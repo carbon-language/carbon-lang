@@ -393,9 +393,6 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   return false;
 }
 
-
-
-
 bool RPR::DoRaisePass(Function &F) {
   bool Changed = false;
   for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB)

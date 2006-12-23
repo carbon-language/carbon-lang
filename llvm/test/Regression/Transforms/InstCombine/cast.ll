@@ -93,11 +93,12 @@ bool %test14(sbyte %A) {
         ret bool %X
 }
 
-bool %test15(ubyte %A) {
-        %c = cast ubyte %A to sbyte
-        %X = setlt sbyte %c, 0   ; setgt %A, 127
-        ret bool %X
-}
+; This just won't occur when there's no difference between ubyte and sbyte
+;bool %test15(ubyte %A) {
+;        %c = cast ubyte %A to sbyte
+;        %X = setlt sbyte %c, 0   ; setgt %A, 127
+;        ret bool %X
+;}
 
 bool %test16(int* %P) {
 	%c = cast int* %P to bool  ;; setne P, null

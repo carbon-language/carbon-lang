@@ -251,8 +251,8 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
       } else {
         return true;
       }
-    } else if (SetCondInst *SCI = dyn_cast<SetCondInst>(*UI)) {
-      if (!isa<ConstantPointerNull>(SCI->getOperand(1)))
+    } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(*UI)) {
+      if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
         return true;  // Allow comparison against null.
     } else if (FreeInst *F = dyn_cast<FreeInst>(*UI)) {
       Writers.push_back(F->getParent()->getParent());

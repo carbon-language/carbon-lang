@@ -197,9 +197,9 @@ void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
   //decrement counter
   LoadInst* l = new LoadInst(Counter, "counter", t);
   
-  SetCondInst* s = new SetCondInst(Instruction::SetEQ, l, 
-				   ConstantInt::get(T, 0), 
-                                   "countercc", t);
+  ICmpInst* s = new ICmpInst(ICmpInst::ICMP_EQ, l, ConstantInt::get(T, 0), 
+                             "countercc", t);
+
   Value* nv = BinaryOperator::createSub(l, ConstantInt::get(T, 1),
                                      "counternew", t);
   new StoreInst(nv, Counter, t);
@@ -270,9 +270,9 @@ void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
   //decrement counter
   LoadInst* l = new LoadInst(AI, "counter", t);
   
-  SetCondInst* s = new SetCondInst(Instruction::SetEQ, l, 
-				   ConstantInt::get(T, 0), 
-                                   "countercc", t);
+  ICmpInst* s = new ICmpInst(ICmpInst::ICMP_EQ, l, ConstantInt::get(T, 0), 
+                             "countercc", t);
+
   Value* nv = BinaryOperator::createSub(l, ConstantInt::get(T, 1),
                                      "counternew", t);
   new StoreInst(nv, AI, t);
@@ -305,9 +305,10 @@ void CycleCounter::ProcessChoicePoint(BasicBlock* bb) {
     BinaryOperator::createAnd(c, ConstantInt::get(Type::ULongTy, rm),
 			      "mrdcc", t);
   
-  SetCondInst* s = new SetCondInst(Instruction::SetEQ, b, 
-				   ConstantInt::get(Type::ULongTy, 0), 
-                                   "mrdccc", t);
+  ICmpInst *s = new ICmpInst(ICmpInst::ICMP_EQ, b,
+                             ConstantInt::get(Type::ULongTy, 0), 
+                             "mrdccc", t);
+
   t->setCondition(s);
 }
 

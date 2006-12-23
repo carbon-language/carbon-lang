@@ -271,14 +271,14 @@ Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
   Value *ExitCnt = RW.expandCodeFor(TripCount, Preheader->getTerminator(),
                                     IndVar->getType());
 
-  // Insert a new setne or seteq instruction before the branch.
-  Instruction::BinaryOps Opcode;
+  // Insert a new icmp_ne or icmp_eq instruction before the branch.
+  ICmpInst::Predicate Opcode;
   if (L->contains(BI->getSuccessor(0)))
-    Opcode = Instruction::SetNE;
+    Opcode = ICmpInst::ICMP_NE;
   else
-    Opcode = Instruction::SetEQ;
+    Opcode = ICmpInst::ICMP_EQ;
 
-  Value *Cond = new SetCondInst(Opcode, IndVar, ExitCnt, "exitcond", BI);
+  Value *Cond = new ICmpInst(Opcode, IndVar, ExitCnt, "exitcond", BI);
   BI->setCondition(Cond);
   ++NumLFTR;
   Changed = true;

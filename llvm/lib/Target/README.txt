@@ -324,7 +324,7 @@ unsigned short read_16_be(const unsigned char *adr) {
 //===---------------------------------------------------------------------===//
 
 -instcombine should handle this transform:
-   setcc (sdiv X / C1 ), C2
+   icmp pred (sdiv X / C1 ), C2
 when X, C1, and C2 are unsigned.  Similarly for udiv and signed operands. 
 
 Currently InstCombine avoids this transform but will do it when the signs of

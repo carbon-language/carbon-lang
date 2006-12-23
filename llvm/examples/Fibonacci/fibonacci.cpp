@@ -58,7 +58,7 @@ static Function *CreateFibFunction(Module *M) {
   BasicBlock* RecurseBB = new BasicBlock("recurse", FibF);
 
   // Create the "if (arg < 2) goto exitbb"
-  Value *CondInst = BinaryOperator::createSetLE(ArgX, Two, "cond", BB);
+  Value *CondInst = new ICmpInst(ICmpInst::ICMP_SLE, ArgX, Two, "cond", BB);
   new BranchInst(RetBB, RecurseBB, CondInst, BB);
 
   // Create: ret int 1

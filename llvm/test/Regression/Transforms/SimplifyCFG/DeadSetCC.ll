@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep seteq
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep 'icmp eq'
 
 ; Check that simplifycfg deletes a dead 'seteq' instruction when it
 ; folds a conditional branch into a switch instruction.

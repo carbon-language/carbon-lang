@@ -116,6 +116,9 @@ namespace {
     std::ostream &printType(std::ostream &Out, const Type *Ty,
                             const std::string &VariableName = "",
                             bool IgnoreName = false);
+    std::ostream &printPrimitiveType(std::ostream &Out, const Type *Ty, 
+                                     bool isSigned, 
+                                     const std::string &NameSoFar = "");
 
     void printStructReturnPointerFunctionType(std::ostream &Out,
                                               const PointerType *Ty);
@@ -124,6 +127,7 @@ namespace {
     void writeOperandRaw(Value *Operand);
     void writeOperandInternal(Value *Operand);
     void writeOperandWithCast(Value* Operand, unsigned Opcode);
+    void writeOperandWithCast(Value* Operand, ICmpInst::Predicate predicate);
     bool writeInstructionCast(const Instruction &I);
 
   private :
@@ -154,9 +158,10 @@ namespace {
     // printed and an extra copy of the expr is not emitted.
     //
     static bool isInlinableInst(const Instruction &I) {
-      // Always inline setcc instructions, even if they are shared by multiple
+      // Always inline cmp instructions, even if they are shared by multiple
       // expressions.  GCC generates horrible code if we don't.
-      if (isa<SetCondInst>(I)) return true;
+      if (isa<CmpInst>(I)) 
+        return true;
 
       // Must be an expression, must be used exactly once.  If it is dead, we
       // emit it inline where it would go.
@@ -211,6 +216,8 @@ namespace {
 
     void visitPHINode(PHINode &I);
     void visitBinaryOperator(Instruction &I);
+    void visitICmpInst(ICmpInst &I);
+    void visitFCmpInst(FCmpInst &I);
 
     void visitCastInst (CastInst &I);
     void visitSelectInst(SelectInst &I);
@@ -351,6 +358,32 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
   printType(Out, RetTy, tstr);
 }
 
+std::ostream &
+CWriter::printPrimitiveType(std::ostream &Out, const Type *Ty, bool isSigned,
+                            const std::string &NameSoFar) {
+  assert(Ty->isPrimitiveType() && "Invalid type for printPrimitiveType");
+  switch (Ty->getTypeID()) {
+  case Type::VoidTyID:   return Out << "void "               << NameSoFar;
+  case Type::BoolTyID:   return Out << "bool "               << NameSoFar;
+  case Type::UByteTyID:  
+  case Type::SByteTyID:
+    return Out << (isSigned?"signed":"unsigned") << " char " << NameSoFar;
+  case Type::UShortTyID: 
+  case Type::ShortTyID:  
+    return Out << (isSigned?"signed":"unsigned") << " short " << NameSoFar;
+  case Type::UIntTyID:   
+  case Type::IntTyID:    
+    return Out << (isSigned?"signed":"unsigned") << " int " << NameSoFar;
+  case Type::ULongTyID:  
+  case Type::LongTyID:   
+    return Out << (isSigned?"signed":"unsigned") << " long long " << NameSoFar;
+  case Type::FloatTyID:  return Out << "float "              << NameSoFar;
+  case Type::DoubleTyID: return Out << "double "             << NameSoFar;
+  default :
+    cerr << "Unknown primitive type: " << *Ty << "\n";
+    abort();
+  }
+}
 
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
@@ -358,24 +391,13 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
 std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  const std::string &NameSoFar,
                                  bool IgnoreName) {
-  if (Ty->isPrimitiveType())
-    switch (Ty->getTypeID()) {
-    case Type::VoidTyID:   return Out << "void "               << NameSoFar;
-    case Type::BoolTyID:   return Out << "bool "               << NameSoFar;
-    case Type::UByteTyID:  return Out << "unsigned char "      << NameSoFar;
-    case Type::SByteTyID:  return Out << "signed char "        << NameSoFar;
-    case Type::UShortTyID: return Out << "unsigned short "     << NameSoFar;
-    case Type::ShortTyID:  return Out << "short "              << NameSoFar;
-    case Type::UIntTyID:   return Out << "unsigned "           << NameSoFar;
-    case Type::IntTyID:    return Out << "int "                << NameSoFar;
-    case Type::ULongTyID:  return Out << "unsigned long long " << NameSoFar;
-    case Type::LongTyID:   return Out << "signed long long "   << NameSoFar;
-    case Type::FloatTyID:  return Out << "float "              << NameSoFar;
-    case Type::DoubleTyID: return Out << "double "             << NameSoFar;
-    default :
-      cerr << "Unknown primitive type: " << *Ty << "\n";
-      abort();
-    }
+  if (Ty->isPrimitiveType()) {
+    // FIXME:Signedness. When integer types are signless, this should just
+    // always pass "false" for the sign of the primitive type. The instructions
+    // will figure out how the value is to be interpreted.
+    printPrimitiveType(Out, Ty, true, NameSoFar);
+    return Out;
+  }
 
   // Check to see if the type is named.
   if (!IgnoreName || isa<OpaqueType>(Ty)) {
@@ -578,41 +600,66 @@ static bool isFPCSafeToPrint(const ConstantFP *CFP) {
 
 /// Print out the casting for a cast operation. This does the double casting
 /// necessary for conversion to the destination type, if necessary. 
-/// @returns true if a closing paren is necessary
 /// @brief Print a cast
 void CWriter::printCast(unsigned opc, const Type *SrcTy, const Type *DstTy) {
-  Out << '(';
-  printType(Out, DstTy);
-  Out << ')';
+  // Print the destination type cast
+  switch (opc) {
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+    case Instruction::IntToPtr:
+    case Instruction::Trunc:
+    case Instruction::BitCast:
+    case Instruction::FPExt:
+    case Instruction::FPTrunc: // For these the DstTy sign doesn't matter
+      Out << '(';
+      printType(Out, DstTy);
+      Out << ')';
+      break;
+    case Instruction::ZExt:
+    case Instruction::PtrToInt:
+    case Instruction::FPToUI: // For these, make sure we get an unsigned dest
+      Out << '(';
+      printPrimitiveType(Out, DstTy, false);
+      Out << ')';
+      break;
+    case Instruction::SExt: 
+    case Instruction::FPToSI: // For these, make sure we get a signed dest
+      Out << '(';
+      printPrimitiveType(Out, DstTy, true);
+      Out << ')';
+      break;
+    default:
+      assert(0 && "Invalid cast opcode");
+  }
+
+  // Print the source type cast
   switch (opc) {
     case Instruction::UIToFP:
     case Instruction::ZExt:
-      if (SrcTy->isSigned()) {
-        Out << '(';
-        printType(Out, SrcTy->getUnsignedVersion());
-        Out << ')';
-      }
+      Out << '(';
+      printPrimitiveType(Out, SrcTy, false);
+      Out << ')';
       break;
     case Instruction::SIToFP:
     case Instruction::SExt:
-      if (SrcTy->isUnsigned()) {
-        Out << '(';
-        printType(Out, SrcTy->getSignedVersion());
-        Out << ')';
-      }
+      Out << '(';
+      printPrimitiveType(Out, SrcTy, true); 
+      Out << ')';
       break;
     case Instruction::IntToPtr:
     case Instruction::PtrToInt:
-        // Avoid "cast to pointer from integer of different size" warnings
-        Out << "(unsigned long)";
-        break;
+      // Avoid "cast to pointer from integer of different size" warnings
+      Out << "(unsigned long)";
+      break;
     case Instruction::Trunc:
     case Instruction::BitCast:
     case Instruction::FPExt:
     case Instruction::FPTrunc:
     case Instruction::FPToSI:
     case Instruction::FPToUI:
+      break; // These don't need a source cast.
     default:
+      assert(0 && "Invalid cast opcode");
       break;
   }
 }
@@ -679,12 +726,8 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor:
-    case Instruction::SetEQ:
-    case Instruction::SetNE:
-    case Instruction::SetLT:
-    case Instruction::SetLE:
-    case Instruction::SetGT:
-    case Instruction::SetGE:
+    case Instruction::ICmp:
+    case Instruction::FCmp:
     case Instruction::Shl:
     case Instruction::LShr:
     case Instruction::AShr:
@@ -705,15 +748,43 @@ void CWriter::printConstant(Constant *CPV) {
       case Instruction::And: Out << " & "; break;
       case Instruction::Or:  Out << " | "; break;
       case Instruction::Xor: Out << " ^ "; break;
-      case Instruction::SetEQ: Out << " == "; break;
-      case Instruction::SetNE: Out << " != "; break;
-      case Instruction::SetLT: Out << " < "; break;
-      case Instruction::SetLE: Out << " <= "; break;
-      case Instruction::SetGT: Out << " > "; break;
-      case Instruction::SetGE: Out << " >= "; break;
       case Instruction::Shl: Out << " << "; break;
       case Instruction::LShr:
       case Instruction::AShr: Out << " >> "; break;
+      case Instruction::ICmp:
+        switch (CE->getPredicate()) {
+          case ICmpInst::ICMP_EQ: Out << " == "; break;
+          case ICmpInst::ICMP_NE: Out << " != "; break;
+          case ICmpInst::ICMP_SLT: 
+          case ICmpInst::ICMP_ULT: Out << " < "; break;
+          case ICmpInst::ICMP_SLE:
+          case ICmpInst::ICMP_ULE: Out << " <= "; break;
+          case ICmpInst::ICMP_SGT:
+          case ICmpInst::ICMP_UGT: Out << " > "; break;
+          case ICmpInst::ICMP_SGE:
+          case ICmpInst::ICMP_UGE: Out << " >= "; break;
+          default: assert(0 && "Illegal ICmp predicate");
+        }
+        break;
+      case Instruction::FCmp:
+        switch (CE->getPredicate()) {
+          case FCmpInst::FCMP_ORD: 
+          case FCmpInst::FCMP_UEQ: 
+          case FCmpInst::FCMP_OEQ: Out << " == "; break;
+          case FCmpInst::FCMP_UNO: 
+          case FCmpInst::FCMP_UNE: 
+          case FCmpInst::FCMP_ONE: Out << " != "; break;
+          case FCmpInst::FCMP_OLT:
+          case FCmpInst::FCMP_ULT: Out << " < "; break;
+          case FCmpInst::FCMP_OLE:
+          case FCmpInst::FCMP_ULE: Out << " <= "; break;
+          case FCmpInst::FCMP_OGT: 
+          case FCmpInst::FCMP_UGT: Out << " > "; break;
+          case FCmpInst::FCMP_OGE:
+          case FCmpInst::FCMP_UGE: Out << " >= "; break;
+          default: assert(0 && "Illegal FCmp predicate");
+        }
+        break;
       default: assert(0 && "Illegal opcode here!");
       }
       printConstantWithCast(CE->getOperand(1), CE->getOpcode());
@@ -730,7 +801,7 @@ void CWriter::printConstant(Constant *CPV) {
     }
   } else if (isa<UndefValue>(CPV) && CPV->getType()->isFirstClassType()) {
     Out << "((";
-    printType(Out, CPV->getType());
+    printType(Out, CPV->getType()); // sign doesn't matter
     Out << ")/*UNDEF*/0)";
     return;
   }
@@ -740,9 +811,23 @@ void CWriter::printConstant(Constant *CPV) {
     Out << (cast<ConstantBool>(CPV)->getValue() ? '1' : '0');
     break;
   case Type::SByteTyID:
-  case Type::ShortTyID:
-    Out << cast<ConstantInt>(CPV)->getSExtValue();
+  case Type::UByteTyID:
+    Out << "((char)" << cast<ConstantInt>(CPV)->getSExtValue() << ")";
     break;
+  case Type::ShortTyID:
+  case Type::UShortTyID:
+    Out << "((short)" << cast<ConstantInt>(CPV)->getSExtValue() << ")";
+    break;
+  case Type::IntTyID:
+  case Type::UIntTyID:
+    Out << "((int)" << cast<ConstantInt>(CPV)->getSExtValue() << ")";
+    break;
+  case Type::LongTyID:
+  case Type::ULongTyID:
+    Out << "((long long)" << cast<ConstantInt>(CPV)->getSExtValue() << "ll)";
+    break;
+
+#if 0
   case Type::IntTyID:
     if ((int)cast<ConstantInt>(CPV)->getSExtValue() == (int)0x80000000)
       Out << "((int)0x80000000U)";   // Handle MININT specially to avoid warning
@@ -767,6 +852,7 @@ void CWriter::printConstant(Constant *CPV) {
   case Type::ULongTyID:
     Out << cast<ConstantInt>(CPV)->getZExtValue() << "ull";
     break;
+#endif
 
   case Type::FloatTyID:
   case Type::DoubleTyID: {
@@ -890,7 +976,7 @@ void CWriter::printConstant(Constant *CPV) {
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(CPV)) {
       Out << "((";
-      printType(Out, CPV->getType());
+      printType(Out, CPV->getType()); // sign doesn't matter
       Out << ")/*NULL*/0)";
       break;
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(CPV)) {
@@ -910,17 +996,20 @@ void CWriter::printConstant(Constant *CPV) {
 bool CWriter::printConstExprCast(const ConstantExpr* CE) {
   bool NeedsExplicitCast = false;
   const Type *Ty = CE->getOperand(0)->getType();
+  bool TypeIsSigned = false;
   switch (CE->getOpcode()) {
   case Instruction::LShr:
   case Instruction::URem: 
-  case Instruction::UDiv: 
-    NeedsExplicitCast = Ty->isSigned(); break;
+  case Instruction::UDiv: NeedsExplicitCast = true; break;
   case Instruction::AShr:
   case Instruction::SRem: 
-  case Instruction::SDiv: 
-    NeedsExplicitCast = Ty->isUnsigned(); break;
-  case Instruction::ZExt:
+  case Instruction::SDiv: NeedsExplicitCast = true; TypeIsSigned = true; break;
   case Instruction::SExt:
+    Ty = CE->getType();
+    NeedsExplicitCast = true;
+    TypeIsSigned = true;
+    break;
+  case Instruction::ZExt:
   case Instruction::Trunc:
   case Instruction::FPTrunc:
   case Instruction::FPExt:
@@ -938,7 +1027,10 @@ bool CWriter::printConstExprCast(const ConstantExpr* CE) {
   }
   if (NeedsExplicitCast) {
     Out << "((";
-    printType(Out, Ty);
+    if (Ty->isPrimitiveType())
+      printPrimitiveType(Out, Ty, TypeIsSigned);
+    else
+      printType(Out, Ty);
     Out << ")(";
   }
   return NeedsExplicitCast;
@@ -954,6 +1046,7 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
 
   // Indicate whether to do the cast or not.
   bool shouldCast = false;
+  bool typeIsSigned = false;
 
   // Based on the Opcode for which this Constant is being written, determine
   // the new type to which the operand should be casted by setting the value
@@ -966,20 +1059,13 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
     case Instruction::LShr:
     case Instruction::UDiv:
     case Instruction::URem:
-      // For UDiv/URem get correct type
-      if (OpTy->isSigned()) {
-        OpTy = OpTy->getUnsignedVersion();
-        shouldCast = true;
-      }
+      shouldCast = true;
       break;
     case Instruction::AShr:
     case Instruction::SDiv:
     case Instruction::SRem:
-      // For SDiv/SRem get correct type
-      if (OpTy->isUnsigned()) {
-        OpTy = OpTy->getSignedVersion();
-        shouldCast = true;
-      }
+      shouldCast = true;
+      typeIsSigned = true;
       break;
   }
 
@@ -987,13 +1073,12 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
   // operand.
   if (shouldCast) {
     Out << "((";
-    printType(Out, OpTy);
+    printPrimitiveType(Out, OpTy, typeIsSigned);
     Out << ")";
     printConstant(CPV);
     Out << ")";
   } else 
-    writeOperand(CPV);
-
+    printConstant(CPV);
 }
 
 void CWriter::writeOperandInternal(Value *Operand) {
@@ -1038,40 +1123,25 @@ void CWriter::writeOperand(Value *Operand) {
 // This function takes care of detecting that case and printing the cast 
 // for the Instruction.
 bool CWriter::writeInstructionCast(const Instruction &I) {
-  bool NeedsExplicitCast = false;
   const Type *Ty = I.getOperand(0)->getType();
   switch (I.getOpcode()) {
   case Instruction::LShr:
   case Instruction::URem: 
   case Instruction::UDiv: 
-    NeedsExplicitCast = Ty->isSigned(); break;
+    Out << "((";
+    printPrimitiveType(Out, Ty, false);
+    Out << ")(";
+    return true;
   case Instruction::AShr:
   case Instruction::SRem: 
   case Instruction::SDiv: 
-    NeedsExplicitCast = Ty->isUnsigned(); break;
-  case Instruction::ZExt:
-  case Instruction::SExt:
-  case Instruction::Trunc:
-  case Instruction::FPTrunc:
-  case Instruction::FPExt:
-  case Instruction::UIToFP:
-  case Instruction::SIToFP:
-  case Instruction::FPToUI:
-  case Instruction::FPToSI:
-  case Instruction::PtrToInt:
-  case Instruction::IntToPtr:
-  case Instruction::BitCast:
-    Ty = I.getType();
-    NeedsExplicitCast = true;
-    break;
+    Out << "((";
+    printPrimitiveType(Out, Ty, true);
+    Out << ")(";
+    return true;
   default: break;
   }
-  if (NeedsExplicitCast) {
-    Out << "((";
-    printType(Out, Ty);
-    Out << ")(";
-  }
-  return NeedsExplicitCast;
+  return false;
 }
 
 // Write the operand with a cast to another type based on the Opcode being used.
@@ -1085,6 +1155,9 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
   // Indicate whether to do the cast or not.
   bool shouldCast = false;
 
+  // Indicate whether the cast should be to a signed type or not.
+  bool castIsSigned = false;
+
   // Based on the Opcode for which this Operand is being written, determine
   // the new type to which the operand should be casted by setting the value
   // of OpTy. If we change OpTy, also set shouldCast to true.
@@ -1094,20 +1167,15 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
       break; 
     case Instruction::LShr:
     case Instruction::UDiv:
-    case Instruction::URem:
-      // For UDiv to have unsigned operands
-      if (OpTy->isSigned()) {
-        OpTy = OpTy->getUnsignedVersion();
-        shouldCast = true;
-      }
+    case Instruction::URem: // Cast to unsigned first
+      shouldCast = true;
+      castIsSigned = false;
       break;
     case Instruction::AShr:
     case Instruction::SDiv:
-    case Instruction::SRem:
-      if (OpTy->isUnsigned()) {
-        OpTy = OpTy->getSignedVersion();
-        shouldCast = true;
-      }
+    case Instruction::SRem: // Cast to signed first
+      shouldCast = true;
+      castIsSigned = true;
       break;
   }
 
@@ -1115,13 +1183,62 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
   // operand.
   if (shouldCast) {
     Out << "((";
-    printType(Out, OpTy);
+    printPrimitiveType(Out, OpTy, castIsSigned);
     Out << ")";
     writeOperand(Operand);
     Out << ")";
   } else 
     writeOperand(Operand);
+}
 
+// Write the operand with a cast to another type based on the icmp predicate 
+// being used. 
+void CWriter::writeOperandWithCast(Value* Operand, ICmpInst::Predicate predicate) {
+
+  // Extract the operand's type, we'll need it.
+  const Type* OpTy = Operand->getType();
+
+  // Indicate whether to do the cast or not.
+  bool shouldCast = false;
+
+  // Indicate whether the cast should be to a signed type or not.
+  bool castIsSigned = false;
+
+  // Based on the Opcode for which this Operand is being written, determine
+  // the new type to which the operand should be casted by setting the value
+  // of OpTy. If we change OpTy, also set shouldCast to true.
+  switch (predicate) {
+    default:
+      // for eq and ne, it doesn't matter
+      break; 
+    case ICmpInst::ICMP_UGT:
+    case ICmpInst::ICMP_UGE:
+    case ICmpInst::ICMP_ULT:
+    case ICmpInst::ICMP_ULE:
+      shouldCast = true;
+      break;
+    case ICmpInst::ICMP_SGT:
+    case ICmpInst::ICMP_SGE:
+    case ICmpInst::ICMP_SLT:
+    case ICmpInst::ICMP_SLE:
+      shouldCast = true;
+      castIsSigned = true;
+      break;
+  }
+
+  // Write out the casted operand if we should, otherwise just write the
+  // operand.
+  if (shouldCast) {
+    Out << "((";
+    if (OpTy->isPrimitiveType())
+      printPrimitiveType(Out, OpTy, castIsSigned);
+    else
+      printType(Out, OpTy);
+    Out << ")";
+    writeOperand(Operand);
+    Out << ")";
+  } else 
+    writeOperand(Operand);
 }
 
 // generateCompilerSpecificCode - This is where we add conditional compilation
@@ -1725,7 +1842,7 @@ void CWriter::printFunction(Function &F) {
       PrintedVar = true;
     }
     // We need a temporary for the BitCast to use so it can pluck a value out
-    // of a uniont to do the BitCast. This is separate from the need for a
+    // of a union to do the BitCast. This is separate from the need for a
     // variable to hold the result of the BitCast. 
     if (isFPIntBitCast(*I)) {
       Out << "  llvmBitCastUnion " << Mang->getValueName(&*I)
@@ -1992,12 +2109,6 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     case Instruction::And: Out << " & "; break;
     case Instruction::Or: Out << " | "; break;
     case Instruction::Xor: Out << " ^ "; break;
-    case Instruction::SetEQ: Out << " == "; break;
-    case Instruction::SetNE: Out << " != "; break;
-    case Instruction::SetLE: Out << " <= "; break;
-    case Instruction::SetGE: Out << " >= "; break;
-    case Instruction::SetLT: Out << " < "; break;
-    case Instruction::SetGT: Out << " > "; break;
     case Instruction::Shl : Out << " << "; break;
     case Instruction::LShr:
     case Instruction::AShr: Out << " >> "; break;
@@ -2012,6 +2123,70 @@ void CWriter::visitBinaryOperator(Instruction &I) {
   if (needsCast) {
     Out << "))";
   }
+}
+
+void CWriter::visitICmpInst(ICmpInst &I) {
+  // We must cast the results of icmp which might be promoted.
+  bool needsCast = false;
+
+  // Write out the cast of the instruction's value back to the proper type
+  // if necessary.
+  bool NeedsClosingParens = writeInstructionCast(I);
+
+  // Certain icmp predicate require the operand to be forced to a specific type
+  // so we use writeOperandWithCast here instead of writeOperand. Similarly
+  // below for operand 1
+  writeOperandWithCast(I.getOperand(0), I.getPredicate());
+
+  switch (I.getPredicate()) {
+  case ICmpInst::ICMP_EQ:  Out << " == "; break;
+  case ICmpInst::ICMP_NE:  Out << " != "; break;
+  case ICmpInst::ICMP_ULE:
+  case ICmpInst::ICMP_SLE: Out << " <= "; break;
+  case ICmpInst::ICMP_UGE:
+  case ICmpInst::ICMP_SGE: Out << " >= "; break;
+  case ICmpInst::ICMP_ULT:
+  case ICmpInst::ICMP_SLT: Out << " < "; break;
+  case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_SGT: Out << " > "; break;
+  default: cerr << "Invalid icmp predicate!" << I; abort();
+  }
+
+  writeOperandWithCast(I.getOperand(1), I.getPredicate());
+  if (NeedsClosingParens)
+    Out << "))";
+
+  if (needsCast) {
+    Out << "))";
+  }
+}
+
+void CWriter::visitFCmpInst(FCmpInst &I) {
+  // Write the first operand
+  writeOperand(I.getOperand(0));
+
+  // Write the predicate
+  switch (I.getPredicate()) {
+  case FCmpInst::FCMP_FALSE: Out << " 0 "; break;
+  case FCmpInst::FCMP_ORD:
+  case FCmpInst::FCMP_OEQ: 
+  case FCmpInst::FCMP_UEQ:   Out << " == "; break;
+  case FCmpInst::FCMP_UNO:
+  case FCmpInst::FCMP_ONE: 
+  case FCmpInst::FCMP_UNE:   Out << " != "; break;
+  case FCmpInst::FCMP_ULE:
+  case FCmpInst::FCMP_OLE:   Out << " <= "; break;
+  case FCmpInst::FCMP_UGE:
+  case FCmpInst::FCMP_OGE:   Out << " >= "; break;
+  case FCmpInst::FCMP_ULT:
+  case FCmpInst::FCMP_OLT:   Out << " < "; break;
+  case FCmpInst::FCMP_UGT:
+  case FCmpInst::FCMP_OGT:   Out << " > "; break;
+  case FCmpInst::FCMP_TRUE:  Out << " 1 "; break;
+  default: cerr << "Invalid fcmp predicate!" << I; abort();
+  }
+  // Write the second operand
+  writeOperand(I.getOperand(1));
 }
 
 static const char * getFloatBitCastField(const Type *Ty) {

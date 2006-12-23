@@ -719,10 +719,6 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Logical operators must have same type for operands and result!",
             &B);
-  } else if (isa<SetCondInst>(B)) {
-    // Check that setcc instructions return bool
-    Assert1(B.getType() == Type::BoolTy,
-            "setcc instructions must return boolean values!", &B);
   } else {
     // Arithmetic operators only work on integer or fp values
     Assert1(B.getType() == B.getOperand(0)->getType(),

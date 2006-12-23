@@ -590,7 +590,8 @@ BasicAliasAnalysis::CheckGEPInstructions(
             // Make sure they are comparable (ie, not constant expressions), and
             // make sure the GEP with the smaller leading constant is GEP1.
             if (G1OC) {
-              Constant *Compare = ConstantExpr::getSetGT(G1OC, G2OC);
+              Constant *Compare = ConstantExpr::getICmp(ICmpInst::ICMP_SGT, 
+                                                        G1OC, G2OC);
               if (ConstantBool *CV = dyn_cast<ConstantBool>(Compare)) {
                 if (CV->getValue())   // If they are comparable and G2 > G1
                   std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2

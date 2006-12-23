@@ -721,7 +721,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
     LoadInst* cond = cast<LoadInst>( pop_integer(bb) );
 
     // Compare the condition against 0
-    SetCondInst* cond_inst = new SetCondInst( Instruction::SetNE, cond,
+    ICmpInst* cond_inst = new ICmpInst( ICmpInst::ICMP_NE, cond,
         ConstantInt::get( Type::LongTy, 0) );
     bb->getInstList().push_back( cond_inst );
 
@@ -735,7 +735,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
     BasicBlock* false_bb = 0;
     if ( ifFalse ) false_bb = new BasicBlock((echo?"else":""));
 
-    // Create a branch on the SetCond
+    // Create a branch on the ICmp
     BranchInst* br_inst = new BranchInst( true_bb,
         ( ifFalse ? false_bb : exit_bb ), cond_inst );
     bb->getInstList().push_back( br_inst );
@@ -805,8 +805,8 @@ StackerCompiler::handle_while( char* todo )
     LoadInst* cond = cast<LoadInst>( stack_top(test) );
 
     // Compare the condition against 0
-    SetCondInst* cond_inst = new SetCondInst(
-        Instruction::SetNE, cond, ConstantInt::get( Type::LongTy, 0));
+    ICmpInst* cond_inst = new ICmpInst(
+        ICmpInst::ICMP_NE, cond, ConstantInt::get( Type::LongTy, 0));
     test->getInstList().push_back( cond_inst );
 
     // Add the branch instruction
@@ -920,8 +920,8 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("LESS");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        SetCondInst* cond_inst =
-            new SetCondInst( Instruction::SetLT, op1, op2 );
+        ICmpInst* cond_inst =
+            new ICmpInst( ICmpInst::ICMP_SLT, op1, op2 );
         bb->getInstList().push_back( cond_inst );
         push_value( bb, cond_inst );
         break;
@@ -931,8 +931,8 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("MORE");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        SetCondInst* cond_inst =
-            new SetCondInst( Instruction::SetGT, op1, op2 );
+        ICmpInst* cond_inst =
+            new ICmpInst( ICmpInst::ICMP_SGT, op1, op2 );
         bb->getInstList().push_back( cond_inst );
         push_value( bb, cond_inst );
         break;
@@ -942,8 +942,8 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("LE");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        SetCondInst* cond_inst =
-            new SetCondInst( Instruction::SetLE, op1, op2 );
+        ICmpInst* cond_inst =
+            new ICmpInst( ICmpInst::ICMP_SLE, op1, op2 );
         bb->getInstList().push_back( cond_inst );
         push_value( bb, cond_inst );
         break;
@@ -953,8 +953,8 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("GE");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        SetCondInst* cond_inst =
-            new SetCondInst( Instruction::SetGE, op1, op2 );
+        ICmpInst* cond_inst =
+            new ICmpInst( ICmpInst::ICMP_SGE, op1, op2 );
         bb->getInstList().push_back( cond_inst );
         push_value( bb, cond_inst );
         break;
@@ -964,8 +964,8 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("NE");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        SetCondInst* cond_inst =
-            new SetCondInst( Instruction::SetNE, op1, op2 );
+        ICmpInst* cond_inst =
+            new ICmpInst( ICmpInst::ICMP_NE, op1, op2 );
         bb->getInstList().push_back( cond_inst );
         push_value( bb, cond_inst );
         break;
@@ -975,8 +975,8 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("EQ");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        SetCondInst* cond_inst =
-            new SetCondInst( Instruction::SetEQ, op1, op2 );
+        ICmpInst* cond_inst =
+            new ICmpInst( ICmpInst::ICMP_EQ, op1, op2 );
         bb->getInstList().push_back( cond_inst );
         push_value( bb, cond_inst );
         break;
@@ -1102,8 +1102,8 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op1 = cast<LoadInst>(stack_top(bb));
 
         // Determine if its negative
-        SetCondInst* cond_inst =
-            new SetCondInst( Instruction::SetLT, op1, Zero );
+        ICmpInst* cond_inst =
+            new ICmpInst( ICmpInst::ICMP_SLT, op1, Zero );
         bb->getInstList().push_back( cond_inst );
 
         // Create a block for storing the result
@@ -1112,7 +1112,7 @@ StackerCompiler::handle_word( int tkn )
         // Create a block for making it a positive value
         BasicBlock* pos_bb = new BasicBlock((echo?"neg":""));
 
-        // Create the branch on the SetCond
+        // Create the branch on the ICmp
         BranchInst* br_inst = new BranchInst( pos_bb, exit_bb, cond_inst );
         bb->getInstList().push_back( br_inst );
 
@@ -1143,11 +1143,11 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
 
         // Compare them
-        SetCondInst* cond_inst =
-            new SetCondInst( Instruction::SetLT, op1, op2);
+        ICmpInst* cond_inst =
+            new ICmpInst( ICmpInst::ICMP_SLT, op1, op2);
         bb->getInstList().push_back( cond_inst );
 
-        // Create a branch on the SetCond
+        // Create a branch on the ICmp
         BranchInst* br_inst =
             new BranchInst( op1_block, op2_block, cond_inst );
         bb->getInstList().push_back( br_inst );
@@ -1175,8 +1175,8 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
 
         // Compare them
-        SetCondInst* cond_inst =
-            new SetCondInst( Instruction::SetGT, op1, op2);
+        ICmpInst* cond_inst =
+            new ICmpInst( ICmpInst::ICMP_SGT, op1, op2);
         bb->getInstList().push_back( cond_inst );
 
         // Create an exit block
@@ -1192,7 +1192,7 @@ StackerCompiler::handle_word( int tkn )
         push_value(op2_block, op2);
         op2_block->getInstList().push_back( new BranchInst( exit_bb ) );
 
-        // Create a banch on the SetCond
+        // Create a banch on the ICmp
         BranchInst* br_inst =
             new BranchInst( op1_block, op2_block, cond_inst );
         bb->getInstList().push_back( br_inst );

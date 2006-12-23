@@ -71,6 +71,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
   case 2:
     Op1 = dyn_cast<Constant>(I->getOperand(1));
     if (Op1 == 0) return 0;        // Not a constant?, can't fold
+    /* FALL THROUGH */
   case 1:
     Op0 = dyn_cast<Constant>(I->getOperand(0));
     if (Op0 == 0) return 0;        // Not a constant?, can't fold
@@ -79,13 +80,14 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
   }
 
   if (isa<BinaryOperator>(I) || isa<ShiftInst>(I)) {
-    if (Constant *Op0 = dyn_cast<Constant>(I->getOperand(0)))
-      if (Constant *Op1 = dyn_cast<Constant>(I->getOperand(1)))
-        return ConstantExpr::get(I->getOpcode(), Op0, Op1);
-    return 0;  // Operands not constants.
+    return ConstantExpr::get(I->getOpcode(), Op0, Op1);
+  } else if (isa<ICmpInst>(I)) {
+    return ConstantExpr::getICmp(cast<ICmpInst>(I)->getPredicate(), Op0, Op1);
+  } else if (isa<FCmpInst>(I)) {
+    return ConstantExpr::getFCmp(cast<FCmpInst>(I)->getPredicate(), Op0, Op1);
   }
 
-  // Scan the operand list, checking to see if the are all constants, if so,
+  // Scan the operand list, checking to see if they are all constants, if so,
   // hand off to ConstantFoldInstOperands.
   std::vector<Constant*> Ops;
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
@@ -94,7 +96,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
     else
       return 0;  // All operands not constant!
 
-  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Ops);
+  return ConstantFoldInstOperands(I, Ops);
 }
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
@@ -103,9 +105,13 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
 /// attempting to fold instructions like loads and stores, which have no
 /// constant expression form.
 ///
-Constant *llvm::ConstantFoldInstOperands(unsigned Opc, const Type *DestTy,
+Constant *llvm::ConstantFoldInstOperands(const Instruction* I, 
                                          const std::vector<Constant*> &Ops) {
-  if (Opc >= Instruction::BinaryOpsBegin && Opc < Instruction::BinaryOpsEnd)
+  unsigned Opc = I->getOpcode();
+  const Type *DestTy = I->getType();
+
+  // Handle easy binops first
+  if (isa<BinaryOperator>(I))
     return ConstantExpr::get(Opc, Ops[0], Ops[1]);
   
   switch (Opc) {
@@ -118,6 +124,10 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opc, const Type *DestTy,
       }
     }
     return 0;
+  case Instruction::ICmp:
+  case Instruction::FCmp:
+    return ConstantExpr::getCompare(cast<CmpInst>(I)->getPredicate(), Ops[0], 
+                                    Ops[1]);
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
@@ -257,8 +267,8 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
     } else if (SI->getNumSuccessors() == 2) {
       // Otherwise, we can fold this switch into a conditional branch
       // instruction if it has only one non-default destination.
-      Value *Cond = new SetCondInst(Instruction::SetEQ, SI->getCondition(),
-                                    SI->getSuccessorValue(1), "cond", SI);
+      Value *Cond = new ICmpInst(ICmpInst::ICMP_EQ, SI->getCondition(),
+                                 SI->getSuccessorValue(1), "cond", SI);
       // Insert the new branch...
       new BranchInst(SI->getSuccessor(1), SI->getSuccessor(0), Cond, SI);
 

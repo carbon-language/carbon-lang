@@ -486,12 +486,11 @@ static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   // Insert a conditional branch on LIC to the two preheaders.  The original
   // code is the true version and the new code is the false version.
   Value *BranchVal = LIC;
-  if (!isa<ConstantBool>(Val)) {
-    BranchVal = BinaryOperator::createSetEQ(LIC, Val, "tmp", InsertPt);
-  } else if (Val != ConstantBool::getTrue()) {
+  if (!isa<ConstantBool>(Val))
+    BranchVal = new ICmpInst(ICmpInst::ICMP_EQ, LIC, Val, "tmp", InsertPt);
+  else if (Val != ConstantBool::getTrue())
     // We want to enter the new loop when the condition is true.
     std::swap(TrueDest, FalseDest);
-  }
 
   // Insert the new branch.
   new BranchInst(TrueDest, FalseDest, BranchVal, InsertPt);

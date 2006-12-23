@@ -177,8 +177,7 @@ SCEVHandle SCEVConstant::get(ConstantInt *V) {
   // are signless. There won't be a need to bitcast then.
   if (V->getType()->isSigned()) {
     const Type *NewTy = V->getType()->getUnsignedVersion();
-    V = cast<ConstantInt>(
-        ConstantExpr::getBitCast(V, NewTy));
+    V = cast<ConstantInt>(ConstantExpr::getBitCast(V, NewTy));
   }
 
   SCEVConstant *&R = (*SCEVConstants)[V];
@@ -461,15 +460,8 @@ SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
     C = Constant::getNullValue(Ty);
   else if (Ty->isFloatingPoint())
     C = ConstantFP::get(Ty, Val);
-  /// FIXME:Signless. when integer types are signless, just change this to:
-  /// else
-  ///   C = ConstantInt::get(Ty, Val);
-  else if (Ty->isSigned())        
+  else 
     C = ConstantInt::get(Ty, Val);
-  else {
-    C = ConstantInt::get(Ty->getSignedVersion(), Val);
-    C = ConstantExpr::getBitCast(C, Ty);
-  }
   return SCEVUnknown::get(C);
 }
 
@@ -514,8 +506,7 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
     for (; NumSteps; --NumSteps)
       Result *= Val-(NumSteps-1);
     Constant *Res = ConstantInt::get(Type::ULongTy, Result);
-    return SCEVUnknown::get(
-        ConstantExpr::getTruncOrBitCast(Res, V->getType()));
+    return SCEVUnknown::get(ConstantExpr::getTruncOrBitCast(Res, V->getType()));
   }
 
   const Type *Ty = V->getType();
@@ -1162,7 +1153,7 @@ namespace {
     SCEVHandle ComputeLoadConstantCompareIterationCount(LoadInst *LI,
                                                         Constant *RHS,
                                                         const Loop *L,
-                                                        unsigned SetCCOpcode);
+                                                        ICmpInst::Predicate p);
 
     /// ComputeIterationCountExhaustively - If the trip is known to execute a
     /// constant number of times (the condition evolves only from constants),
@@ -1521,17 +1512,21 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   BranchInst *ExitBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
   if (ExitBr == 0) return UnknownValue;
   assert(ExitBr->isConditional() && "If unconditional, it can't be in loop!");
-  SetCondInst *ExitCond = dyn_cast<SetCondInst>(ExitBr->getCondition());
-  if (ExitCond == 0)  // Not a setcc
+  ICmpInst *ExitCond = dyn_cast<ICmpInst>(ExitBr->getCondition());
+
+  // If its not an integer comparison then compute it the hard way. 
+  // Note that ICmpInst deals with pointer comparisons too so we must check
+  // the type of the operand.
+  if (ExitCond == 0 || !ExitCond->getOperand(0)->getType()->isIntegral()) 
     return ComputeIterationCountExhaustively(L, ExitBr->getCondition(),
                                           ExitBr->getSuccessor(0) == ExitBlock);
 
-  // If the condition was exit on true, convert the condition to exit on false.
-  Instruction::BinaryOps Cond;
+  // If the condition was exit on true, convert the condition to exit on false
+  ICmpInst::Predicate Cond;
   if (ExitBr->getSuccessor(1) == ExitBlock)
-    Cond = ExitCond->getOpcode();
+    Cond = ExitCond->getPredicate();
   else
-    Cond = ExitCond->getInverseCondition();
+    Cond = ExitCond->getInversePredicate();
 
   // Handle common loops like: for (X = "string"; *X; ++X)
   if (LoadInst *LI = dyn_cast<LoadInst>(ExitCond->getOperand(0)))
@@ -1550,12 +1545,12 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   Tmp = getSCEVAtScope(RHS, L);
   if (!isa<SCEVCouldNotCompute>(Tmp)) RHS = Tmp;
 
-  // At this point, we would like to compute how many iterations of the loop the
-  // predicate will return true for these inputs.
+  // At this point, we would like to compute how many iterations of the 
+  // loop the predicate will return true for these inputs.
   if (isa<SCEVConstant>(LHS) && !isa<SCEVConstant>(RHS)) {
     // If there is a constant, force it into the RHS.
     std::swap(LHS, RHS);
-    Cond = SetCondInst::getSwappedCondition(Cond);
+    Cond = ICmpInst::getSwappedPredicate(Cond);
   }
 
   // FIXME: think about handling pointer comparisons!  i.e.:
@@ -1590,53 +1585,48 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
             CompRange = ConstantRange(NewL, NewU);
           }
 
-          SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange);
+          SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange, 
+              ICmpInst::isSignedPredicate(Cond));
           if (!isa<SCEVCouldNotCompute>(Ret)) return Ret;
         }
       }
 
   switch (Cond) {
-  case Instruction::SetNE:                     // while (X != Y)
+  case ICmpInst::ICMP_NE: {                     // while (X != Y)
     // Convert to: while (X-Y != 0)
-    if (LHS->getType()->isInteger()) {
-      SCEVHandle TC = HowFarToZero(SCEV::getMinusSCEV(LHS, RHS), L);
-      if (!isa<SCEVCouldNotCompute>(TC)) return TC;
-    }
+    SCEVHandle TC = HowFarToZero(SCEV::getMinusSCEV(LHS, RHS), L);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
-  case Instruction::SetEQ:
+  }
+  case ICmpInst::ICMP_EQ: {
     // Convert to: while (X-Y == 0)           // while (X == Y)
-    if (LHS->getType()->isInteger()) {
-      SCEVHandle TC = HowFarToNonZero(SCEV::getMinusSCEV(LHS, RHS), L);
-      if (!isa<SCEVCouldNotCompute>(TC)) return TC;
-    }
+    SCEVHandle TC = HowFarToNonZero(SCEV::getMinusSCEV(LHS, RHS), L);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
-  case Instruction::SetLT:
-    if (LHS->getType()->isInteger() && 
-        ExitCond->getOperand(0)->getType()->isSigned()) {
-      SCEVHandle TC = HowManyLessThans(LHS, RHS, L);
-      if (!isa<SCEVCouldNotCompute>(TC)) return TC;
-    }
+  }
+  case ICmpInst::ICMP_SLT: {
+    SCEVHandle TC = HowManyLessThans(LHS, RHS, L);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
-  case Instruction::SetGT:
-    if (LHS->getType()->isInteger() &&
-        ExitCond->getOperand(0)->getType()->isSigned()) {
-      SCEVHandle TC = HowManyLessThans(RHS, LHS, L);
-      if (!isa<SCEVCouldNotCompute>(TC)) return TC;
-    }
+  }
+  case ICmpInst::ICMP_SGT: {
+    SCEVHandle TC = HowManyLessThans(RHS, LHS, L);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
+  }
   default:
 #if 0
     cerr << "ComputeIterationCount ";
     if (ExitCond->getOperand(0)->getType()->isUnsigned())
       cerr << "[unsigned] ";
     cerr << *LHS << "   "
-         << Instruction::getOpcodeName(Cond) << "   " << *RHS << "\n";
+         << Instruction::getOpcodeName(Instruction::ICmp) 
+         << "   " << *RHS << "\n";
 #endif
     break;
   }
-
   return ComputeIterationCountExhaustively(L, ExitCond,
-                                         ExitBr->getSuccessor(0) == ExitBlock);
+                                       ExitBr->getSuccessor(0) == ExitBlock);
 }
 
 static ConstantInt *
@@ -1686,7 +1676,8 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
 /// 'setcc load X, cst', try to se if we can compute the trip count.
 SCEVHandle ScalarEvolutionsImpl::
 ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
-                                         const Loop *L, unsigned SetCCOpcode) {
+                                         const Loop *L, 
+                                         ICmpInst::Predicate predicate) {
   if (LI->isVolatile()) return UnknownValue;
 
   // Check to see if the loaded pointer is a getelementptr of a global.
@@ -1742,7 +1733,7 @@ ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
     if (Result == 0) break;  // Cannot compute!
 
     // Evaluate the condition for this iteration.
-    Result = ConstantExpr::get(SetCCOpcode, Result, RHS);
+    Result = ConstantExpr::getICmp(predicate, Result, RHS);
     if (!isa<ConstantBool>(Result)) break;  // Couldn't decide for sure
     if (cast<ConstantBool>(Result)->getValue() == false) {
 #if 0
@@ -1761,7 +1752,7 @@ ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
 /// CanConstantFold - Return true if we can constant fold an instruction of the
 /// specified type, assuming that all operands were constants.
 static bool CanConstantFold(const Instruction *I) {
-  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I) ||
+  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I) || isa<CmpInst>(I) ||
       isa<SelectInst>(I) || isa<CastInst>(I) || isa<GetElementPtrInst>(I))
     return true;
 
@@ -1790,10 +1781,17 @@ static Constant *ConstantFold(const Instruction *I,
       return ConstantFoldCall(cast<Function>(GV), Operands);
     }
     return 0;
-  case Instruction::GetElementPtr:
+  case Instruction::GetElementPtr: {
     Constant *Base = Operands[0];
     Operands.erase(Operands.begin());
     return ConstantExpr::getGetElementPtr(Base, Operands);
+  }
+  case Instruction::ICmp:
+    return ConstantExpr::getICmp(
+        cast<ICmpInst>(I)->getPredicate(), Operands[0], Operands[1]);
+  case Instruction::FCmp:
+    return ConstantExpr::getFCmp(
+        cast<FCmpInst>(I)->getPredicate(), Operands[0], Operands[1]);
   }
   return 0;
 }
@@ -2226,8 +2224,8 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
       // Pick the smallest positive root value.
       assert(R1->getType()->isUnsigned()&&"Didn't canonicalize to unsigned?");
       if (ConstantBool *CB =
-          dyn_cast<ConstantBool>(ConstantExpr::getSetLT(R1->getValue(),
-                                                        R2->getValue()))) {
+          dyn_cast<ConstantBool>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
+                                   R1->getValue(), R2->getValue()))) {
         if (CB->getValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
 
@@ -2257,7 +2255,8 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
   // already.  If so, the backedge will execute zero times.
   if (SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
     Constant *Zero = Constant::getNullValue(C->getValue()->getType());
-    Constant *NonZero = ConstantExpr::getSetNE(C->getValue(), Zero);
+    Constant *NonZero = 
+      ConstantExpr::getICmp(ICmpInst::ICMP_NE, C->getValue(), Zero);
     if (NonZero == ConstantBool::getTrue())
       return getSCEV(Zero);
     return UnknownValue;  // Otherwise it will loop infinitely.
@@ -2318,40 +2317,46 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L) {
 
     // Now that we found a conditional branch that dominates the loop, check to
     // see if it is the comparison we are looking for.
-    SetCondInst *SCI =dyn_cast<SetCondInst>(LoopEntryPredicate->getCondition());
-    if (!SCI) return UnknownValue;
-    Value *PreCondLHS = SCI->getOperand(0);
-    Value *PreCondRHS = SCI->getOperand(1);
-    Instruction::BinaryOps Cond;
-    if (LoopEntryPredicate->getSuccessor(0) == PreheaderDest)
-      Cond = SCI->getOpcode();
-    else
-      Cond = SCI->getInverseCondition();
+    if (ICmpInst *ICI = dyn_cast<ICmpInst>(LoopEntryPredicate->getCondition())){
+      Value *PreCondLHS = ICI->getOperand(0);
+      Value *PreCondRHS = ICI->getOperand(1);
+      ICmpInst::Predicate Cond;
+      if (LoopEntryPredicate->getSuccessor(0) == PreheaderDest)
+        Cond = ICI->getPredicate();
+      else
+        Cond = ICI->getInversePredicate();
     
-    switch (Cond) {
-    case Instruction::SetGT:
-      std::swap(PreCondLHS, PreCondRHS);
-      Cond = Instruction::SetLT;
-      // Fall Through.
-    case Instruction::SetLT:
-      if (PreCondLHS->getType()->isInteger() &&
-          PreCondLHS->getType()->isSigned()) { 
-        if (RHS != getSCEV(PreCondRHS))
-          return UnknownValue;  // Not a comparison against 'm'.
-
-        if (SCEV::getMinusSCEV(AddRec->getOperand(0), One)
-                    != getSCEV(PreCondLHS))
-          return UnknownValue;  // Not a comparison against 'n-1'.
+      switch (Cond) {
+      case ICmpInst::ICMP_UGT:
+        std::swap(PreCondLHS, PreCondRHS);
+        Cond = ICmpInst::ICMP_ULT;
         break;
-      } else {
-        return UnknownValue;
+      case ICmpInst::ICMP_SGT:
+        std::swap(PreCondLHS, PreCondRHS);
+        Cond = ICmpInst::ICMP_SLT;
+        break;
+      default: break;
       }
-    default: break;
-    }
 
-    //cerr << "Computed Loop Trip Count as: "
-    //     << *SCEV::getMinusSCEV(RHS, AddRec->getOperand(0)) << "\n";
-    return SCEV::getMinusSCEV(RHS, AddRec->getOperand(0));
+      if (Cond == ICmpInst::ICMP_SLT) {
+        if (PreCondLHS->getType()->isInteger()) {
+          if (RHS != getSCEV(PreCondRHS))
+            return UnknownValue;  // Not a comparison against 'm'.
+
+          if (SCEV::getMinusSCEV(AddRec->getOperand(0), One)
+                      != getSCEV(PreCondLHS))
+            return UnknownValue;  // Not a comparison against 'n-1'.
+        }
+        else return UnknownValue;
+      } else if (Cond == ICmpInst::ICMP_ULT)
+        return UnknownValue;
+
+      // cerr << "Computed Loop Trip Count as: " 
+      //      << //  *SCEV::getMinusSCEV(RHS, AddRec->getOperand(0)) << "\n";
+      return SCEV::getMinusSCEV(RHS, AddRec->getOperand(0));
+    }
+    else 
+      return UnknownValue;
   }
 
   return UnknownValue;
@@ -2362,7 +2367,8 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L) {
 /// this is that it returns the first iteration number where the value is not in
 /// the condition, thus computing the exit count. If the iteration count can't
 /// be computed, an instance of SCEVCouldNotCompute is returned.
-SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
+SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range, 
+                                                   bool isSigned) const {
   if (Range.isFullSet())  // Infinite loop.
     return new SCEVCouldNotCompute();
 
@@ -2374,7 +2380,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
       SCEVHandle Shifted = SCEVAddRecExpr::get(Operands, getLoop());
       if (SCEVAddRecExpr *ShiftedAddRec = dyn_cast<SCEVAddRecExpr>(Shifted))
         return ShiftedAddRec->getNumIterationsInRange(
-                                              Range.subtract(SC->getValue()));
+                                      Range.subtract(SC->getValue()),isSigned);
       // This is strange and shouldn't happen.
       return new SCEVCouldNotCompute();
     }
@@ -2392,7 +2398,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
   // First check to see if the range contains zero.  If not, the first
   // iteration exits.
   ConstantInt *Zero = ConstantInt::get(getType(), 0);
-  if (!Range.contains(Zero)) return SCEVConstant::get(Zero);
+  if (!Range.contains(Zero, isSigned)) return SCEVConstant::get(Zero);
 
   if (isAffine()) {
     // If this is an affine expression then we have this situation:
@@ -2418,12 +2424,12 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
     // range, then we computed our trip count, otherwise wrap around or other
     // things must have happened.
     ConstantInt *Val = EvaluateConstantChrecAtConstant(this, ExitValue);
-    if (Range.contains(Val))
+    if (Range.contains(Val, isSigned))
       return new SCEVCouldNotCompute();  // Something strange happened
 
     // Ensure that the previous value is in the range.  This is a sanity check.
     assert(Range.contains(EvaluateConstantChrecAtConstant(this,
-                              ConstantExpr::getSub(ExitValue, One))) &&
+                          ConstantExpr::getSub(ExitValue, One)), isSigned) &&
            "Linear scev computation is off in a bad way!");
     return SCEVConstant::get(cast<ConstantInt>(ExitValue));
   } else if (isQuadratic()) {
@@ -2444,8 +2450,8 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
       // Pick the smallest positive root value.
       assert(R1->getType()->isUnsigned() && "Didn't canonicalize to unsigned?");
       if (ConstantBool *CB =
-          dyn_cast<ConstantBool>(ConstantExpr::getSetLT(R1->getValue(),
-                                                        R2->getValue()))) {
+          dyn_cast<ConstantBool>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
+                                   R1->getValue(), R2->getValue()))) {
         if (CB->getValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
 
@@ -2454,14 +2460,14 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
         // for "X*X < 5", for example, we should not return a root of 2.
         ConstantInt *R1Val = EvaluateConstantChrecAtConstant(this,
                                                              R1->getValue());
-        if (Range.contains(R1Val)) {
+        if (Range.contains(R1Val, isSigned)) {
           // The next iteration must be out of the range...
           Constant *NextVal =
             ConstantExpr::getAdd(R1->getValue(),
                                  ConstantInt::get(R1->getType(), 1));
 
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
-          if (!Range.contains(R1Val))
+          if (!Range.contains(R1Val, isSigned))
             return SCEVUnknown::get(NextVal);
           return new SCEVCouldNotCompute();  // Something strange happened
         }
@@ -2472,7 +2478,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
           ConstantExpr::getSub(R1->getValue(),
                                ConstantInt::get(R1->getType(), 1));
         R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
-        if (Range.contains(R1Val))
+        if (Range.contains(R1Val, isSigned))
           return R1;
         return new SCEVCouldNotCompute();  // Something strange happened
       }
@@ -2494,7 +2500,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
       return new SCEVCouldNotCompute();
 
     // Check to see if we found the value!
-    if (!Range.contains(cast<SCEVConstant>(Val)->getValue()))
+    if (!Range.contains(cast<SCEVConstant>(Val)->getValue(), isSigned))
       return SCEVConstant::get(TestVal);
 
     // Increment to test the next index.

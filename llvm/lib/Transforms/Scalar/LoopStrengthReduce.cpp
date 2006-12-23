@@ -1191,9 +1191,6 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   // TODO: implement optzns here.
 
-
-
-
   // Finally, get the terminating condition for the loop if possible.  If we
   // can, we want to change it to use a post-incremented version of its
   // induction variable, to allow coalescing the live ranges for the IV into
@@ -1203,10 +1200,10 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   BasicBlock *LatchBlock =
    SomePHI->getIncomingBlock(SomePHI->getIncomingBlock(0) == Preheader);
   BranchInst *TermBr = dyn_cast<BranchInst>(LatchBlock->getTerminator());
-  if (!TermBr || TermBr->isUnconditional() ||
-      !isa<SetCondInst>(TermBr->getCondition()))
+  if (!TermBr || TermBr->isUnconditional() || 
+      !isa<ICmpInst>(TermBr->getCondition()))
     return;
-  SetCondInst *Cond = cast<SetCondInst>(TermBr->getCondition());
+  ICmpInst *Cond = cast<ICmpInst>(TermBr->getCondition());
 
   // Search IVUsesByStride to find Cond's IVUse if there is one.
   IVStrideUse *CondUse = 0;
@@ -1239,7 +1236,7 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
       Cond->moveBefore(TermBr);
     } else {
       // Otherwise, clone the terminating condition and insert into the loopend.
-      Cond = cast<SetCondInst>(Cond->clone());
+      Cond = cast<ICmpInst>(Cond->clone());
       Cond->setName(L->getHeader()->getName() + ".termcond");
       LatchBlock->getInstList().insert(TermBr, Cond);
       
@@ -1360,9 +1357,9 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
       // FIXME: this needs to eliminate an induction variable even if it's being
       // compared against some value to decide loop termination.
       if (PN->hasOneUse()) {
-        BinaryOperator *BO = dyn_cast<BinaryOperator>(*(PN->use_begin()));
-        if (BO && BO->hasOneUse()) {
-          if (PN == *(BO->use_begin())) {
+        Instruction *BO = dyn_cast<Instruction>(*PN->use_begin());
+        if (BO && (isa<BinaryOperator>(BO) || isa<CmpInst>(BO))) {
+          if (BO->hasOneUse() && PN == *(BO->use_begin())) {
             DeadInsts.insert(BO);
             // Break the cycle, then delete the PHI.
             PN->replaceAllUsesWith(UndefValue::get(PN->getType()));

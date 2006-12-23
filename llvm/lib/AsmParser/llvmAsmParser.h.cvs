@@ -1,7 +1,7 @@
-/* A Bison parser, made by GNU Bison 1.875c.  */
+/* A Bison parser, made by GNU Bison 2.1.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, when this file is copied by Bison into a
    Bison output file, you may use that output file without restriction.
@@ -116,63 +116,58 @@
      AND = 342,
      OR = 343,
      XOR = 344,
-     SETLE = 345,
-     SETGE = 346,
-     SETLT = 347,
-     SETGT = 348,
-     SETEQ = 349,
-     SETNE = 350,
-     ICMP = 351,
-     FCMP = 352,
-     EQ = 353,
-     NE = 354,
-     SLT = 355,
-     SGT = 356,
-     SLE = 357,
-     SGE = 358,
-     ULT = 359,
-     UGT = 360,
-     ULE = 361,
-     UGE = 362,
-     OEQ = 363,
-     ONE = 364,
-     OLT = 365,
-     OGT = 366,
-     OLE = 367,
-     OGE = 368,
-     ORD = 369,
-     UNO = 370,
-     UEQ = 371,
-     UNE = 372,
-     MALLOC = 373,
-     ALLOCA = 374,
-     FREE = 375,
-     LOAD = 376,
-     STORE = 377,
-     GETELEMENTPTR = 378,
-     TRUNC = 379,
-     ZEXT = 380,
-     SEXT = 381,
-     FPTRUNC = 382,
-     FPEXT = 383,
-     BITCAST = 384,
-     UITOFP = 385,
-     SITOFP = 386,
-     FPTOUI = 387,
-     FPTOSI = 388,
-     INTTOPTR = 389,
-     PTRTOINT = 390,
-     PHI_TOK = 391,
-     SELECT = 392,
-     SHL = 393,
-     LSHR = 394,
-     ASHR = 395,
-     VAARG = 396,
-     EXTRACTELEMENT = 397,
-     INSERTELEMENT = 398,
-     SHUFFLEVECTOR = 399
+     ICMP = 345,
+     FCMP = 346,
+     EQ = 347,
+     NE = 348,
+     SLT = 349,
+     SGT = 350,
+     SLE = 351,
+     SGE = 352,
+     ULT = 353,
+     UGT = 354,
+     ULE = 355,
+     UGE = 356,
+     OEQ = 357,
+     ONE = 358,
+     OLT = 359,
+     OGT = 360,
+     OLE = 361,
+     OGE = 362,
+     ORD = 363,
+     UNO = 364,
+     UEQ = 365,
+     UNE = 366,
+     MALLOC = 367,
+     ALLOCA = 368,
+     FREE = 369,
+     LOAD = 370,
+     STORE = 371,
+     GETELEMENTPTR = 372,
+     TRUNC = 373,
+     ZEXT = 374,
+     SEXT = 375,
+     FPTRUNC = 376,
+     FPEXT = 377,
+     BITCAST = 378,
+     UITOFP = 379,
+     SITOFP = 380,
+     FPTOUI = 381,
+     FPTOSI = 382,
+     INTTOPTR = 383,
+     PTRTOINT = 384,
+     PHI_TOK = 385,
+     SELECT = 386,
+     SHL = 387,
+     LSHR = 388,
+     ASHR = 389,
+     VAARG = 390,
+     EXTRACTELEMENT = 391,
+     INSERTELEMENT = 392,
+     SHUFFLEVECTOR = 393
    };
 #endif
+/* Tokens.  */
 #define ESINT64VAL 258
 #define EUINT64VAL 259
 #define SINTVAL 260
@@ -260,67 +255,61 @@
 #define AND 342
 #define OR 343
 #define XOR 344
-#define SETLE 345
-#define SETGE 346
-#define SETLT 347
-#define SETGT 348
-#define SETEQ 349
-#define SETNE 350
-#define ICMP 351
-#define FCMP 352
-#define EQ 353
-#define NE 354
-#define SLT 355
-#define SGT 356
-#define SLE 357
-#define SGE 358
-#define ULT 359
-#define UGT 360
-#define ULE 361
-#define UGE 362
-#define OEQ 363
-#define ONE 364
-#define OLT 365
-#define OGT 366
-#define OLE 367
-#define OGE 368
-#define ORD 369
-#define UNO 370
-#define UEQ 371
-#define UNE 372
-#define MALLOC 373
-#define ALLOCA 374
-#define FREE 375
-#define LOAD 376
-#define STORE 377
-#define GETELEMENTPTR 378
-#define TRUNC 379
-#define ZEXT 380
-#define SEXT 381
-#define FPTRUNC 382
-#define FPEXT 383
-#define BITCAST 384
-#define UITOFP 385
-#define SITOFP 386
-#define FPTOUI 387
-#define FPTOSI 388
-#define INTTOPTR 389
-#define PTRTOINT 390
-#define PHI_TOK 391
-#define SELECT 392
-#define SHL 393
-#define LSHR 394
-#define ASHR 395
-#define VAARG 396
-#define EXTRACTELEMENT 397
-#define INSERTELEMENT 398
-#define SHUFFLEVECTOR 399
+#define ICMP 345
+#define FCMP 346
+#define EQ 347
+#define NE 348
+#define SLT 349
+#define SGT 350
+#define SLE 351
+#define SGE 352
+#define ULT 353
+#define UGT 354
+#define ULE 355
+#define UGE 356
+#define OEQ 357
+#define ONE 358
+#define OLT 359
+#define OGT 360
+#define OLE 361
+#define OGE 362
+#define ORD 363
+#define UNO 364
+#define UEQ 365
+#define UNE 366
+#define MALLOC 367
+#define ALLOCA 368
+#define FREE 369
+#define LOAD 370
+#define STORE 371
+#define GETELEMENTPTR 372
+#define TRUNC 373
+#define ZEXT 374
+#define SEXT 375
+#define FPTRUNC 376
+#define FPEXT 377
+#define BITCAST 378
+#define UITOFP 379
+#define SITOFP 380
+#define FPTOUI 381
+#define FPTOSI 382
+#define INTTOPTR 383
+#define PTRTOINT 384
+#define PHI_TOK 385
+#define SELECT 386
+#define SHL 387
+#define LSHR 388
+#define ASHR 389
+#define VAARG 390
+#define EXTRACTELEMENT 391
+#define INSERTELEMENT 392
+#define SHUFFLEVECTOR 393
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 855 "/home/vadve/alenhar2/llvm.old/lib/AsmParser/llvmAsmParser.y"
+#line 855 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -363,8 +352,8 @@ typedef union YYSTYPE {
   llvm::ICmpInst::Predicate         IPredicate;
   llvm::FCmpInst::Predicate         FPredicate;
 } YYSTYPE;
-/* Line 1275 of yacc.c.  */
-#line 368 "llvmAsmParser.tab.h"
+/* Line 1447 of yacc.c.  */
+#line 357 "llvmAsmParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

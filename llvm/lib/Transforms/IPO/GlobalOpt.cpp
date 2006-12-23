@@ -238,7 +238,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
           if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
         GS.isNotSuitableForSRA = true;
         GS.HasPHIUser = true;
-      } else if (isa<SetCondInst>(I)) {
+      } else if (isa<CmpInst>(I)) {
         GS.isNotSuitableForSRA = true;
       } else if (isa<MemCpyInst>(I) || isa<MemMoveInst>(I)) {
         if (I->getOperand(1) == V)
@@ -507,7 +507,7 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
       if (!AllUsesOfValueWillTrapIfNull(CI)) return false;
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI)) {
       if (!AllUsesOfValueWillTrapIfNull(GEPI)) return false;
-    } else if (isa<SetCondInst>(*UI) &&
+    } else if (isa<ICmpInst>(*UI) &&
                isa<ConstantPointerNull>(UI->getOperand(1))) {
       // Ignore setcc X, null
     } else {
@@ -720,29 +720,33 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
       while (!LI->use_empty()) {
         Use &LoadUse = LI->use_begin().getUse();
-        if (!isa<SetCondInst>(LoadUse.getUser()))
+        if (!isa<ICmpInst>(LoadUse.getUser()))
           LoadUse = RepValue;
         else {
-          // Replace the setcc X, 0 with a use of the bool value.
-          SetCondInst *SCI = cast<SetCondInst>(LoadUse.getUser());
-          Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", SCI);
+          ICmpInst *CI = cast<ICmpInst>(LoadUse.getUser());
+          // Replace the cmp X, 0 with a use of the bool value.
+          Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", CI);
           InitBoolUsed = true;
-          switch (SCI->getOpcode()) {
-          default: assert(0 && "Unknown opcode!");
-          case Instruction::SetLT:
+          switch (CI->getPredicate()) {
+          default: assert(0 && "Unknown ICmp Predicate!");
+          case ICmpInst::ICMP_ULT:
+          case ICmpInst::ICMP_SLT:
             LV = ConstantBool::getFalse();   // X < null -> always false
             break;
-          case Instruction::SetEQ:
-          case Instruction::SetLE:
-            LV = BinaryOperator::createNot(LV, "notinit", SCI);
+          case ICmpInst::ICMP_ULE:
+          case ICmpInst::ICMP_SLE:
+          case ICmpInst::ICMP_EQ:
+            LV = BinaryOperator::createNot(LV, "notinit", CI);
             break;
-          case Instruction::SetNE:
-          case Instruction::SetGE:
-          case Instruction::SetGT:
+          case ICmpInst::ICMP_NE:
+          case ICmpInst::ICMP_UGE:
+          case ICmpInst::ICMP_SGE:
+          case ICmpInst::ICMP_UGT:
+          case ICmpInst::ICMP_SGT:
             break;  // no change.
           }
-          SCI->replaceAllUsesWith(LV);
-          SCI->eraseFromParent();
+          CI->replaceAllUsesWith(LV);
+          CI->eraseFromParent();
         }
       }
       LI->eraseFromParent();
@@ -783,7 +787,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
                                                       GlobalVariable *GV) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI)
-    if (isa<LoadInst>(*UI) || isa<SetCondInst>(*UI)) {
+    if (isa<LoadInst>(*UI) || isa<CmpInst>(*UI)) {
       // Fine, ignore.
     } else if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
       if (SI->getOperand(0) == V && SI->getOperand(1) != GV)
@@ -832,8 +836,8 @@ static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV) {
       for (Value::use_iterator UI = LI->use_begin(), E = LI->use_end(); UI != E; 
            ++UI) {
         // Comparison against null is ok.
-        if (SetCondInst *SCI = dyn_cast<SetCondInst>(*UI)) {
-          if (!isa<ConstantPointerNull>(SCI->getOperand(1)))
+        if (ICmpInst *ICI = dyn_cast<ICmpInst>(*UI)) {
+          if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
             return false;
           continue;
         }
@@ -865,7 +869,7 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr,
     Instruction *User = Ptr->use_back();
     
     // If this is a comparison against null, handle it.
-    if (SetCondInst *SCI = dyn_cast<SetCondInst>(User)) {
+    if (ICmpInst *SCI = dyn_cast<ICmpInst>(User)) {
       assert(isa<ConstantPointerNull>(SCI->getOperand(1)));
       // If we have a setcc of the loaded pointer, we can use a setcc of any
       // field.
@@ -877,9 +881,9 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr,
         NPtr = InsertedLoadsForPtr.back();
       }
       
-      Value *New = new SetCondInst(SCI->getOpcode(), NPtr,
-                                   Constant::getNullValue(NPtr->getType()),
-                                   SCI->getName(), SCI);
+      Value *New = new ICmpInst(SCI->getPredicate(), NPtr,
+                                Constant::getNullValue(NPtr->getType()),
+                                SCI->getName(), SCI);
       SCI->replaceAllUsesWith(New);
       SCI->eraseFromParent();
       continue;
@@ -959,7 +963,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
   //    }
   Value *RunningOr = 0;
   for (unsigned i = 0, e = FieldMallocs.size(); i != e; ++i) {
-    Value *Cond = new SetCondInst(Instruction::SetEQ, FieldMallocs[i],
+    Value *Cond = new ICmpInst(ICmpInst::ICMP_EQ, FieldMallocs[i],
                              Constant::getNullValue(FieldMallocs[i]->getType()),
                                   "isnull", MI);
     if (!RunningOr)
@@ -986,9 +990,9 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
   // pointer, because some may be null while others are not.
   for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
     Value *GVVal = new LoadInst(FieldGlobals[i], "tmp", NullPtrBlock);
-    Value *Cmp = new SetCondInst(Instruction::SetNE, GVVal, 
-                                 Constant::getNullValue(GVVal->getType()),
-                                 "tmp", NullPtrBlock);
+    Value *Cmp = new ICmpInst(ICmpInst::ICMP_NE, GVVal, 
+                              Constant::getNullValue(GVVal->getType()),
+                              "tmp", NullPtrBlock);
     BasicBlock *FreeBlock = new BasicBlock("free_it", OrigBB->getParent());
     BasicBlock *NextBlock = new BasicBlock("next", OrigBB->getParent());
     new BranchInst(FreeBlock, NextBlock, Cmp, NullPtrBlock);
@@ -1710,6 +1714,10 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       InstResult = ConstantExpr::get(SI->getOpcode(),
                                      getVal(Values, SI->getOperand(0)),
                                      getVal(Values, SI->getOperand(1)));
+    } else if (CmpInst *CI = dyn_cast<CmpInst>(CurInst)) {
+      InstResult = ConstantExpr::getCompare(CI->getPredicate(),
+                                            getVal(Values, CI->getOperand(0)),
+                                            getVal(Values, CI->getOperand(1)));
     } else if (CastInst *CI = dyn_cast<CastInst>(CurInst)) {
       InstResult = ConstantExpr::getCast(CI->getOpcode(),
                                          getVal(Values, CI->getOperand(0)),

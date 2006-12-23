@@ -2,7 +2,7 @@
 ; having overlapping live ranges that result in copies.  We want the setcc instruction
 ; immediately before the conditional branch.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | %prcontext 'br bool' 1 | grep set
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | %prcontext 'br bool' 1 | grep icmp
 
 void %foo(float* %D, uint %E) {
 entry:

@@ -373,6 +373,7 @@ private:
   void visitCastInst(CastInst &I);
   void visitSelectInst(SelectInst &I);
   void visitBinaryOperator(Instruction &I);
+  void visitCmpInst(CmpInst &I);
   void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
   void visitExtractElementInst(ExtractElementInst &I);
   void visitInsertElementInst(InsertElementInst &I);
@@ -793,6 +794,93 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
   } else if (V1State.isConstant() && V2State.isConstant()) {
     markConstant(IV, &I, ConstantExpr::get(I.getOpcode(), V1State.getConstant(),
                                            V2State.getConstant()));
+  }
+}
+
+// Handle ICmpInst instruction...
+void SCCPSolver::visitCmpInst(CmpInst &I) {
+  LatticeVal &IV = ValueState[&I];
+  if (IV.isOverdefined()) return;
+
+  LatticeVal &V1State = getValueState(I.getOperand(0));
+  LatticeVal &V2State = getValueState(I.getOperand(1));
+
+  if (V1State.isOverdefined() || V2State.isOverdefined()) {
+    // If both operands are PHI nodes, it is possible that this instruction has
+    // a constant value, despite the fact that the PHI node doesn't.  Check for
+    // this condition now.
+    if (PHINode *PN1 = dyn_cast<PHINode>(I.getOperand(0)))
+      if (PHINode *PN2 = dyn_cast<PHINode>(I.getOperand(1)))
+        if (PN1->getParent() == PN2->getParent()) {
+          // Since the two PHI nodes are in the same basic block, they must have
+          // entries for the same predecessors.  Walk the predecessor list, and
+          // if all of the incoming values are constants, and the result of
+          // evaluating this expression with all incoming value pairs is the
+          // same, then this expression is a constant even though the PHI node
+          // is not a constant!
+          LatticeVal Result;
+          for (unsigned i = 0, e = PN1->getNumIncomingValues(); i != e; ++i) {
+            LatticeVal &In1 = getValueState(PN1->getIncomingValue(i));
+            BasicBlock *InBlock = PN1->getIncomingBlock(i);
+            LatticeVal &In2 =
+              getValueState(PN2->getIncomingValueForBlock(InBlock));
+
+            if (In1.isOverdefined() || In2.isOverdefined()) {
+              Result.markOverdefined();
+              break;  // Cannot fold this operation over the PHI nodes!
+            } else if (In1.isConstant() && In2.isConstant()) {
+              Constant *V = ConstantExpr::getCompare(I.getPredicate(), 
+                                                     In1.getConstant(), 
+                                                     In2.getConstant());
+              if (Result.isUndefined())
+                Result.markConstant(V);
+              else if (Result.isConstant() && Result.getConstant() != V) {
+                Result.markOverdefined();
+                break;
+              }
+            }
+          }
+
+          // If we found a constant value here, then we know the instruction is
+          // constant despite the fact that the PHI nodes are overdefined.
+          if (Result.isConstant()) {
+            markConstant(IV, &I, Result.getConstant());
+            // Remember that this instruction is virtually using the PHI node
+            // operands.
+            UsersOfOverdefinedPHIs.insert(std::make_pair(PN1, &I));
+            UsersOfOverdefinedPHIs.insert(std::make_pair(PN2, &I));
+            return;
+          } else if (Result.isUndefined()) {
+            return;
+          }
+
+          // Okay, this really is overdefined now.  Since we might have
+          // speculatively thought that this was not overdefined before, and
+          // added ourselves to the UsersOfOverdefinedPHIs list for the PHIs,
+          // make sure to clean out any entries that we put there, for
+          // efficiency.
+          std::multimap<PHINode*, Instruction*>::iterator It, E;
+          tie(It, E) = UsersOfOverdefinedPHIs.equal_range(PN1);
+          while (It != E) {
+            if (It->second == &I) {
+              UsersOfOverdefinedPHIs.erase(It++);
+            } else
+              ++It;
+          }
+          tie(It, E) = UsersOfOverdefinedPHIs.equal_range(PN2);
+          while (It != E) {
+            if (It->second == &I) {
+              UsersOfOverdefinedPHIs.erase(It++);
+            } else
+              ++It;
+          }
+        }
+
+    markOverdefined(IV, &I);
+  } else if (V1State.isConstant() && V2State.isConstant()) {
+    markConstant(IV, &I, ConstantExpr::getCompare(I.getPredicate(), 
+                                                  V1State.getConstant(), 
+                                                  V2State.getConstant()));
   }
 }
 

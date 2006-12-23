@@ -45,36 +45,36 @@
 #include <algorithm>
 using namespace llvm;
 
-STATISTIC(NumSetCCRemoved, "Number of setcc instruction eliminated");
+STATISTIC(NumCmpRemoved, "Number of cmp instruction eliminated");
 STATISTIC(NumOperandsCann, "Number of operands canonicalized");
 STATISTIC(BranchRevectors, "Number of branches revectored");
 
 namespace {
   class ValueInfo;
   class Relation {
-    Value *Val;                 // Relation to what value?
-    Instruction::BinaryOps Rel; // SetCC relation, or Add if no information
+    Value *Val;          // Relation to what value?
+    unsigned Rel;        // SetCC or ICmp relation, or Add if no information
   public:
     Relation(Value *V) : Val(V), Rel(Instruction::Add) {}
     bool operator<(const Relation &R) const { return Val < R.Val; }
     Value *getValue() const { return Val; }
-    Instruction::BinaryOps getRelation() const { return Rel; }
+    unsigned getRelation() const { return Rel; }
 
     // contradicts - Return true if the relationship specified by the operand
     // contradicts already known information.
     //
-    bool contradicts(Instruction::BinaryOps Rel, const ValueInfo &VI) const;
+    bool contradicts(unsigned Rel, const ValueInfo &VI) const;
 
     // incorporate - Incorporate information in the argument into this relation
     // entry.  This assumes that the information doesn't contradict itself.  If
     // any new information is gained, true is returned, otherwise false is
     // returned to indicate that nothing was updated.
     //
-    bool incorporate(Instruction::BinaryOps Rel, ValueInfo &VI);
+    bool incorporate(unsigned Rel, ValueInfo &VI);
 
     // KnownResult - Whether or not this condition determines the result of a
-    // setcc in the program.  False & True are intentionally 0 & 1 so we can
-    // convert to bool by casting after checking for unknown.
+    // setcc or icmp in the program.  False & True are intentionally 0 & 1 
+    // so we can convert to bool by casting after checking for unknown.
     //
     enum KnownResult { KnownFalse = 0, KnownTrue = 1, Unknown = 2 };
 
@@ -82,7 +82,7 @@ namespace {
     // the specified relationship is true or false, return that.  If we cannot
     // determine the result required, return Unknown.
     //
-    KnownResult getImpliedResult(Instruction::BinaryOps Rel) const;
+    KnownResult getImpliedResult(unsigned Rel) const;
 
     // print - Output this relation to the specified stream
     void print(std::ostream &OS) const;
@@ -269,19 +269,16 @@ namespace {
     void PropagateBranchInfo(BranchInst *BI);
     void PropagateSwitchInfo(SwitchInst *SI);
     void PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI);
-    void PropagateRelation(Instruction::BinaryOps Opcode, Value *Op0,
+    void PropagateRelation(unsigned Opcode, Value *Op0,
                            Value *Op1, RegionInfo &RI);
     void UpdateUsersOfValue(Value *V, RegionInfo &RI);
     void IncorporateInstruction(Instruction *Inst, RegionInfo &RI);
     void ComputeReplacements(RegionInfo &RI);
 
-
-    // getSetCCResult - Given a setcc instruction, determine if the result is
+    // getCmpResult - Given a icmp instruction, determine if the result is
     // determined by facts we already know about the region under analysis.
-    // Return KnownTrue, KnownFalse, or Unknown based on what we can determine.
-    //
-    Relation::KnownResult getSetCCResult(SetCondInst *SC, const RegionInfo &RI);
-
+    // Return KnownTrue, KnownFalse, or UnKnown based on what we can determine.
+    Relation::KnownResult getCmpResult(CmpInst *ICI, const RegionInfo &RI);
 
     bool SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI);
     bool SimplifyInstruction(Instruction *Inst, const RegionInfo &RI);
@@ -448,12 +445,12 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
     return false;
 
   // We can only forward the branch over the block if the block ends with a
-  // setcc we can determine the outcome for.
+  // cmp we can determine the outcome for.
   //
   // FIXME: we can make this more generic.  Code below already handles more
   // generic case.
-  SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition());
-  if (SCI == 0) return false;
+  if (!isa<CmpInst>(BI->getCondition()))
+    return false;
 
   // Make a new RegionInfo structure so that we can simulate the effect of the
   // PHI nodes in the block we are skipping over...
@@ -472,10 +469,10 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
       int OpNum = PN->getBasicBlockIndex(BB);
       assert(OpNum != -1 && "PHI doesn't have incoming edge for predecessor!?");
       PropagateEquality(PN, PN->getIncomingValue(OpNum), NewRI);
-    } else if (SetCondInst *SCI = dyn_cast<SetCondInst>(I)) {
-      Relation::KnownResult Res = getSetCCResult(SCI, NewRI);
+    } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
+      Relation::KnownResult Res = getCmpResult(CI, NewRI);
       if (Res == Relation::Unknown) return false;
-      PropagateEquality(SCI, ConstantBool::get(Res), NewRI);
+      PropagateEquality(CI, ConstantBool::get(Res), NewRI);
     } else {
       assert(isa<BranchInst>(*I) && "Unexpected instruction type!");
     }
@@ -827,7 +824,8 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
   Relation &KnownRelation = VI.getRelation(Op1);
 
   // If we already know they're equal, don't reprocess...
-  if (KnownRelation.getRelation() == Instruction::SetEQ)
+  if (KnownRelation.getRelation() == FCmpInst::FCMP_OEQ ||
+      KnownRelation.getRelation() == ICmpInst::ICMP_EQ)
     return;
 
   // If this is boolean, check to see if one of the operands is a constant.  If
@@ -863,32 +861,55 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
           PropagateEquality(BinaryOperator::getNotArgument(BOp),
                             ConstantBool::get(!CB->getValue()), RI);
 
-      // If we know the value of a SetCC instruction, propagate the information
+      // If we know the value of a FCmp instruction, propagate the information
       // about the relation into this region as well.
       //
-      if (SetCondInst *SCI = dyn_cast<SetCondInst>(Inst)) {
+      if (FCmpInst *FCI = dyn_cast<FCmpInst>(Inst)) {
         if (CB->getValue()) {  // If we know the condition is true...
           // Propagate info about the LHS to the RHS & RHS to LHS
-          PropagateRelation(SCI->getOpcode(), SCI->getOperand(0),
-                            SCI->getOperand(1), RI);
-          PropagateRelation(SCI->getSwappedCondition(),
-                            SCI->getOperand(1), SCI->getOperand(0), RI);
+          PropagateRelation(FCI->getPredicate(), FCI->getOperand(0),
+                            FCI->getOperand(1), RI);
+          PropagateRelation(FCI->getSwappedPredicate(),
+                            FCI->getOperand(1), FCI->getOperand(0), RI);
 
         } else {               // If we know the condition is false...
           // We know the opposite of the condition is true...
-          Instruction::BinaryOps C = SCI->getInverseCondition();
+          FCmpInst::Predicate C = FCI->getInversePredicate();
 
-          PropagateRelation(C, SCI->getOperand(0), SCI->getOperand(1), RI);
-          PropagateRelation(SetCondInst::getSwappedCondition(C),
-                            SCI->getOperand(1), SCI->getOperand(0), RI);
+          PropagateRelation(C, FCI->getOperand(0), FCI->getOperand(1), RI);
+          PropagateRelation(FCmpInst::getSwappedPredicate(C),
+                            FCI->getOperand(1), FCI->getOperand(0), RI);
+        }
+      }
+      
+      // If we know the value of a ICmp instruction, propagate the information
+      // about the relation into this region as well.
+      //
+      if (ICmpInst *ICI = dyn_cast<ICmpInst>(Inst)) {
+        if (CB->getValue()) { // If we know the condition is true...
+          // Propagate info about the LHS to the RHS & RHS to LHS
+          PropagateRelation(ICI->getPredicate(), ICI->getOperand(0),
+                            ICI->getOperand(1), RI);
+          PropagateRelation(ICI->getSwappedPredicate(), ICI->getOperand(1),
+                            ICI->getOperand(1), RI);
+
+        } else {               // If we know the condition is false ...
+          // We know the opposite of the condition is true...
+          ICmpInst::Predicate C = ICI->getInversePredicate();
+
+          PropagateRelation(C, ICI->getOperand(0), ICI->getOperand(1), RI);
+          PropagateRelation(ICmpInst::getSwappedPredicate(C),
+                            ICI->getOperand(1), ICI->getOperand(0), RI);
         }
       }
     }
   }
 
   // Propagate information about Op0 to Op1 & visa versa
-  PropagateRelation(Instruction::SetEQ, Op0, Op1, RI);
-  PropagateRelation(Instruction::SetEQ, Op1, Op0, RI);
+    PropagateRelation(ICmpInst::ICMP_EQ, Op0, Op1, RI);
+    PropagateRelation(ICmpInst::ICMP_EQ, Op1, Op0, RI);
+    PropagateRelation(FCmpInst::FCMP_OEQ, Op0, Op1, RI);
+    PropagateRelation(FCmpInst::FCMP_OEQ, Op1, Op0, RI);
 }
 
 
@@ -896,7 +917,7 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
 // blocks in the specified region.  Propagate the information about Op0 and
 // anything derived from it into this region.
 //
-void CEE::PropagateRelation(Instruction::BinaryOps Opcode, Value *Op0,
+void CEE::PropagateRelation(unsigned Opcode, Value *Op0,
                             Value *Op1, RegionInfo &RI) {
   assert(Op0->getType() == Op1->getType() && "Equal types expected!");
 
@@ -921,7 +942,10 @@ void CEE::PropagateRelation(Instruction::BinaryOps Opcode, Value *Op0,
   if (Op1R.contradicts(Opcode, VI)) {
     Op1R.contradicts(Opcode, VI);
     cerr << "Contradiction found for opcode: "
-         << Instruction::getOpcodeName(Opcode) << "\n";
+         << ((isa<ICmpInst>(Op0)||isa<ICmpInst>(Op1)) ? 
+                  Instruction::getOpcodeName(Instruction::ICmp) :
+                  Instruction::getOpcodeName(Opcode))
+         << "\n";
     Op1R.print(*cerr.stream());
     return;
   }
@@ -964,11 +988,11 @@ void CEE::UpdateUsersOfValue(Value *V, RegionInfo &RI) {
 // value produced by this instruction
 //
 void CEE::IncorporateInstruction(Instruction *Inst, RegionInfo &RI) {
-  if (SetCondInst *SCI = dyn_cast<SetCondInst>(Inst)) {
+  if (CmpInst *CI = dyn_cast<CmpInst>(Inst)) {
     // See if we can figure out a result for this instruction...
-    Relation::KnownResult Result = getSetCCResult(SCI, RI);
+    Relation::KnownResult Result = getCmpResult(CI, RI);
     if (Result != Relation::Unknown) {
-      PropagateEquality(SCI, ConstantBool::get(Result != 0), RI);
+      PropagateEquality(CI, ConstantBool::get(Result != 0), RI);
     }
   }
 }
@@ -1002,7 +1026,14 @@ void CEE::ComputeReplacements(RegionInfo &RI) {
       // Loop over the relationships known about Op0.
       const std::vector<Relation> &Relationships = VI.getRelationships();
       for (unsigned i = 0, e = Relationships.size(); i != e; ++i)
-        if (Relationships[i].getRelation() == Instruction::SetEQ) {
+        if (Relationships[i].getRelation() == FCmpInst::FCMP_OEQ) {
+          unsigned R = getRank(Relationships[i].getValue());
+          if (R < MinRank) {
+            MinRank = R;
+            Replacement = Relationships[i].getValue();
+          }
+        }
+        else if (Relationships[i].getRelation() == ICmpInst::ICMP_EQ) {
           unsigned R = getRank(Relationships[i].getValue());
           if (R < MinRank) {
             MinRank = R;
@@ -1028,16 +1059,17 @@ bool CEE::SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI) {
     // Convert instruction arguments to canonical forms...
     Changed |= SimplifyInstruction(Inst, RI);
 
-    if (SetCondInst *SCI = dyn_cast<SetCondInst>(Inst)) {
+    if (CmpInst *CI = dyn_cast<CmpInst>(Inst)) {
       // Try to simplify a setcc instruction based on inherited information
-      Relation::KnownResult Result = getSetCCResult(SCI, RI);
+      Relation::KnownResult Result = getCmpResult(CI, RI);
       if (Result != Relation::Unknown) {
-        DOUT << "Replacing setcc with " << Result << " constant: " << *SCI;
+        DEBUG(cerr << "Replacing icmp with " << Result
+                   << " constant: " << *CI);
 
-        SCI->replaceAllUsesWith(ConstantBool::get((bool)Result));
+        CI->replaceAllUsesWith(ConstantBool::get((bool)Result));
         // The instruction is now dead, remove it from the program.
-        SCI->getParent()->getInstList().erase(SCI);
-        ++NumSetCCRemoved;
+        CI->getParent()->getInstList().erase(CI);
+        ++NumCmpRemoved;
         Changed = true;
       }
     }
@@ -1069,33 +1101,35 @@ bool CEE::SimplifyInstruction(Instruction *I, const RegionInfo &RI) {
   return Changed;
 }
 
-
-// getSetCCResult - Try to simplify a setcc instruction based on information
-// inherited from a dominating setcc instruction.  V is one of the operands to
-// the setcc instruction, and VI is the set of information known about it.  We
+// getCmpResult - Try to simplify a cmp instruction based on information
+// inherited from a dominating icmp instruction.  V is one of the operands to
+// the icmp instruction, and VI is the set of information known about it.  We
 // take two cases into consideration here.  If the comparison is against a
 // constant value, we can use the constant range to see if the comparison is
 // possible to succeed.  If it is not a comparison against a constant, we check
 // to see if there is a known relationship between the two values.  If so, we
 // may be able to eliminate the check.
 //
-Relation::KnownResult CEE::getSetCCResult(SetCondInst *SCI,
-                                          const RegionInfo &RI) {
-  Value *Op0 = SCI->getOperand(0), *Op1 = SCI->getOperand(1);
-  Instruction::BinaryOps Opcode = SCI->getOpcode();
+Relation::KnownResult CEE::getCmpResult(CmpInst *CI,
+                                        const RegionInfo &RI) {
+  Value *Op0 = CI->getOperand(0), *Op1 = CI->getOperand(1);
+  unsigned short predicate = CI->getPredicate();
 
   if (isa<Constant>(Op0)) {
     if (isa<Constant>(Op1)) {
-      if (Constant *Result = ConstantFoldInstruction(SCI)) {
-        // Wow, this is easy, directly eliminate the SetCondInst.
-        DOUT << "Replacing setcc with constant fold: " << *SCI;
+      if (Constant *Result = ConstantFoldInstruction(CI)) {
+        // Wow, this is easy, directly eliminate the ICmpInst.
+        DEBUG(cerr << "Replacing cmp with constant fold: " << *CI);
         return cast<ConstantBool>(Result)->getValue()
           ? Relation::KnownTrue : Relation::KnownFalse;
       }
     } else {
       // We want to swap this instruction so that operand #0 is the constant.
       std::swap(Op0, Op1);
-      Opcode = SCI->getSwappedCondition();
+      if (isa<ICmpInst>(CI))
+        predicate = cast<ICmpInst>(CI)->getSwappedPredicate();
+      else
+        predicate = cast<FCmpInst>(CI)->getSwappedPredicate();
     }
   }
 
@@ -1107,12 +1141,13 @@ Relation::KnownResult CEE::getSetCCResult(SetCondInst *SCI,
 
     // At this point, we know that if we have a constant argument that it is in
     // Op1.  Check to see if we know anything about comparing value with a
-    // constant, and if we can use this info to fold the setcc.
+    // constant, and if we can use this info to fold the icmp.
     //
     if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(Op1)) {
       // Check to see if we already know the result of this comparison...
-      ConstantRange R = ConstantRange(Opcode, C);
-      ConstantRange Int = R.intersectWith(Op0VI->getBounds());
+      ConstantRange R = ConstantRange(predicate, C);
+      ConstantRange Int = R.intersectWith(Op0VI->getBounds(),
+          ICmpInst::isSignedPredicate(ICmpInst::Predicate(predicate)));
 
       // If the intersection of the two ranges is empty, then the condition
       // could never be true!
@@ -1134,7 +1169,7 @@ Relation::KnownResult CEE::getSetCCResult(SetCondInst *SCI,
       //
       // Do we have value information about Op0 and a relation to Op1?
       if (const Relation *Op2R = Op0VI->requestRelation(Op1))
-        Result = Op2R->getImpliedResult(Opcode);
+        Result = Op2R->getImpliedResult(predicate);
     }
   }
   return Result;
@@ -1147,7 +1182,7 @@ Relation::KnownResult CEE::getSetCCResult(SetCondInst *SCI,
 // contradicts - Return true if the relationship specified by the operand
 // contradicts already known information.
 //
-bool Relation::contradicts(Instruction::BinaryOps Op,
+bool Relation::contradicts(unsigned Op,
                            const ValueInfo &VI) const {
   assert (Op != Instruction::Add && "Invalid relation argument!");
 
@@ -1155,24 +1190,48 @@ bool Relation::contradicts(Instruction::BinaryOps Op,
   // does not contradict properties known about the bounds of the constant.
   //
   if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(Val))
-    if (ConstantRange(Op, C).intersectWith(VI.getBounds()).isEmptySet())
-      return true;
+    if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
+        Op <= ICmpInst::LAST_ICMP_PREDICATE)
+      if (ConstantRange(Op, C).intersectWith(VI.getBounds(),
+          ICmpInst::isSignedPredicate(ICmpInst::Predicate(Op))).isEmptySet())
+        return true;
 
   switch (Rel) {
   default: assert(0 && "Unknown Relationship code!");
   case Instruction::Add: return false;  // Nothing known, nothing contradicts
-  case Instruction::SetEQ:
-    return Op == Instruction::SetLT || Op == Instruction::SetGT ||
-           Op == Instruction::SetNE;
-  case Instruction::SetNE: return Op == Instruction::SetEQ;
-  case Instruction::SetLE: return Op == Instruction::SetGT;
-  case Instruction::SetGE: return Op == Instruction::SetLT;
-  case Instruction::SetLT:
-    return Op == Instruction::SetEQ || Op == Instruction::SetGT ||
-           Op == Instruction::SetGE;
-  case Instruction::SetGT:
-    return Op == Instruction::SetEQ || Op == Instruction::SetLT ||
-           Op == Instruction::SetLE;
+  case ICmpInst::ICMP_EQ:
+    return Op == ICmpInst::ICMP_ULT || Op == ICmpInst::ICMP_SLT ||
+           Op == ICmpInst::ICMP_UGT || Op == ICmpInst::ICMP_SGT ||
+           Op == ICmpInst::ICMP_NE;
+  case ICmpInst::ICMP_NE:  return Op == ICmpInst::ICMP_EQ;
+  case ICmpInst::ICMP_ULE:
+  case ICmpInst::ICMP_SLE: return Op == ICmpInst::ICMP_UGT ||
+                                  Op == ICmpInst::ICMP_SGT;
+  case ICmpInst::ICMP_UGE:
+  case ICmpInst::ICMP_SGE: return Op == ICmpInst::ICMP_ULT ||
+                                  Op == ICmpInst::ICMP_SLT;
+  case ICmpInst::ICMP_ULT:
+  case ICmpInst::ICMP_SLT:
+    return Op == ICmpInst::ICMP_EQ  || Op == ICmpInst::ICMP_UGT ||
+           Op == ICmpInst::ICMP_SGT || Op == ICmpInst::ICMP_UGE ||
+           Op == ICmpInst::ICMP_SGE;
+  case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_SGT:
+    return Op == ICmpInst::ICMP_EQ  || Op == ICmpInst::ICMP_ULT ||
+           Op == ICmpInst::ICMP_SLT || Op == ICmpInst::ICMP_ULE ||
+           Op == ICmpInst::ICMP_SLE;
+  case FCmpInst::FCMP_OEQ:
+    return Op == FCmpInst::FCMP_OLT || Op == FCmpInst::FCMP_OGT ||
+           Op == FCmpInst::FCMP_ONE;
+  case FCmpInst::FCMP_ONE: return Op == FCmpInst::FCMP_OEQ;
+  case FCmpInst::FCMP_OLE: return Op == FCmpInst::FCMP_OGT;
+  case FCmpInst::FCMP_OGE: return Op == FCmpInst::FCMP_OLT;
+  case FCmpInst::FCMP_OLT:
+    return Op == FCmpInst::FCMP_OEQ || Op == FCmpInst::FCMP_OGT ||
+           Op == FCmpInst::FCMP_OGE;
+  case FCmpInst::FCMP_OGT:
+    return Op == FCmpInst::FCMP_OEQ || Op == FCmpInst::FCMP_OLT ||
+           Op == FCmpInst::FCMP_OLE;
   }
 }
 
@@ -1181,7 +1240,7 @@ bool Relation::contradicts(Instruction::BinaryOps Op,
 // new information is gained, true is returned, otherwise false is returned to
 // indicate that nothing was updated.
 //
-bool Relation::incorporate(Instruction::BinaryOps Op, ValueInfo &VI) {
+bool Relation::incorporate(unsigned Op, ValueInfo &VI) {
   assert(!contradicts(Op, VI) &&
          "Cannot incorporate contradictory information!");
 
@@ -1189,30 +1248,64 @@ bool Relation::incorporate(Instruction::BinaryOps Op, ValueInfo &VI) {
   // range that is possible for the value to have...
   //
   if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(Val))
-    VI.getBounds() = ConstantRange(Op, C).intersectWith(VI.getBounds());
+    if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
+        Op <= ICmpInst::LAST_ICMP_PREDICATE)
+      VI.getBounds() = ConstantRange(Op, C).intersectWith(VI.getBounds(),
+          ICmpInst::isSignedPredicate(ICmpInst::Predicate(Op)));
 
   switch (Rel) {
   default: assert(0 && "Unknown prior value!");
   case Instruction::Add:   Rel = Op; return true;
-  case Instruction::SetEQ: return false;  // Nothing is more precise
-  case Instruction::SetNE: return false;  // Nothing is more precise
-  case Instruction::SetLT: return false;  // Nothing is more precise
-  case Instruction::SetGT: return false;  // Nothing is more precise
-  case Instruction::SetLE:
-    if (Op == Instruction::SetEQ || Op == Instruction::SetLT) {
+  case ICmpInst::ICMP_EQ:
+  case ICmpInst::ICMP_NE:
+  case ICmpInst::ICMP_ULT:
+  case ICmpInst::ICMP_SLT:
+  case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_SGT: return false;  // Nothing is more precise
+  case ICmpInst::ICMP_ULE:
+  case ICmpInst::ICMP_SLE:
+    if (Op == ICmpInst::ICMP_EQ  || Op == ICmpInst::ICMP_ULT ||
+        Op == ICmpInst::ICMP_SLT) {
       Rel = Op;
       return true;
-    } else if (Op == Instruction::SetNE) {
-      Rel = Instruction::SetLT;
+    } else if (Op == ICmpInst::ICMP_NE) {
+      Rel = Rel == ICmpInst::ICMP_ULE ? ICmpInst::ICMP_ULT :
+            ICmpInst::ICMP_SLT;
       return true;
     }
     return false;
-  case Instruction::SetGE: return Op == Instruction::SetLT;
-    if (Op == Instruction::SetEQ || Op == Instruction::SetGT) {
+  case ICmpInst::ICMP_UGE:
+  case ICmpInst::ICMP_SGE:
+    if (Op == ICmpInst::ICMP_EQ  || ICmpInst::ICMP_UGT ||
+        Op == ICmpInst::ICMP_SGT) {
       Rel = Op;
       return true;
-    } else if (Op == Instruction::SetNE) {
-      Rel = Instruction::SetGT;
+    } else if (Op == ICmpInst::ICMP_NE) {
+      Rel = Rel == ICmpInst::ICMP_UGE ? ICmpInst::ICMP_UGT :
+            ICmpInst::ICMP_SGT;
+      return true;
+    }
+    return false;
+  case FCmpInst::FCMP_OEQ: return false;  // Nothing is more precise
+  case FCmpInst::FCMP_ONE: return false;  // Nothing is more precise
+  case FCmpInst::FCMP_OLT: return false;  // Nothing is more precise
+  case FCmpInst::FCMP_OGT: return false;  // Nothing is more precise
+  case FCmpInst::FCMP_OLE:
+    if (Op == FCmpInst::FCMP_OEQ || Op == FCmpInst::FCMP_OLT) {
+      Rel = Op;
+      return true;
+    } else if (Op == FCmpInst::FCMP_ONE) {
+      Rel = FCmpInst::FCMP_OLT;
+      return true;
+    }
+    return false;
+  case FCmpInst::FCMP_OGE: 
+    return Op == FCmpInst::FCMP_OLT;
+    if (Op == FCmpInst::FCMP_OEQ || Op == FCmpInst::FCMP_OGT) {
+      Rel = Op;
+      return true;
+    } else if (Op == FCmpInst::FCMP_ONE) {
+      Rel = FCmpInst::FCMP_OGT;
       return true;
     }
     return false;
@@ -1224,28 +1317,67 @@ bool Relation::incorporate(Instruction::BinaryOps Op, ValueInfo &VI) {
 // determine the result required, return Unknown.
 //
 Relation::KnownResult
-Relation::getImpliedResult(Instruction::BinaryOps Op) const {
+Relation::getImpliedResult(unsigned Op) const {
   if (Rel == Op) return KnownTrue;
-  if (Rel == SetCondInst::getInverseCondition(Op)) return KnownFalse;
+  if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
+      Op <= ICmpInst::LAST_ICMP_PREDICATE) {
+    if (Rel == unsigned(ICmpInst::getInversePredicate(ICmpInst::Predicate(Op))))
+      return KnownFalse;
+  } else if (Op <= FCmpInst::LAST_FCMP_PREDICATE) {
+    if (Rel == unsigned(FCmpInst::getInversePredicate(FCmpInst::Predicate(Op))))
+    return KnownFalse;
+  }
 
   switch (Rel) {
   default: assert(0 && "Unknown prior value!");
-  case Instruction::SetEQ:
-    if (Op == Instruction::SetLE || Op == Instruction::SetGE) return KnownTrue;
-    if (Op == Instruction::SetLT || Op == Instruction::SetGT) return KnownFalse;
+  case ICmpInst::ICMP_EQ:
+    if (Op == ICmpInst::ICMP_ULE || Op == ICmpInst::ICMP_SLE || 
+        Op == ICmpInst::ICMP_UGE || Op == ICmpInst::ICMP_SGE) return KnownTrue;
+    if (Op == ICmpInst::ICMP_ULT || Op == ICmpInst::ICMP_SLT || 
+        Op == ICmpInst::ICMP_UGT || Op == ICmpInst::ICMP_SGT) return KnownFalse;
     break;
-  case Instruction::SetLT:
-    if (Op == Instruction::SetNE || Op == Instruction::SetLE) return KnownTrue;
-    if (Op == Instruction::SetEQ) return KnownFalse;
+  case ICmpInst::ICMP_ULT:
+  case ICmpInst::ICMP_SLT:
+    if (Op == ICmpInst::ICMP_ULE || Op == ICmpInst::ICMP_SLE ||
+        Op == ICmpInst::ICMP_NE) return KnownTrue;
+    if (Op == ICmpInst::ICMP_EQ) return KnownFalse;
     break;
-  case Instruction::SetGT:
-    if (Op == Instruction::SetNE || Op == Instruction::SetGE) return KnownTrue;
-    if (Op == Instruction::SetEQ) return KnownFalse;
+  case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_SGT:
+    if (Op == ICmpInst::ICMP_UGE || Op == ICmpInst::ICMP_SGE ||
+        Op == ICmpInst::ICMP_NE) return KnownTrue;
+    if (Op == ICmpInst::ICMP_EQ) return KnownFalse;
     break;
-  case Instruction::SetNE:
-  case Instruction::SetLE:
-  case Instruction::SetGE:
-  case Instruction::Add:
+  case FCmpInst::FCMP_OEQ:
+    if (Op == FCmpInst::FCMP_OLE || Op == FCmpInst::FCMP_OGE) return KnownTrue;
+    if (Op == FCmpInst::FCMP_OLT || Op == FCmpInst::FCMP_OGT) return KnownFalse;
+    break;
+  case FCmpInst::FCMP_OLT:
+    if (Op == FCmpInst::FCMP_ONE || Op == FCmpInst::FCMP_OLE) return KnownTrue;
+    if (Op == FCmpInst::FCMP_OEQ) return KnownFalse;
+    break;
+  case FCmpInst::FCMP_OGT:
+    if (Op == FCmpInst::FCMP_ONE || Op == FCmpInst::FCMP_OGE) return KnownTrue;
+    if (Op == FCmpInst::FCMP_OEQ) return KnownFalse;
+    break;
+  case ICmpInst::ICMP_NE:
+  case ICmpInst::ICMP_SLE:
+  case ICmpInst::ICMP_ULE:
+  case ICmpInst::ICMP_UGE:
+  case ICmpInst::ICMP_SGE:
+  case FCmpInst::FCMP_ONE:
+  case FCmpInst::FCMP_OLE:
+  case FCmpInst::FCMP_OGE:
+  case FCmpInst::FCMP_FALSE:
+  case FCmpInst::FCMP_ORD:
+  case FCmpInst::FCMP_UNO:
+  case FCmpInst::FCMP_UEQ:
+  case FCmpInst::FCMP_UGT:
+  case FCmpInst::FCMP_UGE:
+  case FCmpInst::FCMP_ULT:
+  case FCmpInst::FCMP_ULE:
+  case FCmpInst::FCMP_UNE:
+  case FCmpInst::FCMP_TRUE:
     break;
   }
   return Unknown;
@@ -1298,12 +1430,30 @@ void Relation::print(std::ostream &OS) const {
   OS << "    is ";
   switch (Rel) {
   default:           OS << "*UNKNOWN*"; break;
-  case Instruction::SetEQ: OS << "== "; break;
-  case Instruction::SetNE: OS << "!= "; break;
-  case Instruction::SetLT: OS << "< "; break;
-  case Instruction::SetGT: OS << "> "; break;
-  case Instruction::SetLE: OS << "<= "; break;
-  case Instruction::SetGE: OS << ">= "; break;
+  case ICmpInst::ICMP_EQ:
+  case FCmpInst::FCMP_ORD:
+  case FCmpInst::FCMP_UEQ:
+  case FCmpInst::FCMP_OEQ: OS << "== "; break;
+  case ICmpInst::ICMP_NE:
+  case FCmpInst::FCMP_UNO:
+  case FCmpInst::FCMP_UNE:
+  case FCmpInst::FCMP_ONE: OS << "!= "; break;
+  case ICmpInst::ICMP_ULT:
+  case ICmpInst::ICMP_SLT:
+  case FCmpInst::FCMP_ULT:
+  case FCmpInst::FCMP_OLT: OS << "< "; break;
+  case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_SGT:
+  case FCmpInst::FCMP_UGT:
+  case FCmpInst::FCMP_OGT: OS << "> "; break;
+  case ICmpInst::ICMP_ULE:
+  case ICmpInst::ICMP_SLE:
+  case FCmpInst::FCMP_ULE:
+  case FCmpInst::FCMP_OLE: OS << "<= "; break;
+  case ICmpInst::ICMP_UGE:
+  case ICmpInst::ICMP_SGE:
+  case FCmpInst::FCMP_UGE:
+  case FCmpInst::FCMP_OGE: OS << ">= "; break;
   }
 
   WriteAsOperand(OS, Val);

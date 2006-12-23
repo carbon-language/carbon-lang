@@ -230,7 +230,7 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
 }
 
 
-// insertEntry - Insert a value into the symbol table with the specified
+// insertEntry - Insert a type into the symbol table with the specified
 // name...
 //
 void SymbolTable::insert(const std::string& Name, const Type* T) {

@@ -1068,9 +1068,6 @@ void BinaryOperator::init(BinaryOps iType)
              cast<PackedType>(getType())->getElementType()->isIntegral())) &&
            "Tried to create a logical operation on a non-integral type!");
     break;
-  case SetLT: case SetGT: case SetLE:
-  case SetGE: case SetEQ: case SetNE:
-    assert(getType() == Type::BoolTy && "Setcc must return bool!");
   default:
     break;
   }
@@ -1082,15 +1079,7 @@ BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
                                        Instruction *InsertBefore) {
   assert(S1->getType() == S2->getType() &&
          "Cannot create binary operator with two operands of differing type!");
-  switch (Op) {
-  // Binary comparison operators...
-  case SetLT: case SetGT: case SetLE:
-  case SetGE: case SetEQ: case SetNE:
-    return new SetCondInst(Op, S1, S2, Name, InsertBefore);
-
-  default:
-    return new BinaryOperator(Op, S1, S2, S1->getType(), Name, InsertBefore);
-  }
+  return new BinaryOperator(Op, S1, S2, S1->getType(), Name, InsertBefore);
 }
 
 BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
@@ -1210,14 +1199,8 @@ const Value *BinaryOperator::getNotArgument(const Value *BinOp) {
 // order dependent (SetLT f.e.) the opcode is changed.
 //
 bool BinaryOperator::swapOperands() {
-  if (isCommutative())
-    ;  // If the instruction is commutative, it is safe to swap the operands
-  else if (SetCondInst *SCI = dyn_cast<SetCondInst>(this))
-    /// FIXME: SetCC instructions shouldn't all have different opcodes.
-    setOpcode(SCI->getSwappedCondition());
-  else
-    return true;   // Can't commute operands
-
+  if (!isCommutative())
+    return true; // Can't commute operands
   std::swap(Ops[0], Ops[1]);
   return false;
 }
@@ -1926,58 +1909,6 @@ BitCastInst::BitCastInst(
 }
 
 //===----------------------------------------------------------------------===//
-//                             SetCondInst Class
-//===----------------------------------------------------------------------===//
-
-SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2,
-                         const std::string &Name, Instruction *InsertBefore)
-  : BinaryOperator(Opcode, S1, S2, Type::BoolTy, Name, InsertBefore) {
-
-  // Make sure it's a valid type... getInverseCondition will assert out if not.
-  assert(getInverseCondition(Opcode));
-}
-
-SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2,
-                         const std::string &Name, BasicBlock *InsertAtEnd)
-  : BinaryOperator(Opcode, S1, S2, Type::BoolTy, Name, InsertAtEnd) {
-
-  // Make sure it's a valid type... getInverseCondition will assert out if not.
-  assert(getInverseCondition(Opcode));
-}
-
-// getInverseCondition - Return the inverse of the current condition opcode.
-// For example seteq -> setne, setgt -> setle, setlt -> setge, etc...
-//
-Instruction::BinaryOps SetCondInst::getInverseCondition(BinaryOps Opcode) {
-  switch (Opcode) {
-  default:
-    assert(0 && "Unknown setcc opcode!");
-  case SetEQ: return SetNE;
-  case SetNE: return SetEQ;
-  case SetGT: return SetLE;
-  case SetLT: return SetGE;
-  case SetGE: return SetLT;
-  case SetLE: return SetGT;
-  }
-}
-
-// getSwappedCondition - Return the condition opcode that would be the result
-// of exchanging the two operands of the setcc instruction without changing
-// the result produced.  Thus, seteq->seteq, setle->setge, setlt->setgt, etc.
-//
-Instruction::BinaryOps SetCondInst::getSwappedCondition(BinaryOps Opcode) {
-  switch (Opcode) {
-  default: assert(0 && "Unknown setcc instruction!");
-  case SetEQ: case SetNE: return Opcode;
-  case SetGT: return SetLT;
-  case SetLT: return SetGT;
-  case SetGE: return SetLE;
-  case SetLE: return SetGE;
-  }
-}
-
-
-//===----------------------------------------------------------------------===//
 //                               CmpInst Classes
 //===----------------------------------------------------------------------===//
 
@@ -2111,7 +2042,7 @@ ICmpInst::Predicate ICmpInst::getInversePredicate(Predicate pred) {
 
 ICmpInst::Predicate ICmpInst::getSwappedPredicate(Predicate pred) {
   switch (pred) {
-    default: assert(! "Unknown setcc instruction!");
+    default: assert(! "Unknown icmp predicate!");
     case ICMP_EQ: case ICMP_NE:
       return pred;
     case ICMP_SGT: return ICMP_SLT;
@@ -2122,6 +2053,30 @@ ICmpInst::Predicate ICmpInst::getSwappedPredicate(Predicate pred) {
     case ICMP_ULT: return ICMP_UGT;
     case ICMP_UGE: return ICMP_ULE;
     case ICMP_ULE: return ICMP_UGE;
+  }
+}
+
+ICmpInst::Predicate ICmpInst::getSignedPredicate(Predicate pred) {
+  switch (pred) {
+    default: assert(! "Unknown icmp predicate!");
+    case ICMP_EQ: case ICMP_NE: 
+    case ICMP_SGT: case ICMP_SLT: case ICMP_SGE: case ICMP_SLE: 
+       return pred;
+    case ICMP_UGT: return ICMP_SGT;
+    case ICMP_ULT: return ICMP_SLT;
+    case ICMP_UGE: return ICMP_SGE;
+    case ICMP_ULE: return ICMP_SLE;
+  }
+}
+
+bool ICmpInst::isSignedPredicate(Predicate pred) {
+  switch (pred) {
+    default: assert(! "Unknown icmp predicate!");
+    case ICMP_SGT: case ICMP_SLT: case ICMP_SGE: case ICMP_SLE: 
+      return true;
+    case ICMP_EQ:  case ICMP_NE: case ICMP_UGT: case ICMP_ULT: 
+    case ICMP_UGE: case ICMP_ULE:
+      return false;
   }
 }
 
@@ -2150,7 +2105,7 @@ FCmpInst::Predicate FCmpInst::getInversePredicate(Predicate pred) {
 
 FCmpInst::Predicate FCmpInst::getSwappedPredicate(Predicate pred) {
   switch (pred) {
-    default: assert(!"Unknown setcc instruction!");
+    default: assert(!"Unknown fcmp predicate!");
     case FCMP_FALSE: case FCMP_TRUE:
     case FCMP_OEQ: case FCMP_ONE:
     case FCMP_UEQ: case FCMP_UNE:
@@ -2164,6 +2119,40 @@ FCmpInst::Predicate FCmpInst::getSwappedPredicate(Predicate pred) {
     case FCMP_ULT: return FCMP_UGT;
     case FCMP_UGE: return FCMP_ULE;
     case FCMP_ULE: return FCMP_UGE;
+  }
+}
+
+bool CmpInst::isUnsigned(unsigned short predicate) {
+  switch (predicate) {
+    default: return false;
+    case ICmpInst::ICMP_ULT: case ICmpInst::ICMP_ULE: case ICmpInst::ICMP_UGT: 
+    case ICmpInst::ICMP_UGE: return true;
+  }
+}
+
+bool CmpInst::isSigned(unsigned short predicate){
+  switch (predicate) {
+    default: return false;
+    case ICmpInst::ICMP_SLT: case ICmpInst::ICMP_SLE: case ICmpInst::ICMP_SGT: 
+    case ICmpInst::ICMP_SGE: return true;
+  }
+}
+
+bool CmpInst::isOrdered(unsigned short predicate) {
+  switch (predicate) {
+    default: return false;
+    case FCmpInst::FCMP_OEQ: case FCmpInst::FCMP_ONE: case FCmpInst::FCMP_OGT: 
+    case FCmpInst::FCMP_OLT: case FCmpInst::FCMP_OGE: case FCmpInst::FCMP_OLE: 
+    case FCmpInst::FCMP_ORD: return true;
+  }
+}
+      
+bool CmpInst::isUnordered(unsigned short predicate) {
+  switch (predicate) {
+    default: return false;
+    case FCmpInst::FCMP_UEQ: case FCmpInst::FCMP_UNE: case FCmpInst::FCMP_UGT: 
+    case FCmpInst::FCMP_ULT: case FCmpInst::FCMP_UGE: case FCmpInst::FCMP_ULE: 
+    case FCmpInst::FCMP_UNO: return true;
   }
 }
 

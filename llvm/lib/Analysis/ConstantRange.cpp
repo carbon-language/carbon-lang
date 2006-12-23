@@ -24,56 +24,43 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
+#include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Support/Streams.h"
 #include <ostream>
 using namespace llvm;
 
-static ConstantIntegral *getMaxValue(const Type *Ty) {
-  switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   return ConstantBool::getTrue();
-  case Type::SByteTyID:
-  case Type::ShortTyID:
-  case Type::IntTyID:
-  case Type::LongTyID: {
-    // Calculate 011111111111111...
-    unsigned TypeBits = Ty->getPrimitiveSize()*8;
-    int64_t Val = INT64_MAX;             // All ones
-    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-    return ConstantInt::get(Ty, Val);
+static ConstantIntegral *getMaxValue(const Type *Ty, bool isSigned = false) {
+  if (Ty == Type::BoolTy)
+    return ConstantBool::getTrue();
+  if (Ty->isInteger()) {
+    if (isSigned) {
+      // Calculate 011111111111111...
+      unsigned TypeBits = Ty->getPrimitiveSize()*8;
+      int64_t Val = INT64_MAX;             // All ones
+      Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
+      return ConstantInt::get(Ty, Val);
+    }
+    return ConstantInt::getAllOnesValue(Ty);
   }
-
-  case Type::UByteTyID:
-  case Type::UShortTyID:
-  case Type::UIntTyID:
-  case Type::ULongTyID:  return ConstantInt::getAllOnesValue(Ty);
-
-  default: return 0;
-  }
+  return 0;
 }
 
 // Static constructor to create the minimum constant for an integral type...
-static ConstantIntegral *getMinValue(const Type *Ty) {
-  switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   return ConstantBool::getFalse();
-  case Type::SByteTyID:
-  case Type::ShortTyID:
-  case Type::IntTyID:
-  case Type::LongTyID: {
-     // Calculate 1111111111000000000000
-     unsigned TypeBits = Ty->getPrimitiveSize()*8;
-     int64_t Val = -1;                    // All ones
-     Val <<= TypeBits-1;                  // Shift over to the right spot
-     return ConstantInt::get(Ty, Val);
+static ConstantIntegral *getMinValue(const Type *Ty, bool isSigned = false) {
+  if (Ty == Type::BoolTy)
+    return ConstantBool::getFalse();
+  if (Ty->isInteger()) {
+    if (isSigned) {
+      // Calculate 1111111111000000000000
+      unsigned TypeBits = Ty->getPrimitiveSize()*8;
+      int64_t Val = -1;                    // All ones
+      Val <<= TypeBits-1;                  // Shift over to the right spot
+      return ConstantInt::get(Ty, Val);
+    }
+    return ConstantInt::get(Ty, 0);
   }
-
-  case Type::UByteTyID:
-  case Type::UShortTyID:
-  case Type::UIntTyID:
-  case Type::ULongTyID:  return ConstantInt::get(Ty, 0);
-
-  default: return 0;
-  }
+  return 0;
 }
 static ConstantIntegral *Next(ConstantIntegral *CI) {
   if (ConstantBool *CB = dyn_cast<ConstantBool>(CI))
@@ -84,25 +71,30 @@ static ConstantIntegral *Next(ConstantIntegral *CI) {
   return cast<ConstantIntegral>(Result);
 }
 
-static bool LT(ConstantIntegral *A, ConstantIntegral *B) {
-  Constant *C = ConstantExpr::getSetLT(A, B);
+static bool LT(ConstantIntegral *A, ConstantIntegral *B, bool isSigned) {
+  Constant *C = ConstantExpr::getICmp(
+    (isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT), A, B);
   assert(isa<ConstantBool>(C) && "Constant folding of integrals not impl??");
   return cast<ConstantBool>(C)->getValue();
 }
 
-static bool LTE(ConstantIntegral *A, ConstantIntegral *B) {
-  Constant *C = ConstantExpr::getSetLE(A, B);
+static bool LTE(ConstantIntegral *A, ConstantIntegral *B, bool isSigned) {
+  Constant *C = ConstantExpr::getICmp(
+    (isSigned ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_ULE), A, B);
   assert(isa<ConstantBool>(C) && "Constant folding of integrals not impl??");
   return cast<ConstantBool>(C)->getValue();
 }
 
-static bool GT(ConstantIntegral *A, ConstantIntegral *B) { return LT(B, A); }
+static bool GT(ConstantIntegral *A, ConstantIntegral *B, bool isSigned) { 
+  return LT(B, A, isSigned); }
 
-static ConstantIntegral *Min(ConstantIntegral *A, ConstantIntegral *B) {
-  return LT(A, B) ? A : B;
+static ConstantIntegral *Min(ConstantIntegral *A, ConstantIntegral *B, 
+                             bool isSigned) {
+  return LT(A, B, isSigned) ? A : B;
 }
-static ConstantIntegral *Max(ConstantIntegral *A, ConstantIntegral *B) {
-  return GT(A, B) ? A : B;
+static ConstantIntegral *Max(ConstantIntegral *A, ConstantIntegral *B,
+                             bool isSigned) {
+  return GT(A, B, isSigned) ? A : B;
 }
 
 /// Initialize a full (the default) or empty set for the specified type.
@@ -118,47 +110,62 @@ ConstantRange::ConstantRange(const Type *Ty, bool Full) {
 
 /// Initialize a range to hold the single specified value.
 ///
-ConstantRange::ConstantRange(Constant *V)
-  : Lower(cast<ConstantIntegral>(V)), Upper(Next(cast<ConstantIntegral>(V))) {
-}
+ConstantRange::ConstantRange(Constant *V) 
+  : Lower(cast<ConstantIntegral>(V)), Upper(Next(cast<ConstantIntegral>(V))) { }
 
 /// Initialize a range of values explicitly... this will assert out if
 /// Lower==Upper and Lower != Min or Max for its type (or if the two constants
 /// have different types)
 ///
-ConstantRange::ConstantRange(Constant *L, Constant *U)
+ConstantRange::ConstantRange(Constant *L, Constant *U) 
   : Lower(cast<ConstantIntegral>(L)), Upper(cast<ConstantIntegral>(U)) {
   assert(Lower->getType() == Upper->getType() &&
          "Incompatible types for ConstantRange!");
 
   // Make sure that if L & U are equal that they are either Min or Max...
   assert((L != U || (L == getMaxValue(L->getType()) ||
-                     L == getMinValue(L->getType()))) &&
-         "Lower == Upper, but they aren't min or max for type!");
+                     L == getMinValue(L->getType())))
+          && "Lower == Upper, but they aren't min or max for type!");
 }
 
 /// Initialize a set of values that all satisfy the condition with C.
 ///
-ConstantRange::ConstantRange(unsigned SetCCOpcode, ConstantIntegral *C) {
-  switch (SetCCOpcode) {
-  default: assert(0 && "Invalid SetCC opcode to ConstantRange ctor!");
-  case Instruction::SetEQ: Lower = C; Upper = Next(C); return;
-  case Instruction::SetNE: Upper = C; Lower = Next(C); return;
-  case Instruction::SetLT:
+ConstantRange::ConstantRange(unsigned short ICmpOpcode, ConstantIntegral *C) {
+  switch (ICmpOpcode) {
+  default: assert(0 && "Invalid ICmp opcode to ConstantRange ctor!");
+  case ICmpInst::ICMP_EQ: Lower = C; Upper = Next(C); return;
+  case ICmpInst::ICMP_NE: Upper = C; Lower = Next(C); return;
+  case ICmpInst::ICMP_ULT:
     Lower = getMinValue(C->getType());
     Upper = C;
     return;
-  case Instruction::SetGT:
-    Lower = Next(C);
-    Upper = getMinValue(C->getType());  // Min = Next(Max)
+  case ICmpInst::ICMP_SLT:
+    Lower = getMinValue(C->getType(), true);
+    Upper = C;
     return;
-  case Instruction::SetLE:
+  case ICmpInst::ICMP_UGT:
+    Lower = Next(C);
+    Upper = getMinValue(C->getType());        // Min = Next(Max)
+    return;
+  case ICmpInst::ICMP_SGT:
+    Lower = Next(C);
+    Upper = getMinValue(C->getType(), true);  // Min = Next(Max)
+    return;
+  case ICmpInst::ICMP_ULE:
     Lower = getMinValue(C->getType());
     Upper = Next(C);
     return;
-  case Instruction::SetGE:
+  case ICmpInst::ICMP_SLE:
+    Lower = getMinValue(C->getType(), true);
+    Upper = Next(C);
+    return;
+  case ICmpInst::ICMP_UGE:
     Lower = C;
-    Upper = getMinValue(C->getType());  // Min = Next(Max)
+    Upper = getMinValue(C->getType());        // Min = Next(Max)
+    return;
+  case ICmpInst::ICMP_SGE:
+    Lower = C;
+    Upper = getMinValue(C->getType(), true);  // Min = Next(Max)
     return;
   }
 }
@@ -182,10 +189,9 @@ bool ConstantRange::isEmptySet() const {
 /// isWrappedSet - Return true if this set wraps around the top of the range,
 /// for example: [100, 8)
 ///
-bool ConstantRange::isWrappedSet() const {
-  return GT(Lower, Upper);
+bool ConstantRange::isWrappedSet(bool isSigned) const {
+  return GT(Lower, Upper, isSigned);
 }
-
 
 /// getSingleElement - If this set contains a single element, return it,
 /// otherwise return null.
@@ -212,18 +218,16 @@ uint64_t ConstantRange::getSetSize() const {
 
 /// contains - Return true if the specified value is in the set.
 ///
-bool ConstantRange::contains(ConstantInt *Val) const {
+bool ConstantRange::contains(ConstantInt *Val, bool isSigned) const {
   if (Lower == Upper) {
     if (isFullSet()) return true;
     return false;
   }
 
-  if (!isWrappedSet())
-    return LTE(Lower, Val) && LT(Val, Upper);
-  return LTE(Lower, Val) || LT(Val, Upper);
+  if (!isWrappedSet(isSigned))
+    return LTE(Lower, Val, isSigned) && LT(Val, Upper, isSigned);
+  return LTE(Lower, Val, isSigned) || LT(Val, Upper, isSigned);
 }
-
-
 
 /// subtract - Subtract the specified constant from the endpoints of this
 /// constant range.
@@ -241,15 +245,16 @@ ConstantRange ConstantRange::subtract(ConstantInt *CI) const {
 // it is known that LHS is wrapped and RHS isn't.
 //
 static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
-                                       const ConstantRange &RHS) {
-  assert(LHS.isWrappedSet() && !RHS.isWrappedSet());
+                                       const ConstantRange &RHS,
+                                       bool isSigned) {
+  assert(LHS.isWrappedSet(isSigned) && !RHS.isWrappedSet(isSigned));
 
   // Check to see if we overlap on the Left side of RHS...
   //
-  if (LT(RHS.getLower(), LHS.getUpper())) {
+  if (LT(RHS.getLower(), LHS.getUpper(), isSigned)) {
     // We do overlap on the left side of RHS, see if we overlap on the right of
     // RHS...
-    if (GT(RHS.getUpper(), LHS.getLower())) {
+    if (GT(RHS.getUpper(), LHS.getLower(), isSigned)) {
       // Ok, the result overlaps on both the left and right sides.  See if the
       // resultant interval will be smaller if we wrap or not...
       //
@@ -262,11 +267,10 @@ static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
       // No overlap on the right, just on the left.
       return ConstantRange(RHS.getLower(), LHS.getUpper());
     }
-
   } else {
     // We don't overlap on the left side of RHS, see if we overlap on the right
     // of RHS...
-    if (GT(RHS.getUpper(), LHS.getLower())) {
+    if (GT(RHS.getUpper(), LHS.getLower(), isSigned)) {
       // Simple overlap...
       return ConstantRange(LHS.getLower(), RHS.getUpper());
     } else {
@@ -279,30 +283,31 @@ static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
 /// intersect - Return the range that results from the intersection of this
 /// range with another range.
 ///
-ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
+ConstantRange ConstantRange::intersectWith(const ConstantRange &CR,
+                                           bool isSigned) const {
   assert(getType() == CR.getType() && "ConstantRange types don't agree!");
   // Handle common special cases
   if (isEmptySet() || CR.isFullSet())  return *this;
   if (isFullSet()  || CR.isEmptySet()) return CR;
 
-  if (!isWrappedSet()) {
-    if (!CR.isWrappedSet()) {
-      ConstantIntegral *L = Max(Lower, CR.Lower);
-      ConstantIntegral *U = Min(Upper, CR.Upper);
+  if (!isWrappedSet(isSigned)) {
+    if (!CR.isWrappedSet(isSigned)) {
+      ConstantIntegral *L = Max(Lower, CR.Lower, isSigned);
+      ConstantIntegral *U = Min(Upper, CR.Upper, isSigned);
 
-      if (LT(L, U))  // If range isn't empty...
+      if (LT(L, U, isSigned))  // If range isn't empty...
         return ConstantRange(L, U);
       else
         return ConstantRange(getType(), false);  // Otherwise, return empty set
     } else
-      return intersect1Wrapped(CR, *this);
+      return intersect1Wrapped(CR, *this, isSigned);
   } else {   // We know "this" is wrapped...
-    if (!CR.isWrappedSet())
-      return intersect1Wrapped(*this, CR);
+    if (!CR.isWrappedSet(isSigned))
+      return intersect1Wrapped(*this, CR, isSigned);
     else {
       // Both ranges are wrapped...
-      ConstantIntegral *L = Max(Lower, CR.Lower);
-      ConstantIntegral *U = Min(Upper, CR.Upper);
+      ConstantIntegral *L = Max(Lower, CR.Lower, isSigned);
+      ConstantIntegral *U = Min(Upper, CR.Upper, isSigned);
       return ConstantRange(L, U);
     }
   }
@@ -315,7 +320,8 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
 /// 15), which includes 9, 10, and 11, which were not included in either set
 /// before.
 ///
-ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
+ConstantRange ConstantRange::unionWith(const ConstantRange &CR,
+                                       bool isSigned) const {
   assert(getType() == CR.getType() && "ConstantRange types don't agree!");
 
   assert(0 && "Range union not implemented yet!");
@@ -325,7 +331,7 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
 
 /// zeroExtend - Return a new range in the specified integer type, which must
 /// be strictly larger than the current type.  The returned range will
-/// correspond to the possible range of values if the source range had been
+/// correspond to the possible range of values as if the source range had been
 /// zero extended.
 ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
   assert(getLower()->getType()->getPrimitiveSize() < Ty->getPrimitiveSize() &&
@@ -346,7 +352,7 @@ ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
 
 /// truncate - Return a new range in the specified integer type, which must be
 /// strictly smaller than the current type.  The returned range will
-/// correspond to the possible range of values if the source range had been
+/// correspond to the possible range of values as if the source range had been
 /// truncated to the specified type.
 ConstantRange ConstantRange::truncate(const Type *Ty) const {
   assert(getLower()->getType()->getPrimitiveSize() > Ty->getPrimitiveSize() &&
@@ -359,7 +365,6 @@ ConstantRange ConstantRange::truncate(const Type *Ty) const {
       ConstantExpr::getTrunc(getLower(), Ty),
       ConstantExpr::getTrunc(getUpper(), Ty));
 }
-
 
 /// print - Print out the bounds to a stream...
 ///

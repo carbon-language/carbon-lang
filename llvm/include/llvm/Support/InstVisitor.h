@@ -167,7 +167,6 @@ public:
   RetTy visitInvokeInst(InvokeInst &I)              { DELEGATE(TerminatorInst);}
   RetTy visitUnwindInst(UnwindInst &I)              { DELEGATE(TerminatorInst);}
   RetTy visitUnreachableInst(UnreachableInst &I)    { DELEGATE(TerminatorInst);}
-  RetTy visitSetCondInst(SetCondInst &I)            { DELEGATE(BinaryOperator);}
   RetTy visitICmpInst(ICmpInst &I)                  { DELEGATE(CmpInst);}
   RetTy visitFCmpInst(FCmpInst &I)                  { DELEGATE(CmpInst);}
   RetTy visitMallocInst(MallocInst &I)              { DELEGATE(AllocationInst);}

@@ -161,6 +161,11 @@ static inline bool isIdenticalBinaryInst(const Instruction &I1,
       I1.getParent()->getParent() != I2->getParent()->getParent())
     return false;
 
+  // If they are CmpInst instructions, check their predicates
+  if (CmpInst *CI1 = dyn_cast<CmpInst>(&const_cast<Instruction&>(I1)))
+    if (CI1->getPredicate() != cast<CmpInst>(I2)->getPredicate())
+      return false;
+
   // They are identical if both operands are the same!
   if (I1.getOperand(0) == I2->getOperand(0) &&
       I1.getOperand(1) == I2->getOperand(1))

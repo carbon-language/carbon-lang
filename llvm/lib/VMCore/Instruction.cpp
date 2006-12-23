@@ -106,14 +106,6 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Or : return "or";
   case Xor: return "xor";
 
-  // SetCC operators...
-  case SetLE:  return "setle";
-  case SetGE:  return "setge";
-  case SetLT:  return "setlt";
-  case SetGT:  return "setgt";
-  case SetEQ:  return "seteq";
-  case SetNE:  return "setne";
-
   // Memory instructions...
   case Malloc:        return "malloc";
   case Free:          return "free";
@@ -176,8 +168,35 @@ bool Instruction::isIdenticalTo(Instruction *I) const {
     return LI->isVolatile() == cast<LoadInst>(I)->isVolatile();
   if (const StoreInst *SI = dyn_cast<StoreInst>(this))
     return SI->isVolatile() == cast<StoreInst>(I)->isVolatile();
+  if (const CmpInst *CI = dyn_cast<CmpInst>(this))
+    return CI->getPredicate() == cast<CmpInst>(I)->getPredicate();
   if (const CallInst *CI = dyn_cast<CallInst>(this))
     return CI->isTailCall() == cast<CallInst>(I)->isTailCall();
+  return true;
+}
+
+// isSameOperationAs
+bool Instruction::isSameOperationAs(Instruction *I) const {
+  if (getOpcode() != I->getOpcode() || getType() != I->getType() ||
+      getNumOperands() != I->getNumOperands())
+    return false;
+
+  // We have two instructions of identical opcode and #operands.  Check to see
+  // if all operands are the same type
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    if (getOperand(i)->getType() != I->getOperand(i)->getType())
+      return false;
+
+  // Check special state that is a part of some instructions.
+  if (const LoadInst *LI = dyn_cast<LoadInst>(this))
+    return LI->isVolatile() == cast<LoadInst>(I)->isVolatile();
+  if (const StoreInst *SI = dyn_cast<StoreInst>(this))
+    return SI->isVolatile() == cast<StoreInst>(I)->isVolatile();
+  if (const CmpInst *CI = dyn_cast<CmpInst>(this))
+    return CI->getPredicate() == cast<CmpInst>(I)->getPredicate();
+  if (const CallInst *CI = dyn_cast<CallInst>(this))
+    return CI->isTailCall() == cast<CallInst>(I)->isTailCall();
+
   return true;
 }
 
@@ -213,30 +232,11 @@ bool Instruction::isCommutative(unsigned op) {
   case And:
   case Or:
   case Xor:
-  case SetEQ:
-  case SetNE:
     return true;
   default:
     return false;
   }
 }
-
-/// isComparison - Return true if the instruction is a Set* instruction:
-///
-bool Instruction::isComparison(unsigned op) {
-  switch (op) {
-  case SetEQ:
-  case SetNE:
-  case SetLT:
-  case SetGT:
-  case SetLE:
-  case SetGE:
-    return true;
-  }
-  return false;
-}
-
-
 
 /// isTrappingInstruction - Return true if the instruction may trap.
 ///

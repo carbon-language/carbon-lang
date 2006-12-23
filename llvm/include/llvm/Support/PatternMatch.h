@@ -248,13 +248,6 @@ struct BinaryOpClass_match {
 };
 
 template<typename LHS, typename RHS>
-inline BinaryOpClass_match<LHS, RHS, SetCondInst, Instruction::BinaryOps>
-m_SetCond(Instruction::BinaryOps &Op, const LHS &L, const RHS &R) {
-  return BinaryOpClass_match<LHS, RHS, 
-                             SetCondInst, Instruction::BinaryOps>(Op, L, R);
-}
-
-template<typename LHS, typename RHS>
 inline BinaryOpClass_match<LHS, RHS, ShiftInst, Instruction::OtherOps>
 m_Shift(Instruction::OtherOps &Op, const LHS &L, const RHS &R) {
   return BinaryOpClass_match<LHS, RHS, 
@@ -267,6 +260,45 @@ m_Shift(const LHS &L, const RHS &R) {
   Instruction::OtherOps Op; 
   return BinaryOpClass_match<LHS, RHS, 
                              ShiftInst, Instruction::OtherOps>(Op, L, R);
+}
+
+//===----------------------------------------------------------------------===//
+// Matchers for CmpInst classes
+//
+
+template<typename LHS_t, typename RHS_t, typename Class, typename PredicateTy>
+struct CmpClass_match {
+  PredicateTy &Predicate;
+  LHS_t L;
+  RHS_t R;
+
+  CmpClass_match(PredicateTy &Pred, const LHS_t &LHS,
+                 const RHS_t &RHS)
+    : Predicate(Pred), L(LHS), R(RHS) {}
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (Class *I = dyn_cast<Class>(V))
+      if (L.match(I->getOperand(0)) && R.match(I->getOperand(1))) {
+        Predicate = I->getPredicate();
+        return true;
+      }
+    return false;
+  }
+};
+
+template<typename LHS, typename RHS>
+inline CmpClass_match<LHS, RHS, ICmpInst, ICmpInst::Predicate>
+m_ICmp(ICmpInst::Predicate &Pred, const LHS &L, const RHS &R) {
+  return CmpClass_match<LHS, RHS,
+                        ICmpInst, ICmpInst::Predicate>(Pred, L, R);
+}
+
+template<typename LHS, typename RHS>
+inline CmpClass_match<LHS, RHS, FCmpInst, FCmpInst::Predicate>
+m_FCmp(FCmpInst::Predicate &Pred, const LHS &L, const RHS &R) {
+  return CmpClass_match<LHS, RHS,
+                        FCmpInst, FCmpInst::Predicate>(Pred, L, R);
 }
 
 //===----------------------------------------------------------------------===//

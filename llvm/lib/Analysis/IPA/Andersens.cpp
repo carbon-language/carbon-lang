@@ -325,7 +325,8 @@ namespace {
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
     void visitPHINode(PHINode &PN);
     void visitCastInst(CastInst &CI);
-    void visitSetCondInst(SetCondInst &SCI) {} // NOOP!
+    void visitICmpInst(ICmpInst &ICI) {} // NOOP!
+    void visitFCmpInst(FCmpInst &ICI) {} // NOOP!
     void visitSelectInst(SelectInst &SI);
     void visitVAArg(VAArgInst &I);
     void visitInstruction(Instruction &I);
@@ -778,6 +779,8 @@ void Andersens::visitInstruction(Instruction &I) {
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
+  case Instruction::ICmp:
+  case Instruction::FCmp:
     return;
   default:
     // Is this something we aren't handling yet?

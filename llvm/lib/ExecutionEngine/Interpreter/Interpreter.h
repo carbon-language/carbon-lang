@@ -136,6 +136,8 @@ public:
   void visitSwitchInst(SwitchInst &I);
 
   void visitBinaryOperator(BinaryOperator &I);
+  void visitICmpInst(ICmpInst &I);
+  void visitFCmpInst(FCmpInst &I);
   void visitAllocationInst(AllocationInst &I);
   void visitFreeInst(FreeInst &I);
   void visitLoadInst(LoadInst &I);

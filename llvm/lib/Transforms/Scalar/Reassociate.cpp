@@ -95,10 +95,11 @@ namespace {
 FunctionPass *llvm::createReassociatePass() { return new Reassociate(); }
 
 void Reassociate::RemoveDeadBinaryOp(Value *V) {
-  BinaryOperator *BOp = dyn_cast<BinaryOperator>(V);
-  if (!BOp || !BOp->use_empty()) return;
+  Instruction *Op = dyn_cast<Instruction>(V);
+  if (!Op || !isa<BinaryOperator>(Op) || !isa<CmpInst>(Op) || !Op->use_empty())
+    return;
   
-  Value *LHS = BOp->getOperand(0), *RHS = BOp->getOperand(1);
+  Value *LHS = Op->getOperand(0), *RHS = Op->getOperand(1);
   RemoveDeadBinaryOp(LHS);
   RemoveDeadBinaryOp(RHS);
 }
@@ -755,7 +756,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
       }
 
     // Reject cases where it is pointless to do this.
-    if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPoint() ||
+    if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPoint() || 
         isa<PackedType>(BI->getType()))
       continue;  // Floating point ops are not associative.
 

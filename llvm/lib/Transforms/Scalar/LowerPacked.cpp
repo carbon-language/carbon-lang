@@ -54,6 +54,10 @@ public:
    /// @param BO the binary operator to convert
    void visitBinaryOperator(BinaryOperator& BO);
 
+   /// @brief Lowers packed icmp operations.
+   /// @param CI the icmp operator to convert
+   void visitICmpInst(ICmpInst& IC);
+
    /// @brief Lowers packed select instructions.
    /// @param SELI the select operator to convert
    void visitSelectInst(SelectInst& SELI);
@@ -269,6 +273,35 @@ void LowerPacked::visitBinaryOperator(BinaryOperator& BO)
    }
 }
 
+void LowerPacked::visitICmpInst(ICmpInst& IC)
+{
+   // Make sure both operands are PackedTypes
+   if (isa<PackedType>(IC.getOperand(0)->getType())) {
+       std::vector<Value*>& op0Vals = getValues(IC.getOperand(0));
+       std::vector<Value*>& op1Vals = getValues(IC.getOperand(1));
+       std::vector<Value*> result;
+       assert((op0Vals.size() == op1Vals.size()) &&
+              "The two packed operand to scalar maps must be equal in size.");
+
+       result.reserve(op0Vals.size());
+
+       // generate the new binary op and save the result
+       for (unsigned i = 0; i != op0Vals.size(); ++i) {
+            result.push_back(CmpInst::create(IC.getOpcode(),
+                                             IC.getPredicate(),
+                                             op0Vals[i],
+                                             op1Vals[i],
+                                             IC.getName() +
+                                             "." + utostr(i),
+                                             &IC));
+       }
+
+       setValues(&IC,result);
+       Changed = true;
+       instrsToRemove.push_back(&IC);
+   }
+}
+
 void LowerPacked::visitStoreInst(StoreInst& SI)
 {
    if (const PackedType* PKT =
@@ -376,12 +409,12 @@ void LowerPacked::visitInsertElementInst(InsertElementInst& IE)
     }
   } else {
     for (unsigned i = 0; i != Vals.size(); ++i) {
-      SetCondInst *setcc =
-        new SetCondInst(Instruction::SetEQ, Idx, 
-                        ConstantInt::get(Type::UIntTy, i),
-                        "setcc", &IE);
+      ICmpInst *icmp =
+        new ICmpInst(ICmpInst::ICMP_EQ, Idx, 
+                     ConstantInt::get(Type::UIntTy, i),
+                     "icmp", &IE);
       SelectInst *select =
-        new SelectInst(setcc, Elt, Vals[i], "select", &IE);
+        new SelectInst(icmp, Elt, Vals[i], "select", &IE);
       result.push_back(select);
     }
   }

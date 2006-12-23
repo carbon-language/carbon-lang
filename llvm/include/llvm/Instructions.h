@@ -440,7 +440,8 @@ public:
     ICMP_SLT = 40,    ///< signed less than
     ICMP_SLE = 41,    ///< signed less or equal
     FIRST_ICMP_PREDICATE = ICMP_EQ,
-    LAST_ICMP_PREDICATE = ICMP_SLE
+    LAST_ICMP_PREDICATE = ICMP_SLE,
+    BAD_ICMP_PREDICATE = ICMP_SLE + 1
   };
 
   /// @brief Constructor with insert-before-instruction semantics.
@@ -490,16 +491,30 @@ public:
   /// This is a static version that you can use without an instruction 
   /// available.
   /// @brief Return the predicate as if the operands were swapped.
-  static Predicate getSwappedPredicate(Predicate Opcode);
+  static Predicate getSwappedPredicate(Predicate pred);
+
+  /// For example, EQ->EQ, SLE->SLE, UGT->SGT, etc.
+  /// @returns the predicate that would be the result if the operand were
+  /// regarded as signed.
+  /// @brief Return the signed version of the predicate
+  Predicate getSignedPredicate() const {
+    return getSignedPredicate(getPredicate());
+  }
+
+  /// This is a static version that you can use without an instruction.
+  /// @brief Return the signed version of the predicate.
+  static Predicate getSignedPredicate(Predicate pred);
 
   /// This also tests for commutativity. If isEquality() returns true then
-  /// the predicate is also commutative. Only the equality predicates are
-  /// commutative.
+  /// the predicate is also commutative. 
   /// @returns true if the predicate of this instruction is EQ or NE.
   /// @brief Determine if this is an equality predicate.
   bool isEquality() const {
     return SubclassData == ICMP_EQ || SubclassData == ICMP_NE;
   }
+
+  /// @returns true if the predicate of this ICmpInst is commutative
+  /// @brief Determine if this relation is commutative.
   bool isCommutative() const { return isEquality(); }
 
   /// @returns true if the predicate is relational (not EQ or NE). 
@@ -507,6 +522,14 @@ public:
   bool isRelational() const {
     return !isEquality();
   }
+
+  /// @returns true if the predicate of this ICmpInst is signed, false otherwise
+  /// @brief Determine if this instruction's predicate is signed.
+  bool isSignedPredicate() { return isSignedPredicate(getPredicate()); }
+
+  /// @returns true if the predicate provided is signed, false otherwise
+  /// @brief Determine if the predicate is signed.
+  static bool isSignedPredicate(Predicate pred);
 
   /// Exchange the two operands to this instruction in such a way that it does
   /// not modify the semantics of the instruction. The predicate value may be
@@ -559,7 +582,8 @@ public:
     FCMP_UNE   =14, ///<  1 1 1 0    True if unordered or not equal
     FCMP_TRUE  =15, ///<  1 1 1 1    Always true (always folded)
     FIRST_FCMP_PREDICATE = FCMP_FALSE,
-    LAST_FCMP_PREDICATE = FCMP_TRUE
+    LAST_FCMP_PREDICATE = FCMP_TRUE,
+    BAD_FCMP_PREDICATE = FCMP_TRUE + 1
   };
 
   /// @brief Constructor with insert-before-instruction semantics.
@@ -645,71 +669,6 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
-
-
-//===----------------------------------------------------------------------===//
-//                            SetCondInst Class
-//===----------------------------------------------------------------------===//
-
-/// SetCondInst class - Represent a setCC operator, where CC is eq, ne, lt, gt,
-/// le, or ge.
-///
-class SetCondInst : public BinaryOperator {
-public:
-  SetCondInst(BinaryOps Opcode, Value *LHS, Value *RHS,
-              const std::string &Name = "", Instruction *InsertBefore = 0);
-  SetCondInst(BinaryOps Opcode, Value *LHS, Value *RHS,
-              const std::string &Name, BasicBlock *InsertAtEnd);
-
-  /// getInverseCondition - Return the inverse of the current condition opcode.
-  /// For example seteq -> setne, setgt -> setle, setlt -> setge, etc...
-  ///
-  BinaryOps getInverseCondition() const {
-    return getInverseCondition(getOpcode());
-  }
-
-  /// getInverseCondition - Static version that you can use without an
-  /// instruction available.
-  ///
-  static BinaryOps getInverseCondition(BinaryOps Opcode);
-
-  /// getSwappedCondition - Return the condition opcode that would be the result
-  /// of exchanging the two operands of the setcc instruction without changing
-  /// the result produced.  Thus, seteq->seteq, setle->setge, setlt->setgt, etc.
-  ///
-  BinaryOps getSwappedCondition() const {
-    return getSwappedCondition(getOpcode());
-  }
-
-  /// getSwappedCondition - Static version that you can use without an
-  /// instruction available.
-  ///
-  static BinaryOps getSwappedCondition(BinaryOps Opcode);
-
-  /// isEquality - Return true if this comparison is an ==/!= comparison.
-  ///
-  bool isEquality() const {
-    return getOpcode() == SetEQ || getOpcode() == SetNE;
-  }
-
-  /// isRelational - Return true if this comparison is a </>/<=/>= comparison.
-  ///
-  bool isRelational() const {
-    return !isEquality();
-  }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const SetCondInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == SetEQ || I->getOpcode() == SetNE ||
-           I->getOpcode() == SetLE || I->getOpcode() == SetGE ||
-           I->getOpcode() == SetLT || I->getOpcode() == SetGT;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
-
 
 //===----------------------------------------------------------------------===//
 //                                 CallInst Class

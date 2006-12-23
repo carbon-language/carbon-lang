@@ -260,12 +260,6 @@ frem            { RET_TOK(BinaryOpVal, FRem, FREM); }
 and             { RET_TOK(BinaryOpVal, And, AND); }
 or              { RET_TOK(BinaryOpVal, Or , OR ); }
 xor             { RET_TOK(BinaryOpVal, Xor, XOR); }
-setne           { RET_TOK(BinaryOpVal, SetNE, SETNE); }
-seteq           { RET_TOK(BinaryOpVal, SetEQ, SETEQ); }
-setlt           { RET_TOK(BinaryOpVal, SetLT, SETLT); }
-setgt           { RET_TOK(BinaryOpVal, SetGT, SETGT); }
-setle           { RET_TOK(BinaryOpVal, SetLE, SETLE); }
-setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
 icmp            { RET_TOK(OtherOpVal,  ICmp,  ICMP); }
 fcmp            { RET_TOK(OtherOpVal,  FCmp,  FCMP); }
 eq              { return EQ;  }

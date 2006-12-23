@@ -24,8 +24,8 @@
 //    1. If a binary operator has a constant operand, it is moved to the RHS
 //    2. Bitwise operators with constant operands are always grouped so that
 //       shifts are performed first, then or's, then and's, then xor's.
-//    3. SetCC instructions are converted from <,>,<=,>= to ==,!= if possible
-//    4. All SetCC instructions on boolean values are replaced with logical ops
+//    3. Compare instructions are converted from <,>,<=,>= to ==,!= if possible
+//    4. All cmp instructions on boolean values are replaced with logical ops
 //    5. add X, X is represented as (X*2) => (X << 1)
 //    6. Multiplies with a power-of-two constant argument are transformed into
 //       shifts.
@@ -143,11 +143,12 @@ namespace {
     Instruction *visitAnd(BinaryOperator &I);
     Instruction *visitOr (BinaryOperator &I);
     Instruction *visitXor(BinaryOperator &I);
-    Instruction *visitSetCondInst(SetCondInst &I);
-    Instruction *visitSetCondInstWithCastAndCast(SetCondInst &SCI);
+    Instruction *visitFCmpInst(FCmpInst &I);
+    Instruction *visitICmpInst(ICmpInst &I);
+    Instruction *visitICmpInstWithCastAndCast(ICmpInst &ICI);
 
-    Instruction *FoldGEPSetCC(User *GEPLHS, Value *RHS,
-                              Instruction::BinaryOps Cond, Instruction &I);
+    Instruction *FoldGEPICmp(User *GEPLHS, Value *RHS,
+                             ICmpInst::Predicate Cond, Instruction &I);
     Instruction *visitShiftInst(ShiftInst &I);
     Instruction *FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                      ShiftInst &I);
@@ -274,9 +275,13 @@ namespace {
                                    Value *V, const Type *DestTy,
                                    Instruction *InsertBefore);
 
-    // SimplifyCommutative - This performs a few simplifications for commutative
-    // operators.
+    /// SimplifyCommutative - This performs a few simplifications for 
+    /// commutative operators.
     bool SimplifyCommutative(BinaryOperator &I);
+
+    /// SimplifyCompare - This reorders the operands of a CmpInst to get them in
+    /// most-complex to least-complex order.
+    bool SimplifyCompare(CmpInst &I);
 
     bool SimplifyDemandedBits(Value *V, uint64_t Mask, 
                               uint64_t &KnownZero, uint64_t &KnownOne,
@@ -303,7 +308,7 @@ namespace {
     Value *FoldLogicalPlusAnd(Value *LHS, Value *RHS, ConstantIntegral *Mask,
                               bool isSub, Instruction &I);
     Instruction *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
-                                 bool Inside, Instruction &IB);
+                                 bool isSigned, bool Inside, Instruction &IB);
     Instruction *PromoteCastOfAllocation(CastInst &CI, AllocationInst &AI);
     Instruction *MatchBSwap(BinaryOperator &I);
 
@@ -381,7 +386,8 @@ isEliminableCastPair(
 /// ValueRequiresCast - Return true if the cast from "V to Ty" actually results
 /// in any code being generated.  It does not require codegen if V is simple
 /// enough or if the cast can be folded into other casts.
-static bool ValueRequiresCast(const Value *V, const Type *Ty, TargetData *TD) {
+static bool ValueRequiresCast(Instruction::CastOps opcode, const Value *V, 
+                              const Type *Ty, TargetData *TD) {
   if (V->getType() == Ty || isa<Constant>(V)) return false;
   
   // If this is a noop cast, it isn't real codegen.
@@ -390,8 +396,7 @@ static bool ValueRequiresCast(const Value *V, const Type *Ty, TargetData *TD) {
 
   // If this is another cast that can be eliminated, it isn't codegen either.
   if (const CastInst *CI = dyn_cast<CastInst>(V))
-    if (isEliminableCastPair(CI, CastInst::getCastOpcode(
-            V, V->getType()->isSigned(), Ty, Ty->isSigned()), Ty, TD)) 
+    if (isEliminableCastPair(CI, opcode, Ty, TD)) 
       return false;
   return true;
 }
@@ -454,6 +459,17 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
         }
     }
   return Changed;
+}
+
+/// SimplifyCompare - For a CmpInst this function just orders the operands
+/// so that theyare listed from right (least complex) to left (most complex).
+/// This puts constants before unary operators before binary operators.
+bool InstCombiner::SimplifyCompare(CmpInst &I) {
+  if (getComplexity(I.getOperand(0)) >= getComplexity(I.getOperand(1)))
+    return false;
+  I.swapOperands();
+  // Compare instructions are not associative so there's nothing else we can do.
+  return true;
 }
 
 // dyn_castNegVal - Given a 'sub' instruction, return the RHS of the instruction
@@ -1451,13 +1467,24 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
   return MadeChange ? I : 0;
 }
 
-// isTrueWhenEqual - Return true if the specified setcondinst instruction is
-// true when both operands are equal...
-//
-static bool isTrueWhenEqual(Instruction &I) {
-  return I.getOpcode() == Instruction::SetEQ ||
-         I.getOpcode() == Instruction::SetGE ||
-         I.getOpcode() == Instruction::SetLE;
+/// @returns true if the specified compare instruction is
+/// true when both operands are equal...
+/// @brief Determine if the ICmpInst returns true if both operands are equal
+static bool isTrueWhenEqual(ICmpInst &ICI) {
+  ICmpInst::Predicate pred = ICI.getPredicate();
+  return pred == ICmpInst::ICMP_EQ  || pred == ICmpInst::ICMP_UGE ||
+         pred == ICmpInst::ICMP_SGE || pred == ICmpInst::ICMP_ULE ||
+         pred == ICmpInst::ICMP_SLE;
+}
+
+/// @returns true if the specified compare instruction is
+/// true when both operands are equal...
+/// @brief Determine if the FCmpInst returns true if both operands are equal
+static bool isTrueWhenEqual(FCmpInst &FCI) {
+  FCmpInst::Predicate pred = FCI.getPredicate();
+  return pred == FCmpInst::FCMP_OEQ || pred == FCmpInst::FCMP_UEQ ||
+         pred == FCmpInst::FCMP_OGE || pred == FCmpInst::FCMP_UGE ||
+         pred == FCmpInst::FCMP_OLE || pred == FCmpInst::FCMP_ULE;
 }
 
 /// AssociativeOpt - Perform an optimization on an associative operator.  This
@@ -1593,6 +1620,9 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
   Instruction *New;
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I))
     New = BinaryOperator::create(BO->getOpcode(), Op0, Op1,SO->getName()+".op");
+  else if (CmpInst *CI = dyn_cast<CmpInst>(&I))
+    New = CmpInst::create(CI->getOpcode(), CI->getPredicate(), Op0, Op1, 
+                          SO->getName()+".cmp");
   else if (ShiftInst *SI = dyn_cast<ShiftInst>(&I))
     New = new ShiftInst(SI->getOpcode(), Op0, Op1, SO->getName()+".sh");
   else {
@@ -1671,13 +1701,21 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     for (unsigned i = 0; i != NumPHIValues; ++i) {
       Value *InV;
       if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
-        InV = ConstantExpr::get(I.getOpcode(), InC, C);
+        if (CmpInst *CI = dyn_cast<CmpInst>(&I))
+          InV = ConstantExpr::getCompare(CI->getPredicate(), InC, C);
+        else
+          InV = ConstantExpr::get(I.getOpcode(), InC, C);
       } else {
         assert(PN->getIncomingBlock(i) == NonConstBB);
         if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I)) 
           InV = BinaryOperator::create(BO->getOpcode(),
                                        PN->getIncomingValue(i), C, "phitmp",
                                        NonConstBB->getTerminator());
+        else if (CmpInst *CI = dyn_cast<CmpInst>(&I))
+          InV = CmpInst::create(CI->getOpcode(), 
+                                CI->getPredicate(),
+                                PN->getIncomingValue(i), C, "phitmp",
+                                NonConstBB->getTerminator());
         else if (ShiftInst *SI = dyn_cast<ShiftInst>(&I))
           InV = new ShiftInst(SI->getOpcode(),
                               PN->getIncomingValue(i), C, "phitmp",
@@ -2077,25 +2115,27 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   return 0;
 }
 
-/// isSignBitCheck - Given an exploded setcc instruction, return true if it is
+/// isSignBitCheck - Given an exploded icmp instruction, return true if it
 /// really just returns true if the most significant (sign) bit is set.
-static bool isSignBitCheck(unsigned Opcode, Value *LHS, ConstantInt *RHS) {
-  if (RHS->getType()->isSigned()) {
-    // True if source is LHS < 0 or LHS <= -1
-    return Opcode == Instruction::SetLT && RHS->isNullValue() ||
-           Opcode == Instruction::SetLE && RHS->isAllOnesValue();
-  } else {
-    ConstantInt *RHSC = cast<ConstantInt>(RHS);
-    // True if source is LHS > 127 or LHS >= 128, where the constants depend on
-    // the size of the integer type.
-    if (Opcode == Instruction::SetGE)
-      return RHSC->getZExtValue() ==
-        1ULL << (RHS->getType()->getPrimitiveSizeInBits()-1);
-    if (Opcode == Instruction::SetGT)
-      return RHSC->getZExtValue() ==
+static bool isSignBitCheck(ICmpInst::Predicate pred, ConstantInt *RHS) {
+  switch (pred) {
+    case ICmpInst::ICMP_SLT: 
+      // True if LHS s< RHS and RHS == 0
+      return RHS->isNullValue();
+    case ICmpInst::ICMP_SLE: 
+      // True if LHS s<= RHS and RHS == -1
+      return RHS->isAllOnesValue();
+    case ICmpInst::ICMP_UGE: 
+      // True if LHS u>= RHS and RHS == high-bit-mask (2^7, 2^15, 2^31, etc)
+      return RHS->getZExtValue() == (1ULL << 
+        (RHS->getType()->getPrimitiveSizeInBits()-1));
+    case ICmpInst::ICMP_UGT:
+      // True if LHS u> RHS and RHS == high-bit-mask - 1
+      return RHS->getZExtValue() ==
         (1ULL << (RHS->getType()->getPrimitiveSizeInBits()-1))-1;
+    default:
+      return false;
   }
-  return false;
 }
 
 Instruction *InstCombiner::visitMul(BinaryOperator &I) {
@@ -2179,14 +2219,14 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       if (CI->getOperand(0)->getType() == Type::BoolTy)
         BoolCast = CI;
   if (BoolCast) {
-    if (SetCondInst *SCI = dyn_cast<SetCondInst>(BoolCast->getOperand(0))) {
+    if (ICmpInst *SCI = dyn_cast<ICmpInst>(BoolCast->getOperand(0))) {
       Value *SCIOp0 = SCI->getOperand(0), *SCIOp1 = SCI->getOperand(1);
       const Type *SCOpTy = SCIOp0->getType();
 
-      // If the setcc is true iff the sign bit of X is set, then convert this
+      // If the icmp is true iff the sign bit of X is set, then convert this
       // multiply into a shift/and combination.
       if (isa<ConstantInt>(SCIOp1) &&
-          isSignBitCheck(SCI->getOpcode(), SCIOp0, cast<ConstantInt>(SCIOp1))) {
+          isSignBitCheck(SCI->getPredicate(), cast<ConstantInt>(SCIOp1))) {
         // Shift the X value right to turn it into "all signbits".
         Constant *Amt = ConstantInt::get(Type::UByteTy,
                                           SCOpTy->getPrimitiveSizeInBits()-1);
@@ -2613,27 +2653,27 @@ Instruction *InstCombiner::visitFRem(BinaryOperator &I) {
 }
 
 // isMaxValueMinusOne - return true if this is Max-1
-static bool isMaxValueMinusOne(const ConstantInt *C) {
-  if (C->getType()->isUnsigned()) 
-    return C->getZExtValue() == C->getType()->getIntegralTypeMask()-1;
-
-  // Calculate 0111111111..11111
-  unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
-  int64_t Val = INT64_MAX;             // All ones
-  Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-  return C->getSExtValue() == Val-1;
+static bool isMaxValueMinusOne(const ConstantInt *C, bool isSigned) {
+  if (isSigned) {
+    // Calculate 0111111111..11111
+    unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
+    int64_t Val = INT64_MAX;             // All ones
+    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
+    return C->getSExtValue() == Val-1;
+  }
+  return C->getZExtValue() == C->getType()->getIntegralTypeMask()-1;
 }
 
 // isMinValuePlusOne - return true if this is Min+1
-static bool isMinValuePlusOne(const ConstantInt *C) {
-  if (C->getType()->isUnsigned())
-    return C->getZExtValue() == 1;
-
-  // Calculate 1111111111000000000000
-  unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
-  int64_t Val = -1;                    // All ones
-  Val <<= TypeBits-1;                  // Shift over to the right spot
-  return C->getSExtValue() == Val+1;
+static bool isMinValuePlusOne(const ConstantInt *C, bool isSigned) {
+  if (isSigned) {
+    // Calculate 1111111111000000000000
+    unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
+    int64_t Val = -1;                    // All ones
+    Val <<= TypeBits-1;                  // Shift over to the right spot
+    return C->getSExtValue() == Val+1;
+  }
+  return C->getZExtValue() == 1; // unsigned
 }
 
 // isOneBitSet - Return true if there is exactly one bit set in the specified
@@ -2669,71 +2709,116 @@ static bool isHighOnes(const ConstantInt *CI) {
   return U && V && (U & V) == 0;
 }
 
-
-/// getSetCondCode - Encode a setcc opcode into a three bit mask.  These bits
+/// getICmpCode - Encode a icmp predicate into a three bit mask.  These bits
 /// are carefully arranged to allow folding of expressions such as:
 ///
 ///      (A < B) | (A > B) --> (A != B)
 ///
-/// Bit value '4' represents that the comparison is true if A > B, bit value '2'
-/// represents that the comparison is true if A == B, and bit value '1' is true
-/// if A < B.
+/// Note that this is only valid if the first and second predicates have the
+/// same sign. Is illegal to do: (A u< B) | (A s> B) 
 ///
-static unsigned getSetCondCode(const SetCondInst *SCI) {
-  switch (SCI->getOpcode()) {
+/// Three bits are used to represent the condition, as follows:
+///   0  A > B
+///   1  A == B
+///   2  A < B
+///
+/// <=>  Value  Definition
+/// 000     0   Always false
+/// 001     1   A >  B
+/// 010     2   A == B
+/// 011     3   A >= B
+/// 100     4   A <  B
+/// 101     5   A != B
+/// 110     6   A <= B
+/// 111     7   Always true
+///  
+static unsigned getICmpCode(const ICmpInst *ICI) {
+  switch (ICI->getPredicate()) {
     // False -> 0
-  case Instruction::SetGT: return 1;
-  case Instruction::SetEQ: return 2;
-  case Instruction::SetGE: return 3;
-  case Instruction::SetLT: return 4;
-  case Instruction::SetNE: return 5;
-  case Instruction::SetLE: return 6;
+  case ICmpInst::ICMP_UGT: return 1;  // 001
+  case ICmpInst::ICMP_SGT: return 1;  // 001
+  case ICmpInst::ICMP_EQ:  return 2;  // 010
+  case ICmpInst::ICMP_UGE: return 3;  // 011
+  case ICmpInst::ICMP_SGE: return 3;  // 011
+  case ICmpInst::ICMP_ULT: return 4;  // 100
+  case ICmpInst::ICMP_SLT: return 4;  // 100
+  case ICmpInst::ICMP_NE:  return 5;  // 101
+  case ICmpInst::ICMP_ULE: return 6;  // 110
+  case ICmpInst::ICMP_SLE: return 6;  // 110
     // True -> 7
   default:
-    assert(0 && "Invalid SetCC opcode!");
+    assert(0 && "Invalid ICmp predicate!");
     return 0;
   }
 }
 
-/// getSetCCValue - This is the complement of getSetCondCode, which turns an
-/// opcode and two operands into either a constant true or false, or a brand new
-/// SetCC instruction.
-static Value *getSetCCValue(unsigned Opcode, Value *LHS, Value *RHS) {
-  switch (Opcode) {
-  case 0: return ConstantBool::getFalse();
-  case 1: return new SetCondInst(Instruction::SetGT, LHS, RHS);
-  case 2: return new SetCondInst(Instruction::SetEQ, LHS, RHS);
-  case 3: return new SetCondInst(Instruction::SetGE, LHS, RHS);
-  case 4: return new SetCondInst(Instruction::SetLT, LHS, RHS);
-  case 5: return new SetCondInst(Instruction::SetNE, LHS, RHS);
-  case 6: return new SetCondInst(Instruction::SetLE, LHS, RHS);
-  case 7: return ConstantBool::getTrue();
-  default: assert(0 && "Illegal SetCCCode!"); return 0;
+/// getICmpValue - This is the complement of getICmpCode, which turns an
+/// opcode and two operands into either a constant true or false, or a brand 
+/// new /// ICmp instruction. The sign is passed in to determine which kind
+/// of predicate to use in new icmp instructions.
+static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS) {
+  switch (code) {
+  default: assert(0 && "Illegal ICmp code!");
+  case  0: return ConstantBool::getFalse();
+  case  1: 
+    if (sign)
+      return new ICmpInst(ICmpInst::ICMP_SGT, LHS, RHS);
+    else
+      return new ICmpInst(ICmpInst::ICMP_UGT, LHS, RHS);
+  case  2: return new ICmpInst(ICmpInst::ICMP_EQ,  LHS, RHS);
+  case  3: 
+    if (sign)
+      return new ICmpInst(ICmpInst::ICMP_SGE, LHS, RHS);
+    else
+      return new ICmpInst(ICmpInst::ICMP_UGE, LHS, RHS);
+  case  4: 
+    if (sign)
+      return new ICmpInst(ICmpInst::ICMP_SLT, LHS, RHS);
+    else
+      return new ICmpInst(ICmpInst::ICMP_ULT, LHS, RHS);
+  case  5: return new ICmpInst(ICmpInst::ICMP_NE,  LHS, RHS);
+  case  6: 
+    if (sign)
+      return new ICmpInst(ICmpInst::ICMP_SLE, LHS, RHS);
+    else
+      return new ICmpInst(ICmpInst::ICMP_ULE, LHS, RHS);
+  case  7: return ConstantBool::getTrue();
   }
 }
 
-// FoldSetCCLogical - Implements (setcc1 A, B) & (setcc2 A, B) --> (setcc3 A, B)
-namespace {
-struct FoldSetCCLogical {
+static bool PredicatesFoldable(ICmpInst::Predicate p1, ICmpInst::Predicate p2) {
+  return (ICmpInst::isSignedPredicate(p1) == ICmpInst::isSignedPredicate(p2)) ||
+    (ICmpInst::isSignedPredicate(p1) && 
+     (p2 == ICmpInst::ICMP_EQ || p2 == ICmpInst::ICMP_NE)) ||
+    (ICmpInst::isSignedPredicate(p2) && 
+     (p1 == ICmpInst::ICMP_EQ || p1 == ICmpInst::ICMP_NE));
+}
+
+namespace { 
+// FoldICmpLogical - Implements (icmp1 A, B) & (icmp2 A, B) --> (icmp3 A, B)
+struct FoldICmpLogical {
   InstCombiner &IC;
   Value *LHS, *RHS;
-  FoldSetCCLogical(InstCombiner &ic, SetCondInst *SCI)
-    : IC(ic), LHS(SCI->getOperand(0)), RHS(SCI->getOperand(1)) {}
+  ICmpInst::Predicate pred;
+  FoldICmpLogical(InstCombiner &ic, ICmpInst *ICI)
+    : IC(ic), LHS(ICI->getOperand(0)), RHS(ICI->getOperand(1)),
+      pred(ICI->getPredicate()) {}
   bool shouldApply(Value *V) const {
-    if (SetCondInst *SCI = dyn_cast<SetCondInst>(V))
-      return (SCI->getOperand(0) == LHS && SCI->getOperand(1) == RHS ||
-              SCI->getOperand(0) == RHS && SCI->getOperand(1) == LHS);
+    if (ICmpInst *ICI = dyn_cast<ICmpInst>(V))
+      if (PredicatesFoldable(pred, ICI->getPredicate()))
+        return (ICI->getOperand(0) == LHS && ICI->getOperand(1) == RHS ||
+                ICI->getOperand(0) == RHS && ICI->getOperand(1) == LHS);
     return false;
   }
-  Instruction *apply(BinaryOperator &Log) const {
-    SetCondInst *SCI = cast<SetCondInst>(Log.getOperand(0));
-    if (SCI->getOperand(0) != LHS) {
-      assert(SCI->getOperand(1) == LHS);
-      SCI->swapOperands();  // Swap the LHS and RHS of the SetCC
+  Instruction *apply(Instruction &Log) const {
+    ICmpInst *ICI = cast<ICmpInst>(Log.getOperand(0));
+    if (ICI->getOperand(0) != LHS) {
+      assert(ICI->getOperand(1) == LHS);
+      ICI->swapOperands();  // Swap the LHS and RHS of the ICmp
     }
 
-    unsigned LHSCode = getSetCondCode(SCI);
-    unsigned RHSCode = getSetCondCode(cast<SetCondInst>(Log.getOperand(1)));
+    unsigned LHSCode = getICmpCode(ICI);
+    unsigned RHSCode = getICmpCode(cast<ICmpInst>(Log.getOperand(1)));
     unsigned Code;
     switch (Log.getOpcode()) {
     case Instruction::And: Code = LHSCode & RHSCode; break;
@@ -2742,7 +2827,7 @@ struct FoldSetCCLogical {
     default: assert(0 && "Illegal logical opcode!"); return 0;
     }
 
-    Value *RV = getSetCCValue(Code, LHS, RHS);
+    Value *RV = getICmpValue(ICmpInst::isSignedPredicate(pred), Code, LHS, RHS);
     if (Instruction *I = dyn_cast<Instruction>(RV))
       return I;
     // Otherwise, it's a constant boolean value...
@@ -2882,48 +2967,52 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
 
 /// InsertRangeTest - Emit a computation of: (V >= Lo && V < Hi) if Inside is
 /// true, otherwise (V < Lo || V >= Hi).  In pratice, we emit the more efficient
-/// (V-Lo) <u Hi-Lo.  This method expects that Lo <= Hi.  IB is the location to
+/// (V-Lo) <u Hi-Lo.  This method expects that Lo <= Hi. isSigned indicates
+/// whether to treat the V, Lo and HI as signed or not. IB is the location to
 /// insert new instructions.
 Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
-                                           bool Inside, Instruction &IB) {
-  assert(cast<ConstantBool>(ConstantExpr::getSetLE(Lo, Hi))->getValue() &&
+                                           bool isSigned, bool Inside, 
+                                           Instruction &IB) {
+  assert(cast<ConstantBool>(ConstantExpr::getICmp((isSigned ? 
+            ICmpInst::ICMP_SLE:ICmpInst::ICMP_ULE), Lo, Hi))->getValue() &&
          "Lo is not <= Hi in range emission code!");
+    
   if (Inside) {
     if (Lo == Hi)  // Trivially false.
-      return new SetCondInst(Instruction::SetNE, V, V);
-    if (cast<ConstantIntegral>(Lo)->isMinValue(Lo->getType()->isSigned()))
-      return new SetCondInst(Instruction::SetLT, V, Hi);
+      return new ICmpInst(ICmpInst::ICMP_NE, V, V);
 
-    Constant *AddCST = ConstantExpr::getNeg(Lo);
-    Instruction *Add = BinaryOperator::createAdd(V, AddCST,V->getName()+".off");
+    // V >= Min && V < Hi --> V < Hi
+    if (cast<ConstantIntegral>(Lo)->isMinValue(isSigned)) {
+    ICmpInst::Predicate pred = (isSigned ? 
+        ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT);
+      return new ICmpInst(pred, V, Hi);
+    }
+
+    // Emit V-Lo <u Hi-Lo
+    Constant *NegLo = ConstantExpr::getNeg(Lo);
+    Instruction *Add = BinaryOperator::createAdd(V, NegLo, V->getName()+".off");
     InsertNewInstBefore(Add, IB);
-    // Convert to unsigned for the comparison.
-    const Type *UnsType = Add->getType()->getUnsignedVersion();
-    Value *OffsetVal = InsertCastBefore(Instruction::BitCast, Add, UnsType, IB);
-    AddCST = ConstantExpr::getAdd(AddCST, Hi);
-    AddCST = ConstantExpr::getBitCast(AddCST, UnsType);
-    return new SetCondInst(Instruction::SetLT, OffsetVal, AddCST);
+    Constant *UpperBound = ConstantExpr::getAdd(NegLo, Hi);
+    return new ICmpInst(ICmpInst::ICMP_ULT, Add, UpperBound);
   }
 
   if (Lo == Hi)  // Trivially true.
-    return new SetCondInst(Instruction::SetEQ, V, V);
+    return new ICmpInst(ICmpInst::ICMP_EQ, V, V);
 
+  // V < Min || V >= Hi ->'V > Hi-1'
   Hi = SubOne(cast<ConstantInt>(Hi));
+  if (cast<ConstantIntegral>(Lo)->isMinValue(isSigned)) {
+    ICmpInst::Predicate pred = (isSigned ? 
+        ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT);
+    return new ICmpInst(pred, V, Hi);
+  }
 
-  // V < 0 || V >= Hi ->'V > Hi-1'
-  if (cast<ConstantIntegral>(Lo)->isMinValue(Lo->getType()->isSigned()))
-    return new SetCondInst(Instruction::SetGT, V, Hi);
-
-  // Emit X-Lo > Hi-Lo-1
-  Constant *AddCST = ConstantExpr::getNeg(Lo);
-  Instruction *Add = BinaryOperator::createAdd(V, AddCST, V->getName()+".off");
+  // Emit V-Lo > Hi-1-Lo
+  Constant *NegLo = ConstantExpr::getNeg(Lo);
+  Instruction *Add = BinaryOperator::createAdd(V, NegLo, V->getName()+".off");
   InsertNewInstBefore(Add, IB);
-  // Convert to unsigned for the comparison.
-  const Type *UnsType = Add->getType()->getUnsignedVersion();
-  Value *OffsetVal = InsertCastBefore(Instruction::BitCast, Add, UnsType, IB);
-  AddCST = ConstantExpr::getAdd(AddCST, Hi);
-  AddCST = ConstantExpr::getBitCast(AddCST, UnsType);
-  return new SetCondInst(Instruction::SetGT, OffsetVal, AddCST);
+  Constant *LowerBound = ConstantExpr::getAdd(NegLo, Hi);
+  return new ICmpInst(ICmpInst::ICMP_UGT, Add, LowerBound);
 }
 
 // isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
@@ -3163,62 +3252,72 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     }
   }
   
-
-  if (SetCondInst *RHS = dyn_cast<SetCondInst>(Op1)) {
-    // (setcc1 A, B) & (setcc2 A, B) --> (setcc3 A, B)
-    if (Instruction *R = AssociativeOpt(I, FoldSetCCLogical(*this, RHS)))
+  if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1)) {
+    // (icmp1 A, B) & (icmp2 A, B) --> (icmp3 A, B)
+    if (Instruction *R = AssociativeOpt(I, FoldICmpLogical(*this, RHS)))
       return R;
 
     Value *LHSVal, *RHSVal;
     ConstantInt *LHSCst, *RHSCst;
-    Instruction::BinaryOps LHSCC, RHSCC;
-    if (match(Op0, m_SetCond(LHSCC, m_Value(LHSVal), m_ConstantInt(LHSCst))))
-      if (match(RHS, m_SetCond(RHSCC, m_Value(RHSVal), m_ConstantInt(RHSCst))))
-        if (LHSVal == RHSVal &&    // Found (X setcc C1) & (X setcc C2)
-            // Set[GL]E X, CST is folded to Set[GL]T elsewhere.
-            LHSCC != Instruction::SetGE && LHSCC != Instruction::SetLE &&
-            RHSCC != Instruction::SetGE && RHSCC != Instruction::SetLE) {
+    ICmpInst::Predicate LHSCC, RHSCC;
+    if (match(Op0, m_ICmp(LHSCC, m_Value(LHSVal), m_ConstantInt(LHSCst))))
+      if (match(RHS, m_ICmp(RHSCC, m_Value(RHSVal), m_ConstantInt(RHSCst))))
+        if (LHSVal == RHSVal &&    // Found (X icmp C1) & (X icmp C2)
+            // ICMP_[GL]E X, CST is folded to ICMP_[GL]T elsewhere.
+            LHSCC != ICmpInst::ICMP_UGE && LHSCC != ICmpInst::ICMP_ULE &&
+            RHSCC != ICmpInst::ICMP_UGE && RHSCC != ICmpInst::ICMP_ULE &&
+            LHSCC != ICmpInst::ICMP_SGE && LHSCC != ICmpInst::ICMP_SLE &&
+            RHSCC != ICmpInst::ICMP_SGE && RHSCC != ICmpInst::ICMP_SLE) {
           // Ensure that the larger constant is on the RHS.
-          Constant *Cmp = ConstantExpr::getSetGT(LHSCst, RHSCst);
-          SetCondInst *LHS = cast<SetCondInst>(Op0);
+          ICmpInst::Predicate GT = ICmpInst::isSignedPredicate(LHSCC) ? 
+            ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
+          Constant *Cmp = ConstantExpr::getICmp(GT, LHSCst, RHSCst);
+          ICmpInst *LHS = cast<ICmpInst>(Op0);
           if (cast<ConstantBool>(Cmp)->getValue()) {
             std::swap(LHS, RHS);
             std::swap(LHSCst, RHSCst);
             std::swap(LHSCC, RHSCC);
           }
 
-          // At this point, we know we have have two setcc instructions
+          // At this point, we know we have have two icmp instructions
           // comparing a value against two constants and and'ing the result
           // together.  Because of the above check, we know that we only have
-          // SetEQ, SetNE, SetLT, and SetGT here.  We also know (from the
-          // FoldSetCCLogical check above), that the two constants are not
-          // equal.
+          // icmp eq, icmp ne, icmp [su]lt, and icmp [SU]gt here. We also know 
+          // (from the FoldICmpLogical check above), that the two constants 
+          // are not equal and that the larger constant is on the RHS
           assert(LHSCst != RHSCst && "Compares not folded above?");
 
           switch (LHSCC) {
           default: assert(0 && "Unknown integer condition code!");
-          case Instruction::SetEQ:
+          case ICmpInst::ICMP_EQ:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case Instruction::SetEQ:  // (X == 13 & X == 15) -> false
-            case Instruction::SetGT:  // (X == 13 & X > 15)  -> false
+            case ICmpInst::ICMP_EQ:         // (X == 13 & X == 15) -> false
+            case ICmpInst::ICMP_UGT:        // (X == 13 & X >  15) -> false
+            case ICmpInst::ICMP_SGT:        // (X == 13 & X >  15) -> false
               return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-            case Instruction::SetNE:  // (X == 13 & X != 15) -> X == 13
-            case Instruction::SetLT:  // (X == 13 & X < 15)  -> X == 13
+            case ICmpInst::ICMP_NE:         // (X == 13 & X != 15) -> X == 13
+            case ICmpInst::ICMP_ULT:        // (X == 13 & X <  15) -> X == 13
+            case ICmpInst::ICMP_SLT:        // (X == 13 & X <  15) -> X == 13
               return ReplaceInstUsesWith(I, LHS);
             }
-          case Instruction::SetNE:
+          case ICmpInst::ICMP_NE:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case Instruction::SetLT:
-              if (LHSCst == SubOne(RHSCst)) // (X != 13 & X < 14) -> X < 13
-                return new SetCondInst(Instruction::SetLT, LHSVal, LHSCst);
-              break;                        // (X != 13 & X < 15) -> no change
-            case Instruction::SetEQ:        // (X != 13 & X == 15) -> X == 15
-            case Instruction::SetGT:        // (X != 13 & X > 15)  -> X > 15
+            case ICmpInst::ICMP_ULT:
+              if (LHSCst == SubOne(RHSCst)) // (X != 13 & X u< 14) -> X < 13
+                return new ICmpInst(ICmpInst::ICMP_ULT, LHSVal, LHSCst);
+              break;                        // (X != 13 & X u< 15) -> no change
+            case ICmpInst::ICMP_SLT:
+              if (LHSCst == SubOne(RHSCst)) // (X != 13 & X s< 14) -> X < 13
+                return new ICmpInst(ICmpInst::ICMP_SLT, LHSVal, LHSCst);
+              break;                        // (X != 13 & X s< 15) -> no change
+            case ICmpInst::ICMP_EQ:         // (X != 13 & X == 15) -> X == 15
+            case ICmpInst::ICMP_UGT:        // (X != 13 & X u> 15) -> X u> 15
+            case ICmpInst::ICMP_SGT:        // (X != 13 & X s> 15) -> X s> 15
               return ReplaceInstUsesWith(I, RHS);
-            case Instruction::SetNE:
-              if (LHSCst == SubOne(RHSCst)) {// (X != 13 & X != 14) -> X-13 >u 1
+            case ICmpInst::ICMP_NE:
+              if (LHSCst == SubOne(RHSCst)){// (X != 13 & X != 14) -> X-13 >u 1
                 Constant *AddCST = ConstantExpr::getNeg(LHSCst);
                 Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
                                                       LHSVal->getName()+".off");
@@ -3228,35 +3327,81 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
                                                     UnsType, I);
                 AddCST = ConstantExpr::getSub(RHSCst, LHSCst);
                 AddCST = ConstantExpr::getBitCast(AddCST, UnsType);
-                return new SetCondInst(Instruction::SetGT, OffsetVal, AddCST);
+                return new ICmpInst(ICmpInst::ICMP_UGT, OffsetVal, AddCST);
               }
               break;                        // (X != 13 & X != 15) -> no change
             }
             break;
-          case Instruction::SetLT:
+          case ICmpInst::ICMP_ULT:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case Instruction::SetEQ:  // (X < 13 & X == 15) -> false
-            case Instruction::SetGT:  // (X < 13 & X > 15)  -> false
+            case ICmpInst::ICMP_EQ:         // (X u< 13 & X == 15) -> false
+            case ICmpInst::ICMP_UGT:        // (X u< 13 & X u> 15) -> false
               return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-            case Instruction::SetNE:  // (X < 13 & X != 15) -> X < 13
-            case Instruction::SetLT:  // (X < 13 & X < 15) -> X < 13
+            case ICmpInst::ICMP_SGT:        // (X u< 13 & X s> 15) -> no change
+              break;
+            case ICmpInst::ICMP_NE:         // (X u< 13 & X != 15) -> X u< 13
+            case ICmpInst::ICMP_ULT:        // (X u< 13 & X u< 15) -> X u< 13
               return ReplaceInstUsesWith(I, LHS);
+            case ICmpInst::ICMP_SLT:        // (X u< 13 & X s< 15) -> no change
+              break;
             }
-          case Instruction::SetGT:
+            break;
+          case ICmpInst::ICMP_SLT:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case Instruction::SetEQ:  // (X > 13 & X == 15) -> X > 13
+            case ICmpInst::ICMP_EQ:         // (X s< 13 & X == 15) -> false
+            case ICmpInst::ICMP_SGT:        // (X s< 13 & X s> 15) -> false
+              return ReplaceInstUsesWith(I, ConstantBool::getFalse());
+            case ICmpInst::ICMP_UGT:        // (X s< 13 & X u> 15) -> no change
+              break;
+            case ICmpInst::ICMP_NE:         // (X s< 13 & X != 15) -> X < 13
+            case ICmpInst::ICMP_SLT:        // (X s< 13 & X s< 15) -> X < 13
               return ReplaceInstUsesWith(I, LHS);
-            case Instruction::SetGT:  // (X > 13 & X > 15)  -> X > 15
-              return ReplaceInstUsesWith(I, RHS);
-            case Instruction::SetNE:
-              if (RHSCst == AddOne(LHSCst)) // (X > 13 & X != 14) -> X > 14
-                return new SetCondInst(Instruction::SetGT, LHSVal, RHSCst);
-              break;                        // (X > 13 & X != 15) -> no change
-            case Instruction::SetLT:   // (X > 13 & X < 15) -> (X-14) <u 1
-              return InsertRangeTest(LHSVal, AddOne(LHSCst), RHSCst, true, I);
+            case ICmpInst::ICMP_ULT:        // (X s< 13 & X u< 15) -> no change
+              break;
             }
+            break;
+          case ICmpInst::ICMP_UGT:
+            switch (RHSCC) {
+            default: assert(0 && "Unknown integer condition code!");
+            case ICmpInst::ICMP_EQ:         // (X u> 13 & X == 15) -> X > 13
+              return ReplaceInstUsesWith(I, LHS);
+            case ICmpInst::ICMP_UGT:        // (X u> 13 & X u> 15) -> X u> 15
+              return ReplaceInstUsesWith(I, RHS);
+            case ICmpInst::ICMP_SGT:        // (X u> 13 & X s> 15) -> no change
+              break;
+            case ICmpInst::ICMP_NE:
+              if (RHSCst == AddOne(LHSCst)) // (X u> 13 & X != 14) -> X u> 14
+                return new ICmpInst(LHSCC, LHSVal, RHSCst);
+              break;                        // (X u> 13 & X != 15) -> no change
+            case ICmpInst::ICMP_ULT:        // (X u> 13 & X u< 15) ->(X-14) <u 1
+              return InsertRangeTest(LHSVal, AddOne(LHSCst), RHSCst, false, 
+                                     true, I);
+            case ICmpInst::ICMP_SLT:        // (X u> 13 & X s< 15) -> no change
+              break;
+            }
+            break;
+          case ICmpInst::ICMP_SGT:
+            switch (RHSCC) {
+            default: assert(0 && "Unknown integer condition code!");
+            case ICmpInst::ICMP_EQ:         // (X s> 13 & X == 15) -> X s> 13
+              return ReplaceInstUsesWith(I, LHS);
+            case ICmpInst::ICMP_SGT:        // (X s> 13 & X s> 15) -> X s> 15
+              return ReplaceInstUsesWith(I, RHS);
+            case ICmpInst::ICMP_UGT:        // (X s> 13 & X u> 15) -> no change
+              break;
+            case ICmpInst::ICMP_NE:
+              if (RHSCst == AddOne(LHSCst)) // (X s> 13 & X != 14) -> X s> 14
+                return new ICmpInst(LHSCC, LHSVal, RHSCst);
+              break;                        // (X s> 13 & X != 15) -> no change
+            case ICmpInst::ICMP_SLT:        // (X s> 13 & X s< 15) ->(X-14) s< 1
+              return InsertRangeTest(LHSVal, AddOne(LHSCst), RHSCst, true, 
+                                     true, I);
+            case ICmpInst::ICMP_ULT:        // (X s> 13 & X u< 15) -> no change
+              break;
+            }
+            break;
           }
         }
   }
@@ -3268,8 +3413,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         const Type *SrcTy = Op0C->getOperand(0)->getType();
         if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
             // Only do this if the casts both really cause code to be generated.
-            ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
-            ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
+            ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
+                              I.getType(), TD) &&
+            ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
+                              I.getType(), TD)) {
           Instruction *NewOp = BinaryOperator::createAnd(Op0C->getOperand(0),
                                                          Op1C->getOperand(0),
                                                          I.getName());
@@ -3570,97 +3717,142 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     }
   }
 
-  // (setcc1 A, B) | (setcc2 A, B) --> (setcc3 A, B)
-  if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1))) {
-    if (Instruction *R = AssociativeOpt(I, FoldSetCCLogical(*this, RHS)))
+  // (icmp1 A, B) | (icmp2 A, B) --> (icmp3 A, B)
+  if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1))) {
+    if (Instruction *R = AssociativeOpt(I, FoldICmpLogical(*this, RHS)))
       return R;
 
     Value *LHSVal, *RHSVal;
     ConstantInt *LHSCst, *RHSCst;
-    Instruction::BinaryOps LHSCC, RHSCC;
-    if (match(Op0, m_SetCond(LHSCC, m_Value(LHSVal), m_ConstantInt(LHSCst))))
-      if (match(RHS, m_SetCond(RHSCC, m_Value(RHSVal), m_ConstantInt(RHSCst))))
-        if (LHSVal == RHSVal &&    // Found (X setcc C1) | (X setcc C2)
-            // Set[GL]E X, CST is folded to Set[GL]T elsewhere.
-            LHSCC != Instruction::SetGE && LHSCC != Instruction::SetLE &&
-            RHSCC != Instruction::SetGE && RHSCC != Instruction::SetLE) {
+    ICmpInst::Predicate LHSCC, RHSCC;
+    if (match(Op0, m_ICmp(LHSCC, m_Value(LHSVal), m_ConstantInt(LHSCst))))
+      if (match(RHS, m_ICmp(RHSCC, m_Value(RHSVal), m_ConstantInt(RHSCst))))
+        if (LHSVal == RHSVal &&    // Found (X icmp C1) | (X icmp C2)
+            // icmp [us][gl]e x, cst is folded to icmp [us][gl]t elsewhere.
+            LHSCC != ICmpInst::ICMP_UGE && LHSCC != ICmpInst::ICMP_ULE &&
+            RHSCC != ICmpInst::ICMP_UGE && RHSCC != ICmpInst::ICMP_ULE &&
+            LHSCC != ICmpInst::ICMP_SGE && LHSCC != ICmpInst::ICMP_SLE &&
+            RHSCC != ICmpInst::ICMP_SGE && RHSCC != ICmpInst::ICMP_SLE) {
           // Ensure that the larger constant is on the RHS.
-          Constant *Cmp = ConstantExpr::getSetGT(LHSCst, RHSCst);
-          SetCondInst *LHS = cast<SetCondInst>(Op0);
+          ICmpInst::Predicate GT = ICmpInst::isSignedPredicate(LHSCC) ? 
+            ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
+          Constant *Cmp = ConstantExpr::getICmp(GT, LHSCst, RHSCst);
+          ICmpInst *LHS = cast<ICmpInst>(Op0);
           if (cast<ConstantBool>(Cmp)->getValue()) {
             std::swap(LHS, RHS);
             std::swap(LHSCst, RHSCst);
             std::swap(LHSCC, RHSCC);
           }
 
-          // At this point, we know we have have two setcc instructions
+          // At this point, we know we have have two icmp instructions
           // comparing a value against two constants and or'ing the result
           // together.  Because of the above check, we know that we only have
-          // SetEQ, SetNE, SetLT, and SetGT here.  We also know (from the
-          // FoldSetCCLogical check above), that the two constants are not
+          // ICMP_EQ, ICMP_NE, ICMP_LT, and ICMP_GT here. We also know (from the
+          // FoldICmpLogical check above), that the two constants are not
           // equal.
           assert(LHSCst != RHSCst && "Compares not folded above?");
 
           switch (LHSCC) {
           default: assert(0 && "Unknown integer condition code!");
-          case Instruction::SetEQ:
+          case ICmpInst::ICMP_EQ:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case Instruction::SetEQ:
+            case ICmpInst::ICMP_EQ:
               if (LHSCst == SubOne(RHSCst)) {// (X == 13 | X == 14) -> X-13 <u 2
                 Constant *AddCST = ConstantExpr::getNeg(LHSCst);
                 Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
                                                       LHSVal->getName()+".off");
                 InsertNewInstBefore(Add, I);
-                const Type *UnsType = Add->getType()->getUnsignedVersion();
-                Value *OffsetVal = InsertCastBefore(Instruction::BitCast, Add,
-                                                    UnsType, I);
                 AddCST = ConstantExpr::getSub(AddOne(RHSCst), LHSCst);
-                AddCST = ConstantExpr::getBitCast(AddCST, UnsType);
-                return new SetCondInst(Instruction::SetLT, OffsetVal, AddCST);
+                return new ICmpInst(ICmpInst::ICMP_ULT, Add, AddCST);
               }
-              break;                  // (X == 13 | X == 15) -> no change
-
-            case Instruction::SetGT:  // (X == 13 | X > 14) -> no change
+              break;                         // (X == 13 | X == 15) -> no change
+            case ICmpInst::ICMP_UGT:         // (X == 13 | X u> 14) -> no change
+            case ICmpInst::ICMP_SGT:         // (X == 13 | X s> 14) -> no change
               break;
-            case Instruction::SetNE:  // (X == 13 | X != 15) -> X != 15
-            case Instruction::SetLT:  // (X == 13 | X < 15)  -> X < 15
+            case ICmpInst::ICMP_NE:          // (X == 13 | X != 15) -> X != 15
+            case ICmpInst::ICMP_ULT:         // (X == 13 | X u< 15) -> X u< 15
+            case ICmpInst::ICMP_SLT:         // (X == 13 | X s< 15) -> X s< 15
               return ReplaceInstUsesWith(I, RHS);
             }
             break;
-          case Instruction::SetNE:
+          case ICmpInst::ICMP_NE:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case Instruction::SetEQ:        // (X != 13 | X == 15) -> X != 13
-            case Instruction::SetGT:        // (X != 13 | X > 15)  -> X != 13
+            case ICmpInst::ICMP_EQ:          // (X != 13 | X == 15) -> X != 13
+            case ICmpInst::ICMP_UGT:         // (X != 13 | X u> 15) -> X != 13
+            case ICmpInst::ICMP_SGT:         // (X != 13 | X s> 15) -> X != 13
               return ReplaceInstUsesWith(I, LHS);
-            case Instruction::SetNE:        // (X != 13 | X != 15) -> true
-            case Instruction::SetLT:        // (X != 13 | X < 15)  -> true
+            case ICmpInst::ICMP_NE:          // (X != 13 | X != 15) -> true
+            case ICmpInst::ICMP_ULT:         // (X != 13 | X u< 15) -> true
+            case ICmpInst::ICMP_SLT:         // (X != 13 | X s< 15) -> true
               return ReplaceInstUsesWith(I, ConstantBool::getTrue());
             }
             break;
-          case Instruction::SetLT:
+          case ICmpInst::ICMP_ULT:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case Instruction::SetEQ:  // (X < 13 | X == 14) -> no change
+            case ICmpInst::ICMP_EQ:         // (X u< 13 | X == 14) -> no change
               break;
-            case Instruction::SetGT:  // (X < 13 | X > 15)  -> (X-13) > 2
-              return InsertRangeTest(LHSVal, LHSCst, AddOne(RHSCst), false, I);
-            case Instruction::SetNE:  // (X < 13 | X != 15) -> X != 15
-            case Instruction::SetLT:  // (X < 13 | X < 15) -> X < 15
+            case ICmpInst::ICMP_UGT:        // (X u< 13 | X u> 15) ->(X-13) u> 2
+              return InsertRangeTest(LHSVal, LHSCst, AddOne(RHSCst), false, 
+                                     false, I);
+            case ICmpInst::ICMP_SGT:        // (X u< 13 | X s> 15) -> no change
+              break;
+            case ICmpInst::ICMP_NE:         // (X u< 13 | X != 15) -> X != 15
+            case ICmpInst::ICMP_ULT:        // (X u< 13 | X u< 15) -> X u< 15
               return ReplaceInstUsesWith(I, RHS);
+            case ICmpInst::ICMP_SLT:        // (X u< 13 | X s< 15) -> no change
+              break;
             }
             break;
-          case Instruction::SetGT:
+          case ICmpInst::ICMP_SLT:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case Instruction::SetEQ:  // (X > 13 | X == 15) -> X > 13
-            case Instruction::SetGT:  // (X > 13 | X > 15)  -> X > 13
-              return ReplaceInstUsesWith(I, LHS);
-            case Instruction::SetNE:  // (X > 13 | X != 15)  -> true
-            case Instruction::SetLT:  // (X > 13 | X < 15) -> true
-              return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+            case ICmpInst::ICMP_EQ:         // (X s< 13 | X == 14) -> no change
+              break;
+            case ICmpInst::ICMP_SGT:        // (X s< 13 | X s> 15) ->(X-13) s> 2
+              return InsertRangeTest(LHSVal, LHSCst, AddOne(RHSCst), true, 
+                                     false, I);
+            case ICmpInst::ICMP_UGT:        // (X s< 13 | X u> 15) -> no change
+              break;
+            case ICmpInst::ICMP_NE:         // (X s< 13 | X != 15) -> X != 15
+            case ICmpInst::ICMP_SLT:        // (X s< 13 | X s< 15) -> X s< 15
+              return ReplaceInstUsesWith(I, RHS);
+            case ICmpInst::ICMP_ULT:        // (X s< 13 | X u< 15) -> no change
+              break;
             }
+            break;
+          case ICmpInst::ICMP_UGT:
+            switch (RHSCC) {
+            default: assert(0 && "Unknown integer condition code!");
+            case ICmpInst::ICMP_EQ:         // (X u> 13 | X == 15) -> X u> 13
+            case ICmpInst::ICMP_UGT:        // (X u> 13 | X u> 15) -> X u> 13
+              return ReplaceInstUsesWith(I, LHS);
+            case ICmpInst::ICMP_SGT:        // (X u> 13 | X s> 15) -> no change
+              break;
+            case ICmpInst::ICMP_NE:         // (X u> 13 | X != 15) -> true
+            case ICmpInst::ICMP_ULT:        // (X u> 13 | X u< 15) -> true
+              return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+            case ICmpInst::ICMP_SLT:        // (X u> 13 | X s< 15) -> no change
+              break;
+            }
+            break;
+          case ICmpInst::ICMP_SGT:
+            switch (RHSCC) {
+            default: assert(0 && "Unknown integer condition code!");
+            case ICmpInst::ICMP_EQ:         // (X s> 13 | X == 15) -> X > 13
+            case ICmpInst::ICMP_SGT:        // (X s> 13 | X s> 15) -> X > 13
+              return ReplaceInstUsesWith(I, LHS);
+            case ICmpInst::ICMP_UGT:        // (X s> 13 | X u> 15) -> no change
+              break;
+            case ICmpInst::ICMP_NE:         // (X s> 13 | X != 15) -> true
+            case ICmpInst::ICMP_SLT:        // (X s> 13 | X s< 15) -> true
+              return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+            case ICmpInst::ICMP_ULT:        // (X s> 13 | X u< 15) -> no change
+              break;
+            }
+            break;
           }
         }
   }
@@ -3672,8 +3864,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         const Type *SrcTy = Op0C->getOperand(0)->getType();
         if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
             // Only do this if the casts both really cause code to be generated.
-            ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
-            ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
+            ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
+                              I.getType(), TD) &&
+            ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
+                              I.getType(), TD)) {
           Instruction *NewOp = BinaryOperator::createOr(Op0C->getOperand(0),
                                                         Op1C->getOperand(0),
                                                         I.getName());
@@ -3719,13 +3913,13 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     return &I;
 
   if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1)) {
-    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
-      // xor (setcc A, B), true = not (setcc A, B) = setncc A, B
-      if (SetCondInst *SCI = dyn_cast<SetCondInst>(Op0I))
-        if (RHS == ConstantBool::getTrue() && SCI->hasOneUse())
-          return new SetCondInst(SCI->getInverseCondition(),
-                                 SCI->getOperand(0), SCI->getOperand(1));
+    // xor (icmp A, B), true = not (icmp A, B) = !icmp A, B
+    if (ICmpInst *ICI = dyn_cast<ICmpInst>(Op0))
+      if (RHS == ConstantBool::getTrue() && ICI->hasOneUse())
+        return new ICmpInst(ICI->getInversePredicate(),
+                            ICI->getOperand(0), ICI->getOperand(1));
 
+    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       // ~(c-X) == X-c-1 == X+(-c-1)
       if (Op0I->getOpcode() == Instruction::Sub && RHS->isAllOnesValue())
         if (Constant *Op0I0C = dyn_cast<Constant>(Op0I->getOperand(0))) {
@@ -3842,9 +4036,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       }
     }
 
-  // (setcc1 A, B) ^ (setcc2 A, B) --> (setcc3 A, B)
-  if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1)))
-    if (Instruction *R = AssociativeOpt(I, FoldSetCCLogical(*this, RHS)))
+  // (icmp1 A, B) ^ (icmp2 A, B) --> (icmp3 A, B)
+  if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1)))
+    if (Instruction *R = AssociativeOpt(I, FoldICmpLogical(*this, RHS)))
       return R;
 
   // fold (xor (cast A), (cast B)) -> (cast (xor A, B))
@@ -3854,8 +4048,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         const Type *SrcTy = Op0C->getOperand(0)->getType();
         if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
             // Only do this if the casts both really cause code to be generated.
-            ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
-            ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
+            ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
+                              I.getType(), TD) &&
+            ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
+                              I.getType(), TD)) {
           Instruction *NewOp = BinaryOperator::createXor(Op0C->getOperand(0),
                                                          Op1C->getOperand(0),
                                                          I.getName());
@@ -3909,9 +4105,8 @@ static bool AddWithOverflow(ConstantInt *&Result, ConstantInt *In1,
 static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   TargetData &TD = IC.getTargetData();
   gep_type_iterator GTI = gep_type_begin(GEP);
-  const Type *UIntPtrTy = TD.getIntPtrType();
-  const Type *SIntPtrTy = UIntPtrTy->getSignedVersion();
-  Value *Result = Constant::getNullValue(SIntPtrTy);
+  const Type *IntPtrTy = TD.getIntPtrType();
+  Value *Result = Constant::getNullValue(IntPtrTy);
 
   // Build a mask for high order bits.
   uint64_t PtrSizeMask = ~0ULL >> (64-TD.getPointerSize()*8);
@@ -3919,10 +4114,10 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
     Value *Op = GEP->getOperand(i);
     uint64_t Size = TD.getTypeSize(GTI.getIndexedType()) & PtrSizeMask;
-    Constant *Scale = ConstantInt::get(SIntPtrTy, Size);
+    Constant *Scale = ConstantInt::get(IntPtrTy, Size);
     if (Constant *OpC = dyn_cast<Constant>(Op)) {
       if (!OpC->isNullValue()) {
-        OpC = ConstantExpr::getIntegerCast(OpC, SIntPtrTy, true /*SExt*/);
+        OpC = ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
         Scale = ConstantExpr::getMul(OpC, Scale);
         if (Constant *RC = dyn_cast<Constant>(Result))
           Result = ConstantExpr::getAdd(RC, Scale);
@@ -3935,7 +4130,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
       }
     } else {
       // Convert to correct type.
-      Op = IC.InsertNewInstBefore(CastInst::createSExtOrBitCast(Op, SIntPtrTy,
+      Op = IC.InsertNewInstBefore(CastInst::createSExtOrBitCast(Op, IntPtrTy,
                                                Op->getName()+".c"), I);
       if (Size != 1)
         // We'll let instcombine(mul) convert this to a shl if possible.
@@ -3950,11 +4145,11 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   return Result;
 }
 
-/// FoldGEPSetCC - Fold comparisons between a GEP instruction and something
+/// FoldGEPICmp - Fold comparisons between a GEP instruction and something
 /// else.  At this point we know that the GEP is on the LHS of the comparison.
-Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
-                                        Instruction::BinaryOps Cond,
-                                        Instruction &I) {
+Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
+                                       ICmpInst::Predicate Cond,
+                                       Instruction &I) {
   assert(dyn_castGetElementPtr(GEPLHS) && "LHS is not a getelementptr!");
 
   if (CastInst *CI = dyn_cast<CastInst>(RHS))
@@ -3964,9 +4159,9 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
   Value *PtrBase = GEPLHS->getOperand(0);
   if (PtrBase == RHS) {
     // As an optimization, we don't actually have to compute the actual value of
-    // OFFSET if this is a seteq or setne comparison, just return whether each
-    // index is zero or not.
-    if (Cond == Instruction::SetEQ || Cond == Instruction::SetNE) {
+    // OFFSET if this is a icmp_eq or icmp_ne comparison, just return whether 
+    // each index is zero or not.
+    if (Cond == ICmpInst::ICMP_EQ || Cond == ICmpInst::ICMP_NE) {
       Instruction *InVal = 0;
       gep_type_iterator GTI = gep_type_begin(GEPLHS);
       for (unsigned i = 1, e = GEPLHS->getNumOperands(); i != e; ++i, ++GTI) {
@@ -3980,19 +4175,19 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
             EmitIt = false;  // This is indexing into a zero sized array?
           } else if (isa<ConstantInt>(C))
             return ReplaceInstUsesWith(I, // No comparison is needed here.
-                                 ConstantBool::get(Cond == Instruction::SetNE));
+                                 ConstantBool::get(Cond == ICmpInst::ICMP_NE));
         }
 
         if (EmitIt) {
           Instruction *Comp =
-            new SetCondInst(Cond, GEPLHS->getOperand(i),
+            new ICmpInst(Cond, GEPLHS->getOperand(i),
                     Constant::getNullValue(GEPLHS->getOperand(i)->getType()));
           if (InVal == 0)
             InVal = Comp;
           else {
             InVal = InsertNewInstBefore(InVal, I);
             InsertNewInstBefore(Comp, I);
-            if (Cond == Instruction::SetNE)   // True if any are unequal
+            if (Cond == ICmpInst::ICMP_NE)   // True if any are unequal
               InVal = BinaryOperator::createOr(InVal, Comp);
             else                              // True if all are equal
               InVal = BinaryOperator::createAnd(InVal, Comp);
@@ -4003,17 +4198,17 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
       if (InVal)
         return InVal;
       else
-        ReplaceInstUsesWith(I, // No comparison is needed here, all indexes = 0
-                            ConstantBool::get(Cond == Instruction::SetEQ));
+        // No comparison is needed here, all indexes = 0
+        ReplaceInstUsesWith(I, ConstantBool::get(Cond == ICmpInst::ICMP_EQ));
     }
 
-    // Only lower this if the setcc is the only user of the GEP or if we expect
+    // Only lower this if the icmp is the only user of the GEP or if we expect
     // the result to fold to a constant!
     if (isa<ConstantExpr>(GEPLHS) || GEPLHS->hasOneUse()) {
       // ((gep Ptr, OFFSET) cmp Ptr)   ---> (OFFSET cmp 0).
       Value *Offset = EmitGEPOffset(GEPLHS, I, *this);
-      return new SetCondInst(Cond, Offset,
-                             Constant::getNullValue(Offset->getType()));
+      return new ICmpInst(ICmpInst::getSignedPredicate(Cond), Offset,
+                          Constant::getNullValue(Offset->getType()));
     }
   } else if (User *GEPRHS = dyn_castGetElementPtr(RHS)) {
     // If the base pointers are different, but the indices are the same, just
@@ -4031,8 +4226,8 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
 
       // If all indices are the same, just compare the base pointers.
       if (IndicesTheSame)
-        return new SetCondInst(Cond, GEPLHS->getOperand(0),
-                               GEPRHS->getOperand(0));
+        return new ICmpInst(ICmpInst::getSignedPredicate(Cond), 
+                            GEPLHS->getOperand(0), GEPRHS->getOperand(0));
 
       // Otherwise, the base pointers are different and the indices are
       // different, bail out.
@@ -4048,8 +4243,8 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
         break;
       }
     if (AllZeros)
-      return FoldGEPSetCC(GEPRHS, GEPLHS->getOperand(0),
-                          SetCondInst::getSwappedCondition(Cond), I);
+      return FoldGEPICmp(GEPRHS, GEPLHS->getOperand(0),
+                          ICmpInst::getSwappedPredicate(Cond), I);
 
     // If the other GEP has all zero indices, recurse.
     AllZeros = true;
@@ -4060,7 +4255,7 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
         break;
       }
     if (AllZeros)
-      return FoldGEPSetCC(GEPLHS, GEPRHS->getOperand(0), Cond, I);
+      return FoldGEPICmp(GEPLHS, GEPRHS->getOperand(0), Cond, I);
 
     if (GEPLHS->getNumOperands() == GEPRHS->getNumOperands()) {
       // If the GEPs only differ by one index, compare it.
@@ -4081,49 +4276,103 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
 
       if (NumDifferences == 0)   // SAME GEP?
         return ReplaceInstUsesWith(I, // No comparison is needed here.
-                                 ConstantBool::get(Cond == Instruction::SetEQ));
+                                 ConstantBool::get(Cond == ICmpInst::ICMP_EQ));
       else if (NumDifferences == 1) {
         Value *LHSV = GEPLHS->getOperand(DiffOperand);
         Value *RHSV = GEPRHS->getOperand(DiffOperand);
-
-        // Convert the operands to signed values to make sure to perform a
-        // signed comparison.
-        const Type *NewTy = LHSV->getType()->getSignedVersion();
-        if (LHSV->getType() != NewTy)
-          LHSV = InsertCastBefore(Instruction::BitCast, LHSV, NewTy, I);
-        if (RHSV->getType() != NewTy)
-          RHSV = InsertCastBefore(Instruction::BitCast, RHSV, NewTy, I);
-        return new SetCondInst(Cond, LHSV, RHSV);
+        if (LHSV->getType() != RHSV->getType())
+          // Doesn't matter which one we bitconvert here.
+          LHSV = InsertCastBefore(Instruction::BitCast, LHSV, RHSV->getType(),
+                                  I);
+        // Make sure we do a signed comparison here.
+        return new ICmpInst(ICmpInst::getSignedPredicate(Cond), LHSV, RHSV);
       }
     }
 
-    // Only lower this if the setcc is the only user of the GEP or if we expect
+    // Only lower this if the icmp is the only user of the GEP or if we expect
     // the result to fold to a constant!
     if ((isa<ConstantExpr>(GEPLHS) || GEPLHS->hasOneUse()) &&
         (isa<ConstantExpr>(GEPRHS) || GEPRHS->hasOneUse())) {
       // ((gep Ptr, OFFSET1) cmp (gep Ptr, OFFSET2)  --->  (OFFSET1 cmp OFFSET2)
       Value *L = EmitGEPOffset(GEPLHS, I, *this);
       Value *R = EmitGEPOffset(GEPRHS, I, *this);
-      return new SetCondInst(Cond, L, R);
+      return new ICmpInst(ICmpInst::getSignedPredicate(Cond), L, R);
     }
   }
   return 0;
 }
 
-
-Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
-  bool Changed = SimplifyCommutative(I);
+Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
+  bool Changed = SimplifyCompare(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-  const Type *Ty = Op0->getType();
 
-  // setcc X, X
+  // fcmp pred X, X
   if (Op0 == Op1)
     return ReplaceInstUsesWith(I, ConstantBool::get(isTrueWhenEqual(I)));
 
-  if (isa<UndefValue>(Op1))                  // X setcc undef -> undef
+  if (isa<UndefValue>(Op1))                  // fcmp pred X, undef -> undef
     return ReplaceInstUsesWith(I, UndefValue::get(Type::BoolTy));
 
-  // setcc <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
+  // Handle fcmp with constant RHS
+  if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
+    if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
+      switch (LHSI->getOpcode()) {
+      case Instruction::PHI:
+        if (Instruction *NV = FoldOpIntoPhi(I))
+          return NV;
+        break;
+      case Instruction::Select:
+        // If either operand of the select is a constant, we can fold the
+        // comparison into the select arms, which will cause one to be
+        // constant folded and the select turned into a bitwise or.
+        Value *Op1 = 0, *Op2 = 0;
+        if (LHSI->hasOneUse()) {
+          if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
+            // Fold the known value into the constant operand.
+            Op1 = ConstantExpr::getCompare(I.getPredicate(), C, RHSC);
+            // Insert a new FCmp of the other select operand.
+            Op2 = InsertNewInstBefore(new FCmpInst(I.getPredicate(),
+                                                      LHSI->getOperand(2), RHSC,
+                                                      I.getName()), I);
+          } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
+            // Fold the known value into the constant operand.
+            Op2 = ConstantExpr::getCompare(I.getPredicate(), C, RHSC);
+            // Insert a new FCmp of the other select operand.
+            Op1 = InsertNewInstBefore(new FCmpInst(I.getPredicate(),
+                                                      LHSI->getOperand(1), RHSC,
+                                                      I.getName()), I);
+          }
+        }
+
+        if (Op1)
+          return new SelectInst(LHSI->getOperand(0), Op1, Op2);
+        break;
+      }
+  }
+
+  return Changed ? &I : 0;
+}
+
+Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
+  bool Changed = SimplifyCompare(I);
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  const Type *Ty = Op0->getType();
+
+  // icmp X, X
+  if (Op0 == Op1)
+    return ReplaceInstUsesWith(I, ConstantBool::get(isTrueWhenEqual(I)));
+
+  if (isa<UndefValue>(Op1))                  // X icmp undef -> undef
+    return ReplaceInstUsesWith(I, UndefValue::get(Type::BoolTy));
+
+  // icmp of GlobalValues can never equal each other as long as they aren't
+  // external weak linkage type.
+  if (GlobalValue *GV0 = dyn_cast<GlobalValue>(Op0))
+    if (GlobalValue *GV1 = dyn_cast<GlobalValue>(Op1))
+      if (!GV0->hasExternalWeakLinkage() || !GV1->hasExternalWeakLinkage())
+        return ReplaceInstUsesWith(I, ConstantBool::get(!isTrueWhenEqual(I)));
+
+  // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
   if ((isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0) ||
        isa<ConstantPointerNull>(Op0)) &&
@@ -4131,30 +4380,34 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
        isa<ConstantPointerNull>(Op1)))
     return ReplaceInstUsesWith(I, ConstantBool::get(!isTrueWhenEqual(I)));
 
-  // setcc's with boolean values can always be turned into bitwise operations
+  // icmp's with boolean values can always be turned into bitwise operations
   if (Ty == Type::BoolTy) {
-    switch (I.getOpcode()) {
-    default: assert(0 && "Invalid setcc instruction!");
-    case Instruction::SetEQ: {     //  seteq bool %A, %B -> ~(A^B)
+    switch (I.getPredicate()) {
+    default: assert(0 && "Invalid icmp instruction!");
+    case ICmpInst::ICMP_EQ: {               // icmp eq bool %A, %B -> ~(A^B)
       Instruction *Xor = BinaryOperator::createXor(Op0, Op1, I.getName()+"tmp");
       InsertNewInstBefore(Xor, I);
       return BinaryOperator::createNot(Xor);
     }
-    case Instruction::SetNE:
+    case ICmpInst::ICMP_NE:                  // icmp eq bool %A, %B -> A^B
       return BinaryOperator::createXor(Op0, Op1);
 
-    case Instruction::SetGT:
-      std::swap(Op0, Op1);                   // Change setgt -> setlt
+    case ICmpInst::ICMP_UGT:
+    case ICmpInst::ICMP_SGT:
+      std::swap(Op0, Op1);                   // Change icmp gt -> icmp lt
       // FALL THROUGH
-    case Instruction::SetLT: {               // setlt bool A, B -> ~X & Y
+    case ICmpInst::ICMP_ULT:
+    case ICmpInst::ICMP_SLT: {               // icmp lt bool A, B -> ~X & Y
       Instruction *Not = BinaryOperator::createNot(Op0, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
       return BinaryOperator::createAnd(Not, Op1);
     }
-    case Instruction::SetGE:
-      std::swap(Op0, Op1);                   // Change setge -> setle
+    case ICmpInst::ICMP_UGE:
+    case ICmpInst::ICMP_SGE:
+      std::swap(Op0, Op1);                   // Change icmp ge -> icmp le
       // FALL THROUGH
-    case Instruction::SetLE: {     //  setle bool %A, %B -> ~A | B
+    case ICmpInst::ICMP_ULE:
+    case ICmpInst::ICMP_SLE: {               //  icmp le bool %A, %B -> ~A | B
       Instruction *Not = BinaryOperator::createNot(Op0, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
       return BinaryOperator::createOr(Not, Op1);
@@ -4165,50 +4418,93 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
   // See if we are doing a comparison between a constant and an instruction that
   // can be folded into the comparison.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
-    // Check to see if we are comparing against the minimum or maximum value...
-    if (CI->isMinValue(CI->getType()->isSigned())) {
-      if (I.getOpcode() == Instruction::SetLT)       // A < MIN -> FALSE
+    switch (I.getPredicate()) {
+    default: break;
+    case ICmpInst::ICMP_ULT:                        // A <u MIN -> FALSE
+      if (CI->isMinValue(false))
         return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-      if (I.getOpcode() == Instruction::SetGE)       // A >= MIN -> TRUE
-        return ReplaceInstUsesWith(I, ConstantBool::getTrue());
-      if (I.getOpcode() == Instruction::SetLE)       // A <= MIN -> A == MIN
-        return BinaryOperator::createSetEQ(Op0, Op1);
-      if (I.getOpcode() == Instruction::SetGT)       // A > MIN -> A != MIN
-        return BinaryOperator::createSetNE(Op0, Op1);
+      if (CI->isMaxValue(false))                    // A <u MAX -> A != MAX
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0,Op1);
+      if (isMinValuePlusOne(CI,false))              // A <u MIN+1 -> A == MIN
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, SubOne(CI));
+      break;
 
-    } else if (CI->isMaxValue(CI->getType()->isSigned())) {
-      if (I.getOpcode() == Instruction::SetGT)       // A > MAX -> FALSE
+    case ICmpInst::ICMP_SLT:
+      if (CI->isMinValue(true))                    // A <s MIN -> FALSE
         return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-      if (I.getOpcode() == Instruction::SetLE)       // A <= MAX -> TRUE
+      if (CI->isMaxValue(true))                    // A <s MAX -> A != MAX
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
+      if (isMinValuePlusOne(CI,true))              // A <s MIN+1 -> A == MIN
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, SubOne(CI));
+      break;
+
+    case ICmpInst::ICMP_UGT:
+      if (CI->isMaxValue(false))                  // A >u MAX -> FALSE
+        return ReplaceInstUsesWith(I, ConstantBool::getFalse());
+      if (CI->isMinValue(false))                  // A >u MIN -> A != MIN
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
+      if (isMaxValueMinusOne(CI, false))          // A >u MAX-1 -> A == MAX
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
+      break;
+
+    case ICmpInst::ICMP_SGT:
+      if (CI->isMaxValue(true))                   // A >s MAX -> FALSE
+        return ReplaceInstUsesWith(I, ConstantBool::getFalse());
+      if (CI->isMinValue(true))                   // A >s MIN -> A != MIN
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
+      if (isMaxValueMinusOne(CI, true))           // A >s MAX-1 -> A == MAX
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
+      break;
+
+    case ICmpInst::ICMP_ULE:
+      if (CI->isMaxValue(false))                 // A <=u MAX -> TRUE
         return ReplaceInstUsesWith(I, ConstantBool::getTrue());
-      if (I.getOpcode() == Instruction::SetGE)       // A >= MAX -> A == MAX
-        return BinaryOperator::createSetEQ(Op0, Op1);
-      if (I.getOpcode() == Instruction::SetLT)       // A < MAX -> A != MAX
-        return BinaryOperator::createSetNE(Op0, Op1);
+      if (CI->isMinValue(false))                 // A <=u MIN -> A == MIN
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Op1);
+      if (isMaxValueMinusOne(CI,false))          // A <=u MAX-1 -> A != MAX
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, AddOne(CI));
+      break;
 
-      // Comparing against a value really close to min or max?
-    } else if (isMinValuePlusOne(CI)) {
-      if (I.getOpcode() == Instruction::SetLT)       // A < MIN+1 -> A == MIN
-        return BinaryOperator::createSetEQ(Op0, SubOne(CI));
-      if (I.getOpcode() == Instruction::SetGE)       // A >= MIN-1 -> A != MIN
-        return BinaryOperator::createSetNE(Op0, SubOne(CI));
+    case ICmpInst::ICMP_SLE:
+      if (CI->isMaxValue(true))                  // A <=s MAX -> TRUE
+        return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+      if (CI->isMinValue(true))                  // A <=s MIN -> A == MIN
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Op1);
+      if (isMaxValueMinusOne(CI,true))           // A <=s MAX-1 -> A != MAX
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, AddOne(CI));
+      break;
 
-    } else if (isMaxValueMinusOne(CI)) {
-      if (I.getOpcode() == Instruction::SetGT)       // A > MAX-1 -> A == MAX
-        return BinaryOperator::createSetEQ(Op0, AddOne(CI));
-      if (I.getOpcode() == Instruction::SetLE)       // A <= MAX-1 -> A != MAX
-        return BinaryOperator::createSetNE(Op0, AddOne(CI));
+    case ICmpInst::ICMP_UGE:
+      if (CI->isMinValue(false))                 // A >=u MIN -> TRUE
+        return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+      if (CI->isMaxValue(false))                 // A >=u MAX -> A == MAX
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Op1);
+      if (isMinValuePlusOne(CI,false))           // A >=u MIN-1 -> A != MIN
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, SubOne(CI));
+      break;
+
+    case ICmpInst::ICMP_SGE:
+      if (CI->isMinValue(true))                  // A >=s MIN -> TRUE
+        return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+      if (CI->isMaxValue(true))                  // A >=s MAX -> A == MAX
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Op1);
+      if (isMinValuePlusOne(CI,true))            // A >=s MIN-1 -> A != MIN
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, SubOne(CI));
+      break;
     }
 
-    // If we still have a setle or setge instruction, turn it into the
-    // appropriate setlt or setgt instruction.  Since the border cases have
+    // If we still have a icmp le or icmp ge instruction, turn it into the
+    // appropriate icmp lt or icmp gt instruction.  Since the border cases have
     // already been handled above, this requires little checking.
     //
-    if (I.getOpcode() == Instruction::SetLE)
-      return BinaryOperator::createSetLT(Op0, AddOne(CI));
-    if (I.getOpcode() == Instruction::SetGE)
-      return BinaryOperator::createSetGT(Op0, SubOne(CI));
-
+    if (I.getPredicate() == ICmpInst::ICMP_ULE)
+      return new ICmpInst(ICmpInst::ICMP_ULT, Op0, AddOne(CI));
+    if (I.getPredicate() == ICmpInst::ICMP_SLE)
+      return new ICmpInst(ICmpInst::ICMP_SLT, Op0, AddOne(CI));
+    if (I.getPredicate() == ICmpInst::ICMP_UGE)
+      return new ICmpInst( ICmpInst::ICMP_UGT, Op0, SubOne(CI));
+    if (I.getPredicate() == ICmpInst::ICMP_SGE)
+      return new ICmpInst(ICmpInst::ICMP_SGT, Op0, SubOne(CI));
     
     // See if we can fold the comparison based on bits known to be zero or one
     // in the input.
@@ -4220,68 +4516,59 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
     // Given the known and unknown bits, compute a range that the LHS could be
     // in.
     if (KnownOne | KnownZero) {
-      if (Ty->isUnsigned()) {   // Unsigned comparison.
-        uint64_t Min, Max;
-        uint64_t RHSVal = CI->getZExtValue();
-        ComputeUnsignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne,
-                                                 Min, Max);
-        switch (I.getOpcode()) {  // LE/GE have been folded already.
-        default: assert(0 && "Unknown setcc opcode!");
-        case Instruction::SetEQ:
-          if (Max < RHSVal || Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-          break;
-        case Instruction::SetNE:
-          if (Max < RHSVal || Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
-          break;
-        case Instruction::SetLT:
-          if (Max < RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
-          if (Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-          break;
-        case Instruction::SetGT:
-          if (Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
-          if (Max < RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-          break;
-        }
-      } else {              // Signed comparison.
-        int64_t Min, Max;
-        int64_t RHSVal = CI->getSExtValue();
-        ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne,
-                                               Min, Max);
-        switch (I.getOpcode()) {  // LE/GE have been folded already.
-        default: assert(0 && "Unknown setcc opcode!");
-        case Instruction::SetEQ:
-          if (Max < RHSVal || Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-          break;
-        case Instruction::SetNE:
-          if (Max < RHSVal || Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
-          break;
-        case Instruction::SetLT:
-          if (Max < RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
-          if (Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-          break;
-        case Instruction::SetGT:
-          if (Min > RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getTrue());
-          if (Max < RHSVal)
-            return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-          break;
-        }
+      // Compute the Min, Max and RHS values based on the known bits. For the
+      // EQ and NE we use unsigned values.
+      uint64_t UMin, UMax, URHSVal;
+      int64_t SMin, SMax, SRHSVal;
+      if (ICmpInst::isSignedPredicate(I.getPredicate())) {
+        SRHSVal = CI->getSExtValue();
+        ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, SMin, 
+                                               SMax);
+      } else {
+        URHSVal = CI->getZExtValue();
+        ComputeUnsignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, UMin, 
+                                                 UMax);
+      }
+      switch (I.getPredicate()) {  // LE/GE have been folded already.
+      default: assert(0 && "Unknown icmp opcode!");
+      case ICmpInst::ICMP_EQ:
+        if (UMax < URHSVal || UMin > URHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getFalse());
+        break;
+      case ICmpInst::ICMP_NE:
+        if (UMax < URHSVal || UMin > URHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+        break;
+      case ICmpInst::ICMP_ULT:
+        if (UMax < URHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+        if (UMin > URHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getFalse());
+        break;
+      case ICmpInst::ICMP_UGT:
+        if (UMin > URHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+        if (UMax < URHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getFalse());
+        break;
+      case ICmpInst::ICMP_SLT:
+        if (SMax < SRHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+        if (SMin > SRHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getFalse());
+        break;
+      case ICmpInst::ICMP_SGT: 
+        if (SMin > SRHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getTrue());
+        if (SMax < SRHSVal)
+          return ReplaceInstUsesWith(I, ConstantBool::getFalse());
+        break;
       }
     }
           
-    // Since the RHS is a constantInt (CI), if the left hand side is an 
+    // Since the RHS is a ConstantInt (CI), if the left hand side is an 
     // instruction, see if that instruction also has constants so that the 
-    // instruction can be folded into the setcc
+    // instruction can be folded into the icmp 
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
       case Instruction::And:
@@ -4289,7 +4576,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             LHSI->getOperand(0)->hasOneUse()) {
           ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
 
-          // If an operand is an AND of a truncating cast, we can widen the
+          // If the LHS is an AND of a truncating cast, we can widen the
           // and/compare to be the input width without changing the value
           // produced, eliminating a cast.
           if (CastInst *Cast = dyn_cast<CastInst>(LHSI->getOperand(0))) {
@@ -4318,7 +4605,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 BinaryOperator::createAnd(Cast->getOperand(0), NewCST, 
                                           LHSI->getName());
               InsertNewInstBefore(NewAnd, I);
-              return new SetCondInst(I.getOpcode(), NewAnd, NewCI);
+              return new ICmpInst(I.getPredicate(), NewAnd, NewCI);
             }
           }
           
@@ -4372,9 +4659,9 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 // If we shifted bits out, the fold is not going to work out.
                 // As a special case, check to see if this means that the
                 // result is always true or false now.
-                if (I.getOpcode() == Instruction::SetEQ)
+                if (I.getPredicate() == ICmpInst::ICMP_EQ)
                   return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-                if (I.getOpcode() == Instruction::SetNE)
+                if (I.getPredicate() == ICmpInst::ICMP_NE)
                   return ReplaceInstUsesWith(I, ConstantBool::getTrue());
               } else {
                 I.setOperand(1, NewCst);
@@ -4438,7 +4725,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         }
         break;
 
-      case Instruction::Shl:         // (setcc (shl X, ShAmt), CI)
+      case Instruction::Shl:         // (icmp pred (shl X, ShAmt), CI)
         if (ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
           if (I.isEquality()) {
             unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
@@ -4454,8 +4741,8 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             Constant *Comp =
               ConstantExpr::getShl(ConstantExpr::getLShr(CI, ShAmt), ShAmt);
             if (Comp != CI) {// Comparing against a bit that we know is zero.
-              bool IsSetNE = I.getOpcode() == Instruction::SetNE;
-              Constant *Cst = ConstantBool::get(IsSetNE);
+              bool IsICMP_NE = I.getPredicate() == ICmpInst::ICMP_NE;
+              Constant *Cst = ConstantBool::get(IsICMP_NE);
               return ReplaceInstUsesWith(I, Cst);
             }
 
@@ -4477,14 +4764,14 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 BinaryOperator::createAnd(LHSI->getOperand(0),
                                           Mask, LHSI->getName()+".mask");
               Value *And = InsertNewInstBefore(AndI, I);
-              return new SetCondInst(I.getOpcode(), And,
+              return new ICmpInst(I.getPredicate(), And,
                                      ConstantExpr::getLShr(CI, ShAmt));
             }
           }
         }
         break;
 
-      case Instruction::LShr:         // (setcc (shr X, ShAmt), CI)
+      case Instruction::LShr:         // (icmp pred (shr X, ShAmt), CI)
       case Instruction::AShr:
         if (ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
           if (I.isEquality()) {
@@ -4506,8 +4793,8 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                                            ShAmt);
 
             if (Comp != CI) {// Comparing against a bit that we know is zero.
-              bool IsSetNE = I.getOpcode() == Instruction::SetNE;
-              Constant *Cst = ConstantBool::get(IsSetNE);
+              bool IsICMP_NE = I.getPredicate() == ICmpInst::ICMP_NE;
+              Constant *Cst = ConstantBool::get(IsICMP_NE);
               return ReplaceInstUsesWith(I, Cst);
             }
 
@@ -4530,7 +4817,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 BinaryOperator::createAnd(LHSI->getOperand(0),
                                           Mask, LHSI->getName()+".mask");
               Value *And = InsertNewInstBefore(AndI, I);
-              return new SetCondInst(I.getOpcode(), And,
+              return new ICmpInst(I.getPredicate(), And,
                                      ConstantExpr::getShl(CI, ShAmt));
             }
           }
@@ -4539,7 +4826,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
 
       case Instruction::SDiv:
       case Instruction::UDiv:
-        // Fold: setcc ([us]div X, C1), C2 -> range test
+        // Fold: icmp pred ([us]div X, C1), C2 -> range test
         // Fold this div into the comparison, producing a range check. 
         // Determine, based on the divide type, what the range is being 
         // checked.  If there is an overflow on the low or high side, remember 
@@ -4554,11 +4841,8 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // (x /u C1) <u C2.  Simply casting the operands and result won't 
           // work. :(  The if statement below tests that condition and bails 
           // if it finds it. 
-          const Type *DivRHSTy = DivRHS->getType();
-          unsigned DivOpCode = LHSI->getOpcode();
-          if (I.isEquality() &&
-              ((DivOpCode == Instruction::SDiv && DivRHSTy->isUnsigned()) ||
-               (DivOpCode == Instruction::UDiv && DivRHSTy->isSigned())))
+          bool DivIsSigned = LHSI->getOpcode() == Instruction::SDiv;
+          if (!I.isEquality() && DivIsSigned != I.isSignedPredicate())
             break;
 
           // Initialize the variables that will indicate the nature of the
@@ -4577,16 +4861,15 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // not equal to the divide. Make sure we do the same kind of divide
           // as in the LHS instruction that we're folding. 
           bool ProdOV = !DivRHS->isNullValue() && 
-            (DivOpCode == Instruction::SDiv ?  
-             ConstantExpr::getSDiv(Prod, DivRHS) :
+            (DivIsSigned ?  ConstantExpr::getSDiv(Prod, DivRHS) :
               ConstantExpr::getUDiv(Prod, DivRHS)) != CI;
 
-          // Get the SetCC opcode
-          Instruction::BinaryOps Opcode = I.getOpcode();
+          // Get the ICmp opcode
+          ICmpInst::Predicate predicate = I.getPredicate();
 
           if (DivRHS->isNullValue()) {  
             // Don't hack on divide by zeros!
-          } else if (DivOpCode == Instruction::UDiv) {  // udiv
+          } else if (!DivIsSigned) {  // udiv
             LoBound = Prod;
             LoOverflow = ProdOV;
             HiOverflow = ProdOV || AddWithOverflow(HiBound, LoBound, DivRHS);
@@ -4624,48 +4907,59 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             }
 
             // Dividing by a negate swaps the condition.
-            Opcode = SetCondInst::getSwappedCondition(Opcode);
+            predicate = ICmpInst::getSwappedPredicate(predicate);
           }
 
           if (LoBound) {
             Value *X = LHSI->getOperand(0);
-            switch (Opcode) {
-            default: assert(0 && "Unhandled setcc opcode!");
-            case Instruction::SetEQ:
+            switch (predicate) {
+            default: assert(0 && "Unhandled icmp opcode!");
+            case ICmpInst::ICMP_EQ:
               if (LoOverflow && HiOverflow)
                 return ReplaceInstUsesWith(I, ConstantBool::getFalse());
               else if (HiOverflow)
-                return new SetCondInst(Instruction::SetGE, X, LoBound);
+                return new ICmpInst(DivIsSigned ?  ICmpInst::ICMP_SGE : 
+                                    ICmpInst::ICMP_UGE, X, LoBound);
               else if (LoOverflow)
-                return new SetCondInst(Instruction::SetLT, X, HiBound);
+                return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SLT : 
+                                    ICmpInst::ICMP_ULT, X, HiBound);
               else
-                return InsertRangeTest(X, LoBound, HiBound, true, I);
-            case Instruction::SetNE:
+                return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, 
+                                       true, I);
+            case ICmpInst::ICMP_NE:
               if (LoOverflow && HiOverflow)
                 return ReplaceInstUsesWith(I, ConstantBool::getTrue());
               else if (HiOverflow)
-                return new SetCondInst(Instruction::SetLT, X, LoBound);
+                return new ICmpInst(DivIsSigned ?  ICmpInst::ICMP_SLT : 
+                                    ICmpInst::ICMP_ULT, X, LoBound);
               else if (LoOverflow)
-                return new SetCondInst(Instruction::SetGE, X, HiBound);
+                return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SGE : 
+                                    ICmpInst::ICMP_UGE, X, HiBound);
               else
-                return InsertRangeTest(X, LoBound, HiBound, false, I);
-            case Instruction::SetLT:
+                return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, 
+                                       false, I);
+            case ICmpInst::ICMP_ULT:
+            case ICmpInst::ICMP_SLT:
               if (LoOverflow)
                 return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-              return new SetCondInst(Instruction::SetLT, X, LoBound);
-            case Instruction::SetGT:
+              return new ICmpInst(predicate, X, LoBound);
+            case ICmpInst::ICMP_UGT:
+            case ICmpInst::ICMP_SGT:
               if (HiOverflow)
                 return ReplaceInstUsesWith(I, ConstantBool::getFalse());
-              return new SetCondInst(Instruction::SetGE, X, HiBound);
+              if (predicate == ICmpInst::ICMP_UGT)
+                return new ICmpInst(ICmpInst::ICMP_UGE, X, HiBound);
+              else
+                return new ICmpInst(ICmpInst::ICMP_SGE, X, HiBound);
             }
           }
         }
         break;
       }
 
-    // Simplify seteq and setne instructions with integer constant RHS.
+    // Simplify icmp_eq and icmp_ne instructions with integer constant RHS.
     if (I.isEquality()) {
-      bool isSetNE = I.getOpcode() == Instruction::SetNE;
+      bool isICMP_NE = I.getPredicate() == ICmpInst::ICMP_NE;
 
       // If the first operand is (add|sub|and|or|xor|rem) with a constant, and 
       // the second operand is a constant, simplify a bit.
@@ -4679,8 +4973,8 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             if (V > 1 && isPowerOf2_64(V)) {
               Value *NewRem = InsertNewInstBefore(BinaryOperator::createURem(
                   BO->getOperand(0), BO->getOperand(1), BO->getName()), I);
-              return BinaryOperator::create(I.getOpcode(), NewRem,
-                Constant::getNullValue(BO->getType()));
+              return new ICmpInst(I.getPredicate(), NewRem, 
+                                  Constant::getNullValue(BO->getType()));
             }
           }
           break;
@@ -4688,22 +4982,22 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // Replace ((add A, B) != C) with (A != C-B) if B & C are constants.
           if (ConstantInt *BOp1C = dyn_cast<ConstantInt>(BO->getOperand(1))) {
             if (BO->hasOneUse())
-              return new SetCondInst(I.getOpcode(), BO->getOperand(0),
-                                     ConstantExpr::getSub(CI, BOp1C));
+              return new ICmpInst(I.getPredicate(), BO->getOperand(0),
+                                  ConstantExpr::getSub(CI, BOp1C));
           } else if (CI->isNullValue()) {
             // Replace ((add A, B) != 0) with (A != -B) if A or B is
             // efficiently invertible, or if the add has just this one use.
             Value *BOp0 = BO->getOperand(0), *BOp1 = BO->getOperand(1);
 
             if (Value *NegVal = dyn_castNegVal(BOp1))
-              return new SetCondInst(I.getOpcode(), BOp0, NegVal);
+              return new ICmpInst(I.getPredicate(), BOp0, NegVal);
             else if (Value *NegVal = dyn_castNegVal(BOp0))
-              return new SetCondInst(I.getOpcode(), NegVal, BOp1);
+              return new ICmpInst(I.getPredicate(), NegVal, BOp1);
             else if (BO->hasOneUse()) {
               Instruction *Neg = BinaryOperator::createNeg(BOp1, BO->getName());
               BO->setName("");
               InsertNewInstBefore(Neg, I);
-              return new SetCondInst(I.getOpcode(), BOp0, Neg);
+              return new ICmpInst(I.getPredicate(), BOp0, Neg);
             }
           }
           break;
@@ -4711,15 +5005,15 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // For the xor case, we can xor two constants together, eliminating
           // the explicit xor.
           if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1)))
-            return BinaryOperator::create(I.getOpcode(), BO->getOperand(0),
-                                  ConstantExpr::getXor(CI, BOC));
+            return new ICmpInst(I.getPredicate(), BO->getOperand(0), 
+                                ConstantExpr::getXor(CI, BOC));
 
           // FALLTHROUGH
         case Instruction::Sub:
           // Replace (([sub|xor] A, B) != 0) with (A != B)
           if (CI->isNullValue())
-            return new SetCondInst(I.getOpcode(), BO->getOperand(0),
-                                   BO->getOperand(1));
+            return new ICmpInst(I.getPredicate(), BO->getOperand(0),
+                                BO->getOperand(1));
           break;
 
         case Instruction::Or:
@@ -4728,7 +5022,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1))) {
             Constant *NotCI = ConstantExpr::getNot(CI);
             if (!ConstantExpr::getAnd(BOC, NotCI)->isNullValue())
-              return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
+              return ReplaceInstUsesWith(I, ConstantBool::get(isICMP_NE));
           }
           break;
 
@@ -4738,16 +5032,15 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             // comparison can never succeed!
             if (!ConstantExpr::getAnd(CI,
                                       ConstantExpr::getNot(BOC))->isNullValue())
-              return ReplaceInstUsesWith(I, ConstantBool::get(isSetNE));
+              return ReplaceInstUsesWith(I, ConstantBool::get(isICMP_NE));
 
             // If we have ((X & C) == C), turn it into ((X & C) != 0).
             if (CI == BOC && isOneBitSet(CI))
-              return new SetCondInst(isSetNE ? Instruction::SetEQ :
-                                     Instruction::SetNE, Op0,
-                                     Constant::getNullValue(CI->getType()));
+              return new ICmpInst(isICMP_NE ? ICmpInst::ICMP_EQ :
+                                  ICmpInst::ICMP_NE, Op0,
+                                  Constant::getNullValue(CI->getType()));
 
-            // Replace (and X, (1 << size(X)-1) != 0) with x < 0, converting X
-            // to be a signed value as appropriate.
+            // Replace (and X, (1 << size(X)-1) != 0) with x s< 0
             if (isSignBit(BOC)) {
               Value *X = BO->getOperand(0);
               // If 'X' is not signed, insert a cast now...
@@ -4755,25 +5048,19 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 const Type *DestTy = BOC->getType()->getSignedVersion();
                 X = InsertCastBefore(Instruction::BitCast, X, DestTy, I);
               }
-              return new SetCondInst(isSetNE ? Instruction::SetLT :
-                                         Instruction::SetGE, X,
-                                     Constant::getNullValue(X->getType()));
+              Constant *Zero = Constant::getNullValue(X->getType());
+              ICmpInst::Predicate pred = isICMP_NE ? 
+                ICmpInst::ICMP_SLT : ICmpInst::ICMP_SGE;
+              return new ICmpInst(pred, X, Zero);
             }
 
             // ((X & ~7) == 0) --> X < 8
             if (CI->isNullValue() && isHighOnes(BOC)) {
               Value *X = BO->getOperand(0);
               Constant *NegX = ConstantExpr::getNeg(BOC);
-
-              // If 'X' is signed, insert a cast now.
-              if (NegX->getType()->isSigned()) {
-                const Type *DestTy = NegX->getType()->getUnsignedVersion();
-                X = InsertCastBefore(Instruction::BitCast, X, DestTy, I);
-                NegX = ConstantExpr::getBitCast(NegX, DestTy);
-              }
-
-              return new SetCondInst(isSetNE ? Instruction::SetGE :
-                                     Instruction::SetLT, X, NegX);
+              ICmpInst::Predicate pred = isICMP_NE ? 
+                ICmpInst::ICMP_UGE : ICmpInst::ICMP_ULT;
+              return new ICmpInst(pred, X, NegX);
             }
 
           }
@@ -4783,19 +5070,22 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         // Handle set{eq|ne} <intrinsic>, intcst.
         switch (II->getIntrinsicID()) {
         default: break;
-        case Intrinsic::bswap_i16:   // seteq (bswap(x)), c -> seteq(x,bswap(c))
+        case Intrinsic::bswap_i16: 
+          // icmp eq (bswap(x)), c -> icmp eq (x,bswap(c))
           WorkList.push_back(II);  // Dead?
           I.setOperand(0, II->getOperand(1));
           I.setOperand(1, ConstantInt::get(Type::UShortTy,
                                            ByteSwap_16(CI->getZExtValue())));
           return &I;
-        case Intrinsic::bswap_i32:   // seteq (bswap(x)), c -> seteq(x,bswap(c))
+        case Intrinsic::bswap_i32:   
+          // icmp eq (bswap(x)), c -> icmp eq (x,bswap(c))
           WorkList.push_back(II);  // Dead?
           I.setOperand(0, II->getOperand(1));
           I.setOperand(1, ConstantInt::get(Type::UIntTy,
                                            ByteSwap_32(CI->getZExtValue())));
           return &I;
-        case Intrinsic::bswap_i64:   // seteq (bswap(x)), c -> seteq(x,bswap(c))
+        case Intrinsic::bswap_i64:   
+          // icmp eq (bswap(x)), c -> icmp eq (x,bswap(c))
           WorkList.push_back(II);  // Dead?
           I.setOperand(0, II->getOperand(1));
           I.setOperand(1, ConstantInt::get(Type::ULongTy,
@@ -4803,53 +5093,47 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           return &I;
         }
       }
-    } else {  // Not a SetEQ/SetNE
-      // If the LHS is a cast from an integral value of the same size,
+    } else {  // Not a ICMP_EQ/ICMP_NE
+      // If the LHS is a cast from an integral value of the same size, then 
+      // since we know the RHS is a constant, try to simlify.
       if (CastInst *Cast = dyn_cast<CastInst>(Op0)) {
         Value *CastOp = Cast->getOperand(0);
         const Type *SrcTy = CastOp->getType();
         unsigned SrcTySize = SrcTy->getPrimitiveSizeInBits();
-        if (SrcTy != Cast->getType() && SrcTy->isInteger() &&
+        if (SrcTy->isInteger() && 
             SrcTySize == Cast->getType()->getPrimitiveSizeInBits()) {
-          assert((SrcTy->isSigned() ^ Cast->getType()->isSigned()) &&
-                 "Source and destination signednesses should differ!");
-          if (Cast->getType()->isSigned()) {
-            // If this is a signed comparison, check for comparisons in the
-            // vicinity of zero.
-            if (I.getOpcode() == Instruction::SetLT && CI->isNullValue())
-              // X < 0  => x > 127
-              return BinaryOperator::createSetGT(CastOp,
-                         ConstantInt::get(SrcTy, (1ULL << (SrcTySize-1))-1));
-            else if (I.getOpcode() == Instruction::SetGT &&
-                     cast<ConstantInt>(CI)->getSExtValue() == -1)
-              // X > -1  => x < 128
-              return BinaryOperator::createSetLT(CastOp,
-                         ConstantInt::get(SrcTy, 1ULL << (SrcTySize-1)));
-          } else {
-            ConstantInt *CUI = cast<ConstantInt>(CI);
-            if (I.getOpcode() == Instruction::SetLT &&
-                CUI->getZExtValue() == 1ULL << (SrcTySize-1))
-              // X < 128 => X > -1
-              return BinaryOperator::createSetGT(CastOp,
-                                                 ConstantInt::get(SrcTy, -1));
-            else if (I.getOpcode() == Instruction::SetGT &&
-                     CUI->getZExtValue() == (1ULL << (SrcTySize-1))-1)
-              // X > 127 => X < 0
-              return BinaryOperator::createSetLT(CastOp,
-                                                 Constant::getNullValue(SrcTy));
+          // If this is an unsigned comparison, try to make the comparison use
+          // smaller constant values.
+          switch (I.getPredicate()) {
+            default: break;
+            case ICmpInst::ICMP_ULT: { // X u< 128 => X s> -1
+              ConstantInt *CUI = cast<ConstantInt>(CI);
+              if (CUI->getZExtValue() == 1ULL << (SrcTySize-1))
+                return new ICmpInst(ICmpInst::ICMP_SGT, CastOp, 
+                                    ConstantInt::get(SrcTy, -1));
+              break;
+            }
+            case ICmpInst::ICMP_UGT: { // X u> 127 => X s< 0
+              ConstantInt *CUI = cast<ConstantInt>(CI);
+              if (CUI->getZExtValue() == (1ULL << (SrcTySize-1))-1)
+                return new ICmpInst(ICmpInst::ICMP_SLT, CastOp, 
+                                    Constant::getNullValue(SrcTy));
+              break;
+            }
           }
+
         }
       }
     }
   }
 
-  // Handle setcc with constant RHS's that can be integer, FP or pointer.
+  // Handle icmp with constant RHS
   if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
       case Instruction::GetElementPtr:
         if (RHSC->isNullValue()) {
-          // Transform setcc GEP P, int 0, int 0, int 0, null -> setcc P, null
+          // icmp pred GEP (P, int 0, int 0, int 0), null -> icmp pred P, null
           bool isAllZeros = true;
           for (unsigned i = 1, e = LHSI->getNumOperands(); i != e; ++i)
             if (!isa<Constant>(LHSI->getOperand(i)) ||
@@ -4858,7 +5142,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               break;
             }
           if (isAllZeros)
-            return new SetCondInst(I.getOpcode(), LHSI->getOperand(0),
+            return new ICmpInst(I.getPredicate(), LHSI->getOperand(0),
                     Constant::getNullValue(LHSI->getOperand(0)->getType()));
         }
         break;
@@ -4875,18 +5159,18 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         if (LHSI->hasOneUse()) {
           if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
             // Fold the known value into the constant operand.
-            Op1 = ConstantExpr::get(I.getOpcode(), C, RHSC);
-            // Insert a new SetCC of the other select operand.
-            Op2 = InsertNewInstBefore(new SetCondInst(I.getOpcode(),
-                                                      LHSI->getOperand(2), RHSC,
-                                                      I.getName()), I);
+            Op1 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
+            // Insert a new ICmp of the other select operand.
+            Op2 = InsertNewInstBefore(new ICmpInst(I.getPredicate(),
+                                                   LHSI->getOperand(2), RHSC,
+                                                   I.getName()), I);
           } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
             // Fold the known value into the constant operand.
-            Op2 = ConstantExpr::get(I.getOpcode(), C, RHSC);
-            // Insert a new SetCC of the other select operand.
-            Op1 = InsertNewInstBefore(new SetCondInst(I.getOpcode(),
-                                                      LHSI->getOperand(1), RHSC,
-                                                      I.getName()), I);
+            Op2 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
+            // Insert a new ICmp of the other select operand.
+            Op1 = InsertNewInstBefore(new ICmpInst(I.getPredicate(),
+                                                   LHSI->getOperand(1), RHSC,
+                                                   I.getName()), I);
           }
         }
 
@@ -4896,16 +5180,16 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       }
   }
 
-  // If we can optimize a 'setcc GEP, P' or 'setcc P, GEP', do so now.
+  // If we can optimize a 'icmp GEP, P' or 'icmp P, GEP', do so now.
   if (User *GEP = dyn_castGetElementPtr(Op0))
-    if (Instruction *NI = FoldGEPSetCC(GEP, Op1, I.getOpcode(), I))
+    if (Instruction *NI = FoldGEPICmp(GEP, Op1, I.getPredicate(), I))
       return NI;
   if (User *GEP = dyn_castGetElementPtr(Op1))
-    if (Instruction *NI = FoldGEPSetCC(GEP, Op0,
-                           SetCondInst::getSwappedCondition(I.getOpcode()), I))
+    if (Instruction *NI = FoldGEPICmp(GEP, Op0,
+                           ICmpInst::getSwappedPredicate(I.getPredicate()), I))
       return NI;
 
-  // Test to see if the operands of the setcc are casted versions of other
+  // Test to see if the operands of the icmp are casted versions of other
   // values.  If the cast can be stripped off both arguments, we do so now.
   if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
     Value *CastOp0 = CI->getOperand(0);
@@ -4928,20 +5212,20 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
           Op1 = ConstantExpr::getBitCast(Op1C, Op0->getType());
         } else {
-          // Otherwise, cast the RHS right before the setcc
+          // Otherwise, cast the RHS right before the icmp
           Op1 = InsertCastBefore(Instruction::BitCast, Op1, Op0->getType(), I);
         }
-      return BinaryOperator::create(I.getOpcode(), Op0, Op1);
+      return new ICmpInst(I.getPredicate(), Op0, Op1);
     }
 
-    // Handle the special case of: setcc (cast bool to X), <cst>
+    // Handle the special case of: icmp (cast bool to X), <cst>
     // This comes up when you have code like
     //   int X = A < B;
     //   if (X) ...
     // For generality, we handle any zero-extension of any operand comparison
     // with a constant or another cast from the same type.
     if (isa<ConstantInt>(Op1) || isa<CastInst>(Op1))
-      if (Instruction *R = visitSetCondInstWithCastAndCast(I))
+      if (Instruction *R = visitICmpInstWithCastAndCast(I))
         return R;
   }
   
@@ -4951,22 +5235,22 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
         (A == Op1 || B == Op1)) {
       // (A^B) == A  ->  B == 0
       Value *OtherVal = A == Op1 ? B : A;
-      return BinaryOperator::create(I.getOpcode(), OtherVal,
-                                    Constant::getNullValue(A->getType()));
+      return new ICmpInst(I.getPredicate(), OtherVal,
+                          Constant::getNullValue(A->getType()));
     } else if (match(Op1, m_Xor(m_Value(A), m_Value(B))) &&
                (A == Op0 || B == Op0)) {
       // A == (A^B)  ->  B == 0
       Value *OtherVal = A == Op0 ? B : A;
-      return BinaryOperator::create(I.getOpcode(), OtherVal,
-                                    Constant::getNullValue(A->getType()));
+      return new ICmpInst(I.getPredicate(), OtherVal,
+                          Constant::getNullValue(A->getType()));
     } else if (match(Op0, m_Sub(m_Value(A), m_Value(B))) && A == Op1) {
       // (A-B) == A  ->  B == 0
-      return BinaryOperator::create(I.getOpcode(), B,
-                                    Constant::getNullValue(B->getType()));
+      return new ICmpInst(I.getPredicate(), B,
+                          Constant::getNullValue(B->getType()));
     } else if (match(Op1, m_Sub(m_Value(A), m_Value(B))) && A == Op0) {
       // A == (A-B)  ->  B == 0
-      return BinaryOperator::create(I.getOpcode(), B,
-                                    Constant::getNullValue(B->getType()));
+      return new ICmpInst(I.getPredicate(), B,
+                          Constant::getNullValue(B->getType()));
     }
     
     Value *C, *D;
@@ -4998,116 +5282,113 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
   return Changed ? &I : 0;
 }
 
-// visitSetCondInstWithCastAndCast - Handle setcond (cast x to y), (cast/cst).
+// visitICmpInstWithCastAndCast - Handle icmp (cast x to y), (cast/cst).
 // We only handle extending casts so far.
 //
-Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
-  const CastInst *LHSCI = cast<CastInst>(SCI.getOperand(0));
+Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
+  const CastInst *LHSCI = cast<CastInst>(ICI.getOperand(0));
   Value *LHSCIOp        = LHSCI->getOperand(0);
   const Type *SrcTy     = LHSCIOp->getType();
-  const Type *DestTy    = SCI.getOperand(0)->getType();
+  const Type *DestTy    = LHSCI->getType();
   Value *RHSCIOp;
 
-  if (!DestTy->isIntegral() || !SrcTy->isIntegral())
+  // We only handle extension cast instructions, so far. Enforce this.
+  if (LHSCI->getOpcode() != Instruction::ZExt &&
+      LHSCI->getOpcode() != Instruction::SExt)
     return 0;
 
-  unsigned SrcBits  = SrcTy->getPrimitiveSizeInBits();
-  unsigned DestBits = DestTy->getPrimitiveSizeInBits();
-  if (SrcBits >= DestBits) return 0;  // Only handle extending cast.
+  bool isSignedExt = LHSCI->getOpcode() == Instruction::SExt;
+  bool isSignedCmp = ICI.isSignedPredicate();
 
-  // Is this a sign or zero extension?
-  bool isSignSrc  = SrcTy->isSigned();
-  bool isSignDest = DestTy->isSigned();
-
-  if (CastInst *CI = dyn_cast<CastInst>(SCI.getOperand(1))) {
+  if (CastInst *CI = dyn_cast<CastInst>(ICI.getOperand(1))) {
     // Not an extension from the same type?
     RHSCIOp = CI->getOperand(0);
-    if (RHSCIOp->getType() != LHSCIOp->getType()) return 0;
-  } else if (ConstantInt *CI = dyn_cast<ConstantInt>(SCI.getOperand(1))) {
-    // Compute the constant that would happen if we truncated to SrcTy then
-    // reextended to DestTy.
-    Constant *Res1 = ConstantExpr::getTrunc(CI, SrcTy);
-    Constant *Res2 = ConstantExpr::getCast(LHSCI->getOpcode(), Res1, DestTy);
-
-    if (Res2 == CI) {
-      // Make sure that src sign and dest sign match. For example,
-      //
-      // %A = cast short %X to uint
-      // %B = setgt uint %A, 1330
-      //
-      // It is incorrect to transform this into 
-      //
-      // %B = setgt short %X, 1330 
-      // 
-      // because %A may have negative value. 
-      // However, it is OK if SrcTy is bool (See cast-set.ll testcase)
-      // OR operation is EQ/NE.
-      if (isSignSrc == isSignDest || SrcTy == Type::BoolTy || SCI.isEquality())
-        RHSCIOp = Res1;
-      else
-        return 0;
-    } else {
-      // If the value cannot be represented in the shorter type, we cannot emit
-      // a simple comparison.
-      if (SCI.getOpcode() == Instruction::SetEQ)
-        return ReplaceInstUsesWith(SCI, ConstantBool::getFalse());
-      if (SCI.getOpcode() == Instruction::SetNE)
-        return ReplaceInstUsesWith(SCI, ConstantBool::getTrue());
-
-      // Evaluate the comparison for LT.
-      Value *Result;
-      if (DestTy->isSigned()) {
-        // We're performing a signed comparison.
-        if (isSignSrc) {
-          // Signed extend and signed comparison.
-          if (cast<ConstantInt>(CI)->getSExtValue() < 0)// X < (small) --> false
-            Result = ConstantBool::getFalse();
-          else
-            Result = ConstantBool::getTrue();           // X < (large) --> true
-        } else {
-          // Unsigned extend and signed comparison.
-          if (cast<ConstantInt>(CI)->getSExtValue() < 0)
-            Result = ConstantBool::getFalse();
-          else
-            Result = ConstantBool::getTrue();
-        }
-      } else {
-        // We're performing an unsigned comparison.
-        if (!isSignSrc) {
-          // Unsigned extend & compare -> always true.
-          Result = ConstantBool::getTrue();
-        } else {
-          // We're performing an unsigned comp with a sign extended value.
-          // This is true if the input is >= 0. [aka >s -1]
-          Constant *NegOne = ConstantIntegral::getAllOnesValue(SrcTy);
-          Result = InsertNewInstBefore(BinaryOperator::createSetGT(LHSCIOp,
-                                                  NegOne, SCI.getName()), SCI);
-        }
-      }
-
-      // Finally, return the value computed.
-      if (SCI.getOpcode() == Instruction::SetLT) {
-        return ReplaceInstUsesWith(SCI, Result);
-      } else {
-        assert(SCI.getOpcode()==Instruction::SetGT &&"SetCC should be folded!");
-        if (Constant *CI = dyn_cast<Constant>(Result))
-          return ReplaceInstUsesWith(SCI, ConstantExpr::getNot(CI));
-        else
-          return BinaryOperator::createNot(Result);
-      }
-    }
-  } else {
-    return 0;
+    if (RHSCIOp->getType() != LHSCIOp->getType()) 
+      return 0;
+    else
+      // Okay, just insert a compare of the reduced operands now!
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, RHSCIOp);
   }
 
-  // Okay, just insert a compare of the reduced operands now!
-  return BinaryOperator::create(SCI.getOpcode(), LHSCIOp, RHSCIOp);
+  // If we aren't dealing with a constant on the RHS, exit early
+  ConstantInt *CI = dyn_cast<ConstantInt>(ICI.getOperand(1));
+  if (!CI)
+    return 0;
+
+  // Compute the constant that would happen if we truncated to SrcTy then
+  // reextended to DestTy.
+  Constant *Res1 = ConstantExpr::getTrunc(CI, SrcTy);
+  Constant *Res2 = ConstantExpr::getCast(LHSCI->getOpcode(), Res1, DestTy);
+
+  // If the re-extended constant didn't change...
+  if (Res2 == CI) {
+    // Make sure that sign of the Cmp and the sign of the Cast are the same.
+    // For example, we might have:
+    //    %A = sext short %X to uint
+    //    %B = icmp ugt uint %A, 1330
+    // It is incorrect to transform this into 
+    //    %B = icmp ugt short %X, 1330 
+    // because %A may have negative value. 
+    //
+    // However, it is OK if SrcTy is bool (See cast-set.ll testcase)
+    // OR operation is EQ/NE.
+    if (isSignedExt == isSignedCmp || SrcTy == Type::BoolTy || ICI.isEquality())
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, Res1);
+    else
+      return 0;
+  }
+
+  // The re-extended constant changed so the constant cannot be represented 
+  // in the shorter type. Consequently, we cannot emit a simple comparison.
+
+  // First, handle some easy cases. We know the result cannot be equal at this
+  // point so handle the ICI.isEquality() cases
+  if (ICI.getPredicate() == ICmpInst::ICMP_EQ)
+    return ReplaceInstUsesWith(ICI, ConstantBool::getFalse());
+  if (ICI.getPredicate() == ICmpInst::ICMP_NE)
+    return ReplaceInstUsesWith(ICI, ConstantBool::getTrue());
+
+  // Evaluate the comparison for LT (we invert for GT below). LE and GE cases
+  // should have been folded away previously and not enter in here.
+  Value *Result;
+  if (isSignedCmp) {
+    // We're performing a signed comparison.
+    if (cast<ConstantInt>(CI)->getSExtValue() < 0)
+      Result = ConstantBool::getFalse();          // X < (small) --> false
+    else
+      Result = ConstantBool::getTrue();           // X < (large) --> true
+  } else {
+    // We're performing an unsigned comparison.
+    if (isSignedExt) {
+      // We're performing an unsigned comp with a sign extended value.
+      // This is true if the input is >= 0. [aka >s -1]
+      Constant *NegOne = ConstantIntegral::getAllOnesValue(SrcTy);
+      Result = InsertNewInstBefore(new ICmpInst(ICmpInst::ICMP_SGT, LHSCIOp,
+                                   NegOne, ICI.getName()), ICI);
+    } else {
+      // Unsigned extend & unsigned compare -> always true.
+      Result = ConstantBool::getTrue();
+    }
+  }
+
+  // Finally, return the value computed.
+  if (ICI.getPredicate() == ICmpInst::ICMP_ULT ||
+      ICI.getPredicate() == ICmpInst::ICMP_SLT) {
+    return ReplaceInstUsesWith(ICI, Result);
+  } else {
+    assert((ICI.getPredicate()==ICmpInst::ICMP_UGT || 
+            ICI.getPredicate()==ICmpInst::ICMP_SGT) &&
+           "ICmp should be folded!");
+    if (Constant *CI = dyn_cast<Constant>(Result))
+      return ReplaceInstUsesWith(ICI, ConstantExpr::getNot(CI));
+    else
+      return BinaryOperator::createNot(Result);
+  }
 }
 
 Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
   assert(I.getOperand(1)->getType() == Type::UByteTy);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-  bool isLeftShift = I.getOpcode() == Instruction::Shl;
 
   // shl X, 0 == X and shr X, 0 == X
   // shl 0, X == 0 and shr 0, X == 0
@@ -5115,17 +5396,17 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       Op0 == Constant::getNullValue(Op0->getType()))
     return ReplaceInstUsesWith(I, Op0);
   
-  if (isa<UndefValue>(Op0)) {            // undef >>s X -> undef
-    if (!isLeftShift && I.getType()->isSigned())
+  if (isa<UndefValue>(Op0)) {            
+    if (I.getOpcode() == Instruction::AShr) // undef >>s X -> undef
       return ReplaceInstUsesWith(I, Op0);
-    else                         // undef << X -> 0   AND  undef >>u X -> 0
+    else                                    // undef << X -> 0, undef >>u X -> 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   }
   if (isa<UndefValue>(Op1)) {
-    if (isLeftShift || I.getType()->isUnsigned())// X << undef, X >>u undef -> 0
+    if (I.getOpcode() == Instruction::AShr)  // X >>s undef -> X
+      return ReplaceInstUsesWith(I, Op0);          
+    else                                     // X << undef, X >>u undef -> 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-    else
-      return ReplaceInstUsesWith(I, Op0);          // X >>s undef -> X
   }
 
   // ashr int -1, X = -1   (for any arithmetic shift rights of ~0)
@@ -5157,9 +5438,8 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 
 Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                                ShiftInst &I) {
-  bool isLeftShift = I.getOpcode() == Instruction::Shl;
-  bool isSignedShift = isLeftShift ? Op0->getType()->isSigned() : 
-                                     I.getOpcode() == Instruction::AShr;
+  bool isLeftShift    = I.getOpcode() == Instruction::Shl;
+  bool isSignedShift  = I.getOpcode() == Instruction::AShr;
   bool isUnsignedShift = !isSignedShift;
 
   // See if we can simplify any instructions used by the instruction whose sole 
@@ -5348,10 +5628,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     // Find the operands and properties of the input shift.  Note that the
     // signedness of the input shift may differ from the current shift if there
     // is a noop cast between the two.
-    bool isShiftOfLeftShift = ShiftOp->getOpcode() == Instruction::Shl;
-    bool isShiftOfSignedShift = isShiftOfLeftShift ? 
-           ShiftOp->getType()->isSigned() : 
-           ShiftOp->getOpcode() == Instruction::AShr;
+    bool isShiftOfLeftShift   = ShiftOp->getOpcode() == Instruction::Shl;
+    bool isShiftOfSignedShift = ShiftOp->getOpcode() == Instruction::AShr;
     bool isShiftOfUnsignedShift = !isShiftOfSignedShift;
     
     ConstantInt *ShiftAmt1C = cast<ConstantInt>(ShiftOp->getOperand(1));
@@ -5781,11 +6059,11 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
 
   // If the source isn't an instruction or has more than one use then we
   // can't do anything more. 
-  if (!isa<Instruction>(Src) || !Src->hasOneUse())
+  Instruction *SrcI = dyn_cast<Instruction>(Src);
+  if (!SrcI || !Src->hasOneUse())
     return 0;
 
   // Attempt to propagate the cast into the instruction.
-  Instruction *SrcI = cast<Instruction>(Src);
   int NumCastsRemoved = 0;
   if (CanEvaluateInDifferentType(SrcI, DestTy, NumCastsRemoved)) {
     // If this cast is a truncate, evaluting in a different type always
@@ -5867,8 +6145,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       // two casts to be inserted if the sizes are the same.  This could 
       // only be converting signedness, which is a noop.
       if (DestBitSize == SrcBitSize || 
-          !ValueRequiresCast(Op1, DestTy,TD) ||
-          !ValueRequiresCast(Op0, DestTy, TD)) {
+          !ValueRequiresCast(CI.getOpcode(), Op1, DestTy,TD) ||
+          !ValueRequiresCast(CI.getOpcode(), Op0, DestTy, TD)) {
         Instruction::CastOps opcode = CI.getOpcode();
         Value *Op0c = InsertOperandCastBefore(opcode, Op0, DestTy, SrcI);
         Value *Op1c = InsertOperandCastBefore(opcode, Op1, DestTy, SrcI);
@@ -5881,7 +6159,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     if (isa<ZExtInst>(CI) && SrcBitSize == 1 && 
         SrcI->getOpcode() == Instruction::Xor &&
         Op1 == ConstantBool::getTrue() &&
-        (!Op0->hasOneUse() || !isa<SetCondInst>(Op0))) {
+        (!Op0->hasOneUse() || !isa<CmpInst>(Op0))) {
       Value *New = InsertOperandCastBefore(Instruction::ZExt, Op0, DestTy, &CI);
       return BinaryOperator::createXor(New, ConstantInt::get(CI.getType(), 1));
     }
@@ -5895,8 +6173,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       // Don't insert two casts if they cannot be eliminated.  We allow 
       // two casts to be inserted if the sizes are the same.  This could 
       // only be converting signedness, which is a noop.
-      if (!ValueRequiresCast(Op1, DestTy,TD) || 
-          !ValueRequiresCast(Op0, DestTy, TD)) {
+      if (!ValueRequiresCast(CI.getOpcode(), Op1, DestTy, TD) || 
+          !ValueRequiresCast(CI.getOpcode(), Op0, DestTy, TD)) {
         Value *Op0c = InsertOperandCastBefore(Instruction::BitCast, 
                                               Op0, DestTy, SrcI);
         Value *Op1c = InsertOperandCastBefore(Instruction::BitCast, 
@@ -5935,10 +6213,9 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     }
     break;
 
-  case Instruction::SetEQ:
-  case Instruction::SetNE:
-    // If we are just checking for a seteq of a single bit and casting it
-    // to an integer.  If so, shift the bit to the appropriate place then
+  case Instruction::ICmp:
+    // If we are just checking for a icmp eq of a single bit and casting it
+    // to an integer, then shift the bit to the appropriate place and then
     // cast to integer to avoid the comparison.
     if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
       uint64_t Op1CV = Op1C->getZExtValue();
@@ -5955,13 +6232,18 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         uint64_t KnownZero, KnownOne;
         uint64_t TypeMask = Op1->getType()->getIntegralTypeMask();
         ComputeMaskedBits(Op0, TypeMask, KnownZero, KnownOne);
+
+        // This only works for EQ and NE
+        ICmpInst::Predicate pred = cast<ICmpInst>(SrcI)->getPredicate();
+        if (pred != ICmpInst::ICMP_NE && pred != ICmpInst::ICMP_EQ)
+          break;
         
         if (isPowerOf2_64(KnownZero^TypeMask)) { // Exactly 1 possible 1?
-          bool isSetNE = SrcI->getOpcode() == Instruction::SetNE;
+          bool isNE = pred == ICmpInst::ICMP_NE;
           if (Op1CV && (Op1CV != (KnownZero^TypeMask))) {
             // (X&4) == 2 --> false
             // (X&4) != 2 --> true
-            Constant *Res = ConstantBool::get(isSetNE);
+            Constant *Res = ConstantBool::get(isNE);
             Res = ConstantExpr::getZExt(Res, CI.getType());
             return ReplaceInstUsesWith(CI, Res);
           }
@@ -5977,7 +6259,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
                             In->getName()+".lobit"), CI);
           }
           
-          if ((Op1CV != 0) == isSetNE) { // Toggle the low bit.
+          if ((Op1CV != 0) == isNE) { // Toggle the low bit.
             Constant *One = ConstantInt::get(In->getType(), 1);
             In = BinaryOperator::createXor(In, One, "tmp");
             InsertNewInstBefore(cast<Instruction>(In), CI);
@@ -6039,7 +6321,7 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
                                                             SrcI->getOperand(0),
                                                             "tmp"), CI);
           Value *Zero = Constant::getNullValue(V->getType());
-          return BinaryOperator::createSetNE(V, Zero);
+          return new ICmpInst(ICmpInst::ICMP_NE, V, Zero);
         }
       }
       break;
@@ -6272,8 +6554,14 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
                             TI->getType());
   }
 
-  // Only handle binary operators here.
-  if (!isa<ShiftInst>(TI) && !isa<BinaryOperator>(TI))
+  // Only handle binary, compare and shift operators here.
+  if (!isa<ShiftInst>(TI) && !isa<BinaryOperator>(TI) && !isa<CmpInst>(TI))
+    return 0;
+
+  // If the CmpInst predicates don't match, then the instructions aren't the 
+  // same and we can't continue.
+  if (isa<CmpInst>(TI) && isa<CmpInst>(FI) &&
+      (cast<CmpInst>(TI)->getPredicate() != cast<CmpInst>(FI)->getPredicate()))
     return 0;
 
   // Figure out if the operations have any operands in common.
@@ -6387,20 +6675,20 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         return CastInst::create(Instruction::ZExt, NotCond, SI.getType());
       }
 
-      if (SetCondInst *IC = dyn_cast<SetCondInst>(SI.getCondition())) {
+      if (ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition())) {
 
-        // (x <s 0) ? -1 : 0 -> sra x, 31
-        // (x >u 2147483647) ? -1 : 0 -> sra x, 31
+        // (x <s 0) ? -1 : 0 -> ashr x, 31
+        // (x >u 2147483647) ? -1 : 0 -> ashr x, 31
         if (TrueValC->isAllOnesValue() && FalseValC->isNullValue())
           if (ConstantInt *CmpCst = dyn_cast<ConstantInt>(IC->getOperand(1))) {
             bool CanXForm = false;
-            if (CmpCst->getType()->isSigned())
+            if (IC->isSignedPredicate())
               CanXForm = CmpCst->isNullValue() && 
-                         IC->getOpcode() == Instruction::SetLT;
+                         IC->getPredicate() == ICmpInst::ICMP_SLT;
             else {
               unsigned Bits = CmpCst->getType()->getPrimitiveSizeInBits();
               CanXForm = (CmpCst->getZExtValue() == ~0ULL >> (64-Bits+1)) &&
-                         IC->getOpcode() == Instruction::SetGT;
+                         IC->getPredicate() == ICmpInst::ICMP_UGT;
             }
             
             if (CanXForm) {
@@ -6428,7 +6716,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
 
         // If one of the constants is zero (we know they can't both be) and we
-        // have a setcc instruction with zero, and we have an 'and' with the
+        // have a fcmp instruction with zero, and we have an 'and' with the
         // non-constant value, eliminate this whole mess.  This corresponds to
         // cases like this: ((X & 27) ? 27 : 0)
         if (TrueValC->isNullValue() || FalseValC->isNullValue())
@@ -6441,10 +6729,10 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                    ICA->getOperand(1) == FalseValC) &&
                   isOneBitSet(cast<ConstantInt>(ICA->getOperand(1)))) {
                 // Okay, now we know that everything is set up, we just don't
-                // know whether we have a setne or seteq and whether the true or
-                // false val is the zero.
+                // know whether we have a icmp_ne or icmp_eq and whether the 
+                // true or false val is the zero.
                 bool ShouldNotVal = !TrueValC->isNullValue();
-                ShouldNotVal ^= IC->getOpcode() == Instruction::SetNE;
+                ShouldNotVal ^= IC->getPredicate() == ICmpInst::ICMP_NE;
                 Value *V = ICA;
                 if (ShouldNotVal)
                   V = InsertNewInstBefore(BinaryOperator::create(
@@ -6455,22 +6743,44 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     }
 
   // See if we are selecting two values based on a comparison of the two values.
-  if (SetCondInst *SCI = dyn_cast<SetCondInst>(CondVal)) {
-    if (SCI->getOperand(0) == TrueVal && SCI->getOperand(1) == FalseVal) {
+  if (FCmpInst *FCI = dyn_cast<FCmpInst>(CondVal)) {
+    if (FCI->getOperand(0) == TrueVal && FCI->getOperand(1) == FalseVal) {
       // Transform (X == Y) ? X : Y  -> Y
-      if (SCI->getOpcode() == Instruction::SetEQ)
+      if (FCI->getPredicate() == FCmpInst::FCMP_OEQ)
         return ReplaceInstUsesWith(SI, FalseVal);
       // Transform (X != Y) ? X : Y  -> X
-      if (SCI->getOpcode() == Instruction::SetNE)
+      if (FCI->getPredicate() == FCmpInst::FCMP_ONE)
         return ReplaceInstUsesWith(SI, TrueVal);
       // NOTE: if we wanted to, this is where to detect MIN/MAX/ABS/etc.
 
-    } else if (SCI->getOperand(0) == FalseVal && SCI->getOperand(1) == TrueVal){
+    } else if (FCI->getOperand(0) == FalseVal && FCI->getOperand(1) == TrueVal){
       // Transform (X == Y) ? Y : X  -> X
-      if (SCI->getOpcode() == Instruction::SetEQ)
+      if (FCI->getPredicate() == FCmpInst::FCMP_OEQ)
         return ReplaceInstUsesWith(SI, FalseVal);
       // Transform (X != Y) ? Y : X  -> Y
-      if (SCI->getOpcode() == Instruction::SetNE)
+      if (FCI->getPredicate() == FCmpInst::FCMP_ONE)
+        return ReplaceInstUsesWith(SI, TrueVal);
+      // NOTE: if we wanted to, this is where to detect MIN/MAX/ABS/etc.
+    }
+  }
+
+  // See if we are selecting two values based on a comparison of the two values.
+  if (ICmpInst *ICI = dyn_cast<ICmpInst>(CondVal)) {
+    if (ICI->getOperand(0) == TrueVal && ICI->getOperand(1) == FalseVal) {
+      // Transform (X == Y) ? X : Y  -> Y
+      if (ICI->getPredicate() == ICmpInst::ICMP_EQ)
+        return ReplaceInstUsesWith(SI, FalseVal);
+      // Transform (X != Y) ? X : Y  -> X
+      if (ICI->getPredicate() == ICmpInst::ICMP_NE)
+        return ReplaceInstUsesWith(SI, TrueVal);
+      // NOTE: if we wanted to, this is where to detect MIN/MAX/ABS/etc.
+
+    } else if (ICI->getOperand(0) == FalseVal && ICI->getOperand(1) == TrueVal){
+      // Transform (X == Y) ? Y : X  -> X
+      if (ICI->getPredicate() == ICmpInst::ICMP_EQ)
+        return ReplaceInstUsesWith(SI, FalseVal);
+      // Transform (X != Y) ? Y : X  -> Y
+      if (ICI->getPredicate() == ICmpInst::ICMP_NE)
         return ReplaceInstUsesWith(SI, TrueVal);
       // NOTE: if we wanted to, this is where to detect MIN/MAX/ABS/etc.
     }
@@ -7096,7 +7406,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
   assert(isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst) ||
-         isa<GetElementPtrInst>(FirstInst));
+         isa<GetElementPtrInst>(FirstInst) || isa<CmpInst>(FirstInst));
   unsigned Opc = FirstInst->getOpcode();
   Value *LHSVal = FirstInst->getOperand(0);
   Value *RHSVal = FirstInst->getOperand(1);
@@ -7109,11 +7419,17 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   for (unsigned i = 0; i != PN.getNumIncomingValues(); ++i) {
     Instruction *I = dyn_cast<Instruction>(PN.getIncomingValue(i));
     if (!I || I->getOpcode() != Opc || !I->hasOneUse() ||
-        // Verify type of the LHS matches so we don't fold setcc's of different
+        // Verify type of the LHS matches so we don't fold cmp's of different
         // types or GEP's with different index types.
         I->getOperand(0)->getType() != LHSType ||
         I->getOperand(1)->getType() != RHSType)
       return 0;
+
+    // If they are CmpInst instructions, check their predicates
+    if (Opc == Instruction::ICmp || Opc == Instruction::FCmp)
+      if (cast<CmpInst>(I)->getPredicate() !=
+          cast<CmpInst>(FirstInst)->getPredicate())
+        return 0;
     
     // Keep track of which operand needs a phi node.
     if (I->getOperand(0) != LHSVal) LHSVal = 0;
@@ -7161,6 +7477,9 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
     
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::create(BinOp->getOpcode(), LHSVal, RHSVal);
+  else if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
+    return CmpInst::create(CIOp->getOpcode(), CIOp->getPredicate(), LHSVal, 
+                           RHSVal);
   else if (ShiftInst *SI = dyn_cast<ShiftInst>(FirstInst))
     return new ShiftInst(SI->getOpcode(), LHSVal, RHSVal);
   else {
@@ -7198,9 +7517,10 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   bool isVolatile = false;
   if (isa<CastInst>(FirstInst)) {
     CastSrcTy = FirstInst->getOperand(0)->getType();
-  } else if (isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst)) {
-    // Can fold binop or shift here if the RHS is a constant, otherwise call
-    // FoldPHIArgBinOpIntoPHI.
+  } else if (isa<BinaryOperator>(FirstInst) || isa<ShiftInst>(FirstInst) ||
+             isa<CmpInst>(FirstInst)) {
+    // Can fold binop, compare or shift here if the RHS is a constant, 
+    // otherwise call FoldPHIArgBinOpIntoPHI.
     ConstantOp = dyn_cast<Constant>(FirstInst->getOperand(1));
     if (ConstantOp == 0)
       return FoldPHIArgBinOpIntoPHI(PN);
@@ -7224,14 +7544,14 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
     if (!isa<Instruction>(PN.getIncomingValue(i))) return 0;
     Instruction *I = cast<Instruction>(PN.getIncomingValue(i));
-    if (!I->hasOneUse() || I->getOpcode() != FirstInst->getOpcode())
+    if (!I->hasOneUse() || !I->isSameOperationAs(FirstInst))
       return 0;
     if (CastSrcTy) {
       if (I->getOperand(0)->getType() != CastSrcTy)
         return 0;  // Cast operation must match.
     } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-      // We can't sink the load if the loaded value could be modified between the
-      // load and the PHI.
+      // We can't sink the load if the loaded value could be modified between 
+      // the load and the PHI.
       if (LI->isVolatile() != isVolatile ||
           LI->getParent() != PN.getIncomingBlock(i) ||
           !isSafeToSinkLoad(LI))
@@ -7276,6 +7596,9 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     return new LoadInst(PhiVal, "", isVolatile);
   else if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::create(BinOp->getOpcode(), PhiVal, ConstantOp);
+  else if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
+    return CmpInst::create(CIOp->getOpcode(), CIOp->getPredicate(), 
+                           PhiVal, ConstantOp);
   else
     return new ShiftInst(cast<ShiftInst>(FirstInst)->getOpcode(),
                          PhiVal, ConstantOp);
@@ -7380,11 +7703,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             }
           } else if (SrcTy->getPrimitiveSize() < DestTy->getPrimitiveSize() &&
                      SrcTy->getPrimitiveSize() == 4) {
-            // We can always eliminate a cast from int to [u]long.  We can
-            // eliminate a cast from uint to [u]long iff the target is a 32-bit
-            // pointer target.
-            if (SrcTy->isSigned() ||
-                SrcTy->getPrimitiveSizeInBits() >= TD->getPointerSizeInBits()) {
+            // We can eliminate a cast from [u]int to [u]long iff the target 
+            // is a 32-bit pointer target.
+            if (SrcTy->getPrimitiveSizeInBits() >= TD->getPointerSizeInBits()) {
               MadeChange = true;
               GEP.setOperand(i, Src);
             }
@@ -7398,8 +7719,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Value *Op = GEP.getOperand(i);
       if (Op->getType()->getPrimitiveSize() > TD->getPointerSize())
         if (Constant *C = dyn_cast<Constant>(Op)) {
-          GEP.setOperand(i, ConstantExpr::getTrunc(C,
-                                     TD->getIntPtrType()->getSignedVersion()));
+          GEP.setOperand(i, ConstantExpr::getTrunc(C, TD->getIntPtrType()));
           MadeChange = true;
         } else {
           Op = InsertCastBefore(Instruction::Trunc, Op, TD->getIntPtrType(),
@@ -7407,7 +7727,6 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           GEP.setOperand(i, Op);
           MadeChange = true;
         }
-
       // If this is a constant idx, make sure to canonicalize it to be a signed
       // operand, otherwise CSE and other optimizations are pessimized.
       if (ConstantInt *CUI = dyn_cast<ConstantInt>(Op))
@@ -7589,10 +7908,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
               isa<ConstantInt>(Inst->getOperand(1))) {
             unsigned ShAmt =
               cast<ConstantInt>(Inst->getOperand(1))->getZExtValue();
-            if (Inst->getType()->isSigned())
-              Scale = ConstantInt::get(Inst->getType(), 1ULL << ShAmt);
-            else
-              Scale = ConstantInt::get(Inst->getType(), 1ULL << ShAmt);
+            Scale = ConstantInt::get(Inst->getType(), 1ULL << ShAmt);
             NewIdx = Inst->getOperand(0);
           } else if (Inst->getOpcode() == Instruction::Mul &&
                      isa<ConstantInt>(Inst->getOperand(1))) {
@@ -8104,16 +8420,37 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
     return &BI;
   }
 
-  // Cannonicalize setne -> seteq
-  Instruction::BinaryOps Op; Value *Y;
-  if (match(&BI, m_Br(m_SetCond(Op, m_Value(X), m_Value(Y)),
-                      TrueDest, FalseDest)))
-    if ((Op == Instruction::SetNE || Op == Instruction::SetLE ||
-         Op == Instruction::SetGE) && BI.getCondition()->hasOneUse()) {
-      SetCondInst *I = cast<SetCondInst>(BI.getCondition());
+  // Cannonicalize fcmp_one -> fcmp_oeq
+  FCmpInst::Predicate FPred; Value *Y;
+  if (match(&BI, m_Br(m_FCmp(FPred, m_Value(X), m_Value(Y)), 
+                             TrueDest, FalseDest)))
+    if ((FPred == FCmpInst::FCMP_ONE || FPred == FCmpInst::FCMP_OLE ||
+         FPred == FCmpInst::FCMP_OGE) && BI.getCondition()->hasOneUse()) {
+      FCmpInst *I = cast<FCmpInst>(BI.getCondition());
       std::string Name = I->getName(); I->setName("");
-      Instruction::BinaryOps NewOpcode = SetCondInst::getInverseCondition(Op);
-      Value *NewSCC =  BinaryOperator::create(NewOpcode, X, Y, Name, I);
+      FCmpInst::Predicate NewPred = FCmpInst::getInversePredicate(FPred);
+      Value *NewSCC =  new FCmpInst(NewPred, X, Y, Name, I);
+      // Swap Destinations and condition...
+      BI.setCondition(NewSCC);
+      BI.setSuccessor(0, FalseDest);
+      BI.setSuccessor(1, TrueDest);
+      removeFromWorkList(I);
+      I->getParent()->getInstList().erase(I);
+      WorkList.push_back(cast<Instruction>(NewSCC));
+      return &BI;
+    }
+
+  // Cannonicalize icmp_ne -> icmp_eq
+  ICmpInst::Predicate IPred;
+  if (match(&BI, m_Br(m_ICmp(IPred, m_Value(X), m_Value(Y)),
+                      TrueDest, FalseDest)))
+    if ((IPred == ICmpInst::ICMP_NE  || IPred == ICmpInst::ICMP_ULE ||
+         IPred == ICmpInst::ICMP_SLE || IPred == ICmpInst::ICMP_UGE ||
+         IPred == ICmpInst::ICMP_SGE) && BI.getCondition()->hasOneUse()) {
+      ICmpInst *I = cast<ICmpInst>(BI.getCondition());
+      std::string Name = I->getName(); I->setName("");
+      ICmpInst::Predicate NewPred = ICmpInst::getInversePredicate(IPred);
+      Value *NewSCC = new ICmpInst(NewPred, X, Y, Name, I);
       // Swap Destinations and condition...
       BI.setCondition(NewSCC);
       BI.setSuccessor(0, FalseDest);
@@ -8172,6 +8509,11 @@ static bool CheapToScalarize(Value *V, bool isConstant) {
     if (BO->hasOneUse() &&
         (CheapToScalarize(BO->getOperand(0), isConstant) ||
          CheapToScalarize(BO->getOperand(1), isConstant)))
+      return true;
+  if (CmpInst *CI = dyn_cast<CmpInst>(I))
+    if (CI->hasOneUse() &&
+        (CheapToScalarize(CI->getOperand(0), isConstant) ||
+         CheapToScalarize(CI->getOperand(1), isConstant)))
       return true;
   
   return false;

@@ -278,7 +278,15 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB) {
 /// mapping its operands through ValueMap if they are available.
 Constant *PruningFunctionCloner::
 ConstantFoldMappedInstruction(const Instruction *I) {
-  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I)) {
+  if (isa<CmpInst>(I)) {
+    if (Constant *Op0 = dyn_cast_or_null<Constant>(MapValue(I->getOperand(0),
+                                                            ValueMap)))
+      if (Constant *Op1 = dyn_cast_or_null<Constant>(MapValue(I->getOperand(1),
+                                                              ValueMap)))
+        return ConstantExpr::getCompare(cast<CmpInst>(I)->getPredicate(), Op0, 
+                                        Op1);
+    return 0;
+  } else if (isa<BinaryOperator>(I) || isa<ShiftInst>(I))  {
     if (Constant *Op0 = dyn_cast_or_null<Constant>(MapValue(I->getOperand(0),
                                                             ValueMap)))
       if (Constant *Op1 = dyn_cast_or_null<Constant>(MapValue(I->getOperand(1),
@@ -295,7 +303,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
     else
       return 0;  // All operands not constant!
 
-  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Ops);
+  return ConstantFoldInstOperands(I, Ops);
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,

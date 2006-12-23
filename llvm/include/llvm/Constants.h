@@ -496,8 +496,8 @@ protected:
   // ConstantExprs in intermediate forms.
   static Constant *getTy(const Type *Ty, unsigned Opcode,
                          Constant *C1, Constant *C2);
-  static Constant *getCompareTy(unsigned Opcode, unsigned short pred, 
-                                Constant *C1, Constant *C2);
+  static Constant *getCompareTy(unsigned short pred, Constant *C1, 
+                                Constant *C2);
   static Constant *getShiftTy(const Type *Ty,
                               unsigned Opcode, Constant *C1, Constant *C2);
   static Constant *getSelectTy(const Type *Ty,
@@ -604,8 +604,7 @@ public:
   static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
 
   /// @brief Return an ICmp or FCmp comparison operator constant expression.
-  static Constant *getCompare(unsigned Opcode, unsigned short pred, 
-                              Constant *C1, Constant *C2);
+  static Constant *getCompare(unsigned short pred, Constant *C1, Constant *C2);
 
   /// ConstantExpr::get* - Return some common constants without having to
   /// specify the full Instruction::OPCODE identifier.
@@ -624,12 +623,6 @@ public:
   static Constant *getAnd(Constant *C1, Constant *C2);
   static Constant *getOr(Constant *C1, Constant *C2);
   static Constant *getXor(Constant *C1, Constant *C2);
-  static Constant *getSetEQ(Constant *C1, Constant *C2);
-  static Constant *getSetNE(Constant *C1, Constant *C2);
-  static Constant *getSetLT(Constant *C1, Constant *C2);
-  static Constant *getSetGT(Constant *C1, Constant *C2);
-  static Constant *getSetLE(Constant *C1, Constant *C2);
-  static Constant *getSetGE(Constant *C1, Constant *C2);
   static Constant* getICmp(unsigned short pred, Constant* LHS, Constant* RHS);
   static Constant* getFCmp(unsigned short pred, Constant* LHS, Constant* RHS);
   static Constant *getShl(Constant *C1, Constant *C2);

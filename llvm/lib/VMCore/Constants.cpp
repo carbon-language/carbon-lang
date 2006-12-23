@@ -265,12 +265,6 @@ ConstantPacked::~ConstantPacked() {
   delete [] OperandList;
 }
 
-static bool isSetCC(unsigned Opcode) {
-  return Opcode == Instruction::SetEQ || Opcode == Instruction::SetNE ||
-         Opcode == Instruction::SetLT || Opcode == Instruction::SetGT ||
-         Opcode == Instruction::SetLE || Opcode == Instruction::SetGE;
-}
-
 // We declare several classes private to this file, so use an anonymous
 // namespace
 namespace {
@@ -290,8 +284,7 @@ class VISIBILITY_HIDDEN BinaryConstantExpr : public ConstantExpr {
   Use Ops[2];
 public:
   BinaryConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
-    : ConstantExpr(isSetCC(Opcode) ? Type::BoolTy : C1->getType(),
-                   Opcode, Ops, 2) {
+    : ConstantExpr(C1->getType(), Opcode, Ops, 2) {
     Ops[0].init(C1, this);
     Ops[1].init(C2, this);
   }
@@ -448,24 +441,6 @@ Constant *ConstantExpr::getOr(Constant *C1, Constant *C2) {
 Constant *ConstantExpr::getXor(Constant *C1, Constant *C2) {
   return get(Instruction::Xor, C1, C2);
 }
-Constant *ConstantExpr::getSetEQ(Constant *C1, Constant *C2) {
-  return get(Instruction::SetEQ, C1, C2);
-}
-Constant *ConstantExpr::getSetNE(Constant *C1, Constant *C2) {
-  return get(Instruction::SetNE, C1, C2);
-}
-Constant *ConstantExpr::getSetLT(Constant *C1, Constant *C2) {
-  return get(Instruction::SetLT, C1, C2);
-}
-Constant *ConstantExpr::getSetGT(Constant *C1, Constant *C2) {
-  return get(Instruction::SetGT, C1, C2);
-}
-Constant *ConstantExpr::getSetLE(Constant *C1, Constant *C2) {
-  return get(Instruction::SetLE, C1, C2);
-}
-Constant *ConstantExpr::getSetGE(Constant *C1, Constant *C2) {
-  return get(Instruction::SetGE, C1, C2);
-}
 unsigned ConstantExpr::getPredicate() const {
   assert(getOpcode() == Instruction::FCmp || getOpcode() == Instruction::ICmp);
   return dynamic_cast<const CompareConstantExpr*>(this)->predicate;
@@ -582,6 +557,9 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
     std::vector<Constant*> ActualOps(Ops.begin()+1, Ops.end());
     return ConstantExpr::getGetElementPtr(Ops[0], ActualOps);
   }
+  case Instruction::ICmp:
+  case Instruction::FCmp:
+    return ConstantExpr::getCompare(getPredicate(), Ops[0], Ops[1]);
   default:
     assert(getNumOperands() == 2 && "Must be binary operator?");
     return ConstantExpr::get(getOpcode(), Ops[0], Ops[1]);
@@ -1657,8 +1635,7 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
   assert(C1->getType() == C2->getType() &&
          "Operand types in binary constant expression should match");
 
-  if (ReqTy == C1->getType() || (Instruction::isComparison(Opcode) &&
-                                 ReqTy == Type::BoolTy))
+  if (ReqTy == C1->getType() || ReqTy == Type::BoolTy)
     if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
       return FC;          // Fold a few common cases...
 
@@ -1667,11 +1644,23 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
-Constant *ConstantExpr::getCompareTy(unsigned Opcode, unsigned short predicate,
+Constant *ConstantExpr::getCompareTy(unsigned short predicate,
                                      Constant *C1, Constant *C2) {
-  if (Opcode == Instruction::ICmp)
-    return getICmp(predicate, C1, C2);
-  return getFCmp(predicate, C1, C2);
+  switch (predicate) {
+    default: assert(0 && "Invalid CmpInst predicate");
+    case FCmpInst::FCMP_FALSE: case FCmpInst::FCMP_OEQ: case FCmpInst::FCMP_OGT:
+    case FCmpInst::FCMP_OGE: case FCmpInst::FCMP_OLT: case FCmpInst::FCMP_OLE:
+    case FCmpInst::FCMP_ONE: case FCmpInst::FCMP_ORD: case FCmpInst::FCMP_UNO:
+    case FCmpInst::FCMP_UEQ: case FCmpInst::FCMP_UGT: case FCmpInst::FCMP_UGE:
+    case FCmpInst::FCMP_ULT: case FCmpInst::FCMP_ULE: case FCmpInst::FCMP_UNE:
+    case FCmpInst::FCMP_TRUE:
+      return getFCmp(predicate, C1, C2);
+    case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_UGT:
+    case ICmpInst::ICMP_UGE: case ICmpInst::ICMP_ULT: case ICmpInst::ICMP_ULE:
+    case ICmpInst::ICMP_SGT: case ICmpInst::ICMP_SGE: case ICmpInst::ICMP_SLT:
+    case ICmpInst::ICMP_SLE:
+      return getICmp(predicate, C1, C2);
+  }
 }
 
 Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
@@ -1718,10 +1707,6 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
     assert((C1->getType()->isIntegral() || isa<PackedType>(C1->getType())) &&
            "Tried to create a logical operation on a non-integral type!");
     break;
-  case Instruction::SetLT: case Instruction::SetGT: case Instruction::SetLE:
-  case Instruction::SetGE: case Instruction::SetEQ: case Instruction::SetNE:
-    assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    break;
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
@@ -1737,10 +1722,10 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Opcode, C1, C2);
 }
 
-Constant *ConstantExpr::getCompare(unsigned Opcode, unsigned short pred, 
+Constant *ConstantExpr::getCompare(unsigned short pred, 
                             Constant *C1, Constant *C2) {
   assert(C1->getType() == C2->getType() && "Op types should be identical!");
-  return getCompareTy(Opcode, pred, C1, C2);
+  return getCompareTy(pred, C1, C2);
 }
 
 Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
@@ -1826,7 +1811,7 @@ ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   assert(pred >= ICmpInst::FIRST_ICMP_PREDICATE && 
          pred <= ICmpInst::LAST_ICMP_PREDICATE && "Invalid ICmp Predicate");
 
-  if (Constant *FC = ConstantFoldCompare(Instruction::ICmp, LHS, RHS, pred))
+  if (Constant *FC = ConstantFoldCompareInstruction(pred, LHS, RHS))
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
@@ -1843,7 +1828,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   assert(LHS->getType() == RHS->getType());
   assert(pred <= FCmpInst::LAST_FCMP_PREDICATE && "Invalid FCmp Predicate");
 
-  if (Constant *FC = ConstantFoldCompare(Instruction::FCmp, LHS, RHS, pred))
+  if (Constant *FC = ConstantFoldCompareInstruction(pred, LHS, RHS))
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness

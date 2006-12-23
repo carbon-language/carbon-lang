@@ -369,12 +369,8 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
       case Instruction::Shl:
       case Instruction::LShr:
       case Instruction::AShr:
-      case Instruction::SetEQ:
-      case Instruction::SetNE:
-      case Instruction::SetLT:
-      case Instruction::SetGT:
-      case Instruction::SetLE:
-      case Instruction::SetGE:
+      case Instruction::ICmp:
+      case Instruction::FCmp:
         break;   // These are all cheap and non-trapping instructions.
       }
 
@@ -390,12 +386,13 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   return true;
 }
 
-// GatherConstantSetEQs - Given a potentially 'or'd together collection of seteq
-// instructions that compare a value against a constant, return the value being
-// compared, and stick the constant into the Values vector.
+// GatherConstantSetEQs - Given a potentially 'or'd together collection of 
+// icmp_eq instructions that compare a value against a constant, return the 
+// value being compared, and stick the constant into the Values vector.
 static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
   if (Instruction *Inst = dyn_cast<Instruction>(V))
-    if (Inst->getOpcode() == Instruction::SetEQ) {
+    if (Inst->getOpcode() == Instruction::ICmp &&
+        cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_EQ) {
       if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(1))) {
         Values.push_back(C);
         return Inst->getOperand(0);
@@ -417,7 +414,8 @@ static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
 // being compared, and stick the constant into the Values vector.
 static Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values){
   if (Instruction *Inst = dyn_cast<Instruction>(V))
-    if (Inst->getOpcode() == Instruction::SetNE) {
+    if (Inst->getOpcode() == Instruction::ICmp &&
+               cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_NE) {
       if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(1))) {
         Values.push_back(C);
         return Inst->getOperand(0);
@@ -503,11 +501,11 @@ static Value *isValueEqualityComparison(TerminatorInst *TI) {
   }
   if (BranchInst *BI = dyn_cast<BranchInst>(TI))
     if (BI->isConditional() && BI->getCondition()->hasOneUse())
-      if (SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition()))
-        if ((SCI->getOpcode() == Instruction::SetEQ ||
-             SCI->getOpcode() == Instruction::SetNE) &&
-            isa<ConstantInt>(SCI->getOperand(1)))
-          return SCI->getOperand(0);
+      if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition()))
+        if ((ICI->getPredicate() == ICmpInst::ICMP_EQ ||
+             ICI->getPredicate() == ICmpInst::ICMP_NE) &&
+            isa<ConstantInt>(ICI->getOperand(1)))
+          return ICI->getOperand(0);
   return 0;
 }
 
@@ -525,11 +523,11 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
   }
 
   BranchInst *BI = cast<BranchInst>(TI);
-  SetCondInst *SCI = cast<SetCondInst>(BI->getCondition());
-  Cases.push_back(std::make_pair(cast<ConstantInt>(SCI->getOperand(1)),
-                                 BI->getSuccessor(SCI->getOpcode() ==
-                                                        Instruction::SetNE)));
-  return BI->getSuccessor(SCI->getOpcode() == Instruction::SetEQ);
+  ICmpInst *ICI = cast<ICmpInst>(BI->getCondition());
+  Cases.push_back(std::make_pair(cast<ConstantInt>(ICI->getOperand(1)),
+                                 BI->getSuccessor(ICI->getPredicate() ==
+                                                  ICmpInst::ICMP_NE)));
+  return BI->getSuccessor(ICI->getPredicate() == ICmpInst::ICMP_EQ);
 }
 
 
@@ -847,8 +845,8 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
   BasicBlock *BB2 = BI->getSuccessor(1);  // The false destination
 
   Instruction *I1 = BB1->begin(), *I2 = BB2->begin();
-  if (I1->getOpcode() != I2->getOpcode() || !I1->isIdenticalTo(I2) ||
-      isa<PHINode>(I1) || isa<InvokeInst>(I1))
+  if (I1->getOpcode() != I2->getOpcode() || isa<PHINode>(I1) || 
+      isa<InvokeInst>(I1) || !I1->isIdenticalTo(I2))
     return false;
 
   // If we get here, we can hoist at least one instruction.
@@ -1443,8 +1441,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       // predecessor and use logical operations to pick the right destination.
       BasicBlock *TrueDest  = BI->getSuccessor(0);
       BasicBlock *FalseDest = BI->getSuccessor(1);
-      if (BinaryOperator *Cond = dyn_cast<BinaryOperator>(BI->getCondition()))
-        if (Cond->getParent() == BB && &BB->front() == Cond &&
+      if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition()))
+        if ((isa<CmpInst>(Cond) || isa<BinaryOperator>(Cond)) &&
+            Cond->getParent() == BB && &BB->front() == Cond &&
             Cond->getNext() == BI && Cond->hasOneUse() &&
             TrueDest != BB && FalseDest != BB)
           for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI!=E; ++PI)

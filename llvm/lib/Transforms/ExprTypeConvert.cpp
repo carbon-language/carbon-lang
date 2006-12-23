@@ -463,10 +463,13 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     return ValueConvertibleToType(I, Ty, CTMap, TD) &&
            ExpressionConvertibleToType(OtherOp, Ty, CTMap, TD);
   }
-  case Instruction::SetEQ:
-  case Instruction::SetNE: {
-    Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
-    return ExpressionConvertibleToType(OtherOp, Ty, CTMap, TD);
+  case Instruction::ICmp: {
+    if (cast<ICmpInst>(I)->getPredicate() == ICmpInst::ICMP_EQ ||
+        cast<ICmpInst>(I)->getPredicate() == ICmpInst::ICMP_NE) {
+      Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
+      return ExpressionConvertibleToType(OtherOp, Ty, CTMap, TD);
+    }
+    return false;
   }
   case Instruction::LShr:
   case Instruction::AShr:
@@ -717,9 +720,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   }
 
   case Instruction::Add:
-  case Instruction::Sub:
-  case Instruction::SetEQ:
-  case Instruction::SetNE: {
+  case Instruction::Sub: {
     Res = BinaryOperator::create(cast<BinaryOperator>(I)->getOpcode(),
                                  Dummy, Dummy, Name);
     VMC.ExprMap[I] = Res;   // Add node to expression eagerly
@@ -729,6 +730,19 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     Res->setOperand(!OtherIdx, NewVal);
     Value *NewOther   = ConvertExpressionToType(OtherOp, NewTy, VMC, TD);
     Res->setOperand(OtherIdx, NewOther);
+    break;
+  }
+  case Instruction::ICmp: {
+    ICmpInst::Predicate pred = cast<ICmpInst>(I)->getPredicate();
+    if (pred == ICmpInst::ICMP_EQ || pred == ICmpInst::ICMP_NE) {
+      Res = new ICmpInst(pred, Dummy, Dummy, Name);
+      VMC.ExprMap[I] = Res;  // Add node to expression eagerly
+      unsigned OtherIdx = (OldVal == I->getOperand(0)) ? 1 : 0;
+      Value *OtherOp    = I->getOperand(OtherIdx);
+      Res->setOperand(!OtherIdx, NewVal);
+      Value *NewOther   = ConvertExpressionToType(OtherOp, NewTy, VMC, TD);
+      Res->setOperand(OtherIdx, NewOther);
+    }
     break;
   }
   case Instruction::Shl:

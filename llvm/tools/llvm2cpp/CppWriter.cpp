@@ -783,31 +783,63 @@ void CppWriter::printConstant(const Constant *CV) {
       }
       Out << "Constant* " << constName << " = ConstantExpr::";
       switch (CE->getOpcode()) {
-        case Instruction::Add:    Out << "getAdd";  break;
-        case Instruction::Sub:    Out << "getSub"; break;
-        case Instruction::Mul:    Out << "getMul"; break;
-        case Instruction::UDiv:   Out << "getUDiv"; break;
-        case Instruction::SDiv:   Out << "getSDiv"; break;
-        case Instruction::FDiv:   Out << "getFDiv"; break;
-        case Instruction::URem:   Out << "getURem"; break;
-        case Instruction::SRem:   Out << "getSRem"; break;
-        case Instruction::FRem:   Out << "getFRem"; break;
-        case Instruction::And:    Out << "getAnd"; break;
-        case Instruction::Or:     Out << "getOr"; break;
-        case Instruction::Xor:    Out << "getXor"; break;
-        case Instruction::SetEQ:  Out << "getSetEQ"; break;
-        case Instruction::SetNE:  Out << "getSetNE"; break;
-        case Instruction::SetLE:  Out << "getSetLE"; break;
-        case Instruction::SetGE:  Out << "getSetGE"; break;
-        case Instruction::SetLT:  Out << "getSetLT"; break;
-        case Instruction::SetGT:  Out << "getSetGT"; break;
-        case Instruction::Shl:    Out << "getShl"; break;
-        case Instruction::LShr:    Out << "getLShr"; break;
-        case Instruction::AShr:    Out << "getAShr"; break;
-        case Instruction::Select: Out << "getSelect"; break;
-        case Instruction::ExtractElement: Out << "getExtractElement"; break;
-        case Instruction::InsertElement:  Out << "getInsertElement"; break;
-        case Instruction::ShuffleVector:  Out << "getShuffleVector"; break;
+        case Instruction::Add:    Out << "getAdd(";  break;
+        case Instruction::Sub:    Out << "getSub("; break;
+        case Instruction::Mul:    Out << "getMul("; break;
+        case Instruction::UDiv:   Out << "getUDiv("; break;
+        case Instruction::SDiv:   Out << "getSDiv("; break;
+        case Instruction::FDiv:   Out << "getFDiv("; break;
+        case Instruction::URem:   Out << "getURem("; break;
+        case Instruction::SRem:   Out << "getSRem("; break;
+        case Instruction::FRem:   Out << "getFRem("; break;
+        case Instruction::And:    Out << "getAnd("; break;
+        case Instruction::Or:     Out << "getOr("; break;
+        case Instruction::Xor:    Out << "getXor("; break;
+        case Instruction::ICmp:   
+          Out << "getICmp(ICmpInst::ICMP_";
+          switch (CE->getPredicate()) {
+            case ICmpInst::ICMP_EQ:  Out << "EQ"; break;
+            case ICmpInst::ICMP_NE:  Out << "NE"; break;
+            case ICmpInst::ICMP_SLT: Out << "SLT"; break;
+            case ICmpInst::ICMP_ULT: Out << "ULT"; break;
+            case ICmpInst::ICMP_SGT: Out << "SGT"; break;
+            case ICmpInst::ICMP_UGT: Out << "UGT"; break;
+            case ICmpInst::ICMP_SLE: Out << "SLE"; break;
+            case ICmpInst::ICMP_ULE: Out << "ULE"; break;
+            case ICmpInst::ICMP_SGE: Out << "SGE"; break;
+            case ICmpInst::ICMP_UGE: Out << "UGE"; break;
+            default: error("Invalid ICmp Predicate");
+          }
+          break;
+        case Instruction::FCmp:
+          Out << "getFCmp(FCmpInst::FCMP_";
+          switch (CE->getPredicate()) {
+            case FCmpInst::FCMP_FALSE: Out << "FALSE"; break;
+            case FCmpInst::FCMP_ORD:   Out << "ORD"; break;
+            case FCmpInst::FCMP_UNO:   Out << "UNO"; break;
+            case FCmpInst::FCMP_OEQ:   Out << "OEQ"; break;
+            case FCmpInst::FCMP_UEQ:   Out << "UEQ"; break;
+            case FCmpInst::FCMP_ONE:   Out << "ONE"; break;
+            case FCmpInst::FCMP_UNE:   Out << "UNE"; break;
+            case FCmpInst::FCMP_OLT:   Out << "OLT"; break;
+            case FCmpInst::FCMP_ULT:   Out << "ULT"; break;
+            case FCmpInst::FCMP_OGT:   Out << "OGT"; break;
+            case FCmpInst::FCMP_UGT:   Out << "UGT"; break;
+            case FCmpInst::FCMP_OLE:   Out << "OLE"; break;
+            case FCmpInst::FCMP_ULE:   Out << "ULE"; break;
+            case FCmpInst::FCMP_OGE:   Out << "OGE"; break;
+            case FCmpInst::FCMP_UGE:   Out << "UGE"; break;
+            case FCmpInst::FCMP_TRUE:  Out << "TRUE"; break;
+            default: error("Invalid FCmp Predicate");
+          }
+          break;
+        case Instruction::Shl:     Out << "getShl("; break;
+        case Instruction::LShr:    Out << "getLShr("; break;
+        case Instruction::AShr:    Out << "getAShr("; break;
+        case Instruction::Select:  Out << "getSelect("; break;
+        case Instruction::ExtractElement: Out << "getExtractElement("; break;
+        case Instruction::InsertElement:  Out << "getInsertElement("; break;
+        case Instruction::ShuffleVector:  Out << "getShuffleVector("; break;
         default:
           error("Invalid constant expression");
           break;
@@ -1075,21 +1107,46 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
       Out << "\", " << bbname << ");";
       break;
     }
-    case Instruction::SetEQ:
-    case Instruction::SetNE:
-    case Instruction::SetLE:
-    case Instruction::SetGE:
-    case Instruction::SetLT:
-    case Instruction::SetGT: {
-      Out << "SetCondInst* " << iName << " = new SetCondInst(";
-      switch (I->getOpcode()) {
-        case Instruction::SetEQ: Out << "Instruction::SetEQ"; break;
-        case Instruction::SetNE: Out << "Instruction::SetNE"; break;
-        case Instruction::SetLE: Out << "Instruction::SetLE"; break;
-        case Instruction::SetGE: Out << "Instruction::SetGE"; break;
-        case Instruction::SetLT: Out << "Instruction::SetLT"; break;
-        case Instruction::SetGT: Out << "Instruction::SetGT"; break;
-        default: Out << "Instruction::BadOpCode"; break;
+    case Instruction::FCmp: {
+      Out << "FCmpInst* " << iName << " = new FCmpInst(";
+      switch (cast<FCmpInst>(I)->getPredicate()) {
+        case FCmpInst::FCMP_FALSE: Out << "FCmpInst::FCMP_FALSE"; break;
+        case FCmpInst::FCMP_OEQ  : Out << "FCmpInst::FCMP_OEQ"; break;
+        case FCmpInst::FCMP_OGT  : Out << "FCmpInst::FCMP_OGT"; break;
+        case FCmpInst::FCMP_OGE  : Out << "FCmpInst::FCMP_OGE"; break;
+        case FCmpInst::FCMP_OLT  : Out << "FCmpInst::FCMP_OLT"; break;
+        case FCmpInst::FCMP_OLE  : Out << "FCmpInst::FCMP_OLE"; break;
+        case FCmpInst::FCMP_ONE  : Out << "FCmpInst::FCMP_ONE"; break;
+        case FCmpInst::FCMP_ORD  : Out << "FCmpInst::FCMP_ORD"; break;
+        case FCmpInst::FCMP_UNO  : Out << "FCmpInst::FCMP_UNO"; break;
+        case FCmpInst::FCMP_UEQ  : Out << "FCmpInst::FCMP_UEQ"; break;
+        case FCmpInst::FCMP_UGT  : Out << "FCmpInst::FCMP_UGT"; break;
+        case FCmpInst::FCMP_UGE  : Out << "FCmpInst::FCMP_UGE"; break;
+        case FCmpInst::FCMP_ULT  : Out << "FCmpInst::FCMP_ULT"; break;
+        case FCmpInst::FCMP_ULE  : Out << "FCmpInst::FCMP_ULE"; break;
+        case FCmpInst::FCMP_UNE  : Out << "FCmpInst::FCMP_UNE"; break;
+        case FCmpInst::FCMP_TRUE : Out << "FCmpInst::FCMP_TRUE"; break;
+        default: Out << "FCmpInst::BAD_ICMP_PREDICATE"; break;
+      }
+      Out << ", " << opNames[0] << ", " << opNames[1] << ", \"";
+      printEscapedString(I->getName());
+      Out << "\", " << bbname << ");";
+      break;
+    }
+    case Instruction::ICmp: {
+      Out << "ICmpInst* " << iName << " = new ICmpInst(";
+      switch (cast<ICmpInst>(I)->getPredicate()) {
+        case ICmpInst::ICMP_EQ:  Out << "ICmpInst::ICMP_EQ";  break;
+        case ICmpInst::ICMP_NE:  Out << "ICmpInst::ICMP_NE";  break;
+        case ICmpInst::ICMP_ULE: Out << "ICmpInst::ICMP_ULE"; break;
+        case ICmpInst::ICMP_SLE: Out << "ICmpInst::ICMP_SLE"; break;
+        case ICmpInst::ICMP_UGE: Out << "ICmpInst::ICMP_UGE"; break;
+        case ICmpInst::ICMP_SGE: Out << "ICmpInst::ICMP_SGE"; break;
+        case ICmpInst::ICMP_ULT: Out << "ICmpInst::ICMP_ULT"; break;
+        case ICmpInst::ICMP_SLT: Out << "ICmpInst::ICMP_SLT"; break;
+        case ICmpInst::ICMP_UGT: Out << "ICmpInst::ICMP_UGT"; break;
+        case ICmpInst::ICMP_SGT: Out << "ICmpInst::ICMP_SGT"; break;
+        default: Out << "ICmpInst::BAD_ICMP_PREDICATE"; break;
       }
       Out << ", " << opNames[0] << ", " << opNames[1] << ", \"";
       printEscapedString(I->getName());

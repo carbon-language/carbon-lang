@@ -541,20 +541,6 @@ public:
   void visitAShr(User &I) { visitShift(I, ISD::SRA); }
   void visitICmp(User &I);
   void visitFCmp(User &I);
-  void visitSetCC(User &I, ISD::CondCode SignedOpc, ISD::CondCode UnsignedOpc,
-                  ISD::CondCode FPOpc);
-  void visitSetEQ(User &I) { visitSetCC(I, ISD::SETEQ, ISD::SETEQ, 
-                                        ISD::SETOEQ); }
-  void visitSetNE(User &I) { visitSetCC(I, ISD::SETNE, ISD::SETNE,
-                                        ISD::SETUNE); }
-  void visitSetLE(User &I) { visitSetCC(I, ISD::SETLE, ISD::SETULE,
-                                        ISD::SETOLE); }
-  void visitSetGE(User &I) { visitSetCC(I, ISD::SETGE, ISD::SETUGE,
-                                        ISD::SETOGE); }
-  void visitSetLT(User &I) { visitSetCC(I, ISD::SETLT, ISD::SETULT,
-                                        ISD::SETOLT); }
-  void visitSetGT(User &I) { visitSetCC(I, ISD::SETGT, ISD::SETUGT,
-                                        ISD::SETOGT); }
   // Visit the conversion instructions
   void visitTrunc(User &I);
   void visitZExt(User &I);
@@ -851,9 +837,10 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
                                                 MachineBasicBlock *CurBB,
                                                 unsigned Opc) {
   // If this node is not part of the or/and tree, emit it as a branch.
-  BinaryOperator *BOp = dyn_cast<BinaryOperator>(Cond);
+  Instruction *BOp = dyn_cast<Instruction>(Cond);
 
-  if (!BOp || (unsigned)BOp->getOpcode() != Opc || !BOp->hasOneUse() ||
+  if (!BOp || !(isa<BinaryOperator>(BOp) || isa<CmpInst>(BOp)) || 
+      (unsigned)BOp->getOpcode() != Opc || !BOp->hasOneUse() ||
       BOp->getParent() != CurBB->getBasicBlock() ||
       !InBlock(BOp->getOperand(0), CurBB->getBasicBlock()) ||
       !InBlock(BOp->getOperand(1), CurBB->getBasicBlock())) {
@@ -875,60 +862,59 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
       }
         
     
-    // If the leaf of the tree is a setcond inst, merge the condition into the
-    // caseblock.
-    if (BOp && isa<SetCondInst>(BOp) &&
-        // The operands of the setcc have to be in this block.  We don't know
+    // If the leaf of the tree is a comparison, merge the condition into 
+    // the caseblock.
+    if ((isa<ICmpInst>(Cond) || isa<FCmpInst>(Cond)) &&
+        // The operands of the cmp have to be in this block.  We don't know
         // how to export them from some other block.  If this is the first block
         // of the sequence, no exporting is needed.
         (CurBB == CurMBB ||
          (isExportableFromCurrentBlock(BOp->getOperand(0), BB) &&
           isExportableFromCurrentBlock(BOp->getOperand(1), BB)))) {
-      ISD::CondCode SignCond, UnsCond, FPCond, Condition;
-      switch (BOp->getOpcode()) {
-      default: assert(0 && "Unknown setcc opcode!");
-      case Instruction::SetEQ:
-        SignCond = ISD::SETEQ;
-        UnsCond  = ISD::SETEQ;
-        FPCond   = ISD::SETOEQ;
-        break;
-      case Instruction::SetNE:
-        SignCond = ISD::SETNE;
-        UnsCond  = ISD::SETNE;
-        FPCond   = ISD::SETUNE;
-        break;
-      case Instruction::SetLE:
-        SignCond = ISD::SETLE;
-        UnsCond  = ISD::SETULE;
-        FPCond   = ISD::SETOLE;
-        break;
-      case Instruction::SetGE:
-        SignCond = ISD::SETGE;
-        UnsCond  = ISD::SETUGE;
-        FPCond   = ISD::SETOGE;
-        break;
-      case Instruction::SetLT:
-        SignCond = ISD::SETLT;
-        UnsCond  = ISD::SETULT;
-        FPCond   = ISD::SETOLT;
-        break;
-      case Instruction::SetGT:
-        SignCond = ISD::SETGT;
-        UnsCond  = ISD::SETUGT;
-        FPCond   = ISD::SETOGT;
-        break;
+      BOp = cast<Instruction>(Cond);
+      ISD::CondCode Condition;
+      if (ICmpInst *IC = dyn_cast<ICmpInst>(Cond)) {
+        switch (IC->getPredicate()) {
+        default: assert(0 && "Unknown icmp predicate opcode!");
+        case ICmpInst::ICMP_EQ:  Condition = ISD::SETEQ;  break;
+        case ICmpInst::ICMP_NE:  Condition = ISD::SETNE;  break;
+        case ICmpInst::ICMP_SLE: Condition = ISD::SETLE;  break;
+        case ICmpInst::ICMP_ULE: Condition = ISD::SETULE; break;
+        case ICmpInst::ICMP_SGE: Condition = ISD::SETGE;  break;
+        case ICmpInst::ICMP_UGE: Condition = ISD::SETUGE; break;
+        case ICmpInst::ICMP_SLT: Condition = ISD::SETLT;  break;
+        case ICmpInst::ICMP_ULT: Condition = ISD::SETULT; break;
+        case ICmpInst::ICMP_SGT: Condition = ISD::SETGT;  break;
+        case ICmpInst::ICMP_UGT: Condition = ISD::SETUGT; break;
+        }
+      } else if (FCmpInst *FC = dyn_cast<FCmpInst>(Cond)) {
+        ISD::CondCode FPC, FOC;
+        switch (FC->getPredicate()) {
+        default: assert(0 && "Unknown fcmp predicate opcode!");
+        case FCmpInst::FCMP_FALSE: FOC = FPC = ISD::SETFALSE; break;
+        case FCmpInst::FCMP_OEQ:   FOC = ISD::SETEQ; FPC = ISD::SETOEQ; break;
+        case FCmpInst::FCMP_OGT:   FOC = ISD::SETGT; FPC = ISD::SETOGT; break;
+        case FCmpInst::FCMP_OGE:   FOC = ISD::SETGE; FPC = ISD::SETOGE; break;
+        case FCmpInst::FCMP_OLT:   FOC = ISD::SETLT; FPC = ISD::SETOLT; break;
+        case FCmpInst::FCMP_OLE:   FOC = ISD::SETLE; FPC = ISD::SETOLE; break;
+        case FCmpInst::FCMP_ONE:   FOC = ISD::SETNE; FPC = ISD::SETONE; break;
+        case FCmpInst::FCMP_ORD:   FOC = ISD::SETEQ; FPC = ISD::SETO;   break;
+        case FCmpInst::FCMP_UNO:   FOC = ISD::SETNE; FPC = ISD::SETUO;  break;
+        case FCmpInst::FCMP_UEQ:   FOC = ISD::SETEQ; FPC = ISD::SETUEQ; break;
+        case FCmpInst::FCMP_UGT:   FOC = ISD::SETGT; FPC = ISD::SETUGT; break;
+        case FCmpInst::FCMP_UGE:   FOC = ISD::SETGE; FPC = ISD::SETUGE; break;
+        case FCmpInst::FCMP_ULT:   FOC = ISD::SETLT; FPC = ISD::SETULT; break;
+        case FCmpInst::FCMP_ULE:   FOC = ISD::SETLE; FPC = ISD::SETULE; break;
+        case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
+        case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
+        }
+        if (FiniteOnlyFPMath())
+          Condition = FOC;
+        else 
+          Condition = FPC;
+      } else {
+        assert(0 && "Unknown compare instruction");
       }
-      
-      const Type *OpType = BOp->getOperand(0)->getType();
-      if (const PackedType *PTy = dyn_cast<PackedType>(OpType))
-        OpType = PTy->getElementType();
-      
-      if (!FiniteOnlyFPMath() && OpType->isFloatingPoint())
-        Condition = FPCond;
-      else if (OpType->isUnsigned())
-        Condition = UnsCond;
-      else
-        Condition = SignCond;
       
       SelectionDAGISel::CaseBlock CB(Condition, BOp->getOperand(0), 
                                      BOp->getOperand(1), TBB, FBB, CurBB);
@@ -1462,11 +1448,15 @@ void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
 }
 
 void SelectionDAGLowering::visitICmp(User &I) {
-  ICmpInst *IC = cast<ICmpInst>(&I);
-  SDOperand Op1 = getValue(IC->getOperand(0));
-  SDOperand Op2 = getValue(IC->getOperand(1));
+  ICmpInst::Predicate predicate = ICmpInst::BAD_ICMP_PREDICATE;
+  if (ICmpInst *IC = dyn_cast<ICmpInst>(&I))
+    predicate = IC->getPredicate();
+  else if (ConstantExpr *IC = dyn_cast<ConstantExpr>(&I))
+    predicate = ICmpInst::Predicate(IC->getPredicate());
+  SDOperand Op1 = getValue(I.getOperand(0));
+  SDOperand Op2 = getValue(I.getOperand(1));
   ISD::CondCode Opcode;
-  switch (IC->getPredicate()) {
+  switch (predicate) {
     case ICmpInst::ICMP_EQ  : Opcode = ISD::SETEQ; break;
     case ICmpInst::ICMP_NE  : Opcode = ISD::SETNE; break;
     case ICmpInst::ICMP_UGT : Opcode = ISD::SETUGT; break;
@@ -1486,46 +1476,41 @@ void SelectionDAGLowering::visitICmp(User &I) {
 }
 
 void SelectionDAGLowering::visitFCmp(User &I) {
-  FCmpInst *FC = cast<FCmpInst>(&I);
-  SDOperand Op1 = getValue(FC->getOperand(0));
-  SDOperand Op2 = getValue(FC->getOperand(1));
-  ISD::CondCode Opcode;
-  switch (FC->getPredicate()) {
-    case FCmpInst::FCMP_FALSE : Opcode = ISD::SETFALSE;
-    case FCmpInst::FCMP_OEQ   : Opcode = ISD::SETOEQ;
-    case FCmpInst::FCMP_OGT   : Opcode = ISD::SETOGT;
-    case FCmpInst::FCMP_OGE   : Opcode = ISD::SETOGE;
-    case FCmpInst::FCMP_OLT   : Opcode = ISD::SETOLT;
-    case FCmpInst::FCMP_OLE   : Opcode = ISD::SETOLE;
-    case FCmpInst::FCMP_ONE   : Opcode = ISD::SETONE;
-    case FCmpInst::FCMP_ORD   : Opcode = ISD::SETO;
-    case FCmpInst::FCMP_UNO   : Opcode = ISD::SETUO;
-    case FCmpInst::FCMP_UEQ   : Opcode = ISD::SETUEQ;
-    case FCmpInst::FCMP_UGT   : Opcode = ISD::SETUGT;
-    case FCmpInst::FCMP_UGE   : Opcode = ISD::SETUGE;
-    case FCmpInst::FCMP_ULT   : Opcode = ISD::SETULT;
-    case FCmpInst::FCMP_ULE   : Opcode = ISD::SETULE;
-    case FCmpInst::FCMP_UNE   : Opcode = ISD::SETUNE;
-    case FCmpInst::FCMP_TRUE  : Opcode = ISD::SETTRUE;
-    default:
-      assert(!"Invalid FCmp predicate value");
-      Opcode = ISD::SETFALSE;
-      break;
-  }
-  setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Opcode));
-}
-
-void SelectionDAGLowering::visitSetCC(User &I,ISD::CondCode SignedOpcode,
-                                      ISD::CondCode UnsignedOpcode,
-                                      ISD::CondCode FPOpcode) {
+  FCmpInst::Predicate predicate = FCmpInst::BAD_FCMP_PREDICATE;
+  if (FCmpInst *FC = dyn_cast<FCmpInst>(&I))
+    predicate = FC->getPredicate();
+  else if (ConstantExpr *FC = dyn_cast<ConstantExpr>(&I))
+    predicate = FCmpInst::Predicate(FC->getPredicate());
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
-  ISD::CondCode Opcode = SignedOpcode;
-  if (!FiniteOnlyFPMath() && I.getOperand(0)->getType()->isFloatingPoint())
-    Opcode = FPOpcode;
-  else if (I.getOperand(0)->getType()->isUnsigned())
-    Opcode = UnsignedOpcode;
-  setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Opcode));
+  ISD::CondCode Condition, FOC, FPC;
+  switch (predicate) {
+    case FCmpInst::FCMP_FALSE: FOC = FPC = ISD::SETFALSE; break;
+    case FCmpInst::FCMP_OEQ:   FOC = ISD::SETEQ; FPC = ISD::SETOEQ; break;
+    case FCmpInst::FCMP_OGT:   FOC = ISD::SETGT; FPC = ISD::SETOGT; break;
+    case FCmpInst::FCMP_OGE:   FOC = ISD::SETGE; FPC = ISD::SETOGE; break;
+    case FCmpInst::FCMP_OLT:   FOC = ISD::SETLT; FPC = ISD::SETOLT; break;
+    case FCmpInst::FCMP_OLE:   FOC = ISD::SETLE; FPC = ISD::SETOLE; break;
+    case FCmpInst::FCMP_ONE:   FOC = ISD::SETNE; FPC = ISD::SETONE; break;
+    case FCmpInst::FCMP_ORD:   FOC = ISD::SETEQ; FPC = ISD::SETO;   break;
+    case FCmpInst::FCMP_UNO:   FOC = ISD::SETNE; FPC = ISD::SETUO;  break;
+    case FCmpInst::FCMP_UEQ:   FOC = ISD::SETEQ; FPC = ISD::SETUEQ; break;
+    case FCmpInst::FCMP_UGT:   FOC = ISD::SETGT; FPC = ISD::SETUGT; break;
+    case FCmpInst::FCMP_UGE:   FOC = ISD::SETGE; FPC = ISD::SETUGE; break;
+    case FCmpInst::FCMP_ULT:   FOC = ISD::SETLT; FPC = ISD::SETULT; break;
+    case FCmpInst::FCMP_ULE:   FOC = ISD::SETLE; FPC = ISD::SETULE; break;
+    case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
+    case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
+    default:
+      assert(!"Invalid FCmp predicate value");
+      FOC = FPC = ISD::SETFALSE;
+      break;
+  }
+  if (FiniteOnlyFPMath())
+    Condition = FOC;
+  else 
+    Condition = FPC;
+  setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Condition));
 }
 
 void SelectionDAGLowering::visitSelect(User &I) {

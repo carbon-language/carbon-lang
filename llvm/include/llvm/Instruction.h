@@ -71,6 +71,16 @@ public:
   /// extra information (e.g. load is volatile) agree.
   bool isIdenticalTo(Instruction *I) const;
 
+  /// This function determines if the specified instruction executes the same
+  /// operation as the current one. This means that the opcodes, type, operand
+  /// types and any other factors affecting the operation must be the same. This
+  /// is similar to isIdenticalTo except the operands themselves don't have to
+  /// be identical.
+  /// @returns true if the specified instruction is the same operation as
+  /// the current one.
+  /// @brief Determine if one instruction is the same operation as another.
+  bool isSameOperationAs(Instruction *I) const;
+
   /// use_back - Specialize the methods defined in Value, as we know that an
   /// instruction can only be used by other instructions.
   Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
@@ -154,12 +164,6 @@ public:
   ///
   bool isCommutative() const { return isCommutative(getOpcode()); }
   static bool isCommutative(unsigned op);
-
-  /// isComparison - Return true if the instruction is a Set* instruction:
-  ///
-  bool isComparison() const { return isComparison(getOpcode()); }
-  static bool isComparison(unsigned op);
-
 
   /// isTrappingInstruction - Return true if the instruction may trap.
   ///

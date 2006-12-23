@@ -432,8 +432,8 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     Value *L = CI->getOperand(1);
     Value *R = CI->getOperand(2);
 
-    Value *LIsNan = new SetCondInst(Instruction::SetNE, L, L, "LIsNan", CI);
-    Value *RIsNan = new SetCondInst(Instruction::SetNE, R, R, "RIsNan", CI);
+    Value *LIsNan = new FCmpInst(FCmpInst::FCMP_ONE, L, L, "LIsNan", CI);
+    Value *RIsNan = new FCmpInst(FCmpInst::FCMP_ONE, R, R, "RIsNan", CI);
     CI->replaceAllUsesWith(
       BinaryOperator::create(Instruction::Or, LIsNan, RIsNan,
                              "isunordered", CI));

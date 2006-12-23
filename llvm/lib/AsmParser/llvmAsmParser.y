@@ -958,9 +958,8 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND UNREACHABLE
 
 // Binary Operators
-%type  <BinaryOpVal> ArithmeticOps LogicalOps SetCondOps // Binops Subcatagories
+%type  <BinaryOpVal> ArithmeticOps LogicalOps // Binops Subcatagories
 %token <BinaryOpVal> ADD SUB MUL UDIV SDIV FDIV UREM SREM FREM AND OR XOR
-%token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comparators
 %token <OtherOpVal> ICMP FCMP
 %type  <IPredicate> IPredicates
 %type  <FPredicate> FPredicates
@@ -999,7 +998,6 @@ INTVAL : UINTVAL {
 //
 ArithmeticOps: ADD | SUB | MUL | UDIV | SDIV | FDIV | UREM | SREM | FREM;
 LogicalOps   : AND | OR | XOR;
-SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
 CastOps      : TRUNC | ZEXT | SEXT | FPTRUNC | FPEXT | BITCAST | 
                UITOFP | SITOFP | FPTOUI | FPTOSI | INTTOPTR | PTRTOINT;
 ShiftOps     : SHL | LSHR | ASHR;
@@ -1571,12 +1569,6 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
           !cast<PackedType>($3->getType())->getElementType()->isIntegral())
         GEN_ERROR("Logical operator requires integral operands!");
     }
-    $$ = ConstantExpr::get($1, $3, $5);
-    CHECK_FOR_ERROR
-  }
-  | SetCondOps '(' ConstVal ',' ConstVal ')' {
-    if ($3->getType() != $5->getType())
-      GEN_ERROR("setcc operand types must match!");
     $$ = ConstantExpr::get($1, $3, $5);
     CHECK_FOR_ERROR
   }
@@ -2365,20 +2357,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     Value* tmpVal2 = getVal(*$2, $5);
     CHECK_FOR_ERROR
     $$ = BinaryOperator::create($1, tmpVal1, tmpVal2);
-    if ($$ == 0)
-      GEN_ERROR("binary operator returned null!");
-    delete $2;
-  }
-  | SetCondOps Types ValueRef ',' ValueRef {
-    if(isa<PackedType>((*$2).get())) {
-      GEN_ERROR(
-        "PackedTypes currently not supported in setcc instructions!");
-    }
-    Value* tmpVal1 = getVal(*$2, $3);
-    CHECK_FOR_ERROR
-    Value* tmpVal2 = getVal(*$2, $5);
-    CHECK_FOR_ERROR
-    $$ = new SetCondInst($1, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("binary operator returned null!");
     delete $2;

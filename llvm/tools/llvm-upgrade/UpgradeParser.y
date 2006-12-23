@@ -23,8 +23,6 @@
 #define YYERROR_VERBOSE 1
 #define YYINCLUDED_STDLIB_H
 #define YYDEBUG 1
-#define UPGRADE_SETCOND_OPS 0
-#define GENERATE_FCMP_INSTS 0
 
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
@@ -194,11 +192,7 @@ static std::string getCastUpgrade(
     // the original intent by replace the cast with a setne
     const char* comparator = SrcTy.isPointer() ? ", null" : 
       (SrcTy.isFloatingPoint() ? ", 0.0" : ", 0");
-#if UPGRADE_SETCOND_OPS 
-    const char* compareOp = SrcTy.isFloatingPoint() ? "setne " : "icmp ne ";
-#else
-    const char* compareOp = "setne";
-#endif
+    const char* compareOp = SrcTy.isFloatingPoint() ? "fcmp one " : "icmp ne ";
     if (isConst) { 
       Result = "(" + Source + comparator + ")";
       Result = compareOp + Result;
@@ -254,16 +248,12 @@ getCompareOp(const std::string& setcc, const TypeInfo& TI) {
   result[6] = cc1;
   result[7] = cc2;
   if (TI.isFloatingPoint()) {
-#if GENERATE_FCMP_INSTS
     result[0] = 'f';
-    result[5] = 'o'; // FIXME: Always map to ordered comparison ?
+    result[5] = 'o';
     if (cc1 == 'n')
       result[5] = 'u'; // NE maps to unordered
     else
       result[5] = 'o'; // everything else maps to ordered
-#else
-    result = setcc;
-#endif
   } else if (TI.isIntegral() || TI.isPointer()) {
     result[0] = 'i';
     if ((cc1 == 'e' && cc2 == 'q') || (cc1 == 'n' && cc2 == 'e'))
@@ -679,9 +669,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     $$ = $1;
   }
   | SetCondOps '(' ConstVal ',' ConstVal ')' {
-#if UPGRADE_SETCOND_OPS
     *$1 = getCompareOp(*$1, $3.type);
-#endif
     *$1 += "(" + *$3.cnst + "," + *$5.cnst + ")";
     $3.destroy(); $5.destroy();
     $$ = $1;
@@ -1205,9 +1193,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = $1;
   }
   | SetCondOps Types ValueRef ',' ValueRef {
-#if UPGRADE_SETCOND_OPS
     *$1 = getCompareOp(*$1, $2);
-#endif
     *$1 += " " + *$2.newTy + " " + *$3.val + ", " + *$5.val;
     $2.destroy(); $3.destroy(); $5.destroy();
     $$ = $1;

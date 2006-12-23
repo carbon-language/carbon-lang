@@ -517,9 +517,9 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
                                 EntryBB->getTerminator());
     
     // Compare the return value to zero.
-    Value *IsNormal = BinaryOperator::createSetEQ(SJRet,
-                                     Constant::getNullValue(SJRet->getType()),
-                                        "notunwind", EntryBB->getTerminator());
+    Value *IsNormal = new ICmpInst(ICmpInst::ICMP_EQ, SJRet, 
+                                   Constant::getNullValue(SJRet->getType()),
+      "notunwind", EntryBB->getTerminator());
     // Nuke the uncond branch.
     EntryBB->getTerminator()->eraseFromParent();
     
@@ -551,9 +551,9 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   }
   
   // Load the JBList, if it's null, then there was no catch!
-  Value *NotNull = BinaryOperator::createSetNE(BufPtr,
-                                      Constant::getNullValue(BufPtr->getType()),
-                                          "notnull", UnwindHandler);
+  Value *NotNull = new ICmpInst(ICmpInst::ICMP_NE, BufPtr, 
+                                Constant::getNullValue(BufPtr->getType()),
+    "notnull", UnwindHandler);
   new BranchInst(UnwindBlock, TermBlock, NotNull, UnwindHandler);
   
   // Create the block to do the longjmp.

@@ -49,13 +49,15 @@ bool ConstantFoldTerminator(BasicBlock *BB);
 Constant *ConstantFoldInstruction(Instruction *I);
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
-/// specified opcode and operands.  If successful, the constant result is
-/// returned, if not, null is returned.  Note that this function can fail when
-/// attempting to fold instructions like loads and stores, which have no
-/// constant expression form.
+/// specified operands.  If successful, the constant result is returned, if not,
+/// null is returned.  Note that this function can fail when attempting to 
+/// fold instructions like loads and stores, which have no constant expression 
+/// form.
 ///
-Constant *ConstantFoldInstOperands(unsigned Opc, const Type *DestTy,
-                                   const std::vector<Constant*> &Ops);
+Constant *ConstantFoldInstOperands(
+  const Instruction *I, ///< The model instruction
+  const std::vector<Constant*> &Ops ///< The constant operands to use.
+);
 
 
 /// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a

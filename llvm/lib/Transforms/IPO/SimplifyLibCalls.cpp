@@ -887,8 +887,8 @@ struct StrLenOptimization : public LibCallOptimization {
 
     // Does the call to strlen have exactly one use?
     if (ci->hasOneUse())
-      // Is that single use a binary operator?
-      if (BinaryOperator* bop = dyn_cast<BinaryOperator>(ci->use_back()))
+      // Is that single use a icmp operator?
+      if (ICmpInst* bop = dyn_cast<ICmpInst>(ci->use_back()))
         // Is it compared against a constant integer?
         if (ConstantInt* CI = dyn_cast<ConstantInt>(bop->getOperand(1)))
         {
@@ -897,15 +897,15 @@ struct StrLenOptimization : public LibCallOptimization {
 
           // If its compared against length 0 with == or !=
           if (val == 0 &&
-              (bop->getOpcode() == Instruction::SetEQ ||
-               bop->getOpcode() == Instruction::SetNE))
+              (bop->getPredicate() == ICmpInst::ICMP_EQ ||
+               bop->getPredicate() == ICmpInst::ICMP_NE))
           {
             // strlen(x) != 0 -> *x != 0
             // strlen(x) == 0 -> *x == 0
             LoadInst* load = new LoadInst(str,str->getName()+".first",ci);
-            BinaryOperator* rbop = BinaryOperator::create(bop->getOpcode(),
-              load, ConstantInt::get(Type::SByteTy,0),
-              bop->getName()+".strlen", ci);
+            ICmpInst* rbop = new ICmpInst(bop->getPredicate(), load, 
+                                          ConstantInt::get(Type::SByteTy,0),
+                                          bop->getName()+".strlen", ci);
             bop->replaceAllUsesWith(rbop);
             bop->eraseFromParent();
             ci->eraseFromParent();
@@ -933,10 +933,11 @@ static bool IsOnlyUsedInEqualsZeroComparison(Instruction *I) {
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
        UI != E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
-    if (User->getOpcode() == Instruction::SetNE ||
-        User->getOpcode() == Instruction::SetEQ) {
-      if (isa<Constant>(User->getOperand(1)) && 
-          cast<Constant>(User->getOperand(1))->isNullValue())
+    if (ICmpInst *IC = dyn_cast<ICmpInst>(User)) {
+      if ((IC->getPredicate() == ICmpInst::ICMP_NE ||
+           IC->getPredicate() == ICmpInst::ICMP_EQ) &&
+          isa<Constant>(IC->getOperand(1)) &&
+          cast<Constant>(IC->getOperand(1))->isNullValue())
         continue;
     } else if (CastInst *CI = dyn_cast<CastInst>(User))
       if (CI->getType() == Type::BoolTy)
@@ -1739,7 +1740,7 @@ public:
     BinaryOperator* sub_inst = BinaryOperator::createSub(cast,
         ConstantInt::get(Type::UIntTy,0x30),
         ci->getOperand(1)->getName()+".sub",ci);
-    SetCondInst* setcond_inst = new SetCondInst(Instruction::SetLE,sub_inst,
+    ICmpInst* setcond_inst = new ICmpInst(ICmpInst::ICMP_ULE,sub_inst,
         ConstantInt::get(Type::UIntTy,9),
         ci->getOperand(1)->getName()+".cmp",ci);
     CastInst* c2 = new ZExtInst(setcond_inst, Type::IntTy, 
@@ -1764,12 +1765,9 @@ public:
   virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
     // isascii(c)   -> (unsigned)c < 128
     Value *V = CI->getOperand(1);
-    if (V->getType()->isSigned())
-      V = new BitCastInst(V, V->getType()->getUnsignedVersion(), V->getName(), 
-                          CI);
-    Value *Cmp = BinaryOperator::createSetLT(V, ConstantInt::get(V->getType(),
-                                                                  128),
-                                             V->getName()+".isascii", CI);
+    Value *Cmp = new ICmpInst(ICmpInst::ICMP_ULT, V, 
+                              ConstantInt::get(V->getType(), 128), 
+                              V->getName()+".isascii", CI);
     if (Cmp->getType() != CI->getType())
       Cmp = new BitCastInst(Cmp, CI->getType(), Cmp->getName(), CI);
     CI->replaceAllUsesWith(Cmp);
@@ -1872,9 +1870,9 @@ public:
                                      "tmp", TheCall);
     V2 = BinaryOperator::createAdd(V2, ConstantInt::get(Type::IntTy, 1),
                                    "tmp", TheCall);
-    Value *Cond = 
-      BinaryOperator::createSetEQ(V, Constant::getNullValue(V->getType()),
-                                  "tmp", TheCall);
+    Value *Cond = new ICmpInst(ICmpInst::ICMP_EQ, V, 
+                               Constant::getNullValue(V->getType()), "tmp", 
+                               TheCall);
     V2 = new SelectInst(Cond, ConstantInt::get(Type::IntTy, 0), V2,
                         TheCall->getName(), TheCall);
     TheCall->replaceAllUsesWith(V2);

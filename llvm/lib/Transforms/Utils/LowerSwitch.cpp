@@ -143,8 +143,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   BasicBlock* NewNode = new BasicBlock("NodeBlock");
   F->getBasicBlockList().insert(OrigBlock->getNext(), NewNode);
 
-  SetCondInst* Comp = new SetCondInst(Instruction::SetLT, Val, Pivot.first,
-                                      "Pivot");
+  ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_ULT, Val, Pivot.first, "Pivot");
   NewNode->getInstList().push_back(Comp);
   new BranchInst(LBranch, RBranch, Comp, NewNode);
   return NewNode;
@@ -165,8 +164,8 @@ BasicBlock* LowerSwitch::newLeafBlock(Case& Leaf, Value* Val,
   F->getBasicBlockList().insert(OrigBlock->getNext(), NewLeaf);
 
   // Make the seteq instruction...
-  SetCondInst* Comp = new SetCondInst(Instruction::SetEQ, Val,
-                                      Leaf.first, "SwitchLeaf");
+  ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_EQ, Val,
+                                Leaf.first, "SwitchLeaf");
   NewLeaf->getInstList().push_back(Comp);
 
   // Make the conditional branch...

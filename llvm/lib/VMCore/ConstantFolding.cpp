@@ -30,517 +30,6 @@
 #include <limits>
 using namespace llvm;
 
-namespace {
-  struct VISIBILITY_HIDDEN ConstRules {
-    ConstRules() {}
-    virtual ~ConstRules() {}
-
-    // Binary Operators...
-    virtual Constant *add(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *sub(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *mul(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *urem(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *srem(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *frem(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *udiv(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *sdiv(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *fdiv(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *op_and(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *op_or (const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *op_xor(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *shl(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *lshr(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *ashr(const Constant *V1, const Constant *V2) const = 0;
-    virtual Constant *lessthan(const Constant *V1, const Constant *V2) const =0;
-    virtual Constant *equalto(const Constant *V1, const Constant *V2) const = 0;
-
-    // ConstRules::get - Return an instance of ConstRules for the specified
-    // constant operands.
-    //
-    static ConstRules &get(const Constant *V1, const Constant *V2);
-  private:
-    ConstRules(const ConstRules &);             // Do not implement
-    ConstRules &operator=(const ConstRules &);  // Do not implement
-  };
-}
-
-
-//===----------------------------------------------------------------------===//
-//                             TemplateRules Class
-//===----------------------------------------------------------------------===//
-//
-// TemplateRules - Implement a subclass of ConstRules that provides all
-// operations as noops.  All other rules classes inherit from this class so
-// that if functionality is needed in the future, it can simply be added here
-// and to ConstRules without changing anything else...
-//
-// This class also provides subclasses with typesafe implementations of methods
-// so that don't have to do type casting.
-//
-namespace {
-template<class ArgType, class SubClassName>
-class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
-
-
-  //===--------------------------------------------------------------------===//
-  // Redirecting functions that cast to the appropriate types
-  //===--------------------------------------------------------------------===//
-
-  virtual Constant *add(const Constant *V1, const Constant *V2) const {
-    return SubClassName::Add((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *sub(const Constant *V1, const Constant *V2) const {
-    return SubClassName::Sub((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *mul(const Constant *V1, const Constant *V2) const {
-    return SubClassName::Mul((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *udiv(const Constant *V1, const Constant *V2) const {
-    return SubClassName::UDiv((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *sdiv(const Constant *V1, const Constant *V2) const {
-    return SubClassName::SDiv((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *fdiv(const Constant *V1, const Constant *V2) const {
-    return SubClassName::FDiv((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *urem(const Constant *V1, const Constant *V2) const {
-    return SubClassName::URem((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *srem(const Constant *V1, const Constant *V2) const {
-    return SubClassName::SRem((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *frem(const Constant *V1, const Constant *V2) const {
-    return SubClassName::FRem((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *op_and(const Constant *V1, const Constant *V2) const {
-    return SubClassName::And((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *op_or(const Constant *V1, const Constant *V2) const {
-    return SubClassName::Or((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *op_xor(const Constant *V1, const Constant *V2) const {
-    return SubClassName::Xor((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *shl(const Constant *V1, const Constant *V2) const {
-    return SubClassName::Shl((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *lshr(const Constant *V1, const Constant *V2) const {
-    return SubClassName::LShr((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *ashr(const Constant *V1, const Constant *V2) const {
-    return SubClassName::AShr((const ArgType *)V1, (const ArgType *)V2);
-  }
-
-  virtual Constant *lessthan(const Constant *V1, const Constant *V2) const {
-    return SubClassName::LessThan((const ArgType *)V1, (const ArgType *)V2);
-  }
-  virtual Constant *equalto(const Constant *V1, const Constant *V2) const {
-    return SubClassName::EqualTo((const ArgType *)V1, (const ArgType *)V2);
-  }
-
-
-  //===--------------------------------------------------------------------===//
-  // Default "noop" implementations
-  //===--------------------------------------------------------------------===//
-
-  static Constant *Add (const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Sub (const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Mul (const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *SDiv(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *UDiv(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *FDiv(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *URem(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *SRem(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *FRem(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *And (const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Or  (const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Xor (const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *Shl (const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *LShr(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *AShr(const ArgType *V1, const ArgType *V2) { return 0; }
-  static Constant *LessThan(const ArgType *V1, const ArgType *V2) {
-    return 0;
-  }
-  static Constant *EqualTo(const ArgType *V1, const ArgType *V2) {
-    return 0;
-  }
-
-public:
-  virtual ~TemplateRules() {}
-};
-}  // end anonymous namespace
-
-
-//===----------------------------------------------------------------------===//
-//                             EmptyRules Class
-//===----------------------------------------------------------------------===//
-//
-// EmptyRules provides a concrete base class of ConstRules that does nothing
-//
-namespace {
-struct VISIBILITY_HIDDEN EmptyRules
-  : public TemplateRules<Constant, EmptyRules> {
-  static Constant *EqualTo(const Constant *V1, const Constant *V2) {
-    if (V1 == V2) return ConstantBool::getTrue();
-    return 0;
-  }
-};
-}  // end anonymous namespace
-
-
-
-//===----------------------------------------------------------------------===//
-//                              BoolRules Class
-//===----------------------------------------------------------------------===//
-//
-// BoolRules provides a concrete base class of ConstRules for the 'bool' type.
-//
-namespace {
-struct VISIBILITY_HIDDEN BoolRules
-  : public TemplateRules<ConstantBool, BoolRules> {
-
-  static Constant *LessThan(const ConstantBool *V1, const ConstantBool *V2) {
-    return ConstantBool::get(V1->getValue() < V2->getValue());
-  }
-
-  static Constant *EqualTo(const Constant *V1, const Constant *V2) {
-    return ConstantBool::get(V1 == V2);
-  }
-
-  static Constant *And(const ConstantBool *V1, const ConstantBool *V2) {
-    return ConstantBool::get(V1->getValue() & V2->getValue());
-  }
-
-  static Constant *Or(const ConstantBool *V1, const ConstantBool *V2) {
-    return ConstantBool::get(V1->getValue() | V2->getValue());
-  }
-
-  static Constant *Xor(const ConstantBool *V1, const ConstantBool *V2) {
-    return ConstantBool::get(V1->getValue() ^ V2->getValue());
-  }
-};
-}  // end anonymous namespace
-
-
-//===----------------------------------------------------------------------===//
-//                            NullPointerRules Class
-//===----------------------------------------------------------------------===//
-//
-// NullPointerRules provides a concrete base class of ConstRules for null
-// pointers.
-//
-namespace {
-struct VISIBILITY_HIDDEN NullPointerRules
-  : public TemplateRules<ConstantPointerNull, NullPointerRules> {
-  static Constant *EqualTo(const Constant *V1, const Constant *V2) {
-    return ConstantBool::getTrue();  // Null pointers are always equal
-  }
-};
-}  // end anonymous namespace
-
-//===----------------------------------------------------------------------===//
-//                          ConstantPackedRules Class
-//===----------------------------------------------------------------------===//
-
-/// DoVectorOp - Given two packed constants and a function pointer, apply the
-/// function pointer to each element pair, producing a new ConstantPacked
-/// constant.
-static Constant *EvalVectorOp(const ConstantPacked *V1, 
-                              const ConstantPacked *V2,
-                              Constant *(*FP)(Constant*, Constant*)) {
-  std::vector<Constant*> Res;
-  for (unsigned i = 0, e = V1->getNumOperands(); i != e; ++i)
-    Res.push_back(FP(const_cast<Constant*>(V1->getOperand(i)),
-                     const_cast<Constant*>(V2->getOperand(i))));
-  return ConstantPacked::get(Res);
-}
-
-/// PackedTypeRules provides a concrete base class of ConstRules for
-/// ConstantPacked operands.
-///
-namespace {
-struct VISIBILITY_HIDDEN ConstantPackedRules
-  : public TemplateRules<ConstantPacked, ConstantPackedRules> {
-  
-  static Constant *Add(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getAdd);
-  }
-  static Constant *Sub(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getSub);
-  }
-  static Constant *Mul(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getMul);
-  }
-  static Constant *UDiv(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getUDiv);
-  }
-  static Constant *SDiv(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getSDiv);
-  }
-  static Constant *FDiv(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getFDiv);
-  }
-  static Constant *URem(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getURem);
-  }
-  static Constant *SRem(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getSRem);
-  }
-  static Constant *FRem(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getFRem);
-  }
-  static Constant *And(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getAnd);
-  }
-  static Constant *Or (const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getOr);
-  }
-  static Constant *Xor(const ConstantPacked *V1, const ConstantPacked *V2) {
-    return EvalVectorOp(V1, V2, ConstantExpr::getXor);
-  }
-  static Constant *LessThan(const ConstantPacked *V1, const ConstantPacked *V2){
-    return 0;
-  }
-  static Constant *EqualTo(const ConstantPacked *V1, const ConstantPacked *V2) {
-    for (unsigned i = 0, e = V1->getNumOperands(); i != e; ++i) {
-      Constant *C = 
-        ConstantExpr::getSetEQ(const_cast<Constant*>(V1->getOperand(i)),
-                               const_cast<Constant*>(V2->getOperand(i)));
-      if (ConstantBool *CB = dyn_cast<ConstantBool>(C))
-        return CB;
-    }
-    // Otherwise, could not decide from any element pairs.
-    return 0;
-  }
-};
-}  // end anonymous namespace
-
-
-//===----------------------------------------------------------------------===//
-//                          GeneralPackedRules Class
-//===----------------------------------------------------------------------===//
-
-/// GeneralPackedRules provides a concrete base class of ConstRules for
-/// PackedType operands, where both operands are not ConstantPacked.  The usual
-/// cause for this is that one operand is a ConstantAggregateZero.
-///
-namespace {
-struct VISIBILITY_HIDDEN GeneralPackedRules
-  : public TemplateRules<Constant, GeneralPackedRules> {
-};
-}  // end anonymous namespace
-
-
-//===----------------------------------------------------------------------===//
-//                           DirectIntRules Class
-//===----------------------------------------------------------------------===//
-//
-// DirectIntRules provides implementations of functions that are valid on
-// integer types, but not all types in general.
-//
-namespace {
-template <class BuiltinType, Type **Ty>
-struct VISIBILITY_HIDDEN DirectIntRules
-  : public TemplateRules<ConstantInt, DirectIntRules<BuiltinType, Ty> > {
-
-  static Constant *Add(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = (BuiltinType)V1->getZExtValue() + 
-                    (BuiltinType)V2->getZExtValue();
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *Sub(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = (BuiltinType)V1->getZExtValue() - 
-                    (BuiltinType)V2->getZExtValue();
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *Mul(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = (BuiltinType)V1->getZExtValue() * 
-                    (BuiltinType)V2->getZExtValue();
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *LessThan(const ConstantInt *V1, const ConstantInt *V2) {
-    bool R = (BuiltinType)V1->getZExtValue() < (BuiltinType)V2->getZExtValue();
-    return ConstantBool::get(R);
-  }
-
-  static Constant *EqualTo(const ConstantInt *V1, const ConstantInt *V2) {
-    bool R = (BuiltinType)V1->getZExtValue() == (BuiltinType)V2->getZExtValue();
-    return ConstantBool::get(R);
-  }
-
-  static Constant *UDiv(const ConstantInt *V1, const ConstantInt *V2) {
-    if (V2->isNullValue())                   // X / 0
-      return 0;
-    BuiltinType R = (BuiltinType)(V1->getZExtValue() / V2->getZExtValue());
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *SDiv(const ConstantInt *V1, const ConstantInt *V2) {
-    if (V2->isNullValue())                   // X / 0
-      return 0;
-    if (V2->isAllOnesValue() &&              // MIN_INT / -1
-        (BuiltinType)V1->getSExtValue() == -(BuiltinType)V1->getSExtValue())
-      return 0;
-    BuiltinType R = (BuiltinType)(V1->getSExtValue() / V2->getSExtValue());
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *URem(const ConstantInt *V1,
-                        const ConstantInt *V2) {
-    if (V2->isNullValue()) return 0;         // X / 0
-    BuiltinType R = (BuiltinType)(V1->getZExtValue() % V2->getZExtValue());
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *SRem(const ConstantInt *V1,
-                        const ConstantInt *V2) {
-    if (V2->isNullValue()) return 0;         // X % 0
-    if (V2->isAllOnesValue() &&              // MIN_INT % -1
-        (BuiltinType)V1->getSExtValue() == -(BuiltinType)V1->getSExtValue())
-      return 0;
-    BuiltinType R = (BuiltinType)(V1->getSExtValue() % V2->getSExtValue());
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *And(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = 
-      (BuiltinType)V1->getZExtValue() & (BuiltinType)V2->getZExtValue();
-    return ConstantInt::get(*Ty, R);
-  }
-  static Constant *Or(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = 
-      (BuiltinType)V1->getZExtValue() | (BuiltinType)V2->getZExtValue();
-    return ConstantInt::get(*Ty, R);
-  }
-  static Constant *Xor(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = 
-      (BuiltinType)V1->getZExtValue() ^ (BuiltinType)V2->getZExtValue();
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *Shl(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = 
-      (BuiltinType)V1->getZExtValue() << (BuiltinType)V2->getZExtValue();
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *LShr(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = BuiltinType(V1->getZExtValue() >> V2->getZExtValue());
-    return ConstantInt::get(*Ty, R);
-  }
-
-  static Constant *AShr(const ConstantInt *V1, const ConstantInt *V2) {
-    BuiltinType R = BuiltinType(V1->getSExtValue() >> V2->getZExtValue());
-    return ConstantInt::get(*Ty, R);
-  }
-};
-}  // end anonymous namespace
-
-
-//===----------------------------------------------------------------------===//
-//                           DirectFPRules Class
-//===----------------------------------------------------------------------===//
-//
-/// DirectFPRules provides implementations of functions that are valid on
-/// floating point types, but not all types in general.
-///
-namespace {
-template <class BuiltinType, Type **Ty>
-struct VISIBILITY_HIDDEN DirectFPRules
-  : public TemplateRules<ConstantFP, DirectFPRules<BuiltinType, Ty> > {
-
-  static Constant *Add(const ConstantFP *V1, const ConstantFP *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() + 
-                    (BuiltinType)V2->getValue();
-    return ConstantFP::get(*Ty, R);
-  }
-
-  static Constant *Sub(const ConstantFP *V1, const ConstantFP *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() - (BuiltinType)V2->getValue();
-    return ConstantFP::get(*Ty, R);
-  }
-
-  static Constant *Mul(const ConstantFP *V1, const ConstantFP *V2) {
-    BuiltinType R = (BuiltinType)V1->getValue() * (BuiltinType)V2->getValue();
-    return ConstantFP::get(*Ty, R);
-  }
-
-  static Constant *LessThan(const ConstantFP *V1, const ConstantFP *V2) {
-    bool R = (BuiltinType)V1->getValue() < (BuiltinType)V2->getValue();
-    return ConstantBool::get(R);
-  }
-
-  static Constant *EqualTo(const ConstantFP *V1, const ConstantFP *V2) {
-    bool R = (BuiltinType)V1->getValue() == (BuiltinType)V2->getValue();
-    return ConstantBool::get(R);
-  }
-
-  static Constant *FRem(const ConstantFP *V1, const ConstantFP *V2) {
-    if (V2->isNullValue()) return 0;
-    BuiltinType Result = std::fmod((BuiltinType)V1->getValue(),
-                                   (BuiltinType)V2->getValue());
-    return ConstantFP::get(*Ty, Result);
-  }
-  static Constant *FDiv(const ConstantFP *V1, const ConstantFP *V2) {
-    BuiltinType inf = std::numeric_limits<BuiltinType>::infinity();
-    if (V2->isExactlyValue(0.0)) return ConstantFP::get(*Ty, inf);
-    if (V2->isExactlyValue(-0.0)) return ConstantFP::get(*Ty, -inf);
-    BuiltinType R = (BuiltinType)V1->getValue() / (BuiltinType)V2->getValue();
-    return ConstantFP::get(*Ty, R);
-  }
-};
-}  // end anonymous namespace
-
-static ManagedStatic<EmptyRules>       EmptyR;
-static ManagedStatic<BoolRules>        BoolR;
-static ManagedStatic<NullPointerRules> NullPointerR;
-static ManagedStatic<ConstantPackedRules> ConstantPackedR;
-static ManagedStatic<GeneralPackedRules> GeneralPackedR;
-static ManagedStatic<DirectIntRules<signed char   , &Type::SByteTy> > SByteR;
-static ManagedStatic<DirectIntRules<unsigned char , &Type::UByteTy> > UByteR;
-static ManagedStatic<DirectIntRules<signed short  , &Type::ShortTy> > ShortR;
-static ManagedStatic<DirectIntRules<unsigned short, &Type::UShortTy> > UShortR;
-static ManagedStatic<DirectIntRules<signed int    , &Type::IntTy> >   IntR;
-static ManagedStatic<DirectIntRules<unsigned int  , &Type::UIntTy> >  UIntR;
-static ManagedStatic<DirectIntRules<int64_t       , &Type::LongTy> >  LongR;
-static ManagedStatic<DirectIntRules<uint64_t      , &Type::ULongTy> > ULongR;
-static ManagedStatic<DirectFPRules <float         , &Type::FloatTy> > FloatR;
-static ManagedStatic<DirectFPRules <double        , &Type::DoubleTy> > DoubleR;
-
-/// ConstRules::get - This method returns the constant rules implementation that
-/// implements the semantics of the two specified constants.
-ConstRules &ConstRules::get(const Constant *V1, const Constant *V2) {
-  if (isa<ConstantExpr>(V1) || isa<ConstantExpr>(V2) ||
-      isa<GlobalValue>(V1) || isa<GlobalValue>(V2) ||
-      isa<UndefValue>(V1) || isa<UndefValue>(V2))
-    return *EmptyR;
-
-  switch (V1->getType()->getTypeID()) {
-  default: assert(0 && "Unknown value type for constant folding!");
-  case Type::BoolTyID:    return *BoolR;
-  case Type::PointerTyID: return *NullPointerR;
-  case Type::SByteTyID:   return *SByteR;
-  case Type::UByteTyID:   return *UByteR;
-  case Type::ShortTyID:   return *ShortR;
-  case Type::UShortTyID:  return *UShortR;
-  case Type::IntTyID:     return *IntR;
-  case Type::UIntTyID:    return *UIntR;
-  case Type::LongTyID:    return *LongR;
-  case Type::ULongTyID:   return *ULongR;
-  case Type::FloatTyID:   return *FloatR;
-  case Type::DoubleTyID:  return *DoubleR;
-  case Type::PackedTyID:
-    if (isa<ConstantPacked>(V1) && isa<ConstantPacked>(V2))
-      return *ConstantPackedR;
-    return *GeneralPackedR; // Constant folding rules for ConstantAggregateZero.
-  }
-}
-
-
 //===----------------------------------------------------------------------===//
 //                ConstantFold*Instruction Implementations
 //===----------------------------------------------------------------------===//
@@ -919,6 +408,275 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
   return 0;
 }
 
+/// EvalVectorOp - Given two packed constants and a function pointer, apply the
+/// function pointer to each element pair, producing a new ConstantPacked
+/// constant.
+static Constant *EvalVectorOp(const ConstantPacked *V1, 
+                              const ConstantPacked *V2,
+                              Constant *(*FP)(Constant*, Constant*)) {
+  std::vector<Constant*> Res;
+  for (unsigned i = 0, e = V1->getNumOperands(); i != e; ++i)
+    Res.push_back(FP(const_cast<Constant*>(V1->getOperand(i)),
+                     const_cast<Constant*>(V2->getOperand(i))));
+  return ConstantPacked::get(Res);
+}
+
+Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
+                                              const Constant *C1,
+                                              const Constant *C2) {
+  // Handle UndefValue up front
+  if (isa<UndefValue>(C1) || isa<UndefValue>(C2)) {
+    switch (Opcode) {
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::Xor:
+      return UndefValue::get(C1->getType());
+    case Instruction::Mul:
+    case Instruction::And:
+      return Constant::getNullValue(C1->getType());
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::FDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem:
+      if (!isa<UndefValue>(C2))                    // undef / X -> 0
+        return Constant::getNullValue(C1->getType());
+      return const_cast<Constant*>(C2);            // X / undef -> undef
+    case Instruction::Or:                          // X | undef -> -1
+      return ConstantInt::getAllOnesValue(C1->getType());
+    case Instruction::LShr:
+      if (isa<UndefValue>(C2) && isa<UndefValue>(C1))
+        return const_cast<Constant*>(C1);           // undef lshr undef -> undef
+      return Constant::getNullValue(C1->getType()); // X lshr undef -> 0
+                                                    // undef lshr X -> 0
+    case Instruction::AShr:
+      if (!isa<UndefValue>(C2))
+        return const_cast<Constant*>(C1);           // undef ashr X --> undef
+      else if (isa<UndefValue>(C1)) 
+        return const_cast<Constant*>(C1);           // undef ashr undef -> undef
+      else
+        return const_cast<Constant*>(C1);           // X ashr undef --> X
+    case Instruction::Shl:
+      // undef << X -> 0   or   X << undef -> 0
+      return Constant::getNullValue(C1->getType());
+    }
+  }
+
+  if (const ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
+    if (isa<ConstantExpr>(C2)) {
+      // There are many possible foldings we could do here.  We should probably
+      // at least fold add of a pointer with an integer into the appropriate
+      // getelementptr.  This will improve alias analysis a bit.
+    } else {
+      // Just implement a couple of simple identities.
+      switch (Opcode) {
+      case Instruction::Add:
+        if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X + 0 == X
+        break;
+      case Instruction::Sub:
+        if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X - 0 == X
+        break;
+      case Instruction::Mul:
+        if (C2->isNullValue()) return const_cast<Constant*>(C2);  // X * 0 == 0
+        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
+          if (CI->getZExtValue() == 1)
+            return const_cast<Constant*>(C1);                     // X * 1 == X
+        break;
+      case Instruction::UDiv:
+      case Instruction::SDiv:
+        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
+          if (CI->getZExtValue() == 1)
+            return const_cast<Constant*>(C1);                     // X / 1 == X
+        break;
+      case Instruction::URem:
+      case Instruction::SRem:
+        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
+          if (CI->getZExtValue() == 1)
+            return Constant::getNullValue(CI->getType());         // X % 1 == 0
+        break;
+      case Instruction::And:
+        if (cast<ConstantIntegral>(C2)->isAllOnesValue())
+          return const_cast<Constant*>(C1);                       // X & -1 == X
+        if (C2->isNullValue()) return const_cast<Constant*>(C2);  // X & 0 == 0
+        if (CE1->isCast() && isa<GlobalValue>(CE1->getOperand(0))) {
+          GlobalValue *CPR = cast<GlobalValue>(CE1->getOperand(0));
+
+          // Functions are at least 4-byte aligned.  If and'ing the address of a
+          // function with a constant < 4, fold it to zero.
+          if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
+            if (CI->getZExtValue() < 4 && isa<Function>(CPR))
+              return Constant::getNullValue(CI->getType());
+        }
+        break;
+      case Instruction::Or:
+        if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X | 0 == X
+        if (cast<ConstantIntegral>(C2)->isAllOnesValue())
+          return const_cast<Constant*>(C2);  // X | -1 == -1
+        break;
+      case Instruction::Xor:
+        if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X ^ 0 == X
+        break;
+      }
+    }
+  } else if (isa<ConstantExpr>(C2)) {
+    // If C2 is a constant expr and C1 isn't, flop them around and fold the
+    // other way if possible.
+    switch (Opcode) {
+    case Instruction::Add:
+    case Instruction::Mul:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor:
+      // No change of opcode required.
+      return ConstantFoldBinaryInstruction(Opcode, C2, C1);
+
+    case Instruction::Shl:
+    case Instruction::LShr:
+    case Instruction::AShr:
+    case Instruction::Sub:
+    case Instruction::SDiv:
+    case Instruction::UDiv:
+    case Instruction::FDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem:
+    default:  // These instructions cannot be flopped around.
+      return 0;
+    }
+  }
+
+  // At this point we know neither constant is an UndefValue nor a ConstantExpr
+  // so look at directly computing the 
+  if (const ConstantBool *CB1 = dyn_cast<ConstantBool>(C1)) {
+    if (const ConstantBool *CB2 = dyn_cast<ConstantBool>(C2)) {
+      switch (Opcode) {
+        default:
+          break;
+        case Instruction::And:
+          return ConstantBool::get(CB1->getValue() & CB2->getValue());
+        case Instruction::Or:
+          return ConstantBool::get(CB1->getValue() | CB2->getValue());
+        case Instruction::Xor:
+          return ConstantBool::get(CB1->getValue() ^ CB2->getValue());
+      }
+    }
+  } else if (const ConstantInt *CI1 = dyn_cast<ConstantInt>(C1)) {
+    if (const ConstantInt *CI2 = dyn_cast<ConstantInt>(C2)) {
+      uint64_t C1Val = CI1->getZExtValue();
+      uint64_t C2Val = CI2->getZExtValue();
+      switch (Opcode) {
+      default:
+        break;
+      case Instruction::Add:     
+        return ConstantInt::get(C1->getType(), C1Val + C2Val);
+      case Instruction::Sub:     
+        return ConstantInt::get(C1->getType(), C1Val - C2Val);
+      case Instruction::Mul:     
+        return ConstantInt::get(C1->getType(), C1Val * C2Val);
+      case Instruction::UDiv:
+        if (CI2->isNullValue())                  // X / 0 -> can't fold
+          return 0;
+        return ConstantInt::get(C1->getType(), C1Val / C2Val);
+      case Instruction::SDiv:
+        if (CI2->isNullValue()) return 0;        // X / 0 -> can't fold
+        if (CI2->isAllOnesValue() &&
+            (((CI1->getType()->getPrimitiveSizeInBits() == 64) && 
+              (CI1->getSExtValue() == INT64_MIN)) ||
+             (CI1->getSExtValue() == -CI1->getSExtValue())))
+          return 0;                              // MIN_INT / -1 -> overflow
+        return ConstantInt::get(C1->getType(), 
+                                CI1->getSExtValue() / CI2->getSExtValue());
+      case Instruction::URem:    
+        if (C2->isNullValue()) return 0;         // X / 0 -> can't fold
+        return ConstantInt::get(C1->getType(), C1Val % C2Val);
+      case Instruction::SRem:    
+        if (CI2->isNullValue()) return 0;        // X % 0 -> can't fold
+        if (CI2->isAllOnesValue() &&              
+            (((CI1->getType()->getPrimitiveSizeInBits() == 64) && 
+              (CI1->getSExtValue() == INT64_MIN)) ||
+             (CI1->getSExtValue() == -CI1->getSExtValue())))
+          return 0;                              // MIN_INT % -1 -> overflow
+        return ConstantInt::get(C1->getType(), 
+                                CI1->getSExtValue() % CI2->getSExtValue());
+      case Instruction::And:
+        return ConstantInt::get(C1->getType(), C1Val & C2Val);
+      case Instruction::Or:
+        return ConstantInt::get(C1->getType(), C1Val | C2Val);
+      case Instruction::Xor:
+        return ConstantInt::get(C1->getType(), C1Val ^ C2Val);
+      case Instruction::Shl:
+        return ConstantInt::get(C1->getType(), C1Val << C2Val);
+      case Instruction::LShr:
+        return ConstantInt::get(C1->getType(), C1Val >> C2Val);
+      case Instruction::AShr:
+        return ConstantInt::get(C1->getType(), 
+                                CI1->getSExtValue() >> C2Val);
+      }
+    }
+  } else if (const ConstantFP *CFP1 = dyn_cast<ConstantFP>(C1)) {
+    if (const ConstantFP *CFP2 = dyn_cast<ConstantFP>(C2)) {
+      double C1Val = CFP1->getValue();
+      double C2Val = CFP2->getValue();
+      switch (Opcode) {
+      default:                   
+        break;
+      case Instruction::Add: 
+        return ConstantFP::get(CFP1->getType(), C1Val + C2Val);
+      case Instruction::Sub:     
+        return ConstantFP::get(CFP1->getType(), C1Val - C2Val);
+      case Instruction::Mul:     
+        return ConstantFP::get(CFP1->getType(), C1Val * C2Val);
+      case Instruction::FDiv:
+        if (CFP2->isExactlyValue(0.0)) 
+          return ConstantFP::get(CFP1->getType(),
+                                 std::numeric_limits<double>::infinity());
+        if (CFP2->isExactlyValue(-0.0))
+          return ConstantFP::get(CFP1->getType(),
+                                 -std::numeric_limits<double>::infinity());
+        return ConstantFP::get(CFP1->getType(), C1Val / C2Val);
+      case Instruction::FRem:
+        if (CFP2->isNullValue()) 
+          return 0;
+        return ConstantFP::get(CFP1->getType(), std::fmod(C1Val, C2Val));
+      }
+    }
+  } else if (const ConstantPacked *CP1 = dyn_cast<ConstantPacked>(C1)) {
+    if (const ConstantPacked *CP2 = dyn_cast<ConstantPacked>(C2)) {
+      switch (Opcode) {
+        default:
+          break;
+        case Instruction::Add: 
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getAdd);
+        case Instruction::Sub: 
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getSub);
+        case Instruction::Mul: 
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getMul);
+        case Instruction::UDiv:
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getUDiv);
+        case Instruction::SDiv:
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getSDiv);
+        case Instruction::FDiv:
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getFDiv);
+        case Instruction::URem:
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getURem);
+        case Instruction::SRem:
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getSRem);
+        case Instruction::FRem:
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getFRem);
+        case Instruction::And: 
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getAnd);
+        case Instruction::Or:  
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getOr);
+        case Instruction::Xor: 
+          return EvalVectorOp(CP1, CP2, ConstantExpr::getXor);
+      }
+    }
+  }
+
+  // We don't know how to fold this
+  return 0;
+}
 
 /// isZeroSizedType - This type is zero sized if its an array or structure of
 /// zero sized types.  The only leaf zero sized type is an empty structure.
@@ -979,62 +737,126 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
     return 1;
 }
 
-/// evaluateRelation - This function determines if there is anything we can
+/// evaluatFCmpeRelation - This function determines if there is anything we can
+/// decide about the two constants provided.  This doesn't need to handle simple
+/// things like ConstantFP comparisons, but should instead handle ConstantExprs.
+/// If we can determine that the two constants have a particular relation to 
+/// each other, we should return the corresponding FCmpInst predicate, 
+/// otherwise return FCmpInst::BAD_FCMP_PREDICATE.
+///
+/// To simplify this code we canonicalize the relation so that the first
+/// operand is always the most "complex" of the two.  We consider simple
+/// constants (like ConstantFP) to be the simplest, followed by
+/// GlobalValues, followed by ConstantExpr's (the most complex).
+static FCmpInst::Predicate evaluateFCmpRelation(Constant *V1, Constant *V2) {
+  assert(V1->getType() == V2->getType() &&
+         "Cannot compare different types of values!");
+  if (V1 == V2) return FCmpInst::FCMP_OEQ;
+
+  if (!isa<ConstantExpr>(V1) && !isa<GlobalValue>(V1)) {
+    if (!isa<GlobalValue>(V2) && !isa<ConstantExpr>(V2)) {
+      // We distilled this down to a simple case, use the standard constant
+      // folder.
+      ConstantBool *R = dyn_cast<ConstantBool>(
+          ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ, V1, V2));
+      if (R && R->getValue()) 
+        return FCmpInst::FCMP_OEQ;
+      R = dyn_cast<ConstantBool>(
+          ConstantExpr::getFCmp(FCmpInst::FCMP_OLT, V1, V2));
+      if (R && R->getValue()) 
+        return FCmpInst::FCMP_OLT;
+      R = dyn_cast<ConstantBool>(
+          ConstantExpr::getFCmp(FCmpInst::FCMP_OGT, V1, V2));
+      if (R && R->getValue()) return FCmpInst::FCMP_OGT;
+      
+      // If we couldn't figure it out, bail.
+      return FCmpInst::BAD_FCMP_PREDICATE;
+    }
+    
+    // If the first operand is simple, swap operands.
+    FCmpInst::Predicate SwappedPredicate = evaluateFCmpRelation(V2, V1);
+    if (SwappedPredicate != FCmpInst::BAD_FCMP_PREDICATE)
+      return FCmpInst::getSwappedPredicate(SwappedPredicate);
+
+    return FCmpInst::BAD_FCMP_PREDICATE;
+  }
+
+  // Ok, the LHS is known to be a constantexpr.  The RHS can be any of a
+  // constantexpr, a CPR, or a simple constant.
+  // ConstantExpr *CE1 = cast<ConstantExpr>(V1);
+  // Constant *CE1Op0 = CE1->getOperand(0);
+
+  // There are MANY other foldings that we could perform here.  They will
+  // probably be added on demand, as they seem needed.
+  return FCmpInst::BAD_FCMP_PREDICATE;
+}
+
+/// evaluateICmpRelation - This function determines if there is anything we can
 /// decide about the two constants provided.  This doesn't need to handle simple
 /// things like integer comparisons, but should instead handle ConstantExprs
 /// and GlobalValues.  If we can determine that the two constants have a
-/// particular relation to each other, we should return the corresponding SetCC
-/// code, otherwise return Instruction::BinaryOpsEnd.
+/// particular relation to each other, we should return the corresponding ICmp
+/// predicate, otherwise return ICmpInst::BAD_ICMP_PREDICATE.
 ///
 /// To simplify this code we canonicalize the relation so that the first
 /// operand is always the most "complex" of the two.  We consider simple
 /// constants (like ConstantInt) to be the simplest, followed by
 /// GlobalValues, followed by ConstantExpr's (the most complex).
 ///
-static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
+static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
+                                                bool isSigned) {
   assert(V1->getType() == V2->getType() &&
          "Cannot compare different types of values!");
-  if (V1 == V2) return Instruction::SetEQ;
+  if (V1 == V2) return ICmpInst::ICMP_EQ;
 
   if (!isa<ConstantExpr>(V1) && !isa<GlobalValue>(V1)) {
     if (!isa<GlobalValue>(V2) && !isa<ConstantExpr>(V2)) {
       // We distilled this down to a simple case, use the standard constant
       // folder.
-      ConstantBool *R = dyn_cast<ConstantBool>(ConstantExpr::getSetEQ(V1, V2));
-      if (R && R->getValue()) return Instruction::SetEQ;
-      R = dyn_cast<ConstantBool>(ConstantExpr::getSetLT(V1, V2));
-      if (R && R->getValue()) return Instruction::SetLT;
-      R = dyn_cast<ConstantBool>(ConstantExpr::getSetGT(V1, V2));
-      if (R && R->getValue()) return Instruction::SetGT;
+      ICmpInst::Predicate pred = ICmpInst::ICMP_EQ;
+      ConstantBool *R = 
+        dyn_cast<ConstantBool>(ConstantExpr::getICmp(pred, V1, V2));
+      if (R && R->getValue()) 
+        return pred;
+      pred = isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
+      R = dyn_cast<ConstantBool>(ConstantExpr::getICmp(pred, V1, V2));
+      if (R && R->getValue())
+        return pred;
+      pred = isSigned ?  ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
+      R = dyn_cast<ConstantBool>(ConstantExpr::getICmp(pred, V1, V2));
+      if (R && R->getValue())
+        return pred;
       
       // If we couldn't figure it out, bail.
-      return Instruction::BinaryOpsEnd;
+      return ICmpInst::BAD_ICMP_PREDICATE;
     }
     
     // If the first operand is simple, swap operands.
-    Instruction::BinaryOps SwappedRelation = evaluateRelation(V2, V1);
-    if (SwappedRelation != Instruction::BinaryOpsEnd)
-      return SetCondInst::getSwappedCondition(SwappedRelation);
+    ICmpInst::Predicate SwappedRelation = 
+      evaluateICmpRelation(V2, V1, isSigned);
+    if (SwappedRelation != ICmpInst::BAD_ICMP_PREDICATE)
+      return ICmpInst::getSwappedPredicate(SwappedRelation);
 
   } else if (const GlobalValue *CPR1 = dyn_cast<GlobalValue>(V1)) {
     if (isa<ConstantExpr>(V2)) {  // Swap as necessary.
-      Instruction::BinaryOps SwappedRelation = evaluateRelation(V2, V1);
-      if (SwappedRelation != Instruction::BinaryOpsEnd)
-        return SetCondInst::getSwappedCondition(SwappedRelation);
+      ICmpInst::Predicate SwappedRelation = 
+        evaluateICmpRelation(V2, V1, isSigned);
+      if (SwappedRelation != ICmpInst::BAD_ICMP_PREDICATE)
+        return ICmpInst::getSwappedPredicate(SwappedRelation);
       else
-        return Instruction::BinaryOpsEnd;
+        return ICmpInst::BAD_ICMP_PREDICATE;
     }
 
     // Now we know that the RHS is a GlobalValue or simple constant,
     // which (since the types must match) means that it's a ConstantPointerNull.
     if (const GlobalValue *CPR2 = dyn_cast<GlobalValue>(V2)) {
       if (!CPR1->hasExternalWeakLinkage() || !CPR2->hasExternalWeakLinkage())
-        return Instruction::SetNE;
+        return ICmpInst::ICMP_NE;
     } else {
       // GlobalVals can never be null.
       assert(isa<ConstantPointerNull>(V2) && "Canonicalization guarantee!");
       if (!CPR1->hasExternalWeakLinkage())
-        return Instruction::SetNE;
+        return ICmpInst::ICMP_NE;
     }
   } else {
     // Ok, the LHS is known to be a constantexpr.  The RHS can be any of a
@@ -1048,30 +870,39 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
     case Instruction::FPExt:
     case Instruction::FPToUI:
     case Instruction::FPToSI:
-      break; // We don't do anything with floating point.
-    case Instruction::ZExt:
-    case Instruction::SExt:
+      break; // We can't evaluate floating point casts or truncations.
+
     case Instruction::UIToFP:
     case Instruction::SIToFP:
-    case Instruction::PtrToInt:
     case Instruction::IntToPtr:
     case Instruction::BitCast:
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::PtrToInt:
       // If the cast is not actually changing bits, and the second operand is a
       // null pointer, do the comparison with the pre-casted value.
       if (V2->isNullValue() &&
-          (isa<PointerType>(CE1->getType()) || CE1->getType()->isIntegral()))
-        return evaluateRelation(CE1Op0,
-                                Constant::getNullValue(CE1Op0->getType()));
+          (isa<PointerType>(CE1->getType()) || CE1->getType()->isIntegral())) {
+        bool isSigned = CE1->getOpcode() == Instruction::ZExt ? false :
+          (CE1->getOpcode() == Instruction::SExt ? true :
+           (CE1->getOpcode() == Instruction::PtrToInt ? false : isSigned));
+        return evaluateICmpRelation(
+            CE1Op0, Constant::getNullValue(CE1Op0->getType()), isSigned);
+      }
 
       // If the dest type is a pointer type, and the RHS is a constantexpr cast
       // from the same type as the src of the LHS, evaluate the inputs.  This is
-      // important for things like "seteq (cast 4 to int*), (cast 5 to int*)",
+      // important for things like "icmp eq (cast 4 to int*), (cast 5 to int*)",
       // which happens a lot in compilers with tagged integers.
       if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2))
-        if (isa<PointerType>(CE1->getType()) && CE2->isCast() &&
+        if (CE2->isCast() && isa<PointerType>(CE1->getType()) &&
             CE1->getOperand(0)->getType() == CE2->getOperand(0)->getType() &&
             CE1->getOperand(0)->getType()->isIntegral()) {
-          return evaluateRelation(CE1->getOperand(0), CE2->getOperand(0));
+          bool isSigned = CE1->getOpcode() == Instruction::ZExt ? false :
+            (CE1->getOpcode() == Instruction::SExt ? true :
+             (CE1->getOpcode() == Instruction::PtrToInt ? false : isSigned));
+          return evaluateICmpRelation(CE1->getOperand(0), CE2->getOperand(0),
+              isSigned);
         }
       break;
 
@@ -1085,20 +916,20 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
           if (GV->hasExternalWeakLinkage())
             // Weak linkage GVals could be zero or not. We're comparing that
             // to null pointer so its greater-or-equal
-            return Instruction::SetGE;
+            return isSigned ? ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE;
           else 
             // If its not weak linkage, the GVal must have a non-zero address
             // so the result is greater-than
-            return Instruction::SetGT;
+            return isSigned ? ICmpInst::ICMP_SGT :  ICmpInst::ICMP_UGT;
         } else if (isa<ConstantPointerNull>(CE1Op0)) {
           // If we are indexing from a null pointer, check to see if we have any
           // non-zero indices.
           for (unsigned i = 1, e = CE1->getNumOperands(); i != e; ++i)
             if (!CE1->getOperand(i)->isNullValue())
               // Offsetting from null, must not be equal.
-              return Instruction::SetGT;
+              return isSigned ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
           // Only zero indexes from null, must still be zero.
-          return Instruction::SetEQ;
+          return ICmpInst::ICMP_EQ;
         }
         // Otherwise, we can't really say if the first operand is null or not.
       } else if (const GlobalValue *CPR2 = dyn_cast<GlobalValue>(V2)) {
@@ -1106,11 +937,11 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
           if (CPR2->hasExternalWeakLinkage())
             // Weak linkage GVals could be zero or not. We're comparing it to
             // a null pointer, so its less-or-equal
-            return Instruction::SetLE;
+            return isSigned ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_ULE;
           else
             // If its not weak linkage, the GVal must have a non-zero address
             // so the result is less-than
-            return Instruction::SetLT;
+            return isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
         } else if (const GlobalValue *CPR1 = dyn_cast<GlobalValue>(CE1Op0)) {
           if (CPR1 == CPR2) {
             // If this is a getelementptr of the same global, then it must be
@@ -1120,11 +951,11 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
             assert(CE1->getNumOperands() == 2 &&
                    !CE1->getOperand(1)->isNullValue() &&
                    "Suprising getelementptr!");
-            return Instruction::SetGT;
+            return isSigned ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
           } else {
             // If they are different globals, we don't know what the value is,
             // but they can't be equal.
-            return Instruction::SetNE;
+            return ICmpInst::ICMP_NE;
           }
         }
       } else {
@@ -1140,7 +971,7 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
           // obviously to the same or different globals.
           if (isa<GlobalValue>(CE1Op0) && isa<GlobalValue>(CE2Op0)) {
             if (CE1Op0 != CE2Op0) // Don't know relative ordering, but not equal
-              return Instruction::SetNE;
+              return ICmpInst::ICMP_NE;
             // Ok, we know that both getelementptr instructions are based on the
             // same global.  From this, we can precisely determine the relative
             // ordering of the resultant pointers.
@@ -1152,9 +983,9 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
                  ++i, ++GTI)
               switch (IdxCompare(CE1->getOperand(i), CE2->getOperand(i),
                                  GTI.getIndexedType())) {
-              case -1: return Instruction::SetLT;
-              case 1:  return Instruction::SetGT;
-              case -2: return Instruction::BinaryOpsEnd;
+              case -1: return isSigned ? ICmpInst::ICMP_SLT:ICmpInst::ICMP_ULT;
+              case 1:  return isSigned ? ICmpInst::ICMP_SGT:ICmpInst::ICMP_UGT;
+              case -2: return ICmpInst::BAD_ICMP_PREDICATE;
               }
 
             // Ok, we ran out of things they have in common.  If any leftovers
@@ -1162,280 +993,234 @@ static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
             for (; i < CE1->getNumOperands(); ++i)
               if (!CE1->getOperand(i)->isNullValue())
                 if (isa<ConstantIntegral>(CE1->getOperand(i)))
-                  return Instruction::SetGT;
+                  return isSigned ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
                 else
-                  return Instruction::BinaryOpsEnd; // Might be equal.
+                  return ICmpInst::BAD_ICMP_PREDICATE; // Might be equal.
 
             for (; i < CE2->getNumOperands(); ++i)
               if (!CE2->getOperand(i)->isNullValue())
                 if (isa<ConstantIntegral>(CE2->getOperand(i)))
-                  return Instruction::SetLT;
+                  return isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
                 else
-                  return Instruction::BinaryOpsEnd; // Might be equal.
-            return Instruction::SetEQ;
+                  return ICmpInst::BAD_ICMP_PREDICATE; // Might be equal.
+            return ICmpInst::ICMP_EQ;
           }
         }
       }
-
     default:
       break;
     }
   }
 
-  return Instruction::BinaryOpsEnd;
+  return ICmpInst::BAD_ICMP_PREDICATE;
 }
 
-Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
-                                              const Constant *V1,
-                                              const Constant *V2) {
-  Constant *C = 0;
-  switch (Opcode) {
-  default:                   break;
-  case Instruction::Add:     C = ConstRules::get(V1, V2).add(V1, V2); break;
-  case Instruction::Sub:     C = ConstRules::get(V1, V2).sub(V1, V2); break;
-  case Instruction::Mul:     C = ConstRules::get(V1, V2).mul(V1, V2); break;
-  case Instruction::UDiv:    C = ConstRules::get(V1, V2).udiv(V1, V2); break;
-  case Instruction::SDiv:    C = ConstRules::get(V1, V2).sdiv(V1, V2); break;
-  case Instruction::FDiv:    C = ConstRules::get(V1, V2).fdiv(V1, V2); break;
-  case Instruction::URem:    C = ConstRules::get(V1, V2).urem(V1, V2); break;
-  case Instruction::SRem:    C = ConstRules::get(V1, V2).srem(V1, V2); break;
-  case Instruction::FRem:    C = ConstRules::get(V1, V2).frem(V1, V2); break;
-  case Instruction::And:     C = ConstRules::get(V1, V2).op_and(V1, V2); break;
-  case Instruction::Or:      C = ConstRules::get(V1, V2).op_or (V1, V2); break;
-  case Instruction::Xor:     C = ConstRules::get(V1, V2).op_xor(V1, V2); break;
-  case Instruction::Shl:     C = ConstRules::get(V1, V2).shl(V1, V2); break;
-  case Instruction::LShr:    C = ConstRules::get(V1, V2).lshr(V1, V2); break;
-  case Instruction::AShr:    C = ConstRules::get(V1, V2).ashr(V1, V2); break;
-  case Instruction::SetEQ:   
-    // SetEQ(null,GV) -> false
-    if (V1->isNullValue()) {
-      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V2))
-        if (!GV->hasExternalWeakLinkage())
+Constant *llvm::ConstantFoldCompareInstruction(unsigned short predicate, 
+                                               Constant *C1, Constant *C2) {
+
+  // Handle some degenerate cases first
+  if (isa<UndefValue>(C1) || isa<UndefValue>(C2))
+    return UndefValue::get(Type::BoolTy);
+
+  // icmp eq/ne(null,GV) -> false/true
+  if (C1->isNullValue()) {
+    if (const GlobalValue *GV = dyn_cast<GlobalValue>(C2))
+      if (!GV->hasExternalWeakLinkage()) // External weak GV can be null
+        if (predicate == ICmpInst::ICMP_EQ)
           return ConstantBool::getFalse();
-    // SetEQ(GV,null) -> false
-    } else if (V2->isNullValue()) {
-      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V1))
-        if (!GV->hasExternalWeakLinkage())
+        else if (predicate == ICmpInst::ICMP_NE)
+          return ConstantBool::getTrue();
+  // icmp eq/ne(GV,null) -> false/true
+  } else if (C2->isNullValue()) {
+    if (const GlobalValue *GV = dyn_cast<GlobalValue>(C1))
+      if (!GV->hasExternalWeakLinkage()) // External weak GV can be null
+        if (predicate == ICmpInst::ICMP_EQ)
           return ConstantBool::getFalse();
-    }
-    C = ConstRules::get(V1, V2).equalto(V1, V2); 
-    break;
-  case Instruction::SetLT:   C = ConstRules::get(V1, V2).lessthan(V1, V2);break;
-  case Instruction::SetGT:   C = ConstRules::get(V1, V2).lessthan(V2, V1);break;
-  case Instruction::SetNE:   
-    // SetNE(null,GV) -> true
-    if (V1->isNullValue()) {
-      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V2))
-        if (!GV->hasExternalWeakLinkage())
+        else if (predicate == ICmpInst::ICMP_NE)
           return ConstantBool::getTrue();
-    // SetNE(GV,null) -> true
-    } else if (V2->isNullValue()) {
-      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V1))
-        if (!GV->hasExternalWeakLinkage())
-          return ConstantBool::getTrue();
-    }
-    // V1 != V2  ===  !(V1 == V2)
-    C = ConstRules::get(V1, V2).equalto(V1, V2);
-    if (C) return ConstantExpr::getNot(C);
-    break;
-  case Instruction::SetLE:   // V1 <= V2  ===  !(V2 < V1)
-    C = ConstRules::get(V1, V2).lessthan(V2, V1);
-    if (C) return ConstantExpr::getNot(C);
-    break;
-  case Instruction::SetGE:   // V1 >= V2  ===  !(V1 < V2)
-    C = ConstRules::get(V1, V2).lessthan(V1, V2);
-    if (C) return ConstantExpr::getNot(C);
-    break;
   }
 
-  // If we successfully folded the expression, return it now.
-  if (C) return C;
-
-  if (SetCondInst::isComparison(Opcode)) {
-    if (isa<UndefValue>(V1) || isa<UndefValue>(V2))
-      return UndefValue::get(Type::BoolTy);
-    switch (evaluateRelation(const_cast<Constant*>(V1),
-                             const_cast<Constant*>(V2))) {
-    default: assert(0 && "Unknown relational!");
-    case Instruction::BinaryOpsEnd:
-      break;  // Couldn't determine anything about these constants.
-    case Instruction::SetEQ:   // We know the constants are equal!
-      // If we know the constants are equal, we can decide the result of this
-      // computation precisely.
-      return ConstantBool::get(Opcode == Instruction::SetEQ ||
-                               Opcode == Instruction::SetLE ||
-                               Opcode == Instruction::SetGE);
-    case Instruction::SetLT:
-      // If we know that V1 < V2, we can decide the result of this computation
-      // precisely.
-      return ConstantBool::get(Opcode == Instruction::SetLT ||
-                               Opcode == Instruction::SetNE ||
-                               Opcode == Instruction::SetLE);
-    case Instruction::SetGT:
-      // If we know that V1 > V2, we can decide the result of this computation
-      // precisely.
-      return ConstantBool::get(Opcode == Instruction::SetGT ||
-                               Opcode == Instruction::SetNE ||
-                               Opcode == Instruction::SetGE);
-    case Instruction::SetLE:
-      // If we know that V1 <= V2, we can only partially decide this relation.
-      if (Opcode == Instruction::SetGT) return ConstantBool::getFalse();
-      if (Opcode == Instruction::SetLT) return ConstantBool::getTrue();
-      break;
-
-    case Instruction::SetGE:
-      // If we know that V1 >= V2, we can only partially decide this relation.
-      if (Opcode == Instruction::SetLT) return ConstantBool::getFalse();
-      if (Opcode == Instruction::SetGT) return ConstantBool::getTrue();
-      break;
-
-    case Instruction::SetNE:
-      // If we know that V1 != V2, we can only partially decide this relation.
-      if (Opcode == Instruction::SetEQ) return ConstantBool::getFalse();
-      if (Opcode == Instruction::SetNE) return ConstantBool::getTrue();
-      break;
+  if (isa<ConstantBool>(C1) && isa<ConstantBool>(C2)) {
+    bool C1Val = cast<ConstantBool>(C1)->getValue();
+    bool C2Val = cast<ConstantBool>(C2)->getValue();
+    switch (predicate) {
+    default: assert(0 && "Invalid ICmp Predicate"); return 0;
+    case ICmpInst::ICMP_EQ: return ConstantBool::get(C1Val == C2Val);
+    case ICmpInst::ICMP_NE: return ConstantBool::get(C1Val != C2Val);
+    case ICmpInst::ICMP_ULT:return ConstantBool::get(C1Val <  C2Val);
+    case ICmpInst::ICMP_UGT:return ConstantBool::get(C1Val >  C2Val);
+    case ICmpInst::ICMP_ULE:return ConstantBool::get(C1Val <= C2Val);
+    case ICmpInst::ICMP_UGE:return ConstantBool::get(C1Val >= C2Val);
+    case ICmpInst::ICMP_SLT:return ConstantBool::get(C1Val <  C2Val);
+    case ICmpInst::ICMP_SGT:return ConstantBool::get(C1Val >  C2Val);
+    case ICmpInst::ICMP_SLE:return ConstantBool::get(C1Val <= C2Val);
+    case ICmpInst::ICMP_SGE:return ConstantBool::get(C1Val >= C2Val);
     }
-  }
-
-  if (isa<UndefValue>(V1) || isa<UndefValue>(V2)) {
-    switch (Opcode) {
-    case Instruction::Add:
-    case Instruction::Sub:
-    case Instruction::Xor:
-      return UndefValue::get(V1->getType());
-
-    case Instruction::Mul:
-    case Instruction::And:
-      return Constant::getNullValue(V1->getType());
-    case Instruction::UDiv:
-    case Instruction::SDiv:
-    case Instruction::FDiv:
-    case Instruction::URem:
-    case Instruction::SRem:
-    case Instruction::FRem:
-      if (!isa<UndefValue>(V2))                    // undef / X -> 0
-        return Constant::getNullValue(V1->getType());
-      return const_cast<Constant*>(V2);            // X / undef -> undef
-    case Instruction::Or:                          // X | undef -> -1
-      return ConstantInt::getAllOnesValue(V1->getType());
-    case Instruction::LShr:
-      if (isa<UndefValue>(V2) && isa<UndefValue>(V1))
-        return const_cast<Constant*>(V1);           // undef lshr undef -> undef
-      return Constant::getNullValue(V1->getType()); // X lshr undef -> 0
-                                                    // undef lshr X -> 0
-    case Instruction::AShr:
-      if (!isa<UndefValue>(V2))
-        return const_cast<Constant*>(V1);           // undef ashr X --> undef
-      else if (isa<UndefValue>(V1)) 
-        return const_cast<Constant*>(V1);           // undef ashr undef -> undef
-      else
-        return const_cast<Constant*>(V1);           // X ashr undef --> X
-    case Instruction::Shl:
-      // undef << X -> 0   or   X << undef -> 0
-      return Constant::getNullValue(V1->getType());
-    }
-  }
-
-  if (const ConstantExpr *CE1 = dyn_cast<ConstantExpr>(V1)) {
-    if (isa<ConstantExpr>(V2)) {
-      // There are many possible foldings we could do here.  We should probably
-      // at least fold add of a pointer with an integer into the appropriate
-      // getelementptr.  This will improve alias analysis a bit.
+  } else if (isa<ConstantInt>(C1) && isa<ConstantInt>(C2)) {
+    if (ICmpInst::isSignedPredicate(ICmpInst::Predicate(predicate))) {
+      int64_t V1 = cast<ConstantInt>(C1)->getSExtValue();
+      int64_t V2 = cast<ConstantInt>(C2)->getSExtValue();
+      switch (predicate) {
+      default: assert(0 && "Invalid ICmp Predicate"); return 0;
+      case ICmpInst::ICMP_SLT:return ConstantBool::get(V1 <  V2);
+      case ICmpInst::ICMP_SGT:return ConstantBool::get(V1 >  V2);
+      case ICmpInst::ICMP_SLE:return ConstantBool::get(V1 <= V2);
+      case ICmpInst::ICMP_SGE:return ConstantBool::get(V1 >= V2);
+      }
     } else {
-      // Just implement a couple of simple identities.
-      switch (Opcode) {
-      case Instruction::Add:
-        if (V2->isNullValue()) return const_cast<Constant*>(V1);  // X + 0 == X
-        break;
-      case Instruction::Sub:
-        if (V2->isNullValue()) return const_cast<Constant*>(V1);  // X - 0 == X
-        break;
-      case Instruction::Mul:
-        if (V2->isNullValue()) return const_cast<Constant*>(V2);  // X * 0 == 0
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
-          if (CI->getZExtValue() == 1)
-            return const_cast<Constant*>(V1);                     // X * 1 == X
-        break;
-      case Instruction::UDiv:
-      case Instruction::SDiv:
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
-          if (CI->getZExtValue() == 1)
-            return const_cast<Constant*>(V1);                     // X / 1 == X
-        break;
-      case Instruction::URem:
-      case Instruction::SRem:
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
-          if (CI->getZExtValue() == 1)
-            return Constant::getNullValue(CI->getType());         // X % 1 == 0
-        break;
-      case Instruction::And:
-        if (cast<ConstantIntegral>(V2)->isAllOnesValue())
-          return const_cast<Constant*>(V1);                       // X & -1 == X
-        if (V2->isNullValue()) return const_cast<Constant*>(V2);  // X & 0 == 0
-        if (CE1->isCast() && isa<GlobalValue>(CE1->getOperand(0))) {
-          GlobalValue *CPR = cast<GlobalValue>(CE1->getOperand(0));
-
-          // Functions are at least 4-byte aligned.  If and'ing the address of a
-          // function with a constant < 4, fold it to zero.
-          if (const ConstantInt *CI = dyn_cast<ConstantInt>(V2))
-            if (CI->getZExtValue() < 4 && isa<Function>(CPR))
-              return Constant::getNullValue(CI->getType());
-        }
-        break;
-      case Instruction::Or:
-        if (V2->isNullValue()) return const_cast<Constant*>(V1);  // X | 0 == X
-        if (cast<ConstantIntegral>(V2)->isAllOnesValue())
-          return const_cast<Constant*>(V2);  // X | -1 == -1
-        break;
-      case Instruction::Xor:
-        if (V2->isNullValue()) return const_cast<Constant*>(V1);  // X ^ 0 == X
-        break;
+      uint64_t V1 = cast<ConstantInt>(C1)->getZExtValue();
+      uint64_t V2 = cast<ConstantInt>(C2)->getZExtValue();
+      switch (predicate) {
+      default: assert(0 && "Invalid ICmp Predicate"); return 0;
+      case ICmpInst::ICMP_EQ: return ConstantBool::get(V1 == V2);
+      case ICmpInst::ICMP_NE: return ConstantBool::get(V1 != V2);
+      case ICmpInst::ICMP_ULT:return ConstantBool::get(V1 <  V2);
+      case ICmpInst::ICMP_UGT:return ConstantBool::get(V1 >  V2);
+      case ICmpInst::ICMP_ULE:return ConstantBool::get(V1 <= V2);
+      case ICmpInst::ICMP_UGE:return ConstantBool::get(V1 >= V2);
       }
     }
+  } else if (isa<ConstantFP>(C1) && isa<ConstantFP>(C2)) {
+    double C1Val = cast<ConstantFP>(C1)->getValue();
+    double C2Val = cast<ConstantFP>(C2)->getValue();
+    switch (predicate) {
+    default: assert(0 && "Invalid FCmp Predicate"); return 0;
+    case FCmpInst::FCMP_FALSE: return ConstantBool::getFalse();
+    case FCmpInst::FCMP_TRUE:  return ConstantBool::getTrue();
+    case FCmpInst::FCMP_UNO:
+    case FCmpInst::FCMP_ORD:   break; // Can't fold these
+    case FCmpInst::FCMP_UEQ:
+    case FCmpInst::FCMP_OEQ:   return ConstantBool::get(C1Val == C2Val);
+    case FCmpInst::FCMP_ONE:
+    case FCmpInst::FCMP_UNE:   return ConstantBool::get(C1Val != C2Val);
+    case FCmpInst::FCMP_OLT: 
+    case FCmpInst::FCMP_ULT:   return ConstantBool::get(C1Val < C2Val);
+    case FCmpInst::FCMP_UGT:
+    case FCmpInst::FCMP_OGT:   return ConstantBool::get(C1Val > C2Val);
+    case FCmpInst::FCMP_OLE:
+    case FCmpInst::FCMP_ULE:   return ConstantBool::get(C1Val <= C2Val);
+    case FCmpInst::FCMP_UGE:
+    case FCmpInst::FCMP_OGE:   return ConstantBool::get(C1Val >= C2Val);
+    }
+  } else if (ConstantPacked *CP1 = dyn_cast<ConstantPacked>(C1)) {
+    if (ConstantPacked *CP2 = dyn_cast<ConstantPacked>(C2)) {
+      if (predicate == FCmpInst::FCMP_OEQ || predicate == FCmpInst::FCMP_UEQ) {
+        for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
+          Constant *C= ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ,
+              const_cast<Constant*>(CP1->getOperand(i)),
+              const_cast<Constant*>(CP2->getOperand(i)));
+          if (ConstantBool *CB = dyn_cast<ConstantBool>(C))
+            return CB;
+        }
+        // Otherwise, could not decide from any element pairs.
+        return 0;
+      } else if (predicate == ICmpInst::ICMP_EQ) {
+        for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
+          Constant *C = ConstantExpr::getICmp(ICmpInst::ICMP_EQ,
+              const_cast<Constant*>(CP1->getOperand(i)),
+              const_cast<Constant*>(CP2->getOperand(i)));
+          if (ConstantBool *CB = dyn_cast<ConstantBool>(C))
+            return CB;
+        }
+        // Otherwise, could not decide from any element pairs.
+        return 0;
+      }
+    }
+  }
 
-  } else if (isa<ConstantExpr>(V2)) {
-    // If V2 is a constant expr and V1 isn't, flop them around and fold the
+  // Evaluate the relation between the two constants, per the predicate.
+  switch (evaluateICmpRelation(const_cast<Constant*>(C1),
+                               const_cast<Constant*>(C2),
+                               CmpInst::isSigned(predicate))) {
+  default: assert(0 && "Unknown relational!");
+  case ICmpInst::BAD_ICMP_PREDICATE:
+    break;  // Couldn't determine anything about these constants.
+  case ICmpInst::ICMP_EQ:   // We know the constants are equal!
+    // If we know the constants are equal, we can decide the result of this
+    // computation precisely.
+    return ConstantBool::get(predicate == ICmpInst::ICMP_EQ  ||
+                             predicate == ICmpInst::ICMP_ULE ||
+                             predicate == ICmpInst::ICMP_SLE ||
+                             predicate == ICmpInst::ICMP_UGE ||
+                             predicate == ICmpInst::ICMP_SGE);
+  case ICmpInst::ICMP_ULT:
+    // If we know that C1 < C2, we can decide the result of this computation
+    // precisely.
+    return ConstantBool::get(predicate == ICmpInst::ICMP_ULT ||
+                             predicate == ICmpInst::ICMP_NE  ||
+                             predicate == ICmpInst::ICMP_ULE);
+  case ICmpInst::ICMP_SLT:
+    // If we know that C1 < C2, we can decide the result of this computation
+    // precisely.
+    return ConstantBool::get(predicate == ICmpInst::ICMP_SLT ||
+                             predicate == ICmpInst::ICMP_NE  ||
+                             predicate == ICmpInst::ICMP_SLE);
+  case ICmpInst::ICMP_UGT:
+    // If we know that C1 > C2, we can decide the result of this computation
+    // precisely.
+    return ConstantBool::get(predicate == ICmpInst::ICMP_UGT ||
+                             predicate == ICmpInst::ICMP_NE  ||
+                             predicate == ICmpInst::ICMP_UGE);
+  case ICmpInst::ICMP_SGT:
+    // If we know that C1 > C2, we can decide the result of this computation
+    // precisely.
+    return ConstantBool::get(predicate == ICmpInst::ICMP_SGT ||
+                             predicate == ICmpInst::ICMP_NE  ||
+                             predicate == ICmpInst::ICMP_SGE);
+  case ICmpInst::ICMP_ULE:
+    // If we know that C1 <= C2, we can only partially decide this relation.
+    if (predicate == ICmpInst::ICMP_UGT) return ConstantBool::getFalse();
+    if (predicate == ICmpInst::ICMP_ULT) return ConstantBool::getTrue();
+    break;
+  case ICmpInst::ICMP_SLE:
+    // If we know that C1 <= C2, we can only partially decide this relation.
+    if (predicate == ICmpInst::ICMP_SGT) return ConstantBool::getFalse();
+    if (predicate == ICmpInst::ICMP_SLT) return ConstantBool::getTrue();
+    break;
+
+  case ICmpInst::ICMP_UGE:
+    // If we know that C1 >= C2, we can only partially decide this relation.
+    if (predicate == ICmpInst::ICMP_ULT) return ConstantBool::getFalse();
+    if (predicate == ICmpInst::ICMP_UGT) return ConstantBool::getTrue();
+    break;
+  case ICmpInst::ICMP_SGE:
+    // If we know that C1 >= C2, we can only partially decide this relation.
+    if (predicate == ICmpInst::ICMP_SLT) return ConstantBool::getFalse();
+    if (predicate == ICmpInst::ICMP_SGT) return ConstantBool::getTrue();
+    break;
+
+  case ICmpInst::ICMP_NE:
+    // If we know that C1 != C2, we can only partially decide this relation.
+    if (predicate == ICmpInst::ICMP_EQ) return ConstantBool::getFalse();
+    if (predicate == ICmpInst::ICMP_NE) return ConstantBool::getTrue();
+    break;
+  }
+
+  if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
+    // If C2 is a constant expr and C1 isn't, flop them around and fold the
     // other way if possible.
-    switch (Opcode) {
-    case Instruction::Add:
-    case Instruction::Mul:
-    case Instruction::And:
-    case Instruction::Or:
-    case Instruction::Xor:
-    case Instruction::SetEQ:
-    case Instruction::SetNE:
-      // No change of opcode required.
-      return ConstantFoldBinaryInstruction(Opcode, V2, V1);
+    switch (predicate) {
+    case ICmpInst::ICMP_EQ:
+    case ICmpInst::ICMP_NE:
+      // No change of predicate required.
+      return ConstantFoldCompareInstruction(predicate, C2, C1);
 
-    case Instruction::SetLT:
-    case Instruction::SetGT:
-    case Instruction::SetLE:
-    case Instruction::SetGE:
-      // Change the opcode as necessary to swap the operands.
-      Opcode = SetCondInst::getSwappedCondition((Instruction::BinaryOps)Opcode);
-      return ConstantFoldBinaryInstruction(Opcode, V2, V1);
+    case ICmpInst::ICMP_ULT:
+    case ICmpInst::ICMP_SLT:
+    case ICmpInst::ICMP_UGT:
+    case ICmpInst::ICMP_SGT:
+    case ICmpInst::ICMP_ULE:
+    case ICmpInst::ICMP_SLE:
+    case ICmpInst::ICMP_UGE:
+    case ICmpInst::ICMP_SGE:
+      // Change the predicate as necessary to swap the operands.
+      predicate = ICmpInst::getSwappedPredicate((ICmpInst::Predicate)predicate);
+      return ConstantFoldCompareInstruction(predicate, C2, C1);
 
-    case Instruction::Shl:
-    case Instruction::LShr:
-    case Instruction::AShr:
-    case Instruction::Sub:
-    case Instruction::SDiv:
-    case Instruction::UDiv:
-    case Instruction::FDiv:
-    case Instruction::URem:
-    case Instruction::SRem:
-    case Instruction::FRem:
-    default:  // These instructions cannot be flopped around.
+    default:  // These predicates cannot be flopped around.
       break;
     }
   }
-  return 0;
-}
-
-Constant *llvm::ConstantFoldCompare(
-    unsigned opcode, Constant *C1, Constant  *C2, unsigned short predicate)
-{
-  // Place holder for future folding of ICmp and FCmp instructions
   return 0;
 }
 

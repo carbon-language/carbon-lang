@@ -543,6 +543,20 @@ public:
   /// @brief Determine if this is an equals/not equals predicate.
   bool isEquality();
 
+  /// @returns true if the predicate is unsigned, false otherwise.
+  /// @brief Determine if the predicate is an unsigned operation.
+  static bool isUnsigned(unsigned short predicate);
+
+  /// @returns true if the predicate is signed, false otherwise.
+  /// @brief Determine if the predicate is an signed operation.
+  static bool isSigned(unsigned short predicate);
+
+  /// @brief Determine if the predicate is an ordered operation.
+  static bool isOrdered(unsigned short predicate);
+
+  /// @brief Determine if the predicate is an unordered operation.
+  static bool isUnordered(unsigned short predicate);
+
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CmpInst *) { return true; }
   static inline bool classof(const Instruction *I) {

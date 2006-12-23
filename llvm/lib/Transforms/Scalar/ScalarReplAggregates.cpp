@@ -394,9 +394,9 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
           assert(NumElements == 2 && "Unhandled case!");
           // All users of the GEP must be loads.  At each use of the GEP, insert
           // two loads of the appropriate indexed GEP and select between them.
-          Value *IsOne = BinaryOperator::createSetNE(I.getOperand(),
+          Value *IsOne = new ICmpInst(ICmpInst::ICMP_NE, I.getOperand(), 
                               Constant::getNullValue(I.getOperand()->getType()),
-                                                     "isone", GEPI);
+             "isone", GEPI);
           // Insert the new GEP instructions, which are properly indexed.
           std::vector<Value*> Indices(GEPI->op_begin()+1, GEPI->op_end());
           Indices[1] = Constant::getNullValue(Type::IntTy);
