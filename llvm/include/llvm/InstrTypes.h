@@ -532,7 +532,8 @@ public:
   unsigned getNumOperands() const { return 2; }
 
   /// This is just a convenience that dispatches to the subclasses.
-  /// @brief Swap the operands.
+  /// @brief Swap the operands and adjust predicate accordingly to retain
+  /// the same comparison.
   void swapOperands();
 
   /// This is just a convenience that dispatches to the subclasses.
