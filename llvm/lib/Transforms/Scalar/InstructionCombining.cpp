@@ -6555,13 +6555,7 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
   }
 
   // Only handle binary, compare and shift operators here.
-  if (!isa<ShiftInst>(TI) && !isa<BinaryOperator>(TI) && !isa<CmpInst>(TI))
-    return 0;
-
-  // If the CmpInst predicates don't match, then the instructions aren't the 
-  // same and we can't continue.
-  if (isa<CmpInst>(TI) && isa<CmpInst>(FI) &&
-      (cast<CmpInst>(TI)->getPredicate() != cast<CmpInst>(FI)->getPredicate()))
+  if (!isa<ShiftInst>(TI) && !isa<BinaryOperator>(TI))
     return 0;
 
   // Figure out if the operations have any operands in common.
@@ -6603,12 +6597,13 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
       return BinaryOperator::create(BO->getOpcode(), MatchOp, NewSI);
     else
       return BinaryOperator::create(BO->getOpcode(), NewSI, MatchOp);
-  } else {
-    if (MatchIsOpZero)
-      return new ShiftInst(cast<ShiftInst>(TI)->getOpcode(), MatchOp, NewSI);
-    else
-      return new ShiftInst(cast<ShiftInst>(TI)->getOpcode(), NewSI, MatchOp);
   }
+
+  assert(isa<ShiftInst>(TI) && "Should only have Shift here");
+  if (MatchIsOpZero)
+    return new ShiftInst(cast<ShiftInst>(TI)->getOpcode(), MatchOp, NewSI);
+  else
+    return new ShiftInst(cast<ShiftInst>(TI)->getOpcode(), NewSI, MatchOp);
 }
 
 Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
