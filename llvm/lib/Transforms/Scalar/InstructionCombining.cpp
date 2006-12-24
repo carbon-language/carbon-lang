@@ -2002,8 +2002,14 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
             if (CU->getZExtValue() == 
                 SI->getType()->getPrimitiveSizeInBits()-1) {
               // Ok, the transformation is safe.  Insert AShr.
-              return new ShiftInst(Instruction::AShr, SI->getOperand(0),
-                                    CU, SI->getName());
+              // FIXME: Once integer types are signless, this cast should be 
+              // removed.  
+              Value *ShiftOp = SI->getOperand(0); 
+              if (ShiftOp->getType() != I.getType()) 
+                ShiftOp = InsertCastBefore(Instruction::BitCast, ShiftOp, 
+                                           I.getType(), I); 
+              return new ShiftInst(Instruction::AShr, ShiftOp, CU,
+                                   SI->getName());
             }
           }
         }
