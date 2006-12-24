@@ -1818,7 +1818,7 @@ ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   std::vector<Constant*> ArgVec;
   ArgVec.push_back(LHS);
   ArgVec.push_back(RHS);
-  // Fake up an opcode value that encodes both the opcode and predicate
+  // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::ICmp, ArgVec, pred);
   return ExprConstants->getOrCreate(Type::BoolTy, Key);
 }
@@ -1835,7 +1835,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   std::vector<Constant*> ArgVec;
   ArgVec.push_back(LHS);
   ArgVec.push_back(RHS);
-  // Fake up an opcode value that encodes both the opcode and predicate
+  // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
   return ExprConstants->getOrCreate(Type::BoolTy, Key);
 }
