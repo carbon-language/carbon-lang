@@ -46,7 +46,8 @@ namespace llvm {
   Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
                                           const Constant *V2);
   Constant *ConstantFoldCompareInstruction(unsigned short predicate, 
-                                           Constant *C1, Constant  *C2);
+                                           const Constant *C1, 
+                                           const Constant *C2);
   Constant *ConstantFoldGetElementPtr(const Constant *C,
                                       const std::vector<Value*> &IdxList);
 } // End llvm namespace

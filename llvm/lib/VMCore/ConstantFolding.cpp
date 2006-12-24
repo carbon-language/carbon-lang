@@ -742,50 +742,61 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
 /// things like ConstantFP comparisons, but should instead handle ConstantExprs.
 /// If we can determine that the two constants have a particular relation to 
 /// each other, we should return the corresponding FCmpInst predicate, 
-/// otherwise return FCmpInst::BAD_FCMP_PREDICATE.
+/// otherwise return FCmpInst::BAD_FCMP_PREDICATE. This is used below in
+/// ConstantFoldCompareInstruction.
 ///
 /// To simplify this code we canonicalize the relation so that the first
-/// operand is always the most "complex" of the two.  We consider simple
-/// constants (like ConstantFP) to be the simplest, followed by
-/// GlobalValues, followed by ConstantExpr's (the most complex).
-static FCmpInst::Predicate evaluateFCmpRelation(Constant *V1, Constant *V2) {
+/// operand is always the most "complex" of the two.  We consider ConstantFP
+/// to be the simplest, and ConstantExprs to be the most complex.
+static FCmpInst::Predicate evaluateFCmpRelation(const Constant *V1, 
+                                                const Constant *V2) {
   assert(V1->getType() == V2->getType() &&
-         "Cannot compare different types of values!");
+         "Cannot compare values of different types!");
+  // Handle degenerate case quickly
   if (V1 == V2) return FCmpInst::FCMP_OEQ;
 
-  if (!isa<ConstantExpr>(V1) && !isa<GlobalValue>(V1)) {
-    if (!isa<GlobalValue>(V2) && !isa<ConstantExpr>(V2)) {
-      // We distilled this down to a simple case, use the standard constant
-      // folder.
-      ConstantBool *R = dyn_cast<ConstantBool>(
-          ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ, V1, V2));
+  if (!isa<ConstantExpr>(V1)) {
+    if (!isa<ConstantExpr>(V2)) {
+      // We distilled thisUse the standard constant folder for a few cases
+      ConstantBool *R = 0;
+      Constant *C1 = const_cast<Constant*>(V1);
+      Constant *C2 = const_cast<Constant*>(V2);
+      R = dyn_cast<ConstantBool>(
+                             ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ, C1, C2));
       if (R && R->getValue()) 
         return FCmpInst::FCMP_OEQ;
       R = dyn_cast<ConstantBool>(
-          ConstantExpr::getFCmp(FCmpInst::FCMP_OLT, V1, V2));
+                             ConstantExpr::getFCmp(FCmpInst::FCMP_OLT, C1, C2));
       if (R && R->getValue()) 
         return FCmpInst::FCMP_OLT;
       R = dyn_cast<ConstantBool>(
-          ConstantExpr::getFCmp(FCmpInst::FCMP_OGT, V1, V2));
-      if (R && R->getValue()) return FCmpInst::FCMP_OGT;
-      
-      // If we couldn't figure it out, bail.
+                             ConstantExpr::getFCmp(FCmpInst::FCMP_OGT, C1, C2));
+      if (R && R->getValue()) 
+        return FCmpInst::FCMP_OGT;
+
+      // Nothing more we can do
       return FCmpInst::BAD_FCMP_PREDICATE;
     }
     
-    // If the first operand is simple, swap operands.
-    FCmpInst::Predicate SwappedPredicate = evaluateFCmpRelation(V2, V1);
-    if (SwappedPredicate != FCmpInst::BAD_FCMP_PREDICATE)
-      return FCmpInst::getSwappedPredicate(SwappedPredicate);
-
-    return FCmpInst::BAD_FCMP_PREDICATE;
+    // If the first operand is simple and second is ConstantExpr, swap operands.
+    FCmpInst::Predicate SwappedRelation = evaluateFCmpRelation(V2, V1);
+    if (SwappedRelation != FCmpInst::BAD_FCMP_PREDICATE)
+      return FCmpInst::getSwappedPredicate(SwappedRelation);
+  } else {
+    // Ok, the LHS is known to be a constantexpr.  The RHS can be any of a
+    // constantexpr or a simple constant.
+    const ConstantExpr *CE1 = cast<ConstantExpr>(V1);
+    switch (CE1->getOpcode()) {
+    case Instruction::FPTrunc:
+    case Instruction::FPExt:
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+      // We might be able to do something with these but we don't right now.
+      break;
+    default:
+      break;
+    }
   }
-
-  // Ok, the LHS is known to be a constantexpr.  The RHS can be any of a
-  // constantexpr, a CPR, or a simple constant.
-  // ConstantExpr *CE1 = cast<ConstantExpr>(V1);
-  // Constant *CE1Op0 = CE1->getOperand(0);
-
   // There are MANY other foldings that we could perform here.  They will
   // probably be added on demand, as they seem needed.
   return FCmpInst::BAD_FCMP_PREDICATE;
@@ -803,7 +814,8 @@ static FCmpInst::Predicate evaluateFCmpRelation(Constant *V1, Constant *V2) {
 /// constants (like ConstantInt) to be the simplest, followed by
 /// GlobalValues, followed by ConstantExpr's (the most complex).
 ///
-static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
+static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1, 
+                                                const Constant *V2,
                                                 bool isSigned) {
   assert(V1->getType() == V2->getType() &&
          "Cannot compare different types of values!");
@@ -813,17 +825,19 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
     if (!isa<GlobalValue>(V2) && !isa<ConstantExpr>(V2)) {
       // We distilled this down to a simple case, use the standard constant
       // folder.
+      ConstantBool *R = 0;
+      Constant *C1 = const_cast<Constant*>(V1);
+      Constant *C2 = const_cast<Constant*>(V2);
       ICmpInst::Predicate pred = ICmpInst::ICMP_EQ;
-      ConstantBool *R = 
-        dyn_cast<ConstantBool>(ConstantExpr::getICmp(pred, V1, V2));
+      R = dyn_cast<ConstantBool>(ConstantExpr::getICmp(pred, C1, C2));
       if (R && R->getValue()) 
         return pred;
       pred = isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
-      R = dyn_cast<ConstantBool>(ConstantExpr::getICmp(pred, V1, V2));
+      R = dyn_cast<ConstantBool>(ConstantExpr::getICmp(pred, C1, C2));
       if (R && R->getValue())
         return pred;
       pred = isSigned ?  ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
-      R = dyn_cast<ConstantBool>(ConstantExpr::getICmp(pred, V1, V2));
+      R = dyn_cast<ConstantBool>(ConstantExpr::getICmp(pred, C1, C2));
       if (R && R->getValue())
         return pred;
       
@@ -861,8 +875,8 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
   } else {
     // Ok, the LHS is known to be a constantexpr.  The RHS can be any of a
     // constantexpr, a CPR, or a simple constant.
-    ConstantExpr *CE1 = cast<ConstantExpr>(V1);
-    Constant *CE1Op0 = CE1->getOperand(0);
+    const ConstantExpr *CE1 = cast<ConstantExpr>(V1);
+    const Constant *CE1Op0 = CE1->getOperand(0);
 
     switch (CE1->getOpcode()) {
     case Instruction::Trunc:
@@ -894,7 +908,7 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
       // from the same type as the src of the LHS, evaluate the inputs.  This is
       // important for things like "icmp eq (cast 4 to int*), (cast 5 to int*)",
       // which happens a lot in compilers with tagged integers.
-      if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2))
+      if (const ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2))
         if (CE2->isCast() && isa<PointerType>(CE1->getType()) &&
             CE1->getOperand(0)->getType() == CE2->getOperand(0)->getType() &&
             CE1->getOperand(0)->getType()->isIntegral()) {
@@ -912,7 +926,7 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
       if (isa<ConstantPointerNull>(V2)) {
         // If we are comparing a GEP to a null pointer, check to see if the base
         // of the GEP equals the null pointer.
-        if (GlobalValue *GV = dyn_cast<GlobalValue>(CE1Op0)) {
+        if (const GlobalValue *GV = dyn_cast<GlobalValue>(CE1Op0)) {
           if (GV->hasExternalWeakLinkage())
             // Weak linkage GVals could be zero or not. We're comparing that
             // to null pointer so its greater-or-equal
@@ -1015,8 +1029,9 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
   return ICmpInst::BAD_ICMP_PREDICATE;
 }
 
-Constant *llvm::ConstantFoldCompareInstruction(unsigned short predicate, 
-                                               Constant *C1, Constant *C2) {
+Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred, 
+                                               const Constant *C1, 
+                                               const Constant *C2) {
 
   // Handle some degenerate cases first
   if (isa<UndefValue>(C1) || isa<UndefValue>(C2))
@@ -1026,24 +1041,24 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short predicate,
   if (C1->isNullValue()) {
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C2))
       if (!GV->hasExternalWeakLinkage()) // External weak GV can be null
-        if (predicate == ICmpInst::ICMP_EQ)
+        if (pred == ICmpInst::ICMP_EQ)
           return ConstantBool::getFalse();
-        else if (predicate == ICmpInst::ICMP_NE)
+        else if (pred == ICmpInst::ICMP_NE)
           return ConstantBool::getTrue();
   // icmp eq/ne(GV,null) -> false/true
   } else if (C2->isNullValue()) {
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C1))
       if (!GV->hasExternalWeakLinkage()) // External weak GV can be null
-        if (predicate == ICmpInst::ICMP_EQ)
+        if (pred == ICmpInst::ICMP_EQ)
           return ConstantBool::getFalse();
-        else if (predicate == ICmpInst::ICMP_NE)
+        else if (pred == ICmpInst::ICMP_NE)
           return ConstantBool::getTrue();
   }
 
   if (isa<ConstantBool>(C1) && isa<ConstantBool>(C2)) {
     bool C1Val = cast<ConstantBool>(C1)->getValue();
     bool C2Val = cast<ConstantBool>(C2)->getValue();
-    switch (predicate) {
+    switch (pred) {
     default: assert(0 && "Invalid ICmp Predicate"); return 0;
     case ICmpInst::ICMP_EQ: return ConstantBool::get(C1Val == C2Val);
     case ICmpInst::ICMP_NE: return ConstantBool::get(C1Val != C2Val);
@@ -1057,10 +1072,10 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short predicate,
     case ICmpInst::ICMP_SGE:return ConstantBool::get(C1Val >= C2Val);
     }
   } else if (isa<ConstantInt>(C1) && isa<ConstantInt>(C2)) {
-    if (ICmpInst::isSignedPredicate(ICmpInst::Predicate(predicate))) {
+    if (ICmpInst::isSignedPredicate(ICmpInst::Predicate(pred))) {
       int64_t V1 = cast<ConstantInt>(C1)->getSExtValue();
       int64_t V2 = cast<ConstantInt>(C2)->getSExtValue();
-      switch (predicate) {
+      switch (pred) {
       default: assert(0 && "Invalid ICmp Predicate"); return 0;
       case ICmpInst::ICMP_SLT:return ConstantBool::get(V1 <  V2);
       case ICmpInst::ICMP_SGT:return ConstantBool::get(V1 >  V2);
@@ -1070,7 +1085,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short predicate,
     } else {
       uint64_t V1 = cast<ConstantInt>(C1)->getZExtValue();
       uint64_t V2 = cast<ConstantInt>(C2)->getZExtValue();
-      switch (predicate) {
+      switch (pred) {
       default: assert(0 && "Invalid ICmp Predicate"); return 0;
       case ICmpInst::ICMP_EQ: return ConstantBool::get(V1 == V2);
       case ICmpInst::ICMP_NE: return ConstantBool::get(V1 != V2);
@@ -1083,7 +1098,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short predicate,
   } else if (isa<ConstantFP>(C1) && isa<ConstantFP>(C2)) {
     double C1Val = cast<ConstantFP>(C1)->getValue();
     double C2Val = cast<ConstantFP>(C2)->getValue();
-    switch (predicate) {
+    switch (pred) {
     default: assert(0 && "Invalid FCmp Predicate"); return 0;
     case FCmpInst::FCMP_FALSE: return ConstantBool::getFalse();
     case FCmpInst::FCMP_TRUE:  return ConstantBool::getTrue();
@@ -1102,9 +1117,9 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short predicate,
     case FCmpInst::FCMP_UGE:
     case FCmpInst::FCMP_OGE:   return ConstantBool::get(C1Val >= C2Val);
     }
-  } else if (ConstantPacked *CP1 = dyn_cast<ConstantPacked>(C1)) {
-    if (ConstantPacked *CP2 = dyn_cast<ConstantPacked>(C2)) {
-      if (predicate == FCmpInst::FCMP_OEQ || predicate == FCmpInst::FCMP_UEQ) {
+  } else if (const ConstantPacked *CP1 = dyn_cast<ConstantPacked>(C1)) {
+    if (const ConstantPacked *CP2 = dyn_cast<ConstantPacked>(C2)) {
+      if (pred == FCmpInst::FCMP_OEQ || pred == FCmpInst::FCMP_UEQ) {
         for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
           Constant *C= ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ,
               const_cast<Constant*>(CP1->getOperand(i)),
@@ -1114,7 +1129,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short predicate,
         }
         // Otherwise, could not decide from any element pairs.
         return 0;
-      } else if (predicate == ICmpInst::ICMP_EQ) {
+      } else if (pred == ICmpInst::ICMP_EQ) {
         for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
           Constant *C = ConstantExpr::getICmp(ICmpInst::ICMP_EQ,
               const_cast<Constant*>(CP1->getOperand(i)),
@@ -1128,97 +1143,149 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short predicate,
     }
   }
 
-  // Evaluate the relation between the two constants, per the predicate.
-  switch (evaluateICmpRelation(const_cast<Constant*>(C1),
-                               const_cast<Constant*>(C2),
-                               CmpInst::isSigned(predicate))) {
-  default: assert(0 && "Unknown relational!");
-  case ICmpInst::BAD_ICMP_PREDICATE:
-    break;  // Couldn't determine anything about these constants.
-  case ICmpInst::ICMP_EQ:   // We know the constants are equal!
-    // If we know the constants are equal, we can decide the result of this
-    // computation precisely.
-    return ConstantBool::get(predicate == ICmpInst::ICMP_EQ  ||
-                             predicate == ICmpInst::ICMP_ULE ||
-                             predicate == ICmpInst::ICMP_SLE ||
-                             predicate == ICmpInst::ICMP_UGE ||
-                             predicate == ICmpInst::ICMP_SGE);
-  case ICmpInst::ICMP_ULT:
-    // If we know that C1 < C2, we can decide the result of this computation
-    // precisely.
-    return ConstantBool::get(predicate == ICmpInst::ICMP_ULT ||
-                             predicate == ICmpInst::ICMP_NE  ||
-                             predicate == ICmpInst::ICMP_ULE);
-  case ICmpInst::ICMP_SLT:
-    // If we know that C1 < C2, we can decide the result of this computation
-    // precisely.
-    return ConstantBool::get(predicate == ICmpInst::ICMP_SLT ||
-                             predicate == ICmpInst::ICMP_NE  ||
-                             predicate == ICmpInst::ICMP_SLE);
-  case ICmpInst::ICMP_UGT:
-    // If we know that C1 > C2, we can decide the result of this computation
-    // precisely.
-    return ConstantBool::get(predicate == ICmpInst::ICMP_UGT ||
-                             predicate == ICmpInst::ICMP_NE  ||
-                             predicate == ICmpInst::ICMP_UGE);
-  case ICmpInst::ICMP_SGT:
-    // If we know that C1 > C2, we can decide the result of this computation
-    // precisely.
-    return ConstantBool::get(predicate == ICmpInst::ICMP_SGT ||
-                             predicate == ICmpInst::ICMP_NE  ||
-                             predicate == ICmpInst::ICMP_SGE);
-  case ICmpInst::ICMP_ULE:
-    // If we know that C1 <= C2, we can only partially decide this relation.
-    if (predicate == ICmpInst::ICMP_UGT) return ConstantBool::getFalse();
-    if (predicate == ICmpInst::ICMP_ULT) return ConstantBool::getTrue();
-    break;
-  case ICmpInst::ICMP_SLE:
-    // If we know that C1 <= C2, we can only partially decide this relation.
-    if (predicate == ICmpInst::ICMP_SGT) return ConstantBool::getFalse();
-    if (predicate == ICmpInst::ICMP_SLT) return ConstantBool::getTrue();
-    break;
-
-  case ICmpInst::ICMP_UGE:
-    // If we know that C1 >= C2, we can only partially decide this relation.
-    if (predicate == ICmpInst::ICMP_ULT) return ConstantBool::getFalse();
-    if (predicate == ICmpInst::ICMP_UGT) return ConstantBool::getTrue();
-    break;
-  case ICmpInst::ICMP_SGE:
-    // If we know that C1 >= C2, we can only partially decide this relation.
-    if (predicate == ICmpInst::ICMP_SLT) return ConstantBool::getFalse();
-    if (predicate == ICmpInst::ICMP_SGT) return ConstantBool::getTrue();
-    break;
-
-  case ICmpInst::ICMP_NE:
-    // If we know that C1 != C2, we can only partially decide this relation.
-    if (predicate == ICmpInst::ICMP_EQ) return ConstantBool::getFalse();
-    if (predicate == ICmpInst::ICMP_NE) return ConstantBool::getTrue();
-    break;
-  }
-
-  if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
-    // If C2 is a constant expr and C1 isn't, flop them around and fold the
-    // other way if possible.
-    switch (predicate) {
-    case ICmpInst::ICMP_EQ:
-    case ICmpInst::ICMP_NE:
-      // No change of predicate required.
-      return ConstantFoldCompareInstruction(predicate, C2, C1);
-
-    case ICmpInst::ICMP_ULT:
-    case ICmpInst::ICMP_SLT:
-    case ICmpInst::ICMP_UGT:
-    case ICmpInst::ICMP_SGT:
-    case ICmpInst::ICMP_ULE:
-    case ICmpInst::ICMP_SLE:
-    case ICmpInst::ICMP_UGE:
-    case ICmpInst::ICMP_SGE:
-      // Change the predicate as necessary to swap the operands.
-      predicate = ICmpInst::getSwappedPredicate((ICmpInst::Predicate)predicate);
-      return ConstantFoldCompareInstruction(predicate, C2, C1);
-
-    default:  // These predicates cannot be flopped around.
+  if (C1->getType()->isFloatingPoint()) {
+    switch (evaluateFCmpRelation(C1, C2)) {
+    default: assert(0 && "Unknown relation!");
+    case FCmpInst::FCMP_UNO:
+    case FCmpInst::FCMP_ORD:
+    case FCmpInst::FCMP_UEQ:
+    case FCmpInst::FCMP_UNE:
+    case FCmpInst::FCMP_ULT:
+    case FCmpInst::FCMP_UGT:
+    case FCmpInst::FCMP_ULE:
+    case FCmpInst::FCMP_UGE:
+    case FCmpInst::FCMP_TRUE:
+    case FCmpInst::FCMP_FALSE:
+    case FCmpInst::BAD_FCMP_PREDICATE:
+      break; // Couldn't determine anything about these constants.
+    case FCmpInst::FCMP_OEQ: // We know that C1 == C2
+      return ConstantBool::get(
+          pred == FCmpInst::FCMP_UEQ || pred == FCmpInst::FCMP_OEQ ||
+          pred == FCmpInst::FCMP_ULE || pred == FCmpInst::FCMP_OLE ||
+          pred == FCmpInst::FCMP_UGE || pred == FCmpInst::FCMP_OGE);
+    case FCmpInst::FCMP_OLT: // We know that C1 < C2
+      return ConstantBool::get(
+          pred == FCmpInst::FCMP_UNE || pred == FCmpInst::FCMP_ONE ||
+          pred == FCmpInst::FCMP_ULT || pred == FCmpInst::FCMP_OLT ||
+          pred == FCmpInst::FCMP_ULE || pred == FCmpInst::FCMP_OLE);
+    case FCmpInst::FCMP_OGT: // We know that C1 > C2
+      return ConstantBool::get(
+          pred == FCmpInst::FCMP_UNE || pred == FCmpInst::FCMP_ONE ||
+          pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT ||
+          pred == FCmpInst::FCMP_UGE || pred == FCmpInst::FCMP_OGE);
+    case FCmpInst::FCMP_OLE: // We know that C1 <= C2
+      // We can only partially decide this relation.
+      if (pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT) 
+        return ConstantBool::getFalse();
+      if (pred == FCmpInst::FCMP_ULT || pred == FCmpInst::FCMP_OLT) 
+        return ConstantBool::getTrue();
       break;
+    case FCmpInst::FCMP_OGE: // We known that C1 >= C2
+      // We can only partially decide this relation.
+      if (pred == FCmpInst::FCMP_ULT || pred == FCmpInst::FCMP_OLT) 
+        return ConstantBool::getFalse();
+      if (pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT) 
+        return ConstantBool::getTrue();
+      break;
+    case ICmpInst::ICMP_NE: // We know that C1 != C2
+      // We can only partially decide this relation.
+      if (pred == FCmpInst::FCMP_OEQ || pred == FCmpInst::FCMP_UEQ) 
+        return ConstantBool::getFalse();
+      if (pred == FCmpInst::FCMP_ONE || pred == FCmpInst::FCMP_UNE) 
+        return ConstantBool::getTrue();
+      break;
+    }
+  } else {
+    // Evaluate the relation between the two constants, per the predicate.
+    switch (evaluateICmpRelation(C1, C2, CmpInst::isSigned(pred))) {
+    default: assert(0 && "Unknown relational!");
+    case ICmpInst::BAD_ICMP_PREDICATE:
+      break;  // Couldn't determine anything about these constants.
+    case ICmpInst::ICMP_EQ:   // We know the constants are equal!
+      // If we know the constants are equal, we can decide the result of this
+      // computation precisely.
+      return ConstantBool::get(pred == ICmpInst::ICMP_EQ  ||
+                               pred == ICmpInst::ICMP_ULE ||
+                               pred == ICmpInst::ICMP_SLE ||
+                               pred == ICmpInst::ICMP_UGE ||
+                               pred == ICmpInst::ICMP_SGE);
+    case ICmpInst::ICMP_ULT:
+      // If we know that C1 < C2, we can decide the result of this computation
+      // precisely.
+      return ConstantBool::get(pred == ICmpInst::ICMP_ULT ||
+                               pred == ICmpInst::ICMP_NE  ||
+                               pred == ICmpInst::ICMP_ULE);
+    case ICmpInst::ICMP_SLT:
+      // If we know that C1 < C2, we can decide the result of this computation
+      // precisely.
+      return ConstantBool::get(pred == ICmpInst::ICMP_SLT ||
+                               pred == ICmpInst::ICMP_NE  ||
+                               pred == ICmpInst::ICMP_SLE);
+    case ICmpInst::ICMP_UGT:
+      // If we know that C1 > C2, we can decide the result of this computation
+      // precisely.
+      return ConstantBool::get(pred == ICmpInst::ICMP_UGT ||
+                               pred == ICmpInst::ICMP_NE  ||
+                               pred == ICmpInst::ICMP_UGE);
+    case ICmpInst::ICMP_SGT:
+      // If we know that C1 > C2, we can decide the result of this computation
+      // precisely.
+      return ConstantBool::get(pred == ICmpInst::ICMP_SGT ||
+                               pred == ICmpInst::ICMP_NE  ||
+                               pred == ICmpInst::ICMP_SGE);
+    case ICmpInst::ICMP_ULE:
+      // If we know that C1 <= C2, we can only partially decide this relation.
+      if (pred == ICmpInst::ICMP_UGT) return ConstantBool::getFalse();
+      if (pred == ICmpInst::ICMP_ULT) return ConstantBool::getTrue();
+      break;
+    case ICmpInst::ICMP_SLE:
+      // If we know that C1 <= C2, we can only partially decide this relation.
+      if (pred == ICmpInst::ICMP_SGT) return ConstantBool::getFalse();
+      if (pred == ICmpInst::ICMP_SLT) return ConstantBool::getTrue();
+      break;
+
+    case ICmpInst::ICMP_UGE:
+      // If we know that C1 >= C2, we can only partially decide this relation.
+      if (pred == ICmpInst::ICMP_ULT) return ConstantBool::getFalse();
+      if (pred == ICmpInst::ICMP_UGT) return ConstantBool::getTrue();
+      break;
+    case ICmpInst::ICMP_SGE:
+      // If we know that C1 >= C2, we can only partially decide this relation.
+      if (pred == ICmpInst::ICMP_SLT) return ConstantBool::getFalse();
+      if (pred == ICmpInst::ICMP_SGT) return ConstantBool::getTrue();
+      break;
+
+    case ICmpInst::ICMP_NE:
+      // If we know that C1 != C2, we can only partially decide this relation.
+      if (pred == ICmpInst::ICMP_EQ) return ConstantBool::getFalse();
+      if (pred == ICmpInst::ICMP_NE) return ConstantBool::getTrue();
+      break;
+    }
+
+    if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
+      // If C2 is a constant expr and C1 isn't, flop them around and fold the
+      // other way if possible.
+      switch (pred) {
+      case ICmpInst::ICMP_EQ:
+      case ICmpInst::ICMP_NE:
+        // No change of predicate required.
+        return ConstantFoldCompareInstruction(pred, C2, C1);
+
+      case ICmpInst::ICMP_ULT:
+      case ICmpInst::ICMP_SLT:
+      case ICmpInst::ICMP_UGT:
+      case ICmpInst::ICMP_SGT:
+      case ICmpInst::ICMP_ULE:
+      case ICmpInst::ICMP_SLE:
+      case ICmpInst::ICMP_UGE:
+      case ICmpInst::ICMP_SGE:
+        // Change the predicate as necessary to swap the operands.
+        pred = ICmpInst::getSwappedPredicate((ICmpInst::Predicate)pred);
+        return ConstantFoldCompareInstruction(pred, C2, C1);
+
+      default:  // These predicates cannot be flopped around.
+        break;
+      }
     }
   }
   return 0;
