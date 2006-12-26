@@ -339,6 +339,9 @@ def : Pat<(extloadi8 IntRegs:$addr),
 def : Pat<(extloadi16 IntRegs:$addr),
           (LDRH IntRegs:$addr)>;
 
+// extload bool -> extload byte
+def : Pat<(extloadi1 IntRegs:$addr), (LDRB IntRegs:$addr)>;
+
 // zextload bool -> zextload byte
 def : Pat<(i32 (zextloadi1 IntRegs:$addr)), (LDRB IntRegs:$addr)>;
 def : Pat<(i32 (zextloadi1 IntRegs:$addr)), (LDRB IntRegs:$addr)>;
