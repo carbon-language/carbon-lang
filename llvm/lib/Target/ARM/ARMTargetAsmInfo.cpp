@@ -24,4 +24,6 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   ConstantPoolSection = "\t.text\n";
   AlignmentIsInBytes = false;
   WeakRefDirective = "\t.weak\t";
+  StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
+  StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
 }
