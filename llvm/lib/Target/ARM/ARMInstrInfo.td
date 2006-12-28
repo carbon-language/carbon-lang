@@ -102,7 +102,7 @@ def ARMcall        : SDNode<"ARMISD::CALL", SDT_ARMcall,
 def retflag        : SDNode<"ARMISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 
-def SDTarmselect   : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>, SDTCisVT<2, i32>]>;
+def SDTarmselect   : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>]>;
 def armselect      : SDNode<"ARMISD::SELECT", SDTarmselect, [SDNPInFlag, SDNPOutFlag]>;
 
 def SDTarmfmstat   : SDTypeProfile<0, 0, []>;
@@ -209,6 +209,18 @@ let isTwoAddress = 1 in {
 	                 "mov$cc $dst, $true",
 		         [(set IntRegs:$dst, (armselect addr_mode1:$true,
 			   IntRegs:$false, imm:$cc))]>;
+
+  def fcpyscond : InstARM<(ops FPRegs:$dst, FPRegs:$false,
+			 FPRegs:$true, CCOp:$cc),
+	                 "fcpys$cc $dst, $true",
+		         [(set FPRegs:$dst, (armselect FPRegs:$true,
+			   FPRegs:$false, imm:$cc))]>;
+
+  def fcpydcond : InstARM<(ops DFPRegs:$dst, DFPRegs:$false,
+			 DFPRegs:$true, CCOp:$cc),
+	                 "fcpyd$cc $dst, $true",
+		         [(set DFPRegs:$dst, (armselect DFPRegs:$true,
+			   DFPRegs:$false, imm:$cc))]>;
 }
 
 def MUL     : IntBinOp<"mul", mul>;

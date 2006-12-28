@@ -73,6 +73,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SETCC, MVT::f64, Expand);
 
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
 
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
   setOperationAction(ISD::MEMSET, MVT::Other, Expand);
@@ -745,7 +747,7 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Cmp;
   SDOperand ARMCC;
   LowerCMP(Cmp, ARMCC, LHS, RHS, CC, DAG);
-  return DAG.getNode(ARMISD::SELECT, MVT::i32, TrueVal, FalseVal, ARMCC, Cmp);
+  return DAG.getNode(ARMISD::SELECT, Op.getValueType(), TrueVal, FalseVal, ARMCC, Cmp);
 }
 
 static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG) {
