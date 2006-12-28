@@ -519,8 +519,25 @@ the future:</p>
   <dd>This calling convention (the default if no other calling convention is
   specified) matches the target C calling conventions.  This calling convention
   supports varargs function calls and tolerates some mismatch in the declared
-  prototype and implemented declaration of the function (as does normal C).
+  prototype and implemented declaration of the function (as does normal C). For
+  integer arguments less than 32-bits, the value will be sign-extended to
+  32-bits before the call is made. If zero-extension is required, use the
+  <tt>cextcc</tt> calling convention.
   </dd>
+
+  <dt><b>"<tt>cextcc(bitmask)</tt>" - The C with explicit extend calling 
+    convention </b>:</dt>
+  <dd>This calling convention is exactly like the C calling convention except
+  that it is parameterized to provide a <tt>bitmask</tt> that indicates how
+  integer arguments of less than 32-bits should be extended. A zero bit
+  indicates zero-extension while a 1-bit indicates sign-extension. The least
+  significant bit always corresponds to the return type of the function. The
+  bits in the <tt>bitmask</tt> are assigned to the integer parameters of the 
+  function that are smaller than 32-bits. For example, a bitmask of value
+  5 (0b0101) indicates that the return value is to be sign extended, the first
+  small integer argument is to be zero extended and the second small integer
+  argument is to be sign extended.</dd>
+  
 
   <dt><b>"<tt>csretcc</tt>" - The C struct return calling convention</b>:</dt>
 
@@ -535,6 +552,14 @@ the future:</p>
   pointer to a struct as the first argument.
   </dd>
 
+  <dt><b>"<tt>csretextcc(bitmask)</tt>" - The C struct return with explicit 
+    extend calling convention</b>:</dt>
+  <dd>This calling convention is exactly like the <tt>csret</tt> calling
+  convention except that it is parameterized to provide a <tt>bitmask</tt> 
+  that indicates how integer arguments of less than 32-bits should be extended.
+  A zero bit indicates zero-extension while a 1-bit indicates sign-extension.
+  </dd>
+  
   <dt><b>"<tt>fastcc</tt>" - The fast calling convention</b>:</dt>
 
   <dd>This calling convention attempts to make calls as fast as possible
