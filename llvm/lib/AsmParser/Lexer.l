@@ -192,6 +192,7 @@ end             { return ENDTOK; }
 true            { return TRUETOK;  }
 false           { return FALSETOK; }
 declare         { return DECLARE; }
+define          { return DEFINE; }
 global          { return GLOBAL; }
 constant        { return CONSTANT; }
 internal        { return INTERNAL; }

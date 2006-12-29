@@ -921,7 +921,8 @@ void AssemblyWriter::printFunction(const Function *F) {
     case GlobalValue::ExternalWeakLinkage: Out << "declare extern_weak "; break;
     default: Out << "declare ";
     }
-  else
+  else {
+    Out << "define ";
     switch (F->getLinkage()) {
     case GlobalValue::InternalLinkage:     Out << "internal "; break;
     case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
@@ -935,6 +936,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       cerr << "GhostLinkage not allowed in AsmWriter!\n";
       abort();
     }
+  }
 
   // Print the calling convention.
   switch (F->getCallingConv()) {

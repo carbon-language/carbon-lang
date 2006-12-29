@@ -895,7 +895,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
   llvm::FCmpInst::Predicate         FPredicate;
 }
 
-%type <ModuleVal>     Module FunctionList
+%type <ModuleVal>     Module
 %type <FunctionVal>   Function FunctionProto FunctionHeader BasicBlockList
 %type <BasicBlockVal> BasicBlock InstructionList
 %type <TermInstVal>   BBTerminatorInst
@@ -913,7 +913,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <BoolVal>       OptVolatile                 // 'volatile' or not
 %type <BoolVal>       OptTailCall                 // TAIL CALL or plain CALL.
 %type <BoolVal>       OptSideEffect               // 'sideeffect' or not.
-%type <Linkage>       OptLinkage
+%type <Linkage>       FunctionLinkage GVInternalLinkage GVExternalLinkage
 %type <Endianness>    BigOrLittle
 
 // ValueRef - Unresolved reference to a definition or BB
@@ -936,7 +936,8 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type  <TypeVal> Types TypesV UpRTypes UpRTypesV
 %type  <PrimType> SIntType UIntType IntType FPType PrimType   // Classifications
 %token <PrimType> VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
-%token <PrimType> FLOAT DOUBLE TYPE LABEL
+%token <PrimType> FLOAT DOUBLE LABEL
+%token TYPE
 
 %token <StrVal> VAR_ID LABELSTR STRINGCONSTANT
 %type  <StrVal> Name OptName OptAssign
@@ -944,7 +945,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <StrVal> OptSection SectionString
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
-%token DECLARE GLOBAL CONSTANT SECTION VOLATILE
+%token DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK APPENDING
 %token DLLIMPORT DLLEXPORT EXTERN_WEAK
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
@@ -1038,14 +1039,33 @@ OptAssign : Name '=' {
     CHECK_FOR_ERROR
   };
 
-OptLinkage : INTERNAL    { $$ = GlobalValue::InternalLinkage; } |
-             LINKONCE    { $$ = GlobalValue::LinkOnceLinkage; } |
-             WEAK        { $$ = GlobalValue::WeakLinkage; } |
-             APPENDING   { $$ = GlobalValue::AppendingLinkage; } |
-             DLLIMPORT   { $$ = GlobalValue::DLLImportLinkage; } |
-             DLLEXPORT   { $$ = GlobalValue::DLLExportLinkage; } |
-             EXTERN_WEAK { $$ = GlobalValue::ExternalWeakLinkage; } |
-             /*empty*/   { $$ = GlobalValue::ExternalLinkage; };
+GVInternalLinkage 
+  : INTERNAL    { $$ = GlobalValue::InternalLinkage; } 
+  | WEAK        { $$ = GlobalValue::WeakLinkage; } 
+  | LINKONCE    { $$ = GlobalValue::LinkOnceLinkage; }
+  | APPENDING   { $$ = GlobalValue::AppendingLinkage; }
+  | DLLEXPORT   { $$ = GlobalValue::DLLExportLinkage; } 
+  ;
+
+GVExternalLinkage
+  : DLLIMPORT   { $$ = GlobalValue::DLLImportLinkage; }
+  | EXTERN_WEAK { $$ = GlobalValue::ExternalWeakLinkage; }
+  | EXTERNAL    { $$ = GlobalValue::ExternalLinkage; }
+  ;
+
+FnDeclareLinkage
+  : /*empty*/   { /*default*/ }
+  | DLLIMPORT   { CurFun.Linkage = GlobalValue::DLLImportLinkage; } 
+  | EXTERN_WEAK { CurFun.Linkage = GlobalValue::ExternalWeakLinkage; }
+  ;
+  
+FunctionLinkage 
+  : INTERNAL    { $$ = GlobalValue::InternalLinkage; }
+  | LINKONCE    { $$ = GlobalValue::LinkOnceLinkage; }
+  | WEAK        { $$ = GlobalValue::WeakLinkage; }
+  | DLLEXPORT   { $$ = GlobalValue::DLLExportLinkage; } 
+  | /*empty*/   { $$ = GlobalValue::ExternalLinkage; }
+  ; 
 
 OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                  CCC_TOK            { $$ = CallingConv::C; } |
@@ -1128,7 +1148,7 @@ Types     : UpRTypes {
 // Derived types are added later...
 //
 PrimType : BOOL | SBYTE | UBYTE | SHORT  | USHORT | INT   | UINT ;
-PrimType : LONG | ULONG | FLOAT | DOUBLE | TYPE   | LABEL;
+PrimType : LONG | ULONG | FLOAT | DOUBLE | LABEL ;
 UpRTypes : OPAQUE {
     $$ = new PATypeHolder(OpaqueType::get());
     CHECK_FOR_ERROR
@@ -1634,33 +1654,36 @@ GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; };
 // Module rule: Capture the result of parsing the whole file into a result
 // variable...
 //
-Module : FunctionList {
-  $$ = ParserResult = $1;
-  CurModule.ModuleDone();
-  CHECK_FOR_ERROR;
-};
+Module 
+  : DefinitionList {
+    $$ = ParserResult = CurModule.CurrentModule;
+    CurModule.ModuleDone();
+    CHECK_FOR_ERROR;
+  }
+  | /*empty*/ {
+    $$ = ParserResult = CurModule.CurrentModule;
+    CurModule.ModuleDone();
+    CHECK_FOR_ERROR;
+  }
+  ;
 
-// FunctionList - A list of functions, preceeded by a constant pool.
-//
-FunctionList : FunctionList Function {
-    $$ = $1;
+DefinitionList
+  : Definition
+  | DefinitionList Definition
+  ;
+
+Definition 
+  : DEFINE { CurFun.isDeclare = false } Function {
     CurFun.FunctionDone();
     CHECK_FOR_ERROR
-  } 
-  | FunctionList FunctionProto {
-    $$ = $1;
+  }
+  | DECLARE { CurFun.isDeclare = true; } FunctionProto {
     CHECK_FOR_ERROR
   }
-  | FunctionList MODULE ASM_TOK AsmBlock {
-    $$ = $1;
+  | MODULE ASM_TOK AsmBlock {
     CHECK_FOR_ERROR
   }  
-  | FunctionList IMPLEMENTATION {
-    $$ = $1;
-    CHECK_FOR_ERROR
-  }
-  | ConstPool {
-    $$ = CurModule.CurrentModule;
+  | IMPLEMENTATION {
     // Emit an error if there are any unresolved types left.
     if (!CurModule.LateResolveTypes.empty()) {
       const ValID &DID = CurModule.LateResolveTypes.begin()->first;
@@ -1671,10 +1694,8 @@ FunctionList : FunctionList Function {
       }
     }
     CHECK_FOR_ERROR
-  };
-
-// ConstPool - Constants with optional names assigned to them.
-ConstPool : ConstPool OptAssign TYPE TypesV {
+  }
+  | OptAssign TYPE TypesV {
     // Eagerly resolve types.  This is not an optimization, this is a
     // requirement that is due to the fact that we could have this:
     //
@@ -1684,65 +1705,50 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
     // If types are not resolved eagerly, then the two types will not be
     // determined to be the same type!
     //
-    ResolveTypeTo($2, *$4);
+    ResolveTypeTo($1, *$3);
 
-    if (!setTypeName(*$4, $2) && !$2) {
+    if (!setTypeName(*$3, $1) && !$1) {
       CHECK_FOR_ERROR
       // If this is a named type that is not a redefinition, add it to the slot
       // table.
-      CurModule.Types.push_back(*$4);
+      CurModule.Types.push_back(*$3);
     }
 
-    delete $4;
+    delete $3;
     CHECK_FOR_ERROR
   }
-  | ConstPool FunctionProto {       // Function prototypes can be in const pool
-    CHECK_FOR_ERROR
-  }
-  | ConstPool MODULE ASM_TOK AsmBlock {  // Asm blocks can be in the const pool
-    CHECK_FOR_ERROR
-  }
-  | ConstPool OptAssign OptLinkage GlobalType ConstVal {
-    if ($5 == 0) 
+  | OptAssign GlobalType ConstVal { /* "Externally Visible" Linkage */
+    if ($3 == 0) 
       GEN_ERROR("Global value initializer is not a constant!");
-    CurGV = ParseGlobalVariable($2, $3, $4, $5->getType(), $5);
+    CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage, $2, 
+                                $3->getType(), $3);
     CHECK_FOR_ERROR
   } GlobalVarAttributes {
     CurGV = 0;
   }
-  | ConstPool OptAssign EXTERNAL GlobalType Types {
-    CurGV = ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, *$5, 0);
+  | OptAssign GVInternalLinkage GlobalType ConstVal {
+    if ($4 == 0) 
+      GEN_ERROR("Global value initializer is not a constant!");
+    CurGV = ParseGlobalVariable($1, $2, $3, $4->getType(), $4);
     CHECK_FOR_ERROR
-    delete $5;
+  } GlobalVarAttributes {
+    CurGV = 0;
+  }
+  | OptAssign GVExternalLinkage GlobalType Types {
+    CurGV = ParseGlobalVariable($1, $2, $3, *$4, 0);
+    CHECK_FOR_ERROR
+    delete $4;
   } GlobalVarAttributes {
     CurGV = 0;
     CHECK_FOR_ERROR
   }
-  | ConstPool OptAssign DLLIMPORT GlobalType Types {
-    CurGV = ParseGlobalVariable($2, GlobalValue::DLLImportLinkage, $4, *$5, 0);
-    CHECK_FOR_ERROR
-    delete $5;
-  } GlobalVarAttributes {
-    CurGV = 0;
+  | TARGET TargetDefinition { 
     CHECK_FOR_ERROR
   }
-  | ConstPool OptAssign EXTERN_WEAK GlobalType Types {
-    CurGV = 
-      ParseGlobalVariable($2, GlobalValue::ExternalWeakLinkage, $4, *$5, 0);
-    CHECK_FOR_ERROR
-    delete $5;
-  } GlobalVarAttributes {
-    CurGV = 0;
+  | DEPLIBS '=' LibrariesDefinition {
     CHECK_FOR_ERROR
   }
-  | ConstPool TARGET TargetDefinition { 
-    CHECK_FOR_ERROR
-  }
-  | ConstPool DEPLIBS '=' LibrariesDefinition {
-    CHECK_FOR_ERROR
-  }
-  | /* empty: end of list */ { 
-  };
+  ;
 
 
 AsmBlock : STRINGCONSTANT {
@@ -1944,7 +1950,7 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')'
 
 BEGIN : BEGINTOK | '{';                // Allow BEGIN or '{' to start a function
 
-FunctionHeader : OptLinkage FunctionHeaderH BEGIN {
+FunctionHeader : FunctionLinkage FunctionHeaderH BEGIN {
   $$ = CurFun.CurrentFunction;
 
   // Make sure that we keep track of the linkage type even if there was a
@@ -1959,11 +1965,7 @@ Function : BasicBlockList END {
   CHECK_FOR_ERROR
 };
 
-FnDeclareLinkage: /*default*/ |
-                  DLLIMPORT   { CurFun.Linkage = GlobalValue::DLLImportLinkage; } |
-                  EXTERN_WEAK { CurFun.Linkage = GlobalValue::ExternalWeakLinkage; };
-  
-FunctionProto : DECLARE { CurFun.isDeclare = true; } FnDeclareLinkage FunctionHeaderH {
+FunctionProto : FnDeclareLinkage FunctionHeaderH {
     $$ = CurFun.CurrentFunction;
     CurFun.FunctionDone();
     CHECK_FOR_ERROR
