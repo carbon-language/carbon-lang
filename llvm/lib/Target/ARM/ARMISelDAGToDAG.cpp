@@ -170,7 +170,7 @@ static ARMCC::CondCodes DAGFPCCToARMCC(ISD::CondCode CC) {
 // SETOLE = (N | Z | !V) & (N | Z) = N | Z = !C | Z            = LS
   case ISD::SETLE:
   case ISD::SETOLE: return ARMCC::LS;
-// SETONE = (N | Z | !V) & !Z = (N | !V) & Z = !V & Z = Z      = NE
+// SETONE = (N | Z | !V) & !Z = (N | !V) & !Z = !V & !Z = !Z   = NE
   case ISD::SETNE:
   case ISD::SETONE: return ARMCC::NE;
 // SETO   = N | Z | !V = Z | !V = !V                           = VC
