@@ -80,13 +80,6 @@ class FunctionType : public DerivedType {
 
   FunctionType(const FunctionType &);                   // Do not implement
   const FunctionType &operator=(const FunctionType &);  // Do not implement
-protected:
-  /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class FunctionType' only
-  /// defines private constructors and has no friends
-  ///
-  /// Private ctor - Only can be created by a static member...
-  ///
   FunctionType(const Type *Result, const std::vector<const Type*> &Params,
                bool IsVarArgs);
 
