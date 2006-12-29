@@ -105,6 +105,7 @@ end             { RET_TOK( ENDTOK); }
 true            { RET_TOK( TRUETOK);  }
 false           { RET_TOK( FALSETOK); }
 declare         { RET_TOK( DECLARE); }
+define          { RET_TOK( DEFINE); }
 global          { RET_TOK( GLOBAL); }
 constant        { RET_TOK( CONSTANT); }
 internal        { RET_TOK( INTERNAL); }
