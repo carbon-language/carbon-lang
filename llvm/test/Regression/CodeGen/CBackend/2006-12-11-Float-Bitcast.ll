@@ -1,5 +1,6 @@
-; RUN: llvm-as < %s | llc -march=c &&
-; RUN: llvm-as < %s | llc -march=c | grep '__BITCAST' | wc -l | grep 14
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | \
+; RUN:  grep '__BITCAST' | wc -l | grep 14
 
 int %test1(float %F) {
    %X = bitcast float %F to int

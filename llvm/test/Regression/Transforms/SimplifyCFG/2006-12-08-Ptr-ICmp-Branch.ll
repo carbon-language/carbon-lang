@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis
 ; ModuleID = 'bugpoint-tooptimize.bc'
 target datalayout = "e-p:32:32"
 target endian = little

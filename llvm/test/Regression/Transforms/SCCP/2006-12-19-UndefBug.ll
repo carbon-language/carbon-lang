@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep 'ret bool false'
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | \
+; RUN:   grep 'ret bool false'
 
 bool %foo() {
 	%X = and bool false, undef

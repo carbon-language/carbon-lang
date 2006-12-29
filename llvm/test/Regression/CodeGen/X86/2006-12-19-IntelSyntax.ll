@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel
 ; PR1061
 
 target datalayout = "e-p:32:32"

@@ -1,6 +1,6 @@
 ; Make sure we don't get an assertion failure, even though this is a parse 
 ; error
-; RUN: llvm-as < %s 2>&1 | grep 'No arguments'
+; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f 2>&1 | grep 'No arguments'
 
 %ty = type void (int)
 

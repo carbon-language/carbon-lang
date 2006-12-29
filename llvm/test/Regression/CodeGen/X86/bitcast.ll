@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc &&
-; RUN: llvm-as < %s | llc -march=x86 &&
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llvm-upgrade < %s | llvm-as | llc &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64
 ; PR1033
 
 long %test1(double %t) {

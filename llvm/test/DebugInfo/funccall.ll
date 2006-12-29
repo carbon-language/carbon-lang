@@ -1,4 +1,4 @@
-;; RUN: llvm-as < %s | llc
+;; RUN: llvm-upgrade < %s | llvm-as | llc
 
 ;; Debugger type declarations
 %llvm.dbg.anchor.type = type { uint, uint }

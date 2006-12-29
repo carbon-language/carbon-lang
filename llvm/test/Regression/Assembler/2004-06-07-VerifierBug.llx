@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s > /dev/null
+; RUN: llvm-upgrade < %s | llvm-as > /dev/null
 void %t() {
 entry:
 	ret void

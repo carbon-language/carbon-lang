@@ -1,5 +1,7 @@
-; RUN: llvm-as< %s | opt -scalarrepl -instcombine | llc -march=x86 -mcpu=yonah &&
-; RUN: llvm-as< %s | opt -scalarrepl -instcombine | llc -march=x86 -mcpu=yonah | not grep sub.*esp
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl -instcombine | \
+; RUN:    llc -march=x86 -mcpu=yonah &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl -instcombine | \
+; RUN:    llc -march=x86 -mcpu=yonah | not grep sub.*esp
 
 ; This checks that various insert/extract idiom work without going to the 
 ; stack.

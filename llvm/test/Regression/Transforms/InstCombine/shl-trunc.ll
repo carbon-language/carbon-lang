@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep shl
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep shl
 
 bool %test(int %X, ubyte %A) {
 	%B = lshr int %X, ubyte %A

@@ -1,5 +1,7 @@
 ; Basic test for bugpoint.
-; RUN: bugpoint %s -domset -idom -domset -bugpoint-crashcalls -domset -idom -domset
+; RUN: llvm-upgrade < %s > %t1.ll
+; RUN: bugpoint %t1.ll -domset -idom -domset -bugpoint-crashcalls \
+; RUN:   -domset -idom -domset
 
 int %test() {
 	call int %test()
