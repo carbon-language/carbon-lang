@@ -286,7 +286,7 @@ getCompareOp(const std::string& setcc, const TypeInfo& TI) {
 %token <String> NULL_TOK UNDEF ZEROINITIALIZER TRUETOK FALSETOK
 %token <String> TYPE VAR_ID LABELSTR STRINGCONSTANT
 %token <String> IMPLEMENTATION BEGINTOK ENDTOK
-%token <String> DECLARE GLOBAL CONSTANT SECTION VOLATILE
+%token <String> DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE
 %token <String> TO DOTDOTDOT CONST INTERNAL LINKONCE WEAK 
 %token <String> DLLIMPORT DLLEXPORT EXTERN_WEAK APPENDING
 %token <String> NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
@@ -487,6 +487,16 @@ UpRTypes
   }
   | '{' '}' {                                  // Empty structure type?
     $$.newTy = new std::string("{}");
+    $$.oldTy = StructTy;
+  }
+  | '<' '{' TypeListI '}' '>' {                // Packed Structure type?
+    $3->insert(0, "<{ ");
+    *$3 += " }>";
+    $$.newTy = $3;
+    $$.oldTy = StructTy;
+  }
+  | '<' '{' '}' '>' {                          // Empty packed structure type?
+    $$.newTy = new std::string("<{}>");
     $$.oldTy = StructTy;
   }
   | UpRTypes '*' {                             // Pointer type?
@@ -741,12 +751,12 @@ DefinitionList : DefinitionList Function {
     $$ = 0;
   } 
   | DefinitionList FunctionProto {
-    *O << *$2 << "\n";
+    *O << *$2 << '\n';
     delete $2;
     $$ = 0;
   }
   | DefinitionList MODULE ASM_TOK AsmBlock {
-    *O << "module asm " << " " << *$4 << "\n";
+    *O << "module asm " << ' ' << *$4 << '\n';
     $$ = 0;
   }  
   | DefinitionList IMPLEMENTATION {
@@ -766,17 +776,17 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
       NamedTypes[*$2].elemTy = $4.elemTy;
       *O << *$2 << " = ";
     }
-    *O << "type " << *$4.newTy << "\n";
+    *O << "type " << *$4.newTy << '\n';
     delete $2; delete $3; $4.destroy();
     $$ = 0;
   }
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
-    *O << *$2 << "\n";
+    *O << *$2 << '\n';
     delete $2;
     $$ = 0;
   }
   | ConstPool MODULE ASM_TOK AsmBlock {  // Asm blocks can be in the const pool
-    *O << *$2 << " " << *$3 << " " << *$4 << "\n";
+    *O << *$2 << ' ' << *$3 << ' ' << *$4 << '\n';
     delete $2; delete $3; delete $4; 
     $$ = 0;
   }
@@ -785,7 +795,7 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
       *O << *$2 << " = ";
       Globals[*$2] = $5.type.clone();
     }
-    *O << *$3 << " " << *$4 << " " << *$5.cnst << " " << *$6 << "\n";
+    *O << *$3 << ' ' << *$4 << ' ' << *$5.cnst << ' ' << *$6 << '\n';
     delete $2; delete $3; delete $4; $5.destroy(); delete $6; 
     $$ = 0;
   }
@@ -794,7 +804,7 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
       *O << *$2 << " = ";
       Globals[*$2] = $5.clone();
     }
-    *O <<  *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
+    *O <<  *$3 << ' ' << *$4 << ' ' << *$5.newTy << ' ' << *$6 << '\n';
     delete $2; delete $3; delete $4; $5.destroy(); delete $6;
     $$ = 0;
   }
@@ -803,7 +813,7 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
       *O << *$2 << " = ";
       Globals[*$2] = $5.clone();
     }
-    *O << *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
+    *O << *$3 << ' ' << *$4 << ' ' << *$5.newTy << ' ' << *$6 << '\n';
     delete $2; delete $3; delete $4; $5.destroy(); delete $6;
     $$ = 0;
   }
@@ -812,17 +822,17 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
       *O << *$2 << " = ";
       Globals[*$2] = $5.clone();
     }
-    *O << *$3 << " " << *$4 << " " << *$5.newTy << " " << *$6 << "\n";
+    *O << *$3 << ' ' << *$4 << ' ' << *$5.newTy << ' ' << *$6 << '\n';
     delete $2; delete $3; delete $4; $5.destroy(); delete $6;
     $$ = 0;
   }
   | ConstPool TARGET TargetDefinition { 
-    *O << *$2 << " " << *$3 << "\n";
+    *O << *$2 << ' ' << *$3 << '\n';
     delete $2; delete $3;
     $$ = 0;
   }
   | ConstPool DEPLIBS '=' LibrariesDefinition {
-    *O << *$2 << " = " << *$4 << "\n";
+    *O << *$2 << " = " << *$4 << '\n';
     delete $2; delete $4;
     $$ = 0;
   }
@@ -935,14 +945,26 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')'
 BEGIN : BEGINTOK { $$ = new std::string("{"); delete $1; }
   | '{' { $$ = new std::string ("{"); }
 
-FunctionHeader : OptLinkage FunctionHeaderH BEGIN {
-  if (!$1->empty()) {
-    *O << *$1 << " ";
+FunctionHeader 
+  : OptLinkage FunctionHeaderH BEGIN {
+    *O << "define ";
+    if (!$1->empty()) {
+      *O << *$1 << ' ';
+    }
+    *O << *$2 << ' ' << *$3 << '\n';
+    delete $1; delete $2; delete $3;
+    $$ = 0;
   }
-  *O << *$2 << " " << *$3 << "\n";
-  delete $1; delete $2; delete $3;
-  $$ = 0;
-};
+  | DEFINE OptLinkage FunctionHeaderH BEGIN {
+    *O << *$1 << ' ';
+    if (!$2->empty()) {
+      *O << *$2 << ' ';
+    }
+    *O << *$3 << ' ' << *$4 << '\n';
+    delete $1; delete $2; delete $3; delete $4;
+    $$ = 0;
+  }
+  ;
 
 END : ENDTOK { $$ = new std::string("}"); delete $1; }
     | '}' { $$ = new std::string("}"); };
@@ -950,7 +972,7 @@ END : ENDTOK { $$ = new std::string("}"); delete $1; }
 Function : FunctionHeader BasicBlockList END {
   if ($2)
     *O << *$2;
-  *O << '\n' << *$3 << "\n";
+  *O << '\n' << *$3 << '\n';
   $$ = 0;
 };
 
@@ -1038,7 +1060,7 @@ BasicBlock : InstructionList BBTerminatorInst  {
   };
 
 InstructionList : InstructionList Inst {
-    *O << "    " << *$2 << "\n";
+    *O << "    " << *$2 << '\n';
     delete $2;
     $$ = 0;
   }
@@ -1046,7 +1068,7 @@ InstructionList : InstructionList Inst {
     $$ = 0;
   }
   | LABELSTR {
-    *O << *$1 << "\n";
+    *O << *$1 << '\n';
     delete $1;
     $$ = 0;
   };
@@ -1054,38 +1076,38 @@ InstructionList : InstructionList Inst {
 Unwind : UNWIND | EXCEPT { $$ = $1; *$$ = "unwind"; }
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
-    *O << "    " << *$1 << " " << *$2.val << "\n";
+    *O << "    " << *$1 << ' ' << *$2.val << '\n';
     delete $1; $2.destroy();
     $$ = 0;
   }
   | RET VOID {                                       // Return with no result...
-    *O << "    " << *$1 << " " << *$2.newTy << "\n";
+    *O << "    " << *$1 << ' ' << *$2.newTy << '\n';
     delete $1; $2.destroy();
     $$ = 0;
   }
   | BR LABEL ValueRef {                         // Unconditional Branch...
-    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3.val << "\n";
+    *O << "    " << *$1 << ' ' << *$2.newTy << ' ' << *$3.val << '\n';
     delete $1; $2.destroy(); $3.destroy();
     $$ = 0;
   }                                                  // Conditional Branch...
   | BR BOOL ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
-    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3.val << ", " 
-       << *$5.newTy << " " << *$6.val << ", " << *$8.newTy << " " 
-       << *$9.val << "\n";
+    *O << "    " << *$1 << ' ' << *$2.newTy << ' ' << *$3.val << ", " 
+       << *$5.newTy << ' ' << *$6.val << ", " << *$8.newTy << ' ' 
+       << *$9.val << '\n';
     delete $1; $2.destroy(); $3.destroy(); $5.destroy(); $6.destroy(); 
     $8.destroy(); $9.destroy();
     $$ = 0;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
-    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3.val << ", " 
-       << *$5.newTy << " " << *$6.val << " [" << *$8 << " ]\n";
+    *O << "    " << *$1 << ' ' << *$2.newTy << ' ' << *$3.val << ", " 
+       << *$5.newTy << ' ' << *$6.val << " [" << *$8 << " ]\n";
     delete $1; $2.destroy(); $3.destroy(); $5.destroy(); $6.destroy(); 
     delete $8;
     $$ = 0;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
-    *O << "    " << *$1 << " " << *$2.newTy << " " << *$3.val << ", " 
-       << *$5.newTy << " " << *$6.val << "[]\n";
+    *O << "    " << *$1 << ' ' << *$2.newTy << ' ' << *$3.val << ", " 
+       << *$5.newTy << ' ' << *$6.val << "[]\n";
     delete $1; $2.destroy(); $3.destroy(); $5.destroy(); $6.destroy();
     $$ = 0;
   }
@@ -1094,7 +1116,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     *O << "    ";
     if (!$1->empty())
       *O << *$1 << " = ";
-    *O << *$2 << " " << *$3 << " " << *$4.newTy << " " << *$5.val << " (";
+    *O << *$2 << ' ' << *$3 << ' ' << *$4.newTy << ' ' << *$5.val << " (";
     for (unsigned i = 0; i < $7->size(); ++i) {
       ValueInfo& VI = (*$7)[i];
       *O << *VI.val;
@@ -1102,20 +1124,20 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         *O << ", ";
       VI.destroy();
     }
-    *O << ") " << *$9 << " " << *$10.newTy << " " << *$11.val << " " 
-       << *$12 << " " << *$13.newTy << " " << *$14.val << "\n";
+    *O << ") " << *$9 << ' ' << *$10.newTy << ' ' << *$11.val << ' ' 
+       << *$12 << ' ' << *$13.newTy << ' ' << *$14.val << '\n';
     delete $1; delete $2; delete $3; $4.destroy(); $5.destroy(); delete $7; 
     delete $9; $10.destroy(); $11.destroy(); delete $12; $13.destroy(); 
     $14.destroy(); 
     $$ = 0;
   }
   | Unwind {
-    *O << "    " << *$1 << "\n";
+    *O << "    " << *$1 << '\n';
     delete $1;
     $$ = 0;
   }
   | UNREACHABLE {
-    *O << "    " << *$1 << "\n";
+    *O << "    " << *$1 << '\n';
     delete $1;
     $$ = 0;
   };
@@ -1198,13 +1220,13 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $2.destroy(); $3.destroy(); $5.destroy();
     $$ = $1;
   }
-  | ICMP IPredicates Types ValueRef ',' ValueRef ')' {
-    *$1 += " " + *$2 + " " + *$4.val + "," + *$6.val + ")";
+  | ICMP IPredicates Types ValueRef ',' ValueRef {
+    *$1 += " " + *$2 + " " + *$3.newTy + " " + *$4.val + "," + *$6.val;
     delete $2; $4.destroy(); $6.destroy();
     $$ = $1;
   }
-  | FCMP FPredicates Types ValueRef ',' ValueRef ')' {
-    *$1 += " " + *$2 + " " + *$4.val + "," + *$6.val + ")";
+  | FCMP FPredicates Types ValueRef ',' ValueRef {
+    *$1 += " " + *$2 + " " + *$3.newTy + " " + *$4.val + "," + *$6.val;
     delete $2; $4.destroy(); $6.destroy();
     $$ = $1;
   }
