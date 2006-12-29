@@ -729,7 +729,8 @@ public:
     return static_cast<Function*>(dyn_cast<Function>(getOperand(0)));
   }
 
-  // getCalledValue - Get a pointer to a method that is invoked by this inst.
+  /// getCalledValue - Get a pointer to the function that is invoked by this 
+  /// instruction
   inline const Value *getCalledValue() const { return getOperand(0); }
   inline       Value *getCalledValue()       { return getOperand(0); }
 
