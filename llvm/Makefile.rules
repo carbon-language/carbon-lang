@@ -1042,7 +1042,7 @@ $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 # Create .bc files in the ObjDir directory from .cpp .cc and .c files...
 #---------------------------------------------------------
 
-$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" \
                               $< -o $@ -S -emit-llvm ; \
@@ -1051,7 +1051,7 @@ $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(call UPGRADE_MSG,$@) 
 	$(call UPGRADE_LL,$@)
 
-$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" \
                               $< -o $@ -S -emit-llvm ; \
@@ -1060,7 +1060,7 @@ $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(call UPGRADE_MSG,$@) 
 	$(call UPGRADE_LL,$@)
 
-$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" \
                             $< -o $@ -S -emit-llvm ; \
@@ -1084,19 +1084,19 @@ $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
 	$(MAYBE_PIC_Compile.C) $< -o $@ 
 
-$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
 	$(call UPGRADE_MSG,$@) 
 	$(call UPGRADE_LL,$@)
 
-$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
 	$(call UPGRADE_MSG,$@) 
 	$(call UPGRADE_LL,$@)
 
-$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(BCCompile.C) $< -o $@ -S -emit-llvm
 	$(call UPGRADE_MSG,@) 
