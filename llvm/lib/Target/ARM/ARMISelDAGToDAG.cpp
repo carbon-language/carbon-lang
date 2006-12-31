@@ -151,59 +151,62 @@ namespace llvm {
 /// DAGFPCCToARMCC - Convert a DAG fp condition code to an ARM CC
 // Unordered = !N & !Z & C & V = V
 // Ordered   =  N | Z | !C | !V = N | Z | !V
-static ARMCC::CondCodes DAGFPCCToARMCC(ISD::CondCode CC) {
+static std::vector<unsigned> DAGFPCCToARMCC(ISD::CondCode CC) {
   switch (CC) {
   default:
     assert(0 && "Unknown fp condition code!");
 // SETOEQ = (N | Z | !V) & Z = Z                               = EQ
   case ISD::SETEQ:
-  case ISD::SETOEQ: return ARMCC::EQ;
+  case ISD::SETOEQ: return make_vector<unsigned>(ARMCC::EQ, 0);
 // SETOGT = (N | Z | !V) & !N & !Z = !V &!N &!Z = (N = V) & !Z = GT
   case ISD::SETGT:
-  case ISD::SETOGT: return ARMCC::GT;
+  case ISD::SETOGT: return make_vector<unsigned>(ARMCC::GT, 0);
 // SETOGE = (N | Z | !V) & !N = (Z | !V) & !N = !V & !N        = GE
   case ISD::SETGE:
-  case ISD::SETOGE: return ARMCC::GE;
+  case ISD::SETOGE: return make_vector<unsigned>(ARMCC::GE, 0);
 // SETOLT = (N | Z | !V) & N = N                               = MI
   case ISD::SETLT:
-  case ISD::SETOLT: return ARMCC::MI;
+  case ISD::SETOLT: return make_vector<unsigned>(ARMCC::MI, 0);
 // SETOLE = (N | Z | !V) & (N | Z) = N | Z = !C | Z            = LS
   case ISD::SETLE:
-  case ISD::SETOLE: return ARMCC::LS;
-// SETONE = (N | Z | !V) & !Z = (N | !V) & !Z = !V & !Z = !Z   = NE
-  case ISD::SETNE:
-  case ISD::SETONE: return ARMCC::NE;
+  case ISD::SETOLE: return make_vector<unsigned>(ARMCC::LS, 0);
+// SETONE = OGT | OLT 
+  case ISD::SETONE: return make_vector<unsigned>(ARMCC::GT, ARMCC::MI, 0);
 // SETO   = N | Z | !V = Z | !V = !V                           = VC
-  case ISD::SETO:   return ARMCC::VC;
+  case ISD::SETO:   return make_vector<unsigned>(ARMCC::VC, 0);
 // SETUO  = V                                                  = VS
-  case ISD::SETUO:  return ARMCC::VS;
-// SETUEQ = V | Z                                              = ??
+  case ISD::SETUO:  return make_vector<unsigned>(ARMCC::VS, 0);
+// SETUEQ = V | Z  (need two instructions)                     = EQ/VS
+  case ISD::SETUEQ: return make_vector<unsigned>(ARMCC::EQ, ARMCC::VS, 0);
 // SETUGT = V | (!Z & !N) = !Z & !N = !Z & C                   = HI
-  case ISD::SETUGT: return ARMCC::HI;
+  case ISD::SETUGT: return make_vector<unsigned>(ARMCC::HI, 0);
 // SETUGE = V | !N = !N                                        = PL
-  case ISD::SETUGE: return ARMCC::PL;
-// SETULT = V | N                                              = ??
-// SETULE = V | Z | N                                          = ??
+  case ISD::SETUGE: return make_vector<unsigned>(ARMCC::PL, 0);
+// SETULT = V | N                                              = LT
+  case ISD::SETULT: return make_vector<unsigned>(ARMCC::LT, 0);
+// SETULE = V | Z | N                                          = LE
+  case ISD::SETULE: return make_vector<unsigned>(ARMCC::LE, 0);
 // SETUNE = V | !Z = !Z                                        = NE
-  case ISD::SETUNE: return ARMCC::NE;
+  case ISD::SETNE:
+  case ISD::SETUNE: return make_vector<unsigned>(ARMCC::NE, 0);
   }
 }
 
 /// DAGIntCCToARMCC - Convert a DAG integer condition code to an ARM CC
-static ARMCC::CondCodes DAGIntCCToARMCC(ISD::CondCode CC) {
+static std::vector<unsigned> DAGIntCCToARMCC(ISD::CondCode CC) {
   switch (CC) {
   default:
     assert(0 && "Unknown integer condition code!");
-  case ISD::SETEQ:  return ARMCC::EQ;
-  case ISD::SETNE:  return ARMCC::NE;
-  case ISD::SETLT:  return ARMCC::LT;
-  case ISD::SETLE:  return ARMCC::LE;
-  case ISD::SETGT:  return ARMCC::GT;
-  case ISD::SETGE:  return ARMCC::GE;
-  case ISD::SETULT: return ARMCC::CC;
-  case ISD::SETULE: return ARMCC::LS;
-  case ISD::SETUGT: return ARMCC::HI;
-  case ISD::SETUGE: return ARMCC::CS;
+  case ISD::SETEQ:  return make_vector<unsigned>(ARMCC::EQ, 0);
+  case ISD::SETNE:  return make_vector<unsigned>(ARMCC::NE, 0);
+  case ISD::SETLT:  return make_vector<unsigned>(ARMCC::LT, 0);
+  case ISD::SETLE:  return make_vector<unsigned>(ARMCC::LE, 0);
+  case ISD::SETGT:  return make_vector<unsigned>(ARMCC::GT, 0);
+  case ISD::SETGE:  return make_vector<unsigned>(ARMCC::GE, 0);
+  case ISD::SETULT: return make_vector<unsigned>(ARMCC::CC, 0);
+  case ISD::SETULE: return make_vector<unsigned>(ARMCC::LS, 0);
+  case ISD::SETUGT: return make_vector<unsigned>(ARMCC::HI, 0);
+  case ISD::SETUGE: return make_vector<unsigned>(ARMCC::CS, 0);
   }
 }
 
@@ -653,13 +656,20 @@ static SDOperand GetCMP(ISD::CondCode CC, SDOperand LHS, SDOperand RHS,
   return Cmp;
 }
 
-static SDOperand GetARMCC(ISD::CondCode CC, MVT::ValueType vt,
+static std::vector<SDOperand> GetARMCC(ISD::CondCode CC, MVT::ValueType vt,
                           SelectionDAG &DAG) {
   assert(vt == MVT::i32 || vt == MVT::f32 || vt == MVT::f64);
+  std::vector<unsigned> vcc;
   if (vt == MVT::i32)
-    return DAG.getConstant(DAGIntCCToARMCC(CC), MVT::i32);
+    vcc = DAGIntCCToARMCC(CC);
   else
-    return DAG.getConstant(DAGFPCCToARMCC(CC), MVT::i32);
+    vcc = DAGFPCCToARMCC(CC);
+
+  std::vector<unsigned>::iterator it;
+  std::vector<SDOperand> result;
+  for( it = vcc.begin(); it != vcc.end(); it++ )
+    result.push_back(DAG.getConstant(*it,MVT::i32));
+  return result;
 }
 
 static bool isUInt8Immediate(uint32_t x) {
@@ -682,8 +692,9 @@ static bool isRotInt8Immediate(uint32_t x) {
   return false;
 }
 
-static void LowerCMP(SDOperand &Cmp, SDOperand &ARMCC, SDOperand LHS,
-                     SDOperand RHS, ISD::CondCode CC, SelectionDAG &DAG) {
+static void LowerCMP(SDOperand &Cmp, std::vector<SDOperand> &ARMCC,
+                     SDOperand LHS, SDOperand RHS, ISD::CondCode CC,
+                     SelectionDAG &DAG) {
   MVT::ValueType vt = LHS.getValueType();
   if (vt == MVT::i32) {
     assert(!isa<ConstantSDNode>(LHS));
@@ -745,9 +756,18 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
   SDOperand TrueVal = Op.getOperand(2);
   SDOperand FalseVal = Op.getOperand(3);
   SDOperand Cmp;
-  SDOperand ARMCC;
+  std::vector<SDOperand> ARMCC;
   LowerCMP(Cmp, ARMCC, LHS, RHS, CC, DAG);
-  return DAG.getNode(ARMISD::SELECT, Op.getValueType(), TrueVal, FalseVal, ARMCC, Cmp);
+
+  SDOperand Aux = FalseVal;
+  SDVTList  VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
+  std::vector<SDOperand>::iterator it;
+  for (it = ARMCC.begin(); it != ARMCC.end(); ++it){
+    SDOperand  Flag = it == ARMCC.begin() ? Cmp : Aux.getValue(1);
+    SDOperand Ops[] = {TrueVal, Aux, *it, Flag};
+    Aux  = DAG.getNode(ARMISD::SELECT, VTs, Ops, 4);
+  }
+  return Aux;
 }
 
 static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG) {
@@ -757,9 +777,18 @@ static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG) {
   SDOperand    RHS = Op.getOperand(3);
   SDOperand   Dest = Op.getOperand(4);
   SDOperand Cmp;
-  SDOperand ARMCC;
+  std::vector<SDOperand> ARMCC;
   LowerCMP(Cmp, ARMCC, LHS, RHS, CC, DAG);
-  return DAG.getNode(ARMISD::BR, MVT::Other, Chain, Dest, ARMCC, Cmp);
+
+  SDOperand Aux = Chain;
+  SDVTList  VTs = DAG.getVTList(MVT::Other, MVT::Flag);
+  std::vector<SDOperand>::iterator it;
+  for (it = ARMCC.begin(); it != ARMCC.end(); it++){
+    SDOperand  Flag = it == ARMCC.begin() ? Cmp : Aux.getValue(1);
+    SDOperand Ops[] = {Aux, Dest, *it, Flag};
+    Aux = DAG.getNode(ARMISD::BR, VTs, Ops, 4);
+  }
+  return Aux;
 }
 
 static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {

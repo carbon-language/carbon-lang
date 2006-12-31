@@ -109,7 +109,7 @@ def SDTarmfmstat   : SDTypeProfile<0, 0, []>;
 def armfmstat      : SDNode<"ARMISD::FMSTAT", SDTarmfmstat, [SDNPInFlag, SDNPOutFlag]>;
 
 def SDTarmbr       : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>]>;
-def armbr          : SDNode<"ARMISD::BR", SDTarmbr, [SDNPHasChain, SDNPInFlag]>;
+def armbr          : SDNode<"ARMISD::BR", SDTarmbr, [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 
 def SDTVoidBinOp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def armcmp       : SDNode<"ARMISD::CMP",  SDTVoidBinOp, [SDNPOutFlag]>;
