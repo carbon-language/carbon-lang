@@ -28,7 +28,8 @@ extern std::istream* LexInput;
 
 
 void UpgradeAssembly(
-  const std::string & infile, std::istream& in, std::ostream &out, bool debug);
+  const std::string & infile, std::istream& in, std::ostream &out, bool debug,
+  bool addAttrs);
 
 // Globals exported by the parser...
 extern char* Upgradetext;
@@ -42,8 +43,8 @@ int yyerror(const char *ErrorMsg) ;
 /// signed instructions with signless operands.
 enum Types {
   BoolTy, SByteTy, UByteTy, ShortTy, UShortTy, IntTy, UIntTy, LongTy, ULongTy,
-  FloatTy, DoubleTy, PointerTy, PackedTy, ArrayTy, StructTy, OpaqueTy, VoidTy,
-  LabelTy, FunctionTy, UnresolvedTy, NumericTy
+  FloatTy, DoubleTy, PointerTy, PackedTy, ArrayTy, StructTy, PackedStructTy, 
+  OpaqueTy, VoidTy, LabelTy, FunctionTy, UnresolvedTy, NumericTy
 };
 
 /// This type is used to keep track of the signedness of the obsolete
@@ -90,6 +91,10 @@ struct TypeInfo {
   bool isPointer() const { return oldTy == PointerTy; }
   bool isOther() const { 
     return !isPacked() && !isPointer() && !isFloatingPoint() && !isIntegral(); }
+
+  bool isAttributeCandidate() const {
+    return isIntegral() && getBitWidth() < 32;
+  }
 
   unsigned getBitWidth() const {
     switch (oldTy) {

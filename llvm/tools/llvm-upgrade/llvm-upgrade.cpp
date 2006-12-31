@@ -38,7 +38,11 @@ OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"), cl::init("-"));
 
 static cl::opt<bool>
-Force("f", cl::desc("Overwrite output files"));
+Force("f", cl::desc("Overwrite output files"), cl::init(false));
+
+static cl::opt<bool>
+AddAttrs("add-attrs", cl::desc("Add function result and argument attributes"),
+         cl::init(false));
 
 static cl::opt<bool>
 Debug("debug", cl::desc("Print debug output from yacc parser"),cl::Hidden,
@@ -115,7 +119,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    UpgradeAssembly(InputFilename, *In, *Out, Debug);
+    UpgradeAssembly(InputFilename, *In, *Out, Debug, AddAttrs);
 
   } catch (const std::string& caught_message) {
     cerr << argv[0] << ": " << caught_message << "\n";

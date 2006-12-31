@@ -105,7 +105,6 @@ end             { RET_TOK( ENDTOK); }
 true            { RET_TOK( TRUETOK);  }
 false           { RET_TOK( FALSETOK); }
 declare         { RET_TOK( DECLARE); }
-define          { RET_TOK( DEFINE); }
 global          { RET_TOK( GLOBAL); }
 constant        { RET_TOK( CONSTANT); }
 internal        { RET_TOK( INTERNAL); }
@@ -149,14 +148,18 @@ x86_fastcallcc  { RET_TOK( X86_FASTCALLCC_TOK); }
 
 void            { RET_TY(VOID,VoidTy,"void",false); }
 bool            { RET_TY(BOOL,BoolTy,"bool",false); }
-sbyte           { RET_TY(SBYTE,SByteTy,"sbyte",true); }
-ubyte           { RET_TY(UBYTE,UByteTy,"ubyte",false); }
-short           { RET_TY(SHORT,ShortTy,"short",true); }
-ushort          { RET_TY(USHORT,UShortTy,"ushort",false); }
-int             { RET_TY(INT,IntTy,"int",true);   }
-uint            { RET_TY(UINT,UIntTy,"uint",false);  }
-long            { RET_TY(LONG,LongTy,"long",true);  }
-ulong           { RET_TY(ULONG,ULongTy,"ulong",false); }
+sbyte           { RET_TY(SBYTE,SByteTy,"i8",true); }
+ubyte           { RET_TY(UBYTE,UByteTy,"i8",false); }
+short           { RET_TY(SHORT,ShortTy,"i16",true); }
+ushort          { RET_TY(USHORT,UShortTy,"i16",false); }
+int             { RET_TY(INT,IntTy,"i32",true);   }
+uint            { RET_TY(UINT,UIntTy,"i32",false);  }
+long            { RET_TY(LONG,LongTy,"i64",true);  }
+ulong           { RET_TY(ULONG,ULongTy,"i64",false); }
+i8              { RET_TY(UBYTE,UByteTy,"i8",false); }
+i16             { RET_TY(USHORT,UShortTy,"i16",false); }
+i32             { RET_TY(UINT,UIntTy,"i32",false); }
+i64             { RET_TY(ULONG,ULongTy,"i64",false); }
 float           { RET_TY(FLOAT,FloatTy,"float",false); }
 double          { RET_TY(DOUBLE,DoubleTy,"double",false); }
 label           { RET_TY(LABEL,LabelTy,"label",false); }

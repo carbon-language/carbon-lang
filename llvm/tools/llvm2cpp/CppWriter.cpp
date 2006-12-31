@@ -166,14 +166,10 @@ getTypePrefix(const Type* Ty ) {
   switch (Ty->getTypeID()) {
     case Type::VoidTyID:     prefix = "void_"; break;
     case Type::BoolTyID:     prefix = "bool_"; break; 
-    case Type::UByteTyID:    prefix = "ubyte_"; break;
-    case Type::SByteTyID:    prefix = "sbyte_"; break;
-    case Type::UShortTyID:   prefix = "ushort_"; break;
-    case Type::ShortTyID:    prefix = "short_"; break;
-    case Type::UIntTyID:     prefix = "uint_"; break;
-    case Type::IntTyID:      prefix = "int_"; break;
-    case Type::ULongTyID:    prefix = "ulong_"; break;
-    case Type::LongTyID:     prefix = "long_"; break;
+    case Type::Int8TyID:     prefix = "int8_"; break;
+    case Type::Int16TyID:    prefix = "int16_"; break;
+    case Type::Int32TyID:    prefix = "int32_"; break;
+    case Type::Int64TyID:    prefix = "int64_"; break;
     case Type::FloatTyID:    prefix = "float_"; break;
     case Type::DoubleTyID:   prefix = "double_"; break;
     case Type::LabelTyID:    prefix = "label_"; break;
@@ -318,19 +314,15 @@ CppWriter::getCppName(const Type* Ty)
   // First, handle the primitive types .. easy
   if (Ty->isPrimitiveType()) {
     switch (Ty->getTypeID()) {
-      case Type::VoidTyID:     return "Type::VoidTy";
-      case Type::BoolTyID:     return "Type::BoolTy"; 
-      case Type::UByteTyID:    return "Type::UByteTy";
-      case Type::SByteTyID:    return "Type::SByteTy";
-      case Type::UShortTyID:   return "Type::UShortTy";
-      case Type::ShortTyID:    return "Type::ShortTy";
-      case Type::UIntTyID:     return "Type::UIntTy";
-      case Type::IntTyID:      return "Type::IntTy";
-      case Type::ULongTyID:    return "Type::ULongTy";
-      case Type::LongTyID:     return "Type::LongTy";
-      case Type::FloatTyID:    return "Type::FloatTy";
-      case Type::DoubleTyID:   return "Type::DoubleTy";
-      case Type::LabelTyID:    return "Type::LabelTy";
+      case Type::VoidTyID:   return "Type::VoidTy";
+      case Type::BoolTyID:   return "Type::BoolTy"; 
+      case Type::Int8TyID:   return "Type::Int8Ty";
+      case Type::Int16TyID:  return "Type::Int16Ty";
+      case Type::Int32TyID:  return "Type::Int32Ty";
+      case Type::Int64TyID:  return "Type::Int64Ty";
+      case Type::FloatTyID:  return "Type::FloatTy";
+      case Type::DoubleTyID: return "Type::DoubleTy";
+      case Type::LabelTyID:  return "Type::LabelTy";
       default:
         error("Invalid primitive type");
         break;
@@ -692,7 +684,7 @@ void CppWriter::printConstant(const Constant *CV) {
     printCFP(CFP);
     Out << ";";
   } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
-    if (CA->isString() && CA->getType()->getElementType() == Type::SByteTy) {
+    if (CA->isString() && CA->getType()->getElementType() == Type::Int8Ty) {
       Out << "Constant* " << constName << " = ConstantArray::get(\"";
       printEscapedString(CA->getAsString());
       // Determine if we want null termination or not.

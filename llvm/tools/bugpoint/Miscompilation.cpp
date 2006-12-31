@@ -675,8 +675,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   // Prototype: void *getPointerToNamedFunction(const char* Name)
   Function *resolverFunc =
     Safe->getOrInsertFunction("getPointerToNamedFunction",
-                              PointerType::get(Type::SByteTy),
-                              PointerType::get(Type::SByteTy), (Type *)0);
+                              PointerType::get(Type::Int8Ty),
+                              PointerType::get(Type::Int8Ty), (Type *)0);
 
   // Use the function we just added to get addresses of functions we need.
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {
@@ -697,7 +697,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         // sbyte* so it matches the signature of the resolver function.
 
         // GetElementPtr *funcName, ulong 0, ulong 0
-        std::vector<Constant*> GEPargs(2,Constant::getNullValue(Type::IntTy));
+        std::vector<Constant*> GEPargs(2,Constant::getNullValue(Type::Int32Ty));
         Value *GEP =
           ConstantExpr::getGetElementPtr(funcName, GEPargs);
         std::vector<Value*> ResolverArgs;
