@@ -42,18 +42,14 @@ static char getTypeID(const Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:    return 'V';
   case Type::BoolTyID:    return 'o';
-  case Type::UByteTyID:   return 'B';
-  case Type::SByteTyID:   return 'b';
-  case Type::UShortTyID:  return 'S';
-  case Type::ShortTyID:   return 's';
-  case Type::UIntTyID:    return 'I';
-  case Type::IntTyID:     return 'i';
-  case Type::ULongTyID:   return 'L';
-  case Type::LongTyID:    return 'l';
+  case Type::Int8TyID:    return 'B';
+  case Type::Int16TyID:   return 'S';
+  case Type::Int32TyID:   return 'I';
+  case Type::Int64TyID:   return 'L';
   case Type::FloatTyID:   return 'F';
   case Type::DoubleTyID:  return 'D';
   case Type::PointerTyID: return 'P';
-  case Type::FunctionTyID:  return 'M';
+  case Type::FunctionTyID:return 'M';
   case Type::StructTyID:  return 'T';
   case Type::ArrayTyID:   return 'A';
   case Type::OpaqueTyID:  return 'O';
@@ -113,20 +109,20 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 extern "C" {  // Don't add C++ manglings to llvm mangling :)
 
 // void putchar(sbyte)
-GenericValue lle_Vb_putchar(FunctionType *M, const vector<GenericValue> &Args) {
-  cout << Args[0].SByteVal;
+GenericValue lle_VB_putchar(FunctionType *M, const vector<GenericValue> &Args) {
+  cout << Args[0].Int8Val;
   return GenericValue();
 }
 
 // int putchar(int)
 GenericValue lle_ii_putchar(FunctionType *M, const vector<GenericValue> &Args) {
-  cout << ((char)Args[0].IntVal) << std::flush;
+  cout << ((char)Args[0].Int32Val) << std::flush;
   return Args[0];
 }
 
 // void putchar(ubyte)
-GenericValue lle_VB_putchar(FunctionType *M, const vector<GenericValue> &Args) {
-  cout << Args[0].SByteVal << std::flush;
+GenericValue lle_Vb_putchar(FunctionType *M, const vector<GenericValue> &Args) {
+  cout << Args[0].Int8Val << std::flush;
   return Args[0];
 }
 
@@ -135,7 +131,7 @@ GenericValue lle_X_atexit(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   TheInterpreter->addAtExitHandler((Function*)GVTOP(Args[0]));
   GenericValue GV;
-  GV.IntVal = 0;
+  GV.Int32Val = 0;
   return GV;
 }
 
@@ -154,13 +150,13 @@ GenericValue lle_X_abort(FunctionType *M, const vector<GenericValue> &Args) {
 // void *malloc(uint)
 GenericValue lle_X_malloc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1 && "Malloc expects one argument!");
-  return PTOGV(malloc(Args[0].UIntVal));
+  return PTOGV(malloc(Args[0].Int32Val));
 }
 
 // void *calloc(uint, uint)
 GenericValue lle_X_calloc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2 && "calloc expects two arguments!");
-  return PTOGV(calloc(Args[0].UIntVal, Args[1].UIntVal));
+  return PTOGV(calloc(Args[0].Int32Val, Args[1].Int32Val));
 }
 
 // void free(void *)
@@ -174,7 +170,7 @@ GenericValue lle_X_free(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_atoi(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = atoi((char*)GVTOP(Args[0]));
+  GV.Int32Val = atoi((char*)GVTOP(Args[0]));
   return GV;
 }
 
@@ -232,14 +228,14 @@ GenericValue lle_X_drand48(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_lrand48(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 0);
   GenericValue GV;
-  GV.IntVal = lrand48();
+  GV.Int32Val = lrand48();
   return GV;
 }
 
 // void srand48(long)
 GenericValue lle_X_srand48(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
-  srand48(Args[0].IntVal);
+  srand48(Args[0].Int32Val);
   return GenericValue();
 }
 
@@ -249,14 +245,14 @@ GenericValue lle_X_srand48(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_rand(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 0);
   GenericValue GV;
-  GV.IntVal = rand();
+  GV.Int32Val = rand();
   return GV;
 }
 
 // void srand(uint)
 GenericValue lle_X_srand(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
-  srand(Args[0].UIntVal);
+  srand(Args[0].Int32Val);
   return GenericValue();
 }
 
@@ -264,7 +260,7 @@ GenericValue lle_X_srand(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_puts(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = puts((char*)GVTOP(Args[0]));
+  GV.Int32Val = puts((char*)GVTOP(Args[0]));
   return GV;
 }
 
@@ -277,7 +273,7 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
 
   // printf should return # chars printed.  This is completely incorrect, but
   // close enough for now.
-  GenericValue GV; GV.IntVal = strlen(FmtStr);
+  GenericValue GV; GV.Int32Val = strlen(FmtStr);
   while (1) {
     switch (*FmtStr) {
     case 0: return GV;             // Null terminator...
@@ -308,7 +304,7 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
       case '%':
         sprintf(Buffer, FmtBuf); break;
       case 'c':
-        sprintf(Buffer, FmtBuf, Args[ArgNo++].IntVal); break;
+        sprintf(Buffer, FmtBuf, Args[ArgNo++].Int32Val); break;
       case 'd': case 'i':
       case 'u': case 'o':
       case 'x': case 'X':
@@ -323,9 +319,9 @@ GenericValue lle_X_sprintf(FunctionType *M, const vector<GenericValue> &Args) {
             FmtBuf[Size+1] = 0;
             FmtBuf[Size-1] = 'l';
           }
-          sprintf(Buffer, FmtBuf, Args[ArgNo++].ULongVal);
+          sprintf(Buffer, FmtBuf, Args[ArgNo++].Int64Val);
         } else
-          sprintf(Buffer, FmtBuf, Args[ArgNo++].IntVal); break;
+          sprintf(Buffer, FmtBuf, Args[ArgNo++].Int32Val); break;
       case 'e': case 'E': case 'g': case 'G': case 'f':
         sprintf(Buffer, FmtBuf, Args[ArgNo++].DoubleVal); break;
       case 'p':
@@ -394,11 +390,11 @@ static void ByteswapSCANFResults(const char *Fmt, void *Arg0, void *Arg1,
         case 'i': case 'o': case 'u': case 'x': case 'X': case 'n': case 'p':
         case 'd':
           if (Long || LongLong) {
-            Size = 8; Ty = Type::ULongTy;
+            Size = 8; Ty = Type::Int64Ty;
           } else if (Half) {
-            Size = 4; Ty = Type::UShortTy;
+            Size = 4; Ty = Type::Int16Ty;
           } else {
-            Size = 4; Ty = Type::UIntTy;
+            Size = 4; Ty = Type::Int32Ty;
           }
           break;
 
@@ -413,7 +409,7 @@ static void ByteswapSCANFResults(const char *Fmt, void *Arg0, void *Arg1,
 
         case 's': case 'c': case '[':  // No byteswap needed
           Size = 1;
-          Ty = Type::SByteTy;
+          Ty = Type::Int8Ty;
           break;
 
         default: break;
@@ -439,8 +435,8 @@ GenericValue lle_X_sscanf(FunctionType *M, const vector<GenericValue> &args) {
     Args[i] = (char*)GVTOP(args[i]);
 
   GenericValue GV;
-  GV.IntVal = sscanf(Args[0], Args[1], Args[2], Args[3], Args[4],
-                     Args[5], Args[6], Args[7], Args[8], Args[9]);
+  GV.Int32Val = sscanf(Args[0], Args[1], Args[2], Args[3], Args[4],
+                       Args[5], Args[6], Args[7], Args[8], Args[9]);
   ByteswapSCANFResults(Args[1], Args[2], Args[3], Args[4],
                        Args[5], Args[6], Args[7], Args[8], Args[9], 0);
   return GV;
@@ -455,8 +451,8 @@ GenericValue lle_X_scanf(FunctionType *M, const vector<GenericValue> &args) {
     Args[i] = (char*)GVTOP(args[i]);
 
   GenericValue GV;
-  GV.IntVal = scanf(Args[0], Args[1], Args[2], Args[3], Args[4],
-                    Args[5], Args[6], Args[7], Args[8], Args[9]);
+  GV.Int32Val = scanf( Args[0], Args[1], Args[2], Args[3], Args[4],
+                       Args[5], Args[6], Args[7], Args[8], Args[9]);
   ByteswapSCANFResults(Args[0], Args[1], Args[2], Args[3], Args[4],
                        Args[5], Args[6], Args[7], Args[8], Args[9]);
   return GV;
@@ -466,7 +462,7 @@ GenericValue lle_X_scanf(FunctionType *M, const vector<GenericValue> &args) {
 // int clock(void) - Profiling implementation
 GenericValue lle_i_clock(FunctionType *M, const vector<GenericValue> &Args) {
   extern unsigned int clock(void);
-  GenericValue GV; GV.IntVal = clock();
+  GenericValue GV; GV.Int32Val = clock();
   return GV;
 }
 
@@ -479,7 +475,7 @@ GenericValue lle_i_clock(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_strcmp(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
   GenericValue Ret;
-  Ret.IntVal = strcmp((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]));
+  Ret.Int32Val = strcmp((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]));
   return Ret;
 }
 
@@ -498,10 +494,10 @@ GenericValue lle_X_strcpy(FunctionType *M, const vector<GenericValue> &Args) {
 static GenericValue size_t_to_GV (size_t n) {
   GenericValue Ret;
   if (sizeof (size_t) == sizeof (uint64_t)) {
-    Ret.ULongVal = n;
+    Ret.Int64Val = n;
   } else {
     assert (sizeof (size_t) == sizeof (unsigned int));
-    Ret.UIntVal = n;
+    Ret.Int32Val = n;
   }
   return Ret;
 }
@@ -509,10 +505,10 @@ static GenericValue size_t_to_GV (size_t n) {
 static size_t GV_to_size_t (GenericValue GV) {
   size_t count;
   if (sizeof (size_t) == sizeof (uint64_t)) {
-    count = (size_t)GV.ULongVal;
+    count = (size_t)GV.Int64Val;
   } else {
     assert (sizeof (size_t) == sizeof (unsigned int));
-    count = (size_t)GV.UIntVal;
+    count = (size_t)GV.Int32Val;
   }
   return count;
 }
@@ -540,7 +536,7 @@ GenericValue lle_X___strdup(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_memset(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
   size_t count = GV_to_size_t (Args[2]);
-  return PTOGV(memset(GVTOP(Args[0]), Args[1].IntVal, count));
+  return PTOGV(memset(GVTOP(Args[0]), Args[1].Int32Val, count));
 }
 
 // void *memcpy(void *Dest, void *src, size_t Size);
@@ -569,7 +565,7 @@ GenericValue lle_X_fopen(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_fclose(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = fclose(getFILE(GVTOP(Args[0])));
+  GV.Int32Val = fclose(getFILE(GVTOP(Args[0])));
   return GV;
 }
 
@@ -578,7 +574,7 @@ GenericValue lle_X_feof(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
 
-  GV.IntVal = feof(getFILE(GVTOP(Args[0])));
+  GV.Int32Val = feof(getFILE(GVTOP(Args[0])));
   return GV;
 }
 
@@ -605,7 +601,7 @@ GenericValue lle_X_fwrite(FunctionType *M, const vector<GenericValue> &Args) {
 // char *fgets(char *s, int n, FILE *stream);
 GenericValue lle_X_fgets(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
-  return GVTOP(fgets((char*)GVTOP(Args[0]), Args[1].IntVal,
+  return GVTOP(fgets((char*)GVTOP(Args[0]), Args[1].Int32Val,
                      getFILE(GVTOP(Args[2]))));
 }
 
@@ -620,7 +616,7 @@ GenericValue lle_X_freopen(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_fflush(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = fflush(getFILE(GVTOP(Args[0])));
+  GV.Int32Val = fflush(getFILE(GVTOP(Args[0])));
   return GV;
 }
 
@@ -628,7 +624,7 @@ GenericValue lle_X_fflush(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_getc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = getc(getFILE(GVTOP(Args[0])));
+  GV.Int32Val = getc(getFILE(GVTOP(Args[0])));
   return GV;
 }
 
@@ -641,7 +637,7 @@ GenericValue lle_X__IO_getc(FunctionType *F, const vector<GenericValue> &Args) {
 GenericValue lle_X_fputc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
   GenericValue GV;
-  GV.IntVal = fputc(Args[0].IntVal, getFILE(GVTOP(Args[1])));
+  GV.Int32Val = fputc(Args[0].Int32Val, getFILE(GVTOP(Args[1])));
   return GV;
 }
 
@@ -649,7 +645,7 @@ GenericValue lle_X_fputc(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_ungetc(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
   GenericValue GV;
-  GV.IntVal = ungetc(Args[0].IntVal, getFILE(GVTOP(Args[1])));
+  GV.Int32Val = ungetc(Args[0].Int32Val, getFILE(GVTOP(Args[1])));
   return GV;
 }
 
@@ -657,7 +653,7 @@ GenericValue lle_X_ungetc(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_ferror(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
-  GV.IntVal = ferror (getFILE(GVTOP(Args[0])));
+  GV.Int32Val = ferror (getFILE(GVTOP(Args[0])));
   return GV;
 }
 

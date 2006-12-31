@@ -95,11 +95,11 @@ GenericValue JIT::runFunction(Function *F,
 
   // Handle some common cases first.  These cases correspond to common `main'
   // prototypes.
-  if (RetTy == Type::IntTy || RetTy == Type::UIntTy || RetTy == Type::VoidTy) {
+  if (RetTy == Type::Int32Ty || RetTy == Type::Int32Ty || RetTy == Type::VoidTy) {
     switch (ArgValues.size()) {
     case 3:
-      if ((FTy->getParamType(0) == Type::IntTy ||
-           FTy->getParamType(0) == Type::UIntTy) &&
+      if ((FTy->getParamType(0) == Type::Int32Ty ||
+           FTy->getParamType(0) == Type::Int32Ty) &&
           isa<PointerType>(FTy->getParamType(1)) &&
           isa<PointerType>(FTy->getParamType(2))) {
         int (*PF)(int, char **, const char **) =
@@ -107,30 +107,30 @@ GenericValue JIT::runFunction(Function *F,
 
         // Call the function.
         GenericValue rv;
-        rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]),
+        rv.Int32Val = PF(ArgValues[0].Int32Val, (char **)GVTOP(ArgValues[1]),
                        (const char **)GVTOP(ArgValues[2]));
         return rv;
       }
       break;
     case 2:
-      if ((FTy->getParamType(0) == Type::IntTy ||
-           FTy->getParamType(0) == Type::UIntTy) &&
+      if ((FTy->getParamType(0) == Type::Int32Ty ||
+           FTy->getParamType(0) == Type::Int32Ty) &&
           isa<PointerType>(FTy->getParamType(1))) {
         int (*PF)(int, char **) = (int(*)(int, char **))(intptr_t)FPtr;
 
         // Call the function.
         GenericValue rv;
-        rv.IntVal = PF(ArgValues[0].IntVal, (char **)GVTOP(ArgValues[1]));
+        rv.Int32Val = PF(ArgValues[0].Int32Val, (char **)GVTOP(ArgValues[1]));
         return rv;
       }
       break;
     case 1:
       if (FTy->getNumParams() == 1 &&
-          (FTy->getParamType(0) == Type::IntTy ||
-           FTy->getParamType(0) == Type::UIntTy)) {
+          (FTy->getParamType(0) == Type::Int32Ty ||
+           FTy->getParamType(0) == Type::Int32Ty)) {
         GenericValue rv;
         int (*PF)(int) = (int(*)(int))(intptr_t)FPtr;
-        rv.IntVal = PF(ArgValues[0].IntVal);
+        rv.Int32Val = PF(ArgValues[0].Int32Val);
         return rv;
       }
       break;
@@ -145,22 +145,18 @@ GenericValue JIT::runFunction(Function *F,
     case Type::BoolTyID:
       rv.BoolVal = ((bool(*)())(intptr_t)FPtr)();
       return rv;
-    case Type::SByteTyID:
-    case Type::UByteTyID:
-      rv.SByteVal = ((char(*)())(intptr_t)FPtr)();
+    case Type::Int8TyID:
+      rv.Int8Val = ((char(*)())(intptr_t)FPtr)();
       return rv;
-    case Type::ShortTyID:
-    case Type::UShortTyID:
-      rv.ShortVal = ((short(*)())(intptr_t)FPtr)();
+    case Type::Int16TyID:
+      rv.Int16Val = ((short(*)())(intptr_t)FPtr)();
       return rv;
     case Type::VoidTyID:
-    case Type::IntTyID:
-    case Type::UIntTyID:
-      rv.IntVal = ((int(*)())(intptr_t)FPtr)();
+    case Type::Int32TyID:
+      rv.Int32Val = ((int(*)())(intptr_t)FPtr)();
       return rv;
-    case Type::LongTyID:
-    case Type::ULongTyID:
-      rv.LongVal = ((int64_t(*)())(intptr_t)FPtr)();
+    case Type::Int64TyID:
+      rv.Int64Val = ((int64_t(*)())(intptr_t)FPtr)();
       return rv;
     case Type::FloatTyID:
       rv.FloatVal = ((float(*)())(intptr_t)FPtr)();
@@ -196,22 +192,18 @@ GenericValue JIT::runFunction(Function *F,
     switch (ArgTy->getTypeID()) {
     default: assert(0 && "Unknown argument type for function call!");
     case Type::BoolTyID:   C = ConstantBool::get(AV.BoolVal); break;
-    case Type::SByteTyID:  C = ConstantInt::get(ArgTy, AV.SByteVal);  break;
-    case Type::UByteTyID:  C = ConstantInt::get(ArgTy, AV.UByteVal);  break;
-    case Type::ShortTyID:  C = ConstantInt::get(ArgTy, AV.ShortVal);  break;
-    case Type::UShortTyID: C = ConstantInt::get(ArgTy, AV.UShortVal); break;
-    case Type::IntTyID:    C = ConstantInt::get(ArgTy, AV.IntVal);    break;
-    case Type::UIntTyID:   C = ConstantInt::get(ArgTy, AV.UIntVal);   break;
-    case Type::LongTyID:   C = ConstantInt::get(ArgTy, AV.LongVal);   break;
-    case Type::ULongTyID:  C = ConstantInt::get(ArgTy, AV.ULongVal);  break;
+    case Type::Int8TyID:   C = ConstantInt::get(ArgTy, AV.Int8Val);  break;
+    case Type::Int16TyID:  C = ConstantInt::get(ArgTy, AV.Int16Val);  break;
+    case Type::Int32TyID:  C = ConstantInt::get(ArgTy, AV.Int32Val);    break;
+    case Type::Int64TyID:  C = ConstantInt::get(ArgTy, AV.Int64Val);   break;
     case Type::FloatTyID:  C = ConstantFP ::get(ArgTy, AV.FloatVal);  break;
     case Type::DoubleTyID: C = ConstantFP ::get(ArgTy, AV.DoubleVal); break;
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);
       if (sizeof(void*) == 4) {
-        C = ConstantInt::get(Type::IntTy, (int)(intptr_t)ArgPtr);
+        C = ConstantInt::get(Type::Int32Ty, (int)(intptr_t)ArgPtr);
       } else {
-        C = ConstantInt::get(Type::LongTy, (intptr_t)ArgPtr);
+        C = ConstantInt::get(Type::Int64Ty, (intptr_t)ArgPtr);
       }
       C = ConstantExpr::getIntToPtr(C, ArgTy);  // Cast the integer to pointer
       break;

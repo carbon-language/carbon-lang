@@ -157,7 +157,7 @@ static void *CreateArgv(ExecutionEngine *EE,
   char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
   DOUT << "ARGV = " << (void*)Result << "\n";
-  const Type *SBytePtr = PointerType::get(Type::SByteTy);
+  const Type *SBytePtr = PointerType::get(Type::Int8Ty);
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
@@ -228,7 +228,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
                                        const char * const * envp) {
   std::vector<GenericValue> GVArgs;
   GenericValue GVArgc;
-  GVArgc.IntVal = argv.size();
+  GVArgc.Int32Val = argv.size();
   unsigned NumArgs = Fn->getFunctionType()->getNumParams();
   if (NumArgs) {
     GVArgs.push_back(GVArgc); // Arg #0 = argc.
@@ -244,7 +244,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
       }
     }
   }
-  return runFunction(Fn, GVArgs).IntVal;
+  return runFunction(Fn, GVArgs).Int32Val;
 }
 
 /// If possible, create a JIT, unless the caller specifically requests an
@@ -317,9 +317,9 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         TD->getIndexedOffset(CE->getOperand(0)->getType(), Indexes);
 
       if (getTargetData()->getPointerSize() == 4)
-        Result.IntVal += Offset;
+        Result.Int32Val += Offset;
       else
-        Result.LongVal += Offset;
+        Result.Int64Val += Offset;
       return Result;
     }
     case Instruction::Trunc:
@@ -352,14 +352,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       GenericValue GV = getConstantValue(Op);
       switch (Op->getType()->getTypeID()) {
         case Type::BoolTyID:    return PTOGV((void*)(uintptr_t)GV.BoolVal);
-        case Type::SByteTyID:   return PTOGV((void*)( intptr_t)GV.SByteVal);
-        case Type::UByteTyID:   return PTOGV((void*)(uintptr_t)GV.UByteVal);
-        case Type::ShortTyID:   return PTOGV((void*)( intptr_t)GV.ShortVal);
-        case Type::UShortTyID:  return PTOGV((void*)(uintptr_t)GV.UShortVal);
-        case Type::IntTyID:     return PTOGV((void*)( intptr_t)GV.IntVal);
-        case Type::UIntTyID:    return PTOGV((void*)(uintptr_t)GV.UIntVal);
-        case Type::LongTyID:    return PTOGV((void*)( intptr_t)GV.LongVal);
-        case Type::ULongTyID:   return PTOGV((void*)(uintptr_t)GV.ULongVal);
+        case Type::Int8TyID:   return PTOGV((void*)(uintptr_t)GV.Int8Val);
+        case Type::Int16TyID:  return PTOGV((void*)(uintptr_t)GV.Int16Val);
+        case Type::Int32TyID:    return PTOGV((void*)(uintptr_t)GV.Int32Val);
+        case Type::Int64TyID:   return PTOGV((void*)(uintptr_t)GV.Int64Val);
         default: assert(0 && "Unknown integral type!");
       }
       break;
@@ -367,25 +363,21 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     case Instruction::Add:
       switch (CE->getOperand(0)->getType()->getTypeID()) {
       default: assert(0 && "Bad add type!"); abort();
-      case Type::LongTyID:
-      case Type::ULongTyID:
-        Result.LongVal = getConstantValue(CE->getOperand(0)).LongVal +
-                         getConstantValue(CE->getOperand(1)).LongVal;
+      case Type::Int64TyID:
+        Result.Int64Val = getConstantValue(CE->getOperand(0)).Int64Val +
+                         getConstantValue(CE->getOperand(1)).Int64Val;
         break;
-      case Type::IntTyID:
-      case Type::UIntTyID:
-        Result.IntVal = getConstantValue(CE->getOperand(0)).IntVal +
-                        getConstantValue(CE->getOperand(1)).IntVal;
+      case Type::Int32TyID:
+        Result.Int32Val = getConstantValue(CE->getOperand(0)).Int32Val +
+                        getConstantValue(CE->getOperand(1)).Int32Val;
         break;
-      case Type::ShortTyID:
-      case Type::UShortTyID:
-        Result.ShortVal = getConstantValue(CE->getOperand(0)).ShortVal +
-                          getConstantValue(CE->getOperand(1)).ShortVal;
+      case Type::Int16TyID:
+        Result.Int16Val = getConstantValue(CE->getOperand(0)).Int16Val +
+                          getConstantValue(CE->getOperand(1)).Int16Val;
         break;
-      case Type::SByteTyID:
-      case Type::UByteTyID:
-        Result.SByteVal = getConstantValue(CE->getOperand(0)).SByteVal +
-                          getConstantValue(CE->getOperand(1)).SByteVal;
+      case Type::Int8TyID:
+        Result.Int8Val = getConstantValue(CE->getOperand(0)).Int8Val +
+                          getConstantValue(CE->getOperand(1)).Int8Val;
         break;
       case Type::FloatTyID:
         Result.FloatVal = getConstantValue(CE->getOperand(0)).FloatVal +
@@ -407,17 +399,13 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   switch (C->getType()->getTypeID()) {
 #define GET_CONST_VAL(TY, CTY, CLASS, GETMETH) \
   case Type::TY##TyID: Result.TY##Val = (CTY)cast<CLASS>(C)->GETMETH(); break
-    GET_CONST_VAL(Bool   , bool          , ConstantBool, getValue);
-    GET_CONST_VAL(UByte  , unsigned char , ConstantInt, getZExtValue);
-    GET_CONST_VAL(SByte  , signed char   , ConstantInt, getSExtValue);
-    GET_CONST_VAL(UShort , unsigned short, ConstantInt, getZExtValue);
-    GET_CONST_VAL(Short  , signed short  , ConstantInt, getSExtValue);
-    GET_CONST_VAL(UInt   , unsigned int  , ConstantInt, getZExtValue);
-    GET_CONST_VAL(Int    , signed int    , ConstantInt, getSExtValue);
-    GET_CONST_VAL(ULong  , uint64_t      , ConstantInt, getZExtValue);
-    GET_CONST_VAL(Long   , int64_t       , ConstantInt, getSExtValue);
-    GET_CONST_VAL(Float  , float         , ConstantFP, getValue);
-    GET_CONST_VAL(Double , double        , ConstantFP, getValue);
+    GET_CONST_VAL(Bool  , bool          , ConstantBool, getValue);
+    GET_CONST_VAL(Int8  , unsigned char , ConstantInt, getZExtValue);
+    GET_CONST_VAL(Int16 , unsigned short, ConstantInt, getZExtValue);
+    GET_CONST_VAL(Int32 , unsigned int  , ConstantInt, getZExtValue);
+    GET_CONST_VAL(Int64 , uint64_t      , ConstantInt, getZExtValue);
+    GET_CONST_VAL(Float , float         , ConstantFP, getValue);
+    GET_CONST_VAL(Double, double        , ConstantFP, getValue);
 #undef GET_CONST_VAL
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(C))
@@ -446,33 +434,29 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
   if (getTargetData()->isLittleEndian()) {
     switch (Ty->getTypeID()) {
     case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:   Ptr->Untyped[0] = Val.UByteVal; break;
-    case Type::UShortTyID:
-    case Type::ShortTyID:   Ptr->Untyped[0] = Val.UShortVal & 255;
-                            Ptr->Untyped[1] = (Val.UShortVal >> 8) & 255;
+    case Type::Int8TyID:    Ptr->Untyped[0] = Val.Int8Val; break;
+    case Type::Int16TyID:   Ptr->Untyped[0] = Val.Int16Val & 255;
+                            Ptr->Untyped[1] = (Val.Int16Val >> 8) & 255;
                             break;
     Store4BytesLittleEndian:
     case Type::FloatTyID:
-    case Type::UIntTyID:
-    case Type::IntTyID:     Ptr->Untyped[0] =  Val.UIntVal        & 255;
-                            Ptr->Untyped[1] = (Val.UIntVal >>  8) & 255;
-                            Ptr->Untyped[2] = (Val.UIntVal >> 16) & 255;
-                            Ptr->Untyped[3] = (Val.UIntVal >> 24) & 255;
+    case Type::Int32TyID:   Ptr->Untyped[0] =  Val.Int32Val       & 255;
+                            Ptr->Untyped[1] = (Val.Int32Val >>  8) & 255;
+                            Ptr->Untyped[2] = (Val.Int32Val >> 16) & 255;
+                            Ptr->Untyped[3] = (Val.Int32Val >> 24) & 255;
                             break;
     case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
                               goto Store4BytesLittleEndian;
     case Type::DoubleTyID:
-    case Type::ULongTyID:
-    case Type::LongTyID:
-      Ptr->Untyped[0] = (unsigned char)(Val.ULongVal      );
-      Ptr->Untyped[1] = (unsigned char)(Val.ULongVal >>  8);
-      Ptr->Untyped[2] = (unsigned char)(Val.ULongVal >> 16);
-      Ptr->Untyped[3] = (unsigned char)(Val.ULongVal >> 24);
-      Ptr->Untyped[4] = (unsigned char)(Val.ULongVal >> 32);
-      Ptr->Untyped[5] = (unsigned char)(Val.ULongVal >> 40);
-      Ptr->Untyped[6] = (unsigned char)(Val.ULongVal >> 48);
-      Ptr->Untyped[7] = (unsigned char)(Val.ULongVal >> 56);
+    case Type::Int64TyID:
+      Ptr->Untyped[0] = (unsigned char)(Val.Int64Val      );
+      Ptr->Untyped[1] = (unsigned char)(Val.Int64Val >>  8);
+      Ptr->Untyped[2] = (unsigned char)(Val.Int64Val >> 16);
+      Ptr->Untyped[3] = (unsigned char)(Val.Int64Val >> 24);
+      Ptr->Untyped[4] = (unsigned char)(Val.Int64Val >> 32);
+      Ptr->Untyped[5] = (unsigned char)(Val.Int64Val >> 40);
+      Ptr->Untyped[6] = (unsigned char)(Val.Int64Val >> 48);
+      Ptr->Untyped[7] = (unsigned char)(Val.Int64Val >> 56);
       break;
     default:
       cerr << "Cannot store value of type " << *Ty << "!\n";
@@ -480,33 +464,29 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
   } else {
     switch (Ty->getTypeID()) {
     case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:   Ptr->Untyped[0] = Val.UByteVal; break;
-    case Type::UShortTyID:
-    case Type::ShortTyID:   Ptr->Untyped[1] = Val.UShortVal & 255;
-                            Ptr->Untyped[0] = (Val.UShortVal >> 8) & 255;
+    case Type::Int8TyID:    Ptr->Untyped[0] = Val.Int8Val; break;
+    case Type::Int16TyID:   Ptr->Untyped[1] = Val.Int16Val & 255;
+                            Ptr->Untyped[0] = (Val.Int16Val >> 8) & 255;
                             break;
     Store4BytesBigEndian:
     case Type::FloatTyID:
-    case Type::UIntTyID:
-    case Type::IntTyID:     Ptr->Untyped[3] =  Val.UIntVal        & 255;
-                            Ptr->Untyped[2] = (Val.UIntVal >>  8) & 255;
-                            Ptr->Untyped[1] = (Val.UIntVal >> 16) & 255;
-                            Ptr->Untyped[0] = (Val.UIntVal >> 24) & 255;
+    case Type::Int32TyID:   Ptr->Untyped[3] =  Val.Int32Val        & 255;
+                            Ptr->Untyped[2] = (Val.Int32Val >>  8) & 255;
+                            Ptr->Untyped[1] = (Val.Int32Val >> 16) & 255;
+                            Ptr->Untyped[0] = (Val.Int32Val >> 24) & 255;
                             break;
     case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
                               goto Store4BytesBigEndian;
     case Type::DoubleTyID:
-    case Type::ULongTyID:
-    case Type::LongTyID:
-      Ptr->Untyped[7] = (unsigned char)(Val.ULongVal      );
-      Ptr->Untyped[6] = (unsigned char)(Val.ULongVal >>  8);
-      Ptr->Untyped[5] = (unsigned char)(Val.ULongVal >> 16);
-      Ptr->Untyped[4] = (unsigned char)(Val.ULongVal >> 24);
-      Ptr->Untyped[3] = (unsigned char)(Val.ULongVal >> 32);
-      Ptr->Untyped[2] = (unsigned char)(Val.ULongVal >> 40);
-      Ptr->Untyped[1] = (unsigned char)(Val.ULongVal >> 48);
-      Ptr->Untyped[0] = (unsigned char)(Val.ULongVal >> 56);
+    case Type::Int64TyID:
+      Ptr->Untyped[7] = (unsigned char)(Val.Int64Val      );
+      Ptr->Untyped[6] = (unsigned char)(Val.Int64Val >>  8);
+      Ptr->Untyped[5] = (unsigned char)(Val.Int64Val >> 16);
+      Ptr->Untyped[4] = (unsigned char)(Val.Int64Val >> 24);
+      Ptr->Untyped[3] = (unsigned char)(Val.Int64Val >> 32);
+      Ptr->Untyped[2] = (unsigned char)(Val.Int64Val >> 40);
+      Ptr->Untyped[1] = (unsigned char)(Val.Int64Val >> 48);
+      Ptr->Untyped[0] = (unsigned char)(Val.Int64Val >> 56);
       break;
     default:
       cerr << "Cannot store value of type " << *Ty << "!\n";
@@ -522,16 +502,13 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
   if (getTargetData()->isLittleEndian()) {
     switch (Ty->getTypeID()) {
     case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
-    case Type::UShortTyID:
-    case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[0] |
+    case Type::Int8TyID:    Result.Int8Val  = Ptr->Untyped[0]; break;
+    case Type::Int16TyID:   Result.Int16Val = (unsigned)Ptr->Untyped[0] |
                                               ((unsigned)Ptr->Untyped[1] << 8);
                             break;
     Load4BytesLittleEndian:
     case Type::FloatTyID:
-    case Type::UIntTyID:
-    case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[0] |
+    case Type::Int32TyID:    Result.Int32Val = (unsigned)Ptr->Untyped[0] |
                                             ((unsigned)Ptr->Untyped[1] <<  8) |
                                             ((unsigned)Ptr->Untyped[2] << 16) |
                                             ((unsigned)Ptr->Untyped[3] << 24);
@@ -539,8 +516,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
     case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
                               goto Load4BytesLittleEndian;
     case Type::DoubleTyID:
-    case Type::ULongTyID:
-    case Type::LongTyID:    Result.ULongVal = (uint64_t)Ptr->Untyped[0] |
+    case Type::Int64TyID:    Result.Int64Val = (uint64_t)Ptr->Untyped[0] |
                                              ((uint64_t)Ptr->Untyped[1] <<  8) |
                                              ((uint64_t)Ptr->Untyped[2] << 16) |
                                              ((uint64_t)Ptr->Untyped[3] << 24) |
@@ -556,16 +532,13 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
   } else {
     switch (Ty->getTypeID()) {
     case Type::BoolTyID:
-    case Type::UByteTyID:
-    case Type::SByteTyID:   Result.UByteVal = Ptr->Untyped[0]; break;
-    case Type::UShortTyID:
-    case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[1] |
-                                              ((unsigned)Ptr->Untyped[0] << 8);
+    case Type::Int8TyID:    Result.Int8Val  = Ptr->Untyped[0]; break;
+    case Type::Int16TyID:   Result.Int16Val = (unsigned)Ptr->Untyped[1] |
+                                             ((unsigned)Ptr->Untyped[0] << 8);
                             break;
     Load4BytesBigEndian:
     case Type::FloatTyID:
-    case Type::UIntTyID:
-    case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[3] |
+    case Type::Int32TyID:   Result.Int32Val =(unsigned)Ptr->Untyped[3] |
                                             ((unsigned)Ptr->Untyped[2] <<  8) |
                                             ((unsigned)Ptr->Untyped[1] << 16) |
                                             ((unsigned)Ptr->Untyped[0] << 24);
@@ -573,8 +546,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
     case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
                               goto Load4BytesBigEndian;
     case Type::DoubleTyID:
-    case Type::ULongTyID:
-    case Type::LongTyID:    Result.ULongVal = (uint64_t)Ptr->Untyped[7] |
+    case Type::Int64TyID:   Result.Int64Val = (uint64_t)Ptr->Untyped[7] |
                                              ((uint64_t)Ptr->Untyped[6] <<  8) |
                                              ((uint64_t)Ptr->Untyped[5] << 16) |
                                              ((uint64_t)Ptr->Untyped[4] << 24) |
