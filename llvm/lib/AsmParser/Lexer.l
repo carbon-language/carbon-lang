@@ -235,14 +235,10 @@ x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
 void            { RET_TY(Type::VoidTy,  VOID);  }
 bool            { RET_TY(Type::BoolTy,  BOOL);  }
-sbyte           { RET_TY(Type::SByteTy, SBYTE); }
-ubyte           { RET_TY(Type::UByteTy, UBYTE); }
-short           { RET_TY(Type::ShortTy, SHORT); }
-ushort          { RET_TY(Type::UShortTy,USHORT);}
-int             { RET_TY(Type::IntTy,   INT);   }
-uint            { RET_TY(Type::UIntTy,  UINT);  }
-long            { RET_TY(Type::LongTy,  LONG);  }
-ulong           { RET_TY(Type::ULongTy, ULONG); }
+i8              { RET_TY(Type::Int8Ty,  INT8);  }
+i16             { RET_TY(Type::Int16Ty, INT16); }
+i32             { RET_TY(Type::Int32Ty, INT32); }
+i64             { RET_TY(Type::Int64Ty, INT64); }
 float           { RET_TY(Type::FloatTy, FLOAT); }
 double          { RET_TY(Type::DoubleTy,DOUBLE);}
 label           { RET_TY(Type::LabelTy, LABEL); }
