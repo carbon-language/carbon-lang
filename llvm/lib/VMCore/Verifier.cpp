@@ -764,7 +764,7 @@ void Verifier::visitShiftInst(ShiftInst &SI) {
           "Shift must return an integer result!", &SI);
   Assert1(SI.getType() == SI.getOperand(0)->getType(),
           "Shift return type must be same as first operand!", &SI);
-  Assert1(SI.getOperand(1)->getType() == Type::UByteTy,
+  Assert1(SI.getOperand(1)->getType() == Type::Int8Ty,
           "Second operand to shift must be ubyte type!", &SI);
   visitInstruction(SI);
 }

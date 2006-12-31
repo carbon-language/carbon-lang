@@ -87,7 +87,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
       for (unsigned i = 0; i != SrcNumElts; ++i) {
         uint64_t V =
           DoubleToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
-        Constant *C = ConstantInt::get(Type::ULongTy, V);
+        Constant *C = ConstantInt::get(Type::Int64Ty, V);
         Result.push_back(ConstantExpr::getBitCast(C, DstEltTy ));
       }
       return ConstantPacked::get(Result);
@@ -96,7 +96,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
     assert(SrcEltTy->getTypeID() == Type::FloatTyID);
     for (unsigned i = 0; i != SrcNumElts; ++i) {
       uint32_t V = FloatToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
-      Constant *C = ConstantInt::get(Type::UIntTy, V);
+      Constant *C = ConstantInt::get(Type::Int32Ty, V);
       Result.push_back(ConstantExpr::getBitCast(C, DstEltTy));
     }
     return ConstantPacked::get(Result);
@@ -132,7 +132,7 @@ foldConstantCastPair(
 
   // Let CastInst::isEliminableCastPair do the heavy lifting.
   return CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy, DstTy,
-                                        Type::ULongTy);
+                                        Type::Int64Ty);
 }
 
 Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
@@ -217,13 +217,13 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
       if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy)) {
         std::vector<Value*> IdxList;
-        IdxList.push_back(Constant::getNullValue(Type::IntTy));
+        IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
         const Type *ElTy = PTy->getElementType();
         while (ElTy != DPTy->getElementType()) {
           if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
             if (STy->getNumElements() == 0) break;
             ElTy = STy->getElementType(0);
-            IdxList.push_back(Constant::getNullValue(Type::UIntTy));
+            IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
           } else if (const SequentialType *STy = 
                      dyn_cast<SequentialType>(ElTy)) {
             if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
@@ -296,10 +296,10 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     if (const ConstantFP *FP = dyn_cast<ConstantFP>(V)) {
       // FP -> Integral.
       if (DestTy->isIntegral()) {
-        if (DestTy == Type::IntTy || DestTy == Type::UIntTy)
+        if (DestTy == Type::Int32Ty)
           return ConstantInt::get(DestTy, FloatToBits(FP->getValue()));
-        assert((DestTy == Type::LongTy || DestTy == Type::ULongTy) 
-               && "Incorrect integer  type for bitcast!");
+        assert(DestTy == Type::Int64Ty && 
+               "Incorrect integer  type for bitcast!");
         return ConstantInt::get(DestTy, DoubleToBits(FP->getValue()));
       }
     }
@@ -712,16 +712,13 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
 
   // Ok, we have two differing integer indices.  Sign extend them to be the same
   // type.  Long is always big enough, so we use it.
-  if (C1->getType() != Type::LongTy && C1->getType() != Type::ULongTy)
-    C1 = ConstantExpr::getSExt(C1, Type::LongTy);
-  else
-    C1 = ConstantExpr::getBitCast(C1, Type::LongTy);
-  if (C2->getType() != Type::LongTy && C1->getType() != Type::ULongTy)
-    C2 = ConstantExpr::getSExt(C2, Type::LongTy);
-  else
-    C2 = ConstantExpr::getBitCast(C2, Type::LongTy);
+  if (C1->getType() != Type::Int64Ty)
+    C1 = ConstantExpr::getSExt(C1, Type::Int64Ty);
 
-  if (C1 == C2) return 0;  // Are they just differing types?
+  if (C2->getType() != Type::Int64Ty)
+    C1 = ConstantExpr::getSExt(C2, Type::Int64Ty);
+
+  if (C1 == C2) return 0;  // They are equal
 
   // If the type being indexed over is really just a zero sized type, there is
   // no pointer difference being made here.
@@ -1324,7 +1321,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
       if (uint32_t ElSize = ElTy->getPrimitiveSize()) {
         // gep null, C is equal to C*sizeof(nullty).  If nullty is a known llvm
         // type, we can statically fold this.
-        Constant *R = ConstantInt::get(Type::UIntTy, ElSize);
+        Constant *R = ConstantInt::get(Type::Int32Ty, ElSize);
         // We know R is unsigned, Idx0 is signed because it must be an index
         // through a sequential type (gep pointer operand) which is always
         // signed.
@@ -1360,9 +1357,9 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         if (!Idx0->isNullValue()) {
           const Type *IdxTy = Combined->getType();
           if (IdxTy != Idx0->getType()) {
-            Constant *C1 = ConstantExpr::getSExtOrBitCast(Idx0, Type::LongTy);
+            Constant *C1 = ConstantExpr::getSExtOrBitCast(Idx0, Type::Int64Ty);
             Constant *C2 = ConstantExpr::getSExtOrBitCast(Combined, 
-                                                          Type::LongTy);
+                                                          Type::Int64Ty);
             Combined = ConstantExpr::get(Instruction::Add, C1, C2);
           } else {
             Combined =

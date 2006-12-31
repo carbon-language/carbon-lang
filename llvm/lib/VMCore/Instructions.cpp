@@ -513,11 +513,11 @@ void BranchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 
 static Value *getAISize(Value *Amt) {
   if (!Amt)
-    Amt = ConstantInt::get(Type::UIntTy, 1);
+    Amt = ConstantInt::get(Type::Int32Ty, 1);
   else {
     assert(!isa<BasicBlock>(Amt) &&
            "Passed basic block into allocation size parameter!  Ue other ctor");
-    assert(Amt->getType() == Type::UIntTy &&
+    assert(Amt->getType() == Type::Int32Ty &&
            "Malloc/Allocation array size != UIntTy!");
   }
   return Amt;
@@ -849,7 +849,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
                                        Instruction *InsertBef)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertBef) {
-  Constant *Index = ConstantInt::get(Type::UIntTy, IndexV);
+  Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
   Ops[0].init(Val, this);
@@ -874,7 +874,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
                                        BasicBlock *InsertAE)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertAE) {
-  Constant *Index = ConstantInt::get(Type::UIntTy, IndexV);
+  Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
   
@@ -884,7 +884,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
 
 
 bool ExtractElementInst::isValidOperands(const Value *Val, const Value *Index) {
-  if (!isa<PackedType>(Val->getType()) || Index->getType() != Type::UIntTy)
+  if (!isa<PackedType>(Val->getType()) || Index->getType() != Type::Int32Ty)
     return false;
   return true;
 }
@@ -915,7 +915,7 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
                                      const std::string &Name,
                                      Instruction *InsertBef)
   : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertBef) {
-  Constant *Index = ConstantInt::get(Type::UIntTy, IndexV);
+  Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
   Ops[0].init(Vec, this);
@@ -940,7 +940,7 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
                                      const std::string &Name,
                                      BasicBlock *InsertAE)
 : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertAE) {
-  Constant *Index = ConstantInt::get(Type::UIntTy, IndexV);
+  Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
   
@@ -957,7 +957,7 @@ bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt,
   if (Elt->getType() != cast<PackedType>(Vec->getType())->getElementType())
     return false;// Second operand of insertelement must be packed element type.
     
-  if (Index->getType() != Type::UIntTy)
+  if (Index->getType() != Type::Int32Ty)
     return false;  // Third operand of insertelement must be uint.
   return true;
 }
@@ -1002,7 +1002,7 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
   if (!isa<PackedType>(V1->getType())) return false;
   if (V1->getType() != V2->getType()) return false;
   if (!isa<PackedType>(Mask->getType()) ||
-         cast<PackedType>(Mask->getType())->getElementType() != Type::UIntTy ||
+         cast<PackedType>(Mask->getType())->getElementType() != Type::Int32Ty ||
          cast<PackedType>(Mask->getType())->getNumElements() !=
          cast<PackedType>(V1->getType())->getNumElements())
     return false;
@@ -1233,23 +1233,9 @@ bool CastInst::isLosslessCast() const {
   if (SrcTy == DstTy)
     return true;
   
-  // The remaining possibilities are lossless if the typeID of the source type
-  // matches the type ID of the destination in size and fundamental type. This 
-  // prevents things like int -> ptr, int -> float, packed -> int, mismatched 
-  // packed types of the same size, and etc.
-  switch (SrcTy->getTypeID()) {
-  case Type::UByteTyID:   return DstTy == Type::SByteTy;
-  case Type::SByteTyID:   return DstTy == Type::UByteTy;
-  case Type::UShortTyID:  return DstTy == Type::ShortTy;
-  case Type::ShortTyID:   return DstTy == Type::UShortTy;
-  case Type::UIntTyID:    return DstTy == Type::IntTy;
-  case Type::IntTyID:     return DstTy == Type::UIntTy;
-  case Type::ULongTyID:   return DstTy == Type::LongTy;
-  case Type::LongTyID:    return DstTy == Type::ULongTy;
-  case Type::PointerTyID: return isa<PointerType>(DstTy);
-  default:
-    break;
-  }
+  // Pointer to pointer is always lossless.
+  if (isa<PointerType>(SrcTy))
+    return isa<PointerType>(DstTy);
   return false;  // Other types have no identity values
 }
 

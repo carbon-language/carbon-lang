@@ -31,14 +31,15 @@ using namespace llvm;
 
 Function *ilist_traits<Function>::createSentinel() {
   FunctionType *FTy =
-    FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
+    FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false, 
+                      std::vector<FunctionType::ParameterAttributes>() );
   Function *Ret = new Function(FTy, GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
   return Ret;
 }
 GlobalVariable *ilist_traits<GlobalVariable>::createSentinel() {
-  GlobalVariable *Ret = new GlobalVariable(Type::IntTy, false,
+  GlobalVariable *Ret = new GlobalVariable(Type::Int32Ty, false,
                                            GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
@@ -206,7 +207,7 @@ Function *Module::getMainFunction() {
   std::vector<const Type*> Params;
 
   // int main(void)...
-  if (Function *F = getFunction("main", FunctionType::get(Type::IntTy,
+  if (Function *F = getFunction("main", FunctionType::get(Type::Int32Ty,
                                                           Params, false)))
     return F;
 
@@ -215,10 +216,10 @@ Function *Module::getMainFunction() {
                                                           Params, false)))
     return F;
 
-  Params.push_back(Type::IntTy);
+  Params.push_back(Type::Int32Ty);
 
   // int main(int argc)...
-  if (Function *F = getFunction("main", FunctionType::get(Type::IntTy,
+  if (Function *F = getFunction("main", FunctionType::get(Type::Int32Ty,
                                                           Params, false)))
     return F;
 
@@ -228,10 +229,10 @@ Function *Module::getMainFunction() {
     return F;
 
   for (unsigned i = 0; i != 2; ++i) {  // Check argv and envp
-    Params.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
+    Params.push_back(PointerType::get(PointerType::get(Type::Int8Ty)));
 
     // int main(int argc, char **argv)...
-    if (Function *F = getFunction("main", FunctionType::get(Type::IntTy,
+    if (Function *F = getFunction("main", FunctionType::get(Type::Int32Ty,
                                                             Params, false)))
       return F;
 

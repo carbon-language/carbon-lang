@@ -96,39 +96,22 @@ Constant *Constant::getNullValue(const Type *Ty) {
     static Constant *NullBool = ConstantBool::get(false);
     return NullBool;
   }
-  case Type::SByteTyID: {
-    static Constant *NullSByte = ConstantInt::get(Type::SByteTy, 0);
-    return NullSByte;
+  case Type::Int8TyID: {
+    static Constant *NullInt8 = ConstantInt::get(Type::Int8Ty, 0);
+    return NullInt8;
   }
-  case Type::UByteTyID: {
-    static Constant *NullUByte = ConstantInt::get(Type::UByteTy, 0);
-    return NullUByte;
+  case Type::Int16TyID: {
+    static Constant *NullInt16 = ConstantInt::get(Type::Int16Ty, 0);
+    return NullInt16;
   }
-  case Type::ShortTyID: {
-    static Constant *NullShort = ConstantInt::get(Type::ShortTy, 0);
-    return NullShort;
+  case Type::Int32TyID: {
+    static Constant *NullInt32 = ConstantInt::get(Type::Int32Ty, 0);
+    return NullInt32;
   }
-  case Type::UShortTyID: {
-    static Constant *NullUShort = ConstantInt::get(Type::UShortTy, 0);
-    return NullUShort;
+  case Type::Int64TyID: {
+    static Constant *NullInt64 = ConstantInt::get(Type::Int64Ty, 0);
+    return NullInt64;
   }
-  case Type::IntTyID: {
-    static Constant *NullInt = ConstantInt::get(Type::IntTy, 0);
-    return NullInt;
-  }
-  case Type::UIntTyID: {
-    static Constant *NullUInt = ConstantInt::get(Type::UIntTy, 0);
-    return NullUInt;
-  }
-  case Type::LongTyID: {
-    static Constant *NullLong = ConstantInt::get(Type::LongTy, 0);
-    return NullLong;
-  }
-  case Type::ULongTyID: {
-    static Constant *NullULong = ConstantInt::get(Type::ULongTy, 0);
-    return NullULong;
-  }
-
   case Type::FloatTyID: {
     static Constant *NullFloat = ConstantFP::get(Type::FloatTy, 0);
     return NullFloat;
@@ -137,10 +120,8 @@ Constant *Constant::getNullValue(const Type *Ty) {
     static Constant *NullDouble = ConstantFP::get(Type::DoubleTy, 0);
     return NullDouble;
   }
-
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
-
   case Type::StructTyID:
   case Type::ArrayTyID:
   case Type::PackedTyID:
@@ -157,21 +138,10 @@ Constant *Constant::getNullValue(const Type *Ty) {
 ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::BoolTyID:   return ConstantBool::getTrue();
-  case Type::SByteTyID:
-  case Type::ShortTyID:
-  case Type::IntTyID:
-  case Type::LongTyID:   return ConstantInt::get(Ty, -1);
-
-  case Type::UByteTyID:
-  case Type::UShortTyID:
-  case Type::UIntTyID:
-  case Type::ULongTyID: {
-    // Calculate ~0 of the right type...
-    unsigned TypeBits = Ty->getPrimitiveSize()*8;
-    uint64_t Val = ~0ULL;                // All ones
-    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-    return ConstantInt::get(Ty, Val);
-  }
+  case Type::Int8TyID:
+  case Type::Int16TyID:
+  case Type::Int32TyID:
+  case Type::Int64TyID:   return ConstantInt::get(Ty, int64_t(-1));
   default: return 0;
   }
 }
@@ -573,28 +543,20 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
 bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
   switch (Ty->getTypeID()) {
   default:              return false; // These can't be represented as integers!
-  case Type::SByteTyID:
-  case Type::UByteTyID: return Val <= UINT8_MAX;
-  case Type::ShortTyID:
-  case Type::UShortTyID:return Val <= UINT16_MAX;
-  case Type::IntTyID:
-  case Type::UIntTyID:  return Val <= UINT32_MAX;
-  case Type::LongTyID:
-  case Type::ULongTyID: return true; // always true, has to fit in largest type
+  case Type::Int8TyID:  return Val <= UINT8_MAX;
+  case Type::Int16TyID: return Val <= UINT16_MAX;
+  case Type::Int32TyID: return Val <= UINT32_MAX;
+  case Type::Int64TyID: return true; // always true, has to fit in largest type
   }
 }
 
 bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
   switch (Ty->getTypeID()) {
   default:              return false; // These can't be represented as integers!
-  case Type::SByteTyID:
-  case Type::UByteTyID: return (Val >= INT8_MIN && Val <= INT8_MAX);
-  case Type::ShortTyID:
-  case Type::UShortTyID:return (Val >= INT16_MIN && Val <= UINT16_MAX);
-  case Type::IntTyID:
-  case Type::UIntTyID:  return (Val >= INT32_MIN && Val <= UINT32_MAX);
-  case Type::LongTyID:
-  case Type::ULongTyID: return true; // always true, has to fit in largest type
+  case Type::Int8TyID:  return (Val >= INT8_MIN && Val <= INT8_MAX);
+  case Type::Int16TyID: return (Val >= INT16_MIN && Val <= UINT16_MAX);
+  case Type::Int32TyID: return (Val >= INT32_MIN && Val <= UINT32_MAX);
+  case Type::Int64TyID: return true; // always true, has to fit in largest type
   }
 }
 
@@ -1029,14 +991,14 @@ void ConstantArray::destroyConstant() {
 Constant *ConstantArray::get(const std::string &Str, bool AddNull) {
   std::vector<Constant*> ElementVals;
   for (unsigned i = 0; i < Str.length(); ++i)
-    ElementVals.push_back(ConstantInt::get(Type::SByteTy, Str[i]));
+    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, Str[i]));
 
   // Add a null terminator to the string...
   if (AddNull) {
-    ElementVals.push_back(ConstantInt::get(Type::SByteTy, 0));
+    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, 0));
   }
 
-  ArrayType *ATy = ArrayType::get(Type::SByteTy, ElementVals.size());
+  ArrayType *ATy = ArrayType::get(Type::Int8Ty, ElementVals.size());
   return ConstantArray::get(ATy, ElementVals);
 }
 
@@ -1044,8 +1006,7 @@ Constant *ConstantArray::get(const std::string &Str, bool AddNull) {
 /// ubyte, and if the elements of the array are all ConstantInt's.
 bool ConstantArray::isString() const {
   // Check the element type for sbyte or ubyte...
-  if (getType()->getElementType() != Type::UByteTy &&
-      getType()->getElementType() != Type::SByteTy)
+  if (getType()->getElementType() != Type::Int8Ty)
     return false;
   // Check the elements to make sure they are all integers, not constant
   // expressions.
@@ -1060,8 +1021,7 @@ bool ConstantArray::isString() const {
 /// null bytes except its terminator.
 bool ConstantArray::isCString() const {
   // Check the element type for sbyte or ubyte...
-  if (getType()->getElementType() != Type::UByteTy &&
-      getType()->getElementType() != Type::SByteTy)
+  if (getType()->getElementType() != Type::Int8Ty)
     return false;
   Constant *Zero = Constant::getNullValue(getOperand(0)->getType());
   // Last element must be a null.
@@ -1292,6 +1252,7 @@ void UndefValue::destroyConstant() {
 
 //---- ConstantExpr::get() implementations...
 //
+
 struct ExprMapKeyType {
   explicit ExprMapKeyType(unsigned opc, std::vector<Constant*> ops,
       unsigned short pred = 0) : opcode(opc), predicate(pred), operands(ops) { }
@@ -1612,12 +1573,12 @@ Constant *ConstantExpr::getSizeOf(const Type *Ty) {
   // sizeof is implemented as: (ulong) gep (Ty*)null, 1
   return getCast(Instruction::PtrToInt, getGetElementPtr(getNullValue(
     PointerType::get(Ty)), std::vector<Constant*>(1, 
-    ConstantInt::get(Type::UIntTy, 1))), Type::ULongTy);
+    ConstantInt::get(Type::Int32Ty, 1))), Type::Int64Ty);
 }
 
 Constant *ConstantExpr::getPtrPtrFromArrayPtr(Constant *C) {
   // pointer from array is implemented as: getelementptr arr ptr, 0, 0
-  static std::vector<Constant*> Indices(2, ConstantInt::get(Type::UIntTy, 0));
+  static std::vector<Constant*> Indices(2, ConstantInt::get(Type::Int32Ty, 0));
 
   return ConstantExpr::getGetElementPtr(C, Indices);
 }
@@ -1710,7 +1671,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    assert(C2->getType() == Type::UByteTy && "Shift should be by ubyte!");
+    assert(C2->getType() == Type::Int8Ty && "Shift should be by ubyte!");
     assert(C1->getType()->isInteger() &&
            "Tried to create a shift operation on a non-integer type!");
     break;
@@ -1753,7 +1714,7 @@ Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
           Opcode == Instruction::LShr  ||
           Opcode == Instruction::AShr) &&
          "Invalid opcode in binary constant expression");
-  assert(C1->getType()->isIntegral() && C2->getType() == Type::UByteTy &&
+  assert(C1->getType()->isIntegral() && C2->getType() == Type::Int8Ty &&
          "Invalid operand types for Shift constant expr!");
 
   if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
@@ -1854,7 +1815,7 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   assert(isa<PackedType>(Val->getType()) &&
          "Tried to create extractelement operation on non-packed type!");
-  assert(Idx->getType() == Type::UIntTy &&
+  assert(Idx->getType() == Type::Int32Ty &&
          "Extractelement index must be uint type!");
   return getExtractElementTy(cast<PackedType>(Val->getType())->getElementType(),
                              Val, Idx);
@@ -1878,7 +1839,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
          "Tried to create insertelement operation on non-packed type!");
   assert(Elt->getType() == cast<PackedType>(Val->getType())->getElementType()
          && "Insertelement types must match!");
-  assert(Idx->getType() == Type::UIntTy &&
+  assert(Idx->getType() == Type::Int32Ty &&
          "Insertelement index must be uint type!");
   return getInsertElementTy(cast<PackedType>(Val->getType())->getElementType(),
                             Val, Elt, Idx);

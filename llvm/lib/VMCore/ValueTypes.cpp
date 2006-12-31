@@ -88,10 +88,10 @@ const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   default: assert(0 && "ValueType does not correspond to LLVM type!");
   case MVT::isVoid:return Type::VoidTy;
   case MVT::i1:    return Type::BoolTy;
-  case MVT::i8:    return Type::UByteTy;
-  case MVT::i16:   return Type::UShortTy;
-  case MVT::i32:   return Type::UIntTy;
-  case MVT::i64:   return Type::ULongTy;
+  case MVT::i8:    return Type::Int8Ty;
+  case MVT::i16:   return Type::Int16Ty;
+  case MVT::i32:   return Type::Int32Ty;
+  case MVT::i64:   return Type::Int64Ty;
   case MVT::f32:   return Type::FloatTy;
   case MVT::f64:   return Type::DoubleTy;
   }
