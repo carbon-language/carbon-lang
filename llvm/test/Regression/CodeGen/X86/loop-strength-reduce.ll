@@ -4,10 +4,10 @@
 
 %A = internal global [16 x [16 x int]] zeroinitializer, align 32
 
-void %test(int %row, int %N) {
+void %test(int %row, int %N.in) {
 entry:
-	%N = cast int %N to uint
-	%tmp5 = setgt int %N, 0
+	%N = cast int %N.in to uint
+	%tmp5 = setgt int %N.in, 0
 	br bool %tmp5, label %cond_true, label %return
 
 cond_true:

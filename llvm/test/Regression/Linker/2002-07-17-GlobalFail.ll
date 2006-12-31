@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s > %t.bc
+; RUN: llvm-upgrade < %s | llvm-as > %t.bc
 ; RUN: echo | llvm-as > %t.tmp.bc
 ; RUN: llvm-link %t.tmp.bc %t.bc
 

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | grep 'uint -1' &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | grep 'i32 -1' &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | not grep zeroinitializer
 
 < 4 x uint> %test() {

@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | not grep alloca &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | grep 'bitcast.*float.*int'
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | grep 'bitcast.*float.*i32'
 
 int %test(float %X) {
         %X_addr = alloca float

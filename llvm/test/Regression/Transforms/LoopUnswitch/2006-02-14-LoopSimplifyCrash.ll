@@ -1421,8 +1421,8 @@ no_exit.53.outer:
 no_exit.53:		; preds = %else.166, %else.168, %then.360, %no_exit.53.outer
 	%file.2.3.3.ph = phi int [ 0, %no_exit.53.outer ], [ %inc.551688, %then.360 ], [ %inc.551701, %else.168 ], [ %file.2.3.3.ph, %else.166 ]		; <int> [#uses=2]
 	%nempty.5.3.ph = phi int [ 0, %no_exit.53.outer ], [ %nempty.5.3, %then.360 ], [ %nempty.5.3, %else.168 ], [ %nempty.5.3.ph, %else.166 ]		; <int> [#uses=2]
-	%indvar2053 = phi uint [ 0, %no_exit.53.outer ], [ 0, %then.360 ], [ 0, %else.168 ], [ %indvar.next2054, %else.166 ]		; <uint> [#uses=2]
-	%indvar2053 = cast uint %indvar2053 to int		; <int> [#uses=2]
+	%indvar2053.ui = phi uint [ 0, %no_exit.53.outer ], [ 0, %then.360 ], [ 0, %else.168 ], [ %indvar.next2054, %else.166 ]		; <uint> [#uses=2]
+	%indvar2053 = cast uint %indvar2053.ui to int		; <int> [#uses=2]
 	%file.2.3.3 = add int %indvar2053, %file.2.3.3.ph		; <int> [#uses=4]
 	%nempty.5.3 = add int %indvar2053, %nempty.5.3.ph		; <int> [#uses=3]
 	%tmp.4749 = add int %file.2.3.3, %tmp.4747		; <int> [#uses=1]
@@ -1472,7 +1472,7 @@ else.168:		; preds = %endif.358
 else.166:		; preds = %no_exit.53
 	%inc.55 = add int %file.2.3.3, 1		; <int> [#uses=1]
 	%tmp.47421705 = setlt int %inc.55, 8		; <bool> [#uses=1]
-	%indvar.next2054 = add uint %indvar2053, 1		; <uint> [#uses=1]
+	%indvar.next2054 = add uint %indvar2053.ui, 1		; <uint> [#uses=1]
 	br bool %tmp.47421705, label %no_exit.53, label %loopexit.56
 
 loopexit.56:		; preds = %else.166, %else.168, %then.360

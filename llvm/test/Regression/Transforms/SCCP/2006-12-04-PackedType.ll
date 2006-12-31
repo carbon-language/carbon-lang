@@ -105,8 +105,8 @@ implementation   ; Functions:
 
 void %gldLLVMVecPointRender(%struct.GLDContextRec* %ctx) {
 entry:
-	%tmp = getelementptr %struct.GLDContextRec* %ctx, int 0, uint 22		; <uint*> [#uses=1]
-	%tmp = load uint* %tmp		; <uint> [#uses=3]
+	%tmp.uip = getelementptr %struct.GLDContextRec* %ctx, int 0, uint 22		; <uint*> [#uses=1]
+	%tmp = load uint* %tmp.uip		; <uint> [#uses=3]
 	%tmp91 = lshr uint %tmp, ubyte 5		; <uint> [#uses=1]
 	%tmp92 = trunc uint %tmp91 to bool		; <bool> [#uses=1]
 	br bool %tmp92, label %cond_true93, label %cond_next116

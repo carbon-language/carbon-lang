@@ -19,7 +19,6 @@ bb:		; preds = %bb, %entry
 	]
 
 bb7:		; preds = %bb, %bb
-	%tmp = cast sbyte %tmp to ubyte		; <ubyte> [#uses=1]
 	tail call void %foo( ubyte %tmp )
 	ret sbyte* %tmp2
 }

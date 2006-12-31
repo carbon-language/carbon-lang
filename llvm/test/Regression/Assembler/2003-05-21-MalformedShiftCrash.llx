@@ -1,4 +1,4 @@
 ; Found by inspection of the code
-; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f 2>&1 | grep "Shift constant expression"
+; RUN: llvm-upgrade < %s | llvm-as 2>&1 > /dev/null | grep "Shift constant expression"
 
 global int shr (float 1.0, ubyte 2)

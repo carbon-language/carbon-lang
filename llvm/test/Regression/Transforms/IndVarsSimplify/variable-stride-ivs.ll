@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -instcombine | llvm-dis | grep 'store int 0'
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -instcombine | llvm-dis | grep 'store i32 0'
 ; Test that -indvars can reduce variable stride IVs.  If it can reduce variable
 ; stride iv's, it will make %iv. and %m.0.0 isomorphic to each other without 
 ; cycles, allowing the tmp.21 subtraction to be eliminated.
@@ -19,7 +19,7 @@ no_exit.preheader:              ; preds = %entry
         br label %no_exit
 
 no_exit:                ; preds = %no_exit, %no_exit.preheader
-        %iv. = phi uint [ 0, %no_exit.preheader ], [ %iv..inc, %no_exit ]               ; <uint> [#uses=1]
+        %iv.ui = phi uint [ 0, %no_exit.preheader ], [ %iv..inc.ui, %no_exit ]               ; <uint> [#uses=1]
         %iv. = phi int [ %tmp.5, %no_exit.preheader ], [ %iv..inc, %no_exit ]           ; <int> [#uses=2]
         %m.0.0 = phi int [ %tmp.5, %no_exit.preheader ], [ %tmp.24, %no_exit ]          ; <int> [#uses=2]
         store int 2, int* %tmp.16
@@ -27,8 +27,8 @@ no_exit:                ; preds = %no_exit, %no_exit.preheader
         store int %tmp.21, int* %data
         %tmp.24 = add int %m.0.0, %tmp.9                ; <int> [#uses=1]
         %iv..inc = add int %tmp.9, %iv.         ; <int> [#uses=1]
-        %iv..inc = add uint %iv., 1             ; <uint> [#uses=2]
-        %iv..inc1 = cast uint %iv..inc to int           ; <int> [#uses=1]
+        %iv..inc.ui = add uint %iv.ui, 1             ; <uint> [#uses=2]
+        %iv..inc1 = cast uint %iv..inc.ui to int           ; <int> [#uses=1]
         %tmp.12 = setlt int %iv..inc1, %tmp.2           ; <bool> [#uses=1]
         br bool %tmp.12, label %no_exit, label %return.loopexit
 

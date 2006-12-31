@@ -25,8 +25,8 @@ no_exit.1.outer:		; preds = %cond_true, %no_exit.1.preheader
 	br label %no_exit.1
 
 no_exit.1:		; preds = %cond_continue, %no_exit.1.outer
-	%indvar = phi uint [ 0, %no_exit.1.outer ], [ %indvar.next, %cond_continue ]		; <uint> [#uses=2]
-	%indvar = cast uint %indvar to int		; <int> [#uses=1]
+	%indvar.ui = phi uint [ 0, %no_exit.1.outer ], [ %indvar.next, %cond_continue ]		; <uint> [#uses=2]
+	%indvar = cast uint %indvar.ui to int		; <int> [#uses=1]
 	%j.1.2 = add int %indvar, %j.1.2.ph		; <int> [#uses=2]
 	%tmp.11 = add int %j.1.2, %tmp.9		; <int> [#uses=1]
 	%tmp.12 = cast int %tmp.11 to ubyte		; <ubyte> [#uses=1]
@@ -43,7 +43,7 @@ cond_true:		; preds = %no_exit.1
 
 cond_continue:		; preds = %no_exit.1
 	%tmp.519 = setlt int %inc.1, %C		; <bool> [#uses=1]
-	%indvar.next = add uint %indvar, 1		; <uint> [#uses=1]
+	%indvar.next = add uint %indvar.ui, 1		; <uint> [#uses=1]
 	br bool %tmp.519, label %no_exit.1, label %loopexit.1
 
 loopexit.1:		; preds = %cond_continue, %cond_true, %loopentry.1

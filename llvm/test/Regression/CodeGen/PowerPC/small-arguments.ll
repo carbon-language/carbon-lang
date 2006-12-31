@@ -1,15 +1,14 @@
-
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep 'extsh\|rlwinm'
 
-declare short %foo()
+declare short @sext %foo()
 
-int %test1(short %X) {
+int %test1(short @sext %X) {
 	%Y = cast short %X to int  ;; dead
 	ret int %Y
 }
 
-int %test2(ushort %X) {
+int %test2(ushort @zext %X) {
 	%Y = cast ushort %X to int
 	%Z = and int %Y, 65535      ;; dead
 	ret int %Z
@@ -48,8 +47,7 @@ uint %test6(uint* %P) {
         ret uint %tmp.2
 }
 
-ushort %test7(float %a) {
+ushort @zext %test7(float %a) {
         %tmp.1 = cast float %a to ushort
         ret ushort %tmp.1
 }
-

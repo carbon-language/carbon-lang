@@ -9,8 +9,8 @@ void %test() {
 entry:
 	%tmp = getelementptr { long, long, long, long }* null, int 0, uint 3
 	%tmp = load long* %tmp		; <long> [#uses=1]
-	%tmp8 = load ulong* null		; <ulong> [#uses=1]
-	%tmp8 = cast ulong %tmp8 to long		; <long> [#uses=1]
+	%tmp8.ui = load ulong* null		; <ulong> [#uses=1]
+	%tmp8 = cast ulong %tmp8.ui to long		; <long> [#uses=1]
 	%tmp9 = and long %tmp8, %tmp		; <long> [#uses=1]
 	%sext = cast long %tmp9 to int		; <int> [#uses=1]
 	%tmp27.i = cast int %sext to long		; <long> [#uses=1]

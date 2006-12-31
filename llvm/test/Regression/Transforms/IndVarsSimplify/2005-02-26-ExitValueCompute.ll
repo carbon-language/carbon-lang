@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep 'ret int 152'
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep 'ret i32 152'
 
 int %main() {
 entry:

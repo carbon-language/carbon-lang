@@ -1,5 +1,5 @@
-// RUN: %llvmgcc -S %s -o - | grep 'llvm.ctlz.i32(uint' &&
-// RUN: %llvmgcc -S %s -o - | not grep 'llvm.ctlz.i32(int'
+// RUN: %llvmgcc -S %s -o - | grep 'llvm.ctlz.i32(i32'
+// RUNMEIFWEHADSIGNEDTYPES: %llvmgcc -S %s -o - | not grep 'llvm.ctlz.i32(i32'
 
 unsigned t2(unsigned X) {
   return __builtin_clz(X);

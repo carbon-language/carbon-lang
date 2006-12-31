@@ -3,14 +3,14 @@
 
 implementation   ; Functions:
 
-void %f(int %a, ...) {
+void %f(int %a_arg, ...) {
 entry:
-	%a = cast int %a to uint		; <uint> [#uses=1]
+	%a = cast int %a_arg to uint		; <uint> [#uses=1]
 	%l1 = alloca sbyte*, align 4		; <sbyte**> [#uses=5]
 	%l2 = alloca sbyte*, align 4		; <sbyte**> [#uses=4]
 	%memtmp = alloca sbyte*		; <sbyte**> [#uses=2]
 	call void %llvm.va_start( sbyte** %l1 )
-	%tmp22 = seteq int %a, 0		; <bool> [#uses=1]
+	%tmp22 = seteq int %a_arg, 0		; <bool> [#uses=1]
 	%tmp23 = volatile load sbyte** %l1		; <sbyte*> [#uses=2]
 	br bool %tmp22, label %bb8, label %bb
 

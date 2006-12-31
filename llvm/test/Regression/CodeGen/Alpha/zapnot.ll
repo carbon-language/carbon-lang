@@ -1,11 +1,10 @@
 ; Make sure this testcase codegens to the bic instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'zapnot'
+; RUN: llvm-as < %s | llc -march=alpha | grep 'zapnot'
 
 implementation   ; Functions:
 
-ushort %foo(long %y) {
+define i16 @zext %foo(i64 %y) {
 entry:
-        %tmp.1 = cast long %y to ushort         ; <ushort> [#uses=1]
-        ret ushort %tmp.1
+        %tmp.1 = trunc i64 %y to i16         ; <ushort> [#uses=1]
+        ret i16 %tmp.1
 }
-

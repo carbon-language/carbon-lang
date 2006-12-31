@@ -413,11 +413,11 @@ invcont222:		; preds = %cond_true220
 cond_next225:		; preds = %invcont222, %cond_true217, %invcont213
 	%toPage.1 = phi int [ %tmp223, %invcont222 ], [ %tmp214, %cond_true217 ], [ %tmp214, %invcont213 ]		; <int> [#uses=2]
 	%fromPage.1 = phi int [ 1, %invcont222 ], [ %tmp211, %cond_true217 ], [ %tmp211, %invcont213 ]		; <int> [#uses=2]
-	%tmp = invoke uint %_ZNK8QPrinter9pageOrderEv( %struct.QPrinter* %printer )
+	%tmp.page = invoke uint %_ZNK8QPrinter9pageOrderEv( %struct.QPrinter* %printer )
 			to label %invcont227 unwind label %cleanup329		; <uint> [#uses=1]
 
 invcont227:		; preds = %cond_next225
-	%tmp228 = seteq uint %tmp, 1		; <bool> [#uses=1]
+	%tmp228 = seteq uint %tmp.page, 1		; <bool> [#uses=1]
 	br bool %tmp228, label %cond_true230, label %cond_next234
 
 cond_true230:		; preds = %invcont227

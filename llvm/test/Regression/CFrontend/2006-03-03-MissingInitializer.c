@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -o - | gccas | llvm-dis | grep nate | grep 'global int 0'
+// RUN: %llvmgcc %s -S -o - | gccas | llvm-dis | grep nate | grep 'global i32 0'
 
 struct X { int *XX; int Y;};
 

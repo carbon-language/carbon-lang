@@ -9,10 +9,10 @@ implementation   ; Functions:
 
 void %foo(int %W, int %X, int %Y, int %Z) {
 entry:
-	%X = cast int %X to uint		; <uint> [#uses=1]
-	%Y = cast int %Y to uint		; <uint> [#uses=1]
-	%Z = cast int %Z to uint		; <uint> [#uses=1]
-	%W = cast int %W to uint		; <uint> [#uses=1]
+	%X.u = cast int %X to uint		; <uint> [#uses=1]
+	%Y.u = cast int %Y to uint		; <uint> [#uses=1]
+	%Z.u = cast int %Z to uint		; <uint> [#uses=1]
+	%W.u = cast int %W to uint		; <uint> [#uses=1]
 	%tmp1 = and int %W, 1		; <int> [#uses=1]
 	%tmp1 = seteq int %tmp1, 0		; <bool> [#uses=1]
 	br bool %tmp1, label %cond_false, label %bb5
@@ -21,7 +21,7 @@ bb:		; preds = %bb5, %bb
 	%indvar77 = phi uint [ %indvar.next78, %bb ], [ 0, %bb5 ]		; <uint> [#uses=1]
 	%tmp2 = tail call int (...)* %bar( )		; <int> [#uses=0]
 	%indvar.next78 = add uint %indvar77, 1		; <uint> [#uses=2]
-	%exitcond79 = seteq uint %indvar.next78, %X		; <bool> [#uses=1]
+	%exitcond79 = seteq uint %indvar.next78, %X.u		; <bool> [#uses=1]
 	br bool %exitcond79, label %cond_next48, label %bb
 
 bb5:		; preds = %entry
@@ -37,7 +37,7 @@ bb12:		; preds = %bb16, %bb12
 	%indvar72 = phi uint [ %indvar.next73, %bb12 ], [ 0, %bb16 ]		; <uint> [#uses=1]
 	%tmp13 = tail call int (...)* %bar( )		; <int> [#uses=0]
 	%indvar.next73 = add uint %indvar72, 1		; <uint> [#uses=2]
-	%exitcond74 = seteq uint %indvar.next73, %Y		; <bool> [#uses=1]
+	%exitcond74 = seteq uint %indvar.next73, %Y.u		; <bool> [#uses=1]
 	br bool %exitcond74, label %cond_next48, label %bb12
 
 bb16:		; preds = %cond_false
@@ -53,7 +53,7 @@ bb25:		; preds = %bb29, %bb25
 	%indvar67 = phi uint [ %indvar.next68, %bb25 ], [ 0, %bb29 ]		; <uint> [#uses=1]
 	%tmp26 = tail call int (...)* %bar( )		; <int> [#uses=0]
 	%indvar.next68 = add uint %indvar67, 1		; <uint> [#uses=2]
-	%exitcond69 = seteq uint %indvar.next68, %Z		; <bool> [#uses=1]
+	%exitcond69 = seteq uint %indvar.next68, %Z.u		; <bool> [#uses=1]
 	br bool %exitcond69, label %cond_next48, label %bb25
 
 bb29:		; preds = %cond_false20
@@ -72,9 +72,8 @@ bb38:		; preds = %bb42
 
 bb42:		; preds = %cond_false33, %bb38
 	%indvar = phi uint [ %indvar.next, %bb38 ], [ 0, %cond_false33 ]		; <uint> [#uses=3]
-	%indvar = cast uint %indvar to int		; <int> [#uses=1]
 	%W_addr.0 = sub int %W, %indvar		; <int> [#uses=1]
-	%exitcond = seteq uint %indvar, %W		; <bool> [#uses=1]
+	%exitcond = seteq uint %indvar, %W.u		; <bool> [#uses=1]
 	br bool %exitcond, label %cond_next48, label %bb38
 
 cond_next48:		; preds = %bb, %bb12, %bb25, %bb42, %cond_false33, %bb29, %bb16, %bb5

@@ -11,10 +11,8 @@ int %compare(sbyte* %a, sbyte* %b) {
 	%tmp4 = getelementptr ubyte* %tmp, uint %tmp3		; <ubyte*> [#uses=1]
 	%tmp7 = load uint* %tmp		; <uint> [#uses=1]
 	%tmp8 = getelementptr ubyte* %tmp, uint %tmp7		; <ubyte*> [#uses=1]
-	%tmp8 = cast ubyte* %tmp8 to sbyte*		; <sbyte*> [#uses=1]
-	%tmp4 = cast ubyte* %tmp4 to sbyte*		; <sbyte*> [#uses=1]
-	%tmp = tail call int %memcmp( sbyte* %tmp8, sbyte* %tmp4, uint %tmp )		; <int> [#uses=1]
-	ret int %tmp
+	%result = tail call int %memcmp( sbyte* %tmp8, sbyte* %tmp4, uint %tmp )		; <int> [#uses=1]
+	ret int %result
 }
 
 declare int %memcmp(sbyte*, sbyte*, uint)

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep 'ret int 27'
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep 'ret i32 27'
 
 ; Make sure to compute the right exit value based on negative strides.
 ; PR726

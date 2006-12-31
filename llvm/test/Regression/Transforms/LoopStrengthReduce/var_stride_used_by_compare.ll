@@ -17,10 +17,10 @@ target triple = "i686-apple-darwin8"
 
 implementation   ; Functions:
 
-void %foo(int %k, int %i) {
+void %foo(int %k, int %i.s) {
 entry:
-	%i = cast int %i to uint		; <uint> [#uses=2]
-	%k_addr.012 = shl int %i, ubyte 1		; <int> [#uses=1]
+	%i = cast int %i.s to uint		; <uint> [#uses=2]
+	%k_addr.012 = shl int %i.s, ubyte 1		; <int> [#uses=1]
 	%tmp14 = setgt int %k_addr.012, 8192		; <bool> [#uses=1]
 	br bool %tmp14, label %return, label %bb.preheader
 
@@ -35,7 +35,7 @@ bb:		; preds = %bb, %bb.preheader
 	%k_addr.0.0 = cast uint %tmp.16 to int		; <int> [#uses=1]
 	%tmp = getelementptr [8193 x sbyte]* %flags2, int 0, uint %tmp.16		; <sbyte*> [#uses=1]
 	store sbyte 0, sbyte* %tmp
-	%k_addr.0 = add int %k_addr.0.0, %i		; <int> [#uses=1]
+	%k_addr.0 = add int %k_addr.0.0, %i.s		; <int> [#uses=1]
 	%tmp = setgt int %k_addr.0, 8192		; <bool> [#uses=1]
 	%indvar.next = add uint %indvar, 1		; <uint> [#uses=1]
 	br bool %tmp, label %return.loopexit, label %bb

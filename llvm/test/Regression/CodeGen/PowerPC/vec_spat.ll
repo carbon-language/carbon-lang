@@ -62,10 +62,10 @@ void %splat_h(short %tmp, <16 x ubyte>* %dst) {
 void %spltish(<16 x ubyte>* %A, <16 x ubyte>* %B) {
 	; Gets converted to 16 x ubyte 
         %tmp = load <16 x ubyte>* %B            
-        %tmp = cast <16 x ubyte> %tmp to <16 x sbyte>           
-        %tmp4 = sub <16 x sbyte> %tmp, cast (<8 x short> < short 15, short 15, short 15, short 15, short 15, short 15, short 15, short 15 > to <16 x sbyte>)            
-        %tmp4 = cast <16 x sbyte> %tmp4 to <16 x ubyte>         
-        store <16 x ubyte> %tmp4, <16 x ubyte>* %A
+        %tmp.s = cast <16 x ubyte> %tmp to <16 x sbyte>           
+        %tmp4 = sub <16 x sbyte> %tmp.s, cast (<8 x short> < short 15, short 15, short 15, short 15, short 15, short 15, short 15, short 15 > to <16 x sbyte>)            
+        %tmp4.u = cast <16 x sbyte> %tmp4 to <16 x ubyte>         
+        store <16 x ubyte> %tmp4.u, <16 x ubyte>* %A
         ret void
 }
 

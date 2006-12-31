@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -ipsccp | llvm-dis | grep -v 'ret int 0' | grep -v 'ret int undef' | not grep ret
+; RUN: llvm-upgrade < %s | llvm-as | opt -ipsccp | llvm-dis | grep -v 'ret i32 0' | grep -v 'ret i32 undef' | not grep ret
 
 implementation
 

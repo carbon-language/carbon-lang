@@ -10,7 +10,7 @@ implementation   ; Functions:
 
 int %mem_mono_copy_mono(%struct.gx_device* %dev, ubyte* %base, int %sourcex, int %raster, int %x, int %y, int %w, int %h, uint %zero, uint %one) {
 entry:
-	%raster = cast int %raster to uint		; <uint> [#uses=3]
+	%raster.ui = cast int %raster to uint		; <uint> [#uses=3]
 	%tmp = seteq uint %one, %zero		; <bool> [#uses=1]
 	br bool %tmp, label %cond_true, label %cond_next
 
@@ -146,7 +146,6 @@ cond_true249:		; preds = %cond_true249, %cond_true249.preheader
 	%optr.3.2 = phi ubyte* [ %tmp232, %cond_true249 ], [ %dest.1.0, %cond_true249.preheader ]		; <ubyte*> [#uses=1]
 	%bptr.3.2 = phi ubyte* [ %tmp226, %cond_true249 ], [ %line.1.0, %cond_true249.preheader ]		; <ubyte*> [#uses=1]
 	%tmp. = add int %tmp109, %w		; <int> [#uses=1]
-	%indvar = cast uint %indvar to int		; <int> [#uses=1]
 	%tmp.58 = mul int %indvar, -8		; <int> [#uses=1]
 	%tmp.57 = add int %tmp., -16		; <int> [#uses=1]
 	%tmp246.2 = add int %tmp.58, %tmp.57		; <int> [#uses=1]
@@ -236,10 +235,8 @@ cond_true295.us:		; preds = %cond_next280.us, %cond_true295.preheader.split.us
 	%dest.1.0.us = phi ubyte* [ %tmp286.us, %cond_next280.us ], [ %tmp100, %cond_true295.preheader.split.us ]		; <ubyte*> [#uses=3]
 	%dest_line.1.0.us = phi ubyte** [ %tmp282.us, %cond_next280.us ], [ %tmp96, %cond_true295.preheader.split.us ]		; <ubyte**> [#uses=1]
 	%tmp.89 = sub uint 0, %indvar86		; <uint> [#uses=1]
-	%tmp.89 = cast uint %tmp.89 to int		; <int> [#uses=1]
 	%tmp292.0.us = add int %tmp.89, %tmp29222		; <int> [#uses=1]
-	%tmp.91 = mul uint %indvar86, %raster		; <uint> [#uses=1]
-	%tmp.91 = cast uint %tmp.91 to int		; <int> [#uses=1]
+	%tmp.91 = mul uint %indvar86, %raster.ui		; <uint> [#uses=1]
 	%tmp104.sum101 = add int %tmp102, %tmp.91		; <int> [#uses=1]
 	%line.1.0.us = getelementptr ubyte* %base, int %tmp104.sum101		; <ubyte*> [#uses=2]
 	%tmp.us = load ubyte* %line.1.0.us		; <ubyte> [#uses=1]
@@ -313,10 +310,8 @@ cond_true295:		; preds = %cond_true295.preheader.split, %cond_next280
 	%dest.1.0 = phi ubyte* [ %tmp286, %cond_next280 ], [ %tmp100, %cond_true295.preheader.split ]		; <ubyte*> [#uses=4]
 	%dest_line.1.0 = phi ubyte** [ %tmp282, %cond_next280 ], [ %tmp96, %cond_true295.preheader.split ]		; <ubyte**> [#uses=1]
 	%tmp.63 = sub uint 0, %indvar60		; <uint> [#uses=1]
-	%tmp.63 = cast uint %tmp.63 to int		; <int> [#uses=1]
 	%tmp292.0 = add int %tmp.63, %tmp29222		; <int> [#uses=1]
-	%tmp.65 = mul uint %indvar60, %raster		; <uint> [#uses=1]
-	%tmp.65 = cast uint %tmp.65 to int		; <int> [#uses=1]
+	%tmp.65 = mul uint %indvar60, %raster.ui		; <uint> [#uses=1]
 	%tmp104.sum97 = add int %tmp102, %tmp.65		; <int> [#uses=1]
 	%line.1.0 = getelementptr ubyte* %base, int %tmp104.sum97		; <ubyte*> [#uses=3]
 	%tmp = load ubyte* %line.1.0		; <ubyte> [#uses=1]
@@ -386,7 +381,6 @@ cond_true398:		; preds = %cond_true398, %cond_true398.preheader
 	%optr309.3.0 = phi ubyte* [ %optr309.3, %cond_true398 ], [ %optr309.353, %cond_true398.preheader ]		; <ubyte*> [#uses=2]
 	%optr309.3.in.0 = add uint %indvar66, %optr309.3.in51		; <uint> [#uses=1]
 	%tmp.70 = add int %tmp109, %w		; <int> [#uses=1]
-	%indvar66 = cast uint %indvar66 to int		; <int> [#uses=1]
 	%tmp.72 = mul int %indvar66, -8		; <int> [#uses=1]
 	%tmp.71 = add int %tmp.70, -8		; <int> [#uses=1]
 	%count308.3.0 = add int %tmp.72, %tmp.71		; <int> [#uses=1]
@@ -440,7 +434,6 @@ cond_true414:		; preds = %cond_true404
 	%tmp416 = load ubyte* %tmp410		; <ubyte> [#uses=1]
 	%tmp416 = cast ubyte %tmp416 to uint		; <uint> [#uses=1]
 	%tmp418 = shr uint %tmp416, ubyte %tmp319		; <uint> [#uses=1]
-	%tmp418 = cast uint %tmp418 to int		; <int> [#uses=1]
 	%tmp420 = add int %tmp418, %tmp408		; <int> [#uses=1]
 	br label %cond_next422
 
@@ -479,7 +472,6 @@ cond_true457.preheader:		; preds = %cond_false299
 	%tmp354 = and uint %iftmp.37.0, %mask.1.1		; <uint> [#uses=1]
 	%tmp361 = sub int %w, %tmp110		; <int> [#uses=2]
 	%tmp39755 = setgt int %tmp361, 7		; <bool> [#uses=1]
-	%iftmp.35.0 = cast uint %iftmp.35.0 to int		; <int> [#uses=1]
 	%tmp426 = cast uint %rmask.0.1 to ubyte		; <ubyte> [#uses=1]
 	%tmp426not = xor ubyte %tmp426, 255		; <ubyte> [#uses=1]
 	%tmp428 = or ubyte %tmp347, %tmp426not		; <ubyte> [#uses=1]
@@ -492,10 +484,8 @@ cond_true457:		; preds = %cond_true457.preheader, %cond_next442
 	%dest.3.0 = phi ubyte* [ %tmp448, %cond_next442 ], [ %tmp100, %cond_true457.preheader ]		; <ubyte*> [#uses=3]
 	%dest_line.3.0 = phi ubyte** [ %tmp444, %cond_next442 ], [ %tmp96, %cond_true457.preheader ]		; <ubyte**> [#uses=1]
 	%tmp.77 = sub uint 0, %indvar74		; <uint> [#uses=1]
-	%tmp.77 = cast uint %tmp.77 to int		; <int> [#uses=1]
 	%tmp454.0 = add int %tmp.77, %tmp45438		; <int> [#uses=1]
-	%tmp.79 = mul uint %indvar74, %raster		; <uint> [#uses=1]
-	%tmp.79 = cast uint %tmp.79 to int		; <int> [#uses=1]
+	%tmp.79 = mul uint %indvar74, %raster.ui		; <uint> [#uses=1]
 	%tmp104.sum = add int %tmp102, %tmp.79		; <int> [#uses=1]
 	%line.3.0 = getelementptr ubyte* %base, int %tmp104.sum		; <ubyte*> [#uses=3]
 	%tmp318 = load ubyte* %line.3.0		; <ubyte> [#uses=2]

@@ -16,8 +16,8 @@ cond_true.outer:		; preds = %cond_true.i, %entry
 	br label %cond_true
 
 cond_true:		; preds = %return.i, %cond_true.outer
-	%indvar = phi uint [ 0, %cond_true.outer ], [ %indvar.next, %return.i ]		; <uint> [#uses=2]
-	%indvar = cast uint %indvar to int		; <int> [#uses=1]
+	%indvar.ui = phi uint [ 0, %cond_true.outer ], [ %indvar.next, %return.i ]		; <uint> [#uses=2]
+	%indvar = cast uint %indvar.ui to int		; <int> [#uses=1]
 	%i.0.0 = add int %indvar, %i.0.0.ph		; <int> [#uses=3]
 	%savedstack = call sbyte* %llvm.stacksave( )		; <sbyte*> [#uses=2]
 	%tmp.i = seteq int %i.0.0, 0		; <bool> [#uses=1]
@@ -38,7 +38,7 @@ cond_true.i:		; preds = %cond_true
 return.i:		; preds = %cond_true
 	call void %llvm.stackrestore( sbyte* %savedstack )
 	%tmp21 = setgt int %tmp5, 9999		; <bool> [#uses=1]
-	%indvar.next = add uint %indvar, 1		; <uint> [#uses=1]
+	%indvar.next = add uint %indvar.ui, 1		; <uint> [#uses=1]
 	br bool %tmp21, label %bb8, label %cond_true
 
 bb8:		; preds = %return.i, %cond_true.i

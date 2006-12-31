@@ -755,22 +755,22 @@ cond_true226.critedge:		; preds = %cond_false210
 	%tmp.i = load %struct.TType** %DP_TTable		; <%struct.TType*> [#uses=1]
 	%tmp.i7.b = load bool* %TTSize.b		; <bool> [#uses=1]
 	%tmp1.i = select bool %tmp.i7.b, uint 60000000, uint 0		; <uint> [#uses=1]
-	%tmp.i = getelementptr %struct.TType* %tmp.i, int 0, uint 0		; <sbyte*> [#uses=1]
-	call void %llvm.memset.i32( sbyte* %tmp.i, ubyte 0, uint %tmp1.i, uint 4 )
+	%tmp.i.sb = getelementptr %struct.TType* %tmp.i, int 0, uint 0		; <sbyte*> [#uses=1]
+	call void %llvm.memset.i32( sbyte* %tmp.i.sb, ubyte 0, uint %tmp1.i, uint 4 )
 	%tmp2.i = load %struct.TType** %AS_TTable		; <%struct.TType*> [#uses=1]
 	%tmp3.i8.b = load bool* %TTSize.b		; <bool> [#uses=1]
 	%tmp4.i = select bool %tmp3.i8.b, uint 60000000, uint 0		; <uint> [#uses=1]
 	%tmp2.i = getelementptr %struct.TType* %tmp2.i, int 0, uint 0		; <sbyte*> [#uses=1]
 	call void %llvm.memset.i32( sbyte* %tmp2.i, ubyte 0, uint %tmp4.i, uint 4 )
-	%tmp.i = load %struct.QTType** %QS_TTable		; <%struct.QTType*> [#uses=1]
+	%tmp.i.QTT = load %struct.QTType** %QS_TTable		; <%struct.QTType*> [#uses=1]
 	%tmp5.i9.b = load bool* %TTSize.b		; <bool> [#uses=1]
 	%tmp6.i10 = select bool %tmp5.i9.b, uint 48000000, uint 0		; <uint> [#uses=1]
-	%tmp7.i = getelementptr %struct.QTType* %tmp.i, int 0, uint 0		; <sbyte*> [#uses=1]
+	%tmp7.i = getelementptr %struct.QTType* %tmp.i.QTT, int 0, uint 0		; <sbyte*> [#uses=1]
 	call void %llvm.memset.i32( sbyte* %tmp7.i, ubyte 0, uint %tmp6.i10, uint 4 )
-	%tmp.i = load %struct.ECacheType** %ECache		; <%struct.ECacheType*> [#uses=1]
+	%tmp.i.ECache = load %struct.ECacheType** %ECache		; <%struct.ECacheType*> [#uses=1]
 	%tmp.i14.b = load bool* %ECacheSize.b		; <bool> [#uses=1]
 	%tmp1.i16 = select bool %tmp.i14.b, uint 12000000, uint 0		; <uint> [#uses=1]
-	%tmp.i17 = cast %struct.ECacheType* %tmp.i to sbyte*		; <sbyte*> [#uses=1]
+	%tmp.i17 = cast %struct.ECacheType* %tmp.i.ECache to sbyte*		; <sbyte*> [#uses=1]
 	call void %llvm.memset.i32( sbyte* %tmp.i17, ubyte 0, uint %tmp1.i16, uint 4 )
 	call void %llvm.memset.i32( sbyte* cast ([300 x int]* %rootlosers to sbyte*), ubyte 0, uint 1200, uint 4 )
 	%tmp234.b = load bool* %is_pondering.b		; <bool> [#uses=1]
@@ -800,12 +800,12 @@ bb260:		; preds = %bb249
 	%tmp1.b.i = load bool* %PBSize.b		; <bool> [#uses=1]
 	%tmp1.i1 = select bool %tmp1.b.i, uint 200000, uint 0		; <uint> [#uses=1]
 	%tmp.i2 = call sbyte* %calloc( uint %tmp1.i1, uint 44 )		; <sbyte*> [#uses=1]
-	%tmp.i = cast sbyte* %tmp.i2 to ubyte*		; <ubyte*> [#uses=1]
-	store ubyte* %tmp.i, ubyte** %membuff
+	%tmp.i.ub = cast sbyte* %tmp.i2 to ubyte*		; <ubyte*> [#uses=1]
+	store ubyte* %tmp.i.ub, ubyte** %membuff
 	%tmp2.i3 = call sbyte* %calloc( uint 1, uint 44 )		; <sbyte*> [#uses=3]
 	%tmp2.i = cast sbyte* %tmp2.i3 to %struct.node_t*		; <%struct.node_t*> [#uses=6]
-	%tmp.i = getelementptr [512 x %struct.move_s]* null, int 0, int 0		; <%struct.move_s*> [#uses=3]
-	call fastcc void %gen( %struct.move_s* %tmp.i )
+	%tmp.i.move_s = getelementptr [512 x %struct.move_s]* null, int 0, int 0		; <%struct.move_s*> [#uses=3]
+	call fastcc void %gen( %struct.move_s* %tmp.i.move_s )
 	%tmp3.i4 = load int* %numb_moves		; <int> [#uses=4]
 	%tmp3.i5 = cast int %tmp3.i4 to uint		; <uint> [#uses=0]
 	store bool false, bool* %alllosers.b
@@ -850,8 +850,8 @@ in_check.exit.i:		; preds = %bb260
 cond_true43.i:		; preds = %cond_false12.i.i, %cond_true4.i.i
 	%tmp21.0.ph.i = phi int [ %tmp217.i, %cond_true4.i.i ], [ %tmp2120.i, %cond_false12.i.i ]		; <int> [#uses=1]
 	%i.0.0.i = cast uint 0 to int		; <int> [#uses=2]
-	call fastcc void %make( %struct.move_s* %tmp.i, int %i.0.0.i )
-	%tmp27.i = call fastcc uint %check_legal( %struct.move_s* %tmp.i, int %i.0.0.i, int %tmp21.0.ph.i )		; <uint> [#uses=1]
+	call fastcc void %make( %struct.move_s* %tmp.i.move_s, int %i.0.0.i )
+	%tmp27.i = call fastcc uint %check_legal( %struct.move_s* %tmp.i.move_s, int %i.0.0.i, int %tmp21.0.ph.i )		; <uint> [#uses=1]
 	%tmp.i6 = seteq uint %tmp27.i, 0		; <bool> [#uses=0]
 	ret void
 

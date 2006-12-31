@@ -239,19 +239,19 @@ cond_next1834:		; preds = %bb1808
 	ret void
 
 bb1876:		; preds = %bb1808
-	%tmp1877 = load int* %which_alternative		; <int> [#uses=4]
-	%tmp1877 = cast int %tmp1877 to uint		; <uint> [#uses=1]
+	%tmp1877signed = load int* %which_alternative   ; <int> [#uses=4]
+	%tmp1877 = cast int %tmp1877signed to uint	; <uint> [#uses=1]
 	%bothcond699 = setlt uint %tmp1877, 2		; <bool> [#uses=1]
-	%tmp1888 = seteq int %tmp1877, 2		; <bool> [#uses=1]
+	%tmp1888 = seteq int %tmp1877signed, 2		; <bool> [#uses=1]
 	%bothcond700 = or bool %bothcond699, %tmp1888		; <bool> [#uses=1]
 	%bothcond700.not = xor bool %bothcond700, true		; <bool> [#uses=1]
-	%tmp1894 = seteq int %tmp1877, 3		; <bool> [#uses=1]
+	%tmp1894 = seteq int %tmp1877signed, 3		; <bool> [#uses=1]
 	%bothcond701 = or bool %tmp1894, %bothcond700.not		; <bool> [#uses=1]
 	%bothcond702 = or bool %bothcond701, false		; <bool> [#uses=1]
 	br bool %bothcond702, label %UnifiedReturnBlock, label %cond_next1902
 
 cond_next1902:		; preds = %bb1876
-	switch int %tmp1877, label %cond_next1937 [
+	switch int %tmp1877signed, label %cond_next1937 [
 		 int 0, label %bb1918
 		 int 1, label %bb1918
 		 int 2, label %bb1918

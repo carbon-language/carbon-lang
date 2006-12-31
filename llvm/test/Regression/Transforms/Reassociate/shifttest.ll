@@ -1,6 +1,6 @@
 ; With shl->mul reassociation, we can see that this is (shl A, 9) * A
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | grep 'shl .*, ubyte 9'
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | grep 'shl .*, i8 9'
 
 int %test(int %A, int %B) {
 	%X = shl int %A, ubyte 5

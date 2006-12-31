@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -dse | llvm-dis | grep 'store int 1234567'
+; RUN: llvm-upgrade < %s | llvm-as | opt -dse | llvm-dis | grep 'store i32 1234567'
 
 ; Do not delete stores that are only partially killed.
 

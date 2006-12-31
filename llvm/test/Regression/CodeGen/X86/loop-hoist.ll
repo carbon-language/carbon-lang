@@ -5,9 +5,9 @@
 
 implementation   ; Functions:
 
-void %foo(int %N) {
+void %foo(int %N.in) {
 entry:
-        %N = cast int %N to uint                ; <uint> [#uses=1]
+        %N = cast int %N.in to uint                ; <uint> [#uses=1]
         br label %cond_true
 
 cond_true:              ; preds = %cond_true, %entry
