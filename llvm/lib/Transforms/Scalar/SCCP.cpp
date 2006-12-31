@@ -1322,7 +1322,7 @@ namespace {
   //===--------------------------------------------------------------------===//
   //
   /// SCCP Class - This class uses the SCCPSolver to implement a per-function
-  /// Sparse Conditional COnstant Propagator.
+  /// Sparse Conditional Constant Propagator.
   ///
   struct SCCP : public FunctionPass {
     // runOnFunction - Run the Sparse Conditional Constant Propagation
