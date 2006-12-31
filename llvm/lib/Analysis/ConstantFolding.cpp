@@ -164,7 +164,6 @@ llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
           break;
       }
     } else if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
-      assert(Op->getType()->isUnsigned() && "bswap args must be unsigned");
       uint64_t V = Op->getZExtValue();
       if (Name == "llvm.bswap.i16")
         return ConstantInt::get(Ty, ByteSwap_16(V));

@@ -57,7 +57,7 @@ bool FunctionProfiler::runOnModule(Module &M) {
     if (!I->isExternal())
       ++NumFunctions;
 
-  const Type *ATy = ArrayType::get(Type::UIntTy, NumFunctions);
+  const Type *ATy = ArrayType::get(Type::Int32Ty, NumFunctions);
   GlobalVariable *Counters =
     new GlobalVariable(ATy, false, GlobalValue::InternalLinkage,
                        Constant::getNullValue(ATy), "FuncProfCounters", &M);
@@ -99,7 +99,7 @@ bool BlockProfiler::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     NumBlocks += I->size();
 
-  const Type *ATy = ArrayType::get(Type::UIntTy, NumBlocks);
+  const Type *ATy = ArrayType::get(Type::Int32Ty, NumBlocks);
   GlobalVariable *Counters =
     new GlobalVariable(ATy, false, GlobalValue::InternalLinkage,
                        Constant::getNullValue(ATy), "BlockProfCounters", &M);

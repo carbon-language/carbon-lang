@@ -290,7 +290,7 @@ void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
 
 
 CycleCounter::CycleCounter(Module& m, uint64_t resetmask) : rm(resetmask) {
-  F = m.getOrInsertFunction("llvm.readcyclecounter", Type::ULongTy, NULL);
+  F = m.getOrInsertFunction("llvm.readcyclecounter", Type::Int64Ty, NULL);
 }
 
 CycleCounter::~CycleCounter() {}
@@ -302,11 +302,11 @@ void CycleCounter::ProcessChoicePoint(BasicBlock* bb) {
   
   CallInst* c = new CallInst(F, "rdcc", t);
   BinaryOperator* b = 
-    BinaryOperator::createAnd(c, ConstantInt::get(Type::ULongTy, rm),
+    BinaryOperator::createAnd(c, ConstantInt::get(Type::Int64Ty, rm),
 			      "mrdcc", t);
   
   ICmpInst *s = new ICmpInst(ICmpInst::ICMP_EQ, b,
-                             ConstantInt::get(Type::ULongTy, 0), 
+                             ConstantInt::get(Type::Int64Ty, 0), 
                              "mrdccc", t);
 
   t->setCondition(s);
@@ -332,15 +332,15 @@ void RSProfilers_std::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNu
   
   // Create the getelementptr constant expression
   std::vector<Constant*> Indices(2);
-  Indices[0] = Constant::getNullValue(Type::IntTy);
-  Indices[1] = ConstantInt::get(Type::IntTy, CounterNum);
+  Indices[0] = Constant::getNullValue(Type::Int32Ty);
+  Indices[1] = ConstantInt::get(Type::Int32Ty, CounterNum);
   Constant *ElementPtr = ConstantExpr::getGetElementPtr(CounterArray, Indices);
   
   // Load, increment and store the value back.
   Value *OldVal = new LoadInst(ElementPtr, "OldCounter", InsertPos);
   profcode.insert(OldVal);
   Value *NewVal = BinaryOperator::createAdd(OldVal,
-					    ConstantInt::get(Type::UIntTy, 1),
+					    ConstantInt::get(Type::Int32Ty, 1),
 					    "NewCounter", InsertPos);
   profcode.insert(NewVal);
   profcode.insert(new StoreInst(NewVal, ElementPtr, InsertPos));
@@ -539,10 +539,10 @@ bool ProfilerRS::runOnFunction(Function& F) {
 bool ProfilerRS::doInitialization(Module &M) {
   switch (RandomMethod) {
   case GBV:
-    c = new GlobalRandomCounter(M, Type::UIntTy, (1 << 14) - 1);
+    c = new GlobalRandomCounter(M, Type::Int32Ty, (1 << 14) - 1);
     break;
   case GBVO:
-    c = new GlobalRandomCounterOpt(M, Type::UIntTy, (1 << 14) - 1);
+    c = new GlobalRandomCounterOpt(M, Type::Int32Ty, (1 << 14) - 1);
     break;
   case HOSTCC:
     c = new CycleCounter(M, (1 << 14) - 1);

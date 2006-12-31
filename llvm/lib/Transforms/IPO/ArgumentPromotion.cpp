@@ -384,7 +384,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   bool ExtraArgHack = false;
   if (Params.empty() && FTy->isVarArg()) {
     ExtraArgHack = true;
-    Params.push_back(Type::IntTy);
+    Params.push_back(Type::Int32Ty);
   }
   FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
 
@@ -429,7 +429,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       }
 
     if (ExtraArgHack)
-      Args.push_back(Constant::getNullValue(Type::IntTy));
+      Args.push_back(Constant::getNullValue(Type::Int32Ty));
 
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI)
@@ -540,7 +540,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   // Notify the alias analysis implementation that we inserted a new argument.
   if (ExtraArgHack)
-    AA.copyValue(Constant::getNullValue(Type::IntTy), NF->arg_begin());
+    AA.copyValue(Constant::getNullValue(Type::Int32Ty), NF->arg_begin());
 
 
   // Tell the alias analysis that the old function is about to disappear.

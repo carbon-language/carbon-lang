@@ -173,7 +173,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
               Constant *NCE = ConstantExpr::getGetElementPtr(CE->getOperand(0),
                                                              CEIdxs);
               GetElementPtrInst *NGEPI =
-                new GetElementPtrInst(NCE, Constant::getNullValue(Type::IntTy),
+                new GetElementPtrInst(NCE, Constant::getNullValue(Type::Int32Ty),
                                       NewAdd, GEPI->getName(), GEPI);
               GEPI->replaceAllUsesWith(NGEPI);
               GEPI->eraseFromParent();
@@ -499,7 +499,6 @@ void IndVarSimplify::runOnLoop(Loop *L) {
 
   // Now that we know the largest of of the induction variables in this loop,
   // insert a canonical induction variable of the largest size.
-  LargestType = LargestType->getUnsignedVersion();
   Value *IndVar = Rewriter.getOrInsertCanonicalInductionVariable(L,LargestType);
   ++NumInserted;
   Changed = true;
@@ -525,7 +524,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
         PHINode *PN = IndVars[i].first;
         InsertedSizes[PN->getType()->getPrimitiveSize()] = true;
         Instruction *New = CastInst::create(Instruction::Trunc, IndVar, 
-            PN->getType()->getUnsignedVersion(), "indvar", InsertPt);
+            PN->getType(), "indvar", InsertPt);
         Rewriter.addInsertedValue(New, SE->getSCEV(New));
       }
   }

@@ -66,8 +66,8 @@ bool IndMemRemPass::runOnModule(Module &M) {
 				  "malloc_llvm_bounce", &M);
       BasicBlock* bb = new BasicBlock("entry",FN);
       Instruction* c = CastInst::createIntegerCast(
-          FN->arg_begin(), Type::UIntTy, false, "c", bb);
-      Instruction* a = new MallocInst(Type::SByteTy, c, "m", bb);
+          FN->arg_begin(), Type::Int32Ty, false, "c", bb);
+      Instruction* a = new MallocInst(Type::Int8Ty, c, "m", bb);
       new ReturnInst(a, bb);
       ++NumBounce;
       NumBounceSites += F->getNumUses();

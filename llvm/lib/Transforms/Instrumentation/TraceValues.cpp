@@ -123,13 +123,13 @@ FunctionPass *llvm::createTraceValuesPassForBasicBlocks() {
 //
 void ExternalFuncs::doInitialization(Module &M) {
   M.addLibrary("trace");
-  const Type *SBP = PointerType::get(Type::SByteTy);
+  const Type *SBP = PointerType::get(Type::Int8Ty);
   const FunctionType *MTy =
-    FunctionType::get(Type::IntTy, std::vector<const Type*>(1, SBP), true);
+    FunctionType::get(Type::Int32Ty, std::vector<const Type*>(1, SBP), true);
   PrintfFunc = M.getOrInsertFunction("printf", MTy);
 
   // uint (sbyte*)
-  HashPtrFunc = M.getOrInsertFunction("HashPointerToSeqNum", Type::UIntTy, SBP,
+  HashPtrFunc = M.getOrInsertFunction("HashPointerToSeqNum", Type::Int32Ty, SBP,
                                       (Type *)0);
 
   // void (sbyte*)
@@ -244,11 +244,11 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
 
   // Turn the format string into an sbyte *
   Constant *GEP=ConstantExpr::getGetElementPtr(fmtVal,
-                std::vector<Constant*>(2,Constant::getNullValue(Type::LongTy)));
+                std::vector<Constant*>(2,Constant::getNullValue(Type::Int64Ty)));
 
   // Insert a call to the hash function if this is a pointer value
   if (V && isa<PointerType>(V->getType()) && !DisablePtrHashing) {
-    const Type *SBP = PointerType::get(Type::SByteTy);
+    const Type *SBP = PointerType::get(Type::Int8Ty);
     if (V->getType() != SBP)     // Cast pointer to be sbyte*
       V = new BitCastInst(V, SBP, "Hash_cast", InsertBefore);
 
@@ -279,7 +279,7 @@ InsertReleaseInst(Value *V, BasicBlock *BB,
                   Instruction *InsertBefore,
                   Function* ReleasePtrFunc) {
 
-  const Type *SBP = PointerType::get(Type::SByteTy);
+  const Type *SBP = PointerType::get(Type::Int8Ty);
   if (V->getType() != SBP)    // Cast pointer to be sbyte*
     V = new BitCastInst(V, SBP, "RPSN_cast", InsertBefore);
 
@@ -291,7 +291,7 @@ static void
 InsertRecordInst(Value *V, BasicBlock *BB,
                  Instruction *InsertBefore,
                  Function* RecordPtrFunc) {
-    const Type *SBP = PointerType::get(Type::SByteTy);
+    const Type *SBP = PointerType::get(Type::Int8Ty);
   if (V->getType() != SBP)     // Cast pointer to be sbyte*
     V = new BitCastInst(V, SBP, "RP_cast", InsertBefore);
 

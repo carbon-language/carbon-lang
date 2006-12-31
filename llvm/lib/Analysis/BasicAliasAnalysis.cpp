@@ -269,7 +269,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   if (V1 == V2) return MustAlias;
 
   if ((!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType())) &&
-      V1->getType() != Type::LongTy && V2->getType() != Type::LongTy)
+      V1->getType() != Type::Int64Ty && V2->getType() != Type::Int64Ty)
     return NoAlias;  // Scalars cannot alias each other
 
   // Strip off cast instructions...
@@ -458,14 +458,10 @@ static bool IndexOperandsEqual(Value *V1, Value *V2) {
   if (Constant *C1 = dyn_cast<Constant>(V1))
     if (Constant *C2 = dyn_cast<Constant>(V2)) {
       // Sign extend the constants to long types, if necessary
-      if (C1->getType()->getPrimitiveSizeInBits() < 64)
-        C1 = ConstantExpr::getSExt(C1, Type::LongTy);
-      else if (C1->getType() == Type::ULongTy)
-        C1 = ConstantExpr::getBitCast(C1, Type::LongTy);
-      if (C2->getType()->getPrimitiveSizeInBits() < 64)
-        C2 = ConstantExpr::getSExt(C2, Type::LongTy);
-      else if (C2->getType() == Type::ULongTy)
-        C2 = ConstantExpr::getBitCast(C2, Type::LongTy);
+      if (C1->getType() != Type::Int64Ty)
+        C1 = ConstantExpr::getSExt(C1, Type::Int64Ty);
+      if (C2->getType() != Type::Int64Ty) 
+        C2 = ConstantExpr::getSExt(C2, Type::Int64Ty);
       return C1 == C2;
     }
   return false;
@@ -554,14 +550,10 @@ BasicAliasAnalysis::CheckGEPInstructions(
         if (Constant *G2OC = dyn_cast<ConstantInt>(const_cast<Value*>(G2Oper))){
           if (G1OC->getType() != G2OC->getType()) {
             // Sign extend both operands to long.
-            if (G1OC->getType()->getPrimitiveSizeInBits() < 64)
-              G1OC = ConstantExpr::getSExt(G1OC, Type::LongTy);
-            else if (G1OC->getType() == Type::ULongTy)
-              G1OC = ConstantExpr::getBitCast(G1OC, Type::LongTy);
-            if (G2OC->getType()->getPrimitiveSizeInBits() < 64)
-              G2OC = ConstantExpr::getSExt(G2OC, Type::LongTy);
-            else if (G2OC->getType() == Type::ULongTy)
-              G2OC = ConstantExpr::getBitCast(G2OC, Type::LongTy);
+            if (G1OC->getType() != Type::Int64Ty)
+              G1OC = ConstantExpr::getSExt(G1OC, Type::Int64Ty);
+            if (G2OC->getType() != Type::Int64Ty) 
+              G2OC = ConstantExpr::getSExt(G2OC, Type::Int64Ty);
             GEP1Ops[FirstConstantOper] = G1OC;
             GEP2Ops[FirstConstantOper] = G2OC;
           }
@@ -661,7 +653,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
   const Type *ZeroIdxTy = GEPPointerTy;
   for (unsigned i = 0; i != FirstConstantOper; ++i) {
     if (!isa<StructType>(ZeroIdxTy))
-      GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Type::UIntTy);
+      GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Type::Int32Ty);
 
     if (const CompositeType *CT = dyn_cast<CompositeType>(ZeroIdxTy))
       ZeroIdxTy = CT->getTypeAtIndex(GEP1Ops[i]);
@@ -702,9 +694,9 @@ BasicAliasAnalysis::CheckGEPInstructions(
           // value possible.
           //
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
-            GEP1Ops[i] = ConstantInt::get(Type::LongTy, AT->getNumElements()-1);
+            GEP1Ops[i] = ConstantInt::get(Type::Int64Ty, AT->getNumElements()-1);
           else if (const PackedType *PT = dyn_cast<PackedType>(BasePtr1Ty))
-            GEP1Ops[i] = ConstantInt::get(Type::LongTy, PT->getNumElements()-1);
+            GEP1Ops[i] = ConstantInt::get(Type::Int64Ty, PT->getNumElements()-1);
 
         }
       }

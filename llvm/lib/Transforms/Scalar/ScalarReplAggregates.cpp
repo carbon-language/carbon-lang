@@ -226,7 +226,7 @@ bool SROA::performScalarRepl(Function &F) {
         //
         std::string OldName = GEPI->getName();  // Steal the old name.
         std::vector<Value*> NewArgs;
-        NewArgs.push_back(Constant::getNullValue(Type::IntTy));
+        NewArgs.push_back(Constant::getNullValue(Type::Int32Ty));
         NewArgs.insert(NewArgs.end(), GEPI->op_begin()+3, GEPI->op_end());
         GEPI->setName("");
         RepValue = new GetElementPtrInst(AllocaToUse, NewArgs, OldName, GEPI);
@@ -389,7 +389,7 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
 
       if (!isa<ConstantInt>(I.getOperand())) {
         if (NumElements == 1) {
-          GEPI->setOperand(2, Constant::getNullValue(Type::IntTy));
+          GEPI->setOperand(2, Constant::getNullValue(Type::Int32Ty));
         } else {
           assert(NumElements == 2 && "Unhandled case!");
           // All users of the GEP must be loads.  At each use of the GEP, insert
@@ -399,10 +399,10 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
              "isone", GEPI);
           // Insert the new GEP instructions, which are properly indexed.
           std::vector<Value*> Indices(GEPI->op_begin()+1, GEPI->op_end());
-          Indices[1] = Constant::getNullValue(Type::IntTy);
+          Indices[1] = Constant::getNullValue(Type::Int32Ty);
           Value *ZeroIdx = new GetElementPtrInst(GEPI->getOperand(0), Indices,
                                                  GEPI->getName()+".0", GEPI);
-          Indices[1] = ConstantInt::get(Type::IntTy, 1);
+          Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
           Value *OneIdx = new GetElementPtrInst(GEPI->getOperand(0), Indices,
                                                 GEPI->getName()+".1", GEPI);
           // Replace all loads of the variable index GEP with loads from both
@@ -468,8 +468,8 @@ static bool MergeInType(const Type *In, const Type *&Accum,
     // Pointer/FP/Integer unions merge together as integers.
     switch (Accum->getTypeID()) {
     case Type::PointerTyID: Accum = TD.getIntPtrType(); break;
-    case Type::FloatTyID:   Accum = Type::UIntTy; break;
-    case Type::DoubleTyID:  Accum = Type::ULongTy; break;
+    case Type::FloatTyID:   Accum = Type::Int32Ty; break;
+    case Type::DoubleTyID:  Accum = Type::Int64Ty; break;
     default:
       assert(Accum->isIntegral() && "Unknown FP type!");
       break;
@@ -477,8 +477,8 @@ static bool MergeInType(const Type *In, const Type *&Accum,
     
     switch (In->getTypeID()) {
     case Type::PointerTyID: In = TD.getIntPtrType(); break;
-    case Type::FloatTyID:   In = Type::UIntTy; break;
-    case Type::DoubleTyID:  In = Type::ULongTy; break;
+    case Type::FloatTyID:   In = Type::Int32Ty; break;
+    case Type::DoubleTyID:  In = Type::Int64Ty; break;
     default:
       assert(In->isIntegral() && "Unknown FP type!");
       break;
@@ -493,10 +493,10 @@ static bool MergeInType(const Type *In, const Type *&Accum,
 /// null.
 const Type *getUIntAtLeastAsBitAs(unsigned NumBits) {
   if (NumBits > 64) return 0;
-  if (NumBits > 32) return Type::ULongTy;
-  if (NumBits > 16) return Type::UIntTy;
-  if (NumBits > 8) return Type::UShortTy;
-  return Type::UByteTy;    
+  if (NumBits > 32) return Type::Int64Ty;
+  if (NumBits > 16) return Type::Int32Ty;
+  if (NumBits > 8) return Type::Int16Ty;
+  return Type::Int8Ty;    
 }
 
 /// CanConvertToScalar - V is a pointer.  If we can convert the pointee to a
@@ -610,9 +610,6 @@ void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
          "Not in the entry block!");
   EntryBlock->getInstList().remove(AI);  // Take the alloca out of the program.
   
-  if (ActualTy->isInteger())
-    ActualTy = ActualTy->getUnsignedVersion();
-  
   // Create and insert the alloca.
   AllocaInst *NewAI = new AllocaInst(ActualTy, 0, AI->getName(),
                                      EntryBlock->begin());
@@ -646,7 +643,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           } else {
             // Must be an element access.
             unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
-            NV = new ExtractElementInst(NV, ConstantInt::get(Type::UIntTy, Elt),
+            NV = new ExtractElementInst(NV, ConstantInt::get(Type::Int32Ty, Elt),
                                         "tmp", LI);
           }
         } else if (isa<PointerType>(NV->getType())) {
@@ -658,7 +655,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           assert(NV->getType()->isInteger() && "Unknown promotion!");
           if (Offset && Offset < TD.getTypeSize(NV->getType())*8) {
             NV = new ShiftInst(Instruction::LShr, NV, 
-                               ConstantInt::get(Type::UByteTy, Offset), 
+                               ConstantInt::get(Type::Int8Ty, Offset), 
                                LI->getName(), LI);
           }
           
@@ -673,10 +670,10 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
               switch (LI->getType()->getTypeID()) {
               default: assert(0 && "Unknown FP type!");
               case Type::FloatTyID:
-                NV = new TruncInst(NV, Type::UIntTy, LI->getName(), LI);
+                NV = new TruncInst(NV, Type::Int32Ty, LI->getName(), LI);
                 break;
               case Type::DoubleTyID:
-                NV = new TruncInst(NV, Type::ULongTy, LI->getName(), LI);
+                NV = new TruncInst(NV, Type::Int64Ty, LI->getName(), LI);
                 break;
               }
             }
@@ -710,7 +707,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
             // Must be an element insertion.
             unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
             SV = new InsertElementInst(Old, SV,
-                                       ConstantInt::get(Type::UIntTy, Elt),
+                                       ConstantInt::get(Type::Int32Ty, Elt),
                                        "tmp", SI);
           }
         } else {
@@ -722,10 +719,10 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
             assert(!SV->getType()->isFloatingPoint() && "Unknown FP type!");
             break;
           case Type::FloatTyID:
-            SV = new BitCastInst(SV, Type::UIntTy, SV->getName(), SI);
+            SV = new BitCastInst(SV, Type::Int32Ty, SV->getName(), SI);
             break;
           case Type::DoubleTyID:
-            SV = new BitCastInst(SV, Type::ULongTy, SV->getName(), SI);
+            SV = new BitCastInst(SV, Type::Int64Ty, SV->getName(), SI);
             break;
           case Type::PointerTyID:
             if (isa<PointerType>(AllocaType))
@@ -743,7 +740,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
                                                SV->getName(), SI);
           if (Offset && Offset < AllocaType->getPrimitiveSizeInBits())
             SV = new ShiftInst(Instruction::Shl, SV,
-                               ConstantInt::get(Type::UByteTy, Offset),
+                               ConstantInt::get(Type::Int8Ty, Offset),
                                SV->getName()+".adj", SI);
           // Mask out the bits we are about to insert from the old value.
           unsigned TotalBits = TD.getTypeSize(SV->getType())*8;

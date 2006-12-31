@@ -224,16 +224,16 @@ public:
   /// @brief Return a Function* for the putchar libcall
   Function* get_putchar() {
     if (!putchar_func)
-      putchar_func = M->getOrInsertFunction("putchar", Type::IntTy, Type::IntTy,
-                                            NULL);
+      putchar_func = 
+        M->getOrInsertFunction("putchar", Type::Int32Ty, Type::Int32Ty, NULL);
     return putchar_func;
   }
 
   /// @brief Return a Function* for the puts libcall
   Function* get_puts() {
     if (!puts_func)
-      puts_func = M->getOrInsertFunction("puts", Type::IntTy,
-                                         PointerType::get(Type::SByteTy),
+      puts_func = M->getOrInsertFunction("puts", Type::Int32Ty,
+                                         PointerType::get(Type::Int8Ty),
                                          NULL);
     return puts_func;
   }
@@ -241,7 +241,7 @@ public:
   /// @brief Return a Function* for the fputc libcall
   Function* get_fputc(const Type* FILEptr_type) {
     if (!fputc_func)
-      fputc_func = M->getOrInsertFunction("fputc", Type::IntTy, Type::IntTy,
+      fputc_func = M->getOrInsertFunction("fputc", Type::Int32Ty, Type::Int32Ty,
                                           FILEptr_type, NULL);
     return fputc_func;
   }
@@ -249,8 +249,8 @@ public:
   /// @brief Return a Function* for the fputs libcall
   Function* get_fputs(const Type* FILEptr_type) {
     if (!fputs_func)
-      fputs_func = M->getOrInsertFunction("fputs", Type::IntTy,
-                                          PointerType::get(Type::SByteTy),
+      fputs_func = M->getOrInsertFunction("fputs", Type::Int32Ty,
+                                          PointerType::get(Type::Int8Ty),
                                           FILEptr_type, NULL);
     return fputs_func;
   }
@@ -259,7 +259,7 @@ public:
   Function* get_fwrite(const Type* FILEptr_type) {
     if (!fwrite_func)
       fwrite_func = M->getOrInsertFunction("fwrite", TD->getIntPtrType(),
-                                           PointerType::get(Type::SByteTy),
+                                           PointerType::get(Type::Int8Ty),
                                            TD->getIntPtrType(),
                                            TD->getIntPtrType(),
                                            FILEptr_type, NULL);
@@ -278,9 +278,9 @@ public:
   Function* get_strcpy() {
     if (!strcpy_func)
       strcpy_func = M->getOrInsertFunction("strcpy",
-                                           PointerType::get(Type::SByteTy),
-                                           PointerType::get(Type::SByteTy),
-                                           PointerType::get(Type::SByteTy),
+                                           PointerType::get(Type::Int8Ty),
+                                           PointerType::get(Type::Int8Ty),
+                                           PointerType::get(Type::Int8Ty),
                                            NULL);
     return strcpy_func;
   }
@@ -289,7 +289,7 @@ public:
   Function* get_strlen() {
     if (!strlen_func)
       strlen_func = M->getOrInsertFunction("strlen", TD->getIntPtrType(),
-                                           PointerType::get(Type::SByteTy),
+                                           PointerType::get(Type::Int8Ty),
                                            NULL);
     return strlen_func;
   }
@@ -298,9 +298,9 @@ public:
   Function* get_memchr() {
     if (!memchr_func)
       memchr_func = M->getOrInsertFunction("memchr",
-                                           PointerType::get(Type::SByteTy),
-                                           PointerType::get(Type::SByteTy),
-                                           Type::IntTy, TD->getIntPtrType(),
+                                           PointerType::get(Type::Int8Ty),
+                                           PointerType::get(Type::Int8Ty),
+                                           Type::Int32Ty, TD->getIntPtrType(),
                                            NULL);
     return memchr_func;
   }
@@ -308,11 +308,11 @@ public:
   /// @brief Return a Function* for the memcpy libcall
   Function* get_memcpy() {
     if (!memcpy_func) {
-      const Type *SBP = PointerType::get(Type::SByteTy);
-      const char *N = TD->getIntPtrType() == Type::UIntTy ?
+      const Type *SBP = PointerType::get(Type::Int8Ty);
+      const char *N = TD->getIntPtrType() == Type::Int32Ty ?
                             "llvm.memcpy.i32" : "llvm.memcpy.i64";
       memcpy_func = M->getOrInsertFunction(N, Type::VoidTy, SBP, SBP,
-                                           TD->getIntPtrType(), Type::UIntTy,
+                                           TD->getIntPtrType(), Type::Int32Ty,
                                            NULL);
     }
     return memcpy_func;
@@ -457,12 +457,12 @@ public:
 
   /// @brief Make sure that the "strcat" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
-    if (f->getReturnType() == PointerType::get(Type::SByteTy))
+    if (f->getReturnType() == PointerType::get(Type::Int8Ty))
       if (f->arg_size() == 2)
       {
         Function::const_arg_iterator AI = f->arg_begin();
-        if (AI++->getType() == PointerType::get(Type::SByteTy))
-          if (AI->getType() == PointerType::get(Type::SByteTy))
+        if (AI++->getType() == PointerType::get(Type::Int8Ty))
+          if (AI->getType() == PointerType::get(Type::Int8Ty))
           {
             // Indicate this is a suitable call type.
             return true;
@@ -516,7 +516,7 @@ public:
     vals.push_back(gep); // destination
     vals.push_back(ci->getOperand(2)); // source
     vals.push_back(ConstantInt::get(SLC.getIntPtrType(),len)); // length
-    vals.push_back(ConstantInt::get(Type::UIntTy,1)); // alignment
+    vals.push_back(ConstantInt::get(Type::Int32Ty,1)); // alignment
     new CallInst(SLC.get_memcpy(), vals, "", ci);
 
     // Finally, substitute the first operand of the strcat call for the
@@ -539,7 +539,7 @@ public:
 
   /// @brief Make sure that the "strchr" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
-    if (f->getReturnType() == PointerType::get(Type::SByteTy) &&
+    if (f->getReturnType() == PointerType::get(Type::Int8Ty) &&
         f->arg_size() == 2)
       return true;
     return false;
@@ -555,21 +555,21 @@ public:
     // If it is, get the length and data, otherwise return false.
     uint64_t len = 0;
     ConstantArray* CA = 0;
-    if (!getConstantStringLength(ci->getOperand(1),len,&CA))
+    if (!getConstantStringLength(ci->getOperand(1), len, &CA))
       return false;
 
     // Check that the second argument to strchr is a constant int. If it isn't
     // a constant signed integer, we can try an alternate optimization
     ConstantInt* CSI = dyn_cast<ConstantInt>(ci->getOperand(2));
-    if (!CSI || CSI->getType()->isUnsigned() ) {
+    if (!CSI) {
       // The second operand is not constant, or not signed. Just lower this to 
       // memchr since we know the length of the string since it is constant.
       Function* f = SLC.get_memchr();
       std::vector<Value*> args;
       args.push_back(ci->getOperand(1));
       args.push_back(ci->getOperand(2));
-      args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
-      ci->replaceAllUsesWith( new CallInst(f,args,ci->getName(),ci));
+      args.push_back(ConstantInt::get(SLC.getIntPtrType(), len));
+      ci->replaceAllUsesWith( new CallInst(f, args, ci->getName(), ci));
       ci->eraseFromParent();
       return true;
     }
@@ -597,13 +597,13 @@ public:
     //    (if c is a constant integer and s is a constant string)
     if (char_found) {
       std::vector<Value*> indices;
-      indices.push_back(ConstantInt::get(Type::ULongTy,offset));
+      indices.push_back(ConstantInt::get(Type::Int64Ty,offset));
       GetElementPtrInst* GEP = new GetElementPtrInst(ci->getOperand(1),indices,
           ci->getOperand(1)->getName()+".strchr",ci);
       ci->replaceAllUsesWith(GEP);
     } else {
       ci->replaceAllUsesWith(
-          ConstantPointerNull::get(PointerType::get(Type::SByteTy)));
+          ConstantPointerNull::get(PointerType::get(Type::Int8Ty)));
     }
     ci->eraseFromParent();
     return true;
@@ -621,7 +621,7 @@ public:
 
   /// @brief Make sure that the "strcmp" function has the right prototype
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
-    return F->getReturnType() == Type::IntTy && F->arg_size() == 2;
+    return F->getReturnType() == Type::Int32Ty && F->arg_size() == 2;
   }
 
   /// @brief Perform the strcmp optimization
@@ -633,7 +633,7 @@ public:
     Value* s2 = ci->getOperand(2);
     if (s1 == s2) {
       // strcmp(x,x)  -> 0
-      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,0));
       ci->eraseFromParent();
       return true;
     }
@@ -648,7 +648,7 @@ public:
         LoadInst* load =
           new LoadInst(CastToCStr(s2,*ci), ci->getName()+".load",ci);
         CastInst* cast =
-          CastInst::create(Instruction::SExt, load, Type::IntTy, 
+          CastInst::create(Instruction::SExt, load, Type::Int32Ty, 
                            ci->getName()+".int", ci);
         ci->replaceAllUsesWith(cast);
         ci->eraseFromParent();
@@ -666,7 +666,7 @@ public:
         LoadInst* load =
           new LoadInst(CastToCStr(s1,*ci),ci->getName()+".val",ci);
         CastInst* cast =
-          CastInst::create(Instruction::SExt, load, Type::IntTy, 
+          CastInst::create(Instruction::SExt, load, Type::Int32Ty, 
                            ci->getName()+".int", ci);
         ci->replaceAllUsesWith(cast);
         ci->eraseFromParent();
@@ -679,7 +679,7 @@ public:
       std::string str1 = A1->getAsString();
       std::string str2 = A2->getAsString();
       int result = strcmp(str1.c_str(), str2.c_str());
-      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,result));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,result));
       ci->eraseFromParent();
       return true;
     }
@@ -698,7 +698,7 @@ public:
 
   /// @brief Make sure that the "strncmp" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
-    if (f->getReturnType() == Type::IntTy && f->arg_size() == 3)
+    if (f->getReturnType() == Type::Int32Ty && f->arg_size() == 3)
       return true;
     return false;
   }
@@ -712,7 +712,7 @@ public:
     Value* s2 = ci->getOperand(2);
     if (s1 == s2) {
       // strncmp(x,x,l)  -> 0
-      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,0));
       ci->eraseFromParent();
       return true;
     }
@@ -726,7 +726,7 @@ public:
       len_arg = len_CI->getZExtValue();
       if (len_arg == 0) {
         // strncmp(x,y,0)   -> 0
-        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,0));
         ci->eraseFromParent();
         return true;
       }
@@ -741,7 +741,7 @@ public:
         // strncmp("",x) -> *x
         LoadInst* load = new LoadInst(s1,ci->getName()+".load",ci);
         CastInst* cast =
-          CastInst::create(Instruction::SExt, load, Type::IntTy, 
+          CastInst::create(Instruction::SExt, load, Type::Int32Ty, 
                            ci->getName()+".int", ci);
         ci->replaceAllUsesWith(cast);
         ci->eraseFromParent();
@@ -758,7 +758,7 @@ public:
         // strncmp(x,"") -> *x
         LoadInst* load = new LoadInst(s2,ci->getName()+".val",ci);
         CastInst* cast =
-          CastInst::create(Instruction::SExt, load, Type::IntTy, 
+          CastInst::create(Instruction::SExt, load, Type::Int32Ty, 
                            ci->getName()+".int", ci);
         ci->replaceAllUsesWith(cast);
         ci->eraseFromParent();
@@ -771,7 +771,7 @@ public:
       std::string str1 = A1->getAsString();
       std::string str2 = A2->getAsString();
       int result = strncmp(str1.c_str(), str2.c_str(), len_arg);
-      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,result));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,result));
       ci->eraseFromParent();
       return true;
     }
@@ -791,11 +791,11 @@ public:
 
   /// @brief Make sure that the "strcpy" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
-    if (f->getReturnType() == PointerType::get(Type::SByteTy))
+    if (f->getReturnType() == PointerType::get(Type::Int8Ty))
       if (f->arg_size() == 2) {
         Function::const_arg_iterator AI = f->arg_begin();
-        if (AI++->getType() == PointerType::get(Type::SByteTy))
-          if (AI->getType() == PointerType::get(Type::SByteTy)) {
+        if (AI++->getType() == PointerType::get(Type::Int8Ty))
+          if (AI->getType() == PointerType::get(Type::Int8Ty)) {
             // Indicate this is a suitable call type.
             return true;
           }
@@ -830,7 +830,7 @@ public:
     // If the constant string's length is zero we can optimize this by just
     // doing a store of 0 at the first byte of the destination
     if (len == 0) {
-      new StoreInst(ConstantInt::get(Type::SByteTy,0),ci->getOperand(1),ci);
+      new StoreInst(ConstantInt::get(Type::Int8Ty,0),ci->getOperand(1),ci);
       ci->replaceAllUsesWith(dest);
       ci->eraseFromParent();
       return true;
@@ -846,7 +846,7 @@ public:
     vals.push_back(dest); // destination
     vals.push_back(src); // source
     vals.push_back(ConstantInt::get(SLC.getIntPtrType(),len)); // length
-    vals.push_back(ConstantInt::get(Type::UIntTy,1)); // alignment
+    vals.push_back(ConstantInt::get(Type::Int32Ty,1)); // alignment
     new CallInst(SLC.get_memcpy(), vals, "", ci);
 
     // Finally, substitute the first operand of the strcat call for the
@@ -872,7 +872,7 @@ struct StrLenOptimization : public LibCallOptimization {
     if (f->getReturnType() == SLC.getTargetData()->getIntPtrType())
       if (f->arg_size() == 1)
         if (Function::const_arg_iterator AI = f->arg_begin())
-          if (AI->getType() == PointerType::get(Type::SByteTy))
+          if (AI->getType() == PointerType::get(Type::Int8Ty))
             return true;
     return false;
   }
@@ -882,7 +882,7 @@ struct StrLenOptimization : public LibCallOptimization {
   {
     // Make sure we're dealing with an sbyte* here.
     Value* str = ci->getOperand(1);
-    if (str->getType() != PointerType::get(Type::SByteTy))
+    if (str->getType() != PointerType::get(Type::Int8Ty))
       return false;
 
     // Does the call to strlen have exactly one use?
@@ -904,7 +904,7 @@ struct StrLenOptimization : public LibCallOptimization {
             // strlen(x) == 0 -> *x == 0
             LoadInst* load = new LoadInst(str,str->getName()+".first",ci);
             ICmpInst* rbop = new ICmpInst(bop->getPredicate(), load, 
-                                          ConstantInt::get(Type::SByteTy,0),
+                                          ConstantInt::get(Type::Int8Ty,0),
                                           bop->getName()+".strlen", ci);
             bop->replaceAllUsesWith(rbop);
             bop->eraseFromParent();
@@ -996,7 +996,7 @@ struct memcmpOptimization : public LibCallOptimization {
       return true;
     case 1: {
       // memcmp(S1,S2,1) -> *(ubyte*)S1 - *(ubyte*)S2
-      const Type *UCharPtr = PointerType::get(Type::UByteTy);
+      const Type *UCharPtr = PointerType::get(Type::Int8Ty);
       CastInst *Op1Cast = CastInst::create(
           Instruction::BitCast, LHS, UCharPtr, LHS->getName(), CI);
       CastInst *Op2Cast = CastInst::create(
@@ -1016,7 +1016,7 @@ struct memcmpOptimization : public LibCallOptimization {
         // TODO: IF both are aligned, use a short load/compare.
       
         // memcmp(S1,S2,2) -> S1[0]-S2[0] | S1[1]-S2[1] iff only ==/!= 0 matters
-        const Type *UCharPtr = PointerType::get(Type::UByteTy);
+        const Type *UCharPtr = PointerType::get(Type::Int8Ty);
         CastInst *Op1Cast = CastInst::create(
             Instruction::BitCast, LHS, UCharPtr, LHS->getName(), CI);
         CastInst *Op2Cast = CastInst::create(
@@ -1025,7 +1025,7 @@ struct memcmpOptimization : public LibCallOptimization {
         Value *S2V1 = new LoadInst(Op2Cast, RHS->getName()+".val1", CI);
         Value *D1 = BinaryOperator::createSub(S1V1, S2V1,
                                               CI->getName()+".d1", CI);
-        Constant *One = ConstantInt::get(Type::IntTy, 1);
+        Constant *One = ConstantInt::get(Type::Int32Ty, 1);
         Value *G1 = new GetElementPtrInst(Op1Cast, One, "next1v", CI);
         Value *G2 = new GetElementPtrInst(Op2Cast, One, "next2v", CI);
         Value *S1V2 = new LoadInst(G1, LHS->getName()+".val2", CI);
@@ -1098,10 +1098,10 @@ struct LLVMMemCpyMoveOptzn : public LibCallOptimization {
         // memcpy(d,s,0,a) -> noop
         ci->eraseFromParent();
         return true;
-      case 1: castType = Type::SByteTy; break;
-      case 2: castType = Type::ShortTy; break;
-      case 4: castType = Type::IntTy; break;
-      case 8: castType = Type::LongTy; break;
+      case 1: castType = Type::Int8Ty; break;
+      case 2: castType = Type::Int16Ty; break;
+      case 4: castType = Type::Int32Ty; break;
+      case 8: castType = Type::Int64Ty; break;
       default:
         return false;
     }
@@ -1183,7 +1183,7 @@ struct LLVMMemSetOptimization : public LibCallOptimization {
     ConstantInt* FILL = dyn_cast<ConstantInt>(ci->getOperand(2));
     if (!FILL)
       return false;
-    if (FILL->getType() != Type::UByteTy)
+    if (FILL->getType() != Type::Int8Ty)
       return false;
 
     // memset(s,c,n) -> store s, c (for n=1,2,4,8)
@@ -1198,18 +1198,18 @@ struct LLVMMemSetOptimization : public LibCallOptimization {
     Type* castType = 0;
     switch (len) {
       case 1:
-        castType = Type::UByteTy;
+        castType = Type::Int8Ty;
         break;
       case 2:
-        castType = Type::UShortTy;
+        castType = Type::Int16Ty;
         fill_value |= fill_char << 8;
         break;
       case 4:
-        castType = Type::UIntTy;
+        castType = Type::Int32Ty;
         fill_value |= fill_char << 8 | fill_char << 16 | fill_char << 24;
         break;
       case 8:
-        castType = Type::ULongTy;
+        castType = Type::Int64Ty;
         fill_value |= fill_char << 8 | fill_char << 16 | fill_char << 24;
         fill_value |= fill_char << 32 | fill_char << 40 | fill_char << 48;
         fill_value |= fill_char << 56;
@@ -1350,7 +1350,7 @@ public:
         std::vector<Value*> args;
         args.push_back(CastToCStr(ci->getOperand(2), *ci));
         new CallInst(puts_func,args,ci->getName(),ci);
-        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
         break;
       }
       case 'c':
@@ -1363,9 +1363,9 @@ public:
         if (!putchar_func)
           return false;
         CastInst* cast = CastInst::createSExtOrBitCast(
-            ci->getOperand(2), Type::IntTy, CI->getName()+".int", ci);
+            ci->getOperand(2), Type::Int32Ty, CI->getName()+".int", ci);
         new CallInst(putchar_func, cast, "", ci);
-        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy, 1));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty, 1));
         break;
       }
       default:
@@ -1440,7 +1440,7 @@ public:
       args.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
       args.push_back(ci->getOperand(1));
       new CallInst(fwrite_func,args,ci->getName(),ci);
-      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
       ci->eraseFromParent();
       return true;
     }
@@ -1474,7 +1474,7 @@ public:
           args.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
           args.push_back(ci->getOperand(1));
           new CallInst(fwrite_func,args,ci->getName(),ci);
-          ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
+          ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
         } else {
           // fprintf(file,"%s",str) -> fputs(str,file)
           const Type* FILEptr_type = ci->getOperand(1)->getType();
@@ -1485,7 +1485,7 @@ public:
           args.push_back(CastToCStr(ci->getOperand(3), *ci));
           args.push_back(ci->getOperand(1));
           new CallInst(fputs_func,args,ci->getName(),ci);
-          ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
+          ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
         }
         break;
       }
@@ -1497,9 +1497,9 @@ public:
         if (!fputc_func)
           return false;
         CastInst* cast = CastInst::createSExtOrBitCast(
-            ci->getOperand(3), Type::IntTy, CI->getName()+".int", ci);
+            ci->getOperand(3), Type::Int32Ty, CI->getName()+".int", ci);
         new CallInst(fputc_func,cast,ci->getOperand(1),"",ci);
-        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,1));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,1));
         break;
       }
       default:
@@ -1523,7 +1523,7 @@ public:
   /// @brief Make sure that the "fprintf" function has the right prototype
   virtual bool ValidateCalledFunction(const Function *f, SimplifyLibCalls &SLC){
     // Just make sure this has at least 2 arguments
-    return (f->getReturnType() == Type::IntTy && f->arg_size() >= 2);
+    return (f->getReturnType() == Type::Int32Ty && f->arg_size() >= 2);
   }
 
   /// @brief Perform the sprintf optimization.
@@ -1542,8 +1542,8 @@ public:
     if (ci->getNumOperands() == 3) {
       if (len == 0) {
         // If the length is 0, we just need to store a null byte
-        new StoreInst(ConstantInt::get(Type::SByteTy,0),ci->getOperand(1),ci);
-        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
+        new StoreInst(ConstantInt::get(Type::Int8Ty,0),ci->getOperand(1),ci);
+        ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,0));
         ci->eraseFromParent();
         return true;
       }
@@ -1570,9 +1570,9 @@ public:
       args.push_back(ci->getOperand(1));
       args.push_back(ci->getOperand(2));
       args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
-      args.push_back(ConstantInt::get(Type::UIntTy,1));
+      args.push_back(ConstantInt::get(Type::Int32Ty,1));
       new CallInst(memcpy_func,args,"",ci);
-      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
+      ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
       ci->eraseFromParent();
       return true;
     }
@@ -1609,7 +1609,7 @@ public:
       args.push_back(CastToCStr(ci->getOperand(1), *ci));
       args.push_back(CastToCStr(ci->getOperand(3), *ci));
       args.push_back(Len1);
-      args.push_back(ConstantInt::get(Type::UIntTy,1));
+      args.push_back(ConstantInt::get(Type::Int32Ty,1));
       new CallInst(memcpy_func, args, "", ci);
       
       // The strlen result is the unincremented number of bytes in the string.
@@ -1625,13 +1625,13 @@ public:
     case 'c': {
       // sprintf(dest,"%c",chr) -> store chr, dest
       CastInst* cast = CastInst::createTruncOrBitCast(
-          ci->getOperand(3), Type::SByteTy, "char", ci);
+          ci->getOperand(3), Type::Int8Ty, "char", ci);
       new StoreInst(cast, ci->getOperand(1), ci);
       GetElementPtrInst* gep = new GetElementPtrInst(ci->getOperand(1),
-        ConstantInt::get(Type::UIntTy,1),ci->getOperand(1)->getName()+".end",
+        ConstantInt::get(Type::Int32Ty,1),ci->getOperand(1)->getName()+".end",
         ci);
-      new StoreInst(ConstantInt::get(Type::SByteTy,0),gep,ci);
-      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,1));
+      new StoreInst(ConstantInt::get(Type::Int8Ty,0),gep,ci);
+      ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,1));
       ci->eraseFromParent();
       return true;
     }
@@ -1681,7 +1681,7 @@ public:
           return false;
         LoadInst* loadi = new LoadInst(ci->getOperand(1),
           ci->getOperand(1)->getName()+".byte",ci);
-        CastInst* casti = new SExtInst(loadi, Type::IntTy, 
+        CastInst* casti = new SExtInst(loadi, Type::Int32Ty, 
                                        loadi->getName()+".int", ci);
         new CallInst(fputc_func,casti,ci->getOperand(2),"",ci);
         break;
@@ -1727,23 +1727,23 @@ public:
       // isdigit(c)   -> 0 or 1, if 'c' is constant
       uint64_t val = CI->getZExtValue();
       if (val >= '0' && val <='9')
-        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,1));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,1));
       else
-        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
+        ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,0));
       ci->eraseFromParent();
       return true;
     }
 
     // isdigit(c)   -> (unsigned)c - '0' <= 9
     CastInst* cast = CastInst::createIntegerCast(ci->getOperand(1),
-        Type::UIntTy, false/*ZExt*/, ci->getOperand(1)->getName()+".uint", ci);
+        Type::Int32Ty, false/*ZExt*/, ci->getOperand(1)->getName()+".uint", ci);
     BinaryOperator* sub_inst = BinaryOperator::createSub(cast,
-        ConstantInt::get(Type::UIntTy,0x30),
+        ConstantInt::get(Type::Int32Ty,0x30),
         ci->getOperand(1)->getName()+".sub",ci);
     ICmpInst* setcond_inst = new ICmpInst(ICmpInst::ICMP_ULE,sub_inst,
-        ConstantInt::get(Type::UIntTy,9),
+        ConstantInt::get(Type::Int32Ty,9),
         ci->getOperand(1)->getName()+".cmp",ci);
-    CastInst* c2 = new ZExtInst(setcond_inst, Type::IntTy, 
+    CastInst* c2 = new ZExtInst(setcond_inst, Type::Int32Ty, 
         ci->getOperand(1)->getName()+".isdigit", ci);
     ci->replaceAllUsesWith(c2);
     ci->eraseFromParent();
@@ -1824,7 +1824,7 @@ public:
   /// @brief Make sure that the "ffs" function has the right prototype
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     // Just make sure this has 2 arguments
-    return F->arg_size() == 1 && F->getReturnType() == Type::IntTy;
+    return F->arg_size() == 1 && F->getReturnType() == Type::Int32Ty;
   }
 
   /// @brief Perform the ffs optimization.
@@ -1842,7 +1842,7 @@ public:
           val >>= 1;
         }
       }
-      TheCall->replaceAllUsesWith(ConstantInt::get(Type::IntTy, result));
+      TheCall->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty, result));
       TheCall->eraseFromParent();
       return true;
     }
@@ -1851,14 +1851,13 @@ public:
     // ffsl(x)  -> x == 0 ? 0 : llvm.cttz(x)+1
     // ffsll(x) -> x == 0 ? 0 : llvm.cttz(x)+1
     const Type *ArgType = TheCall->getOperand(1)->getType();
-    ArgType = ArgType->getUnsignedVersion();
     const char *CTTZName;
     switch (ArgType->getTypeID()) {
     default: assert(0 && "Unknown unsigned type!");
-    case Type::UByteTyID : CTTZName = "llvm.cttz.i8" ; break;
-    case Type::UShortTyID: CTTZName = "llvm.cttz.i16"; break;
-    case Type::UIntTyID  : CTTZName = "llvm.cttz.i32"; break;
-    case Type::ULongTyID : CTTZName = "llvm.cttz.i64"; break;
+    case Type::Int8TyID : CTTZName = "llvm.cttz.i8" ; break;
+    case Type::Int16TyID: CTTZName = "llvm.cttz.i16"; break;
+    case Type::Int32TyID  : CTTZName = "llvm.cttz.i32"; break;
+    case Type::Int64TyID : CTTZName = "llvm.cttz.i64"; break;
     }
     
     Function *F = SLC.getModule()->getOrInsertFunction(CTTZName, ArgType,
@@ -1866,14 +1865,14 @@ public:
     Value *V = CastInst::createIntegerCast(TheCall->getOperand(1), ArgType, 
                                            false/*ZExt*/, "tmp", TheCall);
     Value *V2 = new CallInst(F, V, "tmp", TheCall);
-    V2 = CastInst::createIntegerCast(V2, Type::IntTy, false/*ZExt*/, 
+    V2 = CastInst::createIntegerCast(V2, Type::Int32Ty, false/*ZExt*/, 
                                      "tmp", TheCall);
-    V2 = BinaryOperator::createAdd(V2, ConstantInt::get(Type::IntTy, 1),
+    V2 = BinaryOperator::createAdd(V2, ConstantInt::get(Type::Int32Ty, 1),
                                    "tmp", TheCall);
     Value *Cond = new ICmpInst(ICmpInst::ICMP_EQ, V, 
                                Constant::getNullValue(V->getType()), "tmp", 
                                TheCall);
-    V2 = new SelectInst(Cond, ConstantInt::get(Type::IntTy, 0), V2,
+    V2 = new SelectInst(Cond, ConstantInt::get(Type::Int32Ty, 0), V2,
                         TheCall->getName(), TheCall);
     TheCall->replaceAllUsesWith(V2);
     TheCall->eraseFromParent();
@@ -2112,7 +2111,7 @@ bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA) {
 Value *CastToCStr(Value *V, Instruction &IP) {
   assert(isa<PointerType>(V->getType()) && 
          "Can't cast non-pointer type to C string type");
-  const Type *SBPTy = PointerType::get(Type::SByteTy);
+  const Type *SBPTy = PointerType::get(Type::Int8Ty);
   if (V->getType() != SBPTy)
     return new BitCastInst(V, SBPTy, V->getName(), &IP);
   return V;

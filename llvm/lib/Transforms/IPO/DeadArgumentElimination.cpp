@@ -500,7 +500,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   bool ExtraArgHack = false;
   if (Params.empty() && FTy->isVarArg()) {
     ExtraArgHack = true;
-    Params.push_back(Type::IntTy);
+    Params.push_back(Type::Int32Ty);
   }
 
   FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
@@ -526,7 +526,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
         Args.push_back(*AI);
 
     if (ExtraArgHack)
-      Args.push_back(UndefValue::get(Type::IntTy));
+      Args.push_back(UndefValue::get(Type::Int32Ty));
 
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI)

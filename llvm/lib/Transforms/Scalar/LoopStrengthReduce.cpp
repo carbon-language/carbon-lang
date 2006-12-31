@@ -86,8 +86,8 @@ namespace {
     Value      *IncV;
 
     IVExpr()
-      : Stride(SCEVUnknown::getIntegerSCEV(0, Type::UIntTy)),
-        Base  (SCEVUnknown::getIntegerSCEV(0, Type::UIntTy)) {}
+      : Stride(SCEVUnknown::getIntegerSCEV(0, Type::Int32Ty)),
+        Base  (SCEVUnknown::getIntegerSCEV(0, Type::Int32Ty)) {}
     IVExpr(const SCEVHandle &stride, const SCEVHandle &base, PHINode *phi,
            Value *incv)
       : Stride(stride), Base(base), PHI(phi), IncV(incv) {}
@@ -334,12 +334,6 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
          << "] Variable stride: " << *AddRec << "\n";
 
   Stride = AddRec->getOperand(1);
-  // Check that all constant strides are the unsigned type, we don't want to
-  // have two IV's one of signed stride 4 and one of unsigned stride 4 to not be
-  // merged.
-  assert((!isa<SCEVConstant>(Stride) || Stride->getType()->isUnsigned()) &&
-         "Constants should be canonicalized to unsigned!");
-
   return true;
 }
 
@@ -899,7 +893,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
       if (unsigned(abs(SInt)) < Scale || (SInt % Scale) != 0)
         continue;
       std::map<SCEVHandle, IVsOfOneStride>::iterator SI =
-        IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt/Scale, Type::UIntTy));
+        IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt/Scale, Type::Int32Ty));
       if (SI == IVsByStride.end())
         continue;
       for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),

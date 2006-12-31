@@ -384,7 +384,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     NewGlobals.reserve(STy->getNumElements());
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
-                                            ConstantInt::get(Type::UIntTy, i));
+                                            ConstantInt::get(Type::Int32Ty, i));
       assert(In && "Couldn't get element of initializer?");
       GlobalVariable *NGV = new GlobalVariable(STy->getElementType(i), false,
                                                GlobalVariable::InternalLinkage,
@@ -406,7 +406,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     NewGlobals.reserve(NumElements);
     for (unsigned i = 0, e = NumElements; i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
-                                            ConstantInt::get(Type::UIntTy, i));
+                                            ConstantInt::get(Type::Int32Ty, i));
       assert(In && "Couldn't get element of initializer?");
 
       GlobalVariable *NGV = new GlobalVariable(STy->getElementType(), false,
@@ -422,7 +422,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
 
   DOUT << "PERFORMING GLOBAL SRA ON: " << *GV;
 
-  Constant *NullInt = Constant::getNullValue(Type::IntTy);
+  Constant *NullInt = Constant::getNullValue(Type::Int32Ty);
 
   // Loop over all of the uses of the global, replacing the constantexpr geps,
   // with smaller constantexpr geps or direct references.
@@ -679,10 +679,10 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     Type *NewTy = ArrayType::get(MI->getAllocatedType(),
                                  NElements->getZExtValue());
     MallocInst *NewMI =
-      new MallocInst(NewTy, Constant::getNullValue(Type::UIntTy),
+      new MallocInst(NewTy, Constant::getNullValue(Type::Int32Ty),
                      MI->getAlignment(), MI->getName(), MI);
     std::vector<Value*> Indices;
-    Indices.push_back(Constant::getNullValue(Type::IntTy));
+    Indices.push_back(Constant::getNullValue(Type::Int32Ty));
     Indices.push_back(Indices[0]);
     Value *NewGEP = new GetElementPtrInst(NewMI, Indices,
                                           NewMI->getName()+".el0", MI);
@@ -892,7 +892,6 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr,
     // Otherwise, this should be: 'getelementptr Ptr, Idx, uint FieldNo ...'
     GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
     assert(GEPI->getNumOperands() >= 3 && isa<ConstantInt>(GEPI->getOperand(2))
-           && GEPI->getOperand(2)->getType()->isUnsigned()
            && "Unexpected GEPI!");
     
     // Load the pointer for this field.
@@ -1415,7 +1414,7 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
       if (!ATy) return 0;
       const StructType *STy = dyn_cast<StructType>(ATy->getElementType());
       if (!STy || STy->getNumElements() != 2 ||
-          STy->getElementType(0) != Type::IntTy) return 0;
+          STy->getElementType(0) != Type::Int32Ty) return 0;
       const PointerType *PFTy = dyn_cast<PointerType>(STy->getElementType(1));
       if (!PFTy) return 0;
       const FunctionType *FTy = dyn_cast<FunctionType>(PFTy->getElementType());
@@ -1468,7 +1467,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
                                           const std::vector<Function*> &Ctors) {
   // If we made a change, reassemble the initializer list.
   std::vector<Constant*> CSVals;
-  CSVals.push_back(ConstantInt::get(Type::IntTy, 65535));
+  CSVals.push_back(ConstantInt::get(Type::Int32Ty, 65535));
   CSVals.push_back(0);
   
   // Create the new init list.
@@ -1481,7 +1480,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
                                           std::vector<const Type*>(), false);
       const PointerType *PFTy = PointerType::get(FTy);
       CSVals[1] = Constant::getNullValue(PFTy);
-      CSVals[0] = ConstantInt::get(Type::IntTy, 2147483647);
+      CSVals[0] = ConstantInt::get(Type::Int32Ty, 2147483647);
     }
     CAList.push_back(ConstantStruct::get(CSVals));
   }

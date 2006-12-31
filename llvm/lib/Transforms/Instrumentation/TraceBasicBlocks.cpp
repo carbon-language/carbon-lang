@@ -46,9 +46,9 @@ static void InsertInstrumentationCall (BasicBlock *BB,
        << "\", \"" << FnName << "\", " << BBNumber << ")\n";
   Module &M = *BB->getParent ()->getParent ();
   Function *InstrFn = M.getOrInsertFunction (FnName, Type::VoidTy,
-                                             Type::UIntTy, (Type *)0);
+                                             Type::Int32Ty, (Type *)0);
   std::vector<Value*> Args (1);
-  Args[0] = ConstantInt::get (Type::UIntTy, BBNumber);
+  Args[0] = ConstantInt::get (Type::Int32Ty, BBNumber);
 
   // Insert the call after any alloca or PHI instructions...
   BasicBlock::iterator InsertPos = BB->begin();

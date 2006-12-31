@@ -210,8 +210,9 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
     Constant *CPV = cast<Constant>(V);
     // Constants are converted by constant folding the cast that is required.
     // We assume here that all casts are implemented for constant prop.
-    Instruction::CastOps opcode = CastInst::getCastOpcode(CPV,
-        CPV->getType()->isSigned(), Ty, Ty->isSigned());
+    // FIXME: This seems to work, but it is unclear why ZEXT is always the
+    // right choice here.
+    Instruction::CastOps opcode = CastInst::getCastOpcode(CPV, false, Ty,false);
     Value *Result = ConstantExpr::getCast(opcode, CPV, Ty);
     // Add the instruction to the expression map
     //VMC.ExprMap[V] = Result;
@@ -231,7 +232,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
   case Instruction::BitCast: {
     assert(VMC.NewCasts.count(ValueHandle(VMC, I)) == 0);
     Instruction::CastOps opcode = CastInst::getCastOpcode(I->getOperand(0),
-        I->getOperand(0)->getType()->isSigned(), Ty, Ty->isSigned());
+        false, Ty, false);
     Res = CastInst::create(opcode, I->getOperand(0), Ty, Name);
     VMC.NewCasts.insert(ValueHandle(VMC, Res));
     break;
@@ -473,8 +474,6 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
   }
   case Instruction::LShr:
   case Instruction::AShr:
-    if (Ty->isSigned() != V->getType()->isSigned()) return false;
-    // FALL THROUGH
   case Instruction::Shl:
     if (I->getOperand(1) == V) return false;  // Cannot change shift amount type
     if (!Ty->isInteger()) return false;
@@ -713,8 +712,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
   switch (I->getOpcode()) {
   case Instruction::BitCast: {
-    Instruction::CastOps opcode = CastInst::getCastOpcode(NewVal,
-        NewVal->getType()->isSigned(), I->getType(), I->getType()->isSigned());
+    Instruction::CastOps opcode = CastInst::getCastOpcode(NewVal, false, 
+                                                          I->getType(), false);
     Res = CastInst::create(opcode, NewVal, I->getType(), Name);
     break;
   }
@@ -768,7 +767,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
     if (const CompositeType *CT = dyn_cast<CompositeType>(LoadedTy)) {
       std::vector<Value*> Indices;
-      Indices.push_back(Constant::getNullValue(Type::UIntTy));
+      Indices.push_back(Constant::getNullValue(Type::Int32Ty));
 
       unsigned Offset = 0;   // No offset, get first leaf.
       LoadedTy = getStructOffsetType(CT, Offset, Indices, TD, false);
@@ -801,7 +800,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
         if (ElTy != NewTy) {
           std::vector<Value*> Indices;
-          Indices.push_back(Constant::getNullValue(Type::UIntTy));
+          Indices.push_back(Constant::getNullValue(Type::Int32Ty));
 
           unsigned Offset = 0;
           const Type *Ty = getStructOffsetType(ElTy, Offset, Indices, TD,false);
@@ -830,7 +829,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
 
       if (isa<StructType>(ValTy)) {
         std::vector<Value*> Indices;
-        Indices.push_back(Constant::getNullValue(Type::UIntTy));
+        Indices.push_back(Constant::getNullValue(Type::Int32Ty));
 
         unsigned Offset = 0;
         ValTy = getStructOffsetType(ValTy, Offset, Indices, TD, false);

@@ -252,7 +252,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   case 0:
   case 1: RetTy = Type::VoidTy; break;
   case 2: RetTy = Type::BoolTy; break;
-  default: RetTy = Type::UShortTy; break;
+  default: RetTy = Type::Int16Ty; break;
   }
 
   std::vector<const Type*> paramTy;
@@ -304,8 +304,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
     Value *RewriteVal;
     if (AggregateArgs) {
       std::vector<Value*> Indices;
-      Indices.push_back(Constant::getNullValue(Type::UIntTy));
-      Indices.push_back(ConstantInt::get(Type::UIntTy, i));
+      Indices.push_back(Constant::getNullValue(Type::Int32Ty));
+      Indices.push_back(ConstantInt::get(Type::Int32Ty, i));
       std::string GEPname = "gep_" + inputs[i]->getName();
       TerminatorInst *TI = newFunction->begin()->getTerminator();
       GetElementPtrInst *GEP = new GetElementPtrInst(AI, Indices, GEPname, TI);
@@ -391,8 +391,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
     for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
       std::vector<Value*> Indices;
-      Indices.push_back(Constant::getNullValue(Type::UIntTy));
-      Indices.push_back(ConstantInt::get(Type::UIntTy, i));
+      Indices.push_back(Constant::getNullValue(Type::Int32Ty));
+      Indices.push_back(ConstantInt::get(Type::Int32Ty, i));
       GetElementPtrInst *GEP =
         new GetElementPtrInst(Struct, Indices,
                               "gep_" + StructValues[i]->getName());
@@ -417,8 +417,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     Value *Output = 0;
     if (AggregateArgs) {
       std::vector<Value*> Indices;
-      Indices.push_back(Constant::getNullValue(Type::UIntTy));
-      Indices.push_back(ConstantInt::get(Type::UIntTy, FirstOut + i));
+      Indices.push_back(Constant::getNullValue(Type::Int32Ty));
+      Indices.push_back(ConstantInt::get(Type::Int32Ty, FirstOut + i));
       GetElementPtrInst *GEP
         = new GetElementPtrInst(Struct, Indices,
                                 "gep_reload_" + outputs[i]->getName());
@@ -439,7 +439,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
   // Now we can emit a switch statement using the call as a value.
   SwitchInst *TheSwitch =
-    new SwitchInst(ConstantInt::getNullValue(Type::UShortTy),
+    new SwitchInst(ConstantInt::getNullValue(Type::Int16Ty),
                    codeReplacer, 0, codeReplacer);
 
   // Since there may be multiple exits from the original region, make the new
@@ -473,14 +473,14 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
             brVal = ConstantBool::get(!SuccNum);
             break;
           default:
-            brVal = ConstantInt::get(Type::UShortTy, SuccNum);
+            brVal = ConstantInt::get(Type::Int16Ty, SuccNum);
             break;
           }
 
           ReturnInst *NTRet = new ReturnInst(brVal, NewTarget);
 
           // Update the switch instruction.
-          TheSwitch->addCase(ConstantInt::get(Type::UShortTy, SuccNum),
+          TheSwitch->addCase(ConstantInt::get(Type::Int16Ty, SuccNum),
                              OldTarget);
 
           // Restore values just before we exit
@@ -518,8 +518,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
             if (DominatesDef) {
               if (AggregateArgs) {
                 std::vector<Value*> Indices;
-                Indices.push_back(Constant::getNullValue(Type::UIntTy));
-                Indices.push_back(ConstantInt::get(Type::UIntTy,FirstOut+out));
+                Indices.push_back(Constant::getNullValue(Type::Int32Ty));
+                Indices.push_back(ConstantInt::get(Type::Int32Ty,FirstOut+out));
                 GetElementPtrInst *GEP =
                   new GetElementPtrInst(OAI, Indices,
                                         "gep_" + outputs[out]->getName(),

@@ -274,7 +274,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
   // code with llvm.stacksave/llvm.stackrestore intrinsics.
   if (InlinedFunctionInfo.ContainsDynamicAllocas) {
     Module *M = Caller->getParent();
-    const Type *SBytePtr = PointerType::get(Type::SByteTy);
+    const Type *SBytePtr = PointerType::get(Type::Int8Ty);
     // Get the two intrinsics we care about.
     Function *StackSave, *StackRestore;
     StackSave    = M->getOrInsertFunction("llvm.stacksave", SBytePtr, NULL);

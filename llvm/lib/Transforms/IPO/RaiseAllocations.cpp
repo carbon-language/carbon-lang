@@ -66,12 +66,12 @@ ModulePass *llvm::createRaiseAllocationsPass() {
 //
 void RaiseAllocations::doInitialization(Module &M) {
   const FunctionType *MallocType =   // Get the type for malloc
-    FunctionType::get(PointerType::get(Type::SByteTy),
-                    std::vector<const Type*>(1, Type::ULongTy), false);
+    FunctionType::get(PointerType::get(Type::Int8Ty),
+                    std::vector<const Type*>(1, Type::Int64Ty), false);
 
   const FunctionType *FreeType =     // Get the type for free
     FunctionType::get(Type::VoidTy,
-                   std::vector<const Type*>(1, PointerType::get(Type::SByteTy)),
+                   std::vector<const Type*>(1, PointerType::get(Type::Int8Ty)),
                       false);
 
   // Get Malloc and free prototypes if they exist!
@@ -81,15 +81,15 @@ void RaiseAllocations::doInitialization(Module &M) {
   // Check to see if the prototype is wrong, giving us sbyte*(uint) * malloc
   // This handles the common declaration of: 'void *malloc(unsigned);'
   if (MallocFunc == 0) {
-    MallocType = FunctionType::get(PointerType::get(Type::SByteTy),
-                            std::vector<const Type*>(1, Type::UIntTy), false);
+    MallocType = FunctionType::get(PointerType::get(Type::Int8Ty),
+                            std::vector<const Type*>(1, Type::Int32Ty), false);
     MallocFunc = M.getFunction("malloc", MallocType);
   }
 
   // Check to see if the prototype is missing, giving us sbyte*(...) * malloc
   // This handles the common declaration of: 'void *malloc();'
   if (MallocFunc == 0) {
-    MallocType = FunctionType::get(PointerType::get(Type::SByteTy),
+    MallocType = FunctionType::get(PointerType::get(Type::Int8Ty),
                                    std::vector<const Type*>(), true);
     MallocFunc = M.getFunction("malloc", MallocType);
   }
@@ -104,7 +104,7 @@ void RaiseAllocations::doInitialization(Module &M) {
   // One last try, check to see if we can find free as 'int (...)* free'.  This
   // handles the case where NOTHING was declared.
   if (FreeFunc == 0) {
-    FreeType = FunctionType::get(Type::IntTy, std::vector<const Type*>(),true);
+    FreeType = FunctionType::get(Type::Int32Ty, std::vector<const Type*>(),true);
     FreeFunc = M.getFunction("free", FreeType);
   }
 
@@ -140,13 +140,13 @@ bool RaiseAllocations::runOnModule(Module &M) {
 
           // If no prototype was provided for malloc, we may need to cast the
           // source size.
-          if (Source->getType() != Type::UIntTy)
+          if (Source->getType() != Type::Int32Ty)
             Source = 
-              CastInst::createIntegerCast(Source, Type::UIntTy, false/*ZExt*/,
+              CastInst::createIntegerCast(Source, Type::Int32Ty, false/*ZExt*/,
                                           "MallocAmtCast", I);
 
           std::string Name(I->getName()); I->setName("");
-          MallocInst *MI = new MallocInst(Type::SByteTy, Source, Name, I);
+          MallocInst *MI = new MallocInst(Type::Int8Ty, Source, Name, I);
           I->replaceAllUsesWith(MI);
 
           // If the old instruction was an invoke, add an unconditional branch
@@ -194,7 +194,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
           //
           Value *Source = *CS.arg_begin();
           if (!isa<PointerType>(Source->getType()))
-            Source = new IntToPtrInst(Source, PointerType::get(Type::SByteTy), 
+            Source = new IntToPtrInst(Source, PointerType::get(Type::Int8Ty), 
                                       "FreePtrCast", I);
           new FreeInst(Source, I);
 

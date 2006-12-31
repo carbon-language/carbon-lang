@@ -58,7 +58,7 @@ bool EdgeProfiler::runOnModule(Module &M) {
       NumEdges += BB->getTerminator()->getNumSuccessors();
     }
 
-  const Type *ATy = ArrayType::get(Type::UIntTy, NumEdges);
+  const Type *ATy = ArrayType::get(Type::Int32Ty, NumEdges);
   GlobalVariable *Counters =
     new GlobalVariable(ATy, false, GlobalValue::InternalLinkage,
                        Constant::getNullValue(ATy), "EdgeProfCounters", &M);

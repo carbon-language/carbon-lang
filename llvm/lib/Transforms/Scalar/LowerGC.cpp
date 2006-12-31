@@ -83,7 +83,7 @@ const StructType *LowerGC::getRootRecordType(unsigned NumRoots) {
     MainRootRecordType ? (Type*)MainRootRecordType : (Type*)OpaqueType::get();
   ST.clear();
   ST.push_back(PointerType::get(RootListH));         // Prev pointer
-  ST.push_back(Type::UIntTy);                        // NumElements in array
+  ST.push_back(Type::Int32Ty);                       // NumElements in array
   ST.push_back(PairArrTy);                           // The pairs
   StructType *RootList = StructType::get(ST);
   if (MainRootRecordType)
@@ -103,7 +103,7 @@ bool LowerGC::doInitialization(Module &M) {
   GCWriteInt = M.getNamedFunction("llvm.gcwrite");
   if (!GCRootInt && !GCReadInt && !GCWriteInt) return false;
 
-  PointerType *VoidPtr = PointerType::get(Type::SByteTy);
+  PointerType *VoidPtr = PointerType::get(Type::Int8Ty);
   PointerType *VoidPtrPtr = PointerType::get(VoidPtr);
 
   // If the program is using read/write barriers, find the implementations of
@@ -159,7 +159,7 @@ bool LowerGC::runOnFunction(Function &F) {
   // Quick exit for programs that are not using GC mechanisms.
   if (!GCRootInt && !GCReadInt && !GCWriteInt) return false;
 
-  PointerType *VoidPtr    = PointerType::get(Type::SByteTy);
+  PointerType *VoidPtr    = PointerType::get(Type::Int8Ty);
   PointerType *VoidPtrPtr = PointerType::get(VoidPtr);
 
   // If there are read/write barriers in the program, perform a quick pass over
@@ -225,8 +225,8 @@ bool LowerGC::runOnFunction(Function &F) {
   BasicBlock::iterator IP = AI;
   while (isa<AllocaInst>(IP)) ++IP;
 
-  Constant *Zero = ConstantInt::get(Type::UIntTy, 0);
-  Constant *One  = ConstantInt::get(Type::UIntTy, 1);
+  Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
+  Constant *One  = ConstantInt::get(Type::Int32Ty, 1);
 
   // Get a pointer to the prev pointer.
   std::vector<Value*> Par;
@@ -240,11 +240,11 @@ bool LowerGC::runOnFunction(Function &F) {
   new StoreInst(PrevPtr, PrevPtrPtr, IP);
 
   // Set the number of elements in this record.
-  Par[1] = ConstantInt::get(Type::UIntTy, 1);
+  Par[1] = ConstantInt::get(Type::Int32Ty, 1);
   Value *NumEltsPtr = new GetElementPtrInst(AI, Par, "numeltsptr", IP);
-  new StoreInst(ConstantInt::get(Type::UIntTy, GCRoots.size()), NumEltsPtr,IP);
+  new StoreInst(ConstantInt::get(Type::Int32Ty, GCRoots.size()), NumEltsPtr,IP);
 
-  Par[1] = ConstantInt::get(Type::UIntTy, 2);
+  Par[1] = ConstantInt::get(Type::Int32Ty, 2);
   Par.resize(4);
 
   const PointerType *PtrLocTy =
@@ -254,7 +254,7 @@ bool LowerGC::runOnFunction(Function &F) {
   // Initialize all of the gcroot records now, and eliminate them as we go.
   for (unsigned i = 0, e = GCRoots.size(); i != e; ++i) {
     // Initialize the meta-data pointer.
-    Par[2] = ConstantInt::get(Type::UIntTy, i);
+    Par[2] = ConstantInt::get(Type::Int32Ty, i);
     Par[3] = One;
     Value *MetaDataPtr = new GetElementPtrInst(AI, Par, "MetaDataPtr", IP);
     assert(isa<Constant>(GCRoots[i]->getOperand(2)) && "Must be a constant");

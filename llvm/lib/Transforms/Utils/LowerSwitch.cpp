@@ -59,9 +59,7 @@ namespace {
 
       const ConstantInt* CI1 = cast<const ConstantInt>(C1.first);
       const ConstantInt* CI2 = cast<const ConstantInt>(C2.first);
-      if (CI1->getType()->isUnsigned()) 
-        return CI1->getZExtValue() < CI2->getZExtValue();
-      return CI1->getSExtValue() < CI2->getSExtValue();
+      return CI1->getZExtValue() < CI2->getZExtValue();
     }
   };
 

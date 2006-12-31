@@ -123,7 +123,6 @@ void SCEV::dump() const {
 ConstantRange SCEV::getValueRange() const {
   const Type *Ty = getType();
   assert(Ty->isInteger() && "Can't get range for a non-integer SCEV!");
-  Ty = Ty->getUnsignedVersion();
   // Default to a full range if no better information is available.
   return ConstantRange(getType());
 }
@@ -172,14 +171,6 @@ SCEVConstant::~SCEVConstant() {
 }
 
 SCEVHandle SCEVConstant::get(ConstantInt *V) {
-  // Make sure that SCEVConstant instances are all unsigned.
-  // FIXME:Signless. This entire if statement can be removed when integer types
-  // are signless. There won't be a need to bitcast then.
-  if (V->getType()->isSigned()) {
-    const Type *NewTy = V->getType()->getUnsignedVersion();
-    V = cast<ConstantInt>(ConstantExpr::getBitCast(V, NewTy));
-  }
-
   SCEVConstant *&R = (*SCEVConstants)[V];
   if (R == 0) R = new SCEVConstant(V);
   return R;
@@ -310,9 +301,7 @@ void SCEVSDivExpr::print(std::ostream &OS) const {
 }
 
 const Type *SCEVSDivExpr::getType() const {
-  const Type *Ty = LHS->getType();
-  if (Ty->isUnsigned()) Ty = Ty->getSignedVersion();
-  return Ty;
+  return LHS->getType();
 }
 
 // SCEVAddRecExprs - Only allow the creation of one SCEVAddRecExpr for any
@@ -505,7 +494,7 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
     uint64_t Result = 1;
     for (; NumSteps; --NumSteps)
       Result *= Val-(NumSteps-1);
-    Constant *Res = ConstantInt::get(Type::ULongTy, Result);
+    Constant *Res = ConstantInt::get(Type::Int64Ty, Result);
     return SCEVUnknown::get(ConstantExpr::getTruncOrBitCast(Res, V->getType()));
   }
 
@@ -1427,15 +1416,13 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
     case Instruction::Trunc:
       // We don't handle trunc to bool yet.
       if (I->getType()->isInteger())
-        return SCEVTruncateExpr::get(getSCEV(I->getOperand(0)), 
-                                     I->getType()->getUnsignedVersion());
+        return SCEVTruncateExpr::get(getSCEV(I->getOperand(0)), I->getType());
       break;
 
     case Instruction::ZExt:
       // We don't handle zext from bool yet.
       if (I->getOperand(0)->getType()->isInteger())
-        return SCEVZeroExtendExpr::get(getSCEV(I->getOperand(0)), 
-                                       I->getType()->getUnsignedVersion());
+        return SCEVZeroExtendExpr::get(getSCEV(I->getOperand(0)), I->getType());
       break;
 
     case Instruction::BitCast:
@@ -1572,21 +1559,8 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
           // Form the constant range.
           ConstantRange CompRange(Cond, CompVal);
 
-          // Now that we have it, if it's signed, convert it to an unsigned
-          // range.
-          // FIXME:Signless. This entire if statement can go away when 
-          // integers are signless.  ConstantRange is already signless.
-          if (CompRange.getLower()->getType()->isSigned()) {
-            const Type *NewTy = RHSC->getValue()->getType();
-            Constant *NewL = ConstantExpr::getBitCast(CompRange.getLower(), 
-                                                      NewTy);
-            Constant *NewU = ConstantExpr::getBitCast(CompRange.getUpper(), 
-                                                      NewTy);
-            CompRange = ConstantRange(NewL, NewU);
-          }
-
           SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange, 
-              ICmpInst::isSignedPredicate(Cond));
+              false /*Always treat as unsigned range*/);
           if (!isa<SCEVCouldNotCompute>(Ret)) return Ret;
         }
       }
@@ -1723,7 +1697,7 @@ ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
   unsigned MaxSteps = MaxBruteForceIterations;
   for (unsigned IterationNum = 0; IterationNum != MaxSteps; ++IterationNum) {
     ConstantInt *ItCst =
-      ConstantInt::get(IdxExpr->getType()->getUnsignedVersion(), IterationNum);
+      ConstantInt::get(IdxExpr->getType(), IterationNum);
     ConstantInt *Val = EvaluateConstantChrecAtConstant(IdxExpr, ItCst);
 
     // Form the GEP offset.
@@ -1946,7 +1920,7 @@ ComputeIterationCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
     if (CondVal->getValue() == ExitWhen) {
       ConstantEvolutionLoopExitValue[PN] = PHIVal;
       ++NumBruteForceTripCountsComputed;
-      return SCEVConstant::get(ConstantInt::get(Type::UIntTy, IterationNum));
+      return SCEVConstant::get(ConstantInt::get(Type::Int32Ty, IterationNum));
     }
 
     // Compute the value of the PHI node for the next iteration.
@@ -2129,10 +2103,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
   SqrtTerm = ConstantExpr::getSub(ConstantExpr::getMul(B, B), SqrtTerm);
 
   // Compute floor(sqrt(B^2-4ac))
-  ConstantInt *SqrtVal =
-    cast<ConstantInt>(ConstantExpr::getBitCast(SqrtTerm,
-                                   SqrtTerm->getType()->getUnsignedVersion()));
-  uint64_t SqrtValV = SqrtVal->getZExtValue();
+  uint64_t SqrtValV = cast<ConstantInt>(SqrtTerm)->getZExtValue();
   uint64_t SqrtValV2 = (uint64_t)sqrt((double)SqrtValV);
   // The square root might not be precise for arbitrary 64-bit integer
   // values.  Do some sanity checks to ensure it's correct.
@@ -2142,20 +2113,13 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
     return std::make_pair(CNC, CNC);
   }
 
-  SqrtVal = ConstantInt::get(Type::ULongTy, SqrtValV2);
+  ConstantInt *SqrtVal = ConstantInt::get(Type::Int64Ty, SqrtValV2);
   SqrtTerm = ConstantExpr::getTruncOrBitCast(SqrtVal, SqrtTerm->getType());
 
   Constant *NegB = ConstantExpr::getNeg(B);
   Constant *TwoA = ConstantExpr::getMul(A, Two);
 
   // The divisions must be performed as signed divisions.
-  // FIXME:Signedness. These casts can all go away once integer types are
-  // signless.
-  const Type *SignedTy = NegB->getType()->getSignedVersion();
-  NegB = ConstantExpr::getBitCast(NegB, SignedTy);
-  TwoA = ConstantExpr::getBitCast(TwoA, SignedTy);
-  SqrtTerm = ConstantExpr::getBitCast(SqrtTerm, SignedTy);
-
   Constant *Solution1 =
     ConstantExpr::getSDiv(ConstantExpr::getAdd(NegB, SqrtTerm), TwoA);
   Constant *Solution2 =
@@ -2222,7 +2186,6 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
            << "  sol#2: " << *R2 << "\n";
 #endif
       // Pick the smallest positive root value.
-      assert(R1->getType()->isUnsigned()&&"Didn't canonicalize to unsigned?");
       if (ConstantBool *CB =
           dyn_cast<ConstantBool>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
                                    R1->getValue(), R2->getValue()))) {
@@ -2448,7 +2411,6 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
     if (R1) {
       // Pick the smallest positive root value.
-      assert(R1->getType()->isUnsigned() && "Didn't canonicalize to unsigned?");
       if (ConstantBool *CB =
           dyn_cast<ConstantBool>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
                                    R1->getValue(), R2->getValue()))) {

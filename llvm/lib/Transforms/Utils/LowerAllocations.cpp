@@ -84,7 +84,7 @@ FunctionPass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
 // This function is always successful.
 //
 bool LowerAllocations::doInitialization(Module &M) {
-  const Type *SBPTy = PointerType::get(Type::SByteTy);
+  const Type *SBPTy = PointerType::get(Type::Int8Ty);
   MallocFunc = M.getNamedFunction("malloc");
   FreeFunc   = M.getNamedFunction("free");
 
@@ -120,7 +120,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       // malloc(type) becomes sbyte *malloc(size)
       Value *MallocArg;
       if (LowerMallocArgToInteger)
-        MallocArg = ConstantInt::get(Type::ULongTy, TD.getTypeSize(AllocTy));
+        MallocArg = ConstantInt::get(Type::Int64Ty, TD.getTypeSize(AllocTy));
       else
         MallocArg = ConstantExpr::getSizeOf(AllocTy);
       MallocArg = ConstantExpr::getTruncOrBitCast(cast<Constant>(MallocArg), 
@@ -154,7 +154,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
             MallocArg = CastInst::createIntegerCast(MallocArg, IntPtrTy, 
                                                     false /*ZExt*/, "", I);
         } else if (MallocFTy->getNumParams() > 0 &&
-                   MallocFTy->getParamType(0) != Type::UIntTy)
+                   MallocFTy->getParamType(0) != Type::Int32Ty)
           MallocArg = CastInst::createIntegerCast(
               MallocArg, MallocFTy->getParamType(0), false/*ZExt*/, "",I);
         MallocArgs.push_back(MallocArg);

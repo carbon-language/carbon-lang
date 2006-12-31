@@ -87,7 +87,7 @@ bool EmitFunctionTable::runOnModule(Module &M){
       //std::cerr<<MI;
 
       vConsts.push_back(MI);
-      sBCons.push_back(ConstantInt::get(Type::SByteTy, hasBackEdge(MI)));
+      sBCons.push_back(ConstantInt::get(Type::Int8Ty, hasBackEdge(MI)));
 
       counter++;
     }
@@ -100,7 +100,7 @@ bool EmitFunctionTable::runOnModule(Module &M){
                                           cstruct, "llvmFunctionTable");
   M.getGlobalList().push_back(gb);
 
-  Constant *constArray = ConstantArray::get(ArrayType::get(Type::SByteTy,
+  Constant *constArray = ConstantArray::get(ArrayType::get(Type::Int8Ty,
                                                                 sBCons.size()),
                                                  sBCons);
 
@@ -110,8 +110,8 @@ bool EmitFunctionTable::runOnModule(Module &M){
 
   M.getGlobalList().push_back(funcArray);
 
-  ConstantInt *cnst = ConstantInt::get(Type::IntTy, counter);
-  GlobalVariable *fnCount = new GlobalVariable(Type::IntTy, true,
+  ConstantInt *cnst = ConstantInt::get(Type::Int32Ty, counter);
+  GlobalVariable *fnCount = new GlobalVariable(Type::Int32Ty, true,
                                                GlobalValue::ExternalLinkage,
                                                cnst, "llvmFunctionCount");
   M.getGlobalList().push_back(fnCount);

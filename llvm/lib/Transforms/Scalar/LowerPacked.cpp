@@ -209,7 +209,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
    if (const PackedType* PKT = dyn_cast<PackedType>(LI.getType())) {
        // Initialization, Idx is needed for getelementptr needed later
        std::vector<Value*> Idx(2);
-       Idx[0] = ConstantInt::get(Type::UIntTy,0);
+       Idx[0] = ConstantInt::get(Type::Int32Ty,0);
 
        ArrayType* AT = ArrayType::get(PKT->getContainedType(0),
                                       PKT->getNumElements());
@@ -225,7 +225,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
 
        for (unsigned i = 0, e = PKT->getNumElements(); i != e; ++i) {
             // Calculate the second index we will need
-            Idx[1] = ConstantInt::get(Type::UIntTy,i);
+            Idx[1] = ConstantInt::get(Type::Int32Ty,i);
 
             // Get the pointer
             Value* val = new GetElementPtrInst(array,
@@ -308,7 +308,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
        dyn_cast<PackedType>(SI.getOperand(0)->getType())) {
        // We will need this for getelementptr
        std::vector<Value*> Idx(2);
-       Idx[0] = ConstantInt::get(Type::UIntTy,0);
+       Idx[0] = ConstantInt::get(Type::Int32Ty,0);
 
        ArrayType* AT = ArrayType::get(PKT->getContainedType(0),
                                       PKT->getNumElements());
@@ -325,7 +325,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
 
        for (unsigned i = 0, e = PKT->getNumElements(); i != e; ++i) {
             // Generate the indices for getelementptr
-            Idx[1] = ConstantInt::get(Type::UIntTy,i);
+            Idx[1] = ConstantInt::get(Type::Int32Ty,i);
             Value* val = new GetElementPtrInst(array,
                                                Idx,
                                                "store.ge." +
@@ -375,12 +375,12 @@ void LowerPacked::visitExtractElementInst(ExtractElementInst& EI)
   } else {
     AllocaInst *alloca = 
       new AllocaInst(PTy->getElementType(),
-                     ConstantInt::get(Type::UIntTy, PTy->getNumElements()),
+                     ConstantInt::get(Type::Int32Ty, PTy->getNumElements()),
                      EI.getName() + ".alloca", 
 		     EI.getParent()->getParent()->getEntryBlock().begin());
     for (unsigned i = 0; i < PTy->getNumElements(); ++i) {
       GetElementPtrInst *GEP = 
-        new GetElementPtrInst(alloca, ConstantInt::get(Type::UIntTy, i),
+        new GetElementPtrInst(alloca, ConstantInt::get(Type::Int32Ty, i),
                               "store.ge", &EI);
       new StoreInst(op0Vals[i], GEP, &EI);
     }
@@ -411,7 +411,7 @@ void LowerPacked::visitInsertElementInst(InsertElementInst& IE)
     for (unsigned i = 0; i != Vals.size(); ++i) {
       ICmpInst *icmp =
         new ICmpInst(ICmpInst::ICMP_EQ, Idx, 
-                     ConstantInt::get(Type::UIntTy, i),
+                     ConstantInt::get(Type::Int32Ty, i),
                      "icmp", &IE);
       SelectInst *select =
         new SelectInst(icmp, Elt, Vals[i], "select", &IE);
