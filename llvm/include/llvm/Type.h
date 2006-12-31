@@ -72,12 +72,12 @@ public:
   enum TypeID {
     // PrimitiveTypes .. make sure LastPrimitiveTyID stays up to date
     VoidTyID = 0  , BoolTyID,           //  0, 1: Basics...
-    UByteTyID     , SByteTyID,          //  2, 3: 8 bit types...
-    UShortTyID    , ShortTyID,          //  4, 5: 16 bit types...
-    UIntTyID      , IntTyID,            //  6, 7: 32 bit types...
-    ULongTyID     , LongTyID,           //  8, 9: 64 bit types...
-    FloatTyID     , DoubleTyID,         // 10,11: Floating point types...
-    LabelTyID     ,                     // 12   : Labels...
+    Int8TyID,                           //  2   :  8 bit type...
+    Int16TyID,                          //  3   : 16 bit type...
+    Int32TyID,                          //  4   : 32 bit type...
+    Int64TyID,                          //  5   : 64 bit type...
+    FloatTyID, DoubleTyID,              //  6, 7: Floating point types...
+    LabelTyID,                          //  8   : Labels...
 
     // Derived types... see DerivedTypes.h file...
     // Make sure FirstDerivedTyID stays up to date!!!
@@ -160,28 +160,9 @@ public:
   /// getDescription - Return the string representation of the type...
   const std::string &getDescription() const;
 
-  /// isSigned - Return whether an integral numeric type is signed.  This is
-  /// true for SByteTy, ShortTy, IntTy, LongTy.  Note that this is not true for
-  /// Float and Double.
-  ///
-  bool isSigned() const {
-    return ID == SByteTyID || ID == ShortTyID ||
-           ID == IntTyID || ID == LongTyID;
-  }
-
-  /// isUnsigned - Return whether a numeric type is unsigned.  This is not quite
-  /// the complement of isSigned... nonnumeric types return false as they do
-  /// with isSigned.  This returns true for UByteTy, UShortTy, UIntTy, and
-  /// ULongTy
-  ///
-  bool isUnsigned() const {
-    return ID == UByteTyID || ID == UShortTyID ||
-           ID == UIntTyID || ID == ULongTyID;
-  }
-
   /// isInteger - Equivalent to isSigned() || isUnsigned()
   ///
-  bool isInteger() const { return ID >= UByteTyID && ID <= LongTyID; }
+  bool isInteger() const { return ID >= Int8TyID && ID <= Int64TyID; }
 
   /// isIntegral - Returns true if this is an integral type, which is either
   /// BoolTy or one of the Integer types.
@@ -246,14 +227,6 @@ public:
   unsigned getPrimitiveSize() const;
   unsigned getPrimitiveSizeInBits() const;
 
-  /// getUnsignedVersion - If this is an integer type, return the unsigned
-  /// variant of this type.  For example int -> uint.
-  const Type *getUnsignedVersion() const;
-
-  /// getSignedVersion - If this is an integer type, return the signed variant
-  /// of this type.  For example uint -> int.
-  const Type *getSignedVersion() const;
-  
   /// getIntegralTypeMask - Return a bitmask with ones set for all of the bits
   /// that can be set by an unsigned version of this type.  This is 0xFF for
   /// sbyte/ubyte, 0xFFFF for shorts, etc.
@@ -275,10 +248,8 @@ public:
   /// will be promoted to if passed through a variable argument
   /// function.
   const Type *getVAArgsPromotedType() const {
-    if (ID == BoolTyID || ID == UByteTyID || ID == UShortTyID)
-      return Type::UIntTy;
-    else if (ID == SByteTyID || ID == ShortTyID)
-      return Type::IntTy;
+    if (ID == BoolTyID || ID == Int8TyID || ID == Int16TyID)
+      return Type::Int32Ty;
     else if (ID == FloatTyID)
       return Type::DoubleTy;
     else
@@ -318,10 +289,8 @@ public:
   // These are the builtin types that are always available...
   //
   static Type *VoidTy , *BoolTy;
-  static Type *SByteTy, *UByteTy,
-              *ShortTy, *UShortTy,
-              *IntTy  , *UIntTy,
-              *LongTy , *ULongTy;
+  static Type *Int8Ty , *Int16Ty,
+              *Int32Ty, *Int64Ty;
   static Type *FloatTy, *DoubleTy;
 
   static Type* LabelTy;
