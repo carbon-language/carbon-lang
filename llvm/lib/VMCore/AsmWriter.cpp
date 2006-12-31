@@ -1237,8 +1237,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       if (op > 3)
         Out << ',';
       writeOperand(I.getOperand(op), true);
-      if (FTy->getParamAttrs(op) != FunctionType::NoAttributeSet)
-        Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(op));
+      if (FTy->getParamAttrs(op-2) != FunctionType::NoAttributeSet)
+        Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(op-2));
     }
 
     Out << " )\n\t\t\tto";
