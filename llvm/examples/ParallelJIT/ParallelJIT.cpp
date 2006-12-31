@@ -34,7 +34,7 @@ static Function* createAdd1(Module* M)
   // Create the add1 function entry and insert this entry into module M.  The
   // function will have a return type of "int" and take an argument of "int".
   // The '0' terminates the list of argument types.
-  Function *Add1F = M->getOrInsertFunction("add1", Type::IntTy, Type::IntTy,
+  Function *Add1F = M->getOrInsertFunction("add1", Type::Int32Ty, Type::Int32Ty,
                                            (Type *)0);
 
   // Add a basic block to the function. As before, it automatically inserts
@@ -42,7 +42,7 @@ static Function* createAdd1(Module* M)
   BasicBlock *BB = new BasicBlock("EntryBlock", Add1F);
 
   // Get pointers to the constant `1'.
-  Value *One = ConstantInt::get(Type::IntTy, 1);
+  Value *One = ConstantInt::get(Type::Int32Ty, 1);
 
   // Get pointers to the integer argument of the add1 function...
   assert(Add1F->arg_begin() != Add1F->arg_end()); // Make sure there's an arg
@@ -63,15 +63,15 @@ static Function *CreateFibFunction(Module *M)
 {
   // Create the fib function and insert it into module M.  This function is said
   // to return an int and take an int parameter.
-  Function *FibF = M->getOrInsertFunction("fib", Type::IntTy, Type::IntTy,
+  Function *FibF = M->getOrInsertFunction("fib", Type::Int32Ty, Type::Int32Ty,
                                           (Type *)0);
 
   // Add a basic block to the function.
   BasicBlock *BB = new BasicBlock("EntryBlock", FibF);
 
   // Get pointers to the constants.
-  Value *One = ConstantInt::get(Type::IntTy, 1);
-  Value *Two = ConstantInt::get(Type::IntTy, 2);
+  Value *One = ConstantInt::get(Type::Int32Ty, 1);
+  Value *Two = ConstantInt::get(Type::Int32Ty, 2);
 
   // Get pointer to the integer argument of the add1 function...
   Argument *ArgX = FibF->arg_begin();   // Get the arg.
@@ -221,12 +221,12 @@ void* callFunc( void* param )
 
   // Call the `foo' function with no arguments:
   std::vector<GenericValue> Args(1);
-  Args[0].IntVal = p->value;
+  Args[0].Int32Val = p->value;
 
   synchronize.block(); // wait until other threads are at this point
   GenericValue gv = p->EE->runFunction(p->F, Args);
 
-  return (void*) intptr_t(gv.IntVal);
+  return (void*) intptr_t(gv.Int32Val);
 }
 
 int main()

@@ -38,15 +38,15 @@ using namespace llvm;
 static Function *CreateFibFunction(Module *M) {
   // Create the fib function and insert it into module M.  This function is said
   // to return an int and take an int parameter.
-  Function *FibF = M->getOrInsertFunction("fib", Type::IntTy, Type::IntTy,
+  Function *FibF = M->getOrInsertFunction("fib", Type::Int32Ty, Type::Int32Ty,
                                           (Type *)0);
 
   // Add a basic block to the function.
   BasicBlock *BB = new BasicBlock("EntryBlock", FibF);
 
   // Get pointers to the constants.
-  Value *One = ConstantInt::get(Type::IntTy, 1);
-  Value *Two = ConstantInt::get(Type::IntTy, 2);
+  Value *One = ConstantInt::get(Type::Int32Ty, 1);
+  Value *Two = ConstantInt::get(Type::Int32Ty, 2);
 
   // Get pointer to the integer argument of the add1 function...
   Argument *ArgX = FibF->arg_begin();   // Get the arg.
@@ -111,10 +111,10 @@ int main(int argc, char **argv) {
 
   // Call the Fibonacci function with argument n:
   std::vector<GenericValue> Args(1);
-  Args[0].IntVal = n;
+  Args[0].Int32Val = n;
   GenericValue GV = EE->runFunction(FibF, Args);
 
   // import result of execution
-  std::cout << "Result: " << GV.IntVal << "\n";
+  std::cout << "Result: " << GV.Int32Val << "\n";
   return 0;
 }

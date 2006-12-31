@@ -122,7 +122,7 @@ StackerCompiler::compile(
 
         // Create a type to represent the stack. This is the same as the LLVM
         // Assembly type [ 256 x long ]
-        stack_type = ArrayType::get( Type::LongTy, stack_size );
+        stack_type = ArrayType::get( Type::Int64Ty, stack_size );
 
         // Create a global variable for the stack. Note the use of appending
         // linkage linkage so that multiple modules will make the stack larger.
@@ -141,10 +141,10 @@ StackerCompiler::compile(
         // of LinkOnce linkage. Only one copy of _index_ will be retained
         // after linking
         TheIndex = new GlobalVariable(
-            /*type=*/Type::LongTy,
+            /*type=*/Type::Int64Ty,
             /*isConstant=*/false,
             /*Linkage=*/GlobalValue::LinkOnceLinkage,
-            /*initializer=*/ Constant::getNullValue(Type::LongTy),
+            /*initializer=*/ Constant::getNullValue(Type::Int64Ty),
             /*name=*/"_index_",
             /*parent=*/TheModule
         );
@@ -155,9 +155,9 @@ StackerCompiler::compile(
         DefinitionType = FunctionType::get( Type::VoidTy, params, false );
 
         // Create a function for printf(3)
-        params.push_back( PointerType::get( Type::SByteTy ) );
+        params.push_back( PointerType::get( Type::Int8Ty ) );
         FunctionType* printf_type =
-            FunctionType::get( Type::IntTy, params, true );
+            FunctionType::get( Type::Int32Ty, params, true );
         ThePrintf = new Function(
             printf_type, GlobalValue::ExternalLinkage, "printf", TheModule);
 
@@ -167,7 +167,7 @@ StackerCompiler::compile(
 
         // Create a function for exit(3)
         params.clear();
-        params.push_back( Type::IntTy );
+        params.push_back( Type::Int32Ty );
         FunctionType* exit_type =
             FunctionType::get( Type::VoidTy, params, false );
         TheExit = new Function(
@@ -175,7 +175,7 @@ StackerCompiler::compile(
 
         Constant* str_format = ConstantArray::get("%s");
         StrFormat = new GlobalVariable(
-            /*type=*/ArrayType::get( Type::SByteTy,  3 ),
+            /*type=*/ArrayType::get( Type::Int8Ty,  3 ),
             /*isConstant=*/true,
             /*Linkage=*/GlobalValue::LinkOnceLinkage,
             /*initializer=*/str_format,
@@ -185,7 +185,7 @@ StackerCompiler::compile(
 
         Constant* in_str_format = ConstantArray::get(" %as");
         InStrFormat = new GlobalVariable(
-            /*type=*/ArrayType::get( Type::SByteTy,  5 ),
+            /*type=*/ArrayType::get( Type::Int8Ty,  5 ),
             /*isConstant=*/true,
             /*Linkage=*/GlobalValue::LinkOnceLinkage,
             /*initializer=*/in_str_format,
@@ -195,7 +195,7 @@ StackerCompiler::compile(
 
         Constant* num_format = ConstantArray::get("%d");
         NumFormat = new GlobalVariable(
-            /*type=*/ArrayType::get( Type::SByteTy,  3 ),
+            /*type=*/ArrayType::get( Type::Int8Ty,  3 ),
             /*isConstant=*/true,
             /*Linkage=*/GlobalValue::LinkOnceLinkage,
             /*initializer=*/num_format,
@@ -205,7 +205,7 @@ StackerCompiler::compile(
 
         Constant* in_num_format = ConstantArray::get(" %d");
         InNumFormat = new GlobalVariable(
-            /*type=*/ArrayType::get( Type::SByteTy,  4 ),
+            /*type=*/ArrayType::get( Type::Int8Ty,  4 ),
             /*isConstant=*/true,
             /*Linkage=*/GlobalValue::LinkOnceLinkage,
             /*initializer=*/in_num_format,
@@ -215,7 +215,7 @@ StackerCompiler::compile(
 
         Constant* chr_format = ConstantArray::get("%c");
         ChrFormat = new GlobalVariable(
-            /*type=*/ArrayType::get( Type::SByteTy,  3 ),
+            /*type=*/ArrayType::get( Type::Int8Ty,  3 ),
             /*isConstant=*/true,
             /*Linkage=*/GlobalValue::LinkOnceLinkage,
             /*initializer=*/chr_format,
@@ -225,7 +225,7 @@ StackerCompiler::compile(
 
         Constant* in_chr_format = ConstantArray::get(" %c");
         InChrFormat = new GlobalVariable(
-            /*type=*/ArrayType::get( Type::SByteTy,  4 ),
+            /*type=*/ArrayType::get( Type::Int8Ty,  4 ),
             /*isConstant=*/true,
             /*Linkage=*/GlobalValue::LinkOnceLinkage,
             /*initializer=*/in_chr_format,
@@ -234,12 +234,12 @@ StackerCompiler::compile(
         );
 
         // Get some constants so we aren't always creating them
-        Zero = ConstantInt::get( Type::LongTy, 0 );
-        One = ConstantInt::get( Type::LongTy, 1 );
-        Two = ConstantInt::get( Type::LongTy, 2 );
-        Three = ConstantInt::get( Type::LongTy, 3 );
-        Four = ConstantInt::get( Type::LongTy, 4 );
-        Five = ConstantInt::get( Type::LongTy, 5 );
+        Zero = ConstantInt::get( Type::Int64Ty, 0 );
+        One = ConstantInt::get( Type::Int64Ty, 1 );
+        Two = ConstantInt::get( Type::Int64Ty, 2 );
+        Three = ConstantInt::get( Type::Int64Ty, 3 );
+        Four = ConstantInt::get( Type::Int64Ty, 4 );
+        Five = ConstantInt::get( Type::Int64Ty, 5 );
 
         // Reset the current line number
         Stackerlineno = 1;
@@ -363,7 +363,7 @@ StackerCompiler::incr_stack_index( BasicBlock* bb, Value* ival = 0 )
 
     // Increment the loaded index value
     if ( ival == 0 ) ival = One;
-    CastInst* caster = CastInst::createSExtOrBitCast( ival, Type::LongTy );
+    CastInst* caster = CastInst::createSExtOrBitCast( ival, Type::Int64Ty );
     bb->getInstList().push_back( caster );
     BinaryOperator* addop = BinaryOperator::create( Instruction::Add,
             loadop, caster);
@@ -384,7 +384,7 @@ StackerCompiler::decr_stack_index( BasicBlock* bb, Value* ival = 0 )
 
     // Decrement the loaded index value
     if ( ival == 0 ) ival = One;
-    CastInst* caster = CastInst::createSExtOrBitCast( ival, Type::LongTy );
+    CastInst* caster = CastInst::createSExtOrBitCast( ival, Type::Int64Ty );
     bb->getInstList().push_back( caster );
     BinaryOperator* subop = BinaryOperator::create( Instruction::Sub,
             loadop, caster);
@@ -418,7 +418,7 @@ StackerCompiler::get_stack_pointer( BasicBlock* bb, Value* index = 0 )
     }
     else
     {
-        CastInst* caster = CastInst::createSExtOrBitCast( index, Type::LongTy );
+        CastInst* caster = CastInst::createSExtOrBitCast( index, Type::Int64Ty );
         bb->getInstList().push_back( caster );
         BinaryOperator* subop = BinaryOperator::create(
             Instruction::Sub, loadop, caster );
@@ -448,7 +448,7 @@ StackerCompiler::push_value( BasicBlock* bb, Value* val )
        (isa<PointerType>(val->getType()) ? Instruction::PtrToInt :
         (val->getType()->getPrimitiveSizeInBits() < 64 ? Instruction::SExt :
          Instruction::BitCast));
-    CastInst* cast_inst = CastInst::create(opcode, val, Type::LongTy );
+    CastInst* cast_inst = CastInst::create(opcode, val, Type::Int64Ty );
     bb->getInstList().push_back( cast_inst );
 
     // Store the value
@@ -462,7 +462,7 @@ Instruction*
 StackerCompiler::push_integer(BasicBlock* bb, int64_t value )
 {
     // Just push a constant integer value
-    return push_value( bb, ConstantInt::get( Type::LongTy, value ) );
+    return push_value( bb, ConstantInt::get( Type::Int64Ty, value ) );
 }
 
 Instruction*
@@ -491,7 +491,7 @@ StackerCompiler::push_string( BasicBlock* bb, const char* value )
 
     // Create a type for the string constant. Length is +1 for
     // the terminating 0.
-    ArrayType* char_array = ArrayType::get( Type::SByteTy, len + 1 );
+    ArrayType* char_array = ArrayType::get( Type::Int8Ty, len + 1 );
 
     // Create an initializer for the value
     Constant* initVal = ConstantArray::get( value );
@@ -523,7 +523,7 @@ StackerCompiler::pop_string( BasicBlock* bb )
 
     // Cast the integer to a sbyte*
     CastInst* caster = 
-      new IntToPtrInst(loader, PointerType::get(Type::SByteTy));
+      new IntToPtrInst(loader, PointerType::get(Type::Int8Ty));
     bb->getInstList().push_back( caster );
 
     // Decrement stack index
@@ -576,7 +576,7 @@ StackerCompiler::stack_top_string( BasicBlock* bb, Value* index = 0 )
 
     // Cast the integer to a sbyte*
     CastInst* caster = 
-      new IntToPtrInst(loader, PointerType::get(Type::SByteTy) );
+      new IntToPtrInst(loader, PointerType::get(Type::Int8Ty) );
     bb->getInstList().push_back( caster );
 
     // Return the value
@@ -652,7 +652,7 @@ StackerCompiler::handle_main_definition( Function* func )
     TheStack->setLinkage( GlobalValue::LinkOnceLinkage );
 
     // Turn "_index_" into an intialized variable for the same reason.
-    TheIndex->setInitializer( Constant::getNullValue(Type::LongTy) );
+    TheIndex->setInitializer( Constant::getNullValue(Type::Int64Ty) );
     TheIndex->setLinkage( GlobalValue::LinkOnceLinkage );
 
     return func;
@@ -722,7 +722,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
 
     // Compare the condition against 0
     ICmpInst* cond_inst = new ICmpInst( ICmpInst::ICMP_NE, cond,
-        ConstantInt::get( Type::LongTy, 0) );
+        ConstantInt::get( Type::Int64Ty, 0) );
     bb->getInstList().push_back( cond_inst );
 
     // Create an exit block
@@ -806,7 +806,7 @@ StackerCompiler::handle_while( char* todo )
 
     // Compare the condition against 0
     ICmpInst* cond_inst = new ICmpInst(
-        ICmpInst::ICMP_NE, cond, ConstantInt::get( Type::LongTy, 0));
+        ICmpInst::ICMP_NE, cond, ConstantInt::get( Type::Int64Ty, 0));
     test->getInstList().push_back( cond_inst );
 
     // Add the branch instruction
@@ -1020,7 +1020,7 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("DECR");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         BinaryOperator* subop = BinaryOperator::create( Instruction::Sub, op1,
-            ConstantInt::get( Type::LongTy, 1 ) );
+            ConstantInt::get( Type::Int64Ty, 1 ) );
         bb->getInstList().push_back( subop );
         push_value( bb, subop );
         break;
@@ -1090,7 +1090,7 @@ StackerCompiler::handle_word( int tkn )
         // bb->getInstList().push_back( negop );
         // So we'll multiply by -1 (ugh)
         BinaryOperator* multop = BinaryOperator::create( Instruction::Mul, op1,
-            ConstantInt::get( Type::LongTy, -1 ) );
+            ConstantInt::get( Type::Int64Ty, -1 ) );
         bb->getInstList().push_back( multop );
         push_value( bb, multop );
         break;
@@ -1245,7 +1245,7 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("SHL");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        CastInst* castop = new TruncInst( op1, Type::UByteTy );
+        CastInst* castop = new TruncInst( op1, Type::Int8Ty );
         bb->getInstList().push_back( castop );
         ShiftInst* shlop = new ShiftInst( Instruction::Shl, op2, castop );
         bb->getInstList().push_back( shlop );
@@ -1257,7 +1257,7 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("SHR");
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-        CastInst* castop = new TruncInst( op1, Type::UByteTy );
+        CastInst* castop = new TruncInst( op1, Type::Int8Ty );
         bb->getInstList().push_back( castop );
         ShiftInst* shrop = new ShiftInst( Instruction::AShr, op2, castop );
         bb->getInstList().push_back( shrop );
@@ -1479,11 +1479,11 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op1 = cast<LoadInst>( pop_integer(bb) );
 
         // Make sure its a UIntTy
-        CastInst* caster = CastInst::createTruncOrBitCast( op1, Type::UIntTy );
+        CastInst* caster = CastInst::createTruncOrBitCast( op1, Type::Int32Ty );
         bb->getInstList().push_back( caster );
 
         // Allocate the bytes
-        MallocInst* mi = new MallocInst( Type::SByteTy, caster );
+        MallocInst* mi = new MallocInst( Type::Int8Ty, caster );
         bb->getInstList().push_back( mi );
 
         // Push the pointer
@@ -1507,7 +1507,7 @@ StackerCompiler::handle_word( int tkn )
         if (echo) bb->setName("GET");
         // Get the character index
         LoadInst* op1 = cast<LoadInst>( stack_top(bb) );
-        CastInst* chr_idx = CastInst::createSExtOrBitCast( op1, Type::LongTy );
+        CastInst* chr_idx = CastInst::createSExtOrBitCast( op1, Type::Int64Ty );
         bb->getInstList().push_back( chr_idx );
 
         // Get the String pointer
@@ -1522,7 +1522,7 @@ StackerCompiler::handle_word( int tkn )
         // Get the value and push it
         LoadInst* loader = new LoadInst( gep );
         bb->getInstList().push_back( loader );
-        CastInst* caster = CastInst::createTruncOrBitCast(loader, Type::IntTy);
+        CastInst* caster = CastInst::createTruncOrBitCast(loader, Type::Int32Ty);
         bb->getInstList().push_back( caster );
 
         // Push the result back on stack
@@ -1539,7 +1539,7 @@ StackerCompiler::handle_word( int tkn )
 
         // Get the character index
         LoadInst* w2 = cast<LoadInst>( pop_integer(bb) );
-        CastInst* chr_idx = CastInst::createSExtOrBitCast( w2, Type::LongTy );
+        CastInst* chr_idx = CastInst::createSExtOrBitCast( w2, Type::Int64Ty );
         bb->getInstList().push_back( chr_idx );
 
         // Get the String pointer
@@ -1552,7 +1552,7 @@ StackerCompiler::handle_word( int tkn )
         bb->getInstList().push_back( gep );
 
         // Cast the value and put it
-        CastInst* caster = new TruncInst( w1, Type::SByteTy );
+        CastInst* caster = new TruncInst( w1, Type::Int8Ty );
         bb->getInstList().push_back( caster );
         StoreInst* storer = new StoreInst( caster, gep );
         bb->getInstList().push_back( storer );
@@ -1580,7 +1580,7 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 
         // Cast down to an integer
-        CastInst* caster = new TruncInst( op1, Type::IntTy );
+        CastInst* caster = new TruncInst( op1, Type::Int32Ty );
         bb->getInstList().push_back( caster );
 
         // Call exit(3)
@@ -1602,7 +1602,7 @@ StackerCompiler::handle_word( int tkn )
         bb->getInstList().push_back( format_gep );
 
         // Get the character to print (a tab)
-        ConstantInt* newline = ConstantInt::get(Type::IntTy,
+        ConstantInt* newline = ConstantInt::get(Type::Int32Ty,
             static_cast<int>('\t'));
 
         // Call printf
@@ -1624,7 +1624,7 @@ StackerCompiler::handle_word( int tkn )
         bb->getInstList().push_back( format_gep );
 
         // Get the character to print (a space)
-        ConstantInt* newline = ConstantInt::get(Type::IntTy,
+        ConstantInt* newline = ConstantInt::get(Type::Int32Ty,
             static_cast<int>(' '));
 
         // Call printf
@@ -1646,7 +1646,7 @@ StackerCompiler::handle_word( int tkn )
         bb->getInstList().push_back( format_gep );
 
         // Get the character to print (a newline)
-        ConstantInt* newline = ConstantInt::get(Type::IntTy,
+        ConstantInt* newline = ConstantInt::get(Type::Int32Ty,
             static_cast<int>('\n'));
 
         // Call printf
@@ -1664,7 +1664,7 @@ StackerCompiler::handle_word( int tkn )
         GetElementPtrInst* gep_value =
           cast<GetElementPtrInst>(get_stack_pointer(bb));
         CastInst* caster = 
-          new BitCastInst(gep_value, PointerType::get(Type::SByteTy));
+          new BitCastInst(gep_value, PointerType::get(Type::Int8Ty));
 
         // Make room for the count result
         incr_stack_index(bb);

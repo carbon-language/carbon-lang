@@ -52,7 +52,7 @@ int main() {
   // Create the add1 function entry and insert this entry into module M.  The
   // function will have a return type of "int" and take an argument of "int".
   // The '0' terminates the list of argument types.
-  Function *Add1F = M->getOrInsertFunction("add1", Type::IntTy, Type::IntTy,
+  Function *Add1F = M->getOrInsertFunction("add1", Type::Int32Ty, Type::Int32Ty,
                                            (Type *)0);
 
   // Add a basic block to the function. As before, it automatically inserts
@@ -60,7 +60,7 @@ int main() {
   BasicBlock *BB = new BasicBlock("EntryBlock", Add1F);
 
   // Get pointers to the constant `1'.
-  Value *One = ConstantInt::get(Type::IntTy, 1);
+  Value *One = ConstantInt::get(Type::Int32Ty, 1);
 
   // Get pointers to the integer argument of the add1 function...
   assert(Add1F->arg_begin() != Add1F->arg_end()); // Make sure there's an arg
@@ -78,13 +78,13 @@ int main() {
 
   // Now we going to create function `foo', which returns an int and takes no
   // arguments.
-  Function *FooF = M->getOrInsertFunction("foo", Type::IntTy, (Type *)0);
+  Function *FooF = M->getOrInsertFunction("foo", Type::Int32Ty, (Type *)0);
 
   // Add a basic block to the FooF function.
   BB = new BasicBlock("EntryBlock", FooF);
 
   // Get pointers to the constant `10'.
-  Value *Ten = ConstantInt::get(Type::IntTy, 10);
+  Value *Ten = ConstantInt::get(Type::Int32Ty, 10);
 
   // Pass Ten to the call call:
   std::vector<Value*> Params;
@@ -107,6 +107,6 @@ int main() {
   GenericValue gv = EE->runFunction(FooF, noargs);
 
   // Import result of execution:
-  std::cout << "Result: " << gv.IntVal << "\n";
+  std::cout << "Result: " << gv.Int32Val << "\n";
   return 0;
 }
