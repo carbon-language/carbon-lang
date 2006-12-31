@@ -117,10 +117,9 @@ namespace {
     virtual std::vector<SDOperand>
       LowerArguments(Function &F, SelectionDAG &DAG);
     virtual std::pair<SDOperand, SDOperand>
-      LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
-                  unsigned CC,
-                  bool isTailCall, SDOperand Callee, ArgListTy &Args,
-                  SelectionDAG &DAG);
+      LowerCallTo(SDOperand Chain, const Type *RetTy, bool RetTyIsSigned, 
+                  bool isVarArg, unsigned CC, bool isTailCall, SDOperand Callee,
+                  ArgListTy &Args, SelectionDAG &DAG);
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB);
     
@@ -318,8 +317,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         MF.addLiveIn(*CurArgReg++, VReg);
         SDOperand Arg = DAG.getCopyFromReg(Root, VReg, MVT::i32);
         if (ObjectVT != MVT::i32) {
-          unsigned AssertOp = I->getType()->isSigned() ? ISD::AssertSext 
-                                                       : ISD::AssertZext;
+          unsigned AssertOp = ISD::AssertSext;
           Arg = DAG.getNode(AssertOp, MVT::i32, Arg, 
                             DAG.getValueType(ObjectVT));
           Arg = DAG.getNode(ISD::TRUNCATE, ObjectVT, Arg);
@@ -332,8 +330,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         if (ObjectVT == MVT::i32) {
           Load = DAG.getLoad(MVT::i32, Root, FIPtr, NULL, 0);
         } else {
-          ISD::LoadExtType LoadOp =
-            I->getType()->isSigned() ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
+          ISD::LoadExtType LoadOp = ISD::SEXTLOAD;
 
           // Sparc is big endian, so add an offset based on the ObjectVT.
           unsigned Offset = 4-std::max(1U, MVT::getSizeInBits(ObjectVT)/8);
@@ -472,13 +469,13 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
 std::pair<SDOperand, SDOperand>
 SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
-                                 bool isVarArg, unsigned CC,
+                                 bool RetTyIsSigned, bool isVarArg, unsigned CC,
                                  bool isTailCall, SDOperand Callee, 
                                  ArgListTy &Args, SelectionDAG &DAG) {
   // Count the size of the outgoing arguments.
   unsigned ArgsSize = 0;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    switch (getValueType(Args[i].second)) {
+    switch (getValueType(Args[i].Ty)) {
     default: assert(0 && "Unknown value type!");
     case MVT::i1:
     case MVT::i8:
@@ -508,7 +505,7 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   std::vector<SDOperand> RegValuesToPass;
   unsigned ArgOffset = 68;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    SDOperand Val = Args[i].first;
+    SDOperand Val = Args[i].Node;
     MVT::ValueType ObjectVT = Val.getValueType();
     SDOperand ValToStore(0, 0);
     unsigned ObjSize;
@@ -516,14 +513,15 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     default: assert(0 && "Unhandled argument type!");
     case MVT::i1:
     case MVT::i8:
-    case MVT::i16:
+    case MVT::i16: {
       // Promote the integer to 32-bits.  If the input type is signed, use a
       // sign extend, otherwise use a zero extend.
-      if (Args[i].second->isSigned())
-        Val = DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Val);
-      else
-        Val = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Val);
+      ISD::NodeType ExtendKind = ISD::ZERO_EXTEND;
+      if (Args[i].isSigned)
+        ExtendKind = ISD::SIGN_EXTEND;
+      Val = DAG.getNode(ExtendKind, MVT::i32, Val);
       // FALL THROUGH
+    }
     case MVT::i32:
       ObjSize = 4;
 
@@ -629,15 +627,19 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     default: assert(0 && "Unknown value type to return!");
     case MVT::i1:
     case MVT::i8:
-    case MVT::i16:
+    case MVT::i16: {
       RetVal = DAG.getCopyFromReg(Chain, SP::O0, MVT::i32, InFlag);
       Chain = RetVal.getValue(1);
       
       // Add a note to keep track of whether it is sign or zero extended.
-      RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext :ISD::AssertZext,
-                           MVT::i32, RetVal, DAG.getValueType(RetTyVT));
+      ISD::NodeType AssertKind = ISD::AssertZext;
+      if (RetTyIsSigned)
+        AssertKind = ISD::AssertSext;
+      RetVal = DAG.getNode(AssertKind, MVT::i32, RetVal, 
+                           DAG.getValueType(RetTyVT));
       RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
       break;
+    }
     case MVT::i32:
       RetVal = DAG.getCopyFromReg(Chain, SP::O0, MVT::i32, InFlag);
       Chain = RetVal.getValue(1);

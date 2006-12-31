@@ -317,8 +317,8 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
 }
 
 std::pair<SDOperand, SDOperand>
-AlphaTargetLowering::LowerCallTo(SDOperand Chain,
-                                 const Type *RetTy, bool isVarArg,
+AlphaTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, 
+                                 bool RetTyIsSigned, bool isVarArg,
                                  unsigned CallingConv, bool isTailCall,
                                  SDOperand Callee, ArgListTy &Args,
                                  SelectionDAG &DAG) {
@@ -331,7 +331,7 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   std::vector<SDOperand> args_to_use;
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
   {
-    switch (getValueType(Args[i].second)) {
+    switch (getValueType(Args[i].Ty)) {
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i1:
     case MVT::i8:
@@ -339,17 +339,17 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
     case MVT::i32:
       // Promote the integer to 64 bits.  If the input type is signed use a
       // sign extend, otherwise use a zero extend.
-      if (Args[i].second->isSigned())
-        Args[i].first = DAG.getNode(ISD::SIGN_EXTEND, MVT::i64, Args[i].first);
+      if (Args[i].isSigned)
+        Args[i].Node = DAG.getNode(ISD::SIGN_EXTEND, MVT::i64, Args[i].Node);
       else
-        Args[i].first = DAG.getNode(ISD::ZERO_EXTEND, MVT::i64, Args[i].first);
+        Args[i].Node = DAG.getNode(ISD::ZERO_EXTEND, MVT::i64, Args[i].Node);
       break;
     case MVT::i64:
     case MVT::f64:
     case MVT::f32:
       break;
     }
-    args_to_use.push_back(Args[i].first);
+    args_to_use.push_back(Args[i].Node);
   }
 
   std::vector<MVT::ValueType> RetVals;
@@ -373,7 +373,7 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   SDOperand RetVal = TheCall;
 
   if (RetTyVT != ActualRetTyVT) {
-    RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext : ISD::AssertZext,
+    RetVal = DAG.getNode(RetTyIsSigned ? ISD::AssertSext : ISD::AssertZext,
                          MVT::i64, RetVal, DAG.getValueType(RetTyVT));
     RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
   }

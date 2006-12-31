@@ -4447,14 +4447,21 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
       (I && I->getValue() < Subtarget->getMinRepStrSizeThreshold())) {
     MVT::ValueType IntPtr = getPointerTy();
     const Type *IntPtrTy = getTargetData()->getIntPtrType();
-    std::vector<std::pair<SDOperand, const Type*> > Args;
-    Args.push_back(std::make_pair(Op.getOperand(1), IntPtrTy));
+    TargetLowering::ArgListTy Args; 
+    TargetLowering::ArgListEntry Entry;
+    Entry.Node = Op.getOperand(1);
+    Entry.Ty = IntPtrTy;
+    Entry.isSigned = false;
+    Args.push_back(Entry);
     // Extend the ubyte argument to be an int value for the call.
-    SDOperand Val = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Op.getOperand(2));
-    Args.push_back(std::make_pair(Val, IntPtrTy));
-    Args.push_back(std::make_pair(Op.getOperand(3), IntPtrTy));
+    Entry.Node = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Op.getOperand(2));
+    Entry.Ty = IntPtrTy;
+    Entry.isSigned = false;
+    Args.push_back(Entry);
+    Entry.Node = Op.getOperand(3);
+    Args.push_back(Entry);
     std::pair<SDOperand,SDOperand> CallResult =
-      LowerCallTo(Chain, Type::VoidTy, false, CallingConv::C, false,
+      LowerCallTo(Chain, Type::VoidTy, false, false, CallingConv::C, false,
                   DAG.getExternalSymbol("memset", IntPtr), Args, DAG);
     return CallResult.second;
   }
@@ -4601,13 +4608,14 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   if ((Align & 3) != 0 ||
       (I && I->getValue() < Subtarget->getMinRepStrSizeThreshold())) {
     MVT::ValueType IntPtr = getPointerTy();
-    const Type *IntPtrTy = getTargetData()->getIntPtrType();
-    std::vector<std::pair<SDOperand, const Type*> > Args;
-    Args.push_back(std::make_pair(Op.getOperand(1), IntPtrTy));
-    Args.push_back(std::make_pair(Op.getOperand(2), IntPtrTy));
-    Args.push_back(std::make_pair(Op.getOperand(3), IntPtrTy));
+    TargetLowering::ArgListTy Args;
+    TargetLowering::ArgListEntry Entry;
+    Entry.Ty = getTargetData()->getIntPtrType(); Entry.isSigned = false;
+    Entry.Node = Op.getOperand(1); Args.push_back(Entry);
+    Entry.Node = Op.getOperand(2); Args.push_back(Entry);
+    Entry.Node = Op.getOperand(3); Args.push_back(Entry);
     std::pair<SDOperand,SDOperand> CallResult =
-      LowerCallTo(Chain, Type::VoidTy, false, CallingConv::C, false,
+      LowerCallTo(Chain, Type::VoidTy, false, false, CallingConv::C, false,
                   DAG.getExternalSymbol("memcpy", IntPtr), Args, DAG);
     return CallResult.second;
   }

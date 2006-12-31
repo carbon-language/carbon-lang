@@ -95,7 +95,7 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
       default: break;
       case Intrinsic::setjmp:
         EnsureFunctionExists(M, "setjmp", I->arg_begin(), I->arg_end(),
-                             Type::IntTy);
+                             Type::Int32Ty);
         break;
       case Intrinsic::longjmp:
         EnsureFunctionExists(M, "longjmp", I->arg_begin(), I->arg_end(),
@@ -117,9 +117,9 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
         break;
       case Intrinsic::memset_i32:
       case Intrinsic::memset_i64:
-        M.getOrInsertFunction("memset", PointerType::get(Type::SByteTy),
-                              PointerType::get(Type::SByteTy),
-                              Type::IntTy, (--(--I->arg_end()))->getType(),
+        M.getOrInsertFunction("memset", PointerType::get(Type::Int8Ty),
+                              PointerType::get(Type::Int8Ty),
+                              Type::Int32Ty, (--(--I->arg_end()))->getType(),
                               (Type *)0);
         break;
       case Intrinsic::isunordered_f32:
@@ -150,26 +150,26 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
   default: assert(0 && "Unhandled type size of value to byteswap!");
   case 16: {
     Value *Tmp1 = new ShiftInst(Instruction::Shl, V,
-                                ConstantInt::get(Type::UByteTy,8),"bswap.2",IP);
+                                ConstantInt::get(Type::Int8Ty,8),"bswap.2",IP);
     Value *Tmp2 = new ShiftInst(Instruction::LShr, V,
-                                ConstantInt::get(Type::UByteTy,8),"bswap.1",IP);
+                                ConstantInt::get(Type::Int8Ty,8),"bswap.1",IP);
     V = BinaryOperator::createOr(Tmp1, Tmp2, "bswap.i16", IP);
     break;
   }
   case 32: {
     Value *Tmp4 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::UByteTy,24),"bswap.4", IP);
+                              ConstantInt::get(Type::Int8Ty,24),"bswap.4", IP);
     Value *Tmp3 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::UByteTy,8),"bswap.3",IP);
+                              ConstantInt::get(Type::Int8Ty,8),"bswap.3",IP);
     Value *Tmp2 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::UByteTy,8),"bswap.2",IP);
+                              ConstantInt::get(Type::Int8Ty,8),"bswap.2",IP);
     Value *Tmp1 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::UByteTy,24),"bswap.1", IP);
+                              ConstantInt::get(Type::Int8Ty,24),"bswap.1", IP);
     Tmp3 = BinaryOperator::createAnd(Tmp3, 
-                                     ConstantInt::get(Type::UIntTy, 0xFF0000),
+                                     ConstantInt::get(Type::Int32Ty, 0xFF0000),
                                      "bswap.and3", IP);
     Tmp2 = BinaryOperator::createAnd(Tmp2, 
-                                     ConstantInt::get(Type::UIntTy, 0xFF00),
+                                     ConstantInt::get(Type::Int32Ty, 0xFF00),
                                      "bswap.and2", IP);
     Tmp4 = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.or1", IP);
     Tmp2 = BinaryOperator::createOr(Tmp2, Tmp1, "bswap.or2", IP);
@@ -178,39 +178,39 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
   }
   case 64: {
     Value *Tmp8 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::UByteTy,56),"bswap.8", IP);
+                              ConstantInt::get(Type::Int8Ty,56),"bswap.8", IP);
     Value *Tmp7 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::UByteTy,40),"bswap.7", IP);
+                              ConstantInt::get(Type::Int8Ty,40),"bswap.7", IP);
     Value *Tmp6 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::UByteTy,24),"bswap.6", IP);
+                              ConstantInt::get(Type::Int8Ty,24),"bswap.6", IP);
     Value *Tmp5 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::UByteTy,8),"bswap.5", IP);
+                              ConstantInt::get(Type::Int8Ty,8),"bswap.5", IP);
     Value* Tmp4 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::UByteTy,8),"bswap.4", IP);
+                              ConstantInt::get(Type::Int8Ty,8),"bswap.4", IP);
     Value* Tmp3 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::UByteTy,24),"bswap.3", IP);
+                              ConstantInt::get(Type::Int8Ty,24),"bswap.3", IP);
     Value* Tmp2 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::UByteTy,40),"bswap.2", IP);
+                              ConstantInt::get(Type::Int8Ty,40),"bswap.2", IP);
     Value* Tmp1 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::UByteTy,56),"bswap.1", IP);
+                              ConstantInt::get(Type::Int8Ty,56),"bswap.1", IP);
     Tmp7 = BinaryOperator::createAnd(Tmp7,
-                             ConstantInt::get(Type::ULongTy, 
+                             ConstantInt::get(Type::Int64Ty, 
                                0xFF000000000000ULL),
                              "bswap.and7", IP);
     Tmp6 = BinaryOperator::createAnd(Tmp6,
-                             ConstantInt::get(Type::ULongTy, 0xFF0000000000ULL),
+                             ConstantInt::get(Type::Int64Ty, 0xFF0000000000ULL),
                              "bswap.and6", IP);
     Tmp5 = BinaryOperator::createAnd(Tmp5,
-                             ConstantInt::get(Type::ULongTy, 0xFF00000000ULL),
+                             ConstantInt::get(Type::Int64Ty, 0xFF00000000ULL),
                              "bswap.and5", IP);
     Tmp4 = BinaryOperator::createAnd(Tmp4,
-                             ConstantInt::get(Type::ULongTy, 0xFF000000ULL),
+                             ConstantInt::get(Type::Int64Ty, 0xFF000000ULL),
                              "bswap.and4", IP);
     Tmp3 = BinaryOperator::createAnd(Tmp3,
-                             ConstantInt::get(Type::ULongTy, 0xFF0000ULL),
+                             ConstantInt::get(Type::Int64Ty, 0xFF0000ULL),
                              "bswap.and3", IP);
     Tmp2 = BinaryOperator::createAnd(Tmp2,
-                             ConstantInt::get(Type::ULongTy, 0xFF00ULL),
+                             ConstantInt::get(Type::Int64Ty, 0xFF00ULL),
                              "bswap.and2", IP);
     Tmp8 = BinaryOperator::createOr(Tmp8, Tmp7, "bswap.or1", IP);
     Tmp6 = BinaryOperator::createOr(Tmp6, Tmp5, "bswap.or2", IP);
@@ -242,7 +242,7 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
     Value *MaskCst = ConstantInt::get(V->getType(), MaskValues[ct]);
     Value *LHS = BinaryOperator::createAnd(V, MaskCst, "cppop.and1", IP);
     Value *VShift = new ShiftInst(Instruction::LShr, V,
-                      ConstantInt::get(Type::UByteTy, i), "ctpop.sh", IP);
+                      ConstantInt::get(Type::Int8Ty, i), "ctpop.sh", IP);
     Value *RHS = BinaryOperator::createAnd(VShift, MaskCst, "cppop.and2", IP);
     V = BinaryOperator::createAdd(LHS, RHS, "ctpop.step", IP);
   }
@@ -256,7 +256,7 @@ static Value *LowerCTLZ(Value *V, Instruction *IP) {
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   for (unsigned i = 1; i != BitSize; i <<= 1) {
-    Value *ShVal = ConstantInt::get(Type::UByteTy, i);
+    Value *ShVal = ConstantInt::get(Type::Int8Ty, i);
     ShVal = new ShiftInst(Instruction::LShr, V, ShVal, "ctlz.sh", IP);
     V = BinaryOperator::createOr(V, ShVal, "ctlz.step", IP);
   }
@@ -289,7 +289,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     static Function *SetjmpFCache = 0;
     static const unsigned castOpcodes[] = { Instruction::BitCast };
     Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin()+1, CI->op_end(),
-                               castOpcodes, Type::IntTy, SetjmpFCache);
+                               castOpcodes, Type::Int32Ty, SetjmpFCache);
     if (CI->getType() != Type::VoidTy)
       CI->replaceAllUsesWith(V);
     break;
@@ -381,7 +381,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::readcyclecounter: {
     cerr << "WARNING: this target does not support the llvm.readcyclecoun"
          << "ter intrinsic.  It is being lowered to a constant 0\n";
-    CI->replaceAllUsesWith(ConstantInt::get(Type::ULongTy, 0));
+    CI->replaceAllUsesWith(ConstantInt::get(Type::Int64Ty, 0));
     break;
   }
 

@@ -915,7 +915,7 @@ bool ARMDAGToDAGISel::SelectAddrMode1(SDOperand Op,
         SDOperand C = CurDAG->getTargetConstant(~val,  MVT::i32);
         n           = CurDAG->getTargetNode(ARM::MVN,  MVT::i32, C, Z, Z);
      } else {
-        Constant    *C = ConstantInt::get(Type::UIntTy, val);
+        Constant    *C = ConstantInt::get(Type::Int32Ty, val);
         int  alignment = 2;
         SDOperand Addr = CurDAG->getTargetConstantPool(C, MVT::i32, alignment);
         n              = CurDAG->getTargetNode(ARM::LDR,  MVT::i32, Addr, Z);

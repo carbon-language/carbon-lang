@@ -607,7 +607,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
         << "\t" << TAI->getCommentString() << " float " << Val << "\n";
       return;
     }
-  } else if (CV->getType() == Type::ULongTy || CV->getType() == Type::LongTy) {
+  } else if (CV->getType() == Type::Int64Ty) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       uint64_t Val = CI->getZExtValue();
 
@@ -918,10 +918,10 @@ void AsmPrinter::printDataDirective(const Type *type) {
   const TargetData *TD = TM.getTargetData();
   switch (type->getTypeID()) {
   case Type::BoolTyID:
-  case Type::UByteTyID: case Type::SByteTyID:
+  case Type::Int8TyID:
     O << TAI->getData8bitsDirective();
     break;
-  case Type::UShortTyID: case Type::ShortTyID:
+  case Type::Int16TyID: 
     O << TAI->getData16bitsDirective();
     break;
   case Type::PointerTyID:
@@ -932,10 +932,10 @@ void AsmPrinter::printDataDirective(const Type *type) {
       break;
     }
     //Fall through for pointer size == int size
-  case Type::UIntTyID: case Type::IntTyID:
+  case Type::Int32TyID: 
     O << TAI->getData32bitsDirective();
     break;
-  case Type::ULongTyID: case Type::LongTyID:
+  case Type::Int64TyID:
     assert(TAI->getData64bitsDirective() &&
            "Target cannot handle 64-bit constant exprs!");
     O << TAI->getData64bitsDirective();

@@ -243,14 +243,10 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
   switch (Ty->getTypeID()) {
   case Type::BoolTyID:   Size = 1; Alignment = TD->getBoolAlignment(); return;
   case Type::VoidTyID:
-  case Type::UByteTyID:
-  case Type::SByteTyID:  Size = 1; Alignment = TD->getByteAlignment(); return;
-  case Type::UShortTyID:
-  case Type::ShortTyID:  Size = 2; Alignment = TD->getShortAlignment(); return;
-  case Type::UIntTyID:
-  case Type::IntTyID:    Size = 4; Alignment = TD->getIntAlignment(); return;
-  case Type::ULongTyID:
-  case Type::LongTyID:   Size = 8; Alignment = TD->getLongAlignment(); return;
+  case Type::Int8TyID:   Size = 1; Alignment = TD->getByteAlignment(); return;
+  case Type::Int16TyID:  Size = 2; Alignment = TD->getShortAlignment(); return;
+  case Type::Int32TyID:  Size = 4; Alignment = TD->getIntAlignment(); return;
+  case Type::Int64TyID:  Size = 8; Alignment = TD->getLongAlignment(); return;
   case Type::FloatTyID:  Size = 4; Alignment = TD->getFloatAlignment(); return;
   case Type::DoubleTyID: Size = 8; Alignment = TD->getDoubleAlignment(); return;
   case Type::LabelTyID:
@@ -312,9 +308,9 @@ unsigned char TargetData::getTypeAlignmentShift(const Type *Ty) const {
 const Type *TargetData::getIntPtrType() const {
   switch (getPointerSize()) {
   default: assert(0 && "Unknown pointer size!");
-  case 2: return Type::UShortTy;
-  case 4: return Type::UIntTy;
-  case 8: return Type::ULongTy;
+  case 2: return Type::Int16Ty;
+  case 4: return Type::Int32Ty;
+  case 8: return Type::Int64Ty;
   }
 }
 
@@ -329,7 +325,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
     TI = gep_type_begin(ptrTy, Idx.begin(), Idx.end());
   for (unsigned CurIDX = 0; CurIDX != Idx.size(); ++CurIDX, ++TI) {
     if (const StructType *STy = dyn_cast<StructType>(*TI)) {
-      assert(Idx[CurIDX]->getType() == Type::UIntTy && "Illegal struct idx");
+      assert(Idx[CurIDX]->getType() == Type::Int32Ty && "Illegal struct idx");
       unsigned FieldNo = cast<ConstantInt>(Idx[CurIDX])->getZExtValue();
 
       // Get structure layout information...

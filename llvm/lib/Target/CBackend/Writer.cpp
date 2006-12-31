@@ -365,17 +365,13 @@ CWriter::printPrimitiveType(std::ostream &Out, const Type *Ty, bool isSigned,
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:   return Out << "void "               << NameSoFar;
   case Type::BoolTyID:   return Out << "bool "               << NameSoFar;
-  case Type::UByteTyID:  
-  case Type::SByteTyID:
+  case Type::Int8TyID:
     return Out << (isSigned?"signed":"unsigned") << " char " << NameSoFar;
-  case Type::UShortTyID: 
-  case Type::ShortTyID:  
+  case Type::Int16TyID:  
     return Out << (isSigned?"signed":"unsigned") << " short " << NameSoFar;
-  case Type::UIntTyID:   
-  case Type::IntTyID:    
+  case Type::Int32TyID:    
     return Out << (isSigned?"signed":"unsigned") << " int " << NameSoFar;
-  case Type::ULongTyID:  
-  case Type::LongTyID:   
+  case Type::Int64TyID:   
     return Out << (isSigned?"signed":"unsigned") << " long long " << NameSoFar;
   case Type::FloatTyID:  return Out << "float "              << NameSoFar;
   case Type::DoubleTyID: return Out << "double "             << NameSoFar;
@@ -488,7 +484,7 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
   // ubytes or an array of sbytes with positive values.
   //
   const Type *ETy = CPA->getType()->getElementType();
-  bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
+  bool isString = (ETy == Type::Int8Ty || ETy == Type::Int8Ty);
 
   // Make sure the last character is a null char, as automatically added by C
   if (isString && (CPA->getNumOperands() == 0 ||
@@ -810,49 +806,18 @@ void CWriter::printConstant(Constant *CPV) {
   case Type::BoolTyID:
     Out << (cast<ConstantBool>(CPV)->getValue() ? '1' : '0');
     break;
-  case Type::SByteTyID:
-  case Type::UByteTyID:
+  case Type::Int8TyID:
     Out << "((char)" << cast<ConstantInt>(CPV)->getSExtValue() << ")";
     break;
-  case Type::ShortTyID:
-  case Type::UShortTyID:
+  case Type::Int16TyID:
     Out << "((short)" << cast<ConstantInt>(CPV)->getSExtValue() << ")";
     break;
-  case Type::IntTyID:
-  case Type::UIntTyID:
+  case Type::Int32TyID:
     Out << "((int)" << cast<ConstantInt>(CPV)->getSExtValue() << ")";
     break;
-  case Type::LongTyID:
-  case Type::ULongTyID:
+  case Type::Int64TyID:
     Out << "((long long)" << cast<ConstantInt>(CPV)->getSExtValue() << "ll)";
     break;
-
-#if 0
-  case Type::IntTyID:
-    if ((int)cast<ConstantInt>(CPV)->getSExtValue() == (int)0x80000000)
-      Out << "((int)0x80000000U)";   // Handle MININT specially to avoid warning
-    else
-      Out << cast<ConstantInt>(CPV)->getSExtValue();
-    break;
-
-  case Type::LongTyID:
-    if (cast<ConstantInt>(CPV)->isMinValue(true))
-      Out << "(/*INT64_MIN*/(-9223372036854775807LL)-1)";
-    else
-      Out << cast<ConstantInt>(CPV)->getSExtValue() << "ll";
-    break;
-
-  case Type::UByteTyID:
-  case Type::UShortTyID:
-    Out << cast<ConstantInt>(CPV)->getZExtValue();
-    break;
-  case Type::UIntTyID:
-    Out << cast<ConstantInt>(CPV)->getZExtValue() << 'u';
-    break;
-  case Type::ULongTyID:
-    Out << cast<ConstantInt>(CPV)->getZExtValue() << "ull";
-    break;
-#endif
 
   case Type::FloatTyID:
   case Type::DoubleTyID: {
@@ -1627,10 +1592,8 @@ void CWriter::printFloatingPointConstants(Function &F) {
 void CWriter::printModuleTypes(const SymbolTable &ST) {
   Out << "/* Helper union for bitcasts */\n";
   Out << "typedef union {\n";
-  Out << "  unsigned int UInt;\n";
-  Out << "  signed int SInt;\n";
-  Out << "  unsigned long long ULong;\n";
-  Out << "  signed long long SLong;\n";
+  Out << "  unsigned int Int32;\n";
+  Out << "  unsigned long long Int64;\n";
   Out << "  float Float;\n";
   Out << "  double Double;\n";
   Out << "} llvmBitCastUnion;\n";
@@ -2060,8 +2023,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 
   // We must cast the results of binary operations which might be promoted.
   bool needsCast = false;
-  if ((I.getType() == Type::UByteTy) || (I.getType() == Type::SByteTy)
-      || (I.getType() == Type::UShortTy) || (I.getType() == Type::ShortTy)
+  if ((I.getType() == Type::Int8Ty) || (I.getType() == Type::Int16Ty) 
       || (I.getType() == Type::FloatTy)) {
     needsCast = true;
     Out << "((";
@@ -2192,12 +2154,10 @@ void CWriter::visitFCmpInst(FCmpInst &I) {
 static const char * getFloatBitCastField(const Type *Ty) {
   switch (Ty->getTypeID()) {
     default: assert(0 && "Invalid Type");
-    case Type::FloatTyID: return "Float";
-    case Type::UIntTyID:  return "UInt";
-    case Type::IntTyID:   return "SInt";
-    case Type::DoubleTyID:return "Double";
-    case Type::ULongTyID: return "ULong";
-    case Type::LongTyID:  return "SLong";
+    case Type::FloatTyID:  return "Float";
+    case Type::Int32TyID:  return "Int32";
+    case Type::DoubleTyID: return "Double";
+    case Type::Int64TyID:  return "Int64";
   }
 }
 

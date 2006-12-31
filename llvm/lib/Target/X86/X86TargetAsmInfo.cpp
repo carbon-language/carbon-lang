@@ -172,13 +172,13 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
       !CI->getType()->isInteger())
     return false;
   
-  const Type *Ty = CI->getType()->getUnsignedVersion();
+  const Type *Ty = CI->getType();
   const char *IntName;
   switch (Ty->getTypeID()) {
   default: return false;
-  case Type::UShortTyID: IntName = "llvm.bswap.i16"; break;
-  case Type::UIntTyID:   IntName = "llvm.bswap.i32"; break;
-  case Type::ULongTyID:  IntName = "llvm.bswap.i64"; break;
+  case Type::Int16TyID: IntName = "llvm.bswap.i16"; break;
+  case Type::Int32TyID:   IntName = "llvm.bswap.i32"; break;
+  case Type::Int64TyID:  IntName = "llvm.bswap.i64"; break;
   }
 
   // Okay, we can do this xform, do so now.
@@ -226,7 +226,7 @@ bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
     }
     break;
   case 3:
-    if (CI->getType() == Type::ULongTy && Constraints.size() >= 2 &&
+    if (CI->getType() == Type::Int64Ty && Constraints.size() >= 2 &&
         Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
         Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {
       // bswap %eax / bswap %edx / xchgl %eax, %edx  -> llvm.bswap.i64

@@ -55,8 +55,8 @@ getGlobalVariablesUsing(Module &M, const std::string &RootName) {
   std::vector<GlobalVariable*> Result;  // GlobalVariables matching criteria.
   
   std::vector<const Type*> FieldTypes;
-  FieldTypes.push_back(Type::UIntTy);
-  FieldTypes.push_back(Type::UIntTy);
+  FieldTypes.push_back(Type::Int32Ty);
+  FieldTypes.push_back(Type::Int32Ty);
 
   // Get the GlobalVariable root.
   GlobalVariable *UseRoot = M.getGlobalVariable(RootName,
@@ -264,16 +264,16 @@ public:
   /// Apply - Set the value of each of the fields.
   ///
   virtual void Apply(int &Field) {
-    Elements.push_back(ConstantInt::get(Type::IntTy, int32_t(Field)));
+    Elements.push_back(ConstantInt::get(Type::Int32Ty, int32_t(Field)));
   }
   virtual void Apply(unsigned &Field) {
-    Elements.push_back(ConstantInt::get(Type::UIntTy, uint32_t(Field)));
+    Elements.push_back(ConstantInt::get(Type::Int32Ty, uint32_t(Field)));
   }
   virtual void Apply(int64_t &Field) {
-    Elements.push_back(ConstantInt::get(Type::LongTy, int64_t(Field)));
+    Elements.push_back(ConstantInt::get(Type::Int64Ty, int64_t(Field)));
   }
   virtual void Apply(uint64_t &Field) {
-    Elements.push_back(ConstantInt::get(Type::ULongTy, uint64_t(Field)));
+    Elements.push_back(ConstantInt::get(Type::Int64Ty, uint64_t(Field)));
   }
   virtual void Apply(bool &Field) {
     Elements.push_back(ConstantBool::get(Field));
@@ -351,16 +351,16 @@ public:
   /// Apply - Set the value of each of the fields.
   ///
   virtual void Apply(int &Field) {
-    Fields.push_back(Type::IntTy);
+    Fields.push_back(Type::Int32Ty);
   }
   virtual void Apply(unsigned &Field) {
-    Fields.push_back(Type::UIntTy);
+    Fields.push_back(Type::Int32Ty);
   }
   virtual void Apply(int64_t &Field) {
-    Fields.push_back(Type::LongTy);
+    Fields.push_back(Type::Int64Ty);
   }
   virtual void Apply(uint64_t &Field) {
-    Fields.push_back(Type::ULongTy);
+    Fields.push_back(Type::Int64Ty);
   }
   virtual void Apply(bool &Field) {
     Fields.push_back(Type::BoolTy);
@@ -1259,7 +1259,7 @@ const PointerType *DISerializer::getStrPtrType() {
   // If not already defined.
   if (!StrPtrTy) {
     // Construct the pointer to signed bytes.
-    StrPtrTy = PointerType::get(Type::SByteTy);
+    StrPtrTy = PointerType::get(Type::Int8Ty);
   }
   
   return StrPtrTy;

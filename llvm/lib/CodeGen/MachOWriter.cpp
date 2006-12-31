@@ -730,20 +730,17 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
       
       switch (PC->getType()->getTypeID()) {
       case Type::BoolTyID:
-      case Type::UByteTyID:
-      case Type::SByteTyID:
+      case Type::Int8TyID:
         ptr[0] = cast<ConstantInt>(PC)->getZExtValue();
         break;
-      case Type::UShortTyID:
-      case Type::ShortTyID:
+      case Type::Int16TyID:
         val = cast<ConstantInt>(PC)->getZExtValue();
         if (TD->isBigEndian())
           val = ByteSwap_16(val);
         ptr[0] = val;
         ptr[1] = val >> 8;
         break;
-      case Type::UIntTyID:
-      case Type::IntTyID:
+      case Type::Int32TyID:
       case Type::FloatTyID:
         if (PC->getType()->getTypeID() == Type::FloatTyID) {
           val = FloatToBits(cast<ConstantFP>(PC)->getValue());
@@ -758,8 +755,7 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
         ptr[3] = val >> 24;
         break;
       case Type::DoubleTyID:
-      case Type::ULongTyID:
-      case Type::LongTyID:
+      case Type::Int64TyID:
         if (PC->getType()->getTypeID() == Type::DoubleTyID) {
           val = DoubleToBits(cast<ConstantFP>(PC)->getValue());
         } else {
