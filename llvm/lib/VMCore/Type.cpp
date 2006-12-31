@@ -1015,9 +1015,9 @@ FunctionType *FunctionType::get(const Type *ReturnType,
 FunctionType::ParameterAttributes 
 FunctionType::getParamAttrs(unsigned Idx) const {
   if (!ParamAttrs)
-    return ParameterAttributes(0);
-  if (Idx > ParamAttrs->size())
-    return ParameterAttributes(0);
+    return NoAttributeSet;
+  if (Idx >= ParamAttrs->size())
+    return NoAttributeSet;
   return (*ParamAttrs)[Idx];
 }
 
