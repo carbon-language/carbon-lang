@@ -34,6 +34,10 @@ std::istream* LexInput = 0;
 unsigned SizeOfPointer = 32;
 static uint64_t unique = 1;
 
+// This bool controls whether attributes are ever added to function declarations
+// definitions and calls.
+static bool AddAttributes = false;
+
 typedef std::vector<TypeInfo> TypeVector;
 static TypeVector EnumeratedTypes;
 typedef std::map<std::string,TypeInfo> TypeMap;
@@ -50,12 +54,13 @@ void destroy(ValueList* VL) {
 }
 
 void UpgradeAssembly(const std::string &infile, std::istream& in, 
-                     std::ostream &out, bool debug)
+                     std::ostream &out, bool debug, bool addAttrs)
 {
   Upgradelineno = 1; 
   CurFilename = infile;
   LexInput = &in;
   yydebug = debug;
+  AddAttributes = addAttrs;
   O = &out;
 
   if (yyparse()) {
@@ -176,15 +181,15 @@ static std::string getCastUpgrade(
     // fp -> ptr cast is no longer supported but we must upgrade this
     // by doing a double cast: fp -> int -> ptr
     if (isConst)
-      Source = "ulong fptoui(" + Source + " to ulong)";
+      Source = "i64 fptoui(" + Source + " to i64)";
     else {
       *O << "    %cast_upgrade" << unique << " = fptoui " << Source 
-         << " to ulong\n";
-      Source = "ulong %cast_upgrade" + llvm::utostr(unique);
+         << " to i64\n";
+      Source = "i64 %cast_upgrade" + llvm::utostr(unique);
     }
     // Update the SrcTy for the getCastOpcode call below
     SrcTy.destroy();
-    SrcTy.newTy = new std::string("ulong");
+    SrcTy.newTy = new std::string("i64");
     SrcTy.oldTy = ULongTy;
   } else if (DstTy.oldTy == BoolTy && SrcTy.oldTy != BoolTy) {
     // cast ptr %x to  bool was previously defined as setne ptr %x, null
@@ -286,7 +291,7 @@ getCompareOp(const std::string& setcc, const TypeInfo& TI) {
 %token <String> NULL_TOK UNDEF ZEROINITIALIZER TRUETOK FALSETOK
 %token <String> TYPE VAR_ID LABELSTR STRINGCONSTANT
 %token <String> IMPLEMENTATION BEGINTOK ENDTOK
-%token <String> DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE
+%token <String> DECLARE GLOBAL CONSTANT SECTION VOLATILE
 %token <String> TO DOTDOTDOT CONST INTERNAL LINKONCE WEAK 
 %token <String> DLLIMPORT DLLEXPORT EXTERN_WEAK APPENDING
 %token <String> NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
@@ -922,8 +927,8 @@ ArgList : ArgListH {
   }
   | /* empty */ { $$ = new std::string(); };
 
-FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' 
-                  OptSection OptAlign {
+FunctionHeaderH 
+  : OptCallingConv TypesV Name '(' ArgList ')' OptSection OptAlign {
     if (!$1->empty()) {
       *$1 += " ";
     }
@@ -955,15 +960,6 @@ FunctionHeader
     delete $1; delete $2; delete $3;
     $$ = 0;
   }
-  | DEFINE OptLinkage FunctionHeaderH BEGIN {
-    *O << *$1 << ' ';
-    if (!$2->empty()) {
-      *O << *$2 << ' ';
-    }
-    *O << *$3 << ' ' << *$4 << '\n';
-    delete $1; delete $2; delete $3; delete $4;
-    $$ = 0;
-  }
   ;
 
 END : ENDTOK { $$ = new std::string("}"); delete $1; }
@@ -972,7 +968,7 @@ END : ENDTOK { $$ = new std::string("}"); delete $1; }
 Function : FunctionHeader BasicBlockList END {
   if ($2)
     *O << *$2;
-  *O << '\n' << *$3 << '\n';
+  *O << *$3 << "\n\n";
   $$ = 0;
 };
 
@@ -1373,8 +1369,8 @@ MemoryInst : MALLOC Types OptCAlign {
           VI.type.getBitWidth() < 64) {
         std::string* old = VI.val;
         *O << "    %gep_upgrade" << unique << " = zext " << *old 
-           << " to ulong\n";
-        VI.val = new std::string("ulong %gep_upgrade" + llvm::utostr(unique++));
+           << " to i64\n";
+        VI.val = new std::string("i64 %gep_upgrade" + llvm::utostr(unique++));
         VI.type.oldTy = ULongTy;
         delete old;
       }
@@ -1400,6 +1396,6 @@ int yyerror(const char *ErrorMsg) {
     errMsg += "end-of-file.";
   else
     errMsg += "token: '" + std::string(Upgradetext, Upgradeleng) + "'";
-  std::cerr << errMsg << '\n';
+  std::cerr << "llvm-upgrade: " << errMsg << '\n';
   exit(1);
 }
