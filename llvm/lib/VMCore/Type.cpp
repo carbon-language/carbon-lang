@@ -74,14 +74,10 @@ const Type *Type::getPrimitiveType(TypeID IDNumber) {
   switch (IDNumber) {
   case VoidTyID  : return VoidTy;
   case BoolTyID  : return BoolTy;
-  case UByteTyID : return UByteTy;
-  case SByteTyID : return SByteTy;
-  case UShortTyID: return UShortTy;
-  case ShortTyID : return ShortTy;
-  case UIntTyID  : return UIntTy;
-  case IntTyID   : return IntTy;
-  case ULongTyID : return ULongTy;
-  case LongTyID  : return LongTy;
+  case Int8TyID  : return Int8Ty; 
+  case Int16TyID : return Int16Ty; 
+  case Int32TyID : return Int32Ty;
+  case Int64TyID : return Int64Ty;
   case FloatTyID : return FloatTy;
   case DoubleTyID: return DoubleTy;
   case LabelTyID : return LabelTy;
@@ -120,56 +116,10 @@ bool Type::canLosslesslyBitCastTo(const Type *Ty) const {
   // At this point we have only various mismatches of the first class types
   // remaining and ptr->ptr. Just select the lossless conversions. Everything
   // else is not lossless.
-  switch (getTypeID()) {
-  case Type::UByteTyID:   return Ty == Type::SByteTy;
-  case Type::SByteTyID:   return Ty == Type::UByteTy;
-  case Type::UShortTyID:  return Ty == Type::ShortTy;
-  case Type::ShortTyID:   return Ty == Type::UShortTy;
-  case Type::UIntTyID:    return Ty == Type::IntTy;
-  case Type::IntTyID:     return Ty == Type::UIntTy;
-  case Type::ULongTyID:   return Ty == Type::LongTy;
-  case Type::LongTyID:    return Ty == Type::ULongTy;
-  case Type::PointerTyID: return isa<PointerType>(Ty);
-  default:
-    break;
-  }
+  if (getTypeID() == Type::PointerTyID)
+    return isa<PointerType>(Ty);
   return false;  // Other types have no identity values
 }
-
-/// getUnsignedVersion - If this is an integer type, return the unsigned
-/// variant of this type.  For example int -> uint.
-const Type *Type::getUnsignedVersion() const {
-  switch (getTypeID()) {
-  default:
-    assert(isInteger()&&"Type::getUnsignedVersion is only valid for integers!");
-  case Type::UByteTyID:
-  case Type::SByteTyID:   return Type::UByteTy;
-  case Type::UShortTyID:
-  case Type::ShortTyID:   return Type::UShortTy;
-  case Type::UIntTyID:
-  case Type::IntTyID:     return Type::UIntTy;
-  case Type::ULongTyID:
-  case Type::LongTyID:    return Type::ULongTy;
-  }
-}
-
-/// getSignedVersion - If this is an integer type, return the signed variant
-/// of this type.  For example uint -> int.
-const Type *Type::getSignedVersion() const {
-  switch (getTypeID()) {
-  default:
-    assert(isInteger() && "Type::getSignedVersion is only valid for integers!");
-  case Type::UByteTyID:
-  case Type::SByteTyID:   return Type::SByteTy;
-  case Type::UShortTyID:
-  case Type::ShortTyID:   return Type::ShortTy;
-  case Type::UIntTyID:
-  case Type::IntTyID:     return Type::IntTy;
-  case Type::ULongTyID:
-  case Type::LongTyID:    return Type::LongTy;
-  }
-}
-
 
 // getPrimitiveSize - Return the basic size of this type if it is a primitive
 // type.  These are fixed by LLVM and are not target dependent.  This will
@@ -178,15 +128,11 @@ const Type *Type::getSignedVersion() const {
 unsigned Type::getPrimitiveSize() const {
   switch (getTypeID()) {
   case Type::BoolTyID:
-  case Type::SByteTyID:
-  case Type::UByteTyID: return 1;
-  case Type::UShortTyID:
-  case Type::ShortTyID: return 2;
+  case Type::Int8TyID:  return 1;
+  case Type::Int16TyID: return 2;
   case Type::FloatTyID:
-  case Type::IntTyID:
-  case Type::UIntTyID: return 4;
-  case Type::LongTyID:
-  case Type::ULongTyID:
+  case Type::Int32TyID: return 4;
+  case Type::Int64TyID:
   case Type::DoubleTyID: return 8;
   default: return 0;
   }
@@ -195,15 +141,11 @@ unsigned Type::getPrimitiveSize() const {
 unsigned Type::getPrimitiveSizeInBits() const {
   switch (getTypeID()) {
   case Type::BoolTyID:  return 1;
-  case Type::SByteTyID:
-  case Type::UByteTyID: return 8;
-  case Type::UShortTyID:
-  case Type::ShortTyID: return 16;
+  case Type::Int8TyID:  return 8;
+  case Type::Int16TyID: return 16;
   case Type::FloatTyID:
-  case Type::IntTyID:
-  case Type::UIntTyID: return 32;
-  case Type::LongTyID:
-  case Type::ULongTyID:
+  case Type::Int32TyID:return 32;
+  case Type::Int64TyID:
   case Type::DoubleTyID: return 64;
   case Type::PackedTyID: {
     const PackedType *PTy = cast<PackedType>(this);
@@ -303,11 +245,21 @@ static std::string getTypeDescription(const Type *Ty,
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
-    Result = getTypeDescription(FTy->getReturnType(), TypeStack) + " (";
+    Result = FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
+    if (!Result.empty())
+      Result += " ";
+    Result += getTypeDescription(FTy->getReturnType(), TypeStack) + " (";
+    unsigned Idx = 1;
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Result += ", ";
+      const char *PA = FunctionType::getParamAttrsText(FTy->getParamAttrs(Idx));
+      if (PA[0] != 0) {
+        Result += PA;
+        Result += " ";
+      }
+      Idx++;
       Result += getTypeDescription(*I, TypeStack);
     }
     if (FTy->isVarArg()) {
@@ -387,8 +339,8 @@ const std::string &Type::getDescription() const {
 
 
 bool StructType::indexValid(const Value *V) const {
-  // Structure indexes require unsigned integer constants.
-  if (V->getType() == Type::UIntTy)
+  // Structure indexes require 32-bit integer constants.
+  if (V->getType() == Type::Int32Ty)
     if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
       return CU->getZExtValue() < ContainedTys.size();
   return false;
@@ -419,14 +371,10 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 
 DeclarePrimType(Void,   "void");
 DeclarePrimType(Bool,   "bool");
-DeclarePrimType(SByte,  "sbyte");
-DeclarePrimType(UByte,  "ubyte");
-DeclarePrimType(Short,  "short");
-DeclarePrimType(UShort, "ushort");
-DeclarePrimType(Int,    "int");
-DeclarePrimType(UInt,   "uint");
-DeclarePrimType(Long,   "long");
-DeclarePrimType(ULong,  "ulong");
+DeclarePrimType(Int8,   "i8");
+DeclarePrimType(Int16,  "i16");
+DeclarePrimType(Int32,  "i32");
+DeclarePrimType(Int64,  "i64");
 DeclarePrimType(Float,  "float");
 DeclarePrimType(Double, "double");
 DeclarePrimType(Label,  "label");
@@ -439,8 +387,8 @@ DeclarePrimType(Label,  "label");
 
 FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params,
-                           bool IsVarArgs) : DerivedType(FunctionTyID),
-                                             isVarArgs(IsVarArgs) {
+                           bool IsVarArgs, const ParamAttrsList &Attrs) 
+  : DerivedType(FunctionTyID), isVarArgs(IsVarArgs) {
   assert((Result->isFirstClassType() || Result == Type::VoidTy ||
          isa<OpaqueType>(Result)) &&
          "LLVM functions cannot return aggregates");
@@ -456,8 +404,15 @@ FunctionType::FunctionType(const Type *Result,
     isAbstract |= Params[i]->isAbstract();
   }
 
+  // Set the ParameterAttributes
+  if (!Attrs.empty()) 
+    ParamAttrs = new ParamAttrsList(Attrs);
+  else
+    ParamAttrs = 0;
+
   // Calculate whether or not this type is abstract
   setAbstract(isAbstract);
+
 }
 
 StructType::StructType(const std::vector<const Type*> &Types, bool isPacked)
@@ -520,7 +475,7 @@ void DerivedType::dropAllTypeUses() {
     // pick so long as it doesn't point back to this type.  We choose something
     // concrete to avoid overhead for adding to AbstracTypeUser lists and stuff.
     for (unsigned i = 1, e = ContainedTys.size(); i != e; ++i)
-      ContainedTys[i] = Type::IntTy;
+      ContainedTys[i] = Type::Int32Ty;
   }
 }
 
@@ -976,18 +931,22 @@ namespace llvm {
 class FunctionValType {
   const Type *RetTy;
   std::vector<const Type*> ArgTypes;
+  std::vector<FunctionType::ParameterAttributes> ParamAttrs;
   bool isVarArg;
 public:
   FunctionValType(const Type *ret, const std::vector<const Type*> &args,
-                  bool IVA) : RetTy(ret), isVarArg(IVA) {
+                  bool IVA, const FunctionType::ParamAttrsList &attrs) 
+    : RetTy(ret), isVarArg(IVA) {
     for (unsigned i = 0; i < args.size(); ++i)
       ArgTypes.push_back(args[i]);
+    for (unsigned i = 0; i < attrs.size(); ++i)
+      ParamAttrs.push_back(attrs[i]);
   }
 
   static FunctionValType get(const FunctionType *FT);
 
   static unsigned hashTypeStructure(const FunctionType *FT) {
-    return FT->getNumParams()*2+FT->isVarArg();
+    return FT->getNumParams()*64+FT->getNumAttrs()*2+FT->isVarArg();
   }
 
   // Subclass should override this... to update self as usual
@@ -1000,9 +959,10 @@ public:
   inline bool operator<(const FunctionValType &MTV) const {
     if (RetTy < MTV.RetTy) return true;
     if (RetTy > MTV.RetTy) return false;
-
+    if (isVarArg < MTV.isVarArg) return true;
+    if (isVarArg > MTV.isVarArg) return false;
     if (ArgTypes < MTV.ArgTypes) return true;
-    return ArgTypes == MTV.ArgTypes && isVarArg < MTV.isVarArg;
+    return ArgTypes == MTV.ArgTypes && ParamAttrs < MTV.ParamAttrs;
   }
 };
 }
@@ -1013,27 +973,61 @@ static ManagedStatic<TypeMap<FunctionValType, FunctionType> > FunctionTypes;
 FunctionValType FunctionValType::get(const FunctionType *FT) {
   // Build up a FunctionValType
   std::vector<const Type *> ParamTypes;
+  std::vector<FunctionType::ParameterAttributes> ParamAttrs;
   ParamTypes.reserve(FT->getNumParams());
   for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i)
     ParamTypes.push_back(FT->getParamType(i));
-  return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg());
+  for (unsigned i = 0, e = FT->getNumAttrs(); i != e; ++i)
+    ParamAttrs.push_back(FT->getParamAttrs(i));
+  return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg(),
+                         ParamAttrs);
 }
 
 
 // FunctionType::get - The factory function for the FunctionType class...
 FunctionType *FunctionType::get(const Type *ReturnType,
                                 const std::vector<const Type*> &Params,
-                                bool isVarArg) {
-  FunctionValType VT(ReturnType, Params, isVarArg);
+                                bool isVarArg,
+                                const std::vector<ParameterAttributes> &Attrs) {
+  bool noAttrs = true;
+  for (unsigned i = 0, e = Attrs.size(); i < e; ++i)
+    if (Attrs[i] != FunctionType::NoAttributeSet) {
+      noAttrs = false;
+      break;
+    }
+  const std::vector<FunctionType::ParameterAttributes> NullAttrs;
+  const std::vector<FunctionType::ParameterAttributes> *TheAttrs = &Attrs;
+  if (noAttrs)
+    TheAttrs = &NullAttrs;
+  FunctionValType VT(ReturnType, Params, isVarArg, *TheAttrs);
   FunctionType *MT = FunctionTypes->get(VT);
   if (MT) return MT;
 
-  FunctionTypes->add(VT, MT = new FunctionType(ReturnType, Params, isVarArg));
+  MT = new FunctionType(ReturnType, Params, isVarArg, *TheAttrs);
+  FunctionTypes->add(VT, MT);
 
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << MT << "\n";
 #endif
   return MT;
+}
+
+FunctionType::ParameterAttributes 
+FunctionType::getParamAttrs(unsigned Idx) const {
+  if (!ParamAttrs)
+    return ParameterAttributes(0);
+  if (Idx > ParamAttrs->size())
+    return ParameterAttributes(0);
+  return (*ParamAttrs)[Idx];
+}
+
+const char *FunctionType::getParamAttrsText(ParameterAttributes Attr) {
+  switch (Attr) {
+    default: assert(0 && "Invalid ParameterAttribute value");
+    case 0: return "";
+    case ZExtAttribute: return "@zext";
+    case SExtAttribute: return "@sext";
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -1443,10 +1437,8 @@ void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
 bool SequentialType::indexValid(const Value *V) const {
   const Type *Ty = V->getType();
   switch (Ty->getTypeID()) {
-  case Type::IntTyID:
-  case Type::UIntTyID:
-  case Type::LongTyID:
-  case Type::ULongTyID:
+  case Type::Int32TyID:
+  case Type::Int64TyID:
     return true;
   default:
     return false;
