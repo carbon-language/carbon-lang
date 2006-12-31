@@ -652,10 +652,10 @@ an optional <a href="#linkage">linkage type</a>, an optional
 <a href="#callingconv">calling convention</a>, a return type, an optional
 <a href="#paramattrs">parameter attribute</a> for the return type, a function 
 name, a (possibly empty) argument list (each with optional 
-<a href="#paramattrs">parameter attributes</a>, an optional section, an optional
-alignment, an opening curly brace, a list of basic blocks, and a closing curly 
-brace.  LLVM function declarations
-are consist of the "<tt>declare</tt>" keyword, an optional <a
+<a href="#paramattrs">parameter attributes</a>), an optional section, an 
+optional alignment, an opening curly brace, a list of basic blocks, and a 
+closing curly brace.  LLVM function declarations
+consist of the "<tt>declare</tt>" keyword, an optional <a
   href="#callingconv">calling convention</a>, a return type, an optional
 <a href="#paramattrs">parameter attribute</a> for the return type, a function 
 name, a possibly empty list of arguments, and an optional alignment.</p>
@@ -698,12 +698,12 @@ a power of 2.</p>
   type so two functions types that differ only by the parameter attributes 
   are different function types.</p>
 
-  <p>Parameter attributes consist of a at sign (@) followed by either a single
+  <p>Parameter attributes consist of an at sign (@) followed by either a single
   keyword or a comma separate list of keywords enclosed in parentheses. For
   example:<pre>
     %someFunc = i16 @zext (i8 @(sext) %someParam)
-    %someFunc = i16 @zext (i8 @zext %someParam)
-  </pre>Note that the two function types above are unique because the parameter
+    %someFunc = i16 @zext (i8 @zext %someParam)</pre>
+  Note that the two function types above are unique because the parameter
   has a different attribute (@sext in the first one, @zext in the second).</p>
 
   <p>Currently, only the following parameter attributes are defined:
@@ -938,20 +938,22 @@ Variable argument functions can access their arguments with the <a
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
-    <td class="left">
-      <tt>i32 (i32)</tt> <br/>
-      <tt>float (i16 @sext, i32 *) *</tt><br/>
-      <tt>i32 (i8*, ...)</tt><br/>
+    <td class="left"><tt>i32 (i32)</tt></td>
+    <td class="left">function taking an <tt>i32</tt>, returning an <tt>i32</tt>
     </td>
-    <td class="left">
-      function taking an <tt>i32</tt>, returning an <tt>i32</tt><br/>
-      <a href="#t_pointer">Pointer</a> to a function that takes an
-      <tt>i16</tt> that should be sign extended and a 
+  </tr><tr class="layout">
+    <td class="left"><tt>float (i16 @sext, i32 *) *</tt></td>
+    <td class="left"><a href="#t_pointer">Pointer</a> to a function that takes 
+      an <tt>i16</tt> that should be sign extended and a 
       <a href="#t_pointer">pointer</a> to <tt>i32</tt>, returning 
-      <tt>float</tt>.<br/>
-      A vararg function that takes at least one <a href="#t_pointer">pointer</a>
-      to <tt>i8 </tt> (signed char in C), which returns an integer.  This is 
-      the signature for <tt>printf</tt> in LLVM.<br/>
+      <tt>float</tt>.
+    </td>
+  </tr><tr class="layout">
+    <td class="left"><tt>i32 (i8*, ...)</tt></td>
+    <td class="left">A vararg function that takes at least one 
+      <a href="#t_pointer">pointer</a> to <tt>i8 </tt> (signed char in C), 
+      which returns an integer.  This is the signature for <tt>printf</tt> in 
+      LLVM.
     </td>
   </tr>
 </table>
