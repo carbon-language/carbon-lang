@@ -2431,12 +2431,13 @@ ValueRefList : Types ValueRef OptParamAttrs {
   | /*empty*/ { $$ = new ValueRefList(); };
 
 IndexList       // Used for gep instructions and constant expressions
-  : /*empty*/ { $$ = new std::vector<Value*>(); };
+  : /*empty*/ { $$ = new std::vector<Value*>(); }
   | IndexList ',' ResolvedVal {
     $$ = $1;
     $$->push_back($3);
     CHECK_FOR_ERROR
   }
+  ;
 
 OptTailCall : TAIL CALL {
     $$ = true;
