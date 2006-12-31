@@ -2437,6 +2437,7 @@ IndexList       // Used for gep instructions and constant expressions
     $$->push_back($3);
     CHECK_FOR_ERROR
   }
+  ;
 
 OptTailCall : TAIL CALL {
     $$ = true;
