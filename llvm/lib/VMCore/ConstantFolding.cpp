@@ -299,7 +299,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
         if (DestTy == Type::Int32Ty)
           return ConstantInt::get(DestTy, FloatToBits(FP->getValue()));
         assert(DestTy == Type::Int64Ty && 
-               "Incorrect integer  type for bitcast!");
+               "Incorrect integer type for bitcast!");
         return ConstantInt::get(DestTy, DoubleToBits(FP->getValue()));
       }
     }
@@ -705,8 +705,8 @@ static bool isMaybeZeroSizedType(const Type *Ty) {
 static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
   if (C1 == C2) return 0;
 
-  // Ok, we found a different index.  Are either of the operands ConstantExprs?
-  // If so, we can't do anything with them.
+  // Ok, we found a different index.  If they are not ConstantInt, we can't do
+  // anything with them.
   if (!isa<ConstantInt>(C1) || !isa<ConstantInt>(C2))
     return -2; // don't know!
 
@@ -716,7 +716,7 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
     C1 = ConstantExpr::getSExt(C1, Type::Int64Ty);
 
   if (C2->getType() != Type::Int64Ty)
-    C1 = ConstantExpr::getSExt(C2, Type::Int64Ty);
+    C2 = ConstantExpr::getSExt(C2, Type::Int64Ty);
 
   if (C1 == C2) return 0;  // They are equal
 
