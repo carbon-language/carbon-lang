@@ -343,14 +343,10 @@ public:
     default: assert(0 && "Unknown type!");
     case Type::VoidTyID:    return MVT::isVoid;
     case Type::BoolTyID:    return MVT::i1;
-    case Type::UByteTyID:
-    case Type::SByteTyID:   return MVT::i8;
-    case Type::ShortTyID:
-    case Type::UShortTyID:  return MVT::i16;
-    case Type::IntTyID:
-    case Type::UIntTyID:    return MVT::i32;
-    case Type::LongTyID:
-    case Type::ULongTyID:   return MVT::i64;
+    case Type::Int8TyID:    return MVT::i8;
+    case Type::Int16TyID:   return MVT::i16;
+    case Type::Int32TyID:   return MVT::i32;
+    case Type::Int64TyID:   return MVT::i64;
     case Type::FloatTyID:   return MVT::f32;
     case Type::DoubleTyID:  return MVT::f64;
     case Type::PointerTyID: return PointerTy;
@@ -743,11 +739,16 @@ public:
   /// actual call.  This returns a pair of operands.  The first element is the
   /// return value for the function (if RetTy is not VoidTy).  The second
   /// element is the outgoing token chain.
-  typedef std::vector<std::pair<SDOperand, const Type*> > ArgListTy;
+  struct ArgListEntry {
+    SDOperand Node;
+    const Type* Ty;
+    bool isSigned;
+  };
+  typedef std::vector<ArgListEntry> ArgListTy;
   virtual std::pair<SDOperand, SDOperand>
-  LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
-              unsigned CallingConv, bool isTailCall, SDOperand Callee,
-              ArgListTy &Args, SelectionDAG &DAG);
+  LowerCallTo(SDOperand Chain, const Type *RetTy, bool RetTyIsSigned, 
+              bool isVarArg, unsigned CallingConv, bool isTailCall, 
+              SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
   /// LowerFrameReturnAddress - This hook lowers a call to llvm.returnaddress or
   /// llvm.frameaddress (depending on the value of the first argument).  The

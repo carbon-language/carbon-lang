@@ -65,14 +65,14 @@ class LLVMPackedType<ValueType VT, int numelts, LLVMType elty>
 
 def llvm_void_ty       : LLVMType<isVoid, "Type::VoidTyID">;
 def llvm_bool_ty       : LLVMType<i1 , "Type::BoolTyID">;
-def llvm_sbyte_ty      : LLVMType<i8 , "Type::SByteTyID">;
-def llvm_short_ty      : LLVMType<i16, "Type::ShortTyID">;
-def llvm_int_ty        : LLVMType<i32, "Type::IntTyID">;
-def llvm_long_ty       : LLVMType<i64, "Type::LongTyID">;
-def llvm_ubyte_ty      : LLVMType<i8,  "Type::UByteTyID">;
-def llvm_ushort_ty     : LLVMType<i16, "Type::UShortTyID">;
-def llvm_uint_ty       : LLVMType<i32, "Type::UIntTyID">;
-def llvm_ulong_ty      : LLVMType<i64, "Type::ULongTyID">;
+def llvm_sbyte_ty      : LLVMType<i8 , "Type::Int8TyID">;
+def llvm_short_ty      : LLVMType<i16, "Type::Int16TyID">;
+def llvm_int_ty        : LLVMType<i32, "Type::Int32TyID">;
+def llvm_long_ty       : LLVMType<i64, "Type::Int64TyID">;
+def llvm_ubyte_ty      : LLVMType<i8,  "Type::Int8TyID">;
+def llvm_ushort_ty     : LLVMType<i16, "Type::Int16TyID">;
+def llvm_uint_ty       : LLVMType<i32, "Type::Int32TyID">;
+def llvm_ulong_ty      : LLVMType<i64, "Type::Int64TyID">;
 def llvm_float_ty      : LLVMType<f32, "Type::FloatTyID">;
 def llvm_double_ty     : LLVMType<f64, "Type::DoubleTyID">;
 def llvm_ptr_ty        : LLVMType<iPTR, "Type::PointerTyID">;     // sbyte*

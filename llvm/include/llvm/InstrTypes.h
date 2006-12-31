@@ -427,7 +427,7 @@ public:
   /// involving Integer and Pointer types. They are no-op casts if the integer
   /// is the same size as the pointer. However, pointer size varies with 
   /// platform. Generally, the result of TargetData::getIntPtrType() should be
-  /// passed in. If that's not available, use Type::ULongTy, which will make
+  /// passed in. If that's not available, use Type::Int64Ty, which will make
   /// the isNoopCast call conservative.
   /// @brief Determine if this cast is a no-op cast. 
   bool isNoopCast(
