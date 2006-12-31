@@ -44,7 +44,7 @@ namespace {
     Use Op;
     ConstantPlaceHolder(const Type *Ty)
       : ConstantExpr(Ty, Instruction::UserOp1, &Op, 1),
-        Op(UndefValue::get(Type::IntTy), this) {
+        Op(UndefValue::get(Type::Int32Ty), this) {
     }
   };
 }
@@ -572,7 +572,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       if (Oprnds.size() != 2)
         error("Invalid extractelement instruction!");
       Value *V1 = getValue(iType, Oprnds[0]);
-      Value *V2 = getValue(Type::UIntTyID, Oprnds[1]);
+      Value *V2 = getValue(Type::Int32TyID, Oprnds[1]);
       
       if (!ExtractElementInst::isValidOperands(V1, V2))
         error("Invalid extractelement instruction!");
@@ -587,7 +587,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       
       Value *V1 = getValue(iType, Oprnds[0]);
       Value *V2 = getValue(getTypeSlot(PackedTy->getElementType()),Oprnds[1]);
-      Value *V3 = getValue(Type::UIntTyID, Oprnds[2]);
+      Value *V3 = getValue(Type::Int32TyID, Oprnds[2]);
         
       if (!InsertElementInst::isValidOperands(V1, V2, V3))
         error("Invalid insertelement instruction!");
@@ -601,7 +601,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       Value *V1 = getValue(iType, Oprnds[0]);
       Value *V2 = getValue(iType, Oprnds[1]);
       const PackedType *EltTy = 
-        PackedType::get(Type::UIntTy, PackedTy->getNumElements());
+        PackedType::get(Type::Int32Ty, PackedTy->getNumElements());
       Value *V3 = getValue(getTypeSlot(EltTy), Oprnds[2]);
       if (!ShuffleVectorInst::isValidOperands(V1, V2, V3))
         error("Invalid shufflevector instruction!");
@@ -713,7 +713,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     case Instruction::AShr:
       Result = new ShiftInst(Instruction::OtherOps(Opcode),
                              getValue(iType, Oprnds[0]),
-                             getValue(Type::UByteTyID, Oprnds[1]));
+                             getValue(Type::Int8TyID, Oprnds[1]));
       break;
     case Instruction::Ret:
       if (Oprnds.size() == 0)
@@ -876,7 +876,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
         error("Invalid malloc instruction!");
 
       Result = new MallocInst(cast<PointerType>(InstTy)->getElementType(),
-                              getValue(Type::UIntTyID, Oprnds[0]), Align);
+                              getValue(Type::Int32TyID, Oprnds[0]), Align);
       break;
     }
     case Instruction::Alloca: {
@@ -889,7 +889,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
         error("Invalid alloca instruction!");
 
       Result = new AllocaInst(cast<PointerType>(InstTy)->getElementType(),
-                              getValue(Type::UIntTyID, Oprnds[0]), Align);
+                              getValue(Type::Int32TyID, Oprnds[0]), Align);
       break;
     }
     case Instruction::Free:
@@ -913,18 +913,16 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
         unsigned IdxTy = 0;
         // Struct indices are always uints, sequential type indices can be 
         // any of the 32 or 64-bit integer types.  The actual choice of 
-        // type is encoded in the low two bits of the slot number.
+        // type is encoded in the low bit of the slot number.
         if (isa<StructType>(TopTy))
-          IdxTy = Type::UIntTyID;
+          IdxTy = Type::Int32TyID;
         else {
-          switch (ValIdx & 3) {
+          switch (ValIdx & 1) {
           default:
-          case 0: IdxTy = Type::UIntTyID; break;
-          case 1: IdxTy = Type::IntTyID; break;
-          case 2: IdxTy = Type::ULongTyID; break;
-          case 3: IdxTy = Type::LongTyID; break;
+          case 0: IdxTy = Type::Int32TyID; break;
+          case 1: IdxTy = Type::Int64TyID; break;
           }
-          ValIdx >>= 2;
+          ValIdx >>= 1;
         }
         Idx.push_back(getValue(IdxTy, ValIdx));
         NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
@@ -1159,17 +1157,23 @@ const Type *BytecodeReader::ParseType() {
   switch (PrimType) {
   case Type::FunctionTyID: {
     const Type *RetType = readType();
+    unsigned RetAttr = read_vbr_uint();
 
     unsigned NumParams = read_vbr_uint();
 
     std::vector<const Type*> Params;
-    while (NumParams--)
+    std::vector<FunctionType::ParameterAttributes> Attrs;
+    Attrs.push_back(FunctionType::ParameterAttributes(RetAttr));
+    while (NumParams--) {
       Params.push_back(readType());
+      if (Params.back() != Type::VoidTy)
+        Attrs.push_back(FunctionType::ParameterAttributes(read_vbr_uint()));
+    }
 
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    Result = FunctionType::get(RetType, Params, isVarArg);
+    Result = FunctionType::get(RetType, Params, isVarArg, Attrs);
     break;
   }
   case Type::ArrayTyID: {
@@ -1399,9 +1403,9 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     break;
   }
 
-  case Type::UByteTyID:   // Unsigned integer types...
-  case Type::UShortTyID:
-  case Type::UIntTyID: {
+  case Type::Int8TyID:   // Unsigned integer types...
+  case Type::Int16TyID:
+  case Type::Int32TyID: {
     unsigned Val = read_vbr_uint();
     if (!ConstantInt::isValueValidForType(Ty, uint64_t(Val)))
       error("Invalid unsigned byte/short/int read.");
@@ -1410,23 +1414,14 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     break;
   }
 
-  case Type::ULongTyID:
-    Result = ConstantInt::get(Ty, read_vbr_uint64());
-    if (Handler) Handler->handleConstantValue(Result);
-    break;
-    
-  case Type::SByteTyID:   // Signed integer types...
-  case Type::ShortTyID:
-  case Type::IntTyID:
-  case Type::LongTyID: {
-    int64_t Val = read_vbr_int64();
+  case Type::Int64TyID: {
+    uint64_t Val = read_vbr_uint64();
     if (!ConstantInt::isValueValidForType(Ty, Val))
-      error("Invalid signed byte/short/int/long read.");
+      error("Invalid constant integer read.");
     Result = ConstantInt::get(Ty, Val);
     if (Handler) Handler->handleConstantValue(Result);
     break;
   }
-
   case Type::FloatTyID: {
     float Val;
     read_float(Val);
@@ -1542,8 +1537,8 @@ void BytecodeReader::ParseStringConstants(unsigned NumEntries, ValueTable &Tab){
       error("String constant data invalid!");
 
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    if (ATy->getElementType() != Type::SByteTy &&
-        ATy->getElementType() != Type::UByteTy)
+    if (ATy->getElementType() != Type::Int8Ty &&
+        ATy->getElementType() != Type::Int8Ty)
       error("String constant data invalid!");
 
     // Read character data.  The type tells us how long the string is.

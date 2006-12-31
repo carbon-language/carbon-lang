@@ -145,8 +145,7 @@ void SlotCalculator::processModule() {
   //
   for (unsigned plane = 0, e = Table.size(); plane != e; ++plane) {
     if (const ArrayType *AT = dyn_cast<ArrayType>(Types[plane]))
-      if (AT->getElementType() == Type::SByteTy ||
-          AT->getElementType() == Type::UByteTy) {
+      if (AT->getElementType() == Type::Int8Ty) {
         TypePlane &Plane = Table[plane];
         unsigned FirstNonStringID = 0;
         for (unsigned i = 0, e = Plane.size(); i != e; ++i)

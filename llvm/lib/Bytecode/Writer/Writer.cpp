@@ -214,16 +214,20 @@ void BytecodeWriter::outputType(const Type *T) {
     int Slot = Table.getSlot(MT->getReturnType());
     assert(Slot != -1 && "Type used but not available!!");
     output_typeid((unsigned)Slot);
+    output_vbr(unsigned(MT->getParamAttrs(0)));
 
     // Output the number of arguments to function (+1 if varargs):
     output_vbr((unsigned)MT->getNumParams()+MT->isVarArg());
 
     // Output all of the arguments...
     FunctionType::param_iterator I = MT->param_begin();
+    unsigned Idx = 1;
     for (; I != MT->param_end(); ++I) {
       Slot = Table.getSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");
       output_typeid((unsigned)Slot);
+      output_vbr(unsigned(MT->getParamAttrs(Idx)));
+      Idx++;
     }
 
     // Terminate list with VoidTy if we are a varargs function...
@@ -323,18 +327,11 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
       output_vbr(0U);
     break;
 
-  case Type::UByteTyID:   // Unsigned integer types...
-  case Type::UShortTyID:
-  case Type::UIntTyID:
-  case Type::ULongTyID:
+  case Type::Int8TyID:   // Unsigned integer types...
+  case Type::Int16TyID:
+  case Type::Int32TyID:
+  case Type::Int64TyID:
     output_vbr(cast<ConstantInt>(CPV)->getZExtValue());
-    break;
-
-  case Type::SByteTyID:   // Signed integer types...
-  case Type::ShortTyID:
-  case Type::IntTyID:
-  case Type::LongTyID:
-    output_vbr(cast<ConstantInt>(CPV)->getSExtValue());
     break;
 
   case Type::ArrayTyID: {
@@ -489,12 +486,10 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
         unsigned IdxId;
         switch (I->getOperand(Idx)->getType()->getTypeID()) {
         default: assert(0 && "Unknown index type!");
-        case Type::UIntTyID:  IdxId = 0; break;
-        case Type::IntTyID:   IdxId = 1; break;
-        case Type::ULongTyID: IdxId = 2; break;
-        case Type::LongTyID:  IdxId = 3; break;
+        case Type::Int32TyID:  IdxId = 0; break;
+        case Type::Int64TyID:  IdxId = 1; break;
         }
-        Slot = (Slot << 2) | IdxId;
+        Slot = (Slot << 1) | IdxId;
       }
       output_vbr(unsigned(Slot));
     }
@@ -742,12 +737,10 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
           unsigned IdxId;
           switch (GEP->getOperand(Idx)->getType()->getTypeID()) {
           default: assert(0 && "Unknown index type!");
-          case Type::UIntTyID:  IdxId = 0; break;
-          case Type::IntTyID:   IdxId = 1; break;
-          case Type::ULongTyID: IdxId = 2; break;
-          case Type::LongTyID:  IdxId = 3; break;
+          case Type::Int32TyID: IdxId = 0; break;
+          case Type::Int64TyID: IdxId = 1; break;
           }
-          Slots[Idx] = (Slots[Idx] << 2) | IdxId;
+          Slots[Idx] = (Slots[Idx] << 1) | IdxId;
           if (Slots[Idx] > MaxOpSlot) MaxOpSlot = Slots[Idx];
         }
     } else if (Opcode == 58) {
