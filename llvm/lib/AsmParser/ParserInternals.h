@@ -199,6 +199,29 @@ struct ValID {
   }
 };
 
+struct TypeWithAttrs {
+  llvm::PATypeHolder *Ty;
+  FunctionType::ParameterAttributes Attrs;
+};
+
+typedef std::vector<TypeWithAttrs> TypeWithAttrsList; 
+
+struct ArgListEntry {
+  FunctionType::ParameterAttributes Attrs;
+  llvm::PATypeHolder *Ty;
+  char *Name;
+};
+
+typedef std::vector<struct ArgListEntry> ArgListType;
+
+struct ValueRefListEntry {
+  Value *Val;
+  FunctionType::ParameterAttributes Attrs;
+};
+
+typedef std::vector<ValueRefListEntry> ValueRefList;
+
+
 } // End llvm namespace
 
 #endif
