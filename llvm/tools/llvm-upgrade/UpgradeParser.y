@@ -38,6 +38,15 @@ static uint64_t unique = 1;
 // definitions and calls.
 static bool AddAttributes = false;
 
+// This bool is used to communicate between the InstVal and Inst rules about
+// whether or not a cast should be deleted. When the flag is set, InstVal has
+// determined that the cast is a candidate. However, it can only be deleted if
+// the value being casted is the same value name as the instruction. The Inst
+// rule makes that comparison if the flag is set and comments out the
+// instruction if they match.
+static bool deleteUselessCastFlag = false;
+static std::string* deleteUselessCastName = 0;
+
 typedef std::vector<TypeInfo> TypeVector;
 static TypeVector EnumeratedTypes;
 typedef std::map<std::string,TypeInfo> TypeMap;
@@ -1152,10 +1161,18 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
 
 Inst 
   : OptAssign InstVal {
-    if (!$1->empty())
-      *$1 += " = ";
+    if (!$1->empty()) {
+      if (deleteUselessCastFlag && *deleteUselessCastName == *$1) {
+        *$1 += " = ";
+        $1->insert(0, "; "); // don't actually delete it, just comment it out
+        delete deleteUselessCastName;
+      } else {
+        *$1 += " = ";
+      }
+    }
     *$1 += *$2;
     delete $2;
+    deleteUselessCastFlag = false;
     $$ = $1; 
   };
 
@@ -1250,6 +1267,20 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     } else {
       *$$ += *$1 + " " + source + " to " + *DstTy.newTy;
     }
+    // Check to see if this is a useless cast of a value to the same name
+    // and the same type. Such casts will probably cause redefinition errors
+    // when assembled and perform no code gen action so just remove them.
+    if (*$1 == "cast" || *$1 == "bitcast")
+      if ($2.type.isInteger() && $4.isInteger() &&
+          $2.type.getBitWidth() == $4.getBitWidth()) {
+        deleteUselessCastFlag = true; // Flag the "Inst" rule
+        deleteUselessCastName = new std::string(*$2.val); // save the name
+        size_t pos = deleteUselessCastName->find_first_of("%\"",0);
+        if (pos != std::string::npos) {
+          // remove the type portion before val
+          deleteUselessCastName->erase(0, pos);
+        }
+      }
     delete $1; $2.destroy();
     delete $3; $4.destroy();
   }
