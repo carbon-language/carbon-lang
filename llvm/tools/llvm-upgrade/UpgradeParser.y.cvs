@@ -708,7 +708,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     *$$.cnst += " " + *$2;
     delete $2;
   }
-  | UIntType EUINT64VAL {            // integral constants
+  | UIntType EInt64Val {            // integral constants
     $$.type = $1;
     $$.cnst = new std::string($1->getNewTy());
     *$$.cnst += " " + *$2;
