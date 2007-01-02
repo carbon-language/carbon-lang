@@ -69,14 +69,14 @@ public:
                                   unsigned OpNum,
                                   int FrameIndex) const;
 
-  /// getCalleeSaveRegs - Return a null-terminated list of all of the
+  /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.
-  const unsigned *getCalleeSaveRegs() const;
+  const unsigned *getCalleeSavedRegs() const;
 
-  /// getCalleeSaveRegClasses - Return a null-terminated list of the preferred
+  /// getCalleeSavedRegClasses - Return a null-terminated list of the preferred
   /// register classes to spill each callee-saved register with.  The order and
-  /// length of this list match the getCalleeSaveRegs() list.
-  const TargetRegisterClass* const* getCalleeSaveRegClasses() const;
+  /// length of this list match the getCalleeSavedRegs() list.
+  const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,

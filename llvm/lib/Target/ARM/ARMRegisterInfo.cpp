@@ -157,23 +157,23 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr* MI,
   return NULL;
 }
 
-const unsigned* ARMRegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = {
+const unsigned* ARMRegisterInfo::getCalleeSavedRegs() const {
+  static const unsigned CalleeSavedRegs[] = {
     ARM::R4,  ARM::R5, ARM::R6,  ARM::R7,
     ARM::R8,  ARM::R9, ARM::R10, ARM::R11,
     ARM::R14, 0
   };
-  return CalleeSaveRegs;
+  return CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const *
-ARMRegisterInfo::getCalleeSaveRegClasses() const {
-  static const TargetRegisterClass * const CalleeSaveRegClasses[] = {
+ARMRegisterInfo::getCalleeSavedRegClasses() const {
+  static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
     &ARM::IntRegsRegClass, &ARM::IntRegsRegClass, &ARM::IntRegsRegClass, &ARM::IntRegsRegClass,
     &ARM::IntRegsRegClass, &ARM::IntRegsRegClass, &ARM::IntRegsRegClass, &ARM::IntRegsRegClass,
     &ARM::IntRegsRegClass, 0
   };
-  return CalleeSaveRegClasses;
+  return CalleeSavedRegClasses;
 }
 
 void ARMRegisterInfo::

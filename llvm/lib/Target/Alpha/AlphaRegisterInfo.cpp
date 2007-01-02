@@ -151,8 +151,8 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
-const unsigned* AlphaRegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = {
+const unsigned* AlphaRegisterInfo::getCalleeSavedRegs() const {
+  static const unsigned CalleeSavedRegs[] = {
     Alpha::R9, Alpha::R10,
     Alpha::R11, Alpha::R12,
     Alpha::R13, Alpha::R14,
@@ -161,12 +161,12 @@ const unsigned* AlphaRegisterInfo::getCalleeSaveRegs() const {
     Alpha::F6, Alpha::F7,
     Alpha::F8, Alpha::F9,  0
   };
-  return CalleeSaveRegs;
+  return CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const*
-AlphaRegisterInfo::getCalleeSaveRegClasses() const {
-  static const TargetRegisterClass * const CalleeSaveRegClasses[] = {
+AlphaRegisterInfo::getCalleeSavedRegClasses() const {
+  static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
     &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
     &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
     &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
@@ -175,7 +175,7 @@ AlphaRegisterInfo::getCalleeSaveRegClasses() const {
     &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,
     &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,  0
   };
-  return CalleeSaveRegClasses;
+  return CalleeSavedRegClasses;
 }
 
 //===----------------------------------------------------------------------===//

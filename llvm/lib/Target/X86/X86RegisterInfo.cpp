@@ -853,30 +853,30 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
 }
 
 
-const unsigned *X86RegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs32Bit[] = {
+const unsigned *X86RegisterInfo::getCalleeSavedRegs() const {
+  static const unsigned CalleeSavedRegs32Bit[] = {
     X86::ESI, X86::EDI, X86::EBX, X86::EBP,  0
   };
-  static const unsigned CalleeSaveRegs64Bit[] = {
+  static const unsigned CalleeSavedRegs64Bit[] = {
     X86::RBX, X86::R12, X86::R13, X86::R14, X86::R15, X86::RBP, 0
   };
 
-  return Is64Bit ? CalleeSaveRegs64Bit : CalleeSaveRegs32Bit;
+  return Is64Bit ? CalleeSavedRegs64Bit : CalleeSavedRegs32Bit;
 }
 
 const TargetRegisterClass* const*
-X86RegisterInfo::getCalleeSaveRegClasses() const {
-  static const TargetRegisterClass * const CalleeSaveRegClasses32Bit[] = {
+X86RegisterInfo::getCalleeSavedRegClasses() const {
+  static const TargetRegisterClass * const CalleeSavedRegClasses32Bit[] = {
     &X86::GR32RegClass, &X86::GR32RegClass,
     &X86::GR32RegClass, &X86::GR32RegClass,  0
   };
-  static const TargetRegisterClass * const CalleeSaveRegClasses64Bit[] = {
+  static const TargetRegisterClass * const CalleeSavedRegClasses64Bit[] = {
     &X86::GR64RegClass, &X86::GR64RegClass,
     &X86::GR64RegClass, &X86::GR64RegClass,
     &X86::GR64RegClass, &X86::GR64RegClass, 0
   };
 
-  return Is64Bit ? CalleeSaveRegClasses64Bit : CalleeSaveRegClasses32Bit;
+  return Is64Bit ? CalleeSavedRegClasses64Bit : CalleeSavedRegClasses32Bit;
 }
 
 //===----------------------------------------------------------------------===//

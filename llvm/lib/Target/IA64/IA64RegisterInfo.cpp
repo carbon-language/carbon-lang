@@ -91,19 +91,19 @@ void IA64RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, TII.get(IA64::MOV), DestReg).addReg(SrcReg);
 }
 
-const unsigned* IA64RegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = {
+const unsigned* IA64RegisterInfo::getCalleeSavedRegs() const {
+  static const unsigned CalleeSavedRegs[] = {
     IA64::r5,  0
   };
-  return CalleeSaveRegs;
+  return CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const*
-IA64RegisterInfo::getCalleeSaveRegClasses() const {
-  static const TargetRegisterClass * const CalleeSaveRegClasses[] = {
+IA64RegisterInfo::getCalleeSavedRegClasses() const {
+  static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
     &IA64::GRRegClass,  0
   };
-  return CalleeSaveRegClasses;
+  return CalleeSavedRegClasses;
 }
 
 //===----------------------------------------------------------------------===//

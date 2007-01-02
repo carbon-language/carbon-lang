@@ -238,9 +238,9 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
-const unsigned* PPCRegisterInfo::getCalleeSaveRegs() const {
+const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
   // 32-bit Darwin calling convention. 
-  static const unsigned Darwin32_CalleeSaveRegs[] = {
+  static const unsigned Darwin32_CalleeSavedRegs[] = {
               PPC::R13, PPC::R14, PPC::R15,
     PPC::R16, PPC::R17, PPC::R18, PPC::R19,
     PPC::R20, PPC::R21, PPC::R22, PPC::R23,
@@ -261,7 +261,7 @@ const unsigned* PPCRegisterInfo::getCalleeSaveRegs() const {
     PPC::LR,  0
   };
   // 64-bit Darwin calling convention. 
-  static const unsigned Darwin64_CalleeSaveRegs[] = {
+  static const unsigned Darwin64_CalleeSavedRegs[] = {
     PPC::X14, PPC::X15,
     PPC::X16, PPC::X17, PPC::X18, PPC::X19,
     PPC::X20, PPC::X21, PPC::X22, PPC::X23,
@@ -282,14 +282,14 @@ const unsigned* PPCRegisterInfo::getCalleeSaveRegs() const {
     PPC::LR8,  0
   };
   
-  return Subtarget.isPPC64() ? Darwin64_CalleeSaveRegs :
-                               Darwin32_CalleeSaveRegs;
+  return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegs :
+                               Darwin32_CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const*
-PPCRegisterInfo::getCalleeSaveRegClasses() const {
+PPCRegisterInfo::getCalleeSavedRegClasses() const {
   // 32-bit Darwin calling convention. 
-  static const TargetRegisterClass * const Darwin32_CalleeSaveRegClasses[] = {
+  static const TargetRegisterClass * const Darwin32_CalleeSavedRegClasses[] = {
                        &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
@@ -312,7 +312,7 @@ PPCRegisterInfo::getCalleeSaveRegClasses() const {
   };
   
   // 64-bit Darwin calling convention. 
-  static const TargetRegisterClass * const Darwin64_CalleeSaveRegClasses[] = {
+  static const TargetRegisterClass * const Darwin64_CalleeSavedRegClasses[] = {
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
@@ -334,8 +334,8 @@ PPCRegisterInfo::getCalleeSaveRegClasses() const {
     &PPC::G8RCRegClass, 0
   };
  
-  return Subtarget.isPPC64() ? Darwin64_CalleeSaveRegClasses :
-                               Darwin32_CalleeSaveRegClasses;
+  return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegClasses :
+                               Darwin32_CalleeSavedRegClasses;
 }
 
 /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into

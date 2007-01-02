@@ -111,15 +111,15 @@ MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
   return NewMI;
 }
 
-const unsigned* SparcRegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = { 0 };
-  return CalleeSaveRegs;
+const unsigned* SparcRegisterInfo::getCalleeSavedRegs() const {
+  static const unsigned CalleeSavedRegs[] = { 0 };
+  return CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const*
-SparcRegisterInfo::getCalleeSaveRegClasses() const {
-  static const TargetRegisterClass * const CalleeSaveRegClasses[] = { 0 };
-  return CalleeSaveRegClasses;
+SparcRegisterInfo::getCalleeSavedRegClasses() const {
+  static const TargetRegisterClass * const CalleeSavedRegClasses[] = { 0 };
+  return CalleeSavedRegClasses;
 }
 
 
