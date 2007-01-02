@@ -454,6 +454,11 @@ public:
     return Instruction::CastOps(Instruction::getOpcode()); 
   }
 
+  /// @brief Return the source type, as a convenience
+  const Type* getSrcTy() const { return getOperand(0)->getType(); }
+  /// @brief Return the destination type, as a convenience
+  const Type* getDestTy() const { return getType(); }
+
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CastInst *) { return true; }
   static inline bool classof(const Instruction *I) {
