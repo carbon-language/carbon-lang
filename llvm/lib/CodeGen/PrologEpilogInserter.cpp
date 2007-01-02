@@ -46,7 +46,8 @@ namespace {
 
       // Allow the target machine to make some adjustments to the function
       // e.g. UsedPhysRegs before calculateCalleeSavedRegisters.
-      Fn.getTarget().getRegisterInfo()->processFunctionBeforeCalleeSaveScan(Fn);
+      Fn.getTarget().getRegisterInfo()
+        ->processFunctionBeforeCalleeSavedScan(Fn);
 
       // Scan the function for modified callee saved registers and insert spill
       // code for any callee saved registers that are modified.  Also calculate
@@ -80,7 +81,7 @@ namespace {
     }
   
   private:
-    // MinCSFrameIndex, MaxCSFrameIndex - Keeps the range of callee save
+    // MinCSFrameIndex, MaxCSFrameIndex - Keeps the range of callee saved
     // stack frame indexes.
     unsigned MinCSFrameIndex, MaxCSFrameIndex;
 
@@ -109,7 +110,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
 
   // Get the callee saved register list...
-  const unsigned *CSRegs = RegInfo->getCalleeSaveRegs();
+  const unsigned *CSRegs = RegInfo->getCalleeSavedRegs();
 
   // Get the function call frame set-up and tear-down instruction opcode
   int FrameSetupOpcode   = RegInfo->getCallFrameSetupOpcode();
@@ -151,7 +152,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   //
   const bool *PhysRegsUsed = Fn.getUsedPhysregs();
   const TargetRegisterClass* const *CSRegClasses =
-    RegInfo->getCalleeSaveRegClasses();
+    RegInfo->getCalleeSavedRegClasses();
   std::vector<CalleeSavedInfo> CSI;
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
@@ -174,7 +175,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
 
   unsigned NumFixedSpillSlots;
   const std::pair<unsigned,int> *FixedSpillSlots =
-    TFI->getCalleeSaveSpillSlots(NumFixedSpillSlots);
+    TFI->getCalleeSavedSpillSlots(NumFixedSpillSlots);
 
   // Now that we know which registers need to be saved and restored, allocate
   // stack slots for them.
@@ -228,10 +229,13 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
   // code into the entry block.
   MachineBasicBlock *MBB = Fn.begin();
   MachineBasicBlock::iterator I = MBB->begin();
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    // Insert the spill to the stack frame.
-    RegInfo->storeRegToStackSlot(*MBB, I, CSI[i].getReg(), CSI[i].getFrameIdx(),
-                                 CSI[i].getRegClass());
+  if (!RegInfo->spillCalleeSavedRegisters(*MBB, I, CSI)) {
+    for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+      // Insert the spill to the stack frame.
+      RegInfo->storeRegToStackSlot(*MBB, I, CSI[i].getReg(),
+                                   CSI[i].getFrameIdx(),
+                                   CSI[i].getRegClass());
+    }
   }
 
   // Add code to restore the callee-save registers in each exiting block.
@@ -255,19 +259,21 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
       
       // Restore all registers immediately before the return and any terminators
       // that preceed it.
-      for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-        RegInfo->loadRegFromStackSlot(*MBB, I, CSI[i].getReg(),
-                                      CSI[i].getFrameIdx(),
-                                      CSI[i].getRegClass());
-        assert(I != MBB->begin() &&
-               "loadRegFromStackSlot didn't insert any code!");
-        // Insert in reverse order.  loadRegFromStackSlot can insert multiple
-        // instructions.
-        if (AtStart)
-          I = MBB->begin();
-        else {
-          I = BeforeI;
-          ++I;
+      if (!RegInfo->restoreCalleeSavedRegisters(*MBB, I, CSI)) {
+        for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+          RegInfo->loadRegFromStackSlot(*MBB, I, CSI[i].getReg(),
+                                        CSI[i].getFrameIdx(),
+                                        CSI[i].getRegClass());
+          assert(I != MBB->begin() &&
+                 "loadRegFromStackSlot didn't insert any code!");
+          // Insert in reverse order.  loadRegFromStackSlot can insert multiple
+          // instructions.
+          if (AtStart)
+            I = MBB->begin();
+          else {
+            I = BeforeI;
+            ++I;
+          }
         }
       }
     }
@@ -319,7 +325,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   }
 
   // First assign frame offsets to stack objects that are used to spill
-  // callee save registers.
+  // callee saved registers.
   if (StackGrowsDown) {
     for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
       if (i < MinCSFrameIndex || i > MaxCSFrameIndex)
@@ -356,7 +362,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   }
 
   // Then assign frame offsets to stack objects that are not used to spill
-  // callee save registers.
+  // callee saved registers.
   for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
     if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
       continue;
