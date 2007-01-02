@@ -1,6 +1,8 @@
 ; There should be exactly two calls here (memset and malloc), no more.
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep jsr | wc -l | grep 2
 
+%typedef.bc_struct = type i8
+
 implementation   ; Functions:
 
 declare void %llvm.memset.i64(sbyte*, ubyte, ulong, uint)
