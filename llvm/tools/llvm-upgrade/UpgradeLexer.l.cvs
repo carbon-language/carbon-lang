@@ -48,9 +48,7 @@
   return sym
 
 #define RET_TY(sym,OldTY,NewTY,sign) \
-  Upgradelval.Type.newTy = new std::string(NewTY); \
-  Upgradelval.Type.oldTy = OldTY; \
-  Upgradelval.Type.elemTy = VoidTy; \
+  Upgradelval.Type = new TypeInfo(NewTY, OldTY); \
   return sym
 
 #define YY_NEVER_INTERACTIVE 1

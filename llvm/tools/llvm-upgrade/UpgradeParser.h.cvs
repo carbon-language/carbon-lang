@@ -333,16 +333,17 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 289 "/proj/llvm/llvm-3/tools/llvm-upgrade/UpgradeParser.y"
+#line 357 "/proj/llvm/llvm-3/tools/llvm-upgrade/UpgradeParser.y"
 typedef union YYSTYPE {
   std::string*    String;
-  TypeInfo        Type;
+  TypeInfo*       Type;
   ValueInfo       Value;
   ConstInfo       Const;
   ValueList*      ValList;
+  TypeList*       TypeVec;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 346 "UpgradeParser.tab.h"
+#line 347 "UpgradeParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
