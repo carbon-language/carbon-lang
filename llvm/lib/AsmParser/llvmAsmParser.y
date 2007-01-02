@@ -149,6 +149,58 @@ static struct PerModuleInfo {
     }
     return Ret;
   }
+
+  bool TypeIsUnresolved(PATypeHolder* PATy) {
+    // If it isn't abstract, its resolved
+    const Type* Ty = PATy->get();
+    if (!Ty->isAbstract())
+      return false;
+    // Traverse the type looking for abstract types. If it isn't abstract then
+    // we don't need to traverse that leg of the type. 
+    std::vector<const Type*> WorkList, SeenList;
+    WorkList.push_back(Ty);
+    while (!WorkList.empty()) {
+      const Type* Ty = WorkList.back();
+      SeenList.push_back(Ty);
+      WorkList.pop_back();
+      if (const OpaqueType* OpTy = dyn_cast<OpaqueType>(Ty)) {
+        // Check to see if this is an unresolved type
+        std::map<ValID, PATypeHolder>::iterator I = LateResolveTypes.begin();
+        std::map<ValID, PATypeHolder>::iterator E = LateResolveTypes.end();
+        for ( ; I != E; ++I) {
+          if (I->second.get() == OpTy)
+            return true;
+        }
+      } else if (const SequentialType* SeqTy = dyn_cast<SequentialType>(Ty)) {
+        const Type* TheTy = SeqTy->getElementType();
+        if (TheTy->isAbstract() && TheTy != Ty) {
+          std::vector<const Type*>::iterator I = SeenList.begin(), 
+                                             E = SeenList.end();
+          for ( ; I != E; ++I)
+            if (*I == TheTy)
+              break;
+          if (I == E)
+            WorkList.push_back(TheTy);
+        }
+      } else if (const StructType* StrTy = dyn_cast<StructType>(Ty)) {
+        for (unsigned i = 0; i < StrTy->getNumElements(); ++i) {
+          const Type* TheTy = StrTy->getElementType(i);
+          if (TheTy->isAbstract() && TheTy != Ty) {
+            std::vector<const Type*>::iterator I = SeenList.begin(), 
+                                               E = SeenList.end();
+            for ( ; I != E; ++I)
+              if (*I == TheTy)
+                break;
+            if (I == E)
+              WorkList.push_back(TheTy);
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+
 } CurModule;
 
 static struct PerFunctionInfo {
@@ -1943,12 +1995,19 @@ FunctionHeaderH : OptCallingConv ResultType Name '(' ArgList ')'
   std::string FunctionName($3);
   free($3);  // Free strdup'd memory!
   
+  // Check the function result for abstractness if this is a define. We should
+  // have no abstract types at this point
+  if (!CurFun.isDeclare && CurModule.TypeIsUnresolved($2.Ty))
+    GEN_ERROR("Reference to abstract result: "+ $2.Ty->get()->getDescription());
+
   std::vector<const Type*> ParamTypeList;
   std::vector<FunctionType::ParameterAttributes> ParamAttrs;
   ParamAttrs.push_back($2.Attrs);
   if ($5) {   // If there are arguments...
     for (ArgListType::iterator I = $5->begin(); I != $5->end(); ++I) {
       const Type* Ty = I->Ty->get();
+      if (!CurFun.isDeclare && CurModule.TypeIsUnresolved(I->Ty))
+        GEN_ERROR("Reference to abstract argument: " + Ty->getDescription());
       ParamTypeList.push_back(Ty);
       if (Ty != Type::VoidTy)
         ParamAttrs.push_back(I->Attrs);
