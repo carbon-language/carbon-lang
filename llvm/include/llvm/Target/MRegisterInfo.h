@@ -29,6 +29,7 @@ class MachineInstr;
 class MachineLocation;
 class MachineMove;
 class TargetRegisterClass;
+class CalleeSavedInfo;
 
 /// TargetRegisterDesc - This record contains all of the information known about
 /// a particular register.  The AliasSet field (if not null) contains a pointer
@@ -318,6 +319,26 @@ public:
   // manipulation passes to move data around between registers,
   // immediates and memory.  FIXME: Move these to TargetInstrInfo.h.
   //
+
+  /// spillCalleeSaveRegisters - Issues instruction(s) to spill all callee saved
+  /// registers and returns true if it isn't possible / profitable to do so by
+  /// issuing a series of store instructions via storeRegToStackSlot(). Returns
+  /// false otherwise.
+  virtual bool spillCalleeSaveRegisters(MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+    return false;
+  }
+
+  /// restoreCalleeSaveRegisters - Issues instruction(s) to restore all callee
+  /// saved registers and returns true if it isn't possible / profitable to do
+  /// so by issuing a series of load instructions via loadRegToStackSlot().
+  /// Returns false otherwise.
+  virtual bool restoreCalleeSaveRegisters(MachineBasicBlock &MBB,
+                                          MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+    return false;
+  }
 
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
