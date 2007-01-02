@@ -1,7 +1,8 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep -v 'sub i32 %Cok, %Bok' | not grep sub
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   grep -v 'sub i32 %Cok.s, %Bok.s' | not grep sub
 
 implementation
 

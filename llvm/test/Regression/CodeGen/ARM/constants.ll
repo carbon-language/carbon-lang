@@ -1,12 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #0" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #255" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #256" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep ".word.*257" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #-1073741761" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #1008" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "cmp r0, #65536" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "\.comm.*a,4,4" | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -o %t.s -f &&
+; RUN: grep "mov r0, #0" %t.s     | wc -l | grep 1 &&
+; RUN: grep "mov r0, #255" %t.s   | wc -l | grep 1 &&
+; RUN: grep "mov r0, #256" %t.s   | wc -l | grep 1 &&
+; RUN: grep ".word.*257" %t.s     | wc -l | grep 1 &&
+; RUN: grep "mov r0, #-1073741761" %t.s | wc -l | grep 1 &&
+; RUN: grep "mov r0, #1008" %t.s  | wc -l | grep 1 &&
+; RUN: grep "cmp r0, #65536" %t.s | wc -l | grep 1 &&
+; RUN: grep "\.comm.*a.s,4,4" %t.s  | wc -l | grep 1
 
 %a = internal global int 0
 
