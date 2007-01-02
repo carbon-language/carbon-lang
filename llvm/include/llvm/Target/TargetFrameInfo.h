@@ -61,8 +61,8 @@ public:
   ///
   int getOffsetOfLocalArea() const { return LocalAreaOffset; }
 
-  /// getCalleeSaveSpillSlots - This method returns a pointer to an array of
-  /// pairs, that contains an entry for each callee save register that must be
+  /// getCalleeSavedSpillSlots - This method returns a pointer to an array of
+  /// pairs, that contains an entry for each callee saved register that must be
   /// spilled to a particular stack location if it is spilled.
   ///
   /// Each entry in this array contains a <register,offset> pair, indicating the
@@ -71,7 +71,7 @@ public:
   /// allowed to spill it anywhere it chooses.
   ///
   virtual const std::pair<unsigned, int> *
-  getCalleeSaveSpillSlots(unsigned &NumEntries) const {
+  getCalleeSavedSpillSlots(unsigned &NumEntries) const {
     NumEntries = 0;
     return 0;
   }

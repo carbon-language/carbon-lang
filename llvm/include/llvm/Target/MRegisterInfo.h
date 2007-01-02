@@ -283,16 +283,16 @@ public:
     return false;
   }
 
-  /// getCalleeSaveRegs - Return a null-terminated list of all of the
-  /// callee-save registers on this target. The register should be in the
+  /// getCalleeSavedRegs - Return a null-terminated list of all of the
+  /// callee saved registers on this target. The register should be in the
   /// order of desired callee-save stack frame offset. The first register is
   /// closed to the incoming stack pointer if stack grows down, and vice versa.
-  virtual const unsigned* getCalleeSaveRegs() const = 0;
+  virtual const unsigned* getCalleeSavedRegs() const = 0;
 
-  /// getCalleeSaveRegClasses - Return a null-terminated list of the preferred
-  /// register classes to spill each callee-saved register with.  The order and
+  /// getCalleeSavedRegClasses - Return a null-terminated list of the preferred
+  /// register classes to spill each callee saved register with.  The order and
   /// length of this list match the getCalleeSaveRegs() list.
-  virtual const TargetRegisterClass* const *getCalleeSaveRegClasses() const = 0;
+  virtual const TargetRegisterClass* const *getCalleeSavedRegClasses() const =0;
 
   //===--------------------------------------------------------------------===//
   // Register Class Information
@@ -320,22 +320,22 @@ public:
   // immediates and memory.  FIXME: Move these to TargetInstrInfo.h.
   //
 
-  /// spillCalleeSaveRegisters - Issues instruction(s) to spill all callee saved
+  /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee saved
   /// registers and returns true if it isn't possible / profitable to do so by
   /// issuing a series of store instructions via storeRegToStackSlot(). Returns
   /// false otherwise.
-  virtual bool spillCalleeSaveRegisters(MachineBasicBlock &MBB,
-                                        MachineBasicBlock::iterator MI,
+  virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI) const {
     return false;
   }
 
-  /// restoreCalleeSaveRegisters - Issues instruction(s) to restore all callee
+  /// restoreCalleeSavedRegisters - Issues instruction(s) to restore all callee
   /// saved registers and returns true if it isn't possible / profitable to do
   /// so by issuing a series of load instructions via loadRegToStackSlot().
   /// Returns false otherwise.
-  virtual bool restoreCalleeSaveRegisters(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator MI,
+  virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI) const {
     return false;
   }
@@ -394,10 +394,10 @@ public:
     assert(0 && "Call Frame Pseudo Instructions do not exist on this target!");
   }
 
-  /// processFunctionBeforeCalleeSaveScan - This method is called immediately
+  /// processFunctionBeforeCalleeSavedScan - This method is called immediately
   /// before PrologEpilogInserter scans the physical registers used to determine
-  /// what callee-save registers should be spilled. This method is optional.
-  virtual void processFunctionBeforeCalleeSaveScan(MachineFunction &MF) const {
+  /// what callee saved registers should be spilled. This method is optional.
+  virtual void processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
   }
 
   /// processFunctionBeforeFrameFinalized - This method is called immediately
