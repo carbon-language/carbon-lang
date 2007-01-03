@@ -88,6 +88,7 @@ public:
     if (LatticeValue != constant) {
       if (LatticeValue == undefined) {
         LatticeValue = constant;
+        assert(V && "Marking constant with NULL");
         ConstantVal = V;
       } else {
         assert(LatticeValue == forcedconstant && 
@@ -699,14 +700,15 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
           // Could annihilate value.
           if (I.getOpcode() == Instruction::And)
             markConstant(IV, &I, Constant::getNullValue(I.getType()));
-          else
-            markConstant(IV, &I, ConstantInt::getAllOnesValue(I.getType()));
+          else if (Constant *Ones = ConstantInt::getAllOnesValue(I.getType())) {
+            markConstant(IV, &I, Ones);
+          }
           return;
         } else {
           if (I.getOpcode() == Instruction::And) {
             if (NonOverdefVal->getConstant()->isNullValue()) {
               markConstant(IV, &I, NonOverdefVal->getConstant());
-              return;      // X or 0 = -1
+              return;      // X and 0 = 0
             }
           } else {
             if (ConstantIntegral *CI =
@@ -1231,8 +1233,11 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
 
       case Instruction::Or:
         // undef | X -> -1.   X could be -1.
-        markForcedConstant(LV, I, ConstantInt::getAllOnesValue(ITy));
-        return true;
+        if (Constant *Ones = ConstantInt::getAllOnesValue(ITy)) {
+          markForcedConstant(LV, I, Ones);
+          return true;
+        }
+        break;
 
       case Instruction::SDiv:
       case Instruction::UDiv:
