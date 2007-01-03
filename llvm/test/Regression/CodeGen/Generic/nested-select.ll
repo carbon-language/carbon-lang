@@ -2,6 +2,10 @@
 
 ; Test that select of a select works
 
+%typedef.tree = type opaque
+
+implementation
+
 int %ic_test(double %p.0.2.0.val, double %p.0.2.1.val, double %p.0.2.2.val, %typedef.tree* %t) {
         %result.1.0 = cast bool false to int            ; <int> [#uses=1]
         %tmp.55 = setge double 0.000000e+00, 1.000000e+00               ; <bool> [#uses=1]
