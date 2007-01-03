@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | grep 'G1 = internal constant'
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | \
+; RUN:   grep 'G1.s = internal constant'
 
 %G1 = internal global [58 x sbyte] c"asdlfkajsdlfkajsd;lfkajds;lfkjasd;flkajsd;lkfja;sdlkfjasd\00"
 
