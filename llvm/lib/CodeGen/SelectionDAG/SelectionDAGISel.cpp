@@ -766,7 +766,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       else
         TmpVT = MVT::i32;
       const FunctionType *FTy = I.getParent()->getParent()->getFunctionType();
-      ISD::NodeType ExtendKind = ISD::ZERO_EXTEND; // FIXME: ANY_EXTEND?
+      ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
       if (FTy->paramHasAttr(0, FunctionType::SExtAttribute))
         ExtendKind = ISD::SIGN_EXTEND;
       if (FTy->paramHasAttr(0, FunctionType::ZExtAttribute))
