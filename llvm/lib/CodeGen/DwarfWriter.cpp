@@ -2429,7 +2429,7 @@ private:
     EOL("Length of Common Information Entry");
 
     EmitLabel("frame_common_begin", 0);
-    EmitInt32(DW_CIE_ID); EOL("CIE Identifier Tag");
+    EmitInt32((int)DW_CIE_ID); EOL("CIE Identifier Tag");
     EmitInt8(DW_CIE_VERSION); EOL("CIE Version");
     EmitString("");  EOL("CIE Augmentation");
     EmitULEB128Bytes(1); EOL("CIE Code Alignment Factor");
