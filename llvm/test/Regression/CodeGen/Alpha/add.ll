@@ -1,183 +1,180 @@
 ;test all the shifted and signextending adds and subs with and without consts
-
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep '	addl' |wc -l |grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep '	addq' |wc -l |grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep '	subl' |wc -l |grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep '	subq' |wc -l |grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'lda $0,-100($16)' |wc -l |grep 1 &&
-
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 's4addl' |wc -l |grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 's8addl' |wc -l |grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 's4addq' |wc -l |grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 's8addq' |wc -l |grep 2 &&
-
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 's4subl' |wc -l |grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 's8subl' |wc -l |grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 's4subq' |wc -l |grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 's8subq' |wc -l |grep 2
+;
+; RUN: llvm-as < %s | llc -march=alpha -o %t.s -f &&
+; RUN: grep '	addl' %t.s | wc -l | grep 2 &&
+; RUN: grep '	addq' %t.s | wc -l | grep 2 &&
+; RUN: grep '	subl' %t.s | wc -l | grep 2 &&
+; RUN: grep '	subq' %t.s | wc -l | grep 1 &&
+;
+; RUN: grep 'lda $0,-100($16)' %t.s | wc -l | grep 1 &&
+; RUN: grep 's4addl' %t.s | wc -l | grep 2 &&
+; RUN: grep 's8addl' %t.s | wc -l | grep 2 &&
+; RUN: grep 's4addq' %t.s | wc -l | grep 2 &&
+; RUN: grep 's8addq' %t.s | wc -l | grep 2 &&
+;
+; RUN: grep 's4subl' %t.s | wc -l | grep 2 &&
+; RUN: grep 's8subl' %t.s | wc -l | grep 2 &&
+; RUN: grep 's4subq' %t.s | wc -l | grep 2 &&
+; RUN: grep 's8subq' %t.s | wc -l | grep 2
 
 implementation   ; Functions:
 
-int %al(int %x, int %y) {
+define i32 @sext %al(i32 @sext %x.s, i32 @sext %y.s) {
 entry:
-        %tmp.3 = add int %y, %x
-        ret int %tmp.3
+	%tmp.3.s = add i32 %y.s, %x.s		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-int %ali(int %x) {
+define i32 @sext %ali(i32 @sext %x.s) {
 entry:
-        %tmp.3 = add int 100, %x
-        ret int %tmp.3
+	%tmp.3.s = add i32 100, %x.s		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-long %aq(long %x, long %y) {
+define i64 @sext %aq(i64 @sext %x.s, i64 @sext %y.s) {
 entry:
-        %tmp.3 = add long %y, %x
-        ret long %tmp.3
-}
-long %aqi(long %x) {
-entry:
-        %tmp.3 = add long 100, %x
-        ret long %tmp.3
+	%tmp.3.s = add i64 %y.s, %x.s		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-int %sl(int %x, int %y) {
+define i64 %aqi(i64 %x.s) {
 entry:
-        %tmp.3 = sub int %y, %x
-        ret int %tmp.3
+	%tmp.3.s = add i64 100, %x.s		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-int %sli(int %x) {
+define i32 @sext %sl(i32 @sext %x.s, i32 @sext %y.s) {
 entry:
-        %tmp.3 = sub int %x, 100
-        ret int %tmp.3
+	%tmp.3.s = sub i32 %y.s, %x.s		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-long %sq(long %x, long %y) {
+define i32 @sext %sli(i32 @sext %x.s) {
 entry:
-        %tmp.3 = sub long %y, %x
-        ret long %tmp.3
-}
-long %sqi(long %x) {
-entry:
-        %tmp.3 = sub long %x, 100
-        ret long %tmp.3
+	%tmp.3.s = sub i32 %x.s, 100		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-
-
-int %a4l(int %x, int %y) {
+define i64 %sq(i64 %x.s, i64 %y.s) {
 entry:
-        %tmp.1 = shl int %y, ubyte 2
-        %tmp.3 = add int %tmp.1, %x
-        ret int %tmp.3
+	%tmp.3.s = sub i64 %y.s, %x.s		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-int %a8l(int %x, int %y) {
+define i64 %sqi(i64 %x.s) {
 entry:
-        %tmp.1 = shl int %y, ubyte 3
-        %tmp.3 = add int %tmp.1, %x
-        ret int %tmp.3
+	%tmp.3.s = sub i64 %x.s, 100		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-long %a4q(long %x, long %y) {
+define i32 @sext %a4l(i32 @sext %x.s, i32 @sext %y.s) {
 entry:
-        %tmp.1 = shl long %y, ubyte 2
-        %tmp.3 = add long %tmp.1, %x
-        ret long %tmp.3
+	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
+	%tmp.3.s = add i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-long %a8q(long %x, long %y) {
+define i32 @sext %a8l(i32 @sext %x.s, i32 @sext %y.s) {
 entry:
-        %tmp.1 = shl long %y, ubyte 3
-        %tmp.3 = add long %tmp.1, %x
-        ret long %tmp.3
+	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
+	%tmp.3.s = add i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-int %a4li(int %y) {
+define i64 %a4q(i64 %x.s, i64 %y.s) {
 entry:
-        %tmp.1 = shl int %y, ubyte 2
-        %tmp.3 = add int 100, %tmp.1
-        ret int %tmp.3
+	%tmp.1.s = shl i64 %y.s, i8 2		; <i64> [#uses=1]
+	%tmp.3.s = add i64 %tmp.1.s, %x.s		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-int %a8li(int %y) {
+define i64 %a8q(i64 %x.s, i64 %y.s) {
 entry:
-        %tmp.1 = shl int %y, ubyte 3
-        %tmp.3 = add int 100, %tmp.1
-        ret int %tmp.3
+	%tmp.1.s = shl i64 %y.s, i8 3		; <i64> [#uses=1]
+	%tmp.3.s = add i64 %tmp.1.s, %x.s		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-long %a4qi(long %y) {
+define i32 @sext %a4li(i32 @sext %y.s) {
 entry:
-        %tmp.1 = shl long %y, ubyte 2
-        %tmp.3 = add long 100, %tmp.1
-        ret long %tmp.3
+	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
+	%tmp.3.s = add i32 100, %tmp.1.s		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-long %a8qi(long %y) {
+define i32 @sext %a8li(i32 @sext %y.s) {
 entry:
-        %tmp.1 = shl long %y, ubyte 3
-        %tmp.3 = add long 100, %tmp.1
-        ret long %tmp.3
+	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
+	%tmp.3.s = add i32 100, %tmp.1.s		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-
-
-
-int %s4l(int %x, int %y) {
+define i64 %a4qi(i64 %y.s) {
 entry:
-        %tmp.1 = shl int %y, ubyte 2
-        %tmp.3 = sub int %tmp.1, %x
-        ret int %tmp.3
+	%tmp.1.s = shl i64 %y.s, i8 2		; <i64> [#uses=1]
+	%tmp.3.s = add i64 100, %tmp.1.s		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-int %s8l(int %x, int %y) {
+define i64 %a8qi(i64 %y.s) {
 entry:
-        %tmp.1 = shl int %y, ubyte 3
-        %tmp.3 = sub int %tmp.1, %x
-        ret int %tmp.3
+	%tmp.1.s = shl i64 %y.s, i8 3		; <i64> [#uses=1]
+	%tmp.3.s = add i64 100, %tmp.1.s		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-long %s4q(long %x, long %y) {
+define i32 @sext %s4l(i32 @sext %x.s, i32 @sext %y.s) {
 entry:
-        %tmp.1 = shl long %y, ubyte 2
-        %tmp.3 = sub long %tmp.1, %x
-        ret long %tmp.3
+	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
+	%tmp.3.s = sub i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-long %s8q(long %x, long %y) {
+define i32 @sext %s8l(i32 @sext %x.s, i32 @sext %y.s) {
 entry:
-        %tmp.1 = shl long %y, ubyte 3
-        %tmp.3 = sub long %tmp.1, %x
-        ret long %tmp.3
+	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
+	%tmp.3.s = sub i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-int %s4li(int %y) {
+define i64 %s4q(i64 %x.s, i64 %y.s) {
 entry:
-        %tmp.1 = shl int %y, ubyte 2
-        %tmp.3 = sub int %tmp.1, 100
-        ret int %tmp.3
+	%tmp.1.s = shl i64 %y.s, i8 2		; <i64> [#uses=1]
+	%tmp.3.s = sub i64 %tmp.1.s, %x.s		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-int %s8li(int %y) {
+define i64 %s8q(i64 %x.s, i64 %y.s) {
 entry:
-        %tmp.1 = shl int %y, ubyte 3
-        %tmp.3 = sub int %tmp.1, 100
-        ret int %tmp.3
+	%tmp.1.s = shl i64 %y.s, i8 3		; <i64> [#uses=1]
+	%tmp.3.s = sub i64 %tmp.1.s, %x.s		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
 }
 
-long %s4qi(long %y) {
+define i32 @sext %s4li(i32 @sext %y.s) {
 entry:
-        %tmp.1 = shl long %y, ubyte 2
-        %tmp.3 = sub long %tmp.1, 100
-        ret long %tmp.3
+	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
+	%tmp.3.s = sub i32 %tmp.1.s, 100		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
-long %s8qi(long %y) {
+define i32 @sext %s8li(i32 @sext %y.s) {
 entry:
-        %tmp.1 = shl long %y, ubyte 3
-        %tmp.3 = sub long %tmp.1, 100
-        ret long %tmp.3
+	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
+	%tmp.3.s = sub i32 %tmp.1.s, 100		; <i32> [#uses=1]
+	ret i32 %tmp.3.s
 }
 
+define i64 %s4qi(i64 %y.s) {
+entry:
+	%tmp.1.s = shl i64 %y.s, i8 2		; <i64> [#uses=1]
+	%tmp.3.s = sub i64 %tmp.1.s, 100		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
+}
+
+define i64 %s8qi(i64 %y.s) {
+entry:
+	%tmp.1.s = shl i64 %y.s, i8 3		; <i64> [#uses=1]
+	%tmp.3.s = sub i64 %tmp.1.s, 100		; <i64> [#uses=1]
+	ret i64 %tmp.3.s
+}
