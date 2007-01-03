@@ -2127,9 +2127,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
       const char *FnName = 0;
       if (Node->getOpcode() == ISD::MEMSET) {
-        Entry.Node = Tmp2;
-        Entry.Ty = IntPtrTy;
-        Entry.isSigned = false;
+        Entry.Node = Tmp2; Entry.isSigned = false; Entry.Ty = IntPtrTy;
         Args.push_back(Entry);
         // Extend the (previously legalized) ubyte argument to be an int value
         // for the call.
@@ -2145,12 +2143,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         FnName = "memset";
       } else if (Node->getOpcode() == ISD::MEMCPY ||
                  Node->getOpcode() == ISD::MEMMOVE) {
-        Entry.Node = Tmp2; Entry.Ty = IntPtrTy; Entry.isSigned = false;
-        Args.push_back(Entry);
-        Entry.Node = Tmp3; Entry.Ty = IntPtrTy; Entry.isSigned = false;
-        Args.push_back(Entry);
-        Entry.Node = Tmp4; Entry.Ty = IntPtrTy; Entry.isSigned = false;
-        Args.push_back(Entry);
+        Entry.Ty = IntPtrTy; Entry.isSigned = false;
+        Entry.Node = Tmp2; Args.push_back(Entry);
+        Entry.Node = Tmp3; Args.push_back(Entry);
+        Entry.Node = Tmp4; Args.push_back(Entry);
         FnName = Node->getOpcode() == ISD::MEMMOVE ? "memmove" : "memcpy";
       } else {
         assert(0 && "Unknown op!");
@@ -2356,7 +2352,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                    DAG.getNode(ISD::FP_EXTEND, MVT::f64, Tmp2));
       }
       SDOperand Dummy;
-      Result = ExpandLibCall(FnName, Node, false, Dummy);
+      Result = ExpandLibCall(FnName, Node, false/*sign irrelevant*/, Dummy);
       break;
     }
     break;
@@ -2450,7 +2446,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // Floating point mod -> fmod libcall.
         const char *FnName = Node->getValueType(0) == MVT::f32 ? "fmodf":"fmod";
         SDOperand Dummy;
-        Result = ExpandLibCall(FnName, Node, false, Dummy);
+        Result = ExpandLibCall(FnName, Node, false/*sign irrelevant*/, Dummy);
       }
       break;
     }
@@ -2699,7 +2695,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         default: assert(0 && "Unreachable!");
         }
         SDOperand Dummy;
-        Result = ExpandLibCall(FnName, Node, false, Dummy);
+        Result = ExpandLibCall(FnName, Node, false/*sign irrelevant*/, Dummy);
         break;
       }
       }
@@ -2711,7 +2707,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     const char *FnName = Node->getValueType(0) == MVT::f32
                             ? "__powisf2" : "__powidf2";
     SDOperand Dummy;
-    Result = ExpandLibCall(FnName, Node, false, Dummy);
+    Result = ExpandLibCall(FnName, Node, false/*sign irrelevant*/, Dummy);
     break;
   }
   case ISD::BIT_CONVERT:
@@ -2897,7 +2893,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       default: assert(0 && "Unreachable!");
       }
       SDOperand Dummy;
-      Result = ExpandLibCall(FnName, Node, false, Dummy);
+      Result = ExpandLibCall(FnName, Node, false/*sign irrelevant*/, Dummy);
       break;
     }
     case Promote:
@@ -3621,14 +3617,14 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       SDOperand Dummy;
       Tmp1 = ExpandLibCall(FnName1,
                            DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, 
-                           false, Dummy);
+                           false /*sign irrelevant*/, Dummy);
       Tmp2 = DAG.getConstant(0, MVT::i32);
       CC = DAG.getCondCode(CC1);
       if (FnName2) {
         Tmp1 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), Tmp1, Tmp2, CC);
         LHS = ExpandLibCall(FnName2,
                             DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, 
-                            false, Dummy);
+                            false /*sign irrelevant*/, Dummy);
         Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHS, Tmp2,
                            DAG.getCondCode(CC2));
         Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
@@ -4836,9 +4832,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     if (Node->getOperand(0).getValueType() == MVT::f32)
-      Lo = ExpandLibCall("__fixsfdi", Node, false, Hi);
+      Lo = ExpandLibCall("__fixsfdi", Node, false/*sign irrelevant*/, Hi);
     else
-      Lo = ExpandLibCall("__fixdfdi", Node, false, Hi);
+      Lo = ExpandLibCall("__fixdfdi", Node, false/*sign irrelevant*/, Hi);
     break;
 
   case ISD::FP_TO_UINT:
@@ -4860,9 +4856,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     if (Node->getOperand(0).getValueType() == MVT::f32)
-      Lo = ExpandLibCall("__fixunssfdi", Node, false, Hi);
+      Lo = ExpandLibCall("__fixunssfdi", Node, false/*sign irrelevant*/, Hi);
     else
-      Lo = ExpandLibCall("__fixunsdfdi", Node, false, Hi);
+      Lo = ExpandLibCall("__fixunsdfdi", Node, false/*sign irrelevant*/, Hi);
     break;
 
   case ISD::SHL: {
@@ -4911,7 +4907,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     // Otherwise, emit a libcall.
-    Lo = ExpandLibCall("__ashldi3", Node, false, Hi);
+    Lo = ExpandLibCall("__ashldi3", Node, false/*left shift=unsigned*/, Hi);
     break;
   }
 
@@ -4943,7 +4939,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     // Otherwise, emit a libcall.
-    Lo = ExpandLibCall("__ashrdi3", Node, true, Hi);
+    Lo = ExpandLibCall("__ashrdi3", Node, true/*ashr is signed*/, Hi);
     break;
   }
 
@@ -4975,7 +4971,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     // Otherwise, emit a libcall.
-    Lo = ExpandLibCall("__lshrdi3", Node, false, Hi);
+    Lo = ExpandLibCall("__lshrdi3", Node, false/*lshr is unsigned*/, Hi);
     break;
   }
 
@@ -5062,7 +5058,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       }
     }
 
-    Lo = ExpandLibCall("__muldi3" , Node, false, Hi);
+    Lo = ExpandLibCall("__muldi3" , Node, false/*sign irrelevant*/, Hi);
     break;
   }
   case ISD::SDIV: Lo = ExpandLibCall("__divdi3" , Node, true, Hi); break;
