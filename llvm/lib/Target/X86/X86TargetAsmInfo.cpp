@@ -188,13 +188,7 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
   Function *Int = M->getOrInsertFunction(IntName, Ty, Ty, (Type*)0);
   
   Value *Op = CI->getOperand(1);
-  if (CI->getOperand(1)->getType() != Ty)
-    Op = new BitCastInst(Op, Ty, Op->getName(), CI);
-  
   Op = new CallInst(Int, Op, CI->getName(), CI);
-  
-  if (Op->getType() != CI->getType())
-    Op = new BitCastInst(Op, CI->getType(), Op->getName(), CI);
   
   CI->replaceAllUsesWith(Op);
   CI->eraseFromParent();
