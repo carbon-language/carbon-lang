@@ -50,7 +50,7 @@ int yyerror(const char *ErrorMsg) ;
 enum Types {
   BoolTy, SByteTy, UByteTy, ShortTy, UShortTy, IntTy, UIntTy, LongTy, ULongTy,
   FloatTy, DoubleTy, PointerTy, PackedTy, ArrayTy, StructTy, PackedStructTy, 
-  OpaqueTy, VoidTy, LabelTy, FunctionTy, UnresolvedTy, NumericTy
+  OpaqueTy, VoidTy, LabelTy, FunctionTy, UnresolvedTy, UpRefTy
 };
 
 /// This type is used to keep track of the signedness of values. Instead
@@ -152,7 +152,7 @@ struct TypeInfo {
   }
 
   bool isUnresolved() const { return oldTy == UnresolvedTy; }
-  bool isNumeric() const { return oldTy == NumericTy; }
+  bool isUpReference() const { return oldTy == UpRefTy; }
   bool isVoid() const { return oldTy == VoidTy; }
   bool isBool() const { return oldTy == BoolTy; }
   bool isSigned() const {
@@ -233,6 +233,17 @@ struct TypeInfo {
     return 0;
   }
 
+  unsigned getNumStructElements() const { 
+    return (elements ? elements->size() : 0);
+  }
+
+  TypeInfo* getElement(unsigned idx) {
+    if (elements)
+      if (idx < elements->size())
+        return (*elements)[idx];
+    return 0;
+  }
+
 private:
   std::string* newTy;
   Types oldTy;
@@ -246,11 +257,11 @@ private:
 struct ConstInfo {
   std::string *cnst;
   TypeInfo *type;
-  void destroy() { delete cnst; delete type; }
+  void destroy() { delete cnst; }
 };
 
 typedef std::vector<ValueInfo> ValueList;
 
-inline void ValueInfo::destroy() { delete val; delete type; }
+inline void ValueInfo::destroy() { delete val; }
 
 #endif
