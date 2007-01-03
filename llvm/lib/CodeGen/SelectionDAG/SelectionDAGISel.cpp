@@ -397,8 +397,8 @@ class SelectionDAGLowering {
   struct CaseCmp {
     bool operator () (const Case& C1, const Case& C2) {
       assert(isa<ConstantInt>(C1.first) && isa<ConstantInt>(C2.first));
-      return cast<const ConstantInt>(C1.first)->getZExtValue() <
-        cast<const ConstantInt>(C2.first)->getZExtValue();
+      return cast<const ConstantInt>(C1.first)->getSExtValue() <
+        cast<const ConstantInt>(C2.first)->getSExtValue();
     }
   };
   
@@ -766,10 +766,17 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       else
         TmpVT = MVT::i32;
       const FunctionType *FTy = I.getParent()->getParent()->getFunctionType();
-      ISD::NodeType ExtendKind = ISD::SIGN_EXTEND;
+      ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+      if (FTy->paramHasAttr(0, FunctionType::SExtAttribute))
+        ExtendKind = ISD::SIGN_EXTEND;
       if (FTy->paramHasAttr(0, FunctionType::ZExtAttribute))
         ExtendKind = ISD::ZERO_EXTEND;
-      RetOp = DAG.getNode(ExtendKind, TmpVT, RetOp);
+      if (ExtendKind == ISD::ANY_EXTEND)
+        // There was no specification for extension in the parameter attributes
+        // so we will just let the legalizer do the ANY_EXTEND
+        ;
+      else
+        RetOp = DAG.getNode(ExtendKind, TmpVT, RetOp);
     }
     NewValues.push_back(RetOp);
     NewValues.push_back(DAG.getConstant(false, MVT::i32));
@@ -1378,7 +1385,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // Create a CaseBlock record representing a conditional branch to
       // the LHS node if the value being switched on SV is less than C. 
       // Otherwise, branch to LHS.
-      ISD::CondCode CC =  ISD::SETULT;
+      ISD::CondCode CC =  ISD::SETLT;
       SelectionDAGISel::CaseBlock CB(CC, SV, C, TrueBB, FalseBB, CR.CaseBB);
 
       if (CR.CaseBB == CurMBB)
