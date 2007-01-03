@@ -9,6 +9,7 @@ dnl   $4 - set to 1 to make errors only a warning
 AC_DEFUN([CHECK_PROGRAM_SANITY],
 [
 AC_MSG_CHECKING([sanity for program ]$1)
+sanity="0"
 sanity_path=`which $1 2>/dev/null`
 if test "$?" -eq 0 -a -x "$sanity_path" ; then
   sanity=`$1 $2 2>&1 | grep "$3"`
