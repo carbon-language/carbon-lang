@@ -458,6 +458,11 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   GCCArgs.push_back(0);                    // NULL terminator
 
   std::cout << "<gcc>" << std::flush;
+  DEBUG(std::cerr << "\nAbout to run:\t";
+        for (unsigned i=0, e = GCCArgs.size()-1; i != e; ++i)
+          std::cerr << " " << GCCArgs[i];
+        std::cerr << "\n";
+        );
   if (RunProgramWithTimeout(GCCPath, &GCCArgs[0], sys::Path(), sys::Path(),
         sys::Path())) {
     ProcessFailure(GCCPath, &GCCArgs[0]);
@@ -545,6 +550,11 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
   
 
   std::cout << "<gcc>" << std::flush;
+  DEBUG(std::cerr << "\nAbout to run:\t";
+        for (unsigned i=0, e = GCCArgs.size()-1; i != e; ++i)
+          std::cerr << " " << GCCArgs[i];
+        std::cerr << "\n";
+        );
   if (RunProgramWithTimeout(GCCPath, &GCCArgs[0], sys::Path(), sys::Path(),
                             sys::Path())) {
     ProcessFailure(GCCPath, &GCCArgs[0]);
