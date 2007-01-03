@@ -430,7 +430,8 @@ public:
   }
   virtual void Apply(std::string &Field) {
     Constant *C = CI->getOperand(I++);
-    IsValid = IsValid && (!C || isStringValue(C));
+    IsValid = IsValid &&
+              (!C || isStringValue(C) || C->isNullValue());
   }
   virtual void Apply(DebugInfoDesc *&Field) {
     // FIXME - Prepare the correct descriptor.
