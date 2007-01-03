@@ -766,17 +766,12 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       else
         TmpVT = MVT::i32;
       const FunctionType *FTy = I.getParent()->getParent()->getFunctionType();
-      ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+      ISD::NodeType ExtendKind = ISD::ZERO_EXTEND; // FIXME: ANY_EXTEND?
       if (FTy->paramHasAttr(0, FunctionType::SExtAttribute))
         ExtendKind = ISD::SIGN_EXTEND;
       if (FTy->paramHasAttr(0, FunctionType::ZExtAttribute))
         ExtendKind = ISD::ZERO_EXTEND;
-      if (ExtendKind == ISD::ANY_EXTEND)
-        // There was no specification for extension in the parameter attributes
-        // so we will just let the legalizer do the ANY_EXTEND
-        ;
-      else
-        RetOp = DAG.getNode(ExtendKind, TmpVT, RetOp);
+      RetOp = DAG.getNode(ExtendKind, TmpVT, RetOp);
     }
     NewValues.push_back(RetOp);
     NewValues.push_back(DAG.getConstant(false, MVT::i32));
