@@ -69,8 +69,9 @@ bool llvm::isCurrentDebugType(const char *DebugType) {
 // program from having to have hundreds of static c'tor/d'tors for them.
 // 
 OStream &llvm::getErrorOutputStream(const char *DebugType) {
+  static OStream cnoout(0);
   if (DebugFlag && isCurrentDebugType(DebugType))
     return cerr;
   else
-    return cnull;
+    return cnoout;
 }

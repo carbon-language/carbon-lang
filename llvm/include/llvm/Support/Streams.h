@@ -39,11 +39,6 @@ namespace llvm {
       return *this;
     }
 
-//     inline BaseStream &operator << (std::ios &(*Func)(std::ios&)) {
-//       if (Stream) *Stream << Func;
-//       return *this;
-//     }
-      
     template <typename Ty>
     BaseStream &operator << (const Ty &Thing) {
       if (Stream) *Stream << Thing;
@@ -68,7 +63,6 @@ namespace llvm {
   typedef BaseStream<std::istream> IStream;
   typedef BaseStream<std::stringstream> StringStream;
 
-  extern OStream cnull;
   extern OStream cout;
   extern OStream cerr;
   extern IStream cin;

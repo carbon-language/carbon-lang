@@ -68,7 +68,7 @@ bool isCurrentDebugType(const char *Type);
 OStream &getErrorOutputStream(const char *DebugType);
 
 #ifdef NDEBUG
-#define DOUT cnull
+#define DOUT OStream(0)
 #else
 #define DOUT getErrorOutputStream(DEBUG_TYPE)
 #endif
