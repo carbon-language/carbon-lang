@@ -4453,7 +4453,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     Entry.Ty = IntPtrTy;
     Entry.isSigned = false;
     Args.push_back(Entry);
-    // Extend the ubyte argument to be an int value for the call.
+    // Extend the unsigned i8 argument to be an int value for the call.
     Entry.Node = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Op.getOperand(2));
     Entry.Ty = IntPtrTy;
     Entry.isSigned = false;
