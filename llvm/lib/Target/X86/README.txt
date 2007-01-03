@@ -755,8 +755,9 @@ In c99 mode, the preprocessor doesn't like assembly comments like #TRUNCATE.
 //===---------------------------------------------------------------------===//
 
 This could be a single 16-bit load.
+
 int f(char *p) {
-    if (p[0] == 1 && p[1] == 2) return 1;
+    if ((p[0] == 1) & (p[1] == 2)) return 1;
     return 0;
 }
 
