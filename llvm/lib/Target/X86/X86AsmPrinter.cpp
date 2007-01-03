@@ -111,7 +111,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
 
     // Emit initial debug information.
     DW.BeginModule(&M);
-  } else if (Subtarget->isTargetELF() || Subtarget->isTargetCygwin()) {
+  } else if (Subtarget->isTargetELF() || Subtarget->isTargetCygMing()) {
     // Emit initial debug information.
     DW.BeginModule(&M);
   }
@@ -161,7 +161,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           } else
             O << TAI->getCOMMDirective()  << name << "," << Size;
         } else {
-          if (!Subtarget->isTargetCygwin()) {
+          if (!Subtarget->isTargetCygMing()) {
             if (I->hasInternalLinkage())
               O << "\t.local\t" << name << "\n";
           }
@@ -179,7 +179,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << "\t.globl " << name << "\n"
             << "\t.weak_definition " << name << "\n";
           SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
-        } else if (Subtarget->isTargetCygwin()) {
+        } else if (Subtarget->isTargetCygMing()) {
           std::string SectionName(".section\t.data$linkonce." +
                                   name +
                                   ",\"aw\"");
@@ -218,7 +218,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
              I->getSection() == ".dtors")) {
           std::string SectionName = ".section " + I->getSection();
           
-          if (Subtarget->isTargetCygwin()) {
+          if (Subtarget->isTargetCygMing()) {
             SectionName += ",\"aw\"";
           } else {
             assert(!Subtarget->isTargetDarwin());
@@ -310,7 +310,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     O << "\t.subsections_via_symbols\n";
-  } else if (Subtarget->isTargetELF() || Subtarget->isTargetCygwin()) {
+  } else if (Subtarget->isTargetELF() || Subtarget->isTargetCygMing()) {
     // Emit final debug information.
     DW.EndModule();
   }

@@ -64,7 +64,7 @@ private:
 
 public:
   enum {
-    isELF, isCygwin, isDarwin, isWindows
+    isELF, isCygwin, isDarwin, isWindows, isMingw
   } TargetType;
 
   /// This constructor initializes the data members to match that
@@ -106,6 +106,9 @@ public:
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
   bool isTargetWindows() const { return TargetType == isWindows; }
+  bool isTargetMingw() const { return TargetType == isMingw; }
+  bool isTargetCygMing() const { return (TargetType == isMingw ||
+                                         TargetType == isCygwin); }
   bool isTargetCygwin() const { return TargetType == isCygwin; }
 
   /// True if accessing the GV requires an extra load. For Windows, dllimported

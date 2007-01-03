@@ -58,7 +58,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // Darwin should use _setjmp/_longjmp instead of setjmp/longjmp.
     setUseUnderscoreSetJmp(false);
     setUseUnderscoreLongJmp(false);
-  } else if (Subtarget->isTargetCygwin()) {
+  } else if (Subtarget->isTargetMingw()) {
     // MS runtime is weird: it exports _setjmp, but longjmp!
     setUseUnderscoreSetJmp(true);
     setUseUnderscoreLongJmp(false);
@@ -234,7 +234,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // FIXME - use subtarget debug flags
   if (!Subtarget->isTargetDarwin() &&
       !Subtarget->isTargetELF() &&
-      !Subtarget->isTargetCygwin())
+      !Subtarget->isTargetCygMing())
     setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
@@ -4405,7 +4405,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   const Function* Fn = MF.getFunction();
   if (Fn->hasExternalLinkage() &&
-      Subtarget->isTargetCygwin() &&
+      Subtarget->isTargetCygMing() &&
       Fn->getName() == "main")
     MF.getInfo<X86FunctionInfo>()->setForceFramePointer(true);
 

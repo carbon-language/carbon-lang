@@ -40,7 +40,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
       return (!isDirectCall &&
               (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
                (GV->isExternal() && !GV->hasNotBeenReadFromBytecode())));
-    } else if (isTargetCygwin() || isTargetWindows()) {
+    } else if (isTargetCygMing() || isTargetWindows()) {
       return (GV->hasDLLImportLinkage());
     }
   
@@ -248,16 +248,19 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
-    if (TT.find("cygwin") != std::string::npos ||
-        TT.find("mingw")  != std::string::npos)
+    if (TT.find("cygwin") != std::string::npos)
       TargetType = isCygwin;
+    else if (TT.find("mingw") != std::string::npos)
+      TargetType = isMingw;
     else if (TT.find("darwin") != std::string::npos)
       TargetType = isDarwin;
     else if (TT.find("win32") != std::string::npos)
       TargetType = isWindows;
   } else if (TT.empty()) {
-#if defined(__CYGWIN__) || defined(__MINGW32__)
+#if defined(__CYGWIN__)
     TargetType = isCygwin;
+#elif defined(__MINGW32__)
+    TargetType = isMingw;
 #elif defined(__APPLE__)
     TargetType = isDarwin;
 #elif defined(_WIN32)
@@ -277,6 +280,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
 
   if (TargetType == isDarwin ||
       TargetType == isCygwin ||
+      TargetType == isMingw  ||
       (TargetType == isELF && Is64Bit))
     stackAlignment = 16;
 }

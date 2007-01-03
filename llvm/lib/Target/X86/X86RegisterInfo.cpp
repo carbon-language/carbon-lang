@@ -1010,7 +1010,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MFI->setStackSize(NumBytes);
 
   if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
-    if (NumBytes >= 4096 && Subtarget->isTargetCygwin()) {
+    if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
       // Function prologue calls _alloca to probe the stack when allocating  
       // more than 4k bytes in one go. Touching the stack at 4K increments is  
       // necessary to ensure that the guard pages used by the OS virtual memory
@@ -1054,7 +1054,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // If it's main() on Cygwin\Mingw32 we should align stack as well
   if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
-      Subtarget->isTargetCygwin()) {
+      Subtarget->isTargetCygMing()) {
     MI= BuildMI(TII.get(X86::AND32ri), X86::ESP).addReg(X86::ESP).addImm(-Align);
     MBB.insert(MBBI, MI);
 

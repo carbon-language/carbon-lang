@@ -42,7 +42,7 @@ std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
   case Function::LinkOnceLinkage:
     if (Subtarget->isTargetDarwin()) {
       return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
-    } else if (Subtarget->isTargetCygwin()) {
+    } else if (Subtarget->isTargetCygMing()) {
       return "\t.section\t.text$linkonce." + CurrentFnName + ",\"ax\"\n";
     } else {
       return "\t.section\t.llvm.linkonce.t." + CurrentFnName +
@@ -57,7 +57,7 @@ std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
 bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (Subtarget->isTargetDarwin() ||
       Subtarget->isTargetELF() ||
-      Subtarget->isTargetCygwin()) {
+      Subtarget->isTargetCygMing()) {
     // Let PassManager know we need debug information and relay
     // the MachineDebugInfo address on to DwarfWriter.
     DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
@@ -99,7 +99,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
-    } else if (Subtarget->isTargetCygwin()) {
+    } else if (Subtarget->isTargetCygMing()) {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
       O << "\t.linkonce discard\n";
       O << "\t.globl " << CurrentFnName << "\n";
@@ -111,14 +111,14 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
   O << CurrentFnName << ":\n";
   // Add some workaround for linkonce linkage on Cygwin\MinGW
-  if (Subtarget->isTargetCygwin() &&
+  if (Subtarget->isTargetCygMing() &&
       (F->getLinkage() == Function::LinkOnceLinkage ||
        F->getLinkage() == Function::WeakLinkage))
     O << "_llvm$workaround$fake$stub_" << CurrentFnName << ":\n";
 
   if (Subtarget->isTargetDarwin() ||
       Subtarget->isTargetELF() ||
-      Subtarget->isTargetCygwin()) {
+      Subtarget->isTargetCygMing()) {
     // Emit pre-function debug information.
     DW.BeginFunction(&MF);
   }
@@ -150,7 +150,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   if (Subtarget->isTargetDarwin() ||
       Subtarget->isTargetELF() ||
-      Subtarget->isTargetCygwin()) {
+      Subtarget->isTargetCygMing()) {
     // Emit post-function debug information.
     DW.EndFunction();
   }

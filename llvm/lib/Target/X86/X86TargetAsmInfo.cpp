@@ -103,7 +103,9 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     break;
 
   case X86Subtarget::isCygwin:
+  case X86Subtarget::isMingw:
     GlobalPrefix = "_";
+    LCOMMDirective = "\t.lcomm\t";
     COMMDirectiveTakesAlignment = false;
     HasDotTypeDotSizeDirective = false;
     StaticCtorsSection = "\t.section .ctors,\"aw\"";

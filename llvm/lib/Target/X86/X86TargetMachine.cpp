@@ -115,7 +115,7 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS, bool 
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
     InstrInfo(*this), JITInfo(*this), TLInfo(*this) {
   if (getRelocationModel() == Reloc::Default)
-    if (Subtarget.isTargetDarwin() || Subtarget.isTargetCygwin())
+    if (Subtarget.isTargetDarwin() || Subtarget.isTargetCygMing())
       setRelocationModel(Reloc::DynamicNoPIC);
     else
       setRelocationModel(Reloc::Static);
