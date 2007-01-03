@@ -78,24 +78,26 @@ void UpgradeAssembly(const std::string &infile, std::istream& in,
 
 TypeInfo* ResolveType(TypeInfo*& Ty) {
   if (Ty->isUnresolved()) {
-    TypeMap::iterator I = NamedTypes.find(Ty->getNewTy());
-    if (I != NamedTypes.end()) {
-      Ty = I->second.clone();
-      return Ty;
+    if (Ty->getNewTy()[0] == '%' && isdigit(Ty->getNewTy()[1])) {
+      unsigned ref = atoi(&((Ty->getNewTy().c_str())[1])); // skip the %
+      if (ref < EnumeratedTypes.size()) {
+        Ty = &EnumeratedTypes[ref];
+        return Ty;
+      } else {
+        std::string msg("Can't resolve numbered type: ");
+        msg += Ty->getNewTy();
+        yyerror(msg.c_str());
+      }
     } else {
-      std::string msg("Cannot resolve type: ");
-      msg += Ty->getNewTy();
-      yyerror(msg.c_str());
-    }
-  } else if (Ty->isNumeric()) {
-    unsigned ref = atoi(&((Ty->getNewTy().c_str())[1])); // Skip the '\\'
-    if (ref < EnumeratedTypes.size()) {
-      Ty = EnumeratedTypes[ref].clone();
-      return Ty;
-    } else {
-      std::string msg("Can't resolve type: ");
-      msg += Ty->getNewTy();
-      yyerror(msg.c_str());
+      TypeMap::iterator I = NamedTypes.find(Ty->getNewTy());
+      if (I != NamedTypes.end()) {
+        Ty = &I->second;
+        return Ty;
+      } else {
+        std::string msg("Cannot resolve type: ");
+        msg += Ty->getNewTy();
+        yyerror(msg.c_str());
+      }
     }
   }
   // otherwise its already resolved.
@@ -293,17 +295,34 @@ static TypeInfo* getFunctionReturnType(TypeInfo* PFTy) {
   return PFTy->clone();
 }
 
+typedef std::vector<TypeInfo*> UpRefStack;
+static TypeInfo* ResolveUpReference(TypeInfo* Ty, UpRefStack* stack) {
+  assert(Ty->isUpReference() && "Can't resolve a non-upreference");
+  unsigned upref = atoi(&((Ty->getNewTy().c_str())[1])); // skip the slash
+  assert(upref < stack->size() && "Invalid up reference");
+  return (*stack)[upref - stack->size() - 1];
+}
+
 static TypeInfo* getGEPIndexedType(TypeInfo* PTy, ValueList* idxs) {
-  ResolveType(PTy);
+  TypeInfo* Result = ResolveType(PTy);
   assert(PTy->isPointer() && "GEP Operand is not a pointer?");
-  TypeInfo* Result = PTy->getElementType(); // just skip first index
-  ResolveType(Result);
-  for (unsigned i = 1; i < idxs->size(); ++i) {
+  UpRefStack stack;
+  for (unsigned i = 0; i < idxs->size(); ++i) {
     if (Result->isComposite()) {
       Result = Result->getIndexedType((*idxs)[i]);
       ResolveType(Result);
+      stack.push_back(Result);
     } else
       yyerror("Invalid type for index");
+  }
+  // Resolve upreferences so we can return a more natural type
+  if (Result->isPointer()) {
+    if (Result->getElementType()->isUpReference()) {
+      stack.push_back(Result);
+      Result = ResolveUpReference(Result->getElementType(), &stack);
+    }
+  } else if (Result->isUpReference()) {
+    Result = ResolveUpReference(Result->getElementType(), &stack);
   }
   return Result->getPointerType();
 }
@@ -335,17 +354,41 @@ static std::string getUniqueName(const std::string *Name, TypeInfo* Ty) {
   // Resolve the type
   ResolveType(Ty);
 
+  // Remove as many levels of pointer nesting that we have.
+  if (Ty->isPointer()) {
+    // Avoid infinite loops in recursive types
+    TypeInfo* Last = 0;
+    while (Ty->isPointer() && Last != Ty) {
+      Last = Ty;
+      Ty = Ty->getElementType();
+      ResolveType(Ty);
+    }
+  }
+
   // Default the result to the current name
   std::string Result = *Name; 
 
+  // Now deal with the underlying type
   if (Ty->isInteger()) {
     // If its an integer type, make the name unique
     Result = makeUniqueName(Name, Ty->isSigned());
-  } else if (Ty->isPointer()) {
-    while (Ty->isPointer()) 
-      Ty = Ty->getElementType();
+  } else if (Ty->isArray() || Ty->isPacked()) {
+    Ty = Ty->getElementType();
     if (Ty->isInteger())
       Result = makeUniqueName(Name, Ty->isSigned());
+  } else if (Ty->isStruct()) {
+    // Scan the fields and count the signed and unsigned fields
+    int isSigned = 0;
+    for (unsigned i = 0; i < Ty->getNumStructElements(); ++i) {
+      TypeInfo* Tmp = Ty->getElement(i);
+      if (Tmp->isInteger())
+        if (Tmp->isSigned())
+          isSigned++;
+        else
+          isSigned--;
+    }
+    if (isSigned != 0)
+      Result = makeUniqueName(Name, isSigned > 0);
   }
   return Result;
 }
@@ -536,7 +579,7 @@ UpRTypes
   }
   | '\\' EUINT64VAL {                   // Type UpReference
     $2->insert(0, "\\");
-    $$ = new TypeInfo($2, NumericTy);
+    $$ = new TypeInfo($2, UpRefTy);
   }
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
     std::string newTy( $1->getNewTy() + "(");
@@ -550,21 +593,18 @@ UpRTypes
     }
     newTy += ")";
     $$ = new TypeInfo(new std::string(newTy), $1, $3);
-    EnumeratedTypes.push_back(*$$);
   }
   | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
     $2->insert(0,"[ ");
     *$2 += " x " + $4->getNewTy() + " ]";
     uint64_t elems = atoi($2->c_str());
     $$ = new TypeInfo($2, ArrayTy, $4, elems);
-    EnumeratedTypes.push_back(*$$);
   }
   | '<' EUINT64VAL 'x' UpRTypes '>' {          // Packed array type?
     $2->insert(0,"< ");
     *$2 += " x " + $4->getNewTy() + " >";
     uint64_t elems = atoi($2->c_str());
     $$ = new TypeInfo($2, PackedTy, $4, elems);
-    EnumeratedTypes.push_back(*$$);
   }
   | '{' TypeListI '}' {                        // Structure type?
     std::string newTy("{");
@@ -575,11 +615,9 @@ UpRTypes
     }
     newTy += "}";
     $$ = new TypeInfo(new std::string(newTy), StructTy, $2);
-    EnumeratedTypes.push_back(*$$);
   }
   | '{' '}' {                                  // Empty structure type?
     $$ = new TypeInfo(new std::string("{}"), StructTy, new TypeList());
-    EnumeratedTypes.push_back(*$$);
   }
   | '<' '{' TypeListI '}' '>' {                // Packed Structure type?
     std::string newTy("<{");
@@ -590,15 +628,12 @@ UpRTypes
     }
     newTy += "}>";
     $$ = new TypeInfo(new std::string(newTy), PackedStructTy, $3);
-    EnumeratedTypes.push_back(*$$);
   }
   | '<' '{' '}' '>' {                          // Empty packed structure type?
     $$ = new TypeInfo(new std::string("<{}>"), PackedStructTy, new TypeList());
-    EnumeratedTypes.push_back(*$$);
   }
   | UpRTypes '*' {                             // Pointer type?
     $$ = $1->getPointerType();
-    EnumeratedTypes.push_back(*$$);
   };
 
 // TypeList - Used for struct declarations and as a basis for function type 
@@ -745,7 +780,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
       $$ = new std::string(*$1);
       *$$ += "( " + source + " to " + $5->getNewTy() + ")";
     }
-    delete $1; $3.destroy(); delete $4; delete $5;
+    delete $1; $3.destroy(); delete $4;
   }
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
     *$1 += "(" + *$3.cnst;
@@ -1129,6 +1164,7 @@ ValueRef
 // type immediately preceeds the value reference, and allows complex constant
 // pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
 ResolvedVal : Types ValueRef {
+    ResolveType($1);
     std::string Name = getUniqueName($2.val, $1);
     $$ = $2;
     delete $$.val;
@@ -1414,7 +1450,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     *$1 += " " + *$2.val + ", " + *$4.val;
     $$.val = $1;
     ResolveType($2.type);
-    $$.type = $2.type->getElementType()->clone();
+    $$.type = $2.type->getElementType();
     delete $2.val; $4.destroy();
   }
   | INSERTELEMENT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
