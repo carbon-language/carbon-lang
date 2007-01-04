@@ -186,16 +186,7 @@ class StructType : public CompositeType {
   friend class TypeMap<StructValType, StructType>;
   StructType(const StructType &);                   // Do not implement
   const StructType &operator=(const StructType &);  // Do not implement
-
-protected:
-  /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class StructType' only
-  /// defines private constructors and has no friends
-  ///
-  /// Private ctor - Only can be created by a static member...
-  ///
   StructType(const std::vector<const Type*> &Types, bool isPacked);
-
 public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
@@ -282,15 +273,7 @@ class ArrayType : public SequentialType {
 
   ArrayType(const ArrayType &);                   // Do not implement
   const ArrayType &operator=(const ArrayType &);  // Do not implement
-protected:
-  /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class ArrayType' only
-  /// defines private constructors and has no friends
-  ///
-  /// Private ctor - Only can be created by a static member...
-  ///
   ArrayType(const Type *ElType, uint64_t NumEl);
-
 public:
   /// ArrayType::get - This static method is the primary way to construct an
   /// ArrayType
@@ -318,15 +301,7 @@ class PackedType : public SequentialType {
 
   PackedType(const PackedType &);                   // Do not implement
   const PackedType &operator=(const PackedType &);  // Do not implement
-protected:
-  /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class PackedType' only
-  /// defines private constructors and has no friends
-  ///
-  /// Private ctor - Only can be created by a static member...
-  ///
   PackedType(const Type *ElType, unsigned NumEl);
-
 public:
   /// PackedType::get - This static method is the primary way to construct an
   /// PackedType
@@ -359,14 +334,7 @@ class PointerType : public SequentialType {
   friend class TypeMap<PointerValType, PointerType>;
   PointerType(const PointerType &);                   // Do not implement
   const PointerType &operator=(const PointerType &);  // Do not implement
-protected:
-  // This should really be private, but it squelches a bogus warning
-  // from GCC to make them protected:  warning: `class PointerType' only
-  // defines private constructors and has no friends
-
-  // Private ctor - Only can be created by a static member...
   PointerType(const Type *ElType);
-
 public:
   /// PointerType::get - This is the only way to construct a new pointer type.
   static PointerType *get(const Type *ElementType);
@@ -388,14 +356,7 @@ public:
 class OpaqueType : public DerivedType {
   OpaqueType(const OpaqueType &);                   // DO NOT IMPLEMENT
   const OpaqueType &operator=(const OpaqueType &);  // DO NOT IMPLEMENT
-protected:
-  /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class OpaqueType' only
-  /// defines private constructors and has no friends
-  ///
-  /// Private ctor - Only can be created by a static member...
   OpaqueType();
-
 public:
   /// OpaqueType::get - Static factory method for the OpaqueType class...
   ///
