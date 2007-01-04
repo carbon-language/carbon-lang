@@ -857,12 +857,12 @@ be any type with a size.</p>
     <td class="left">
       <tt>[40 x i32 ]</tt><br/>
       <tt>[41 x i32 ]</tt><br/>
-      <tt>[40 x i32]</tt><br/>
+      <tt>[40 x i8]</tt><br/>
     </td>
     <td class="left">
-      Array of 40 integer values.<br/>
-      Array of 41 integer values.<br/>
-      Array of 40 unsigned integer values.<br/>
+      Array of 40 32-bit integer values.<br/>
+      Array of 41 32-bit integer values.<br/>
+      Array of 40 8-bit integer values.<br/>
     </td>
   </tr>
 </table>
@@ -872,12 +872,12 @@ be any type with a size.</p>
     <td class="left">
       <tt>[3 x [4 x i32]]</tt><br/>
       <tt>[12 x [10 x float]]</tt><br/>
-      <tt>[2 x [3 x [4 x i32]]]</tt><br/>
+      <tt>[2 x [3 x [4 x i16]]]</tt><br/>
     </td>
     <td class="left">
-      3x4 array of integer values.<br/>
+      3x4 array of 32-bit integer values.<br/>
       12x10 array of single precision floating point values.<br/>
-      2x3x4 array of unsigned integer values.<br/>
+      2x3x4 array of 16-bit integer  values.<br/>
     </td>
   </tr>
 </table>
@@ -927,7 +927,7 @@ Variable argument functions can access their arguments with the <a
   </tr><tr class="layout">
     <td class="left"><tt>i32 (i8*, ...)</tt></td>
     <td class="left">A vararg function that takes at least one 
-      <a href="#t_pointer">pointer</a> to <tt>i8 </tt> (signed char in C), 
+      <a href="#t_pointer">pointer</a> to <tt>i8 </tt> (char in C), 
       which returns an integer.  This is the signature for <tt>printf</tt> in 
       LLVM.
     </td>
@@ -1054,12 +1054,12 @@ be any integral or floating point type.</p>
     <td class="left">
       <tt>&lt;4 x i32&gt;</tt><br/>
       <tt>&lt;8 x float&gt;</tt><br/>
-      <tt>&lt;2 x i32&gt;</tt><br/>
+      <tt>&lt;2 x i64&gt;</tt><br/>
     </td>
     <td class="left">
-      Packed vector of 4 integer values.<br/>
+      Packed vector of 4 32-bit integer values.<br/>
       Packed vector of 8 floating-point values.<br/>
-      Packed vector of 2 unsigned integer values.<br/>
+      Packed vector of 2 64-bit integer values.<br/>
     </td>
   </tr>
 </table>
@@ -1123,7 +1123,7 @@ them all and their syntax.</p>
   <dt><b>Integer constants</b></dt>
 
   <dd>Standard integers (such as '4') are constants of the <a
-  href="#t_integer">integer</a> type.  Negative numbers may be used with signed
+  href="#t_integer">integer</a> type.  Negative numbers may be used with 
   integer types.
   </dd>
 
@@ -1770,8 +1770,9 @@ Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point product of the
 two operands.</p>
-<p>There is no signed vs unsigned multiplication.  The appropriate
-action is taken based on the type of the operand.</p>
+<p>Because the operands are the same width, the result of an integer
+multiplication is the same whether the operands should be deemed unsigned or
+signed.</p>
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = mul i32 4, %var          <i>; yields {i32}:result = 4 * %var</i>
 </pre>
@@ -2127,9 +2128,9 @@ operand shifted to the right a specified number of bits.</p>
  href="#t_integer">integer</a> type.  The second argument must be an '<tt>i8</tt>' type.</p>
 
 <h5>Semantics:</h5>
-<p>This instruction always performs a logical shift right operation, regardless
-of whether the arguments are unsigned or not. The <tt>var2</tt> most significant
-bits will be filled with zero bits after the shift.</p>
+<p>This instruction always performs a logical shift right operation. The 
+<tt>var2</tt> most significant bits will be filled with zero bits after the 
+shift.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -4387,7 +4388,7 @@ value.
 
 <p>
 The only argument is the value to be counted.  The argument may be of any
-unsigned integer type.  The return type must match the argument type.
+integer type.  The return type must match the argument type.
 </p>
 
 <h5>Semantics:</h5>
@@ -4423,7 +4424,7 @@ leading zeros in a variable.
 
 <p>
 The only argument is the value to be counted.  The argument may be of any
-unsigned integer type. The return type must match the argument type.
+integer type. The return type must match the argument type.
 </p>
 
 <h5>Semantics:</h5>
@@ -4463,7 +4464,7 @@ trailing zeros.
 
 <p>
 The only argument is the value to be counted.  The argument may be of any
-unsigned integer type.  The return type must match the argument type.
+integer type.  The return type must match the argument type.
 </p>
 
 <h5>Semantics:</h5>
