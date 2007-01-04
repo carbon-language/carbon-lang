@@ -739,9 +739,7 @@ void Verifier::visitICmpInst(ICmpInst& IC) {
   Assert1(Op0Ty == Op1Ty,
           "Both operands to ICmp instruction are not of the same type!", &IC);
   // Check that the operands are the right type
-  Assert1(Op0Ty->isIntegral() || Op0Ty->getTypeID() == Type::PointerTyID ||
-          (isa<PackedType>(Op0Ty) && 
-           cast<PackedType>(Op0Ty)->getElementType()->isIntegral()),
+  Assert1(Op0Ty->isIntegral() || Op0Ty->getTypeID() == Type::PointerTyID,
           "Invalid operand types for ICmp instruction", &IC);
   visitInstruction(IC);
 }
@@ -753,8 +751,7 @@ void Verifier::visitFCmpInst(FCmpInst& FC) {
   Assert1(Op0Ty == Op1Ty,
           "Both operands to FCmp instruction are not of the same type!", &FC);
   // Check that the operands are the right type
-  Assert1(Op0Ty->isFloatingPoint() || (isa<PackedType>(Op0Ty) &&
-           cast<PackedType>(Op0Ty)->getElementType()->isFloatingPoint()),
+  Assert1(Op0Ty->isFloatingPoint(),
           "Invalid operand types for FCmp instruction", &FC);
   visitInstruction(FC);
 }
