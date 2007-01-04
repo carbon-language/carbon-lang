@@ -146,6 +146,18 @@ ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
   }
 }
 
+/// @returns the value for an packed integer constant of the given type that
+/// has all its bits set to true.
+/// @brief Get the all ones value
+ConstantPacked *ConstantPacked::getAllOnesValue(const PackedType *Ty) {
+  std::vector<Constant*> Elts;
+  Elts.resize(Ty->getNumElements(),
+              ConstantIntegral::getAllOnesValue(Ty->getElementType()));
+  assert(Elts[0] && "Not a packed integer type!");
+  return cast<ConstantPacked>(ConstantPacked::get(Elts));
+}
+
+
 //===----------------------------------------------------------------------===//
 //                            ConstantXXX Classes
 //===----------------------------------------------------------------------===//

@@ -422,6 +422,11 @@ public:
     return reinterpret_cast<const PackedType*>(Value::getType());
   }
 
+  /// @returns the value for an packed integer constant of the given type that
+  /// has all its bits set to true.
+  /// @brief Get the all ones value
+  static ConstantPacked *getAllOnesValue(const PackedType *Ty);
+  
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because zero arrays are always
   /// created as ConstantAggregateZero objects.
