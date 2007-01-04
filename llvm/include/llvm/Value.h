@@ -48,7 +48,7 @@ class SymbolTable;
 /// using this Value.
 /// @brief LLVM Value Representation
 class Value {
-  unsigned short SubclassID;         // Subclass identifier (for isa/dyn_cast)
+  const unsigned short SubclassID;   // Subclass identifier (for isa/dyn_cast)
 protected:
   /// SubclassData - This member is defined by this class, but is not used for
   /// anything.  Subclasses can use it to hold whatever state they find useful.
@@ -186,11 +186,6 @@ public:
   /// getRawType - This should only be used to implement the vmcore library.
   ///
   const Type *getRawType() const { return Ty.getRawType(); }
-
-private:
-  /// FIXME: this is a gross hack, needed by another gross hack.  Eliminate!
-  void setValueType(unsigned short VT) { SubclassID = VT; }
-  friend class Instruction;
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Value &V) {

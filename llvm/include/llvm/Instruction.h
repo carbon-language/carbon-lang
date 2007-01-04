@@ -39,12 +39,6 @@ class Instruction : public User {
   friend class SymbolTableListTraits<Instruction, BasicBlock, Function,
                                      ilist_traits<Instruction> >;
   void setParent(BasicBlock *P);
-
-private:
-  // FIXME: This is a dirty hack.  Setcc instructions shouldn't encode the CC
-  // into the opcode field.  When they don't, this will be unneeded.
-  void setOpcode(unsigned NewOpcode);
-  friend class BinaryOperator;
 protected:
   Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
               const std::string &Name = "",

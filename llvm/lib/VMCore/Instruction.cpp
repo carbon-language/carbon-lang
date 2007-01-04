@@ -49,10 +49,6 @@ Instruction::~Instruction() {
 }
 
 
-void Instruction::setOpcode(unsigned opc) {
-  setValueType(Value::InstructionVal + opc);
-}
-
 void Instruction::setParent(BasicBlock *P) {
   if (getParent()) {
     if (!P) LeakDetector::addGarbageObject(this);
