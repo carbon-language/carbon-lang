@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-llvmc - The LLVM Compiler Driver
+llvmc - The LLVM Compiler Driver (experimental)
 
 =head1 SYNOPSIS
 
@@ -12,8 +12,8 @@ B<llvmc> [I<options>] [I<filenames>...]
 
 B<llvmc> is a configurable driver for invoking other LLVM (and non-LLVM) tools
 in order to compile, optimize and link software for multiple languages. For
-those familiar with FSF's B<gcc> tool, it is very similar.  B<llvmc> has the
-following goals:
+those familiar with FSF's B<gcc> tool, it is very similar.  Please note that
+B<llvmc> is considered an experimental tool.  B<llvmc> has the following goals:
 
 =over
 
@@ -394,6 +394,31 @@ occurs, it will exit with a non-zero value and no compilation actions
 will be taken. If one of the compilation tools returns a non-zero 
 status, pending actions will be discarded and B<llvmc> will return the
 same result code as the failing compilation tool.
+
+=head1 DEFICIENCIES
+
+B<llvmc> is considered an experimental LLVM tool because it has these
+deficiencies: 
+
+=over
+
+=item Insufficient support for native linking
+
+Because B<llvm-ld> doesn't handle native linking, neither can B<llvmc>
+
+=item Poor configuration support
+
+The support for configuring new languages, etc. is weak. There are many
+command line configurations that cannot be achieved with the current
+support. Furthermore the grammar is cumbersome for configuration files.
+Please see L<http://llvm.org/PR686> for further details.
+
+=item Does not handle target specific configurations
+
+This is one of the major deficiencies, also addressed in 
+L<http://llvm.org/PR686>
+
+=back
 
 =head1 SEE ALSO
 
