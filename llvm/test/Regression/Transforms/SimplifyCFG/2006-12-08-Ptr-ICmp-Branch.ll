@@ -56,7 +56,7 @@ entry:
 
 bb:             ; preds = %bb33
         %tmp = load %struct.FILE** %f_addr              ; <%struct.FILE*> [#uses=1]
-        %tmp.r = call int %_IO_getc( %struct.FILE* %tmp )         ; <int> [#uses=1]
+        %tmp = call int %_IO_getc( %struct.FILE* %tmp )         ; <int> [#uses=1]
         %tmp6 = call int %tolower( int %tmp )           ; <int> [#uses=1]
         %tmp6 = trunc int %tmp6 to sbyte                ; <sbyte> [#uses=1]
         store sbyte %tmp6, sbyte* %c
