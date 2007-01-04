@@ -700,9 +700,10 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
           // Could annihilate value.
           if (I.getOpcode() == Instruction::And)
             markConstant(IV, &I, Constant::getNullValue(I.getType()));
-          else if (Constant *Ones = ConstantInt::getAllOnesValue(I.getType())) {
-            markConstant(IV, &I, Ones);
-          }
+          else if (const PackedType *PT = dyn_cast<PackedType>(I.getType()))
+            markConstant(IV, &I, ConstantPacked::getAllOnesValue(PT));
+          else
+            markConstant(IV, &I, ConstantInt::getAllOnesValue(I.getType()));
           return;
         } else {
           if (I.getOpcode() == Instruction::And) {
@@ -1233,11 +1234,11 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
 
       case Instruction::Or:
         // undef | X -> -1.   X could be -1.
-        if (Constant *Ones = ConstantInt::getAllOnesValue(ITy)) {
-          markForcedConstant(LV, I, Ones);
-          return true;
-        }
-        break;
+        if (const PackedType *PTy = dyn_cast<PackedType>(ITy))
+          markForcedConstant(LV, I, ConstantPacked::getAllOnesValue(PTy));
+        else          
+          markForcedConstant(LV, I, ConstantInt::getAllOnesValue(ITy));
+        return true;
 
       case Instruction::SDiv:
       case Instruction::UDiv:
