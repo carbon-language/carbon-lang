@@ -72,6 +72,7 @@ void UpgradeAssembly(const std::string &infile, std::istream& in,
 
   if (yyparse()) {
     std::cerr << "Parse failed.\n";
+    out << "llvm-upgrade parse failed.\n";
     exit(1);
   }
 }
@@ -1597,5 +1598,6 @@ int yyerror(const char *ErrorMsg) {
   else
     errMsg += "token: '" + std::string(Upgradetext, Upgradeleng) + "'";
   std::cerr << "llvm-upgrade: " << errMsg << '\n';
+  *O << "llvm-upgrade parse failed.\n";
   exit(1);
 }
