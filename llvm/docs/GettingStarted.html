@@ -174,7 +174,8 @@ and performance.
   <ol>
       <li><tt>gmake -k |&amp; tee gnumake.out
       &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt></li>
-      <li>If you get an "internal compiler error (ICE)" see <a href="#brokengcc">below</a>.</li>
+      <li>If you get an "internal compiler error (ICE)" or test failures, see 
+          <a href="#brokengcc">below</a>.</li>
   </ol>
 
 </ol>
@@ -533,6 +534,10 @@ the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
 <p><b>GCC 4.1.1</b>: GCC fails to build LLVM with template concept check errors
       compiling some files.  At the time of this writing, GCC mainline (4.2)
       did not share the problem.</p>
+<p><b>GCC 4.1.1 on X86-64/amd64</b>: GCC <a href="http://llvm.org/PR1063">
+   miscompiles portions of LLVM</a> when compiling llvm itself into 64-bit 
+   code.  LLVM will appear to mostly work but will be buggy, e.g. failing 
+   portions of its testsuite.</p>
 <p><b>GNU ld 2.16.X</b>. Some 2.16.X versions of the ld linker will produce very
 long warning messages complaining that some ".gnu.linkonce.t.*" symbol was
 defined in a discarded section. You can safely ignore these messages as they are
