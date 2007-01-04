@@ -3139,9 +3139,8 @@ a value, just a keyword. The possibilities for the condition code are:
   <li><tt>slt</tt>: signed less than</li>
   <li><tt>sle</tt>: signed less or equal</li>
 </ol>
-<p>The remaining two arguments must be of <a href="#t_integral">integral</a>, 
-<a href="#t_pointer">pointer</a> or a <a href="#t_packed">packed</a> integral 
-type. They must have identical types.</p>
+<p>The remaining two arguments must be <a href="#t_integral">integral</a> or
+<a href="#t_pointer">pointer</a> typed. They must also be identical types.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>icmp</tt>' compares <tt>var1</tt> and <tt>var2</tt> according to 
 the condition code given as <tt>cond</tt>. The comparison performed always
@@ -3220,9 +3219,9 @@ a value, just a keyword. The possibilities for the condition code are:
 </ol>
 <p>In the preceding, <i>ordered</i> means that neither operand is a QNAN while
 <i>unordered</i> means that either operand may be a QNAN.</p>
-<p>The <tt>val1</tt> and <tt>val2</tt> arguments must be of 
-<a href="#t_floating">floating point</a>, or a <a href="#t_packed">packed</a> 
-floating point type. They must have identical types.</p>
+<p>The <tt>val1</tt> and <tt>val2</tt> arguments must be
+<a href="#t_floating">floating point</a> typed.  They must have identical 
+types.</p>
 <p>In the foregoing, <i>ordered</i> means that neither operand is a QNAN and 
 <i>unordered</i> means that either operand is a QNAN.</p>
 <h5>Semantics:</h5>
