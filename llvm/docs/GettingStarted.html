@@ -54,7 +54,6 @@
   <li><a href="#tutorial">An Example Using the LLVM Tool Chain</a>
       <ol>
          <li><a href="#tutorial4">Example with llvm-gcc4</a></li>
-         <li><a href="#tutorial3">Example with llvm-gcc3</a></li>
       </ol>
   <li><a href="#problems">Common Problems</a>
   <li><a href="#links">Links</a>
@@ -648,12 +647,6 @@ compressed with the gzip program.
   <dt><tt>llvm-test-x.y.tar.gz</tt></dt>
   <dd>Source release for the LLVM test suite.</dd>
 
-  <dt><tt>llvm-gcc3.4-x.y.source.tar.gz</tt></dt>
-  <dd>Source release of the LLVM GCC 3.4 front end.<br/></dd>
-	
-  <dt><tt>llvm-gcc3.4-x.y-platform.tar.gz</tt></dt>
-  <dd>Binary release of the LLVM GCC 3.4 for a specific platform.<br/></dd>
-
   <dt><tt>llvm-gcc4-x.y.source.tar.gz</tt></dt>
   <dd>Source release of the llvm-gcc4 front end.  See README.LLVM in the root
       directory for build instructions.<br/></dd>
@@ -749,11 +742,6 @@ location must be specified when the LLVM suite is configured.</p>
   <li><tt>gunzip --stdout llvmgcc-<i>version</i>.<i>platform</i>.tar.gz | tar -xvf
       -</tt></li>
 </ol>
-
-<p>Next, you will need to fix your system header files (llvm-gcc3.4 only):</p>
-
-<p><tt>cd llvm-gcc3.4/<i>platform</i><br>
-   ./fixheaders</tt></p>
 
 <p>The binary versions of the GCC front end may not suit all of your needs.  For
 example, the binary distribution may include an old version of a system header
@@ -1504,8 +1492,8 @@ are code generators for parts of LLVM infrastructure.</p>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-<p>This section gives an example of using LLVM.  Since we are currently 
-transitioning from llvm-gcc3 to llvm-gcc4, we include examples for both.
+<p>This section gives an example of using LLVM.  llvm-gcc3 is now obsolete,
+so we only include instructiosn for llvm-gcc4.
 </p>
 
 <p><b>Note:</b> The <i>gcc4</i> frontend's invocation is <b><i>considerably different</i></b>
@@ -1588,66 +1576,6 @@ output.</p>
 
 </div>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="tutorial3">Example with llvm-gcc3</a></div>
-
-<div class="doc_text">
-
-<ol>
-  <li>First, create a simple C file, name it 'hello.c':
-       <pre>
-   #include &lt;stdio.h&gt;
-   int main() {
-     printf("hello world\n");
-     return 0;
-   }
-       </pre></li>
-
-  <li><p>Next, compile the C file into a LLVM bytecode file:</p>
-      <p><tt>% llvm-gcc hello.c -o hello</tt></p>
-
-      <p>Note that you should have already built the tools and they have to be
-      in your path, at least <tt>gccas</tt> and <tt>gccld</tt>.</p>
-
-      <p>This will create two result files: <tt>hello</tt> and
-      <tt>hello.bc</tt>. The <tt>hello.bc</tt> is the LLVM bytecode that
-      corresponds the the compiled program and the library facilities that it
-      required.  <tt>hello</tt> is a simple shell script that runs the bytecode
-      file with <tt>lli</tt>, making the result directly executable.  Note that
-      all LLVM optimizations are enabled by default, so there is no need for a 
-      "-O3" switch.</p></li>
-
-  <li><p>Run the program. To make sure the program ran, execute one of the
-      following commands:</p>
-
-      <p><tt>% ./hello</tt></p>
-
-      <p>or</p>
-
-      <p><tt>% lli hello.bc</tt></p></li>
-
-  <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
-      code:</p>
-
-      <p><tt>% llvm-dis &lt; hello.bc | less</tt><br><br></li>
-
-  <li><p>Compile the program to native assembly using the LLC code
-      generator:</p>
-
-      <p><tt>% llc hello.bc -o hello.s</tt></p>
-
-  <li><p>Assemble the native assembly language file into a program:</p>
-
-      <p><b>Solaris:</b><tt>% /opt/SUNWspro/bin/cc -xarch=v9 hello.s -o hello.native</tt></p>
-      <p><b>Others:</b><tt>% gcc hello.s -o hello.native</tt></p>
-
-  <li><p>Execute the native code program:</p>
-
-      <p><tt>% ./hello.native</tt></p></li>
-
-</ol>
-
-</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
