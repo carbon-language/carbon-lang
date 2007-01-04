@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc | grep extsb &&
-; RUN: llvm-as < %s | llc | grep extsh
+; RUN: llvm-as < %s | llc -march=ppc32 | grep extsb &&
+; RUN: llvm-as < %s | llc -march=ppc32 | grep extsh
 
 define i32 %p1(i8 %c, i16 %s) {
 entry:
