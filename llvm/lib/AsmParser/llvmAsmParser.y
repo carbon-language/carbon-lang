@@ -1602,7 +1602,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
     if ($1->get() != $2->getType())
-      GEN_ERROR("Mismatched types for constant expression!");
+      GEN_ERROR("Mismatched types for constant expression: " + 
+        (*$1)->getDescription() + " and " + $2->getType()->getDescription());
     $$ = $2;
     delete $1;
     CHECK_FOR_ERROR
@@ -2548,8 +2549,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | ICMP IPredicates Types ValueRef ',' ValueRef  {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
-    if (isa<PackedType>((*$3).get()))
-      GEN_ERROR("Packed types not supported by icmp instruction");
     Value* tmpVal1 = getVal(*$3, $4);
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
@@ -2561,8 +2560,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | FCMP FPredicates Types ValueRef ',' ValueRef  {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
-    if (isa<PackedType>((*$3).get()))
-      GEN_ERROR("Packed types not supported by fcmp instruction");
     Value* tmpVal1 = getVal(*$3, $4);
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
