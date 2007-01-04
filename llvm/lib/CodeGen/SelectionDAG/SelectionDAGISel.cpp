@@ -2955,10 +2955,12 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     case Promote: {
       SDOperand Op(Result, i++);
       if (MVT::isInteger(VT)) {
-        unsigned AssertOp = ISD::AssertSext;
-        if (FTy->paramHasAttr(Idx, FunctionType::ZExtAttribute))
-          AssertOp = ISD::AssertZext;
-        Op = DAG.getNode(AssertOp, Op.getValueType(), Op, DAG.getValueType(VT));
+        if (FTy->paramHasAttr(Idx, FunctionType::SExtAttribute))
+          Op = DAG.getNode(ISD::AssertSext, Op.getValueType(), Op,
+                           DAG.getValueType(VT));
+        else if (FTy->paramHasAttr(Idx, FunctionType::ZExtAttribute))
+          Op = DAG.getNode(ISD::AssertZext, Op.getValueType(), Op,
+                           DAG.getValueType(VT));
         Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
       } else {
         assert(MVT::isFloatingPoint(VT) && "Not int or FP?");
