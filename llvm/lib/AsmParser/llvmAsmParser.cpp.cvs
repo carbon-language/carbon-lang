@@ -1671,9 +1671,9 @@ static const unsigned short int yyrline[] =
     2192,  2196,  2210,  2214,  2220,  2220,  2226,  2235,  2239,  2248,
     2259,  2268,  2280,  2293,  2297,  2301,  2306,  2315,  2334,  2343,
     2410,  2414,  2421,  2432,  2445,  2454,  2465,  2475,  2483,  2491,
-    2494,  2495,  2502,  2506,  2511,  2532,  2549,  2560,  2571,  2584,
-    2593,  2606,  2614,  2621,  2627,  2633,  2639,  2654,  2716,  2721,
-    2725,  2732,  2739,  2747,  2754,  2762,  2770,  2784,  2801
+    2494,  2495,  2502,  2506,  2511,  2532,  2549,  2562,  2575,  2588,
+    2597,  2610,  2618,  2625,  2631,  2637,  2643,  2658,  2720,  2725,
+    2729,  2736,  2743,  2751,  2758,  2766,  2774,  2788,  2805
 };
 #endif
 
@@ -5211,6 +5211,8 @@ yyreduce:
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-3].TypeVal))->getDescription());
+    if (isa<PackedType>((*(yyvsp[-3].TypeVal)).get()))
+      GEN_ERROR("Packed types not supported by icmp instruction");
     Value* tmpVal1 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[-2].ValIDVal));
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[0].ValIDVal));
@@ -5222,10 +5224,12 @@ yyreduce:
     break;
 
   case 267:
-#line 2560 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2562 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-3].TypeVal))->getDescription());
+    if (isa<PackedType>((*(yyvsp[-3].TypeVal)).get()))
+      GEN_ERROR("Packed types not supported by fcmp instruction");
     Value* tmpVal1 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[-2].ValIDVal));
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[0].ValIDVal));
@@ -5237,7 +5241,7 @@ yyreduce:
     break;
 
   case 268:
-#line 2571 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2575 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     cerr << "WARNING: Use of eliminated 'not' instruction:"
          << " Replacing with 'xor'.\n";
@@ -5254,7 +5258,7 @@ yyreduce:
     break;
 
   case 269:
-#line 2584 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2588 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[0].ValueVal)->getType() != Type::Int8Ty)
       GEN_ERROR("Shift amount must be i8 type!");
@@ -5267,7 +5271,7 @@ yyreduce:
     break;
 
   case 270:
-#line 2593 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2597 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[0].TypeVal))->getDescription());
@@ -5284,7 +5288,7 @@ yyreduce:
     break;
 
   case 271:
-#line 2606 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2610 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-4].ValueVal)->getType() != Type::BoolTy)
       GEN_ERROR("select condition must be boolean!");
@@ -5296,7 +5300,7 @@ yyreduce:
     break;
 
   case 272:
-#line 2614 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2618 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[0].TypeVal))->getDescription());
@@ -5307,7 +5311,7 @@ yyreduce:
     break;
 
   case 273:
-#line 2621 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2625 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[-2].ValueVal), (yyvsp[0].ValueVal)))
       GEN_ERROR("Invalid extractelement operands!");
@@ -5317,7 +5321,7 @@ yyreduce:
     break;
 
   case 274:
-#line 2627 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2631 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[-4].ValueVal), (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal)))
       GEN_ERROR("Invalid insertelement operands!");
@@ -5327,7 +5331,7 @@ yyreduce:
     break;
 
   case 275:
-#line 2633 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2637 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[-4].ValueVal), (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal)))
       GEN_ERROR("Invalid shufflevector operands!");
@@ -5337,7 +5341,7 @@ yyreduce:
     break;
 
   case 276:
-#line 2639 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2643 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     const Type *Ty = (yyvsp[0].PHIList)->front().first->getType();
     if (!Ty->isFirstClassType())
@@ -5356,7 +5360,7 @@ yyreduce:
     break;
 
   case 277:
-#line 2654 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2658 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
 
     // Handle the short syntax
@@ -5422,7 +5426,7 @@ yyreduce:
     break;
 
   case 278:
-#line 2716 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2720 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.InstVal) = (yyvsp[0].InstVal);
     CHECK_FOR_ERROR
@@ -5430,7 +5434,7 @@ yyreduce:
     break;
 
   case 279:
-#line 2721 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2725 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
@@ -5438,7 +5442,7 @@ yyreduce:
     break;
 
   case 280:
-#line 2725 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2729 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
@@ -5446,7 +5450,7 @@ yyreduce:
     break;
 
   case 281:
-#line 2732 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2736 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
@@ -5457,7 +5461,7 @@ yyreduce:
     break;
 
   case 282:
-#line 2739 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2743 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-4].TypeVal))->getDescription());
@@ -5469,7 +5473,7 @@ yyreduce:
     break;
 
   case 283:
-#line 2747 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2751 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
@@ -5480,7 +5484,7 @@ yyreduce:
     break;
 
   case 284:
-#line 2754 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2758 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-4].TypeVal))->getDescription());
@@ -5492,7 +5496,7 @@ yyreduce:
     break;
 
   case 285:
-#line 2762 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2766 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<PointerType>((yyvsp[0].ValueVal)->getType()))
       GEN_ERROR("Trying to free nonpointer type " + 
@@ -5503,7 +5507,7 @@ yyreduce:
     break;
 
   case 286:
-#line 2770 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2774 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
@@ -5521,7 +5525,7 @@ yyreduce:
     break;
 
   case 287:
-#line 2784 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2788 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
@@ -5542,7 +5546,7 @@ yyreduce:
     break;
 
   case 288:
-#line 2801 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2805 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-2].TypeVal))->getDescription());
@@ -5565,7 +5569,7 @@ yyreduce:
     }
 
 /* Line 1126 of yacc.c.  */
-#line 5569 "llvmAsmParser.tab.c"
+#line 5573 "llvmAsmParser.tab.c"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -5833,7 +5837,7 @@ yyreturn:
 }
 
 
-#line 2818 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
+#line 2822 "/proj/llvm/llvm-3/lib/AsmParser/llvmAsmParser.y"
 
 
 // common code from the two 'RunVMAsmParser' functions
