@@ -1998,9 +1998,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
               // FIXME: Once integer types are signless, this cast should be 
               // removed.  
               Value *ShiftOp = SI->getOperand(0); 
-              if (ShiftOp->getType() != I.getType()) 
-                ShiftOp = InsertCastBefore(Instruction::BitCast, ShiftOp, 
-                                           I.getType(), I); 
               return new ShiftInst(Instruction::AShr, ShiftOp, CU,
                                    SI->getName());
             }
@@ -4267,10 +4264,6 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
       else if (NumDifferences == 1) {
         Value *LHSV = GEPLHS->getOperand(DiffOperand);
         Value *RHSV = GEPRHS->getOperand(DiffOperand);
-        if (LHSV->getType() != RHSV->getType())
-          // Doesn't matter which one we bitconvert here.
-          LHSV = InsertCastBefore(Instruction::BitCast, LHSV, RHSV->getType(),
-                                  I);
         // Make sure we do a signed comparison here.
         return new ICmpInst(ICmpInst::getSignedPredicate(Cond), LHSV, RHSV);
       }
@@ -4651,14 +4644,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                 else
                   NewAndCST = ConstantExpr::getShl(AndCST, ShAmt);
                 LHSI->setOperand(1, NewAndCST);
-                if (AndTy == Ty) 
-                  LHSI->setOperand(0, Shift->getOperand(0));
-                else {
-                  Value *NewCast = InsertCastBefore(Instruction::BitCast,
-                                                    Shift->getOperand(0), AndTy,
-                                                    *Shift);
-                  LHSI->setOperand(0, NewCast);
-                }
+                LHSI->setOperand(0, Shift->getOperand(0));
                 WorkList.push_back(Shift); // Shift is dead.
                 AddUsesToWorkList(I);
                 return &I;
@@ -4684,19 +4670,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             }
             InsertNewInstBefore(cast<Instruction>(NS), I);
 
-            // If C's sign doesn't agree with the and, insert a cast now.
-            if (NS->getType() != LHSI->getType())
-              NS = InsertCastBefore(Instruction::BitCast, NS, LHSI->getType(),
-                                    I);
-
-            Value *ShiftOp = Shift->getOperand(0);
-            if (ShiftOp->getType() != LHSI->getType())
-              ShiftOp = InsertCastBefore(Instruction::BitCast, ShiftOp, 
-                                         LHSI->getType(), I);
-              
             // Compute X & (C << Y).
-            Instruction *NewAnd =
-              BinaryOperator::createAnd(ShiftOp, NS, LHSI->getName());
+            Instruction *NewAnd = BinaryOperator::createAnd(
+                Shift->getOperand(0), NS, LHSI->getName());
             InsertNewInstBefore(NewAnd, I);
             
             I.setOperand(0, NewAnd);
@@ -5630,8 +5606,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         C = ConstantExpr::getLShr(C, ShiftAmt1C);
       
       Value *Op = ShiftOp->getOperand(0);
-      if (Op->getType() != C->getType())
-        Op = InsertCastBefore(Instruction::BitCast, Op, I.getType(), I);
       
       Instruction *Mask =
         BinaryOperator::createAnd(Op, C, Op->getName()+".mask");
@@ -6070,10 +6044,6 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
           ConstantInt::get(Type::Int64Ty, (1ULL << SrcBitSize)-1);
         if (DestBitSize < 64)
           C = ConstantExpr::getTrunc(C, DestTy);
-        else {
-          assert(DestBitSize == 64);
-          C = ConstantExpr::getBitCast(C, DestTy);
-        }
         return BinaryOperator::createAnd(Res, C);
       }
       case Instruction::SExt:
