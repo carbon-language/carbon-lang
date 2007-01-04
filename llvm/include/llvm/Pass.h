@@ -36,7 +36,8 @@
 #include <typeinfo>
 #include <cassert>
 
-#define USE_OLD_PASSMANAGER 1
+//Use new Pass Manager. Disable old Pass Manager.
+//#define USE_OLD_PASSMANAGER 1
 
 namespace llvm {
 
