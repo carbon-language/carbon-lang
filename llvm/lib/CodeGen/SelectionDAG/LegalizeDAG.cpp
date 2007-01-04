@@ -528,6 +528,35 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
 }
 
 
+/// ExpandFCOPYSIGNToBitwiseOps - Expands fcopysign to a series of bitwise
+/// operations.
+static
+SDOperand ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT::ValueType NVT,
+                                      SelectionDAG &DAG, TargetLowering &TLI) {
+  MVT::ValueType SrcVT = Node->getOperand(1).getValueType();
+  MVT::ValueType SrcNVT = (SrcVT == MVT::f64) ? MVT::i64 : MVT::i32;
+  // First get the sign bit of second operand.
+  SDOperand Mask = (SrcVT == MVT::f64)
+    ? DAG.getConstantFP(BitsToDouble(1ULL << 63), SrcVT)
+    : DAG.getConstantFP(BitsToFloat(1U << 31), SrcVT);
+  Mask = DAG.getNode(ISD::BIT_CONVERT, SrcNVT, Mask);
+  SDOperand SignBit= DAG.getNode(ISD::BIT_CONVERT, SrcNVT, Node->getOperand(1));
+  SignBit = DAG.getNode(ISD::AND, SrcNVT, SignBit, Mask);
+  // Shift right or sign-extend it if the two operands have different types.
+  int SizeDiff = MVT::getSizeInBits(SrcNVT) - MVT::getSizeInBits(NVT);
+  if (SizeDiff > 0) {
+    SignBit = DAG.getNode(ISD::SRL, SrcNVT, SignBit,
+                          DAG.getConstant(SizeDiff, TLI.getShiftAmountTy()));
+    SignBit = DAG.getNode(ISD::TRUNCATE, NVT, SignBit);
+  } else if (SizeDiff < 0)
+    SignBit = DAG.getNode(ISD::SIGN_EXTEND, NVT, SignBit);
+  // Or the first operand with the sign bit.
+  SDOperand Result = DAG.getNode(ISD::BIT_CONVERT, NVT, Node->getOperand(0));
+  Result = DAG.getNode(ISD::OR, NVT, Result, SignBit);
+  return Result;
+}
+
+
 /// LegalizeOp - We know that the specified value has a legal type.
 /// Recursively ensure that the operands have legal types, then return the
 /// result.
@@ -2314,10 +2343,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Tmp1.Val) Result = Tmp1;
       break;
     case TargetLowering::Legal: break;
-    case TargetLowering::Expand:
+    case TargetLowering::Expand: {
       // If this target supports fabs/fneg natively, do this efficiently.
-      if (TLI.isOperationLegal(ISD::FABS, Tmp1.getValueType()) &&
-          TLI.isOperationLegal(ISD::FNEG, Tmp1.getValueType())) {
+      if (TLI.getOperationAction(ISD::FABS, Tmp1.getValueType()) ==
+                                 TargetLowering::Legal &&
+          TLI.getOperationAction(ISD::FNEG, Tmp1.getValueType()) ==
+                                 TargetLowering::Legal) {
         // Get the sign bit of the RHS.
         MVT::ValueType IVT = 
           Tmp2.getValueType() == MVT::f32 ? MVT::i32 : MVT::i64;
@@ -2337,23 +2368,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       
       // Otherwise, do bitwise ops!
-      
-      // copysign -> copysignf/copysign libcall.
-      const char *FnName;
-      if (Node->getValueType(0) == MVT::f32) {
-        FnName = "copysignf";
-        if (Tmp2.getValueType() != MVT::f32)  // Force operands to match type.
-          Result = DAG.UpdateNodeOperands(Result, Tmp1, 
-                                    DAG.getNode(ISD::FP_ROUND, MVT::f32, Tmp2));
-      } else {
-        FnName = "copysign";
-        if (Tmp2.getValueType() != MVT::f64)  // Force operands to match type.
-          Result = DAG.UpdateNodeOperands(Result, Tmp1, 
-                                   DAG.getNode(ISD::FP_EXTEND, MVT::f64, Tmp2));
-      }
-      SDOperand Dummy;
-      Result = ExpandLibCall(FnName, Node, false/*sign irrelevant*/, Dummy);
+      MVT::ValueType NVT = 
+        Node->getValueType(0) == MVT::f32 ? MVT::i32 : MVT::i64;
+      Result = ExpandFCOPYSIGNToBitwiseOps(Node, NVT, DAG, TLI);
+      Result = DAG.getNode(ISD::BIT_CONVERT, Node->getValueType(0), Result);
+      Result = LegalizeOp(Result);
       break;
+    }
     }
     break;
     
@@ -5119,6 +5140,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Mask = DAG.getNode(ISD::BIT_CONVERT, NVT, Mask);
     Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Node->getOperand(0));
     Lo = DAG.getNode(ISD::XOR, NVT, Lo, Mask);
+    if (getTypeAction(NVT) == Expand)
+      ExpandOp(Lo, Lo, Hi);
+    break;
+  }
+  case ISD::FCOPYSIGN: {
+    Lo = ExpandFCOPYSIGNToBitwiseOps(Node, NVT, DAG, TLI);
     if (getTypeAction(NVT) == Expand)
       ExpandOp(Lo, Lo, Hi);
     break;
