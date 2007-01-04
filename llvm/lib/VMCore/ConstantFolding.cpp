@@ -744,7 +744,7 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
     return 1;
 }
 
-/// evaluatFCmpeRelation - This function determines if there is anything we can
+/// evaluateFCmpRelation - This function determines if there is anything we can
 /// decide about the two constants provided.  This doesn't need to handle simple
 /// things like ConstantFP comparisons, but should instead handle ConstantExprs.
 /// If we can determine that the two constants have a particular relation to 
