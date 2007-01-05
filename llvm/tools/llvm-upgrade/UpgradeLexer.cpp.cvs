@@ -940,7 +940,7 @@ char *yytext;
 #define YY_NEVER_INTERACTIVE 1
 #line 28 "/proj/llvm/llvm-3/tools/llvm-upgrade/UpgradeLexer.l"
 
-#include "ParserInternals.h"
+#include "UpgradeInternals.h"
 #include "UpgradeParser.h"
 #include <cctype>
 #include <cstdlib>
@@ -962,7 +962,7 @@ char *yytext;
   return sym
 
 #define RET_TY(sym,OldTY,NewTY,sign) \
-  Upgradelval.Type = new TypeInfo(NewTY, OldTY); \
+  Upgradelval.Type = TypeInfo::get(NewTY, OldTY); \
   return sym
 
 #define YY_NEVER_INTERACTIVE 1
@@ -1196,7 +1196,7 @@ yy_match:
 yy_find_action:
 		yy_current_state = *--yy_state_ptr;
 		yy_lp = yy_accept[yy_current_state];
-find_rule: /* we branch to this label when backing up */
+
 		for ( ; ; ) /* until we find what rule we matched */
 			{
 			if ( yy_lp && yy_lp < yy_accept[yy_current_state + 1] )

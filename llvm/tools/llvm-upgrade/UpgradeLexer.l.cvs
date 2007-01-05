@@ -26,7 +26,7 @@
 
 %{
 
-#include "ParserInternals.h"
+#include "UpgradeInternals.h"
 #include "UpgradeParser.h"
 #include <cctype>
 #include <cstdlib>
@@ -48,7 +48,7 @@
   return sym
 
 #define RET_TY(sym,OldTY,NewTY,sign) \
-  Upgradelval.Type = new TypeInfo(NewTY, OldTY); \
+  Upgradelval.Type = TypeInfo::get(NewTY, OldTY); \
   return sym
 
 #define YY_NEVER_INTERACTIVE 1
