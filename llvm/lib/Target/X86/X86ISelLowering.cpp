@@ -4144,7 +4144,7 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   Constant *CS = ConstantStruct::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
   std::vector<MVT::ValueType> Tys;
-  Tys.push_back(VT);
+  Tys.push_back(SrcVT);
   Tys.push_back(MVT::Other);
   SmallVector<SDOperand, 3> Ops;
   Ops.push_back(DAG.getEntryNode());
