@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm
+; RUN: llvm-as < %s | llc -march=arm
 
 define csretcc void %__divsc3({ float, float }* %agg.result, float %a, float %b, float %c, float %d) {
 entry:
