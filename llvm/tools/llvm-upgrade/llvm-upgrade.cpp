@@ -19,7 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ParserInternals.h"
+#include "UpgradeInternals.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
