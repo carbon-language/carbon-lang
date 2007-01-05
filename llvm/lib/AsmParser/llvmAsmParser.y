@@ -635,8 +635,8 @@ static void setValueName(Value *V, char *NameStr) {
     assert(inFunctionScope() && "Must be in function scope!");
     SymbolTable &ST = CurFun.CurrentFunction->getSymbolTable();
     if (ST.lookup(V->getType(), Name)) {
-      GenerateError("Redefinition of value named '" + Name + "' in the '" +
-                     V->getType()->getDescription() + "' type plane!");
+      GenerateError("Redefinition of value '" + Name + "' of type '" +
+                     V->getType()->getDescription() + "'!");
       return;
     }
 
@@ -687,32 +687,13 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   }
 
   // If this global has a name, check to see if there is already a definition
-  // of this global in the module.  If so, merge as appropriate.  Note that
-  // this is really just a hack around problems in the CFE.  :(
+  // of this global in the module.  If so, it is an error.
   if (!Name.empty()) {
     // We are a simple redefinition of a value, check to see if it is defined
     // the same as the old one.
-    if (GlobalVariable *EGV =
-                CurModule.CurrentModule->getGlobalVariable(Name, Ty)) {
-      // We are allowed to redefine a global variable in two circumstances:
-      // 1. If at least one of the globals is uninitialized or
-      // 2. If both initializers have the same value.
-      //
-      if (!EGV->hasInitializer() || !Initializer ||
-          EGV->getInitializer() == Initializer) {
-
-        // Make sure the existing global version gets the initializer!  Make
-        // sure that it also gets marked const if the new version is.
-        if (Initializer && !EGV->hasInitializer())
-          EGV->setInitializer(Initializer);
-        if (isConstantGlobal)
-          EGV->setConstant(true);
-        EGV->setLinkage(Linkage);
-        return EGV;
-      }
-
+    if (CurModule.CurrentModule->getGlobalVariable(Name, Ty)) {
       GenerateError("Redefinition of global variable named '" + Name +
-                     "' in the '" + Ty->getDescription() + "' type plane!");
+                     "' of type '" + Ty->getDescription() + "'!");
       return 0;
     }
   }
@@ -767,8 +748,8 @@ static bool setTypeName(const Type *T, char *NameStr) {
     if (Existing == T) return true;  // Yes, it's equal.
 
     // Any other kind of (non-equivalent) redefinition is an error.
-    GenerateError("Redefinition of type named '" + Name + "' in the '" +
-                   T->getDescription() + "' type plane!");
+    GenerateError("Redefinition of type named '" + Name + "' of type '" +
+                   T->getDescription() + "'!");
   }
 
   return false;
