@@ -245,7 +245,6 @@ static std::string getTypeDescription(const Type *Ty,
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
-    Result = FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
     if (!Result.empty())
       Result += " ";
     Result += getTypeDescription(FTy->getReturnType(), TypeStack) + " (";
@@ -254,11 +253,7 @@ static std::string getTypeDescription(const Type *Ty,
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Result += ", ";
-      const char *PA = FunctionType::getParamAttrsText(FTy->getParamAttrs(Idx));
-      if (PA[0] != 0) {
-        Result += PA;
-        Result += " ";
-      }
+      Result +=  FunctionType::getParamAttrsText(FTy->getParamAttrs(Idx));
       Idx++;
       Result += getTypeDescription(*I, TypeStack);
     }
@@ -267,6 +262,9 @@ static std::string getTypeDescription(const Type *Ty,
       Result += "...";
     }
     Result += ")";
+    if (FTy->getParamAttrs(0)) {
+      Result += " " + FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
+    }
     break;
   }
   case Type::StructTyID: {
@@ -1021,13 +1019,15 @@ FunctionType::getParamAttrs(unsigned Idx) const {
   return (*ParamAttrs)[Idx];
 }
 
-const char *FunctionType::getParamAttrsText(ParameterAttributes Attr) {
-  switch (Attr) {
-    default: assert(0 && "Invalid ParameterAttribute value");
-    case 0: return "";
-    case ZExtAttribute: return "@zext";
-    case SExtAttribute: return "@sext";
-  }
+std::string FunctionType::getParamAttrsText(ParameterAttributes Attr) {
+  std::string Result;
+  if (Attr & ZExtAttribute)
+    Result += "zext ";
+  if (Attr & SExtAttribute)
+    Result += "sext ";
+  if (Attr & NoReturnAttribute)
+    Result += "noreturn ";
+  return Result;
 }
 
 //===----------------------------------------------------------------------===//

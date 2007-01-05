@@ -271,10 +271,6 @@ static void calcTypeName(const Type *Ty,
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
     calcTypeName(FTy->getReturnType(), TypeStack, TypeNames, Result);
-    if (FTy->getParamAttrs(0)) {
-      Result += " ";
-      Result += FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
-    }
     Result += " (";
     unsigned Idx = 1;
     for (FunctionType::param_iterator I = FTy->param_begin(),
@@ -293,6 +289,10 @@ static void calcTypeName(const Type *Ty,
       Result += "...";
     }
     Result += ")";
+    if (FTy->getParamAttrs(0)) {
+      Result += " ";
+      Result += FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
+    }
     break;
   }
   case Type::StructTyID: {
@@ -698,8 +698,6 @@ private:
 std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
   if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     printType(FTy->getReturnType());
-    if (FTy->getParamAttrs(0))
-      Out << ' ' << FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
     Out << " (";
     unsigned Idx = 1;
     for (FunctionType::param_iterator I = FTy->param_begin(),
@@ -717,6 +715,8 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
       Out << "...";
     }
     Out << ')';
+    if (FTy->getParamAttrs(0))
+      Out << ' ' << FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     if (STy->isPacked())
       Out << '<';
@@ -969,8 +969,6 @@ void AssemblyWriter::printFunction(const Function *F) {
 
   const FunctionType *FT = F->getFunctionType();
   printType(F->getReturnType()) << ' ';
-  if (FT->getParamAttrs(0))
-    Out << FunctionType::getParamAttrsText(FT->getParamAttrs(0)) << ' ';
   if (!F->getName().empty())
     Out << getLLVMName(F->getName());
   else
@@ -995,7 +993,8 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "...";  // Output varargs portion of signature!
   }
   Out << ')';
-
+  if (FT->getParamAttrs(0))
+    Out << ' ' << FunctionType::getParamAttrsText(FT->getParamAttrs(0));
   if (F->hasSection())
     Out << " section \"" << F->getSection() << '"';
   if (F->getAlignment())
@@ -1186,8 +1185,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
         (!isa<PointerType>(RetTy) ||
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
       Out << ' '; printType(RetTy);
-      if (FTy->getParamAttrs(0) != FunctionType::NoAttributeSet)
-        Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(0));
       writeOperand(Operand, false);
     } else {
       writeOperand(Operand, true);
@@ -1201,6 +1198,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
         Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(op));
     }
     Out << " )";
+    if (FTy->getParamAttrs(0) != FunctionType::NoAttributeSet)
+      Out << ' ' << FTy->getParamAttrsText(FTy->getParamAttrs(0));
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     const PointerType  *PTy = cast<PointerType>(Operand->getType());
     const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
@@ -1225,8 +1224,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
         (!isa<PointerType>(RetTy) ||
          !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
       Out << ' '; printType(RetTy);
-      if (FTy->getParamAttrs(0) != FunctionType::NoAttributeSet)
-        Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(0));
       writeOperand(Operand, false);
     } else {
       writeOperand(Operand, true);
@@ -1241,7 +1238,10 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
         Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(op-2));
     }
 
-    Out << " )\n\t\t\tto";
+    Out << " )";
+    if (FTy->getParamAttrs(0) != FunctionType::NoAttributeSet)
+      Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(0));
+    Out << "\n\t\t\tto";
     writeOperand(II->getNormalDest(), true);
     Out << " unwind";
     writeOperand(II->getUnwindDest(), true);

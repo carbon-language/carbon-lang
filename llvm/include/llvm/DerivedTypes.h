@@ -81,9 +81,10 @@ public:
   /// set of possible attributes.
   /// @brief Function parameter attributes enumeration.
   enum ParameterAttributes {
-    NoAttributeSet = 0, ///< No attribute value has been set on the parameter
-    ZExtAttribute  = 1, ///< The parameter should be zero extended before call
-    SExtAttribute  = 2  ///< The parameter should be sign extended before call
+    NoAttributeSet    = 0,      ///< No attribute value has been set 
+    ZExtAttribute     = 1,      ///< zero extended before/after call
+    SExtAttribute     = 1 << 1, ///< sign extended before/after call
+    NoReturnAttribute = 1 << 2  ///< mark the function as not returning
   };
   typedef std::vector<ParameterAttributes> ParamAttrsList;
 private:
@@ -142,7 +143,7 @@ public:
   }
 
   /// @brief Convert a ParameterAttribute into its assembly text
-  static const char * getParamAttrsText(ParameterAttributes Attr);
+  static std::string getParamAttrsText(ParameterAttributes Attr);
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
