@@ -1,4 +1,4 @@
-//===-- ParserInternals.h - Definitions internal to the parser --*- C++ -*-===//
+//===-- UpgradeInternals.h - Internal parser definitionsr -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,13 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PARSER_INTERNALS_H
-#define PARSER_INTERNALS_H
+#ifndef UPGRADE_INTERNALS_H
+#define UPGRADE_INTERNALS_H
 
 #include <llvm/ADT/StringExtras.h>
 #include <string>
 #include <istream>
 #include <vector>
+#include <set>
 #include <cassert>
 
 // Global variables exported from the lexer...
@@ -29,13 +30,11 @@ extern int Upgradelineno;
 extern std::istream* LexInput;
 
 struct TypeInfo;
-typedef std::vector<TypeInfo*> TypeList;
+typedef std::vector<const TypeInfo*> TypeList;
 
 void UpgradeAssembly(
   const std::string & infile, std::istream& in, std::ostream &out, bool debug,
   bool addAttrs);
-
-TypeInfo* ResolveType(TypeInfo*& Ty);
 
 // Globals exported by the parser...
 extern char* Upgradetext;
@@ -58,7 +57,7 @@ enum Types {
 /// associates a Value* with a Signedness indication.
 struct ValueInfo {
   std::string* val;
-  TypeInfo* type;
+  const TypeInfo* type;
   bool constant;
   bool isConstant() const { return constant; }
   inline void destroy();
@@ -72,83 +71,47 @@ struct ValueInfo {
 /// to "int32" and the "second" field will be set to "isUnsigned".  If the 
 /// type is not obsolete then "second" will be set to "isSignless".
 struct TypeInfo {
-  TypeInfo() 
-    : newTy(0), oldTy(UnresolvedTy), elemTy(0), resultTy(0), elements(0),
-      nelems(0) {
+
+  static const TypeInfo* get(const std::string &newType, Types oldType);
+  static const TypeInfo* get(const std::string& newType, Types oldType, 
+                             const TypeInfo* eTy, const TypeInfo* rTy);
+
+  static const TypeInfo* get(const std::string& newType, Types oldType, 
+                       const TypeInfo *eTy, uint64_t elems);
+
+  static const TypeInfo* get(const std::string& newType, Types oldType, 
+                       TypeList* TL);
+
+  static const TypeInfo* get(const std::string& newType, const TypeInfo* resTy, 
+                       TypeList* TL);
+
+  const TypeInfo* resolve() const;
+  bool operator<(const TypeInfo& that) const;
+
+  bool sameNewTyAs(const TypeInfo* that) const {
+    return this->newTy == that->newTy;
   }
 
-  TypeInfo(const char * newType, Types oldType)
-    : newTy(0), oldTy(oldType), elemTy(0), resultTy(0), elements(0), nelems(0) {
-    newTy = new std::string(newType);
-  }
+  bool sameOldTyAs(const TypeInfo* that) const;
 
-  TypeInfo(std::string *newType, Types oldType, TypeInfo* eTy = 0, 
-           TypeInfo *rTy = 0) 
-    : newTy(newType), oldTy(oldType), elemTy(eTy), resultTy(rTy), elements(0),
-      nelems(0) { 
-  }
-
-  TypeInfo(std::string *newType, Types oldType, TypeInfo *eTy, uint64_t elems)
-    : newTy(newType), oldTy(oldType), elemTy(eTy), resultTy(0), elements(0), 
-      nelems(elems) {
-  }
-
-  TypeInfo(std::string *newType, Types oldType, TypeList* TL)
-    : newTy(newType), oldTy(oldType), elemTy(0), resultTy(0), elements(TL),
-      nelems(0) {
-  }
-
-  TypeInfo(std::string *newType, TypeInfo* resTy, TypeList* TL) 
-    : newTy(newType), oldTy(FunctionTy), elemTy(0), resultTy(resTy), 
-    elements(TL), nelems(0) {
-  }
-
-  TypeInfo(const TypeInfo& that)
-    : newTy(0), oldTy(that.oldTy), elemTy(0), resultTy(0), elements(0), 
-      nelems(0) {
-    *this = that;
-  }
-
-  TypeInfo& operator=(const TypeInfo& that) {
-    oldTy = that.oldTy;
-    nelems = that.nelems;
-    if (that.newTy)
-      newTy = new std::string(*that.newTy);
-    if (that.elemTy)
-      elemTy = that.elemTy->clone();
-    if (that.resultTy)
-      resultTy = that.resultTy->clone();
-    if (that.elements) {
-      elements = new std::vector<TypeInfo*>(that.elements->size());
-      *elements = *that.elements;
-    }
-    return *this;
-  }
-
-  ~TypeInfo() { 
-    delete newTy; delete elemTy; delete resultTy; delete elements;
-  }
-
-  TypeInfo* clone() const { 
-    return new TypeInfo(*this);
-  }
-
-  Types getElementTy() const { 
+  Types getElementTy() const {
     if (elemTy) {
       return elemTy->oldTy;
     }
     return UnresolvedTy;
   }
 
-  const std::string& getNewTy() const { return *newTy; }
-  void setOldTy(Types Ty) { oldTy = Ty; }
+  unsigned getUpRefNum() const {
+    assert(oldTy == UpRefTy && "Can't getUpRefNum on non upreference");
+    return atoi(&((getNewTy().c_str())[1])); // skip the slash
+  }
 
-  TypeInfo* getResultType() const { return resultTy; }
-  TypeInfo* getElementType() const { return elemTy; }
+  const std::string& getNewTy() const { return newTy; }
+  const TypeInfo* getResultType() const { return resultTy; }
+  const TypeInfo* getElementType() const { return elemTy; }
 
-  TypeInfo* getPointerType() const {
-    std::string* ty = new std::string(*newTy + "*");
-    return new TypeInfo(ty, PointerTy, this->clone(), (TypeInfo*)0);
+  const TypeInfo* getPointerType() const {
+    return get(newTy + "*", PointerTy, this, (TypeInfo*)0);
   }
 
   bool isUnresolved() const { return oldTy == UnresolvedTy; }
@@ -164,8 +127,6 @@ struct TypeInfo {
     return oldTy == UByteTy || oldTy == UShortTy || 
            oldTy == UIntTy || oldTy == ULongTy;
   }
-
-
   bool isSignless() const { return !isSigned() && !isUnsigned(); }
   bool isInteger() const { return isSigned() || isUnsigned(); }
   bool isIntegral() const { return oldTy == BoolTy || isInteger(); }
@@ -185,78 +146,60 @@ struct TypeInfo {
     return isIntegral() && getBitWidth() < 32;
   }
 
-  unsigned getBitWidth() const {
-    switch (oldTy) {
-      default:
-      case LabelTy:
-      case VoidTy : return 0;
-      case BoolTy : return 1;
-      case SByteTy: case UByteTy : return 8;
-      case ShortTy: case UShortTy : return 16;
-      case IntTy: case UIntTy: case FloatTy: return 32;
-      case LongTy: case ULongTy: case DoubleTy : return 64;
-      case PointerTy: return SizeOfPointer; // global var
-      case PackedTy: 
-      case ArrayTy: 
-        return nelems * elemTy->getBitWidth();
-      case StructTy:
-      case PackedStructTy: {
-        uint64_t size = 0;
-        for (unsigned i = 0; i < elements->size(); i++) {
-          ResolveType((*elements)[i]);
-          size += (*elements)[i]->getBitWidth();
-        }
-        return size;
-      }
-    }
-  }
+  bool isUnresolvedDeep() const;
 
-  TypeInfo* getIndexedType(const ValueInfo&  VI) {
-    if (isStruct()) {
-      if (VI.isConstant() && VI.type->isInteger()) {
-        size_t pos = VI.val->find(' ') + 1;
-        if (pos < VI.val->size()) {
-          uint64_t idx = atoi(VI.val->substr(pos).c_str());
-          return (*elements)[idx];
-        } else {
-          yyerror("Invalid value for constant integer");
-          return 0;
-        }
-      } else {
-        yyerror("Structure requires constant index");
-        return 0;
-      }
-    }
-    if (isArray() || isPacked() || isPointer())
-      return elemTy;
-    yyerror("Invalid type for getIndexedType");
-    return 0;
-  }
+  unsigned getBitWidth() const;
+
+  const TypeInfo* getIndexedType(const ValueInfo&  VI) const;
 
   unsigned getNumStructElements() const { 
     return (elements ? elements->size() : 0);
   }
 
-  TypeInfo* getElement(unsigned idx) {
+  const TypeInfo* getElement(unsigned idx) const {
     if (elements)
       if (idx < elements->size())
         return (*elements)[idx];
     return 0;
   }
 
+
 private:
-  std::string* newTy;
+  TypeInfo() 
+    : newTy(), oldTy(UnresolvedTy), elemTy(0), resultTy(0), elements(0),
+      nelems(0) {
+  }
+
+  TypeInfo(const TypeInfo& that); // do not implement
+  TypeInfo& operator=(const TypeInfo& that); // do not implement
+
+  ~TypeInfo() { delete elements; }
+
+  struct ltfunctor
+  {
+    bool operator()(const TypeInfo* X, const TypeInfo* Y) const {
+      assert(X && "Can't compare null pointer");
+      assert(Y && "Can't compare null pointer");
+      return *X < *Y;
+    }
+  };
+
+  typedef std::set<const TypeInfo*, ltfunctor> TypeRegMap;
+  static const TypeInfo* add_new_type(TypeInfo* existing);
+
+  std::string newTy;
   Types oldTy;
   TypeInfo *elemTy;
   TypeInfo *resultTy;
   TypeList *elements;
   uint64_t nelems;
+  static TypeRegMap registry;
 };
 
 /// This type is used to keep track of the signedness of constants.
 struct ConstInfo {
   std::string *cnst;
-  TypeInfo *type;
+  const TypeInfo *type;
   void destroy() { delete cnst; }
 };
 
