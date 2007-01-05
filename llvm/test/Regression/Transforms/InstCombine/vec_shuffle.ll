@@ -42,3 +42,7 @@ define float %test6(<4 x float> %X) {
         ret float %tmp34
 }
 
+define <4 x float> %test7(<4 x float> %tmp45.i) {
+        %tmp1642.i = shufflevector <4 x float> %tmp45.i, <4 x float> undef, <4 x i32> < i32 0, i32 1, i32 6, i32 7 >
+        ret <4 x float> %tmp1642.i
+}
