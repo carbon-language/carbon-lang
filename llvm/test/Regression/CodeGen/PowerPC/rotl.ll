@@ -1,6 +1,8 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep or && 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwnm | wc -l | grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwinm | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN:    grep rlwnm  | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN:    grep rlwinm | wc -l | grep 2
 
 implementation   ; Functions:
 
