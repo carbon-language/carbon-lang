@@ -1,6 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | \
-; RUN:    grep pslldq | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not getp test
 
 define float %test1(float %a, float %b) {
