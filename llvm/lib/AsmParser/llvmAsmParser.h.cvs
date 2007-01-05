@@ -160,7 +160,8 @@
      VAARG = 386,
      EXTRACTELEMENT = 387,
      INSERTELEMENT = 388,
-     SHUFFLEVECTOR = 389
+     SHUFFLEVECTOR = 389,
+     NORETURN = 390
    };
 #endif
 /* Tokens.  */
@@ -296,6 +297,7 @@
 #define EXTRACTELEMENT 387
 #define INSERTELEMENT 388
 #define SHUFFLEVECTOR 389
+#define NORETURN 390
 
 
 
@@ -348,7 +350,7 @@ typedef union YYSTYPE {
   llvm::FCmpInst::Predicate         FPredicate;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 352 "llvmAsmParser.tab.h"
+#line 354 "llvmAsmParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
