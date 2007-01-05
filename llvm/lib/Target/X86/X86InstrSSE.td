@@ -31,7 +31,6 @@ def X86for     : SDNode<"X86ISD::FOR",       SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def X86fxor    : SDNode<"X86ISD::FXOR",      SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
-def X86fshl    : SDNode<"X86ISD::FSHL",      SDTX86FPShiftOp>;
 def X86fsrl    : SDNode<"X86ISD::FSRL",      SDTX86FPShiftOp>;
 def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest,
                         [SDNPHasChain, SDNPOutFlag]>;
@@ -1377,8 +1376,6 @@ let Predicates = [HasSSE2] in {
             (v2i64 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
   def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
             (v2i64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
-  def : Pat<(v4f32 (X86fshl VR128:$src1, i32immSExt8:$src2)),
-            (v4f32 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
   def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
             (v2f64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
 }

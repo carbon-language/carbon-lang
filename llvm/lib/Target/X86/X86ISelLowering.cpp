@@ -4127,9 +4127,18 @@ SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand Op0 = Op.getOperand(0);
+  SDOperand Op1 = Op.getOperand(1);
   MVT::ValueType VT = Op.getValueType();
-  MVT::ValueType SrcVT = Op.getOperand(1).getValueType();
+  MVT::ValueType SrcVT = Op1.getValueType();
   const Type *SrcTy =  MVT::getTypeForValueType(SrcVT);
+
+  // If second operand is smaller, extend it first.
+  if (MVT::getSizeInBits(SrcVT) < MVT::getSizeInBits(VT)) {
+    Op1 = DAG.getNode(ISD::FP_EXTEND, VT, Op1);
+    SrcVT = VT;
+  }
+
   // First get the sign bit of second operand.
   std::vector<Constant*> CV;
   if (SrcVT == MVT::f64) {
@@ -4150,8 +4159,8 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(DAG.getEntryNode());
   Ops.push_back(CPIdx);
   Ops.push_back(DAG.getSrcValue(NULL));
-  SDOperand Mask = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
-  SDOperand SignBit = DAG.getNode(X86ISD::FAND, SrcVT, Op.getOperand(1), Mask);
+  SDOperand Mask1 = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
+  SDOperand SignBit = DAG.getNode(X86ISD::FAND, SrcVT, Op1, Mask1);
 
   // Shift sign bit right or left if the two operands have different types.
   if (MVT::getSizeInBits(SrcVT) > MVT::getSizeInBits(VT)) {
@@ -4162,18 +4171,33 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
     SignBit = DAG.getNode(ISD::BIT_CONVERT, MVT::v4f32, SignBit);
     SignBit = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::f32, SignBit,
                           DAG.getConstant(0, getPointerTy()));
-  } else if (MVT::getSizeInBits(SrcVT) < MVT::getSizeInBits(VT)) {
-    // Op0 is MVT::f64, Op1 is MVT::f32.
-    SignBit = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, SignBit);
-    SignBit = DAG.getNode(X86ISD::FSHL, MVT::v4f32, SignBit,
-                          DAG.getConstant(32, MVT::i32));
-    SignBit = DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, SignBit);
-    SignBit = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::f64, SignBit,
-                          DAG.getConstant(0, getPointerTy()));
   }
 
-  // Or the first operand with the sign bit.
-  return DAG.getNode(X86ISD::FOR, VT, Op.getOperand(0), SignBit);
+  // Clear first operand sign bit.
+  CV.clear();
+  if (VT == MVT::f64) {
+    CV.push_back(ConstantFP::get(SrcTy, BitsToDouble(~(1ULL << 63))));
+    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+  } else {
+    CV.push_back(ConstantFP::get(SrcTy, BitsToFloat(~(1U << 31))));
+    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+  }
+  CS = ConstantStruct::get(CV);
+  CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
+  Tys.clear();
+  Tys.push_back(VT);
+  Tys.push_back(MVT::Other);
+  Ops.clear();
+  Ops.push_back(DAG.getEntryNode());
+  Ops.push_back(CPIdx);
+  Ops.push_back(DAG.getSrcValue(NULL));
+  SDOperand Mask2 = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
+  SDOperand Val = DAG.getNode(X86ISD::FAND, VT, Op0, Mask2);
+
+  // Or the value with the sign bit.
+  return DAG.getNode(X86ISD::FOR, VT, Val, SignBit);
 }
 
 SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG,
@@ -5032,7 +5056,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FAND:               return "X86ISD::FAND";
   case X86ISD::FOR:                return "X86ISD::FOR";
   case X86ISD::FXOR:               return "X86ISD::FXOR";
-  case X86ISD::FSHL:               return "X86ISD::FSHL";
   case X86ISD::FSRL:               return "X86ISD::FSRL";
   case X86ISD::FILD:               return "X86ISD::FILD";
   case X86ISD::FILD_FLAG:          return "X86ISD::FILD_FLAG";

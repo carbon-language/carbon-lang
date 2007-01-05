@@ -43,10 +43,8 @@ namespace llvm {
       /// to X86::XORPS or X86::XORPD.
       FXOR,
 
-      /// FSHL, FSRL - Shift a floating point value (in SSE register) by n bits
-      /// while shifting in 0's. These corresponds to X86::PSLLDQ or
-      /// X86::PSRLDQ.
-      FSHL,
+      /// FSRL - Bitwise logical right shift of floating point values. These
+      /// corresponds to X86::PSRLDQ.
       FSRL,
 
       /// FILD, FILD_FLAG - This instruction implements SINT_TO_FP with the
