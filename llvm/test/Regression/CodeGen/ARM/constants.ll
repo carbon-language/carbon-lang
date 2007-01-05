@@ -6,7 +6,7 @@
 ; RUN: grep "mov r0, #-1073741761" %t.s | wc -l | grep 1 &&
 ; RUN: grep "mov r0, #1008" %t.s  | wc -l | grep 1 &&
 ; RUN: grep "cmp r0, #65536" %t.s | wc -l | grep 1 &&
-; RUN: grep "\.comm.*a.s,4,4" %t.s  | wc -l | grep 1
+; RUN: grep "\.comm.*a,4,4" %t.s  | wc -l | grep 1
 
 %a = internal global int 0
 
