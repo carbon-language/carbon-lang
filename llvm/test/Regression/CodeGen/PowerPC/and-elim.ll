@@ -1,19 +1,19 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwin
+; RUN: llvm-as < %s | llc -march=ppc32 &&
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwin
 
-void %test(ubyte* %P) {
-	%W = load ubyte* %P
-	%X = shl ubyte %W, ubyte 1
-	%Y = add ubyte %X, 2
-	%Z = and ubyte %Y, 254        ; dead and
-	store ubyte %Z, ubyte* %P
+define void %test(i8* %P) {
+	%W = load i8* %P
+	%X = shl i8 %W, i8 1
+	%Y = add i8 %X, 2
+	%Z = and i8 %Y, 254        ; dead and
+	store i8 %Z, i8* %P
 	ret void
 }
 
-ushort @zext %test2(ushort @zext %crc) { 
-        ; No and's should be needed for the ushorts here.
-        %tmp.1 = shr ushort %crc, ubyte 1
-        %tmp.7 = xor ushort %tmp.1, 40961
-        ret ushort %tmp.7
+define i16 %test2(i16 zext %crc) zext { 
+        ; No and's should be needed for the i16s here.
+        %tmp.1 = lshr i16 %crc, i8 1
+        %tmp.7 = xor i16 %tmp.1, 40961
+        ret i16 %tmp.7
 }
 
