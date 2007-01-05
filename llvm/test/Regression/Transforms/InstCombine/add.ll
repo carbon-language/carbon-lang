@@ -240,3 +240,9 @@ ubyte %test34(ubyte %A) {
         ret ubyte %C
 }
 
+define i32 %test34(i32 %a) {  ;; -> -1
+        %tmpnot = xor i32 %a, -1
+        %tmp2 = add i32 %tmpnot, %a
+        ret i32 %tmp2
+}
+
