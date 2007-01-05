@@ -118,7 +118,6 @@ PassDebugging_New("debug-pass", cl::Hidden,
                              clEnumValEnd));
 } // End of llvm namespace
 
-#ifndef USE_OLD_PASSMANAGER
 namespace {
 
 //===----------------------------------------------------------------------===//
@@ -1602,4 +1601,4 @@ void TimingInfo::createTheTimeInfo() {
   TheTimeInfo = &*TTI;
 }
 
-#endif
+

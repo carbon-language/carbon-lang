@@ -14,9 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassManager.h"
-#ifdef USE_OLD_PASSMANAGER
-#include "PassManagerT.h"         // PassManagerT implementation
-#endif
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/STLExtras.h"
@@ -31,157 +28,16 @@ using namespace llvm;
 
 AnalysisResolver::~AnalysisResolver() {
 }
-void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
-  assert(P->Resolver == 0 && "Pass already in a PassManager!");
-  P->Resolver = AR;
-}
-
-#ifdef USE_OLD_PASSMANAGER
-//===----------------------------------------------------------------------===//
-// PassManager implementation - The PassManager class is a simple Pimpl class
-// that wraps the PassManagerT template.
-//
-PassManager::PassManager() : PM(new ModulePassManager()) {}
-PassManager::~PassManager() { delete PM; }
-void PassManager::add(Pass *P) {
-  ModulePass *MP = dynamic_cast<ModulePass*>(P);
-  assert(MP && "Not a modulepass?");
-  PM->add(MP);
-}
-bool PassManager::run(Module &M) { return PM->runOnModule(M); }
-
-//===----------------------------------------------------------------------===//
-// FunctionPassManager implementation - The FunctionPassManager class
-// is a simple Pimpl class that wraps the PassManagerT template. It
-// is like PassManager, but only deals in FunctionPasses.
-//
-FunctionPassManager::FunctionPassManager(ModuleProvider *P) :
-  PM(new FunctionPassManagerT()), MP(P) {}
-FunctionPassManager::~FunctionPassManager() { delete PM; }
-void FunctionPassManager::add(FunctionPass *P) { PM->add(P); }
-void FunctionPassManager::add(ImmutablePass *IP) { PM->add(IP); }
-
-/// doInitialization - Run all of the initializers for the function passes.
-///
-bool FunctionPassManager::doInitialization() {
-  return PM->doInitialization(*MP->getModule());
-}
-
-bool FunctionPassManager::run(Function &F) {
-  std::string errstr;
-  if (MP->materializeFunction(&F, &errstr)) {
-    cerr << "Error reading bytecode file: " << errstr << "\n";
-    abort();
-  }
-  return PM->runOnFunction(F);
-}
-
-/// doFinalization - Run all of the initializers for the function passes.
-///
-bool FunctionPassManager::doFinalization() {
-  return PM->doFinalization(*MP->getModule());
-}
-
-
-//===----------------------------------------------------------------------===//
-// TimingInfo Class - This class is used to calculate information about the
-// amount of time each pass takes to execute.  This only happens with
-// -time-passes is enabled on the command line.
-//
-bool llvm::TimePassesIsEnabled = false;
-static cl::opt<bool,true>
-EnableTiming("time-passes", cl::location(TimePassesIsEnabled),
-            cl::desc("Time each pass, printing elapsed time for each on exit"));
-
-// createTheTimeInfo - This method either initializes the TheTimeInfo pointer to
-// a non null value (if the -time-passes option is enabled) or it leaves it
-// null.  It may be called multiple times.
-void TimingInfo::createTheTimeInfo() {
-  if (!TimePassesIsEnabled || TheTimeInfo) return;
-
-  // Constructed the first time this is called, iff -time-passes is enabled.
-  // This guarantees that the object will be constructed before static globals,
-  // thus it will be destroyed before them.
-  static ManagedStatic<TimingInfo> TTI;
-  TheTimeInfo = &*TTI;
-}
-
-void PMDebug::PrintArgumentInformation(const Pass *P) {
-  // Print out passes in pass manager...
-  if (const AnalysisResolver *PM = dynamic_cast<const AnalysisResolver*>(P)) {
-    for (unsigned i = 0, e = PM->getNumContainedPasses(); i != e; ++i)
-      PrintArgumentInformation(PM->getContainedPass(i));
-
-  } else {  // Normal pass.  Print argument information...
-    // Print out arguments for registered passes that are _optimizations_
-    if (const PassInfo *PI = P->getPassInfo())
-      if (!PI->isAnalysisGroup())
-        cerr << " -" << PI->getPassArgument();
-  }
-}
-
-void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
-                                   Pass *P, Module *M) {
-  if (PassDebugging >= Executions) {
-    cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
-         << P->getPassName();
-    if (M) cerr << "' on Module '" << M->getModuleIdentifier() << "'\n";
-    cerr << "'...\n";
-  }
-}
-
-void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
-                                   Pass *P, Function *F) {
-  if (PassDebugging >= Executions) {
-    cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
-         << P->getPassName();
-    if (F) cerr << "' on Function '" << F->getName();
-    cerr << "'...\n";
-  }
-}
-
-void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
-                                   Pass *P, BasicBlock *BB) {
-  if (PassDebugging >= Executions) {
-    cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
-         << P->getPassName();
-    if (BB) cerr << "' on BasicBlock '" << BB->getName();
-    cerr << "'...\n";
-  }
-}
-
-void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
-                                   Pass *P, const std::vector<AnalysisID> &Set){
-  if (PassDebugging >= Details && !Set.empty()) {
-    cerr << (void*)P << std::string(Depth*2+3, ' ') << Msg << " Analyses:";
-    for (unsigned i = 0; i != Set.size(); ++i) {
-      if (i) cerr << ",";
-      cerr << " " << Set[i]->getPassName();
-    }
-    cerr << "\n";
-  }
-}
-#endif
 
 //===----------------------------------------------------------------------===//
 // Pass Implementation
 //
 
-#ifdef USE_OLD_PASSMANAGER
-void ModulePass::addToPassManager(ModulePassManager *PM, AnalysisUsage &AU) {
-  PM->addPass(this, AU);
-}
-#else
 // Force out-of-line virtual method.
 ModulePass::~ModulePass() { }
-#endif
 
 bool Pass::mustPreserveAnalysisID(const PassInfo *AnalysisID) const {
-#ifdef USE_OLD_PASSMANAGER
-  return Resolver->getAnalysisToUpdate(AnalysisID) != 0;
-#else
   return Resolver_New->getAnalysisToUpdate(AnalysisID, true) != 0;
-#endif
 }
 
 // dumpPassStructure - Implement the -debug-passes=Structure option
@@ -213,15 +69,8 @@ void Pass::dump() const {
 //===----------------------------------------------------------------------===//
 // ImmutablePass Implementation
 //
-#ifdef USE_OLD_PASSMANAGER
-void ImmutablePass::addToPassManager(ModulePassManager *PM, 
-                                     AnalysisUsage &AU) {
-  PM->addPass(this, AU);
-}
-#else
 // Force out-of-line virtual method.
 ImmutablePass::~ImmutablePass() { }
-#endif
 
 //===----------------------------------------------------------------------===//
 // FunctionPass Implementation
@@ -250,18 +99,6 @@ bool FunctionPass::run(Function &F) {
   return Changed | doFinalization(*F.getParent());
 }
 
-#ifdef USE_OLD_PASSMANAGER
-void FunctionPass::addToPassManager(ModulePassManager *PM,
-                                    AnalysisUsage &AU) {
-  PM->addPass(this, AU);
-}
-
-void FunctionPass::addToPassManager(FunctionPassManagerT *PM,
-                                    AnalysisUsage &AU) {
-  PM->addPass(this, AU);
-}
-#endif
-
 //===----------------------------------------------------------------------===//
 // BasicBlockPass Implementation
 //
@@ -289,18 +126,6 @@ bool BasicBlockPass::runPass(BasicBlock &BB) {
   Changed |= doFinalization(M);
   return Changed;
 }
-
-#ifdef USE_OLD_PASSMANAGER
-void BasicBlockPass::addToPassManager(FunctionPassManagerT *PM,
-                                      AnalysisUsage &AU) {
-  PM->addPass(this, AU);
-}
-
-void BasicBlockPass::addToPassManager(BasicBlockPassManager *PM,
-                                      AnalysisUsage &AU) {
-  PM->addPass(this, AU);
-}
-#endif
 
 //===----------------------------------------------------------------------===//
 // Pass Registration mechanism

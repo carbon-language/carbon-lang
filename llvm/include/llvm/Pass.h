@@ -36,9 +36,6 @@
 #include <typeinfo>
 #include <cassert>
 
-//Use new Pass Manager. Disable old Pass Manager.
-//#define USE_OLD_PASSMANAGER 1
-
 namespace llvm {
 
 class Value;
@@ -52,7 +49,6 @@ template<class Trait> class PassManagerT;
 class BasicBlockPassManager;
 class FunctionPassManagerT;
 class ModulePassManager;
-struct AnalysisResolver;
 class AnalysisResolver_New;
 
 // AnalysisID - Use the PassInfo to identify a pass...
@@ -64,8 +60,6 @@ typedef const PassInfo* AnalysisID;
 /// constrained passes described below.
 ///
 class Pass {
-  friend struct AnalysisResolver;
-  AnalysisResolver *Resolver;  // AnalysisResolver this pass is owned by...
   AnalysisResolver_New *Resolver_New;  // Used to resolve analysis
   const PassInfo *PassInfoCache;
 
@@ -77,7 +71,7 @@ class Pass {
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
-  Pass() : Resolver(0), Resolver_New(0), PassInfoCache(0) {}
+  Pass() : Resolver_New(0), PassInfoCache(0) {}
   virtual ~Pass() {} // Destructor is virtual so we can be subclassed
 
   /// getPassName - Return a nice clean name for a pass.  This usually
@@ -204,12 +198,8 @@ public:
   virtual bool runPass(Module &M) { return runOnModule(M); }
   virtual bool runPass(BasicBlock&) { return false; }
 
-#ifdef USE_OLD_PASSMANAGER
-  virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
-#else
   // Force out-of-line virtual method.
   virtual ~ModulePass();
-#endif
 };
 
 
@@ -232,15 +222,8 @@ public:
   ///
   virtual bool runOnModule(Module &M) { return false; }
 
-#ifdef USE_OLD_PASSMANAGER
-private:
-  template<typename Trait> friend class PassManagerT;
-  friend class ModulePassManager;
-  virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
-#else
   // Force out-of-line virtual method.
   virtual ~ImmutablePass();
-#endif
 };
 
 //===----------------------------------------------------------------------===//
@@ -280,15 +263,6 @@ public:
   ///
   bool run(Function &F);
 
-#ifdef USE_OLD_PASSMANAGER
-protected:
-  template<typename Trait> friend class PassManagerT;
-  friend class ModulePassManager;
-  friend class FunctionPassManagerT;
-  friend class BasicBlockPassManager;
-  virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
-  virtual void addToPassManager(FunctionPassManagerT *PM, AnalysisUsage &AU);
-#endif
 };
 
 
@@ -342,17 +316,6 @@ public:
   virtual bool runPass(Module &M) { return false; }
   virtual bool runPass(BasicBlock &BB);
 
-#ifdef USE_OLD_PASSMANAGER
-private:
-  template<typename Trait> friend class PassManagerT;
-  friend class FunctionPassManagerT;
-  friend class BasicBlockPassManager;
-  virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU) {
-    FunctionPass::addToPassManager(PM, AU);
-  }
-  virtual void addToPassManager(FunctionPassManagerT *PM, AnalysisUsage &AU);
-  virtual void addToPassManager(BasicBlockPassManager *PM,AnalysisUsage &AU);
-#endif
 };
 
 /// If the user specifies the -time-passes argument on an LLVM tool command line
