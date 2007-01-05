@@ -19,19 +19,19 @@
 
 implementation   ; Functions:
 
-define i32 @sext %al(i32 @sext %x.s, i32 @sext %y.s) {
+define i32 %al(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
 	%tmp.3.s = add i32 %y.s, %x.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
-define i32 @sext %ali(i32 @sext %x.s) {
+define i32 %ali(i32 sext %x.s) sext {
 entry:
 	%tmp.3.s = add i32 100, %x.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
-define i64 @sext %aq(i64 @sext %x.s, i64 @sext %y.s) {
+define i64 %aq(i64 sext %x.s, i64 sext %y.s) sext {
 entry:
 	%tmp.3.s = add i64 %y.s, %x.s		; <i64> [#uses=1]
 	ret i64 %tmp.3.s
@@ -43,13 +43,13 @@ entry:
 	ret i64 %tmp.3.s
 }
 
-define i32 @sext %sl(i32 @sext %x.s, i32 @sext %y.s) {
+define i32 %sl(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
 	%tmp.3.s = sub i32 %y.s, %x.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
-define i32 @sext %sli(i32 @sext %x.s) {
+define i32 %sli(i32 sext %x.s) sext {
 entry:
 	%tmp.3.s = sub i32 %x.s, 100		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
@@ -67,14 +67,14 @@ entry:
 	ret i64 %tmp.3.s
 }
 
-define i32 @sext %a4l(i32 @sext %x.s, i32 @sext %y.s) {
+define i32 %a4l(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
 	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
 	%tmp.3.s = add i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
-define i32 @sext %a8l(i32 @sext %x.s, i32 @sext %y.s) {
+define i32 %a8l(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
 	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
 	%tmp.3.s = add i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
@@ -95,14 +95,14 @@ entry:
 	ret i64 %tmp.3.s
 }
 
-define i32 @sext %a4li(i32 @sext %y.s) {
+define i32 %a4li(i32 sext %y.s) sext {
 entry:
 	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
 	%tmp.3.s = add i32 100, %tmp.1.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
-define i32 @sext %a8li(i32 @sext %y.s) {
+define i32 %a8li(i32 sext %y.s) sext {
 entry:
 	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
 	%tmp.3.s = add i32 100, %tmp.1.s		; <i32> [#uses=1]
@@ -123,14 +123,14 @@ entry:
 	ret i64 %tmp.3.s
 }
 
-define i32 @sext %s4l(i32 @sext %x.s, i32 @sext %y.s) {
+define i32 %s4l(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
 	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
 	%tmp.3.s = sub i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
-define i32 @sext %s8l(i32 @sext %x.s, i32 @sext %y.s) {
+define i32 %s8l(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
 	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
 	%tmp.3.s = sub i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
@@ -151,14 +151,14 @@ entry:
 	ret i64 %tmp.3.s
 }
 
-define i32 @sext %s4li(i32 @sext %y.s) {
+define i32 %s4li(i32 sext %y.s) sext {
 entry:
 	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
 	%tmp.3.s = sub i32 %tmp.1.s, 100		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
-define i32 @sext %s8li(i32 @sext %y.s) {
+define i32 %s8li(i32 sext %y.s) sext {
 entry:
 	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
 	%tmp.3.s = sub i32 %tmp.1.s, 100		; <i32> [#uses=1]
