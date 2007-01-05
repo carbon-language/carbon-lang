@@ -1,53 +1,53 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep 'extsh\|rlwinm'
+; RUN: llvm-as < %s | llc -march=ppc32 &&
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep 'extsh\|rlwinm'
 
-declare short @sext %foo()
+declare i16 %foo() sext 
 
-int %test1(short @sext %X) {
-	%Y = cast short %X to int  ;; dead
-	ret int %Y
+define i32 %test1(i16 sext %X) {
+	%Y = sext i16 %X to i32  ;; dead
+	ret i32 %Y
 }
 
-int %test2(ushort @zext %X) {
-	%Y = cast ushort %X to int
-	%Z = and int %Y, 65535      ;; dead
-	ret int %Z
+define i32 %test2(i16 zext %X) {
+	%Y = sext i16 %X to i32
+	%Z = and i32 %Y, 65535      ;; dead
+	ret i32 %Z
 }
 
-void %test3() {
-	%tmp.0 = call short %foo()            ;; no extsh!
-	%tmp.1 = setlt short %tmp.0, 1234
+define void %test3() {
+	%tmp.0 = call i16 %foo() sext            ;; no extsh!
+	%tmp.1 = icmp slt i16 %tmp.0, 1234
 	br bool %tmp.1, label %then, label %UnifiedReturnBlock
 
 then:	
-	call int %test1(short 0)
+	call i32 %test1(i16 0 sext)
 	ret void
 UnifiedReturnBlock:
 	ret void
 }
 
-uint %test4(ushort* %P) {
-        %tmp.1 = load ushort* %P
-        %tmp.2 = cast ushort %tmp.1 to uint
-        %tmp.3 = and uint %tmp.2, 255
-        ret uint %tmp.3
+define i32 %test4(i16* %P) {
+        %tmp.1 = load i16* %P
+        %tmp.2 = zext i16 %tmp.1 to i32
+        %tmp.3 = and i32 %tmp.2, 255
+        ret i32 %tmp.3
 }
 
-uint %test5(short* %P) {
-        %tmp.1 = load short* %P
-        %tmp.2 = cast short %tmp.1 to ushort
-        %tmp.3 = cast ushort %tmp.2 to uint
-        %tmp.4 = and uint %tmp.3, 255
-        ret uint %tmp.4
+define i32 %test5(i16* %P) {
+        %tmp.1 = load i16* %P
+        %tmp.2 = bitcast i16 %tmp.1 to i16
+        %tmp.3 = zext i16 %tmp.2 to i32
+        %tmp.4 = and i32 %tmp.3, 255
+        ret i32 %tmp.4
 }
 
-uint %test6(uint* %P) {
-        %tmp.1 = load uint* %P
-        %tmp.2 = and uint %tmp.1, 255
-        ret uint %tmp.2
+define i32 %test6(i32* %P) {
+        %tmp.1 = load i32* %P
+        %tmp.2 = and i32 %tmp.1, 255
+        ret i32 %tmp.2
 }
 
-ushort @zext %test7(float %a) {
-        %tmp.1 = cast float %a to ushort
-        ret ushort %tmp.1
+define i16 %test7(float %a) zext {
+        %tmp.1 = fptoui float %a to i16
+        ret i16 %tmp.1
 }
