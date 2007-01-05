@@ -29,5 +29,4 @@ test:
 valgrind:
 	valgrind ../../Debug/bin/llvm-upgrade -o /dev/null -f $(TESTCASE)
 
-$(PROJ_SRC_DIR)/UpgradeParser.h: $(PROJ_SRC_DIR)/UpgradeParser.y
-$(PROJ_SRC_DIR)/UpgradeParser.cpp: $(PROJ_SRC_DIR)/UpgradeParser.y
+$(ObjDir)/UpgradeLexer.o: $(PROJ_SRC_DIR)/UpgradeParser.y $(PROJ_SRC_DIR)/UpgradeParser.h
