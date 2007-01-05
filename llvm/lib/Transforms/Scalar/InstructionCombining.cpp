@@ -5173,30 +5173,51 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   }
   
   if (I.isEquality()) {
-    Value *A, *B;
-    if (match(Op0, m_Xor(m_Value(A), m_Value(B))) &&
-        (A == Op1 || B == Op1)) {
-      // (A^B) == A  ->  B == 0
-      Value *OtherVal = A == Op1 ? B : A;
-      return new ICmpInst(I.getPredicate(), OtherVal,
-                          Constant::getNullValue(A->getType()));
-    } else if (match(Op1, m_Xor(m_Value(A), m_Value(B))) &&
-               (A == Op0 || B == Op0)) {
+    Value *A, *B, *C, *D;
+    if (match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
+      if (A == Op1 || B == Op1) {    // (A^B) == A  ->  B == 0
+        Value *OtherVal = A == Op1 ? B : A;
+        return new ICmpInst(I.getPredicate(), OtherVal,
+                            Constant::getNullValue(A->getType()));
+      }
+
+      if (match(Op1, m_Xor(m_Value(C), m_Value(D)))) {
+        // A^c1 == C^c2 --> A == C^(c1^c2)
+        if (ConstantInt *C1 = dyn_cast<ConstantInt>(B))
+          if (ConstantInt *C2 = dyn_cast<ConstantInt>(D))
+            if (Op1->hasOneUse()) {
+              Constant *NC = ConstantExpr::getXor(C1, C2);
+              Instruction *Xor = BinaryOperator::createXor(C, NC, "tmp");
+              return new ICmpInst(I.getPredicate(), A,
+                                  InsertNewInstBefore(Xor, I));
+            }
+        
+        // A^B == A^D -> B == D
+        if (A == C) return new ICmpInst(I.getPredicate(), B, D);
+        if (A == D) return new ICmpInst(I.getPredicate(), B, C);
+        if (B == C) return new ICmpInst(I.getPredicate(), A, D);
+        if (B == D) return new ICmpInst(I.getPredicate(), A, C);
+      }
+    }
+    
+    if (match(Op1, m_Xor(m_Value(A), m_Value(B))) &&
+        (A == Op0 || B == Op0)) {
       // A == (A^B)  ->  B == 0
       Value *OtherVal = A == Op0 ? B : A;
       return new ICmpInst(I.getPredicate(), OtherVal,
                           Constant::getNullValue(A->getType()));
-    } else if (match(Op0, m_Sub(m_Value(A), m_Value(B))) && A == Op1) {
+    }
+    if (match(Op0, m_Sub(m_Value(A), m_Value(B))) && A == Op1) {
       // (A-B) == A  ->  B == 0
       return new ICmpInst(I.getPredicate(), B,
                           Constant::getNullValue(B->getType()));
-    } else if (match(Op1, m_Sub(m_Value(A), m_Value(B))) && A == Op0) {
+    }
+    if (match(Op1, m_Sub(m_Value(A), m_Value(B))) && A == Op0) {
       // A == (A-B)  ->  B == 0
       return new ICmpInst(I.getPredicate(), B,
                           Constant::getNullValue(B->getType()));
     }
     
-    Value *C, *D;
     // (X&Z) == (Y&Z) -> (X^Y) & Z == 0
     if (Op0->hasOneUse() && Op1->hasOneUse() &&
         match(Op0, m_And(m_Value(A), m_Value(B))) && 
