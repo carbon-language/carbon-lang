@@ -1703,7 +1703,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
         if (CI->getZExtValue() == 0) continue;
         uint64_t Offs = 
-            TD->getTypeSize(Ty)*cast<ConstantInt>(CI)->getZExtValue();
+            TD->getTypeSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         N = DAG.getNode(ISD::ADD, N.getValueType(), N, getIntPtrConstant(Offs));
         continue;
       }
