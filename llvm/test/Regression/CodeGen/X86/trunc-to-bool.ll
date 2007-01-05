@@ -5,7 +5,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 | grep '\(and\)\|\(test.*\$1\)' | \
 ; RUN:   wc -l | grep 6
 
-define bool @zext %test1(i32 %X) {
+define bool %test1(i32 %X) zext {
     %Y = trunc i32 %X to bool
     ret bool %Y
 }
