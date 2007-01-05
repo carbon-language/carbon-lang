@@ -89,9 +89,9 @@ public:
   /// codegen.
   bool usesGlobalOffsetTable() const { return UsesGlobalOffsetTable; }
   
-  /// isSetCCExpensive - Return true if the setcc operation is expensive for
+  /// isSelectExpensive - Return true if the select operation is expensive for
   /// this target.
-  bool isSetCCExpensive() const { return SetCCIsExpensive; }
+  bool isSelectExpensive() const { return SelectIsExpensive; }
   
   /// isIntDivCheap() - Return true if integer divide is usually cheaper than
   /// a sequence of several shifts, adds, and multiplies for this target.
@@ -608,10 +608,9 @@ protected:
     StackPointerRegisterToSaveRestore = R;
   }
   
-  /// setSetCCIxExpensive - This is a short term hack for targets that codegen
-  /// setcc as a conditional branch.  This encourages the code generator to fold
-  /// setcc operations into other operations if possible.
-  void setSetCCIsExpensive() { SetCCIsExpensive = true; }
+  /// SelectIsExpensive - Tells the code generator not to expand operations
+  /// into sequences that use the select operations if possible.
+  void setSelectIsExpensive() { SelectIsExpensive = true; }
 
   /// setIntDivIsCheap - Tells the code generator that integer divide is
   /// expensive, and if possible, should be replaced by an alternate sequence
@@ -890,10 +889,9 @@ private:
 
   OutOfRangeShiftAmount ShiftAmtHandling;
 
-  /// SetCCIsExpensive - This is a short term hack for targets that codegen
-  /// setcc as a conditional branch.  This encourages the code generator to fold
-  /// setcc operations into other operations if possible.
-  bool SetCCIsExpensive;
+  /// SelectIsExpensive - Tells the code generator not to expand operations
+  /// into sequences that use the select operations if possible.
+  bool SelectIsExpensive;
 
   /// IntDivIsCheap - Tells the code generator not to expand integer divides by
   /// constants into a sequence of muls, adds, and shifts.  This is a hack until
