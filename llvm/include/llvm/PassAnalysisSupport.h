@@ -106,12 +106,12 @@ public:
 // the pass.
 //
 class PMDataManager;
-class AnalysisResolver_New {
+class AnalysisResolver {
 private:
-  AnalysisResolver_New();  // DO NOT IMPLEMENT
+  AnalysisResolver();  // DO NOT IMPLEMENT
 
 public:
-  AnalysisResolver_New(PMDataManager &P) : PM(P) { }
+  AnalysisResolver(PMDataManager &P) : PM(P) { }
   
   inline PMDataManager &getPMDataManager() { return PM; }
 
@@ -137,44 +137,13 @@ public:
 
   // AnalysisImpls - This keeps track of which passes implements the interfaces
   // that are required by the current pass (to implement getAnalysis()).
-  // NOTE : Remove AnalysisImpls from class Pass, when AnalysisResolver_New
+  // NOTE : Remove AnalysisImpls from class Pass, when AnalysisResolver
   // replaces AnalysisResolver
   std::vector<std::pair<const PassInfo*, Pass*> > AnalysisImpls;
 
 private:
   // PassManager that is used to resolve analysis info
   PMDataManager &PM;
-};
-
-//===----------------------------------------------------------------------===//
-// AnalysisResolver - Simple interface implemented by PassManager objects that
-// is used to pull analysis information out of them.
-//
-struct AnalysisResolver {
-  virtual ~AnalysisResolver();
-  virtual Pass *getAnalysisOrNullUp(AnalysisID ID) const = 0;
-  virtual Pass *getAnalysisOrNullDown(AnalysisID ID) const = 0;
-  virtual void addPass(ImmutablePass *IP, AnalysisUsage &AU) = 0;
-  Pass *getAnalysis(AnalysisID ID) const {
-    Pass *Result = getAnalysisOrNullUp(ID);
-    assert(Result && "Pass has an incorrect analysis uses set!");
-    return Result;
-  }
-
-  // getAnalysisToUpdate - Return an analysis result or null if it doesn't exist
-  Pass *getAnalysisToUpdate(AnalysisID ID) const {
-    return getAnalysisOrNullUp(ID);
-  }
-
-  // Methods for introspecting into pass manager objects...
-  virtual unsigned getDepth() const = 0;
-  virtual unsigned getNumContainedPasses() const = 0;
-  virtual const Pass *getContainedPass(unsigned N) const = 0;
-
-  virtual void markPassUsed(AnalysisID P, Pass *User) = 0;
-
-  void startPass(Pass *P) {}
-  void endPass(Pass *P) {}
 };
 
 /// getAnalysisToUpdate<AnalysisType>() - This function is used by subclasses
@@ -187,12 +156,12 @@ struct AnalysisResolver {
 ///
 template<typename AnalysisType>
 AnalysisType *Pass::getAnalysisToUpdate() const {
-  assert(Resolver_New && "Pass not resident in a PassManager object!");
+  assert(Resolver && "Pass not resident in a PassManager object!");
 
   const PassInfo *PI = getClassPassInfo<AnalysisType>();
   if (PI == 0) return 0;
   return dynamic_cast<AnalysisType*>
-    (Resolver_New->getAnalysisToUpdate(PI, true));
+    (Resolver->getAnalysisToUpdate(PI, true));
 }
 
 /// getAnalysis<AnalysisType>() - This function is used by subclasses to get
@@ -201,7 +170,7 @@ AnalysisType *Pass::getAnalysisToUpdate() const {
 ///
 template<typename AnalysisType>
 AnalysisType &Pass::getAnalysis() const {
-  assert(Resolver_New &&"Pass has not been inserted into a PassManager object!");
+  assert(Resolver &&"Pass has not been inserted into a PassManager object!");
 
   return getAnalysisID<AnalysisType>(getClassPassInfo<AnalysisType>());
 }
@@ -209,11 +178,11 @@ AnalysisType &Pass::getAnalysis() const {
 template<typename AnalysisType>
 AnalysisType &Pass::getAnalysisID(const PassInfo *PI) const {
   assert(PI && "getAnalysis for unregistered pass!");
-  assert(Resolver_New&&"Pass has not been inserted into a PassManager object!");
+  assert(Resolver&&"Pass has not been inserted into a PassManager object!");
   // PI *must* appear in AnalysisImpls.  Because the number of passes used
   // should be a small number, we just do a linear search over a (dense)
   // vector.
-  Pass *ResultPass = Resolver_New->findImplPass(PI);
+  Pass *ResultPass = Resolver->findImplPass(PI);
   assert (ResultPass && 
           "getAnalysis*() called on an analysis that was not "
           "'required' by pass!");

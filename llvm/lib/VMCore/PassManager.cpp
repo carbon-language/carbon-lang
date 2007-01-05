@@ -463,7 +463,7 @@ public:
       
       // P is a immutable pass and it will be managed by this
       // top level manager. Set up analysis resolver to connect them.
-      AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+      AnalysisResolver *AR = new AnalysisResolver(*this);
       P->setResolver(AR);
       initializeAnalysisImpl(P);
       addImmutablePass(IP);
@@ -571,7 +571,7 @@ public:
       
       // P is a immutable pass and it will be managed by this
       // top level manager. Set up analysis resolver to connect them.
-      AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+      AnalysisResolver *AR = new AnalysisResolver(*this);
       P->setResolver(AR);
       initializeAnalysisImpl(P);
       addImmutablePass(IP);
@@ -873,7 +873,7 @@ void PMDataManager::addPassToManager(Pass *P,
 
   // This manager is going to manage pass P. Set up analysis resolver
   // to connect them.
-  AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+  AnalysisResolver *AR = new AnalysisResolver(*this);
   P->setResolver(AR);
 
   if (ProcessAnalysis) {
@@ -956,7 +956,7 @@ void PMDataManager::initializeAnalysisImpl(Pass *P) {
     Pass *Impl = findAnalysisPass(*I, true);
     if (Impl == 0)
       assert(0 && "Analysis used but not available!");
-    AnalysisResolver_New *AR = P->getResolver();
+    AnalysisResolver *AR = P->getResolver();
     AR->addAnalysisImplsPair(*I, Impl);
   }
 }
@@ -1031,7 +1031,7 @@ void PMDataManager::dumpAnalysisSetInfo(const char *Msg, Pass *P,
 //===----------------------------------------------------------------------===//
 // NOTE: Is this the right place to define this method ?
 // getAnalysisToUpdate - Return an analysis result or null if it doesn't exist
-Pass *AnalysisResolver_New::getAnalysisToUpdate(AnalysisID ID, bool dir) const {
+Pass *AnalysisResolver::getAnalysisToUpdate(AnalysisID ID, bool dir) const {
   return PM.findAnalysisPass(ID, dir);
 }
 
@@ -1154,7 +1154,7 @@ FunctionPassManager::FunctionPassManager(ModuleProvider *P) {
   FPM->setTopLevelManager(FPM);
 
   PMDataManager *PMD = dynamic_cast<PMDataManager *>(FPM);
-  AnalysisResolver_New *AR = new AnalysisResolver_New(*PMD);
+  AnalysisResolver *AR = new AnalysisResolver(*PMD);
   FPM->setResolver(AR);
   
   MP = P;
@@ -1213,7 +1213,7 @@ bool FunctionPassManagerImpl::addPass(Pass *P) {
 
     // This top level manager is going to manage activeManager. 
     // Set up analysis resolver to connect them.
-    AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+    AnalysisResolver *AR = new AnalysisResolver(*this);
     activeManager->setResolver(AR);
 
     addPassManager(activeManager);
@@ -1520,7 +1520,7 @@ bool PassManagerImpl::addPass(Pass *P) {
 
     // This top level manager is going to manage activeManager. 
     // Set up analysis resolver to connect them.
-    AnalysisResolver_New *AR = new AnalysisResolver_New(*this);
+    AnalysisResolver *AR = new AnalysisResolver(*this);
     activeManager->setResolver(AR);
 
     addPassManager(activeManager);

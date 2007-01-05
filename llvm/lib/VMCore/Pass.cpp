@@ -23,13 +23,6 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-//   AnalysisResolver Class Implementation
-//
-
-AnalysisResolver::~AnalysisResolver() {
-}
-
-//===----------------------------------------------------------------------===//
 // Pass Implementation
 //
 
@@ -37,7 +30,7 @@ AnalysisResolver::~AnalysisResolver() {
 ModulePass::~ModulePass() { }
 
 bool Pass::mustPreserveAnalysisID(const PassInfo *AnalysisID) const {
-  return Resolver_New->getAnalysisToUpdate(AnalysisID, true) != 0;
+  return Resolver->getAnalysisToUpdate(AnalysisID, true) != 0;
 }
 
 // dumpPassStructure - Implement the -debug-passes=Structure option

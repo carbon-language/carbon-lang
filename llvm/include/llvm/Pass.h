@@ -49,7 +49,7 @@ template<class Trait> class PassManagerT;
 class BasicBlockPassManager;
 class FunctionPassManagerT;
 class ModulePassManager;
-class AnalysisResolver_New;
+class AnalysisResolver;
 
 // AnalysisID - Use the PassInfo to identify a pass...
 typedef const PassInfo* AnalysisID;
@@ -60,7 +60,7 @@ typedef const PassInfo* AnalysisID;
 /// constrained passes described below.
 ///
 class Pass {
-  AnalysisResolver_New *Resolver_New;  // Used to resolve analysis
+  AnalysisResolver *Resolver;  // Used to resolve analysis
   const PassInfo *PassInfoCache;
 
   // AnalysisImpls - This keeps track of which passes implement the interfaces
@@ -71,7 +71,7 @@ class Pass {
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
-  Pass() : Resolver_New(0), PassInfoCache(0) {}
+  Pass() : Resolver(0), PassInfoCache(0) {}
   virtual ~Pass() {} // Destructor is virtual so we can be subclassed
 
   /// getPassName - Return a nice clean name for a pass.  This usually
@@ -104,9 +104,9 @@ public:
   void print(std::ostream *O, const Module *M) const { if (O) print(*O, M); }
   void dump() const; // dump - call print(std::cerr, 0);
 
-  // Access AnalysisResolver_New
-  inline void setResolver(AnalysisResolver_New *AR) { Resolver_New = AR; }
-  inline AnalysisResolver_New *getResolver() { return Resolver_New; }
+  // Access AnalysisResolver
+  inline void setResolver(AnalysisResolver *AR) { Resolver = AR; }
+  inline AnalysisResolver *getResolver() { return Resolver; }
 
   /// getAnalysisUsage - This function should be overriden by passes that need
   /// analysis information to do their job.  If a pass specifies that it uses a
