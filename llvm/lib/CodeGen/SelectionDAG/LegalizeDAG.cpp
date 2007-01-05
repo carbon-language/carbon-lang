@@ -2354,11 +2354,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     case TargetLowering::Legal: break;
     case TargetLowering::Expand: {
-      // If this target supports fabs/fneg natively, do this efficiently.
-      if (TLI.getOperationAction(ISD::FABS, Tmp1.getValueType()) ==
-                                 TargetLowering::Legal &&
+      // If this target supports fabs/fneg natively and select is cheap,
+      // do this efficiently.
+      if (!TLI.isSelectExpensive() &&
+          TLI.getOperationAction(ISD::FABS, Tmp1.getValueType()) ==
+          TargetLowering::Legal &&
           TLI.getOperationAction(ISD::FNEG, Tmp1.getValueType()) ==
-                                 TargetLowering::Legal) {
+          TargetLowering::Legal) {
         // Get the sign bit of the RHS.
         MVT::ValueType IVT = 
           Tmp2.getValueType() == MVT::f32 ? MVT::i32 : MVT::i64;
