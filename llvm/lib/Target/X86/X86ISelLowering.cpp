@@ -250,9 +250,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
 
-  setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
-  setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
-
   if (X86ScalarSSE) {
     // Set up the FP register classes.
     addRegisterClass(MVT::f32, X86::FR32RegisterClass);
@@ -265,6 +262,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // Use XORP to simulate FNEG.
     setOperationAction(ISD::FNEG , MVT::f64, Custom);
     setOperationAction(ISD::FNEG , MVT::f32, Custom);
+
+    // Use ANDPD and ORPD to simulate FCOPYSIGN.
+    setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
+    setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
 
     // We don't support sin/cos/fmod
     setOperationAction(ISD::FSIN , MVT::f64, Expand);
@@ -283,7 +284,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // Set up the FP register classes.
     addRegisterClass(MVT::f64, X86::RFPRegisterClass);
 
-    setOperationAction(ISD::UNDEF, MVT::f64, Expand);
+    setOperationAction(ISD::UNDEF,     MVT::f64, Expand);
+    setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
+    setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
 
     if (!UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
@@ -4123,6 +4126,56 @@ SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(X86ISD::FXOR, VT, Op.getOperand(0), Mask);
 }
 
+SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
+  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType SrcVT = Op.getOperand(1).getValueType();
+  const Type *SrcTy =  MVT::getTypeForValueType(SrcVT);
+  // First get the sign bit of second operand.
+  std::vector<Constant*> CV;
+  if (SrcVT == MVT::f64) {
+    CV.push_back(ConstantFP::get(SrcTy, BitsToDouble(1ULL << 63)));
+    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+  } else {
+    CV.push_back(ConstantFP::get(SrcTy, BitsToFloat(1U << 31)));
+    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+  }
+  Constant *CS = ConstantStruct::get(CV);
+  SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
+  std::vector<MVT::ValueType> Tys;
+  Tys.push_back(VT);
+  Tys.push_back(MVT::Other);
+  SmallVector<SDOperand, 3> Ops;
+  Ops.push_back(DAG.getEntryNode());
+  Ops.push_back(CPIdx);
+  Ops.push_back(DAG.getSrcValue(NULL));
+  SDOperand Mask = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
+  SDOperand SignBit = DAG.getNode(X86ISD::FAND, SrcVT, Op.getOperand(1), Mask);
+
+  // Shift sign bit right or left if the two operands have different types.
+  if (MVT::getSizeInBits(SrcVT) > MVT::getSizeInBits(VT)) {
+    // Op0 is MVT::f32, Op1 is MVT::f64.
+    SignBit = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v2f64, SignBit);
+    SignBit = DAG.getNode(X86ISD::FSRL, MVT::v2f64, SignBit,
+                          DAG.getConstant(32, MVT::i32));
+    SignBit = DAG.getNode(ISD::BIT_CONVERT, MVT::v4f32, SignBit);
+    SignBit = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::f32, SignBit,
+                          DAG.getConstant(0, getPointerTy()));
+  } else if (MVT::getSizeInBits(SrcVT) < MVT::getSizeInBits(VT)) {
+    // Op0 is MVT::f64, Op1 is MVT::f32.
+    SignBit = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, SignBit);
+    SignBit = DAG.getNode(X86ISD::FSHL, MVT::v4f32, SignBit,
+                          DAG.getConstant(32, MVT::i32));
+    SignBit = DAG.getNode(ISD::BIT_CONVERT, MVT::v2f64, SignBit);
+    SignBit = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::f64, SignBit,
+                          DAG.getConstant(0, getPointerTy()));
+  }
+
+  // Or the first operand with the sign bit.
+  return DAG.getNode(X86ISD::FOR, VT, Op.getOperand(0), SignBit);
+}
+
 SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG,
                                         SDOperand Chain) {
   assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
@@ -4955,6 +5008,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::FABS:               return LowerFABS(Op, DAG);
   case ISD::FNEG:               return LowerFNEG(Op, DAG);
+  case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG, DAG.getEntryNode());
   case ISD::SELECT:             return LowerSELECT(Op, DAG);
   case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
@@ -4976,7 +5030,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SHLD:               return "X86ISD::SHLD";
   case X86ISD::SHRD:               return "X86ISD::SHRD";
   case X86ISD::FAND:               return "X86ISD::FAND";
+  case X86ISD::FOR:                return "X86ISD::FOR";
   case X86ISD::FXOR:               return "X86ISD::FXOR";
+  case X86ISD::FSHL:               return "X86ISD::FSHL";
+  case X86ISD::FSRL:               return "X86ISD::FSRL";
   case X86ISD::FILD:               return "X86ISD::FILD";
   case X86ISD::FILD_FLAG:          return "X86ISD::FILD_FLAG";
   case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";

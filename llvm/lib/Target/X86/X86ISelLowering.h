@@ -35,9 +35,19 @@ namespace llvm {
       /// to X86::ANDPS or X86::ANDPD.
       FAND,
 
+      /// FOR - Bitwise logical OR of floating point values. This corresponds
+      /// to X86::ORPS or X86::ORPD.
+      FOR,
+
       /// FXOR - Bitwise logical XOR of floating point values. This corresponds
       /// to X86::XORPS or X86::XORPD.
       FXOR,
+
+      /// FSHL, FSRL - Shift a floating point value (in SSE register) by n bits
+      /// while shifting in 0's. These corresponds to X86::PSLLDQ or
+      /// X86::PSRLDQ.
+      FSHL,
+      FSRL,
 
       /// FILD, FILD_FLAG - This instruction implements SINT_TO_FP with the
       /// integer source in memory and FP reg result.  This corresponds to the
@@ -389,6 +399,7 @@ namespace llvm {
     SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFABS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFNEG(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG, SDOperand Chain);
     SDOperand LowerSELECT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBRCOND(SDOperand Op, SelectionDAG &DAG);

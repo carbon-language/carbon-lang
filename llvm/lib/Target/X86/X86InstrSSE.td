@@ -18,14 +18,21 @@
 // SSE specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
+def SDTX86FPShiftOp : SDTypeProfile<1, 2, [ SDTCisSameAs<0, 1>,
+                                            SDTCisFP<0>, SDTCisInt<2> ]>;
+
 def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, [SDNPHasChain]>;
 def X86loadu   : SDNode<"X86ISD::LOAD_UA",   SDTLoad, [SDNPHasChain]>;
 def X86fmin    : SDNode<"X86ISD::FMIN",      SDTFPBinOp>;
 def X86fmax    : SDNode<"X86ISD::FMAX",      SDTFPBinOp>;
 def X86fand    : SDNode<"X86ISD::FAND",      SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
+def X86for     : SDNode<"X86ISD::FOR",       SDTFPBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
 def X86fxor    : SDNode<"X86ISD::FXOR",      SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
+def X86fshl    : SDNode<"X86ISD::FSHL",      SDTX86FPShiftOp>;
+def X86fsrl    : SDNode<"X86ISD::FSRL",      SDTX86FPShiftOp>;
 def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest,
                         [SDNPHasChain, SDNPOutFlag]>;
 def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest,
@@ -607,9 +614,11 @@ def FsANDPDrr : PDI<0x54, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
                   "andpd {$src2, $dst|$dst, $src2}",
                   [(set FR64:$dst, (X86fand FR64:$src1, FR64:$src2))]>;
 def FsORPSrr  : PSI<0x56, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                  "orps {$src2, $dst|$dst, $src2}", []>;
+                  "orps {$src2, $dst|$dst, $src2}",
+                  [(set FR32:$dst, (X86for FR32:$src1, FR32:$src2))]>;
 def FsORPDrr  : PDI<0x56, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                  "orpd {$src2, $dst|$dst, $src2}", []>;
+                  "orpd {$src2, $dst|$dst, $src2}",
+                  [(set FR64:$dst, (X86for FR64:$src1, FR64:$src2))]>;
 def FsXORPSrr : PSI<0x57, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                   "xorps {$src2, $dst|$dst, $src2}",
                   [(set FR32:$dst, (X86fxor FR32:$src1, FR32:$src2))]>;
@@ -626,9 +635,13 @@ def FsANDPDrm : PDI<0x54, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
                   [(set FR64:$dst, (X86fand FR64:$src1,
                                     (X86loadpf64 addr:$src2)))]>;
 def FsORPSrm  : PSI<0x56, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
-                  "orps {$src2, $dst|$dst, $src2}", []>;
+                  "orps {$src2, $dst|$dst, $src2}",
+                  [(set FR32:$dst, (X86for FR32:$src1,
+                                    (X86loadpf32 addr:$src2)))]>;
 def FsORPDrm  : PDI<0x56, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
-                  "orpd {$src2, $dst|$dst, $src2}", []>;
+                  "orpd {$src2, $dst|$dst, $src2}",
+                  [(set FR64:$dst, (X86for FR64:$src1,
+                                    (X86loadpf64 addr:$src2)))]>;
 def FsXORPSrm : PSI<0x57, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
                   "xorps {$src2, $dst|$dst, $src2}",
                   [(set FR32:$dst, (X86fxor FR32:$src1,
@@ -1364,6 +1377,10 @@ let Predicates = [HasSSE2] in {
             (v2i64 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
   def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
             (v2i64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
+  def : Pat<(v4f32 (X86fshl VR128:$src1, i32immSExt8:$src2)),
+            (v4f32 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
+  def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
+            (v2f64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
 }
 
 // Logical
