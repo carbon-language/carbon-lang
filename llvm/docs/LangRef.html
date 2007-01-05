@@ -495,8 +495,10 @@ variable is defined to be internal, if another module defined a "<tt>.LC0</tt>"
 variable and was linked with this one, one of the two would be renamed,
 preventing a collision.  Since "<tt>main</tt>" and "<tt>puts</tt>" are
 external (i.e., lacking any linkage declarations), they are accessible
-outside of the current module.  It is illegal for a function <i>declaration</i>
-to have any linkage type other than "externally visible".</a></p>
+outside of the current module.</p>
+<p>It is illegal for a function <i>declaration</i>
+to have any linkage type other than "externally visible", <tt>dllimport</tt>,
+or <tt>extern_weak</tt>.</a></p>
 
 </div>
 
