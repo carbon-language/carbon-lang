@@ -533,15 +533,17 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
 static
 SDOperand ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT::ValueType NVT,
                                       SelectionDAG &DAG, TargetLowering &TLI) {
+  MVT::ValueType VT = Node->getValueType(0);
   MVT::ValueType SrcVT = Node->getOperand(1).getValueType();
   MVT::ValueType SrcNVT = (SrcVT == MVT::f64) ? MVT::i64 : MVT::i32;
+
   // First get the sign bit of second operand.
-  SDOperand Mask = (SrcVT == MVT::f64)
+  SDOperand Mask1 = (SrcVT == MVT::f64)
     ? DAG.getConstantFP(BitsToDouble(1ULL << 63), SrcVT)
     : DAG.getConstantFP(BitsToFloat(1U << 31), SrcVT);
-  Mask = DAG.getNode(ISD::BIT_CONVERT, SrcNVT, Mask);
+  Mask1 = DAG.getNode(ISD::BIT_CONVERT, SrcNVT, Mask1);
   SDOperand SignBit= DAG.getNode(ISD::BIT_CONVERT, SrcNVT, Node->getOperand(1));
-  SignBit = DAG.getNode(ISD::AND, SrcNVT, SignBit, Mask);
+  SignBit = DAG.getNode(ISD::AND, SrcNVT, SignBit, Mask1);
   // Shift right or sign-extend it if the two operands have different types.
   int SizeDiff = MVT::getSizeInBits(SrcNVT) - MVT::getSizeInBits(NVT);
   if (SizeDiff > 0) {
@@ -550,8 +552,16 @@ SDOperand ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT::ValueType NVT,
     SignBit = DAG.getNode(ISD::TRUNCATE, NVT, SignBit);
   } else if (SizeDiff < 0)
     SignBit = DAG.getNode(ISD::SIGN_EXTEND, NVT, SignBit);
-  // Or the first operand with the sign bit.
+
+  // Clear the sign bit of first operand.
+  SDOperand Mask2 = (VT == MVT::f64)
+    ? DAG.getConstantFP(BitsToDouble(~(1ULL << 63)), VT)
+    : DAG.getConstantFP(BitsToFloat(~(1U << 31)), VT);
+  Mask2 = DAG.getNode(ISD::BIT_CONVERT, NVT, Mask2);
   SDOperand Result = DAG.getNode(ISD::BIT_CONVERT, NVT, Node->getOperand(0));
+  Result = DAG.getNode(ISD::AND, NVT, Result, Mask2);
+
+  // Or the value with the sign bit.
   Result = DAG.getNode(ISD::OR, NVT, Result, SignBit);
   return Result;
 }
