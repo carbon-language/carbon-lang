@@ -8833,8 +8833,30 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   if (isa<UndefValue>(SVI.getOperand(2)))
     return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
   
-  // TODO: If we have shuffle(x, undef, mask) and any elements of mask refer to
+  // If we have shuffle(x, undef, mask) and any elements of mask refer to
   // the undef, change them to undefs.
+  if (isa<UndefValue>(SVI.getOperand(1))) {
+    // Scan to see if there are any references to the RHS.  If so, replace them
+    // with undef element refs and set MadeChange to true.
+    for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
+      if (Mask[i] >= e && Mask[i] != 2*e) {
+        Mask[i] = 2*e;
+        MadeChange = true;
+      }
+    }
+    
+    if (MadeChange) {
+      // Remap any references to RHS to use LHS.
+      std::vector<Constant*> Elts;
+      for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
+        if (Mask[i] == 2*e)
+          Elts.push_back(UndefValue::get(Type::Int32Ty));
+        else
+          Elts.push_back(ConstantInt::get(Type::Int32Ty, Mask[i]));
+      }
+      SVI.setOperand(2, ConstantPacked::get(Elts));
+    }
+  }
   
   // Canonicalize shuffle(x    ,x,mask) -> shuffle(x, undef,mask')
   // Canonicalize shuffle(undef,x,mask) -> shuffle(x, undef,mask').
