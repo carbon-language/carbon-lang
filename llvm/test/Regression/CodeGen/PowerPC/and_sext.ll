@@ -1,29 +1,29 @@
 ; These tests should not contain a sign extend.
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep extsh  &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep extsb
+; RUN: llvm-as < %s | llc -march=ppc32 &&
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep extsh  &&
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep extsb
 
-int %test1(uint %mode.0.i.0) {
-        %tmp.79 = cast uint %mode.0.i.0 to short
-        %tmp.80 = cast short %tmp.79 to int
-        %tmp.81 = and int %tmp.80, 24
-        ret int %tmp.81
+define i32 %test1(i32 %mode.0.i.0) {
+        %tmp.79 = trunc i32 %mode.0.i.0 to i16
+        %tmp.80 = sext i16 %tmp.79 to i32
+        %tmp.81 = and i32 %tmp.80, 24
+        ret i32 %tmp.81
 }
 
-short %test2(short %X, short %x) {
-        %tmp = cast short %X to int
-        %tmp1 = cast short %x to int
-        %tmp2 = add int %tmp, %tmp1
-        %tmp4 = shr int %tmp2, ubyte 1
-        %tmp4 = cast int %tmp4 to short
-        %tmp45 = cast short %tmp4 to int
-        %retval = cast int %tmp45 to short
-        ret short %retval
+define i16 %test2(i16 sext %X, i16 sext %x) sext {
+        %tmp = sext i16 %X to i32
+        %tmp1 = sext i16 %x to i32
+        %tmp2 = add i32 %tmp, %tmp1
+        %tmp4 = ashr i32 %tmp2, i8 1
+        %tmp4 = trunc i32 %tmp4 to i16
+        %tmp45 = sext i16 %tmp4 to i32
+        %retval = trunc i32 %tmp45 to i16
+        ret i16 %retval
 }
 
-short %test3(uint %X) {
-        %tmp1 = shr uint %X, ubyte 16
-        %tmp1 = cast uint %tmp1 to short
-        ret short %tmp1
+define i16 %test3(i32 zext %X) sext {
+        %tmp1 = lshr i32 %X, i8 16
+        %tmp1 = trunc i32 %tmp1 to i16
+        ret i16 %tmp1
 }
 
