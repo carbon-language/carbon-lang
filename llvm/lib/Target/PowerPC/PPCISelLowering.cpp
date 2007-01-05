@@ -36,8 +36,6 @@ static cl::opt<bool> EnablePPCPreinc("enable-ppc-preinc");
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   : TargetLowering(TM), PPCSubTarget(*TM.getSubtargetImpl()) {
     
-  // Fold away setcc operations if possible.
-  setSetCCIsExpensive();
   setPow2DivIsCheap();
   
   // Use _setjmp/_longjmp instead of setjmp/longjmp.
