@@ -1871,10 +1871,16 @@ FoundSExt:
   if (dyn_castFoldableMul(RHS, C2) == LHS)
     return BinaryOperator::createMul(LHS, AddOne(C2));
 
+  // X + ~X --> -1   since   ~X = -X-1
+  if (dyn_castNotVal(LHS) == RHS ||
+      dyn_castNotVal(RHS) == LHS)
+    return ReplaceInstUsesWith(I, ConstantInt::getAllOnesValue(I.getType()));
+  
 
   // (A & C1)+(B & C2) --> (A & C1)|(B & C2) iff C1&C2 == 0
   if (match(RHS, m_And(m_Value(), m_ConstantInt(C2))))
-    if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2))) return R;
+    if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2)))
+      return R;
 
   if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
     Value *X = 0;
