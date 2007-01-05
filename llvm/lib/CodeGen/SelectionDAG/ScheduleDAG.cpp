@@ -307,7 +307,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
   } else if (ConstantSDNode *C =
              dyn_cast<ConstantSDNode>(Op)) {
     MI->addImmOperand(C->getValue());
-  } else if (RegisterSDNode*R =
+  } else if (RegisterSDNode *R =
              dyn_cast<RegisterSDNode>(Op)) {
     MI->addRegOperand(R->getReg(), false);
   } else if (GlobalAddressSDNode *TGA =
@@ -457,7 +457,11 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     case ISD::TokenFactor:
       break;
     case ISD::CopyToReg: {
-      unsigned InReg = getVR(Node->getOperand(2), VRBaseMap);
+      unsigned InReg;
+      if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Node->getOperand(2)))
+        InReg = R->getReg();
+      else
+        InReg = getVR(Node->getOperand(2), VRBaseMap);
       unsigned DestReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
       if (InReg != DestReg)   // Coalesced away the copy?
         MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg,
