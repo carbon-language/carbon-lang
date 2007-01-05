@@ -181,3 +181,12 @@ int %test26(int %a, int %b) {
         ret int %tmp4
 }
 
+
+i32 %test27(i32 %b, i32 %c, i32 %d) {
+        %tmp2 = xor i32 %d, %b
+        %tmp5 = xor i32 %d, %c
+        %tmp = icmp eq i32 %tmp2, %tmp5
+        %tmp6 = zext bool %tmp to i32
+        ret i32 %tmp6
+}
+
