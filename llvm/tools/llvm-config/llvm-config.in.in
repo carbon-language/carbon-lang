@@ -45,6 +45,7 @@ my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
 #---- end autoconf values ----
 
 #---- begin Makefile values ----
+my $CFLAGS              = q{@LLVM_CFLAGS@};
 my $CXXFLAGS            = q{@LLVM_CXXFLAGS@};
 my $LDFLAGS             = q{@LLVM_LDFLAGS@};
 my $SYSTEM_LIBS         = q{@LIBS@};
@@ -107,6 +108,8 @@ foreach my $arg (@ARGV) {
             $has_opt = 1; print "$INCLUDEDIR\n";
         } elsif ($arg eq "--libdir") {
             $has_opt = 1; print "$LIBDIR\n";
+        } elsif ($arg eq "--cflags") {
+            $has_opt = 1; print "-I$INCLUDEDIR $CFLAGS\n";
         } elsif ($arg eq "--cxxflags") {
             $has_opt = 1; print "-I$INCLUDEDIR $CXXFLAGS\n";
         } elsif ($arg eq "--ldflags") {
@@ -178,6 +181,7 @@ Options:
   --bindir               Directory containing LLVM executables.
   --includedir           Directory containing LLVM headers.
   --libdir               Directory containing LLVM libraries.
+  --cflags               C compiler flags for files that include LLVM headers.
   --cxxflags             C++ compiler flags for files that include LLVM headers.
   --ldflags              Print Linker flags.
   --libs                 Libraries needed to link against LLVM components.
