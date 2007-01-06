@@ -3357,7 +3357,7 @@ yyreduce:
   case 167:
 #line 1162 "/proj/llvm/llvm-3/tools/llvm-upgrade/UpgradeParser.y"
     {
-    *(yyvsp[-6].String) += "(" + *(yyvsp[-5].String) + "," + *(yyvsp[-3].Const).cnst + "," + *(yyvsp[-1].Const).cnst + ")";
+    *(yyvsp[-6].String) += " " + *(yyvsp[-5].String) + " (" +  *(yyvsp[-3].Const).cnst + "," + *(yyvsp[-1].Const).cnst + ")";
     delete (yyvsp[-5].String); (yyvsp[-3].Const).destroy(); (yyvsp[-1].Const).destroy();
     (yyval.String) = (yyvsp[-6].String);
   ;}
@@ -3366,7 +3366,7 @@ yyreduce:
   case 168:
 #line 1167 "/proj/llvm/llvm-3/tools/llvm-upgrade/UpgradeParser.y"
     {
-    *(yyvsp[-6].String) += "(" + *(yyvsp[-5].String) + "," + *(yyvsp[-3].Const).cnst + "," + *(yyvsp[-1].Const).cnst + ")";
+    *(yyvsp[-6].String) += " " + *(yyvsp[-5].String) + " (" + *(yyvsp[-3].Const).cnst + "," + *(yyvsp[-1].Const).cnst + ")";
     delete (yyvsp[-5].String); (yyvsp[-3].Const).destroy(); (yyvsp[-1].Const).destroy();
     (yyval.String) = (yyvsp[-6].String);
   ;}
