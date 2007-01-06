@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implementes link time optimization library. This library is 
+// This file implements the Link Time Optimization library. This library is 
 // intended to be used by linker to optimize code at link time.
 //
 //===----------------------------------------------------------------------===//
