@@ -388,10 +388,6 @@ static bool ValueRequiresCast(Instruction::CastOps opcode, const Value *V,
                               const Type *Ty, TargetData *TD) {
   if (V->getType() == Ty || isa<Constant>(V)) return false;
   
-  // If this is a noop cast, it isn't real codegen.
-  if (V->getType()->canLosslesslyBitCastTo(Ty))
-    return false;
-
   // If this is another cast that can be eliminated, it isn't codegen either.
   if (const CastInst *CI = dyn_cast<CastInst>(V))
     if (isEliminableCastPair(CI, opcode, Ty, TD)) 
