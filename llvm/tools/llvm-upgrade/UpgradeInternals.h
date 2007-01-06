@@ -106,6 +106,10 @@ struct TypeInfo {
     return atoi(&((getNewTy().c_str())[1])); // skip the slash
   }
 
+  typedef std::vector<const TypeInfo*> UpRefStack;
+  void getSignedness(unsigned &sNum, unsigned &uNum, UpRefStack& stk) const;
+  std::string makeUniqueName(const std::string& BaseName) const;
+
   const std::string& getNewTy() const { return newTy; }
   const TypeInfo* getResultType() const { return resultTy; }
   const TypeInfo* getElementType() const { return elemTy; }
