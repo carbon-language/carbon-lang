@@ -131,6 +131,9 @@ bool PPCTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
 
 bool PPCTargetMachine::addObjectWriter(FunctionPassManager &PM, bool Fast,
                                        std::ostream &Out) {
+  // FIXME: until the macho writer is 100% functional, diable this by default.
+  return true;
+  
   // FIXME: support PPC ELF files at some point
   addPPCMachOObjectWriterPass(PM, Out, *this);
   return false;
