@@ -900,8 +900,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
              IE = SI->second.IVs.end(); II != IE; ++II)
         // FIXME: Only handle base == 0 for now.
         // Only reuse previous IV if it would not require a type conversion.
-        if (isZero(II->Base) &&
-            II->Base->getType()->canLosslesslyBitCastTo(Ty)) {
+        if (isZero(II->Base) && II->Base->getType() == Ty) {
           IV = *II;
           return Scale;
         }
