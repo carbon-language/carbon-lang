@@ -1160,12 +1160,12 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     $$ = $1;
   }
   | ICMP IPredicates '(' ConstVal ',' ConstVal ')' {
-    *$1 += "(" + *$2 + "," + *$4.cnst + "," + *$6.cnst + ")";
+    *$1 += " " + *$2 + " (" +  *$4.cnst + "," + *$6.cnst + ")";
     delete $2; $4.destroy(); $6.destroy();
     $$ = $1;
   }
   | FCMP FPredicates '(' ConstVal ',' ConstVal ')' {
-    *$1 += "(" + *$2 + "," + *$4.cnst + "," + *$6.cnst + ")";
+    *$1 += " " + *$2 + " (" + *$4.cnst + "," + *$6.cnst + ")";
     delete $2; $4.destroy(); $6.destroy();
     $$ = $1;
   }
