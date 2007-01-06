@@ -131,8 +131,8 @@ const TypeInfo* TypeInfo::get(const std::string& newType, const TypeInfo* resTy,
 
 const TypeInfo* TypeInfo::resolve() const {
   if (isUnresolved()) {
-    if (getNewTy()[0] == '%' && isdigit(getNewTy()[1])) {
-      unsigned ref = atoi(&((getNewTy().c_str())[1])); // skip the %
+    if (getNewTy()[0] == '%' && isdigit(newTy[1])) {
+      unsigned ref = atoi(&((newTy.c_str())[1])); // skip the %
       if (ref < EnumeratedTypes.size()) {
         return EnumeratedTypes[ref];
       } else {
@@ -141,7 +141,7 @@ const TypeInfo* TypeInfo::resolve() const {
         yyerror(msg.c_str());
       }
     } else {
-      TypeMap::iterator I = NamedTypes.find(getNewTy());
+      TypeMap::iterator I = NamedTypes.find(newTy);
       if (I != NamedTypes.end()) {
         return I->second;
       } else {
@@ -311,6 +311,110 @@ const TypeInfo* TypeInfo::getIndexedType(const ValueInfo&  VI) const {
     return elemTy;
   yyerror("Invalid type for getIndexedType");
   return 0;
+}
+
+void TypeInfo::getSignedness(unsigned &sNum, unsigned &uNum, 
+                             UpRefStack& stack) const {
+  switch (oldTy) {
+    default:
+    case OpaqueTy: case LabelTy: case VoidTy: case BoolTy: 
+    case FloatTy : case DoubleTy: case UpRefTy:
+      return;
+    case SByteTy: case ShortTy: case LongTy: case IntTy: 
+      sNum++;
+      return;
+    case UByteTy: case UShortTy: case UIntTy: case ULongTy: 
+      uNum++;
+      return;
+    case PointerTy:
+    case PackedTy: 
+    case ArrayTy:
+      stack.push_back(this);
+      elemTy->getSignedness(sNum, uNum, stack);
+      return;
+    case StructTy:
+    case PackedStructTy: {
+      stack.push_back(this);
+      for (unsigned i = 0; i < elements->size(); i++) {
+        (*elements)[i]->getSignedness(sNum, uNum, stack);
+      }
+      return;
+    }
+    case UnresolvedTy: {
+      const TypeInfo* Ty = this->resolve();
+      // Let's not recurse.
+      UpRefStack::const_iterator I = stack.begin(), E = stack.end();
+      for ( ; I != E && *I != Ty; ++I) 
+        ;
+      if (I == E)
+        Ty->getSignedness(sNum, uNum, stack);
+      return;
+    }
+  }
+}
+
+std::string AddSuffix(const std::string& Name, const std::string& Suffix) {
+  if (Name[Name.size()-1] == '"') {
+    std::string Result = Name;
+    Result.insert(Result.size()-1, Suffix);
+    return Result;
+  }
+  return Name + Suffix;
+}
+
+std::string TypeInfo::makeUniqueName(const std::string& BaseName) const {
+  if (BaseName == "\"alloca point\"")
+    return BaseName;
+  switch (oldTy) {
+    default:
+      break;
+    case OpaqueTy: case LabelTy: case VoidTy: case BoolTy: case UpRefTy:
+    case FloatTy : case DoubleTy: case UnresolvedTy:
+      return BaseName;
+    case SByteTy: case ShortTy: case LongTy: case IntTy: 
+      return AddSuffix(BaseName, ".s");
+    case UByteTy: case UShortTy: case UIntTy: case ULongTy: 
+      return AddSuffix(BaseName, ".u");
+  }
+
+  unsigned uNum = 0, sNum = 0;
+  std::string Suffix;
+  switch (oldTy) {
+    case PointerTy:
+    case PackedTy: 
+    case ArrayTy: {
+      TypeInfo::UpRefStack stack;
+      elemTy->resolve()->getSignedness(sNum, uNum, stack);
+      break;
+    }
+    case StructTy:
+    case PackedStructTy: {
+      for (unsigned i = 0; i < elements->size(); i++) {
+        TypeInfo::UpRefStack stack;
+        (*elements)[i]->resolve()->getSignedness(sNum, uNum, stack);
+      }
+      break;
+    }
+    default:
+      assert(0 && "Invalid Type");
+      break;
+  }
+
+  if (sNum == 0 && uNum == 0)
+    return BaseName;
+
+  switch (oldTy) {
+    default:             Suffix += ".nada"; break;
+    case PointerTy:      Suffix += ".pntr"; break;
+    case PackedTy:       Suffix += ".pckd"; break;
+    case ArrayTy:        Suffix += ".arry"; break;
+    case StructTy:       Suffix += ".strc"; break;
+    case PackedStructTy: Suffix += ".pstr"; break;
+  }
+
+  Suffix += ".s" + llvm::utostr(sNum);
+  Suffix += ".u" + llvm::utostr(uNum);
+  return AddSuffix(BaseName, Suffix);
 }
 
 TypeInfo& TypeInfo::operator=(const TypeInfo& that) {
@@ -528,9 +632,8 @@ static const TypeInfo* getFunctionReturnType(const TypeInfo* PFTy) {
   return PFTy;
 }
 
-typedef std::vector<const TypeInfo*> UpRefStack;
 static const TypeInfo* ResolveUpReference(const TypeInfo* Ty, 
-                                          UpRefStack* stack) {
+                                          TypeInfo::UpRefStack* stack) {
   assert(Ty->isUpReference() && "Can't resolve a non-upreference");
   unsigned upref = Ty->getUpRefNum();
   assert(upref < stack->size() && "Invalid up reference");
@@ -540,7 +643,7 @@ static const TypeInfo* ResolveUpReference(const TypeInfo* Ty,
 static const TypeInfo* getGEPIndexedType(const TypeInfo* PTy, ValueList* idxs) {
   const TypeInfo* Result = PTy = PTy->resolve();
   assert(PTy->isPointer() && "GEP Operand is not a pointer?");
-  UpRefStack stack;
+  TypeInfo::UpRefStack stack;
   for (unsigned i = 0; i < idxs->size(); ++i) {
     if (Result->isComposite()) {
       Result = Result->getIndexedType((*idxs)[i]);
@@ -561,24 +664,13 @@ static const TypeInfo* getGEPIndexedType(const TypeInfo* PTy, ValueList* idxs) {
   return Result->getPointerType();
 }
 
-static std::string makeUniqueName(const std::string *Name, bool isSigned) {
-  const char *suffix = ".u";
-  if (isSigned)
-    suffix = ".s";
-  if ((*Name)[Name->size()-1] == '"') {
-    std::string Result(*Name);
-    Result.insert(Name->size()-1, suffix);
-    return Result;
-  }
-  return *Name + suffix;
-}
 
 // This function handles appending .u or .s to integer value names that
 // were previously unsigned or signed, respectively. This avoids name
 // collisions since the unsigned and signed type planes have collapsed
 // into a single signless type plane.
 static std::string getUniqueName(const std::string *Name, const TypeInfo* Ty,
-                                 bool isGlobal = false) {
+                                 bool isGlobal = false, bool isDef = false) {
 
   // If its not a symbolic name, don't modify it, probably a constant val.
   if ((*Name)[0] != '%' && (*Name)[0] != '"')
@@ -611,41 +703,9 @@ static std::string getUniqueName(const std::string *Name, const TypeInfo* Ty,
     return *Name;
   }
 
-  // Remove as many levels of pointer nesting that we have.
-  if (Ty->isPointer()) {
-    // Avoid infinite loops in recursive types
-    const TypeInfo* Last = 0;
-    while (Ty->isPointer() && !Ty->sameOldTyAs(Last)) {
-      Last = Ty;
-      Ty = Ty->getElementType()->resolve();
-    }
-  }
-
   // Default the result to the current name
-  std::string Result = *Name; 
+  std::string Result = Ty->makeUniqueName(*Name);
 
-  // Now deal with the underlying type
-  if (Ty->isInteger()) {
-    // If its an integer type, make the name unique
-    Result = makeUniqueName(Name, Ty->isSigned());
-  } else if (Ty->isArray() || Ty->isPacked()) {
-    Ty = Ty->getElementType();
-    if (Ty->isInteger())
-      Result = makeUniqueName(Name, Ty->isSigned());
-  } else if (Ty->isStruct()) {
-    // Scan the fields and count the signed and unsigned fields
-    int isSigned = 0;
-    for (unsigned i = 0; i < Ty->getNumStructElements(); ++i) {
-      const TypeInfo* Tmp = Ty->getElement(i);
-      if (Tmp->isInteger())
-        if (Tmp->isSigned())
-          isSigned++;
-        else
-          isSigned--;
-    }
-    if (isSigned != 0)
-      Result = makeUniqueName(Name, isSigned > 0);
-  }
   return Result;
 }
 
@@ -1744,7 +1804,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$.val = new std::string(shiftop);
     *$$.val += " " + *$2.val + ", " + *$4.val;
     $$.type = $2.type;
-    delete $1; delete $2.val; $4.destroy();
+    delete $1; $2.destroy(); $4.destroy();
   }
   | CastOps ResolvedVal TO Types {
     std::string source = *$2.val;
@@ -1778,7 +1838,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     *$1 += " " + *$2.val + ", " + *$4.val + ", " + *$6.val;
     $$.val = $1;
     $$.type = $4.type;
-    $2.destroy(); delete $4.val; $6.destroy();
+    $2.destroy(); $4.destroy(); $6.destroy();
   }
   | VAARG ResolvedVal ',' Types {
     *$1 += " " + *$2.val + ", " + $4->getNewTy();
@@ -1791,19 +1851,19 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$.val = $1;
     $2.type = $2.type->resolve();;
     $$.type = $2.type->getElementType();
-    delete $2.val; $4.destroy();
+    $2.destroy(); $4.destroy();
   }
   | INSERTELEMENT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     *$1 += " " + *$2.val + ", " + *$4.val + ", " + *$6.val;
     $$.val = $1;
     $$.type = $2.type;
-    delete $2.val; $4.destroy(); $6.destroy();
+    $2.destroy(); $4.destroy(); $6.destroy();
   }
   | SHUFFLEVECTOR ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     *$1 += " " + *$2.val + ", " + *$4.val + ", " + *$6.val;
     $$.val = $1;
     $$.type = $2.type;
-    delete $2.val; $4.destroy(); $6.destroy();
+    $2.destroy(); $4.destroy(); $6.destroy();
   }
   | PHI_TOK PHIList {
     *$1 += " " + *$2.val;
@@ -1908,10 +1968,9 @@ MemoryInst : MALLOC Types OptCAlign {
       ValueInfo& VI = (*$4)[i];
       if (VI.type->isUnsigned() && !VI.isConstant() && 
           VI.type->getBitWidth() < 64) {
-        std::string* old = VI.val;
-        *O << "    %gep_upgrade" << unique << " = zext " << *old 
+        *O << "    %gep_upgrade" << unique << " = zext " << *VI.val 
            << " to i64\n";
-        VI.val = new std::string("i64 %gep_upgrade" + llvm::utostr(unique++));
+        *VI.val = "i64 %gep_upgrade" + llvm::utostr(unique++);
         VI.type = TypeInfo::get("i64",ULongTy);
       }
     }
