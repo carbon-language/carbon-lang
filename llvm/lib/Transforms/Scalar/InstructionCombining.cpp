@@ -5133,25 +5133,22 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return NI;
 
   // Test to see if the operands of the icmp are casted versions of other
-  // values.  If the cast can be stripped off both arguments, we do so now.
-  if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
-    Value *CastOp0 = CI->getOperand(0);
-    if (CI->isLosslessCast() && I.isEquality() && 
-        (isa<Constant>(Op1) || isa<CastInst>(Op1))) { 
+  // values.  If the ptr->ptr cast can be stripped off both arguments, we do so
+  // now.
+  if (BitCastInst *CI = dyn_cast<BitCastInst>(Op0)) {
+    if (isa<PointerType>(Op0->getType()) && 
+        (isa<Constant>(Op1) || isa<BitCastInst>(Op1))) { 
       // We keep moving the cast from the left operand over to the right
       // operand, where it can often be eliminated completely.
-      Op0 = CastOp0;
+      Op0 = CI->getOperand(0);
 
-      // If operand #1 is a cast instruction, see if we can eliminate it as
-      // well.
-      if (CastInst *CI2 = dyn_cast<CastInst>(Op1)) { 
-        Value *CI2Op0 = CI2->getOperand(0);
-        if (CI2Op0->getType()->canLosslesslyBitCastTo(Op0->getType()))
-          Op1 = CI2Op0;
-      }
+      // If operand #1 is a bitcast instruction, it must also be a ptr->ptr cast
+      // so eliminate it as well.
+      if (BitCastInst *CI2 = dyn_cast<BitCastInst>(Op1))
+        Op1 = CI2->getOperand(0);
 
       // If Op1 is a constant, we can fold the cast into the constant.
-      if (Op1->getType() != Op0->getType())
+      if (Op0->getType() != Op1->getType())
         if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
           Op1 = ConstantExpr::getBitCast(Op1C, Op0->getType());
         } else {
@@ -5160,7 +5157,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         }
       return new ICmpInst(I.getPredicate(), Op0, Op1);
     }
-
+  }
+  
+  if (isa<CastInst>(Op0)) {
     // Handle the special case of: icmp (cast bool to X), <cst>
     // This comes up when you have code like
     //   int X = A < B;
