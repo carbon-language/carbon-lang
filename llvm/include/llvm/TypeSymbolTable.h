@@ -111,12 +111,12 @@ public:
   /// Remove a type at the specified position in the symbol table.
   /// @returns the removed Type.
   /// @returns the Type that was erased from the symbol table.
-  Type* erase(iterator TI);
+  Type* remove(iterator TI);
 
   /// Remove a specific Type from the symbol table. This isn't fast, linear
   /// search, O(n), algorithm.
   /// @returns true if the erase was successful (TI was found)
-  bool erase(Type* TI);
+  bool remove(Type* TI);
 
   /// Rename a type. This ain't fast, we have to linearly search for it first.
   /// @returns true if the rename was successful (type was found)

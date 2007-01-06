@@ -337,7 +337,7 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
     // module, and that they don't include any deleted blocks.
     BBs.clear();
     for (unsigned i = 0, e = BlockInfo.size(); i != e; ++i) {
-      SymbolTable &ST = BlockInfo[i].first->getSymbolTable();
+      SymbolTable &ST = BlockInfo[i].first->getValueSymbolTable();
       SymbolTable::plane_iterator PI = ST.find(Type::LabelTy);
       if (PI != ST.plane_end() && PI->second.count(BlockInfo[i].second))
         BBs.push_back(cast<BasicBlock>(PI->second[BlockInfo[i].second]));

@@ -16,7 +16,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -69,14 +69,15 @@ static inline bool ShouldNukeSymtabEntry(const Type *Ty){
 bool DTE::runOnModule(Module &M) {
   bool Changed = false;
 
-  SymbolTable &ST = M.getSymbolTable();
+  TypeSymbolTable &ST = M.getTypeSymbolTable();
   std::set<const Type *> UsedTypes = getAnalysis<FindUsedTypes>().getTypes();
 
   // Check the symbol table for superfluous type entries...
   //
   // Grab the 'type' plane of the module symbol...
-  SymbolTable::type_iterator TI = ST.type_begin();
-  while ( TI != ST.type_end() ) {
+  TypeSymbolTable::iterator TI = ST.begin();
+  TypeSymbolTable::iterator TE = ST.end();
+  while ( TI != TE ) {
     // If this entry should be unconditionally removed, or if we detect that
     // the type is not used, remove it.
     const Type *RHS = TI->second;

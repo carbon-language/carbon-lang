@@ -35,7 +35,7 @@ public:
     ModuleBlockID          = 1,  ///< Module block that contains other blocks.
     FunctionBlockID        = 2,  ///< Function block identifier
     ConstantPoolBlockID    = 3,  ///< Constant pool identifier
-    SymbolTableBlockID     = 4,  ///< Symbol table identifier
+    ValueSymbolTableBlockID= 4,  ///< Value Symbol table identifier
     ModuleGlobalInfoBlockID= 5,  ///< Module global info identifier
     GlobalTypePlaneBlockID = 6,  ///< Global type plan identifier
     InstructionListBlockID = 7,  ///< All instructions in a function
@@ -46,8 +46,9 @@ public:
     /// instructions to be encoded more efficiently because VBR takes fewer
     /// bytes with smaller values.
     /// @brief Value Compaction Table Block
-    CompactionTableBlockID = 0x08,
+    CompactionTableBlockID = 8,
 
+    TypeSymbolTableBlockID = 9,  ///< Value Symbol table identifier
     // Not a block id, just used to count them
     NumberOfBlockIDs
   };

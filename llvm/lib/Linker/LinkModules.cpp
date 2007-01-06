@@ -21,6 +21,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Streams.h"
@@ -61,7 +62,7 @@ static std::string ToStr(const Type *Ty, const Module *M) {
 //  false - No errors.
 //
 static bool ResolveTypes(const Type *DestTy, const Type *SrcTy,
-                         SymbolTable *DestST, const std::string &Name) {
+                         TypeSymbolTable *DestST, const std::string &Name) {
   if (DestTy == SrcTy) return false;       // If already equal, noop
 
   // Does the type already exist in the module?
@@ -93,7 +94,8 @@ static const StructType *getST(const PATypeHolder &TH) {
 // are compatible.
 static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
                                    const PATypeHolder &SrcTy,
-                                   SymbolTable *DestST, const std::string &Name,
+                                   TypeSymbolTable *DestST, 
+                                   const std::string &Name,
                 std::vector<std::pair<PATypeHolder, PATypeHolder> > &Pointers) {
   const Type *SrcTyT = SrcTy.get();
   const Type *DestTyT = DestTy.get();
@@ -164,7 +166,8 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
 
 static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
                                   const PATypeHolder &SrcTy,
-                                  SymbolTable *DestST, const std::string &Name){
+                                  TypeSymbolTable *DestST, 
+                                  const std::string &Name){
   std::vector<std::pair<PATypeHolder, PATypeHolder> > PointerTypes;
   return RecursiveResolveTypesI(DestTy, SrcTy, DestST, Name, PointerTypes);
 }
@@ -174,12 +177,12 @@ static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
 // types are named in the src module that are not named in the Dst module.
 // Make sure there are no type name conflicts.
 static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
-  SymbolTable       *DestST = &Dest->getSymbolTable();
-  const SymbolTable *SrcST  = &Src->getSymbolTable();
+        TypeSymbolTable *DestST = &Dest->getTypeSymbolTable();
+  const TypeSymbolTable *SrcST  = &Src->getTypeSymbolTable();
 
   // Look for a type plane for Type's...
-  SymbolTable::type_const_iterator TI = SrcST->type_begin();
-  SymbolTable::type_const_iterator TE = SrcST->type_end();
+  TypeSymbolTable::const_iterator TI = SrcST->begin();
+  TypeSymbolTable::const_iterator TE = SrcST->end();
   if (TI == TE) return false;  // No named types, do nothing.
 
   // Some types cannot be resolved immediately because they depend on other
@@ -192,7 +195,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
     const Type *RHS = TI->second;
 
     // Check to see if this type name is already in the dest module...
-    Type *Entry = DestST->lookupType(Name);
+    Type *Entry = DestST->lookup(Name);
 
     if (ResolveTypes(Entry, RHS, DestST, Name)) {
       // They look different, save the types 'till later to resolve.
@@ -208,8 +211,8 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
     // Try direct resolution by name...
     for (unsigned i = 0; i != DelayedTypesToResolve.size(); ++i) {
       const std::string &Name = DelayedTypesToResolve[i];
-      Type *T1 = SrcST->lookupType(Name);
-      Type *T2 = DestST->lookupType(Name);
+      Type *T1 = SrcST->lookup(Name);
+      Type *T2 = DestST->lookup(Name);
       if (!ResolveTypes(T2, T1, DestST, Name)) {
         // We are making progress!
         DelayedTypesToResolve.erase(DelayedTypesToResolve.begin()+i);
@@ -223,8 +226,8 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
       // two types: { int* } and { opaque* }
       for (unsigned i = 0, e = DelayedTypesToResolve.size(); i != e; ++i) {
         const std::string &Name = DelayedTypesToResolve[i];
-        PATypeHolder T1(SrcST->lookupType(Name));
-        PATypeHolder T2(DestST->lookupType(Name));
+        PATypeHolder T1(SrcST->lookup(Name));
+        PATypeHolder T2(DestST->lookup(Name));
 
         if (!RecursiveResolveTypes(T2, T1, DestST, Name)) {
           // We are making progress!
@@ -326,7 +329,7 @@ static Value *RemapOperand(const Value *In,
 /// through the trouble to force this back.
 static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
   assert(GV->getName() != Name && "Can't force rename to self");
-  SymbolTable &ST = GV->getParent()->getSymbolTable();
+  SymbolTable &ST = GV->getParent()->getValueSymbolTable();
 
   // If there is a conflict, rename the conflict.
   Value *ConflictVal = ST.lookup(GV->getType(), Name);
@@ -427,7 +430,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
                         std::string *Err) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
-  SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
+  TypeSymbolTable *TST = &Dest->getTypeSymbolTable();
 
   // Loop over all of the globals in the src module, mapping them over as we go
   for (Module::global_iterator I = Src->global_begin(), E = Src->global_end();
@@ -444,7 +447,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
           DGV = dyn_cast<GlobalVariable>(EGV->second);
         if (DGV)
           // If types don't agree due to opaque types, try to resolve them.
-          RecursiveResolveTypes(SGV->getType(), DGV->getType(),ST, "");
+          RecursiveResolveTypes(SGV->getType(), DGV->getType(), TST, "");
       }
 
     if (DGV && DGV->hasInternalLinkage())
@@ -591,9 +594,10 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 //
 static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                std::map<const Value*, Value*> &ValueMap,
-                               std::map<std::string, GlobalValue*> &GlobalsByName,
+                               std::map<std::string, 
+                               GlobalValue*> &GlobalsByName,
                                std::string *Err) {
-  SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
+  TypeSymbolTable *TST = &Dest->getTypeSymbolTable();
 
   // Loop over all of the functions in the src module, mapping them over as we
   // go
@@ -607,7 +611,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
           GlobalsByName.find(SF->getName());
         if (EF != GlobalsByName.end())
           DF = dyn_cast<Function>(EF->second);
-        if (DF && RecursiveResolveTypes(SF->getType(), DF->getType(), ST, ""))
+        if (DF && RecursiveResolveTypes(SF->getType(), DF->getType(), TST, ""))
           DF = 0;  // FIXME: gross.
       }
     }

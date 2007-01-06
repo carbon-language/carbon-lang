@@ -99,7 +99,8 @@ namespace {  // Anonymous namespace for class
 
     bool doInitialization(Module &M) {
       Mod = &M;
-      verifySymbolTable(M.getSymbolTable());
+      verifyTypeSymbolTable(M.getTypeSymbolTable());
+      verifyValueSymbolTable(M.getValueSymbolTable());
 
       // If this is a real pass, in a pass manager, we must abort before
       // returning back to the pass manager, or else the pass manager may try to
@@ -173,7 +174,8 @@ namespace {  // Anonymous namespace for class
 
 
     // Verification methods...
-    void verifySymbolTable(SymbolTable &ST);
+    void verifyTypeSymbolTable(TypeSymbolTable &ST);
+    void verifyValueSymbolTable(SymbolTable &ST);
     void visitGlobalValue(GlobalValue &GV);
     void visitGlobalVariable(GlobalVariable &GV);
     void visitFunction(Function &F);
@@ -301,10 +303,12 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
   visitGlobalValue(GV);
 }
 
+void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
+}
 
 // verifySymbolTable - Verify that a function or module symbol table is ok
 //
-void Verifier::verifySymbolTable(SymbolTable &ST) {
+void Verifier::verifyValueSymbolTable(SymbolTable &ST) {
 
   // Loop over all of the values in all type planes in the symbol table.
   for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
@@ -372,7 +376,7 @@ void Verifier::visitFunction(Function &F) {
       Assert1(F.getName().substr(0, 5) != "llvm.",
               "llvm intrinsics cannot be defined!", &F);
     
-    verifySymbolTable(F.getSymbolTable());
+    verifyValueSymbolTable(F.getValueSymbolTable());
 
     // Check the entry node
     BasicBlock *Entry = &F.getEntryBlock();

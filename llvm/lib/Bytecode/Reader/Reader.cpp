@@ -24,6 +24,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -1023,13 +1024,27 @@ unsigned BytecodeReader::ParseInstructionList(Function* F) {
   return BlockNo;
 }
 
-/// Parse a symbol table. This works for both module level and function
+/// Parse a type symbol table.
+void BytecodeReader::ParseTypeSymbolTable(TypeSymbolTable *TST) {
+  // Type Symtab block header: [num entries]
+  unsigned NumEntries = read_vbr_uint();
+  for (unsigned i = 0; i < NumEntries; ++i) {
+    // Symtab entry: [type slot #][name]
+    unsigned slot = read_vbr_uint();
+    std::string Name = read_str();
+    const Type* T = getType(slot);
+    TST->insert(Name, T);
+  }
+}
+
+/// Parse a value symbol table. This works for both module level and function
 /// level symbol tables.  For function level symbol tables, the CurrentFunction
 /// parameter must be non-zero and the ST parameter must correspond to
 /// CurrentFunction's symbol table. For Module level symbol tables, the
 /// CurrentFunction argument must be zero.
-void BytecodeReader::ParseSymbolTable(Function *CurrentFunction,
-                                      SymbolTable *ST) {
+void BytecodeReader::ParseValueSymbolTable(Function *CurrentFunction,
+                                           SymbolTable *ST) {
+                                      
   if (Handler) Handler->handleSymbolTableBegin(CurrentFunction,ST);
 
   // Allow efficient basic block lookup by number.
@@ -1038,16 +1053,6 @@ void BytecodeReader::ParseSymbolTable(Function *CurrentFunction,
     for (Function::iterator I = CurrentFunction->begin(),
            E = CurrentFunction->end(); I != E; ++I)
       BBMap.push_back(I);
-
-  // Symtab block header: [num entries]
-  unsigned NumEntries = read_vbr_uint();
-  for (unsigned i = 0; i < NumEntries; ++i) {
-    // Symtab entry: [def slot #][name]
-    unsigned slot = read_vbr_uint();
-    std::string Name = read_str();
-    const Type* T = getType(slot);
-    ST->insert(Name, T);
-  }
 
   while (moreInBlock()) {
     // Symtab block header: [num entries][type id number]
@@ -1683,8 +1688,12 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
       break;
     }
 
-    case BytecodeFormat::SymbolTableBlockID:
-      ParseSymbolTable(F, &F->getSymbolTable());
+    case BytecodeFormat::ValueSymbolTableBlockID:
+      ParseValueSymbolTable(F, &F->getValueSymbolTable());
+      break;
+
+    case BytecodeFormat::TypeSymbolTableBlockID:
+      error("Functions don't have type symbol tables");
       break;
 
     default:
@@ -2084,8 +2093,12 @@ void BytecodeReader::ParseModule() {
       ParseFunctionLazily();
       break;
 
-    case BytecodeFormat::SymbolTableBlockID:
-      ParseSymbolTable(0, &TheModule->getSymbolTable());
+    case BytecodeFormat::ValueSymbolTableBlockID:
+      ParseValueSymbolTable(0, &TheModule->getValueSymbolTable());
+      break;
+
+    case BytecodeFormat::TypeSymbolTableBlockID:
+      ParseTypeSymbolTable(&TheModule->getTypeSymbolTable());
       break;
 
     default:

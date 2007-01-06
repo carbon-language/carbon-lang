@@ -24,12 +24,6 @@ using namespace llvm;
 #define DEBUG_ABSTYPE 0
 
 SymbolTable::~SymbolTable() {
-  // Drop all abstract type references in the type plane...
-  for (type_iterator TI = tmap.begin(), TE = tmap.end(); TI != TE; ++TI) {
-    if (TI->second->isAbstract())   // If abstract, drop the reference...
-      cast<DerivedType>(TI->second)->removeAbstractTypeUser(this);
-  }
-
  // TODO: FIXME: BIG ONE: This doesn't unreference abstract types for the
  // planes that could still have entries!
 
@@ -81,14 +75,6 @@ Value *SymbolTable::lookup(const Type *Ty, const std::string &Name) const {
   return 0;
 }
 
-
-// lookup a type by name - returns null on failure
-Type* SymbolTable::lookupType(const std::string& Name) const {
-  type_const_iterator TI = tmap.find(Name);
-  if (TI != tmap.end())
-    return const_cast<Type*>(TI->second);
-  return 0;
-}
 
 /// changeName - Given a value with a non-empty name, remove its existing entry
 /// from the symbol table and insert a new one for Name.  This is equivalent to
@@ -158,32 +144,6 @@ void SymbolTable::remove(Value *N) {
   }
 }
 
-// remove - Remove a type from the symbol table...
-Type* SymbolTable::remove(type_iterator Entry) {
-  assert(Entry != tmap.end() && "Invalid entry to remove!");
-
-  const Type* Result = Entry->second;
-
-#if DEBUG_SYMBOL_TABLE
-  dump();
-  DOUT << " Removing type: " << Entry->first << "\n";
-#endif
-
-  tmap.erase(Entry);
-
-  // If we are removing an abstract type, remove the symbol table from it's use
-  // list...
-  if (Result->isAbstract()) {
-#if DEBUG_ABSTYPE
-    DOUT  << "Removing abstract type from symtab"
-          << Result->getDescription() << "\n";
-#endif
-    cast<DerivedType>(Result)->removeAbstractTypeUser(this);
-  }
-
-  return const_cast<Type*>(Result);
-}
-
 
 // insertEntry - Insert a value into the symbol table with the specified name.
 void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
@@ -230,34 +190,6 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
 }
 
 
-// insertEntry - Insert a type into the symbol table with the specified
-// name...
-//
-void SymbolTable::insert(const std::string& Name, const Type* T) {
-  assert(T && "Can't insert null type into symbol table!");
-
-  // Check to see if there is a naming conflict.  If so, rename this type!
-  std::string UniqueName = Name;
-  if (lookupType(Name))
-    UniqueName = getUniqueName(T, Name);
-
-#if DEBUG_SYMBOL_TABLE
-  dump();
-  DOUT << " Inserting type: " << UniqueName << ": "
-       << T->getDescription() << "\n";
-#endif
-
-  // Insert the tmap entry
-  tmap.insert(make_pair(UniqueName, T));
-
-  // If we are adding an abstract type, add the symbol table to it's use list.
-  if (T->isAbstract()) {
-    cast<DerivedType>(T)->addAbstractTypeUser(this);
-#if DEBUG_ABSTYPE
-    DOUT << "Added abstract type to ST: " << T->getDescription() << "\n";
-#endif
-  }
-}
 
 // Strip the symbol table of its names.
 bool SymbolTable::strip() {
@@ -276,11 +208,6 @@ bool SymbolTable::strip() {
         RemovedSymbol = true;
       }
     }
-  }
-
-  for (type_iterator TI = tmap.begin(); TI != tmap.end(); ) {
-    remove(TI++);
-    RemovedSymbol = true;
   }
 
   return RemovedSymbol;
@@ -375,28 +302,6 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
     // Remove the plane that is no longer used
     pmap.erase(PI);
   }
-
-  // Loop over all of the types in the symbol table, replacing any references
-  // to OldType with references to NewType.  Note that there may be multiple
-  // occurrences, and although we only need to remove one at a time, it's
-  // faster to remove them all in one pass.
-  //
-  for (type_iterator I = type_begin(), E = type_end(); I != E; ++I) {
-    if (I->second == (Type*)OldType) {  // FIXME when Types aren't const.
-#if DEBUG_ABSTYPE
-      DOUT << "Removing type " << OldType->getDescription() << "\n";
-#endif
-      OldType->removeAbstractTypeUser(this);
-
-      I->second = (Type*)NewType;  // TODO FIXME when types aren't const
-      if (NewType->isAbstract()) {
-#if DEBUG_ABSTYPE
-        DOUT << "Added type " << NewType->getDescription() << "\n";
-#endif
-        cast<DerivedType>(NewType)->addAbstractTypeUser(this);
-      }
-    }
-  }
 }
 
 
@@ -408,13 +313,6 @@ void SymbolTable::typeBecameConcrete(const DerivedType *AbsTy) {
   // plane is a use of the abstract type which must be dropped.
   if (PI != pmap.end())
     AbsTy->removeAbstractTypeUser(this);
-
-  // Loop over all of the types in the symbol table, dropping any abstract
-  // type user entries for AbsTy which occur because there are names for the
-  // type.
-  for (type_iterator TI = type_begin(), TE = type_end(); TI != TE; ++TI)
-    if (TI->second == (Type*)AbsTy)   // FIXME when Types aren't const.
-      AbsTy->removeAbstractTypeUser(this);
 }
 
 static void DumpVal(const std::pair<const std::string, Value *> &V) {
@@ -430,17 +328,9 @@ static void DumpPlane(const std::pair<const Type *,
   for_each(P.second.begin(), P.second.end(), DumpVal);
 }
 
-static void DumpTypes(const std::pair<const std::string, const Type*>& T ) {
-  DOUT << "  '" << T.first << "' = ";
-  T.second->dump();
-  DOUT << "\n";
-}
-
 void SymbolTable::dump() const {
   DOUT << "Symbol table dump:\n  Plane:";
   for_each(pmap.begin(), pmap.end(), DumpPlane);
-  DOUT << "  Types: ";
-  for_each(tmap.begin(), tmap.end(), DumpTypes);
 }
 
 // vim: sw=2 ai

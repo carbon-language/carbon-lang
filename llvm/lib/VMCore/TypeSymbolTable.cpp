@@ -48,10 +48,10 @@ Type* TypeSymbolTable::lookup(const std::string& Name) const {
 }
 
 // Erase a specific type from the symbol table
-bool TypeSymbolTable::erase(Type *N) {
+bool TypeSymbolTable::remove(Type *N) {
   for (iterator TI = tmap.begin(), TE = tmap.end(); TI != TE; ++TI) {
     if (TI->second == N) {
-      this->erase(TI);
+      this->remove(TI);
       return true;
     }
   }
@@ -59,7 +59,7 @@ bool TypeSymbolTable::erase(Type *N) {
 }
 
 // remove - Remove a type from the symbol table...
-Type* TypeSymbolTable::erase(iterator Entry) {
+Type* TypeSymbolTable::remove(iterator Entry) {
   assert(Entry != tmap.end() && "Invalid entry to remove!");
 
   const Type* Result = Entry->second;
@@ -115,7 +115,7 @@ void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
 bool TypeSymbolTable::strip() {
   bool RemovedSymbol = false;
   for (iterator TI = tmap.begin(); TI != tmap.end(); ) {
-    erase(TI++);
+    remove(TI++);
     RemovedSymbol = true;
   }
 

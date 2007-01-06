@@ -101,13 +101,13 @@ void Value::setName(const std::string &name) {
   if (Instruction *I = dyn_cast<Instruction>(this)) {
     if (BasicBlock *P = I->getParent())
       if (Function *PP = P->getParent())
-        ST = &PP->getSymbolTable();
+        ST = &PP->getValueSymbolTable();
   } else if (BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
-    if (Function *P = BB->getParent()) ST = &P->getSymbolTable();
+    if (Function *P = BB->getParent()) ST = &P->getValueSymbolTable();
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
-    if (Module *P = GV->getParent()) ST = &P->getSymbolTable();
+    if (Module *P = GV->getParent()) ST = &P->getValueSymbolTable();
   } else if (Argument *A = dyn_cast<Argument>(this)) {
-    if (Function *P = A->getParent()) ST = &P->getSymbolTable();
+    if (Function *P = A->getParent()) ST = &P->getValueSymbolTable();
   } else {
     assert(isa<Constant>(this) && "Unknown value type!");
     return;  // no name is setable for this.

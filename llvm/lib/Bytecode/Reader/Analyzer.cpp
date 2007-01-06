@@ -96,11 +96,12 @@ public:
     bca.BlockSizes[BytecodeFormat::ModuleBlockID] = theSize;
     bca.BlockSizes[BytecodeFormat::FunctionBlockID] = 0;
     bca.BlockSizes[BytecodeFormat::ConstantPoolBlockID] = 0;
-    bca.BlockSizes[BytecodeFormat::SymbolTableBlockID] = 0;
+    bca.BlockSizes[BytecodeFormat::ValueSymbolTableBlockID] = 0;
     bca.BlockSizes[BytecodeFormat::ModuleGlobalInfoBlockID] = 0;
     bca.BlockSizes[BytecodeFormat::GlobalTypePlaneBlockID] = 0;
     bca.BlockSizes[BytecodeFormat::InstructionListBlockID] = 0;
     bca.BlockSizes[BytecodeFormat::CompactionTableBlockID] = 0;
+    bca.BlockSizes[BytecodeFormat::TypeSymbolTableBlockID] = 0;
   }
 
   virtual void handleFinish() {
@@ -636,8 +637,11 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
   print(Out, "Compaction Table Bytes",
         double(bca.BlockSizes[BytecodeFormat::CompactionTableBlockID]),
         double(bca.byteSize));
-  print(Out, "Symbol Table Bytes",
-        double(bca.BlockSizes[BytecodeFormat::SymbolTableBlockID]),
+  print(Out, "Value Symbol Table Bytes",
+        double(bca.BlockSizes[BytecodeFormat::ValueSymbolTableBlockID]),
+        double(bca.byteSize));
+  print(Out, "Type Symbol Table Bytes",
+        double(bca.BlockSizes[BytecodeFormat::TypeSymbolTableBlockID]),
         double(bca.byteSize));
   print(Out, "Alignment Bytes",
         double(bca.numAlignment), double(bca.byteSize));

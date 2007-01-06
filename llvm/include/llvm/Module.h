@@ -25,6 +25,7 @@ class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class FunctionType;
 class SymbolTable;
+class TypeSymbolTable;
 
 template<> struct ilist_traits<Function>
   : public SymbolTableListTraits<Function, Module, Module> {
@@ -91,7 +92,8 @@ private:
   FunctionListType FunctionList; ///< The Functions in the module
   LibraryListType LibraryList;   ///< The Libraries needed by the module
   std::string GlobalScopeAsm;    ///< Inline Asm at global scope.
-  SymbolTable *SymTab;           ///< Symbol Table for the module
+  SymbolTable *ValSymTab;        ///< Symbol table for values
+  TypeSymbolTable *TypeSymTab;   ///< Symbol table for types
   std::string ModuleID;          ///< Human readable identifier for the module
   std::string TargetTriple;      ///< Platform target triple Module compiled on
   std::string DataLayout;        ///< Target data description
@@ -237,9 +239,13 @@ public:
   /// Get the Module's list of functions.
   FunctionListType       &getFunctionList()           { return FunctionList; }
   /// Get the symbol table of global variable and function identifiers
-  const SymbolTable      &getSymbolTable() const      { return *SymTab; }
+  const SymbolTable      &getValueSymbolTable() const { return *ValSymTab; }
   /// Get the Module's symbol table of global variable and function identifiers.
-  SymbolTable            &getSymbolTable()            { return *SymTab; }
+  SymbolTable            &getValueSymbolTable()       { return *ValSymTab; }
+  /// Get the symbol table of types
+  const TypeSymbolTable   &getTypeSymbolTable() const { return *TypeSymTab; }
+  /// Get the Module's symbol table of types
+  TypeSymbolTable         &getTypeSymbolTable()       { return *TypeSymTab; }
 
 /// @}
 /// @name Global Variable Iteration

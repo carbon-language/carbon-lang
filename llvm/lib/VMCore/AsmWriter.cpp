@@ -25,6 +25,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
@@ -216,9 +217,9 @@ static std::string getLLVMName(const std::string &Name,
 static void fillTypeNameTable(const Module *M,
                               std::map<const Type *, std::string> &TypeNames) {
   if (!M) return;
-  const SymbolTable &ST = M->getSymbolTable();
-  SymbolTable::type_const_iterator TI = ST.type_begin();
-  for (; TI != ST.type_end(); ++TI) {
+  const TypeSymbolTable &ST = M->getTypeSymbolTable();
+  TypeSymbolTable::const_iterator TI = ST.begin();
+  for (; TI != ST.end(); ++TI) {
     // As a heuristic, don't insert pointer to primitive types, because
     // they are used too often to have a single useful name.
     //
@@ -666,7 +667,8 @@ public:
 
 private:
   void printModule(const Module *M);
-  void printSymbolTable(const SymbolTable &ST);
+  void printTypeSymbolTable(const TypeSymbolTable &ST);
+  void printValueSymbolTable(const SymbolTable &ST);
   void printConstant(const Constant *CPV);
   void printGlobal(const GlobalVariable *GV);
   void printFunction(const Function *F);
@@ -818,7 +820,8 @@ void AssemblyWriter::printModule(const Module *M) {
   }
 
   // Loop over the symbol table, emitting all named constants.
-  printSymbolTable(M->getSymbolTable());
+  printTypeSymbolTable(M->getTypeSymbolTable());
+  printValueSymbolTable(M->getValueSymbolTable());
 
   for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
@@ -873,14 +876,10 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   Out << "\n";
 }
 
-
-// printSymbolTable - Run through symbol table looking for constants
-// and types. Emit their declarations.
-void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
-
+void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
   // Print the types.
-  for (SymbolTable::type_const_iterator TI = ST.type_begin();
-       TI != ST.type_end(); ++TI) {
+  for (TypeSymbolTable::const_iterator TI = ST.begin(), TE = ST.end();
+       TI != TE; ++TI) {
     Out << "\t" << getLLVMName(TI->first) << " = type ";
 
     // Make sure we print out at least one level of the type structure, so
@@ -888,6 +887,11 @@ void AssemblyWriter::printSymbolTable(const SymbolTable &ST) {
     //
     printTypeAtLeastOneLevel(TI->second) << "\n";
   }
+}
+
+// printSymbolTable - Run through symbol table looking for constants
+// and types. Emit their declarations.
+void AssemblyWriter::printValueSymbolTable(const SymbolTable &ST) {
 
   // Print the constants, in type plane order.
   for (SymbolTable::plane_const_iterator PI = ST.plane_begin();

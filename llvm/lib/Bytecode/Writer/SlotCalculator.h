@@ -30,6 +30,7 @@ class Type;
 class Module;
 class Function;
 class SymbolTable;
+class TypeSymbolTable;
 class ConstantArray;
 
 class SlotCalculator {
@@ -168,7 +169,8 @@ private:
   // processSymbolTable - Insert all of the values in the specified symbol table
   // into the values table...
   //
-  void processSymbolTable(const SymbolTable *ST);
+  void processTypeSymbolTable(const TypeSymbolTable *ST);
+  void processValueSymbolTable(const SymbolTable *ST);
   void processSymbolTableConstants(const SymbolTable *ST);
 
   void buildCompactionTable(const Function *F);

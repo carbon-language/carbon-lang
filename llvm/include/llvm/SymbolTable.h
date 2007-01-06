@@ -47,16 +47,6 @@ class SymbolTable : public AbstractTypeUser {
 /// @name Types
 /// @{
 public:
-
-  /// @brief A mapping of names to types.
-  typedef std::map<const std::string, const Type*> TypeMap;
-
-  /// @brief An iterator over the TypeMap.
-  typedef TypeMap::iterator type_iterator;
-
-  /// @brief A const_iterator over the TypeMap.
-  typedef TypeMap::const_iterator type_const_iterator;
-
   /// @brief A mapping of names to values.
   typedef std::map<const std::string, Value *> ValueMap;
 
@@ -96,20 +86,10 @@ public:
   /// @brief Lookup a named, typed value.
   Value *lookup(const Type *Ty, const std::string &name) const;
 
-  /// This method finds the type with the given \p name in the
-  /// type  map and returns it.
-  /// @returns null if the name is not found, otherwise the Type
-  /// associated with the \p name.
-  /// @brief Lookup a type by name.
-  Type* lookupType(const std::string& name) const;
-
   /// @returns true iff the type map and the type plane are both not
   /// empty.
   /// @brief Determine if the symbol table is empty
-  inline bool isEmpty() const { return pmap.empty() && tmap.empty(); }
-
-  /// @brief The number of name/type pairs is returned.
-  inline unsigned num_types() const { return unsigned(tmap.size()); }
+  inline bool isEmpty() const { return pmap.empty(); }
 
   /// Given a base name, return a string that is either equal to it or
   /// derived from it that does not already occur in the symbol table
@@ -178,20 +158,6 @@ public:
     return pmap.find(Typ)->second.end();
   }
 
-  /// Get an iterator to the start of the name/Type map.
-  inline type_iterator type_begin() { return tmap.begin(); }
-
-  /// @brief Get a const_iterator to the start of the name/Type map.
-  inline type_const_iterator type_begin() const { return tmap.begin(); }
-
-  /// Get an iterator to the end of the name/Type map. This serves as the
-  /// marker for end of iteration of the types.
-  inline type_iterator type_end() { return tmap.end(); }
-
-  /// Get a const-iterator to the end of the name/Type map. This serves
-  /// as the marker for end of iteration of the types.
-  inline type_const_iterator type_end() const { return tmap.end(); }
-
   /// This method returns a plane_const_iterator for iteration over
   /// the type planes starting at a specific plane, given by \p Ty.
   /// @brief Find a type plane.
@@ -218,16 +184,6 @@ public:
   /// values.
   /// @brief Strip the symbol table.
   bool strip();
-
-  /// Inserts a type into the symbol table with the specified name. There can be
-  /// a many-to-one mapping between names and types. This method allows a type
-  /// with an existing entry in the symbol table to get a new name.
-  /// @brief Insert a type under a new name.
-  void insert(const std::string &Name, const Type *Typ);
-
-  /// Remove a type at the specified position in the symbol table.
-  /// @returns the removed Type.
-  Type* remove(type_iterator TI);
 
 /// @}
 /// @name Mutators used by Value::setName and other LLVM internals.
@@ -286,15 +242,9 @@ private:
   /// @brief The mapping of types to names to values.
   PlaneMap pmap;
 
-  /// This is the type plane. It is separated from the pmap
-  /// because the elements of the map are name/Type pairs not
-  /// name/Value pairs and Type is not a Value.
-  TypeMap tmap;
-
   /// This value is used to retain the last unique value used
   /// by getUniqueName to generate unique names.
   mutable uint32_t LastUnique;
-
 /// @}
 
 };

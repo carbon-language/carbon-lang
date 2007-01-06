@@ -639,8 +639,8 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
 
 static Value *lookupInSymbolTable(const Type *Ty, const std::string &Name) {
   SymbolTable &SymTab =
-    inFunctionScope() ? CurFun.CurrentFunction->getSymbolTable() :
-                        CurModule.CurrentModule->getSymbolTable();
+    inFunctionScope() ? CurFun.CurrentFunction->getValueSymbolTable() :
+                        CurModule.CurrentModule->getValueSymbolTable();
   return SymTab.lookup(Ty, Name);
 }
 
@@ -821,7 +821,7 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
   case ValID::NameVal:                  // Is it a named definition?
     Name = ID.Name;
     if (Value *N = CurFun.CurrentFunction->
-                   getSymbolTable().lookup(Type::LabelTy, Name))
+                   getValueSymbolTable().lookup(Type::LabelTy, Name))
       BB = cast<BasicBlock>(N);
     break;
   }
@@ -961,7 +961,7 @@ static void setValueName(Value *V, char *NameStr) {
     }
 
     assert(inFunctionScope() && "Must be in function scope!");
-    SymbolTable &ST = CurFun.CurrentFunction->getSymbolTable();
+    SymbolTable &ST = CurFun.CurrentFunction->getValueSymbolTable();
     if (ST.lookup(V->getType(), Name)) {
       GenerateError("Redefinition of value '" + Name + "' of type '" +
                      V->getType()->getDescription() + "'!");

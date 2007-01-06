@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
+#include "llvm/TypeSymbolTable.h"
 #include <algorithm>
 #include <cstdarg>
 #include <cstdlib>
@@ -68,7 +69,8 @@ Module::Module(const std::string &MID)
   FunctionList.setParent(this);
   GlobalList.setItemParent(this);
   GlobalList.setParent(this);
-  SymTab = new SymbolTable();
+  ValSymTab = new SymbolTable();
+  TypeSymTab = new TypeSymbolTable();
 }
 
 Module::~Module() {
@@ -78,7 +80,8 @@ Module::~Module() {
   FunctionList.clear();
   FunctionList.setParent(0);
   LibraryList.clear();
-  delete SymTab;
+  delete ValSymTab;
+  delete TypeSymTab;
 }
 
 // Module::dump() - Allow printing from debugger
@@ -156,7 +159,7 @@ void Module::setPointerSize(PointerSize PS) {
 //
 Function *Module::getOrInsertFunction(const std::string &Name,
                                       const FunctionType *Ty) {
-  SymbolTable &SymTab = getSymbolTable();
+  SymbolTable &SymTab = getValueSymbolTable();
 
   // See if we have a definitions for the specified function already...
   if (Value *V = SymTab.lookup(PointerType::get(Ty), Name)) {
@@ -194,7 +197,7 @@ Function *Module::getOrInsertFunction(const std::string &Name,
 // If it does not exist, return null.
 //
 Function *Module::getFunction(const std::string &Name, const FunctionType *Ty) {
-  SymbolTable &SymTab = getSymbolTable();
+  SymbolTable &SymTab = getValueSymbolTable();
   return cast_or_null<Function>(SymTab.lookup(PointerType::get(Ty), Name));
 }
 
@@ -275,7 +278,7 @@ Function *Module::getNamedFunction(const std::string &Name) const {
 ///
 GlobalVariable *Module::getGlobalVariable(const std::string &Name,
                                           const Type *Ty, bool AllowInternal) {
-  if (Value *V = getSymbolTable().lookup(PointerType::get(Ty), Name)) {
+  if (Value *V = getValueSymbolTable().lookup(PointerType::get(Ty), Name)) {
     GlobalVariable *Result = cast<GlobalVariable>(V);
     if (AllowInternal || !Result->hasInternalLinkage())
       return Result;
@@ -309,9 +312,9 @@ GlobalVariable *Module::getNamedGlobal(const std::string &Name) const {
 // table is not modified.
 //
 bool Module::addTypeName(const std::string &Name, const Type *Ty) {
-  SymbolTable &ST = getSymbolTable();
+  TypeSymbolTable &ST = getTypeSymbolTable();
 
-  if (ST.lookupType(Name)) return true;  // Already in symtab...
+  if (ST.lookup(Name)) return true;  // Already in symtab...
 
   // Not in symbol table?  Set the name with the Symtab as an argument so the
   // type knows what to update...
@@ -323,18 +326,18 @@ bool Module::addTypeName(const std::string &Name, const Type *Ty) {
 /// getTypeByName - Return the type with the specified name in this module, or
 /// null if there is none by that name.
 const Type *Module::getTypeByName(const std::string &Name) const {
-  const SymbolTable &ST = getSymbolTable();
-  return cast_or_null<Type>(ST.lookupType(Name));
+  const TypeSymbolTable &ST = getTypeSymbolTable();
+  return cast_or_null<Type>(ST.lookup(Name));
 }
 
 // getTypeName - If there is at least one entry in the symbol table for the
 // specified type, return it.
 //
 std::string Module::getTypeName(const Type *Ty) const {
-  const SymbolTable &ST = getSymbolTable();
+  const TypeSymbolTable &ST = getTypeSymbolTable();
 
-  SymbolTable::type_const_iterator TI = ST.type_begin();
-  SymbolTable::type_const_iterator TE = ST.type_end();
+  TypeSymbolTable::const_iterator TI = ST.begin();
+  TypeSymbolTable::const_iterator TE = ST.end();
   if ( TI == TE ) return ""; // No names for types
 
   while (TI != TE && TI->second != Ty)

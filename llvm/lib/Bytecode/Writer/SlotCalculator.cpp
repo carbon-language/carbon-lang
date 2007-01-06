@@ -22,6 +22,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/ADT/PostOrderIterator.h"
@@ -189,13 +190,14 @@ void SlotCalculator::processModule() {
       }
       getOrCreateSlot(I->getType());
     }
-    processSymbolTableConstants(&F->getSymbolTable());
+    processSymbolTableConstants(&F->getValueSymbolTable());
   }
 
   // Insert constants that are named at module level into the slot pool so that
   // the module symbol table can refer to them...
   SC_DEBUG("Inserting SymbolTable values:\n");
-  processSymbolTable(&TheModule->getSymbolTable());
+  processTypeSymbolTable(&TheModule->getTypeSymbolTable());
+  processValueSymbolTable(&TheModule->getValueSymbolTable());
 
   // Now that we have collected together all of the information relevant to the
   // module, compactify the type table if it is particularly big and outputting
@@ -233,16 +235,18 @@ void SlotCalculator::processModule() {
   SC_DEBUG("end processModule!\n");
 }
 
+// processTypeSymbolTable - Insert all of the type sin the specified symbol
+// table.
+void SlotCalculator::processTypeSymbolTable(const TypeSymbolTable *ST) {
+  for (TypeSymbolTable::const_iterator TI = ST->begin(), TE = ST->end(); 
+       TI != TE; ++TI )
+    getOrCreateSlot(TI->second);
+}
+
 // processSymbolTable - Insert all of the values in the specified symbol table
 // into the values table...
 //
-void SlotCalculator::processSymbolTable(const SymbolTable *ST) {
-  // Do the types first.
-  for (SymbolTable::type_const_iterator TI = ST->type_begin(),
-       TE = ST->type_end(); TI != TE; ++TI )
-    getOrCreateSlot(TI->second);
-
-  // Now do the values.
+void SlotCalculator::processValueSymbolTable(const SymbolTable *ST) {
   for (SymbolTable::plane_const_iterator PI = ST->plane_begin(),
        PE = ST->plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
@@ -251,11 +255,6 @@ void SlotCalculator::processSymbolTable(const SymbolTable *ST) {
 }
 
 void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
-  // Do the types first
-  for (SymbolTable::type_const_iterator TI = ST->type_begin(),
-       TE = ST->type_end(); TI != TE; ++TI )
-    getOrCreateSlot(TI->second);
-
   // Now do the constant values in all planes
   for (SymbolTable::plane_const_iterator PI = ST->plane_begin(),
        PE = ST->plane_end(); PI != PE; ++PI)
@@ -306,7 +305,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
     // symbol table references to constants not in the output.  Scan for these
     // constants now.
     //
-    processSymbolTableConstants(&F->getSymbolTable());
+    processSymbolTableConstants(&F->getValueSymbolTable());
   }
 
   SC_DEBUG("Inserting Instructions:\n");
@@ -468,13 +467,8 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
         getOrCreateCompactionTableSlot(I->getOperand(op));
   }
 
-  // Do the types in the symbol table
-  const SymbolTable &ST = F->getSymbolTable();
-  for (SymbolTable::type_const_iterator TI = ST.type_begin(),
-       TE = ST.type_end(); TI != TE; ++TI)
-    getOrCreateCompactionTableSlot(TI->second);
-
   // Now do the constants and global values
+  const SymbolTable &ST = F->getValueSymbolTable();
   for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
        PE = ST.plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),

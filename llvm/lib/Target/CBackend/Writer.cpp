@@ -21,6 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/InlineAsm.h"
@@ -136,7 +137,7 @@ namespace {
     void lowerIntrinsics(Function &F);
 
     void printModule(Module *M);
-    void printModuleTypes(const SymbolTable &ST);
+    void printModuleTypes(const TypeSymbolTable &ST);
     void printContainedStructs(const Type *Ty, std::set<const StructType *> &);
     void printFloatingPointConstants(Function &F);
     void printFunctionSignature(const Function *F, bool Prototype);
@@ -263,15 +264,15 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
   // Loop over the module symbol table, removing types from UT that are
   // already named, and removing names for types that are not used.
   //
-  SymbolTable &MST = M.getSymbolTable();
-  for (SymbolTable::type_iterator TI = MST.type_begin(), TE = MST.type_end();
+  TypeSymbolTable &TST = M.getTypeSymbolTable();
+  for (TypeSymbolTable::iterator TI = TST.begin(), TE = TST.end();
        TI != TE; ) {
-    SymbolTable::type_iterator I = TI++;
+    TypeSymbolTable::iterator I = TI++;
 
     // If this is not used, remove it from the symbol table.
     std::set<const Type *>::iterator UTI = UT.find(I->second);
     if (UTI == UT.end())
-      MST.remove(I);
+      TST.remove(I);
     else
       UT.erase(UTI);    // Only keep one name for this type.
   }
@@ -1421,7 +1422,7 @@ bool CWriter::doInitialization(Module &M) {
   //
 
   // Loop over the symbol table, emitting all named constants...
-  printModuleTypes(M.getSymbolTable());
+  printModuleTypes(M.getTypeSymbolTable());
 
   // Global variable declarations...
   if (!M.global_empty()) {
@@ -1589,7 +1590,7 @@ void CWriter::printFloatingPointConstants(Function &F) {
 /// printSymbolTable - Run through symbol table looking for type names.  If a
 /// type name is found, emit its declaration...
 ///
-void CWriter::printModuleTypes(const SymbolTable &ST) {
+void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   Out << "/* Helper union for bitcasts */\n";
   Out << "typedef union {\n";
   Out << "  unsigned int Int32;\n";
@@ -1599,8 +1600,8 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
   Out << "} llvmBitCastUnion;\n";
 
   // We are only interested in the type plane of the symbol table.
-  SymbolTable::type_const_iterator I   = ST.type_begin();
-  SymbolTable::type_const_iterator End = ST.type_end();
+  TypeSymbolTable::const_iterator I   = TST.begin();
+  TypeSymbolTable::const_iterator End = TST.end();
 
   // If there are no type names, exit early.
   if (I == End) return;
@@ -1618,7 +1619,7 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
 
   // Now we can print out typedefs...
   Out << "/* Typedefs */\n";
-  for (I = ST.type_begin(); I != End; ++I) {
+  for (I = TST.begin(); I != End; ++I) {
     const Type *Ty = cast<Type>(I->second);
     std::string Name = "l_" + Mang->makeNameProper(I->first);
     Out << "typedef ";
@@ -1635,7 +1636,7 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
   // printed in the correct order.
   //
   Out << "/* Structure contents */\n";
-  for (I = ST.type_begin(); I != End; ++I)
+  for (I = TST.begin(); I != End; ++I)
     if (const StructType *STy = dyn_cast<StructType>(I->second))
       // Only print out used types!
       printContainedStructs(STy, StructPrinted);

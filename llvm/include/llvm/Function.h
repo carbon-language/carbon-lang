@@ -163,8 +163,8 @@ public:
 
   /// getSymbolTable() - Return the symbol table...
   ///
-  inline       SymbolTable &getSymbolTable()       { return *SymTab; }
-  inline const SymbolTable &getSymbolTable() const { return *SymTab; }
+  inline       SymbolTable &getValueSymbolTable()       { return *SymTab; }
+  inline const SymbolTable &getValueSymbolTable() const { return *SymTab; }
 
 
   //===--------------------------------------------------------------------===//

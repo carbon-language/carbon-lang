@@ -144,8 +144,8 @@ void Function::eraseFromParent() {
 /// required before printing out to a textual form, to ensure that there is no
 /// ambiguity when parsing.
 void Function::renameLocalSymbols() {
-  SymbolTable &LST = getSymbolTable();                 // Local Symtab
-  SymbolTable &GST = getParent()->getSymbolTable();    // Global Symtab
+  SymbolTable &LST = getValueSymbolTable();                 // Local Symtab
+  SymbolTable &GST = getParent()->getValueSymbolTable();    // Global Symtab
 
   for (SymbolTable::plane_iterator LPI = LST.plane_begin(), E = LST.plane_end();
        LPI != E; ++LPI)

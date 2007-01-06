@@ -27,6 +27,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/MathExtras.h"
@@ -837,8 +838,11 @@ BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     outputFunction(I);
 
-  // If needed, output the symbol table for the module...
-  outputSymbolTable(M->getSymbolTable());
+  // Output the symbole table for types
+  outputTypeSymbolTable(M->getTypeSymbolTable());
+
+  // Output the symbol table for values
+  outputValueSymbolTable(M->getValueSymbolTable());
 }
 
 void BytecodeWriter::outputTypes(unsigned TypeNum) {
@@ -1112,7 +1116,7 @@ void BytecodeWriter::outputFunction(const Function *F) {
   outputInstructions(F);
 
   // If needed, output the symbol table for the function...
-  outputSymbolTable(F->getSymbolTable());
+  outputValueSymbolTable(F->getValueSymbolTable());
 
   Table.purgeFunction();
 }
@@ -1187,24 +1191,33 @@ void BytecodeWriter::outputCompactionTable() {
   }
 }
 
-void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
-  // Do not output the Bytecode block for an empty symbol table, it just wastes
+void BytecodeWriter::outputTypeSymbolTable(const TypeSymbolTable &TST) {
+  // Do not output the block for an empty symbol table, it just wastes
   // space!
-  if (MST.isEmpty()) return;
+  if (TST.empty()) return;
 
-  BytecodeBlock SymTabBlock(BytecodeFormat::SymbolTableBlockID, *this,
+  // Create a header for the symbol table
+  BytecodeBlock SymTabBlock(BytecodeFormat::TypeSymbolTableBlockID, *this,
                             true/*ElideIfEmpty*/);
-
   // Write the number of types
-  output_vbr(MST.num_types());
+  output_vbr(TST.size());
 
   // Write each of the types
-  for (SymbolTable::type_const_iterator TI = MST.type_begin(),
-       TE = MST.type_end(); TI != TE; ++TI) {
+  for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end(); 
+       TI != TE; ++TI) {
     // Symtab entry:[def slot #][name]
     output_typeid((unsigned)Table.getSlot(TI->second));
     output(TI->first);
   }
+}
+
+void BytecodeWriter::outputValueSymbolTable(const SymbolTable &MST) {
+  // Do not output the Bytecode block for an empty symbol table, it just wastes
+  // space!
+  if (MST.isEmpty()) return;
+
+  BytecodeBlock SymTabBlock(BytecodeFormat::ValueSymbolTableBlockID, *this,
+                            true/*ElideIfEmpty*/);
 
   // Now do each of the type planes in order.
   for (SymbolTable::plane_const_iterator PI = MST.plane_begin(),

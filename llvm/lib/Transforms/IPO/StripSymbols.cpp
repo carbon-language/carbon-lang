@@ -29,6 +29,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/TypeSymbolTable.h"
 using namespace llvm;
 
 namespace {
@@ -83,13 +84,11 @@ bool StripSymbols::runOnModule(Module &M) {
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
       if (I->hasInternalLinkage())
         I->setName("");     // Internal symbols can't participate in linkage
-      I->getSymbolTable().strip();
+      I->getValueSymbolTable().strip();
     }
     
     // Remove all names from types.
-    SymbolTable &SymTab = M.getSymbolTable();
-    while (SymTab.type_begin() != SymTab.type_end())
-      SymTab.remove(SymTab.type_begin());
+    M.getTypeSymbolTable().strip();
   }
 
   // Strip debug info in the module if it exists.  To do this, we remove

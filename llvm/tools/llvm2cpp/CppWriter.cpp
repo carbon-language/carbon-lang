@@ -20,6 +20,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -189,10 +190,10 @@ getTypePrefix(const Type* Ty ) {
 // Mode::getTypeName function which will return an empty string, not a null
 // pointer if the name is not found.
 inline const std::string* 
-findTypeName(const SymbolTable& ST, const Type* Ty)
+findTypeName(const TypeSymbolTable& ST, const Type* Ty)
 {
-  SymbolTable::type_const_iterator TI = ST.type_begin();
-  SymbolTable::type_const_iterator TE = ST.type_end();
+  TypeSymbolTable::const_iterator TI = ST.begin();
+  TypeSymbolTable::const_iterator TE = ST.end();
   for (;TI != TE; ++TI)
     if (TI->second == Ty)
       return &(TI->first);
@@ -348,7 +349,7 @@ CppWriter::getCppName(const Type* Ty)
   }
 
   // See if the type has a name in the symboltable and build accordingly
-  const std::string* tName = findTypeName(TheModule->getSymbolTable(), Ty);
+  const std::string* tName = findTypeName(TheModule->getTypeSymbolTable(), Ty);
   std::string name;
   if (tName) 
     name = std::string(prefix) + *tName;
@@ -539,7 +540,7 @@ CppWriter::printTypeInternal(const Type* Ty) {
 
   // If the type had a name, make sure we recreate it.
   const std::string* progTypeName = 
-    findTypeName(TheModule->getSymbolTable(),Ty);
+    findTypeName(TheModule->getTypeSymbolTable(),Ty);
   if (progTypeName)
     Out << "mod->addTypeName(\"" << *progTypeName << "\", " 
         << typeName << ");";
@@ -596,9 +597,9 @@ void
 CppWriter::printTypes(const Module* M) {
 
   // Walk the symbol table and print out all its types
-  const SymbolTable& symtab = M->getSymbolTable();
-  for (SymbolTable::type_const_iterator TI = symtab.type_begin(), 
-       TE = symtab.type_end(); TI != TE; ++TI) {
+  const TypeSymbolTable& symtab = M->getTypeSymbolTable();
+  for (TypeSymbolTable::const_iterator TI = symtab.begin(), TE = symtab.end(); 
+       TI != TE; ++TI) {
 
     // For primitive types and types already defined, just add a name
     TypeMap::const_iterator TNI = TypeNames.find(TI->second);
