@@ -7208,7 +7208,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // Check to see if we are changing the return type...
   if (OldRetTy != FT->getReturnType()) {
     if (Callee->isExternal() && !Caller->use_empty() && 
-        OldRetTy != FT->getReturnType())
+        OldRetTy != FT->getReturnType() &&
+        // Conversion is ok if changing from pointer to int of same size.
+        !(isa<PointerType>(FT->getReturnType()) &&
+          TD->getIntPtrType() == OldRetTy))
       return false;   // Cannot transform this return value.
 
     // If the callsite is an invoke instruction, and the return value is used by
@@ -7235,6 +7238,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     ConstantInt *c = dyn_cast<ConstantInt>(*AI);
     //Either we can cast directly, or we can upconvert the argument
     bool isConvertible = ActTy == ParamTy ||
+      (isa<PointerType>(ParamTy) && isa<PointerType>(ActTy)) ||
       (ParamTy->isIntegral() && ActTy->isIntegral() &&
        ParamTy->getPrimitiveSize() >= ActTy->getPrimitiveSize()) ||
       (c && ParamTy->getPrimitiveSize() >= ActTy->getPrimitiveSize() &&
