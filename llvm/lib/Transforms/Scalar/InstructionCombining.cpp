@@ -7211,13 +7211,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // Check to see if we are changing the return type...
   if (OldRetTy != FT->getReturnType()) {
-    if (Callee->isExternal() &&
-        !Caller->use_empty() && 
-        !(OldRetTy->canLosslesslyBitCastTo(FT->getReturnType()) ||
-          (isa<PointerType>(FT->getReturnType()) && 
-           TD->getIntPtrType()->canLosslesslyBitCastTo(OldRetTy)))
-        )
-      return false;   // Cannot transform this return value...
+    if (Callee->isExternal() && !Caller->use_empty() && 
+        OldRetTy != FT->getReturnType())
+      return false;   // Cannot transform this return value.
 
     // If the callsite is an invoke instruction, and the return value is used by
     // a PHI node in a successor, we cannot change the return type of the call
@@ -7242,7 +7238,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     const Type *ActTy = (*AI)->getType();
     ConstantInt *c = dyn_cast<ConstantInt>(*AI);
     //Either we can cast directly, or we can upconvert the argument
-    bool isConvertible = ActTy->canLosslesslyBitCastTo(ParamTy) ||
+    bool isConvertible = ActTy == ParamTy ||
       (ParamTy->isIntegral() && ActTy->isIntegral() &&
        ParamTy->getPrimitiveSize() >= ActTy->getPrimitiveSize()) ||
       (c && ParamTy->getPrimitiveSize() >= ActTy->getPrimitiveSize() &&
