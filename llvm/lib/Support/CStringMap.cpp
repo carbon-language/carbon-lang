@@ -36,7 +36,7 @@ static unsigned HashString(const char *Start, const char *End) {
   // Bernstein hash function.
   unsigned int Result = 0;
   // TODO: investigate whether a modified bernstein hash function performs
-  // better: http://eternallyconfuzzled.com/tuts/hashing.html#existing
+  // better: http://eternallyconfuzzled.com/tuts/algorithms/jsw_tut_hashing.aspx
   //   X*33+c -> X*33^c
   while (Start != End)
     Result = Result * 33 + *Start++;
