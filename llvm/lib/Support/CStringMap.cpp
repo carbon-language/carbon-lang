@@ -33,8 +33,11 @@ CStringMapImpl::CStringMapImpl(unsigned InitSize, unsigned itemSize) {
 /// HashString - Compute a hash code for the specified string.
 ///
 static unsigned HashString(const char *Start, const char *End) {
+  // Bernstein hash function.
   unsigned int Result = 0;
-  // Perl hash function.
+  // TODO: investigate whether a modified bernstein hash function performs
+  // better: http://eternallyconfuzzled.com/tuts/hashing.html#existing
+  //   X*33+c -> X*33^c
   while (Start != End)
     Result = Result * 33 + *Start++;
   Result = Result + (Result >> 5);
