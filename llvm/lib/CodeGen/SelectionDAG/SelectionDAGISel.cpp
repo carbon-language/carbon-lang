@@ -843,22 +843,6 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
       !InBlock(BOp->getOperand(1), CurBB->getBasicBlock())) {
     const BasicBlock *BB = CurBB->getBasicBlock();
     
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Cond))
-      if ((II->getIntrinsicID() == Intrinsic::isunordered_f32 ||
-           II->getIntrinsicID() == Intrinsic::isunordered_f64) &&
-          // The operands of the setcc have to be in this block.  We don't know
-          // how to export them from some other block.  If this is the first
-          // block of the sequence, no exporting is needed.
-          (CurBB == CurMBB ||
-           (isExportableFromCurrentBlock(II->getOperand(1), BB) &&
-            isExportableFromCurrentBlock(II->getOperand(2), BB)))) {
-        SelectionDAGISel::CaseBlock CB(ISD::SETUO, II->getOperand(1),
-                                       II->getOperand(2), TBB, FBB, CurBB);
-        SwitchCases.push_back(CB);
-        return;
-      }
-        
-    
     // If the leaf of the tree is a comparison, merge the condition into 
     // the caseblock.
     if ((isa<ICmpInst>(Cond) || isa<FCmpInst>(Cond)) &&
@@ -2037,12 +2021,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
     return 0;
   }
-    
-  case Intrinsic::isunordered_f32:
-  case Intrinsic::isunordered_f64:
-    setValue(&I, DAG.getSetCC(MVT::i1,getValue(I.getOperand(1)),
-                              getValue(I.getOperand(2)), ISD::SETUO));
-    return 0;
     
   case Intrinsic::sqrt_f32:
   case Intrinsic::sqrt_f64:
