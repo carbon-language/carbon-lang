@@ -106,8 +106,6 @@ namespace {
       (void) llvm::createTailCallEliminationPass();
       (void) llvm::createTailDuplicationPass();
       (void) llvm::createTraceBasicBlockPass();
-      (void) llvm::createTraceValuesPassForBasicBlocks();
-      (void) llvm::createTraceValuesPassForFunction();
       (void) llvm::createUnifyFunctionExitNodesPass();
       (void) llvm::createCondPropagationPass();
       (void) llvm::createNullProfilerRSPass();
