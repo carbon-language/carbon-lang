@@ -4,8 +4,7 @@
 
 %FunTy = type int(int)
 
-declare int "test"(...)   ; Test differences of prototype
-declare int "test"()      ; Differ only by vararg
+declare int "test"(int)   ; Test forward declaration merging
 
 implementation
 
