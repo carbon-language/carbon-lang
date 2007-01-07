@@ -1426,14 +1426,14 @@ somewhere) can never be refined.
 <p>This class provides a symbol table that the <a
 href="#Function"><tt>Function</tt></a> and <a href="#Module">
 <tt>Module</tt></a> classes use for naming definitions. The symbol table can
-provide a name for any <a href="#Value"><tt>Value</tt></a> or <a
-href="#Type"><tt>Type</tt></a>.  <tt>SymbolTable</tt> is an abstract data
-type. It hides the data it contains and provides access to it through a
-controlled interface.</p>
+provide a name for any <a href="#Value"><tt>Value</tt></a>. 
+<tt>SymbolTable</tt> is an abstract data type. It hides the data it contains 
+and provides access to it through a controlled interface.</p>
 
-<p>Note that the symbol table class is should not be directly accessed by most
-clients.  It should only be used when iteration over the symbol table names
-themselves are required, which is very special purpose.  Note that not all LLVM
+<p>Note that the <tt>SymbolTable</tt> class should not be directly accessed 
+by most clients.  It should only be used when iteration over the symbol table 
+names themselves are required, which is very special purpose.  Note that not 
+all LLVM
 <a href="#Value">Value</a>s have names, and those without names (i.e. they have
 an empty name) do not exist in the symbol table.
 </p>
@@ -1442,9 +1442,8 @@ an empty name) do not exist in the symbol table.
 structure of the information it holds. The class contains two 
 <tt>std::map</tt> objects. The first, <tt>pmap</tt>, is a map of 
 <tt>Type*</tt> to maps of name (<tt>std::string</tt>) to <tt>Value*</tt>. 
-The second, <tt>tmap</tt>, is a map of names to <tt>Type*</tt>. Thus, Values
-are stored in two-dimensions and accessed by <tt>Type</tt> and name. Types,
-however, are stored in a single dimension and accessed only by name.</p>
+Thus, Values are stored in two-dimensions and accessed by <tt>Type</tt> and 
+name.</p> 
 
 <p>The interface of this class provides three basic types of operations:
 <ol>
@@ -1456,7 +1455,7 @@ however, are stored in a single dimension and accessed only by name.</p>
   <a href="#SymbolTable_insert"><tt>insert</tt></a>.</li>
   <li><em>Iterators</em>. Iterators allow the user to traverse the content
   of the symbol table in well defined ways, such as the method
-  <a href="#SymbolTable_type_begin"><tt>type_begin</tt></a>.</li>
+  <a href="#SymbolTable_plane_begin"><tt>plane_begin</tt></a>.</li>
 </ol>
 
 <h3>Accessors</h3>
@@ -1466,15 +1465,6 @@ however, are stored in a single dimension and accessed only by name.</p>
   <dd>The <tt>lookup</tt> method searches the type plane given by the
   <tt>Ty</tt> parameter for a <tt>Value</tt> with the provided <tt>name</tt>.
   If a suitable <tt>Value</tt> is not found, null is returned.</dd>
-
-  <dt><tt>Type* lookupType( const std::string&amp; name) const</tt>:</dt>
-  <dd>The <tt>lookupType</tt> method searches through the types for a
-  <tt>Type</tt> with the provided <tt>name</tt>. If a suitable <tt>Type</tt>
-  is not found, null is returned.</dd>
-
-  <dt><tt>bool hasTypes() const</tt>:</dt>
-  <dd>This function returns true if an entry has been made into the type
-  map.</dd>
 
   <dt><tt>bool isEmpty() const</tt>:</dt>
   <dd>This function returns true if both the value and types maps are
@@ -1493,12 +1483,6 @@ however, are stored in a single dimension and accessed only by name.</p>
   name. There can be a many to one mapping between names and constants
   or types.</dd>
 
-  <dt><tt>void insert(const std::string&amp; Name, Type *Typ)</tt>:</dt>
-  <dd> Inserts a type into the symbol table with the specified name. There
-  can be a many-to-one mapping between names and types. This method
-  allows a type with an existing entry in the symbol table to get
-  a new name.</dd>
-
   <dt><tt>void remove(Value* Val)</tt>:</dt>
  <dd> This method removes a named value from the symbol table. The
   type and name of the Value are extracted from \p N and used to
@@ -1506,21 +1490,11 @@ however, are stored in a single dimension and accessed only by name.</p>
   not in the symbol table, this method silently ignores the
   request.</dd>
 
-  <dt><tt>void remove(Type* Typ)</tt>:</dt>
-  <dd> This method removes a named type from the symbol table. The
-  name of the type is extracted from \P T and used to look up
-  the Type in the type map. If the Type is not in the symbol
-  table, this method silently ignores the request.</dd>
-
   <dt><tt>Value* remove(const std::string&amp; Name, Value *Val)</tt>:</dt>
   <dd> Remove a constant or type with the specified name from the 
   symbol table.</dd>
 
-  <dt><tt>Type* remove(const std::string&amp; Name, Type* T)</tt>:</dt>
-  <dd> Remove a type with the specified name from the symbol table.
-  Returns the removed Type.</dd>
-
-  <dt><tt>Value *value_remove(const value_iterator&amp; It)</tt>:</dt>
+  <dt><tt>Value *remove(const value_iterator&amp; It)</tt>:</dt>
   <dd> Removes a specific value from the symbol table. 
   Returns the removed value.</dd>
 
@@ -1547,16 +1521,6 @@ for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
      PE = ST.plane_end(); PI != PE; ++PI ) {
   PI-&gt;first  // <i>This is the Type* of the plane</i>
   PI-&gt;second // <i>This is the SymbolTable::ValueMap of name/Value pairs</i>
-}
-    </tt></pre></td>
-  </tr>
-  <tr>
-    <td align="left">All name/Type Pairs</td><td>TI</td>
-    <td align="left"><pre><tt>
-for (SymbolTable::type_const_iterator TI = ST.type_begin(),
-     TE = ST.type_end(); TI != TE; ++TI ) {
-  TI-&gt;first  // <i>This is the name of the type</i>
-  TI-&gt;second // <i>This is the Type* value associated with the name</i>
 }
     </tt></pre></td>
   </tr>
@@ -1617,20 +1581,6 @@ will loop infinitely.</p>
   <dd>Get a const_iterator to the end of a type plane. This serves as the
   marker for end of iteration of the type plane.
   Note: the type plane must already exist before using this.</dd>
-
-  <dt><tt>type_iterator type_begin()</tt>:</dt>
-  <dd>Get an iterator to the start of the name/Type map.</dd>
-
-  <dt><tt>type_const_iterator type_begin() cons</tt>:</dt>
-  <dd> Get a const_iterator to the start of the name/Type map.</dd>
-
-  <dt><tt>type_iterator type_end()</tt>:</dt>
-  <dd>Get an iterator to the end of the name/Type map. This serves as the
-  marker for end of iteration of the types.</dd>
-
-  <dt><tt>type_const_iterator type_end() const</tt>:</dt>
-  <dd>Get a const-iterator to the end of the name/Type map. This serves 
-  as the marker for end of iteration of the types.</dd>
 
   <dt><tt>plane_const_iterator find(const Type* Typ ) const</tt>:</dt>
   <dd>This method returns a plane_const_iterator for iteration over
