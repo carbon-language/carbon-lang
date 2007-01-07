@@ -114,7 +114,8 @@ namespace {
       return false;
     }
 
-    std::ostream &printType(std::ostream &Out, const Type *Ty,
+    std::ostream &printType(std::ostream &Out, const Type *Ty, 
+                            bool isSigned = true,
                             const std::string &VariableName = "",
                             bool IgnoreName = false);
     std::ostream &printPrimitiveType(std::ostream &Out, const Type *Ty, 
@@ -342,10 +343,12 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
 
   FunctionType::param_iterator I = FTy->param_begin(), E = FTy->param_end();
   const Type *RetTy = cast<PointerType>(I->get())->getElementType();
+  unsigned Idx = 1;
   for (++I; I != E; ++I) {
     if (PrintedType)
       FunctionInnards << ", ";
-    printType(FunctionInnards, *I, "");
+    printType(FunctionInnards, *I, 
+        /*isSigned=*/FTy->paramHasAttr(Idx, FunctionType::SExtAttribute), "");
     PrintedType = true;
   }
   if (FTy->isVarArg()) {
@@ -356,7 +359,8 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
   }
   FunctionInnards << ')';
   std::string tstr = FunctionInnards.str();
-  printType(Out, RetTy, tstr);
+  printType(Out, RetTy, 
+      /*isSigned=*/FTy->paramHasAttr(0, FunctionType::SExtAttribute), tstr);
 }
 
 std::ostream &
@@ -386,13 +390,13 @@ CWriter::printPrimitiveType(std::ostream &Out, const Type *Ty, bool isSigned,
 // declaration.
 //
 std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
-                                 const std::string &NameSoFar,
+                                 bool isSigned, const std::string &NameSoFar,
                                  bool IgnoreName) {
   if (Ty->isPrimitiveType()) {
     // FIXME:Signedness. When integer types are signless, this should just
     // always pass "false" for the sign of the primitive type. The instructions
     // will figure out how the value is to be interpreted.
-    printPrimitiveType(Out, Ty, true, NameSoFar);
+    printPrimitiveType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
 
@@ -407,11 +411,14 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     const FunctionType *FTy = cast<FunctionType>(Ty);
     std::stringstream FunctionInnards;
     FunctionInnards << " (" << NameSoFar << ") (";
+    unsigned Idx = 1;
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         FunctionInnards << ", ";
-      printType(FunctionInnards, *I, "");
+      printType(FunctionInnards, *I, 
+          /*isSigned=*/FTy->paramHasAttr(Idx, FunctionType::SExtAttribute), "");
+      ++Idx;
     }
     if (FTy->isVarArg()) {
       if (FTy->getNumParams())
@@ -421,7 +428,8 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     }
     FunctionInnards << ')';
     std::string tstr = FunctionInnards.str();
-    printType(Out, FTy->getReturnType(), tstr);
+    printType(Out, FTy->getReturnType(), 
+        /*isSigned=*/FTy->paramHasAttr(0, FunctionType::SExtAttribute), tstr);
     return Out;
   }
   case Type::StructTyID: {
@@ -431,7 +439,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     for (StructType::element_iterator I = STy->element_begin(),
            E = STy->element_end(); I != E; ++I) {
       Out << "  ";
-      printType(Out, *I, "field" + utostr(Idx++));
+      printType(Out, *I, true, "field" + utostr(Idx++));
       Out << ";\n";
     }
     return Out << '}';
@@ -445,14 +453,14 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
         isa<PackedType>(PTy->getElementType()))
       ptrName = "(" + ptrName + ")";
 
-    return printType(Out, PTy->getElementType(), ptrName);
+    return printType(Out, PTy->getElementType(), true, ptrName);
   }
 
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
     unsigned NumElements = ATy->getNumElements();
     if (NumElements == 0) NumElements = 1;
-    return printType(Out, ATy->getElementType(),
+    return printType(Out, ATy->getElementType(), true,
                      NameSoFar + "[" + utostr(NumElements) + "]");
   }
 
@@ -460,7 +468,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     const PackedType *PTy = cast<PackedType>(Ty);
     unsigned NumElements = PTy->getNumElements();
     if (NumElements == 0) NumElements = 1;
-    return printType(Out, PTy->getElementType(),
+    return printType(Out, PTy->getElementType(), true,
                      NameSoFar + "[" + utostr(NumElements) + "]");
   }
 
@@ -1431,15 +1439,18 @@ bool CWriter::doInitialization(Module &M) {
          I != E; ++I) {
       if (I->hasExternalLinkage()) {
         Out << "extern ";
-        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
+        printType(Out, I->getType()->getElementType(), true, 
+                  Mang->getValueName(I));
         Out << ";\n";
       } else if (I->hasDLLImportLinkage()) {
         Out << "__declspec(dllimport) ";
-        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
+        printType(Out, I->getType()->getElementType(), true, 
+                  Mang->getValueName(I));
         Out << ";\n";        
       } else if (I->hasExternalWeakLinkage()) {
         Out << "extern ";
-        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
+        printType(Out, I->getType()->getElementType(), true,
+                  Mang->getValueName(I));
         Out << " __EXTERNAL_WEAK__ ;\n";
       }
     }
@@ -1487,7 +1498,8 @@ bool CWriter::doInitialization(Module &M) {
           Out << "static ";
         else
           Out << "extern ";
-        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
+        printType(Out, I->getType()->getElementType(), true, 
+                  Mang->getValueName(I));
 
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
@@ -1516,7 +1528,8 @@ bool CWriter::doInitialization(Module &M) {
         else if (I->hasDLLExportLinkage())
           Out << "__declspec(dllexport) ";
             
-        printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
+        printType(Out, I->getType()->getElementType(), true, 
+                  Mang->getValueName(I));
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
         else if (I->hasWeakLinkage())
@@ -1623,7 +1636,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
     const Type *Ty = cast<Type>(I->second);
     std::string Name = "l_" + Mang->makeNameProper(I->first);
     Out << "typedef ";
-    printType(Out, Ty, Name);
+    printType(Out, Ty, true, Name);
     Out << ";\n";
   }
 
@@ -1662,7 +1675,7 @@ void CWriter::printContainedStructs(const Type *Ty,
     if (StructPrinted.insert(STy).second) {
       // Print structure type out.
       std::string Name = TypeNames[STy];
-      printType(Out, STy, Name, true);
+      printType(Out, STy, true, Name, true);
       Out << ";\n\n";
     }
   }
@@ -1705,14 +1718,18 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
       }
       
       std::string ArgName;
+      unsigned Idx = 1;
       for (; I != E; ++I) {
         if (PrintedArg) FunctionInnards << ", ";
         if (I->hasName() || !Prototype)
           ArgName = Mang->getValueName(I);
         else
           ArgName = "";
-        printType(FunctionInnards, I->getType(), ArgName);
+        printType(FunctionInnards, I->getType(), 
+            /*isSigned=*/FT->paramHasAttr(Idx, FunctionType::SExtAttribute), 
+            ArgName);
         PrintedArg = true;
+        ++Idx;
       }
     }
   } else {
@@ -1726,10 +1743,13 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
       ++I;
     }
     
+    unsigned Idx = 1;
     for (; I != E; ++I) {
       if (PrintedArg) FunctionInnards << ", ";
-      printType(FunctionInnards, *I);
+      printType(FunctionInnards, *I,
+               /*isSigned=*/FT->paramHasAttr(Idx, FunctionType::SExtAttribute));
       PrintedArg = true;
+      ++Idx;
     }
   }
 
@@ -1754,7 +1774,8 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   }
     
   // Print out the return type and the signature built above.
-  printType(Out, RetTy, FunctionInnards.str());
+  printType(Out, RetTy, FT->paramHasAttr(0, FunctionType::SExtAttribute),
+            FunctionInnards.str());
 }
 
 static inline bool isFPIntBitCast(const Instruction &I) {
@@ -1775,11 +1796,12 @@ void CWriter::printFunction(Function &F) {
     const Type *StructTy =
       cast<PointerType>(F.arg_begin()->getType())->getElementType();
     Out << "  ";
-    printType(Out, StructTy, "StructReturn");
+    printType(Out, StructTy, true, "StructReturn");
     Out << ";  /* Struct return temporary */\n";
 
     Out << "  ";
-    printType(Out, F.arg_begin()->getType(), Mang->getValueName(F.arg_begin()));
+    printType(Out, F.arg_begin()->getType(), true, 
+              Mang->getValueName(F.arg_begin()));
     Out << " = &StructReturn;\n";
   }
 
@@ -1789,17 +1811,17 @@ void CWriter::printFunction(Function &F) {
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
     if (const AllocaInst *AI = isDirectAlloca(&*I)) {
       Out << "  ";
-      printType(Out, AI->getAllocatedType(), Mang->getValueName(AI));
+      printType(Out, AI->getAllocatedType(), true, Mang->getValueName(AI));
       Out << ";    /* Address-exposed local */\n";
       PrintedVar = true;
     } else if (I->getType() != Type::VoidTy && !isInlinableInst(*I)) {
       Out << "  ";
-      printType(Out, I->getType(), Mang->getValueName(&*I));
+      printType(Out, I->getType(), true, Mang->getValueName(&*I));
       Out << ";\n";
 
       if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
         Out << "  ";
-        printType(Out, I->getType(),
+        printType(Out, I->getType(), true,
                   Mang->getValueName(&*I)+"__PHI_TEMPORARY");
         Out << ";\n";
       }
@@ -2428,12 +2450,14 @@ void CWriter::visitCallInst(CallInst &I) {
   }
       
   bool PrintedArg = false;
-  for (; AI != AE; ++AI, ++ArgNo) {
+  unsigned Idx = 1;
+  for (; AI != AE; ++AI, ++ArgNo, ++Idx) {
     if (PrintedArg) Out << ", ";
     if (ArgNo < NumDeclaredParams &&
         (*AI)->getType() != FTy->getParamType(ArgNo)) {
       Out << '(';
-      printType(Out, FTy->getParamType(ArgNo));
+      printType(Out, FTy->getParamType(ArgNo), 
+              /*isSigned=*/FTy->paramHasAttr(Idx, FunctionType::SExtAttribute));
       Out << ')';
     }
     writeOperand(*AI);
@@ -2650,7 +2674,7 @@ void CWriter::visitLoadInst(LoadInst &I) {
   Out << '*';
   if (I.isVolatile()) {
     Out << "((";
-    printType(Out, I.getType(), "volatile*");
+    printType(Out, I.getType(), true, "volatile*");
     Out << ")";
   }
 
@@ -2664,7 +2688,7 @@ void CWriter::visitStoreInst(StoreInst &I) {
   Out << '*';
   if (I.isVolatile()) {
     Out << "((";
-    printType(Out, I.getOperand(0)->getType(), " volatile*");
+    printType(Out, I.getOperand(0)->getType(), true, " volatile*");
     Out << ")";
   }
   writeOperand(I.getPointerOperand());
