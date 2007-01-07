@@ -3552,8 +3552,7 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
     FnName = "llvm.bswap.i64";
   else
     assert(0 && "Unknown integer type!");
-  Function *F = M->getOrInsertFunction(FnName, I.getType(), I.getType(), NULL);
-  
+  Constant *F = M->getOrInsertFunction(FnName, I.getType(), I.getType(), NULL);
   return new CallInst(F, V);
 }
 
@@ -6953,7 +6952,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
             Name = "llvm.memcpy.i32";
           else
             Name = "llvm.memcpy.i64";
-          Function *MemCpy = M->getOrInsertFunction(Name,
+          Constant *MemCpy = M->getOrInsertFunction(Name,
                                      CI.getCalledFunction()->getFunctionType());
           CI.setOperand(0, MemCpy);
           Changed = true;

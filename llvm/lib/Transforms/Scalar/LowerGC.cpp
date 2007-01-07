@@ -37,7 +37,7 @@ namespace {
 
     /// GCRead/GCWrite - These are the functions provided by the garbage
     /// collector for read/write barriers.
-    Function *GCRead, *GCWrite;
+    Constant *GCRead, *GCWrite;
 
     /// RootChain - This is the global linked-list that contains the chain of GC
     /// roots.
