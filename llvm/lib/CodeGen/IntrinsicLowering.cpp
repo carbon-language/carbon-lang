@@ -92,11 +92,6 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
                               Type::Int32Ty, (--(--I->arg_end()))->getType(),
                               (Type *)0);
         break;
-      case Intrinsic::isunordered_f32:
-      case Intrinsic::isunordered_f64:
-        EnsureFunctionExists(M, "isunordered", I->arg_begin(), I->arg_end(),
-                             Type::BoolTy);
-        break;
       case Intrinsic::sqrt_f32:
       case Intrinsic::sqrt_f64:
         if(I->arg_begin()->getType() == Type::FloatTy)
@@ -390,18 +385,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     static Constant *MemsetFCache = 0;
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemsetFCache);
-    break;
-  }
-  case Intrinsic::isunordered_f32:
-  case Intrinsic::isunordered_f64: {
-    Value *L = CI->getOperand(1);
-    Value *R = CI->getOperand(2);
-
-    Value *LIsNan = new FCmpInst(FCmpInst::FCMP_ONE, L, L, "LIsNan", CI);
-    Value *RIsNan = new FCmpInst(FCmpInst::FCMP_ONE, R, R, "RIsNan", CI);
-    CI->replaceAllUsesWith(
-      BinaryOperator::create(Instruction::Or, LIsNan, RIsNan,
-                             "isunordered", CI));
     break;
   }
   case Intrinsic::sqrt_f32: {
