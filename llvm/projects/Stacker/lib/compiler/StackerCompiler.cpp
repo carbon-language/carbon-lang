@@ -895,7 +895,7 @@ StackerCompiler::handle_word( int tkn )
     case DUMP :  // Dump the stack (debugging aid)
     {
         if (echo) bb->setName("DUMP");
-        Function* f = TheModule->getOrInsertFunction(
+        Constant * f = TheModule->getOrInsertFunction(
             "_stacker_dump_stack_", DefinitionType);
         std::vector<Value*> args;
         bb->getInstList().push_back( new CallInst( f, args ) );
