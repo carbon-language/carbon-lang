@@ -1498,12 +1498,26 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   BranchInst *ExitBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
   if (ExitBr == 0) return UnknownValue;
   assert(ExitBr->isConditional() && "If unconditional, it can't be in loop!");
+  
+  // At this point, we know we have a conditional branch that determines whether
+  // the loop is exited.  However, we don't know if the branch is executed each
+  // time through the loop.  If not, then the execution count of the branch will
+  // not be equal to the trip count of the loop.
+  //
+  // Currently we check for this by checking to see if the Exit branch goes to
+  // the loop header.  If so, we know it will always execute the same number of
+  // times as the loop.  More extensive analysis could be done to handle more
+  // cases here.
+  if (ExitBr->getSuccessor(0) != L->getHeader() &&
+      ExitBr->getSuccessor(1) != L->getHeader())
+    return UnknownValue;
+  
   ICmpInst *ExitCond = dyn_cast<ICmpInst>(ExitBr->getCondition());
 
   // If its not an integer comparison then compute it the hard way. 
   // Note that ICmpInst deals with pointer comparisons too so we must check
   // the type of the operand.
-  if (ExitCond == 0 || !ExitCond->getOperand(0)->getType()->isIntegral()) 
+  if (ExitCond == 0 || isa<PointerType>(ExitCond->getOperand(0)->getType()))
     return ComputeIterationCountExhaustively(L, ExitBr->getCondition(),
                                           ExitBr->getSuccessor(0) == ExitBlock);
 
