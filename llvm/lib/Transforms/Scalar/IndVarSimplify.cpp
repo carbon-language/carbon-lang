@@ -46,6 +46,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
@@ -113,6 +114,7 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
         if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
           Insts.insert(U);
       SE->deleteInstructionFromRecords(I);
+      DOUT << "INDVARS: Deleting: " << *I;
       I->eraseFromParent();
       Changed = true;
     }
@@ -133,7 +135,8 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
           dyn_cast<GetElementPtrInst>(PN->getIncomingValue(BackedgeIdx)))
     if (GEPI->getOperand(0) == PN) {
       assert(GEPI->getNumOperands() == 2 && "GEP types must match!");
-
+      DOUT << "INDVARS: Eliminating pointer recurrence: " << *GEPI;
+      
       // Okay, we found a pointer recurrence.  Transform this pointer
       // recurrence into an integer recurrence.  Compute the value that gets
       // added to the pointer at every iteration.
@@ -265,6 +268,9 @@ Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     // We have to use the preincremented value...
     IndVar = L->getCanonicalInductionVariable();
   }
+  
+  DOUT << "INDVARS: LFTR: TripCount = " << *TripCount
+       << "  IndVar = " << *IndVar << "\n";
 
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
@@ -359,6 +365,9 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
                 Value *NewVal = Rewriter.expandCodeFor(ExitValue, InsertPt,
                                                        I->getType());
 
+                DOUT << "INDVARS: RLEV: AfterLoopVal = " << *NewVal
+                     << "  LoopVal = " << *I << "\n";
+                
                 // Rewrite any users of the computed value outside of the loop
                 // with the newly computed value.
                 for (unsigned i = 0, e = ExtraLoopUsers.size(); i != e; ++i) {
@@ -502,6 +511,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   Value *IndVar = Rewriter.getOrInsertCanonicalInductionVariable(L,LargestType);
   ++NumInserted;
   Changed = true;
+  DOUT << "INDVARS: New CanIV: " << *IndVar;
 
   if (!isa<SCEVCouldNotCompute>(IterationCount))
     if (Instruction *DI = LinearFunctionTestReplace(L, IterationCount,Rewriter))
@@ -523,20 +533,23 @@ void IndVarSimplify::runOnLoop(Loop *L) {
       if (!InsertedSizes[IndVars[i].first->getType()->getPrimitiveSize()]) {
         PHINode *PN = IndVars[i].first;
         InsertedSizes[PN->getType()->getPrimitiveSize()] = true;
-        Instruction *New = CastInst::create(Instruction::Trunc, IndVar, 
-            PN->getType(), "indvar", InsertPt);
+        Instruction *New = new TruncInst(IndVar, PN->getType(), "indvar",
+                                         InsertPt);
         Rewriter.addInsertedValue(New, SE->getSCEV(New));
+        DOUT << "INDVARS: Made trunc IV for " << *PN
+             << "   NewVal = " << *New << "\n";
       }
   }
 
-  // If there were induction variables of other sizes, cast the primary
-  // induction variable to the right size for them, avoiding the need for the
-  // code evaluation methods to insert induction variables of different sizes.
+  // Rewrite all induction variables in terms of the canonical induction
+  // variable.
   std::map<unsigned, Value*> InsertedSizes;
   while (!IndVars.empty()) {
     PHINode *PN = IndVars.back().first;
     Value *NewVal = Rewriter.expandCodeFor(IndVars.back().second, InsertPt,
                                            PN->getType());
+    DOUT << "INDVARS: Rewrote IV '" << *IndVars.back().second << "' " << *PN
+         << "   into = " << *NewVal << "\n";
     std::string Name = PN->getName();
     PN->setName("");
     NewVal->setName(Name);
