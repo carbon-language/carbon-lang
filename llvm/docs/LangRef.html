@@ -173,7 +173,6 @@
           <li><a href="#i_memcpy">'<tt>llvm.memcpy.*</tt>' Intrinsic</a></li>
           <li><a href="#i_memmove">'<tt>llvm.memmove.*</tt>' Intrinsic</a></li>
           <li><a href="#i_memset">'<tt>llvm.memset.*</tt>' Intrinsic</a></li>
-          <li><a href="#i_isunordered">'<tt>llvm.isunordered.*</tt>' Intrinsic</a></li>
           <li><a href="#i_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a></li>
           <li><a href="#i_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a></li>
         </ol>
@@ -4206,41 +4205,6 @@ the
 destination location.  If the argument is known to be aligned to some boundary,
 this can be specified as the fourth argument, otherwise it should be set to 0 or
 1.
-</p>
-</div>
-
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="i_isunordered">'<tt>llvm.isunordered.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-<pre>
-  declare bool %llvm.isunordered.f32(float Val1, float  Val2)
-  declare bool %llvm.isunordered.f64(double Val1, double Val2)
-</pre>
-
-<h5>Overview:</h5>
-
-<p>
-The '<tt>llvm.isunordered</tt>' intrinsics return true if either or both of the
-specified floating point values is a NAN.
-</p>
-
-<h5>Arguments:</h5>
-
-<p>
-The arguments are floating point numbers of the same type.
-</p>
-
-<h5>Semantics:</h5>
-
-<p>
-If either or both of the arguments is a SNAN or QNAN, it returns true, otherwise
-false.
 </p>
 </div>
 
