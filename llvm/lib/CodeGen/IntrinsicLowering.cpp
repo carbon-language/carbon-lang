@@ -21,15 +21,14 @@
 using namespace llvm;
 
 template <class ArgIt>
-static Function *EnsureFunctionExists(Module &M, const char *Name,
-                                      ArgIt ArgBegin, ArgIt ArgEnd,
-                                      const Type *RetTy) {
-  if (Function *F = M.getNamedFunction(Name)) return F;
-  // It doesn't already exist in the program, insert a new definition now.
+static void EnsureFunctionExists(Module &M, const char *Name,
+                                 ArgIt ArgBegin, ArgIt ArgEnd,
+                                 const Type *RetTy) {
+  // Insert a correctly-typed definition now.
   std::vector<const Type *> ParamTys;
   for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
     ParamTys.push_back(I->getType());
-  return M.getOrInsertFunction(Name, FunctionType::get(RetTy, ParamTys, false));
+  M.getOrInsertFunction(Name, FunctionType::get(RetTy, ParamTys, false));
 }
 
 /// ReplaceCallWith - This function is used when we want to lower an intrinsic
@@ -38,53 +37,24 @@ static Function *EnsureFunctionExists(Module &M, const char *Name,
 /// prototype doesn't match the arguments we expect to pass in.
 template <class ArgIt>
 static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
-                                 ArgIt ArgBegin, ArgIt ArgEnd, bool isSigned,
-                                 const Type *RetTy, Function *&FCache) {
+                                 ArgIt ArgBegin, ArgIt ArgEnd,
+                                 const Type *RetTy, Constant *&FCache) {
   if (!FCache) {
     // If we haven't already looked up this function, check to see if the
     // program already contains a function with this name.
     Module *M = CI->getParent()->getParent()->getParent();
-    FCache = M->getNamedFunction(NewFn);
-    if (!FCache) {
-      // It doesn't already exist in the program, insert a new definition now.
-      std::vector<const Type *> ParamTys;
-      for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
-        ParamTys.push_back((*I)->getType());
-      FCache = M->getOrInsertFunction(NewFn,
-                                     FunctionType::get(RetTy, ParamTys, false));
-    }
-   }
-
-  const FunctionType *FT = FCache->getFunctionType();
-  std::vector<Value*> Operands;
-  unsigned ArgNo = 0;
-  for (ArgIt I = ArgBegin; I != ArgEnd && ArgNo != FT->getNumParams(); 
-       ++I, ++ArgNo) {
-    Value *Arg = *I;
-    if (Arg->getType() != FT->getParamType(ArgNo)) {
-      Instruction::CastOps opcode = CastInst::getCastOpcode(Arg, isSigned,
-          FT->getParamType(ArgNo), isSigned);
-      Arg = CastInst::create(opcode, Arg, FT->getParamType(ArgNo), 
-                             Arg->getName(), CI);
-    }
-    Operands.push_back(Arg);
+    // Get or insert the definition now.
+    std::vector<const Type *> ParamTys;
+    for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
+      ParamTys.push_back((*I)->getType());
+    FCache = M->getOrInsertFunction(NewFn,
+                                    FunctionType::get(RetTy, ParamTys, false));
   }
-  // Pass nulls into any additional arguments...
-  for (; ArgNo != FT->getNumParams(); ++ArgNo)
-    Operands.push_back(Constant::getNullValue(FT->getParamType(ArgNo)));
 
-  std::string Name = CI->getName(); CI->setName("");
-  if (FT->getReturnType() == Type::VoidTy) Name.clear();
-  CallInst *NewCI = new CallInst(FCache, Operands, Name, CI);
-  if (!CI->use_empty()) {
-    Value *V = NewCI;
-    if (CI->getType() != NewCI->getType()) {
-      Instruction::CastOps opcode = CastInst::getCastOpcode(NewCI, isSigned,
-          CI->getType(), isSigned);
-      V = CastInst::create(opcode, NewCI, CI->getType(), Name, CI);
-    }
-    CI->replaceAllUsesWith(V);
-  }
+  std::vector<Value*> Operands(ArgBegin, ArgEnd);
+  CallInst *NewCI = new CallInst(FCache, Operands, CI->getName(), CI);
+  if (!CI->use_empty())
+    CI->replaceAllUsesWith(NewCI);
   return NewCI;
 }
 
@@ -286,10 +256,9 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     // by the lowerinvoke pass.  In both cases, the right thing to do is to
     // convert the call to an explicit setjmp or longjmp call.
   case Intrinsic::setjmp: {
-    static Function *SetjmpFCache = 0;
-    static const unsigned castOpcodes[] = { Instruction::BitCast };
+    static Constant *SetjmpFCache = 0;
     Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin()+1, CI->op_end(),
-                               castOpcodes, Type::Int32Ty, SetjmpFCache);
+                               Type::Int32Ty, SetjmpFCache);
     if (CI->getType() != Type::VoidTy)
       CI->replaceAllUsesWith(V);
     break;
@@ -300,21 +269,17 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
      break;
 
   case Intrinsic::longjmp: {
-    static Function *LongjmpFCache = 0;
-    static const unsigned castOpcodes[] = 
-      { Instruction::BitCast, 0 };
+    static Constant *LongjmpFCache = 0;
     ReplaceCallWith("longjmp", CI, CI->op_begin()+1, CI->op_end(),
-                    castOpcodes, Type::VoidTy, LongjmpFCache);
+                    Type::VoidTy, LongjmpFCache);
     break;
   }
 
   case Intrinsic::siglongjmp: {
     // Insert the call to abort
-    static Function *AbortFCache = 0;
-    static const unsigned castOpcodes[] =
-      { Instruction::BitCast, 0 };
+    static Constant *AbortFCache = 0;
     ReplaceCallWith("abort", CI, CI->op_end(), CI->op_end(), 
-                    castOpcodes, Type::VoidTy, AbortFCache);
+                    Type::VoidTy, AbortFCache);
     break;
   }
   case Intrinsic::ctpop_i8:
@@ -393,38 +358,38 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;    // Simply strip out debugging intrinsics
 
   case Intrinsic::memcpy_i32: {
-    static Function *MemcpyFCache = 0;
+    static Constant *MemcpyFCache = 0;
     ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
-                    false, (*(CI->op_begin()+1))->getType(), MemcpyFCache);
+                    (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
   }
   case Intrinsic::memcpy_i64: {
-    static Function *MemcpyFCache = 0;
+    static Constant *MemcpyFCache = 0;
     ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
-                     false, (*(CI->op_begin()+1))->getType(), MemcpyFCache);
+                     (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
   }
   case Intrinsic::memmove_i32: {
-    static Function *MemmoveFCache = 0;
+    static Constant *MemmoveFCache = 0;
     ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
-                    false, (*(CI->op_begin()+1))->getType(), MemmoveFCache);
+                    (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
   }
   case Intrinsic::memmove_i64: {
-    static Function *MemmoveFCache = 0;
+    static Constant *MemmoveFCache = 0;
     ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
-                    false, (*(CI->op_begin()+1))->getType(), MemmoveFCache);
+                    (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
   }
   case Intrinsic::memset_i32: {
-    static Function *MemsetFCache = 0;
+    static Constant *MemsetFCache = 0;
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
-                    true, (*(CI->op_begin()+1))->getType(), MemsetFCache);
+                    (*(CI->op_begin()+1))->getType(), MemsetFCache);
   }
   case Intrinsic::memset_i64: {
-    static Function *MemsetFCache = 0;
+    static Constant *MemsetFCache = 0;
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
-                    true, (*(CI->op_begin()+1))->getType(), MemsetFCache);
+                    (*(CI->op_begin()+1))->getType(), MemsetFCache);
     break;
   }
   case Intrinsic::isunordered_f32:
@@ -440,15 +405,15 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::sqrt_f32: {
-    static Function *sqrtfFCache = 0;
+    static Constant *sqrtfFCache = 0;
     ReplaceCallWith("sqrtf", CI, CI->op_begin()+1, CI->op_end(),
-                    false, Type::FloatTy, sqrtfFCache);
+                    Type::FloatTy, sqrtfFCache);
     break;
   }
   case Intrinsic::sqrt_f64: {
-    static Function *sqrtFCache = 0;
+    static Constant *sqrtFCache = 0;
     ReplaceCallWith("sqrt", CI, CI->op_begin()+1, CI->op_end(),
-                    false, Type::DoubleTy, sqrtFCache);
+                    Type::DoubleTy, sqrtFCache);
     break;
   }
   }

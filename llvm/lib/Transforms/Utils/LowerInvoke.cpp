@@ -60,15 +60,15 @@ static cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
 namespace {
   class VISIBILITY_HIDDEN LowerInvoke : public FunctionPass {
     // Used for both models.
-    Function *WriteFn;
-    Function *AbortFn;
+    Constant *WriteFn;
+    Constant *AbortFn;
     Value *AbortMessage;
     unsigned AbortMessageLength;
 
     // Used for expensive EH support.
     const Type *JBLinkTy;
     GlobalVariable *JBListHead;
-    Function *SetJmpFn, *LongJmpFn;
+    Constant *SetJmpFn, *LongJmpFn;
     
     // We peek in TLI to grab the target's jmp_buf size and alignment
     const TargetLowering *TLI;
@@ -87,7 +87,7 @@ namespace {
     }
        
   private:
-    void createAbortMessage();
+    void createAbortMessage(Module *M);
     void writeAbortMessage(Instruction *IB);
     bool insertCheapEHSupport(Function &F);
     void splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes);
@@ -148,29 +148,12 @@ bool LowerInvoke::doInitialization(Module &M) {
 
   // We need the 'write' and 'abort' functions for both models.
   AbortFn = M.getOrInsertFunction("abort", Type::VoidTy, (Type *)0);
-
-  // Unfortunately, 'write' can end up being prototyped in several different
-  // ways.  If the user defines a three (or more) operand function named 'write'
-  // we will use their prototype.  We _do not_ want to insert another instance
-  // of a write prototype, because we don't know that the funcresolve pass will
-  // run after us.  If there is a definition of a write function, but it's not
-  // suitable for our uses, we just don't emit write calls.  If there is no
-  // write prototype at all, we just add one.
-  if (Function *WF = M.getNamedFunction("write")) {
-    if (WF->getFunctionType()->getNumParams() > 3 ||
-        WF->getFunctionType()->isVarArg())
-      WriteFn = WF;
-    else
-      WriteFn = 0;
-  } else {
-    WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::Int32Ty,
-                                    VoidPtrTy, Type::Int32Ty, (Type *)0);
-  }
+  WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::Int32Ty,
+                                  VoidPtrTy, Type::Int32Ty, (Type *)0);
   return true;
 }
 
-void LowerInvoke::createAbortMessage() {
-  Module &M = *WriteFn->getParent();
+void LowerInvoke::createAbortMessage(Module *M) {
   if (ExpensiveEHSupport) {
     // The abort message for expensive EH support tells the user that the
     // program 'unwound' without an 'invoke' instruction.
@@ -180,7 +163,7 @@ void LowerInvoke::createAbortMessage() {
 
     GlobalVariable *MsgGV = new GlobalVariable(Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
-                                               Msg, "abortmsg", &M);
+                                               Msg, "abortmsg", M);
     std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::Int32Ty));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
   } else {
@@ -193,7 +176,7 @@ void LowerInvoke::createAbortMessage() {
 
     GlobalVariable *MsgGV = new GlobalVariable(Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
-                                               Msg, "abortmsg", &M);
+                                               Msg, "abortmsg", M);
     std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::Int32Ty));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
   }
@@ -201,30 +184,15 @@ void LowerInvoke::createAbortMessage() {
 
 
 void LowerInvoke::writeAbortMessage(Instruction *IB) {
-  if (WriteFn) {
-    if (AbortMessage == 0) createAbortMessage();
+  if (AbortMessage == 0)
+    createAbortMessage(IB->getParent()->getParent()->getParent());
 
-    // These are the arguments we WANT...
-    std::vector<Value*> Args;
-    Args.push_back(ConstantInt::get(Type::Int32Ty, 2));
-    Args.push_back(AbortMessage);
-    Args.push_back(ConstantInt::get(Type::Int32Ty, AbortMessageLength));
-
-    // If the actual declaration of write disagrees, insert casts as
-    // appropriate.
-    const FunctionType *FT = WriteFn->getFunctionType();
-    unsigned NumArgs = FT->getNumParams();
-    for (unsigned i = 0; i != 3; ++i)
-      if (i < NumArgs && FT->getParamType(i) != Args[i]->getType())
-        if (Args[i]->getType()->isInteger())
-          Args[i] = ConstantExpr::getIntegerCast(cast<Constant>(Args[i]),
-                                                 FT->getParamType(i), true);
-        else
-          Args[i] = ConstantExpr::getBitCast(cast<Constant>(Args[i]),
-                                             FT->getParamType(i));
-
-    (new CallInst(WriteFn, Args, "", IB))->setTailCall();
-  }
+  // These are the arguments we WANT...
+  std::vector<Value*> Args;
+  Args.push_back(ConstantInt::get(Type::Int32Ty, 2));
+  Args.push_back(AbortMessage);
+  Args.push_back(ConstantInt::get(Type::Int32Ty, AbortMessageLength));
+  (new CallInst(WriteFn, Args, "", IB))->setTailCall();
 }
 
 bool LowerInvoke::insertCheapEHSupport(Function &F) {

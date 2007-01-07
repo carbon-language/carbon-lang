@@ -32,8 +32,8 @@ namespace {
   /// %free calls.
   ///
   class VISIBILITY_HIDDEN LowerAllocations : public BasicBlockPass {
-    Function *MallocFunc;   // Functions in the module we are processing
-    Function *FreeFunc;     // Initialized by doInitialization
+    Constant *MallocFunc;   // Functions in the module we are processing
+    Constant *FreeFunc;     // Initialized by doInitialization
     bool LowerMallocArgToInteger;
   public:
     LowerAllocations(bool LowerToInt = false)
@@ -84,19 +84,12 @@ FunctionPass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
 // This function is always successful.
 //
 bool LowerAllocations::doInitialization(Module &M) {
-  const Type *SBPTy = PointerType::get(Type::Int8Ty);
-  MallocFunc = M.getNamedFunction("malloc");
-  FreeFunc   = M.getNamedFunction("free");
-
-  if (MallocFunc == 0) {
-    // Prototype malloc as "void* malloc(...)", because we don't know in
-    // doInitialization whether size_t is int or long.
-    FunctionType *FT = FunctionType::get(SBPTy,std::vector<const Type*>(),true);
-    MallocFunc = M.getOrInsertFunction("malloc", FT);
-  }
-  if (FreeFunc == 0)
-    FreeFunc = M.getOrInsertFunction("free"  , Type::VoidTy, SBPTy, (Type *)0);
-
+  const Type *BPTy = PointerType::get(Type::Int8Ty);
+  // Prototype malloc as "char* malloc(...)", because we don't know in
+  // doInitialization whether size_t is int or long.
+  FunctionType *FT = FunctionType::get(BPTy, std::vector<const Type*>(), true);
+  MallocFunc = M.getOrInsertFunction("malloc", FT);
+  FreeFunc = M.getOrInsertFunction("free"  , Type::VoidTy, BPTy, (Type *)0);
   return true;
 }
 
@@ -145,27 +138,8 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
         }
       }
 
-      const FunctionType *MallocFTy = MallocFunc->getFunctionType();
-      std::vector<Value*> MallocArgs;
-
-      if (MallocFTy->getNumParams() > 0 || MallocFTy->isVarArg()) {
-        if (MallocFTy->isVarArg()) {
-          if (MallocArg->getType() != IntPtrTy)
-            MallocArg = CastInst::createIntegerCast(MallocArg, IntPtrTy, 
-                                                    false /*ZExt*/, "", I);
-        } else if (MallocFTy->getNumParams() > 0 &&
-                   MallocFTy->getParamType(0) != Type::Int32Ty)
-          MallocArg = CastInst::createIntegerCast(
-              MallocArg, MallocFTy->getParamType(0), false/*ZExt*/, "",I);
-        MallocArgs.push_back(MallocArg);
-      }
-
-      // If malloc is prototyped to take extra arguments, pass nulls.
-      for (unsigned i = 1; i < MallocFTy->getNumParams(); ++i)
-       MallocArgs.push_back(Constant::getNullValue(MallocFTy->getParamType(i)));
-
-      // Create the call to Malloc...
-      CallInst *MCall = new CallInst(MallocFunc, MallocArgs, "", I);
+      // Create the call to Malloc.
+      CallInst *MCall = new CallInst(MallocFunc, MallocArg, "", I);
       MCall->setTailCall();
 
       // Create a cast instruction to convert to the right type...
@@ -181,23 +155,11 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       Changed = true;
       ++NumLowered;
     } else if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
-      const FunctionType *FreeFTy = FreeFunc->getFunctionType();
-      std::vector<Value*> FreeArgs;
-
-      if (FreeFTy->getNumParams() > 0 || FreeFTy->isVarArg()) {
-        Value *MCast = FI->getOperand(0);
-        if (FreeFTy->getNumParams() > 0 &&
-            FreeFTy->getParamType(0) != MCast->getType())
-          MCast = new BitCastInst(MCast, FreeFTy->getParamType(0), "", I);
-        FreeArgs.push_back(MCast);
-      }
-
-      // If malloc is prototyped to take extra arguments, pass nulls.
-      for (unsigned i = 1; i < FreeFTy->getNumParams(); ++i)
-       FreeArgs.push_back(Constant::getNullValue(FreeFTy->getParamType(i)));
+      Value *PtrCast = new BitCastInst(FI->getOperand(0),
+                                       PointerType::get(Type::Int8Ty), "", I);
 
       // Insert a call to the free function...
-      (new CallInst(FreeFunc, FreeArgs, "", I))->setTailCall();
+      (new CallInst(FreeFunc, PtrCast, "", I))->setTailCall();
 
       // Delete the old free instruction
       I = --BBIL.erase(I);

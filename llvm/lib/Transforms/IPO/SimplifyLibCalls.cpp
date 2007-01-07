@@ -222,7 +222,7 @@ public:
   const Type* getIntPtrType() const { return TD->getIntPtrType(); }
 
   /// @brief Return a Function* for the putchar libcall
-  Function* get_putchar() {
+  Constant *get_putchar() {
     if (!putchar_func)
       putchar_func = 
         M->getOrInsertFunction("putchar", Type::Int32Ty, Type::Int32Ty, NULL);
@@ -230,7 +230,7 @@ public:
   }
 
   /// @brief Return a Function* for the puts libcall
-  Function* get_puts() {
+  Constant *get_puts() {
     if (!puts_func)
       puts_func = M->getOrInsertFunction("puts", Type::Int32Ty,
                                          PointerType::get(Type::Int8Ty),
@@ -239,7 +239,7 @@ public:
   }
 
   /// @brief Return a Function* for the fputc libcall
-  Function* get_fputc(const Type* FILEptr_type) {
+  Constant *get_fputc(const Type* FILEptr_type) {
     if (!fputc_func)
       fputc_func = M->getOrInsertFunction("fputc", Type::Int32Ty, Type::Int32Ty,
                                           FILEptr_type, NULL);
@@ -247,7 +247,7 @@ public:
   }
 
   /// @brief Return a Function* for the fputs libcall
-  Function* get_fputs(const Type* FILEptr_type) {
+  Constant *get_fputs(const Type* FILEptr_type) {
     if (!fputs_func)
       fputs_func = M->getOrInsertFunction("fputs", Type::Int32Ty,
                                           PointerType::get(Type::Int8Ty),
@@ -256,7 +256,7 @@ public:
   }
 
   /// @brief Return a Function* for the fwrite libcall
-  Function* get_fwrite(const Type* FILEptr_type) {
+  Constant *get_fwrite(const Type* FILEptr_type) {
     if (!fwrite_func)
       fwrite_func = M->getOrInsertFunction("fwrite", TD->getIntPtrType(),
                                            PointerType::get(Type::Int8Ty),
@@ -267,7 +267,7 @@ public:
   }
 
   /// @brief Return a Function* for the sqrt libcall
-  Function* get_sqrt() {
+  Constant *get_sqrt() {
     if (!sqrt_func)
       sqrt_func = M->getOrInsertFunction("sqrt", Type::DoubleTy, 
                                          Type::DoubleTy, NULL);
@@ -275,7 +275,7 @@ public:
   }
 
   /// @brief Return a Function* for the strlen libcall
-  Function* get_strcpy() {
+  Constant *get_strcpy() {
     if (!strcpy_func)
       strcpy_func = M->getOrInsertFunction("strcpy",
                                            PointerType::get(Type::Int8Ty),
@@ -286,7 +286,7 @@ public:
   }
 
   /// @brief Return a Function* for the strlen libcall
-  Function* get_strlen() {
+  Constant *get_strlen() {
     if (!strlen_func)
       strlen_func = M->getOrInsertFunction("strlen", TD->getIntPtrType(),
                                            PointerType::get(Type::Int8Ty),
@@ -295,7 +295,7 @@ public:
   }
 
   /// @brief Return a Function* for the memchr libcall
-  Function* get_memchr() {
+  Constant *get_memchr() {
     if (!memchr_func)
       memchr_func = M->getOrInsertFunction("memchr",
                                            PointerType::get(Type::Int8Ty),
@@ -306,7 +306,7 @@ public:
   }
 
   /// @brief Return a Function* for the memcpy libcall
-  Function* get_memcpy() {
+  Constant *get_memcpy() {
     if (!memcpy_func) {
       const Type *SBP = PointerType::get(Type::Int8Ty);
       const char *N = TD->getIntPtrType() == Type::Int32Ty ?
@@ -318,17 +318,17 @@ public:
     return memcpy_func;
   }
 
-  Function *getUnaryFloatFunction(const char *Name, Function *&Cache) {
+  Constant *getUnaryFloatFunction(const char *Name, Constant *&Cache) {
     if (!Cache)
       Cache = M->getOrInsertFunction(Name, Type::FloatTy, Type::FloatTy, NULL);
     return Cache;
   }
   
-  Function *get_floorf() { return getUnaryFloatFunction("floorf", floorf_func);}
-  Function *get_ceilf()  { return getUnaryFloatFunction( "ceilf",  ceilf_func);}
-  Function *get_roundf() { return getUnaryFloatFunction("roundf", roundf_func);}
-  Function *get_rintf()  { return getUnaryFloatFunction( "rintf",  rintf_func);}
-  Function *get_nearbyintf() { return getUnaryFloatFunction("nearbyintf",
+  Constant *get_floorf() { return getUnaryFloatFunction("floorf", floorf_func);}
+  Constant *get_ceilf()  { return getUnaryFloatFunction( "ceilf",  ceilf_func);}
+  Constant *get_roundf() { return getUnaryFloatFunction("roundf", roundf_func);}
+  Constant *get_rintf()  { return getUnaryFloatFunction( "rintf",  rintf_func);}
+  Constant *get_nearbyintf() { return getUnaryFloatFunction("nearbyintf",
                                                             nearbyintf_func); }
 private:
   /// @brief Reset our cached data for a new Module
@@ -354,13 +354,13 @@ private:
 
 private:
   /// Caches for function pointers.
-  Function *putchar_func, *puts_func;
-  Function *fputc_func, *fputs_func, *fwrite_func;
-  Function *memcpy_func, *memchr_func;
-  Function* sqrt_func;
-  Function *strcpy_func, *strlen_func;
-  Function *floorf_func, *ceilf_func, *roundf_func;
-  Function *rintf_func, *nearbyintf_func;
+  Constant *putchar_func, *puts_func;
+  Constant *fputc_func, *fputs_func, *fwrite_func;
+  Constant *memcpy_func, *memchr_func;
+  Constant *sqrt_func;
+  Constant *strcpy_func, *strlen_func;
+  Constant *floorf_func, *ceilf_func, *roundf_func;
+  Constant *rintf_func, *nearbyintf_func;
   Module *M;             ///< Cached Module
   TargetData *TD;        ///< Cached TargetData
 };
@@ -564,12 +564,12 @@ public:
     if (!CSI) {
       // The second operand is not constant, or not signed. Just lower this to 
       // memchr since we know the length of the string since it is constant.
-      Function* f = SLC.get_memchr();
+      Constant *f = SLC.get_memchr();
       std::vector<Value*> args;
       args.push_back(ci->getOperand(1));
       args.push_back(ci->getOperand(2));
       args.push_back(ConstantInt::get(SLC.getIntPtrType(), len));
-      ci->replaceAllUsesWith( new CallInst(f, args, ci->getName(), ci));
+      ci->replaceAllUsesWith(new CallInst(f, args, ci->getName(), ci));
       ci->eraseFromParent();
       return true;
     }
@@ -1344,13 +1344,10 @@ public:
           return false;
 
         // printf("%s\n",str) -> puts(str)
-        Function* puts_func = SLC.get_puts();
-        if (!puts_func)
-          return false;
         std::vector<Value*> args;
-        args.push_back(CastToCStr(ci->getOperand(2), *ci));
-        new CallInst(puts_func,args,ci->getName(),ci);
-        ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
+        new CallInst(SLC.get_puts(), CastToCStr(ci->getOperand(2), *ci),
+                     ci->getName(), ci);
+        ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty, len));
         break;
       }
       case 'c':
@@ -1359,12 +1356,9 @@ public:
         if (len != 2)
           return false;
 
-        Function* putchar_func = SLC.get_putchar();
-        if (!putchar_func)
-          return false;
-        CastInst* cast = CastInst::createSExtOrBitCast(
+        CastInst *Char = CastInst::createSExtOrBitCast(
             ci->getOperand(2), Type::Int32Ty, CI->getName()+".int", ci);
-        new CallInst(putchar_func, cast, "", ci);
+        new CallInst(SLC.get_putchar(), Char, "", ci);
         ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty, 1));
         break;
       }
@@ -1424,14 +1418,10 @@ public:
 
       // fprintf(file,fmt) -> fwrite(fmt,strlen(fmt),file)
       const Type* FILEptr_type = ci->getOperand(1)->getType();
-      Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
-      if (!fwrite_func)
-        return false;
 
       // Make sure that the fprintf() and fwrite() functions both take the
       // same type of char pointer.
-      if (ci->getOperand(2)->getType() !=
-          fwrite_func->getFunctionType()->getParamType(0))
+      if (ci->getOperand(2)->getType() != PointerType::get(Type::Int8Ty))
         return false;
 
       std::vector<Value*> args;
@@ -1439,7 +1429,7 @@ public:
       args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
       args.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
       args.push_back(ci->getOperand(1));
-      new CallInst(fwrite_func,args,ci->getName(),ci);
+      new CallInst(SLC.get_fwrite(FILEptr_type), args, ci->getName(), ci);
       ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
       ci->eraseFromParent();
       return true;
@@ -1465,26 +1455,19 @@ public:
         if (getConstantStringLength(ci->getOperand(3), len, &CA)) {
           // fprintf(file,"%s",str) -> fwrite(str,strlen(str),1,file)
           const Type* FILEptr_type = ci->getOperand(1)->getType();
-          Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
-          if (!fwrite_func)
-            return false;
           std::vector<Value*> args;
           args.push_back(CastToCStr(ci->getOperand(3), *ci));
-          args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
-          args.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
+          args.push_back(ConstantInt::get(SLC.getIntPtrType(), len));
+          args.push_back(ConstantInt::get(SLC.getIntPtrType(), 1));
           args.push_back(ci->getOperand(1));
-          new CallInst(fwrite_func,args,ci->getName(),ci);
-          ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
+          new CallInst(SLC.get_fwrite(FILEptr_type), args, ci->getName(), ci);
+          ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty, len));
         } else {
           // fprintf(file,"%s",str) -> fputs(str,file)
           const Type* FILEptr_type = ci->getOperand(1)->getType();
-          Function* fputs_func = SLC.get_fputs(FILEptr_type);
-          if (!fputs_func)
-            return false;
-          std::vector<Value*> args;
-          args.push_back(CastToCStr(ci->getOperand(3), *ci));
-          args.push_back(ci->getOperand(1));
-          new CallInst(fputs_func,args,ci->getName(),ci);
+          new CallInst(SLC.get_fputs(FILEptr_type),
+                       CastToCStr(ci->getOperand(3), *ci),
+                       ci->getOperand(1), ci->getName(),ci);
           ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
         }
         break;
@@ -1493,12 +1476,9 @@ public:
       {
         // fprintf(file,"%c",c) -> fputc(c,file)
         const Type* FILEptr_type = ci->getOperand(1)->getType();
-        Function* fputc_func = SLC.get_fputc(FILEptr_type);
-        if (!fputc_func)
-          return false;
         CastInst* cast = CastInst::createSExtOrBitCast(
             ci->getOperand(3), Type::Int32Ty, CI->getName()+".int", ci);
-        new CallInst(fputc_func,cast,ci->getOperand(1),"",ci);
+        new CallInst(SLC.get_fputc(FILEptr_type), cast,ci->getOperand(1),"",ci);
         ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,1));
         break;
       }
@@ -1563,15 +1543,12 @@ public:
       len++;
 
       // sprintf(str,fmt) -> llvm.memcpy(str,fmt,strlen(fmt),1)
-      Function* memcpy_func = SLC.get_memcpy();
-      if (!memcpy_func)
-        return false;
       std::vector<Value*> args;
       args.push_back(ci->getOperand(1));
       args.push_back(ci->getOperand(2));
       args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
       args.push_back(ConstantInt::get(Type::Int32Ty,1));
-      new CallInst(memcpy_func,args,"",ci);
+      new CallInst(SLC.get_memcpy(), args, "", ci);
       ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
       ci->eraseFromParent();
       return true;
@@ -1592,12 +1569,8 @@ public:
     switch (CI->getZExtValue()) {
     case 's': {
       // sprintf(dest,"%s",str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
-      Function* strlen_func = SLC.get_strlen();
-      Function* memcpy_func = SLC.get_memcpy();
-      if (!strlen_func || !memcpy_func)
-        return false;
-      
-      Value *Len = new CallInst(strlen_func, CastToCStr(ci->getOperand(3), *ci),
+      Value *Len = new CallInst(SLC.get_strlen(),
+                                CastToCStr(ci->getOperand(3), *ci),
                                 ci->getOperand(3)->getName()+".len", ci);
       Value *Len1 = BinaryOperator::createAdd(Len,
                                             ConstantInt::get(Len->getType(), 1),
@@ -1610,7 +1583,7 @@ public:
       args.push_back(CastToCStr(ci->getOperand(3), *ci));
       args.push_back(Len1);
       args.push_back(ConstantInt::get(Type::Int32Ty,1));
-      new CallInst(memcpy_func, args, "", ci);
+      new CallInst(SLC.get_memcpy(), args, "", ci);
       
       // The strlen result is the unincremented number of bytes in the string.
       if (!ci->use_empty()) {
@@ -1676,29 +1649,24 @@ public:
       {
         // fputs(s,F)  -> fputc(s[0],F)  (if s is constant and strlen(s) == 1)
         const Type* FILEptr_type = ci->getOperand(2)->getType();
-        Function* fputc_func = SLC.get_fputc(FILEptr_type);
-        if (!fputc_func)
-          return false;
         LoadInst* loadi = new LoadInst(ci->getOperand(1),
           ci->getOperand(1)->getName()+".byte",ci);
         CastInst* casti = new SExtInst(loadi, Type::Int32Ty, 
                                        loadi->getName()+".int", ci);
-        new CallInst(fputc_func,casti,ci->getOperand(2),"",ci);
+        new CallInst(SLC.get_fputc(FILEptr_type), casti,
+                     ci->getOperand(2), "", ci);
         break;
       }
       default:
       {
         // fputs(s,F)  -> fwrite(s,1,len,F) (if s is constant and strlen(s) > 1)
         const Type* FILEptr_type = ci->getOperand(2)->getType();
-        Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
-        if (!fwrite_func)
-          return false;
         std::vector<Value*> parms;
         parms.push_back(ci->getOperand(1));
         parms.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
         parms.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
         parms.push_back(ci->getOperand(2));
-        new CallInst(fwrite_func,parms,"",ci);
+        new CallInst(SLC.get_fwrite(FILEptr_type), parms, "", ci);
         break;
       }
     }
@@ -1860,7 +1828,7 @@ public:
     case Type::Int64TyID : CTTZName = "llvm.cttz.i64"; break;
     }
     
-    Function *F = SLC.getModule()->getOrInsertFunction(CTTZName, ArgType,
+    Constant *F = SLC.getModule()->getOrInsertFunction(CTTZName, ArgType,
                                                        ArgType, NULL);
     Value *V = CastInst::createIntegerCast(TheCall->getOperand(1), ArgType, 
                                            false/*ZExt*/, "tmp", TheCall);
@@ -1921,7 +1889,7 @@ struct UnaryDoubleFPOptimizer : public LibCallOptimization {
   /// when the target supports the destination function and where there can be
   /// no precision loss.
   static bool ShrinkFunctionToFloatVersion(CallInst *CI, SimplifyLibCalls &SLC,
-                                           Function *(SimplifyLibCalls::*FP)()){
+                                           Constant *(SimplifyLibCalls::*FP)()){
     if (CastInst *Cast = dyn_cast<CastInst>(CI->getOperand(1)))
       if (Cast->getOperand(0)->getType() == Type::FloatTy) {
         Value *New = new CallInst((SLC.*FP)(), Cast->getOperand(0),
