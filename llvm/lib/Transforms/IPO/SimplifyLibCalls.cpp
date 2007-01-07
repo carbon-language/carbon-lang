@@ -1091,7 +1091,7 @@ struct LLVMMemCpyMoveOptzn : public LibCallOptimization {
     // Get the type we will cast to, based on size of the string
     Value* dest = ci->getOperand(1);
     Value* src = ci->getOperand(2);
-    Type* castType = 0;
+    const Type* castType = 0;
     switch (len)
     {
       case 0:
@@ -1195,7 +1195,7 @@ struct LLVMMemSetOptimization : public LibCallOptimization {
     // Get the type we will cast to, based on size of memory area to fill, and
     // and the value we will store there.
     Value* dest = ci->getOperand(1);
-    Type* castType = 0;
+    const Type* castType = 0;
     switch (len) {
       case 1:
         castType = Type::Int8Ty;
