@@ -673,7 +673,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
   // Add the resolver to the Safe module.
   // Prototype: void *getPointerToNamedFunction(const char* Name)
-  Function *resolverFunc =
+  Constant *resolverFunc =
     Safe->getOrInsertFunction("getPointerToNamedFunction",
                               PointerType::get(Type::Int8Ty),
                               PointerType::get(Type::Int8Ty), (Type *)0);
