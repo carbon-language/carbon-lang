@@ -185,7 +185,7 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
 
   // Okay, we can do this xform, do so now.
   Module *M = CI->getParent()->getParent()->getParent();
-  Function *Int = M->getOrInsertFunction(IntName, Ty, Ty, (Type*)0);
+  Constant *Int = M->getOrInsertFunction(IntName, Ty, Ty, (Type*)0);
   
   Value *Op = CI->getOperand(1);
   Op = new CallInst(Int, Op, CI->getName(), CI);
