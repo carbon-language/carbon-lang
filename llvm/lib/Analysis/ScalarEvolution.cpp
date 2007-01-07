@@ -1495,7 +1495,6 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   // exit.
   //
   // FIXME: we should be able to handle switch instructions (with a single exit)
-  // FIXME: We should handle cast of int to bool as well
   BranchInst *ExitBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
   if (ExitBr == 0) return UnknownValue;
   assert(ExitBr->isConditional() && "If unconditional, it can't be in loop!");
