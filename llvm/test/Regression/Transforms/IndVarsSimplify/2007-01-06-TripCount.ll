@@ -40,14 +40,3 @@ return:		; preds = %bb6
 	ret i32 %i.0
 }
 
-define void %main() {
-entry:
-	%tmp = call i32 %test( i32 0 )		; <i32> [#uses=1]
-	%tmp1 = call i32 (i8*, ...)* %printf( i8* getelementptr ([4 x i8]* %str, i32 0, i32 0), i32 %tmp )		; <i32> [#uses=0]
-	br label %return
-
-return:		; preds = %entry
-	ret void
-}
-
-declare i32 %printf(i8*, ...)
