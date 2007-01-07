@@ -118,18 +118,7 @@ int main(int argc, char **argv, char * const *envp) {
     // Run static destructors.
     EE->runStaticConstructorsDestructors(true);
     
-    // If the program didn't explicitly call exit, call exit now, for the
-    // program. This ensures that any atexit handlers get called correctly.
-    Function *Exit = MP->getModule()->getOrInsertFunction("exit", Type::VoidTy,
-                                                          Type::Int32Ty,
-                                                          (Type *)0);
-
-    std::vector<GenericValue> Args;
-    GenericValue ResultGV;
-    ResultGV.Int32Val = Result;
-    Args.push_back(ResultGV);
-    EE->runFunction(Exit, Args);
-
+    exit(Result);
     std::cerr << "ERROR: exit(" << Result << ") returned!\n";
     abort();
   } catch (const std::string& msg) {
