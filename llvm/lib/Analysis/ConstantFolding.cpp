@@ -35,8 +35,6 @@ llvm::canConstantFoldCallTo(Function *F) {
   const std::string &Name = F->getName();
 
   switch (F->getIntrinsicID()) {
-  case Intrinsic::isunordered_f32:
-  case Intrinsic::isunordered_f64:
   case Intrinsic::sqrt_f32:
   case Intrinsic::sqrt_f64:
   case Intrinsic::bswap_i16:
@@ -178,9 +176,6 @@ llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
         double Op2V = Op2->getValue();
 
-        if (Name == "llvm.isunordered.f32" || Name == "llvm.isunordered.f64")
-          return ConstantBool::get(IsNAN(Op1V) || IsNAN(Op2V));
-        else
         if (Name == "pow") {
           errno = 0;
           double V = pow(Op1V, Op2V);
