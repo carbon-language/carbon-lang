@@ -274,19 +274,21 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
   // code with llvm.stacksave/llvm.stackrestore intrinsics.
   if (InlinedFunctionInfo.ContainsDynamicAllocas) {
     Module *M = Caller->getParent();
-    const Type *SBytePtr = PointerType::get(Type::Int8Ty);
+    const Type *BytePtr = PointerType::get(Type::Int8Ty);
     // Get the two intrinsics we care about.
-    Function *StackSave, *StackRestore;
-    StackSave    = M->getOrInsertFunction("llvm.stacksave", SBytePtr, NULL);
+    Constant *StackSave, *StackRestore;
+    StackSave    = M->getOrInsertFunction("llvm.stacksave", BytePtr, NULL);
     StackRestore = M->getOrInsertFunction("llvm.stackrestore", Type::VoidTy,
-                                          SBytePtr, NULL);
+                                          BytePtr, NULL);
 
     // If we are preserving the callgraph, add edges to the stacksave/restore
     // functions for the calls we insert.
     CallGraphNode *StackSaveCGN = 0, *StackRestoreCGN = 0, *CallerNode = 0;
     if (CG) {
-      StackSaveCGN    = CG->getOrInsertFunction(StackSave);
-      StackRestoreCGN = CG->getOrInsertFunction(StackRestore);
+      // We know that StackSave/StackRestore are Function*'s, because they are
+      // intrinsics which must have the right types.
+      StackSaveCGN    = CG->getOrInsertFunction(cast<Function>(StackSave));
+      StackRestoreCGN = CG->getOrInsertFunction(cast<Function>(StackRestore));
       CallerNode = (*CG)[Caller];
     }
       
