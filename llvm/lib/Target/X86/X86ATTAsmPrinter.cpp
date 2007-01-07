@@ -80,12 +80,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   X86SharedAsmPrinter::decorateName(CurrentFnName, F);
 
-  // Change GNU linkonce to LLVM linkonce name
-  if (F->hasSection() &&
-      (F->getSection().find(".gnu.linkonce.t") != std::string::npos))
-    SwitchToTextSection(getSectionForFunction(*F).c_str(), NULL);
-  else
-    SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
     
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
