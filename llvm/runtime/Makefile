@@ -18,7 +18,7 @@ install all::
 	$(Echo) "Warning: with llvm-gcc version 4 and beyond"
 else 
 ifneq ($(wildcard $(LLVMGCC)),)
-PARALLEL_DIRS  := GCCLibraries  libdummy libprofile libtrace GC
+PARALLEL_DIRS  := GCCLibraries  libdummy libprofile GC
 else
 PARALLEL_DIRS  := 
 install all ::
