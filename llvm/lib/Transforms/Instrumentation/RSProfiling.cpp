@@ -127,7 +127,7 @@ namespace {
   //deciding when to sample.
   class CycleCounter : public Chooser {
     uint64_t rm;
-    Function* F;
+    Constant *F;
   public:
     CycleCounter(Module& m, uint64_t resetmask);
     virtual ~CycleCounter();

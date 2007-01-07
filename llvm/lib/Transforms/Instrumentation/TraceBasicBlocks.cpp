@@ -45,17 +45,16 @@ static void InsertInstrumentationCall (BasicBlock *BB,
   DOUT << "InsertInstrumentationCall (\"" << BB->getName ()
        << "\", \"" << FnName << "\", " << BBNumber << ")\n";
   Module &M = *BB->getParent ()->getParent ();
-  Function *InstrFn = M.getOrInsertFunction (FnName, Type::VoidTy,
+  Constant *InstrFn = M.getOrInsertFunction (FnName, Type::VoidTy,
                                              Type::Int32Ty, (Type *)0);
-  std::vector<Value*> Args (1);
-  Args[0] = ConstantInt::get (Type::Int32Ty, BBNumber);
-
-  // Insert the call after any alloca or PHI instructions...
+  
+  // Insert the call after any alloca or PHI instructions.
   BasicBlock::iterator InsertPos = BB->begin();
   while (isa<AllocaInst>(InsertPos) || isa<PHINode>(InsertPos))
     ++InsertPos;
 
-  new CallInst (InstrFn, Args, "", InsertPos);
+  new CallInst(InstrFn, ConstantInt::get (Type::Int32Ty, BBNumber),
+               "", InsertPos);
 }
 
 bool TraceBasicBlocks::runOnModule(Module &M) {

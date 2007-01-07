@@ -36,7 +36,7 @@ TraceFuncNames("tracefunc", cl::desc("Only trace specific functions in the "
                cl::value_desc("function"), cl::Hidden);
 
 static void TraceValuesAtBBExit(BasicBlock *BB,
-                                Function *Printf, Function* HashPtrToSeqNum,
+                                Constant *Printf, Constant* HashPtrToSeqNum,
                              std::vector<Instruction*> *valuesStoredInFunction);
 
 // We trace a particular function if no functions to trace were specified
@@ -54,8 +54,8 @@ TraceThisFunction(Function &F)
 
 namespace {
   struct ExternalFuncs {
-    Function *PrintfFunc, *HashPtrFunc, *ReleasePtrFunc;
-    Function *RecordPtrFunc, *PushOnEntryFunc, *ReleaseOnReturnFunc;
+    Constant *PrintfFunc, *HashPtrFunc, *ReleasePtrFunc;
+    Constant *RecordPtrFunc, *PushOnEntryFunc, *ReleaseOnReturnFunc;
     void doInitialization(Module &M); // Add prototypes for external functions
   };
 
@@ -224,7 +224,7 @@ static std::string getPrintfCodeFor(const Value *V) {
 
 static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
                             std::string Message,
-                            Function *Printf, Function* HashPtrToSeqNum) {
+                            Constant *Printf, Constant* HashPtrToSeqNum) {
   // Escape Message by replacing all % characters with %% chars.
   std::string Tmp;
   std::swap(Tmp, Message);
@@ -266,8 +266,8 @@ static void InsertPrintInst(Value *V, BasicBlock *BB, Instruction *InsertBefore,
 
 static void InsertVerbosePrintInst(Value *V, BasicBlock *BB,
                                    Instruction *InsertBefore,
-                                   const std::string &Message, Function *Printf,
-                                   Function* HashPtrToSeqNum) {
+                                   const std::string &Message, Constant *Printf,
+                                   Constant * HashPtrToSeqNum) {
   std::ostringstream OutStr;
   if (V) WriteAsOperand(OutStr, V);
   InsertPrintInst(V, BB, InsertBefore, Message+OutStr.str()+" = ",
@@ -277,7 +277,7 @@ static void InsertVerbosePrintInst(Value *V, BasicBlock *BB,
 static void
 InsertReleaseInst(Value *V, BasicBlock *BB,
                   Instruction *InsertBefore,
-                  Function* ReleasePtrFunc) {
+                  Constant *ReleasePtrFunc) {
 
   const Type *SBP = PointerType::get(Type::Int8Ty);
   if (V->getType() != SBP)    // Cast pointer to be sbyte*
@@ -290,7 +290,7 @@ InsertReleaseInst(Value *V, BasicBlock *BB,
 static void
 InsertRecordInst(Value *V, BasicBlock *BB,
                  Instruction *InsertBefore,
-                 Function* RecordPtrFunc) {
+                 Constant *RecordPtrFunc) {
     const Type *SBP = PointerType::get(Type::Int8Ty);
   if (V->getType() != SBP)     // Cast pointer to be sbyte*
     V = new BitCastInst(V, SBP, "RP_cast", InsertBefore);
@@ -325,7 +325,7 @@ ReleasePtrSeqNumbers(BasicBlock *BB,
 // store instruction).
 //
 static void TraceValuesAtBBExit(BasicBlock *BB,
-                                Function *Printf, Function* HashPtrToSeqNum,
+                                Constant *Printf, Constant * HashPtrToSeqNum,
                             std::vector<Instruction*> *valuesStoredInFunction) {
   // Get an iterator to point to the insertion location, which is
   // just before the terminator instruction.
@@ -354,8 +354,8 @@ static void TraceValuesAtBBExit(BasicBlock *BB,
   }
 }
 
-static inline void InsertCodeToShowFunctionEntry(Function &F, Function *Printf,
-                                                 Function* HashPtrToSeqNum){
+static inline void InsertCodeToShowFunctionEntry(Function &F, Constant *Printf,
+                                                 Constant * HashPtrToSeqNum){
   // Get an iterator to point to the insertion location
   BasicBlock &BB = F.getEntryBlock();
   Instruction *InsertPos = BB.begin();
@@ -376,8 +376,8 @@ static inline void InsertCodeToShowFunctionEntry(Function &F, Function *Printf,
 
 
 static inline void InsertCodeToShowFunctionExit(BasicBlock *BB,
-                                                Function *Printf,
-                                                Function* HashPtrToSeqNum) {
+                                                Constant *Printf,
+                                                Constant * HashPtrToSeqNum) {
   // Get an iterator to point to the insertion location
   ReturnInst *Ret = cast<ReturnInst>(BB->getTerminator());
 
