@@ -166,15 +166,21 @@ public:
 /// @{
 public:
   /// getOrInsertFunction - Look up the specified function in the module symbol
-  /// table.  If it does not exist, add a prototype for the function and return
-  /// it.
-  Function *getOrInsertFunction(const std::string &Name, const FunctionType *T);
+  /// table.  Four possibilities:
+  ///   1. If it does not exist, add a prototype for the function and return it.
+  ///   2. If it exists, and has internal linkage, the existing function is
+  ///      renamed and a new one is inserted.
+  ///   3. Otherwise, if the existing function has the correct prototype, return
+  ///      the existing function.
+  ///   4. Finally, the function exists but has the wrong prototype: return the
+  ///      function with a constantexpr cast to the right prototype.
+  Constant *getOrInsertFunction(const std::string &Name, const FunctionType *T);
 
   /// getOrInsertFunction - Look up the specified function in the module symbol
   /// table.  If it does not exist, add a prototype for the function and return
   /// it.  This version of the method takes a null terminated list of function
   /// arguments, which makes it easier for clients to use.
-  Function *getOrInsertFunction(const std::string &Name, const Type *RetTy,...)
+  Constant *getOrInsertFunction(const std::string &Name, const Type *RetTy,...)
     END_WITH_NULL;
 
   /// getFunction - Look up the specified function in the module symbol table.

@@ -152,23 +152,35 @@ void Module::setPointerSize(PointerSize PS) {
 // Methods for easy access to the functions in the module.
 //
 
-// getOrInsertFunction - Look up the specified function in the module symbol
-// table.  If it does not exist, add a prototype for the function and return
-// it.  This is nice because it allows most passes to get away with not handling
-// the symbol table directly for this common task.
-//
-Function *Module::getOrInsertFunction(const std::string &Name,
+Constant *Module::getOrInsertFunction(const std::string &Name,
                                       const FunctionType *Ty) {
   SymbolTable &SymTab = getValueSymbolTable();
 
-  // See if we have a definitions for the specified function already...
-  if (Value *V = SymTab.lookup(PointerType::get(Ty), Name)) {
-    return cast<Function>(V);      // Yup, got it
-  } else {                         // Nope, add one
+  // See if we have a definitions for the specified function already.
+  Function *F =
+    dyn_cast_or_null<Function>(SymTab.lookup(PointerType::get(Ty), Name));
+  if (F == 0) {
+    // Nope, add it.
     Function *New = new Function(Ty, GlobalVariable::ExternalLinkage, Name);
     FunctionList.push_back(New);
-    return New;                    // Return the new prototype...
+    return New;                    // Return the new prototype.
   }
+
+  // Okay, the function exists.  Does it have externally visible linkage?
+  if (F->hasInternalLinkage()) {
+    // Rename the function.
+    F->setName(SymTab.getUniqueName(F->getType(), F->getName()));
+    // Retry, now there won't be a conflict.
+    return getOrInsertFunction(Name, Ty);
+  }
+
+  // If the function exists but has the wrong type, return a bitcast to the
+  // right type.
+  if (F->getFunctionType() != Ty)
+    return ConstantExpr::getBitCast(F, PointerType::get(Ty));
+  
+  // Otherwise, we just found the existing function or a prototype.
+  return F;  
 }
 
 // getOrInsertFunction - Look up the specified function in the module symbol
@@ -176,7 +188,7 @@ Function *Module::getOrInsertFunction(const std::string &Name,
 // This version of the method takes a null terminated list of function
 // arguments, which makes it easier for clients to use.
 //
-Function *Module::getOrInsertFunction(const std::string &Name,
+Constant *Module::getOrInsertFunction(const std::string &Name,
                                       const Type *RetTy, ...) {
   va_list Args;
   va_start(Args, RetTy);
