@@ -1105,8 +1105,6 @@ declare int %strcmp(sbyte*, sbyte*)
 
 declare void (int)* %signal(int, void (int)*)
 
-declare bool %llvm.isunordered.f64(double, double)
-
 declare fastcc void %hash_extract_pv(int, sbyte*)
 
 declare double %difftime(int, int)
