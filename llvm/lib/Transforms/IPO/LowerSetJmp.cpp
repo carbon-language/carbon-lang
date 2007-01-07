@@ -61,13 +61,13 @@ namespace {
   class LowerSetJmp : public ModulePass,
                       public InstVisitor<LowerSetJmp> {
     // LLVM library functions...
-    Function* InitSJMap;        // __llvm_sjljeh_init_setjmpmap
-    Function* DestroySJMap;     // __llvm_sjljeh_destroy_setjmpmap
-    Function* AddSJToMap;       // __llvm_sjljeh_add_setjmp_to_map
-    Function* ThrowLongJmp;     // __llvm_sjljeh_throw_longjmp
-    Function* TryCatchLJ;       // __llvm_sjljeh_try_catching_longjmp_exception
-    Function* IsLJException;    // __llvm_sjljeh_is_longjmp_exception
-    Function* GetLJValue;       // __llvm_sjljeh_get_longjmp_value
+    Constant *InitSJMap;        // __llvm_sjljeh_init_setjmpmap
+    Constant *DestroySJMap;     // __llvm_sjljeh_destroy_setjmpmap
+    Constant *AddSJToMap;       // __llvm_sjljeh_add_setjmp_to_map
+    Constant *ThrowLongJmp;     // __llvm_sjljeh_throw_longjmp
+    Constant *TryCatchLJ;       // __llvm_sjljeh_try_catching_longjmp_exception
+    Constant *IsLJException;    // __llvm_sjljeh_is_longjmp_exception
+    Constant *GetLJValue;       // __llvm_sjljeh_get_longjmp_value
 
     typedef std::pair<SwitchInst*, CallInst*> SwitchValuePair;
 
