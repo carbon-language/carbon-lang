@@ -1872,21 +1872,31 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $2.val;
   }
   | OptTailCall OptCallingConv TypesV ValueRef '(' ValueRefListE ')'  {
-    if (!$2->empty())
-      *$1 += " " + *$2;
-    if (!$1->empty())
-      *$1 += " ";
-    *$1 += $3->getNewTy() + " " + *$4.val + "(";
-    for (unsigned i = 0; i < $6->size(); ++i) {
-      ValueInfo& VI = (*$6)[i];
-      *$1 += *VI.val;
-      if (i+1 < $6->size())
-        *$1 += ", ";
-      VI.destroy();
+    // map llvm.isunordered to "fcmp uno" 
+    if (*$4.val == "%llvm.isunordered.f32" ||
+        *$4.val == "%llvm.isunordered.f64") {
+      $$.val = new std::string( "fcmp uno " + *(*$6)[0].val + ", ");
+      size_t pos = (*$6)[1].val->find(' ');
+      assert(pos != std::string::npos && "no space?");
+      *$$.val += (*$6)[1].val->substr(pos+1);
+      $$.type = TypeInfo::get("bool", BoolTy);
+    } else {
+      if (!$2->empty())
+        *$1 += " " + *$2;
+      if (!$1->empty())
+        *$1 += " ";
+      *$1 += $3->getNewTy() + " " + *$4.val + "(";
+      for (unsigned i = 0; i < $6->size(); ++i) {
+        ValueInfo& VI = (*$6)[i];
+        *$1 += *VI.val;
+        if (i+1 < $6->size())
+          *$1 += ", ";
+        VI.destroy();
+      }
+      *$1 += ")";
+      $$.val = $1;
+      $$.type = getFunctionReturnType($3);
     }
-    *$1 += ")";
-    $$.val = $1;
-    $$.type = getFunctionReturnType($3);
     delete $2; $4.destroy(); delete $6;
   }
   | MemoryInst ;
