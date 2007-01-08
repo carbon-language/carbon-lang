@@ -1,6 +1,7 @@
 // RUN: %llvmgxx %s -emit-llvm -S -o - &&
 // RUN: %llvmgxx %s -emit-llvm -S -o - | not grep 'gnu.linkonce.'
 // PR1085
+// XFAIL: i.86-pc-linux-*
 
 class 
 __attribute__((visibility("default"))) QGenericArgument
