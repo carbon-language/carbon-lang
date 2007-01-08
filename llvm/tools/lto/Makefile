@@ -11,9 +11,13 @@ LEVEL = ../..
 LIBRARYNAME = LLVMlto
 
 LINK_LIBS_IN_SHARED = 1
-SHARED_LIBRARY = 1
-LOADABLE_MODULE = 1
-DONT_BUILD_RELINKED = 1
+ifeq ($(OS),Darwin)
+  SHARED_LIBRARY = 1
+  LOADABLE_MODULE = 1
+  DONT_BUILD_RELINKED = 1
+else
+  BUILD_ARCHIVE = 1
+endif
 
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 

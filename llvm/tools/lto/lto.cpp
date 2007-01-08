@@ -455,6 +455,9 @@ LTO::optimizeModules(const std::string &OutputFilename,
   return LTO_OPT_SUCCESS;
 }
 
+/// Unused pure-virtual destructor. Must remain empty.
+LinkTimeOptimizer::~LinkTimeOptimizer() {}
+
 /// Destruct LTO. Delete all modules, symbols and target.
 LTO::~LTO() {
   

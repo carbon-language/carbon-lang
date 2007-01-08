@@ -22,8 +22,8 @@ PARALLEL_DIRS := llvm-config llvm-upgrade \
 
 include $(LEVEL)/Makefile.config
 
-# Disable liblto on non-darwin platforms right now until LLVM is built PIC.
-ifeq ($(OS), Darwin)
+# Disable liblto on Windows until compatability is determined.
+ifneq ($(OS), MingW)
 PARALLEL_DIRS += lto
 endif
 
