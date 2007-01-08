@@ -118,9 +118,22 @@ int main(int argc, char **argv, char * const *envp) {
     // Run static destructors.
     EE->runStaticConstructorsDestructors(true);
     
-    exit(Result);
-    std::cerr << "ERROR: exit(" << Result << ") returned!\n";
-    abort();
+    // If the program didn't explicitly call exit, call exit now, for the
+    // program. This ensures that any atexit handlers get called correctly.
+    Constant *Exit = MP->getModule()->getOrInsertFunction("exit", Type::VoidTy,
+                                                          Type::Int32Ty, NULL);
+    if (Function *ExitF = dyn_cast<Function>(Exit)) {
+      std::vector<GenericValue> Args;
+      GenericValue ResultGV;
+      ResultGV.Int32Val = Result;
+      Args.push_back(ResultGV);
+      EE->runFunction(ExitF, Args);
+      std::cerr << "ERROR: exit(" << Result << ") returned!\n";
+      abort();
+    } else {
+      std::cerr << "ERROR: exit defined with wrong prototype!\n";
+      abort();
+    }
   } catch (const std::string& msg) {
     std::cerr << argv[0] << ": " << msg << "\n";
   } catch (...) {
