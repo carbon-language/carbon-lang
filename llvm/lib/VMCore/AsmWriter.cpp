@@ -501,6 +501,8 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       Out << " ]";
     }
   } else if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(CV)) {
+    if (CS->getType()->isPacked())
+      Out << '<';
     Out << '{';
     unsigned N = CS->getNumOperands();
     if (N) {
@@ -525,6 +527,8 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     }
  
     Out << " }";
+    if (CS->getType()->isPacked())
+      Out << '>';
   } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CV)) {
       const Type *ETy = CP->getType()->getElementType();
       assert(CP->getNumOperands() > 0 &&
