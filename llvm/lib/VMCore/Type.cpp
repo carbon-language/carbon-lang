@@ -607,11 +607,16 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
     const FunctionType *FTy2 = cast<FunctionType>(Ty2);
     if (FTy->isVarArg() != FTy2->isVarArg() ||
         FTy->getNumParams() != FTy2->getNumParams() ||
+        FTy->getNumAttrs() != FTy2->getNumAttrs() ||
+        FTy->getParamAttrs(0) != FTy2->getParamAttrs(0) ||
         !TypesEqual(FTy->getReturnType(), FTy2->getReturnType(), EqTypes))
       return false;
-    for (unsigned i = 0, e = FTy2->getNumParams(); i != e; ++i)
+    for (unsigned i = 0, e = FTy2->getNumParams(); i != e; ++i) {
+      if (FTy->getParamAttrs(i+1) != FTy->getParamAttrs(i+1))
+        return false;
       if (!TypesEqual(FTy->getParamType(i), FTy2->getParamType(i), EqTypes))
         return false;
+    }
     return true;
   } else {
     assert(0 && "Unknown derived type!");
