@@ -36,7 +36,7 @@ static ConstantIntegral *getMaxValue(const Type *Ty, bool isSigned = false) {
   if (Ty->isInteger()) {
     if (isSigned) {
       // Calculate 011111111111111...
-      unsigned TypeBits = Ty->getPrimitiveSize()*8;
+      unsigned TypeBits = Ty->getPrimitiveSizeInBits();
       int64_t Val = INT64_MAX;             // All ones
       Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
       return ConstantInt::get(Ty, Val);
@@ -53,7 +53,7 @@ static ConstantIntegral *getMinValue(const Type *Ty, bool isSigned = false) {
   if (Ty->isInteger()) {
     if (isSigned) {
       // Calculate 1111111111000000000000
-      unsigned TypeBits = Ty->getPrimitiveSize()*8;
+      unsigned TypeBits = Ty->getPrimitiveSizeInBits();
       int64_t Val = -1;                    // All ones
       Val <<= TypeBits-1;                  // Shift over to the right spot
       return ConstantInt::get(Ty, Val);
@@ -334,13 +334,12 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR,
 /// correspond to the possible range of values as if the source range had been
 /// zero extended.
 ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
-  assert(getLower()->getType()->getPrimitiveSize() < Ty->getPrimitiveSize() &&
-         "Not a value extension");
+  unsigned SrcTySize = getLower()->getType()->getPrimitiveSizeInBits();
+  assert(SrcTySize < Ty->getPrimitiveSizeInBits() && "Not a value extension");
   if (isFullSet()) {
     // Change a source full set into [0, 1 << 8*numbytes)
-    unsigned SrcTySize = getLower()->getType()->getPrimitiveSize();
     return ConstantRange(Constant::getNullValue(Ty),
-                         ConstantInt::get(Ty, 1ULL << SrcTySize*8));
+                         ConstantInt::get(Ty, 1ULL << SrcTySize));
   }
 
   Constant *Lower = getLower();
@@ -355,9 +354,9 @@ ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
 /// correspond to the possible range of values as if the source range had been
 /// truncated to the specified type.
 ConstantRange ConstantRange::truncate(const Type *Ty) const {
-  assert(getLower()->getType()->getPrimitiveSize() > Ty->getPrimitiveSize() &&
-         "Not a value truncation");
-  uint64_t Size = 1ULL << Ty->getPrimitiveSize()*8;
+  unsigned SrcTySize = getLower()->getType()->getPrimitiveSizeInBits();
+  assert(SrcTySize > Ty->getPrimitiveSize() && "Not a value truncation");
+  uint64_t Size = 1ULL << Ty->getPrimitiveSizeInBits();
   if (isFullSet() || getSetSize() >= Size)
     return ConstantRange(getType());
 

@@ -196,8 +196,8 @@ SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty)
   : SCEV(scTruncate), Op(op), Ty(ty) {
   assert(Op->getType()->isInteger() && Ty->isInteger() &&
          "Cannot truncate non-integer value!");
-  assert(Op->getType()->getPrimitiveSize() > Ty->getPrimitiveSize() &&
-         "This is not a truncating conversion!");
+  assert(Op->getType()->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits()
+         && "This is not a truncating conversion!");
 }
 
 SCEVTruncateExpr::~SCEVTruncateExpr() {
@@ -222,8 +222,8 @@ SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
   : SCEV(scZeroExtend), Op(op), Ty(ty) {
   assert(Op->getType()->isInteger() && Ty->isInteger() &&
          "Cannot zero extend non-integer value!");
-  assert(Op->getType()->getPrimitiveSize() < Ty->getPrimitiveSize() &&
-         "This is not an extending conversion!");
+  assert(Op->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()
+         && "This is not an extending conversion!");
 }
 
 SCEVZeroExtendExpr::~SCEVZeroExtendExpr() {
@@ -461,9 +461,9 @@ static SCEVHandle getTruncateOrZeroExtend(const SCEVHandle &V, const Type *Ty) {
   const Type *SrcTy = V->getType();
   assert(SrcTy->isInteger() && Ty->isInteger() &&
          "Cannot truncate or zero extend with non-integer arguments!");
-  if (SrcTy->getPrimitiveSize() == Ty->getPrimitiveSize())
+  if (SrcTy->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
     return V;  // No conversion
-  if (SrcTy->getPrimitiveSize() > Ty->getPrimitiveSize())
+  if (SrcTy->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits())
     return SCEVTruncateExpr::get(V, Ty);
   return SCEVZeroExtendExpr::get(V, Ty);
 }
