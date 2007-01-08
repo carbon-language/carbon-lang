@@ -3519,18 +3519,20 @@ used.</p>
 define i32 %test(i32 %X, ...) {
   ; Initialize variable argument processing
   %ap = alloca i8 *
-  call void %<a href="#i_va_start">llvm.va_start</a>(i8 ** %ap)
+  %ap2 = bitcast i8** %ap to i8*
+  call void %<a href="#i_va_start">llvm.va_start</a>(i8* %ap2)
 
   ; Read a single integer argument
   %tmp = va_arg i8 ** %ap, i32
 
   ; Demonstrate usage of llvm.va_copy and llvm.va_end
   %aq = alloca i8 *
-  call void %<a href="#i_va_copy">llvm.va_copy</a>(i8 ** %aq, i8 ** %ap)
-  call void %<a href="#i_va_end">llvm.va_end</a>(i8 ** %aq)
+  %aq2 = bitcast i8** %aq to i8*
+  call void %<a href="#i_va_copy">llvm.va_copy</a>(i8 *%aq2, i8* %ap2)
+  call void %<a href="#i_va_end">llvm.va_end</a>(i8* %aq2)
 
   ; Stop processing of arguments.
-  call void %<a href="#i_va_end">llvm.va_end</a>(i8 ** %ap)
+  call void %<a href="#i_va_end">llvm.va_end</a>(i8* %ap2)
   ret i32 %tmp
 }
 </pre>
@@ -3544,7 +3546,7 @@ define i32 %test(i32 %X, ...) {
 
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  declare void %llvm.va_start(&lt;va_list&gt;* &lt;arglist&gt;)<br></pre>
+<pre>  declare void %llvm.va_start(i8* &lt;arglist&gt;)<br></pre>
 <h5>Overview:</h5>
 <P>The '<tt>llvm.va_start</tt>' intrinsic initializes
 <tt>*&lt;arglist&gt;</tt> for subsequent use by <tt><a
@@ -3572,19 +3574,25 @@ last argument of the function, the compiler can figure that out.</p>
 
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  declare void %llvm.va_end(&lt;va_list*&gt; &lt;arglist&gt;)<br></pre>
+<pre>  declare void %llvm.va_end(i8* &lt;arglist&gt;)<br></pre>
 <h5>Overview:</h5>
+
 <p>The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>&lt;arglist&gt;</tt>
 which has been initialized previously with <tt><a href="#i_va_start">llvm.va_start</a></tt>
 or <tt><a href="#i_va_copy">llvm.va_copy</a></tt>.</p>
+
 <h5>Arguments:</h5>
+
 <p>The argument is a <tt>va_list</tt> to destroy.</p>
+
 <h5>Semantics:</h5>
+
 <p>The '<tt>llvm.va_end</tt>' intrinsic works just like the <tt>va_end</tt>
 macro available in C.  In a target-dependent way, it destroys the <tt>va_list</tt>.
 Calls to <a href="#i_va_start"><tt>llvm.va_start</tt></a> and <a
  href="#i_va_copy"><tt>llvm.va_copy</tt></a> must be matched exactly
 with calls to <tt>llvm.va_end</tt>.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -3597,8 +3605,7 @@ with calls to <tt>llvm.va_end</tt>.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  declare void %llvm.va_copy(&lt;va_list&gt;* &lt;destarglist&gt;,
-                                          &lt;va_list&gt;* &lt;srcarglist&gt;)
+  declare void %llvm.va_copy(i8* &lt;destarglist&gt;, i8* &lt;srcarglist&gt;)
 </pre>
 
 <h5>Overview:</h5>
