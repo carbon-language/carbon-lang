@@ -39,6 +39,10 @@ N: Cameron Buschardt
 E: buschard@uiuc.edu
 D: The `mem2reg' pass - promotes values stored in memory to registers
 
+N: Chandler Carruth
+E: chandlerc@gmail.com
+D: LinkTimeOptimizer for Linux, via binutils integration, and C API
+
 N: Casey Carter
 E: ccarter@uiuc.edu
 D: Fixes to the Reassociation pass, various improvement patches
