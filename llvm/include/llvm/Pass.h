@@ -31,6 +31,7 @@
 
 #include "llvm/Support/Streams.h"
 #include <vector>
+#include <deque>
 #include <map>
 #include <iosfwd>
 #include <typeinfo>
@@ -49,6 +50,7 @@ template<class Trait> class PassManagerT;
 class BasicBlockPassManager;
 class FunctionPassManagerT;
 class ModulePassManager;
+class PMStack;
 class AnalysisResolver;
 
 // AnalysisID - Use the PassInfo to identify a pass...
@@ -133,8 +135,6 @@ public:
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
   virtual void dumpPassStructure(unsigned Offset = 0);
 
-
-  // getPassInfo - Static method to get the pass information from a class name.
   template<typename AnalysisClass>
   static const PassInfo *getClassPassInfo() {
     return lookupPassInfo(typeid(AnalysisClass));
@@ -198,6 +198,7 @@ public:
   virtual bool runPass(Module &M) { return runOnModule(M); }
   virtual bool runPass(BasicBlock&) { return false; }
 
+  virtual void assignPassManager(PMStack &PMS);
   // Force out-of-line virtual method.
   virtual ~ModulePass();
 };
@@ -263,6 +264,7 @@ public:
   ///
   bool run(Function &F);
 
+  virtual void assignPassManager(PMStack &PMS);
 };
 
 
@@ -316,7 +318,35 @@ public:
   virtual bool runPass(Module &M) { return false; }
   virtual bool runPass(BasicBlock &BB);
 
+  virtual void assignPassManager(PMStack &PMS);
 };
+
+/// PMStack
+/// Top level pass manager (see PasManager.cpp) maintains active Pass Managers 
+/// using PMStack. Each Pass implements assignPassManager() to connect itself
+/// with appropriate manager. assignPassManager() walks PMStack to find
+/// suitable manager.
+///
+/// PMStack is just a wrapper around standard deque that overrides pop() and
+/// push() methods.
+class PMDataManager;
+class PMStack {
+public:
+  typedef std::deque<PMDataManager *>::reverse_iterator iterator;
+  iterator begin() { return S.rbegin(); }
+  iterator end() { return S.rend(); }
+
+  void handleLastUserOverflow();
+
+  void pop();
+  inline PMDataManager *top() { return S.back(); }
+  void push(PMDataManager *PM);
+  inline bool empty() { return S.empty(); }
+
+private:
+  std::deque<PMDataManager *> S;
+};
+
 
 /// If the user specifies the -time-passes argument on an LLVM tool command line
 /// then the value of this boolean will be true, otherwise false.
