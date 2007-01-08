@@ -1614,7 +1614,8 @@ private:
               AddType(Static, StaticTy, Unit);
             
             // Add flags.
-            AddUInt(Static, DW_AT_external, DW_FORM_flag, 1);
+            if (!StaticDesc->isStatic())
+              AddUInt(Static, DW_AT_external, DW_FORM_flag, 1);
             AddUInt(Static, DW_AT_declaration, DW_FORM_flag, 1);
             
             Buffer.AddChild(Static);
@@ -1662,7 +1663,8 @@ private:
             }
 
             // Add flags.
-            AddUInt(Method, DW_AT_external, DW_FORM_flag, 1);
+            if (!MethodDesc->isStatic())
+              AddUInt(Method, DW_AT_external, DW_FORM_flag, 1);
             AddUInt(Method, DW_AT_declaration, DW_FORM_flag, 1);
               
             Buffer.AddChild(Method);
@@ -1773,8 +1775,9 @@ private:
       AddString(VariableDie, DW_AT_MIPS_linkage_name, DW_FORM_string,
                              LinkageName);
     }
-    AddType(VariableDie, GVD->getType(), Unit); 
-    AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);
+    AddType(VariableDie, GVD->getType(), Unit);
+    if (!GVD->isStatic())
+      AddUInt(VariableDie, DW_AT_external, DW_FORM_flag, 1);
     
     // Add source line info if available.
     AddSourceLine(VariableDie, UnitDesc, GVD->getLine());
@@ -1814,7 +1817,6 @@ private:
     const std::string &Name = SPD->getName();
     const std::string &FullName = SPD->getFullName();
     const std::string &LinkageName = SPD->getLinkageName();
-    unsigned IsExternal = SPD->isStatic() ? 0 : 1;
                                       
     DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
     AddString(SubprogramDie, DW_AT_name, DW_FORM_string, Name);
@@ -1823,7 +1825,8 @@ private:
                                LinkageName);
     }
     if (SPD->getType()) AddType(SubprogramDie, SPD->getType(), Unit);
-    AddUInt(SubprogramDie, DW_AT_external, DW_FORM_flag, IsExternal);
+    if (!SPD->isStatic())
+      AddUInt(SubprogramDie, DW_AT_external, DW_FORM_flag, 1);
     AddUInt(SubprogramDie, DW_AT_prototyped, DW_FORM_flag, 1);
     
     // Add source line info if available.
