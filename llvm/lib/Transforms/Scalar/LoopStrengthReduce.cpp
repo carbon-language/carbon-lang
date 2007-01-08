@@ -893,7 +893,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
       if (unsigned(abs(SInt)) < Scale || (SInt % Scale) != 0)
         continue;
       std::map<SCEVHandle, IVsOfOneStride>::iterator SI =
-        IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt/Scale, Type::Int32Ty));
+        IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt/Scale, UIntPtrTy));
       if (SI == IVsByStride.end())
         continue;
       for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
