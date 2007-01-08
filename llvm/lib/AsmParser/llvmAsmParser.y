@@ -1484,6 +1484,10 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
                        "' for element #" + utostr(i) +
                        " of structure initializer!");
 
+    // Check to ensure that Type is not packed
+    if (STy->isPacked())
+      GEN_ERROR("Unpacked Initializer to packed type '" + STy->getDescription() + "'");
+
     $$ = ConstantStruct::get(STy, *$3);
     delete $1; delete $3;
     CHECK_FOR_ERROR
@@ -1498,6 +1502,54 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     if (STy->getNumContainedTypes() != 0)
       GEN_ERROR("Illegal number of initializers for structure type!");
+
+    // Check to ensure that Type is not packed
+    if (STy->isPacked())
+      GEN_ERROR("Unpacked Initializer to packed type '" + STy->getDescription() + "'");
+
+    $$ = ConstantStruct::get(STy, std::vector<Constant*>());
+    delete $1;
+    CHECK_FOR_ERROR
+  }
+  | Types '<' '{' ConstVector '}' '>' {
+    const StructType *STy = dyn_cast<StructType>($1->get());
+    if (STy == 0)
+      GEN_ERROR("Cannot make struct constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
+
+    if ($4->size() != STy->getNumContainedTypes())
+      GEN_ERROR("Illegal number of initializers for structure type!");
+
+    // Check to ensure that constants are compatible with the type initializer!
+    for (unsigned i = 0, e = $4->size(); i != e; ++i)
+      if ((*$4)[i]->getType() != STy->getElementType(i))
+        GEN_ERROR("Expected type '" +
+                       STy->getElementType(i)->getDescription() +
+                       "' for element #" + utostr(i) +
+                       " of structure initializer!");
+
+    // Check to ensure that Type is packed
+    if (!STy->isPacked())
+      GEN_ERROR("Packed Initializer to unpacked type '" + STy->getDescription() + "'");
+
+    $$ = ConstantStruct::get(STy, *$4);
+    delete $1; delete $4;
+    CHECK_FOR_ERROR
+  }
+  | Types '<' '{' '}' '>' {
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
+    const StructType *STy = dyn_cast<StructType>($1->get());
+    if (STy == 0)
+      GEN_ERROR("Cannot make struct constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
+
+    if (STy->getNumContainedTypes() != 0)
+      GEN_ERROR("Illegal number of initializers for structure type!");
+
+    // Check to ensure that Type is packed
+    if (!STy->isPacked())
+      GEN_ERROR("Packed Initializer to unpacked type '" + STy->getDescription() + "'");
 
     $$ = ConstantStruct::get(STy, std::vector<Constant*>());
     delete $1;
