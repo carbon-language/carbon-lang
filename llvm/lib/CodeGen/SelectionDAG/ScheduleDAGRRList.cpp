@@ -414,6 +414,12 @@ namespace {
   };
 }  // end anonymous namespace
 
+static inline bool isCopyFromLiveIn(const SUnit *SU) {
+  SDNode *N = SU->Node;
+  return N->getOpcode() == ISD::CopyFromReg &&
+    N->getOperand(N->getNumOperands()-1).getValueType() != MVT::Flag;
+}
+
 namespace {
   template<class SF>
   class VISIBILITY_HIDDEN RegReductionPriorityQueue
@@ -428,7 +434,7 @@ namespace {
                            std::vector<SUnit> &sunits) {}
     virtual void releaseState() {}
     
-    virtual int getSethiUllmanNumber(unsigned NodeNum) const {
+    virtual unsigned getSethiUllmanNumber(const SUnit *SU) const {
       return 0;
     }
     
@@ -464,7 +470,7 @@ namespace {
     const std::vector<SUnit> *SUnits;
     
     // SethiUllmanNumbers - The SethiUllman number for each node.
-    std::vector<int> SethiUllmanNumbers;
+    std::vector<unsigned> SethiUllmanNumbers;
 
     const TargetInstrInfo *TII;
   public:
@@ -486,9 +492,30 @@ namespace {
       SethiUllmanNumbers.clear();
     }
 
-    int getSethiUllmanNumber(unsigned NodeNum) const {
-      assert(NodeNum < SethiUllmanNumbers.size());
-      return SethiUllmanNumbers[NodeNum];
+    unsigned getSethiUllmanNumber(const SUnit *SU) const {
+      assert(SU->NodeNum < SethiUllmanNumbers.size());
+      unsigned Opc = SU->Node->getOpcode();
+      if (Opc == ISD::CopyFromReg && !isCopyFromLiveIn(SU))
+        // CopyFromReg should be close to its def because it restricts
+        // allocation choices. But if it is a livein then perhaps we want it
+        // closer to its uses so it can be coalesced.
+        return 0xffff;
+      else if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
+        // CopyToReg should be close to its uses to facilitate coalescing and
+        // avoid spilling.
+        return 0;
+      else if (SU->NumSuccs == 0)
+        // If SU does not have a use, i.e. it doesn't produce a value that would
+        // be consumed (e.g. store), then it terminates a chain of computation.
+        // Give it a large SethiUllman number so it will be scheduled right
+        // before its predecessors that it doesn't lengthen their live ranges.
+        return 0xffff;
+      else if (SU->NumPreds == 0)
+        // If SU does not have a def, schedule it close to its uses because it
+        // does not lengthen any live ranges.
+        return 0;
+      else
+        return SethiUllmanNumbers[SU->NodeNum];
     }
 
     bool isDUOperand(const SUnit *SU1, const SUnit *SU2) {
@@ -507,7 +534,7 @@ namespace {
     bool canClobber(SUnit *SU, SUnit *Op);
     void AddPseudoTwoAddrDeps();
     void CalculatePriorities();
-    int CalcNodePriority(const SUnit *SU);
+    unsigned CalcNodePriority(const SUnit *SU);
   };
 
 
@@ -520,7 +547,7 @@ namespace {
     const std::vector<SUnit> *SUnits;
     
     // SethiUllmanNumbers - The SethiUllman number for each node.
-    std::vector<int> SethiUllmanNumbers;
+    std::vector<unsigned> SethiUllmanNumbers;
 
   public:
     TDRegReductionPriorityQueue() {}
@@ -538,86 +565,38 @@ namespace {
       SethiUllmanNumbers.clear();
     }
 
-    int getSethiUllmanNumber(unsigned NodeNum) const {
-      assert(NodeNum < SethiUllmanNumbers.size());
-      return SethiUllmanNumbers[NodeNum];
+    unsigned getSethiUllmanNumber(const SUnit *SU) const {
+      assert(SU->NodeNum < SethiUllmanNumbers.size());
+      return SethiUllmanNumbers[SU->NodeNum];
     }
 
   private:
     void CalculatePriorities();
-    int CalcNodePriority(const SUnit *SU);
+    unsigned CalcNodePriority(const SUnit *SU);
   };
-}
-
-static bool isFloater(const SUnit *SU) {
-  if (SU->Node->isTargetOpcode()) {
-    if (SU->NumPreds == 0)
-      return true;
-    if (SU->NumPreds == 1) {
-      for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
-           I != E; ++I) {
-        if (I->second) continue;
-
-        SUnit *PredSU = I->first;
-        unsigned Opc = PredSU->Node->getOpcode();
-        if (Opc != ISD::EntryToken && Opc != ISD::TokenFactor &&
-            Opc != ISD::CopyToReg)
-          return false;
-      }
-      return true;
-    }
-  }
-  return false;
-}
-
-static bool isSimpleFloaterUse(const SUnit *SU) {
-  unsigned NumOps = 0;
-  for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I) {
-    if (I->second) continue;
-    if (++NumOps > 1)
-      return false;
-    if (!isFloater(I->first))
-      return false;
-  }
-  return true;
 }
 
 // Bottom up
 bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
-  unsigned LeftNum  = left->NodeNum;
-  unsigned RightNum = right->NodeNum;
   bool LIsTarget = left->Node->isTargetOpcode();
   bool RIsTarget = right->Node->isTargetOpcode();
-  int LPriority = SPQ->getSethiUllmanNumber(LeftNum);
-  int RPriority = SPQ->getSethiUllmanNumber(RightNum);
-  int LBonus = 0;
-  int RBonus = 0;
-
-  // Schedule floaters (e.g. load from some constant address) and those nodes
-  // with a single predecessor each first. They maintain / reduce register
-  // pressure.
-  if (isFloater(left) || isSimpleFloaterUse(left))
-    LBonus += 2;
-  if (isFloater(right) || isSimpleFloaterUse(right))
-    RBonus += 2;
+  unsigned LPriority = SPQ->getSethiUllmanNumber(left);
+  unsigned RPriority = SPQ->getSethiUllmanNumber(right);
 
   // Special tie breaker: if two nodes share a operand, the one that use it
   // as a def&use operand is preferred.
   if (LIsTarget && RIsTarget) {
-    if (left->isTwoAddress && !right->isTwoAddress) {
+    if (left->isTwoAddress && !right->isTwoAddress)
       if (SPQ->isDUOperand(left, right))
-        LBonus += 2;
-    }
-    if (!left->isTwoAddress && right->isTwoAddress) {
+        return false;
+    if (!left->isTwoAddress && right->isTwoAddress)
       if (SPQ->isDUOperand(right, left))
-        RBonus += 2;
-    }
+        return true;
   }
 
-  if (LPriority+LBonus < RPriority+RBonus)
+  if (LPriority > RPriority)
     return true;
-  else if (LPriority+LBonus == RPriority+RBonus)
+  else if (LPriority == RPriority)
     if (left->Height > right->Height)
       return true;
     else if (left->Height == right->Height)
@@ -627,12 +606,6 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
         if (left->CycleBound > right->CycleBound) 
           return true;
   return false;
-}
-
-static inline bool isCopyFromLiveIn(const SUnit *SU) {
-  SDNode *N = SU->Node;
-  return N->getOpcode() == ISD::CopyFromReg &&
-    N->getOperand(N->getNumOperands()-1).getValueType() != MVT::Flag;
 }
 
 // FIXME: This is probably too slow!
@@ -723,47 +696,28 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
 /// CalcNodePriority - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
 template<class SF>
-int BURegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
-  int &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
+unsigned BURegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
+  unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
 
-  unsigned Opc = SU->Node->getOpcode();
-  if (Opc == ISD::CopyFromReg && !isCopyFromLiveIn(SU))
-    // CopyFromReg should be close to its def because it restricts allocation
-    // choices. But if it is a livein then perhaps we want it closer to the
-    // uses so it can be coalesced.
-    SethiUllmanNumber = INT_MIN + 10;
-  else if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
-    // CopyToReg should be close to its uses to facilitate coalescing and avoid
-    // spilling.
-    SethiUllmanNumber = INT_MAX - 10;
-  else if (SU->NumSuccsLeft == 0)
-    // If SU does not have a use, i.e. it doesn't produce a value that would
-    // be consumed (e.g. store), then it terminates a chain of computation.
-    // Give it a small SethiUllman number so it will be scheduled right before its
-    // predecessors that it doesn't lengthen their live ranges.
-    SethiUllmanNumber = INT_MIN + 10;
-  else if (SU->NumPredsLeft == 0)
-    // If SU does not have a def, schedule it close to its uses because it does
-    // not lengthen any live ranges.
-    SethiUllmanNumber = INT_MAX - 10;
-  else {
-    int Extra = 0;
-    for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-         I != E; ++I) {
-      if (I->second) continue;  // ignore chain preds
-      SUnit *PredSU = I->first;
-      int PredSethiUllman = CalcNodePriority(PredSU);
-      if (PredSethiUllman > SethiUllmanNumber) {
-        SethiUllmanNumber = PredSethiUllman;
-        Extra = 0;
-      } else if (PredSethiUllman == SethiUllmanNumber && !I->second)
-        Extra++;
-    }
-
-    SethiUllmanNumber += Extra;
+  unsigned Extra = 0;
+  for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
+    if (I->second) continue;  // ignore chain preds
+    SUnit *PredSU = I->first;
+    unsigned PredSethiUllman = CalcNodePriority(PredSU);
+    if (PredSethiUllman > SethiUllmanNumber) {
+      SethiUllmanNumber = PredSethiUllman;
+      Extra = 0;
+    } else if (PredSethiUllman == SethiUllmanNumber && !I->second)
+      Extra++;
   }
+
+  SethiUllmanNumber += Extra;
+
+  if (SethiUllmanNumber == 0)
+    SethiUllmanNumber = 1;
   
   return SethiUllmanNumber;
 }
@@ -796,10 +750,8 @@ static unsigned SumOfUnscheduledPredsOfSuccs(const SUnit *SU) {
 
 // Top down
 bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
-  unsigned LeftNum  = left->NodeNum;
-  unsigned RightNum = right->NodeNum;
-  int LPriority = SPQ->getSethiUllmanNumber(LeftNum);
-  int RPriority = SPQ->getSethiUllmanNumber(RightNum);
+  unsigned LPriority = SPQ->getSethiUllmanNumber(left);
+  unsigned RPriority = SPQ->getSethiUllmanNumber(right);
   bool LIsTarget = left->Node->isTargetOpcode();
   bool RIsTarget = right->Node->isTargetOpcode();
   bool LIsFloater = LIsTarget && left->NumPreds == 0;
@@ -852,30 +804,30 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 /// CalcNodePriority - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
 template<class SF>
-int TDRegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
-  int &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
+unsigned TDRegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
+  unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
 
   unsigned Opc = SU->Node->getOpcode();
   if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
-    SethiUllmanNumber = INT_MAX - 10;
+    SethiUllmanNumber = 0xffff;
   else if (SU->NumSuccsLeft == 0)
     // If SU does not have a use, i.e. it doesn't produce a value that would
     // be consumed (e.g. store), then it terminates a chain of computation.
     // Give it a small SethiUllman number so it will be scheduled right before its
     // predecessors that it doesn't lengthen their live ranges.
-    SethiUllmanNumber = INT_MIN + 10;
+    SethiUllmanNumber = 0;
   else if (SU->NumPredsLeft == 0 &&
            (Opc != ISD::CopyFromReg || isCopyFromLiveIn(SU)))
-    SethiUllmanNumber = 1;
+    SethiUllmanNumber = 0xffff;
   else {
     int Extra = 0;
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
       if (I->second) continue;  // ignore chain preds
       SUnit *PredSU = I->first;
-      int PredSethiUllman = CalcNodePriority(PredSU);
+      unsigned PredSethiUllman = CalcNodePriority(PredSU);
       if (PredSethiUllman > SethiUllmanNumber) {
         SethiUllmanNumber = PredSethiUllman;
         Extra = 0;
