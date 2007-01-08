@@ -355,7 +355,7 @@ ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
 /// truncated to the specified type.
 ConstantRange ConstantRange::truncate(const Type *Ty) const {
   unsigned SrcTySize = getLower()->getType()->getPrimitiveSizeInBits();
-  assert(SrcTySize > Ty->getPrimitiveSize() && "Not a value truncation");
+  assert(SrcTySize > Ty->getPrimitiveSizeInBits() && "Not a value truncation");
   uint64_t Size = 1ULL << Ty->getPrimitiveSizeInBits();
   if (isFullSet() || getSetSize() >= Size)
     return ConstantRange(getType());
