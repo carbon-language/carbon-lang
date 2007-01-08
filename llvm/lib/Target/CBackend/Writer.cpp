@@ -826,23 +826,26 @@ void CWriter::printConstant(Constant *CPV) {
     return;
   }
 
-  switch (CPV->getType()->getTypeID()) {
-  case Type::BoolTyID:
-    Out << (cast<ConstantBool>(CPV)->getValue() ? '1' : '0');
-    break;
-  case Type::Int8TyID:
-    Out << "((char)" << cast<ConstantInt>(CPV)->getSExtValue() << ")";
-    break;
-  case Type::Int16TyID:
-    Out << "((short)" << cast<ConstantInt>(CPV)->getSExtValue() << ")";
-    break;
-  case Type::Int32TyID:
-    Out << "((int)" << cast<ConstantInt>(CPV)->getSExtValue() << ")";
-    break;
-  case Type::Int64TyID:
-    Out << "((long long)" << cast<ConstantInt>(CPV)->getSExtValue() << "ll)";
-    break;
+  if (ConstantBool *CB = dyn_cast<ConstantBool>(CPV)) {
+    Out << (CB->getValue() ? '1' : '0') ;
+    return;
+  }
 
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
+    const Type* Ty = CI->getType();
+    Out << "((";
+    printPrimitiveType(Out, Ty, true) << ')';
+    if (CI->isMinValue(true)) 
+      Out << CI->getZExtValue() << 'u';
+    else
+      Out << CI->getSExtValue();
+    if (Ty->getPrimitiveSizeInBits() > 32)
+      Out << "ll";
+    Out << ')';
+    return;
+  } 
+
+  switch (CPV->getType()->getTypeID()) {
   case Type::FloatTyID:
   case Type::DoubleTyID: {
     ConstantFP *FPC = cast<ConstantFP>(CPV);
@@ -1586,29 +1589,29 @@ bool CWriter::doInitialization(Module &M) {
   Out << "static inline int llvm_fcmp_uno(double X, double Y) { ";
   Out << "return X != X || Y != Y; }\n";
   Out << "static inline int llvm_fcmp_ueq(double X, double Y) { ";
-  Out << "return X == Y || X != X || Y != Y; }\n";
+  Out << "return X == Y || llvm_fcmp_uno(X, Y); }\n";
   Out << "static inline int llvm_fcmp_une(double X, double Y) { ";
-  Out << "return X != Y || X != X || Y != Y; }\n";
+  Out << "return X != Y; }\n";
   Out << "static inline int llvm_fcmp_ult(double X, double Y) { ";
-  Out << "return X <  Y || X != X || Y != Y; }\n";
+  Out << "return X <  Y || llvm_fcmp_uno(X, Y); }\n";
   Out << "static inline int llvm_fcmp_ugt(double X, double Y) { ";
-  Out << "return X >  Y || X != X || Y != Y; }\n";
+  Out << "return X >  Y || llvm_fcmp_uno(X, Y); }\n";
   Out << "static inline int llvm_fcmp_ule(double X, double Y) { ";
-  Out << "return X <= Y || X != X || Y != Y; }\n";
+  Out << "return X <= Y || llvm_fcmp_uno(X, Y); }\n";
   Out << "static inline int llvm_fcmp_uge(double X, double Y) { ";
-  Out << "return X >= Y || X != X || Y != Y; }\n";
+  Out << "return X >= Y || llvm_fcmp_uno(X, Y); }\n";
   Out << "static inline int llvm_fcmp_oeq(double X, double Y) { ";
-  Out << "return X == Y && X == X && Y == Y; }\n";
+  Out << "return X == Y ; }\n";
   Out << "static inline int llvm_fcmp_one(double X, double Y) { ";
-  Out << "return X != Y && X == X && Y == Y; }\n";
+  Out << "return X != Y && llvm_fcmp_ord(X, Y); }\n";
   Out << "static inline int llvm_fcmp_olt(double X, double Y) { ";
-  Out << "return X <  Y && X == X && Y == Y; }\n";
+  Out << "return X <  Y ; }\n";
   Out << "static inline int llvm_fcmp_ogt(double X, double Y) { ";
-  Out << "return X >  Y && X == X && Y == Y; }\n";
+  Out << "return X >  Y ; }\n";
   Out << "static inline int llvm_fcmp_ole(double X, double Y) { ";
-  Out << "return X <= Y && X == X && Y == Y; }\n";
+  Out << "return X <= Y ; }\n";
   Out << "static inline int llvm_fcmp_oge(double X, double Y) { ";
-  Out << "return X >= Y && X == X && Y == Y; }\n";
+  Out << "return X >= Y ; }\n";
   return false;
 }
 
