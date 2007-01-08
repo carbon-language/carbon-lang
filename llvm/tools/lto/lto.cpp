@@ -353,6 +353,8 @@ LTO::optimizeModules(const std::string &OutputFilename,
   for (unsigned i = 1, e = modules.size(); i != e; ++i)
     if (theLinker.LinkModules(bigOne, modules[i], errMsg))
       return LTO_MODULE_MERGE_FAILURE;
+  //  all modules have been handed off to the linker.
+  modules.clear();
 
   sys::Path FinalOutputPath(FinalOutputFilename);
   FinalOutputPath.eraseSuffix();
