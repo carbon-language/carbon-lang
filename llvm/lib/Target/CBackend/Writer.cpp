@@ -732,7 +732,6 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::Or:
     case Instruction::Xor:
     case Instruction::ICmp:
-    case Instruction::FCmp:
     case Instruction::Shl:
     case Instruction::LShr:
     case Instruction::AShr:
@@ -771,25 +770,6 @@ void CWriter::printConstant(Constant *CPV) {
           default: assert(0 && "Illegal ICmp predicate");
         }
         break;
-      case Instruction::FCmp:
-        switch (CE->getPredicate()) {
-          case FCmpInst::FCMP_ORD: 
-          case FCmpInst::FCMP_UEQ: 
-          case FCmpInst::FCMP_OEQ: Out << " == "; break;
-          case FCmpInst::FCMP_UNO: 
-          case FCmpInst::FCMP_UNE: 
-          case FCmpInst::FCMP_ONE: Out << " != "; break;
-          case FCmpInst::FCMP_OLT:
-          case FCmpInst::FCMP_ULT: Out << " < "; break;
-          case FCmpInst::FCMP_OLE:
-          case FCmpInst::FCMP_ULE: Out << " <= "; break;
-          case FCmpInst::FCMP_OGT: 
-          case FCmpInst::FCMP_UGT: Out << " > "; break;
-          case FCmpInst::FCMP_OGE:
-          case FCmpInst::FCMP_UGE: Out << " >= "; break;
-          default: assert(0 && "Illegal FCmp predicate");
-        }
-        break;
       default: assert(0 && "Illegal opcode here!");
       }
       printConstantWithCast(CE->getOperand(1), CE->getOpcode());
@@ -798,7 +778,42 @@ void CWriter::printConstant(Constant *CPV) {
       Out << ')';
       return;
     }
-
+    case Instruction::FCmp: {
+      Out << '('; 
+      bool NeedsClosingParens = printConstExprCast(CE); 
+      if (CE->getPredicate() == FCmpInst::FCMP_FALSE)
+        Out << "0";
+      else if (CE->getPredicate() == FCmpInst::FCMP_TRUE)
+        Out << "1";
+      else {
+        const char* op = 0;
+        switch (CE->getPredicate()) {
+        default: assert(0 && "Illegal FCmp predicate");
+        case FCmpInst::FCMP_ORD: op = "ord"; break;
+        case FCmpInst::FCMP_UNO: op = "uno"; break;
+        case FCmpInst::FCMP_UEQ: op = "ueq"; break;
+        case FCmpInst::FCMP_UNE: op = "une"; break;
+        case FCmpInst::FCMP_ULT: op = "ult"; break;
+        case FCmpInst::FCMP_ULE: op = "ule"; break;
+        case FCmpInst::FCMP_UGT: op = "ugt"; break;
+        case FCmpInst::FCMP_UGE: op = "uge"; break;
+        case FCmpInst::FCMP_OEQ: op = "oeq"; break;
+        case FCmpInst::FCMP_ONE: op = "one"; break;
+        case FCmpInst::FCMP_OLT: op = "olt"; break;
+        case FCmpInst::FCMP_OLE: op = "ole"; break;
+        case FCmpInst::FCMP_OGT: op = "ogt"; break;
+        case FCmpInst::FCMP_OGE: op = "oge"; break;
+        }
+        Out << "llvm_fcmp_" << op << "(";
+        printConstantWithCast(CE->getOperand(0), CE->getOpcode());
+        Out << ", ";
+        printConstantWithCast(CE->getOperand(1), CE->getOpcode());
+        Out << ")";
+      }
+      if (NeedsClosingParens)
+        Out << "))";
+      Out << ')';
+    }
     default:
       cerr << "CWriter Error: Unhandled constant expression: "
            << *CE << "\n";
@@ -1563,6 +1578,37 @@ bool CWriter::doInitialization(Module &M) {
 
   if (!M.empty())
     Out << "\n\n/* Function Bodies */\n";
+
+  // Emit some helper functions for dealing with FCMP instruction's 
+  // predicates
+  Out << "static inline int llvm_fcmp_ord(double X, double Y) { ";
+  Out << "return X == X && Y == Y; }\n";
+  Out << "static inline int llvm_fcmp_uno(double X, double Y) { ";
+  Out << "return X != X || Y != Y; }\n";
+  Out << "static inline int llvm_fcmp_ueq(double X, double Y) { ";
+  Out << "return X == Y || X != X || Y != Y; }\n";
+  Out << "static inline int llvm_fcmp_une(double X, double Y) { ";
+  Out << "return X != Y || X != X || Y != Y; }\n";
+  Out << "static inline int llvm_fcmp_ult(double X, double Y) { ";
+  Out << "return X <  Y || X != X || Y != Y; }\n";
+  Out << "static inline int llvm_fcmp_ugt(double X, double Y) { ";
+  Out << "return X >  Y || X != X || Y != Y; }\n";
+  Out << "static inline int llvm_fcmp_ule(double X, double Y) { ";
+  Out << "return X <= Y || X != X || Y != Y; }\n";
+  Out << "static inline int llvm_fcmp_uge(double X, double Y) { ";
+  Out << "return X >= Y || X != X || Y != Y; }\n";
+  Out << "static inline int llvm_fcmp_oeq(double X, double Y) { ";
+  Out << "return X == Y && X == X && Y == Y; }\n";
+  Out << "static inline int llvm_fcmp_one(double X, double Y) { ";
+  Out << "return X != Y && X == X && Y == Y; }\n";
+  Out << "static inline int llvm_fcmp_olt(double X, double Y) { ";
+  Out << "return X <  Y && X == X && Y == Y; }\n";
+  Out << "static inline int llvm_fcmp_ogt(double X, double Y) { ";
+  Out << "return X >  Y && X == X && Y == Y; }\n";
+  Out << "static inline int llvm_fcmp_ole(double X, double Y) { ";
+  Out << "return X <= Y && X == X && Y == Y; }\n";
+  Out << "static inline int llvm_fcmp_oge(double X, double Y) { ";
+  Out << "return X >= Y && X == X && Y == Y; }\n";
   return false;
 }
 
@@ -2147,31 +2193,41 @@ void CWriter::visitICmpInst(ICmpInst &I) {
 }
 
 void CWriter::visitFCmpInst(FCmpInst &I) {
+  if (I.getPredicate() == FCmpInst::FCMP_FALSE) {
+    Out << "0";
+    return;
+  }
+  if (I.getPredicate() == FCmpInst::FCMP_TRUE) {
+    Out << "1";
+    return;
+  }
+
+  const char* op = 0;
+  switch (I.getPredicate()) {
+  default: assert(0 && "Illegal FCmp predicate");
+  case FCmpInst::FCMP_ORD: op = "ord"; break;
+  case FCmpInst::FCMP_UNO: op = "uno"; break;
+  case FCmpInst::FCMP_UEQ: op = "ueq"; break;
+  case FCmpInst::FCMP_UNE: op = "une"; break;
+  case FCmpInst::FCMP_ULT: op = "ult"; break;
+  case FCmpInst::FCMP_ULE: op = "ule"; break;
+  case FCmpInst::FCMP_UGT: op = "ugt"; break;
+  case FCmpInst::FCMP_UGE: op = "uge"; break;
+  case FCmpInst::FCMP_OEQ: op = "oeq"; break;
+  case FCmpInst::FCMP_ONE: op = "one"; break;
+  case FCmpInst::FCMP_OLT: op = "olt"; break;
+  case FCmpInst::FCMP_OLE: op = "ole"; break;
+  case FCmpInst::FCMP_OGT: op = "ogt"; break;
+  case FCmpInst::FCMP_OGE: op = "oge"; break;
+  }
+
+  Out << "llvm_fcmp_" << op << "(";
   // Write the first operand
   writeOperand(I.getOperand(0));
-
-  // Write the predicate
-  switch (I.getPredicate()) {
-  case FCmpInst::FCMP_FALSE: Out << " 0 "; break;
-  case FCmpInst::FCMP_ORD:
-  case FCmpInst::FCMP_OEQ: 
-  case FCmpInst::FCMP_UEQ:   Out << " == "; break;
-  case FCmpInst::FCMP_UNO:
-  case FCmpInst::FCMP_ONE: 
-  case FCmpInst::FCMP_UNE:   Out << " != "; break;
-  case FCmpInst::FCMP_ULE:
-  case FCmpInst::FCMP_OLE:   Out << " <= "; break;
-  case FCmpInst::FCMP_UGE:
-  case FCmpInst::FCMP_OGE:   Out << " >= "; break;
-  case FCmpInst::FCMP_ULT:
-  case FCmpInst::FCMP_OLT:   Out << " < "; break;
-  case FCmpInst::FCMP_UGT:
-  case FCmpInst::FCMP_OGT:   Out << " > "; break;
-  case FCmpInst::FCMP_TRUE:  Out << " 1 "; break;
-  default: cerr << "Invalid fcmp predicate!" << I; abort();
-  }
+  Out << ", ";
   // Write the second operand
   writeOperand(I.getOperand(1));
+  Out << ")";
 }
 
 static const char * getFloatBitCastField(const Type *Ty) {
