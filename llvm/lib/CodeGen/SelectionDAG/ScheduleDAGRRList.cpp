@@ -434,7 +434,7 @@ namespace {
                            std::vector<SUnit> &sunits) {}
     virtual void releaseState() {}
     
-    virtual unsigned getSethiUllmanNumber(const SUnit *SU) const {
+    virtual unsigned getNodePriority(const SUnit *SU) const {
       return 0;
     }
     
@@ -484,7 +484,7 @@ namespace {
       // Add pseudo dependency edges for two-address nodes.
       AddPseudoTwoAddrDeps();
       // Calculate node priorities.
-      CalculatePriorities();
+      CalculateSethiUllmanNumbers();
     }
 
     void releaseState() {
@@ -492,7 +492,7 @@ namespace {
       SethiUllmanNumbers.clear();
     }
 
-    unsigned getSethiUllmanNumber(const SUnit *SU) const {
+    unsigned getNodePriority(const SUnit *SU) const {
       assert(SU->NodeNum < SethiUllmanNumbers.size());
       unsigned Opc = SU->Node->getOpcode();
       if (Opc == ISD::CopyFromReg && !isCopyFromLiveIn(SU))
@@ -533,8 +533,8 @@ namespace {
   private:
     bool canClobber(SUnit *SU, SUnit *Op);
     void AddPseudoTwoAddrDeps();
-    void CalculatePriorities();
-    unsigned CalcNodePriority(const SUnit *SU);
+    void CalculateSethiUllmanNumbers();
+    unsigned CalcNodeSethiUllmanNumber(const SUnit *SU);
   };
 
 
@@ -557,7 +557,7 @@ namespace {
       SUnitMap = &sumap;
       SUnits = &sunits;
       // Calculate node priorities.
-      CalculatePriorities();
+      CalculateSethiUllmanNumbers();
     }
 
     void releaseState() {
@@ -565,14 +565,14 @@ namespace {
       SethiUllmanNumbers.clear();
     }
 
-    unsigned getSethiUllmanNumber(const SUnit *SU) const {
+    unsigned getNodePriority(const SUnit *SU) const {
       assert(SU->NodeNum < SethiUllmanNumbers.size());
       return SethiUllmanNumbers[SU->NodeNum];
     }
 
   private:
-    void CalculatePriorities();
-    unsigned CalcNodePriority(const SUnit *SU);
+    void CalculateSethiUllmanNumbers();
+    unsigned CalcNodeSethiUllmanNumber(const SUnit *SU);
   };
 }
 
@@ -580,8 +580,6 @@ namespace {
 bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   bool LIsTarget = left->Node->isTargetOpcode();
   bool RIsTarget = right->Node->isTargetOpcode();
-  unsigned LPriority = SPQ->getSethiUllmanNumber(left);
-  unsigned RPriority = SPQ->getSethiUllmanNumber(right);
 
   // Special tie breaker: if two nodes share a operand, the one that use it
   // as a def&use operand is preferred.
@@ -594,6 +592,8 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
         return true;
   }
 
+  unsigned LPriority = SPQ->getNodePriority(left);
+  unsigned RPriority = SPQ->getNodePriority(right);
   if (LPriority > RPriority)
     return true;
   else if (LPriority == RPriority)
@@ -693,10 +693,10 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
   }
 }
 
-/// CalcNodePriority - Priority is the Sethi Ullman number. 
+/// CalcNodeSethiUllmanNumber - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
 template<class SF>
-unsigned BURegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
+unsigned BURegReductionPriorityQueue<SF>::CalcNodeSethiUllmanNumber(const SUnit *SU) {
   unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
@@ -706,7 +706,7 @@ unsigned BURegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
        I != E; ++I) {
     if (I->second) continue;  // ignore chain preds
     SUnit *PredSU = I->first;
-    unsigned PredSethiUllman = CalcNodePriority(PredSU);
+    unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU);
     if (PredSethiUllman > SethiUllmanNumber) {
       SethiUllmanNumber = PredSethiUllman;
       Extra = 0;
@@ -722,13 +722,14 @@ unsigned BURegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
   return SethiUllmanNumber;
 }
 
-/// CalculatePriorities - Calculate priorities of all scheduling units.
+/// CalculateSethiUllmanNumbers - Calculate Sethi-Ullman numbers of all
+/// scheduling units.
 template<class SF>
-void BURegReductionPriorityQueue<SF>::CalculatePriorities() {
+void BURegReductionPriorityQueue<SF>::CalculateSethiUllmanNumbers() {
   SethiUllmanNumbers.assign(SUnits->size(), 0);
   
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    CalcNodePriority(&(*SUnits)[i]);
+    CalcNodeSethiUllmanNumber(&(*SUnits)[i]);
 }
 
 static unsigned SumOfUnscheduledPredsOfSuccs(const SUnit *SU) {
@@ -750,8 +751,8 @@ static unsigned SumOfUnscheduledPredsOfSuccs(const SUnit *SU) {
 
 // Top down
 bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
-  unsigned LPriority = SPQ->getSethiUllmanNumber(left);
-  unsigned RPriority = SPQ->getSethiUllmanNumber(right);
+  unsigned LPriority = SPQ->getNodePriority(left);
+  unsigned RPriority = SPQ->getNodePriority(right);
   bool LIsTarget = left->Node->isTargetOpcode();
   bool RIsTarget = right->Node->isTargetOpcode();
   bool LIsFloater = LIsTarget && left->NumPreds == 0;
@@ -801,10 +802,10 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   return false;
 }
 
-/// CalcNodePriority - Priority is the Sethi Ullman number. 
+/// CalcNodeSethiUllmanNumber - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
 template<class SF>
-unsigned TDRegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
+unsigned TDRegReductionPriorityQueue<SF>::CalcNodeSethiUllmanNumber(const SUnit *SU) {
   unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
@@ -827,7 +828,7 @@ unsigned TDRegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
          I != E; ++I) {
       if (I->second) continue;  // ignore chain preds
       SUnit *PredSU = I->first;
-      unsigned PredSethiUllman = CalcNodePriority(PredSU);
+      unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU);
       if (PredSethiUllman > SethiUllmanNumber) {
         SethiUllmanNumber = PredSethiUllman;
         Extra = 0;
@@ -841,13 +842,14 @@ unsigned TDRegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
   return SethiUllmanNumber;
 }
 
-/// CalculatePriorities - Calculate priorities of all scheduling units.
+/// CalculateSethiUllmanNumbers - Calculate Sethi-Ullman numbers of all
+/// scheduling units.
 template<class SF>
-void TDRegReductionPriorityQueue<SF>::CalculatePriorities() {
+void TDRegReductionPriorityQueue<SF>::CalculateSethiUllmanNumbers() {
   SethiUllmanNumbers.assign(SUnits->size(), 0);
   
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    CalcNodePriority(&(*SUnits)[i]);
+    CalcNodeSethiUllmanNumber(&(*SUnits)[i]);
 }
 
 //===----------------------------------------------------------------------===//
