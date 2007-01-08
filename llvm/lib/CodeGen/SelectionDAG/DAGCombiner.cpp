@@ -35,6 +35,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include <algorithm>
@@ -2401,6 +2402,13 @@ SDOperand DAGCombiner::visitFADD(SDNode *N) {
   // fold ((-A) + B) -> B-A
   if (N0.getOpcode() == ISD::FNEG)
     return DAG.getNode(ISD::FSUB, VT, N1, N0.getOperand(0));
+  
+  // If allowed, fold (fadd (fadd x, c1), c2) -> (fadd x, (fadd c1, c2))
+  if (UnsafeFPMath && N1CFP && N0.getOpcode() == ISD::FADD &&
+      N0.Val->hasOneUse() && isa<ConstantFPSDNode>(N0.getOperand(1)))
+    return DAG.getNode(ISD::FADD, VT, N0.getOperand(0),
+                       DAG.getNode(ISD::FADD, VT, N0.getOperand(1), N1));
+  
   return SDOperand();
 }
 
@@ -2436,6 +2444,13 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
   // fold (fmul X, 2.0) -> (fadd X, X)
   if (N1CFP && N1CFP->isExactlyValue(+2.0))
     return DAG.getNode(ISD::FADD, VT, N0, N0);
+  
+  // If allowed, fold (fmul (fmul x, c1), c2) -> (fmul x, (fmul c1, c2))
+  if (UnsafeFPMath && N1CFP && N0.getOpcode() == ISD::FMUL &&
+      N0.Val->hasOneUse() && isa<ConstantFPSDNode>(N0.getOperand(1)))
+    return DAG.getNode(ISD::FMUL, VT, N0.getOperand(0),
+                       DAG.getNode(ISD::FMUL, VT, N0.getOperand(1), N1));
+  
   return SDOperand();
 }
 
