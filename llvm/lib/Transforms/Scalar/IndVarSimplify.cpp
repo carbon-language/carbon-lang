@@ -498,8 +498,9 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   bool DifferingSizes = false;
   for (unsigned i = 1, e = IndVars.size(); i != e; ++i) {
     const Type *Ty = IndVars[i].first->getType();
-    DifferingSizes |= Ty->getPrimitiveSize() != LargestType->getPrimitiveSize();
-    if (Ty->getPrimitiveSize() > LargestType->getPrimitiveSize())
+    DifferingSizes |= 
+      Ty->getPrimitiveSizeInBits() != LargestType->getPrimitiveSizeInBits();
+    if (Ty->getPrimitiveSizeInBits() > LargestType->getPrimitiveSizeInBits())
       LargestType = Ty;
   }
 

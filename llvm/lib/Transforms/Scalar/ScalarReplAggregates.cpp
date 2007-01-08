@@ -665,8 +665,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
                                                 LI->getName(), LI);
           } else if (LI->getType()->isFloatingPoint()) {
             // If needed, truncate the integer to the appropriate size.
-            if (NV->getType()->getPrimitiveSize() > 
-                LI->getType()->getPrimitiveSize()) {
+            if (NV->getType()->getPrimitiveSizeInBits() > 
+                LI->getType()->getPrimitiveSizeInBits()) {
               switch (LI->getType()->getTypeID()) {
               default: assert(0 && "Unknown FP type!");
               case Type::FloatTyID:

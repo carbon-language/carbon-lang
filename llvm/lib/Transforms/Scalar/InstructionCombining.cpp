@@ -1926,8 +1926,8 @@ FoundSExt:
       Other = LHS;
     }
     if (CI && CI->getType()->isSized() && 
-        (CI->getType()->getPrimitiveSize() == 
-         TD->getIntPtrType()->getPrimitiveSize()) 
+        (CI->getType()->getPrimitiveSizeInBits() == 
+         TD->getIntPtrType()->getPrimitiveSizeInBits()) 
         && isa<PointerType>(CI->getOperand(0)->getType())) {
       Value *I2 = InsertCastBefore(Instruction::BitCast, CI->getOperand(0),
                                    PointerType::get(Type::Int8Ty), I);
@@ -7239,9 +7239,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     bool isConvertible = ActTy == ParamTy ||
       (isa<PointerType>(ParamTy) && isa<PointerType>(ActTy)) ||
       (ParamTy->isIntegral() && ActTy->isIntegral() &&
-       ParamTy->getPrimitiveSize() >= ActTy->getPrimitiveSize()) ||
-      (c && ParamTy->getPrimitiveSize() >= ActTy->getPrimitiveSize() &&
-       c->getSExtValue() > 0);
+       ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()) ||
+      (c && ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()
+       && c->getSExtValue() > 0);
     if (Callee->isExternal() && !isConvertible) return false;
   }
 
@@ -7594,8 +7594,8 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
 static Value *InsertCastToIntPtrTy(Value *V, const Type *DTy,
                                    Instruction *InsertPoint,
                                    InstCombiner *IC) {
-  unsigned PtrSize = DTy->getPrimitiveSize();
-  unsigned VTySize = V->getType()->getPrimitiveSize();
+  unsigned PtrSize = DTy->getPrimitiveSizeInBits();
+  unsigned VTySize = V->getType()->getPrimitiveSizeInBits();
   // We must cast correctly to the pointer type. Ensure that we
   // sign extend the integer value if it is smaller as this is
   // used for address computation.
@@ -7642,7 +7642,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
               MadeChange = true;
               GEP.setOperand(i, Src);
             }
-          } else if (SrcTy->getPrimitiveSize() < DestTy->getPrimitiveSize() &&
+          } else if (SrcTy->getPrimitiveSizeInBits() < 
+                     DestTy->getPrimitiveSizeInBits() &&
                      SrcTy->getPrimitiveSize() == 4) {
             // We can eliminate a cast from [u]int to [u]long iff the target 
             // is a 32-bit pointer target.
