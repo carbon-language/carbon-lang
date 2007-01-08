@@ -1091,7 +1091,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       
       // If the top bit of the output is demanded, demand everything from the
       // input.  Otherwise, we demand all the input bits except NLZ top bits.
-      uint64_t InDemandedBits = ~0ULL >> 64-BitWidth+NLZ;
+      uint64_t InDemandedBits = ~0ULL >> (64-BitWidth+NLZ);
 
       // Find information about known zero/one bits in the input.
       if (SimplifyDemandedBits(I->getOperand(0), InDemandedBits, 
