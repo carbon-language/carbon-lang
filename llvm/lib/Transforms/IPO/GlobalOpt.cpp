@@ -1016,9 +1016,25 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
   // loads, and all uses of those loads are simple.  Rewrite them to use loads
   // of the per-field globals instead.
   while (!GV->use_empty()) {
-    LoadInst *LI = cast<LoadInst>(GV->use_back());
-    RewriteUsesOfLoadForHeapSRoA(LI, FieldGlobals);
-    LI->eraseFromParent();
+    if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
+      RewriteUsesOfLoadForHeapSRoA(LI, FieldGlobals);
+      LI->eraseFromParent();
+    } else {
+      // Must be a store of null.
+      StoreInst *SI = cast<StoreInst>(GV->use_back());
+      assert(isa<Constant>(SI->getOperand(0)) &&
+             cast<Constant>(SI->getOperand(0))->isNullValue() &&
+             "Unexpected heap-sra user!");
+      
+      // Insert a store of null into each global.
+      for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
+        Constant *Null = 
+          Constant::getNullValue(FieldGlobals[i]->getType()->getElementType());
+        new StoreInst(Null, FieldGlobals[i], SI);
+      }
+      // Erase the original store.
+      SI->eraseFromParent();
+    }
   }
 
   // The old global is now dead, remove it.
