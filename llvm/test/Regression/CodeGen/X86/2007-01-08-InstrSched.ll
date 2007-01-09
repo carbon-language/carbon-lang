@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-as | llc -mtriple=x86_64-apple-darwin | \
+; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | \
 ; RUN:   %prcontext 'mulss LCPI1_3' 1 | grep mulss | wc -l | grep 1
 
 define float %foo(float %x) {
