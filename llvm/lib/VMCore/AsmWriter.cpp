@@ -108,9 +108,6 @@ private:
   /// CreateFunctionSlot - Insert the specified Value* into the slot table.
   void CreateFunctionSlot(const Value *V);
 
-  /// Insert a value into the value table.
-  void insertValue(const Value *V);
-
   /// Add all of the module level global variables (and their initializers)
   /// and function declarations, but not the contents of those functions.
   void processModule();
@@ -1539,7 +1536,20 @@ int SlotMachine::getSlot(const Value *V) {
 
 /// CreateModuleSlot - Insert the specified GlobalValue* into the slot table.
 void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
-  return insertValue(V);
+  assert(V && "Can't insert a null Value into SlotMachine!");
+  
+  unsigned DestSlot = 0;
+  const Type *VTy = V->getType();
+  
+  TypedPlanes::iterator I = mMap.find(VTy);
+  if (I == mMap.end())
+    I = mMap.insert(std::make_pair(VTy,ValuePlane())).first;
+  DestSlot = I->second.map[V] = I->second.next_slot++;
+  
+  SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" <<
+           DestSlot << " [");
+  // G = Global, F = Function, o = other
+  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : 'F') << "]\n");
 }
 
 
@@ -1547,36 +1557,15 @@ void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
 void SlotMachine::CreateFunctionSlot(const Value *V) {
   const Type *VTy = V->getType();
   assert(VTy != Type::VoidTy && !V->hasName() && "Doesn't need a slot!");
-  return insertValue(V);
-}
-
-
-// Low level insert function. Minimal checking is done. This
-// function is just for the convenience of CreateSlot (above).
-void SlotMachine::insertValue(const Value *V) {
-  assert(V && "Can't insert a null Value into SlotMachine!");
-  assert(!isa<Constant>(V) || isa<GlobalValue>(V) &&
-         "Can't insert a non-GlobalValue Constant into SlotMachine");
-  assert(V->getType() != Type::VoidTy && !V->hasName());
-
-  const Type *VTy = V->getType();
+  
   unsigned DestSlot = 0;
-
-  if (TheFunction) {
-    TypedPlanes::iterator I = fMap.find(VTy);
-    if (I == fMap.end())
-      I = fMap.insert(std::make_pair(VTy,ValuePlane())).first;
-    DestSlot = I->second.map[V] = I->second.next_slot++;
-  } else {
-    TypedPlanes::iterator I = mMap.find(VTy);
-    if (I == mMap.end())
-      I = mMap.insert(std::make_pair(VTy,ValuePlane())).first;
-    DestSlot = I->second.map[V] = I->second.next_slot++;
-  }
-
-  SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" <<
-           DestSlot << " [");
+  
+  TypedPlanes::iterator I = fMap.find(VTy);
+  if (I == fMap.end())
+    I = fMap.insert(std::make_pair(VTy,ValuePlane())).first;
+  DestSlot = I->second.map[V] = I->second.next_slot++;
+  
   // G = Global, F = Function, o = other
-  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : (isa<Function>(V) ? 'F' : 'o')));
-  SC_DEBUG("]\n");
-}
+  SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" <<
+           DestSlot << " [o]\n");
+}  
