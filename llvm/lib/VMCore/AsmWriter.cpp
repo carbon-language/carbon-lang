@@ -102,15 +102,12 @@ private:
   /// This function does the actual initialization.
   inline void initialize();
 
-  /// Values can be crammed into here at will. If they haven't
-  /// been inserted already, they get inserted, otherwise they are ignored.
-  /// Either way, the slot number for the Value* is returned.
-  unsigned getOrCreateSlot(const Value *V);
+  /// CreateSlot - If the specified Value* doesn't have a name, assign it a slot
+  /// number.
+  void CreateSlot(const Value *V);
 
-  /// Insert a value into the value table. Return the slot number
-  /// that it now occupies.  BadThings(TM) will happen if you insert a
-  /// Value that's already been inserted.
-  unsigned insertValue(const Value *V);
+  /// Insert a value into the value table.
+  void insertValue(const Value *V);
 
   /// Add all of the module level global variables (and their initializers)
   /// and function declarations, but not the contents of those functions.
@@ -1427,13 +1424,13 @@ void SlotMachine::processModule() {
   for (Module::const_global_iterator I = TheModule->global_begin(),
        E = TheModule->global_end(); I != E; ++I)
     if (!I->hasName()) 
-      getOrCreateSlot(I);
+      CreateSlot(I);
 
   // Add all the unnamed functions to the table.
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
     if (!I->hasName())
-      getOrCreateSlot(I);
+      CreateSlot(I);
 
   SC_DEBUG("end processModule!\n");
 }
@@ -1447,7 +1444,7 @@ void SlotMachine::processFunction() {
   for(Function::const_arg_iterator AI = TheFunction->arg_begin(),
       AE = TheFunction->arg_end(); AI != AE; ++AI)
     if (!AI->hasName())
-      getOrCreateSlot(AI);
+      CreateSlot(AI);
 
   SC_DEBUG("Inserting Instructions:\n");
 
@@ -1455,10 +1452,10 @@ void SlotMachine::processFunction() {
   for (Function::const_iterator BB = TheFunction->begin(),
        E = TheFunction->end(); BB != E; ++BB) {
     if (!BB->hasName())
-      getOrCreateSlot(BB);
+      CreateSlot(BB);
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       if (I->getType() != Type::VoidTy && !I->hasName())
-        getOrCreateSlot(I);
+        CreateSlot(I);
   }
 
   FunctionProcessed = true;
@@ -1467,9 +1464,8 @@ void SlotMachine::processFunction() {
 }
 
 /// Clean up after incorporating a function. This is the only way to get out of
-/// the function incorporation state that affects the
-/// getSlot/getOrCreateSlot lock. Function incorporation state is indicated
-/// by TheFunction != 0.
+/// the function incorporation state that affects getSlot/CreateSlot. Function
+/// incorporation state is indicated by TheFunction != 0.
 void SlotMachine::purgeFunction() {
   SC_DEBUG("begin purgeFunction!\n");
   fMap.clear(); // Simply discard the function level map
@@ -1479,8 +1475,7 @@ void SlotMachine::purgeFunction() {
 }
 
 /// Get the slot number for a value. This function will assert if you
-/// ask for a Value that hasn't previously been inserted with getOrCreateSlot.
-/// Types are forbidden because Type does not inherit from Value (any more).
+/// ask for a Value that hasn't previously been inserted with CreateSlot.
 int SlotMachine::getSlot(const Value *V) {
   assert(V && "Can't get slot for null Value");
   assert(!isa<Constant>(V) || isa<GlobalValue>(V) &&
@@ -1540,10 +1535,8 @@ int SlotMachine::getSlot(const Value *V) {
 }
 
 
-// Create a new slot, or return the existing slot if it is already
-// inserted. Note that the logic here parallels getSlot but instead
-// of asserting when the Value* isn't found, it inserts the value.
-unsigned SlotMachine::getOrCreateSlot(const Value *V) {
+/// CreateSlot - Create a new slot for the specified value if it has no name.
+void SlotMachine::CreateSlot(const Value *V) {
   const Type* VTy = V->getType();
   assert(VTy != Type::VoidTy && !V->hasName() && "Doesn't need a slot!");
   assert(!isa<Constant>(V) || isa<GlobalValue>(V) &&
@@ -1557,32 +1550,21 @@ unsigned SlotMachine::getOrCreateSlot(const Value *V) {
     TypedPlanes::const_iterator FI = fMap.find(VTy);
     // If there is a corresponding type plane in the function map
     if (FI != fMap.end()) {
-      // Lookup the Value in the function map
+      // Lookup the Value in the function map.
       ValueMap::const_iterator FVI = FI->second.map.find(V);
-      // If the value doesn't exist in the function map
-      if (FVI == FI->second.map.end()) {
-        // If there is no corresponding type plane in the module map
-        if (MI == mMap.end())
-          return insertValue(V);
-        // Look up the value in the module map
-        ValueMap::const_iterator MVI = MI->second.map.find(V);
-        // If we didn't find it, it wasn't inserted
-        if (MVI == MI->second.map.end())
-          return insertValue(V);
-        else
-          // We found it only at the module level
-          return MVI->second;
-
-      // else the value exists in the function map
-      } else {
-        if (MI == mMap.end())
-          return FVI->second;
-        else
-          // Return the slot number as the module's contribution to
-          // the type plane plus the index in the function's contribution
-          // to the type plane.
-          return MI->second.next_slot + FVI->second;
-      }
+      // If the value exists in the function map, we're done.
+      if (FVI != FI->second.map.end())
+        return;
+      
+      // If there is no corresponding type plane in the module map
+      if (MI == mMap.end())
+        return insertValue(V);
+      // Look up the value in the module map
+      ValueMap::const_iterator MVI = MI->second.map.find(V);
+      // If we found it, it was already inserted
+      if (MVI != MI->second.map.end())
+        return;
+      return insertValue(V);
 
     // else there is not a corresponding type plane in the function map
     } else {
@@ -1597,9 +1579,9 @@ unsigned SlotMachine::getOrCreateSlot(const Value *V) {
         if (MVI == MI->second.map.end())
           // Return the slot number as the module's contribution to
           // the type plane plus the index of the function map insertion.
-          return MI->second.next_slot + insertValue(V);
+          return insertValue(V);
         else
-          return MVI->second;
+          return;
       }
     }
   }
@@ -1611,7 +1593,7 @@ unsigned SlotMachine::getOrCreateSlot(const Value *V) {
     // Lookup the value in the module's map
     ValueMap::const_iterator MVI = MI->second.map.find(V);
     if (MVI != MI->second.map.end())
-      return MVI->second;
+      return;
   }
 
   return insertValue(V);
@@ -1619,8 +1601,8 @@ unsigned SlotMachine::getOrCreateSlot(const Value *V) {
 
 
 // Low level insert function. Minimal checking is done. This
-// function is just for the convenience of getOrCreateSlot (above).
-unsigned SlotMachine::insertValue(const Value *V) {
+// function is just for the convenience of CreateSlot (above).
+void SlotMachine::insertValue(const Value *V) {
   assert(V && "Can't insert a null Value into SlotMachine!");
   assert(!isa<Constant>(V) || isa<GlobalValue>(V) &&
          "Can't insert a non-GlobalValue Constant into SlotMachine");
@@ -1646,5 +1628,4 @@ unsigned SlotMachine::insertValue(const Value *V) {
   // G = Global, F = Function, o = other
   SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : (isa<Function>(V) ? 'F' : 'o')));
   SC_DEBUG("]\n");
-  return DestSlot;
 }
