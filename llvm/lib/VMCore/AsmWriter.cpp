@@ -1539,20 +1539,6 @@ int SlotMachine::getSlot(const Value *V) {
 
 /// CreateModuleSlot - Insert the specified GlobalValue* into the slot table.
 void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
-  assert(!V->hasName() && "Doesn't need a slot!");
-  const Type *VTy = V->getType();
-  
-  // Look up the type plane for the Value's type from the module map
-  TypedPlanes::const_iterator MI = mMap.find(VTy);
-  
-  // If the module map's type plane is not for the Value's type
-  if (MI != mMap.end()) {
-    // Lookup the value in the module's map
-    ValueMap::const_iterator MVI = MI->second.map.find(V);
-    if (MVI != MI->second.map.end())
-      return;
-  }
-  
   return insertValue(V);
 }
 
@@ -1561,49 +1547,7 @@ void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
 void SlotMachine::CreateFunctionSlot(const Value *V) {
   const Type *VTy = V->getType();
   assert(VTy != Type::VoidTy && !V->hasName() && "Doesn't need a slot!");
-  assert(!isa<Constant>(V) && "Can't insert a Constants into SlotMachine");
-
-  // Look up the type plane for the Value's type from the module map
-  TypedPlanes::const_iterator MI = mMap.find(VTy);
-
-  // Get the type plane for the Value's type from the function map
-  TypedPlanes::const_iterator FI = fMap.find(VTy);
-  // If there is a corresponding type plane in the function map
-  if (FI != fMap.end()) {
-    // Lookup the Value in the function map.
-    ValueMap::const_iterator FVI = FI->second.map.find(V);
-    // If the value exists in the function map, we're done.
-    if (FVI != FI->second.map.end())
-      return;
-    
-    // If there is no corresponding type plane in the module map
-    if (MI == mMap.end())
-      return insertValue(V);
-    // Look up the value in the module map
-    ValueMap::const_iterator MVI = MI->second.map.find(V);
-    // If we found it, it was already inserted
-    if (MVI != MI->second.map.end())
-      return;
-    return insertValue(V);
-  }
-  
-  // Otherwise, there is no corresponding type plane in the function map yet.
-    
-  // If the type plane doesn't exists at the module level
-  if (MI == mMap.end()) {
-    return insertValue(V);
-  // else type plane exists at the module level, examine it
-  } else {
-    // Look up the value in the module's map
-    ValueMap::const_iterator MVI = MI->second.map.find(V);
-    // If we didn't find it there either
-    if (MVI == MI->second.map.end())
-      // Return the slot number as the module's contribution to
-      // the type plane plus the index of the function map insertion.
-      return insertValue(V);
-    else
-      return;
-  }
+  return insertValue(V);
 }
 
 
