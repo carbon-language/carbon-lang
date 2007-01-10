@@ -1541,10 +1541,8 @@ void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
   unsigned DestSlot = 0;
   const Type *VTy = V->getType();
   
-  TypedPlanes::iterator I = mMap.find(VTy);
-  if (I == mMap.end())
-    I = mMap.insert(std::make_pair(VTy,ValuePlane())).first;
-  DestSlot = I->second.map[V] = I->second.next_slot++;
+  ValuePlane &PlaneMap = mMap[VTy];
+  DestSlot = PlaneMap.map[V] = PlaneMap.next_slot++;
   
   SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" <<
            DestSlot << " [");
@@ -1560,10 +1558,8 @@ void SlotMachine::CreateFunctionSlot(const Value *V) {
   
   unsigned DestSlot = 0;
   
-  TypedPlanes::iterator I = fMap.find(VTy);
-  if (I == fMap.end())
-    I = fMap.insert(std::make_pair(VTy,ValuePlane())).first;
-  DestSlot = I->second.map[V] = I->second.next_slot++;
+  ValuePlane &PlaneMap = fMap[VTy];
+  DestSlot = PlaneMap.map[V] = PlaneMap.next_slot++;
   
   // G = Global, F = Function, o = other
   SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" <<
