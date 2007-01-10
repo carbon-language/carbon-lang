@@ -1,4 +1,4 @@
-//===-- Writer.cpp - Library for converting LLVM code to C ----------------===//
+//===-- CBackend.cpp - Library for converting LLVM code to C --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
