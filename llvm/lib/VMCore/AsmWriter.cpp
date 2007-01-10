@@ -75,9 +75,9 @@ public:
 /// @{
 public:
   /// Return the slot number of the specified value in it's type
-  /// plane.  If something is not in the SlotMachine, return -1.
-  int getLocalSlot(const Value *V);
-  int getGlobalSlot(const GlobalValue *V);
+  /// plane.  Its an error to ask for something not in the SlotMachine.
+  /// Its an error to ask for a Type*
+  int getSlot(const Value *V);
 
 /// @}
 /// @name Mutators
@@ -597,20 +597,13 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
     } else {
       int Slot;
       if (Machine) {
-        if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-          Slot = Machine->getGlobalSlot(GV);
-        else
-          Slot = Machine->getLocalSlot(V);
+        Slot = Machine->getSlot(V);
       } else {
         Machine = createSlotMachine(V);
-        if (Machine) {
-          if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-            Slot = Machine->getGlobalSlot(GV);
-          else
-            Slot = Machine->getLocalSlot(V);
-        } else {
+        if (Machine)
+          Slot = Machine->getSlot(V);
+        else
           Slot = -1;
-        }
         delete Machine;
       }
       if (Slot != -1)
@@ -1049,7 +1042,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
     Out << "\n" << getLLVMName(BB->getName(), false) << ':';
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
     Out << "\n; <label>:";
-    int Slot = Machine.getLocalSlot(BB);
+    int Slot = Machine.getSlot(BB);
     if (Slot != -1)
       Out << Slot;
     else
@@ -1098,7 +1091,7 @@ void AssemblyWriter::printInfoComment(const Value &V) {
     printType(V.getType()) << '>';
 
     if (!V.hasName()) {
-      int SlotNum = Machine.getLocalSlot(&V);
+      int SlotNum = Machine.getSlot(&V);
       if (SlotNum == -1)
         Out << ":<badref>";
       else
@@ -1412,7 +1405,7 @@ SlotMachine::SlotMachine(const Function *F)
 {
 }
 
-inline void SlotMachine::initialize() {
+inline void SlotMachine::initialize(void) {
   if (TheModule) {
     processModule();
     TheModule = 0; ///< Prevent re-processing next time we're called.
@@ -1470,7 +1463,7 @@ void SlotMachine::processFunction() {
 }
 
 /// Clean up after incorporating a function. This is the only way to get out of
-/// the function incorporation state that affects get*Slot/Create*Slot. Function
+/// the function incorporation state that affects getSlot/Create*Slot. Function
 /// incorporation state is indicated by TheFunction != 0.
 void SlotMachine::purgeFunction() {
   SC_DEBUG("begin purgeFunction!\n");
@@ -1480,57 +1473,64 @@ void SlotMachine::purgeFunction() {
   SC_DEBUG("end purgeFunction!\n");
 }
 
-/// getGlobalSlot - Get the slot number of a global value.
-int SlotMachine::getGlobalSlot(const GlobalValue *V) {
-  // Check for uninitialized state and do lazy initialization.
-  initialize();
-  
-  // Find the type plane in the module map
-  TypedPlanes::const_iterator MI = mMap.find(V->getType());
-  if (MI == mMap.end()) return -1;
-  
-  // Lookup the value in the module plane's map.
-  ValueMap::const_iterator MVI = MI->second.map.find(V);
-  return MVI != MI->second.map.end() ? MVI->second : -1;
-}
+/// Get the slot number for a value. This function will assert if you
+/// ask for a Value that hasn't previously been inserted with Create*Slot.
+int SlotMachine::getSlot(const Value *V) {
+  assert(V && "Can't get slot for null Value");
+  assert(!isa<Constant>(V) || isa<GlobalValue>(V) &&
+    "Can't insert a non-GlobalValue Constant into SlotMachine");
 
-
-/// getLocalSlot - Get the slot number for a value that is local to a function.
-int SlotMachine::getLocalSlot(const Value *V) {
-  assert(!isa<Constant>(V) && "Can't get a constant or global slot with this!");
-
-  // Check for uninitialized state and do lazy initialization.
-  initialize();
+  // Check for uninitialized state and do lazy initialization
+  this->initialize();
 
   // Get the type of the value
-  const Type *VTy = V->getType();
+  const Type* VTy = V->getType();
 
-  TypedPlanes::const_iterator FI = fMap.find(VTy);
-  if (FI == fMap.end()) return -1;
-  
-  // Lookup the Value in the function and module maps.
-  ValueMap::const_iterator FVI = FI->second.map.find(V);
+  // Find the type plane in the module map
   TypedPlanes::const_iterator MI = mMap.find(VTy);
-  
-  // If the value doesn't exist in the function map
-  if (FVI == FI->second.map.end()) {
-    // Look up the value in the module map.
-    if (MI == mMap.end()) return -1;
-    ValueMap::const_iterator MVI = MI->second.map.find(V);
-    // If we didn't find it, it wasn't inserted
-    if (MVI == MI->second.map.end()) return -1;
-    assert(MVI != MI->second.map.end() && "Value not found");
-    // We found it only at the module level
-    return MVI->second;
+
+  if (TheFunction) {
+    // Lookup the type in the function map too
+    TypedPlanes::const_iterator FI = fMap.find(VTy);
+    // If there is a corresponding type plane in the function map
+    if (FI != fMap.end()) {
+      // Lookup the Value in the function map
+      ValueMap::const_iterator FVI = FI->second.map.find(V);
+      // If the value doesn't exist in the function map
+      if (FVI == FI->second.map.end()) {
+        // Look up the value in the module map.
+        if (MI == mMap.end()) return -1;
+        ValueMap::const_iterator MVI = MI->second.map.find(V);
+        // If we didn't find it, it wasn't inserted
+        if (MVI == MI->second.map.end()) return -1;
+        assert(MVI != MI->second.map.end() && "Value not found");
+        // We found it only at the module level
+        return MVI->second;
+
+      // else the value exists in the function map
+      } else {
+        // Return the slot number as the module's contribution to
+        // the type plane plus the index in the function's contribution
+        // to the type plane.
+        if (MI != mMap.end())
+          return MI->second.next_slot + FVI->second;
+        else
+          return FVI->second;
+      }
+    }
   }
-  
-  // Return the slot number as the module's contribution to
-  // the type plane plus the index in the function's contribution
-  // to the type plane.
-  if (MI != mMap.end())
-    return MI->second.next_slot + FVI->second;
-  else
-    return FVI->second;
+
+  // N.B. Can get here only if either !TheFunction or the function doesn't
+  // have a corresponding type plane for the Value
+
+  // Make sure the type plane exists
+  if (MI == mMap.end()) return -1;
+  // Lookup the value in the module's map
+  ValueMap::const_iterator MVI = MI->second.map.find(V);
+  // Make sure we found it.
+  if (MVI == MI->second.map.end()) return -1;
+  // Return it.
+  return MVI->second;
 }
 
 
