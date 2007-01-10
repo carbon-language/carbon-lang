@@ -141,10 +141,11 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   // important symbols are marked 'private external' which doesn't allow
   // SearchForAddressOfSymbol to find them.  As such, we special case them here,
   // there is only a small handful of them.
+
 #ifdef __APPLE__
-  {
 #define EXPLICIT_SYMBOL(SYM) \
    extern void *SYM; if (!strcmp(symbolName, #SYM)) return &SYM
+  {
     EXPLICIT_SYMBOL(__ashldi3);
     EXPLICIT_SYMBOL(__ashrdi3);
     EXPLICIT_SYMBOL(__cmpdi2);
@@ -160,9 +161,18 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
     EXPLICIT_SYMBOL(__moddi3);
     EXPLICIT_SYMBOL(__udivdi3);
     EXPLICIT_SYMBOL(__umoddi3);
-#undef EXPLICIT_SYMBOL
   }
+#undef EXPLICIT_SYMBOL
 #endif
+#define EXPLICIT_SYMBOL(SYM) \
+   if (!strcmp(symbolName, #SYM)) return &SYM
+  // Try a few well known symbols just to give lli a shot at working.
+  {
+    EXPLICIT_SYMBOL(stdin);
+    EXPLICIT_SYMBOL(stdout);
+    EXPLICIT_SYMBOL(stderr);
+  }
+#undef EXPLICIT_SYMBOL
 
   return 0;
 }
