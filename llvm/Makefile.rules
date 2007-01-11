@@ -1264,7 +1264,6 @@ $(PROJ_SRC_DIR)/%.cpp: $(PROJ_SRC_DIR)/%.l
 	$(Verb) $(FLEX) -t $(PROJ_SRC_DIR)/$*.l | \
 	$(SED) 's/void yyunput/inline void yyunput/' | \
 	$(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
-	$(SED) 's/^find_rule: \/\* we branch.*//' | \
 	$(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
 	  > $(PROJ_SRC_DIR)/$*.cpp
     
