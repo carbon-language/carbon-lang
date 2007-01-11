@@ -906,10 +906,10 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
   }
 
   // Propagate information about Op0 to Op1 & visa versa
-    PropagateRelation(ICmpInst::ICMP_EQ, Op0, Op1, RI);
-    PropagateRelation(ICmpInst::ICMP_EQ, Op1, Op0, RI);
-    PropagateRelation(FCmpInst::FCMP_OEQ, Op0, Op1, RI);
-    PropagateRelation(FCmpInst::FCMP_OEQ, Op1, Op0, RI);
+  PropagateRelation(ICmpInst::ICMP_EQ, Op0, Op1, RI);
+  PropagateRelation(ICmpInst::ICMP_EQ, Op1, Op0, RI);
+  PropagateRelation(FCmpInst::FCMP_OEQ, Op0, Op1, RI);
+  PropagateRelation(FCmpInst::FCMP_OEQ, Op1, Op0, RI);
 }
 
 
