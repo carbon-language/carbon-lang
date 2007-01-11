@@ -6553,8 +6553,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   // select true, X, Y  -> X
   // select false, X, Y -> Y
   if (ConstantInt *C = dyn_cast<ConstantInt>(CondVal))
-    if (C->getType() == Type::BoolTy)
-      return ReplaceInstUsesWith(SI, C->getBoolValue() ? TrueVal : FalseVal);
+    return ReplaceInstUsesWith(SI, C->getBoolValue() ? TrueVal : FalseVal);
 
   // select C, X, X -> X
   if (TrueVal == FalseVal)
