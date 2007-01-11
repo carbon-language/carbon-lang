@@ -167,10 +167,14 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
 #define EXPLICIT_SYMBOL(SYM) \
    if (!strcmp(symbolName, #SYM)) return &SYM
   // Try a few well known symbols just to give lli a shot at working.
+  // Note that on some systems stdin, etc. are macros so we have to
+  // avoid attempting to take the address of a macro :)
   {
+#ifndef stdin
     EXPLICIT_SYMBOL(stdin);
     EXPLICIT_SYMBOL(stdout);
     EXPLICIT_SYMBOL(stderr);
+#endif
   }
 #undef EXPLICIT_SYMBOL
 
