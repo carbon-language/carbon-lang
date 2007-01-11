@@ -96,13 +96,13 @@ public:
   /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const Type *Ty, int64_t V);
 
-  /// Returns the opposite value of this ConstantInt value if it's a boolean 
-  /// constant.
+  /// Returns the opposite value of this ConstantInt. 
   /// @brief Get inverse value.
   inline ConstantInt *inverted() const {
     static ConstantInt *CI = 0;
     if (CI) return CI; 
-    return CI = new ConstantInt(getType(), Val ^ (-1));
+    return CI = new ConstantInt(getType(), 
+                                Val ^ (getType() == Type::BoolTy ? 1 : -1));
   }
 
   /// @returns the value of this ConstantInt only if it's a boolean type.
