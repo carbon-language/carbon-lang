@@ -1495,7 +1495,7 @@ int SlotMachine::getGlobalSlot(const GlobalValue *V) {
   
   // Lookup the value in the module plane's map.
   ValueMap::const_iterator MVI = MI->second.map.find(V);
-  return MVI != MI->second.map.end() ? MVI->second : -1;
+  return MVI != MI->second.map.end() ? int(MVI->second) : -1;
 }
 
 
