@@ -211,7 +211,7 @@ public:
   }
   virtual void Apply(bool &Field) {
     Constant *C = CI->getOperand(I++);
-    Field = cast<ConstantBool>(C)->getValue();
+    Field = cast<ConstantInt>(C)->getBoolValue();
   }
   virtual void Apply(std::string &Field) {
     Constant *C = CI->getOperand(I++);
@@ -276,7 +276,7 @@ public:
     Elements.push_back(ConstantInt::get(Type::Int64Ty, uint64_t(Field)));
   }
   virtual void Apply(bool &Field) {
-    Elements.push_back(ConstantBool::get(Field));
+    Elements.push_back(ConstantInt::get(Field));
   }
   virtual void Apply(std::string &Field) {
       Elements.push_back(SR.getString(Field));
@@ -426,7 +426,7 @@ public:
   }
   virtual void Apply(bool &Field) {
     Constant *C = CI->getOperand(I++);
-    IsValid = IsValid && isa<ConstantBool>(C);
+    IsValid = IsValid && isa<ConstantInt>(C) && C->getType() == Type::BoolTy;
   }
   virtual void Apply(std::string &Field) {
     Constant *C = CI->getOperand(I++);

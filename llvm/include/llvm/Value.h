@@ -152,7 +152,6 @@ public:
     UndefValueVal,            // This is an instance of UndefValue
     ConstantExprVal,          // This is an instance of ConstantExpr
     ConstantAggregateZeroVal, // This is an instance of ConstantAggregateNull
-    ConstantBoolVal,          // This is an instance of ConstantBool
     ConstantIntVal,           // This is an instance of ConstantInt
     ConstantFPVal,            // This is an instance of ConstantFP
     ConstantArrayVal,         // This is an instance of ConstantArray

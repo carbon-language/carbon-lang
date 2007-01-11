@@ -1118,10 +1118,10 @@ BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
   Constant *C;
   if (const PackedType *PTy = dyn_cast<PackedType>(Op->getType())) {
-    C = ConstantIntegral::getAllOnesValue(PTy->getElementType());
+    C = ConstantInt::getAllOnesValue(PTy->getElementType());
     C = ConstantPacked::get(std::vector<Constant*>(PTy->getNumElements(), C));
   } else {
-    C = ConstantIntegral::getAllOnesValue(Op->getType());
+    C = ConstantInt::getAllOnesValue(Op->getType());
   }
   
   return new BinaryOperator(Instruction::Xor, Op, C,
@@ -1133,11 +1133,11 @@ BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
   Constant *AllOnes;
   if (const PackedType *PTy = dyn_cast<PackedType>(Op->getType())) {
     // Create a vector of all ones values.
-    Constant *Elt = ConstantIntegral::getAllOnesValue(PTy->getElementType());
+    Constant *Elt = ConstantInt::getAllOnesValue(PTy->getElementType());
     AllOnes = 
       ConstantPacked::get(std::vector<Constant*>(PTy->getNumElements(), Elt));
   } else {
-    AllOnes = ConstantIntegral::getAllOnesValue(Op->getType());
+    AllOnes = ConstantInt::getAllOnesValue(Op->getType());
   }
   
   return new BinaryOperator(Instruction::Xor, Op, AllOnes,
@@ -1147,7 +1147,7 @@ BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
 
 // isConstantAllOnes - Helper function for several functions below
 static inline bool isConstantAllOnes(const Value *V) {
-  return isa<ConstantIntegral>(V) &&cast<ConstantIntegral>(V)->isAllOnesValue();
+  return isa<ConstantInt>(V) &&cast<ConstantInt>(V)->isAllOnesValue();
 }
 
 bool BinaryOperator::isNeg(const Value *V) {

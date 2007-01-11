@@ -356,9 +356,9 @@ struct not_match {
   }
 private:
   bool matchIfNot(Value *LHS, Value *RHS) {
-    if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(RHS))
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
       return CI->isAllOnesValue() && L.match(LHS);
-    else if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(LHS))
+    else if (ConstantInt *CI = dyn_cast<ConstantInt>(LHS))
       return CI->isAllOnesValue() && L.match(RHS);
     return false;
   }

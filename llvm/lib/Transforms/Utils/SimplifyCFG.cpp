@@ -968,12 +968,14 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
   
   // Okay, this is a simple enough basic block.  See if any phi values are
   // constants.
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-    if (ConstantBool *CB = dyn_cast<ConstantBool>(PN->getIncomingValue(i))) {
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    ConstantInt *CB;
+    if ((CB = dyn_cast<ConstantInt>(PN->getIncomingValue(i))) &&
+        CB->getType() == Type::BoolTy) {
       // Okay, we now know that all edges from PredBB should be revectored to
       // branch to RealDest.
       BasicBlock *PredBB = PN->getIncomingBlock(i);
-      BasicBlock *RealDest = BI->getSuccessor(!CB->getValue());
+      BasicBlock *RealDest = BI->getSuccessor(!CB->getBoolValue());
       
       if (RealDest == BB) continue;  // Skip self loops.
       
@@ -1037,6 +1039,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
       // Recurse, simplifying any other constants.
       return FoldCondBranchOnPHI(BI) | true;
     }
+  }
 
   return false;
 }
@@ -1506,7 +1509,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               if (BB->getSinglePredecessor()) {
                 // Turn this into a branch on constant.
                 bool CondIsTrue = PBI->getSuccessor(0) == BB;
-                BI->setCondition(ConstantBool::get(CondIsTrue));
+                BI->setCondition(ConstantInt::get(CondIsTrue));
                 return SimplifyCFG(BB);  // Nuke the branch on constant.
               }
               
@@ -1522,7 +1525,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                       PBI->getCondition() == BI->getCondition() &&
                       PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
                     bool CondIsTrue = PBI->getSuccessor(0) == BB;
-                    NewPN->addIncoming(ConstantBool::get(CondIsTrue), *PI);
+                    NewPN->addIncoming(ConstantInt::get(CondIsTrue), *PI);
                   } else {
                     NewPN->addIncoming(BI->getCondition(), *PI);
                   }

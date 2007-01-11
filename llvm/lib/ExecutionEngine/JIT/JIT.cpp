@@ -191,7 +191,7 @@ GenericValue JIT::runFunction(Function *F,
     const GenericValue &AV = ArgValues[i];
     switch (ArgTy->getTypeID()) {
     default: assert(0 && "Unknown argument type for function call!");
-    case Type::BoolTyID:   C = ConstantBool::get(AV.BoolVal); break;
+    case Type::BoolTyID:   C = ConstantInt::get(AV.BoolVal); break;
     case Type::Int8TyID:   C = ConstantInt::get(ArgTy, AV.Int8Val);  break;
     case Type::Int16TyID:  C = ConstantInt::get(ArgTy, AV.Int16Val);  break;
     case Type::Int32TyID:  C = ConstantInt::get(ArgTy, AV.Int32Val);    break;

@@ -36,12 +36,11 @@
 
 namespace llvm {
 class Constant;
-class ConstantIntegral;
 class ConstantInt;
 class Type;
 
 class ConstantRange {
-  ConstantIntegral *Lower, *Upper;
+  ConstantInt *Lower, *Upper;
  public:
   /// Initialize a full (the default) or empty set for the specified type.
   ///
@@ -61,15 +60,15 @@ class ConstantRange {
   /// predicate should be either an ICmpInst::Predicate or FCmpInst::Predicate
   /// value.
   /// @brief Get a range for a relation with a constant integral.
-  ConstantRange(unsigned short predicate, ConstantIntegral *C);
+  ConstantRange(unsigned short predicate, ConstantInt *C);
 
   /// getLower - Return the lower value for this range...
   ///
-  ConstantIntegral *getLower() const { return Lower; }
+  ConstantInt *getLower() const { return Lower; }
 
   /// getUpper - Return the upper value for this range...
   ///
-  ConstantIntegral *getUpper() const { return Upper; }
+  ConstantInt *getUpper() const { return Upper; }
 
   /// getType - Return the LLVM data type of this range.
   ///
@@ -98,7 +97,7 @@ class ConstantRange {
   /// getSingleElement - If this set contains a single element, return it,
   /// otherwise return null.
   ///
-  ConstantIntegral *getSingleElement() const;
+  ConstantInt *getSingleElement() const;
 
   /// isSingleElement - Return true if this set contains exactly one member.
   ///

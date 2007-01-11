@@ -133,12 +133,13 @@ void CondProp::SimplifyPredecessors(BranchInst *BI) {
   // constants.  Walk from the end to remove operands from the end when
   // possible, and to avoid invalidating "i".
   for (unsigned i = PN->getNumIncomingValues(); i != 0; --i)
-    if (ConstantBool *CB = dyn_cast<ConstantBool>(PN->getIncomingValue(i-1))) {
+    if (ConstantInt *CB = dyn_cast<ConstantInt>(PN->getIncomingValue(i-1))) {
+      if (CB->getType() != Type::BoolTy) continue;
       // If we have a constant, forward the edge from its current to its
       // ultimate destination.
       bool PHIGone = PN->getNumIncomingValues() == 2;
       RevectorBlockTo(PN->getIncomingBlock(i-1),
-                      BI->getSuccessor(CB->getValue() == 0));
+                      BI->getSuccessor(CB->getBoolValue() == 0));
       ++NumBrThread;
 
       // If there were two predecessors before this simplification, the PHI node

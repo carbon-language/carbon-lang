@@ -668,12 +668,13 @@ void CppWriter::printConstant(const Constant *CV) {
     // Skip variables and functions, we emit them elsewhere
     return;
   }
-  if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
-    Out << "ConstantBool* " << constName << " = ConstantBool::get(" 
-        << (CB->getValue() ? "true" : "false") << ");";
-  } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    Out << "ConstantInt* " << constName << " = ConstantInt::get(" 
-        << typeName << ", " << CI->getZExtValue() << ");";
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    if (CI->getType() == Type::BoolTy)
+      Out << "ConstantInt* " << constName << " = ConstantInt::get(" 
+          << (CI->getBoolValue() ? "true" : "false") << ");";
+    else
+      Out << "ConstantInt* " << constName << " = ConstantInt::get(" 
+          << typeName << ", " << CI->getZExtValue() << ");";
   } else if (isa<ConstantAggregateZero>(CV)) {
     Out << "ConstantAggregateZero* " << constName 
         << " = ConstantAggregateZero::get(" << typeName << ");";

@@ -30,9 +30,9 @@
 #include <ostream>
 using namespace llvm;
 
-static ConstantIntegral *getMaxValue(const Type *Ty, bool isSigned = false) {
+static ConstantInt *getMaxValue(const Type *Ty, bool isSigned = false) {
   if (Ty == Type::BoolTy)
-    return ConstantBool::getTrue();
+    return ConstantInt::getTrue();
   if (Ty->isInteger()) {
     if (isSigned) {
       // Calculate 011111111111111...
@@ -47,9 +47,9 @@ static ConstantIntegral *getMaxValue(const Type *Ty, bool isSigned = false) {
 }
 
 // Static constructor to create the minimum constant for an integral type...
-static ConstantIntegral *getMinValue(const Type *Ty, bool isSigned = false) {
+static ConstantInt *getMinValue(const Type *Ty, bool isSigned = false) {
   if (Ty == Type::BoolTy)
-    return ConstantBool::getFalse();
+    return ConstantInt::getFalse();
   if (Ty->isInteger()) {
     if (isSigned) {
       // Calculate 1111111111000000000000
@@ -62,37 +62,37 @@ static ConstantIntegral *getMinValue(const Type *Ty, bool isSigned = false) {
   }
   return 0;
 }
-static ConstantIntegral *Next(ConstantIntegral *CI) {
-  if (ConstantBool *CB = dyn_cast<ConstantBool>(CI))
-    return ConstantBool::get(!CB->getValue());
+static ConstantInt *Next(ConstantInt *CI) {
+  if (CI->getType() == Type::BoolTy)
+    return ConstantInt::get(!CI->getBoolValue());
 
   Constant *Result = ConstantExpr::getAdd(CI,
                                           ConstantInt::get(CI->getType(), 1));
-  return cast<ConstantIntegral>(Result);
+  return cast<ConstantInt>(Result);
 }
 
-static bool LT(ConstantIntegral *A, ConstantIntegral *B, bool isSigned) {
+static bool LT(ConstantInt *A, ConstantInt *B, bool isSigned) {
   Constant *C = ConstantExpr::getICmp(
     (isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT), A, B);
-  assert(isa<ConstantBool>(C) && "Constant folding of integrals not impl??");
-  return cast<ConstantBool>(C)->getValue();
+  assert(isa<ConstantInt>(C) && "Constant folding of integrals not impl??");
+  return cast<ConstantInt>(C)->getBoolValue();
 }
 
-static bool LTE(ConstantIntegral *A, ConstantIntegral *B, bool isSigned) {
+static bool LTE(ConstantInt *A, ConstantInt *B, bool isSigned) {
   Constant *C = ConstantExpr::getICmp(
     (isSigned ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_ULE), A, B);
-  assert(isa<ConstantBool>(C) && "Constant folding of integrals not impl??");
-  return cast<ConstantBool>(C)->getValue();
+  assert(isa<ConstantInt>(C) && "Constant folding of integrals not impl??");
+  return cast<ConstantInt>(C)->getBoolValue();
 }
 
-static bool GT(ConstantIntegral *A, ConstantIntegral *B, bool isSigned) { 
+static bool GT(ConstantInt *A, ConstantInt *B, bool isSigned) { 
   return LT(B, A, isSigned); }
 
-static ConstantIntegral *Min(ConstantIntegral *A, ConstantIntegral *B, 
+static ConstantInt *Min(ConstantInt *A, ConstantInt *B, 
                              bool isSigned) {
   return LT(A, B, isSigned) ? A : B;
 }
-static ConstantIntegral *Max(ConstantIntegral *A, ConstantIntegral *B,
+static ConstantInt *Max(ConstantInt *A, ConstantInt *B,
                              bool isSigned) {
   return GT(A, B, isSigned) ? A : B;
 }
@@ -111,14 +111,14 @@ ConstantRange::ConstantRange(const Type *Ty, bool Full) {
 /// Initialize a range to hold the single specified value.
 ///
 ConstantRange::ConstantRange(Constant *V) 
-  : Lower(cast<ConstantIntegral>(V)), Upper(Next(cast<ConstantIntegral>(V))) { }
+  : Lower(cast<ConstantInt>(V)), Upper(Next(cast<ConstantInt>(V))) { }
 
 /// Initialize a range of values explicitly... this will assert out if
 /// Lower==Upper and Lower != Min or Max for its type (or if the two constants
 /// have different types)
 ///
 ConstantRange::ConstantRange(Constant *L, Constant *U) 
-  : Lower(cast<ConstantIntegral>(L)), Upper(cast<ConstantIntegral>(U)) {
+  : Lower(cast<ConstantInt>(L)), Upper(cast<ConstantInt>(U)) {
   assert(Lower->getType() == Upper->getType() &&
          "Incompatible types for ConstantRange!");
 
@@ -130,7 +130,7 @@ ConstantRange::ConstantRange(Constant *L, Constant *U)
 
 /// Initialize a set of values that all satisfy the condition with C.
 ///
-ConstantRange::ConstantRange(unsigned short ICmpOpcode, ConstantIntegral *C) {
+ConstantRange::ConstantRange(unsigned short ICmpOpcode, ConstantInt *C) {
   switch (ICmpOpcode) {
   default: assert(0 && "Invalid ICmp opcode to ConstantRange ctor!");
   case ICmpInst::ICMP_EQ: Lower = C; Upper = Next(C); return;
@@ -195,7 +195,7 @@ bool ConstantRange::isWrappedSet(bool isSigned) const {
 
 /// getSingleElement - If this set contains a single element, return it,
 /// otherwise return null.
-ConstantIntegral *ConstantRange::getSingleElement() const {
+ConstantInt *ConstantRange::getSingleElement() const {
   if (Upper == Next(Lower))  // Is it a single element range?
     return Lower;
   return 0;
@@ -292,8 +292,8 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR,
 
   if (!isWrappedSet(isSigned)) {
     if (!CR.isWrappedSet(isSigned)) {
-      ConstantIntegral *L = Max(Lower, CR.Lower, isSigned);
-      ConstantIntegral *U = Min(Upper, CR.Upper, isSigned);
+      ConstantInt *L = Max(Lower, CR.Lower, isSigned);
+      ConstantInt *U = Min(Upper, CR.Upper, isSigned);
 
       if (LT(L, U, isSigned))  // If range isn't empty...
         return ConstantRange(L, U);
@@ -306,8 +306,8 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR,
       return intersect1Wrapped(*this, CR, isSigned);
     else {
       // Both ranges are wrapped...
-      ConstantIntegral *L = Max(Lower, CR.Lower, isSigned);
-      ConstantIntegral *U = Min(Upper, CR.Upper, isSigned);
+      ConstantInt *L = Max(Lower, CR.Lower, isSigned);
+      ConstantInt *U = Min(Upper, CR.Upper, isSigned);
       return ConstantRange(L, U);
     }
   }

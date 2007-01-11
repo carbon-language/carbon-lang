@@ -143,7 +143,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
     Value *F = expandInTy(S->getOperand(1), Ty);
     
     // IF the step is by one, just return the inserted IV.
-    if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(F))
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(F))
       if (CI->getZExtValue() == 1)
         return I;
     

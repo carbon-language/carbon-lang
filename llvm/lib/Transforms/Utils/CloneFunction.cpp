@@ -226,11 +226,14 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB) {
   if (const BranchInst *BI = dyn_cast<BranchInst>(OldTI)) {
     if (BI->isConditional()) {
       // If the condition was a known constant in the callee...
-      ConstantBool *Cond = dyn_cast<ConstantBool>(BI->getCondition());
-      if (Cond == 0)  // Or is a known constant in the caller...
-        Cond = dyn_cast_or_null<ConstantBool>(ValueMap[BI->getCondition()]);
-      if (Cond) {     // Constant fold to uncond branch!
-        BasicBlock *Dest = BI->getSuccessor(!Cond->getValue());
+      ConstantInt *Cond = dyn_cast<ConstantInt>(BI->getCondition());
+      // Or is a known constant in the caller...
+      if (Cond == 0)  
+        Cond = dyn_cast_or_null<ConstantInt>(ValueMap[BI->getCondition()]);
+
+      // Constant fold to uncond branch!
+      if (Cond) {
+        BasicBlock *Dest = BI->getSuccessor(!Cond->getBoolValue());
         ValueMap[OldTI] = new BranchInst(Dest, NewBB);
         CloneBlock(Dest);
         TerminatorDone = true;

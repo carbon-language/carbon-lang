@@ -1721,8 +1721,8 @@ ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
 
     // Evaluate the condition for this iteration.
     Result = ConstantExpr::getICmp(predicate, Result, RHS);
-    if (!isa<ConstantBool>(Result)) break;  // Couldn't decide for sure
-    if (cast<ConstantBool>(Result)->getValue() == false) {
+    if (!isa<ConstantInt>(Result)) break;  // Couldn't decide for sure
+    if (cast<ConstantInt>(Result)->getBoolValue() == false) {
 #if 0
       cerr << "\n***\n*** Computed loop count " << *ItCst
            << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
@@ -1926,11 +1926,13 @@ ComputeIterationCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
   unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.
   for (Constant *PHIVal = StartCST;
        IterationNum != MaxIterations; ++IterationNum) {
-    ConstantBool *CondVal =
-      dyn_cast_or_null<ConstantBool>(EvaluateExpression(Cond, PHIVal));
-    if (!CondVal) return UnknownValue;     // Couldn't symbolically evaluate.
+    ConstantInt *CondVal =
+      dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, PHIVal));
 
-    if (CondVal->getValue() == ExitWhen) {
+    // Couldn't symbolically evaluate.
+    if (!CondVal || CondVal->getType() != Type::BoolTy) return UnknownValue;
+
+    if (CondVal->getBoolValue() == ExitWhen) {
       ConstantEvolutionLoopExitValue[PN] = PHIVal;
       ++NumBruteForceTripCountsComputed;
       return SCEVConstant::get(ConstantInt::get(Type::Int32Ty, IterationNum));
@@ -2199,10 +2201,10 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
            << "  sol#2: " << *R2 << "\n";
 #endif
       // Pick the smallest positive root value.
-      if (ConstantBool *CB =
-          dyn_cast<ConstantBool>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
+      if (ConstantInt *CB =
+          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
                                    R1->getValue(), R2->getValue()))) {
-        if (CB->getValue() == false)
+        if (CB->getBoolValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
 
         // We can only use this value if the chrec ends up with an exact zero
@@ -2233,7 +2235,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
     Constant *Zero = Constant::getNullValue(C->getValue()->getType());
     Constant *NonZero = 
       ConstantExpr::getICmp(ICmpInst::ICMP_NE, C->getValue(), Zero);
-    if (NonZero == ConstantBool::getTrue())
+    if (NonZero == ConstantInt::getTrue())
       return getSCEV(Zero);
     return UnknownValue;  // Otherwise it will loop infinitely.
   }
@@ -2424,10 +2426,10 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
     if (R1) {
       // Pick the smallest positive root value.
-      if (ConstantBool *CB =
-          dyn_cast<ConstantBool>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
+      if (ConstantInt *CB =
+          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT, 
                                    R1->getValue(), R2->getValue()))) {
-        if (CB->getValue() == false)
+        if (CB->getBoolValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
 
         // Make sure the root is not off by one.  The returned iteration should

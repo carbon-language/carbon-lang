@@ -472,7 +472,7 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
     } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
       Relation::KnownResult Res = getCmpResult(CI, NewRI);
       if (Res == Relation::Unknown) return false;
-      PropagateEquality(CI, ConstantBool::get(Res), NewRI);
+      PropagateEquality(CI, ConstantInt::get(Res), NewRI);
     } else {
       assert(isa<BranchInst>(*I) && "Unexpected instruction type!");
     }
@@ -484,10 +484,11 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
   if (PredicateVI.getReplacement() &&
       isa<Constant>(PredicateVI.getReplacement()) &&
       !isa<GlobalValue>(PredicateVI.getReplacement())) {
-    ConstantBool *CB = cast<ConstantBool>(PredicateVI.getReplacement());
+    ConstantInt *CB = cast<ConstantInt>(PredicateVI.getReplacement());
 
     // Forward to the successor that corresponds to the branch we will take.
-    ForwardSuccessorTo(TI, SuccNo, BI->getSuccessor(!CB->getValue()), NewRI);
+    ForwardSuccessorTo(TI, SuccNo, 
+                       BI->getSuccessor(!CB->getBoolValue()), NewRI);
     return true;
   }
 
@@ -782,12 +783,12 @@ void CEE::PropagateBranchInfo(BranchInst *BI) {
 
   // Propagate information into the true block...
   //
-  PropagateEquality(BI->getCondition(), ConstantBool::getTrue(),
+  PropagateEquality(BI->getCondition(), ConstantInt::getTrue(),
                     getRegionInfo(BI->getSuccessor(0)));
 
   // Propagate information into the false block...
   //
-  PropagateEquality(BI->getCondition(), ConstantBool::getFalse(),
+  PropagateEquality(BI->getCondition(), ConstantInt::getFalse(),
                     getRegionInfo(BI->getSuccessor(1)));
 }
 
@@ -832,78 +833,79 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
   // it's a constant, then see if the other one is one of a setcc instruction,
   // an AND, OR, or XOR instruction.
   //
-  if (ConstantBool *CB = dyn_cast<ConstantBool>(Op1)) {
-
-    if (Instruction *Inst = dyn_cast<Instruction>(Op0)) {
-      // If we know that this instruction is an AND instruction, and the result
-      // is true, this means that both operands to the OR are known to be true
-      // as well.
-      //
-      if (CB->getValue() && Inst->getOpcode() == Instruction::And) {
-        PropagateEquality(Inst->getOperand(0), CB, RI);
-        PropagateEquality(Inst->getOperand(1), CB, RI);
-      }
-
-      // If we know that this instruction is an OR instruction, and the result
-      // is false, this means that both operands to the OR are know to be false
-      // as well.
-      //
-      if (!CB->getValue() && Inst->getOpcode() == Instruction::Or) {
-        PropagateEquality(Inst->getOperand(0), CB, RI);
-        PropagateEquality(Inst->getOperand(1), CB, RI);
-      }
-
-      // If we know that this instruction is a NOT instruction, we know that the
-      // operand is known to be the inverse of whatever the current value is.
-      //
-      if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(Inst))
-        if (BinaryOperator::isNot(BOp))
-          PropagateEquality(BinaryOperator::getNotArgument(BOp),
-                            ConstantBool::get(!CB->getValue()), RI);
-
-      // If we know the value of a FCmp instruction, propagate the information
-      // about the relation into this region as well.
-      //
-      if (FCmpInst *FCI = dyn_cast<FCmpInst>(Inst)) {
-        if (CB->getValue()) {  // If we know the condition is true...
-          // Propagate info about the LHS to the RHS & RHS to LHS
-          PropagateRelation(FCI->getPredicate(), FCI->getOperand(0),
-                            FCI->getOperand(1), RI);
-          PropagateRelation(FCI->getSwappedPredicate(),
-                            FCI->getOperand(1), FCI->getOperand(0), RI);
-
-        } else {               // If we know the condition is false...
-          // We know the opposite of the condition is true...
-          FCmpInst::Predicate C = FCI->getInversePredicate();
-
-          PropagateRelation(C, FCI->getOperand(0), FCI->getOperand(1), RI);
-          PropagateRelation(FCmpInst::getSwappedPredicate(C),
-                            FCI->getOperand(1), FCI->getOperand(0), RI);
+  if (Op1->getType() == Type::BoolTy)
+    if (ConstantInt *CB = dyn_cast<ConstantInt>(Op1)) {
+  
+      if (Instruction *Inst = dyn_cast<Instruction>(Op0)) {
+        // If we know that this instruction is an AND instruction, and the result
+        // is true, this means that both operands to the OR are known to be true
+        // as well.
+        //
+        if (CB->getBoolValue() && Inst->getOpcode() == Instruction::And) {
+          PropagateEquality(Inst->getOperand(0), CB, RI);
+          PropagateEquality(Inst->getOperand(1), CB, RI);
         }
-      }
+  
+        // If we know that this instruction is an OR instruction, and the result
+        // is false, this means that both operands to the OR are know to be false
+        // as well.
+        //
+        if (!CB->getBoolValue() && Inst->getOpcode() == Instruction::Or) {
+          PropagateEquality(Inst->getOperand(0), CB, RI);
+          PropagateEquality(Inst->getOperand(1), CB, RI);
+        }
+
+        // If we know that this instruction is a NOT instruction, we know that the
+        // operand is known to be the inverse of whatever the current value is.
+        //
+        if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(Inst))
+          if (BinaryOperator::isNot(BOp))
+            PropagateEquality(BinaryOperator::getNotArgument(BOp),
+                              ConstantInt::get(!CB->getBoolValue()), RI);
+
+        // If we know the value of a FCmp instruction, propagate the information
+        // about the relation into this region as well.
+        //
+        if (FCmpInst *FCI = dyn_cast<FCmpInst>(Inst)) {
+          if (CB->getBoolValue()) {  // If we know the condition is true...
+            // Propagate info about the LHS to the RHS & RHS to LHS
+            PropagateRelation(FCI->getPredicate(), FCI->getOperand(0),
+                              FCI->getOperand(1), RI);
+            PropagateRelation(FCI->getSwappedPredicate(),
+                              FCI->getOperand(1), FCI->getOperand(0), RI);
+
+          } else {               // If we know the condition is false...
+            // We know the opposite of the condition is true...
+            FCmpInst::Predicate C = FCI->getInversePredicate();
+
+            PropagateRelation(C, FCI->getOperand(0), FCI->getOperand(1), RI);
+            PropagateRelation(FCmpInst::getSwappedPredicate(C),
+                              FCI->getOperand(1), FCI->getOperand(0), RI);
+          }
+        }
       
-      // If we know the value of a ICmp instruction, propagate the information
-      // about the relation into this region as well.
-      //
-      if (ICmpInst *ICI = dyn_cast<ICmpInst>(Inst)) {
-        if (CB->getValue()) { // If we know the condition is true...
-          // Propagate info about the LHS to the RHS & RHS to LHS
-          PropagateRelation(ICI->getPredicate(), ICI->getOperand(0),
-                            ICI->getOperand(1), RI);
-          PropagateRelation(ICI->getSwappedPredicate(), ICI->getOperand(1),
-                            ICI->getOperand(1), RI);
+        // If we know the value of a ICmp instruction, propagate the information
+        // about the relation into this region as well.
+        //
+        if (ICmpInst *ICI = dyn_cast<ICmpInst>(Inst)) {
+          if (CB->getBoolValue()) { // If we know the condition is true...
+            // Propagate info about the LHS to the RHS & RHS to LHS
+            PropagateRelation(ICI->getPredicate(), ICI->getOperand(0),
+                              ICI->getOperand(1), RI);
+            PropagateRelation(ICI->getSwappedPredicate(), ICI->getOperand(1),
+                              ICI->getOperand(1), RI);
 
-        } else {               // If we know the condition is false ...
-          // We know the opposite of the condition is true...
-          ICmpInst::Predicate C = ICI->getInversePredicate();
+          } else {               // If we know the condition is false ...
+            // We know the opposite of the condition is true...
+            ICmpInst::Predicate C = ICI->getInversePredicate();
 
-          PropagateRelation(C, ICI->getOperand(0), ICI->getOperand(1), RI);
-          PropagateRelation(ICmpInst::getSwappedPredicate(C),
-                            ICI->getOperand(1), ICI->getOperand(0), RI);
+            PropagateRelation(C, ICI->getOperand(0), ICI->getOperand(1), RI);
+            PropagateRelation(ICmpInst::getSwappedPredicate(C),
+                              ICI->getOperand(1), ICI->getOperand(0), RI);
+          }
         }
       }
     }
-  }
 
   // Propagate information about Op0 to Op1 & visa versa
   PropagateRelation(ICmpInst::ICMP_EQ, Op0, Op1, RI);
@@ -992,7 +994,7 @@ void CEE::IncorporateInstruction(Instruction *Inst, RegionInfo &RI) {
     // See if we can figure out a result for this instruction...
     Relation::KnownResult Result = getCmpResult(CI, RI);
     if (Result != Relation::Unknown) {
-      PropagateEquality(CI, ConstantBool::get(Result != 0), RI);
+      PropagateEquality(CI, ConstantInt::get(Result != 0), RI);
     }
   }
 }
@@ -1066,7 +1068,7 @@ bool CEE::SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI) {
         DEBUG(cerr << "Replacing icmp with " << Result
                    << " constant: " << *CI);
 
-        CI->replaceAllUsesWith(ConstantBool::get((bool)Result));
+        CI->replaceAllUsesWith(ConstantInt::get((bool)Result));
         // The instruction is now dead, remove it from the program.
         CI->getParent()->getInstList().erase(CI);
         ++NumCmpRemoved;
@@ -1120,7 +1122,7 @@ Relation::KnownResult CEE::getCmpResult(CmpInst *CI,
       if (Constant *Result = ConstantFoldInstruction(CI)) {
         // Wow, this is easy, directly eliminate the ICmpInst.
         DEBUG(cerr << "Replacing cmp with constant fold: " << *CI);
-        return cast<ConstantBool>(Result)->getValue()
+        return cast<ConstantInt>(Result)->getBoolValue()
           ? Relation::KnownTrue : Relation::KnownFalse;
       }
     } else {
@@ -1143,7 +1145,7 @@ Relation::KnownResult CEE::getCmpResult(CmpInst *CI,
     // Op1.  Check to see if we know anything about comparing value with a
     // constant, and if we can use this info to fold the icmp.
     //
-    if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(Op1)) {
+    if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
       // Check to see if we already know the result of this comparison...
       ConstantRange R = ConstantRange(predicate, C);
       ConstantRange Int = R.intersectWith(Op0VI->getBounds(),
@@ -1189,7 +1191,7 @@ bool Relation::contradicts(unsigned Op,
   // If this is a relationship with a constant, make sure that this relationship
   // does not contradict properties known about the bounds of the constant.
   //
-  if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(Val))
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Val))
     if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
         Op <= ICmpInst::LAST_ICMP_PREDICATE)
       if (ConstantRange(Op, C).intersectWith(VI.getBounds(),
@@ -1247,7 +1249,7 @@ bool Relation::incorporate(unsigned Op, ValueInfo &VI) {
   // If this is a relationship with a constant, make sure that we update the
   // range that is possible for the value to have...
   //
-  if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(Val))
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Val))
     if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
         Op <= ICmpInst::LAST_ICMP_PREDICATE)
       VI.getBounds() = ConstantRange(Op, C).intersectWith(VI.getBounds(),

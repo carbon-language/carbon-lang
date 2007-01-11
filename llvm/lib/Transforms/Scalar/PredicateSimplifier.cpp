@@ -357,16 +357,16 @@ namespace {
 
     std::vector<Node> Nodes;
 
-    std::vector<std::pair<ConstantIntegral *, unsigned> > Constants;
+    std::vector<std::pair<ConstantInt *, unsigned> > Constants;
     void initializeConstant(Constant *C, unsigned index) {
-      ConstantIntegral *CI = dyn_cast<ConstantIntegral>(C);
+      ConstantInt *CI = dyn_cast<ConstantInt>(C);
       if (!CI) return;
 
       // XXX: instead of O(n) calls to addInequality, just find the 2, 3 or 4
       // nodes that are nearest less than or greater than (signed or unsigned).
-      for (std::vector<std::pair<ConstantIntegral *, unsigned> >::iterator
+      for (std::vector<std::pair<ConstantInt *, unsigned> >::iterator
            I = Constants.begin(), E = Constants.end(); I != E; ++I) {
-        ConstantIntegral *Other = I->first;
+        ConstantInt *Other = I->first;
         if (CI->getType() == Other->getType()) {
           unsigned lv = 0;
 
@@ -1046,7 +1046,7 @@ namespace {
       if (Constant *C1 = dyn_cast<Constant>(V1))
         if (Constant *C2 = dyn_cast<Constant>(V2))
           return ConstantExpr::getCompare(Pred, C1, C2) ==
-                 ConstantBool::getTrue();
+                 ConstantInt::getTrue();
 
       // XXX: this is lousy. If we're passed a Constant, then we might miss
       // some relationships if it isn't in the IG because the relationships
@@ -1100,7 +1100,7 @@ namespace {
           case Instruction::And: {
             // "and int %a, %b"  EQ -1   then %a EQ -1   and %b EQ -1
             // "and bool %a, %b" EQ true then %a EQ true and %b EQ true
-            ConstantIntegral *CI = ConstantIntegral::getAllOnesValue(Ty);
+            ConstantInt *CI = ConstantInt::getAllOnesValue(Ty);
             if (Canonical == CI) {
               add(CI, Op0, ICmpInst::ICMP_EQ, NewContext);
               add(CI, Op1, ICmpInst::ICMP_EQ, NewContext);
@@ -1127,13 +1127,17 @@ namespace {
             Value *RHS = Op1;
             if (!isa<Constant>(LHS)) std::swap(LHS, RHS);
 
-            if (ConstantBool *CB = dyn_cast<ConstantBool>(Canonical)) {
-              if (ConstantBool *A = dyn_cast<ConstantBool>(LHS))
-                add(RHS, ConstantBool::get(A->getValue() ^ CB->getValue()),
-                                           ICmpInst::ICMP_EQ, NewContext);
+            ConstantInt *CB, *A;
+            if ((CB = dyn_cast<ConstantInt>(Canonical)) && 
+                CB->getType() == Type::BoolTy) {
+              if ((A = dyn_cast<ConstantInt>(LHS)) &&
+                  A->getType() == Type::BoolTy)
+                add(RHS, ConstantInt::get(A->getBoolValue() ^ 
+                                          CB->getBoolValue()),
+                                          ICmpInst::ICMP_EQ, NewContext);
             }
             if (Canonical == LHS) {
-              if (isa<ConstantIntegral>(Canonical))
+              if (isa<ConstantInt>(Canonical))
                 add(RHS, Constant::getNullValue(Ty), ICmpInst::ICMP_EQ,
                     NewContext);
             } else if (isRelatedBy(LHS, Canonical, ICmpInst::ICMP_NE)) {
@@ -1148,10 +1152,10 @@ namespace {
         // "icmp ult int %a, int %y" EQ true then %a u< y
         // etc.
 
-        if (Canonical == ConstantBool::getTrue()) {
+        if (Canonical == ConstantInt::getTrue()) {
           add(IC->getOperand(0), IC->getOperand(1), IC->getPredicate(),
               NewContext);
-        } else if (Canonical == ConstantBool::getFalse()) {
+        } else if (Canonical == ConstantInt::getFalse()) {
           add(IC->getOperand(0), IC->getOperand(1),
               ICmpInst::getInversePredicate(IC->getPredicate()), NewContext);
         }
@@ -1167,11 +1171,11 @@ namespace {
         if (isRelatedBy(True, False, ICmpInst::ICMP_NE)) {
           if (Canonical == IG.canonicalize(True, Top) ||
               isRelatedBy(Canonical, False, ICmpInst::ICMP_NE))
-            add(SI->getCondition(), ConstantBool::getTrue(),
+            add(SI->getCondition(), ConstantInt::getTrue(),
                 ICmpInst::ICMP_EQ, NewContext);
           else if (Canonical == IG.canonicalize(False, Top) ||
                    isRelatedBy(I, True, ICmpInst::ICMP_NE))
-            add(SI->getCondition(), ConstantBool::getFalse(),
+            add(SI->getCondition(), ConstantInt::getFalse(),
                 ICmpInst::ICMP_EQ, NewContext);
         }
       }
@@ -1188,8 +1192,8 @@ namespace {
         Value *Op0 = IG.canonicalize(BO->getOperand(0), Top);
         Value *Op1 = IG.canonicalize(BO->getOperand(1), Top);
 
-        if (ConstantIntegral *CI0 = dyn_cast<ConstantIntegral>(Op0))
-          if (ConstantIntegral *CI1 = dyn_cast<ConstantIntegral>(Op1)) {
+        if (ConstantInt *CI0 = dyn_cast<ConstantInt>(Op0))
+          if (ConstantInt *CI1 = dyn_cast<ConstantInt>(Op1)) {
             add(BO, ConstantExpr::get(BO->getOpcode(), CI0, CI1),
                 ICmpInst::ICMP_EQ, NewContext);
             return;
@@ -1207,7 +1211,7 @@ namespace {
             return;
           }
         } else if (BO->getOpcode() == Instruction::And) {
-          Constant *AllOnes = ConstantIntegral::getAllOnesValue(BO->getType());
+          Constant *AllOnes = ConstantInt::getAllOnesValue(BO->getType());
           if (Op0 == AllOnes) {
             add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
             return;
@@ -1244,8 +1248,9 @@ namespace {
               Constant *One = NULL;
               if (isa<ConstantInt>(Unknown))
                 One = ConstantInt::get(Ty, 1);
-              else if (isa<ConstantBool>(Unknown))
-                One = ConstantBool::getTrue();
+              else if (isa<ConstantInt>(Unknown) && 
+                       Unknown->getType() == Type::BoolTy)
+                One = ConstantInt::getTrue();
 
               if (One) add(Unknown, One, ICmpInst::ICMP_EQ, NewContext);
               break;
@@ -1264,9 +1269,9 @@ namespace {
 
         ICmpInst::Predicate Pred = IC->getPredicate();
         if (isRelatedBy(Op0, Op1, Pred)) {
-          add(IC, ConstantBool::getTrue(), ICmpInst::ICMP_EQ, NewContext);
+          add(IC, ConstantInt::getTrue(), ICmpInst::ICMP_EQ, NewContext);
         } else if (isRelatedBy(Op0, Op1, ICmpInst::getInversePredicate(Pred))) {
-          add(IC, ConstantBool::getFalse(), ICmpInst::ICMP_EQ, NewContext);
+          add(IC, ConstantInt::getFalse(), ICmpInst::ICMP_EQ, NewContext);
         }
 
         // TODO: make the predicate more strict, if possible.
@@ -1278,9 +1283,9 @@ namespace {
         // %b EQ %c then %a EQ %b
 
         Value *Canonical = IG.canonicalize(SI->getCondition(), Top);
-        if (Canonical == ConstantBool::getTrue()) {
+        if (Canonical == ConstantInt::getTrue()) {
           add(SI, SI->getTrueValue(), ICmpInst::ICMP_EQ, NewContext);
-        } else if (Canonical == ConstantBool::getFalse()) {
+        } else if (Canonical == ConstantInt::getFalse()) {
           add(SI, SI->getFalseValue(), ICmpInst::ICMP_EQ, NewContext);
         } else if (IG.canonicalize(SI->getTrueValue(), Top) ==
                    IG.canonicalize(SI->getFalseValue(), Top)) {
@@ -1565,13 +1570,13 @@ namespace {
       if (Dest == TrueDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") true set:\n";
         VRPSolver VRP(IG, UB, PS->Forest, PS->modified, Dest);
-        VRP.add(ConstantBool::getTrue(), Condition, ICmpInst::ICMP_EQ);
+        VRP.add(ConstantInt::getTrue(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
         DEBUG(IG.dump());
       } else if (Dest == FalseDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") false set:\n";
         VRPSolver VRP(IG, UB, PS->Forest, PS->modified, Dest);
-        VRP.add(ConstantBool::getFalse(), Condition, ICmpInst::ICMP_EQ);
+        VRP.add(ConstantInt::getFalse(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
         DEBUG(IG.dump());
       }

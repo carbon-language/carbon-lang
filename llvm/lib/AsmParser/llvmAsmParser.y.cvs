@@ -1484,6 +1484,10 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
                        "' for element #" + utostr(i) +
                        " of structure initializer!");
 
+    // Check to ensure that Type is not packed
+    if (STy->isPacked())
+      GEN_ERROR("Unpacked Initializer to packed type '" + STy->getDescription() + "'");
+
     $$ = ConstantStruct::get(STy, *$3);
     delete $1; delete $3;
     CHECK_FOR_ERROR
@@ -1498,6 +1502,54 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     if (STy->getNumContainedTypes() != 0)
       GEN_ERROR("Illegal number of initializers for structure type!");
+
+    // Check to ensure that Type is not packed
+    if (STy->isPacked())
+      GEN_ERROR("Unpacked Initializer to packed type '" + STy->getDescription() + "'");
+
+    $$ = ConstantStruct::get(STy, std::vector<Constant*>());
+    delete $1;
+    CHECK_FOR_ERROR
+  }
+  | Types '<' '{' ConstVector '}' '>' {
+    const StructType *STy = dyn_cast<StructType>($1->get());
+    if (STy == 0)
+      GEN_ERROR("Cannot make struct constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
+
+    if ($4->size() != STy->getNumContainedTypes())
+      GEN_ERROR("Illegal number of initializers for structure type!");
+
+    // Check to ensure that constants are compatible with the type initializer!
+    for (unsigned i = 0, e = $4->size(); i != e; ++i)
+      if ((*$4)[i]->getType() != STy->getElementType(i))
+        GEN_ERROR("Expected type '" +
+                       STy->getElementType(i)->getDescription() +
+                       "' for element #" + utostr(i) +
+                       " of structure initializer!");
+
+    // Check to ensure that Type is packed
+    if (!STy->isPacked())
+      GEN_ERROR("Packed Initializer to unpacked type '" + STy->getDescription() + "'");
+
+    $$ = ConstantStruct::get(STy, *$4);
+    delete $1; delete $4;
+    CHECK_FOR_ERROR
+  }
+  | Types '<' '{' '}' '>' {
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
+    const StructType *STy = dyn_cast<StructType>($1->get());
+    if (STy == 0)
+      GEN_ERROR("Cannot make struct constant with type: '" + 
+                     (*$1)->getDescription() + "'!");
+
+    if (STy->getNumContainedTypes() != 0)
+      GEN_ERROR("Illegal number of initializers for structure type!");
+
+    // Check to ensure that Type is packed
+    if (!STy->isPacked())
+      GEN_ERROR("Packed Initializer to unpacked type '" + STy->getDescription() + "'");
 
     $$ = ConstantStruct::get(STy, std::vector<Constant*>());
     delete $1;
@@ -1618,11 +1670,11 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     CHECK_FOR_ERROR
   }
   | BOOL TRUETOK {                      // Boolean constants
-    $$ = ConstantBool::getTrue();
+    $$ = ConstantInt::getTrue();
     CHECK_FOR_ERROR
   }
   | BOOL FALSETOK {                     // Boolean constants
-    $$ = ConstantBool::getFalse();
+    $$ = ConstantInt::getFalse();
     CHECK_FOR_ERROR
   }
   | FPType FPVAL {                   // Float & Double constants
@@ -2132,11 +2184,11 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     CHECK_FOR_ERROR
   }
   | TRUETOK {
-    $$ = ValID::create(ConstantBool::getTrue());
+    $$ = ValID::create(ConstantInt::getTrue());
     CHECK_FOR_ERROR
   } 
   | FALSETOK {
-    $$ = ValID::create(ConstantBool::getFalse());
+    $$ = ValID::create(ConstantInt::getFalse());
     CHECK_FOR_ERROR
   }
   | NULL_TOK {
@@ -2563,7 +2615,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     cerr << "WARNING: Use of eliminated 'not' instruction:"
          << " Replacing with 'xor'.\n";
 
-    Value *Ones = ConstantIntegral::getAllOnesValue($2->getType());
+    Value *Ones = ConstantInt::getAllOnesValue($2->getType());
     if (Ones == 0)
       GEN_ERROR("Expected integral type for not instruction!");
 

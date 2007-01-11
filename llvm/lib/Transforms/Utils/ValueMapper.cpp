@@ -28,7 +28,7 @@ Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
     return VMSlot = const_cast<Value*>(V);
 
   if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
-    if (isa<ConstantIntegral>(C) || isa<ConstantFP>(C) ||
+    if (isa<ConstantInt>(C) || isa<ConstantFP>(C) ||
         isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C) ||
         isa<UndefValue>(C))
       return VMSlot = C;           // Primitive constants map directly

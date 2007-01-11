@@ -711,7 +711,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   // keep track of whether the global was initialized yet or not.
   GlobalVariable *InitBool =
     new GlobalVariable(Type::BoolTy, false, GlobalValue::InternalLinkage,
-                       ConstantBool::getFalse(), GV->getName()+".init");
+                       ConstantInt::getFalse(), GV->getName()+".init");
   bool InitBoolUsed = false;
 
   // Loop over all uses of GV, processing them in turn.
@@ -731,7 +731,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
           default: assert(0 && "Unknown ICmp Predicate!");
           case ICmpInst::ICMP_ULT:
           case ICmpInst::ICMP_SLT:
-            LV = ConstantBool::getFalse();   // X < null -> always false
+            LV = ConstantInt::getFalse();   // X < null -> always false
             break;
           case ICmpInst::ICMP_ULE:
           case ICmpInst::ICMP_SLE:
@@ -753,7 +753,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     } else {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
       // The global is initialized when the store to it occurs.
-      new StoreInst(ConstantBool::getTrue(), InitBool, SI);
+      new StoreInst(ConstantInt::getTrue(), InitBool, SI);
       SI->eraseFromParent();
     }
 
@@ -1140,7 +1140,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
 static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(Type::BoolTy, false,
-         GlobalValue::InternalLinkage, ConstantBool::getFalse(),
+         GlobalValue::InternalLinkage, ConstantInt::getFalse(),
                                              GV->getName()+".b");
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
@@ -1161,7 +1161,7 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
       // Only do this if we weren't storing a loaded value.
       Value *StoreVal;
       if (StoringOther || SI->getOperand(0) == InitVal)
-        StoreVal = ConstantBool::get(StoringOther);
+        StoreVal = ConstantInt::get(StoringOther);
       else {
         // Otherwise, we are storing a previously loaded copy.  To do this,
         // change the copy from copying the original value to just copying the
@@ -1797,10 +1797,13 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         if (BI->isUnconditional()) {
           NewBB = BI->getSuccessor(0);
         } else {
-          ConstantBool *Cond =
-            dyn_cast<ConstantBool>(getVal(Values, BI->getCondition()));
-          if (!Cond) return false;  // Cannot determine.
-          NewBB = BI->getSuccessor(!Cond->getValue());          
+          ConstantInt *Cond =
+            dyn_cast<ConstantInt>(getVal(Values, BI->getCondition()));
+
+          // Cannot determine.
+          if (!Cond || Cond->getType() != Type::BoolTy) 
+            return false;  
+          NewBB = BI->getSuccessor(!Cond->getBoolValue());          
         }
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(CurInst)) {
         ConstantInt *Val =

@@ -537,7 +537,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     }
 
   // Check for destructive annihilation due to a constant being used.
-  if (ConstantIntegral *CstVal = dyn_cast<ConstantIntegral>(Ops.back().Op))
+  if (ConstantInt *CstVal = dyn_cast<ConstantInt>(Ops.back().Op))
     switch (Opcode) {
     default: break;
     case Instruction::And:
@@ -591,7 +591,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
             return Constant::getNullValue(X->getType());
           } else if (Opcode == Instruction::Or) {   // ...|X|~X = -1
             ++NumAnnihil;
-            return ConstantIntegral::getAllOnesValue(X->getType());
+            return ConstantInt::getAllOnesValue(X->getType());
           }
         }
       }

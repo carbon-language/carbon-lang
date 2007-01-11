@@ -1670,11 +1670,11 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     CHECK_FOR_ERROR
   }
   | BOOL TRUETOK {                      // Boolean constants
-    $$ = ConstantBool::getTrue();
+    $$ = ConstantInt::getTrue();
     CHECK_FOR_ERROR
   }
   | BOOL FALSETOK {                     // Boolean constants
-    $$ = ConstantBool::getFalse();
+    $$ = ConstantInt::getFalse();
     CHECK_FOR_ERROR
   }
   | FPType FPVAL {                   // Float & Double constants
@@ -2184,11 +2184,11 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     CHECK_FOR_ERROR
   }
   | TRUETOK {
-    $$ = ValID::create(ConstantBool::getTrue());
+    $$ = ValID::create(ConstantInt::getTrue());
     CHECK_FOR_ERROR
   } 
   | FALSETOK {
-    $$ = ValID::create(ConstantBool::getFalse());
+    $$ = ValID::create(ConstantInt::getFalse());
     CHECK_FOR_ERROR
   }
   | NULL_TOK {
@@ -2615,7 +2615,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     cerr << "WARNING: Use of eliminated 'not' instruction:"
          << " Replacing with 'xor'.\n";
 
-    Value *Ones = ConstantIntegral::getAllOnesValue($2->getType());
+    Value *Ones = ConstantInt::getAllOnesValue($2->getType());
     if (Ones == 0)
       GEN_ERROR("Expected integral type for not instruction!");
 

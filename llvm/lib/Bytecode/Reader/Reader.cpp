@@ -1403,7 +1403,7 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     unsigned Val = read_vbr_uint();
     if (Val != 0 && Val != 1)
       error("Invalid boolean value read.");
-    Result = ConstantBool::get(Val == 1);
+    Result = ConstantInt::get(Val == 1);
     if (Handler) Handler->handleConstantValue(Result);
     break;
   }

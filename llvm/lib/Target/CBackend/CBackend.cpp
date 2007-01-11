@@ -826,22 +826,21 @@ void CWriter::printConstant(Constant *CPV) {
     return;
   }
 
-  if (ConstantBool *CB = dyn_cast<ConstantBool>(CPV)) {
-    Out << (CB->getValue() ? '1' : '0') ;
-    return;
-  }
-
   if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
     const Type* Ty = CI->getType();
-    Out << "((";
-    printPrimitiveType(Out, Ty, false) << ')';
-    if (CI->isMinValue(true)) 
-      Out << CI->getZExtValue() << 'u';
-    else
-      Out << CI->getSExtValue();
-    if (Ty->getPrimitiveSizeInBits() > 32)
-      Out << "ll";
-    Out << ')';
+    if (Ty == Type::BoolTy)
+      Out << (CI->getBoolValue() ? '1' : '0') ;
+    else {
+      Out << "((";
+      printPrimitiveType(Out, Ty, false) << ')';
+      if (CI->isMinValue(true)) 
+        Out << CI->getZExtValue() << 'u';
+      else
+        Out << CI->getSExtValue();
+      if (Ty->getPrimitiveSizeInBits() > 32)
+        Out << "ll";
+      Out << ')';
+    }
     return;
   } 
 

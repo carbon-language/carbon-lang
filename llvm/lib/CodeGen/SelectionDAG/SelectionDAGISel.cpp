@@ -649,7 +649,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       return N = DAG.getNode(ISD::VBUILD_VECTOR,MVT::Vector,&Ops[0],Ops.size());
     } else {
       // Canonicalize all constant ints to be unsigned.
-      return N = DAG.getConstant(cast<ConstantIntegral>(C)->getZExtValue(),VT);
+      return N = DAG.getConstant(cast<ConstantInt>(C)->getZExtValue(),VT);
     }
   }
       
@@ -904,7 +904,7 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
     }
     
     // Create a CaseBlock record representing this branch.
-    SelectionDAGISel::CaseBlock CB(ISD::SETEQ, Cond, ConstantBool::getTrue(),
+    SelectionDAGISel::CaseBlock CB(ISD::SETEQ, Cond, ConstantInt::getTrue(),
                                    TBB, FBB, CurBB);
     SwitchCases.push_back(CB);
     return;
@@ -1043,7 +1043,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
   }
   
   // Create a CaseBlock record representing this branch.
-  SelectionDAGISel::CaseBlock CB(ISD::SETEQ, CondVal, ConstantBool::getTrue(),
+  SelectionDAGISel::CaseBlock CB(ISD::SETEQ, CondVal, ConstantInt::getTrue(),
                                  Succ0MBB, Succ1MBB, CurMBB);
   // Use visitSwitchCase to actually insert the fast branch sequence for this
   // cond branch.
@@ -1058,9 +1058,9 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
   
   // Build the setcc now, fold "(X == true)" to X and "(X == false)" to !X to
   // handle common cases produced by branch lowering.
-  if (CB.CmpRHS == ConstantBool::getTrue() && CB.CC == ISD::SETEQ)
+  if (CB.CmpRHS == ConstantInt::getTrue() && CB.CC == ISD::SETEQ)
     Cond = CondLHS;
-  else if (CB.CmpRHS == ConstantBool::getFalse() && CB.CC == ISD::SETEQ) {
+  else if (CB.CmpRHS == ConstantInt::getFalse() && CB.CC == ISD::SETEQ) {
     SDOperand True = DAG.getConstant(1, CondLHS.getValueType());
     Cond = DAG.getNode(ISD::XOR, CondLHS.getValueType(), CondLHS, True);
   } else
@@ -1206,8 +1206,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   if ((TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
        TLI.isOperationLegal(ISD::BRIND, MVT::Other)) &&
       Cases.size() > 5) {
-    uint64_t First =cast<ConstantIntegral>(Cases.front().first)->getZExtValue();
-    uint64_t Last  = cast<ConstantIntegral>(Cases.back().first)->getZExtValue();
+    uint64_t First =cast<ConstantInt>(Cases.front().first)->getZExtValue();
+    uint64_t Last  = cast<ConstantInt>(Cases.back().first)->getZExtValue();
     double Density = (double)Cases.size() / (double)((Last - First) + 1ULL);
     
     if (Density >= 0.3125) {
@@ -1256,7 +1256,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       std::vector<MachineBasicBlock*> DestBBs;
       uint64_t TEI = First;
       for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++TEI)
-        if (cast<ConstantIntegral>(ii->first)->getZExtValue() == TEI) {
+        if (cast<ConstantInt>(ii->first)->getZExtValue() == TEI) {
           DestBBs.push_back(ii->second);
           ++ii;
         } else {
@@ -1338,8 +1338,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // rather than creating a leaf node for it.
       if ((LHSR.second - LHSR.first) == 1 &&
           LHSR.first->first == CR.GE &&
-          cast<ConstantIntegral>(C)->getZExtValue() ==
-          (cast<ConstantIntegral>(CR.GE)->getZExtValue() + 1ULL)) {
+          cast<ConstantInt>(C)->getZExtValue() ==
+          (cast<ConstantInt>(CR.GE)->getZExtValue() + 1ULL)) {
         TrueBB = LHSR.first->second;
       } else {
         TrueBB = new MachineBasicBlock(LLVMBB);
@@ -1352,8 +1352,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // is CR.LT - 1, then we can branch directly to the target block for
       // the current Case Value, rather than emitting a RHS leaf node for it.
       if ((RHSR.second - RHSR.first) == 1 && CR.LT &&
-          cast<ConstantIntegral>(RHSR.first->first)->getZExtValue() ==
-          (cast<ConstantIntegral>(CR.LT)->getZExtValue() - 1ULL)) {
+          cast<ConstantInt>(RHSR.first->first)->getZExtValue() ==
+          (cast<ConstantInt>(CR.LT)->getZExtValue() - 1ULL)) {
         FalseBB = RHSR.first->second;
       } else {
         FalseBB = new MachineBasicBlock(LLVMBB);

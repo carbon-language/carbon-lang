@@ -388,11 +388,11 @@ void AsmPrinter::EmitZeros(uint64_t NumZeros) const {
 void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   if (CV->isNullValue() || isa<UndefValue>(CV))
     O << "0";
-  else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
-    assert(CB->getValue());
-    O << "1";
-  } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    O << CI->getSExtValue();
+  else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    if (CI->getType() == Type::BoolTy) {
+      assert(CI->getBoolValue());
+      O << "1";
+    } else O << CI->getSExtValue();
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
     // This is a constant address for a global variable or function. Use the
     // name of the variable or function as the address value, possibly

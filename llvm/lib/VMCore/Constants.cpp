@@ -93,7 +93,7 @@ bool Constant::canTrap() const {
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::BoolTyID: {
-    static Constant *NullBool = ConstantBool::get(false);
+    static Constant *NullBool = ConstantInt::get(false);
     return NullBool;
   }
   case Type::Int8TyID: {
@@ -135,9 +135,9 @@ Constant *Constant::getNullValue(const Type *Ty) {
 
 
 // Static constructor to create an integral constant with all bits set
-ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
+ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   return ConstantBool::getTrue();
+  case Type::BoolTyID:   return ConstantInt::getTrue();
   case Type::Int8TyID:
   case Type::Int16TyID:
   case Type::Int32TyID:
@@ -152,7 +152,7 @@ ConstantIntegral *ConstantIntegral::getAllOnesValue(const Type *Ty) {
 ConstantPacked *ConstantPacked::getAllOnesValue(const PackedType *Ty) {
   std::vector<Constant*> Elts;
   Elts.resize(Ty->getNumElements(),
-              ConstantIntegral::getAllOnesValue(Ty->getElementType()));
+              ConstantInt::getAllOnesValue(Ty->getElementType()));
   assert(Elts[0] && "Not a packed integer type!");
   return cast<ConstantPacked>(ConstantPacked::get(Elts));
 }
@@ -165,16 +165,12 @@ ConstantPacked *ConstantPacked::getAllOnesValue(const PackedType *Ty) {
 //===----------------------------------------------------------------------===//
 //                             Normal Constructors
 
-ConstantIntegral::ConstantIntegral(const Type *Ty, ValueTy VT, uint64_t V)
-  : Constant(Ty, VT, 0, 0), Val(V) {
-}
-
-ConstantBool::ConstantBool(bool V) 
-  : ConstantIntegral(Type::BoolTy, ConstantBoolVal, uint64_t(V)) {
+ConstantInt::ConstantInt(bool V) 
+  : Constant(Type::BoolTy, ConstantIntVal, 0, 0), Val(uint64_t(V)) {
 }
 
 ConstantInt::ConstantInt(const Type *Ty, uint64_t V)
-  : ConstantIntegral(Ty, ConstantIntVal, V) {
+  : Constant(Ty, ConstantIntVal, 0, 0), Val(Ty == Type::BoolTy ? bool(V) : V) {
 }
 
 ConstantFP::ConstantFP(const Type *Ty, double V)
@@ -383,9 +379,9 @@ Constant *ConstantExpr::getNeg(Constant *C) {
     return get(Instruction::Sub, ConstantFP::get(C->getType(), -0.0), C);
 }
 Constant *ConstantExpr::getNot(Constant *C) {
-  assert(isa<ConstantIntegral>(C) && "Cannot NOT a nonintegral type!");
+  assert(isa<ConstantInt>(C) && "Cannot NOT a nonintegral type!");
   return get(Instruction::Xor, C,
-             ConstantIntegral::getAllOnesValue(C->getType()));
+             ConstantInt::getAllOnesValue(C->getType()));
 }
 Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2) {
   return get(Instruction::Add, C1, C2);
@@ -555,6 +551,7 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
 bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
   switch (Ty->getTypeID()) {
   default:              return false; // These can't be represented as integers!
+  case Type::BoolTyID:  return Val == 0 || Val == 1;
   case Type::Int8TyID:  return Val <= UINT8_MAX;
   case Type::Int16TyID: return Val <= UINT16_MAX;
   case Type::Int32TyID: return Val <= UINT32_MAX;
@@ -565,6 +562,7 @@ bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
 bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
   switch (Ty->getTypeID()) {
   default:              return false; // These can't be represented as integers!
+  case Type::BoolTyID:  return (Val == 0 || Val == 1);
   case Type::Int8TyID:  return (Val >= INT8_MIN && Val <= INT8_MAX);
   case Type::Int16TyID: return (Val >= INT16_MIN && Val <= UINT16_MAX);
   case Type::Int32TyID: return (Val >= INT32_MIN && Val <= UINT32_MAX);
@@ -830,19 +828,6 @@ public:
 }
 
 
-//---- ConstantBool::get*() implementation.
-
-ConstantBool *ConstantBool::getTrue() {
-  static ConstantBool *T = 0;
-  if (T) return T;
-  return T = new ConstantBool(true);
-}
-ConstantBool *ConstantBool::getFalse() {
-  static ConstantBool *F = 0;
-  if (F) return F;
-  return F = new ConstantBool(false);
-}
-
 //---- ConstantInt::get() implementations...
 //
 static ManagedStatic<ValueMap<uint64_t, Type, ConstantInt> > IntConstants;
@@ -853,11 +838,7 @@ static ManagedStatic<ValueMap<uint64_t, Type, ConstantInt> > IntConstants;
 // just return the stored value while getSExtValue has to convert back to sign
 // extended. getZExtValue is more common in LLVM than getSExtValue().
 ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
-  return IntConstants->getOrCreate(Ty, V & Ty->getIntegralTypeMask());
-}
-
-ConstantIntegral *ConstantIntegral::get(const Type *Ty, int64_t V) {
-  if (Ty == Type::BoolTy) return ConstantBool::get(V&1);
+  if (Ty == Type::BoolTy) return ConstantInt::get(V&1);
   return IntConstants->getOrCreate(Ty, V & Ty->getIntegralTypeMask());
 }
 

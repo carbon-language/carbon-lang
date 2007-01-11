@@ -438,10 +438,10 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
                              SlotMachine *Machine) {
   const int IndentSize = 4;
   static std::string Indent = "\n";
-  if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
-    Out << (CB->getValue() ? "true" : "false");
-  } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    Out << CI->getSExtValue();
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    if (CI->getType() == Type::BoolTy) 
+      Out << (CI->getBoolValue() ? "true" : "false");
+    else Out << CI->getSExtValue();
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     // We would like to output the FP constant value in exponential notation,
     // but we cannot do this if doing so will lose precision.  Check here to

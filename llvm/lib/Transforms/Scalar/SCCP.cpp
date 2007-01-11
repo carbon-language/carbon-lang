@@ -416,13 +416,14 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
     } else {
       LatticeVal &BCValue = getValueState(BI->getCondition());
       if (BCValue.isOverdefined() ||
-          (BCValue.isConstant() && !isa<ConstantBool>(BCValue.getConstant()))) {
+          (BCValue.isConstant() && 
+          BCValue.getConstant()->getType() != Type::BoolTy)) {
         // Overdefined condition variables, and branches on unfoldable constant
         // conditions, mean the branch could go either way.
         Succs[0] = Succs[1] = true;
       } else if (BCValue.isConstant()) {
         // Constant condition variables mean the branch can only go a single way
-        Succs[BCValue.getConstant() == ConstantBool::getFalse()] = true;
+        Succs[BCValue.getConstant() == ConstantInt::getFalse()] = true;
       }
     }
   } else if (isa<InvokeInst>(&TI)) {
@@ -476,11 +477,11 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
         return true;
       } else if (BCValue.isConstant()) {
         // Not branching on an evaluatable constant?
-        if (!isa<ConstantBool>(BCValue.getConstant())) return true;
+        if (BCValue.getConstant()->getType() != Type::BoolTy) return true;
 
         // Constant condition variables mean the branch can only go a single way
         return BI->getSuccessor(BCValue.getConstant() ==
-                                       ConstantBool::getFalse()) == To;
+                                       ConstantInt::getFalse()) == To;
       }
       return false;
     }
@@ -646,10 +647,11 @@ void SCCPSolver::visitSelectInst(SelectInst &I) {
   LatticeVal &CondValue = getValueState(I.getCondition());
   if (CondValue.isUndefined())
     return;
-  if (CondValue.isConstant()) {
-    if (ConstantBool *CondCB = dyn_cast<ConstantBool>(CondValue.getConstant())){
-      mergeInValue(&I, getValueState(CondCB->getValue() ? I.getTrueValue()
-                                                        : I.getFalseValue()));
+  if (CondValue.isConstant() &&
+      CondValue.getConstant()->getType() == Type::BoolTy) {
+    if (ConstantInt *CondCB = dyn_cast<ConstantInt>(CondValue.getConstant())){
+      mergeInValue(&I, getValueState(CondCB->getBoolValue() ? I.getTrueValue()
+                                                          : I.getFalseValue()));
       return;
     }
   }
@@ -712,8 +714,8 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
               return;      // X and 0 = 0
             }
           } else {
-            if (ConstantIntegral *CI =
-                     dyn_cast<ConstantIntegral>(NonOverdefVal->getConstant()))
+            if (ConstantInt *CI =
+                     dyn_cast<ConstantInt>(NonOverdefVal->getConstant()))
               if (CI->isAllOnesValue()) {
                 markConstant(IV, &I, NonOverdefVal->getConstant());
                 return;    // X or -1 = -1

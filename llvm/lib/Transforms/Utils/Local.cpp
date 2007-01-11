@@ -173,11 +173,11 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
     BasicBlock *Dest1 = cast<BasicBlock>(BI->getOperand(0));
     BasicBlock *Dest2 = cast<BasicBlock>(BI->getOperand(1));
 
-    if (ConstantBool *Cond = dyn_cast<ConstantBool>(BI->getCondition())) {
+    if (ConstantInt *Cond = dyn_cast<ConstantInt>(BI->getCondition())) {
       // Are we branching on constant?
       // YES.  Change to unconditional branch...
-      BasicBlock *Destination = Cond->getValue() ? Dest1 : Dest2;
-      BasicBlock *OldDest     = Cond->getValue() ? Dest2 : Dest1;
+      BasicBlock *Destination = Cond->getBoolValue() ? Dest1 : Dest2;
+      BasicBlock *OldDest     = Cond->getBoolValue() ? Dest2 : Dest1;
 
       //cerr << "Function: " << T->getParent()->getParent()
       //     << "\nRemoving branch from " << T->getParent()

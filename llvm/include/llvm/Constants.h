@@ -36,18 +36,19 @@ template<class ConstantClass, class TypeClass>
 struct ConvertConstantType;
 
 //===----------------------------------------------------------------------===//
-/// This is the shared superclass of boolean and integer constants. This class 
-/// just defines some common interfaces to be implemented by the subclasses.
-/// @brief An abstract class for integer constants.
-class ConstantIntegral : public Constant {
+/// This is the shared class of boolean and integrer constants. This class 
+/// represents both boolean and integral constants.
+/// @brief Class for constant integers.
+class ConstantInt : public Constant {
 protected:
   uint64_t Val;
-  ConstantIntegral(const Type *Ty, ValueTy VT, uint64_t V);
+protected:
+  ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
+  ConstantInt(const Type *Ty, uint64_t V);
+  ConstantInt(const Type *Ty, int64_t V);
+  ConstantInt(bool V);
+  friend struct ConstantCreator<ConstantInt, Type, uint64_t>;
 public:
-    
-  /// ConstantIntegral::get - Return a bool or integer constant.
-  static ConstantIntegral *get(const Type *Ty, int64_t V);
-    
   /// Return the constant as a 64-bit unsigned integer value after it
   /// has been zero extended as appropriate for the type of this constant.
   /// @brief Return the zero extended value.
@@ -62,106 +63,6 @@ public:
     unsigned Size = getType()->getPrimitiveSizeInBits();
     return (int64_t(Val) << (64-Size)) >> (64-Size);
   }
-  
-  /// This function is implemented by subclasses and will return true iff this
-  /// constant represents the the "null" value that would be returned by the
-  /// getNullValue method.
-  /// @returns true if the constant's value is 0.
-  /// @brief Determine if the value is null.
-  virtual bool isNullValue() const = 0;
-
-  /// This function is implemented by sublcasses and will return true iff this
-  /// constant represents the the largest value that may be represented by this
-  /// constant's type.
-  /// @returns true if the constant's value is maximal.
-  /// @brief Determine if the value is maximal.
-  virtual bool isMaxValue(bool isSigned) const = 0;
-
-  /// This function is implemented by subclasses and will return true iff this 
-  /// constant represents the smallest value that may be represented by this 
-  /// constant's type.
-  /// @returns true if the constant's value is minimal
-  /// @brief Determine if the value is minimal.
-  virtual bool isMinValue(bool isSigned) const = 0;
-
-  /// This function is implemented by subclasses and will return true iff every
-  /// bit in this constant is set to true.
-  /// @returns true if all bits of the constant are ones.
-  /// @brief Determine if the value is all ones.
-  virtual bool isAllOnesValue() const = 0;
-
-  /// @returns the value for an integer constant of the given type that has all
-  /// its bits set to true.
-  /// @brief Get the all ones value
-  static ConstantIntegral *getAllOnesValue(const Type *Ty);
-
-  /// Methods to support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstantIntegral *) { return true; }
-  static bool classof(const Value *V) {
-    return V->getValueType() == ConstantBoolVal ||
-           V->getValueType() == ConstantIntVal;
-  }
-};
-
-
-//===----------------------------------------------------------------------===//
-/// This concrete class represents constant values of type BoolTy. There are 
-/// only two instances of this class constructed: the True and False static 
-/// members. The constructor is hidden to ensure this invariant.
-/// @brief Constant Boolean class
-class ConstantBool : public ConstantIntegral {
-  ConstantBool(bool V);
-public:
-  /// getTrue/getFalse - Return the singleton true/false values.
-  static ConstantBool *getTrue();
-  static ConstantBool *getFalse();
-
-  /// This method is provided mostly for compatibility with the other 
-  /// ConstantIntegral subclasses.
-  /// @brief Static factory method for getting a ConstantBool instance.
-  static ConstantBool *get(bool Value) { return Value ? getTrue() : getFalse();}
-
-  /// This method is provided mostly for compatibility with the other 
-  /// ConstantIntegral subclasses.
-  /// @brief Static factory method for getting a ConstantBool instance.
-  static ConstantBool *get(const Type *Ty, bool Value) { return get(Value); }
-
-  /// Returns the opposite value of this ConstantBool value.
-  /// @brief Get inverse value.
-  inline ConstantBool *inverted() const {
-    return getValue() ? getFalse() : getTrue();
-  }
-
-  /// @returns the value of this ConstantBool
-  /// @brief return the boolean value of this constant.
-  inline bool getValue() const { return static_cast<bool>(getZExtValue()); }
-
-  /// @see ConstantIntegral for details
-  /// @brief Implement overrides
-  virtual bool isNullValue() const { return getValue() == false; }
-  virtual bool isMaxValue(bool isSigned) const { return getValue() == true; }
-  virtual bool isMinValue(bool isSigned) const { return getValue() == false; }
-  virtual bool isAllOnesValue() const { return getValue() == true; }
-
-  /// @brief Methods to support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstantBool *) { return true; }
-  static bool classof(const Value *V) {
-    return V->getValueType() == ConstantBoolVal;
-  }
-};
-
-
-//===----------------------------------------------------------------------===//
-/// This is concrete integer subclass of ConstantIntegral that represents 
-/// both signed and unsigned integral constants, other than boolean.
-/// @brief Class for constant integers.
-class ConstantInt : public ConstantIntegral {
-protected:
-  ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
-  ConstantInt(const Type *Ty, uint64_t V);
-  ConstantInt(const Type *Ty, int64_t V);
-  friend struct ConstantCreator<ConstantInt, Type, uint64_t>;
-public:
   /// A helper method that can be used to determine if the constant contained 
   /// within is equal to a constant.  This only works for very small values, 
   /// because this is all that can be represented with all types.
@@ -172,12 +73,44 @@ public:
     return Val == V;
   }
 
+  /// getTrue/getFalse - Return the singleton true/false values.
+  static inline ConstantInt *getTrue() {
+    static ConstantInt *T = 0;
+    if (T) return T;
+    return T = new ConstantInt(true);
+  }
+  static inline ConstantInt *getFalse() {
+    static ConstantInt *F = 0;
+    if (F) return F;
+    return F = new ConstantInt(false);
+  }
+
+  /// @brief Static factory method for getting a ConstantInt instance which
+  /// stands for a bool value.
+  static ConstantInt *get(bool Value) { return Value ? getTrue() : getFalse();}
+
   /// Return a ConstantInt with the specified value for the specified type. The
   /// value V will be canonicalized to a uint64_t but accessing it with either
-  /// getSExtValue() or getZExtValue() (ConstantIntegral) will yield the correct
+  /// getSExtValue() or getZExtValue() (ConstantInt) will yield the correct
   /// sized/signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const Type *Ty, int64_t V);
+
+  /// Returns the opposite value of this ConstantInt value if it's a boolean 
+  /// constant.
+  /// @brief Get inverse value.
+  inline ConstantInt *inverted() const {
+    static ConstantInt *CI = 0;
+    if (CI) return CI; 
+    return CI = new ConstantInt(getType(), Val ^ (-1));
+  }
+
+  /// @returns the value of this ConstantInt only if it's a boolean type.
+  /// @brief return the boolean value of this constant.
+  inline bool getBoolValue() const { 
+    assert(getType() == Type::BoolTy && "Should be a boolean constant!");
+    return static_cast<bool>(getZExtValue()); 
+  }
 
   /// This static method returns true if the type Ty is big enough to 
   /// represent the value V. This can be used to avoid having the get method 
@@ -191,21 +124,30 @@ public:
   static bool isValueValidForType(const Type *Ty, uint64_t V);
   static bool isValueValidForType(const Type *Ty, int64_t V);
 
+  /// This function will return true iff this constant represents the "null"
+  /// value that would be returned by the getNullValue method.
   /// @returns true if this is the null integer value.
-  /// @see ConstantIntegral for details
-  /// @brief Implement override.
-  virtual bool isNullValue() const { return Val == 0; }
+  /// @brief Determine if the value is null.
+  virtual bool isNullValue() const { 
+    return Val == 0; 
+  }
 
+  /// This function will return true iff every bit in this constant is set
+  /// to true.
   /// @returns true iff this constant's bits are all set to true.
-  /// @see ConstantIntegral
-  /// @brief Override implementation
-  virtual bool isAllOnesValue() const { return getSExtValue() == -1; }
+  /// @brief Determine if the value is all ones.
+  virtual bool isAllOnesValue() const { 
+    if (getType() == Type::BoolTy) return getBoolValue() == true;
+    return getSExtValue() == -1; 
+  }
 
+  /// This function will return true iff this constant represents the largest
+  /// value that may be represented by the constant's type.
   /// @returns true iff this is the largest value that may be represented 
   /// by this type.
-  /// @see ConstantIntegeral
-  /// @brief Override implementation
+  /// @brief Determine if the value is maximal.
   virtual bool isMaxValue(bool isSigned) const {
+    if (getType() == Type::BoolTy) return getBoolValue() == true;
     if (isSigned) {
       int64_t V = getSExtValue();
       if (V < 0) return false;    // Be careful about wrap-around on 'long's
@@ -215,11 +157,13 @@ public:
     return isAllOnesValue();
   }
 
+  /// This function will return true iff this constant represents the smallest
+  /// value that may be represented by this constant's type.
   /// @returns true if this is the smallest value that may be represented by 
   /// this type.
-  /// @see ConstantIntegral
-  /// @brief Override implementation
+  /// @brief Determine if the value is minimal.
   virtual bool isMinValue(bool isSigned) const {
+    if (getType() == Type::BoolTy) return getBoolValue() == false;
     if (isSigned) {
       int64_t V = getSExtValue();
       if (V > 0) return false;    // Be careful about wrap-around on 'long's
@@ -228,6 +172,11 @@ public:
     }
     return getZExtValue() == 0;
   }
+
+  /// @returns the value for an integer constant of the given type that has all
+  /// its bits set to true.
+  /// @brief Get the all ones value
+  static ConstantInt *getAllOnesValue(const Type *Ty);
 
   /// @brief Methods to support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const ConstantInt *) { return true; }
