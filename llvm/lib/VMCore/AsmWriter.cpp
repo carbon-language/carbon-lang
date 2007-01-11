@@ -439,7 +439,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
   const int IndentSize = 4;
   static std::string Indent = "\n";
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    if (CI->getType() == Type::BoolTy) 
+    if (CI->getType() == Type::Int1Ty) 
       Out << (CI->getBoolValue() ? "true" : "false");
     else Out << CI->getSExtValue();
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {

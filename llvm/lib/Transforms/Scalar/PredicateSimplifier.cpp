@@ -1129,9 +1129,9 @@ namespace {
 
             ConstantInt *CB, *A;
             if ((CB = dyn_cast<ConstantInt>(Canonical)) && 
-                CB->getType() == Type::BoolTy) {
+                CB->getType() == Type::Int1Ty) {
               if ((A = dyn_cast<ConstantInt>(LHS)) &&
-                  A->getType() == Type::BoolTy)
+                  A->getType() == Type::Int1Ty)
                 add(RHS, ConstantInt::get(A->getBoolValue() ^ 
                                           CB->getBoolValue()),
                                           ICmpInst::ICMP_EQ, NewContext);
@@ -1249,7 +1249,7 @@ namespace {
               if (isa<ConstantInt>(Unknown))
                 One = ConstantInt::get(Ty, 1);
               else if (isa<ConstantInt>(Unknown) && 
-                       Unknown->getType() == Type::BoolTy)
+                       Unknown->getType() == Type::Int1Ty)
                 One = ConstantInt::getTrue();
 
               if (One) add(Unknown, One, ICmpInst::ICMP_EQ, NewContext);

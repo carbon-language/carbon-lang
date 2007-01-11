@@ -351,7 +351,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       Constant *Op = CE->getOperand(0);
       GenericValue GV = getConstantValue(Op);
       switch (Op->getType()->getTypeID()) {
-        case Type::BoolTyID:    return PTOGV((void*)(uintptr_t)GV.BoolVal);
+        case Type::Int1TyID:    return PTOGV((void*)(uintptr_t)GV.Int1Val);
         case Type::Int8TyID:   return PTOGV((void*)(uintptr_t)GV.Int8Val);
         case Type::Int16TyID:  return PTOGV((void*)(uintptr_t)GV.Int16Val);
         case Type::Int32TyID:    return PTOGV((void*)(uintptr_t)GV.Int32Val);
@@ -399,7 +399,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   switch (C->getType()->getTypeID()) {
 #define GET_CONST_VAL(TY, CTY, CLASS, GETMETH) \
   case Type::TY##TyID: Result.TY##Val = (CTY)cast<CLASS>(C)->GETMETH(); break
-    GET_CONST_VAL(Bool  , bool          , ConstantInt, getBoolValue);
+    GET_CONST_VAL(Int1  , bool          , ConstantInt, getBoolValue);
     GET_CONST_VAL(Int8  , unsigned char , ConstantInt, getZExtValue);
     GET_CONST_VAL(Int16 , unsigned short, ConstantInt, getZExtValue);
     GET_CONST_VAL(Int32 , unsigned int  , ConstantInt, getZExtValue);
@@ -433,7 +433,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                                          const Type *Ty) {
   if (getTargetData()->isLittleEndian()) {
     switch (Ty->getTypeID()) {
-    case Type::BoolTyID:
+    case Type::Int1TyID:
     case Type::Int8TyID:    Ptr->Untyped[0] = Val.Int8Val; break;
     case Type::Int16TyID:   Ptr->Untyped[0] = Val.Int16Val & 255;
                             Ptr->Untyped[1] = (Val.Int16Val >> 8) & 255;
@@ -463,7 +463,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
     }
   } else {
     switch (Ty->getTypeID()) {
-    case Type::BoolTyID:
+    case Type::Int1TyID:
     case Type::Int8TyID:    Ptr->Untyped[0] = Val.Int8Val; break;
     case Type::Int16TyID:   Ptr->Untyped[1] = Val.Int16Val & 255;
                             Ptr->Untyped[0] = (Val.Int16Val >> 8) & 255;
@@ -501,7 +501,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
   GenericValue Result;
   if (getTargetData()->isLittleEndian()) {
     switch (Ty->getTypeID()) {
-    case Type::BoolTyID:
+    case Type::Int1TyID:
     case Type::Int8TyID:    Result.Int8Val  = Ptr->Untyped[0]; break;
     case Type::Int16TyID:   Result.Int16Val = (unsigned)Ptr->Untyped[0] |
                                               ((unsigned)Ptr->Untyped[1] << 8);
@@ -531,7 +531,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
     }
   } else {
     switch (Ty->getTypeID()) {
-    case Type::BoolTyID:
+    case Type::Int1TyID:
     case Type::Int8TyID:    Result.Int8Val  = Ptr->Untyped[0]; break;
     case Type::Int16TyID:   Result.Int16Val = (unsigned)Ptr->Untyped[1] |
                                              ((unsigned)Ptr->Untyped[0] << 8);

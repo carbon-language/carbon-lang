@@ -389,7 +389,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   if (CV->isNullValue() || isa<UndefValue>(CV))
     O << "0";
   else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    if (CI->getType() == Type::BoolTy) {
+    if (CI->getType() == Type::Int1Ty) {
       assert(CI->getBoolValue());
       O << "1";
     } else O << CI->getSExtValue();
@@ -917,7 +917,7 @@ void AsmPrinter::printSetLabel(unsigned uid, unsigned uid2,
 void AsmPrinter::printDataDirective(const Type *type) {
   const TargetData *TD = TM.getTargetData();
   switch (type->getTypeID()) {
-  case Type::BoolTyID:
+  case Type::Int1TyID:
   case Type::Int8TyID:
     O << TAI->getData8bitsDirective();
     break;

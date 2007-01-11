@@ -234,7 +234,7 @@ x86_stdcallcc   { return X86_STDCALLCC_TOK; }
 x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
 void            { RET_TY(Type::VoidTy,  VOID);  }
-bool            { RET_TY(Type::BoolTy,  BOOL);  }
+bool            { RET_TY(Type::Int1Ty,  BOOL);  }
 i8              { RET_TY(Type::Int8Ty,  INT8);  }
 i16             { RET_TY(Type::Int16Ty, INT16); }
 i32             { RET_TY(Type::Int32Ty, INT32); }

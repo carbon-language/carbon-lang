@@ -342,7 +342,7 @@ public:
     switch (Ty->getTypeID()) {
     default: assert(0 && "Unknown type!");
     case Type::VoidTyID:    return MVT::isVoid;
-    case Type::BoolTyID:    return MVT::i1;
+    case Type::Int1TyID:    return MVT::i1;
     case Type::Int8TyID:    return MVT::i8;
     case Type::Int16TyID:   return MVT::i16;
     case Type::Int32TyID:   return MVT::i32;

@@ -166,7 +166,7 @@ getTypePrefix(const Type* Ty ) {
   const char* prefix;
   switch (Ty->getTypeID()) {
     case Type::VoidTyID:     prefix = "void_"; break;
-    case Type::BoolTyID:     prefix = "bool_"; break; 
+    case Type::Int1TyID:     prefix = "bool_"; break; 
     case Type::Int8TyID:     prefix = "int8_"; break;
     case Type::Int16TyID:    prefix = "int16_"; break;
     case Type::Int32TyID:    prefix = "int32_"; break;
@@ -316,7 +316,7 @@ CppWriter::getCppName(const Type* Ty)
   if (Ty->isPrimitiveType()) {
     switch (Ty->getTypeID()) {
       case Type::VoidTyID:   return "Type::VoidTy";
-      case Type::BoolTyID:   return "Type::BoolTy"; 
+      case Type::Int1TyID:   return "Type::Int1Ty"; 
       case Type::Int8TyID:   return "Type::Int8Ty";
       case Type::Int16TyID:  return "Type::Int16Ty";
       case Type::Int32TyID:  return "Type::Int32Ty";
@@ -669,7 +669,7 @@ void CppWriter::printConstant(const Constant *CV) {
     return;
   }
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    if (CI->getType() == Type::BoolTy)
+    if (CI->getType() == Type::Int1Ty)
       Out << "ConstantInt* " << constName << " = ConstantInt::get(" 
           << (CI->getBoolValue() ? "true" : "false") << ");";
     else

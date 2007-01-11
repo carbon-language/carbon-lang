@@ -474,7 +474,7 @@ void Verifier::visitSwitchInst(SwitchInst &SI) {
 }
 
 void Verifier::visitSelectInst(SelectInst &SI) {
-  Assert1(SI.getCondition()->getType() == Type::BoolTy,
+  Assert1(SI.getCondition()->getType() == Type::Int1Ty,
           "Select condition type must be bool!", &SI);
   Assert1(SI.getTrueValue()->getType() == SI.getFalseValue()->getType(),
           "Select values must have identical types!", &SI);

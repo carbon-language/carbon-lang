@@ -73,7 +73,7 @@ Type::Type(const char *Name, TypeID id)
 const Type *Type::getPrimitiveType(TypeID IDNumber) {
   switch (IDNumber) {
   case VoidTyID  : return VoidTy;
-  case BoolTyID  : return BoolTy;
+  case Int1TyID  : return Int1Ty;
   case Int8TyID  : return Int8Ty; 
   case Int16TyID : return Int16Ty; 
   case Int32TyID : return Int32Ty;
@@ -127,7 +127,7 @@ bool Type::canLosslesslyBitCastTo(const Type *Ty) const {
 //
 unsigned Type::getPrimitiveSize() const {
   switch (getTypeID()) {
-  case Type::BoolTyID:
+  case Type::Int1TyID:
   case Type::Int8TyID:  return 1;
   case Type::Int16TyID: return 2;
   case Type::FloatTyID:
@@ -140,7 +140,7 @@ unsigned Type::getPrimitiveSize() const {
 
 unsigned Type::getPrimitiveSizeInBits() const {
   switch (getTypeID()) {
-  case Type::BoolTyID:  return 1;
+  case Type::Int1TyID:  return 1;
   case Type::Int8TyID:  return 8;
   case Type::Int16TyID: return 16;
   case Type::FloatTyID:
@@ -368,7 +368,7 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
   Type *Type::TY##Ty = &*The##TY##Ty
 
 DeclarePrimType(Void,   "void");
-DeclarePrimType(Bool,   "bool");
+DeclarePrimType(Int1,   "bool");
 DeclarePrimType(Int8,   "i8");
 DeclarePrimType(Int16,  "i16");
 DeclarePrimType(Int32,  "i32");

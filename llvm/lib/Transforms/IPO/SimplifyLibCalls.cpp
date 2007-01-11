@@ -940,7 +940,7 @@ static bool IsOnlyUsedInEqualsZeroComparison(Instruction *I) {
           cast<Constant>(IC->getOperand(1))->isNullValue())
         continue;
     } else if (CastInst *CI = dyn_cast<CastInst>(User))
-      if (CI->getType() == Type::BoolTy)
+      if (CI->getType() == Type::Int1Ty)
         continue;
     // Unknown instruction.
     return false;

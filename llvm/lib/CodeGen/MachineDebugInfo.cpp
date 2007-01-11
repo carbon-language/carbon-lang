@@ -363,7 +363,7 @@ public:
     Fields.push_back(Type::Int64Ty);
   }
   virtual void Apply(bool &Field) {
-    Fields.push_back(Type::BoolTy);
+    Fields.push_back(Type::Int1Ty);
   }
   virtual void Apply(std::string &Field) {
     Fields.push_back(SR.getStrPtrType());
@@ -426,7 +426,7 @@ public:
   }
   virtual void Apply(bool &Field) {
     Constant *C = CI->getOperand(I++);
-    IsValid = IsValid && isa<ConstantInt>(C) && C->getType() == Type::BoolTy;
+    IsValid = IsValid && isa<ConstantInt>(C) && C->getType() == Type::Int1Ty;
   }
   virtual void Apply(std::string &Field) {
     Constant *C = CI->getOperand(I++);

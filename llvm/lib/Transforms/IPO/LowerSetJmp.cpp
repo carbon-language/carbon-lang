@@ -223,7 +223,7 @@ bool LowerSetJmp::doInitialization(Module& M)
 
   // bool __llvm_sjljeh_is_longjmp_exception()
   IsLJException = M.getOrInsertFunction("__llvm_sjljeh_is_longjmp_exception",
-                                        Type::BoolTy, (Type *)0);
+                                        Type::Int1Ty, (Type *)0);
 
   // int __llvm_sjljeh_get_longjmp_value()
   GetLJValue = M.getOrInsertFunction("__llvm_sjljeh_get_longjmp_value",

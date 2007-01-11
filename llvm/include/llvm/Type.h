@@ -71,7 +71,7 @@ public:
   ///
   enum TypeID {
     // PrimitiveTypes .. make sure LastPrimitiveTyID stays up to date
-    VoidTyID = 0  , BoolTyID,           //  0, 1: Basics...
+    VoidTyID = 0  , Int1TyID,           //  0, 1: Basics...
     Int8TyID,                           //  2   :  8 bit type...
     Int16TyID,                          //  3   : 16 bit type...
     Int32TyID,                          //  4   : 32 bit type...
@@ -165,9 +165,9 @@ public:
   bool isInteger() const { return ID >= Int8TyID && ID <= Int64TyID; }
 
   /// isIntegral - Returns true if this is an integral type, which is either
-  /// BoolTy or one of the Integer types.
+  /// Int1Ty or one of the Integer types.
   ///
-  bool isIntegral() const { return isInteger() || this == BoolTy; }
+  bool isIntegral() const { return isInteger() || this == Int1Ty; }
 
   /// isFloatingPoint - Return true if this is one of the two floating point
   /// types
@@ -209,7 +209,7 @@ public:
   ///
   bool isSized() const {
     // If it's a primitive, it is always sized.
-    if (ID >= BoolTyID && ID <= DoubleTyID || ID == PointerTyID)
+    if (ID >= Int1TyID && ID <= DoubleTyID || ID == PointerTyID)
       return true;
     // If it is not something that can have a size (e.g. a function or label),
     // it doesn't have a size.
@@ -248,7 +248,7 @@ public:
   /// will be promoted to if passed through a variable argument
   /// function.
   const Type *getVAArgsPromotedType() const {
-    if (ID == BoolTyID || ID == Int8TyID || ID == Int16TyID)
+    if (ID == Int1TyID || ID == Int8TyID || ID == Int16TyID)
       return Type::Int32Ty;
     else if (ID == FloatTyID)
       return Type::DoubleTy;
@@ -288,7 +288,7 @@ public:
   //===--------------------------------------------------------------------===//
   // These are the builtin types that are always available...
   //
-  static Type *VoidTy , *BoolTy;
+  static Type *VoidTy , *Int1Ty;
   static Type *Int8Ty , *Int16Ty,
               *Int32Ty, *Int64Ty;
   static Type *FloatTy, *DoubleTy;

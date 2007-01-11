@@ -339,7 +339,7 @@ static GenericValue executeAndInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
-    IMPLEMENT_BINARY_OPERATOR(&, Bool);
+    IMPLEMENT_BINARY_OPERATOR(&, Int1);
     IMPLEMENT_BINARY_OPERATOR(&, Int8);
     IMPLEMENT_BINARY_OPERATOR(&, Int16);
     IMPLEMENT_BINARY_OPERATOR(&, Int32);
@@ -355,7 +355,7 @@ static GenericValue executeOrInst(GenericValue Src1, GenericValue Src2,
                                   const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
-    IMPLEMENT_BINARY_OPERATOR(|, Bool);
+    IMPLEMENT_BINARY_OPERATOR(|, Int1);
     IMPLEMENT_BINARY_OPERATOR(|, Int8);
     IMPLEMENT_BINARY_OPERATOR(|, Int16);
     IMPLEMENT_BINARY_OPERATOR(|, Int32);
@@ -371,7 +371,7 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
   GenericValue Dest;
   switch (Ty->getTypeID()) {
-    IMPLEMENT_BINARY_OPERATOR(^, Bool);
+    IMPLEMENT_BINARY_OPERATOR(^, Int1);
     IMPLEMENT_BINARY_OPERATOR(^, Int8);
     IMPLEMENT_BINARY_OPERATOR(^, Int16);
     IMPLEMENT_BINARY_OPERATOR(^, Int32);
@@ -384,7 +384,7 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
 }
 
 #define IMPLEMENT_ICMP(OP, TY, CAST) \
-   case Type::TY##TyID: Dest.BoolVal = \
+   case Type::TY##TyID: Dest.Int1Val = \
      ((CAST)Src1.TY##Val) OP ((CAST)Src2.TY##Val); break
 
 // Handle pointers specially because they must be compared with only as much
@@ -393,7 +393,7 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
 // comparisons if they contain garbage.
 #define IMPLEMENT_POINTERCMP(OP) \
    case Type::PointerTyID: \
-        Dest.BoolVal = (void*)(intptr_t)Src1.PointerVal OP \
+        Dest.Int1Val = (void*)(intptr_t)Src1.PointerVal OP \
                        (void*)(intptr_t)Src2.PointerVal; break
 
 static GenericValue executeICMP_EQ(GenericValue Src1, GenericValue Src2,
@@ -583,7 +583,7 @@ void Interpreter::visitICmpInst(ICmpInst &I) {
 }
 
 #define IMPLEMENT_FCMP(OP, TY) \
-   case Type::TY##TyID: Dest.BoolVal = Src1.TY##Val OP Src2.TY##Val; break
+   case Type::TY##TyID: Dest.Int1Val = Src1.TY##Val OP Src2.TY##Val; break
 
 static GenericValue executeFCMP_EQ(GenericValue Src1, GenericValue Src2,
                                    const Type *Ty) {
@@ -672,7 +672,7 @@ void Interpreter::visitFCmpInst(FCmpInst &I) {
   GenericValue R;   // Result
   
   switch (I.getPredicate()) {
-  case FCmpInst::FCMP_FALSE: R.BoolVal = false;
+  case FCmpInst::FCMP_FALSE: R.Int1Val = false;
   case FCmpInst::FCMP_ORD:   R = executeFCMP_EQ(Src1, Src2, Ty); break; ///???
   case FCmpInst::FCMP_UNO:   R = executeFCMP_NE(Src1, Src2, Ty); break; ///???
   case FCmpInst::FCMP_OEQ:
@@ -687,7 +687,7 @@ void Interpreter::visitFCmpInst(FCmpInst &I) {
   case FCmpInst::FCMP_ULE:   R = executeFCMP_LE(Src1, Src2, Ty); break;
   case FCmpInst::FCMP_OGE:
   case FCmpInst::FCMP_UGE:   R = executeFCMP_GE(Src1, Src2, Ty); break;
-  case FCmpInst::FCMP_TRUE:  R.BoolVal = true;
+  case FCmpInst::FCMP_TRUE:  R.Int1Val = true;
   default:
     cerr << "Don't know how to handle this FCmp predicate!\n-->" << I;
     abort();
@@ -726,12 +726,12 @@ static GenericValue executeCmpInst(unsigned predicate, GenericValue Src1,
   case FCmpInst::FCMP_UGE:   return executeFCMP_GE(Src1, Src2, Ty); break;
   case FCmpInst::FCMP_FALSE: { 
     GenericValue Result;
-    Result.BoolVal = false; 
+    Result.Int1Val = false; 
     return Result;
   }
   case FCmpInst::FCMP_TRUE: {
     GenericValue Result;
-    Result.BoolVal = true;
+    Result.Int1Val = true;
     return Result;
   }
   default:
@@ -770,7 +770,7 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
 
 static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2,
                                       GenericValue Src3) {
-  return Src1.BoolVal ? Src2 : Src3;
+  return Src1.Int1Val ? Src2 : Src3;
 }
 
 void Interpreter::visitSelectInst(SelectInst &I) {
@@ -873,7 +873,7 @@ void Interpreter::visitBranchInst(BranchInst &I) {
   Dest = I.getSuccessor(0);          // Uncond branches have a fixed dest...
   if (!I.isUnconditional()) {
     Value *Cond = I.getCondition();
-    if (getOperandValue(Cond, SF).BoolVal == 0) // If false cond...
+    if (getOperandValue(Cond, SF).Int1Val == 0) // If false cond...
       Dest = I.getSuccessor(1);
   }
   SwitchToNewBasicBlock(Dest, SF);
@@ -888,7 +888,7 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
   BasicBlock *Dest = 0;
   for (unsigned i = 2, e = I.getNumOperands(); i != e; i += 2)
     if (executeICMP_EQ(CondVal,
-                       getOperandValue(I.getOperand(i), SF), ElTy).BoolVal) {
+                       getOperandValue(I.getOperand(i), SF), ElTy).Int1Val) {
       Dest = cast<BasicBlock>(I.getOperand(i+1));
       break;
     }
@@ -1089,8 +1089,8 @@ void Interpreter::visitCallSite(CallSite CS) {
         ArgVals.back().Int32Val = ArgVals.back().Int16Val;
       else if (Ty == Type::Int8Ty)
         ArgVals.back().Int32Val = ArgVals.back().Int8Val;
-      else if (Ty == Type::BoolTy)
-        ArgVals.back().Int32Val = ArgVals.back().BoolVal;
+      else if (Ty == Type::Int1Ty)
+        ArgVals.back().Int32Val = ArgVals.back().Int1Val;
       else
         assert(0 && "Unknown type!");
     }
@@ -1192,7 +1192,7 @@ void Interpreter::visitAShr(ShiftInst &I) {
 #define IMPLEMENT_CAST_CASE(DTY, CAST)          \
   case Type::DTY##TyID:                         \
     switch (SrcTy->getTypeID()) {               \
-      IMPLEMENT_CAST(Bool,   DTY, CAST);        \
+      IMPLEMENT_CAST(Int1,   DTY, CAST);        \
       IMPLEMENT_CAST(Int8,   DTY, CAST);        \
       IMPLEMENT_CAST(Int16,  DTY, CAST);        \
       IMPLEMENT_CAST(Int32,  DTY, CAST);        \
@@ -1220,10 +1220,10 @@ GenericValue Interpreter::executeCastOperation(Instruction::CastOps opcode,
   const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
 
-  if (opcode == Instruction::Trunc && DstTy->getTypeID() == Type::BoolTyID) {
+  if (opcode == Instruction::Trunc && DstTy->getTypeID() == Type::Int1TyID) {
     // For truncations to bool, we must clear the high order bits of the source
     switch (SrcTy->getTypeID()) {
-      case Type::BoolTyID:  Src.BoolVal  &= 1; break;
+      case Type::Int1TyID:  Src.Int1Val  &= 1; break;
       case Type::Int8TyID:  Src.Int8Val  &= 1; break;
       case Type::Int16TyID: Src.Int16Val &= 1; break;
       case Type::Int32TyID: Src.Int32Val &= 1; break;
@@ -1233,16 +1233,16 @@ GenericValue Interpreter::executeCastOperation(Instruction::CastOps opcode,
         break;
     }
   } else if (opcode == Instruction::SExt && 
-             SrcTy->getTypeID() == Type::BoolTyID) {
+             SrcTy->getTypeID() == Type::Int1TyID) {
     // For sign extension from bool, we must extend the source bits.
     SrcTy = Type::Int64Ty;
-    Src.Int64Val = 0 - Src.BoolVal;
+    Src.Int64Val = 0 - Src.Int1Val;
   }
 
   switch (opcode) {
     case Instruction::Trunc:     // src integer, dest integral (can't be long)
       IMPLEMENT_CAST_START
-      IMPLEMENT_CAST_CASE(Bool , (bool));
+      IMPLEMENT_CAST_CASE(Int1 , (bool));
       IMPLEMENT_CAST_CASE(Int8 , (uint8_t));
       IMPLEMENT_CAST_CASE(Int16, (uint16_t));
       IMPLEMENT_CAST_CASE(Int32, (uint32_t));
@@ -1289,7 +1289,7 @@ GenericValue Interpreter::executeCastOperation(Instruction::CastOps opcode,
       break;
     case Instruction::FPToUI:    // src floating, dest integral
       IMPLEMENT_CAST_START
-      IMPLEMENT_CAST_CASE(Bool , (bool));
+      IMPLEMENT_CAST_CASE(Int1 , (bool));
       IMPLEMENT_CAST_CASE(Int8 , (uint8_t));
       IMPLEMENT_CAST_CASE(Int16, (uint16_t));
       IMPLEMENT_CAST_CASE(Int32, (uint32_t ));
@@ -1298,7 +1298,7 @@ GenericValue Interpreter::executeCastOperation(Instruction::CastOps opcode,
       break;
     case Instruction::FPToSI:    // src floating, dest integral
       IMPLEMENT_CAST_START
-      IMPLEMENT_CAST_CASE(Bool , (bool));
+      IMPLEMENT_CAST_CASE(Int1 , (bool));
       IMPLEMENT_CAST_CASE(Int8 , (uint8_t) (int8_t));
       IMPLEMENT_CAST_CASE(Int16, (uint16_t)(int16_t));
       IMPLEMENT_CAST_CASE(Int32, (uint32_t)(int32_t));
@@ -1307,7 +1307,7 @@ GenericValue Interpreter::executeCastOperation(Instruction::CastOps opcode,
       break;
     case Instruction::PtrToInt:  // src pointer,  dest integral
       IMPLEMENT_CAST_START
-      IMPLEMENT_CAST_CASE(Bool , (bool));
+      IMPLEMENT_CAST_CASE(Int1 , (bool));
       IMPLEMENT_CAST_CASE(Int8 , (uint8_t));
       IMPLEMENT_CAST_CASE(Int16, (uint16_t));
       IMPLEMENT_CAST_CASE(Int32, (uint32_t));
@@ -1321,7 +1321,7 @@ GenericValue Interpreter::executeCastOperation(Instruction::CastOps opcode,
       break;
     case Instruction::BitCast:   // src any, dest any (same size)
       IMPLEMENT_CAST_START
-      IMPLEMENT_CAST_CASE(Bool   , (bool));
+      IMPLEMENT_CAST_CASE(Int1   , (bool));
       IMPLEMENT_CAST_CASE(Int8   , (uint8_t));
       IMPLEMENT_CAST_CASE(Int16  , (uint16_t));
       IMPLEMENT_CAST_CASE(Int32  , (uint32_t));
@@ -1365,7 +1365,7 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
     IMPLEMENT_VAARG(Pointer);
     IMPLEMENT_VAARG(Float);
     IMPLEMENT_VAARG(Double);
-    IMPLEMENT_VAARG(Bool);
+    IMPLEMENT_VAARG(Int1);
   default:
     cerr << "Unhandled dest type for vaarg instruction: " << *Ty << "\n";
     abort();

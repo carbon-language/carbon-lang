@@ -486,7 +486,7 @@ static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   // Insert a conditional branch on LIC to the two preheaders.  The original
   // code is the true version and the new code is the false version.
   Value *BranchVal = LIC;
-  if (Val->getType() != Type::BoolTy)
+  if (Val->getType() != Type::Int1Ty)
     BranchVal = new ICmpInst(ICmpInst::ICMP_EQ, LIC, Val, "tmp", InsertPt);
   else if (Val != ConstantInt::getTrue())
     // We want to enter the new loop when the condition is true.
@@ -919,7 +919,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
 
   // If we know that LIC == Val, or that LIC == NotVal, just replace uses of LIC
   // in the loop with the appropriate one directly.
-  if (IsEqual || (isa<ConstantInt>(Val) && Val->getType() == Type::BoolTy)) {
+  if (IsEqual || (isa<ConstantInt>(Val) && Val->getType() == Type::Int1Ty)) {
     Value *Replacement;
     if (IsEqual)
       Replacement = Val;
@@ -1032,10 +1032,10 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
       break;
     case Instruction::And:
       if (isa<ConstantInt>(I->getOperand(0)) && 
-          I->getOperand(0)->getType() == Type::BoolTy)   // constant -> RHS
+          I->getOperand(0)->getType() == Type::Int1Ty)   // constant -> RHS
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1))) 
-        if (CB->getType() == Type::BoolTy) {
+        if (CB->getType() == Type::Int1Ty) {
           if (CB->getBoolValue())   // X & 1 -> X
             ReplaceUsesOfWith(I, I->getOperand(0), Worklist);
           else                  // X & 0 -> 0
@@ -1045,10 +1045,10 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
       break;
     case Instruction::Or:
       if (isa<ConstantInt>(I->getOperand(0)) &&
-          I->getOperand(0)->getType() == Type::BoolTy)   // constant -> RHS
+          I->getOperand(0)->getType() == Type::Int1Ty)   // constant -> RHS
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1)))
-        if (CB->getType() == Type::BoolTy) {
+        if (CB->getType() == Type::Int1Ty) {
           if (CB->getBoolValue())   // X | 1 -> 1
             ReplaceUsesOfWith(I, I->getOperand(1), Worklist);
           else                  // X | 0 -> X

@@ -321,7 +321,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   }
 
   switch (CPV->getType()->getTypeID()) {
-  case Type::BoolTyID:    // Boolean Types
+  case Type::Int1TyID:    // Boolean Types
     if (cast<ConstantInt>(CPV)->getBoolValue())
       output_vbr(1U);
     else

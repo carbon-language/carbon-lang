@@ -1626,7 +1626,7 @@ static Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
 
   if (isa<Constant>(TV) || isa<Constant>(FV)) {
     // Bool selects with constant operands can be folded to logical ops.
-    if (SI->getType() == Type::BoolTy) return 0;
+    if (SI->getType() == Type::Int1Ty) return 0;
 
     Value *SelectTrueVal = FoldOperationIntoSelectOperand(Op, TV, IC);
     Value *SelectFalseVal = FoldOperationIntoSelectOperand(Op, FV, IC);
@@ -2203,11 +2203,11 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // formed.
   CastInst *BoolCast = 0;
   if (ZExtInst *CI = dyn_cast<ZExtInst>(I.getOperand(0)))
-    if (CI->getOperand(0)->getType() == Type::BoolTy)
+    if (CI->getOperand(0)->getType() == Type::Int1Ty)
       BoolCast = CI;
   if (!BoolCast)
     if (ZExtInst *CI = dyn_cast<ZExtInst>(I.getOperand(1)))
-      if (CI->getOperand(0)->getType() == Type::BoolTy)
+      if (CI->getOperand(0)->getType() == Type::Int1Ty)
         BoolCast = CI;
   if (BoolCast) {
     if (ICmpInst *SCI = dyn_cast<ICmpInst>(BoolCast->getOperand(0))) {
@@ -4284,7 +4284,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
     return ReplaceInstUsesWith(I, ConstantInt::get(isTrueWhenEqual(I)));
 
   if (isa<UndefValue>(Op1))                  // fcmp pred X, undef -> undef
-    return ReplaceInstUsesWith(I, UndefValue::get(Type::BoolTy));
+    return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
 
   // Handle fcmp with constant RHS
   if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
@@ -4336,7 +4336,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     return ReplaceInstUsesWith(I, ConstantInt::get(isTrueWhenEqual(I)));
 
   if (isa<UndefValue>(Op1))                  // X icmp undef -> undef
-    return ReplaceInstUsesWith(I, UndefValue::get(Type::BoolTy));
+    return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
 
   // icmp of GlobalValues can never equal each other as long as they aren't
   // external weak linkage type.
@@ -4354,7 +4354,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     return ReplaceInstUsesWith(I, ConstantInt::get(!isTrueWhenEqual(I)));
 
   // icmp's with boolean values can always be turned into bitwise operations
-  if (Ty == Type::BoolTy) {
+  if (Ty == Type::Int1Ty) {
     switch (I.getPredicate()) {
     default: assert(0 && "Invalid icmp instruction!");
     case ICmpInst::ICMP_EQ: {               // icmp eq bool %A, %B -> ~(A^B)
@@ -5282,7 +5282,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
     //
     // However, it is OK if SrcTy is bool (See cast-set.ll testcase)
     // OR operation is EQ/NE.
-    if (isSignedExt == isSignedCmp || SrcTy == Type::BoolTy || ICI.isEquality())
+    if (isSignedExt == isSignedCmp || SrcTy == Type::Int1Ty || ICI.isEquality())
       return new ICmpInst(ICI.getPredicate(), LHSCIOp, Res1);
     else
       return 0;
@@ -6250,7 +6250,7 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
         // Turn 'trunc (lshr X, Y) to bool' into '(X & (1 << Y)) != 0'.  This is
         // more LLVM instructions, but allows '1 << Y' to be hoisted if
         // loop-invariant and CSE'd.
-        if (CI.getType() == Type::BoolTy && SrcI->hasOneUse()) {
+        if (CI.getType() == Type::Int1Ty && SrcI->hasOneUse()) {
           Value *One = ConstantInt::get(SrcI->getType(), 1);
 
           Value *V = InsertNewInstBefore(new ShiftInst(Instruction::Shl, One,
@@ -6570,10 +6570,10 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       return ReplaceInstUsesWith(SI, FalseVal);
   }
 
-  if (SI.getType() == Type::BoolTy) {
+  if (SI.getType() == Type::Int1Ty) {
     ConstantInt *C;
     if ((C = dyn_cast<ConstantInt>(TrueVal)) && 
-        C->getType() == Type::BoolTy) {
+        C->getType() == Type::Int1Ty) {
       if (C->getBoolValue()) {
         // Change: A = select B, true, C --> A = or B, C
         return BinaryOperator::createOr(CondVal, FalseVal);
@@ -6585,7 +6585,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         return BinaryOperator::createAnd(NotCond, FalseVal);
       }
     } else if ((C = dyn_cast<ConstantInt>(FalseVal)) &&
-               C->getType() == Type::BoolTy) {
+               C->getType() == Type::Int1Ty) {
       if (C->getBoolValue() == false) {
         // Change: A = select B, C, false --> A = and B, C
         return BinaryOperator::createAnd(CondVal, TrueVal);
@@ -7132,7 +7132,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       // If the call and callee calling conventions don't match, this call must
       // be unreachable, as the call is undefined.
       new StoreInst(ConstantInt::getTrue(),
-                    UndefValue::get(PointerType::get(Type::BoolTy)), OldCall);
+                    UndefValue::get(PointerType::get(Type::Int1Ty)), OldCall);
       if (!OldCall->use_empty())
         OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
       if (isa<CallInst>(OldCall))   // Not worth removing an invoke here.
@@ -7145,7 +7145,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // undef so that we know that this code is not reachable, despite the fact
     // that we can't modify the CFG here.
     new StoreInst(ConstantInt::getTrue(),
-                  UndefValue::get(PointerType::get(Type::BoolTy)),
+                  UndefValue::get(PointerType::get(Type::Int1Ty)),
                   CS.getInstruction());
 
     if (!CS.getInstruction()->use_empty())
@@ -7937,7 +7937,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
     new StoreInst(ConstantInt::getTrue(),
-                  UndefValue::get(PointerType::get(Type::BoolTy)), &FI);
+                  UndefValue::get(PointerType::get(Type::Int1Ty)), &FI);
     return EraseInstFromFunction(FI);
   }
 
@@ -9048,7 +9048,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
   TerminatorInst *TI = BB->getTerminator();
   if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
     if (BI->isConditional() && isa<ConstantInt>(BI->getCondition()) &&
-        BI->getCondition()->getType() == Type::BoolTy) {
+        BI->getCondition()->getType() == Type::Int1Ty) {
       bool CondVal = cast<ConstantInt>(BI->getCondition())->getBoolValue();
       AddReachableCodeToWorklist(BI->getSuccessor(!CondVal), Visited, WorkList,
                                  TD);

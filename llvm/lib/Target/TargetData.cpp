@@ -241,7 +241,7 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
                                uint64_t &Size, unsigned char &Alignment) {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   Size = 1; Alignment = TD->getBoolAlignment(); return;
+  case Type::Int1TyID:   Size = 1; Alignment = TD->getBoolAlignment(); return;
   case Type::VoidTyID:
   case Type::Int8TyID:   Size = 1; Alignment = TD->getByteAlignment(); return;
   case Type::Int16TyID:  Size = 2; Alignment = TD->getShortAlignment(); return;

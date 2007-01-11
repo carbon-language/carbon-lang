@@ -41,7 +41,7 @@ static Interpreter *TheInterpreter;
 static char getTypeID(const Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:    return 'V';
-  case Type::BoolTyID:    return 'o';
+  case Type::Int1TyID:    return 'o';
   case Type::Int8TyID:    return 'B';
   case Type::Int16TyID:   return 'S';
   case Type::Int32TyID:   return 'I';

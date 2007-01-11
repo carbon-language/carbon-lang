@@ -92,7 +92,7 @@ bool Constant::canTrap() const {
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
-  case Type::BoolTyID: {
+  case Type::Int1TyID: {
     static Constant *NullBool = ConstantInt::get(false);
     return NullBool;
   }
@@ -137,7 +137,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
 // Static constructor to create an integral constant with all bits set
 ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
-  case Type::BoolTyID:   return ConstantInt::getTrue();
+  case Type::Int1TyID:   return ConstantInt::getTrue();
   case Type::Int8TyID:
   case Type::Int16TyID:
   case Type::Int32TyID:
@@ -166,11 +166,11 @@ ConstantPacked *ConstantPacked::getAllOnesValue(const PackedType *Ty) {
 //                             Normal Constructors
 
 ConstantInt::ConstantInt(bool V) 
-  : Constant(Type::BoolTy, ConstantIntVal, 0, 0), Val(uint64_t(V)) {
+  : Constant(Type::Int1Ty, ConstantIntVal, 0, 0), Val(uint64_t(V)) {
 }
 
 ConstantInt::ConstantInt(const Type *Ty, uint64_t V)
-  : Constant(Ty, ConstantIntVal, 0, 0), Val(Ty == Type::BoolTy ? bool(V) : V) {
+  : Constant(Ty, ConstantIntVal, 0, 0), Val(Ty == Type::Int1Ty ? bool(V) : V) {
 }
 
 ConstantFP::ConstantFP(const Type *Ty, double V)
@@ -349,7 +349,7 @@ struct VISIBILITY_HIDDEN CompareConstantExpr : public ConstantExpr {
   Use Ops[2];
   CompareConstantExpr(Instruction::OtherOps opc, unsigned short pred, 
                       Constant* LHS, Constant* RHS)
-    : ConstantExpr(Type::BoolTy, opc, Ops, 2), predicate(pred) {
+    : ConstantExpr(Type::Int1Ty, opc, Ops, 2), predicate(pred) {
     OperandList[0].init(LHS, this);
     OperandList[1].init(RHS, this);
   }
@@ -551,7 +551,7 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
 bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
   switch (Ty->getTypeID()) {
   default:              return false; // These can't be represented as integers!
-  case Type::BoolTyID:  return Val == 0 || Val == 1;
+  case Type::Int1TyID:  return Val == 0 || Val == 1;
   case Type::Int8TyID:  return Val <= UINT8_MAX;
   case Type::Int16TyID: return Val <= UINT16_MAX;
   case Type::Int32TyID: return Val <= UINT32_MAX;
@@ -562,7 +562,7 @@ bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
 bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
   switch (Ty->getTypeID()) {
   default:              return false; // These can't be represented as integers!
-  case Type::BoolTyID:  return (Val == 0 || Val == 1);
+  case Type::Int1TyID:  return (Val == 0 || Val == 1);
   case Type::Int8TyID:  return (Val >= INT8_MIN && Val <= INT8_MAX);
   case Type::Int16TyID: return (Val >= INT16_MIN && Val <= UINT16_MAX);
   case Type::Int32TyID: return (Val >= INT32_MIN && Val <= UINT32_MAX);
@@ -838,7 +838,7 @@ static ManagedStatic<ValueMap<uint64_t, Type, ConstantInt> > IntConstants;
 // just return the stored value while getSExtValue has to convert back to sign
 // extended. getZExtValue is more common in LLVM than getSExtValue().
 ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
-  if (Ty == Type::BoolTy) return ConstantInt::get(V&1);
+  if (Ty == Type::Int1Ty) return ConstantInt::get(V&1);
   return IntConstants->getOrCreate(Ty, V & Ty->getIntegralTypeMask());
 }
 
@@ -1589,7 +1589,7 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
   assert(C1->getType() == C2->getType() &&
          "Operand types in binary constant expression should match");
 
-  if (ReqTy == C1->getType() || ReqTy == Type::BoolTy)
+  if (ReqTy == C1->getType() || ReqTy == Type::Int1Ty)
     if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
       return FC;          // Fold a few common cases...
 
@@ -1684,7 +1684,7 @@ Constant *ConstantExpr::getCompare(unsigned short pred,
 
 Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
                                     Constant *V1, Constant *V2) {
-  assert(C->getType() == Type::BoolTy && "Select condition must be bool!");
+  assert(C->getType() == Type::Int1Ty && "Select condition must be bool!");
   assert(V1->getType() == V2->getType() && "Select value types must match!");
   assert(V1->getType()->isFirstClassType() && "Cannot select aggregate type!");
 
@@ -1774,7 +1774,7 @@ ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::ICmp, ArgVec, pred);
-  return ExprConstants->getOrCreate(Type::BoolTy, Key);
+  return ExprConstants->getOrCreate(Type::Int1Ty, Key);
 }
 
 Constant *
@@ -1791,7 +1791,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
-  return ExprConstants->getOrCreate(Type::BoolTy, Key);
+  return ExprConstants->getOrCreate(Type::Int1Ty, Key);
 }
 
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,

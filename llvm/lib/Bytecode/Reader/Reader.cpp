@@ -684,7 +684,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     case Instruction::Select:
       if (Oprnds.size() != 3)
         error("Invalid Select instruction!");
-      Result = new SelectInst(getValue(Type::BoolTyID, Oprnds[0]),
+      Result = new SelectInst(getValue(Type::Int1TyID, Oprnds[0]),
                               getValue(iType, Oprnds[1]),
                               getValue(iType, Oprnds[2]));
       break;
@@ -730,7 +730,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
         Result = new BranchInst(getBasicBlock(Oprnds[0]));
       else if (Oprnds.size() == 3)
         Result = new BranchInst(getBasicBlock(Oprnds[0]),
-            getBasicBlock(Oprnds[1]), getValue(Type::BoolTyID , Oprnds[2]));
+            getBasicBlock(Oprnds[1]), getValue(Type::Int1TyID , Oprnds[2]));
       else
         error("Invalid number of operands for a 'br' instruction!");
       break;
@@ -1399,7 +1399,7 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
   const Type *Ty = getType(TypeID);
   Constant *Result = 0;
   switch (Ty->getTypeID()) {
-  case Type::BoolTyID: {
+  case Type::Int1TyID: {
     unsigned Val = read_vbr_uint();
     if (Val != 0 && Val != 1)
       error("Invalid boolean value read.");

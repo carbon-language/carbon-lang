@@ -102,13 +102,13 @@ public:
     static ConstantInt *CI = 0;
     if (CI) return CI; 
     return CI = new ConstantInt(getType(), 
-                                Val ^ (getType() == Type::BoolTy ? 1 : -1));
+                                Val ^ (getType() == Type::Int1Ty ? 1 : -1));
   }
 
   /// @returns the value of this ConstantInt only if it's a boolean type.
   /// @brief return the boolean value of this constant.
   inline bool getBoolValue() const { 
-    assert(getType() == Type::BoolTy && "Should be a boolean constant!");
+    assert(getType() == Type::Int1Ty && "Should be a boolean constant!");
     return static_cast<bool>(getZExtValue()); 
   }
 
@@ -137,7 +137,7 @@ public:
   /// @returns true iff this constant's bits are all set to true.
   /// @brief Determine if the value is all ones.
   virtual bool isAllOnesValue() const { 
-    if (getType() == Type::BoolTy) return getBoolValue() == true;
+    if (getType() == Type::Int1Ty) return getBoolValue() == true;
     return getSExtValue() == -1; 
   }
 
@@ -147,7 +147,7 @@ public:
   /// by this type.
   /// @brief Determine if the value is maximal.
   virtual bool isMaxValue(bool isSigned) const {
-    if (getType() == Type::BoolTy) return getBoolValue() == true;
+    if (getType() == Type::Int1Ty) return getBoolValue() == true;
     if (isSigned) {
       int64_t V = getSExtValue();
       if (V < 0) return false;    // Be careful about wrap-around on 'long's
@@ -163,7 +163,7 @@ public:
   /// this type.
   /// @brief Determine if the value is minimal.
   virtual bool isMinValue(bool isSigned) const {
-    if (getType() == Type::BoolTy) return getBoolValue() == false;
+    if (getType() == Type::Int1Ty) return getBoolValue() == false;
     if (isSigned) {
       int64_t V = getSExtValue();
       if (V > 0) return false;    // Be careful about wrap-around on 'long's

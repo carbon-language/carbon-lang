@@ -1721,7 +1721,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     CHECK_FOR_ERROR
   }
   | SELECT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
-    if ($3->getType() != Type::BoolTy)
+    if ($3->getType() != Type::Int1Ty)
       GEN_ERROR("Select condition must be of boolean type!");
     if ($5->getType() != $7->getType())
       GEN_ERROR("Select operand types must match!");
@@ -2347,7 +2347,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     CHECK_FOR_ERROR
     BasicBlock* tmpBBB = getBBVal($9);
     CHECK_FOR_ERROR
-    Value* tmpVal = getVal(Type::BoolTy, $3);
+    Value* tmpVal = getVal(Type::Int1Ty, $3);
     CHECK_FOR_ERROR
     $$ = new BranchInst(tmpBBA, tmpBBB, tmpVal);
   }
@@ -2647,7 +2647,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $4;
   }
   | SELECT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
-    if ($2->getType() != Type::BoolTy)
+    if ($2->getType() != Type::Int1Ty)
       GEN_ERROR("select condition must be boolean!");
     if ($4->getType() != $6->getType())
       GEN_ERROR("select value types should match!");

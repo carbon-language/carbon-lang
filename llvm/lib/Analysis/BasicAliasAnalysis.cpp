@@ -435,7 +435,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
                 BasePtr->getType())->getElementType()->isSized()) {
             for (unsigned i = 0; i != GEPOperands.size(); ++i)
               if (!isa<ConstantInt>(GEPOperands[i]) || 
-                  GEPOperands[i]->getType() == Type::BoolTy)
+                  GEPOperands[i]->getType() == Type::Int1Ty)
                 GEPOperands[i] =
                   Constant::getNullValue(GEPOperands[i]->getType());
             int64_t Offset =
@@ -610,14 +610,14 @@ BasicAliasAnalysis::CheckGEPInstructions(
     if (GEP1Ops.size() > MinOperands) {
       for (unsigned i = FirstConstantOper; i != MaxOperands; ++i)
         if (isa<ConstantInt>(GEP1Ops[i]) && 
-            GEP1Ops[i]->getType() != Type::BoolTy &&
+            GEP1Ops[i]->getType() != Type::Int1Ty &&
             !cast<Constant>(GEP1Ops[i])->isNullValue()) {
           // Yup, there's a constant in the tail.  Set all variables to
           // constants in the GEP instruction to make it suiteable for
           // TargetData::getIndexedOffset.
           for (i = 0; i != MaxOperands; ++i)
             if (!isa<ConstantInt>(GEP1Ops[i]) ||
-                GEP1Ops[i]->getType() == Type::BoolTy)
+                GEP1Ops[i]->getType() == Type::Int1Ty)
               GEP1Ops[i] = Constant::getNullValue(GEP1Ops[i]->getType());
           // Okay, now get the offset.  This is the relative offset for the full
           // instruction.
@@ -670,7 +670,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
     const Value *Op2 = i < GEP2Ops.size() ? GEP2Ops[i] : 0;
     // If they are equal, use a zero index...
     if (Op1 == Op2 && BasePtr1Ty == BasePtr2Ty) {
-      if (!isa<ConstantInt>(Op1) || Op1->getType() == Type::BoolTy)
+      if (!isa<ConstantInt>(Op1) || Op1->getType() == Type::Int1Ty)
         GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Op1->getType());
       // Otherwise, just keep the constants we have.
     } else {

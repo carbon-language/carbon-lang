@@ -417,7 +417,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
       LatticeVal &BCValue = getValueState(BI->getCondition());
       if (BCValue.isOverdefined() ||
           (BCValue.isConstant() && 
-          BCValue.getConstant()->getType() != Type::BoolTy)) {
+          BCValue.getConstant()->getType() != Type::Int1Ty)) {
         // Overdefined condition variables, and branches on unfoldable constant
         // conditions, mean the branch could go either way.
         Succs[0] = Succs[1] = true;
@@ -477,7 +477,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
         return true;
       } else if (BCValue.isConstant()) {
         // Not branching on an evaluatable constant?
-        if (BCValue.getConstant()->getType() != Type::BoolTy) return true;
+        if (BCValue.getConstant()->getType() != Type::Int1Ty) return true;
 
         // Constant condition variables mean the branch can only go a single way
         return BI->getSuccessor(BCValue.getConstant() ==
@@ -648,7 +648,7 @@ void SCCPSolver::visitSelectInst(SelectInst &I) {
   if (CondValue.isUndefined())
     return;
   if (CondValue.isConstant() &&
-      CondValue.getConstant()->getType() == Type::BoolTy) {
+      CondValue.getConstant()->getType() == Type::Int1Ty) {
     if (ConstantInt *CondCB = dyn_cast<ConstantInt>(CondValue.getConstant())){
       mergeInValue(&I, getValueState(CondCB->getBoolValue() ? I.getTrueValue()
                                                           : I.getFalseValue()));

@@ -482,7 +482,7 @@ BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
 
 void BranchInst::AssertOK() {
   if (isConditional())
-    assert(getCondition()->getType() == Type::BoolTy &&
+    assert(getCondition()->getType() == Type::Int1Ty &&
            "May only branch on boolean predicates!");
 }
 
@@ -1900,7 +1900,7 @@ BitCastInst::BitCastInst(
 
 CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
                  const std::string &Name, Instruction *InsertBefore)
-  : Instruction(Type::BoolTy, op, Ops, 2, Name, InsertBefore) {
+  : Instruction(Type::Int1Ty, op, Ops, 2, Name, InsertBefore) {
     Ops[0].init(LHS, this);
     Ops[1].init(RHS, this);
   SubclassData = predicate;
@@ -1934,7 +1934,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
   
 CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
                  const std::string &Name, BasicBlock *InsertAtEnd)
-  : Instruction(Type::BoolTy, op, Ops, 2, Name, InsertAtEnd) {
+  : Instruction(Type::Int1Ty, op, Ops, 2, Name, InsertAtEnd) {
   Ops[0].init(LHS, this);
   Ops[1].init(RHS, this);
   SubclassData = predicate;

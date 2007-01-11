@@ -251,7 +251,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   switch (NumExitBlocks) {
   case 0:
   case 1: RetTy = Type::VoidTy; break;
-  case 2: RetTy = Type::BoolTy; break;
+  case 2: RetTy = Type::Int1Ty; break;
   default: RetTy = Type::Int16Ty; break;
   }
 

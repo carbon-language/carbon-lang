@@ -729,7 +729,7 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
       uint64_t val;
       
       switch (PC->getType()->getTypeID()) {
-      case Type::BoolTyID:
+      case Type::Int1TyID:
       case Type::Int8TyID:
         ptr[0] = cast<ConstantInt>(PC)->getZExtValue();
         break;

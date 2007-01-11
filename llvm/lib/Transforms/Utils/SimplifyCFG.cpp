@@ -971,7 +971,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     ConstantInt *CB;
     if ((CB = dyn_cast<ConstantInt>(PN->getIncomingValue(i))) &&
-        CB->getType() == Type::BoolTy) {
+        CB->getType() == Type::Int1Ty) {
       // Okay, we now know that all edges from PredBB should be revectored to
       // branch to RealDest.
       BasicBlock *PredBB = PN->getIncomingBlock(i);
@@ -1516,7 +1516,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               // Otherwise, if there are multiple predecessors, insert a PHI that
               // merges in the constant and simplify the block result.
               if (BlockIsSimpleEnoughToThreadThrough(BB)) {
-                PHINode *NewPN = new PHINode(Type::BoolTy,
+                PHINode *NewPN = new PHINode(Type::Int1Ty,
                                              BI->getCondition()->getName()+".pr",
                                              BB->begin());
                 for (PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)

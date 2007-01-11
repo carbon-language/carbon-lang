@@ -317,7 +317,7 @@ Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
                                               const Constant *V1,
                                               const Constant *V2) {
   if (const ConstantInt *CB = dyn_cast<ConstantInt>(Cond))
-    if (CB->getType() == Type::BoolTy)
+    if (CB->getType() == Type::Int1Ty)
       return const_cast<Constant*>(CB->getBoolValue() ? V1 : V2);
 
   if (isa<UndefValue>(V1)) return const_cast<Constant*>(V2);
@@ -555,7 +555,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   // so look at directly computing the value.
   if (const ConstantInt *CI1 = dyn_cast<ConstantInt>(C1)) {
     if (const ConstantInt *CI2 = dyn_cast<ConstantInt>(C2)) {
-      if (CI1->getType() == Type::BoolTy && CI2->getType() == Type::BoolTy) {
+      if (CI1->getType() == Type::Int1Ty && CI2->getType() == Type::Int1Ty) {
         switch (Opcode) {
           default:
             break;
@@ -1037,7 +1037,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
 
   // Handle some degenerate cases first
   if (isa<UndefValue>(C1) || isa<UndefValue>(C2))
-    return UndefValue::get(Type::BoolTy);
+    return UndefValue::get(Type::Int1Ty);
 
   // icmp eq/ne(null,GV) -> false/true
   if (C1->isNullValue()) {
@@ -1058,7 +1058,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   }
 
   if (isa<ConstantInt>(C1) && isa<ConstantInt>(C2) &&
-      C1->getType() == Type::BoolTy && C2->getType() == Type::BoolTy) {
+      C1->getType() == Type::Int1Ty && C2->getType() == Type::Int1Ty) {
     bool C1Val = cast<ConstantInt>(C1)->getBoolValue();
     bool C2Val = cast<ConstantInt>(C2)->getBoolValue();
     switch (pred) {

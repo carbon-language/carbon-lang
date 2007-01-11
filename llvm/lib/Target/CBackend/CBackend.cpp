@@ -369,7 +369,7 @@ CWriter::printPrimitiveType(std::ostream &Out, const Type *Ty, bool isSigned,
   assert(Ty->isPrimitiveType() && "Invalid type for printPrimitiveType");
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:   return Out << "void "               << NameSoFar;
-  case Type::BoolTyID:   return Out << "bool "               << NameSoFar;
+  case Type::Int1TyID:   return Out << "bool "               << NameSoFar;
   case Type::Int8TyID:
     return Out << (isSigned?"signed":"unsigned") << " char " << NameSoFar;
   case Type::Int16TyID:  
@@ -688,12 +688,12 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "(";
       printCast(CE->getOpcode(), CE->getOperand(0)->getType(), CE->getType());
       if (CE->getOpcode() == Instruction::SExt &&
-          CE->getOperand(0)->getType() == Type::BoolTy) {
+          CE->getOperand(0)->getType() == Type::Int1Ty) {
         // Make sure we really sext from bool here by subtracting from 0
         Out << "0-";
       }
       printConstant(CE->getOperand(0));
-      if (CE->getType() == Type::BoolTy &&
+      if (CE->getType() == Type::Int1Ty &&
           (CE->getOpcode() == Instruction::Trunc ||
            CE->getOpcode() == Instruction::FPToUI ||
            CE->getOpcode() == Instruction::FPToSI ||
@@ -828,7 +828,7 @@ void CWriter::printConstant(Constant *CPV) {
 
   if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
     const Type* Ty = CI->getType();
-    if (Ty == Type::BoolTy)
+    if (Ty == Type::Int1Ty)
       Out << (CI->getBoolValue() ? '1' : '0') ;
     else {
       Out << "((";
@@ -2256,12 +2256,12 @@ void CWriter::visitCastInst(CastInst &I) {
         << getFloatBitCastField(I.getType());
   } else {
     printCast(I.getOpcode(), SrcTy, DstTy);
-    if (I.getOpcode() == Instruction::SExt && SrcTy == Type::BoolTy) {
+    if (I.getOpcode() == Instruction::SExt && SrcTy == Type::Int1Ty) {
       // Make sure we really get a sext from bool by subtracing the bool from 0
       Out << "0-";
     }
     writeOperand(I.getOperand(0));
-    if (DstTy == Type::BoolTy && 
+    if (DstTy == Type::Int1Ty && 
         (I.getOpcode() == Instruction::Trunc ||
          I.getOpcode() == Instruction::FPToUI ||
          I.getOpcode() == Instruction::FPToSI ||

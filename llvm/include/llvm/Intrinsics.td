@@ -64,7 +64,7 @@ class LLVMPackedType<ValueType VT, int numelts, LLVMType elty>
 } 
 
 def llvm_void_ty       : LLVMType<isVoid, "Type::VoidTyID">;
-def llvm_bool_ty       : LLVMType<i1 , "Type::BoolTyID">;
+def llvm_i1_ty         : LLVMType<i1 , "Type::Int1TyID">;
 def llvm_i8_ty         : LLVMType<i8 , "Type::Int8TyID">;
 def llvm_i16_ty        : LLVMType<i16, "Type::Int16TyID">;
 def llvm_i32_ty        : LLVMType<i32, "Type::Int32TyID">;

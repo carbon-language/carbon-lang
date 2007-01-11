@@ -833,7 +833,7 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
   // it's a constant, then see if the other one is one of a setcc instruction,
   // an AND, OR, or XOR instruction.
   //
-  if (Op1->getType() == Type::BoolTy)
+  if (Op1->getType() == Type::Int1Ty)
     if (ConstantInt *CB = dyn_cast<ConstantInt>(Op1)) {
   
       if (Instruction *Inst = dyn_cast<Instruction>(Op0)) {

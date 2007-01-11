@@ -142,8 +142,8 @@ GenericValue JIT::runFunction(Function *F,
     GenericValue rv;
     switch (RetTy->getTypeID()) {
     default: assert(0 && "Unknown return type for function call!");
-    case Type::BoolTyID:
-      rv.BoolVal = ((bool(*)())(intptr_t)FPtr)();
+    case Type::Int1TyID:
+      rv.Int1Val = ((bool(*)())(intptr_t)FPtr)();
       return rv;
     case Type::Int8TyID:
       rv.Int8Val = ((char(*)())(intptr_t)FPtr)();
@@ -191,7 +191,7 @@ GenericValue JIT::runFunction(Function *F,
     const GenericValue &AV = ArgValues[i];
     switch (ArgTy->getTypeID()) {
     default: assert(0 && "Unknown argument type for function call!");
-    case Type::BoolTyID:   C = ConstantInt::get(AV.BoolVal); break;
+    case Type::Int1TyID:   C = ConstantInt::get(AV.Int1Val); break;
     case Type::Int8TyID:   C = ConstantInt::get(ArgTy, AV.Int8Val);  break;
     case Type::Int16TyID:  C = ConstantInt::get(ArgTy, AV.Int16Val);  break;
     case Type::Int32TyID:  C = ConstantInt::get(ArgTy, AV.Int32Val);    break;

@@ -31,7 +31,7 @@
 using namespace llvm;
 
 static ConstantInt *getMaxValue(const Type *Ty, bool isSigned = false) {
-  if (Ty == Type::BoolTy)
+  if (Ty == Type::Int1Ty)
     return ConstantInt::getTrue();
   if (Ty->isInteger()) {
     if (isSigned) {
@@ -48,7 +48,7 @@ static ConstantInt *getMaxValue(const Type *Ty, bool isSigned = false) {
 
 // Static constructor to create the minimum constant for an integral type...
 static ConstantInt *getMinValue(const Type *Ty, bool isSigned = false) {
-  if (Ty == Type::BoolTy)
+  if (Ty == Type::Int1Ty)
     return ConstantInt::getFalse();
   if (Ty->isInteger()) {
     if (isSigned) {
@@ -63,7 +63,7 @@ static ConstantInt *getMinValue(const Type *Ty, bool isSigned = false) {
   return 0;
 }
 static ConstantInt *Next(ConstantInt *CI) {
-  if (CI->getType() == Type::BoolTy)
+  if (CI->getType() == Type::Int1Ty)
     return ConstantInt::get(!CI->getBoolValue());
 
   Constant *Result = ConstantExpr::getAdd(CI,
@@ -205,7 +205,7 @@ ConstantInt *ConstantRange::getSingleElement() const {
 ///
 uint64_t ConstantRange::getSetSize() const {
   if (isEmptySet()) return 0;
-  if (getType() == Type::BoolTy) {
+  if (getType() == Type::Int1Ty) {
     if (Lower != Upper)  // One of T or F in the set...
       return 1;
     return 2;            // Must be full set...

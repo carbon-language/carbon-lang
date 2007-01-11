@@ -710,7 +710,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   // If there is a comparison against null, we will insert a global bool to
   // keep track of whether the global was initialized yet or not.
   GlobalVariable *InitBool =
-    new GlobalVariable(Type::BoolTy, false, GlobalValue::InternalLinkage,
+    new GlobalVariable(Type::Int1Ty, false, GlobalValue::InternalLinkage,
                        ConstantInt::getFalse(), GV->getName()+".init");
   bool InitBoolUsed = false;
 
@@ -1139,13 +1139,13 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
 /// values ever stored into GV are its initializer and OtherVal.
 static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   // Create the new global, initializing it to false.
-  GlobalVariable *NewGV = new GlobalVariable(Type::BoolTy, false,
+  GlobalVariable *NewGV = new GlobalVariable(Type::Int1Ty, false,
          GlobalValue::InternalLinkage, ConstantInt::getFalse(),
                                              GV->getName()+".b");
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
   Constant *InitVal = GV->getInitializer();
-  assert(InitVal->getType() != Type::BoolTy && "No reason to shrink to bool!");
+  assert(InitVal->getType() != Type::Int1Ty && "No reason to shrink to bool!");
 
   // If initialized to zero and storing one into the global, we can use a cast
   // instead of a select to synthesize the desired value.
@@ -1341,7 +1341,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       // Otherwise, if the global was not a boolean, we can shrink it to be a
       // boolean.
       if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue))
-        if (GV->getType()->getElementType() != Type::BoolTy &&
+        if (GV->getType()->getElementType() != Type::Int1Ty &&
             !GV->getType()->getElementType()->isFloatingPoint() &&
             !GS.HasPHIUser) {
           DOUT << "   *** SHRINKING TO BOOL: " << *GV;
@@ -1801,7 +1801,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
             dyn_cast<ConstantInt>(getVal(Values, BI->getCondition()));
 
           // Cannot determine.
-          if (!Cond || Cond->getType() != Type::BoolTy) 
+          if (!Cond || Cond->getType() != Type::Int1Ty) 
             return false;  
           NewBB = BI->getSuccessor(!Cond->getBoolValue());          
         }

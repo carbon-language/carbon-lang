@@ -22,7 +22,7 @@ namespace llvm {
 typedef uintptr_t PointerTy;
 
 union GenericValue {
-  bool            BoolVal;
+  bool            Int1Val;
   unsigned char   Int8Val;
   unsigned short  Int16Val;
   unsigned int    Int32Val;
