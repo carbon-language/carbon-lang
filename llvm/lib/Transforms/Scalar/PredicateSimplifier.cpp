@@ -247,6 +247,7 @@ namespace {
     private:
 #ifndef NDEBUG
     public:
+      virtual ~Node() {}
       virtual void dump() const {
         dump(*cerr.stream());
       }
@@ -638,6 +639,7 @@ namespace {
     }
 
 #ifndef NDEBUG
+    virtual ~InequalityGraph() {}
     virtual void dump() {
       dump(*cerr.stream());
     }
