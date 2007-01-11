@@ -1616,14 +1616,39 @@ void PMStack::pop() {
 }
 
 // Push PM on the stack and set its top level manager.
-void PMStack::push(PMDataManager *PM) {
+void PMStack::push(Pass *P) {
 
-  PMDataManager *Top = this->top();
+  PMDataManager *Top = NULL;
+  PMDataManager *PM = dynamic_cast<PMDataManager *>(P);
+  assert (PM && "Unable to push. Pass Manager expected");
 
-  // Inherit top level manager
-  PMTopLevelManager *TPM = Top->getTopLevelManager();
-  PM->setTopLevelManager(TPM);
-  TPM->addIndirectPassManager(PM);
+  if (this->empty()) {
+    Top = PM;
+  } 
+  else {
+    Top = this->top();
+    PMTopLevelManager *TPM = Top->getTopLevelManager();
+
+    assert (TPM && "Unable to find top level manager");
+    TPM->addIndirectPassManager(PM);
+    PM->setTopLevelManager(TPM);
+  }
+
+  AnalysisResolver *AR = new AnalysisResolver(*Top);
+  P->setResolver(AR);
+
+  S.push_back(PM);
+}
+
+// Dump content of the pass manager stack.
+void PMStack::dump() {
+  for(std::deque<PMDataManager *>::iterator I = S.begin(),
+        E = S.end(); I != E; ++I) {
+    Pass *P = dynamic_cast<Pass *>(*I);
+    printf ("%s ", P->getPassName());
+  }
+  if (!S.empty())
+    printf ("\n");
 }
 
 // Walk Pass Manager stack and set LastUse markers if any
@@ -1662,7 +1687,6 @@ void ModulePass::assignPassManager(PMStack &PMS) {
   }
 
   assert(MPP && "Unable to find Module Pass Manager");
-
   MPP->addPassToManager(this);
 }
 
@@ -1672,34 +1696,42 @@ void FunctionPass::assignPassManager(PMStack &PMS) {
 
   FPPassManager *FPP = NULL;
 
-  // Find Module Pass Manager
+  // Find Module Pass Manager (TODO : Or Call Graph Pass Manager)
   while(!PMS.empty()) {
 
     FPP = dynamic_cast<FPPassManager *>(PMS.top());
-    if (FPP || dynamic_cast<MPPassManager *>(PMS.top()))
-      break;        // Found it or it is not here
+    if (FPP)
+      break;        // Found Function Pass Manager
+    else if (dynamic_cast<BBPassManager *>(PMS.top()))
+      PMS.pop();    // Pop Basic Block Pass Manager
+    // TODO : else if Pop Loop Pass Manager
     else
-      PMS.pop();    // Pop children pass managers
+      break;        // PMS.top() is either Module Pass Manager or Call Graph 
+                    // Pass Manager
   }
 
+  // Create new Function Pass Manager
   if (!FPP) {
-    /// Create new Function Pass Manager
-
-    /// Function Pass Manager does not live by itself
     assert(!PMS.empty() && "Unable to create Function Pass Manager");
-
     PMDataManager *PMD = PMS.top();
-    
-    /// PMD should be either Module Pass Manager or Call Graph Pass Manager
-    assert(dynamic_cast<MPPassManager *>(PMD) && 
-           "Unable to create Function Pass Manager");
 
+    // [1] Create new Function Pass Manager
     FPP = new FPPassManager(PMD->getDepth() + 1);
-    PMD->addPassToManager(FPP, false);
+
+    // [2] Set up new manager's top level manager
+    PMTopLevelManager *TPM = PMD->getTopLevelManager();
+    TPM->addIndirectPassManager(FPP);
+
+    // [3] Assign manager to manage this new manager. This may create
+    // and push new managers into PMS
+    Pass *P = dynamic_cast<Pass *>(FPP);
+    P->assignPassManager(PMS);
+
+    // [4] Push new manager into PMS
     PMS.push(FPP);
   }
 
-
+  // Assign FPP as the manager of this pass.
   FPP->addPassToManager(this);
 }
 
@@ -1709,33 +1741,37 @@ void BasicBlockPass::assignPassManager(PMStack &PMS) {
 
   BBPassManager *BBP = NULL;
 
-  // Find Module Pass Manager
-  while(!PMS.empty()) {
-
+  // Basic Pass Manager is a leaf pass manager. It does not handle
+  // any other pass manager.
+  if (!PMS.empty()) {
     BBP = dynamic_cast<BBPassManager *>(PMS.top());
-    if (BBP || dynamic_cast<FPPassManager *>(PMS.top()))
-      break;        // Found it or it is not here
-    else
-      PMS.pop();    // Pop children pass managers
   }
 
+  // If leaf manager is not Basic Block Pass manager then create new
+  // basic Block Pass manager.
+
   if (!BBP) {
-    /// Create new BasicBlock Pass Manager
-
-    /// BasicBlock Pass Manager does not live by itself
     assert(!PMS.empty() && "Unable to create BasicBlock Pass Manager");
-
     PMDataManager *PMD = PMS.top();
-    
-    /// PMD should be Function Pass Manager
-    assert(dynamic_cast<FPPassManager *>(PMD) && 
-           "Unable to create BasicBlock Pass Manager");
 
+    // [1] Create new Basic Block Manager
     BBP = new BBPassManager(PMD->getDepth() + 1);
-    PMD->addPassToManager(BBP, false);
+
+    // [2] Set up new manager's top level manager
+    // Basic Block Pass Manager does not live by itself
+    PMTopLevelManager *TPM = PMD->getTopLevelManager();
+    TPM->addIndirectPassManager(BBP);
+
+    // [3] Assign manager to manage this new manager. This may create
+    // and push new managers into PMS
+    Pass *P = dynamic_cast<Pass *>(BBP);
+    P->assignPassManager(PMS);
+
+    // [4] Push new manager into PMS
     PMS.push(BBP);
   }
 
+  // Assign BBP as the manager of this pass.
   BBP->addPassToManager(this);
 }
 

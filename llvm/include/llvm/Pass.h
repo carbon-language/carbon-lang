@@ -52,6 +52,7 @@ class FunctionPassManagerT;
 class ModulePassManager;
 class PMStack;
 class AnalysisResolver;
+class PMDataManager;
 
 // AnalysisID - Use the PassInfo to identify a pass...
 typedef const PassInfo* AnalysisID;
@@ -106,6 +107,7 @@ public:
   void print(std::ostream *O, const Module *M) const { if (O) print(*O, M); }
   void dump() const; // dump - call print(std::cerr, 0);
 
+  virtual void assignPassManager(PMStack &PMS) {}
   // Access AnalysisResolver
   inline void setResolver(AnalysisResolver *AR) { Resolver = AR; }
   inline AnalysisResolver *getResolver() { return Resolver; }
@@ -329,7 +331,6 @@ public:
 ///
 /// PMStack is just a wrapper around standard deque that overrides pop() and
 /// push() methods.
-class PMDataManager;
 class PMStack {
 public:
   typedef std::deque<PMDataManager *>::reverse_iterator iterator;
@@ -340,9 +341,10 @@ public:
 
   void pop();
   inline PMDataManager *top() { return S.back(); }
-  void push(PMDataManager *PM);
+  void push(Pass *P);
   inline bool empty() { return S.empty(); }
 
+  void dump();
 private:
   std::deque<PMDataManager *> S;
 };
