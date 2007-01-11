@@ -24,6 +24,7 @@
 
 using namespace llvm;
 class llvm::PMDataManager;
+class llvm::PMStack;
 
 //===----------------------------------------------------------------------===//
 // Overview:
@@ -189,6 +190,9 @@ public:
   void dumpArguments() const;
 
   void initializeAllAnalysisInfo();
+
+  // Active Pass Managers
+  PMStack activeStack;
 
 protected:
   
@@ -434,9 +438,8 @@ private:
 //
 /// FunctionPassManagerImpl manages FPPassManagers
 class FunctionPassManagerImpl : public Pass,
-                                    public PMDataManager,
-                                    public PMTopLevelManager {
-
+                                public PMDataManager,
+                                public PMTopLevelManager {
 public:
 
   FunctionPassManagerImpl(int Depth) : PMDataManager(Depth) {
@@ -551,8 +554,8 @@ private:
 //
 /// PassManagerImpl manages MPPassManagers
 class PassManagerImpl : public Pass,
-                            public PMDataManager,
-                            public PMTopLevelManager {
+                        public PMDataManager,
+                        public PMTopLevelManager {
 
 public:
 
@@ -1218,19 +1221,15 @@ bool FunctionPassManager::doFinalization() {
 /// manage it.
 bool FunctionPassManagerImpl::addPass(Pass *P) {
 
-  if (!activeManager || !activeManager->addPass(P)) {
-    activeManager = new FPPassManager(getDepth() + 1);
-    // Inherit top level manager
-    activeManager->setTopLevelManager(this->getTopLevelManager());
-
-    // This top level manager is going to manage activeManager. 
-    // Set up analysis resolver to connect them.
-    AnalysisResolver *AR = new AnalysisResolver(*this);
-    activeManager->setResolver(AR);
-
-    addPassManager(activeManager);
-    return activeManager->addPass(P);
+  if (activeStack.empty()) {
+    FPPassManager *FPP = new FPPassManager(getDepth() + 1);
+    FPP->setTopLevelManager(this->getTopLevelManager());
+    addPassManager(FPP);
+    activeStack.push(FPP);
   }
+
+  P->assignPassManager(activeStack);
+
   return true;
 }
 
@@ -1525,21 +1524,16 @@ MPPassManager::runOnModule(Module &M) {
 /// manage it.
 bool PassManagerImpl::addPass(Pass *P) {
 
-  if (!activeManager || !activeManager->addPass(P)) {
 
-    activeManager = new MPPassManager(getDepth() + 1);
-    
-    // Inherit top level manager
-    activeManager->setTopLevelManager(this->getTopLevelManager());
-
-    // This top level manager is going to manage activeManager. 
-    // Set up analysis resolver to connect them.
-    AnalysisResolver *AR = new AnalysisResolver(*this);
-    activeManager->setResolver(AR);
-
-    addPassManager(activeManager);
-    return activeManager->addPass(P);
+  if (activeStack.empty()) {
+    MPPassManager *MPP = new MPPassManager(getDepth() + 1);
+    MPP->setTopLevelManager(this->getTopLevelManager());
+    addPassManager(MPP);
+    activeStack.push(MPP);
   }
+
+  P->assignPassManager(activeStack);
+
   return true;
 }
 
@@ -1618,6 +1612,7 @@ void TimingInfo::createTheTimeInfo() {
 //===----------------------------------------------------------------------===//
 // PMStack implementation
 //
+
 // Pop Pass Manager from the stack and clear its analysis info.
 void PMStack::pop() {
 
