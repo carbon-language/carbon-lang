@@ -1110,18 +1110,38 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     case FCmpInst::FCMP_FALSE: return ConstantBool::getFalse();
     case FCmpInst::FCMP_TRUE:  return ConstantBool::getTrue();
     case FCmpInst::FCMP_UNO:
-    case FCmpInst::FCMP_ORD:   break; // Can't fold these
+      return ConstantBool::get(C1Val != C1Val || C2Val != C2Val);
+    case FCmpInst::FCMP_ORD:
+      return ConstantBool::get(C1Val == C1Val && C2Val == C2Val);
     case FCmpInst::FCMP_UEQ:
+      if (C1Val != C1Val || C2Val != C2Val)
+        return ConstantBool::getTrue();
+      /* FALL THROUGH */
     case FCmpInst::FCMP_OEQ:   return ConstantBool::get(C1Val == C2Val);
-    case FCmpInst::FCMP_ONE:
-    case FCmpInst::FCMP_UNE:   return ConstantBool::get(C1Val != C2Val);
-    case FCmpInst::FCMP_OLT: 
-    case FCmpInst::FCMP_ULT:   return ConstantBool::get(C1Val < C2Val);
+    case FCmpInst::FCMP_UNE:
+      if (C1Val != C1Val || C2Val != C2Val)
+        return ConstantBool::getTrue();
+      /* FALL THROUGH */
+    case FCmpInst::FCMP_ONE:   return ConstantBool::get(C1Val != C2Val);
+    case FCmpInst::FCMP_ULT: 
+      if (C1Val != C1Val || C2Val != C2Val)
+        return ConstantBool::getTrue();
+      /* FALL THROUGH */
+    case FCmpInst::FCMP_OLT:   return ConstantBool::get(C1Val < C2Val);
     case FCmpInst::FCMP_UGT:
+      if (C1Val != C1Val || C2Val != C2Val)
+        return ConstantBool::getTrue();
+      /* FALL THROUGH */
     case FCmpInst::FCMP_OGT:   return ConstantBool::get(C1Val > C2Val);
-    case FCmpInst::FCMP_OLE:
-    case FCmpInst::FCMP_ULE:   return ConstantBool::get(C1Val <= C2Val);
+    case FCmpInst::FCMP_ULE:
+      if (C1Val != C1Val || C2Val != C2Val)
+        return ConstantBool::getTrue();
+      /* FALL THROUGH */
+    case FCmpInst::FCMP_OLE:   return ConstantBool::get(C1Val <= C2Val);
     case FCmpInst::FCMP_UGE:
+      if (C1Val != C1Val || C2Val != C2Val)
+        return ConstantBool::getTrue();
+      /* FALL THROUGH */
     case FCmpInst::FCMP_OGE:   return ConstantBool::get(C1Val >= C2Val);
     }
   } else if (const ConstantPacked *CP1 = dyn_cast<ConstantPacked>(C1)) {
