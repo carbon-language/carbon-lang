@@ -323,6 +323,18 @@ public:
   virtual void assignPassManager(PMStack &PMS);
 };
 
+/// Different types of internal pass managers. External pass managers
+/// (PassManager and FunctionPassManager) are not represented here.
+/// Ordering of pass manager types is important here.
+enum PassManagerType {
+  PMT_Unknown = 0,
+  PMT_ModulePassManager = 1, /// MPPassManager 
+  PMT_CallGraphPassManager,  /// CGPassManager
+  PMT_FunctionPassManager,   /// FPPassManager
+  PMT_LoopPassManager,       /// LPPassManager
+  PMT_BasicBlockPassManager  /// BBPassManager
+};
+
 /// PMStack
 /// Top level pass manager (see PasManager.cpp) maintains active Pass Managers 
 /// using PMStack. Each Pass implements assignPassManager() to connect itself

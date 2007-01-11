@@ -291,6 +291,10 @@ public:
     return PassVector.size();
   }
 
+  virtual PassManagerType getPassManagerType() { 
+    assert ( 0 && "Invalid use of getPassManagerType");
+    return PMT_Unknown; 
+  }
 protected:
 
   // If a FunctionPass F is the last user of ModulePass info M
@@ -359,6 +363,10 @@ public:
     BasicBlockPass *BP = static_cast<BasicBlockPass *>(PassVector[N]);
     return BP;
   }
+
+  virtual PassManagerType getPassManagerType() { 
+    return PMT_BasicBlockPassManager; 
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -413,6 +421,9 @@ public:
     return FP;
   }
 
+  virtual PassManagerType getPassManagerType() { 
+    return PMT_FunctionPassManager; 
+  }
 private:
   // Active Pass Manager
   BBPassManager *activeBBPassManager;
@@ -529,6 +540,7 @@ public:
     return MP;
   }
 
+  virtual PassManagerType getPassManagerType() { return PMT_ModulePassManager; }
 private:
   // Active Pass Manager
   FPPassManager *activeFunctionPassManager;
