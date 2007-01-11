@@ -1516,17 +1516,8 @@ int SlotMachine::getLocalSlot(const Value *V) {
   ValueMap::const_iterator FVI = FI->second.map.find(V);
   TypedPlanes::const_iterator MI = mMap.find(VTy);
   
-  // If the value doesn't exist in the function map
-  if (FVI == FI->second.map.end()) {
-    // Look up the value in the module map.
-    if (MI == mMap.end()) return -1;
-    ValueMap::const_iterator MVI = MI->second.map.find(V);
-    // If we didn't find it, it wasn't inserted
-    if (MVI == MI->second.map.end()) return -1;
-    assert(MVI != MI->second.map.end() && "Value not found");
-    // We found it only at the module level
-    return MVI->second;
-  }
+  // If the value doesn't exist in the function map, it is a <badref>
+  if (FVI == FI->second.map.end()) return -1;
   
   // Return the slot number as the module's contribution to
   // the type plane plus the index in the function's contribution
