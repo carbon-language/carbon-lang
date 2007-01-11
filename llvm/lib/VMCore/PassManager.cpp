@@ -1686,17 +1686,14 @@ void PMStack::handleLastUserOverflow() {
 /// add self into that manager. 
 void ModulePass::assignPassManager(PMStack &PMS) {
 
-  MPPassManager *MPP = NULL;
-
   // Find Module Pass Manager
   while(!PMS.empty()) {
-
-    MPP = dynamic_cast<MPPassManager *>(PMS.top());
-    if (MPP)
-      break;        // Found it
-    else
+    if (PMS.top()->getPassManagerType() > PMT_ModulePassManager)
       PMS.pop();    // Pop children pass managers
+    else
+      break;
   }
+  MPPassManager *MPP = dynamic_cast<MPPassManager *>(PMS.top());
 
   assert(MPP && "Unable to find Module Pass Manager");
   MPP->addPassToManager(this);
@@ -1706,21 +1703,14 @@ void ModulePass::assignPassManager(PMStack &PMS) {
 /// in the PM Stack and add self into that manager. 
 void FunctionPass::assignPassManager(PMStack &PMS) {
 
-  FPPassManager *FPP = NULL;
-
   // Find Module Pass Manager (TODO : Or Call Graph Pass Manager)
   while(!PMS.empty()) {
-
-    FPP = dynamic_cast<FPPassManager *>(PMS.top());
-    if (FPP)
-      break;        // Found Function Pass Manager
-    else if (dynamic_cast<BBPassManager *>(PMS.top()))
-      PMS.pop();    // Pop Basic Block Pass Manager
-    // TODO : else if Pop Loop Pass Manager
+    if (PMS.top()->getPassManagerType() > PMT_FunctionPassManager)
+      PMS.pop();
     else
-      break;        // PMS.top() is either Module Pass Manager or Call Graph 
-                    // Pass Manager
+      break; 
   }
+  FPPassManager *FPP = dynamic_cast<FPPassManager *>(PMS.top());
 
   // Create new Function Pass Manager
   if (!FPP) {
