@@ -1799,10 +1799,8 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         } else {
           ConstantInt *Cond =
             dyn_cast<ConstantInt>(getVal(Values, BI->getCondition()));
+          if (!Cond) return false;  // Cannot determine.
 
-          // Cannot determine.
-          if (!Cond || Cond->getType() != Type::Int1Ty) 
-            return false;  
           NewBB = BI->getSuccessor(!Cond->getZExtValue());          
         }
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(CurInst)) {
