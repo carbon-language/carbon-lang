@@ -1285,8 +1285,17 @@ namespace {
                    IG.canonicalize(SI->getFalseValue(), Top)) {
           add(SI, SI->getTrueValue(), ICmpInst::ICMP_EQ, NewContext);
         }
+      } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
+        if (CI->getDestTy()->isFPOrFPVector()) return;
+
+        if (Constant *C = dyn_cast<Constant>(
+                IG.canonicalize(CI->getOperand(0), Top))) {
+          add(CI, ConstantExpr::getCast(CI->getOpcode(), C, CI->getDestTy()),
+              ICmpInst::ICMP_EQ, NewContext);
+        }
+
+        // TODO: "%a = cast ... %b" where %b is NE/LT/GT a constant.
       }
-      // TODO: CastInst "%a = cast ... %b" where %b is EQ or NE a constant.
     }
 
     /// solve - process the work queue
