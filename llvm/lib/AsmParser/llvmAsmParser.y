@@ -961,7 +961,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 // Built in types...
 %type  <TypeVal> Types ResultTypes
 %type  <PrimType> IntType FPType PrimType           // Classifications
-%token <PrimType> VOID BOOL INT8 INT16 INT32 INT64
+%token <PrimType> VOID BOOL INTTYPE 
 %token <PrimType> FLOAT DOUBLE LABEL
 %token TYPE
 
@@ -1054,7 +1054,7 @@ FPredicates
 
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.
-IntType :  INT64 | INT32 | INT16 | INT8;
+IntType :  INTTYPE;
 FPType   : FLOAT | DOUBLE;
 
 // OptAssign - Value producing statements have an optional assignment component
@@ -1181,7 +1181,7 @@ GlobalVarAttribute : SectionString {
 
 // Derived types are added later...
 //
-PrimType : BOOL | INT8 | INT16  | INT32 | INT64 | FLOAT | DOUBLE | LABEL ;
+PrimType : BOOL | INTTYPE | FLOAT | DOUBLE | LABEL ;
 
 Types 
   : OPAQUE {
@@ -1257,8 +1257,8 @@ Types
      const llvm::Type* ElemTy = $4->get();
      if ((unsigned)$2 != $2)
         GEN_ERROR("Unsigned result not equal to signed result");
-     if (!ElemTy->isPrimitiveType())
-        GEN_ERROR("Elemental type of a PackedType must be primitive");
+     if (!ElemTy->isFloatingPoint() && !ElemTy->isInteger())
+        GEN_ERROR("Element type of a PackedType must be primitive");
      if (!isPowerOf2_32($2))
        GEN_ERROR("Vector length should be a power of 2!");
      $$ = new PATypeHolder(HandleUpRefs(PackedType::get(*$4, (unsigned)$2)));
@@ -2780,7 +2780,7 @@ MemoryInst : MALLOC Types OptCAlign {
     delete $2;
     CHECK_FOR_ERROR
   }
-  | MALLOC Types ',' INT32 ValueRef OptCAlign {
+  | MALLOC Types ',' INTTYPE ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     Value* tmpVal = getVal($4, $5);
@@ -2795,7 +2795,7 @@ MemoryInst : MALLOC Types OptCAlign {
     delete $2;
     CHECK_FOR_ERROR
   }
-  | ALLOCA Types ',' INT32 ValueRef OptCAlign {
+  | ALLOCA Types ',' INTTYPE ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     Value* tmpVal = getVal($4, $5);

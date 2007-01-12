@@ -1364,22 +1364,6 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
       assert(Ty != 0 && "Invalid indices for GEP!");
       return ConstantPointerNull::get(PointerType::get(Ty));
     }
-
-    if (IdxList.size() == 1) {
-      const Type *ElTy = cast<PointerType>(C->getType())->getElementType();
-      if (uint32_t ElSize = ElTy->getPrimitiveSize()) {
-        // gep null, C is equal to C*sizeof(nullty).  If nullty is a known llvm
-        // type, we can statically fold this.
-        Constant *R = ConstantInt::get(Type::Int32Ty, ElSize);
-        // We know R is unsigned, Idx0 is signed because it must be an index
-        // through a sequential type (gep pointer operand) which is always
-        // signed.
-        R = ConstantExpr::getSExtOrBitCast(R, Idx0->getType());
-        R = ConstantExpr::getMul(R, Idx0); // signed multiply
-        // R is a signed integer, C is the GEP pointer so -> IntToPtr
-        return ConstantExpr::getIntToPtr(R, C->getType());
-      }
-    }
   }
 
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(const_cast<Constant*>(C))) {

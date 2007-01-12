@@ -1611,7 +1611,7 @@ bool IPSCCP::runOnModule(Module &M) {
         Instruction *I = cast<Instruction>(DeadBB->use_back());
         bool Folded = ConstantFoldTerminator(I->getParent());
         if (!Folded) {
-          // The constant folder may not have been able to fold the termiantor
+          // The constant folder may not have been able to fold the terminator
           // if this is a branch or switch on undef.  Fold it manually as a
           // branch to the first successor.
           if (BranchInst *BI = dyn_cast<BranchInst>(I)) {

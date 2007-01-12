@@ -189,7 +189,7 @@ inline bool BytecodeReader::hasImplicitNull(unsigned TyID) {
 /// Obtain a type given a typeid and account for things like compaction tables,
 /// function level vs module level, and the offsetting for the primitive types.
 const Type *BytecodeReader::getType(unsigned ID) {
-  if (ID < Type::FirstDerivedTyID)
+  if (ID <= Type::LastPrimitiveTyID)
     if (const Type *T = Type::getPrimitiveType((Type::TypeID)ID))
       return T;   // Asked for a primitive type...
 
@@ -573,7 +573,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       if (Oprnds.size() != 2)
         error("Invalid extractelement instruction!");
       Value *V1 = getValue(iType, Oprnds[0]);
-      Value *V2 = getValue(Type::Int32TyID, Oprnds[1]);
+      Value *V2 = getValue(Int32TySlot, Oprnds[1]);
       
       if (!ExtractElementInst::isValidOperands(V1, V2))
         error("Invalid extractelement instruction!");
@@ -588,7 +588,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       
       Value *V1 = getValue(iType, Oprnds[0]);
       Value *V2 = getValue(getTypeSlot(PackedTy->getElementType()),Oprnds[1]);
-      Value *V3 = getValue(Type::Int32TyID, Oprnds[2]);
+      Value *V3 = getValue(Int32TySlot, Oprnds[2]);
         
       if (!InsertElementInst::isValidOperands(V1, V2, V3))
         error("Invalid insertelement instruction!");
@@ -684,7 +684,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     case Instruction::Select:
       if (Oprnds.size() != 3)
         error("Invalid Select instruction!");
-      Result = new SelectInst(getValue(Type::Int1TyID, Oprnds[0]),
+      Result = new SelectInst(getValue(BoolTySlot, Oprnds[0]),
                               getValue(iType, Oprnds[1]),
                               getValue(iType, Oprnds[2]));
       break;
@@ -714,7 +714,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     case Instruction::AShr:
       Result = new ShiftInst(Instruction::OtherOps(Opcode),
                              getValue(iType, Oprnds[0]),
-                             getValue(Type::Int8TyID, Oprnds[1]));
+                             getValue(Int8TySlot, Oprnds[1]));
       break;
     case Instruction::Ret:
       if (Oprnds.size() == 0)
@@ -730,7 +730,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
         Result = new BranchInst(getBasicBlock(Oprnds[0]));
       else if (Oprnds.size() == 3)
         Result = new BranchInst(getBasicBlock(Oprnds[0]),
-            getBasicBlock(Oprnds[1]), getValue(Type::Int1TyID , Oprnds[2]));
+            getBasicBlock(Oprnds[1]), getValue(BoolTySlot, Oprnds[2]));
       else
         error("Invalid number of operands for a 'br' instruction!");
       break;
@@ -877,7 +877,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
         error("Invalid malloc instruction!");
 
       Result = new MallocInst(cast<PointerType>(InstTy)->getElementType(),
-                              getValue(Type::Int32TyID, Oprnds[0]), Align);
+                              getValue(Int32TySlot, Oprnds[0]), Align);
       break;
     }
     case Instruction::Alloca: {
@@ -890,7 +890,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
         error("Invalid alloca instruction!");
 
       Result = new AllocaInst(cast<PointerType>(InstTy)->getElementType(),
-                              getValue(Type::Int32TyID, Oprnds[0]), Align);
+                              getValue(Int32TySlot, Oprnds[0]), Align);
       break;
     }
     case Instruction::Free:
@@ -916,12 +916,12 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
         // any of the 32 or 64-bit integer types.  The actual choice of 
         // type is encoded in the low bit of the slot number.
         if (isa<StructType>(TopTy))
-          IdxTy = Type::Int32TyID;
+          IdxTy = Int32TySlot;
         else {
           switch (ValIdx & 1) {
           default:
-          case 0: IdxTy = Type::Int32TyID; break;
-          case 1: IdxTy = Type::Int64TyID; break;
+          case 0: IdxTy = Int32TySlot; break;
+          case 1: IdxTy = Int64TySlot; break;
           }
           ValIdx >>= 1;
         }
@@ -1064,7 +1064,7 @@ void BytecodeReader::ParseValueSymbolTable(Function *CurrentFunction,
       unsigned slot = read_vbr_uint();
       std::string Name = read_str();
       Value *V = 0;
-      if (Typ == Type::LabelTyID) {
+      if (Typ == LabelTySlot) {
         if (slot < BBMap.size())
           V = BBMap[slot];
       } else {
@@ -1160,6 +1160,11 @@ const Type *BytecodeReader::ParseType() {
     return Result;
 
   switch (PrimType) {
+  case Type::IntegerTyID: {
+    unsigned NumBits = read_vbr_uint();
+    Result = IntegerType::get(NumBits);
+    break;
+  }
   case Type::FunctionTyID: {
     const Type *RetType = readType();
     unsigned RetAttr = read_vbr_uint();
@@ -1204,7 +1209,7 @@ const Type *BytecodeReader::ParseType() {
     Result = StructType::get(Elements, false);
     break;
   }
-  case Type::BC_ONLY_PackedStructTyID: {
+  case Type::PackedStructTyID: {
     std::vector<const Type*> Elements;
     unsigned Typ = read_vbr_uint();
     while (Typ) {         // List is terminated by void/0 typeid
@@ -1399,32 +1404,29 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
   const Type *Ty = getType(TypeID);
   Constant *Result = 0;
   switch (Ty->getTypeID()) {
-  case Type::Int1TyID: {
-    unsigned Val = read_vbr_uint();
-    if (Val != 0 && Val != 1)
-      error("Invalid boolean value read.");
-    Result = ConstantInt::get(Type::Int1Ty, Val == 1);
-    if (Handler) Handler->handleConstantValue(Result);
-    break;
-  }
-
-  case Type::Int8TyID:   // Unsigned integer types...
-  case Type::Int16TyID:
-  case Type::Int32TyID: {
-    unsigned Val = read_vbr_uint();
-    if (!ConstantInt::isValueValidForType(Ty, uint64_t(Val)))
-      error("Invalid unsigned byte/short/int read.");
-    Result = ConstantInt::get(Ty, Val);
-    if (Handler) Handler->handleConstantValue(Result);
-    break;
-  }
-
-  case Type::Int64TyID: {
-    uint64_t Val = read_vbr_uint64();
-    if (!ConstantInt::isValueValidForType(Ty, Val))
-      error("Invalid constant integer read.");
-    Result = ConstantInt::get(Ty, Val);
-    if (Handler) Handler->handleConstantValue(Result);
+  case Type::IntegerTyID: {
+    const IntegerType *IT = cast<IntegerType>(Ty);
+    if (IT->getBitWidth() <= 32) {
+      uint32_t Val = read_vbr_uint();
+      if (IT->getBitWidth() == 1) {
+        if (Val != 0 && Val != 1)
+          error("Invalid boolean value read.");
+        Result = ConstantInt::get(Type::Int1Ty, Val == 1);
+        if (Handler) Handler->handleConstantValue(Result);
+      } else {
+        if (!ConstantInt::isValueValidForType(Ty, uint64_t(Val)))
+          error("Integer value read is invalid for type.");
+        Result = ConstantInt::get(IT, Val);
+        if (Handler) Handler->handleConstantValue(Result);
+      }
+    } else if (IT->getBitWidth() <= 64) {
+      uint64_t Val = read_vbr_uint64();
+      if (!ConstantInt::isValueValidForType(Ty, Val))
+        error("Invalid constant integer read.");
+      Result = ConstantInt::get(IT, Val);
+      if (Handler) Handler->handleConstantValue(Result);
+    } else 
+      assert("Integer types > 64 bits not supported");
     break;
   }
   case Type::FloatTyID: {

@@ -29,6 +29,7 @@ class ArrayValType;
 class StructValType;
 class PointerValType;
 class PackedValType;
+class IntegerValType;
 
 class DerivedType : public Type {
   friend class Type;
@@ -69,6 +70,40 @@ public:
   static inline bool classof(const Type *T) {
     return T->isDerivedType();
   }
+};
+
+/// Class to represent integer types. Note that this class is also used to
+/// represent the built-in integer types: Int1Ty, Int8Ty, Int16Ty, Int32Ty and
+/// Int64Ty. 
+/// @brief Integer representation type
+class IntegerType : public DerivedType {
+protected:
+  IntegerType(unsigned NumBits) : DerivedType(IntegerTyID) {
+    setSubclassData(NumBits);
+  }
+  friend class TypeMap<IntegerValType, IntegerType>;
+public:
+  /// This enum is just used to hold constants we need for IntegerType.
+  enum {
+    MIN_INT_BITS = 1,        ///< Minimum number of bits that can be specified
+    MAX_INT_BITS = (1<<23)-1 ///< Maximum number of bits that can be specified
+      ///< Note that bit width is stored in the Type classes SubclassData field
+      ///< which has 23 bits. This yields a maximum bit width of 8,388,607 bits.
+  };
+
+  /// This static method is the primary way of constructing an IntegerType. 
+  /// If an IntegerType with the same NumBits value was previously instantiated,
+  /// that instance will be returned. Otherwise a new one will be created. Only
+  /// one instance with a given NumBits value is ever created.
+  /// @brief Get or create an IntegerType instance.
+  static const IntegerType* get(unsigned NumBits);
+
+  /// @brief Get the number of bits in this IntegerType
+  unsigned getBitWidth() const { return getSubclassData(); }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const IntegerType *T) { return true; }
+  static inline bool classof(const Type *T) { return T->isIntegral(); }
 };
 
 

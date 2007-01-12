@@ -64,7 +64,7 @@ static ManagedStatic<std::map<const Type*,
                               std::string> > AbstractTypeDescriptions;
 
 Type::Type(const char *Name, TypeID id)
-  : ID(id), Abstract(false),  RefCount(0), ForwardType(0) {
+  : ID(id), Abstract(false),  SubclassData(0), RefCount(0), ForwardType(0) {
   assert(Name && Name[0] && "Should use other ctor if no name!");
   (*ConcreteTypeDescriptions)[this] = Name;
 }
@@ -73,11 +73,6 @@ Type::Type(const char *Name, TypeID id)
 const Type *Type::getPrimitiveType(TypeID IDNumber) {
   switch (IDNumber) {
   case VoidTyID  : return VoidTy;
-  case Int1TyID  : return Int1Ty;
-  case Int8TyID  : return Int8Ty; 
-  case Int16TyID : return Int16Ty; 
-  case Int32TyID : return Int32Ty;
-  case Int64TyID : return Int64Ty;
   case FloatTyID : return FloatTy;
   case DoubleTyID: return DoubleTy;
   case LabelTyID : return LabelTy;
@@ -116,41 +111,17 @@ bool Type::canLosslesslyBitCastTo(const Type *Ty) const {
   // At this point we have only various mismatches of the first class types
   // remaining and ptr->ptr. Just select the lossless conversions. Everything
   // else is not lossless.
-  if (getTypeID() == Type::PointerTyID)
+  if (isa<PointerType>(this))
     return isa<PointerType>(Ty);
   return false;  // Other types have no identity values
 }
 
-// getPrimitiveSize - Return the basic size of this type if it is a primitive
-// type.  These are fixed by LLVM and are not target dependent.  This will
-// return zero if the type does not have a size or is not a primitive type.
-//
-unsigned Type::getPrimitiveSize() const {
-  switch (getTypeID()) {
-  case Type::Int1TyID:
-  case Type::Int8TyID:  return 1;
-  case Type::Int16TyID: return 2;
-  case Type::FloatTyID:
-  case Type::Int32TyID: return 4;
-  case Type::Int64TyID:
-  case Type::DoubleTyID: return 8;
-  default: return 0;
-  }
-}
-
 unsigned Type::getPrimitiveSizeInBits() const {
   switch (getTypeID()) {
-  case Type::Int1TyID:  return 1;
-  case Type::Int8TyID:  return 8;
-  case Type::Int16TyID: return 16;
-  case Type::FloatTyID:
-  case Type::Int32TyID:return 32;
-  case Type::Int64TyID:
+  case Type::FloatTyID: return 32;
   case Type::DoubleTyID: return 64;
-  case Type::PackedTyID: {
-    const PackedType *PTy = cast<PackedType>(this);
-    return PTy->getBitWidth();
-  }
+  case Type::IntegerTyID: return cast<IntegerType>(this)->getBitWidth();
+  case Type::PackedTyID:  return cast<PackedType>(this)->getBitWidth();
   default: return 0;
   }
 }
@@ -165,11 +136,13 @@ bool Type::isSizedDerivedType() const {
   if (const PackedType *PTy = dyn_cast<PackedType>(this))
     return PTy->getElementType()->isSized();
 
-  if (!isa<StructType>(this)) return false;
+  if (!isa<StructType>(this)) 
+    return false;
 
   // Okay, our struct is sized if all of the elements are...
   for (subtype_iterator I = subtype_begin(), E = subtype_end(); I != E; ++I)
-    if (!(*I)->isSized()) return false;
+    if (!(*I)->isSized()) 
+      return false;
 
   return true;
 }
@@ -243,6 +216,14 @@ static std::string getTypeDescription(const Type *Ty,
   TypeStack.push_back(Ty);    // Add us to the stack..
 
   switch (Ty->getTypeID()) {
+  case Type::IntegerTyID: {
+    const IntegerType *ITy = cast<IntegerType>(Ty);
+    if (ITy->getBitWidth() == 1)
+      Result = "bool"; // FIXME: eventually this becomes i1
+    else
+      Result = "i" + utostr(ITy->getBitWidth());
+    break;
+  }
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
     if (!Result.empty())
@@ -267,6 +248,7 @@ static std::string getTypeDescription(const Type *Ty,
     }
     break;
   }
+  case Type::PackedStructTyID:
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
     if (STy->isPacked())
@@ -353,7 +335,6 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
   return ContainedTys[Idx];
 }
 
-
 //===----------------------------------------------------------------------===//
 //                          Primitive 'Type' data
 //===----------------------------------------------------------------------===//
@@ -365,17 +346,26 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
     };                                                 \
   }                                                    \
   static ManagedStatic<TY##Type> The##TY##Ty;          \
-  Type *Type::TY##Ty = &*The##TY##Ty
+  const Type *Type::TY##Ty = &*The##TY##Ty
+
+#define DeclareIntegerType(TY, BitWidth)                     \
+  namespace {                                                \
+    struct VISIBILITY_HIDDEN TY##Type : public IntegerType { \
+      TY##Type() : IntegerType(BitWidth) {}                  \
+    };                                                       \
+  }                                                          \
+  static ManagedStatic<TY##Type> The##TY##Ty;                \
+  const Type *Type::TY##Ty = &*The##TY##Ty
 
 DeclarePrimType(Void,   "void");
-DeclarePrimType(Int1,   "bool");
-DeclarePrimType(Int8,   "i8");
-DeclarePrimType(Int16,  "i16");
-DeclarePrimType(Int32,  "i32");
-DeclarePrimType(Int64,  "i64");
 DeclarePrimType(Float,  "float");
 DeclarePrimType(Double, "double");
 DeclarePrimType(Label,  "label");
+DeclareIntegerType(Int1,    1);
+DeclareIntegerType(Int8,    8);
+DeclareIntegerType(Int16,  16);
+DeclareIntegerType(Int32,  32);
+DeclareIntegerType(Int64,  64);
 #undef DeclarePrimType
 
 
@@ -584,7 +574,10 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   // algorithm is the fact that arraytypes have sizes that differentiates types,
   // and that function types can be varargs or not.  Consider this now.
   //
-  if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+  if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
+    const IntegerType *ITy2 = cast<IntegerType>(Ty2);
+    return ITy->getBitWidth() == ITy2->getBitWidth();
+  } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     return TypesEqual(PTy->getElementType(),
                       cast<PointerType>(Ty2)->getElementType(), EqTypes);
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
@@ -695,6 +688,9 @@ static unsigned getSubElementHash(const Type *Ty) {
     switch (SubTy->getTypeID()) {
     default: break;
     case Type::OpaqueTyID: return 0;    // Opaque -> hash = 0 no matter what.
+    case Type::IntegerTyID:
+      HashVal ^= (cast<IntegerType>(SubTy)->getBitWidth() << 3);
+      break;
     case Type::FunctionTyID:
       HashVal ^= cast<FunctionType>(SubTy)->getNumParams()*2 + 
                  cast<FunctionType>(SubTy)->isVarArg();
@@ -927,6 +923,60 @@ public:
 //===----------------------------------------------------------------------===//
 // Function Type Factory and Value Class...
 //
+
+//===----------------------------------------------------------------------===//
+// Integer Type Factory...
+//
+namespace llvm {
+class IntegerValType {
+  uint16_t bits;
+public:
+  IntegerValType(uint16_t numbits) : bits(numbits) {}
+
+  static IntegerValType get(const IntegerType *Ty) {
+    return IntegerValType(Ty->getBitWidth());
+  }
+
+  static unsigned hashTypeStructure(const IntegerType *Ty) {
+    return (unsigned)Ty->getBitWidth();
+  }
+
+  inline bool operator<(const IntegerValType &IVT) const {
+    return bits < IVT.bits;
+  }
+};
+}
+
+static ManagedStatic<TypeMap<IntegerValType, IntegerType> > IntegerTypes;
+
+const IntegerType *IntegerType::get(unsigned NumBits) {
+  assert(NumBits >= MIN_INT_BITS && "bitwidth too small");
+  assert(NumBits <= MAX_INT_BITS && "bitwidth too large");
+
+  // Check for the built-in integer types
+  switch (NumBits) {
+    case  1: return cast<IntegerType>(Type::Int1Ty);
+    case  8: return cast<IntegerType>(Type::Int8Ty);
+    case 16: return cast<IntegerType>(Type::Int16Ty);
+    case 32: return cast<IntegerType>(Type::Int32Ty);
+    case 64: return cast<IntegerType>(Type::Int64Ty);
+    default: 
+      break;
+  }
+
+  IntegerValType IVT(NumBits);
+  IntegerType *ITy = IntegerTypes->get(IVT);
+  if (ITy) return ITy;           // Found a match, return it!
+
+  // Value not found.  Derive a new type!
+  ITy = new IntegerType(NumBits);
+  IntegerTypes->add(IVT, ITy);
+
+#ifdef DEBUG_MERGE_TYPES
+  DOUT << "Derived new type: " << *ITy << "\n";
+#endif
+  return ITy;
+}
 
 // FunctionValType - Define a class to hold the key that goes into the TypeMap
 //
@@ -1440,14 +1490,9 @@ void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
 }
 
 bool SequentialType::indexValid(const Value *V) const {
-  const Type *Ty = V->getType();
-  switch (Ty->getTypeID()) {
-  case Type::Int32TyID:
-  case Type::Int64TyID:
-    return true;
-  default:
-    return false;
-  }
+  if (const IntegerType *IT = dyn_cast<IntegerType>(V->getType())) 
+    return IT->getBitWidth() == 32 || IT->getBitWidth() == 64;
+  return false;
 }
 
 namespace llvm {

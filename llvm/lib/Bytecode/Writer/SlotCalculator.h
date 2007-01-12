@@ -177,6 +177,9 @@ private:
   unsigned getOrCreateCompactionTableSlot(const Value *V);
   unsigned getOrCreateCompactionTableSlot(const Type *V);
   void pruneCompactionTable();
+
+  // insertPrimitives - helper for constructors to insert primitive types.
+  void insertPrimitives();
 };
 
 } // End llvm namespace

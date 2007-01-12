@@ -144,7 +144,18 @@ public:
   void visitStoreInst(StoreInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitPHINode(PHINode &PN) { assert(0 && "PHI nodes already handled!"); }
-  void visitCastInst(CastInst &I);
+  void visitTruncInst(TruncInst &I);
+  void visitZExtInst(ZExtInst &I);
+  void visitSExtInst(SExtInst &I);
+  void visitFPTruncInst(FPTruncInst &I);
+  void visitFPExtInst(FPExtInst &I);
+  void visitUIToFPInst(UIToFPInst &I);
+  void visitSIToFPInst(SIToFPInst &I);
+  void visitFPToUIInst(FPToUIInst &I);
+  void visitFPToSIInst(FPToSIInst &I);
+  void visitPtrToIntInst(PtrToIntInst &I);
+  void visitIntToPtrInst(IntToPtrInst &I);
+  void visitBitCastInst(BitCastInst &I);
   void visitSelectInst(SelectInst &I);
 
 
@@ -193,6 +204,30 @@ private:  // Helper functions
   void initializeExternalFunctions();
   GenericValue getConstantExprValue(ConstantExpr *CE, ExecutionContext &SF);
   GenericValue getOperandValue(Value *V, ExecutionContext &SF);
+  GenericValue executeTruncInst(Value *SrcVal, const Type *DstTy,
+                                ExecutionContext &SF);
+  GenericValue executeSExtInst(Value *SrcVal, const Type *DstTy,
+                               ExecutionContext &SF);
+  GenericValue executeZExtInst(Value *SrcVal, const Type *DstTy,
+                               ExecutionContext &SF);
+  GenericValue executeFPTruncInst(Value *SrcVal, const Type *DstTy,
+                                  ExecutionContext &SF);
+  GenericValue executeFPExtInst(Value *SrcVal, const Type *DstTy,
+                                ExecutionContext &SF);
+  GenericValue executeFPToUIInst(Value *SrcVal, const Type *DstTy,
+                                 ExecutionContext &SF);
+  GenericValue executeFPToSIInst(Value *SrcVal, const Type *DstTy,
+                                 ExecutionContext &SF);
+  GenericValue executeUIToFPInst(Value *SrcVal, const Type *DstTy,
+                                 ExecutionContext &SF);
+  GenericValue executeSIToFPInst(Value *SrcVal, const Type *DstTy,
+                                 ExecutionContext &SF);
+  GenericValue executePtrToIntInst(Value *SrcVal, const Type *DstTy,
+                                   ExecutionContext &SF);
+  GenericValue executeIntToPtrInst(Value *SrcVal, const Type *DstTy,
+                                   ExecutionContext &SF);
+  GenericValue executeBitCastInst(Value *SrcVal, const Type *DstTy,
+                                  ExecutionContext &SF);
   GenericValue executeCastOperation(Instruction::CastOps opcode, Value *SrcVal, 
                                     const Type *Ty, ExecutionContext &SF);
   void popStackAndReturnValueToCaller(const Type *RetTy, GenericValue Result);

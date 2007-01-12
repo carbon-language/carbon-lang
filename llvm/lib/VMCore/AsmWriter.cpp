@@ -222,6 +222,7 @@ static void fillTypeNameTable(const Module *M,
     const Type *Ty = cast<Type>(TI->second);
     if (!isa<PointerType>(Ty) ||
         !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
+        !cast<PointerType>(Ty)->getElementType()->isIntegral() ||
         isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
       TypeNames.insert(std::make_pair(Ty, getLLVMName(TI->first)));
   }
@@ -233,7 +234,7 @@ static void calcTypeName(const Type *Ty,
                          std::vector<const Type *> &TypeStack,
                          std::map<const Type *, std::string> &TypeNames,
                          std::string & Result){
-  if (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty)) {
+  if (Ty->isIntegral() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
     Result += Ty->getDescription();  // Base case
     return;
   }
@@ -265,6 +266,15 @@ static void calcTypeName(const Type *Ty,
   TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
 
   switch (Ty->getTypeID()) {
+  case Type::IntegerTyID: {
+    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+    if (BitWidth == 1)
+      Result += "bool";
+    else {
+      Result += "i" + utostr(BitWidth);
+    }
+    break;
+  }
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
     calcTypeName(FTy->getReturnType(), TypeStack, TypeNames, Result);
@@ -347,7 +357,7 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
   // Primitive types always print out their description, regardless of whether
   // they have been named or not.
   //
-  if (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))
+  if (Ty->isIntegral() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty)))
     return Out << Ty->getDescription();
 
   // Check to see if the type is named.
@@ -706,7 +716,9 @@ private:
 /// without considering any symbolic types that we may have equal to it.
 ///
 std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
-  if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
+  if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty))
+    Out << "i" << utostr(ITy->getBitWidth());
+  else if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     printType(FTy->getReturnType());
     Out << " (";
     unsigned Idx = 1;

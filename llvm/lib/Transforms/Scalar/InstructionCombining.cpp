@@ -339,12 +339,12 @@ static bool isOnlyUse(Value *V) {
 // getPromotedType - Return the specified type promoted as it would be to pass
 // though a va_arg area...
 static const Type *getPromotedType(const Type *Ty) {
-  switch (Ty->getTypeID()) {
-  case Type::Int8TyID:
-  case Type::Int16TyID:  return Type::Int32Ty;
-  case Type::FloatTyID:  return Type::DoubleTy;
-  default:               return Ty;
-  }
+  if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty)) {
+    if (ITy->getBitWidth() < 32)
+      return Type::Int32Ty;
+  } else if (Ty == Type::FloatTy)
+    return Type::DoubleTy;
+  return Ty;
 }
 
 /// getBitCastOperand - If the specified operand is a CastInst or a constant 
@@ -530,7 +530,6 @@ static ConstantInt *SubOne(ConstantInt *C) {
   return cast<ConstantInt>(ConstantExpr::getSub(C,
                                          ConstantInt::get(C->getType(), 1)));
 }
-
 
 /// ComputeMaskedBits - Determine which of the bits specified in Mask are
 /// known to be either zero or one and return them in the KnownZero/KnownOne
@@ -3516,7 +3515,7 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   /// ByteValues - For each byte of the result, we keep track of which value
   /// defines each byte.
   std::vector<Value*> ByteValues;
-  ByteValues.resize(I.getType()->getPrimitiveSize());
+  ByteValues.resize(TD->getTypeSize(I.getType()));
     
   // Try to find all the pieces corresponding to the bswap.
   if (CollectBSwapParts(I.getOperand(0), ByteValues) ||
@@ -6580,9 +6579,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   }
 
   if (SI.getType() == Type::Int1Ty) {
-    ConstantInt *C;
-    if ((C = dyn_cast<ConstantInt>(TrueVal)) && 
-        C->getType() == Type::Int1Ty) {
+    if (ConstantInt *C = dyn_cast<ConstantInt>(TrueVal)) {
       if (C->getZExtValue()) {
         // Change: A = select B, true, C --> A = or B, C
         return BinaryOperator::createOr(CondVal, FalseVal);
@@ -6593,8 +6590,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                                              "not."+CondVal->getName()), SI);
         return BinaryOperator::createAnd(NotCond, FalseVal);
       }
-    } else if ((C = dyn_cast<ConstantInt>(FalseVal)) &&
-               C->getType() == Type::Int1Ty) {
+    } else if (ConstantInt *C = dyn_cast<ConstantInt>(FalseVal)) {
       if (C->getZExtValue() == false) {
         // Change: A = select B, C, false --> A = and B, C
         return BinaryOperator::createAnd(CondVal, TrueVal);
@@ -7649,7 +7645,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             }
           } else if (SrcTy->getPrimitiveSizeInBits() < 
                      DestTy->getPrimitiveSizeInBits() &&
-                     SrcTy->getPrimitiveSize() == 4) {
+                     SrcTy->getPrimitiveSizeInBits() == 32) {
             // We can eliminate a cast from [u]int to [u]long iff the target 
             // is a 32-bit pointer target.
             if (SrcTy->getPrimitiveSizeInBits() >= TD->getPointerSizeInBits()) {
@@ -7664,7 +7660,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // insert it.  This explicit cast can make subsequent optimizations more
       // obvious.
       Value *Op = GEP.getOperand(i);
-      if (Op->getType()->getPrimitiveSize() > TD->getPointerSize())
+      if (TD->getTypeSize(Op->getType()) > TD->getPointerSize())
         if (Constant *C = dyn_cast<Constant>(Op)) {
           GEP.setOperand(i, ConstantExpr::getTrunc(C, TD->getIntPtrType()));
           MadeChange = true;
@@ -7722,11 +7718,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             GO1 = ConstantExpr::getIntegerCast(GO1C, SO1->getType(), true);
           } else {
             unsigned PS = TD->getPointerSize();
-            if (SO1->getType()->getPrimitiveSize() == PS) {
+            if (TD->getTypeSize(SO1->getType()) == PS) {
               // Convert GO1 to SO1's type.
               GO1 = InsertCastToIntPtrTy(GO1, SO1->getType(), &GEP, this);
 
-            } else if (GO1->getType()->getPrimitiveSize() == PS) {
+            } else if (TD->getTypeSize(GO1->getType()) == PS) {
               // Convert SO1 to GO1's type.
               SO1 = InsertCastToIntPtrTy(SO1, GO1->getType(), &GEP, this);
             } else {
@@ -9056,8 +9052,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
   // only visit the reachable successor.
   TerminatorInst *TI = BB->getTerminator();
   if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-    if (BI->isConditional() && isa<ConstantInt>(BI->getCondition()) &&
-        BI->getCondition()->getType() == Type::Int1Ty) {
+    if (BI->isConditional() && isa<ConstantInt>(BI->getCondition())) {
       bool CondVal = cast<ConstantInt>(BI->getCondition())->getZExtValue();
       AddReachableCodeToWorklist(BI->getSuccessor(!CondVal), Visited, WorkList,
                                  TD);

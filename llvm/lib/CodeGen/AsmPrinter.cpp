@@ -459,7 +459,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       // We can emit the pointer value into this slot if the slot is an
       // integer slot greater or equal to the size of the pointer.
       if (Ty->isIntegral() &&
-          Ty->getPrimitiveSize() >= TD->getTypeSize(Op->getType()))
+          TD->getTypeSize(Ty) >= TD->getTypeSize(Op->getType()))
         return EmitConstantValueOnly(Op);
       
       assert(0 && "FIXME: Don't yet support this kind of constant cast expr");
@@ -917,28 +917,29 @@ void AsmPrinter::printSetLabel(unsigned uid, unsigned uid2,
 void AsmPrinter::printDataDirective(const Type *type) {
   const TargetData *TD = TM.getTargetData();
   switch (type->getTypeID()) {
-  case Type::Int1TyID:
-  case Type::Int8TyID:
-    O << TAI->getData8bitsDirective();
+  case Type::IntegerTyID: {
+    unsigned BitWidth = cast<IntegerType>(type)->getBitWidth();
+    if (BitWidth <= 8)
+      O << TAI->getData8bitsDirective();
+    else if (BitWidth <= 16)
+      O << TAI->getData16bitsDirective();
+    else if (BitWidth <= 32)
+      O << TAI->getData32bitsDirective();
+    else if (BitWidth <= 64) {
+      assert(TAI->getData64bitsDirective() &&
+             "Target cannot handle 64-bit constant exprs!");
+      O << TAI->getData64bitsDirective();
+    }
     break;
-  case Type::Int16TyID: 
-    O << TAI->getData16bitsDirective();
-    break;
+  }
   case Type::PointerTyID:
     if (TD->getPointerSize() == 8) {
       assert(TAI->getData64bitsDirective() &&
              "Target cannot handle 64-bit pointer exprs!");
       O << TAI->getData64bitsDirective();
-      break;
+    } else {
+      O << TAI->getData32bitsDirective();
     }
-    //Fall through for pointer size == int size
-  case Type::Int32TyID: 
-    O << TAI->getData32bitsDirective();
-    break;
-  case Type::Int64TyID:
-    assert(TAI->getData64bitsDirective() &&
-           "Target cannot handle 64-bit constant exprs!");
-    O << TAI->getData64bitsDirective();
     break;
   case Type::FloatTyID: case Type::DoubleTyID:
     assert (0 && "Should have already output floating point constant.");

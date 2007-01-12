@@ -57,6 +57,11 @@ class LLVMType<ValueType vt, string typeval> {
   string TypeVal = typeval;
 }
 
+class LLVMIntegerType<ValueType VT, int width>
+  : LLVMType<VT, "Type::IntegerTyID"> {
+  int Width = width;
+}
+
 class LLVMPackedType<ValueType VT, int numelts, LLVMType elty>
   : LLVMType<VT, "Type::PackedTyID">{
   int NumElts = numelts;
@@ -64,25 +69,24 @@ class LLVMPackedType<ValueType VT, int numelts, LLVMType elty>
 } 
 
 def llvm_void_ty       : LLVMType<isVoid, "Type::VoidTyID">;
-def llvm_i1_ty         : LLVMType<i1 , "Type::Int1TyID">;
-def llvm_i8_ty         : LLVMType<i8 , "Type::Int8TyID">;
-def llvm_i16_ty        : LLVMType<i16, "Type::Int16TyID">;
-def llvm_i32_ty        : LLVMType<i32, "Type::Int32TyID">;
-def llvm_i64_ty        : LLVMType<i64, "Type::Int64TyID">;
+def llvm_bool_ty       : LLVMIntegerType<i1, 1>;
+def llvm_i8_ty         : LLVMIntegerType<i8 , 8>;
+def llvm_i16_ty        : LLVMIntegerType<i16, 16>;
+def llvm_i32_ty        : LLVMIntegerType<i32, 32>;
+def llvm_i64_ty        : LLVMIntegerType<i64, 64>;
 def llvm_float_ty      : LLVMType<f32, "Type::FloatTyID">;
 def llvm_double_ty     : LLVMType<f64, "Type::DoubleTyID">;
-def llvm_ptr_ty        : LLVMType<iPTR, "Type::PointerTyID">;     // sbyte*
-def llvm_ptrptr_ty     : LLVMType<iPTR, "Type::PointerTyID">;     // sbyte**
+def llvm_ptr_ty        : LLVMType<iPTR, "Type::PointerTyID">;     // i8*
+def llvm_ptrptr_ty     : LLVMType<iPTR, "Type::PointerTyID">;     // i8**
 def llvm_descriptor_ty : LLVMType<iPTR, "Type::PointerTyID">;     // global*
 
-def llvm_v16i8_ty      : LLVMPackedType<v16i8,16, llvm_i8_ty>;  // 16 x sbyte
-def llvm_v8i16_ty      : LLVMPackedType<v8i16, 8, llvm_i16_ty>;  // 8 x short
-
-def llvm_v2i64_ty      : LLVMPackedType<v2i64, 2, llvm_i64_ty>;   // 2 x long
-def llvm_v2i32_ty      : LLVMPackedType<v2i32, 2, llvm_i32_ty>;    // 2 x int
-def llvm_v4i32_ty      : LLVMPackedType<v4i32, 4, llvm_i32_ty>;    // 4 x int
-def llvm_v4f32_ty      : LLVMPackedType<v4f32, 4, llvm_float_ty>;  // 4 x float
-def llvm_v2f64_ty      : LLVMPackedType<v2f64, 2, llvm_double_ty>; // 2 x double
+def llvm_v16i8_ty      : LLVMPackedType<v16i8,16, llvm_i8_ty>;    // 16 x i8
+def llvm_v8i16_ty      : LLVMPackedType<v8i16, 8, llvm_i16_ty>;   //  8 x i16
+def llvm_v2i64_ty      : LLVMPackedType<v2i64, 2, llvm_i64_ty>;   //  2 x i64
+def llvm_v2i32_ty      : LLVMPackedType<v2i32, 2, llvm_i32_ty>;   //  2 x i32
+def llvm_v4i32_ty      : LLVMPackedType<v4i32, 4, llvm_i32_ty>;   //  4 x i32
+def llvm_v4f32_ty      : LLVMPackedType<v4f32, 4, llvm_float_ty>; //  4 x float
+def llvm_v2f64_ty      : LLVMPackedType<v2f64, 2, llvm_double_ty>;//  2 x double
 
 //===----------------------------------------------------------------------===//
 // Intrinsic Definitions.

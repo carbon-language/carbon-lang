@@ -31,26 +31,45 @@
 #include <functional>
 using namespace llvm;
 
-#if 0
+#ifndef NDEBUG
 #include "llvm/Support/Streams.h"
-#define SC_DEBUG(X) cerr << X
+#include "llvm/Support/CommandLine.h"
+static cl::opt<bool> SlotCalculatorDebugOption("scdebug",cl::init(false), 
+    cl::desc("Enable SlotCalculator debug output"), cl::Hidden);
+#define SC_DEBUG(X) if (SlotCalculatorDebugOption) cerr << X
 #else
 #define SC_DEBUG(X)
 #endif
+
+void SlotCalculator::insertPrimitives() {
+  // Preload the table with the built-in types. These built-in types are
+  // inserted first to ensure that they have low integer indices which helps to
+  // keep bytecode sizes small. Note that the first group of indices must match
+  // the Type::TypeIDs for the primitive types. After that the integer types are
+  // added, but the order and value is not critical. What is critical is that 
+  // the indices of these "well known" slot numbers be properly maintained in
+  // Reader.h which uses them directly to extract values of these types.
+  SC_DEBUG("Inserting primitive types:\n");
+                                    // See WellKnownTypeSlots in Reader.h
+  insertType(Type::VoidTy,   true); // 0: VoidTySlot
+  insertType(Type::FloatTy,  true); // 1: FloatTySlot
+  insertType(Type::DoubleTy, true); // 2: DoubleTySlot
+  insertType(Type::LabelTy,  true); // 3: LabelTySlot
+  assert(TypeMap.size() == Type::FirstDerivedTyID && "Invalid primitive insert");
+  // Above here *must* correspond 1:1 with the primitive types.
+  insertType(Type::Int1Ty,   true); // 4: BoolTySlot
+  insertType(Type::Int8Ty,   true); // 5: Int8TySlot
+  insertType(Type::Int16Ty,  true); // 6: Int16TySlot
+  insertType(Type::Int32Ty,  true); // 7: Int32TySlot
+  insertType(Type::Int64Ty,  true); // 8: Int64TySlot
+}
 
 SlotCalculator::SlotCalculator(const Module *M ) {
   ModuleContainsAllFunctionConstants = false;
   ModuleTypeLevel = 0;
   TheModule = M;
 
-  // Preload table... Make sure that all of the primitive types are in the table
-  // and that their Primitive ID is equal to their slot #
-  //
-  SC_DEBUG("Inserting primitive types:\n");
-  for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
-    assert(Type::getPrimitiveType((Type::TypeID)i));
-    insertType(Type::getPrimitiveType((Type::TypeID)i), true);
-  }
+  insertPrimitives();
 
   if (M == 0) return;   // Empty table...
   processModule();
@@ -60,14 +79,7 @@ SlotCalculator::SlotCalculator(const Function *M ) {
   ModuleContainsAllFunctionConstants = false;
   TheModule = M ? M->getParent() : 0;
 
-  // Preload table... Make sure that all of the primitive types are in the table
-  // and that their Primitive ID is equal to their slot #
-  //
-  SC_DEBUG("Inserting primitive types:\n");
-  for (unsigned i = 0; i < Type::FirstDerivedTyID; ++i) {
-    assert(Type::getPrimitiveType((Type::TypeID)i));
-    insertType(Type::getPrimitiveType((Type::TypeID)i), true);
-  }
+  insertPrimitives();
 
   if (TheModule == 0) return;   // Empty table...
 
@@ -423,15 +435,14 @@ unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Value *V) {
 /// getOrCreateCompactionTableSlot - This method is used to build up the initial
 /// approximation of the compaction table.
 unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Type *T) {
-  std::map<const Type*, unsigned>::iterator I =
-    CompactionTypeMap.lower_bound(T);
+  CompactionTypeMapType::iterator I = CompactionTypeMap.lower_bound(T);
   if (I != CompactionTypeMap.end() && I->first == T)
     return I->second;  // Already exists?
 
   unsigned SlotNo = CompactionTypes.size();
-  SC_DEBUG("Inserting Compaction Type #" << SlotNo << ": " << T << "\n");
+  SC_DEBUG("Inserting Compaction Type #" << SlotNo << ": " << *T << "\n");
   CompactionTypes.push_back(T);
-  CompactionTypeMap.insert(std::make_pair(T, SlotNo));
+  CompactionTypeMap[T] = SlotNo; 
   return SlotNo;
 }
 
@@ -452,6 +463,16 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
     CompactionTypes.push_back(PrimTy);
     CompactionTypeMap[PrimTy] = i;
   }
+  CompactionTypeMap[Type::Int1Ty] = CompactionTypes.size();
+  CompactionTypes.push_back(Type::Int1Ty);
+  CompactionTypeMap[Type::Int8Ty] = CompactionTypes.size();
+  CompactionTypes.push_back(Type::Int8Ty);
+  CompactionTypeMap[Type::Int16Ty] = CompactionTypes.size();
+  CompactionTypes.push_back(Type::Int16Ty);
+  CompactionTypeMap[Type::Int32Ty] = CompactionTypes.size();
+  CompactionTypes.push_back(Type::Int32Ty);
+  CompactionTypeMap[Type::Int64Ty] = CompactionTypes.size();
+  CompactionTypes.push_back(Type::Int64Ty);
 
   // Next, include any types used by function arguments.
   for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
@@ -485,7 +506,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
     if (CompactionTable[i].empty() && (i != Type::VoidTyID) &&
         i != Type::LabelTyID) {
       const Type *Ty = CompactionTypes[i];
-      SC_DEBUG("Getting Null Value #" << i << " for Type " << Ty << "\n");
+      SC_DEBUG("Getting Null Value #" << i << " for Type " << *Ty << "\n");
       assert(Ty->getTypeID() != Type::VoidTyID);
       assert(Ty->getTypeID() != Type::LabelTyID);
       getOrCreateCompactionTableSlot(Constant::getNullValue(Ty));
@@ -618,7 +639,8 @@ void SlotCalculator::pruneCompactionTable() {
 /// to determine if its actually empty.
 bool SlotCalculator::CompactionTableIsEmpty() const {
   // Check a degenerate case, just in case.
-  if (CompactionTable.size() == 0) return true;
+  if (CompactionTable.size() == 0) 
+    return true;
 
   // Check each plane
   for (unsigned i = 0, e = CompactionTable.size(); i < e; ++i) {
@@ -830,7 +852,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
   unsigned DestSlot = NodeMap[D] = Table[Ty].size();
   Table[Ty].push_back(D);
 
-  SC_DEBUG("  Inserting value [" << Ty << "] = " << D << " slot=" <<
+  SC_DEBUG("  Inserting value [" << Ty << "] = " << *D << " slot=" <<
            DestSlot << " [");
   // G = Global, C = Constant, T = Type, F = Function, o = other
   SC_DEBUG((isa<GlobalVariable>(D) ? "G" : (isa<Constant>(D) ? "C" :
@@ -848,7 +870,6 @@ int SlotCalculator::doInsertType(const Type *Ty) {
   unsigned DestSlot = TypeMap[Ty] = Types.size();
   Types.push_back(Ty);
 
-  SC_DEBUG("  Inserting type [" << DestSlot << "] = " << Ty << "\n" );
+  SC_DEBUG("  Inserting type [" << DestSlot << "] = " << *Ty << "\n" );
   return (int)DestSlot;
 }
-

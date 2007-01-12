@@ -444,7 +444,8 @@ static bool MergeInType(const Type *In, const Type *&Accum,
     // Noop.
   } else if (In->isIntegral() && Accum->isIntegral()) {   // integer union.
     // Otherwise pick whichever type is larger.
-    if (In->getTypeID() > Accum->getTypeID())
+    if (cast<IntegerType>(In)->getBitWidth() > 
+        cast<IntegerType>(Accum)->getBitWidth())
       Accum = In;
   } else if (isa<PointerType>(In) && isa<PointerType>(Accum)) {
     // Pointer unions just stay as one of the pointers.
@@ -643,8 +644,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           } else {
             // Must be an element access.
             unsigned Elt = Offset/(TD.getTypeSize(PTy->getElementType())*8);
-            NV = new ExtractElementInst(NV, ConstantInt::get(Type::Int32Ty, Elt),
-                                        "tmp", LI);
+            NV = new ExtractElementInst(
+                           NV, ConstantInt::get(Type::Int32Ty, Elt), "tmp", LI);
           }
         } else if (isa<PointerType>(NV->getType())) {
           assert(isa<PointerType>(LI->getType()));

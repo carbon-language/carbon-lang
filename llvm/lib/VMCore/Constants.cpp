@@ -92,25 +92,32 @@ bool Constant::canTrap() const {
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
-  case Type::Int1TyID: {
-    static Constant *NullBool = ConstantInt::get(Type::Int1Ty, false);
-    return NullBool;
-  }
-  case Type::Int8TyID: {
-    static Constant *NullInt8 = ConstantInt::get(Type::Int8Ty, 0);
-    return NullInt8;
-  }
-  case Type::Int16TyID: {
-    static Constant *NullInt16 = ConstantInt::get(Type::Int16Ty, 0);
-    return NullInt16;
-  }
-  case Type::Int32TyID: {
-    static Constant *NullInt32 = ConstantInt::get(Type::Int32Ty, 0);
-    return NullInt32;
-  }
-  case Type::Int64TyID: {
-    static Constant *NullInt64 = ConstantInt::get(Type::Int64Ty, 0);
-    return NullInt64;
+  case Type::IntegerTyID: {
+    const IntegerType *ITy = dyn_cast<IntegerType>(Ty);
+    switch (ITy->getBitWidth()) {
+    case 1: {
+      static Constant *NullBool = ConstantInt::get(Ty, false);
+      return NullBool;
+    } 
+    case 8: {
+      static Constant *NullInt8 = ConstantInt::get(Ty, 0);
+      return NullInt8;
+    } 
+    case 16: {
+      static Constant *NullInt16 = ConstantInt::get(Ty, 0);
+      return NullInt16;
+    } 
+    case 32: {
+      static Constant *NullInt32 = ConstantInt::get(Ty, 0);
+      return NullInt32;
+    } 
+    case 64: {
+      static Constant *NullInt64 = ConstantInt::get(Ty, 0);
+      return NullInt64;
+    }
+    default:
+      return ConstantInt::get(Ty, 0);
+    }
   }
   case Type::FloatTyID: {
     static Constant *NullFloat = ConstantFP::get(Type::FloatTy, 0);
@@ -136,14 +143,12 @@ Constant *Constant::getNullValue(const Type *Ty) {
 
 // Static constructor to create an integral constant with all bits set
 ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
-  switch (Ty->getTypeID()) {
-  case Type::Int1TyID:   return ConstantInt::getTrue();
-  case Type::Int8TyID:
-  case Type::Int16TyID:
-  case Type::Int32TyID:
-  case Type::Int64TyID:   return ConstantInt::get(Ty, int64_t(-1));
-  default: return 0;
-  }
+  if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
+    if (ITy->getBitWidth() == 1)
+      return ConstantInt::getTrue();
+    else
+      return ConstantInt::get(Ty, int64_t(-1));
+  return 0;
 }
 
 /// @returns the value for an packed integer constant of the given type that
@@ -549,25 +554,26 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
 //                      isValueValidForType implementations
 
 bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
-  switch (Ty->getTypeID()) {
-  default:              return false; // These can't be represented as integers!
-  case Type::Int1TyID:  return Val == 0 || Val == 1;
-  case Type::Int8TyID:  return Val <= UINT8_MAX;
-  case Type::Int16TyID: return Val <= UINT16_MAX;
-  case Type::Int32TyID: return Val <= UINT32_MAX;
-  case Type::Int64TyID: return true; // always true, has to fit in largest type
-  }
+  unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth(); // assert okay
+  assert(NumBits <= 64 && "Not implemented: integers > 64-bits");
+  if (Ty == Type::Int1Ty)
+    return Val == 0 || Val == 1;
+  if (NumBits == 64)
+    return true; // always true, has to fit in largest type
+  uint64_t Max = (1ll << NumBits) - 1;
+  return Val <= Max;
 }
 
 bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
-  switch (Ty->getTypeID()) {
-  default:              return false; // These can't be represented as integers!
-  case Type::Int1TyID:  return (Val == 0 || Val == 1);
-  case Type::Int8TyID:  return (Val >= INT8_MIN && Val <= INT8_MAX);
-  case Type::Int16TyID: return (Val >= INT16_MIN && Val <= UINT16_MAX);
-  case Type::Int32TyID: return (Val >= INT32_MIN && Val <= UINT32_MAX);
-  case Type::Int64TyID: return true; // always true, has to fit in largest type
-  }
+  unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth(); // assert okay
+  assert(NumBits <= 64 && "Not implemented: integers > 64-bits");
+  if (Ty == Type::Int1Ty)
+    return Val == 0 || Val == 1;
+  if (NumBits == 64)
+    return true; // always true, has to fit in largest type
+  int64_t Min = -(1ll << (NumBits-1));
+  int64_t Max = (1ll << (NumBits-1)) - 1;
+  return (Val >= Min && Val <= Max);
 }
 
 bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
@@ -1441,8 +1447,7 @@ Constant *ConstantExpr::getTruncOrBitCast(Constant *C, const Type *Ty) {
 
 Constant *ConstantExpr::getPointerCast(Constant *S, const Type *Ty) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
-  assert((Ty->isIntegral() || Ty->getTypeID() == Type::PointerTyID) &&
-         "Invalid cast");
+  assert((Ty->isIntegral() || isa<PointerType>(Ty)) && "Invalid cast");
 
   if (Ty->isIntegral())
     return getCast(Instruction::PtrToInt, S, Ty);

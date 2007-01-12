@@ -241,12 +241,21 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
                                uint64_t &Size, unsigned char &Alignment) {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getTypeID()) {
-  case Type::Int1TyID:   Size = 1; Alignment = TD->getBoolAlignment(); return;
-  case Type::VoidTyID:
-  case Type::Int8TyID:   Size = 1; Alignment = TD->getByteAlignment(); return;
-  case Type::Int16TyID:  Size = 2; Alignment = TD->getShortAlignment(); return;
-  case Type::Int32TyID:  Size = 4; Alignment = TD->getIntAlignment(); return;
-  case Type::Int64TyID:  Size = 8; Alignment = TD->getLongAlignment(); return;
+  case Type::IntegerTyID: {
+    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+    if (BitWidth <= 8) {
+      Size = 1; Alignment = TD->getByteAlignment();
+    } else if (BitWidth <= 16) {
+      Size = 2; Alignment = TD->getShortAlignment();
+    } else if (BitWidth <= 32) {
+      Size = 4; Alignment = TD->getIntAlignment();
+    } else if (BitWidth <= 64) {
+      Size = 8; Alignment = TD->getLongAlignment();
+    } else
+      assert(0 && "Integer types > 64 bits not supported.");
+    return;
+  }
+  case Type::VoidTyID:   Size = 1; Alignment = TD->getByteAlignment(); return;
   case Type::FloatTyID:  Size = 4; Alignment = TD->getFloatAlignment(); return;
   case Type::DoubleTyID: Size = 8; Alignment = TD->getDoubleAlignment(); return;
   case Type::LabelTyID:

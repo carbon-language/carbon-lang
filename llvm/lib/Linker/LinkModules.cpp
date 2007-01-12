@@ -111,6 +111,12 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
 
   // Otherwise, resolve the used type used by this derived type...
   switch (DestTyT->getTypeID()) {
+  case Type::IntegerTyID: {
+    if (cast<IntegerType>(DestTyT)->getBitWidth() !=
+        cast<IntegerType>(SrcTyT)->getBitWidth())
+      return true;
+    return false;
+  }
   case Type::FunctionTyID: {
     if (cast<FunctionType>(DestTyT)->isVarArg() !=
         cast<FunctionType>(SrcTyT)->isVarArg() ||
@@ -275,7 +281,7 @@ static Value *RemapOperand(const Value *In,
   Value *Result = 0;
   if (const Constant *CPV = dyn_cast<Constant>(In)) {
     if ((!isa<DerivedType>(CPV->getType()) && !isa<ConstantExpr>(CPV)) ||
-        isa<ConstantAggregateZero>(CPV))
+        isa<ConstantInt>(CPV) || isa<ConstantAggregateZero>(CPV))
       return const_cast<Constant*>(CPV);   // Simple constants stay identical.
 
     if (const ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {

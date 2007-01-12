@@ -176,12 +176,18 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
   
   const Type *Ty = CI->getType();
   const char *IntName;
-  switch (Ty->getTypeID()) {
-  default: return false;
-  case Type::Int16TyID: IntName = "llvm.bswap.i16"; break;
-  case Type::Int32TyID:   IntName = "llvm.bswap.i32"; break;
-  case Type::Int64TyID:  IntName = "llvm.bswap.i64"; break;
-  }
+  if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
+    unsigned BitWidth = ITy->getBitWidth();
+    if (BitWidth > 8 && BitWidth <= 16)
+      IntName = "llvm.bswap.i16";
+    else if (BitWidth > 24  && BitWidth <= 32)
+      IntName = "llvm.bswap.i32";
+    else if (BitWidth > 56 && BitWidth <= 64)
+      IntName = "llvm.bswap.i64";
+    else
+      return false;
+  } else
+    return false;
 
   // Okay, we can do this xform, do so now.
   Module *M = CI->getParent()->getParent()->getParent();

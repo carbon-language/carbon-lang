@@ -118,7 +118,7 @@ namespace {
                             bool isSigned = false,
                             const std::string &VariableName = "",
                             bool IgnoreName = false);
-    std::ostream &printPrimitiveType(std::ostream &Out, const Type *Ty, 
+    std::ostream &printSimpleType(std::ostream &Out, const Type *Ty, 
                                      bool isSigned, 
                                      const std::string &NameSoFar = "");
 
@@ -364,22 +364,29 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
 }
 
 std::ostream &
-CWriter::printPrimitiveType(std::ostream &Out, const Type *Ty, bool isSigned,
+CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
                             const std::string &NameSoFar) {
-  assert(Ty->isPrimitiveType() && "Invalid type for printPrimitiveType");
+  assert((Ty->isPrimitiveType() || Ty->isIntegral()) && 
+         "Invalid type for printSimpleType");
   switch (Ty->getTypeID()) {
-  case Type::VoidTyID:   return Out << "void "               << NameSoFar;
-  case Type::Int1TyID:   return Out << "bool "               << NameSoFar;
-  case Type::Int8TyID:
-    return Out << (isSigned?"signed":"unsigned") << " char " << NameSoFar;
-  case Type::Int16TyID:  
-    return Out << (isSigned?"signed":"unsigned") << " short " << NameSoFar;
-  case Type::Int32TyID:    
-    return Out << (isSigned?"signed":"unsigned") << " int " << NameSoFar;
-  case Type::Int64TyID:   
-    return Out << (isSigned?"signed":"unsigned") << " long long " << NameSoFar;
-  case Type::FloatTyID:  return Out << "float "              << NameSoFar;
-  case Type::DoubleTyID: return Out << "double "             << NameSoFar;
+  case Type::VoidTyID:   return Out << "void " << NameSoFar;
+  case Type::IntegerTyID: {
+    unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth();
+    if (NumBits == 1) 
+      return Out << "bool " << NameSoFar;
+    else if (NumBits <= 8)
+      return Out << (isSigned?"signed":"unsigned") << " char " << NameSoFar;
+    else if (NumBits <= 16)
+      return Out << (isSigned?"signed":"unsigned") << " short " << NameSoFar;
+    else if (NumBits <= 32)
+      return Out << (isSigned?"signed":"unsigned") << " int " << NameSoFar;
+    else { 
+      assert(NumBits <= 64 && "Bit widths > 64 not implemented yet");
+      return Out << (isSigned?"signed":"unsigned") << " long long "<< NameSoFar;
+    }
+  }
+  case Type::FloatTyID:  return Out << "float "   << NameSoFar;
+  case Type::DoubleTyID: return Out << "double "  << NameSoFar;
   default :
     cerr << "Unknown primitive type: " << *Ty << "\n";
     abort();
@@ -392,11 +399,11 @@ CWriter::printPrimitiveType(std::ostream &Out, const Type *Ty, bool isSigned,
 std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  bool isSigned, const std::string &NameSoFar,
                                  bool IgnoreName) {
-  if (Ty->isPrimitiveType()) {
+  if (Ty->isPrimitiveType() || Ty->isIntegral()) {
     // FIXME:Signedness. When integer types are signless, this should just
     // always pass "false" for the sign of the primitive type. The instructions
     // will figure out how the value is to be interpreted.
-    printPrimitiveType(Out, Ty, isSigned, NameSoFar);
+    printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
 
@@ -624,13 +631,13 @@ void CWriter::printCast(unsigned opc, const Type *SrcTy, const Type *DstTy) {
     case Instruction::PtrToInt:
     case Instruction::FPToUI: // For these, make sure we get an unsigned dest
       Out << '(';
-      printPrimitiveType(Out, DstTy, false);
+      printSimpleType(Out, DstTy, false);
       Out << ')';
       break;
     case Instruction::SExt: 
     case Instruction::FPToSI: // For these, make sure we get a signed dest
       Out << '(';
-      printPrimitiveType(Out, DstTy, true);
+      printSimpleType(Out, DstTy, true);
       Out << ')';
       break;
     default:
@@ -642,13 +649,13 @@ void CWriter::printCast(unsigned opc, const Type *SrcTy, const Type *DstTy) {
     case Instruction::UIToFP:
     case Instruction::ZExt:
       Out << '(';
-      printPrimitiveType(Out, SrcTy, false);
+      printSimpleType(Out, SrcTy, false);
       Out << ')';
       break;
     case Instruction::SIToFP:
     case Instruction::SExt:
       Out << '(';
-      printPrimitiveType(Out, SrcTy, true); 
+      printSimpleType(Out, SrcTy, true); 
       Out << ')';
       break;
     case Instruction::IntToPtr:
@@ -832,7 +839,7 @@ void CWriter::printConstant(Constant *CPV) {
       Out << (CI->getZExtValue() ? '1' : '0') ;
     else {
       Out << "((";
-      printPrimitiveType(Out, Ty, false) << ')';
+      printSimpleType(Out, Ty, false) << ')';
       if (CI->isMinValue(true)) 
         Out << CI->getZExtValue() << 'u';
       else
@@ -1019,7 +1026,7 @@ bool CWriter::printConstExprCast(const ConstantExpr* CE) {
   if (NeedsExplicitCast) {
     Out << "((";
     if (Ty->isInteger())
-      printPrimitiveType(Out, Ty, TypeIsSigned);
+      printSimpleType(Out, Ty, TypeIsSigned);
     else
       printType(Out, Ty); // not integer, sign doesn't matter
     Out << ")(";
@@ -1064,7 +1071,7 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
   // operand.
   if (shouldCast) {
     Out << "((";
-    printPrimitiveType(Out, OpTy, typeIsSigned);
+    printSimpleType(Out, OpTy, typeIsSigned);
     Out << ")";
     printConstant(CPV);
     Out << ")";
@@ -1120,14 +1127,14 @@ bool CWriter::writeInstructionCast(const Instruction &I) {
   case Instruction::URem: 
   case Instruction::UDiv: 
     Out << "((";
-    printPrimitiveType(Out, Ty, false);
+    printSimpleType(Out, Ty, false);
     Out << ")(";
     return true;
   case Instruction::AShr:
   case Instruction::SRem: 
   case Instruction::SDiv: 
     Out << "((";
-    printPrimitiveType(Out, Ty, true);
+    printSimpleType(Out, Ty, true);
     Out << ")(";
     return true;
   default: break;
@@ -1174,7 +1181,7 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
   // operand.
   if (shouldCast) {
     Out << "((";
-    printPrimitiveType(Out, OpTy, castIsSigned);
+    printSimpleType(Out, OpTy, castIsSigned);
     Out << ")";
     writeOperand(Operand);
     Out << ")";
@@ -1222,7 +1229,7 @@ void CWriter::writeOperandWithCast(Value* Operand, ICmpInst::Predicate predicate
   if (shouldCast) {
     Out << "((";
     if (OpTy->isInteger())
-      printPrimitiveType(Out, OpTy, castIsSigned);
+      printSimpleType(Out, OpTy, castIsSigned);
     else
       printType(Out, OpTy); // not integer, sign doesn't matter
     Out << ")";
@@ -1711,7 +1718,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
 void CWriter::printContainedStructs(const Type *Ty,
                                     std::set<const StructType*> &StructPrinted){
   // Don't walk through pointers.
-  if (isa<PointerType>(Ty) || Ty->isPrimitiveType()) return;
+  if (isa<PointerType>(Ty) || Ty->isPrimitiveType() || Ty->isIntegral()) return;
   
   // Print all contained types first.
   for (Type::subtype_iterator I = Ty->subtype_begin(),
@@ -2237,9 +2244,14 @@ static const char * getFloatBitCastField(const Type *Ty) {
   switch (Ty->getTypeID()) {
     default: assert(0 && "Invalid Type");
     case Type::FloatTyID:  return "Float";
-    case Type::Int32TyID:  return "Int32";
     case Type::DoubleTyID: return "Double";
-    case Type::Int64TyID:  return "Int64";
+    case Type::IntegerTyID: {
+      unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth();
+      if (NumBits <= 32)
+        return "Int32";
+      else
+        return "Int64";
+    }
   }
 }
 

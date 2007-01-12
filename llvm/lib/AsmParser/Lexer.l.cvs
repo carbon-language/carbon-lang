@@ -165,6 +165,8 @@ StringConstant \"[^\"]*\"
 EPInteger     %[0-9]+
 ENInteger    %-[0-9]+
 
+IntegerType i[0-9]*
+
 
 /* E[PN]Integer: match positive and negative literal integer values */
 PInteger   [0-9]+
@@ -235,15 +237,18 @@ x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
 void            { RET_TY(Type::VoidTy,  VOID);  }
 bool            { RET_TY(Type::Int1Ty,  BOOL);  }
-i8              { RET_TY(Type::Int8Ty,  INT8);  }
-i16             { RET_TY(Type::Int16Ty, INT16); }
-i32             { RET_TY(Type::Int32Ty, INT32); }
-i64             { RET_TY(Type::Int64Ty, INT64); }
 float           { RET_TY(Type::FloatTy, FLOAT); }
 double          { RET_TY(Type::DoubleTy,DOUBLE);}
 label           { RET_TY(Type::LabelTy, LABEL); }
 type            { return TYPE;   }
 opaque          { return OPAQUE; }
+{IntegerType}   { uint64_t NumBits = atoull(yytext+1);
+                  if (NumBits < IntegerType::MIN_INT_BITS || 
+                      NumBits > IntegerType::MAX_INT_BITS)
+                    GenerateError("Bitwidth for integer type out of range!");
+                  const Type* Ty = IntegerType::get(NumBits);
+                  RET_TY(Ty, INTTYPE);
+                }
 
 add             { RET_TOK(BinaryOpVal, Add, ADD); }
 sub             { RET_TOK(BinaryOpVal, Sub, SUB); }

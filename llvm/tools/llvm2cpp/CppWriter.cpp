@@ -161,28 +161,25 @@ sanitize(std::string& str) {
       str[i] = '_';
 }
 
-inline const char* 
+inline std::string
 getTypePrefix(const Type* Ty ) {
-  const char* prefix;
   switch (Ty->getTypeID()) {
-    case Type::VoidTyID:     prefix = "void_"; break;
-    case Type::Int1TyID:     prefix = "bool_"; break; 
-    case Type::Int8TyID:     prefix = "int8_"; break;
-    case Type::Int16TyID:    prefix = "int16_"; break;
-    case Type::Int32TyID:    prefix = "int32_"; break;
-    case Type::Int64TyID:    prefix = "int64_"; break;
-    case Type::FloatTyID:    prefix = "float_"; break;
-    case Type::DoubleTyID:   prefix = "double_"; break;
-    case Type::LabelTyID:    prefix = "label_"; break;
-    case Type::FunctionTyID: prefix = "func_"; break;
-    case Type::StructTyID:   prefix = "struct_"; break;
-    case Type::ArrayTyID:    prefix = "array_"; break;
-    case Type::PointerTyID:  prefix = "ptr_"; break;
-    case Type::PackedTyID:   prefix = "packed_"; break;
-    case Type::OpaqueTyID:   prefix = "opaque_"; break;
-    default:                 prefix = "other_"; break;
+    case Type::VoidTyID:     return "void_";
+    case Type::IntegerTyID:  
+      return std::string("int") + utostr(cast<IntegerType>(Ty)->getBitWidth()) +
+        "_";
+    case Type::FloatTyID:    return "float_"; 
+    case Type::DoubleTyID:   return "double_"; 
+    case Type::LabelTyID:    return "label_"; 
+    case Type::FunctionTyID: return "func_"; 
+    case Type::StructTyID:   return "struct_"; 
+    case Type::ArrayTyID:    return "array_"; 
+    case Type::PointerTyID:  return "ptr_"; 
+    case Type::PackedTyID:   return "packed_"; 
+    case Type::OpaqueTyID:   return "opaque_"; 
+    default:                 return "other_"; 
   }
-  return prefix;
+  return "unknown_";
 }
 
 // Looks up the type in the symbol table and returns a pointer to its name or
@@ -313,14 +310,13 @@ std::string
 CppWriter::getCppName(const Type* Ty)
 {
   // First, handle the primitive types .. easy
-  if (Ty->isPrimitiveType()) {
+  if (Ty->isPrimitiveType() || Ty->isIntegral()) {
     switch (Ty->getTypeID()) {
       case Type::VoidTyID:   return "Type::VoidTy";
-      case Type::Int1TyID:   return "Type::Int1Ty"; 
-      case Type::Int8TyID:   return "Type::Int8Ty";
-      case Type::Int16TyID:  return "Type::Int16Ty";
-      case Type::Int32TyID:  return "Type::Int32Ty";
-      case Type::Int64TyID:  return "Type::Int64Ty";
+      case Type::IntegerTyID: {
+        unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+        return "IntegerType::get(" + utostr(BitWidth) + ")";
+      }
       case Type::FloatTyID:  return "Type::FloatTy";
       case Type::DoubleTyID: return "Type::DoubleTy";
       case Type::LabelTyID:  return "Type::LabelTy";
@@ -414,7 +410,7 @@ CppWriter::printCppName(const Value* val) {
 bool
 CppWriter::printTypeInternal(const Type* Ty) {
   // We don't print definitions for primitive types
-  if (Ty->isPrimitiveType())
+  if (Ty->isPrimitiveType() || Ty->isIntegral())
     return false;
 
   // If we already defined this type, we don't need to define it again.
@@ -603,7 +599,8 @@ CppWriter::printTypes(const Module* M) {
 
     // For primitive types and types already defined, just add a name
     TypeMap::const_iterator TNI = TypeNames.find(TI->second);
-    if (TI->second->isPrimitiveType() || TNI != TypeNames.end()) {
+    if (TI->second->isIntegral() || TI->second->isPrimitiveType() || 
+        TNI != TypeNames.end()) {
       Out << "mod->addTypeName(\"";
       printEscapedString(TI->first);
       Out << "\", " << getCppName(TI->second) << ");";

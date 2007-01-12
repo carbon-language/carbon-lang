@@ -142,21 +142,24 @@ GenericValue JIT::runFunction(Function *F,
     GenericValue rv;
     switch (RetTy->getTypeID()) {
     default: assert(0 && "Unknown return type for function call!");
-    case Type::Int1TyID:
-      rv.Int1Val = ((bool(*)())(intptr_t)FPtr)();
+    case Type::IntegerTyID: {
+      unsigned BitWidth = cast<IntegerType>(RetTy)->getBitWidth();
+      if (BitWidth == 1)
+        rv.Int1Val = ((bool(*)())(intptr_t)FPtr)();
+      else if (BitWidth <= 8)
+        rv.Int8Val = ((char(*)())(intptr_t)FPtr)();
+      else if (BitWidth <= 16)
+        rv.Int16Val = ((short(*)())(intptr_t)FPtr)();
+      else if (BitWidth <= 32)
+        rv.Int32Val = ((int(*)())(intptr_t)FPtr)();
+      else if (BitWidth <= 64)
+        rv.Int64Val = ((int64_t(*)())(intptr_t)FPtr)();
+      else 
+        assert(0 && "Integer types > 64 bits not supported");
       return rv;
-    case Type::Int8TyID:
-      rv.Int8Val = ((char(*)())(intptr_t)FPtr)();
-      return rv;
-    case Type::Int16TyID:
-      rv.Int16Val = ((short(*)())(intptr_t)FPtr)();
-      return rv;
+    }
     case Type::VoidTyID:
-    case Type::Int32TyID:
       rv.Int32Val = ((int(*)())(intptr_t)FPtr)();
-      return rv;
-    case Type::Int64TyID:
-      rv.Int64Val = ((int64_t(*)())(intptr_t)FPtr)();
       return rv;
     case Type::FloatTyID:
       rv.FloatVal = ((float(*)())(intptr_t)FPtr)();
@@ -191,11 +194,22 @@ GenericValue JIT::runFunction(Function *F,
     const GenericValue &AV = ArgValues[i];
     switch (ArgTy->getTypeID()) {
     default: assert(0 && "Unknown argument type for function call!");
-    case Type::Int1TyID:   C = ConstantInt::get(ArgTy, AV.Int1Val); break;
-    case Type::Int8TyID:   C = ConstantInt::get(ArgTy, AV.Int8Val);  break;
-    case Type::Int16TyID:  C = ConstantInt::get(ArgTy, AV.Int16Val);  break;
-    case Type::Int32TyID:  C = ConstantInt::get(ArgTy, AV.Int32Val);    break;
-    case Type::Int64TyID:  C = ConstantInt::get(ArgTy, AV.Int64Val);   break;
+    case Type::IntegerTyID: {
+      unsigned BitWidth = cast<IntegerType>(ArgTy)->getBitWidth();
+      if (BitWidth == 1)
+        C = ConstantInt::get(ArgTy, AV.Int1Val);
+      else if (BitWidth <= 8)
+        C = ConstantInt::get(ArgTy, AV.Int8Val);
+      else if (BitWidth <= 16)
+        C = ConstantInt::get(ArgTy, AV.Int16Val);
+      else if (BitWidth <= 32)
+        C = ConstantInt::get(ArgTy, AV.Int32Val); 
+      else if (BitWidth <= 64)
+        C = ConstantInt::get(ArgTy, AV.Int64Val);
+      else
+        assert(0 && "Integer types > 64 bits not supported");
+      break;
+    }
     case Type::FloatTyID:  C = ConstantFP ::get(ArgTy, AV.FloatVal);  break;
     case Type::DoubleTyID: C = ConstantFP ::get(ArgTy, AV.DoubleVal); break;
     case Type::PointerTyID:

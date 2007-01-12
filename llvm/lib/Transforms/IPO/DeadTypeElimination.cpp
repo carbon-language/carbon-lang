@@ -52,11 +52,14 @@ ModulePass *llvm::createDeadTypeEliminationPass() {
 //
 static inline bool ShouldNukeSymtabEntry(const Type *Ty){
   // Nuke all names for primitive types!
-  if (Ty->isPrimitiveType()) return true;
+  if (Ty->isPrimitiveType() || Ty->isIntegral()) 
+    return true;
 
   // Nuke all pointers to primitive types as well...
   if (const PointerType *PT = dyn_cast<PointerType>(Ty))
-    if (PT->getElementType()->isPrimitiveType()) return true;
+    if (PT->getElementType()->isPrimitiveType() ||
+        PT->getElementType()->isIntegral()) 
+      return true;
 
   return false;
 }

@@ -50,6 +50,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -528,18 +529,27 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   // induction variable to the right size for them, avoiding the need for the
   // code evaluation methods to insert induction variables of different sizes.
   if (DifferingSizes) {
-    bool InsertedSizes[17] = { false };
-    InsertedSizes[LargestType->getPrimitiveSize()] = true;
-    for (unsigned i = 0, e = IndVars.size(); i != e; ++i)
-      if (!InsertedSizes[IndVars[i].first->getType()->getPrimitiveSize()]) {
+    SmallVector<unsigned,4> InsertedSizes;
+    InsertedSizes.push_back(LargestType->getPrimitiveSizeInBits());
+    for (unsigned i = 0, e = IndVars.size(); i != e; ++i) {
+      unsigned ithSize = IndVars[i].first->getType()->getPrimitiveSizeInBits();
+      bool alreadyInsertedSize = false;
+      for (SmallVector<unsigned,4>::iterator I = InsertedSizes.begin(), 
+           E = InsertedSizes.end(); I != E; ++I)
+        if (*I == ithSize) {
+          alreadyInsertedSize = true;
+          break;
+        }
+      if (!alreadyInsertedSize) {
         PHINode *PN = IndVars[i].first;
-        InsertedSizes[PN->getType()->getPrimitiveSize()] = true;
+        InsertedSizes.push_back(ithSize);
         Instruction *New = new TruncInst(IndVar, PN->getType(), "indvar",
                                          InsertPt);
         Rewriter.addInsertedValue(New, SE->getSCEV(New));
         DOUT << "INDVARS: Made trunc IV for " << *PN
              << "   NewVal = " << *New << "\n";
       }
+    }
   }
 
   // Rewrite all induction variables in terms of the canonical induction

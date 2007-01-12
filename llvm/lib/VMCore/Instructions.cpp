@@ -1528,7 +1528,7 @@ CastInst *CastInst::createPointerCast(Value *S, const Type *Ty,
                                       const std::string &Name,
                                       BasicBlock *InsertAtEnd) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
-  assert((Ty->isIntegral() || Ty->getTypeID() == Type::PointerTyID) &&
+  assert((Ty->isIntegral() || isa<PointerType>(Ty)) &&
          "Invalid cast");
 
   if (Ty->isIntegral())
@@ -1541,7 +1541,7 @@ CastInst *CastInst::createPointerCast(Value *S, const Type *Ty,
                                       const std::string &Name, 
                                       Instruction *InsertBefore) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
-  assert((Ty->isIntegral() || Ty->getTypeID() == Type::PointerTyID) &&
+  assert((Ty->isIntegral() || isa<PointerType>(Ty)) &&
          "Invalid cast");
 
   if (Ty->isIntegral())
@@ -1913,7 +1913,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
     assert(Op0Ty == Op1Ty &&
            "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(Op0Ty->isIntegral() || Op0Ty->getTypeID() == Type::PointerTyID ||
+    assert(Op0Ty->isIntegral() || isa<PointerType>(Op0Ty) ||
            (isa<PackedType>(Op0Ty) && 
             cast<PackedType>(Op0Ty)->getElementType()->isIntegral()) &&
            "Invalid operand types for ICmp instruction");
@@ -1948,7 +1948,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
     assert(Op0Ty == Op1Ty &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(Op0Ty->isIntegral() || Op0Ty->getTypeID() == Type::PointerTyID ||
+    assert(Op0Ty->isIntegral() || isa<PointerType>(Op0Ty) ||
            (isa<PackedType>(Op0Ty) && 
             cast<PackedType>(Op0Ty)->getElementType()->isIntegral()) &&
            "Invalid operand types for ICmp instruction");

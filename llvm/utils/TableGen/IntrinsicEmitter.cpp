@@ -110,12 +110,14 @@ EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints,
 
 static void EmitTypeVerify(std::ostream &OS, Record *ArgType) {
   OS << "(int)" << ArgType->getValueAsString("TypeVal") << ", ";
+  // If this is an integer type, check the width is correct.
+  if (ArgType->isSubClassOf("LLVMIntegerType"))
+    OS << ArgType->getValueAsInt("Width") << ", ";
 
   // If this is a packed type, check that the subtype and size are correct.
-  if (ArgType->isSubClassOf("LLVMPackedType")) {
-    Record *SubType = ArgType->getValueAsDef("ElTy");
-    OS << "(int)" << SubType->getValueAsString("TypeVal") << ", "
-       << ArgType->getValueAsInt("NumElts") << ", ";
+  else if (ArgType->isSubClassOf("LLVMPackedType")) {
+    EmitTypeVerify(OS, ArgType->getValueAsDef("ElTy"));
+    OS << ArgType->getValueAsInt("NumElts") << ", ";
   }
 }
 

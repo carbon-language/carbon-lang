@@ -743,7 +743,7 @@ void Verifier::visitICmpInst(ICmpInst& IC) {
   Assert1(Op0Ty == Op1Ty,
           "Both operands to ICmp instruction are not of the same type!", &IC);
   // Check that the operands are the right type
-  Assert1(Op0Ty->isIntegral() || Op0Ty->getTypeID() == Type::PointerTyID,
+  Assert1(Op0Ty->isIntegral() || isa<PointerType>(Op0Ty),
           "Invalid operand types for ICmp instruction", &IC);
   visitInstruction(IC);
 }
@@ -1005,7 +1005,7 @@ void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
     else
       Ty = FTy->getParamType(ArgNo-1);
     
-    if (Ty->getTypeID() != TypeID) {
+    if (TypeID != Ty->getTypeID()) {
       if (ArgNo == 0)
         CheckFailed("Intrinsic prototype has incorrect result type!", F);
       else
@@ -1013,18 +1013,43 @@ void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
       break;
     }
 
-    // If this is a packed argument, verify the number and type of elements.
-    if (TypeID == Type::PackedTyID) {
-      const PackedType *PTy = cast<PackedType>(Ty);
-      if (va_arg(VA, int) != PTy->getElementType()->getTypeID()) {
-        CheckFailed("Intrinsic prototype has incorrect vector element type!",F);
+    if (TypeID == Type::IntegerTyID) {
+      unsigned GotBits = (unsigned) va_arg(VA, int);
+      unsigned ExpectBits = cast<IntegerType>(Ty)->getBitWidth();
+      if (GotBits != ExpectBits) {
+        std::string bitmsg = " Expecting " + utostr(ExpectBits) + " but got " +
+                             utostr(GotBits) + " bits.";
+        if (ArgNo == 0)
+          CheckFailed("Intrinsic prototype has incorrect integer result width!"
+                      + bitmsg, F);
+        else
+          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " has "
+                      "incorrect integer width!" + bitmsg, F);
         break;
       }
-
+    } else if (TypeID == Type::PackedTyID) {
+      // If this is a packed argument, verify the number and type of elements.
+      const PackedType *PTy = cast<PackedType>(Ty);
+      int ElemTy = va_arg(VA, int);
+      if (ElemTy != PTy->getElementType()->getTypeID()) {
+        CheckFailed("Intrinsic prototype has incorrect vector element type!",
+                    F);
+        break;
+      }
+      if (ElemTy == Type::IntegerTyID) {
+        unsigned NumBits = (unsigned)va_arg(VA, int);
+        unsigned ExpectedBits = 
+          cast<IntegerType>(PTy->getElementType())->getBitWidth();
+        if (NumBits != ExpectedBits) {
+          CheckFailed("Intrinsic prototype has incorrect vector element type!",
+                      F);
+          break;
+        }
+      }
       if ((unsigned)va_arg(VA, int) != PTy->getNumElements()) {
         CheckFailed("Intrinsic prototype has incorrect number of "
                     "vector elements!",F);
-        break;
+          break;
       }
     }
   }

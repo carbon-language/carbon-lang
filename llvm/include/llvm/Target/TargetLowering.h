@@ -22,7 +22,7 @@
 #ifndef LLVM_TARGET_TARGETLOWERING_H
 #define LLVM_TARGET_TARGETLOWERING_H
 
-#include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include <map>
 
@@ -429,11 +429,16 @@ public:
     switch (Ty->getTypeID()) {
     default: assert(0 && "Unknown type!");
     case Type::VoidTyID:    return MVT::isVoid;
-    case Type::Int1TyID:    return MVT::i1;
-    case Type::Int8TyID:    return MVT::i8;
-    case Type::Int16TyID:   return MVT::i16;
-    case Type::Int32TyID:   return MVT::i32;
-    case Type::Int64TyID:   return MVT::i64;
+    case Type::IntegerTyID:
+      switch (cast<IntegerType>(Ty)->getBitWidth()) {
+        default: assert(0 && "Invalid width for value type");
+        case 1:    return MVT::i1;
+        case 8:    return MVT::i8;
+        case 16:   return MVT::i16;
+        case 32:   return MVT::i32;
+        case 64:   return MVT::i64;
+      }
+      break;
     case Type::FloatTyID:   return MVT::f32;
     case Type::DoubleTyID:  return MVT::f64;
     case Type::PointerTyID: return PointerTy;

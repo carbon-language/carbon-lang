@@ -296,6 +296,28 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
   return state.getGlobalAddressMap(locked)[GV];
 }
 
+/// This macro is used to handle a variety of situations involing integer
+/// values where the action should be done to one of the GenericValue members.
+/// THEINTTY is a const Type * for the integer type. ACTION1 comes before
+/// the GenericValue, ACTION2 comes after.
+#define DO_FOR_INTEGER(THEINTTY, ACTION) \
+   { \
+      unsigned BitWidth = cast<IntegerType>(THEINTTY)->getBitWidth(); \
+      if (BitWidth == 1) {\
+        ACTION(Int1Val); \
+      } else if (BitWidth <= 8) {\
+        ACTION(Int8Val); \
+      } else if (BitWidth <= 16) {\
+        ACTION(Int16Val); \
+      } else if (BitWidth <= 32) { \
+        ACTION(Int32Val); \
+      } else if (BitWidth <= 64) { \
+        ACTION(Int64Val); \
+      } else   {\
+        assert(0 && "Not implemented: integer types > 64 bits"); \
+      } \
+   }
+
 /// This function converts a Constant* into a GenericValue. The interesting 
 /// part is if C is a ConstantExpr.
 /// @brief Get a GenericValue for a Constnat*
@@ -350,34 +372,21 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       // IntToPtr casts are just so special. Cast to intptr_t first.
       Constant *Op = CE->getOperand(0);
       GenericValue GV = getConstantValue(Op);
-      switch (Op->getType()->getTypeID()) {
-        case Type::Int1TyID:    return PTOGV((void*)(uintptr_t)GV.Int1Val);
-        case Type::Int8TyID:   return PTOGV((void*)(uintptr_t)GV.Int8Val);
-        case Type::Int16TyID:  return PTOGV((void*)(uintptr_t)GV.Int16Val);
-        case Type::Int32TyID:    return PTOGV((void*)(uintptr_t)GV.Int32Val);
-        case Type::Int64TyID:   return PTOGV((void*)(uintptr_t)GV.Int64Val);
-        default: assert(0 && "Unknown integral type!");
-      }
+#define INT_TO_PTR_ACTION(FIELD) \
+        return PTOGV((void*)(uintptr_t)GV.FIELD)
+      DO_FOR_INTEGER(Op->getType(), INT_TO_PTR_ACTION)
+#undef INT_TO_PTR_ACTION
       break;
     }
     case Instruction::Add:
       switch (CE->getOperand(0)->getType()->getTypeID()) {
       default: assert(0 && "Bad add type!"); abort();
-      case Type::Int64TyID:
-        Result.Int64Val = getConstantValue(CE->getOperand(0)).Int64Val +
-                         getConstantValue(CE->getOperand(1)).Int64Val;
-        break;
-      case Type::Int32TyID:
-        Result.Int32Val = getConstantValue(CE->getOperand(0)).Int32Val +
-                        getConstantValue(CE->getOperand(1)).Int32Val;
-        break;
-      case Type::Int16TyID:
-        Result.Int16Val = getConstantValue(CE->getOperand(0)).Int16Val +
-                          getConstantValue(CE->getOperand(1)).Int16Val;
-        break;
-      case Type::Int8TyID:
-        Result.Int8Val = getConstantValue(CE->getOperand(0)).Int8Val +
-                          getConstantValue(CE->getOperand(1)).Int8Val;
+      case Type::IntegerTyID:
+#define ADD_ACTION(FIELD) \
+        Result.FIELD = getConstantValue(CE->getOperand(0)).FIELD + \
+                       getConstantValue(CE->getOperand(1)).FIELD;
+        DO_FOR_INTEGER(CE->getOperand(0)->getType(),ADD_ACTION);
+#undef ADD_ACTION
         break;
       case Type::FloatTyID:
         Result.FloatVal = getConstantValue(CE->getOperand(0)).FloatVal +
@@ -399,14 +408,26 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   switch (C->getType()->getTypeID()) {
 #define GET_CONST_VAL(TY, CTY, CLASS, GETMETH) \
   case Type::TY##TyID: Result.TY##Val = (CTY)cast<CLASS>(C)->GETMETH(); break
-    GET_CONST_VAL(Int1  , bool          , ConstantInt, getZExtValue);
-    GET_CONST_VAL(Int8  , unsigned char , ConstantInt, getZExtValue);
-    GET_CONST_VAL(Int16 , unsigned short, ConstantInt, getZExtValue);
-    GET_CONST_VAL(Int32 , unsigned int  , ConstantInt, getZExtValue);
-    GET_CONST_VAL(Int64 , uint64_t      , ConstantInt, getZExtValue);
     GET_CONST_VAL(Float , float         , ConstantFP, getValue);
     GET_CONST_VAL(Double, double        , ConstantFP, getValue);
 #undef GET_CONST_VAL
+  case Type::IntegerTyID: {
+    unsigned BitWidth = cast<IntegerType>(C->getType())->getBitWidth();
+    if (BitWidth == 1)
+      Result.Int1Val = (bool)cast<ConstantInt>(C)->getZExtValue();
+    else if (BitWidth <= 8)
+      Result.Int8Val = (uint8_t )cast<ConstantInt>(C)->getZExtValue();
+    else if (BitWidth <= 16)
+      Result.Int16Val = (uint16_t )cast<ConstantInt>(C)->getZExtValue();
+    else if (BitWidth <= 32)
+      Result.Int32Val = (uint32_t )cast<ConstantInt>(C)->getZExtValue();
+    else if (BitWidth <= 64)
+      Result.Int64Val = (uint64_t )cast<ConstantInt>(C)->getZExtValue();
+    else
+      assert("Integers with > 64-bits not implemented");
+    break;
+  }
+
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(C))
       Result.PointerVal = 0;
@@ -433,22 +454,43 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                                          const Type *Ty) {
   if (getTargetData()->isLittleEndian()) {
     switch (Ty->getTypeID()) {
-    case Type::Int1TyID:
-    case Type::Int8TyID:    Ptr->Untyped[0] = Val.Int8Val; break;
-    case Type::Int16TyID:   Ptr->Untyped[0] = Val.Int16Val & 255;
-                            Ptr->Untyped[1] = (Val.Int16Val >> 8) & 255;
-                            break;
-    Store4BytesLittleEndian:
+    case Type::IntegerTyID: {
+      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+      if (BitWidth <= 8)
+        Ptr->Untyped[0] = Val.Int8Val;
+      else if (BitWidth <= 16) {
+        Ptr->Untyped[0] = Val.Int16Val        & 255;
+        Ptr->Untyped[1] = (Val.Int16Val >> 8) & 255;
+      } else if (BitWidth <= 32) {
+        Ptr->Untyped[0] =  Val.Int32Val        & 255;
+        Ptr->Untyped[1] = (Val.Int32Val >>  8) & 255;
+        Ptr->Untyped[2] = (Val.Int32Val >> 16) & 255;
+        Ptr->Untyped[3] = (Val.Int32Val >> 24) & 255;
+      } else if (BitWidth <= 64) {
+        Ptr->Untyped[0] = (unsigned char)(Val.Int64Val      );
+        Ptr->Untyped[1] = (unsigned char)(Val.Int64Val >>  8);
+        Ptr->Untyped[2] = (unsigned char)(Val.Int64Val >> 16);
+        Ptr->Untyped[3] = (unsigned char)(Val.Int64Val >> 24);
+        Ptr->Untyped[4] = (unsigned char)(Val.Int64Val >> 32);
+        Ptr->Untyped[5] = (unsigned char)(Val.Int64Val >> 40);
+        Ptr->Untyped[6] = (unsigned char)(Val.Int64Val >> 48);
+        Ptr->Untyped[7] = (unsigned char)(Val.Int64Val >> 56);
+      } else
+        assert(0 && "Integer types > 64 bits not supported");
+      break;
+    }
+Store4BytesLittleEndian:
     case Type::FloatTyID:
-    case Type::Int32TyID:   Ptr->Untyped[0] =  Val.Int32Val       & 255;
-                            Ptr->Untyped[1] = (Val.Int32Val >>  8) & 255;
-                            Ptr->Untyped[2] = (Val.Int32Val >> 16) & 255;
-                            Ptr->Untyped[3] = (Val.Int32Val >> 24) & 255;
-                            break;
-    case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
-                              goto Store4BytesLittleEndian;
+      Ptr->Untyped[0] =  Val.Int32Val        & 255;
+      Ptr->Untyped[1] = (Val.Int32Val >>  8) & 255;
+      Ptr->Untyped[2] = (Val.Int32Val >> 16) & 255;
+      Ptr->Untyped[3] = (Val.Int32Val >> 24) & 255;
+      break;
+    case Type::PointerTyID: 
+      if (getTargetData()->getPointerSize() == 4)
+        goto Store4BytesLittleEndian;
+      /* FALL THROUGH */
     case Type::DoubleTyID:
-    case Type::Int64TyID:
       Ptr->Untyped[0] = (unsigned char)(Val.Int64Val      );
       Ptr->Untyped[1] = (unsigned char)(Val.Int64Val >>  8);
       Ptr->Untyped[2] = (unsigned char)(Val.Int64Val >> 16);
@@ -463,22 +505,43 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
     }
   } else {
     switch (Ty->getTypeID()) {
-    case Type::Int1TyID:
-    case Type::Int8TyID:    Ptr->Untyped[0] = Val.Int8Val; break;
-    case Type::Int16TyID:   Ptr->Untyped[1] = Val.Int16Val & 255;
-                            Ptr->Untyped[0] = (Val.Int16Val >> 8) & 255;
-                            break;
+    case Type::IntegerTyID: {
+      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+      if (BitWidth <= 8)
+        Ptr->Untyped[0] = Val.Int8Val;
+      else if (BitWidth <= 16) {
+        Ptr->Untyped[1] =  Val.Int16Val       & 255;
+        Ptr->Untyped[0] = (Val.Int16Val >> 8) & 255;
+      } else if (BitWidth <= 32) {
+        Ptr->Untyped[3] =  Val.Int32Val        & 255;
+        Ptr->Untyped[2] = (Val.Int32Val >>  8) & 255;
+        Ptr->Untyped[1] = (Val.Int32Val >> 16) & 255;
+        Ptr->Untyped[0] = (Val.Int32Val >> 24) & 255;
+      } else if (BitWidth <= 64) {
+        Ptr->Untyped[7] = (unsigned char)(Val.Int64Val      );
+        Ptr->Untyped[6] = (unsigned char)(Val.Int64Val >>  8);
+        Ptr->Untyped[5] = (unsigned char)(Val.Int64Val >> 16);
+        Ptr->Untyped[4] = (unsigned char)(Val.Int64Val >> 24);
+        Ptr->Untyped[3] = (unsigned char)(Val.Int64Val >> 32);
+        Ptr->Untyped[2] = (unsigned char)(Val.Int64Val >> 40);
+        Ptr->Untyped[1] = (unsigned char)(Val.Int64Val >> 48);
+        Ptr->Untyped[0] = (unsigned char)(Val.Int64Val >> 56);
+      } else
+        assert(0 && "Integer types > 64 bits not supported");
+      break;
+    }
     Store4BytesBigEndian:
     case Type::FloatTyID:
-    case Type::Int32TyID:   Ptr->Untyped[3] =  Val.Int32Val        & 255;
-                            Ptr->Untyped[2] = (Val.Int32Val >>  8) & 255;
-                            Ptr->Untyped[1] = (Val.Int32Val >> 16) & 255;
-                            Ptr->Untyped[0] = (Val.Int32Val >> 24) & 255;
-                            break;
-    case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
-                              goto Store4BytesBigEndian;
+      Ptr->Untyped[3] =  Val.Int32Val        & 255;
+      Ptr->Untyped[2] = (Val.Int32Val >>  8) & 255;
+      Ptr->Untyped[1] = (Val.Int32Val >> 16) & 255;
+      Ptr->Untyped[0] = (Val.Int32Val >> 24) & 255;
+      break;
+    case Type::PointerTyID: 
+      if (getTargetData()->getPointerSize() == 4)
+        goto Store4BytesBigEndian;
+      /* FALL THROUGH */
     case Type::DoubleTyID:
-    case Type::Int64TyID:
       Ptr->Untyped[7] = (unsigned char)(Val.Int64Val      );
       Ptr->Untyped[6] = (unsigned char)(Val.Int64Val >>  8);
       Ptr->Untyped[5] = (unsigned char)(Val.Int64Val >> 16);
@@ -501,60 +564,104 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
   GenericValue Result;
   if (getTargetData()->isLittleEndian()) {
     switch (Ty->getTypeID()) {
-    case Type::Int1TyID:
-    case Type::Int8TyID:    Result.Int8Val  = Ptr->Untyped[0]; break;
-    case Type::Int16TyID:   Result.Int16Val = (unsigned)Ptr->Untyped[0] |
-                                              ((unsigned)Ptr->Untyped[1] << 8);
-                            break;
+    case Type::IntegerTyID: {
+      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+      if (BitWidth <= 8)
+        Result.Int8Val  = Ptr->Untyped[0];
+      else if (BitWidth <= 16) {
+        Result.Int16Val =  (unsigned)Ptr->Untyped[0] |
+                          ((unsigned)Ptr->Untyped[1] << 8);
+      } else if (BitWidth <= 32) {
+        Result.Int32Val =  (unsigned)Ptr->Untyped[0] |
+                          ((unsigned)Ptr->Untyped[1] <<  8) |
+                          ((unsigned)Ptr->Untyped[2] << 16) |
+                          ((unsigned)Ptr->Untyped[3] << 24);
+      } else if (BitWidth <= 64) {
+        Result.Int64Val =  (uint64_t)Ptr->Untyped[0] |
+                          ((uint64_t)Ptr->Untyped[1] <<  8) |
+                          ((uint64_t)Ptr->Untyped[2] << 16) |
+                          ((uint64_t)Ptr->Untyped[3] << 24) |
+                          ((uint64_t)Ptr->Untyped[4] << 32) |
+                          ((uint64_t)Ptr->Untyped[5] << 40) |
+                          ((uint64_t)Ptr->Untyped[6] << 48) |
+                          ((uint64_t)Ptr->Untyped[7] << 56);
+      } else
+        assert(0 && "Integer types > 64 bits not supported");
+      break;
+    }
     Load4BytesLittleEndian:
     case Type::FloatTyID:
-    case Type::Int32TyID:    Result.Int32Val = (unsigned)Ptr->Untyped[0] |
-                                            ((unsigned)Ptr->Untyped[1] <<  8) |
-                                            ((unsigned)Ptr->Untyped[2] << 16) |
-                                            ((unsigned)Ptr->Untyped[3] << 24);
-                            break;
-    case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
-                              goto Load4BytesLittleEndian;
+      Result.Int32Val =  (unsigned)Ptr->Untyped[0] |
+                        ((unsigned)Ptr->Untyped[1] <<  8) |
+                        ((unsigned)Ptr->Untyped[2] << 16) |
+                        ((unsigned)Ptr->Untyped[3] << 24);
+      break;
+    case Type::PointerTyID: 
+      if (getTargetData()->getPointerSize() == 4)
+        goto Load4BytesLittleEndian;
+      /* FALL THROUGH */
     case Type::DoubleTyID:
-    case Type::Int64TyID:    Result.Int64Val = (uint64_t)Ptr->Untyped[0] |
-                                             ((uint64_t)Ptr->Untyped[1] <<  8) |
-                                             ((uint64_t)Ptr->Untyped[2] << 16) |
-                                             ((uint64_t)Ptr->Untyped[3] << 24) |
-                                             ((uint64_t)Ptr->Untyped[4] << 32) |
-                                             ((uint64_t)Ptr->Untyped[5] << 40) |
-                                             ((uint64_t)Ptr->Untyped[6] << 48) |
-                                             ((uint64_t)Ptr->Untyped[7] << 56);
-                            break;
+      Result.Int64Val =  (uint64_t)Ptr->Untyped[0] |
+                        ((uint64_t)Ptr->Untyped[1] <<  8) |
+                        ((uint64_t)Ptr->Untyped[2] << 16) |
+                        ((uint64_t)Ptr->Untyped[3] << 24) |
+                        ((uint64_t)Ptr->Untyped[4] << 32) |
+                        ((uint64_t)Ptr->Untyped[5] << 40) |
+                        ((uint64_t)Ptr->Untyped[6] << 48) |
+                        ((uint64_t)Ptr->Untyped[7] << 56);
+       break;
     default:
       cerr << "Cannot load value of type " << *Ty << "!\n";
       abort();
     }
   } else {
     switch (Ty->getTypeID()) {
-    case Type::Int1TyID:
-    case Type::Int8TyID:    Result.Int8Val  = Ptr->Untyped[0]; break;
-    case Type::Int16TyID:   Result.Int16Val = (unsigned)Ptr->Untyped[1] |
-                                             ((unsigned)Ptr->Untyped[0] << 8);
-                            break;
+    case Type::IntegerTyID: {
+      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+      if (BitWidth <= 8)
+        Result.Int8Val  = Ptr->Untyped[0];
+      else if (BitWidth <= 16) {
+        Result.Int16Val =  (unsigned)Ptr->Untyped[1] |
+                          ((unsigned)Ptr->Untyped[0] << 8);
+      } else if (BitWidth <= 32) {
+        Result.Int32Val =  (unsigned)Ptr->Untyped[3] |
+                          ((unsigned)Ptr->Untyped[2] <<  8) |
+                          ((unsigned)Ptr->Untyped[1] << 16) |
+                          ((unsigned)Ptr->Untyped[0] << 24);
+      } else if (BitWidth <= 64) {
+        Result.Int64Val =  (uint64_t)Ptr->Untyped[7] |
+                          ((uint64_t)Ptr->Untyped[6] <<  8) |
+                          ((uint64_t)Ptr->Untyped[5] << 16) |
+                          ((uint64_t)Ptr->Untyped[4] << 24) |
+                          ((uint64_t)Ptr->Untyped[3] << 32) |
+                          ((uint64_t)Ptr->Untyped[2] << 40) |
+                          ((uint64_t)Ptr->Untyped[1] << 48) |
+                          ((uint64_t)Ptr->Untyped[0] << 56);
+      } else
+        assert(0 && "Integer types > 64 bits not supported");
+      break;
+    }
     Load4BytesBigEndian:
     case Type::FloatTyID:
-    case Type::Int32TyID:   Result.Int32Val =(unsigned)Ptr->Untyped[3] |
-                                            ((unsigned)Ptr->Untyped[2] <<  8) |
-                                            ((unsigned)Ptr->Untyped[1] << 16) |
-                                            ((unsigned)Ptr->Untyped[0] << 24);
+      Result.Int32Val =  (unsigned)Ptr->Untyped[3] |
+                        ((unsigned)Ptr->Untyped[2] <<  8) |
+                        ((unsigned)Ptr->Untyped[1] << 16) |
+                        ((unsigned)Ptr->Untyped[0] << 24);
                             break;
-    case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
-                              goto Load4BytesBigEndian;
+    case Type::PointerTyID: 
+      if (getTargetData()->getPointerSize() == 4)
+        goto Load4BytesBigEndian;
+      /* FALL THROUGH */
     case Type::DoubleTyID:
-    case Type::Int64TyID:   Result.Int64Val = (uint64_t)Ptr->Untyped[7] |
-                                             ((uint64_t)Ptr->Untyped[6] <<  8) |
-                                             ((uint64_t)Ptr->Untyped[5] << 16) |
-                                             ((uint64_t)Ptr->Untyped[4] << 24) |
-                                             ((uint64_t)Ptr->Untyped[3] << 32) |
-                                             ((uint64_t)Ptr->Untyped[2] << 40) |
-                                             ((uint64_t)Ptr->Untyped[1] << 48) |
-                                             ((uint64_t)Ptr->Untyped[0] << 56);
-                            break;
+      Result.Int64Val =  (uint64_t)Ptr->Untyped[7] |
+                        ((uint64_t)Ptr->Untyped[6] <<  8) |
+                        ((uint64_t)Ptr->Untyped[5] << 16) |
+                        ((uint64_t)Ptr->Untyped[4] << 24) |
+                        ((uint64_t)Ptr->Untyped[3] << 32) |
+                        ((uint64_t)Ptr->Untyped[2] << 40) |
+                        ((uint64_t)Ptr->Untyped[1] << 48) |
+                        ((uint64_t)Ptr->Untyped[0] << 56);
+      break;
     default:
       cerr << "Cannot load value of type " << *Ty << "!\n";
       abort();
@@ -708,8 +815,8 @@ void ExecutionEngine::emitGlobals() {
       }
     }
     
-    // Now that all of the globals are set up in memory, loop through them all and
-    // initialize their contents.
+    // Now that all of the globals are set up in memory, loop through them all 
+    // and initialize their contents.
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
       if (!I->isExternal()) {

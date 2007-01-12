@@ -200,16 +200,18 @@ inline BytecodeBlock::~BytecodeBlock() { // Do backpatch when block goes out
 void BytecodeWriter::outputType(const Type *T) {
   const StructType* STy = dyn_cast<StructType>(T);
   if(STy && STy->isPacked())
-    output_vbr((unsigned)Type::BC_ONLY_PackedStructTyID);
+    output_vbr((unsigned)Type::PackedStructTyID);
   else
     output_vbr((unsigned)T->getTypeID());
 
   // That's all there is to handling primitive types...
-  if (T->isPrimitiveType()) {
+  if (T->isPrimitiveType())
     return;     // We might do this if we alias a prim type: %x = type int
-  }
 
   switch (T->getTypeID()) {   // Handle derived types now.
+  case Type::IntegerTyID:
+    output_vbr(cast<IntegerType>(T)->getBitWidth());
+    break;
   case Type::FunctionTyID: {
     const FunctionType *MT = cast<FunctionType>(T);
     int Slot = Table.getSlot(MT->getReturnType());
@@ -290,8 +292,8 @@ void BytecodeWriter::outputType(const Type *T) {
 }
 
 void BytecodeWriter::outputConstant(const Constant *CPV) {
-  assert((CPV->getType()->isPrimitiveType() || !CPV->isNullValue()) &&
-         "Shouldn't output null constants!");
+  assert(((CPV->getType()->isPrimitiveType() || CPV->getType()->isIntegral()) ||
+          !CPV->isNullValue()) && "Shouldn't output null constants!");
 
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
@@ -321,19 +323,21 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   }
 
   switch (CPV->getType()->getTypeID()) {
-  case Type::Int1TyID:    // Boolean Types
-    if (cast<ConstantInt>(CPV)->getZExtValue())
-      output_vbr(1U);
-    else
-      output_vbr(0U);
+  case Type::IntegerTyID: { // Integer types...
+    unsigned NumBits = cast<IntegerType>(CPV->getType())->getBitWidth();
+    if (NumBits == 1)
+      if (cast<ConstantInt>(CPV)->getZExtValue())
+        output_vbr(1U);
+      else
+        output_vbr(0U);
+    else if (NumBits <= 32)
+      output_vbr(uint32_t(cast<ConstantInt>(CPV)->getZExtValue()));
+    else if (NumBits <= 64)
+      output_vbr(uint64_t(cast<ConstantInt>(CPV)->getZExtValue()));
+    else 
+      assert("Integer types > 64 bits not supported.");
     break;
-
-  case Type::Int8TyID:   // Unsigned integer types...
-  case Type::Int16TyID:
-  case Type::Int32TyID:
-  case Type::Int64TyID:
-    output_vbr(cast<ConstantInt>(CPV)->getZExtValue());
-    break;
+  }
 
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(CPV);
@@ -484,12 +488,12 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
       assert(Slot >= 0 && "No slot number for value!?!?");
 
       if (isa<SequentialType>(*TI)) {
-        unsigned IdxId;
-        switch (I->getOperand(Idx)->getType()->getTypeID()) {
-        default: assert(0 && "Unknown index type!");
-        case Type::Int32TyID:  IdxId = 0; break;
-        case Type::Int64TyID:  IdxId = 1; break;
-        }
+        // These should be either 32-bits or 64-bits, however, with bit
+        // accurate types we just distinguish between less than or equal to
+        // 32-bits or greater than 32-bits.
+        const IntegerType *IdxTy = 
+          cast<IntegerType>(I->getOperand(Idx)->getType());
+        unsigned IdxId = IdxTy->getBitWidth() <= 32 ? 0 : 1;
         Slot = (Slot << 1) | IdxId;
       }
       output_vbr(unsigned(Slot));
@@ -735,12 +739,12 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
       for (gep_type_iterator I = gep_type_begin(GEP), E = gep_type_end(GEP);
            I != E; ++I, ++Idx)
         if (isa<SequentialType>(*I)) {
-          unsigned IdxId;
-          switch (GEP->getOperand(Idx)->getType()->getTypeID()) {
-          default: assert(0 && "Unknown index type!");
-          case Type::Int32TyID: IdxId = 0; break;
-          case Type::Int64TyID: IdxId = 1; break;
-          }
+          // These should be either 32-bits or 64-bits, however, with bit
+          // accurate types we just distinguish between less than or equal to
+          // 32-bits or greater than 32-bits.
+          const IntegerType *IdxTy = 
+            cast<IntegerType>(GEP->getOperand(Idx)->getType());
+          unsigned IdxId = IdxTy->getBitWidth() <= 32 ? 0 : 1;
           Slots[Idx] = (Slots[Idx] << 1) | IdxId;
           if (Slots[Idx] > MaxOpSlot) MaxOpSlot = Slots[Idx];
         }

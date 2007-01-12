@@ -708,8 +708,7 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
     if (isa<UndefValue>(PC)) {
       continue;
     } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(PC)) {
-      unsigned ElementSize = 
-        CP->getType()->getElementType()->getPrimitiveSize();
+      unsigned ElementSize = TD->getTypeSize(CP->getType()->getElementType());
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
         WorkList.push_back(CPair(CP->getOperand(i), PA+i*ElementSize));
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(PC)) {
@@ -726,27 +725,42 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
       }
     } else if (PC->getType()->isFirstClassType()) {
       unsigned char *ptr = (unsigned char *)PA;
-      uint64_t val;
-      
       switch (PC->getType()->getTypeID()) {
-      case Type::Int1TyID:
-      case Type::Int8TyID:
-        ptr[0] = cast<ConstantInt>(PC)->getZExtValue();
-        break;
-      case Type::Int16TyID:
-        val = cast<ConstantInt>(PC)->getZExtValue();
-        if (TD->isBigEndian())
-          val = ByteSwap_16(val);
-        ptr[0] = val;
-        ptr[1] = val >> 8;
-        break;
-      case Type::Int32TyID:
-      case Type::FloatTyID:
-        if (PC->getType()->getTypeID() == Type::FloatTyID) {
-          val = FloatToBits(cast<ConstantFP>(PC)->getValue());
+      case Type::IntegerTyID: {
+        unsigned NumBits = cast<IntegerType>(PC->getType())->getBitWidth();
+        uint64_t val = cast<ConstantInt>(PC)->getZExtValue();
+        if (NumBits <= 8)
+          ptr[0] = val;
+        else if (NumBits <= 16) {
+          if (TD->isBigEndian())
+            val = ByteSwap_16(val);
+          ptr[0] = val;
+          ptr[1] = val >> 8;
+        } else if (NumBits <= 32) {
+          if (TD->isBigEndian())
+            val = ByteSwap_32(val);
+          ptr[0] = val;
+          ptr[1] = val >> 8;
+          ptr[2] = val >> 16;
+          ptr[3] = val >> 24;
+        } else if (NumBits <= 64) {
+          if (TD->isBigEndian())
+            val = ByteSwap_64(val);
+          ptr[0] = val;
+          ptr[1] = val >> 8;
+          ptr[2] = val >> 16;
+          ptr[3] = val >> 24;
+          ptr[4] = val >> 32;
+          ptr[5] = val >> 40;
+          ptr[6] = val >> 48;
+          ptr[7] = val >> 56;
         } else {
-          val = cast<ConstantInt>(PC)->getZExtValue();
+          assert(0 && "Not implemented: bit widths > 64");
         }
+        break;
+      }
+      case Type::FloatTyID: {
+        uint64_t val = FloatToBits(cast<ConstantFP>(PC)->getValue());
         if (TD->isBigEndian())
           val = ByteSwap_32(val);
         ptr[0] = val;
@@ -754,13 +768,9 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
         ptr[2] = val >> 16;
         ptr[3] = val >> 24;
         break;
-      case Type::DoubleTyID:
-      case Type::Int64TyID:
-        if (PC->getType()->getTypeID() == Type::DoubleTyID) {
-          val = DoubleToBits(cast<ConstantFP>(PC)->getValue());
-        } else {
-          val = cast<ConstantInt>(PC)->getZExtValue();
-        }
+      }
+      case Type::DoubleTyID: {
+        uint64_t val = DoubleToBits(cast<ConstantFP>(PC)->getValue());
         if (TD->isBigEndian())
           val = ByteSwap_64(val);
         ptr[0] = val;
@@ -772,6 +782,7 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
         ptr[6] = val >> 48;
         ptr[7] = val >> 56;
         break;
+      }
       case Type::PointerTyID:
         if (isa<ConstantPointerNull>(C))
           memset(ptr, 0, TD->getPointerSize());
@@ -790,8 +801,7 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
     } else if (isa<ConstantAggregateZero>(PC)) {
       memset((void*)PA, 0, (size_t)TD->getTypeSize(PC->getType()));
     } else if (const ConstantArray *CPA = dyn_cast<ConstantArray>(PC)) {
-      unsigned ElementSize = 
-        CPA->getType()->getElementType()->getPrimitiveSize();
+      unsigned ElementSize = TD->getTypeSize(CPA->getType()->getElementType());
       for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
         WorkList.push_back(CPair(CPA->getOperand(i), PA+i*ElementSize));
     } else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(PC)) {

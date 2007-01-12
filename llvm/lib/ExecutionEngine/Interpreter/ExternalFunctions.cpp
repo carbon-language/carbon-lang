@@ -41,11 +41,15 @@ static Interpreter *TheInterpreter;
 static char getTypeID(const Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:    return 'V';
-  case Type::Int1TyID:    return 'o';
-  case Type::Int8TyID:    return 'B';
-  case Type::Int16TyID:   return 'S';
-  case Type::Int32TyID:   return 'I';
-  case Type::Int64TyID:   return 'L';
+  case Type::IntegerTyID:
+    switch (cast<IntegerType>(Ty)->getBitWidth()) {
+      case 1:  return 'o';
+      case 8:  return 'B';
+      case 16: return 'S';
+      case 32: return 'I';
+      case 64: return 'L';
+      default: return 'N';
+    }
   case Type::FloatTyID:   return 'F';
   case Type::DoubleTyID:  return 'D';
   case Type::PointerTyID: return 'P';

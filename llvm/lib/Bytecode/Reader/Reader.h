@@ -415,6 +415,20 @@ private:
   BytecodeReader(const BytecodeReader &);  // DO NOT IMPLEMENT
   void operator=(const BytecodeReader &);  // DO NOT IMPLEMENT
 
+  // This enum provides the values of the well-known type slots that are always
+  // emitted as the first few types in the table by the BytecodeWriter class.
+  enum WellKnownTypeSlots {
+    VoidTypeSlot = 0, ///< TypeID == VoidTyID
+    FloatTySlot  = 1, ///< TypeID == FloatTyID
+    DoubleTySlot = 2, ///< TypeID == DoubleTyID
+    LabelTySlot  = 3, ///< TypeID == LabelTyID
+    BoolTySlot   = 4, ///< TypeID == IntegerTyID, width = 1
+    Int8TySlot   = 5, ///< TypeID == IntegerTyID, width = 8
+    Int16TySlot  = 6, ///< TypeID == IntegerTyID, width = 16
+    Int32TySlot  = 7, ///< TypeID == IntegerTyID, width = 32
+    Int64TySlot  = 8  ///< TypeID == IntegerTyID, width = 64
+  };
+
 /// @}
 /// @name Reader Primitives
 /// @{

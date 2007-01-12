@@ -1820,13 +1820,17 @@ public:
     // ffsll(x) -> x == 0 ? 0 : llvm.cttz(x)+1
     const Type *ArgType = TheCall->getOperand(1)->getType();
     const char *CTTZName;
-    switch (ArgType->getTypeID()) {
-    default: assert(0 && "Unknown unsigned type!");
-    case Type::Int8TyID : CTTZName = "llvm.cttz.i8" ; break;
-    case Type::Int16TyID: CTTZName = "llvm.cttz.i16"; break;
-    case Type::Int32TyID  : CTTZName = "llvm.cttz.i32"; break;
-    case Type::Int64TyID : CTTZName = "llvm.cttz.i64"; break;
-    }
+    assert(ArgType->getTypeID() == Type::IntegerTyID &&
+           "llvm.cttz argument is not an integer?");
+    unsigned BitWidth = cast<IntegerType>(ArgType)->getBitWidth();
+    if (BitWidth <= 8)
+      CTTZName = "llvm.cttz.i8";
+    else if (BitWidth <= 16)
+      CTTZName = "llvm.cttz.i16"; 
+    else if (BitWidth <= 32)
+      CTTZName = "llvm.cttz.i32";
+    else
+      CTTZName = "llvm.cttz.i64";
     
     Constant *F = SLC.getModule()->getOrInsertFunction(CTTZName, ArgType,
                                                        ArgType, NULL);

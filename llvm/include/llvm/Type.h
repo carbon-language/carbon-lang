@@ -71,32 +71,31 @@ public:
   ///
   enum TypeID {
     // PrimitiveTypes .. make sure LastPrimitiveTyID stays up to date
-    VoidTyID = 0  , Int1TyID,           //  0, 1: Basics...
-    Int8TyID,                           //  2   :  8 bit type...
-    Int16TyID,                          //  3   : 16 bit type...
-    Int32TyID,                          //  4   : 32 bit type...
-    Int64TyID,                          //  5   : 64 bit type...
-    FloatTyID, DoubleTyID,              //  6, 7: Floating point types...
-    LabelTyID,                          //  8   : Labels...
+    VoidTyID = 0,    ///<  0: type with no size
+    FloatTyID,       ///<  1: 32 bit floating point type
+    DoubleTyID,      ///<  2: 64 bit floating point type
+    LabelTyID,       ///<  3: Labels
 
     // Derived types... see DerivedTypes.h file...
     // Make sure FirstDerivedTyID stays up to date!!!
-    FunctionTyID  , StructTyID,         // Functions... Structs...
-    ArrayTyID     , PointerTyID,        // Array... pointer...
-    OpaqueTyID,                         // Opaque type instances...
-    PackedTyID,                         // SIMD 'packed' format...
-    BC_ONLY_PackedStructTyID,           // packed struct, for BC rep only
-    //...
+    IntegerTyID,     ///<  4: Arbitrary bit width integers
+    FunctionTyID,    ///<  5: Functions
+    StructTyID,      ///<  6: Structures
+    PackedStructTyID,///<  7: Packed Structure. This is for bytecode only
+    ArrayTyID,       ///<  8: Arrays
+    PointerTyID,     ///<  9: Pointers
+    OpaqueTyID,      ///< 10: Opaque: type with unknown structure
+    PackedTyID,      ///< 11: SIMD 'packed' format, or other vector type
 
     NumTypeIDs,                         // Must remain as last defined ID
     LastPrimitiveTyID = LabelTyID,
-    FirstDerivedTyID = FunctionTyID
+    FirstDerivedTyID = IntegerTyID
   };
 
 private:
   TypeID   ID : 8;    // The current base type of this type.
   bool     Abstract : 1;  // True if type contains an OpaqueType
-  bool     SubclassData : 1; //Space for subclasses to store a flag
+  unsigned SubclassData : 23; //Space for subclasses to store data
 
   /// RefCount - This counts the number of PATypeHolders that are pointing to
   /// this type.  When this number falls to zero, if the type is abstract and
@@ -108,7 +107,8 @@ private:
   const Type *getForwardedTypeInternal() const;
 protected:
   Type(const char *Name, TypeID id);
-  Type(TypeID id) : ID(id), Abstract(false), RefCount(0), ForwardType(0) {}
+  Type(TypeID id) : ID(id), Abstract(false), SubclassData(0), RefCount(0), 
+                    ForwardType(0) {}
   virtual ~Type() {
     assert(AbstractTypeUsers.empty());
   }
@@ -119,8 +119,8 @@ protected:
 
   unsigned getRefCount() const { return RefCount; }
 
-  bool getSubclassData() const { return SubclassData; }
-  void setSubclassData(bool b) { SubclassData = b; }
+  unsigned getSubclassData() const { return SubclassData; }
+  void setSubclassData(unsigned val) { SubclassData = val; }
 
   /// ForwardType - This field is used to implement the union find scheme for
   /// abstract types.  When types are refined to other types, this field is set
@@ -162,12 +162,12 @@ public:
 
   /// isInteger - Equivalent to isSigned() || isUnsigned()
   ///
-  bool isInteger() const { return ID >= Int8TyID && ID <= Int64TyID; }
+  bool isInteger() const { return ID == IntegerTyID && this != Int1Ty; } 
 
   /// isIntegral - Returns true if this is an integral type, which is either
   /// Int1Ty or one of the Integer types.
   ///
-  bool isIntegral() const { return isInteger() || this == Int1Ty; }
+  bool isIntegral() const { return ID == IntegerTyID; }
 
   /// isFloatingPoint - Return true if this is one of the two floating point
   /// types
@@ -200,7 +200,7 @@ public:
   ///
   inline bool isFirstClassType() const {
     return (ID != VoidTyID && ID <= LastPrimitiveTyID) ||
-            ID == PointerTyID || ID == PackedTyID;
+            ID == IntegerTyID || ID == PointerTyID || ID == PackedTyID;
   }
 
   /// isSized - Return true if it makes sense to take the size of this type.  To
@@ -209,11 +209,13 @@ public:
   ///
   bool isSized() const {
     // If it's a primitive, it is always sized.
-    if (ID >= Int1TyID && ID <= DoubleTyID || ID == PointerTyID)
+    if (ID == IntegerTyID || (ID >= FloatTyID && ID <= DoubleTyID) || 
+        ID == PointerTyID)
       return true;
     // If it is not something that can have a size (e.g. a function or label),
     // it doesn't have a size.
-    if (ID != StructTyID && ID != ArrayTyID && ID != PackedTyID)
+    if (ID != StructTyID && ID != ArrayTyID && ID != PackedTyID &&
+        ID != PackedStructTyID)
       return false;
     // If it is something that can have a size and it's concrete, it definitely
     // has a size, otherwise we have to try harder to decide.
@@ -224,7 +226,6 @@ public:
   /// type.  These are fixed by LLVM and are not target dependent.  This will
   /// return zero if the type does not have a size or is not a primitive type.
   ///
-  unsigned getPrimitiveSize() const;
   unsigned getPrimitiveSizeInBits() const;
 
   /// getIntegralTypeMask - Return a bitmask with ones set for all of the bits
@@ -248,7 +249,7 @@ public:
   /// will be promoted to if passed through a variable argument
   /// function.
   const Type *getVAArgsPromotedType() const {
-    if (ID == Int1TyID || ID == Int8TyID || ID == Int16TyID)
+    if (ID == IntegerTyID && getSubclassData() < 32)
       return Type::Int32Ty;
     else if (ID == FloatTyID)
       return Type::DoubleTy;
@@ -288,12 +289,8 @@ public:
   //===--------------------------------------------------------------------===//
   // These are the builtin types that are always available...
   //
-  static Type *VoidTy , *Int1Ty;
-  static Type *Int8Ty , *Int16Ty,
-              *Int32Ty, *Int64Ty;
-  static Type *FloatTy, *DoubleTy;
-
-  static Type* LabelTy;
+  static const Type *VoidTy, *LabelTy, *FloatTy, *DoubleTy;
+  static const Type *Int1Ty, *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *T) { return true; }
