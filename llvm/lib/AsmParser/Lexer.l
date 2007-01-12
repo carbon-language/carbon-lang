@@ -165,7 +165,7 @@ StringConstant \"[^\"]*\"
 EPInteger     %[0-9]+
 ENInteger    %-[0-9]+
 
-IntegerType i[0-9]*
+IntegerType i[0-9]+
 
 
 /* E[PN]Integer: match positive and negative literal integer values */
