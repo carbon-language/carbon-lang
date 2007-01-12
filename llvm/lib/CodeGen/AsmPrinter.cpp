@@ -389,10 +389,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   if (CV->isNullValue() || isa<UndefValue>(CV))
     O << "0";
   else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    if (CI->getType() == Type::Int1Ty) {
-      assert(CI->getZExtValue());
-      O << "1";
-    } else O << CI->getSExtValue();
+    O << CI->getZExtValue();
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
     // This is a constant address for a global variable or function. Use the
     // name of the variable or function as the address value, possibly
