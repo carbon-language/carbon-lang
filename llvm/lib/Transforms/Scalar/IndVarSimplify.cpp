@@ -533,14 +533,8 @@ void IndVarSimplify::runOnLoop(Loop *L) {
     InsertedSizes.push_back(LargestType->getPrimitiveSizeInBits());
     for (unsigned i = 0, e = IndVars.size(); i != e; ++i) {
       unsigned ithSize = IndVars[i].first->getType()->getPrimitiveSizeInBits();
-      bool alreadyInsertedSize = false;
-      for (SmallVector<unsigned,4>::iterator I = InsertedSizes.begin(), 
-           E = InsertedSizes.end(); I != E; ++I)
-        if (*I == ithSize) {
-          alreadyInsertedSize = true;
-          break;
-        }
-      if (!alreadyInsertedSize) {
+      if (std::find(InsertedSizes.begin(), InsertedSizes.end(), ithSize)
+          == InsertedSizes.end()) {
         PHINode *PN = IndVars[i].first;
         InsertedSizes.push_back(ithSize);
         Instruction *New = new TruncInst(IndVar, PN->getType(), "indvar",
