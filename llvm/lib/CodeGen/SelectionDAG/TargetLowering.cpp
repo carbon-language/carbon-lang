@@ -23,7 +23,7 @@ using namespace llvm;
 
 /// InitLibcallNames - Set default libcall names.
 ///
-static void InitLibcallNames(std::string *Names) {
+static void InitLibcallNames(const char **Names) {
   Names[RTLIB::SHL_I32] = "__ashlsi3";
   Names[RTLIB::SHL_I64] = "__ashldi3";
   Names[RTLIB::SRL_I32] = "__lshrsi3";
