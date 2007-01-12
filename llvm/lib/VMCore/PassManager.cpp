@@ -558,7 +558,7 @@ void PMDataManager::removeDeadPasses(Pass *P, std::string &Msg) {
 
 /// Add pass P into the PassVector. Update 
 /// AvailableAnalysis appropriately if ProcessAnalysis is true.
-void PMDataManager::addPassToManager(Pass *P, 
+void PMDataManager::add(Pass *P, 
                                      bool ProcessAnalysis) {
 
   // This manager is going to manage pass P. Set up analysis resolver
@@ -1207,7 +1207,7 @@ void ModulePass::assignPassManager(PMStack &PMS) {
   MPPassManager *MPP = dynamic_cast<MPPassManager *>(PMS.top());
 
   assert(MPP && "Unable to find Module Pass Manager");
-  MPP->addPassToManager(this);
+  MPP->add(this);
 }
 
 /// Find appropriate Function Pass Manager or Call Graph Pass Manager
@@ -1245,7 +1245,7 @@ void FunctionPass::assignPassManager(PMStack &PMS) {
   }
 
   // Assign FPP as the manager of this pass.
-  FPP->addPassToManager(this);
+  FPP->add(this);
 }
 
 /// Find appropriate Basic Pass Manager or Call Graph Pass Manager
@@ -1285,7 +1285,7 @@ void BasicBlockPass::assignPassManager(PMStack &PMS) {
   }
 
   // Assign BBP as the manager of this pass.
-  BBP->addPassToManager(this);
+  BBP->add(this);
 }
 
 

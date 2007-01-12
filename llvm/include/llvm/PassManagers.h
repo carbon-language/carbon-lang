@@ -198,7 +198,7 @@ public:
 
   /// Add pass P into the PassVector. Update 
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
-  void addPassToManager(Pass *P, bool ProcessAnalysis = true);
+  void add(Pass *P, bool ProcessAnalysis = true);
 
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 
