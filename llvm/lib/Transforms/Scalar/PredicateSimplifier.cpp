@@ -432,11 +432,8 @@ namespace {
       NodeMap.insert(std::lower_bound(NodeMap.begin(), NodeMap.end(),
                                       MapEntry), MapEntry);
 
-#if 1
-      // This is the missing piece to turn on VRP.
       if (Constant *C = dyn_cast<Constant>(V))
         initializeConstant(C, MapEntry.index);
-#endif
 
       return MapEntry.index;
     }
@@ -1127,14 +1124,12 @@ namespace {
             Value *RHS = Op1;
             if (!isa<Constant>(LHS)) std::swap(LHS, RHS);
 
-            ConstantInt *CB, *A;
-            if ((CB = dyn_cast<ConstantInt>(Canonical)) && 
-                CB->getType() == Type::Int1Ty) {
-              if ((A = dyn_cast<ConstantInt>(LHS)) &&
-                  A->getType() == Type::Int1Ty)
-                add(RHS, ConstantInt::get(A->getBoolValue() ^ 
-                                          CB->getBoolValue()),
-                                          ICmpInst::ICMP_EQ, NewContext);
+            if (ConstantInt *CI = dyn_cast<ConstantInt>(Canonical)) {
+              if (ConstantInt *Arg = dyn_cast<ConstantInt>(LHS)) {
+                add(RHS, ConstantInt::get(CI->getType(), CI->getZExtValue() ^
+                                          Arg->getZExtValue()),
+                    ICmpInst::ICMP_EQ, NewContext);
+              }
             }
             if (Canonical == LHS) {
               if (isa<ConstantInt>(Canonical))
@@ -1238,21 +1233,18 @@ namespace {
             case Instruction::Or:
             case Instruction::Add:
             case Instruction::Sub:
-              add(Unknown, Constant::getNullValue(Ty), ICmpInst::ICMP_EQ, NewContext);
+              add(Unknown, Constant::getNullValue(Ty), ICmpInst::ICMP_EQ,
+                  NewContext);
               break;
             case Instruction::UDiv:
             case Instruction::SDiv:
               if (Unknown == Op0) break; // otherwise, fallthrough
             case Instruction::And:
             case Instruction::Mul:
-              Constant *One = NULL;
-              if (isa<ConstantInt>(Unknown))
-                One = ConstantInt::get(Ty, 1);
-              else if (isa<ConstantInt>(Unknown) && 
-                       Unknown->getType() == Type::Int1Ty)
-                One = ConstantInt::getTrue();
-
-              if (One) add(Unknown, One, ICmpInst::ICMP_EQ, NewContext);
+              if (isa<ConstantInt>(Unknown)) {
+                Constant *One = ConstantInt::get(Ty, 1);
+                add(Unknown, One, ICmpInst::ICMP_EQ, NewContext);
+              }
               break;
           }
         }
@@ -1273,6 +1265,8 @@ namespace {
         } else if (isRelatedBy(Op0, Op1, ICmpInst::getInversePredicate(Pred))) {
           add(IC, ConstantInt::getFalse(), ICmpInst::ICMP_EQ, NewContext);
         }
+
+        // TODO: "bool %x s<u> %y" implies %x = true and %y = false.
 
         // TODO: make the predicate more strict, if possible.
 
