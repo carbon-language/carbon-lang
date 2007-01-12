@@ -444,6 +444,7 @@ public:
     case Type::PointerTyID: return PointerTy;
     case Type::PackedTyID:  return MVT::Vector;
     }
+    return MVT::isVoid;  // Silence a compiler warning.
   }
 
   /// getNumElements - Return the number of registers that this ValueType will
