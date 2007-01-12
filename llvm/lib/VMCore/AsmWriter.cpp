@@ -268,11 +268,7 @@ static void calcTypeName(const Type *Ty,
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID: {
     unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-    if (BitWidth == 1)
-      Result += "bool";
-    else {
-      Result += "i" + utostr(BitWidth);
-    }
+    Result += "i" + utostr(BitWidth);
     break;
   }
   case Type::FunctionTyID: {
