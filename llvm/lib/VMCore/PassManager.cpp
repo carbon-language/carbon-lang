@@ -335,9 +335,6 @@ class VISIBILITY_HIDDEN BBPassManager : public PMDataManager,
 public:
   BBPassManager(int Depth) : PMDataManager(Depth) { }
 
-  /// Add a pass into a passmanager queue. 
-  bool addPass(Pass *p);
-  
   /// Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the function, and if so, return true.
   bool runOnFunction(Function &F);
@@ -384,12 +381,7 @@ public:
 class FPPassManager : public ModulePass, public PMDataManager {
  
 public:
-  FPPassManager(int Depth) : PMDataManager(Depth) { 
-    activeBBPassManager = NULL; 
-  }
-  
-  /// Add a pass into a passmanager queue. 
-  bool addPass(Pass *p);
+  FPPassManager(int Depth) : PMDataManager(Depth) { }
   
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
@@ -428,9 +420,6 @@ public:
   virtual PassManagerType getPassManagerType() { 
     return PMT_FunctionPassManager; 
   }
-private:
-  // Active Pass Manager
-  BBPassManager *activeBBPassManager;
 };
 
 //===----------------------------------------------------------------------===//
@@ -442,9 +431,7 @@ class FunctionPassManagerImpl : public Pass,
                                 public PMTopLevelManager {
 public:
 
-  FunctionPassManagerImpl(int Depth) : PMDataManager(Depth) {
-    activeManager = NULL;
-  }
+  FunctionPassManagerImpl(int Depth) : PMDataManager(Depth) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -482,9 +469,17 @@ public:
       initializeAnalysisImpl(P);
       addImmutablePass(IP);
       recordAvailableAnalysis(IP);
+    } else {
+      // Assign manager
+      if (activeStack.empty()) {
+        FPPassManager *FPP = new FPPassManager(getDepth() + 1);
+        FPP->setTopLevelManager(this->getTopLevelManager());
+        addPassManager(FPP);
+        activeStack.push(FPP);
+      }
+      P->assignPassManager(activeStack);
     }
-    else 
-      addPass(P);
+
   }
 
   FPPassManager *getContainedManager(unsigned N) {
@@ -493,13 +488,6 @@ public:
     return FP;
   }
 
-  /// Add a pass into a passmanager queue.
-  bool addPass(Pass *p);
-
-private:
-
-  // Active Pass Manager
-  FPPassManager *activeManager;
 };
 
 //===----------------------------------------------------------------------===//
@@ -511,12 +499,7 @@ private:
 class MPPassManager : public Pass, public PMDataManager {
  
 public:
-  MPPassManager(int Depth) : PMDataManager(Depth) { 
-    activeFunctionPassManager = NULL; 
-  }
-  
-  /// Add a pass into a passmanager queue. 
-  bool addPass(Pass *p);
+  MPPassManager(int Depth) : PMDataManager(Depth) { }
   
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
@@ -544,9 +527,6 @@ public:
   }
 
   virtual PassManagerType getPassManagerType() { return PMT_ModulePassManager; }
-private:
-  // Active Pass Manager
-  FPPassManager *activeFunctionPassManager;
 };
 
 //===----------------------------------------------------------------------===//
@@ -559,9 +539,7 @@ class PassManagerImpl : public Pass,
 
 public:
 
-  PassManagerImpl(int Depth) : PMDataManager(Depth) {
-    activeManager = NULL;
-  }
+  PassManagerImpl(int Depth) : PMDataManager(Depth) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -591,9 +569,19 @@ public:
       initializeAnalysisImpl(P);
       addImmutablePass(IP);
       recordAvailableAnalysis(IP);
+    } else {
+
+      // Assign manager
+      if (activeStack.empty()) {
+        MPPassManager *MPP = new MPPassManager(getDepth() + 1);
+        MPP->setTopLevelManager(this->getTopLevelManager());
+        addPassManager(MPP);
+        activeStack.push(MPP);
+      }
+      
+      P->assignPassManager(activeStack);
     }
-    else 
-      addPass(P);
+
   }
 
   MPPassManager *getContainedManager(unsigned N) {
@@ -602,13 +590,6 @@ public:
     return MP;
   }
 
-private:
-
-  /// Add a pass into a passmanager queue.
-  bool addPass(Pass *p);
-
-  // Active Pass Manager
-  MPPassManager *activeManager;
 };
 
 } // End of llvm namespace
@@ -1053,25 +1034,6 @@ Pass *AnalysisResolver::getAnalysisToUpdate(AnalysisID ID, bool dir) const {
 //===----------------------------------------------------------------------===//
 // BBPassManager implementation
 
-/// Add pass P into PassVector and return true. If this pass is not
-/// manageable by this manager then return false.
-bool
-BBPassManager::addPass(Pass *P) {
-
-  BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P);
-  if (!BP)
-    return false;
-
-  // If this pass does not preserve analysis that is used by other passes
-  // managed by this manager than it is not a suitable pass for this manager.
-  if (!manageablePass(P))
-    return false;
-
-  addPassToManager(BP);
-
-  return true;
-}
-
 /// Execute all of the passes scheduled for execution by invoking 
 /// runOnBasicBlock method.  Keep track of whether any of the passes modifies 
 /// the function, and if so, return true.
@@ -1217,22 +1179,6 @@ bool FunctionPassManager::doFinalization() {
 //===----------------------------------------------------------------------===//
 // FunctionPassManagerImpl implementation
 //
-/// Add P into active pass manager or use new module pass manager to
-/// manage it.
-bool FunctionPassManagerImpl::addPass(Pass *P) {
-
-  if (activeStack.empty()) {
-    FPPassManager *FPP = new FPPassManager(getDepth() + 1);
-    FPP->setTopLevelManager(this->getTopLevelManager());
-    addPassManager(FPP);
-    activeStack.push(FPP);
-  }
-
-  P->assignPassManager(activeStack);
-
-  return true;
-}
-
 inline bool FunctionPassManagerImpl::doInitialization(Module &M) {
   bool Changed = false;
 
@@ -1276,68 +1222,6 @@ bool FunctionPassManagerImpl::run(Function &F) {
 
 //===----------------------------------------------------------------------===//
 // FPPassManager implementation
-
-/// Add pass P into the pass manager queue. If P is a BasicBlockPass then
-/// either use it into active basic block pass manager or create new basic
-/// block pass manager to handle pass P.
-bool
-FPPassManager::addPass(Pass *P) {
-
-  // If P is a BasicBlockPass then use BBPassManager.
-  if (BasicBlockPass *BP = dynamic_cast<BasicBlockPass*>(P)) {
-
-    if (!activeBBPassManager || !activeBBPassManager->addPass(BP)) {
-
-      // If active manager exists then clear its analysis info.
-      if (activeBBPassManager)
-        activeBBPassManager->initializeAnalysisInfo();
-
-      // Create and add new manager
-      activeBBPassManager = new BBPassManager(getDepth() + 1);
-      // Inherit top level manager
-      activeBBPassManager->setTopLevelManager(this->getTopLevelManager());
-
-      // Add new manager into current manager's list.
-      addPassToManager(activeBBPassManager, false);
-
-      // Add new manager into top level manager's indirect passes list
-      PMDataManager *PMD = dynamic_cast<PMDataManager *>(activeBBPassManager);
-      assert (PMD && "Manager is not Pass Manager");
-      TPM->addIndirectPassManager(PMD);
-
-      // Add pass into new manager. This time it must succeed.
-      if (!activeBBPassManager->addPass(BP))
-        assert(0 && "Unable to add Pass");
-
-      // If activeBBPassManager transfered any Last Uses then handle them here.
-      std::vector<Pass *> &TLU = activeBBPassManager->getTransferredLastUses();
-      if (!TLU.empty())
-        TPM->setLastUser(TLU, this);
-
-    }
-
-    return true;
-  }
-
-  FunctionPass *FP = dynamic_cast<FunctionPass *>(P);
-  if (!FP)
-    return false;
-
-  // If this pass does not preserve analysis that is used by other passes
-  // managed by this manager than it is not a suitable pass for this manager.
-  if (!manageablePass(P))
-    return false;
-
-  addPassToManager (FP);
-
-  // If active manager exists then clear its analysis info.
-  if (activeBBPassManager) {
-    activeBBPassManager->initializeAnalysisInfo();
-    activeBBPassManager = NULL;
-  }
-
-  return true;
-}
 
 /// Execute all of the passes scheduled for execution by invoking 
 /// runOnFunction method.  Keep track of whether any of the passes modifies 
@@ -1414,72 +1298,6 @@ inline bool FPPassManager::doFinalization(Module &M) {
 //===----------------------------------------------------------------------===//
 // MPPassManager implementation
 
-/// Add P into pass vector if it is manageble. If P is a FunctionPass
-/// then use FPPassManager to manage it. Return false if P
-/// is not manageable by this manager.
-bool
-MPPassManager::addPass(Pass *P) {
-
-  // If P is FunctionPass then use function pass maanager.
-  if (FunctionPass *FP = dynamic_cast<FunctionPass*>(P)) {
-
-    if (!activeFunctionPassManager || !activeFunctionPassManager->addPass(P)) {
-
-      // If active manager exists then clear its analysis info.
-      if (activeFunctionPassManager) 
-        activeFunctionPassManager->initializeAnalysisInfo();
-
-      // Create and add new manager
-      activeFunctionPassManager = 
-        new FPPassManager(getDepth() + 1);
-      
-      // Add new manager into current manager's list
-      addPassToManager(activeFunctionPassManager, false);
-
-      // Inherit top level manager
-      activeFunctionPassManager->setTopLevelManager(this->getTopLevelManager());
-
-      // Add new manager into top level manager's indirect passes list
-      PMDataManager *PMD =
-        dynamic_cast<PMDataManager *>(activeFunctionPassManager);
-      assert(PMD && "Manager is not Pass Manager");
-      TPM->addIndirectPassManager(PMD);
-      
-      // Add pass into new manager. This time it must succeed.
-      if (!activeFunctionPassManager->addPass(FP))
-        assert(0 && "Unable to add pass");
-
-      // If activeFunctionPassManager transfered any Last Uses then 
-      // handle them here.
-      std::vector<Pass *> &TLU = 
-        activeFunctionPassManager->getTransferredLastUses();
-      if (!TLU.empty())
-        TPM->setLastUser(TLU, this);
-    }
-
-    return true;
-  }
-
-  ModulePass *MP = dynamic_cast<ModulePass *>(P);
-  if (!MP)
-    return false;
-
-  // If this pass does not preserve analysis that is used by other passes
-  // managed by this manager than it is not a suitable pass for this manager.
-  if (!manageablePass(P))
-    return false;
-
-  addPassToManager(MP);
-  // If active manager exists then clear its analysis info.
-  if (activeFunctionPassManager) {
-    activeFunctionPassManager->initializeAnalysisInfo();
-    activeFunctionPassManager = NULL;
-  }
-
-  return true;
-}
-
-
 /// Execute all of the passes scheduled for execution by invoking 
 /// runOnModule method.  Keep track of whether any of the passes modifies 
 /// the module, and if so, return true.
@@ -1520,23 +1338,6 @@ MPPassManager::runOnModule(Module &M) {
 //===----------------------------------------------------------------------===//
 // PassManagerImpl implementation
 //
-/// Add P into active pass manager or use new module pass manager to
-/// manage it.
-bool PassManagerImpl::addPass(Pass *P) {
-
-
-  if (activeStack.empty()) {
-    MPPassManager *MPP = new MPPassManager(getDepth() + 1);
-    MPP->setTopLevelManager(this->getTopLevelManager());
-    addPassManager(MPP);
-    activeStack.push(MPP);
-  }
-
-  P->assignPassManager(activeStack);
-
-  return true;
-}
-
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the module, and if so, return true.
 bool PassManagerImpl::run(Module &M) {
