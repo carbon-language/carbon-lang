@@ -134,7 +134,6 @@ void CondProp::SimplifyPredecessors(BranchInst *BI) {
   // possible, and to avoid invalidating "i".
   for (unsigned i = PN->getNumIncomingValues(); i != 0; --i)
     if (ConstantInt *CB = dyn_cast<ConstantInt>(PN->getIncomingValue(i-1))) {
-      if (CB->getType() != Type::Int1Ty) continue;
       // If we have a constant, forward the edge from its current to its
       // ultimate destination.
       bool PHIGone = PN->getNumIncomingValues() == 2;
