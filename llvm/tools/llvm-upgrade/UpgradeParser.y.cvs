@@ -1792,11 +1792,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$.type = TypeInfo::get("bool",BoolTy);
     delete $2; $4.destroy(); $6.destroy();
   }
-  | NOT ResolvedVal {
-    $$ = $2;
-    $$.val->insert(0, *$1 + " ");
-    delete $1;
-  }
   | ShiftOps ResolvedVal ',' ResolvedVal {
     const char* shiftop = $1->c_str();
     if (*$1 == "shr")
