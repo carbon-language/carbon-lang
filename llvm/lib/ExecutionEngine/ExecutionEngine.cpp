@@ -399,7 +399,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   switch (C->getType()->getTypeID()) {
 #define GET_CONST_VAL(TY, CTY, CLASS, GETMETH) \
   case Type::TY##TyID: Result.TY##Val = (CTY)cast<CLASS>(C)->GETMETH(); break
-    GET_CONST_VAL(Int1  , bool          , ConstantInt, getBoolValue);
+    GET_CONST_VAL(Int1  , bool          , ConstantInt, getZExtValue);
     GET_CONST_VAL(Int8  , unsigned char , ConstantInt, getZExtValue);
     GET_CONST_VAL(Int16 , unsigned short, ConstantInt, getZExtValue);
     GET_CONST_VAL(Int32 , unsigned int  , ConstantInt, getZExtValue);

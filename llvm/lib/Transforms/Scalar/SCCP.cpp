@@ -416,8 +416,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
     } else {
       LatticeVal &BCValue = getValueState(BI->getCondition());
       if (BCValue.isOverdefined() ||
-          (BCValue.isConstant() && 
-          BCValue.getConstant()->getType() != Type::Int1Ty)) {
+          (BCValue.isConstant() && !isa<ConstantInt>(BCValue.getConstant()))) {
         // Overdefined condition variables, and branches on unfoldable constant
         // conditions, mean the branch could go either way.
         Succs[0] = Succs[1] = true;
@@ -647,10 +646,9 @@ void SCCPSolver::visitSelectInst(SelectInst &I) {
   LatticeVal &CondValue = getValueState(I.getCondition());
   if (CondValue.isUndefined())
     return;
-  if (CondValue.isConstant() &&
-      CondValue.getConstant()->getType() == Type::Int1Ty) {
+  if (CondValue.isConstant()) {
     if (ConstantInt *CondCB = dyn_cast<ConstantInt>(CondValue.getConstant())){
-      mergeInValue(&I, getValueState(CondCB->getBoolValue() ? I.getTrueValue()
+      mergeInValue(&I, getValueState(CondCB->getZExtValue() ? I.getTrueValue()
                                                           : I.getFalseValue()));
       return;
     }

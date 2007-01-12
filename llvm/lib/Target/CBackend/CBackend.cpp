@@ -829,7 +829,7 @@ void CWriter::printConstant(Constant *CPV) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(CPV)) {
     const Type* Ty = CI->getType();
     if (Ty == Type::Int1Ty)
-      Out << (CI->getBoolValue() ? '1' : '0') ;
+      Out << (CI->getZExtValue() ? '1' : '0') ;
     else {
       Out << "((";
       printPrimitiveType(Out, Ty, false) << ')';

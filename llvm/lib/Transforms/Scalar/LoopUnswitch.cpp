@@ -924,7 +924,8 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     if (IsEqual)
       Replacement = Val;
     else
-      Replacement = ConstantInt::get(!cast<ConstantInt>(Val)->getBoolValue());
+      Replacement = ConstantInt::get(Type::Int1Ty, 
+                                     !cast<ConstantInt>(Val)->getZExtValue());
     
     for (unsigned i = 0, e = Users.size(); i != e; ++i)
       if (Instruction *U = cast<Instruction>(Users[i])) {
@@ -1026,7 +1027,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
     switch (I->getOpcode()) {
     case Instruction::Select:
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(0))) {
-        ReplaceUsesOfWith(I, I->getOperand(!CB->getBoolValue()+1), Worklist);
+        ReplaceUsesOfWith(I, I->getOperand(!CB->getZExtValue()+1), Worklist);
         continue;
       }
       break;
@@ -1036,7 +1037,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1))) 
         if (CB->getType() == Type::Int1Ty) {
-          if (CB->getBoolValue())   // X & 1 -> X
+          if (CB->getZExtValue())   // X & 1 -> X
             ReplaceUsesOfWith(I, I->getOperand(0), Worklist);
           else                  // X & 0 -> 0
             ReplaceUsesOfWith(I, I->getOperand(1), Worklist);
@@ -1049,7 +1050,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1)))
         if (CB->getType() == Type::Int1Ty) {
-          if (CB->getBoolValue())   // X | 1 -> 1
+          if (CB->getZExtValue())   // X | 1 -> 1
             ReplaceUsesOfWith(I, I->getOperand(1), Worklist);
           else                  // X | 0 -> X
             ReplaceUsesOfWith(I, I->getOperand(0), Worklist);
@@ -1094,8 +1095,8 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
         break;  // FIXME: Enable.
 
         DOUT << "Folded branch: " << *BI;
-        BasicBlock *DeadSucc = BI->getSuccessor(CB->getBoolValue());
-        BasicBlock *LiveSucc = BI->getSuccessor(!CB->getBoolValue());
+        BasicBlock *DeadSucc = BI->getSuccessor(CB->getZExtValue());
+        BasicBlock *LiveSucc = BI->getSuccessor(!CB->getZExtValue());
         DeadSucc->removePredecessor(BI->getParent(), true);
         Worklist.push_back(new BranchInst(LiveSucc, BI));
         BI->eraseFromParent();

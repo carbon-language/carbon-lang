@@ -64,7 +64,7 @@ static ConstantInt *getMinValue(const Type *Ty, bool isSigned = false) {
 }
 static ConstantInt *Next(ConstantInt *CI) {
   if (CI->getType() == Type::Int1Ty)
-    return ConstantInt::get(!CI->getBoolValue());
+    return ConstantInt::get(Type::Int1Ty, !CI->getZExtValue());
 
   Constant *Result = ConstantExpr::getAdd(CI,
                                           ConstantInt::get(CI->getType(), 1));
@@ -75,14 +75,14 @@ static bool LT(ConstantInt *A, ConstantInt *B, bool isSigned) {
   Constant *C = ConstantExpr::getICmp(
     (isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT), A, B);
   assert(isa<ConstantInt>(C) && "Constant folding of integrals not impl??");
-  return cast<ConstantInt>(C)->getBoolValue();
+  return cast<ConstantInt>(C)->getZExtValue();
 }
 
 static bool LTE(ConstantInt *A, ConstantInt *B, bool isSigned) {
   Constant *C = ConstantExpr::getICmp(
     (isSigned ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_ULE), A, B);
   assert(isa<ConstantInt>(C) && "Constant folding of integrals not impl??");
-  return cast<ConstantInt>(C)->getBoolValue();
+  return cast<ConstantInt>(C)->getZExtValue();
 }
 
 static bool GT(ConstantInt *A, ConstantInt *B, bool isSigned) { 

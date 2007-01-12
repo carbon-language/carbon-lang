@@ -317,8 +317,7 @@ Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
                                               const Constant *V1,
                                               const Constant *V2) {
   if (const ConstantInt *CB = dyn_cast<ConstantInt>(Cond))
-    if (CB->getType() == Type::Int1Ty)
-      return const_cast<Constant*>(CB->getBoolValue() ? V1 : V2);
+    return const_cast<Constant*>(CB->getZExtValue() ? V1 : V2);
 
   if (isa<UndefValue>(V1)) return const_cast<Constant*>(V2);
   if (isa<UndefValue>(V2)) return const_cast<Constant*>(V1);
@@ -560,11 +559,14 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
           default:
             break;
           case Instruction::And:
-            return ConstantInt::get(CI1->getBoolValue() & CI2->getBoolValue());
+            return ConstantInt::get(Type::Int1Ty, 
+                                    CI1->getZExtValue() & CI2->getZExtValue());
           case Instruction::Or:
-            return ConstantInt::get(CI1->getBoolValue() | CI2->getBoolValue());
+            return ConstantInt::get(Type::Int1Ty, 
+                                    CI1->getZExtValue() | CI2->getZExtValue());
           case Instruction::Xor:
-            return ConstantInt::get(CI1->getBoolValue() ^ CI2->getBoolValue());
+            return ConstantInt::get(Type::Int1Ty, 
+                                    CI1->getZExtValue() ^ CI2->getZExtValue());
         }
       } else {
         uint64_t C1Val = CI1->getZExtValue();
@@ -765,15 +767,15 @@ static FCmpInst::Predicate evaluateFCmpRelation(const Constant *V1,
       Constant *C2 = const_cast<Constant*>(V2);
       R = dyn_cast<ConstantInt>(
                              ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ, C1, C2));
-      if (R && R->getBoolValue()) 
+      if (R && R->getZExtValue()) 
         return FCmpInst::FCMP_OEQ;
       R = dyn_cast<ConstantInt>(
                              ConstantExpr::getFCmp(FCmpInst::FCMP_OLT, C1, C2));
-      if (R && R->getBoolValue()) 
+      if (R && R->getZExtValue()) 
         return FCmpInst::FCMP_OLT;
       R = dyn_cast<ConstantInt>(
                              ConstantExpr::getFCmp(FCmpInst::FCMP_OGT, C1, C2));
-      if (R && R->getBoolValue()) 
+      if (R && R->getZExtValue()) 
         return FCmpInst::FCMP_OGT;
 
       // Nothing more we can do
@@ -832,15 +834,15 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
       Constant *C2 = const_cast<Constant*>(V2);
       ICmpInst::Predicate pred = ICmpInst::ICMP_EQ;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
-      if (R && R->getBoolValue()) 
+      if (R && R->getZExtValue()) 
         return pred;
       pred = isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
-      if (R && R->getBoolValue())
+      if (R && R->getZExtValue())
         return pred;
       pred = isSigned ?  ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
-      if (R && R->getBoolValue())
+      if (R && R->getZExtValue())
         return pred;
       
       // If we couldn't figure it out, bail.
@@ -1059,20 +1061,30 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
 
   if (isa<ConstantInt>(C1) && isa<ConstantInt>(C2) &&
       C1->getType() == Type::Int1Ty && C2->getType() == Type::Int1Ty) {
-    bool C1Val = cast<ConstantInt>(C1)->getBoolValue();
-    bool C2Val = cast<ConstantInt>(C2)->getBoolValue();
+    bool C1Val = cast<ConstantInt>(C1)->getZExtValue();
+    bool C2Val = cast<ConstantInt>(C2)->getZExtValue();
     switch (pred) {
     default: assert(0 && "Invalid ICmp Predicate"); return 0;
-    case ICmpInst::ICMP_EQ: return ConstantInt::get(C1Val == C2Val);
-    case ICmpInst::ICMP_NE: return ConstantInt::get(C1Val != C2Val);
-    case ICmpInst::ICMP_ULT:return ConstantInt::get(C1Val <  C2Val);
-    case ICmpInst::ICMP_UGT:return ConstantInt::get(C1Val >  C2Val);
-    case ICmpInst::ICMP_ULE:return ConstantInt::get(C1Val <= C2Val);
-    case ICmpInst::ICMP_UGE:return ConstantInt::get(C1Val >= C2Val);
-    case ICmpInst::ICMP_SLT:return ConstantInt::get(C1Val <  C2Val);
-    case ICmpInst::ICMP_SGT:return ConstantInt::get(C1Val >  C2Val);
-    case ICmpInst::ICMP_SLE:return ConstantInt::get(C1Val <= C2Val);
-    case ICmpInst::ICMP_SGE:return ConstantInt::get(C1Val >= C2Val);
+    case ICmpInst::ICMP_EQ: 
+      return ConstantInt::get(Type::Int1Ty, C1Val == C2Val);
+    case ICmpInst::ICMP_NE: 
+      return ConstantInt::get(Type::Int1Ty, C1Val != C2Val);
+    case ICmpInst::ICMP_ULT:
+      return ConstantInt::get(Type::Int1Ty, C1Val <  C2Val);
+    case ICmpInst::ICMP_UGT:
+      return ConstantInt::get(Type::Int1Ty, C1Val >  C2Val);
+    case ICmpInst::ICMP_ULE:
+      return ConstantInt::get(Type::Int1Ty, C1Val <= C2Val);
+    case ICmpInst::ICMP_UGE:
+      return ConstantInt::get(Type::Int1Ty, C1Val >= C2Val);
+    case ICmpInst::ICMP_SLT:
+      return ConstantInt::get(Type::Int1Ty, C1Val <  C2Val);
+    case ICmpInst::ICMP_SGT:
+      return ConstantInt::get(Type::Int1Ty, C1Val >  C2Val);
+    case ICmpInst::ICMP_SLE:
+      return ConstantInt::get(Type::Int1Ty, C1Val <= C2Val);
+    case ICmpInst::ICMP_SGE:
+      return ConstantInt::get(Type::Int1Ty, C1Val >= C2Val);
     }
   } else if (isa<ConstantInt>(C1) && isa<ConstantInt>(C2)) {
     if (ICmpInst::isSignedPredicate(ICmpInst::Predicate(pred))) {
@@ -1080,22 +1092,22 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
       int64_t V2 = cast<ConstantInt>(C2)->getSExtValue();
       switch (pred) {
       default: assert(0 && "Invalid ICmp Predicate"); return 0;
-      case ICmpInst::ICMP_SLT:return ConstantInt::get(V1 <  V2);
-      case ICmpInst::ICMP_SGT:return ConstantInt::get(V1 >  V2);
-      case ICmpInst::ICMP_SLE:return ConstantInt::get(V1 <= V2);
-      case ICmpInst::ICMP_SGE:return ConstantInt::get(V1 >= V2);
+      case ICmpInst::ICMP_SLT:return ConstantInt::get(Type::Int1Ty, V1 <  V2);
+      case ICmpInst::ICMP_SGT:return ConstantInt::get(Type::Int1Ty, V1 >  V2);
+      case ICmpInst::ICMP_SLE:return ConstantInt::get(Type::Int1Ty, V1 <= V2);
+      case ICmpInst::ICMP_SGE:return ConstantInt::get(Type::Int1Ty, V1 >= V2);
       }
     } else {
       uint64_t V1 = cast<ConstantInt>(C1)->getZExtValue();
       uint64_t V2 = cast<ConstantInt>(C2)->getZExtValue();
       switch (pred) {
       default: assert(0 && "Invalid ICmp Predicate"); return 0;
-      case ICmpInst::ICMP_EQ: return ConstantInt::get(V1 == V2);
-      case ICmpInst::ICMP_NE: return ConstantInt::get(V1 != V2);
-      case ICmpInst::ICMP_ULT:return ConstantInt::get(V1 <  V2);
-      case ICmpInst::ICMP_UGT:return ConstantInt::get(V1 >  V2);
-      case ICmpInst::ICMP_ULE:return ConstantInt::get(V1 <= V2);
-      case ICmpInst::ICMP_UGE:return ConstantInt::get(V1 >= V2);
+      case ICmpInst::ICMP_EQ: return ConstantInt::get(Type::Int1Ty, V1 == V2);
+      case ICmpInst::ICMP_NE: return ConstantInt::get(Type::Int1Ty, V1 != V2);
+      case ICmpInst::ICMP_ULT:return ConstantInt::get(Type::Int1Ty, V1 <  V2);
+      case ICmpInst::ICMP_UGT:return ConstantInt::get(Type::Int1Ty, V1 >  V2);
+      case ICmpInst::ICMP_ULE:return ConstantInt::get(Type::Int1Ty, V1 <= V2);
+      case ICmpInst::ICMP_UGE:return ConstantInt::get(Type::Int1Ty, V1 >= V2);
       }
     }
   } else if (isa<ConstantFP>(C1) && isa<ConstantFP>(C2)) {
@@ -1106,39 +1118,45 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     case FCmpInst::FCMP_FALSE: return ConstantInt::getFalse();
     case FCmpInst::FCMP_TRUE:  return ConstantInt::getTrue();
     case FCmpInst::FCMP_UNO:
-      return ConstantInt::get(C1Val != C1Val || C2Val != C2Val);
+      return ConstantInt::get(Type::Int1Ty, C1Val != C1Val || C2Val != C2Val);
     case FCmpInst::FCMP_ORD:
-      return ConstantInt::get(C1Val == C1Val && C2Val == C2Val);
+      return ConstantInt::get(Type::Int1Ty, C1Val == C1Val && C2Val == C2Val);
     case FCmpInst::FCMP_UEQ:
       if (C1Val != C1Val || C2Val != C2Val)
         return ConstantInt::getTrue();
       /* FALL THROUGH */
-    case FCmpInst::FCMP_OEQ:   return ConstantInt::get(C1Val == C2Val);
+    case FCmpInst::FCMP_OEQ:   
+      return ConstantInt::get(Type::Int1Ty, C1Val == C2Val);
     case FCmpInst::FCMP_UNE:
       if (C1Val != C1Val || C2Val != C2Val)
         return ConstantInt::getTrue();
       /* FALL THROUGH */
-    case FCmpInst::FCMP_ONE:   return ConstantInt::get(C1Val != C2Val);
+    case FCmpInst::FCMP_ONE:   
+      return ConstantInt::get(Type::Int1Ty, C1Val != C2Val);
     case FCmpInst::FCMP_ULT: 
       if (C1Val != C1Val || C2Val != C2Val)
         return ConstantInt::getTrue();
       /* FALL THROUGH */
-    case FCmpInst::FCMP_OLT:   return ConstantInt::get(C1Val < C2Val);
+    case FCmpInst::FCMP_OLT:   
+      return ConstantInt::get(Type::Int1Ty, C1Val < C2Val);
     case FCmpInst::FCMP_UGT:
       if (C1Val != C1Val || C2Val != C2Val)
         return ConstantInt::getTrue();
       /* FALL THROUGH */
-    case FCmpInst::FCMP_OGT:   return ConstantInt::get(C1Val > C2Val);
+    case FCmpInst::FCMP_OGT:
+      return ConstantInt::get(Type::Int1Ty, C1Val > C2Val);
     case FCmpInst::FCMP_ULE:
       if (C1Val != C1Val || C2Val != C2Val)
         return ConstantInt::getTrue();
       /* FALL THROUGH */
-    case FCmpInst::FCMP_OLE:   return ConstantInt::get(C1Val <= C2Val);
+    case FCmpInst::FCMP_OLE: 
+      return ConstantInt::get(Type::Int1Ty, C1Val <= C2Val);
     case FCmpInst::FCMP_UGE:
       if (C1Val != C1Val || C2Val != C2Val)
         return ConstantInt::getTrue();
       /* FALL THROUGH */
-    case FCmpInst::FCMP_OGE:   return ConstantInt::get(C1Val >= C2Val);
+    case FCmpInst::FCMP_OGE: 
+      return ConstantInt::get(Type::Int1Ty, C1Val >= C2Val);
     }
   } else if (const ConstantPacked *CP1 = dyn_cast<ConstantPacked>(C1)) {
     if (const ConstantPacked *CP2 = dyn_cast<ConstantPacked>(C2)) {
@@ -1182,17 +1200,17 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     case FCmpInst::BAD_FCMP_PREDICATE:
       break; // Couldn't determine anything about these constants.
     case FCmpInst::FCMP_OEQ: // We know that C1 == C2
-      return ConstantInt::get(
+      return ConstantInt::get(Type::Int1Ty,
           pred == FCmpInst::FCMP_UEQ || pred == FCmpInst::FCMP_OEQ ||
           pred == FCmpInst::FCMP_ULE || pred == FCmpInst::FCMP_OLE ||
           pred == FCmpInst::FCMP_UGE || pred == FCmpInst::FCMP_OGE);
     case FCmpInst::FCMP_OLT: // We know that C1 < C2
-      return ConstantInt::get(
+      return ConstantInt::get(Type::Int1Ty,
           pred == FCmpInst::FCMP_UNE || pred == FCmpInst::FCMP_ONE ||
           pred == FCmpInst::FCMP_ULT || pred == FCmpInst::FCMP_OLT ||
           pred == FCmpInst::FCMP_ULE || pred == FCmpInst::FCMP_OLE);
     case FCmpInst::FCMP_OGT: // We know that C1 > C2
-      return ConstantInt::get(
+      return ConstantInt::get(Type::Int1Ty,
           pred == FCmpInst::FCMP_UNE || pred == FCmpInst::FCMP_ONE ||
           pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT ||
           pred == FCmpInst::FCMP_UGE || pred == FCmpInst::FCMP_OGE);
@@ -1227,7 +1245,8 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     case ICmpInst::ICMP_EQ:   // We know the constants are equal!
       // If we know the constants are equal, we can decide the result of this
       // computation precisely.
-      return ConstantInt::get(pred == ICmpInst::ICMP_EQ  ||
+      return ConstantInt::get(Type::Int1Ty, 
+                              pred == ICmpInst::ICMP_EQ  ||
                               pred == ICmpInst::ICMP_ULE ||
                               pred == ICmpInst::ICMP_SLE ||
                               pred == ICmpInst::ICMP_UGE ||
@@ -1235,25 +1254,29 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     case ICmpInst::ICMP_ULT:
       // If we know that C1 < C2, we can decide the result of this computation
       // precisely.
-      return ConstantInt::get(pred == ICmpInst::ICMP_ULT ||
+      return ConstantInt::get(Type::Int1Ty, 
+                              pred == ICmpInst::ICMP_ULT ||
                               pred == ICmpInst::ICMP_NE  ||
                               pred == ICmpInst::ICMP_ULE);
     case ICmpInst::ICMP_SLT:
       // If we know that C1 < C2, we can decide the result of this computation
       // precisely.
-      return ConstantInt::get(pred == ICmpInst::ICMP_SLT ||
+      return ConstantInt::get(Type::Int1Ty,
+                              pred == ICmpInst::ICMP_SLT ||
                               pred == ICmpInst::ICMP_NE  ||
                               pred == ICmpInst::ICMP_SLE);
     case ICmpInst::ICMP_UGT:
       // If we know that C1 > C2, we can decide the result of this computation
       // precisely.
-      return ConstantInt::get(pred == ICmpInst::ICMP_UGT ||
+      return ConstantInt::get(Type::Int1Ty, 
+                              pred == ICmpInst::ICMP_UGT ||
                               pred == ICmpInst::ICMP_NE  ||
                               pred == ICmpInst::ICMP_UGE);
     case ICmpInst::ICMP_SGT:
       // If we know that C1 > C2, we can decide the result of this computation
       // precisely.
-      return ConstantInt::get(pred == ICmpInst::ICMP_SGT ||
+      return ConstantInt::get(Type::Int1Ty, 
+                              pred == ICmpInst::ICMP_SGT ||
                               pred == ICmpInst::ICMP_NE  ||
                               pred == ICmpInst::ICMP_SGE);
     case ICmpInst::ICMP_ULE:

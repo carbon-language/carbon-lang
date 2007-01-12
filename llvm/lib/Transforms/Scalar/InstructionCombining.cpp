@@ -2965,7 +2965,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
                                            bool isSigned, bool Inside, 
                                            Instruction &IB) {
   assert(cast<ConstantInt>(ConstantExpr::getICmp((isSigned ? 
-            ICmpInst::ICMP_SLE:ICmpInst::ICMP_ULE), Lo, Hi))->getBoolValue() &&
+            ICmpInst::ICMP_SLE:ICmpInst::ICMP_ULE), Lo, Hi))->getZExtValue() &&
          "Lo is not <= Hi in range emission code!");
     
   if (Inside) {
@@ -3264,7 +3264,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
           Constant *Cmp = ConstantExpr::getICmp(GT, LHSCst, RHSCst);
           ICmpInst *LHS = cast<ICmpInst>(Op0);
-          if (cast<ConstantInt>(Cmp)->getBoolValue()) {
+          if (cast<ConstantInt>(Cmp)->getZExtValue()) {
             std::swap(LHS, RHS);
             std::swap(LHSCst, RHSCst);
             std::swap(LHSCC, RHSCC);
@@ -3723,7 +3723,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
           Constant *Cmp = ConstantExpr::getICmp(GT, LHSCst, RHSCst);
           ICmpInst *LHS = cast<ICmpInst>(Op0);
-          if (cast<ConstantInt>(Cmp)->getBoolValue()) {
+          if (cast<ConstantInt>(Cmp)->getZExtValue()) {
             std::swap(LHS, RHS);
             std::swap(LHSCst, RHSCst);
             std::swap(LHSCC, RHSCC);
@@ -4152,7 +4152,8 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
             EmitIt = false;  // This is indexing into a zero sized array?
           } else if (isa<ConstantInt>(C))
             return ReplaceInstUsesWith(I, // No comparison is needed here.
-                                 ConstantInt::get(Cond == ICmpInst::ICMP_NE));
+                                 ConstantInt::get(Type::Int1Ty, 
+                                                  Cond == ICmpInst::ICMP_NE));
         }
 
         if (EmitIt) {
@@ -4176,7 +4177,8 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
         return InVal;
       else
         // No comparison is needed here, all indexes = 0
-        ReplaceInstUsesWith(I, ConstantInt::get(Cond == ICmpInst::ICMP_EQ));
+        ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 
+                                                Cond == ICmpInst::ICMP_EQ));
     }
 
     // Only lower this if the icmp is the only user of the GEP or if we expect
@@ -4253,7 +4255,8 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
 
       if (NumDifferences == 0)   // SAME GEP?
         return ReplaceInstUsesWith(I, // No comparison is needed here.
-                                 ConstantInt::get(Cond == ICmpInst::ICMP_EQ));
+                                   ConstantInt::get(Type::Int1Ty, 
+                                                    Cond == ICmpInst::ICMP_EQ));
       else if (NumDifferences == 1) {
         Value *LHSV = GEPLHS->getOperand(DiffOperand);
         Value *RHSV = GEPRHS->getOperand(DiffOperand);
@@ -4281,7 +4284,8 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
 
   // fcmp pred X, X
   if (Op0 == Op1)
-    return ReplaceInstUsesWith(I, ConstantInt::get(isTrueWhenEqual(I)));
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 
+                                                   isTrueWhenEqual(I)));
 
   if (isa<UndefValue>(Op1))                  // fcmp pred X, undef -> undef
     return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
@@ -4333,7 +4337,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
   // icmp X, X
   if (Op0 == Op1)
-    return ReplaceInstUsesWith(I, ConstantInt::get(isTrueWhenEqual(I)));
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 
+                                                   isTrueWhenEqual(I)));
 
   if (isa<UndefValue>(Op1))                  // X icmp undef -> undef
     return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
@@ -4343,7 +4348,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   if (GlobalValue *GV0 = dyn_cast<GlobalValue>(Op0))
     if (GlobalValue *GV1 = dyn_cast<GlobalValue>(Op1))
       if (!GV0->hasExternalWeakLinkage() || !GV1->hasExternalWeakLinkage())
-        return ReplaceInstUsesWith(I, ConstantInt::get(!isTrueWhenEqual(I)));
+        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty,
+                                                       !isTrueWhenEqual(I)));
 
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
@@ -4351,7 +4357,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
        isa<ConstantPointerNull>(Op0)) &&
       (isa<GlobalValue>(Op1) || isa<AllocaInst>(Op1) ||
        isa<ConstantPointerNull>(Op1)))
-    return ReplaceInstUsesWith(I, ConstantInt::get(!isTrueWhenEqual(I)));
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 
+                                                   !isTrueWhenEqual(I)));
 
   // icmp's with boolean values can always be turned into bitwise operations
   if (Ty == Type::Int1Ty) {
@@ -4691,7 +4698,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               ConstantExpr::getShl(ConstantExpr::getLShr(CI, ShAmt), ShAmt);
             if (Comp != CI) {// Comparing against a bit that we know is zero.
               bool IsICMP_NE = I.getPredicate() == ICmpInst::ICMP_NE;
-              Constant *Cst = ConstantInt::get(IsICMP_NE);
+              Constant *Cst = ConstantInt::get(Type::Int1Ty, IsICMP_NE);
               return ReplaceInstUsesWith(I, Cst);
             }
 
@@ -4735,7 +4742,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
             if (Comp != CI) {// Comparing against a bit that we know is zero.
               bool IsICMP_NE = I.getPredicate() == ICmpInst::ICMP_NE;
-              Constant *Cst = ConstantInt::get(IsICMP_NE);
+              Constant *Cst = ConstantInt::get(Type::Int1Ty, IsICMP_NE);
               return ReplaceInstUsesWith(I, Cst);
             }
 
@@ -4957,7 +4964,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1))) {
             Constant *NotCI = ConstantExpr::getNot(CI);
             if (!ConstantExpr::getAnd(BOC, NotCI)->isNullValue())
-              return ReplaceInstUsesWith(I, ConstantInt::get(isICMP_NE));
+              return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 
+                                                             isICMP_NE));
           }
           break;
 
@@ -4967,7 +4975,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             // comparison can never succeed!
             if (!ConstantExpr::getAnd(CI,
                                       ConstantExpr::getNot(BOC))->isNullValue())
-              return ReplaceInstUsesWith(I, ConstantInt::get(isICMP_NE));
+              return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty,
+                                                             isICMP_NE));
 
             // If we have ((X & C) == C), turn it into ((X & C) != 0).
             if (CI == BOC && isOneBitSet(CI))
@@ -6182,7 +6191,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
           if (Op1CV && (Op1CV != (KnownZero^TypeMask))) {
             // (X&4) == 2 --> false
             // (X&4) != 2 --> true
-            Constant *Res = ConstantInt::get(isNE);
+            Constant *Res = ConstantInt::get(Type::Int1Ty, isNE);
             Res = ConstantExpr::getZExt(Res, CI.getType());
             return ReplaceInstUsesWith(CI, Res);
           }
@@ -6553,7 +6562,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   // select true, X, Y  -> X
   // select false, X, Y -> Y
   if (ConstantInt *C = dyn_cast<ConstantInt>(CondVal))
-    return ReplaceInstUsesWith(SI, C->getBoolValue() ? TrueVal : FalseVal);
+    return ReplaceInstUsesWith(SI, C->getZExtValue() ? TrueVal : FalseVal);
 
   // select C, X, X -> X
   if (TrueVal == FalseVal)
@@ -6574,7 +6583,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     ConstantInt *C;
     if ((C = dyn_cast<ConstantInt>(TrueVal)) && 
         C->getType() == Type::Int1Ty) {
-      if (C->getBoolValue()) {
+      if (C->getZExtValue()) {
         // Change: A = select B, true, C --> A = or B, C
         return BinaryOperator::createOr(CondVal, FalseVal);
       } else {
@@ -6586,7 +6595,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       }
     } else if ((C = dyn_cast<ConstantInt>(FalseVal)) &&
                C->getType() == Type::Int1Ty) {
-      if (C->getBoolValue() == false) {
+      if (C->getZExtValue() == false) {
         // Change: A = select B, C, false --> A = and B, C
         return BinaryOperator::createAnd(CondVal, TrueVal);
       } else {
@@ -9049,7 +9058,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
   if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
     if (BI->isConditional() && isa<ConstantInt>(BI->getCondition()) &&
         BI->getCondition()->getType() == Type::Int1Ty) {
-      bool CondVal = cast<ConstantInt>(BI->getCondition())->getBoolValue();
+      bool CondVal = cast<ConstantInt>(BI->getCondition())->getZExtValue();
       AddReachableCodeToWorklist(BI->getSuccessor(!CondVal), Visited, WorkList,
                                  TD);
       return;

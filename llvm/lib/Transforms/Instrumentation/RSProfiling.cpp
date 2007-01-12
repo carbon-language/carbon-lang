@@ -460,7 +460,7 @@ void ProfilerRS::ProcessBackEdge(BasicBlock* src, BasicBlock* dst, Function& F) 
   //b:
   new BranchInst(cast<BasicBlock>(Translate(dst)), bbC);
   new BranchInst(dst, cast<BasicBlock>(Translate(dst)), 
-		 ConstantInt::get(true), bbCp);
+		 ConstantInt::get(Type::Int1Ty, true), bbCp);
   //c:
   {
     TerminatorInst* iB = src->getTerminator();
@@ -516,7 +516,7 @@ bool ProfilerRS::runOnFunction(Function& F) {
     TerminatorInst* T = F.getEntryBlock().getTerminator();
     ReplaceInstWithInst(T, new BranchInst(T->getSuccessor(0),
 			       cast<BasicBlock>(Translate(T->getSuccessor(0))),
-					  ConstantInt::get(true)));
+					 ConstantInt::get(Type::Int1Ty, true)));
     
     //do whatever is needed now that the function is duplicated
     c->PrepFunction(&F);

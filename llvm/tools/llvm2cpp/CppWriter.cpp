@@ -671,7 +671,7 @@ void CppWriter::printConstant(const Constant *CV) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     if (CI->getType() == Type::Int1Ty)
       Out << "ConstantInt* " << constName << " = ConstantInt::get(" 
-          << (CI->getBoolValue() ? "true" : "false") << ");";
+          << (CI->getZExtValue() ? "true" : "false") << ");";
     else
       Out << "ConstantInt* " << constName << " = ConstantInt::get(" 
           << typeName << ", " << CI->getZExtValue() << ");";

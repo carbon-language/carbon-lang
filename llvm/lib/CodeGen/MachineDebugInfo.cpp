@@ -211,7 +211,7 @@ public:
   }
   virtual void Apply(bool &Field) {
     Constant *C = CI->getOperand(I++);
-    Field = cast<ConstantInt>(C)->getBoolValue();
+    Field = cast<ConstantInt>(C)->getZExtValue();
   }
   virtual void Apply(std::string &Field) {
     Constant *C = CI->getOperand(I++);
@@ -276,7 +276,7 @@ public:
     Elements.push_back(ConstantInt::get(Type::Int64Ty, uint64_t(Field)));
   }
   virtual void Apply(bool &Field) {
-    Elements.push_back(ConstantInt::get(Field));
+    Elements.push_back(ConstantInt::get(Type::Int1Ty, Field));
   }
   virtual void Apply(std::string &Field) {
       Elements.push_back(SR.getString(Field));

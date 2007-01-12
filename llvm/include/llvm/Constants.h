@@ -85,32 +85,12 @@ public:
     return F = new ConstantInt(false);
   }
 
-  /// @brief Static factory method for getting a ConstantInt instance which
-  /// stands for a bool value.
-  static ConstantInt *get(bool Value) { return Value ? getTrue() : getFalse();}
-
   /// Return a ConstantInt with the specified value for the specified type. The
   /// value V will be canonicalized to a uint64_t but accessing it with either
   /// getSExtValue() or getZExtValue() (ConstantInt) will yield the correct
   /// sized/signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const Type *Ty, int64_t V);
-
-  /// Returns the opposite value of this ConstantInt. 
-  /// @brief Get inverse value.
-  inline ConstantInt *inverted() const {
-    static ConstantInt *CI = 0;
-    if (CI) return CI; 
-    return CI = new ConstantInt(getType(), 
-                                Val ^ (getType() == Type::Int1Ty ? 1 : -1));
-  }
-
-  /// @returns the value of this ConstantInt only if it's a boolean type.
-  /// @brief return the boolean value of this constant.
-  inline bool getBoolValue() const { 
-    assert(getType() == Type::Int1Ty && "Should be a boolean constant!");
-    return static_cast<bool>(getZExtValue()); 
-  }
 
   /// This static method returns true if the type Ty is big enough to 
   /// represent the value V. This can be used to avoid having the get method 
@@ -136,8 +116,7 @@ public:
   /// to true.
   /// @returns true iff this constant's bits are all set to true.
   /// @brief Determine if the value is all ones.
-  virtual bool isAllOnesValue() const { 
-    if (getType() == Type::Int1Ty) return getBoolValue() == true;
+  bool isAllOnesValue() const { 
     return getSExtValue() == -1; 
   }
 
@@ -146,8 +125,7 @@ public:
   /// @returns true iff this is the largest value that may be represented 
   /// by this type.
   /// @brief Determine if the value is maximal.
-  virtual bool isMaxValue(bool isSigned) const {
-    if (getType() == Type::Int1Ty) return getBoolValue() == true;
+  bool isMaxValue(bool isSigned) const {
     if (isSigned) {
       int64_t V = getSExtValue();
       if (V < 0) return false;    // Be careful about wrap-around on 'long's
@@ -162,8 +140,7 @@ public:
   /// @returns true if this is the smallest value that may be represented by 
   /// this type.
   /// @brief Determine if the value is minimal.
-  virtual bool isMinValue(bool isSigned) const {
-    if (getType() == Type::Int1Ty) return getBoolValue() == false;
+  bool isMinValue(bool isSigned) const {
     if (isSigned) {
       int64_t V = getSExtValue();
       if (V > 0) return false;    // Be careful about wrap-around on 'long's

@@ -975,7 +975,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
       // Okay, we now know that all edges from PredBB should be revectored to
       // branch to RealDest.
       BasicBlock *PredBB = PN->getIncomingBlock(i);
-      BasicBlock *RealDest = BI->getSuccessor(!CB->getBoolValue());
+      BasicBlock *RealDest = BI->getSuccessor(!CB->getZExtValue());
       
       if (RealDest == BB) continue;  // Skip self loops.
       
@@ -1500,8 +1500,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           if (PBI != BI && PBI->isConditional()) {
               
             // If this block ends with a branch instruction, and if there is a
-            // predecessor that ends on a branch of the same condition, make this 
-            // conditional branch redundant.
+            // predecessor that ends on a branch of the same condition, make 
+            // this conditional branch redundant.
             if (PBI->getCondition() == BI->getCondition() &&
                 PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
               // Okay, the outcome of this conditional branch is statically
@@ -1509,23 +1509,24 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               if (BB->getSinglePredecessor()) {
                 // Turn this into a branch on constant.
                 bool CondIsTrue = PBI->getSuccessor(0) == BB;
-                BI->setCondition(ConstantInt::get(CondIsTrue));
+                BI->setCondition(ConstantInt::get(Type::Int1Ty, CondIsTrue));
                 return SimplifyCFG(BB);  // Nuke the branch on constant.
               }
               
-              // Otherwise, if there are multiple predecessors, insert a PHI that
-              // merges in the constant and simplify the block result.
+              // Otherwise, if there are multiple predecessors, insert a PHI 
+              // that merges in the constant and simplify the block result.
               if (BlockIsSimpleEnoughToThreadThrough(BB)) {
                 PHINode *NewPN = new PHINode(Type::Int1Ty,
-                                             BI->getCondition()->getName()+".pr",
-                                             BB->begin());
+                                            BI->getCondition()->getName()+".pr",
+                                            BB->begin());
                 for (PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
                   if ((PBI = dyn_cast<BranchInst>((*PI)->getTerminator())) &&
                       PBI != BI && PBI->isConditional() &&
                       PBI->getCondition() == BI->getCondition() &&
                       PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
                     bool CondIsTrue = PBI->getSuccessor(0) == BB;
-                    NewPN->addIncoming(ConstantInt::get(CondIsTrue), *PI);
+                    NewPN->addIncoming(ConstantInt::get(Type::Int1Ty, 
+                                                        CondIsTrue), *PI);
                   } else {
                     NewPN->addIncoming(BI->getCondition(), *PI);
                   }

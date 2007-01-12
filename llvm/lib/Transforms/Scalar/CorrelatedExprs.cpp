@@ -472,7 +472,7 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
     } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
       Relation::KnownResult Res = getCmpResult(CI, NewRI);
       if (Res == Relation::Unknown) return false;
-      PropagateEquality(CI, ConstantInt::get(Res), NewRI);
+      PropagateEquality(CI, ConstantInt::get(Type::Int1Ty, Res), NewRI);
     } else {
       assert(isa<BranchInst>(*I) && "Unexpected instruction type!");
     }
@@ -488,7 +488,7 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
 
     // Forward to the successor that corresponds to the branch we will take.
     ForwardSuccessorTo(TI, SuccNo, 
-                       BI->getSuccessor(!CB->getBoolValue()), NewRI);
+                       BI->getSuccessor(!CB->getZExtValue()), NewRI);
     return true;
   }
 
@@ -841,7 +841,7 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
         // is true, this means that both operands to the OR are known to be true
         // as well.
         //
-        if (CB->getBoolValue() && Inst->getOpcode() == Instruction::And) {
+        if (CB->getZExtValue() && Inst->getOpcode() == Instruction::And) {
           PropagateEquality(Inst->getOperand(0), CB, RI);
           PropagateEquality(Inst->getOperand(1), CB, RI);
         }
@@ -850,24 +850,26 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
         // is false, this means that both operands to the OR are know to be false
         // as well.
         //
-        if (!CB->getBoolValue() && Inst->getOpcode() == Instruction::Or) {
+        if (!CB->getZExtValue() && Inst->getOpcode() == Instruction::Or) {
           PropagateEquality(Inst->getOperand(0), CB, RI);
           PropagateEquality(Inst->getOperand(1), CB, RI);
         }
 
-        // If we know that this instruction is a NOT instruction, we know that the
-        // operand is known to be the inverse of whatever the current value is.
+        // If we know that this instruction is a NOT instruction, we know that 
+        // the operand is known to be the inverse of whatever the current 
+        // value is.
         //
         if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(Inst))
           if (BinaryOperator::isNot(BOp))
             PropagateEquality(BinaryOperator::getNotArgument(BOp),
-                              ConstantInt::get(!CB->getBoolValue()), RI);
+                              ConstantInt::get(Type::Int1Ty, 
+                                               !CB->getZExtValue()), RI);
 
         // If we know the value of a FCmp instruction, propagate the information
         // about the relation into this region as well.
         //
         if (FCmpInst *FCI = dyn_cast<FCmpInst>(Inst)) {
-          if (CB->getBoolValue()) {  // If we know the condition is true...
+          if (CB->getZExtValue()) {  // If we know the condition is true...
             // Propagate info about the LHS to the RHS & RHS to LHS
             PropagateRelation(FCI->getPredicate(), FCI->getOperand(0),
                               FCI->getOperand(1), RI);
@@ -888,7 +890,7 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
         // about the relation into this region as well.
         //
         if (ICmpInst *ICI = dyn_cast<ICmpInst>(Inst)) {
-          if (CB->getBoolValue()) { // If we know the condition is true...
+          if (CB->getZExtValue()) { // If we know the condition is true...
             // Propagate info about the LHS to the RHS & RHS to LHS
             PropagateRelation(ICI->getPredicate(), ICI->getOperand(0),
                               ICI->getOperand(1), RI);
@@ -994,7 +996,7 @@ void CEE::IncorporateInstruction(Instruction *Inst, RegionInfo &RI) {
     // See if we can figure out a result for this instruction...
     Relation::KnownResult Result = getCmpResult(CI, RI);
     if (Result != Relation::Unknown) {
-      PropagateEquality(CI, ConstantInt::get(Result != 0), RI);
+      PropagateEquality(CI, ConstantInt::get(Type::Int1Ty, Result != 0), RI);
     }
   }
 }
@@ -1068,7 +1070,7 @@ bool CEE::SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI) {
         DEBUG(cerr << "Replacing icmp with " << Result
                    << " constant: " << *CI);
 
-        CI->replaceAllUsesWith(ConstantInt::get((bool)Result));
+        CI->replaceAllUsesWith(ConstantInt::get(Type::Int1Ty, (bool)Result));
         // The instruction is now dead, remove it from the program.
         CI->getParent()->getInstList().erase(CI);
         ++NumCmpRemoved;
@@ -1122,7 +1124,7 @@ Relation::KnownResult CEE::getCmpResult(CmpInst *CI,
       if (Constant *Result = ConstantFoldInstruction(CI)) {
         // Wow, this is easy, directly eliminate the ICmpInst.
         DEBUG(cerr << "Replacing cmp with constant fold: " << *CI);
-        return cast<ConstantInt>(Result)->getBoolValue()
+        return cast<ConstantInt>(Result)->getZExtValue()
           ? Relation::KnownTrue : Relation::KnownFalse;
       }
     } else {

@@ -1161,7 +1161,7 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
       // Only do this if we weren't storing a loaded value.
       Value *StoreVal;
       if (StoringOther || SI->getOperand(0) == InitVal)
-        StoreVal = ConstantInt::get(StoringOther);
+        StoreVal = ConstantInt::get(Type::Int1Ty, StoringOther);
       else {
         // Otherwise, we are storing a previously loaded copy.  To do this,
         // change the copy from copying the original value to just copying the
@@ -1803,7 +1803,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
           // Cannot determine.
           if (!Cond || Cond->getType() != Type::Int1Ty) 
             return false;  
-          NewBB = BI->getSuccessor(!Cond->getBoolValue());          
+          NewBB = BI->getSuccessor(!Cond->getZExtValue());          
         }
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(CurInst)) {
         ConstantInt *Val =

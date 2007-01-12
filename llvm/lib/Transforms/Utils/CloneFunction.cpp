@@ -233,7 +233,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB) {
 
       // Constant fold to uncond branch!
       if (Cond) {
-        BasicBlock *Dest = BI->getSuccessor(!Cond->getBoolValue());
+        BasicBlock *Dest = BI->getSuccessor(!Cond->getZExtValue());
         ValueMap[OldTI] = new BranchInst(Dest, NewBB);
         CloneBlock(Dest);
         TerminatorDone = true;

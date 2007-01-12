@@ -586,7 +586,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
               Constant *Compare = ConstantExpr::getICmp(ICmpInst::ICMP_SGT, 
                                                         G1OC, G2OC);
               if (ConstantInt *CV = dyn_cast<ConstantInt>(Compare)) {
-                if (CV->getBoolValue())   // If they are comparable and G2 > G1
+                if (CV->getZExtValue())   // If they are comparable and G2 > G1
                   std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2
                 break;
               }

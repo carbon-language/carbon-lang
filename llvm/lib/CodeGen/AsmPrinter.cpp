@@ -390,7 +390,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     O << "0";
   else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     if (CI->getType() == Type::Int1Ty) {
-      assert(CI->getBoolValue());
+      assert(CI->getZExtValue());
       O << "1";
     } else O << CI->getSExtValue();
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {

@@ -93,7 +93,7 @@ bool Constant::canTrap() const {
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::Int1TyID: {
-    static Constant *NullBool = ConstantInt::get(false);
+    static Constant *NullBool = ConstantInt::get(Type::Int1Ty, false);
     return NullBool;
   }
   case Type::Int8TyID: {
@@ -838,7 +838,11 @@ static ManagedStatic<ValueMap<uint64_t, Type, ConstantInt> > IntConstants;
 // just return the stored value while getSExtValue has to convert back to sign
 // extended. getZExtValue is more common in LLVM than getSExtValue().
 ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
-  if (Ty == Type::Int1Ty) return ConstantInt::get(V&1);
+  if (Ty == Type::Int1Ty) 
+    if (V & 1)
+      return getTrue();
+    else
+      return getFalse();
   return IntConstants->getOrCreate(Ty, V & Ty->getIntegralTypeMask());
 }
 
