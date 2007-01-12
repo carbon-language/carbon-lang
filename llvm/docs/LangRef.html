@@ -770,7 +770,7 @@ system. The current set of primitive types is as follows:</p>
       <table>
         <tbody>
           <tr><th>Type</th><th>Description</th></tr>
-          <tr><td><tt>bool</tt></td><td>True or False value</td></tr>
+          <tr><td><tt>i1</tt></td><td>True or False value</td></tr>
           <tr><td><tt>i16</tt></td><td>Signless 16-bit value</td></tr>
           <tr><td><tt>i64</tt></td><td>Signless 64-bit value</td></tr>
          <tr><td><tt>double</tt></td><td>64-bit floating point value</td></tr>
@@ -797,7 +797,7 @@ classifications:</p>
     </tr>
     <tr>
       <td><a name="t_integral">integral</a></td>
-      <td><tt>bool, i8, i16, i32, i64</tt>
+      <td><tt>i1, i8, i16, i32, i64</tt>
       </td>
     </tr>
     <tr>
@@ -806,7 +806,7 @@ classifications:</p>
     </tr>
     <tr>
       <td><a name="t_firstclass">first class</a></td>
-      <td><tt>bool, i8, i16, i32, i64, float, double, <br/>
+      <td><tt>i1, i8, i16, i32, i64, float, double, <br/>
           <a href="#t_pointer">pointer</a>,<a href="#t_packed">packed</a></tt>
       </td>
     </tr>
@@ -1118,7 +1118,7 @@ them all and their syntax.</p>
   <dt><b>Boolean constants</b></dt>
 
   <dd>The two strings '<tt>true</tt>' and '<tt>false</tt>' are both valid
-  constants of the <tt><a href="#t_primitive">bool</a></tt> type.
+  constants of the <tt><a href="#t_primitive">i1</a></tt> type.
   </dd>
 
   <dt><b>Integer constants</b></dt>
@@ -1480,7 +1480,7 @@ return value.</p>
 <div class="doc_subsubsection"> <a name="i_br">'<tt>br</tt>' Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  br bool &lt;cond&gt;, label &lt;iftrue&gt;, label &lt;iffalse&gt;<br>  br label &lt;dest&gt;          <i>; Unconditional branch</i>
+<pre>  br i1 &lt;cond&gt;, label &lt;iftrue&gt;, label &lt;iffalse&gt;<br>  br label &lt;dest&gt;          <i>; Unconditional branch</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>br</tt>' instruction is used to cause control flow to
@@ -1489,16 +1489,16 @@ two forms of this instruction, corresponding to a conditional branch
 and an unconditional branch.</p>
 <h5>Arguments:</h5>
 <p>The conditional branch form of the '<tt>br</tt>' instruction takes a
-single '<tt>bool</tt>' value and two '<tt>label</tt>' values.  The
+single '<tt>i1</tt>' value and two '<tt>label</tt>' values.  The
 unconditional form of the '<tt>br</tt>' instruction takes a single '<tt>label</tt>'
 value as a target.</p>
 <h5>Semantics:</h5>
-<p>Upon execution of a conditional '<tt>br</tt>' instruction, the '<tt>bool</tt>'
+<p>Upon execution of a conditional '<tt>br</tt>' instruction, the '<tt>i1</tt>'
 argument is evaluated.  If the value is <tt>true</tt>, control flows
 to the '<tt>iftrue</tt>' <tt>label</tt> argument.  If "cond" is <tt>false</tt>,
 control flows to the '<tt>iffalse</tt>' <tt>label</tt> argument.</p>
 <h5>Example:</h5>
-<pre>Test:<br>  %cond = <a href="#i_icmp">icmp</a> eq, i32 %a, %b<br>  br bool %cond, label %IfEqual, label %IfUnequal<br>IfEqual:<br>  <a
+<pre>Test:<br>  %cond = <a href="#i_icmp">icmp</a> eq, i32 %a, %b<br>  br i1 %cond, label %IfEqual, label %IfUnequal<br>IfEqual:<br>  <a
  href="#i_ret">ret</a> i32 1<br>IfUnequal:<br>  <a href="#i_ret">ret</a> i32 0<br></pre>
 </div>
 <!-- _______________________________________________________________________ -->
@@ -1547,7 +1547,7 @@ branches or with a lookup table.</p>
 
 <pre>
  <i>; Emulate a conditional br instruction</i>
- %Val = <a href="#i_zext">zext</a> bool %value to i32
+ %Val = <a href="#i_zext">zext</a> i1 %value to i32
  switch i32 %Val, label %truedest [i32 0, label %falsedest ]
 
  <i>; Emulate an unconditional br instruction</i>
@@ -2699,8 +2699,8 @@ It will always truncate bits.</p>
 <h5>Example:</h5>
 <pre>
   %X = trunc i32 257 to i8              <i>; yields i8:1</i>
-  %Y = trunc i32 123 to bool               <i>; yields bool:true</i>
-  %Y = trunc i32 122 to bool               <i>; yields bool:false</i>
+  %Y = trunc i32 123 to i1              <i>; yields i1:true</i>
+  %Y = trunc i32 122 to i1              <i>; yields i1:false</i>
 </pre>
 </div>
 
@@ -2734,12 +2734,12 @@ the operand and the type are the same size, no bit filling is done and the
 cast is considered a <i>no-op cast</i> because no bits change (only the type 
 changes).</p>
 
-<p>When zero extending from bool, the result will alwasy be either 0 or 1.</p>
+<p>When zero extending from i1, the result will alwasy be either 0 or 1.</p>
 
 <h5>Example:</h5>
 <pre>
   %X = zext i32 257 to i64              <i>; yields i64:257</i>
-  %Y = zext bool true to i32              <i>; yields i32:1</i>
+  %Y = zext i1 true to i32              <i>; yields i32:1</i>
 </pre>
 </div>
 
@@ -2773,12 +2773,12 @@ the type <tt>ty2</tt>.  When the the operand and the type are the same size,
 no bit filling is done and the cast is considered a <i>no-op cast</i> because 
 no bits change (only the type changes).</p>
 
-<p>When sign extending from bool, the extension always results in -1 or 0.</p>
+<p>When sign extending from i1, the extension always results in -1 or 0.</p>
 
 <h5>Example:</h5>
 <pre>
   %X = sext i8  -1 to i16              <i>; yields i16   :65535</i>
-  %Y = sext bool true to i32             <i>; yields i32:-1</i>
+  %Y = sext i1 true to i32             <i>; yields i32:-1</i>
 </pre>
 </div>
 
@@ -2882,14 +2882,14 @@ must be an <a href="#t_integral">integral</a> type.</p>
 towards zero) unsigned integer value. If the value cannot fit in <tt>ty2</tt>,
 the results are undefined.</p>
 
-<p>When converting to bool, the conversion is done as a comparison against 
-zero. If the <tt>value</tt> was zero, the bool result will be <tt>false</tt>. 
-If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
+<p>When converting to i1, the conversion is done as a comparison against 
+zero. If the <tt>value</tt> was zero, the i1 result will be <tt>false</tt>. 
+If the <tt>value</tt> was non-zero, the i1 result will be <tt>true</tt>.</p>
 
 <h5>Example:</h5>
 <pre>
-  %X = fp2uint double 123.0 to i32         <i>; yields i32:123</i>
-  %Y = fp2uint float 1.0E+300 to bool      <i>; yields bool:true</i>
+  %X = fp2uint double 123.0 to i32      <i>; yields i32:123</i>
+  %Y = fp2uint float 1.0E+300 to i1     <i>; yields i1:true</i>
   %X = fp2uint float 1.04E+17 to i8     <i>; yields undefined:1</i>
 </pre>
 </div>
@@ -2922,14 +2922,14 @@ must also be an <a href="#t_integral">integral</a> type.</p>
 towards zero) signed integer value. If the value cannot fit in <tt>ty2</tt>,
 the results are undefined.</p>
 
-<p>When converting to bool, the conversion is done as a comparison against 
-zero. If the <tt>value</tt> was zero, the bool result will be <tt>false</tt>. 
-If the <tt>value</tt> was non-zero, the bool result will be <tt>true</tt>.</p>
+<p>When converting to i1, the conversion is done as a comparison against 
+zero. If the <tt>value</tt> was zero, the i1 result will be <tt>false</tt>. 
+If the <tt>value</tt> was non-zero, the i1 result will be <tt>true</tt>.</p>
 
 <h5>Example:</h5>
 <pre>
-  %X = fptosi double -123.0 to i32        <i>; yields i32:-123</i>
-  %Y = fptosi float 1.0E-247 to bool      <i>; yields bool:true</i>
+  %X = fptosi double -123.0 to i32      <i>; yields i32:-123</i>
+  %Y = fptosi float 1.0E-247 to i1      <i>; yields i1:true</i>
   %X = fptosi float 1.04E+17 to i8      <i>; yields undefined:1</i>
 </pre>
 </div>
@@ -3122,7 +3122,8 @@ instructions, which defy better classification.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
+<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;
+<i>; yields {i1}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>icmp</tt>' instruction returns a boolean value based on comparison
@@ -3148,7 +3149,7 @@ a value, just a keyword. The possibilities for the condition code are:
 <h5>Semantics:</h5>
 <p>The '<tt>icmp</tt>' compares <tt>var1</tt> and <tt>var2</tt> according to 
 the condition code given as <tt>cond</tt>. The comparison performed always
-yields a <a href="#t_bool">bool</a> result, as follows: 
+yields a <a href="#t_primitive">i1</a> result, as follows: 
 <ol>
   <li><tt>eq</tt>: yields <tt>true</tt> if the operands are equal, 
   <tt>false</tt> otherwise. No sign interpretation is necessary or performed.
@@ -3194,7 +3195,8 @@ elements.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {bool}:result</i>
+<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;
+<i>; yields {i1}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>fcmp</tt>' instruction returns a boolean value based on comparison
@@ -3231,7 +3233,7 @@ types.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>fcmp</tt>' compares <tt>var1</tt> and <tt>var2</tt> according to 
 the condition code given as <tt>cond</tt>. The comparison performed always
-yields a <a href="#t_bool">bool</a> result, as follows: 
+yields a <a href="#t_primitive">i1</a> result, as follows: 
 <ol>
   <li><tt>false</tt>: always yields <tt>false</tt>, regardless of operands.</li>
   <li><tt>oeq</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
@@ -3311,7 +3313,7 @@ came from in the last <a href="#terminators">terminator</a> instruction.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = select bool &lt;cond&gt;, &lt;ty&gt; &lt;val1&gt;, &lt;ty&gt; &lt;val2&gt;             <i>; yields ty</i>
+  &lt;result&gt; = select i1 &lt;cond&gt;, &lt;ty&gt; &lt;val1&gt;, &lt;ty&gt; &lt;val2&gt;             <i>; yields ty</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -3338,7 +3340,7 @@ value argument; otherwise, it returns the second value argument.
 <h5>Example:</h5>
 
 <pre>
-  %X = select bool true, i8 17, i8 42          <i>; yields i8:17</i>
+  %X = select i1 true, i8 17, i8 42          <i>; yields i8:17</i>
 </pre>
 </div>
 
