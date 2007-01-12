@@ -1166,6 +1166,22 @@ void ConstantPacked::destroyConstant() {
   destroyConstantImpl();
 }
 
+/// This function will return true iff every element in this packed constant
+/// is set to all ones.
+/// @returns true iff this constant's emements are all set to all ones.
+/// @brief Determine if the value is all ones.
+bool ConstantPacked::isAllOnesValue() const {
+  // Check out first element.
+  const Constant *Elt = getOperand(0);
+  const ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
+  if (!CI || !CI->isAllOnesValue()) return false;
+  // Then make sure all remaining elements point to the same value.
+  for (unsigned I = 1, E = getNumOperands(); I < E; ++I) {
+    if (getOperand(I) != Elt) return false;
+  }
+  return true;
+}
+
 //---- ConstantPointerNull::get() implementation...
 //
 
