@@ -1930,7 +1930,7 @@ ComputeIterationCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
       dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, PHIVal));
 
     // Couldn't symbolically evaluate.
-    if (!CondVal || CondVal->getType() != Type::Int1Ty) return UnknownValue;
+    if (!CondVal) return UnknownValue;
 
     if (CondVal->getZExtValue() == ExitWhen) {
       ConstantEvolutionLoopExitValue[PN] = PHIVal;
