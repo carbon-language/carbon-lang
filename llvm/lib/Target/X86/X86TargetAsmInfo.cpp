@@ -179,11 +179,11 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
   const char *IntName;
   if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
     unsigned BitWidth = ITy->getBitWidth();
-    if (BitWidth > 8 && BitWidth <= 16)
+    if (BitWidth == 16)
       IntName = "llvm.bswap.i16";
-    else if (BitWidth > 24  && BitWidth <= 32)
+    else if (BitWidth == 32)
       IntName = "llvm.bswap.i32";
-    else if (BitWidth > 56 && BitWidth <= 64)
+    else if (BitWidth == 64)
       IntName = "llvm.bswap.i64";
     else
       return false;
