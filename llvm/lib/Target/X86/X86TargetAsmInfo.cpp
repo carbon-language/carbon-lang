@@ -14,6 +14,7 @@
 #include "X86TargetAsmInfo.h"
 #include "X86TargetMachine.h"
 #include "X86Subtarget.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
