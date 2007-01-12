@@ -103,7 +103,9 @@ public:
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const IntegerType *T) { return true; }
-  static inline bool classof(const Type *T) { return T->isIntegral(); }
+  static inline bool classof(const Type *T) {
+    return T->getTypeID() == IntegerTyID;
+  }
 };
 
 
