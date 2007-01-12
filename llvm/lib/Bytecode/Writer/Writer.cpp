@@ -325,12 +325,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
   switch (CPV->getType()->getTypeID()) {
   case Type::IntegerTyID: { // Integer types...
     unsigned NumBits = cast<IntegerType>(CPV->getType())->getBitWidth();
-    if (NumBits == 1)
-      if (cast<ConstantInt>(CPV)->getZExtValue())
-        output_vbr(1U);
-      else
-        output_vbr(0U);
-    else if (NumBits <= 32)
+    if (NumBits <= 32)
       output_vbr(uint32_t(cast<ConstantInt>(CPV)->getZExtValue()));
     else if (NumBits <= 64)
       output_vbr(uint64_t(cast<ConstantInt>(CPV)->getZExtValue()));
