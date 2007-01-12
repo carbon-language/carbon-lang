@@ -206,9 +206,11 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   MFI->setStackSize(NumBytes);
 
-  //sub sp, sp, #NumBytes
-  splitInstructionWithImmediate(MBB, MBBI, TII.get(ARM::SUB), ARM::R13,
-			     ARM::R13, NumBytes);
+  if (NumBytes) {
+    //sub sp, sp, #NumBytes
+    splitInstructionWithImmediate(MBB, MBBI, TII.get(ARM::SUB), ARM::R13,
+                                  ARM::R13, NumBytes);
+  }
 
 
   if (HasFP) {
@@ -234,9 +236,11 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
     BuildMI(MBB, MBBI, TII.get(ARM::LDR), ARM::R11).addReg(ARM::R13).addImm(0);
   }
 
-  //add sp, sp, #NumBytes
-  splitInstructionWithImmediate(MBB, MBBI, TII.get(ARM::ADD), ARM::R13,
-			     ARM::R13, NumBytes);
+  if (NumBytes){
+    //add sp, sp, #NumBytes
+    splitInstructionWithImmediate(MBB, MBBI, TII.get(ARM::ADD), ARM::R13,
+                                  ARM::R13, NumBytes);
+  }
 
 }
 
