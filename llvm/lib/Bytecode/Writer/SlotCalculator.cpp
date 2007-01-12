@@ -279,7 +279,7 @@ void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
 
 
 void SlotCalculator::incorporateFunction(const Function *F) {
-  assert((ModuleLevel.size() == 0 ||
+  assert((ModuleLevel.empty() ||
           ModuleTypeLevel == 0) && "Module already incorporated!");
 
   SC_DEBUG("begin processFunction!\n");
@@ -442,7 +442,7 @@ unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Type *T) {
   unsigned SlotNo = CompactionTypes.size();
   SC_DEBUG("Inserting Compaction Type #" << SlotNo << ": " << *T << "\n");
   CompactionTypes.push_back(T);
-  CompactionTypeMap[T] = SlotNo; 
+  CompactionTypeMap.insert(I, std::make_pair(T, SlotNo)); 
   return SlotNo;
 }
 
@@ -639,7 +639,7 @@ void SlotCalculator::pruneCompactionTable() {
 /// to determine if its actually empty.
 bool SlotCalculator::CompactionTableIsEmpty() const {
   // Check a degenerate case, just in case.
-  if (CompactionTable.size() == 0) 
+  if (CompactionTable.empty()) 
     return true;
 
   // Check each plane
