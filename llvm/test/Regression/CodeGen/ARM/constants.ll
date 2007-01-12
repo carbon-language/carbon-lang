@@ -2,7 +2,8 @@
 ; RUN: grep "mov r0, #0" %t.s     | wc -l | grep 1 &&
 ; RUN: grep "mov r0, #255" %t.s   | wc -l | grep 1 &&
 ; RUN: grep "mov r0, #256" %t.s   | wc -l | grep 1 &&
-; RUN: grep ".word.*257" %t.s     | wc -l | grep 1 &&
+; RUN: grep "mov r0, #1" %t.s     | wc -l | grep 2 &&
+; RUN: grep "orr r0, r0, #256" %t.s     | wc -l | grep 1 &&
 ; RUN: grep "mov r0, #-1073741761" %t.s | wc -l | grep 1 &&
 ; RUN: grep "mov r0, #1008" %t.s  | wc -l | grep 1 &&
 ; RUN: grep "cmp r0, #65536" %t.s | wc -l | grep 1 &&

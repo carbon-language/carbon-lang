@@ -14,6 +14,7 @@
 
 #include "ARM.h"
 #include "ARMRegisterInfo.h"
+#include "ARMCommon.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -35,82 +36,18 @@ static bool hasFP(const MachineFunction &MF) {
   return NoFramePointerElim || MFI->hasVarSizedObjects();
 }
 
-static inline unsigned rotateL(unsigned x, unsigned n){
-  return ((x << n) | (x  >> (32 - n)));
-}
-
-static inline unsigned rotateR(unsigned x, unsigned n){
-  return ((x >> n) | (x  << (32 - n)));
-}
-
-// finds the end position of largest sequence of zeros in binary representation
-// of 'immediate'.
-static int findLargestZeroSequence(unsigned immediate){
-  int max_zero_pos;
-  int max_zero_length = 0;
-  int zero_pos;
-  int zero_length;
-  int pos = 0;
-  int end_pos;
-
-  while ((immediate & 0x3) == 0) {
-    immediate = rotateR(immediate, 2);
-    pos+=2;
-  }
-  end_pos = pos+32;
-
-  while (pos<end_pos){
-    while ((immediate & 0x3) != 0) {
-      immediate = rotateR(immediate, 2);
-      pos+=2;
-    }
-    zero_pos = pos;
-    while ((immediate & 0x3) == 0) {
-      immediate = rotateR(immediate, 2);
-      pos+=2;
-    }
-    zero_length = pos - zero_pos;
-    if (zero_length > max_zero_length){
-      max_zero_length = zero_length;
-      max_zero_pos = zero_pos % 32;
-    }
-
-  }
-
-  return (max_zero_pos + max_zero_length) % 32;
-}
-
 static void splitInstructionWithImmediate(MachineBasicBlock &BB,
 				       MachineBasicBlock::iterator I,
 				       const TargetInstrDescriptor &TID,
 				       unsigned DestReg,
 				       unsigned OrigReg,
 				       unsigned immediate){
-
-  if (immediate == 0){
-    BuildMI(BB, I, TID, DestReg).addReg(OrigReg).addImm(0)
-	.addImm(0).addImm(ARMShift::LSL);
-    return;
+  std::vector<unsigned> immediatePieces = splitImmediate(immediate);
+  std::vector<unsigned>::iterator it;
+  for (it=immediatePieces.begin(); it != immediatePieces.end(); ++it){
+    BuildMI(BB, I, TID, DestReg).addReg(OrigReg)
+	.addImm(*it).addImm(0).addImm(ARMShift::LSL);
   }
-
-  int start_pos = findLargestZeroSequence(immediate);
-  unsigned immediate_tmp = rotateR(immediate, start_pos);
-
-  int pos = 0;
-  while (pos < 32){
-    while(((immediate_tmp&0x3) == 0)&&(pos<32)){
-      immediate_tmp = rotateR(immediate_tmp,2);
-      pos+=2;
-    }
-    if (pos < 32){
-      BuildMI(BB, I, TID, DestReg).addReg(OrigReg)
-	.addImm(rotateL(immediate_tmp&0xFF, (start_pos + pos) % 32 ))
-	.addImm(0).addImm(ARMShift::LSL);
-      immediate_tmp = rotateR(immediate_tmp,8);
-      pos+=8;
-    }
-  }
-
 }
 
 ARMRegisterInfo::ARMRegisterInfo(const TargetInstrInfo &tii)

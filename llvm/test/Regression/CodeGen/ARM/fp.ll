@@ -7,13 +7,19 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep flds &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fstd &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fsts &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep ".word.*1065353216"
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #1065353216"
 
 
 double %h(double* %v) {
 entry:
 	%tmp = load double* %v		; <double> [#uses=1]
 	ret double %tmp
+}
+
+float %h(float* %v) {
+entry:
+	%tmp = load float* %v		; <double> [#uses=1]
+	ret float %tmp
 }
 
 float %h() {

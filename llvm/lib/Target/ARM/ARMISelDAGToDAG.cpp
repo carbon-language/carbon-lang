@@ -13,6 +13,7 @@
 
 #include "ARM.h"
 #include "ARMTargetMachine.h"
+#include "ARMCommon.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -27,6 +28,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 #include <vector>
 using namespace llvm;
 
@@ -103,8 +105,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::VAEND,         MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
-  setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
-  setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
+  setOperationAction(ISD::ConstantFP, MVT::f64, Custom);
+  setOperationAction(ISD::ConstantFP, MVT::f32, Custom);
 
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
@@ -543,6 +545,70 @@ static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   return CPI;
 }
 
+SDOperand LegalizeImmediate(uint32_t immediate, SelectionDAG &DAG,
+                            bool canReturnConstant){
+  SDOperand Shift = DAG.getTargetConstant(0, MVT::i32);
+  SDOperand ShiftType = DAG.getTargetConstant(ARMShift::LSL, MVT::i32);
+  std::vector<unsigned>immediatePieces = splitImmediate(immediate);
+  if (immediatePieces.size()>1){
+    unsigned movInst = ARM::MOV;
+    unsigned orInst = ARM::ORR;
+    SDNode *node;
+    //try mvn
+    std::vector<unsigned>immediateNegPieces = splitImmediate(~immediate);
+    if (immediatePieces.size() > immediateNegPieces.size()) {
+      //use mvn/eor
+      movInst = ARM::MVN;
+      orInst = ARM::EOR;
+      immediatePieces = immediateNegPieces;
+    }
+    SDOperand n = DAG.getTargetConstant(immediatePieces[0], MVT::i32);
+    node = DAG.getTargetNode(movInst, MVT::i32, n, Shift, ShiftType);
+    std::vector<unsigned>::iterator it;
+    for (it=immediatePieces.begin()+1; it != immediatePieces.end(); ++it){
+      n = DAG.getTargetConstant(*it, MVT::i32);
+      SDOperand ops[] = {SDOperand(node, 0), n, Shift, ShiftType};
+      node = DAG.getTargetNode(orInst, MVT::i32, ops, 4);
+    }
+    return SDOperand(node, 0);
+  } else {
+    if (canReturnConstant)
+      return DAG.getTargetConstant(immediate, MVT::i32);
+    else {
+      SDOperand n = DAG.getTargetConstant(immediate, MVT::i32);
+      SDNode *node = DAG.getTargetNode(ARM::MOV,  MVT::i32, n, Shift,
+                                       ShiftType);
+      return SDOperand(node, 0);
+    }
+  }
+}
+
+static SDOperand LowerConstantFP(SDOperand Op, SelectionDAG &DAG) {
+  MVT::ValueType VT = Op.getValueType();
+  SDOperand Shift     = DAG.getTargetConstant(0, MVT::i32);
+  SDOperand ShiftType = DAG.getTargetConstant(ARMShift::LSL, MVT::i32);
+  SDNode *node;
+  switch (VT) {
+  default: assert(0 && "VT!=f32 && VT!=f64");
+  case MVT::f32: {
+    float val = cast<ConstantFPSDNode>(Op)->getValue();
+    uint32_t i32_val = FloatToBits(val);
+    SDOperand c = LegalizeImmediate(i32_val, DAG, false);
+    node = DAG.getTargetNode(ARM::FMSR, MVT::f32, c);
+    break;
+  }
+  case MVT::f64: {
+    double val = cast<ConstantFPSDNode>(Op)->getValue();
+    uint64_t i64_val = DoubleToBits(val);
+    SDOperand hi = LegalizeImmediate(Hi_32(i64_val), DAG, false);
+    SDOperand lo = LegalizeImmediate(Lo_32(i64_val), DAG, false);
+    node = DAG.getTargetNode(ARM::FMDRR, MVT::f64, lo, hi);
+    break;
+  }
+  }
+  return SDOperand(node, 0);
+}
+
 static SDOperand LowerGlobalAddress(SDOperand Op,
 				    SelectionDAG &DAG) {
   GlobalValue  *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
@@ -849,6 +915,8 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     abort();
   case ISD::ConstantPool:
     return LowerConstantPool(Op, DAG);
+  case ISD::ConstantFP:
+    return LowerConstantFP(Op, DAG);
   case ISD::GlobalAddress:
     return LowerGlobalAddress(Op, DAG);
   case ISD::FP_TO_SINT:
@@ -942,26 +1010,12 @@ bool ARMDAGToDAGISel::SelectAddrMode1(SDOperand Op,
   switch(N.getOpcode()) {
   case ISD::Constant: {
     uint32_t val = cast<ConstantSDNode>(N)->getValue();
-    if(!isRotInt8Immediate(val)) {
-      SDOperand Z = CurDAG->getTargetConstant(0,     MVT::i32);
-      SDNode *n;
-      if (isRotInt8Immediate(~val)) {
-        SDOperand C = CurDAG->getTargetConstant(~val,  MVT::i32);
-        n           = CurDAG->getTargetNode(ARM::MVN,  MVT::i32, C, Z, Z);
-     } else {
-        Constant    *C = ConstantInt::get(Type::Int32Ty, val);
-        int  alignment = 2;
-        SDOperand Addr = CurDAG->getTargetConstantPool(C, MVT::i32, alignment);
-        n              = CurDAG->getTargetNode(ARM::LDR,  MVT::i32, Addr, Z);
-      }
-      Arg            = SDOperand(n, 0);
-    } else
-      Arg            = CurDAG->getTargetConstant(val,    MVT::i32);
-
-    Shift     = CurDAG->getTargetConstant(0,             MVT::i32);
-    ShiftType = CurDAG->getTargetConstant(ARMShift::LSL, MVT::i32);
+    Shift        = CurDAG->getTargetConstant(0, MVT::i32);
+    ShiftType    = CurDAG->getTargetConstant(ARMShift::LSL, MVT::i32);
+    Arg = LegalizeImmediate(val, *CurDAG, true);
     return true;
   }
+
   case ISD::SRA:
     Arg       = N.getOperand(0);
     Shift     = N.getOperand(1);

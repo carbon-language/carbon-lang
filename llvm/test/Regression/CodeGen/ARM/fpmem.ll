@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep flds | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #0" | wc -l | grep 1 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "flds.*\[" | wc -l | grep 1 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "fsts.*\[" | wc -l | grep 1
 
