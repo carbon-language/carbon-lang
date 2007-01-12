@@ -22,10 +22,10 @@
 #ifndef LLVM_TARGET_TARGETLOWERING_H
 #define LLVM_TARGET_TARGETLOWERING_H
 
-#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include <map>
+#include <vector>
 
 namespace llvm {
   class Value;
@@ -38,6 +38,7 @@ namespace llvm {
   class SelectionDAG;
   class MachineBasicBlock;
   class MachineInstr;
+  class PackedType;
 
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to
@@ -339,27 +340,7 @@ public:
 
   /// getValueType - Return the MVT::ValueType corresponding to this LLVM type.
   /// This is fixed by the LLVM operations except for the pointer size.
-  MVT::ValueType getValueType(const Type *Ty) const {
-    switch (Ty->getTypeID()) {
-    default: assert(0 && "Unknown type!");
-    case Type::VoidTyID:    return MVT::isVoid;
-    case Type::IntegerTyID:
-      switch (cast<IntegerType>(Ty)->getBitWidth()) {
-        default: assert(0 && "Invalid width for value type");
-        case 1:    return MVT::i1;
-        case 8:    return MVT::i8;
-        case 16:   return MVT::i16;
-        case 32:   return MVT::i32;
-        case 64:   return MVT::i64;
-      }
-      break;
-    case Type::FloatTyID:   return MVT::f32;
-    case Type::DoubleTyID:  return MVT::f64;
-    case Type::PointerTyID: return PointerTy;
-    case Type::PackedTyID:  return MVT::Vector;
-    }
-    return MVT::isVoid;  // Silence a compiler warning.
-  }
+  MVT::ValueType getValueType(const Type *Ty) const;
 
   /// getNumElements - Return the number of registers that this ValueType will
   /// eventually require.  This is one for any types promoted to live in larger
