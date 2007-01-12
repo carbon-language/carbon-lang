@@ -31,8 +31,6 @@
 using namespace llvm;
 
 static ConstantInt *getMaxValue(const Type *Ty, bool isSigned = false) {
-  if (Ty == Type::Int1Ty)
-    return ConstantInt::getTrue();
   if (Ty->isInteger()) {
     if (isSigned) {
       // Calculate 011111111111111...
@@ -48,8 +46,6 @@ static ConstantInt *getMaxValue(const Type *Ty, bool isSigned = false) {
 
 // Static constructor to create the minimum constant for an integral type...
 static ConstantInt *getMinValue(const Type *Ty, bool isSigned = false) {
-  if (Ty == Type::Int1Ty)
-    return ConstantInt::getFalse();
   if (Ty->isInteger()) {
     if (isSigned) {
       // Calculate 1111111111000000000000
@@ -63,9 +59,6 @@ static ConstantInt *getMinValue(const Type *Ty, bool isSigned = false) {
   return 0;
 }
 static ConstantInt *Next(ConstantInt *CI) {
-  if (CI->getType() == Type::Int1Ty)
-    return ConstantInt::get(Type::Int1Ty, !CI->getZExtValue());
-
   Constant *Result = ConstantExpr::getAdd(CI,
                                           ConstantInt::get(CI->getType(), 1));
   return cast<ConstantInt>(Result);
