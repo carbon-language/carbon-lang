@@ -1823,14 +1823,16 @@ public:
     assert(ArgType->getTypeID() == Type::IntegerTyID &&
            "llvm.cttz argument is not an integer?");
     unsigned BitWidth = cast<IntegerType>(ArgType)->getBitWidth();
-    if (BitWidth <= 8)
+    if (BitWidth == 8)
       CTTZName = "llvm.cttz.i8";
-    else if (BitWidth <= 16)
+    else if (BitWidth == 16)
       CTTZName = "llvm.cttz.i16"; 
-    else if (BitWidth <= 32)
+    else if (BitWidth == 32)
       CTTZName = "llvm.cttz.i32";
-    else
+    else {
+      assert(BitWidth == 64 && "Unknown bitwidth");
       CTTZName = "llvm.cttz.i64";
+    }
     
     Constant *F = SLC.getModule()->getOrInsertFunction(CTTZName, ArgType,
                                                        ArgType, NULL);
