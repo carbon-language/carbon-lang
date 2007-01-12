@@ -24,6 +24,7 @@
 
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/RuntimeLibcalls.h"
 #include <map>
 
 namespace llvm {
@@ -37,93 +38,6 @@ namespace llvm {
   class SelectionDAG;
   class MachineBasicBlock;
   class MachineInstr;
-
-namespace RTLIB {
-  /// RTLIB::Libcall enum - This enum defines all of the runtime library calls
-  /// the backend can emit.
-  ///
-  enum Libcall {
-    // Integer
-    SHL_I32,
-    SHL_I64,
-    SRL_I32,
-    SRL_I64,
-    SRA_I32,
-    SRA_I64,
-    MUL_I32,
-    MUL_I64,
-    SDIV_I32,
-    SDIV_I64,
-    UDIV_I32,
-    UDIV_I64,
-    SREM_I32,
-    SREM_I64,
-    UREM_I32,
-    UREM_I64,
-    NEG_I32,
-    NEG_I64,
-
-    // FLOATING POINT
-    ADD_F32,
-    ADD_F64,
-    SUB_F32,
-    SUB_F64,
-    MUL_F32,
-    MUL_F64,
-    DIV_F32,
-    DIV_F64,
-    REM_F32,
-    REM_F64,
-    NEG_F32,
-    NEG_F64,
-    POWI_F32,
-    POWI_F64,
-    SQRT_F32,
-    SQRT_F64,
-    SIN_F32,
-    SIN_F64,
-    COS_F32,
-    COS_F64,
-
-    // CONVERSION
-    FPEXT_F32_F64,
-    FPROUND_F64_F32,
-    FPTOSINT_F32_I32,
-    FPTOSINT_F32_I64,
-    FPTOSINT_F64_I32,
-    FPTOSINT_F64_I64,
-    FPTOUINT_F32_I32,
-    FPTOUINT_F32_I64,
-    FPTOUINT_F64_I32,
-    FPTOUINT_F64_I64,
-    SINTTOFP_I32_F32,
-    SINTTOFP_I32_F64,
-    SINTTOFP_I64_F32,
-    SINTTOFP_I64_F64,
-    UINTTOFP_I32_F32,
-    UINTTOFP_I32_F64,
-    UINTTOFP_I64_F32,
-    UINTTOFP_I64_F64,
-
-    // COMPARISON
-    OEQ_F32,
-    OEQ_F64,
-    UNE_F32,
-    UNE_F64,
-    OGE_F32,
-    OGE_F64,
-    OLT_F32,
-    OLT_F64,
-    OLE_F32,
-    OLE_F64,
-    OGT_F32,
-    OGT_F64,
-    UO_F32,
-    UO_F64,
-
-    UNKNOWN_LIBCALL
-  };
-  }
 
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to
@@ -956,14 +870,14 @@ public:
 
   /// setLibcallName - Rename the default libcall routine name for the specified
   /// libcall.
-  void setLibcallName(RTLIB::Libcall Call, std::string Name) {
+  void setLibcallName(RTLIB::Libcall Call, const char *Name) {
     LibcallRoutineNames[Call] = Name;
   }
 
   /// getLibcallName - Get the libcall routine name for the specified libcall.
   ///
   const char *getLibcallName(RTLIB::Libcall Call) const {
-    return LibcallRoutineNames[Call].c_str();
+    return LibcallRoutineNames[Call];
   }
 
 protected:
@@ -1101,7 +1015,7 @@ private:
 
   /// LibcallRoutineNames - Stores the name each libcall.
   ///
-  std::string LibcallRoutineNames[RTLIB::UNKNOWN_LIBCALL];
+  const char *LibcallRoutineNames[RTLIB::UNKNOWN_LIBCALL];
 
 protected:
   /// When lowering %llvm.memset this field specifies the maximum number of
