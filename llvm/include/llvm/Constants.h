@@ -362,7 +362,7 @@ public:
   /// is set to all ones.
   /// @returns true iff this constant's emements are all set to all ones.
   /// @brief Determine if the value is all ones.
-  virtual bool isAllOnesValue() const;
+  bool isAllOnesValue() const;
 
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
