@@ -521,7 +521,7 @@ STATISTIC(NumXForms, "The # of times I did stuff");
   <p>The <tt>STATISTIC</tt> macro defines a static variable, whose name is
     specified by the first argument.  The pass name is taken from the DEBUG_TYPE
     macro, and the description is taken from the second argument.  The variable
-    defined ("NumXForms" in this case) acts like an unsigned int.</p></li>
+    defined ("NumXForms" in this case) acts like an unsigned integer.</p></li>
 
     <li><p>Whenever you make a transformation, bump the counter:</p>
 
@@ -1278,8 +1278,8 @@ system.
 For our purposes below, we need three concepts.  First, an "Opaque Type" is 
 exactly as defined in the <a href="LangRef.html#t_opaque">language 
 reference</a>.  Second an "Abstract Type" is any type which includes an 
-opaque type as part of its type graph (for example "<tt>{ opaque, int }</tt>").
-Third, a concrete type is a type that is not an abstract type (e.g. "<tt>{ int, 
+opaque type as part of its type graph (for example "<tt>{ opaque, i32 }</tt>").
+Third, a concrete type is a type that is not an abstract type (e.g. "<tt>{ i32, 
 float }</tt>").
 </p>
 
@@ -1300,7 +1300,7 @@ to be emitted to an output .ll file:
 
 <div class="doc_code">
 <pre>
-%mylist = type { %mylist*, int }
+%mylist = type { %mylist*, i32 }
 </pre>
 </div>
 
@@ -1317,7 +1317,7 @@ Elts.push_back(PointerType::get(StructTy));
 Elts.push_back(Type::IntTy);
 StructType *NewSTy = StructType::get(Elts);
 
-// <i>At this point, NewSTy = "{ opaque*, int }". Tell VMCore that</i>
+// <i>At this point, NewSTy = "{ opaque*, i32 }". Tell VMCore that</i>
 // <i>the struct and the opaque type are actually the same.</i>
 cast&lt;OpaqueType&gt;(StructTy.get())-&gt;<a href="#refineAbstractTypeTo">refineAbstractTypeTo</a>(NewSTy);
 
@@ -1357,7 +1357,7 @@ existing types, and all duplicates are deleted (to preserve pointer equality).
 
 <p>
 In the example above, the OpaqueType object is definitely deleted.
-Additionally, if there is an "{ \2*, int}" type already created in the system,
+Additionally, if there is an "{ \2*, i32}" type already created in the system,
 the pointer and struct type created are <b>also</b> deleted.  Obviously whenever
 a type is deleted, any "Type*" pointers in the program are invalidated.  As
 such, it is safest to avoid having <i>any</i> "Type*" pointers to abstract types
@@ -1411,8 +1411,8 @@ To support this, a class can derive from the AbstractTypeUser class.  This class
 allows it to get callbacks when certain types are resolved.  To register to get
 callbacks for a particular type, the DerivedType::{add/remove}AbstractTypeUser
 methods can be called on a type.  Note that these methods only work for <i>
-abstract</i> types.  Concrete types (those that do not include an opaque objects
-somewhere) can never be refined.
+  abstract</i> types.  Concrete types (those that do not include any opaque 
+objects) can never be refined.
 </p>
 </div>
 
@@ -1647,7 +1647,7 @@ method. In addition, all LLVM values can be named.  The "name" of the
 
 <div class="doc_code">
 <pre>
-%<b>foo</b> = add int 1, 2
+%<b>foo</b> = add i32 1, 2
 </pre>
 </div>
 
@@ -1988,11 +1988,11 @@ global is always a pointer to its contents. It is important to remember this
 when using the <tt>GetElementPtrInst</tt> instruction because this pointer must
 be dereferenced first. For example, if you have a <tt>GlobalVariable</tt> (a
 subclass of <tt>GlobalValue)</tt> that is an array of 24 ints, type <tt>[24 x
-int]</tt>, then the <tt>GlobalVariable</tt> is a pointer to that array. Although
+i32]</tt>, then the <tt>GlobalVariable</tt> is a pointer to that array. Although
 the address of the first element of this array and the value of the
 <tt>GlobalVariable</tt> are the same, they have different types. The
-<tt>GlobalVariable</tt>'s type is <tt>[24 x int]</tt>. The first element's type
-is <tt>int.</tt> Because of this, accessing a global value requires you to
+<tt>GlobalVariable</tt>'s type is <tt>[24 x i32]</tt>. The first element's type
+is <tt>i32.</tt> Because of this, accessing a global value requires you to
 dereference the pointer with <tt>GetElementPtrInst</tt> first, then its elements
 can be accessed. This is explained in the <a href="LangRef.html#globalvars">LLVM
 Language Reference Manual</a>.</p>
@@ -2429,15 +2429,19 @@ the various types of Constants.</p>
 
 <div class="doc_text">
 
-<p>Type as noted earlier is also a subclass of a Value class.  Any primitive
-type (like int, short etc) in LLVM is an instance of Type Class.  All other
-types are instances of subclasses of type like FunctionType, ArrayType
-etc. DerivedType is the interface for all such dervied types including
-FunctionType, ArrayType, PointerType, StructType. Types can have names. They can
-be recursive (StructType).  There exists exactly one instance of any type
-structure at a time. This allows using pointer equality of Type *s for comparing
-types.</p>
-
+  <p><tt>Type</tt> is a superclass of all type classes. Every <tt>Value</tt> has
+  a <tt>Type</tt>. <tt>Type</tt> cannot be instantiated directly but only
+  through its subclasses. Certain primitive types (<tt>VoidType</tt>,
+  <tt>LabelType</tt>, <tt>FloatType</tt> and <tt>DoubleType</tt>) have hidden 
+  subclasses. They are hidden because they offer no useful functionality beyond
+  what the <tt>Type</tt> class offers except to distinguish themselves from 
+  other subclasses of <tt>Type</tt>.</p>
+  <p>All other types are subclasses of <tt>DerivedType</tt>.  Types can be 
+  named, but this is not a requirement. There exists exactly 
+  one instance of a given shape at any one time.  This allows type equality to
+  be performed with address equality of the Type Instance. That is, given two 
+  <tt>Type*</tt> values, the types are identical if the pointers are identical.
+  </p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -2448,17 +2452,21 @@ types.</p>
 <div class="doc_text">
 
 <ul>
-  <li><tt>bool isInteger() const</tt>: True for any integer type.</li> 
+  <li><tt>bool isInteger() const</tt>: Returns true for any integer type except
+  a one-bit integer (i1). </li> 
 
-  <li><tt>bool isIntegral() const</tt>: Returns true if this is an integral
-  type, which is either Bool type or one of the Integer types.</li>
+  <li><tt>bool isIntegral() const</tt>: Returns true for any integer type 
+  including a one-bit integer.</li>
 
   <li><tt>bool isFloatingPoint()</tt>: Return true if this is one of the two
   floating point types.</li>
 
-  <li><tt>isLosslesslyConvertableTo (const Type *Ty) const</tt>: Return true if
-  this type can be converted to 'Ty' without any reinterpretation of bits. For
-  example, uint to int or one pointer type to another.</li>
+  <li><tt>bool isAbstract()</tt>: Return true if the type is abstract (contains
+  an OpaqueType anywhere in its definition).</li>
+
+  <li><tt>bool isSized()</tt>: Return true if the type has known size. Things
+  that don't have a size are abstract types, labels and void.</li>
+
 </ul>
 </div>
 
@@ -2468,6 +2476,16 @@ types.</p>
 </div>
 <div class="doc_text">
 <ul>
+  <li>IntegerType: Subclass of DerivedType that represents integer types of
+  any bit width. Any bit width between <tt>IntegerType::MIN_INT_BITS</tt> (1) 
+  and <tt>IntegerType::MAX_INT_BITS</tt> (~8 million) can be represented.
+  <ul>
+    <li><tt>static const IntegerType* get(unsigned NumBits)</tt>: get an integer
+    type of a specific bit width.</li>
+    <li><tt>unsigned getBitWidth() const</tt>: Get the bit width of an integer
+    type.</li>
+  </ul>
+  </li>
   <li>SequentialType : This is subclassed by ArrayType and PointerType
     <ul>
       <li><tt>const Type * getElementType() const</tt>: Returns the type of each
@@ -2482,6 +2500,11 @@ types.</p>
     </ul>
   </li>
   <li>PointerType : Subclass of SequentialType for  pointer types. </li>
+  <li>PackedType: Subclass of SequentialType for packed (vector) types. A 
+  packed type is similar to an ArrayType but is distinguished because it is 
+  a first class type wherease ArrayType is not. Packed types are used for 
+  vector operations and are usually small vectors of of an integer or floating 
+  point type.</dd>
   <li>StructType : subclass of DerivedTypes for struct types </li>
   <li>FunctionType : subclass of DerivedTypes for function types.
     <ul>
@@ -2495,6 +2518,13 @@ types.</p>
       number of formal parameters.</li>
     </ul>
   </li>
+  <li>OpaqueType: Sublcass of DerivedType for abstract types. This class 
+  defines no content and is used as a placeholder for some other type. Note 
+  that OpaqueType is used (temporarily) during type resolution for forward 
+  references of types. Once the referenced type is resolved, the OpaqueType 
+  is replaced with the actual type. OpaqueType can also be used for data 
+  abstraction. At link time opaque types can be resolved to actual types 
+  of the same name.</li>
 </ul>
 </div>
 
