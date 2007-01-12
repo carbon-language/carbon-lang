@@ -400,9 +400,6 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  bool isSigned, const std::string &NameSoFar,
                                  bool IgnoreName) {
   if (Ty->isPrimitiveType() || Ty->isIntegral()) {
-    // FIXME:Signedness. When integer types are signless, this should just
-    // always pass "false" for the sign of the primitive type. The instructions
-    // will figure out how the value is to be interpreted.
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
