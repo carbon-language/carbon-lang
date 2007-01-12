@@ -444,7 +444,7 @@ AC_PATH_PROG(GRAPHVIZ, [Graphviz], [echo Graphviz])
 if test "$GRAPHVIZ" != "echo Graphviz" ; then
   AC_DEFINE([HAVE_GRAPHVIZ],[1],[Define if the Graphviz program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
-  if test "$llvm_cv_os_type" == "MingW" ; then
+  if test "$llvm_cv_os_type" = "MingW" ; then
     GRAPHVIZ=`echo $GRAPHVIZ | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
   fi
   AC_DEFINE_UNQUOTED([LLVM_PATH_GRAPHVIZ],"$GRAPHVIZ${EXEEXT}",
@@ -454,7 +454,7 @@ AC_PATH_PROG(DOT, [dot], [echo dot])
 if test "$DOT" != "echo dot" ; then
   AC_DEFINE([HAVE_DOT],[1],[Define if the dot program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
-  if test "$llvm_cv_os_type" == "MingW" ; then
+  if test "$llvm_cv_os_type" = "MingW" ; then
     DOT=`echo $DOT | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
   fi
   AC_DEFINE_UNQUOTED([LLVM_PATH_DOT],"$DOT${EXEEXT}",
@@ -464,7 +464,7 @@ AC_PATH_PROGS(GV, [gv gsview32], [echo gv])
 if test "$GV" != "echo gv" ; then
   AC_DEFINE([HAVE_GV],[1],[Define if the gv program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
-  if test "$llvm_cv_os_type" == "MingW" ; then
+  if test "$llvm_cv_os_type" = "MingW" ; then
     GV=`echo $GV | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
   fi
   AC_DEFINE_UNQUOTED([LLVM_PATH_GV],"$GV${EXEEXT}",
@@ -474,7 +474,7 @@ AC_PATH_PROG(DOTTY, [dotty], [echo dotty])
 if test "$DOTTY" != "echo dotty" ; then
   AC_DEFINE([HAVE_DOTTY],[1],[Define if the dotty program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
-  if test "$llvm_cv_os_type" == "MingW" ; then
+  if test "$llvm_cv_os_type" = "MingW" ; then
     DOTTY=`echo $DOTTY | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
   fi
   AC_DEFINE_UNQUOTED([LLVM_PATH_DOTTY],"$DOTTY${EXEEXT}",
@@ -600,7 +600,7 @@ dnl===-----------------------------------------------------------------------===
 dnl libelf is for sparc only; we can ignore it if we don't have it
 AC_CHECK_LIB(elf, elf_begin)
 AC_CHECK_LIB(m,sin)
-if test "$llvm_cv_os_type" == "MingW" ; then
+if test "$llvm_cv_os_type" = "MingW" ; then
   AC_CHECK_LIB(imagehlp, main)
   AC_CHECK_LIB(psapi, main)
 fi
@@ -758,7 +758,7 @@ AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
 # Translate the various configuration directories and other basic
 # information into substitutions that will end up in Makefile.config.in 
 # that these configured values can be used by the makefiles
-if test "${prefix}" == "NONE" ; then
+if test "${prefix}" = "NONE" ; then
   prefix="/usr/local"
 fi
 eval LLVM_PREFIX="${prefix}";
