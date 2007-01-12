@@ -974,7 +974,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF INTERNAL LINKONCE WEAK APPENDING
 %token DLLIMPORT DLLEXPORT EXTERN_WEAK
-%token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
+%token OPAQUE EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK CSRETCC_TOK FASTCC_TOK COLDCC_TOK
 %token X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
@@ -2610,19 +2610,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("fcmp operator returned null!");
-  }
-  | NOT ResolvedVal {
-    cerr << "WARNING: Use of eliminated 'not' instruction:"
-         << " Replacing with 'xor'.\n";
-
-    Value *Ones = ConstantInt::getAllOnesValue($2->getType());
-    if (Ones == 0)
-      GEN_ERROR("Expected integral type for not instruction!");
-
-    $$ = BinaryOperator::create(Instruction::Xor, $2, Ones);
-    if ($$ == 0)
-      GEN_ERROR("Could not create a xor instruction!");
-    CHECK_FOR_ERROR
   }
   | ShiftOps ResolvedVal ',' ResolvedVal {
     if ($4->getType() != Type::Int8Ty)
