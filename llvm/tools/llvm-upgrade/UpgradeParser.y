@@ -817,7 +817,7 @@ std::string getGlobalName(const std::string* Name, const std::string Linkage,
 %token <String> DECLARE GLOBAL CONSTANT SECTION VOLATILE
 %token <String> TO DOTDOTDOT CONST INTERNAL LINKONCE WEAK 
 %token <String> DLLIMPORT DLLEXPORT EXTERN_WEAK APPENDING
-%token <String> NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
+%token <String> EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
 %token <String> ALIGN UNINITIALIZED
 %token <String> DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token <String> CC_TOK CCC_TOK CSRETCC_TOK FASTCC_TOK COLDCC_TOK
@@ -1791,11 +1791,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$.val = $1;
     $$.type = TypeInfo::get("bool",BoolTy);
     delete $2; $4.destroy(); $6.destroy();
-  }
-  | NOT ResolvedVal {
-    $$ = $2;
-    $$.val->insert(0, *$1 + " ");
-    delete $1;
   }
   | ShiftOps ResolvedVal ',' ResolvedVal {
     const char* shiftop = $1->c_str();
