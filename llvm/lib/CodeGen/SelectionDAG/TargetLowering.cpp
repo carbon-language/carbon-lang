@@ -21,6 +21,81 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
+/// InitLibcallNames - Set default libcall names.
+///
+static void InitLibcallNames(std::string *Names) {
+  Names[RTLIB::SHL_I32] = "__ashlsi3";
+  Names[RTLIB::SHL_I64] = "__ashldi3";
+  Names[RTLIB::SRL_I32] = "__lshrsi3";
+  Names[RTLIB::SRL_I64] = "__lshrdi3";
+  Names[RTLIB::SRA_I32] = "__ashrsi3";
+  Names[RTLIB::SRA_I64] = "__ashrdi3";
+  Names[RTLIB::MUL_I32] = "__mulsi3";
+  Names[RTLIB::MUL_I64] = "__muldi3";
+  Names[RTLIB::SDIV_I32] = "__divsi3";
+  Names[RTLIB::SDIV_I64] = "__divdi3";
+  Names[RTLIB::UDIV_I32] = "__udivsi3";
+  Names[RTLIB::UDIV_I64] = "__udivdi3";
+  Names[RTLIB::SREM_I32] = "__modsi3";
+  Names[RTLIB::SREM_I64] = "__moddi3";
+  Names[RTLIB::UREM_I32] = "__umodsi3";
+  Names[RTLIB::UREM_I64] = "__umoddi3";
+  Names[RTLIB::NEG_I32] = "__negsi2";
+  Names[RTLIB::NEG_I64] = "__negdi2";
+  Names[RTLIB::ADD_F32] = "__addsf3";
+  Names[RTLIB::ADD_F64] = "__adddf3";
+  Names[RTLIB::SUB_F32] = "__subsf3";
+  Names[RTLIB::SUB_F64] = "__subdf3";
+  Names[RTLIB::MUL_F32] = "__mulsf3";
+  Names[RTLIB::MUL_F64] = "__muldf3";
+  Names[RTLIB::DIV_F32] = "__divsf3";
+  Names[RTLIB::DIV_F64] = "__divdf3";
+  Names[RTLIB::REM_F32] = "fmodf";
+  Names[RTLIB::REM_F64] = "fmod";
+  Names[RTLIB::NEG_F32] = "__negsf2";
+  Names[RTLIB::NEG_F64] = "__negdf2";
+  Names[RTLIB::POWI_F32] = "__powisf2";
+  Names[RTLIB::POWI_F64] = "__powidf2";
+  Names[RTLIB::SQRT_F32] = "sqrtf";
+  Names[RTLIB::SQRT_F64] = "sqrt";
+  Names[RTLIB::SIN_F32] = "sinf";
+  Names[RTLIB::SIN_F64] = "sin";
+  Names[RTLIB::COS_F32] = "cosf";
+  Names[RTLIB::COS_F64] = "cos";
+  Names[RTLIB::FPEXT_F32_F64] = "__extendsfdf2";
+  Names[RTLIB::FPROUND_F64_F32] = "__truncdfsf2";
+  Names[RTLIB::FPTOSINT_F32_I32] = "__fixsfsi";
+  Names[RTLIB::FPTOSINT_F32_I64] = "__fixsfdi";
+  Names[RTLIB::FPTOSINT_F64_I32] = "__fixdfsi";
+  Names[RTLIB::FPTOSINT_F64_I64] = "__fixdfdi";
+  Names[RTLIB::FPTOUINT_F32_I32] = "__fixunssfsi";
+  Names[RTLIB::FPTOUINT_F32_I64] = "__fixunssfdi";
+  Names[RTLIB::FPTOUINT_F64_I32] = "__fixunsdfsi";
+  Names[RTLIB::FPTOUINT_F64_I64] = "__fixunsdfdi";
+  Names[RTLIB::SINTTOFP_I32_F32] = "__floatsisf";
+  Names[RTLIB::SINTTOFP_I32_F64] = "__floatsidf";
+  Names[RTLIB::SINTTOFP_I64_F32] = "__floatdisf";
+  Names[RTLIB::SINTTOFP_I64_F64] = "__floatdidf";
+  Names[RTLIB::UINTTOFP_I32_F32] = "__floatunsisf";
+  Names[RTLIB::UINTTOFP_I32_F64] = "__floatunsidf";
+  Names[RTLIB::UINTTOFP_I64_F32] = "__floatundisf";
+  Names[RTLIB::UINTTOFP_I64_F64] = "__floatundidf";
+  Names[RTLIB::OEQ_F32] = "__eqsf2";
+  Names[RTLIB::OEQ_F64] = "__eqdf2";
+  Names[RTLIB::UNE_F32] = "__nesf2";
+  Names[RTLIB::UNE_F64] = "__nedf2";
+  Names[RTLIB::OGE_F32] = "__gesf2";
+  Names[RTLIB::OGE_F64] = "__gedf2";
+  Names[RTLIB::OLT_F32] = "__ltsf2";
+  Names[RTLIB::OLT_F64] = "__ltdf2";
+  Names[RTLIB::OLE_F32] = "__lesf2";
+  Names[RTLIB::OLE_F64] = "__ledf2";
+  Names[RTLIB::OGT_F32] = "__gtsf2";
+  Names[RTLIB::OGT_F64] = "__gtdf2";
+  Names[RTLIB::UO_F32] = "__unordsf2";
+  Names[RTLIB::UO_F64] = "__unorddf2";
+}
+
 TargetLowering::TargetLowering(TargetMachine &tm)
   : TM(tm), TD(TM.getTargetData()) {
   assert(ISD::BUILTIN_OP_END <= 156 &&
@@ -55,6 +130,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   SchedPreferenceInfo = SchedulingForLatency;
   JumpBufSize = 0;
   JumpBufAlignment = 0;
+
+  InitLibcallNames(LibcallRoutineNames);
 }
 
 TargetLowering::~TargetLowering() {}
