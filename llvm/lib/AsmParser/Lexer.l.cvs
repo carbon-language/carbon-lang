@@ -203,6 +203,7 @@ weak            { return WEAK; }
 appending       { return APPENDING; }
 dllimport       { return DLLIMPORT; }
 dllexport       { return DLLEXPORT; }
+hidden          { return HIDDEN; }
 extern_weak     { return EXTERN_WEAK; }
 external        { return EXTERNAL; }
 implementation  { return IMPLEMENTATION; }

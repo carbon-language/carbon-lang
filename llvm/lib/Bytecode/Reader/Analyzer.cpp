@@ -162,6 +162,7 @@ public:
     const Type* ElemType,
     bool isConstant,
     GlobalValue::LinkageTypes Linkage,
+    GlobalValue::VisibilityTypes Visibility,
     unsigned SlotNum,
     unsigned initSlot
   ) {
@@ -169,7 +170,9 @@ public:
       *os << "      GV: "
           << ( initSlot == 0 ? "Uni" : "I" ) << "nitialized, "
           << ( isConstant? "Constant, " : "Variable, ")
-          << " Linkage=" << Linkage << " Type=";
+          << " Linkage=" << Linkage
+          << " Visibility="<< Visibility
+          << " Type=";
       WriteTypeSymbolic(*os, ElemType, M);
       *os << " Slot=" << SlotNum << " InitSlot=" << initSlot
           << "\n";
@@ -206,6 +209,7 @@ public:
       *os << "      Function Decl: ";
       WriteTypeSymbolic(*os,Func->getType(),M);
       *os <<", Linkage=" << Func->getLinkage();
+      *os <<", Visibility=" << Func->getVisibility();
       *os << "\n";
     }
   }
@@ -311,6 +315,7 @@ public:
     if (os) {
       *os << "    BLOCK: Function {\n"
           << "      Linkage: " << Func->getLinkage() << "\n"
+          << "      Visibility: " << Func->getVisibility() << "\n"
           << "      Type: ";
       WriteTypeSymbolic(*os,Func->getType(),M);
       *os << "\n";

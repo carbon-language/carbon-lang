@@ -743,7 +743,6 @@ describes the latest version, 1.3):</p>
   <li>#3: LLVM 1.3</li>
   <li>#4: LLVM 1.3.x (not released)</li>
   <li>#5: LLVM 1.4 and newer</li>
-  </li>
 </ul>
 <p>Note that we plan to eventually expand the target description
 capabilities
@@ -1082,7 +1081,11 @@ and can includes more information:</p>
       <td class="td_left">If this bit is set, a SectionID follows this vbr.</td>
     </tr>
     <tr>
-      <td><a href="#bit">bit(10-31)</a></td>
+      <td><a href="#bit">bit(10-12)</a></td>
+      <td class="td_left">Visibility style: 0=Default, 1=Hidden.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(13-31)</a></td>
       <td class="td_left">Currently unassigned.</td>
     </tr>
   </tbody>
@@ -1337,7 +1340,7 @@ field values of the structure.</li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">Undef Entries</a></div>
+<div class="doc_subsubsection">Undef Entries</div>
 
 <div class="doc_text">
 <p>When the number of operands to the constant is one, we have an 'undef' value
@@ -1345,7 +1348,7 @@ of the specified type.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">Inline Assembler Entries</a></div>
+<div class="doc_subsubsection">Inline Assembler Entries</div>
 
 <div class="doc_text">
 <p>Inline Assembler entries are stored in the constant pool, though they are not
@@ -1369,7 +1372,7 @@ of the specified type.</p>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
-      <td class="td_left">Flags</sup></td>
+      <td class="td_left">Flags</td>
     </tr>
   </tbody>
 </table>
@@ -1380,7 +1383,7 @@ of the specified type.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">Constant Expression Entries</a></div>
+<div class="doc_subsubsection">Constant Expression Entries</div>
 
 <div class="doc_text">
 
@@ -1436,8 +1439,8 @@ size<br>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>
-      <td class="td_left">The linkage type of the function: 0=External, 1=Weak,
-2=Appending, 3=Internal, 4=LinkOnce, 5=DllImport, 6=DllExport<sup>1</sup></td>
+      <td class="td_left"><a href="#funclinkage_and_visibility">The linkage and
+      visibility</a> style field</td>
     </tr>
     <tr>
       <td><a href="#block">block</a></td>
@@ -1470,7 +1473,34 @@ other fields will be present as the function is defined elsewhere.</li>
 be written. Compaction tables are only written if they will actually
 save bytecode space. If not, then a regular constant pool is written.</li>
 </ol>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="funclinkage_and_visibility">Linkage and
+    visibility word</a>
 </div>
+<div class="doc_text">
+
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(0-15)</a></td>
+      <td class="td_left">The linkage type of the function: 0=External, 1=Weak,
+2=Appending, 3=Internal, 4=LinkOnce, 5=DllImport, 6=DllExport<sup>1</sup></td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(16-31)</a></td>
+      <td class="td_left">Visibility style: 0=Default, 1=Hidden.</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="compactiontable">Compaction Table</a>
 </div>

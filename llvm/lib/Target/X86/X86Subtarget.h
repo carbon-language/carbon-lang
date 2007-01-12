@@ -22,13 +22,18 @@ namespace llvm {
 class Module;
 class GlobalValue;
 class TargetMachine;
+  
+namespace PICStyle {
+enum Style {
+  Stub, GOT, RIPRel, WinPIC, None
+};
+}
 
 class X86Subtarget : public TargetSubtarget {
 public:
   enum AsmWriterFlavorTy {
-    att, intel, unset
+    ATT, Intel, Unset
   };
-
 protected:
   enum X86SSEEnum {
     NoMMXSSE, MMX, SSE1, SSE2, SSE3
@@ -41,6 +46,9 @@ protected:
   /// AsmFlavor - Which x86 asm dialect to use.
   AsmWriterFlavorTy AsmFlavor;
 
+  /// PICStyle - Which PIC style to use
+  PICStyle::Style PICStyle;
+  
   /// X86SSELevel - MMX, SSE1, SSE2, SSE3, or none supported.
   X86SSEEnum X86SSELevel;
 
@@ -93,6 +101,9 @@ public:
 
   bool is64Bit() const { return Is64Bit; }
 
+  PICStyle::Style getPICStyle() const { return PICStyle; }
+  void setPICStyle(PICStyle::Style Style)  { PICStyle = Style; }
+
   bool hasMMX() const { return X86SSELevel >= MMX; }
   bool hasSSE1() const { return X86SSELevel >= SSE1; }
   bool hasSSE2() const { return X86SSELevel >= SSE2; }
@@ -100,8 +111,8 @@ public:
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
 
-  bool isFlavorAtt() const { return AsmFlavor == att; }
-  bool isFlavorIntel() const { return AsmFlavor == intel; }
+  bool isFlavorAtt() const { return AsmFlavor == ATT; }
+  bool isFlavorIntel() const { return AsmFlavor == Intel; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
@@ -111,6 +122,12 @@ public:
                                          TargetType == isCygwin); }
   bool isTargetCygwin() const { return TargetType == isCygwin; }
 
+  bool isPICStyleSet() const { return PICStyle != PICStyle::None; }
+  bool isPICStyleGOT() const { return PICStyle == PICStyle::GOT; }
+  bool isPICStyleStub() const { return PICStyle == PICStyle::Stub; }
+  bool isPICStyleRIPRel() const { return PICStyle == PICStyle::RIPRel; }
+  bool isPICStyleWinPIC() const { return PICStyle == PICStyle:: WinPIC; }
+    
   /// True if accessing the GV requires an extra load. For Windows, dllimported
   /// symbols are indirect, loading the value at address GV rather then the
   /// value of GV itself. This means that the GlobalAddress must be in the base

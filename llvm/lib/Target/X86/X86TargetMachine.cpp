@@ -127,6 +127,25 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS, bool 
     if (getCodeModel() == CodeModel::Default)
       setCodeModel(CodeModel::Small);
   }
+
+  if (getRelocationModel() == Reloc::PIC_) {
+    if (Subtarget.isTargetDarwin()) {
+      if (Subtarget.is64Bit())
+        Subtarget.setPICStyle(PICStyle::RIPRel);
+      else
+        Subtarget.setPICStyle(PICStyle::Stub);
+    } else if (Subtarget.isTargetELF())
+      Subtarget.setPICStyle(PICStyle::GOT);
+    else
+      assert(0 && "Don't know how to generate PIC code for this target!");
+  } else if (getRelocationModel() == Reloc::DynamicNoPIC) {
+    if (Subtarget.isTargetDarwin())
+      Subtarget.setPICStyle(PICStyle::Stub);
+    else if (Subtarget.isTargetCygMing())
+      Subtarget.setPICStyle(PICStyle::WinPIC);
+    else
+      assert(0 && "Don't know how to generate PIC code for this target!");
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -163,6 +182,8 @@ bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
                                       MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   setRelocationModel(Reloc::Static);
+  Subtarget.setPICStyle(PICStyle::None);
+  
   // JIT cannot ensure globals are placed in the lower 4G of address.
   if (Subtarget.is64Bit())
     setCodeModel(CodeModel::Large);

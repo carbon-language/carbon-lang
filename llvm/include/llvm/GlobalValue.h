@@ -38,14 +38,19 @@ public:
     ExternalWeakLinkage, /// ExternalWeak linkage description
     GhostLinkage         /// Stand-in functions for streaming fns from BC files    
   };
+  enum VisibilityTypes {
+    DefaultVisibility,
+    HiddenVisibility
+  };
 protected:
   GlobalValue(const Type *Ty, ValueTy vty, Use *Ops, unsigned NumOps,
               LinkageTypes linkage, const std::string &name = "")
-    : Constant(Ty, vty, Ops, NumOps, name), 
-      Parent(0), Linkage(linkage), Alignment(0) { }
+    : Constant(Ty, vty, Ops, NumOps, name), Parent(0),
+      Linkage(linkage), Visibility(DefaultVisibility), Alignment(0) { }
 
   Module *Parent;
   LinkageTypes Linkage;   // The linkage of this global
+  VisibilityTypes Visibility;  // The visibility style of this global
   unsigned Alignment;     // Alignment of this symbol, must be power of two
   std::string Section;    // Section to emit this into, empty mean default
 public:
@@ -58,6 +63,10 @@ public:
     assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
     Alignment = Align;
   }
+
+  VisibilityTypes getVisibility() const { return Visibility; }
+  bool hasHiddenVisibility() const { return Visibility == HiddenVisibility; }
+  void setVisibility(VisibilityTypes V) { Visibility = V; }
   
   bool hasSection() const { return !Section.empty(); }
   const std::string &getSection() const { return Section; }

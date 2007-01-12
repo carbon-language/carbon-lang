@@ -275,7 +275,7 @@ purposes:</p>
   For example, %foo, %DivisionByZero, %a.really.long.identifier.  The actual
   regular expression used is '<tt>%[a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.
   Identifiers which require other characters in their names can be surrounded
-  with quotes.  In this way, anything except a <tt>"</tt> character can be used
+  with quotes.  In this way, anything except a <tt>&quot;</tt> character can be used
   in a name.</li>
 
   <li>Unnamed values are represented as an unsigned numeric value with a '%'
@@ -452,16 +452,18 @@ All Global Variables and Functions have one of the following types of linkage:
   "sections" with identical names when .o files are linked.
   </dd>
 
+  <dt><tt><b><a name="linkage_externweak">extern_weak</a></b></tt>: </dt>
+  <dd>The semantics of this linkage follow the ELF model: the symbol is weak
+    until linked, if not linked, the symbol becomes null instead of being an
+    undefined reference.
+  </dd>
+</dl>
+
   <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
 
   <dd>If none of the above identifiers are used, the global is externally
   visible, meaning that it participates in linkage and can be used to resolve
   external symbol references.
-  </dd>
-
-  <dt><tt><b><a name="linkage_externweak">extern_weak</a></b></tt>: </dt>
-
-  <dd>"<tt>extern_weak</tt>" TBD
   </dd>
 
   <p>
@@ -470,6 +472,7 @@ All Global Variables and Functions have one of the following types of linkage:
   DLLs.
   </p>
 
+  <dl>
   <dt><tt><b><a name="linkage_dllimport">dllimport</a></b></tt>: </dt>
 
   <dd>"<tt>dllimport</tt>" linkage causes the compiler to reference a function
@@ -489,7 +492,7 @@ All Global Variables and Functions have one of the following types of linkage:
 
 </dl>
 
-<p><a name="linkage_external">For example, since the "<tt>.LC0</tt>"
+<p><a name="linkage_external"></a>For example, since the "<tt>.LC0</tt>"
 variable is defined to be internal, if another module defined a "<tt>.LC0</tt>"
 variable and was linked with this one, one of the two would be renamed,
 preventing a collision.  Since "<tt>main</tt>" and "<tt>puts</tt>" are
@@ -497,7 +500,7 @@ external (i.e., lacking any linkage declarations), they are accessible
 outside of the current module.</p>
 <p>It is illegal for a function <i>declaration</i>
 to have any linkage type other than "externally visible", <tt>dllimport</tt>,
-or <tt>extern_weak</tt>.</a></p>
+or <tt>extern_weak</tt>.</p>
 
 </div>
 
@@ -676,13 +679,13 @@ a power of 2.</p>
 
   <p>Parameter attributes consist of an at sign (@) followed by either a single
   keyword or a comma separate list of keywords enclosed in parentheses. For
-  example:<pre>
+  example:</p><pre>
     %someFunc = i16 @zext (i8 @(sext) %someParam)
     %someFunc = i16 @zext (i8 @zext %someParam)</pre>
-  Note that the two function types above are unique because the parameter
-  has a different attribute (@sext in the first one, @zext in the second).</p>
+  <p>Note that the two function types above are unique because the parameter has
+  a different attribute (@sext in the first one, @zext in the second).</p>
 
-  <p>Currently, only the following parameter attributes are defined:
+  <p>Currently, only the following parameter attributes are defined:</p>
   <dl>
     <dt><tt>@zext</tt></dt>
     <dd>This indicates that the parameter should be zero extended just before
@@ -690,7 +693,7 @@ a power of 2.</p>
     <dt><tt>@sext</tt></dt>
     <dd>This indicates that the parameter should be sign extended just before
     a call to this function.</dd>
-  </dl></p>
+  </dl>
 
   <p>The current motivation for parameter attributes is to enable the sign and
   zero extend information necessary for the C calling convention to be passed
@@ -3053,7 +3056,7 @@ a pointer type, <tt>ty2</tt>.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>inttoptr</tt>' instruction takes an <a href="i_integer">integer</a>
 value to cast, and a type to cast it to, which must be a 
-<a href="#t_pointer">pointer</a> type. </tt>
+<a href="#t_pointer">pointer</a> type.
 
 <h5>Semantics:</h5>
 <p>The '<tt>inttoptr</tt>' instruction converts <tt>value</tt> to type
@@ -3172,7 +3175,6 @@ yields a <a href="#t_primitive">i1</a> result, as follows:
   <tt>true</tt> if <tt>var1</tt> is less than <tt>var2</tt>.</li>
   <li><tt>sle</tt>: interprets the operands as signed values and yields
   <tt>true</tt> if <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
-  </li>
 </ol>
 <p>If the operands are <a href="#t_pointer">pointer</a> typed, the pointer
 values are treated as integers and then compared.</p>

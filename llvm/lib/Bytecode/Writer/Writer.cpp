@@ -960,6 +960,14 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   }
 }
 
+static unsigned getEncodedVisibility(const GlobalValue *GV) {
+  switch (GV->getVisibility()) {
+  default: assert(0 && "Invalid visibility!");
+  case GlobalValue::DefaultVisibility: return 0;
+  case GlobalValue::HiddenVisibility:  return 1;
+  }
+}
+
 void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   BytecodeBlock ModuleInfoBlock(BytecodeFormat::ModuleGlobalInfoBlockID, *this);
 
@@ -979,7 +987,9 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2-4=Linkage,
     // bit5+ = Slot # for type.
-    bool HasExtensionWord = (I->getAlignment() != 0) || I->hasSection();
+    bool HasExtensionWord = (I->getAlignment() != 0) ||
+                            I->hasSection() ||
+      (I->getVisibility() != GlobalValue::DefaultVisibility);
     
     // If we need to use the extension byte, set linkage=3(internal) and
     // initializer = 0 (impossible!).
@@ -993,12 +1003,13 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
       output_vbr(oSlot);
       
       // The extension word has this format: bit 0 = has initializer, bit 1-3 =
-      // linkage, bit 4-8 = alignment (log2), bit 9 = has SectionID, 
-      // bits 10+ = future use.
+      // linkage, bit 4-8 = alignment (log2), bit 9 = has SectionID,
+      // bits 10-12 = visibility, bits 13+ = future use.
       unsigned ExtWord = (unsigned)I->hasInitializer() |
                          (getEncodedLinkage(I) << 1) |
                          ((Log2_32(I->getAlignment())+1) << 4) |
-                         ((unsigned)I->hasSection() << 9);
+                         ((unsigned)I->hasSection() << 9) |
+                         (getEncodedVisibility(I) << 10);
       output_vbr(ExtWord);
       if (I->hasSection()) {
         // Give section names unique ID's.
@@ -1102,7 +1113,8 @@ void BytecodeWriter::outputFunction(const Function *F) {
   if (F->isExternal()) return;
 
   BytecodeBlock FunctionBlock(BytecodeFormat::FunctionBlockID, *this);
-  output_vbr(getEncodedLinkage(F));
+  unsigned rWord = (getEncodedVisibility(F) << 16) | getEncodedLinkage(F);
+  output_vbr(rWord);
 
   // Get slot information about the function...
   Table.incorporateFunction(F);

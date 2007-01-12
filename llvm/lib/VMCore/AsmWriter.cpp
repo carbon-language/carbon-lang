@@ -858,8 +858,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
      case GlobalValue::DLLImportLinkage:   Out << "dllimport "; break;
      case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
      default: Out << "external "; break;
-    }
-  else
+    } else {
     switch (GV->getLinkage()) {
     case GlobalValue::InternalLinkage:     Out << "internal "; break;
     case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
@@ -873,7 +872,15 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
       cerr << "GhostLinkage not allowed in AsmWriter!\n";
       abort();
     }
-
+    switch (GV->getVisibility()) {
+    case GlobalValue::DefaultVisibility: break;
+    case GlobalValue::HiddenVisibility: Out << "hidden "; break;
+    default:
+     cerr << "Invalid visibility style!\n";
+     abort();
+    }
+  }
+  
   Out << (GV->isConstant() ? "constant " : "global ");
   printType(GV->getType()->getElementType());
 
@@ -973,6 +980,13 @@ void AssemblyWriter::printFunction(const Function *F) {
     case GlobalValue::GhostLinkage:
       cerr << "GhostLinkage not allowed in AsmWriter!\n";
       abort();
+    }
+    switch (F->getVisibility()) {
+    case GlobalValue::DefaultVisibility: break;
+    case GlobalValue::HiddenVisibility: Out << "hidden "; break;
+    default:
+     cerr << "Invalid visibility style!\n";
+     abort();
     }
   }
 

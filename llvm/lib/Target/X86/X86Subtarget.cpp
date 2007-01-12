@@ -19,11 +19,11 @@
 using namespace llvm;
 
 cl::opt<X86Subtarget::AsmWriterFlavorTy>
-AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::unset),
+AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
   cl::desc("Choose style of code to emit from X86 backend:"),
   cl::values(
-    clEnumValN(X86Subtarget::att,   "att",   "  Emit AT&T-style assembly"),
-    clEnumValN(X86Subtarget::intel, "intel", "  Emit Intel-style assembly"),
+    clEnumValN(X86Subtarget::ATT,   "att",   "  Emit AT&T-style assembly"),
+    clEnumValN(X86Subtarget::Intel, "intel", "  Emit Intel-style assembly"),
     clEnumValEnd));
 
 
@@ -36,7 +36,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
                                        bool isDirectCall) const
 {
   if (TM.getRelocationModel() != Reloc::Static)
-    if (isTargetDarwin()) {
+    if (isTargetDarwin() || isPICStyleGOT()) {
       return (!isDirectCall &&
               (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
                (GV->isExternal() && !GV->hasNotBeenReadFromBytecode())));
@@ -212,6 +212,7 @@ static const char *GetCurrentX86CPU() {
 
 X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   : AsmFlavor(AsmWriterFlavor)
+  , PICStyle(PICStyle::None)
   , X86SSELevel(NoMMXSSE)
   , HasX86_64(false)
   , stackAlignment(8)
@@ -270,11 +271,11 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
 
   // If the asm syntax hasn't been overridden on the command line, use whatever
   // the target wants.
-  if (AsmFlavor == X86Subtarget::unset) {
+  if (AsmFlavor == X86Subtarget::Unset) {
     if (TargetType == isWindows) {
-      AsmFlavor = X86Subtarget::intel;
+      AsmFlavor = X86Subtarget::Intel;
     } else {
-      AsmFlavor = X86Subtarget::att;
+      AsmFlavor = X86Subtarget::ATT;
     }
   }
 

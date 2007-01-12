@@ -1290,6 +1290,11 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define __ATTRIBUTE_WEAK__\n"
       << "#endif\n\n";
 
+  // Add hidden visibility support. FIXME: APPLE_CC?
+  Out << "#if defined(__GNUC__)\n"
+      << "#define __HIDDEN__ __attribute__((visibility(\"hidden\")))\n"
+      << "#endif\n\n";
+    
   // Define NaN and Inf as GCC builtins if using GCC, as 0 otherwise
   // From the GCC documentation:
   //
@@ -1500,6 +1505,8 @@ bool CWriter::doInitialization(Module &M) {
         Out << " __ATTRIBUTE_CTOR__";
       if (StaticDtors.count(I))
         Out << " __ATTRIBUTE_DTOR__";
+      if (I->hasHiddenVisibility())
+        Out << " __HIDDEN__";
       
       if (I->hasName() && I->getName()[0] == 1)
         Out << " LLVM_ASM(\"" << I->getName().c_str()+1 << "\")";
@@ -1531,6 +1538,8 @@ bool CWriter::doInitialization(Module &M) {
           Out << " __ATTRIBUTE_WEAK__";
         else if (I->hasExternalWeakLinkage())
           Out << " __EXTERNAL_WEAK__";
+        if (I->hasHiddenVisibility())
+          Out << " __HIDDEN__";
         Out << ";\n";
       }
   }
@@ -1559,6 +1568,9 @@ bool CWriter::doInitialization(Module &M) {
         else if (I->hasWeakLinkage())
           Out << " __ATTRIBUTE_WEAK__";
 
+        if (I->hasHiddenVisibility())
+          Out << " __HIDDEN__";
+        
         // If the initializer is not null, emit the initializer.  If it is null,
         // we try to avoid emitting large amounts of zeros.  The problem with
         // this, however, occurs when the variable has weak linkage.  In this

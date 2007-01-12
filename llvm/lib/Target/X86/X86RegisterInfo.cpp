@@ -178,6 +178,8 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
       MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
     else if (MO.isJumpTableIndex())
       MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
+    else if (MO.isExternalSymbol())
+      MIB = MIB.addExternalSymbol(MO.getSymbolName());
     else
       assert(0 && "Unknown operand type!");
   }
@@ -202,6 +204,8 @@ static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
       MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
     else if (MO.isJumpTableIndex())
       MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
+    else if (MO.isExternalSymbol())
+      MIB = MIB.addExternalSymbol(MO.getSymbolName());
     else
       assert(0 && "Unknown operand for FuseInst!");
   }

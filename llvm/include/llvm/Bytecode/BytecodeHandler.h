@@ -112,6 +112,7 @@ public:
     const Type* ElemType,     ///< The type of the global variable
     bool isConstant,          ///< Whether the GV is constant or not
     GlobalValue::LinkageTypes,///< The linkage type of the GV
+    GlobalValue::VisibilityTypes,///< The visibility style of the GV
     unsigned SlotNum,         ///< Slot number of GV
     unsigned initSlot         ///< Slot number of GV's initializer (0 if none)
   ) {}

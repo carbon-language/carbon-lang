@@ -210,6 +210,7 @@ static struct PerFunctionInfo {
   std::map<const Type*, ValueList> LateResolveValues;
   bool isDeclare;                    // Is this function a forward declararation?
   GlobalValue::LinkageTypes Linkage; // Linkage for forward declaration.
+  GlobalValue::VisibilityTypes Visibility;
 
   /// BBForwardRefs - When we see forward references to basic blocks, keep
   /// track of them here.
@@ -220,7 +221,8 @@ static struct PerFunctionInfo {
   inline PerFunctionInfo() {
     CurrentFunction = 0;
     isDeclare = false;
-    Linkage = GlobalValue::ExternalLinkage;    
+    Linkage = GlobalValue::ExternalLinkage;
+    Visibility = GlobalValue::DefaultVisibility;
   }
 
   inline void FunctionStart(Function *M) {
@@ -245,6 +247,7 @@ static struct PerFunctionInfo {
     CurrentFunction = 0;
     isDeclare = false;
     Linkage = GlobalValue::ExternalLinkage;
+    Visibility = GlobalValue::DefaultVisibility;
   }
 } CurFun;  // Info for the current function...
 
@@ -648,7 +651,9 @@ static void setValueName(Value *V, char *NameStr) {
 /// ParseGlobalVariable - Handle parsing of a global.  If Initializer is null,
 /// this is a declaration, otherwise it is a definition.
 static GlobalVariable *
-ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
+ParseGlobalVariable(char *NameStr,
+                    GlobalValue::LinkageTypes Linkage,
+                    GlobalValue::VisibilityTypes Visibility,
                     bool isConstantGlobal, const Type *Ty,
                     Constant *Initializer) {
   if (isa<FunctionType>(Ty)) {
@@ -681,6 +686,7 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
     CurModule.CurrentModule->getGlobalList().push_back(GV);
     GV->setInitializer(Initializer);
     GV->setLinkage(Linkage);
+    GV->setVisibility(Visibility);
     GV->setConstant(isConstantGlobal);
     InsertValue(GV, CurModule.Values);
     return GV;
@@ -702,6 +708,7 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   GlobalVariable *GV =
     new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name,
                        CurModule.CurrentModule);
+  GV->setVisibility(Visibility);
   InsertValue(GV, CurModule.Values);
   return GV;
 }
@@ -898,6 +905,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
   std::vector<llvm::Constant*>           *ConstVector;
 
   llvm::GlobalValue::LinkageTypes         Linkage;
+  llvm::GlobalValue::VisibilityTypes      Visibility;
   llvm::FunctionType::ParameterAttributes ParamAttrs;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
@@ -940,6 +948,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <BoolVal>       OptSideEffect               // 'sideeffect' or not.
 %type <Linkage>       GVInternalLinkage GVExternalLinkage
 %type <Linkage>       FunctionDefineLinkage FunctionDeclareLinkage
+%type <Visibility>    GVVisibilityStyle
 %type <Endianness>    BigOrLittle
 
 // ValueRef - Unresolved reference to a definition or BB
@@ -1011,6 +1020,9 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 // Function Attributes
 %token NORETURN
 
+// Visibility Styles
+%token DEFAULT HIDDEN
+
 %start Module
 %%
 
@@ -1079,6 +1091,11 @@ GVExternalLinkage
   : DLLIMPORT   { $$ = GlobalValue::DLLImportLinkage; }
   | EXTERN_WEAK { $$ = GlobalValue::ExternalWeakLinkage; }
   | EXTERNAL    { $$ = GlobalValue::ExternalLinkage; }
+  ;
+
+GVVisibilityStyle
+  : /*empty*/ { $$ = GlobalValue::DefaultVisibility; }
+  | HIDDEN    { $$ = GlobalValue::HiddenVisibility;  }
   ;
 
 FunctionDeclareLinkage
@@ -1225,7 +1242,7 @@ Types
     if (isVarArg) Params.pop_back();
 
     FunctionType *FT = FunctionType::get(*$1, Params, isVarArg, Attrs);
-    delete $3;      // Delete the argument list
+    delete $3;   // Delete the argument list
     delete $1;   // Delete the return type handle
     $$ = new PATypeHolder(HandleUpRefs(FT)); 
     CHECK_FOR_ERROR
@@ -1883,29 +1900,29 @@ Definition
     }
     CHECK_FOR_ERROR
   }
-  | OptAssign GlobalType ConstVal { /* "Externally Visible" Linkage */
-    if ($3 == 0) 
-      GEN_ERROR("Global value initializer is not a constant!");
-    CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage, $2, 
-                                $3->getType(), $3);
-    CHECK_FOR_ERROR
-  } GlobalVarAttributes {
-    CurGV = 0;
-  }
-  | OptAssign GVInternalLinkage GlobalType ConstVal {
+  | OptAssign GVVisibilityStyle GlobalType ConstVal { /* "Externally Visible" Linkage */
     if ($4 == 0) 
       GEN_ERROR("Global value initializer is not a constant!");
-    CurGV = ParseGlobalVariable($1, $2, $3, $4->getType(), $4);
+    CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage,
+                                $2, $3, $4->getType(), $4);
     CHECK_FOR_ERROR
   } GlobalVarAttributes {
     CurGV = 0;
   }
-  | OptAssign GVExternalLinkage GlobalType Types {
-    if (!UpRefs.empty())
-      GEN_ERROR("Invalid upreference in type: " + (*$4)->getDescription());
-    CurGV = ParseGlobalVariable($1, $2, $3, *$4, 0);
+  | OptAssign GVInternalLinkage GVVisibilityStyle GlobalType ConstVal {
+    if ($5 == 0) 
+      GEN_ERROR("Global value initializer is not a constant!");
+    CurGV = ParseGlobalVariable($1, $2, $3, $4, $5->getType(), $5);
     CHECK_FOR_ERROR
-    delete $4;
+  } GlobalVarAttributes {
+    CurGV = 0;
+  }
+  | OptAssign GVExternalLinkage GVVisibilityStyle GlobalType Types {
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + (*$5)->getDescription());
+    CurGV = ParseGlobalVariable($1, $2, $3, $4, *$5, 0);
+    CHECK_FOR_ERROR
+    delete $5;
   } GlobalVarAttributes {
     CurGV = 0;
     CHECK_FOR_ERROR
@@ -2103,6 +2120,7 @@ FunctionHeaderH : OptCallingConv ResultTypes Name '(' ArgList ')'
     // correctly handle cases, when pointer to function is passed as argument to
     // another function.
     Fn->setLinkage(CurFun.Linkage);
+    Fn->setVisibility(CurFun.Visibility);
   }
   Fn->setCallingConv($1);
   Fn->setAlignment($9);
@@ -2136,12 +2154,13 @@ FunctionHeaderH : OptCallingConv ResultTypes Name '(' ArgList ')'
 
 BEGIN : BEGINTOK | '{';                // Allow BEGIN or '{' to start a function
 
-FunctionHeader : FunctionDefineLinkage FunctionHeaderH BEGIN {
+FunctionHeader : FunctionDefineLinkage GVVisibilityStyle FunctionHeaderH BEGIN {
   $$ = CurFun.CurrentFunction;
 
   // Make sure that we keep track of the linkage type even if there was a
   // previous "declare".
   $$->setLinkage($1);
+  $$->setVisibility($2);
 };
 
 END : ENDTOK | '}';                    // Allow end of '}' to end a function
@@ -2151,8 +2170,9 @@ Function : BasicBlockList END {
   CHECK_FOR_ERROR
 };
 
-FunctionProto : FunctionDeclareLinkage FunctionHeaderH {
+FunctionProto : FunctionDeclareLinkage GVVisibilityStyle FunctionHeaderH {
     CurFun.CurrentFunction->setLinkage($1);
+    CurFun.CurrentFunction->setVisibility($2);
     $$ = CurFun.CurrentFunction;
     CurFun.FunctionDone();
     CHECK_FOR_ERROR

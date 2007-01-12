@@ -19,6 +19,7 @@
 #include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
 #include "X86TargetAsmInfo.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Mangler.h"
@@ -28,6 +29,21 @@
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
+
+static std::string computePICLabel(unsigned fnNumber,
+                                   const X86Subtarget* Subtarget) 
+{
+  std::string label;
+
+  if (Subtarget->isTargetDarwin()) {
+    label =  "\"L" + utostr_32(fnNumber) + "$pb\"";
+  } else if (Subtarget->isTargetELF()) {
+    label = ".Lllvm$" + utostr_32(fnNumber) + "$piclabel";
+  } else
+    assert(0 && "Don't know how to print PIC label!\n");
+
+  return label;
+}
 
 /// getSectionForFunction - Return the section that we should emit the
 /// specified function body into.
@@ -109,12 +125,15 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
     break;
   }
+  if (F->hasHiddenVisibility())
+    O << "\t.hidden " << CurrentFnName << "\n";
+  
   O << CurrentFnName << ":\n";
   // Add some workaround for linkonce linkage on Cygwin\MinGW
   if (Subtarget->isTargetCygMing() &&
       (F->getLinkage() == Function::LinkOnceLinkage ||
        F->getLinkage() == Function::WeakLinkage))
-    O << "_llvm$workaround$fake$stub_" << CurrentFnName << ":\n";
+    O << "Lllvm$workaround$fake$stub$" << CurrentFnName << ":\n";
 
   if (Subtarget->isTargetDarwin() ||
       Subtarget->isTargetELF() ||
@@ -193,9 +212,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << "_"
       << MO.getJumpTableIndex();
-    if (X86PICStyle == PICStyle::Stub &&
-        TM.getRelocationModel() == Reloc::PIC_)
-      O << "-\"L" << getFunctionNumber() << "$pb\"";
+
+    if (TM.getRelocationModel() == Reloc::PIC_) {
+      if (Subtarget->isPICStyleStub())
+        O << "-\"L" << getFunctionNumber() << "$pb\"";
+      else if (Subtarget->isPICStyleGOT())
+        O << "@GOTOFF";
+    }
+    
     if (isMemOp && Subtarget->is64Bit() && !NotRIPRel)
       O << "(%rip)";
     return;
@@ -205,9 +229,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
-    if (X86PICStyle == PICStyle::Stub &&
-        TM.getRelocationModel() == Reloc::PIC_)
-      O << "-\"L" << getFunctionNumber() << "$pb\"";
+
+    if (TM.getRelocationModel() == Reloc::PIC_) {
+      if (Subtarget->isPICStyleStub())
+        O << "-\"L" << getFunctionNumber() << "$pb\"";
+      if (Subtarget->isPICStyleGOT())
+        O << "@GOTOFF";
+    }
+    
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << "+" << Offset;
@@ -228,11 +257,11 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     
     bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
+    bool isHidden = GV->hasHiddenVisibility();
     
     X86SharedAsmPrinter::decorateName(Name, GV);
     
-    if (X86PICStyle == PICStyle::Stub &&
-        TM.getRelocationModel() != Reloc::Static) {
+    if (Subtarget->isPICStyleStub()) {
       // Link-once, External, or Weakly-linked global variables need
       // non-lazily-resolved stubs
       if (isExt) {
@@ -258,6 +287,12 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         O << "__imp_";          
       }       
       O << Name;
+
+      if (Subtarget->isPICStyleGOT() && isCallOp && isa<Function>(GV)) {
+        // Assemble call via PLT for non-local symbols
+        if (!isHidden || isExt)
+          O << "@PLT";
+      }
     }
 
     if (GV->hasExternalWeakLinkage())
@@ -269,31 +304,55 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     else if (Offset < 0)
       O << Offset;
 
-    if (isMemOp && Subtarget->is64Bit()) {
-      if (isExt && TM.getRelocationModel() != Reloc::Static)
-        O << "@GOTPCREL(%rip)";
-      else if (!NotRIPRel)
-        // Use rip when possible to reduce code size, except when index or
-        // base register are also part of the address. e.g.
-        // foo(%rip)(%rcx,%rax,4) is not legal
-        O << "(%rip)";        
+    if (isMemOp) {
+      if (isExt) {
+        if (Subtarget->isPICStyleGOT()) {
+          O << "@GOT";
+        } else if (Subtarget->isPICStyleRIPRel()) {
+          O << "@GOTPCREL(%rip)";
+        } if (Subtarget->is64Bit() && !NotRIPRel)
+            // Use rip when possible to reduce code size, except when
+            // index or base register are also part of the address. e.g.
+            // foo(%rip)(%rcx,%rax,4) is not legal
+            O << "(%rip)";
+      } else {
+        if (Subtarget->is64Bit() && !NotRIPRel)
+          O << "(%rip)";
+        else if (Subtarget->isPICStyleGOT())
+          O << "@GOTOFF";
+      }
     }
 
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    if (isCallOp && 
-        X86PICStyle == PICStyle::Stub &&
-        TM.getRelocationModel() != Reloc::Static) {
-      std::string Name(TAI->getGlobalPrefix());
-      Name += MO.getSymbolName();
+    std::string Name(TAI->getGlobalPrefix());
+    Name += MO.getSymbolName();
+    if (isCallOp && Subtarget->isPICStyleStub()) {
       FnStubs.insert(Name);
       O << "L" << Name << "$stub";
       return;
     }
     if (!isCallOp) O << '$';
-    O << TAI->getGlobalPrefix() << MO.getSymbolName();
+    O << Name;
+
+    if (Subtarget->isPICStyleGOT()) {
+      std::string GOTName(TAI->getGlobalPrefix());
+      GOTName+="_GLOBAL_OFFSET_TABLE_";
+      if (Name == GOTName)
+        // Really hack! Emit extra offset to PC during printing GOT offset to
+        // compensate size of popl instruction. The resulting code should look
+        // like:
+        //   call .piclabel
+        // piclabel:
+        //   popl %some_register
+        //   addl $_GLOBAL_ADDRESS_TABLE_ + [.-piclabel], %some_register
+        O << " + [.-" << computePICLabel(getFunctionNumber(), Subtarget) << "]";
+    }
+
+    if (isCallOp && Subtarget->isPICStyleGOT())
+      O << "@PLT";
 
     if (!isCallOp && Subtarget->is64Bit())
       O << "(%rip)";
@@ -366,8 +425,8 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
 }
 
 void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
-  O << "\"L" << getFunctionNumber() << "$pb\"\n";
-  O << "\"L" << getFunctionNumber() << "$pb\":";
+  std::string label = computePICLabel(getFunctionNumber(), Subtarget);
+  O << label << "\n" << label << ":";
 }
 
 

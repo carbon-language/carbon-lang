@@ -105,13 +105,9 @@ void X86SharedAsmPrinter::decorateName(std::string &Name,
 
 /// doInitialization
 bool X86SharedAsmPrinter::doInitialization(Module &M) {
-  if (Subtarget->isTargetDarwin()) {
-    if (!Subtarget->is64Bit())
-      X86PICStyle = PICStyle::Stub;
-
-    // Emit initial debug information.
-    DW.BeginModule(&M);
-  } else if (Subtarget->isTargetELF() || Subtarget->isTargetCygMing()) {
+  if (Subtarget->isTargetELF() ||
+      Subtarget->isTargetCygMing() ||
+      Subtarget->isTargetDarwin()) {
     // Emit initial debug information.
     DW.BeginModule(&M);
   }
@@ -241,7 +237,6 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         << "\n";
       if (TAI->hasDotTypeDotSizeDirective())
         O << "\t.size " << name << ", " << Size << "\n";
-
       // If the initializer is a extern weak symbol, remember to emit the weak
       // reference!
       if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
@@ -251,6 +246,8 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       EmitGlobalConstant(C);
       O << '\n';
     }
+    if (I->hasHiddenVisibility())
+      O << "\t.hidden " << name << "\n";
   }
   
   // Output linker support code for dllexported globals

@@ -1628,9 +1628,12 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
 
   unsigned FuncSize = BlockEnd - At;
   GlobalValue::LinkageTypes Linkage = GlobalValue::ExternalLinkage;
+  GlobalValue::VisibilityTypes Visibility = GlobalValue::DefaultVisibility;
 
-  unsigned LinkageType = read_vbr_uint();
-  switch (LinkageType) {
+  unsigned rWord = read_vbr_uint();
+  unsigned LinkageID =  rWord & 65535;
+  unsigned VisibilityID = rWord >> 16;
+  switch (LinkageID) {
   case 0: Linkage = GlobalValue::ExternalLinkage; break;
   case 1: Linkage = GlobalValue::WeakLinkage; break;
   case 2: Linkage = GlobalValue::AppendingLinkage; break;
@@ -1644,8 +1647,17 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
     Linkage = GlobalValue::InternalLinkage;
     break;
   }
+  switch (VisibilityID) {
+  case 0: Visibility = GlobalValue::DefaultVisibility; break;
+  case 1: Visibility = GlobalValue::HiddenVisibility; break;
+  default:
+   error("Unknown visibility type: " + utostr(VisibilityID));
+   Visibility = GlobalValue::DefaultVisibility;
+   break;
+  }
 
   F->setLinkage(Linkage);
+  F->setVisibility(Visibility);
   if (Handler) Handler->handleFunctionBegin(F,FuncSize);
 
   // Keep track of how many basic blocks we have read in...
@@ -1844,6 +1856,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     // Linkage, bit4+ = slot#
     unsigned SlotNo = VarType >> 5;
     unsigned LinkageID = (VarType >> 2) & 7;
+    unsigned VisibilityID = 0;
     bool isConstant = VarType & 1;
     bool hasInitializer = (VarType & 2) != 0;
     unsigned Alignment = 0;
@@ -1853,10 +1866,12 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     if (LinkageID == 3 && !hasInitializer) {
       unsigned ExtWord = read_vbr_uint();
       // The extension word has this format: bit 0 = has initializer, bit 1-3 =
-      // linkage, bit 4-8 = alignment (log2), bits 10+ = future use.
+      // linkage, bit 4-8 = alignment (log2), bit 9 = has section,
+      // bits 10-12 = visibility, bits 13+ = future use.
       hasInitializer = ExtWord & 1;
       LinkageID = (ExtWord >> 1) & 7;
       Alignment = (1 << ((ExtWord >> 4) & 31)) >> 1;
+      VisibilityID = (ExtWord >> 10) & 7;
       
       if (ExtWord & (1 << 9))  // Has a section ID.
         GlobalSectionID = read_vbr_uint();
@@ -1877,7 +1892,16 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       Linkage = GlobalValue::InternalLinkage;
       break;
     }
-
+    GlobalValue::VisibilityTypes Visibility;
+    switch (VisibilityID) {
+    case 0: Visibility = GlobalValue::DefaultVisibility; break;
+    case 1: Visibility = GlobalValue::HiddenVisibility; break;
+    default:
+      error("Unknown visibility type: " + utostr(VisibilityID));
+      Visibility = GlobalValue::DefaultVisibility;
+      break;
+    }
+    
     const Type *Ty = getType(SlotNo);
     if (!Ty)
       error("Global has no type! SlotNo=" + utostr(SlotNo));
@@ -1891,6 +1915,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     GlobalVariable *GV = new GlobalVariable(ElTy, isConstant, Linkage,
                                             0, "", TheModule);
     GV->setAlignment(Alignment);
+    GV->setVisibility(Visibility);
     insertValue(GV, SlotNo, ModuleValues);
 
     if (GlobalSectionID != 0)
@@ -1904,7 +1929,8 @@ void BytecodeReader::ParseModuleGlobalInfo() {
 
     // Notify handler about the global value.
     if (Handler)
-      Handler->handleGlobalVariable(ElTy, isConstant, Linkage, SlotNo,initSlot);
+      Handler->handleGlobalVariable(ElTy, isConstant, Linkage, Visibility,
+                                    SlotNo, initSlot);
 
     // Get next item
     VarType = read_vbr_uint();

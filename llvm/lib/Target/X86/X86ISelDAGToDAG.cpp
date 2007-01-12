@@ -938,10 +938,23 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     SSARegMap *RegMap = BB->getParent()->getSSARegMap();
-    GlobalBaseReg = RegMap->createVirtualRegister(X86::GR32RegisterClass);
+    unsigned PC = RegMap->createVirtualRegister(X86::GR32RegisterClass);
+    
     const TargetInstrInfo *TII = TM.getInstrInfo();
     BuildMI(FirstMBB, MBBI, TII->get(X86::MovePCtoStack));
-    BuildMI(FirstMBB, MBBI, TII->get(X86::POP32r), GlobalBaseReg);
+    BuildMI(FirstMBB, MBBI, TII->get(X86::POP32r), PC);
+    
+    // If we're using vanilla 'GOT' PIC style, we should use relative addressing
+    // not to pc, but to _GLOBAL_ADDRESS_TABLE_ external
+    if (Subtarget->isPICStyleGOT()) {
+      GlobalBaseReg = RegMap->createVirtualRegister(X86::GR32RegisterClass);
+      BuildMI(FirstMBB, MBBI, TII->get(X86::ADD32ri), GlobalBaseReg).
+        addReg(PC).
+        addExternalSymbol("_GLOBAL_OFFSET_TABLE_");
+    } else {
+      GlobalBaseReg = PC;
+    }
+    
   }
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).Val;
 }

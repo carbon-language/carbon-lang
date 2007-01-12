@@ -28,19 +28,12 @@
 
 namespace llvm {
 
-// FIXME: Move this to CodeGen/AsmPrinter.h
-namespace PICStyle {
-  enum X86AsmPICStyle {
-    Stub, GOT
-  };
-}
-
 struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
   DwarfWriter DW;
 
   X86SharedAsmPrinter(std::ostream &O, X86TargetMachine &TM,
                       const TargetAsmInfo *T)
-    : AsmPrinter(O, TM, T), DW(O, this, T), X86PICStyle(PICStyle::GOT) {
+    : AsmPrinter(O, TM, T), DW(O, this, T) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 
@@ -73,8 +66,6 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
-  PICStyle::X86AsmPICStyle X86PICStyle;
-  
   const X86Subtarget *Subtarget;
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs

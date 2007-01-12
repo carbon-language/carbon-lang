@@ -664,6 +664,13 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
   }
 
+  if (Subtarget->isPICStyleGOT()) {
+    Chain = DAG.getCopyToReg(Chain, X86::EBX,
+                             DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                             InFlag);
+    InFlag = Chain.getValue(1);
+  }
+  
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
@@ -687,7 +694,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
-
+  
   if (InFlag.Val)
     Ops.push_back(InFlag);
 
@@ -3856,12 +3863,12 @@ X86TargetLowering::LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
                                                getPointerTy(),
                                                CP->getAlignment());
   Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
-  if (Subtarget->isTargetDarwin()) {
-    // With PIC, the address is actually $g + Offset.
-    if (!Subtarget->is64Bit() &&
-        getTargetMachine().getRelocationModel() == Reloc::PIC_)
-      Result = DAG.getNode(ISD::ADD, getPointerTy(),
-                    DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);
+  // With PIC, the address is actually $g + Offset.
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+      !Subtarget->isPICStyleRIPRel()) {
+    Result = DAG.getNode(ISD::ADD, getPointerTy(),
+                         DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                         Result);
   }
 
   return Result;
@@ -3872,19 +3879,19 @@ X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDOperand Result = DAG.getTargetGlobalAddress(GV, getPointerTy());
   Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
-  if (Subtarget->isTargetDarwin()) {
-    // With PIC, the address is actually $g + Offset.
-    if (!Subtarget->is64Bit() &&
-        getTargetMachine().getRelocationModel() == Reloc::PIC_)
-      Result = DAG.getNode(ISD::ADD, getPointerTy(),
-                           DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
-                           Result);
+  // With PIC, the address is actually $g + Offset.
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+      !Subtarget->isPICStyleRIPRel()) {
+    Result = DAG.getNode(ISD::ADD, getPointerTy(),
+                         DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                         Result);
   }
   
   // For Darwin & Mingw32, external and weak symbols are indirect, so we want to
   // load the value at address GV, not the value of GV itself. This means that
   // the GlobalAddress must be in the base or index register of the address, not
   // the GV offset field. Platform check is inside GVRequiresExtraLoad() call
+  // The same applies for external symbols during PIC codegen
   if (Subtarget->GVRequiresExtraLoad(GV, getTargetMachine(), false))
     Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), Result, NULL, 0);
 
@@ -3896,13 +3903,27 @@ X86TargetLowering::LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG) {
   const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
   SDOperand Result = DAG.getTargetExternalSymbol(Sym, getPointerTy());
   Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
-  if (Subtarget->isTargetDarwin()) {
-    // With PIC, the address is actually $g + Offset.
-    if (!Subtarget->is64Bit() &&
-        getTargetMachine().getRelocationModel() == Reloc::PIC_)
-      Result = DAG.getNode(ISD::ADD, getPointerTy(),
-                           DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
-                           Result);
+  // With PIC, the address is actually $g + Offset.
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+      !Subtarget->isPICStyleRIPRel()) {
+    Result = DAG.getNode(ISD::ADD, getPointerTy(),
+                         DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                         Result);
+  }
+
+  return Result;
+}
+
+SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
+  JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
+  SDOperand Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy());
+  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
+  // With PIC, the address is actually $g + Offset.
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+      !Subtarget->isPICStyleRIPRel()) {
+    Result = DAG.getNode(ISD::ADD, getPointerTy(),
+                         DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                         Result);
   }
 
   return Result;
@@ -4332,22 +4353,6 @@ SDOperand X86TargetLowering::LowerBRCOND(SDOperand Op, SelectionDAG &DAG) {
   }
   return DAG.getNode(X86ISD::BRCOND, Op.getValueType(),
                      Cond, Op.getOperand(2), CC, Cond.getValue(1));
-}
-
-SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
-  JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
-  SDOperand Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy());
-  Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(), Result);
-  if (Subtarget->isTargetDarwin()) {
-    // With PIC, the address is actually $g + Offset.
-    if (!Subtarget->is64Bit() &&
-        getTargetMachine().getRelocationModel() == Reloc::PIC_)
-      Result = DAG.getNode(ISD::ADD, getPointerTy(),
-                           DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
-                           Result);
-  }
-
-  return Result;
 }
 
 SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
