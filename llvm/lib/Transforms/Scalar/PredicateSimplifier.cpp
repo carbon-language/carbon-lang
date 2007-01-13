@@ -721,7 +721,8 @@ namespace {
       Value *LHS, *RHS;
       ICmpInst::Predicate Op;
 
-      Instruction *Context;
+      BasicBlock *ContextBB;
+      Instruction *ContextInst;
     };
     std::deque<Operation> WorkList;
 
@@ -1075,7 +1076,8 @@ namespace {
 
       WorkList.push_back(Operation());
       Operation &O = WorkList.back();
-      O.LHS = V1, O.RHS = V2, O.Op = Pred, O.Context = I;
+      O.LHS = V1, O.RHS = V2, O.Op = Pred, O.ContextInst = I;
+      O.ContextBB = I ? I->getParent() : TopBB;
     }
 
     /// defToOps - Given an instruction definition that we've learned something
@@ -1306,10 +1308,10 @@ namespace {
         //DOUT << "WorkList size: " << WorkList.size() << "\n";
 
         Operation &O = WorkList.front();
-        if (O.Context) {
-          TopInst = O.Context;
-          Top = Forest->getNodeForBlock(TopInst->getParent());
-        }
+        TopInst = O.ContextInst;
+        TopBB = O.ContextBB;
+        Top = Forest->getNodeForBlock(TopBB);
+
         O.LHS = IG.canonicalize(O.LHS, Top);
         O.RHS = IG.canonicalize(O.RHS, Top);
 
@@ -1317,8 +1319,8 @@ namespace {
         assert(O.RHS == IG.canonicalize(O.RHS, Top) && "Canonicalize isn't.");
 
         DOUT << "solving " << *O.LHS << " " << O.Op << " " << *O.RHS;
-        if (O.Context) DOUT << " context: " << *O.Context;
-        else DOUT << " default context";
+        if (O.ContextInst) DOUT << " context inst: " << *O.ContextInst;
+        else DOUT << " context block: " << O.ContextBB->getName();
         DOUT << "\n";
 
         DEBUG(IG.dump());
@@ -1485,6 +1487,7 @@ namespace {
         return;
       }
 
+#ifndef NDEBUG
       // Try to replace the whole instruction.
       Value *V = IG->canonicalize(I, ET);
       assert(V == I && "Late instruction canonicalization.");
@@ -1511,6 +1514,7 @@ namespace {
           DOUT << " into " << *I;
         }
       }
+#endif
 
       DOUT << "push (%" << I->getParent()->getName() << ")\n";
       Forwards visit(this, DT);
