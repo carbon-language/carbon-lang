@@ -199,14 +199,6 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
-  if (BaseReg.isFrameIndex()) {
-    O << "[frame slot #" << BaseReg.getFrameIndex();
-    if (DispSpec.getImmedValue())
-      O << " + " << DispSpec.getImmedValue();
-    O << "]";
-    return;
-  }
-
   O << "[";
   bool NeedPlus = false;
   if (BaseReg.getReg()) {
