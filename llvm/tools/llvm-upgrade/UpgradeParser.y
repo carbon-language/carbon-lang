@@ -36,6 +36,10 @@ static uint64_t unique = 1;
 // definitions and calls.
 static bool AddAttributes = false;
 
+// This is set when a DECLARE keyword is recognized so that subsequent parsing
+// of a function prototype can know if its a declaration or definition.
+static bool isDeclare = false;
+
 // This bool is used to communicate between the InstVal and Inst rules about
 // whether or not a cast should be deleted. When the flag is set, InstVal has
 // determined that the cast is a candidate. However, it can only be deleted if
@@ -1463,6 +1467,11 @@ ArgList : ArgListH {
 
 FunctionHeaderH 
   : OptCallingConv TypesV Name '(' ArgList ')' OptSection OptAlign {
+    if (*$3 == "%llvm.va_start" || *$3 == "%llvm.va_end") {
+      *$5 = "i8*";
+    } else if (*$3 == "%llvm.va_copy") {
+      *$5 = "i8*, i8*";
+    }
     if (!$1->empty()) {
       *$1 += " ";
     }
@@ -1513,13 +1522,14 @@ FnDeclareLinkage
   ;
   
 FunctionProto 
-  : DECLARE FnDeclareLinkage FunctionHeaderH { 
-    if (!$2->empty())
-      *$1 += " " + *$2;
-    *$1 += " " + *$3;
-    delete $2;
+  : DECLARE { isDeclare = true; } FnDeclareLinkage FunctionHeaderH { 
+    if (!$3->empty())
+      *$1 += " " + *$3;
+    *$1 += " " + *$4;
     delete $3;
+    delete $4;
     $$ = $1;
+    isDeclare = false;
   };
 
 //===----------------------------------------------------------------------===//
@@ -1876,6 +1886,25 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       *$$.val += (*$6)[1].val->substr(pos+1);
       $$.type = TypeInfo::get("bool", BoolTy);
     } else {
+      static unsigned upgradeCount = 1;
+      if (*$4.val == "%llvm.va_start" || *$4.val == "%llvm.va_end") {
+        std::string name("%va_upgrade");
+        name += llvm::utostr(upgradeCount++);
+        $1->insert(0, name + " = bitcast " + *(*$6)[0].val + " to i8*\n    ");
+        *(*$6)[0].val = "i8* " + name;
+        (*$6)[0].type = TypeInfo::get("i8", UByteTy)->getPointerType();
+      } else if (*$4.val == "%llvm.va_copy") {
+        std::string name0("%va_upgrade");
+        name0 += llvm::utostr(upgradeCount++);
+        std::string name1("%va_upgrade");
+        name1 += llvm::utostr(upgradeCount++);
+        $1->insert(0, name0 + " = bitcast " + *(*$6)[0].val + " to i8*\n    " +
+                      name1 + " = bitcast " + *(*$6)[1].val + " to i8*\n    ");
+        *(*$6)[0].val = "i8* " + name0;
+        (*$6)[0].type = TypeInfo::get("i8", UByteTy)->getPointerType();
+        *(*$6)[1].val = "i8* " + name1;
+        (*$6)[0].type = TypeInfo::get("i8", UByteTy)->getPointerType();
+      }
       if (!$2->empty())
         *$1 += " " + *$2;
       if (!$1->empty())
