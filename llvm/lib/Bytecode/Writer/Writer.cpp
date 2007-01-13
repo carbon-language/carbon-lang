@@ -486,9 +486,11 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
         // These should be either 32-bits or 64-bits, however, with bit
         // accurate types we just distinguish between less than or equal to
         // 32-bits or greater than 32-bits.
-        const IntegerType *IdxTy = 
-          cast<IntegerType>(I->getOperand(Idx)->getType());
-        unsigned IdxId = IdxTy->getBitWidth() <= 32 ? 0 : 1;
+        unsigned BitWidth = 
+          cast<IntegerType>(I->getOperand(Idx)->getType())->getBitWidth();
+        assert(BitWidth == 32 || BitWidth == 64 && 
+               "Invalid bitwidth for GEP index");
+        unsigned IdxId = BitWidth == 32 ? 0 : 1;
         Slot = (Slot << 1) | IdxId;
       }
       output_vbr(unsigned(Slot));
@@ -737,9 +739,11 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
           // These should be either 32-bits or 64-bits, however, with bit
           // accurate types we just distinguish between less than or equal to
           // 32-bits or greater than 32-bits.
-          const IntegerType *IdxTy = 
-            cast<IntegerType>(GEP->getOperand(Idx)->getType());
-          unsigned IdxId = IdxTy->getBitWidth() <= 32 ? 0 : 1;
+          unsigned BitWidth = 
+            cast<IntegerType>(GEP->getOperand(Idx)->getType())->getBitWidth();
+          assert(BitWidth == 32 || BitWidth == 64 && 
+                 "Invalid bitwidth for GEP index");
+          unsigned IdxId = BitWidth == 32 ? 0 : 1;
           Slots[Idx] = (Slots[Idx] << 1) | IdxId;
           if (Slots[Idx] > MaxOpSlot) MaxOpSlot = Slots[Idx];
         }
