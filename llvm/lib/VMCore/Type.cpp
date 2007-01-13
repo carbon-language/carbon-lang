@@ -929,7 +929,7 @@ public:
 //
 namespace llvm {
 class IntegerValType {
-  uint16_t bits;
+  uint32_t bits;
 public:
   IntegerValType(uint16_t numbits) : bits(numbits) {}
 
