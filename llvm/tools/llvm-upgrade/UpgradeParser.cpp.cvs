@@ -4203,7 +4203,7 @@ yyreduce:
     *(yyvsp[-4].String) = getCompareOp(*(yyvsp[-4].String), (yyvsp[-3].Type));
     *(yyvsp[-4].String) += " " + (yyvsp[-3].Type)->getNewTy() + " " + Name1 + ", " + Name2;
     (yyval.Value).val = (yyvsp[-4].String);
-    (yyval.Value).type = TypeInfo::get("bool",BoolTy);
+    (yyval.Value).type = TypeInfo::get("i1",BoolTy);
     (yyvsp[-2].Value).destroy(); (yyvsp[0].Value).destroy();
   ;}
     break;
@@ -4215,7 +4215,7 @@ yyreduce:
     std::string Name2 = getUniqueName((yyvsp[0].Value).val, (yyvsp[-3].Type));
     *(yyvsp[-5].String) += " " + *(yyvsp[-4].String) + " " + (yyvsp[-3].Type)->getNewTy() + " " + Name1 + "," + Name2;
     (yyval.Value).val = (yyvsp[-5].String);
-    (yyval.Value).type = TypeInfo::get("bool",BoolTy);
+    (yyval.Value).type = TypeInfo::get("i1",BoolTy);
     delete (yyvsp[-4].String); (yyvsp[-2].Value).destroy(); (yyvsp[0].Value).destroy();
   ;}
     break;
@@ -4227,7 +4227,7 @@ yyreduce:
     std::string Name2 = getUniqueName((yyvsp[0].Value).val, (yyvsp[-3].Type));
     *(yyvsp[-5].String) += " " + *(yyvsp[-4].String) + " " + (yyvsp[-3].Type)->getNewTy() + " " + Name1 + "," + Name2;
     (yyval.Value).val = (yyvsp[-5].String);
-    (yyval.Value).type = TypeInfo::get("bool",BoolTy);
+    (yyval.Value).type = TypeInfo::get("i1",BoolTy);
     delete (yyvsp[-4].String); (yyvsp[-2].Value).destroy(); (yyvsp[0].Value).destroy();
   ;}
     break;
@@ -4348,7 +4348,7 @@ yyreduce:
       size_t pos = (*(yyvsp[-1].ValList))[1].val->find(' ');
       assert(pos != std::string::npos && "no space?");
       *(yyval.Value).val += (*(yyvsp[-1].ValList))[1].val->substr(pos+1);
-      (yyval.Value).type = TypeInfo::get("bool", BoolTy);
+      (yyval.Value).type = TypeInfo::get("i1", BoolTy);
     } else {
       static unsigned upgradeCount = 1;
       if (*(yyvsp[-3].Value).val == "%llvm.va_start" || *(yyvsp[-3].Value).val == "%llvm.va_end") {

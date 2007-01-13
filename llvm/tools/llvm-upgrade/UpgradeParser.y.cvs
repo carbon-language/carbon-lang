@@ -1783,7 +1783,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     *$1 = getCompareOp(*$1, $2);
     *$1 += " " + $2->getNewTy() + " " + Name1 + ", " + Name2;
     $$.val = $1;
-    $$.type = TypeInfo::get("bool",BoolTy);
+    $$.type = TypeInfo::get("i1",BoolTy);
     $3.destroy(); $5.destroy();
   }
   | ICMP IPredicates Types ValueRef ',' ValueRef {
@@ -1791,7 +1791,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     std::string Name2 = getUniqueName($6.val, $3);
     *$1 += " " + *$2 + " " + $3->getNewTy() + " " + Name1 + "," + Name2;
     $$.val = $1;
-    $$.type = TypeInfo::get("bool",BoolTy);
+    $$.type = TypeInfo::get("i1",BoolTy);
     delete $2; $4.destroy(); $6.destroy();
   }
   | FCMP FPredicates Types ValueRef ',' ValueRef {
@@ -1799,7 +1799,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     std::string Name2 = getUniqueName($6.val, $3);
     *$1 += " " + *$2 + " " + $3->getNewTy() + " " + Name1 + "," + Name2;
     $$.val = $1;
-    $$.type = TypeInfo::get("bool",BoolTy);
+    $$.type = TypeInfo::get("i1",BoolTy);
     delete $2; $4.destroy(); $6.destroy();
   }
   | ShiftOps ResolvedVal ',' ResolvedVal {
@@ -1884,7 +1884,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       size_t pos = (*$6)[1].val->find(' ');
       assert(pos != std::string::npos && "no space?");
       *$$.val += (*$6)[1].val->substr(pos+1);
-      $$.type = TypeInfo::get("bool", BoolTy);
+      $$.type = TypeInfo::get("i1", BoolTy);
     } else {
       static unsigned upgradeCount = 1;
       if (*$4.val == "%llvm.va_start" || *$4.val == "%llvm.va_end") {

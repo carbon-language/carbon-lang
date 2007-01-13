@@ -145,7 +145,7 @@ x86_stdcallcc   { RET_TOK( X86_STDCALLCC_TOK); }
 x86_fastcallcc  { RET_TOK( X86_FASTCALLCC_TOK); }
 
 void            { RET_TY(VOID,VoidTy,"void",false); }
-bool            { RET_TY(BOOL,BoolTy,"bool",false); }
+bool            { RET_TY(BOOL,BoolTy,"i1",false); }
 sbyte           { RET_TY(SBYTE,SByteTy,"i8",true); }
 ubyte           { RET_TY(UBYTE,UByteTy,"i8",false); }
 short           { RET_TY(SHORT,ShortTy,"i16",true); }
