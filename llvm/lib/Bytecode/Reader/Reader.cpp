@@ -1408,17 +1408,10 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     const IntegerType *IT = cast<IntegerType>(Ty);
     if (IT->getBitWidth() <= 32) {
       uint32_t Val = read_vbr_uint();
-      if (IT->getBitWidth() == 1) {
-        if (Val != 0 && Val != 1)
-          error("Invalid boolean value read.");
-        Result = ConstantInt::get(Type::Int1Ty, Val == 1);
-        if (Handler) Handler->handleConstantValue(Result);
-      } else {
-        if (!ConstantInt::isValueValidForType(Ty, uint64_t(Val)))
-          error("Integer value read is invalid for type.");
-        Result = ConstantInt::get(IT, Val);
-        if (Handler) Handler->handleConstantValue(Result);
-      }
+      if (!ConstantInt::isValueValidForType(Ty, uint64_t(Val)))
+        error("Integer value read is invalid for type.");
+      Result = ConstantInt::get(IT, Val);
+      if (Handler) Handler->handleConstantValue(Result);
     } else if (IT->getBitWidth() <= 64) {
       uint64_t Val = read_vbr_uint64();
       if (!ConstantInt::isValueValidForType(Ty, Val))
