@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llvm-as | llc -march=c
+; RUN: llvm-as < %s | llc -march=c
 
 
 declare i8* %llvm.va_start()
