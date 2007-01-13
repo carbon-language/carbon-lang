@@ -237,7 +237,6 @@ x86_stdcallcc   { return X86_STDCALLCC_TOK; }
 x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
 void            { RET_TY(Type::VoidTy,  VOID);  }
-bool            { RET_TY(Type::Int1Ty,  BOOL);  }
 float           { RET_TY(Type::FloatTy, FLOAT); }
 double          { RET_TY(Type::DoubleTy,DOUBLE);}
 label           { RET_TY(Type::LabelTy, LABEL); }

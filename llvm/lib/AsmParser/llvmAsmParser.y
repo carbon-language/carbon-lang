@@ -970,7 +970,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 // Built in types...
 %type  <TypeVal> Types ResultTypes
 %type  <PrimType> IntType FPType PrimType           // Classifications
-%token <PrimType> VOID BOOL INTTYPE 
+%token <PrimType> VOID INTTYPE 
 %token <PrimType> FLOAT DOUBLE LABEL
 %token TYPE
 
@@ -1198,7 +1198,7 @@ GlobalVarAttribute : SectionString {
 
 // Derived types are added later...
 //
-PrimType : BOOL | INTTYPE | FLOAT | DOUBLE | LABEL ;
+PrimType : INTTYPE | FLOAT | DOUBLE | LABEL ;
 
 Types 
   : OPAQUE {
@@ -1686,11 +1686,13 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     $$ = ConstantInt::get($1, $2);
     CHECK_FOR_ERROR
   }
-  | BOOL TRUETOK {                      // Boolean constants
+  | INTTYPE TRUETOK {                      // Boolean constants
+    assert(cast<IntegerType>($1)->getBitWidth() == 1 && "Not Bool?");
     $$ = ConstantInt::getTrue();
     CHECK_FOR_ERROR
   }
-  | BOOL FALSETOK {                     // Boolean constants
+  | INTTYPE FALSETOK {                     // Boolean constants
+    assert(cast<IntegerType>($1)->getBitWidth() == 1 && "Not Bool?");
     $$ = ConstantInt::getFalse();
     CHECK_FOR_ERROR
   }
@@ -2362,7 +2364,8 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     CHECK_FOR_ERROR
     $$ = new BranchInst(tmpBB);
   }                                                  // Conditional Branch...
-  | BR BOOL ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
+  | BR INTTYPE ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
+    assert(cast<IntegerType>($2)->getBitWidth() == 1 && "Not Bool?");
     BasicBlock* tmpBBA = getBBVal($6);
     CHECK_FOR_ERROR
     BasicBlock* tmpBBB = getBBVal($9);
