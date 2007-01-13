@@ -218,10 +218,7 @@ static std::string getTypeDescription(const Type *Ty,
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID: {
     const IntegerType *ITy = cast<IntegerType>(Ty);
-    if (ITy->getBitWidth() == 1)
-      Result = "bool"; // FIXME: eventually this becomes i1
-    else
-      Result = "i" + utostr(ITy->getBitWidth());
+    Result = "i" + utostr(ITy->getBitWidth());
     break;
   }
   case Type::FunctionTyID: {
