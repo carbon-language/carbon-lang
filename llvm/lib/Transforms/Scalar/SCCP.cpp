@@ -476,7 +476,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
         return true;
       } else if (BCValue.isConstant()) {
         // Not branching on an evaluatable constant?
-        if (BCValue.getConstant()->getType() != Type::Int1Ty) return true;
+        if (!isa<ConstantInt>(BCValue.getConstant())) return true;
 
         // Constant condition variables mean the branch can only go a single way
         return BI->getSuccessor(BCValue.getConstant() ==
