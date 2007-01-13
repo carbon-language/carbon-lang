@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -ipconstprop -instcombine | llvm-dis | grep 'ret bool true'
+; RUN: llvm-upgrade < %s | llvm-as | opt -ipconstprop -instcombine | \
+; RUN:    llvm-dis | grep 'ret i1 true'
 implementation
 
 internal int %foo(bool %C) {

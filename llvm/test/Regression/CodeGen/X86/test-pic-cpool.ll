@@ -7,7 +7,7 @@
 define double %foo(i32 %a.u) {
 entry:
     %tmp = icmp eq i32 %a.u,0
-    %retval = select bool %tmp, double 4.561230e+02, double 1.234560e+02
+    %retval = select i1 %tmp, double 4.561230e+02, double 1.234560e+02
     ret double %retval
 }
 

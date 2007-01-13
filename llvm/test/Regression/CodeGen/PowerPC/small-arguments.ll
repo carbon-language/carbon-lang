@@ -17,7 +17,7 @@ define i32 %test2(i16 zext %X) {
 define void %test3() {
 	%tmp.0 = call i16 %foo() sext            ;; no extsh!
 	%tmp.1 = icmp slt i16 %tmp.0, 1234
-	br bool %tmp.1, label %then, label %UnifiedReturnBlock
+	br i1 %tmp.1, label %then, label %UnifiedReturnBlock
 
 then:	
 	call i32 %test1(i16 0 sext)

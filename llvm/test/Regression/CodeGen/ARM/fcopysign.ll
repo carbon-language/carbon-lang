@@ -2,7 +2,7 @@
 
 define csretcc void %__divsc3({ float, float }* %agg.result, float %a, float %b, float %c, float %d) {
 entry:
-	br bool false, label %bb, label %cond_next375
+	br i1 false, label %bb, label %cond_next375
 
 bb:		; preds = %entry
 	%tmp81 = tail call float %copysignf( float 0x7FF0000000000000, float %c )		; <float> [#uses=1]
@@ -16,6 +16,6 @@ cond_next375:		; preds = %bb, %entry
 
 declare float %fabsf(float)
 
-declare bool %llvm.isunordered.f32(float, float)
+declare i1 %llvm.isunordered.f32(float, float)
 
 declare float %copysignf(float, float)

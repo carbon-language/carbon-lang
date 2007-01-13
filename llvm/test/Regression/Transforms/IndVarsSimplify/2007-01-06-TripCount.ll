@@ -21,8 +21,8 @@ bb:		; preds = %cond_next, %cond_true
 
 bb2:		; preds = %bb, %entry
 	%i.0 = phi i32 [ 0, %entry ], [ %tmp1, %bb ]		; <i32> [#uses=4]
-	%tmp = icmp eq i32 %i.0, 0		; <bool> [#uses=1]
-	br bool %tmp, label %cond_true, label %cond_next
+	%tmp = icmp eq i32 %i.0, 0		; <i1> [#uses=1]
+	br i1 %tmp, label %cond_true, label %cond_next
 
 cond_true:		; preds = %bb2
 	br label %bb
@@ -30,8 +30,8 @@ cond_true:		; preds = %bb2
 cond_next:		; preds = %bb2
 	%tmp = getelementptr [5 x i8]* %foo, i32 0, i32 %i.0		; <i8*> [#uses=1]
 	%tmp = load i8* %tmp		; <i8> [#uses=1]
-	%tmp5 = icmp eq i8 %tmp, 0		; <bool> [#uses=1]
-	br bool %tmp5, label %bb6, label %bb
+	%tmp5 = icmp eq i8 %tmp, 0		; <i1> [#uses=1]
+	br i1 %tmp5, label %bb6, label %bb
 
 bb6:		; preds = %cond_next
 	br label %return

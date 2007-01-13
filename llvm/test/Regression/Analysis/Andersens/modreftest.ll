@@ -1,4 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -anders-aa -load-vn -gcse -instcombine | llvm-dis | grep 'ret bool true'
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   opt -anders-aa -load-vn -gcse -instcombine | llvm-dis | \
+; RUN:   grep 'ret i1 true'
 
 %G = internal global int* null
 declare int *%ext()

@@ -11,7 +11,7 @@ bb:
         store double 0.000000e+00, double* %j
         %k = add i64 %i, 1
         %n = icmp eq i64 %k, 0
-        br bool %n, label %return, label %bb
+        br i1 %n, label %return, label %bb
 
 return:
         ret void

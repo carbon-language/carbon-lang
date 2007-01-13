@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 'ret bool true'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   grep 'ret i1 true'
 ; PR586
 
 %g_07918478 = external global uint		; <uint*> [#uses=1]

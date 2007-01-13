@@ -1,7 +1,8 @@
 ; This file contains various testcases that check to see that instcombine
 ; is narrowing computations when possible.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 'ret bool false'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    grep 'ret i1 false'
 
 ; test1 - Eliminating the casts in this testcase (by narrowing the AND
 ; operation) allows instcombine to realize the function always returns false.
