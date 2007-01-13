@@ -1888,11 +1888,13 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     } else {
       static unsigned upgradeCount = 1;
       if (*$4.val == "%llvm.va_start" || *$4.val == "%llvm.va_end") {
-        std::string name("%va_upgrade");
-        name += llvm::utostr(upgradeCount++);
-        $1->insert(0, name + " = bitcast " + *(*$6)[0].val + " to i8*\n    ");
-        *(*$6)[0].val = "i8* " + name;
-        (*$6)[0].type = TypeInfo::get("i8", UByteTy)->getPointerType();
+        if (!$6->empty()) {
+          std::string name("%va_upgrade");
+          name += llvm::utostr(upgradeCount++);
+          $1->insert(0, name + " = bitcast " + *(*$6)[0].val + " to i8*\n    ");
+          *(*$6)[0].val = "i8* " + name;
+          (*$6)[0].type = TypeInfo::get("i8", UByteTy)->getPointerType();
+        }
       } else if (*$4.val == "%llvm.va_copy") {
         std::string name0("%va_upgrade");
         name0 += llvm::utostr(upgradeCount++);
