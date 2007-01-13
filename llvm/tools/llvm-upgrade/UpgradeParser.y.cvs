@@ -1468,7 +1468,7 @@ ArgList : ArgListH {
 FunctionHeaderH 
   : OptCallingConv TypesV Name '(' ArgList ')' OptSection OptAlign {
     if (*$3 == "%llvm.va_start" || *$3 == "%llvm.va_end") {
-      *$5 = "i8* ";
+      *$5 = "i8*";
     } else if (*$3 == "%llvm.va_copy") {
       *$5 = "i8*, i8*";
     }

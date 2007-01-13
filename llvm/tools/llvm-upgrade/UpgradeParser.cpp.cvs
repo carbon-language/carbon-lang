@@ -3772,7 +3772,7 @@ yyreduce:
 #line 1469 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (*(yyvsp[-5].String) == "%llvm.va_start" || *(yyvsp[-5].String) == "%llvm.va_end") {
-      *(yyvsp[-3].String) = "i8* ";
+      *(yyvsp[-3].String) = "i8*";
     } else if (*(yyvsp[-5].String) == "%llvm.va_copy") {
       *(yyvsp[-3].String) = "i8*, i8*";
     }
