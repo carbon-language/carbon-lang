@@ -1,12 +1,12 @@
 ; XFAIL: *
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c
+; RUN: llvm-as | llc -march=c
 
 
-declare sbyte* %llvm.va_start()
-declare void %llvm.va_end(sbyte*)
+declare i8* %llvm.va_start()
+declare void %llvm.va_end(i8*)
 
 void %test(...) {
-	%P = call sbyte* %llvm.va_start()
-	call void %llvm.va_end(sbyte* %P)
+	%P = call i8* %llvm.va_start()
+	call void %llvm.va_end(i8* %P)
 	ret void
 }
