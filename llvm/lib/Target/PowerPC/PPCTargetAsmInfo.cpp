@@ -55,6 +55,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   StaticDtorsSection = ".mod_term_func";
   UsedDirective = "\t.no_dead_strip\t";
   WeakRefDirective = "\t.weak_reference\t";
+  HiddenDirective = "\t.private_extern\t";
 }
 
 LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)

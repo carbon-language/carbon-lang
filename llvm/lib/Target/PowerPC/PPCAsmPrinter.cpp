@@ -550,6 +550,11 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.weak\t" << CurrentFnName << '\n';
     break;
   }
+  
+  if (F->hasHiddenVisibility())
+    if (const char *Directive = TAI->getHiddenDirective())
+      O << Directive << CurrentFnName << "\n";
+  
   EmitAlignment(2, F);
   O << CurrentFnName << ":\n";
 
@@ -608,8 +613,13 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
     // Check to see if this is a special global used by LLVM, if so, emit it.
     if (EmitSpecialLLVMGlobal(I))
       continue;
-    
+
     std::string name = Mang->getValueName(I);
+
+    if (I->hasHiddenVisibility())
+      if (const char *Directive = TAI->getHiddenDirective())
+        O << Directive << name << "\n";
+    
     Constant *C = I->getInitializer();
     unsigned Size = TD->getTypeSize(C->getType());
     unsigned Align = TD->getPreferredAlignmentLog(I);
@@ -749,6 +759,11 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.weak_definition\t" << CurrentFnName << "\n";
     break;
   }
+  
+  if (F->hasHiddenVisibility())
+    if (const char *Directive = TAI->getHiddenDirective())
+      O << Directive << CurrentFnName << "\n";
+  
   EmitAlignment(4, F);
   O << CurrentFnName << ":\n";
 
@@ -840,6 +855,11 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       continue;
     
     std::string name = Mang->getValueName(I);
+    
+    if (I->hasHiddenVisibility())
+      if (const char *Directive = TAI->getHiddenDirective())
+        O << Directive << name << "\n";
+    
     Constant *C = I->getInitializer();
     unsigned Size = TD->getTypeSize(C->getType());
     unsigned Align = TD->getPreferredAlignmentLog(I);
