@@ -616,6 +616,13 @@ to whatever it feels convenient.  If an explicit alignment is specified, the
 global is forced to have at least that much alignment.  All alignments must be
 a power of 2.</p>
 
+<p>For example, the following defines a global with an initializer, section,
+   and alignment:</p>
+
+<pre>
+  %G = constant float 1.0, section "foo", align 4
+</pre>
+
 </div>
 
 
