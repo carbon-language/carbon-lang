@@ -382,10 +382,8 @@ void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
 void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
                                          const char *Modifier){
   assert(isMem(MI, Op) && "Invalid memory reference!");
-
-  const MachineOperand &BaseReg  = MI->getOperand(Op);
-  int ScaleVal                   = MI->getOperand(Op+1).getImmedValue();
-  const MachineOperand &IndexReg = MI->getOperand(Op+2);
+  MachineOperand BaseReg  = MI->getOperand(Op);
+  MachineOperand IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
   bool NotRIPRel = IndexReg.getReg() || BaseReg.getReg();
@@ -400,18 +398,28 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   }
 
   if (IndexReg.getReg() || BaseReg.getReg()) {
-    O << "(";
-    if (BaseReg.getReg()) {
-      printOperand(MI, Op, Modifier);
+    unsigned ScaleVal = MI->getOperand(Op+1).getImmedValue();
+    unsigned BaseRegOperand = 0, IndexRegOperand = 2;
+      
+    // There are cases where we can end up with ESP/RSP in the indexreg slot.
+    // If this happens, swap the base/index register to support assemblers that
+    // don't work when the index is *SP.
+    if (IndexReg.getReg() == X86::ESP || IndexReg.getReg() == X86::RSP) {
+      assert(ScaleVal == 1 && "Scale not supported for stack pointer!");
+      std::swap(BaseReg, IndexReg);
+      std::swap(BaseRegOperand, IndexRegOperand);
     }
+    
+    O << "(";
+    if (BaseReg.getReg())
+      printOperand(MI, Op+BaseRegOperand, Modifier);
 
     if (IndexReg.getReg()) {
       O << ",";
-      printOperand(MI, Op+2, Modifier);
+      printOperand(MI, Op+IndexRegOperand, Modifier);
       if (ScaleVal != 1)
         O << "," << ScaleVal;
     }
-
     O << ")";
   }
 }
