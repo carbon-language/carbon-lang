@@ -467,6 +467,9 @@ public:
   /// @brief Return the predicate for this instruction.
   Predicate getPredicate() const { return Predicate(SubclassData); }
 
+  /// @brief Set the predicate for this instruction to the specified value.
+  void setPredicate(Predicate P) { SubclassData = P; }
+  
   /// For example, EQ -> NE, UGT -> ULE, SLT -> SGE, etc.
   /// @returns the inverse predicate for the instruction's current predicate. 
   /// @brief Return the inverse of the instruction's predicate.
@@ -608,6 +611,9 @@ public:
 
   /// @brief Return the predicate for this instruction.
   Predicate getPredicate() const { return Predicate(SubclassData); }
+
+  /// @brief Set the predicate for this instruction to the specified value.
+  void setPredicate(Predicate P) { SubclassData = P; }
 
   /// For example, OEQ -> UNE, UGT -> OLE, OLT -> UGE, etc.
   /// @returns the inverse predicate for the instructions current predicate. 
