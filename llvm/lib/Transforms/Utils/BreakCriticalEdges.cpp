@@ -182,49 +182,54 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
   
   // Should we update DominatorSet information?
   if (DominatorSet *DS = P->getAnalysisToUpdate<DominatorSet>()) {
-    // The blocks that dominate the new one are the blocks that dominate TIBB
-    // plus the new block itself.
-    DominatorSet::DomSetType DomSet = DS->getDominators(TIBB);
-    DomSet.insert(NewBB);  // A block always dominates itself.
-    DS->addBasicBlock(NewBB, DomSet);
-    
-    // If NewBBDominatesDestBB hasn't been computed yet, do so with DS.
-    if (!OtherPreds.empty()) {
-      while (!OtherPreds.empty() && NewBBDominatesDestBB) {
-        NewBBDominatesDestBB = DS->dominates(DestBB, OtherPreds.back());
-        OtherPreds.pop_back();
+    DominatorSet::iterator DSI = DS->find(TIBB);
+    if (DSI != DS->end()) {    // TIBB is reachable?
+      // The blocks that dominate the new one are the blocks that dominate TIBB
+      // plus the new block itself.
+      DominatorSet::DomSetType DomSet = DSI->second;  // Copy domset.
+      DomSet.insert(NewBB);  // A block always dominates itself.
+      DS->addBasicBlock(NewBB, DomSet);
+      
+      // If NewBBDominatesDestBB hasn't been computed yet, do so with DS.
+      if (!OtherPreds.empty()) {
+        while (!OtherPreds.empty() && NewBBDominatesDestBB) {
+          NewBBDominatesDestBB = DS->dominates(DestBB, OtherPreds.back());
+          OtherPreds.pop_back();
+        }
+        OtherPreds.clear();
       }
-      OtherPreds.clear();
-    }
-    
-    // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
-    // doesn't dominate anything.  If NewBB does dominates DestBB, then it
-    // dominates everything that DestBB dominates.
-    if (NewBBDominatesDestBB) {
-      for (DominatorSet::iterator I = DS->begin(), E = DS->end(); I != E; ++I)
-        if (I->second.count(DestBB))
-          I->second.insert(NewBB);
+      
+      // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
+      // doesn't dominate anything.  If NewBB does dominates DestBB, then it
+      // dominates everything that DestBB dominates.
+      if (NewBBDominatesDestBB) {
+        for (DominatorSet::iterator I = DS->begin(), E = DS->end(); I != E; ++I)
+          if (I->second.count(DestBB))
+            I->second.insert(NewBB);
+      }
     }
   }
 
   // Should we update ImmediateDominator information?
   if (ImmediateDominators *ID = P->getAnalysisToUpdate<ImmediateDominators>()) {
-    // TIBB is the new immediate dominator for NewBB.
-    ID->addNewBlock(NewBB, TIBB);
-    
-    // If NewBBDominatesDestBB hasn't been computed yet, do so with ID.
-    if (!OtherPreds.empty()) {
-      while (!OtherPreds.empty() && NewBBDominatesDestBB) {
-        NewBBDominatesDestBB = ID->dominates(DestBB, OtherPreds.back());
-        OtherPreds.pop_back();
+    if (ID->get(TIBB)) {  // Only do this if TIBB is reachable.
+      // TIBB is the new immediate dominator for NewBB.
+      ID->addNewBlock(NewBB, TIBB);
+      
+      // If NewBBDominatesDestBB hasn't been computed yet, do so with ID.
+      if (!OtherPreds.empty()) {
+        while (!OtherPreds.empty() && NewBBDominatesDestBB) {
+          NewBBDominatesDestBB = ID->dominates(DestBB, OtherPreds.back());
+          OtherPreds.pop_back();
+        }
+        OtherPreds.clear();
       }
-      OtherPreds.clear();
+      
+      // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
+      // doesn't dominate anything.
+      if (NewBBDominatesDestBB)
+        ID->setImmediateDominator(DestBB, NewBB);
     }
-    
-    // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
-    // doesn't dominate anything.
-    if (NewBBDominatesDestBB)
-      ID->setImmediateDominator(DestBB, NewBB);
   }
 
   // Update the forest?
