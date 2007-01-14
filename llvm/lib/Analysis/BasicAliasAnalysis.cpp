@@ -104,7 +104,7 @@ namespace {
     bool pointsToConstantMemory(const Value *P);
 
     virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
-                                             std::vector<PointerAccessInfo> *Info);
+                                          std::vector<PointerAccessInfo> *Info);
 
   private:
     // CheckGEPInstructions - Check two GEP instructions with known
@@ -274,11 +274,9 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
 
   // Strip off cast instructions...
   if (const BitCastInst *I = dyn_cast<BitCastInst>(V1))
-    if (isa<PointerType>(I->getOperand(0)->getType()))
-      return alias(I->getOperand(0), V1Size, V2, V2Size);
+    return alias(I->getOperand(0), V1Size, V2, V2Size);
   if (const BitCastInst *I = dyn_cast<BitCastInst>(V2))
-    if (isa<PointerType>(I->getOperand(0)->getType()))
-      return alias(V1, V1Size, I->getOperand(0), V2Size);
+    return alias(V1, V1Size, I->getOperand(0), V2Size);
 
   // Figure out what objects these things are pointing to if we can...
   const Value *O1 = getUnderlyingObject(V1);
@@ -363,7 +361,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
        Constant::getNullValue(cast<User>(BasePtr2)->getOperand(1)->getType()));
 
     // Do the base pointers alias?
-    AliasResult BaseAlias = alias(BasePtr1, V1Size, BasePtr2, V2Size);
+    AliasResult BaseAlias = alias(BasePtr1, ~0U, BasePtr2, ~0U);
     if (BaseAlias == NoAlias) return NoAlias;
     if (BaseAlias == MustAlias) {
       // If the base pointers alias each other exactly, check to see if we can
@@ -694,9 +692,9 @@ BasicAliasAnalysis::CheckGEPInstructions(
           // value possible.
           //
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
-            GEP1Ops[i] = ConstantInt::get(Type::Int64Ty, AT->getNumElements()-1);
+            GEP1Ops[i] = ConstantInt::get(Type::Int64Ty,AT->getNumElements()-1);
           else if (const PackedType *PT = dyn_cast<PackedType>(BasePtr1Ty))
-            GEP1Ops[i] = ConstantInt::get(Type::Int64Ty, PT->getNumElements()-1);
+            GEP1Ops[i] = ConstantInt::get(Type::Int64Ty,PT->getNumElements()-1);
 
         }
       }
