@@ -424,23 +424,26 @@ All Global Variables and Functions have one of the following types of linkage:
   an internal global value may cause the internal to be renamed as necessary to
   avoid collisions.  Because the symbol is internal to the module, all
   references can be updated.  This corresponds to the notion of the
-  '<tt>static</tt>' keyword in C, or the idea of "anonymous namespaces" in C++.
+  '<tt>static</tt>' keyword in C.
   </dd>
 
   <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt>: </dt>
 
-  <dd>"<tt>linkonce</tt>" linkage is similar to <tt>internal</tt> linkage, with
-  the twist that linking together two modules defining the same
-  <tt>linkonce</tt> globals will cause one of the globals to be discarded.  This
-  is typically used to implement inline functions.  Unreferenced
-  <tt>linkonce</tt> globals are allowed to be discarded.
+  <dd>Globals with "<tt>linkonce</tt>" linkage are merged with other globals of
+  the same name when linkage occurs.  This is typically used to implement 
+  inline functions, templates, or other code which must be generated in each 
+  translation unit that uses it.  Unreferenced <tt>linkonce</tt> globals are 
+  allowed to be discarded.
   </dd>
 
   <dt><tt><b><a name="linkage_weak">weak</a></b></tt>: </dt>
 
   <dd>"<tt>weak</tt>" linkage is exactly the same as <tt>linkonce</tt> linkage,
   except that unreferenced <tt>weak</tt> globals may not be discarded.  This is
-  used to implement constructs in C such as "<tt>int X;</tt>" at global scope.
+  used for globals that may be emitted in multiple translation units, but that
+  are not guaranteed to be emitted into every translation unit that uses them.
+  One example of this are common globals in C, such as "<tt>int X;</tt>" at 
+  global scope.
   </dd>
 
   <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>
