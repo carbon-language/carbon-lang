@@ -64,6 +64,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     SetDirective = "\t.set";
     UsedDirective = "\t.no_dead_strip\t";
     WeakRefDirective = "\t.weak_reference\t";
+    HiddenDirective = "\t.private_extern\t";
     
     NeedsSet = true;
     DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";

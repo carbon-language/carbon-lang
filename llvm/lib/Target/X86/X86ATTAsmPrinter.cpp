@@ -125,8 +125,9 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
     break;
   }
-  if (F->hasHiddenVisibility() && !Subtarget->isTargetDarwin())
-    O << "\t.hidden " << CurrentFnName << "\n";
+  if (F->hasHiddenVisibility())
+    if (const char *Directive = TAI->getHiddenDirective())
+      O << Directive << CurrentFnName << "\n";
   
   O << CurrentFnName << ":\n";
   // Add some workaround for linkonce linkage on Cygwin\MinGW

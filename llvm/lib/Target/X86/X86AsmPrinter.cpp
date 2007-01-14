@@ -246,8 +246,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       EmitGlobalConstant(C);
       O << '\n';
     }
-    if (I->hasHiddenVisibility() && !Subtarget->isTargetDarwin())
-      O << "\t.hidden " << name << "\n";
+    if (I->hasHiddenVisibility())
+      if (const char *Directive = TAI->getHiddenDirective())
+        O << Directive << name << "\n";
   }
   
   // Output linker support code for dllexported globals
