@@ -310,7 +310,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           O << "@GOT";
         } else if (Subtarget->isPICStyleRIPRel()) {
           O << "@GOTPCREL(%rip)";
-        } if (Subtarget->is64Bit() && !NotRIPRel)
+        } else if (Subtarget->is64Bit() && !NotRIPRel)
             // Use rip when possible to reduce code size, except when
             // index or base register are also part of the address. e.g.
             // foo(%rip)(%rcx,%rax,4) is not legal
