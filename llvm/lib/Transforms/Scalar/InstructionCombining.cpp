@@ -1457,16 +1457,6 @@ static bool isTrueWhenEqual(ICmpInst &ICI) {
          pred == ICmpInst::ICMP_SLE;
 }
 
-/// @returns true if the specified compare instruction is
-/// true when both operands are equal...
-/// @brief Determine if the FCmpInst returns true if both operands are equal
-static bool isTrueWhenEqual(FCmpInst &FCI) {
-  FCmpInst::Predicate pred = FCI.getPredicate();
-  return pred == FCmpInst::FCMP_OEQ || pred == FCmpInst::FCMP_UEQ ||
-         pred == FCmpInst::FCMP_OGE || pred == FCmpInst::FCMP_UGE ||
-         pred == FCmpInst::FCMP_OLE || pred == FCmpInst::FCMP_ULE;
-}
-
 /// AssociativeOpt - Perform an optimization on an associative operator.  This
 /// function is designed to check a chain of associative operators for a
 /// potential to apply a certain optimization.  Since the optimization may be
@@ -4281,11 +4271,45 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   bool Changed = SimplifyCompare(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  // fcmp pred X, X
-  if (Op0 == Op1)
-    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 
-                                                   isTrueWhenEqual(I)));
-
+  // Fold trivial predicates.
+  if (I.getPredicate() == FCmpInst::FCMP_FALSE)
+    return ReplaceInstUsesWith(I, Constant::getNullValue(Type::Int1Ty));
+  if (I.getPredicate() == FCmpInst::FCMP_TRUE)
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+  
+  // Simplify 'fcmp pred X, X'
+  if (Op0 == Op1) {
+    switch (I.getPredicate()) {
+    default: assert(0 && "Unknown predicate!");
+    case FCmpInst::FCMP_UEQ:    // True if unordered or equal
+    case FCmpInst::FCMP_UGE:    // True if unordered, greater than, or equal
+    case FCmpInst::FCMP_ULE:    // True if unordered, less than, or equal
+      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+    case FCmpInst::FCMP_OGT:    // True if ordered and greater than
+    case FCmpInst::FCMP_OLT:    // True if ordered and less than
+    case FCmpInst::FCMP_ONE:    // True if ordered and operands are unequal
+      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+      
+    case FCmpInst::FCMP_UNO:    // True if unordered: isnan(X) | isnan(Y)
+    case FCmpInst::FCMP_ULT:    // True if unordered or less than
+    case FCmpInst::FCMP_UGT:    // True if unordered or greater than
+    case FCmpInst::FCMP_UNE:    // True if unordered or not equal
+      // Canonicalize these to be 'fcmp uno %X, 0.0'.
+      I.setPredicate(FCmpInst::FCMP_UNO);
+      I.setOperand(1, Constant::getNullValue(Op0->getType()));
+      return &I;
+      
+    case FCmpInst::FCMP_ORD:    // True if ordered (no nans)
+    case FCmpInst::FCMP_OEQ:    // True if ordered and equal
+    case FCmpInst::FCMP_OGE:    // True if ordered and greater than or equal
+    case FCmpInst::FCMP_OLE:    // True if ordered and less than or equal
+      // Canonicalize these to be 'fcmp ord %X, 0.0'.
+      I.setPredicate(FCmpInst::FCMP_ORD);
+      I.setOperand(1, Constant::getNullValue(Op0->getType()));
+      return &I;
+    }
+  }
+    
   if (isa<UndefValue>(Op1))                  // fcmp pred X, undef -> undef
     return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
 
