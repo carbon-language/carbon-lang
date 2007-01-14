@@ -246,7 +246,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       EmitGlobalConstant(C);
       O << '\n';
     }
-    if (I->hasHiddenVisibility())
+    if (I->hasHiddenVisibility() && !Subtarget->isTargetDarwin())
       O << "\t.hidden " << name << "\n";
   }
   

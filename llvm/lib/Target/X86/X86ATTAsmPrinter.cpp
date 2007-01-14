@@ -125,7 +125,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
     break;
   }
-  if (F->hasHiddenVisibility())
+  if (F->hasHiddenVisibility() && !Subtarget->isTargetDarwin())
     O << "\t.hidden " << CurrentFnName << "\n";
   
   O << CurrentFnName << ":\n";
