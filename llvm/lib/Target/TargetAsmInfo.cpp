@@ -62,6 +62,7 @@ TargetAsmInfo::TargetAsmInfo() :
   HasDotTypeDotSizeDirective(true),
   UsedDirective(0),
   WeakRefDirective(0),
+  HiddenDirective("\t.hidden\t"),
   HasLEB128(false),
   HasDotLoc(false),
   HasDotFile(false),

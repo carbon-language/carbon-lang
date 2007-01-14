@@ -216,6 +216,10 @@ namespace llvm {
     /// global as being a weak undefined symbol.
     const char *WeakRefDirective;         // Defaults to null.
     
+    /// HiddenDirective - This directive, if non-null, is used to declare a
+    /// global or function as having hidden visibility.
+    const char *HiddenDirective;          // Defaults to "\t.hidden\t".
+    
     //===--- Dwarf Emission Directives -----------------------------------===//
 
     /// HasLEB128 - True if target asm supports leb128 directives.
@@ -428,6 +432,9 @@ namespace llvm {
     }
     const char *getWeakRefDirective() const {
       return WeakRefDirective;
+    }
+    const char *getHiddenDirective() const {
+      return HiddenDirective;
     }
     bool hasLEB128() const {
       return HasLEB128;
