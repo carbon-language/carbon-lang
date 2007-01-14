@@ -1506,10 +1506,12 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   //
   // Currently we check for this by checking to see if the Exit branch goes to
   // the loop header.  If so, we know it will always execute the same number of
-  // times as the loop.  More extensive analysis could be done to handle more
-  // cases here.
+  // times as the loop.  We also handle the case where the exit block *is* the
+  // loop header.  This is common for un-rotated loops.  More extensive analysis
+  // could be done to handle more cases here.
   if (ExitBr->getSuccessor(0) != L->getHeader() &&
-      ExitBr->getSuccessor(1) != L->getHeader())
+      ExitBr->getSuccessor(1) != L->getHeader() &&
+      ExitBr->getParent() != L->getHeader())
     return UnknownValue;
   
   ICmpInst *ExitCond = dyn_cast<ICmpInst>(ExitBr->getCondition());
