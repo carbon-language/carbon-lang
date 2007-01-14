@@ -112,6 +112,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     HasDotTypeDotSizeDirective = false;
     StaticCtorsSection = "\t.section .ctors,\"aw\"";
     StaticDtorsSection = "\t.section .dtors,\"aw\"";
+    HiddenDirective = NULL;
 
     // Set up DWARF directives
     HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
