@@ -541,7 +541,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         IsNotTrivial = true;
         const Type *SubElt = CanConvertToScalar(GEP, IsNotTrivial);
         if (SubElt == 0) return 0;
-        if (SubElt != Type::VoidTy && SubElt->isInteger()) {
+        if (SubElt != Type::VoidTy && SubElt->isIntegral()) {
           const Type *NewTy = 
             getUIntAtLeastAsBitAs(TD.getTypeSize(SubElt)*8+BitOffset);
           if (NewTy == 0 || MergeInType(NewTy, UsedType, TD)) return 0;
@@ -653,7 +653,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           // an integer.
           NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
         } else {
-          assert(NV->getType()->isInteger() && "Unknown promotion!");
+          assert(NV->getType()->isIntegral() && "Unknown promotion!");
           if (Offset && Offset < TD.getTypeSize(NV->getType())*8) {
             NV = new ShiftInst(Instruction::LShr, NV, 
                                ConstantInt::get(Type::Int8Ty, Offset), 

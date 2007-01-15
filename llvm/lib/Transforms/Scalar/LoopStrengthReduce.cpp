@@ -398,7 +398,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
 /// return true.  Otherwise, return false.
 bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
                                             std::set<Instruction*> &Processed) {
-  if (!I->getType()->isInteger() && !isa<PointerType>(I->getType()))
+  if (!I->getType()->isIntegral() && !isa<PointerType>(I->getType()))
       return false;   // Void and FP expressions cannot be reduced.
   if (!Processed.insert(I).second)
     return true;    // Instruction already handled.

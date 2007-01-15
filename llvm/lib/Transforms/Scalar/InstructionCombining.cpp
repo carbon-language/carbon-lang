@@ -495,7 +495,7 @@ static inline Value *dyn_castNotVal(Value *V) {
 // Otherwise, return null.
 //
 static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
-  if (V->hasOneUse() && V->getType()->isInteger())
+  if (V->hasOneUse() && V->getType()->isIntegral())
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       if (I->getOpcode() == Instruction::Mul)
         if ((CST = dyn_cast<ConstantInt>(I->getOperand(1))))
@@ -1808,7 +1808,7 @@ FoundSExt:
   }
 
   // X + X --> X << 1
-  if (I.getType()->isInteger()) {
+  if (I.getType()->isIntegral() && I.getType() != Type::Int1Ty) {
     if (Instruction *Result = AssociativeOpt(I, AddRHS(RHS))) return Result;
 
     if (Instruction *RHSI = dyn_cast<Instruction>(RHS)) {
@@ -1933,7 +1933,7 @@ static Value *RemoveNoopCast(Value *V) {
   if (CastInst *CI = dyn_cast<CastInst>(V)) {
     const Type *CTy = CI->getType();
     const Type *OpTy = CI->getOperand(0)->getType();
-    if (CTy->isInteger() && OpTy->isInteger()) {
+    if (CTy->isIntegral() && OpTy->isIntegral()) {
       if (CTy->getPrimitiveSizeInBits() == OpTy->getPrimitiveSizeInBits())
         return RemoveNoopCast(CI->getOperand(0));
     } else if (isa<PointerType>(CTy) && isa<PointerType>(OpTy))
@@ -2412,7 +2412,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a udiv.
-  if (I.getType()->isInteger()) {
+  if (I.getType()->isIntegral()) {
     uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
     if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
       return BinaryOperator::createUDiv(Op0, Op1, I.getName());
@@ -5062,7 +5062,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         Value *CastOp = Cast->getOperand(0);
         const Type *SrcTy = CastOp->getType();
         unsigned SrcTySize = SrcTy->getPrimitiveSizeInBits();
-        if (SrcTy->isInteger() && 
+        if (SrcTy->isIntegral() && 
             SrcTySize == Cast->getType()->getPrimitiveSizeInBits()) {
           // If this is an unsigned comparison, try to make the comparison use
           // smaller constant values.
@@ -6395,7 +6395,7 @@ Instruction *InstCombiner::visitBitCast(CastInst &CI) {
   const Type *SrcTy = Src->getType();
   const Type *DestTy = CI.getType();
 
-  if (SrcTy->isInteger() && DestTy->isInteger()) {
+  if (SrcTy->isIntegral() && DestTy->isIntegral()) {
     if (Instruction *Result = commonIntCastTransforms(CI))
       return Result;
   } else {
@@ -6816,7 +6816,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       }
 
   // See if we can fold the select into one of our operands.
-  if (SI.getType()->isInteger()) {
+  if (SI.getType()->isIntegral()) {
     // See the comment above GetSelectFoldableOperands for a description of the
     // transformation we are doing here.
     if (Instruction *TVI = dyn_cast<Instruction>(TrueVal))
@@ -7667,7 +7667,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Value *Src = CI->getOperand(0);
         const Type *SrcTy = Src->getType();
         const Type *DestTy = CI->getType();
-        if (Src->getType()->isInteger()) {
+        if (Src->getType()->isIntegral()) {
           if (SrcTy->getPrimitiveSizeInBits() ==
                        DestTy->getPrimitiveSizeInBits()) {
             // We can always eliminate a cast from ulong or long to the other.
@@ -7998,7 +7998,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if (DestPTy->isInteger() || isa<PointerType>(DestPTy) || 
+    if (DestPTy->isIntegral() || isa<PointerType>(DestPTy) || 
         isa<PackedType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
@@ -8012,7 +8012,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
             SrcPTy = SrcTy->getElementType();
           }
 
-      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy) || 
+      if ((SrcPTy->isIntegral() || isa<PointerType>(SrcPTy) || 
            isa<PackedType>(SrcPTy)) &&
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
@@ -8186,7 +8186,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if (DestPTy->isInteger() || isa<PointerType>(DestPTy)) {
+    if (DestPTy->isIntegral() || isa<PointerType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
       // constants.
@@ -8199,7 +8199,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
             SrcPTy = SrcTy->getElementType();
           }
 
-      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
+      if ((SrcPTy->isIntegral() || isa<PointerType>(SrcPTy)) &&
           IC.getTargetData().getTypeSize(SrcPTy) ==
                IC.getTargetData().getTypeSize(DestPTy)) {
 

@@ -69,19 +69,19 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
 
   case Instruction::Add:
   case Instruction::Sub:
-    if (!Ty->isInteger() && !Ty->isFloatingPoint()) return false;
+    if (!Ty->isIntegral() && !Ty->isFloatingPoint()) return false;
     if (!ExpressionConvertibleToType(I->getOperand(0), Ty, CTMap, TD) ||
         !ExpressionConvertibleToType(I->getOperand(1), Ty, CTMap, TD))
       return false;
     break;
   case Instruction::LShr:
   case Instruction::AShr:
-    if (!Ty->isInteger()) return false;
+    if (!Ty->isIntegral()) return false;
     if (!ExpressionConvertibleToType(I->getOperand(0), Ty, CTMap, TD))
       return false;
     break;
   case Instruction::Shl:
-    if (!Ty->isInteger()) return false;
+    if (!Ty->isIntegral()) return false;
     if (!ExpressionConvertibleToType(I->getOperand(0), Ty, CTMap, TD))
       return false;
     break;
@@ -458,7 +458,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
 
   case Instruction::Add:
   case Instruction::Sub: {
-    if (!Ty->isInteger() && !Ty->isFloatingPoint()) return false;
+    if (!Ty->isIntegral() && !Ty->isFloatingPoint()) return false;
 
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
     return ValueConvertibleToType(I, Ty, CTMap, TD) &&
@@ -476,7 +476,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
   case Instruction::AShr:
   case Instruction::Shl:
     if (I->getOperand(1) == V) return false;  // Cannot change shift amount type
-    if (!Ty->isInteger()) return false;
+    if (!Ty->isIntegral()) return false;
     return ValueConvertibleToType(I, Ty, CTMap, TD);
 
   case Instruction::Free:
@@ -634,8 +634,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       // arguments if possible.
       //
       for (unsigned i = 0, NA = FTy->getNumParams(); i < NA; ++i)
-        if (!FTy->getParamType(i)->canLosslesslyBitCastTo(
-              I->getOperand(i+1)->getType()))
+        if (FTy->getParamType(i) != I->getOperand(i+1)->getType())
           return false;   // Operands must have compatible types!
 
       // Okay, at this point, we know that all of the arguments can be
@@ -655,7 +654,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     // If we get this far, we know the value is in the varargs section of the
     // function!  We can convert if we don't reinterpret the value...
     //
-    return Ty->canLosslesslyBitCastTo(V->getType());
+    return isa<PointerType>(Ty) && isa<PointerType>(V->getType());
   }
   }
   return false;

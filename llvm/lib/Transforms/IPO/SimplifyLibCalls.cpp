@@ -398,7 +398,7 @@ struct ExitInMainOptimization : public LibCallOptimization {
   // Make sure the called function looks like exit (int argument, int return
   // type, external linkage, not varargs).
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
-    return F->arg_size() >= 1 && F->arg_begin()->getType()->isInteger();
+    return F->arg_size() >= 1 && F->arg_begin()->getType()->isIntegral();
   }
 
   virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
@@ -960,8 +960,8 @@ struct memcmpOptimization : public LibCallOptimization {
     Function::const_arg_iterator AI = F->arg_begin();
     if (F->arg_size() != 3 || !isa<PointerType>(AI->getType())) return false;
     if (!isa<PointerType>((++AI)->getType())) return false;
-    if (!(++AI)->getType()->isInteger()) return false;
-    if (!F->getReturnType()->isInteger()) return false;
+    if (!(++AI)->getType()->isIntegral()) return false;
+    if (!F->getReturnType()->isIntegral()) return false;
     return true;
   }
   
@@ -1725,8 +1725,8 @@ public:
     : LibCallOptimization("isascii", "Number of 'isascii' calls simplified") {}
   
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
-    return F->arg_size() == 1 && F->arg_begin()->getType()->isInteger() && 
-           F->getReturnType()->isInteger();
+    return F->arg_size() == 1 && F->arg_begin()->getType()->isIntegral() && 
+           F->getReturnType()->isIntegral();
   }
   
   /// @brief Perform the isascii optimization.
