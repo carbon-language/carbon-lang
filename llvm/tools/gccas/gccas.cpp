@@ -102,6 +102,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
   addPass(PM, createRaisePointerReferencesPass());// Recover type information
   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
+  addPass(PM, createInstructionCombiningPass()); // Cleanup for scalarrepl.
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
