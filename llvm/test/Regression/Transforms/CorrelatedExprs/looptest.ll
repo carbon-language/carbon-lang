@@ -12,6 +12,7 @@
 ; Note that this is a "feature" test, not a correctness test.
 ;
 ; XFAIL: *
+; RUN: llvm-upgrade < %s | llvm-as | opt -cee -simplifycfg -disable-output &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -cee -simplifycfg | llvm-dis | not grep cond213
 ;
 implementation   ; Functions:

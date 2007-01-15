@@ -2,6 +2,7 @@
 ; Any succeeding uses of the pointer should get this info
 ;
 ; XFAIL: *
+; RUN: llvm-upgrade < %s | llvm-as | opt -cee -instcombine -simplifycfg -disable-output &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -cee -instcombine -simplifycfg | llvm-dis | not grep br
 
 implementation   ; Functions:
