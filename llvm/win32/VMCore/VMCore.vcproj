@@ -291,6 +291,9 @@
 				RelativePath="..\..\include\llvm\PassManager.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\PassManagers.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\PassSupport.h">
 			</File>
 			<File

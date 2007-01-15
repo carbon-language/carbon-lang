@@ -292,6 +292,9 @@
 				RelativePath="..\..\include\llvm\CodeGen\RegAllocRegistry.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\CodeGen\RuntimeLibcalls.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\CodeGen\SchedGraphCommon.h">
 			</File>
 			<File

@@ -1929,7 +1929,7 @@ ComputeIterationCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
     // Couldn't symbolically evaluate.
     if (!CondVal) return UnknownValue;
 
-    if (CondVal->getZExtValue() == ExitWhen) {
+    if (CondVal->getZExtValue() == uint64_t(ExitWhen)) {
       ConstantEvolutionLoopExitValue[PN] = PHIVal;
       ++NumBruteForceTripCountsComputed;
       return SCEVConstant::get(ConstantInt::get(Type::Int32Ty, IterationNum));
