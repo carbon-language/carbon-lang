@@ -263,7 +263,7 @@ namespace {
               "000024", "000025", "    u>", "   u>=", "    u<", "   u<=",
               "    !=", "000031" };
           os << "  " << names[NI->LV] << " " << NI->To
-             << "(" << NI->Subtree << ")\n";
+             << " (" << NI->Subtree->getDFSNumIn() << ")\n";
         }
       }
 #endif
@@ -313,15 +313,24 @@ namespace {
           LatticeVal LV = static_cast<LatticeVal>(I->LV & R);
           assert(validPredicate(LV) && "Invalid union of lattice values.");
           if (LV != I->LV) {
-            if (Subtree == I->Subtree)
-              I->LV = LV;
-            else {
+            if (Subtree != I->Subtree) {
               assert(Subtree->DominatedBy(I->Subtree) &&
                      "Find returned subtree that doesn't apply.");
 
               Edge edge(n, R, Subtree);
               iterator Insert = std::lower_bound(begin(), end(), edge);
-              Relations.insert(Insert, edge);
+              Relations.insert(Insert, edge); // invalidates I
+              I = find(n, Subtree);
+            }
+
+            // Also, we have to tighten any edge that Subtree dominates.
+            for (iterator B = begin(); I->To == n; --I) {
+              if (I->Subtree->DominatedBy(Subtree)) {
+                LatticeVal LV = static_cast<LatticeVal>(I->LV & R);
+                assert(validPredicate(LV) && "Invalid union of lattice values.");
+                I->LV = LV;
+              }
+              if (I == B) break;
             }
           }
         }
@@ -646,7 +655,8 @@ namespace {
     for (NodeMapType::const_iterator I = NodeMap.begin(), E = NodeMap.end();
          I != E; ++I) {
       Node *N = node(I->index);
-      os << *I->V << " == " << I->index << "(" << I->Subtree << ")\n";
+      os << *I->V << " == " << I->index
+         << "(" << I->Subtree->getDFSNumIn() << ")\n";
       if (VisitedNodes.insert(N).second) {
         os << I->index << ". ";
         if (!N->getValue()) os << "(deleted node)\n";
@@ -819,27 +829,28 @@ namespace {
         // We can't just merge %x and %y because the relationship with %z would
         // be EQ and that's invalid. What we're doing is looking for any nodes
         // %z such that %x <= %z and %y >= %z, and vice versa.
-        //
-        // Also handle %a <= %b and %c <= %a when adding %b <= %c.
 
         Node *N1 = IG.node(n1);
-        Node::iterator end = N1->end();
-        for (unsigned i = 0; i < Remove.size(); ++i) {
-          Node *N = IG.node(Remove[i]);
-          Value *V = N->getValue();
-          for (Node::iterator I = N->begin(), E = N->end(); I != E; ++I) {
-            if (I->LV & EQ_BIT) {
-              if (Top == I->Subtree || Top->DominatedBy(I->Subtree)) {
-                Node::iterator NI = N1->find(I->To, Top);
-                if (NI != end) {
-                  if (!(NI->LV & EQ_BIT)) return false;
-                  if (isRelatedBy(V, IG.node(NI->To)->getValue(),
-                                  ICmpInst::ICMP_NE))
-                    return false;
-                  Remove.insert(NI->To);
-                }
-              }
-            }
+        Node *N2 = IG.node(n2);
+        Node::iterator end = N2->end();
+
+        // Find the intersection between N1 and N2 which is dominated by
+        // Top. If we find %x where N1 <= %x <= N2 (or >=) then add %x to
+        // Remove.
+        for (Node::iterator I = N1->begin(), E = N1->end(); I != E; ++I) {
+          if (!(I->LV & EQ_BIT) || !Top->DominatedBy(I->Subtree)) continue;
+
+          unsigned ILV_s = I->LV & (SLT_BIT|SGT_BIT);
+          unsigned ILV_u = I->LV & (ULT_BIT|UGT_BIT);
+          Node::iterator NI = N2->find(I->To, Top);
+          if (NI != end) {
+            LatticeVal NILV = reversePredicate(NI->LV);
+            unsigned NILV_s = NILV & (SLT_BIT|SGT_BIT);
+            unsigned NILV_u = NILV & (ULT_BIT|UGT_BIT);
+
+            if ((ILV_s != (SLT_BIT|SGT_BIT) && ILV_s == NILV_s) ||
+                (ILV_u != (ULT_BIT|UGT_BIT) && ILV_u == NILV_u))
+              Remove.insert(I->To);
           }
         }
 
@@ -973,13 +984,19 @@ namespace {
       for (Value *R = V2; i == 0 || i < Remove.size(); ++i) {
         if (i) R = IG.node(Remove[i])->getValue(); // skip n2.
 
-        if (Instruction *I2 = dyn_cast<Instruction>(R)) defToOps(I2);
+        if (Instruction *I2 = dyn_cast<Instruction>(R)) {
+          if (below(I2) ||
+              Top->DominatedBy(Forest->getNodeForBlock(I2->getParent())))
+          defToOps(I2);
+        }
         for (Value::use_iterator UI = V2->use_begin(), UE = V2->use_end();
              UI != UE;) {
           Use &TheUse = UI.getUse();
           ++UI;
           if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
-            opsToDef(I);
+            if (below(I) ||
+                Top->DominatedBy(Forest->getNodeForBlock(I->getParent())))
+              opsToDef(I);
           }
         }
       }
@@ -1367,25 +1384,38 @@ namespace {
 
             IG.addInequality(n1, n2, Top, LV);
 
-            if (Instruction *I1 = dyn_cast<Instruction>(O.LHS)) defToOps(I1);
+            if (Instruction *I1 = dyn_cast<Instruction>(O.LHS)) {
+              if (below(I1) ||
+                  Top->DominatedBy(Forest->getNodeForBlock(I1->getParent())))
+                defToOps(I1);
+            }
             if (isa<Instruction>(O.LHS) || isa<Argument>(O.LHS)) {
               for (Value::use_iterator UI = O.LHS->use_begin(),
                    UE = O.LHS->use_end(); UI != UE;) {
                 Use &TheUse = UI.getUse();
                 ++UI;
                 if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
-                  opsToDef(I);
+                  if (below(I) ||
+                      Top->DominatedBy(Forest->getNodeForBlock(I->getParent())))
+                    opsToDef(I);
                 }
               }
             }
-            if (Instruction *I2 = dyn_cast<Instruction>(O.RHS)) defToOps(I2);
+            if (Instruction *I2 = dyn_cast<Instruction>(O.RHS)) {
+              if (below(I2) ||
+                  Top->DominatedBy(Forest->getNodeForBlock(I2->getParent())))
+              defToOps(I2);
+            }
             if (isa<Instruction>(O.RHS) || isa<Argument>(O.RHS)) {
               for (Value::use_iterator UI = O.RHS->use_begin(),
                    UE = O.RHS->use_end(); UI != UE;) {
                 Use &TheUse = UI.getUse();
                 ++UI;
                 if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
-                  opsToDef(I);
+                  if (below(I) ||
+                      Top->DominatedBy(Forest->getNodeForBlock(I->getParent())))
+
+                    opsToDef(I);
                 }
               }
             }
@@ -1466,7 +1496,8 @@ namespace {
     void visitBasicBlock(DominatorTree::Node *Node) {
       BasicBlock *BB = Node->getBlock();
       ETNode *ET = Forest->getNodeForBlock(BB);
-      DOUT << "Entering Basic Block: " << BB->getName() << " (" << ET << ")\n";
+      DOUT << "Entering Basic Block: " << BB->getName()
+           << " (" << ET->getDFSNumIn() << ")\n";
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
         visitInstruction(I++, Node, ET);
       }
@@ -1572,7 +1603,7 @@ namespace {
          I != E; ++I) {
       BasicBlock *Dest = (*I)->getBlock();
       DOUT << "Branch thinking about %" << Dest->getName()
-           << "(" << PS->Forest->getNodeForBlock(Dest) << ")\n";
+           << "(" << PS->Forest->getNodeForBlock(Dest)->getDFSNumIn() << ")\n";
 
       if (Dest == TrueDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") true set:\n";
@@ -1602,7 +1633,7 @@ namespace {
          I != E; ++I) {
       BasicBlock *BB = (*I)->getBlock();
       DOUT << "Switch thinking about BB %" << BB->getName()
-           << "(" << PS->Forest->getNodeForBlock(BB) << ")\n";
+           << "(" << PS->Forest->getNodeForBlock(BB)->getDFSNumIn() << ")\n";
 
       VRPSolver VRP(IG, UB, PS->Forest, PS->modified, BB);
       if (BB == SI.getDefaultDest()) {
