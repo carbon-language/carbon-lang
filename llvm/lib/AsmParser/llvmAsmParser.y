@@ -1274,7 +1274,7 @@ Types
      const llvm::Type* ElemTy = $4->get();
      if ((unsigned)$2 != $2)
         GEN_ERROR("Unsigned result not equal to signed result");
-     if (!ElemTy->isFloatingPoint() && !ElemTy->isInteger())
+     if (!ElemTy->isFloatingPoint() && !ElemTy->isIntegral())
         GEN_ERROR("Element type of a PackedType must be primitive");
      if (!isPowerOf2_32($2))
        GEN_ERROR("Vector length should be a power of 2!");
@@ -1777,7 +1777,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
   | ShiftOps '(' ConstVal ',' ConstVal ')' {
     if ($5->getType() != Type::Int8Ty)
       GEN_ERROR("Shift count for shift constant must be i8 type!");
-    if (!$3->getType()->isInteger())
+    if (!$3->getType()->isIntegral())
       GEN_ERROR("Shift constant expression requires integer operand!");
     CHECK_FOR_ERROR;
     $$ = ConstantExpr::get($1, $3, $5);
@@ -2573,7 +2573,7 @@ OptTailCall : TAIL CALL {
 InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
-    if (!(*$2)->isInteger() && !(*$2)->isFloatingPoint() && 
+    if (!(*$2)->isIntegral() && !(*$2)->isFloatingPoint() && 
         !isa<PackedType>((*$2).get()))
       GEN_ERROR(
         "Arithmetic operator requires integer, FP, or packed operands!");
@@ -2637,7 +2637,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | ShiftOps ResolvedVal ',' ResolvedVal {
     if ($4->getType() != Type::Int8Ty)
       GEN_ERROR("Shift amount must be i8 type!");
-    if (!$2->getType()->isInteger())
+    if (!$2->getType()->isIntegral())
       GEN_ERROR("Shift constant expression requires integer operand!");
     CHECK_FOR_ERROR;
     $$ = new ShiftInst($1, $2, $4);
