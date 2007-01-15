@@ -40,6 +40,8 @@ llvm::canConstantFoldCallTo(Function *F) {
   case Intrinsic::bswap_i16:
   case Intrinsic::bswap_i32:
   case Intrinsic::bswap_i64:
+  case Intrinsic::powi_f32:
+  case Intrinsic::powi_f64:
   // FIXME: these should be constant folded as well
   //case Intrinsic::ctpop_i8:
   //case Intrinsic::ctpop_i16:
@@ -186,8 +188,17 @@ llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
           double V = fmod(Op1V, Op2V);
           if (errno == 0)
             return ConstantFP::get(Ty, V);
-        } else if (Name == "atan2")
+        } else if (Name == "atan2") {
           return ConstantFP::get(Ty, atan2(Op1V,Op2V));
+        }
+      } else if (ConstantInt *Op2C = dyn_cast<ConstantInt>(Operands[1])) {
+        if (Name == "llvm.powi.f32") {
+          return ConstantFP::get(Ty, std::pow((float)Op1V,
+                                              (int)Op2C->getZExtValue()));
+        } else if (Name == "llvm.powi.f64") {
+          return ConstantFP::get(Ty, std::pow((double)Op1V,
+                                              (int)Op2C->getZExtValue()));
+        }
       }
     }
   }
