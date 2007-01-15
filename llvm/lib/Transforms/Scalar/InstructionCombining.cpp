@@ -7978,8 +7978,8 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if (DestPTy->isInteger() || isa<PointerType>(DestPTy) || 
-        isa<PackedType>(DestPTy)) {
+    if ((DestPTy->isInteger() && DestPTy != Type::Int1Ty) ||
+        isa<PointerType>(DestPTy) || isa<PackedType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
       // constants.
@@ -7992,8 +7992,8 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
             SrcPTy = SrcTy->getElementType();
           }
 
-      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy) || 
-           isa<PackedType>(SrcPTy)) &&
+      if (((SrcPTy->isInteger() && SrcPTy != Type::Int1Ty) ||
+           isa<PointerType>(SrcPTy) || isa<PackedType>(SrcPTy)) &&
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
           (isa<PointerType>(SrcPTy) == isa<PointerType>(LI.getType())) &&
@@ -8166,7 +8166,8 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if (DestPTy->isInteger() || isa<PointerType>(DestPTy)) {
+    if ((DestPTy->isInteger() && DestPTy != Type::Int1Ty) ||
+        isa<PointerType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
       // constants.
@@ -8179,7 +8180,8 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
             SrcPTy = SrcTy->getElementType();
           }
 
-      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
+      if (((SrcPTy->isInteger() && SrcPTy != Type::Int1Ty) ||
+           isa<PointerType>(SrcPTy)) &&
           IC.getTargetData().getTypeSize(SrcPTy) ==
                IC.getTargetData().getTypeSize(DestPTy)) {
 
