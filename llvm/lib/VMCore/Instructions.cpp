@@ -1025,7 +1025,7 @@ void BinaryOperator::init(BinaryOps iType)
   case Mul: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isInteger() || getType()->isFloatingPoint() ||
+    assert((getType()->isIntegral() || getType()->isFloatingPoint() ||
             isa<PackedType>(getType())) &&
           "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
@@ -1033,8 +1033,8 @@ void BinaryOperator::init(BinaryOps iType)
   case SDiv: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isInteger() || (isa<PackedType>(getType()) && 
-            cast<PackedType>(getType())->getElementType()->isInteger())) &&
+    assert((getType()->isIntegral() || (isa<PackedType>(getType()) && 
+            cast<PackedType>(getType())->getElementType()->isIntegral())) &&
            "Incorrect operand type (not integer) for S/UDIV");
     break;
   case FDiv:
@@ -1048,8 +1048,8 @@ void BinaryOperator::init(BinaryOps iType)
   case SRem: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isInteger() || (isa<PackedType>(getType()) && 
-            cast<PackedType>(getType())->getElementType()->isInteger())) &&
+    assert((getType()->isIntegral() || (isa<PackedType>(getType()) && 
+            cast<PackedType>(getType())->getElementType()->isIntegral())) &&
            "Incorrect operand type (not integer) for S/UREM");
     break;
   case FRem:
@@ -1351,7 +1351,7 @@ unsigned CastInst::isEliminableCastPair(
     case 3: 
       // no-op cast in second op implies firstOp as long as the DestTy 
       // is integer
-      if (DstTy->isInteger())
+      if (DstTy->isIntegral())
         return firstOp;
       return 0;
     case 4:
@@ -1363,7 +1363,7 @@ unsigned CastInst::isEliminableCastPair(
     case 5: 
       // no-op cast in first op implies secondOp as long as the SrcTy
       // is an integer
-      if (SrcTy->isInteger())
+      if (SrcTy->isIntegral())
         return secondOp;
       return 0;
     case 6:
@@ -1715,11 +1715,11 @@ checkCast(Instruction::CastOps op, Value *S, const Type *DstTy) {
   switch (op) {
   default: return false; // This is an input error
   case Instruction::Trunc:
-    return SrcTy->isInteger() && DstTy->isIntegral() && SrcBitSize > DstBitSize;
+    return SrcTy->isIntegral() && DstTy->isIntegral()&& SrcBitSize > DstBitSize;
   case Instruction::ZExt:
-    return SrcTy->isIntegral() && DstTy->isInteger() && SrcBitSize < DstBitSize;
+    return SrcTy->isIntegral() && DstTy->isIntegral()&& SrcBitSize < DstBitSize;
   case Instruction::SExt: 
-    return SrcTy->isIntegral() && DstTy->isInteger() && SrcBitSize < DstBitSize;
+    return SrcTy->isIntegral() && DstTy->isIntegral()&& SrcBitSize < DstBitSize;
   case Instruction::FPTrunc:
     return SrcTy->isFloatingPoint() && DstTy->isFloatingPoint() && 
       SrcBitSize > DstBitSize;

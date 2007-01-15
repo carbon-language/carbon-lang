@@ -501,7 +501,7 @@ void Verifier::visitTruncInst(TruncInst &I) {
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
   Assert1(SrcTy->isIntegral(), "Trunc only operates on integer", &I);
-  Assert1(DestTy->isIntegral(),"Trunc only produces integral", &I);
+  Assert1(DestTy->isIntegral(), "Trunc only produces integer", &I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for Trunc", &I);
 
   visitInstruction(I);
@@ -513,11 +513,11 @@ void Verifier::visitZExtInst(ZExtInst &I) {
   const Type *DestTy = I.getType();
 
   // Get the size of the types in bits, we'll need this later
+  Assert1(SrcTy->isIntegral(), "ZExt only operates on integer", &I);
+  Assert1(DestTy->isIntegral(), "ZExt only produces an integer", &I);
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
-  Assert1(SrcTy->isIntegral(),"ZExt only operates on integral", &I);
-  Assert1(DestTy->isInteger(),"ZExt only produces an integer", &I);
   Assert1(SrcBitSize < DestBitSize,"Type too small for ZExt", &I);
 
   visitInstruction(I);
@@ -532,8 +532,8 @@ void Verifier::visitSExtInst(SExtInst &I) {
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
-  Assert1(SrcTy->isIntegral(),"SExt only operates on integral", &I);
-  Assert1(DestTy->isInteger(),"SExt only produces an integer", &I);
+  Assert1(SrcTy->isIntegral(), "SExt only operates on integer", &I);
+  Assert1(DestTy->isIntegral(), "SExt only produces an integer", &I);
   Assert1(SrcBitSize < DestBitSize,"Type too small for SExt", &I);
 
   visitInstruction(I);
@@ -728,7 +728,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Arithmetic operators must have same type for operands and result!",
             &B);
-    Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint() ||
+    Assert1(B.getType()->isIntegral() || B.getType()->isFloatingPoint() ||
             isa<PackedType>(B.getType()),
             "Arithmetic operators must have integer, fp, or packed type!", &B);
   }
@@ -761,7 +761,7 @@ void Verifier::visitFCmpInst(FCmpInst& FC) {
 }
 
 void Verifier::visitShiftInst(ShiftInst &SI) {
-  Assert1(SI.getType()->isInteger(),
+  Assert1(SI.getType()->isIntegral(),
           "Shift must return an integer result!", &SI);
   Assert1(SI.getType() == SI.getOperand(0)->getType(),
           "Shift return type must be same as first operand!", &SI);
