@@ -212,7 +212,8 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
 
   // Should we update ImmediateDominator information?
   if (ImmediateDominators *ID = P->getAnalysisToUpdate<ImmediateDominators>()) {
-    if (ID->get(TIBB)) {  // Only do this if TIBB is reachable.
+    // Only do this if TIBB is reachable.
+    if (ID->get(TIBB) || &TIBB->getParent()->getEntryBlock() == TIBB) {
       // TIBB is the new immediate dominator for NewBB.
       ID->addNewBlock(NewBB, TIBB);
       
