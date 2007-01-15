@@ -42,23 +42,24 @@ int yyerror(const char *ErrorMsg) ;
 /// This enum is used to keep track of the original (1.9) type used to form
 /// a type. These are needed for type upgrades and to determine how to upgrade
 /// signed instructions with signless operands. The Lexer uses thse in its
-/// calls to getTypeInfo
-enum Types {
+/// calls to getType
+enum TypeIDs {
   BoolTy, SByteTy, UByteTy, ShortTy, UShortTy, IntTy, UIntTy, LongTy, ULongTy,
   FloatTy, DoubleTy, PointerTy, PackedTy, ArrayTy, StructTy, PackedStructTy, 
   OpaqueTy, VoidTy, LabelTy, FunctionTy, UnresolvedTy, UpRefTy
 };
 
 namespace {
-class TypeInfo;
-class ValueInfo;
-class ConstInfo;
+class Type;
+class Value;
+class Constant;
+class Instruction;
 }
 
-typedef std::vector<const TypeInfo*> TypeList;
-typedef std::vector<ValueInfo*> ValueList;
+typedef std::vector<const Type*> TypeList;
+typedef std::vector<Value*> ValueList;
 
-/// A function to create a TypeInfo* used in the Lexer.
-extern const TypeInfo* getTypeInfo(const std::string& newTy, Types oldTy);
+/// A function to create a Typeo* used in the Lexer.
+extern const Type* getType(const std::string& newTy, TypeIDs oldTy);
 
 #endif
