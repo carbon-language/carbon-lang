@@ -225,7 +225,7 @@ bool ConstantRange::contains(ConstantInt *Val, bool isSigned) const {
 /// subtract - Subtract the specified constant from the endpoints of this
 /// constant range.
 ConstantRange ConstantRange::subtract(ConstantInt *CI) const {
-  assert(CI->getType() == getType() && getType()->isInteger() &&
+  assert(CI->getType() == getType() && getType()->isIntegral() &&
          "Cannot subtract from different type range or non-integer!");
   // If the set is empty or full, don't modify the endpoints.
   if (Lower == Upper) return *this;
