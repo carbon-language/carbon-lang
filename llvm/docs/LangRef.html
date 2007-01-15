@@ -772,8 +772,8 @@ system. The current set of primitive types is as follows:</p>
         <tbody>
         <tr><th>Type</th><th>Description</th></tr>
         <tr><td><tt>void</tt></td><td>No value</td></tr>
-        <tr><td><tt>i8</tt></td><td>Signless 8-bit value</td></tr>
-        <tr><td><tt>i32</tt></td><td>Signless 32-bit value</td></tr>
+        <tr><td><tt>i8</tt></td><td>8-bit value</td></tr>
+        <tr><td><tt>i32</tt></td><td>32-bit value</td></tr>
         <tr><td><tt>float</tt></td><td>32-bit floating point value</td></tr>
         <tr><td><tt>label</tt></td><td>Branch destination</td></tr>
         </tbody>
@@ -784,8 +784,8 @@ system. The current set of primitive types is as follows:</p>
         <tbody>
           <tr><th>Type</th><th>Description</th></tr>
           <tr><td><tt>i1</tt></td><td>True or False value</td></tr>
-          <tr><td><tt>i16</tt></td><td>Signless 16-bit value</td></tr>
-          <tr><td><tt>i64</tt></td><td>Signless 64-bit value</td></tr>
+          <tr><td><tt>i16</tt></td><td>16-bit value</td></tr>
+          <tr><td><tt>i64</tt></td><td>64-bit value</td></tr>
          <tr><td><tt>double</tt></td><td>64-bit floating point value</td></tr>
         </tbody>
       </table>
@@ -806,12 +806,7 @@ classifications:</p>
     <tr><th>Classification</th><th>Types</th></tr>
     <tr>
       <td><a name="t_integer">integer</a></td>
-      <td><tt>i8, i16, i32, i64</tt></td>
-    </tr>
-    <tr>
-      <td><a name="t_integral">integral</a></td>
-      <td><tt>i1, i8, i16, i32, i64</tt>
-      </td>
+      <td><tt>i1, i8, i16, i32, i64</tt></td>
     </tr>
     <tr>
       <td><a name="t_floating">floating point</a></td>
@@ -1059,7 +1054,7 @@ considered <a href="#t_firstclass">first class</a>.</p>
 </pre>
 
 <p>The number of elements is a constant integer value; elementtype may
-be any integral or floating point type.</p>
+be any integer or floating point type.</p>
 
 <h5>Examples:</h5>
 
@@ -1266,15 +1261,15 @@ following is the syntax for constant expressions:</p>
 <dl>
   <dt><b><tt>trunc ( CST to TYPE )</tt></b></dt>
   <dd>Truncate a constant to another type. The bit size of CST must be larger 
-  than the bit size of TYPE. Both types must be integral.</dd>
+  than the bit size of TYPE. Both types must be integers.</dd>
 
   <dt><b><tt>zext ( CST to TYPE )</tt></b></dt>
   <dd>Zero extend a constant to another type. The bit size of CST must be 
-  smaller or equal to the bit size of TYPE.  Both types must be integral.</dd>
+  smaller or equal to the bit size of TYPE.  Both types must be integers.</dd>
 
   <dt><b><tt>sext ( CST to TYPE )</tt></b></dt>
   <dd>Sign extend a constant to another type. The bit size of CST must be 
-  smaller or equal to the bit size of TYPE.  Both types must be integral.</dd>
+  smaller or equal to the bit size of TYPE.  Both types must be integers.</dd>
 
   <dt><b><tt>fptrunc ( CST to TYPE )</tt></b></dt>
   <dd>Truncate a floating point constant to another floating point type. The 
@@ -1951,7 +1946,7 @@ Instruction</a> </div>
 its two operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>and</tt>' instruction must be <a
- href="#t_integral">integral</a> values.  Both arguments must have
+ href="#t_integer">integer</a> values.  Both arguments must have
 identical types.</p>
 <h5>Semantics:</h5>
 <p>The truth table used for the '<tt>and</tt>' instruction is:</p>
@@ -2004,7 +1999,7 @@ identical types.</p>
 or of its two operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>or</tt>' instruction must be <a
- href="#t_integral">integral</a> values.  Both arguments must have
+ href="#t_integer">integer</a> values.  Both arguments must have
 identical types.</p>
 <h5>Semantics:</h5>
 <p>The truth table used for the '<tt>or</tt>' instruction is:</p>
@@ -2059,7 +2054,7 @@ or of its two operands.  The <tt>xor</tt> is used to implement the
 "one's complement" operation, which is the "~" operator in C.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>xor</tt>' instruction must be <a
- href="#t_integral">integral</a> values.  Both arguments must have
+ href="#t_integer">integer</a> values.  Both arguments must have
 identical types.</p>
 <h5>Semantics:</h5>
 <p>The truth table used for the '<tt>xor</tt>' instruction is:</p>
@@ -2698,7 +2693,7 @@ The '<tt>trunc</tt>' instruction truncates its operand to the type <tt>ty2</tt>.
 <p>
 The '<tt>trunc</tt>' instruction takes a <tt>value</tt> to trunc, which must 
 be an <a href="#t_integer">integer</a> type, and a type that specifies the size 
-and type of the result, which must be an <a href="#t_integral">integral</a> 
+and type of the result, which must be an <a href="#t_integer">integer</a> 
 type. The bit size of <tt>value</tt> must be larger than the bit size of 
 <tt>ty2</tt>. Equal sized types are not allowed.</p>
 
@@ -2735,8 +2730,8 @@ It will always truncate bits.</p>
 
 <h5>Arguments:</h5>
 <p>The '<tt>zext</tt>' instruction takes a value to cast, which must be of 
-<a href="#t_integral">integral</a> type, and a type to cast it to, which must
-also be of <a href="#t_integral">integral</a> type. The bit size of the
+<a href="#t_integer">integer</a> type, and a type to cast it to, which must
+also be of <a href="#t_integer">integer</a> type. The bit size of the
 <tt>value</tt> must be smaller than the bit size of the destination type, 
 <tt>ty2</tt>.</p>
 
@@ -2773,8 +2768,8 @@ changes).</p>
 <h5>Arguments:</h5>
 <p>
 The '<tt>sext</tt>' instruction takes a value to cast, which must be of 
-<a href="#t_integral">integral</a> type, and a type to cast it to, which must
-also be of <a href="#t_integral">integral</a> type.  The bit size of the
+<a href="#t_integer">integer</a> type, and a type to cast it to, which must
+also be of <a href="#t_integer">integer</a> type.  The bit size of the
 <tt>value</tt> must be smaller than the bit size of the destination type, 
 <tt>ty2</tt>.</p>
 
@@ -2887,7 +2882,7 @@ unsigned integer equivalent of type <tt>ty2</tt>.
 <h5>Arguments:</h5>
 <p>The '<tt>fp2uint</tt>' instruction takes a value to cast, which must be a 
 <a href="#t_floating">floating point</a> value, and a type to cast it to, which
-must be an <a href="#t_integral">integral</a> type.</p>
+must be an <a href="#t_integer">integer</a> type.</p>
 
 <h5>Semantics:</h5>
 <p> The '<tt>fp2uint</tt>' instruction converts its 
@@ -2927,7 +2922,7 @@ If the <tt>value</tt> was non-zero, the i1 result will be <tt>true</tt>.</p>
 <h5>Arguments:</h5>
 <p> The '<tt>fptosi</tt>' instruction takes a value to cast, which must be a 
 <a href="#t_floating">floating point</a> value, and a type to cast it to, which 
-must also be an <a href="#t_integral">integral</a> type.</p>
+must also be an <a href="#t_integer">integer</a> type.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>fptosi</tt>' instruction converts its 
@@ -2965,7 +2960,7 @@ integer and converts that value to the <tt>ty2</tt> type.</p>
 
 <h5>Arguments:</h5>
 <p>The '<tt>uitofp</tt>' instruction takes a value to cast, which must be an
-<a href="#t_integral">integral</a> value, and a type to cast it to, which must 
+<a href="#t_integer">integer</a> value, and a type to cast it to, which must 
 be a <a href="#t_floating">floating point</a> type.</p>
 
 <h5>Semantics:</h5>
@@ -2998,7 +2993,7 @@ integer and converts that value to the <tt>ty2</tt> type.</p>
 
 <h5>Arguments:</h5>
 <p>The '<tt>sitofp</tt>' instruction takes a value to cast, which must be an
-<a href="#t_integral">integral</a> value, and a type to cast it to, which must be
+<a href="#t_integer">integer</a> value, and a type to cast it to, which must be
 a <a href="#t_floating">floating point</a> type.</p>
 
 <h5>Semantics:</h5>
@@ -3157,7 +3152,7 @@ a value, just a keyword. The possibilities for the condition code are:
   <li><tt>slt</tt>: signed less than</li>
   <li><tt>sle</tt>: signed less or equal</li>
 </ol>
-<p>The remaining two arguments must be <a href="#t_integral">integral</a> or
+<p>The remaining two arguments must be <a href="#t_integer">integer</a> or
 <a href="#t_pointer">pointer</a> typed. They must also be identical types.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>icmp</tt>' compares <tt>var1</tt> and <tt>var2</tt> according to 
