@@ -873,11 +873,9 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
       abort();
     }
     switch (GV->getVisibility()) {
+    default: assert(0 && "Invalid visibility style!");
     case GlobalValue::DefaultVisibility: break;
     case GlobalValue::HiddenVisibility: Out << "hidden "; break;
-    default:
-     cerr << "Invalid visibility style!\n";
-     abort();
     }
   }
   
@@ -982,11 +980,9 @@ void AssemblyWriter::printFunction(const Function *F) {
       abort();
     }
     switch (F->getVisibility()) {
+    default: assert(0 && "Invalid visibility style!");
     case GlobalValue::DefaultVisibility: break;
     case GlobalValue::HiddenVisibility: Out << "hidden "; break;
-    default:
-     cerr << "Invalid visibility style!\n";
-     abort();
     }
   }
 
