@@ -1495,7 +1495,7 @@ Constant *ConstantExpr::getFPCast(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
-  assert(C->getType()->isInteger() && "Trunc operand must be integer");
+  assert(C->getType()->isIntegral() && "Trunc operand must be integer");
   assert(Ty->isIntegral() && "Trunc produces only integral");
   assert(C->getType()->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits()&&
          "SrcTy must be larger than DestTy for Trunc!");
@@ -1505,7 +1505,7 @@ Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
 
 Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty) {
   assert(C->getType()->isIntegral() && "SEXt operand must be integral");
-  assert(Ty->isInteger() && "SExt produces only integer");
+  assert(Ty->isIntegral() && "SExt produces only integer");
   assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
          "SrcTy must be smaller than DestTy for SExt!");
 
@@ -1514,7 +1514,7 @@ Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty) {
 
 Constant *ConstantExpr::getZExt(Constant *C, const Type *Ty) {
   assert(C->getType()->isIntegral() && "ZEXt operand must be integral");
-  assert(Ty->isInteger() && "ZExt produces only integer");
+  assert(Ty->isIntegral() && "ZExt produces only integer");
   assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
          "SrcTy must be smaller than DestTy for ZExt!");
 
@@ -1649,15 +1649,15 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Sub:
   case Instruction::Mul: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint() ||
+    assert((C1->getType()->isIntegral() || C1->getType()->isFloatingPoint() ||
             isa<PackedType>(C1->getType())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::UDiv: 
   case Instruction::SDiv: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || (isa<PackedType>(C1->getType()) &&
-      cast<PackedType>(C1->getType())->getElementType()->isInteger())) &&
+    assert((C1->getType()->isIntegral() || (isa<PackedType>(C1->getType()) &&
+      cast<PackedType>(C1->getType())->getElementType()->isIntegral())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FDiv:
@@ -1669,8 +1669,8 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::URem: 
   case Instruction::SRem: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || (isa<PackedType>(C1->getType()) &&
-      cast<PackedType>(C1->getType())->getElementType()->isInteger())) &&
+    assert((C1->getType()->isIntegral() || (isa<PackedType>(C1->getType()) &&
+      cast<PackedType>(C1->getType())->getElementType()->isIntegral())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FRem:
@@ -1690,7 +1690,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::LShr:
   case Instruction::AShr:
     assert(C2->getType() == Type::Int8Ty && "Shift should be by ubyte!");
-    assert(C1->getType()->isInteger() &&
+    assert(C1->getType()->isIntegral() &&
            "Tried to create a shift operation on a non-integer type!");
     break;
   default:
