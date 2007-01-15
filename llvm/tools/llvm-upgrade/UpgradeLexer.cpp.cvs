@@ -962,7 +962,7 @@ char *yytext;
   return sym
 
 #define RET_TY(sym,OldTY,NewTY,sign) \
-  Upgradelval.Type = getTypeInfo(NewTY, OldTY); \
+  Upgradelval.Ty = getType(NewTY, OldTY); \
   return sym
 
 #define YY_NEVER_INTERACTIVE 1

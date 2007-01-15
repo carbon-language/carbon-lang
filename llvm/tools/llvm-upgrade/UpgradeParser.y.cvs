@@ -59,49 +59,49 @@ namespace { // Anonymous namespace to keep our implementation local
 
 
 /// This type is used to keep track of the signedness of values. Instead
-/// of creating llvm::Value directly, the parser will create ValueInfo which
+/// of creating llvm::Value directly, the parser will create Value which
 /// associates a Value* with a Signedness indication.
-struct ValueInfo {
+struct Value {
   std::string* val;
-  const TypeInfo* type;
+  const Type* type;
   bool constant;
   bool isConstant() const { return constant; }
-  ~ValueInfo() { delete val; }
+  ~Value() { delete val; }
 };
 
 
 /// This type is used to keep track of the signedness of the obsolete
 /// integer types. Instead of creating an llvm::Type directly, the Lexer will
-/// create instances of TypeInfo which retains the signedness indication so
+/// create instances of Type which retains the signedness indication so
 /// it can be used by the parser for upgrade decisions.
 /// For example if "uint" is encountered then the "first" field will be set 
 /// to "int32" and the "second" field will be set to "isUnsigned".  If the 
 /// type is not obsolete then "second" will be set to "isSignless".
-class TypeInfo {
+class Type {
 public:
-  static const TypeInfo* get(const std::string &newType, Types oldType);
-  static const TypeInfo* get(const std::string& newType, Types oldType, 
-                             const TypeInfo* eTy, const TypeInfo* rTy);
+  static const Type* get(const std::string &newType, TypeIDs oldType);
+  static const Type* get(const std::string& newType, TypeIDs oldType, 
+                             const Type* eTy, const Type* rTy);
 
-  static const TypeInfo* get(const std::string& newType, Types oldType, 
-                             const TypeInfo *eTy, uint64_t elems);
+  static const Type* get(const std::string& newType, TypeIDs oldType, 
+                             const Type *eTy, uint64_t elems);
 
-  static const TypeInfo* get(const std::string& newType, Types oldType, 
+  static const Type* get(const std::string& newType, TypeIDs oldType, 
                              TypeList* TL);
 
-  static const TypeInfo* get(const std::string& newType, const TypeInfo* resTy, 
+  static const Type* get(const std::string& newType, const Type* resTy, 
                              TypeList* TL);
 
-  const TypeInfo* resolve() const;
-  bool operator<(const TypeInfo& that) const;
+  const Type* resolve() const;
+  bool operator<(const Type& that) const;
 
-  bool sameNewTyAs(const TypeInfo* that) const {
+  bool sameNewTyAs(const Type* that) const {
     return this->newTy == that->newTy;
   }
 
-  bool sameOldTyAs(const TypeInfo* that) const;
+  bool sameOldTyAs(const Type* that) const;
 
-  Types getElementTy() const {
+  TypeIDs getElementTy() const {
     if (elemTy) {
       return elemTy->oldTy;
     }
@@ -113,16 +113,16 @@ public:
     return atoi(&((getNewTy().c_str())[1])); // skip the slash
   }
 
-  typedef std::vector<const TypeInfo*> UpRefStack;
+  typedef std::vector<const Type*> UpRefStack;
   void getSignedness(unsigned &sNum, unsigned &uNum, UpRefStack& stk) const;
   std::string makeUniqueName(const std::string& BaseName) const;
 
   const std::string& getNewTy() const { return newTy; }
-  const TypeInfo* getResultType() const { return resultTy; }
-  const TypeInfo* getElementType() const { return elemTy; }
+  const Type* getResultType() const { return resultTy; }
+  const Type* getElementType() const { return elemTy; }
 
-  const TypeInfo* getPointerType() const {
-    return get(newTy + "*", PointerTy, this, (TypeInfo*)0);
+  const Type* getPointerType() const {
+    return get(newTy + "*", PointerTy, this, (Type*)0);
   }
 
   bool isUnresolved() const { return oldTy == UnresolvedTy; }
@@ -161,13 +161,13 @@ public:
 
   unsigned getBitWidth() const;
 
-  const TypeInfo* getIndexedType(const ValueInfo*  VI) const;
+  const Type* getIndexedType(const Value*  V) const;
 
   unsigned getNumStructElements() const { 
     return (elements ? elements->size() : 0);
   }
 
-  const TypeInfo* getElement(unsigned idx) const {
+  const Type* getElement(unsigned idx) const {
     if (elements)
       if (idx < elements->size())
         return (*elements)[idx];
@@ -175,98 +175,98 @@ public:
   }
 
 private:
-  TypeInfo() 
+  Type() 
     : newTy(), oldTy(UnresolvedTy), elemTy(0), resultTy(0), elements(0),
       nelems(0) {
   }
 
-  TypeInfo(const TypeInfo& that); // do not implement
-  TypeInfo& operator=(const TypeInfo& that); // do not implement
+  Type(const Type& that); // do not implement
+  Type& operator=(const Type& that); // do not implement
 
-  ~TypeInfo() { delete elements; }
+  ~Type() { delete elements; }
 
   struct ltfunctor
   {
-    bool operator()(const TypeInfo* X, const TypeInfo* Y) const {
+    bool operator()(const Type* X, const Type* Y) const {
       assert(X && "Can't compare null pointer");
       assert(Y && "Can't compare null pointer");
       return *X < *Y;
     }
   };
 
-  typedef std::set<const TypeInfo*, ltfunctor> TypeRegMap;
+  typedef std::set<const Type*, ltfunctor> TypeRegMap;
 
-  static const TypeInfo* add_new_type(TypeInfo* existing);
+  static const Type* add_new_type(Type* existing);
 
   std::string newTy;
-  Types oldTy;
-  TypeInfo *elemTy;
-  TypeInfo *resultTy;
+  TypeIDs oldTy;
+  Type *elemTy;
+  Type *resultTy;
   TypeList *elements;
   uint64_t nelems;
   static TypeRegMap registry;
 public:
-  typedef std::vector<const TypeInfo*> TypeVector;
-  typedef std::map<std::string,const TypeInfo*> TypeMap;
-  typedef std::map<const TypeInfo*,std::string> TypePlaneMap;
+  typedef std::vector<const Type*> TypeVector;
+  typedef std::map<std::string,const Type*> TypeMap;
+  typedef std::map<const Type*,std::string> TypePlaneMap;
   typedef std::map<std::string,TypePlaneMap> GlobalsTypeMap;
   static TypeVector EnumeratedTypes;
   static TypeMap NamedTypes;
   static GlobalsTypeMap Globals;
 };
 
-TypeInfo::TypeRegMap     TypeInfo::registry;
-TypeInfo::TypeVector     TypeInfo::EnumeratedTypes;
-TypeInfo::TypeMap        TypeInfo::NamedTypes;
-TypeInfo::GlobalsTypeMap TypeInfo::Globals;
+Type::TypeRegMap     Type::registry;
+Type::TypeVector     Type::EnumeratedTypes;
+Type::TypeMap        Type::NamedTypes;
+Type::GlobalsTypeMap Type::Globals;
 
-const TypeInfo* TypeInfo::get(const std::string &newType, Types oldType) {
-  TypeInfo* Ty = new TypeInfo();
+const Type* Type::get(const std::string &newType, TypeIDs oldType) {
+  Type* Ty = new Type();
   Ty->newTy = newType;
   Ty->oldTy = oldType;
   return add_new_type(Ty);
 }
 
-const TypeInfo* TypeInfo::get(const std::string& newType, Types oldType, 
-                              const TypeInfo* eTy, const TypeInfo* rTy) {
-  TypeInfo* Ty= new TypeInfo();
+const Type* Type::get(const std::string& newType, TypeIDs oldType, 
+                              const Type* eTy, const Type* rTy) {
+  Type* Ty= new Type();
   Ty->newTy = newType;
   Ty->oldTy = oldType;
-  Ty->elemTy = const_cast<TypeInfo*>(eTy);
-  Ty->resultTy = const_cast<TypeInfo*>(rTy);
+  Ty->elemTy = const_cast<Type*>(eTy);
+  Ty->resultTy = const_cast<Type*>(rTy);
   return add_new_type(Ty);
 }
 
-const TypeInfo* TypeInfo::get(const std::string& newType, Types oldType, 
-                              const TypeInfo *eTy, uint64_t elems) {
-  TypeInfo* Ty = new TypeInfo();
+const Type* Type::get(const std::string& newType, TypeIDs oldType, 
+                              const Type *eTy, uint64_t elems) {
+  Type* Ty = new Type();
   Ty->newTy = newType;
   Ty->oldTy = oldType;
-  Ty->elemTy = const_cast<TypeInfo*>(eTy);
+  Ty->elemTy = const_cast<Type*>(eTy);
   Ty->nelems = elems;
   return  add_new_type(Ty);
 }
 
-const TypeInfo* TypeInfo::get(const std::string& newType, Types oldType, 
+const Type* Type::get(const std::string& newType, TypeIDs oldType, 
                               TypeList* TL) {
-  TypeInfo* Ty = new TypeInfo();
+  Type* Ty = new Type();
   Ty->newTy = newType;
   Ty->oldTy = oldType;
   Ty->elements = TL;
   return add_new_type(Ty);
 }
 
-const TypeInfo* TypeInfo::get(const std::string& newType, const TypeInfo* resTy,
+const Type* Type::get(const std::string& newType, const Type* resTy,
                               TypeList* TL) {
-  TypeInfo* Ty = new TypeInfo();
+  Type* Ty = new Type();
   Ty->newTy = newType;
   Ty->oldTy = FunctionTy;
-  Ty->resultTy = const_cast<TypeInfo*>(resTy);
+  Ty->resultTy = const_cast<Type*>(resTy);
   Ty->elements = TL;
   return add_new_type(Ty);
 }
 
-const TypeInfo* TypeInfo::resolve() const {
+const Type* Type::resolve() const {
   if (isUnresolved()) {
     if (getNewTy()[0] == '%' && isdigit(newTy[1])) {
       unsigned ref = atoi(&((newTy.c_str())[1])); // skip the %
@@ -278,7 +278,7 @@ const TypeInfo* TypeInfo::resolve() const {
         yyerror(msg.c_str());
       }
     } else {
-      TypeInfo::TypeMap::iterator I = NamedTypes.find(newTy);
+      Type::TypeMap::iterator I = NamedTypes.find(newTy);
       if (I != NamedTypes.end()) {
         return I->second;
       } else {
@@ -292,7 +292,7 @@ const TypeInfo* TypeInfo::resolve() const {
   return this;
 }
 
-bool TypeInfo::operator<(const TypeInfo& that) const {
+bool Type::operator<(const Type& that) const {
   if (this == &that)
     return false;
   if (oldTy != that.oldTy)
@@ -308,13 +308,13 @@ bool TypeInfo::operator<(const TypeInfo& that) const {
       if (this->nelems != that.nelems)
         return nelems < that.nelems;
     case PointerTy: {
-      const TypeInfo* thisTy = this->elemTy;
-      const TypeInfo* thatTy = that.elemTy;
+      const Type* thisTy = this->elemTy;
+      const Type* thatTy = that.elemTy;
       return *thisTy < *thatTy;
     }
     case FunctionTy: {
-      const TypeInfo* thisTy = this->resultTy;
-      const TypeInfo* thatTy = that.resultTy;
+      const Type* thisTy = this->resultTy;
+      const Type* thatTy = that.resultTy;
       if (!thisTy->sameOldTyAs(thatTy))
         return *thisTy < *thatTy;
       /* FALL THROUGH */
@@ -324,8 +324,8 @@ bool TypeInfo::operator<(const TypeInfo& that) const {
       if (elements->size() != that.elements->size())
         return elements->size() < that.elements->size();
       for (unsigned i = 0; i < elements->size(); i++) {
-        const TypeInfo* thisTy = (*this->elements)[i];
-        const TypeInfo* thatTy = (*that.elements)[i];
+        const Type* thisTy = (*this->elements)[i];
+        const Type* thatTy = (*that.elements)[i];
         if (!thisTy->sameOldTyAs(thatTy))
           return *thisTy < *thatTy;
       }
@@ -339,7 +339,7 @@ bool TypeInfo::operator<(const TypeInfo& that) const {
   return false; 
 }
 
-bool TypeInfo::sameOldTyAs(const TypeInfo* that) const {
+bool Type::sameOldTyAs(const Type* that) const {
   if (that == 0)
     return false;
   if ( this == that ) 
@@ -353,13 +353,13 @@ bool TypeInfo::sameOldTyAs(const TypeInfo* that) const {
         return false;
       /* FALL THROUGH */
     case PointerTy: {
-      const TypeInfo* thisTy = this->elemTy;
-      const TypeInfo* thatTy = that->elemTy;
+      const Type* thisTy = this->elemTy;
+      const Type* thatTy = that->elemTy;
       return thisTy->sameOldTyAs(thatTy);
     }
     case FunctionTy: {
-      const TypeInfo* thisTy = this->resultTy;
-      const TypeInfo* thatTy = that->resultTy;
+      const Type* thisTy = this->resultTy;
+      const Type* thatTy = that->resultTy;
       if (!thisTy->sameOldTyAs(thatTy))
         return false;
       /* FALL THROUGH */
@@ -369,8 +369,8 @@ bool TypeInfo::sameOldTyAs(const TypeInfo* that) const {
       if (elements->size() != that->elements->size())
         return false;
       for (unsigned i = 0; i < elements->size(); i++) {
-        const TypeInfo* thisTy = (*this->elements)[i];
-        const TypeInfo* thatTy = (*that->elements)[i];
+        const Type* thisTy = (*this->elements)[i];
+        const Type* thatTy = (*that->elements)[i];
         if (!thisTy->sameOldTyAs(thatTy))
           return false;
       }
@@ -384,7 +384,7 @@ bool TypeInfo::sameOldTyAs(const TypeInfo* that) const {
   return true;
 }
 
-bool TypeInfo::isUnresolvedDeep() const {
+bool Type::isUnresolvedDeep() const {
   switch (oldTy) {
     case UnresolvedTy: 
       return true;
@@ -403,7 +403,7 @@ bool TypeInfo::isUnresolvedDeep() const {
   }
 }
 
-unsigned TypeInfo::getBitWidth() const {
+unsigned Type::getBitWidth() const {
   switch (oldTy) {
     default:
     case LabelTy:
@@ -428,12 +428,12 @@ unsigned TypeInfo::getBitWidth() const {
   }
 }
 
-const TypeInfo* TypeInfo::getIndexedType(const ValueInfo*  VI) const {
+const Type* Type::getIndexedType(const Value*  V) const {
   if (isStruct()) {
-    if (VI->isConstant() && VI->type->isInteger()) {
-      size_t pos = VI->val->find(' ') + 1;
-      if (pos < VI->val->size()) {
-        uint64_t idx = atoi(VI->val->substr(pos).c_str());
+    if (V->isConstant() && V->type->isInteger()) {
+      size_t pos = V->val->find(' ') + 1;
+      if (pos < V->val->size()) {
+        uint64_t idx = atoi(V->val->substr(pos).c_str());
         return (*elements)[idx];
       } else {
         yyerror("Invalid value for constant integer");
@@ -450,7 +450,7 @@ const TypeInfo* TypeInfo::getIndexedType(const ValueInfo*  VI) const {
   return 0;
 }
 
-void TypeInfo::getSignedness(unsigned &sNum, unsigned &uNum, 
+void Type::getSignedness(unsigned &sNum, unsigned &uNum, 
                              UpRefStack& stack) const {
   switch (oldTy) {
     default:
@@ -478,7 +478,7 @@ void TypeInfo::getSignedness(unsigned &sNum, unsigned &uNum,
       return;
     }
     case UnresolvedTy: {
-      const TypeInfo* Ty = this->resolve();
+      const Type* Ty = this->resolve();
       // Let's not recurse.
       UpRefStack::const_iterator I = stack.begin(), E = stack.end();
       for ( ; I != E && *I != Ty; ++I) 
@@ -499,7 +499,7 @@ std::string AddSuffix(const std::string& Name, const std::string& Suffix) {
   return Name + Suffix;
 }
 
-std::string TypeInfo::makeUniqueName(const std::string& BaseName) const {
+std::string Type::makeUniqueName(const std::string& BaseName) const {
   if (BaseName == "\"alloca point\"")
     return BaseName;
   switch (oldTy) {
@@ -520,14 +520,14 @@ std::string TypeInfo::makeUniqueName(const std::string& BaseName) const {
     case PointerTy:
     case PackedTy: 
     case ArrayTy: {
-      TypeInfo::UpRefStack stack;
+      Type::UpRefStack stack;
       elemTy->resolve()->getSignedness(sNum, uNum, stack);
       break;
     }
     case StructTy:
     case PackedStructTy: {
       for (unsigned i = 0; i < elements->size(); i++) {
-        TypeInfo::UpRefStack stack;
+        Type::UpRefStack stack;
         (*elements)[i]->resolve()->getSignedness(sNum, uNum, stack);
       }
       break;
@@ -554,7 +554,7 @@ std::string TypeInfo::makeUniqueName(const std::string& BaseName) const {
   return AddSuffix(BaseName, Suffix);
 }
 
-TypeInfo& TypeInfo::operator=(const TypeInfo& that) {
+Type& Type::operator=(const Type& that) {
   oldTy = that.oldTy;
   nelems = that.nelems;
   newTy = that.newTy;
@@ -569,7 +569,7 @@ TypeInfo& TypeInfo::operator=(const TypeInfo& that) {
   return *this;
 }
 
-const TypeInfo* TypeInfo::add_new_type(TypeInfo* newTy) {
+const Type* Type::add_new_type(Type* newTy) {
   TypeRegMap::iterator I = registry.find(newTy);
   if (I != registry.end()) {
     delete newTy;
@@ -579,11 +579,14 @@ const TypeInfo* TypeInfo::add_new_type(TypeInfo* newTy) {
   return newTy;
 }
 
+class Instruction {
+};
+
 /// This type is used to keep track of the signedness of constants.
-struct ConstInfo {
+struct Constant {
   std::string *cnst;
-  const TypeInfo *type;
-  ~ConstInfo() { delete cnst; }
+  const Type *type;
+  ~Constant() { delete cnst; }
 };
 
 /// This variable provides a counter for unique names. It is used in various
@@ -605,8 +608,8 @@ static std::string* deleteUselessCastName = 0;
 
 
 
-const char* getCastOpcode(std::string& Source, const TypeInfo* SrcTy, 
-                          const TypeInfo* DstTy) {
+const char* getCastOpcode(std::string& Source, const Type* SrcTy, 
+                          const Type* DstTy) {
   unsigned SrcBits = SrcTy->getBitWidth();
   unsigned DstBits = DstTy->getBitWidth();
   const char* opcode = "bitcast";
@@ -682,8 +685,8 @@ const char* getCastOpcode(std::string& Source, const TypeInfo* SrcTy,
   return opcode;
 }
 
-std::string getCastUpgrade(const std::string& Src, const TypeInfo* SrcTy,
-                           const TypeInfo* DstTy, bool isConst) {
+std::string getCastUpgrade(const std::string& Src, const Type* SrcTy,
+                           const Type* DstTy, bool isConst) {
   std::string Result;
   std::string Source = Src;
   if (SrcTy->isFloatingPoint() && DstTy->isPointer()) {
@@ -692,12 +695,12 @@ std::string getCastUpgrade(const std::string& Src, const TypeInfo* SrcTy,
     if (isConst)
       Source = "i64 fptoui(" + Source + " to i64)";
     else {
-      *O << "    %cast_upgrade" << UniqueNameCounter++ << " = fptoui " 
+      *O << "    %cast_upgrade" << UniqueNameCounter << " = fptoui " 
          << Source << " to i64\n";
-      Source = "i64 %cast_upgrade" + llvm::utostr(UniqueNameCounter);
+      Source = "i64 %cast_upgrade" + llvm::utostr(UniqueNameCounter++);
     }
     // Update the SrcTy for the getCastOpcode call below
-    SrcTy = TypeInfo::get("i64", ULongTy);
+    SrcTy = Type::get("i64", ULongTy);
   } else if (DstTy->isBool()) {
     // cast type %x to bool was previously defined as setne type %x, null
     // The cast semantic is now to truncate, not compare so we must retain
@@ -723,9 +726,9 @@ std::string getCastUpgrade(const std::string& Src, const TypeInfo* SrcTy,
   return Result;
 }
 
-const char* getDivRemOpcode(const std::string& opcode, const TypeInfo* TI) {
+const char* getDivRemOpcode(const std::string& opcode, const Type* TI) {
   const char* op = opcode.c_str();
-  const TypeInfo* Ty = TI->resolve();
+  const Type* Ty = TI->resolve();
   if (Ty->isPacked())
     Ty = Ty->getElementType();
   if (opcode == "div")
@@ -749,7 +752,7 @@ const char* getDivRemOpcode(const std::string& opcode, const TypeInfo* TI) {
   return op;
 }
 
-std::string getCompareOp(const std::string& setcc, const TypeInfo* TI) {
+std::string getCompareOp(const std::string& setcc, const Type* TI) {
   assert(setcc.length() == 5);
   char cc1 = setcc[3];
   char cc2 = setcc[4];
@@ -779,10 +782,10 @@ std::string getCompareOp(const std::string& setcc, const TypeInfo* TI) {
   return result;
 }
 
-const TypeInfo* getFunctionReturnType(const TypeInfo* PFTy) {
+const Type* getFunctionReturnType(const Type* PFTy) {
   PFTy = PFTy->resolve();
   if (PFTy->isPointer()) {
-    const TypeInfo* ElemTy = PFTy->getElementType();
+    const Type* ElemTy = PFTy->getElementType();
     ElemTy = ElemTy->resolve();
     if (ElemTy->isFunction())
       return ElemTy->getResultType();
@@ -792,18 +795,18 @@ const TypeInfo* getFunctionReturnType(const TypeInfo* PFTy) {
   return PFTy;
 }
 
-const TypeInfo* ResolveUpReference(const TypeInfo* Ty, 
-                                   TypeInfo::UpRefStack* stack) {
+const Type* ResolveUpReference(const Type* Ty, 
+                                   Type::UpRefStack* stack) {
   assert(Ty->isUpReference() && "Can't resolve a non-upreference");
   unsigned upref = Ty->getUpRefNum();
   assert(upref < stack->size() && "Invalid up reference");
   return (*stack)[upref - stack->size() - 1];
 }
 
-const TypeInfo* getGEPIndexedType(const TypeInfo* PTy, ValueList* idxs) {
-  const TypeInfo* Result = PTy = PTy->resolve();
+const Type* getGEPIndexedType(const Type* PTy, ValueList* idxs) {
+  const Type* Result = PTy = PTy->resolve();
   assert(PTy->isPointer() && "GEP Operand is not a pointer?");
-  TypeInfo::UpRefStack stack;
+  Type::UpRefStack stack;
   for (unsigned i = 0; i < idxs->size(); ++i) {
     if (Result->isComposite()) {
       Result = Result->getIndexedType((*idxs)[i]);
@@ -828,7 +831,7 @@ const TypeInfo* getGEPIndexedType(const TypeInfo* PTy, ValueList* idxs) {
 // were previously unsigned or signed, respectively. This avoids name
 // collisions since the unsigned and signed type planes have collapsed
 // into a single signless type plane.
-std::string getUniqueName(const std::string *Name, const TypeInfo* Ty,
+std::string getUniqueName(const std::string *Name, const Type* Ty,
                           bool isGlobal = false, bool isDef = false) {
 
   // If its not a symbolic name, don't modify it, probably a constant val.
@@ -843,10 +846,10 @@ std::string getUniqueName(const std::string *Name, const TypeInfo* Ty,
   Ty = Ty->resolve(); 
 
   // If its a global name, get its uniquified name, if any
-  TypeInfo::GlobalsTypeMap::iterator GI = TypeInfo::Globals.find(*Name);
-  if (GI != TypeInfo::Globals.end()) {
-    TypeInfo::TypePlaneMap::iterator TPI = GI->second.begin();
-    TypeInfo::TypePlaneMap::iterator TPE = GI->second.end();
+  Type::GlobalsTypeMap::iterator GI = Type::Globals.find(*Name);
+  if (GI != Type::Globals.end()) {
+    Type::TypePlaneMap::iterator TPI = GI->second.begin();
+    Type::TypePlaneMap::iterator TPE = GI->second.end();
     for ( ; TPI != TPE ; ++TPI) {
       if (TPI->first->sameNewTyAs(Ty)) 
         return TPI->second;
@@ -869,13 +872,13 @@ std::string getUniqueName(const std::string *Name, const TypeInfo* Ty,
 }
 
 std::string getGlobalName(const std::string* Name, const std::string Linkage,
-                          const TypeInfo* Ty, bool isConstant) {
+                          const Type* Ty, bool isConstant) {
   // Default to given name
   std::string Result = *Name; 
   // Look up the name in the Globals Map
-  TypeInfo::GlobalsTypeMap::iterator GI = TypeInfo::Globals.find(*Name);
+  Type::GlobalsTypeMap::iterator GI = Type::Globals.find(*Name);
   // Did we see this global name before?
-  if (GI != TypeInfo::Globals.end()) {
+  if (GI != Type::Globals.end()) {
     if (Ty->isUnresolvedDeep()) {
       // The Gval's type is unresolved. Consequently, we can't disambiguate it
       // by type. We'll just change its name and emit a warning.
@@ -886,7 +889,7 @@ std::string getGlobalName(const std::string* Name, const std::string Linkage,
       Result += llvm::utostr(UniqueNameCounter);
       return Result;
     } else {
-      TypeInfo::TypePlaneMap::iterator TPI = GI->second.find(Ty);
+      Type::TypePlaneMap::iterator TPI = GI->second.find(Ty);
       if (TPI != GI->second.end()) {
         // We found an existing name of the same old type. This isn't allowed 
         // in LLVM 2.0. Consequently, we must alter the name of the global so it
@@ -901,8 +904,8 @@ std::string getGlobalName(const std::string* Name, const std::string Linkage,
         // There isn't an existing definition for this name according to the
         // old types. Now search the TypePlanMap for types with the same new
         // name. 
-        TypeInfo::TypePlaneMap::iterator TPI = GI->second.begin();
-        TypeInfo::TypePlaneMap::iterator TPE = GI->second.end();
+        Type::TypePlaneMap::iterator TPI = GI->second.begin();
+        Type::TypePlaneMap::iterator TPE = GI->second.end();
         for ( ; TPI != TPE; ++TPI) {
           if (TPI->first->sameNewTyAs(Ty)) {
             // The new types are the same but the old types are different so 
@@ -942,23 +945,23 @@ std::string getGlobalName(const std::string* Name, const std::string Linkage,
   // Its a new global name, if it is external we can't change it
   if (isConstant || Linkage == "external" || Linkage == "dllimport" || 
       Linkage == "extern_weak" || Linkage == "") {
-    TypeInfo::Globals[Result][Ty] = Result;
+    Type::Globals[Result][Ty] = Result;
     return Result;
   }
 
   // Its a new global name, and it is internal, change the name to make it
   // unique for its type.
   // Result = getUniqueName(Name, Ty);
-  TypeInfo::Globals[*Name][Ty] = Result;
+  Type::Globals[*Name][Ty] = Result;
   return Result;
 }
 
 } // End anonymous namespace
 
-// This function is used by the Lexer to create a TypeInfo. It can't be
+// This function is used by the Lexer to create a Type. It can't be
 // in the anonymous namespace.
-const TypeInfo* getTypeInfo(const std::string& newTy, Types oldTy) {
-  return TypeInfo::get(newTy, oldTy);
+const Type* getType(const std::string& newTy, TypeIDs oldTy) {
+  return Type::get(newTy, oldTy);
 }
 
 %}
@@ -967,15 +970,15 @@ const TypeInfo* getTypeInfo(const std::string& newTy, Types oldTy) {
 
 %union {
   std::string*    String;
-  const TypeInfo* Type;
-  ValueInfo*      Value;
-  ConstInfo*      Const;
+  const Type*     Ty;
+  Value*          Val;
+  Constant*       Const;
   ValueList*      ValList;
   TypeList*       TypeVec;
 }
 
-%token <Type>   VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
-%token <Type>   FLOAT DOUBLE LABEL 
+%token <Ty>     VOID BOOL SBYTE UBYTE SHORT USHORT INT UINT LONG ULONG
+%token <Ty>     FLOAT DOUBLE LABEL 
 %token <String> OPAQUE ESINT64VAL EUINT64VAL SINTVAL UINTVAL FPVAL
 %token <String> NULL_TOK UNDEF ZEROINITIALIZER TRUETOK FALSETOK
 %token <String> TYPE VAR_ID LABELSTR STRINGCONSTANT
@@ -1017,13 +1020,13 @@ const TypeInfo* getTypeInfo(const std::string& newTy, Types oldTy) {
 %type <ValList> ValueRefList ValueRefListE IndexList
 %type <TypeVec> TypeListI ArgTypeListI
 
-%type <Type> IntType SIntType UIntType FPType TypesV Types 
-%type <Type> PrimType UpRTypesV UpRTypes
+%type <Ty> IntType SIntType UIntType FPType TypesV Types 
+%type <Ty> PrimType UpRTypesV UpRTypes
 
 %type <String> IntVal EInt64Val 
 %type <Const>  ConstVal
 
-%type <Value> ValueRef ResolvedVal InstVal PHIList MemoryInst
+%type <Val> ValueRef ResolvedVal InstVal PHIList MemoryInst
 
 %start Module
 
@@ -1137,17 +1140,17 @@ PrimType : BOOL | SBYTE | UBYTE | SHORT  | USHORT | INT   | UINT ;
 PrimType : LONG | ULONG | FLOAT | DOUBLE | LABEL;
 UpRTypes 
   : OPAQUE { 
-    $$ = TypeInfo::get(*$1, OpaqueTy);
+    $$ = Type::get(*$1, OpaqueTy);
   } 
   | SymbolicValueRef { 
-    $$ = TypeInfo::get(*$1, UnresolvedTy);
+    $$ = Type::get(*$1, UnresolvedTy);
   }
   | PrimType { 
     $$ = $1; 
   }
   | '\\' EUINT64VAL {                   // Type UpReference
     $2->insert(0, "\\");
-    $$ = TypeInfo::get(*$2, UpRefTy);
+    $$ = Type::get(*$2, UpRefTy);
   }
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
     std::string newTy( $1->getNewTy() + "(");
@@ -1160,19 +1163,19 @@ UpRTypes
         newTy += (*$3)[i]->getNewTy();
     }
     newTy += ")";
-    $$ = TypeInfo::get(newTy, $1, $3);
+    $$ = Type::get(newTy, $1, $3);
   }
   | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
     uint64_t elems = atoi($2->c_str());
     $2->insert(0,"[ ");
     *$2 += " x " + $4->getNewTy() + " ]";
-    $$ = TypeInfo::get(*$2, ArrayTy, $4, elems);
+    $$ = Type::get(*$2, ArrayTy, $4, elems);
   }
   | '<' EUINT64VAL 'x' UpRTypes '>' {          // Packed array type?
     uint64_t elems = atoi($2->c_str());
     $2->insert(0,"< ");
     *$2 += " x " + $4->getNewTy() + " >";
-    $$ = TypeInfo::get(*$2, PackedTy, $4, elems);
+    $$ = Type::get(*$2, PackedTy, $4, elems);
   }
   | '{' TypeListI '}' {                        // Structure type?
     std::string newTy("{");
@@ -1182,10 +1185,10 @@ UpRTypes
       newTy += (*$2)[i]->getNewTy();
     }
     newTy += "}";
-    $$ = TypeInfo::get(newTy, StructTy, $2);
+    $$ = Type::get(newTy, StructTy, $2);
   }
   | '{' '}' {                                  // Empty structure type?
-    $$ = TypeInfo::get("{}", StructTy, new TypeList());
+    $$ = Type::get("{}", StructTy, new TypeList());
   }
   | '<' '{' TypeListI '}' '>' {                // Packed Structure type?
     std::string newTy("<{");
@@ -1195,10 +1198,10 @@ UpRTypes
       newTy += (*$3)[i]->getNewTy();
     }
     newTy += "}>";
-    $$ = TypeInfo::get(newTy, PackedStructTy, $3);
+    $$ = Type::get(newTy, PackedStructTy, $3);
   }
   | '<' '{' '}' '>' {                          // Empty packed structure type?
-    $$ = TypeInfo::get("<{}>", PackedStructTy, new TypeList());
+    $$ = Type::get("<{}>", PackedStructTy, new TypeList());
   }
   | UpRTypes '*' {                             // Pointer type?
     $$ = $1->getPointerType();
@@ -1222,12 +1225,12 @@ ArgTypeListI
   : TypeListI 
   | TypeListI ',' DOTDOTDOT {
     $$ = $1;
-    $$->push_back(TypeInfo::get("void",VoidTy));
+    $$->push_back(Type::get("void",VoidTy));
     delete $3;
   }
   | DOTDOTDOT {
     $$ = new TypeList();
-    $$->push_back(TypeInfo::get("void",VoidTy));
+    $$->push_back(Type::get("void",VoidTy));
     delete $1;
   }
   | /*empty*/ {
@@ -1241,61 +1244,61 @@ ArgTypeListI
 // ResolvedVal, ValueRef and ConstValueRef productions.
 //
 ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " [ " + *$3 + " ]";
     delete $3;
   }
   | Types '[' ']' {
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += "[ ]";
   }
   | Types 'c' STRINGCONSTANT {
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " c" + *$3;
     delete $3;
   }
   | Types '<' ConstVector '>' { // Nonempty unsized arr
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " < " + *$3 + " >";
     delete $3;
   }
   | Types '{' ConstVector '}' {
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " { " + *$3 + " }";
     delete $3;
   }
   | Types '{' '}' {
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " {}";
   }
   | Types NULL_TOK {
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst +=  " " + *$2;
     delete $2;
   }
   | Types UNDEF {
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " " + *$2;
     delete $2;
   }
   | Types SymbolicValueRef {
-    $$ = new ConstInfo;
+    $$ = new Constant;
     std::string Name = getUniqueName($2, $1->resolve(), true);
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
@@ -1303,49 +1306,49 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     delete $2;
   }
   | Types ConstExpr {
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " " + *$2;
     delete $2;
   }
   | Types ZEROINITIALIZER {
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " " + *$2;
     delete $2;
   }
   | SIntType EInt64Val {      // integral constants
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " " + *$2;
     delete $2;
   }
   | UIntType EInt64Val {            // integral constants
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " " + *$2;
     delete $2;
   }
   | BOOL TRUETOK {                      // Boolean constants
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " " + *$2;
     delete $2;
   }
   | BOOL FALSETOK {                     // Boolean constants
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " " + *$2;
     delete $2;
   }
   | FPType FPVAL {                   // Float & Double constants
-    $$ = new ConstInfo;
+    $$ = new Constant;
     $$->type = $1;
     $$->cnst = new std::string($1->getNewTy());
     *$$->cnst += " " + *$2;
@@ -1354,8 +1357,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
 ConstExpr: CastOps '(' ConstVal TO Types ')' {
     std::string source = *$3->cnst;
-    const TypeInfo* SrcTy = $3->type->resolve();
-    const TypeInfo* DstTy = $5->resolve(); 
+    const Type* SrcTy = $3->type->resolve();
+    const Type* DstTy = $5->resolve(); 
     if (*$1 == "cast") {
       // Call getCastUpgrade to upgrade the old cast
       $$ = new std::string(getCastUpgrade(source, SrcTy, DstTy, true));
@@ -1369,9 +1372,9 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
     *$1 += "(" + *$3->cnst;
     for (unsigned i = 0; i < $4->size(); ++i) {
-      ValueInfo* VI = (*$4)[i];
-      *$1 += ", " + *VI->val;
-      delete VI;
+      Value* V = (*$4)[i];
+      *$1 += ", " + *V->val;
+      delete V;
     }
     *$1 += ")";
     $$ = $1;
@@ -1485,9 +1488,9 @@ External : EXTERNAL | UNINITIALIZED { $$ = $1; *$$ = "external"; }
 
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign TYPE TypesV {
-    TypeInfo::EnumeratedTypes.push_back($4);
+    Type::EnumeratedTypes.push_back($4);
     if (!$2->empty()) {
-      TypeInfo::NamedTypes[*$2] = $4;
+      Type::NamedTypes[*$2] = $4;
       *O << *$2 << " = ";
     }
     *O << "type " << $4->getNewTy() << '\n';
@@ -1739,13 +1742,13 @@ SymbolicValueRef : IntVal | Name ;
 // ValueRef - A reference to a definition... either constant or symbolic
 ValueRef 
   : SymbolicValueRef {
-    $$ = new ValueInfo;
+    $$ = new Value;
     $$->val = $1;
     $$->constant = false;
     $$->type = 0;
   }
   | ConstValueRef {
-    $$ = new ValueInfo;
+    $$ = new Value;
     $$->val = $1;
     $$->constant = true;
     $$->type = 0;
@@ -1839,7 +1842,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
   }
   | OptAssign INVOKE OptCallingConv TypesV ValueRef '(' ValueRefListE ')'
     TO LABEL ValueRef Unwind LABEL ValueRef {
-    const TypeInfo* ResTy = getFunctionReturnType($4);
+    const Type* ResTy = getFunctionReturnType($4);
     *O << "    ";
     if (!$1->empty()) {
       std::string Name = getUniqueName($1, ResTy);
@@ -1847,11 +1850,11 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     }
     *O << *$2 << ' ' << *$3 << ' ' << $4->getNewTy() << ' ' << *$5->val << " (";
     for (unsigned i = 0; i < $7->size(); ++i) {
-      ValueInfo* VI = (*$7)[i];
-      *O << *VI->val;
+      Value* V = (*$7)[i];
+      *O << *V->val;
       if (i+1 < $7->size())
         *O << ", ";
-      delete VI;
+      delete V;
     }
     *O << ") " << *$9 << ' ' << $10->getNewTy() << ' ' << *$11->val << ' ' 
        << *$12 << ' ' << $13->getNewTy() << ' ' << *$14->val << '\n';
@@ -1906,7 +1909,7 @@ PHIList
     std::string Name = getUniqueName($3->val, $1);
     Name.insert(0, $1->getNewTy() + "[");
     Name += "," + *$5->val + "]";
-    $$ = new ValueInfo;
+    $$ = new Value;
     $$->val = new std::string(Name);
     $$->type = $1;
     delete $3; delete $5;
@@ -1974,7 +1977,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = $3;
     delete $$->val;
     $$->val = $1;
-    $$->type = TypeInfo::get("i1",BoolTy);
+    $$->type = Type::get("i1",BoolTy);
     delete $5;
   }
   | ICMP IPredicates Types ValueRef ',' ValueRef {
@@ -1984,7 +1987,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = $4;
     delete $$->val;
     $$->val = $1;
-    $$->type = TypeInfo::get("i1",BoolTy);
+    $$->type = Type::get("i1",BoolTy);
     delete $2; delete $6;
   }
   | FCMP FPredicates Types ValueRef ',' ValueRef {
@@ -1994,7 +1997,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = $4;
     delete $$->val;
     $$->val = $1;
-    $$->type = TypeInfo::get("i1",BoolTy);
+    $$->type = Type::get("i1",BoolTy);
     delete $2; delete $6;
   }
   | ShiftOps ResolvedVal ',' ResolvedVal {
@@ -2010,8 +2013,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   }
   | CastOps ResolvedVal TO Types {
     std::string source = *$2->val;
-    const TypeInfo* SrcTy = $2->type->resolve();
-    const TypeInfo* DstTy = $4->resolve();
+    const Type* SrcTy = $2->type->resolve();
+    const Type* DstTy = $4->resolve();
     $$ = $2;
     delete $$->val;
     $$->val = new std::string();
@@ -2085,14 +2088,14 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   }
   | OptTailCall OptCallingConv TypesV ValueRef '(' ValueRefListE ')'  {
     // map llvm.isunordered to "fcmp uno" 
-    $$ = new ValueInfo;
+    $$ = new Value;
     if (*$4->val == "%llvm.isunordered.f32" ||
         *$4->val == "%llvm.isunordered.f64") {
       $$->val = new std::string( "fcmp uno " + *(*$6)[0]->val + ", ");
       size_t pos = (*$6)[1]->val->find(' ');
       assert(pos != std::string::npos && "no space?");
       *$$->val += (*$6)[1]->val->substr(pos+1);
-      $$->type = TypeInfo::get("i1", BoolTy);
+      $$->type = Type::get("i1", BoolTy);
     } else {
       static unsigned upgradeCount = 1;
       if (*$4->val == "%llvm.va_start" || *$4->val == "%llvm.va_end") {
@@ -2101,7 +2104,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
           name += llvm::utostr(upgradeCount++);
           $1->insert(0, name + " = bitcast " + *(*$6)[0]->val + " to i8*\n    ");
           *(*$6)[0]->val = "i8* " + name;
-          (*$6)[0]->type = TypeInfo::get("i8", UByteTy)->getPointerType();
+          (*$6)[0]->type = Type::get("i8", UByteTy)->getPointerType();
         }
       } else if (*$4->val == "%llvm.va_copy") {
         std::string name0("%va_upgrade");
@@ -2111,9 +2114,9 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         $1->insert(0, name0 + " = bitcast " + *(*$6)[0]->val + " to i8*\n    " +
                       name1 + " = bitcast " + *(*$6)[1]->val + " to i8*\n    ");
         *(*$6)[0]->val = "i8* " + name0;
-        (*$6)[0]->type = TypeInfo::get("i8", UByteTy)->getPointerType();
+        (*$6)[0]->type = Type::get("i8", UByteTy)->getPointerType();
         *(*$6)[1]->val = "i8* " + name1;
-        (*$6)[0]->type = TypeInfo::get("i8", UByteTy)->getPointerType();
+        (*$6)[0]->type = Type::get("i8", UByteTy)->getPointerType();
       }
       if (!$2->empty())
         *$1 += " " + *$2;
@@ -2121,14 +2124,14 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         *$1 += " ";
       *$1 += $3->getNewTy() + " " + *$4->val + "(";
       for (unsigned i = 0; i < $6->size(); ++i) {
-        ValueInfo* VI = (*$6)[i];
-        *$1 += *VI->val;
+        Value* V = (*$6)[i];
+        *$1 += *V->val;
         if (i+1 < $6->size())
           *$1 += ", ";
-        delete VI;
+        delete V;
       }
       *$1 += ")";
-      $$ = new ValueInfo;
+      $$ = new Value;
       $$->val = $1;
       $$->type = getFunctionReturnType($3);
     }
@@ -2152,7 +2155,7 @@ MemoryInst : MALLOC Types OptCAlign {
     *$1 += " " + $2->getNewTy();
     if (!$3->empty())
       *$1 += " " + *$3;
-    $$ = new ValueInfo;
+    $$ = new Value;
     $$->val = $1;
     $$->type = $2->getPointerType();
     delete $3;
@@ -2162,7 +2165,7 @@ MemoryInst : MALLOC Types OptCAlign {
     *$1 += " " + $2->getNewTy() + ", " + $4->getNewTy() + " " + Name;
     if (!$6->empty())
       *$1 += " " + *$6;
-    $$ = new ValueInfo;
+    $$ = new Value;
     $$->val = $1;
     $$->type = $2->getPointerType();
     delete $5; delete $6;
@@ -2171,7 +2174,7 @@ MemoryInst : MALLOC Types OptCAlign {
     *$1 += " " + $2->getNewTy();
     if (!$3->empty())
       *$1 += " " + *$3;
-    $$ = new ValueInfo;
+    $$ = new Value;
     $$->val = $1;
     $$->type = $2->getPointerType();
     delete $3;
@@ -2192,7 +2195,7 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = $2;
     delete $2->val;
     $$->val = $1;
-    $$->type = TypeInfo::get("void", VoidTy); 
+    $$->type = Type::get("void", VoidTy); 
   }
   | OptVolatile LOAD Types ValueRef {
     std::string Name = getUniqueName($4->val, $3);
@@ -2213,26 +2216,26 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = $3;
     delete $$->val;
     $$->val = $1;
-    $$->type = TypeInfo::get("void", VoidTy);
+    $$->type = Type::get("void", VoidTy);
     delete $2; delete $6;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
     std::string Name = getUniqueName($3->val, $2);
     // Upgrade the indices
     for (unsigned i = 0; i < $4->size(); ++i) {
-      ValueInfo* VI = (*$4)[i];
-      if (VI->type->isUnsigned() && !VI->isConstant() && 
-          VI->type->getBitWidth() < 64) {
-        *O << "    %gep_upgrade" << UniqueNameCounter << " = zext " << *VI->val 
+      Value* V = (*$4)[i];
+      if (V->type->isUnsigned() && !V->isConstant() && 
+          V->type->getBitWidth() < 64) {
+        *O << "    %gep_upgrade" << UniqueNameCounter << " = zext " << *V->val 
            << " to i64\n";
-        *VI->val = "i64 %gep_upgrade" + llvm::utostr(UniqueNameCounter++);
-        VI->type = TypeInfo::get("i64",ULongTy);
+        *V->val = "i64 %gep_upgrade" + llvm::utostr(UniqueNameCounter++);
+        V->type = Type::get("i64",ULongTy);
       }
     }
     *$1 += " " + $2->getNewTy() + " " + Name;
     for (unsigned i = 0; i < $4->size(); ++i) {
-      ValueInfo* VI = (*$4)[i];
-      *$1 += ", " + *VI->val;
+      Value* V = (*$4)[i];
+      *$1 += ", " + *V->val;
     }
     $$ = $3;
     delete $$->val;
