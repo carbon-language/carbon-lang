@@ -118,7 +118,7 @@ public:
 /// FunctionDecl - An instance of this class is created to represent a function
 /// declaration or definition.
 class FunctionDecl : public ObjectDecl {
-  // Args etc.
+  // FIXME: Args etc.
   Stmt *Body;  // Null if a prototype.
   
   /// DeclChain - Linked list of declarations that are defined inside this
