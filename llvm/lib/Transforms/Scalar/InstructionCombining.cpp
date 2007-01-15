@@ -1927,21 +1927,6 @@ static bool isSignBit(ConstantInt *CI) {
   return (CI->getZExtValue() & (~0ULL >> (64-NumBits))) == (1ULL << (NumBits-1));
 }
 
-/// RemoveNoopCast - Strip off nonconverting casts from the value.
-///
-static Value *RemoveNoopCast(Value *V) {
-  if (CastInst *CI = dyn_cast<CastInst>(V)) {
-    const Type *CTy = CI->getType();
-    const Type *OpTy = CI->getOperand(0)->getType();
-    if (CTy->isInteger() && OpTy->isInteger()) {
-      if (CTy->getPrimitiveSizeInBits() == OpTy->getPrimitiveSizeInBits())
-        return RemoveNoopCast(CI->getOperand(0));
-    } else if (isa<PointerType>(CTy) && isa<PointerType>(OpTy))
-      return RemoveNoopCast(CI->getOperand(0));
-  }
-  return V;
-}
-
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -1967,21 +1952,17 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (match(Op1, m_Not(m_Value(X))))
       return BinaryOperator::createAdd(X,
                     ConstantExpr::getAdd(C, ConstantInt::get(I.getType(), 1)));
-    // -((uint)X >> 31) -> ((int)X >> 31)
-    // -((int)X >> 31) -> ((uint)X >> 31)
+    // -(X >>u 31) -> (X >>s 31)
+    // -(X >>s 31) -> (X >>u 31)
     if (C->isNullValue()) {
-      Value *NoopCastedRHS = RemoveNoopCast(Op1);
-      if (ShiftInst *SI = dyn_cast<ShiftInst>(NoopCastedRHS))
+      if (ShiftInst *SI = dyn_cast<ShiftInst>(Op1))
         if (SI->getOpcode() == Instruction::LShr) {
           if (ConstantInt *CU = dyn_cast<ConstantInt>(SI->getOperand(1))) {
             // Check to see if we are shifting out everything but the sign bit.
             if (CU->getZExtValue() == 
                 SI->getType()->getPrimitiveSizeInBits()-1) {
               // Ok, the transformation is safe.  Insert AShr.
-              // FIXME: Once integer types are signless, this cast should be 
-              // removed.  
-              Value *ShiftOp = SI->getOperand(0); 
-              return new ShiftInst(Instruction::AShr, ShiftOp, CU,
+              return new ShiftInst(Instruction::AShr, SI->getOperand(0), CU,
                                    SI->getName());
             }
           }
@@ -1991,7 +1972,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
             // Check to see if we are shifting out everything but the sign bit.
             if (CU->getZExtValue() == 
                 SI->getType()->getPrimitiveSizeInBits()-1) {
-              
               // Ok, the transformation is safe.  Insert LShr. 
               return new ShiftInst(Instruction::LShr, SI->getOperand(0), CU, 
                                    SI->getName());
@@ -7664,28 +7644,14 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i, ++GTI)
     if (isa<SequentialType>(*GTI)) {
       if (CastInst *CI = dyn_cast<CastInst>(GEP.getOperand(i))) {
-        Value *Src = CI->getOperand(0);
-        const Type *SrcTy = Src->getType();
-        const Type *DestTy = CI->getType();
-        if (Src->getType()->isInteger()) {
-          if (SrcTy->getPrimitiveSizeInBits() ==
-                       DestTy->getPrimitiveSizeInBits()) {
-            // We can always eliminate a cast from ulong or long to the other.
-            // We can always eliminate a cast from uint to int or the other on
-            // 32-bit pointer platforms.
-            if (DestTy->getPrimitiveSizeInBits() >= TD->getPointerSizeInBits()){
-              MadeChange = true;
-              GEP.setOperand(i, Src);
-            }
-          } else if (SrcTy->getPrimitiveSizeInBits() < 
-                     DestTy->getPrimitiveSizeInBits() &&
-                     SrcTy->getPrimitiveSizeInBits() == 32) {
-            // We can eliminate a cast from [u]int to [u]long iff the target 
-            // is a 32-bit pointer target.
-            if (SrcTy->getPrimitiveSizeInBits() >= TD->getPointerSizeInBits()) {
-              MadeChange = true;
-              GEP.setOperand(i, Src);
-            }
+        if (CI->getOpcode() == Instruction::ZExt ||
+            CI->getOpcode() == Instruction::SExt) {
+          const Type *SrcTy = CI->getOperand(0)->getType();
+          // We can eliminate a cast from i32 to i64 iff the target 
+          // is a 32-bit pointer target.
+          if (SrcTy->getPrimitiveSizeInBits() >= TD->getPointerSizeInBits()) {
+            MadeChange = true;
+            GEP.setOperand(i, CI->getOperand(0));
           }
         }
       }
