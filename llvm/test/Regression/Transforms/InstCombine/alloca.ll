@@ -12,3 +12,16 @@ void %test() {
 	call void(...)* %use({}* %Z)
 	ret void
 }
+
+void %test2() {
+	%A = alloca int    ;; dead.
+	store int 123, int* %A
+	ret void
+}
+
+void %test3() {
+	%A = alloca {int}    ;; dead.
+	%B = getelementptr {int}* %A, int 0, uint 0
+	store int 123, int* %B
+	ret void
+}
