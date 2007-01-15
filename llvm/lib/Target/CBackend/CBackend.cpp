@@ -1022,7 +1022,7 @@ bool CWriter::printConstExprCast(const ConstantExpr* CE) {
   }
   if (NeedsExplicitCast) {
     Out << "((";
-    if (Ty->isInteger())
+    if (Ty->isIntegral() && Ty != Type::Int1Ty)
       printSimpleType(Out, Ty, TypeIsSigned);
     else
       printType(Out, Ty); // not integer, sign doesn't matter
@@ -1225,7 +1225,7 @@ void CWriter::writeOperandWithCast(Value* Operand, ICmpInst::Predicate predicate
   // operand.
   if (shouldCast) {
     Out << "((";
-    if (OpTy->isInteger())
+    if (OpTy->isIntegral() && OpTy != Type::Int1Ty)
       printSimpleType(Out, OpTy, castIsSigned);
     else
       printType(Out, OpTy); // not integer, sign doesn't matter
@@ -1848,8 +1848,8 @@ static inline bool isFPIntBitCast(const Instruction &I) {
     return false;
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DstTy = I.getType();
-  return (SrcTy->isFloatingPoint() && DstTy->isInteger()) ||
-         (DstTy->isFloatingPoint() && SrcTy->isInteger());
+  return (SrcTy->isFloatingPoint() && DstTy->isIntegral()) ||
+         (DstTy->isFloatingPoint() && SrcTy->isIntegral());
 }
 
 void CWriter::printFunction(Function &F) {
