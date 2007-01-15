@@ -1,4 +1,4 @@
-//===- PassManager.cpp - LLVM Pass Infrastructure Implementation ----------===//
+//===- llvm/PassManager.h - Pass Inftrastructre classes  --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the LLVM Pass Manager infrastructure. 
+// This file declares the LLVM Pass Manager infrastructure. 
 //
 //===----------------------------------------------------------------------===//
 

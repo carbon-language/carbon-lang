@@ -559,7 +559,7 @@ void PMDataManager::removeDeadPasses(Pass *P, std::string &Msg) {
 /// Add pass P into the PassVector. Update 
 /// AvailableAnalysis appropriately if ProcessAnalysis is true.
 void PMDataManager::add(Pass *P, 
-                                     bool ProcessAnalysis) {
+                        bool ProcessAnalysis) {
 
   // This manager is going to manage pass P. Set up analysis resolver
   // to connect them.
