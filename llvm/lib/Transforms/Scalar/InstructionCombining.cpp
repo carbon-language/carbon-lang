@@ -7595,13 +7595,27 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // If this is a trivial cycle in the PHI node graph, remove it.  Basically, if
   // this PHI only has a single use (a PHI), and if that PHI only has one use (a
   // PHI)... break the cycle.
-  if (PN.hasOneUse())
-    if (PHINode *PU = dyn_cast<PHINode>(PN.use_back())) {
+  if (PN.hasOneUse()) {
+    Instruction *PHIUser = cast<Instruction>(PN.use_back());
+    if (PHINode *PU = dyn_cast<PHINode>(PHIUser)) {
       std::set<PHINode*> PotentiallyDeadPHIs;
       PotentiallyDeadPHIs.insert(&PN);
       if (DeadPHICycle(PU, PotentiallyDeadPHIs))
         return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
     }
+   
+    // If this phi has a single use, and if that use just computes a value for
+    // the next iteration of a loop, delete the phi.  This occurs with unused
+    // induction variables, e.g. "for (int j = 0; ; ++j);".  Detecting this
+    // common case here is good because the only other things that catch this
+    // are induction variable analysis (sometimes) and ADCE, which is only run
+    // late.
+    if (PHIUser->hasOneUse() &&
+        (isa<BinaryOperator>(PHIUser) || isa<GetElementPtrInst>(PHIUser)) &&
+        PHIUser->use_back() == &PN) {
+      return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
+    }
+  }
 
   return 0;
 }
