@@ -495,7 +495,7 @@ static inline Value *dyn_castNotVal(Value *V) {
 // Otherwise, return null.
 //
 static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
-  if (V->hasOneUse() && V->getType()->isIntegral())
+  if (V->hasOneUse() && V->getType()->isInteger())
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       if (I->getOpcode() == Instruction::Mul)
         if ((CST = dyn_cast<ConstantInt>(I->getOperand(1))))
@@ -558,7 +558,7 @@ static void ComputeMaskedBits(Value *V, uint64_t Mask, uint64_t &KnownZero,
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return;
 
-  Mask &= V->getType()->getIntegralTypeMask();
+  Mask &= V->getType()->getIntegerTypeMask();
   
   switch (I->getOpcode()) {
   case Instruction::And:
@@ -624,7 +624,7 @@ static void ComputeMaskedBits(Value *V, uint64_t Mask, uint64_t &KnownZero,
     return;
   case Instruction::BitCast: {
     const Type *SrcTy = I->getOperand(0)->getType();
-    if (SrcTy->isIntegral()) {
+    if (SrcTy->isInteger()) {
       ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
       return;
     }
@@ -633,10 +633,10 @@ static void ComputeMaskedBits(Value *V, uint64_t Mask, uint64_t &KnownZero,
   case Instruction::ZExt:  {
     // Compute the bits in the result that are not present in the input.
     const Type *SrcTy = I->getOperand(0)->getType();
-    uint64_t NotIn = ~SrcTy->getIntegralTypeMask();
-    uint64_t NewBits = I->getType()->getIntegralTypeMask() & NotIn;
+    uint64_t NotIn = ~SrcTy->getIntegerTypeMask();
+    uint64_t NewBits = I->getType()->getIntegerTypeMask() & NotIn;
       
-    Mask &= SrcTy->getIntegralTypeMask();
+    Mask &= SrcTy->getIntegerTypeMask();
     ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     // The top bits are known to be zero.
@@ -646,10 +646,10 @@ static void ComputeMaskedBits(Value *V, uint64_t Mask, uint64_t &KnownZero,
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
     const Type *SrcTy = I->getOperand(0)->getType();
-    uint64_t NotIn = ~SrcTy->getIntegralTypeMask();
-    uint64_t NewBits = I->getType()->getIntegralTypeMask() & NotIn;
+    uint64_t NotIn = ~SrcTy->getIntegerTypeMask();
+    uint64_t NewBits = I->getType()->getIntegerTypeMask() & NotIn;
       
-    Mask &= SrcTy->getIntegralTypeMask();
+    Mask &= SrcTy->getIntegerTypeMask();
     ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
 
@@ -766,7 +766,7 @@ static void ComputeSignedMinMaxValuesFromKnownBits(const Type *Ty,
                                                    uint64_t KnownZero,
                                                    uint64_t KnownOne,
                                                    int64_t &Min, int64_t &Max) {
-  uint64_t TypeBits = Ty->getIntegralTypeMask();
+  uint64_t TypeBits = Ty->getIntegerTypeMask();
   uint64_t UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
 
   uint64_t SignBit = 1ULL << (Ty->getPrimitiveSizeInBits()-1);
@@ -796,7 +796,7 @@ static void ComputeUnsignedMinMaxValuesFromKnownBits(const Type *Ty,
                                                      uint64_t KnownOne,
                                                      uint64_t &Min,
                                                      uint64_t &Max) {
-  uint64_t TypeBits = Ty->getIntegralTypeMask();
+  uint64_t TypeBits = Ty->getIntegerTypeMask();
   uint64_t UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
   
   // The minimum value is when the unknown bits are all zeros.
@@ -831,7 +831,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     }
     // If this is the root being simplified, allow it to have multiple uses,
     // just set the DemandedMask to all bits.
-    DemandedMask = V->getType()->getIntegralTypeMask();
+    DemandedMask = V->getType()->getIntegerTypeMask();
   } else if (DemandedMask == 0) {   // Not demanding any bits from V.
     if (V != UndefValue::get(V->getType()))
       return UpdateValueUsesWith(V, UndefValue::get(V->getType()));
@@ -843,7 +843,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;        // Only analyze instructions.
 
-  DemandedMask &= V->getType()->getIntegralTypeMask();
+  DemandedMask &= V->getType()->getIntegerTypeMask();
   
   uint64_t KnownZero2 = 0, KnownOne2 = 0;
   switch (I->getOpcode()) {
@@ -1001,7 +1001,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     break;
   case Instruction::BitCast:
-    if (!I->getOperand(0)->getType()->isIntegral())
+    if (!I->getOperand(0)->getType()->isInteger())
       return false;
       
     if (SimplifyDemandedBits(I->getOperand(0), DemandedMask,
@@ -1012,10 +1012,10 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
   case Instruction::ZExt: {
     // Compute the bits in the result that are not present in the input.
     const Type *SrcTy = I->getOperand(0)->getType();
-    uint64_t NotIn = ~SrcTy->getIntegralTypeMask();
-    uint64_t NewBits = I->getType()->getIntegralTypeMask() & NotIn;
+    uint64_t NotIn = ~SrcTy->getIntegerTypeMask();
+    uint64_t NewBits = I->getType()->getIntegerTypeMask() & NotIn;
     
-    DemandedMask &= SrcTy->getIntegralTypeMask();
+    DemandedMask &= SrcTy->getIntegerTypeMask();
     if (SimplifyDemandedBits(I->getOperand(0), DemandedMask,
                              KnownZero, KnownOne, Depth+1))
       return true;
@@ -1027,12 +1027,12 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
     const Type *SrcTy = I->getOperand(0)->getType();
-    uint64_t NotIn = ~SrcTy->getIntegralTypeMask();
-    uint64_t NewBits = I->getType()->getIntegralTypeMask() & NotIn;
+    uint64_t NotIn = ~SrcTy->getIntegerTypeMask();
+    uint64_t NewBits = I->getType()->getIntegerTypeMask() & NotIn;
     
     // Get the sign bit for the source type
     uint64_t InSignBit = 1ULL << (SrcTy->getPrimitiveSizeInBits()-1);
-    int64_t InputDemandedBits = DemandedMask & SrcTy->getIntegralTypeMask();
+    int64_t InputDemandedBits = DemandedMask & SrcTy->getIntegerTypeMask();
 
     // If any of the sign extended bits are demanded, we know that the sign
     // bit is demanded.
@@ -1174,7 +1174,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       // Compute the new bits that are at the top now.
       uint64_t HighBits = (1ULL << ShiftAmt)-1;
       HighBits <<= I->getType()->getPrimitiveSizeInBits() - ShiftAmt;
-      uint64_t TypeMask = I->getType()->getIntegralTypeMask();
+      uint64_t TypeMask = I->getType()->getIntegerTypeMask();
       // Unsigned shift right.
       if (SimplifyDemandedBits(I->getOperand(0),
                               (DemandedMask << ShiftAmt) & TypeMask,
@@ -1207,7 +1207,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       // Compute the new bits that are at the top now.
       uint64_t HighBits = (1ULL << ShiftAmt)-1;
       HighBits <<= I->getType()->getPrimitiveSizeInBits() - ShiftAmt;
-      uint64_t TypeMask = I->getType()->getIntegralTypeMask();
+      uint64_t TypeMask = I->getType()->getIntegerTypeMask();
       // Signed shift right.
       if (SimplifyDemandedBits(I->getOperand(0),
                                (DemandedMask << ShiftAmt) & TypeMask,
@@ -1745,7 +1745,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       // (X & 254)+1 -> (X&254)|1
       uint64_t KnownZero, KnownOne;
       if (!isa<PackedType>(I.getType()) &&
-          SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+          SimplifyDemandedBits(&I, I.getType()->getIntegerTypeMask(),
                                KnownZero, KnownOne))
         return &I;
     }
@@ -1780,7 +1780,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
             // This is a sign extend if the top bits are known zero.
             uint64_t Mask = ~0ULL;
             Mask <<= 64-(TySizeBits-Size);
-            Mask &= XorLHS->getType()->getIntegralTypeMask();
+            Mask &= XorLHS->getType()->getIntegerTypeMask();
             if (!MaskedValueIsZero(XorLHS, Mask))
               Size = 0;  // Not a sign ext, but can't be any others either.
             goto FoundSExt;
@@ -1808,7 +1808,7 @@ FoundSExt:
   }
 
   // X + X --> X << 1
-  if (I.getType()->isIntegral() && I.getType() != Type::Int1Ty) {
+  if (I.getType()->isInteger() && I.getType() != Type::Int1Ty) {
     if (Instruction *Result = AssociativeOpt(I, AddRHS(RHS))) return Result;
 
     if (Instruction *RHSI = dyn_cast<Instruction>(RHS)) {
@@ -1876,7 +1876,7 @@ FoundSExt:
 
         // Form a mask of all bits from the lowest bit added through the top.
         uint64_t AddRHSHighBits = ~((AddRHSV & -AddRHSV)-1);
-        AddRHSHighBits &= C2->getType()->getIntegralTypeMask();
+        AddRHSHighBits &= C2->getType()->getIntegerTypeMask();
 
         // See if the and mask includes all of these bits.
         uint64_t AddRHSHighBitsAnd = AddRHSHighBits & C2->getZExtValue();
@@ -1933,7 +1933,7 @@ static Value *RemoveNoopCast(Value *V) {
   if (CastInst *CI = dyn_cast<CastInst>(V)) {
     const Type *CTy = CI->getType();
     const Type *OpTy = CI->getOperand(0)->getType();
-    if (CTy->isIntegral() && OpTy->isIntegral()) {
+    if (CTy->isInteger() && OpTy->isInteger()) {
       if (CTy->getPrimitiveSizeInBits() == OpTy->getPrimitiveSizeInBits())
         return RemoveNoopCast(CI->getOperand(0));
     } else if (isa<PointerType>(CTy) && isa<PointerType>(OpTy))
@@ -2412,7 +2412,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a udiv.
-  if (I.getType()->isIntegral()) {
+  if (I.getType()->isInteger()) {
     uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
     if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
       return BinaryOperator::createUDiv(Op0, Op1, I.getName());
@@ -2641,7 +2641,7 @@ static bool isMaxValueMinusOne(const ConstantInt *C, bool isSigned) {
     Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
     return C->getSExtValue() == Val-1;
   }
-  return C->getZExtValue() == C->getType()->getIntegralTypeMask()-1;
+  return C->getZExtValue() == C->getType()->getIntegerTypeMask()-1;
 }
 
 // isMinValuePlusOne - return true if this is Min+1
@@ -2858,7 +2858,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       uint64_t AndRHSV = cast<ConstantInt>(AndRHS)->getZExtValue();
 
       // Clear bits that are not part of the constant.
-      AndRHSV &= AndRHS->getType()->getIntegralTypeMask();
+      AndRHSV &= AndRHS->getType()->getIntegerTypeMask();
 
       // If there is only one bit set...
       if (isOneBitSet(cast<ConstantInt>(AndRHS))) {
@@ -3044,7 +3044,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
       // is all N is, ignore it.
       unsigned MB, ME;
       if (isRunOfOnes(Mask, MB, ME)) {  // begin/end bit of run, inclusive
-        uint64_t Mask = RHS->getType()->getIntegralTypeMask();
+        uint64_t Mask = RHS->getType()->getIntegerTypeMask();
         Mask >>= 64-MB+1;
         if (MaskedValueIsZero(RHS, Mask))
           break;
@@ -3083,13 +3083,13 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
   if (!isa<PackedType>(I.getType()) &&
-      SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+      SimplifyDemandedBits(&I, I.getType()->getIntegerTypeMask(),
                            KnownZero, KnownOne))
     return &I;
   
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
     uint64_t AndRHSMask = AndRHS->getZExtValue();
-    uint64_t TypeMask = Op0->getType()->getIntegralTypeMask();
+    uint64_t TypeMask = Op0->getType()->getIntegerTypeMask();
     uint64_t NotAndRHS = AndRHSMask^TypeMask;
 
     // Optimize a variety of ((val OP C1) & C2) combinations...
@@ -3386,7 +3386,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) { // same cast kind ?
         const Type *SrcTy = Op0C->getOperand(0)->getType();
-        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
+        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isInteger() &&
             // Only do this if the casts both really cause code to be generated.
             ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
                               I.getType(), TD) &&
@@ -3554,7 +3554,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
   if (!isa<PackedType>(I.getType()) &&
-      SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+      SimplifyDemandedBits(&I, I.getType()->getIntegerTypeMask(),
                            KnownZero, KnownOne))
     return &I;
   
@@ -3836,7 +3836,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) {// same cast kind ?
         const Type *SrcTy = Op0C->getOperand(0)->getType();
-        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
+        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isInteger() &&
             // Only do this if the casts both really cause code to be generated.
             ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
                               I.getType(), TD) &&
@@ -3882,7 +3882,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
   if (!isa<PackedType>(I.getType()) &&
-      SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+      SimplifyDemandedBits(&I, I.getType()->getIntegerTypeMask(),
                            KnownZero, KnownOne))
     return &I;
 
@@ -4020,7 +4020,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) { // same cast kind?
         const Type *SrcTy = Op0C->getOperand(0)->getType();
-        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
+        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isInteger() &&
             // Only do this if the casts both really cause code to be generated.
             ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
                               I.getType(), TD) &&
@@ -4512,7 +4512,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // See if we can fold the comparison based on bits known to be zero or one
     // in the input.
     uint64_t KnownZero, KnownOne;
-    if (SimplifyDemandedBits(Op0, Ty->getIntegralTypeMask(),
+    if (SimplifyDemandedBits(Op0, Ty->getIntegerTypeMask(),
                              KnownZero, KnownOne, 0))
       return &I;
         
@@ -5062,7 +5062,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         Value *CastOp = Cast->getOperand(0);
         const Type *SrcTy = CastOp->getType();
         unsigned SrcTySize = SrcTy->getPrimitiveSizeInBits();
-        if (SrcTy->isIntegral() && 
+        if (SrcTy->isInteger() && 
             SrcTySize == Cast->getType()->getPrimitiveSizeInBits()) {
           // If this is an unsigned comparison, try to make the comparison use
           // smaller constant values.
@@ -5436,7 +5436,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
-  if (SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+  if (SimplifyDemandedBits(&I, I.getType()->getIntegerTypeMask(),
                            KnownZero, KnownOne))
     return &I;
   
@@ -6038,7 +6038,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   // See if we can simplify any instructions used by the LHS whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero = 0, KnownOne = 0;
-  if (SimplifyDemandedBits(&CI, DestTy->getIntegralTypeMask(),
+  if (SimplifyDemandedBits(&CI, DestTy->getIntegerTypeMask(),
                            KnownZero, KnownOne))
     return &CI;
 
@@ -6211,7 +6211,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       if (Op1CV == 0 || isPowerOf2_64(Op1CV)) {
         // If Op1C some other power of two, convert:
         uint64_t KnownZero, KnownOne;
-        uint64_t TypeMask = Op1->getType()->getIntegralTypeMask();
+        uint64_t TypeMask = Op1->getType()->getIntegerTypeMask();
         ComputeMaskedBits(Op0, TypeMask, KnownZero, KnownOne);
 
         // This only works for EQ and NE
@@ -6333,7 +6333,7 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
       // If we're actually extending zero bits and the trunc is a no-op
       if (MidSize < DstSize && SrcSize == DstSize) {
         // Replace both of the casts with an And of the type mask.
-        uint64_t AndValue = CSrc->getType()->getIntegralTypeMask();
+        uint64_t AndValue = CSrc->getType()->getIntegerTypeMask();
         Constant *AndConst = ConstantInt::get(A->getType(), AndValue);
         Instruction *And = 
           BinaryOperator::createAnd(CSrc->getOperand(0), AndConst);
@@ -6395,7 +6395,7 @@ Instruction *InstCombiner::visitBitCast(CastInst &CI) {
   const Type *SrcTy = Src->getType();
   const Type *DestTy = CI.getType();
 
-  if (SrcTy->isIntegral() && DestTy->isIntegral()) {
+  if (SrcTy->isInteger() && DestTy->isInteger()) {
     if (Instruction *Result = commonIntCastTransforms(CI))
       return Result;
   } else {
@@ -6816,7 +6816,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       }
 
   // See if we can fold the select into one of our operands.
-  if (SI.getType()->isIntegral()) {
+  if (SI.getType()->isInteger()) {
     // See the comment above GetSelectFoldableOperands for a description of the
     // transformation we are doing here.
     if (Instruction *TVI = dyn_cast<Instruction>(TrueVal))
@@ -7273,7 +7273,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     //Either we can cast directly, or we can upconvert the argument
     bool isConvertible = ActTy == ParamTy ||
       (isa<PointerType>(ParamTy) && isa<PointerType>(ActTy)) ||
-      (ParamTy->isIntegral() && ActTy->isIntegral() &&
+      (ParamTy->isInteger() && ActTy->isInteger() &&
        ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()) ||
       (c && ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()
        && c->getSExtValue() > 0);
@@ -7667,7 +7667,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Value *Src = CI->getOperand(0);
         const Type *SrcTy = Src->getType();
         const Type *DestTy = CI->getType();
-        if (Src->getType()->isIntegral()) {
+        if (Src->getType()->isInteger()) {
           if (SrcTy->getPrimitiveSizeInBits() ==
                        DestTy->getPrimitiveSizeInBits()) {
             // We can always eliminate a cast from ulong or long to the other.
@@ -7998,7 +7998,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if (DestPTy->isIntegral() || isa<PointerType>(DestPTy) || 
+    if (DestPTy->isInteger() || isa<PointerType>(DestPTy) || 
         isa<PackedType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
@@ -8012,7 +8012,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
             SrcPTy = SrcTy->getElementType();
           }
 
-      if ((SrcPTy->isIntegral() || isa<PointerType>(SrcPTy) || 
+      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy) || 
            isa<PackedType>(SrcPTy)) &&
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
@@ -8186,7 +8186,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if (DestPTy->isIntegral() || isa<PointerType>(DestPTy)) {
+    if (DestPTy->isInteger() || isa<PointerType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
       // constants.
@@ -8199,7 +8199,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
             SrcPTy = SrcTy->getElementType();
           }
 
-      if ((SrcPTy->isIntegral() || isa<PointerType>(SrcPTy)) &&
+      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
           IC.getTargetData().getTypeSize(SrcPTy) ==
                IC.getTargetData().getTypeSize(DestPTy)) {
 
@@ -8210,9 +8210,9 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
         Instruction::CastOps opcode = Instruction::BitCast;
         Value *SIOp0 = SI.getOperand(0);
         if (isa<PointerType>(SrcPTy)) {
-          if (SIOp0->getType()->isIntegral())
+          if (SIOp0->getType()->isInteger())
             opcode = Instruction::IntToPtr;
-        } else if (SrcPTy->isIntegral()) {
+        } else if (SrcPTy->isInteger()) {
           if (isa<PointerType>(SIOp0->getType()))
             opcode = Instruction::PtrToInt;
         }

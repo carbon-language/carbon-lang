@@ -60,7 +60,7 @@ namespace llvm {
     /// loop (inserting one if there is none).  A canonical induction variable
     /// starts at zero and steps by one on each iteration.
     Value *getOrInsertCanonicalInductionVariable(const Loop *L, const Type *Ty){
-      assert((Ty->isIntegral() || Ty->isFloatingPoint()) &&
+      assert((Ty->isInteger() || Ty->isFloatingPoint()) &&
              "Can only insert integer or floating point induction variables!");
       SCEVHandle H = SCEVAddRecExpr::get(SCEVUnknown::getIntegerSCEV(0, Ty),
                                          SCEVUnknown::getIntegerSCEV(1, Ty), L);
@@ -106,9 +106,9 @@ namespace llvm {
     Value *expandInTy(SCEV *S, const Type *Ty) {
       Value *V = expand(S);
       if (Ty && V->getType() != Ty) {
-        if (isa<PointerType>(Ty) && V->getType()->isIntegral())
+        if (isa<PointerType>(Ty) && V->getType()->isInteger())
           return InsertCastOfTo(Instruction::IntToPtr, V, Ty);
-        else if (Ty->isIntegral() && isa<PointerType>(V->getType()))
+        else if (Ty->isInteger() && isa<PointerType>(V->getType()))
           return InsertCastOfTo(Instruction::PtrToInt, V, Ty);
         else if (Ty->getPrimitiveSizeInBits() == 
                  V->getType()->getPrimitiveSizeInBits())

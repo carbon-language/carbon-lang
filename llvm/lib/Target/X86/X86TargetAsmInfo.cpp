@@ -174,7 +174,7 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
   // Verify this is a simple bswap.
   if (CI->getNumOperands() != 2 ||
       CI->getType() != CI->getOperand(1)->getType() ||
-      !CI->getType()->isIntegral())
+      !CI->getType()->isInteger())
     return false;
   
   const Type *Ty = CI->getType();

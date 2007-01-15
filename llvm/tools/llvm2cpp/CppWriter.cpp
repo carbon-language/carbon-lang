@@ -310,7 +310,7 @@ std::string
 CppWriter::getCppName(const Type* Ty)
 {
   // First, handle the primitive types .. easy
-  if (Ty->isPrimitiveType() || Ty->isIntegral()) {
+  if (Ty->isPrimitiveType() || Ty->isInteger()) {
     switch (Ty->getTypeID()) {
       case Type::VoidTyID:   return "Type::VoidTy";
       case Type::IntegerTyID: {
@@ -410,7 +410,7 @@ CppWriter::printCppName(const Value* val) {
 bool
 CppWriter::printTypeInternal(const Type* Ty) {
   // We don't print definitions for primitive types
-  if (Ty->isPrimitiveType() || Ty->isIntegral())
+  if (Ty->isPrimitiveType() || Ty->isInteger())
     return false;
 
   // If we already defined this type, we don't need to define it again.
@@ -599,7 +599,7 @@ CppWriter::printTypes(const Module* M) {
 
     // For primitive types and types already defined, just add a name
     TypeMap::const_iterator TNI = TypeNames.find(TI->second);
-    if (TI->second->isIntegral() || TI->second->isPrimitiveType() || 
+    if (TI->second->isInteger() || TI->second->isPrimitiveType() || 
         TNI != TypeNames.end()) {
       Out << "mod->addTypeName(\"";
       printEscapedString(TI->first);

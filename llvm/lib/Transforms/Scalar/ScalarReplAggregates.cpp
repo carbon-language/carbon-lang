@@ -442,7 +442,7 @@ static bool MergeInType(const Type *In, const Type *&Accum,
     Accum = In;
   } else if (In == Type::VoidTy) {
     // Noop.
-  } else if (In->isIntegral() && Accum->isIntegral()) {   // integer union.
+  } else if (In->isInteger() && Accum->isInteger()) {   // integer union.
     // Otherwise pick whichever type is larger.
     if (cast<IntegerType>(In)->getBitWidth() > 
         cast<IntegerType>(Accum)->getBitWidth())
@@ -472,7 +472,7 @@ static bool MergeInType(const Type *In, const Type *&Accum,
     case Type::FloatTyID:   Accum = Type::Int32Ty; break;
     case Type::DoubleTyID:  Accum = Type::Int64Ty; break;
     default:
-      assert(Accum->isIntegral() && "Unknown FP type!");
+      assert(Accum->isInteger() && "Unknown FP type!");
       break;
     }
     
@@ -481,7 +481,7 @@ static bool MergeInType(const Type *In, const Type *&Accum,
     case Type::FloatTyID:   In = Type::Int32Ty; break;
     case Type::DoubleTyID:  In = Type::Int64Ty; break;
     default:
-      assert(In->isIntegral() && "Unknown FP type!");
+      assert(In->isInteger() && "Unknown FP type!");
       break;
     }
     return MergeInType(In, Accum, TD);
@@ -541,7 +541,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         IsNotTrivial = true;
         const Type *SubElt = CanConvertToScalar(GEP, IsNotTrivial);
         if (SubElt == 0) return 0;
-        if (SubElt != Type::VoidTy && SubElt->isIntegral()) {
+        if (SubElt != Type::VoidTy && SubElt->isInteger()) {
           const Type *NewTy = 
             getUIntAtLeastAsBitAs(TD.getTypeSize(SubElt)*8+BitOffset);
           if (NewTy == 0 || MergeInType(NewTy, UsedType, TD)) return 0;
@@ -653,7 +653,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           // an integer.
           NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
         } else {
-          assert(NV->getType()->isIntegral() && "Unknown promotion!");
+          assert(NV->getType()->isInteger() && "Unknown promotion!");
           if (Offset && Offset < TD.getTypeSize(NV->getType())*8) {
             NV = new ShiftInst(Instruction::LShr, NV, 
                                ConstantInt::get(Type::Int8Ty, Offset), 
@@ -661,7 +661,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           }
           
           // If the result is an integer, this is a trunc or bitcast.
-          if (LI->getType()->isIntegral()) {
+          if (LI->getType()->isInteger()) {
             NV = CastInst::createTruncOrBitCast(NV, LI->getType(),
                                                 LI->getName(), LI);
           } else if (LI->getType()->isFloatingPoint()) {
@@ -748,7 +748,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           if (TotalBits != SrcSize) {
             assert(TotalBits > SrcSize);
             uint64_t Mask = ~(((1ULL << SrcSize)-1) << Offset);
-            Mask = Mask & SV->getType()->getIntegralTypeMask();
+            Mask = Mask & SV->getType()->getIntegerTypeMask();
             Old = BinaryOperator::createAnd(Old,
                                         ConstantInt::get(Old->getType(), Mask),
                                             Old->getName()+".mask", SI);

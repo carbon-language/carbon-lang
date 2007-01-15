@@ -51,7 +51,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
     
     // If the src and dest elements are both integers, or both floats, we can 
     // just BitCast each element because the elements are the same size.
-    if ((SrcEltTy->isIntegral() && DstEltTy->isIntegral()) ||
+    if ((SrcEltTy->isInteger() && DstEltTy->isInteger()) ||
         (SrcEltTy->isFloatingPoint() && DstEltTy->isFloatingPoint())) {
       for (unsigned i = 0; i != SrcNumElts; ++i)
         Result.push_back(
@@ -60,7 +60,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
     }
     
     // If this is an int-to-fp cast ..
-    if (SrcEltTy->isIntegral()) {
+    if (SrcEltTy->isInteger()) {
       // Ensure that it is int-to-fp cast
       assert(DstEltTy->isFloatingPoint());
       if (DstEltTy->getTypeID() == Type::DoubleTyID) {
@@ -81,7 +81,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
     }
     
     // Otherwise, this is an fp-to-int cast.
-    assert(SrcEltTy->isFloatingPoint() && DstEltTy->isIntegral());
+    assert(SrcEltTy->isFloatingPoint() && DstEltTy->isInteger());
     
     if (SrcEltTy->getTypeID() == Type::DoubleTyID) {
       for (unsigned i = 0; i != SrcNumElts; ++i) {
@@ -279,7 +279,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     // Handle integral constant input.
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       // Integral -> Integral, must be changing sign.
-      if (DestTy->isIntegral())
+      if (DestTy->isInteger())
         return ConstantInt::get(DestTy, CI->getZExtValue());
 
       if (DestTy->isFloatingPoint()) {
@@ -295,7 +295,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     // Handle ConstantFP input.
     if (const ConstantFP *FP = dyn_cast<ConstantFP>(V)) {
       // FP -> Integral.
-      if (DestTy->isIntegral()) {
+      if (DestTy->isInteger()) {
         if (DestTy == Type::Int32Ty)
           return ConstantInt::get(DestTy, FloatToBits(FP->getValue()));
         assert(DestTy == Type::Int64Ty && 
@@ -884,7 +884,7 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
       // If the cast is not actually changing bits, and the second operand is a
       // null pointer, do the comparison with the pre-casted value.
       if (V2->isNullValue() &&
-          (isa<PointerType>(CE1->getType()) || CE1->getType()->isIntegral())) {
+          (isa<PointerType>(CE1->getType()) || CE1->getType()->isInteger())) {
         bool sgnd = CE1->getOpcode() == Instruction::ZExt ? false :
           (CE1->getOpcode() == Instruction::SExt ? true :
            (CE1->getOpcode() == Instruction::PtrToInt ? false : isSigned));
@@ -899,7 +899,7 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
       if (const ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2))
         if (CE2->isCast() && isa<PointerType>(CE1->getType()) &&
             CE1->getOperand(0)->getType() == CE2->getOperand(0)->getType() &&
-            CE1->getOperand(0)->getType()->isIntegral()) {
+            CE1->getOperand(0)->getType()->isInteger()) {
           bool sgnd = CE1->getOpcode() == Instruction::ZExt ? false :
             (CE1->getOpcode() == Instruction::SExt ? true :
              (CE1->getOpcode() == Instruction::PtrToInt ? false : isSigned));

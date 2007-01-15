@@ -160,14 +160,9 @@ public:
   /// getDescription - Return the string representation of the type...
   const std::string &getDescription() const;
 
-  /// isInteger - Equivalent to isSigned() || isUnsigned()
+  /// isInteger - True if this is an instance of IntegerType.
   ///
-  bool isInteger() const { return ID == IntegerTyID && this != Int1Ty; } 
-
-  /// isIntegral - Returns true if this is an integral type, which is either
-  /// Int1Ty or one of the Integer types.
-  ///
-  bool isIntegral() const { return ID == IntegerTyID; }
+  bool isInteger() const { return ID == IntegerTyID; } 
 
   /// isFloatingPoint - Return true if this is one of the two floating point
   /// types
@@ -209,8 +204,7 @@ public:
   ///
   bool isSized() const {
     // If it's a primitive, it is always sized.
-    if (ID == IntegerTyID || (ID >= FloatTyID && ID <= DoubleTyID) || 
-        ID == PointerTyID)
+    if (ID == IntegerTyID || isFloatingPoint() || ID == PointerTyID)
       return true;
     // If it is not something that can have a size (e.g. a function or label),
     // it doesn't have a size.
@@ -228,11 +222,11 @@ public:
   ///
   unsigned getPrimitiveSizeInBits() const;
 
-  /// getIntegralTypeMask - Return a bitmask with ones set for all of the bits
+  /// getIntegerTypeMask - Return a bitmask with ones set for all of the bits
   /// that can be set by an unsigned version of this type.  This is 0xFF for
   /// sbyte/ubyte, 0xFFFF for shorts, etc.
-  uint64_t getIntegralTypeMask() const {
-    assert(isIntegral() && "This only works for integral types!");
+  uint64_t getIntegerTypeMask() const {
+    assert(isInteger() && "This only works for integer types!");
     return ~uint64_t(0UL) >> (64-getPrimitiveSizeInBits());
   }
 

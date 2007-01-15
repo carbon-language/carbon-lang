@@ -428,7 +428,7 @@ PackedType::PackedType(const Type *ElType, unsigned NumEl)
   NumElements = NumEl;
 
   assert(NumEl > 0 && "NumEl of a PackedType must be greater than 0");
-  assert((ElType->isIntegral() || ElType->isFloatingPoint()) &&
+  assert((ElType->isInteger() || ElType->isFloatingPoint()) &&
          "Elements of a PackedType must be a primitive type");
 }
 

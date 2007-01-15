@@ -534,7 +534,7 @@ namespace llvm {
     }
     MachOSection *getConstSection(const Type *Ty) {
       // FIXME: support cstring literals and pointer literal
-      if (Ty->isPrimitiveType() || Ty->isIntegral()) {
+      if (Ty->isPrimitiveType() || Ty->isInteger()) {
         unsigned Size = TM.getTargetData()->getTypeSize(Ty);
         switch(Size) {
         default: break; // Fall through to __TEXT,__const

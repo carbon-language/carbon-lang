@@ -455,7 +455,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
 
       // We can emit the pointer value into this slot if the slot is an
       // integer slot greater or equal to the size of the pointer.
-      if (Ty->isIntegral() &&
+      if (Ty->isInteger() &&
           TD->getTypeSize(Ty) >= TD->getTypeSize(Op->getType()))
         return EmitConstantValueOnly(Op);
       

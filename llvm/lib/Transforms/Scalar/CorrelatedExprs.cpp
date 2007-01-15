@@ -111,7 +111,7 @@ namespace {
     Value *Replacement;
   public:
     ValueInfo(const Type *Ty)
-      : Bounds(Ty->isIntegral() ? Ty : Type::Int32Ty), Replacement(0) {}
+      : Bounds(Ty->isInteger() ? Ty : Type::Int32Ty), Replacement(0) {}
 
     // getBounds() - Return the constant bounds of the value...
     const ConstantRange &getBounds() const { return Bounds; }

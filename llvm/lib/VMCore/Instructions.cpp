@@ -1025,7 +1025,7 @@ void BinaryOperator::init(BinaryOps iType)
   case Mul: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isIntegral() || getType()->isFloatingPoint() ||
+    assert((getType()->isInteger() || getType()->isFloatingPoint() ||
             isa<PackedType>(getType())) &&
           "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
@@ -1033,8 +1033,8 @@ void BinaryOperator::init(BinaryOps iType)
   case SDiv: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isIntegral() || (isa<PackedType>(getType()) && 
-            cast<PackedType>(getType())->getElementType()->isIntegral())) &&
+    assert((getType()->isInteger() || (isa<PackedType>(getType()) && 
+            cast<PackedType>(getType())->getElementType()->isInteger())) &&
            "Incorrect operand type (not integer) for S/UDIV");
     break;
   case FDiv:
@@ -1048,8 +1048,8 @@ void BinaryOperator::init(BinaryOps iType)
   case SRem: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isIntegral() || (isa<PackedType>(getType()) && 
-            cast<PackedType>(getType())->getElementType()->isIntegral())) &&
+    assert((getType()->isInteger() || (isa<PackedType>(getType()) && 
+            cast<PackedType>(getType())->getElementType()->isInteger())) &&
            "Incorrect operand type (not integer) for S/UREM");
     break;
   case FRem:
@@ -1063,9 +1063,9 @@ void BinaryOperator::init(BinaryOps iType)
   case Xor:
     assert(getType() == LHS->getType() &&
            "Logical operation should return same type as operands!");
-    assert((getType()->isIntegral() ||
+    assert((getType()->isInteger() ||
             (isa<PackedType>(getType()) && 
-             cast<PackedType>(getType())->getElementType()->isIntegral())) &&
+             cast<PackedType>(getType())->getElementType()->isInteger())) &&
            "Tried to create a logical operation on a non-integral type!");
     break;
   default:
@@ -1218,7 +1218,7 @@ bool CastInst::isIntegerCast() const {
     case Instruction::Trunc:
       return true;
     case Instruction::BitCast:
-      return getOperand(0)->getType()->isIntegral() && getType()->isIntegral();
+      return getOperand(0)->getType()->isInteger() && getType()->isInteger();
   }
 }
 
@@ -1351,7 +1351,7 @@ unsigned CastInst::isEliminableCastPair(
     case 3: 
       // no-op cast in second op implies firstOp as long as the DestTy 
       // is integer
-      if (DstTy->isIntegral())
+      if (DstTy->isInteger())
         return firstOp;
       return 0;
     case 4:
@@ -1363,7 +1363,7 @@ unsigned CastInst::isEliminableCastPair(
     case 5: 
       // no-op cast in first op implies secondOp as long as the SrcTy
       // is an integer
-      if (SrcTy->isIntegral())
+      if (SrcTy->isInteger())
         return secondOp;
       return 0;
     case 6:
@@ -1528,10 +1528,10 @@ CastInst *CastInst::createPointerCast(Value *S, const Type *Ty,
                                       const std::string &Name,
                                       BasicBlock *InsertAtEnd) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
-  assert((Ty->isIntegral() || isa<PointerType>(Ty)) &&
+  assert((Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Invalid cast");
 
-  if (Ty->isIntegral())
+  if (Ty->isInteger())
     return create(Instruction::PtrToInt, S, Ty, Name, InsertAtEnd);
   return create(Instruction::BitCast, S, Ty, Name, InsertAtEnd);
 }
@@ -1541,10 +1541,10 @@ CastInst *CastInst::createPointerCast(Value *S, const Type *Ty,
                                       const std::string &Name, 
                                       Instruction *InsertBefore) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
-  assert((Ty->isIntegral() || isa<PointerType>(Ty)) &&
+  assert((Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Invalid cast");
 
-  if (Ty->isIntegral())
+  if (Ty->isInteger())
     return create(Instruction::PtrToInt, S, Ty, Name, InsertBefore);
   return create(Instruction::BitCast, S, Ty, Name, InsertBefore);
 }
@@ -1552,7 +1552,7 @@ CastInst *CastInst::createPointerCast(Value *S, const Type *Ty,
 CastInst *CastInst::createIntegerCast(Value *C, const Type *Ty, 
                                       bool isSigned, const std::string &Name,
                                       Instruction *InsertBefore) {
-  assert(C->getType()->isIntegral() && Ty->isIntegral() && "Invalid cast");
+  assert(C->getType()->isInteger() && Ty->isInteger() && "Invalid cast");
   unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
   unsigned DstBits = Ty->getPrimitiveSizeInBits();
   Instruction::CastOps opcode =
@@ -1565,7 +1565,7 @@ CastInst *CastInst::createIntegerCast(Value *C, const Type *Ty,
 CastInst *CastInst::createIntegerCast(Value *C, const Type *Ty, 
                                       bool isSigned, const std::string &Name,
                                       BasicBlock *InsertAtEnd) {
-  assert(C->getType()->isIntegral() && Ty->isIntegral() && "Invalid cast");
+  assert(C->getType()->isInteger() && Ty->isInteger() && "Invalid cast");
   unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
   unsigned DstBits = Ty->getPrimitiveSizeInBits();
   Instruction::CastOps opcode =
@@ -1616,8 +1616,8 @@ CastInst::getCastOpcode(
   unsigned DestBits = DestTy->getPrimitiveSizeInBits(); // 0 for ptr/packed
 
   // Run through the possibilities ...
-  if (DestTy->isIntegral()) {                       // Casting to integral
-    if (SrcTy->isIntegral()) {                      // Casting from integral
+  if (DestTy->isInteger()) {                       // Casting to integral
+    if (SrcTy->isInteger()) {                      // Casting from integral
       if (DestBits < SrcBits)
         return Trunc;                               // int -> smaller int
       else if (DestBits > SrcBits) {                // its an extension
@@ -1643,7 +1643,7 @@ CastInst::getCastOpcode(
       return PtrToInt;                              // ptr -> int
     }
   } else if (DestTy->isFloatingPoint()) {           // Casting to floating pt
-    if (SrcTy->isIntegral()) {                      // Casting from integral
+    if (SrcTy->isInteger()) {                      // Casting from integral
       if (SrcIsSigned)
         return SIToFP;                              // sint -> FP
       else
@@ -1676,7 +1676,7 @@ CastInst::getCastOpcode(
   } else if (isa<PointerType>(DestTy)) {
     if (isa<PointerType>(SrcTy)) {
       return BitCast;                               // ptr -> ptr
-    } else if (SrcTy->isIntegral()) {
+    } else if (SrcTy->isInteger()) {
       return IntToPtr;                              // int -> ptr
     } else {
       assert(!"Casting pointer to other than pointer or int");
@@ -1715,11 +1715,11 @@ checkCast(Instruction::CastOps op, Value *S, const Type *DstTy) {
   switch (op) {
   default: return false; // This is an input error
   case Instruction::Trunc:
-    return SrcTy->isIntegral() && DstTy->isIntegral()&& SrcBitSize > DstBitSize;
+    return SrcTy->isInteger() && DstTy->isInteger()&& SrcBitSize > DstBitSize;
   case Instruction::ZExt:
-    return SrcTy->isIntegral() && DstTy->isIntegral()&& SrcBitSize < DstBitSize;
+    return SrcTy->isInteger() && DstTy->isInteger()&& SrcBitSize < DstBitSize;
   case Instruction::SExt: 
-    return SrcTy->isIntegral() && DstTy->isIntegral()&& SrcBitSize < DstBitSize;
+    return SrcTy->isInteger() && DstTy->isInteger()&& SrcBitSize < DstBitSize;
   case Instruction::FPTrunc:
     return SrcTy->isFloatingPoint() && DstTy->isFloatingPoint() && 
       SrcBitSize > DstBitSize;
@@ -1727,17 +1727,17 @@ checkCast(Instruction::CastOps op, Value *S, const Type *DstTy) {
     return SrcTy->isFloatingPoint() && DstTy->isFloatingPoint() && 
       SrcBitSize < DstBitSize;
   case Instruction::UIToFP:
-    return SrcTy->isIntegral() && DstTy->isFloatingPoint();
+    return SrcTy->isInteger() && DstTy->isFloatingPoint();
   case Instruction::SIToFP:
-    return SrcTy->isIntegral() && DstTy->isFloatingPoint();
+    return SrcTy->isInteger() && DstTy->isFloatingPoint();
   case Instruction::FPToUI:
-    return SrcTy->isFloatingPoint() && DstTy->isIntegral();
+    return SrcTy->isFloatingPoint() && DstTy->isInteger();
   case Instruction::FPToSI:
-    return SrcTy->isFloatingPoint() && DstTy->isIntegral();
+    return SrcTy->isFloatingPoint() && DstTy->isInteger();
   case Instruction::PtrToInt:
-    return isa<PointerType>(SrcTy) && DstTy->isIntegral();
+    return isa<PointerType>(SrcTy) && DstTy->isInteger();
   case Instruction::IntToPtr:
-    return SrcTy->isIntegral() && isa<PointerType>(DstTy);
+    return SrcTy->isInteger() && isa<PointerType>(DstTy);
   case Instruction::BitCast:
     // BitCast implies a no-op cast of type only. No bits change.
     // However, you can't cast pointers to anything but pointers.
@@ -1913,9 +1913,9 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
     assert(Op0Ty == Op1Ty &&
            "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(Op0Ty->isIntegral() || isa<PointerType>(Op0Ty) ||
+    assert(Op0Ty->isInteger() || isa<PointerType>(Op0Ty) ||
            (isa<PackedType>(Op0Ty) && 
-            cast<PackedType>(Op0Ty)->getElementType()->isIntegral()) &&
+            cast<PackedType>(Op0Ty)->getElementType()->isInteger()) &&
            "Invalid operand types for ICmp instruction");
     return;
   }
@@ -1948,9 +1948,9 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
     assert(Op0Ty == Op1Ty &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(Op0Ty->isIntegral() || isa<PointerType>(Op0Ty) ||
+    assert(Op0Ty->isInteger() || isa<PointerType>(Op0Ty) ||
            (isa<PackedType>(Op0Ty) && 
-            cast<PackedType>(Op0Ty)->getElementType()->isIntegral()) &&
+            cast<PackedType>(Op0Ty)->getElementType()->isInteger()) &&
            "Invalid operand types for ICmp instruction");
     return;
   }

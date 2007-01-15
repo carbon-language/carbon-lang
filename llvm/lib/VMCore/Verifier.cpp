@@ -500,8 +500,8 @@ void Verifier::visitTruncInst(TruncInst &I) {
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
-  Assert1(SrcTy->isIntegral(), "Trunc only operates on integer", &I);
-  Assert1(DestTy->isIntegral(), "Trunc only produces integer", &I);
+  Assert1(SrcTy->isInteger(), "Trunc only operates on integer", &I);
+  Assert1(DestTy->isInteger(), "Trunc only produces integer", &I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for Trunc", &I);
 
   visitInstruction(I);
@@ -513,8 +513,8 @@ void Verifier::visitZExtInst(ZExtInst &I) {
   const Type *DestTy = I.getType();
 
   // Get the size of the types in bits, we'll need this later
-  Assert1(SrcTy->isIntegral(), "ZExt only operates on integer", &I);
-  Assert1(DestTy->isIntegral(), "ZExt only produces an integer", &I);
+  Assert1(SrcTy->isInteger(), "ZExt only operates on integer", &I);
+  Assert1(DestTy->isInteger(), "ZExt only produces an integer", &I);
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
@@ -532,8 +532,8 @@ void Verifier::visitSExtInst(SExtInst &I) {
   unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
   unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
-  Assert1(SrcTy->isIntegral(), "SExt only operates on integer", &I);
-  Assert1(DestTy->isIntegral(), "SExt only produces an integer", &I);
+  Assert1(SrcTy->isInteger(), "SExt only operates on integer", &I);
+  Assert1(DestTy->isInteger(), "SExt only produces an integer", &I);
   Assert1(SrcBitSize < DestBitSize,"Type too small for SExt", &I);
 
   visitInstruction(I);
@@ -575,7 +575,7 @@ void Verifier::visitUIToFPInst(UIToFPInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  Assert1(SrcTy->isIntegral(),"UInt2FP source must be integral", &I);
+  Assert1(SrcTy->isInteger(),"UInt2FP source must be integral", &I);
   Assert1(DestTy->isFloatingPoint(),"UInt2FP result must be FP", &I);
 
   visitInstruction(I);
@@ -586,7 +586,7 @@ void Verifier::visitSIToFPInst(SIToFPInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  Assert1(SrcTy->isIntegral(),"SInt2FP source must be integral", &I);
+  Assert1(SrcTy->isInteger(),"SInt2FP source must be integral", &I);
   Assert1(DestTy->isFloatingPoint(),"SInt2FP result must be FP", &I);
 
   visitInstruction(I);
@@ -598,7 +598,7 @@ void Verifier::visitFPToUIInst(FPToUIInst &I) {
   const Type *DestTy = I.getType();
 
   Assert1(SrcTy->isFloatingPoint(),"FP2UInt source must be FP", &I);
-  Assert1(DestTy->isIntegral(),"FP2UInt result must be integral", &I);
+  Assert1(DestTy->isInteger(),"FP2UInt result must be integral", &I);
 
   visitInstruction(I);
 }
@@ -609,7 +609,7 @@ void Verifier::visitFPToSIInst(FPToSIInst &I) {
   const Type *DestTy = I.getType();
 
   Assert1(SrcTy->isFloatingPoint(),"FPToSI source must be FP", &I);
-  Assert1(DestTy->isIntegral(),"FP2ToI result must be integral", &I);
+  Assert1(DestTy->isInteger(),"FP2ToI result must be integral", &I);
 
   visitInstruction(I);
 }
@@ -620,7 +620,7 @@ void Verifier::visitPtrToIntInst(PtrToIntInst &I) {
   const Type *DestTy = I.getType();
 
   Assert1(isa<PointerType>(SrcTy), "PtrToInt source must be pointer", &I);
-  Assert1(DestTy->isIntegral(), "PtrToInt result must be integral", &I);
+  Assert1(DestTy->isInteger(), "PtrToInt result must be integral", &I);
 
   visitInstruction(I);
 }
@@ -630,7 +630,7 @@ void Verifier::visitIntToPtrInst(IntToPtrInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  Assert1(SrcTy->isIntegral(), "IntToPtr source must be an integral", &I);
+  Assert1(SrcTy->isInteger(), "IntToPtr source must be an integral", &I);
   Assert1(isa<PointerType>(DestTy), "IntToPtr result must be a pointer",&I);
 
   visitInstruction(I);
@@ -716,9 +716,9 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   // Check that logical operators are only used with integral operands.
   if (B.getOpcode() == Instruction::And || B.getOpcode() == Instruction::Or ||
       B.getOpcode() == Instruction::Xor) {
-    Assert1(B.getType()->isIntegral() ||
+    Assert1(B.getType()->isInteger() ||
             (isa<PackedType>(B.getType()) && 
-             cast<PackedType>(B.getType())->getElementType()->isIntegral()),
+             cast<PackedType>(B.getType())->getElementType()->isInteger()),
             "Logical operators only work with integral types!", &B);
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Logical operators must have same type for operands and result!",
@@ -728,7 +728,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Arithmetic operators must have same type for operands and result!",
             &B);
-    Assert1(B.getType()->isIntegral() || B.getType()->isFloatingPoint() ||
+    Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint() ||
             isa<PackedType>(B.getType()),
             "Arithmetic operators must have integer, fp, or packed type!", &B);
   }
@@ -743,7 +743,7 @@ void Verifier::visitICmpInst(ICmpInst& IC) {
   Assert1(Op0Ty == Op1Ty,
           "Both operands to ICmp instruction are not of the same type!", &IC);
   // Check that the operands are the right type
-  Assert1(Op0Ty->isIntegral() || isa<PointerType>(Op0Ty),
+  Assert1(Op0Ty->isInteger() || isa<PointerType>(Op0Ty),
           "Invalid operand types for ICmp instruction", &IC);
   visitInstruction(IC);
 }
@@ -761,7 +761,7 @@ void Verifier::visitFCmpInst(FCmpInst& FC) {
 }
 
 void Verifier::visitShiftInst(ShiftInst &SI) {
-  Assert1(SI.getType()->isIntegral(),
+  Assert1(SI.getType()->isInteger(),
           "Shift must return an integer result!", &SI);
   Assert1(SI.getType() == SI.getOperand(0)->getType(),
           "Shift return type must be same as first operand!", &SI);

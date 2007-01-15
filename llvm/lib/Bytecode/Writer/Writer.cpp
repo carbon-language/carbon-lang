@@ -292,7 +292,7 @@ void BytecodeWriter::outputType(const Type *T) {
 }
 
 void BytecodeWriter::outputConstant(const Constant *CPV) {
-  assert(((CPV->getType()->isPrimitiveType() || CPV->getType()->isIntegral()) ||
+  assert(((CPV->getType()->isPrimitiveType() || CPV->getType()->isInteger()) ||
           !CPV->isNullValue()) && "Shouldn't output null constants!");
 
   // We must check for a ConstantExpr before switching by type because

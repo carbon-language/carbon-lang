@@ -69,19 +69,19 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
 
   case Instruction::Add:
   case Instruction::Sub:
-    if (!Ty->isIntegral() && !Ty->isFloatingPoint()) return false;
+    if (!Ty->isInteger() && !Ty->isFloatingPoint()) return false;
     if (!ExpressionConvertibleToType(I->getOperand(0), Ty, CTMap, TD) ||
         !ExpressionConvertibleToType(I->getOperand(1), Ty, CTMap, TD))
       return false;
     break;
   case Instruction::LShr:
   case Instruction::AShr:
-    if (!Ty->isIntegral()) return false;
+    if (!Ty->isInteger()) return false;
     if (!ExpressionConvertibleToType(I->getOperand(0), Ty, CTMap, TD))
       return false;
     break;
   case Instruction::Shl:
-    if (!Ty->isIntegral()) return false;
+    if (!Ty->isInteger()) return false;
     if (!ExpressionConvertibleToType(I->getOperand(0), Ty, CTMap, TD))
       return false;
     break;
@@ -458,7 +458,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
 
   case Instruction::Add:
   case Instruction::Sub: {
-    if (!Ty->isIntegral() && !Ty->isFloatingPoint()) return false;
+    if (!Ty->isInteger() && !Ty->isFloatingPoint()) return false;
 
     Value *OtherOp = I->getOperand((V == I->getOperand(0)) ? 1 : 0);
     return ValueConvertibleToType(I, Ty, CTMap, TD) &&
@@ -476,7 +476,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
   case Instruction::AShr:
   case Instruction::Shl:
     if (I->getOperand(1) == V) return false;  // Cannot change shift amount type
-    if (!Ty->isIntegral()) return false;
+    if (!Ty->isInteger()) return false;
     return ValueConvertibleToType(I, Ty, CTMap, TD);
 
   case Instruction::Free:
@@ -576,7 +576,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       // Can convert store if the incoming value is convertible and if the
       // result will preserve semantics...
       const Type *Op0Ty = I->getOperand(0)->getType();
-      if (!(Op0Ty->isIntegral() ^ ElTy->isIntegral()) &&
+      if (!(Op0Ty->isInteger() ^ ElTy->isInteger()) &&
           !(Op0Ty->isFloatingPoint() ^ ElTy->isFloatingPoint()))
         return ExpressionConvertibleToType(I->getOperand(0), ElTy, CTMap, TD);
     }

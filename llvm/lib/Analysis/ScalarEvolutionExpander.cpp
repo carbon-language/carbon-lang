@@ -92,7 +92,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   const Type *Ty = S->getType();
   const Loop *L = S->getLoop();
   // We cannot yet do fp recurrences, e.g. the xform of {X,+,F} --> X+{0,+,F}
-  assert(Ty->isIntegral() && "Cannot expand fp recurrences yet!");
+  assert(Ty->isInteger() && "Cannot expand fp recurrences yet!");
 
   // {X,+,F} --> X + {0,+,F}
   if (!isa<SCEVConstant>(S->getStart()) ||

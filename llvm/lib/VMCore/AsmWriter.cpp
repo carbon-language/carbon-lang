@@ -222,7 +222,7 @@ static void fillTypeNameTable(const Module *M,
     const Type *Ty = cast<Type>(TI->second);
     if (!isa<PointerType>(Ty) ||
         !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
-        !cast<PointerType>(Ty)->getElementType()->isIntegral() ||
+        !cast<PointerType>(Ty)->getElementType()->isInteger() ||
         isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
       TypeNames.insert(std::make_pair(Ty, getLLVMName(TI->first)));
   }
@@ -234,7 +234,7 @@ static void calcTypeName(const Type *Ty,
                          std::vector<const Type *> &TypeStack,
                          std::map<const Type *, std::string> &TypeNames,
                          std::string & Result){
-  if (Ty->isIntegral() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
+  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty))) {
     Result += Ty->getDescription();  // Base case
     return;
   }
@@ -353,7 +353,7 @@ static std::ostream &printTypeInt(std::ostream &Out, const Type *Ty,
   // Primitive types always print out their description, regardless of whether
   // they have been named or not.
   //
-  if (Ty->isIntegral() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty)))
+  if (Ty->isInteger() || (Ty->isPrimitiveType() && !isa<OpaqueType>(Ty)))
     return Out << Ty->getDescription();
 
   // Check to see if the type is named.

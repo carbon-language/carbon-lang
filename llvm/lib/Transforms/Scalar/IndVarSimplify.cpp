@@ -325,7 +325,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
     if (LI->getLoopFor(L->getBlocks()[i]) == L) {  // Not in a subloop...
       BasicBlock *BB = L->getBlocks()[i];
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
-        if (I->getType()->isIntegral()) {      // Is an integer instruction
+        if (I->getType()->isInteger()) {      // Is an integer instruction
           SCEVHandle SH = SE->getSCEV(I);
           if (SH->hasComputableLoopEvolution(L) ||    // Varies predictably
               HasConstantItCount) {
@@ -460,7 +460,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
 
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
-    if (PN->getType()->isIntegral()) { // FIXME: when we have fast-math, enable!
+    if (PN->getType()->isInteger()) { // FIXME: when we have fast-math, enable!
       SCEVHandle SCEV = SE->getSCEV(PN);
       if (SCEV->hasComputableLoopEvolution(L))
         // FIXME: It is an extremely bad idea to indvar substitute anything more
@@ -574,7 +574,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
     if (LI->getLoopFor(L->getBlocks()[i]) == L) {  // Not in a subloop...
       BasicBlock *BB = L->getBlocks()[i];
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-        if (I->getType()->isIntegral() &&      // Is an integer instruction
+        if (I->getType()->isInteger() &&      // Is an integer instruction
             !I->use_empty() &&
             !Rewriter.isInsertedInstruction(I)) {
           SCEVHandle SH = SE->getSCEV(I);

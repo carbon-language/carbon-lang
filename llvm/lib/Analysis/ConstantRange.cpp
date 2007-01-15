@@ -31,7 +31,7 @@
 using namespace llvm;
 
 static ConstantInt *getMaxValue(const Type *Ty, bool isSigned = false) {
-  if (Ty->isIntegral()) {
+  if (Ty->isInteger()) {
     if (isSigned) {
       // Calculate 011111111111111...
       unsigned TypeBits = Ty->getPrimitiveSizeInBits();
@@ -46,7 +46,7 @@ static ConstantInt *getMaxValue(const Type *Ty, bool isSigned = false) {
 
 // Static constructor to create the minimum constant for an integral type...
 static ConstantInt *getMinValue(const Type *Ty, bool isSigned = false) {
-  if (Ty->isIntegral()) {
+  if (Ty->isInteger()) {
     if (isSigned) {
       // Calculate 1111111111000000000000
       unsigned TypeBits = Ty->getPrimitiveSizeInBits();
@@ -93,7 +93,7 @@ static ConstantInt *Max(ConstantInt *A, ConstantInt *B,
 /// Initialize a full (the default) or empty set for the specified type.
 ///
 ConstantRange::ConstantRange(const Type *Ty, bool Full) {
-  assert(Ty->isIntegral() &&
+  assert(Ty->isInteger() &&
          "Cannot make constant range of non-integral type!");
   if (Full)
     Lower = Upper = getMaxValue(Ty);
@@ -225,7 +225,7 @@ bool ConstantRange::contains(ConstantInt *Val, bool isSigned) const {
 /// subtract - Subtract the specified constant from the endpoints of this
 /// constant range.
 ConstantRange ConstantRange::subtract(ConstantInt *CI) const {
-  assert(CI->getType() == getType() && getType()->isIntegral() &&
+  assert(CI->getType() == getType() && getType()->isInteger() &&
          "Cannot subtract from different type range or non-integer!");
   // If the set is empty or full, don't modify the endpoints.
   if (Lower == Upper) return *this;

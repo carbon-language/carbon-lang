@@ -122,7 +122,7 @@ void SCEV::dump() const {
 /// known to have.  This method is only valid on integer SCEV objects.
 ConstantRange SCEV::getValueRange() const {
   const Type *Ty = getType();
-  assert(Ty->isIntegral() && "Can't get range for a non-integer SCEV!");
+  assert(Ty->isInteger() && "Can't get range for a non-integer SCEV!");
   // Default to a full range if no better information is available.
   return ConstantRange(getType());
 }
@@ -194,7 +194,7 @@ static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
 
 SCEVTruncateExpr::SCEVTruncateExpr(const SCEVHandle &op, const Type *ty)
   : SCEV(scTruncate), Op(op), Ty(ty) {
-  assert(Op->getType()->isIntegral() && Ty->isIntegral() &&
+  assert(Op->getType()->isInteger() && Ty->isInteger() &&
          "Cannot truncate non-integer value!");
   assert(Op->getType()->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits()
          && "This is not a truncating conversion!");
@@ -220,7 +220,7 @@ static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
 
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty)
   : SCEV(scZeroExtend), Op(op), Ty(ty) {
-  assert(Op->getType()->isIntegral() && Ty->isIntegral() &&
+  assert(Op->getType()->isInteger() && Ty->isInteger() &&
          "Cannot zero extend non-integer value!");
   assert(Op->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()
          && "This is not an extending conversion!");
@@ -459,7 +459,7 @@ SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
 /// extended.
 static SCEVHandle getTruncateOrZeroExtend(const SCEVHandle &V, const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert(SrcTy->isIntegral() && Ty->isIntegral() &&
+  assert(SrcTy->isInteger() && Ty->isInteger() &&
          "Cannot truncate or zero extend with non-integer arguments!");
   if (SrcTy->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
     return V;  // No conversion
@@ -1333,7 +1333,7 @@ static uint64_t GetConstantFactor(SCEVHandle S) {
 
   if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S))
     return GetConstantFactor(T->getOperand()) &
-           T->getType()->getIntegralTypeMask();
+           T->getType()->getIntegerTypeMask();
   if (SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S))
     return GetConstantFactor(E->getOperand());
   
@@ -1421,8 +1421,8 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
 
     case Instruction::BitCast:
       // BitCasts are no-op casts so we just eliminate the cast.
-      if (I->getType()->isIntegral() &&
-          I->getOperand(0)->getType()->isIntegral())
+      if (I->getType()->isInteger() &&
+          I->getOperand(0)->getType()->isInteger())
         return getSCEV(I->getOperand(0));
       break;
 
@@ -2186,7 +2186,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
         }
       }
     }
-  } else if (AddRec->isQuadratic() && AddRec->getType()->isIntegral()) {
+  } else if (AddRec->isQuadratic() && AddRec->getType()->isInteger()) {
     // If this is a quadratic (3-term) AddRec {L,+,M,+,N}, find the roots of
     // the quadratic equation to solve it.
     std::pair<SCEVHandle,SCEVHandle> Roots = SolveQuadraticEquation(AddRec);
@@ -2314,7 +2314,7 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L) {
       }
 
       if (Cond == ICmpInst::ICMP_SLT) {
-        if (PreCondLHS->getType()->isIntegral()) {
+        if (PreCondLHS->getType()->isInteger()) {
           if (RHS != getSCEV(PreCondRHS))
             return UnknownValue;  // Not a comparison against 'm'.
 
@@ -2567,14 +2567,14 @@ void ScalarEvolution::print(std::ostream &OS, const Module* ) const {
 
   OS << "Classifying expressions for: " << F.getName() << "\n";
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if (I->getType()->isIntegral()) {
+    if (I->getType()->isInteger()) {
       OS << *I;
       OS << "  --> ";
       SCEVHandle SV = getSCEV(&*I);
       SV->print(OS);
       OS << "\t\t";
 
-      if ((*I).getType()->isIntegral()) {
+      if ((*I).getType()->isInteger()) {
         ConstantRange Bounds = SV->getValueRange();
         if (!Bounds.isFullSet())
           OS << "Bounds: " << Bounds << " ";

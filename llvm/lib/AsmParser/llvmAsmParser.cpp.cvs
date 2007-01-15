@@ -2791,7 +2791,7 @@ case 118:
      const llvm::Type* ElemTy = yyvsp[-1].TypeVal->get();
      if ((unsigned)yyvsp[-3].UInt64Val != yyvsp[-3].UInt64Val)
         GEN_ERROR("Unsigned result not equal to signed result");
-     if (!ElemTy->isFloatingPoint() && !ElemTy->isIntegral())
+     if (!ElemTy->isFloatingPoint() && !ElemTy->isInteger())
         GEN_ERROR("Element type of a PackedType must be primitive");
      if (!isPowerOf2_32(yyvsp[-3].UInt64Val))
        GEN_ERROR("Vector length should be a power of 2!");
@@ -3359,9 +3359,9 @@ case 156:
 {
     if (yyvsp[-3].ConstVal->getType() != yyvsp[-1].ConstVal->getType())
       GEN_ERROR("Logical operator types must match!");
-    if (!yyvsp[-3].ConstVal->getType()->isIntegral()) {
+    if (!yyvsp[-3].ConstVal->getType()->isInteger()) {
       if (!isa<PackedType>(yyvsp[-3].ConstVal->getType()) || 
-          !cast<PackedType>(yyvsp[-3].ConstVal->getType())->getElementType()->isIntegral())
+          !cast<PackedType>(yyvsp[-3].ConstVal->getType())->getElementType()->isInteger())
         GEN_ERROR("Logical operator requires integral operands!");
     }
     yyval.ConstVal = ConstantExpr::get(yyvsp[-5].BinaryOpVal, yyvsp[-3].ConstVal, yyvsp[-1].ConstVal);
@@ -3389,7 +3389,7 @@ case 159:
 {
     if (yyvsp[-1].ConstVal->getType() != Type::Int8Ty)
       GEN_ERROR("Shift count for shift constant must be i8 type!");
-    if (!yyvsp[-3].ConstVal->getType()->isIntegral())
+    if (!yyvsp[-3].ConstVal->getType()->isInteger())
       GEN_ERROR("Shift constant expression requires integer operand!");
     CHECK_FOR_ERROR;
     yyval.ConstVal = ConstantExpr::get(yyvsp[-5].OtherOpVal, yyvsp[-3].ConstVal, yyvsp[-1].ConstVal);
@@ -4371,7 +4371,7 @@ case 261:
 {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*yyvsp[-3].TypeVal)->getDescription());
-    if (!(*yyvsp[-3].TypeVal)->isIntegral() && !(*yyvsp[-3].TypeVal)->isFloatingPoint() && 
+    if (!(*yyvsp[-3].TypeVal)->isInteger() && !(*yyvsp[-3].TypeVal)->isFloatingPoint() && 
         !isa<PackedType>((*yyvsp[-3].TypeVal).get()))
       GEN_ERROR(
         "Arithmetic operator requires integer, FP, or packed operands!");
@@ -4395,9 +4395,9 @@ case 262:
 {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*yyvsp[-3].TypeVal)->getDescription());
-    if (!(*yyvsp[-3].TypeVal)->isIntegral()) {
+    if (!(*yyvsp[-3].TypeVal)->isInteger()) {
       if (!isa<PackedType>(yyvsp[-3].TypeVal->get()) ||
-          !cast<PackedType>(yyvsp[-3].TypeVal->get())->getElementType()->isIntegral())
+          !cast<PackedType>(yyvsp[-3].TypeVal->get())->getElementType()->isInteger())
         GEN_ERROR("Logical operator requires integral operands!");
     }
     Value* tmpVal1 = getVal(*yyvsp[-3].TypeVal, yyvsp[-2].ValIDVal);
@@ -4447,7 +4447,7 @@ case 265:
 {
     if (yyvsp[0].ValueVal->getType() != Type::Int8Ty)
       GEN_ERROR("Shift amount must be i8 type!");
-    if (!yyvsp[-2].ValueVal->getType()->isIntegral())
+    if (!yyvsp[-2].ValueVal->getType()->isInteger())
       GEN_ERROR("Shift constant expression requires integer operand!");
     CHECK_FOR_ERROR;
     yyval.InstVal = new ShiftInst(yyvsp[-3].OtherOpVal, yyvsp[-2].ValueVal, yyvsp[0].ValueVal);

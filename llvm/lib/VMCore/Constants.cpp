@@ -849,7 +849,7 @@ ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
       return getTrue();
     else
       return getFalse();
-  return IntConstants->getOrCreate(Ty, V & Ty->getIntegralTypeMask());
+  return IntConstants->getOrCreate(Ty, V & Ty->getIntegerTypeMask());
 }
 
 //---- ConstantFP::get() implementation...
@@ -1463,16 +1463,16 @@ Constant *ConstantExpr::getTruncOrBitCast(Constant *C, const Type *Ty) {
 
 Constant *ConstantExpr::getPointerCast(Constant *S, const Type *Ty) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
-  assert((Ty->isIntegral() || isa<PointerType>(Ty)) && "Invalid cast");
+  assert((Ty->isInteger() || isa<PointerType>(Ty)) && "Invalid cast");
 
-  if (Ty->isIntegral())
+  if (Ty->isInteger())
     return getCast(Instruction::PtrToInt, S, Ty);
   return getCast(Instruction::BitCast, S, Ty);
 }
 
 Constant *ConstantExpr::getIntegerCast(Constant *C, const Type *Ty, 
                                        bool isSigned) {
-  assert(C->getType()->isIntegral() && Ty->isIntegral() && "Invalid cast");
+  assert(C->getType()->isInteger() && Ty->isInteger() && "Invalid cast");
   unsigned SrcBits = C->getType()->getPrimitiveSizeInBits();
   unsigned DstBits = Ty->getPrimitiveSizeInBits();
   Instruction::CastOps opcode =
@@ -1495,8 +1495,8 @@ Constant *ConstantExpr::getFPCast(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
-  assert(C->getType()->isIntegral() && "Trunc operand must be integer");
-  assert(Ty->isIntegral() && "Trunc produces only integral");
+  assert(C->getType()->isInteger() && "Trunc operand must be integer");
+  assert(Ty->isInteger() && "Trunc produces only integral");
   assert(C->getType()->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits()&&
          "SrcTy must be larger than DestTy for Trunc!");
 
@@ -1504,8 +1504,8 @@ Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty) {
-  assert(C->getType()->isIntegral() && "SEXt operand must be integral");
-  assert(Ty->isIntegral() && "SExt produces only integer");
+  assert(C->getType()->isInteger() && "SEXt operand must be integral");
+  assert(Ty->isInteger() && "SExt produces only integer");
   assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
          "SrcTy must be smaller than DestTy for SExt!");
 
@@ -1513,8 +1513,8 @@ Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getZExt(Constant *C, const Type *Ty) {
-  assert(C->getType()->isIntegral() && "ZEXt operand must be integral");
-  assert(Ty->isIntegral() && "ZExt produces only integer");
+  assert(C->getType()->isInteger() && "ZEXt operand must be integral");
+  assert(Ty->isInteger() && "ZExt produces only integer");
   assert(C->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()&&
          "SrcTy must be smaller than DestTy for ZExt!");
 
@@ -1536,37 +1536,37 @@ Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty) {
-  assert(C->getType()->isIntegral() && Ty->isFloatingPoint() &&
+  assert(C->getType()->isInteger() && Ty->isFloatingPoint() &&
          "This is an illegal uint to floating point cast!");
   return getFoldedCast(Instruction::UIToFP, C, Ty);
 }
 
 Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty) {
-  assert(C->getType()->isIntegral() && Ty->isFloatingPoint() &&
+  assert(C->getType()->isInteger() && Ty->isFloatingPoint() &&
          "This is an illegal sint to floating point cast!");
   return getFoldedCast(Instruction::SIToFP, C, Ty);
 }
 
 Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty) {
-  assert(C->getType()->isFloatingPoint() && Ty->isIntegral() &&
+  assert(C->getType()->isFloatingPoint() && Ty->isInteger() &&
          "This is an illegal floating point to uint cast!");
   return getFoldedCast(Instruction::FPToUI, C, Ty);
 }
 
 Constant *ConstantExpr::getFPToSI(Constant *C, const Type *Ty) {
-  assert(C->getType()->isFloatingPoint() && Ty->isIntegral() &&
+  assert(C->getType()->isFloatingPoint() && Ty->isInteger() &&
          "This is an illegal floating point to sint cast!");
   return getFoldedCast(Instruction::FPToSI, C, Ty);
 }
 
 Constant *ConstantExpr::getPtrToInt(Constant *C, const Type *DstTy) {
   assert(isa<PointerType>(C->getType()) && "PtrToInt source must be pointer");
-  assert(DstTy->isIntegral() && "PtrToInt destination must be integral");
+  assert(DstTy->isInteger() && "PtrToInt destination must be integral");
   return getFoldedCast(Instruction::PtrToInt, C, DstTy);
 }
 
 Constant *ConstantExpr::getIntToPtr(Constant *C, const Type *DstTy) {
-  assert(C->getType()->isIntegral() && "IntToPtr source must be integral");
+  assert(C->getType()->isInteger() && "IntToPtr source must be integral");
   assert(isa<PointerType>(DstTy) && "IntToPtr destination must be a pointer");
   return getFoldedCast(Instruction::IntToPtr, C, DstTy);
 }
@@ -1649,15 +1649,15 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Sub:
   case Instruction::Mul: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isIntegral() || C1->getType()->isFloatingPoint() ||
+    assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint() ||
             isa<PackedType>(C1->getType())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::UDiv: 
   case Instruction::SDiv: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isIntegral() || (isa<PackedType>(C1->getType()) &&
-      cast<PackedType>(C1->getType())->getElementType()->isIntegral())) &&
+    assert((C1->getType()->isInteger() || (isa<PackedType>(C1->getType()) &&
+      cast<PackedType>(C1->getType())->getElementType()->isInteger())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FDiv:
@@ -1669,8 +1669,8 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::URem: 
   case Instruction::SRem: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isIntegral() || (isa<PackedType>(C1->getType()) &&
-      cast<PackedType>(C1->getType())->getElementType()->isIntegral())) &&
+    assert((C1->getType()->isInteger() || (isa<PackedType>(C1->getType()) &&
+      cast<PackedType>(C1->getType())->getElementType()->isInteger())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FRem:
@@ -1683,14 +1683,14 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Or:
   case Instruction::Xor:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isIntegral() || isa<PackedType>(C1->getType())) &&
+    assert((C1->getType()->isInteger() || isa<PackedType>(C1->getType())) &&
            "Tried to create a logical operation on a non-integral type!");
     break;
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
     assert(C2->getType() == Type::Int8Ty && "Shift should be by ubyte!");
-    assert(C1->getType()->isIntegral() &&
+    assert(C1->getType()->isInteger() &&
            "Tried to create a shift operation on a non-integer type!");
     break;
   default:
@@ -1732,7 +1732,7 @@ Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
           Opcode == Instruction::LShr  ||
           Opcode == Instruction::AShr) &&
          "Invalid opcode in binary constant expression");
-  assert(C1->getType()->isIntegral() && C2->getType() == Type::Int8Ty &&
+  assert(C1->getType()->isInteger() && C2->getType() == Type::Int8Ty &&
          "Invalid operand types for Shift constant expr!");
 
   if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))

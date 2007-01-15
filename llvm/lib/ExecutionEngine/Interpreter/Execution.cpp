@@ -891,7 +891,7 @@ void Interpreter::popStackAndReturnValueToCaller (const Type *RetTy,
   ECStack.pop_back();
 
   if (ECStack.empty()) {  // Finished main.  Put result into exit code...
-    if (RetTy && RetTy->isIntegral()) {          // Nonvoid return type?
+    if (RetTy && RetTy->isInteger()) {          // Nonvoid return type?
       ExitValue = Result;   // Capture the exit value of the program
     } else {
       memset(&ExitValue, 0, sizeof(ExitValue));
@@ -1170,7 +1170,7 @@ void Interpreter::visitCallSite(CallSite CS) {
     // this by zero or sign extending the value as appropriate according to the
     // source type.
     const Type *Ty = V->getType();
-    if (Ty->isIntegral()) {
+    if (Ty->isInteger()) {
       if (Ty->getPrimitiveSizeInBits() == 1)
         ArgVals.back().Int32Val = ArgVals.back().Int1Val;
       else if (Ty->getPrimitiveSizeInBits() <= 8)
@@ -1541,14 +1541,14 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
   if (isa<PointerType>(DstTy)) {
     assert(isa<PointerType>(SrcTy) && "Invalid BitCast");
     Dest.PointerVal = Src.PointerVal;
-  } else if (DstTy->isIntegral()) {
+  } else if (DstTy->isInteger()) {
     const IntegerType *DITy = cast<IntegerType>(DstTy);
     unsigned DBitWidth = DITy->getBitWidth();
     if (SrcTy == Type::FloatTy) {
       Dest.Int32Val = FloatToBits(Src.FloatVal);
     } else if (SrcTy == Type::DoubleTy) {
       Dest.Int64Val = DoubleToBits(Src.DoubleVal);
-    } else if (SrcTy->isIntegral()) {
+    } else if (SrcTy->isInteger()) {
       const IntegerType *SITy = cast<IntegerType>(SrcTy);
       unsigned SBitWidth = SITy->getBitWidth();
       assert(SBitWidth <= 64  && "Integer types > 64 bits not supported");
@@ -1566,12 +1566,12 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
     } else 
       assert(0 && "Invalid BitCast");
   } else if (DstTy == Type::FloatTy) {
-    if (SrcTy->isIntegral())
+    if (SrcTy->isInteger())
       Dest.FloatVal = BitsToFloat(Src.Int32Val);
     else
       Dest.FloatVal = Src.FloatVal;
   } else if (DstTy == Type::DoubleTy) {
-    if (SrcTy->isIntegral())
+    if (SrcTy->isInteger())
       Dest.DoubleVal = BitsToDouble(Src.Int64Val);
     else
       Dest.DoubleVal = Src.DoubleVal;

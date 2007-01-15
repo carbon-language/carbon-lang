@@ -1852,7 +1852,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         Value *CompVal = 0;
         std::vector<ConstantInt*> Values;
         bool TrueWhenEqual = GatherValueComparisons(Cond, CompVal, Values);
-        if (CompVal && CompVal->getType()->isIntegral()) {
+        if (CompVal && CompVal->getType()->isInteger()) {
           // There might be duplicate constants in the list, which the switch
           // instruction can't handle, remove them now.
           std::sort(Values.begin(), Values.end(), ConstantIntOrdering());

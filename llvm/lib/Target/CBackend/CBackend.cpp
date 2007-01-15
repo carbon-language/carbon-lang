@@ -366,7 +366,7 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
 std::ostream &
 CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
                             const std::string &NameSoFar) {
-  assert((Ty->isPrimitiveType() || Ty->isIntegral()) && 
+  assert((Ty->isPrimitiveType() || Ty->isInteger()) && 
          "Invalid type for printSimpleType");
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:   return Out << "void " << NameSoFar;
@@ -399,7 +399,7 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
 std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  bool isSigned, const std::string &NameSoFar,
                                  bool IgnoreName) {
-  if (Ty->isPrimitiveType() || Ty->isIntegral()) {
+  if (Ty->isPrimitiveType() || Ty->isInteger()) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
@@ -1022,7 +1022,7 @@ bool CWriter::printConstExprCast(const ConstantExpr* CE) {
   }
   if (NeedsExplicitCast) {
     Out << "((";
-    if (Ty->isIntegral() && Ty != Type::Int1Ty)
+    if (Ty->isInteger() && Ty != Type::Int1Ty)
       printSimpleType(Out, Ty, TypeIsSigned);
     else
       printType(Out, Ty); // not integer, sign doesn't matter
@@ -1225,7 +1225,7 @@ void CWriter::writeOperandWithCast(Value* Operand, ICmpInst::Predicate predicate
   // operand.
   if (shouldCast) {
     Out << "((";
-    if (OpTy->isIntegral() && OpTy != Type::Int1Ty)
+    if (OpTy->isInteger() && OpTy != Type::Int1Ty)
       printSimpleType(Out, OpTy, castIsSigned);
     else
       printType(Out, OpTy); // not integer, sign doesn't matter
@@ -1727,7 +1727,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
 void CWriter::printContainedStructs(const Type *Ty,
                                     std::set<const StructType*> &StructPrinted){
   // Don't walk through pointers.
-  if (isa<PointerType>(Ty) || Ty->isPrimitiveType() || Ty->isIntegral()) return;
+  if (isa<PointerType>(Ty) || Ty->isPrimitiveType() || Ty->isInteger()) return;
   
   // Print all contained types first.
   for (Type::subtype_iterator I = Ty->subtype_begin(),
@@ -1848,8 +1848,8 @@ static inline bool isFPIntBitCast(const Instruction &I) {
     return false;
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DstTy = I.getType();
-  return (SrcTy->isFloatingPoint() && DstTy->isIntegral()) ||
-         (DstTy->isFloatingPoint() && SrcTy->isIntegral());
+  return (SrcTy->isFloatingPoint() && DstTy->isInteger()) ||
+         (DstTy->isFloatingPoint() && SrcTy->isInteger());
 }
 
 void CWriter::printFunction(Function &F) {
