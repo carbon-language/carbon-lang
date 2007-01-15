@@ -762,3 +762,71 @@ int f(char *p) {
 We should inline lrintf and probably other libc functions.
 
 //===---------------------------------------------------------------------===//
+
+Start using the flags more.  For example, compile:
+
+int add_zf(int *x, int y, int a, int b) {
+     if ((*x += y) == 0)
+          return a;
+     else
+          return b;
+}
+
+to:
+       addl    %esi, (%rdi)
+       movl    %edx, %eax
+       cmovne  %ecx, %eax
+       ret
+instead of:
+
+_add_zf:
+        addl (%rdi), %esi
+        movl %esi, (%rdi)
+        testl %esi, %esi
+        cmove %edx, %ecx
+        movl %ecx, %eax
+        ret
+
+and:
+
+int add_zf(int *x, int y, int a, int b) {
+     if ((*x + y) < 0)
+          return a;
+     else
+          return b;
+}
+
+to:
+
+add_zf:
+        addl    (%rdi), %esi
+        movl    %edx, %eax
+        cmovns  %ecx, %eax
+        ret
+
+instead of:
+
+_add_zf:
+        addl (%rdi), %esi
+        testl %esi, %esi
+        cmovs %edx, %ecx
+        movl %ecx, %eax
+        ret
+
+//===---------------------------------------------------------------------===//
+
+This:
+#include <math.h>
+int foo(double X) { return isnan(X); }
+
+compiles to (-m64):
+
+_foo:
+        pxor %xmm1, %xmm1
+        ucomisd %xmm1, %xmm0
+        setp %al
+        movzbl %al, %eax
+        ret
+
+the pxor is not needed, we could compare the value against itself.
+
