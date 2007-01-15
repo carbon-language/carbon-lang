@@ -48,7 +48,7 @@
   return sym
 
 #define RET_TY(sym,OldTY,NewTY,sign) \
-  Upgradelval.Type = TypeInfo::get(NewTY, OldTY); \
+  Upgradelval.Type = getTypeInfo(NewTY, OldTY); \
   return sym
 
 #define YY_NEVER_INTERACTIVE 1
