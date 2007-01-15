@@ -107,7 +107,7 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
 /// LowerBSWAP - Emit the code to lower bswap of V before the specified
 /// instruction IP.
 static Value *LowerBSWAP(Value *V, Instruction *IP) {
-  assert(V->getType()->isInteger() && "Can't bswap a non-integer type!");
+  assert(V->getType()->isIntegral() && "Can't bswap a non-integer type!");
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   
@@ -193,7 +193,7 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
 /// LowerCTPOP - Emit the code to lower ctpop of V before the specified
 /// instruction IP.
 static Value *LowerCTPOP(Value *V, Instruction *IP) {
-  assert(V->getType()->isInteger() && "Can't ctpop a non-integer type!");
+  assert(V->getType()->isIntegral() && "Can't ctpop a non-integer type!");
 
   static const uint64_t MaskValues[6] = {
     0x5555555555555555ULL, 0x3333333333333333ULL,

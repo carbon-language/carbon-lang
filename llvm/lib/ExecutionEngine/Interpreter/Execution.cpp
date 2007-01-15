@@ -1541,14 +1541,14 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
   if (isa<PointerType>(DstTy)) {
     assert(isa<PointerType>(SrcTy) && "Invalid BitCast");
     Dest.PointerVal = Src.PointerVal;
-  } else if (DstTy->isInteger()) {
+  } else if (DstTy->isIntegral()) {
     const IntegerType *DITy = cast<IntegerType>(DstTy);
     unsigned DBitWidth = DITy->getBitWidth();
     if (SrcTy == Type::FloatTy) {
       Dest.Int32Val = FloatToBits(Src.FloatVal);
     } else if (SrcTy == Type::DoubleTy) {
       Dest.Int64Val = DoubleToBits(Src.DoubleVal);
-    } else if (SrcTy->isInteger()) {
+    } else if (SrcTy->isIntegral()) {
       const IntegerType *SITy = cast<IntegerType>(SrcTy);
       unsigned SBitWidth = SITy->getBitWidth();
       assert(SBitWidth <= 64  && "Integer types > 64 bits not supported");
@@ -1566,12 +1566,12 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
     } else 
       assert(0 && "Invalid BitCast");
   } else if (DstTy == Type::FloatTy) {
-    if (SrcTy->isInteger())
+    if (SrcTy->isIntegral())
       Dest.FloatVal = BitsToFloat(Src.Int32Val);
     else
       Dest.FloatVal = Src.FloatVal;
   } else if (DstTy == Type::DoubleTy) {
-    if (SrcTy->isInteger())
+    if (SrcTy->isIntegral())
       Dest.DoubleVal = BitsToDouble(Src.Int64Val);
     else
       Dest.DoubleVal = Src.DoubleVal;
