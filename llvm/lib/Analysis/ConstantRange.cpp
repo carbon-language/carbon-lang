@@ -31,7 +31,7 @@
 using namespace llvm;
 
 static ConstantInt *getMaxValue(const Type *Ty, bool isSigned = false) {
-  if (Ty->isInteger()) {
+  if (Ty->isIntegral()) {
     if (isSigned) {
       // Calculate 011111111111111...
       unsigned TypeBits = Ty->getPrimitiveSizeInBits();
@@ -46,7 +46,7 @@ static ConstantInt *getMaxValue(const Type *Ty, bool isSigned = false) {
 
 // Static constructor to create the minimum constant for an integral type...
 static ConstantInt *getMinValue(const Type *Ty, bool isSigned = false) {
-  if (Ty->isInteger()) {
+  if (Ty->isIntegral()) {
     if (isSigned) {
       // Calculate 1111111111000000000000
       unsigned TypeBits = Ty->getPrimitiveSizeInBits();
