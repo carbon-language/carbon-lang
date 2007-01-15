@@ -8237,6 +8237,24 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     ++NumCombined;
     return 0;
   }
+  
+  // If the RHS is an alloca with a single use, zapify the store, making the
+  // alloca dead.
+  if (Ptr->hasOneUse()) {
+    if (isa<AllocaInst>(Ptr)) {
+      EraseInstFromFunction(SI);
+      ++NumCombined;
+      return 0;
+    }
+    
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr))
+      if (isa<AllocaInst>(GEP->getOperand(0)) &&
+          GEP->getOperand(0)->hasOneUse()) {
+        EraseInstFromFunction(SI);
+        ++NumCombined;
+        return 0;
+      }
+  }
 
   // Do really simple DSE, to catch cases where there are several consequtive
   // stores to the same location, separated by a few arithmetic operations. This
