@@ -687,27 +687,29 @@ a power of 2.</p>
   type so two functions types that differ only by the parameter attributes 
   are different function types.</p>
 
-  <p>Parameter attributes consist of an at sign (@) followed by either a single
-  keyword or a comma separate list of keywords enclosed in parentheses. For
+  <p>Parameter attributes are simple keywords that follow the type specified. If
+  multiple parameter attributes are needed, they are space separated. For 
   example:</p><pre>
-    %someFunc = i16 @zext (i8 @(sext) %someParam)
-    %someFunc = i16 @zext (i8 @zext %someParam)</pre>
+    %someFunc = i16 (i8 sext %someParam) zext
+    %someFunc = i16 (i8 zext %someParam) zext</pre>
   <p>Note that the two function types above are unique because the parameter has
-  a different attribute (@sext in the first one, @zext in the second).</p>
+  a different attribute (sext in the first one, zext in the second). Also note
+  that the attribute for the function result (zext) comes immediately after the
+  argument list.</p>
 
   <p>Currently, only the following parameter attributes are defined:</p>
   <dl>
-    <dt><tt>@zext</tt></dt>
+    <dt><tt>zext</tt></dt>
     <dd>This indicates that the parameter should be zero extended just before
     a call to this function.</dd>
-    <dt><tt>@sext</tt></dt>
+    <dt><tt>sext</tt></dt>
     <dd>This indicates that the parameter should be sign extended just before
     a call to this function.</dd>
   </dl>
 
   <p>The current motivation for parameter attributes is to enable the sign and
   zero extend information necessary for the C calling convention to be passed
-  from the front end to LLVM. The <tt>@zext</tt> and <tt>@sext</tt> attributes
+  from the front end to LLVM. The <tt>zext</tt> and <tt>sext</tt> attributes
   are used by the code generator to perform the required extension. However, 
   parameter attributes are an orthogonal feature to calling conventions and
   may be used for other purposes in the future.</p>
