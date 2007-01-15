@@ -1,6 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep phi
 
 implementation
@@ -63,5 +64,16 @@ BB1:
 BB2:
         %B = phi uint [%X, %BB0], [%Y, %BB1] ;; Suck casts into phi
         ret uint %B
+}
+
+int %test7(int %A, bool %b) {
+BB0: br label %Loop
+
+Loop:
+        %B = phi int [%A, %BB0], [%C, %Loop]    ; PHI is dead.
+	%C = add int %B, 123
+        br bool %b, label %Loop, label %Exit
+Exit:
+        ret int 0
 }
 
