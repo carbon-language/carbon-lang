@@ -269,13 +269,19 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
   for (TypeSymbolTable::iterator TI = TST.begin(), TE = TST.end();
        TI != TE; ) {
     TypeSymbolTable::iterator I = TI++;
-
-    // If this is not used, remove it from the symbol table.
-    std::set<const Type *>::iterator UTI = UT.find(I->second);
-    if (UTI == UT.end())
+    
+    // If this isn't a struct type, remove it from our set of types to name.
+    // This simplifies emission later.
+    if (!isa<StructType>(I->second)) {
       TST.remove(I);
-    else
-      UT.erase(UTI);    // Only keep one name for this type.
+    } else {
+      // If this is not used, remove it from the symbol table.
+      std::set<const Type *>::iterator UTI = UT.find(I->second);
+      if (UTI == UT.end())
+        TST.remove(I);
+      else
+        UT.erase(UTI);    // Only keep one name for this type.
+    }
   }
 
   // UT now contains types that are not named.  Loop over it, naming
@@ -1694,10 +1700,11 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
 
   Out << '\n';
 
-  // Now we can print out typedefs...
+  // Now we can print out typedefs.  Above, we guaranteed that this can only be
+  // for struct types.
   Out << "/* Typedefs */\n";
   for (I = TST.begin(); I != End; ++I) {
-    const Type *Ty = cast<Type>(I->second);
+    const StructType *Ty = cast<StructType>(I->second);
     std::string Name = "l_" + Mang->makeNameProper(I->first);
     Out << "typedef ";
     printType(Out, Ty, false, Name);
