@@ -137,12 +137,12 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     DwarfRangesSection =  "\t.section\t.debug_ranges,\"dr\"";
     DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"dr\"";
     break;
-    
-    break;
+
   case X86Subtarget::isWindows:
     GlobalPrefix = "_";
     HasDotTypeDotSizeDirective = false;
     break;
+
   default: break;
   }
   
@@ -169,6 +169,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     TextSectionStartSuffix = "\tsegment 'CODE'";
     DataSectionStartSuffix = "\tsegment 'DATA'";
     SectionEndDirectiveSuffix = "\tends\n";
+
+    AssemblerDialect = X86_INTEL;
   }
 }
 
