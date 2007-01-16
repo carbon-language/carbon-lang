@@ -16,6 +16,7 @@
 
 #include "X86AsmPrinter.h"
 #include "X86ATTAsmPrinter.h"
+#include "X86COFF.h"
 #include "X86IntelAsmPrinter.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
@@ -249,6 +250,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     if (I->hasHiddenVisibility())
       if (const char *Directive = TAI->getHiddenDirective())
         O << Directive << name << "\n";
+    
+    if (Subtarget->isTargetELF())
+      O << "\t.type " << name << ",@object\n";
   }
   
   // Output linker support code for dllexported globals
@@ -308,7 +312,19 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     O << "\t.subsections_via_symbols\n";
-  } else if (Subtarget->isTargetELF() || Subtarget->isTargetCygMing()) {
+  } else if (Subtarget->isTargetCygMing()) {
+    // Emit type information for external functions
+    for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
+         i != e; ++i) {
+      O << "\t.def\t " << *i
+        << ";\t.scl\t" << COFF::C_EXT
+        << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
+        << ";\t.endef\n";
+    }
+    
+    // Emit final debug information.
+    DW.EndModule();    
+  } else if (Subtarget->isTargetELF()) {
     // Emit final debug information.
     DW.EndModule();
   }

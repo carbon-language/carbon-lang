@@ -16,6 +16,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "X86ATTAsmPrinter.h"
 #include "X86.h"
+#include "X86COFF.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
 #include "X86TargetAsmInfo.h"
@@ -128,7 +129,17 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (F->hasHiddenVisibility())
     if (const char *Directive = TAI->getHiddenDirective())
       O << Directive << CurrentFnName << "\n";
-  
+
+  if (Subtarget->isTargetELF())
+    O << "\t.type " << CurrentFnName << ",@function\n";
+  else if (Subtarget->isTargetCygMing()) {
+    O << "\t.def\t " << CurrentFnName
+      << ";\t.scl\t" <<
+      (F->getLinkage() == Function::InternalLinkage ? COFF::C_STAT : COFF::C_EXT)
+      << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
+      << ";\t.endef\n";
+  }
+
   O << CurrentFnName << ":\n";
   // Add some workaround for linkonce linkage on Cygwin\MinGW
   if (Subtarget->isTargetCygMing() &&
@@ -289,10 +300,16 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       }       
       O << Name;
 
-      if (Subtarget->isPICStyleGOT() && isCallOp && isa<Function>(GV)) {
-        // Assemble call via PLT for non-local symbols
-        if (!isHidden || isExt)
-          O << "@PLT";
+      if (isCallOp && isa<Function>(GV)) {
+        if (Subtarget->isPICStyleGOT()) {
+          // Assemble call via PLT for non-local symbols
+          if (!isHidden || GV->isExternal())
+            O << "@PLT";
+        }
+        if (Subtarget->isTargetCygMing() && GV->isExternal()) {
+          // Save function name for later type emission
+          FnStubs.insert(Name);
+        }
       }
     }
 
