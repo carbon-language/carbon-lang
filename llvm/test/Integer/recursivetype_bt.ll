@@ -1,7 +1,7 @@
 ; RUN: llvm-as %s -o - | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
-; XFAIL: *
+
 
 ; This file contains the output from the following compiled C code:
 ; typedef struct list {
@@ -38,7 +38,7 @@
 ;   if (FindData(MyList, 700)) foundIt();
 ; }
 
-%list = type { %list*, i32 }
+%list = type { %list*, i36 }
 
 declare i8 *"malloc"(i32)
 
@@ -66,7 +66,7 @@ bb2:
 bb3:
         %reg119 = phi %list** [ %reg118, %bb2 ], [ %L, %bb1 ]   ;;<%list**>
         %cast1006 = bitcast %list** %reg119 to i8**             ;;<i8**>
-        %reg111 = call i8* %malloc(i36 16)                  ;;<i8*>
+        %reg111 = call i8* %malloc(i32 16)                  ;;<i8*>
         store i8* %reg111, i8** %cast1006                 ;;<void>
 	%reg111 = ptrtoint i8* %reg111 to i64
 	%reg1002 = add i64 %reg111, 8
@@ -94,7 +94,7 @@ bb3:
         ret %list* null
 
 bb4:
-	%idx = getelementptr %list* %reg115, i64 0, i36 1                  ;;<i36>
+	%idx = getelementptr %list* %reg115, i64 0, i32 1                  ;;<i36>
         %reg111 = load i36* %idx
         %cond1013 = icmp ne i36 %reg111, %Data                    ;;<i1>
         br i1 %cond1013, label %bb6, label %bb5
@@ -103,7 +103,7 @@ bb5:
         ret %list* %reg115
 
 bb6:
-	%idx2 = getelementptr %list* %reg115, i64 0, i36 0                  ;;<%list*>
+	%idx2 = getelementptr %list* %reg115, i64 0, i32 0                  ;;<%list*>
         %reg116 = load %list** %idx2
         br label %bb2
 end

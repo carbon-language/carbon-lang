@@ -1,7 +1,7 @@
 ; RUN: llvm-as %s -o - | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
-; XFAIL: *
+
 
 
 %MyVar     = external global i27
@@ -20,7 +20,7 @@ implementation
 define i27 "foo"(i27 %blah)
 begin
 	store i27 5, i27 *%MyVar
-	%idx = getelementptr { \2 *, i27 } * %MyIntList, i64 0, i27 1
+        %idx = getelementptr { \2 *, i27 } * %MyIntList, i64 0, i32 1
   	store i27 12, i27* %idx
   	ret i27 %blah
 end

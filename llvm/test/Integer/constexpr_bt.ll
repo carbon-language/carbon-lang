@@ -1,7 +1,7 @@
 ; RUN: llvm-as %s -o - | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
-; XFAIL: *
+
 
 ; This testcase is for testing expressions constructed from
 ; constant values, including constant pointers to globals.
@@ -11,8 +11,8 @@
 ;; Test constant cast expressions
 ;;-------------------------------
 
-global i63 0x00001     ; hexadecimal unsigned integer constants
-global i63  0x012312   ; hexadecimal signed integer constants
+global i63 u0x00001     ; hexadecimal unsigned integer constants
+global i63  s0x012312   ; hexadecimal signed integer constants
 
 %t2 = global i33* %t1                             ;; Forward reference without cast
 %t3 = global i33* bitcast (i33* %t1 to i33*)       ;; Forward reference with cast
@@ -21,7 +21,8 @@ global i63  0x012312   ; hexadecimal signed integer constants
 %t5 = global i33** %t3                           ;; Reference to a previous cast
 %t6 = global i33*** %t4
 %t7 = global float* inttoptr (i32 12345678 to float*) ;; Cast ordinary value to ptr
-%t9 = global i33 fp2uint (float sitofp (i33 8 to float) to i33) ;; Nested cast expression
+%t9 = global i33 fptosi (float sitofp (i33 8 to float) to i33) ;; Nested cast expression
+
 
 global i32* bitcast (float* %0 to i32*)   ;; Forward numeric reference
 global float* %0                       ;; Duplicate forward numeric reference
@@ -40,7 +41,7 @@ global float 0.0
 %char5  = global i8* getelementptr([11x i8]* %somestr, i64 0, i64 5)
 
 ;; cast of getelementptr
-%char8a = global i33* sext (i8* getelementptr([11x i8]* %somestr, i64 0, i64 8) to i33*)
+%char8a = global i33* bitcast (i8* getelementptr([11x i8]* %somestr, i64 0, i64 8) to i33*)
 
 ;; getelementptr containing casts
 %char8b = global i8* getelementptr([11x i8]* %somestr, i64 sext (i8 0 to i64), i64 sext (i8 8 to i64))

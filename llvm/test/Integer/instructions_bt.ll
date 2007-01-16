@@ -1,21 +1,21 @@
 ; RUN: llvm-as %s -o - | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
-; XFAIL: *
+
 
 define i39 %test_extractelement(<4 x i39> %V) {
-        %R = extractelement <4 x i39> %V, i39 1
+        %R = extractelement <4 x i39> %V, i32 1
         ret i39 %R
 }
 
 define <4 x i39> %test_insertelement(<4 x i39> %V) {
-        %R = insertelement <4 x i39> %V, i39 0, i39 0
+        %R = insertelement <4 x i39> %V, i39 0, i32 0
         ret <4 x i39> %R
 }
 
 define <4 x i39> %test_shufflevector_u(<4 x i39> %V) {
         %R = shufflevector <4 x i39> %V, <4 x i39> %V, 
-                  <4 x i39> < i39 1, i39 undef, i39 7, i39 2>
+                  <4 x i32> < i32 1, i32 undef, i32 7, i32 2>
         ret <4 x i39> %R
 }
 
