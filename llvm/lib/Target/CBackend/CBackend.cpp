@@ -272,7 +272,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
     
     // If this isn't a struct type, remove it from our set of types to name.
     // This simplifies emission later.
-    if (!isa<StructType>(I->second)) {
+    if (!isa<StructType>(I->second) && !isa<OpaqueType>(I->second)) {
       TST.remove(I);
     } else {
       // If this is not used, remove it from the symbol table.
@@ -1691,23 +1691,21 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
 
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
-  for (; I != End; ++I)
-    if (const Type *STy = dyn_cast<StructType>(I->second)) {
-      std::string Name = "struct l_" + Mang->makeNameProper(I->first);
-      Out << Name << ";\n";
-      TypeNames.insert(std::make_pair(STy, Name));
-    }
+  for (; I != End; ++I) {
+    std::string Name = "struct l_" + Mang->makeNameProper(I->first);
+    Out << Name << ";\n";
+    TypeNames.insert(std::make_pair(I->second, Name));
+  }
 
   Out << '\n';
 
   // Now we can print out typedefs.  Above, we guaranteed that this can only be
-  // for struct types.
+  // for struct or opaque types.
   Out << "/* Typedefs */\n";
   for (I = TST.begin(); I != End; ++I) {
-    const StructType *Ty = cast<StructType>(I->second);
     std::string Name = "l_" + Mang->makeNameProper(I->first);
     Out << "typedef ";
-    printType(Out, Ty, false, Name);
+    printType(Out, I->second, false, Name);
     Out << ";\n";
   }
 
