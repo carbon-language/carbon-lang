@@ -387,3 +387,31 @@ void good(unsigned x)
 to enable further optimizations.
 
 //===---------------------------------------------------------------------===//
+
+Consider:
+
+typedef unsigned U32;
+typedef unsigned long long U64;
+int test (U32 *inst, U64 *regs) {
+    U64 effective_addr2;
+    U32 temp = *inst;
+    int r1 = (temp >> 20) & 0xf;
+    int b2 = (temp >> 16) & 0xf;
+    effective_addr2 = temp & 0xfff;
+    if (b2) effective_addr2 += regs[b2];
+    b2 = (temp >> 12) & 0xf;
+    if (b2) effective_addr2 += regs[b2];
+    effective_addr2 &= regs[4];
+     if ((effective_addr2 & 3) == 0)
+        return 1;
+    return 0;
+}
+
+Note that only the low 2 bits of effective_addr2 are used.  On 32-bit systems,
+we don't eliminate the computation of the top half of effective_addr2 because
+we don't have whole-function selection dags.  On x86, this means we use one
+extra register for the function when effective_addr2 is declared as U64 than
+when it is declared U32.
+
+//===---------------------------------------------------------------------===//
+
