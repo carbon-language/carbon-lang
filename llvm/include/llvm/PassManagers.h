@@ -86,6 +86,13 @@ class llvm::PMStack;
 
 namespace llvm {
 
+/// FunctionPassManager and PassManager, two top level managers, serve 
+/// as the public interface of pass manager infrastructure.
+enum TopLevelManagerType {
+  TLM_Function,  // FunctionPassManager
+  TLM_Pass       // PassManager
+};
+    
 //===----------------------------------------------------------------------===//
 // PMTopLevelManager
 //
@@ -118,6 +125,7 @@ public:
   /// then return NULL.
   Pass *findAnalysisPass(AnalysisID AID);
 
+  PMTopLevelManager(enum TopLevelManagerType t);
   virtual ~PMTopLevelManager(); 
 
   /// Add immutable pass and initialize it.

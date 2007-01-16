@@ -112,7 +112,8 @@ class FunctionPassManagerImpl : public Pass,
                                 public PMTopLevelManager {
 public:
 
-  FunctionPassManagerImpl(int Depth) : PMDataManager(Depth) { }
+  FunctionPassManagerImpl(int Depth) : PMDataManager(Depth),
+                                       PMTopLevelManager(TLM_Function) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -151,13 +152,6 @@ public:
       addImmutablePass(IP);
       recordAvailableAnalysis(IP);
     } else {
-      // Assign manager
-      if (activeStack.empty()) {
-        FPPassManager *FPP = new FPPassManager(getDepth() + 1);
-        FPP->setTopLevelManager(this->getTopLevelManager());
-        addPassManager(FPP);
-        activeStack.push(FPP);
-      }
       P->assignPassManager(activeStack);
     }
 
@@ -220,7 +214,8 @@ class PassManagerImpl : public Pass,
 
 public:
 
-  PassManagerImpl(int Depth) : PMDataManager(Depth) { }
+  PassManagerImpl(int Depth) : PMDataManager(Depth),
+                               PMTopLevelManager(TLM_Pass) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -251,15 +246,6 @@ public:
       addImmutablePass(IP);
       recordAvailableAnalysis(IP);
     } else {
-
-      // Assign manager
-      if (activeStack.empty()) {
-        MPPassManager *MPP = new MPPassManager(getDepth() + 1);
-        MPP->setTopLevelManager(this->getTopLevelManager());
-        addPassManager(MPP);
-        activeStack.push(MPP);
-      }
-      
       P->assignPassManager(activeStack);
     }
 
@@ -330,6 +316,23 @@ static TimingInfo *TheTimeInfo;
 
 //===----------------------------------------------------------------------===//
 // PMTopLevelManager implementation
+
+/// Initialize top level manager. Create first pass manager.
+PMTopLevelManager::PMTopLevelManager (enum TopLevelManagerType t) {
+
+  if (t == TLM_Pass) {
+    MPPassManager *MPP = new MPPassManager(1);
+    MPP->setTopLevelManager(this);
+    addPassManager(MPP);
+    activeStack.push(MPP);
+  } 
+  else if (t == TLM_Function) {
+    FPPassManager *FPP = new FPPassManager(1);
+    FPP->setTopLevelManager(this);
+    addPassManager(FPP);
+    activeStack.push(FPP);
+  } 
+}
 
 /// Set pass P as the last user of the given analysis passes.
 void PMTopLevelManager::setLastUser(std::vector<Pass *> &AnalysisPasses, 
