@@ -3709,36 +3709,52 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
         // the right thing to do, but nothing uses srcvalues now.  When they do,
         // turn SrcValue into a list of locations.
         SDOperand Addr;
-        if (TheSelect->getOpcode() == ISD::SELECT)
-          Addr = DAG.getNode(ISD::SELECT, LLD->getBasePtr().getValueType(),
-                             TheSelect->getOperand(0), LLD->getBasePtr(),
-                             RLD->getBasePtr());
-        else
-          Addr = DAG.getNode(ISD::SELECT_CC, LLD->getBasePtr().getValueType(),
+        if (TheSelect->getOpcode() == ISD::SELECT) {
+          // Check that the condition doesn't reach either load.  If so, folding
+          // this will induce a cycle into the DAG.
+          if (!LLD->isPredecessor(TheSelect->getOperand(0).Val) &&
+              !RLD->isPredecessor(TheSelect->getOperand(0).Val)) {
+            Addr = DAG.getNode(ISD::SELECT, LLD->getBasePtr().getValueType(),
+                               TheSelect->getOperand(0), LLD->getBasePtr(),
+                               RLD->getBasePtr());
+          }
+        } else {
+          // Check that the condition doesn't reach either load.  If so, folding
+          // this will induce a cycle into the DAG.
+          if (!LLD->isPredecessor(TheSelect->getOperand(0).Val) &&
+              !RLD->isPredecessor(TheSelect->getOperand(0).Val) &&
+              !LLD->isPredecessor(TheSelect->getOperand(1).Val) &&
+              !RLD->isPredecessor(TheSelect->getOperand(1).Val)) {
+            Addr = DAG.getNode(ISD::SELECT_CC, LLD->getBasePtr().getValueType(),
                              TheSelect->getOperand(0),
                              TheSelect->getOperand(1), 
                              LLD->getBasePtr(), RLD->getBasePtr(),
                              TheSelect->getOperand(4));
-      
-        SDOperand Load;
-        if (LLD->getExtensionType() == ISD::NON_EXTLOAD)
-          Load = DAG.getLoad(TheSelect->getValueType(0), LLD->getChain(),
-                             Addr,LLD->getSrcValue(), LLD->getSrcValueOffset());
-        else {
-          Load = DAG.getExtLoad(LLD->getExtensionType(),
-                                TheSelect->getValueType(0),
-                                LLD->getChain(), Addr, LLD->getSrcValue(),
-                                LLD->getSrcValueOffset(),
-                                LLD->getLoadedVT());
+          }
         }
-        // Users of the select now use the result of the load.
-        CombineTo(TheSelect, Load);
-      
-        // Users of the old loads now use the new load's chain.  We know the
-        // old-load value is dead now.
-        CombineTo(LHS.Val, Load.getValue(0), Load.getValue(1));
-        CombineTo(RHS.Val, Load.getValue(0), Load.getValue(1));
-        return true;
+        
+        if (Addr.Val) {
+          SDOperand Load;
+          if (LLD->getExtensionType() == ISD::NON_EXTLOAD)
+            Load = DAG.getLoad(TheSelect->getValueType(0), LLD->getChain(),
+                               Addr,LLD->getSrcValue(), 
+                               LLD->getSrcValueOffset());
+          else {
+            Load = DAG.getExtLoad(LLD->getExtensionType(),
+                                  TheSelect->getValueType(0),
+                                  LLD->getChain(), Addr, LLD->getSrcValue(),
+                                  LLD->getSrcValueOffset(),
+                                  LLD->getLoadedVT());
+          }
+          // Users of the select now use the result of the load.
+          CombineTo(TheSelect, Load);
+        
+          // Users of the old loads now use the new load's chain.  We know the
+          // old-load value is dead now.
+          CombineTo(LHS.Val, Load.getValue(0), Load.getValue(1));
+          CombineTo(RHS.Val, Load.getValue(0), Load.getValue(1));
+          return true;
+        }
       }
     }
   }
