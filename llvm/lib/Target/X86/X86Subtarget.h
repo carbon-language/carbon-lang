@@ -32,7 +32,9 @@ enum Style {
 class X86Subtarget : public TargetSubtarget {
 public:
   enum AsmWriterFlavorTy {
-    ATT, Intel, Unset
+    // Note: This numbering has to match the GCC assembler dialects for inline
+    // asm alternatives to work right.
+    ATT = 0, Intel = 1, Unset
   };
 protected:
   enum X86SSEEnum {
