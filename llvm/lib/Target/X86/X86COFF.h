@@ -87,7 +87,7 @@ enum SymbolTypeMasks {
 
 /// Offsets of parts of type
 enum Shifts {
-  N_BTSHFT = 4 /// Type is formed as (base + derived << N_BTSHIFT)
+  N_BTSHFT = 4 ///< Type is formed as (base + derived << N_BTSHIFT)
 };
 
 }
