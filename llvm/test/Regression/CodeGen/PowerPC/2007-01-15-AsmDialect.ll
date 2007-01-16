@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep cntlzw
+; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 | grep cntlzw
 
 define i32 %foo() {
 entry:
