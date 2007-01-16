@@ -2,7 +2,7 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
+// This file was developed by Anton Korobeynikov and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
@@ -17,71 +17,77 @@
 
 namespace COFF 
 {
+/// Storage class tells where and what the symbol represents
 enum StorageClass {
-  C_EFCN =   -1,  // physical end of function
-  C_NULL    = 0,
-  C_AUTO    = 1,  // external definition
-  C_EXT     = 2,  // external symbol
-  C_STAT    = 3,  // static
-  C_REG     = 4,  // register variable
-  C_EXTDEF  = 5,  // external definition
-  C_LABEL   = 6,  // label
-  C_ULABEL  = 7,  // undefined label
-  C_MOS     = 8,  // member of structure
-  C_ARG     = 9,  // function argument
-  C_STRTAG  = 10, // structure tag
-  C_MOU     = 11, // member of union
-  C_UNTAG   = 12, // union tag
-  C_TPDEF   = 13, // type definition
-  C_USTATIC = 14, // undefined static
-  C_ENTAG   = 15, // enumeration tag
-  C_MOE     = 16, // member of enumeration
-  C_REGPARM = 17, // register parameter
-  C_FIELD   = 18, // bit field
+  C_EFCN =   -1,  ///< Physical end of function
+  C_NULL    = 0,  ///< No symbol
+  C_AUTO    = 1,  ///< External definition
+  C_EXT     = 2,  ///< External symbol
+  C_STAT    = 3,  ///< Static
+  C_REG     = 4,  ///< Register variable
+  C_EXTDEF  = 5,  ///< External definition
+  C_LABEL   = 6,  ///< Label
+  C_ULABEL  = 7,  ///< Undefined label
+  C_MOS     = 8,  ///< Member of structure
+  C_ARG     = 9,  ///< Function argument
+  C_STRTAG  = 10, ///< Structure tag
+  C_MOU     = 11, ///< Member of union
+  C_UNTAG   = 12, ///< Union tag
+  C_TPDEF   = 13, ///< Type definition
+  C_USTATIC = 14, ///< Undefined static
+  C_ENTAG   = 15, ///< Enumeration tag
+  C_MOE     = 16, ///< Member of enumeration
+  C_REGPARM = 17, ///< Register parameter
+  C_FIELD   = 18, ///< Bit field
 
-  C_BLOCK  = 100, // ".bb" or ".eb"
-  C_FCN    = 101, // ".bf" or ".ef"
-  C_EOS    = 102, // end of structure
-  C_FILE   = 103, // file name
-  C_LINE   = 104, // dummy class for line number entry
-  C_ALIAS  = 105, // duplicate tag
-  C_HIDDEN = 106
+  C_BLOCK  = 100, ///< ".bb" or ".eb" - beginning or end of block
+  C_FCN    = 101, ///< ".bf" or ".ef" - beginning or end of function
+  C_EOS    = 102, ///< End of structure
+  C_FILE   = 103, ///< File name
+  C_LINE   = 104, ///< Line number, reformatted as symbol
+  C_ALIAS  = 105, ///< Duplicate tag
+  C_HIDDEN = 106  ///< External symbol in dmert public lib
 };
 
+/// The type of the symbol. This is made up of a base type and a derived type.
+/// For example, pointer to int is "pointer to T" and "int"
 enum SymbolType {
-  T_NULL   = 0,  // no type info
-  T_ARG    = 1,  // function argument (only used by compiler)
-  T_VOID   = 1,
-  T_CHAR   = 2,  // character
-  T_SHORT  = 3,  // short integer
-  T_INT    = 4,  // integer
-  T_LONG   = 5,  // long integer
-  T_FLOAT  = 6,  // floating point
-  T_DOUBLE = 7,  // double word
-  T_STRUCT = 8,  // structure
-  T_UNION  = 9,  // union
-  T_ENUM   = 10, // enumeration
-  T_MOE    = 11, // member of enumeration
-  T_UCHAR  = 12, // unsigned character
-  T_USHORT = 13, // unsigned short
-  T_UINT   = 14, // unsigned integer
-  T_ULONG  = 15  // unsigned long
+  T_NULL   = 0,  ///< No type info
+  T_ARG    = 1,  ///< Void function argument (only used by compiler)
+  T_VOID   = 1,  ///< The same as above. Just named differently in some specs.
+  T_CHAR   = 2,  ///< Character
+  T_SHORT  = 3,  ///< Short integer
+  T_INT    = 4,  ///< Integer
+  T_LONG   = 5,  ///< Long integer
+  T_FLOAT  = 6,  ///< Floating point
+  T_DOUBLE = 7,  ///< Double word
+  T_STRUCT = 8,  ///< Structure
+  T_UNION  = 9,  ///< Union
+  T_ENUM   = 10, ///< Enumeration
+  T_MOE    = 11, ///< Member of enumeration
+  T_UCHAR  = 12, ///< Unsigned character
+  T_USHORT = 13, ///< Unsigned short
+  T_UINT   = 14, ///< Unsigned integer
+  T_ULONG  = 15  ///< Unsigned long
 };
 
+/// Derived type of symbol
 enum SymbolDerivedType {
-  DT_NON = 0, // no derived type
-  DT_PTR = 1, // pointer
-  DT_FCN = 2, // function
-  DT_ARY = 3  // array
+  DT_NON = 0, ///< No derived type
+  DT_PTR = 1, ///< Pointer to T
+  DT_FCN = 2, ///< Function returning T
+  DT_ARY = 3  ///< Array of T
 };
 
-enum TypePacking {
-  N_BTMASK = 017,
-  N_TMASK = 060,
-  N_TMASK1 = 0300,
-  N_TMASK2 = 0360,
-  N_BTSHFT = 4,
-  N_TSHIFT = 2
+/// Masks for extracting parts of type
+enum SymbolTypeMasks {
+  N_BTMASK = 017, ///< Mask for base type
+  N_TMASK  = 060  ///< Mask for derived type
+};
+
+/// Offsets of parts of type
+enum Shifts {
+  N_BTSHFT = 4 /// Type is formed as (base + derived << N_BTSHIFT)
 };
 
 }
