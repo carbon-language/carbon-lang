@@ -600,10 +600,9 @@ void PMDataManager::add(Pass *P,
     // Set P as P's last user until someone starts using P.
     // However, if P is a Pass Manager then it does not need
     // to record its last user.
-    if (!dynamic_cast<PMDataManager *>(P)) {
+    if (!dynamic_cast<PMDataManager *>(P))
       LastUses.push_back(P);
-      TPM->setLastUser(LastUses, P);
-    }
+    TPM->setLastUser(LastUses, P);
 
     // Take a note of analysis required and made available by this pass.
     // Remove the analysis not preserved by this pass
