@@ -16,12 +16,6 @@
 #include "llvm/Function.h"
 using namespace llvm;
 
-// ASM variant to use.
-enum {
-  PPC_OLD_MNEMONICS = 0,
-  PPC_NEW_MNEMONICS = 1
-};
-
 PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
   
@@ -32,7 +26,7 @@ PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   LCOMMDirective = "\t.lcomm\t";
   InlineAsmStart = "# InlineAsm Start";
   InlineAsmEnd = "# InlineAsm End";
-  AssemblerDialect = PPC_OLD_MNEMONICS;
+  AssemblerDialect = TM.getSubtargetImpl()->getAsmFlavor();
   
   NeedsSet = true;
   AddressSize = isPPC64 ? 8 : 4;
@@ -63,7 +57,6 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   UsedDirective = "\t.no_dead_strip\t";
   WeakRefDirective = "\t.weak_reference\t";
   HiddenDirective = "\t.private_extern\t";
-  AssemblerDialect = PPC_NEW_MNEMONICS;
 }
 
 LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)

@@ -112,6 +112,9 @@ PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
   // Set up darwin-specific properties.
   if (IsDarwin) {
     HasLazyResolverStubs = true;
+    AsmFlavor = NewMnemonic;
+  } else {
+    AsmFlavor = OldMnemonic;
   }
 }
 

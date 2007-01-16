@@ -111,6 +111,10 @@ public:
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
 
+  unsigned getAsmFlavor() const {
+    return AsmFlavor != Unset ? unsigned(AsmFlavor) : 0;
+  }
+
   bool isFlavorAtt() const { return AsmFlavor == ATT; }
   bool isFlavorIntel() const { return AsmFlavor == Intel; }
 

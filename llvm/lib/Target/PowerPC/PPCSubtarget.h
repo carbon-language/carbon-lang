@@ -40,6 +40,10 @@ class GlobalValue;
 class TargetMachine;
   
 class PPCSubtarget : public TargetSubtarget {
+public:
+  enum AsmWriterFlavorTy {
+    OldMnemonic, NewMnemonic, Unset
+  };
 protected:
   const TargetMachine &TM;
   
@@ -52,6 +56,9 @@ protected:
   
   /// Which cpu directive was used.
   unsigned DarwinDirective;
+
+  /// AsmFlavor - Which PPC asm dialect to use.
+  AsmWriterFlavorTy AsmFlavor;
 
   /// Used by the ISel to turn in optimizations for POWER4-derived architectures
   bool IsGigaProcessor;
@@ -120,8 +127,12 @@ public:
   bool hasSTFIWX() const { return HasSTFIWX; }
   bool hasAltivec() const { return HasAltivec; }
   bool isGigaProcessor() const { return IsGigaProcessor; }
-  
+
   bool isDarwin() const { return IsDarwin; }
+
+  unsigned getAsmFlavor() const {
+    return AsmFlavor != Unset ? unsigned(AsmFlavor) : 0;
+  }
 };
 } // End llvm namespace
 
