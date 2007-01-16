@@ -21,6 +21,12 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
+// ASM variant to use.
+enum {
+  X86_ATT   = 0,
+  X86_INTEL = 1
+};
+
 static const char* x86_asm_table[] = {"{si}", "S",
                                       "{di}", "D",
                                       "{ax}", "a",
@@ -38,6 +44,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
   // FIXME - Should be simplified.
 
   AsmTransCBE = x86_asm_table;
+  AssemblerDialect = X86_ATT;
   
   switch (Subtarget->TargetType) {
   case X86Subtarget::isDarwin:

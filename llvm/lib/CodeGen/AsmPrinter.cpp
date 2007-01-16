@@ -698,9 +698,9 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   
   O << TAI->getInlineAsmStart() << "\n\t";
 
-  // The variant of the current asmprinter: FIXME: change.
-  int AsmPrinterVariant = 0;
-  
+  // The variant of the current asmprinter.
+  int AsmPrinterVariant = TAI->getAssemblerDialect();
+
   int CurVariant = -1;            // The number of the {.|.|.} region we are in.
   const char *LastEmitted = AsmStr; // One past the last character emitted.
   

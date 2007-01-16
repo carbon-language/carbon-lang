@@ -32,6 +32,7 @@ TargetAsmInfo::TargetAsmInfo() :
   FunctionAddrSuffix(""),
   InlineAsmStart("#APP"),
   InlineAsmEnd("#NO_APP"),
+  AssemblerDialect(0),
   ZeroDirective("\t.zero\t"),
   ZeroDirectiveSuffix(0),
   AsciiDirective("\t.ascii\t"),

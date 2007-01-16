@@ -89,7 +89,10 @@ namespace llvm {
     /// emit before and after an inline assembly statement.
     const char *InlineAsmStart;           // Defaults to "#APP\n"
     const char *InlineAsmEnd;             // Defaults to "#NO_APP\n"
-    
+
+    /// AssemblerDialect - Which dialect of an assembler variant to use.
+    unsigned AssemblerDialect;            // Defaults to 0
+
     //===--- Data Emission Directives -------------------------------------===//
 
     /// ZeroDirective - this should be set to the directive used to get some
@@ -128,7 +131,7 @@ namespace llvm {
     /// Otherwise, it emits ".align log2(N)", e.g. 3 to align to an 8 byte
     /// boundary.
     bool AlignmentIsInBytes;              // Defaults to true
-    
+
     //===--- Section Switching Directives ---------------------------------===//
     
     /// SwitchToSectionDirective - This is the directive used when we want to
@@ -342,6 +345,9 @@ namespace llvm {
     }
     const char *getInlineAsmEnd() const {
       return InlineAsmEnd;
+    }
+    unsigned getAssemblerDialect() const {
+      return AssemblerDialect;
     }
     const char *getZeroDirective() const {
       return ZeroDirective;

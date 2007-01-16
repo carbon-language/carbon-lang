@@ -17,7 +17,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-  
+
   // Forward declaration.
   class X86TargetMachine;
 
