@@ -108,8 +108,6 @@ public:
   void dump() const; // dump - call print(std::cerr, 0);
 
   virtual void assignPassManager(PMStack &PMS) {}
-  virtual void setupPassManager(PMStack &PMS) {}
-
   // Access AnalysisResolver
   inline void setResolver(AnalysisResolver *AR) { Resolver = AR; }
   inline AnalysisResolver *getResolver() { return Resolver; }
@@ -203,7 +201,6 @@ public:
   virtual bool runPass(BasicBlock&) { return false; }
 
   virtual void assignPassManager(PMStack &PMS);
-
   // Force out-of-line virtual method.
   virtual ~ModulePass();
 };
@@ -270,7 +267,6 @@ public:
   bool run(Function &F);
 
   virtual void assignPassManager(PMStack &PMS);
-  virtual void setupPassManager(PMStack &PMS);
 };
 
 
@@ -325,7 +321,6 @@ public:
   virtual bool runPass(BasicBlock &BB);
 
   virtual void assignPassManager(PMStack &PMS);
-  virtual void setupPassManager(PMStack &PMS);
 };
 
 /// Different types of internal pass managers. External pass managers
@@ -342,10 +337,8 @@ enum PassManagerType {
 
 /// PMStack
 /// Top level pass manager (see PasManager.cpp) maintains active Pass Managers 
-/// using PMStack. Each Pass implements setupPassManager() and 
-/// assignPassManager() to connect itself with appropriate manager. 
-/// setupPassManager() creates new pass manager if required before adding 
-/// required analysis passes. assignPassManager() walks PMStack to find
+/// using PMStack. Each Pass implements assignPassManager() to connect itself
+/// with appropriate manager. assignPassManager() walks PMStack to find
 /// suitable manager.
 ///
 /// PMStack is just a wrapper around standard deque that overrides pop() and
