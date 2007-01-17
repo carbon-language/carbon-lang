@@ -55,6 +55,9 @@ namespace llvm {
   /// target FP instructions.
   extern bool UseSoftFloat;
 
+  /// NoZerosInBSS - By default some codegens place zero-initialized data to
+  /// .bss section. This flag disables such behaviour (necessary, e.g. for
+  /// crt*.o compiling).
   extern bool NoZerosInBSS;
 } // End llvm namespace
 
