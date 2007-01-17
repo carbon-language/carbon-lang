@@ -12,7 +12,7 @@ include $(LEVEL)/Makefile.config
 
 DIRS:= $(filter-out llvm-test,$(patsubst $(PROJ_SRC_DIR)/%/Makefile,%,$(wildcard $(PROJ_SRC_DIR)/*/Makefile)))
 
-# Sparc cannot link shared libraries (libtool problem?) which Stacker uses
+# Sparc cannot link shared libraries (libtool problem?)
 ifeq ($(ARCH), Sparc)
 DIRS := $(filter-out sample, $(DIRS))
 endif
