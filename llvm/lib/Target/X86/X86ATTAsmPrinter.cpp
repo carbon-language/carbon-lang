@@ -323,22 +323,19 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << Offset;
 
     if (isMemOp) {
-      if (isExt) {
-        if (Subtarget->isPICStyleGOT()) {
+      if (Subtarget->isPICStyleGOT()) {
+        if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
           O << "@GOT";
-        } else if (Subtarget->isPICStyleRIPRel()) {
-          O << "@GOTPCREL(%rip)";
-        } else if (Subtarget->is64Bit() && !NotRIPRel)
-            // Use rip when possible to reduce code size, except when
-            // index or base register are also part of the address. e.g.
-            // foo(%rip)(%rcx,%rax,4) is not legal
-            O << "(%rip)";
-      } else {
-        if (Subtarget->is64Bit() && !NotRIPRel)
-          O << "(%rip)";
-        else if (Subtarget->isPICStyleGOT())
+        else
           O << "@GOTOFF";
-      }
+      } else     
+        if (isExt && Subtarget->isPICStyleRIPRel())
+          O << "@GOTPCREL(%rip)";
+        else if (Subtarget->is64Bit() && !NotRIPRel)
+          // Use rip when possible to reduce code size, except when
+          // index or base register are also part of the address. e.g.
+          // foo(%rip)(%rcx,%rax,4) is not legal
+          O << "(%rip)";
     }
 
     return;

@@ -19,6 +19,7 @@ using namespace llvm;
 TargetAsmInfo::TargetAsmInfo() :
   TextSection(".text"),
   DataSection(".data"),
+  BSSSection(".bss"),
   AddressSize(4),
   NeedsSet(false),
   MaxInstLength(4),

@@ -28,6 +28,7 @@ namespace llvm {
   bool UnsafeFPMath;
   bool FiniteOnlyFPMathOption;
   bool UseSoftFloat;
+  bool NoZerosInBSS;
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
 }
@@ -60,6 +61,11 @@ namespace {
   GenerateSoftFloatCalls("soft-float",
                cl::desc("Generate software floating point library calls"),
                cl::location(UseSoftFloat),
+               cl::init(false));
+  cl::opt<bool, true>
+  DontPlaceZerosInBSS("nozero-initialized-in-bss",
+               cl::desc("Don't place zero-initialized symbols into bss section"),
+               cl::location(NoZerosInBSS),
                cl::init(false));
 
   cl::opt<llvm::Reloc::Model, true>

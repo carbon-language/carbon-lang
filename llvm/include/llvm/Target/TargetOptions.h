@@ -54,6 +54,8 @@ namespace llvm {
   /// generate libcalls to the software floating point library instead of
   /// target FP instructions.
   extern bool UseSoftFloat;
+
+  extern bool NoZerosInBSS;
 } // End llvm namespace
 
 #endif

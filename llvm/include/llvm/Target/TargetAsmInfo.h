@@ -38,6 +38,10 @@ namespace llvm {
     /// DataSection - Section directive for standard data.
     ///
     const char *DataSection;              // Defaults to ".data".
+
+    /// BSSSection - Section directive for uninitialized data.
+    ///
+    const char *BSSSection;               // Default to ".bss".
     
     /// AddressSize - Size of addresses used in file.
     ///
@@ -312,6 +316,9 @@ namespace llvm {
     }
     const char *getDataSection() const {
       return DataSection;
+    }
+    const char *getBSSSection() const {
+      return BSSSection;
     }
     unsigned getAddressSize() const {
       return AddressSize;

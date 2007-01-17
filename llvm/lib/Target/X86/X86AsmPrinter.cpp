@@ -28,6 +28,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 static X86FunctionInfo calculateFunctionInfo(const Function *F,
@@ -149,7 +150,10 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << "\t.zerofill __DATA__, __common, " << name << ", "
             << Size << ", " << Align;
       } else {
-        SwitchToDataSection(TAI->getDataSection(), I);
+        if (!NoZerosInBSS && TAI->getBSSSection())
+          SwitchToDataSection(TAI->getBSSSection(), I);
+        else
+          SwitchToDataSection(TAI->getDataSection(), I);
         if (TAI->getLCOMMDirective() != NULL) {
           if (I->hasInternalLinkage()) {
             O << TAI->getLCOMMDirective() << name << "," << Size;
@@ -224,7 +228,10 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 
           SwitchToDataSection(SectionName.c_str());
         } else {
-          SwitchToDataSection(TAI->getDataSection(), I);
+          if (C->isNullValue() && !NoZerosInBSS && TAI->getBSSSection())
+            SwitchToDataSection(TAI->getBSSSection(), I);
+          else
+            SwitchToDataSection(TAI->getDataSection(), I);
         }
         
         break;

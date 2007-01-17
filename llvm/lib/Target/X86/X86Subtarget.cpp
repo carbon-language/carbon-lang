@@ -36,10 +36,14 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
                                        bool isDirectCall) const
 {
   if (TM.getRelocationModel() != Reloc::Static)
-    if (isTargetDarwin() || isPICStyleGOT()) {
+    if (isTargetDarwin()) {
       return (!isDirectCall &&
               (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
                (GV->isExternal() && !GV->hasNotBeenReadFromBytecode())));
+    } else if (isPICStyleGOT()) {
+      // Extra load is needed for all non-statics.
+      return (!isDirectCall &&
+              (GV->isExternal() || !GV->hasInternalLinkage()));
     } else if (isTargetCygMing() || isTargetWindows()) {
       return (GV->hasDLLImportLinkage());
     }
