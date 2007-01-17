@@ -22,13 +22,8 @@
 
 namespace llvm {
 
-class ArrayType;
 class DerivedType;
-class FunctionType;
-class OpaqueType;
 class PointerType;
-class StructType;
-class PackedType;
 class TypeMapBase;
 
 /// This file contains the declaration of the Type class.  For more "Type" type
