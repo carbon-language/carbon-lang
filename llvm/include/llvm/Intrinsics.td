@@ -138,8 +138,10 @@ def int_gcwrite : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,
 //  
 def int_returnaddress : Intrinsic<[llvm_ptr_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_frameaddress  : Intrinsic<[llvm_ptr_ty, llvm_i32_ty], [IntrNoMem]>;
-def int_stacksave     : Intrinsic<[llvm_ptr_ty], [IntrReadMem]>;
-def int_stackrestore  : Intrinsic<[llvm_void_ty, llvm_ptr_ty]>;
+def int_stacksave     : Intrinsic<[llvm_ptr_ty], [IntrReadMem]>,
+                        GCCBuiltin<"__builtin_stack_save">;
+def int_stackrestore  : Intrinsic<[llvm_void_ty, llvm_ptr_ty]>,
+                        GCCBuiltin<"__builtin_stack_restore">;
 def int_prefetch      : Intrinsic<[llvm_void_ty, llvm_ptr_ty, 
                                    llvm_i32_ty, llvm_i32_ty]>;
 def int_pcmarker      : Intrinsic<[llvm_void_ty, llvm_i32_ty]>;
