@@ -81,8 +81,38 @@ public:
 
   ~TargetData();  // Not virtual, do not subclass this class
 
-  /// init - Specify configuration if not available at ctor time.
+  /// Parse a target data layout string and initialize TargetData members.
   ///
+  /// Parse a target data layout string, initializing the various TargetData
+  /// members along the way. A TargetData specification string looks like
+  /// "E-p:64:64-d:64-f:32-l:64-i:32-s:16-b:8-B:8" and specifies the
+  /// target's endianess, the alignments of various data types and
+  /// the size of pointers. The "-" is used as a separator and ":"
+  /// separates a token from its argument. Alignment is indicated in bits
+  /// and internally converted to the appropriate number of bytes.
+  ///
+  /// Valid tokens:
+  /// <br>
+  /// <em>E</em> specifies big endian architecture (1234) [default]<br>
+  /// <em>e</em> specifies little endian architecture (4321) <br>
+  /// <em>p:[ptr size]:[ptr align]</em> specifies pointer size and alignment
+  /// [default = 64:64] <br>
+  /// <em>d:[align]</em> specifies double floating point alignment
+  /// [default = 64] <br>
+  /// <em>f:[align]</em> specifies single floating point alignment
+  /// [default = 32] <br>
+  /// <em>l:[align]</em> specifies long integer alignment
+  /// [default = 64] <br>
+  /// <em>i:[align]</em> specifies integer alignment
+  /// [default = 32] <br>
+  /// <em>s:[align]</em> specifies short integer alignment
+  /// [default = 16] <br>
+  /// <em>b:[align]</em> specifies byte data type alignment
+  /// [default = 8] <br>
+  /// <em>B:[align]</em> specifies boolean data type alignment
+  /// [default = 8] <br>
+  ///
+  /// All other token types are silently ignored.
   void init(const std::string &TargetDescription);
   
   
