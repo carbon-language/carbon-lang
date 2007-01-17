@@ -22,7 +22,6 @@ namespace llvm {
   class Mangler;
   class MachineCodeEmitter;
   class ELFCodeEmitter;
-  class TargetObjInfo;
 
   /// ELFWriter - This class implements the common target-independent code for
   /// writing ELF files.  Targets should derive a class from this to
@@ -49,10 +48,6 @@ namespace llvm {
     /// Target machine description.
     ///
     TargetMachine &TM;
-
-    /// Target object writer info.
-    ///
-    const TargetObjInfo *TOI;
 
     /// Mang - The object used to perform name mangling for this module.
     ///
@@ -219,6 +214,102 @@ namespace llvm {
     unsigned ELFHeader_e_shoff_Offset;     // e_shoff    in ELF header.
     unsigned ELFHeader_e_shstrndx_Offset;  // e_shstrndx in ELF header.
     unsigned ELFHeader_e_shnum_Offset;     // e_shnum    in ELF header.
+
+
+    // align - Emit padding into the file until the current output position is
+    // aligned to the specified power of two boundary.
+    static void align(DataBuffer &Output, unsigned Boundary) {
+      assert(Boundary && (Boundary & (Boundary-1)) == 0 &&
+             "Must align to 2^k boundary");
+      size_t Size = Output.size();
+      if (Size & (Boundary-1)) {
+        // Add padding to get alignment to the correct place.
+        size_t Pad = Boundary-(Size & (Boundary-1));
+        Output.resize(Size+Pad);
+      }
+    }
+
+    static void outbyte(DataBuffer &Output, unsigned char X) {
+      Output.push_back(X);
+    }
+    void outhalf(DataBuffer &Output, unsigned short X) {
+      if (isLittleEndian) {
+        Output.push_back(X&255);
+        Output.push_back(X >> 8);
+      } else {
+        Output.push_back(X >> 8);
+        Output.push_back(X&255);
+      }
+    }
+    void outword(DataBuffer &Output, unsigned X) {
+      if (isLittleEndian) {
+        Output.push_back((X >>  0) & 255);
+        Output.push_back((X >>  8) & 255);
+        Output.push_back((X >> 16) & 255);
+        Output.push_back((X >> 24) & 255);
+      } else {
+        Output.push_back((X >> 24) & 255);
+        Output.push_back((X >> 16) & 255);
+        Output.push_back((X >>  8) & 255);
+        Output.push_back((X >>  0) & 255);
+      }
+    }
+    void outxword(DataBuffer &Output, uint64_t X) {
+      if (isLittleEndian) {
+        Output.push_back(unsigned(X >>  0) & 255);
+        Output.push_back(unsigned(X >>  8) & 255);
+        Output.push_back(unsigned(X >> 16) & 255);
+        Output.push_back(unsigned(X >> 24) & 255);
+        Output.push_back(unsigned(X >> 32) & 255);
+        Output.push_back(unsigned(X >> 40) & 255);
+        Output.push_back(unsigned(X >> 48) & 255);
+        Output.push_back(unsigned(X >> 56) & 255);
+      } else {
+        Output.push_back(unsigned(X >> 56) & 255);
+        Output.push_back(unsigned(X >> 48) & 255);
+        Output.push_back(unsigned(X >> 40) & 255);
+        Output.push_back(unsigned(X >> 32) & 255);
+        Output.push_back(unsigned(X >> 24) & 255);
+        Output.push_back(unsigned(X >> 16) & 255);
+        Output.push_back(unsigned(X >>  8) & 255);
+        Output.push_back(unsigned(X >>  0) & 255);
+      }
+    }
+    void outaddr32(DataBuffer &Output, unsigned X) {
+      outword(Output, X);
+    }
+    void outaddr64(DataBuffer &Output, uint64_t X) {
+      outxword(Output, X);
+    }
+    void outaddr(DataBuffer &Output, uint64_t X) {
+      if (!is64Bit)
+        outword(Output, (unsigned)X);
+      else
+        outxword(Output, X);
+    }
+
+    // fix functions - Replace an existing entry at an offset.
+    void fixhalf(DataBuffer &Output, unsigned short X, unsigned Offset) {
+      unsigned char *P = &Output[Offset];
+      P[0] = (X >> (isLittleEndian ?  0 : 8)) & 255;
+      P[1] = (X >> (isLittleEndian ?  8 : 0)) & 255;
+    }
+
+    void fixword(DataBuffer &Output, unsigned X, unsigned Offset) {
+      unsigned char *P = &Output[Offset];
+      P[0] = (X >> (isLittleEndian ?  0 : 24)) & 255;
+      P[1] = (X >> (isLittleEndian ?  8 : 16)) & 255;
+      P[2] = (X >> (isLittleEndian ? 16 :  8)) & 255;
+      P[3] = (X >> (isLittleEndian ? 24 :  0)) & 255;
+    }
+
+    void fixaddr(DataBuffer &Output, uint64_t X, unsigned Offset) {
+      if (!is64Bit)
+        fixword(Output, (unsigned)X, Offset);
+      else
+        assert(0 && "Emission of 64-bit data not implemented yet!");
+    }
+
   private:
     void EmitGlobal(GlobalVariable *GV);
 

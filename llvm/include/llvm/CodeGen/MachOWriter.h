@@ -25,7 +25,6 @@ namespace llvm {
   class Mangler;
   class MachineCodeEmitter;
   class MachOCodeEmitter;
-  class TargetObjInfo;
 
   /// MachOSym - This struct contains information about each symbol that is
   /// added to logical symbol table for the module.  This is eventually
@@ -100,10 +99,6 @@ namespace llvm {
     /// Target machine description.
     ///
     TargetMachine &TM;
-
-    /// Target object writer info.
-    ///
-    const TargetObjInfo *TOI;
 
     /// Mang - The object used to perform name mangling for this module.
     ///
@@ -663,6 +658,101 @@ namespace llvm {
     /// DynamicSymbolTable - This is just a vector of indices into
     /// SymbolTable to aid in emitting the DYSYMTAB load command.
     std::vector<unsigned> DynamicSymbolTable;
+    
+    // align - Emit padding into the file until the current output position is
+    // aligned to the specified power of two boundary.
+    static void align(DataBuffer &Output, unsigned Boundary) {
+      assert(Boundary && (Boundary & (Boundary-1)) == 0 &&
+             "Must align to 2^k boundary");
+      size_t Size = Output.size();
+      if (Size & (Boundary-1)) {
+        // Add padding to get alignment to the correct place.
+        size_t Pad = Boundary-(Size & (Boundary-1));
+        Output.resize(Size+Pad);
+      }
+    }
+
+    void outbyte(DataBuffer &Output, unsigned char X) {
+      Output.push_back(X);
+    }
+    void outhalf(DataBuffer &Output, unsigned short X) {
+      if (isLittleEndian) {
+        Output.push_back(X&255);
+        Output.push_back(X >> 8);
+      } else {
+        Output.push_back(X >> 8);
+        Output.push_back(X&255);
+      }
+    }
+    void outword(DataBuffer &Output, unsigned X) {
+      if (isLittleEndian) {
+        Output.push_back((X >>  0) & 255);
+        Output.push_back((X >>  8) & 255);
+        Output.push_back((X >> 16) & 255);
+        Output.push_back((X >> 24) & 255);
+      } else {
+        Output.push_back((X >> 24) & 255);
+        Output.push_back((X >> 16) & 255);
+        Output.push_back((X >>  8) & 255);
+        Output.push_back((X >>  0) & 255);
+      }
+    }
+    void outxword(DataBuffer &Output, uint64_t X) {
+      if (isLittleEndian) {
+        Output.push_back(unsigned(X >>  0) & 255);
+        Output.push_back(unsigned(X >>  8) & 255);
+        Output.push_back(unsigned(X >> 16) & 255);
+        Output.push_back(unsigned(X >> 24) & 255);
+        Output.push_back(unsigned(X >> 32) & 255);
+        Output.push_back(unsigned(X >> 40) & 255);
+        Output.push_back(unsigned(X >> 48) & 255);
+        Output.push_back(unsigned(X >> 56) & 255);
+      } else {
+        Output.push_back(unsigned(X >> 56) & 255);
+        Output.push_back(unsigned(X >> 48) & 255);
+        Output.push_back(unsigned(X >> 40) & 255);
+        Output.push_back(unsigned(X >> 32) & 255);
+        Output.push_back(unsigned(X >> 24) & 255);
+        Output.push_back(unsigned(X >> 16) & 255);
+        Output.push_back(unsigned(X >>  8) & 255);
+        Output.push_back(unsigned(X >>  0) & 255);
+      }
+    }
+    void outaddr32(DataBuffer &Output, unsigned X) {
+      outword(Output, X);
+    }
+    void outaddr64(DataBuffer &Output, uint64_t X) {
+      outxword(Output, X);
+    }
+    void outaddr(DataBuffer &Output, uint64_t X) {
+      if (!is64Bit)
+        outword(Output, (unsigned)X);
+      else
+        outxword(Output, X);
+    }
+    void outstring(DataBuffer &Output, std::string &S, unsigned Length) {
+      unsigned len_to_copy = S.length() < Length ? S.length() : Length;
+      unsigned len_to_fill = S.length() < Length ? Length-S.length() : 0;
+      
+      for (unsigned i = 0; i < len_to_copy; ++i)
+        outbyte(Output, S[i]);
+
+      for (unsigned i = 0; i < len_to_fill; ++i)
+        outbyte(Output, 0);
+      
+    }
+    void fixhalf(DataBuffer &Output, unsigned short X, unsigned Offset) {
+      unsigned char *P = &Output[Offset];
+      P[0] = (X >> (isLittleEndian ?  0 : 8)) & 255;
+      P[1] = (X >> (isLittleEndian ?  8 : 0)) & 255;
+    }
+    void fixword(DataBuffer &Output, unsigned X, unsigned Offset) {
+      unsigned char *P = &Output[Offset];
+      P[0] = (X >> (isLittleEndian ?  0 : 24)) & 255;
+      P[1] = (X >> (isLittleEndian ?  8 : 16)) & 255;
+      P[2] = (X >> (isLittleEndian ? 16 :  8)) & 255;
+      P[3] = (X >> (isLittleEndian ? 24 :  0)) & 255;
+    }
     
     static void InitMem(const Constant *C, void *Addr, intptr_t Offset,
                         const TargetData *TD, 

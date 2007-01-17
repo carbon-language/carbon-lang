@@ -39,7 +39,6 @@ class PPCTargetMachine : public LLVMTargetMachine {
   
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
-  virtual const TargetObjInfo *createTargetObjInfo() const;
   
 public:
   PPCTargetMachine(const Module &M, const std::string &FS, bool is64Bit);

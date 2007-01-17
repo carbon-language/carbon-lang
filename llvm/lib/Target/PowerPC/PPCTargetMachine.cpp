@@ -13,7 +13,6 @@
 
 #include "PPC.h"
 #include "PPCTargetAsmInfo.h"
-#include "PPCTargetObjInfo.h"
 #include "PPCTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -33,10 +32,6 @@ const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
     return new DarwinTargetAsmInfo(*this);
   else
     return new LinuxTargetAsmInfo(*this);
-}
-
-const TargetObjInfo *PPCTargetMachine::createTargetObjInfo() const {
-  return new MachOTargetObjInfo(*this);
 }
 
 unsigned PPC32TargetMachine::getJITMatchQuality() {

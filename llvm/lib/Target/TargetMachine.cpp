@@ -13,7 +13,6 @@
 
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetObjInfo.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
@@ -105,7 +104,6 @@ namespace {
 
 TargetMachine::~TargetMachine() {
   delete AsmInfo;
-  delete ObjInfo;
 }
 
 /// getRelocationModel - Returns the code generation relocation model. The

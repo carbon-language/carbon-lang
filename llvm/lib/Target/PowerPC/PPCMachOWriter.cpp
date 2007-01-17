@@ -2,8 +2,8 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Nate Begeman and is distributed under the
-// University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by Nate Begeman and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -17,7 +17,6 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachOWriter.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Target/TargetObjInfo.h"
 using namespace llvm;
 
 namespace {
@@ -92,10 +91,10 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
       MachORelocation VANILLA(MR.getMachineCodeOffset(), To.Index, false, 2, 
                               isExtern, PPC_RELOC_VANILLA);
       ++From.nreloc;
-      TOI->outword(From.RelocBuffer, VANILLA.r_address);
-      TOI->outword(From.RelocBuffer, VANILLA.getPackedFields());
+      outword(From.RelocBuffer, VANILLA.r_address);
+      outword(From.RelocBuffer, VANILLA.getPackedFields());
     }
-    TOI->fixword(From.SectionData, Addr, MR.getMachineCodeOffset());
+    fixword(From.SectionData, Addr, MR.getMachineCodeOffset());
     break;
   case PPC::reloc_pcrel_bx:
     Addr -= MR.getMachineCodeOffset();
@@ -103,12 +102,12 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
     Addr &= 0xFFFFFF;
     Addr <<= 2;
     Addr |= (From.SectionData[MR.getMachineCodeOffset()] << 24);
-    TOI->fixword(From.SectionData, Addr, MR.getMachineCodeOffset());
+    fixword(From.SectionData, Addr, MR.getMachineCodeOffset());
     break;
   case PPC::reloc_pcrel_bcx:
     Addr -= MR.getMachineCodeOffset();
     Addr &= 0xFFFC;
-    TOI->fixhalf(From.SectionData, Addr, MR.getMachineCodeOffset() + 2);
+    fixhalf(From.SectionData, Addr, MR.getMachineCodeOffset() + 2);
     break;
   case PPC::reloc_absolute_high:
     {
@@ -118,14 +117,14 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
                            PPC_RELOC_PAIR);
       ++From.nreloc;
       ++From.nreloc;
-      TOI->outword(From.RelocBuffer, HA16.r_address);
-      TOI->outword(From.RelocBuffer, HA16.getPackedFields());
-      TOI->outword(From.RelocBuffer, PAIR.r_address);
-      TOI->outword(From.RelocBuffer, PAIR.getPackedFields());
+      outword(From.RelocBuffer, HA16.r_address);
+      outword(From.RelocBuffer, HA16.getPackedFields());
+      outword(From.RelocBuffer, PAIR.r_address);
+      outword(From.RelocBuffer, PAIR.getPackedFields());
     }
     printf("ha16: %x\n", (unsigned)Addr);
     Addr += 0x8000;
-    TOI->fixhalf(From.SectionData, Addr >> 16, MR.getMachineCodeOffset() + 2);
+    fixhalf(From.SectionData, Addr >> 16, MR.getMachineCodeOffset() + 2);
     break;
   case PPC::reloc_absolute_low:
     {
@@ -135,13 +134,13 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
                            PPC_RELOC_PAIR);
       ++From.nreloc;
       ++From.nreloc;
-      TOI->outword(From.RelocBuffer, LO16.r_address);
-      TOI->outword(From.RelocBuffer, LO16.getPackedFields());
-      TOI->outword(From.RelocBuffer, PAIR.r_address);
-      TOI->outword(From.RelocBuffer, PAIR.getPackedFields());
+      outword(From.RelocBuffer, LO16.r_address);
+      outword(From.RelocBuffer, LO16.getPackedFields());
+      outword(From.RelocBuffer, PAIR.r_address);
+      outword(From.RelocBuffer, PAIR.getPackedFields());
     }
     printf("lo16: %x\n", (unsigned)Addr);
-    TOI->fixhalf(From.SectionData, Addr, MR.getMachineCodeOffset() + 2);
+    fixhalf(From.SectionData, Addr, MR.getMachineCodeOffset() + 2);
     break;
   }
 }
@@ -151,3 +150,4 @@ MachineRelocation PPCMachOWriter::GetJTRelocation(unsigned Offset,
   // FIXME: do something about PIC
   return MachineRelocation::getBB(Offset, PPC::reloc_vanilla, MBB);
 }
+

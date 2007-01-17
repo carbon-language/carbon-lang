@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86TargetAsmInfo.h"
-#include "X86TargetObjInfo.h"
 #include "X86TargetMachine.h"
 #include "X86.h"
 #include "llvm/Module.h"
@@ -41,10 +40,6 @@ namespace {
 
 const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
   return new X86TargetAsmInfo(*this);
-}
-
-const TargetObjInfo *X86TargetMachine::createTargetObjInfo() const {
-  return new ELFTargetObjInfo(*this);
 }
 
 unsigned X86_32TargetMachine::getJITMatchQuality() {

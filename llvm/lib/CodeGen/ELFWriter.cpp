@@ -37,7 +37,6 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetObjInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
@@ -54,20 +53,8 @@ namespace llvm {
     ELFWriter::ELFSection *ES;  // Section to write to.
     std::vector<unsigned char> *OutBuffer;
     size_t FnStart;
-
-    /// Target machine description.
-    ///
-    TargetMachine &TM;
-
-    /// Target object writer info.
-    ///
-    const TargetObjInfo *TOI;
   public:
-    ELFCodeEmitter(ELFWriter &ew, TargetMachine &tm)
-      : EW(ew), OutBuffer(0), TM(tm) {
-      // Create the target object info object for this target.
-      TOI = TM.getTargetObjInfo();
-    }
+    ELFCodeEmitter(ELFWriter &ew) : EW(ew), OutBuffer(0) {}
 
     void startFunction(MachineFunction &F);
     bool finishFunction(MachineFunction &F);
@@ -126,7 +113,7 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
 
   // Add padding zeros to the end of the buffer to make sure that the
   // function will start on the correct byte alignment within the section.
-  TOI->align(*OutBuffer, Align);
+  ELFWriter::align(*OutBuffer, Align);
 
   FnStart = OutBuffer->size();
 }
@@ -178,11 +165,8 @@ ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
   isLittleEndian = TM.getTargetData()->isLittleEndian();
 
   // Create the machine code emitter object for this target.
-  MCE = new ELFCodeEmitter(*this, TM);
+  MCE = new ELFCodeEmitter(*this);
   NumSections = 0;
-
-  // Create the target object info object for this target.
-  TOI = TM.getTargetObjInfo();
 }
 
 ELFWriter::~ELFWriter() {
@@ -197,36 +181,36 @@ bool ELFWriter::doInitialization(Module &M) {
   // Local alias to shortenify coming code.
   std::vector<unsigned char> &FH = FileHeader;
 
-  TOI->outbyte(FH, 0x7F);                     // EI_MAG0
-  TOI->outbyte(FH, 'E');                      // EI_MAG1
-  TOI->outbyte(FH, 'L');                      // EI_MAG2
-  TOI->outbyte(FH, 'F');                      // EI_MAG3
-  TOI->outbyte(FH, is64Bit ? 2 : 1);          // EI_CLASS
-  TOI->outbyte(FH, isLittleEndian ? 1 : 2);   // EI_DATA
-  TOI->outbyte(FH, 1);                        // EI_VERSION
-  FH.resize(16);                              // EI_PAD up to 16 bytes.
+  outbyte(FH, 0x7F);                     // EI_MAG0
+  outbyte(FH, 'E');                      // EI_MAG1
+  outbyte(FH, 'L');                      // EI_MAG2
+  outbyte(FH, 'F');                      // EI_MAG3
+  outbyte(FH, is64Bit ? 2 : 1);          // EI_CLASS
+  outbyte(FH, isLittleEndian ? 1 : 2);   // EI_DATA
+  outbyte(FH, 1);                        // EI_VERSION
+  FH.resize(16);                         // EI_PAD up to 16 bytes.
 
   // This should change for shared objects.
-  TOI->outhalf(FH, 1);               // e_type = ET_REL
-  TOI->outhalf(FH, e_machine);       // e_machine = whatever the target wants
-  TOI->outword(FH, 1);               // e_version = 1
-  TOI->outaddr(FH, 0);               // e_entry = 0 -> no entry point in .o file
-  TOI->outaddr(FH, 0);               // e_phoff = 0 -> no program header for .o
+  outhalf(FH, 1);                 // e_type = ET_REL
+  outhalf(FH, e_machine);         // e_machine = whatever the target wants
+  outword(FH, 1);                 // e_version = 1
+  outaddr(FH, 0);                 // e_entry = 0 -> no entry point in .o file
+  outaddr(FH, 0);                 // e_phoff = 0 -> no program header for .o
 
   ELFHeader_e_shoff_Offset = FH.size();
-  TOI->outaddr(FH, 0);                 // e_shoff
-  TOI->outword(FH, e_flags);           // e_flags = whatever the target wants
+  outaddr(FH, 0);                 // e_shoff
+  outword(FH, e_flags);           // e_flags = whatever the target wants
 
-  TOI->outhalf(FH, is64Bit ? 64 : 52); // e_ehsize = ELF header size
-  TOI->outhalf(FH, 0);                 // e_phentsize = prog header entry size
-  TOI->outhalf(FH, 0);                 // e_phnum     = # prog header entries=0
-  TOI->outhalf(FH, is64Bit ? 64 : 40); // e_shentsize = sect hdr entry size
+  outhalf(FH, is64Bit ? 64 : 52); // e_ehsize = ELF header size
+  outhalf(FH, 0);                 // e_phentsize = prog header entry size
+  outhalf(FH, 0);                 // e_phnum     = # prog header entries = 0
+  outhalf(FH, is64Bit ? 64 : 40); // e_shentsize = sect hdr entry size
 
 
   ELFHeader_e_shnum_Offset = FH.size();
-  TOI->outhalf(FH, 0);                 // e_shnum     = # of section header ents
+  outhalf(FH, 0);                 // e_shnum     = # of section header ents
   ELFHeader_e_shstrndx_Offset = FH.size();
-  TOI->outhalf(FH, 0);                 // e_shstrndx  = Section # of '.shstrtab'
+  outhalf(FH, 0);                 // e_shstrndx  = Section # of '.shstrtab'
 
   // Add the null section, which is required to be first in the file.
   getSection("", 0, 0);
@@ -368,7 +352,7 @@ void ELFWriter::EmitSymbolTable() {
   DataBuffer &StrTabBuf = StrTab.SectionData;
 
   // Set the zero'th symbol to a null byte, as required.
-  TOI->outbyte(StrTabBuf, 0);
+  outbyte(StrTabBuf, 0);
   SymbolTable[0].NameIdx = 0;
   unsigned Index = 1;
   for (unsigned i = 1, e = SymbolTable.size(); i != e; ++i) {
@@ -405,22 +389,22 @@ void ELFWriter::EmitSymbolTable() {
   if (!is64Bit) {   // 32-bit and 64-bit formats are shuffled a bit.
     for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
       ELFSym &Sym = SymbolTable[i];
-      TOI->outword(SymTabBuf, Sym.NameIdx);
-      TOI->outaddr32(SymTabBuf, Sym.Value);
-      TOI->outword(SymTabBuf, Sym.Size);
-      TOI->outbyte(SymTabBuf, Sym.Info);
-      TOI->outbyte(SymTabBuf, Sym.Other);
-      TOI->outhalf(SymTabBuf, Sym.SectionIdx);
+      outword(SymTabBuf, Sym.NameIdx);
+      outaddr32(SymTabBuf, Sym.Value);
+      outword(SymTabBuf, Sym.Size);
+      outbyte(SymTabBuf, Sym.Info);
+      outbyte(SymTabBuf, Sym.Other);
+      outhalf(SymTabBuf, Sym.SectionIdx);
     }
   } else {
     for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
       ELFSym &Sym = SymbolTable[i];
-      TOI->outword(SymTabBuf, Sym.NameIdx);
-      TOI->outbyte(SymTabBuf, Sym.Info);
-      TOI->outbyte(SymTabBuf, Sym.Other);
-      TOI->outhalf(SymTabBuf, Sym.SectionIdx);
-      TOI->outaddr64(SymTabBuf, Sym.Value);
-      TOI->outxword(SymTabBuf, Sym.Size);
+      outword(SymTabBuf, Sym.NameIdx);
+      outbyte(SymTabBuf, Sym.Info);
+      outbyte(SymTabBuf, Sym.Other);
+      outhalf(SymTabBuf, Sym.SectionIdx);
+      outaddr64(SymTabBuf, Sym.Value);
+      outxword(SymTabBuf, Sym.Size);
     }
   }
 
@@ -436,7 +420,7 @@ void ELFWriter::EmitSectionTableStringTable() {
 
   // Now that we know which section number is the .shstrtab section, update the
   // e_shstrndx entry in the ELF header.
-  TOI->fixhalf(FileHeader, SHStrTab.SectionIdx, ELFHeader_e_shstrndx_Offset);
+  fixhalf(FileHeader, SHStrTab.SectionIdx, ELFHeader_e_shstrndx_Offset);
 
   // Set the NameIdx of each section in the string table and emit the bytes for
   // the string table.
@@ -487,11 +471,11 @@ void ELFWriter::OutputSectionsAndSectionTable() {
 
   // Now that we know where all of the sections will be emitted, set the e_shnum
   // entry in the ELF header.
-  TOI->fixhalf(FileHeader, NumSections, ELFHeader_e_shnum_Offset);
+  fixhalf(FileHeader, NumSections, ELFHeader_e_shnum_Offset);
 
   // Now that we know the offset in the file of the section table, update the
   // e_shoff address in the ELF header.
-  TOI->fixaddr(FileHeader, FileOff, ELFHeader_e_shoff_Offset);
+  fixaddr(FileHeader, FileOff, ELFHeader_e_shoff_Offset);
 
   // Now that we know all of the data in the file header, emit it and all of the
   // sections!
@@ -513,16 +497,16 @@ void ELFWriter::OutputSectionsAndSectionTable() {
     O.write((char*)&S.SectionData[0], S.SectionData.size());
     FileOff += S.SectionData.size();
 
-    TOI->outword(Table, S.NameIdx); // sh_name - Symbol table name idx
-    TOI->outword(Table, S.Type);    // sh_type - Section contents & semantics
-    TOI->outword(Table, S.Flags);   // sh_flags - Section flags
-    TOI->outaddr(Table, S.Addr);    // sh_addr - The mem addr this section is in
-    TOI->outaddr(Table, S.Offset);  // sh_offset - Offset from the file start
-    TOI->outword(Table, S.Size);    // sh_size - The section size
-    TOI->outword(Table, S.Link);    // sh_link - Section header table index link
-    TOI->outword(Table, S.Info);    // sh_info - Auxillary information
-    TOI->outword(Table, S.Align);   // sh_addralign - Alignment of section
-    TOI->outword(Table, S.EntSize); // sh_entsize - Size of entries in the sect
+    outword(Table, S.NameIdx);  // sh_name - Symbol table name idx
+    outword(Table, S.Type);     // sh_type - Section contents & semantics
+    outword(Table, S.Flags);    // sh_flags - Section flags.
+    outaddr(Table, S.Addr);     // sh_addr - The mem addr this section is in.
+    outaddr(Table, S.Offset);   // sh_offset - Offset from the file start.
+    outword(Table, S.Size);     // sh_size - The section size.
+    outword(Table, S.Link);     // sh_link - Section header table index link.
+    outword(Table, S.Info);     // sh_info - Auxillary information.
+    outword(Table, S.Align);    // sh_addralign - Alignment of section.
+    outword(Table, S.EntSize);  // sh_entsize - Size of entries in the section.
 
     SectionList.pop_front();
   }
