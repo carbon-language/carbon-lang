@@ -27,7 +27,7 @@ cvs diff -Ntdup -5 >> "$NAME".patch.raw 2>&1 \
   tools test runtime projects examples win32 Xcode
 
 echo "mkpatch: Removing cruft from the patch file"
-sed "$NAME".patch.raw -e '/^[?] .*/d' -e '/^cvs diff: Diffing/d' | awk '\
+sed -e '/^[?] .*/d' -e '/^cvs diff: Diffing/d' "$NAME".patch.raw | awk '\
 BEGIN { deleting = 0; } \
 /^Index: .*[.]cvs$/ { deleting = 1; fname=substr($0,7); \
   print "Skipping: ", fname > "/dev/stderr"; } \
