@@ -1207,15 +1207,16 @@ void ModulePass::assignPassManager(PMStack &PMS,
 
   // Find Module Pass Manager
   while(!PMS.empty()) {
-    if (PMS.top()->getPassManagerType() > PMT_ModulePassManager)
+    PassManagerType TopPMType = PMS.top()->getPassManagerType();
+    if (TopPMType == PreferredType)
+      break; // We found desired pass manager
+    else if (TopPMType > PMT_ModulePassManager)
       PMS.pop();    // Pop children pass managers
     else
       break;
   }
-  MPPassManager *MPP = dynamic_cast<MPPassManager *>(PMS.top());
 
-  assert(MPP && "Unable to find Module Pass Manager");
-  MPP->add(this);
+  PMS.top()->add(this);
 }
 
 /// Find appropriate Function Pass Manager or Call Graph Pass Manager
