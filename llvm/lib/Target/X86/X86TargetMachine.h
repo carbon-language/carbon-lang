@@ -35,6 +35,7 @@ class X86TargetMachine : public LLVMTargetMachine {
 
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
+  virtual const TargetObjInfo *createTargetObjInfo() const;
   
 public:
   X86TargetMachine(const Module &M, const std::string &FS, bool is64Bit);
