@@ -857,8 +857,8 @@ namespace {
         // See if one of the nodes about to be removed is actually a better
         // canonical choice than n1.
         unsigned orig_n1 = n1;
-        std::vector<unsigned>::iterator DontRemove = Remove.end();
-        for (std::vector<unsigned>::iterator I = Remove.begin()+1 /* skip n2 */,
+        SetVector<unsigned>::iterator DontRemove = Remove.end();
+        for (SetVector<unsigned>::iterator I = Remove.begin()+1 /* skip n2 */,
              E = Remove.end(); I != E; ++I) {
           unsigned n = *I;
           Value *V = IG.node(n)->getValue();
@@ -949,7 +949,7 @@ namespace {
 
       // Migrate relationships from removed nodes to N1.
       Node *N1 = IG.node(n1);
-      for (std::vector<unsigned>::iterator I = Remove.begin(), E = Remove.end();
+      for (SetVector<unsigned>::iterator I = Remove.begin(), E = Remove.end();
            I != E; ++I) {
         unsigned n = *I;
         Node *N = IG.node(n);
@@ -972,7 +972,7 @@ namespace {
       if (!n2)
         IG.addEquality(n1, V2, Top);
       else {
-        for (std::vector<unsigned>::iterator I = Remove.begin(),
+        for (SetVector<unsigned>::iterator I = Remove.begin(),
              E = Remove.end(); I != E; ++I) {
           IG.addEquality(n1, IG.node(*I)->getValue(), Top);
         }
