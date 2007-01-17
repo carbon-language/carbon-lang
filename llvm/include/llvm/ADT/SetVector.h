@@ -37,7 +37,7 @@ public:
   typedef const T& const_reference;
   typedef std::set<value_type> set_type;
   typedef std::vector<value_type> vector_type;
-  typedef typename vector_type::iterator iterator;
+  typedef typename vector_type::const_iterator iterator;
   typedef typename vector_type::const_iterator const_iterator;
   typedef typename vector_type::size_type size_type;
 
@@ -112,7 +112,8 @@ public:
   /// @brief Remove an item from the set vector.
   void remove(const value_type& X) {
     if (0 < set_.erase(X)) {
-      iterator I = std::find(vector_.begin(),vector_.end(),X);
+      typename vector_type::iterator I =
+        std::find(vector_.begin(), vector_.end(), X);
       assert(I != vector_.end() && "Corrupted SetVector instances!");
       vector_.erase(I);
     }
