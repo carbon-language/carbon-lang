@@ -38,6 +38,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/OutputBuffer.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
 
@@ -50,11 +51,12 @@ namespace llvm {
   /// functions to the ELF file.
   class ELFCodeEmitter : public MachineCodeEmitter {
     ELFWriter &EW;
+    TargetMachine &TM;
     ELFWriter::ELFSection *ES;  // Section to write to.
     std::vector<unsigned char> *OutBuffer;
     size_t FnStart;
   public:
-    ELFCodeEmitter(ELFWriter &ew) : EW(ew), OutBuffer(0) {}
+    ELFCodeEmitter(ELFWriter &ew) : EW(ew), TM(EW.TM), OutBuffer(0) {}
 
     void startFunction(MachineFunction &F);
     bool finishFunction(MachineFunction &F);
@@ -103,8 +105,8 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
                       ELFWriter::ELFSection::SHF_EXECINSTR |
                       ELFWriter::ELFSection::SHF_ALLOC);
   OutBuffer = &ES->SectionData;
-  cerr << "FIXME: This code needs to be updated for changes in the"
-       << " CodeEmitter interfaces.  In particular, this should set "
+  cerr << "FIXME: This code needs to be updated for changes in the "
+       << "CodeEmitter interfaces.  In particular, this should set "
        << "BufferBegin/BufferEnd/CurBufferPtr, not deal with OutBuffer!";
   abort();
 
@@ -113,8 +115,8 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
 
   // Add padding zeros to the end of the buffer to make sure that the
   // function will start on the correct byte alignment within the section.
-  ELFWriter::align(*OutBuffer, Align);
-
+  OutputBuffer OB(TM, *OutBuffer);
+  OB.align(Align);
   FnStart = OutBuffer->size();
 }
 
@@ -145,7 +147,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &F) {
 
   FnSym.SetType(ELFWriter::ELFSym::STT_FUNC);
   FnSym.SectionIdx = ES->SectionIdx;
-    FnSym.Value = FnStart;   // Value = Offset from start of Section.
+  FnSym.Value = FnStart;   // Value = Offset from start of Section.
   FnSym.Size = OutBuffer->size()-FnStart;
 
   // Finally, add it to the symtab.
@@ -180,37 +182,38 @@ bool ELFWriter::doInitialization(Module &M) {
 
   // Local alias to shortenify coming code.
   std::vector<unsigned char> &FH = FileHeader;
+  OutputBuffer FHOut(TM, FH);
 
-  outbyte(FH, 0x7F);                     // EI_MAG0
-  outbyte(FH, 'E');                      // EI_MAG1
-  outbyte(FH, 'L');                      // EI_MAG2
-  outbyte(FH, 'F');                      // EI_MAG3
-  outbyte(FH, is64Bit ? 2 : 1);          // EI_CLASS
-  outbyte(FH, isLittleEndian ? 1 : 2);   // EI_DATA
-  outbyte(FH, 1);                        // EI_VERSION
+  FHOut.outbyte(0x7F);                     // EI_MAG0
+  FHOut.outbyte('E');                      // EI_MAG1
+  FHOut.outbyte('L');                      // EI_MAG2
+  FHOut.outbyte('F');                      // EI_MAG3
+  FHOut.outbyte(is64Bit ? 2 : 1);          // EI_CLASS
+  FHOut.outbyte(isLittleEndian ? 1 : 2);   // EI_DATA
+  FHOut.outbyte(1);                        // EI_VERSION
   FH.resize(16);                         // EI_PAD up to 16 bytes.
 
   // This should change for shared objects.
-  outhalf(FH, 1);                 // e_type = ET_REL
-  outhalf(FH, e_machine);         // e_machine = whatever the target wants
-  outword(FH, 1);                 // e_version = 1
-  outaddr(FH, 0);                 // e_entry = 0 -> no entry point in .o file
-  outaddr(FH, 0);                 // e_phoff = 0 -> no program header for .o
+  FHOut.outhalf(1);                 // e_type = ET_REL
+  FHOut.outhalf(e_machine);         // e_machine = whatever the target wants
+  FHOut.outword(1);                 // e_version = 1
+  FHOut.outaddr(0);                 // e_entry = 0 -> no entry point in .o file
+  FHOut.outaddr(0);                 // e_phoff = 0 -> no program header for .o
 
   ELFHeader_e_shoff_Offset = FH.size();
-  outaddr(FH, 0);                 // e_shoff
-  outword(FH, e_flags);           // e_flags = whatever the target wants
+  FHOut.outaddr(0);                 // e_shoff
+  FHOut.outword(e_flags);           // e_flags = whatever the target wants
 
-  outhalf(FH, is64Bit ? 64 : 52); // e_ehsize = ELF header size
-  outhalf(FH, 0);                 // e_phentsize = prog header entry size
-  outhalf(FH, 0);                 // e_phnum     = # prog header entries = 0
-  outhalf(FH, is64Bit ? 64 : 40); // e_shentsize = sect hdr entry size
+  FHOut.outhalf(is64Bit ? 64 : 52); // e_ehsize = ELF header size
+  FHOut.outhalf(0);                 // e_phentsize = prog header entry size
+  FHOut.outhalf(0);                 // e_phnum     = # prog header entries = 0
+  FHOut.outhalf(is64Bit ? 64 : 40); // e_shentsize = sect hdr entry size
 
 
   ELFHeader_e_shnum_Offset = FH.size();
-  outhalf(FH, 0);                 // e_shnum     = # of section header ents
+  FHOut.outhalf(0);                 // e_shnum     = # of section header ents
   ELFHeader_e_shstrndx_Offset = FH.size();
-  outhalf(FH, 0);                 // e_shstrndx  = Section # of '.shstrtab'
+  FHOut.outhalf(0);                 // e_shstrndx  = Section # of '.shstrtab'
 
   // Add the null section, which is required to be first in the file.
   getSection("", 0, 0);
@@ -350,9 +353,10 @@ void ELFWriter::EmitSymbolTable() {
   StrTab.Align = 1;
 
   DataBuffer &StrTabBuf = StrTab.SectionData;
+  OutputBuffer StrTabOut(TM, StrTabBuf);
 
   // Set the zero'th symbol to a null byte, as required.
-  outbyte(StrTabBuf, 0);
+  StrTabOut.outbyte(0);
   SymbolTable[0].NameIdx = 0;
   unsigned Index = 1;
   for (unsigned i = 1, e = SymbolTable.size(); i != e; ++i) {
@@ -385,26 +389,27 @@ void ELFWriter::EmitSymbolTable() {
   SymTab.Info = FirstNonLocalSymbol;   // First non-STB_LOCAL symbol.
   SymTab.EntSize = 16; // Size of each symtab entry. FIXME: wrong for ELF64
   DataBuffer &SymTabBuf = SymTab.SectionData;
+  OutputBuffer SymTabOut(TM, SymTabBuf);
 
   if (!is64Bit) {   // 32-bit and 64-bit formats are shuffled a bit.
     for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
       ELFSym &Sym = SymbolTable[i];
-      outword(SymTabBuf, Sym.NameIdx);
-      outaddr32(SymTabBuf, Sym.Value);
-      outword(SymTabBuf, Sym.Size);
-      outbyte(SymTabBuf, Sym.Info);
-      outbyte(SymTabBuf, Sym.Other);
-      outhalf(SymTabBuf, Sym.SectionIdx);
+      SymTabOut.outword(Sym.NameIdx);
+      SymTabOut.outaddr32(Sym.Value);
+      SymTabOut.outword(Sym.Size);
+      SymTabOut.outbyte(Sym.Info);
+      SymTabOut.outbyte(Sym.Other);
+      SymTabOut.outhalf(Sym.SectionIdx);
     }
   } else {
     for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
       ELFSym &Sym = SymbolTable[i];
-      outword(SymTabBuf, Sym.NameIdx);
-      outbyte(SymTabBuf, Sym.Info);
-      outbyte(SymTabBuf, Sym.Other);
-      outhalf(SymTabBuf, Sym.SectionIdx);
-      outaddr64(SymTabBuf, Sym.Value);
-      outxword(SymTabBuf, Sym.Size);
+      SymTabOut.outword(Sym.NameIdx);
+      SymTabOut.outbyte(Sym.Info);
+      SymTabOut.outbyte(Sym.Other);
+      SymTabOut.outhalf(Sym.SectionIdx);
+      SymTabOut.outaddr64(Sym.Value);
+      SymTabOut.outxword(Sym.Size);
     }
   }
 
@@ -420,7 +425,8 @@ void ELFWriter::EmitSectionTableStringTable() {
 
   // Now that we know which section number is the .shstrtab section, update the
   // e_shstrndx entry in the ELF header.
-  fixhalf(FileHeader, SHStrTab.SectionIdx, ELFHeader_e_shstrndx_Offset);
+  OutputBuffer FHOut(TM, FileHeader);
+  FHOut.fixhalf(SHStrTab.SectionIdx, ELFHeader_e_shstrndx_Offset);
 
   // Set the NameIdx of each section in the string table and emit the bytes for
   // the string table.
@@ -471,11 +477,12 @@ void ELFWriter::OutputSectionsAndSectionTable() {
 
   // Now that we know where all of the sections will be emitted, set the e_shnum
   // entry in the ELF header.
-  fixhalf(FileHeader, NumSections, ELFHeader_e_shnum_Offset);
+  OutputBuffer FHOut(TM, FileHeader);
+  FHOut.fixhalf(NumSections, ELFHeader_e_shnum_Offset);
 
   // Now that we know the offset in the file of the section table, update the
   // e_shoff address in the ELF header.
-  fixaddr(FileHeader, FileOff, ELFHeader_e_shoff_Offset);
+  FHOut.fixaddr(FileOff, ELFHeader_e_shoff_Offset);
 
   // Now that we know all of the data in the file header, emit it and all of the
   // sections!
@@ -484,6 +491,7 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   DataBuffer().swap(FileHeader);
 
   DataBuffer Table;
+  OutputBuffer TableOut(TM, Table);
 
   // Emit all of the section data and build the section table itself.
   while (!SectionList.empty()) {
@@ -497,16 +505,16 @@ void ELFWriter::OutputSectionsAndSectionTable() {
     O.write((char*)&S.SectionData[0], S.SectionData.size());
     FileOff += S.SectionData.size();
 
-    outword(Table, S.NameIdx);  // sh_name - Symbol table name idx
-    outword(Table, S.Type);     // sh_type - Section contents & semantics
-    outword(Table, S.Flags);    // sh_flags - Section flags.
-    outaddr(Table, S.Addr);     // sh_addr - The mem addr this section is in.
-    outaddr(Table, S.Offset);   // sh_offset - Offset from the file start.
-    outword(Table, S.Size);     // sh_size - The section size.
-    outword(Table, S.Link);     // sh_link - Section header table index link.
-    outword(Table, S.Info);     // sh_info - Auxillary information.
-    outword(Table, S.Align);    // sh_addralign - Alignment of section.
-    outword(Table, S.EntSize);  // sh_entsize - Size of entries in the section.
+    TableOut.outword(S.NameIdx);  // sh_name - Symbol table name idx
+    TableOut.outword(S.Type);     // sh_type - Section contents & semantics
+    TableOut.outword(S.Flags);    // sh_flags - Section flags.
+    TableOut.outaddr(S.Addr);     // sh_addr - The mem addr this section is in.
+    TableOut.outaddr(S.Offset);   // sh_offset - Offset from the file start.
+    TableOut.outword(S.Size);     // sh_size - The section size.
+    TableOut.outword(S.Link);     // sh_link - Section header table index link.
+    TableOut.outword(S.Info);     // sh_info - Auxillary information.
+    TableOut.outword(S.Align);    // sh_addralign - Alignment of section.
+    TableOut.outword(S.EntSize);  // sh_entsize - Size of entries in the section
 
     SectionList.pop_front();
   }

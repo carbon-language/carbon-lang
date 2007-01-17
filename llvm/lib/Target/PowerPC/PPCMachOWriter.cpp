@@ -17,6 +17,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachOWriter.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/OutputBuffer.h"
 using namespace llvm;
 
 namespace {
@@ -91,24 +92,36 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
       MachORelocation VANILLA(MR.getMachineCodeOffset(), To.Index, false, 2, 
                               isExtern, PPC_RELOC_VANILLA);
       ++From.nreloc;
-      outword(From.RelocBuffer, VANILLA.r_address);
-      outword(From.RelocBuffer, VANILLA.getPackedFields());
+
+      OutputBuffer RelocOut(TM, From.RelocBuffer);
+      RelocOut.outword(VANILLA.r_address);
+      RelocOut.outword(VANILLA.getPackedFields());
+
+      OutputBuffer SecOut(TM, From.SectionData);
+      SecOut.fixword(Addr, MR.getMachineCodeOffset());
+      break;
     }
-    fixword(From.SectionData, Addr, MR.getMachineCodeOffset());
-    break;
   case PPC::reloc_pcrel_bx:
-    Addr -= MR.getMachineCodeOffset();
-    Addr >>= 2;
-    Addr &= 0xFFFFFF;
-    Addr <<= 2;
-    Addr |= (From.SectionData[MR.getMachineCodeOffset()] << 24);
-    fixword(From.SectionData, Addr, MR.getMachineCodeOffset());
-    break;
+    {
+      Addr -= MR.getMachineCodeOffset();
+      Addr >>= 2;
+      Addr &= 0xFFFFFF;
+      Addr <<= 2;
+      Addr |= (From.SectionData[MR.getMachineCodeOffset()] << 24);
+
+      OutputBuffer SecOut(TM, From.SectionData);
+      SecOut.fixword(Addr, MR.getMachineCodeOffset());
+      break;
+    }
   case PPC::reloc_pcrel_bcx:
-    Addr -= MR.getMachineCodeOffset();
-    Addr &= 0xFFFC;
-    fixhalf(From.SectionData, Addr, MR.getMachineCodeOffset() + 2);
-    break;
+    {
+      Addr -= MR.getMachineCodeOffset();
+      Addr &= 0xFFFC;
+
+      OutputBuffer SecOut(TM, From.SectionData);
+      SecOut.fixhalf(Addr, MR.getMachineCodeOffset() + 2);
+      break;
+    }
   case PPC::reloc_absolute_high:
     {
       MachORelocation HA16(MR.getMachineCodeOffset(), To.Index, false, 2,
@@ -117,15 +130,19 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
                            PPC_RELOC_PAIR);
       ++From.nreloc;
       ++From.nreloc;
-      outword(From.RelocBuffer, HA16.r_address);
-      outword(From.RelocBuffer, HA16.getPackedFields());
-      outword(From.RelocBuffer, PAIR.r_address);
-      outword(From.RelocBuffer, PAIR.getPackedFields());
+
+      OutputBuffer RelocOut(TM, From.RelocBuffer);
+      RelocOut.outword(HA16.r_address);
+      RelocOut.outword(HA16.getPackedFields());
+      RelocOut.outword(PAIR.r_address);
+      RelocOut.outword(PAIR.getPackedFields());
+      printf("ha16: %x\n", (unsigned)Addr);
+      Addr += 0x8000;
+
+      OutputBuffer SecOut(TM, From.SectionData);
+      SecOut.fixhalf(Addr >> 16, MR.getMachineCodeOffset() + 2);
+      break;
     }
-    printf("ha16: %x\n", (unsigned)Addr);
-    Addr += 0x8000;
-    fixhalf(From.SectionData, Addr >> 16, MR.getMachineCodeOffset() + 2);
-    break;
   case PPC::reloc_absolute_low:
     {
       MachORelocation LO16(MR.getMachineCodeOffset(), To.Index, false, 2,
@@ -134,14 +151,18 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
                            PPC_RELOC_PAIR);
       ++From.nreloc;
       ++From.nreloc;
-      outword(From.RelocBuffer, LO16.r_address);
-      outword(From.RelocBuffer, LO16.getPackedFields());
-      outword(From.RelocBuffer, PAIR.r_address);
-      outword(From.RelocBuffer, PAIR.getPackedFields());
+
+      OutputBuffer RelocOut(TM, From.RelocBuffer);
+      RelocOut.outword(LO16.r_address);
+      RelocOut.outword(LO16.getPackedFields());
+      RelocOut.outword(PAIR.r_address);
+      RelocOut.outword(PAIR.getPackedFields());
+      printf("lo16: %x\n", (unsigned)Addr);
+
+      OutputBuffer SecOut(TM, From.SectionData);
+      SecOut.fixhalf(Addr, MR.getMachineCodeOffset() + 2);
+      break;
     }
-    printf("lo16: %x\n", (unsigned)Addr);
-    fixhalf(From.SectionData, Addr, MR.getMachineCodeOffset() + 2);
-    break;
   }
 }
 
