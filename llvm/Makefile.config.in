@@ -47,16 +47,8 @@ LLVM_SRC_ROOT   := $(shell cd @abs_top_srcdir@; $(PWD))
 LLVM_OBJ_ROOT   := $(shell cd @abs_top_builddir@; $(PWD))
 PROJ_SRC_ROOT   := $(shell cd $(LLVM_SRC_ROOT); $(PWD))
 PROJ_SRC_DIR    := $(shell cd $(LLVM_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)); $(PWD))
-DESTDIR         := @prefix@
-PROJ_prefix     := $(DESTDIR)
-PROJ_bindir     := $(DESTDIR)/bin
-PROJ_libdir     := $(DESTDIR)/lib
-PROJ_datadir    := $(DESTDIR)/share
-PROJ_docsdir    := $(DESTDIR)/docs/llvm
-PROJ_etcdir     := $(DESTDIR)/etc/llvm
-PROJ_includedir := $(DESTDIR)/include
-PROJ_infodir    := $(DESTDIR)/info
-PROJ_mandir     := $(DESTDIR)/man
+prefix          := @prefix@
+PROJ_prefix     := $(prefix)
 PROJ_VERSION    := $(LLVMVersion)
 else
 ifndef PROJ_SRC_ROOT
@@ -75,19 +67,21 @@ ifndef LLVM_OBJ_ROOT
 $(error Projects must define LLVM_OBJ_ROOT)
 endif
 PROJ_SRC_DIR := $(shell cd $(PROJ_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)); $(PWD))
-PROJ_prefix     := $(PROJ_INSTALL_ROOT)
-PROJ_bindir     := $(PROJ_INSTALL_ROOT)/bin
-PROJ_libdir     := $(PROJ_INSTALL_ROOT)/lib
-PROJ_datadir    := $(PROJ_INSTALL_ROOT)/share
-PROJ_docsdir    := $(PROJ_INSTALL_ROOT)/docs/llvm
-PROJ_etcdir     := $(PROJ_INSTALL_ROOT)/etc/llvm
-PROJ_includedir := $(PROJ_INSTALL_ROOT)/include
-PROJ_infodir    := $(PROJ_INSTALL_ROOT)/info
-PROJ_mandir     := $(PROJ_INSTALL_ROOT)/man
+prefix          := $(PROJ_INSTALL_ROOT)
+PROJ_prefix     := $(prefix)
 ifndef PROJ_VERSION
 PROJ_VERSION := 1.0
 endif
 endif
+
+PROJ_bindir     := $(DESTDIR)$(PROJ_prefix)/bin
+PROJ_libdir     := $(DESTDIR)$(PROJ_prefix)/lib
+PROJ_datadir    := $(DESTDIR)$(PROJ_prefix)/share
+PROJ_docsdir    := $(DESTDIR)$(PROJ_prefix)/docs/llvm
+PROJ_etcdir     := $(DESTDIR)$(PROJ_prefix)/etc/llvm
+PROJ_includedir := $(DESTDIR)$(PROJ_prefix)/include
+PROJ_infodir    := $(DESTDIR)$(PROJ_prefix)/info
+PROJ_mandir     := $(DESTDIR)$(PROJ_prefix)/man
 
 # Determine if we're on a unix type operating system
 LLVM_ON_UNIX:=@LLVM_ON_UNIX@
