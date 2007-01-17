@@ -21,6 +21,7 @@
 namespace llvm {
 
 class TargetAsmInfo;
+class TargetObjInfo;
 class TargetData;
 class TargetSubtarget;
 class TargetInstrInfo;
@@ -66,7 +67,7 @@ class TargetMachine {
   TargetMachine(const TargetMachine &);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetMachine() : AsmInfo(NULL) { }
+  TargetMachine() : AsmInfo(NULL), ObjInfo(NULL) { }
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtarget-derived member variable.
@@ -75,10 +76,18 @@ protected: // Can only create subclasses.
   /// AsmInfo - Contains target specific asm information.
   ///
   mutable const TargetAsmInfo *AsmInfo;
-  
+
   /// createTargetAsmInfo - Create a new instance of target specific asm
   /// information.
   virtual const TargetAsmInfo *createTargetAsmInfo() const { return NULL; }
+
+  /// ObjInfo - Contains target specific object file information.
+  /// 
+  mutable const TargetObjInfo *ObjInfo;
+  
+  /// createTargetObjInfo - Create a new instance of target specific object
+  /// information.
+  virtual const TargetObjInfo *createTargetObjInfo() const { return NULL; }
 
 public:
   virtual ~TargetMachine();
@@ -107,12 +116,18 @@ public:
   virtual       TargetLowering    *getTargetLowering() const { return 0; }
   virtual const TargetData            *getTargetData() const { return 0; }
   
-  
   /// getTargetAsmInfo - Return target specific asm information.
   ///
   const TargetAsmInfo *getTargetAsmInfo() const {
     if (!AsmInfo) AsmInfo = createTargetAsmInfo();
     return AsmInfo;
+  }
+  
+  /// getTargetObjInfo - Return target specific object information.
+  ///
+  const TargetObjInfo *getTargetObjInfo() const {
+    if (!ObjInfo) ObjInfo = createTargetObjInfo();
+    return ObjInfo;
   }
   
   /// getSubtarget - This method returns a pointer to the specified type of
