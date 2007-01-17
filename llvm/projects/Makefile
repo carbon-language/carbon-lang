@@ -14,14 +14,7 @@ DIRS:= $(filter-out llvm-test,$(patsubst $(PROJ_SRC_DIR)/%/Makefile,%,$(wildcard
 
 # Sparc cannot link shared libraries (libtool problem?) which Stacker uses
 ifeq ($(ARCH), Sparc)
-DIRS := $(filter-out Stacker, $(DIRS))
 DIRS := $(filter-out sample, $(DIRS))
-endif
-
-
-# Universal builds can't build stacker, which uses llvm-gcc -S.
-ifdef UNIVERSAL
-DIRS := $(filter-out Stacker, $(DIRS))
 endif
 
 include $(PROJ_SRC_ROOT)/Makefile.rules
