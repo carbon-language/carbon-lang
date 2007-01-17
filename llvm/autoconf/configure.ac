@@ -66,17 +66,17 @@ for i in `ls ${srcdir}/projects`
 do
   if test -d ${srcdir}/projects/${i} ; then
     case ${i} in
-      "CVS") ;;
-      "sample")       AC_CONFIG_SUBDIRS([projects/sample])    ;;
-      "Stacker")      AC_CONFIG_SUBDIRS([projects/Stacker])   ;;
-      "privbracket")  AC_CONFIG_SUBDIRS([projects/privbracket]) ;;
-      "llvm-test")    AC_CONFIG_SUBDIRS([projects/llvm-test]) ;;
-      "llvm-reopt")   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
-      "llvm-gcc")     AC_CONFIG_SUBDIRS([projects/llvm-gcc])  ;;
-      "llvm-java")    AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
-      "llvm-tv")      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
-      "llvm-poolalloc") AC_CONFIG_SUBDIRS([projects/llvm-poolalloc]) ;;
-      "llvm-kernel")  AC_CONFIG_SUBDIRS([projects/llvm-kernel]) ;;
+      CVS) ;;
+      sample)       AC_CONFIG_SUBDIRS([projects/sample])    ;;
+      privbracket)  AC_CONFIG_SUBDIRS([projects/privbracket]) ;;
+      llvm-stacker) AC_CONFIG_SUBDIRS([projects/llvm-stacker]) ;;
+      llvm-test)    AC_CONFIG_SUBDIRS([projects/llvm-test]) ;;
+      llvm-reopt)   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
+      llvm-gcc)     AC_CONFIG_SUBDIRS([projects/llvm-gcc])  ;;
+      llvm-java)    AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
+      llvm-tv)      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
+      llvm-poolalloc) AC_CONFIG_SUBDIRS([projects/llvm-poolalloc]) ;;
+      llvm-kernel)  AC_CONFIG_SUBDIRS([projects/llvm-kernel]) ;;
       *)              
         AC_MSG_WARN([Unknown project (${i}) won't be configured automatically])
         ;;

@@ -938,8 +938,8 @@ CXXCPP
 F77
 FFLAGS'
 ac_subdirs_all='projects/sample
-projects/Stacker
 projects/privbracket
+projects/llvm-stacker
 projects/llvm-test
 projects/llvm-reopt
 projects/llvm-gcc
@@ -2060,26 +2060,26 @@ for i in `ls ${srcdir}/projects`
 do
   if test -d ${srcdir}/projects/${i} ; then
     case ${i} in
-      "CVS") ;;
-      "sample")       subdirs="$subdirs projects/sample"
+      CVS) ;;
+      sample)       subdirs="$subdirs projects/sample"
     ;;
-      "Stacker")      subdirs="$subdirs projects/Stacker"
-   ;;
-      "privbracket")  subdirs="$subdirs projects/privbracket"
+      privbracket)  subdirs="$subdirs projects/privbracket"
  ;;
-      "llvm-test")    subdirs="$subdirs projects/llvm-test"
+      llvm-stacker) subdirs="$subdirs projects/llvm-stacker"
  ;;
-      "llvm-reopt")   subdirs="$subdirs projects/llvm-reopt"
+      llvm-test)    subdirs="$subdirs projects/llvm-test"
+ ;;
+      llvm-reopt)   subdirs="$subdirs projects/llvm-reopt"
 ;;
-      "llvm-gcc")     subdirs="$subdirs projects/llvm-gcc"
+      llvm-gcc)     subdirs="$subdirs projects/llvm-gcc"
   ;;
-      "llvm-java")    subdirs="$subdirs projects/llvm-java"
+      llvm-java)    subdirs="$subdirs projects/llvm-java"
  ;;
-      "llvm-tv")      subdirs="$subdirs projects/llvm-tv"
+      llvm-tv)      subdirs="$subdirs projects/llvm-tv"
    ;;
-      "llvm-poolalloc") subdirs="$subdirs projects/llvm-poolalloc"
+      llvm-poolalloc) subdirs="$subdirs projects/llvm-poolalloc"
  ;;
-      "llvm-kernel")  subdirs="$subdirs projects/llvm-kernel"
+      llvm-kernel)  subdirs="$subdirs projects/llvm-kernel"
  ;;
       *)
         { echo "$as_me:$LINENO: WARNING: Unknown project (${i}) won't be configured automatically" >&5
