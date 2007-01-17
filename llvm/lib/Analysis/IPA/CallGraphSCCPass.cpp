@@ -18,7 +18,131 @@
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/SCCIterator.h"
+#include "llvm/PassManagers.h"
 using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+// CGPassManager
+//
+/// CGPassManager manages FPPassManagers and CalLGraphSCCPasses.
+
+class CGPassManager : public ModulePass, public PMDataManager {
+
+public:
+  CGPassManager(int Depth) : PMDataManager(Depth) { }
+
+  /// run - Execute all of the passes scheduled for execution.  Keep track of
+  /// whether any of the passes modifies the module, and if so, return true.
+  bool runOnModule(Module &M);
+
+  bool doInitialization(CallGraph &CG);
+  bool doFinalization(CallGraph &CG);
+
+  /// Pass Manager itself does not invalidate any analysis info.
+  void getAnalysisUsage(AnalysisUsage &Info) const {
+    // CGPassManager walks SCC and it needs CallGraph.
+    Info.addRequired<CallGraph>();
+    Info.setPreservesAll();
+  }
+
+  // Print passes managed by this manager
+  void dumpPassStructure(unsigned Offset) {
+    llvm::cerr << std::string(Offset*2, ' ') << "Call Graph SCC Pass Manager\n";
+    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+      Pass *P = getContainedPass(Index);
+      P->dumpPassStructure(Offset + 1);
+      dumpLastUses(P, Offset+1);
+    }
+  }
+
+  Pass *getContainedPass(unsigned N) {
+    assert ( N < PassVector.size() && "Pass number out of range!");
+    Pass *FP = static_cast<Pass *>(PassVector[N]);
+    return FP;
+  }
+
+  virtual PassManagerType getPassManagerType() { 
+    return PMT_CallGraphPassManager; 
+  }
+};
+
+/// run - Execute all of the passes scheduled for execution.  Keep track of
+/// whether any of the passes modifies the module, and if so, return true.
+bool CGPassManager::runOnModule(Module &M) {
+  CallGraph &CG = getAnalysis<CallGraph>();
+  bool Changed = doInitialization(CG);
+
+  std::string Msg1 = "Executing Pass '";
+  std::string Msg3 = "' Made Modification '";
+
+  // Walk SCC
+  for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG);
+       I != E; ++I) {
+
+    // Run all passes on current SCC
+    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
+
+      Pass *P = getContainedPass(Index);
+      AnalysisUsage AnUsage;
+      P->getAnalysisUsage(AnUsage);
+
+      std::string Msg2 = "' on Call Graph ...\n'";
+      dumpPassInfo(P, Msg1, Msg2);
+      dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
+
+      initializeAnalysisImpl(P);
+
+      //        if (TheTimeInfo) TheTimeInfo->passStarted(P);
+      if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P))
+	Changed |= CGSP->runOnSCC(*I);   // TODO : What if CG is changed ?
+      else {
+	FPPassManager *FPP = dynamic_cast<FPPassManager *>(P);
+	assert (FPP && "Invalid CGPassManager member");
+
+	// Run pass P on all functions current SCC
+	std::vector<CallGraphNode*> &SCC = *I;
+	for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+	  Function *F = SCC[i]->getFunction();
+	  if (F) 
+	    Changed |= FPP->runOnFunction(*F);
+	}
+      }
+      //        if (TheTimeInfo) TheTimeInfo->passEnded(MP);
+
+      if (Changed)
+	dumpPassInfo(P, Msg3, Msg2);
+      dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
+      
+      removeNotPreservedAnalysis(P);
+      recordAvailableAnalysis(P);
+      removeDeadPasses(P, Msg2);
+    }
+  }
+  Changed |= doFinalization(CG);
+  return Changed;
+}
+
+/// Initialize CG
+bool CGPassManager::doInitialization(CallGraph &CG) {
+  bool Changed = false;
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
+    Pass *P = getContainedPass(Index);
+    if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P)) 
+      Changed |= CGSP->doInitialization(CG);
+  }
+  return Changed;
+}
+
+/// Finalize CG
+bool CGPassManager::doFinalization(CallGraph &CG) {
+  bool Changed = false;
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
+    Pass *P = getContainedPass(Index);
+    if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P)) 
+      Changed |= CGSP->doFinalization(CG);
+  }
+  return Changed;
+}
 
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should
