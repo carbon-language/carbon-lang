@@ -39,9 +39,14 @@ namespace llvm {
     ///
     const char *DataSection;              // Defaults to ".data".
 
-    /// BSSSection - Section directive for uninitialized data.
+    /// BSSSection - Section directive for uninitialized data.  Null if this
+    /// target doesn't support a BSS section.
     ///
     const char *BSSSection;               // Default to ".bss".
+    
+    /// ZeroFillDirective - Directive for emitting a global to the ZeroFill
+    /// section on this target.  Null if this target doesn't support zerofill.
+    const char *ZeroFillDirective;        // Default is null.
     
     /// AddressSize - Size of addresses used in file.
     ///
@@ -319,6 +324,9 @@ namespace llvm {
     }
     const char *getBSSSection() const {
       return BSSSection;
+    }
+    const char *getZeroFillDirective() const {
+      return ZeroFillDirective;
     }
     unsigned getAddressSize() const {
       return AddressSize;
