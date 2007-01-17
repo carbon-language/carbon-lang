@@ -1202,7 +1202,8 @@ void PMStack::handleLastUserOverflow() {
 
 /// Find appropriate Module Pass Manager in the PM Stack and
 /// add self into that manager. 
-void ModulePass::assignPassManager(PMStack &PMS) {
+void ModulePass::assignPassManager(PMStack &PMS, 
+				   PassManagerType PreferredType) {
 
   // Find Module Pass Manager
   while(!PMS.empty()) {
@@ -1219,7 +1220,8 @@ void ModulePass::assignPassManager(PMStack &PMS) {
 
 /// Find appropriate Function Pass Manager or Call Graph Pass Manager
 /// in the PM Stack and add self into that manager. 
-void FunctionPass::assignPassManager(PMStack &PMS) {
+void FunctionPass::assignPassManager(PMStack &PMS,
+				     PassManagerType PreferredType) {
 
   // Find Module Pass Manager (TODO : Or Call Graph Pass Manager)
   while(!PMS.empty()) {
@@ -1245,7 +1247,13 @@ void FunctionPass::assignPassManager(PMStack &PMS) {
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
     Pass *P = dynamic_cast<Pass *>(FPP);
-    P->assignPassManager(PMS);
+
+    // If Call Graph Pass Manager is active then use it to manage
+    // this new Function Pass manager.
+    if (PMD->getPassManagerType() == PMT_CallGraphPassManager)
+      P->assignPassManager(PMS, PMT_CallGraphPassManager);
+    else
+      P->assignPassManager(PMS);
 
     // [4] Push new manager into PMS
     PMS.push(FPP);
@@ -1257,7 +1265,8 @@ void FunctionPass::assignPassManager(PMStack &PMS) {
 
 /// Find appropriate Basic Pass Manager or Call Graph Pass Manager
 /// in the PM Stack and add self into that manager. 
-void BasicBlockPass::assignPassManager(PMStack &PMS) {
+void BasicBlockPass::assignPassManager(PMStack &PMS,
+				       PassManagerType PreferredType) {
 
   BBPassManager *BBP = NULL;
 

@@ -57,6 +57,20 @@ class PMDataManager;
 // AnalysisID - Use the PassInfo to identify a pass...
 typedef const PassInfo* AnalysisID;
 
+/// Different types of internal pass managers. External pass managers
+/// (PassManager and FunctionPassManager) are not represented here.
+/// Ordering of pass manager types is important here.
+enum PassManagerType {
+  PMT_Unknown = 0,
+  PMT_ModulePassManager = 1, /// MPPassManager 
+  PMT_CallGraphPassManager,  /// CGPassManager
+  PMT_FunctionPassManager,   /// FPPassManager
+  PMT_LoopPassManager,       /// LPPassManager
+  PMT_BasicBlockPassManager  /// BBPassManager
+};
+
+typedef enum PassManagerType PassManagerType;
+
 //===----------------------------------------------------------------------===//
 /// Pass interface - Implemented by all 'passes'.  Subclass this if you are an
 /// interprocedural optimization or you do not fit into any of the more
@@ -107,7 +121,8 @@ public:
   void print(std::ostream *O, const Module *M) const { if (O) print(*O, M); }
   void dump() const; // dump - call print(std::cerr, 0);
 
-  virtual void assignPassManager(PMStack &PMS) {}
+  virtual void assignPassManager(PMStack &PMS, 
+				 PassManagerType T = PMT_Unknown) {}
   // Access AnalysisResolver
   inline void setResolver(AnalysisResolver *AR) { Resolver = AR; }
   inline AnalysisResolver *getResolver() { return Resolver; }
@@ -200,7 +215,8 @@ public:
   virtual bool runPass(Module &M) { return runOnModule(M); }
   virtual bool runPass(BasicBlock&) { return false; }
 
-  virtual void assignPassManager(PMStack &PMS);
+  virtual void assignPassManager(PMStack &PMS, 
+				 PassManagerType T = PMT_ModulePassManager);
   // Force out-of-line virtual method.
   virtual ~ModulePass();
 };
@@ -266,7 +282,8 @@ public:
   ///
   bool run(Function &F);
 
-  virtual void assignPassManager(PMStack &PMS);
+  virtual void assignPassManager(PMStack &PMS, 
+				 PassManagerType T = PMT_FunctionPassManager);
 };
 
 
@@ -320,19 +337,8 @@ public:
   virtual bool runPass(Module &M) { return false; }
   virtual bool runPass(BasicBlock &BB);
 
-  virtual void assignPassManager(PMStack &PMS);
-};
-
-/// Different types of internal pass managers. External pass managers
-/// (PassManager and FunctionPassManager) are not represented here.
-/// Ordering of pass manager types is important here.
-enum PassManagerType {
-  PMT_Unknown = 0,
-  PMT_ModulePassManager = 1, /// MPPassManager 
-  PMT_CallGraphPassManager,  /// CGPassManager
-  PMT_FunctionPassManager,   /// FPPassManager
-  PMT_LoopPassManager,       /// LPPassManager
-  PMT_BasicBlockPassManager  /// BBPassManager
+  virtual void assignPassManager(PMStack &PMS, 
+				 PassManagerType T = PMT_BasicBlockPassManager);
 };
 
 /// PMStack
