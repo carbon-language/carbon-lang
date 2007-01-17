@@ -47,6 +47,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
     ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
     PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
+    BSSSection = 0;                       // no BSS section.
+    ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
     ConstantPoolSection = "\t.const\n";
     JumpTableDataSection = "\t.const\n";
     CStringSection = "\t.cstring";
