@@ -1603,9 +1603,9 @@ CastInst *CastInst::createFPCast(Value *C, const Type *Ty,
 
 // Provide a way to get a "cast" where the cast opcode is inferred from the 
 // types and size of the operand. This, basically, is a parallel of the 
-// logic in the checkCast function below.  This axiom should hold:
-//   checkCast( getCastOpcode(Val, Ty), Val, Ty)
-// should not assert in checkCast. In other words, this produces a "correct"
+// logic in the castIsValid function below.  This axiom should hold:
+//   castIsValid( getCastOpcode(Val, Ty), Val, Ty)
+// should not assert in castIsValid. In other words, this produces a "correct"
 // casting opcode for the arguments passed to it.
 Instruction::CastOps
 CastInst::getCastOpcode(
@@ -1699,8 +1699,8 @@ CastInst::getCastOpcode(
 /// could be broken out into the separate constructors but it is useful to have
 /// it in one place and to eliminate the redundant code for getting the sizes
 /// of the types involved.
-static bool 
-checkCast(Instruction::CastOps op, Value *S, const Type *DstTy) {
+bool 
+CastInst::castIsValid(Instruction::CastOps op, Value *S, const Type *DstTy) {
 
   // Check for type sanity on the arguments
   const Type *SrcTy = S->getType();
@@ -1754,144 +1754,144 @@ checkCast(Instruction::CastOps op, Value *S, const Type *DstTy) {
 TruncInst::TruncInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, Trunc, S, Name, InsertBefore) {
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal Trunc");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal Trunc");
 }
 
 TruncInst::TruncInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, Trunc, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal Trunc");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal Trunc");
 }
 
 ZExtInst::ZExtInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 )  : CastInst(Ty, ZExt, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal ZExt");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal ZExt");
 }
 
 ZExtInst::ZExtInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 )  : CastInst(Ty, ZExt, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal ZExt");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal ZExt");
 }
 SExtInst::SExtInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, SExt, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal SExt");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal SExt");
 }
 
 SExtInst::SExtInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 )  : CastInst(Ty, SExt, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal SExt");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal SExt");
 }
 
 FPTruncInst::FPTruncInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPTrunc, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal FPTrunc");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPTrunc");
 }
 
 FPTruncInst::FPTruncInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPTrunc, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal FPTrunc");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPTrunc");
 }
 
 FPExtInst::FPExtInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPExt, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal FPExt");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPExt");
 }
 
 FPExtInst::FPExtInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPExt, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal FPExt");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPExt");
 }
 
 UIToFPInst::UIToFPInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, UIToFP, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal UIToFP");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal UIToFP");
 }
 
 UIToFPInst::UIToFPInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, UIToFP, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal UIToFP");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal UIToFP");
 }
 
 SIToFPInst::SIToFPInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, SIToFP, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal SIToFP");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal SIToFP");
 }
 
 SIToFPInst::SIToFPInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, SIToFP, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal SIToFP");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal SIToFP");
 }
 
 FPToUIInst::FPToUIInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPToUI, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal FPToUI");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToUI");
 }
 
 FPToUIInst::FPToUIInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPToUI, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal FPToUI");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToUI");
 }
 
 FPToSIInst::FPToSIInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPToSI, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal FPToSI");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToSI");
 }
 
 FPToSIInst::FPToSIInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPToSI, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal FPToSI");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToSI");
 }
 
 PtrToIntInst::PtrToIntInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, PtrToInt, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal PtrToInt");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal PtrToInt");
 }
 
 PtrToIntInst::PtrToIntInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, PtrToInt, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal PtrToInt");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal PtrToInt");
 }
 
 IntToPtrInst::IntToPtrInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, IntToPtr, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal IntToPtr");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal IntToPtr");
 }
 
 IntToPtrInst::IntToPtrInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, IntToPtr, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal IntToPtr");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal IntToPtr");
 }
 
 BitCastInst::BitCastInst(
   Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
 ) : CastInst(Ty, BitCast, S, Name, InsertBefore) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal BitCast");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal BitCast");
 }
 
 BitCastInst::BitCastInst(
   Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, BitCast, S, Name, InsertAtEnd) { 
-  assert(checkCast(getOpcode(), S, Ty) && "Illegal BitCast");
+  assert(castIsValid(getOpcode(), S, Ty) && "Illegal BitCast");
 }
 
 //===----------------------------------------------------------------------===//
