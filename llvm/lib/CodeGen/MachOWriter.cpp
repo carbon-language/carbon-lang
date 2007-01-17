@@ -32,11 +32,11 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetJITInfo.h"
+#include "llvm/Target/TargetObjInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
-
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -48,6 +48,14 @@ namespace llvm {
   /// for functions to the Mach-O file.
   class MachOCodeEmitter : public MachineCodeEmitter {
     MachOWriter &MOW;
+
+    /// Target machine description.
+    ///
+    TargetMachine &TM;
+
+    /// Target object writer info.
+    ///
+    const TargetObjInfo *TOI;
 
     /// Relocations - These are the relocations that the function needs, as
     /// emitted.
@@ -71,7 +79,10 @@ namespace llvm {
     std::vector<intptr_t> MBBLocations;
     
   public:
-    MachOCodeEmitter(MachOWriter &mow) : MOW(mow) {}
+    MachOCodeEmitter(MachOWriter &mow, TargetMachine &tm) : MOW(mow), TM(tm) {
+      // Create the target object info object for this target.
+      TOI = TM.getTargetObjInfo();
+    }
 
     virtual void startFunction(MachineFunction &F);
     virtual bool finishFunction(MachineFunction &F);
@@ -163,7 +174,7 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
   
   // Get a symbol for the function to add to the symbol table
   const GlobalValue *FuncV = F.getFunction();
-  MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index, MOW.TM);
+  MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index, TM);
 
   // Emit constant pool to appropriate section(s)
   emitConstantPool(F.getConstantPool());
@@ -211,7 +222,7 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
   if (CP.empty()) return;
 
   // FIXME: handle PIC codegen
-  bool isPIC = MOW.TM.getRelocationModel() == Reloc::PIC_;
+  bool isPIC = TM.getRelocationModel() == Reloc::PIC_;
   assert(!isPIC && "PIC codegen not yet handled for mach-o jump tables!");
 
   // Although there is no strict necessity that I am aware of, we will do what
@@ -223,7 +234,7 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
   // "giant object for PIC" optimization.
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     const Type *Ty = CP[i].getType();
-    unsigned Size = MOW.TM.getTargetData()->getTypeSize(Ty);
+    unsigned Size = TM.getTargetData()->getTypeSize(Ty);
 
     MachOWriter::MachOSection *Sec = MOW.getConstSection(Ty);
     CPLocations.push_back(Sec->SectionData.size());
@@ -236,10 +247,10 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
     // FIXME: need alignment?
     // FIXME: share between here and AddSymbolToSection?
     for (unsigned j = 0; j < Size; ++j)
-      MOW.outbyte(Sec->SectionData, 0);
+      TOI->outbyte(Sec->SectionData, 0);
 
     MOW.InitMem(CP[i].Val.ConstVal, &Sec->SectionData[0], CPLocations[i],
-                MOW.TM.getTargetData(), Sec->Relocations);
+                TM.getTargetData(), Sec->Relocations);
   }
 }
 
@@ -250,7 +261,7 @@ void MachOCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
   if (JT.empty()) return;
 
   // FIXME: handle PIC codegen
-  bool isPIC = MOW.TM.getRelocationModel() == Reloc::PIC_;
+  bool isPIC = TM.getRelocationModel() == Reloc::PIC_;
   assert(!isPIC && "PIC codegen not yet handled for mach-o jump tables!");
 
   MachOWriter::MachOSection *Sec = MOW.getJumpTableSection();
@@ -267,7 +278,7 @@ void MachOCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
       MR.setResultPointer((void *)JTLocations[i]);
       MR.setConstantVal(TextSecIndex);
       Sec->Relocations.push_back(MR);
-      MOW.outaddr(Sec->SectionData, 0);
+      TOI->outaddr(Sec->SectionData, 0);
     }
   }
   // FIXME: remove when we have unified size + output buffer
@@ -283,7 +294,10 @@ MachOWriter::MachOWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
   isLittleEndian = TM.getTargetData()->isLittleEndian();
 
   // Create the machine code emitter object for this target.
-  MCE = new MachOCodeEmitter(*this);
+  MCE = new MachOCodeEmitter(*this, tm);
+
+  // Create the target object info object for this target.
+  TOI = TM.getTargetObjInfo();
 }
 
 MachOWriter::~MachOWriter() {
@@ -312,7 +326,7 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
     // FIXME: remove when we have unified size + output buffer
     unsigned AlignedSize = Sec->size - OrigSize;
     for (unsigned i = 0; i < AlignedSize; ++i)
-      outbyte(Sec->SectionData, 0);
+      TOI->outbyte(Sec->SectionData, 0);
   }
   // Record the offset of the symbol, and then allocate space for it.
   // FIXME: remove when we have unified size + output buffer
@@ -329,7 +343,7 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
   
   // Allocate space in the section for the global.
   for (unsigned i = 0; i < Size; ++i)
-    outbyte(Sec->SectionData, 0);
+    TOI->outbyte(Sec->SectionData, 0);
 }
 
 void MachOWriter::EmitGlobal(GlobalVariable *GV) {
@@ -442,15 +456,15 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   // Step #3: write the header to the file
   // Local alias to shortenify coming code.
   DataBuffer &FH = Header.HeaderData;
-  outword(FH, Header.magic);
-  outword(FH, Header.cputype);
-  outword(FH, Header.cpusubtype);
-  outword(FH, Header.filetype);
-  outword(FH, Header.ncmds);
-  outword(FH, Header.sizeofcmds);
-  outword(FH, Header.flags);
+  TOI->outword(FH, Header.magic);
+  TOI->outword(FH, Header.cputype);
+  TOI->outword(FH, Header.cpusubtype);
+  TOI->outword(FH, Header.filetype);
+  TOI->outword(FH, Header.ncmds);
+  TOI->outword(FH, Header.sizeofcmds);
+  TOI->outword(FH, Header.flags);
   if (is64Bit)
-    outword(FH, Header.reserved);
+    TOI->outword(FH, Header.reserved);
   
   // Step #4: Finish filling in the segment load command and write it out
   for (std::vector<MachOSection*>::iterator I = SectionList.begin(),
@@ -460,17 +474,17 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   SEG.vmsize = SEG.filesize;
   SEG.fileoff = Header.cmdSize(is64Bit) + Header.sizeofcmds;
   
-  outword(FH, SEG.cmd);
-  outword(FH, SEG.cmdsize);
-  outstring(FH, SEG.segname, 16);
-  outaddr(FH, SEG.vmaddr);
-  outaddr(FH, SEG.vmsize);
-  outaddr(FH, SEG.fileoff);
-  outaddr(FH, SEG.filesize);
-  outword(FH, SEG.maxprot);
-  outword(FH, SEG.initprot);
-  outword(FH, SEG.nsects);
-  outword(FH, SEG.flags);
+  TOI->outword(FH, SEG.cmd);
+  TOI->outword(FH, SEG.cmdsize);
+  TOI->outstring(FH, SEG.segname, 16);
+  TOI->outaddr(FH, SEG.vmaddr);
+  TOI->outaddr(FH, SEG.vmsize);
+  TOI->outaddr(FH, SEG.fileoff);
+  TOI->outaddr(FH, SEG.filesize);
+  TOI->outword(FH, SEG.maxprot);
+  TOI->outword(FH, SEG.initprot);
+  TOI->outword(FH, SEG.nsects);
+  TOI->outword(FH, SEG.flags);
   
   // Step #5: Finish filling in the fields of the MachOSections 
   uint64_t currentAddr = 0;
@@ -497,19 +511,19 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
     currentAddr += MOS->nreloc * 8;
     
     // write the finalized section command to the output buffer
-    outstring(FH, MOS->sectname, 16);
-    outstring(FH, MOS->segname, 16);
-    outaddr(FH, MOS->addr);
-    outaddr(FH, MOS->size);
-    outword(FH, MOS->offset);
-    outword(FH, MOS->align);
-    outword(FH, MOS->reloff);
-    outword(FH, MOS->nreloc);
-    outword(FH, MOS->flags);
-    outword(FH, MOS->reserved1);
-    outword(FH, MOS->reserved2);
+    TOI->outstring(FH, MOS->sectname, 16);
+    TOI->outstring(FH, MOS->segname, 16);
+    TOI->outaddr(FH, MOS->addr);
+    TOI->outaddr(FH, MOS->size);
+    TOI->outword(FH, MOS->offset);
+    TOI->outword(FH, MOS->align);
+    TOI->outword(FH, MOS->reloff);
+    TOI->outword(FH, MOS->nreloc);
+    TOI->outword(FH, MOS->flags);
+    TOI->outword(FH, MOS->reserved1);
+    TOI->outword(FH, MOS->reserved2);
     if (is64Bit)
-      outword(FH, MOS->reserved3);
+      TOI->outword(FH, MOS->reserved3);
   }
   
   // Step #7: Emit the symbol table to temporary buffers, so that we know the
@@ -521,36 +535,36 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   SymTab.nsyms   = SymbolTable.size();
   SymTab.stroff  = SymTab.symoff + SymT.size();
   SymTab.strsize = StrT.size();
-  outword(FH, SymTab.cmd);
-  outword(FH, SymTab.cmdsize);
-  outword(FH, SymTab.symoff);
-  outword(FH, SymTab.nsyms);
-  outword(FH, SymTab.stroff);
-  outword(FH, SymTab.strsize);
+  TOI->outword(FH, SymTab.cmd);
+  TOI->outword(FH, SymTab.cmdsize);
+  TOI->outword(FH, SymTab.symoff);
+  TOI->outword(FH, SymTab.nsyms);
+  TOI->outword(FH, SymTab.stroff);
+  TOI->outword(FH, SymTab.strsize);
 
   // FIXME: set DySymTab fields appropriately
   // We should probably just update these in BufferSymbolAndStringTable since
   // thats where we're partitioning up the different kinds of symbols.
-  outword(FH, DySymTab.cmd);
-  outword(FH, DySymTab.cmdsize);
-  outword(FH, DySymTab.ilocalsym);
-  outword(FH, DySymTab.nlocalsym);
-  outword(FH, DySymTab.iextdefsym);
-  outword(FH, DySymTab.nextdefsym);
-  outword(FH, DySymTab.iundefsym);
-  outword(FH, DySymTab.nundefsym);
-  outword(FH, DySymTab.tocoff);
-  outword(FH, DySymTab.ntoc);
-  outword(FH, DySymTab.modtaboff);
-  outword(FH, DySymTab.nmodtab);
-  outword(FH, DySymTab.extrefsymoff);
-  outword(FH, DySymTab.nextrefsyms);
-  outword(FH, DySymTab.indirectsymoff);
-  outword(FH, DySymTab.nindirectsyms);
-  outword(FH, DySymTab.extreloff);
-  outword(FH, DySymTab.nextrel);
-  outword(FH, DySymTab.locreloff);
-  outword(FH, DySymTab.nlocrel);
+  TOI->outword(FH, DySymTab.cmd);
+  TOI->outword(FH, DySymTab.cmdsize);
+  TOI->outword(FH, DySymTab.ilocalsym);
+  TOI->outword(FH, DySymTab.nlocalsym);
+  TOI->outword(FH, DySymTab.iextdefsym);
+  TOI->outword(FH, DySymTab.nextdefsym);
+  TOI->outword(FH, DySymTab.iundefsym);
+  TOI->outword(FH, DySymTab.nundefsym);
+  TOI->outword(FH, DySymTab.tocoff);
+  TOI->outword(FH, DySymTab.ntoc);
+  TOI->outword(FH, DySymTab.modtaboff);
+  TOI->outword(FH, DySymTab.nmodtab);
+  TOI->outword(FH, DySymTab.extrefsymoff);
+  TOI->outword(FH, DySymTab.nextrefsyms);
+  TOI->outword(FH, DySymTab.indirectsymoff);
+  TOI->outword(FH, DySymTab.nindirectsyms);
+  TOI->outword(FH, DySymTab.extreloff);
+  TOI->outword(FH, DySymTab.nextrel);
+  TOI->outword(FH, DySymTab.locreloff);
+  TOI->outword(FH, DySymTab.nlocrel);
   
   O.write((char*)&FH[0], FH.size());
 }
@@ -627,7 +641,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
   
   // Write out a leading zero byte when emitting string table, for n_strx == 0
   // which means an empty string.
-  outbyte(StrT, 0);
+  TOI->outbyte(StrT, 0);
 
   // The order of the string table is:
   // 1. strings for external symbols
@@ -640,7 +654,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
       I->n_strx = 0;
     } else {
       I->n_strx = StrT.size();
-      outstring(StrT, I->GVName, I->GVName.length()+1);
+      TOI->outstring(StrT, I->GVName, I->GVName.length()+1);
     }
   }
 
@@ -654,11 +668,11 @@ void MachOWriter::BufferSymbolAndStringTable() {
       I->n_value += GVSection[GV]->addr;
          
     // Emit nlist to buffer
-    outword(SymT, I->n_strx);
-    outbyte(SymT, I->n_type);
-    outbyte(SymT, I->n_sect);
-    outhalf(SymT, I->n_desc);
-    outaddr(SymT, I->n_value);
+    TOI->outword(SymT, I->n_strx);
+    TOI->outbyte(SymT, I->n_type);
+    TOI->outbyte(SymT, I->n_sect);
+    TOI->outhalf(SymT, I->n_desc);
+    TOI->outaddr(SymT, I->n_value);
   }
 }
 
