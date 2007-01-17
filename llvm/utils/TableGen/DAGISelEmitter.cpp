@@ -2621,7 +2621,10 @@ public:
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
         std::string CastType;
         switch (N->getTypeNum(0)) {
-        default: assert(0 && "Unknown type for constant node!");
+        default:
+          cerr << "Cannot handle " << getEnumName(N->getTypeNum(0))
+               << " type as an immediate constant. Aborting\n";
+          abort();
         case MVT::i1:  CastType = "bool"; break;
         case MVT::i8:  CastType = "unsigned char"; break;
         case MVT::i16: CastType = "unsigned short"; break;
