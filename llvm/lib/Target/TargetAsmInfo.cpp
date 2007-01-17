@@ -20,6 +20,7 @@ TargetAsmInfo::TargetAsmInfo() :
   TextSection(".text"),
   DataSection(".data"),
   BSSSection(".bss"),
+  ZeroFillDirective(0),
   AddressSize(4),
   NeedsSet(false),
   MaxInstLength(4),
