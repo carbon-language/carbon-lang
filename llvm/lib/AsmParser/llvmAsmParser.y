@@ -1708,14 +1708,12 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$5)->getDescription());
     Constant *Val = $3;
-    const Type *Ty = $5->get();
-    if (!Val->getType()->isFirstClassType())
-      GEN_ERROR("cast constant expression from a non-primitive type: '" +
-                     Val->getType()->getDescription() + "'!");
-    if (!Ty->isFirstClassType())
-      GEN_ERROR("cast constant expression to a non-primitive type: '" +
-                Ty->getDescription() + "'!");
-    $$ = ConstantExpr::getCast($1, $3, $5->get());
+    const Type *DestTy = $5->get();
+    if (!CastInst::castIsValid($1, $3, DestTy))
+      GEN_ERROR("invalid cast opcode for cast from '" +
+                Val->getType()->getDescription() + "' to '" +
+                DestTy->getDescription() + "'!"); 
+    $$ = ConstantExpr::getCast($1, $3, DestTy);
     delete $5;
   }
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
@@ -2647,13 +2645,12 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$4)->getDescription());
     Value* Val = $2;
-    const Type* Ty = $4->get();
-    if (!Val->getType()->isFirstClassType())
-      GEN_ERROR("cast from a non-primitive type: '" +
-                Val->getType()->getDescription() + "'!");
-    if (!Ty->isFirstClassType())
-      GEN_ERROR("cast to a non-primitive type: '" + Ty->getDescription() +"'!");
-    $$ = CastInst::create($1, Val, $4->get());
+    const Type* DestTy = $4->get();
+    if (!CastInst::castIsValid($1, Val, DestTy))
+      GEN_ERROR("invalid cast opcode for cast from '" +
+                Val->getType()->getDescription() + "' to '" +
+                DestTy->getDescription() + "'!"); 
+    $$ = CastInst::create($1, Val, DestTy);
     delete $4;
   }
   | SELECT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
