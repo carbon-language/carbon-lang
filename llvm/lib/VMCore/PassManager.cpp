@@ -39,7 +39,7 @@ enum PassDebugLevel {
 };
 
 static cl::opt<enum PassDebugLevel>
-PassDebugging_New("debug-pass", cl::Hidden,
+PassDebugging("debug-pass", cl::Hidden,
                   cl::desc("Print PassManager debugging information"),
                   cl::values(
   clEnumVal(None      , "disable debug output"),
@@ -426,7 +426,7 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 // Print passes managed by this top level manager.
 void PMTopLevelManager::dumpPasses() const {
 
-  if (PassDebugging_New < Structure)
+  if (PassDebugging < Structure)
     return;
 
   // Print out the immutable passes
@@ -441,7 +441,7 @@ void PMTopLevelManager::dumpPasses() const {
 
 void PMTopLevelManager::dumpArguments() const {
 
-  if (PassDebugging_New < Arguments)
+  if (PassDebugging < Arguments)
     return;
 
   cerr << "Pass Arguments: ";
@@ -704,7 +704,7 @@ void PMDataManager::dumpPassArguments() const {
 
 void PMDataManager:: dumpPassInfo(Pass *P,  std::string &Msg1, 
                                   std::string &Msg2) const {
-  if (PassDebugging_New < Executions)
+  if (PassDebugging < Executions)
     return;
   cerr << (void*)this << std::string(getDepth()*2+1, ' ');
   cerr << Msg1;
@@ -715,7 +715,7 @@ void PMDataManager:: dumpPassInfo(Pass *P,  std::string &Msg1,
 void PMDataManager::dumpAnalysisSetInfo(const char *Msg, Pass *P,
                                         const std::vector<AnalysisID> &Set) 
   const {
-  if (PassDebugging_New >= Details && !Set.empty()) {
+  if (PassDebugging >= Details && !Set.empty()) {
     cerr << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
       for (unsigned i = 0; i != Set.size(); ++i) {
         if (i) cerr << ",";
