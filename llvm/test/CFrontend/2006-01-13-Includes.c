@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -g -S -o - | gccas | llvm-dis | grep "test/Regression/CFrontend"
+// RUN: %llvmgcc %s -g -S -o - | gccas | llvm-dis | grep "test/CFrontend"
 // PR676
 
 #include <stdio.h>
