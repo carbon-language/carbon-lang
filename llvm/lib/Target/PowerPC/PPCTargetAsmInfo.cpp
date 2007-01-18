@@ -57,6 +57,13 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   UsedDirective = "\t.no_dead_strip\t";
   WeakRefDirective = "\t.weak_reference\t";
   HiddenDirective = "\t.private_extern\t";
+  
+  // In non-PIC modes, emit a special label before jump tables so that the
+  // linker can perform more accurate dead code stripping.
+  if (TM.getRelocationModel() != Reloc::PIC_) {
+    // Emit a local label that is preserved until the linker runs.
+    JumpTableSpecialLabelPrefix = "l";
+  }
 }
 
 LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
