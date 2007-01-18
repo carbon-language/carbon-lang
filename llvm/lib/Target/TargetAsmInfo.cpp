@@ -28,6 +28,7 @@ TargetAsmInfo::TargetAsmInfo() :
   CommentString("#"),
   GlobalPrefix(""),
   PrivateGlobalPrefix("."),
+  JumpTableSpecialLabelPrefix(0),
   GlobalVarAddrPrefix(""),
   GlobalVarAddrSuffix(""),
   FunctionAddrPrefix(""),

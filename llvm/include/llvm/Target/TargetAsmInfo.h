@@ -78,6 +78,10 @@ namespace llvm {
     /// have names in the .o file.  This is often "." or "L".
     const char *PrivateGlobalPrefix;      // Defaults to "."
     
+    /// JumpTableSpecialLabelPrefix - If not null, a extra (dead) label is
+    /// emitted before jump tables with the specified prefix.
+    const char *JumpTableSpecialLabelPrefix;  // Default to null.
+    
     /// GlobalVarAddrPrefix/Suffix - If these are nonempty, these strings
     /// will enclose any GlobalVariable (that isn't a function)
     ///
@@ -342,6 +346,9 @@ namespace llvm {
     }
     const char *getPrivateGlobalPrefix() const {
       return PrivateGlobalPrefix;
+    }
+    const char *getJumpTableSpecialLabelPrefix() const {
+      return JumpTableSpecialLabelPrefix;
     }
     const char *getGlobalVarAddrPrefix() const {
       return GlobalVarAddrPrefix;

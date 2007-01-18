@@ -244,6 +244,13 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
         if (EmittedSets.insert(JTBBs[ii]).second)
           printSetLabel(i, JTBBs[ii]);
     
+    // On some targets (e.g. darwin) we want to emit two consequtive labels
+    // before each jump table.  The first label is never referenced, but tells
+    // the assembler and linker the extents of the jump table object.  The
+    // second label is actually referenced by the code.
+    if (const char *JTLabelPrefix = TAI->getJumpTableSpecialLabelPrefix())
+      O << JTLabelPrefix << "JTI" << getFunctionNumber() << '_' << i << ":\n";
+    
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
       << '_' << i << ":\n";
     
@@ -259,7 +266,8 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
           << '_' << i << "_set_" << JTBBs[ii]->getNumber();
       } else if (IsPic) {
         printBasicBlockLabel(JTBBs[ii], false, false);
-        //If the arch uses custom Jump Table directives, don't calc relative to JT
+        // If the arch uses custom Jump Table directives, don't calc relative to
+        // JT
         if (!HadJTEntryDirective) 
           O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
             << getFunctionNumber() << '_' << i;
