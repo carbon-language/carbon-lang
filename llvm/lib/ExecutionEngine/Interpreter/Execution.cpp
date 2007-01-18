@@ -1187,15 +1187,20 @@ static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   if (const IntegerType *ITy = cast<IntegerType>(Ty)) {
     unsigned BitWidth = ITy->getBitWidth();
-    if (BitWidth <= 8)
+    uint32_t BitMask = (1ull << BitWidth) - 1;
+    if (BitWidth <= 8) {
       Dest.Int8Val  = ((uint8_t)Src1.Int8Val)   << ((uint32_t)Src2.Int8Val);
-    else if (BitWidth <= 16)
+      Dest.Int8Val &= BitMask;
+    } else if (BitWidth <= 16) {
       Dest.Int16Val = ((uint16_t)Src1.Int16Val) << ((uint32_t)Src2.Int8Val);
-    else if (BitWidth <= 32)
+      Dest.Int16Val &= BitMask;
+    } else if (BitWidth <= 32) {
       Dest.Int32Val = ((uint32_t)Src1.Int32Val) << ((uint32_t)Src2.Int8Val);
-    else if (BitWidth <= 64)
+      Dest.Int32Val &= BitMask;
+    } else if (BitWidth <= 64) {
       Dest.Int64Val = ((uint64_t)Src1.Int64Val) << ((uint32_t)Src2.Int8Val);
-    else {
+      Dest.Int64Val &= BitMask;
+    } else {
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n";
       abort();
     }
