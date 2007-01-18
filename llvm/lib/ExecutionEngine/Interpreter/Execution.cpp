@@ -1073,16 +1073,12 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
       int64_t Idx;
       unsigned BitWidth = 
         cast<IntegerType>(I.getOperand()->getType())->getBitWidth();
-      if (BitWidth <= 8)
-        Idx = (int64_t)(int8_t)IdxGV.Int8Val;
-      else if (BitWidth <= 16)
-        Idx = (int64_t)(int16_t)IdxGV.Int16Val;
-      else if (BitWidth <= 32)
+      if (BitWidth == 32)
         Idx = (int64_t)(int32_t)IdxGV.Int32Val;
-      else if (BitWidth <= 64)
+      else if (BitWidth == 64)
         Idx = (int64_t)IdxGV.Int64Val;
       else 
-        assert(0 && "Integer types >64 bits not supported");
+        assert(0 && "Invalid index type for getelementptr");
       Total += PointerTy(TD.getTypeSize(ST->getElementType())*Idx);
     }
   }
@@ -1288,17 +1284,20 @@ void Interpreter::visitAShr(ShiftInst &I) {
   SetValue(&I, Dest, SF);
 }
 
-#define INTEGER_ASSIGN(DEST, BITWIDTH, VAL)   \
-  if (BITWIDTH == 1) {                        \
-    Dest.Int1Val = (bool) VAL;                \
-  } else if (BITWIDTH <= 8) {                 \
-    Dest.Int8Val = (uint8_t) VAL;             \
-  } else if (BITWIDTH <= 16) {                \
-    Dest.Int16Val = (uint16_t) VAL;           \
-  } else if (BITWIDTH <= 32) {                \
-    Dest.Int32Val = (uint32_t) VAL;           \
-  } else                                      \
-    Dest.Int64Val = (uint64_t) VAL;          
+#define INTEGER_ASSIGN(DEST, BITWIDTH, VAL)     \
+  {                                             \
+    uint64_t Mask = (1ull << BITWIDTH) - 1;     \
+    if (BITWIDTH == 1) {                        \
+      Dest.Int1Val = (bool) (VAL & Mask);       \
+    } else if (BITWIDTH <= 8) {                 \
+      Dest.Int8Val = (uint8_t) (VAL & Mask);    \
+    } else if (BITWIDTH <= 16) {                \
+      Dest.Int16Val = (uint16_t) (VAL & Mask);  \
+    } else if (BITWIDTH <= 32) {                \
+      Dest.Int32Val = (uint32_t) (VAL & Mask);  \
+    } else                                      \
+      Dest.Int64Val = (uint64_t) (VAL & Mask);  \
+  }
 
 GenericValue Interpreter::executeTruncInst(Value *SrcVal, const Type *DstTy,
                                            ExecutionContext &SF) {
