@@ -216,6 +216,7 @@ void Interpreter::initializeExecutionEngine() {
        Dest.Int64Val = Src1.Int64Val OP Src2.Int64Val; \
      else \
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n"; \
+     maskToBitWidth(Dest, BitWidth); \
      break; \
    }
 
@@ -234,6 +235,7 @@ void Interpreter::initializeExecutionEngine() {
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n"; \
        abort(); \
      } \
+     maskToBitWidth(Dest, BitWidth); \
    } else { \
     cerr << "Unhandled type for " #OP " operator: " << *Ty << "\n"; \
     abort(); \
@@ -254,6 +256,7 @@ void Interpreter::initializeExecutionEngine() {
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n"; \
        abort(); \
      } \
+     maskToBitWidth(Dest, BitWidth); \
    } else { \
     cerr << "Unhandled type for " #OP " operator: " << *Ty << "\n"; \
     abort(); \
@@ -397,6 +400,7 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n"; \
        abort(); \
      } \
+     maskToBitWidth(Dest, BitWidth); \
      break; \
    }
 
@@ -417,6 +421,7 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n"; \
        abort(); \
      } \
+     maskToBitWidth(Dest, BitWidth); \
      break; \
    }
 
@@ -1187,23 +1192,19 @@ static GenericValue executeShlInst(GenericValue Src1, GenericValue Src2,
   GenericValue Dest;
   if (const IntegerType *ITy = cast<IntegerType>(Ty)) {
     unsigned BitWidth = ITy->getBitWidth();
-    uint32_t BitMask = (1ull << BitWidth) - 1;
-    if (BitWidth <= 8) {
+    if (BitWidth <= 8)
       Dest.Int8Val  = ((uint8_t)Src1.Int8Val)   << ((uint32_t)Src2.Int8Val);
-      Dest.Int8Val &= BitMask;
-    } else if (BitWidth <= 16) {
+    else if (BitWidth <= 16)
       Dest.Int16Val = ((uint16_t)Src1.Int16Val) << ((uint32_t)Src2.Int8Val);
-      Dest.Int16Val &= BitMask;
-    } else if (BitWidth <= 32) {
+    else if (BitWidth <= 32)
       Dest.Int32Val = ((uint32_t)Src1.Int32Val) << ((uint32_t)Src2.Int8Val);
-      Dest.Int32Val &= BitMask;
-    } else if (BitWidth <= 64) {
+    else if (BitWidth <= 64)
       Dest.Int64Val = ((uint64_t)Src1.Int64Val) << ((uint32_t)Src2.Int8Val);
-      Dest.Int64Val &= BitMask;
-    } else {
+    else {
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n";
       abort();
     }
+    maskToBitWidth(Dest, BitWidth);
   } else {
     cerr << "Unhandled type for Shl instruction: " << *Ty << "\n";
     abort();
@@ -1228,6 +1229,7 @@ static GenericValue executeLShrInst(GenericValue Src1, GenericValue Src2,
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n";
       abort();
     }
+    maskToBitWidth(Dest, BitWidth);
   } else {
     cerr << "Unhandled type for LShr instruction: " << *Ty << "\n";
     abort();
@@ -1252,6 +1254,7 @@ static GenericValue executeAShrInst(GenericValue Src1, GenericValue Src2,
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n"; \
       abort();
     } 
+    maskToBitWidth(Dest, BitWidth);
   } else { 
     cerr << "Unhandled type for AShr instruction: " << *Ty << "\n";
     abort();
@@ -1567,6 +1570,7 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
         Dest.Int32Val = Src.Int32Val;
       else 
         Dest.Int64Val = Src.Int64Val;
+      maskToBitWidth(Dest, DBitWidth);
     } else 
       assert(0 && "Invalid BitCast");
   } else if (DstTy == Type::FloatTy) {
@@ -1673,6 +1677,7 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
         Dest.Int64Val = Src.Int64Val;
       else
         assert("Integer types > 64 bits not supported");
+      maskToBitWidth(Dest, BitWidth);
     }
     IMPLEMENT_VAARG(Pointer);
     IMPLEMENT_VAARG(Float);
