@@ -101,6 +101,12 @@ public:
   /// @brief Get the number of bits in this IntegerType
   unsigned getBitWidth() const { return getSubclassData(); }
 
+  /// This method determines if the width of this IntegerType is a power-of-2
+  /// in terms of 8 bit bytes. 
+  /// @returns true if this is a power-of-2 byte width.
+  /// @brief Is this a power-of-2 byte-width IntegerType ?
+  bool isPowerOf2ByteWidth() const;
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const IntegerType *T) { return true; }
   static inline bool classof(const Type *T) {

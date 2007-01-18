@@ -975,6 +975,11 @@ const IntegerType *IntegerType::get(unsigned NumBits) {
   return ITy;
 }
 
+bool IntegerType::isPowerOf2ByteWidth() const {
+  unsigned BitWidth = getBitWidth();
+  return (BitWidth > 7 && Log2_32(BitWidth) == Log2_32_Ceil(BitWidth));
+}
+
 // FunctionValType - Define a class to hold the key that goes into the TypeMap
 //
 namespace llvm {
