@@ -128,24 +128,18 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS, bool 
       setCodeModel(CodeModel::Small);
   }
 
-  if (getRelocationModel() == Reloc::PIC_) {
-    if (Subtarget.isTargetDarwin()) {
-      if (Subtarget.is64Bit())
-        Subtarget.setPICStyle(PICStyle::RIPRel);
-      else
-        Subtarget.setPICStyle(PICStyle::Stub);
-    } else if (Subtarget.isTargetELF())
-      Subtarget.setPICStyle(PICStyle::GOT);
+  if (Subtarget.isTargetCygMing())
+    Subtarget.setPICStyle(PICStyle::WinPIC);
+  else if (Subtarget.isTargetDarwin())
+    if (Subtarget.is64Bit())
+      Subtarget.setPICStyle(PICStyle::RIPRel);
     else
-      assert(0 && "Don't know how to generate PIC code for this target!");
-  } else if (getRelocationModel() == Reloc::DynamicNoPIC) {
-    if (Subtarget.isTargetDarwin())
       Subtarget.setPICStyle(PICStyle::Stub);
-    else if (Subtarget.isTargetCygMing())
-      Subtarget.setPICStyle(PICStyle::WinPIC);
+  else if (Subtarget.isTargetELF())
+    if (Subtarget.is64Bit())
+      Subtarget.setPICStyle(PICStyle::RIPRel);
     else
-      assert(0 && "Don't know how to generate PIC code for this target!");
-  }
+      Subtarget.setPICStyle(PICStyle::GOT);
 }
 
 //===----------------------------------------------------------------------===//

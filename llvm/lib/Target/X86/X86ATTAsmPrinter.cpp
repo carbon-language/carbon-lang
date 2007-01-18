@@ -189,6 +189,14 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
+static inline bool printGOT(TargetMachine &TM, const X86Subtarget* ST) {
+  return ST->isPICStyleGOT() && TM.getRelocationModel() == Reloc::PIC_;
+}
+
+static inline bool printStub(TargetMachine &TM, const X86Subtarget* ST) {
+  return ST->isPICStyleStub() && TM.getRelocationModel() != Reloc::Static;
+}
+
 void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                     const char *Modifier, bool NotRIPRel) {
   const MachineOperand &MO = MI->getOperand(OpNo);
@@ -232,7 +240,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         O << "@GOTOFF";
     }
     
-    if (isMemOp && Subtarget->is64Bit() && !NotRIPRel)
+    if (isMemOp && Subtarget->isPICStyleRIPRel() && !NotRIPRel)
       O << "(%rip)";
     return;
   }
@@ -246,7 +254,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       if (Subtarget->isPICStyleStub())
         O << "-\"" << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
           << "$pb\"";
-      if (Subtarget->isPICStyleGOT())
+      else if (Subtarget->isPICStyleGOT())
         O << "@GOTOFF";
     }
     
@@ -256,7 +264,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     else if (Offset < 0)
       O << Offset;
 
-    if (isMemOp && Subtarget->is64Bit() && !NotRIPRel)
+    if (isMemOp && Subtarget->isPICStyleRIPRel() && !NotRIPRel)
       O << "(%rip)";
     return;
   }
@@ -267,17 +275,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
     GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
-    
-    bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
-                  GV->hasLinkOnceLinkage());
-    bool isHidden = GV->hasHiddenVisibility();
-    
     X86SharedAsmPrinter::decorateName(Name, GV);
     
-    if (Subtarget->isPICStyleStub()) {
+    if (printStub(TM, Subtarget)) {
       // Link-once, External, or Weakly-linked global variables need
       // non-lazily-resolved stubs
-      if (isExt) {
+      if (GV->isExternal() ||
+          GV->hasWeakLinkage() ||
+          GV->hasLinkOnceLinkage()) {
         // Dynamically-resolved functions need a stub for the function.
         if (isCallOp && isa<Function>(GV)) {
           FnStubs.insert(Name);
@@ -287,9 +292,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           O << TAI->getPrivateGlobalPrefix() << Name << "$non_lazy_ptr";
         }
       } else {
-        if (GV->hasDLLImportLinkage()) {
+        if (GV->hasDLLImportLinkage())
           O << "__imp_";          
-        } 
         O << Name;
       }
       
@@ -303,15 +307,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << Name;
 
       if (isCallOp && isa<Function>(GV)) {
-        if (Subtarget->isPICStyleGOT()) {
+        if (printGOT(TM, Subtarget)) {
           // Assemble call via PLT for non-local symbols
-          if (!isHidden || GV->isExternal())
+          if (!GV->hasHiddenVisibility() || GV->isExternal())
             O << "@PLT";
         }
-        if (Subtarget->isTargetCygMing() && GV->isExternal()) {
+        if (Subtarget->isTargetCygMing() && GV->isExternal())
           // Save function name for later type emission
           FnStubs.insert(Name);
-        }
       }
     }
 
@@ -325,19 +328,22 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << Offset;
 
     if (isMemOp) {
-      if (Subtarget->isPICStyleGOT()) {
+      if (printGOT(TM, Subtarget)) {
         if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
           O << "@GOT";
         else
           O << "@GOTOFF";
-      } else     
-        if (isExt && Subtarget->isPICStyleRIPRel())
-          O << "@GOTPCREL(%rip)";
-        else if (Subtarget->is64Bit() && !NotRIPRel)
-          // Use rip when possible to reduce code size, except when
-          // index or base register are also part of the address. e.g.
-          // foo(%rip)(%rcx,%rax,4) is not legal
-          O << "(%rip)";
+      } else if (Subtarget->isPICStyleRIPRel() && !NotRIPRel) {
+        if ((GV->hasExternalLinkage() ||
+             GV->hasWeakLinkage() ||
+             GV->hasLinkOnceLinkage()) &&
+            TM.getRelocationModel() != Reloc::Static)
+          O << "@GOTPCREL";
+        // Use rip when possible to reduce code size, except when
+        // index or base register are also part of the address. e.g.
+        // foo(%rip)(%rcx,%rax,4) is not legal
+        O << "(%rip)";
+      }
     }
 
     return;
@@ -346,7 +352,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
-    if (isCallOp && Subtarget->isPICStyleStub()) {
+    if (isCallOp && printStub(TM, Subtarget)) {
       FnStubs.insert(Name);
       O << TAI->getPrivateGlobalPrefix() << Name << "$stub";
       return;
@@ -354,25 +360,25 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isCallOp) O << '$';
     O << Name;
 
-    if (Subtarget->isPICStyleGOT()) {
+    if (printGOT(TM, Subtarget)) {
       std::string GOTName(TAI->getGlobalPrefix());
       GOTName+="_GLOBAL_OFFSET_TABLE_";
       if (Name == GOTName)
-        // Really hack! Emit extra offset to PC during printing GOT offset to
-        // compensate size of popl instruction. The resulting code should look
-        // like:
+        // HACK! Emit extra offset to PC during printing GOT offset to
+        // compensate for the size of popl instruction. The resulting code
+        // should look like:
         //   call .piclabel
         // piclabel:
         //   popl %some_register
         //   addl $_GLOBAL_ADDRESS_TABLE_ + [.-piclabel], %some_register
         O << " + [.-"
           << computePICLabel(getFunctionNumber(), TAI, Subtarget) << "]";
+
+      if (isCallOp)
+        O << "@PLT";
     }
 
-    if (isCallOp && Subtarget->isPICStyleGOT())
-      O << "@PLT";
-
-    if (!isCallOp && Subtarget->is64Bit())
+    if (!isCallOp && Subtarget->isPICStyleRIPRel())
       O << "(%rip)";
 
     return;
