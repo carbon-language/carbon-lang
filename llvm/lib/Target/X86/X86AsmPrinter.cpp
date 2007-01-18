@@ -166,7 +166,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           if (I->hasInternalLinkage()) {
             O << TAI->getLCOMMDirective() << name << "," << Size;
             if (Subtarget->isTargetDarwin())
-              O << "," << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+              O << "," << Align;
           } else
             O << TAI->getCOMMDirective()  << name << "," << Size;
         } else {
