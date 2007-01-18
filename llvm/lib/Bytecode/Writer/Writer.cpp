@@ -1090,6 +1090,9 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
   // Output the target triple from the module
   output(M->getTargetTriple());
+
+  // Output the data layout from the module
+  output(M->getDataLayout());
   
   // Emit the table of section names.
   output_vbr((unsigned)SectionNames.size());
