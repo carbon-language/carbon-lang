@@ -457,6 +457,8 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
     case Type::IntegerTyID: {
       unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
       uint64_t BitMask = (1ull << BitWidth) - 1;
+      if (BitWidth >= 64)
+        BitMask = (uint64_t)-1;
       GenericValue TmpVal = Val;
       if (BitWidth <= 8)
         Ptr->Untyped[0] = Val.Int8Val & BitMask;
@@ -513,6 +515,8 @@ Store4BytesLittleEndian:
     case Type::IntegerTyID: {
       unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
       uint64_t BitMask = (1ull << BitWidth) - 1;
+      if (BitWidth >= 64)
+        BitMask = (uint64_t)-1;
       GenericValue TmpVal = Val;
       if (BitWidth <= 8)
         Ptr->Untyped[0] = Val.Int8Val & BitMask;
