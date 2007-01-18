@@ -8186,23 +8186,29 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
                IC.getTargetData().getTypeSize(DestPTy)) {
 
         // Okay, we are casting from one integer or pointer type to another of
-        // the same size.  Instead of casting the pointer before the store, cast
-        // the value to be stored.
+        // the same size.  Instead of casting the pointer before 
+        // the store, cast the value to be stored.
         Value *NewCast;
-        Instruction::CastOps opcode = Instruction::BitCast;
         Value *SIOp0 = SI.getOperand(0);
-        if (isa<PointerType>(SrcPTy)) {
-          if (SIOp0->getType()->isInteger())
+        Instruction::CastOps opcode = Instruction::BitCast;
+        const Type* CastSrcTy = SIOp0->getType();
+        const Type* CastDstTy = SrcPTy;
+        if (isa<PointerType>(CastDstTy)) {
+          if (CastSrcTy->isInteger())
             opcode = Instruction::IntToPtr;
-        } else if (SrcPTy->isInteger()) {
+        } else if (const IntegerType* DITy = dyn_cast<IntegerType>(CastDstTy)) {
           if (isa<PointerType>(SIOp0->getType()))
             opcode = Instruction::PtrToInt;
+          else if (const IntegerType* SITy = dyn_cast<IntegerType>(CastSrcTy))
+            assert(DITy->getBitWidth() == SITy->getBitWidth() &&
+                   "Illegal store instruction");
         }
         if (Constant *C = dyn_cast<Constant>(SIOp0))
-          NewCast = ConstantExpr::getCast(opcode, C, SrcPTy);
+          NewCast = ConstantExpr::getCast(opcode, C, CastDstTy);
         else
           NewCast = IC.InsertNewInstBefore(
-            CastInst::create(opcode, SIOp0, SrcPTy, SIOp0->getName()+".c"), SI);
+            CastInst::create(opcode, SIOp0, CastDstTy, SIOp0->getName()+".c"), 
+            SI);
         return new StoreInst(NewCast, CastOp);
       }
     }
