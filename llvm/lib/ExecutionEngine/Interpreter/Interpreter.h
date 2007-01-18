@@ -231,8 +231,20 @@ private:  // Helper functions
   GenericValue executeCastOperation(Instruction::CastOps opcode, Value *SrcVal, 
                                     const Type *Ty, ExecutionContext &SF);
   void popStackAndReturnValueToCaller(const Type *RetTy, GenericValue Result);
+
 };
 
+inline void maskToBitWidth(GenericValue& GV, unsigned BitWidth) {
+  uint64_t BitMask = (1ull << BitWidth) - 1;
+  if (BitWidth <= 8)
+    GV.Int8Val &= BitMask;
+  else if (BitWidth <= 16)
+    GV.Int16Val &= BitMask;
+  else if (BitWidth <= 32)
+    GV.Int32Val &= BitMask;
+  else 
+    GV.Int64Val &= BitMask;
+}
 } // End llvm namespace
 
 #endif
