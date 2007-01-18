@@ -53,6 +53,10 @@ namespace llvm {
     /// Target machine description.
     TargetMachine &TM;
 
+    /// is64Bit/isLittleEndian - This information is inferred from the target
+    /// machine directly, indicating what header values and flags to set.
+    bool is64Bit, isLittleEndian;
+
     /// Relocations - These are the relocations that the function needs, as
     /// emitted.
     std::vector<MachineRelocation> Relocations;
@@ -75,7 +79,10 @@ namespace llvm {
     std::vector<intptr_t> MBBLocations;
     
   public:
-    MachOCodeEmitter(MachOWriter &mow) : MOW(mow), TM(MOW.TM) {}
+    MachOCodeEmitter(MachOWriter &mow) : MOW(mow), TM(MOW.TM) {
+      is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
+      isLittleEndian = TM.getTargetData()->isLittleEndian();
+    }
 
     virtual void startFunction(MachineFunction &F);
     virtual bool finishFunction(MachineFunction &F);
@@ -230,7 +237,7 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
     unsigned Size = TM.getTargetData()->getTypeSize(Ty);
 
     MachOWriter::MachOSection *Sec = MOW.getConstSection(Ty);
-    OutputBuffer SecDataOut(TM, Sec->SectionData);
+    OutputBuffer SecDataOut(Sec->SectionData, is64Bit, isLittleEndian);
 
     CPLocations.push_back(Sec->SectionData.size());
     CPSections.push_back(Sec->Index);
@@ -261,7 +268,7 @@ void MachOCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
 
   MachOWriter::MachOSection *Sec = MOW.getJumpTableSection();
   unsigned TextSecIndex = MOW.getTextSection()->Index;
-  OutputBuffer SecDataOut(TM, Sec->SectionData);
+  OutputBuffer SecDataOut(Sec->SectionData, is64Bit, isLittleEndian);
 
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     // For each jump table, record its offset from the start of the section,
@@ -309,7 +316,7 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
   // Reserve space in the .bss section for this symbol while maintaining the
   // desired section alignment, which must be at least as much as required by
   // this symbol.
-  OutputBuffer SecDataOut(TM, Sec->SectionData);
+  OutputBuffer SecDataOut(Sec->SectionData, is64Bit, isLittleEndian);
 
   if (Align) {
     uint64_t OrigSize = Sec->size;
@@ -451,7 +458,7 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   // Step #3: write the header to the file
   // Local alias to shortenify coming code.
   DataBuffer &FH = Header.HeaderData;
-  OutputBuffer FHOut(TM, FH);
+  OutputBuffer FHOut(FH, is64Bit, isLittleEndian);
 
   FHOut.outword(Header.magic);
   FHOut.outword(Header.cputype);
@@ -638,7 +645,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
   
   // Write out a leading zero byte when emitting string table, for n_strx == 0
   // which means an empty string.
-  OutputBuffer StrTOut(TM, StrT);
+  OutputBuffer StrTOut(StrT, is64Bit, isLittleEndian);
   StrTOut.outbyte(0);
 
   // The order of the string table is:
@@ -656,7 +663,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
     }
   }
 
-  OutputBuffer SymTOut(TM, SymT);
+  OutputBuffer SymTOut(SymT, is64Bit, isLittleEndian);
 
   for (std::vector<MachOSym>::iterator I = SymbolTable.begin(),
          E = SymbolTable.end(); I != E; ++I) {

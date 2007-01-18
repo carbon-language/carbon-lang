@@ -115,7 +115,9 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
 
   // Add padding zeros to the end of the buffer to make sure that the
   // function will start on the correct byte alignment within the section.
-  OutputBuffer OB(TM, *OutBuffer);
+  OutputBuffer OB(*OutBuffer,
+                  TM.getTargetData()->getPointerSizeInBits() == 64,
+                  TM.getTargetData()->isLittleEndian());
   OB.align(Align);
   FnStart = OutBuffer->size();
 }
@@ -182,7 +184,7 @@ bool ELFWriter::doInitialization(Module &M) {
 
   // Local alias to shortenify coming code.
   std::vector<unsigned char> &FH = FileHeader;
-  OutputBuffer FHOut(TM, FH);
+  OutputBuffer FHOut(FH, is64Bit, isLittleEndian);
 
   FHOut.outbyte(0x7F);                     // EI_MAG0
   FHOut.outbyte('E');                      // EI_MAG1
@@ -353,7 +355,7 @@ void ELFWriter::EmitSymbolTable() {
   StrTab.Align = 1;
 
   DataBuffer &StrTabBuf = StrTab.SectionData;
-  OutputBuffer StrTabOut(TM, StrTabBuf);
+  OutputBuffer StrTabOut(StrTabBuf, is64Bit, isLittleEndian);
 
   // Set the zero'th symbol to a null byte, as required.
   StrTabOut.outbyte(0);
@@ -389,7 +391,7 @@ void ELFWriter::EmitSymbolTable() {
   SymTab.Info = FirstNonLocalSymbol;   // First non-STB_LOCAL symbol.
   SymTab.EntSize = 16; // Size of each symtab entry. FIXME: wrong for ELF64
   DataBuffer &SymTabBuf = SymTab.SectionData;
-  OutputBuffer SymTabOut(TM, SymTabBuf);
+  OutputBuffer SymTabOut(SymTabBuf, is64Bit, isLittleEndian);
 
   if (!is64Bit) {   // 32-bit and 64-bit formats are shuffled a bit.
     for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
@@ -425,7 +427,7 @@ void ELFWriter::EmitSectionTableStringTable() {
 
   // Now that we know which section number is the .shstrtab section, update the
   // e_shstrndx entry in the ELF header.
-  OutputBuffer FHOut(TM, FileHeader);
+  OutputBuffer FHOut(FileHeader, is64Bit, isLittleEndian);
   FHOut.fixhalf(SHStrTab.SectionIdx, ELFHeader_e_shstrndx_Offset);
 
   // Set the NameIdx of each section in the string table and emit the bytes for
@@ -477,7 +479,7 @@ void ELFWriter::OutputSectionsAndSectionTable() {
 
   // Now that we know where all of the sections will be emitted, set the e_shnum
   // entry in the ELF header.
-  OutputBuffer FHOut(TM, FileHeader);
+  OutputBuffer FHOut(FileHeader, is64Bit, isLittleEndian);
   FHOut.fixhalf(NumSections, ELFHeader_e_shnum_Offset);
 
   // Now that we know the offset in the file of the section table, update the
@@ -491,7 +493,7 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   DataBuffer().swap(FileHeader);
 
   DataBuffer Table;
-  OutputBuffer TableOut(TM, Table);
+  OutputBuffer TableOut(Table, is64Bit, isLittleEndian);
 
   // Emit all of the section data and build the section table itself.
   while (!SectionList.empty()) {

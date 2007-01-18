@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_OUTPUTBUFFER_H
 #define LLVM_SUPPORT_OUTPUTBUFFER_H
 
+#include <string>
 #include <vector>
 
 namespace llvm {
@@ -26,11 +27,9 @@ namespace llvm {
     /// machine directly, indicating what header values and flags to set.
     bool is64Bit, isLittleEndian;
   public:
-    OutputBuffer(const TargetMachine& TM,
-                 std::vector<unsigned char> &Out) : Output(Out) {
-      is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
-      isLittleEndian = TM.getTargetData()->isLittleEndian();
-    }
+    OutputBuffer(std::vector<unsigned char> &Out,
+                 bool is64bit, bool le)
+      : Output(Out), is64Bit(is64bit), isLittleEndian(le) {}
 
     // align - Emit padding into the file until the current output position is
     // aligned to the specified power of two boundary.
@@ -107,7 +106,7 @@ namespace llvm {
       else
         outxword(X);
     }
-    void outstring(std::string &S, unsigned Length) {
+    void outstring(const std::string &S, unsigned Length) {
       unsigned len_to_copy = S.length() < Length ? S.length() : Length;
       unsigned len_to_fill = S.length() < Length ? Length - S.length() : 0;
       

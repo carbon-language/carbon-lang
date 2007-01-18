@@ -93,11 +93,11 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
                               isExtern, PPC_RELOC_VANILLA);
       ++From.nreloc;
 
-      OutputBuffer RelocOut(TM, From.RelocBuffer);
+      OutputBuffer RelocOut(From.RelocBuffer, is64Bit, isLittleEndian);
       RelocOut.outword(VANILLA.r_address);
       RelocOut.outword(VANILLA.getPackedFields());
 
-      OutputBuffer SecOut(TM, From.SectionData);
+      OutputBuffer SecOut(From.SectionData, is64Bit, isLittleEndian);
       SecOut.fixword(Addr, MR.getMachineCodeOffset());
       break;
     }
@@ -109,7 +109,7 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
       Addr <<= 2;
       Addr |= (From.SectionData[MR.getMachineCodeOffset()] << 24);
 
-      OutputBuffer SecOut(TM, From.SectionData);
+      OutputBuffer SecOut(From.SectionData, is64Bit, isLittleEndian);
       SecOut.fixword(Addr, MR.getMachineCodeOffset());
       break;
     }
@@ -118,7 +118,7 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
       Addr -= MR.getMachineCodeOffset();
       Addr &= 0xFFFC;
 
-      OutputBuffer SecOut(TM, From.SectionData);
+      OutputBuffer SecOut(From.SectionData, is64Bit, isLittleEndian);
       SecOut.fixhalf(Addr, MR.getMachineCodeOffset() + 2);
       break;
     }
@@ -131,7 +131,7 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
       ++From.nreloc;
       ++From.nreloc;
 
-      OutputBuffer RelocOut(TM, From.RelocBuffer);
+      OutputBuffer RelocOut(From.RelocBuffer, is64Bit, isLittleEndian);
       RelocOut.outword(HA16.r_address);
       RelocOut.outword(HA16.getPackedFields());
       RelocOut.outword(PAIR.r_address);
@@ -139,7 +139,7 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
       printf("ha16: %x\n", (unsigned)Addr);
       Addr += 0x8000;
 
-      OutputBuffer SecOut(TM, From.SectionData);
+      OutputBuffer SecOut(From.SectionData, is64Bit, isLittleEndian);
       SecOut.fixhalf(Addr >> 16, MR.getMachineCodeOffset() + 2);
       break;
     }
@@ -152,14 +152,14 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
       ++From.nreloc;
       ++From.nreloc;
 
-      OutputBuffer RelocOut(TM, From.RelocBuffer);
+      OutputBuffer RelocOut(From.RelocBuffer, is64Bit, isLittleEndian);
       RelocOut.outword(LO16.r_address);
       RelocOut.outword(LO16.getPackedFields());
       RelocOut.outword(PAIR.r_address);
       RelocOut.outword(PAIR.getPackedFields());
       printf("lo16: %x\n", (unsigned)Addr);
 
-      OutputBuffer SecOut(TM, From.SectionData);
+      OutputBuffer SecOut(From.SectionData, is64Bit, isLittleEndian);
       SecOut.fixhalf(Addr, MR.getMachineCodeOffset() + 2);
       break;
     }
