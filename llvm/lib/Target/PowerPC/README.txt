@@ -552,3 +552,48 @@ _test6:
         or r3,r3,r0
         blr
 
+
+===-------------------------------------------------------------------------===
+
+Consider a function like this:
+
+float foo(float X) { return X + 1234.4123f; }
+
+The FP constant ends up in the constant pool, so we need to get the LR register.
+ This ends up producing code like this:
+
+_foo:
+.LBB_foo_0:     ; entry
+        mflr r11
+***     stw r11, 8(r1)
+        bl "L00000$pb"
+"L00000$pb":
+        mflr r2
+        addis r2, r2, ha16(.CPI_foo_0-"L00000$pb")
+        lfs f0, lo16(.CPI_foo_0-"L00000$pb")(r2)
+        fadds f1, f1, f0
+***     lwz r11, 8(r1)
+        mtlr r11
+        blr
+
+This is functional, but there is no reason to spill the LR register all the way
+to the stack (the two marked instrs): spilling it to a GPR is quite enough.
+
+Implementing this will require some codegen improvements.  Nate writes:
+
+"So basically what we need to support the "no stack frame save and restore" is a
+generalization of the LR optimization to "callee-save regs".
+
+Currently, we have LR marked as a callee-save reg.  The register allocator sees
+that it's callee save, and spills it directly to the stack.
+
+Ideally, something like this would happen:
+
+LR would be in a separate register class from the GPRs. The class of LR would be
+marked "unspillable".  When the register allocator came across an unspillable
+reg, it would ask "what is the best class to copy this into that I *can* spill"
+If it gets a class back, which it will in this case (the gprs), it grabs a free
+register of that class.  If it is then later necessary to spill that reg, so be
+it.
+
+===-------------------------------------------------------------------------===
