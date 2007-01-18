@@ -149,7 +149,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         if (const char *Directive = TAI->getZeroFillDirective()) {
           O << "\t.globl\t" << name << "\n";
           O << Directive << "__DATA__, __common, " << name << ", "
-            << Size << ", " << Align;
+            << Size << ", " << Align << "\n";
           continue;
         }
       }
