@@ -456,25 +456,30 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
     switch (Ty->getTypeID()) {
     case Type::IntegerTyID: {
       unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+      uint64_t BitMask = (1ull << BitWidth) - 1;
+      GenericValue TmpVal = Val;
       if (BitWidth <= 8)
-        Ptr->Untyped[0] = Val.Int8Val;
+        Ptr->Untyped[0] = Val.Int8Val & BitMask;
       else if (BitWidth <= 16) {
-        Ptr->Untyped[0] = Val.Int16Val        & 255;
-        Ptr->Untyped[1] = (Val.Int16Val >> 8) & 255;
+        TmpVal.Int16Val &= BitMask;
+        Ptr->Untyped[0] = TmpVal.Int16Val        & 255;
+        Ptr->Untyped[1] = (TmpVal.Int16Val >> 8) & 255;
       } else if (BitWidth <= 32) {
-        Ptr->Untyped[0] =  Val.Int32Val        & 255;
-        Ptr->Untyped[1] = (Val.Int32Val >>  8) & 255;
-        Ptr->Untyped[2] = (Val.Int32Val >> 16) & 255;
-        Ptr->Untyped[3] = (Val.Int32Val >> 24) & 255;
+        TmpVal.Int32Val &= BitMask;
+        Ptr->Untyped[0] =  TmpVal.Int32Val        & 255;
+        Ptr->Untyped[1] = (TmpVal.Int32Val >>  8) & 255;
+        Ptr->Untyped[2] = (TmpVal.Int32Val >> 16) & 255;
+        Ptr->Untyped[3] = (TmpVal.Int32Val >> 24) & 255;
       } else if (BitWidth <= 64) {
-        Ptr->Untyped[0] = (unsigned char)(Val.Int64Val      );
-        Ptr->Untyped[1] = (unsigned char)(Val.Int64Val >>  8);
-        Ptr->Untyped[2] = (unsigned char)(Val.Int64Val >> 16);
-        Ptr->Untyped[3] = (unsigned char)(Val.Int64Val >> 24);
-        Ptr->Untyped[4] = (unsigned char)(Val.Int64Val >> 32);
-        Ptr->Untyped[5] = (unsigned char)(Val.Int64Val >> 40);
-        Ptr->Untyped[6] = (unsigned char)(Val.Int64Val >> 48);
-        Ptr->Untyped[7] = (unsigned char)(Val.Int64Val >> 56);
+        TmpVal.Int64Val &= BitMask;
+        Ptr->Untyped[0] = (unsigned char)(TmpVal.Int64Val      );
+        Ptr->Untyped[1] = (unsigned char)(TmpVal.Int64Val >>  8);
+        Ptr->Untyped[2] = (unsigned char)(TmpVal.Int64Val >> 16);
+        Ptr->Untyped[3] = (unsigned char)(TmpVal.Int64Val >> 24);
+        Ptr->Untyped[4] = (unsigned char)(TmpVal.Int64Val >> 32);
+        Ptr->Untyped[5] = (unsigned char)(TmpVal.Int64Val >> 40);
+        Ptr->Untyped[6] = (unsigned char)(TmpVal.Int64Val >> 48);
+        Ptr->Untyped[7] = (unsigned char)(TmpVal.Int64Val >> 56);
       } else
         assert(0 && "Integer types > 64 bits not supported");
       break;
@@ -507,25 +512,30 @@ Store4BytesLittleEndian:
     switch (Ty->getTypeID()) {
     case Type::IntegerTyID: {
       unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+      uint64_t BitMask = (1ull << BitWidth) - 1;
+      GenericValue TmpVal = Val;
       if (BitWidth <= 8)
-        Ptr->Untyped[0] = Val.Int8Val;
+        Ptr->Untyped[0] = Val.Int8Val & BitMask;
       else if (BitWidth <= 16) {
-        Ptr->Untyped[1] =  Val.Int16Val       & 255;
-        Ptr->Untyped[0] = (Val.Int16Val >> 8) & 255;
+        TmpVal.Int16Val &= BitMask;
+        Ptr->Untyped[1] =  TmpVal.Int16Val       & 255;
+        Ptr->Untyped[0] = (TmpVal.Int16Val >> 8) & 255;
       } else if (BitWidth <= 32) {
-        Ptr->Untyped[3] =  Val.Int32Val        & 255;
-        Ptr->Untyped[2] = (Val.Int32Val >>  8) & 255;
-        Ptr->Untyped[1] = (Val.Int32Val >> 16) & 255;
-        Ptr->Untyped[0] = (Val.Int32Val >> 24) & 255;
+        TmpVal.Int32Val &= BitMask;
+        Ptr->Untyped[3] =  TmpVal.Int32Val        & 255;
+        Ptr->Untyped[2] = (TmpVal.Int32Val >>  8) & 255;
+        Ptr->Untyped[1] = (TmpVal.Int32Val >> 16) & 255;
+        Ptr->Untyped[0] = (TmpVal.Int32Val >> 24) & 255;
       } else if (BitWidth <= 64) {
-        Ptr->Untyped[7] = (unsigned char)(Val.Int64Val      );
-        Ptr->Untyped[6] = (unsigned char)(Val.Int64Val >>  8);
-        Ptr->Untyped[5] = (unsigned char)(Val.Int64Val >> 16);
-        Ptr->Untyped[4] = (unsigned char)(Val.Int64Val >> 24);
-        Ptr->Untyped[3] = (unsigned char)(Val.Int64Val >> 32);
-        Ptr->Untyped[2] = (unsigned char)(Val.Int64Val >> 40);
-        Ptr->Untyped[1] = (unsigned char)(Val.Int64Val >> 48);
-        Ptr->Untyped[0] = (unsigned char)(Val.Int64Val >> 56);
+        TmpVal.Int64Val &= BitMask;
+        Ptr->Untyped[7] = (unsigned char)(TmpVal.Int64Val      );
+        Ptr->Untyped[6] = (unsigned char)(TmpVal.Int64Val >>  8);
+        Ptr->Untyped[5] = (unsigned char)(TmpVal.Int64Val >> 16);
+        Ptr->Untyped[4] = (unsigned char)(TmpVal.Int64Val >> 24);
+        Ptr->Untyped[3] = (unsigned char)(TmpVal.Int64Val >> 32);
+        Ptr->Untyped[2] = (unsigned char)(TmpVal.Int64Val >> 40);
+        Ptr->Untyped[1] = (unsigned char)(TmpVal.Int64Val >> 48);
+        Ptr->Untyped[0] = (unsigned char)(TmpVal.Int64Val >> 56);
       } else
         assert(0 && "Integer types > 64 bits not supported");
       break;
