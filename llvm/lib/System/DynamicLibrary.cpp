@@ -172,7 +172,11 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   {
 #ifndef stdin
     EXPLICIT_SYMBOL(stdin);
+#endif
+#ifndef stdout
     EXPLICIT_SYMBOL(stdout);
+#endif
+#ifndef stderr
     EXPLICIT_SYMBOL(stderr);
 #endif
   }
