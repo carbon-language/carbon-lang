@@ -753,7 +753,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
             << "\t.weak_definition " << name << "\n";
           SwitchToDataSection("\t.section __DATA,__const_coal,coalesced", I);
         } else {
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n"
+          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",%progbits\n"
             << "\t.weak " << name << "\n";
         }
         break;
@@ -774,7 +774,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
              I->getSection() == ".dtors")) {
           assert(!Subtarget->isDarwin());
           std::string SectionName = ".section " + I->getSection();
-          SectionName += ",\"aw\",@progbits";
+          SectionName += ",\"aw\",%progbits";
           SwitchToDataSection(SectionName.c_str());
         } else {
           SwitchToDataSection(TAI->getDataSection(), I);
