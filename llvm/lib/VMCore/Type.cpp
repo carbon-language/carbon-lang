@@ -1013,13 +1013,6 @@ public:
     return FT->getNumParams()*64+FT->getNumAttrs()*2+FT->isVarArg();
   }
 
-  // Subclass should override this... to update self as usual
-  void doRefinement(const DerivedType *OldType, const Type *NewType) {
-    if (RetTy == OldType) RetTy = NewType;
-    for (unsigned i = 0, e = ArgTypes.size(); i != e; ++i)
-      if (ArgTypes[i] == OldType) ArgTypes[i] = NewType;
-  }
-
   inline bool operator<(const FunctionValType &MTV) const {
     if (RetTy < MTV.RetTy) return true;
     if (RetTy > MTV.RetTy) return false;
@@ -1114,12 +1107,6 @@ public:
     return (unsigned)AT->getNumElements();
   }
 
-  // Subclass should override this... to update self as usual
-  void doRefinement(const DerivedType *OldType, const Type *NewType) {
-    assert(ValTy == OldType);
-    ValTy = NewType;
-  }
-
   inline bool operator<(const ArrayValType &MTV) const {
     if (Size < MTV.Size) return true;
     return Size == MTV.Size && ValTy < MTV.ValTy;
@@ -1162,12 +1149,6 @@ public:
 
   static unsigned hashTypeStructure(const PackedType *PT) {
     return PT->getNumElements();
-  }
-
-  // Subclass should override this... to update self as usual
-  void doRefinement(const DerivedType *OldType, const Type *NewType) {
-    assert(ValTy == OldType);
-    ValTy = NewType;
   }
 
   inline bool operator<(const PackedValType &MTV) const {
@@ -1223,12 +1204,6 @@ public:
     return ST->getNumElements();
   }
 
-  // Subclass should override this... to update self as usual
-  void doRefinement(const DerivedType *OldType, const Type *NewType) {
-    for (unsigned i = 0; i < ElTypes.size(); ++i)
-      if (ElTypes[i] == OldType) ElTypes[i] = NewType;
-  }
-
   inline bool operator<(const StructValType &STV) const {
     if (ElTypes < STV.ElTypes) return true;
     else if (ElTypes > STV.ElTypes) return false;
@@ -1274,12 +1249,6 @@ public:
 
   static unsigned hashTypeStructure(const PointerType *PT) {
     return getSubElementHash(PT);
-  }
-
-  // Subclass should override this... to update self as usual
-  void doRefinement(const DerivedType *OldType, const Type *NewType) {
-    assert(ValTy == OldType);
-    ValTy = NewType;
   }
 
   bool operator<(const PointerValType &MTV) const {
