@@ -17,21 +17,23 @@ using namespace llvm;
 
 ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   const ARMSubtarget *Subtarget = &TM.getSubtarget<ARMSubtarget>();
-  if (Subtarget->isDarwin()) {
-    HasDotTypeDotSizeDirective = false;
-    PrivateGlobalPrefix = "L";
+  if (Subtarget->isTargetDarwin()) {
     GlobalPrefix = "_";
     ZeroDirective = "\t.space\t";
+    PrivateGlobalPrefix = "L";
+    BSSSection = 0;                       // no BSS section.
+    ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
     SetDirective = "\t.set";
     WeakRefDirective = "\t.weak_reference\t";
     JumpTableDataSection = ".const";
     CStringSection = "\t.cstring";
+    LCOMMDirective = "\t.lcomm\t";
+    COMMDirectiveTakesAlignment = false;
+    HasDotTypeDotSizeDirective = false;
     StaticCtorsSection = ".mod_init_func";
     StaticDtorsSection = ".mod_term_func";
     InlineAsmStart = "@ InlineAsm Start";
     InlineAsmEnd = "@ InlineAsm End";
-    LCOMMDirective = "\t.lcomm\t";
-    COMMDirectiveTakesAlignment = false;
     
     // In non-PIC modes, emit a special label before jump tables so that the
     // linker can perform more accurate dead code stripping.
