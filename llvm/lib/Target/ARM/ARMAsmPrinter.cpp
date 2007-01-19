@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
@@ -159,7 +160,7 @@ FunctionPass *llvm::createARMCodePrinterPass(std::ostream &o,
 bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   AFI = MF.getInfo<ARMFunctionInfo>();
 
-  if (Subtarget->isDarwin()) {
+  if (Subtarget->isTargetDarwin()) {
     DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
   }
 
@@ -183,7 +184,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
-    if (Subtarget->isDarwin()) {
+    if (Subtarget->isTargetDarwin()) {
       SwitchToTextSection(
                 ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
       O << "\t.globl\t" << CurrentFnName << "\n";
@@ -203,7 +204,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     EmitAlignment(2, F);
 
   O << CurrentFnName << ":\n";
-  if (Subtarget->isDarwin()) {
+  if (Subtarget->isTargetDarwin()) {
     // Emit pre-function debug information.
     DW.BeginFunction(&MF);
   }
@@ -226,7 +227,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
-  if (Subtarget->isDarwin()) {
+  if (Subtarget->isTargetDarwin()) {
     // Emit post-function debug information.
     DW.EndFunction();
   }
@@ -260,7 +261,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     std::string Name = Mang->getValueName(GV);
     bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
-    if (isExt && isCallOp && Subtarget->isDarwin() &&
+    if (isExt && isCallOp && Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() != Reloc::Static) {
       O << TAI->getPrivateGlobalPrefix() << Name << "$stub";
       FnStubs.insert(Name);
@@ -275,7 +276,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
-    if (isCallOp && Subtarget->isDarwin() &&
+    if (isCallOp && Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() != Reloc::Static) {
       O << TAI->getPrivateGlobalPrefix() << Name << "$stub";
       FnStubs.insert(Name);
@@ -688,7 +689,7 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool ARMAsmPrinter::doInitialization(Module &M) {
-  if (Subtarget->isDarwin()) {
+  if (Subtarget->isTargetDarwin()) {
     // Emit initial debug information.
     DW.BeginModule(&M);
   }
@@ -712,22 +713,34 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     unsigned Size = TD->getTypeSize(C->getType());
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
-    if (C->isNullValue() &&
-        !I->hasSection() &&
-        (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-         I->hasLinkOnceLinkage() ||
-         (Subtarget->isDarwin() &&  I->hasExternalLinkage()))) {
-      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+    if (I->hasHiddenVisibility())
+      if (const char *Directive = TAI->getHiddenDirective())
+        O << Directive << name << "\n";
+    if (Subtarget->isTargetELF())
+      O << "\t.type " << name << ",@object\n";
+    
+    if (C->isNullValue()) {
       if (I->hasExternalLinkage()) {
+        if (const char *Directive = TAI->getZeroFillDirective()) {
           O << "\t.globl\t" << name << "\n";
-          O << "\t.zerofill __DATA__, __common, " << name << ", "
-            << Size << ", " << Align;
-      } else {
-        SwitchToDataSection(TAI->getDataSection(), I);
+          O << Directive << "__DATA__, __common, " << name << ", "
+            << Size << ", " << Align << "\n";
+          continue;
+        }
+      }
+
+      if (!I->hasSection() &&
+          (I->hasInternalLinkage() || I->hasWeakLinkage() ||
+           I->hasLinkOnceLinkage())) {
+        if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+        if (!NoZerosInBSS && TAI->getBSSSection())
+          SwitchToDataSection(TAI->getBSSSection(), I);
+        else
+          SwitchToDataSection(TAI->getDataSection(), I);
         if (TAI->getLCOMMDirective() != NULL) {
           if (I->hasInternalLinkage()) {
             O << TAI->getLCOMMDirective() << name << "," << Size;
-            if (Subtarget->isDarwin())
+            if (Subtarget->isTargetDarwin())
               O << "," << Align;
           } else
             O << TAI->getCOMMDirective()  << name << "," << Size;
@@ -738,59 +751,67 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
           if (TAI->getCOMMDirectiveTakesAlignment())
             O << "," << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
+        O << "\t\t" << TAI->getCommentString() << " " << I->getName() << "\n";
+        continue;
       }
-      O << "\t\t" << TAI->getCommentString() << " " << I->getName() << "\n";
-      continue;
-    } else {
-      switch (I->getLinkage()) {
-      default:
-        assert(0 && "Unknown linkage type!");
-        break;
-      case GlobalValue::LinkOnceLinkage:
-      case GlobalValue::WeakLinkage:
-        if (Subtarget->isDarwin()) {
-          O << "\t.globl " << name << "\n"
-            << "\t.weak_definition " << name << "\n";
-          SwitchToDataSection("\t.section __DATA,__const_coal,coalesced", I);
-        } else {
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",%progbits\n"
-            << "\t.weak " << name << "\n";
-        }
-        break;
-      case GlobalValue::ExternalLinkage:
-        O << "\t.globl " << name << "\n";
-        // FALL THROUGH
-      case GlobalValue::InternalLinkage:
-        if (I->isConstant()) {
-          const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-          if (TAI->getCStringSection() && CVA && CVA->isCString()) {
-            SwitchToDataSection(TAI->getCStringSection(), I);
-            break;
-          }
-        }
+    }
 
-        if (I->hasSection() &&
-            (I->getSection() == ".ctors" ||
-             I->getSection() == ".dtors")) {
-          assert(!Subtarget->isDarwin());
-          std::string SectionName = ".section " + I->getSection();
-          SectionName += ",\"aw\",%progbits";
-          SwitchToDataSection(SectionName.c_str());
-        } else {
+    switch (I->getLinkage()) {
+    case GlobalValue::LinkOnceLinkage:
+    case GlobalValue::WeakLinkage:
+      if (Subtarget->isTargetDarwin()) {
+        O << "\t.globl " << name << "\n"
+          << "\t.weak_definition " << name << "\n";
+        SwitchToDataSection("\t.section __DATA,__const_coal,coalesced", I);
+      } else {
+        std::string SectionName("\t.section\t.llvm.linkonce.d." +
+                                name +
+                                ",\"aw\",%progbits");
+        SwitchToDataSection(SectionName.c_str(), I);
+        O << "\t.weak " << name << "\n";
+      }
+      break;
+    case GlobalValue::AppendingLinkage:
+      // FIXME: appending linkage variables should go into a section of
+      // their name or something.  For now, just emit them as external.
+    case GlobalValue::ExternalLinkage:
+      O << "\t.globl " << name << "\n";
+      // FALL THROUGH
+    case GlobalValue::InternalLinkage: {
+      if (I->isConstant()) {
+        const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+        if (TAI->getCStringSection() && CVA && CVA->isCString()) {
+          SwitchToDataSection(TAI->getCStringSection(), I);
+          break;
+        }
+      }
+      // FIXME: special handling for ".ctors" & ".dtors" sections
+      if (I->hasSection() &&
+          (I->getSection() == ".ctors" ||
+           I->getSection() == ".dtors")) {
+        assert(!Subtarget->isTargetDarwin());
+        std::string SectionName = ".section " + I->getSection();
+        SectionName += ",\"aw\",%progbits";
+        SwitchToDataSection(SectionName.c_str());
+      } else {
+        if (C->isNullValue() && !NoZerosInBSS && TAI->getBSSSection())
+          SwitchToDataSection(TAI->getBSSSection(), I);
+        else
           SwitchToDataSection(TAI->getDataSection(), I);
-        }
-
-        break;
       }
+
+      break;
+    }
+    default:
+      assert(0 && "Unknown linkage type!");
+      break;
     }
 
     EmitAlignment(Align, I);
-    if (TAI->hasDotTypeDotSizeDirective()) {
-      O << "\t.type " << name << ", %object\n";
+    O << name << ":\t\t\t\t" << TAI->getCommentString() << " " << I->getName()
+      << "\n";
+    if (TAI->hasDotTypeDotSizeDirective())
       O << "\t.size " << name << ", " << Size << "\n";
-    }
-    O << name << ":\n";
-    
     // If the initializer is a extern weak symbol, remember to emit the weak
     // reference!
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
@@ -801,7 +822,9 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     O << '\n';
   }
 
-  if (Subtarget->isDarwin()) {
+  if (Subtarget->isTargetDarwin()) {
+    SwitchToDataSection("");
+
     // Output stubs for dynamically-linked functions
     unsigned j = 1;
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
