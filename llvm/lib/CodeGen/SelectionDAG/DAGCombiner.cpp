@@ -653,6 +653,22 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
   return Result;
 }
 
+static
+SDOperand combineShlAddConstant(SDOperand N0, SDOperand N1, SelectionDAG &DAG) {
+  MVT::ValueType VT = N0.getValueType();
+  SDOperand N00 = N0.getOperand(0);
+  SDOperand N01 = N0.getOperand(1);
+  ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N01);
+  if (N01C && N00.getOpcode() == ISD::ADD && N00.Val->hasOneUse() &&
+      isa<ConstantSDNode>(N00.getOperand(1))) {
+    N0 = DAG.getNode(ISD::ADD, VT,
+                     DAG.getNode(ISD::SHL, VT, N00.getOperand(0), N01),
+                     DAG.getNode(ISD::SHL, VT, N00.getOperand(1), N01));
+    return DAG.getNode(ISD::ADD, VT, N0, N1);
+  }
+  return SDOperand();
+}
+
 SDOperand DAGCombiner::visitADD(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
@@ -709,6 +725,16 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
           (LHSZero & (~RHSZero & Mask)) == (~RHSZero & Mask))
         return DAG.getNode(ISD::OR, VT, N0, N1);
     }
+  }
+
+  // fold (add (shl (add x, c1), c2), ) -> (add (add (shl x, c2), c1<<c2), )
+  if (N0.getOpcode() == ISD::SHL && N0.Val->hasOneUse()) {
+    SDOperand Result = combineShlAddConstant(N0, N1, DAG);
+    if (Result.Val) return Result;
+  }
+  if (N1.getOpcode() == ISD::SHL && N1.Val->hasOneUse()) {
+    SDOperand Result = combineShlAddConstant(N1, N0, DAG);
+    if (Result.Val) return Result;
   }
 
   return SDOperand();
@@ -1615,13 +1641,6 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::SRA && N1 == N0.getOperand(1))
     return DAG.getNode(ISD::AND, VT, N0.getOperand(0),
                        DAG.getConstant(~0ULL << N1C->getValue(), VT));
-  // fold (shl (add x, c1), c2) -> (add (shl x, c2), c1<<c2)
-  if (N1C && N0.getOpcode() == ISD::ADD && N0.Val->hasOneUse() && 
-      isa<ConstantSDNode>(N0.getOperand(1))) {
-    return DAG.getNode(ISD::ADD, VT, 
-                       DAG.getNode(ISD::SHL, VT, N0.getOperand(0), N1),
-                       DAG.getNode(ISD::SHL, VT, N0.getOperand(1), N1));
-  }
   return SDOperand();
 }
 
