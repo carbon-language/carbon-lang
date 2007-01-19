@@ -8162,7 +8162,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   return 0;
 }
 
-/// InstCombineStoreToCast - Fold 'store V, (cast P)' -> store (cast V), P'
+/// InstCombineStoreToCast - Fold store V, (cast P) -> store (cast V), P
 /// when possible.
 static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   User *CI = cast<User>(SI.getOperand(1));
@@ -8206,8 +8206,9 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
           if (isa<PointerType>(SIOp0->getType()))
             opcode = Instruction::PtrToInt;
           else if (const IntegerType* SITy = dyn_cast<IntegerType>(CastSrcTy))
-            assert(DITy->getBitWidth() == SITy->getBitWidth() &&
-                   "Illegal store instruction");
+            if (SITy->getBitWidth() != DITy->getBitWidth())
+              return 0; // Don't do this transform on unequal bit widths.
+            // else, BitCast is fine
         }
         if (Constant *C = dyn_cast<Constant>(SIOp0))
           NewCast = ConstantExpr::getCast(opcode, C, CastDstTy);
