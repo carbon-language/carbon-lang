@@ -3185,9 +3185,6 @@ yields a <a href="#t_primitive">i1</a> result, as follows:
 </ol>
 <p>If the operands are <a href="#t_pointer">pointer</a> typed, the pointer
 values are treated as integers and then compared.</p>
-<p>If the operands are <a href="#t_packed">packed</a> typed, the elements of 
-the vector are compared in turn and the predicate must hold for all
-elements.</p>
 
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = icmp eq i32 4, 5          <i>; yields: result=false</i>
