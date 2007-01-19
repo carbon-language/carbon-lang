@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #0" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "flds.*\[" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "fsts.*\[" | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep "flds.*\[" | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep "fsts.*\[" | wc -l | grep 1
 
 float %f1(float %a) {
 entry:

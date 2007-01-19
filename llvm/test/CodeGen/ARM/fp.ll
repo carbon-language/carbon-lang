@@ -1,25 +1,46 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmsr &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmrs &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmrrd &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmdrr &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fldd &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep flds &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fstd &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fsts &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #1065353216"
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmsr  | wc -l | grep 4 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fsitos &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmrs &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fsitod &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmrrd | wc -l | grep 5 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmdrr | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fldd &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep flds &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitod &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitos &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep 1065353216
+
+float %f(int %a) {
+entry:
+	%tmp = cast int %a to float		; <float> [#uses=1]
+	ret float %tmp
+}
+
+double %g(int %a) {
+entry:
+        %tmp = cast int %a to double            ; <double> [#uses=1]
+        ret double %tmp
+}
+
+double %uint_to_double(uint %a) {
+entry:
+	%tmp = cast uint %a to double
+	ret double %tmp
+}
+
+float %uint_to_float(uint %a) {
+entry:
+	%tmp = cast uint %a to float
+	ret float %tmp
+}
 
 
 double %h(double* %v) {
 entry:
 	%tmp = load double* %v		; <double> [#uses=1]
 	ret double %tmp
-}
-
-float %h(float* %v) {
-entry:
-	%tmp = load float* %v		; <double> [#uses=1]
-	ret float %tmp
 }
 
 float %h() {
@@ -40,15 +61,3 @@ entry:
 
 declare void %f4(double)
 declare double %f5()
-
-void %f6(float %a, float* %b) {
-entry:
-	store float %a, float* %b
-	ret void
-}
-
-void %f7(double %a, double* %b) {
-entry:
-	store double %a, double* %b
-	ret void
-}

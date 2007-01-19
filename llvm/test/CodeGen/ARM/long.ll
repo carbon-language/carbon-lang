@@ -1,13 +1,10 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r1, #0" | wc -l | grep 4 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #1" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mvn r0, #-2147483648" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mov r0, #-2147483648" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mvn r1, #-2147483648" | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "\-2147483648" | wc -l | grep 3 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "mvn" | wc -l | grep 3 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "adds" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "adcs" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "subs" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "sbcs" | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "adc" | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-linux | grep "subs" | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "sbc" | wc -l | grep 1 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "smull" | wc -l | grep 1 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "umull" | wc -l | grep 1
 

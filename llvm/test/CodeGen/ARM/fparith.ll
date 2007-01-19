@@ -1,12 +1,14 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fadds &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep faddd &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmuls &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fmuld &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fnegs &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fnegd &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fdivs &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep fdivd
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fadds &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep faddd &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmuls &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmuld &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fnegs &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fnegd &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fdivs &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fdivd
+
 
 float %f1(float %a, float %b) {
 entry:

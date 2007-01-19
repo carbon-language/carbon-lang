@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "ldr r0.*#0" | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "ldr r0" | wc -l | grep 3 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "ldr r0.*#4092" | wc -l | grep 1
 
 int %f1(int* %v) {
