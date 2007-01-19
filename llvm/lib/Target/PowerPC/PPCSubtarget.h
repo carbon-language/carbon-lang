@@ -19,6 +19,9 @@
 
 #include <string>
 
+// GCC #defines PPC on Linux but we use it as our namespace name
+#undef PPC
+
 namespace llvm {
 
 namespace PPC {
