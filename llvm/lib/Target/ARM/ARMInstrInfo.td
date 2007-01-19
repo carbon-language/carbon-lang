@@ -320,10 +320,12 @@ def IndexModePost : IndexMode<2>;
 class ARMPat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsARM];
 }
+class ARMV5TEPat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsARM, HasV5TE];
+}
 class ARMV6Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsARM, HasV6];
 }
-
 
 class InstARM<bits<4> opcod, AddrMode am, SizeFlagVal sz, IndexMode im,
               dag ops, string asmstr, string cstr>
@@ -870,72 +872,31 @@ def SMMLS : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$c),
                Requires<[IsARM, HasV6]>;
 
 multiclass AI_smul<string opc, PatFrag opnode> {
-  def BB1 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "bb $dst, $a, $b"),
-               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
-                                       (sext_inreg GPR:$b, i16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def BB2 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "bb $dst, $a, $b"),
-               [(set GPR:$dst, (opnode (sra (shl GPR:$a, 16), 16),
-                                       (sra (shl GPR:$b, 16), 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def BB3 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "bb $dst, $a, $b"),
-               [(set GPR:$dst, (opnode sext_16_node:$a, sext_16_node:$b))]>,
-            Requires<[IsARM, HasV5TE]>;
-
-  def BT1 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "bt $dst, $a, $b"),
-               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
-                                       (sra GPR:$b, 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def BT2 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "bt $dst, $a, $b"),
-               [(set GPR:$dst, (opnode (sra (shl GPR:$a, 16), 16),
-                                       (sra GPR:$b, 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def BT3 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "bt $dst, $a, $b"),
-               [(set GPR:$dst, (opnode sext_16_node:$a, (sra GPR:$b, 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-
-  def TB1 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "tb $dst, $a, $b"),
-               [(set GPR:$dst, (opnode (sra GPR:$a, 16),
-                                       (sext_inreg GPR:$b, i16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def TB2 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "tb $dst, $a, $b"),
-               [(set GPR:$dst, (opnode (sra GPR:$a, 16),
-                                       (sra (shl GPR:$b, 16), 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def TB3 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "tb $dst, $a, $b"),
-               [(set GPR:$dst, (opnode (sra GPR:$a, 16), sext_16_node:$b))]>,
-            Requires<[IsARM, HasV5TE]>;
-
+  def BB : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
+              !strconcat(opc, "bb $dst, $a, $b"),
+              [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
+                                      (sext_inreg GPR:$b, i16)))]>,
+           Requires<[IsARM, HasV5TE]>;
+  def BT : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
+              !strconcat(opc, "bt $dst, $a, $b"),
+              [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
+                                      (sra GPR:$b, 16)))]>,
+           Requires<[IsARM, HasV5TE]>;
+  def TB : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
+              !strconcat(opc, "tb $dst, $a, $b"),
+              [(set GPR:$dst, (opnode (sra GPR:$a, 16),
+                                      (sext_inreg GPR:$b, i16)))]>,
+           Requires<[IsARM, HasV5TE]>;
   def TT : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
               !strconcat(opc, "tt $dst, $a, $b"),
               [(set GPR:$dst, (opnode (sra GPR:$a, 16),
                                       (sra GPR:$b, 16)))]>,
             Requires<[IsARM, HasV5TE]>;
-
-  def WB1 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "wb $dst, $a, $b"),
-               [(set GPR:$dst, (sra (opnode GPR:$a,
-                                     (sext_inreg GPR:$b, i16)), 16))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def WB2 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "wb $dst, $a, $b"),
-               [(set GPR:$dst, (sra (opnode GPR:$a,
-                                     (sra (shl GPR:$b, 16), 16)), 16))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def WB3 : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, "wb $dst, $a, $b"),
-               [(set GPR:$dst, (sra (opnode GPR:$a, sext_16_node:$b), 16))]>,
-            Requires<[IsARM, HasV5TE]>;
-
+  def WB : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
+              !strconcat(opc, "wb $dst, $a, $b"),
+              [(set GPR:$dst, (sra (opnode GPR:$a,
+                                    (sext_inreg GPR:$b, i16)), 16))]>,
+           Requires<[IsARM, HasV5TE]>;
   def WT : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
               !strconcat(opc, "wt $dst, $a, $b"),
               [(set GPR:$dst, (sra (opnode GPR:$a,
@@ -944,78 +905,33 @@ multiclass AI_smul<string opc, PatFrag opnode> {
 }
 
 multiclass AI_smla<string opc, PatFrag opnode> {
-  def BB1 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "bb $dst, $a, $b, $acc"),
-               [(set GPR:$dst, (add GPR:$acc,
-                                (opnode (sext_inreg GPR:$a, i16),
-                                        (sext_inreg GPR:$b, i16))))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def BB2 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "bb $dst, $a, $b, $acc"),
-               [(set GPR:$dst, (add GPR:$acc,
-                                (opnode (sra (shl GPR:$a, 16), 16),
-                                        (sra (shl GPR:$b, 16), 16))))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def BB3 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "bb $dst, $a, $b, $acc"),
-               [(set GPR:$dst, (add GPR:$acc,
-                                (opnode sext_16_node:$a, sext_16_node:$b)))]>,
-            Requires<[IsARM, HasV5TE]>;
-
-  def BT1 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "bt $dst, $a, $b, $acc"),
-               [(set GPR:$dst, (add GPR:$acc, (opnode (sext_inreg GPR:$a, i16),
-                                                      (sra GPR:$b, 16))))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def BT2 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "bt $dst, $a, $b, $acc"),
-              [(set GPR:$dst, (add GPR:$acc, (opnode (sra (shl GPR:$a, 16), 16),
+  def BB : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
+              !strconcat(opc, "bb $dst, $a, $b, $acc"),
+              [(set GPR:$dst, (add GPR:$acc,
+                               (opnode (sext_inreg GPR:$a, i16),
+                                       (sext_inreg GPR:$b, i16))))]>,
+           Requires<[IsARM, HasV5TE]>;
+  def BT : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
+              !strconcat(opc, "bt $dst, $a, $b, $acc"),
+              [(set GPR:$dst, (add GPR:$acc, (opnode (sext_inreg GPR:$a, i16),
                                                      (sra GPR:$b, 16))))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def BT3 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "bt $dst, $a, $b, $acc"),
-               [(set GPR:$dst, (add GPR:$acc, (opnode sext_16_node:$a,
-                                                      (sra GPR:$b, 16))))]>,
-            Requires<[IsARM, HasV5TE]>;
-
-  def TB1 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "tb $dst, $a, $b, $acc"),
-               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
-                                                  (sext_inreg GPR:$b, i16))))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def TB2 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "tb $dst, $a, $b, $acc"),
-             [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
-                                                (sra (shl GPR:$b, 16), 16))))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def TB3 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "tb $dst, $a, $b, $acc"),
-               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
-                                                      sext_16_node:$b)))]>,
-            Requires<[IsARM, HasV5TE]>;
-
+           Requires<[IsARM, HasV5TE]>;
+  def TB : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
+              !strconcat(opc, "tb $dst, $a, $b, $acc"),
+              [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
+                                                 (sext_inreg GPR:$b, i16))))]>,
+           Requires<[IsARM, HasV5TE]>;
   def TT : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "tt $dst, $a, $b, $acc"),
               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
                                                      (sra GPR:$b, 16))))]>,
             Requires<[IsARM, HasV5TE]>;
 
-  def WB1 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "wb $dst, $a, $b, $acc"),
-               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
-                                             (sext_inreg GPR:$b, i16)), 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def WB2 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "wb $dst, $a, $b, $acc"),
-             [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
-                                           (sra (shl GPR:$b, 16), 16)), 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-  def WB3 : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
-               !strconcat(opc, "wb $dst, $a, $b, $acc"),
-               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
-                                              sext_16_node:$b), 16)))]>,
-            Requires<[IsARM, HasV5TE]>;
-
+  def WB : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
+              !strconcat(opc, "wb $dst, $a, $b, $acc"),
+              [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
+                                            (sext_inreg GPR:$b, i16)), 16)))]>,
+           Requires<[IsARM, HasV5TE]>;
   def WT : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$acc),
               !strconcat(opc, "wt $dst, $a, $b, $acc"),
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
@@ -1181,6 +1097,50 @@ def : Pat<(pre_truncsti1 GPR:$src, GPR:$base, am2offset:$offset),
           (STRB_PRE GPR:$src, GPR:$base, am2offset:$offset)>;
 def : Pat<(post_truncsti1 GPR:$src, GPR:$base, am2offset:$offset), 
           (STRB_POST GPR:$src, GPR:$base, am2offset:$offset)>;
+
+// smul* and smla*
+def : ARMV5TEPat<(mul (sra (shl GPR:$a, 16), 16), (sra (shl GPR:$b, 16), 16)),
+                 (SMULBB GPR:$a, GPR:$b)>;
+def : ARMV5TEPat<(mul sext_16_node:$a, sext_16_node:$b),
+                 (SMULBB GPR:$a, GPR:$b)>;
+def : ARMV5TEPat<(mul (sra (shl GPR:$a, 16), 16), (sra GPR:$b, 16)),
+                 (SMULBT GPR:$a, GPR:$b)>;
+def : ARMV5TEPat<(mul sext_16_node:$a, (sra GPR:$b, 16)),
+                 (SMULBT GPR:$a, GPR:$b)>;
+def : ARMV5TEPat<(mul (sra GPR:$a, 16), (sra (shl GPR:$b, 16), 16)),
+                 (SMULTB GPR:$a, GPR:$b)>;
+def : ARMV5TEPat<(mul (sra GPR:$a, 16), sext_16_node:$b),
+                (SMULTB GPR:$a, GPR:$b)>;
+def : ARMV5TEPat<(sra (mul GPR:$a, (sra (shl GPR:$b, 16), 16)), 16),
+                 (SMULWB GPR:$a, GPR:$b)>;
+def : ARMV5TEPat<(sra (mul GPR:$a, sext_16_node:$b), 16),
+                 (SMULWB GPR:$a, GPR:$b)>;
+
+def : ARMV5TEPat<(add GPR:$acc,
+                      (mul (sra (shl GPR:$a, 16), 16),
+                           (sra (shl GPR:$b, 16), 16))),
+                 (SMLABB GPR:$a, GPR:$b, GPR:$acc)>;
+def : ARMV5TEPat<(add GPR:$acc,
+                      (mul sext_16_node:$a, sext_16_node:$b)),
+                 (SMLABB GPR:$a, GPR:$b, GPR:$acc)>;
+def : ARMV5TEPat<(add GPR:$acc,
+                      (mul (sra (shl GPR:$a, 16), 16), (sra GPR:$b, 16))),
+                 (SMLABT GPR:$a, GPR:$b, GPR:$acc)>;
+def : ARMV5TEPat<(add GPR:$acc,
+                      (mul sext_16_node:$a, (sra GPR:$b, 16))),
+                 (SMLABT GPR:$a, GPR:$b, GPR:$acc)>;
+def : ARMV5TEPat<(add GPR:$acc,
+                      (mul (sra GPR:$a, 16), (sra (shl GPR:$b, 16), 16))),
+                 (SMLATB GPR:$a, GPR:$b, GPR:$acc)>;
+def : ARMV5TEPat<(add GPR:$acc,
+                      (mul (sra GPR:$a, 16), sext_16_node:$b)),
+                 (SMLATB GPR:$a, GPR:$b, GPR:$acc)>;
+def : ARMV5TEPat<(add GPR:$acc,
+                      (sra (mul GPR:$a, (sra (shl GPR:$b, 16), 16)), 16)),
+                 (SMLAWB GPR:$a, GPR:$b, GPR:$acc)>;
+def : ARMV5TEPat<(add GPR:$acc,
+                      (sra (mul GPR:$a, sext_16_node:$b), 16)),
+                 (SMLAWB GPR:$a, GPR:$b, GPR:$acc)>;
 
 //===----------------------------------------------------------------------===//
 // Thumb Support
