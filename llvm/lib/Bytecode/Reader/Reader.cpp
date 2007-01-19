@@ -2013,13 +2013,6 @@ void BytecodeReader::ParseModuleGlobalInfo() {
   TheModule->setTargetTriple(triple);
   if (Handler)
     Handler->handleTargetTriple(triple);
-
-  // Read the data layout string and place into the module.
-  std::string datalayout = read_str();
-  TheModule->setDataLayout(datalayout);
-  // FIXME: Implement
-  // if (Handler)
-    // Handler->handleDataLayout(datalayout);
   
   if (At != BlockEnd) {
     // If the file has section info in it, read the section names now.
