@@ -22,8 +22,12 @@ static cl::opt<bool> Thumb("enable-thumb",
                            cl::desc("Switch to thumb mode in ARM backend"));
 
 ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS)
-  : ARMArchVersion(V4T), HasVFP2(false), IsDarwin(false),
-    UseThumbBacktraces(false), IsR9Reserved(false), stackAlignment(8) {
+  : ARMArchVersion(V4T)
+  , HasVFP2(false)
+  , UseThumbBacktraces(false)
+  , IsR9Reserved(false)
+  , stackAlignment(8)
+  , TargetType(isELF) { // Default to ELF unless otherwise specified.
 
   // Determine default and user specified characteristics
   std::string CPU = "generic";
@@ -37,14 +41,15 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS)
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
-    IsDarwin = TT.find("-darwin") != std::string::npos;
+    if (TT.find("-darwin") != std::string::npos)
+      TargetType = isDarwin;
   } else if (TT.empty()) {
 #if defined(__APPLE__)
-    IsDarwin = true;
+    TargetType = isDarwin;
 #endif
   }
 
-  if (IsDarwin) {
+  if (isTargetDarwin()) {
     UseThumbBacktraces = true;
     IsR9Reserved = true;
     stackAlignment = 4;

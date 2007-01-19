@@ -37,8 +37,6 @@ protected:
   /// IsThumb - True if we are in thumb mode, false if in ARM mode.
   bool IsThumb;
 
-  bool IsDarwin;
-  
   /// UseThumbBacktraces - True if we use thumb style backtraces.
   bool UseThumbBacktraces;
 
@@ -50,6 +48,10 @@ protected:
   unsigned stackAlignment;
 
  public:
+  enum {
+    isELF, isDarwin
+  } TargetType;
+
   /// This constructor initializes the data members to match that
   /// of the specified module.
   ///
@@ -66,7 +68,9 @@ protected:
 
   bool hasVFP2() const { return HasVFP2; }
   
-  bool isDarwin() const { return IsDarwin; }
+  bool isTargetDarwin() const { return TargetType == isDarwin; }
+  bool isTargetELF() const { return TargetType == isELF; }
+
   bool isThumb() const { return IsThumb; }
 
   bool useThumbBacktraces() const { return UseThumbBacktraces; }
