@@ -20,19 +20,17 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "ARMInstrInfo.h"
 #include "ARMFrameInfo.h"
+#include "ARMSubtarget.h"
 
 namespace llvm {
 
 class Module;
 
 class ARMTargetMachine : public LLVMTargetMachine {
-  const TargetData DataLayout;       // Calculates type size & alignment
-  ARMInstrInfo InstrInfo;
-  ARMFrameInfo FrameInfo;
-  
-protected:
-  virtual const TargetAsmInfo *createTargetAsmInfo() const;
-
+  ARMSubtarget      Subtarget;
+  const TargetData  DataLayout;       // Calculates type size & alignment
+  ARMInstrInfo      InstrInfo;
+  ARMFrameInfo      FrameInfo;
 public:
   ARMTargetMachine(const Module &M, const std::string &FS);
 
@@ -42,11 +40,14 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
+  virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
   static unsigned getModuleMatchQuality(const Module &M);
 
+  virtual const TargetAsmInfo *createTargetAsmInfo() const;
+  
   // Pass Pipeline Configuration
   virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);
-  virtual bool addPostRegAlloc(FunctionPassManager &PM, bool Fast);
+  virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast);
   virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                   std::ostream &Out);
 };

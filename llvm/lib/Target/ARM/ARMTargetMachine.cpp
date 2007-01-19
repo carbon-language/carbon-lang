@@ -11,30 +11,32 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMTargetAsmInfo.h"
 #include "ARMTargetMachine.h"
+#include "ARMTargetAsmInfo.h"
 #include "ARMFrameInfo.h"
 #include "ARM.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
+
+static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
+                              cl::desc("Disable load store optimization pass"));
 
 namespace {
   // Register the target.
   RegisterTarget<ARMTargetMachine> X("arm", "  ARM");
 }
 
-
-const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
-  return new ARMTargetAsmInfo(*this);
-}
-
-
 /// TargetMachine ctor - Create an ILP32 architecture model
 ///
 ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
-  : DataLayout("e-p:32:32") {
+  : Subtarget(M, FS), DataLayout("e-p:32:32-d:32"), InstrInfo(Subtarget),
+    FrameInfo(Subtarget) {
+  if (Subtarget.isDarwin())
+    NoFramePointerElim = true;
 }
 
 unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
@@ -49,14 +51,23 @@ unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
 }
 
 
+const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
+  return new ARMTargetAsmInfo(*this);
+}
+
+
 // Pass Pipeline Configuration
 bool ARMTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
   PM.add(createARMISelDag(*this));
   return false;
 }
 
-bool ARMTargetMachine::addPostRegAlloc(FunctionPassManager &PM, bool Fast) {
-  PM.add(createARMFixMulPass());
+bool ARMTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
+  // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
+  if (!Fast && !DisableLdStOpti && !Subtarget.isThumb())
+    PM.add(createARMLoadStoreOptimizationPass());
+  
+  PM.add(createARMConstantIslandPass());
   return true;
 }
 
