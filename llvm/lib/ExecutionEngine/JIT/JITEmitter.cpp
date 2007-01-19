@@ -27,6 +27,7 @@
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Disassembler.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/System/Memory.h"
@@ -847,7 +848,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   }
 
   // Update the GOT entry for F to point to the new code.
-  if(MemMgr.isManagingGOT()) {
+  if (MemMgr.isManagingGOT()) {
     unsigned idx = getJITResolver(this).getGOTIndexForAddr((void*)BufferBegin);
     if (((void**)MemMgr.getGOTBase())[idx] != (void*)BufferBegin) {
       DOUT << "GOT was out of date for " << (void*)BufferBegin
@@ -864,6 +865,18 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
        << ": " << (FnEnd-FnStart) << " bytes of text, "
        << Relocations.size() << " relocations\n";
   Relocations.clear();
+
+  DOUT << "Disassembled code:\n"
+#if defined(__i386__)
+       << disassembleBuffer(FnStart, FnEnd-FnStart,
+                            Disassembler::X86_32, (uint32_t)FnStart);
+#elif defined(__amd64__) || defined(__x86_64__)
+       << disassembleBuffer(FnStart, FnEnd-FnStart,
+                            Disassembler::X86_64, (uint32_t)FnStart);
+#else
+       << "N/A\n";
+#endif
+  
   return false;
 }
 

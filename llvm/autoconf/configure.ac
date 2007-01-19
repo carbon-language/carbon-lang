@@ -35,8 +35,8 @@ AC_INIT([[llvm]],[[2.0cvs]],[llvmbugs@cs.uiuc.edu])
 
 dnl Provide a copyright substitution and ensure the copyright notice is included
 dnl in the output of --version option of the generated configure script.
-AC_SUBST(LLVM_COPYRIGHT,["Copyright (c) 2003-2005 University of Illinois at Urbana-Champaign."])
-AC_COPYRIGHT([Copyright (c) 2003-2005 University of Illinois at Urbana-Champaign.])
+AC_SUBST(LLVM_COPYRIGHT,["Copyright (c) 2003-2007 University of Illinois at Urbana-Champaign."])
+AC_COPYRIGHT([Copyright (c) 2003-2007 University of Illinois at Urbana-Champaign.])
 
 dnl Indicate that we require autoconf 2.59 or later. Ths is needed because we
 dnl use some autoconf macros only available in 2.59.
@@ -628,6 +628,25 @@ if test "$ENABLE_THREADS" -eq 1 ; then
                  AC_DEFINE([HAVE_PTHREAD_MUTEX_LOCK],[1],
                            [Have pthread_mutex_lock]))
 fi
+
+dnl Allow extra x86-disassembler library
+AC_ARG_WITH(udis86,
+  AS_HELP_STRING([--with-udis86=<path>],
+    [Use udis86 external x86 disassembler library]),
+    [
+      AC_SUBST(USE_UDIS86, [1])
+      case "$withval" in
+        /usr/lib) ;;
+        *) LDFLAGS="$LDFLAGS -L${withval}" ;;
+      esac
+      AC_CHECK_LIB(udis86, ud_init, [], [
+        echo "Error! You need to have libudis86 around."
+        exit -1
+      ])
+    ],
+    AC_SUBST(USE_UDIS86, [0]))
+AC_DEFINE_UNQUOTED([USE_UDIS86],$USE_UDIS86,
+                   [Define if use udis86 library])
 
 dnl===-----------------------------------------------------------------------===
 dnl===
