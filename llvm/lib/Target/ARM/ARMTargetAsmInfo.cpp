@@ -33,6 +33,13 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     LCOMMDirective = "\t.lcomm\t";
     COMMDirectiveTakesAlignment = false;
     
+    // In non-PIC modes, emit a special label before jump tables so that the
+    // linker can perform more accurate dead code stripping.
+    if (TM.getRelocationModel() != Reloc::PIC_) {
+      // Emit a local label that is preserved until the linker runs.
+      JumpTableSpecialLabelPrefix = "l";
+    }
+    
     NeedsSet = true;
     DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
     DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
