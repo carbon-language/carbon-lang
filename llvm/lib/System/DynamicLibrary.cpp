@@ -191,9 +191,6 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
 #ifndef stderr
     EXPLICIT_SYMBOL(stderr);
 #endif
-#ifndef errno
-    EXPLICIT_SYMBOL(errno);
-#endif
   }
 #endif
 #undef EXPLICIT_SYMBOL
