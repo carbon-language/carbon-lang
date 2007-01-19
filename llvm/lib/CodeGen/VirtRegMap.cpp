@@ -30,6 +30,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
+#include <set>
 using namespace llvm;
 
 STATISTIC(NumSpills, "Number of register spills");
@@ -469,18 +470,23 @@ namespace {
     /// a new register to use, or evict the previous reload and use this reg. 
     unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
                              AvailableSpills &Spills,
-                             std::map<int, MachineInstr*> &MaybeDeadStores) {
+                             std::map<int, MachineInstr*> &MaybeDeadStores,
+                             std::set<unsigned> &Rejected) {
       if (Reuses.empty()) return PhysReg;  // This is most often empty.
 
       for (unsigned ro = 0, e = Reuses.size(); ro != e; ++ro) {
         ReusedOp &Op = Reuses[ro];
         // If we find some other reuse that was supposed to use this register
         // exactly for its reload, we can change this reload to use ITS reload
-        // register.
-        if (Op.PhysRegReused == PhysReg) {
+        // register. That is, unless its reload register has already been
+        // considered and subsequently rejected because it has also been reused
+        // by another operand.
+        if (Op.PhysRegReused == PhysReg &&
+            Rejected.count(Op.AssignedPhysReg) == 0) {
           // Yup, use the reload register that we didn't use before.
-          unsigned NewReg = Op.AssignedPhysReg;          
-          return GetRegForReload(NewReg, MI, Spills, MaybeDeadStores);
+          unsigned NewReg = Op.AssignedPhysReg;
+          Rejected.insert(PhysReg);
+          return GetRegForReload(NewReg, MI, Spills, MaybeDeadStores, Rejected);
         } else {
           // Otherwise, we might also have a problem if a previously reused
           // value aliases the new register.  If so, codegen the previous reload
@@ -505,7 +511,7 @@ namespace {
             // register could hold a reuse.  Check to see if it conflicts or
             // would prefer us to use a different register.
             unsigned NewPhysReg = GetRegForReload(NewOp.AssignedPhysReg,
-                                                  MI, Spills, MaybeDeadStores);
+                                         MI, Spills, MaybeDeadStores, Rejected);
             
             MRI->loadRegFromStackSlot(*MBB, MI, NewPhysReg,
                                       NewOp.StackSlot, AliasRC);
@@ -531,6 +537,24 @@ namespace {
         }
       }
       return PhysReg;
+    }
+
+    /// GetRegForReload - Helper for the above GetRegForReload(). Add a
+    /// 'Rejected' set to remember which registers have been considered and
+    /// rejected for the reload. This avoids infinite looping in case like
+    /// this:
+    /// t1 := op t2, t3
+    /// t2 <- assigned r0 for use by the reload but ended up reuse r1
+    /// t3 <- assigned r1 for use by the reload but ended up reuse r0
+    /// t1 <- desires r1
+    ///       sees r1 is taken by t2, tries t2's reload register r0
+    ///       sees r0 is taken by t3, tries t3's reload register r1
+    ///       sees r1 is taken by t2, tries t2's reload register r0 ...
+    unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
+                             AvailableSpills &Spills,
+                             std::map<int, MachineInstr*> &MaybeDeadStores) {
+      std::set<unsigned> Rejected;
+      return GetRegForReload(PhysReg, MI, Spills, MaybeDeadStores, Rejected);
     }
   };
 }
@@ -626,8 +650,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             MI.getOperand(ti).isReg() && 
             MI.getOperand(ti).getReg() == VirtReg) {
           // Okay, we have a two address operand.  We can reuse this physreg as
-          // long as we are allowed to clobber the value and there is an earlier
-          // def that has already clobbered the physreg.
+          // long as we are allowed to clobber the value and there isn't an
+          // earlier def that has already clobbered the physreg.
           CanReuse = Spills.canClobberPhysReg(StackSlot) &&
             !ReusedOperands.isClobbered(PhysReg);
         }
