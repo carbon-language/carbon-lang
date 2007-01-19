@@ -872,7 +872,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
                             Disassembler::X86_32, (uint32_t)FnStart);
 #elif defined(__amd64__) || defined(__x86_64__)
        << disassembleBuffer(FnStart, FnEnd-FnStart,
-                            Disassembler::X86_64, (uint32_t)FnStart);
+                            Disassembler::X86_64, (uint64_t)FnStart);
 #else
        << "N/A\n";
 #endif
