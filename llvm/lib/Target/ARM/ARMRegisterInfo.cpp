@@ -256,7 +256,7 @@ const unsigned* ARMRegisterInfo::getCalleeSavedRegs() const {
     ARM::D11, ARM::D10, ARM::D9,  ARM::D8,
     0
   };
-  return STI.isDarwin() ? DarwinCalleeSavedRegs : CalleeSavedRegs;
+  return STI.isTargetDarwin() ? DarwinCalleeSavedRegs : CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const *
@@ -807,7 +807,7 @@ static void movePastCSLoadStoreOps(MachineBasicBlock &MBB,
       case ARM::R9:
       case ARM::R10:
       case ARM::R11:
-        Category = STI.isDarwin() ? 2 : 1;
+        Category = STI.isTargetDarwin() ? 2 : 1;
         break;
       case ARM::D8:
       case ARM::D9:
@@ -870,7 +870,7 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
       case ARM::R11:
         if (Reg == FramePtr)
           FramePtrSpillFI = FI;
-        if (STI.isDarwin()) {
+        if (STI.isTargetDarwin()) {
           AFI->addGPRCalleeSavedArea2Frame(FI);
           GPRCS2Size += 4;
         } else {

@@ -35,7 +35,7 @@ namespace {
 ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
   : Subtarget(M, FS), DataLayout("e-p:32:32-d:32"), InstrInfo(Subtarget),
     FrameInfo(Subtarget) {
-  if (Subtarget.isDarwin())
+  if (Subtarget.isTargetDarwin())
     NoFramePointerElim = true;
 }
 

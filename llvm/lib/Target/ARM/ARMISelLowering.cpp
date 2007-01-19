@@ -146,7 +146,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   // FIXME - use subtarget debug flags
-  if (Subtarget->isDarwin())
+  if (Subtarget->isTargetDarwin())
     setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
   setOperationAction(ISD::RET,           MVT::Other, Custom);
@@ -470,7 +470,7 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     isDirect = true;
     bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
-    bool isStub = (isExt && Subtarget->isDarwin()) &&
+    bool isStub = (isExt && Subtarget->isTargetDarwin()) &&
                    getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
     // Wrap it since tBX takes a register source operand.
@@ -479,7 +479,7 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
     isDirect = true;
-    bool isStub = Subtarget->isDarwin() &&
+    bool isStub = Subtarget->isTargetDarwin() &&
                   getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
     // Wrap it since tBX takes a register source operand.
@@ -641,7 +641,7 @@ SDOperand ARMTargetLowering::LowerGlobalAddress(SDOperand Op,
   MVT::ValueType PtrVT = getPointerTy();
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
-  bool IsIndirect = Subtarget->isDarwin() && GVIsIndirectSymbol(GV);
+  bool IsIndirect = Subtarget->isTargetDarwin() && GVIsIndirectSymbol(GV);
   SDOperand CPAddr;
   if (RelocM == Reloc::Static)
     CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 2);
