@@ -1,4 +1,5 @@
-// RUN: %llvmgcc -S %s -o - /dev/null
+// RUN: %llvmgcc -S %s -o - /dev/null 2>&1 > /dev/null | \
+// RUN:   not grep warning
 // XFAIL: *
 
 #define ATTR_BITS(N) __attribute__((bitwidth(N))) 
