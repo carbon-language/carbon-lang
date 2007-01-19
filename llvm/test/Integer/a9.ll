@@ -18,6 +18,10 @@
 %m = constant i9 ashr(i9 511 , i8 9)
 
 %n = constant i9 mul(i9 511, i9 2)
+%q = constant i9 sdiv(i9 511, i9 2)
+%r = constant i9 udiv(i9 511, i9 2)
+%s = constant i9 urem(i9 511, i9 -1)
+%t = constant i9 srem(i9 1, i9 510)
 %o = constant i9 trunc( i10 512  to i9 )
 %p = constant i9 trunc( i10 511  to i9 )
 

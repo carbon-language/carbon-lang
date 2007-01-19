@@ -18,5 +18,10 @@
 %m = constant i63 ashr(i63 9223372036854775807 , i8 63)
 
 %n = constant i63 mul(i63 9223372036854775807, i63 2) 
+%q = constant i63 sdiv(i63 -1,                 i63 4611686018427387903)
+%u = constant i63 sdiv(i63 -1,                 i63 1)
+%r = constant i63 udiv(i63 -1,                 i63 4611686018427387903)
+%s = constant i63 srem(i63  3,                 i63 9223372036854775806)
+%t = constant i63 urem(i63 9223372036854775807,i63 -1)
 %o = constant i63 trunc( i64 9223372036854775808 to i63 )
 %p = constant i63 trunc( i64 9223372036854775807  to i63 )

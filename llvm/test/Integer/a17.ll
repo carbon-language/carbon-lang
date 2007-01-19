@@ -18,5 +18,9 @@
 %m = constant i17 ashr(i17 131071 , i8 17)
 
 %n = constant i17 mul(i17 131071, i17 2) 
+%q = constant i17 sdiv(i17 -1,    i17 65535)
+%r = constant i17 udiv(i17 -1,    i17 65535)
+%s = constant i17 srem(i17  1,    i17 131070)
+%t = constant i17 urem(i17 131071,i17 -1)
 %o = constant i17 trunc( i18 131072  to i17 )
 %p = constant i17 trunc( i18 131071  to i17 )

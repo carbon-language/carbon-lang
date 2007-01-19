@@ -18,3 +18,7 @@
 %n = constant i1 mul(i1 -1, i1 1)
 %o = constant i1 sdiv(i1 -1, i1 1)
 %p = constant i1 sdiv(i1 1 , i1 -1)
+%q = constant i1 udiv(i1 -1, i1 1)
+%r = constant i1 udiv(i1 1, i1 -1)
+%s = constant i1 srem(i1 -1, i1 1)
+%t = constant i1 urem(i1 -1, i1 1)

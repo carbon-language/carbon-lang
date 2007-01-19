@@ -18,6 +18,11 @@
 %m = constant i15 ashr(i15 32767 , i8 15)
 
 %n = constant i15 mul(i15 32767, i15 2)
+%q = constant i15 mul(i15 -16383,i15 -3)
+%r = constant i15 sdiv(i15 -1,   i15 16383)
+%s = constant i15 udiv(i15 -1,   i15 16383)
+%t = constant i15 srem(i15 1,    i15 32766)
+%u = constant i15 urem(i15 32767,i15 -1)
 %o = constant i15 trunc( i16 32768  to i15 )
 %p = constant i15 trunc( i16 32767  to i15 )
  
