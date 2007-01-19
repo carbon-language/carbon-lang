@@ -164,11 +164,23 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   }
 #undef EXPLICIT_SYMBOL
 #endif
+
+// This macro returns the address of a well-known, explicit symbol
 #define EXPLICIT_SYMBOL(SYM) \
    if (!strcmp(symbolName, #SYM)) return &SYM
-  // Try a few well known symbols just to give lli a shot at working.
-  // Note that on some systems stdin, etc. are macros so we have to
-  // avoid attempting to take the address of a macro :)
+
+// On linux we have a weird situation. The stderr/out/in symbols are both
+// macros and global variables because of standards requirements. So, we 
+// boldly use the EXPLICIT_SYMBOL macro without checking for a #define first.
+#if defined(__linux__)
+  {
+    EXPLICIT_SYMBOL(stderr);
+    EXPLICIT_SYMBOL(stdout);
+    EXPLICIT_SYMBOL(stdin);
+  }
+#else
+  // For everything else, we want to check to make sure the symbol isn't defined
+  // as a macro before using EXPLICIT_SYMBOL.
   {
 #ifndef stdin
     EXPLICIT_SYMBOL(stdin);
@@ -179,7 +191,11 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
 #ifndef stderr
     EXPLICIT_SYMBOL(stderr);
 #endif
+#ifndef errno
+    EXPLICIT_SYMBOL(errno);
+#endif
   }
+#endif
 #undef EXPLICIT_SYMBOL
 
   return 0;
