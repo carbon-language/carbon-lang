@@ -1333,7 +1333,7 @@ static uint64_t GetConstantFactor(SCEVHandle S) {
 
   if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S))
     return GetConstantFactor(T->getOperand()) &
-           T->getType()->getIntegerTypeMask();
+           cast<IntegerType>(T->getType())->getBitMask();
   if (SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S))
     return GetConstantFactor(E->getOperand());
   

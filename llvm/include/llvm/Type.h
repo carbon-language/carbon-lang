@@ -24,6 +24,7 @@ namespace llvm {
 
 class DerivedType;
 class PointerType;
+class IntegerType;
 class TypeMapBase;
 
 /// This file contains the declaration of the Type class.  For more "Type" type
@@ -217,14 +218,6 @@ public:
   ///
   unsigned getPrimitiveSizeInBits() const;
 
-  /// getIntegerTypeMask - Return a bitmask with ones set for all of the bits
-  /// that can be set by an unsigned version of this type.  This is 0xFF for
-  /// sbyte/ubyte, 0xFFFF for shorts, etc.
-  uint64_t getIntegerTypeMask() const {
-    assert(isInteger() && "This only works for integer types!");
-    return ~uint64_t(0UL) >> (64-getPrimitiveSizeInBits());
-  }
-
   /// getForwaredType - Return the type that this type has been resolved to if
   /// it has been resolved to anything.  This is used to implement the
   /// union-find algorithm for type resolution, and shouldn't be used by general
@@ -237,14 +230,7 @@ public:
   /// getVAArgsPromotedType - Return the type an argument of this type
   /// will be promoted to if passed through a variable argument
   /// function.
-  const Type *getVAArgsPromotedType() const {
-    if (ID == IntegerTyID && getSubclassData() < 32)
-      return Type::Int32Ty;
-    else if (ID == FloatTyID)
-      return Type::DoubleTy;
-    else
-      return this;
-  }
+  const Type *getVAArgsPromotedType() const; 
 
   //===--------------------------------------------------------------------===//
   // Type Iteration support
@@ -279,7 +265,7 @@ public:
   // These are the builtin types that are always available...
   //
   static const Type *VoidTy, *LabelTy, *FloatTy, *DoubleTy;
-  static const Type *Int1Ty, *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
+  static const IntegerType *Int1Ty, *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *T) { return true; }

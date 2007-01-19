@@ -21,6 +21,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"

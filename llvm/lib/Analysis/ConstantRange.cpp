@@ -26,6 +26,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Support/Streams.h"
 #include <ostream>
 using namespace llvm;

@@ -81,6 +81,15 @@ const Type *Type::getPrimitiveType(TypeID IDNumber) {
   }
 }
 
+const Type *Type::getVAArgsPromotedType() const {
+  if (ID == IntegerTyID && getSubclassData() < 32)
+    return Type::Int32Ty;
+  else if (ID == FloatTyID)
+    return Type::DoubleTy;
+  else
+    return this;
+}
+
 /// isFPOrFPVector - Return true if this is a FP type or a vector of FP types.
 ///
 bool Type::isFPOrFPVector() const {
@@ -352,7 +361,7 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
     };                                                       \
   }                                                          \
   static ManagedStatic<TY##Type> The##TY##Ty;                \
-  const Type *Type::TY##Ty = &*The##TY##Ty
+  const IntegerType *Type::TY##Ty = &*The##TY##Ty
 
 DeclarePrimType(Void,   "void");
 DeclarePrimType(Float,  "float");

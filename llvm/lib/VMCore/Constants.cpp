@@ -568,7 +568,7 @@ bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
   unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth(); // assert okay
   assert(NumBits <= 64 && "Not implemented: integers > 64-bits");
   if (Ty == Type::Int1Ty)
-    return Val == 0 || Val == 1;
+    return Val == 0 || Val == 1 || Val == -1;
   if (NumBits == 64)
     return true; // always true, has to fit in largest type
   int64_t Min = -(1ll << (NumBits-1));
@@ -849,7 +849,7 @@ ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
       return getTrue();
     else
       return getFalse();
-  return IntConstants->getOrCreate(Ty, V & Ty->getIntegerTypeMask());
+  return IntConstants->getOrCreate(Ty, V & cast<IntegerType>(Ty)->getBitMask());
 }
 
 //---- ConstantFP::get() implementation...

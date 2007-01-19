@@ -21,6 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 

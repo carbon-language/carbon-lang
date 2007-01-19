@@ -101,6 +101,13 @@ public:
   /// @brief Get the number of bits in this IntegerType
   unsigned getBitWidth() const { return getSubclassData(); }
 
+  /// getBitMask - Return a bitmask with ones set for all of the bits
+  /// that can be set by an unsigned version of this type.  This is 0xFF for
+  /// sbyte/ubyte, 0xFFFF for shorts, etc.
+  uint64_t getBitMask() const {
+    return ~uint64_t(0UL) >> (64-getPrimitiveSizeInBits());
+  }
+
   /// This method determines if the width of this IntegerType is a power-of-2
   /// in terms of 8 bit bytes. 
   /// @returns true if this is a power-of-2 byte width.

@@ -29,6 +29,7 @@
 #define DEBUG_TYPE "loop-unswitch"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -486,7 +487,7 @@ static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   // Insert a conditional branch on LIC to the two preheaders.  The original
   // code is the true version and the new code is the false version.
   Value *BranchVal = LIC;
-  if (Val->getType() != Type::Int1Ty || !isa<ConstantInt>(Val))
+  if (!isa<ConstantInt>(Val) || Val->getType() != Type::Int1Ty)
     BranchVal = new ICmpInst(ICmpInst::ICMP_EQ, LIC, Val, "tmp", InsertPt);
   else if (Val != ConstantInt::getTrue())
     // We want to enter the new loop when the condition is true.

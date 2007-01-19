@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 using namespace llvm;
 
 /// MVT::getValueTypeString - This function returns value type as a string,

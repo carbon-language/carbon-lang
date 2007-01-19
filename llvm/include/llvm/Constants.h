@@ -60,7 +60,7 @@ public:
   /// sign extended as appropriate for the type of this constant.
   /// @brief Return the sign extended value.
   inline int64_t getSExtValue() const {
-    unsigned Size = getType()->getPrimitiveSizeInBits();
+    unsigned Size = Value::getType()->getPrimitiveSizeInBits();
     return (int64_t(Val) << (64-Size)) >> (64-Size);
   }
   /// A helper method that can be used to determine if the constant contained 
@@ -91,6 +91,13 @@ public:
   /// sized/signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const Type *Ty, int64_t V);
+
+  /// getType - Specialize the getType() method to always return an IntegerType,
+  /// which reduces the amount of casting needed in parts of the compiler.
+  ///
+  inline const IntegerType *getType() const {
+    return reinterpret_cast<const IntegerType*>(Value::getType());
+  }
 
   /// This static method returns true if the type Ty is big enough to 
   /// represent the value V. This can be used to avoid having the get method 
@@ -130,7 +137,7 @@ public:
       int64_t V = getSExtValue();
       if (V < 0) return false;    // Be careful about wrap-around on 'long's
       ++V;
-      return !isValueValidForType(getType(), V) || V < 0;
+      return !isValueValidForType(Value::getType(), V) || V < 0;
     }
     return isAllOnesValue();
   }
@@ -145,7 +152,7 @@ public:
       int64_t V = getSExtValue();
       if (V > 0) return false;    // Be careful about wrap-around on 'long's
       --V;
-      return !isValueValidForType(getType(), V) || V > 0;
+      return !isValueValidForType(Value::getType(), V) || V > 0;
     }
     return getZExtValue() == 0;
   }

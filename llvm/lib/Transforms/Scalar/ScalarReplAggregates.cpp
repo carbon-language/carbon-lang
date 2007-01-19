@@ -748,7 +748,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           if (TotalBits != SrcSize) {
             assert(TotalBits > SrcSize);
             uint64_t Mask = ~(((1ULL << SrcSize)-1) << Offset);
-            Mask = Mask & SV->getType()->getIntegerTypeMask();
+            Mask = Mask & cast<IntegerType>(SV->getType())->getBitMask();
             Old = BinaryOperator::createAnd(Old,
                                         ConstantInt::get(Old->getType(), Mask),
                                             Old->getName()+".mask", SI);

@@ -295,13 +295,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     // Handle ConstantFP input.
     if (const ConstantFP *FP = dyn_cast<ConstantFP>(V)) {
       // FP -> Integral.
-      if (DestTy->isInteger()) {
-        if (DestTy == Type::Int32Ty)
-          return ConstantInt::get(DestTy, FloatToBits(FP->getValue()));
-        assert(DestTy == Type::Int64Ty && 
-               "Incorrect integer type for bitcast!");
+      if (DestTy->isInteger())
         return ConstantInt::get(DestTy, DoubleToBits(FP->getValue()));
-      }
     }
     return 0;
   default:

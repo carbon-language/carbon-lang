@@ -33,6 +33,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Transforms/Utils/Local.h"

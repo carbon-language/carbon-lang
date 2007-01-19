@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"

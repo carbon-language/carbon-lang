@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Debug.h"
