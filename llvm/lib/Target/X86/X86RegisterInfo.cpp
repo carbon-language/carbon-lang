@@ -997,18 +997,16 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
-  if (MFI->hasCalls() || MF.getFrameInfo()->hasVarSizedObjects()) {
+  if (MFI->hasCalls() && !hasFP(MF))
     // When we have no frame pointer, we reserve argument space for call sites
     // in the function immediately on entry to the current function.  This
     // eliminates the need for add/sub ESP brackets around call sites.
     //
-    if (!hasFP(MF))
-      NumBytes += MFI->getMaxCallFrameSize();
+    NumBytes += MFI->getMaxCallFrameSize();
 
-    // Round the size to a multiple of the alignment (don't forget the 4/8 byte
-    // offset though).
-    NumBytes = ((NumBytes+SlotSize)+Align-1)/Align*Align - SlotSize;
-  }
+  // Round the size to a multiple of the alignment (don't forget the 4/8 byte
+  // offset though).
+  NumBytes = ((NumBytes+SlotSize)+Align-1)/Align*Align - SlotSize;
 
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
