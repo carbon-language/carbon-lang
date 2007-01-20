@@ -866,6 +866,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
        << Relocations.size() << " relocations\n";
   Relocations.clear();
 
+#ifndef NDEBUG
   DOUT << "Disassembled code:\n"
 #if defined(__i386__)
        << disassembleBuffer(FnStart, FnEnd-FnStart,
@@ -875,6 +876,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
                             Disassembler::X86_64, (uint64_t)FnStart);
 #else
        << "N/A\n";
+#endif
 #endif
   
   return false;
