@@ -636,7 +636,7 @@ AC_ARG_WITH(udis86,
     [
       AC_SUBST(USE_UDIS86, [1])
       case "$withval" in
-        /usr/lib) ;;
+        /usr/lib|yes) ;;
         *) LDFLAGS="$LDFLAGS -L${withval}" ;;
       esac
       AC_CHECK_LIB(udis86, ud_init, [], [
@@ -718,22 +718,22 @@ AC_CXX_HAVE_FWD_ITERATOR
 AC_FUNC_ISNAN
 AC_FUNC_ISINF
 
-dnl Check for mmap and mprotect support. We need both to do the JIT and for
-dnl bytecode loading, etc. We also need to know if /dev/zero is required to
-dnl be opened for allocating RWX memory.
-AC_FUNC_MMAP
-AC_FUNC_MMAP_FILE
-AC_NEED_DEV_ZERO_FOR_MMAP
-AC_CHECK_FUNC(mprotect,,
-              AC_MSG_ERROR([Function mprotect() required but not found]))
+dnl Check for mmap support.We also need to know if /dev/zero is required to 
+dnl be opened for allocating RWX memory.  
+dnl Make sure we aren't attempting to configure for an unknown system
+if test "$llvm_cv_platform_type" = "Unix" ; then
+  AC_FUNC_MMAP 
+  AC_FUNC_MMAP_FILE
+  AC_NEED_DEV_ZERO_FOR_MMAP
 
-if test "$ac_cv_func_mmap_fixed_mapped" = "no"
-then
-  AC_MSG_WARN([mmap() of a fixed address required but not supported])
-fi
-if test "$ac_cv_func_mmap_file" = "no"
-then
-  AC_MSG_WARN([mmap() of files required but not found])
+  if test "$ac_cv_func_mmap_fixed_mapped" = "no"
+  then
+    AC_MSG_WARN([mmap() of a fixed address required but not supported])
+  fi
+  if test "$ac_cv_func_mmap_file" = "no"
+  then
+    AC_MSG_WARN([mmap() of files required but not found])
+  fi
 fi
 
 dnl===-----------------------------------------------------------------------===
