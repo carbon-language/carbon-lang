@@ -244,17 +244,9 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
         const Type *Ty = AI->getAllocatedType();
         uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
         unsigned Align = 
-          std::max((unsigned)TLI.getTargetData()->getTypeAlignment(Ty),
+          std::max((unsigned)TLI.getTargetData()->getTypeAlignmentPref(Ty),
                    AI->getAlignment());
 
-        // If the alignment of the value is smaller than the size of the 
-        // value, and if the size of the value is particularly small 
-        // (<= 8 bytes), round up to the size of the value for potentially 
-        // better performance.
-        //
-        // FIXME: This could be made better with a preferred alignment hook in
-        // TargetData.  It serves primarily to 8-byte align doubles for X86.
-        if (Align < TySize && TySize <= 8) Align = TySize;
         TySize *= CUI->getZExtValue();   // Get total allocated size.
         if (TySize == 0) TySize = 1; // Don't create zero-sized stack objects.
         StaticAllocaMap[AI] =
@@ -1729,8 +1721,9 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
 
   const Type *Ty = I.getAllocatedType();
   uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
-  unsigned Align = std::max((unsigned)TLI.getTargetData()->getTypeAlignment(Ty),
-                            I.getAlignment());
+  unsigned Align =
+    std::max((unsigned)TLI.getTargetData()->getTypeAlignmentPref(Ty),
+             I.getAlignment());
 
   SDOperand AllocSize = getValue(I.getArraySize());
   MVT::ValueType IntPtr = TLI.getPointerTy();

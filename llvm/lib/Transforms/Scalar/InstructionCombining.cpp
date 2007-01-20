@@ -5779,8 +5779,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   const Type *CastElTy = PTy->getElementType();
   if (!AllocElTy->isSized() || !CastElTy->isSized()) return 0;
 
-  unsigned AllocElTyAlign = TD->getTypeAlignment(AllocElTy);
-  unsigned CastElTyAlign = TD->getTypeAlignment(CastElTy);
+  unsigned AllocElTyAlign = TD->getTypeAlignmentABI(AllocElTy);
+  unsigned CastElTyAlign = TD->getTypeAlignmentABI(CastElTy);
   if (CastElTyAlign < AllocElTyAlign) return 0;
 
   // If the allocation has multiple uses, only promote it if we are strictly
@@ -6878,18 +6878,22 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     unsigned Align = GV->getAlignment();
     if (Align == 0 && TD) 
-      Align = TD->getTypeAlignment(GV->getType()->getElementType());
+      Align = TD->getTypeAlignmentPref(GV->getType()->getElementType());
     return Align;
   } else if (AllocationInst *AI = dyn_cast<AllocationInst>(V)) {
     unsigned Align = AI->getAlignment();
     if (Align == 0 && TD) {
       if (isa<AllocaInst>(AI))
-        Align = TD->getTypeAlignment(AI->getType()->getElementType());
+        Align = TD->getTypeAlignmentPref(AI->getType()->getElementType());
       else if (isa<MallocInst>(AI)) {
         // Malloc returns maximally aligned memory.
-        Align = TD->getTypeAlignment(AI->getType()->getElementType());
-        Align = std::max(Align, (unsigned)TD->getTypeAlignment(Type::DoubleTy));
-        Align = std::max(Align, (unsigned)TD->getTypeAlignment(Type::Int64Ty));
+        Align = TD->getTypeAlignmentABI(AI->getType()->getElementType());
+        Align =
+          std::max(Align,
+                   (unsigned)TD->getTypeAlignmentABI(Type::DoubleTy));
+        Align =
+          std::max(Align,
+                   (unsigned)TD->getTypeAlignmentABI(Type::Int64Ty));
       }
     }
     return Align;
@@ -6924,10 +6928,12 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
     if (!TD) return 0;
 
     const Type *BasePtrTy = GEPI->getOperand(0)->getType();
-    if (TD->getTypeAlignment(cast<PointerType>(BasePtrTy)->getElementType())
+    const PointerType *PtrTy = cast<PointerType>(BasePtrTy);
+    if (TD->getTypeAlignmentABI(PtrTy->getElementType())
         <= BaseAlignment) {
       const Type *GEPTy = GEPI->getType();
-      return TD->getTypeAlignment(cast<PointerType>(GEPTy)->getElementType());
+      const PointerType *GEPPtrTy = cast<PointerType>(GEPTy);
+      return TD->getTypeAlignmentABI(GEPPtrTy->getElementType());
     }
     return 0;
   }

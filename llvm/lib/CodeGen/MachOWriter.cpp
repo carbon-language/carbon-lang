@@ -309,7 +309,7 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
   unsigned Size = TM.getTargetData()->getTypeSize(Ty);
   unsigned Align = GV->getAlignment();
   if (Align == 0)
-    Align = TM.getTargetData()->getTypeAlignment(Ty);
+    Align = TM.getTargetData()->getTypeAlignmentPref(Ty);
   
   MachOSym Sym(GV, Mang->getValueName(GV), Sec->Index, TM);
   

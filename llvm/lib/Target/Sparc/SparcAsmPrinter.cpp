@@ -229,7 +229,7 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
       unsigned Size = TD->getTypeSize(C->getType());
-      unsigned Align = TD->getTypeAlignment(C->getType());
+      unsigned Align = TD->getTypeAlignmentPref(C->getType());
 
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
@@ -239,7 +239,7 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
           O << "\t.local " << name << "\n";
 
         O << "\t.comm " << name << "," << TD->getTypeSize(C->getType())
-          << "," << (unsigned)TD->getTypeAlignment(C->getType());
+          << "," << Align;
         O << "\n";
       } else {
         switch (I->getLinkage()) {

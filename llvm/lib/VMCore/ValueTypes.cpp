@@ -82,8 +82,8 @@ MVT::ValueType MVT::getVectorType(ValueType VT, unsigned NumElements) {
 }
 
 /// MVT::getTypeForValueType - This method returns an LLVM type corresponding
-/// to the specified ValueType.  For integer types, this returns an unsigned
-/// type.  Note that this will abort for types that cannot be represented.
+/// to the specified ValueType.  Note that this will abort for types that cannot
+/// be represented.
 const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   switch (VT) {
   default: assert(0 && "ValueType does not correspond to LLVM type!");
@@ -95,5 +95,14 @@ const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   case MVT::i64:   return Type::Int64Ty;
   case MVT::f32:   return Type::FloatTy;
   case MVT::f64:   return Type::DoubleTy;
+  case MVT::v8i8:  return PackedType::get(Type::Int8Ty, 8);
+  case MVT::v4i16: return PackedType::get(Type::Int16Ty, 4);
+  case MVT::v2i32: return PackedType::get(Type::Int32Ty, 2);
+  case MVT::v16i8: return PackedType::get(Type::Int8Ty, 16);
+  case MVT::v8i16: return PackedType::get(Type::Int16Ty, 8);
+  case MVT::v4i32: return PackedType::get(Type::Int32Ty, 4);
+  case MVT::v2i64: return PackedType::get(Type::Int64Ty, 2);
+  case MVT::v4f32: return PackedType::get(Type::FloatTy, 4);
+  case MVT::v2f64: return PackedType::get(Type::DoubleTy, 2);
   }
 }

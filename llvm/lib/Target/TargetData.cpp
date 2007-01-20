@@ -34,8 +34,11 @@ namespace {
   RegisterPass<TargetData> X("targetdata", "Target Data Layout");
 }
 
-static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
-                               uint64_t &Size, unsigned char &Alignment);
+static inline void getTypeInfoABI(const Type *Ty, const TargetData *TD,
+                                  uint64_t &Size, unsigned char &Alignment);
+
+static inline void getTypeInfoPref(const Type *Ty, const TargetData *TD,
+                                   uint64_t &Size, unsigned char &Alignment);
 
 //===----------------------------------------------------------------------===//
 // Support for StructLayout
@@ -52,7 +55,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
     unsigned char A;
     unsigned TyAlign;
     uint64_t TySize;
-    getTypeInfo(Ty, &TD, TySize, A);
+    getTypeInfoABI(Ty, &TD, TySize, A);
     TyAlign = ST->isPacked() ? 1 : A;
 
     // Add padding if necessary to make the data element aligned properly...
@@ -80,8 +83,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
 /// return the structure index that contains it.
 unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
   std::vector<uint64_t>::const_iterator SI =
-    std::upper_bound(MemberOffsets.begin(), MemberOffsets.end(),
-                     Offset);
+    std::upper_bound(MemberOffsets.begin(), MemberOffsets.end(), Offset);
   assert(SI != MemberOffsets.begin() && "Offset not in structure type!");
   --SI;
   assert(*SI <= Offset && "upper_bound didn't work");
@@ -99,15 +101,24 @@ void TargetData::init(const std::string &TargetDescription) {
   std::string temp = TargetDescription;
   
   LittleEndian = false;
-  PointerSize = 8;
-  PointerAlignment   = 8;
-  DoubleAlignment = 8;
-  FloatAlignment = 4;
-  LongAlignment   = 8;
-  IntAlignment   = 4;
-  ShortAlignment  = 2;
-  ByteAlignment  = 1;
-  BoolAlignment   = 1;
+  PointerMemSize = 8;
+  PointerABIAlignment   = 8;
+  DoubleABIAlignment = 8;
+  FloatABIAlignment = 4;
+  LongABIAlignment   = 8;
+  IntABIAlignment   = 4;
+  ShortABIAlignment  = 2;
+  ByteABIAlignment  = 1;
+  BoolABIAlignment   = 1;
+  BoolPrefAlignment = BoolABIAlignment;
+  BytePrefAlignment = ByteABIAlignment;
+  ShortPrefAlignment = ShortABIAlignment;
+  IntPrefAlignment = IntABIAlignment;
+  LongPrefAlignment = LongABIAlignment;
+  FloatPrefAlignment = FloatABIAlignment;
+  DoublePrefAlignment = DoubleABIAlignment;
+  PointerPrefAlignment = PointerABIAlignment;
+  AggMinPrefAlignment = 0;
   
   while (!temp.empty()) {
     std::string token = getToken(temp, "-");
@@ -122,29 +133,58 @@ void TargetData::init(const std::string &TargetDescription) {
       LittleEndian = true;
       break;
     case 'p':
-      PointerSize = atoi(getToken(token,":").c_str()) / 8;
-      PointerAlignment = atoi(getToken(token,":").c_str()) / 8;
+      PointerMemSize = atoi(getToken(token,":").c_str()) / 8;
+      PointerABIAlignment = atoi(getToken(token,":").c_str()) / 8;
+      PointerPrefAlignment = atoi(getToken(token,":").c_str()) / 8;
+      if (PointerPrefAlignment == 0)
+        PointerPrefAlignment = PointerABIAlignment;
       break;
     case 'd':
-      DoubleAlignment = atoi(getToken(token,":").c_str()) / 8;
+      DoubleABIAlignment = atoi(getToken(token,":").c_str()) / 8;
+      DoublePrefAlignment = atoi(getToken(token,":").c_str()) / 8;
+      if (DoublePrefAlignment == 0)
+        DoublePrefAlignment = DoubleABIAlignment;
       break;
     case 'f':
-      FloatAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      FloatABIAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      FloatPrefAlignment = atoi(getToken(token,":").c_str()) / 8;
+      if (FloatPrefAlignment == 0)
+        FloatPrefAlignment = FloatABIAlignment;
       break;
     case 'l':
-      LongAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      LongABIAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      LongPrefAlignment = atoi(getToken(token,":").c_str()) / 8;
+      if (LongPrefAlignment == 0)
+        LongPrefAlignment = LongABIAlignment;
       break;
     case 'i':
-      IntAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      IntABIAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      IntPrefAlignment = atoi(getToken(token,":").c_str()) / 8;
+      if (IntPrefAlignment == 0)
+        IntPrefAlignment = IntABIAlignment;
       break;
     case 's':
-      ShortAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      ShortABIAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      ShortPrefAlignment = atoi(getToken(token,":").c_str()) / 8;
+      if (ShortPrefAlignment == 0)
+        ShortPrefAlignment = ShortABIAlignment;
       break;
     case 'b':
-      ByteAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      ByteABIAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      BytePrefAlignment = atoi(getToken(token,":").c_str()) / 8;
+      if (BytePrefAlignment == 0)
+        BytePrefAlignment = ByteABIAlignment;
       break;
     case 'B':
-      BoolAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      BoolABIAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      BoolPrefAlignment = atoi(getToken(token,":").c_str()) / 8;
+      if (BoolPrefAlignment == 0)
+        BoolPrefAlignment = BoolABIAlignment;
+      break;
+    case 'A':
+      AggMinPrefAlignment = atoi(getToken(token,":").c_str()) / 8;
+      if (AggMinPrefAlignment == 0)
+        AggMinPrefAlignment = 0;
       break;
     default:
       break;
@@ -153,16 +193,25 @@ void TargetData::init(const std::string &TargetDescription) {
 }
 
 TargetData::TargetData(const Module *M) {
-  LittleEndian     = M->getEndianness() != Module::BigEndian;
-  PointerSize      = M->getPointerSize() != Module::Pointer64 ? 4 : 8;
-  PointerAlignment = PointerSize;
-  DoubleAlignment  = PointerSize;
-  FloatAlignment   = 4;
-  LongAlignment    = PointerSize;
-  IntAlignment     = 4;
-  ShortAlignment   = 2;
-  ByteAlignment    = 1;
-  BoolAlignment    = 1;
+  LittleEndian       = M->getEndianness() != Module::BigEndian;
+  PointerMemSize     = M->getPointerSize() != Module::Pointer64 ? 4 : 8;
+  PointerABIAlignment = PointerMemSize;
+  DoubleABIAlignment  = PointerMemSize;
+  FloatABIAlignment   = 4;
+  LongABIAlignment    = PointerMemSize;
+  IntABIAlignment     = 4;
+  ShortABIAlignment   = 2;
+  ByteABIAlignment    = 1;
+  BoolABIAlignment    = 1;
+  BoolPrefAlignment = BoolABIAlignment;
+  BytePrefAlignment = ByteABIAlignment;
+  ShortPrefAlignment = ShortABIAlignment;
+  IntPrefAlignment = IntABIAlignment;
+  LongPrefAlignment = LongABIAlignment;
+  FloatPrefAlignment = FloatABIAlignment;
+  DoublePrefAlignment = DoubleABIAlignment;
+  PointerPrefAlignment = PointerABIAlignment;
+  AggMinPrefAlignment = 0;
 }
 
 /// Layouts - The lazy cache of structure layout information maintained by
@@ -195,14 +244,22 @@ std::string TargetData::getStringRepresentation() const {
   else
     repr << "E";
   
-  repr << "-p:" << (PointerSize * 8) << ":" << (PointerAlignment * 8);
-  repr << "-d:64:" << (DoubleAlignment * 8);
-  repr << "-f:32:" << (FloatAlignment * 8);
-  repr << "-l:64:" << (LongAlignment * 8);
-  repr << "-i:32:" << (IntAlignment * 8);
-  repr << "-s:16:" << (ShortAlignment * 8);
-  repr << "-b:8:" << (ByteAlignment * 8);
-  repr << "-B:8:" << (BoolAlignment * 8);
+  repr << "-p:" << (PointerMemSize * 8) << ":" << (PointerABIAlignment * 8);
+  repr << "-d:" << (DoubleABIAlignment * 8) << ":"
+       << (DoublePrefAlignment * 8);
+  repr << "-f:" << (FloatABIAlignment * 8) << ":"
+       << (FloatPrefAlignment * 8);
+  repr << "-l:" << (LongABIAlignment * 8) << ":"
+       << (LongPrefAlignment * 8);
+  repr << "-i:" << (IntABIAlignment * 8) << ":"
+       << (IntPrefAlignment * 8);
+  repr << "-s:" << (ShortABIAlignment * 8) << ":"
+       << (ShortPrefAlignment * 8);
+  repr << "-b:" << (ByteABIAlignment * 8) << ":"
+       << (BytePrefAlignment * 8);
+  repr << "-B:" << (BoolABIAlignment * 8) << ":"
+       << (BoolPrefAlignment * 8);
+  repr << "-A:" << (AggMinPrefAlignment * 8);
   
   return repr.str();
 }
@@ -237,41 +294,41 @@ void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
 
 
 
-static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
-                               uint64_t &Size, unsigned char &Alignment) {
+static inline void getTypeInfoABI(const Type *Ty, const TargetData *TD,
+                                  uint64_t &Size, unsigned char &Alignment) {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID: {
     unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
     if (BitWidth <= 8) {
-      Size = 1; Alignment = TD->getByteAlignment();
+      Size = 1; Alignment = TD->getByteABIAlignment();
     } else if (BitWidth <= 16) {
-      Size = 2; Alignment = TD->getShortAlignment();
+      Size = 2; Alignment = TD->getShortABIAlignment();
     } else if (BitWidth <= 32) {
-      Size = 4; Alignment = TD->getIntAlignment();
+      Size = 4; Alignment = TD->getIntABIAlignment();
     } else if (BitWidth <= 64) {
-      Size = 8; Alignment = TD->getLongAlignment();
+      Size = 8; Alignment = TD->getLongABIAlignment();
     } else
       assert(0 && "Integer types > 64 bits not supported.");
     return;
   }
-  case Type::VoidTyID:   Size = 1; Alignment = TD->getByteAlignment(); return;
-  case Type::FloatTyID:  Size = 4; Alignment = TD->getFloatAlignment(); return;
-  case Type::DoubleTyID: Size = 8; Alignment = TD->getDoubleAlignment(); return;
+  case Type::VoidTyID:   Size = 1; Alignment = TD->getByteABIAlignment(); return;
+  case Type::FloatTyID:  Size = 4; Alignment = TD->getFloatABIAlignment(); return;
+  case Type::DoubleTyID: Size = 8; Alignment = TD->getDoubleABIAlignment(); return;
   case Type::LabelTyID:
   case Type::PointerTyID:
-    Size = TD->getPointerSize(); Alignment = TD->getPointerAlignment();
+    Size = TD->getPointerSize(); Alignment = TD->getPointerABIAlignment();
     return;
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    getTypeInfo(ATy->getElementType(), TD, Size, Alignment);
+    getTypeInfoABI(ATy->getElementType(), TD, Size, Alignment);
     unsigned AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
     Size = AlignedSize*ATy->getNumElements();
     return;
   }
   case Type::PackedTyID: {
     const PackedType *PTy = cast<PackedType>(Ty);
-    getTypeInfo(PTy->getElementType(), TD, Size, Alignment);
+    getTypeInfoABI(PTy->getElementType(), TD, Size, Alignment);
     unsigned AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
     Size = AlignedSize*PTy->getNumElements();
     // FIXME: The alignments of specific packed types are target dependent.
@@ -292,22 +349,94 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
   }
 }
 
+static inline void getTypeInfoPref(const Type *Ty, const TargetData *TD,
+                                   uint64_t &Size, unsigned char &Alignment) {
+  assert(Ty->isSized() && "Cannot getTypeInfoPref() on a type that is unsized!");
+  switch (Ty->getTypeID()) {
+  case Type::IntegerTyID: {
+    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+    if (BitWidth <= 8) {
+      Size = 1; Alignment = TD->getBytePrefAlignment();
+    } else if (BitWidth <= 16) {
+      Size = 2; Alignment = TD->getShortPrefAlignment();
+    } else if (BitWidth <= 32) {
+      Size = 4; Alignment = TD->getIntPrefAlignment();
+    } else if (BitWidth <= 64) {
+      Size = 8; Alignment = TD->getLongPrefAlignment();
+    } else
+      assert(0 && "Integer types > 64 bits not supported.");
+    return;
+  }
+  case Type::VoidTyID:
+    Size = 1; Alignment = TD->getBytePrefAlignment();
+    return;
+  case Type::FloatTyID:
+    Size = 4; Alignment = TD->getFloatPrefAlignment();
+    return;
+  case Type::DoubleTyID:
+    Size = 8; Alignment = TD->getDoublePrefAlignment();
+    return;
+  case Type::LabelTyID:
+  case Type::PointerTyID:
+    Size = TD->getPointerSize(); Alignment = TD->getPointerPrefAlignment();
+    return;
+  case Type::ArrayTyID: {
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    getTypeInfoPref(ATy->getElementType(), TD, Size, Alignment);
+    unsigned AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
+    Size = AlignedSize*ATy->getNumElements();
+    return;
+  }
+  case Type::PackedTyID: {
+    const PackedType *PTy = cast<PackedType>(Ty);
+    getTypeInfoPref(PTy->getElementType(), TD, Size, Alignment);
+    unsigned AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
+    Size = AlignedSize*PTy->getNumElements();
+    // FIXME: The alignments of specific packed types are target dependent.
+    // For now, just set it to be equal to Size.
+    Alignment = Size;
+    return;
+  }
+  case Type::StructTyID: {
+    // Get the layout annotation... which is lazily created on demand;
+    // enforce minimum aggregate alignment.
+    const StructLayout *Layout = TD->getStructLayout(cast<StructType>(Ty));
+    Size = Layout->StructSize;
+    Alignment = std::max(Layout->StructAlignment,
+                         (const unsigned int) TD->getAggMinPrefAlignment());
+    return;
+  }
+
+  default:
+    assert(0 && "Bad type for getTypeInfoPref!!!");
+    return;
+  }
+}
+
+
 uint64_t TargetData::getTypeSize(const Type *Ty) const {
   uint64_t Size;
   unsigned char Align;
-  getTypeInfo(Ty, this, Size, Align);
+  getTypeInfoABI(Ty, this, Size, Align);
   return Size;
 }
 
-unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
+unsigned char TargetData::getTypeAlignmentABI(const Type *Ty) const {
   uint64_t Size;
   unsigned char Align;
-  getTypeInfo(Ty, this, Size, Align);
+  getTypeInfoABI(Ty, this, Size, Align);
+  return Align;
+}
+
+unsigned char TargetData::getTypeAlignmentPref(const Type *Ty) const {
+  uint64_t Size;
+  unsigned char Align;
+  getTypeInfoPref(Ty, this, Size, Align);
   return Align;
 }
 
 unsigned char TargetData::getTypeAlignmentShift(const Type *Ty) const {
-  unsigned Align = getTypeAlignment(Ty);
+  unsigned Align = getTypeAlignmentABI(Ty);
   assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
   return Log2_32(Align);
 }

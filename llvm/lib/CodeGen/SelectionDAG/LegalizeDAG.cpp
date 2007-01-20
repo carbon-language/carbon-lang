@@ -3029,7 +3029,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // new ones, as reuse may inhibit scheduling.
         const Type *Ty = MVT::getTypeForValueType(ExtraVT);
         unsigned TySize = (unsigned)TLI.getTargetData()->getTypeSize(Ty);
-        unsigned Align  = TLI.getTargetData()->getTypeAlignment(Ty);
+        unsigned Align  = TLI.getTargetData()->getTypeAlignmentPref(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
         int SSFI =
           MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
@@ -3937,7 +3937,9 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
 SDOperand SelectionDAGLegalize::CreateStackTemporary(MVT::ValueType VT) {
   MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
   unsigned ByteSize = MVT::getSizeInBits(VT)/8;
-  int FrameIdx = FrameInfo->CreateStackObject(ByteSize, ByteSize);
+  const Type *Ty = MVT::getTypeForValueType(VT);
+  unsigned StackAlign = (unsigned)TLI.getTargetData()->getTypeAlignmentPref(Ty);
+  int FrameIdx = FrameInfo->CreateStackObject(ByteSize, StackAlign);
   return DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
 }
 
@@ -4242,9 +4244,12 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   if (Op0.getValueType() == MVT::i32) {
     // simple 32-bit [signed|unsigned] integer to float/double expansion
     
-    // get the stack frame index of a 8 byte buffer
+    // get the stack frame index of a 8 byte buffer, pessimistically aligned
     MachineFunction &MF = DAG.getMachineFunction();
-    int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+    const Type *F64Type = MVT::getTypeForValueType(MVT::f64);
+    unsigned StackAlign =
+      (unsigned)TLI.getTargetData()->getTypeAlignmentPref(F64Type);
+    int SSFI = MF.getFrameInfo()->CreateStackObject(8, StackAlign);
     // get address of 8 byte buffer
     SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
     // word offset constant for Hi/Lo address computation

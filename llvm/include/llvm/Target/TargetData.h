@@ -35,15 +35,28 @@ class GlobalVariable;
 
 class TargetData : public ImmutablePass {
   bool          LittleEndian;          // Defaults to false
-  unsigned char BoolAlignment;         // Defaults to 1 byte
-  unsigned char ByteAlignment;         // Defaults to 1 byte
-  unsigned char ShortAlignment;        // Defaults to 2 bytes
-  unsigned char IntAlignment;          // Defaults to 4 bytes
-  unsigned char LongAlignment;         // Defaults to 8 bytes
-  unsigned char FloatAlignment;        // Defaults to 4 bytes
-  unsigned char DoubleAlignment;       // Defaults to 8 bytes
-  unsigned char PointerSize;           // Defaults to 8 bytes
-  unsigned char PointerAlignment;      // Defaults to 8 bytes
+
+  // ABI alignments
+  unsigned char BoolABIAlignment;       // Defaults to 1 byte
+  unsigned char ByteABIAlignment;       // Defaults to 1 byte
+  unsigned char ShortABIAlignment;      // Defaults to 2 bytes
+  unsigned char IntABIAlignment;        // Defaults to 4 bytes
+  unsigned char LongABIAlignment;       // Defaults to 8 bytes
+  unsigned char FloatABIAlignment;      // Defaults to 4 bytes
+  unsigned char DoubleABIAlignment;     // Defaults to 8 bytes
+  unsigned char PointerMemSize;        // Defaults to 8 bytes
+  unsigned char PointerABIAlignment;    // Defaults to 8 bytes
+
+  // Preferred stack/global type alignments
+  unsigned char BoolPrefAlignment;    // Defaults to BoolABIAlignment
+  unsigned char BytePrefAlignment;    // Defaults to ByteABIAlignment
+  unsigned char ShortPrefAlignment;   // Defaults to ShortABIAlignment
+  unsigned char IntPrefAlignment;     // Defaults to IntABIAlignment
+  unsigned char LongPrefAlignment;    // Defaults to LongABIAlignment
+  unsigned char FloatPrefAlignment;   // Defaults to FloatABIAlignment
+  unsigned char DoublePrefAlignment;  // Defaults to DoubleABIAlignment
+  unsigned char PointerPrefAlignment; // Defaults to PointerABIAlignment
+  unsigned char AggMinPrefAlignment;  // Defaults to 0 bytes
 
 public:
   /// Default ctor - This has to exist, because this is a pass, but it should
@@ -68,15 +81,24 @@ public:
   TargetData(const TargetData &TD) : 
     ImmutablePass(),
     LittleEndian(TD.isLittleEndian()),
-    BoolAlignment(TD.getBoolAlignment()),
-    ByteAlignment(TD.getByteAlignment()),
-    ShortAlignment(TD.getShortAlignment()),
-    IntAlignment(TD.getIntAlignment()),
-    LongAlignment(TD.getLongAlignment()),
-    FloatAlignment(TD.getFloatAlignment()),
-    DoubleAlignment(TD.getDoubleAlignment()),
-    PointerSize(TD.getPointerSize()),
-    PointerAlignment(TD.getPointerAlignment()) {
+    BoolABIAlignment(TD.getBoolABIAlignment()),
+    ByteABIAlignment(TD.getByteABIAlignment()),
+    ShortABIAlignment(TD.getShortABIAlignment()),
+    IntABIAlignment(TD.getIntABIAlignment()),
+    LongABIAlignment(TD.getLongABIAlignment()),
+    FloatABIAlignment(TD.getFloatABIAlignment()),
+    DoubleABIAlignment(TD.getDoubleABIAlignment()),
+    PointerMemSize(TD.getPointerSize()),
+    PointerABIAlignment(TD.getPointerABIAlignment()),
+    BoolPrefAlignment(TD.getBoolPrefAlignment()),
+    BytePrefAlignment(TD.getBytePrefAlignment()),
+    ShortPrefAlignment(TD.getShortPrefAlignment()),
+    IntPrefAlignment(TD.getIntPrefAlignment()),
+    LongPrefAlignment(TD.getLongPrefAlignment()),
+    FloatPrefAlignment(TD.getFloatPrefAlignment()),
+    DoublePrefAlignment(TD.getDoublePrefAlignment()),
+    PointerPrefAlignment(TD.getPointerPrefAlignment()),
+    AggMinPrefAlignment(TD.getAggMinPrefAlignment()) {
   }
 
   ~TargetData();  // Not virtual, do not subclass this class
@@ -86,10 +108,16 @@ public:
   /// Parse a target data layout string, initializing the various TargetData
   /// members along the way. A TargetData specification string looks like
   /// "E-p:64:64-d:64-f:32-l:64-i:32-s:16-b:8-B:8" and specifies the
-  /// target's endianess, the alignments of various data types and
-  /// the size of pointers. The "-" is used as a separator and ":"
-  /// separates a token from its argument. Alignment is indicated in bits
-  /// and internally converted to the appropriate number of bytes.
+  /// target's endianess, the ABI alignments of various data types and
+  /// the size of pointers.
+  ///
+  /// "-" is used as a separator and ":" separates a token from its argument.
+  ///
+  /// Alignment is indicated in bits and internally converted to the
+  /// appropriate number of bytes.
+  ///
+  /// The preferred stack/global alignment specifications (":[prefalign]") are
+  /// optional and default to the ABI alignment.
   ///
   /// Valid tokens:
   /// <br>
@@ -97,20 +125,24 @@ public:
   /// <em>e</em> specifies little endian architecture (4321) <br>
   /// <em>p:[ptr size]:[ptr align]</em> specifies pointer size and alignment
   /// [default = 64:64] <br>
-  /// <em>d:[align]</em> specifies double floating point alignment
-  /// [default = 64] <br>
-  /// <em>f:[align]</em> specifies single floating point alignment
+  /// <em>d:[align]:[prefalign]</em> specifies double floating
+  /// point alignment [default = 64] <br>
+  /// <em>f:[align]:[prefalign]</em> specifies single floating
+  /// point alignment [default = 32] <br>
+  /// <em>l:[align]:[prefalign]:[globalign[</em> specifies long integer
+  /// alignment [default = 64] <br>
+  /// <em>i:[align]:[prefalign]</em> specifies integer alignment
   /// [default = 32] <br>
-  /// <em>l:[align]</em> specifies long integer alignment
-  /// [default = 64] <br>
-  /// <em>i:[align]</em> specifies integer alignment
-  /// [default = 32] <br>
-  /// <em>s:[align]</em> specifies short integer alignment
-  /// [default = 16] <br>
-  /// <em>b:[align]</em> specifies byte data type alignment
-  /// [default = 8] <br>
-  /// <em>B:[align]</em> specifies boolean data type alignment
-  /// [default = 8] <br>
+  /// <em>s:[align]:[prefalign]</em> specifies short integer
+  /// alignment [default = 16] <br>
+  /// <em>b:[align]:[prefalign]</em> specifies byte data type
+  /// alignment [default = 8] <br>
+  /// <em>B:[align]:[prefalign]</em> specifies boolean data type
+  /// alignment [default = 8] <br>
+  /// <em>A:[prefalign]</em> specifies an aggregates' minimum alignment
+  /// on the stack and when emitted as a global. The default minimum aggregate
+  /// alignment defaults to 0, which causes the aggregate's "natural" internal
+  /// alignment calculated by llvm to be preferred.
   ///
   /// All other token types are silently ignored.
   void init(const std::string &TargetDescription);
@@ -120,17 +152,63 @@ public:
   bool          isLittleEndian()       const { return     LittleEndian; }
   bool          isBigEndian()          const { return    !LittleEndian; }
 
-  /// Target alignment constraints
-  unsigned char getBoolAlignment()     const { return    BoolAlignment; }
-  unsigned char getByteAlignment()     const { return    ByteAlignment; }
-  unsigned char getShortAlignment()    const { return   ShortAlignment; }
-  unsigned char getIntAlignment()      const { return     IntAlignment; }
-  unsigned char getLongAlignment()     const { return    LongAlignment; }
-  unsigned char getFloatAlignment()    const { return   FloatAlignment; }
-  unsigned char getDoubleAlignment()   const { return  DoubleAlignment; }
-  unsigned char getPointerAlignment()  const { return PointerAlignment; }
-  unsigned char getPointerSize()       const { return      PointerSize; }
-  unsigned char getPointerSizeInBits() const { return    8*PointerSize; }
+  /// Target boolean alignment
+  unsigned char getBoolABIAlignment()    const { return    BoolABIAlignment; }
+  /// Target byte alignment
+  unsigned char getByteABIAlignment()    const { return    ByteABIAlignment; }
+  /// Target short alignment
+  unsigned char getShortABIAlignment()   const { return   ShortABIAlignment; }
+  /// Target integer alignment
+  unsigned char getIntABIAlignment()     const { return     IntABIAlignment; }
+  /// Target long alignment
+  unsigned char getLongABIAlignment()    const { return    LongABIAlignment; }
+  /// Target single precision float alignment
+  unsigned char getFloatABIAlignment()   const { return   FloatABIAlignment; }
+  /// Target double precision float alignment
+  unsigned char getDoubleABIAlignment()  const { return  DoubleABIAlignment; }
+  /// Target pointer alignment
+  unsigned char getPointerABIAlignment() const { return PointerABIAlignment; }
+  /// Target pointer size
+  unsigned char getPointerSize()         const { return      PointerMemSize; }
+  /// Target pointer size, in bits
+  unsigned char getPointerSizeInBits()   const { return    8*PointerMemSize; }
+
+  /// Return target's alignment for booleans on stack
+  unsigned char getBoolPrefAlignment() const {
+    return BoolPrefAlignment;
+  }
+  /// Return target's alignment for integers on stack
+  unsigned char getBytePrefAlignment() const {
+    return BytePrefAlignment;
+  }
+  /// Return target's alignment for shorts on stack
+  unsigned char getShortPrefAlignment() const {
+    return ShortPrefAlignment;
+  }
+  /// Return target's alignment for integers on stack
+  unsigned char getIntPrefAlignment()     const {
+    return IntPrefAlignment;
+  }
+  /// Return target's alignment for longs on stack
+  unsigned char getLongPrefAlignment() const {
+    return LongPrefAlignment;
+  }
+  /// Return target's alignment for single precision floats on stack
+  unsigned char getFloatPrefAlignment() const {
+    return FloatPrefAlignment;
+  }
+  /// Return target's alignment for double preceision floats on stack
+  unsigned char getDoublePrefAlignment()  const {
+    return DoublePrefAlignment;
+  }
+  /// Return target's alignment for stack-based pointers
+  unsigned char getPointerPrefAlignment() const {
+    return PointerPrefAlignment;
+  }
+  /// Return target's alignment for stack-based structures
+  unsigned char getAggMinPrefAlignment() const {
+    return AggMinPrefAlignment;
+  }
 
   /// getStringRepresentation - Return the string representation of the
   /// TargetData.  This representation is in the same format accepted by the
@@ -142,10 +220,13 @@ public:
   ///
   uint64_t getTypeSize(const Type *Ty) const;
 
-  /// getTypeAlignment - Return the minimum required alignment for the specified
-  /// type.
-  ///
-  unsigned char getTypeAlignment(const Type *Ty) const;
+  /// getTypeAlignmentABI - Return the minimum ABI-required alignment for the
+  /// specified type.
+  unsigned char getTypeAlignmentABI(const Type *Ty) const;
+
+  /// getTypeAlignmentPref - Return the preferred stack/global alignment for
+  /// the specified type.
+  unsigned char getTypeAlignmentPref(const Type *Ty) const;
 
   /// getTypeAlignmentShift - Return the minimum required alignment for the
   /// specified type, returned as log2 of the value (a shift amount).

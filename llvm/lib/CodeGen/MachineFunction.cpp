@@ -123,7 +123,8 @@ MachineFunction::MachineFunction(const Function *F,
   const TargetData &TD = *TM.getTargetData();
   bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
   unsigned EntrySize = IsPic ? 4 : TD.getPointerSize();
-  unsigned Alignment = IsPic ? TD.getIntAlignment() : TD.getPointerAlignment();
+  unsigned Alignment = IsPic ? TD.getIntABIAlignment()
+                             : TD.getPointerABIAlignment();
   JumpTableInfo = new MachineJumpTableInfo(EntrySize, Alignment);
   
   BasicBlocks.Parent = this;
