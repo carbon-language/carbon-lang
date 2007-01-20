@@ -3251,7 +3251,7 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
     SmallVector<SDOperand, 8> BuildVecIndices;
     for (unsigned i = 0; i != NumInScalars; ++i) {
       if (N->getOperand(i).getOpcode() == ISD::UNDEF) {
-        BuildVecIndices.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+        BuildVecIndices.push_back(DAG.getNode(ISD::UNDEF, TLI.getPointerTy()));
         continue;
       }
       
@@ -3265,12 +3265,13 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
 
       // Otherwise, use InIdx + VecSize
       unsigned Idx = cast<ConstantSDNode>(Extract.getOperand(1))->getValue();
-      BuildVecIndices.push_back(DAG.getConstant(Idx+NumInScalars, MVT::i32));
+      BuildVecIndices.push_back(DAG.getConstant(Idx+NumInScalars,
+                                                TLI.getPointerTy()));
     }
     
     // Add count and size info.
     BuildVecIndices.push_back(NumElts);
-    BuildVecIndices.push_back(DAG.getValueType(MVT::i32));
+    BuildVecIndices.push_back(DAG.getValueType(TLI.getPointerTy()));
     
     // Return the new VVECTOR_SHUFFLE node.
     SDOperand Ops[5];
