@@ -183,8 +183,6 @@ void TargetData::init(const std::string &TargetDescription) {
       break;
     case 'A':
       AggMinPrefAlignment = atoi(getToken(token,":").c_str()) / 8;
-      if (AggMinPrefAlignment == 0)
-        AggMinPrefAlignment = 0;
       break;
     default:
       break;
