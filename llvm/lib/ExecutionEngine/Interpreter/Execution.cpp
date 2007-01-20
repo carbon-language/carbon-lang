@@ -1347,21 +1347,25 @@ GenericValue Interpreter::executeSExtInst(Value *SrcVal, const Type *DstTy,
   assert(SBitWidth <= 64 && DBitWidth <= 64  && 
          "Integer types > 64 bits not supported");
   assert(SBitWidth < DBitWidth && "Invalid sign extend");
-  int64_t Extended = 0;
-  if (SBitWidth == 1)
-    // For sign extension from bool, we must extend the source bits.
-    Extended = 0 - (Src.Int1Val & 1);
-  else if (SBitWidth <= 8)
-    Extended = (int64_t) (int8_t)Src.Int8Val;
+
+  // Normalize to a 64-bit value.
+  uint64_t Normalized = 0;
+  if (SBitWidth <= 8)
+    Normalized = Src.Int8Val;
   else if (SBitWidth <= 16)
-    Extended = (int64_t) (int16_t)Src.Int16Val;
+    Normalized = Src.Int16Val;
   else if (SBitWidth <= 32)
-    Extended = (int64_t) (int32_t)Src.Int32Val;
+    Normalized = Src.Int32Val;
   else 
-    Extended = (int64_t) Src.Int64Val;
+    Normalized = Src.Int64Val;
+
+  // Now do the bit-accurate sign extension manually.
+  bool isSigned = (Normalized & (1 << (SBitWidth-1))) != 0;
+  if (isSigned)
+    Normalized |= ~SITy->getBitMask();
 
   // Now that we have a sign extended value, assign it to the destination
-  INTEGER_ASSIGN(Dest, DBitWidth, Extended);
+  INTEGER_ASSIGN(Dest, DBitWidth, Normalized);
   return Dest;
 }
 
