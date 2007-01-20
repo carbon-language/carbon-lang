@@ -292,7 +292,6 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *FFI = Fn.getFrameInfo();
 
-  unsigned StackAlignment = TFI.getStackAlignment();
   unsigned MaxAlign = 0;
 
   // Start at the beginning of the local area.
