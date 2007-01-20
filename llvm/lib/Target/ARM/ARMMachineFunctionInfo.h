@@ -32,11 +32,11 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   ///
   unsigned VarArgsRegSaveSize;
 
-  /// FramePtrSpilled - True if FP register is spilled. Set by
+  /// HasStackFrame - True if this function has a stack frame. Set by
   /// processFunctionBeforeCalleeSavedScan().
-  bool FramePtrSpilled;
+  bool HasStackFrame;
 
-  /// FramePtrSpillOffset - If FramePtrSpilled, this records the frame pointer
+  /// FramePtrSpillOffset - If HasStackFrame, this records the frame pointer
   /// spill stack offset.
   unsigned FramePtrSpillOffset;
 
@@ -71,13 +71,13 @@ class ARMFunctionInfo : public MachineFunctionInfo {
 public:
   ARMFunctionInfo() :
     isThumb(false),
-    VarArgsRegSaveSize(0), FramePtrSpilled(false), FramePtrSpillOffset(0),
+    VarArgsRegSaveSize(0), HasStackFrame(false), FramePtrSpillOffset(0),
     GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0), JumpTableUId(0) {}
 
   ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
-    VarArgsRegSaveSize(0), FramePtrSpilled(false), FramePtrSpillOffset(0),
+    VarArgsRegSaveSize(0), HasStackFrame(false), FramePtrSpillOffset(0),
     GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0), JumpTableUId(0) {}
 
@@ -86,8 +86,8 @@ public:
   unsigned getVarArgsRegSaveSize() const { return VarArgsRegSaveSize; }
   void setVarArgsRegSaveSize(unsigned s) { VarArgsRegSaveSize = s; }
 
-  bool isFramePtrSpilled() const { return FramePtrSpilled; }
-  void setFramePtrSpilled(bool s) { FramePtrSpilled = s; }
+  bool hasStackFrame() const { return HasStackFrame; }
+  void setHasStackFrame(bool s) { HasStackFrame = s; }
   unsigned getFramePtrSpillOffset() const { return FramePtrSpillOffset; }
   void setFramePtrSpillOffset(unsigned o) { FramePtrSpillOffset = o; }
   

@@ -411,7 +411,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
 void ARMRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (MF.getFrameInfo()->hasVarSizedObjects()) {
+  if (hasFP(MF)) {
     // If we have alloca, convert as follows:
     // ADJCALLSTACKDOWN -> sub, sp, sp, amount
     // ADJCALLSTACKUP   -> add, sp, sp, amount
@@ -480,7 +480,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     Offset -= AFI->getGPRCalleeSavedArea2Offset();
   else if (AFI->isDPRCalleeSavedAreaFrame(FrameIndex))
     Offset -= AFI->getDPRCalleeSavedAreaOffset();
-  else if (MF.getFrameInfo()->hasVarSizedObjects()) {
+  else if (hasFP(MF)) {
     // There is alloca()'s in this function, must reference off the frame
     // pointer instead.
     FrameReg = getFrameRegister(MF);
@@ -689,76 +689,75 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
 
 void ARMRegisterInfo::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
-  // This tells PEI to spill the FP as if it is any other callee-save register to
-  // take advantage the eliminateFrameIndex machinery. This also ensures it is
-  // spilled in the order specified by getCalleeSavedRegs() to make it easier
+  // This tells PEI to spill the FP as if it is any other callee-save register
+  // to take advantage the eliminateFrameIndex machinery. This also ensures it
+  // is spilled in the order specified by getCalleeSavedRegs() to make it easier
   // to combine multiple loads / stores.
-  bool FramePtrSpilled = MF.getFrameInfo()->hasVarSizedObjects();
+  bool CanEliminateFrame = true;
   bool CS1Spilled = false;
   bool LRSpilled = false;
   unsigned NumGPRSpills = 0;
   SmallVector<unsigned, 4> UnspilledCS1GPRs;
   SmallVector<unsigned, 4> UnspilledCS2GPRs;
-  if (!FramePtrSpilled && NoFramePointerElim) {
-    // Don't spill FP if the frame can be eliminated. This is determined
-    // by scanning the callee-save registers to see if any is used.
-    const unsigned *CSRegs = getCalleeSavedRegs();
-    const TargetRegisterClass* const *CSRegClasses = getCalleeSavedRegClasses();
-    for (unsigned i = 0; CSRegs[i]; ++i) {
-      unsigned Reg = CSRegs[i];
-      bool Spilled = false;
-      if (MF.isPhysRegUsed(Reg)) {
-        Spilled = true;
-        FramePtrSpilled = true;
-      } else {
-        // Check alias registers too.
-        for (const unsigned *Aliases = getAliasSet(Reg); *Aliases; ++Aliases) {
-          if (MF.isPhysRegUsed(*Aliases)) {
-            Spilled = true;
-            FramePtrSpilled = true;
-          }
+
+  // Don't spill FP if the frame can be eliminated. This is determined
+  // by scanning the callee-save registers to see if any is used.
+  const unsigned *CSRegs = getCalleeSavedRegs();
+  const TargetRegisterClass* const *CSRegClasses = getCalleeSavedRegClasses();
+  for (unsigned i = 0; CSRegs[i]; ++i) {
+    unsigned Reg = CSRegs[i];
+    bool Spilled = false;
+    if (MF.isPhysRegUsed(Reg)) {
+      Spilled = true;
+      CanEliminateFrame = false;
+    } else {
+      // Check alias registers too.
+      for (const unsigned *Aliases = getAliasSet(Reg); *Aliases; ++Aliases) {
+        if (MF.isPhysRegUsed(*Aliases)) {
+          Spilled = true;
+          CanEliminateFrame = false;
         }
       }
+    }
 
-      if (CSRegClasses[i] == &ARM::GPRRegClass) {
-        if (Spilled) {
-          NumGPRSpills++;
+    if (CSRegClasses[i] == &ARM::GPRRegClass) {
+      if (Spilled) {
+        NumGPRSpills++;
 
-          // Keep track if LR and any of R4, R5, R6, and R7 is spilled.
-          switch (Reg) {
-          case ARM::LR:
-            LRSpilled = true;
-            // Fallthrough
-          case ARM::R4:
-          case ARM::R5:
-          case ARM::R6:
-          case ARM::R7:
-            CS1Spilled = true;
-            break;
-          default:
-            break;
-          }
-        } else { 
-          switch (Reg) {
-          case ARM::R4:
-          case ARM::R5:
-          case ARM::R6:
-          case ARM::R7:
-          case ARM::LR:
-            UnspilledCS1GPRs.push_back(Reg);
-            break;
-          default:
-            UnspilledCS2GPRs.push_back(Reg);
-            break;
-          }
+        // Keep track if LR and any of R4, R5, R6, and R7 is spilled.
+        switch (Reg) {
+        case ARM::LR:
+          LRSpilled = true;
+          // Fallthrough
+        case ARM::R4:
+        case ARM::R5:
+        case ARM::R6:
+        case ARM::R7:
+          CS1Spilled = true;
+          break;
+        default:
+          break;
+        }
+      } else { 
+        switch (Reg) {
+        case ARM::R4:
+        case ARM::R5:
+        case ARM::R6:
+        case ARM::R7:
+        case ARM::LR:
+          UnspilledCS1GPRs.push_back(Reg);
+          break;
+        default:
+          UnspilledCS2GPRs.push_back(Reg);
+          break;
         }
       }
     }
   }
 
-  if (FramePtrSpilled) {
+  if (!CanEliminateFrame) {
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-    AFI->setFramePtrSpilled(true);
+    AFI->setHasStackFrame(true);
 
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
     // Spill LR as well so we can fold BX_RET to the registers restore (LDM).
@@ -796,27 +795,15 @@ static void movePastCSLoadStoreOps(MachineBasicBlock &MBB,
       bool Done = false;
       unsigned Category = 0;
       switch (MBBI->getOperand(0).getReg()) {
-      case ARM::R4:
-      case ARM::R5:
-      case ARM::R6:
-      case ARM::R7:
+      case ARM::R4:  case ARM::R5:  case ARM::R6: case ARM::R7:
       case ARM::LR:
         Category = 1;
         break;
-      case ARM::R8:
-      case ARM::R9:
-      case ARM::R10:
-      case ARM::R11:
+      case ARM::R8:  case ARM::R9:  case ARM::R10: case ARM::R11:
         Category = STI.isTargetDarwin() ? 2 : 1;
         break;
-      case ARM::D8:
-      case ARM::D9:
-      case ARM::D10:
-      case ARM::D11:
-      case ARM::D12:
-      case ARM::D13:
-      case ARM::D14:
-      case ARM::D15:
+      case ARM::D8:  case ARM::D9:  case ARM::D10: case ARM::D11:
+      case ARM::D12: case ARM::D13: case ARM::D14: case ARM::D15:
         Category = 3;
         break;
       default:
@@ -846,7 +833,7 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // belongs to which callee-save spill areas.
   unsigned GPRCS1Size = 0, GPRCS2Size = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
-  if (AFI->isFramePtrSpilled()) {
+  if (AFI->hasStackFrame()) {
     if (VARegSaveSize)
       emitSPUpdate(MBB, MBBI, -VARegSaveSize, isThumb, TII);
 
@@ -909,19 +896,18 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // If necessary, add one more SUBri to account for the call frame
   // and/or local storage, alloca area.
-  if (MFI->hasCalls())
+  if (MFI->hasCalls() && !hasFP(MF))
     // We reserve argument space for call sites in the function immediately on
     // entry to the current function.  This eliminates the need for add/sub
     // brackets around call sites.
-    if (!MF.getFrameInfo()->hasVarSizedObjects())
-      NumBytes += MFI->getMaxCallFrameSize();
+    NumBytes += MFI->getMaxCallFrameSize();
 
   // Round the size to a multiple of the alignment.
   NumBytes = (NumBytes+Align-1)/Align*Align;
   MFI->setStackSize(NumBytes);
 
   // Determine starting offsets of spill areas.
-  if (AFI->isFramePtrSpilled()) {
+  if (AFI->hasStackFrame()) {
     unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
     unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
     unsigned GPRCS1Offset = GPRCS2Offset + GPRCS2Size;
@@ -973,7 +959,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   bool isThumb = AFI->isThumbFunction();
   unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
   int NumBytes = (int)MFI->getStackSize();
-  if (AFI->isFramePtrSpilled()) {
+  if (AFI->hasStackFrame()) {
     // Unwind MBBI to point to first LDR / FLDD.
     const unsigned *CSRegs = getCalleeSavedRegs();
     if (MBBI != MBB.begin()) {

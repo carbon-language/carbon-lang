@@ -166,7 +166,8 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
           I = ARM_GPR_AO_1 + (sizeof(ARM_GPR_AO_1)/sizeof(unsigned));
       }
 
-      return hasFP(MF) ? I-1 : I;
+      // Mac OS X requires FP not to be clobbered for backtracing purpose.
+      return (Subtarget.isTargetDarwin() || hasFP(MF)) ? I-1 : I;
     }
   }];
 }
