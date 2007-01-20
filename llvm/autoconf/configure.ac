@@ -131,6 +131,11 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="OpenBSD" 
     llvm_cv_platform_type="Unix" ;;
+  *-*-netbsd*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
+    llvm_cv_os_type="NetBSD" 
+    llvm_cv_platform_type="Unix" ;;
   *-*-hpux*) 
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
