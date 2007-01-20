@@ -27586,7 +27586,7 @@ if test "${with_udis86+set}" = set; then
       USE_UDIS86=1
 
       case "$withval" in
-        /usr/lib) ;;
+        /usr/lib|yes) ;;
         *) LDFLAGS="$LDFLAGS -L${withval}" ;;
       esac
 
@@ -32717,6 +32717,7 @@ fi
 
 
 
+if test "$llvm_cv_platform_type" = "Unix" ; then
 
 
 for ac_header in stdlib.h unistd.h
@@ -33183,7 +33184,7 @@ _ACEOF
 fi
 rm -f conftest.mmap
 
-{ echo "$as_me:$LINENO: checking for mmap of files" >&5
+  { echo "$as_me:$LINENO: checking for mmap of files" >&5
 echo $ECHO_N "checking for mmap of files... $ECHO_C" >&6; }
 if test "${ac_cv_func_mmap_file+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -33275,7 +33276,7 @@ _ACEOF
 
 fi
 
-{ echo "$as_me:$LINENO: checking if /dev/zero is needed for mmap" >&5
+  { echo "$as_me:$LINENO: checking if /dev/zero is needed for mmap" >&5
 echo $ECHO_N "checking if /dev/zero is needed for mmap... $ECHO_C" >&6; }
 if test "${ac_cv_need_dev_zero_for_mmap+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -33296,121 +33297,17 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 fi
-{ echo "$as_me:$LINENO: checking for mprotect" >&5
-echo $ECHO_N "checking for mprotect... $ECHO_C" >&6; }
-if test "${ac_cv_func_mprotect+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-/* Define mprotect to an innocuous variant, in case <limits.h> declares mprotect.
-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define mprotect innocuous_mprotect
 
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char mprotect (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-
-#undef mprotect
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char mprotect ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined __stub_mprotect || defined __stub___mprotect
-choke me
-#endif
-
-int
-main ()
-{
-return mprotect ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_func_mprotect=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_func_mprotect=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_func_mprotect" >&5
-echo "${ECHO_T}$ac_cv_func_mprotect" >&6; }
-if test $ac_cv_func_mprotect = yes; then
-  :
-else
-  { { echo "$as_me:$LINENO: error: Function mprotect() required but not found" >&5
-echo "$as_me: error: Function mprotect() required but not found" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-if test "$ac_cv_func_mmap_fixed_mapped" = "no"
-then
-  { echo "$as_me:$LINENO: WARNING: mmap() of a fixed address required but not supported" >&5
+  if test "$ac_cv_func_mmap_fixed_mapped" = "no"
+  then
+    { echo "$as_me:$LINENO: WARNING: mmap() of a fixed address required but not supported" >&5
 echo "$as_me: WARNING: mmap() of a fixed address required but not supported" >&2;}
-fi
-if test "$ac_cv_func_mmap_file" = "no"
-then
-  { echo "$as_me:$LINENO: WARNING: mmap() of files required but not found" >&5
+  fi
+  if test "$ac_cv_func_mmap_file" = "no"
+  then
+    { echo "$as_me:$LINENO: WARNING: mmap() of files required but not found" >&5
 echo "$as_me: WARNING: mmap() of files required but not found" >&2;}
+  fi
 fi
 
 
