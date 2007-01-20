@@ -991,6 +991,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned AlignMask = Align - 1;
   const Function* Fn = MF.getFunction();
   const X86Subtarget* Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
   MachineInstr *MI;
@@ -1004,9 +1005,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     //
     NumBytes += MFI->getMaxCallFrameSize();
 
-  // Round the size to a multiple of the alignment (don't forget the 4/8 byte
-  // offset though).
-  NumBytes = ((NumBytes+SlotSize)+Align-1)/Align*Align - SlotSize;
+    // Round the size to a multiple of the alignment (don't forget the 4/8 byte
+    // offset pushed by the caller though). No need to align the stack if this
+    // is a leaf function.
+    NumBytes = (((NumBytes+SlotSize) + AlignMask) & ~AlignMask) - SlotSize;
+  }
 
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
