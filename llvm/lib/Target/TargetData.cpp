@@ -426,6 +426,16 @@ uint64_t TargetData::getTypeSize(const Type *Ty) const {
   return Size;
 }
 
+uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
+  if (Ty->isInteger())
+    return cast<IntegerType>(Ty)->getBitWidth();
+
+  uint64_t Size;
+  unsigned char Align;
+  getTypeInfoABI(Ty, this, Size, Align);
+  return Size * 8;
+}
+
 unsigned char TargetData::getTypeAlignmentABI(const Type *Ty) const {
   uint64_t Size;
   unsigned char Align;

@@ -221,6 +221,10 @@ public:
   ///
   uint64_t getTypeSize(const Type *Ty) const;
 
+  /// getTypeSizeInBits - Return the number of bytes necessary to hold the
+  /// specified type.
+  uint64_t getTypeSizeInBits(const Type* Ty) const;
+
   /// getTypeAlignmentABI - Return the minimum ABI-required alignment for the
   /// specified type.
   unsigned char getTypeAlignmentABI(const Type *Ty) const;
