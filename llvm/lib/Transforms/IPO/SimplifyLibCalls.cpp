@@ -274,7 +274,7 @@ public:
     return sqrt_func;
   }
 
-  /// @brief Return a Function* for the strlen libcall
+  /// @brief Return a Function* for the strcpy libcall
   Constant *get_strcpy() {
     if (!strcpy_func)
       strcpy_func = M->getOrInsertFunction("strcpy",
