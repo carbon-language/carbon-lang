@@ -67,6 +67,15 @@ static GenericValue executeAShrInst(GenericValue Src1, GenericValue Src2,
 static GenericValue executeSelectInst(GenericValue Src1, GenericValue Src2,
                                       GenericValue Src3);
 
+inline uint64_t doSignExtension(uint64_t Val, const IntegerType* ITy) {
+  // Determine if the value is signed or not
+  bool isSigned = (Val & (1 << (ITy->getBitWidth()-1))) != 0;
+  // If its signed, extend the sign bits
+  if (isSigned)
+    Val |= ~ITy->getBitMask();
+  return Val;
+}
+
 GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
                                                 ExecutionContext &SF) {
   switch (CE->getOpcode()) {
@@ -385,22 +394,26 @@ static GenericValue executeXorInst(GenericValue Src1, GenericValue Src2,
 
 #define IMPLEMENT_SIGNED_ICMP(OP, TY) \
    case Type::IntegerTyID: {  \
-     unsigned BitWidth = cast<IntegerType>(TY)->getBitWidth(); \
-     if (BitWidth == 1) \
-       Dest.Int1Val = ((int8_t)Src1.Int1Val)   OP ((int8_t)Src2.Int1Val); \
-     else if (BitWidth <= 8) \
-       Dest.Int1Val = ((int8_t)Src1.Int8Val)   OP ((int8_t)Src2.Int8Val); \
-     else if (BitWidth <= 16) \
-       Dest.Int1Val = ((int16_t)Src1.Int16Val) OP ((int16_t)Src2.Int16Val); \
-     else if (BitWidth <= 32) \
-       Dest.Int1Val = ((int32_t)Src1.Int32Val) OP ((int32_t)Src2.Int32Val); \
-     else if (BitWidth <= 64) \
-       Dest.Int1Val = ((int64_t)Src1.Int64Val) OP ((int64_t)Src2.Int64Val); \
-     else { \
+     const IntegerType* ITy = cast<IntegerType>(TY); \
+     unsigned BitWidth = ITy->getBitWidth(); \
+     int64_t LHS = 0, RHS = 0; \
+     if (BitWidth <= 8) { \
+       LHS = int64_t(doSignExtension(uint64_t(Src1.Int8Val), ITy)); \
+       RHS = int64_t(doSignExtension(uint64_t(Src2.Int8Val), ITy)); \
+     } else if (BitWidth <= 16) { \
+       LHS = int64_t(doSignExtension(uint64_t(Src1.Int16Val), ITy)); \
+       RHS = int64_t(doSignExtension(uint64_t(Src2.Int16Val), ITy)); \
+    } else if (BitWidth <= 32) { \
+       LHS = int64_t(doSignExtension(uint64_t(Src1.Int32Val), ITy)); \
+       RHS = int64_t(doSignExtension(uint64_t(Src2.Int32Val), ITy)); \
+    } else if (BitWidth <= 64) { \
+       LHS = int64_t(doSignExtension(uint64_t(Src1.Int64Val), ITy)); \
+       RHS = int64_t(doSignExtension(uint64_t(Src2.Int64Val), ITy)); \
+    } else { \
       cerr << "Integer types > 64 bits not supported: " << *Ty << "\n"; \
        abort(); \
      } \
-     maskToBitWidth(Dest, BitWidth); \
+     Dest.Int1Val = LHS OP RHS; \
      break; \
    }
 
@@ -1359,10 +1372,7 @@ GenericValue Interpreter::executeSExtInst(Value *SrcVal, const Type *DstTy,
   else 
     Normalized = Src.Int64Val;
 
-  // Now do the bit-accurate sign extension manually.
-  bool isSigned = (Normalized & (1 << (SBitWidth-1))) != 0;
-  if (isSigned)
-    Normalized |= ~SITy->getBitMask();
+  Normalized = doSignExtension(Normalized, SITy);
 
   // Now that we have a sign extended value, assign it to the destination
   INTEGER_ASSIGN(Dest, DBitWidth, Normalized);
