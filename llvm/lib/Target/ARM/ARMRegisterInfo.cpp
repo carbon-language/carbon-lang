@@ -484,7 +484,8 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     // There is alloca()'s in this function, must reference off the frame
     // pointer instead.
     FrameReg = getFrameRegister(MF);
-    Offset -= AFI->getFramePtrSpillOffset();
+    if (STI.isTargetDarwin())
+      Offset -= AFI->getFramePtrSpillOffset();
   }
 
   unsigned Opcode = MI.getOpcode();
@@ -724,6 +725,14 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
       if (Spilled) {
         NumGPRSpills++;
 
+        if (!STI.isTargetDarwin()) {
+          if (Reg == ARM::LR)
+            LRSpilled = true;
+          else
+            CS1Spilled = true;
+          continue;
+        }
+
         // Keep track if LR and any of R4, R5, R6, and R7 is spilled.
         switch (Reg) {
         case ARM::LR:
@@ -739,6 +748,11 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
           break;
         }
       } else { 
+        if (!STI.isTargetDarwin()) {
+          UnspilledCS1GPRs.push_back(Reg);
+          continue;
+        }
+
         switch (Reg) {
         case ARM::R4:
         case ARM::R5:
@@ -768,17 +782,21 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
                                     UnspilledCS1GPRs.end(), (unsigned)ARM::LR));
     }
 
-    // If stack and double are 8-byte aligned and we are spilling a odd number
+    if (STI.isTargetDarwin()) {
+      MF.changePhyRegUsed(FramePtr, true);
+      NumGPRSpills++;
+    }
+
+    // If stack and double are 8-byte aligned and we are spilling an odd number
     // of GPRs. Spill one extra callee save GPR so we won't have to pad between
     // the integer and double callee save areas.
     unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
     if (TargetAlign == 8 && (NumGPRSpills & 1)) {
       if (CS1Spilled && !UnspilledCS1GPRs.empty())
         MF.changePhyRegUsed(UnspilledCS1GPRs.front(), true);
-      else
+      else if (!UnspilledCS2GPRs.empty())
         MF.changePhyRegUsed(UnspilledCS2GPRs.front(), true);
     }
-    MF.changePhyRegUsed(FramePtr, true);
   }
 }
 
@@ -871,18 +889,21 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
       }
     }
 
+    if (Align == 8 && (GPRCS1Size & 7) != 0)
+      // Pad CS1 to ensure proper alignment.
+      GPRCS1Size += 4;
+
     if (!isThumb) {
       // Build the new SUBri to adjust SP for integer callee-save spill area 1.
       emitSPUpdate(MBB, MBBI, -GPRCS1Size, isThumb, TII);
       movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, 1, STI);
-    } else {
-      if (MBBI != MBB.end() && MBBI->getOpcode() == ARM::tPUSH)
-        ++MBBI;
-    }
+    } else if (MBBI != MBB.end() && MBBI->getOpcode() == ARM::tPUSH)
+      ++MBBI;
 
     // Point FP to the stack slot that contains the previous FP.
-    BuildMI(MBB, MBBI, TII.get(isThumb ? ARM::tADDrSPi : ARM::ADDri), FramePtr)
-      .addFrameIndex(FramePtrSpillFI).addImm(0);
+    if (STI.isTargetDarwin())
+      BuildMI(MBB, MBBI, TII.get(isThumb ? ARM::tADDrSPi : ARM::ADDri), FramePtr)
+        .addFrameIndex(FramePtrSpillFI).addImm(0);
 
     if (!isThumb) {
       // Build the new SUBri to adjust SP for integer callee-save spill area 2.
@@ -977,18 +998,21 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
     if (isThumb)
       emitSPUpdate(MBB, MBBI, -NumBytes, isThumb, TII);
     else {
-      NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
-      // Reset SP based on frame pointer only if the stack frame extends beyond
-      // frame pointer stack slot.
-      if (AFI->getGPRCalleeSavedArea2Size() ||
-          AFI->getDPRCalleeSavedAreaSize()  ||
-          AFI->getDPRCalleeSavedAreaOffset())
-        if (NumBytes)
-          BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
-            .addImm(NumBytes);
-        else
-          BuildMI(MBB, MBBI, TII.get(isThumb ? ARM::tMOVrr : ARM::MOVrr),
-                  ARM::SP).addReg(FramePtr);
+      if (STI.isTargetDarwin()) {
+        NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
+        // Reset SP based on frame pointer only if the stack frame extends beyond
+        // frame pointer stack slot.
+        if (AFI->getGPRCalleeSavedArea2Size() ||
+            AFI->getDPRCalleeSavedAreaSize()  ||
+            AFI->getDPRCalleeSavedAreaOffset())
+          if (NumBytes)
+            BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
+              .addImm(NumBytes);
+          else
+            BuildMI(MBB, MBBI, TII.get(ARM::MOVrr), ARM::SP).addReg(FramePtr);
+      } else if (NumBytes) {
+        emitSPUpdate(MBB, MBBI, NumBytes, false, TII);
+      }
 
       // Move SP to start of integer callee save spill area 2.
       movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 3, STI);
