@@ -14,6 +14,7 @@
 %k = constant i7 0		; <i7*> [#uses=0]
 %l = constant i7 -1		; <i7*> [#uses=0]
 %m = constant i7 -1		; <i7*> [#uses=0]
+%m2 = constant i7 -1		; <i7*> [#uses=0]
 %n = constant i7 -2		; <i7*> [#uses=0]
 %t = constant i7 -2		; <i7*> [#uses=0]
 %u = constant i7 -64		; <i7*> [#uses=0]

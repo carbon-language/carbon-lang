@@ -19,6 +19,7 @@
 %k = constant i7 lshr(i7 127 , i8 7)
 %l = constant i7 ashr(i7 127 , i8 6)
 %m = constant i7 ashr(i7 127 , i8 7)
+%m2= constant i7 ashr(i7 -1  , i8 3)
 
 %n = constant i7 mul(i7 127, i7 2)
 %t = constant i7 mul(i7 -63, i7 -2)
