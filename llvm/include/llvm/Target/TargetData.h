@@ -70,7 +70,8 @@ public:
   /// Constructs a TargetData from a string of the following format:
   /// "E-p:64:64-d:64-f:32-l:64-i:32-s:16-b:8-B:8"
   /// The above string is considered the default, and any values not specified
-  /// in the string will be assumed to be as above.
+  /// in the string will be assumed to be as above, with the caveat that unspecified
+  /// values are always assumed to be smaller than the size of a pointer.
   TargetData(const std::string &TargetDescription) {
     init(TargetDescription);
   }

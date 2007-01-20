@@ -103,9 +103,9 @@ void TargetData::init(const std::string &TargetDescription) {
   LittleEndian = false;
   PointerMemSize = 8;
   PointerABIAlignment   = 8;
-  DoubleABIAlignment = 8;
+  DoubleABIAlignment = 0;
   FloatABIAlignment = 4;
-  LongABIAlignment   = 8;
+  LongABIAlignment   = 0;
   IntABIAlignment   = 4;
   ShortABIAlignment  = 2;
   ByteABIAlignment  = 1;
@@ -114,9 +114,9 @@ void TargetData::init(const std::string &TargetDescription) {
   BytePrefAlignment = ByteABIAlignment;
   ShortPrefAlignment = ShortABIAlignment;
   IntPrefAlignment = IntABIAlignment;
-  LongPrefAlignment = LongABIAlignment;
+  LongPrefAlignment = 8;
   FloatPrefAlignment = FloatABIAlignment;
-  DoublePrefAlignment = DoubleABIAlignment;
+  DoublePrefAlignment = 8;
   PointerPrefAlignment = PointerABIAlignment;
   AggMinPrefAlignment = 0;
   
@@ -188,6 +188,13 @@ void TargetData::init(const std::string &TargetDescription) {
       break;
     }
   }
+
+  // Unless explicitly specified, the alignments for longs and doubles is capped by 
+  // pointer size.
+  if (LongABIAlignment == 0)
+	  LongABIAlignment = LongPrefAlignment = PointerMemSize;
+  if (DoubleABIAlignment == 0)
+    DoubleABIAlignment = DoublePrefAlignment = PointerMemSize;
 }
 
 TargetData::TargetData(const Module *M) {
