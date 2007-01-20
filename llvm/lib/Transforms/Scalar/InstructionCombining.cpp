@@ -8192,10 +8192,9 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
             SrcPTy = SrcTy->getElementType();
           }
 
-      if (((SrcPTy->isInteger() && SrcPTy != Type::Int1Ty) ||
-           isa<PointerType>(SrcPTy)) &&
-          IC.getTargetData().getTypeSize(SrcPTy) ==
-               IC.getTargetData().getTypeSize(DestPTy)) {
+      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
+          IC.getTargetData().getTypeSizeInBits(SrcPTy) ==
+               IC.getTargetData().getTypeSizeInBits(DestPTy)) {
 
         // Okay, we are casting from one integer or pointer type to another of
         // the same size.  Instead of casting the pointer before 
@@ -8208,13 +8207,9 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
         if (isa<PointerType>(CastDstTy)) {
           if (CastSrcTy->isInteger())
             opcode = Instruction::IntToPtr;
-        } else if (const IntegerType* DITy = dyn_cast<IntegerType>(CastDstTy)) {
+        } else if (isa<IntegerType>(CastDstTy)) {
           if (isa<PointerType>(SIOp0->getType()))
             opcode = Instruction::PtrToInt;
-          else if (const IntegerType* SITy = dyn_cast<IntegerType>(CastSrcTy))
-            if (SITy->getBitWidth() != DITy->getBitWidth())
-              return 0; // Don't do this transform on unequal bit widths.
-            // else, BitCast is fine
         }
         if (Constant *C = dyn_cast<Constant>(SIOp0))
           NewCast = ConstantExpr::getCast(opcode, C, CastDstTy);
