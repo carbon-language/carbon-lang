@@ -213,6 +213,7 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   powerpc*-*)             llvm_cv_target_arch="PowerPC" ;;
   alpha*-*)               llvm_cv_target_arch="Alpha" ;;
   ia64-*)                 llvm_cv_target_arch="IA64" ;;
+  arm-*)                  llvm_cv_target_arch="ARM" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
 esac])
 
@@ -298,6 +299,7 @@ else
     x86_64)  AC_SUBST(TARGET_HAS_JIT,0) ;;
     Alpha)   AC_SUBST(TARGET_HAS_JIT,1) ;;
     IA64)    AC_SUBST(TARGET_HAS_JIT,0) ;;
+    ARM)     AC_SUBST(TARGET_HAS_JIT,1) ;;
     *)       AC_SUBST(TARGET_HAS_JIT,0) ;;
   esac
 fi
@@ -356,6 +358,7 @@ case "$enableval" in
       PowerPC) TARGETS_TO_BUILD="PowerPC" ;;
       Alpha)   TARGETS_TO_BUILD="Alpha" ;;
       IA64)    TARGETS_TO_BUILD="IA64" ;;
+      ARM)     TARGETS_TO_BUILD="ARM" ;;
       *)       AC_MSG_ERROR([Can not set target to build]) ;;
     esac 
     ;;
@@ -367,6 +370,7 @@ case "$enableval" in
         powerpc) TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
         alpha)   TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
         ia64)    TARGETS_TO_BUILD="IA64 $TARGETS_TO_BUILD" ;;
+        arm)     TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
         *) AC_MSG_ERROR([Unrecognized target $a_target]) ;;
       esac
   done 
