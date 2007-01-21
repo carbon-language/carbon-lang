@@ -119,6 +119,20 @@ public:
   void dump() const;
 };
 
+} // end clang.
+
+/// Implement simplify_type for TypeRef, so that we can dyn_cast from TypeRef to
+/// a specific Type class.
+template<> struct simplify_type<const clang::TypeRef> {
+  typedef clang::Type* SimpleType;
+  static SimpleType getSimplifiedValue(const clang::TypeRef &Val) {
+    return Val.getTypePtr();
+  }
+};
+template<> struct simplify_type<clang::TypeRef>
+  : public simplify_type<const clang::TypeRef> {};
+
+namespace clang {
 
 /// Type - This is the base class of the type hierarchy.  A central concept
 /// with types is that each type always has a canonical type.  A canonical type
