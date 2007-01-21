@@ -830,3 +830,55 @@ _foo:
 
 the pxor is not needed, we could compare the value against itself.
 
+//===---------------------------------------------------------------------===//
+
+These two functions have identical effects:
+
+unsigned int f(unsigned int i, unsigned int n) {++i; if (i == n) ++i; return i;}
+unsigned int f2(unsigned int i, unsigned int n) {++i; i += i == n; return i;}
+
+We currently compile them to:
+
+_f:
+        movl 4(%esp), %eax
+        movl %eax, %ecx
+        incl %ecx
+        movl 8(%esp), %edx
+        cmpl %edx, %ecx
+        jne LBB1_2      #UnifiedReturnBlock
+LBB1_1: #cond_true
+        addl $2, %eax
+        ret
+LBB1_2: #UnifiedReturnBlock
+        movl %ecx, %eax
+        ret
+_f2:
+        movl 4(%esp), %eax
+        movl %eax, %ecx
+        incl %ecx
+        cmpl 8(%esp), %ecx
+        sete %cl
+        movzbl %cl, %ecx
+        leal 1(%ecx,%eax), %eax
+        ret
+
+both of which are inferior to GCC's:
+
+_f:
+        movl    4(%esp), %edx
+        leal    1(%edx), %eax
+        addl    $2, %edx
+        cmpl    8(%esp), %eax
+        cmove   %edx, %eax
+        ret
+_f2:
+        movl    4(%esp), %eax
+        addl    $1, %eax
+        xorl    %edx, %edx
+        cmpl    8(%esp), %eax
+        sete    %dl
+        addl    %edx, %eax
+        ret
+
+//===---------------------------------------------------------------------===//
+
