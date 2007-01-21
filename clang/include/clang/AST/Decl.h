@@ -35,13 +35,16 @@ private:
   /// DeclKind - This indicates which class this is.
   Kind DeclKind;
   
+  /// Loc - The location that this decl.
+  SourceLocation Loc;
+  
   /// Identifier - The identifier for this declaration (e.g. the name for the
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
   
   /// Type.
   TypeRef DeclType;
-  
+
   /// When this decl is in scope while parsing, the Next field contains a
   /// pointer to the shadowed decl of the same name.  When the scope is popped,
   /// Decls are relinked onto a containing decl object.
@@ -49,11 +52,12 @@ private:
   Decl *Next;
   
 public:
-  Decl(Kind DK, IdentifierInfo *Id, TypeRef T, Decl *next)
-    : DeclKind(DK), Identifier(Id), DeclType(T), Next(next) {}
+  Decl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *next)
+    : DeclKind(DK), Loc(L), Identifier(Id), DeclType(T), Next(next) {}
   virtual ~Decl();
   
-  const IdentifierInfo *getIdentifier() const { return Identifier; }
+  IdentifierInfo *getIdentifier() const { return Identifier; }
+  SourceLocation getLocation() const { return Loc; }
   const char *getName() const;
   
   TypeRef getType() const { return DeclType; }
@@ -69,8 +73,8 @@ public:
 /// Objective-C classes.
 class TypeDecl : public Decl {
 public:
-  TypeDecl(Kind DK, IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : Decl(DK, Id, T, Next) {}
+  TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : Decl(DK, L, Id, T, Next) {}
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }
@@ -80,8 +84,8 @@ public:
 class TypedefDecl : public TypeDecl {
 public:
   // FIXME: Remove Declarator argument.
-  TypedefDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : TypeDecl(Typedef, Id, T, Next) {}
+  TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : TypeDecl(Typedef, L, Id, T, Next) {}
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }
@@ -91,8 +95,9 @@ public:
 /// ObjectDecl - ObjectDecl - Represents a declaration of a value.
 class ObjectDecl : public Decl {
 protected:
-  ObjectDecl(Kind DK, IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : Decl(DK, Id, T, Next) {}
+  ObjectDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T,
+             Decl *Next)
+    : Decl(DK, L, Id, T, Next) {}
 public:
   
   // Implement isa/cast/dyncast/etc.
@@ -107,8 +112,8 @@ public:
 class VarDecl : public ObjectDecl {
   // TODO: Initializer.
 public:
-  VarDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : ObjectDecl(Variable, Id, T, Next) {}
+  VarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : ObjectDecl(Variable, L, Id, T, Next) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Variable; }
@@ -130,8 +135,9 @@ class FunctionDecl : public ObjectDecl {
   /// function.
   Decl *DeclChain;
 public:
-  FunctionDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : ObjectDecl(Function, Id, T, Next), ParamInfo(0), Body(0), DeclChain(0) {}
+  FunctionDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *Next)
+    : ObjectDecl(Function, L, Id, T, Next),
+      ParamInfo(0), Body(0), DeclChain(0) {}
   virtual ~FunctionDecl();
   
   Stmt *getBody() const { return Body; }

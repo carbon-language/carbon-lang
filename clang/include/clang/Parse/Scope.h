@@ -113,6 +113,16 @@ public:
     DeclsInScope.push_back(D);
   }
   
+  /// isDeclScope - Return true if this is the scope that the specified decl is
+  /// declared in.
+  bool isDeclScope(Action::DeclTy *D) {
+    // FIXME: this is bad.  We should use a SmallSet instead of a smallvector
+    // for DeclsInScope to handle scopes with thousands of variables!
+    for (unsigned i = 0, e = DeclsInScope.size(); i != e; ++i)
+      if (DeclsInScope[i] == D)
+        return true;
+    return false;
+  }
   
   
   /// Init - This is used by the parser to implement scope caching.

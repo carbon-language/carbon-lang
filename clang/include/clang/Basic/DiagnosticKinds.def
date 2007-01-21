@@ -419,6 +419,10 @@ DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%s': expected expression")
 DIAG(err_undeclared_var_use, ERROR,
      "use of undeclared identifier '%s'")
+DIAG(err_redefinition, ERROR,
+     "redefinition of '%s'")
+DIAG(err_previous_definition, ERROR,
+     "previous definition is here")
 
 DIAG(warn_implicit_function_decl, WARNING,
      "implicit declaration of function '%s'")

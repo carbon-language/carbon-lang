@@ -30,11 +30,10 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
 void Sema::PopScope(SourceLocation Loc, Scope *S) {
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
-    IdentifierInfo &II = *static_cast<IdentifierInfo*>(*I);
-    Decl *D = II.getFETokenInfo<Decl>();
+    Decl *D = static_cast<Decl*>(*I);
     assert(D && "This decl didn't get pushed??");
     
-    II.setFETokenInfo(D->getNext());
+    D->getIdentifier()->setFETokenInfo(D->getNext());
     
     // This will have to be revisited for C++: there we want to nest stuff in
     // namespace decls etc.  Even for C, we might want a top-level translation
@@ -69,19 +68,27 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   IdentifierInfo *II = D.getIdentifier();
   Decl *PrevDecl = 0;
   
-  if (II) {
+  if (II)
     PrevDecl = II->getFETokenInfo<Decl>();
-    
+  if (PrevDecl) {
     // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
+    if (S->isDeclScope(PrevDecl)) {
+      // TODO: This is totally simplistic.  It should handle merging functions
+      // together etc, merging extern int X; int X; ...
+      Diag(D.getIdentifierLoc(), diag::err_redefinition, II->getName());
+      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+    }
   }
   
   Decl *New;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
     New = ParseTypedefDecl(S, D, PrevDecl);
   else if (D.isFunctionDeclarator())
-    New = new FunctionDecl(II, GetTypeForDeclarator(D, S), PrevDecl);
+    New = new FunctionDecl(D.getIdentifierLoc(), II, GetTypeForDeclarator(D, S),
+                           PrevDecl);
   else
-    New = new VarDecl(II, GetTypeForDeclarator(D, S), PrevDecl);
+    New = new VarDecl(D.getIdentifierLoc(), II, GetTypeForDeclarator(D, S),
+                      PrevDecl);
   
   if (!New) return 0;
   
@@ -90,7 +97,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   if (II) {
     // If PrevDecl includes conflicting name here, emit a diagnostic.
     II->setFETokenInfo(New);
-    S->AddDecl(II);
+    S->AddDecl(New);
   }
   
   // If this is a top-level decl that is chained to some other (e.g. int A,B,C;)
@@ -109,19 +116,21 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   IdentifierInfo *II = PI.Ident;
   Decl *PrevDecl = 0;
   
-  if (II) {
+  if (II)
     PrevDecl = II->getFETokenInfo<Decl>();
+  if (PrevDecl) {
     
     // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   }
   
-  VarDecl *New = new VarDecl(II, static_cast<Type*>(PI.TypeInfo), PrevDecl);
+  VarDecl *New = new VarDecl(PI.IdentLoc, II, static_cast<Type*>(PI.TypeInfo),
+                             PrevDecl);
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
     // If PrevDecl includes conflicting name here, emit a diagnostic.
     II->setFETokenInfo(New);
-    FnScope->AddDecl(II);
+    FnScope->AddDecl(New);
   }
 
   return New;
@@ -168,7 +177,7 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   // no arguments, not a function that takes a single void argument.
   if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
       FTI.ArgInfo[0].TypeInfo == Context.VoidTy.getAsOpaquePtr()) {
-    
+    // empty arg list, don't push any params.
   } else {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
       Params.push_back(ParseParamDeclarator(D.getTypeObject(0), i,FnBodyScope));
@@ -225,6 +234,6 @@ Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl) {
   TypeRef T = GetTypeForDeclarator(D, S);
   if (T.isNull()) return 0;
   
-  return new TypedefDecl(D.getIdentifier(), T, PrevDecl);
+  return new TypedefDecl(D.getIdentifierLoc(), D.getIdentifier(), T, PrevDecl);
 }
 
