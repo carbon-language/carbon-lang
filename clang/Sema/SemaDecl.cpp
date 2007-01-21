@@ -163,8 +163,16 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
   SmallVector<VarDecl*, 16> Params;
-  for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-    Params.push_back(ParseParamDeclarator(D.getTypeObject(0), i, FnBodyScope));
+  
+  // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs function that takes
+  // no arguments, not a function that takes a single void argument.
+  if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
+      FTI.ArgInfo[0].TypeInfo == Context.VoidTy.getAsOpaquePtr()) {
+    
+  } else {
+    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
+      Params.push_back(ParseParamDeclarator(D.getTypeObject(0), i,FnBodyScope));
+  }
   
   FD->setParams(&Params[0], Params.size());
   
