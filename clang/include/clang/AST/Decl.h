@@ -147,6 +147,10 @@ public:
   void setDeclChain(Decl *D) { DeclChain = D; }
 
   unsigned getNumParams() const;
+  VarDecl *getParamDecl(unsigned i) const {
+    assert(i < getNumParams() && "Illegal param #");
+    return ParamInfo[i];
+  }
   void setParams(VarDecl **NewParamInfo, unsigned NumParams);
     
   // Implement isa/cast/dyncast/etc.
