@@ -433,8 +433,10 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
     }
   }
   
-  // Parse the function body as a compound stmt.
-  StmtResult FnBody = ParseCompoundStatement();
+  // Do not enter a scope for the brace, as the arguments are in the same scope
+  // (the function body) as the body itself.  Instead, just read the statement
+  // list and put it into a CompoundStmt for safe keeping.
+  StmtResult FnBody = ParseCompoundStatementBody();
   if (FnBody.isInvalid) {
     ExitScope();
     return 0;
