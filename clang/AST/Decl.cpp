@@ -21,7 +21,9 @@ Decl::~Decl() {
 }
 
 const char *Decl::getName() const {
-  return getIdentifier()->getName();
+  if (const IdentifierInfo *II = getIdentifier())
+    return II->getName();
+  return "";
 }
 
 
