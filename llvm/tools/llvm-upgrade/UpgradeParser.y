@@ -1483,8 +1483,9 @@ DefinitionList : DefinitionList Function {
     $$ = 0;
   }
   | ConstPool { $$ = 0; }
+  ;
 
-External : EXTERNAL | UNINITIALIZED { $$ = $1; *$$ = "external"; }
+External : EXTERNAL | UNINITIALIZED { $$ = $1; *$$ = "external"; } ;
 
 // ConstPool - Constants with optional names assigned to them.
 ConstPool : ConstPool OptAssign TYPE TypesV {
@@ -1564,7 +1565,7 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
 
 AsmBlock : STRINGCONSTANT ;
 
-BigOrLittle : BIG | LITTLE 
+BigOrLittle : BIG | LITTLE ;
 
 TargetDefinition 
   : ENDIAN '=' BigOrLittle {
@@ -1671,6 +1672,7 @@ FunctionHeaderH
 
 BEGIN : BEGINTOK { $$ = new std::string("{"); delete $1; }
   | '{' { $$ = new std::string ("{"); }
+  ;
 
 FunctionHeader 
   : OptLinkage FunctionHeaderH BEGIN {
@@ -1796,7 +1798,7 @@ InstructionList : InstructionList Inst {
     $$ = 0;
   };
 
-Unwind : UNWIND | EXCEPT { $$ = $1; *$$ = "unwind"; }
+Unwind : UNWIND | EXCEPT { $$ = $1; *$$ = "unwind"; } ;
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     *O << "    " << *$1 << ' ' << *$2->val << '\n';
