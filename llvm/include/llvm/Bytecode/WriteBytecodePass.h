@@ -27,8 +27,8 @@ class WriteBytecodePass : public ModulePass {
   bool CompressFile;
 public:
   WriteBytecodePass()
-    : Out(&cout), DeleteStream(false), CompressFile(true) {}
-  WriteBytecodePass(OStream *o, bool DS = false, bool CF = true)
+    : Out(&cout), DeleteStream(false), CompressFile(false) {}
+  WriteBytecodePass(OStream *o, bool DS = false, bool CF = false)
     : Out(o), DeleteStream(DS), CompressFile(CF) {}
 
   inline ~WriteBytecodePass() {

@@ -74,7 +74,7 @@ static cl::opt<bool> Native("native",
 static cl::opt<bool>NativeCBE("native-cbe",
   cl::desc("Generate a native binary with the C backend and GCC"));
 
-static cl::opt<bool>DisableCompression("disable-compression",cl::init(false),
+static cl::opt<bool>DisableCompression("disable-compression", cl::init(true),
   cl::desc("Disable writing of compressed bytecode files"));
 
 static cl::list<std::string> PostLinkOpts("post-link-opts",

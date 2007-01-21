@@ -23,7 +23,7 @@ namespace llvm {
   /// stream.  If compress is set to true, try to use compression when writing
   /// out the file.  This can never fail if M is a well-formed module.
   void WriteBytecodeToFile(const Module *M, OStream &Out,
-                           bool compress = true);
+                           bool compress = false);
 } // End llvm namespace
 
 #endif

@@ -364,7 +364,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
     tempFileName += "0.bc";
     std::ofstream Out(tempFileName.c_str(), io_mode);
     OStream L(Out);
-    WriteBytecodeToFile(bigOne, L, true);
+    WriteBytecodeToFile(bigOne, L);
   }
 
   // Strip leading underscore because it was added to match names
@@ -418,7 +418,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
     tempFileName += "1.bc";
     std::ofstream Out(tempFileName.c_str(), io_mode);
     OStream L(Out);
-    WriteBytecodeToFile(bigOne, L, true);
+    WriteBytecodeToFile(bigOne, L);
   }
 
   targetTriple = bigOne->getTargetTriple();
