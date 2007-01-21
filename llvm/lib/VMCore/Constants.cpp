@@ -1882,12 +1882,12 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
 }
 
 Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
-  if ((const PackedType *PTy = dyn_cast<PackedType>(Ty)) &&
-      PTy->getElementType()->isFloatingPoint()) {
-    std::vector<Constant*> zeros(PTy->getNumElements(),
-                                 ConstantFP::get(PTy->getElementType(), -0.0));
-    return ConstantPacked::get(PTy, zeros);
-  }
+  if (const PackedType *PTy = dyn_cast<PackedType>(Ty))
+    if (PTy->getElementType()->isFloatingPoint()) {
+      std::vector<Constant*> zeros(PTy->getNumElements(),
+                                   ConstantFP::get(PTy->getElementType(),-0.0));
+      return ConstantPacked::get(PTy, zeros);
+    }
 
   if (Ty->isFloatingPoint())
     return ConstantFP::get(Ty, -0.0);
