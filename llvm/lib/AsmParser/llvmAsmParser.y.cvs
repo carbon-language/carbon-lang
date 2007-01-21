@@ -1843,7 +1843,7 @@ DefinitionList
   ;
 
 Definition 
-  : DEFINE { CurFun.isDeclare = false } Function {
+  : DEFINE { CurFun.isDeclare = false; } Function {
     CurFun.FunctionDone();
     CHECK_FOR_ERROR
   }
