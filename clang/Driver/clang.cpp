@@ -812,22 +812,40 @@ static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
   ASTStreamer_Terminate(Streamer);
 }
 
+static void PrintFunctionDecl(FunctionDecl *FD) {
+  FunctionTypeProto *FT = cast<FunctionTypeProto>(FD->getType());
+  
+  std::string Proto = FD->getName();
+  Proto += "(";
+  for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
+    if (i) Proto += ", ";
+    VarDecl *Param = FD->getParamDecl(i);
+    std::string ParamStr = Param->getName();
+    Param->getType().getAsString(ParamStr);
+    Proto += ParamStr;
+  }
+  Proto += ")";
+  
+  FT->getResultType().getAsString(Proto);
+
+  std::cerr << "\n" << Proto;
+  
+  if (FD->getBody()) {
+    std::cerr << " ";
+    FD->getBody()->dump();
+    std::cerr << "\n";
+  }
+}
 
 static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
   ASTContext Context(PP);
   ASTStreamerTy *Streamer = ASTStreamer_Init(Context, MainFileID);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    std::cerr << "Read top-level decl: '";
-    if (const IdentifierInfo *II = D->getIdentifier())
-      std::cerr << II->getName() << "'\n";
-    else
-      std::cerr << "\n";
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-      if (FD->getBody()) {
-        FD->getBody()->dump();
-        std::cerr << "\n";
-      }
+      PrintFunctionDecl(FD);
+    } else {
+      std::cerr << "Read top-level variable decl: '" << D->getName() << "'\n";
     }
   }
   
