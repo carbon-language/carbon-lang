@@ -814,14 +814,16 @@ static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
 
 static void PrintFunctionDecl(FunctionDecl *FD) {
   FunctionTypeProto *FT = cast<FunctionTypeProto>(FD->getType());
+  bool HasBody = FD->getBody();
   
   std::string Proto = FD->getName();
   Proto += "(";
   for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
     if (i) Proto += ", ";
-    VarDecl *Param = FD->getParamDecl(i);
-    std::string ParamStr = Param->getName();
-    Param->getType().getAsString(ParamStr);
+    std::string ParamStr;
+    if (HasBody) ParamStr = FD->getParamDecl(i)->getName();
+    
+    FT->getArgType(i).getAsString(ParamStr);
     Proto += ParamStr;
   }
   Proto += ")";
@@ -834,7 +836,15 @@ static void PrintFunctionDecl(FunctionDecl *FD) {
     std::cerr << " ";
     FD->getBody()->dump();
     std::cerr << "\n";
+  } else {
+    std::cerr << ";\n";
   }
+}
+
+static void PrintTypeDefDecl(TypedefDecl *TD) {
+  std::string S = TD->getName();
+  TD->getType().getAsString(S);
+  std::cerr << "typedef " << S << ";\n";
 }
 
 static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
@@ -844,6 +854,8 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       PrintFunctionDecl(FD);
+    } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+      PrintTypeDefDecl(TD);
     } else {
       std::cerr << "Read top-level variable decl: '" << D->getName() << "'\n";
     }
