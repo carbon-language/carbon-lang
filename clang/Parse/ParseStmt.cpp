@@ -364,11 +364,25 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
 ///
 Parser::StmtResult Parser::ParseCompoundStatement() {
   assert(Tok.getKind() == tok::l_brace && "Not a compount stmt!");
-  SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
   
   // Enter a scope to hold everything within the compound stmt.
   EnterScope(0);
-  
+
+  // Parse the statements in the body.
+  StmtResult Body = ParseCompoundStatementBody();
+
+  ExitScope();
+  return Body;
+}
+
+
+/// ParseCompoundStatementBody - Parse a sequence of statements and invoke the
+/// ParseCompoundStmt action.  This expects the '{' to be the current token, and
+/// consume the '}' at the end of the block.  It does not manipulate the scope
+/// stack.
+Parser::StmtResult Parser::ParseCompoundStatementBody() {
+  SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
+
   SmallVector<StmtTy*, 32> Stmts;
   while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
     StmtResult R = ParseStatementOrDeclaration(false);
@@ -381,9 +395,7 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
     Diag(Tok, diag::err_expected_rbrace);
     return 0;
   }
-
-  ExitScope();
-
+  
   SourceLocation RBraceLoc = ConsumeBrace();
   return Actions.ParseCompoundStmt(LBraceLoc, RBraceLoc,
                                    &Stmts[0], Stmts.size());

@@ -310,6 +310,7 @@ private:
   StmtResult ParseCaseStatement();
   StmtResult ParseDefaultStatement();
   StmtResult ParseCompoundStatement();
+  StmtResult ParseCompoundStatementBody();
   StmtResult ParseIfStatement();
   StmtResult ParseSwitchStatement();
   StmtResult ParseWhileStatement();
