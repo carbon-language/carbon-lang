@@ -294,12 +294,12 @@ then
 else
   case "$llvm_cv_target_arch" in
     x86)     AC_SUBST(TARGET_HAS_JIT,1) ;;
-    Sparc)   AC_SUBST(TARGET_HAS_JIT,1) ;;
+    Sparc)   AC_SUBST(TARGET_HAS_JIT,0) ;;
     PowerPC) AC_SUBST(TARGET_HAS_JIT,1) ;;
-    x86_64)  AC_SUBST(TARGET_HAS_JIT,0) ;;
+    x86_64)  AC_SUBST(TARGET_HAS_JIT,1) ;;
     Alpha)   AC_SUBST(TARGET_HAS_JIT,1) ;;
     IA64)    AC_SUBST(TARGET_HAS_JIT,0) ;;
-    ARM)     AC_SUBST(TARGET_HAS_JIT,1) ;;
+    ARM)     AC_SUBST(TARGET_HAS_JIT,0) ;;
     *)       AC_SUBST(TARGET_HAS_JIT,0) ;;
   esac
 fi
