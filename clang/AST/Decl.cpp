@@ -37,6 +37,9 @@ void FunctionDecl::setParams(VarDecl **NewParamInfo, unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
   assert(NumParams == getNumParams() && "Parameter count mismatch!");
   
-  ParamInfo = new VarDecl*[NumParams];
-  memcpy(ParamInfo, NewParamInfo, sizeof(VarDecl*)*NumParams);
+  // Zero params -> null pointer.
+  if (NumParams) {
+    ParamInfo = new VarDecl*[NumParams];
+    memcpy(ParamInfo, NewParamInfo, sizeof(VarDecl*)*NumParams);
+  }
 }
