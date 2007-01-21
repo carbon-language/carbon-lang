@@ -826,6 +826,11 @@ static void PrintFunctionDecl(FunctionDecl *FD) {
     FT->getArgType(i).getAsString(ParamStr);
     Proto += ParamStr;
   }
+  
+  if (FT->isVariadic()) {
+    if (FD->getNumParams()) Proto += ", ";
+    Proto += "...";
+  }
   Proto += ")";
   
   FT->getResultType().getAsString(Proto);
