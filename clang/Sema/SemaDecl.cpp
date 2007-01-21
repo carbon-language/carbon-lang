@@ -101,10 +101,34 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   return New;
 }
 
+VarDecl *
+Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
+                           Scope *FnScope) {
+  const DeclaratorChunk::ParamInfo &PI = FTI.Fun.ArgInfo[ArgNo];
 
+  IdentifierInfo *II = PI.Ident;
+  Decl *PrevDecl = 0;
+  
+  if (II) {
+    PrevDecl = II->getFETokenInfo<Decl>();
+    
+    // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
+  }
+  
+  VarDecl *New = new VarDecl(II, static_cast<Type*>(PI.TypeInfo), PrevDecl);
+  
+  // If this has an identifier, add it to the scope stack.
+  if (II) {
+    // If PrevDecl includes conflicting name here, emit a diagnostic.
+    II->setFETokenInfo(New);
+    FnScope->AddDecl(II);
+  }
 
-Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *S, Declarator &D
-                                            /* TODO: FORMAL ARG INFO.*/) {
+  return New;
+}
+  
+
+Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   assert(CurFunctionDecl == 0 && "Function parsing confused");
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
@@ -131,14 +155,18 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *S, Declarator &D
     
   }
   
-  FunctionDecl *FD = static_cast<FunctionDecl*>(ParseDeclarator(S, D, 0, 0));
+  Scope *GlobalScope = FnBodyScope->getParent();
+  
+  FunctionDecl *FD =
+    static_cast<FunctionDecl*>(ParseDeclarator(GlobalScope, D, 0, 0));
   CurFunctionDecl = FD;
   
-  // Since this is a function definition, remember the names of the arguments in
-  // the FunctionDecl.
+  // Create Decl objects for each parameter, adding them to the FunctionDecl.
+  SmallVector<VarDecl*, 16> Params;
+  for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
+    Params.push_back(ParseParamDeclarator(D.getTypeObject(0), i, FnBodyScope));
   
-  // FIXME: TODO.  Add to FunctionDecl, install declarators into current scope.
-  
+  FD->setParams(&Params[0], Params.size());
   
   return FD;
 }

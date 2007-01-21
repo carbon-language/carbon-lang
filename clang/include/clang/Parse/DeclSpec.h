@@ -259,7 +259,6 @@ struct DeclaratorChunk {
   /// Parameter type lists will have type info (if the actions module provides
   /// it), but may have null identifier info: e.g. for 'void foo(int X, int)'.
   struct ParamInfo {
-    /// Ident - In a K&R 
     IdentifierInfo *Ident;
     SourceLocation IdentLoc;
     Action::TypeTy *TypeInfo;

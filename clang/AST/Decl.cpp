@@ -23,3 +23,20 @@ Decl::~Decl() {
 const char *Decl::getName() const {
   return getIdentifier()->getName();
 }
+
+
+FunctionDecl::~FunctionDecl() {
+  delete[] ParamInfo;
+}
+
+unsigned FunctionDecl::getNumParams() const {
+  return cast<FunctionTypeProto>(getType().getTypePtr())->getNumArgs();
+}
+
+void FunctionDecl::setParams(VarDecl **NewParamInfo, unsigned NumParams) {
+  assert(ParamInfo == 0 && "Already has param info!");
+  assert(NumParams == getNumParams() && "Parameter count mismatch!");
+  
+  ParamInfo = new VarDecl*[NumParams];
+  memcpy(ParamInfo, NewParamInfo, sizeof(VarDecl*)*NumParams);
+}

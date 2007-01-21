@@ -24,9 +24,11 @@ namespace clang {
   class ASTContext;
   class Preprocessor;
   class Decl;
+  class VarDecl;
   class TypeRef;
   class LangOptions;
   class FunctionDecl;
+  class DeclaratorChunk;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -66,8 +68,9 @@ public:
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
   virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
                                   DeclTy *LastInGroup);
-  virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D
-                                          /* TODO: FORMAL ARG INFO.*/);
+  VarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
+                                Scope *FnBodyScope);
+  virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
   

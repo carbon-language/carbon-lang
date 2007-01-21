@@ -118,7 +118,12 @@ public:
 /// FunctionDecl - An instance of this class is created to represent a function
 /// declaration or definition.
 class FunctionDecl : public ObjectDecl {
-  // FIXME: Args etc.
+  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
+  /// parameters of this function.  This is null if a prototype or if there are
+  /// no formals.  TODO: we could allocate this space immediately after the
+  /// FunctionDecl object to save an allocation like FunctionType does.
+  VarDecl **ParamInfo;
+  
   Stmt *Body;  // Null if a prototype.
   
   /// DeclChain - Linked list of declarations that are defined inside this
@@ -126,14 +131,18 @@ class FunctionDecl : public ObjectDecl {
   Decl *DeclChain;
 public:
   FunctionDecl(IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : ObjectDecl(Function, Id, T, Next), Body(0), DeclChain(0) {}
+    : ObjectDecl(Function, Id, T, Next), ParamInfo(0), Body(0), DeclChain(0) {}
+  virtual ~FunctionDecl();
   
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
   
   Decl *getDeclChain() const { return DeclChain; }
   void setDeclChain(Decl *D) { DeclChain = D; }
-  
+
+  unsigned getNumParams() const;
+  void setParams(VarDecl **NewParamInfo, unsigned NumParams);
+    
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Function; }
   static bool classof(const FunctionDecl *D) { return true; }

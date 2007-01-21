@@ -98,11 +98,11 @@ public:
   }
 
   /// ParseStartOfFunctionDef - This is called at the start of a function
-  /// definition, instead of calling ParseDeclarator.
-  virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D
-                                          /* TODO: FORMAL ARG INFO.*/) {
+  /// definition, instead of calling ParseDeclarator.  The Declarator includes
+  /// information about formal arguments that are part of this function.
+  virtual DeclTy *ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     // Default to ParseDeclarator.
-    return ParseDeclarator(S, D, 0, 0);
+    return ParseDeclarator(FnBodyScope, D, 0, 0);
   }
 
   /// ParseFunctionDefBody - This is called when a function body has completed
