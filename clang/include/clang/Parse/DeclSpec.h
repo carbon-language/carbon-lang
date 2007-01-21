@@ -234,6 +234,7 @@ struct DeclaratorChunk {
   struct PointerTypeInfo {
     /// The type qualifiers: const/volatile/restrict.
     unsigned TypeQuals : 3;
+    void destroy() {}
   };
   struct ArrayTypeInfo {
     /// The type qualifiers for the array: const/volatile/restrict.
@@ -248,6 +249,7 @@ struct DeclaratorChunk {
     /// This is the size of the array, or null if [] or [*] was specified.
     /// FIXME: make this be an expression* when we have expressions.
     void *NumElts;
+    void destroy() {}
   };
   
   /// ParamInfo - An array of paraminfo objects is allocated whenever a function
@@ -286,6 +288,10 @@ struct DeclaratorChunk {
     /// describe the arguments for this function declarator.  This is null if
     /// there are no arguments specified.
     ParamInfo *ArgInfo;
+    
+    void destroy() {
+      delete[] ArgInfo;
+    }
   };
   
   union {
@@ -398,10 +404,16 @@ public:
     Identifier = 0;
     IdentifierLoc = SourceLocation();
     
-    for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i)
+    for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i) {
       if (DeclTypeInfo[i].Kind == DeclaratorChunk::Function)
-        delete [] DeclTypeInfo[i].Fun.ArgInfo;
-        
+        DeclTypeInfo[i].Fun.destroy();
+      else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Pointer)
+        DeclTypeInfo[i].Ptr.destroy();
+      else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Array)
+        DeclTypeInfo[i].Arr.destroy();
+      else
+        assert(0 && "Unknown decl type!");
+    }
     DeclTypeInfo.clear();
   }
   
