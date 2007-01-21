@@ -4606,17 +4606,17 @@ else
   case "$llvm_cv_target_arch" in
     x86)     TARGET_HAS_JIT=1
  ;;
-    Sparc)   TARGET_HAS_JIT=1
+    Sparc)   TARGET_HAS_JIT=0
  ;;
     PowerPC) TARGET_HAS_JIT=1
  ;;
-    x86_64)  TARGET_HAS_JIT=0
+    x86_64)  TARGET_HAS_JIT=1
  ;;
     Alpha)   TARGET_HAS_JIT=1
  ;;
     IA64)    TARGET_HAS_JIT=0
  ;;
-    ARM)     TARGET_HAS_JIT=1
+    ARM)     TARGET_HAS_JIT=0
  ;;
     *)       TARGET_HAS_JIT=0
  ;;
