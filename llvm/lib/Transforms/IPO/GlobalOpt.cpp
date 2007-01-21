@@ -1343,6 +1343,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       if (Constant *SOVConstant = dyn_cast<Constant>(GS.StoredOnceValue))
         if (GV->getType()->getElementType() != Type::Int1Ty &&
             !GV->getType()->getElementType()->isFloatingPoint() &&
+            !isa<PackedType>(GV->getType()->getElementType()) &&
             !GS.HasPHIUser) {
           DOUT << "   *** SHRINKING TO BOOL: " << *GV;
           ShrinkGlobalToBoolean(GV, SOVConstant);

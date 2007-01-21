@@ -186,11 +186,7 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 /// LowerNegateToMultiply - Replace 0-X with X*-1.
 ///
 static Instruction *LowerNegateToMultiply(Instruction *Neg) {
-  Constant *Cst;
-  if (Neg->getType()->isFloatingPoint())
-    Cst = ConstantFP::get(Neg->getType(), -1);
-  else
-    Cst = ConstantInt::getAllOnesValue(Neg->getType());
+  Constant *Cst = ConstantInt::getAllOnesValue(Neg->getType());
 
   std::string NegName = Neg->getName(); Neg->setName("");
   Instruction *Res = BinaryOperator::createMul(Neg->getOperand(1), Cst, NegName,
@@ -661,32 +657,32 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     std::map<Value*, unsigned> FactorOccurrences;
     unsigned MaxOcc = 0;
     Value *MaxOccVal = 0;
-    if (!I->getType()->isFloatingPoint()) {
-      for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-        if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(Ops[i].Op))
-          if (BOp->getOpcode() == Instruction::Mul && BOp->use_empty()) {
-            // Compute all of the factors of this added value.
-            std::vector<Value*> Factors;
-            FindSingleUseMultiplyFactors(BOp, Factors);
-            assert(Factors.size() > 1 && "Bad linearize!");
-            
-            // Add one to FactorOccurrences for each unique factor in this op.
-            if (Factors.size() == 2) {
-              unsigned Occ = ++FactorOccurrences[Factors[0]];
-              if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[0]; }
-              if (Factors[0] != Factors[1]) {   // Don't double count A*A.
-                Occ = ++FactorOccurrences[Factors[1]];
-                if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[1]; }
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(Ops[i].Op)) {
+        if (BOp->getOpcode() == Instruction::Mul && BOp->use_empty()) {
+          // Compute all of the factors of this added value.
+          std::vector<Value*> Factors;
+          FindSingleUseMultiplyFactors(BOp, Factors);
+          assert(Factors.size() > 1 && "Bad linearize!");
+
+          // Add one to FactorOccurrences for each unique factor in this op.
+          if (Factors.size() == 2) {
+            unsigned Occ = ++FactorOccurrences[Factors[0]];
+            if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[0]; }
+            if (Factors[0] != Factors[1]) {   // Don't double count A*A.
+              Occ = ++FactorOccurrences[Factors[1]];
+              if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[1]; }
+            }
+          } else {
+            std::set<Value*> Duplicates;
+            for (unsigned i = 0, e = Factors.size(); i != e; ++i) {
+              if (Duplicates.insert(Factors[i]).second) {
+                unsigned Occ = ++FactorOccurrences[Factors[i]];
+                if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[i]; }
               }
-            } else {
-              std::set<Value*> Duplicates;
-              for (unsigned i = 0, e = Factors.size(); i != e; ++i)
-                if (Duplicates.insert(Factors[i]).second) {
-                  unsigned Occ = ++FactorOccurrences[Factors[i]];
-                  if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[i]; }
-                }
             }
           }
+        }
       }
     }
 

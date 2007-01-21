@@ -1498,7 +1498,7 @@ GenericValue Interpreter::executeSIToFPInst(Value *SrcVal, const Type *DstTy,
   const IntegerType *SITy = cast<IntegerType>(SrcTy);
   unsigned SBitWidth = SITy->getBitWidth();
   assert(SBitWidth <= 64  && "Integer types > 64 bits not supported");
-  assert(DstTy->isFloatingPoint() && "Invalid UIToFP instruction");
+  assert(DstTy->isFloatingPoint() && "Invalid SIToFP instruction");
   int64_t Converted = 0;
   if (SBitWidth == 1)
     Converted = 0LL - Src.Int1Val;

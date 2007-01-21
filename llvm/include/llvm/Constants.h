@@ -36,7 +36,7 @@ template<class ConstantClass, class TypeClass>
 struct ConvertConstantType;
 
 //===----------------------------------------------------------------------===//
-/// This is the shared class of boolean and integrer constants. This class 
+/// This is the shared class of boolean and integer constants. This class 
 /// represents both boolean and integral constants.
 /// @brief Class for constant integers.
 class ConstantInt : public Constant {
@@ -584,6 +584,11 @@ public:
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
   static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);
+
+  /// Floating point negation must be implemented with f(x) = -0.0 - x. This
+  /// method returns the negative zero constant for floating point or packed
+  /// floating point types; for all other types, it returns the null value.
+  static Constant *getZeroValueForNegationExpr(const Type *Ty);
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.

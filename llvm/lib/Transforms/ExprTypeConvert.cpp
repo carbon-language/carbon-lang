@@ -576,8 +576,8 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       // Can convert store if the incoming value is convertible and if the
       // result will preserve semantics...
       const Type *Op0Ty = I->getOperand(0)->getType();
-      if (!(Op0Ty->isInteger() ^ ElTy->isInteger()) &&
-          !(Op0Ty->isFloatingPoint() ^ ElTy->isFloatingPoint()))
+      if (Op0Ty->isInteger() == ElTy->isInteger() &&
+          Op0Ty->isFloatingPoint() == ElTy->isFloatingPoint())
         return ExpressionConvertibleToType(I->getOperand(0), ElTy, CTMap, TD);
     }
     return false;

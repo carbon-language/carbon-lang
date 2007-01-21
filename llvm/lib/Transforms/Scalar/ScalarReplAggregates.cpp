@@ -519,7 +519,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         return 0;
       
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
-      // Storing the pointer, not the into the value?
+      // Storing the pointer, not into the value?
       if (SI->getOperand(0) == V) return 0;
       
       // NOTE: We could handle storing of FP imms into integers here!

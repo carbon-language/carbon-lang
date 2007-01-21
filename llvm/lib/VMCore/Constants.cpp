@@ -378,10 +378,9 @@ bool ConstantExpr::isCompare() const {
 /// specify the full Instruction::OPCODE identifier.
 ///
 Constant *ConstantExpr::getNeg(Constant *C) {
-  if (!C->getType()->isFloatingPoint())
-    return get(Instruction::Sub, getNullValue(C->getType()), C);
-  else
-    return get(Instruction::Sub, ConstantFP::get(C->getType(), -0.0), C);
+  return get(Instruction::Sub,
+             ConstantExpr::getZeroValueForNegationExpr(C->getType()),
+             C);
 }
 Constant *ConstantExpr::getNot(Constant *C) {
   assert(isa<ConstantInt>(C) && "Cannot NOT a nonintegral type!");
@@ -1880,6 +1879,20 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
   assert(ShuffleVectorInst::isValidOperands(V1, V2, Mask) &&
          "Invalid shuffle vector constant expr operands!");
   return getShuffleVectorTy(V1->getType(), V1, V2, Mask);
+}
+
+Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
+  if ((const PackedType *PTy = dyn_cast<PackedType>(Ty)) &&
+      PTy->getElementType()->isFloatingPoint()) {
+    std::vector<Constant*> zeros(PTy->getNumElements(),
+                                 ConstantFP::get(PTy->getElementType(), -0.0));
+    return ConstantPacked::get(PTy, zeros);
+  }
+
+  if (Ty->isFloatingPoint())
+    return ConstantFP::get(Ty, -0.0);
+
+  return Constant::getNullValue(Ty);
 }
 
 // destroyConstant - Remove the constant from the constant table...

@@ -123,8 +123,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
 
     // Insert a unit add instruction right before the terminator corresponding
     // to the back-edge.
-    Constant *One = Ty->isFloatingPoint() ? (Constant*)ConstantFP::get(Ty, 1.0)
-                                          : ConstantInt::get(Ty, 1);
+    Constant *One = ConstantInt::get(Ty, 1);
     Instruction *Add = BinaryOperator::createAdd(PN, One, "indvar.next",
                                                  (*HPI)->getTerminator());
 

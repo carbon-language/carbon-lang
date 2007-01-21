@@ -60,8 +60,7 @@ namespace llvm {
     /// loop (inserting one if there is none).  A canonical induction variable
     /// starts at zero and steps by one on each iteration.
     Value *getOrInsertCanonicalInductionVariable(const Loop *L, const Type *Ty){
-      assert((Ty->isInteger() || Ty->isFloatingPoint()) &&
-             "Can only insert integer or floating point induction variables!");
+      assert(Ty->isInteger() && "Can only insert integer induction variables!");
       SCEVHandle H = SCEVAddRecExpr::get(SCEVUnknown::getIntegerSCEV(0, Ty),
                                          SCEVUnknown::getIntegerSCEV(1, Ty), L);
       return expand(H);

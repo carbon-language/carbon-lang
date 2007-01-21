@@ -2867,7 +2867,7 @@ used to make a <i>no-op cast</i> because it always changes bits. Use
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-   <a name="i_fp2uint">'<tt>fptoui .. to</tt>' Instruction</a>
+   <a name="i_fptoui">'<tt>fptoui .. to</tt>' Instruction</a>
 </div>
 <div class="doc_text">
 
@@ -3270,9 +3270,6 @@ yields a <a href="#t_primitive">i1</a> result, as follows:
   <li><tt>uno</tt>: yields <tt>true</tt> if either operand is a QNAN.</li>
   <li><tt>true</tt>: always yields <tt>true</tt>, regardless of operands.</li>
 </ol>
-<p>If the operands are <a href="#t_packed">packed</a> typed, the elements of 
-the vector are compared in turn and the predicate must hold for all elements.
-</p>
 
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = fcmp oeq float 4.0, 5.0    <i>; yields: result=false</i>

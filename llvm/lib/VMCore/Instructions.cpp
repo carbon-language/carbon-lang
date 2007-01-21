@@ -1092,26 +1092,18 @@ BinaryOperator *BinaryOperator::create(BinaryOps Op, Value *S1, Value *S2,
 
 BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
-  if (!Op->getType()->isFloatingPoint())
-    return new BinaryOperator(Instruction::Sub,
-                              Constant::getNullValue(Op->getType()), Op,
-                              Op->getType(), Name, InsertBefore);
-  else
-    return new BinaryOperator(Instruction::Sub,
-                              ConstantFP::get(Op->getType(), -0.0), Op,
-                              Op->getType(), Name, InsertBefore);
+  Value *zero = ConstantExpr::getZeroValueForNegationExpr(Op->getType());
+  return new BinaryOperator(Instruction::Sub,
+                            zero, Op,
+                            Op->getType(), Name, InsertBefore);
 }
 
 BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
                                           BasicBlock *InsertAtEnd) {
-  if (!Op->getType()->isFloatingPoint())
-    return new BinaryOperator(Instruction::Sub,
-                              Constant::getNullValue(Op->getType()), Op,
-                              Op->getType(), Name, InsertAtEnd);
-  else
-    return new BinaryOperator(Instruction::Sub,
-                              ConstantFP::get(Op->getType(), -0.0), Op,
-                              Op->getType(), Name, InsertAtEnd);
+  Value *zero = ConstantExpr::getZeroValueForNegationExpr(Op->getType());
+  return new BinaryOperator(Instruction::Sub,
+                            zero, Op,
+                            Op->getType(), Name, InsertAtEnd);
 }
 
 BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
@@ -1153,10 +1145,8 @@ static inline bool isConstantAllOnes(const Value *V) {
 bool BinaryOperator::isNeg(const Value *V) {
   if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
     if (Bop->getOpcode() == Instruction::Sub)
-      if (!V->getType()->isFloatingPoint())
-        return Bop->getOperand(0) == Constant::getNullValue(Bop->getType());
-      else
-        return Bop->getOperand(0) == ConstantFP::get(Bop->getType(), -0.0);
+      return Bop->getOperand(0) ==
+             ConstantExpr::getZeroValueForNegationExpr(Bop->getType());
   return false;
 }
 
@@ -1913,9 +1903,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
     assert(Op0Ty == Op1Ty &&
            "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(Op0Ty->isInteger() || isa<PointerType>(Op0Ty) ||
-           (isa<PackedType>(Op0Ty) && 
-            cast<PackedType>(Op0Ty)->getElementType()->isInteger()) &&
+    assert((Op0Ty->isInteger() || isa<PointerType>(Op0Ty)) &&
            "Invalid operand types for ICmp instruction");
     return;
   }
@@ -1927,8 +1915,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
   assert(Op0Ty == Op1Ty &&
          "Both operands to FCmp instruction are not of the same type!");
   // Check that the operands are the right type
-  assert(Op0Ty->isFloatingPoint() || (isa<PackedType>(Op0Ty) &&
-         cast<PackedType>(Op0Ty)->getElementType()->isFloatingPoint()) &&
+  assert(Op0Ty->isFloatingPoint() &&
          "Invalid operand types for FCmp instruction");
 }
   
@@ -1948,9 +1935,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
     assert(Op0Ty == Op1Ty &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(Op0Ty->isInteger() || isa<PointerType>(Op0Ty) ||
-           (isa<PackedType>(Op0Ty) && 
-            cast<PackedType>(Op0Ty)->getElementType()->isInteger()) &&
+    assert(Op0Ty->isInteger() || isa<PointerType>(Op0Ty) &&
            "Invalid operand types for ICmp instruction");
     return;
   }
@@ -1962,8 +1947,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
   assert(Op0Ty == Op1Ty &&
           "Both operands to FCmp instruction are not of the same type!");
   // Check that the operands are the right type
-  assert(Op0Ty->isFloatingPoint() || (isa<PackedType>(Op0Ty) &&
-         cast<PackedType>(Op0Ty)->getElementType()->isFloatingPoint()) &&
+  assert(Op0Ty->isFloatingPoint() &&
         "Invalid operand types for FCmp instruction");
 }
 
