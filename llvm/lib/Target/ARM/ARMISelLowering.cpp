@@ -483,7 +483,7 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
                   getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
     // Wrap it since tBX takes a register source operand.
-    if (!Subtarget->hasV5TOps() && Subtarget->isThumb())
+    if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps())
       Callee = DAG.getNode(ARMISD::WrapperCall, MVT::i32, Callee);
   }
 
