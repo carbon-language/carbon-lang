@@ -140,6 +140,12 @@ public:
     return 0;
   }
   
+  virtual DeclTy *ParseStructUnionTag(Scope *S, bool isUnion,
+                                      SourceLocation KWLoc,IdentifierInfo *Name,
+                                      SourceLocation NameLoc) {
+    return 0;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks.
   //===--------------------------------------------------------------------===//
