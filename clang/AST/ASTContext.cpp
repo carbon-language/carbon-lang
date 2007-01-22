@@ -211,7 +211,7 @@ TypeRef ASTContext::getTypeDeclType(TypeDecl *Decl) {
 
   // FIXME: does this lose qualifiers from the typedef??
   
-  Type *Canonical = Decl->getType().getTypePtr();
+  Type *Canonical = Decl->getUnderlyingType().getTypePtr();
   Types.push_back(new TypeNameType(Decl, Canonical));
   return Types.back();
 }

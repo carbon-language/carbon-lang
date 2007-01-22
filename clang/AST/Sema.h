@@ -74,7 +74,7 @@ public:
   virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
-  Decl *ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl);
+  Decl *ParseTypedefDecl(Scope *S, Declarator &D);
   
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.
@@ -82,6 +82,10 @@ public:
   
   Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
+  
+  virtual DeclTy *ParseStructUnionTag(Scope *S, bool isUnion,
+                                      SourceLocation KWLoc,IdentifierInfo *Name,
+                                      SourceLocation NameLoc);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
