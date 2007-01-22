@@ -7990,8 +7990,8 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if ((DestPTy->isInteger() && DestPTy != Type::Int1Ty) ||
-        isa<PointerType>(DestPTy) || isa<PackedType>(DestPTy)) {
+    if (DestPTy->isInteger() || isa<PointerType>(DestPTy) || 
+         isa<PackedType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
       // constants.
@@ -8004,13 +8004,13 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
             SrcPTy = SrcTy->getElementType();
           }
 
-      if (((SrcPTy->isInteger() && SrcPTy != Type::Int1Ty) ||
-           isa<PointerType>(SrcPTy) || isa<PackedType>(SrcPTy)) &&
+      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy) || 
+            isa<PackedType>(SrcPTy)) &&
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
           (isa<PointerType>(SrcPTy) == isa<PointerType>(LI.getType())) &&
-          IC.getTargetData().getTypeSize(SrcPTy) ==
-               IC.getTargetData().getTypeSize(DestPTy)) {
+          IC.getTargetData().getTypeSizeInBits(SrcPTy) ==
+               IC.getTargetData().getTypeSizeInBits(DestPTy)) {
 
         // Okay, we are casting from one integer or pointer type to another of
         // the same size.  Instead of casting the pointer before the load, cast
@@ -8178,8 +8178,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if ((DestPTy->isInteger() && DestPTy != Type::Int1Ty) ||
-        isa<PointerType>(DestPTy)) {
+    if (DestPTy->isInteger() || isa<PointerType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
       // constants.
