@@ -29,7 +29,17 @@ class FunctionDecl;
 class Decl {
 public:
   enum Kind {
-    Typedef, Function, Variable
+    Typedef, Function, Variable,
+    Struct, Union, Class, Enum
+  };
+
+  /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
+  /// labels, tags, members and ordinary identifiers.
+  enum IdentifierNamespace {
+    IDNS_Label,
+    IDNS_Tag,
+    IDNS_Member,
+    IDNS_Ordinary
   };
 private:
   /// DeclKind - This indicates which class this is.
@@ -42,9 +52,6 @@ private:
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
   
-  /// Type.
-  TypeRef DeclType;
-
   /// When this decl is in scope while parsing, the Next field contains a
   /// pointer to the shadowed decl of the same name.  When the scope is popped,
   /// Decls are relinked onto a containing decl object.
@@ -52,18 +59,32 @@ private:
   Decl *Next;
   
 public:
-  Decl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *next)
-    : DeclKind(DK), Loc(L), Identifier(Id), DeclType(T), Next(next) {}
+  Decl(Kind DK, SourceLocation L, IdentifierInfo *Id)
+    : DeclKind(DK), Loc(L), Identifier(Id), Next(0) {}
   virtual ~Decl();
   
   IdentifierInfo *getIdentifier() const { return Identifier; }
   SourceLocation getLocation() const { return Loc; }
   const char *getName() const;
   
-  TypeRef getType() const { return DeclType; }
   Kind getKind() const { return DeclKind; }
   Decl *getNext() const { return Next; }
   void setNext(Decl *N) { Next = N; }
+  
+  IdentifierNamespace getIdentifierNamespace() const {
+    switch (DeclKind) {
+    default: assert(0 && "Unknown decl kind!");
+    case Typedef:
+    case Function:
+    case Variable:
+      return IDNS_Ordinary;
+    case Struct:
+    case Union:
+    case Class:
+    case Enum:
+      return IDNS_Tag;
+    }
+  }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }
@@ -72,9 +93,13 @@ public:
 /// TypeDecl - Common base-class for all type name decls, which as Typedefs and
 /// Objective-C classes.
 class TypeDecl : public Decl {
+  /// Type.  FIXME: This isn't a wonderful place for this.
+  TypeRef DeclType;
 public:
-  TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : Decl(DK, L, Id, T, Next) {}
+  TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T)
+    : Decl(DK, L, Id), DeclType(T) {}
+
+  TypeRef getUnderlyingType() const { return DeclType; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }
@@ -84,8 +109,8 @@ public:
 class TypedefDecl : public TypeDecl {
 public:
   // FIXME: Remove Declarator argument.
-  TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : TypeDecl(Typedef, L, Id, T, Next) {}
+  TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+    : TypeDecl(Typedef, L, Id, T) {}
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }
@@ -94,12 +119,14 @@ public:
 
 /// ObjectDecl - ObjectDecl - Represents a declaration of a value.
 class ObjectDecl : public Decl {
+  TypeRef DeclType;
 protected:
-  ObjectDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T,
-             Decl *Next)
-    : Decl(DK, L, Id, T, Next) {}
+  ObjectDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T)
+    : Decl(DK, L, Id), DeclType(T) {}
 public:
-  
+
+  TypeRef getType() const { return DeclType; }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() == Variable || D->getKind() == Function;
@@ -112,8 +139,8 @@ public:
 class VarDecl : public ObjectDecl {
   // TODO: Initializer.
 public:
-  VarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : ObjectDecl(Variable, L, Id, T, Next) {}
+  VarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+    : ObjectDecl(Variable, L, Id, T) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Variable; }
@@ -135,9 +162,8 @@ class FunctionDecl : public ObjectDecl {
   /// function.
   Decl *DeclChain;
 public:
-  FunctionDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, Decl *Next)
-    : ObjectDecl(Function, L, Id, T, Next),
-      ParamInfo(0), Body(0), DeclChain(0) {}
+  FunctionDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+    : ObjectDecl(Function, L, Id, T), ParamInfo(0), Body(0), DeclChain(0) {}
   virtual ~FunctionDecl();
   
   Stmt *getBody() const { return Body; }
@@ -156,6 +182,34 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Function; }
   static bool classof(const FunctionDecl *D) { return true; }
+};
+
+/// TagDecl - Represents the declaration of a struct/union/class/enum.
+class TagDecl : public Decl {
+protected:
+  TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) : Decl(DK, L, Id) {}
+public:
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() == Struct || D->getKind() == Union ||
+           D->getKind() == Class || D->getKind() == Enum;
+  }
+  static bool classof(const ObjectDecl *D) { return true; }
+};
+
+/// RecordDecl - Represents a struct/union/class.
+class RecordDecl : public TagDecl {
+public:
+  RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) :TagDecl(DK, L, Id){
+    assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
+  }
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == Struct || D->getKind() == Union ||
+           D->getKind() == Class;
+  }
+  static bool classof(const RecordDecl *D) { return true; }
 };
 
   
