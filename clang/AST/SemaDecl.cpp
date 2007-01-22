@@ -62,15 +62,27 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   return 0;
 }
 
+/// LookupScopedDecl - Look up the inner-most declaration in the specified
+/// namespace.
+static Decl *LookupScopedDecl(IdentifierInfo *II, Decl::IdentifierNamespace NS){
+  if (II == 0) return 0;
+  
+  // Scan up the scope chain looking for a decl that matches this identifier
+  // that is in the appropriate namespace.  This search should not take long, as
+  // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
+  for (Decl *D = II->getFETokenInfo<Decl>(); D; D = D->getNext())
+    if (D->getIdentifierNamespace() == NS)
+      return D;
+  return 0;
+}
+
+
 Action::DeclTy *
 Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
                       DeclTy *LastInGroup) {
   IdentifierInfo *II = D.getIdentifier();
-  Decl *PrevDecl = 0;
   
-  if (II)
-    PrevDecl = II->getFETokenInfo<Decl>();
-  if (PrevDecl) {
+  if (Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary)) {
     // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
     if (S->isDeclScope(PrevDecl)) {
       // TODO: This is totally simplistic.  It should handle merging functions
@@ -82,20 +94,18 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   
   Decl *New;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
-    New = ParseTypedefDecl(S, D, PrevDecl);
+    New = ParseTypedefDecl(S, D);
   else if (D.isFunctionDeclarator())
-    New = new FunctionDecl(D.getIdentifierLoc(), II, GetTypeForDeclarator(D, S),
-                           PrevDecl);
+    New = new FunctionDecl(D.getIdentifierLoc(), II, GetTypeForDeclarator(D,S));
   else
-    New = new VarDecl(D.getIdentifierLoc(), II, GetTypeForDeclarator(D, S),
-                      PrevDecl);
+    New = new VarDecl(D.getIdentifierLoc(), II, GetTypeForDeclarator(D, S));
   
   if (!New) return 0;
   
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
-    // If PrevDecl includes conflicting name here, emit a diagnostic.
+    New->setNext(II->getFETokenInfo<Decl>());
     II->setFETokenInfo(New);
     S->AddDecl(New);
   }
@@ -114,21 +124,17 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   const DeclaratorChunk::ParamInfo &PI = FTI.Fun.ArgInfo[ArgNo];
 
   IdentifierInfo *II = PI.Ident;
-  Decl *PrevDecl = 0;
   
-  if (II)
-    PrevDecl = II->getFETokenInfo<Decl>();
-  if (PrevDecl) {
+  if (Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary)) {
     
     // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   }
   
-  VarDecl *New = new VarDecl(PI.IdentLoc, II, static_cast<Type*>(PI.TypeInfo),
-                             PrevDecl);
+  VarDecl *New = new VarDecl(PI.IdentLoc, II, static_cast<Type*>(PI.TypeInfo));
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
-    // If PrevDecl includes conflicting name here, emit a diagnostic.
+    New->setNext(II->getFETokenInfo<Decl>());
     II->setFETokenInfo(New);
     FnScope->AddDecl(New);
   }
@@ -228,12 +234,44 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
 }
 
 
-Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, Decl *PrevDecl) {
+Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
   assert(D.getIdentifier() && "Wrong callback for declspec withotu declarator");
   
   TypeRef T = GetTypeForDeclarator(D, S);
   if (T.isNull()) return 0;
   
-  return new TypedefDecl(D.getIdentifierLoc(), D.getIdentifier(), T, PrevDecl);
+  // Scope manipulation handled by caller.
+  return new TypedefDecl(D.getIdentifierLoc(), D.getIdentifier(), T);
 }
 
+
+/// ParseStructUnionTag - This is invoked when we see 'struct foo' or
+/// 'struct {'.  In the former case, Name will be non-null.  In the later case,
+/// Name will be null.  isUnion indicates whether this is a union or struct tag.
+Sema::DeclTy *Sema::ParseStructUnionTag(Scope *S, bool isUnion,
+                                        SourceLocation KWLoc, 
+                                        IdentifierInfo *Name,
+                                        SourceLocation NameLoc) {
+  // If this is a named struct, check to see if there was a previous forward
+  // declaration or definition.
+  if (Decl *PrevDecl = LookupScopedDecl(Name, Decl::IDNS_Tag)) {
+    // TODO: verify it's struct/union, etc.
+  }
+  
+  // If there is an identifier, use the location of the identifier as the
+  // location of the decl, otherwise use the location of the struct/union
+  // keyword.
+  SourceLocation Loc = NameLoc.isValid() ? NameLoc : KWLoc;
+  
+  // Otherwise, if this is the first time we've seen this tag, create the decl.
+  Decl *New = new RecordDecl(isUnion ? Decl::Union : Decl::Struct, Loc, Name);
+  
+  // If this has an identifier, add it to the scope stack.
+  if (Name) {
+    New->setNext(Name->getFETokenInfo<Decl>());
+    Name->setFETokenInfo(New);
+    S->AddDecl(New);
+  }
+  
+  return New;
+}
