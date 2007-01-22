@@ -1,7 +1,8 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep align.*1 | wc | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep align.*2 | wc | grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep align.*3 | wc | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-linux | grep align.*2 | wc | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-linux | grep align.*3 | wc | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-apple-darwin | grep align.*2 | wc | grep 4
 
 %a = global bool true
 %b = global sbyte 1
