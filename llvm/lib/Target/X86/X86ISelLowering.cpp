@@ -664,7 +664,8 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
   }
 
-  if (Subtarget->isPICStyleGOT()) {
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+      Subtarget->isPICStyleGOT()) {
     Chain = DAG.getCopyToReg(Chain, X86::EBX,
                              DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                              InFlag);
