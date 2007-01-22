@@ -439,12 +439,24 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   if (Tok.getKind() != tok::identifier &&
       Tok.getKind() != tok::l_brace) {
     Diag(Tok, diag::err_expected_ident_lbrace);
+    // TODO: better error recovery here.
     return;
   }
   
-  if (Tok.getKind() == tok::identifier)
-    ConsumeToken();
+  // If an identifier is present, consume and remember it.
+  IdentifierInfo *Name = 0;
+  SourceLocation NameLoc;
+  if (Tok.getKind() == tok::identifier) {
+    Name = Tok.getIdentifierInfo();
+    NameLoc = ConsumeToken();
+  }
   
+  // There are three options here.  If we have 'struct foo;', then this is a
+  // forward declaration.  If we have 'struct foo {...' then this is a
+  // definition.  Otherwise we have something like 'struct foo xyz', a use.
+  DeclTy *TagDecl = Actions.ParseStructUnionTag(CurScope, isUnion, StartLoc,
+                                                Name, NameLoc);
+  // TODO: more with the tag decl.
   if (Tok.getKind() == tok::l_brace) {
     SourceLocation LBraceLoc = ConsumeBrace();
 
