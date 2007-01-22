@@ -104,7 +104,8 @@ public:
   /// getTargetDataString - Return the pointer size and type alignment
   /// properties of this subtarget.
   const char *getTargetDataString() const {
-    return isPPC64() ? "E-p:64:64-d:32-l:32" : "E-p:32:32-d:32-l:32";
+    return isPPC64() ? "E-p:64:64-d:32:64-l:32:64"
+                     : "E-p:32:32-d:32:64-l:32:64";
   }
 
   /// isPPC64 - Return true if we are generating code for 64-bit pointer mode.
