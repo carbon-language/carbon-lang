@@ -451,7 +451,7 @@ unsigned char TargetData::getTypeAlignmentPref(const Type *Ty) const {
 }
 
 unsigned char TargetData::getTypeAlignmentShift(const Type *Ty) const {
-  unsigned Align = getTypeAlignmentABI(Ty);
+  unsigned Align = getTypeAlignmentPref(Ty);
   assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
   return Log2_32(Align);
 }
@@ -514,8 +514,6 @@ unsigned TargetData::getPreferredAlignmentLog(const GlobalVariable *GV) const {
   
   if (GV->hasInitializer()) {
     // Always round up alignment of global doubles to 8 bytes.
-    if (GV->getType()->getElementType() == Type::DoubleTy && Alignment < 3)
-      Alignment = 3;
     if (Alignment < 4) {
       // If the global is not external, see if it is large.  If so, give it a
       // larger alignment.
