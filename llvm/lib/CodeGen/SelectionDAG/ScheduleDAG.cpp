@@ -330,15 +330,11 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     const Type *Type = CP->getType();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
-      if (Type == Type::DoubleTy)
-        Align = 3;  // always 8-byte align doubles.
-      else {
-        Align = TM.getTargetData()->getTypeAlignmentShift(Type);
-        if (Align == 0) {
-          // Alignment of packed types.  FIXME!
-          Align = TM.getTargetData()->getTypeSize(Type);
-          Align = Log2_64(Align);
-        }
+      Align = TM.getTargetData()->getTypeAlignmentShift(Type);
+      if (Align == 0) {
+        // Alignment of packed types.  FIXME!
+        Align = TM.getTargetData()->getTypeSize(Type);
+        Align = Log2_64(Align);
       }
     }
     
