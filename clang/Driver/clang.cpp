@@ -848,7 +848,7 @@ static void PrintFunctionDecl(FunctionDecl *FD) {
 
 static void PrintTypeDefDecl(TypedefDecl *TD) {
   std::string S = TD->getName();
-  TD->getType().getAsString(S);
+  TD->getUnderlyingType().getAsString(S);
   std::cerr << "typedef " << S << ";\n";
 }
 
