@@ -233,7 +233,7 @@ public:
   /// the specified type.
   unsigned char getTypeAlignmentPref(const Type *Ty) const;
 
-  /// getTypeAlignmentShift - Return the minimum required alignment for the
+  /// getTypeAlignmentShift - Return the preferred alignment for the
   /// specified type, returned as log2 of the value (a shift amount).
   ///
   unsigned char getTypeAlignmentShift(const Type *Ty) const;
