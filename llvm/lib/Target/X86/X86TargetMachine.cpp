@@ -109,8 +109,8 @@ X86_64TargetMachine::X86_64TargetMachine(const Module &M, const std::string &FS)
 X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS, bool is64Bit)
   : Subtarget(M, FS, is64Bit),
     DataLayout(Subtarget.is64Bit() ?
-               std::string("e-p:64:64-d:32:64-l:32") :
-               std::string("e-p:32:32-d:32:64-l:32")),
+               std::string("e-p:64:64-d:32:64-l:32:64") :
+               std::string("e-p:32:32-d:32:64-l:32:64")),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
     InstrInfo(*this), JITInfo(*this), TLInfo(*this) {
