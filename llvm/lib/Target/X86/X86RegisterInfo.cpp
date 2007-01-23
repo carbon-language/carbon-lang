@@ -891,7 +891,7 @@ X86RegisterInfo::getCalleeSavedRegClasses() const {
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
 //
-static bool hasFP(const MachineFunction &MF) {
+bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
   return (NoFramePointerElim || 
           MF.getFrameInfo()->hasVarSizedObjects() ||
           MF.getInfo<X86FunctionInfo>()->getForceFramePointer());
@@ -998,7 +998,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
-  if (MFI->hasCalls() || MF.getFrameInfo()->hasVarSizedObjects()) {
+  if (MFI->hasCalls() || MFI->hasVarSizedObjects()) {
     // When we have no frame pointer, we reserve argument space for call sites
     // in the function immediately on entry to the current function.  This
     // eliminates the need for add/sub ESP brackets around call sites.

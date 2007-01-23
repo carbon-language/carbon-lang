@@ -277,7 +277,7 @@ ARMRegisterInfo::getCalleeSavedRegClasses() const {
 /// pointer register.  This is true if the function has variable sized allocas
 /// or if frame pointer elimination is disabled.
 ///
-static bool hasFP(const MachineFunction &MF) {
+bool ARMRegisterInfo::hasFP(const MachineFunction &MF) const {
   return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 

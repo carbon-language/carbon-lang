@@ -186,7 +186,7 @@ AlphaRegisterInfo::getCalleeSavedRegClasses() const {
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
 //
-static bool hasFP(const MachineFunction &MF) {
+bool AlphaRegisterInfo::hasFP(const MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   return MFI->hasVarSizedObjects();
 }

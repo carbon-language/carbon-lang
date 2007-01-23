@@ -78,6 +78,8 @@ public:
   /// length of this list match the getCalleeSavedRegs() list.
   const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
 
+  bool hasFP(const MachineFunction &MF) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI) const;

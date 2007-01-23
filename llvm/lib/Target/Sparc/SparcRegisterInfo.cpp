@@ -122,6 +122,9 @@ SparcRegisterInfo::getCalleeSavedRegClasses() const {
   return CalleeSavedRegClasses;
 }
 
+bool SparcRegisterInfo::hasFP(const MachineFunction &MF) const {
+  return false;
+}
 
 void SparcRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,

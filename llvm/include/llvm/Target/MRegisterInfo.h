@@ -367,6 +367,11 @@ public:
     return 0;
   }
 
+  /// hasFP - Return true if the specified function should have a dedicated frame
+  /// pointer register. For most targets this is true only if the function has
+  /// variable sized allocas or if frame pointer elimination is disabled.
+  virtual bool hasFP(const MachineFunction &MF) const = 0;
+
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
   /// frame setup/destroy instructions if they exist (-1 otherwise).  Some
   /// targets use pseudo instructions in order to abstract away the difference

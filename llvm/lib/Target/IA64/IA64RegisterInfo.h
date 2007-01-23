@@ -48,6 +48,8 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
 
   const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
 
+  bool hasFP(const MachineFunction &MF) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI) const;

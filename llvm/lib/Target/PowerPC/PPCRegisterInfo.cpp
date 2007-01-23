@@ -410,7 +410,7 @@ static bool needsFP(const MachineFunction &MF) {
 // hasFP - Return true if the specified function actually has a dedicated frame
 // pointer register.  This is true if the function needs a frame pointer and has
 // a non-zero stack size.
-static bool hasFP(const MachineFunction &MF) {
+bool PPCRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return MFI->getStackSize() && needsFP(MF);
 }
