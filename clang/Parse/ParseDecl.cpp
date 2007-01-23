@@ -536,12 +536,8 @@ void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
       if (Tok.getKind() == tok::kw___attribute)
         ParseAttributes();
       
-      // TODO: install declarator.
-      
-      
-      //LastDeclInGroup = Actions.ParseDeclarator(CurScope, D, Init.Val,
-      //LastDeclInGroup);
-
+      // Install the declarator into the current TagDecl.
+      Actions.ParseField(TagDecl, DeclaratorInfo, BitfieldSize);
       
       // If we don't have a comma, it is either the end of the list (a ';')
       // or an error, bail out.

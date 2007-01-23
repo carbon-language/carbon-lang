@@ -153,6 +153,9 @@ public:
     return 0;
   }
   
+  virtual void ParseField(DeclTy *TagDecl, Declarator &D,
+                          ExprTy *BitfieldWidth) {}
+  
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks.
   //===--------------------------------------------------------------------===//
