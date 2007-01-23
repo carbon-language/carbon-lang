@@ -493,9 +493,6 @@ void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
     Diag(Tok, diag::ext_empty_struct_union_enum, 
          DeclSpec::getSpecifierName((DeclSpec::TST)TagType));
 
-  // Enter a scope to capture the struct declarations.
-  EnterScope(0);
-  
   // While we still have something to read, read the declarations in the struct.
   while (Tok.getKind() != tok::r_brace && 
          Tok.getKind() != tok::eof) {
@@ -570,8 +567,6 @@ void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
       SkipUntil(tok::r_brace, true, true);
     }
   }
-  
-  ExitScope();
   
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   
