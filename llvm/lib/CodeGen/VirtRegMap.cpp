@@ -29,8 +29,8 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallSet.h"
 #include <algorithm>
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumSpills, "Number of register spills");
@@ -471,7 +471,7 @@ namespace {
     unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
                              AvailableSpills &Spills,
                              std::map<int, MachineInstr*> &MaybeDeadStores,
-                             std::set<unsigned> &Rejected) {
+                             SmallSet<unsigned, 8> &Rejected) {
       if (Reuses.empty()) return PhysReg;  // This is most often empty.
 
       for (unsigned ro = 0, e = Reuses.size(); ro != e; ++ro) {
@@ -553,7 +553,7 @@ namespace {
     unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
                              AvailableSpills &Spills,
                              std::map<int, MachineInstr*> &MaybeDeadStores) {
-      std::set<unsigned> Rejected;
+      SmallSet<unsigned, 8> Rejected;
       return GetRegForReload(PhysReg, MI, Spills, MaybeDeadStores, Rejected);
     }
   };
