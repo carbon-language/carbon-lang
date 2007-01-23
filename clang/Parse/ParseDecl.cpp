@@ -13,6 +13,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
+#include "llvm/ADT/SmallSet.h"
 using namespace llvm;
 using namespace clang;
 
@@ -928,6 +929,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 
   // Build up an array of information about the parsed arguments.
   SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
+  SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
   
   if (Tok.getKind() == tok::r_paren) {
     // int() -> no prototype, no '...'.
@@ -966,17 +968,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       IdentifierInfo *ParmII = Tok.getIdentifierInfo();
       
       // Verify that the argument identifier has not already been mentioned.
-      // Note that the implementation of this check is N^2 in # arguments.  For
-      // reasonable number of arguments though (e.g. < 32) this is faster than
-      // building a set.
-      // FIXME: we need a SmallSet<const IdentifierInfo*, 16>.
-      for (unsigned i = 0, e = ParamInfo.size(); i != e; ++i)
-        if (ParamInfo[i].Ident == ParmII) {
-          Diag(Tok.getLocation(), diag::err_param_redefinition,
-               ParmII->getName());
-          ParmII = 0;
-          break;
-        }
+      if (!ParamsSoFar.insert(ParmII).second) {
+        Diag(Tok.getLocation(), diag::err_param_redefinition,ParmII->getName());
+        ParmII = 0;
+      }
           
       // Remember this identifier in ParamInfo.
       if (ParmII)
@@ -1052,18 +1047,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       IdentifierInfo *ParmII = ParmDecl.getIdentifier();
       
       // Verify that the argument identifier has not already been mentioned.
-      // Note that the implementation of this check is N^2 in # arguments.  For
-      // reasonable number of arguments though (e.g. < 32) this is faster than
-      // building a set.
-      // FIXME: we need a SmallSet<const IdentifierInfo*, 16>.
-      if (ParmII) {
-        for (unsigned i = 0, e = ParamInfo.size(); i != e; ++i)
-          if (ParamInfo[i].Ident == ParmII) {
-            Diag(ParmDecl.getIdentifierLoc(), diag::err_param_redefinition,
-                 ParmII->getName());
-            ParmII = 0;
-            break;
-          }
+      if (ParmII && !ParamsSoFar.insert(ParmII).second) {
+        Diag(ParmDecl.getIdentifierLoc(), diag::err_param_redefinition,
+             ParmII->getName());
+        ParmII = 0;
       }
         
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
