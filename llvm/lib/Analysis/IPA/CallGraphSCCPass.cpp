@@ -144,7 +144,7 @@ bool CGPassManager::doFinalization(CallGraph &CG) {
   return Changed;
 }
 
-/// Assign pass manager to manager this pass
+/// Assign pass manager to manage this pass.
 void CallGraphSCCPass::assignPassManager(PMStack &PMS,
 					 PassManagerType PreferredType) {
   // Find CGPassManager 
