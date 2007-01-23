@@ -779,6 +779,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       
       const char *IDStart = LastEmitted;
       char *IDEnd;
+      errno = 0;
       long Val = strtol(IDStart, &IDEnd, 10); // We only accept numbers for IDs.
       if (!isdigit(*IDStart) || (Val == 0 && errno == EINVAL)) {
         cerr << "Bad $ operand number in inline asm string: '" 
