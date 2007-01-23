@@ -144,6 +144,44 @@ bool CGPassManager::doFinalization(CallGraph &CG) {
   return Changed;
 }
 
+/// Assign pass manager to manager this pass
+void CallGraphSCCPass::assignPassManager(PMStack &PMS,
+					 PassManagerType PreferredType) {
+  // Find CGPassManager 
+  while (!PMS.empty()) {
+    if (PMS.top()->getPassManagerType() > PMT_CallGraphPassManager)
+      PMS.pop();
+    else;
+    break;
+  }
+
+  CGPassManager *CGP = dynamic_cast<CGPassManager *>(PMS.top());
+
+  // Create new Call Graph SCC Pass Manager if it does not exist. 
+  if (!CGP) {
+
+    assert (!PMS.empty() && "Unable to create Call Graph Pass Manager");
+    PMDataManager *PMD = PMS.top();
+
+    // [1] Create new Call Graph Pass Manager
+    CGP = new CGPassManager(PMD->getDepth() + 1);
+
+    // [2] Set up new manager's top level manager
+    PMTopLevelManager *TPM = PMD->getTopLevelManager();
+    TPM->addIndirectPassManager(CGP);
+
+    // [3] Assign manager to manage this new manager. This may create
+    // and push new managers into PMS
+    Pass *P = dynamic_cast<Pass *>(CGP);
+    P->assignPassManager(PMS);
+
+    // [4] Push new manager into PMS
+    PMS.push(CGP);
+  }
+
+  CGP->add(this);
+}
+
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should
 /// always explicitly call the implementation here.

@@ -27,6 +27,7 @@ namespace llvm {
 
 class CallGraphNode;
 class CallGraph;
+class PMStack;
 
 struct CallGraphSCCPass : public ModulePass {
 
@@ -54,6 +55,9 @@ struct CallGraphSCCPass : public ModulePass {
   ///
   virtual bool runOnModule(Module &M);
 
+  /// Assign pass manager to manager this pass
+  virtual void assignPassManager(PMStack &PMS,
+				 PassManagerType PMT = PMT_CallGraphPassManager);
 
   /// getAnalysisUsage - For this class, we declare that we require and preserve
   /// the call graph.  If the derived class implements this method, it should
