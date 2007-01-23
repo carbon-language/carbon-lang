@@ -36,7 +36,7 @@ unsigned DeclSpec::getParsedSpecifiers() const {
   return Res;
 }
 
-static const char *getSpecifierName(DeclSpec::SCS S) {
+const char *DeclSpec::getSpecifierName(DeclSpec::SCS S) {
   switch (S) {
   default: assert(0 && "Unknown typespec!");
   case DeclSpec::SCS_unspecified: return "unspecified";
@@ -49,7 +49,7 @@ static const char *getSpecifierName(DeclSpec::SCS S) {
 }
 
 static bool BadSpecifier(DeclSpec::SCS S, const char *&PrevSpec) {
-  PrevSpec = getSpecifierName(S);
+  PrevSpec = DeclSpec::getSpecifierName(S);
   return true;
 }
 
