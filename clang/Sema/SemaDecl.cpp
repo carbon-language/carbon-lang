@@ -141,10 +141,11 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   const DeclaratorChunk::ParamInfo &PI = FTI.Fun.ArgInfo[ArgNo];
 
   IdentifierInfo *II = PI.Ident;
+  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
+  // Can this happen for params?  We already checked that they don't conflict
+  // among each other.  Here they can only shadow globals, which is ok.
   if (Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary)) {
     
-    // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
-    assert(PrevDecl == 0 && "FIXME: Unimp!");
   }
   
   VarDecl *New = new VarDecl(PI.IdentLoc, II, static_cast<Type*>(PI.TypeInfo));
@@ -271,7 +272,7 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, bool isUse,
                              SourceLocation KWLoc, IdentifierInfo *Name,
                              SourceLocation NameLoc) {
   // If this is a use of an existing tag, it must have a name.
-  assert((isUse || Name != 0) && "Nameless record must have a name!");
+  assert((!isUse || Name != 0) && "Nameless record must be a definition!");
   
   Decl::Kind Kind;
   switch (TagType) {
