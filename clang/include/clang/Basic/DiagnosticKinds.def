@@ -426,8 +426,8 @@ DIAG(err_undeclared_var_use, ERROR,
      "use of undeclared identifier '%s'")
 DIAG(err_redefinition, ERROR,
      "redefinition of '%s'")
-DIAG(err_redefinition_with_wrong_tag, ERROR,
-     "redefinition of '%s' with tag that does not match previous use")
+DIAG(err_use_with_wrong_tag, ERROR,
+     "use of '%s' with tag type that does not match previous declaration")
 
 DIAG(warn_implicit_function_decl, WARNING,
      "implicit declaration of function '%s'")

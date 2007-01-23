@@ -83,10 +83,10 @@ public:
   Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   
-  virtual DeclTy *ParseStructUnionTag(Scope *S, bool isUnion, bool isUse,
-                                      SourceLocation KWLoc,IdentifierInfo *Name,
-                                      SourceLocation NameLoc);
-  
+  virtual DeclTy *ParseTag(Scope *S, TagType Ty, bool isUse,
+                           SourceLocation KWLoc, IdentifierInfo *Name,
+                           SourceLocation NameLoc);
+    
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 

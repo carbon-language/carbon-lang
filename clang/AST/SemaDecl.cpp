@@ -266,14 +266,20 @@ Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
 /// Name will be null.  isUnion indicates whether this is a union or struct tag.
 /// isUse indicates whether this is a use of a preexisting struct tag, or if it
 /// is a definition or declaration of a new one.
-Sema::DeclTy *Sema::ParseStructUnionTag(Scope *S, bool isUnion, bool isUse,
-                                        SourceLocation KWLoc, 
-                                        IdentifierInfo *Name,
-                                        SourceLocation NameLoc) {
+Sema::DeclTy *Sema::ParseTag(Scope *S, TagType Ty, bool isUse,
+                             SourceLocation KWLoc, IdentifierInfo *Name,
+                             SourceLocation NameLoc) {
   // If this is a use of an existing tag, it must have a name.
   assert((isUse || Name != 0) && "Nameless record must have a name!");
   
-  Decl::Kind Kind = isUnion ? Decl::Union : Decl::Struct;
+  Decl::Kind Kind;
+  switch (Ty) {
+  default: assert(0 && "Unknown tag type!");
+  case TAG_STRUCT: Kind = Decl::Struct; break;
+  case TAG_UNION: Kind = Decl::Union; break;
+  case TAG_CLASS: Kind = Decl::Class; break;
+  case TAG_ENUM:  Kind = Decl::Enum; break;
+  }
   
   // If there is an identifier, use the location of the identifier as the
   // location of the decl, otherwise use the location of the struct/union
@@ -292,20 +298,24 @@ Sema::DeclTy *Sema::ParseStructUnionTag(Scope *S, bool isUnion, bool isUse,
       // Make sure that this wasn't declared as an enum and now used as a struct
       // or something similar.
       if (PrevDecl->getKind() != Kind) {
-        Diag(KWLoc, diag::err_redefinition_with_wrong_tag, Name->getName());
+        Diag(KWLoc, diag::err_use_with_wrong_tag, Name->getName());
         Diag(PrevDecl->getLocation(), diag::err_previous_use);
       }
-      
+
+      // Okay, this is a reference to the old decl, return it.
+      return PrevDecl;
     }
-    
-    // TODO: verify it's struct/union, etc.
-    
-    
-    
+    // If we get here, this is a definition of a new struct type in a nested
+    // scope, e.g. "struct foo; void bar() { struct foo; }", just create a new
+    // type.
   }
   
   // Otherwise, if this is the first time we've seen this tag, create the decl.
-  Decl *New = new RecordDecl(Kind, Loc, Name);
+  Decl *New;
+  if (Kind != Decl::Enum)
+    New = new RecordDecl(Kind, Loc, Name);
+  else
+    assert(0 && "Enum tags not implemented yet!");
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {

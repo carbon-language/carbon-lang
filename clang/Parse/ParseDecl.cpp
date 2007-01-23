@@ -463,8 +463,10 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   // struct foo {..};  void bar() { struct foo x; }  <- use of old foo.
   //
   bool isUse = Tok.getKind() != tok::l_brace && Tok.getKind() != tok::semi;
-  DeclTy *TagDecl = Actions.ParseStructUnionTag(CurScope, isUnion, isUse,
-                                                StartLoc, Name, NameLoc);
+  DeclTy *TagDecl = Actions.ParseTag(CurScope,
+                                     isUnion ? Action::TAG_UNION : 
+                                               Action::TAG_STRUCT, isUse,
+                                     StartLoc, Name, NameLoc);
   // TODO: more with the tag decl.
   if (Tok.getKind() == tok::l_brace) {
     SourceLocation LBraceLoc = ConsumeBrace();
