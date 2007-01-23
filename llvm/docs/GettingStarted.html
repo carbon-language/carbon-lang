@@ -849,6 +849,11 @@ script to configure the build system:</p>
   documentation from the source code. This is disabled by default because 
   generating the documentation can take a long time and producess 100s of 
   megabytes of output.</dd>
+  <dt><i>--with-udis86</i></dt>
+  <dd>LLVM can use external disassembler library for various purposes (now it's
+  used only for examining code produced by JIT). This option will enable usage
+  of <a href="http://udis86.sourceforge.net/">udis86</a> x86 (both 32 and 64
+  bits) disassembler library.</dd>
 </dl>
 
 <p>To configure LLVM, follow these steps:</p>

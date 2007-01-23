@@ -580,6 +580,40 @@ convention.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
+  <a name="visibility">Visibility Styles</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+All Global Variables and Functions have one of the following visibility styles:
+</p>
+
+<dl>
+  <dt><b>"<tt>default</tt>" - Default style</b>:</dt>
+
+  <dd>On ELF, default visibility means that the declaration is visible to other
+    modules and, in shared libraries, means that the declared entity may be
+    overridden. On Darwin, default visibility means that the declaration is
+    visible to other modules. Default visibility corresponds to "external
+    linkage" in the language.
+  </dd>
+
+  <dt><b>"<tt>hidden</tt>" - Hidden style</b>:</dt>
+
+  <dd>Two declarations of an object with hidden visibility refer to the same
+    object if they are in the same shared object. Usually, hidden visibility
+    indicates that the symbol will not be placed into the dynamic symbol table,
+    so no other module (executable or shared library) can reference it
+    directly.
+  </dd>
+
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
   <a name="globalvars">Global Variables</a>
 </div>
 
@@ -638,14 +672,18 @@ a power of 2.</p>
 
 <p>LLVM function definitions consist of the "<tt>define</tt>" keyord, 
 an optional <a href="#linkage">linkage type</a>, an optional 
+<a href="#visibility">visibility style</a>, an optional 
 <a href="#callingconv">calling convention</a>, a return type, an optional
 <a href="#paramattrs">parameter attribute</a> for the return type, a function 
 name, a (possibly empty) argument list (each with optional 
-<a href="#paramattrs">parameter attributes</a>), an optional section, an 
-optional alignment, an opening curly brace, a list of basic blocks, and a 
-closing curly brace.  LLVM function declarations
-consist of the "<tt>declare</tt>" keyword, an optional <a
-  href="#callingconv">calling convention</a>, a return type, an optional
+<a href="#paramattrs">parameter attributes</a>), an optional section, an
+optional alignment, an opening curly brace, a list of basic blocks, and a
+closing curly brace.  
+
+LLVM function declarations consist of the "<tt>declare</tt>" keyword, an
+optional <a href="#linkage">linkage type</a>, an optional
+<a href="#visibility">visibility style</a>, an optional 
+<a href="#callingconv">calling convention</a>, a return type, an optional
 <a href="#paramattrs">parameter attribute</a> for the return type, a function 
 name, a possibly empty list of arguments, and an optional alignment.</p>
 
