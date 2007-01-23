@@ -100,14 +100,10 @@ public:
   }
   
   
-  typedef SmallVector<Action::DeclTy*, 32>::const_iterator decl_iterator;
-  typedef SmallVector<Action::DeclTy*, 32>::const_iterator decl_const_iterator;
+  typedef SmallSet<Action::DeclTy*, 32>::iterator decl_iterator;
   
-  decl_iterator decl_begin() { return DeclsInScope.begin(); }
-  decl_iterator decl_end()   { return DeclsInScope.end(); }
-
-  decl_const_iterator decl_begin() const { return DeclsInScope.begin(); }
-  decl_const_iterator decl_end()   const { return DeclsInScope.end(); }
+  decl_iterator decl_begin() const { return DeclsInScope.begin(); }
+  decl_iterator decl_end()   const { return DeclsInScope.end(); }
 
   void AddDecl(Action::DeclTy *D) {
     DeclsInScope.insert(D);
