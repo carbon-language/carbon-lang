@@ -915,21 +915,6 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  // If necessary, add one more SUBri to account for the call frame
-  // and/or local storage, alloca area.
-  if (MFI->hasCalls() || MF.getFrameInfo()->hasVarSizedObjects()) {
-    // We reserve argument space for call sites in the function immediately on
-    // entry to the current function.  This eliminates the need for add/sub
-    // brackets around call sites.
-    if (!hasFP(MF))
-      NumBytes += MFI->getMaxCallFrameSize();
-
-    // Round the size to a multiple of the alignment.
-    NumBytes = (NumBytes+Align-1)/Align*Align;
-  }
-
-  MFI->setStackSize(NumBytes);
-
   // Determine starting offsets of spill areas.
   if (AFI->hasStackFrame()) {
     unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);

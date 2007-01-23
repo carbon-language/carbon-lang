@@ -991,29 +991,12 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-  unsigned AlignMask = Align - 1;
   const Function* Fn = MF.getFunction();
   const X86Subtarget* Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
   MachineInstr *MI;
   
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
-  if (MFI->hasCalls() || MFI->hasVarSizedObjects()) {
-    // When we have no frame pointer, we reserve argument space for call sites
-    // in the function immediately on entry to the current function.  This
-    // eliminates the need for add/sub ESP brackets around call sites.
-    //
-    if (!hasFP(MF))
-      NumBytes += MFI->getMaxCallFrameSize();
-
-    // Round the size to a multiple of the alignment (don't forget the 4/8 byte
-    // offset pushed by the caller though). No need to align the stack if this
-    // is a leaf function.
-    NumBytes = (((NumBytes+SlotSize) + AlignMask) & ~AlignMask) - SlotSize;
-  }
-
-  // Update frame info to pretend that this is part of the stack...
-  MFI->setStackSize(NumBytes);
 
   if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
     if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {

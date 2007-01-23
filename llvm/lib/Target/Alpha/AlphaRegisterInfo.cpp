@@ -302,16 +302,6 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get the number of bytes to allocate from the FrameInfo
   long NumBytes = MFI->getStackSize();
 
-  if (MFI->hasCalls() && !FP) {
-    // We reserve argument space for call sites in the function immediately on
-    // entry to the current function.  This eliminates the need for add/sub
-    // brackets around call sites.
-    //If there is a frame pointer, then we don't do this
-    NumBytes += MFI->getMaxCallFrameSize();
-    DOUT << "Added " << MFI->getMaxCallFrameSize()
-         << " to the stack due to calls\n";
-  }
-
   if (FP)
     NumBytes += 8; //reserve space for the old FP
 
