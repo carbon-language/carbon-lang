@@ -32,8 +32,25 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
        I != E; ++I) {
     Decl *D = static_cast<Decl*>(*I);
     assert(D && "This decl didn't get pushed??");
+    IdentifierInfo *II = D->getIdentifier();
+    if (!II) continue;
     
-    D->getIdentifier()->setFETokenInfo(D->getNext());
+    // Unlink this decl from the identifier.  Because the scope contains decls
+    // in an unordered collection, and because we have multiple identifier
+    // namespaces (e.g. tag, normal, label),the decl may not be the first entry.
+    if (II->getFETokenInfo<Decl>() == D) {
+      // Normal case, no multiple decls in different namespaces.
+      II->setFETokenInfo(D->getNext());
+    } else {
+      // Scan ahead.  There are only three namespaces in C, so this loop can
+      // never execute more than 3 times.
+      Decl *SomeDecl = II->getFETokenInfo<Decl>();
+      while (SomeDecl->getNext() != D) {
+        SomeDecl = SomeDecl->getNext();
+        assert(SomeDecl && "Didn't find this decl on its identifier's chain!");
+      }
+      SomeDecl->setNext(D->getNext());
+    }
     
     // This will have to be revisited for C++: there we want to nest stuff in
     // namespace decls etc.  Even for C, we might want a top-level translation
