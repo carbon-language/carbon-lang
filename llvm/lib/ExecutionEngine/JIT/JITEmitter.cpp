@@ -27,8 +27,8 @@
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Disassembler.h"
 #include "llvm/Support/MutexGuard.h"
+#include "llvm/System/Disassembler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/System/Memory.h"
 #include <algorithm>
@@ -868,15 +868,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
 
 #ifndef NDEBUG
   DOUT << "Disassembled code:\n"
-#if defined(__i386__)
-       << disassembleBuffer(FnStart, FnEnd-FnStart,
-                            Disassembler::X86_32, (uint32_t)FnStart);
-#elif defined(__amd64__) || defined(__x86_64__)
-       << disassembleBuffer(FnStart, FnEnd-FnStart,
-                            Disassembler::X86_64, (uint64_t)FnStart);
-#else
-       << "N/A\n";
-#endif
+       << sys::disassembleBuffer(FnStart, FnEnd-FnStart, (uintptr_t)FnStart);
 #endif
   
   return false;
