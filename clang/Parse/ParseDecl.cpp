@@ -431,6 +431,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
           Tok.getKind() == tok::kw_union) && "Not a struct/union specifier");
   bool isUnion = Tok.getKind() == tok::kw_union;
   SourceLocation StartLoc = ConsumeToken();
+  DeclSpec::TST TagType = isUnion ? DeclSpec::TST_union : DeclSpec::TST_struct;
 
   // If attributes exist after tag, parse them.
   if (Tok.getKind() == tok::kw___attribute)
@@ -463,11 +464,9 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   // struct foo {..};  void bar() { struct foo x; }  <- use of old foo.
   //
   bool isUse = Tok.getKind() != tok::l_brace && Tok.getKind() != tok::semi;
-  DeclTy *TagDecl = Actions.ParseTag(CurScope,
-                                     isUnion ? Action::TAG_UNION : 
-                                               Action::TAG_STRUCT, isUse,
-                                     StartLoc, Name, NameLoc);
-  // TODO: more with the tag decl.
+  DeclTy *TagDecl =
+    Actions.ParseTag(CurScope, TagType, isUse, StartLoc, Name, NameLoc);
+  
   if (Tok.getKind() == tok::l_brace) {
     SourceLocation LBraceLoc = ConsumeBrace();
 
@@ -548,8 +547,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   }
 
   const char *PrevSpec = 0;
-  if (DS.SetTypeSpecType(isUnion ? DeclSpec::TST_union : DeclSpec::TST_struct,
-                         StartLoc, PrevSpec))
+  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 

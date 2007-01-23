@@ -140,10 +140,11 @@ public:
     return 0;
   }
   
-  enum TagType { TAG_STRUCT, TAG_UNION, TAG_ENUM, TAG_CLASS };
-  virtual DeclTy *ParseTag(Scope *S, TagType Ty, bool isUse,
+  virtual DeclTy *ParseTag(Scope *S, unsigned TagType, bool isUse,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc) {
+    // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
+    // is (struct/union/enum/class).
     return 0;
   }
   

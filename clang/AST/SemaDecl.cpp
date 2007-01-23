@@ -144,6 +144,7 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   if (Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary)) {
     
     // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
+    assert(PrevDecl == 0 && "FIXME: Unimp!");
   }
   
   VarDecl *New = new VarDecl(PI.IdentLoc, II, static_cast<Type*>(PI.TypeInfo));
@@ -263,29 +264,23 @@ Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
 
 /// ParseStructUnionTag - This is invoked when we see 'struct foo' or
 /// 'struct {'.  In the former case, Name will be non-null.  In the later case,
-/// Name will be null.  isUnion indicates whether this is a union or struct tag.
-/// isUse indicates whether this is a use of a preexisting struct tag, or if it
-/// is a definition or declaration of a new one.
-Sema::DeclTy *Sema::ParseTag(Scope *S, TagType Ty, bool isUse,
+/// Name will be null.  TagType indicates what kind of tag this is.  isUse
+/// indicates whether this is a use of a preexisting struct tag, or if it is a
+/// definition or declaration of a new one.
+Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, bool isUse,
                              SourceLocation KWLoc, IdentifierInfo *Name,
                              SourceLocation NameLoc) {
   // If this is a use of an existing tag, it must have a name.
   assert((isUse || Name != 0) && "Nameless record must have a name!");
   
   Decl::Kind Kind;
-  switch (Ty) {
+  switch (TagType) {
   default: assert(0 && "Unknown tag type!");
-  case TAG_STRUCT: Kind = Decl::Struct; break;
-  case TAG_UNION: Kind = Decl::Union; break;
-  case TAG_CLASS: Kind = Decl::Class; break;
-  case TAG_ENUM:  Kind = Decl::Enum; break;
+  case DeclSpec::TST_struct: Kind = Decl::Struct; break;
+  case DeclSpec::TST_union:  Kind = Decl::Union; break;
+//case DeclSpec::TST_class:  Kind = Decl::Class; break;
+  case DeclSpec::TST_enum:   Kind = Decl::Enum; break;
   }
-  
-  // If there is an identifier, use the location of the identifier as the
-  // location of the decl, otherwise use the location of the struct/union
-  // keyword.
-  SourceLocation Loc = NameLoc.isValid() ? NameLoc : KWLoc;
-  
   
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
@@ -309,6 +304,11 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, TagType Ty, bool isUse,
     // scope, e.g. "struct foo; void bar() { struct foo; }", just create a new
     // type.
   }
+  
+  // If there is an identifier, use the location of the identifier as the
+  // location of the decl, otherwise use the location of the struct/union
+  // keyword.
+  SourceLocation Loc = NameLoc.isValid() ? NameLoc : KWLoc;
   
   // Otherwise, if this is the first time we've seen this tag, create the decl.
   Decl *New;
