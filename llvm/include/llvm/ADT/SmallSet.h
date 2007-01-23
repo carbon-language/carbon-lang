@@ -41,19 +41,26 @@ public:
   bool empty() const { return Vector.empty(); }
   unsigned size() const { return Vector.size(); }
   
+  iterator find(const T &V) const {
+    for (iterator I = begin(), E = end(); I != E; ++I)
+      if (*I == V)
+        return I;
+    return end();
+  }
+  
   /// count - Return true if the element is in the set.
   unsigned count(const T &V) const {
     // Since the collection is small, just do a linear search.
-    for (iterator I = begin(), E = end(); I != E; ++I)
-      if (*I == V)
-        return 1;
-    return 0;
+    return find(V) != end();
   }
   
   /// insert - Insert an element into the set if it isn't already there.
-  void insert(const T &V) {
-    if (count(V)) return;   // Don't reinsert if it already exists.
+  std::pair<iterator,bool> insert(const T &V) {
+    iterator I = find(V);
+    if (I == end())    // Don't reinsert if it already exists.
+      return std::make_pair(I, false);
     Vector.push_back(V);
+    return std::make_pair(end()-1, true);
   }
   
   void erase(const T &V) {
