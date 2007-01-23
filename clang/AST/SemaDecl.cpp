@@ -265,14 +265,14 @@ Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
 
 /// ParseStructUnionTag - This is invoked when we see 'struct foo' or
 /// 'struct {'.  In the former case, Name will be non-null.  In the later case,
-/// Name will be null.  TagType indicates what kind of tag this is.  isUse
-/// indicates whether this is a use of a preexisting struct tag, or if it is a
-/// definition or declaration of a new one.
-Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, bool isUse,
+/// Name will be null.  TagType indicates what kind of tag this is. TK indicates
+/// whether this is a reference/declaration/definition of a tag.
+Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
                              SourceLocation KWLoc, IdentifierInfo *Name,
                              SourceLocation NameLoc) {
   // If this is a use of an existing tag, it must have a name.
-  assert((!isUse || Name != 0) && "Nameless record must be a definition!");
+  assert((Name != 0 || TK == TK_Definition) &&
+         "Nameless record must be a definition!");
   
   Decl::Kind Kind;
   switch (TagType) {
@@ -285,21 +285,39 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, bool isUse,
   
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
-  if (Decl *PrevDecl = LookupScopedDecl(Name, Decl::IDNS_Tag)) {
+  if (TagDecl *PrevDecl = 
+          dyn_cast_or_null<TagDecl>(LookupScopedDecl(Name, Decl::IDNS_Tag))) {
     
     // If this is a use of a previous tag, or if the tag is already declared in
     // the same scope (so that the definition/declaration completes or
     // rementions the tag), reuse the decl.
-    if (isUse || S->isDeclScope(PrevDecl)) {
+    if (TK == TK_Reference || S->isDeclScope(PrevDecl)) {
       // Make sure that this wasn't declared as an enum and now used as a struct
       // or something similar.
       if (PrevDecl->getKind() != Kind) {
         Diag(KWLoc, diag::err_use_with_wrong_tag, Name->getName());
         Diag(PrevDecl->getLocation(), diag::err_previous_use);
       }
+      
+      // If this is a use or a forward declaration, we're good.
+      if (TK != TK_Definition)
+        return PrevDecl;
 
-      // Okay, this is a reference to the old decl, return it.
-      return PrevDecl;
+      // Diagnose attempts to redefine a tag.
+      if (PrevDecl->isDefinition()) {
+        Diag(NameLoc, diag::err_redefinition, Name->getName());
+        Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+        // If this is a redefinition, recover by making this struct be
+        // anonymous, which will make any later references get the previous
+        // definition.
+        Name = 0;
+      } else {
+        // Okay, this is definition of a previously declared or referenced tag.
+        // Move the location of the decl to be the definition site.
+        PrevDecl->setLocation(NameLoc);
+        PrevDecl->setDefinition(true);
+        return PrevDecl;
+      }
     }
     // If we get here, this is a definition of a new struct type in a nested
     // scope, e.g. "struct foo; void bar() { struct foo; }", just create a new
@@ -312,11 +330,14 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, bool isUse,
   SourceLocation Loc = NameLoc.isValid() ? NameLoc : KWLoc;
   
   // Otherwise, if this is the first time we've seen this tag, create the decl.
-  Decl *New;
+  TagDecl *New;
   if (Kind != Decl::Enum)
     New = new RecordDecl(Kind, Loc, Name);
   else
     assert(0 && "Enum tags not implemented yet!");
+  
+  if (TK == TK_Definition)
+    New->setDefinition(true);
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {

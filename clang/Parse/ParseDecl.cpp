@@ -435,17 +435,21 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   
   // There are three options here.  If we have 'struct foo;', then this is a
   // forward declaration.  If we have 'struct foo {...' then this is a
-  // definition.  Otherwise we have something like 'struct foo xyz', a use. Tell
-  // the actions module whether this is a definition (forward or not) of the
-  // type insted of a use.
+  // definition. Otherwise we have something like 'struct foo xyz', a reference.
   //
   // This is needed to handle stuff like this right (C99 6.7.2.3p11):
   // struct foo {..};  void bar() { struct foo; }    <- new foo in bar.
   // struct foo {..};  void bar() { struct foo x; }  <- use of old foo.
   //
-  bool isUse = Tok.getKind() != tok::l_brace && Tok.getKind() != tok::semi;
+  Action::TagKind TK;
+  if (Tok.getKind() == tok::l_brace)
+    TK = Action::TK_Definition;
+  else if (Tok.getKind() == tok::semi)
+    TK = Action::TK_Declaration;
+  else
+    TK = Action::TK_Reference;
   DeclTy *TagDecl =
-    Actions.ParseTag(CurScope, TagType, isUse, StartLoc, Name, NameLoc);
+    Actions.ParseTag(CurScope, TagType, TK, StartLoc, Name, NameLoc);
   
   // If there is a body, parse it and inform the actions module.
   if (Tok.getKind() == tok::l_brace)
@@ -483,10 +487,16 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
   SourceLocation LBraceLoc = ConsumeBrace();
   
+  // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
+  // C++.
   if (Tok.getKind() == tok::r_brace)
     Diag(Tok, diag::ext_empty_struct_union_enum, 
          DeclSpec::getSpecifierName((DeclSpec::TST)TagType));
+
+  // Enter a scope to capture the struct declarations.
+  EnterScope(0);
   
+  // While we still have something to read, read the declarations in the struct.
   while (Tok.getKind() != tok::r_brace && 
          Tok.getKind() != tok::eof) {
     // Each iteration of this loop reads one struct-declaration.
@@ -498,50 +508,58 @@ void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
     // TODO: Does specifier-qualifier list correctly check that *something* is
     // specified?
     
-    Declarator DeclaratorInfo(DS, Declarator::MemberContext);
-    
     // If there are no declarators, issue a warning.
     if (Tok.getKind() == tok::semi) {
       Diag(SpecQualLoc, diag::w_no_declarators);
-    } else {
-      // Read struct-declarators until we find the semicolon.
-      while (1) {
-        /// struct-declarator: declarator
-        /// struct-declarator: declarator[opt] ':' constant-expression
-        if (Tok.getKind() != tok::colon)
-          ParseDeclarator(DeclaratorInfo);
-        
-        if (Tok.getKind() == tok::colon) {
-          ConsumeToken();
-          ExprResult Res = ParseConstantExpression();
-          if (Res.isInvalid) {
-            SkipUntil(tok::semi, true, true);
-          } else {
-            // Process it.
-          }
-        }
-        
-        // If attributes exist after the declarator, parse them.
-        if (Tok.getKind() == tok::kw___attribute)
-          ParseAttributes();
-        
-        // TODO: install declarator.
-        
-        // If we don't have a comma, it is either the end of the list (a ';')
-        // or an error, bail out.
-        if (Tok.getKind() != tok::comma)
-          break;
-        
-        // Consume the comma.
+      ConsumeToken();
+      continue;
+    }
+
+    // Read struct-declarators until we find the semicolon.
+    Declarator DeclaratorInfo(DS, Declarator::MemberContext);
+
+    while (1) {
+      /// struct-declarator: declarator
+      /// struct-declarator: declarator[opt] ':' constant-expression
+      if (Tok.getKind() != tok::colon)
+        ParseDeclarator(DeclaratorInfo);
+      
+      ExprTy *BitfieldSize = 0;
+      if (Tok.getKind() == tok::colon) {
         ConsumeToken();
-        
-        // Parse the next declarator.
-        DeclaratorInfo.clear();
-        
-        // Attributes are only allowed on the second declarator.
-        if (Tok.getKind() == tok::kw___attribute)
-          ParseAttributes();
+        ExprResult Res = ParseConstantExpression();
+        if (Res.isInvalid) {
+          SkipUntil(tok::semi, true, true);
+        } else {
+          BitfieldSize = Res.Val;
+        }
       }
+      
+      // If attributes exist after the declarator, parse them.
+      if (Tok.getKind() == tok::kw___attribute)
+        ParseAttributes();
+      
+      // TODO: install declarator.
+      
+      
+      //LastDeclInGroup = Actions.ParseDeclarator(CurScope, D, Init.Val,
+      //LastDeclInGroup);
+
+      
+      // If we don't have a comma, it is either the end of the list (a ';')
+      // or an error, bail out.
+      if (Tok.getKind() != tok::comma)
+        break;
+      
+      // Consume the comma.
+      ConsumeToken();
+      
+      // Parse the next declarator.
+      DeclaratorInfo.clear();
+      
+      // Attributes are only allowed on the second declarator.
+      if (Tok.getKind() == tok::kw___attribute)
+        ParseAttributes();
     }
     
     if (Tok.getKind() == tok::semi) {
@@ -552,6 +570,8 @@ void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
       SkipUntil(tok::r_brace, true, true);
     }
   }
+  
+  ExitScope();
   
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   

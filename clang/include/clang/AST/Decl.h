@@ -65,6 +65,7 @@ public:
   
   IdentifierInfo *getIdentifier() const { return Identifier; }
   SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
   const char *getName() const;
   
   Kind getKind() const { return DeclKind; }
@@ -186,9 +187,20 @@ public:
 
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
 class TagDecl : public Decl {
+  /// IsDefinition - True if this is a definition ("struct foo {};"), false if
+  /// it is a declaration ("struct foo;").
+  bool IsDefinition;
 protected:
-  TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) : Decl(DK, L, Id) {}
+  TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) : Decl(DK, L, Id) {
+    IsDefinition = false;
+  }
 public:
+  
+  /// isDefinition - Return true if this decl has its body specified.
+  bool isDefinition() const {
+    return IsDefinition;
+  }
+  void setDefinition(bool V) { IsDefinition = V; }
   
   const char *getKindName() const {
     switch (getKind()) {

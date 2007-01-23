@@ -83,7 +83,7 @@ public:
   Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   
-  virtual DeclTy *ParseTag(Scope *S, unsigned TagType, bool isUse,
+  virtual DeclTy *ParseTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc);
     

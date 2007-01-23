@@ -140,7 +140,12 @@ public:
     return 0;
   }
   
-  virtual DeclTy *ParseTag(Scope *S, unsigned TagType, bool isUse,
+  enum TagKind {
+    TK_Reference,   // Reference to a tag:  'struct foo *X;'
+    TK_Declaration, // Fwd decl of a tag:   'struct foo;'
+    TK_Definition   // Definition of a tag: 'struct foo { int X; } Y;'
+  };
+  virtual DeclTy *ParseTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc) {
     // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
