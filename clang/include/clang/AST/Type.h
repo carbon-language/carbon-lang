@@ -185,6 +185,10 @@ public:
   /// isVoidType - Helper method to determine if this is the 'void' type.
   bool isVoidType() const;
   
+  /// isIncompleteType - Return true if this is an incomplete type (C99 6.2.5p1)
+  /// - a type that can describe objects, but which lacks information needed to
+  /// determine its size (e.g. void, or a fwd declared struct).
+  bool isIncompleteType() const;
   
   virtual void getAsString(std::string &InnerString) const = 0;
   
@@ -256,6 +260,7 @@ private:
   TypeRef ElementType;
   
   /// FIXME: Capture size for VLA or constant size.
+  /// Use this to implement Type::isIncompleteType.
 
   ArrayType(TypeRef et, ArraySizeModifier sm, unsigned tq, Type *can)
     : Type(Array, can), SizeModifier(sm), IndexTypeQuals(tq), ElementType(et) {}

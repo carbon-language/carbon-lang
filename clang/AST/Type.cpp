@@ -27,6 +27,29 @@ bool Type::isVoidType() const {
   return false;
 }
 
+/// isIncompleteType - Return true if this is an incomplete type (C99 6.2.5p1)
+/// - a type that can describe objects, but which lacks information needed to
+/// determine its size.
+bool Type::isIncompleteType() const {
+  switch (getTypeClass()) {
+  default: return false;
+  case Builtin:
+    // Void is the only incomplete builtin type.  Per C99 6.2.5p19, it can never
+    // be completed.
+    return isVoidType();
+  case Tagged:
+    // A tagged type (struct/union/enum/class) is incomplete if the decl is a
+    // forward declaration, but not a full definition (C99 6.2.5p22).
+    return !cast<TaggedType>(this)->getDecl()->isDefinition();
+    
+  case Array:
+    // An array of unknown size is an incomplete type (C99 6.2.5p22).
+    // FIXME: Implement this.
+    return true; // cast<ArrayType>(this)-> blah.
+  }
+}
+
+
 const char *BuiltinType::getName() const {
   switch (getKind()) {
   default: assert(0 && "Unknown builtin type!");
