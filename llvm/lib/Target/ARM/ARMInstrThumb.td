@@ -114,22 +114,31 @@ def t_addrmode_rr : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg);
 }
 
-// t_addrmode_ri5_{1|2|4} := reg + imm5 * {1|2|4}
+// t_addrmode_s4 := reg + reg
+//                  reg + imm5 * 4
 //
-def t_addrmode_ri5_1 : Operand<i32>,
-                       ComplexPattern<i32, 2, "SelectThumbAddrModeRI5_1", []> {
-  let PrintMethod = "printThumbAddrModeRI5_1Operand";
-  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+def t_addrmode_s4 : Operand<i32>,
+                    ComplexPattern<i32, 3, "SelectThumbAddrModeS4", []> {
+  let PrintMethod = "printThumbAddrModeS4Operand";
+  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
-def t_addrmode_ri5_2 : Operand<i32>,
-                       ComplexPattern<i32, 2, "SelectThumbAddrModeRI5_2", []> {
-  let PrintMethod = "printThumbAddrModeRI5_2Operand";
-  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+
+// t_addrmode_s2 := reg + reg
+//                  reg + imm5 * 2
+//
+def t_addrmode_s2 : Operand<i32>,
+                    ComplexPattern<i32, 3, "SelectThumbAddrModeS2", []> {
+  let PrintMethod = "printThumbAddrModeS2Operand";
+  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
-def t_addrmode_ri5_4 : Operand<i32>,
-                       ComplexPattern<i32, 2, "SelectThumbAddrModeRI5_4", []> {
-  let PrintMethod = "printThumbAddrModeRI5_4Operand";
-  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+
+// t_addrmode_s1 := reg + reg
+//                  reg + imm5
+//
+def t_addrmode_s1 : Operand<i32>,
+                    ComplexPattern<i32, 3, "SelectThumbAddrModeS1", []> {
+  let PrintMethod = "printThumbAddrModeS1Operand";
+  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
 
 // t_addrmode_sp := sp + imm8 * 4
@@ -191,71 +200,48 @@ let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in
 //
 
 let isLoad = 1 in {
-def tLDRri : TI4<(ops GPR:$dst, t_addrmode_ri5_4:$addr),
-                 "ldr $dst, $addr",
-                 [(set GPR:$dst, (load t_addrmode_ri5_4:$addr))]>;
+def tLDR : TI4<(ops GPR:$dst, t_addrmode_s4:$addr),
+               "ldr $dst, $addr",
+               [(set GPR:$dst, (load t_addrmode_s4:$addr))]>;
 
-def tLDRrr : TI<(ops GPR:$dst, t_addrmode_rr:$addr),
-                "ldr $dst, $addr",
-                [(set GPR:$dst, (load t_addrmode_rr:$addr))]>;
+def tLDRB : TI1<(ops GPR:$dst, t_addrmode_s1:$addr),
+                "ldrb $dst, $addr",
+                [(set GPR:$dst, (zextloadi8 t_addrmode_s1:$addr))]>;
+
+def tLDRH : TI2<(ops GPR:$dst, t_addrmode_s2:$addr),
+                "ldrh $dst, $addr",
+                [(set GPR:$dst, (zextloadi16 t_addrmode_s2:$addr))]>;
+
+def tLDRSB : TI1<(ops GPR:$dst, t_addrmode_rr:$addr),
+                 "ldrsb $dst, $addr",
+                 [(set GPR:$dst, (sextloadi8 t_addrmode_rr:$addr))]>;
+
+def tLDRSH : TI2<(ops GPR:$dst, t_addrmode_rr:$addr),
+                 "ldrsh $dst, $addr",
+                 [(set GPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
+
 // def tLDRpci
 def tLDRspi : TIs<(ops GPR:$dst, t_addrmode_sp:$addr),
                   "ldr $dst, $addr",
                   [(set GPR:$dst, (load t_addrmode_sp:$addr))]>;
-
-def tLDRBri : TI1<(ops GPR:$dst, t_addrmode_ri5_1:$addr),
-                  "ldrb $dst, $addr",
-                  [(set GPR:$dst, (zextloadi8 t_addrmode_ri5_1:$addr))]>;
-
-def tLDRBrr : TI1<(ops GPR:$dst, t_addrmode_rr:$addr),
-                  "ldrb $dst, $addr",
-                  [(set GPR:$dst, (zextloadi8 t_addrmode_rr:$addr))]>;
-
-def tLDRHri : TI2<(ops GPR:$dst, t_addrmode_ri5_2:$addr),
-                  "ldrh $dst, $addr",
-                  [(set GPR:$dst, (zextloadi16 t_addrmode_ri5_2:$addr))]>;
-
-def tLDRHrr : TI2<(ops GPR:$dst, t_addrmode_rr:$addr),
-                  "ldrh $dst, $addr",
-                  [(set GPR:$dst, (zextloadi16 t_addrmode_rr:$addr))]>;
-
-def tLDRSBrr : TI1<(ops GPR:$dst, t_addrmode_rr:$addr),
-                   "ldrsb $dst, $addr",
-                   [(set GPR:$dst, (sextloadi8 t_addrmode_rr:$addr))]>;
-
-def tLDRSHrr : TI2<(ops GPR:$dst, t_addrmode_rr:$addr),
-                   "ldrsh $dst, $addr",
-                   [(set GPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
 } // isLoad
 
 let isStore = 1 in {
-def tSTRri : TI4<(ops GPR:$src, t_addrmode_ri5_4:$addr),
-                 "str $src, $addr",
-                 [(store GPR:$src, t_addrmode_ri5_4:$addr)]>;
+def tSTR : TI4<(ops GPR:$src, t_addrmode_s4:$addr),
+               "str $src, $addr",
+               [(store GPR:$src, t_addrmode_s4:$addr)]>;
 
-def tSTRrr : TI<(ops GPR:$src, t_addrmode_rr:$addr),
-                 "str $src, $addr",
-                 [(store GPR:$src, t_addrmode_rr:$addr)]>;
+def tSTRB : TI1<(ops GPR:$src, t_addrmode_s1:$addr),
+                 "strb $src, $addr",
+                 [(truncstorei8 GPR:$src, t_addrmode_s1:$addr)]>;
+
+def tSTRH : TI2<(ops GPR:$src, t_addrmode_s2:$addr),
+                 "strh $src, $addr",
+                 [(truncstorei16 GPR:$src, t_addrmode_s2:$addr)]>;
 
 def tSTRspi : TIs<(ops GPR:$src, t_addrmode_sp:$addr),
                    "str $src, $addr",
                    [(store GPR:$src, t_addrmode_sp:$addr)]>;
-
-def tSTRBri : TI1<(ops GPR:$src, t_addrmode_ri5_1:$addr),
-                   "strb $src, $addr",
-                   [(truncstorei8 GPR:$src, t_addrmode_ri5_1:$addr)]>;
-
-def tSTRBrr : TI1<(ops GPR:$src, t_addrmode_rr:$addr),
-                   "strb $src, $addr",
-                   [(truncstorei8 GPR:$src, t_addrmode_rr:$addr)]>;
-
-def tSTRHri : TI2<(ops GPR:$src, t_addrmode_ri5_2:$addr),
-                   "strh $src, $addr",
-                   [(truncstorei16 GPR:$src, t_addrmode_ri5_1:$addr)]>;
-
-def tSTRHrr : TI2<(ops GPR:$src, t_addrmode_rr:$addr),
-                   "strh $src, $addr",
-                   [(truncstorei16 GPR:$src, t_addrmode_rr:$addr)]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -491,16 +477,12 @@ def : ThumbV5Pat<(ARMcall texternalsym:$func), (tBLXi texternalsym:$func)>;
 def : ThumbV5Pat<(ARMcall GPR:$dst), (tBLXr GPR:$dst)>;
 
 // zextload i1 -> zextload i8
-def : ThumbPat<(zextloadi1 t_addrmode_ri5_1:$addr),
-               (tLDRBri t_addrmode_ri5_1:$addr)>;
-def : ThumbPat<(zextloadi1 t_addrmode_rr:$addr),
-               (tLDRBri t_addrmode_rr:$addr)>;
+def : ThumbPat<(zextloadi1 t_addrmode_s1:$addr),
+               (tLDRB t_addrmode_s1:$addr)>;
                   
 // truncstore i1 -> truncstore i8
-def : ThumbPat<(truncstorei1 GPR:$src, t_addrmode_ri5_1:$dst), 
-               (tSTRBri GPR:$src, t_addrmode_ri5_1:$dst)>;
-def : ThumbPat<(truncstorei1 GPR:$src, t_addrmode_rr:$dst), 
-               (tSTRBrr GPR:$src, t_addrmode_rr:$dst)>;
+def : ThumbPat<(truncstorei1 GPR:$src, t_addrmode_s1:$dst), 
+               (tSTRB GPR:$src, t_addrmode_s1:$dst)>;
 
 // Large immediate handling.
 

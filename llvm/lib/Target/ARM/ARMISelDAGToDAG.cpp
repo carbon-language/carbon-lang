@@ -71,12 +71,12 @@ public:
 
   bool SelectThumbAddrModeRR(SDOperand Op, SDOperand N, SDOperand &Base,
                              SDOperand &Offset);
-  bool SelectThumbAddrModeRI5_1(SDOperand Op, SDOperand N, SDOperand &Base,
-                                SDOperand &Offset);
-  bool SelectThumbAddrModeRI5_2(SDOperand Op, SDOperand N, SDOperand &Base,
-                                SDOperand &Offset);
-  bool SelectThumbAddrModeRI5_4(SDOperand Op, SDOperand N, SDOperand &Base,
-                                SDOperand &Offset);
+  bool SelectThumbAddrModeS1(SDOperand Op, SDOperand N, SDOperand &Base,
+                             SDOperand &Offset, SDOperand &OffImm);
+  bool SelectThumbAddrModeS2(SDOperand Op, SDOperand N, SDOperand &Base,
+                             SDOperand &Offset, SDOperand &OffImm);
+  bool SelectThumbAddrModeS4(SDOperand Op, SDOperand N, SDOperand &Base,
+                             SDOperand &Offset, SDOperand &OffImm);
   bool SelectThumbAddrModeSP(SDOperand Op, SDOperand N, SDOperand &Base,
                              SDOperand &Offset);
 
@@ -340,8 +340,16 @@ bool ARMDAGToDAGISel::SelectAddrModePC(SDOperand Op, SDOperand N,
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDOperand Op, SDOperand N,
                                             SDOperand &Base, SDOperand &Offset){
-  if (N.getOpcode() != ISD::ADD)
-    return false;
+  if (N.getOpcode() != ISD::ADD) {
+    Base = N;
+    // We must materialize a zero in a reg! Returning an constant here won't
+    // work since its node is -1 so it won't get added to the selection queue.
+    // Explicitly issue a tMOVri8 node!
+    Offset = SDOperand(CurDAG->getTargetNode(ARM::tMOVri8, MVT::i32,
+                                    CurDAG->getTargetConstant(0, MVT::i32)), 0);
+    return true;
+  }
+
   Base = N.getOperand(0);
   Offset = N.getOperand(1);
   return true;
@@ -349,13 +357,15 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDOperand Op, SDOperand N,
 
 static bool SelectThumbAddrModeRI5(SDOperand N, unsigned Scale,
                                    TargetLowering &TLI, SelectionDAG *CurDAG,
-                                   SDOperand &Base, SDOperand &Offset) {
+                                   SDOperand &Base, SDOperand &Offset,
+                                   SDOperand &OffImm) {
   if (N.getOpcode() == ISD::FrameIndex)
     return false;
     
   if (N.getOpcode() != ISD::ADD) {
     Base = (N.getOpcode() == ARMISD::Wrapper) ? N.getOperand(0) : N;
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    Offset = CurDAG->getRegister(0, MVT::i32);
+    OffImm = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
 
@@ -366,28 +376,35 @@ static bool SelectThumbAddrModeRI5(SDOperand N, unsigned Scale,
       RHSC /= Scale;
       if (RHSC >= 0 && RHSC < 32) {
         Base = N.getOperand(0);
-        Offset = CurDAG->getTargetConstant(RHSC, MVT::i32);
+        Offset = CurDAG->getRegister(0, MVT::i32);
+        OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
         return true;
       }
     }
   }
 
-  return false;
+  Base = N.getOperand(0);
+  Offset = N.getOperand(1);
+  OffImm = CurDAG->getTargetConstant(0, MVT::i32);
+  return true;
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeRI5_1(SDOperand Op, SDOperand N,
-                                            SDOperand &Base, SDOperand &Offset){
-  return SelectThumbAddrModeRI5(N, 1, TLI, CurDAG, Base, Offset);
+bool ARMDAGToDAGISel::SelectThumbAddrModeS1(SDOperand Op, SDOperand N,
+                                            SDOperand &Base, SDOperand &Offset,
+                                            SDOperand &OffImm) {
+  return SelectThumbAddrModeRI5(N, 1, TLI, CurDAG, Base, Offset, OffImm);
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeRI5_2(SDOperand Op, SDOperand N,
-                                            SDOperand &Base, SDOperand &Offset){
-  return SelectThumbAddrModeRI5(N, 2, TLI, CurDAG, Base, Offset);
+bool ARMDAGToDAGISel::SelectThumbAddrModeS2(SDOperand Op, SDOperand N,
+                                            SDOperand &Base, SDOperand &Offset,
+                                            SDOperand &OffImm) {
+  return SelectThumbAddrModeRI5(N, 2, TLI, CurDAG, Base, Offset, OffImm);
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeRI5_4(SDOperand Op, SDOperand N,
-                                            SDOperand &Base, SDOperand &Offset){
-  return SelectThumbAddrModeRI5(N, 4, TLI, CurDAG, Base, Offset);
+bool ARMDAGToDAGISel::SelectThumbAddrModeS4(SDOperand Op, SDOperand N,
+                                            SDOperand &Base, SDOperand &Offset,
+                                            SDOperand &OffImm) {
+  return SelectThumbAddrModeRI5(N, 4, TLI, CurDAG, Base, Offset, OffImm);
 }
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDOperand Op, SDOperand N,
