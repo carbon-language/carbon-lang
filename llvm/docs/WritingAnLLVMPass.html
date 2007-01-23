@@ -29,10 +29,10 @@
         </ul></li>
      <li><a href="#CallGraphSCCPass">The <tt>CallGraphSCCPass</tt> class</a>
         <ul>
-        <li><a href="#doInitialization_scc">The <tt>doInitialization(Module
+        <li><a href="#doInitialization_scc">The <tt>doInitialization(CallGraph
                                            &amp;)</tt> method</a></li>
         <li><a href="#runOnSCC">The <tt>runOnSCC</tt> method</a></li>
-        <li><a href="#doFinalization_scc">The <tt>doFinalization(Module
+        <li><a href="#doFinalization_scc">The <tt>doFinalization(CallGraph
                                            &amp;)</tt> method</a></li>
         </ul></li>
      <li><a href="#FunctionPass">The <tt>FunctionPass</tt> class</a>
@@ -534,14 +534,14 @@ false if they didn't.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="doInitialization_scc">The <tt>doInitialization(Module &amp;)</tt>
+  <a name="doInitialization_scc">The <tt>doInitialization(CallGraph &amp;)</tt>
   method</a>
 </div>
 
 <div class="doc_text">
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doInitialization(Module &amp;M);
+  <b>virtual bool</b> doInitialization(CallGraph &amp;CG);
 </pre></div>
 
 <p>The <tt>doIninitialize</tt> method is allowed to do most of the things that
@@ -573,14 +573,14 @@ otherwise.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="doFinalization_scc">The <tt>doFinalization(Module
+  <a name="doFinalization_scc">The <tt>doFinalization(CallGraph
    &amp;)</tt> method</a>
 </div>
 
 <div class="doc_text">
 
 <div class="doc_code"><pre>
-  <b>virtual bool</b> doFinalization(Module &amp;M);
+  <b>virtual bool</b> doFinalization(CallGraph &amp;CG);
 </pre></div>
 
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
