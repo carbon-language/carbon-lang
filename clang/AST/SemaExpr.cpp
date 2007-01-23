@@ -336,7 +336,25 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
                            SourceLocation RParenLoc) {
   // If error parsing type, ignore.
   if (Ty == 0) return true;
-  return new SizeOfAlignOfTypeExpr(isSizeof, TypeRef::getFromOpaquePtr(Ty));
+  
+  // Verify that this is a valid expression.
+  TypeRef ArgTy = TypeRef::getFromOpaquePtr(Ty);
+  
+  if (isa<FunctionType>(ArgTy) && isSizeof) {
+    // alignof(function) is allowed.
+    Diag(OpLoc, diag::ext_sizeof_function_type);
+    return new IntegerConstant(/*1*/);
+  } else if (ArgTy->isVoidType()) {
+    Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof");
+  } else if (ArgTy->isIncompleteType()) {
+    std::string TypeName;
+    ArgTy->getAsString(TypeName);
+    Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
+         diag::err_alignof_incomplete_type, TypeName);
+    return new IntegerConstant(/*0*/);
+  }
+  
+  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy);
 }
 
 

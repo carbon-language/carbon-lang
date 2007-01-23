@@ -370,6 +370,7 @@ DIAG(ext_unknown_escape, EXTENSION,
 DIAG(err_hex_escape_no_digits, ERROR,
      "\\x used with no following hex digits")
 
+// Declarations.
 DIAG(err_typename_requires_specqual, ERROR,
      "type name requires a specifier or qualifier")
 DIAG(err_typename_invalid_storageclass, ERROR,
@@ -434,6 +435,17 @@ DIAG(warn_implicit_function_decl, WARNING,
 DIAG(ext_implicit_function_decl, EXTENSION,
      "implicit declaration of function '%s' is invalid in C99")
 
+// Expressions.
+DIAG(ext_sizeof_function_type, EXTENSION,
+     "invalid application of 'sizeof' to a function type")
+DIAG(ext_sizeof_void_type, EXTENSION,
+     "invalid application of '%s' to a void type")
+DIAG(err_sizeof_incomplete_type, ERROR,
+     "invalid application of 'sizeof' to an incomplete type '%s'")
+DIAG(err_alignof_incomplete_type, ERROR,
+     "invalid application of '__alignof' to an incomplete type '%s'")
+
+// Statements.
 DIAG(err_continue_not_in_loop, ERROR,
      "'continue' statement not in loop statement")
 DIAG(err_break_not_in_loop_or_switch, ERROR,
