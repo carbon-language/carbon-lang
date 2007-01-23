@@ -86,7 +86,11 @@ public:
   virtual DeclTy *ParseTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc);
-    
+  virtual DeclTy *ParseField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
+                             Declarator &D, ExprTy *BitfieldWidth);
+  virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
+                               DeclTy **Fields, unsigned NumFields);
+  
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 

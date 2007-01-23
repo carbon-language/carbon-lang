@@ -427,6 +427,8 @@ DIAG(err_undeclared_var_use, ERROR,
      "use of undeclared identifier '%s'")
 DIAG(err_redefinition, ERROR,
      "redefinition of '%s'")
+DIAG(err_nested_redefinition, ERROR,
+     "nested redefinition of '%s'")
 DIAG(err_use_with_wrong_tag, ERROR,
      "use of '%s' with tag type that does not match previous declaration")
 

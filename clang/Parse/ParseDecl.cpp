@@ -453,7 +453,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   
   // If there is a body, parse it and inform the actions module.
   if (Tok.getKind() == tok::l_brace)
-    ParseStructUnionBody(TagType, TagDecl);
+    ParseStructUnionBody(StartLoc, TagType, TagDecl);
 
   const char *PrevSpec = 0;
   if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagDecl))
@@ -484,7 +484,8 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 ///         declarator[opt] ':' constant-expression
 /// [GNU]   declarator[opt] ':' constant-expression attributes[opt]
 ///
-void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
+void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
+                                  unsigned TagType, DeclTy *TagDecl) {
   SourceLocation LBraceLoc = ConsumeBrace();
   
   // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
@@ -493,6 +494,8 @@ void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
     Diag(Tok, diag::ext_empty_struct_union_enum, 
          DeclSpec::getSpecifierName((DeclSpec::TST)TagType));
 
+  SmallVector<DeclTy*, 32> FieldDecls;
+  
   // While we still have something to read, read the declarations in the struct.
   while (Tok.getKind() != tok::r_brace && 
          Tok.getKind() != tok::eof) {
@@ -537,7 +540,9 @@ void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
         ParseAttributes();
       
       // Install the declarator into the current TagDecl.
-      Actions.ParseField(TagDecl, DeclaratorInfo, BitfieldSize);
+      DeclTy *Field = Actions.ParseField(CurScope, TagDecl, SpecQualLoc,
+                                         DeclaratorInfo, BitfieldSize);
+      FieldDecls.push_back(Field);
       
       // If we don't have a comma, it is either the end of the list (a ';')
       // or an error, bail out.
@@ -563,6 +568,8 @@ void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
       SkipUntil(tok::r_brace, true, true);
     }
   }
+  
+  Actions.ParseRecordBody(RecordLoc, TagDecl, &FieldDecls[0],FieldDecls.size());
   
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   

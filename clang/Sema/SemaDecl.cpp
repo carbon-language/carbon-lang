@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
@@ -263,10 +264,10 @@ Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
 }
 
 
-/// ParseStructUnionTag - This is invoked when we see 'struct foo' or
-/// 'struct {'.  In the former case, Name will be non-null.  In the later case,
-/// Name will be null.  TagType indicates what kind of tag this is. TK indicates
-/// whether this is a reference/declaration/definition of a tag.
+/// ParseTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
+/// former case, Name will be non-null.  In the later case, Name will be null.
+/// TagType indicates what kind of tag this is. TK indicates whether this is a
+/// reference/declaration/definition of a tag.
 Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
                              SourceLocation KWLoc, IdentifierInfo *Name,
                              SourceLocation NameLoc) {
@@ -315,7 +316,7 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
         // Okay, this is definition of a previously declared or referenced tag.
         // Move the location of the decl to be the definition site.
         PrevDecl->setLocation(NameLoc);
-        PrevDecl->setDefinition(true);
+        //PrevDecl->setDefinition(true);
         return PrevDecl;
       }
     }
@@ -336,8 +337,8 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
   else
     assert(0 && "Enum tags not implemented yet!");
   
-  if (TK == TK_Definition)
-    New->setDefinition(true);
+  //if (TK == TK_Definition)
+  //  New->setDefinition(true);
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {
@@ -348,3 +349,50 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
   
   return New;
 }
+
+/// ParseField - Each field of a struct/union/class is passed into this in order
+/// to create a FieldDecl object for it.
+Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
+                               SourceLocation DeclStart, 
+                               Declarator &D, ExprTy *BitfieldWidth) {
+  IdentifierInfo *II = D.getIdentifier();
+  Expr *BitWidth = (Expr*)BitfieldWidth;
+  
+  SourceLocation Loc = DeclStart;
+  if (II) Loc = D.getIdentifierLoc();
+  
+  if (BitWidth) {
+    // TODO: Validate.
+    assert(0 && "bitfields unimp");
+    
+    // 6.7.2.1p3
+    // 6.7.2.1p4
+    
+  } else {
+    // Not a bitfield.
+
+    // validate II.
+    
+  }
+  
+  return new FieldDecl(Loc, II, GetTypeForDeclarator(D, S));
+}
+
+void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
+                           DeclTy **Fields, unsigned NumFields) {
+  TagDecl *Record = static_cast<TagDecl*>(RecDecl);
+  if (Record->isDefinition()) {
+    // Diagnose code like:
+    // struct S { struct S {} X; };
+    // We discover this when we complete the outer S.  Reject and ignore the
+    // outer S.
+    Diag(Record->getLocation(), diag::err_nested_redefinition,
+         Record->getKindName());
+    Diag(RecLoc, diag::err_previous_definition);
+    return;
+  }
+  
+  Record->setDefinition(true);
+}
+
+

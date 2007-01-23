@@ -153,8 +153,13 @@ public:
     return 0;
   }
   
-  virtual void ParseField(DeclTy *TagDecl, Declarator &D,
-                          ExprTy *BitfieldWidth) {}
+  virtual DeclTy *ParseField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
+                             Declarator &D, ExprTy *BitfieldWidth) {
+    return 0;
+  }
+  virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
+                               DeclTy **Fields, unsigned NumFields) {}
+
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks.

@@ -29,7 +29,7 @@ class FunctionDecl;
 class Decl {
 public:
   enum Kind {
-    Typedef, Function, Variable,
+    Typedef, Function, Variable, Field,
     Struct, Union, Class, Enum
   };
 
@@ -183,6 +183,17 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Function; }
   static bool classof(const FunctionDecl *D) { return true; }
+};
+
+
+/// FunctionDecl - An instance of this class is created to represent a function
+/// declaration or definition.
+class FieldDecl : public ObjectDecl {
+
+public:
+  FieldDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+    : ObjectDecl(Field, L, Id, T) {}
+  
 };
 
 /// TagDecl - Represents the declaration of a struct/union/class/enum.

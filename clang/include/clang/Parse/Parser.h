@@ -333,7 +333,8 @@ private:
 
   void ParseEnumSpecifier(DeclSpec &DS);
   void ParseStructUnionSpecifier(DeclSpec &DS);
-  void ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl);
+  void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
+                            DeclTy *TagDecl);
 
   bool isDeclarationSpecifier() const;
   bool isTypeSpecifierQualifier() const;
