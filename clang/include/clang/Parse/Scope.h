@@ -15,7 +15,7 @@
 #define LLVM_CLANG_PARSE_SCOPE_H
 
 #include "clang/Parse/Action.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
 namespace clang {
@@ -77,7 +77,7 @@ private:
   /// popped, these declarations are removed from the IdentifierTable's notion
   /// of current declaration.  It is up to the current Action implementation to
   /// implement these semantics.
-  SmallVector<Action::DeclTy*, 32> DeclsInScope;
+  SmallSet<Action::DeclTy*, 32> DeclsInScope;
 public:
   Scope(Scope *Parent, unsigned ScopeFlags) {
     Init(Parent, ScopeFlags);
@@ -100,7 +100,7 @@ public:
   }
   
   
-  typedef SmallVector<Action::DeclTy*, 32>::iterator decl_iterator;
+  typedef SmallVector<Action::DeclTy*, 32>::const_iterator decl_iterator;
   typedef SmallVector<Action::DeclTy*, 32>::const_iterator decl_const_iterator;
   
   decl_iterator decl_begin() { return DeclsInScope.begin(); }
@@ -110,18 +110,13 @@ public:
   decl_const_iterator decl_end()   const { return DeclsInScope.end(); }
 
   void AddDecl(Action::DeclTy *D) {
-    DeclsInScope.push_back(D);
+    DeclsInScope.insert(D);
   }
   
   /// isDeclScope - Return true if this is the scope that the specified decl is
   /// declared in.
   bool isDeclScope(Action::DeclTy *D) {
-    // FIXME: this is bad.  We should use a SmallSet instead of a smallvector
-    // for DeclsInScope to handle scopes with thousands of variables!
-    for (unsigned i = 0, e = DeclsInScope.size(); i != e; ++i)
-      if (DeclsInScope[i] == D)
-        return true;
-    return false;
+    return DeclsInScope.count(D) != 0;
   }
   
   
