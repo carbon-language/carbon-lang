@@ -415,14 +415,19 @@ DIAG(err_no_matching_param, ERROR,
 DIAG(err_param_not_declared, ERROR,
      "parameter '%s' was not declared")
 
+DIAG(err_previous_definition, ERROR,
+     "previous definition is here")
+DIAG(err_previous_use, ERROR,
+     "previous use is here")
+
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%s': expected expression")
 DIAG(err_undeclared_var_use, ERROR,
      "use of undeclared identifier '%s'")
 DIAG(err_redefinition, ERROR,
      "redefinition of '%s'")
-DIAG(err_previous_definition, ERROR,
-     "previous definition is here")
+DIAG(err_redefinition_with_wrong_tag, ERROR,
+     "redefinition of '%s' with tag that does not match previous use")
 
 DIAG(warn_implicit_function_decl, WARNING,
      "implicit declaration of function '%s'")

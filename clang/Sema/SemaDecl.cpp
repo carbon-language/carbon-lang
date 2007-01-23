@@ -273,6 +273,14 @@ Sema::DeclTy *Sema::ParseStructUnionTag(Scope *S, bool isUnion, bool isUse,
   // If this is a use of an existing tag, it must have a name.
   assert((isUse || Name != 0) && "Nameless record must have a name!");
   
+  Decl::Kind Kind = isUnion ? Decl::Union : Decl::Struct;
+  
+  // If there is an identifier, use the location of the identifier as the
+  // location of the decl, otherwise use the location of the struct/union
+  // keyword.
+  SourceLocation Loc = NameLoc.isValid() ? NameLoc : KWLoc;
+  
+  
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
   if (Decl *PrevDecl = LookupScopedDecl(Name, Decl::IDNS_Tag)) {
@@ -281,7 +289,12 @@ Sema::DeclTy *Sema::ParseStructUnionTag(Scope *S, bool isUnion, bool isUse,
     // the same scope (so that the definition/declaration completes or
     // rementions the tag), reuse the decl.
     if (isUse || S->isDeclScope(PrevDecl)) {
-      
+      // Make sure that this wasn't declared as an enum and now used as a struct
+      // or something similar.
+      if (PrevDecl->getKind() != Kind) {
+        Diag(KWLoc, diag::err_redefinition_with_wrong_tag, Name->getName());
+        Diag(PrevDecl->getLocation(), diag::err_previous_use);
+      }
       
     }
     
@@ -291,13 +304,8 @@ Sema::DeclTy *Sema::ParseStructUnionTag(Scope *S, bool isUnion, bool isUse,
     
   }
   
-  // If there is an identifier, use the location of the identifier as the
-  // location of the decl, otherwise use the location of the struct/union
-  // keyword.
-  SourceLocation Loc = NameLoc.isValid() ? NameLoc : KWLoc;
-  
   // Otherwise, if this is the first time we've seen this tag, create the decl.
-  Decl *New = new RecordDecl(isUnion ? Decl::Union : Decl::Struct, Loc, Name);
+  Decl *New = new RecordDecl(Kind, Loc, Name);
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {
