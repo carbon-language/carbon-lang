@@ -190,6 +190,16 @@ protected:
   TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) : Decl(DK, L, Id) {}
 public:
   
+  const char *getKindName() const {
+    switch (getKind()) {
+    default: assert(0 && "Unknown TagDecl!");
+    case Struct: return "struct";
+    case Union:  return "union";
+    case Class:  return "class";
+    case Enum:   return "enum";
+    }
+  }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() == Struct || D->getKind() == Union ||

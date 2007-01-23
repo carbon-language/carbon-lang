@@ -408,9 +408,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   assert((Tok.getKind() == tok::kw_struct ||
           Tok.getKind() == tok::kw_union) && "Not a struct/union specifier");
-  SourceLocation StartLoc = ConsumeToken();
   DeclSpec::TST TagType =
     Tok.getKind() == tok::kw_union ? DeclSpec::TST_union : DeclSpec::TST_struct;
+
+  SourceLocation StartLoc = ConsumeToken();
 
   // If attributes exist after tag, parse them.
   if (Tok.getKind() == tok::kw___attribute)

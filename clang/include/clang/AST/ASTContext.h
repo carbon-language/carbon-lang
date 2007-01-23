@@ -66,6 +66,10 @@ public:
   /// getTypeDeclType - Return the unique reference to the type for the
   /// specified typename decl.
   TypeRef getTypeDeclType(TypeDecl *Decl);
+
+  /// getTagDeclType - Return the unique reference to the type for the
+  /// specified TagDecl (struct/union/class/enum) decl.
+  TypeRef getTagDeclType(TagDecl *Decl);
   
 private:
   void InitBuiltinTypes();

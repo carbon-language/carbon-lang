@@ -167,11 +167,21 @@ void FunctionTypeProto::getAsString(std::string &S) const {
 
 
 void TypeNameType::getAsString(std::string &InnerString) const {
-  if (InnerString.empty()) {
-    InnerString = getDecl()->getIdentifier()->getName();
-  } else {
-    // Prefix the basic type, e.g. 'typedefname X'.
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
-    InnerString = getDecl()->getIdentifier()->getName() + InnerString;
-  }
+  InnerString = getDecl()->getIdentifier()->getName() + InnerString;
+}
+
+void TaggedType::getAsString(std::string &InnerString) const {
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
+    InnerString = ' ' + InnerString;
+  
+  const char *Kind = getDecl()->getKindName();
+  const char *ID;
+  if (const IdentifierInfo *II = getDecl()->getIdentifier())
+    ID = II->getName();
+  else
+    ID = "<anonymous>";
+
+  InnerString = std::string(Kind) + " " + ID + InnerString;
 }

@@ -23,6 +23,7 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class TypeDecl;
+  class TagDecl;
   class Type;
   
 /// TypeRef - For efficiency, we don't store CVR-qualified types as nodes on
@@ -162,7 +163,7 @@ namespace clang {
 class Type {
 public:
   enum TypeClass {
-    Builtin, Pointer, Array, FunctionNoProto, FunctionProto, TypeName
+    Builtin, Pointer, Array, FunctionNoProto, FunctionProto, TypeName, Tagged
   };
 private:
   Type *CanonicalType;
@@ -365,6 +366,22 @@ public:
   static bool classof(const Type *T) { return T->getTypeClass() == TypeName; }
   static bool classof(const TypeNameType *) { return true; }
 };
+
+
+class TaggedType : public Type {
+  TagDecl *Decl;
+  TaggedType(TagDecl *D, Type *can) : Type(Tagged, can), Decl(D) {}
+  friend class ASTContext;  // ASTContext creates these.
+public:
+    
+  TagDecl *getDecl() const { return Decl; }
+  
+  virtual void getAsString(std::string &InnerString) const;
+  
+  static bool classof(const Type *T) { return T->getTypeClass() == Tagged; }
+  static bool classof(const TaggedType *) { return true; }
+};
+
 
 
 /// ...
