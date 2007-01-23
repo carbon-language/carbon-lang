@@ -404,34 +404,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 ///       struct-or-union:
 ///         'struct'
 ///         'union'
-///       struct-contents:
-///         struct-declaration-list
-/// [EXT]   empty
-/// [GNU]   "struct-declaration-list" without terminatoring ';'   [TODO]
-///       struct-declaration-list:
-///         struct-declaration
-///         struct-declaration-list struct-declaration
-/// [OBC]   '@' 'defs' '(' class-name ')'                         [TODO]
-///       struct-declaration:
-///         specifier-qualifier-list struct-declarator-list ';'
-/// [GNU]   __extension__ struct-declaration                       [TODO]
-/// [GNU]   specifier-qualifier-list ';'                           [TODO]
-///       struct-declarator-list:
-///         struct-declarator
-///         struct-declarator-list ',' struct-declarator
-/// [GNU]   struct-declarator-list ',' attributes[opt] struct-declarator
-///       struct-declarator:
-///         declarator
-/// [GNU]   declarator attributes[opt]
-///         declarator[opt] ':' constant-expression
-/// [GNU]   declarator[opt] ':' constant-expression attributes[opt]
 ///
 void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   assert((Tok.getKind() == tok::kw_struct ||
           Tok.getKind() == tok::kw_union) && "Not a struct/union specifier");
-  bool isUnion = Tok.getKind() == tok::kw_union;
   SourceLocation StartLoc = ConsumeToken();
-  DeclSpec::TST TagType = isUnion ? DeclSpec::TST_union : DeclSpec::TST_struct;
+  DeclSpec::TST TagType =
+    Tok.getKind() == tok::kw_union ? DeclSpec::TST_union : DeclSpec::TST_struct;
 
   // If attributes exist after tag, parse them.
   if (Tok.getKind() == tok::kw___attribute)
@@ -467,88 +446,117 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   DeclTy *TagDecl =
     Actions.ParseTag(CurScope, TagType, isUse, StartLoc, Name, NameLoc);
   
-  if (Tok.getKind() == tok::l_brace) {
-    SourceLocation LBraceLoc = ConsumeBrace();
-
-    if (Tok.getKind() == tok::r_brace)
-      Diag(Tok, diag::ext_empty_struct_union_enum, isUnion ? "union":"struct");
-
-    while (Tok.getKind() != tok::r_brace && 
-           Tok.getKind() != tok::eof) {
-      // Each iteration of this loop reads one struct-declaration.
-
-      // Parse the common specifier-qualifiers-list piece.
-      DeclSpec DS;
-      SourceLocation SpecQualLoc = Tok.getLocation();
-      ParseSpecifierQualifierList(DS);
-      // TODO: Does specifier-qualifier list correctly check that *something* is
-      // specified?
-      
-      Declarator DeclaratorInfo(DS, Declarator::MemberContext);
-
-      // If there are no declarators, issue a warning.
-      if (Tok.getKind() == tok::semi) {
-        Diag(SpecQualLoc, diag::w_no_declarators);
-      } else {
-        // Read struct-declarators until we find the semicolon.
-        while (1) {
-          /// struct-declarator: declarator
-          /// struct-declarator: declarator[opt] ':' constant-expression
-          if (Tok.getKind() != tok::colon)
-            ParseDeclarator(DeclaratorInfo);
-          
-          if (Tok.getKind() == tok::colon) {
-            ConsumeToken();
-            ExprResult Res = ParseConstantExpression();
-            if (Res.isInvalid) {
-              SkipUntil(tok::semi, true, true);
-            } else {
-              // Process it.
-            }
-          }
-          
-          // If attributes exist after the declarator, parse them.
-          if (Tok.getKind() == tok::kw___attribute)
-            ParseAttributes();
-
-          // TODO: install declarator.
-          
-          // If we don't have a comma, it is either the end of the list (a ';')
-          // or an error, bail out.
-          if (Tok.getKind() != tok::comma)
-            break;
-          
-          // Consume the comma.
-          ConsumeToken();
-          
-          // Parse the next declarator.
-          DeclaratorInfo.clear();
-
-          // Attributes are only allowed on the second declarator.
-          if (Tok.getKind() == tok::kw___attribute)
-            ParseAttributes();
-        }
-      }
-      
-      if (Tok.getKind() == tok::semi) {
-        ConsumeToken();
-      } else {
-        Diag(Tok, diag::err_expected_semi_decl_list);
-        // Skip to end of block or statement
-        SkipUntil(tok::r_brace, true, true);
-      }
-    }
-
-    MatchRHSPunctuation(tok::r_brace, LBraceLoc);
-    
-    // If attributes exist after struct contents, parse them.
-    if (Tok.getKind() == tok::kw___attribute)
-      ParseAttributes();
-  }
+  // If there is a body, parse it and inform the actions module.
+  if (Tok.getKind() == tok::l_brace)
+    ParseStructUnionBody(TagType, TagDecl);
 
   const char *PrevSpec = 0;
   if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+}
+
+
+/// ParseStructUnionBody
+///       struct-contents:
+///         struct-declaration-list
+/// [EXT]   empty
+/// [GNU]   "struct-declaration-list" without terminatoring ';'   [TODO]
+///       struct-declaration-list:
+///         struct-declaration
+///         struct-declaration-list struct-declaration
+/// [OBC]   '@' 'defs' '(' class-name ')'                         [TODO]
+///       struct-declaration:
+///         specifier-qualifier-list struct-declarator-list ';'
+/// [GNU]   __extension__ struct-declaration                       [TODO]
+/// [GNU]   specifier-qualifier-list ';'                           [TODO]
+///       struct-declarator-list:
+///         struct-declarator
+///         struct-declarator-list ',' struct-declarator
+/// [GNU]   struct-declarator-list ',' attributes[opt] struct-declarator
+///       struct-declarator:
+///         declarator
+/// [GNU]   declarator attributes[opt]
+///         declarator[opt] ':' constant-expression
+/// [GNU]   declarator[opt] ':' constant-expression attributes[opt]
+///
+void Parser::ParseStructUnionBody(unsigned TagType, DeclTy *TagDecl) {
+  SourceLocation LBraceLoc = ConsumeBrace();
+  
+  if (Tok.getKind() == tok::r_brace)
+    Diag(Tok, diag::ext_empty_struct_union_enum, 
+         DeclSpec::getSpecifierName((DeclSpec::TST)TagType));
+  
+  while (Tok.getKind() != tok::r_brace && 
+         Tok.getKind() != tok::eof) {
+    // Each iteration of this loop reads one struct-declaration.
+    
+    // Parse the common specifier-qualifiers-list piece.
+    DeclSpec DS;
+    SourceLocation SpecQualLoc = Tok.getLocation();
+    ParseSpecifierQualifierList(DS);
+    // TODO: Does specifier-qualifier list correctly check that *something* is
+    // specified?
+    
+    Declarator DeclaratorInfo(DS, Declarator::MemberContext);
+    
+    // If there are no declarators, issue a warning.
+    if (Tok.getKind() == tok::semi) {
+      Diag(SpecQualLoc, diag::w_no_declarators);
+    } else {
+      // Read struct-declarators until we find the semicolon.
+      while (1) {
+        /// struct-declarator: declarator
+        /// struct-declarator: declarator[opt] ':' constant-expression
+        if (Tok.getKind() != tok::colon)
+          ParseDeclarator(DeclaratorInfo);
+        
+        if (Tok.getKind() == tok::colon) {
+          ConsumeToken();
+          ExprResult Res = ParseConstantExpression();
+          if (Res.isInvalid) {
+            SkipUntil(tok::semi, true, true);
+          } else {
+            // Process it.
+          }
+        }
+        
+        // If attributes exist after the declarator, parse them.
+        if (Tok.getKind() == tok::kw___attribute)
+          ParseAttributes();
+        
+        // TODO: install declarator.
+        
+        // If we don't have a comma, it is either the end of the list (a ';')
+        // or an error, bail out.
+        if (Tok.getKind() != tok::comma)
+          break;
+        
+        // Consume the comma.
+        ConsumeToken();
+        
+        // Parse the next declarator.
+        DeclaratorInfo.clear();
+        
+        // Attributes are only allowed on the second declarator.
+        if (Tok.getKind() == tok::kw___attribute)
+          ParseAttributes();
+      }
+    }
+    
+    if (Tok.getKind() == tok::semi) {
+      ConsumeToken();
+    } else {
+      Diag(Tok, diag::err_expected_semi_decl_list);
+      // Skip to end of block or statement
+      SkipUntil(tok::r_brace, true, true);
+    }
+  }
+  
+  MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+  
+  // If attributes exist after struct contents, parse them.
+  if (Tok.getKind() == tok::kw___attribute)
+    ParseAttributes();
 }
 
 
