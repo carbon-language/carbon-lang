@@ -141,7 +141,6 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   const DeclaratorChunk::ParamInfo &PI = FTI.Fun.ArgInfo[ArgNo];
 
   IdentifierInfo *II = PI.Ident;
-  
   if (Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary)) {
     
     // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
@@ -265,14 +264,31 @@ Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
 /// ParseStructUnionTag - This is invoked when we see 'struct foo' or
 /// 'struct {'.  In the former case, Name will be non-null.  In the later case,
 /// Name will be null.  isUnion indicates whether this is a union or struct tag.
-Sema::DeclTy *Sema::ParseStructUnionTag(Scope *S, bool isUnion,
+/// isUse indicates whether this is a use of a preexisting struct tag, or if it
+/// is a definition or declaration of a new one.
+Sema::DeclTy *Sema::ParseStructUnionTag(Scope *S, bool isUnion, bool isUse,
                                         SourceLocation KWLoc, 
                                         IdentifierInfo *Name,
                                         SourceLocation NameLoc) {
+  // If this is a use of an existing tag, it must have a name.
+  assert((isUse || Name != 0) && "Nameless record must have a name!");
+  
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
   if (Decl *PrevDecl = LookupScopedDecl(Name, Decl::IDNS_Tag)) {
+    
+    // If this is a use of a previous tag, or if the tag is already declared in
+    // the same scope (so that the definition/declaration completes or
+    // rementions the tag), reuse the decl.
+    if (isUse || S->isDeclScope(PrevDecl)) {
+      
+      
+    }
+    
     // TODO: verify it's struct/union, etc.
+    
+    
+    
   }
   
   // If there is an identifier, use the location of the identifier as the

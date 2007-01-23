@@ -140,7 +140,7 @@ public:
     return 0;
   }
   
-  virtual DeclTy *ParseStructUnionTag(Scope *S, bool isUnion,
+  virtual DeclTy *ParseStructUnionTag(Scope *S, bool isUnion, bool isUse,
                                       SourceLocation KWLoc,IdentifierInfo *Name,
                                       SourceLocation NameLoc) {
     return 0;

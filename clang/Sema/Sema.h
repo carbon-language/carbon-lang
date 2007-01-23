@@ -83,7 +83,7 @@ public:
   Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   
-  virtual DeclTy *ParseStructUnionTag(Scope *S, bool isUnion,
+  virtual DeclTy *ParseStructUnionTag(Scope *S, bool isUnion, bool isUse,
                                       SourceLocation KWLoc,IdentifierInfo *Name,
                                       SourceLocation NameLoc);
   

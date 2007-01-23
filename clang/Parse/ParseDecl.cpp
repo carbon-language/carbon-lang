@@ -454,9 +454,17 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
   
   // There are three options here.  If we have 'struct foo;', then this is a
   // forward declaration.  If we have 'struct foo {...' then this is a
-  // definition.  Otherwise we have something like 'struct foo xyz', a use.
-  DeclTy *TagDecl = Actions.ParseStructUnionTag(CurScope, isUnion, StartLoc,
-                                                Name, NameLoc);
+  // definition.  Otherwise we have something like 'struct foo xyz', a use. Tell
+  // the actions module whether this is a definition (forward or not) of the
+  // type insted of a use.
+  //
+  // This is needed to handle stuff like this right (C99 6.7.2.3p11):
+  // struct foo {..};  void bar() { struct foo; }    <- new foo in bar.
+  // struct foo {..};  void bar() { struct foo x; }  <- use of old foo.
+  //
+  bool isUse = Tok.getKind() != tok::l_brace && Tok.getKind() != tok::semi;
+  DeclTy *TagDecl = Actions.ParseStructUnionTag(CurScope, isUnion, isUse,
+                                                StartLoc, Name, NameLoc);
   // TODO: more with the tag decl.
   if (Tok.getKind() == tok::l_brace) {
     SourceLocation LBraceLoc = ConsumeBrace();
