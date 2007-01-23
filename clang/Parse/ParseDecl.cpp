@@ -451,7 +451,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
     ParseStructUnionBody(TagType, TagDecl);
 
   const char *PrevSpec = 0;
-  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec))
+  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagDecl))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 

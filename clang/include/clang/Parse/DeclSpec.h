@@ -111,9 +111,10 @@ private:
   // function-specifier
   bool FS_inline_specified : 1;
   
-  // TypenameRep - If TypeSpecType == TST_typedef, this contains the
-  // representation for the typedef.
-  void *TypenameRep;  
+  /// TypeRep - This contains action-specific information about a specific TST.
+  /// For example, for a typedef or struct, it might contain the declaration for
+  /// these.
+  void *TypeRep;  
   
   // attributes.
   // FIXME: implement declspec attributes.
@@ -135,7 +136,7 @@ public:
       TypeSpecType(TST_unspecified),
       TypeQualifiers(TSS_unspecified),
       FS_inline_specified(false),
-      TypenameRep(0) {
+      TypeRep(0) {
   }
   
   // storage-class-specifier
@@ -158,7 +159,7 @@ public:
   TSC getTypeSpecComplex() const { return TypeSpecComplex; }
   TSS getTypeSpecSign() const { return TypeSpecSign; }
   TST getTypeSpecType() const { return TypeSpecType; }
-  void *getTypenameRep() const { return TypenameRep; }
+  void *getTypeRep() const { return TypeRep; }
   
   SourceLocation getTypeSpecWidthLoc() const { return TSWLoc; }
   SourceLocation getTypeSpecComplexLoc() const { return TSCLoc; }
@@ -210,7 +211,7 @@ public:
   bool SetTypeSpecComplex(TSC C, SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecSign(TSS S, SourceLocation Loc, const char *&PrevSpec);
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
-                       void *TypenameRep = 0);
+                       void *TypeRep = 0);
   
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                    const LangOptions &Lang);
