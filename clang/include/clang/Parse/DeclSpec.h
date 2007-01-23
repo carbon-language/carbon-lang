@@ -165,6 +165,11 @@ public:
   SourceLocation getTypeSpecSignLoc() const { return TSSLoc; }
   SourceLocation getTypeSpecTypeLoc() const { return TSTLoc; }
   
+  /// getSpecifierName - Turn a type-specifier-type into a string like "_Bool"
+  /// or "union".
+  static const char *getSpecifierName(DeclSpec::TST T);
+  static const char *getSpecifierName(DeclSpec::SCS S);
+  
   // type-qualifiers
 
   /// getTypeQualifiers - Return a set of TQs.

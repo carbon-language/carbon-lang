@@ -82,7 +82,7 @@ static bool BadSpecifier(DeclSpec::TSS S, const char *&PrevSpec) {
   return true;
 }
 
-static const char *getSpecifierName(DeclSpec::TST T) {
+const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   switch (T) {
   default: assert(0 && "Unknown typespec!");
   case DeclSpec::TST_unspecified: return "unspecified";
@@ -103,7 +103,7 @@ static const char *getSpecifierName(DeclSpec::TST T) {
 }
 
 static bool BadSpecifier(DeclSpec::TST T, const char *&PrevSpec) {
-  PrevSpec = getSpecifierName(T);
+  PrevSpec = DeclSpec::getSpecifierName(T);
   return true;
 }
 
