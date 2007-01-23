@@ -25,6 +25,7 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
     SetDirective = "\t.set";
     WeakRefDirective = "\t.weak_reference\t";
+    HiddenDirective = "\t.private_extern\t";
     JumpTableDataSection = ".const";
     CStringSection = "\t.cstring";
     LCOMMDirective = "\t.lcomm\t";
