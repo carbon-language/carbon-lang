@@ -27,7 +27,7 @@ namespace llvm {
       // Start the numbering where the builting ops and target ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END+Alpha::INSTRUCTION_LIST_END,
       //These corrospond to the identical Instruction
-      ITOFT_, FTOIT_, CVTQT_, CVTQS_, CVTTQ_,
+      CVTQT_, CVTQS_, CVTTQ_,
 
       /// GPRelHi/GPRelLo - These represent the high and low 16-bit
       /// parts of a global address respectively.

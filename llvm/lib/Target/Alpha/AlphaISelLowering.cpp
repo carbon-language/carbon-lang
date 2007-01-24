@@ -104,6 +104,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   
   setOperationAction(ISD::SETCC, MVT::f32, Promote);
 
+  setOperationAction(ISD::BIT_CONVERT, MVT::f32, Promote);
+
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
@@ -143,15 +145,11 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setJumpBufAlignment(16);
 
   computeRegisterProperties();
-
-  useITOF = TM.getSubtarget<AlphaSubtarget>().hasF2I();
 }
 
 const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
-  case AlphaISD::ITOFT_: return "Alpha::ITOFT_";
-  case AlphaISD::FTOIT_: return "Alpha::FTOIT_";
   case AlphaISD::CVTQT_: return "Alpha::CVTQT_";
   case AlphaISD::CVTQS_: return "Alpha::CVTQS_";
   case AlphaISD::CVTTQ_: return "Alpha::CVTTQ_";
@@ -398,16 +396,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
            "Unhandled SINT_TO_FP type in custom expander!");
     SDOperand LD;
     bool isDouble = MVT::f64 == Op.getValueType();
-    if (useITOF) {
-      LD = DAG.getNode(AlphaISD::ITOFT_, MVT::f64, Op.getOperand(0));
-    } else {
-      int FrameIdx =
-        DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
-      SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i64);
-      SDOperand ST = DAG.getStore(DAG.getEntryNode(),
-                                  Op.getOperand(0), FI, NULL, 0);
-      LD = DAG.getLoad(MVT::f64, ST, FI, NULL, 0);
-      }
+    LD = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
     SDOperand FP = DAG.getNode(isDouble?AlphaISD::CVTQT_:AlphaISD::CVTQS_,
                                isDouble?MVT::f64:MVT::f32, LD);
     return FP;
@@ -421,15 +410,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     src = DAG.getNode(AlphaISD::CVTTQ_, MVT::f64, src);
 
-    if (useITOF) {
-      return DAG.getNode(AlphaISD::FTOIT_, MVT::i64, src);
-    } else {
-      int FrameIdx =
-        DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
-      SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i64);
-      SDOperand ST = DAG.getStore(DAG.getEntryNode(), src, FI, NULL, 0);
-      return DAG.getLoad(MVT::i64, ST, FI, NULL, 0);
-      }
+    return DAG.getNode(ISD::BIT_CONVERT, MVT::i64, src);
   }
   case ISD::ConstantPool: {
     ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);

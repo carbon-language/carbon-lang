@@ -190,11 +190,10 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 bool AlphaAsmPrinter::doInitialization(Module &M)
 {
   AsmPrinter::doInitialization(M);
-  if(TM.getSubtarget<AlphaSubtarget>().hasF2I() 
-     || TM.getSubtarget<AlphaSubtarget>().hasCT())
-    O << "\t.arch ev6\n";
+  if(TM.getSubtarget<AlphaSubtarget>().hasCT())
+    O << "\t.arch ev6\n"; //This might need to be ev67, so leave this test here
   else
-    O << "\t.arch ev56\n";
+    O << "\t.arch ev6\n";
   O << "\t.set noat\n";
   return false;
 }

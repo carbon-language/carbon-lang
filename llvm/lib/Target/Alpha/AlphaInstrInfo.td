@@ -19,8 +19,6 @@ include "AlphaInstrFormats.td"
 def SDTFPUnaryOpUnC  : SDTypeProfile<1, 1, [
   SDTCisFP<1>, SDTCisFP<0>
 ]>;
-def Alpha_itoft   : SDNode<"AlphaISD::ITOFT_",    SDTIntToFPOp, []>;
-def Alpha_ftoit   : SDNode<"AlphaISD::FTOIT_",    SDTFPToIntOp, []>;
 def Alpha_cvtqt   : SDNode<"AlphaISD::CVTQT_",    SDTFPUnaryOpUnC, []>;
 def Alpha_cvtqs   : SDNode<"AlphaISD::CVTQS_",    SDTFPUnaryOpUnC, []>;
 def Alpha_cvttq   : SDNode<"AlphaISD::CVTTQ_"  ,  SDTFPUnaryOp, []>;
@@ -745,12 +743,12 @@ let OperandList = (ops GPRC:$RC, F4RC:$RA), Fb = 31 in
 def FTOIS : FPForm<0x1C, 0x078, "ftois $RA,$RC",[], s_ftoi>; //Floating to integer move, S_floating
 let OperandList = (ops GPRC:$RC, F8RC:$RA), Fb = 31 in 
 def FTOIT : FPForm<0x1C, 0x070, "ftoit $RA,$RC",
-        [(set GPRC:$RC, (Alpha_ftoit F8RC:$RA))], s_ftoi>; //Floating to integer move
+        [(set GPRC:$RC, (bitconvert F8RC:$RA))], s_ftoi>; //Floating to integer move
 let OperandList = (ops F4RC:$RC, GPRC:$RA), Fb = 31 in 
 def ITOFS : FPForm<0x14, 0x004, "itofs $RA,$RC",[], s_itof>; //Integer to floating move, S_floating
 let OperandList = (ops F8RC:$RC, GPRC:$RA), Fb = 31 in 
 def ITOFT : FPForm<0x14, 0x024, "itoft $RA,$RC",
-        [(set F8RC:$RC, (Alpha_itoft GPRC:$RA))], s_itof>; //Integer to floating move
+        [(set F8RC:$RC, (bitconvert GPRC:$RA))], s_itof>; //Integer to floating move
 
 
 let OperandList = (ops F4RC:$RC, F8RC:$RB), Fa = 31 in 

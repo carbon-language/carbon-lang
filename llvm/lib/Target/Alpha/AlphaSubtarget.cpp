@@ -17,7 +17,7 @@
 using namespace llvm;
 
 AlphaSubtarget::AlphaSubtarget(const Module &M, const std::string &FS)
-  : HasF2I(false), HasCT(false) {
+  : HasCT(false) {
   std::string CPU = "generic";
 
   // Parse features string.

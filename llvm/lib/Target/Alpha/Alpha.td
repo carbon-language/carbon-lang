@@ -22,8 +22,6 @@ include "../Target.td"
 
 def FeatureCIX : SubtargetFeature<"CIX", "HasCT", "true",
                                   "Enable CIX extentions">;
-def FeatureFIX : SubtargetFeature<"FIX", "HasF2I", "true",
-                                  "Enable FIX extentions">;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
@@ -54,10 +52,8 @@ def AlphaInstrInfo : InstrInfo {
 //===----------------------------------------------------------------------===//
 
 def : Processor<"generic", Alpha21264Itineraries, []>;
-def : Processor<"pca56"  , Alpha21264Itineraries, []>;
-def : Processor<"ev56"   , Alpha21264Itineraries, []>;
-def : Processor<"ev6"    , Alpha21264Itineraries, [FeatureFIX]>;
-def : Processor<"ev67"   , Alpha21264Itineraries, [FeatureFIX, FeatureCIX]>;
+def : Processor<"ev6"    , Alpha21264Itineraries, []>;
+def : Processor<"ev67"   , Alpha21264Itineraries, [FeatureCIX]>;
 
 //===----------------------------------------------------------------------===//
 // The Alpha Target
