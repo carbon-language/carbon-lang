@@ -350,30 +350,50 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
 
   case ISD::SETCC:
     if (MVT::isFloatingPoint(N->getOperand(0).Val->getValueType(0))) {
-      unsigned Opc = Alpha::WTF;
       ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
+
+      unsigned Opc = Alpha::WTF;
       bool rev = false;
-      bool isNE = false;
+      bool inv = false;
       switch(CC) {
       default: DEBUG(N->dump()); assert(0 && "Unknown FP comparison!");
-      case ISD::SETEQ: case ISD::SETOEQ: case ISD::SETUEQ: Opc = Alpha::CMPTEQ; break;
-      case ISD::SETLT: case ISD::SETOLT: case ISD::SETULT: Opc = Alpha::CMPTLT; break;
-      case ISD::SETLE: case ISD::SETOLE: case ISD::SETULE: Opc = Alpha::CMPTLE; break;
-      case ISD::SETGT: case ISD::SETOGT: case ISD::SETUGT: Opc = Alpha::CMPTLT; rev = true; break;
-      case ISD::SETGE: case ISD::SETOGE: case ISD::SETUGE: Opc = Alpha::CMPTLE; rev = true; break;
-      case ISD::SETNE: case ISD::SETONE: case ISD::SETUNE: Opc = Alpha::CMPTEQ; isNE = true; break;
+      case ISD::SETEQ: case ISD::SETOEQ: case ISD::SETUEQ:
+	Opc = Alpha::CMPTEQ; break;
+      case ISD::SETLT: case ISD::SETOLT: case ISD::SETULT: 
+	Opc = Alpha::CMPTLT; break;
+      case ISD::SETLE: case ISD::SETOLE: case ISD::SETULE: 
+	Opc = Alpha::CMPTLE; break;
+      case ISD::SETGT: case ISD::SETOGT: case ISD::SETUGT: 
+	Opc = Alpha::CMPTLT; rev = true; break;
+      case ISD::SETGE: case ISD::SETOGE: case ISD::SETUGE: 
+	Opc = Alpha::CMPTLE; rev = true; break;
+      case ISD::SETNE: case ISD::SETONE: case ISD::SETUNE:
+	Opc = Alpha::CMPTEQ; inv = true; break;
+      case ISD::SETO:
+	Opc = Alpha::CMPTUN; inv = true; break;
+      case ISD::SETUO:
+	Opc = Alpha::CMPTUN; break;
       };
-      SDOperand tmp1 = N->getOperand(0);
-      SDOperand tmp2 = N->getOperand(1);
+      SDOperand tmp1 = N->getOperand(rev?1:0);
+      SDOperand tmp2 = N->getOperand(rev?0:1);
       AddToISelQueue(tmp1);
       AddToISelQueue(tmp2);
-      SDNode *cmp = CurDAG->getTargetNode(Opc, MVT::f64, 
-                                          rev?tmp2:tmp1,
-                                          rev?tmp1:tmp2);
-      if (isNE) 
+      SDNode *cmp = CurDAG->getTargetNode(Opc, MVT::f64, tmp1, tmp2);
+      if (inv) 
         cmp = CurDAG->getTargetNode(Alpha::CMPTEQ, MVT::f64, SDOperand(cmp, 0), 
                                     CurDAG->getRegister(Alpha::F31, MVT::f64));
-      
+      switch(CC) {
+      case ISD::SETUEQ: case ISD::SETULT: case ISD::SETULE:
+      case ISD::SETUNE: case ISD::SETUGT: case ISD::SETUGE:
+	{
+	  SDNode* cmp2 = CurDAG->getTargetNode(Alpha::CMPTUN, MVT::f64, tmp1, tmp2);
+	  cmp = CurDAG->getTargetNode(Alpha::ADDT, MVT::f64, 
+				      SDOperand(cmp2, 0), SDOperand(cmp, 0));
+	  break;
+	}
+      default: break;
+      }
+
       SDOperand LD;
       if (AlphaLowering.hasITOF()) {
         LD = CurDAG->getNode(AlphaISD::FTOIT_, MVT::i64, SDOperand(cmp, 0));
