@@ -194,6 +194,11 @@ public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
     : ObjectDecl(Field, L, Id, T) {}
   
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() == Field;
+  }
+  static bool classof(const FieldDecl *D) { return true; }
 };
 
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
