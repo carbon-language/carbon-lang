@@ -23,23 +23,11 @@ using namespace llvm;
 namespace {
   class VISIBILITY_HIDDEN PPCMachOWriter : public MachOWriter {
   public:
-    PPCMachOWriter(std::ostream &O, PPCTargetMachine &TM) : MachOWriter(O, TM) {
-      if (TM.getTargetData()->getPointerSizeInBits() == 64) {
-        Header.cputype = MachOHeader::HDR_CPU_TYPE_POWERPC64;
-      } else {
-        Header.cputype = MachOHeader::HDR_CPU_TYPE_POWERPC;
-      }
-      Header.cpusubtype = MachOHeader::HDR_CPU_SUBTYPE_POWERPC_ALL;
-    }
+    PPCMachOWriter(std::ostream &O, PPCTargetMachine &TM)
+      : MachOWriter(O, TM) {}
 
     virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &From,
                                      MachOSection &To);
-    virtual MachineRelocation GetJTRelocation(unsigned Offset,
-                                              MachineBasicBlock *MBB);
-    
-    virtual const char *getPassName() const {
-      return "PowerPC Mach-O Writer";
-    }
 
     // Constants for the relocation r_type field.
     // see <mach-o/ppc/reloc.h>
@@ -67,20 +55,20 @@ void llvm::addPPCMachOObjectWriterPass(FunctionPassManager &FPM,
 
 /// GetTargetRelocation - For the MachineRelocation MR, convert it to one or
 /// more PowerPC MachORelocation(s), add the new relocations to the
-/// MachOSection, and rewrite the instruction at the section offset if required 
+/// MachOSection, and rewrite the instruction at the section offset if required
 /// by that relocation type.
 void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
                                          MachOSection &From,
                                          MachOSection &To) {
   uint64_t Addr = 0;
-  
+
   // Keep track of whether or not this is an externally defined relocation.
   bool     isExtern = false;
-  
+
   // Get the address of whatever it is we're relocating, if possible.
   if (!isExtern)
     Addr = (uintptr_t)MR.getResultPointer() + To.addr;
-    
+
   switch ((PPC::RelocationType)MR.getRelocationType()) {
   default: assert(0 && "Unknown PPC relocation type!");
   case PPC::reloc_absolute_low_ix:
@@ -89,7 +77,7 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
   case PPC::reloc_vanilla:
     {
       // FIXME: need to handle 64 bit vanilla relocs
-      MachORelocation VANILLA(MR.getMachineCodeOffset(), To.Index, false, 2, 
+      MachORelocation VANILLA(MR.getMachineCodeOffset(), To.Index, false, 2,
                               isExtern, PPC_RELOC_VANILLA);
       ++From.nreloc;
 
@@ -165,10 +153,3 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
     }
   }
 }
-
-MachineRelocation PPCMachOWriter::GetJTRelocation(unsigned Offset,
-                                                  MachineBasicBlock *MBB) {
-  // FIXME: do something about PIC
-  return MachineRelocation::getBB(Offset, PPC::reloc_vanilla, MBB);
-}
-
