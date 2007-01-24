@@ -383,7 +383,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
   TagDecl *Record = static_cast<TagDecl*>(RecDecl);
   if (Record->isDefinition()) {
     // Diagnose code like:
-    // struct S { struct S {} X; };
+    //     struct S { struct S {} X; };
     // We discover this when we complete the outer S.  Reject and ignore the
     // outer S.
     Diag(Record->getLocation(), diag::err_nested_redefinition,
@@ -391,8 +391,30 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     Diag(RecLoc, diag::err_previous_definition);
     return;
   }
-  
+
+  // Okay, we successfully defined 'Record'.
   Record->setDefinition(true);
+  
+  // Verify that all the fields are okay.
+  for (unsigned i = 0; i != NumFields; ++i) {
+    FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
+    if (!FD) continue;  // Already issued a diagnostic.
+
+    // C99 6.7.2.1p2 - A field may not be a function type.
+    if (isa<FunctionType>(FD->getType())) {
+      Diag(FD->getLocation(), diag::err_field_declared_as_function,
+           FD->getName());
+      continue;
+    }
+
+    // C99 6.7.2.1p2 - A field may not be an incomplete type  except...
+    if (FD->getType()->isIncompleteType()) {
+      
+      // 
+      
+    }
+  }
+  
 }
 
 

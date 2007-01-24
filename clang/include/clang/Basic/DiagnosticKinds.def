@@ -437,6 +437,9 @@ DIAG(warn_implicit_function_decl, WARNING,
 DIAG(ext_implicit_function_decl, EXTENSION,
      "implicit declaration of function '%s' is invalid in C99")
 
+DIAG(err_field_declared_as_function, ERROR,
+     "field '%s' declared as a function")
+
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,
      "invalid application of 'sizeof' to a function type")
