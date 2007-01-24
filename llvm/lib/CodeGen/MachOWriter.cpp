@@ -461,8 +461,8 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   OutputBuffer FHOut(FH, is64Bit, isLittleEndian);
 
   FHOut.outword(Header.magic);
-  FHOut.outword(Header.cputype);
-  FHOut.outword(Header.cpusubtype);
+  FHOut.outword(TM.getMachOWriterInfo()->CPUType);
+  FHOut.outword(TM.getMachOWriterInfo()->CPUSubType);
   FHOut.outword(Header.filetype);
   FHOut.outword(Header.ncmds);
   FHOut.outword(Header.sizeofcmds);
