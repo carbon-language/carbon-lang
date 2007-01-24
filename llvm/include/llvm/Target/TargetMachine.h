@@ -34,6 +34,7 @@ class Module;
 class FunctionPassManager;
 class PassManager;
 class Pass;
+struct TargetMachOWriterInfo;
 
 // Relocation model types.
 namespace Reloc {
@@ -142,6 +143,11 @@ public:
   virtual const InstrItineraryData getInstrItineraryData() const {  
     return InstrItineraryData();
   }
+
+  /// getMachOWriterInfo - If this target supports a Mach-O writer, return
+  /// information for it, otherwise return null.
+  /// 
+  virtual const TargetMachOWriterInfo *getMachOWriterInfo() const { return 0; }
 
   /// getRelocationModel - Returns the code generation relocation model. The
   /// choices are static, PIC, and dynamic-no-pic, and target default.
