@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetMachOWriterInfo.h"
 
 namespace llvm {
   class GlobalVariable;
@@ -126,8 +127,6 @@ namespace llvm {
     /// specific architecture type/subtype pair that is emitted to the file.
     struct MachOHeader {
       uint32_t  magic;      // mach magic number identifier
-      uint32_t  cputype;    // cpu specifier
-      uint32_t  cpusubtype; // machine specifier
       uint32_t  filetype;   // type of file
       uint32_t  ncmds;      // number of load commands
       uint32_t  sizeofcmds; // the size of all the load commands
@@ -138,62 +137,6 @@ namespace llvm {
       /// up for emission to the file.
       DataBuffer HeaderData;
 
-      // The various CPU_TYPE_* constants are already defined by at least one
-      // system header file and create compilation errors if not respected.
-#if !defined(CPU_TYPE_I386)
-#define CPU_TYPE_I386		7
-#endif
-#if !defined(CPU_TYPE_X86_64)
-#define CPU_TYPE_X86_64		(CPU_TYPE_I386 | 0x1000000)
-#endif
-#if !defined(CPU_TYPE_ARM)
-#define CPU_TYPE_ARM		12
-#endif
-#if !defined(CPU_TYPE_SPARC)
-#define CPU_TYPE_SPARC		14
-#endif
-#if !defined(CPU_TYPE_POWERPC)
-#define CPU_TYPE_POWERPC	18
-#endif
-#if !defined(CPU_TYPE_POWERPC64)
-#define CPU_TYPE_POWERPC64	(CPU_TYPE_POWERPC | 0x1000000)
-#endif
-
-      // Constants for the cputype field
-      // see <mach/machine.h>
-      enum { HDR_CPU_TYPE_I386      = CPU_TYPE_I386,
-             HDR_CPU_TYPE_X86_64    = CPU_TYPE_X86_64,
-             HDR_CPU_TYPE_ARM       = CPU_TYPE_ARM,
-             HDR_CPU_TYPE_SPARC     = CPU_TYPE_SPARC,
-             HDR_CPU_TYPE_POWERPC   = CPU_TYPE_POWERPC,
-             HDR_CPU_TYPE_POWERPC64 = CPU_TYPE_POWERPC64
-      };
-      
-#if !defined(CPU_SUBTYPE_I386_ALL)
-#define CPU_SUBTYPE_I386_ALL	3
-#endif
-#if !defined(CPU_SUBTYPE_X86_64_ALL)
-#define CPU_SUBTYPE_X86_64_ALL	3
-#endif
-#if !defined(CPU_SUBTYPE_ARM_ALL)
-#define CPU_SUBTYPE_ARM_ALL	0
-#endif
-#if !defined(CPU_SUBTYPE_SPARC_ALL)
-#define CPU_SUBTYPE_SPARC_ALL	0
-#endif
-#if !defined(CPU_SUBTYPE_POWERPC_ALL)
-#define CPU_SUBTYPE_POWERPC_ALL	0
-
-#endif
-      // Constants for the cpusubtype field
-      // see <mach/machine.h>
-      enum { HDR_CPU_SUBTYPE_I386_ALL = CPU_SUBTYPE_I386_ALL,
-             HDR_CPU_SUBTYPE_X86_64_ALL = CPU_SUBTYPE_X86_64_ALL,
-             HDR_CPU_SUBTYPE_ARM_ALL = CPU_SUBTYPE_ARM_ALL,
-             HDR_CPU_SUBTYPE_SPARC_ALL = CPU_SUBTYPE_SPARC_ALL,
-             HDR_CPU_SUBTYPE_POWERPC_ALL = CPU_SUBTYPE_POWERPC_ALL
-      };
-             
       // Constants for the filetype field
       // see <mach-o/loader.h> for additional info on the various types
       enum { MH_OBJECT     = 1, // relocatable object file
@@ -261,8 +204,8 @@ namespace llvm {
                 // stack execution privilege.  Only used in MH_EXECUTE filetype
       };
 
-      MachOHeader() : magic(0), cputype(0), cpusubtype(0), filetype(0),
-                      ncmds(0), sizeofcmds(0), flags(0), reserved(0) { }
+      MachOHeader() : magic(0), filetype(0), ncmds(0), sizeofcmds(0), flags(0),
+                      reserved(0) { }
       
       /// cmdSize - This routine returns the size of the MachOSection as written
       /// to disk, depending on whether the destination is a 64 bit Mach-O file.
@@ -671,8 +614,10 @@ namespace llvm {
     void BufferSymbolAndStringTable();
     void CalculateRelocations(MachOSection &MOS);
 
-    virtual MachineRelocation GetJTRelocation(unsigned Offset,
-                                              MachineBasicBlock *MBB) = 0;
+    MachineRelocation GetJTRelocation(unsigned Offset,
+                                      MachineBasicBlock *MBB) const {
+      return TM.getMachOWriterInfo()->GetJTRelocation(Offset, MBB);
+    }
     virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &From,
                                      MachOSection &To) = 0;
   };
