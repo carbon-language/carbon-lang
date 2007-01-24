@@ -995,6 +995,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   const Function* Fn = MF.getFunction();
   const X86Subtarget* Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
   MachineInstr *MI;
+  MachineDebugInfo *DebugInfo = MFI->getMachineDebugInfo();
+  
+  // Prepare for debug frame info.
+  bool hasInfo = DebugInfo && DebugInfo->hasInfo();
+  unsigned FrameLabelId = 0;
   
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
@@ -1018,6 +1023,12 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
+  if (hasInfo) {
+    // Mark effective beginning of when frame pointer becomes valid.
+    FrameLabelId = DebugInfo->NextLabelID();
+    BuildMI(MBB, MBBI, TII.get(X86::DWARF_LABEL)).addImm(FrameLabelId);
+  }
+  
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
@@ -1040,6 +1051,38 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
                                 FramePtr), StackPtr, NumBytes-SlotSize);
 
     MBB.insert(MBBI, MI);
+  }
+
+  if (hasInfo) {
+    std::vector<MachineMove> &Moves = DebugInfo->getFrameMoves();
+    
+    if (NumBytes) {
+      // Show update of SP.
+      MachineLocation SPDst(MachineLocation::VirtualFP);
+      MachineLocation SPSrc(MachineLocation::VirtualFP, -NumBytes);
+      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+    } else {
+      MachineLocation SP(StackPtr);
+      Moves.push_back(MachineMove(FrameLabelId, SP, SP));
+    }
+
+    // Add callee saved registers to move list.
+    const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+    for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
+      int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
+      unsigned Reg = CSI[I].getReg();
+      MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
+      MachineLocation CSSrc(Reg);
+      Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
+    }
+    
+    // Mark effective beginning of when frame pointer is ready.
+    unsigned ReadyLabelId = DebugInfo->NextLabelID();
+    BuildMI(MBB, MBBI, TII.get(X86::DWARF_LABEL)).addImm(ReadyLabelId);
+    
+    MachineLocation FPDst(hasFP(MF) ? FramePtr : StackPtr);
+    MachineLocation FPSrc(MachineLocation::VirtualFP);
+    Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
   }
 
   // If it's main() on Cygwin\Mingw32 we should align stack as well
@@ -1125,6 +1168,14 @@ unsigned X86RegisterInfo::getRARegister() const {
 
 unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {
   return hasFP(MF) ? FramePtr : StackPtr;
+}
+
+void X86RegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
+                                                                         const {
+  // Initial state of the frame pointer is esp.
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(StackPtr, 0);
+  Moves.push_back(MachineMove(0, Dst, Src));
 }
 
 namespace llvm {

@@ -94,6 +94,7 @@ public:
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
+  void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 };
 
 // getX86SubSuperRegister - X86 utility function. It returns the sub or super
