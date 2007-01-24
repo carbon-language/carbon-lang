@@ -945,12 +945,6 @@ public:
     O << "\n";
   }
   
-  /// EmitAlign - Print a align directive.
-  ///
-  void EmitAlign(unsigned Alignment) const {
-    O << TAI->getAlignDirective() << Alignment << "\n";
-  }
-                                        
   /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
   /// unsigned leb128 value.
   void EmitULEB128Bytes(unsigned Value) const {
@@ -2444,7 +2438,7 @@ private:
     EmitFrameMoves(NULL, 0, Moves);
     for (unsigned i = 0, N = Moves.size(); i < N; ++i) delete Moves[i];
 
-    EmitAlign(2);
+    Asm->EmitAlignment(2);
     EmitLabel("frame_common_end", 0);
     
     O << "\n";
@@ -2477,7 +2471,7 @@ private:
     
     EmitFrameMoves("func_begin", SubprogramCount, Moves);
     
-    EmitAlign(2);
+    Asm->EmitAlignment(2);
     EmitLabel("frame_end", SubprogramCount);
 
     O << "\n";

@@ -174,12 +174,14 @@ namespace llvm {
     /// do nothing and return false.
     bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
     
+  public:
     /// EmitAlignment - Emit an alignment directive to the specified power of
     /// two boundary.  For example, if you pass in 3 here, you will get an 8
     /// byte alignment.  If a global value is specified, and if that global has
     /// an explicit alignment requested, it will override the alignment request.
     void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const;
 
+  protected:
     /// EmitZeros - Emit a block of zeros.
     ///
     void EmitZeros(uint64_t NumZeros) const;
