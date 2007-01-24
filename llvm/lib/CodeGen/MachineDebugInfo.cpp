@@ -1505,7 +1505,6 @@ void MachineDebugInfo::EndFunction() {
   }
   
   // Clean up frame info.
-  for (unsigned i = 0, N = FrameMoves.size(); i < N; ++i) delete FrameMoves[i];
   FrameMoves.clear();
 }
 

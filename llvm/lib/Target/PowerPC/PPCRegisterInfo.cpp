@@ -762,6 +762,10 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineDebugInfo *DebugInfo = MFI->getMachineDebugInfo();
   
+  // Prepare for debug frame info.
+  bool hasInfo = DebugInfo && DebugInfo->hasInfo();
+  unsigned FrameLabelId = 0;
+  
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
   // process it.
   for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
@@ -821,6 +825,12 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
 
+  if (hasInfo) {
+    // Mark effective beginning of when frame pointer becomes valid.
+    FrameLabelId = DebugInfo->NextLabelID();
+    BuildMI(MBB, MBBI, TII.get(PPC::DWARF_LABEL)).addImm(FrameLabelId);
+  }
+  
   // Adjust stack pointer: r1 += NegFrameSize.
   // If there is a preferred stack alignment, align R1 now
   if (!IsPPC64) {
@@ -866,26 +876,44 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
   
-  if (DebugInfo && DebugInfo->hasInfo()) {
-    std::vector<MachineMove *> &Moves = DebugInfo->getFrameMoves();
-    unsigned LabelID = DebugInfo->NextLabelID();
+  if (hasInfo) {
+    std::vector<MachineMove> &Moves = DebugInfo->getFrameMoves();
     
-    // Mark effective beginning of when frame pointer becomes valid.
-    BuildMI(MBB, MBBI, TII.get(PPC::DWARF_LABEL)).addImm(LabelID);
+    if (NegFrameSize) {
+      // Show update of SP.
+      MachineLocation SPDst(MachineLocation::VirtualFP);
+      MachineLocation SPSrc(MachineLocation::VirtualFP, NegFrameSize);
+      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+    } else {
+      MachineLocation SP(IsPPC64 ? PPC::X31 : PPC::R31);
+      Moves.push_back(MachineMove(FrameLabelId, SP, SP));
+    }
     
-    // Show update of SP.
-    MachineLocation SPDst(MachineLocation::VirtualFP);
-    MachineLocation SPSrc(MachineLocation::VirtualFP, NegFrameSize);
-    Moves.push_back(new MachineMove(LabelID, SPDst, SPSrc));
+    if (HasFP) {
+      MachineLocation FPDst(MachineLocation::VirtualFP, FPOffset);
+      MachineLocation FPSrc(IsPPC64 ? PPC::X31 : PPC::R31);
+      Moves.push_back(MachineMove(FrameLabelId, FPDst, FPSrc));
+    }
 
     // Add callee saved registers to move list.
     const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
     for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
-      MachineLocation CSDst(MachineLocation::VirtualFP,
-                            MFI->getObjectOffset(CSI[I].getFrameIdx()));
-      MachineLocation CSSrc(CSI[I].getReg());
-      Moves.push_back(new MachineMove(LabelID, CSDst, CSSrc));
+      int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
+      unsigned Reg = CSI[I].getReg();
+      if (Reg == PPC::LR || Reg == PPC::LR8) continue;
+      MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
+      MachineLocation CSSrc(Reg);
+      Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
     }
+    
+    // Mark effective beginning of when frame pointer is ready.
+    unsigned ReadyLabelId = DebugInfo->NextLabelID();
+    BuildMI(MBB, MBBI, TII.get(PPC::DWARF_LABEL)).addImm(ReadyLabelId);
+    
+    MachineLocation FPDst(HasFP ? (IsPPC64 ? PPC::X31 : PPC::R31) :
+                                  (IsPPC64 ? PPC::X1 : PPC::R1));
+    MachineLocation FPSrc(MachineLocation::VirtualFP);
+    Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
   }
 
   // If there is a frame pointer, copy R1 into R31
@@ -983,12 +1011,12 @@ unsigned PPCRegisterInfo::getFrameRegister(MachineFunction &MF) const {
     return hasFP(MF) ? PPC::X31 : PPC::X1;
 }
 
-void PPCRegisterInfo::getInitialFrameState(std::vector<MachineMove *> &Moves)
+void PPCRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
                                                                          const {
   // Initial state of the frame pointer is R1.
   MachineLocation Dst(MachineLocation::VirtualFP);
   MachineLocation Src(PPC::R1, 0);
-  Moves.push_back(new MachineMove(0, Dst, Src));
+  Moves.push_back(MachineMove(0, Dst, Src));
 }
 
 #include "PPCGenRegisterInfo.inc"

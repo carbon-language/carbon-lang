@@ -985,7 +985,7 @@ private:
   
   // FrameMoves - List of moves done by a function's prolog.  Used to construct
   // frame maps by debug consumers.
-  std::vector<MachineMove *> FrameMoves;
+  std::vector<MachineMove> FrameMoves;
 
 public:
   MachineDebugInfo();
@@ -1145,7 +1145,7 @@ public:
   
   /// getFrameMoves - Returns a reference to a list of moves done in the current
   /// function's prologue.  Used to construct frame maps for debug comsumers.
-  std::vector<MachineMove *> &getFrameMoves() { return FrameMoves; }
+  std::vector<MachineMove> &getFrameMoves() { return FrameMoves; }
 
 }; // End class MachineDebugInfo
 

@@ -79,10 +79,16 @@ private:
   unsigned LabelID;                     // Label ID number for post-instruction
                                         // address when result of move takes
                                         // effect.
-  const MachineLocation Destination;    // Move to location.
-  const MachineLocation Source;         // Move from location.
+  MachineLocation Destination;          // Move to location.
+  MachineLocation Source;               // Move from location.
   
 public:
+  MachineMove()
+  : LabelID(0)
+  , Destination()
+  , Source()
+  {}
+
   MachineMove(unsigned ID, MachineLocation &D, MachineLocation &S)
   : LabelID(ID)
   , Destination(D)

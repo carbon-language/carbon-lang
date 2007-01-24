@@ -64,7 +64,7 @@ void MRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
 /// getInitialFrameState - Returns a list of machine moves that are assumed
 /// on entry to a function.
 void
-MRegisterInfo::getInitialFrameState(std::vector<MachineMove *> &Moves) const {
+MRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
   // Default is to do nothing.
 }
 

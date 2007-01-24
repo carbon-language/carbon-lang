@@ -2112,16 +2112,25 @@ private:
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.
   void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
-                                   std::vector<MachineMove *> &Moves) {
+                                   std::vector<MachineMove> &Moves) {
+    int stackGrowth =
+        Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
+          TargetFrameInfo::StackGrowsUp ?
+            TAI->getAddressSize() : -TAI->getAddressSize();
+
     for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
-      MachineMove *Move = Moves[i];
-      unsigned LabelID = DebugInfo->MappedLabel(Move->getLabelID());
+      MachineMove &Move = Moves[i];
+      unsigned LabelID = Move.getLabelID();
       
-      // Throw out move if the label is invalid.
-      if (!LabelID) continue;
+      if (LabelID) {
+        LabelID = DebugInfo->MappedLabel(LabelID);
       
-      const MachineLocation &Dst = Move->getDestination();
-      const MachineLocation &Src = Move->getSource();
+        // Throw out move if the label is invalid.
+        if (!LabelID) continue;
+      }
+      
+      const MachineLocation &Dst = Move.getDestination();
+      const MachineLocation &Src = Move.getSource();
       
       // Advance row if new location.
       if (BaseLabel && LabelID && BaseLabelID != LabelID) {
@@ -2134,11 +2143,6 @@ private:
         BaseLabel = "loc";
       }
       
-      int stackGrowth =
-          Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
-            TargetFrameInfo::StackGrowsUp ?
-              TAI->getAddressSize() : -TAI->getAddressSize();
-
       // If advancing cfa.
       if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
         if (!Src.isRegister()) {
@@ -2156,6 +2160,16 @@ private:
           
           EmitULEB128Bytes(Offset);
           EOL("Offset");
+        } else {
+          assert(0 && "Machine move no supported yet.");
+        }
+      } else if (Src.isRegister() &&
+        Src.getRegister() == MachineLocation::VirtualFP) {
+        if (Dst.isRegister()) {
+          EmitInt8(DW_CFA_def_cfa_register);
+          EOL("DW_CFA_def_cfa_register");
+          EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister()));
+          EOL("Register");
         } else {
           assert(0 && "Machine move no supported yet.");
         }
@@ -2433,10 +2447,9 @@ private:
     EmitSLEB128Bytes(stackGrowth); EOL("CIE Data Alignment Factor");   
     EmitInt8(RI->getDwarfRegNum(RI->getRARegister())); EOL("CIE RA Column");
     
-    std::vector<MachineMove *> Moves;
+    std::vector<MachineMove> Moves;
     RI->getInitialFrameState(Moves);
     EmitFrameMoves(NULL, 0, Moves);
-    for (unsigned i = 0, N = Moves.size(); i < N; ++i) delete Moves[i];
 
     Asm->EmitAlignment(2);
     EmitLabel("frame_common_end", 0);
@@ -2467,7 +2480,7 @@ private:
                    "func_begin", SubprogramCount);
     EOL("FDE address range");
     
-    std::vector<MachineMove *> &Moves = DebugInfo->getFrameMoves();
+    std::vector<MachineMove> &Moves = DebugInfo->getFrameMoves();
     
     EmitFrameMoves("func_begin", SubprogramCount, Moves);
     
