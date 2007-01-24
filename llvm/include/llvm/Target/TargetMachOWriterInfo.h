@@ -24,10 +24,10 @@ namespace llvm {
   //                        TargetMachOWriterInfo
   //===--------------------------------------------------------------------===//
 
-  struct TargetMachOWriterInfo {
+  class TargetMachOWriterInfo {
     uint32_t CPUType;                 // CPU specifier
     uint32_t CPUSubType;              // Machine specifier
-
+  public:
     // The various CPU_TYPE_* constants are already defined by at least one
     // system header file and create compilation errors if not respected.
 #if !defined(CPU_TYPE_I386)
@@ -93,9 +93,8 @@ namespace llvm {
     virtual MachineRelocation GetJTRelocation(unsigned Offset,
                                               MachineBasicBlock *MBB) const;
 
-    virtual const char *getPassName() const {
-      return "Mach-O Writer";
-    }
+    uint32_t getCPUType() const { return CPUType; }
+    uint32_t getCPUSubType() const { return CPUSubType; }
   };
 
 } // end llvm namespace

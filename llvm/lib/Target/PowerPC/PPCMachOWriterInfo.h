@@ -21,13 +21,10 @@ namespace llvm {
   // Forward declarations
   class PPCTargetMachine;
 
-  struct PPCMachOWriterInfo : public TargetMachOWriterInfo {
+  class PPCMachOWriterInfo : public TargetMachOWriterInfo {
+  public:
     PPCMachOWriterInfo(const PPCTargetMachine &TM);
     virtual ~PPCMachOWriterInfo() {}
-
-    virtual const char *getPassName() const {
-      return "PowerPC Mach-O Writer";
-    }
   };
 
 } // end llvm namespace

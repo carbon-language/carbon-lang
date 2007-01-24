@@ -85,11 +85,13 @@ namespace llvm {
     MachineCodeEmitter &getMachineCodeEmitter() const {
       return *(MachineCodeEmitter*)MCE;
     }
+    virtual ~MachOWriter();
 
-    ~MachOWriter();
+    virtual const char *getPassName() const {
+      return "Mach-O Writer";
+    }
 
     typedef std::vector<unsigned char> DataBuffer;
-
   protected:
     MachOWriter(std::ostream &O, TargetMachine &TM);
 
