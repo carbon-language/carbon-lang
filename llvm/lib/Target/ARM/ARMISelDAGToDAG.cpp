@@ -122,17 +122,21 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDOperand Op, SDOperand N,
   if (N.getOpcode() == ISD::ADD)
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       int RHSC = (int)RHS->getValue();
-      if (RHSC >= 0 && RHSC < 0x1000) { // 12 bits.
+      if ((RHSC >= 0 && RHSC < 0x1000) ||
+          (RHSC < 0 && RHSC > -0x1000)) { // 12 bits.
         Base = N.getOperand(0);
+        if (Base.getOpcode() == ISD::FrameIndex) {
+          int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+          Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+        }
         Offset = CurDAG->getRegister(0, MVT::i32);
-        Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(ARM_AM::add, RHSC,
-                                                          ARM_AM::no_shift),
-                                        MVT::i32);
-        return true;
-      } else if (RHSC < 0 && RHSC > -0x1000) {
-        Base = N.getOperand(0);
-        Offset = CurDAG->getRegister(0, MVT::i32);
-        Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(ARM_AM::sub, -RHSC,
+
+        ARM_AM::AddrOpc AddSub = ARM_AM::add;
+        if (RHSC < 0) {
+          AddSub = ARM_AM::sub;
+          RHSC = - RHSC;
+        }
+        Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, RHSC,
                                                           ARM_AM::no_shift),
                                         MVT::i32);
         return true;
@@ -245,17 +249,21 @@ bool ARMDAGToDAGISel::SelectAddrMode3(SDOperand Op, SDOperand N,
   // If the RHS is +/- imm8, fold into addr mode.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     int RHSC = (int)RHS->getValue();
-    if (RHSC >= 0 && RHSC < 256) {
+    if ((RHSC >= 0 && RHSC < 256) ||
+        (RHSC < 0 && RHSC > -256)) { // note -256 itself isn't allowed.
       Base = N.getOperand(0);
+      if (Base.getOpcode() == ISD::FrameIndex) {
+        int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+        Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+      }
       Offset = CurDAG->getRegister(0, MVT::i32);
-      Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(ARM_AM::add, RHSC),
-                                      MVT::i32);
-      return true;
-    } else if (RHSC < 0 && RHSC > -256) { // note -256 itself isn't allowed.
-      Base = N.getOperand(0);
-      Offset = CurDAG->getRegister(0, MVT::i32);
-      Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(ARM_AM::sub, -RHSC),
-                                      MVT::i32);
+
+      ARM_AM::AddrOpc AddSub = ARM_AM::add;
+      if (RHSC < 0) {
+        AddSub = ARM_AM::sub;
+        RHSC = - RHSC;
+      }
+      Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(AddSub, RHSC),MVT::i32);
       return true;
     }
   }
@@ -309,14 +317,20 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDOperand Op, SDOperand N,
     int RHSC = (int)RHS->getValue();
     if ((RHSC & 3) == 0) {  // The constant is implicitly multiplied by 4.
       RHSC >>= 2;
-      if (RHSC >= 0 && RHSC < 256) {
+      if ((RHSC >= 0 && RHSC < 256) ||
+          (RHSC < 0 && RHSC > -256)) { // note -256 itself isn't allowed.
         Base = N.getOperand(0);
-        Offset = CurDAG->getTargetConstant(ARM_AM::getAM5Opc(ARM_AM::add, RHSC),
-                                           MVT::i32);
-        return true;
-      } else if (RHSC < 0 && RHSC > -256) { // note -256 itself isn't allowed.
-        Base = N.getOperand(0);
-        Offset = CurDAG->getTargetConstant(ARM_AM::getAM5Opc(ARM_AM::sub,-RHSC),
+        if (Base.getOpcode() == ISD::FrameIndex) {
+          int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+          Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+        }
+
+        ARM_AM::AddrOpc AddSub = ARM_AM::add;
+        if (RHSC < 0) {
+          AddSub = ARM_AM::sub;
+          RHSC = - RHSC;
+        }
+        Offset = CurDAG->getTargetConstant(ARM_AM::getAM5Opc(AddSub, RHSC),
                                            MVT::i32);
         return true;
       }
