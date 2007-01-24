@@ -65,6 +65,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		84115FFE0B66D87400E1293E /* TargetMachOWriterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetMachOWriterInfo.cpp; sourceTree = "<group>"; };
+		84115FFF0B66D89B00E1293E /* PPCMachOWriterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PPCMachOWriterInfo.cpp; sourceTree = "<group>"; };
+		841160000B66D8AC00E1293E /* PPCMachOWriterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCMachOWriterInfo.h; sourceTree = "<group>"; };
+		8443EF210B66B62D00959964 /* TargetMachOWriterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetMachOWriterInfo.h; sourceTree = "<group>"; };
 		CF1ACC9709C9DE4400D3C5EB /* IntrinsicInst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IntrinsicInst.cpp; path = ../lib/VMCore/IntrinsicInst.cpp; sourceTree = "<group>"; };
 		CF26835B09178F5500C5F253 /* TargetInstrItineraries.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TargetInstrItineraries.h; sourceTree = "<group>"; };
 		CF32AF5C0AEE6A4E00D24CD4 /* LLVMTargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LLVMTargetMachine.cpp; sourceTree = "<group>"; };
@@ -1479,6 +1483,7 @@
 		DE66EE9608ABEE5D00323D32 /* lib/Target */ = {
 			isa = PBXGroup;
 			children = (
+				84115FFE0B66D87400E1293E /* TargetMachOWriterInfo.cpp */,
 				DE66EE9708ABEE5D00323D32 /* Alpha */,
 				CF8F1BCF0B64FC8A00BB4199 /* ARM */,
 				DE66EEC908ABEE5E00323D32 /* CBackend */,
@@ -1592,6 +1597,8 @@
 		DE66EF1108ABEE5E00323D32 /* PowerPC */ = {
 			isa = PBXGroup;
 			children = (
+				841160000B66D8AC00E1293E /* PPCMachOWriterInfo.h */,
+				84115FFF0B66D89B00E1293E /* PPCMachOWriterInfo.cpp */,
 				CFA702CB0A6FA8AD0006009A /* PPCGenAsmWriter.inc */,
 				CFA702CC0A6FA8AD0006009A /* PPCGenCodeEmitter.inc */,
 				CFA702CD0A6FA8AD0006009A /* PPCGenDAGISel.inc */,
@@ -2151,6 +2158,7 @@
 		DE66F29F08ABF03200323D32 /* Target */ = {
 			isa = PBXGroup;
 			children = (
+				8443EF210B66B62D00959964 /* TargetMachOWriterInfo.h */,
 				DE66F2A008ABF03200323D32 /* MRegisterInfo.h */,
 				CF9BCD0808C74DE0001E7011 /* SubtargetFeature.h */,
 				CF47BD380AAF40BC00A8B13E /* TargetAsmInfo.h */,
@@ -2535,9 +2543,12 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = DE66EC5008ABE78900323D32 /* Build configuration list for PBXProject "LLVM" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* LLVM */;
 			projectDirPath = "";
+			projectRoot = "";
+			shouldCheckCompatibility = 1;
 			targets = (
 				D28A88AD04BDD90700651E21 /* LLVM */,
 				CF0329B608D1BE110030FD33 /* LLVM lib */,
