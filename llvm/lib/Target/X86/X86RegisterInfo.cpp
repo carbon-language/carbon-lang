@@ -926,7 +926,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
           unsigned Opc = (Amount < 128) ?
             (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
             (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-          New = BuildMI(TII.get(Opc),  StackPtr).addReg(StackPtr).addImm(Amount);
+          New = BuildMI(TII.get(Opc),  StackPtr)
+                        .addReg(StackPtr).addImm(Amount);
         }
       }
 
@@ -1044,7 +1045,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If it's main() on Cygwin\Mingw32 we should align stack as well
   if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
       Subtarget->isTargetCygMing()) {
-    MI= BuildMI(TII.get(X86::AND32ri), X86::ESP).addReg(X86::ESP).addImm(-Align);
+    MI= BuildMI(TII.get(X86::AND32ri), X86::ESP)
+                .addReg(X86::ESP).addImm(-Align);
     MBB.insert(MBBI, MI);
 
     // Probe the stack
@@ -1104,12 +1106,14 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
         unsigned Opc = (NumBytes < 128) ?
           (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
           (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-        BuildMI(MBB, MBBI, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(NumBytes);
+        BuildMI(MBB, MBBI, TII.get(Opc), StackPtr)
+                .addReg(StackPtr).addImm(NumBytes);
       } else if ((int)NumBytes < 0) {
         unsigned Opc = (-NumBytes < 128) ?
           (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
           (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
-        BuildMI(MBB, MBBI, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(-NumBytes);
+        BuildMI(MBB, MBBI, TII.get(Opc), StackPtr)
+                .addReg(StackPtr).addImm(-NumBytes);
       }
     }
   }
