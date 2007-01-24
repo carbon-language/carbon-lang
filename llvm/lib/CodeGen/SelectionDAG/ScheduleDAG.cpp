@@ -330,7 +330,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     const Type *Type = CP->getType();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
-      Align = TM.getTargetData()->getTypeAlignmentShift(Type);
+      Align = TM.getTargetData()->getPreferredTypeAlignmentShift(Type);
       if (Align == 0) {
         // Alignment of packed types.  FIXME!
         Align = TM.getTargetData()->getTypeSize(Type);

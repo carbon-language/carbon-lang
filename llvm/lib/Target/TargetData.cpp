@@ -450,7 +450,7 @@ unsigned char TargetData::getTypeAlignmentPref(const Type *Ty) const {
   return Align;
 }
 
-unsigned char TargetData::getTypeAlignmentShift(const Type *Ty) const {
+unsigned char TargetData::getPreferredTypeAlignmentShift(const Type *Ty) const {
   unsigned Align = getTypeAlignmentPref(Ty);
   assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
   return Log2_32(Align);
@@ -508,7 +508,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
 /// requested alignment (if the global has one).
 unsigned TargetData::getPreferredAlignmentLog(const GlobalVariable *GV) const {
   const Type *ElemType = GV->getType()->getElementType();
-  unsigned Alignment = getTypeAlignmentShift(ElemType);
+  unsigned Alignment = getPreferredTypeAlignmentShift(ElemType);
   if (GV->getAlignment() > (1U << Alignment))
     Alignment = Log2_32(GV->getAlignment());
   

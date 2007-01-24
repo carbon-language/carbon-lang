@@ -233,10 +233,10 @@ public:
   /// the specified type.
   unsigned char getTypeAlignmentPref(const Type *Ty) const;
 
-  /// getTypeAlignmentShift - Return the preferred alignment for the
+  /// getPreferredTypeAlignmentShift - Return the preferred alignment for the
   /// specified type, returned as log2 of the value (a shift amount).
   ///
-  unsigned char getTypeAlignmentShift(const Type *Ty) const;
+  unsigned char getPreferredTypeAlignmentShift(const Type *Ty) const;
 
   /// getIntPtrType - Return an unsigned integer type that is the same size or
   /// greater to the host pointer size.

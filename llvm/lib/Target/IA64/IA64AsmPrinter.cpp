@@ -272,7 +272,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
       unsigned Size = TD->getTypeSize(C->getType());
-      unsigned Align = TD->getTypeAlignmentShift(C->getType());
+      unsigned Align = TD->getPreferredTypeAlignmentShift(C->getType());
       
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
