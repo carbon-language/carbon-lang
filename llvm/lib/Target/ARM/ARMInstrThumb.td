@@ -220,10 +220,14 @@ def tLDRSH : TI2<(ops GPR:$dst, t_addrmode_rr:$addr),
                  "ldrsh $dst, $addr",
                  [(set GPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
 
-// def tLDRpci
 def tLDRspi : TIs<(ops GPR:$dst, t_addrmode_sp:$addr),
                   "ldr $dst, $addr",
                   [(set GPR:$dst, (load t_addrmode_sp:$addr))]>;
+
+// Load tconstpool
+def tLDRpci : TIs<(ops GPR:$dst, i32imm:$addr),
+                  "ldr $dst, $addr",
+                  [(set GPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
 } // isLoad
 
 let isStore = 1 in {

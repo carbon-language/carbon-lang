@@ -380,6 +380,9 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDOperand Op, SDOperand N,
     SDOperand TmpBase, TmpOffImm;
     if (SelectThumbAddrModeSP(Op, N, TmpBase, TmpOffImm))
       return false;  // We want to select tLDRspi / tSTRspi instead.
+    if (N.getOpcode() == ARMISD::Wrapper &&
+        N.getOperand(0).getOpcode() == ISD::TargetConstantPool)
+      return false;  // We want to select tLDRpci instead.
   }
 
   if (N.getOpcode() != ISD::ADD) {
@@ -505,14 +508,20 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
       SDOperand CPIdx =
         CurDAG->getTargetConstantPool(ConstantInt::get(Type::Int32Ty, Val),
                                       TLI.getPointerTy());
-      SDOperand Ops[] = {
-        CPIdx, 
-        CurDAG->getRegister(0, MVT::i32),
-        CurDAG->getTargetConstant(0, MVT::i32),
-        CurDAG->getEntryNode()
-      };
-      SDNode *ResNode = 
-        CurDAG->getTargetNode(ARM::LDR, MVT::i32, MVT::Other, Ops, 4);
+
+      SDNode *ResNode;
+      if (Subtarget->isThumb())
+        ResNode = CurDAG->getTargetNode(ARM::tLDRpci, MVT::i32, MVT::Other,
+                                        CPIdx, CurDAG->getEntryNode());
+      else {
+        SDOperand Ops[] = {
+          CPIdx, 
+          CurDAG->getRegister(0, MVT::i32),
+          CurDAG->getTargetConstant(0, MVT::i32),
+          CurDAG->getEntryNode()
+        };
+        ResNode = CurDAG->getTargetNode(ARM::LDR, MVT::i32, MVT::Other, Ops, 4);
+      }
       ReplaceUses(Op, SDOperand(ResNode, 0));
       return NULL;
     }

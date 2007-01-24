@@ -245,6 +245,9 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
           case ARMII::AddrModeT4:
             MaxOffs = 1 << (5+2);
             break;
+          case ARMII::AddrModeTs:
+            MaxOffs = 1 << (8+2);
+            break;
           }
           
           // Remember that this is a user of a CP entry.
