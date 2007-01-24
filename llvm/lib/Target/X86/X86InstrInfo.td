@@ -2394,12 +2394,12 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (ops GR32:$dst, i16mem:$src),
                    [(set GR32:$dst, (zextloadi32i16 addr:$src))]>, TB;
 
 def CBW : I<0x98, RawFrm, (ops),
-            "{cbtw|cbw}", []>, Imp<[AL],[AX]>;   // AX = signext(AL)
+            "{cbtw|cbw}", []>, Imp<[AL],[AX]>, OpSize;   // AX = signext(AL)
 def CWDE : I<0x98, RawFrm, (ops),
             "{cwtl|cwde}", []>, Imp<[AX],[EAX]>;   // EAX = signext(AX)
 
 def CWD : I<0x99, RawFrm, (ops),
-            "{cwtd|cwd}", []>, Imp<[AX],[AX,DX]>;   // DX:AX = signext(AX)
+            "{cwtd|cwd}", []>, Imp<[AX],[AX,DX]>, OpSize; // DX:AX = signext(AX)
 def CDQ : I<0x99, RawFrm, (ops),
             "{cltd|cdq}", []>, Imp<[EAX],[EAX,EDX]>; // EDX:EAX = signext(EAX)
           
