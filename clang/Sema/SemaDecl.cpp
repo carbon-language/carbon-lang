@@ -392,10 +392,8 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     return;
   }
 
-  // Okay, we successfully defined 'Record'.
-  Record->setDefinition(true);
-  
   // Verify that all the fields are okay.
+  unsigned NumNamedMembers = 0;
   for (unsigned i = 0; i != NumFields; ++i) {
     FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
     if (!FD) continue;  // Already issued a diagnostic.
@@ -404,16 +402,37 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     if (isa<FunctionType>(FD->getType())) {
       Diag(FD->getLocation(), diag::err_field_declared_as_function,
            FD->getName());
+      delete FD;
       continue;
     }
 
-    // C99 6.7.2.1p2 - A field may not be an incomplete type  except...
+    // C99 6.7.2.1p2 - A field may not be an incomplete type except...
     if (FD->getType()->isIncompleteType()) {
-      
-      // 
-      
+      if (i != NumFields-1 ||                   // ... that the last member ...
+          Record->getKind() != Decl::Struct ||  // ... of a structure ...
+          !isa<ArrayType>(FD->getType())) {//... may have incomplete array type.
+        Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
+        delete FD;
+        continue;
+      }
+      if (NumNamedMembers < 1) {           //... with more than named member ...
+        Diag(FD->getLocation(), diag::err_flexible_array_empty_struct,
+             FD->getName());
+        delete FD;
+        continue;
+      }
     }
+      
+      
+    // Keep track of the number of named members.
+    if (FD->getIdentifier())
+      ++NumNamedMembers;
   }
+ 
+  
+  // Okay, we successfully defined 'Record'.
+  Record->setDefinition(true);
+  
   
 }
 

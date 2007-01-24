@@ -439,6 +439,10 @@ DIAG(ext_implicit_function_decl, EXTENSION,
 
 DIAG(err_field_declared_as_function, ERROR,
      "field '%s' declared as a function")
+DIAG(err_field_incomplete, ERROR,
+     "field '%s' has incomplete type")
+DIAG(err_flexible_array_empty_struct, ERROR,
+     "flexible array '%s' not allowed in otherwise empty struct")
 
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,
