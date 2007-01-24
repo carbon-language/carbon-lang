@@ -71,6 +71,9 @@ public:
 
   bool SelectThumbAddrModeRR(SDOperand Op, SDOperand N, SDOperand &Base,
                              SDOperand &Offset);
+  bool SelectThumbAddrModeRI5(SDOperand Op, SDOperand N, unsigned Scale,
+                              SDOperand &Base, SDOperand &Offset,
+                              SDOperand &OffImm);
   bool SelectThumbAddrModeS1(SDOperand Op, SDOperand N, SDOperand &Base,
                              SDOperand &Offset, SDOperand &OffImm);
   bool SelectThumbAddrModeS2(SDOperand Op, SDOperand N, SDOperand &Base,
@@ -78,7 +81,7 @@ public:
   bool SelectThumbAddrModeS4(SDOperand Op, SDOperand N, SDOperand &Base,
                              SDOperand &Offset, SDOperand &OffImm);
   bool SelectThumbAddrModeSP(SDOperand Op, SDOperand N, SDOperand &Base,
-                             SDOperand &Offset);
+                             SDOperand &OffImm);
 
   bool SelectShifterOperandReg(SDOperand Op, SDOperand N, SDOperand &A,
                                SDOperand &B, SDOperand &C);
@@ -355,13 +358,16 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDOperand Op, SDOperand N,
   return true;
 }
 
-static bool SelectThumbAddrModeRI5(SDOperand N, unsigned Scale,
-                                   TargetLowering &TLI, SelectionDAG *CurDAG,
-                                   SDOperand &Base, SDOperand &Offset,
-                                   SDOperand &OffImm) {
-  if (N.getOpcode() == ISD::FrameIndex)
-    return false;
-    
+bool
+ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDOperand Op, SDOperand N,
+                                        unsigned Scale, SDOperand &Base,
+                                        SDOperand &Offset, SDOperand &OffImm) {
+  if (Scale == 4) {
+    SDOperand TmpBase, TmpOffImm;
+    if (SelectThumbAddrModeSP(Op, N, TmpBase, TmpOffImm))
+      return false;  // We want to select tLDRspi / tSTRspi instead.
+  }
+
   if (N.getOpcode() != ISD::ADD) {
     Base = (N.getOpcode() == ARMISD::Wrapper) ? N.getOperand(0) : N;
     Offset = CurDAG->getRegister(0, MVT::i32);
@@ -392,28 +398,45 @@ static bool SelectThumbAddrModeRI5(SDOperand N, unsigned Scale,
 bool ARMDAGToDAGISel::SelectThumbAddrModeS1(SDOperand Op, SDOperand N,
                                             SDOperand &Base, SDOperand &Offset,
                                             SDOperand &OffImm) {
-  return SelectThumbAddrModeRI5(N, 1, TLI, CurDAG, Base, Offset, OffImm);
+  return SelectThumbAddrModeRI5(Op, N, 1, Base, Offset, OffImm);
 }
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeS2(SDOperand Op, SDOperand N,
                                             SDOperand &Base, SDOperand &Offset,
                                             SDOperand &OffImm) {
-  return SelectThumbAddrModeRI5(N, 2, TLI, CurDAG, Base, Offset, OffImm);
+  return SelectThumbAddrModeRI5(Op, N, 2, Base, Offset, OffImm);
 }
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeS4(SDOperand Op, SDOperand N,
                                             SDOperand &Base, SDOperand &Offset,
                                             SDOperand &OffImm) {
-  return SelectThumbAddrModeRI5(N, 4, TLI, CurDAG, Base, Offset, OffImm);
+  return SelectThumbAddrModeRI5(Op, N, 4, Base, Offset, OffImm);
 }
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDOperand Op, SDOperand N,
-                                           SDOperand &Base, SDOperand &Offset) {
+                                           SDOperand &Base, SDOperand &OffImm) {
   if (N.getOpcode() == ISD::FrameIndex) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    OffImm = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
+  }
+
+  if (N.getOpcode() == ISD::ADD &&
+      N.getOperand(0).getOpcode() == ISD::FrameIndex) {
+    // If the RHS is + imm8 * scale, fold into addr mode.
+    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      int RHSC = (int)RHS->getValue();
+      if ((RHSC & 3) == 0) {  // The constant is implicitly multiplied.
+        RHSC >>= 2;
+        if (RHSC >= 0 && RHSC < 256) {
+          int FI = cast<FrameIndexSDNode>(N.getOperand(0))->getIndex();
+          Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+          OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
+          return true;
+        }
+      }
+    }
   }
   
   return false;
@@ -492,6 +515,8 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
                                 CurDAG->getTargetConstant(0, MVT::i32));
   }
   case ISD::MUL:
+    if (Subtarget->isThumb())
+      break;
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       unsigned RHSV = C->getValue();
       if (!RHSV) break;
