@@ -20,6 +20,7 @@
 namespace llvm {
 namespace clang {
 class IdentifierInfo;
+class Expr;
 class Stmt;
 class FunctionDecl;
   
@@ -29,7 +30,7 @@ class FunctionDecl;
 class Decl {
 public:
   enum Kind {
-    Typedef, Function, Variable, Field,
+    Typedef, Function, Variable, Field, EnumConstant,
     Struct, Union, Class, Enum
   };
 
@@ -189,7 +190,6 @@ public:
 /// FunctionDecl - An instance of this class is created to represent a function
 /// declaration or definition.
 class FieldDecl : public ObjectDecl {
-
 public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
     : ObjectDecl(Field, L, Id, T) {}
@@ -200,6 +200,26 @@ public:
   }
   static bool classof(const FieldDecl *D) { return true; }
 };
+
+/// EnumConstantDecl - An instance of this object exists for each enum constant
+/// that is defined.  For example, in "enum X {a,b}", each of a/b are
+/// EnumConstantDecl's, X is an instance of EnumDecl, and the type of a/b is a
+/// TaggedType for the X EnumDecl.
+class EnumConstantDecl : public ObjectDecl {
+public:
+  // FIXME: Capture value info.
+  EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+    : ObjectDecl(EnumConstant, L, Id, T) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() == EnumConstant;
+  }
+  static bool classof(const EnumConstantDecl *D) { return true; }
+  
+};
+
+
 
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
 class TagDecl : public Decl {
@@ -240,19 +260,20 @@ protected:
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
 /// enums.
 class EnumDecl : public TagDecl {
-  /// Fields/NumFields - This is a new[]'d array of pointers to Decls.
-  //Decl **Fields;   // Null if not defined.
-  //int NumFields;   // -1 if not defined.
+  /// Elements/NumElements - This is a new[]'d array of pointers to
+  /// EnumConstantDecls.
+  EnumConstantDecl **Elements;   // Null if not defined.
+  int NumElements;   // -1 if not defined.
 public:
   EnumDecl(SourceLocation L, IdentifierInfo *Id) : TagDecl(Enum, L, Id) {
-    //Fields = 0;
-    //NumFields = -1;
+    Elements = 0;
+    NumElements = -1;
   }
   
-  /// defineBody - When created, RecordDecl's correspond to a forward declared
-  /// record.  This method is used to mark the decl as being defined, with the
+  /// defineElements - When created, EnumDecl correspond to a forward declared
+  /// enum.  This method is used to mark the decl as being defined, with the
   /// specified contents.
-  //void defineBody(Decl **fields, unsigned numFields);
+  void defineElements(EnumConstantDecl **Elements, unsigned NumElements);
   
   static bool classof(const Decl *D) {
     return D->getKind() == Enum;

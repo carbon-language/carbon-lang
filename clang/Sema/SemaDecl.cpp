@@ -316,7 +316,6 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
         // Okay, this is definition of a previously declared or referenced tag.
         // Move the location of the decl to be the definition site.
         PrevDecl->setLocation(NameLoc);
-        //PrevDecl->setDefinition(true);
         return PrevDecl;
       }
     }
@@ -337,8 +336,7 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
   case Decl::Enum:
     New = new EnumDecl(Loc, Name);
     // If this is an undefined enum, warn.
-    if (TK != TK_Definition)
-      Diag(Loc, diag::ext_forward_ref_enum);
+    if (TK != TK_Definition) Diag(Loc, diag::ext_forward_ref_enum);
     break;
   case Decl::Union:
   case Decl::Struct:
@@ -387,7 +385,7 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
 
 void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
                            DeclTy **Fields, unsigned NumFields) {
-  RecordDecl *Record = cast<RecordDecl>(static_cast<TagDecl*>(RecDecl));
+  RecordDecl *Record = cast<RecordDecl>(static_cast<Decl*>(RecDecl));
   if (Record->isDefinition()) {
     // Diagnose code like:
     //     struct S { struct S {} X; };
@@ -478,4 +476,29 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
   Record->defineBody(&RecFields[0], RecFields.size());
 }
 
+Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
+                                      SourceLocation IdLoc, IdentifierInfo *Id,
+                                      SourceLocation EqualLoc, ExprTy *Val) {
+  EnumDecl *TheEnumDecl = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
+  TypeRef Ty = Context.getTagDeclType(TheEnumDecl);
+  return new EnumConstantDecl(IdLoc, Id, Ty);
+}
+
+void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
+                         DeclTy **Elements, unsigned NumElements) {
+  EnumDecl *Enum = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
+  assert(!Enum->isDefinition() && "Enum redefinitions can't reach here");
+  
+  // Verify that all the values are okay.
+  SmallVector<EnumConstantDecl*, 32> Values;
+  for (unsigned i = 0; i != NumElements; ++i) {
+    EnumConstantDecl *ECD =
+      cast_or_null<EnumConstantDecl>(static_cast<Decl*>(Elements[i]));
+    if (!ECD) continue;  // Already issued a diagnostic.
+    
+    Values.push_back(ECD);
+  }
+  
+  Enum->defineElements(&Values[0], Values.size());
+}
 

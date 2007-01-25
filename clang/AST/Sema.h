@@ -90,6 +90,11 @@ public:
                              Declarator &D, ExprTy *BitfieldWidth);
   virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
                                DeclTy **Fields, unsigned NumFields);
+  virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
+                                    SourceLocation IdLoc, IdentifierInfo *Id,
+                                    SourceLocation EqualLoc, ExprTy *Val);
+  virtual void ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
+                             DeclTy **Elements, unsigned NumElements);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.

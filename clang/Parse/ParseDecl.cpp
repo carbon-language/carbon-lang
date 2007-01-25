@@ -579,9 +579,9 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     }
   }
   
-  Actions.ParseRecordBody(RecordLoc, TagDecl, &FieldDecls[0],FieldDecls.size());
-  
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+  
+  Actions.ParseRecordBody(RecordLoc, TagDecl, &FieldDecls[0],FieldDecls.size());
   
   // If attributes exist after struct contents, parse them.
   if (Tok.getKind() == tok::kw___attribute)
@@ -597,15 +597,6 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 ///                                                 '}' attributes[opt]
 ///         'enum' identifier
 /// [GNU]   'enum' attributes[opt] identifier
-///       enumerator-list:
-///         enumerator
-///         enumerator-list ',' enumerator
-///       enumerator:
-///         enumeration-constant
-///         enumeration-constant '=' constant-expression
-///       enumeration-constant:
-///         identifier
-///
 void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   assert(Tok.getKind() == tok::kw_enum && "Not an enum specifier");
   SourceLocation StartLoc = ConsumeToken();
@@ -615,45 +606,73 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   if (ParseTag(TagDecl, DeclSpec::TST_enum, StartLoc))
     return;
   
-  if (Tok.getKind() == tok::l_brace) {
-    SourceLocation LBraceLoc = ConsumeBrace();
-    
-    if (Tok.getKind() == tok::r_brace)
-      Diag(Tok, diag::ext_empty_struct_union_enum, "enum");
-    
-    // Parse the enumerator-list.
-    while (Tok.getKind() == tok::identifier) {
-      ConsumeToken();
-      
-      if (Tok.getKind() == tok::equal) {
-        ConsumeToken();
-        ExprResult Res = ParseConstantExpression();
-        if (Res.isInvalid) SkipUntil(tok::comma, true, false);
-      }
-      
-      if (Tok.getKind() != tok::comma)
-        break;
-      SourceLocation CommaLoc = ConsumeToken();
-      
-      if (Tok.getKind() != tok::identifier && !getLang().C99)
-        Diag(CommaLoc, diag::ext_c99_enumerator_list_comma);
-    }
-    
-    // Eat the }.
-    MatchRHSPunctuation(tok::r_brace, LBraceLoc);
-
-    // If attributes exist after the identifier list, parse them.
-    if (Tok.getKind() == tok::kw___attribute)
-      ParseAttributes();
-  }
+  if (Tok.getKind() == tok::l_brace)
+    ParseEnumBody(StartLoc, TagDecl);
+  
   // TODO: semantic analysis on the declspec for enums.
-  
-  
   const char *PrevSpec = 0;
   if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc, PrevSpec, TagDecl))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 
+/// ParseEnumBody - Parse a {} enclosed enumerator-list.
+///       enumerator-list:
+///         enumerator
+///         enumerator-list ',' enumerator
+///       enumerator:
+///         enumeration-constant
+///         enumeration-constant '=' constant-expression
+///       enumeration-constant:
+///         identifier
+///
+void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
+  SourceLocation LBraceLoc = ConsumeBrace();
+  
+  if (Tok.getKind() == tok::r_brace)
+    Diag(Tok, diag::ext_empty_struct_union_enum, "enum");
+  
+  SmallVector<DeclTy*, 32> EnumConstantDecls;
+
+  // Parse the enumerator-list.
+  while (Tok.getKind() == tok::identifier) {
+    IdentifierInfo *Ident = Tok.getIdentifierInfo();
+    SourceLocation IdentLoc = ConsumeToken();
+    
+    SourceLocation EqualLoc;
+    ExprTy *AssignedVal = 0;
+    if (Tok.getKind() == tok::equal) {
+      EqualLoc = ConsumeToken();
+      ExprResult Res = ParseConstantExpression();
+      if (Res.isInvalid)
+        SkipUntil(tok::comma, true, false);
+      else
+        AssignedVal = Res.Val;
+    }
+    
+    // Install the enumerator constant into EnumDecl.
+    DeclTy *ConstDecl = Actions.ParseEnumConstant(CurScope, EnumDecl,
+                                                  IdentLoc, Ident,
+                                                  EqualLoc, AssignedVal);
+    EnumConstantDecls.push_back(ConstDecl);
+    
+    if (Tok.getKind() != tok::comma)
+      break;
+    SourceLocation CommaLoc = ConsumeToken();
+    
+    if (Tok.getKind() != tok::identifier && !getLang().C99)
+      Diag(CommaLoc, diag::ext_c99_enumerator_list_comma);
+  }
+  
+  // Eat the }.
+  MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+
+  Actions.ParseEnumBody(StartLoc, EnumDecl, &EnumConstantDecls[0],
+                        EnumConstantDecls.size());
+  
+  // If attributes exist after the identifier list, parse them.
+  if (Tok.getKind() == tok::kw___attribute)
+    ParseAttributes();
+}
 
 /// isTypeSpecifierQualifier - Return true if the current token could be the
 /// start of a specifier-qualifier-list.

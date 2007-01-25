@@ -333,6 +333,7 @@ private:
 
   bool ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc);
   void ParseEnumSpecifier(DeclSpec &DS);
+  void ParseEnumBody(SourceLocation StartLoc, DeclTy *TagDecl);
   void ParseStructUnionSpecifier(DeclSpec &DS);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             DeclTy *TagDecl);
