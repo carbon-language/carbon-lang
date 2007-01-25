@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "arm-cp-islands"
 #include "ARM.h"
+#include "ARMMachineFunctionInfo.h"
 #include "ARMInstrInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -72,13 +73,30 @@ namespace {
     /// constant pools and their max displacement.
     std::vector<CPUser> CPUsers;
     
+    /// ImmBranch - One per immediate branch, keeping the machine instruction
+    /// pointer, conditional or unconditional, the max displacement,
+    /// and (if isCond is true) the corresponding unconditional branch
+    /// opcode.
+    struct ImmBranch {
+      MachineInstr *MI;
+      bool isCond;
+      int UncondBr;
+      unsigned MaxDisp;
+      ImmBranch(MachineInstr *mi, bool cond, int ubr, unsigned maxdisp)
+        : MI(mi), isCond(cond), UncondBr(ubr), MaxDisp(maxdisp) {}
+    };
+
+    /// Branches - Keep track of all the immediate branche instructions.
+    ///
+    std::vector<ImmBranch> ImmBranches;
+
     const TargetInstrInfo *TII;
     const TargetAsmInfo   *TAI;
   public:
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
     virtual const char *getPassName() const {
-      return "ARM constant island placement pass";
+      return "ARM constant island placement and branch shortening pass";
     }
     
   private:
@@ -87,16 +105,18 @@ namespace {
     void InitialFunctionScan(MachineFunction &Fn,
                              const std::vector<MachineInstr*> &CPEMIs);
     void SplitBlockBeforeInstr(MachineInstr *MI);
-    bool HandleConstantPoolUser(MachineFunction &Fn, CPUser &U);
     void UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB);
+    bool HandleConstantPoolUser(MachineFunction &Fn, CPUser &U);
+    bool ShortenImmediateBranch(MachineFunction &Fn, ImmBranch &Br);
 
     unsigned GetInstSize(MachineInstr *MI) const;
     unsigned GetOffsetOf(MachineInstr *MI) const;
+    unsigned GetOffsetOf(MachineBasicBlock *MBB) const;
   };
 }
 
-/// createARMLoadStoreOptimizationPass - returns an instance of the load / store
-/// optimization pass.
+/// createARMConstantIslandPass - returns an instance of the constpool
+/// island pass.
 FunctionPass *llvm::createARMConstantIslandPass() {
   return new ARMConstantIslands();
 }
@@ -133,11 +153,14 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
     MadeChange = false;
     for (unsigned i = 0, e = CPUsers.size(); i != e; ++i)
       MadeChange |= HandleConstantPoolUser(Fn, CPUsers[i]);
+    for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
+      MadeChange |= ShortenImmediateBranch(Fn, ImmBranches[i]);
   } while (MadeChange);
   
   BBSizes.clear();
   WaterList.clear();
   CPUsers.clear();
+  ImmBranches.clear();
     
   return true;
 }
@@ -207,6 +230,37 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
          I != E; ++I) {
       // Add instruction size to MBBSize.
       MBBSize += GetInstSize(I);
+
+      int Opc = I->getOpcode();
+      if (TII->isBranch(Opc)) {
+        bool isCond = false;
+        unsigned Bits = 0;
+        unsigned Scale = 1;
+        int UOpc = Opc;
+        switch (Opc) {
+        default: break; // Ignore JT branches
+        case ARM::Bcc:
+          isCond = true;
+          UOpc = ARM::B;
+          // Fallthrough
+        case ARM::B:
+          Bits = 24;
+          Scale = 4;
+          break;
+        case ARM::tBcc:
+          isCond = true;
+          UOpc = ARM::tB;
+          Bits = 8;
+          Scale = 2;
+          break;
+        case ARM::tB:
+          Bits = 11;
+          Scale = 2;
+          break;
+        }
+        unsigned MaxDisp = (1 << (Bits-1)) * Scale;
+        ImmBranches.push_back(ImmBranch(I, isCond, UOpc, MaxDisp));
+      }
 
       // Scan the instructions for constant pool operands.
       for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
@@ -336,6 +390,18 @@ unsigned ARMConstantIslands::GetOffsetOf(MachineInstr *MI) const {
   }
 }
 
+/// GetOffsetOf - Return the current offset of the specified machine BB
+/// from the start of the function.  This offset changes as stuff is moved
+/// around inside the function.
+unsigned ARMConstantIslands::GetOffsetOf(MachineBasicBlock *MBB) const {
+  // Sum block sizes before MBB.
+  unsigned Offset = 0;  
+  for (unsigned BB = 0, e = MBB->getNumber(); BB != e; ++BB)
+    Offset += BBSizes[BB];
+
+  return Offset;
+}
+
 /// CompareMBBNumbers - Little predicate function to sort the WaterList by MBB
 /// ID.
 static bool CompareMBBNumbers(const MachineBasicBlock *LHS,
@@ -368,6 +434,8 @@ void ARMConstantIslands::UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB) {
 /// account for this change.
 void ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   MachineBasicBlock *OrigBB = MI->getParent();
+  const ARMFunctionInfo *AFI = OrigBB->getParent()->getInfo<ARMFunctionInfo>();
+  bool isThumb = AFI->isThumbFunction();
 
   // Create a new MBB for the code after the OrigBB.
   MachineBasicBlock *NewBB = new MachineBasicBlock(OrigBB->getBasicBlock());
@@ -378,7 +446,7 @@ void ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   NewBB->splice(NewBB->end(), OrigBB, MI, OrigBB->end());
   
   // Add an unconditional branch from OrigBB to NewBB.
-  BuildMI(OrigBB, TII->get(ARM::B)).addMBB(NewBB);
+  BuildMI(OrigBB, TII->get(isThumb ? ARM::tB : ARM::B)).addMBB(NewBB);
   NumSplit++;
   
   // Update the CFG.  All succs of OrigBB are now succs of NewBB.
@@ -409,8 +477,8 @@ void ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   BBSizes[NewBB->getNumber()] = NewBBSize;
   
   // We removed instructions from UserMBB, subtract that off from its size.
-  // Add 4 to the block to count the unconditional branch we added to it.
-  BBSizes[OrigBB->getNumber()] -= NewBBSize-4;
+  // Add 2 or 4 to the block to count the unconditional branch we added to it.
+  BBSizes[OrigBB->getNumber()] -= NewBBSize - (isThumb ? 2 : 4);
 }
 
 /// HandleConstantPoolUser - Analyze the specified user, checking to see if it
@@ -491,3 +559,58 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
   return true;
 }
 
+bool
+ARMConstantIslands::ShortenImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
+  MachineInstr *MI = Br.MI;
+  MachineBasicBlock *DestBB = MI->getOperand(0).getMachineBasicBlock();
+
+  unsigned BrOffset   = GetOffsetOf(MI);
+  unsigned DestOffset = GetOffsetOf(DestBB);
+
+  // Check to see if the destination BB is in range.
+  if (BrOffset < DestOffset) {
+    if (DestOffset - BrOffset < Br.MaxDisp)
+      return false;
+  } else {
+    if (BrOffset - DestOffset <= Br.MaxDisp)
+      return false;
+  }
+
+  if (!Br.isCond) {
+    // Unconditional branch. We have to insert a branch somewhere to perform
+    // a two level branch (branch to branch). FIXME: not yet implemented.
+    assert(false && "Can't handle unconditional branch yet!");
+    return false;
+  }
+
+  // Otherwise, add a unconditional branch to the destination and 
+  // invert the branch condition to jump over it:
+  // blt L1
+  // =>
+  // bge L2
+  // b   L1
+  // L2:
+  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(1).getImmedValue();
+  CC = ARMCC::getOppositeCondition(CC);
+
+  // If the branch is at the end of its MBB and that has a fall-through block,
+  // direct the updated conditional branch to the fall-through block. Otherwise,
+  // split the MBB before the next instruction.
+  MachineBasicBlock *MBB = MI->getParent();
+  if (&MBB->back() != MI || !BBHasFallthrough(MBB))
+    SplitBlockBeforeInstr(MI);
+  MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
+
+  // Insert a unconditional branch and replace the conditional branch.
+  // Also update the ImmBranch as well as adding a new entry for the new branch.
+  BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB).addImm((unsigned)CC);
+  Br.MI = &MBB->back();
+  BuildMI(MBB, TII->get(Br.UncondBr)).addMBB(DestBB);
+  unsigned MaxDisp = (Br.UncondBr == ARM::tB) ? (1<<10)*2 : (1<<23)*4;
+  ImmBranches.push_back(ImmBranch(&MBB->back(), false, Br.UncondBr, MaxDisp));
+  MI->eraseFromParent();
+
+  // Increase the size of MBB to account for the new unconditional branch.
+  BBSizes[MBB->getNumber()] += GetInstSize(&MBB->back());
+  return true;
+}
