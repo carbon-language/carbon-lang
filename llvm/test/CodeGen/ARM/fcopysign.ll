@@ -1,7 +1,7 @@
-; RUN: llvm-as < fcopysign.ll | llc -march=arm &&
-; RUN: llvm-as < fcopysign.ll | llc -march=arm | grep bic | wc -l | grep 2 &&
-; RUN: llvm-as < fcopysign.ll | llc -march=arm -mattr=+v6,+vfp2 &&
-; RUN: llvm-as < fcopysign.ll | llc -march=arm -mattr=+v6,+vfp2 | grep fneg | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=arm &&
+; RUN: llvm-as < %s | llc -march=arm | grep bic | wc -l | grep 2 &&
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 &&
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | grep fneg | wc -l | grep 2
 
 define float %test1(float %x, double %y) {
 	%tmp = fpext float %x to double
