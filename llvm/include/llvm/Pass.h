@@ -46,9 +46,7 @@ class Module;
 class AnalysisUsage;
 class PassInfo;
 class ImmutablePass;
-template<class Trait> class PassManagerT;
 class BasicBlockPassManager;
-class FunctionPassManagerT;
 class ModulePassManager;
 class PMStack;
 class AnalysisResolver;
@@ -190,11 +188,6 @@ public:
   template<typename AnalysisType>
   AnalysisType &getAnalysisID(const PassInfo *PI) const;
     
-private:
-  template<typename Trait> friend class PassManagerT;
-  friend class ModulePassManager;
-  friend class FunctionPassManagerT;
-  friend class BasicBlockPassManager;
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
