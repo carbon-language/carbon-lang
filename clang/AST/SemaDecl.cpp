@@ -480,8 +480,29 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
                                       SourceLocation IdLoc, IdentifierInfo *Id,
                                       SourceLocation EqualLoc, ExprTy *Val) {
   EnumDecl *TheEnumDecl = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
+
+  // Verify that there isn't already something declared with this name in this
+  // scope.
+  if (Decl *PrevDecl = LookupScopedDecl(Id, Decl::IDNS_Ordinary)) {
+    if (S->isDeclScope(PrevDecl)) {
+      if (isa<EnumConstantDecl>(PrevDecl))
+        Diag(IdLoc, diag::err_redefinition_of_enumerator, Id->getName());
+      else
+        Diag(IdLoc, diag::err_redefinition, Id->getName());
+      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+      return 0;
+    }
+  }
+  
+  
   TypeRef Ty = Context.getTagDeclType(TheEnumDecl);
-  return new EnumConstantDecl(IdLoc, Id, Ty);
+  EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, Ty);
+  
+  // Register this decl in the current scope stack.
+  New->setNext(Id->getFETokenInfo<Decl>());
+  Id->setFETokenInfo(New);
+  S->AddDecl(New);
+  return New;
 }
 
 void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,

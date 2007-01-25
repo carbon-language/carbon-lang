@@ -79,6 +79,7 @@ public:
     case Typedef:
     case Function:
     case Variable:
+    case EnumConstant:
       return IDNS_Ordinary;
     case Struct:
     case Union:

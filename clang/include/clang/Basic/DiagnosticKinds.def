@@ -433,6 +433,8 @@ DIAG(err_use_with_wrong_tag, ERROR,
      "use of '%s' with tag type that does not match previous declaration")
 DIAG(ext_forward_ref_enum, EXTENSION,
      "ISO C forbids forward references to 'enum' types")
+DIAG(err_redefinition_of_enumerator, ERROR,
+     "redefinition of enumerator '%s'")
 
 DIAG(warn_implicit_function_decl, WARNING,
      "implicit declaration of function '%s'")
