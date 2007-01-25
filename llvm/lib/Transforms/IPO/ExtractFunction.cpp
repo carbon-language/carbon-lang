@@ -70,6 +70,7 @@ namespace {
           Function *New = new Function(I->getFunctionType(),
                                        GlobalValue::ExternalLinkage,
                                        I->getName());
+          New->setCallingConv(I->getCallingConv());
           I->setName("");  // Remove Old name
 
           // If it's not the named function, delete the body of the function
