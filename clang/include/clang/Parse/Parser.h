@@ -331,6 +331,7 @@ private:
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   void ParseSpecifierQualifierList(DeclSpec &DS);
 
+  bool ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc);
   void ParseEnumSpecifier(DeclSpec &DS);
   void ParseStructUnionSpecifier(DeclSpec &DS);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,

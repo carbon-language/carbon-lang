@@ -393,36 +393,21 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
   }
 }
 
-
-/// ParseStructUnionSpecifier
-///       struct-or-union-specifier: [C99 6.7.2.1]
-///         struct-or-union identifier[opt] '{' struct-contents '}'
-///         struct-or-union identifier
-/// [GNU]   struct-or-union attributes[opt] identifier[opt] '{' struct-contents
-///                                                         '}' attributes[opt]
-/// [GNU]   struct-or-union attributes[opt] identifier
-///       struct-or-union:
-///         'struct'
-///         'union'
-///
-void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
-  assert((Tok.getKind() == tok::kw_struct ||
-          Tok.getKind() == tok::kw_union) && "Not a struct/union specifier");
-  DeclSpec::TST TagType =
-    Tok.getKind() == tok::kw_union ? DeclSpec::TST_union : DeclSpec::TST_struct;
-
-  SourceLocation StartLoc = ConsumeToken();
-
+/// ParseTag - Parse "struct-or-union-or-class-or-enum identifier[opt]", where
+/// the first token has already been read and has been turned into an instance
+/// of DeclSpec::TST (TagType).  This returns true if there is an error parsing,
+/// otherwise it returns false and fills in Decl.
+bool Parser::ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc){
   // If attributes exist after tag, parse them.
   if (Tok.getKind() == tok::kw___attribute)
     ParseAttributes();
-
+  
   // Must have either 'struct name' or 'struct {...}'.
   if (Tok.getKind() != tok::identifier &&
       Tok.getKind() != tok::l_brace) {
     Diag(Tok, diag::err_expected_ident_lbrace);
     // TODO: better error recovery here.
-    return;
+    return true;
   }
   
   // If an identifier is present, consume and remember it.
@@ -448,8 +433,33 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
     TK = Action::TK_Declaration;
   else
     TK = Action::TK_Reference;
-  DeclTy *TagDecl =
-    Actions.ParseTag(CurScope, TagType, TK, StartLoc, Name, NameLoc);
+  Decl = Actions.ParseTag(CurScope, TagType, TK, StartLoc, Name, NameLoc);
+  return false;
+}
+
+
+/// ParseStructUnionSpecifier
+///       struct-or-union-specifier: [C99 6.7.2.1]
+///         struct-or-union identifier[opt] '{' struct-contents '}'
+///         struct-or-union identifier
+/// [GNU]   struct-or-union attributes[opt] identifier[opt] '{' struct-contents
+///                                                         '}' attributes[opt]
+/// [GNU]   struct-or-union attributes[opt] identifier
+///       struct-or-union:
+///         'struct'
+///         'union'
+///
+void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
+  assert((Tok.getKind() == tok::kw_struct ||
+          Tok.getKind() == tok::kw_union) && "Not a struct/union specifier");
+  DeclSpec::TST TagType =
+    Tok.getKind() == tok::kw_union ? DeclSpec::TST_union : DeclSpec::TST_struct;
+  SourceLocation StartLoc = ConsumeToken();
+
+  // Parse the tag portion of this.
+  DeclTy *TagDecl;
+  if (ParseTag(TagDecl, TagType, StartLoc))
+    return;
   
   // If there is a body, parse it and inform the actions module.
   if (Tok.getKind() == tok::l_brace)
@@ -600,18 +610,10 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   assert(Tok.getKind() == tok::kw_enum && "Not an enum specifier");
   SourceLocation StartLoc = ConsumeToken();
   
-  if (Tok.getKind() == tok::kw___attribute)
-    ParseAttributes();
-  
-  // Must have either 'enum name' or 'enum {...}'.
-  if (Tok.getKind() != tok::identifier &&
-      Tok.getKind() != tok::l_brace) {
-    Diag(Tok, diag::err_expected_ident_lbrace);
+  // Parse the tag portion of this.
+  DeclTy *TagDecl;
+  if (ParseTag(TagDecl, DeclSpec::TST_enum, StartLoc))
     return;
-  }
-  
-  if (Tok.getKind() == tok::identifier)
-    ConsumeToken();
   
   if (Tok.getKind() == tok::l_brace) {
     SourceLocation LBraceLoc = ConsumeBrace();
@@ -648,7 +650,7 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
   
   
   const char *PrevSpec = 0;
-  if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc, PrevSpec))
+  if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc, PrevSpec, TagDecl))
     Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 
