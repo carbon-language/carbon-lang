@@ -19,8 +19,8 @@
 
 namespace llvm {
 
-class ModulePass;
 class FunctionPass;
+class Pass;
 class GetElementPtrInst;
 class PassInfo;
 class TerminatorInst;
@@ -52,7 +52,7 @@ FunctionPass *createSCCPPass();
 // without modifying the CFG of the function.  It is a BasicBlockPass, so it
 // runs efficiently when queued next to other BasicBlockPass's.
 //
-FunctionPass *createDeadInstEliminationPass();
+Pass *createDeadInstEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -249,7 +249,7 @@ extern const PassInfo *LowerSelectID;
 //
 //   AU.addRequiredID(LowerAllocationsID);
 //
-FunctionPass *createLowerAllocationsPass(bool LowerMallocArgToInteger = false);
+Pass *createLowerAllocationsPass(bool LowerMallocArgToInteger = false);
 extern const PassInfo *LowerAllocationsID;
 
 //===----------------------------------------------------------------------===//

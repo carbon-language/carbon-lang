@@ -73,7 +73,7 @@ namespace {
 // Publically exposed interface to pass...
 const PassInfo *llvm::LowerAllocationsID = X.getPassInfo();
 // createLowerAllocationsPass - Interface to this file...
-FunctionPass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
+Pass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
   return new LowerAllocations(LowerMallocArgToInteger);
 }
 
