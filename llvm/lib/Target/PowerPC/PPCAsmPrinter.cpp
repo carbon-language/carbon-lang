@@ -412,6 +412,10 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
+    case 'c': // Don't print "$" before a global var name or constant.
+      // PPC never has a prefix.
+      printOperand(MI, OpNo);
+      return false;
     case 'L': // Write second word of DImode reference.  
       // Verify that this operand has two consecutive registers.
       if (!MI->getOperand(OpNo).isRegister() ||
