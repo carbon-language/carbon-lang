@@ -50,12 +50,12 @@ void FunctionDecl::setParams(VarDecl **NewParamInfo, unsigned NumParams) {
 /// defineBody - When created, RecordDecl's correspond to a forward declared
 /// record.  This method is used to mark the decl as being defined, with the
 /// specified contents.
-void RecordDecl::defineBody(Decl **fields, unsigned numFields) {
+void RecordDecl::defineBody(Decl **members, unsigned numMembers) {
   assert(!isDefinition() && "Cannot redefine record!");
   setDefinition(true);
-  NumFields = numFields;
-  if (numFields) {
-    Fields = new Decl*[numFields];
-    memcpy(Fields, fields, numFields*sizeof(Decl*));
+  NumMembers = numMembers;
+  if (numMembers) {
+    Members = new Decl*[numMembers];
+    memcpy(Members, members, numMembers*sizeof(Decl*));
   }
 }

@@ -237,6 +237,30 @@ protected:
   void setDefinition(bool V) { IsDefinition = V; }
 };
 
+/// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
+/// enums.
+class EnumDecl : public TagDecl {
+  /// Fields/NumFields - This is a new[]'d array of pointers to Decls.
+  //Decl **Fields;   // Null if not defined.
+  //int NumFields;   // -1 if not defined.
+public:
+  EnumDecl(SourceLocation L, IdentifierInfo *Id) : TagDecl(Enum, L, Id) {
+    //Fields = 0;
+    //NumFields = -1;
+  }
+  
+  /// defineBody - When created, RecordDecl's correspond to a forward declared
+  /// record.  This method is used to mark the decl as being defined, with the
+  /// specified contents.
+  //void defineBody(Decl **fields, unsigned numFields);
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == Enum;
+  }
+  static bool classof(const EnumDecl *D) { return true; }
+};
+
+
 /// RecordDecl - Represents a struct/union/class.
 class RecordDecl : public TagDecl {
   /// HasFlexibleArrayMember - This is true if this struct ends with a flexible
@@ -244,15 +268,15 @@ class RecordDecl : public TagDecl {
   /// If so, this cannot be contained in arrays or other structs as a member.
   bool HasFlexibleArrayMember : 1;
 
-  /// Fields/NumFields - This is a new[]'d array of pointers to FieldDecls.
-  Decl **Fields;   // Null if not defined.
-  int NumFields;   // -1 if not defined.
+  /// Members/NumMembers - This is a new[]'d array of pointers to Decls.
+  Decl **Members;   // Null if not defined.
+  int NumMembers;   // -1 if not defined.
 public:
   RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) :TagDecl(DK, L, Id){
     HasFlexibleArrayMember = false;
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
-    Fields = 0;
-    NumFields = -1;
+    Members = 0;
+    NumMembers = -1;
   }
   
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
@@ -261,7 +285,7 @@ public:
   /// defineBody - When created, RecordDecl's correspond to a forward declared
   /// record.  This method is used to mark the decl as being defined, with the
   /// specified contents.
-  void defineBody(Decl **fields, unsigned numFields);
+  void defineBody(Decl **Members, unsigned numMembers);
   
   static bool classof(const Decl *D) {
     return D->getKind() == Struct || D->getKind() == Union ||

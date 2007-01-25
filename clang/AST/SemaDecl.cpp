@@ -334,16 +334,18 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
   TagDecl *New;
   switch (Kind) {
   default: assert(0 && "Unknown tag kind!");
-  case Decl::Enum: assert(0 && "Enum tags not implemented yet!");
+  case Decl::Enum:
+    New = new EnumDecl(Loc, Name);
+    // If this is an undefined enum, warn.
+    if (TK != TK_Definition)
+      Diag(Loc, diag::ext_forward_ref_enum);
+    break;
   case Decl::Union:
   case Decl::Struct:
   case Decl::Class:
     New = new RecordDecl(Kind, Loc, Name);
     break;
   }    
-  
-  //if (TK == TK_Definition)
-  //  New->setDefinition(true);
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {
