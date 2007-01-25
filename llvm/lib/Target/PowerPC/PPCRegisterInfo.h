@@ -58,6 +58,11 @@ public:
 
   const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
 
+  /// targetHandlesStackFrameRounding - Returns true if the target is
+  /// responsible for rounding up the stack frame (probably at emitPrologue
+  /// time).
+  bool targetHandlesStackFrameRounding() const { return true; }
+
   bool hasFP(const MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,

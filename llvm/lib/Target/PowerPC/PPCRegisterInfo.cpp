@@ -451,9 +451,6 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   // Determine the maximum call stack size.  maxCallFrameSize may be
   // less than the minimum.
   unsigned maxCallFrameSize = MFI->getMaxCallFrameSize();
-  unsigned getMinCallFrameSize =
-    PPCFrameInfo::getMinCallFrameSize(LP64); 
-  maxCallFrameSize = std::max(maxCallFrameSize, getMinCallFrameSize);
   // Get the total frame size.
   unsigned FrameSize = MFI->getStackSize();
   
@@ -712,11 +709,9 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   
   // Get the alignments provided by the target, and the maximum alignment
   // (if any) of the fixed frame objects.
-  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
-  unsigned Align = std::max(TargetAlign, MaxAlign);
-  assert(isPowerOf2_32(Align) && "Alignment is not power of 2");
-  unsigned AlignMask = Align - 1;  //
+  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned AlignMask = TargetAlign - 1;  //
 
   // If we are a leaf function, and use up to 224 bytes of stack space,
   // don't have a frame pointer, calls, or dynamic alloca then we do not need
