@@ -613,7 +613,7 @@ ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
   Br.MI = &MBB->back();
   BuildMI(MBB, TII->get(Br.UncondBr)).addMBB(DestBB);
   unsigned MaxDisp = (Br.UncondBr == ARM::tB) ? (1<<10)*2 : (1<<23)*4;
-  ImmBranches.push_back(ImmBranch(&MBB->back(), false, Br.UncondBr, MaxDisp));
+  ImmBranches.push_back(ImmBranch(&MBB->back(), MaxDisp, false, Br.UncondBr));
   MI->eraseFromParent();
 
   // Increase the size of MBB to account for the new unconditional branch.
