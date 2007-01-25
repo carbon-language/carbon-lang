@@ -448,8 +448,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   // Determine whether 64-bit pointers are used.
   bool LP64 = Subtarget.isPPC64();
 
-  // Determine the maximum call stack size.  maxCallFrameSize may be
-  // less than the minimum.
+  // Get the maximum call stack size.
   unsigned maxCallFrameSize = MFI->getMaxCallFrameSize();
   // Get the total frame size.
   unsigned FrameSize = MFI->getStackSize();
