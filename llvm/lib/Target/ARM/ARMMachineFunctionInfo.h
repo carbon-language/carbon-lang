@@ -60,9 +60,9 @@ class ARMFunctionInfo : public MachineFunctionInfo {
 
   /// GPRCS1Frames, GPRCS2Frames, DPRCSFrames - Keeps track of frame indices
   /// which belong to these spill areas.
-  std::set<int> GPRCS1Frames;
-  std::set<int> GPRCS2Frames;
-  std::set<int> DPRCSFrames;
+  std::vector<bool> GPRCS1Frames;
+  std::vector<bool> GPRCS2Frames;
+  std::vector<bool> DPRCSFrames;
 
   /// JumpTableUId - Unique id for jumptables.
   ///
@@ -107,24 +107,42 @@ public:
   void setGPRCalleeSavedArea2Size(unsigned s) { GPRCS2Size = s; }
   void setDPRCalleeSavedAreaSize(unsigned s)  { DPRCSSize = s; }
 
-  bool isGPRCalleeSavedArea1Frame(unsigned fi) const {
-    return GPRCS1Frames.count(fi);
+  bool isGPRCalleeSavedArea1Frame(int fi) const {
+    if (fi < 0 || fi >= (int)GPRCS1Frames.size())
+      return false;
+    return GPRCS1Frames[fi];
   }
-  bool isGPRCalleeSavedArea2Frame(unsigned fi) const {
-    return GPRCS2Frames.count(fi);
+  bool isGPRCalleeSavedArea2Frame(int fi) const {
+    if (fi < 0 || fi >= (int)GPRCS2Frames.size())
+      return false;
+    return GPRCS2Frames[fi];
   }
-  bool isDPRCalleeSavedAreaFrame(unsigned fi) const {
-    return DPRCSFrames.count(fi);
+  bool isDPRCalleeSavedAreaFrame(int fi) const {
+    if (fi < 0 || fi >= (int)DPRCSFrames.size())
+      return false;
+    return DPRCSFrames[fi];
   }
 
-  void addGPRCalleeSavedArea1Frame(unsigned fi) {
-    GPRCS1Frames.insert(fi);
+  void addGPRCalleeSavedArea1Frame(int fi) {
+    if (fi >= 0) {
+      if (fi >= (int)GPRCS1Frames.size())
+        GPRCS1Frames.resize(fi+1);
+      GPRCS1Frames[fi] = true;
+    }
   }
-  void addGPRCalleeSavedArea2Frame(unsigned fi) {
-    GPRCS2Frames.insert(fi);
+  void addGPRCalleeSavedArea2Frame(int fi) {
+    if (fi >= 0) {
+      if (fi >= (int)GPRCS2Frames.size())
+        GPRCS2Frames.resize(fi+1);
+      GPRCS2Frames[fi] = true;
+    }
   }
-  void addDPRCalleeSavedAreaFrame(unsigned fi) {
-    DPRCSFrames.insert(fi);
+  void addDPRCalleeSavedAreaFrame(int fi) {
+    if (fi >= 0) {
+      if (fi >= (int)DPRCSFrames.size())
+        DPRCSFrames.resize(fi+1);
+      DPRCSFrames[fi] = true;
+    }
   }
 
   unsigned createJumpTableUId() {

@@ -17,7 +17,6 @@
 
 #include "llvm/Target/MRegisterInfo.h"
 #include "ARMGenRegisterInfo.h.inc"
-#include <set>
 
 namespace llvm {
   class TargetInstrInfo;
