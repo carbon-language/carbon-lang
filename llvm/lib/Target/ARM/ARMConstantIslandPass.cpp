@@ -238,7 +238,8 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
         unsigned Scale = 1;
         int UOpc = Opc;
         switch (Opc) {
-        default: break; // Ignore JT branches
+        default:
+          continue;  // Ignore JT branches
         case ARM::Bcc:
           isCond = true;
           UOpc = ARM::B;
