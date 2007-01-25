@@ -79,14 +79,14 @@ namespace {
     /// opcode.
     struct ImmBranch {
       MachineInstr *MI;
-      bool isCond;
+      unsigned MaxDisp : 31;
+      bool isCond : 1;
       int UncondBr;
-      unsigned MaxDisp;
-      ImmBranch(MachineInstr *mi, bool cond, int ubr, unsigned maxdisp)
-        : MI(mi), isCond(cond), UncondBr(ubr), MaxDisp(maxdisp) {}
+      ImmBranch(MachineInstr *mi, unsigned maxdisp, bool cond, int ubr)
+        : MI(mi), MaxDisp(maxdisp), isCond(cond), UncondBr(ubr) {}
     };
 
-    /// Branches - Keep track of all the immediate branche instructions.
+    /// Branches - Keep track of all the immediate branch instructions.
     ///
     std::vector<ImmBranch> ImmBranches;
 
@@ -107,7 +107,7 @@ namespace {
     void SplitBlockBeforeInstr(MachineInstr *MI);
     void UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB);
     bool HandleConstantPoolUser(MachineFunction &Fn, CPUser &U);
-    bool ShortenImmediateBranch(MachineFunction &Fn, ImmBranch &Br);
+    bool FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br);
 
     unsigned GetInstSize(MachineInstr *MI) const;
     unsigned GetOffsetOf(MachineInstr *MI) const;
@@ -154,7 +154,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
     for (unsigned i = 0, e = CPUsers.size(); i != e; ++i)
       MadeChange |= HandleConstantPoolUser(Fn, CPUsers[i]);
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
-      MadeChange |= ShortenImmediateBranch(Fn, ImmBranches[i]);
+      MadeChange |= FixUpImmediateBranch(Fn, ImmBranches[i]);
   } while (MadeChange);
   
   BBSizes.clear();
@@ -260,7 +260,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
           break;
         }
         unsigned MaxDisp = (1 << (Bits-1)) * Scale;
-        ImmBranches.push_back(ImmBranch(I, isCond, UOpc, MaxDisp));
+        ImmBranches.push_back(ImmBranch(I, MaxDisp, isCond, UOpc));
       }
 
       // Scan the instructions for constant pool operands.
@@ -560,8 +560,13 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
   return true;
 }
 
+/// FixUpImmediateBranch - Fix up immediate branches whose destination is too
+/// far away to fit in its displacement field. If it is a conditional branch,
+/// then it is converted to an inverse conditional branch + an unconditional
+/// branch to the destination. If it is an unconditional branch, then it is
+/// converted to a branch to a branch.
 bool
-ARMConstantIslands::ShortenImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
+ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
   MachineBasicBlock *DestBB = MI->getOperand(0).getMachineBasicBlock();
 
