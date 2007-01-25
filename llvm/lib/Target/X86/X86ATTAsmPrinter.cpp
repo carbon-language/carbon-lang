@@ -219,7 +219,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
 
   case MachineOperand::MO_Immediate:
-    if (!Modifier || strcmp(Modifier, "debug") != 0)
+    if (!Modifier ||
+        (strcmp(Modifier, "debug") && strcmp(Modifier, "mem")))
       O << '$';
     O << MO.getImmedValue();
     return;
@@ -491,7 +492,7 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
-    case 'c': // Don't print "$" before a global var name.
+    case 'c': // Don't print "$" before a global var name or constant.
       printOperand(MI, OpNo, "mem");
       return false;
     case 'b': // Print QImode register
