@@ -984,7 +984,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
                  AFI->getGPRCalleeSavedArea2Size() +
                  AFI->getDPRCalleeSavedAreaSize());
     if (isThumb)
-      emitSPUpdate(MBB, MBBI, -NumBytes, isThumb, TII);
+      emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
     else {
       if (STI.isTargetDarwin()) {
         NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
