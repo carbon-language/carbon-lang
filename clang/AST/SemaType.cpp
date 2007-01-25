@@ -130,6 +130,17 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       else
         ASM = ArrayType::Normal;
       
+      // If the element type is a struct or union that contains a variadic
+      // array, reject it: C99 6.7.2.1p2.
+      if (RecordType *EltTy = dyn_cast<RecordType>(T->getCanonicalType())) {
+        if (EltTy->getDecl()->hasFlexibleArrayMember()) {
+          std::string Name;
+          T->getAsString(Name);
+          Diag(DeclType.Loc, diag::err_flexible_array_in_array, Name);
+          return TypeRef();
+        }
+      }
+      
       T = Context.getArrayType(T, ASM, ATI.TypeQuals, ATI.NumElts);
       break;
     }

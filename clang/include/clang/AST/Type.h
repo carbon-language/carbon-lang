@@ -22,9 +22,11 @@
 namespace llvm {
 namespace clang {
   class ASTContext;
+  class Type;
   class TypeDecl;
   class TagDecl;
-  class Type;
+  class RecordDecl;
+  class EnumDecl;
   
 /// TypeRef - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -387,6 +389,19 @@ public:
   static bool classof(const TaggedType *) { return true; }
 };
 
+/// RecordType - This is a helper class that allows the use of isa/cast/dyncast
+/// to detect TaggedType objects of structs/unions/classes.
+class RecordType : public TaggedType {
+  RecordType(); // DO NOT IMPLEMENT
+public:
+    
+  RecordDecl *getDecl() const {
+    return reinterpret_cast<RecordDecl*>(TaggedType::getDecl());
+  }
+  
+  static bool classof(const Type *T);
+  static bool classof(const RecordType *) { return true; }
+};
 
 
 /// ...

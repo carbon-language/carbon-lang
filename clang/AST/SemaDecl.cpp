@@ -332,10 +332,15 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
   
   // Otherwise, if this is the first time we've seen this tag, create the decl.
   TagDecl *New;
-  if (Kind != Decl::Enum)
+  switch (Kind) {
+  default: assert(0 && "Unknown tag kind!");
+  case Decl::Enum: assert(0 && "Enum tags not implemented yet!");
+  case Decl::Union:
+  case Decl::Struct:
+  case Decl::Class:
     New = new RecordDecl(Kind, Loc, Name);
-  else
-    assert(0 && "Enum tags not implemented yet!");
+    break;
+  }    
   
   //if (TK == TK_Definition)
   //  New->setDefinition(true);
@@ -397,9 +402,12 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
   for (unsigned i = 0; i != NumFields; ++i) {
     FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
     if (!FD) continue;  // Already issued a diagnostic.
-
+    
+    // Get the type for the field.
+    Type *FDTy = FD->getType()->getCanonicalType();
+    
     // C99 6.7.2.1p2 - A field may not be a function type.
-    if (isa<FunctionType>(FD->getType())) {
+    if (isa<FunctionType>(FDTy)) {
       Diag(FD->getLocation(), diag::err_field_declared_as_function,
            FD->getName());
       delete FD;
@@ -407,23 +415,53 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     }
 
     // C99 6.7.2.1p2 - A field may not be an incomplete type except...
-    if (FD->getType()->isIncompleteType()) {
+    if (FDTy->isIncompleteType()) {
       if (i != NumFields-1 ||                   // ... that the last member ...
           Record->getKind() != Decl::Struct ||  // ... of a structure ...
-          !isa<ArrayType>(FD->getType())) {//... may have incomplete array type.
+          !isa<ArrayType>(FDTy)) {         //... may have incomplete array type.
         Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
         delete FD;
         continue;
       }
-      if (NumNamedMembers < 1) {           //... with more than named member ...
+      if (NumNamedMembers < 1) {      //... must have more than named member ...
         Diag(FD->getLocation(), diag::err_flexible_array_empty_struct,
              FD->getName());
         delete FD;
         continue;
       }
+      
+      // Okay, we have a legal flexible array member at the end of the struct.
+      cast<RecordDecl>(Record)->setHasFlexibleArrayMember(true);
     }
-      
-      
+    
+    
+    /// C99 6.7.2.1p2 - a struct ending in a flexible array member cannot be the
+    /// field of another structure or the element of an array.
+    if (RecordType *FDTTy = dyn_cast<RecordType>(FDTy)) {
+      if (FDTTy->getDecl()->hasFlexibleArrayMember()) {
+        // If this is a member of a union, then entire union becomes "flexible".
+        if (Record->getKind() == Decl::Union) {
+          cast<RecordDecl>(Record)->setHasFlexibleArrayMember(true);
+        } else {
+          // If this is a struct/class and this is not the last element, reject
+          // it.  Note that GCC supports variable sized arrays in the middle of
+          // structures.
+          if (i != NumFields-1) {
+            Diag(FD->getLocation(), diag::err_variable_sized_type_in_struct,
+                 FD->getName());
+            delete FD;
+            continue;
+          }
+
+          // We support flexible arrays at the end of structs in other structs
+          // as an extension.
+          Diag(FD->getLocation(), diag::ext_flexible_array_in_struct,
+               FD->getName());
+          cast<RecordDecl>(Record)->setHasFlexibleArrayMember(true);
+        }
+      }
+    }
+    
     // Keep track of the number of named members.
     if (FD->getIdentifier())
       ++NumNamedMembers;

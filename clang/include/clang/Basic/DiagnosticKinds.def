@@ -441,8 +441,14 @@ DIAG(err_field_declared_as_function, ERROR,
      "field '%s' declared as a function")
 DIAG(err_field_incomplete, ERROR,
      "field '%s' has incomplete type")
+DIAG(err_variable_sized_type_in_struct, EXTENSION,
+     "variable sized type '%s' must be at end of struct or class")
 DIAG(err_flexible_array_empty_struct, ERROR,
      "flexible array '%s' not allowed in otherwise empty struct")
+DIAG(ext_flexible_array_in_struct, EXTENSION,
+     "'%s' may not be nested in a struct due to flexible array member")
+DIAG(err_flexible_array_in_array, ERROR,
+     "'%s' may not be used as an array element due to flexible array member")
 
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,

@@ -75,6 +75,13 @@ const char *BuiltinType::getName() const {
   }
 }
 
+bool RecordType::classof(const Type *T) {
+  if (const TaggedType *TT = dyn_cast<TaggedType>(T))
+    return isa<RecordDecl>(TT->getDecl());
+  return false;
+}
+
+
 //===----------------------------------------------------------------------===//
 // Type Printing
 //===----------------------------------------------------------------------===//

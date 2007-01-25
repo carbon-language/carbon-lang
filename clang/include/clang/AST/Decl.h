@@ -238,10 +238,18 @@ public:
 
 /// RecordDecl - Represents a struct/union/class.
 class RecordDecl : public TagDecl {
+  /// HasFlexibleArrayMember - This is true if this struct ends with a flexible
+  /// array member (e.g. int X[]) or if this union contains a struct that does.
+  /// If so, this cannot be contained in arrays or other structs as a member.
+  bool HasFlexibleArrayMember;
 public:
   RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) :TagDecl(DK, L, Id){
+    HasFlexibleArrayMember = false;
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
   }
+  
+  bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
+  void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }
   
   static bool classof(const Decl *D) {
     return D->getKind() == Struct || D->getKind() == Union ||
@@ -250,7 +258,6 @@ public:
   static bool classof(const RecordDecl *D) { return true; }
 };
 
-  
 }  // end namespace clang
 }  // end namespace llvm
 
