@@ -57,64 +57,6 @@ class DIE;
 class DIEValue;
 
 //===----------------------------------------------------------------------===//
-/// LEB 128 number encoding.
-
-/// PrintULEB128 - Print a series of hexidecimal values (separated by commas)
-/// representing an unsigned leb128 value.
-static void PrintULEB128(std::ostream &O, unsigned Value) {
-  do {
-    unsigned Byte = Value & 0x7f;
-    Value >>= 7;
-    if (Value) Byte |= 0x80;
-    O << "0x" << std::hex << Byte << std::dec;
-    if (Value) O << ", ";
-  } while (Value);
-}
-
-/// SizeULEB128 - Compute the number of bytes required for an unsigned leb128
-/// value.
-static unsigned SizeULEB128(unsigned Value) {
-  unsigned Size = 0;
-  do {
-    Value >>= 7;
-    Size += sizeof(int8_t);
-  } while (Value);
-  return Size;
-}
-
-/// PrintSLEB128 - Print a series of hexidecimal values (separated by commas)
-/// representing a signed leb128 value.
-static void PrintSLEB128(std::ostream &O, int Value) {
-  int Sign = Value >> (8 * sizeof(Value) - 1);
-  bool IsMore;
-  
-  do {
-    unsigned Byte = Value & 0x7f;
-    Value >>= 7;
-    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
-    if (IsMore) Byte |= 0x80;
-    O << "0x" << std::hex << Byte << std::dec;
-    if (IsMore) O << ", ";
-  } while (IsMore);
-}
-
-/// SizeSLEB128 - Compute the number of bytes required for a signed leb128
-/// value.
-static unsigned SizeSLEB128(int Value) {
-  unsigned Size = 0;
-  int Sign = Value >> (8 * sizeof(Value) - 1);
-  bool IsMore;
-  
-  do {
-    unsigned Byte = Value & 0x7f;
-    Value >>= 7;
-    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
-    Size += sizeof(int8_t);
-  } while (IsMore);
-  return Size;
-}
-
-//===----------------------------------------------------------------------===//
 /// DWLabel - Labels are used to track locations in the assembler file.
 /// Labels appear in the form <prefix>debug_<Tag><Number>, where the tag is a
 /// category of label (Ex. location) and number is a value unique in that
@@ -429,23 +371,7 @@ public:
   
   /// SizeOf - Determine size of integer value in bytes.
   ///
-  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const {
-    switch (Form) {
-    case DW_FORM_flag:  // Fall thru
-    case DW_FORM_ref1:  // Fall thru
-    case DW_FORM_data1: return sizeof(int8_t);
-    case DW_FORM_ref2:  // Fall thru
-    case DW_FORM_data2: return sizeof(int16_t);
-    case DW_FORM_ref4:  // Fall thru
-    case DW_FORM_data4: return sizeof(int32_t);
-    case DW_FORM_ref8:  // Fall thru
-    case DW_FORM_data8: return sizeof(int64_t);
-    case DW_FORM_udata: return SizeULEB128(Integer);
-    case DW_FORM_sdata: return SizeSLEB128(Integer);
-    default: assert(0 && "DIE Value form not supported yet"); break;
-    }
-    return 0;
-  }
+  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
   
   /// Profile - Used to gather unique data for the value folding set.
   ///
@@ -924,122 +850,9 @@ private:
 public:
 
   //===--------------------------------------------------------------------===//
-  // Emission and print routines
+  // Accessors.
   //
-
-  /// PrintHex - Print a value as a hexidecimal value.
-  ///
-  void PrintHex(int Value) const { 
-    O << "0x" << std::hex << Value << std::dec;
-  }
-
-  /// EOL - Print a newline character to asm stream.  If a comment is present
-  /// then it will be printed first.  Comments should not contain '\n'.
-  void EOL(const std::string &Comment) const {
-    if (DwarfVerbose && !Comment.empty()) {
-      O << "\t"
-        << TAI->getCommentString()
-        << " "
-        << Comment;
-    }
-    O << "\n";
-  }
-  
-  /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
-  /// unsigned leb128 value.
-  void EmitULEB128Bytes(unsigned Value) const {
-    if (TAI->hasLEB128()) {
-      O << "\t.uleb128\t"
-        << Value;
-    } else {
-      O << TAI->getData8bitsDirective();
-      PrintULEB128(O, Value);
-    }
-  }
-  
-  /// EmitSLEB128Bytes - print an assembler byte data directive to compose a
-  /// signed leb128 value.
-  void EmitSLEB128Bytes(int Value) const {
-    if (TAI->hasLEB128()) {
-      O << "\t.sleb128\t"
-        << Value;
-    } else {
-      O << TAI->getData8bitsDirective();
-      PrintSLEB128(O, Value);
-    }
-  }
-  
-  /// EmitInt8 - Emit a byte directive and value.
-  ///
-  void EmitInt8(int Value) const {
-    O << TAI->getData8bitsDirective();
-    PrintHex(Value & 0xFF);
-  }
-
-  /// EmitInt16 - Emit a short directive and value.
-  ///
-  void EmitInt16(int Value) const {
-    O << TAI->getData16bitsDirective();
-    PrintHex(Value & 0xFFFF);
-  }
-
-  /// EmitInt32 - Emit a long directive and value.
-  ///
-  void EmitInt32(int Value) const {
-    O << TAI->getData32bitsDirective();
-    PrintHex(Value);
-  }
-
-  /// EmitInt64 - Emit a long long directive and value.
-  ///
-  void EmitInt64(uint64_t Value) const {
-    if (TAI->getData64bitsDirective()) {
-      O << TAI->getData64bitsDirective();
-      PrintHex(Value);
-    } else {
-      if (TD->isBigEndian()) {
-        EmitInt32(unsigned(Value >> 32)); O << "\n";
-        EmitInt32(unsigned(Value));
-      } else {
-        EmitInt32(unsigned(Value)); O << "\n";
-        EmitInt32(unsigned(Value >> 32));
-      }
-    }
-  }
-
-  /// EmitString - Emit a string with quotes and a null terminator.
-  /// Special characters are emitted properly.
-  /// \literal (Eg. '\t') \endliteral
-  void EmitString(const std::string &String) const {
-    O << TAI->getAsciiDirective()
-      << "\"";
-    for (unsigned i = 0, N = String.size(); i < N; ++i) {
-      unsigned char C = String[i];
-      
-      if (!isascii(C) || iscntrl(C)) {
-        switch(C) {
-        case '\b': O << "\\b"; break;
-        case '\f': O << "\\f"; break;
-        case '\n': O << "\\n"; break;
-        case '\r': O << "\\r"; break;
-        case '\t': O << "\\t"; break;
-        default:
-          O << '\\';
-          O << char('0' + ((C >> 6) & 7));
-          O << char('0' + ((C >> 3) & 7));
-          O << char('0' + ((C >> 0) & 7));
-          break;
-        }
-      } else if (C == '\"') {
-        O << "\\\"";
-      } else if (C == '\'') {
-        O << "\\\'";
-      } else {
-       O << C;
-      }
-    }
-    O << "\\0\"";
-  }
+  AsmPrinter *getAsm() const { return Asm; }
 
   /// PrintLabelName - Print label name in form used by Dwarf writer.
   ///
@@ -2005,12 +1818,12 @@ private:
     O << "\n";
 
     // Emit the code (index) for the abbreviation.
-    EmitULEB128Bytes(AbbrevNumber);
-    EOL(std::string("Abbrev [" +
-        utostr(AbbrevNumber) +
-        "] 0x" + utohexstr(Die->getOffset()) +
-        ":0x" + utohexstr(Die->getSize()) + " " +
-        TagString(Abbrev->getTag())));
+    Asm->EmitULEB128Bytes(AbbrevNumber);
+    Asm->EOL(std::string("Abbrev [" +
+             utostr(AbbrevNumber) +
+             "] 0x" + utohexstr(Die->getOffset()) +
+             ":0x" + utohexstr(Die->getSize()) + " " +
+             TagString(Abbrev->getTag())));
     
     const std::vector<DIEValue *> &Values = Die->getValues();
     const std::vector<DIEAbbrevData> &AbbrevData = Abbrev->getData();
@@ -2023,7 +1836,7 @@ private:
       
       switch (Attr) {
       case DW_AT_sibling: {
-        EmitInt32(Die->SiblingOffset());
+        Asm->EmitInt32(Die->SiblingOffset());
         break;
       }
       default: {
@@ -2033,7 +1846,7 @@ private:
       }
       }
       
-      EOL(AttributeString(Attr));
+      Asm->EOL(AttributeString(Attr));
     }
     
     // Emit the DIE children if any.
@@ -2044,7 +1857,7 @@ private:
         EmitDIE(Children[j]);
       }
       
-      EmitInt8(0); EOL("End Of Children Mark");
+      Asm->EmitInt8(0); Asm->EOL("End Of Children Mark");
     }
   }
 
@@ -2068,7 +1881,7 @@ private:
     Die->setOffset(Offset);
     
     // Start the size with the size of abbreviation code.
-    Offset += SizeULEB128(AbbrevNumber);
+    Offset += Asm->SizeULEB128(AbbrevNumber);
     
     const std::vector<DIEValue *> &Values = Die->getValues();
     const std::vector<DIEAbbrevData> &AbbrevData = Abbrev->getData();
@@ -2134,10 +1947,10 @@ private:
       
       // Advance row if new location.
       if (BaseLabel && LabelID && BaseLabelID != LabelID) {
-        EmitInt8(DW_CFA_advance_loc4);
-        EOL("DW_CFA_advance_loc4");
+        Asm->EmitInt8(DW_CFA_advance_loc4);
+        Asm->EOL("DW_CFA_advance_loc4");
         EmitDifference("loc", LabelID, BaseLabel, BaseLabelID, true);
-        EOL("");
+        Asm->EOL("");
         
         BaseLabelID = LabelID;
         BaseLabel = "loc";
@@ -2147,29 +1960,29 @@ private:
       if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
         if (!Src.isRegister()) {
           if (Src.getRegister() == MachineLocation::VirtualFP) {
-            EmitInt8(DW_CFA_def_cfa_offset);
-            EOL("DW_CFA_def_cfa_offset");
+            Asm->EmitInt8(DW_CFA_def_cfa_offset);
+            Asm->EOL("DW_CFA_def_cfa_offset");
           } else {
-            EmitInt8(DW_CFA_def_cfa);
-            EOL("DW_CFA_def_cfa");
-            EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister()));
-            EOL("Register");
+            Asm->EmitInt8(DW_CFA_def_cfa);
+            Asm->EOL("DW_CFA_def_cfa");
+            Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister()));
+            Asm->EOL("Register");
           }
           
           int Offset = Src.getOffset() / stackGrowth;
           
-          EmitULEB128Bytes(Offset);
-          EOL("Offset");
+          Asm->EmitULEB128Bytes(Offset);
+          Asm->EOL("Offset");
         } else {
           assert(0 && "Machine move no supported yet.");
         }
       } else if (Src.isRegister() &&
         Src.getRegister() == MachineLocation::VirtualFP) {
         if (Dst.isRegister()) {
-          EmitInt8(DW_CFA_def_cfa_register);
-          EOL("DW_CFA_def_cfa_register");
-          EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister()));
-          EOL("Register");
+          Asm->EmitInt8(DW_CFA_def_cfa_register);
+          Asm->EOL("DW_CFA_def_cfa_register");
+          Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister()));
+          Asm->EOL("Register");
         } else {
           assert(0 && "Machine move no supported yet.");
         }
@@ -2178,24 +1991,24 @@ private:
         int Offset = Dst.getOffset() / stackGrowth;
         
         if (Offset < 0) {
-          EmitInt8(DW_CFA_offset_extended_sf);
-          EOL("DW_CFA_offset_extended_sf");
-          EmitULEB128Bytes(Reg);
-          EOL("Reg");
-          EmitSLEB128Bytes(Offset);
-          EOL("Offset");
+          Asm->EmitInt8(DW_CFA_offset_extended_sf);
+          Asm->EOL("DW_CFA_offset_extended_sf");
+          Asm->EmitULEB128Bytes(Reg);
+          Asm->EOL("Reg");
+          Asm->EmitSLEB128Bytes(Offset);
+          Asm->EOL("Offset");
         } else if (Reg < 64) {
-          EmitInt8(DW_CFA_offset + Reg);
-          EOL("DW_CFA_offset + Reg");
-          EmitULEB128Bytes(Offset);
-          EOL("Offset");
+          Asm->EmitInt8(DW_CFA_offset + Reg);
+          Asm->EOL("DW_CFA_offset + Reg");
+          Asm->EmitULEB128Bytes(Offset);
+          Asm->EOL("Offset");
         } else {
-          EmitInt8(DW_CFA_offset_extended);
-          EOL("DW_CFA_offset_extended");
-          EmitULEB128Bytes(Reg);
-          EOL("Reg");
-          EmitULEB128Bytes(Offset);
-          EOL("Offset");
+          Asm->EmitInt8(DW_CFA_offset_extended);
+          Asm->EOL("DW_CFA_offset_extended");
+          Asm->EmitULEB128Bytes(Reg);
+          Asm->EOL("Reg");
+          Asm->EmitULEB128Bytes(Offset);
+          Asm->EOL("Offset");
         }
       }
     }
@@ -2218,17 +2031,18 @@ private:
                            sizeof(int8_t) +  // Pointer Size (in bytes)
                            sizeof(int32_t);  // FIXME - extra pad for gdb bug.
                            
-    EmitInt32(ContentSize);  EOL("Length of Compilation Unit Info");
-    EmitInt16(DWARF_VERSION); EOL("DWARF version number");
+    Asm->EmitInt32(ContentSize);  Asm->EOL("Length of Compilation Unit Info");
+    Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF version number");
     EmitDifference("abbrev_begin", 0, "section_abbrev", 0, true);
-    EOL("Offset Into Abbrev. Section");
-    EmitInt8(TAI->getAddressSize()); EOL("Address Size (in bytes)");
+    Asm->EOL("Offset Into Abbrev. Section");
+    Asm->EmitInt8(TAI->getAddressSize()); Asm->EOL("Address Size (in bytes)");
   
     EmitDIE(Die);
-    EmitInt8(0); EOL("Extra Pad For GDB"); // FIXME - extra pad for gdb bug.
-    EmitInt8(0); EOL("Extra Pad For GDB"); // FIXME - extra pad for gdb bug.
-    EmitInt8(0); EOL("Extra Pad For GDB"); // FIXME - extra pad for gdb bug.
-    EmitInt8(0); EOL("Extra Pad For GDB"); // FIXME - extra pad for gdb bug.
+    // FIXME - extra padding for gdb bug.
+    Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
+    Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
+    Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
+    Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
     EmitLabel("info_end", Unit->getID());
     
     O << "\n";
@@ -2250,7 +2064,8 @@ private:
         const DIEAbbrev *Abbrev = Abbreviations[i];
         
         // Emit the abbrevations code (base 1 index.)
-        EmitULEB128Bytes(Abbrev->getNumber()); EOL("Abbreviation Code");
+        Asm->EmitULEB128Bytes(Abbrev->getNumber());
+        Asm->EOL("Abbreviation Code");
         
         // Emit the abbreviations data.
         Abbrev->Emit(*this);
@@ -2278,35 +2093,35 @@ private:
     // Construct the section header.
     
     EmitDifference("line_end", 0, "line_begin", 0, true);
-    EOL("Length of Source Line Info");
+    Asm->EOL("Length of Source Line Info");
     EmitLabel("line_begin", 0);
     
-    EmitInt16(DWARF_VERSION); EOL("DWARF version number");
+    Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF version number");
     
     EmitDifference("line_prolog_end", 0, "line_prolog_begin", 0, true);
-    EOL("Prolog Length");
+    Asm->EOL("Prolog Length");
     EmitLabel("line_prolog_begin", 0);
     
-    EmitInt8(1); EOL("Minimum Instruction Length");
+    Asm->EmitInt8(1); Asm->EOL("Minimum Instruction Length");
 
-    EmitInt8(1); EOL("Default is_stmt_start flag");
+    Asm->EmitInt8(1); Asm->EOL("Default is_stmt_start flag");
 
-    EmitInt8(MinLineDelta);  EOL("Line Base Value (Special Opcodes)");
+    Asm->EmitInt8(MinLineDelta); Asm->EOL("Line Base Value (Special Opcodes)");
     
-    EmitInt8(MaxLineDelta); EOL("Line Range Value (Special Opcodes)");
+    Asm->EmitInt8(MaxLineDelta); Asm->EOL("Line Range Value (Special Opcodes)");
 
-    EmitInt8(-MinLineDelta); EOL("Special Opcode Base");
+    Asm->EmitInt8(-MinLineDelta); Asm->EOL("Special Opcode Base");
     
     // Line number standard opcode encodings argument count
-    EmitInt8(0); EOL("DW_LNS_copy arg count");
-    EmitInt8(1); EOL("DW_LNS_advance_pc arg count");
-    EmitInt8(1); EOL("DW_LNS_advance_line arg count");
-    EmitInt8(1); EOL("DW_LNS_set_file arg count");
-    EmitInt8(1); EOL("DW_LNS_set_column arg count");
-    EmitInt8(0); EOL("DW_LNS_negate_stmt arg count");
-    EmitInt8(0); EOL("DW_LNS_set_basic_block arg count");
-    EmitInt8(0); EOL("DW_LNS_const_add_pc arg count");
-    EmitInt8(1); EOL("DW_LNS_fixed_advance_pc arg count");
+    Asm->EmitInt8(0); Asm->EOL("DW_LNS_copy arg count");
+    Asm->EmitInt8(1); Asm->EOL("DW_LNS_advance_pc arg count");
+    Asm->EmitInt8(1); Asm->EOL("DW_LNS_advance_line arg count");
+    Asm->EmitInt8(1); Asm->EOL("DW_LNS_set_file arg count");
+    Asm->EmitInt8(1); Asm->EOL("DW_LNS_set_column arg count");
+    Asm->EmitInt8(0); Asm->EOL("DW_LNS_negate_stmt arg count");
+    Asm->EmitInt8(0); Asm->EOL("DW_LNS_set_basic_block arg count");
+    Asm->EmitInt8(0); Asm->EOL("DW_LNS_const_add_pc arg count");
+    Asm->EmitInt8(1); Asm->EOL("DW_LNS_fixed_advance_pc arg count");
 
     const UniqueVector<std::string> &Directories = DebugInfo->getDirectories();
     const UniqueVector<SourceFileInfo>
@@ -2315,20 +2130,24 @@ private:
     // Emit directories.
     for (unsigned DirectoryID = 1, NDID = Directories.size();
                   DirectoryID <= NDID; ++DirectoryID) {
-      EmitString(Directories[DirectoryID]); EOL("Directory");
+      Asm->EmitString(Directories[DirectoryID]); Asm->EOL("Directory");
     }
-    EmitInt8(0); EOL("End of directories");
+    Asm->EmitInt8(0); Asm->EOL("End of directories");
     
     // Emit files.
     for (unsigned SourceID = 1, NSID = SourceFiles.size();
                  SourceID <= NSID; ++SourceID) {
       const SourceFileInfo &SourceFile = SourceFiles[SourceID];
-      EmitString(SourceFile.getName()); EOL("Source");
-      EmitULEB128Bytes(SourceFile.getDirectoryID());  EOL("Directory #");
-      EmitULEB128Bytes(0);  EOL("Mod date");
-      EmitULEB128Bytes(0);  EOL("File size");
+      Asm->EmitString(SourceFile.getName());
+      Asm->EOL("Source");
+      Asm->EmitULEB128Bytes(SourceFile.getDirectoryID());
+      Asm->EOL("Directory #");
+      Asm->EmitULEB128Bytes(0);
+      Asm->EOL("Mod date");
+      Asm->EmitULEB128Bytes(0);
+      Asm->EOL("File size");
     }
-    EmitInt8(0); EOL("End of files");
+    Asm->EmitInt8(0); Asm->EOL("End of files");
     
     EmitLabel("line_prolog_end", 0);
     
@@ -2366,16 +2185,16 @@ private:
         }
 
         // Define the line address.
-        EmitInt8(0); EOL("Extended Op");
-        EmitInt8(TAI->getAddressSize() + 1); EOL("Op size");
-        EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
-        EmitReference("loc",  LabelID); EOL("Location label");
+        Asm->EmitInt8(0); Asm->EOL("Extended Op");
+        Asm->EmitInt8(TAI->getAddressSize() + 1); Asm->EOL("Op size");
+        Asm->EmitInt8(DW_LNE_set_address); Asm->EOL("DW_LNE_set_address");
+        EmitReference("loc",  LabelID); Asm->EOL("Location label");
         
         // If change of source, then switch to the new source.
         if (Source != LineInfo.getSourceID()) {
           Source = LineInfo.getSourceID();
-          EmitInt8(DW_LNS_set_file); EOL("DW_LNS_set_file");
-          EmitULEB128Bytes(Source); EOL("New Source");
+          Asm->EmitInt8(DW_LNS_set_file); Asm->EOL("DW_LNS_set_file");
+          Asm->EmitULEB128Bytes(Source); Asm->EOL("New Source");
         }
         
         // If change of line.
@@ -2390,29 +2209,29 @@ private:
           // If delta is small enough and in range...
           if (Delta >= 0 && Delta < (MaxLineDelta - 1)) {
             // ... then use fast opcode.
-            EmitInt8(Delta - MinLineDelta); EOL("Line Delta");
+            Asm->EmitInt8(Delta - MinLineDelta); Asm->EOL("Line Delta");
           } else {
             // ... otherwise use long hand.
-            EmitInt8(DW_LNS_advance_line); EOL("DW_LNS_advance_line");
-            EmitSLEB128Bytes(Offset); EOL("Line Offset");
-            EmitInt8(DW_LNS_copy); EOL("DW_LNS_copy");
+            Asm->EmitInt8(DW_LNS_advance_line); Asm->EOL("DW_LNS_advance_line");
+            Asm->EmitSLEB128Bytes(Offset); Asm->EOL("Line Offset");
+            Asm->EmitInt8(DW_LNS_copy); Asm->EOL("DW_LNS_copy");
           }
         } else {
           // Copy the previous row (different address or source)
-          EmitInt8(DW_LNS_copy); EOL("DW_LNS_copy");
+          Asm->EmitInt8(DW_LNS_copy); Asm->EOL("DW_LNS_copy");
         }
       }
 
       // Define last address of section.
-      EmitInt8(0); EOL("Extended Op");
-      EmitInt8(TAI->getAddressSize() + 1); EOL("Op size");
-      EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
-      EmitReference("section_end", j + 1); EOL("Section end label");
+      Asm->EmitInt8(0); Asm->EOL("Extended Op");
+      Asm->EmitInt8(TAI->getAddressSize() + 1); Asm->EOL("Op size");
+      Asm->EmitInt8(DW_LNE_set_address); Asm->EOL("DW_LNE_set_address");
+      EmitReference("section_end", j + 1); Asm->EOL("Section end label");
 
       // Mark end of matrix.
-      EmitInt8(0); EOL("DW_LNE_end_sequence");
-      EmitULEB128Bytes(1);  O << "\n";
-      EmitInt8(1); O << "\n";
+      Asm->EmitInt8(0); Asm->EOL("DW_LNE_end_sequence");
+      Asm->EmitULEB128Bytes(1);  O << "\n";
+      Asm->EmitInt8(1); O << "\n";
     }
     
     EmitLabel("line_end", 0);
@@ -2437,15 +2256,21 @@ private:
     EmitLabel("frame_common", 0);
     EmitDifference("frame_common_end", 0,
                    "frame_common_begin", 0, true);
-    EOL("Length of Common Information Entry");
+    Asm->EOL("Length of Common Information Entry");
 
     EmitLabel("frame_common_begin", 0);
-    EmitInt32((int)DW_CIE_ID); EOL("CIE Identifier Tag");
-    EmitInt8(DW_CIE_VERSION); EOL("CIE Version");
-    EmitString("");  EOL("CIE Augmentation");
-    EmitULEB128Bytes(1); EOL("CIE Code Alignment Factor");
-    EmitSLEB128Bytes(stackGrowth); EOL("CIE Data Alignment Factor");   
-    EmitInt8(RI->getDwarfRegNum(RI->getRARegister())); EOL("CIE RA Column");
+    Asm->EmitInt32((int)DW_CIE_ID);
+    Asm->EOL("CIE Identifier Tag");
+    Asm->EmitInt8(DW_CIE_VERSION);
+    Asm->EOL("CIE Version");
+    Asm->EmitString("");
+    Asm->EOL("CIE Augmentation");
+    Asm->EmitULEB128Bytes(1);
+    Asm->EOL("CIE Code Alignment Factor");
+    Asm->EmitSLEB128Bytes(stackGrowth);
+    Asm->EOL("CIE Data Alignment Factor");   
+    Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister()));
+    Asm->EOL("CIE RA Column");
     
     std::vector<MachineMove> Moves;
     RI->getInitialFrameState(Moves);
@@ -2468,17 +2293,18 @@ private:
     
     EmitDifference("frame_end", SubprogramCount,
                    "frame_begin", SubprogramCount, true);
-    EOL("Length of Frame Information Entry");
+    Asm->EOL("Length of Frame Information Entry");
     
     EmitLabel("frame_begin", SubprogramCount);
     
     EmitDifference("frame_common", 0, "section_frame", 0, true);
-    EOL("FDE CIE offset");
+    Asm->EOL("FDE CIE offset");
 
-    EmitReference("func_begin", SubprogramCount); EOL("FDE initial location");
+    EmitReference("func_begin", SubprogramCount);
+    Asm->EOL("FDE initial location");
     EmitDifference("func_end", SubprogramCount,
                    "func_begin", SubprogramCount);
-    EOL("FDE address range");
+    Asm->EOL("FDE address range");
     
     std::vector<MachineMove> &Moves = DebugInfo->getFrameMoves();
     
@@ -2500,17 +2326,17 @@ private:
  
     EmitDifference("pubnames_end", Unit->getID(),
                    "pubnames_begin", Unit->getID(), true);
-    EOL("Length of Public Names Info");
+    Asm->EOL("Length of Public Names Info");
     
     EmitLabel("pubnames_begin", Unit->getID());
     
-    EmitInt16(DWARF_VERSION); EOL("DWARF Version");
+    Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF Version");
     
     EmitDifference("info_begin", Unit->getID(), "section_info", 0, true);
-    EOL("Offset of Compilation Unit Info");
+    Asm->EOL("Offset of Compilation Unit Info");
 
     EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),true);
-    EOL("Compilation Unit Length");
+    Asm->EOL("Compilation Unit Length");
     
     std::map<std::string, DIE *> &Globals = Unit->getGlobals();
     
@@ -2520,11 +2346,11 @@ private:
       const std::string &Name = GI->first;
       DIE * Entity = GI->second;
       
-      EmitInt32(Entity->getOffset()); EOL("DIE offset");
-      EmitString(Name); EOL("External Name");
+      Asm->EmitInt32(Entity->getOffset()); Asm->EOL("DIE offset");
+      Asm->EmitString(Name); Asm->EOL("External Name");
     }
   
-    EmitInt32(0); EOL("End Mark");
+    Asm->EmitInt32(0); Asm->EOL("End Mark");
     EmitLabel("pubnames_end", Unit->getID());
   
     O << "\n";
@@ -2545,7 +2371,7 @@ private:
         EmitLabel("string", StringID);
         // Emit the string itself.
         const std::string &String = StringPool[StringID];
-        EmitString(String); O << "\n";
+        Asm->EmitString(String); O << "\n";
       }
     
       O << "\n";
@@ -2572,26 +2398,26 @@ private:
     CompileUnit *Unit = GetBaseCompileUnit(); 
       
     // Don't include size of length
-    EmitInt32(0x1c); EOL("Length of Address Ranges Info");
+    Asm->EmitInt32(0x1c); Asm->EOL("Length of Address Ranges Info");
     
-    EmitInt16(DWARF_VERSION); EOL("Dwarf Version");
+    Asm->EmitInt16(DWARF_VERSION); Asm->EOL("Dwarf Version");
     
     EmitReference("info_begin", Unit->getID());
-    EOL("Offset of Compilation Unit Info");
+    Asm->EOL("Offset of Compilation Unit Info");
 
-    EmitInt8(TAI->getAddressSize()); EOL("Size of Address");
+    Asm->EmitInt8(TAI->getAddressSize()); Asm->EOL("Size of Address");
 
-    EmitInt8(0); EOL("Size of Segment Descriptor");
+    Asm->EmitInt8(0); Asm->EOL("Size of Segment Descriptor");
 
-    EmitInt16(0);  EOL("Pad (1)");
-    EmitInt16(0);  EOL("Pad (2)");
+    Asm->EmitInt16(0);  Asm->EOL("Pad (1)");
+    Asm->EmitInt16(0);  Asm->EOL("Pad (2)");
 
     // Range 1
-    EmitReference("text_begin", 0); EOL("Address");
-    EmitDifference("text_end", 0, "text_begin", 0, true); EOL("Length");
+    EmitReference("text_begin", 0); Asm->EOL("Address");
+    EmitDifference("text_end", 0, "text_begin", 0, true); Asm->EOL("Length");
 
-    EmitInt32(0); EOL("EOM (1)");
-    EmitInt32(0); EOL("EOM (2)");
+    Asm->EmitInt32(0); Asm->EOL("EOM (1)");
+    Asm->EmitInt32(0); Asm->EOL("EOM (2)");
     
     O << "\n";
   #endif
@@ -2724,14 +2550,14 @@ public:
     this->M = M;
     
     if (!ShouldEmitDwarf()) return;
-    EOL("Dwarf Begin Module");
+    Asm->EOL("Dwarf Begin Module");
   }
 
   /// EndModule - Emit all Dwarf sections that should come after the content.
   ///
   void EndModule() {
     if (!ShouldEmitDwarf()) return;
-    EOL("Dwarf End Module");
+    Asm->EOL("Dwarf End Module");
     
     // Standard sections final addresses.
     Asm->SwitchToTextSection(TAI->getTextSection());
@@ -2782,7 +2608,7 @@ public:
     this->MF = MF;
     
     if (!ShouldEmitDwarf()) return;
-    EOL("Dwarf Begin Function");
+    Asm->EOL("Dwarf Begin Function");
 
     // Begin accumulating function debug information.
     DebugInfo->BeginFunction(MF);
@@ -2795,7 +2621,7 @@ public:
   ///
   void EndFunction() {
     if (!ShouldEmitDwarf()) return;
-    EOL("Dwarf End Function");
+    Asm->EOL("Dwarf End Function");
     
     // Define end label for subprogram.
     EmitLabel("func_end", SubprogramCount);
@@ -2835,29 +2661,29 @@ public:
 ///
 void DIEAbbrev::Emit(const Dwarf &DW) const {
   // Emit its Dwarf tag type.
-  DW.EmitULEB128Bytes(Tag);
-  DW.EOL(TagString(Tag));
+  DW.getAsm()->EmitULEB128Bytes(Tag);
+  DW.getAsm()->EOL(TagString(Tag));
   
   // Emit whether it has children DIEs.
-  DW.EmitULEB128Bytes(ChildrenFlag);
-  DW.EOL(ChildrenString(ChildrenFlag));
+  DW.getAsm()->EmitULEB128Bytes(ChildrenFlag);
+  DW.getAsm()->EOL(ChildrenString(ChildrenFlag));
   
   // For each attribute description.
   for (unsigned i = 0, N = Data.size(); i < N; ++i) {
     const DIEAbbrevData &AttrData = Data[i];
     
     // Emit attribute type.
-    DW.EmitULEB128Bytes(AttrData.getAttribute());
-    DW.EOL(AttributeString(AttrData.getAttribute()));
+    DW.getAsm()->EmitULEB128Bytes(AttrData.getAttribute());
+    DW.getAsm()->EOL(AttributeString(AttrData.getAttribute()));
     
     // Emit form type.
-    DW.EmitULEB128Bytes(AttrData.getForm());
-    DW.EOL(FormEncodingString(AttrData.getForm()));
+    DW.getAsm()->EmitULEB128Bytes(AttrData.getForm());
+    DW.getAsm()->EOL(FormEncodingString(AttrData.getForm()));
   }
 
   // Mark end of abbreviation.
-  DW.EmitULEB128Bytes(0); DW.EOL("EOM(1)");
-  DW.EmitULEB128Bytes(0); DW.EOL("EOM(2)");
+  DW.getAsm()->EmitULEB128Bytes(0); DW.getAsm()->EOL("EOM(1)");
+  DW.getAsm()->EmitULEB128Bytes(0); DW.getAsm()->EOL("EOM(2)");
 }
 
 #ifndef NDEBUG
@@ -2897,17 +2723,37 @@ void DIEInteger::EmitValue(const Dwarf &DW, unsigned Form) const {
   switch (Form) {
   case DW_FORM_flag:  // Fall thru
   case DW_FORM_ref1:  // Fall thru
-  case DW_FORM_data1: DW.EmitInt8(Integer);         break;
+  case DW_FORM_data1: DW.getAsm()->EmitInt8(Integer);         break;
   case DW_FORM_ref2:  // Fall thru
-  case DW_FORM_data2: DW.EmitInt16(Integer);        break;
+  case DW_FORM_data2: DW.getAsm()->EmitInt16(Integer);        break;
   case DW_FORM_ref4:  // Fall thru
-  case DW_FORM_data4: DW.EmitInt32(Integer);        break;
+  case DW_FORM_data4: DW.getAsm()->EmitInt32(Integer);        break;
   case DW_FORM_ref8:  // Fall thru
-  case DW_FORM_data8: DW.EmitInt64(Integer);        break;
-  case DW_FORM_udata: DW.EmitULEB128Bytes(Integer); break;
-  case DW_FORM_sdata: DW.EmitSLEB128Bytes(Integer); break;
+  case DW_FORM_data8: DW.getAsm()->EmitInt64(Integer);        break;
+  case DW_FORM_udata: DW.getAsm()->EmitULEB128Bytes(Integer); break;
+  case DW_FORM_sdata: DW.getAsm()->EmitSLEB128Bytes(Integer); break;
+  default: assert(0 && "DIE Value form not supported yet");   break;
+  }
+}
+
+/// SizeOf - Determine size of integer value in bytes.
+///
+unsigned DIEInteger::SizeOf(const Dwarf &DW, unsigned Form) const {
+  switch (Form) {
+  case DW_FORM_flag:  // Fall thru
+  case DW_FORM_ref1:  // Fall thru
+  case DW_FORM_data1: return sizeof(int8_t);
+  case DW_FORM_ref2:  // Fall thru
+  case DW_FORM_data2: return sizeof(int16_t);
+  case DW_FORM_ref4:  // Fall thru
+  case DW_FORM_data4: return sizeof(int32_t);
+  case DW_FORM_ref8:  // Fall thru
+  case DW_FORM_data8: return sizeof(int64_t);
+  case DW_FORM_udata: return DW.getAsm()->SizeULEB128(Integer);
+  case DW_FORM_sdata: return DW.getAsm()->SizeSLEB128(Integer);
   default: assert(0 && "DIE Value form not supported yet"); break;
   }
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2915,7 +2761,7 @@ void DIEInteger::EmitValue(const Dwarf &DW, unsigned Form) const {
 /// EmitValue - Emit string value.
 ///
 void DIEString::EmitValue(const Dwarf &DW, unsigned Form) const {
-  DW.EmitString(String);
+  DW.getAsm()->EmitString(String);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2967,7 +2813,7 @@ unsigned DIEDelta::SizeOf(const Dwarf &DW, unsigned Form) const {
 /// EmitValue - Emit debug information entry offset.
 ///
 void DIEntry::EmitValue(const Dwarf &DW, unsigned Form) const {
-  DW.EmitInt32(Entry->getOffset());
+  DW.getAsm()->EmitInt32(Entry->getOffset());
 }
     
 //===----------------------------------------------------------------------===//
@@ -2989,17 +2835,17 @@ unsigned DIEBlock::ComputeSize(Dwarf &DW) {
 ///
 void DIEBlock::EmitValue(const Dwarf &DW, unsigned Form) const {
   switch (Form) {
-  case DW_FORM_block1: DW.EmitInt8(Size);         break;
-  case DW_FORM_block2: DW.EmitInt16(Size);        break;
-  case DW_FORM_block4: DW.EmitInt32(Size);        break;
-  case DW_FORM_block:  DW.EmitULEB128Bytes(Size); break;
-  default: assert(0 && "Improper form for block"); break;
+  case DW_FORM_block1: DW.getAsm()->EmitInt8(Size);         break;
+  case DW_FORM_block2: DW.getAsm()->EmitInt16(Size);        break;
+  case DW_FORM_block4: DW.getAsm()->EmitInt32(Size);        break;
+  case DW_FORM_block:  DW.getAsm()->EmitULEB128Bytes(Size); break;
+  default: assert(0 && "Improper form for block");          break;
   }
   
   const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
 
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-    DW.EOL("");
+    DW.getAsm()->EOL("");
     Values[i]->EmitValue(DW, AbbrevData[i].getForm());
   }
 }
@@ -3011,7 +2857,7 @@ unsigned DIEBlock::SizeOf(const Dwarf &DW, unsigned Form) const {
   case DW_FORM_block1: return Size + sizeof(int8_t);
   case DW_FORM_block2: return Size + sizeof(int16_t);
   case DW_FORM_block4: return Size + sizeof(int32_t);
-  case DW_FORM_block: return Size + SizeULEB128(Size);
+  case DW_FORM_block: return Size + DW.getAsm()->SizeULEB128(Size);
   default: assert(0 && "Improper form for block"); break;
   }
   return 0;

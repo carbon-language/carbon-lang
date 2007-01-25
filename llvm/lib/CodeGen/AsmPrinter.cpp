@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
@@ -27,6 +28,9 @@
 #include "llvm/Target/TargetMachine.h"
 #include <cerrno>
 using namespace llvm;
+
+static cl::opt<bool>
+AsmVerbose("asm-verbose", cl::Hidden, cl::desc("Add comments to directives."));
 
 AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T)
@@ -366,6 +370,196 @@ const std::string AsmPrinter::getGlobalLinkName(const GlobalVariable *GV) const{
   return LinkName;
 }
 
+//===----------------------------------------------------------------------===//
+/// LEB 128 number encoding.
+
+/// PrintULEB128 - Print a series of hexidecimal values (separated by commas)
+/// representing an unsigned leb128 value.
+void AsmPrinter::PrintULEB128(unsigned Value) const {
+  do {
+    unsigned Byte = Value & 0x7f;
+    Value >>= 7;
+    if (Value) Byte |= 0x80;
+    O << "0x" << std::hex << Byte << std::dec;
+    if (Value) O << ", ";
+  } while (Value);
+}
+
+/// SizeULEB128 - Compute the number of bytes required for an unsigned leb128
+/// value.
+unsigned AsmPrinter::SizeULEB128(unsigned Value) {
+  unsigned Size = 0;
+  do {
+    Value >>= 7;
+    Size += sizeof(int8_t);
+  } while (Value);
+  return Size;
+}
+
+/// PrintSLEB128 - Print a series of hexidecimal values (separated by commas)
+/// representing a signed leb128 value.
+void AsmPrinter::PrintSLEB128(int Value) const {
+  int Sign = Value >> (8 * sizeof(Value) - 1);
+  bool IsMore;
+  
+  do {
+    unsigned Byte = Value & 0x7f;
+    Value >>= 7;
+    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
+    if (IsMore) Byte |= 0x80;
+    O << "0x" << std::hex << Byte << std::dec;
+    if (IsMore) O << ", ";
+  } while (IsMore);
+}
+
+/// SizeSLEB128 - Compute the number of bytes required for a signed leb128
+/// value.
+unsigned AsmPrinter::SizeSLEB128(int Value) {
+  unsigned Size = 0;
+  int Sign = Value >> (8 * sizeof(Value) - 1);
+  bool IsMore;
+  
+  do {
+    unsigned Byte = Value & 0x7f;
+    Value >>= 7;
+    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
+    Size += sizeof(int8_t);
+  } while (IsMore);
+  return Size;
+}
+
+//===--------------------------------------------------------------------===//
+// Emission and print routines
+//
+
+/// PrintHex - Print a value as a hexidecimal value.
+///
+void AsmPrinter::PrintHex(int Value) const { 
+  O << "0x" << std::hex << Value << std::dec;
+}
+
+/// EOL - Print a newline character to asm stream.  If a comment is present
+/// then it will be printed first.  Comments should not contain '\n'.
+void AsmPrinter::EOL(const std::string &Comment) const {
+  if (AsmVerbose && !Comment.empty()) {
+    O << "\t"
+      << TAI->getCommentString()
+      << " "
+      << Comment;
+  }
+  O << "\n";
+}
+
+/// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
+/// unsigned leb128 value.
+void AsmPrinter::EmitULEB128Bytes(unsigned Value) const {
+  if (TAI->hasLEB128()) {
+    O << "\t.uleb128\t"
+      << Value;
+  } else {
+    O << TAI->getData8bitsDirective();
+    PrintULEB128(Value);
+  }
+}
+
+/// EmitSLEB128Bytes - print an assembler byte data directive to compose a
+/// signed leb128 value.
+void AsmPrinter::EmitSLEB128Bytes(int Value) const {
+  if (TAI->hasLEB128()) {
+    O << "\t.sleb128\t"
+      << Value;
+  } else {
+    O << TAI->getData8bitsDirective();
+    PrintSLEB128(Value);
+  }
+}
+
+/// EmitInt8 - Emit a byte directive and value.
+///
+void AsmPrinter::EmitInt8(int Value) const {
+  O << TAI->getData8bitsDirective();
+  PrintHex(Value & 0xFF);
+}
+
+/// EmitInt16 - Emit a short directive and value.
+///
+void AsmPrinter::EmitInt16(int Value) const {
+  O << TAI->getData16bitsDirective();
+  PrintHex(Value & 0xFFFF);
+}
+
+/// EmitInt32 - Emit a long directive and value.
+///
+void AsmPrinter::EmitInt32(int Value) const {
+  O << TAI->getData32bitsDirective();
+  PrintHex(Value);
+}
+
+/// EmitInt64 - Emit a long long directive and value.
+///
+void AsmPrinter::EmitInt64(uint64_t Value) const {
+  if (TAI->getData64bitsDirective()) {
+    O << TAI->getData64bitsDirective();
+    PrintHex(Value);
+  } else {
+    if (TM.getTargetData()->isBigEndian()) {
+      EmitInt32(unsigned(Value >> 32)); O << "\n";
+      EmitInt32(unsigned(Value));
+    } else {
+      EmitInt32(unsigned(Value)); O << "\n";
+      EmitInt32(unsigned(Value >> 32));
+    }
+  }
+}
+
+/// toOctal - Convert the low order bits of X into an octal digit.
+///
+static inline char toOctal(int X) {
+  return (X&7)+'0';
+}
+
+/// printStringChar - Print a char, escaped if necessary.
+///
+static void printStringChar(std::ostream &O, unsigned char C) {
+  if (C == '"') {
+    O << "\\\"";
+  } else if (C == '\\') {
+    O << "\\\\";
+  } else if (isprint(C)) {
+    O << C;
+  } else {
+    switch(C) {
+    case '\b': O << "\\b"; break;
+    case '\f': O << "\\f"; break;
+    case '\n': O << "\\n"; break;
+    case '\r': O << "\\r"; break;
+    case '\t': O << "\\t"; break;
+    default:
+      O << '\\';
+      O << toOctal(C >> 6);
+      O << toOctal(C >> 3);
+      O << toOctal(C >> 0);
+      break;
+    }
+  }
+}
+
+/// EmitString - Emit a string with quotes and a null terminator.
+/// Special characters are emitted properly.
+/// \literal (Eg. '\t') \endliteral
+void AsmPrinter::EmitString(const std::string &String) const {
+  O << TAI->getAsciiDirective()
+    << "\"";
+  for (unsigned i = 0, N = String.size(); i < N; ++i) {
+    unsigned char C = String[i];
+    printStringChar(O, C);
+  }
+  O << "\\0\"";
+}
+
+
+//===----------------------------------------------------------------------===//
+
 // EmitAlignment - Emit an alignment directive to the specified power of two.
 void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
   if (GV && GV->getAlignment())
@@ -486,12 +680,6 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   }
 }
 
-/// toOctal - Convert the low order bits of X into an octal digit.
-///
-static inline char toOctal(int X) {
-  return (X&7)+'0';
-}
-
 /// printAsCString - Print the specified array as a C compatible string, only if
 /// the predicate isString is true.
 ///
@@ -503,28 +691,7 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA,
   for (unsigned i = 0; i != LastElt; ++i) {
     unsigned char C =
         (unsigned char)cast<ConstantInt>(CVA->getOperand(i))->getZExtValue();
-
-    if (C == '"') {
-      O << "\\\"";
-    } else if (C == '\\') {
-      O << "\\\\";
-    } else if (isprint(C)) {
-      O << C;
-    } else {
-      switch(C) {
-      case '\b': O << "\\b"; break;
-      case '\f': O << "\\f"; break;
-      case '\n': O << "\\n"; break;
-      case '\r': O << "\\r"; break;
-      case '\t': O << "\\t"; break;
-      default:
-        O << '\\';
-        O << toOctal(C >> 6);
-        O << toOctal(C >> 3);
-        O << toOctal(C >> 0);
-        break;
-      }
-    }
+    printStringChar(O, C);
   }
   O << "\"";
 }
