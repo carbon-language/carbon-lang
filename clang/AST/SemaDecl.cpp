@@ -111,14 +111,18 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   }
   
   Decl *New;
-  if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
+  if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
     New = ParseTypedefDecl(S, D);
-  else if (D.isFunctionDeclarator())
-    New = new FunctionDecl(D.getIdentifierLoc(), II, GetTypeForDeclarator(D,S));
-  else
-    New = new VarDecl(D.getIdentifierLoc(), II, GetTypeForDeclarator(D, S));
-  
-  if (!New) return 0;
+    if (!New) return 0;
+  } else if (D.isFunctionDeclarator()) {
+    TypeRef R = GetTypeForDeclarator(D, S);
+    if (R.isNull()) return 0;
+    New = new FunctionDecl(D.getIdentifierLoc(), II, R);
+  } else {
+    TypeRef R = GetTypeForDeclarator(D, S);
+    if (R.isNull()) return 0;
+    New = new VarDecl(D.getIdentifierLoc(), II, R);
+  }
   
   
   // If this has an identifier, add it to the scope stack.
@@ -368,7 +372,7 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   
   if (BitWidth) {
     // TODO: Validate.
-    assert(0 && "bitfields unimp");
+    printf("WARNING: BITFIELDS IGNORED!\n");
     
     // 6.7.2.1p3
     // 6.7.2.1p4
@@ -380,7 +384,10 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
     
   }
   
-  return new FieldDecl(Loc, II, GetTypeForDeclarator(D, S));
+  TypeRef T = GetTypeForDeclarator(D, S);
+  if (T.isNull()) return 0;
+
+  return new FieldDecl(Loc, II, T);
 }
 
 void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
