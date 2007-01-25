@@ -36,10 +36,6 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-static cl::opt<bool>
-DwarfVerbose("dwarf-verbose", cl::Hidden,
-                              cl::desc("Add comments to Dwarf directives."));
-
 namespace llvm {
   
 //===----------------------------------------------------------------------===//
@@ -1815,7 +1811,7 @@ private:
     unsigned AbbrevNumber = Die->getAbbrevNumber();
     const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
     
-    O << "\n";
+    Asm->EOL("");
 
     // Emit the code (index) for the abbreviation.
     Asm->EmitULEB128Bytes(AbbrevNumber);
@@ -2045,7 +2041,7 @@ private:
     Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
     EmitLabel("info_end", Unit->getID());
     
-    O << "\n";
+    Asm->EOL("");
   }
 
   /// EmitAbbreviations - Emit the abbreviation section.
@@ -2070,12 +2066,12 @@ private:
         // Emit the abbreviations data.
         Abbrev->Emit(*this);
     
-        O << "\n";
+        Asm->EOL("");
       }
       
       EmitLabel("abbrev_end", 0);
     
-      O << "\n";
+      Asm->EOL("");
     }
   }
 
@@ -2156,12 +2152,7 @@ private:
       // Isolate current sections line info.
       const std::vector<SourceLineInfo> &LineInfos = SectionSourceLines[j];
       
-      if (DwarfVerbose) {
-        O << "\t"
-          << TAI->getCommentString() << " "
-          << "Section "
-          << SectionMap[j + 1].c_str() << "\n";
-      }
+      Asm->EOL(std::string("Section ") + SectionMap[j + 1]);
 
       // Dwarf assumes we start with first line of first source file.
       unsigned Source = 1;
@@ -2173,16 +2164,13 @@ private:
         unsigned LabelID = DebugInfo->MappedLabel(LineInfo.getLabelID());
         if (!LabelID) continue;
         
-        if (DwarfVerbose) {
-          unsigned SourceID = LineInfo.getSourceID();
-          const SourceFileInfo &SourceFile = SourceFiles[SourceID];
-          unsigned DirectoryID = SourceFile.getDirectoryID();
-          O << "\t"
-            << TAI->getCommentString() << " "
-            << Directories[DirectoryID]
-            << SourceFile.getName() << ":"
-            << LineInfo.getLine() << "\n"; 
-        }
+        unsigned SourceID = LineInfo.getSourceID();
+        const SourceFileInfo &SourceFile = SourceFiles[SourceID];
+        unsigned DirectoryID = SourceFile.getDirectoryID();
+        Asm->EOL(Directories[DirectoryID]
+          + SourceFile.getName()
+          + ":"
+          + utostr_32(LineInfo.getLine()));
 
         // Define the line address.
         Asm->EmitInt8(0); Asm->EOL("Extended Op");
@@ -2230,13 +2218,13 @@ private:
 
       // Mark end of matrix.
       Asm->EmitInt8(0); Asm->EOL("DW_LNE_end_sequence");
-      Asm->EmitULEB128Bytes(1);  O << "\n";
-      Asm->EmitInt8(1); O << "\n";
+      Asm->EmitULEB128Bytes(1); Asm->EOL("");
+      Asm->EmitInt8(1); Asm->EOL("");
     }
     
     EmitLabel("line_end", 0);
     
-    O << "\n";
+    Asm->EOL("");
   }
     
   /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
@@ -2279,7 +2267,7 @@ private:
     Asm->EmitAlignment(2);
     EmitLabel("frame_common_end", 0);
     
-    O << "\n";
+    Asm->EOL("");
   }
 
   /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
@@ -2313,7 +2301,7 @@ private:
     Asm->EmitAlignment(2);
     EmitLabel("frame_end", SubprogramCount);
 
-    O << "\n";
+    Asm->EOL("");
   }
 
   /// EmitDebugPubNames - Emit visible names into a debug pubnames section.
@@ -2353,7 +2341,7 @@ private:
     Asm->EmitInt32(0); Asm->EOL("End Mark");
     EmitLabel("pubnames_end", Unit->getID());
   
-    O << "\n";
+    Asm->EOL("");
   }
 
   /// EmitDebugStr - Emit visible names into a debug str section.
@@ -2371,10 +2359,10 @@ private:
         EmitLabel("string", StringID);
         // Emit the string itself.
         const std::string &String = StringPool[StringID];
-        Asm->EmitString(String); O << "\n";
+        Asm->EmitString(String); Asm->EOL("");
       }
     
-      O << "\n";
+      Asm->EOL("");
     }
   }
 
@@ -2384,7 +2372,7 @@ private:
     // Start the dwarf loc section.
     Asm->SwitchToDataSection(TAI->getDwarfLocSection());
     
-    O << "\n";
+    Asm->EOL("");
   }
 
   /// EmitDebugARanges - Emit visible names into a debug aranges section.
@@ -2419,7 +2407,7 @@ private:
     Asm->EmitInt32(0); Asm->EOL("EOM (1)");
     Asm->EmitInt32(0); Asm->EOL("EOM (2)");
     
-    O << "\n";
+    Asm->EOL("");
   #endif
   }
 
@@ -2429,7 +2417,7 @@ private:
     // Start the dwarf ranges section.
     Asm->SwitchToDataSection(TAI->getDwarfRangesSection());
     
-    O << "\n";
+    Asm->EOL("");
   }
 
   /// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
@@ -2438,7 +2426,7 @@ private:
     // Start the dwarf macinfo section.
     Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
     
-    O << "\n";
+    Asm->EOL("");
   }
 
   /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
