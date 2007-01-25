@@ -389,11 +389,12 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Round up the size to a multiple of the alignment, but only if there are
   // calls or alloca's in the function.  This ensures that any calls to
   // subroutines have their stack frames suitable aligned.
-  if (FFI->hasCalls() || FFI->hasVarSizedObjects()) {
+  const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
+  if (!RegInfo->targetHandlesStackFrameRounding() &&
+      (FFI->hasCalls() || FFI->hasVarSizedObjects())) {
     // When we have no frame pointer, we reserve argument space for call sites
     // in the function immediately on entry to the current function. This
     // eliminates the need for add/sub sp brackets around call sites.
-    const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
     if (!RegInfo->hasFP(Fn))
       Offset += FFI->getMaxCallFrameSize();
 

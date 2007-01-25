@@ -367,6 +367,12 @@ public:
     return 0;
   }
 
+  /// targetHandlesStackFrameRounding - Returns true if the target is responsible
+  /// for rounding up the stack frame (probably at emitPrologue time).
+  virtual bool targetHandlesStackFrameRounding() const {
+    return false;
+  }
+
   /// hasFP - Return true if the specified function should have a dedicated frame
   /// pointer register. For most targets this is true only if the function has
   /// variable sized allocas or if frame pointer elimination is disabled.
