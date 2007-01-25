@@ -400,6 +400,8 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
   SmallVector<Decl*, 32> RecFields;
+  SmallSet<const IdentifierInfo*, 32> FieldIDs;
+  
   for (unsigned i = 0; i != NumFields; ++i) {
     FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
     if (!FD) continue;  // Already issued a diagnostic.
@@ -464,8 +466,25 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     }
     
     // Keep track of the number of named members.
-    if (FD->getIdentifier())
+    if (IdentifierInfo *II = FD->getIdentifier()) {
+      // Detect duplicate member names.
+      if (!FieldIDs.insert(II).second) {
+        Diag(FD->getLocation(), diag::err_duplicate_member, II->getName());
+        // Find the previous decl.
+        SourceLocation PrevLoc;
+        for (unsigned i = 0, e = RecFields.size(); ; ++i) {
+          assert(i != e && "Didn't find previous def!");
+          if (RecFields[i]->getIdentifier() == II) {
+            PrevLoc = RecFields[i]->getLocation();
+            break;
+          }
+        }
+        Diag(PrevLoc, diag::err_previous_definition);
+        delete FD;
+        continue;
+      }
       ++NumNamedMembers;
+    }
     
     // Remember good fields.
     RecFields.push_back(FD);
