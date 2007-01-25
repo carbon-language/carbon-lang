@@ -385,7 +385,7 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
 
 void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
                            DeclTy **Fields, unsigned NumFields) {
-  TagDecl *Record = static_cast<TagDecl*>(RecDecl);
+  RecordDecl *Record = cast<RecordDecl>(static_cast<TagDecl*>(RecDecl));
   if (Record->isDefinition()) {
     // Diagnose code like:
     //     struct S { struct S {} X; };
@@ -399,6 +399,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
 
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
+  SmallVector<Decl*, 32> RecFields;
   for (unsigned i = 0; i != NumFields; ++i) {
     FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
     if (!FD) continue;  // Already issued a diagnostic.
@@ -431,7 +432,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
       }
       
       // Okay, we have a legal flexible array member at the end of the struct.
-      cast<RecordDecl>(Record)->setHasFlexibleArrayMember(true);
+      Record->setHasFlexibleArrayMember(true);
     }
     
     
@@ -441,7 +442,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
       if (FDTTy->getDecl()->hasFlexibleArrayMember()) {
         // If this is a member of a union, then entire union becomes "flexible".
         if (Record->getKind() == Decl::Union) {
-          cast<RecordDecl>(Record)->setHasFlexibleArrayMember(true);
+          Record->setHasFlexibleArrayMember(true);
         } else {
           // If this is a struct/class and this is not the last element, reject
           // it.  Note that GCC supports variable sized arrays in the middle of
@@ -457,7 +458,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
           // as an extension.
           Diag(FD->getLocation(), diag::ext_flexible_array_in_struct,
                FD->getName());
-          cast<RecordDecl>(Record)->setHasFlexibleArrayMember(true);
+          Record->setHasFlexibleArrayMember(true);
         }
       }
     }
@@ -465,13 +466,14 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     // Keep track of the number of named members.
     if (FD->getIdentifier())
       ++NumNamedMembers;
+    
+    // Remember good fields.
+    RecFields.push_back(FD);
   }
  
   
   // Okay, we successfully defined 'Record'.
-  Record->setDefinition(true);
-  
-  
+  Record->defineBody(&RecFields[0], RecFields.size());
 }
 
 

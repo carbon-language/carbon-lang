@@ -205,7 +205,7 @@ public:
 class TagDecl : public Decl {
   /// IsDefinition - True if this is a definition ("struct foo {};"), false if
   /// it is a declaration ("struct foo;").
-  bool IsDefinition;
+  bool IsDefinition : 1;
 protected:
   TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) : Decl(DK, L, Id) {
     IsDefinition = false;
@@ -216,7 +216,6 @@ public:
   bool isDefinition() const {
     return IsDefinition;
   }
-  void setDefinition(bool V) { IsDefinition = V; }
   
   const char *getKindName() const {
     switch (getKind()) {
@@ -234,6 +233,8 @@ public:
            D->getKind() == Class || D->getKind() == Enum;
   }
   static bool classof(const ObjectDecl *D) { return true; }
+protected:
+  void setDefinition(bool V) { IsDefinition = V; }
 };
 
 /// RecordDecl - Represents a struct/union/class.
@@ -241,15 +242,26 @@ class RecordDecl : public TagDecl {
   /// HasFlexibleArrayMember - This is true if this struct ends with a flexible
   /// array member (e.g. int X[]) or if this union contains a struct that does.
   /// If so, this cannot be contained in arrays or other structs as a member.
-  bool HasFlexibleArrayMember;
+  bool HasFlexibleArrayMember : 1;
+
+  /// Fields/NumFields - This is a new[]'d array of pointers to FieldDecls.
+  Decl **Fields;   // Null if not defined.
+  int NumFields;   // -1 if not defined.
 public:
   RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) :TagDecl(DK, L, Id){
     HasFlexibleArrayMember = false;
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
+    Fields = 0;
+    NumFields = -1;
   }
   
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }
+
+  /// defineBody - When created, RecordDecl's correspond to a forward declared
+  /// record.  This method is used to mark the decl as being defined, with the
+  /// specified contents.
+  void defineBody(Decl **fields, unsigned numFields);
   
   static bool classof(const Decl *D) {
     return D->getKind() == Struct || D->getKind() == Union ||
