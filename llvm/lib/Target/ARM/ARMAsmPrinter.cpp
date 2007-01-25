@@ -725,7 +725,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
       if (const char *Directive = TAI->getHiddenDirective())
         O << Directive << name << "\n";
     if (Subtarget->isTargetELF())
-      O << "\t.type " << name << ",@object\n";
+      O << "\t.type " << name << ",%object\n";
     
     if (C->isNullValue()) {
       if (I->hasExternalLinkage()) {
