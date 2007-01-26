@@ -1169,13 +1169,15 @@ const Type* upgradeGEPIndices(const Type* PTy,
       // all indices for SequentialType elements. We must retain the same 
       // semantic (zext) for unsigned types.
       if (const IntegerType *Ity = dyn_cast<IntegerType>(Index->getType()))
-        if (Ity->getBitWidth() < 64 && (*Indices)[i].S == Unsigned)
+        if (Ity->getBitWidth() < 64 && (*Indices)[i].S == Unsigned) {
           if (CIndices)
             Index = ConstantExpr::getCast(Instruction::ZExt, 
               cast<Constant>(Index), Type::Int64Ty);
           else
             Index = CastInst::create(Instruction::ZExt, Index, Type::Int64Ty,
               makeNameUnique("gep_upgrade"), CurBB);
+          VIndices[i] = Index;
+        }
     }
     // Add to the CIndices list, if requested.
     if (CIndices)
