@@ -1004,10 +1004,10 @@ Constant *ConstantArray::get(const std::string &Str, bool AddNull) {
   return ConstantArray::get(ATy, ElementVals);
 }
 
-/// isString - This method returns true if the array is an array of sbyte or
-/// ubyte, and if the elements of the array are all ConstantInt's.
+/// isString - This method returns true if the array is an array of i8, and 
+/// if the elements of the array are all ConstantInt's.
 bool ConstantArray::isString() const {
-  // Check the element type for sbyte or ubyte...
+  // Check the element type for i8...
   if (getType()->getElementType() != Type::Int8Ty)
     return false;
   // Check the elements to make sure they are all integers, not constant
@@ -1022,7 +1022,7 @@ bool ConstantArray::isString() const {
 /// isString) and it ends in a null byte \0 and does not contains any other
 /// null bytes except its terminator.
 bool ConstantArray::isCString() const {
-  // Check the element type for sbyte or ubyte...
+  // Check the element type for i8...
   if (getType()->getElementType() != Type::Int8Ty)
     return false;
   Constant *Zero = Constant::getNullValue(getOperand(0)->getType());
@@ -1040,7 +1040,7 @@ bool ConstantArray::isCString() const {
 }
 
 
-// getAsString - If the sub-element type of this array is either sbyte or ubyte,
+// getAsString - If the sub-element type of this array is i8
 // then this method converts the array to an std::string and returns it.
 // Otherwise, it asserts out.
 //
@@ -1536,7 +1536,7 @@ Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty) {
 
 Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty) {
   assert(C->getType()->isInteger() && Ty->isFloatingPoint() &&
-         "This is an illegal uint to floating point cast!");
+         "This is an illegal i32 to floating point cast!");
   return getFoldedCast(Instruction::UIToFP, C, Ty);
 }
 
@@ -1548,13 +1548,13 @@ Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty) {
 
 Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty) {
   assert(C->getType()->isFloatingPoint() && Ty->isInteger() &&
-         "This is an illegal floating point to uint cast!");
+         "This is an illegal floating point to i32 cast!");
   return getFoldedCast(Instruction::FPToUI, C, Ty);
 }
 
 Constant *ConstantExpr::getFPToSI(Constant *C, const Type *Ty) {
   assert(C->getType()->isFloatingPoint() && Ty->isInteger() &&
-         "This is an illegal floating point to sint cast!");
+         "This is an illegal floating point to i32 cast!");
   return getFoldedCast(Instruction::FPToSI, C, Ty);
 }
 
@@ -1688,7 +1688,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    assert(C2->getType() == Type::Int8Ty && "Shift should be by ubyte!");
+    assert(C2->getType() == Type::Int8Ty && "Shift should be by i8!");
     assert(C1->getType()->isInteger() &&
            "Tried to create a shift operation on a non-integer type!");
     break;
@@ -1708,7 +1708,7 @@ Constant *ConstantExpr::getCompare(unsigned short pred,
 
 Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
                                     Constant *V1, Constant *V2) {
-  assert(C->getType() == Type::Int1Ty && "Select condition must be bool!");
+  assert(C->getType() == Type::Int1Ty && "Select condition must be i1!");
   assert(V1->getType() == V2->getType() && "Select value types must match!");
   assert(V1->getType()->isFirstClassType() && "Cannot select aggregate type!");
 
@@ -1833,7 +1833,7 @@ Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   assert(isa<PackedType>(Val->getType()) &&
          "Tried to create extractelement operation on non-packed type!");
   assert(Idx->getType() == Type::Int32Ty &&
-         "Extractelement index must be uint type!");
+         "Extractelement index must be i32 type!");
   return getExtractElementTy(cast<PackedType>(Val->getType())->getElementType(),
                              Val, Idx);
 }
@@ -1857,7 +1857,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
   assert(Elt->getType() == cast<PackedType>(Val->getType())->getElementType()
          && "Insertelement types must match!");
   assert(Idx->getType() == Type::Int32Ty &&
-         "Insertelement index must be uint type!");
+         "Insertelement index must be i32 type!");
   return getInsertElementTy(cast<PackedType>(Val->getType())->getElementType(),
                             Val, Elt, Idx);
 }
