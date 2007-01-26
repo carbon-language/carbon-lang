@@ -378,7 +378,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     Bytes -= ThisVal;    
     // Build the new tADD / tSUB.
     if (isTwoAddr)
-      BuildMI(MBB, MBBI, TII.get(Opc), DestReg).addImm(ThisVal);
+      BuildMI(MBB, MBBI, TII.get(Opc), DestReg).addReg(DestReg).addImm(ThisVal);
     else {
       BuildMI(MBB, MBBI, TII.get(Opc), DestReg).addReg(BaseReg).addImm(ThisVal);
       BaseReg = DestReg;

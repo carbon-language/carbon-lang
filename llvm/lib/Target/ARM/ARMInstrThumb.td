@@ -285,8 +285,8 @@ def tADDrPCi : TI<(ops GPR:$dst, i32imm:$rhs),
                   "add $dst, pc, $rhs * 4", []>;
 def tADDrSPi : TI<(ops GPR:$dst, GPR:$sp, i32imm:$rhs),
                   "add $dst, $sp, $rhs * 4", []>;
-def tADDspi : TI<(ops GPR:$sp, i32imm:$rhs),
-                 "add $sp, $rhs * 4", []>;
+def tADDspi : TIt<(ops GPR:$dst, GPR:$lhs, i32imm:$rhs),
+                  "add $dst, $rhs * 4", []>;
 
 
 def tAND : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
@@ -413,8 +413,8 @@ def tSUBrr : TI<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
                 "sub $dst, $lhs, $rhs",
                 [(set GPR:$dst, (sub GPR:$lhs, GPR:$rhs))]>;
 
-def tSUBspi : TI<(ops GPR:$sp, i32imm:$rhs),
-                 "sub $sp, $rhs * 4", []>;
+def tSUBspi : TIt<(ops GPR:$dst, GPR:$lhs, i32imm:$rhs),
+                  "sub $dst, $rhs * 4", []>;
 
 def tSXTB  : TI<(ops GPR:$dst, GPR:$src),
                 "sxtb $dst, $src",
