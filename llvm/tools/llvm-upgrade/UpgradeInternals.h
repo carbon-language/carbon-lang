@@ -38,30 +38,6 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
                         bool debug, bool addAttrs);
 
 
-class SignedType : public IntegerType {
-  const IntegerType *base_type;
-  static SignedType *SByteTy;
-  static SignedType *SShortTy;
-  static SignedType *SIntTy;
-  static SignedType *SLongTy;
-  SignedType(const IntegerType* ITy);
-public:
-  static const SignedType *get(const IntegerType* ITy);
-
-  bool isSigned() const { return true; }
-  const IntegerType* getBaseType() const {
-    return base_type;
-  }
-  const IntegerType*  resolve() const {
-    ForwardType = base_type;
-    return base_type;
-  }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const SignedType *T) { return true; }
-  static inline bool classof(const Type *T); 
-};
-
 extern std::istream* LexInput;
 
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
@@ -206,14 +182,9 @@ struct ValID {
   }
 };
 
-
-// This structure is used to keep track of obsolete opcodes. The lexer will
-// retain the ability to parse obsolete opcode mnemonics. In this case it will
-// set "obsolete" to true and the opcode will be the replacement opcode. For
-// example if "rem" is encountered then opcode will be set to "urem" and the
-// "obsolete" flag will be true. If the opcode is not obsolete then "obsolete"
-// will be false. 
-
+/// The following enums are used to keep track of prior opcodes. The lexer will
+/// retain the ability to parse obsolete opcode mnemonics and generates semantic
+/// values containing one of these enumerators.
 enum TermOps {
   RetOp, BrOp, SwitchOp, InvokeOp, UnwindOp, UnreachableOp
 };
@@ -242,8 +213,14 @@ enum CastOps {
   UIToFPOp, SIToFPOp, PtrToIntOp, IntToPtrOp, BitCastOp
 };
 
+/// An enumeration for defining the Signedness of a type or value. Signless
+/// means the signedness is not relevant to the type or value.
 enum Signedness { Signless, Unsigned, Signed };
 
+/// These structures are used as the semantic values returned from various
+/// productions in the grammar. They simply bundle an LLVM IR object with
+/// its Signedness value. These help track signedness through the various
+/// productions. 
 struct TypeInfo {
   const llvm::Type *T;
   Signedness S;
