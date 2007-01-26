@@ -93,27 +93,15 @@ public:
   static bool classof(const Decl *) { return true; }
 };
 
-/// TypeDecl - Common base-class for all type name decls, which as Typedefs and
-/// Objective-C classes.
-class TypeDecl : public Decl {
-  /// Type.  FIXME: This isn't a wonderful place for this.
-  TypeRef DeclType;
-public:
-  TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T)
-    : Decl(DK, L, Id), DeclType(T) {}
-
-  TypeRef getUnderlyingType() const { return DeclType; }
-
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == Typedef; }
-  static bool classof(const TypeDecl *D) { return true; }
-};
-
-class TypedefDecl : public TypeDecl {
+class TypedefDecl : public Decl {
+  /// UnderlyingType - This is the type the typedef is set to.
+  TypeRef UnderlyingType;
 public:
   // FIXME: Remove Declarator argument.
   TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
-    : TypeDecl(Typedef, L, Id, T) {}
+    : Decl(Typedef, L, Id), UnderlyingType(T) {}
+
+  TypeRef getUnderlyingType() const { return UnderlyingType; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }

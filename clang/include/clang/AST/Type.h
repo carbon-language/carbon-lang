@@ -23,7 +23,7 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class Type;
-  class TypeDecl;
+  class TypedefDecl;
   class TagDecl;
   class RecordDecl;
   class EnumDecl;
@@ -360,18 +360,18 @@ public:
 };
 
 
-class TypeNameType : public Type {
-  TypeDecl *Decl;
-  TypeNameType(TypeDecl *D, Type *can) : Type(TypeName, can), Decl(D) {}
+class TypedefType : public Type {
+  TypedefDecl *Decl;
+  TypedefType(TypedefDecl *D, Type *can) : Type(TypeName, can), Decl(D) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   
-  TypeDecl *getDecl() const { return Decl; }
+  TypedefDecl *getDecl() const { return Decl; }
     
   virtual void getAsString(std::string &InnerString) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeName; }
-  static bool classof(const TypeNameType *) { return true; }
+  static bool classof(const TypedefType *) { return true; }
 };
 
 

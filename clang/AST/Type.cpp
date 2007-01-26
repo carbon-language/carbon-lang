@@ -196,7 +196,7 @@ void FunctionTypeProto::getAsString(std::string &S) const {
 }
 
 
-void TypeNameType::getAsString(std::string &InnerString) const {
+void TypedefType::getAsString(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;

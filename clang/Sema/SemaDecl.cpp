@@ -25,7 +25,7 @@ using namespace clang;
 
 
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
-  return dyn_cast_or_null<TypeDecl>(II.getFETokenInfo<Decl>());
+  return dyn_cast_or_null<TypedefDecl>(II.getFETokenInfo<Decl>());
 }
 
 void Sema::PopScope(SourceLocation Loc, Scope *S) {

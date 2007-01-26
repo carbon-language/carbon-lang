@@ -92,7 +92,7 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
     // TypeQuals handled by caller.
-    return Ctx.getTypeDeclType(cast<TypedefDecl>(D));
+    return Ctx.getTypedefType(cast<TypedefDecl>(D));
   }
   }
 }

@@ -267,7 +267,7 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
     }
   }
   
-  if (isa<TypeDecl>(D)) {
+  if (isa<TypedefDecl>(D)) {
     Diag(Loc, diag::err_unexpected_typedef, II.getName());
     return true;
   }

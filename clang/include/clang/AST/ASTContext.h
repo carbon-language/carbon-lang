@@ -66,9 +66,9 @@ public:
   TypeRef getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
                           unsigned NumArgs, bool isVariadic);
   
-  /// getTypeDeclType - Return the unique reference to the type for the
+  /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
-  TypeRef getTypeDeclType(TypeDecl *Decl);
+  TypeRef getTypedefType(TypedefDecl *Decl);
 
   /// getTagDeclType - Return the unique reference to the type for the
   /// specified TagDecl (struct/union/class/enum) decl.

@@ -58,7 +58,7 @@ void ASTContext::PrintStats() const {
       ++NumFunctionNP;
     else if (isa<FunctionTypeProto>(T))
       ++NumFunctionP;
-    else if (isa<TypeNameType>(T))
+    else if (isa<TypedefType>(T))
       ++NumTypeName;
     else if (TaggedType *TT = dyn_cast<TaggedType>(T)) {
       ++NumTagged;
@@ -255,21 +255,21 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
   return FTP;
 }
 
-/// getTypeDeclType - Return the unique reference to the type for the
+/// getTypedefType - Return the unique reference to the type for the
 /// specified typename decl.
-TypeRef ASTContext::getTypeDeclType(TypeDecl *Decl) {
+TypeRef ASTContext::getTypedefType(TypedefDecl *Decl) {
   // FIXME: This is obviously braindead!
-  // Unique TypeDecl, to guarantee there is only one TypeDeclType.
+  // Unique TypedefDecl, to guarantee there is only one TypedefType.
   ++NumSlowLookups;
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    if (TypeNameType *Ty = dyn_cast<TypeNameType>(Types[i]))
+    if (TypedefType *Ty = dyn_cast<TypedefType>(Types[i]))
       if (Ty->getDecl() == Decl)
         return Types[i];
 
   // FIXME: does this lose qualifiers from the typedef??
   
   Type *Canonical = Decl->getUnderlyingType().getTypePtr();
-  Types.push_back(new TypeNameType(Decl, Canonical));
+  Types.push_back(new TypedefType(Decl, Canonical));
   return Types.back();
 }
 
