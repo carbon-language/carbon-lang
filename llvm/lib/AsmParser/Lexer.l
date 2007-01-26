@@ -148,8 +148,11 @@ using namespace llvm;
 /* Comments start with a ; and go till end of line */
 Comment    ;.*
 
-/* Variable(Value) identifiers start with a % sign */
-VarID       %[-a-zA-Z$._][-a-zA-Z$._0-9]*
+/* Local Values and Type identifiers start with a % sign */
+LocalVarName       %[-a-zA-Z$._][-a-zA-Z$._0-9]*
+
+/* Global Value identifiers start with an @ sign */
+GlobalVarName       @[-a-zA-Z$._][-a-zA-Z$._0-9]*
 
 /* Label identifiers end with a colon */
 Label       [-a-zA-Z$._0-9]+:
@@ -157,18 +160,16 @@ QuoteLabel \"[^\"]+\":
 
 /* Quoted names can contain any character except " and \ */
 StringConstant \"[^\"]*\"
+AtStringConstant @\"[^\"]*\"
+  
+/* LocalVarID/GlobalVarID: match an unnamed local variable slot ID. */
+LocalVarID     %[0-9]+
+GlobalVarID    @[0-9]+
 
-
-/* [PN]Integer: match positive and negative literal integer values that
- * are preceeded by a '%' character.  These represent unnamed variable slots.
- */
-EPInteger     %[0-9]+
-ENInteger    %-[0-9]+
-
+/* Integer types are specified with i and a bitwidth */
 IntegerType i[0-9]+
 
-
-/* E[PN]Integer: match positive and negative literal integer values */
+/* E[PN]Integer: match positive and negative literal integer values. */
 PInteger   [0-9]+
 NInteger  -[0-9]+
 
@@ -216,11 +217,7 @@ tail            { return TAIL; }
 target          { return TARGET; }
 triple          { return TRIPLE; }
 deplibs         { return DEPLIBS; }
-endian          { return ENDIAN; }
-pointersize     { return POINTERSIZE; }
 datalayout      { return DATALAYOUT; }
-little          { return LITTLE; }
-big             { return BIG; }
 volatile        { return VOLATILE; }
 align           { return ALIGN;  }
 section         { return SECTION; }
@@ -323,10 +320,15 @@ insertelement   { RET_TOK(OtherOpVal, InsertElement, INSERTELEMENT); }
 shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
 
 
-{VarID}         {
+{LocalVarName}  {
                   UnEscapeLexed(yytext+1);
                   llvmAsmlval.StrVal = strdup(yytext+1);             // Skip %
-                  return VAR_ID;
+                  return LOCALVAR;
+                }
+{GlobalVarName} {
+                  UnEscapeLexed(yytext+1);
+                  llvmAsmlval.StrVal = strdup(yytext+1);             // Skip @
+                  return GLOBALVAR;
                 }
 {Label}         {
                   yytext[strlen(yytext)-1] = 0;  // nuke colon
@@ -350,6 +352,12 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                    llvmAsmlval.StrVal = strdup(yytext+1);  // Nuke start quote
                    return STRINGCONSTANT;
                  }
+{AtStringConstant} {
+                     yytext[strlen(yytext)-1] = 0;           // nuke end quote
+                     llvmAsmlval.StrVal = strdup(yytext+2);  // Nuke @, quote
+                     return ATSTRINGCONSTANT;
+                   }
+
 
 
 {PInteger}      { llvmAsmlval.UInt64Val = atoull(yytext); return EUINT64VAL; }
@@ -366,20 +374,19 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                    return yytext[0] == 's' ? ESINT64VAL : EUINT64VAL;
                  }
 
-{EPInteger}     {
+{LocalVarID}     {
                   uint64_t Val = atoull(yytext+1);
                   if ((unsigned)Val != Val)
                     GenerateError("Invalid value number (too large)!");
                   llvmAsmlval.UIntVal = unsigned(Val);
-                  return UINTVAL;
+                  return LOCALVAL_ID;
                 }
-{ENInteger}     {
-                  uint64_t Val = atoull(yytext+2);
-                  // +1:  we have bigger negative range
-                  if (Val > (uint64_t)INT32_MAX+1)
-                    GenerateError("Constant too large for signed 32 bits!");
-                  llvmAsmlval.SIntVal = (int)-Val;
-                  return SINTVAL;
+{GlobalVarID}   {
+                  uint64_t Val = atoull(yytext+1);
+                  if ((unsigned)Val != Val)
+                    GenerateError("Invalid value number (too large)!");
+                  llvmAsmlval.UIntVal = unsigned(Val);
+                  return GLOBALVAL_ID;
                 }
 
 {FPConstant}    { llvmAsmlval.FPVal = atof(yytext); return FPVAL; }

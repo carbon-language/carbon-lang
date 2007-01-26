@@ -88,12 +88,13 @@ struct InlineAsmDescriptor {
 //
 struct ValID {
   enum {
-    NumberVal, NameVal, ConstSIntVal, ConstUIntVal, ConstFPVal, ConstNullVal,
+    LocalID, GlobalID, LocalName, GlobalName,
+    ConstSIntVal, ConstUIntVal, ConstFPVal, ConstNullVal,
     ConstUndefVal, ConstZeroVal, ConstantVal, InlineAsmVal
   } Type;
 
   union {
-    int      Num;         // If it's a numeric reference
+    unsigned Num;         // If it's a numeric reference like %1234
     char    *Name;        // If it's a named reference.  Memory must be free'd.
     int64_t  ConstPool64; // Constant pool reference.  This is the value
     uint64_t UConstPool64;// Unsigned constant pool reference.
@@ -102,14 +103,19 @@ struct ValID {
     InlineAsmDescriptor *IAD;
   };
 
-  static ValID create(int Num) {
-    ValID D; D.Type = NumberVal; D.Num = Num; return D;
+  static ValID createLocalID(unsigned Num) {
+    ValID D; D.Type = LocalID; D.Num = Num; return D;
   }
-
-  static ValID create(char *Name) {
-    ValID D; D.Type = NameVal; D.Name = Name; return D;
+  static ValID createGlobalID(unsigned Num) {
+    ValID D; D.Type = GlobalID; D.Num = Num; return D;
   }
-
+  static ValID createLocalName(char *Name) {
+    ValID D; D.Type = LocalName; D.Name = Name; return D;
+  }
+  static ValID createGlobalName(char *Name) {
+    ValID D; D.Type = GlobalName; D.Name = Name; return D;
+  }
+  
   static ValID create(int64_t Val) {
     ValID D; D.Type = ConstSIntVal; D.ConstPool64 = Val; return D;
   }
@@ -148,14 +154,14 @@ struct ValID {
   }
 
   inline void destroy() const {
-    if (Type == NameVal)
+    if (Type == LocalName || Type == GlobalName)
       free(Name);    // Free this strdup'd memory.
     else if (Type == InlineAsmVal)
       delete IAD;
   }
 
   inline ValID copy() const {
-    if (Type != NameVal) return *this;
+    if (Type != LocalName && Type != GlobalName) return *this;
     ValID Result = *this;
     Result.Name = strdup(Name);
     return Result;
@@ -163,8 +169,10 @@ struct ValID {
 
   inline std::string getName() const {
     switch (Type) {
-    case NumberVal     : return std::string("#") + itostr(Num);
-    case NameVal       : return Name;
+    case LocalID       : return '%' + utostr(Num);
+    case GlobalID      : return '@' + utostr(Num);
+    case LocalName     : return Name;
+    case GlobalName    : return Name;
     case ConstFPVal    : return ftostr(ConstPoolFP);
     case ConstNullVal  : return "null";
     case ConstUndefVal : return "undef";
@@ -185,8 +193,10 @@ struct ValID {
   bool operator<(const ValID &V) const {
     if (Type != V.Type) return Type < V.Type;
     switch (Type) {
-    case NumberVal:     return Num < V.Num;
-    case NameVal:       return strcmp(Name, V.Name) < 0;
+    case LocalID:
+    case GlobalID:      return Num < V.Num;
+    case LocalName:
+    case GlobalName:    return strcmp(Name, V.Name) < 0;
     case ConstSIntVal:  return ConstPool64  < V.ConstPool64;
     case ConstUIntVal:  return UConstPool64 < V.UConstPool64;
     case ConstFPVal:    return ConstPoolFP  < V.ConstPoolFP;

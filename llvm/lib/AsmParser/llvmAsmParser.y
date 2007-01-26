@@ -270,12 +270,12 @@ static int InsertValue(Value *V,
 
 static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   switch (D.Type) {
-  case ValID::NumberVal:               // Is it a numbered definition?
+  case ValID::LocalID:               // Is it a numbered definition?
     // Module constants occupy the lowest numbered slots...
-    if ((unsigned)D.Num < CurModule.Types.size())
-      return CurModule.Types[(unsigned)D.Num];
+    if (D.Num < CurModule.Types.size())
+      return CurModule.Types[D.Num];
     break;
-  case ValID::NameVal:                 // Is it a named definition?
+  case ValID::LocalName:                 // Is it a named definition?
     if (const Type *N = CurModule.CurrentModule->getTypeByName(D.Name)) {
       D.destroy();  // Free old strdup'd memory...
       return N;
@@ -294,11 +294,11 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
 
 
   if (inFunctionScope()) {
-    if (D.Type == ValID::NameVal) {
+    if (D.Type == ValID::LocalName) {
       GenerateError("Reference to an undefined type: '" + D.getName() + "'");
       return 0;
     } else {
-      GenerateError("Reference to an undefined type: #" + itostr(D.Num));
+      GenerateError("Reference to an undefined type: #" + utostr(D.Num));
       return 0;
     }
   }
@@ -312,13 +312,6 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   return Typ;
  }
 
-static Value *lookupInSymbolTable(const Type *Ty, const std::string &Name) {
-  SymbolTable &SymTab =
-    inFunctionScope() ? CurFun.CurrentFunction->getValueSymbolTable() :
-                        CurModule.CurrentModule->getValueSymbolTable();
-  return SymTab.lookup(Ty, Name);
-}
-
 // getValNonImprovising - Look up the value specified by the provided type and
 // the provided ValID.  If the value exists and has already been defined, return
 // it.  Otherwise return null.
@@ -331,29 +324,39 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   }
 
   switch (D.Type) {
-  case ValID::NumberVal: {                 // Is it a numbered definition?
-    unsigned Num = (unsigned)D.Num;
-
-    // Module constants occupy the lowest numbered slots...
-    std::map<const Type*,ValueList>::iterator VI = CurModule.Values.find(Ty);
-    if (VI != CurModule.Values.end()) {
-      if (Num < VI->second.size())
-        return VI->second[Num];
-      Num -= VI->second.size();
-    }
-
-    // Make sure that our type is within bounds
-    VI = CurFun.Values.find(Ty);
+  case ValID::LocalID: {                 // Is it a numbered definition?
+    // Module constants occupy the lowest numbered slots.
+    std::map<const Type*,ValueList>::iterator VI = CurFun.Values.find(Ty);
+    // Make sure that our type is within bounds.
     if (VI == CurFun.Values.end()) return 0;
 
-    // Check that the number is within bounds...
-    if (VI->second.size() <= Num) return 0;
+    // Check that the number is within bounds.
+    if (D.Num >= VI->second.size()) return 0;
 
+    return VI->second[D.Num];
+  }
+  case ValID::GlobalID: {                 // Is it a numbered definition?
+    unsigned Num = D.Num;
+    
+    // Module constants occupy the lowest numbered slots...
+    std::map<const Type*,ValueList>::iterator VI = CurModule.Values.find(Ty);
+    if (VI == CurModule.Values.end()) return 0;
+    if (D.Num >= VI->second.size()) return 0;
     return VI->second[Num];
   }
-
-  case ValID::NameVal: {                // Is it a named definition?
-    Value *N = lookupInSymbolTable(Ty, std::string(D.Name));
+    
+  case ValID::LocalName: {                // Is it a named definition?
+    if (!inFunctionScope()) return 0;
+    SymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
+    Value *N = SymTab.lookup(Ty, D.Name);
+    if (N == 0) return 0;
+    
+    D.destroy();  // Free old strdup'd memory...
+    return N;
+  }
+  case ValID::GlobalName: {                // Is it a named definition?
+    SymbolTable &SymTab = CurModule.CurrentModule->getValueSymbolTable();
+    Value *N = SymTab.lookup(Ty, D.Name);
     if (N == 0) return 0;
 
     D.destroy();  // Free old strdup'd memory...
@@ -488,12 +491,12 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
   default: 
     GenerateError("Illegal label reference " + ID.getName());
     return 0;
-  case ValID::NumberVal:                // Is it a numbered definition?
-    if (unsigned(ID.Num) >= CurFun.NumberedBlocks.size())
+  case ValID::LocalID:                // Is it a numbered definition?
+    if (ID.Num >= CurFun.NumberedBlocks.size())
       CurFun.NumberedBlocks.resize(ID.Num+1);
     BB = CurFun.NumberedBlocks[ID.Num];
     break;
-  case ValID::NameVal:                  // Is it a named definition?
+  case ValID::LocalName:                  // Is it a named definition?
     Name = ID.Name;
     if (Value *N = CurFun.CurrentFunction->
                    getValueSymbolTable().lookup(Type::LabelTy, Name))
@@ -518,7 +521,7 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
 
   // Otherwise this block has not been seen before.
   BB = new BasicBlock("", CurFun.CurrentFunction);
-  if (ID.Type == ValID::NameVal) {
+  if (ID.Type == ValID::LocalName) {
     BB->setName(ID.Name);
   } else {
     CurFun.NumberedBlocks[ID.Num] = BB;
@@ -585,7 +588,7 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
         // resolver table
         InsertValue(V, *FutureLateResolvers);
       } else {
-        if (DID.Type == ValID::NameVal) {
+        if (DID.Type == ValID::LocalName || DID.Type == ValID::GlobalName) {
           GenerateError("Reference to an invalid definition: '" +DID.getName()+
                          "' of type '" + V->getType()->getDescription() + "'",
                          PHI->second.second);
@@ -610,8 +613,8 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
 //
 static void ResolveTypeTo(char *Name, const Type *ToTy) {
   ValID D;
-  if (Name) D = ValID::create(Name);
-  else      D = ValID::create((int)CurModule.Types.size());
+  if (Name) D = ValID::createLocalName(Name);
+  else      D = ValID::createLocalID(CurModule.Types.size());
 
   std::map<ValID, PATypeHolder>::iterator I =
     CurModule.LateResolveTypes.find(D);
@@ -626,26 +629,25 @@ static void ResolveTypeTo(char *Name, const Type *ToTy) {
 // assumed to be a malloc'd string buffer, and is free'd by this function.
 //
 static void setValueName(Value *V, char *NameStr) {
-  if (NameStr) {
-    std::string Name(NameStr);      // Copy string
-    free(NameStr);                  // Free old string
+  if (!NameStr) return;
+  std::string Name(NameStr);      // Copy string
+  free(NameStr);                  // Free old string
 
-    if (V->getType() == Type::VoidTy) {
-      GenerateError("Can't assign name '" + Name+"' to value with void type!");
-      return;
-    }
-
-    assert(inFunctionScope() && "Must be in function scope!");
-    SymbolTable &ST = CurFun.CurrentFunction->getValueSymbolTable();
-    if (ST.lookup(V->getType(), Name)) {
-      GenerateError("Redefinition of value '" + Name + "' of type '" +
-                     V->getType()->getDescription() + "'!");
-      return;
-    }
-
-    // Set the name.
-    V->setName(Name);
+  if (V->getType() == Type::VoidTy) {
+    GenerateError("Can't assign name '" + Name+"' to value with void type!");
+    return;
   }
+
+  assert(inFunctionScope() && "Must be in function scope!");
+  SymbolTable &ST = CurFun.CurrentFunction->getValueSymbolTable();
+  if (ST.lookup(V->getType(), Name)) {
+    GenerateError("Redefinition of value '" + Name + "' of type '" +
+                   V->getType()->getDescription() + "'!");
+    return;
+  }
+
+  // Set the name.
+  V->setName(Name);
 }
 
 /// ParseGlobalVariable - Handle parsing of a global.  If Initializer is null,
@@ -673,9 +675,9 @@ ParseGlobalVariable(char *NameStr,
   // object.
   ValID ID;
   if (!Name.empty()) {
-    ID = ValID::create((char*)Name.c_str());
+    ID = ValID::createGlobalName((char*)Name.c_str());
   } else {
-    ID = ValID::create((int)CurModule.Values[PTy].size());
+    ID = ValID::createGlobalID(CurModule.Values[PTy].size());
   }
 
   if (GlobalValue *FWGV = CurModule.GetForwardRefForGlobal(PTy, ID)) {
@@ -922,7 +924,6 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
   llvm::Instruction::MemoryOps      MemOpVal;
   llvm::Instruction::CastOps        CastOpVal;
   llvm::Instruction::OtherOps       OtherOpVal;
-  llvm::Module::Endianness          Endianness;
   llvm::ICmpInst::Predicate         IPredicate;
   llvm::FCmpInst::Predicate         FPredicate;
 }
@@ -949,7 +950,6 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <Linkage>       GVInternalLinkage GVExternalLinkage
 %type <Linkage>       FunctionDefineLinkage FunctionDeclareLinkage
 %type <Visibility>    GVVisibilityStyle
-%type <Endianness>    BigOrLittle
 
 // ValueRef - Unresolved reference to a definition or BB
 %type <ValIDVal>      ValueRef ConstValueRef SymbolicValueRef
@@ -962,9 +962,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 // EUINT64VAL - A positive number within uns. long long range
 %token <UInt64Val> EUINT64VAL
 
-%token  <SIntVal>   SINTVAL   // Signed 32 bit ints...
-%token  <UIntVal>   UINTVAL   // Unsigned 32 bit ints...
-%type   <SIntVal>   INTVAL
+%token  <UIntVal>   LOCALVAL_ID GLOBALVAL_ID  // %123 @123
 %token  <FPVal>     FPVAL     // Float or Double constant
 
 // Built in types...
@@ -974,16 +972,17 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <PrimType> FLOAT DOUBLE LABEL
 %token TYPE
 
-%token <StrVal> VAR_ID LABELSTR STRINGCONSTANT
-%type  <StrVal> Name OptName OptAssign
-%type  <UIntVal> OptAlign OptCAlign
+%token<StrVal> LOCALVAR GLOBALVAR LABELSTR STRINGCONSTANT ATSTRINGCONSTANT
+%type <StrVal> LocalName OptLocalName OptLocalAssign
+%type <StrVal> GlobalName OptGlobalAssign
+%type <UIntVal> OptAlign OptCAlign
 %type <StrVal> OptSection SectionString
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF INTERNAL LINKONCE WEAK APPENDING
 %token DLLIMPORT DLLEXPORT EXTERN_WEAK
-%token OPAQUE EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
+%token OPAQUE EXTERNAL TARGET TRIPLE ALIGN
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK CSRETCC_TOK FASTCC_TOK COLDCC_TOK
 %token X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
@@ -1026,15 +1025,6 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %start Module
 %%
 
-// Handle constant integer size restriction and conversion...
-//
-INTVAL : SINTVAL;
-INTVAL : UINTVAL {
-  if ($1 > (uint32_t)INT32_MAX)     // Outside of my range!
-    GEN_ERROR("Value too large for type!");
-  $$ = (int32_t)$1;
-  CHECK_FOR_ERROR
-};
 
 // Operations that are notably excluded from this list include:
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
@@ -1069,8 +1059,23 @@ FPredicates
 IntType :  INTTYPE;
 FPType   : FLOAT | DOUBLE;
 
-// OptAssign - Value producing statements have an optional assignment component
-OptAssign : Name '=' {
+LocalName : LOCALVAR | STRINGCONSTANT;
+OptLocalName : LocalName | /*empty*/ { $$ = 0; };
+
+/// OptLocalAssign - Value producing statements have an optional assignment
+/// component.
+OptLocalAssign : LocalName '=' {
+    $$ = $1;
+    CHECK_FOR_ERROR
+  }
+  | /*empty*/ {
+    $$ = 0;
+    CHECK_FOR_ERROR
+  };
+
+GlobalName : GLOBALVAR | ATSTRINGCONSTANT;
+
+OptGlobalAssign : GlobalName '=' {
     $$ = $1;
     CHECK_FOR_ERROR
   }
@@ -1630,7 +1635,10 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
         $2.destroy();
       } else {
         std::string Name;
-        if ($2.Type == ValID::NameVal) Name = $2.Name;
+        if ($2.Type == ValID::GlobalName)
+          Name = $2.Name;
+        else if ($2.Type != ValID::GlobalID)
+          GEN_ERROR("Invalid reference to global");
 
         // Create the forward referenced global.
         GlobalValue *GV;
@@ -1857,7 +1865,7 @@ Definition
     // Emit an error if there are any unresolved types left.
     if (!CurModule.LateResolveTypes.empty()) {
       const ValID &DID = CurModule.LateResolveTypes.begin()->first;
-      if (DID.Type == ValID::NameVal) {
+      if (DID.Type == ValID::LocalName) {
         GEN_ERROR("Reference to an undefined type: '"+DID.getName() + "'");
       } else {
         GEN_ERROR("Reference to an undefined type: #" + itostr(DID.Num));
@@ -1865,7 +1873,7 @@ Definition
     }
     CHECK_FOR_ERROR
   }
-  | OptAssign TYPE Types {
+  | OptLocalAssign TYPE Types {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     // Eagerly resolve types.  This is not an optimization, this is a
@@ -1889,7 +1897,7 @@ Definition
     delete $3;
     CHECK_FOR_ERROR
   }
-  | OptAssign TYPE VOID {
+  | OptLocalAssign TYPE VOID {
     ResolveTypeTo($1, $3);
 
     if (!setTypeName($3, $1) && !$1) {
@@ -1900,7 +1908,8 @@ Definition
     }
     CHECK_FOR_ERROR
   }
-  | OptAssign GVVisibilityStyle GlobalType ConstVal { /* "Externally Visible" Linkage */
+  | OptGlobalAssign GVVisibilityStyle GlobalType ConstVal { 
+    /* "Externally Visible" Linkage */
     if ($4 == 0) 
       GEN_ERROR("Global value initializer is not a constant!");
     CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage,
@@ -1909,7 +1918,7 @@ Definition
   } GlobalVarAttributes {
     CurGV = 0;
   }
-  | OptAssign GVInternalLinkage GVVisibilityStyle GlobalType ConstVal {
+  | OptGlobalAssign GVInternalLinkage GVVisibilityStyle GlobalType ConstVal {
     if ($5 == 0) 
       GEN_ERROR("Global value initializer is not a constant!");
     CurGV = ParseGlobalVariable($1, $2, $3, $4, $5->getType(), $5);
@@ -1917,7 +1926,7 @@ Definition
   } GlobalVarAttributes {
     CurGV = 0;
   }
-  | OptAssign GVExternalLinkage GVVisibilityStyle GlobalType Types {
+  | OptGlobalAssign GVExternalLinkage GVVisibilityStyle GlobalType Types {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$5)->getDescription());
     CurGV = ParseGlobalVariable($1, $2, $3, $4, *$5, 0);
@@ -1949,23 +1958,7 @@ AsmBlock : STRINGCONSTANT {
   CHECK_FOR_ERROR
 };
 
-BigOrLittle : BIG    { $$ = Module::BigEndian; };
-BigOrLittle : LITTLE { $$ = Module::LittleEndian; };
-
-TargetDefinition : ENDIAN '=' BigOrLittle {
-    CurModule.CurrentModule->setEndianness($3);
-    CHECK_FOR_ERROR
-  }
-  | POINTERSIZE '=' EUINT64VAL {
-    if ($3 == 32)
-      CurModule.CurrentModule->setPointerSize(Module::Pointer32);
-    else if ($3 == 64)
-      CurModule.CurrentModule->setPointerSize(Module::Pointer64);
-    else
-      GEN_ERROR("Invalid pointer size: '" + utostr($3) + "'!");
-    CHECK_FOR_ERROR
-  }
-  | TRIPLE '=' STRINGCONSTANT {
+TargetDefinition : TRIPLE '=' STRINGCONSTANT {
     CurModule.CurrentModule->setTargetTriple($3);
     free($3);
   }
@@ -1995,10 +1988,7 @@ LibList : LibList ',' STRINGCONSTANT {
 //                       Rules to match Function Headers
 //===----------------------------------------------------------------------===//
 
-Name : VAR_ID | STRINGCONSTANT;
-OptName : Name | /*empty*/ { $$ = 0; };
-
-ArgListH : ArgListH ',' Types OptParamAttrs OptName {
+ArgListH : ArgListH ',' Types OptParamAttrs OptLocalName {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     if (*$3 == Type::VoidTy)
@@ -2008,7 +1998,7 @@ ArgListH : ArgListH ',' Types OptParamAttrs OptName {
     $1->push_back(E);
     CHECK_FOR_ERROR
   }
-  | Types OptParamAttrs OptName {
+  | Types OptParamAttrs OptLocalName {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
     if (*$1 == Type::VoidTy)
@@ -2046,7 +2036,7 @@ ArgList : ArgListH {
     CHECK_FOR_ERROR
   };
 
-FunctionHeaderH : OptCallingConv ResultTypes Name '(' ArgList ')' 
+FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')' 
                   OptFuncAttrs OptSection OptAlign {
   UnEscapeLexed($3);
   std::string FunctionName($3);
@@ -2081,9 +2071,9 @@ FunctionHeaderH : OptCallingConv ResultTypes Name '(' ArgList ')'
 
   ValID ID;
   if (!FunctionName.empty()) {
-    ID = ValID::create((char*)FunctionName.c_str());
+    ID = ValID::createGlobalName((char*)FunctionName.c_str());
   } else {
-    ID = ValID::create((int)CurModule.Values[PFT].size());
+    ID = ValID::createGlobalID(CurModule.Values[PFT].size());
   }
 
   Function *Fn = 0;
@@ -2266,12 +2256,20 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
 // SymbolicValueRef - Reference to one of two ways of symbolically refering to
 // another value.
 //
-SymbolicValueRef : INTVAL {  // Is it an integer reference...?
-    $$ = ValID::create($1);
+SymbolicValueRef : LOCALVAL_ID {  // Is it an integer reference...?
+    $$ = ValID::createLocalID($1);
     CHECK_FOR_ERROR
   }
-  | Name {                   // Is it a named reference...?
-    $$ = ValID::create($1);
+  | GLOBALVAL_ID {
+    $$ = ValID::createGlobalID($1);
+    CHECK_FOR_ERROR
+  }
+  | LocalName {                   // Is it a named reference...?
+    $$ = ValID::createLocalName($1);
+    CHECK_FOR_ERROR
+  }
+  | GlobalName {                   // Is it a named reference...?
+    $$ = ValID::createGlobalName($1);
     CHECK_FOR_ERROR
   };
 
@@ -2304,7 +2302,7 @@ BasicBlockList : BasicBlockList BasicBlock {
 // Basic blocks are terminated by branching instructions: 
 // br, br/cc, switch, ret
 //
-BasicBlock : InstructionList OptAssign BBTerminatorInst  {
+BasicBlock : InstructionList OptLocalAssign BBTerminatorInst  {
     setValueName($3, $2);
     CHECK_FOR_ERROR
     InsertValue($3);
@@ -2325,7 +2323,7 @@ InstructionList : InstructionList Inst {
     CHECK_FOR_ERROR
   }
   | /* empty */ {
-    $$ = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
+    $$ = getBBVal(ValID::createLocalID(CurFun.NextBBNum++), true);
     CHECK_FOR_ERROR
 
     // Make sure to move the basic block to the correct location in the
@@ -2337,7 +2335,7 @@ InstructionList : InstructionList Inst {
     CHECK_FOR_ERROR
   }
   | LABELSTR {
-    $$ = getBBVal(ValID::create($1), true);
+    $$ = getBBVal(ValID::createLocalName($1), true);
     CHECK_FOR_ERROR
 
     // Make sure to move the basic block to the correct location in the
@@ -2502,7 +2500,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$->push_back(std::make_pair(V, tmpBB)); 
   };
 
-Inst : OptAssign InstVal {
+Inst : OptLocalAssign InstVal {
   // Is this definition named?? if so, assign the name...
   setValueName($2, $1);
   CHECK_FOR_ERROR
@@ -2762,6 +2760,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CI->setCallingConv($2);
     $$ = CI;
     delete $6;
+    delete $3;
     CHECK_FOR_ERROR
   }
   | MemoryInst {
