@@ -819,27 +819,31 @@ static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
 }
 
 static void PrintFunctionDecl(FunctionDecl *FD) {
-  FunctionTypeProto *FT = cast<FunctionTypeProto>(FD->getType());
   bool HasBody = FD->getBody();
   
   std::string Proto = FD->getName();
-  Proto += "(";
-  for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
-    if (i) Proto += ", ";
-    std::string ParamStr;
-    if (HasBody) ParamStr = FD->getParamDecl(i)->getName();
+  FunctionType *AFT = cast<FunctionType>(FD->getType());
+  if (FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(AFT)) {
+    Proto += "(";
+    for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
+      if (i) Proto += ", ";
+      std::string ParamStr;
+      if (HasBody) ParamStr = FD->getParamDecl(i)->getName();
+      
+      FT->getArgType(i).getAsString(ParamStr);
+      Proto += ParamStr;
+    }
     
-    FT->getArgType(i).getAsString(ParamStr);
-    Proto += ParamStr;
+    if (FT->isVariadic()) {
+      if (FD->getNumParams()) Proto += ", ";
+      Proto += "...";
+    }
+    Proto += ")";
+  } else {
+    assert(isa<FunctionTypeNoProto>(AFT));
+    Proto += "()";
   }
-  
-  if (FT->isVariadic()) {
-    if (FD->getNumParams()) Proto += ", ";
-    Proto += "...";
-  }
-  Proto += ")";
-  
-  FT->getResultType().getAsString(Proto);
+  AFT->getResultType().getAsString(Proto);
 
   std::cerr << "\n" << Proto;
   
