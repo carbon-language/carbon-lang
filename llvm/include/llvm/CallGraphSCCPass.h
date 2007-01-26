@@ -50,11 +50,6 @@ struct CallGraphSCCPass : public Pass {
     return false;
   }
 
-  /// run - Run this pass, returning true if a modification was made to the
-  /// module argument.  This is implemented in terms of the runOnSCC method.
-  ///
-  virtual bool runOnModule(Module &M);
-
   /// Assign pass manager to manager this pass
   virtual void assignPassManager(PMStack &PMS,
 				 PassManagerType PMT = PMT_CallGraphPassManager);
