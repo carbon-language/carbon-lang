@@ -484,6 +484,11 @@ def : ThumbV5Pat<(ARMcall GPR:$dst), (tBLXr GPR:$dst)>;
 def : ThumbPat<(zextloadi1 t_addrmode_s1:$addr),
                (tLDRB t_addrmode_s1:$addr)>;
                   
+// extload -> zextload
+def : ThumbPat<(extloadi1  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
+def : ThumbPat<(extloadi8  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
+def : ThumbPat<(extloadi16 t_addrmode_s2:$addr),  (tLDRH t_addrmode_s2:$addr)>;
+
 // truncstore i1 -> truncstore i8
 def : ThumbPat<(truncstorei1 GPR:$src, t_addrmode_s1:$dst), 
                (tSTRB GPR:$src, t_addrmode_s1:$dst)>;
