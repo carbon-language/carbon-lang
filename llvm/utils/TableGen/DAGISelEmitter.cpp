@@ -3688,6 +3688,14 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  return New.Val;\n"
      << "}\n\n";
   
+  OS << "SDNode *Select_LABEL(const SDOperand &N) {\n"
+     << "  SDOperand Chain = N.getOperand(0);\n"
+     << "  SDOperand N1 = N.getOperand(1);\n"
+     << "  AddToISelQueue(Chain);\n"
+     << "  return CurDAG->getTargetNode(TargetInstrInfo::LABEL,\n"
+     << "                               MVT::Other, N1, Chain);\n"
+     << "}\n\n";
+
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDOperand N) {\n"
      << "  if (N.getOpcode() >= ISD::BUILTIN_OP_END &&\n"
@@ -3722,7 +3730,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "      AddToISelQueue(N.getOperand(i));\n"
      << "    return NULL;\n"
      << "  }\n"
-     << "  case ISD::INLINEASM:  return Select_INLINEASM(N);\n";
+     << "  case ISD::INLINEASM: return Select_INLINEASM(N);\n"
+     << "  case ISD::LABEL: return Select_LABEL(N);\n";
 
     
   // Loop over all of the case statements, emiting a call to each method we

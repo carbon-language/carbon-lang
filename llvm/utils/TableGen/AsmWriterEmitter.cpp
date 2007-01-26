@@ -344,7 +344,7 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
   
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     const AsmWriterInst *Inst = getAsmWriterInstByID(i);
-    if (Inst == 0) continue;  // PHI, INLINEASM, etc.
+    if (Inst == 0) continue;  // PHI, INLINEASM, LABEL, etc.
     
     std::string Command;
     if (Inst->Operands.empty())
@@ -620,6 +620,9 @@ void AsmWriterEmitter::run(std::ostream &O) {
 
   O << "  if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {\n"
     << "    printInlineAsm(MI);\n"
+    << "    return true;\n"
+    << "  } else if (MI->getOpcode() == TargetInstrInfo::LABEL) {\n"
+    << "    printLabel(MI);\n"
     << "    return true;\n"
     << "  }\n\n";
   

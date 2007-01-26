@@ -258,11 +258,18 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   if (I == Instructions.end()) throw "Could not find 'INLINEASM' instruction!";
   const CodeGenInstruction *INLINEASM = &I->second;
   
+  I = getInstructions().find("LABEL");
+  if (I == Instructions.end()) throw "Could not find 'LABEL' instruction!";
+  const CodeGenInstruction *LABEL = &I->second;
+  
   // Print out the rest of the instructions now.
   NumberedInstructions.push_back(PHI);
   NumberedInstructions.push_back(INLINEASM);
+  NumberedInstructions.push_back(LABEL);
   for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
-    if (&II->second != PHI &&&II->second != INLINEASM)
+    if (&II->second != PHI &&
+        &II->second != INLINEASM &&
+        &II->second != LABEL)
       NumberedInstructions.push_back(&II->second);
 }
 
