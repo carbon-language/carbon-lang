@@ -3691,9 +3691,11 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   OS << "SDNode *Select_LABEL(const SDOperand &N) {\n"
      << "  SDOperand Chain = N.getOperand(0);\n"
      << "  SDOperand N1 = N.getOperand(1);\n"
+     << "  unsigned C = cast<ConstantSDNode>(N1)->getValue();\n"
+     << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(Chain);\n"
      << "  return CurDAG->getTargetNode(TargetInstrInfo::LABEL,\n"
-     << "                               MVT::Other, N1, Chain);\n"
+     << "                               MVT::Other, Tmp, Chain);\n"
      << "}\n\n";
 
   OS << "// The main instruction selector code.\n"
