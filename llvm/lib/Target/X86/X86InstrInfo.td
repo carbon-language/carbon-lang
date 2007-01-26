@@ -2449,10 +2449,6 @@ def DWARF_LOC   : I<0, Pseudo, (ops i32imm:$line, i32imm:$col, i32imm:$file),
                     [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
                       (i32 imm:$file))]>;
 
-def DWARF_LABEL : I<0, Pseudo, (ops i32imm:$id), 
-                    "\n${:private}debug_loc${id:debug}:",
-                    [(dwarf_label (i32 imm:$id))]>;
-
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//

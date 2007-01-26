@@ -755,8 +755,5 @@ def SDT_dwarf_loc : SDTypeProfile<0, 3,
                       [SDTCisInt<0>, SDTCisInt<1>, SDTCisInt<2>]>;
 def dwarf_loc : SDNode<"ISD::DEBUG_LOC", SDT_dwarf_loc,[SDNPHasChain]>;
 
-def SDT_dwarf_label : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
-def dwarf_label : SDNode<"ISD::DEBUG_LABEL", SDT_dwarf_label,[SDNPHasChain]>;
-
 
 

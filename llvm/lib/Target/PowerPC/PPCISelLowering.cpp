@@ -147,7 +147,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   // FIXME - use subtarget debug flags
   if (!TM.getSubtarget<PPCSubtarget>().isDarwin())
-    setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
+    setOperationAction(ISD::LABEL, MVT::Other, Expand);
   
   // We want to legalize GlobalAddress and ConstantPool nodes into the 
   // appropriate instructions to materialize the address.

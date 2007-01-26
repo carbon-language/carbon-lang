@@ -1026,7 +1026,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (hasInfo) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = DebugInfo->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(X86::DWARF_LABEL)).addImm(FrameLabelId);
+    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(FrameLabelId);
   }
   
   if (hasFP(MF)) {
@@ -1078,7 +1078,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     
     // Mark effective beginning of when frame pointer is ready.
     unsigned ReadyLabelId = DebugInfo->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(X86::DWARF_LABEL)).addImm(ReadyLabelId);
+    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(ReadyLabelId);
     
     MachineLocation FPDst(hasFP(MF) ? FramePtr : StackPtr);
     MachineLocation FPSrc(MachineLocation::VirtualFP);

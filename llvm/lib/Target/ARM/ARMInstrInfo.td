@@ -513,11 +513,6 @@ PseudoInst<(ops i32imm:$line, i32imm:$col, i32imm:$file),
            ".loc $file, $line, $col",
            [(dwarf_loc (i32 imm:$line), (i32 imm:$col), (i32 imm:$file))]>;
 
-def DWARF_LABEL :
-PseudoInst<(ops i32imm:$id),
-           "\nLdebug_loc${id:no_hash}:",
-           [(dwarf_label (i32 imm:$id))]>;
-
 def PICADD : AI1<(ops GPR:$dst, GPR:$a, pclabel:$cp),
                   "\n$cp:\n\tadd $dst, pc, $a",
                   [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;

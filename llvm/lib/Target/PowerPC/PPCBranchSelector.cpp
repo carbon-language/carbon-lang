@@ -66,6 +66,9 @@ static unsigned getNumBytesForInstruction(MachineInstr *MI) {
     const char *AsmStr = MI->getOperand(0).getSymbolName();
     return MF->getTarget().getTargetAsmInfo()->getInlineAsmLength(AsmStr);
   }
+  case PPC::LABEL: {
+    return 0;
+  }
   default:
     return 4; // PowerPC instructions are all 4 bytes
   }

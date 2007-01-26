@@ -77,13 +77,6 @@ public:
   /// This is used for addressing modes.
   virtual const TargetRegisterClass *getPointerRegClass() const;  
 
-  /// getDWARF_LABELOpcode - Return the opcode of the target's DWARF_LABEL
-  /// instruction if it has one.  This is used by codegen passes that update
-  /// DWARF line number info as they modify the code.
-  virtual unsigned getDWARF_LABELOpcode() const {
-    return PPC::DWARF_LABEL;
-  }
-  
   // Return true if the instruction is a register to register move and
   // leave the source and dest operands in the passed parameters.
   //

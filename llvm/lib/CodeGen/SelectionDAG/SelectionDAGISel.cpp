@@ -1980,7 +1980,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
     if (DebugInfo && RSI.getContext() && DebugInfo->Verify(RSI.getContext())) {
       unsigned LabelID = DebugInfo->RecordRegionStart(RSI.getContext());
-      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, getRoot(),
+      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
                               DAG.getConstant(LabelID, MVT::i32)));
     }
 
@@ -1991,7 +1991,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
     if (DebugInfo && REI.getContext() && DebugInfo->Verify(REI.getContext())) {
       unsigned LabelID = DebugInfo->RecordRegionEnd(REI.getContext());
-      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other,
+      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other,
                               getRoot(), DAG.getConstant(LabelID, MVT::i32)));
     }
 
@@ -2003,7 +2003,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (DebugInfo && FSI.getSubprogram() &&
         DebugInfo->Verify(FSI.getSubprogram())) {
       unsigned LabelID = DebugInfo->RecordRegionStart(FSI.getSubprogram());
-      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other,
+      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other,
                   getRoot(), DAG.getConstant(LabelID, MVT::i32)));
     }
 

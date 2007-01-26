@@ -266,6 +266,12 @@ def INLINEASM : Instruction {
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
 }
+def LABEL : Instruction {
+  let OperandList = (ops i32imm:$id);
+  let AsmString = "";
+  let Namespace = "TargetInstrInfo";
+  let hasCtrlDep = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // AsmWriter - This class can be implemented by targets that need to customize

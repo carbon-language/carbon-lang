@@ -1015,10 +1015,6 @@ def DWARF_LOC        : Pseudo<(ops i32imm:$line, i32imm:$col, i32imm:$file),
                       [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
                                   (i32 imm:$file))]>;
 
-def DWARF_LABEL      : Pseudo<(ops i32imm:$id),
-                              "\n${:private}debug_loc$id:",
-                      [(dwarf_label (i32 imm:$id))]>;
-
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Patterns
 //

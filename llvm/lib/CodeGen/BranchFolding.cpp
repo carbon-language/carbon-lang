@@ -74,16 +74,12 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
   while (!MBB->succ_empty())
     MBB->removeSuccessor(MBB->succ_end()-1);
   
-  // If there is DWARF info to active, check to see if there are any DWARF_LABEL
+  // If there is DWARF info to active, check to see if there are any LABEL
   // records in the basic block.  If so, unregister them from MachineDebugInfo.
   if (MDI && !MBB->empty()) {
-    unsigned DWARF_LABELOpc = TII->getDWARF_LABELOpcode();
-    assert(DWARF_LABELOpc &&
-           "Target supports dwarf but didn't implement getDWARF_LABELOpcode!");
-    
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
-      if ((unsigned)I->getOpcode() == DWARF_LABELOpc) {
+      if ((unsigned)I->getOpcode() == TargetInstrInfo::LABEL) {
         // The label ID # is always operand #0, an immediate.
         MDI->InvalidateLabel(I->getOperand(0).getImm());
       }

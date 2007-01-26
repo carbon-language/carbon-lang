@@ -737,9 +737,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Expand: {
       MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
       bool useDEBUG_LOC = TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other);
-      bool useDEBUG_LABEL = TLI.isOperationLegal(ISD::DEBUG_LABEL, MVT::Other);
+      bool useLABEL = TLI.isOperationLegal(ISD::LABEL, MVT::Other);
       
-      if (DebugInfo && (useDEBUG_LOC || useDEBUG_LABEL)) {
+      if (DebugInfo && (useDEBUG_LOC || useLABEL)) {
         const std::string &FName =
           cast<StringSDNode>(Node->getOperand(3))->getValue();
         const std::string &DirName = 
@@ -761,7 +761,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           unsigned Col = cast<ConstantSDNode>(ColOp)->getValue();
           unsigned ID = DebugInfo->RecordLabel(Line, Col, SrcFile);
           Ops.push_back(DAG.getConstant(ID, MVT::i32));
-          Result = DAG.getNode(ISD::DEBUG_LABEL, MVT::Other,&Ops[0],Ops.size());
+          Result = DAG.getNode(ISD::LABEL, MVT::Other,&Ops[0],Ops.size());
         }
       } else {
         Result = Tmp1;  // chain
@@ -803,9 +803,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;    
 
-  case ISD::DEBUG_LABEL:
-    assert(Node->getNumOperands() == 2 && "Invalid DEBUG_LABEL node!");
-    switch (TLI.getOperationAction(ISD::DEBUG_LABEL, MVT::Other)) {
+  case ISD::LABEL:
+    assert(Node->getNumOperands() == 2 && "Invalid LABEL node!");
+    switch (TLI.getOperationAction(ISD::LABEL, MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.

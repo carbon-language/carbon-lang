@@ -166,7 +166,8 @@ public:
   // Invariant opcodes: All instruction sets have these as their low opcodes.
   enum { 
     PHI = 0,
-    INLINEASM = 1
+    INLINEASM = 1,
+    LABEL = 2
   };
 
   unsigned getNumOpcodes() const { return NumOpcodes; }
@@ -263,13 +264,6 @@ public:
     return get(Opcode).getOperandConstraint(OpNum, Constraint);
   }
 
-  /// getDWARF_LABELOpcode - Return the opcode of the target's DWARF_LABEL
-  /// instruction if it has one.  This is used by codegen passes that update
-  /// DWARF line number info as they modify the code.
-  virtual unsigned getDWARF_LABELOpcode() const {
-    return 0;
-  }
-  
   /// Return true if the instruction is a register to register move
   /// and leave the source and dest operands in the passed parameters.
   virtual bool isMoveInstr(const MachineInstr& MI,

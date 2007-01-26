@@ -1649,9 +1649,6 @@ bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
   // Get target instruction info.
   const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
-  // Get target version of the debug label opcode.
-  unsigned DWARF_LABELOpc = TII->getDWARF_LABELOpcode();
-  if (!DWARF_LABELOpc) return false;
   
   // Track if change is made.
   bool MadeChange = false;
@@ -1664,7 +1661,7 @@ bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
     // Iterate through instructions.
     for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
       // Is it a debug label.
-      if ((unsigned)I->getOpcode() == DWARF_LABELOpc) {
+      if ((unsigned)I->getOpcode() == TargetInstrInfo::LABEL) {
         // The label ID # is always operand #0, an immediate.
         unsigned NextLabel = I->getOperand(0).getImm();
         

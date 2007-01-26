@@ -2691,6 +2691,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::UNDEF:         return "undef";
   case ISD::MERGE_VALUES:  return "mergevalues";
   case ISD::INLINEASM:     return "inlineasm";
+  case ISD::LABEL:         return "label";
   case ISD::HANDLENODE:    return "handlenode";
   case ISD::FORMAL_ARGUMENTS: return "formal_arguments";
   case ISD::CALL:          return "call";
@@ -2811,7 +2812,6 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   // Debug info
   case ISD::LOCATION: return "location";
   case ISD::DEBUG_LOC: return "debug_loc";
-  case ISD::DEBUG_LABEL: return "debug_label";
 
   case ISD::CONDCODE:
     switch (cast<CondCodeSDNode>(this)->get()) {

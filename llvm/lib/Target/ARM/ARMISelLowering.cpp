@@ -147,7 +147,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   // FIXME - use subtarget debug flags
   if (Subtarget->isTargetDarwin())
-    setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
+    setOperationAction(ISD::LABEL, MVT::Other, Expand);
 
   setOperationAction(ISD::RET,           MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);

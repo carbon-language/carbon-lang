@@ -266,6 +266,10 @@ namespace llvm {
     /// instruction that is an inline asm.
     void printInlineAsm(const MachineInstr *MI) const;
     
+    /// printLabel - This method prints a local label used by debug and
+    /// exception handling tables.
+    void printLabel(const MachineInstr *MI) const;
+
     /// printBasicBlockLabel - This method prints the label for the specified
     /// MachineBasicBlock
     virtual void printBasicBlockLabel(const MachineBasicBlock *MBB,

@@ -207,7 +207,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::LABEL, MVT::Other, Expand);
 
   // RET must be custom lowered, to meet ABI requirements
   setOperationAction(ISD::RET               , MVT::Other, Custom);

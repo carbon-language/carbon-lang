@@ -1029,6 +1029,16 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   O << "\n\t" << TAI->getInlineAsmEnd() << "\n";
 }
 
+/// printLabel - This method prints a local label used by debug and
+/// exception handling tables.
+void AsmPrinter::printLabel(const MachineInstr *MI) const {
+  if (AsmVerbose) O << "\n";
+  O << TAI->getPrivateGlobalPrefix()
+    << "debug_loc"
+    << MI->getOperand(0).getImmedValue()
+    << ":\n";
+}
+
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
 /// instruction, using the specified assembler variant.  Targets should
 /// overried this to format as appropriate.

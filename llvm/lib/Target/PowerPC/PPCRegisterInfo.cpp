@@ -822,7 +822,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (hasInfo) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = DebugInfo->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(PPC::DWARF_LABEL)).addImm(FrameLabelId);
+    BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(FrameLabelId);
   }
   
   // Adjust stack pointer: r1 += NegFrameSize.
@@ -902,7 +902,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     
     // Mark effective beginning of when frame pointer is ready.
     unsigned ReadyLabelId = DebugInfo->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(PPC::DWARF_LABEL)).addImm(ReadyLabelId);
+    BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(ReadyLabelId);
     
     MachineLocation FPDst(HasFP ? (IsPPC64 ? PPC::X31 : PPC::R31) :
                                   (IsPPC64 ? PPC::X1 : PPC::R1));

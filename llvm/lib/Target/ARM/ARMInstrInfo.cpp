@@ -30,10 +30,6 @@ ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
     RI(*this, STI) {
 }
 
-unsigned ARMInstrInfo::getDWARF_LABELOpcode() const {
-  return ARM::DWARF_LABEL;
-}
-
 const TargetRegisterClass *ARMInstrInfo::getPointerRegClass() const {
   return &ARM::GPRRegClass;
 }

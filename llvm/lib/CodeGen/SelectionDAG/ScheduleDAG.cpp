@@ -452,6 +452,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
       assert(0 && "This target-independent node should have been selected!");
     case ISD::EntryToken: // fall thru
     case ISD::TokenFactor:
+    case ISD::LABEL:
       break;
     case ISD::CopyToReg: {
       unsigned InReg;

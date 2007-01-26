@@ -336,6 +336,8 @@ unsigned ARMConstantIslands::GetInstSize(MachineInstr *MI) const {
     // If this machine instr is an inline asm, measure it.
     if (MI->getOpcode() == ARM::INLINEASM)
       return TAI->getInlineAsmLength(MI->getOperand(0).getSymbolName());
+    if (MI->getOpcode() == ARM::LABEL)
+      return 0;
     assert(0 && "Unknown or unset size field for instr!");
     break;
   case ARMII::Size8Bytes: return 8;          // Arm instruction x 2.

@@ -436,6 +436,13 @@ namespace ISD {
     //   Operand #2n+3: A TargetConstant, indicating if the reg is a use/def
     //   Operand #last: Optional, an incoming flag.
     INLINEASM,
+    
+    // LABEL - Represents a label in mid basic block used to track
+    // locations needed for debug and exception handling tables.  This node
+    // returns a chain.
+    //   Operand #0 : input chain.
+    //   Operand #1 : module unique number use to identify the label.
+    LABEL,
 
     // STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a
     // value, the same type as the pointer type for the system, and an output
@@ -502,12 +509,6 @@ namespace ISD {
     // number, then a column then a file id (provided by MachineDebugInfo.) It
     // produces a token chain as output.
     DEBUG_LOC,
-    
-    // DEBUG_LABEL - This node is used to mark a location in the code where a
-    // label should be generated for use by the debug information.  It takes a
-    // token chain as input and then a unique id (provided by MachineDebugInfo.)
-    // It produces a token chain as output.
-    DEBUG_LABEL,
     
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END

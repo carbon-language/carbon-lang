@@ -235,7 +235,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   if (!Subtarget->isTargetDarwin() &&
       !Subtarget->isTargetELF() &&
       !Subtarget->isTargetCygMing())
-    setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
+    setOperationAction(ISD::LABEL, MVT::Other, Expand);
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
