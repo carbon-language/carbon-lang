@@ -21,6 +21,7 @@ namespace llvm {
 
 class FunctionPass;
 class ModulePass;
+class Pass;
 class Function;
 class BasicBlock;
 
@@ -101,13 +102,13 @@ ModulePass *createFunctionResolvingPass();
 /// createFunctionInliningPass - Return a new pass object that uses a heuristic
 /// to inline direct function calls to small functions.
 ///
-ModulePass *createFunctionInliningPass();
+Pass *createFunctionInliningPass();
 
 //===----------------------------------------------------------------------===//
 /// createPruneEHPass - Return a new pass object which transforms invoke
 /// instructions into calls, if the callee can _not_ unwind the stack.
 ///
-ModulePass *createPruneEHPass();
+Pass *createPruneEHPass();
 
 //===----------------------------------------------------------------------===//
 /// createInternalizePass - This pass loops over all of the functions in the
@@ -134,7 +135,7 @@ ModulePass *createDeadArgHackingPass();
 /// createArgumentPromotionPass - This pass promotes "by reference" arguments to
 /// be passed by value.
 ///
-ModulePass *createArgumentPromotionPass();
+Pass *createArgumentPromotionPass();
 
 //===----------------------------------------------------------------------===//
 /// createIPConstantPropagationPass - This pass propagates constants from call

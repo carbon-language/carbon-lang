@@ -58,7 +58,7 @@ namespace {
   RegisterPass<SimpleInliner> X("inline", "Function Integration/Inlining");
 }
 
-ModulePass *llvm::createFunctionInliningPass() { return new SimpleInliner(); }
+Pass *llvm::createFunctionInliningPass() { return new SimpleInliner(); }
 
 // CountCodeReductionForConstant - Figure out an approximation for how many
 // instructions will be constant folded if the specified value is constant.

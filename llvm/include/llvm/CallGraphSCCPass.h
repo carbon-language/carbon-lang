@@ -29,7 +29,7 @@ class CallGraphNode;
 class CallGraph;
 class PMStack;
 
-struct CallGraphSCCPass : public ModulePass {
+struct CallGraphSCCPass : public Pass {
 
   /// doInitialization - This method is called before the SCC's of the program
   /// has been processed, allowing the pass to do initialization as necessary.

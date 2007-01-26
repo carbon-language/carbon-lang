@@ -72,7 +72,7 @@ namespace {
                                "Promote 'by reference' arguments to scalars");
 }
 
-ModulePass *llvm::createArgumentPromotionPass() {
+Pass *llvm::createArgumentPromotionPass() {
   return new ArgPromotion();
 }
 
