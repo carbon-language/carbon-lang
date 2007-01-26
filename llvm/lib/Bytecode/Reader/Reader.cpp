@@ -2014,6 +2014,13 @@ void BytecodeReader::ParseModuleGlobalInfo() {
   if (Handler)
     Handler->handleTargetTriple(triple);
   
+  // Read the data layout string and place into the module.
+  std::string datalayout = read_str();
+  TheModule->setDataLayout(datalayout);
+  // FIXME: Implement
+  // if (Handler)
+    // Handler->handleDataLayout(datalayout);
+
   if (At != BlockEnd) {
     // If the file has section info in it, read the section names now.
     unsigned NumSections = read_vbr_uint();
@@ -2045,31 +2052,14 @@ void BytecodeReader::ParseModuleGlobalInfo() {
 /// Parse the version information and decode it by setting flags on the
 /// Reader that enable backward compatibility of the reader.
 void BytecodeReader::ParseVersionInfo() {
-  unsigned Version = read_vbr_uint();
-
-  // Unpack version number: low four bits are for flags, top bits = version
-  Module::Endianness  Endianness;
-  Module::PointerSize PointerSize;
-  Endianness  = (Version & 1) ? Module::BigEndian : Module::LittleEndian;
-  PointerSize = (Version & 2) ? Module::Pointer64 : Module::Pointer32;
-
-  bool hasNoEndianness = Version & 4;
-  bool hasNoPointerSize = Version & 8;
-
-  RevisionNum = Version >> 4;
+  unsigned RevisionNum = read_vbr_uint();
 
   // We don't provide backwards compatibility in the Reader any more. To
   // upgrade, the user should use llvm-upgrade.
   if (RevisionNum < 7)
     error("Bytecode formats < 7 are no longer supported. Use llvm-upgrade.");
 
-  if (hasNoEndianness) Endianness  = Module::AnyEndianness;
-  if (hasNoPointerSize) PointerSize = Module::AnyPointerSize;
-
-  TheModule->setEndianness(Endianness);
-  TheModule->setPointerSize(PointerSize);
-
-  if (Handler) Handler->handleVersionInfo(RevisionNum, Endianness, PointerSize);
+  if (Handler) Handler->handleVersionInfo(RevisionNum);
 }
 
 /// Parse a whole module.

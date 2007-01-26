@@ -142,14 +142,10 @@ public:
   }
 
   virtual void handleVersionInfo(
-    unsigned char RevisionNum,        ///< Byte code revision number
-    Module::Endianness Endianness,    ///< Endianness indicator
-    Module::PointerSize PointerSize   ///< PointerSize indicator
+    unsigned char RevisionNum        ///< Byte code revision number
   ) {
     if (os)
-      *os << "    RevisionNum: " << int(RevisionNum)
-         << " Endianness: " << Endianness
-         << " PointerSize: " << PointerSize << "\n";
+      *os << "    RevisionNum: " << int(RevisionNum) << "\n";
     bca.version = RevisionNum;
   }
 

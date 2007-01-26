@@ -813,17 +813,8 @@ BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
   // Emit the top level CLASS block.
   BytecodeBlock ModuleBlock(BytecodeFormat::ModuleBlockID, *this, false, true);
 
-  bool isBigEndian      = M->getEndianness() == Module::BigEndian;
-  bool hasLongPointers  = M->getPointerSize() == Module::Pointer64;
-  bool hasNoEndianness  = M->getEndianness() == Module::AnyEndianness;
-  bool hasNoPointerSize = M->getPointerSize() == Module::AnyPointerSize;
-
-  // Output the version identifier and other information.
-  unsigned Version = (BCVersionNum << 4) |
-                     (unsigned)isBigEndian | (hasLongPointers << 1) |
-                     (hasNoEndianness << 2) |
-                     (hasNoPointerSize << 3);
-  output_vbr(Version);
+  // Output the version identifier
+  output_vbr(BCVersionNum);
 
   // The Global type plane comes first
   {
@@ -1090,6 +1081,9 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
   // Output the target triple from the module
   output(M->getTargetTriple());
+
+  // Output the data layout from the module
+  output(M->getDataLayout());
   
   // Emit the table of section names.
   output_vbr((unsigned)SectionNames.size());
