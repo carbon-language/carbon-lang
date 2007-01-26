@@ -878,7 +878,7 @@ public:
     EmitReference(Label.Tag, Label.Number);
   }
   void EmitReference(const char *Tag, unsigned Number) const {
-    if (TAI->getAddressSize() == 4)
+    if (TAI->getAddressSize() == sizeof(int32_t))
       O << TAI->getData32bitsDirective();
     else
       O << TAI->getData64bitsDirective();
@@ -886,7 +886,7 @@ public:
     PrintLabelName(Tag, Number);
   }
   void EmitReference(const std::string &Name) const {
-    if (TAI->getAddressSize() == 4)
+    if (TAI->getAddressSize() == sizeof(int32_t))
       O << TAI->getData32bitsDirective();
     else
       O << TAI->getData64bitsDirective();
@@ -1208,7 +1208,7 @@ private:
   ///
   void AddType(DIE *Entity, TypeDesc *TyDesc, CompileUnit *Unit) {
     if (!TyDesc) {
-      AddBasicType(Entity, Unit, "", DW_ATE_signed, 4);
+      AddBasicType(Entity, Unit, "", DW_ATE_signed, sizeof(int32_t));
     } else {
       // Check for pre-existence.
       DIEntry *&Slot = Unit->getDIEntrySlotFor(TyDesc);
@@ -1290,7 +1290,8 @@ private:
         Size = 0;
         
         // Construct an anonymous type for index type.
-        DIE *IndexTy = ConstructBasicType(Unit, "", DW_ATE_signed, 4);
+        DIE *IndexTy = ConstructBasicType(Unit, "", DW_ATE_signed,
+                                          sizeof(int32_t));
       
         // Add subranges to array type.
         for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
