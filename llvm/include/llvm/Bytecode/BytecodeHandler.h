@@ -96,9 +96,7 @@ public:
   /// read.
   /// @brief Handle the bytecode prolog
   virtual void handleVersionInfo(
-    unsigned char RevisionNum,        ///< Byte code revision number
-    Module::Endianness Endianness,    ///< Endianness indicator
-    Module::PointerSize PointerSize   ///< PointerSize indicator
+    unsigned char RevisionNum        ///< Byte code revision number
   ) {}
 
   /// This method is called at the start of a module globals block which
