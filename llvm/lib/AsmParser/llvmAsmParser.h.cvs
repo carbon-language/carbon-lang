@@ -1,7 +1,7 @@
-/* A Bison parser, made from /usr/home/jeffc/llvm/lib/AsmParser/llvmAsmParser.y, by GNU bison 1.75.  */
+/* A Bison parser, made by GNU Bison 2.1.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,16 +15,13 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, when this file is copied by Bison into a
    Bison output file, you may use that output file without restriction.
    This special exception was added by the Free Software Foundation
    in version 1.24 of Bison.  */
-
-#ifndef BISON_LLVMASMPARSER_TAB_H
-# define BISON_LLVMASMPARSER_TAB_H
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -34,8 +31,8 @@
    enum yytokentype {
      ESINT64VAL = 258,
      EUINT64VAL = 259,
-     SINTVAL = 260,
-     UINTVAL = 261,
+     LOCALVAL_ID = 260,
+     GLOBALVAL_ID = 261,
      FPVAL = 262,
      VOID = 263,
      INTTYPE = 264,
@@ -43,131 +40,130 @@
      DOUBLE = 266,
      LABEL = 267,
      TYPE = 268,
-     VAR_ID = 269,
-     LABELSTR = 270,
-     STRINGCONSTANT = 271,
-     IMPLEMENTATION = 272,
-     ZEROINITIALIZER = 273,
-     TRUETOK = 274,
-     FALSETOK = 275,
-     BEGINTOK = 276,
-     ENDTOK = 277,
-     DECLARE = 278,
-     DEFINE = 279,
-     GLOBAL = 280,
-     CONSTANT = 281,
-     SECTION = 282,
-     VOLATILE = 283,
-     TO = 284,
-     DOTDOTDOT = 285,
-     NULL_TOK = 286,
-     UNDEF = 287,
-     INTERNAL = 288,
-     LINKONCE = 289,
-     WEAK = 290,
-     APPENDING = 291,
-     DLLIMPORT = 292,
-     DLLEXPORT = 293,
-     EXTERN_WEAK = 294,
-     OPAQUE = 295,
-     EXTERNAL = 296,
-     TARGET = 297,
-     TRIPLE = 298,
-     ENDIAN = 299,
-     POINTERSIZE = 300,
-     LITTLE = 301,
-     BIG = 302,
-     ALIGN = 303,
-     DEPLIBS = 304,
-     CALL = 305,
-     TAIL = 306,
-     ASM_TOK = 307,
-     MODULE = 308,
-     SIDEEFFECT = 309,
-     CC_TOK = 310,
-     CCC_TOK = 311,
-     CSRETCC_TOK = 312,
-     FASTCC_TOK = 313,
-     COLDCC_TOK = 314,
-     X86_STDCALLCC_TOK = 315,
-     X86_FASTCALLCC_TOK = 316,
-     DATALAYOUT = 317,
-     RET = 318,
-     BR = 319,
-     SWITCH = 320,
-     INVOKE = 321,
-     UNWIND = 322,
-     UNREACHABLE = 323,
-     ADD = 324,
-     SUB = 325,
-     MUL = 326,
-     UDIV = 327,
-     SDIV = 328,
-     FDIV = 329,
-     UREM = 330,
-     SREM = 331,
-     FREM = 332,
-     AND = 333,
-     OR = 334,
-     XOR = 335,
-     ICMP = 336,
-     FCMP = 337,
-     EQ = 338,
-     NE = 339,
-     SLT = 340,
-     SGT = 341,
-     SLE = 342,
-     SGE = 343,
-     ULT = 344,
-     UGT = 345,
-     ULE = 346,
-     UGE = 347,
-     OEQ = 348,
-     ONE = 349,
-     OLT = 350,
-     OGT = 351,
-     OLE = 352,
-     OGE = 353,
-     ORD = 354,
-     UNO = 355,
-     UEQ = 356,
-     UNE = 357,
-     MALLOC = 358,
-     ALLOCA = 359,
-     FREE = 360,
-     LOAD = 361,
-     STORE = 362,
-     GETELEMENTPTR = 363,
-     TRUNC = 364,
-     ZEXT = 365,
-     SEXT = 366,
-     FPTRUNC = 367,
-     FPEXT = 368,
-     BITCAST = 369,
-     UITOFP = 370,
-     SITOFP = 371,
-     FPTOUI = 372,
-     FPTOSI = 373,
-     INTTOPTR = 374,
-     PTRTOINT = 375,
-     PHI_TOK = 376,
-     SELECT = 377,
-     SHL = 378,
-     LSHR = 379,
-     ASHR = 380,
-     VAARG = 381,
-     EXTRACTELEMENT = 382,
-     INSERTELEMENT = 383,
-     SHUFFLEVECTOR = 384,
-     NORETURN = 385,
-     DEFAULT = 386,
-     HIDDEN = 387
+     LOCALVAR = 269,
+     GLOBALVAR = 270,
+     LABELSTR = 271,
+     STRINGCONSTANT = 272,
+     ATSTRINGCONSTANT = 273,
+     IMPLEMENTATION = 274,
+     ZEROINITIALIZER = 275,
+     TRUETOK = 276,
+     FALSETOK = 277,
+     BEGINTOK = 278,
+     ENDTOK = 279,
+     DECLARE = 280,
+     DEFINE = 281,
+     GLOBAL = 282,
+     CONSTANT = 283,
+     SECTION = 284,
+     VOLATILE = 285,
+     TO = 286,
+     DOTDOTDOT = 287,
+     NULL_TOK = 288,
+     UNDEF = 289,
+     INTERNAL = 290,
+     LINKONCE = 291,
+     WEAK = 292,
+     APPENDING = 293,
+     DLLIMPORT = 294,
+     DLLEXPORT = 295,
+     EXTERN_WEAK = 296,
+     OPAQUE = 297,
+     EXTERNAL = 298,
+     TARGET = 299,
+     TRIPLE = 300,
+     ALIGN = 301,
+     DEPLIBS = 302,
+     CALL = 303,
+     TAIL = 304,
+     ASM_TOK = 305,
+     MODULE = 306,
+     SIDEEFFECT = 307,
+     CC_TOK = 308,
+     CCC_TOK = 309,
+     CSRETCC_TOK = 310,
+     FASTCC_TOK = 311,
+     COLDCC_TOK = 312,
+     X86_STDCALLCC_TOK = 313,
+     X86_FASTCALLCC_TOK = 314,
+     DATALAYOUT = 315,
+     RET = 316,
+     BR = 317,
+     SWITCH = 318,
+     INVOKE = 319,
+     UNWIND = 320,
+     UNREACHABLE = 321,
+     ADD = 322,
+     SUB = 323,
+     MUL = 324,
+     UDIV = 325,
+     SDIV = 326,
+     FDIV = 327,
+     UREM = 328,
+     SREM = 329,
+     FREM = 330,
+     AND = 331,
+     OR = 332,
+     XOR = 333,
+     ICMP = 334,
+     FCMP = 335,
+     EQ = 336,
+     NE = 337,
+     SLT = 338,
+     SGT = 339,
+     SLE = 340,
+     SGE = 341,
+     ULT = 342,
+     UGT = 343,
+     ULE = 344,
+     UGE = 345,
+     OEQ = 346,
+     ONE = 347,
+     OLT = 348,
+     OGT = 349,
+     OLE = 350,
+     OGE = 351,
+     ORD = 352,
+     UNO = 353,
+     UEQ = 354,
+     UNE = 355,
+     MALLOC = 356,
+     ALLOCA = 357,
+     FREE = 358,
+     LOAD = 359,
+     STORE = 360,
+     GETELEMENTPTR = 361,
+     TRUNC = 362,
+     ZEXT = 363,
+     SEXT = 364,
+     FPTRUNC = 365,
+     FPEXT = 366,
+     BITCAST = 367,
+     UITOFP = 368,
+     SITOFP = 369,
+     FPTOUI = 370,
+     FPTOSI = 371,
+     INTTOPTR = 372,
+     PTRTOINT = 373,
+     PHI_TOK = 374,
+     SELECT = 375,
+     SHL = 376,
+     LSHR = 377,
+     ASHR = 378,
+     VAARG = 379,
+     EXTRACTELEMENT = 380,
+     INSERTELEMENT = 381,
+     SHUFFLEVECTOR = 382,
+     NORETURN = 383,
+     DEFAULT = 384,
+     HIDDEN = 385
    };
 #endif
+/* Tokens.  */
 #define ESINT64VAL 258
 #define EUINT64VAL 259
-#define SINTVAL 260
-#define UINTVAL 261
+#define LOCALVAL_ID 260
+#define GLOBALVAL_ID 261
 #define FPVAL 262
 #define VOID 263
 #define INTTYPE 264
@@ -175,132 +171,130 @@
 #define DOUBLE 266
 #define LABEL 267
 #define TYPE 268
-#define VAR_ID 269
-#define LABELSTR 270
-#define STRINGCONSTANT 271
-#define IMPLEMENTATION 272
-#define ZEROINITIALIZER 273
-#define TRUETOK 274
-#define FALSETOK 275
-#define BEGINTOK 276
-#define ENDTOK 277
-#define DECLARE 278
-#define DEFINE 279
-#define GLOBAL 280
-#define CONSTANT 281
-#define SECTION 282
-#define VOLATILE 283
-#define TO 284
-#define DOTDOTDOT 285
-#define NULL_TOK 286
-#define UNDEF 287
-#define INTERNAL 288
-#define LINKONCE 289
-#define WEAK 290
-#define APPENDING 291
-#define DLLIMPORT 292
-#define DLLEXPORT 293
-#define EXTERN_WEAK 294
-#define OPAQUE 295
-#define EXTERNAL 296
-#define TARGET 297
-#define TRIPLE 298
-#define ENDIAN 299
-#define POINTERSIZE 300
-#define LITTLE 301
-#define BIG 302
-#define ALIGN 303
-#define DEPLIBS 304
-#define CALL 305
-#define TAIL 306
-#define ASM_TOK 307
-#define MODULE 308
-#define SIDEEFFECT 309
-#define CC_TOK 310
-#define CCC_TOK 311
-#define CSRETCC_TOK 312
-#define FASTCC_TOK 313
-#define COLDCC_TOK 314
-#define X86_STDCALLCC_TOK 315
-#define X86_FASTCALLCC_TOK 316
-#define DATALAYOUT 317
-#define RET 318
-#define BR 319
-#define SWITCH 320
-#define INVOKE 321
-#define UNWIND 322
-#define UNREACHABLE 323
-#define ADD 324
-#define SUB 325
-#define MUL 326
-#define UDIV 327
-#define SDIV 328
-#define FDIV 329
-#define UREM 330
-#define SREM 331
-#define FREM 332
-#define AND 333
-#define OR 334
-#define XOR 335
-#define ICMP 336
-#define FCMP 337
-#define EQ 338
-#define NE 339
-#define SLT 340
-#define SGT 341
-#define SLE 342
-#define SGE 343
-#define ULT 344
-#define UGT 345
-#define ULE 346
-#define UGE 347
-#define OEQ 348
-#define ONE 349
-#define OLT 350
-#define OGT 351
-#define OLE 352
-#define OGE 353
-#define ORD 354
-#define UNO 355
-#define UEQ 356
-#define UNE 357
-#define MALLOC 358
-#define ALLOCA 359
-#define FREE 360
-#define LOAD 361
-#define STORE 362
-#define GETELEMENTPTR 363
-#define TRUNC 364
-#define ZEXT 365
-#define SEXT 366
-#define FPTRUNC 367
-#define FPEXT 368
-#define BITCAST 369
-#define UITOFP 370
-#define SITOFP 371
-#define FPTOUI 372
-#define FPTOSI 373
-#define INTTOPTR 374
-#define PTRTOINT 375
-#define PHI_TOK 376
-#define SELECT 377
-#define SHL 378
-#define LSHR 379
-#define ASHR 380
-#define VAARG 381
-#define EXTRACTELEMENT 382
-#define INSERTELEMENT 383
-#define SHUFFLEVECTOR 384
-#define NORETURN 385
-#define DEFAULT 386
-#define HIDDEN 387
+#define LOCALVAR 269
+#define GLOBALVAR 270
+#define LABELSTR 271
+#define STRINGCONSTANT 272
+#define ATSTRINGCONSTANT 273
+#define IMPLEMENTATION 274
+#define ZEROINITIALIZER 275
+#define TRUETOK 276
+#define FALSETOK 277
+#define BEGINTOK 278
+#define ENDTOK 279
+#define DECLARE 280
+#define DEFINE 281
+#define GLOBAL 282
+#define CONSTANT 283
+#define SECTION 284
+#define VOLATILE 285
+#define TO 286
+#define DOTDOTDOT 287
+#define NULL_TOK 288
+#define UNDEF 289
+#define INTERNAL 290
+#define LINKONCE 291
+#define WEAK 292
+#define APPENDING 293
+#define DLLIMPORT 294
+#define DLLEXPORT 295
+#define EXTERN_WEAK 296
+#define OPAQUE 297
+#define EXTERNAL 298
+#define TARGET 299
+#define TRIPLE 300
+#define ALIGN 301
+#define DEPLIBS 302
+#define CALL 303
+#define TAIL 304
+#define ASM_TOK 305
+#define MODULE 306
+#define SIDEEFFECT 307
+#define CC_TOK 308
+#define CCC_TOK 309
+#define CSRETCC_TOK 310
+#define FASTCC_TOK 311
+#define COLDCC_TOK 312
+#define X86_STDCALLCC_TOK 313
+#define X86_FASTCALLCC_TOK 314
+#define DATALAYOUT 315
+#define RET 316
+#define BR 317
+#define SWITCH 318
+#define INVOKE 319
+#define UNWIND 320
+#define UNREACHABLE 321
+#define ADD 322
+#define SUB 323
+#define MUL 324
+#define UDIV 325
+#define SDIV 326
+#define FDIV 327
+#define UREM 328
+#define SREM 329
+#define FREM 330
+#define AND 331
+#define OR 332
+#define XOR 333
+#define ICMP 334
+#define FCMP 335
+#define EQ 336
+#define NE 337
+#define SLT 338
+#define SGT 339
+#define SLE 340
+#define SGE 341
+#define ULT 342
+#define UGT 343
+#define ULE 344
+#define UGE 345
+#define OEQ 346
+#define ONE 347
+#define OLT 348
+#define OGT 349
+#define OLE 350
+#define OGE 351
+#define ORD 352
+#define UNO 353
+#define UEQ 354
+#define UNE 355
+#define MALLOC 356
+#define ALLOCA 357
+#define FREE 358
+#define LOAD 359
+#define STORE 360
+#define GETELEMENTPTR 361
+#define TRUNC 362
+#define ZEXT 363
+#define SEXT 364
+#define FPTRUNC 365
+#define FPEXT 366
+#define BITCAST 367
+#define UITOFP 368
+#define SITOFP 369
+#define FPTOUI 370
+#define FPTOSI 371
+#define INTTOPTR 372
+#define PTRTOINT 373
+#define PHI_TOK 374
+#define SELECT 375
+#define SHL 376
+#define LSHR 377
+#define ASHR 378
+#define VAARG 379
+#define EXTRACTELEMENT 380
+#define INSERTELEMENT 381
+#define SHUFFLEVECTOR 382
+#define NORETURN 383
+#define DEFAULT 384
+#define HIDDEN 385
 
 
 
 
-#ifndef YYSTYPE
-#line 883 "/usr/home/jeffc/llvm/lib/AsmParser/llvmAsmParser.y"
-typedef union {
+#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
+#line 885 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
+typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
   llvm::BasicBlock                       *BasicBlockVal;
@@ -342,17 +336,17 @@ typedef union {
   llvm::Instruction::MemoryOps      MemOpVal;
   llvm::Instruction::CastOps        CastOpVal;
   llvm::Instruction::OtherOps       OtherOpVal;
-  llvm::Module::Endianness          Endianness;
   llvm::ICmpInst::Predicate         IPredicate;
   llvm::FCmpInst::Predicate         FPredicate;
-} yystype;
-/* Line 1237 of /usr/local/share/bison/yacc.c.  */
-#line 351 "llvmAsmParser.tab.h"
-# define YYSTYPE yystype
+} YYSTYPE;
+/* Line 1447 of yacc.c.  */
+#line 344 "llvmAsmParser.tab.h"
+# define yystype YYSTYPE /* obsolescent; will be withdrawn */
+# define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 extern YYSTYPE llvmAsmlval;
 
 
-#endif /* not BISON_LLVMASMPARSER_TAB_H */
 
