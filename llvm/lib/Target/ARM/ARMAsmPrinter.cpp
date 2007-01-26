@@ -121,7 +121,8 @@ namespace {
       printDataDirective(MCPV->getType());
 
       ARMConstantPoolValue *ACPV = (ARMConstantPoolValue*)MCPV;
-      std::string Name = Mang->getValueName(ACPV->getGV());
+      GlobalValue *GV = ACPV->getGV();
+      std::string Name = Mang->getValueName(GV);
       if (ACPV->isNonLazyPointer()) {
         GVNonLazyPtrs.insert(Name);
         O << TAI->getPrivateGlobalPrefix() << Name << "$non_lazy_ptr";
@@ -132,6 +133,11 @@ namespace {
           << utostr(ACPV->getLabelId())
           << "+" << (unsigned)ACPV->getPCAdjustment() << ")";
       O << "\n";
+
+      // If the constant pool value is a extern weak symbol, remember to emit
+      // the weak reference.
+      if (GV->hasExternalWeakLinkage())
+        ExtWeakSymbols.insert(GV);
     }
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
