@@ -122,9 +122,7 @@ FunctionPass *llvm::createARMConstantIslandPass() {
 }
 
 bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
-  // If there are no constants, there is nothing to do.
   MachineConstantPool &MCP = *Fn.getConstantPool();
-  if (MCP.isEmpty()) return false;
   
   TII = Fn.getTarget().getInstrInfo();
   TAI = Fn.getTarget().getTargetAsmInfo();
@@ -136,7 +134,8 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   // Perform the initial placement of the constant pool entries.  To start with,
   // we put them all at the end of the function.
   std::vector<MachineInstr*> CPEMIs;
-  DoInitialPlacement(Fn, CPEMIs);
+  if (!MCP.isEmpty())
+    DoInitialPlacement(Fn, CPEMIs);
   
   /// The next UID to take is the first unused one.
   NextUID = CPEMIs.size();
