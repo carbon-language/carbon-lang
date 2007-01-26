@@ -107,16 +107,6 @@ Module::Endianness Module::getEndianness() const {
   return ret;
 }
 
-void Module::setEndianness(Endianness E) {
-  if (!DataLayout.empty() && E != AnyEndianness)
-    DataLayout += "-";
-  
-  if (E == LittleEndian)
-    DataLayout += "e";
-  else if (E == BigEndian)
-    DataLayout += "E";
-}
-
 /// Target Pointer Size information...
 Module::PointerSize Module::getPointerSize() const {
   std::string temp = DataLayout;
@@ -136,16 +126,6 @@ Module::PointerSize Module::getPointerSize() const {
   }
   
   return ret;
-}
-
-void Module::setPointerSize(PointerSize PS) {
-  if (!DataLayout.empty() && PS != AnyPointerSize)
-    DataLayout += "-";
-  
-  if (PS == Pointer32)
-    DataLayout += "p:32:32";
-  else if (PS == Pointer64)
-    DataLayout += "p:64:64";
 }
 
 //===----------------------------------------------------------------------===//
