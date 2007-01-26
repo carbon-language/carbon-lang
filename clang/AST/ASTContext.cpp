@@ -258,18 +258,11 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
 /// getTypedefType - Return the unique reference to the type for the
 /// specified typename decl.
 TypeRef ASTContext::getTypedefType(TypedefDecl *Decl) {
-  // FIXME: This is obviously braindead!
-  // Unique TypedefDecl, to guarantee there is only one TypedefType.
-  ++NumSlowLookups;
-  for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    if (TypedefType *Ty = dyn_cast<TypedefType>(Types[i]))
-      if (Ty->getDecl() == Decl)
-        return Types[i];
-
-  // FIXME: does this lose qualifiers from the typedef??
+  if (Decl->TypeForDecl) return Decl->TypeForDecl;
   
+  // FIXME: does this lose qualifiers from the typedef??
   Type *Canonical = Decl->getUnderlyingType().getTypePtr();
-  Types.push_back(new TypedefType(Decl, Canonical));
+  Types.push_back(Decl->TypeForDecl = new TypedefType(Decl, Canonical));
   return Types.back();
 }
 

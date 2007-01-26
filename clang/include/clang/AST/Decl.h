@@ -96,10 +96,15 @@ public:
 class TypedefDecl : public Decl {
   /// UnderlyingType - This is the type the typedef is set to.
   TypeRef UnderlyingType;
+  
+  /// TypeForDecl - This indicates the Type object that represents this
+  /// TypedefDecl.  It is a cache maintained by ASTContext::getTypedefType.
+  Type *TypeForDecl;
+  friend class ASTContext;
 public:
   // FIXME: Remove Declarator argument.
   TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
-    : Decl(Typedef, L, Id), UnderlyingType(T) {}
+    : Decl(Typedef, L, Id), UnderlyingType(T), TypeForDecl(0) {}
 
   TypeRef getUnderlyingType() const { return UnderlyingType; }
 
