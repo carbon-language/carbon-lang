@@ -1,28 +1,28 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > %t1.ll
+; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-void "NewCasts" (short %x) {
-  %a = zext short %x to int
-  %b = sext short %x to uint
-  %c = trunc short %x to ubyte
-  %d = uitofp short %x to float
-  %e = sitofp short %x to double
-  %f = fptoui float %d to short
-  %g = fptosi double %e to short
+define void @"NewCasts" (i16 %x) {
+  %a = zext i16 %x to i32
+  %b = sext i16 %x to i32
+  %c = trunc i16 %x to i8
+  %d = uitofp i16 %x to float
+  %e = sitofp i16 %x to double
+  %f = fptoui float %d to i16
+  %g = fptosi double %e to i16
   %i = fpext float %d to double
   %j = fptrunc double %i to float
-  %k = bitcast int %a to float
-  %l = inttoptr short %x to int*
-  %m = ptrtoint int* %l to long
+  %k = bitcast i32 %a to float
+  %l = inttoptr i16 %x to i32*
+  %m = ptrtoint i32* %l to i64
   ret void
 }
 
 
-ushort "ZExtConst" () {
-  ret ushort trunc ( uint zext ( short 42 to uint) to ushort )
+define i16 @"ZExtConst" () {
+  ret i16 trunc ( i32 zext ( i16 42 to i32) to i16 )
 }
 
-short "SExtConst" () {
-  ret short trunc (int sext (ushort 42 to int) to short )
+define i16 @"SExtConst" () {
+  ret i16 trunc (i32 sext (i16 42 to i32) to i16 )
 }

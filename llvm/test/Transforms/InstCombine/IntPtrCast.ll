@@ -1,4 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
+target endian = little
 target pointersize = 32
 
 int *%test(int *%P) {

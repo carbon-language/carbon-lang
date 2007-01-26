@@ -6,24 +6,24 @@
 
 implementation
 
-define void "invoke"(%FunTy *%x)
+define void @"invoke"(%FunTy *%x)
 begin
 	%foo = call %FunTy* %x(i31 123)
 	ret void
 end
 
-define i31 "main"(i31 %argc, i8 **%argv, i8 **%envp)
+define i31 @"main"(i31 %argc, i8 **%argv, i8 **%envp)
 begin
-        %retval = call i31 (i31) *%test(i31 %argc)
+        %retval = call i31 (i31) *@test(i31 %argc)
         %two    = add i31 %retval, %retval
-	%retval2 = call i31 %test(i31 %argc)
+	%retval2 = call i31 @test(i31 %argc)
 
 	%two2 = add i31 %two, %retval2
-	call void %invoke (%FunTy* %test)
+	call void @invoke (%FunTy* @test)
         ret i31 %two2
 end
 
-define i31 "test"(i31 %i0)
+define i31 @"test"(i31 %i0)
 begin
     ret i31 %i0
 end

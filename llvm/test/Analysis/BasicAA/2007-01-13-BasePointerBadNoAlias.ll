@@ -3,8 +3,6 @@
 ; PR1109
 
 target datalayout = "e-p:32:32"
-target endian = little
-target pointersize = 32
 target triple = "i686-apple-darwin8"
 	%struct.CONSTRAINT = type { i32, i32, i32, i32 }
 	%struct.FILE_POS = type { i8, i8, i16, i32 }
@@ -21,7 +19,7 @@ target triple = "i686-apple-darwin8"
 
 implementation   ; Functions:
 
-define i32 %test(%struct.closure_type* %tmp18169) {
+define i32 @test(%struct.closure_type* %tmp18169) {
 	%tmp18174 = getelementptr %struct.closure_type* %tmp18169, i32 0, i32 4, i32 0, i32 0		; <i32*> [#uses=2]
 	%tmp18269 = bitcast i32* %tmp18174  to %struct.STYLE*		; <%struct.STYLE*> [#uses=1]
 	%A = load i32* %tmp18174		; <i32> [#uses=1]

@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwin
 
-define void %test(i8* %P) {
+define void @test(i8* %P) {
 	%W = load i8* %P
 	%X = shl i8 %W, i8 1
 	%Y = add i8 %X, 2
@@ -10,7 +10,7 @@ define void %test(i8* %P) {
 	ret void
 }
 
-define i16 %test2(i16 zext %crc) zext { 
+define i16 @test2(i16 zext %crc) zext { 
         ; No and's should be needed for the i16s here.
         %tmp.1 = lshr i16 %crc, i8 1
         %tmp.7 = xor i16 %tmp.1, 40961

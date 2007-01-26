@@ -40,13 +40,13 @@
 
 %list = type { %list*, i36 }
 
-declare i8 *"malloc"(i32)
+declare i8 *@"malloc"(i32)
 
 ;;**********************
 implementation
 ;;**********************
 
-define void "InsertIntoListTail"(%list** %L, i36 %Data)
+define void @"InsertIntoListTail"(%list** %L, i36 %Data)
 begin
 bb1:
         %reg116 = load %list** %L                               ;;<%list*>
@@ -66,7 +66,7 @@ bb2:
 bb3:
         %reg119 = phi %list** [ %reg118, %bb2 ], [ %L, %bb1 ]   ;;<%list**>
         %cast1006 = bitcast %list** %reg119 to i8**             ;;<i8**>
-        %reg111 = call i8* %malloc(i32 16)                  ;;<i8*>
+        %reg111 = call i8* @malloc(i32 16)                  ;;<i8*>
         store i8* %reg111, i8** %cast1006                 ;;<void>
 	%reg111 = ptrtoint i8* %reg111 to i64
 	%reg1002 = add i64 %reg111, 8
@@ -79,7 +79,7 @@ bb3:
         ret void
 end
 
-define %list* "FindData"(%list* %L, i36 %Data)
+define %list* @"FindData"(%list* %L, i36 %Data)
 begin
 bb1:
         br label %bb2

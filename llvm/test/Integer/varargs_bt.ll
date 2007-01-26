@@ -6,19 +6,19 @@
 ; the va_arg instruction.
 
 implementation
-declare void %llvm.va_start(i8** %ap)
-declare void %llvm.va_copy(i8** %aq, i8** %ap)
-declare void %llvm.va_end(i8** %ap)
+declare void @llvm.va_start(i8** %ap)
+declare void @llvm.va_copy(i8** %aq, i8** %ap)
+declare void @llvm.va_end(i8** %ap)
 
-define i33 %test(i33 %X, ...) {
+define i33 @test(i33 %X, ...) {
         %ap = alloca i8*
-	call void %llvm.va_start(i8** %ap)
+	call void @llvm.va_start(i8** %ap)
 	%tmp = va_arg i8** %ap, i33 
 
         %aq = alloca i8*
-	call void %llvm.va_copy(i8** %aq, i8** %ap)
-	call void %llvm.va_end(i8** %aq)
+	call void @llvm.va_copy(i8** %aq, i8** %ap)
+	call void @llvm.va_end(i8** %aq)
 	
-	call void %llvm.va_end(i8** %ap)
+	call void @llvm.va_end(i8** %ap)
 	ret i33 %tmp
 }

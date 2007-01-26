@@ -4,7 +4,7 @@
 
 implementation
 
-define i31 "simpleArith"(i31 %i0, i31 %j0)
+define i31 @"simpleArith"(i31 %i0, i31 %j0)
 begin
 	%t1 = add i31 %i0, %j0
 	%t2 = sub i31 %i0, %j0

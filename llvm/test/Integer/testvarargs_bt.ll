@@ -4,11 +4,11 @@
 
 implementation
 
-declare i31 "printf"(i8*, ...)   ;; Prototype for: i32 __builtin_printf(const char*, ...)
+declare i31 @"printf"(i8*, ...)   ;; Prototype for: i32 __builtin_printf(const char*, ...)
 
-define i31 "testvarar"()
+define i31 @"testvarar"()
 begin
-	call i31(i8*, ...) *%printf(i8 * null, i31 12, i8 42);
+	call i31(i8*, ...) *@printf(i8 * null, i31 12, i8 42);
 	ret i31 %0
 end
 

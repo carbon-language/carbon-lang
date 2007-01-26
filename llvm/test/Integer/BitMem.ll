@@ -2,19 +2,15 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-
-declare void "foo"()
-
+declare void @"foo"()
 
 implementation
 
 ; foo test basic arith operations
-define void "foo"()
-begin
+define void @"foo"() {
 	%t1 = malloc i31, i32 4
         %t2 = malloc i31, i32 7, align 1024
         %t3 = malloc [4 x i15]
-
 
         %idx = getelementptr [4 x i15]* %t3, i64 0, i64 2
         store i15 -123, i15* %idx
@@ -31,4 +27,4 @@ begin
 
         free i31* %t5
 	ret void
-end
+}

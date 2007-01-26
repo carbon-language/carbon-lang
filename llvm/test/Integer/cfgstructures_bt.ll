@@ -7,7 +7,7 @@ implementation
 ;; This is an irreducible flow graph
 
 
-define void "irreducible"(i1 %cond)
+define void @"irreducible"(i1 %cond)
 begin
 	br i1 %cond, label %X, label %Y
 
@@ -19,7 +19,7 @@ end
 
 ;; This is a pair of loops that share the same header
 
-define void "sharedheader"(i1 %cond)
+define void @"sharedheader"(i1 %cond)
 begin
 	br label %A
 A:
@@ -32,7 +32,7 @@ Y:
 end
 
 ;; This is a simple nested loop
-define void "nested"(i1 %cond1, i1 %cond2, i1 %cond3)
+define void @"nested"(i1 %cond1, i1 %cond2, i1 %cond3)
 begin
 	br label %Loop1
 

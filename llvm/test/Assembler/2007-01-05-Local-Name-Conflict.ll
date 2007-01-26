@@ -1,5 +1,4 @@
 ; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
-; XFAIL: *
 
 implementation   ; Functions:
 

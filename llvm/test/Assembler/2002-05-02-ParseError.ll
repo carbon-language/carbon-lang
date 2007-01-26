@@ -5,6 +5,6 @@
 
 %T = type i32 *
 
-define %T %test() {
+define %T @test() {
 	ret %T null
 }

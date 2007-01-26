@@ -3,12 +3,12 @@
 ; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic | grep piclabel | wc -l | grep 3 &&
 ; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic | grep PLT | wc -l | grep 1
 
-define void %bar() {
+define void @bar() {
 entry:
-    call void(...)* %foo()
+    call void(...)* @foo()
     br label %return
 return:
     ret void
 }
 
-declare void %foo(...)
+declare void @foo(...)

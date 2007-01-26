@@ -6,7 +6,7 @@
 
 implementation
 
-define i35 "squared"(%i35 %i0)
+define i35 @"squared"(%i35 %i0)
 begin
 	switch i35 %i0, label %Default [ 
 		i35 1, label %Case1

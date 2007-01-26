@@ -3,12 +3,12 @@
 ; RUN: diff %t1.ll %t2.ll
 
 
-declare void "foo"(i31 %i, i63 %j, i10 %k)
+declare void @"foo"(i31 %i, i63 %j, i10 %k)
 
 implementation
 
 ; foo test basic arith operations
-define void "foo"(i31 %i, i63 %j, i10 %k)
+define void @"foo"(i31 %i, i63 %j, i10 %k)
 begin
 	%t1 = trunc i63 %j to i31 
         %t2 = add i31 %t1, %i

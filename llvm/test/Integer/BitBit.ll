@@ -2,14 +2,12 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-
-
-declare void "foo"(i31 %i, i17 %j)
+declare void @"foo"(i31 %i, i17 %j)
 
 implementation
 
 ; foo test basic bitwise operations
-define void "foo"(i31 %i, i33 %j)
+define void @"foo"(i31 %i, i33 %j)
 begin
 	%t1 = trunc i33 %j to i31 
         %t2 = and i31 %t1, %i

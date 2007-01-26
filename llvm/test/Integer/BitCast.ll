@@ -2,13 +2,12 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-
-declare void "foo"(i31 %i, i1280 %j, i1 %k, float %f)
+declare void @"foo"(i31 %i, i1280 %j, i1 %k, float %f)
 
 implementation
 
 ; foo test basic arith operations
-define void "foo"(i31 %i, i1280 %j, i1 %k, float %f)
+define void @"foo"(i31 %i, i1280 %j, i1 %k, float %f)
 begin
 	%t1 = trunc i1280 %j to i31
         %t2 = trunc i31 %t1 to i1

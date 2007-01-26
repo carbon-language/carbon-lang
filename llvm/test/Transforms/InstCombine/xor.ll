@@ -182,11 +182,11 @@ int %test26(int %a, int %b) {
 }
 
 
-i32 %test27(i32 %b, i32 %c, i32 %d) {
-        %tmp2 = xor i32 %d, %b
-        %tmp5 = xor i32 %d, %c
-        %tmp = icmp eq i32 %tmp2, %tmp5
-        %tmp6 = zext bool %tmp to i32
-        ret i32 %tmp6
+int %test27(int %b, int %c, int %d) {
+        %tmp2 = xor int %d, %b
+        %tmp5 = xor int %d, %c
+        %tmp = icmp eq int %tmp2, %tmp5
+        %tmp6 = zext bool %tmp to int
+        ret int %tmp6
 }
 

@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | %prcontext alloca 1 | grep 'i32 %foo'
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | \
+; RUN:    %prcontext alloca 1 | grep 'i32 @foo'
 
 declare void %bar(int*)
 int %foo() {

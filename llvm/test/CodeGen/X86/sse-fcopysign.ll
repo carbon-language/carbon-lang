@@ -1,17 +1,17 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 &&
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not getp test
 
-define float %test1(float %a, float %b) {
-	%tmp = tail call float %copysignf( float %b, float %a )
+define float @test1(float %a, float %b) {
+	%tmp = tail call float @copysignf( float %b, float %a )
 	ret float %tmp
 }
 
-define double %test2(double %a, float %b, float %c) {
+define double @test2(double %a, float %b, float %c) {
 	%tmp1 = add float %b, %c
 	%tmp2 = fpext float %tmp1 to double
-	%tmp = tail call double %copysign( double %a, double %tmp2 )
+	%tmp = tail call double @copysign( double %a, double %tmp2 )
 	ret double %tmp
 }
 
-declare float %copysignf(float, float)
-declare double %copysign(double, double)
+declare float @copysignf(float, float)
+declare double @copysign(double, double)

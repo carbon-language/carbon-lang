@@ -4,18 +4,18 @@
 
 implementation
 
-define i63 "test"(i63 %X)
+define i63 @"test"(i63 %X)
 begin
 	ret i63 %X
 end
 
-define i63 "fib"(i63 %n)
+define i63 @"fib"(i63 %n)
 begin
   %T = icmp ult i63 %n, 2       ; {i1}:0
   br i1 %T, label %BaseCase, label %RecurseCase
 
 RecurseCase:
-  %result = call i63 %test(i63 %n)
+  %result = call i63 @test(i63 %n)
   br label %BaseCase
 
 BaseCase:

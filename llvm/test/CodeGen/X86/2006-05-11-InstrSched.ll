@@ -1,5 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -stats 2>&1 | grep 'asm-printer' | grep 39
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -stats 2>&1 |\
+; RUN:     grep 'asm-printer' | grep 39
 
+target datalayout = "e-p:32:32"
 void %foo(int* %mc, int* %bp, int* %ms, int* %xmb, int* %mpp, int* %tpmm, int* %ip, int* %tpim, int* %dpp, int* %tpdm, int* %bpi, int %M) {
 entry:
 	%tmp9 = setlt int %M, 5		; <bool> [#uses=1]

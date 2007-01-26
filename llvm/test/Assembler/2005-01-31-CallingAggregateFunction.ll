@@ -1,8 +1,9 @@
-; RUN: llvm-upgrade %s | llvm-as -o /dev/null -f 2>&1 | grep "LLVM functions cannot return aggregate types"
+; RUN: llvm-as 2>&1 < %s -o /dev/null -f | \
+; RUN:    grep "LLVM functions cannot return aggregate types"
 
-void %test() {
-	call {} %foo()
+define void @test() {
+	call {} @foo()
 	ret void
 }
 
-declare {} %foo()
+declare {} @foo()

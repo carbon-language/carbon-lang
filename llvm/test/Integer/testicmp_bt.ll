@@ -4,7 +4,7 @@
 
 implementation
 
-define i31 "simpleIcmp"(i31 %i0, i31 %j0)
+define i31 @"simpleIcmp"(i31 %i0, i31 %j0)
 begin
 	%t1 = icmp eq i31 %i0, %j0
 	%t2 = icmp ne i31 %i0, %j0

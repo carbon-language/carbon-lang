@@ -4,5 +4,5 @@
 
 ; Test forward references and redefinitions of globals
 
-%B = global i32 7
-%B = global i32 7
+@B = global i32 7
+@B = global i32 7

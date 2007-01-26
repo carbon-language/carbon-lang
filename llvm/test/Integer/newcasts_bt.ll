@@ -2,7 +2,7 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-define void "NewCasts" (i17 %x) {
+define void @"NewCasts" (i17 %x) {
   %a = zext i17 %x to i32
   %b = sext i17 %x to i32
   %c = trunc i17 %x to i8
@@ -19,10 +19,10 @@ define void "NewCasts" (i17 %x) {
 }
 
 
-define i17 "ZExtConst" () {
+define i17 @"ZExtConst" () {
   ret i17 trunc ( i32 zext ( i17 42 to i32) to i17 )
 }
 
-define i17 "SExtConst" () {
+define i17 @"SExtConst" () {
   ret i17 trunc (i32 sext (i17 42 to i32) to i17 )
 }

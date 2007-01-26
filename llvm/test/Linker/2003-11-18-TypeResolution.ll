@@ -5,7 +5,7 @@
 ; own.
 
 ; RUN: llvm-upgrade %s | llvm-as > %t.out2.bc
-; RUN: echo "%T1 = type opaque  %GVar = external global %T1*" | llvm-as > %t.out1.bc
+; RUN: echo "%T1 = type opaque  @GVar = external global %T1*" | llvm-as > %t.out1.bc
 ; RUN: llvm-link %t.out[12].bc
 
 	%T1 = type opaque

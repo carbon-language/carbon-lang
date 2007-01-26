@@ -2,7 +2,7 @@
 ; RUN:   %prcontext 'mulss LCPI1_3' 1 | grep mulss | wc -l | grep 1
 ; PR1075
 
-define float %foo(float %x) {
+define float @foo(float %x) {
     %tmp1 = mul float %x, 3.000000e+00
     %tmp3 = mul float %x, 5.000000e+00
     %tmp5 = mul float %x, 7.000000e+00

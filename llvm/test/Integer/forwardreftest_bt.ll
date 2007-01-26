@@ -11,23 +11,23 @@
   %thisfuncty = type i55 (i55) *
 implementation
 
-declare void %F(%thisfuncty, %thisfuncty, %thisfuncty)
+declare void @F(%thisfuncty, %thisfuncty, %thisfuncty)
 
 ; This function always returns zero
-define i55 %zarro(i55 %Func)
+define i55 @zarro(i55 %Func)
 begin
 Startup:
     add i55 0, 10
     ret i55 0 
 end
 
-define i55 %test(i55) 
+define i55 @test(i55) 
 begin
-    call void %F(%thisfuncty %zarro, %thisfuncty %test, %thisfuncty %foozball)
+    call void @F(%thisfuncty @zarro, %thisfuncty @test, %thisfuncty @foozball)
     ret i55 0
 end
 
-define i55 %foozball(i55)
+define i55 @foozball(i55)
 begin
     ret i55 0
 end

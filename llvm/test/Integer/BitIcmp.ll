@@ -2,11 +2,9 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-
-
 implementation
 
-define i55 "simpleIcmp"(i55 %i0, i55 %j0)
+define i55 @"simpleIcmp"(i55 %i0, i55 %j0)
 begin
 	%t1 = icmp eq i55 %i0, %j0
 	%t2 = icmp ne i55 %i0, %j0
@@ -24,7 +22,7 @@ begin
 	ret i55 %i0
 end
 
-define i31 "phitest"(i12 %i)
+define i31 @"phitest"(i12 %i)
 begin
 
 HasArg:
@@ -37,7 +35,7 @@ Continue:
         br label %Continue
 end
 
-define i18 "select"(i18 %i)
+define i18 @"select"(i18 %i)
 begin
         %t = icmp sgt i18 %i, 100
         %k = select i1 %t, i18 %i, i18 999

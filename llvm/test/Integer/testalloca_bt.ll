@@ -8,7 +8,7 @@
 
 implementation
 
-define i33 %testfunction(i33 %i0, i33 %j0)
+define i33 @testfunction(i33 %i0, i33 %j0)
 begin
     alloca i8, i32 5
     %ptr = alloca i33                       ; yields {i33*}:ptr

@@ -4,23 +4,23 @@
 
 
 
-%MyVar     = external global i27
-%MyIntList = external global { \2 *, i27 }
+@MyVar     = external global i27
+@MyIntList = external global { \2 *, i27 }
              external global i27      ; i27*:0
 
-%AConst    = constant i27 123
+@AConst    = constant i27 123
 
-%AString   = constant [4 x i8] c"test"
+@AString   = constant [4 x i8] c"test"
 
-%ZeroInit  = global { [100 x i27 ], [40 x float ] } { [100 x i27] zeroinitializer,
+@ZeroInit  = global { [100 x i27 ], [40 x float ] } { [100 x i27] zeroinitializer,
                                                       [40  x float] zeroinitializer }
 
 implementation
 
-define i27 "foo"(i27 %blah)
+define i27 @"foo"(i27 %blah)
 begin
-	store i27 5, i27 *%MyVar
-        %idx = getelementptr { \2 *, i27 } * %MyIntList, i64 0, i32 1
+	store i27 5, i27 *@MyVar
+        %idx = getelementptr { \2 *, i27 } * @MyIntList, i64 0, i32 1
   	store i27 12, i27* %idx
   	ret i27 %blah
 end

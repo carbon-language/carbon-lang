@@ -1,10 +1,10 @@
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2
 
-%quant_coef = external global [6 x [4 x [4 x i32]]]		; <[6 x [4 x [4 x i32]]]*> [#uses=1]
-%dequant_coef = external global [6 x [4 x [4 x i32]]]		; <[6 x [4 x [4 x i32]]]*> [#uses=1]
-%A = external global [4 x [4 x i32]]		; <[4 x [4 x i32]]*> [#uses=1]
+@quant_coef = external global [6 x [4 x [4 x i32]]]		; <[6 x [4 x [4 x i32]]]*> [#uses=1]
+@dequant_coef = external global [6 x [4 x [4 x i32]]]		; <[6 x [4 x [4 x i32]]]*> [#uses=1]
+@A = external global [4 x [4 x i32]]		; <[4 x [4 x i32]]*> [#uses=1]
 
-define fastcc i32 %dct_luma_sp(i32 %block_x, i32 %block_y, i32* %coeff_cost) {
+define fastcc i32 @dct_luma_sp(i32 %block_x, i32 %block_y, i32* %coeff_cost) {
 entry:
 	%predicted_block = alloca [4 x [4 x i32]], align 4		; <[4 x [4 x i32]]*> [#uses=1]
 	br label %cond_next489
@@ -17,7 +17,7 @@ cond_next489:		; preds = %cond_false, %bb471
 	%tmp495 = getelementptr [4 x [4 x i32]]* %predicted_block, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=2]
 	%tmp496 = load i32* %tmp495		; <i32> [#uses=2]
 	%tmp502 = load i32* null		; <i32> [#uses=1]
-	%tmp542 = getelementptr [6 x [4 x [4 x i32]]]* %quant_coef, i32 0, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
+	%tmp542 = getelementptr [6 x [4 x [4 x i32]]]* @quant_coef, i32 0, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
 	%tmp543 = load i32* %tmp542		; <i32> [#uses=1]
 	%tmp548 = ashr i32 0, i8 0		; <i32> [#uses=3]
 	%tmp561 = sub i32 0, %tmp496		; <i32> [#uses=3]
@@ -30,14 +30,14 @@ cond_next489:		; preds = %cond_false, %bb471
 	br i1 %tmp579, label %bb712, label %cond_next589
 
 cond_next589:		; preds = %cond_next489
-	%tmp605 = getelementptr [6 x [4 x [4 x i32]]]* %dequant_coef, i32 0, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
+	%tmp605 = getelementptr [6 x [4 x [4 x i32]]]* @dequant_coef, i32 0, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
 	%tmp606 = load i32* %tmp605		; <i32> [#uses=1]
 	%tmp612 = load i32* null		; <i32> [#uses=1]
 	%tmp629 = load i32* null		; <i32> [#uses=1]
 	%tmp629 = sitofp i32 %tmp629 to double		; <double> [#uses=1]
 	%tmp631 = mul double %tmp629, 0.000000e+00		; <double> [#uses=1]
 	%tmp632 = add double 0.000000e+00, %tmp631		; <double> [#uses=1]
-	%tmp642 = call fastcc i32 %sign( i32 %tmp576, i32 %tmp561 )		; <i32> [#uses=1]
+	%tmp642 = call fastcc i32 @sign( i32 %tmp576, i32 %tmp561 )		; <i32> [#uses=1]
 	%tmp650 = mul i32 %tmp606, %tmp642		; <i32> [#uses=1]
 	%tmp656 = mul i32 %tmp650, %tmp612		; <i32> [#uses=1]
 	%tmp658 = shl i32 %tmp656, i8 0		; <i32> [#uses=1]
@@ -45,7 +45,7 @@ cond_next589:		; preds = %cond_next489
 	%tmp660 = sub i32 0, %tmp659		; <i32> [#uses=1]
 	%tmp666 = sub i32 %tmp660, %tmp496		; <i32> [#uses=1]
 	%tmp666 = sitofp i32 %tmp666 to double		; <double> [#uses=2]
-	call void %levrun_linfo_inter( i32 %tmp576, i32 0, i32* null, i32* null )
+	call void @levrun_linfo_inter( i32 %tmp576, i32 0, i32* null, i32* null )
 	%tmp671 = mul double %tmp666, %tmp666		; <double> [#uses=1]
 	%tmp675 = add double %tmp671, 0.000000e+00		; <double> [#uses=1]
 	%tmp678 = fcmp oeq double %tmp632, %tmp675		; <i1> [#uses=1]
@@ -79,9 +79,9 @@ bb737:		; preds = %cond_false689
 	br i1 %tmp739, label %cond_next791, label %cond_true740
 
 cond_true740:		; preds = %bb737
-	%tmp761 = call fastcc i32 %sign( i32 %tmp576, i32 0 )		; <i32> [#uses=1]
+	%tmp761 = call fastcc i32 @sign( i32 %tmp576, i32 0 )		; <i32> [#uses=1]
 	%tmp780 = load i32* null		; <i32> [#uses=1]
-	%tmp785 = getelementptr [4 x [4 x i32]]* %A, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
+	%tmp785 = getelementptr [4 x [4 x i32]]* @A, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
 	%tmp786 = load i32* %tmp785		; <i32> [#uses=1]
 	%tmp781 = mul i32 %tmp780, %tmp761		; <i32> [#uses=1]
 	%tmp787 = mul i32 %tmp781, %tmp786		; <i32> [#uses=1]
@@ -94,10 +94,10 @@ cond_next791:		; preds = %cond_true740, %bb737
 	%tmp796 = load i32* %tmp495		; <i32> [#uses=1]
 	%tmp798 = add i32 %tmp796, %ilev.1		; <i32> [#uses=1]
 	%tmp812 = mul i32 0, %tmp502		; <i32> [#uses=0]
-	%tmp818 = call fastcc i32 %sign( i32 0, i32 %tmp798 )		; <i32> [#uses=0]
+	%tmp818 = call fastcc i32 @sign( i32 0, i32 %tmp798 )		; <i32> [#uses=0]
 	unreachable
 }
 
-declare i32 %sign(i32, i32)
+declare i32 @sign(i32, i32)
 
-declare void %levrun_linfo_inter(i32, i32, i32*, i32*)
+declare void @levrun_linfo_inter(i32, i32, i32*, i32*)

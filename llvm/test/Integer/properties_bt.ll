@@ -3,8 +3,7 @@
 ; RUN: diff %t1.ll %t2.ll
 
 
-target endian = little
-target pointersize = 32
+target datalayout = "e-p:32:32"
 target triple = "proc-vend-sys"
 deplibs = [ "m", "c" ]
 

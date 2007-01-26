@@ -1,17 +1,18 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution 2>&1 | grep '10000 iterations'
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution 2>&1 | \
+; RUN:   grep '10000 iterations'
 ; PR1101
 
-%A = weak global [1000 x i32] zeroinitializer, align 32         
+@A = weak global [1000 x i32] zeroinitializer, align 32         
 
 implementation   ; Functions:
 
-define void %test(i32 %N) {
+define void @test(i32 %N) {
 entry:
         "alloca point" = bitcast i32 0 to i32           ; <i32> [#uses=0]
         br label %bb3
 
 bb:             ; preds = %bb3
-        %tmp = getelementptr [1000 x i32]* %A, i32 0, i32 %i.0          ; <i32*> [#uses=1]
+        %tmp = getelementptr [1000 x i32]* @A, i32 0, i32 %i.0          ; <i32*> [#uses=1]
         store i32 123, i32* %tmp
         %tmp2 = add i32 %i.0, 1         ; <i32> [#uses=1]
         br label %bb3

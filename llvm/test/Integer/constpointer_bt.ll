@@ -10,24 +10,24 @@
 ;
 
 
-%t3 = global i40 * %t1           ;; Forward reference
-%t1 = global i40 4
-%t4 = global i40 ** %t3		 ;; reference to reference
+@t3 = global i40 * @t1           ;; Forward reference
+@t1 = global i40 4
+@t4 = global i40 ** @t3		 ;; reference to reference
 
-%t2 = global i40 * %t1
+@t2 = global i40 * @t1
 
-global float * %0                ;; Forward numeric reference
-global float * %0                ;; Duplicate forward numeric reference
+global float * @0                ;; Forward numeric reference
+global float * @0                ;; Duplicate forward numeric reference
 global float 0.0
-global float * %0                ;; Numeric reference
+global float * @0                ;; Numeric reference
 
 
-%fptr = global void() * %f       ;; Forward ref method defn
-declare void "f"()               ;; External method
+@fptr = global void() * @f       ;; Forward ref method defn
+declare void @"f"()               ;; External method
 
-%sptr1   = global [11x i8]* %somestr		;; Forward ref to a constant
-%somestr = constant [11x i8] c"hello world"
-%sptr2   = global [11x i8]* %somestr
+@sptr1   = global [11x i8]* @somestr		;; Forward ref to a constant
+@somestr = constant [11x i8] c"hello world"
+@sptr2   = global [11x i8]* @somestr
 
 implementation
 

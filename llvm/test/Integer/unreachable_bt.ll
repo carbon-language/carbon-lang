@@ -5,13 +5,13 @@
 
 implementation
 
-declare void %bar()
+declare void @bar()
 
-define i9 %foo() {  ;; Calling this function has undefined behavior
+define i9 @foo() {  ;; Calling this function has undefined behavior
 	unreachable
 }
 
-define double %xyz() {
-	call void %bar()
+define double @xyz() {
+	call void @bar()
 	unreachable          ;; Bar must not return.
 }

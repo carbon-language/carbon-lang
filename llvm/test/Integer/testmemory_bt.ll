@@ -8,13 +8,13 @@
 
 implementation
 
-define i31 "main"()
+define i31 @"main"()
 begin
-  call i31 %testfunction(i64 0, i64 1)
+  call i31 @testfunction(i64 0, i64 1)
   ret i31 0
 end
 
-define i31 "testfunction"(i64 %i0, i64 %j0)
+define i31 @"testfunction"(i64 %i0, i64 %j0)
 begin
     %array0 = malloc [4 x i9]            ; yields {[4 x i9]*}:array0
     %size   = add i32 2, 2                 ; yields {i31}:size = i31 %4

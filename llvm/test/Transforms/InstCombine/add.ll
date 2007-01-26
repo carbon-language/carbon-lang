@@ -241,9 +241,9 @@ ubyte %test34(ubyte %A) {
         ret ubyte %C
 }
 
-i32 %test34(i32 %a) {  ;; -> -1
-        %tmpnot = xor i32 %a, -1
-        %tmp2 = add i32 %tmpnot, %a
-        ret i32 %tmp2
+int %test34(int %a) {  ;; -> -1
+        %tmpnot = xor int %a, -1
+        %tmp2 = add int %tmpnot, %a
+        ret int %tmp2
 }
 

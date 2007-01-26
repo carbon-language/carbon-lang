@@ -2,6 +2,8 @@
 ; LevelRaise should eliminate all cast instructions from this testcase.
 ;
 ; XFAIL: *
+; RUN: llvm-upgrade < %s &&
+; RUN: llvm-upgrade < %s | llvm-as > /dev/null &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -raise | llvm-dis | notcast
 
 	%Hash = type { { uint, sbyte *, \2 } * *, int (uint) *, int } *

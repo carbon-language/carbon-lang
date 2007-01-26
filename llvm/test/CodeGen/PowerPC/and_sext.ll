@@ -3,14 +3,14 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 | not grep extsh  &&
 ; RUN: llvm-as < %s | llc -march=ppc32 | not grep extsb
 
-define i32 %test1(i32 %mode.0.i.0) {
+define i32 @test1(i32 %mode.0.i.0) {
         %tmp.79 = trunc i32 %mode.0.i.0 to i16
         %tmp.80 = sext i16 %tmp.79 to i32
         %tmp.81 = and i32 %tmp.80, 24
         ret i32 %tmp.81
 }
 
-define i16 %test2(i16 sext %X, i16 sext %x) sext {
+define i16 @test2(i16 sext %X, i16 sext %x) sext {
         %tmp = sext i16 %X to i32
         %tmp1 = sext i16 %x to i32
         %tmp2 = add i32 %tmp, %tmp1
@@ -21,7 +21,7 @@ define i16 %test2(i16 sext %X, i16 sext %x) sext {
         ret i16 %retval
 }
 
-define i16 %test3(i32 zext %X) sext {
+define i16 @test3(i32 zext %X) sext {
         %tmp1 = lshr i32 %X, i8 16
         %tmp1 = trunc i32 %tmp1 to i16
         ret i16 %tmp1

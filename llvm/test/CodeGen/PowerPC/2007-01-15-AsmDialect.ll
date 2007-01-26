@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 | grep cntlzw
 
-define i32 %foo() {
+define i32 @foo() {
 entry:
 	%retval = alloca i32, align 4		; <i32*> [#uses=2]
 	%tmp = alloca i32, align 4		; <i32*> [#uses=2]

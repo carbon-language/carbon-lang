@@ -4,15 +4,15 @@
 
 ; Test forward references and redefinitions of globals
 
-%A = global i17* %B
-%B = global i17 7
+@A = global i17* @B
+@B = global i17 7
 
-declare void %X()
+declare void @X()
 
-declare void %X()
+declare void @X()
 
-define void %X() {
+define void @X() {
   ret void
 }
 
-declare void %X()
+declare void @X()

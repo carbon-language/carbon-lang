@@ -6,7 +6,7 @@
 
 implementation
 
-define i19 "foo"(i19 %in) 
+define i19 @"foo"(i19 %in) 
 begin
 label: 
   ret i19 2

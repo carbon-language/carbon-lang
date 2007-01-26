@@ -3,14 +3,14 @@
 ; RUN: llvm-as < %s | llc -march=arm -enable-thumb &&
 ; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep cpy | wc -l | grep 2
 
-define i32 %f1() {
+define i32 @f1() {
 	%buf = alloca [32 x i32], align 4
 	%tmp = getelementptr [32 x i32]* %buf, i32 0, i32 0
 	%tmp1 = load i32* %tmp
 	ret i32 %tmp1
 }
 
-define i32 %f2() {
+define i32 @f2() {
 	%buf = alloca [32 x i8], align 4
 	%tmp = getelementptr [32 x i8]* %buf, i32 0, i32 0
 	%tmp1 = load i8* %tmp
@@ -18,14 +18,14 @@ define i32 %f2() {
 	ret i32 %tmp2
 }
 
-define i32 %f3() {
+define i32 @f3() {
 	%buf = alloca [32 x i32], align 4
 	%tmp = getelementptr [32 x i32]* %buf, i32 0, i32 32
 	%tmp1 = load i32* %tmp
 	ret i32 %tmp1
 }
 
-define i32 %f4() {
+define i32 @f4() {
 	%buf = alloca [32 x i8], align 4
 	%tmp = getelementptr [32 x i8]* %buf, i32 0, i32 2
 	%tmp1 = load i8* %tmp

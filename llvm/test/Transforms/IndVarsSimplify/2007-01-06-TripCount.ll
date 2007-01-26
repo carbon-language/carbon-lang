@@ -3,15 +3,13 @@
 ; PR1015
 
 target datalayout = "e-p:32:32"
-target endian = little
-target pointersize = 32
 target triple = "i686-apple-darwin8"
-%foo = internal constant [5 x i8] c"\00abc\00"		; <[5 x i8]*> [#uses=1]
-%str = internal constant [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]
+@foo = internal constant [5 x i8] c"\00abc\00"		; <[5 x i8]*> [#uses=1]
+@str = internal constant [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]
 
 implementation   ; Functions:
 
-define i32 %test(i32 %J) {
+define i32 @test(i32 %J) {
 entry:
 	br label %bb2
 
@@ -28,7 +26,7 @@ cond_true:		; preds = %bb2
 	br label %bb
 
 cond_next:		; preds = %bb2
-	%tmp = getelementptr [5 x i8]* %foo, i32 0, i32 %i.0		; <i8*> [#uses=1]
+	%tmp = getelementptr [5 x i8]* @foo, i32 0, i32 %i.0		; <i8*> [#uses=1]
 	%tmp = load i8* %tmp		; <i8> [#uses=1]
 	%tmp5 = icmp eq i8 %tmp, 0		; <i1> [#uses=1]
 	br i1 %tmp5, label %bb6, label %bb

@@ -14,7 +14,7 @@
 
 implementation   ; Functions:
 
-define void %ov_read() {
+define void @ov_read() {
 entry:
 	br i1 false, label %bb, label %return
 
