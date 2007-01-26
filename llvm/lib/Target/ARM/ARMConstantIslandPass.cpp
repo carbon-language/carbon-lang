@@ -107,6 +107,7 @@ namespace {
     void SplitBlockBeforeInstr(MachineInstr *MI);
     void UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB);
     bool HandleConstantPoolUser(MachineFunction &Fn, CPUser &U);
+    bool BBIsInBranchRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned D);
     bool FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br);
 
     unsigned GetInstSize(MachineInstr *MI) const;
@@ -561,6 +562,29 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
   return true;
 }
 
+/// BBIsInBranchRange - Returns true is the distance between specific MI and
+/// specific BB can fit in MI's displacement field.
+bool ARMConstantIslands::BBIsInBranchRange(MachineInstr *MI,
+                                           MachineBasicBlock *DestBB,
+                                           unsigned MaxDisp) {
+  unsigned BrOffset   = GetOffsetOf(MI);
+  unsigned DestOffset = GetOffsetOf(DestBB);
+
+  // Check to see if the destination BB is in range.
+  if (BrOffset < DestOffset) {
+    if (DestOffset - BrOffset < MaxDisp)
+      return true;
+  } else {
+    if (BrOffset - DestOffset <= MaxDisp)
+      return true;
+  }
+  return false;
+}
+
+static inline unsigned getUncondBranchDisp(int Opc) {
+  return (Opc == ARM::tB) ? (1<<10)*2 : (1<<23)*4;
+}
+
 /// FixUpImmediateBranch - Fix up immediate branches whose destination is too
 /// far away to fit in its displacement field. If it is a conditional branch,
 /// then it is converted to an inverse conditional branch + an unconditional
@@ -571,17 +595,8 @@ ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
   MachineBasicBlock *DestBB = MI->getOperand(0).getMachineBasicBlock();
 
-  unsigned BrOffset   = GetOffsetOf(MI);
-  unsigned DestOffset = GetOffsetOf(DestBB);
-
-  // Check to see if the destination BB is in range.
-  if (BrOffset < DestOffset) {
-    if (DestOffset - BrOffset < Br.MaxDisp)
-      return false;
-  } else {
-    if (BrOffset - DestOffset <= Br.MaxDisp)
-      return false;
-  }
+  if (BBIsInBranchRange(MI, DestBB, Br.MaxDisp))
+    return false;
 
   if (!Br.isCond) {
     // Unconditional branch. We have to insert a branch somewhere to perform
@@ -604,7 +619,30 @@ ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
   // direct the updated conditional branch to the fall-through block. Otherwise,
   // split the MBB before the next instruction.
   MachineBasicBlock *MBB = MI->getParent();
-  if (&MBB->back() != MI || !BBHasFallthrough(MBB)) {
+  MachineInstr *BackMI = &MBB->back();
+  bool NeedSplit = (BackMI != MI) || !BBHasFallthrough(MBB);
+
+  if (BackMI != MI) {
+    if (next(MachineBasicBlock::iterator(MI)) == MBB->back() &&
+        BackMI->getOpcode() == Br.UncondBr) {
+      // Last MI in the BB is a unconditional branch. Can we simply invert the
+      // condition and swap destinations:
+      // beq L1
+      // b   L2
+      // =>
+      // bne L2
+      // b   L1
+      MachineBasicBlock *NewDest = BackMI->getOperand(0).getMachineBasicBlock();
+      if (BBIsInBranchRange(MI, NewDest, Br.MaxDisp)) {
+        BackMI->getOperand(0).setMachineBasicBlock(DestBB);
+        MI->getOperand(0).setMachineBasicBlock(NewDest);
+        MI->getOperand(1).setImm(CC);
+        return true;
+      }
+    }
+  }
+
+  if (NeedSplit) {
     SplitBlockBeforeInstr(MI);
     // No need for the branch to the next block. We're adding a unconditional
     // branch to the destination.
@@ -617,7 +655,7 @@ ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
   BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB).addImm(CC);
   Br.MI = &MBB->back();
   BuildMI(MBB, TII->get(Br.UncondBr)).addMBB(DestBB);
-  unsigned MaxDisp = (Br.UncondBr == ARM::tB) ? (1<<10)*2 : (1<<23)*4;
+  unsigned MaxDisp = getUncondBranchDisp(Br.UncondBr);
   ImmBranches.push_back(ImmBranch(&MBB->back(), MaxDisp, false, Br.UncondBr));
   MI->eraseFromParent();
 
