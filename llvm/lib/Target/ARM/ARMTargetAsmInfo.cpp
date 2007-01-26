@@ -56,7 +56,6 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
     DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
   } else {
-    Data16bitsDirective = "\t.half\t";
     Data32bitsDirective = "\t.word\t";
     ZeroDirective = "\t.skip\t";
     WeakRefDirective = "\t.weak\t";
