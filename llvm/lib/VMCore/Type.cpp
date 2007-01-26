@@ -139,6 +139,9 @@ unsigned Type::getPrimitiveSizeInBits() const {
 /// iff all of the members of the type are sized as well.  Since asking for
 /// their size is relatively uncommon, move this operation out of line.
 bool Type::isSizedDerivedType() const {
+  if (isa<IntegerType>(this))
+    return true;
+
   if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
     return ATy->getElementType()->isSized();
 
