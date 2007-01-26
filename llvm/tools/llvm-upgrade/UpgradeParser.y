@@ -1175,7 +1175,7 @@ const Type* upgradeGEPIndices(const Type* PTy,
               cast<Constant>(Index), Type::Int64Ty);
           else
             Index = CastInst::create(Instruction::ZExt, Index, Type::Int64Ty,
-              "gep_upgrade", CurBB);
+              makeNameUnique("gep_upgrade"), CurBB);
     }
     // Add to the CIndices list, if requested.
     if (CIndices)
