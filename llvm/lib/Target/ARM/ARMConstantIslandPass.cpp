@@ -602,13 +602,17 @@ ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
   // direct the updated conditional branch to the fall-through block. Otherwise,
   // split the MBB before the next instruction.
   MachineBasicBlock *MBB = MI->getParent();
-  if (&MBB->back() != MI || !BBHasFallthrough(MBB))
+  if (&MBB->back() != MI || !BBHasFallthrough(MBB)) {
     SplitBlockBeforeInstr(MI);
+    // No need for the branch to the next block. We're adding a unconditional
+    // branch to the destination.
+    MBB->back().eraseFromParent();
+  }
   MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
 
   // Insert a unconditional branch and replace the conditional branch.
   // Also update the ImmBranch as well as adding a new entry for the new branch.
-  BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB).addImm((unsigned)CC);
+  BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB).addImm(CC);
   Br.MI = &MBB->back();
   BuildMI(MBB, TII->get(Br.UncondBr)).addMBB(DestBB);
   unsigned MaxDisp = (Br.UncondBr == ARM::tB) ? (1<<10)*2 : (1<<23)*4;
