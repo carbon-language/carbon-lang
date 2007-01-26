@@ -224,11 +224,17 @@ public:
 
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
 class TagDecl : public Decl {
+  /// TypeForDecl - This indicates the Type object that represents this TagDecl.
+  /// It is a cache maintained by ASTContext::getTagDeclType.
+  Type *TypeForDecl;
+  friend class ASTContext;
+  
   /// IsDefinition - True if this is a definition ("struct foo {};"), false if
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
 protected:
   TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) : Decl(DK, L, Id) {
+    TypeForDecl = 0;
     IsDefinition = false;
   }
 public:

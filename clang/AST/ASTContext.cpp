@@ -276,17 +276,10 @@ TypeRef ASTContext::getTypeDeclType(TypeDecl *Decl) {
 /// getTagDeclType - Return the unique reference to the type for the
 /// specified TagDecl (struct/union/class/enum) decl.
 TypeRef ASTContext::getTagDeclType(TagDecl *Decl) {
-  // FIXME: This is obviously braindead!
-  // Unique TypeDecl, to guarantee there is only one TaggedType.
-  ++NumSlowLookups;
-  for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    if (TaggedType *Ty = dyn_cast<TaggedType>(Types[i]))
-      if (Ty->getDecl() == Decl)
-        return Types[i];
+  // The decl stores the type cache.
+  if (Decl->TypeForDecl) return Decl->TypeForDecl;
   
-  // FIXME: does this lose qualifiers from the typedef??
-  
-  Types.push_back(new TaggedType(Decl, 0));
+  Types.push_back(Decl->TypeForDecl = new TaggedType(Decl, 0));
   return Types.back();
 }
 
