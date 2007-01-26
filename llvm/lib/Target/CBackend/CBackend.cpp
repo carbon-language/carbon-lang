@@ -99,9 +99,6 @@ namespace {
       // Output all floating point constants that cannot be printed accurately.
       printFloatingPointConstants(F);
 
-      // Ensure that no local symbols conflict with global symbols.
-      F.renameLocalSymbols();
-
       printFunction(F);
       FPConstantMap.clear();
       return false;
