@@ -114,7 +114,7 @@ private:
   ///
   unsigned NumBuckets;
   
-  /// NumNodes - Number of nodes in the folding set.  Growth occurs when NumNodes
+  /// NumNodes - Number of nodes in the folding set. Growth occurs when NumNodes
   /// is greater than twice the number of buckets.
   unsigned NumNodes;
   
@@ -217,7 +217,7 @@ protected:
 typedef FoldingSetImpl::Node FoldingSetNode;
 typedef FoldingSetImpl::NodeID FoldingSetNodeID;
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 /// FoldingSet - This template class is used to instantiate a specialized
 /// implementation of the folding set to the node class T.  T must be a 
 /// subclass of FoldingSetNode and implement a Profile function.
