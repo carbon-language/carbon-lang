@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/MachineDebugInfo.h -------------------------*- C++ -*-===//
+//===-- llvm/CodeGen/MachineModuleInfo.h ------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Collect debug information for a module.  This information should be in a
-// neutral form that can be used by different debugging schemes.
+// Collect meta information for a module.  This information should be in a
+// neutral form that can be used by different debugging and exception handling
+// schemes.
 //
 // The organization of information is primarily clustered around the source
 // compile units.  The main exception is source line correspondence where
 // inlining may interleave code from various compile units.
 //
-// The following information can be retrieved from the MachineDebugInfo.
+// The following information can be retrieved from the MachineModuleInfo.
 //
 //  -- Source directories - Directories are uniqued based on their canonical
 //     string and assigned a sequential numeric ID (base 1.)
@@ -27,8 +28,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MACHINEDEBUGINFO_H
-#define LLVM_CODEGEN_MACHINEDEBUGINFO_H
+#ifndef LLVM_CODEGEN_MACHINEMODULEINFO_H
+#define LLVM_CODEGEN_MACHINEMODULEINFO_H
 
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DataTypes.h"
@@ -948,11 +949,11 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// MachineDebugInfo - This class contains debug information specific to a
-/// module.  Queries can be made by different debugging schemes and reformated
-/// for specific use.
+/// MachineModuleInfo - This class contains meta information specific to a
+/// module.  Queries can be made by different debugging and exception handling 
+/// schemes and reformated for specific use.
 ///
-class MachineDebugInfo : public ImmutablePass {
+class MachineModuleInfo : public ImmutablePass {
 private:
   // Use the same deserializer/verifier for the module.
   DIDeserializer DR;
@@ -984,26 +985,26 @@ private:
   DebugScope *RootScope;
   
   // FrameMoves - List of moves done by a function's prolog.  Used to construct
-  // frame maps by debug consumers.
+  // frame maps by debug and exception handling consumers.
   std::vector<MachineMove> FrameMoves;
 
 public:
-  MachineDebugInfo();
-  ~MachineDebugInfo();
+  MachineModuleInfo();
+  ~MachineModuleInfo();
   
-  /// doInitialization - Initialize the debug state for a new module.
+  /// doInitialization - Initialize the state for a new module.
   ///
   bool doInitialization();
   
-  /// doFinalization - Tear down the debug state after completion of a module.
+  /// doFinalization - Tear down the state after completion of a module.
   ///
   bool doFinalization();
   
-  /// BeginFunction - Begin gathering function debug information.
+  /// BeginFunction - Begin gathering function meta information.
   ///
   void BeginFunction(MachineFunction *MF);
   
-  /// EndFunction - Discard function debug information.
+  /// EndFunction - Discard function meta information.
   ///
   void EndFunction();
 
@@ -1020,9 +1021,9 @@ public:
   ///
   void AnalyzeModule(Module &M);
   
-  /// hasInfo - Returns true if valid debug info is present.
+  /// hasDebugInfo - Returns true if valid debug info is present.
   ///
-  bool hasInfo() const { return !CompileUnits.empty(); }
+  bool hasDebugInfo() const { return !CompileUnits.empty(); }
   
   /// NextLabelID - Return the next unique label id.
   ///
@@ -1033,12 +1034,12 @@ public:
   }
   
   /// RecordLabel - Records location information and associates it with a
-  /// debug label.  Returns a unique label ID used to generate a label and 
+  /// label.  Returns a unique label ID used to generate a label and 
   /// provide correspondence to the source line list.
   unsigned RecordLabel(unsigned Line, unsigned Column, unsigned Source);
   
   /// InvalidateLabel - Inhibit use of the specified label # from
-  /// MachineDebugInfo, for example because the code was deleted.
+  /// MachineModuleInfo, for example because the code was deleted.
   void InvalidateLabel(unsigned LabelID) {
     // Remap to zero to indicate deletion.
     RemapLabel(LabelID, 0);
@@ -1048,9 +1049,9 @@ public:
   ///
   void RemapLabel(unsigned OldLabelID, unsigned NewLabelID) {
     assert(0 < OldLabelID && OldLabelID <= LabelIDList.size() &&
-          "Old debug label ID out of range.");
+          "Old label ID out of range.");
     assert(NewLabelID <= LabelIDList.size() &&
-          "New debug label ID out of range.");
+          "New label ID out of range.");
     LabelIDList[OldLabelID - 1] = NewLabelID;
   }
   
@@ -1144,10 +1145,11 @@ public:
   DebugScope *getOrCreateScope(DebugInfoDesc *ScopeDesc);
   
   /// getFrameMoves - Returns a reference to a list of moves done in the current
-  /// function's prologue.  Used to construct frame maps for debug comsumers.
+  /// function's prologue.  Used to construct frame maps for debug and exception
+  /// handling comsumers.
   std::vector<MachineMove> &getFrameMoves() { return FrameMoves; }
 
-}; // End class MachineDebugInfo
+}; // End class MachineModuleInfo
 
 } // End llvm namespace
 

@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/MachineDebugInfo.cpp -----------------------*- C++ -*-===//
+//===-- llvm/CodeGen/MachineModuleInfo.cpp ----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 
 #include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -27,7 +27,7 @@ using namespace llvm::dwarf;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
-  RegisterPass<MachineDebugInfo> X("machinedebuginfo", "Debug Information");
+  RegisterPass<MachineModuleInfo> X("machinemoduleinfo", "Module Information");
 }
 
 //===----------------------------------------------------------------------===//
@@ -1460,7 +1460,7 @@ DebugScope::~DebugScope() {
 
 //===----------------------------------------------------------------------===//
 
-MachineDebugInfo::MachineDebugInfo()
+MachineModuleInfo::MachineModuleInfo()
 : DR()
 , VR()
 , CompileUnits()
@@ -1472,31 +1472,31 @@ MachineDebugInfo::MachineDebugInfo()
 , RootScope(NULL)
 , FrameMoves()
 {}
-MachineDebugInfo::~MachineDebugInfo() {
+MachineModuleInfo::~MachineModuleInfo() {
 
 }
 
-/// doInitialization - Initialize the debug state for a new module.
+/// doInitialization - Initialize the state for a new module.
 ///
-bool MachineDebugInfo::doInitialization() {
+bool MachineModuleInfo::doInitialization() {
   return false;
 }
 
-/// doFinalization - Tear down the debug state after completion of a module.
+/// doFinalization - Tear down the state after completion of a module.
 ///
-bool MachineDebugInfo::doFinalization() {
+bool MachineModuleInfo::doFinalization() {
   return false;
 }
 
-/// BeginFunction - Begin gathering function debug information.
+/// BeginFunction - Begin gathering function meta information.
 ///
-void MachineDebugInfo::BeginFunction(MachineFunction *MF) {
+void MachineModuleInfo::BeginFunction(MachineFunction *MF) {
   // Coming soon.
 }
 
-/// MachineDebugInfo::EndFunction - Discard function debug information.
+/// EndFunction - Discard function meta information.
 ///
-void MachineDebugInfo::EndFunction() {
+void MachineModuleInfo::EndFunction() {
   // Clean up scope information.
   if (RootScope) {
     delete RootScope;
@@ -1511,25 +1511,25 @@ void MachineDebugInfo::EndFunction() {
 /// getDescFor - Convert a Value to a debug information descriptor.
 ///
 // FIXME - use new Value type when available.
-DebugInfoDesc *MachineDebugInfo::getDescFor(Value *V) {
+DebugInfoDesc *MachineModuleInfo::getDescFor(Value *V) {
   return DR.Deserialize(V);
 }
 
 /// Verify - Verify that a Value is debug information descriptor.
 ///
-bool MachineDebugInfo::Verify(Value *V) {
+bool MachineModuleInfo::Verify(Value *V) {
   return VR.Verify(V);
 }
 
 /// AnalyzeModule - Scan the module for global debug information.
 ///
-void MachineDebugInfo::AnalyzeModule(Module &M) {
+void MachineModuleInfo::AnalyzeModule(Module &M) {
   SetupCompileUnits(M);
 }
 
 /// SetupCompileUnits - Set up the unique vector of compile units.
 ///
-void MachineDebugInfo::SetupCompileUnits(Module &M) {
+void MachineModuleInfo::SetupCompileUnits(Module &M) {
   std::vector<CompileUnitDesc *>CU = getAnchoredDescriptors<CompileUnitDesc>(M);
   
   for (unsigned i = 0, N = CU.size(); i < N; i++) {
@@ -1539,22 +1539,22 @@ void MachineDebugInfo::SetupCompileUnits(Module &M) {
 
 /// getCompileUnits - Return a vector of debug compile units.
 ///
-const UniqueVector<CompileUnitDesc *> MachineDebugInfo::getCompileUnits()const{
+const UniqueVector<CompileUnitDesc *> MachineModuleInfo::getCompileUnits()const{
   return CompileUnits;
 }
 
 /// getGlobalVariablesUsing - Return all of the GlobalVariables that use the
 /// named GlobalVariable.
 std::vector<GlobalVariable*>
-MachineDebugInfo::getGlobalVariablesUsing(Module &M,
-                                          const std::string &RootName) {
+MachineModuleInfo::getGlobalVariablesUsing(Module &M,
+                                           const std::string &RootName) {
   return ::getGlobalVariablesUsing(M, RootName);
 }
 
 /// RecordLabel - Records location information and associates it with a
 /// debug label.  Returns a unique label ID used to generate a label and 
 /// provide correspondence to the source line list.
-unsigned MachineDebugInfo::RecordLabel(unsigned Line, unsigned Column,
+unsigned MachineModuleInfo::RecordLabel(unsigned Line, unsigned Column,
                                        unsigned Source) {
   unsigned ID = NextLabelID();
   Lines.push_back(SourceLineInfo(Line, Column, Source, ID));
@@ -1563,19 +1563,19 @@ unsigned MachineDebugInfo::RecordLabel(unsigned Line, unsigned Column,
 
 /// RecordSource - Register a source file with debug info. Returns an source
 /// ID.
-unsigned MachineDebugInfo::RecordSource(const std::string &Directory,
-                                        const std::string &Source) {
+unsigned MachineModuleInfo::RecordSource(const std::string &Directory,
+                                         const std::string &Source) {
   unsigned DirectoryID = Directories.insert(Directory);
   return SourceFiles.insert(SourceFileInfo(DirectoryID, Source));
 }
-unsigned MachineDebugInfo::RecordSource(const CompileUnitDesc *CompileUnit) {
+unsigned MachineModuleInfo::RecordSource(const CompileUnitDesc *CompileUnit) {
   return RecordSource(CompileUnit->getDirectory(),
                       CompileUnit->getFileName());
 }
 
 /// RecordRegionStart - Indicate the start of a region.
 ///
-unsigned MachineDebugInfo::RecordRegionStart(Value *V) {
+unsigned MachineModuleInfo::RecordRegionStart(Value *V) {
   // FIXME - need to be able to handle split scopes because of bb cloning.
   DebugInfoDesc *ScopeDesc = DR.Deserialize(V);
   DebugScope *Scope = getOrCreateScope(ScopeDesc);
@@ -1586,7 +1586,7 @@ unsigned MachineDebugInfo::RecordRegionStart(Value *V) {
 
 /// RecordRegionEnd - Indicate the end of a region.
 ///
-unsigned MachineDebugInfo::RecordRegionEnd(Value *V) {
+unsigned MachineModuleInfo::RecordRegionEnd(Value *V) {
   // FIXME - need to be able to handle split scopes because of bb cloning.
   DebugInfoDesc *ScopeDesc = DR.Deserialize(V);
   DebugScope *Scope = getOrCreateScope(ScopeDesc);
@@ -1597,7 +1597,7 @@ unsigned MachineDebugInfo::RecordRegionEnd(Value *V) {
 
 /// RecordVariable - Indicate the declaration of  a local variable.
 ///
-void MachineDebugInfo::RecordVariable(Value *V, unsigned FrameIndex) {
+void MachineModuleInfo::RecordVariable(Value *V, unsigned FrameIndex) {
   VariableDesc *VD = cast<VariableDesc>(DR.Deserialize(V));
   DebugScope *Scope = getOrCreateScope(VD->getContext());
   DebugVariable *DV = new DebugVariable(VD, FrameIndex);
@@ -1606,7 +1606,7 @@ void MachineDebugInfo::RecordVariable(Value *V, unsigned FrameIndex) {
 
 /// getOrCreateScope - Returns the scope associated with the given descriptor.
 ///
-DebugScope *MachineDebugInfo::getOrCreateScope(DebugInfoDesc *ScopeDesc) {
+DebugScope *MachineModuleInfo::getOrCreateScope(DebugInfoDesc *ScopeDesc) {
   DebugScope *&Slot = ScopeMap[ScopeDesc];
   if (!Slot) {
     // FIXME - breaks down when the context is an inlined function.
@@ -1631,21 +1631,21 @@ DebugScope *MachineDebugInfo::getOrCreateScope(DebugInfoDesc *ScopeDesc) {
 }
 
 //===----------------------------------------------------------------------===//
-/// DebugLabelFolding pass - This pass prunes out redundant debug labels.  This
-/// allows a debug emitter to determine if the range of two labels is empty,
-/// by seeing if the labels map to the same reduced label.
+/// DebugLabelFolding pass - This pass prunes out redundant labels.  This allows
+/// a info consumer to determine if the range of two labels is empty, by seeing
+/// if the labels map to the same reduced label.
 
 namespace llvm {
 
 struct DebugLabelFolder : public MachineFunctionPass {
   virtual bool runOnMachineFunction(MachineFunction &MF);
-  virtual const char *getPassName() const { return "Debug Label Folder"; }
+  virtual const char *getPassName() const { return "Label Folder"; }
 };
 
 bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
-  // Get machine debug info.
-  MachineDebugInfo *MDI = getAnalysisToUpdate<MachineDebugInfo>();
-  if (!MDI) return false;
+  // Get machine module info.
+  MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  if (!MMI) return false;
   // Get target instruction info.
   const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
@@ -1660,7 +1660,7 @@ bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
        BB != E; ++BB) {
     // Iterate through instructions.
     for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
-      // Is it a debug label.
+      // Is it a label.
       if ((unsigned)I->getOpcode() == TargetInstrInfo::LABEL) {
         // The label ID # is always operand #0, an immediate.
         unsigned NextLabel = I->getOperand(0).getImm();
@@ -1668,7 +1668,7 @@ bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
         // If there was an immediate prior label.
         if (PriorLabel) {
           // Remap the current label to prior label.
-          MDI->RemapLabel(NextLabel, PriorLabel);
+          MMI->RemapLabel(NextLabel, PriorLabel);
           // Delete the current label.
           I = BB->erase(I);
           // Indicate a change has been made.
