@@ -27,7 +27,7 @@ namespace {
       : MachOWriter(O, TM) {}
 
     virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &From,
-                                     MachOSection &To);
+                                     MachOSection &To, bool Scattered);
 
     // Constants for the relocation r_type field.
     // see <mach-o/ppc/reloc.h>
@@ -59,7 +59,8 @@ void llvm::addPPCMachOObjectWriterPass(FunctionPassManager &FPM,
 /// by that relocation type.
 void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
                                          MachOSection &From,
-                                         MachOSection &To) {
+                                         MachOSection &To,
+                                         bool Scattered) {
   uint64_t Addr = 0;
 
   // Keep track of whether or not this is an externally defined relocation.
@@ -77,18 +78,30 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
   case PPC::reloc_vanilla:
     {
       // FIXME: need to handle 64 bit vanilla relocs
-      MachORelocation VANILLA(MR.getMachineCodeOffset(), To.Index, false, 2,
-                              isExtern, PPC_RELOC_VANILLA);
+      MachORelocation VANILLA(MR.getMachineCodeOffset(), To.Index, false, 2, 
+                              isExtern, PPC_RELOC_VANILLA, Scattered,
+                              (intptr_t)MR.getResultPointer());
       ++From.nreloc;
-
       OutputBuffer RelocOut(From.RelocBuffer, is64Bit, isLittleEndian);
-      RelocOut.outword(VANILLA.r_address);
-      RelocOut.outword(VANILLA.getPackedFields());
-
       OutputBuffer SecOut(From.SectionData, is64Bit, isLittleEndian);
-      SecOut.fixword(Addr, MR.getMachineCodeOffset());
-      break;
+
+      if (Scattered) {
+        RelocOut.outword(VANILLA.getPackedFields());
+        RelocOut.outword(VANILLA.getAddress());
+      } else {
+        RelocOut.outword(VANILLA.getAddress());
+        RelocOut.outword(VANILLA.getPackedFields());
+      }
+      
+      intptr_t SymbolOffset;
+      if (Scattered)
+        SymbolOffset = Addr + MR.getConstantVal();
+      else
+        SymbolOffset = Addr;
+      printf("vanilla fixup: sec_%x[%x] = %x\n", From.Index, unsigned(MR.getMachineCodeOffset()), (unsigned)SymbolOffset);
+      SecOut.fixword(SymbolOffset, MR.getMachineCodeOffset());
     }
+    break;
   case PPC::reloc_pcrel_bx:
     {
       Addr -= MR.getMachineCodeOffset();
@@ -124,7 +137,6 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
       RelocOut.outword(HA16.getPackedFields());
       RelocOut.outword(PAIR.r_address);
       RelocOut.outword(PAIR.getPackedFields());
-      printf("ha16: %x\n", (unsigned)Addr);
       Addr += 0x8000;
 
       OutputBuffer SecOut(From.SectionData, is64Bit, isLittleEndian);
@@ -145,7 +157,6 @@ void PPCMachOWriter::GetTargetRelocation(MachineRelocation &MR,
       RelocOut.outword(LO16.getPackedFields());
       RelocOut.outword(PAIR.r_address);
       RelocOut.outword(PAIR.getPackedFields());
-      printf("lo16: %x\n", (unsigned)Addr);
 
       OutputBuffer SecOut(From.SectionData, is64Bit, isLittleEndian);
       SecOut.fixhalf(Addr, MR.getMachineCodeOffset() + 2);

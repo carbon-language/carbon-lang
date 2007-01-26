@@ -145,6 +145,15 @@ void MachOCodeEmitter::startFunction(MachineFunction &F) {
   BufferBegin = &MOS->SectionData[0];
   BufferEnd = BufferBegin + MOS->SectionData.capacity();
 
+  // Upgrade the section alignment if required.
+  if (MOS->align < Align) MOS->align = Align;
+
+  // Round the size up to the correct alignment for starting the new function.
+  if ((MOS->size & ((1 << Align) - 1)) != 0) {
+    MOS->size += (1 << Align);
+    MOS->size &= ~((1 << Align) - 1);
+  }
+
   // FIXME: Using MOS->size directly here instead of calculating it from the
   // output buffer size (impossible because the code emitter deals only in raw
   // bytes) forces us to manually synchronize size and write padding zero bytes
@@ -153,9 +162,6 @@ void MachOCodeEmitter::startFunction(MachineFunction &F) {
   // write non-code to it.  An assert should probably be added to
   // AddSymbolToSection to prevent calling it on the text section.
   CurBufferPtr = BufferBegin + MOS->size;
-
-  // Upgrade the section alignment if required.
-  if (MOS->align < Align) MOS->align = Align;
 
   // Clear per-function data structures.
   CPLocations.clear();
@@ -170,12 +176,15 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
   // Get the Mach-O Section that this function belongs in.
   MachOWriter::MachOSection *MOS = MOW.getTextSection();
 
-  MOS->size += CurBufferPtr - BufferBegin;
-  
   // Get a symbol for the function to add to the symbol table
+  // FIXME: it seems like we should call something like AddSymbolToSection
+  // in startFunction rather than changing the section size and symbol n_value
+  // here.
   const GlobalValue *FuncV = F.getFunction();
   MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index, TM);
-
+  FnSym.n_value = MOS->size;
+  MOS->size = CurBufferPtr - BufferBegin;
+  
   // Emit constant pool to appropriate section(s)
   emitConstantPool(F.getConstantPool());
 
@@ -635,6 +644,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
     if (PartitionByLocal(*I)) {
       ++DySymTab.nlocalsym;
       ++DySymTab.iextdefsym;
+      ++DySymTab.iundefsym;
     } else if (PartitionByDefined(*I)) {
       ++DySymTab.nextdefsym;
       ++DySymTab.iundefsym;
@@ -692,6 +702,10 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
   for (unsigned i = 0, e = MOS.Relocations.size(); i != e; ++i) {
     MachineRelocation &MR = MOS.Relocations[i];
     unsigned TargetSection = MR.getConstantVal();
+
+    // This is a scattered relocation entry if it points to a global value with
+    // a non-zero offset.
+    bool Scattered = false;
     
     // Since we may not have seen the GlobalValue we were interested in yet at
     // the time we emitted the relocation for it, fix it up now so that it
@@ -699,15 +713,16 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
     if (MR.isGlobalValue()) {
       GlobalValue *GV = MR.getGlobalValue();
       MachOSection *MOSPtr = GVSection[GV];
-      intptr_t offset = GVOffset[GV];
+      intptr_t Offset = GVOffset[GV];
+      Scattered = TargetSection != 0;
       
       assert(MOSPtr && "Trying to relocate unknown global!");
       
       TargetSection = MOSPtr->Index;
-      MR.setResultPointer((void*)offset);
+      MR.setResultPointer((void*)Offset);
     }
     
-    GetTargetRelocation(MR, MOS, *SectionList[TargetSection-1]);
+    GetTargetRelocation(MR, MOS, *SectionList[TargetSection-1], Scattered);
   }
 }
 
@@ -720,6 +735,8 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
   std::vector<CPair> WorkList;
   
   WorkList.push_back(CPair(C,(intptr_t)Addr + Offset));
+  
+  intptr_t ScatteredOffset = 0;
   
   while (!WorkList.empty()) {
     const Constant *PC = WorkList.back().first;
@@ -737,7 +754,13 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
       // FIXME: Handle ConstantExpression.  See EE::getConstantValue()
       //
       switch (CE->getOpcode()) {
-      case Instruction::GetElementPtr:
+      case Instruction::GetElementPtr: {
+        std::vector<Value*> Indexes(CE->op_begin()+1, CE->op_end());
+        ScatteredOffset = TD->getIndexedOffset(CE->getOperand(0)->getType(),
+                                               Indexes);
+        WorkList.push_back(CPair(CE->getOperand(0), PA));
+        break;
+      }
       case Instruction::Add:
       default:
         cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
@@ -805,14 +828,16 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
         break;
       }
       case Type::PointerTyID:
-        if (isa<ConstantPointerNull>(C))
+        if (isa<ConstantPointerNull>(PC))
           memset(ptr, 0, TD->getPointerSize());
-        else if (const GlobalValue* GV = dyn_cast<GlobalValue>(C))
+        else if (const GlobalValue* GV = dyn_cast<GlobalValue>(PC)) {
           // FIXME: what about function stubs?
           MRs.push_back(MachineRelocation::getGV(PA-(intptr_t)Addr, 
                                                  MachineRelocation::VANILLA,
-                                                 const_cast<GlobalValue*>(GV)));
-        else
+                                                 const_cast<GlobalValue*>(GV),
+                                                 ScatteredOffset));
+          ScatteredOffset = 0;
+        } else
           assert(0 && "Unknown constant pointer type!");
         break;
       default:
@@ -853,10 +878,10 @@ MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
     assert(!isa<Function>(gv) && "Unexpected linkage type for Function!");
   case GlobalValue::ExternalLinkage:
     GVName = TAI->getGlobalPrefix() + name;
-    n_type |= N_EXT;
+    n_type |= GV->hasHiddenVisibility() ? N_PEXT : N_EXT;
     break;
   case GlobalValue::InternalLinkage:
-    GVName = TAI->getPrivateGlobalPrefix() + name;
+    GVName = TAI->getGlobalPrefix() + name;
     break;
   }
 }
