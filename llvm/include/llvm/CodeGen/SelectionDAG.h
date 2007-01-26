@@ -29,7 +29,7 @@ namespace llvm {
   class AliasAnalysis;
   class TargetLowering;
   class TargetMachine;
-  class MachineDebugInfo;
+  class MachineModuleInfo;
   class MachineFunction;
   class MachineConstantPoolValue;
 
@@ -47,7 +47,7 @@ namespace llvm {
 class SelectionDAG {
   TargetLowering &TLI;
   MachineFunction &MF;
-  MachineDebugInfo *DI;
+  MachineModuleInfo *MMI;
 
   /// Root - The root of the entire DAG.  EntryNode - The starting token.
   SDOperand Root, EntryNode;
@@ -60,8 +60,8 @@ class SelectionDAG {
   FoldingSet<SDNode> CSEMap;
 
 public:
-  SelectionDAG(TargetLowering &tli, MachineFunction &mf, MachineDebugInfo *di)
-  : TLI(tli), MF(mf), DI(di) {
+  SelectionDAG(TargetLowering &tli, MachineFunction &mf, MachineModuleInfo *mmi)
+  : TLI(tli), MF(mf), MMI(mmi) {
     EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
   }
   ~SelectionDAG();
@@ -69,7 +69,7 @@ public:
   MachineFunction &getMachineFunction() const { return MF; }
   const TargetMachine &getTarget() const;
   TargetLowering &getTargetLoweringInfo() const { return TLI; }
-  MachineDebugInfo *getMachineDebugInfo() const { return DI; }
+  MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
 
   /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.
   ///

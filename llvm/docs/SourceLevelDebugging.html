@@ -281,7 +281,7 @@ source-language is allowed to define its own objects, by using unreserved tag
 numbers.  We recommend using with tags in the range 0x1000 thru 0x2000 (there is
 a defined enum DW_TAG_user_base = 0x1000.)</p>
 
-<p>The fields of debug descriptors used internally by LLVM (MachineDebugInfo)
+<p>The fields of debug descriptors used internally by LLVM (MachineModuleInfo)
 are restricted to only the simple data types <tt>int</tt>, <tt>uint</tt>,
 <tt>bool</tt>, <tt>float</tt>, <tt>double</tt>, <tt>sbyte*</tt> and <tt> { }*
 </tt>.  References to arbitrary values are handled using a <tt> { }* </tt> and a

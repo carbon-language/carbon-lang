@@ -28,7 +28,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

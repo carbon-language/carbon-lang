@@ -18,7 +18,7 @@
 
 #define DEBUG_TYPE "branchfolding"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -40,7 +40,7 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Control Flow Optimizer"; }
     const TargetInstrInfo *TII;
-    MachineDebugInfo *MDI;
+    MachineModuleInfo *MMI;
     bool MadeChange;
   private:
     // Tail Merging.
@@ -75,13 +75,13 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
     MBB->removeSuccessor(MBB->succ_end()-1);
   
   // If there is DWARF info to active, check to see if there are any LABEL
-  // records in the basic block.  If so, unregister them from MachineDebugInfo.
-  if (MDI && !MBB->empty()) {
+  // records in the basic block.  If so, unregister them from MachineModuleInfo.
+  if (MMI && !MBB->empty()) {
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
       if ((unsigned)I->getOpcode() == TargetInstrInfo::LABEL) {
         // The label ID # is always operand #0, an immediate.
-        MDI->InvalidateLabel(I->getOperand(0).getImm());
+        MMI->InvalidateLabel(I->getOperand(0).getImm());
       }
     }
   }
@@ -94,7 +94,7 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
-  MDI = getAnalysisToUpdate<MachineDebugInfo>();
+  MMI = getAnalysisToUpdate<MachineModuleInfo>();
   
   bool EverMadeChange = false;
   bool MadeChangeThisIteration = true;

@@ -38,10 +38,10 @@ namespace {
     /// frame indexes with appropriate references.
     ///
     bool runOnMachineFunction(MachineFunction &Fn) {
-      // Get MachineDebugInfo so that we can track the construction of the
+      // Get MachineModuleInfo so that we can track the construction of the
       // frame.
-      if (MachineDebugInfo *DI = getAnalysisToUpdate<MachineDebugInfo>()) {
-        Fn.getFrameInfo()->setMachineDebugInfo(DI);
+      if (MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>()) {
+        Fn.getFrameInfo()->setMachineModuleInfo(MMI);
       }
 
       // Allow the target machine to make some adjustments to the function

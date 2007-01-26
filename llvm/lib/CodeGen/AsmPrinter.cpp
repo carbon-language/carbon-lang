@@ -102,8 +102,8 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   SwitchToDataSection("");   // Reset back to no section.
   
-  if (MachineDebugInfo *DebugInfo = getAnalysisToUpdate<MachineDebugInfo>()) {
-    DebugInfo->AnalyzeModule(M);
+  if (MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>()) {
+    MMI->AnalyzeModule(M);
   }
   
   return false;

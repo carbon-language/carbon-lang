@@ -735,16 +735,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Promote:
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
-      MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+      MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
       bool useDEBUG_LOC = TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other);
       bool useLABEL = TLI.isOperationLegal(ISD::LABEL, MVT::Other);
       
-      if (DebugInfo && (useDEBUG_LOC || useLABEL)) {
+      if (MMI && (useDEBUG_LOC || useLABEL)) {
         const std::string &FName =
           cast<StringSDNode>(Node->getOperand(3))->getValue();
         const std::string &DirName = 
           cast<StringSDNode>(Node->getOperand(4))->getValue();
-        unsigned SrcFile = DebugInfo->RecordSource(DirName, FName);
+        unsigned SrcFile = MMI->RecordSource(DirName, FName);
 
         SmallVector<SDOperand, 8> Ops;
         Ops.push_back(Tmp1);  // chain
@@ -759,7 +759,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         } else {
           unsigned Line = cast<ConstantSDNode>(LineOp)->getValue();
           unsigned Col = cast<ConstantSDNode>(ColOp)->getValue();
-          unsigned ID = DebugInfo->RecordLabel(Line, Col, SrcFile);
+          unsigned ID = MMI->RecordLabel(Line, Col, SrcFile);
           Ops.push_back(DAG.getConstant(ID, MVT::i32));
           Result = DAG.getNode(ISD::LABEL, MVT::Other,&Ops[0],Ops.size());
         }

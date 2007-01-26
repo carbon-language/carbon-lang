@@ -75,8 +75,8 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       Subtarget->isTargetELF() ||
       Subtarget->isTargetCygMing()) {
     // Let PassManager know we need debug information and relay
-    // the MachineDebugInfo address on to DwarfWriter.
-    DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+    // the MachineModuleInfo address on to DwarfWriter.
+    DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
   }
 
   SetupMachineFunction(MF);

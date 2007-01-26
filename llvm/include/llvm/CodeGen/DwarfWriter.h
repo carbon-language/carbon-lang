@@ -12,7 +12,7 @@
 // V.3 reference manual http://dwarf.freestandards.org ,
 //
 // The role of the Dwarf Writer class is to extract debug information from the
-// MachineDebugInfo object, organize it in Dwarf form and then emit it into asm
+// MachineModuleInfo object, organize it in Dwarf form and then emit it into asm
 // the current asm file using data and high level Dwarf directives.
 // 
 //===----------------------------------------------------------------------===//
@@ -26,7 +26,7 @@ namespace llvm {
 
 class AsmPrinter;
 class Dwarf;
-class MachineDebugInfo;
+class MachineModuleInfo;
 class MachineFunction;
 class Module;
 class TargetAsmInfo;
@@ -46,9 +46,9 @@ public:
   DwarfWriter(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T);
   virtual ~DwarfWriter();
   
-  /// SetDebugInfo - Set DebugInfo when it's known that pass manager has
-  /// created it.  Set by the target AsmPrinter.
-  void SetDebugInfo(MachineDebugInfo *DI);
+  /// SetModuleInfo - Set machine module info when it's known that pass manager
+  /// has created it.  Set by the target AsmPrinter.
+  void SetModuleInfo(MachineModuleInfo *MMI);
 
   //===--------------------------------------------------------------------===//
   // Main entry points.

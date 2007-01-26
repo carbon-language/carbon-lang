@@ -22,7 +22,7 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
@@ -754,10 +754,10 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineDebugInfo *DebugInfo = MFI->getMachineDebugInfo();
+  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   
   // Prepare for debug frame info.
-  bool hasInfo = DebugInfo && DebugInfo->hasInfo();
+  bool hasDebugInfo = MMI && MMI->hasDebugInfo();
   unsigned FrameLabelId = 0;
   
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
@@ -819,9 +819,9 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
 
-  if (hasInfo) {
+  if (hasDebugInfo) {
     // Mark effective beginning of when frame pointer becomes valid.
-    FrameLabelId = DebugInfo->NextLabelID();
+    FrameLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(FrameLabelId);
   }
   
@@ -870,8 +870,8 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
   
-  if (hasInfo) {
-    std::vector<MachineMove> &Moves = DebugInfo->getFrameMoves();
+  if (hasDebugInfo) {
+    std::vector<MachineMove> &Moves = MMI->getFrameMoves();
     
     if (NegFrameSize) {
       // Show update of SP.
@@ -901,7 +901,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
     
     // Mark effective beginning of when frame pointer is ready.
-    unsigned ReadyLabelId = DebugInfo->NextLabelID();
+    unsigned ReadyLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(ReadyLabelId);
     
     MachineLocation FPDst(HasFP ? (IsPPC64 ? PPC::X31 : PPC::R31) :

@@ -22,7 +22,7 @@
 namespace llvm {
   struct InstrStage;
   class MachineConstantPool;
-  class MachineDebugInfo;
+  class MachineModuleInfo;
   class MachineInstr;
   class MRegisterInfo;
   class SelectionDAG;

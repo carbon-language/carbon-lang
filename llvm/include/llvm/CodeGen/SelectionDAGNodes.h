@@ -506,7 +506,7 @@ namespace ISD {
     
     // DEBUG_LOC - This node is used to represent source line information
     // embedded in the code.  It takes a token chain as input, then a line
-    // number, then a column then a file id (provided by MachineDebugInfo.) It
+    // number, then a column then a file id (provided by MachineModuleInfo.) It
     // produces a token chain as output.
     DEBUG_LOC,
     

@@ -120,8 +120,8 @@ bool InternalizePass::runOnModule(Module &M) {
   // attribute((used)).
   ExternalNames.insert("llvm.used");
   
-  // Never internalize anchors used by the debugger, else the debugger won't
-  // find them.  (see MachineDebugInfo.)
+  // Never internalize anchors used by the machine module info, else the info
+  // won't find them.  (see MachineModuleInfo.)
   ExternalNames.insert("llvm.dbg.compile_units");
   ExternalNames.insert("llvm.dbg.global_variables");
   ExternalNames.insert("llvm.dbg.subprograms");

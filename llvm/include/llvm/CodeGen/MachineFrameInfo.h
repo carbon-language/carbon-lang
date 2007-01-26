@@ -17,7 +17,7 @@ namespace llvm {
 class TargetData;
 class TargetRegisterClass;
 class Type;
-class MachineDebugInfo;
+class MachineModuleInfo;
 class MachineFunction;
 
 /// The CalleeSavedInfo class tracks the information need to locate where a
@@ -147,12 +147,12 @@ class MachineFrameInfo {
   /// handling.
   std::vector<CalleeSavedInfo> CSInfo;
   
-  /// DebugInfo - This field is set (via setMachineDebugInfo) by a debug info
+  /// MMI - This field is set (via setMachineModuleInfo) by a module info
   /// consumer (ex. DwarfWriter) to indicate that frame layout information
   /// should be acquired.  Typically, it's the responsibility of the target's
-  /// MRegisterInfo prologue/epilogue emitting code to inform MachineDebugInfo
+  /// MRegisterInfo prologue/epilogue emitting code to inform MachineModuleInfo
   /// of frame layouts.
-  MachineDebugInfo *DebugInfo;
+  MachineModuleInfo *MMI;
   
 public:
   MachineFrameInfo() {
@@ -160,7 +160,7 @@ public:
     HasVarSizedObjects = false;
     HasCalls = false;
     MaxCallFrameSize = 0;
-    DebugInfo = 0;
+    MMI = 0;
   }
 
   /// hasStackObjects - Return true if there are any stack objects in this
@@ -299,13 +299,13 @@ public:
     CSInfo = CSI;
   }
 
-  /// getMachineDebugInfo - Used by a prologue/epilogue emitter (MRegisterInfo)
+  /// getMachineModuleInfo - Used by a prologue/epilogue emitter (MRegisterInfo)
   /// to provide frame layout information. 
-  MachineDebugInfo *getMachineDebugInfo() const { return DebugInfo; }
+  MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
 
-  /// setMachineDebugInfo - Used by a debug consumer (DwarfWriter) to indicate
-  /// that frame layout information should be gathered.
-  void setMachineDebugInfo(MachineDebugInfo *DI) { DebugInfo = DI; }
+  /// setMachineModuleInfo - Used by a meta info consumer (DwarfWriter) to
+  /// indicate that frame layout information should be gathered.
+  void setMachineModuleInfo(MachineModuleInfo *mmi) { MMI = mmi; }
 
   /// print - Used by the MachineFunction printer to print information about
   /// stack objects.  Implemented in MachineFunction.cpp

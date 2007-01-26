@@ -24,7 +24,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
@@ -1954,16 +1954,16 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
     
   case Intrinsic::dbg_stoppoint: {
-    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-    if (DebugInfo && SPI.getContext() && DebugInfo->Verify(SPI.getContext())) {
+    if (MMI && SPI.getContext() && MMI->Verify(SPI.getContext())) {
       SDOperand Ops[5];
 
       Ops[0] = getRoot();
       Ops[1] = getValue(SPI.getLineValue());
       Ops[2] = getValue(SPI.getColumnValue());
 
-      DebugInfoDesc *DD = DebugInfo->getDescFor(SPI.getContext());
+      DebugInfoDesc *DD = MMI->getDescFor(SPI.getContext());
       assert(DD && "Not a debug information descriptor");
       CompileUnitDesc *CompileUnit = cast<CompileUnitDesc>(DD);
       
@@ -1976,10 +1976,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_region_start: {
-    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
-    if (DebugInfo && RSI.getContext() && DebugInfo->Verify(RSI.getContext())) {
-      unsigned LabelID = DebugInfo->RecordRegionStart(RSI.getContext());
+    if (MMI && RSI.getContext() && MMI->Verify(RSI.getContext())) {
+      unsigned LabelID = MMI->RecordRegionStart(RSI.getContext());
       DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
                               DAG.getConstant(LabelID, MVT::i32)));
     }
@@ -1987,10 +1987,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_region_end: {
-    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
-    if (DebugInfo && REI.getContext() && DebugInfo->Verify(REI.getContext())) {
-      unsigned LabelID = DebugInfo->RecordRegionEnd(REI.getContext());
+    if (MMI && REI.getContext() && MMI->Verify(REI.getContext())) {
+      unsigned LabelID = MMI->RecordRegionEnd(REI.getContext());
       DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other,
                               getRoot(), DAG.getConstant(LabelID, MVT::i32)));
     }
@@ -1998,11 +1998,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_func_start: {
-    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
-    if (DebugInfo && FSI.getSubprogram() &&
-        DebugInfo->Verify(FSI.getSubprogram())) {
-      unsigned LabelID = DebugInfo->RecordRegionStart(FSI.getSubprogram());
+    if (MMI && FSI.getSubprogram() &&
+        MMI->Verify(FSI.getSubprogram())) {
+      unsigned LabelID = MMI->RecordRegionStart(FSI.getSubprogram());
       DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other,
                   getRoot(), DAG.getConstant(LabelID, MVT::i32)));
     }
@@ -2010,12 +2010,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_declare: {
-    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-    if (DebugInfo && DI.getVariable() && DebugInfo->Verify(DI.getVariable())) {
+    if (MMI && DI.getVariable() && MMI->Verify(DI.getVariable())) {
       SDOperand AddressOp  = getValue(DI.getAddress());
       if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(AddressOp))
-        DebugInfo->RecordVariable(DI.getVariable(), FI->getIndex());
+        MMI->RecordVariable(DI.getVariable(), FI->getIndex());
     }
 
     return 0;
@@ -4128,7 +4128,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
                                         FunctionLoweringInfo &FuncInfo) {
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
   {
-    SelectionDAG DAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
+    SelectionDAG DAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &DAG;
   
     // First step, lower LLVM code to some DAG.  This DAG may use operations and
@@ -4157,7 +4157,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   // whether the PHI is a successor of the range check MBB or the jump table MBB
   if (JT.Reg) {
     assert(SwitchCases.empty() && "Cannot have jump table and lowered switch");
-    SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
+    SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &SDAG;
     SelectionDAGLowering SDL(SDAG, TLI, FuncInfo);
     MachineBasicBlock *RangeBB = BB;
@@ -4201,7 +4201,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   // If we generated any switch lowering information, build and codegen any
   // additional DAGs necessary.
   for (unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
-    SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
+    SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &SDAG;
     SelectionDAGLowering SDL(SDAG, TLI, FuncInfo);
     

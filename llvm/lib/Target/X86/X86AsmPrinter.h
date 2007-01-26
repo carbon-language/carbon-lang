@@ -21,7 +21,7 @@
 #include "X86TargetMachine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/Compiler.h"
 #include <set>
 
@@ -61,7 +61,7 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
     if (Subtarget->isTargetDarwin() ||
         Subtarget->isTargetELF() ||
         Subtarget->isTargetCygMing()) {
-      AU.addRequired<MachineDebugInfo>();
+      AU.addRequired<MachineModuleInfo>();
     }
     MachineFunctionPass::getAnalysisUsage(AU);
   }

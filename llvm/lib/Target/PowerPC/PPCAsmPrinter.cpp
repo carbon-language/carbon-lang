@@ -27,7 +27,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/Mangler.h"
@@ -302,7 +302,7 @@ namespace {
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
-      AU.addRequired<MachineDebugInfo>();
+      AU.addRequired<MachineModuleInfo>();
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
@@ -332,7 +332,7 @@ namespace {
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
-      AU.addRequired<MachineDebugInfo>();
+      AU.addRequired<MachineModuleInfo>();
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
@@ -528,7 +528,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+  DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
 
   SetupMachineFunction(MF);
   O << "\n\n";
@@ -738,7 +738,7 @@ std::string DarwinAsmPrinter::getSectionForFunction(const Function &F) const {
 /// method to print assembly for each instruction.
 ///
 bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+  DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
 
   SetupMachineFunction(MF);
   O << "\n\n";

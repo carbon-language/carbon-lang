@@ -19,7 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Support/Dwarf.h"
@@ -786,9 +786,9 @@ private:
   ///
   MachineFunction *MF;
   
-  /// DebugInfo - Collected debug information.
+  /// MMI - Collected machine module information.
   ///
-  MachineDebugInfo *DebugInfo;
+  MachineModuleInfo *MMI;
   
   /// didInitial - Flag to indicate if initial emission has been done.
   ///
@@ -807,7 +807,7 @@ private:
   //
   
   /// CompileUnits - All the compile units involved in this build.  The index
-  /// of each entry in this vector corresponds to the sources in DebugInfo.
+  /// of each entry in this vector corresponds to the sources in MMI.
   std::vector<CompileUnit *> CompileUnits;
   
   /// AbbreviationsSet - Used to uniquely define abbreviations.
@@ -1702,8 +1702,8 @@ private:
       // FIXME - Ignore inlined functions for the time being.
       if (!Scope->getParent()) continue;
       
-      unsigned StartID = DebugInfo->MappedLabel(Scope->getStartLabelID());
-      unsigned EndID = DebugInfo->MappedLabel(Scope->getEndLabelID());
+      unsigned StartID = MMI->MappedLabel(Scope->getStartLabelID());
+      unsigned EndID = MMI->MappedLabel(Scope->getEndLabelID());
 
       // Ignore empty scopes.
       if (StartID == EndID && StartID != 0) continue;
@@ -1933,7 +1933,7 @@ private:
       unsigned LabelID = Move.getLabelID();
       
       if (LabelID) {
-        LabelID = DebugInfo->MappedLabel(LabelID);
+        LabelID = MMI->MappedLabel(LabelID);
       
         // Throw out move if the label is invalid.
         if (!LabelID) continue;
@@ -2120,9 +2120,9 @@ private:
     Asm->EmitInt8(0); Asm->EOL("DW_LNS_const_add_pc arg count");
     Asm->EmitInt8(1); Asm->EOL("DW_LNS_fixed_advance_pc arg count");
 
-    const UniqueVector<std::string> &Directories = DebugInfo->getDirectories();
+    const UniqueVector<std::string> &Directories = MMI->getDirectories();
     const UniqueVector<SourceFileInfo>
-      &SourceFiles = DebugInfo->getSourceFiles();
+      &SourceFiles = MMI->getSourceFiles();
 
     // Emit directories.
     for (unsigned DirectoryID = 1, NDID = Directories.size();
@@ -2162,7 +2162,7 @@ private:
       // Construct rows of the address, source, line, column matrix.
       for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
         const SourceLineInfo &LineInfo = LineInfos[i];
-        unsigned LabelID = DebugInfo->MappedLabel(LineInfo.getLabelID());
+        unsigned LabelID = MMI->MappedLabel(LineInfo.getLabelID());
         if (!LabelID) continue;
         
         unsigned SourceID = LineInfo.getSourceID();
@@ -2295,7 +2295,7 @@ private:
                    "func_begin", SubprogramCount);
     Asm->EOL("FDE address range");
     
-    std::vector<MachineMove> &Moves = DebugInfo->getFrameMoves();
+    std::vector<MachineMove> &Moves = MMI->getFrameMoves();
     
     EmitFrameMoves("func_begin", SubprogramCount, Moves);
     
@@ -2433,10 +2433,10 @@ private:
   /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
   /// header file.
   void ConstructCompileUnitDIEs() {
-    const UniqueVector<CompileUnitDesc *> CUW = DebugInfo->getCompileUnits();
+    const UniqueVector<CompileUnitDesc *> CUW = MMI->getCompileUnits();
     
     for (unsigned i = 1, N = CUW.size(); i <= N; ++i) {
-      unsigned ID = DebugInfo->RecordSource(CUW[i]);
+      unsigned ID = MMI->RecordSource(CUW[i]);
       CompileUnit *Unit = NewCompileUnit(CUW[i], ID);
       CompileUnits.push_back(Unit);
     }
@@ -2446,7 +2446,7 @@ private:
   /// global variables.
   void ConstructGlobalDIEs() {
     std::vector<GlobalVariableDesc *> GlobalVariables =
-        DebugInfo->getAnchoredDescriptors<GlobalVariableDesc>(*M);
+        MMI->getAnchoredDescriptors<GlobalVariableDesc>(*M);
     
     for (unsigned i = 0, N = GlobalVariables.size(); i < N; ++i) {
       GlobalVariableDesc *GVD = GlobalVariables[i];
@@ -2458,7 +2458,7 @@ private:
   /// subprograms.
   void ConstructSubprogramDIEs() {
     std::vector<SubprogramDesc *> Subprograms =
-        DebugInfo->getAnchoredDescriptors<SubprogramDesc>(*M);
+        MMI->getAnchoredDescriptors<SubprogramDesc>(*M);
     
     for (unsigned i = 0, N = Subprograms.size(); i < N; ++i) {
       SubprogramDesc *SPD = Subprograms[i];
@@ -2482,7 +2482,7 @@ public:
   , RI(Asm->TM.getRegisterInfo())
   , M(NULL)
   , MF(NULL)
-  , DebugInfo(NULL)
+  , MMI(NULL)
   , didInitial(false)
   , shouldEmit(false)
   , SubprogramCount(0)
@@ -2508,12 +2508,12 @@ public:
   //
   const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
   
-  /// SetDebugInfo - Set DebugInfo when it's known that pass manager has
-  /// created it.  Set by the target AsmPrinter.
-  void SetDebugInfo(MachineDebugInfo *DI) {
+  /// SetModuleInfo - Set machine module information when it's known that pass
+  /// manager has created it.  Set by the target AsmPrinter.
+  void SetModuleInfo(MachineModuleInfo *mmi) {
     // Make sure initial declarations are made.
-    if (!DebugInfo && DI->hasInfo()) {
-      DebugInfo = DI;
+    if (!MMI && mmi->hasDebugInfo()) {
+      MMI = mmi;
       shouldEmit = true;
       
       // Emit initial sections
@@ -2600,7 +2600,7 @@ public:
     Asm->EOL("Dwarf Begin Function");
 
     // Begin accumulating function debug information.
-    DebugInfo->BeginFunction(MF);
+    MMI->BeginFunction(MF);
     
     // Assumes in correct section after the entry point.
     EmitLabel("func_begin", ++SubprogramCount);
@@ -2616,7 +2616,7 @@ public:
     EmitLabel("func_end", SubprogramCount);
       
     // Get function line info.
-    const std::vector<SourceLineInfo> &LineInfos = DebugInfo->getSourceLines();
+    const std::vector<SourceLineInfo> &LineInfos = MMI->getSourceLines();
 
     if (!LineInfos.empty()) {
       // Get section line info.
@@ -2629,16 +2629,16 @@ public:
     }
     
     // Construct scopes for subprogram.
-    ConstructRootScope(DebugInfo->getRootScope());
+    ConstructRootScope(MMI->getRootScope());
     
     // Emit function frame information.
     EmitFunctionDebugFrame();
     
     // Reset the line numbers for the next function.
-    DebugInfo->ClearLineInfo();
+    MMI->ClearLineInfo();
 
     // Clear function debug information.
-    DebugInfo->EndFunction();
+    MMI->EndFunction();
   }
 };
 
@@ -2948,10 +2948,10 @@ DwarfWriter::~DwarfWriter() {
   delete DW;
 }
 
-/// SetDebugInfo - Set DebugInfo when it's known that pass manager has
-/// created it.  Set by the target AsmPrinter.
-void DwarfWriter::SetDebugInfo(MachineDebugInfo *DI) {
-  DW->SetDebugInfo(DI);
+/// SetModuleInfo - Set machine module info when it's known that pass manager
+/// has created it.  Set by the target AsmPrinter.
+void DwarfWriter::SetModuleInfo(MachineModuleInfo *MMI) {
+  DW->SetModuleInfo(MMI);
 }
 
 /// BeginModule - Emit all Dwarf sections that should come prior to the

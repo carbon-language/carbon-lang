@@ -23,7 +23,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -142,7 +142,7 @@ namespace {
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
-      AU.addRequired<MachineDebugInfo>();
+      AU.addRequired<MachineModuleInfo>();
     }
   };
 } // end of anonymous namespace
@@ -166,7 +166,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   AFI = MF.getInfo<ARMFunctionInfo>();
 
   if (Subtarget->isTargetDarwin()) {
-    DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+    DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
   }
 
   SetupMachineFunction(MF);
