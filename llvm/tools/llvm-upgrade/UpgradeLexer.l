@@ -25,8 +25,9 @@
 %option noyymore
 
 %{
-
 #include "UpgradeInternals.h"
+#include "llvm/Module.h"
+#include <list>
 #include "UpgradeParser.h"
 #include <cctype>
 #include <cstdlib>
@@ -41,17 +42,108 @@
   } \
 }
 
+#define YY_NEVER_INTERACTIVE 1
 
 // Construct a token value for a non-obsolete token
-#define RET_TOK(sym) \
-  Upgradelval.String = new std::string(yytext); \
+#define RET_TOK(type, Enum, sym) \
+  Upgradelval.type = Enum; \
   return sym
 
-#define RET_TY(sym,OldTY,NewTY,sign) \
-  Upgradelval.Ty = getType(NewTY, OldTY); \
+#define RET_TY(sym,NewTY,sign) \
+  Upgradelval.PrimType.T = NewTY; \
+  Upgradelval.PrimType.S = sign; \
   return sym
 
-#define YY_NEVER_INTERACTIVE 1
+namespace llvm {
+
+// TODO: All of the static identifiers are figured out by the lexer,
+// these should be hashed to reduce the lexer size
+
+// UnEscapeLexed - Run through the specified buffer and change \xx codes to the
+// appropriate character.  If AllowNull is set to false, a \00 value will cause
+// an exception to be thrown.
+//
+// If AllowNull is set to true, the return value of the function points to the
+// last character of the string in memory.
+//
+char *UnEscapeLexed(char *Buffer, bool AllowNull) {
+  char *BOut = Buffer;
+  for (char *BIn = Buffer; *BIn; ) {
+    if (BIn[0] == '\\' && isxdigit(BIn[1]) && isxdigit(BIn[2])) {
+      char Tmp = BIn[3]; BIn[3] = 0;     // Terminate string
+      *BOut = (char)strtol(BIn+1, 0, 16);  // Convert to number
+      if (!AllowNull && !*BOut)
+        error("String literal cannot accept \\00 escape!");
+
+      BIn[3] = Tmp;                  // Restore character
+      BIn += 3;                      // Skip over handled chars
+      ++BOut;
+    } else {
+      *BOut++ = *BIn++;
+    }
+  }
+
+  return BOut;
+}
+
+// atoull - Convert an ascii string of decimal digits into the unsigned long
+// long representation... this does not have to do input error checking,
+// because we know that the input will be matched by a suitable regex...
+//
+static uint64_t atoull(const char *Buffer) {
+  uint64_t Result = 0;
+  for (; *Buffer; Buffer++) {
+    uint64_t OldRes = Result;
+    Result *= 10;
+    Result += *Buffer-'0';
+    if (Result < OldRes)   // Uh, oh, overflow detected!!!
+      error("constant bigger than 64 bits detected!");
+  }
+  return Result;
+}
+
+static uint64_t HexIntToVal(const char *Buffer) {
+  uint64_t Result = 0;
+  for (; *Buffer; ++Buffer) {
+    uint64_t OldRes = Result;
+    Result *= 16;
+    char C = *Buffer;
+    if (C >= '0' && C <= '9')
+      Result += C-'0';
+    else if (C >= 'A' && C <= 'F')
+      Result += C-'A'+10;
+    else if (C >= 'a' && C <= 'f')
+      Result += C-'a'+10;
+
+    if (Result < OldRes)   // Uh, oh, overflow detected!!!
+      error("constant bigger than 64 bits detected!");
+  }
+  return Result;
+}
+
+
+// HexToFP - Convert the ascii string in hexidecimal format to the floating
+// point representation of it.
+//
+static double HexToFP(const char *Buffer) {
+  // Behave nicely in the face of C TBAA rules... see:
+  // http://www.nullstone.com/htmls/category/aliastyp.htm
+  union {
+    uint64_t UI;
+    double FP;
+  } UIntToFP;
+  UIntToFP.UI = HexIntToVal(Buffer);
+
+  assert(sizeof(double) == sizeof(uint64_t) &&
+         "Data sizes incompatible on this target!");
+  return UIntToFP.FP;   // Cast Hex constant to double
+}
+
+
+} // End llvm namespace
+
+using namespace llvm;
+
 %}
 
 
@@ -98,168 +190,219 @@ HexIntConstant [us]0x[0-9A-Fa-f]+
 
 {Comment}       { /* Ignore comments for now */ }
 
-begin           { RET_TOK( BEGINTOK); }
-end             { RET_TOK( ENDTOK); }
-true            { RET_TOK( TRUETOK);  }
-false           { RET_TOK( FALSETOK); }
-declare         { RET_TOK( DECLARE); }
-global          { RET_TOK( GLOBAL); }
-constant        { RET_TOK( CONSTANT); }
-internal        { RET_TOK( INTERNAL); }
-linkonce        { RET_TOK( LINKONCE); }
-weak            { RET_TOK( WEAK); }
-appending       { RET_TOK( APPENDING); }
-dllimport       { RET_TOK( DLLIMPORT); }
-dllexport       { RET_TOK( DLLEXPORT); }
-extern_weak     { RET_TOK( EXTERN_WEAK); }
-external        { RET_TOK( EXTERNAL); }
-uninitialized   { RET_TOK( UNINITIALIZED); }  // alias for external
-implementation  { RET_TOK( IMPLEMENTATION); }
-zeroinitializer { RET_TOK( ZEROINITIALIZER); }
-\.\.\.          { RET_TOK( DOTDOTDOT); }
-undef           { RET_TOK( UNDEF); }
-null            { RET_TOK( NULL_TOK); }
-to              { RET_TOK( TO); }
-tail            { RET_TOK( TAIL); }
-target          { RET_TOK( TARGET); }
-triple          { RET_TOK( TRIPLE); }
-deplibs         { RET_TOK( DEPLIBS); }
-endian          { RET_TOK( ENDIAN); }
-pointersize     { RET_TOK( POINTERSIZE); }
-datalayout      { RET_TOK( DATALAYOUT); }
-little          { RET_TOK( LITTLE); }
-big             { RET_TOK( BIG); }
-volatile        { RET_TOK( VOLATILE); }
-align           { RET_TOK( ALIGN);  }
-section         { RET_TOK( SECTION); }
-module          { RET_TOK( MODULE); }
-asm             { RET_TOK( ASM_TOK); }
-sideeffect      { RET_TOK( SIDEEFFECT); }
+begin           { return BEGINTOK; }
+end             { return ENDTOK; }
+true            { return TRUETOK;  }
+false           { return FALSETOK; }
+declare         { return DECLARE; }
+global          { return GLOBAL; }
+constant        { return CONSTANT; }
+internal        { return INTERNAL; }
+linkonce        { return LINKONCE; }
+weak            { return WEAK; }
+appending       { return APPENDING; }
+dllimport       { return DLLIMPORT; }
+dllexport       { return DLLEXPORT; }
+extern_weak     { return EXTERN_WEAK; }
+uninitialized   { return EXTERNAL; }    /* Deprecated, turn into external */
+external        { return EXTERNAL; }
+implementation  { return IMPLEMENTATION; }
+zeroinitializer { return ZEROINITIALIZER; }
+\.\.\.          { return DOTDOTDOT; }
+undef           { return UNDEF; }
+null            { return NULL_TOK; }
+to              { return TO; }
+except          { return EXCEPT; }
+not             { return NOT; }  /* Deprecated, turned into XOR */
+tail            { return TAIL; }
+target          { return TARGET; }
+triple          { return TRIPLE; }
+deplibs         { return DEPLIBS; }
+endian          { return ENDIAN; }
+pointersize     { return POINTERSIZE; }
+datalayout      { return DATALAYOUT; }
+little          { return LITTLE; }
+big             { return BIG; }
+volatile        { return VOLATILE; }
+align           { return ALIGN;  }
+section         { return SECTION; }
+module          { return MODULE; }
+asm             { return ASM_TOK; }
+sideeffect      { return SIDEEFFECT; }
 
-cc              { RET_TOK( CC_TOK); }
-ccc             { RET_TOK( CCC_TOK); }
-csretcc         { RET_TOK( CSRETCC_TOK); }
-fastcc          { RET_TOK( FASTCC_TOK); }
-coldcc          { RET_TOK( COLDCC_TOK); }
-x86_stdcallcc   { RET_TOK( X86_STDCALLCC_TOK); }
-x86_fastcallcc  { RET_TOK( X86_FASTCALLCC_TOK); }
+cc              { return CC_TOK; }
+ccc             { return CCC_TOK; }
+csretcc         { return CSRETCC_TOK; }
+fastcc          { return FASTCC_TOK; }
+coldcc          { return COLDCC_TOK; }
+x86_stdcallcc   { return X86_STDCALLCC_TOK; }
+x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
-void            { RET_TY(VOID,VoidTy,"void",false); }
-bool            { RET_TY(BOOL,BoolTy,"i1",false); }
-sbyte           { RET_TY(SBYTE,SByteTy,"i8",true); }
-ubyte           { RET_TY(UBYTE,UByteTy,"i8",false); }
-short           { RET_TY(SHORT,ShortTy,"i16",true); }
-ushort          { RET_TY(USHORT,UShortTy,"i16",false); }
-int             { RET_TY(INT,IntTy,"i32",true);   }
-uint            { RET_TY(UINT,UIntTy,"i32",false);  }
-long            { RET_TY(LONG,LongTy,"i64",true);  }
-ulong           { RET_TY(ULONG,ULongTy,"i64",false); }
-i8              { RET_TY(UBYTE,UByteTy,"i8",false); }
-i16             { RET_TY(USHORT,UShortTy,"i16",false); }
-i32             { RET_TY(UINT,UIntTy,"i32",false); }
-i64             { RET_TY(ULONG,ULongTy,"i64",false); }
-float           { RET_TY(FLOAT,FloatTy,"float",false); }
-double          { RET_TY(DOUBLE,DoubleTy,"double",false); }
-label           { RET_TY(LABEL,LabelTy,"label",false); }
-opaque          { RET_TOK(OPAQUE); }
-type            { RET_TOK(TYPE);   }
+sbyte           { RET_TY(SBYTE,  Type::Int8Ty,  Signed);  }
+ubyte           { RET_TY(UBYTE,  Type::Int8Ty,  Unsigned); }
+short           { RET_TY(SHORT,  Type::Int16Ty, Signed);  }
+ushort          { RET_TY(USHORT, Type::Int16Ty, Unsigned); }
+int             { RET_TY(INT,    Type::Int32Ty, Signed);  }
+uint            { RET_TY(UINT,   Type::Int32Ty, Unsigned); }
+long            { RET_TY(LONG,   Type::Int64Ty, Signed);  }
+ulong           { RET_TY(ULONG,  Type::Int64Ty, Unsigned); }
+void            { RET_TY(VOID,   Type::VoidTy,  Signless  ); }
+bool            { RET_TY(BOOL,   Type::Int1Ty,  Unsigned  ); }
+float           { RET_TY(FLOAT,  Type::FloatTy, Signless ); }
+double          { RET_TY(DOUBLE, Type::DoubleTy,Signless); }
+label           { RET_TY(LABEL,  Type::LabelTy, Signless ); }
+type            { return TYPE;   }
+opaque          { return OPAQUE; }
 
-add             { RET_TOK( ADD); }
-sub             { RET_TOK( SUB); }
-mul             { RET_TOK( MUL); }
-div             { RET_TOK( DIV); }
-udiv            { RET_TOK( UDIV); }
-sdiv            { RET_TOK( SDIV); }
-fdiv            { RET_TOK( FDIV); }
-rem             { RET_TOK( REM);  }
-urem            { RET_TOK( UREM); }
-srem            { RET_TOK( SREM); }
-frem            { RET_TOK( FREM); }
-and             { RET_TOK( AND); }
-or              { RET_TOK( OR); }
-xor             { RET_TOK( XOR); }
-setne           { RET_TOK( SETNE); }
-seteq           { RET_TOK( SETEQ); }
-setlt           { RET_TOK( SETLT); }
-setgt           { RET_TOK( SETGT); }
-setle           { RET_TOK( SETLE); }
-setge           { RET_TOK( SETGE); }
-icmp            { RET_TOK(ICMP); }
-fcmp            { RET_TOK(FCMP); }
-eq              { RET_TOK(EQ); }
-ne              { RET_TOK(NE); }
-slt             { RET_TOK(SLT); }
-sgt             { RET_TOK(SGT); }
-sle             { RET_TOK(SLE); }
-sge             { RET_TOK(SGE); }
-oeq             { RET_TOK(OEQ); }
-one             { RET_TOK(ONE); }
-olt             { RET_TOK(OLT); }
-ogt             { RET_TOK(OGT); }
-ole             { RET_TOK(OLE); }
-oge             { RET_TOK(OGE); }
-ord             { RET_TOK(ORD); }
-uno             { RET_TOK(UNO); }
-ueq             { RET_TOK(UEQ); }
-une             { RET_TOK(UNE); }
-ult             { RET_TOK(ULT); }
-ugt             { RET_TOK(UGT); }
-ule             { RET_TOK(ULE); }
-uge             { RET_TOK(UGE); }
+add             { RET_TOK(BinaryOpVal, AddOp, ADD); }
+sub             { RET_TOK(BinaryOpVal, SubOp, SUB); }
+mul             { RET_TOK(BinaryOpVal, MulOp, MUL); }
+div             { RET_TOK(BinaryOpVal, DivOp,  DIV); }
+udiv            { RET_TOK(BinaryOpVal, UDivOp, UDIV); }
+sdiv            { RET_TOK(BinaryOpVal, SDivOp, SDIV); }
+fdiv            { RET_TOK(BinaryOpVal, FDivOp, FDIV); }
+rem             { RET_TOK(BinaryOpVal, RemOp,  REM); }
+urem            { RET_TOK(BinaryOpVal, URemOp, UREM); }
+srem            { RET_TOK(BinaryOpVal, SRemOp, SREM); }
+frem            { RET_TOK(BinaryOpVal, FRemOp, FREM); }
+and             { RET_TOK(BinaryOpVal, AndOp, AND); }
+or              { RET_TOK(BinaryOpVal, OrOp , OR ); }
+xor             { RET_TOK(BinaryOpVal, XorOp, XOR); }
+setne           { RET_TOK(BinaryOpVal, SetNE, SETNE); }
+seteq           { RET_TOK(BinaryOpVal, SetEQ, SETEQ); }
+setlt           { RET_TOK(BinaryOpVal, SetLT, SETLT); }
+setgt           { RET_TOK(BinaryOpVal, SetGT, SETGT); }
+setle           { RET_TOK(BinaryOpVal, SetLE, SETLE); }
+setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
+icmp            { RET_TOK(OtherOpVal, ICmpOp, ICMP); }
+fcmp            { RET_TOK(OtherOpVal, FCmpOp, FCMP); }
 
-phi             { RET_TOK( PHI_TOK); }
-call            { RET_TOK( CALL); }
-cast            { RET_TOK( CAST); }
-trunc           { RET_TOK( TRUNC); }
-zext            { RET_TOK( ZEXT); }
-sext            { RET_TOK( SEXT); }
-fptrunc         { RET_TOK( FPTRUNC); }
-fpext           { RET_TOK( FPEXT); }
-fptoui          { RET_TOK( FPTOUI); }
-fptosi          { RET_TOK( FPTOSI); }
-uitofp          { RET_TOK( UITOFP); }
-sitofp          { RET_TOK( SITOFP); }
-ptrtoint        { RET_TOK( PTRTOINT); }
-inttoptr        { RET_TOK( INTTOPTR); }
-bitcast         { RET_TOK( BITCAST); }
-select          { RET_TOK( SELECT); }
-shl             { RET_TOK( SHL); }
-shr             { RET_TOK( SHR); }
-ashr            { RET_TOK( ASHR); }
-lshr            { RET_TOK( LSHR); }
-va_arg          { RET_TOK( VAARG); }
-ret             { RET_TOK( RET); }
-br              { RET_TOK( BR); }
-switch          { RET_TOK( SWITCH); }
-invoke          { RET_TOK( INVOKE); }
-unwind          { RET_TOK( UNWIND); }
-except          { RET_TOK( EXCEPT); } // alias for unwind
-unreachable     { RET_TOK( UNREACHABLE); }
+eq              { return EQ; }
+ne              { return NE; }
+slt             { return SLT; }
+sgt             { return SGT; }
+sle             { return SLE; }
+sge             { return SGE; }
+ult             { return ULT; }
+ugt             { return UGT; }
+ule             { return ULE; }
+uge             { return UGE; }
+oeq             { return OEQ; }
+one             { return ONE; }
+olt             { return OLT; }
+ogt             { return OGT; }
+ole             { return OLE; }
+oge             { return OGE; }
+ord             { return ORD; }
+uno             { return UNO; }
+ueq             { return UEQ; }
+une             { return UNE; }
 
-malloc          { RET_TOK( MALLOC); }
-alloca          { RET_TOK( ALLOCA); }
-free            { RET_TOK( FREE); }
-load            { RET_TOK( LOAD); }
-store           { RET_TOK( STORE); }
-getelementptr   { RET_TOK( GETELEMENTPTR); }
+phi             { RET_TOK(OtherOpVal, PHIOp, PHI_TOK); }
+call            { RET_TOK(OtherOpVal, CallOp, CALL); }
+cast            { RET_TOK(CastOpVal, CastOp, CAST);  }
+trunc           { RET_TOK(CastOpVal, TruncOp, TRUNC); }
+zext            { RET_TOK(CastOpVal, ZExtOp , ZEXT); }
+sext            { RET_TOK(CastOpVal, SExtOp, SEXT); }
+fptrunc         { RET_TOK(CastOpVal, FPTruncOp, FPTRUNC); }
+fpext           { RET_TOK(CastOpVal, FPExtOp, FPEXT); }
+fptoui          { RET_TOK(CastOpVal, FPToUIOp, FPTOUI); }
+fptosi          { RET_TOK(CastOpVal, FPToSIOp, FPTOSI); }
+uitofp          { RET_TOK(CastOpVal, UIToFPOp, UITOFP); }
+sitofp          { RET_TOK(CastOpVal, SIToFPOp, SITOFP); }
+ptrtoint        { RET_TOK(CastOpVal, PtrToIntOp, PTRTOINT); }
+inttoptr        { RET_TOK(CastOpVal, IntToPtrOp, INTTOPTR); }
+bitcast         { RET_TOK(CastOpVal, BitCastOp, BITCAST); }
+select          { RET_TOK(OtherOpVal, SelectOp, SELECT); }
+shl             { RET_TOK(OtherOpVal, ShlOp, SHL); }
+shr             { RET_TOK(OtherOpVal, ShrOp, SHR); }
+lshr            { RET_TOK(OtherOpVal, LShrOp, LSHR); }
+ashr            { RET_TOK(OtherOpVal, AShrOp, ASHR); }
+vanext          { return VANEXT_old; }
+vaarg           { return VAARG_old; }
+va_arg          { RET_TOK(OtherOpVal, VAArg , VAARG); }
+ret             { RET_TOK(TermOpVal, RetOp, RET); }
+br              { RET_TOK(TermOpVal, BrOp, BR); }
+switch          { RET_TOK(TermOpVal, SwitchOp, SWITCH); }
+invoke          { RET_TOK(TermOpVal, InvokeOp, INVOKE); }
+unwind          { return UNWIND; }
+unreachable     { RET_TOK(TermOpVal, UnreachableOp, UNREACHABLE); }
 
-extractelement  { RET_TOK( EXTRACTELEMENT); }
-insertelement   { RET_TOK( INSERTELEMENT); }
-shufflevector   { RET_TOK( SHUFFLEVECTOR); }
+malloc          { RET_TOK(MemOpVal, MallocOp, MALLOC); }
+alloca          { RET_TOK(MemOpVal, AllocaOp, ALLOCA); }
+free            { RET_TOK(MemOpVal, FreeOp, FREE); }
+load            { RET_TOK(MemOpVal, LoadOp, LOAD); }
+store           { RET_TOK(MemOpVal, StoreOp, STORE); }
+getelementptr   { RET_TOK(MemOpVal, GetElementPtrOp, GETELEMENTPTR); }
+
+extractelement  { RET_TOK(OtherOpVal, ExtractElementOp, EXTRACTELEMENT); }
+insertelement   { RET_TOK(OtherOpVal, InsertElementOp, INSERTELEMENT); }
+shufflevector   { RET_TOK(OtherOpVal, ShuffleVectorOp, SHUFFLEVECTOR); }
 
 
-{VarID}          { RET_TOK( VAR_ID); }
-{Label}          { RET_TOK( LABELSTR); }
-{QuoteLabel}     { RET_TOK( LABELSTR); }
-{StringConstant} { RET_TOK( STRINGCONSTANT ); }
-{PInteger}       { RET_TOK( EUINT64VAL ); }
-{NInteger}       { RET_TOK( ESINT64VAL ); }
-{HexIntConstant} { RET_TOK( yytext[0] == 's' ? ESINT64VAL : EUINT64VAL ); }
-{EPInteger}      { RET_TOK( UINTVAL); }
-{ENInteger}      { RET_TOK( SINTVAL); }
-{FPConstant}     { RET_TOK( FPVAL); }
-{HexFPConstant}  { RET_TOK( FPVAL); }
-<<EOF>>          {
+{VarID}         {
+                  UnEscapeLexed(yytext+1);
+                  Upgradelval.StrVal = strdup(yytext+1);             // Skip %
+                  return VAR_ID;
+                }
+{Label}         {
+                  yytext[strlen(yytext)-1] = 0;  // nuke colon
+                  UnEscapeLexed(yytext);
+                  Upgradelval.StrVal = strdup(yytext);
+                  return LABELSTR;
+                }
+{QuoteLabel}    {
+                  yytext[strlen(yytext)-2] = 0;  // nuke colon, end quote
+                  UnEscapeLexed(yytext+1);
+                  Upgradelval.StrVal = strdup(yytext+1);
+                  return LABELSTR;
+                }
+
+{StringConstant} { // Note that we cannot unescape a string constant here!  The
+                   // string constant might contain a \00 which would not be
+                   // understood by the string stuff.  It is valid to make a
+                   // [sbyte] c"Hello World\00" constant, for example.
+                   //
+                   yytext[strlen(yytext)-1] = 0;           // nuke end quote
+                   Upgradelval.StrVal = strdup(yytext+1);  // Nuke start quote
+                   return STRINGCONSTANT;
+                 }
+
+
+{PInteger}      { Upgradelval.UInt64Val = atoull(yytext); return EUINT64VAL; }
+{NInteger}      {
+                  uint64_t Val = atoull(yytext+1);
+                  // +1:  we have bigger negative range
+                  if (Val > (uint64_t)INT64_MAX+1)
+                    error("Constant too large for signed 64 bits!");
+                  Upgradelval.SInt64Val = -Val;
+                  return ESINT64VAL;
+                }
+{HexIntConstant} {
+                   Upgradelval.UInt64Val = HexIntToVal(yytext+3);
+                   return yytext[0] == 's' ? ESINT64VAL : EUINT64VAL;
+                 }
+
+{EPInteger}     {
+                  uint64_t Val = atoull(yytext+1);
+                  if ((unsigned)Val != Val)
+                    error("Invalid value number (too large)!");
+                  Upgradelval.UIntVal = unsigned(Val);
+                  return UINTVAL;
+                }
+{ENInteger}     {
+                  uint64_t Val = atoull(yytext+2);
+                  // +1:  we have bigger negative range
+                  if (Val > (uint64_t)INT32_MAX+1)
+                    error("Constant too large for signed 32 bits!");
+                  Upgradelval.SIntVal = (int)-Val;
+                  return SINTVAL;
+                }
+
+{FPConstant}    { Upgradelval.FPVal = atof(yytext); return FPVAL; }
+{HexFPConstant} { Upgradelval.FPVal = HexToFP(yytext); return FPVAL; }
+
+<<EOF>>         {
                   /* Make sure to free the internal buffers for flex when we are
                    * done reading our input!
                    */
