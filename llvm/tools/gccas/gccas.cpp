@@ -97,7 +97,6 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
 
   if (!DisableInline)
     addPass(PM, createFunctionInliningPass());   // Inline small functions
-  addPass(PM, createSimplifyLibCallsPass());     // Library Call Optimizations
   addPass(PM, createArgumentPromotionPass());    // Scalarize uninlined fn args
 
   addPass(PM, createRaisePointerReferencesPass());// Recover type information
@@ -129,6 +128,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createDeadStoreEliminationPass()); // Delete dead stores
   addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+  addPass(PM, createSimplifyLibCallsPass());     // Library Call Optimizations
   addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
   addPass(PM, createConstantMergePass());        // Merge dup global constants
 }
