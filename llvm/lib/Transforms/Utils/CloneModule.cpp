@@ -37,8 +37,7 @@ Module *llvm::CloneModule(const Module *M) {
 Module *llvm::CloneModule(const Module *M, std::map<const Value*, Value*> &ValueMap) {
   // First off, we need to create the new module...
   Module *New = new Module(M->getModuleIdentifier());
-  New->setEndianness(M->getEndianness());
-  New->setPointerSize(M->getPointerSize());
+  New->setDataLayout(M->getDataLayout());
   New->setTargetTriple(M->getTargetTriple());
   New->setModuleInlineAsm(M->getModuleInlineAsm());
 

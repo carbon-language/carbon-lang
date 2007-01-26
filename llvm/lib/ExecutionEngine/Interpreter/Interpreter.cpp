@@ -39,18 +39,17 @@ ExecutionEngine *Interpreter::create(ModuleProvider *MP) {
     return 0;  // error materializing the module.
   }
   
-  if (M->getEndianness() == Module::AnyEndianness) {
-    int Test = 0;
-    *(char*)&Test = 1;    // Return true if the host is little endian
-    bool isLittleEndian = (Test == 1);
-    M->setEndianness(isLittleEndian ? Module::LittleEndian : Module::BigEndian);
-  }
+  // FIXME: This should probably compute the entire data layout
+  std::string DataLayout;
+  int Test = 0;
+  *(char*)&Test = 1;    // Return true if the host is little endian
+  bool isLittleEndian = (Test == 1);
+  DataLayout.append(isLittleEndian ? "e" : "E");
 
-  if (M->getPointerSize() == Module::AnyPointerSize) {
-    // Follow host.
-    bool Ptr64 = sizeof(void*) == 8;
-    M->setPointerSize(Ptr64 ? Module::Pointer64 : Module::Pointer32);
-  }
+	bool Ptr64 = sizeof(void*) == 8;
+	DataLayout.append(Ptr64 ? "-p:64:64" : "-p:32:32");
+	
+  M->setDataLayout(DataLayout);
 
   return new Interpreter(M);
 }

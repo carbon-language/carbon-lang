@@ -189,8 +189,8 @@ void TargetData::init(const std::string &TargetDescription) {
     }
   }
 
-  // Unless explicitly specified, the alignments for longs and doubles is capped by 
-  // pointer size.
+  // Unless explicitly specified, the alignments for longs and doubles is 
+  // capped by pointer size.
   if (LongABIAlignment == 0)
 	  LongABIAlignment = LongPrefAlignment = PointerMemSize;
   if (DoubleABIAlignment == 0)
@@ -198,25 +198,7 @@ void TargetData::init(const std::string &TargetDescription) {
 }
 
 TargetData::TargetData(const Module *M) {
-  LittleEndian       = M->getEndianness() != Module::BigEndian;
-  PointerMemSize     = M->getPointerSize() != Module::Pointer64 ? 4 : 8;
-  PointerABIAlignment = PointerMemSize;
-  DoubleABIAlignment  = PointerMemSize;
-  FloatABIAlignment   = 4;
-  LongABIAlignment    = PointerMemSize;
-  IntABIAlignment     = 4;
-  ShortABIAlignment   = 2;
-  ByteABIAlignment    = 1;
-  BoolABIAlignment    = 1;
-  BoolPrefAlignment = BoolABIAlignment;
-  BytePrefAlignment = ByteABIAlignment;
-  ShortPrefAlignment = ShortABIAlignment;
-  IntPrefAlignment = IntABIAlignment;
-  LongPrefAlignment = LongABIAlignment;
-  FloatPrefAlignment = FloatABIAlignment;
-  DoublePrefAlignment = DoubleABIAlignment;
-  PointerPrefAlignment = PointerABIAlignment;
-  AggMinPrefAlignment = 0;
+  init(M->getDataLayout());
 }
 
 /// Layouts - The lazy cache of structure layout information maintained by
