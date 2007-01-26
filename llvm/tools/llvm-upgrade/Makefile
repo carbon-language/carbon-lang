@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = llvm-upgrade
-LINK_COMPONENTS := support system
+LINK_COMPONENTS := BCWriter Core support system
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

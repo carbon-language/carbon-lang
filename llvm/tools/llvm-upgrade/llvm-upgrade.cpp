@@ -20,6 +20,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "UpgradeInternals.h"
+#include "llvm/Module.h"
+#include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
@@ -45,7 +47,11 @@ AddAttrs("add-attrs", cl::desc("Add function result and argument attributes"),
          cl::init(false));
 
 static cl::opt<bool>
-Debug("debug", cl::desc("Print debug output from yacc parser"),cl::Hidden,
+Debug("debug-upgrade-yacc", cl::desc("Print debug output from yacc parser"),
+      cl::Hidden, cl::init(false));
+
+static cl::opt<bool>
+EmitByteCode("emit-bytecode", cl::desc("Emit bytecode instead of assembly"),
     cl::init(false));
 
 int main(int argc, char **argv) {
@@ -119,7 +125,20 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    UpgradeAssembly(InputFilename, *In, *Out, Debug, AddAttrs);
+    Module *M = UpgradeAssembly(InputFilename, *In, Debug, AddAttrs);
+    if (!M) {
+      cerr << argv[0] << ": No module returned from assembly parsing\n";
+      if (!EmitByteCode)
+        *Out << argv[0] << ": parse failed.";
+      exit(1);
+    }
+
+    // Finally, print the module on the output stream.
+    if (EmitByteCode) {
+      OStream OS(*Out);
+      WriteBytecodeToFile(M, OS);
+    } else
+      M->print(Out);
 
   } catch (const std::string& caught_message) {
     cerr << argv[0] << ": " << caught_message << "\n";
