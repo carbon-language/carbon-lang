@@ -19,7 +19,6 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   const ARMSubtarget *Subtarget = &TM.getSubtarget<ARMSubtarget>();
   if (Subtarget->isTargetDarwin()) {
     GlobalPrefix = "_";
-    ZeroDirective = "\t.space\t";
     PrivateGlobalPrefix = "L";
     BSSSection = 0;                       // no BSS section.
     ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
@@ -28,13 +27,9 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     HiddenDirective = "\t.private_extern\t";
     JumpTableDataSection = ".const";
     CStringSection = "\t.cstring";
-    LCOMMDirective = "\t.lcomm\t";
-    COMMDirectiveTakesAlignment = false;
     HasDotTypeDotSizeDirective = false;
     StaticCtorsSection = ".mod_init_func";
     StaticDtorsSection = ".mod_term_func";
-    InlineAsmStart = "@ InlineAsm Start";
-    InlineAsmEnd = "@ InlineAsm End";
     
     // In non-PIC modes, emit a special label before jump tables so that the
     // linker can perform more accurate dead code stripping.
@@ -56,15 +51,19 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
     DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
   } else {
-    Data32bitsDirective = "\t.word\t";
-    ZeroDirective = "\t.skip\t";
     WeakRefDirective = "\t.weak\t";
     StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
     StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
   }
-  AlignmentIsInBytes = false; 
+
+  ZeroDirective = "\t.space\t";
+  AlignmentIsInBytes = false;
   Data64bitsDirective = 0;
   CommentString = "@";
   DataSection = "\t.data";
   ConstantPoolSection = "\t.text\n";
+  COMMDirectiveTakesAlignment = false;
+  InlineAsmStart = "@ InlineAsm Start";
+  InlineAsmEnd = "@ InlineAsm End";
+  LCOMMDirective = "\t.lcomm\t";
 }
