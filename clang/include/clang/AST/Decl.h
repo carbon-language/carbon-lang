@@ -93,27 +93,7 @@ public:
   static bool classof(const Decl *) { return true; }
 };
 
-class TypedefDecl : public Decl {
-  /// UnderlyingType - This is the type the typedef is set to.
-  TypeRef UnderlyingType;
-  
-  /// TypeForDecl - This indicates the Type object that represents this
-  /// TypedefDecl.  It is a cache maintained by ASTContext::getTypedefType.
-  Type *TypeForDecl;
-  friend class ASTContext;
-public:
-  // FIXME: Remove Declarator argument.
-  TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
-    : Decl(Typedef, L, Id), UnderlyingType(T), TypeForDecl(0) {}
-
-  TypeRef getUnderlyingType() const { return UnderlyingType; }
-
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == Typedef; }
-  static bool classof(const TypedefDecl *D) { return true; }
-};
-
-/// ObjectDecl - ObjectDecl - Represents a declaration of a value.
+/// ObjectDecl - Represents a declaration of a value.
 class ObjectDecl : public Decl {
   TypeRef DeclType;
 protected:
@@ -214,20 +194,51 @@ public:
 };
 
 
-
-/// TagDecl - Represents the declaration of a struct/union/class/enum.
-class TagDecl : public Decl {
-  /// TypeForDecl - This indicates the Type object that represents this TagDecl.
-  /// It is a cache maintained by ASTContext::getTagDeclType.
+/// TypeDecl - Represents a declaration of a type.
+///
+class TypeDecl : public Decl {
+  /// TypeForDecl - This indicates the Type object that represents this
+  /// TypeDecl.  It is a cache maintained by ASTContext::getTypeDeclType.
   Type *TypeForDecl;
   friend class ASTContext;
+protected:
+  TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id)
+    : Decl(DK, L, Id), TypeForDecl(0) {}
+public:
   
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() == Typedef ||
+           D->getKind() == Struct || D->getKind() == Union ||
+           D->getKind() == Class || D->getKind() == Enum;
+  }
+  static bool classof(const TypeDecl *D) { return true; }
+};
+
+
+class TypedefDecl : public TypeDecl {
+  /// UnderlyingType - This is the type the typedef is set to.
+  TypeRef UnderlyingType;
+public:
+    // FIXME: Remove Declarator argument.
+    TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+    : TypeDecl(Typedef, L, Id), UnderlyingType(T) {}
+  
+  TypeRef getUnderlyingType() const { return UnderlyingType; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == Typedef; }
+  static bool classof(const TypedefDecl *D) { return true; }
+};
+
+
+/// TagDecl - Represents the declaration of a struct/union/class/enum.
+class TagDecl : public TypeDecl {
   /// IsDefinition - True if this is a definition ("struct foo {};"), false if
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
 protected:
-  TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) : Decl(DK, L, Id) {
-    TypeForDecl = 0;
+  TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) : TypeDecl(DK, L, Id) {
     IsDefinition = false;
   }
 public:
