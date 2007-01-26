@@ -33,38 +33,10 @@ namespace {
     }
     
     /// ReadTopLevelDecl - Parse and return the next top-level declaration.
-    Decl *ReadTopLevelDecl() {
-      Parser::DeclTy *Result;
-      
-      /// If the previous time through we read something like 'int X, Y', return
-      /// the next declarator.
-      if (!LastInGroupList.empty()) {
-        Result = LastInGroupList.back();
-        LastInGroupList.pop_back();
-        return (Decl*)Result;
-      }
-
-      do {
-        if (P.ParseTopLevelDecl(Result))
-          return 0;  // End of file.
-
-        // If we got a null return and something *was* parsed, try again.  This
-        // is due to a top-level semicolon, an action override, or a parse error
-        // skipping something.
-      } while (Result == 0);
-
-      // If we parsed a declspec with multiple declarators, reverse the list and
-      // return the first one.
-      if (!LastInGroupList.empty()) {
-        LastInGroupList.push_back((Decl*)Result);
-        std::reverse(LastInGroupList.begin(), LastInGroupList.end());
-        Result = LastInGroupList.back();
-        LastInGroupList.pop_back();
-      }
-
-      return (Decl*)Result;
-    }
+    Decl *ReadTopLevelDecl();
     
+    void PrintStats() const;
+
     ~ASTStreamer() {
       P.Finalize();
       delete &P.getActions();
@@ -72,7 +44,43 @@ namespace {
   };
 }
 
+/// ReadTopLevelDecl - Parse and return the next top-level declaration.
+///
+Decl *ASTStreamer::ReadTopLevelDecl() {
+  Parser::DeclTy *Result;
+  
+  /// If the previous time through we read something like 'int X, Y', return
+  /// the next declarator.
+  if (!LastInGroupList.empty()) {
+    Result = LastInGroupList.back();
+    LastInGroupList.pop_back();
+    return static_cast<Decl*>(Result);
+  }
+  
+  do {
+    if (P.ParseTopLevelDecl(Result))
+      return 0;  // End of file.
+    
+    // If we got a null return and something *was* parsed, try again.  This
+    // is due to a top-level semicolon, an action override, or a parse error
+    // skipping something.
+  } while (Result == 0);
+  
+  // If we parsed a declspec with multiple declarators, reverse the list and
+  // return the first one.
+  if (!LastInGroupList.empty()) {
+    LastInGroupList.push_back((Decl*)Result);
+    std::reverse(LastInGroupList.begin(), LastInGroupList.end());
+    Result = LastInGroupList.back();
+    LastInGroupList.pop_back();
+  }
+  
+  return static_cast<Decl*>(Result);
+}
 
+void ASTStreamer::PrintStats() const {
+  
+}
 
 //===----------------------------------------------------------------------===//
 // Public interface to the file
@@ -89,6 +97,13 @@ ASTStreamerTy *llvm::clang::ASTStreamer_Init(ASTContext &Ctx,
 /// returns null at end of file.
 Decl *llvm::clang::ASTStreamer_ReadTopLevelDecl(ASTStreamerTy *Streamer) {
   return static_cast<ASTStreamer*>(Streamer)->ReadTopLevelDecl();
+}
+
+
+/// ASTStreamer_PrintStats - Emit statistic information to stderr.
+///
+void llvm::clang::ASTStreamer_PrintStats(ASTStreamerTy *Streamer) {
+  return static_cast<ASTStreamer*>(Streamer)->PrintStats();
 }
 
 /// ASTStreamer_Terminate - Gracefully shut down the streamer.

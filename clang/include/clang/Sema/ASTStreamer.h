@@ -31,6 +31,10 @@ namespace clang {
   /// This returns null at end of file.
   Decl *ASTStreamer_ReadTopLevelDecl(ASTStreamerTy *Streamer);
   
+  /// ASTStreamer_PrintStats - Emit statistic information to stderr.
+  ///
+  void ASTStreamer_PrintStats(ASTStreamerTy *Streamer);
+  
   /// ASTStreamer_Terminate - Gracefully shut down the streamer.
   ///
   void ASTStreamer_Terminate(ASTStreamerTy *Streamer);

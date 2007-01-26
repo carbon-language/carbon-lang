@@ -27,6 +27,7 @@ namespace clang {
 class ASTContext {
   // FIXME: This is a stupid data structure.
   std::vector<Type*> Types;
+  unsigned NumSlowLookups;
 public:
   Preprocessor &PP;
   TargetInfo &Target;
@@ -43,6 +44,8 @@ public:
   
   ASTContext(Preprocessor &pp);
   ~ASTContext();
+  
+  void PrintStats() const;
   
   
   /// getPointerType - Return the uniqued reference to the type for a pointer to

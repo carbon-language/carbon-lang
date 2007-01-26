@@ -808,6 +808,12 @@ static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
   ASTStreamerTy *Streamer = ASTStreamer_Init(Context, MainFileID);
   while (ASTStreamer_ReadTopLevelDecl(Streamer))
     /* keep reading */;
+
+  if (Stats) {
+    std::cerr << "\nSTATISTICS:\n";
+    ASTStreamer_PrintStats(Streamer);
+    Context.PrintStats();
+  }
   
   ASTStreamer_Terminate(Streamer);
 }
@@ -864,6 +870,12 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
     } else {
       std::cerr << "Read top-level variable decl: '" << D->getName() << "'\n";
     }
+  }
+  
+  if (Stats) {
+    std::cerr << "\nSTATISTICS:\n";
+    ASTStreamer_PrintStats(Streamer);
+    Context.PrintStats();
   }
   
   ASTStreamer_Terminate(Streamer);

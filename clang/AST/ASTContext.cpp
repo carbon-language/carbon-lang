@@ -20,6 +20,7 @@ using namespace clang;
 
 ASTContext::ASTContext(Preprocessor &pp)
   : PP(pp), Target(pp.getTargetInfo()) {
+  NumSlowLookups = 0;
   InitBuiltinTypes();
 }
 
@@ -36,6 +37,57 @@ ASTContext::~ASTContext() {
     Types.pop_back();
   }
 }
+
+void ASTContext::PrintStats() const {
+  fprintf(stderr, "*** AST Context Stats:\n");
+  fprintf(stderr, "  %d types total.\n", (int)Types.size());
+  unsigned NumBuiltin = 0, NumPointer = 0, NumArray = 0, NumFunctionP = 0;
+  unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0;
+  
+  unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
+  
+  for (unsigned i = 0, e = Types.size(); i != e; ++i) {
+    Type *T = Types[i];
+    if (isa<BuiltinType>(T))
+      ++NumBuiltin;
+    else if (isa<PointerType>(T))
+      ++NumPointer;
+    else if (isa<ArrayType>(T))
+      ++NumArray;
+    else if (isa<FunctionTypeNoProto>(T))
+      ++NumFunctionNP;
+    else if (isa<FunctionTypeProto>(T))
+      ++NumFunctionP;
+    else if (isa<TypeNameType>(T))
+      ++NumTypeName;
+    else if (TaggedType *TT = dyn_cast<TaggedType>(T)) {
+      ++NumTagged;
+      switch (TT->getDecl()->getKind()) {
+      default: assert(0 && "Unknown tagged type!");
+      case Decl::Struct: ++NumTagStruct; break;
+      case Decl::Union:  ++NumTagUnion; break;
+      case Decl::Class:  ++NumTagClass; break; 
+      case Decl::Enum:   ++NumTagEnum; break;
+      }
+    } else {
+      assert(0 && "Unknown type!");
+    }
+  }
+
+  fprintf(stderr, "    %d builtin types\n", NumBuiltin);
+  fprintf(stderr, "    %d pointer types\n", NumPointer);
+  fprintf(stderr, "    %d array types\n", NumArray);
+  fprintf(stderr, "    %d function types with proto\n", NumFunctionP);
+  fprintf(stderr, "    %d function types with no proto\n", NumFunctionNP);
+  fprintf(stderr, "    %d typename (typedef) types\n", NumTypeName);
+  fprintf(stderr, "    %d tagged types\n", NumTagged);
+  fprintf(stderr, "      %d struct types\n", NumTagStruct);
+  fprintf(stderr, "      %d union types\n", NumTagUnion);
+  fprintf(stderr, "      %d class types\n", NumTagClass);
+  fprintf(stderr, "      %d enum types\n", NumTagEnum);
+  fprintf(stderr, "  %d slow type lookups\n", NumSlowLookups);
+}
+
 
 void ASTContext::InitBuiltinType(TypeRef &R, BuiltinType::Kind K) {
   Types.push_back((R = new BuiltinType(K)).getTypePtr());
@@ -83,6 +135,7 @@ TypeRef ASTContext::getPointerType(TypeRef T) {
   // FIXME: This is obviously braindead!
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
+  ++NumSlowLookups;
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
     if (PointerType *PTy = dyn_cast<PointerType>(Types[i]))
       if (PTy->getPointeeType() == T)
@@ -107,6 +160,7 @@ TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
   // FIXME: This is obviously braindead!
   // Unique array, to guarantee there is only one array of a particular
   // structure.
+  ++NumSlowLookups;
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
     if (ArrayType *ATy = dyn_cast<ArrayType>(Types[i]))
       if (ATy->getElementType() == EltTy &&
@@ -131,6 +185,7 @@ TypeRef ASTContext::getFunctionTypeNoProto(TypeRef ResultTy) {
   // FIXME: This is obviously braindead!
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
+  ++NumSlowLookups;
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
     if (FunctionTypeNoProto *FTy = dyn_cast<FunctionTypeNoProto>(Types[i]))
       if (FTy->getResultType() == ResultTy)
@@ -151,6 +206,7 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
   // FIXME: This is obviously braindead!
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
+  ++NumSlowLookups;
   for (unsigned i = 0, e = Types.size(); i != e; ++i) {
     if (FunctionTypeProto *FTy = dyn_cast<FunctionTypeProto>(Types[i]))
       if (FTy->getResultType() == ResultTy &&
@@ -204,6 +260,7 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
 TypeRef ASTContext::getTypeDeclType(TypeDecl *Decl) {
   // FIXME: This is obviously braindead!
   // Unique TypeDecl, to guarantee there is only one TypeDeclType.
+  ++NumSlowLookups;
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
     if (TypeNameType *Ty = dyn_cast<TypeNameType>(Types[i]))
       if (Ty->getDecl() == Decl)
@@ -221,6 +278,7 @@ TypeRef ASTContext::getTypeDeclType(TypeDecl *Decl) {
 TypeRef ASTContext::getTagDeclType(TagDecl *Decl) {
   // FIXME: This is obviously braindead!
   // Unique TypeDecl, to guarantee there is only one TaggedType.
+  ++NumSlowLookups;
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
     if (TaggedType *Ty = dyn_cast<TaggedType>(Types[i]))
       if (Ty->getDecl() == Decl)
