@@ -121,7 +121,7 @@ public:
   /// Get the data layout string for the module's target platform.  This encodes
   /// the type sizes and alignments expected by this module.
   /// @returns the data layout as a string
-  std::string getDataLayout() const { return DataLayout; }
+  const std::string& getDataLayout() const { return DataLayout; }
 
   /// Get the target triple which is a string describing the target host.
   /// @returns a string containing the target triple.
@@ -147,16 +147,10 @@ public:
   void setModuleIdentifier(const std::string &ID) { ModuleID = ID; }
 
   /// Set the data layout
-  void setDataLayout(std::string DL) { DataLayout = DL; }
+  void setDataLayout(const std::string& DL) { DataLayout = DL; }
 
   /// Set the target triple.
   void setTargetTriple(const std::string &T) { TargetTriple = T; }
-
-  /// Set the target endian information.
-  void setEndianness(Endianness E);
-
-  /// Set the target pointer size.
-  void setPointerSize(PointerSize PS);
 
   /// Set the module-scope inline assembly blocks.
   void setModuleInlineAsm(const std::string &Asm) { GlobalScopeAsm = Asm; }
