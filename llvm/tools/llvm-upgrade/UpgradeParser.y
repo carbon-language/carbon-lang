@@ -1474,7 +1474,7 @@ using namespace llvm;
 // Handle constant integer size restriction and conversion...
 //
 INTVAL 
-  : SINTVAL;
+  : SINTVAL
   | UINTVAL {
     if ($1 > (uint32_t)INT32_MAX)     // Outside of my range!
       error("Value too large for type");
@@ -1483,7 +1483,7 @@ INTVAL
   ;
 
 EINT64VAL 
-  : ESINT64VAL;      // These have same type and can't cause problems...
+  : ESINT64VAL       // These have same type and can't cause problems...
   | EUINT64VAL {
     if ($1 > (uint64_t)INT64_MAX)     // Outside of my range!
       error("Value too large for type");
@@ -2351,7 +2351,7 @@ AsmBlock
   ;
 
 BigOrLittle 
-  : BIG    { $$ = Module::BigEndian; };
+  : BIG    { $$ = Module::BigEndian; }
   | LITTLE { $$ = Module::LittleEndian; }
   ;
 
