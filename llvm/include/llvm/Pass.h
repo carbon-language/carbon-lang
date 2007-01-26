@@ -247,7 +247,7 @@ public:
 ///  2. Optimizing a function does not cause the addition or removal of any
 ///     functions in the module
 ///
-class FunctionPass : public ModulePass {
+class FunctionPass : public Pass {
 public:
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
