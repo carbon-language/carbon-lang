@@ -48,132 +48,6 @@ static void warning(const std::string& WarningMsg);
 
 namespace llvm {
 
-
-SignedType *SignedType::SByteTy = 0;
-SignedType *SignedType::SShortTy = 0;
-SignedType *SignedType::SIntTy = 0;
-SignedType *SignedType::SLongTy = 0;
-
-inline bool SignedType::classof(const Type *T) {
-  if (T->getTypeID() != IntegerTyID)
-    return false;
-  return (T == SByteTy || T == SShortTy || T == SIntTy || T == SLongTy );
-}
-
-SignedType::SignedType(const IntegerType* ITy) 
-  : IntegerType(ITy->getBitWidth()), base_type(ITy)
-{
-}
-
-const SignedType *SignedType::get(const IntegerType* ITy) {
-  if (ITy == Type::Int8Ty) {
-    if (!SByteTy)
-      SByteTy = new SignedType(IntegerType::get(8));
-    return SByteTy;
-  } else if (ITy == Type::Int16Ty) {
-    if (!SShortTy)
-      SShortTy = new SignedType(IntegerType::get(16));
-    return SShortTy;
-  } else if (ITy == Type::Int32Ty) {
-    if (!SIntTy)
-      SIntTy = new SignedType(IntegerType::get(32));
-    return SIntTy;
-  } else if (ITy == Type::Int64Ty) {
-    if (!SLongTy)
-      SLongTy = new SignedType(IntegerType::get(64));
-    return SLongTy;
-  } else
-    assert(0 && "Invalid integer type for SignedType::get");
-}
-
-static inline Signedness getSign(const Type *&Ty) {
-  if (const SignedType *STy = dyn_cast<SignedType>(Ty)) {
-    Ty = STy->getBaseType();
-    return Signed;
-  } else if (isa<IntegerType>(Ty))
-    return Unsigned;
-  return Signless;
-}
-
-static const Type*
-resolveTypeImpl(const Type* Ty, std::vector<const Type*>& TyStack)
-{
-  // Nothing to resolve if it isn't a derived type
-  if (!Ty->isDerivedType())
-    return Ty;
-
-  // Prevent infinite recursion for recursive types
-  for (std::vector<const Type*>::const_iterator I = TyStack.begin(), 
-       E = TyStack.end(); I != E; ++I)
-    if (Ty == *I)
-      return Ty;
-
-  // Okay, haven't seen this derived type yet, push it on the stack.
-  const Type* Result = Ty;
-  TyStack.push_back(Ty);
-
-  // Process the type
-  switch (Ty->getTypeID()) {
-    default: assert(0 && "Invalid derived type");
-    case Type::IntegerTyID:
-      break;
-    case Type::FunctionTyID: {
-      const FunctionType* FTy = cast<FunctionType>(Ty);
-      const Type* RetTy = resolveTypeImpl(FTy->getReturnType(), TyStack);
-      std::vector<const Type*> Types;
-      FunctionType::ParamAttrsList Attrs;
-      Attrs.push_back(FTy->getParamAttrs(0));
-      for (unsigned i = 0; i < FTy->getNumParams(); ++i) {
-        Types.push_back(resolveTypeImpl(FTy->getParamType(i), TyStack));
-        Attrs.push_back(FTy->getParamAttrs(i+1));
-      }
-      Result = FunctionType::get(RetTy, Types, FTy->isVarArg(), Attrs);
-      break;
-    }
-    case Type::StructTyID:
-    case Type::PackedStructTyID: {
-      const StructType *STy = cast<StructType>(Ty);
-      std::vector<const Type*> FieldTypes;
-      for (unsigned i = 0; i < STy->getNumElements(); ++i)
-        FieldTypes.push_back(resolveTypeImpl(STy->getElementType(i), TyStack));
-      Result = StructType::get(FieldTypes, STy->isPacked());
-      break;
-    }
-    case Type::ArrayTyID: {
-      const ArrayType *ATy = cast<ArrayType>(Ty);
-      uint64_t NElems = ATy->getNumElements();
-      const Type *ElemTy = resolveTypeImpl(ATy->getElementType(), TyStack);
-      Result = ArrayType::get(ElemTy, NElems);
-      break;
-    }
-    case Type::PointerTyID: {
-      const PointerType *PTy = cast<PointerType>(Ty);
-      const Type *ElemTy = resolveTypeImpl(PTy->getElementType(), TyStack);
-      Result = PointerType::get(ElemTy);
-      break;
-    }
-    case Type::PackedTyID: {
-      const PackedType *PTy = cast<PackedType>(Ty);
-      unsigned NElems = PTy->getNumElements();
-      const Type *ElemTy = resolveTypeImpl(PTy->getElementType(), TyStack);
-      Result = PackedType::get(ElemTy, NElems);
-      break;
-    }
-  }
-  // Done with it, pop it off.
-  TyStack.pop_back();
-  return Result;
-}
-
-static inline const Type* resolveType(const Type* Ty) {
-  if (!Ty)
-    return 0;
-  if (const SignedType* STy = dyn_cast<SignedType>(Ty))
-    return STy->getBaseType();
-  std::vector<const Type*> TyStack;
-  return resolveTypeImpl(Ty, TyStack);
-}
-
 std::istream* LexInput;
 static std::string CurFilename;
 
@@ -186,8 +60,6 @@ static bool ObsoleteVarArgs;
 static bool NewVarArgs;
 static BasicBlock *CurBB;
 static GlobalVariable *CurGV;
-
-
 
 // This contains info used when building the body of a function.  It is
 // destroyed when the function is completed.
@@ -299,7 +171,6 @@ static struct PerFunctionInfo {
   std::map<BasicBlock*, std::pair<ValID, int> > BBForwardRefs;
   std::vector<BasicBlock*> NumberedBlocks;
   RenameMapType RenameMap;
-  std::set<Value*> SignedValues;
   unsigned NextBBNum;
 
   inline PerFunctionInfo() {
@@ -328,7 +199,6 @@ static struct PerFunctionInfo {
 
     Values.clear();         // Clear out function local definitions
     RenameMap.clear();
-    SignedValues.clear();
     CurrentFunction = 0;
     isDeclare = false;
     Linkage = GlobalValue::ExternalLinkage;
@@ -352,7 +222,7 @@ static int InsertValue(Value *V,
   return List.size()-1;
 }
 
-static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
+static const Type *getType(const ValID &D, bool DoNotImprovise = false) {
   switch (D.Type) {
   case ValID::NumberVal:               // Is it a numbered definition?
     // Module constants occupy the lowest numbered slots...
@@ -540,7 +410,6 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   // If we reached here, we referenced either a symbol that we don't know about
   // or an id number that hasn't been read yet.  We may be referencing something
   // forward, so just create an entry to be resolved later and get to it...
-  assert(!isa<SignedType>(Ty) && "Can't create value with SignedType");
   V = new Argument(Ty);
 
   // Remember where this forward reference came from.  FIXME, shouldn't we try
@@ -722,7 +591,6 @@ static void setValueName(Value *V, char *NameStr) {
       return;
     }
 
-    assert(!isa<SignedType>(V->getType()) && "Shouldn't have SignedType Value");
     assert(inFunctionScope() && "Must be in function scope");
 
     // Search the function's symbol table for an existing value of this name
@@ -1307,7 +1175,7 @@ const Type* upgradeGEPIndices(const Type* PTy,
               cast<Constant>(Index), Type::Int64Ty);
           else
             Index = CastInst::create(Instruction::ZExt, Index, Type::Int64Ty,
-              "gep_upgrade", CurBB);
+              makeNameUnique("gep_upgrade"), CurBB);
     }
     // Add to the CIndices list, if requested.
     if (CIndices)
@@ -1532,6 +1400,7 @@ using namespace llvm;
 // ValueRef - Unresolved reference to a definition or BB
 %type <ValIDVal>      ValueRef ConstValueRef SymbolicValueRef
 %type <ValueVal>      ResolvedVal            // <type> <valref> pair
+
 // Tokens and types for handling constant integer values
 //
 // ESINT64VAL - A negative number within long long range
@@ -1588,6 +1457,7 @@ using namespace llvm;
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 %token VAARG_old VANEXT_old //OBSOLETE
 
+// Support for ICmp/FCmp Predicates, which is 1.9++ but not 2.0
 %type  <IPred> IPredicates
 %type  <FPred> FPredicates
 %token  EQ NE SLT SGT SLE SGE ULT UGT ULE UGE 
@@ -1604,7 +1474,7 @@ using namespace llvm;
 // Handle constant integer size restriction and conversion...
 //
 INTVAL 
-  : SINTVAL;
+  : SINTVAL
   | UINTVAL {
     if ($1 > (uint32_t)INT32_MAX)     // Outside of my range!
       error("Value too large for type");
@@ -1613,7 +1483,7 @@ INTVAL
   ;
 
 EINT64VAL 
-  : ESINT64VAL;      // These have same type and can't cause problems...
+  : ESINT64VAL       // These have same type and can't cause problems...
   | EUINT64VAL {
     if ($1 > (uint64_t)INT64_MAX)     // Outside of my range!
       error("Value too large for type");
@@ -1818,7 +1688,7 @@ UpRTypes
     $$.S = Signless;
   }
   | SymbolicValueRef {            // Named types are also simple types...
-    const Type* tmp = getTypeVal($1);
+    const Type* tmp = getType($1);
     $$.T = new PATypeHolder(tmp);
     $$.S = Signless; // FIXME: what if its signed?
   }
@@ -2481,7 +2351,7 @@ AsmBlock
   ;
 
 BigOrLittle 
-  : BIG    { $$ = Module::BigEndian; };
+  : BIG    { $$ = Module::BigEndian; }
   | LITTLE { $$ = Module::LittleEndian; }
   ;
 
