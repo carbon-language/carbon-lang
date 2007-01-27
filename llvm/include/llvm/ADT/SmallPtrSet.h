@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the SmallPtrSet class.
+// This file defines the SmallPtrSet class.  See the doxygen comment for
+// SmallPtrSetImpl for more details on the algorithm used.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,6 +20,24 @@
 
 namespace llvm {
 
+/// SmallPtrSetImpl - This is the common code shared among all the
+/// SmallPtrSet<>'s, which is almost everything.  SmallPtrSet has two modes, one
+/// for small and one for large sets.
+///
+/// Small sets use an array of pointers allocated in the SmallPtrSet object,
+/// which is treated as a simple array of pointers.  When a pointer is added to
+/// the set, the array is scanned to see if the element already exists, if not
+/// the element is 'pushed back' onto the array.  If we run out of space in the
+/// array, we grow into the 'large set' case.  SmallSet should be used when the
+/// sets are often small.  In this case, no memory allocation is used, and only
+/// light-weight and cache-efficient scanning is used.
+///
+/// Large sets use a classic exponentially-probed hash table.  Empty buckets are
+/// represented with an illegal pointer value (-1) to allow null pointers to be
+/// inserted.  Tombstones are represented with another illegal pointer value
+/// (-2), to allow deletion.  The hash table is resized when the table is 3/4 or
+/// more.  When this happens, the table is doubled in size.
+///
 class SmallPtrSetImpl {
 protected:
   /// CurArray - This is the current set of buckets.  If it points to
