@@ -224,7 +224,8 @@ typedef FoldingSetImpl::NodeID FoldingSetNodeID;
 ///
 template<class T> class FoldingSet : public FoldingSetImpl {
 private:
-  /// GetNodeProfile - Each instantiatation of the FoldingSet 
+  /// GetNodeProfile - Each instantiatation of the FoldingSet needs to provide a
+  /// way to convert nodes into a unique specifier.
   virtual void GetNodeProfile(NodeID &ID, Node *N) const {
     T *TN = static_cast<T *>(N);
     TN->Profile(ID);
@@ -246,8 +247,7 @@ public:
   /// return it.  If not, return the insertion token that will make insertion
   /// faster.
   T *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos) {
-    return static_cast<T *>(FoldingSetImpl::FindNodeOrInsertPos(ID,
-                                                                InsertPos));
+    return static_cast<T *>(FoldingSetImpl::FindNodeOrInsertPos(ID, InsertPos));
   }
 };
 
