@@ -15,9 +15,7 @@
 #define LLVM_CLANG_AST_TYPE_H
 
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/DataTypes.h"
-#include <cassert>
-#include <string>
+#include "llvm/ADT/FoldingSet.h"
 
 namespace llvm {
 namespace clang {
@@ -325,7 +323,7 @@ public:
 /// FunctionTypeProto - Represents a prototype with argument type info, e.g.
 /// 'int foo(int)' or 'int foo(void)'.  'void' is represented as having no
 /// arguments, not as having a single void argument.
-class FunctionTypeProto : public FunctionType {
+class FunctionTypeProto : public FunctionType, public FoldingSetNode {
   FunctionTypeProto(TypeRef Result, TypeRef *ArgArray, unsigned numArgs,
                     bool isVariadic, Type *Canonical)
     : FunctionType(FunctionProto, Result, isVariadic, Canonical),
@@ -357,6 +355,12 @@ public:
     return T->getTypeClass() == FunctionProto;
   }
   static bool classof(const FunctionTypeProto *) { return true; }
+  
+  void Profile(FoldingSetNodeID &ID) {
+    Profile(ID, getResultType(), ArgInfo, NumArgs, isVariadic());
+  }
+  static void Profile(FoldingSetNodeID &ID, TypeRef Result, TypeRef* ArgTys,
+                      unsigned NumArgs, bool isVariadic);
 };
 
 

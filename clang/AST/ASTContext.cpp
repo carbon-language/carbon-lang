@@ -203,27 +203,16 @@ TypeRef ASTContext::getFunctionTypeNoProto(TypeRef ResultTy) {
 /// list.  isVariadic indicates whether the argument list includes '...'.
 TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
                                     unsigned NumArgs, bool isVariadic) {
-  // FIXME: This is obviously braindead!
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
-  ++NumSlowLookups;
-  for (unsigned i = 0, e = Types.size(); i != e; ++i) {
-    if (FunctionTypeProto *FTy = dyn_cast<FunctionTypeProto>(Types[i]))
-      if (FTy->getResultType() == ResultTy &&
-          FTy->getNumArgs() == NumArgs &&
-          FTy->isVariadic() == isVariadic) {
-        bool Match = true;
-        for (unsigned arg = 0; arg != NumArgs; ++arg) {
-          if (FTy->getArgType(arg) != ArgArray[arg]) {
-            Match = false;
-            break;
-          }
-        } 
-        if (Match)
-          return Types[i];
-      }
-  }
-  
+  FoldingSetNodeID ID;
+  FunctionTypeProto::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic);
+
+  void *InsertPos = 0;
+  if (FunctionTypeProto *FTP = 
+        FunctionTypeProtos.FindNodeOrInsertPos(ID, InsertPos))
+    return FTP;
+    
   // Determine whether the type being created is already canonical or not.  
   bool isCanonical = ResultTy->isCanonical();
   for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
@@ -241,6 +230,11 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
     Canonical = getFunctionType(ResultTy.getCanonicalType(),
                                 &CanonicalArgs[0], NumArgs,
                                 isVariadic).getTypePtr();
+    
+    // Get the new insert position for the node we care about.
+    FunctionTypeProto *NewIP =
+      FunctionTypeProtos.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!");
   }
   
   // FunctionTypeProto objects are not allocated with new because they have a
@@ -252,6 +246,7 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
                               Canonical);
   
   Types.push_back(FTP);
+  FunctionTypeProtos.InsertNode(FTP, InsertPos);
   return FTP;
 }
 

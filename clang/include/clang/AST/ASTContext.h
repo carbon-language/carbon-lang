@@ -25,9 +25,9 @@ namespace clang {
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
-  // FIXME: This is a stupid data structure.
   std::vector<Type*> Types;
   unsigned NumSlowLookups;
+  FoldingSet<FunctionTypeProto> FunctionTypeProtos;
 public:
   Preprocessor &PP;
   TargetInfo &Target;

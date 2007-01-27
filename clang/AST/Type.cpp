@@ -75,6 +75,15 @@ const char *BuiltinType::getName() const {
   }
 }
 
+void FunctionTypeProto::Profile(FoldingSetNodeID &ID, TypeRef Result,
+                                TypeRef* ArgTys,
+                                unsigned NumArgs, bool isVariadic) {
+  ID.AddPointer(Result.getAsOpaquePtr());
+  for (unsigned i = 0; i != NumArgs; ++i)
+    ID.AddPointer(ArgTys[i].getAsOpaquePtr());
+  ID.AddInteger(isVariadic);
+}
+
 bool RecordType::classof(const Type *T) {
   if (const TaggedType *TT = dyn_cast<TaggedType>(T))
     return isa<RecordDecl>(TT->getDecl());
