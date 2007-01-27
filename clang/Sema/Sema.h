@@ -25,9 +25,10 @@ namespace clang {
   class Preprocessor;
   class Decl;
   class VarDecl;
+  class TypedefDecl;
+  class FunctionDecl;
   class TypeRef;
   class LangOptions;
-  class FunctionDecl;
   class DeclaratorChunk;
   
 /// Sema - This implements semantic analysis and AST building for C.
@@ -74,8 +75,11 @@ public:
   virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
-  Decl *ParseTypedefDecl(Scope *S, Declarator &D);
-  
+  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D);
+  TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
+  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
+  VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
+
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.
   virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);  

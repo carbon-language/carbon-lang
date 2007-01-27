@@ -74,10 +74,6 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   // TODO: emit error on 'typedef int;'
   // if (!DS.isMissingDeclaratorOk()) Diag(...);
   
-  // TODO: Register 'struct foo;' with the type system as an opaque struct.
-  
-  // TODO: Check that we don't already have 'union foo;' or something else
-  // that conflicts.
   return 0;
 }
 
@@ -95,34 +91,90 @@ static Decl *LookupScopedDecl(IdentifierInfo *II, Decl::IdentifierNamespace NS){
   return 0;
 }
 
+/// MergeTypeDefDecl - We just parsed a typedef 'New' which has the same name
+/// and scope as a previous declaration 'Old'.  Figure out how to resolve this
+/// situation, merging decls or emitting diagnostics as appropriate.
+///
+TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *Old) {
+  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
+  // TODO: This is totally simplistic.  It should handle merging functions
+  // together etc, merging extern int X; int X; ...
+  Diag(New->getLocation(), diag::err_redefinition, New->getName());
+  Diag(Old->getLocation(), diag::err_previous_definition);
+  return New;
+}
+
+/// MergeFunctionDecl - We just parsed a function 'New' which has the same name
+/// and scope as a previous declaration 'Old'.  Figure out how to resolve this
+/// situation, merging decls or emitting diagnostics as appropriate.
+///
+FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *Old) {
+  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
+  // TODO: This is totally simplistic.  It should handle merging functions
+  // together etc, merging extern int X; int X; ...
+  Diag(New->getLocation(), diag::err_redefinition, New->getName());
+  Diag(Old->getLocation(), diag::err_previous_definition);
+  return New;
+}
+
+/// MergeVarDecl - We just parsed a variable 'New' which has the same name
+/// and scope as a previous declaration 'Old'.  Figure out how to resolve this
+/// situation, merging decls or emitting diagnostics as appropriate.
+///
+VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *Old) {
+  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
+  // TODO: This is totally simplistic.  It should handle merging functions
+  // together etc, merging extern int X; int X; ...
+  Diag(New->getLocation(), diag::err_redefinition, New->getName());
+  Diag(Old->getLocation(), diag::err_previous_definition);
+  return New;
+}
+
 
 Action::DeclTy *
 Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
                       DeclTy *LastInGroup) {
   IdentifierInfo *II = D.getIdentifier();
   
-  if (Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary)) {
-    // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
-    if (S->isDeclScope(PrevDecl)) {
-      // TODO: This is totally simplistic.  It should handle merging functions
-      // together etc, merging extern int X; int X; ...
-      Diag(D.getIdentifierLoc(), diag::err_redefinition, II->getName());
-      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
-    }
-  }
-  
+  // See if this is a redefinition of a variable in the same scope.
+  Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary);
+  if (!S->isDeclScope(PrevDecl))
+    PrevDecl = 0;   // If in outer scope, it isn't the same thing.
+
   Decl *New;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
-    New = ParseTypedefDecl(S, D);
-    if (!New) return 0;
+    TypedefDecl *NewTD = ParseTypedefDecl(S, D);
+    if (!NewTD) return 0;
+    
+    // Merge the decl with the existing one if appropriate.
+    if (PrevDecl) {
+      NewTD = MergeTypeDefDecl(NewTD, PrevDecl);
+      if (NewTD == 0) return 0;
+    }
+    New = NewTD;
   } else if (D.isFunctionDeclarator()) {
     TypeRef R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0;
-    New = new FunctionDecl(D.getIdentifierLoc(), II, R);
+    
+    FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R);
+    
+    // Merge the decl with the existing one if appropriate.
+    if (PrevDecl) {
+      NewFD = MergeFunctionDecl(NewFD, PrevDecl);
+      if (NewFD == 0) return 0;
+    }
+    New = NewFD;
   } else {
     TypeRef R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0;
-    New = new VarDecl(D.getIdentifierLoc(), II, R);
+    VarDecl *NewVD = new VarDecl(D.getIdentifierLoc(), II, R);
+
+    // Merge the decl with the existing one if appropriate.
+    if (PrevDecl) {
+      NewVD = MergeVarDecl(NewVD, PrevDecl);
+      if (NewVD == 0) return 0;
+    }
+    New = NewVD;
   }
   
   
@@ -259,7 +311,7 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
 }
 
 
-Decl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
+TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
   assert(D.getIdentifier() && "Wrong callback for declspec withotu declarator");
   
   TypeRef T = GetTypeForDeclarator(D, S);
