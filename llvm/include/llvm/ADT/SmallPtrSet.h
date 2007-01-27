@@ -161,13 +161,41 @@ public:
   }
 };
 
+/// NextPowerOfTwo - This is a helper template that rounds N up to the next
+/// power of two.
+template<unsigned N>
+struct NextPowerOfTwo;
+
+/// NextPowerOfTwoH - If N is not a power of two, increase it.  This is a helper
+/// template used to implement NextPowerOfTwo.
+template<unsigned N, bool isPowerTwo>
+struct NextPowerOfTwoH {
+  enum { Val = N };
+};
+template<unsigned N>
+struct NextPowerOfTwoH<N, false> {
+  enum {
+    // We could just use NextVal = N+1, but this converges faster.  N|(N-1) sets
+    // the right-most zero bits to one all at once, e.g. 0b0011000 -> 0b0011111.
+    NextVal = (N|(N-1)) + 1,
+    Val = NextPowerOfTwo<NextVal>::Val
+  };
+};
+
+template<unsigned N>
+struct NextPowerOfTwo {
+  enum { Val = NextPowerOfTwoH<N, (N&(N-1)) == 0>::Val };
+};
+
 
 /// SmallPtrSet - This class implements 
 template<class PtrType, unsigned SmallSize>
 class SmallPtrSet : public SmallPtrSetImpl {
-  void *SmallArray[SmallSize];
+  // Make sure that SmallSize is a power of two, round up if not.
+  enum { SmallSizePowTwo = NextPowerOfTwo<SmallSize>::Val };
+  void *SmallArray[SmallSizePowTwo];
 public:
-  SmallPtrSet() : SmallPtrSetImpl(SmallSize) {}
+  SmallPtrSet() : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {}
   
   typedef SmallPtrSetIterator<PtrType> iterator;
   typedef SmallPtrSetIterator<PtrType> const_iterator;
