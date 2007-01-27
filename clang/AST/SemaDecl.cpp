@@ -475,7 +475,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     // Keep track of the number of named members.
     if (IdentifierInfo *II = FD->getIdentifier()) {
       // Detect duplicate member names.
-      if (!FieldIDs.insert(II).second) {
+      if (!FieldIDs.insert(II)) {
         Diag(FD->getLocation(), diag::err_duplicate_member, II->getName());
         // Find the previous decl.
         SourceLocation PrevLoc;
@@ -519,7 +519,6 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
       return 0;
     }
   }
-  
   
   TypeRef Ty = Context.getTagDeclType(TheEnumDecl);
   EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, Ty);

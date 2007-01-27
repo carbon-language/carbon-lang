@@ -367,6 +367,7 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
                                                SourceLocation Pos,
                                                diag::kind ID, 
                                                const std::string &Extra) {
+  return;
   ++NumDiagnostics;
   unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
   unsigned LineStart = 0, LineEnd = 0;

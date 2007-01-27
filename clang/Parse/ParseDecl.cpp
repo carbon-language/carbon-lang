@@ -1024,7 +1024,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       IdentifierInfo *ParmII = Tok.getIdentifierInfo();
       
       // Verify that the argument identifier has not already been mentioned.
-      if (!ParamsSoFar.insert(ParmII).second) {
+      if (!ParamsSoFar.insert(ParmII)) {
         Diag(Tok.getLocation(), diag::err_param_redefinition,ParmII->getName());
         ParmII = 0;
       }
@@ -1103,7 +1103,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       IdentifierInfo *ParmII = ParmDecl.getIdentifier();
       
       // Verify that the argument identifier has not already been mentioned.
-      if (ParmII && !ParamsSoFar.insert(ParmII).second) {
+      if (ParmII && !ParamsSoFar.insert(ParmII)) {
         Diag(ParmDecl.getIdentifierLoc(), diag::err_param_redefinition,
              ParmII->getName());
         ParmII = 0;
