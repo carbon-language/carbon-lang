@@ -79,7 +79,6 @@ private:
   /// of current declaration.  It is up to the current Action implementation to
   /// implement these semantics.
   typedef SmallPtrSet<Action::DeclTy*, 32> DeclSetTy;
-  //typedef SmallSet<Action::DeclTy*, 32> DeclSetTy;
   DeclSetTy DeclsInScope;
 public:
   Scope(Scope *Parent, unsigned ScopeFlags) {
@@ -104,7 +103,6 @@ public:
   
   
   typedef DeclSetTy::iterator decl_iterator;
-  
   decl_iterator decl_begin() const { return DeclsInScope.begin(); }
   decl_iterator decl_end()   const { return DeclsInScope.end(); }
 
