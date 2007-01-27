@@ -27,8 +27,9 @@ namespace clang {
 class ASTContext {
   std::vector<Type*> Types;
   unsigned NumSlowLookups;
-  FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   FoldingSet<PointerType> PointerTypes;
+  FoldingSet<ArrayType> ArrayTypes;
+  FoldingSet<FunctionTypeProto> FunctionTypeProtos;
 public:
   Preprocessor &PP;
   TargetInfo &Target;

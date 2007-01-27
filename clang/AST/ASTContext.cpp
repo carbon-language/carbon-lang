@@ -164,26 +164,31 @@ TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
                                  unsigned EltTypeQuals, void *NumElts) {
 #warning "IGNORING SIZE"
   
-  // FIXME: This is obviously braindead!
-  // Unique array, to guarantee there is only one array of a particular
+  // Unique array types, to guarantee there is only one array of a particular
   // structure.
-  ++NumSlowLookups;
-  for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    if (ArrayType *ATy = dyn_cast<ArrayType>(Types[i]))
-      if (ATy->getElementType() == EltTy &&
-          ATy->getSizeModifier() == ASM &&
-          ATy->getIndexTypeQualifier() == EltTypeQuals)
-        return Types[i];
+  FoldingSetNodeID ID;
+  ArrayType::Profile(ID, ASM, EltTypeQuals, EltTy);
+  
+  void *InsertPos = 0;
+  if (ArrayType *ATP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return ATP;
   
   // If the element type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   Type *Canonical = 0;
-  if (!EltTy->isCanonical())
+  if (!EltTy->isCanonical()) {
     Canonical = getArrayType(EltTy.getCanonicalType(), ASM, EltTypeQuals,
                              NumElts).getTypePtr();
+    
+    // Get the new insert position for the node we care about.
+    ArrayType *NewIP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!");
+  }
   
-  Types.push_back(new ArrayType(EltTy, ASM, EltTypeQuals, Canonical));
-  return Types.back();
+  ArrayType *New = new ArrayType(EltTy, ASM, EltTypeQuals, Canonical);
+  ArrayTypes.InsertNode(New, InsertPos);
+  Types.push_back(New);
+  return New;
 }
 
 /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.

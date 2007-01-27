@@ -79,6 +79,13 @@ void PointerType::Profile(FoldingSetNodeID &ID, TypeRef Pointee) {
   ID.AddPointer(Pointee.getAsOpaquePtr());
 }
 
+void ArrayType::Profile(FoldingSetNodeID &ID, ArraySizeModifier SizeModifier,
+                        unsigned IndexTypeQuals, TypeRef ElementType) {
+  ID.AddInteger(SizeModifier);
+  ID.AddInteger(IndexTypeQuals);
+  ID.AddPointer(ElementType.getAsOpaquePtr());
+}
+
 void FunctionTypeProto::Profile(FoldingSetNodeID &ID, TypeRef Result,
                                 TypeRef* ArgTys,
                                 unsigned NumArgs, bool isVariadic) {
@@ -170,7 +177,6 @@ void ArrayType::getAsString(std::string &S) const {
   
   ElementType.getAsString(S);
 }
-
 
 void FunctionTypeNoProto::getAsString(std::string &S) const {
   // If needed for precedence reasons, wrap the inner part in grouping parens.

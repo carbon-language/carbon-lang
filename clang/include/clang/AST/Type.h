@@ -246,7 +246,7 @@ public:
 
 /// PointerType - C99 6.7.5.2 - Array Declarators.
 ///
-class ArrayType : public Type {
+class ArrayType : public Type, public FoldingSetNode {
 public:
   /// ArraySizeModifier - Capture whether this is a normal array (e.g. int X[4])
   /// an array with a static size (e.g. int X[static 4]), or with a star size
@@ -266,6 +266,7 @@ private:
   TypeRef ElementType;
   
   /// FIXME: Capture size for VLA or constant size.
+  /// FIXME: Update Profile()!
   /// Use this to implement Type::isIncompleteType.
 
   ArrayType(TypeRef et, ArraySizeModifier sm, unsigned tq, Type *can)
@@ -278,6 +279,12 @@ public:
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   
   virtual void getAsString(std::string &InnerString) const;
+  
+  void Profile(FoldingSetNodeID &ID) {
+    Profile(ID, getSizeModifier(), getIndexTypeQualifier(), getElementType());
+  }
+  static void Profile(FoldingSetNodeID &ID, ArraySizeModifier SizeModifier,
+                      unsigned IndexTypeQuals, TypeRef ElementType);
   
   static bool classof(const Type *T) { return T->getTypeClass() == Array; }
   static bool classof(const ArrayType *) { return true; }
