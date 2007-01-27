@@ -36,6 +36,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetELFWriterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/OutputBuffer.h"
@@ -162,7 +163,6 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &F) {
 //===----------------------------------------------------------------------===//
 
 ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
-  e_machine = 0;  // e_machine defaults to 'No Machine'
   e_flags = 0;    // e_flags defaults to 0, no flags.
 
   is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
@@ -197,7 +197,7 @@ bool ELFWriter::doInitialization(Module &M) {
 
   // This should change for shared objects.
   FHOut.outhalf(1);                 // e_type = ET_REL
-  FHOut.outhalf(e_machine);         // e_machine = whatever the target wants
+  FHOut.outword(TM.getELFWriterInfo()->getEMachine()); // target-defined
   FHOut.outword(1);                 // e_version = 1
   FHOut.outaddr(0);                 // e_entry = 0 -> no entry point in .o file
   FHOut.outaddr(0);                 // e_phoff = 0 -> no program header for .o
