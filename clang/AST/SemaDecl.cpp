@@ -95,7 +95,16 @@ static Decl *LookupScopedDecl(IdentifierInfo *II, Decl::IdentifierNamespace NS){
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
-TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *Old) {
+TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
+  // Verify the old decl was also a typedef.
+  TypedefDecl *Old = dyn_cast<TypedefDecl>(OldD);
+  if (!Old) {
+    Diag(New->getLocation(), diag::err_redefinition_different_kind,
+         New->getName());
+    Diag(OldD->getLocation(), diag::err_previous_definition);
+    return New;
+  }
+  
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
@@ -108,7 +117,19 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *Old) {
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
-FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *Old) {
+FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
+  // Verify the old decl was also a function.
+  FunctionDecl *Old = dyn_cast<FunctionDecl>(OldD);
+  if (!Old) {
+    Diag(New->getLocation(), diag::err_redefinition_different_kind,
+         New->getName());
+    Diag(OldD->getLocation(), diag::err_previous_definition);
+    return New;
+  }
+  
+  // This is not right, but it's a start.  If 'Old' is a 
+  
+  
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
@@ -121,7 +142,16 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *Old) {
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
-VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *Old) {
+VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
+  // Verify the old decl was also a variable.
+  VarDecl *Old = dyn_cast<VarDecl>(OldD);
+  if (!Old) {
+    Diag(New->getLocation(), diag::err_redefinition_different_kind,
+         New->getName());
+    Diag(OldD->getLocation(), diag::err_previous_definition);
+    return New;
+  }
+  
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
