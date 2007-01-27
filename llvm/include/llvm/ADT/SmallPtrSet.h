@@ -67,6 +67,9 @@ public:
       delete[] CurArray;
   }
   
+  bool empty() const { return size() == 0; }
+  unsigned size() const { return NumElements; }
+  
   static void *getTombstoneMarker() { return reinterpret_cast<void*>(-2); }
   static void *getEmptyMarker() {
     // Note that -1 is chosen to make clear() efficiently implementable with
