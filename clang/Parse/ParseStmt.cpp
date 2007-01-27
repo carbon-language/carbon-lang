@@ -203,12 +203,18 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
   }
   
   // Check to see if this is a declaration.
+  void *TypeRep;
   if (!OnlyStatement &&
-      Actions.isTypeName(*IdentTok.getIdentifierInfo(), CurScope)) {
+      (TypeRep = Actions.isTypeName(*IdentTok.getIdentifierInfo(), CurScope))) {
     // Handle this.  Warn/disable if in middle of block and !C99.
     DeclSpec DS;
     
-    // FIXME: Add the typedef name to the start of the decl-specs.
+    // Add the typedef name to the start of the decl-specs.
+    const char *PrevSpec = 0;
+    int isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef,
+                                       IdentTok.getLocation(), PrevSpec,
+                                       TypeRep);
+    assert(!isInvalid && "First declspec can't be invalid!");
     
     // ParseDeclarationSpecifiers will continue from there.
     ParseDeclarationSpecifiers(DS);
