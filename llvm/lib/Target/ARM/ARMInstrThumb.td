@@ -266,6 +266,16 @@ def tPUSH : TI<(ops reglist:$src1, variable_ops),
 //  Arithmetic Instructions.
 //
 
+// Add with carry
+def tADC : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
+               "adc $dst, $rhs",
+               [(set GPR:$dst, (adde GPR:$lhs, GPR:$rhs))]>;
+
+def tADDS : TI<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
+               "adds $dst, $lhs, $rhs",
+               [(set GPR:$dst, (addc GPR:$lhs, GPR:$rhs))]>;
+
+
 def tADDi3 : TI<(ops GPR:$dst, GPR:$lhs, i32imm:$rhs),
                 "add $dst, $lhs, $rhs",
                 [(set GPR:$dst, (add GPR:$lhs, imm0_7:$rhs))]>;
@@ -287,7 +297,6 @@ def tADDrSPi : TI<(ops GPR:$dst, GPR:$sp, i32imm:$rhs),
                   "add $dst, $sp, $rhs * 4", []>;
 def tADDspi : TIt<(ops GPR:$dst, GPR:$lhs, i32imm:$rhs),
                   "add $dst, $rhs * 4", []>;
-
 
 def tAND : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
                 "and $dst, $rhs",
@@ -395,9 +404,16 @@ def tROR : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
                 "ror $dst, $rhs",
                 [(set GPR:$dst, (rotr GPR:$lhs, GPR:$rhs))]>;
 
+
+// Subtract with carry
 def tSBC : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
                 "sbc $dst, $rhs",
                 [(set GPR:$dst, (sube GPR:$lhs, GPR:$rhs))]>;
+
+def tSUBS : TI<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
+                "subs $dst, $lhs, $rhs",
+               [(set GPR:$dst, (subc GPR:$lhs, GPR:$rhs))]>;
+
 
 // TODO: A7-96: STMIA - store multiple.
 
