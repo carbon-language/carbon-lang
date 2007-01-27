@@ -352,7 +352,8 @@ unsigned ARMConstantIslands::GetInstSize(MachineInstr *MI) const {
       return MI->getOperand(2).getImm();
     case ARM::BR_JTr:
     case ARM::BR_JTm:
-    case ARM::BR_JTadd: {
+    case ARM::BR_JTadd:
+    case ARM::tBR_JTr: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries.
       unsigned JTI = MI->getOperand(MI->getNumOperands()-2).getJumpTableIndex();
@@ -360,6 +361,13 @@ unsigned ARMConstantIslands::GetInstSize(MachineInstr *MI) const {
       MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
       const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
       assert(JTI < JT.size());
+      // Thumb instructions are 2 byte aligned, but JT entries are 4 byte
+      // 4 aligned. The assembler / linker may add 2 byte padding just before
+      // the JT entries. Use + 4 even for tBR_JTr to purposely over-estimate
+      // the size the jumptable.
+      // FIXME: If we know the size of the function is less than (1 << 16) *2
+      // bytes, we can use 16-bit entries instead. Then there won't be an
+      // alignment issue.
       return getNumJTEntries(JT, JTI) * 4 + 4;
     }
     default:

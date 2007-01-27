@@ -56,6 +56,10 @@ class TIt<dag ops, string asm, list<dag> pattern>
 class TIx2<dag ops, string asm, list<dag> pattern>
   : ThumbI<ops, AddrModeNone, Size4Bytes, asm, "", pattern>;
 
+// BR_JT instructions
+class TJTI<dag ops, string asm, list<dag> pattern>
+  : ThumbI<ops, AddrModeNone, SizeSpecial, asm, "", pattern>;
+
 def imm_neg_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(-(int)N->getValue(), MVT::i32);
 }]>;
@@ -188,8 +192,13 @@ let isCall = 1, noResults = 1,
                   [(ARMcall_nolink GPR:$dst)]>;
 }
 
-let isBranch = 1, isTerminator = 1, isBarrier = 1 in
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   def tB   : TI<(ops brtarget:$dst), "b $dst", [(br bb:$dst)]>;
+
+  def tBR_JTr : TJTI<(ops GPR:$dst, jtblock_operand:$jt, i32imm:$id),
+                     "cpy pc, $dst \n\t.align\t2\n$jt",
+                     [(ARMbrjt GPR:$dst, tjumptable:$jt, imm:$id)]>;
+}
 
 let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in
   def tBcc : TI<(ops brtarget:$dst, CCOp:$cc), "b$cc $dst",
@@ -477,6 +486,13 @@ def tLEApcrelCall : TI<(ops GPR:$dst, i32imm:$label),
                                          "add $dst, pc, #PCRELV${:uid}")),
                    []>;
 
+def tLEApcrelJT : TI<(ops GPR:$dst, i32imm:$label, i32imm:$id),
+          !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
+                                         "${:private}PCRELL${:uid}+4))\n"),
+                              !strconcat("${:private}PCRELL${:uid}:\n\t",
+                                         "add $dst, pc, #PCRELV${:uid}")),
+                   []>;
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
@@ -488,6 +504,10 @@ def : ThumbPat<(ARMWrapperCall tglobaladdr :$dst),
                (tLEApcrelCall  tglobaladdr :$dst)>;
 def : ThumbPat<(ARMWrapperCall texternalsym:$dst),
                (tLEApcrelCall  texternalsym:$dst)>;
+
+// JumpTable
+def : ThumbPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
+               (tLEApcrelJT tjumptable:$dst, imm:$id)>;
 
 // Direct calls
 def : ThumbPat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>;

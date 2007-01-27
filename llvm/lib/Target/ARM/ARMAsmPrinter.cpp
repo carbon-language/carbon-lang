@@ -647,7 +647,8 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNo) {
           << getFunctionNumber() << '_' << JTI << '_' << MO2.getImmedValue();
     } else
       printBasicBlockLabel(MBB, false, false);
-    O << '\n';
+    if (i != e-1)
+      O << '\n';
   }
 }
 
