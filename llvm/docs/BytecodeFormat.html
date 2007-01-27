@@ -700,55 +700,23 @@ sections.</p>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"><a name="format">Format Information</a></div>
 <div class="doc_text">
-<p>The format information field is encoded into a <a href="#uint32_vbr">uint32_vbr</a>
-as shown in the following table.</p>
-<table>
-  <tbody>
-    <tr>
-      <th><b>Type</b></th>
-      <th class="td_left"><b>Description</b></th>
-    </tr>
-    <tr>
-      <td><a href="#bit">bit(0)</a></td>
-      <td class="td_left">Target is big endian?</td>
-    </tr>
-    <tr>
-      <td><a href="#bit">bit(1)</a></td>
-      <td class="td_left">On target pointers are 64-bit?</td>
-    </tr>
-    <tr>
-      <td><a href="#bit">bit(2)</a></td>
-      <td class="td_left">Target has no endianess?</td>
-    </tr>
-    <tr>
-      <td><a href="#bit">bit(3)</a></td>
-      <td class="td_left">Target has no pointer size?</td>
-    </tr>
-    <tr>
-      <td><a href="#bit">bit(4-31)</a></td>
-      <td class="td_left">Bytecode format version</td>
-    </tr>
-  </tbody>
-</table>
-<p>
-Of particular note, the bytecode format number is simply a 28-bit
+<p>The format information field is encoded into a <a href="#uint32_vbr">uint32_vbr</a>.</p>
+
+<p>Of particular note, the bytecode format number is simply a 32-bit
 monotonically increasing integer that identifies the version of the bytecode
 format (which is not directly related to the LLVM release number). The
 bytecode versions defined so far are (note that this document only
-describes the latest version, 1.3):</p>
+describes the latest version, 2.0):</p>
 <ul>
   <li>#0: LLVM 1.0 &amp; 1.1</li>
   <li>#1: LLVM 1.2</li>
   <li>#2: LLVM 1.2.5 (not released)</li>
   <li>#3: LLVM 1.3</li>
   <li>#4: LLVM 1.3.x (not released)</li>
-  <li>#5: LLVM 1.4 and newer</li>
+  <li>#5: LLVM 1.4 through 1.8</li>
+  <li>#6: LLVM 1.9</li>
+  <li>#7: LLVM 2.0 and newer</li>
 </ul>
-<p>Note that we plan to eventually expand the target description
-capabilities
-of bytecode files to <a href="http://llvm.org/PR263">target
-triples</a>.
-</p>
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="globaltypes">Global Type Pool</a> </div>
@@ -993,7 +961,12 @@ depends upon.</td>
       <td><a href="#string">string</a></td>
       <td class="td_left">The target
 triple for the module (blank means no target triple specified, i.e. a
-platform independent module).</td>
+platform-independent module).</td>
+    </tr>
+    <tr>
+	  <td><a href="#string">string</a></td>
+	  <td class="td_left">The data layout string describing the endianness, pointer size, and
+type alignments for which the module was written (blank means no data layout specified, i.e. a platform-independent module).</td>
     </tr>
     <tr>
       <td><a href="#llist">llist</a>(<a href="#string">string</a>)</td>
