@@ -15,6 +15,7 @@
 #define LLVM_CLANG_PARSE_SCOPE_H
 
 #include "clang/Parse/Action.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
@@ -77,7 +78,9 @@ private:
   /// popped, these declarations are removed from the IdentifierTable's notion
   /// of current declaration.  It is up to the current Action implementation to
   /// implement these semantics.
-  SmallSet<Action::DeclTy*, 32> DeclsInScope;
+  typedef SmallPtrSet<Action::DeclTy*, 32> DeclSetTy;
+  //typedef SmallSet<Action::DeclTy*, 32> DeclSetTy;
+  DeclSetTy DeclsInScope;
 public:
   Scope(Scope *Parent, unsigned ScopeFlags) {
     Init(Parent, ScopeFlags);
@@ -100,7 +103,7 @@ public:
   }
   
   
-  typedef SmallSet<Action::DeclTy*, 32>::iterator decl_iterator;
+  typedef DeclSetTy::iterator decl_iterator;
   
   decl_iterator decl_begin() const { return DeclsInScope.begin(); }
   decl_iterator decl_end()   const { return DeclsInScope.end(); }
