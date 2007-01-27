@@ -15,3 +15,4 @@
 using namespace llvm;
 
 X86ELFWriterInfo::X86ELFWriterInfo() : TargetELFWriterInfo(EM_386) {}
+X86ELFWriterInfo::~X86ELFWriterInfo() {}

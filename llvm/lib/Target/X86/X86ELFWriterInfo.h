@@ -21,7 +21,7 @@ namespace llvm {
   class X86ELFWriterInfo : public TargetELFWriterInfo {
   public:
     X86ELFWriterInfo();
-    virtual ~X86ELFWriterInfo() {}
+    virtual ~X86ELFWriterInfo();
   };
 
 } // end llvm namespace
