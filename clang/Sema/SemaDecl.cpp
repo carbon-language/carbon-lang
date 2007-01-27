@@ -20,6 +20,7 @@
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/ADT/SmallSet.h"
 using namespace llvm;
 using namespace clang;
 
@@ -153,7 +154,8 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
     
   }
   
-  VarDecl *New = new VarDecl(PI.IdentLoc, II, static_cast<Type*>(PI.TypeInfo));
+  VarDecl *New = new VarDecl(PI.IdentLoc, II, 
+                             TypeRef::getFromOpaquePtr(PI.TypeInfo));
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
