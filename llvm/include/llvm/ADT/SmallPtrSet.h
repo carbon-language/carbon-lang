@@ -67,8 +67,6 @@ public:
       delete[] CurArray;
   }
   
-  bool isSmall() const { return CurArray == &SmallArray[0]; }
-
   static void *getTombstoneMarker() { return reinterpret_cast<void*>(-2); }
   static void *getEmptyMarker() {
     // Note that -1 is chosen to make clear() efficiently implementable with
@@ -86,6 +84,10 @@ public:
   /// was already in the set.
   bool insert(void *Ptr);
   
+  /// erase - If the set contains the specified pointer, remove it and return
+  /// true, otherwise return false.
+  bool erase(void *Ptr);
+  
   bool count(void *Ptr) const {
     if (isSmall()) {
       // Linear search for the item.
@@ -101,6 +103,8 @@ public:
   }
   
 private:
+  bool isSmall() const { return CurArray == &SmallArray[0]; }
+
   unsigned Hash(void *Ptr) const {
     return ((uintptr_t)Ptr >> 4) & (CurArraySize-1);
   }
@@ -188,7 +192,10 @@ struct NextPowerOfTwo {
 };
 
 
-/// SmallPtrSet - This class implements 
+/// SmallPtrSet - This class implements a set which is optimizer for holding
+/// SmallSize or less elements.  This internally rounds up SmallSize to the next
+/// power of two if it is not already a power of two.  See the comments above
+/// SmallPtrSetImpl for details of the algorithm.
 template<class PtrType, unsigned SmallSize>
 class SmallPtrSet : public SmallPtrSetImpl {
   // Make sure that SmallSize is a power of two, round up if not.

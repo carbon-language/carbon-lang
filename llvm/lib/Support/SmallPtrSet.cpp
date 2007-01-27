@@ -45,6 +45,33 @@ bool SmallPtrSetImpl::insert(void *Ptr) {
   return true;
 }
 
+bool SmallPtrSetImpl::erase(void *Ptr) {
+  if (isSmall()) {
+    // Check to see if it is in the set.
+    for (void **APtr = SmallArray, **E = SmallArray+NumElements;
+         APtr != E; ++APtr)
+      if (*APtr == Ptr) {
+        // If it is in the set, move everything over, replacing this element.
+        memmove(APtr, APtr+1, sizeof(void*)*(E-APtr-1));
+        // Clear the end element.
+        E[-1] = getEmptyMarker();
+        --NumElements;
+        return false;
+      }
+    
+    return false;
+  }
+  
+  // Okay, we know we have space.  Find a hash bucket.
+  void **Bucket = const_cast<void**>(FindBucketFor(Ptr));
+  if (*Bucket != Ptr) return false;  // Not in the set?
+
+  // Set this as a tombstone.
+  *Bucket = getTombstoneMarker();
+  --NumElements;
+  return true;
+}
+
 void * const *SmallPtrSetImpl::FindBucketFor(void *Ptr) const {
   unsigned Bucket = Hash(Ptr);
   unsigned ArraySize = CurArraySize;
