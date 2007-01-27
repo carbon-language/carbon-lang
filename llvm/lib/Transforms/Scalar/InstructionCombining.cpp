@@ -3288,7 +3288,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
                 Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
                                                       LHSVal->getName()+".off");
                 InsertNewInstBefore(Add, I);
-                return new ICmpInst(ICmpInst::ICMP_UGT, Add, AddCST);
+                return new ICmpInst(ICmpInst::ICMP_UGT, Add,
+                                    ConstantInt::get(Add->getType(), 1));
               }
               break;                        // (X != 13 & X != 15) -> no change
             }
