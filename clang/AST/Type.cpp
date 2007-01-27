@@ -75,17 +75,6 @@ const char *BuiltinType::getName() const {
   }
 }
 
-void PointerType::Profile(FoldingSetNodeID &ID, TypeRef Pointee) {
-  ID.AddPointer(Pointee.getAsOpaquePtr());
-}
-
-void ArrayType::Profile(FoldingSetNodeID &ID, ArraySizeModifier SizeModifier,
-                        unsigned IndexTypeQuals, TypeRef ElementType) {
-  ID.AddInteger(SizeModifier);
-  ID.AddInteger(IndexTypeQuals);
-  ID.AddPointer(ElementType.getAsOpaquePtr());
-}
-
 void FunctionTypeProto::Profile(FoldingSetNodeID &ID, TypeRef Result,
                                 TypeRef* ArgTys,
                                 unsigned NumArgs, bool isVariadic) {

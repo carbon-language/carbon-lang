@@ -26,9 +26,9 @@ namespace clang {
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
   std::vector<Type*> Types;
-  unsigned NumSlowLookups;
   FoldingSet<PointerType> PointerTypes;
   FoldingSet<ArrayType> ArrayTypes;
+  FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   FoldingSet<FunctionTypeProto> FunctionTypeProtos;
 public:
   Preprocessor &PP;

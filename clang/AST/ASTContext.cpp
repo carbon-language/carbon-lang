@@ -20,7 +20,6 @@ using namespace clang;
 
 ASTContext::ASTContext(Preprocessor &pp)
   : PP(pp), Target(pp.getTargetInfo()) {
-  NumSlowLookups = 0;
   InitBuiltinTypes();
 }
 
@@ -85,7 +84,6 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "      %d union types\n", NumTagUnion);
   fprintf(stderr, "      %d class types\n", NumTagClass);
   fprintf(stderr, "      %d enum types\n", NumTagEnum);
-  fprintf(stderr, "  %d slow type lookups\n", NumSlowLookups);
 }
 
 
@@ -194,21 +192,30 @@ TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
 /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
 ///
 TypeRef ASTContext::getFunctionTypeNoProto(TypeRef ResultTy) {
-  // FIXME: This is obviously braindead!
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
-  ++NumSlowLookups;
-  for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    if (FunctionTypeNoProto *FTy = dyn_cast<FunctionTypeNoProto>(Types[i]))
-      if (FTy->getResultType() == ResultTy)
-        return Types[i];
-
-  Type *Canonical = 0;
-  if (!ResultTy->isCanonical())
-    Canonical =getFunctionTypeNoProto(ResultTy.getCanonicalType()).getTypePtr();
+  FoldingSetNodeID ID;
+  FunctionTypeNoProto::Profile(ID, ResultTy);
   
-  Types.push_back(new FunctionTypeNoProto(ResultTy, Canonical));
-  return Types.back();
+  void *InsertPos = 0;
+  if (FunctionTypeNoProto *FT = 
+        FunctionTypeNoProtos.FindNodeOrInsertPos(ID, InsertPos))
+    return FT;
+  
+  Type *Canonical = 0;
+  if (!ResultTy->isCanonical()) {
+    Canonical =getFunctionTypeNoProto(ResultTy.getCanonicalType()).getTypePtr();
+    
+    // Get the new insert position for the node we care about.
+    FunctionTypeNoProto *NewIP =
+      FunctionTypeNoProtos.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!");
+  }
+  
+  FunctionTypeNoProto *New = new FunctionTypeNoProto(ResultTy, Canonical);
+  Types.push_back(New);
+  FunctionTypeProtos.InsertNode(New, InsertPos);
+  return New;
 }
 
 /// getFunctionType - Return a normal function type with a typed argument

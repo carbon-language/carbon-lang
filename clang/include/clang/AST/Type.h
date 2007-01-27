@@ -238,7 +238,9 @@ public:
   void Profile(FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType());
   }
-  static void Profile(FoldingSetNodeID &ID, TypeRef Pointee);
+  static void Profile(FoldingSetNodeID &ID, TypeRef Pointee) {
+    ID.AddPointer(Pointee.getAsOpaquePtr());
+  }
   
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
@@ -284,7 +286,11 @@ public:
     Profile(ID, getSizeModifier(), getIndexTypeQualifier(), getElementType());
   }
   static void Profile(FoldingSetNodeID &ID, ArraySizeModifier SizeModifier,
-                      unsigned IndexTypeQuals, TypeRef ElementType);
+                      unsigned IndexTypeQuals, TypeRef ElementType) {
+    ID.AddInteger(SizeModifier);
+    ID.AddInteger(IndexTypeQuals);
+    ID.AddPointer(ElementType.getAsOpaquePtr());
+  }
   
   static bool classof(const Type *T) { return T->getTypeClass() == Array; }
   static bool classof(const ArrayType *) { return true; }
@@ -318,7 +324,7 @@ public:
 
 /// FunctionTypeNoProto - Represents a K&R-style 'int foo()' function, which has
 /// no information available about its arguments.
-class FunctionTypeNoProto : public FunctionType {
+class FunctionTypeNoProto : public FunctionType, public FoldingSetNode {
   FunctionTypeNoProto(TypeRef Result, Type *Canonical)
     : FunctionType(FunctionNoProto, Result, false, Canonical) {}
   friend class ASTContext;  // ASTContext creates these.
@@ -327,6 +333,13 @@ public:
   
   virtual void getAsString(std::string &InnerString) const;
 
+  void Profile(FoldingSetNodeID &ID) {
+    Profile(ID, getResultType());
+  }
+  static void Profile(FoldingSetNodeID &ID, TypeRef ResultType) {
+    ID.AddPointer(ResultType.getAsOpaquePtr());
+  }
+  
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto;
   }
