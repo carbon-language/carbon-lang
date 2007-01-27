@@ -15,6 +15,7 @@
 #define LLVM_ADT_SMALLSET_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <set>
 
 namespace llvm {
@@ -101,6 +102,10 @@ private:
   }
 };
 
+/// If this set is of pointer values, transparently switch over to using
+/// SmallPtrSet for performance.
+template <typename PointeeType, unsigned N>
+class SmallSet<PointeeType*, N> : public SmallPtrSet<PointeeType*, N> {};
 
 } // end namespace llvm
 
