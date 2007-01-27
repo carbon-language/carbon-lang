@@ -15,66 +15,90 @@
 #define LLVM_ADT_SMALLSET_H
 
 #include "llvm/ADT/SmallVector.h"
+#include <set>
 
 namespace llvm {
 
 /// SmallSet - This maintains a set of unique values, optimizing for the case
 /// when the set is small (less than N).  In this case, the set can be
-/// maintained with no mallocs.
+/// maintained with no mallocs.  If the set gets large, we expand to using an
+/// std::set to maintain reasonable lookup times.
 ///
-/// Note that this set does not guarantee that the elements in the set will be
-/// ordered.
+/// Note that this set does not provide a way to iterate over members in the
+/// set.
 template <typename T, unsigned N>
 class SmallSet {
+  /// Use a SmallVector to hold the elements here (even though it will never
+  /// reach it's 'large' stage) to avoid calling the default ctors of elements
+  /// we will never use.
   SmallVector<T, N> Vector;
+  std::set<T> Set;
+  typedef typename SmallVector<T, N>::const_iterator VIterator;
   typedef typename SmallVector<T, N>::iterator mutable_iterator;
 public:
   SmallSet() {}
 
-  // Support iteration.
-  typedef typename SmallVector<T, N>::const_iterator iterator;
-  typedef typename SmallVector<T, N>::const_iterator const_iterator;
-  
-  iterator begin() const { return Vector.begin(); }
-  iterator end() const { return Vector.end(); }
-  
-  bool empty() const { return Vector.empty(); }
-  unsigned size() const { return Vector.size(); }
-  
-  iterator find(const T &V) const {
-    for (iterator I = begin(), E = end(); I != E; ++I)
-      if (*I == V)
-        return I;
-    return end();
+  bool empty() const { return Vector.empty() && Set.empty(); }
+  unsigned size() const {
+    return isSmall() ? Vector.size() : Set.size();
   }
   
   /// count - Return true if the element is in the set.
-  unsigned count(const T &V) const {
-    // Since the collection is small, just do a linear search.
-    return find(V) != end();
+  bool count(const T &V) const {
+    if (isSmall()) {
+      // Since the collection is small, just do a linear search.
+      return vfind(V) != Vector.end();
+    } else {
+      return Set.count(V);
+    }
   }
   
   /// insert - Insert an element into the set if it isn't already there.
   bool insert(const T &V) {
-    iterator I = find(V);
-    if (I != end())    // Don't reinsert if it already exists.
+    if (!isSmall())
+      return Set.insert(V).second;
+    
+    VIterator I = vfind(V);
+    if (I != Vector.end())    // Don't reinsert if it already exists.
       return false;
-    Vector.push_back(V);
+    if (Vector.size() < N) {
+      Vector.push_back(V);
+      return true;
+    }
+
+    // Otherwise, grow from vector to set.
+    while (!Vector.empty()) {
+      Set.insert(Vector.back());
+      Vector.pop_back();
+    }
+    Set.insert(V);
     return true;
   }
   
-  void erase(const T &V) {
+  bool erase(const T &V) {
+    if (!isSmall())
+      return Set.erase(V).second;
     for (mutable_iterator I = Vector.begin(), E = Vector.end(); I != E; ++I)
       if (*I == V) {
         Vector.erase(I);
-        return;
+        return true;
       }
+    return false;
   }
   
   void clear() {
     Vector.clear();
+    Set.clear();
   }
-  
+private:
+  bool isSmall() const { return Set.empty(); }
+    
+  VIterator vfind(const T &V) const {
+    for (VIterator I = Vector.begin(), E = Vector.end(); I != E; ++I)
+      if (*I == V)
+        return I;
+    return Vector.end();
+  }
 };
 
 
