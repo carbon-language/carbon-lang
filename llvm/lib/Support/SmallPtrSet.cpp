@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the SmallPtrSet class.
+// This file implements the SmallPtrSet class.  See SmallPtrSet.h for an
+// overview of the algorithm.
 //
 //===----------------------------------------------------------------------===//
 
