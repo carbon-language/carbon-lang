@@ -15,3 +15,7 @@
 * Make better use of high registers r8, r10, r11, r12 (ip). Some variants of add
   and cmp instructions can use high registers. Also, we can use them as
   temporaries to spill values into.
+
+* If we know function size is less than (1 << 16) * 2 bytes, we can use 16-bit
+  jumptable entries (e.g. (L1 - L2) >> 1). Or even smaller entries if the
+  function is even smaller. This also applies to ARM.
