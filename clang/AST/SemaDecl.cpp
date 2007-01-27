@@ -127,8 +127,12 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     return New;
   }
   
-  // This is not right, but it's a start.  If 'Old' is a 
-  
+  // This is not right, but it's a start.  If 'Old' is a function prototype with
+  // the same type as 'New', silently allow this.  FIXME: We should link up decl
+  // objects here.
+  if (Old->getBody() == 0 && Old->getType() == New->getType()) {
+    return New;
+  }
   
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
