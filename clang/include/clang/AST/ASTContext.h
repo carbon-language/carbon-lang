@@ -28,6 +28,7 @@ class ASTContext {
   std::vector<Type*> Types;
   unsigned NumSlowLookups;
   FoldingSet<FunctionTypeProto> FunctionTypeProtos;
+  FoldingSet<PointerType> PointerTypes;
 public:
   Preprocessor &PP;
   TargetInfo &Target;

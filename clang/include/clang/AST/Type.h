@@ -222,7 +222,7 @@ public:
 
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
 ///
-class PointerType : public Type {
+class PointerType : public Type, public FoldingSetNode {
   TypeRef PointeeType;
   PointerType(TypeRef Pointee, Type *CanonicalPtr) :
     Type(Pointer, CanonicalPtr), PointeeType(Pointee) {
@@ -233,6 +233,12 @@ public:
   TypeRef getPointeeType() const { return PointeeType; }
   
   virtual void getAsString(std::string &InnerString) const;
+  
+  
+  void Profile(FoldingSetNodeID &ID) {
+    Profile(ID, getPointeeType());
+  }
+  static void Profile(FoldingSetNodeID &ID, TypeRef Pointee);
   
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }

@@ -132,23 +132,30 @@ void ASTContext::InitBuiltinTypes() {
 /// getPointerType - Return the uniqued reference to the type for a pointer to
 /// the specified type.
 TypeRef ASTContext::getPointerType(TypeRef T) {
-  // FIXME: This is obviously braindead!
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
-  ++NumSlowLookups;
-  for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    if (PointerType *PTy = dyn_cast<PointerType>(Types[i]))
-      if (PTy->getPointeeType() == T)
-        return Types[i];
+  FoldingSetNodeID ID;
+  PointerType::Profile(ID, T);
+  
+  void *InsertPos = 0;
+  if (PointerType *PT = PointerTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return PT;
   
   // If the pointee type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   Type *Canonical = 0;
-  if (!T->isCanonical())
+  if (!T->isCanonical()) {
     Canonical = getPointerType(T.getCanonicalType()).getTypePtr();
+   
+    // Get the new insert position for the node we care about.
+    PointerType *NewIP = PointerTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!");
+  }
   
-  Types.push_back(new PointerType(T, Canonical));
-  return Types.back();
+  PointerType *New = new PointerType(T, Canonical);
+  Types.push_back(New);
+  PointerTypes.InsertNode(New, InsertPos);
+  return New;
 }
 
 /// getArrayType - Return the unique reference to the type for an array of the
