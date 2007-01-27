@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "X86.h"
+#include "X86ELFWriterInfo.h"
 #include "X86InstrInfo.h"
 #include "X86JITInfo.h"
 #include "X86Subtarget.h"
@@ -27,11 +28,12 @@ namespace llvm {
 
 class X86TargetMachine : public LLVMTargetMachine {
   X86Subtarget      Subtarget;
-  const TargetData DataLayout;       // Calculates type size & alignment
+  const TargetData  DataLayout; // Calculates type size & alignment
   TargetFrameInfo   FrameInfo;
   X86InstrInfo      InstrInfo;
   X86JITInfo        JITInfo;
   X86TargetLowering TLInfo;
+  X86ELFWriterInfo  ELFWriterInfo;
 
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
@@ -50,6 +52,9 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
+  virtual const X86ELFWriterInfo *getELFWriterInfo() const {
+    return &ELFWriterInfo;
+  }
 
   static unsigned getModuleMatchQuality(const Module &M);
   static unsigned getJITMatchQuality();
