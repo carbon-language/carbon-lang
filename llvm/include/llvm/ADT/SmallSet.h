@@ -55,12 +55,12 @@ public:
   }
   
   /// insert - Insert an element into the set if it isn't already there.
-  std::pair<iterator,bool> insert(const T &V) {
+  bool insert(const T &V) {
     iterator I = find(V);
     if (I != end())    // Don't reinsert if it already exists.
-      return std::make_pair(I, false);
+      return false;
     Vector.push_back(V);
-    return std::make_pair(end()-1, true);
+    return true;
   }
   
   void erase(const T &V) {
