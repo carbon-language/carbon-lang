@@ -2874,7 +2874,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
   // Add one result value for each formal argument.
   std::vector<MVT::ValueType> RetVals;
-  unsigned j = 0;
+  unsigned j = 1;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
        I != E; ++I, ++j) {
     MVT::ValueType VT = getValueType(I->getType());
