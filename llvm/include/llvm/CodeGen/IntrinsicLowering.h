@@ -31,10 +31,10 @@ namespace llvm {
     /// inserted into the module specified.
     void AddPrototypes(Module &M);
 
-    /// LowerIntrinsicCall - This method returns the LLVM function which should
-    /// be used to implement the specified intrinsic function call.  If an
-    /// intrinsic function must be implemented by the code generator (such as
-    /// va_start), this function should print a message and abort.
+    /// LowerIntrinsicCall - This method replaces a call with the LLVM function
+    /// which should be used to implement the specified intrinsic function call.
+    /// If an intrinsic function must be implemented by the code generator 
+    /// (such as va_start), this function should print a message and abort.
     ///
     /// Otherwise, if an intrinsic function call can be lowered, the code to
     /// implement it (often a call to a non-intrinsic function) is inserted
