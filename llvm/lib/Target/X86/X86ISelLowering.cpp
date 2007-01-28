@@ -1542,11 +1542,12 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
       default: assert(0 && "Unhandled argument type!");
       case MVT::i8:
       case MVT::i16:
-      case MVT::i32:
-       unsigned RegToUse = GPRArgRegs[ObjectVT-MVT::i8][GPRInd][NumIntRegs];
-       Reg = AddLiveIn(MF, RegToUse, GPRClasses[ObjectVT-MVT::i8]);
-       ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
-       break;
+      case MVT::i32: {
+        unsigned RegToUse = GPRArgRegs[ObjectVT-MVT::i8][GPRInd][NumIntRegs];
+        Reg = AddLiveIn(MF, RegToUse, GPRClasses[ObjectVT-MVT::i8]);
+        ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
+        break;
+      }
       case MVT::v16i8:
       case MVT::v8i16:
       case MVT::v4i32:
