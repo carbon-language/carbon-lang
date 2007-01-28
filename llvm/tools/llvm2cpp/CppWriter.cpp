@@ -258,7 +258,6 @@ CppWriter::printCallingConv(unsigned cc){
   // Print the calling convention.
   switch (cc) {
     case CallingConv::C:     Out << "CallingConv::C"; break;
-    case CallingConv::CSRet: Out << "CallingConv::CSRet"; break;
     case CallingConv::Fast:  Out << "CallingConv::Fast"; break;
     case CallingConv::Cold:  Out << "CallingConv::Cold"; break;
     case CallingConv::FirstTargetCC: Out << "CallingConv::FirstTargetCC"; break;
