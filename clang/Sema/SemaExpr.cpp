@@ -247,14 +247,10 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
                                            IdentifierInfo &II,
                                            bool HasTrailingLParen) {
   // Could be enum-constant or decl.
-  Decl *D = II.getFETokenInfo<Decl>();
+  Decl *D = LookupScopedDecl(&II, Decl::IDNS_Ordinary, Loc, S);
   if (D == 0) {
-    // FIXME: check to see if this is a use of a builtin.  By handling builtins
-    // here, we can avoid having to preload tons of decls for functions.
-
-    
-    // Otherwise, this is an imlicitly declared function reference (legal in
-    // C90, extension in C99).
+    // Otherwise, this could be an imlicitly declared function reference (legal
+    // in C90, extension in C99).
     if (HasTrailingLParen &&
         // Not in C++.
         !getLangOptions().CPlusPlus) {

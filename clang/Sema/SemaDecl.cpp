@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
@@ -20,6 +21,7 @@
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallSet.h"
 using namespace llvm;
 using namespace clang;
@@ -69,7 +71,8 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
 
 /// LookupScopedDecl - Look up the inner-most declaration in the specified
 /// namespace.
-Decl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI) {
+Decl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
+                             SourceLocation IdLoc, Scope *S) {
   if (II == 0) return 0;
   Decl::IdentifierNamespace NS = (Decl::IdentifierNamespace)NSI;
   
@@ -80,8 +83,54 @@ Decl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI) {
     if (D->getIdentifierNamespace() == NS)
       return D;
   
+  // If we didn't find a use of this identifier, and if the identifier
+  // corresponds to a compiler builtin, create the decl object for the builtin
+  // now, injecting it into translation unit scope, and return it.
+  if (NS == Decl::IDNS_Ordinary) {
+    // If this is a builtin on some other target, or if this builtin varies
+    // across targets (e.g. in type), emit a diagnostic and mark the translation
+    // unit non-portable for using it.
+    if (II->isNonPortableBuiltin()) {
+      // Only emit this diagnostic once for this builtin.
+      II->setNonPortableBuiltin(false);
+      Context.Target.DiagnoseNonPortability(IdLoc,
+                                            diag::port_target_builtin_use);
+    }
     
+    // If this is a builtin on this (or all) targets, create the decl.
+    if (unsigned BuiltinID = II->getBuiltinID())
+      return LazilyCreateBuiltin(II, BuiltinID, S);
+  }
   return 0;
+}
+
+/// LazilyCreateBuiltin - The specified Builtin-ID was first used at file scope.
+/// lazily create a decl for it.
+Decl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
+  Builtin::ID BID = (Builtin::ID)bid;
+
+  TypeRef R = Builtin::GetBuiltinType(BID, Context);
+  FunctionDecl *New = new FunctionDecl(SourceLocation(), II, R);
+  
+  // Find translation-unit scope to insert this function into.
+  while (S->getParent())
+    S = S->getParent();
+  S->AddDecl(New);
+  
+  // Add this decl to the end of the identifier info.
+  if (Decl *LastDecl = II->getFETokenInfo<Decl>()) {
+    // Scan until we find the last (outermost) decl in the id chain. 
+    while (LastDecl->getNext())
+      LastDecl = LastDecl->getNext();
+    // Insert before (outside) it.
+    LastDecl->setNext(New);
+  } else {
+    II->setFETokenInfo(New);
+  }    
+  // Make sure clients iterating over decls see this.
+  LastInGroupList.push_back(New);
+  
+  return New;
 }
 
 /// MergeTypeDefDecl - We just parsed a typedef 'New' which has the same name
@@ -174,7 +223,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   IdentifierInfo *II = D.getIdentifier();
   
   // See if this is a redefinition of a variable in the same scope.
-  Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary);
+  Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
+                                    D.getIdentifierLoc(), S);
   if (!S->isDeclScope(PrevDecl))
     PrevDecl = 0;   // If in outer scope, it isn't the same thing.
 
@@ -239,7 +289,8 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
   // among each other.  Here they can only shadow globals, which is ok.
-  if (Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary)) {
+  if (Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
+                                        PI.IdentLoc, FnScope)) {
     
   }
   
@@ -382,7 +433,8 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
   // If this is a named struct, check to see if there was a previous forward
   // declaration or definition.
   if (TagDecl *PrevDecl = 
-          dyn_cast_or_null<TagDecl>(LookupScopedDecl(Name, Decl::IDNS_Tag))) {
+          dyn_cast_or_null<TagDecl>(LookupScopedDecl(Name, Decl::IDNS_Tag,
+                                                     NameLoc, S))) {
     
     // If this is a use of a previous tag, or if the tag is already declared in
     // the same scope (so that the definition/declaration completes or
@@ -604,7 +656,7 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
 
   // Verify that there isn't already something declared with this name in this
   // scope.
-  if (Decl *PrevDecl = LookupScopedDecl(Id, Decl::IDNS_Ordinary)) {
+  if (Decl *PrevDecl = LookupScopedDecl(Id, Decl::IDNS_Ordinary, IdLoc, S)) {
     if (S->isDeclScope(PrevDecl)) {
       if (isa<EnumConstantDecl>(PrevDecl))
         Diag(IdLoc, diag::err_redefinition_of_enumerator, Id->getName());

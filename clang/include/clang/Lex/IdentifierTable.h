@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_IDENTIFIERTABLE_H
-#define LLVM_CLANG_IDENTIFIERTABLE_H
+#ifndef LLVM_CLANG_LEX_IDENTIFIERTABLE_H
+#define LLVM_CLANG_LEX_IDENTIFIERTABLE_H
 
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/CStringMap.h"
@@ -33,10 +33,12 @@ class IdentifierInfo {
   tok::TokenKind TokenID      : 8; // Front-end token ID or tok::identifier.
   tok::PPKeywordKind PPID     : 5; // ID for preprocessor command like #'ifdef'.
   tok::ObjCKeywordKind ObjCID : 5; // ID for objc @ keyword like @'protocol'.
+  unsigned BuiltinID          :12; // ID if this is a builtin (__builtin_inf).
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
+  bool IsNonPortableBuiltin   : 1; // True if builtin varies across targets.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
 public:
@@ -73,6 +75,22 @@ public:
   /// enabled.
   tok::ObjCKeywordKind getObjCKeywordID() const { return ObjCID; }
   void setObjCKeywordID(tok::ObjCKeywordKind ID) { ObjCID = ID; }
+  
+  /// getBuiltinID - Return a value indicating whether this is a builtin
+  /// function.  0 is not-built-in.  1 is builtin-for-some-nonprimary-target.
+  /// 2+ are specific builtin functions.
+  unsigned getBuiltinID() const { return BuiltinID; }
+  void setBuiltinID(unsigned ID) {
+    assert(ID < (1 << 12) && "ID too large for field!");
+    BuiltinID = ID;
+  }
+  
+  /// isNonPortableBuiltin - Return true if this identifier corresponds to a
+  /// builtin on some other target, but isn't one on this target, or if it is on
+  /// the target but not on another, or if it is on both but it differs somehow
+  /// in behavior.
+  bool isNonPortableBuiltin() const { return IsNonPortableBuiltin; }
+  void setNonPortableBuiltin(bool Val) { IsNonPortableBuiltin = Val; }
   
   /// get/setExtension - Initialize information about whether or not this
   /// language token is an extension.  This controls extension warnings, and is

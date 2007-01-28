@@ -57,6 +57,9 @@
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
 		DED627030AE0C51D001E80A4 /* Targets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED627020AE0C51D001E80A4 /* Targets.cpp */; };
 		DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */; };
+		DED676D10B6C786700AAD4A3 /* Builtins.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676D00B6C786700AAD4A3 /* Builtins.def */; };
+		DED676FA0B6C797B00AAD4A3 /* Builtins.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676F90B6C797B00AAD4A3 /* Builtins.h */; };
+		DED677C90B6C854100AAD4A3 /* Builtins.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED677C80B6C854100AAD4A3 /* Builtins.cpp */; };
 		DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7310A524295003AD0FB /* Diagnostic.h */; };
 		DED7D7420A524295003AD0FB /* DiagnosticKinds.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7320A524295003AD0FB /* DiagnosticKinds.def */; };
 		DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7330A524295003AD0FB /* FileManager.h */; };
@@ -134,6 +137,8 @@
 				DE75ED290B044DC90020CF81 /* ASTContext.h in CopyFiles */,
 				DE1733700B068DC60080B521 /* DeclSpec.h in CopyFiles */,
 				DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */,
+				DED676D10B6C786700AAD4A3 /* Builtins.def in CopyFiles */,
+				DED676FA0B6C797B00AAD4A3 /* Builtins.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -191,6 +196,9 @@
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; };
 		DED627020AE0C51D001E80A4 /* Targets.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Targets.cpp; path = Driver/Targets.cpp; sourceTree = "<group>"; };
 		DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Decl.cpp; path = AST/Decl.cpp; sourceTree = "<group>"; };
+		DED676D00B6C786700AAD4A3 /* Builtins.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = Builtins.def; path = clang/AST/Builtins.def; sourceTree = "<group>"; };
+		DED676F90B6C797B00AAD4A3 /* Builtins.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Builtins.h; path = clang/AST/Builtins.h; sourceTree = "<group>"; };
+		DED677C80B6C854100AAD4A3 /* Builtins.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Builtins.cpp; path = AST/Builtins.cpp; sourceTree = "<group>"; };
 		DED7D7310A524295003AD0FB /* Diagnostic.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Diagnostic.h; sourceTree = "<group>"; };
 		DED7D7320A524295003AD0FB /* DiagnosticKinds.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = DiagnosticKinds.def; sourceTree = "<group>"; };
 		DED7D7330A524295003AD0FB /* FileManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FileManager.h; sourceTree = "<group>"; };
@@ -317,6 +325,8 @@
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
 				DEC8DABF0A94402500353FCA /* ASTStreamer.h */,
+				DED676D00B6C786700AAD4A3 /* Builtins.def */,
+				DED676F90B6C797B00AAD4A3 /* Builtins.h */,
 				DEC8D9900A9433CD00353FCA /* Decl.h */,
 				DE0FCA620A95859D00248FD5 /* Expr.h */,
 				DE3452800AEF1B1800DBC861 /* Stmt.h */,
@@ -332,6 +342,7 @@
 			children = (
 				DE1732FF0B068B700080B521 /* ASTContext.cpp */,
 				DEC8DAAC0A94400300353FCA /* ASTStreamer.cpp */,
+				DED677C80B6C854100AAD4A3 /* Builtins.cpp */,
 				DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */,
 				DE0FCB330A9C21F100248FD5 /* Expr.cpp */,
 				DE3452400AEF1A2D00DBC861 /* Stmt.cpp */,
@@ -507,6 +518,7 @@
 				DE1733000B068B700080B521 /* ASTContext.cpp in Sources */,
 				DE17336E0B068DC20080B521 /* DeclSpec.cpp in Sources */,
 				DE1737A90B0847BC0080B521 /* SemaType.cpp in Sources */,
+				DED677C90B6C854100AAD4A3 /* Builtins.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

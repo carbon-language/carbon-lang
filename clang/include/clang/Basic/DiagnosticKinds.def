@@ -27,6 +27,9 @@
 DIAG(port_target_macro_use, NOTE,
      "use of a target-specific macro, source is not 'portable'")
 
+DIAG(port_target_builtin_use, NOTE,
+     "use of a target-specific builtin function, source is not 'portable'")
+
 DIAG(port_wchar_t, NOTE,
      "sizeof(wchar_t) varies between targets, source is not 'portable'")
 

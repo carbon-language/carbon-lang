@@ -28,6 +28,7 @@ IdentifierInfo::IdentifierInfo() {
   TokenID = tok::identifier;
   PPID = tok::pp_not_keyword;
   ObjCID = tok::objc_not_keyword;
+  BuiltinID = 0;
   IsExtension = false;
   IsPoisoned = false;
   IsOtherTargetMacro = false;

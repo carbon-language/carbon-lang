@@ -74,7 +74,10 @@ public:
   virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
-  Decl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI);
+  Decl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, SourceLocation IdLoc,
+                         Scope *S);
+  
+  Decl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
   
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D);
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);

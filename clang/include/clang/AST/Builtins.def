@@ -1,0 +1,52 @@
+//===--- Builtins.def - Builtin function info database ----------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by Chris Lattner and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the standard builtin function database.  Users of this file
+// must define the BUILTIN macro to make use of this information.
+//
+//===----------------------------------------------------------------------===//
+
+// FIXME: this needs to be the full list supported by GCC.  Right now, I'm just
+// adding stuff on demand.
+//
+// FIXME: This should really be a .td file, but that requires modifying tblgen.
+// Perhaps tblgen should have plugins.
+
+// The first value provided to the macro specifies the function name of the
+// builtin, and results in a clang::builtin::BIXX enum value for XX.
+
+// The second value provided to the macro specifies the type of the function
+// (result value, then each argument) as follows:
+//  v -> void
+//  c -> char
+//  s -> short
+//  i -> int
+//  f -> float
+//  d -> double
+//  . -> "...".  This may only occur at the end of the function list.
+//
+// Types maybe prefixed with the following modifiers:
+//  L  -> long (e.g. Li for 'long int')
+//  LL -> long long
+//  S  -> signed
+//  U  -> unsigned
+
+// The third value provided to the macro specifies information about attributes
+// of the function.  Currently we have:
+//  n -> nothrow
+//  c -> const
+
+BUILTIN(__builtin_inf  , "d"   , "nc")
+BUILTIN(__builtin_inff , "f"   , "nc")
+BUILTIN(__builtin_infl , "Ld"  , "nc")
+BUILTIN(__builtin_fabs , "dd"  , "nc")
+BUILTIN(__builtin_fabsf, "ff"  , "nc")
+BUILTIN(__builtin_fabsl, "LdLd", "nc")
+
+#undef BUILTIN
