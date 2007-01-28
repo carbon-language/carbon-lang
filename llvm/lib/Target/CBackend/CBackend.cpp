@@ -1748,8 +1748,8 @@ void CWriter::printContainedStructs(const Type *Ty,
 }
 
 void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
-  /// isCStructReturn - Should this function actually return a struct by-value?
-  bool isCStructReturn = F->getCallingConv() == CallingConv::CSRet;
+  /// isStructReturn - Should this function actually return a struct by-value?
+  bool isStructReturn = F->getFunctionType()->isStructReturn();
   
   if (F->hasInternalLinkage()) Out << "static ";
   if (F->hasDLLImportLinkage()) Out << "__declspec(dllimport) ";
@@ -1778,7 +1778,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
       
       // If this is a struct-return function, don't print the hidden
       // struct-return argument.
-      if (isCStructReturn) {
+      if (isStructReturn) {
         assert(I != E && "Invalid struct return function!");
         ++I;
       }
@@ -1804,7 +1804,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     
     // If this is a struct-return function, don't print the hidden
     // struct-return argument.
-    if (isCStructReturn) {
+    if (isStructReturn) {
       assert(I != E && "Invalid struct return function!");
       ++I;
     }
@@ -1832,7 +1832,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   
   // Get the return tpe for the function.
   const Type *RetTy;
-  if (!isCStructReturn)
+  if (!isStructReturn)
     RetTy = F->getReturnType();
   else {
     // If this is a struct-return function, print the struct-return type.
@@ -1855,11 +1855,14 @@ static inline bool isFPIntBitCast(const Instruction &I) {
 }
 
 void CWriter::printFunction(Function &F) {
+  /// isStructReturn - Should this function actually return a struct by-value?
+  bool isStructReturn = F.getFunctionType()->isStructReturn();
+
   printFunctionSignature(&F, false);
   Out << " {\n";
   
   // If this is a struct return function, handle the result with magic.
-  if (F.getCallingConv() == CallingConv::CSRet) {
+  if (isStructReturn) {
     const Type *StructTy =
       cast<PointerType>(F.arg_begin()->getType())->getElementType();
     Out << "  ";
@@ -1977,7 +1980,10 @@ void CWriter::printBasicBlock(BasicBlock *BB) {
 //
 void CWriter::visitReturnInst(ReturnInst &I) {
   // If this is a struct return function, return the temporary struct.
-  if (I.getParent()->getParent()->getCallingConv() == CallingConv::CSRet) {
+  bool isStructReturn = I.getParent()->getParent()->
+    getFunctionType()->isStructReturn();
+
+  if (isStructReturn) {
     Out << "  return StructReturn;\n";
     return;
   }
@@ -2468,9 +2474,12 @@ void CWriter::visitCallInst(CallInst &I) {
 
   Value *Callee = I.getCalledValue();
 
+  const PointerType  *PTy   = cast<PointerType>(Callee->getType());
+  const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
+
   // If this is a call to a struct-return function, assign to the first
   // parameter instead of passing it to the call.
-  bool isStructRet = I.getCallingConv() == CallingConv::CSRet;
+  bool isStructRet = FTy->isStructReturn();
   if (isStructRet) {
     Out << "*(";
     writeOperand(I.getOperand(1));
@@ -2478,9 +2487,6 @@ void CWriter::visitCallInst(CallInst &I) {
   }
   
   if (I.isTailCall()) Out << " /*tail*/ ";
-
-  const PointerType  *PTy   = cast<PointerType>(Callee->getType());
-  const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
   
   if (!WroteCallee) {
     // If this is an indirect call to a struct return function, we need to cast

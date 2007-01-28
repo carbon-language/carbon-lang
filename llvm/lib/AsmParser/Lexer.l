@@ -227,7 +227,6 @@ sideeffect      { return SIDEEFFECT; }
 
 cc              { return CC_TOK; }
 ccc             { return CCC_TOK; }
-csretcc         { return CSRETCC_TOK; }
 fastcc          { return FASTCC_TOK; }
 coldcc          { return COLDCC_TOK; }
 x86_stdcallcc   { return X86_STDCALLCC_TOK; }
@@ -287,6 +286,8 @@ call            { RET_TOK(OtherOpVal, Call, CALL); }
 trunc           { RET_TOK(CastOpVal, Trunc, TRUNC); }
 zext            { RET_TOK(CastOpVal, ZExt, ZEXT); }
 sext            { RET_TOK(CastOpVal, SExt, SEXT); }
+inreg           { return INREG; }
+sret            { return SRET;  }
 fptrunc         { RET_TOK(CastOpVal, FPTrunc, FPTRUNC); }
 fpext           { RET_TOK(CastOpVal, FPExt, FPEXT); }
 uitofp          { RET_TOK(CastOpVal, UIToFP, UITOFP); }

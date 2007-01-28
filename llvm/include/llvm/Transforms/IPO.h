@@ -82,7 +82,8 @@ ModulePass *createGlobalDCEPass();
 /// the specified function. Otherwise, it deletes as much of the module as
 /// possible, except for the function specified.
 ///
-ModulePass *createFunctionExtractionPass(Function *F, bool deleteFn = false);
+ModulePass *createFunctionExtractionPass(Function *F, bool deleteFn = false,
+                                         bool relinkCallees = false);
 
 
 //===----------------------------------------------------------------------===//

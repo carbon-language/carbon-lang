@@ -1089,6 +1089,10 @@ std::string FunctionType::getParamAttrsText(ParameterAttributes Attr) {
     Result += "sext ";
   if (Attr & NoReturnAttribute)
     Result += "noreturn ";
+  if (Attr & InRegAttribute)
+    Result += "inreg ";
+  if (Attr & StructRetAttribute)
+    Result += "sret ";  
   return Result;
 }
 

@@ -352,7 +352,6 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Chain    = Op.getOperand(0);
   unsigned CallConv  = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   assert((CallConv == CallingConv::C ||
-          CallConv == CallingConv::CSRet ||
           CallConv == CallingConv::Fast) && "unknown calling convention");
   SDOperand Callee   = Op.getOperand(4);
   unsigned NumOps    = (Op.getNumOperands() - 5) / 2;

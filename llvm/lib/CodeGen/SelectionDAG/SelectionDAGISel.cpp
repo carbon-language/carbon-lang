@@ -2167,6 +2167,8 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     SDOperand ArgNode = getValue(Arg);
     Entry.Node = ArgNode; Entry.Ty = Arg->getType();
     Entry.isSigned = FTy->paramHasAttr(i, FunctionType::SExtAttribute);
+    Entry.isInReg  = FTy->paramHasAttr(i, FunctionType::InRegAttribute);
+    Entry.isSRet   = FTy->paramHasAttr(i, FunctionType::StructRetAttribute);
     Args.push_back(Entry);
   }
 
@@ -2761,6 +2763,8 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   Entry.Node = Src;
   Entry.Ty = TLI.getTargetData()->getIntPtrType();
   Entry.isSigned = false;
+  Entry.isInReg = false;
+  Entry.isSRet = false;
   Args.push_back(Entry);
 
   std::pair<SDOperand,SDOperand> Result =
@@ -2777,6 +2781,8 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   Entry.Node = getValue(I.getOperand(0));
   Entry.Ty = TLI.getTargetData()->getIntPtrType();
   Entry.isSigned = false;
+  Entry.isInReg = false;
+  Entry.isSRet = false;
   Args.push_back(Entry);
   MVT::ValueType IntPtr = TLI.getPointerTy();
   std::pair<SDOperand,SDOperand> Result =
@@ -2859,6 +2865,7 @@ static SDOperand ExpandScalarFormalArgs(MVT::ValueType VT, SDNode *Arg,
 /// integrated into SDISel.
 std::vector<SDOperand> 
 TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
+  const FunctionType *FTy = F.getFunctionType();
   // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
   std::vector<SDOperand> Ops;
   Ops.push_back(DAG.getRoot());
@@ -2867,16 +2874,22 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
   // Add one result value for each formal argument.
   std::vector<MVT::ValueType> RetVals;
+  unsigned j = 0;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
     MVT::ValueType VT = getValueType(I->getType());
+    bool isInReg = FTy->paramHasAttr(++j, FunctionType::InRegAttribute);
+    bool isSRet  = FTy->paramHasAttr(j, FunctionType::StructRetAttribute);
+    unsigned Flags = (isInReg << 1) | (isSRet << 2);
     
     switch (getTypeAction(VT)) {
     default: assert(0 && "Unknown type action!");
     case Legal: 
       RetVals.push_back(VT);
+      Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       break;
     case Promote:
       RetVals.push_back(getTypeToTransformTo(VT));
+      Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       break;
     case Expand:
       if (VT != MVT::Vector) {
@@ -2885,8 +2898,10 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // integers it turns into.
         MVT::ValueType NVT = getTypeToExpandTo(VT);
         unsigned NumVals = getNumElements(VT);
-        for (unsigned i = 0; i != NumVals; ++i)
+        for (unsigned i = 0; i != NumVals; ++i) {
           RetVals.push_back(NVT);
+          Ops.push_back(DAG.getConstant(Flags, MVT::i32));
+        }
       } else {
         // Otherwise, this is a vector type.  We only support legal vectors
         // right now.
@@ -2898,6 +2913,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
           RetVals.push_back(TVT);
+          Ops.push_back(DAG.getConstant(Flags, MVT::i32));
         } else {
           assert(0 && "Don't support illegal by-val vector arguments yet!");
         }
@@ -2917,7 +2933,6 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
   // Set up the return result vector.
   Ops.clear();
-  const FunctionType *FTy = F.getFunctionType();
   unsigned i = 0;
   unsigned Idx = 1;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; 
@@ -2984,13 +2999,13 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 /// ExpandScalarCallArgs - Recursively expand call argument node by
 /// bit_converting it or extract a pair of elements from the larger  node.
 static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
-                                 bool isSigned, 
+                                 unsigned Flags, 
                                  SmallVector<SDOperand, 32> &Ops,
                                  SelectionDAG &DAG,
                                  TargetLowering &TLI) {
   if (TLI.getTypeAction(VT) != TargetLowering::Expand) {
     Ops.push_back(Arg);
-    Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
+    Ops.push_back(DAG.getConstant(Flags, MVT::i32));
     return;
   }
 
@@ -2998,7 +3013,7 @@ static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
   unsigned NumVals = MVT::getSizeInBits(VT) / MVT::getSizeInBits(EVT);
   if (NumVals == 1) {
     Arg = DAG.getNode(ISD::BIT_CONVERT, EVT, Arg);
-    ExpandScalarCallArgs(EVT, Arg, isSigned, Ops, DAG, TLI);
+    ExpandScalarCallArgs(EVT, Arg, Flags, Ops, DAG, TLI);
   } else if (NumVals == 2) {
     SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, EVT, Arg,
                                DAG.getConstant(0, TLI.getPointerTy()));
@@ -3006,8 +3021,8 @@ static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
                                DAG.getConstant(1, TLI.getPointerTy()));
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
-    ExpandScalarCallArgs(EVT, Lo, isSigned, Ops, DAG, TLI);
-    ExpandScalarCallArgs(EVT, Hi, isSigned, Ops, DAG, TLI);
+    ExpandScalarCallArgs(EVT, Lo, Flags, Ops, DAG, TLI);
+    ExpandScalarCallArgs(EVT, Hi, Flags, Ops, DAG, TLI);
   } else {
     // Value scalarized into many values.  Unimp for now.
     assert(0 && "Cannot expand i64 -> i16 yet!");
@@ -3036,11 +3051,14 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     MVT::ValueType VT = getValueType(Args[i].Ty);
     SDOperand Op = Args[i].Node;
     bool isSigned = Args[i].isSigned;
+    bool isInReg = Args[i].isInReg;
+    bool isSRet  = Args[i].isSRet; 
+    unsigned Flags = (isSRet << 2) | (isInReg << 1) | isSigned;
     switch (getTypeAction(VT)) {
     default: assert(0 && "Unknown type action!");
     case Legal: 
       Ops.push_back(Op);
-      Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
+      Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       break;
     case Promote:
       if (MVT::isInteger(VT)) {
@@ -3051,14 +3069,14 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         Op = DAG.getNode(ISD::FP_EXTEND, getTypeToTransformTo(VT), Op);
       }
       Ops.push_back(Op);
-      Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
+      Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       break;
     case Expand:
       if (VT != MVT::Vector) {
         // If this is a large integer, it needs to be broken down into small
         // integers.  Figure out what the source elt type is and how many small
         // integers it is.
-        ExpandScalarCallArgs(VT, Op, isSigned, Ops, DAG, *this);
+        ExpandScalarCallArgs(VT, Op, Flags, Ops, DAG, *this);
       } else {
         // Otherwise, this is a vector type.  We only support legal vectors
         // right now.
@@ -3073,7 +3091,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
           // Insert a VBIT_CONVERT of the MVT::Vector type to the packed type.
           Op = DAG.getNode(ISD::VBIT_CONVERT, TVT, Op);
           Ops.push_back(Op);
-          Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
+          Ops.push_back(DAG.getConstant(Flags, MVT::i32));
         } else {
           assert(0 && "Don't support illegal by-val vector call args yet!");
           abort();

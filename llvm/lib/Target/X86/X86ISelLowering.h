@@ -364,25 +364,21 @@ namespace llvm {
     /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
     bool X86ScalarSSE;
 
-    // C Calling Convention implementation.
-    SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG);
+    // C and StdCall Calling Convention implementation.
+    SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
+                                bool isStdCall = false);
+    SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
+                             bool isStdCall = false);
 
     // X86-64 C Calling Convention implementation.
     SDOperand LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG);
 
-    // Fast Calling Convention implementation.
-    SDOperand LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
+    // Fast and FastCall Calling Convention implementation.
+    SDOperand LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
+                                   bool isFastCall = false);
     SDOperand LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
-                                bool isFastCall);
-
-    // StdCall Calling Convention implementation.
-    SDOperand LowerStdCallCCArguments(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerStdCallCCCallTo(SDOperand Op, SelectionDAG &DAG);
-
-    // FastCall Calling Convention implementation.
-    SDOperand LowerFastCallCCArguments(SDOperand Op, SelectionDAG &DAG);
+                                bool isFastCall = false);
 
     SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);

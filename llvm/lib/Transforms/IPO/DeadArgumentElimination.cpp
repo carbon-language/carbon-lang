@@ -230,9 +230,10 @@ static inline bool CallPassesValueThoughVararg(Instruction *Call,
 // (used in a computation), MaybeLive (only passed as an argument to a call), or
 // Dead (not used).
 DAE::Liveness DAE::getArgumentLiveness(const Argument &A) {
-  // If this is the return value of a csret function, it's not really dead.
-  if (A.getParent()->getCallingConv() == CallingConv::CSRet &&
-      &*A.getParent()->arg_begin() == &A)
+  const FunctionType *FTy = A.getParent()->getFunctionType();
+  
+  // If this is the return value of a struct function, it's not really dead.
+  if (FTy->isStructReturn() && &*A.getParent()->arg_begin() == &A)
     return Live;
   
   if (A.use_empty())  // First check, directly dead?

@@ -133,20 +133,25 @@ namespace ISD {
     // UNDEF - An undefined node
     UNDEF,
     
-    /// FORMAL_ARGUMENTS(CHAIN, CC#, ISVARARG) - This node represents the formal
-    /// arguments for a function.  CC# is a Constant value indicating the
-    /// calling convention of the function, and ISVARARG is a flag that
-    /// indicates whether the function is varargs or not.  This node has one
-    /// result value for each incoming argument, plus one for the output chain.
-    /// It must be custom legalized.
+    /// FORMAL_ARGUMENTS(CHAIN, CC#, ISVARARG, FLAG0, ..., FLAGn) - This node
+    /// represents the formal arguments for a function.  CC# is a Constant value
+    /// indicating the calling convention of the function, and ISVARARG is a
+    /// flag that indicates whether the function is varargs or not. This node
+    /// has one result value for each incoming argument, plus one for the output
+    /// chain. It must be custom legalized. See description of CALL node for
+    /// FLAG argument contents explanation.
     /// 
     FORMAL_ARGUMENTS,
     
     /// RV1, RV2...RVn, CHAIN = CALL(CHAIN, CC#, ISVARARG, ISTAILCALL, CALLEE,
-    ///                              ARG0, SIGN0, ARG1, SIGN1, ... ARGn, SIGNn)
+    ///                              ARG0, FLAG0, ARG1, FLAG1, ... ARGn, FLAGn)
     /// This node represents a fully general function call, before the legalizer
-    /// runs.  This has one result value for each argument / signness pair, plus
-    /// a chain result. It must be custom legalized.
+    /// runs.  This has one result value for each argument / flag pair, plus
+    /// a chain result. It must be custom legalized. Flag argument indicates
+    /// misc. argument attributes. Currently:
+    /// Bit 0 - signness
+    /// Bit 1 - 'inreg' attribute
+    /// Bit 2 - 'sret' attribute
     CALL,
 
     // EXTRACT_ELEMENT - This is used to get the first or second (determined by

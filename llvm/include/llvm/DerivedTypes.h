@@ -134,7 +134,9 @@ public:
     NoAttributeSet    = 0,      ///< No attribute value has been set 
     ZExtAttribute     = 1,      ///< zero extended before/after call
     SExtAttribute     = 1 << 1, ///< sign extended before/after call
-    NoReturnAttribute = 1 << 2  ///< mark the function as not returning
+    NoReturnAttribute = 1 << 2, ///< mark the function as not returning
+    InRegAttribute    = 1 << 3, ///< force argument to be passed in register
+    StructRetAttribute= 1 << 4  ///< hidden pointer to structure to return
   };
   typedef std::vector<ParameterAttributes> ParamAttrsList;
 private:
@@ -176,6 +178,10 @@ public:
   ///
   unsigned getNumParams() const { return unsigned(ContainedTys.size()-1); }
 
+  bool isStructReturn() const {
+    return (getNumParams() && paramHasAttr(1, StructRetAttribute));
+  }
+  
   /// The parameter attributes for the \p ith parameter are returned. The 0th
   /// parameter refers to the return type of the function.
   /// @returns The ParameterAttributes for the \p ith parameter.

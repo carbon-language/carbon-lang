@@ -1360,9 +1360,9 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
     // On PPC64, promote integers to 64-bit values.
     if (isPPC64 && Arg.getValueType() == MVT::i32) {
-      unsigned ExtOp = ISD::ZERO_EXTEND;
-      if (cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue())
-        ExtOp = ISD::SIGN_EXTEND;
+      unsigned Flags = cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
+      unsigned ExtOp = (Flags & 1) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+
       Arg = DAG.getNode(ExtOp, MVT::i64, Arg);
     }
     

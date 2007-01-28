@@ -71,6 +71,10 @@ void X86SharedAsmPrinter::decorateName(std::string &Name,
   unsigned CC = F->getCallingConv();
   if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
     return;
+
+  // Decorate names only when we're targeting Cygwin/Mingw32 targets
+  if (!Subtarget->isTargetCygMing())
+    return;
     
   FMFInfoMap::const_iterator info_item = FunctionInfoMap.find(F);
 

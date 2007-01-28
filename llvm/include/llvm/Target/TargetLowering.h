@@ -730,6 +730,8 @@ public:
     SDOperand Node;
     const Type* Ty;
     bool isSigned;
+    bool isInReg;
+    bool isSRet;
   };
   typedef std::vector<ArgListEntry> ArgListTy;
   virtual std::pair<SDOperand, SDOperand>

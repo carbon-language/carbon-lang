@@ -984,8 +984,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token DLLIMPORT DLLEXPORT EXTERN_WEAK
 %token OPAQUE EXTERNAL TARGET TRIPLE ALIGN
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
-%token CC_TOK CCC_TOK CSRETCC_TOK FASTCC_TOK COLDCC_TOK
-%token X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
+%token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
 %token DATALAYOUT
 %type <UIntVal> OptCallingConv
 %type <ParamAttrs> OptParamAttrs ParamAttr 
@@ -1017,7 +1016,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 
 // Function Attributes
-%token NORETURN
+%token NORETURN INREG SRET
 
 // Visibility Styles
 %token DEFAULT HIDDEN
@@ -1119,7 +1118,6 @@ FunctionDefineLinkage
 
 OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                  CCC_TOK            { $$ = CallingConv::C; } |
-                 CSRETCC_TOK        { $$ = CallingConv::CSRet; } |
                  FASTCC_TOK         { $$ = CallingConv::Fast; } |
                  COLDCC_TOK         { $$ = CallingConv::Cold; } |
                  X86_STDCALLCC_TOK  { $$ = CallingConv::X86_StdCall; } |
@@ -1131,8 +1129,10 @@ OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                   CHECK_FOR_ERROR
                  };
 
-ParamAttr     : ZEXT { $$ = FunctionType::ZExtAttribute; }
-              | SEXT { $$ = FunctionType::SExtAttribute; }
+ParamAttr     : ZEXT  { $$ = FunctionType::ZExtAttribute;      }
+              | SEXT  { $$ = FunctionType::SExtAttribute;      }
+              | INREG { $$ = FunctionType::InRegAttribute;     }
+              | SRET  { $$ = FunctionType::StructRetAttribute; }
               ;
 
 OptParamAttrs : /* empty */  { $$ = FunctionType::NoAttributeSet; }

@@ -338,16 +338,16 @@ void Verifier::visitFunction(Function &F) {
           F.getReturnType() == Type::VoidTy,
           "Functions cannot return aggregate values!", &F);
 
+  Assert1(!FT->isStructReturn() ||
+          (FT->getReturnType() == Type::VoidTy && 
+           FT->getNumParams() > 0 && isa<PointerType>(FT->getParamType(0))),
+          "Invalid struct-return function!", &F);
+
   // Check that this function meets the restrictions on this calling convention.
   switch (F.getCallingConv()) {
   default:
     break;
   case CallingConv::C:
-    break;
-  case CallingConv::CSRet:
-    Assert1(FT->getReturnType() == Type::VoidTy && 
-            FT->getNumParams() > 0 && isa<PointerType>(FT->getParamType(0)),
-            "Invalid struct-return function!", &F);
     break;
   case CallingConv::Fast:
   case CallingConv::Cold:
