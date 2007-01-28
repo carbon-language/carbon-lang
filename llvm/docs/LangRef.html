@@ -732,11 +732,12 @@ a power of 2.</p>
     a call to this function.</dd>
     <dt><tt>inreg</tt></dt>
     <dd>This indicates that the parameter should be placed in register (if
-    possible) during assembling function call. It's currently supported in x86
-    backend only.</dd>
+    possible) during assembling function call. Support for this attribute is
+    target-specific</dd>
     <dt><tt>sret</tt></dt>
-    <dd>This indicates, that the parameter is special hidden pointer to struct
-    to return. Usually such parameter needs special handling during codegen.</dd>
+    <dd>This indicates that the parameter specifies the address of a structure
+    that is the return value of the function in the source program.
+    </dd>
   </dl>
 
 </div>
