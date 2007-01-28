@@ -31,8 +31,8 @@ namespace clang {
 class IdentifierInfo {
   MacroInfo *Macro;                // Set if this identifier is #define'd.
   tok::TokenKind TokenID      : 8; // Front-end token ID or tok::identifier.
-  tok::PPKeywordKind PPID     : 5; // ID for preprocessor command like 'ifdef'.
-  tok::ObjCKeywordKind ObjCID : 5; // ID for preprocessor command like 'ifdef'.
+  tok::PPKeywordKind PPID     : 5; // ID for preprocessor command like #'ifdef'.
+  tok::ObjCKeywordKind ObjCID : 5; // ID for objc @ keyword like @'protocol'.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.

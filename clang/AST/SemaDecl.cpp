@@ -67,20 +67,11 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
   }
 }
 
-/// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
-/// no declarator (e.g. "struct foo;") is parsed.
-Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
-  // TODO: emit error on 'int;' or 'const enum foo;'.
-  // TODO: emit error on 'typedef int;'
-  // if (!DS.isMissingDeclaratorOk()) Diag(...);
-  
-  return 0;
-}
-
 /// LookupScopedDecl - Look up the inner-most declaration in the specified
 /// namespace.
-static Decl *LookupScopedDecl(IdentifierInfo *II, Decl::IdentifierNamespace NS){
+Decl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI) {
   if (II == 0) return 0;
+  Decl::IdentifierNamespace NS = (Decl::IdentifierNamespace)NSI;
   
   // Scan up the scope chain looking for a decl that matches this identifier
   // that is in the appropriate namespace.  This search should not take long, as
@@ -88,6 +79,8 @@ static Decl *LookupScopedDecl(IdentifierInfo *II, Decl::IdentifierNamespace NS){
   for (Decl *D = II->getFETokenInfo<Decl>(); D; D = D->getNext())
     if (D->getIdentifierNamespace() == NS)
       return D;
+  
+    
   return 0;
 }
 
@@ -162,6 +155,16 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   Diag(New->getLocation(), diag::err_redefinition, New->getName());
   Diag(Old->getLocation(), diag::err_previous_definition);
   return New;
+}
+
+/// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
+/// no declarator (e.g. "struct foo;") is parsed.
+Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
+  // TODO: emit error on 'int;' or 'const enum foo;'.
+  // TODO: emit error on 'typedef int;'
+  // if (!DS.isMissingDeclaratorOk()) Diag(...);
+  
+  return 0;
 }
 
 
