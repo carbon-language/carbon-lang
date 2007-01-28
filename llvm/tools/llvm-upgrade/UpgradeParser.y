@@ -570,11 +570,63 @@ static void ResolveTypeTo(char *Name, const Type *ToTy) {
   }
 }
 
+/// @brief This just makes any name given to it unique, up to MAX_UINT times.
 static std::string makeNameUnique(const std::string& Name) {
   static unsigned UniqueNameCounter = 1;
   std::string Result(Name);
   Result += ".upgrd." + llvm::utostr(UniqueNameCounter++);
   return Result;
+}
+
+/// This is the implementation portion of TypeHasInteger. It traverses the
+/// type given, avoiding recursive types, and returns true as soon as it finds
+/// an integer type. If no integer type is found, it returns false.
+static bool TypeHasIntegerI(const Type *Ty, std::vector<const Type*> Stack) {
+  // Handle some easy cases
+  if (Ty->isPrimitiveType() || (Ty->getTypeID() == Type::OpaqueTyID))
+    return false;
+  if (Ty->isInteger())
+    return true;
+  if (const SequentialType *STy = dyn_cast<SequentialType>(Ty))
+    return STy->getElementType()->isInteger();
+
+  // Avoid type structure recursion
+  for (std::vector<const Type*>::iterator I = Stack.begin(), E = Stack.end();
+       I != E; ++I)
+    if (Ty == *I)
+      return false;
+
+  // Push us on the type stack
+  Stack.push_back(Ty);
+
+  if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
+    if (TypeHasIntegerI(FTy->getReturnType(), Stack)) 
+      return true;
+    FunctionType::param_iterator I = FTy->param_begin();
+    FunctionType::param_iterator E = FTy->param_end();
+    for (; I != E; ++I)
+      if (TypeHasIntegerI(*I, Stack))
+        return true;
+    return false;
+  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    StructType::element_iterator I = STy->element_begin();
+    StructType::element_iterator E = STy->element_end();
+    for (; I != E; ++I) {
+      if (TypeHasIntegerI(*I, Stack))
+        return true;
+    }
+    return false;
+  }
+  // There shouldn't be anything else, but its definitely not integer
+  assert(0 && "What type is this?");
+  return false;
+}
+
+/// This is the interface to TypeHasIntegerI. It just provides the type stack,
+/// to avoid recursion, and then calls TypeHasIntegerI.
+static inline bool TypeHasInteger(const Type *Ty) {
+  std::vector<const Type*> TyStack;
+  return TypeHasIntegerI(Ty, TyStack);
 }
 
 // setValueName - Set the specified value to the name given.  The name may be
@@ -605,16 +657,16 @@ static void setValueName(Value *V, char *NameStr) {
       }
     }
     if (Existing) {
-      if (Existing->getType() == V->getType()) {
-        // The type of the Existing value and the new one are the same. This
-        // is probably a type plane collapsing error. If the types involved
-        // are both integer, just rename it. Otherwise it 
-        // is a redefinition error.
-        if (!Existing->getType()->isInteger()) {
-          error("Redefinition of value named '" + Name + "' in the '" +
-                V->getType()->getDescription() + "' type plane");
-          return;
-        }
+      // An existing value of the same name was found. This might have happened
+      // because of the integer type planes collapsing in LLVM 2.0. 
+      if (Existing->getType() == V->getType() &&
+          !TypeHasInteger(Existing->getType())) {
+        // If the type does not contain any integers in them then this can't be
+        // a type plane collapsing issue. It truly is a redefinition and we 
+        // should error out as the assembly is invalid.
+        error("Redefinition of value named '" + Name + "' of type '" +
+              V->getType()->getDescription() + "'");
+        return;
       } 
       // In LLVM 2.0 we don't allow names to be re-used for any values in a 
       // function, regardless of Type. Previously re-use of names was okay as 
