@@ -2168,7 +2168,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       const char *FnName = 0;
       if (Node->getOpcode() == ISD::MEMSET) {
         Entry.Node = Tmp2; Entry.isSigned = false; Entry.Ty = IntPtrTy;
-	Entry.isInReg = false;
+        Entry.isInReg = false;
         Args.push_back(Entry);
         // Extend the (previously legalized) ubyte argument to be an int value
         // for the call.
@@ -2177,7 +2177,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         else
           Tmp3 = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Tmp3);
         Entry.Node = Tmp3; Entry.Ty = Type::Int32Ty; Entry.isSigned = true;
-	Entry.isInReg = false;
+        Entry.isInReg = false;
         Args.push_back(Entry);
         Entry.Node = Tmp4; Entry.Ty = IntPtrTy; Entry.isSigned = false;
         Args.push_back(Entry);
