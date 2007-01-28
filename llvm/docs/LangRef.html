@@ -530,19 +530,6 @@ the future:</p>
   prototype and implemented declaration of the function (as does normal C). 
   </dd>
 
-  <dt><b>"<tt>csretcc</tt>" - The C struct return calling convention</b>:</dt>
-
-  <dd>This calling convention matches the target C calling conventions, except
-  that functions with this convention are required to take a pointer as their
-  first argument, and the return type of the function must be void.  This is
-  used for C functions that return aggregates by-value.  In this case, the
-  function has been transformed to take a pointer to the struct as the first
-  argument to the function.  For targets where the ABI specifies specific
-  behavior for structure-return calls, the calling convention can be used to
-  distinguish between struct return functions and other functions that take a
-  pointer to a struct as the first argument.
-  </dd>
-
   <dt><b>"<tt>fastcc</tt>" - The fast calling convention</b>:</dt>
 
   <dd>This calling convention attempts to make calls as fast as possible
@@ -743,14 +730,15 @@ a power of 2.</p>
     <dt><tt>sext</tt></dt>
     <dd>This indicates that the parameter should be sign extended just before
     a call to this function.</dd>
+    <dt><tt>inreg</tt></dt>
+    <dd>This indicates that the parameter should be placed in register (if
+    possible) during assembling function call. It's currently supported in x86
+    backend only.</dd>
+    <dt><tt>sret</tt></dt>
+    <dd>This indicates, that the parameter is special hidden pointer to struct
+    to return. Usually such parameter needs special handling during codegen.</dd>
   </dl>
 
-  <p>The current motivation for parameter attributes is to enable the sign and
-  zero extend information necessary for the C calling convention to be passed
-  from the front end to LLVM. The <tt>zext</tt> and <tt>sext</tt> attributes
-  are used by the code generator to perform the required extension. However, 
-  parameter attributes are an orthogonal feature to calling conventions and
-  may be used for other purposes in the future.</p>
 </div>
 
 <!-- ======================================================================= -->
