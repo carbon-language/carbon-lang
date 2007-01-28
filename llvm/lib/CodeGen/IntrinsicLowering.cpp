@@ -77,13 +77,17 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
         break;
       case Intrinsic::memcpy_i32:
       case Intrinsic::memcpy_i64:
-        EnsureFunctionExists(M, "memcpy", I->arg_begin(), --I->arg_end(),
-                             I->arg_begin()->getType());
+        M.getOrInsertFunction("memcpy", PointerType::get(Type::Int8Ty),
+                              PointerType::get(Type::Int8Ty), 
+                              PointerType::get(Type::Int8Ty), Type::Int32Ty,
+                              (Type *)0);
         break;
       case Intrinsic::memmove_i32:
       case Intrinsic::memmove_i64:
-        EnsureFunctionExists(M, "memmove", I->arg_begin(), --I->arg_end(),
-                             I->arg_begin()->getType());
+        M.getOrInsertFunction("memmove", PointerType::get(Type::Int8Ty),
+                              PointerType::get(Type::Int8Ty), 
+                              PointerType::get(Type::Int8Ty), Type::Int32Ty,
+                              (Type *)0);
         break;
       case Intrinsic::memset_i32:
       case Intrinsic::memset_i64:
@@ -360,6 +364,9 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   }
   case Intrinsic::memcpy_i64: {
     static Constant *MemcpyFCache = 0;
+    Value * Size = cast<Value>(CI->op_end()-1);
+    if (Size->getType() != Type::Int32Ty)
+      Size->replaceAllUsesWith(new TruncInst(Size, Type::Int32Ty));
     ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
                      (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
