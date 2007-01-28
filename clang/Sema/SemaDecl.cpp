@@ -337,11 +337,11 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
   D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, 0, 0, Loc));
   D.SetIdentifier(&II, Loc);
   
-  Decl *Result = static_cast<Decl*>(ParseDeclarator(S, D, 0, 0));
+  // Find translation-unit scope to insert this function into.
+  while (S->getParent())
+    S = S->getParent();
   
-  // Visit this implicit declaration like any other top-level form.
-  LastInGroupList.push_back(Result);
-  return Result;
+  return static_cast<Decl*>(ParseDeclarator(S, D, 0, 0));
 }
 
 
@@ -457,6 +457,10 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   
   SourceLocation Loc = DeclStart;
   if (II) Loc = D.getIdentifierLoc();
+  
+  // FIXME: Unnamed fields can be handled in various different ways, for
+  // example, unnamed unions inject all members into the struct namespace!
+  
   
   if (BitWidth) {
     // TODO: Validate.
