@@ -84,6 +84,13 @@ namespace ISD {
 
     // The address of the GOT
     GLOBAL_OFFSET_TABLE,
+    
+    // FRAMEADDR, RETURNADDR - These nodes represent llvm.frameaddress and
+    // llvm.returnaddress on the DAG.  These nodes take one operand, the index
+    // of the frame or return address to return.  An index of zero corresponds
+    // to the current function's frame or return address, an index of one to the
+    // parent's frame or return address, and so on.
+    FRAMEADDR, RETURNADDR,
 
     // TargetConstant* - Like Constant*, but the DAG does not do any folding or
     // simplification of the constant.

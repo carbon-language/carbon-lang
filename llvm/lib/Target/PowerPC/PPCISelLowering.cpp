@@ -2634,6 +2634,10 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::SCALAR_TO_VECTOR:   return LowerSCALAR_TO_VECTOR(Op, DAG);
   case ISD::MUL:                return LowerMUL(Op, DAG);
+  
+  // Frame & Return address.  Currently unimplemented
+  case ISD::RETURNADDR:         break;
+  case ISD::FRAMEADDR:          break;
   }
   return SDOperand();
 }

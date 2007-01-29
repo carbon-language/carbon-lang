@@ -2665,6 +2665,8 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FrameIndex:    return "FrameIndex";
   case ISD::JumpTable:     return "JumpTable";
   case ISD::GLOBAL_OFFSET_TABLE: return "GLOBAL_OFFSET_TABLE";
+  case ISD::RETURNADDR: return "RETURNADDR";
+  case ISD::FRAMEADDR: return "FRAMEADDR";
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
   case ISD::INTRINSIC_WO_CHAIN: {

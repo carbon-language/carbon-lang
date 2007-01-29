@@ -739,14 +739,6 @@ public:
               bool isVarArg, unsigned CallingConv, bool isTailCall, 
               SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
-  /// LowerFrameReturnAddress - This hook lowers a call to llvm.returnaddress or
-  /// llvm.frameaddress (depending on the value of the first argument).  The
-  /// return values are the result pointer and the resultant token chain.  If
-  /// not implemented, both of these intrinsics will return null.
-  virtual std::pair<SDOperand, SDOperand>
-  LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
-                          SelectionDAG &DAG);
-
   /// LowerOperation - This callback is invoked for operations that are 
   /// unsupported by the target, which are registered to use 'custom' lowering,
   /// and whose defined values are all legal.

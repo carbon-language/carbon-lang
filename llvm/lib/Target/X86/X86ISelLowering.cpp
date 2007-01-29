@@ -1940,25 +1940,6 @@ SDOperand X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
 
 
 
-std::pair<SDOperand, SDOperand> X86TargetLowering::
-LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
-                        SelectionDAG &DAG) {
-  SDOperand Result;
-  if (Depth)        // Depths > 0 not supported yet!
-    Result = DAG.getConstant(0, getPointerTy());
-  else {
-    SDOperand RetAddrFI = getReturnAddressFrameIndex(DAG);
-    if (!isFrameAddress)
-      // Just load the return address
-      Result = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), RetAddrFI,
-                           NULL, 0);
-    else
-      Result = DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI,
-                           DAG.getConstant(4, getPointerTy()));
-  }
-  return std::make_pair(Result, Chain);
-}
-
 /// translateX86CC - do a one to one translation of a ISD::CondCode to the X86
 /// specific condition code. It returns a false if it cannot do a direct
 /// translation. X86CC is the translated CondCode.  LHS/RHS are modified as
@@ -4621,6 +4602,26 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
   }
 }
 
+SDOperand X86TargetLowering::LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG) {
+  // Depths > 0 not supported yet!
+  if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
+    return SDOperand();
+  
+  // Just load the return address
+  SDOperand RetAddrFI = getReturnAddressFrameIndex(DAG);
+  return DAG.getLoad(getPointerTy(), DAG.getEntryNode(), RetAddrFI, NULL, 0);
+}
+
+SDOperand X86TargetLowering::LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG) {
+  // Depths > 0 not supported yet!
+  if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
+    return SDOperand();
+    
+  SDOperand RetAddrFI = getReturnAddressFrameIndex(DAG);
+  return DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI, 
+                     DAG.getConstant(4, getPointerTy()));
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -4654,6 +4655,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::READCYCLECOUNTER:   return LowerREADCYCLCECOUNTER(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+  case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
+  case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
   }
 }
 

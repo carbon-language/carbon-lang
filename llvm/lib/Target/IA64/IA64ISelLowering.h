@@ -66,10 +66,6 @@ namespace llvm {
     /// (currently, only "ret void")
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
     
-    virtual std::pair<SDOperand, SDOperand>
-      LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
-                              SelectionDAG &DAG);
-    
 // XXX    virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
 // XXX                                                      MachineBasicBlock *MBB);
   };

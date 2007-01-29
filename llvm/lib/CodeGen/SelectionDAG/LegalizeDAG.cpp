@@ -652,6 +652,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
+  case ISD::FRAMEADDR:
+  case ISD::RETURNADDR:
+    // The only option for these nodes is to custom lower them.  If the target
+    // does not custom lower them, then return zero.
+    Tmp1 = TLI.LowerOperation(Op, DAG);
+    if (Tmp1.Val) 
+      Result = Tmp1;
+    else
+      Result = DAG.getConstant(0, TLI.getPointerTy());
+    break;
   case ISD::AssertSext:
   case ISD::AssertZext:
     Tmp1 = LegalizeOp(Node->getOperand(0));

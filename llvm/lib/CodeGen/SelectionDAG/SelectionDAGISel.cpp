@@ -570,7 +570,6 @@ public:
   void visitVAArg(VAArgInst &I);
   void visitVAEnd(CallInst &I);
   void visitVACopy(CallInst &I);
-  void visitFrameReturnAddress(CallInst &I, bool isFrameAddress);
 
   void visitMemIntrinsic(CallInst &I, unsigned Op);
 
@@ -1932,8 +1931,14 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::vastart:  visitVAStart(I); return 0;
   case Intrinsic::vaend:    visitVAEnd(I); return 0;
   case Intrinsic::vacopy:   visitVACopy(I); return 0;
-  case Intrinsic::returnaddress: visitFrameReturnAddress(I, false); return 0;
-  case Intrinsic::frameaddress:  visitFrameReturnAddress(I, true); return 0;
+  case Intrinsic::returnaddress:
+    setValue(&I, DAG.getNode(ISD::RETURNADDR, TLI.getPointerTy(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::frameaddress:
+    setValue(&I, DAG.getNode(ISD::FRAMEADDR, TLI.getPointerTy(),
+                             getValue(I.getOperand(1))));
+    return 0;
   case Intrinsic::setjmp:
     return "_setjmp"+!TLI.usesUnderscoreSetJmp();
     break;
@@ -3207,19 +3212,6 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   return std::make_pair(ResVal, Res.getValue(Res.Val->getNumValues()-1));
 }
 
-
-
-// It is always conservatively correct for llvm.returnaddress and
-// llvm.frameaddress to return 0.
-//
-// FIXME: Change this to insert a FRAMEADDR/RETURNADDR node, and have that be
-// expanded to 0 if the target wants.
-std::pair<SDOperand, SDOperand>
-TargetLowering::LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain,
-                                        unsigned Depth, SelectionDAG &DAG) {
-  return std::make_pair(DAG.getConstant(0, getPointerTy()), Chain);
-}
-
 SDOperand TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   assert(0 && "LowerOperation not implemented for this target!");
   abort();
@@ -3231,14 +3223,6 @@ SDOperand TargetLowering::CustomPromoteOperation(SDOperand Op,
   assert(0 && "CustomPromoteOperation not implemented for this target!");
   abort();
   return SDOperand();
-}
-
-void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
-  unsigned Depth = (unsigned)cast<ConstantInt>(I.getOperand(1))->getZExtValue();
-  std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerFrameReturnAddress(isFrame, getRoot(), Depth, DAG);
-  setValue(&I, Result.first);
-  DAG.setRoot(Result.second);
 }
 
 /// getMemsetValue - Vectorized representation of the memset value

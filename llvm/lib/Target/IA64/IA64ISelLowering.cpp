@@ -532,13 +532,6 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(RetVal, Chain);
 }
 
-std::pair<SDOperand, SDOperand> IA64TargetLowering::
-LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
-                        SelectionDAG &DAG) {
-  assert(0 && "LowerFrameReturnAddress unimplemented");
-  abort();
-}
-
 SDOperand IA64TargetLowering::
 LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
@@ -594,5 +587,9 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getStore(Op.getOperand(0), FR, 
                         Op.getOperand(1), SV->getValue(), SV->getOffset());
   }
+  // Frame & Return address.  Currently unimplemented
+  case ISD::RETURNADDR:         break;
+  case ISD::FRAMEADDR:          break;
   }
+  return SDOperand();
 }

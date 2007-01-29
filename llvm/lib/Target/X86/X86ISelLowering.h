@@ -292,10 +292,6 @@ namespace llvm {
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
-    virtual std::pair<SDOperand, SDOperand>
-    LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
-                            SelectionDAG &DAG);
-
     virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
@@ -406,6 +402,8 @@ namespace llvm {
     SDOperand LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
   };
 }
 

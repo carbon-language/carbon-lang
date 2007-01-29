@@ -1130,7 +1130,10 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SRA:           return LowerSRx(Op, DAG, Subtarget);
   case ISD::FORMAL_ARGUMENTS:
     return LowerFORMAL_ARGUMENTS(Op, DAG);
+  case ISD::RETURNADDR:    break;
+  case ISD::FRAMEADDR:     break;
   }
+  return SDOperand();
 }
 
 //===----------------------------------------------------------------------===//

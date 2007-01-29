@@ -868,7 +868,11 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     }
     return DAG.getNode(SPISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
   }
+  // Frame & Return address.  Currently unimplemented
+  case ISD::RETURNADDR:         break;
+  case ISD::FRAMEADDR:          break;
   }
+  return SDOperand();
 }
 
 MachineBasicBlock *
