@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | grep 'tail call csretcc'
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | \
+; RUN:    grep 'tail call void ({  }\* sret'
 
 declare csretcc void %foo({}*, ...)
 
