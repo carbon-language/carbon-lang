@@ -32,6 +32,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -70,16 +71,18 @@ namespace {
   /// module to a C translation unit.
   class CWriter : public FunctionPass, public InstVisitor<CWriter> {
     std::ostream &Out;
-    IntrinsicLowering IL;
+    IntrinsicLowering *IL;
     Mangler *Mang;
     LoopInfo *LI;
     const Module *TheModule;
     const TargetAsmInfo* TAsm;
+    const TargetData* TD;
     std::map<const Type *, std::string> TypeNames;
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
   public:
-    CWriter(std::ostream &o) : Out(o), TAsm(0) {}
+    CWriter(std::ostream &o) : Out(o), IL(0), Mang(0), LI(0), TheModule(0), 
+                               TAsm(0), TD(0) {}
 
     virtual const char *getPassName() const { return "C backend"; }
 
@@ -1416,7 +1419,9 @@ bool CWriter::doInitialization(Module &M) {
   // Initialize
   TheModule = &M;
 
-  IL.AddPrototypes(M);
+  TD = new TargetData(&M);
+  IL = new IntrinsicLowering(*TD);
+  IL->AddPrototypes(M);
 
   // Ensure that all structure types have names...
   Mang = new Mangler(M);
@@ -2348,7 +2353,7 @@ void CWriter::lowerIntrinsics(Function &F) {
             if (CI != &BB->front())
               Before = prior(BasicBlock::iterator(CI));
 
-            IL.LowerIntrinsicCall(CI);
+            IL->LowerIntrinsicCall(CI);
             if (Before) {        // Move iterator to instruction after call
               I = Before; ++I;
             } else {

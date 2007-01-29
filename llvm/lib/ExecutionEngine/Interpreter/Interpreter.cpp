@@ -66,7 +66,7 @@ Interpreter::Interpreter(Module *M) : ExecutionEngine(M), TD(M) {
   initializeExternalFunctions();
   emitGlobals();
 
-  IL = new IntrinsicLowering();
+  IL = new IntrinsicLowering(TD);
 }
 
 Interpreter::~Interpreter() {
