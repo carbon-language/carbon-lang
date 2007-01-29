@@ -15,6 +15,8 @@
 #ifndef LLVM_CLANG_AST_BUILTINS_H
 #define LLVM_CLANG_AST_BUILTINS_H
 
+#include <cstring>
+
 namespace llvm {
 namespace clang {
   class TargetInfo;
@@ -27,24 +29,44 @@ enum ID {
   NotBuiltin  = 0,      // This is not a builtin function.
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
 #include "clang/AST/Builtins.def"
-  FirstTargetSpecificBuiltin
+  FirstTSBuiltin
 };
 
 struct Info {
   const char *Name, *Type, *Attributes;
+  
+  bool operator==(const Info &RHS) const {
+    return !strcmp(Name, RHS.Name) &&
+           !strcmp(Type, RHS.Type) &&
+           !strcmp(Attributes, RHS.Attributes);
+  }
+  bool operator!=(const Info &RHS) const { return !(*this == RHS); }
 };
 
-/// Builtin::GetName - Return the identifier name for the specified builtin,
-/// e.g. "__builtin_abs".
-const char *GetName(ID id);
-
-/// InitializeBuiltins - Mark the identifiers for all the builtins with their
-/// appropriate builtin ID # and mark any non-portable builtin identifiers as
-/// such.
-void InitializeBuiltins(IdentifierTable &Table, const TargetInfo &Target);
-
-/// GetBuiltinType - Return the type for the specified builtin.
-TypeRef GetBuiltinType(ID id, ASTContext &Context);
+/// Builtin::Context - This holds information about target-independent and
+/// target-specific builtins, allowing easy queries by clients.
+class Context {
+  const Info *TSRecords;
+  unsigned NumTSRecords;
+public:
+  Context() : TSRecords(0), NumTSRecords(0) {}
+  
+  /// InitializeBuiltins - Mark the identifiers for all the builtins with their
+  /// appropriate builtin ID # and mark any non-portable builtin identifiers as
+  /// such.
+  void InitializeBuiltins(IdentifierTable &Table, const TargetInfo &Target);
+  
+  /// Builtin::GetName - Return the identifier name for the specified builtin,
+  /// e.g. "__builtin_abs".
+  const char *GetName(unsigned ID) const {
+    return GetRecord(ID).Name;
+  }
+  
+  /// GetBuiltinType - Return the type for the specified builtin.
+  TypeRef GetBuiltinType(unsigned ID, ASTContext &Context) const;
+private:
+  const Info &GetRecord(unsigned ID) const;
+};
 
 }
 } // end namespace clang

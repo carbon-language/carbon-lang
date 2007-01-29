@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/SmallVector.h"
@@ -22,7 +21,7 @@ using namespace clang;
 ASTContext::ASTContext(Preprocessor &pp)
   : PP(pp), Target(pp.getTargetInfo()) {
   InitBuiltinTypes();
-  Builtin::InitializeBuiltins(PP.getIdentifierTable(), Target);
+  BuiltinInfo.InitializeBuiltins(PP.getIdentifierTable(), Target);
 }
 
 ASTContext::~ASTContext() {

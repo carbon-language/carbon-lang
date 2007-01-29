@@ -109,7 +109,7 @@ Decl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
 Decl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
   Builtin::ID BID = (Builtin::ID)bid;
 
-  TypeRef R = Builtin::GetBuiltinType(BID, Context);
+  TypeRef R = Context.BuiltinInfo.GetBuiltinType(BID, Context);
   FunctionDecl *New = new FunctionDecl(SourceLocation(), II, R);
   
   // Find translation-unit scope to insert this function into.

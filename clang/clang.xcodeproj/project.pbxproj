@@ -60,6 +60,8 @@
 		DED676D10B6C786700AAD4A3 /* Builtins.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676D00B6C786700AAD4A3 /* Builtins.def */; };
 		DED676FA0B6C797B00AAD4A3 /* Builtins.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676F90B6C797B00AAD4A3 /* Builtins.h */; };
 		DED677C90B6C854100AAD4A3 /* Builtins.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED677C80B6C854100AAD4A3 /* Builtins.cpp */; };
+		DED67AEE0B6DB92A00AAD4A3 /* X86Builtins.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED67AED0B6DB92A00AAD4A3 /* X86Builtins.def */; };
+		DED67AF00B6DB92F00AAD4A3 /* PPCBuiltins.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED67AEF0B6DB92F00AAD4A3 /* PPCBuiltins.def */; };
 		DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7310A524295003AD0FB /* Diagnostic.h */; };
 		DED7D7420A524295003AD0FB /* DiagnosticKinds.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7320A524295003AD0FB /* DiagnosticKinds.def */; };
 		DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7330A524295003AD0FB /* FileManager.h */; };
@@ -139,6 +141,8 @@
 				DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */,
 				DED676D10B6C786700AAD4A3 /* Builtins.def in CopyFiles */,
 				DED676FA0B6C797B00AAD4A3 /* Builtins.h in CopyFiles */,
+				DED67AEE0B6DB92A00AAD4A3 /* X86Builtins.def in CopyFiles */,
+				DED67AF00B6DB92F00AAD4A3 /* PPCBuiltins.def in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -199,6 +203,8 @@
 		DED676D00B6C786700AAD4A3 /* Builtins.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = Builtins.def; path = clang/AST/Builtins.def; sourceTree = "<group>"; };
 		DED676F90B6C797B00AAD4A3 /* Builtins.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Builtins.h; path = clang/AST/Builtins.h; sourceTree = "<group>"; };
 		DED677C80B6C854100AAD4A3 /* Builtins.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Builtins.cpp; path = AST/Builtins.cpp; sourceTree = "<group>"; };
+		DED67AED0B6DB92A00AAD4A3 /* X86Builtins.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = X86Builtins.def; path = Driver/X86Builtins.def; sourceTree = "<group>"; };
+		DED67AEF0B6DB92F00AAD4A3 /* PPCBuiltins.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = PPCBuiltins.def; path = Driver/PPCBuiltins.def; sourceTree = "<group>"; };
 		DED7D7310A524295003AD0FB /* Diagnostic.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Diagnostic.h; sourceTree = "<group>"; };
 		DED7D7320A524295003AD0FB /* DiagnosticKinds.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = DiagnosticKinds.def; sourceTree = "<group>"; };
 		DED7D7330A524295003AD0FB /* FileManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FileManager.h; sourceTree = "<group>"; };
@@ -313,6 +319,8 @@
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				DED627020AE0C51D001E80A4 /* Targets.cpp */,
+				DED67AEF0B6DB92F00AAD4A3 /* PPCBuiltins.def */,
+				DED67AED0B6DB92A00AAD4A3 /* X86Builtins.def */,
 				DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */,
 				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
 			);

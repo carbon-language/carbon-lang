@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang.h"
+#include "clang/AST/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -270,6 +271,47 @@ static void getX86Defines(std::vector<std::string> &Defines, bool is64Bit) {
 
 }
 
+/// PPC builtin info.
+namespace PPC {
+  enum {
+    LastTIBuiltin = Builtin::FirstTSBuiltin-1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "PPCBuiltins.def"
+    LastTSBuiltin
+  };
+  
+  static const Builtin::Info BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
+#include "PPCBuiltins.def"
+  };
+  
+  static void getBuiltins(const Builtin::Info *&Records, unsigned &NumRecords) {
+    Records = BuiltinInfo;
+    NumRecords = LastTSBuiltin-Builtin::FirstTSBuiltin;
+  }
+} // End namespace PPC
+
+
+/// X86 builtin info.
+namespace X86 {
+  enum {
+    LastTIBuiltin = Builtin::FirstTSBuiltin-1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "X86Builtins.def"
+    LastTSBuiltin
+  };
+
+  static const Builtin::Info BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
+#include "X86Builtins.def"
+  };
+
+  static void getBuiltins(const Builtin::Info *&Records, unsigned &NumRecords) {
+    Records = BuiltinInfo;
+    NumRecords = LastTSBuiltin-Builtin::FirstTSBuiltin;
+  }
+} // End namespace X86
+
 //===----------------------------------------------------------------------===//
 // Specific target implementations.
 //===----------------------------------------------------------------------===//
@@ -282,6 +324,10 @@ public:
     DarwinTargetInfo::getTargetDefines(Defines);
     getPowerPCDefines(Defines, false);
   }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    PPC::getBuiltins(Records, NumRecords);
+  }
 };
 } // end anonymous namespace.
 
@@ -291,6 +337,10 @@ public:
   virtual void getTargetDefines(std::vector<std::string> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getPowerPCDefines(Defines, true);
+  }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    PPC::getBuiltins(Records, NumRecords);
   }
 };
 } // end anonymous namespace.
@@ -302,6 +352,10 @@ public:
     DarwinTargetInfo::getTargetDefines(Defines);
     getX86Defines(Defines, false);
   }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    X86::getBuiltins(Records, NumRecords);
+  }
 };
 } // end anonymous namespace.
 
@@ -311,6 +365,10 @@ public:
   virtual void getTargetDefines(std::vector<std::string> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getX86Defines(Defines, true);
+  }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    X86::getBuiltins(Records, NumRecords);
   }
 };
 } // end anonymous namespace.
@@ -326,6 +384,10 @@ public:
   virtual void getTargetDefines(std::vector<std::string> &Defines) const {
     // TODO: linux-specific stuff.
     getX86Defines(Defines, false);
+  }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    X86::getBuiltins(Records, NumRecords);
   }
 };
 } // end anonymous namespace.

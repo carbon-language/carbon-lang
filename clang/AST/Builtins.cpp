@@ -14,6 +14,7 @@
 #include "clang/AST/Builtins.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/TargetInfo.h"
 using namespace llvm;
 using namespace clang;
 
@@ -23,27 +24,34 @@ static const Builtin::Info BuiltinInfo[] = {
 #include "clang/AST/Builtins.def"
 };
 
-/// Builtin::GetName - Return the identifier name for the specified builtin,
-/// e.g. "__builtin_abs".
-const char *Builtin::GetName(ID id) {
-  if (id >= Builtin::FirstTargetSpecificBuiltin)
-    return "target-builtin";
-  return BuiltinInfo[id].Name;
+const Builtin::Info &Builtin::Context::GetRecord(unsigned ID) const {
+  if (ID < Builtin::FirstTSBuiltin)
+    return BuiltinInfo[ID];
+  assert(ID - Builtin::FirstTSBuiltin < NumTSRecords && "Invalid builtin ID!");
+  return TSRecords[ID - Builtin::FirstTSBuiltin];
 }
 
 
 /// InitializeBuiltins - Mark the identifiers for all the builtins with their
 /// appropriate builtin ID # and mark any non-portable builtin identifiers as
 /// such.
-void Builtin::InitializeBuiltins(IdentifierTable &Table,
-                                 const TargetInfo &Target) {
+void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
+                                          const TargetInfo &Target) {
   // Step #1: mark all target-independent builtins with their ID's.
-  for (unsigned i = Builtin::NotBuiltin+1;
-       i != Builtin::FirstTargetSpecificBuiltin; ++i)
+  for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
     Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
   
   // Step #2: handle target builtins.
-  // FIXME: implement.
+  std::vector<const char *> NonPortableBuiltins;
+  Target.getTargetBuiltins(TSRecords, NumTSRecords, NonPortableBuiltins);
+
+  // Step #2a: Register target-specific builtins.
+  for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
+    Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
+  
+  // Step #2b: Mark non-portable builtins as such.
+  for (unsigned i = 0, e = NonPortableBuiltins.size(); i != e; ++i)
+    Table.get(NonPortableBuiltins[i]).setNonPortableBuiltin(true);
 }
 
 /// DecodeTypeFromStr - This decodes one type descriptor from Str, advancing the
@@ -80,6 +88,9 @@ static TypeRef DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
   // Read the base type.
   switch (*Str++) {
   default: assert(0 && "Unknown builtin type letter!");
+  case 'v':
+    assert(!Long && !Signed && !Unsigned && "Bad modifiers used with 'f'!");
+    return Context.VoidTy;
   case 'f':
     assert(!Long && !Signed && !Unsigned && "Bad modifiers used with 'f'!");
     return Context.FloatTy;
@@ -93,10 +104,8 @@ static TypeRef DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
 }
 
 /// GetBuiltinType - Return the type for the specified builtin.
-TypeRef Builtin::GetBuiltinType(ID id, ASTContext &Context) {
-  assert(id < Builtin::FirstTargetSpecificBuiltin &&
-         "Can't handle target builtins yet!");
-  const char *TypeStr = BuiltinInfo[id].Type;
+TypeRef Builtin::Context::GetBuiltinType(unsigned id, ASTContext &Context)const{
+  const char *TypeStr = GetRecord(id).Type;
   
   SmallVector<TypeRef, 8> ArgTypes;
   

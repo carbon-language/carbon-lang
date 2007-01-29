@@ -13,7 +13,9 @@
 
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/AST/Builtins.h"
 #include <map>
+#include <set>
 using namespace llvm;
 using namespace clang;
 
@@ -147,4 +149,58 @@ void TargetInfo::ComputeWCharWidth(SourceLocation Loc) {
     if (SecondaryTargets[i]->getWCharWidth() != WCharWidth)
       return DiagnoseNonPortability(Loc, diag::port_wchar_t);
 }
+
+
+/// getTargetBuiltins - Return information about target-specific builtins for
+/// the current primary target, and info about which builtins are non-portable
+/// across the current set of primary and secondary targets.
+void TargetInfo::getTargetBuiltins(const Builtin::Info *&Records,
+                                   unsigned &NumRecords,
+                                   std::vector<const char *> &NPortable) const {
+  // Get info about what actual builtins we will expose.
+  PrimaryTarget->getTargetBuiltins(Records, NumRecords);
+  if (SecondaryTargets.empty()) return;
+ 
+  // Compute the set of non-portable builtins.
+  
+  // Start by computing a mapping from the primary target's builtins to their
+  // info records for efficient lookup.
+  std::map<std::string, const Builtin::Info*> PrimaryRecs;
+  for (unsigned i = 0, e = NumRecords; i != e; ++i)
+    PrimaryRecs[Records[i].Name] = Records+i;
+  
+  for (unsigned i = 0, e = SecondaryTargets.size(); i != e; ++i) {
+    // Get the builtins for this secondary target.
+    const Builtin::Info *Records2nd;
+    unsigned NumRecords2nd;
+    SecondaryTargets[i]->getTargetBuiltins(Records2nd, NumRecords2nd);
+    
+    // Remember all of the secondary builtin names.
+    std::set<std::string> BuiltinNames2nd;
+
+    for (unsigned j = 0, e = NumRecords2nd; j != e; ++j) {
+      BuiltinNames2nd.insert(Records2nd[j].Name);
+      
+      // Check to see if the primary target has this builtin.
+      if (const Builtin::Info *PrimBI = PrimaryRecs[Records2nd[j].Name]) {
+        // If does.  If they are not identical, mark the builtin as being
+        // non-portable.
+        if (Records2nd[j] != *PrimBI)
+          NPortable.push_back(PrimBI->Name);
+      } else {
+        // The primary target doesn't have this, it is non-portable.
+        NPortable.push_back(Records2nd[j].Name);
+      }
+    }
+    
+    // Now that we checked all the secondary builtins, check to see if the
+    // primary target has any builtins that the secondary one doesn't.  If so,
+    // then those are non-portable.
+    for (unsigned j = 0, e = NumRecords; j != e; ++j) {
+      if (!BuiltinNames2nd.count(Records[j].Name))
+        NPortable.push_back(Records[j].Name);
+    }
+  }
+}
+
 

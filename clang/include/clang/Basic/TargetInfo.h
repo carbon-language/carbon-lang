@@ -23,6 +23,7 @@ namespace clang {
 
 class TargetInfoImpl;
 class Diagnostic;
+namespace Builtin { struct Info; }
   
 /// TargetInfo - This class exposes information about the current target set.
 /// A target set consists of a primary target and zero or more secondary targets
@@ -101,6 +102,12 @@ public:
     if (!WCharWidth) ComputeWCharWidth(Loc);
     return WCharWidth;
   }
+  
+  /// getTargetBuiltins - Return information about target-specific builtins for
+  /// the current primary target, and info about which builtins are non-portable
+  /// across the current set of primary and secondary targets.
+  void getTargetBuiltins(const Builtin::Info *&Records, unsigned &NumRecords,
+                         std::vector<const char *> &NonPortableBuiltins) const;
 
 private:
   void ComputeWCharWidth(SourceLocation Loc);
@@ -129,6 +136,13 @@ public:
   ///
   unsigned getWCharWidth() const { return WCharWidth; }
   
+  /// getTargetBuiltins - Return information about target-specific builtins for
+  /// the target.
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    Records = 0;
+    NumRecords = 0;
+  }
 private:
   virtual void ANCHOR(); // out-of-line virtual method for class.
 };

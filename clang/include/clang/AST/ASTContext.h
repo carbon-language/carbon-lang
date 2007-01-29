@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_ASTCONTEXT_H
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
+#include "clang/AST/Builtins.h"
 #include "clang/AST/Type.h"
 #include <vector>
 
@@ -33,6 +34,7 @@ class ASTContext {
 public:
   Preprocessor &PP;
   TargetInfo &Target;
+  Builtin::Context BuiltinInfo;
 
   // Builtin Types.
   TypeRef VoidTy;
