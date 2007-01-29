@@ -123,9 +123,9 @@
 		CF65281209D1BA3800C4B521 /* SparcSubtarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SparcSubtarget.h; path = ../lib/Target/Sparc/SparcSubtarget.h; sourceTree = SOURCE_ROOT; };
 		CF65281309D1BA3800C4B521 /* SparcTargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SparcTargetMachine.cpp; path = ../lib/Target/Sparc/SparcTargetMachine.cpp; sourceTree = SOURCE_ROOT; };
 		CF65281409D1BA3800C4B521 /* SparcTargetMachine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SparcTargetMachine.h; path = ../lib/Target/Sparc/SparcTargetMachine.h; sourceTree = SOURCE_ROOT; };
-		CF6529A6095B21A8007F884E /* MachineDebugInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachineDebugInfo.cpp; sourceTree = "<group>"; };
+		CF6529A6095B21A8007F884E /* MachineModuleInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachineModuleInfo.cpp; sourceTree = "<group>"; };
 		CF6B5AFD095C82C300D1EA42 /* DAGCombiner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DAGCombiner.cpp; sourceTree = "<group>"; };
-		CF6F487109505E1500BC9E82 /* MachineDebugInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineDebugInfo.h; sourceTree = "<group>"; };
+		CF6F487109505E1500BC9E82 /* MachineModuleInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineModuleInfo.h; sourceTree = "<group>"; };
 		CF71B60F0AC45EDA0007F57C /* SmallVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SmallVector.h; sourceTree = "<group>"; };
 		CF73C0A2098A4FDF00627152 /* InlineAsm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InlineAsm.h; sourceTree = "<group>"; };
 		CF73C0A3098A4FDF00627152 /* TypeSymbolTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TypeSymbolTable.h; sourceTree = "<group>"; };
@@ -1257,7 +1257,7 @@
 				DE66ED7508ABEC2B00323D32 /* LiveVariables.cpp */,
 				CF32AF5C0AEE6A4E00D24CD4 /* LLVMTargetMachine.cpp */,
 				DE66ED7608ABEC2B00323D32 /* MachineBasicBlock.cpp */,
-				CF6529A6095B21A8007F884E /* MachineDebugInfo.cpp */,
+				CF6529A6095B21A8007F884E /* MachineModuleInfo.cpp */,
 				DE66ED7808ABEC2B00323D32 /* MachineFunction.cpp */,
 				DE66ED7908ABEC2B00323D32 /* MachineInstr.cpp */,
 				CF4F27F60A7B6FA3004359F6 /* MachinePassRegistry.cpp */,
@@ -2030,7 +2030,7 @@
 				DE66F23B08ABF03100323D32 /* MachineBasicBlock.h */,
 				DE66F23C08ABF03100323D32 /* MachineCodeEmitter.h */,
 				DE66F23D08ABF03100323D32 /* MachineConstantPool.h */,
-				CF6F487109505E1500BC9E82 /* MachineDebugInfo.h */,
+				CF6F487109505E1500BC9E82 /* MachineModuleInfo.h */,
 				DE66F23E08ABF03100323D32 /* MachineFrameInfo.h */,
 				DE66F23F08ABF03100323D32 /* MachineFunction.h */,
 				DE66F24008ABF03100323D32 /* MachineFunctionPass.h */,
@@ -2543,12 +2543,10 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = DE66EC5008ABE78900323D32 /* Build configuration list for PBXProject "LLVM" */;
-			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* LLVM */;
 			projectDirPath = "";
 			projectRoot = "";
-			shouldCheckCompatibility = 1;
 			targets = (
 				D28A88AD04BDD90700651E21 /* LLVM */,
 				CF0329B608D1BE110030FD33 /* LLVM lib */,
