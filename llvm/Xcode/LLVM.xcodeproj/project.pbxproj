@@ -154,13 +154,11 @@
 		CF8F1B420B64F70B00BB4199 /* PassManagers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PassManagers.h; sourceTree = "<group>"; };
 		CF8F1B430B64F74400BB4199 /* Allocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Allocator.h; sourceTree = "<group>"; };
 		CF8F1B440B64F74400BB4199 /* Compiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compiler.h; sourceTree = "<group>"; };
-		CF8F1B450B64F74400BB4199 /* Disassembler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Disassembler.h; sourceTree = "<group>"; };
 		CF8F1B460B64F74400BB4199 /* ManagedStatic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ManagedStatic.h; sourceTree = "<group>"; };
 		CF8F1B470B64F74400BB4199 /* OutputBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OutputBuffer.h; sourceTree = "<group>"; };
 		CF8F1B490B64F7AB00BB4199 /* LinkTimeOptimizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LinkTimeOptimizer.h; sourceTree = "<group>"; };
 		CF8F1B4D0B64F80700BB4199 /* AliasDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AliasDebugger.cpp; sourceTree = "<group>"; };
 		CF8F1B4E0B64F86A00BB4199 /* CStringMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CStringMap.cpp; sourceTree = "<group>"; };
-		CF8F1B4F0B64F86A00BB4199 /* Disassembler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Disassembler.cpp; sourceTree = "<group>"; };
 		CF8F1B500B64F86A00BB4199 /* ManagedStatic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ManagedStatic.cpp; sourceTree = "<group>"; };
 		CF8F1B510B64F86A00BB4199 /* Streams.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Streams.cpp; sourceTree = "<group>"; };
 		CF8F1B530B64F8C000BB4199 /* IncludeFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IncludeFile.cpp; sourceTree = "<group>"; };
@@ -396,7 +394,6 @@
 		DE66ECA508ABEB8000323D32 /* ArchiveWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ArchiveWriter.cpp; sourceTree = "<group>"; };
 		DE66ECB708ABEB8000323D32 /* SlotCalculator.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SlotCalculator.cpp; sourceTree = "<group>"; };
 		DE66ECB808ABEB8000323D32 /* SlotCalculator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SlotCalculator.h; sourceTree = "<group>"; };
-		DE66ECB908ABEB8000323D32 /* SlotTable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SlotTable.h; sourceTree = "<group>"; };
 		DE66ECBA08ABEB8000323D32 /* Writer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Writer.cpp; sourceTree = "<group>"; };
 		DE66ECBB08ABEB8000323D32 /* WriterInternals.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = WriterInternals.h; sourceTree = "<group>"; };
 		DE66ECBE08ABEC0700323D32 /* AliasAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AliasAnalysis.cpp; sourceTree = "<group>"; };
@@ -1182,7 +1179,6 @@
 			children = (
 				DE66ECB708ABEB8000323D32 /* SlotCalculator.cpp */,
 				DE66ECB808ABEB8000323D32 /* SlotCalculator.h */,
-				DE66ECB908ABEB8000323D32 /* SlotTable.h */,
 				DE66ECBA08ABEB8000323D32 /* Writer.cpp */,
 				DE66ECBB08ABEB8000323D32 /* WriterInternals.h */,
 			);
@@ -1368,7 +1364,6 @@
 				DE66EE1E08ABEDE600323D32 /* Compressor.cpp */,
 				CF8F1B4E0B64F86A00BB4199 /* CStringMap.cpp */,
 				DE66EE3D08ABEDE600323D32 /* Debug.cpp */,
-				CF8F1B4F0B64F86A00BB4199 /* Disassembler.cpp */,
 				CF79495D09B326D4005ADFCA /* Dwarf.cpp */,
 				DE66EE3E08ABEDE600323D32 /* FileUtilities.cpp */,
 				CF42B6C40AF2512000D5D47C /* FoldingSet.cpp */,
@@ -2107,7 +2102,6 @@
 				CF73C0AD098A519400627152 /* DataTypes.h */,
 				DE66F27908ABF03200323D32 /* DataTypes.h.in */,
 				DE66F27A08ABF03200323D32 /* Debug.h */,
-				CF8F1B450B64F74400BB4199 /* Disassembler.h */,
 				DE66F27B08ABF03200323D32 /* DOTGraphTraits.h */,
 				DE66F27C08ABF03200323D32 /* DynamicLinker.h */,
 				DE66F27D08ABF03200323D32 /* ELF.h */,
