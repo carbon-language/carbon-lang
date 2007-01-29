@@ -46,8 +46,8 @@ ExecutionEngine *Interpreter::create(ModuleProvider *MP) {
   bool isLittleEndian = (Test == 1);
   DataLayout.append(isLittleEndian ? "e" : "E");
 
-	bool Ptr64 = sizeof(void*) == 8;
-	DataLayout.append(Ptr64 ? "-p:64:64" : "-p:32:32");
+  bool Ptr64 = sizeof(void*) == 8;
+  DataLayout.append(Ptr64 ? "-p:64:64" : "-p:32:32");
 	
   M->setDataLayout(DataLayout);
 
