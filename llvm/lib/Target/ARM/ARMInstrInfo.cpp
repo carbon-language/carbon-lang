@@ -17,8 +17,10 @@
 #include "ARMAddressingModes.h"
 #include "ARMGenInstrInfo.inc"
 #include "ARMMachineFunctionInfo.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -415,4 +417,71 @@ ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)(int)Cond[0].getImm();
   Cond[0].setImm(ARMCC::getOppositeCondition(CC));
   return false;
+}
+
+
+/// FIXME: Works around a gcc miscompilation with -fstrict-aliasing
+static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
+                                unsigned JTI) DISABLE_INLINE;
+static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
+                                unsigned JTI) {
+  return JT[JTI].MBBs.size();
+}
+
+/// GetInstSize - Return the size of the specified MachineInstr.
+///
+unsigned ARM::GetInstSize(MachineInstr *MI) {
+  MachineBasicBlock &MBB = *MI->getParent();
+  const MachineFunction *MF = MBB.getParent();
+  const TargetAsmInfo *TAI = MF->getTarget().getTargetAsmInfo();
+
+  // Basic size info comes from the TSFlags field.
+  unsigned TSFlags = MI->getInstrDescriptor()->TSFlags;
+  
+  switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {
+  default:
+    // If this machine instr is an inline asm, measure it.
+    if (MI->getOpcode() == ARM::INLINEASM)
+      return TAI->getInlineAsmLength(MI->getOperand(0).getSymbolName());
+    assert(0 && "Unknown or unset size field for instr!");
+    break;
+  case ARMII::Size8Bytes: return 8;          // Arm instruction x 2.
+  case ARMII::Size4Bytes: return 4;          // Arm instruction.
+  case ARMII::Size2Bytes: return 2;          // Thumb instruction.
+  case ARMII::SizeSpecial: {
+    switch (MI->getOpcode()) {
+    case ARM::CONSTPOOL_ENTRY:
+      // If this machine instr is a constant pool entry, its size is recorded as
+      // operand #2.
+      return MI->getOperand(2).getImm();
+    case ARM::BR_JTr:
+    case ARM::BR_JTm:
+    case ARM::BR_JTadd: {
+      // These are jumptable branches, i.e. a branch followed by an inlined
+      // jumptable. The size is 4 + 4 * number of entries.
+      unsigned JTI = MI->getOperand(MI->getNumOperands()-2).getJumpTableIndex();
+      MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
+      const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+      assert(JTI < JT.size());
+      return getNumJTEntries(JT, JTI) * 4 + 4;
+    }
+    default:
+      // Otherwise, pseudo-instruction sizes are zero.
+      return 0;
+    }
+  }
+  }
+}
+
+/// GetFunctionSize - Returns the size of the specified MachineFunction.
+///
+unsigned ARM::GetFunctionSize(MachineFunction &MF) {
+  unsigned FnSize = 0;
+  for (MachineFunction::iterator MBBI = MF.begin(), E = MF.end();
+       MBBI != E; ++MBBI) {
+    MachineBasicBlock &MBB = *MBBI;
+    for (MachineBasicBlock::iterator I = MBB.begin(),E = MBB.end(); I != E; ++I)
+      FnSize += ARM::GetInstSize(I);
+  }
+  return FnSize;
 }

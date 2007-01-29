@@ -104,6 +104,16 @@ public:
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
 };
 
+  // Utility routines
+  namespace ARM {
+    /// GetInstSize - Returns the size of the specified MachineInstr.
+    ///
+    unsigned GetInstSize(MachineInstr *MI);
+
+    /// GetFunctionSize - Returns the size of the specified MachineFunction.
+    ///
+    unsigned GetFunctionSize(MachineFunction &MF);
+  }
 }
 
 #endif

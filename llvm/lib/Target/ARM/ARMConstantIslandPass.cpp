@@ -20,8 +20,6 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineJumpTableInfo.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Compiler.h"
@@ -91,7 +89,6 @@ namespace {
     std::vector<ImmBranch> ImmBranches;
 
     const TargetInstrInfo *TII;
-    const TargetAsmInfo   *TAI;
   public:
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -110,7 +107,6 @@ namespace {
     bool BBIsInBranchRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned D);
     bool FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br);
 
-    unsigned GetInstSize(MachineInstr *MI) const;
     unsigned GetOffsetOf(MachineInstr *MI) const;
     unsigned GetOffsetOf(MachineBasicBlock *MBB) const;
   };
@@ -126,7 +122,6 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   MachineConstantPool &MCP = *Fn.getConstantPool();
   
   TII = Fn.getTarget().getInstrInfo();
-  TAI = Fn.getTarget().getTargetAsmInfo();
   
   // Renumber all of the machine basic blocks in the function, guaranteeing that
   // the numbers agree with the position of the block in the function.
@@ -229,7 +224,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
          I != E; ++I) {
       // Add instruction size to MBBSize.
-      MBBSize += GetInstSize(I);
+      MBBSize += ARM::GetInstSize(I);
 
       int Opc = I->getOpcode();
       if (TII->isBranch(Opc)) {
@@ -318,66 +313,6 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
   }
 }
 
-/// FIXME: Works around a gcc miscompilation with -fstrict-aliasing
-static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
-                                unsigned JTI) DISABLE_INLINE;
-static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
-                                unsigned JTI) {
-  return JT[JTI].MBBs.size();
-}
-
-/// GetInstSize - Return the size of the specified MachineInstr.
-///
-unsigned ARMConstantIslands::GetInstSize(MachineInstr *MI) const {
-  // Basic size info comes from the TSFlags field.
-  unsigned TSFlags = MI->getInstrDescriptor()->TSFlags;
-  
-  switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {
-  default:
-    // If this machine instr is an inline asm, measure it.
-    if (MI->getOpcode() == ARM::INLINEASM)
-      return TAI->getInlineAsmLength(MI->getOperand(0).getSymbolName());
-    if (MI->getOpcode() == ARM::LABEL)
-      return 0;
-    assert(0 && "Unknown or unset size field for instr!");
-    break;
-  case ARMII::Size8Bytes: return 8;          // Arm instruction x 2.
-  case ARMII::Size4Bytes: return 4;          // Arm instruction.
-  case ARMII::Size2Bytes: return 2;          // Thumb instruction.
-  case ARMII::SizeSpecial: {
-    switch (MI->getOpcode()) {
-    case ARM::CONSTPOOL_ENTRY:
-      // If this machine instr is a constant pool entry, its size is recorded as
-      // operand #2.
-      return MI->getOperand(2).getImm();
-    case ARM::BR_JTr:
-    case ARM::BR_JTm:
-    case ARM::BR_JTadd:
-    case ARM::tBR_JTr: {
-      // These are jumptable branches, i.e. a branch followed by an inlined
-      // jumptable. The size is 4 + 4 * number of entries.
-      unsigned JTI = MI->getOperand(MI->getNumOperands()-2).getJumpTableIndex();
-      const MachineFunction *MF = MI->getParent()->getParent();
-      MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
-      const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
-      assert(JTI < JT.size());
-      // Thumb instructions are 2 byte aligned, but JT entries are 4 byte
-      // 4 aligned. The assembler / linker may add 2 byte padding just before
-      // the JT entries. Use + 4 even for tBR_JTr to purposely over-estimate
-      // the size the jumptable.
-      // FIXME: If we know the size of the function is less than (1 << 16) *2
-      // bytes, we can use 16-bit entries instead. Then there won't be an
-      // alignment issue.
-      return getNumJTEntries(JT, JTI) * 4 + 4;
-    }
-    default:
-      // Otherwise, pseudo-instruction sizes are zero.
-      return 0;
-    }
-  }
-  }
-}
-
 /// GetOffsetOf - Return the current offset of the specified machine instruction
 /// from the start of the function.  This offset changes as stuff is moved
 /// around inside the function.
@@ -397,7 +332,7 @@ unsigned ARMConstantIslands::GetOffsetOf(MachineInstr *MI) const {
   for (MachineBasicBlock::iterator I = MBB->begin(); ; ++I) {
     assert(I != MBB->end() && "Didn't find MI in its own basic block?");
     if (&*I == MI) return Offset;
-    Offset += GetInstSize(I);
+    Offset += ARM::GetInstSize(I);
   }
 }
 
@@ -482,7 +417,7 @@ void ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   unsigned NewBBSize = 0;
   for (MachineBasicBlock::iterator I = NewBB->begin(), E = NewBB->end();
        I != E; ++I)
-    NewBBSize += GetInstSize(I);
+    NewBBSize += ARM::GetInstSize(I);
   
   // Set the size of NewBB in BBSizes.
   BBSizes[NewBB->getNumber()] = NewBBSize;
@@ -668,6 +603,6 @@ ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
   MI->eraseFromParent();
 
   // Increase the size of MBB to account for the new unconditional branch.
-  BBSizes[MBB->getNumber()] += GetInstSize(&MBB->back());
+  BBSizes[MBB->getNumber()] += ARM::GetInstSize(&MBB->back());
   return true;
 }
