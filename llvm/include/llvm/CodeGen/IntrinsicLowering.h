@@ -21,10 +21,12 @@
 namespace llvm {
   class CallInst;
   class Module;
+  class TargetData;
 
   class IntrinsicLowering {
+    const TargetData& TD;
   public:
-    IntrinsicLowering() {}
+    IntrinsicLowering(const TargetData &td) : TD(td) {}
 
     /// AddPrototypes - This method, if called, causes all of the prototypes
     /// that might be needed by an intrinsic lowering implementation to be
