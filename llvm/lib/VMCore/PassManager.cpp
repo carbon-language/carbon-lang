@@ -14,6 +14,7 @@
 
 #include "llvm/PassManagers.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/Streams.h"
@@ -258,13 +259,60 @@ public:
 
 };
 
+} // End of llvm namespace
+
+namespace {
+
+//===----------------------------------------------------------------------===//
+// TimingInfo Class - This class is used to calculate information about the
+// amount of time each pass takes to execute.  This only happens when
+// -time-passes is enabled on the command line.
+//
+
+class VISIBILITY_HIDDEN TimingInfo {
+  std::map<Pass*, Timer> TimingData;
+  TimerGroup TG;
+
+public:
+  // Use 'create' member to get this.
+  TimingInfo() : TG("... Pass execution timing report ...") {}
+  
+  // TimingDtor - Print out information about timing information
+  ~TimingInfo() {
+    // Delete all of the timers...
+    TimingData.clear();
+    // TimerGroup is deleted next, printing the report.
+  }
+
+  // createTheTimeInfo - This method either initializes the TheTimeInfo pointer
+  // to a non null value (if the -time-passes option is enabled) or it leaves it
+  // null.  It may be called multiple times.
+  static void createTheTimeInfo();
+
+  void passStarted(Pass *P) {
+
+    if (dynamic_cast<PMDataManager *>(P)) 
+      return;
+
+    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
+    if (I == TimingData.end())
+      I=TimingData.insert(std::make_pair(P, Timer(P->getPassName(), TG))).first;
+    I->second.startTimer();
+  }
+  void passEnded(Pass *P) {
+
+    if (dynamic_cast<PMDataManager *>(P)) 
+      return;
+
+    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
+    assert (I != TimingData.end() && "passStarted/passEnded not nested right!");
+    I->second.stopTimer();
+  }
+};
+
 static TimingInfo *TheTimeInfo;
 
-TimingInfo *getTheTimeInfo() {
-  return TheTimeInfo;
-}
-
-} // End of llvm namespace
+} // End of anon namespace
 
 //===----------------------------------------------------------------------===//
 // PMTopLevelManager implementation
@@ -1082,6 +1130,18 @@ void TimingInfo::createTheTimeInfo() {
   // thus it will be destroyed before them.
   static ManagedStatic<TimingInfo> TTI;
   TheTimeInfo = &*TTI;
+}
+
+/// If TimingInfo is enabled then start pass timer.
+void StartPassTimer(Pass *P) {
+  if (TheTimeInfo) 
+    TheTimeInfo->passStarted(P);
+}
+
+/// If TimingInfo is enabled then stop pass timer.
+void StopPassTimer(Pass *P) {
+  if (TheTimeInfo) 
+    TheTimeInfo->passEnded(P);
 }
 
 //===----------------------------------------------------------------------===//

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassManager.h"
-#include "llvm/Support/Timer.h"
 
 using namespace llvm;
 class llvm::PMDataManager;
@@ -324,53 +323,7 @@ public:
   }
 };
 
-//===----------------------------------------------------------------------===//
-// TimingInfo Class - This class is used to calculate information about the
-// amount of time each pass takes to execute.  This only happens when
-// -time-passes is enabled on the command line.
-//
-
-class TimingInfo {
-  std::map<Pass*, Timer> TimingData;
-  TimerGroup TG;
-
-public:
-  // Use 'create' member to get this.
-  TimingInfo() : TG("... Pass execution timing report ...") {}
-  
-  // TimingDtor - Print out information about timing information
-  ~TimingInfo() {
-    // Delete all of the timers...
-    TimingData.clear();
-    // TimerGroup is deleted next, printing the report.
-  }
-
-  // createTheTimeInfo - This method either initializes the TheTimeInfo pointer
-  // to a non null value (if the -time-passes option is enabled) or it leaves it
-  // null.  It may be called multiple times.
-  static void createTheTimeInfo();
-
-  void passStarted(Pass *P) {
-
-    if (dynamic_cast<PMDataManager *>(P)) 
-      return;
-
-    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
-    if (I == TimingData.end())
-      I=TimingData.insert(std::make_pair(P, Timer(P->getPassName(), TG))).first;
-    I->second.startTimer();
-  }
-  void passEnded(Pass *P) {
-
-    if (dynamic_cast<PMDataManager *>(P)) 
-      return;
-
-    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
-    assert (I != TimingData.end() && "passStarted/passEnded not nested right!");
-    I->second.stopTimer();
-  }
-};
-
-extern TimingInfo *getTheTimeInfo();
 }
 
+extern void StartPassTimer(Pass *);
+extern void StopPassTimer(Pass *);
