@@ -69,7 +69,7 @@ namespace {
                cl::location(NoZerosInBSS),
                cl::init(false));
   cl::opt<bool, true>
-  EnableExceptionHandling("exception-handling",
+  EnableExceptionHandling("enable-eh",
                cl::desc("Exception handling should be emitted."),
                cl::location(ExceptionHandling),
                cl::init(false));
