@@ -18,6 +18,7 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 template <class ArgIt>
@@ -79,22 +80,21 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
       case Intrinsic::memcpy_i64:
         M.getOrInsertFunction("memcpy", PointerType::get(Type::Int8Ty),
                               PointerType::get(Type::Int8Ty), 
-                              PointerType::get(Type::Int8Ty), Type::Int32Ty,
-                              (Type *)0);
+                              PointerType::get(Type::Int8Ty), 
+                              TD.getIntPtrType(), (Type *)0);
         break;
       case Intrinsic::memmove_i32:
       case Intrinsic::memmove_i64:
         M.getOrInsertFunction("memmove", PointerType::get(Type::Int8Ty),
                               PointerType::get(Type::Int8Ty), 
-                              PointerType::get(Type::Int8Ty), Type::Int32Ty,
-                              (Type *)0);
+                              PointerType::get(Type::Int8Ty), 
+                              TD.getIntPtrType(), (Type *)0);
         break;
       case Intrinsic::memset_i32:
       case Intrinsic::memset_i64:
         M.getOrInsertFunction("memset", PointerType::get(Type::Int8Ty),
-                              PointerType::get(Type::Int8Ty),
-                              Type::Int32Ty, (--(--I->arg_end()))->getType(),
-                              (Type *)0);
+                              PointerType::get(Type::Int8Ty), Type::Int32Ty, 
+                              TD.getIntPtrType(), (Type *)0);
         break;
       case Intrinsic::sqrt_f32:
       case Intrinsic::sqrt_f64:
@@ -358,6 +358,9 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::memcpy_i32: {
     static Constant *MemcpyFCache = 0;
+    Value * Size = cast<Value>(CI->op_end()-1);
+    if (Size->getType() != TD.getIntPtrType())
+      Size->replaceAllUsesWith(new ZExtInst(Size, TD.getIntPtrType()));
     ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
@@ -365,31 +368,43 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::memcpy_i64: {
     static Constant *MemcpyFCache = 0;
     Value * Size = cast<Value>(CI->op_end()-1);
-    if (Size->getType() != Type::Int32Ty)
-      Size->replaceAllUsesWith(new TruncInst(Size, Type::Int32Ty));
+    if (Size->getType() != TD.getIntPtrType())
+      Size->replaceAllUsesWith(new TruncInst(Size, TD.getIntPtrType()));
     ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
                      (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
   }
   case Intrinsic::memmove_i32: {
     static Constant *MemmoveFCache = 0;
+    Value * Size = cast<Value>(CI->op_end()-1);
+    if (Size->getType() != TD.getIntPtrType())
+      Size->replaceAllUsesWith(new ZExtInst(Size, TD.getIntPtrType()));
     ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
   }
   case Intrinsic::memmove_i64: {
     static Constant *MemmoveFCache = 0;
+    Value * Size = cast<Value>(CI->op_end()-1);
+    if (Size->getType() != TD.getIntPtrType())
+      Size->replaceAllUsesWith(new TruncInst(Size, TD.getIntPtrType()));
     ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
   }
   case Intrinsic::memset_i32: {
     static Constant *MemsetFCache = 0;
+    Value * Size = cast<Value>(CI->op_end()-1);
+    if (Size->getType() != TD.getIntPtrType())
+      Size->replaceAllUsesWith(new ZExtInst(Size, TD.getIntPtrType()));
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemsetFCache);
   }
   case Intrinsic::memset_i64: {
     static Constant *MemsetFCache = 0;
+    Value * Size = cast<Value>(CI->op_end()-1);
+    if (Size->getType() != TD.getIntPtrType())
+      Size->replaceAllUsesWith(new TruncInst(Size, TD.getIntPtrType()));
     ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
                     (*(CI->op_begin()+1))->getType(), MemsetFCache);
     break;
