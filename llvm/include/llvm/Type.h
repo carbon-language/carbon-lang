@@ -59,7 +59,7 @@ class TypeMapBase;
 /// @brief Root of type hierarchy
 class Type : public AbstractTypeUser {
 public:
-  ///===-------------------------------------------------------------------===//
+  //===-------------------------------------------------------------------===//
   /// Definitions of all of the base types for the Type system.  Based on this
   /// value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)
   /// Note: If you add an element to this, you need to add an element to the
