@@ -818,7 +818,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
 
-  if (MMI) {
+  if (MMI && MMI->needsFrameInfo()) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(FrameLabelId);
@@ -869,7 +869,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
   
-  if (MMI) {
+  if (MMI && MMI->needsFrameInfo()) {
     std::vector<MachineMove> &Moves = MMI->getFrameMoves();
     
     if (NegFrameSize) {

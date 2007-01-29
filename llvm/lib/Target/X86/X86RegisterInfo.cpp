@@ -1022,7 +1022,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  if (MMI) {
+  if (MMI && MMI->needsFrameInfo()) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(FrameLabelId);
@@ -1052,7 +1052,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MBB.insert(MBBI, MI);
   }
 
-  if (MMI) {
+  if (MMI && MMI->needsFrameInfo()) {
     std::vector<MachineMove> &Moves = MMI->getFrameMoves();
     
     if (NumBytes) {

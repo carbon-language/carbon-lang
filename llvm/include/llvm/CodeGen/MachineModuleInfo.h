@@ -36,6 +36,7 @@
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
+#include "llvm/Target/TargetOptions.h"
 
 namespace llvm {
 
@@ -1024,6 +1025,10 @@ public:
   /// hasDebugInfo - Returns true if valid debug info is present.
   ///
   bool hasDebugInfo() const { return !CompileUnits.empty(); }
+  
+  /// needsFrameInfo - Returns true if we need to gather callee-saved register
+  /// move info for the frame.
+  bool needsFrameInfo() const { return hasDebugInfo() || ExceptionHandling; }
   
   /// NextLabelID - Return the next unique label id.
   ///
