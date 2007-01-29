@@ -118,10 +118,9 @@ extern "C" {
   ASMPREFIX "X86CompilationCallback:\n"
     "pushl   %ebp\n"
     "movl    %esp, %ebp\n"    // Standard prologue
-#if FASTCC_NUM_INT_ARGS_INREGS > 0
     "pushl   %eax\n"
-    "pushl   %edx\n"          // Save EAX/EDX
-#endif
+    "pushl   %edx\n"          // Save EAX/EDX/ECX
+    "pushl   %ecx\n"
 #if defined(__APPLE__)
     "andl    $-16, %esp\n"    // Align ESP on 16-byte boundary
 #endif
@@ -131,11 +130,10 @@ extern "C" {
     "movl    %ebp, (%esp)\n"
     "call    " ASMPREFIX "X86CompilationCallback2\n"
     "movl    %ebp, %esp\n"    // Restore ESP
-#if FASTCC_NUM_INT_ARGS_INREGS > 0
-    "subl    $8, %esp\n"
+    "subl    $12, %esp\n"
+    "popl    %ecx\n"
     "popl    %edx\n"
     "popl    %eax\n"
-#endif
     "popl    %ebp\n"
     "ret\n");
 
@@ -148,10 +146,9 @@ extern "C" {
   ASMPREFIX "X86CompilationCallback_SSE:\n"
     "pushl   %ebp\n"
     "movl    %esp, %ebp\n"    // Standard prologue
-#if FASTCC_NUM_INT_ARGS_INREGS > 0
     "pushl   %eax\n"
-    "pushl   %edx\n"          // Save EAX/EDX
-#endif
+    "pushl   %edx\n"          // Save EAX/EDX/ECX
+    "pushl   %ecx\n"
     "andl    $-16, %esp\n"    // Align ESP on 16-byte boundary
     // Save all XMM arg registers
     "subl    $64, %esp\n"
@@ -170,11 +167,10 @@ extern "C" {
     "movaps  16(%esp), %xmm1\n"
     "movaps  (%esp), %xmm0\n"
     "movl    %ebp, %esp\n"    // Restore ESP
-#if FASTCC_NUM_INT_ARGS_INREGS > 0
-    "subl    $8, %esp\n"
+    "subl    $12, %esp\n"
+    "popl    %ecx\n"
     "popl    %edx\n"
     "popl    %eax\n"
-#endif
     "popl    %ebp\n"
     "ret\n");
 #else
@@ -184,7 +180,9 @@ extern "C" {
     __asm {
       push  eax
       push  edx
+      push  ecx
       call  X86CompilationCallback2
+      pop   ecx
       pop   edx
       pop   eax
       ret
@@ -208,7 +206,7 @@ extern "C" {
 extern "C" void X86CompilationCallback2() {
   assert(sizeof(size_t) == 4); // FIXME: handle Win64
   unsigned *RetAddrLoc = (unsigned *)_AddressOfReturnAddress();
-  RetAddrLoc += 3;  // skip over ret addr, edx, eax
+  RetAddrLoc += 4;  // skip over ret addr, edx, eax, ecx
   unsigned RetAddr = *RetAddrLoc;
 #else
 extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
