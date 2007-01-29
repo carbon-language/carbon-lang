@@ -202,6 +202,10 @@ namespace llvm {
     
     //===--- Global Variable Emission Directives --------------------------===//
     
+    /// GlobalDirective - This is the directive used to declare a global entity.
+    ///
+    const char *GlobalDirective;          // Defaults to NULL.
+    
     /// SetDirective - This is the name of a directive that can be used to tell
     /// the assembler to set the value of a variable to some expression.
     const char *SetDirective;             // Defaults to null.
@@ -249,6 +253,10 @@ namespace llvm {
     /// HasDotFile - True if target asm supports .file directives.
     ///
     bool HasDotFile; // Defaults to false.
+    
+    /// SupportsExceptionHandling - True if target supports exception handling.
+    ///
+    bool SupportsExceptionHandling; // Defaults to false.
     
     /// RequiresFrameSection - true if the Dwarf2 output needs a frame section
     ///
@@ -440,6 +448,9 @@ namespace llvm {
     const char *getSixteenByteConstantSection() const {
       return SixteenByteConstantSection;
     }
+    const char *getGlobalDirective() const {
+      return GlobalDirective;
+    }
     const char *getSetDirective() const {
       return SetDirective;
     }
@@ -472,6 +483,9 @@ namespace llvm {
     }
     bool hasDotFile() const {
       return HasDotFile;
+    }
+    bool getSupportsExceptionHandling() const {
+      return SupportsExceptionHandling;
     }
     bool getDwarfRequiresFrameSection() const {
       return DwarfRequiresFrameSection;

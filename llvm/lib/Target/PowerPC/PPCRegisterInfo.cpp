@@ -756,8 +756,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   
-  // Prepare for debug frame info.
-  bool hasDebugInfo = MMI && MMI->hasDebugInfo();
+  // Prepare for frame info.
   unsigned FrameLabelId = 0;
   
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
@@ -819,7 +818,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
 
-  if (hasDebugInfo) {
+  if (MMI) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(FrameLabelId);
@@ -870,7 +869,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
   
-  if (hasDebugInfo) {
+  if (MMI) {
     std::vector<MachineMove> &Moves = MMI->getFrameMoves();
     
     if (NegFrameSize) {

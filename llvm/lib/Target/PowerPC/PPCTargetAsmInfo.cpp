@@ -51,12 +51,14 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   PrivateGlobalPrefix = "L";
   ConstantPoolSection = "\t.const\t";
   JumpTableDataSection = ".const";
+  GlobalDirective = "\t.globl\t";
   CStringSection = "\t.cstring";
   StaticCtorsSection = ".mod_init_func";
   StaticDtorsSection = ".mod_term_func";
   UsedDirective = "\t.no_dead_strip\t";
   WeakRefDirective = "\t.weak_reference\t";
   HiddenDirective = "\t.private_extern\t";
+  SupportsExceptionHandling = true;
   
   // In non-PIC modes, emit a special label before jump tables so that the
   // linker can perform more accurate dead code stripping.

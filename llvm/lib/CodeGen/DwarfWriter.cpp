@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains support for writing dwarf debug info into asm files.
+// This file contains support for writing dwarf info into asm files.
 //
 //===----------------------------------------------------------------------===//
 
@@ -180,7 +180,7 @@ public:
   
   /// Emit - Print the abbreviation using the specified Dwarf writer.
   ///
-  void Emit(const Dwarf &DW) const; 
+  void Emit(const DwarfDebug &DD) const; 
       
 #ifndef NDEBUG
   void print(std::ostream *O) {
@@ -313,11 +313,11 @@ public:
   
   /// EmitValue - Emit value via the Dwarf writer.
   ///
-  virtual void EmitValue(const Dwarf &DW, unsigned Form) const = 0;
+  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const = 0;
   
   /// SizeOf - Return the size of a value in bytes.
   ///
-  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const = 0;
+  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const = 0;
   
   /// Profile - Used to gather unique data for the value folding set.
   ///
@@ -363,11 +363,11 @@ public:
     
   /// EmitValue - Emit integer of appropriate size.
   ///
-  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
+  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
   
   /// SizeOf - Determine size of integer value in bytes.
   ///
-  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
   
   /// Profile - Used to gather unique data for the value folding set.
   ///
@@ -400,11 +400,11 @@ public:
   
   /// EmitValue - Emit string value.
   ///
-  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
+  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
   
   /// SizeOf - Determine size of string value in bytes.
   ///
-  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const {
+  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const {
     return String.size() + sizeof(char); // sizeof('\0');
   }
   
@@ -439,11 +439,11 @@ public:
   
   /// EmitValue - Emit label value.
   ///
-  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
+  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
   
   /// SizeOf - Determine size of label value in bytes.
   ///
-  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
   
   /// Profile - Used to gather unique data for the value folding set.
   ///
@@ -477,11 +477,11 @@ public:
   
   /// EmitValue - Emit label value.
   ///
-  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
+  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
   
   /// SizeOf - Determine size of label value in bytes.
   ///
-  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
   
   /// Profile - Used to gather unique data for the value folding set.
   ///
@@ -515,11 +515,11 @@ public:
   
   /// EmitValue - Emit delta value.
   ///
-  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
+  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
   
   /// SizeOf - Determine size of delta value in bytes.
   ///
-  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
   
   /// Profile - Used to gather unique data for the value folding set.
   ///
@@ -557,11 +557,11 @@ public:
   
   /// EmitValue - Emit debug information entry offset.
   ///
-  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
+  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
   
   /// SizeOf - Determine size of debug information entry in bytes.
   ///
-  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const {
+  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const {
     return sizeof(int32_t);
   }
   
@@ -609,7 +609,7 @@ public:
   
   /// ComputeSize - calculate the size of the block.
   ///
-  unsigned ComputeSize(Dwarf &DW);
+  unsigned ComputeSize(DwarfDebug &DD);
   
   /// BestForm - Choose the best form for data.
   ///
@@ -622,11 +622,11 @@ public:
 
   /// EmitValue - Emit block data.
   ///
-  virtual void EmitValue(const Dwarf &DW, unsigned Form) const;
+  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
   
   /// SizeOf - Determine size of block data in bytes.
   ///
-  virtual unsigned SizeOf(const Dwarf &DW, unsigned Form) const;
+  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
   
 
   /// Profile - Used to gather unique data for the value folding set.
@@ -720,14 +720,14 @@ public:
   
   /// getDieMapSlotFor - Returns the debug information entry map slot for the
   /// specified debug descriptor.
-  DIE *&getDieMapSlotFor(DebugInfoDesc *DD) {
-    return DescToDieMap[DD];
+  DIE *&getDieMapSlotFor(DebugInfoDesc *DID) {
+    return DescToDieMap[DID];
   }
   
   /// getDIEntrySlotFor - Returns the debug information entry proxy slot for the
   /// specified debug descriptor.
-  DIEntry *&getDIEntrySlotFor(DebugInfoDesc *DD) {
-    return DescToDIEntryMap[DD];
+  DIEntry *&getDIEntrySlotFor(DebugInfoDesc *DID) {
+    return DescToDIEntryMap[DID];
   }
   
   /// AddDie - Adds or interns the DIE to the compile unit.
@@ -750,14 +750,14 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// Dwarf - Emits Dwarf debug and exception handling directives. 
+/// Dwarf - Emits general Dwarf directives. 
 ///
 class Dwarf {
 
-private:
+protected:
 
   //===--------------------------------------------------------------------===//
-  // Core attributes used by the Dwarf  writer.
+  // Core attributes used by the Dwarf writer.
   //
   
   //
@@ -802,6 +802,41 @@ private:
   ///
   unsigned SubprogramCount;
   
+  Dwarf(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
+  : O(OS)
+  , Asm(A)
+  , TAI(T)
+  , TD(Asm->TM.getTargetData())
+  , RI(Asm->TM.getRegisterInfo())
+  , M(NULL)
+  , MF(NULL)
+  , MMI(NULL)
+  , didInitial(false)
+  , shouldEmit(false)
+  , SubprogramCount(0)
+  {
+  }
+
+public:
+
+  //===--------------------------------------------------------------------===//
+  // Accessors.
+  //
+  AsmPrinter *getAsm() const { return Asm; }
+  const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
+
+  /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
+  ///
+  bool ShouldEmitDwarf() const { return shouldEmit; }
+
+};
+
+//===----------------------------------------------------------------------===//
+/// DwarfDebug - Emits Dwarf debug directives. 
+///
+class DwarfDebug : public Dwarf {
+
+private:
   //===--------------------------------------------------------------------===//
   // Attributes used to construct specific Dwarf sections.
   //
@@ -844,11 +879,6 @@ private:
 
 
 public:
-
-  //===--------------------------------------------------------------------===//
-  // Accessors.
-  //
-  AsmPrinter *getAsm() const { return Asm; }
 
   /// PrintLabelName - Print label name in form used by Dwarf writer.
   ///
@@ -2466,26 +2496,12 @@ private:
     }
   }
 
-  /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
-  ///
-  bool ShouldEmitDwarf() const { return shouldEmit; }
-
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
-  Dwarf(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
-  : O(OS)
-  , Asm(A)
-  , TAI(T)
-  , TD(Asm->TM.getTargetData())
-  , RI(Asm->TM.getRegisterInfo())
-  , M(NULL)
-  , MF(NULL)
-  , MMI(NULL)
-  , didInitial(false)
-  , shouldEmit(false)
-  , SubprogramCount(0)
+  DwarfDebug(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
+  : Dwarf(OS, A, T)
   , CompileUnits()
   , AbbreviationsSet(InitAbbreviationsSetSize)
   , Abbreviations()
@@ -2497,17 +2513,13 @@ public:
   , SectionSourceLines()
   {
   }
-  virtual ~Dwarf() {
+  virtual ~DwarfDebug() {
     for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i)
       delete CompileUnits[i];
     for (unsigned j = 0, M = Values.size(); j < M; ++j)
       delete Values[j];
   }
 
-  // Accessors.
-  //
-  const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
-  
   /// SetModuleInfo - Set machine module information when it's known that pass
   /// manager has created it.  Set by the target AsmPrinter.
   void SetModuleInfo(MachineModuleInfo *mmi) {
@@ -2539,14 +2551,12 @@ public:
     this->M = M;
     
     if (!ShouldEmitDwarf()) return;
-    Asm->EOL("Dwarf Begin Module");
   }
 
   /// EndModule - Emit all Dwarf sections that should come after the content.
   ///
   void EndModule() {
     if (!ShouldEmitDwarf()) return;
-    Asm->EOL("Dwarf End Module");
     
     // Standard sections final addresses.
     Asm->SwitchToTextSection(TAI->getTextSection());
@@ -2597,7 +2607,6 @@ public:
     this->MF = MF;
     
     if (!ShouldEmitDwarf()) return;
-    Asm->EOL("Dwarf Begin Function");
 
     // Begin accumulating function debug information.
     MMI->BeginFunction(MF);
@@ -2605,15 +2614,20 @@ public:
     // Assumes in correct section after the entry point.
     EmitLabel("func_begin", ++SubprogramCount);
   }
+  
+  /// PreExceptionEndFunction - Close off function before exception handling
+  /// tables.
+  void PreExceptionEndFunction() {
+    if (!ShouldEmitDwarf()) return;
+    
+    // Define end label for subprogram.
+    EmitLabel("func_end", SubprogramCount);
+  }
 
   /// EndFunction - Gather and emit post-function debug information.
   ///
   void EndFunction() {
     if (!ShouldEmitDwarf()) return;
-    Asm->EOL("Dwarf End Function");
-    
-    // Define end label for subprogram.
-    EmitLabel("func_end", SubprogramCount);
       
     // Get function line info.
     const std::vector<SourceLineInfo> &LineInfos = MMI->getSourceLines();
@@ -2642,37 +2656,99 @@ public:
   }
 };
 
+//===----------------------------------------------------------------------===//
+/// DwarfException - Emits Dwarf exception handling directives. 
+///
+class DwarfException : public Dwarf  {
+
+public:
+  //===--------------------------------------------------------------------===//
+  // Main entry points.
+  //
+  DwarfException(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
+  : Dwarf(OS, A, T)
+  {}
+  
+  virtual ~DwarfException() {}
+
+  /// SetModuleInfo - Set machine module information when it's known that pass
+  /// manager has created it.  Set by the target AsmPrinter.
+  void SetModuleInfo(MachineModuleInfo *mmi) {
+    // Make sure initial declarations are made.
+    if (!MMI && TAI->getSupportsExceptionHandling()) {
+      MMI = mmi;
+      shouldEmit = true;
+    }
+  }
+
+  /// BeginModule - Emit all exception information that should come prior to the
+  /// content.
+  void BeginModule(Module *M) {
+    this->M = M;
+    
+    if (!ShouldEmitDwarf()) return;
+  }
+
+  /// EndModule - Emit all exception information that should come after the
+  /// content.
+  void EndModule() {
+    if (!ShouldEmitDwarf()) return;
+  }
+
+  /// BeginFunction - Gather pre-function exception information.  Assumes being 
+  /// emitted immediately after the function entry point.
+  void BeginFunction(MachineFunction *MF) {
+    this->MF = MF;
+    
+    if (!ShouldEmitDwarf()) return;
+  }
+
+  /// EndFunction - Gather and emit post-function exception information.
+  ///
+  void EndFunction() {
+    if (!ShouldEmitDwarf()) return;
+
+    if (const char *GlobalDirective = TAI->getGlobalDirective())
+      O << GlobalDirective << getAsm()->CurrentFnName << ".eh\n";
+      
+    O << getAsm()->CurrentFnName << ".eh = 0\n";
+    
+    if (const char *UsedDirective = TAI->getUsedDirective())
+      O << UsedDirective << getAsm()->CurrentFnName << ".eh\n";
+  }
+};
+
 } // End of namespace llvm
 
 //===----------------------------------------------------------------------===//
 
 /// Emit - Print the abbreviation using the specified Dwarf writer.
 ///
-void DIEAbbrev::Emit(const Dwarf &DW) const {
+void DIEAbbrev::Emit(const DwarfDebug &DD) const {
   // Emit its Dwarf tag type.
-  DW.getAsm()->EmitULEB128Bytes(Tag);
-  DW.getAsm()->EOL(TagString(Tag));
+  DD.getAsm()->EmitULEB128Bytes(Tag);
+  DD.getAsm()->EOL(TagString(Tag));
   
   // Emit whether it has children DIEs.
-  DW.getAsm()->EmitULEB128Bytes(ChildrenFlag);
-  DW.getAsm()->EOL(ChildrenString(ChildrenFlag));
+  DD.getAsm()->EmitULEB128Bytes(ChildrenFlag);
+  DD.getAsm()->EOL(ChildrenString(ChildrenFlag));
   
   // For each attribute description.
   for (unsigned i = 0, N = Data.size(); i < N; ++i) {
     const DIEAbbrevData &AttrData = Data[i];
     
     // Emit attribute type.
-    DW.getAsm()->EmitULEB128Bytes(AttrData.getAttribute());
-    DW.getAsm()->EOL(AttributeString(AttrData.getAttribute()));
+    DD.getAsm()->EmitULEB128Bytes(AttrData.getAttribute());
+    DD.getAsm()->EOL(AttributeString(AttrData.getAttribute()));
     
     // Emit form type.
-    DW.getAsm()->EmitULEB128Bytes(AttrData.getForm());
-    DW.getAsm()->EOL(FormEncodingString(AttrData.getForm()));
+    DD.getAsm()->EmitULEB128Bytes(AttrData.getForm());
+    DD.getAsm()->EOL(FormEncodingString(AttrData.getForm()));
   }
 
   // Mark end of abbreviation.
-  DW.getAsm()->EmitULEB128Bytes(0); DW.getAsm()->EOL("EOM(1)");
-  DW.getAsm()->EmitULEB128Bytes(0); DW.getAsm()->EOL("EOM(2)");
+  DD.getAsm()->EmitULEB128Bytes(0); DD.getAsm()->EOL("EOM(1)");
+  DD.getAsm()->EmitULEB128Bytes(0); DD.getAsm()->EOL("EOM(2)");
 }
 
 #ifndef NDEBUG
@@ -2708,26 +2784,26 @@ void DIEValue::dump() {
 
 /// EmitValue - Emit integer of appropriate size.
 ///
-void DIEInteger::EmitValue(const Dwarf &DW, unsigned Form) const {
+void DIEInteger::EmitValue(const DwarfDebug &DD, unsigned Form) const {
   switch (Form) {
   case DW_FORM_flag:  // Fall thru
   case DW_FORM_ref1:  // Fall thru
-  case DW_FORM_data1: DW.getAsm()->EmitInt8(Integer);         break;
+  case DW_FORM_data1: DD.getAsm()->EmitInt8(Integer);         break;
   case DW_FORM_ref2:  // Fall thru
-  case DW_FORM_data2: DW.getAsm()->EmitInt16(Integer);        break;
+  case DW_FORM_data2: DD.getAsm()->EmitInt16(Integer);        break;
   case DW_FORM_ref4:  // Fall thru
-  case DW_FORM_data4: DW.getAsm()->EmitInt32(Integer);        break;
+  case DW_FORM_data4: DD.getAsm()->EmitInt32(Integer);        break;
   case DW_FORM_ref8:  // Fall thru
-  case DW_FORM_data8: DW.getAsm()->EmitInt64(Integer);        break;
-  case DW_FORM_udata: DW.getAsm()->EmitULEB128Bytes(Integer); break;
-  case DW_FORM_sdata: DW.getAsm()->EmitSLEB128Bytes(Integer); break;
+  case DW_FORM_data8: DD.getAsm()->EmitInt64(Integer);        break;
+  case DW_FORM_udata: DD.getAsm()->EmitULEB128Bytes(Integer); break;
+  case DW_FORM_sdata: DD.getAsm()->EmitSLEB128Bytes(Integer); break;
   default: assert(0 && "DIE Value form not supported yet");   break;
   }
 }
 
 /// SizeOf - Determine size of integer value in bytes.
 ///
-unsigned DIEInteger::SizeOf(const Dwarf &DW, unsigned Form) const {
+unsigned DIEInteger::SizeOf(const DwarfDebug &DD, unsigned Form) const {
   switch (Form) {
   case DW_FORM_flag:  // Fall thru
   case DW_FORM_ref1:  // Fall thru
@@ -2738,8 +2814,8 @@ unsigned DIEInteger::SizeOf(const Dwarf &DW, unsigned Form) const {
   case DW_FORM_data4: return sizeof(int32_t);
   case DW_FORM_ref8:  // Fall thru
   case DW_FORM_data8: return sizeof(int64_t);
-  case DW_FORM_udata: return DW.getAsm()->SizeULEB128(Integer);
-  case DW_FORM_sdata: return DW.getAsm()->SizeSLEB128(Integer);
+  case DW_FORM_udata: return DD.getAsm()->SizeULEB128(Integer);
+  case DW_FORM_sdata: return DD.getAsm()->SizeSLEB128(Integer);
   default: assert(0 && "DIE Value form not supported yet"); break;
   }
   return 0;
@@ -2749,72 +2825,72 @@ unsigned DIEInteger::SizeOf(const Dwarf &DW, unsigned Form) const {
 
 /// EmitValue - Emit string value.
 ///
-void DIEString::EmitValue(const Dwarf &DW, unsigned Form) const {
-  DW.getAsm()->EmitString(String);
+void DIEString::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+  DD.getAsm()->EmitString(String);
 }
 
 //===----------------------------------------------------------------------===//
 
 /// EmitValue - Emit label value.
 ///
-void DIEDwarfLabel::EmitValue(const Dwarf &DW, unsigned Form) const {
-  DW.EmitReference(Label);
+void DIEDwarfLabel::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+  DD.EmitReference(Label);
 }
 
 /// SizeOf - Determine size of label value in bytes.
 ///
-unsigned DIEDwarfLabel::SizeOf(const Dwarf &DW, unsigned Form) const {
-  return DW.getTargetAsmInfo()->getAddressSize();
+unsigned DIEDwarfLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
+  return DD.getTargetAsmInfo()->getAddressSize();
 }
 
 //===----------------------------------------------------------------------===//
 
 /// EmitValue - Emit label value.
 ///
-void DIEObjectLabel::EmitValue(const Dwarf &DW, unsigned Form) const {
-  DW.EmitReference(Label);
+void DIEObjectLabel::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+  DD.EmitReference(Label);
 }
 
 /// SizeOf - Determine size of label value in bytes.
 ///
-unsigned DIEObjectLabel::SizeOf(const Dwarf &DW, unsigned Form) const {
-  return DW.getTargetAsmInfo()->getAddressSize();
+unsigned DIEObjectLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
+  return DD.getTargetAsmInfo()->getAddressSize();
 }
     
 //===----------------------------------------------------------------------===//
 
 /// EmitValue - Emit delta value.
 ///
-void DIEDelta::EmitValue(const Dwarf &DW, unsigned Form) const {
+void DIEDelta::EmitValue(const DwarfDebug &DD, unsigned Form) const {
   bool IsSmall = Form == DW_FORM_data4;
-  DW.EmitDifference(LabelHi, LabelLo, IsSmall);
+  DD.EmitDifference(LabelHi, LabelLo, IsSmall);
 }
 
 /// SizeOf - Determine size of delta value in bytes.
 ///
-unsigned DIEDelta::SizeOf(const Dwarf &DW, unsigned Form) const {
+unsigned DIEDelta::SizeOf(const DwarfDebug &DD, unsigned Form) const {
   if (Form == DW_FORM_data4) return 4;
-  return DW.getTargetAsmInfo()->getAddressSize();
+  return DD.getTargetAsmInfo()->getAddressSize();
 }
 
 //===----------------------------------------------------------------------===//
 
 /// EmitValue - Emit debug information entry offset.
 ///
-void DIEntry::EmitValue(const Dwarf &DW, unsigned Form) const {
-  DW.getAsm()->EmitInt32(Entry->getOffset());
+void DIEntry::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+  DD.getAsm()->EmitInt32(Entry->getOffset());
 }
     
 //===----------------------------------------------------------------------===//
 
 /// ComputeSize - calculate the size of the block.
 ///
-unsigned DIEBlock::ComputeSize(Dwarf &DW) {
+unsigned DIEBlock::ComputeSize(DwarfDebug &DD) {
   if (!Size) {
     const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
     
     for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-      Size += Values[i]->SizeOf(DW, AbbrevData[i].getForm());
+      Size += Values[i]->SizeOf(DD, AbbrevData[i].getForm());
     }
   }
   return Size;
@@ -2822,31 +2898,31 @@ unsigned DIEBlock::ComputeSize(Dwarf &DW) {
 
 /// EmitValue - Emit block data.
 ///
-void DIEBlock::EmitValue(const Dwarf &DW, unsigned Form) const {
+void DIEBlock::EmitValue(const DwarfDebug &DD, unsigned Form) const {
   switch (Form) {
-  case DW_FORM_block1: DW.getAsm()->EmitInt8(Size);         break;
-  case DW_FORM_block2: DW.getAsm()->EmitInt16(Size);        break;
-  case DW_FORM_block4: DW.getAsm()->EmitInt32(Size);        break;
-  case DW_FORM_block:  DW.getAsm()->EmitULEB128Bytes(Size); break;
+  case DW_FORM_block1: DD.getAsm()->EmitInt8(Size);         break;
+  case DW_FORM_block2: DD.getAsm()->EmitInt16(Size);        break;
+  case DW_FORM_block4: DD.getAsm()->EmitInt32(Size);        break;
+  case DW_FORM_block:  DD.getAsm()->EmitULEB128Bytes(Size); break;
   default: assert(0 && "Improper form for block");          break;
   }
   
   const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
 
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-    DW.getAsm()->EOL("");
-    Values[i]->EmitValue(DW, AbbrevData[i].getForm());
+    DD.getAsm()->EOL("");
+    Values[i]->EmitValue(DD, AbbrevData[i].getForm());
   }
 }
 
 /// SizeOf - Determine size of block data in bytes.
 ///
-unsigned DIEBlock::SizeOf(const Dwarf &DW, unsigned Form) const {
+unsigned DIEBlock::SizeOf(const DwarfDebug &DD, unsigned Form) const {
   switch (Form) {
   case DW_FORM_block1: return Size + sizeof(int8_t);
   case DW_FORM_block2: return Size + sizeof(int16_t);
   case DW_FORM_block4: return Size + sizeof(int32_t);
-  case DW_FORM_block: return Size + DW.getAsm()->SizeULEB128(Size);
+  case DW_FORM_block: return Size + DD.getAsm()->SizeULEB128(Size);
   default: assert(0 && "Improper form for block"); break;
   }
   return 0;
@@ -2941,39 +3017,47 @@ void DIE::dump() {
 
 DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A,
                          const TargetAsmInfo *T) {
-  DW = new Dwarf(OS, A, T);
+  DE = new DwarfException(OS, A, T);
+  DD = new DwarfDebug(OS, A, T);
 }
 
 DwarfWriter::~DwarfWriter() {
-  delete DW;
+  delete DE;
+  delete DD;
 }
 
 /// SetModuleInfo - Set machine module info when it's known that pass manager
 /// has created it.  Set by the target AsmPrinter.
 void DwarfWriter::SetModuleInfo(MachineModuleInfo *MMI) {
-  DW->SetModuleInfo(MMI);
+  DE->SetModuleInfo(MMI);
+  DD->SetModuleInfo(MMI);
 }
 
 /// BeginModule - Emit all Dwarf sections that should come prior to the
 /// content.
 void DwarfWriter::BeginModule(Module *M) {
-  DW->BeginModule(M);
+  DE->BeginModule(M);
+  DD->BeginModule(M);
 }
 
 /// EndModule - Emit all Dwarf sections that should come after the content.
 ///
 void DwarfWriter::EndModule() {
-  DW->EndModule();
+  DE->EndModule();
+  DD->EndModule();
 }
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being 
 /// emitted immediately after the function entry point.
 void DwarfWriter::BeginFunction(MachineFunction *MF) {
-  DW->BeginFunction(MF);
+  DE->BeginFunction(MF);
+  DD->BeginFunction(MF);
 }
 
 /// EndFunction - Gather and emit post-function debug information.
 ///
 void DwarfWriter::EndFunction() {
-  DW->EndFunction();
+  DD->PreExceptionEndFunction();
+  DE->EndFunction();
+  DD->EndFunction();
 }

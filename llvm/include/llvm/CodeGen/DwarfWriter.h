@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains support for writing Dwarf debug info into asm files.  For
-// Details on the Dwarf 3 specfication see DWARF Debugging Information Format
-// V.3 reference manual http://dwarf.freestandards.org ,
+// This file contains support for writing Dwarf debug and exception info into
+// asm files.  For Details on the Dwarf 3 specfication see DWARF Debugging
+// Information Format V.3 reference manual http://dwarf.freestandards.org ,
 //
-// The role of the Dwarf Writer class is to extract debug information from the
+// The role of the Dwarf Writer class is to extract information from the
 // MachineModuleInfo object, organize it in Dwarf form and then emit it into asm
 // the current asm file using data and high level Dwarf directives.
 // 
@@ -25,7 +25,8 @@
 namespace llvm {
 
 class AsmPrinter;
-class Dwarf;
+class DwarfDebug;
+class DwarfException;
 class MachineModuleInfo;
 class MachineFunction;
 class Module;
@@ -37,9 +38,13 @@ class TargetAsmInfo;
 
 class DwarfWriter {
 private:
-  /// DM - Provides the DwarfWriter implementation.
+  /// DD - Provides the DwarfWriter debug implementation.
   ///
-  Dwarf *DW;
+  DwarfDebug *DD;
+
+  /// DE - Provides the DwarfWriter exception implementation.
+  ///
+  DwarfException *DE;
   
 public:
   

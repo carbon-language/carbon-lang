@@ -997,8 +997,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineInstr *MI;
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   
-  // Prepare for debug frame info.
-  bool hasDebugInfo = MMI && MMI->hasDebugInfo();
+  // Prepare for frame info.
   unsigned FrameLabelId = 0;
   
   // Get the number of bytes to allocate from the FrameInfo
@@ -1023,7 +1022,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  if (hasDebugInfo) {
+  if (MMI) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(FrameLabelId);
@@ -1053,7 +1052,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MBB.insert(MBBI, MI);
   }
 
-  if (hasDebugInfo) {
+  if (MMI) {
     std::vector<MachineMove> &Moves = MMI->getFrameMoves();
     
     if (NumBytes) {
