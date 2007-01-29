@@ -851,7 +851,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
 
   if (Dest->getDataLayout().empty()) {
     if (!Src->getDataLayout().empty()) {
-      Dest->setDataLayout(Src->getTargetTriple());
+      Dest->setDataLayout(Src->getDataLayout());
     } else {
       std::string DataLayout;
 
