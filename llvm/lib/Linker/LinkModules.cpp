@@ -849,24 +849,31 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   assert(Dest != 0 && "Invalid Destination module");
   assert(Src  != 0 && "Invalid Source Module");
 
-  std::string DataLayout;
+  if (Dest->getDataLayout().empty()) {
+    if (!Src->getDataLayout().empty()) {
+      Dest->setDataLayout(Src->getTargetTriple());
+    } else {
+      std::string DataLayout;
 
-  if (Dest->getEndianness() == Module::AnyEndianness)
-    if (Src->getEndianness() == Module::BigEndian)
-      DataLayout.append("E");
-    else if (Src->getEndianness() == Module::LittleEndian)
-      DataLayout.append("e");
-  if (Dest->getPointerSize() == Module::AnyPointerSize)
-    if (Src->getPointerSize() == Module::Pointer64)
-      DataLayout.append(DataLayout.length() == 0 ? "p:64:64" : "-p:64:64");
-    else if (Src->getPointerSize() == Module::Pointer32)
-      DataLayout.append(DataLayout.length() == 0 ? "p:32:32" : "-p:32:32");
-  if (Dest->getTargetTriple().empty())
+      if (Dest->getEndianness() == Module::AnyEndianness)
+        if (Src->getEndianness() == Module::BigEndian)
+          DataLayout.append("E");
+        else if (Src->getEndianness() == Module::LittleEndian)
+          DataLayout.append("e");
+      if (Dest->getPointerSize() == Module::AnyPointerSize)
+        if (Src->getPointerSize() == Module::Pointer64)
+          DataLayout.append(DataLayout.length() == 0 ? "p:64:64" : "-p:64:64");
+        else if (Src->getPointerSize() == Module::Pointer32)
+          DataLayout.append(DataLayout.length() == 0 ? "p:32:32" : "-p:32:32");
+      Dest->setDataLayout(DataLayout);
+    }
+  }
+
+  if (Dest->getTargetTriple().empty() && !Src->getTargetTriple().empty())
     Dest->setTargetTriple(Src->getTargetTriple());
-  Dest->setDataLayout(DataLayout);
-
-  if (Src->getDataLayout().length() > 0 && Dest->getDataLayout().length() > 0 &&
-      Src->getDataLayout().compare(Dest->getDataLayout()) != 0)
+      
+  if (!Src->getDataLayout().empty() && !Dest->getDataLayout().empty() &&
+      Src->getDataLayout() != Dest->getDataLayout())
     cerr << "WARNING: Linking two modules of different data layouts!\n";
   if (!Src->getTargetTriple().empty() &&
       Dest->getTargetTriple() != Src->getTargetTriple())
