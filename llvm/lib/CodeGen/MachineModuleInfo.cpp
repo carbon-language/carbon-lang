@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
@@ -1525,6 +1526,12 @@ bool MachineModuleInfo::Verify(Value *V) {
 ///
 void MachineModuleInfo::AnalyzeModule(Module &M) {
   SetupCompileUnits(M);
+}
+
+/// needsFrameInfo - Returns true if we need to gather callee-saved register
+/// move info for the frame.
+bool MachineModuleInfo::needsFrameInfo() const {
+  return hasDebugInfo() || ExceptionHandling;
 }
 
 /// SetupCompileUnits - Set up the unique vector of compile units.
