@@ -245,7 +245,7 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
     const Type *Ty = CP[i].getType();
     unsigned Size = TM.getTargetData()->getTypeSize(Ty);
 
-    MachOWriter::MachOSection *Sec = MOW.getConstSection(Ty);
+    MachOWriter::MachOSection *Sec = MOW.getConstSection(CP[i].Val.ConstVal);
     OutputBuffer SecDataOut(Sec->SectionData, is64Bit, isLittleEndian);
 
     CPLocations.push_back(Sec->SectionData.size());
@@ -390,7 +390,8 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
   // Scalar read-only data goes in a literal section if the scalar is 4, 8, or
   // 16 bytes, or a cstring.  Other read only data goes into a regular const
   // section.  Read-write data goes in the data section.
-  MachOSection *Sec = GV->isConstant() ? getConstSection(Ty) : getDataSection();
+  MachOSection *Sec = GV->isConstant() ? getConstSection(GV->getInitializer()) : 
+                                         getDataSection();
   AddSymbolToSection(Sec, GV);
   InitMem(GV->getInitializer(), &Sec->SectionData[0], GVOffset[GV],
           TM.getTargetData(), Sec->Relocations);
@@ -716,7 +717,11 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
       intptr_t Offset = GVOffset[GV];
       Scattered = TargetSection != 0;
       
-      assert(MOSPtr && "Trying to relocate unknown global!");
+      if (!MOSPtr) {
+        cerr << "Trying to relocate unknown global " << *GV << '\n';
+        continue;
+        //abort();
+      }
       
       TargetSection = MOSPtr->Index;
       MR.setResultPointer((void*)Offset);

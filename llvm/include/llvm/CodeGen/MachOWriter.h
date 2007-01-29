@@ -14,6 +14,7 @@
 #ifndef LLVM_CODEGEN_MACHOWRITER_H
 #define LLVM_CODEGEN_MACHOWRITER_H
 
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRelocation.h"
@@ -486,8 +487,13 @@ namespace llvm {
     MachOSection *getDataSection() {
       return getSection("__DATA", "__data");
     }
-    MachOSection *getConstSection(const Type *Ty) {
-      // FIXME: support cstring literals and pointer literal
+    MachOSection *getConstSection(Constant *C) {
+      const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+      if (CVA && CVA->isCString())
+        return getSection("__TEXT", "__cstring", 
+                          MachOSection::S_CSTRING_LITERALS);
+      
+      const Type *Ty = C->getType();
       if (Ty->isPrimitiveType() || Ty->isInteger()) {
         unsigned Size = TM.getTargetData()->getTypeSize(Ty);
         switch(Size) {
