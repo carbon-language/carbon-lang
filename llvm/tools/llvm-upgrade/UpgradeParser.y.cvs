@@ -505,6 +505,25 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
 // and back patchs after we are done.
 //
 
+/// This function determines if two function types differ only in their use of
+/// the sret parameter attribute in the first argument. If they are identical 
+/// in all other respects, it returns true. Otherwise, it returns false.
+bool FuncTysDifferOnlyBySRet(const FunctionType *F1, 
+                                   const FunctionType *F2) {
+  if (F1->getReturnType() != F2->getReturnType() ||
+      F1->getNumParams() != F2->getNumParams() ||
+      F1->getParamAttrs(0) != F2->getParamAttrs(0))
+    return false;
+  unsigned SRetMask = ~unsigned(FunctionType::StructRetAttribute);
+  for (unsigned i = 0; i < F1->getNumParams(); ++i) {
+    if (F1->getParamType(i) != F2->getParamType(i) ||
+        unsigned(F1->getParamAttrs(i+1)) & SRetMask !=
+        unsigned(F2->getParamAttrs(i+1)) & SRetMask)
+      return false;
+  }
+  return true;
+}
+
 // ResolveDefinitions - If we could not resolve some defs at parsing
 // time (forward branches, phi functions for loops, etc...) resolve the
 // defs now...
@@ -537,10 +556,26 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
         InsertValue(V, *FutureLateResolvers);
       } else {
         if (DID.Type == ValID::NameVal) {
-          error("Reference to an invalid definition: '" +DID.getName()+
-                "' of type '" + V->getType()->getDescription() + "'",
-                PHI->second.second);
-          return;
+          // The upgrade of csretcc to sret param attribute may have caused a
+          // function to not be found because the param attribute changed the 
+          // type of the called function. Detect this situation and insert a 
+          // cast as necessary.
+          bool fixed = false;
+          if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
+            if (const FunctionType *FTy =
+              dyn_cast<FunctionType>(PTy->getElementType()))
+              if (Function *OtherF =
+                CurModule.CurrentModule->getNamedFunction(DID.getName()))
+                if (FuncTysDifferOnlyBySRet(FTy,OtherF->getFunctionType())) {
+                  V->replaceAllUsesWith(ConstantExpr::getBitCast(OtherF, PTy));
+                  fixed = true;
+                }
+          if (!fixed) {
+            error("Reference to an invalid definition: '" +DID.getName()+
+                  "' of type '" + V->getType()->getDescription() + "'",
+                  PHI->second.second);
+            return;
+          }
         } else {
           error("Reference to an invalid definition: #" +
                 itostr(DID.Num) + " of type '" + 
