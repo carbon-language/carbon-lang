@@ -2433,6 +2433,44 @@ GetRegistersForValue(const std::string &ConstrCode,
   return RegsForValue();
 }
 
+/// getConstraintGenerality - Return an integer indicating how general CT is.
+static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
+  switch (CT) {
+  default: assert(0 && "Unknown constraint type!");
+  case TargetLowering::C_Other:
+  case TargetLowering::C_Unknown:
+    return 0;
+  case TargetLowering::C_Register:
+    return 1;
+  case TargetLowering::C_RegisterClass:
+    return 2;
+  case TargetLowering::C_Memory:
+    return 3;
+  }
+}
+
+static std::string GetMostGeneralConstraint(std::vector<std::string> &C,
+                                            const TargetLowering &TLI) {
+  assert(!C.empty() && "Must have at least one constraint");
+  if (C.size() == 1) return C[0];
+    
+  std::string *Current = &C[0];
+  // If we have multiple constraints, try to pick the most general one ahead
+  // of time.  This isn't a wonderful solution, but handles common cases.
+  TargetLowering::ConstraintType Flavor = TLI.getConstraintType(Current[0][0]);
+  for (unsigned j = 1, e = C.size(); j != e; ++j) {
+    TargetLowering::ConstraintType ThisFlavor = TLI.getConstraintType(C[j][0]);
+    if (getConstraintGenerality(ThisFlavor) > 
+        getConstraintGenerality(Flavor)) {
+      // This constraint letter is more general than the previous one,
+      // use it.
+      Flavor = ThisFlavor;
+      Current = &C[j];
+    }
+  }
+  return *Current;
+}
+
 
 /// visitInlineAsm - Handle a call to an InlineAsm object.
 ///
@@ -2462,8 +2500,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   std::set<unsigned> OutputRegs, InputRegs;
   unsigned OpNum = 1;
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
-    assert(Constraints[i].Codes.size() == 1 && "Only handles one code so far!");
-    std::string &ConstraintCode = Constraints[i].Codes[0];
+    std::string ConstraintCode =
+      GetMostGeneralConstraint(Constraints[i].Codes, TLI);
     
     MVT::ValueType OpVT;
 
@@ -2527,8 +2565,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   OpNum = 1;
   
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
-    assert(Constraints[i].Codes.size() == 1 && "Only handles one code so far!");
-    std::string &ConstraintCode = Constraints[i].Codes[0];
+    std::string ConstraintCode =
+      GetMostGeneralConstraint(Constraints[i].Codes, TLI);
 
     switch (Constraints[i].Type) {
     case InlineAsm::isOutput: {
