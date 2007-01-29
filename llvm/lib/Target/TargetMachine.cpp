@@ -29,6 +29,7 @@ namespace llvm {
   bool FiniteOnlyFPMathOption;
   bool UseSoftFloat;
   bool NoZerosInBSS;
+  bool ExceptionHandling;
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
 }
@@ -66,6 +67,11 @@ namespace {
   DontPlaceZerosInBSS("nozero-initialized-in-bss",
                cl::desc("Don't place zero-initialized symbols into bss section"),
                cl::location(NoZerosInBSS),
+               cl::init(false));
+  cl::opt<bool, true>
+  EnableExceptionHandling("exception-handling",
+               cl::desc("Exception handling should be emitted."),
+               cl::location(ExceptionHandling),
                cl::init(false));
 
   cl::opt<llvm::Reloc::Model, true>

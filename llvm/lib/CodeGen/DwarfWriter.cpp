@@ -29,8 +29,9 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include <ostream>
 #include <string>
 using namespace llvm;
@@ -2675,7 +2676,7 @@ public:
   /// manager has created it.  Set by the target AsmPrinter.
   void SetModuleInfo(MachineModuleInfo *mmi) {
     // Make sure initial declarations are made.
-    if (!MMI && TAI->getSupportsExceptionHandling()) {
+    if (!MMI && ExceptionHandling && TAI->getSupportsExceptionHandling()) {
       MMI = mmi;
       shouldEmit = true;
     }

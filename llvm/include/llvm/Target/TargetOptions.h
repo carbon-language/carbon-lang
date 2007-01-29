@@ -59,6 +59,11 @@ namespace llvm {
   /// .bss section. This flag disables such behaviour (necessary, e.g. for
   /// crt*.o compiling).
   extern bool NoZerosInBSS;
+  
+  /// ExceptionHandling - This flag indicates that exception information should
+  /// be emitted.
+  extern bool ExceptionHandling;
+  
 } // End llvm namespace
 
 #endif
