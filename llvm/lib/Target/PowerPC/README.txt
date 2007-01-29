@@ -277,18 +277,16 @@ bool %test(ulong %x) {
 into "if x.high == 0", not:
 
 _test:
-        addi r2, r3, -1
-        cntlzw r2, r2
-        cntlzw r3, r3
+        cntlzw r2, r3
+        xori r3, r3, 1
+        cmplwi cr0, r3, 0
         srwi r2, r2, 5
-        srwi r4, r3, 5
         li r3, 0
-        cmpwi cr0, r2, 0
-        bne cr0, LBB1_2 ; 
-LBB1_1:
-        or r3, r4, r4
-LBB1_2:
-        blr
+        beq cr0, LBB1_2 ;entry
+LBB1_1: ;entry
+        mr r3, r2
+LBB1_2: ;entry
+        blr 
 
 noticed in 2005-05-11-Popcount-ffs-fls.c.
 
@@ -487,23 +485,23 @@ sounds like we need to get the 64-bit register classes going.
 
 ===-------------------------------------------------------------------------===
 
-%struct.B = type { ubyte, [3 x ubyte] }
+%struct.B = type { i8, [3 x i8] }
 
-void %foo(%struct.B* %b) {
+define void @bar(%struct.B* %b) {
 entry:
-        %tmp = cast %struct.B* %b to uint*              ; <uint*> [#uses=1]
-        %tmp = load uint* %tmp          ; <uint> [#uses=1]
-        %tmp3 = cast %struct.B* %b to uint*             ; <uint*> [#uses=1]
-        %tmp4 = load uint* %tmp3                ; <uint> [#uses=1]
-        %tmp8 = cast %struct.B* %b to uint*             ; <uint*> [#uses=2]
-        %tmp9 = load uint* %tmp8                ; <uint> [#uses=1]
-        %tmp4.mask17 = shl uint %tmp4, ubyte 1          ; <uint> [#uses=1]
-        %tmp1415 = and uint %tmp4.mask17, 2147483648            ; <uint> [#uses=1]
-        %tmp.masked = and uint %tmp, 2147483648         ; <uint> [#uses=1]
-        %tmp11 = or uint %tmp1415, %tmp.masked          ; <uint> [#uses=1]
-        %tmp12 = and uint %tmp9, 2147483647             ; <uint> [#uses=1]
-        %tmp13 = or uint %tmp12, %tmp11         ; <uint> [#uses=1]
-        store uint %tmp13, uint* %tmp8
+        %tmp = bitcast %struct.B* %b to i32*              ; <uint*> [#uses=1]
+        %tmp = load i32* %tmp          ; <uint> [#uses=1]
+        %tmp3 = bitcast %struct.B* %b to i32*             ; <uint*> [#uses=1]
+        %tmp4 = load i32* %tmp3                ; <uint> [#uses=1]
+        %tmp8 = bitcast %struct.B* %b to i32*             ; <uint*> [#uses=2]
+        %tmp9 = load i32* %tmp8                ; <uint> [#uses=1]
+        %tmp4.mask17 = shl i32 %tmp4, i8 1          ; <uint> [#uses=1]
+        %tmp1415 = and i32 %tmp4.mask17, 2147483648            ; <uint> [#uses=1]
+        %tmp.masked = and i32 %tmp, 2147483648         ; <uint> [#uses=1]
+        %tmp11 = or i32 %tmp1415, %tmp.masked          ; <uint> [#uses=1]
+        %tmp12 = and i32 %tmp9, 2147483647             ; <uint> [#uses=1]
+        %tmp13 = or i32 %tmp12, %tmp11         ; <uint> [#uses=1]
+        store i32 %tmp13, i32* %tmp8
         ret void
 }
 
