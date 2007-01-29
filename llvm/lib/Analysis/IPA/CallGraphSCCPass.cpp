@@ -92,7 +92,8 @@ bool CGPassManager::runOnModule(Module &M) {
 
       initializeAnalysisImpl(P);
 
-      //        if (TheTimeInfo) TheTimeInfo->passStarted(P);
+      TimingInfo *TheTimeInfo = llvm::getTheTimeInfo();
+      if (TheTimeInfo)  TheTimeInfo->passStarted(P);
       if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P))
 	Changed |= CGSP->runOnSCC(*I);   // TODO : What if CG is changed ?
       else {
@@ -107,7 +108,7 @@ bool CGPassManager::runOnModule(Module &M) {
 	    Changed |= FPP->runOnFunction(*F);
 	}
       }
-      //        if (TheTimeInfo) TheTimeInfo->passEnded(MP);
+      if (TheTimeInfo) TheTimeInfo->passEnded(P);
 
       if (Changed)
 	dumpPassInfo(P, Msg3, Msg2);
