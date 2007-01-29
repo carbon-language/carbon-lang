@@ -171,6 +171,7 @@ static struct PerFunctionInfo {
   std::map<BasicBlock*, std::pair<ValID, int> > BBForwardRefs;
   std::vector<BasicBlock*> NumberedBlocks;
   RenameMapType RenameMap;
+  unsigned LastCC;
   unsigned NextBBNum;
 
   inline PerFunctionInfo() {
@@ -1243,6 +1244,19 @@ const Type* upgradeGEPIndices(const Type* PTy,
   return IdxTy;
 }
 
+unsigned upgradeCallingConv(unsigned CC) {
+  switch (CC) {
+    case OldCallingConv::C           : return CallingConv::C;
+    case OldCallingConv::CSRet       : return CallingConv::C;
+    case OldCallingConv::Fast        : return CallingConv::Fast;
+    case OldCallingConv::Cold        : return CallingConv::Cold;
+    case OldCallingConv::X86_StdCall : return CallingConv::X86_StdCall;
+    case OldCallingConv::X86_FastCall: return CallingConv::X86_FastCall;
+    default:
+      return CC;
+  }
+}
+
 Module* UpgradeAssembly(const std::string &infile, std::istream& in, 
                               bool debug, bool addAttrs)
 {
@@ -1626,13 +1640,13 @@ OptLinkage
   ;
 
 OptCallingConv 
-  : /*empty*/          { $$ = CallingConv::C; } 
-  | CCC_TOK            { $$ = CallingConv::C; } 
-  | CSRETCC_TOK        { $$ = CallingConv::C; } 
-  | FASTCC_TOK         { $$ = CallingConv::Fast; } 
-  | COLDCC_TOK         { $$ = CallingConv::Cold; } 
-  | X86_STDCALLCC_TOK  { $$ = CallingConv::X86_StdCall; } 
-  | X86_FASTCALLCC_TOK { $$ = CallingConv::X86_FastCall; } 
+  : /*empty*/          { CurFun.LastCC = $$ = OldCallingConv::C; } 
+  | CCC_TOK            { CurFun.LastCC = $$ = OldCallingConv::C; } 
+  | CSRETCC_TOK        { CurFun.LastCC = $$ = OldCallingConv::CSRet; } 
+  | FASTCC_TOK         { CurFun.LastCC = $$ = OldCallingConv::Fast; } 
+  | COLDCC_TOK         { CurFun.LastCC = $$ = OldCallingConv::Cold; } 
+  | X86_STDCALLCC_TOK  { CurFun.LastCC = $$ = OldCallingConv::X86_StdCall; } 
+  | X86_FASTCALLCC_TOK { CurFun.LastCC = $$ = OldCallingConv::X86_FastCall; } 
   | CC_TOK EUINT64VAL  {
     if ((unsigned)$2 != $2)
       error("Calling conv too large");
@@ -1762,11 +1776,16 @@ UpRTypes
       Params.push_back(I->T->get());
       delete I->T;
     }
+    FunctionType::ParamAttrsList ParamAttrs;
+    if (CurFun.LastCC == OldCallingConv::CSRet) {
+      ParamAttrs.push_back(FunctionType::NoAttributeSet);
+      ParamAttrs.push_back(FunctionType::StructRetAttribute);
+    }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    $$.T = new PATypeHolder(HandleUpRefs(
-                           FunctionType::get($1.T->get(),Params,isVarArg)));
+    $$.T = new PATypeHolder(
+      HandleUpRefs(FunctionType::get($1.T->get(),Params,isVarArg, ParamAttrs)));
     $$.S = $1.S;
     delete $1.T;    // Delete the return type handle
     delete $3;      // Delete the argument list
@@ -2533,7 +2552,16 @@ FunctionHeaderH
       ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
     if (isVarArg) ParamTypeList.pop_back();
 
-    const FunctionType *FT = FunctionType::get(RetTy, ParamTypeList, isVarArg);
+    // Convert the CSRet calling convention into the corresponding parameter
+    // attribute.
+    FunctionType::ParamAttrsList ParamAttrs;
+    if ($1 == OldCallingConv::CSRet) {
+      ParamAttrs.push_back(FunctionType::NoAttributeSet);     // result
+      ParamAttrs.push_back(FunctionType::StructRetAttribute); // first arg
+    }
+
+    const FunctionType *FT = FunctionType::get(RetTy, ParamTypeList, isVarArg,
+                                               ParamAttrs);
     const PointerType *PFT = PointerType::get(FT);
     delete $2.T;
 
@@ -2579,7 +2607,7 @@ FunctionHeaderH
       // argument to another function.
       Fn->setLinkage(CurFun.Linkage);
     }
-    Fn->setCallingConv($1);
+    Fn->setCallingConv(upgradeCallingConv($1));
     Fn->setAlignment($8);
     if ($7) {
       Fn->setSection($7);
@@ -2825,9 +2853,14 @@ BBTerminatorInst
              I != E; ++I)
           ParamTypes.push_back((*I).V->getType());
       }
+      FunctionType::ParamAttrsList ParamAttrs;
+      if ($2 == OldCallingConv::CSRet) {
+        ParamAttrs.push_back(FunctionType::NoAttributeSet);
+        ParamAttrs.push_back(FunctionType::StructRetAttribute);
+      }
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
-      Ty = FunctionType::get($3.T->get(), ParamTypes, isVarArg);
+      Ty = FunctionType::get($3.T->get(), ParamTypes, isVarArg, ParamAttrs);
       PFTy = PointerType::get(Ty);
     }
     Value *V = getVal(PFTy, $4);   // Get the function we're calling...
@@ -2858,7 +2891,7 @@ BBTerminatorInst
 
       $$ = new InvokeInst(V, Normal, Except, Args);
     }
-    cast<InvokeInst>($$)->setCallingConv($2);
+    cast<InvokeInst>($$)->setCallingConv(upgradeCallingConv($2));
     delete $3.T;
     delete $6;
   }
@@ -3174,6 +3207,11 @@ InstVal
           ParamTypes.push_back((*I).V->getType());
       }
 
+      FunctionType::ParamAttrsList ParamAttrs;
+      if ($2 == OldCallingConv::CSRet) {
+        ParamAttrs.push_back(FunctionType::NoAttributeSet);
+        ParamAttrs.push_back(FunctionType::StructRetAttribute);
+      }
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
@@ -3181,7 +3219,7 @@ InstVal
       if (!RetTy->isFirstClassType() && RetTy != Type::VoidTy)
         error("Functions cannot return aggregate types");
 
-      FTy = FunctionType::get(RetTy, ParamTypes, isVarArg);
+      FTy = FunctionType::get(RetTy, ParamTypes, isVarArg, ParamAttrs);
       PFTy = PointerType::get(FTy);
     }
 
@@ -3225,7 +3263,7 @@ InstVal
       // Create the call instruction
       CallInst *CI = new CallInst(V, Args);
       CI->setTailCall($1);
-      CI->setCallingConv($2);
+      CI->setCallingConv(upgradeCallingConv($2));
       $$.I = CI;
       $$.S = $3.S;
     }

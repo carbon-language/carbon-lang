@@ -213,6 +213,13 @@ enum CastOps {
   UIToFPOp, SIToFPOp, PtrToIntOp, IntToPtrOp, BitCastOp
 };
 
+// An enumeration for the old calling conventions, ala LLVM 1.9
+namespace OldCallingConv {
+  enum ID {
+    C = 0, CSRet = 1, Fast = 8, Cold = 9, X86_StdCall = 64, X86_FastCall = 65 
+  };
+}
+
 /// An enumeration for defining the Signedness of a type or value. Signless
 /// means the signedness is not relevant to the type or value.
 enum Signedness { Signless, Unsigned, Signed };
