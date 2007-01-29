@@ -2707,7 +2707,7 @@ public:
   ///
   void EndFunction() {
     if (!ShouldEmitDwarf()) return;
-
+#if 0
     if (const char *GlobalDirective = TAI->getGlobalDirective())
       O << GlobalDirective << getAsm()->CurrentFnName << ".eh\n";
       
@@ -2715,6 +2715,7 @@ public:
     
     if (const char *UsedDirective = TAI->getUsedDirective())
       O << UsedDirective << getAsm()->CurrentFnName << ".eh\n";
+#endif
   }
 };
 
