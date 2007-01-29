@@ -769,13 +769,14 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
     }
   }
 
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   if (!CanEliminateFrame) {
-    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     AFI->setHasStackFrame(true);
 
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
     // Spill LR as well so we can fold BX_RET to the registers restore (LDM).
     if (!LRSpilled && CS1Spilled) {
+      LRSpilled = true;
       MF.changePhyRegUsed(ARM::LR, true);
       NumGPRSpills++;
       UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
@@ -798,6 +799,9 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
         MF.changePhyRegUsed(UnspilledCS2GPRs.front(), true);
     }
   }
+
+  // Remembe if LR has been spilled.
+  AFI->setLRIsSpilled(LRSpilled);
 }
 
 /// Move iterator pass the next bunch of callee save load / store ops for
