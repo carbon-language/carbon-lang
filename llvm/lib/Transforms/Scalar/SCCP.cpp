@@ -33,6 +33,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/hash_map"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -1093,7 +1094,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
     return;
   }
 
-  std::vector<Constant*> Operands;
+  SmallVector<Constant*, 8> Operands;
   Operands.reserve(I->getNumOperands()-1);
 
   for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
@@ -1109,7 +1110,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
     Operands.push_back(State.getConstant());
   }
 
-  if (Constant *C = ConstantFoldCall(F, Operands))
+  if (Constant *C = ConstantFoldCall(F, &Operands[0], Operands.size()))
     markConstant(IV, I, C);
   else
     markOverdefined(IV, I);
