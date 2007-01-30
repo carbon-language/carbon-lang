@@ -22,9 +22,9 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>

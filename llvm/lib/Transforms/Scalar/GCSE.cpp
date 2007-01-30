@@ -16,13 +16,12 @@
 
 #define DEBUG_TYPE "gcse"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Constant.h"
 #include "llvm/Instructions.h"
+#include "llvm/Function.h"
 #include "llvm/Type.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueNumbering.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
