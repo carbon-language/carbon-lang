@@ -124,7 +124,7 @@ def t_addrmode_rr : Operand<i32>,
 def t_addrmode_s4 : Operand<i32>,
                     ComplexPattern<i32, 3, "SelectThumbAddrModeS4", []> {
   let PrintMethod = "printThumbAddrModeS4Operand";
-  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm, GPR:$offsreg);
 }
 
 // t_addrmode_s2 := reg + reg
@@ -133,7 +133,7 @@ def t_addrmode_s4 : Operand<i32>,
 def t_addrmode_s2 : Operand<i32>,
                     ComplexPattern<i32, 3, "SelectThumbAddrModeS2", []> {
   let PrintMethod = "printThumbAddrModeS2Operand";
-  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm, GPR:$offsreg);
 }
 
 // t_addrmode_s1 := reg + reg
@@ -142,7 +142,7 @@ def t_addrmode_s2 : Operand<i32>,
 def t_addrmode_s1 : Operand<i32>,
                     ComplexPattern<i32, 3, "SelectThumbAddrModeS1", []> {
   let PrintMethod = "printThumbAddrModeS1Operand";
-  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm, GPR:$offsreg);
 }
 
 // t_addrmode_sp := sp + imm8 * 4

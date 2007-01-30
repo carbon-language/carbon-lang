@@ -72,14 +72,14 @@ public:
   bool SelectThumbAddrModeRR(SDOperand Op, SDOperand N, SDOperand &Base,
                              SDOperand &Offset);
   bool SelectThumbAddrModeRI5(SDOperand Op, SDOperand N, unsigned Scale,
-                              SDOperand &Base, SDOperand &Offset,
-                              SDOperand &OffImm);
+                              SDOperand &Base, SDOperand &OffImm,
+                              SDOperand &Offset);
   bool SelectThumbAddrModeS1(SDOperand Op, SDOperand N, SDOperand &Base,
-                             SDOperand &Offset, SDOperand &OffImm);
+                             SDOperand &OffImm, SDOperand &Offset);
   bool SelectThumbAddrModeS2(SDOperand Op, SDOperand N, SDOperand &Base,
-                             SDOperand &Offset, SDOperand &OffImm);
+                             SDOperand &OffImm, SDOperand &Offset);
   bool SelectThumbAddrModeS4(SDOperand Op, SDOperand N, SDOperand &Base,
-                             SDOperand &Offset, SDOperand &OffImm);
+                             SDOperand &OffImm, SDOperand &Offset);
   bool SelectThumbAddrModeSP(SDOperand Op, SDOperand N, SDOperand &Base,
                              SDOperand &OffImm);
 
@@ -375,7 +375,7 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDOperand Op, SDOperand N,
 bool
 ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDOperand Op, SDOperand N,
                                         unsigned Scale, SDOperand &Base,
-                                        SDOperand &Offset, SDOperand &OffImm) {
+                                        SDOperand &OffImm, SDOperand &Offset) {
   if (Scale == 4) {
     SDOperand TmpBase, TmpOffImm;
     if (SelectThumbAddrModeSP(Op, N, TmpBase, TmpOffImm))
@@ -413,21 +413,21 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDOperand Op, SDOperand N,
 }
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeS1(SDOperand Op, SDOperand N,
-                                            SDOperand &Base, SDOperand &Offset,
-                                            SDOperand &OffImm) {
-  return SelectThumbAddrModeRI5(Op, N, 1, Base, Offset, OffImm);
+                                            SDOperand &Base, SDOperand &OffImm,
+                                            SDOperand &Offset) {
+  return SelectThumbAddrModeRI5(Op, N, 1, Base, OffImm, Offset);
 }
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeS2(SDOperand Op, SDOperand N,
-                                            SDOperand &Base, SDOperand &Offset,
-                                            SDOperand &OffImm) {
-  return SelectThumbAddrModeRI5(Op, N, 2, Base, Offset, OffImm);
+                                            SDOperand &Base, SDOperand &OffImm,
+                                            SDOperand &Offset) {
+  return SelectThumbAddrModeRI5(Op, N, 2, Base, OffImm, Offset);
 }
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeS4(SDOperand Op, SDOperand N,
-                                            SDOperand &Base, SDOperand &Offset,
-                                            SDOperand &OffImm) {
-  return SelectThumbAddrModeRI5(Op, N, 4, Base, Offset, OffImm);
+                                            SDOperand &Base, SDOperand &OffImm,
+                                            SDOperand &Offset) {
+  return SelectThumbAddrModeRI5(Op, N, 4, Base, OffImm, Offset);
 }
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDOperand Op, SDOperand N,

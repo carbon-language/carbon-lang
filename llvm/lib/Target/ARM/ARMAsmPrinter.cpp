@@ -523,7 +523,8 @@ void
 ARMAsmPrinter::printThumbAddrModeRI5Operand(const MachineInstr *MI, int Op,
                                             unsigned Scale) {
   const MachineOperand &MO1 = MI->getOperand(Op);
-  const MachineOperand &MO2 = MI->getOperand(Op+2);
+  const MachineOperand &MO2 = MI->getOperand(Op+1);
+  const MachineOperand &MO3 = MI->getOperand(Op+2);
 
   if (!MO1.isRegister()) {   // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, Op);
@@ -531,7 +532,9 @@ ARMAsmPrinter::printThumbAddrModeRI5Operand(const MachineInstr *MI, int Op,
   }
 
   O << "[" << TM.getRegisterInfo()->get(MO1.getReg()).Name;
-  if (unsigned ImmOffs = MO2.getImm()) {
+  if (MO3.getReg())
+    O << ", " << TM.getRegisterInfo()->get(MO3.getReg()).Name;
+  else if (unsigned ImmOffs = MO2.getImm()) {
     O << ", #" << ImmOffs;
     if (Scale > 1)
       O << " * " << Scale;
@@ -541,24 +544,15 @@ ARMAsmPrinter::printThumbAddrModeRI5Operand(const MachineInstr *MI, int Op,
 
 void
 ARMAsmPrinter::printThumbAddrModeS1Operand(const MachineInstr *MI, int Op) {
-  if (MI->getOperand(Op+1).getReg())
-    printThumbAddrModeRROperand(MI, Op);
-  else
-    printThumbAddrModeRI5Operand(MI, Op, 1);
+  printThumbAddrModeRI5Operand(MI, Op, 1);
 }
 void
 ARMAsmPrinter::printThumbAddrModeS2Operand(const MachineInstr *MI, int Op) {
-  if (MI->getOperand(Op+1).getReg())
-    printThumbAddrModeRROperand(MI, Op);
-  else
-    printThumbAddrModeRI5Operand(MI, Op, 2);
+  printThumbAddrModeRI5Operand(MI, Op, 2);
 }
 void
 ARMAsmPrinter::printThumbAddrModeS4Operand(const MachineInstr *MI, int Op) {
-  if (MI->getOperand(Op+1).getReg())
-    printThumbAddrModeRROperand(MI, Op);
-  else
-    printThumbAddrModeRI5Operand(MI, Op, 4);
+  printThumbAddrModeRI5Operand(MI, Op, 4);
 }
 
 void ARMAsmPrinter::printThumbAddrModeSPOperand(const MachineInstr *MI,int Op) {
