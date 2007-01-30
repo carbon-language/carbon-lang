@@ -18,14 +18,16 @@
 #include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
 #include "ARMSubtarget.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Type.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -281,7 +283,7 @@ bool ARMRegisterInfo::hasFP(const MachineFunction &MF) const {
   return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-/// emitARMRegPlusImmediate - Emit a series of instructions to materialize
+/// emitARMRegPlusImmediate - Emits a series of instructions to materialize
 /// a destreg = basereg + immediate in ARM code.
 static
 void emitARMRegPlusImmediate(MachineBasicBlock &MBB,
@@ -323,7 +325,70 @@ static bool isLowRegister(unsigned Reg) {
   }
 }
 
-/// emitThumbRegPlusImmediate - Emit a series of instructions to materialize
+/// calcNumMI - Returns the number of instructions required to materialize
+/// the specific add / sub r, c instruction.
+static unsigned calcNumMI(int Opc, int ExtraOpc, unsigned Bytes,
+                          unsigned NumBits, unsigned Scale) {
+  unsigned NumMIs = 0;
+  unsigned Chunk = ((1 << NumBits) - 1) * Scale;
+
+  if (Opc == ARM::tADDrSPi) {
+    unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
+    Bytes -= ThisVal;
+    NumMIs++;
+    NumBits = 8;
+    Scale = 1;
+    Chunk = ((1 << NumBits) - 1) * Scale;
+  }
+
+  NumMIs += Bytes / Chunk;
+  if ((Bytes % Chunk) != 0)
+    NumMIs++;
+  if (ExtraOpc)
+    NumMIs++;
+  return NumMIs;
+}
+
+/// emitThumbRegPlusConstPool - Emits a series of instructions to materialize
+/// a destreg = basereg + immediate in Thumb code. Load the immediate from a
+/// constpool entry.
+static
+void emitThumbRegPlusConstPool(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator &MBBI,
+                               unsigned DestReg, unsigned BaseReg,
+                               int NumBytes, const TargetInstrInfo &TII) {
+    MachineFunction &MF = *MBB.getParent();
+    MachineConstantPool *ConstantPool = MF.getConstantPool();
+    bool isHigh = !isLowRegister(DestReg) || !isLowRegister(BaseReg);
+    bool isSub = false;
+    // Subtract doesn't have high register version. Load the negative value
+    // if either base or dest register is a high register.
+    if (NumBytes < 0 && !isHigh) {
+      isSub = true;
+      NumBytes = -NumBytes;
+    }
+    Constant *C = ConstantInt::get(Type::Int32Ty, NumBytes);
+    unsigned Idx = ConstantPool->getConstantPoolIndex(C, 2);
+    unsigned LdReg = DestReg;
+    if (DestReg == ARM::SP) {
+      assert(BaseReg == ARM::SP && "Unexpected!");
+      LdReg = ARM::R3;
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R3);
+    }
+    // Load the constant.
+    BuildMI(MBB, MBBI, TII.get(ARM::tLDRpci), LdReg).addConstantPoolIndex(Idx);
+    // Emit add / sub.
+    int Opc = (isSub) ? ARM::tSUBrr : (isHigh ? ARM::tADDhirr : ARM::tADDrr);
+    const MachineInstrBuilder MIB = BuildMI(MBB, MBBI, TII.get(Opc), DestReg);
+    if (DestReg == ARM::SP)
+      MIB.addReg(BaseReg).addReg(LdReg);
+    else
+      MIB.addReg(LdReg).addReg(BaseReg);
+    if (DestReg == ARM::SP)
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::R3).addReg(ARM::R12);
+}
+
+/// emitThumbRegPlusImmediate - Emits a series of instructions to materialize
 /// a destreg = basereg + immediate in Thumb code.
 static
 void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
@@ -335,10 +400,11 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   if (isSub) Bytes = -NumBytes;
   bool isMul4 = (Bytes & 3) == 0;
   bool isTwoAddr = false;
+  bool DstNeBase = false;
   unsigned NumBits = 1;
   unsigned Scale = 1;
-  unsigned Opc = 0;
-  unsigned ExtraOpc = 0;
+  int Opc = 0;
+  int ExtraOpc = 0;
 
   if (DestReg == BaseReg && BaseReg == ARM::SP) {
     assert(isMul4 && "Thumb sp inc / dec size must be multiple of 4!");
@@ -359,22 +425,37 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     Scale = 4;
     Opc = ARM::tADDrSPi;
   } else {
-    if (DestReg != BaseReg) {
-      if (isLowRegister(DestReg) && isLowRegister(BaseReg)) {
-        // If both are low registers, emit DestReg = add BaseReg, max(Imm, 7)
-        unsigned Chunk = (1 << 3) - 1;
-        unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
-        Bytes -= ThisVal;
-        BuildMI(MBB, MBBI, TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3), DestReg)
-          .addReg(BaseReg).addImm(ThisVal);
-      } else {
-        BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), DestReg).addReg(BaseReg);
-      }
-      BaseReg = DestReg;
-    }
+    // sp = sub sp, c
+    // r1 = sub sp, c
+    // r8 = sub sp, c
+    if (DestReg != BaseReg)
+      DstNeBase = true;
     NumBits = 8;
     Opc = isSub ? ARM::tSUBi8 : ARM::tADDi8;
     isTwoAddr = true;
+  }
+
+  unsigned NumMIs = calcNumMI(Opc, ExtraOpc, Bytes, NumBits, Scale);
+  unsigned Threshold = (DestReg == ARM::SP) ? 4 : 3;
+  if (NumMIs > Threshold) {
+    // This will expand into too many instructions. Load the immediate from a
+    // constpool entry.
+    emitThumbRegPlusConstPool(MBB, MBBI, DestReg, BaseReg, NumBytes, TII);
+    return;
+  }
+
+  if (DstNeBase) {
+    if (isLowRegister(DestReg) && isLowRegister(BaseReg)) {
+      // If both are low registers, emit DestReg = add BaseReg, max(Imm, 7)
+      unsigned Chunk = (1 << 3) - 1;
+      unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
+      Bytes -= ThisVal;
+      BuildMI(MBB, MBBI, TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3), DestReg)
+        .addReg(BaseReg).addImm(ThisVal);
+    } else {
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), DestReg).addReg(BaseReg);
+    }
+    BaseReg = DestReg;
   }
 
   unsigned Chunk = ((1 << NumBits) - 1) * Scale;
@@ -643,7 +724,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       return;
     }
 
-    // Otherwise, it didn't fit.  Pull in what we can to simplify the immediate.
+    // Otherwise, it didn't fit. Pull in what we can to simplify the immediate.
     if (AddrMode == ARMII::AddrModeTs) {
       // Thumb tLDRspi, tSTRspi. These will change to instructions that use a
       // different base register.
