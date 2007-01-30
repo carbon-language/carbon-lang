@@ -68,20 +68,6 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
     return Result;
   }
 
-  Constant *Op0 = 0, *Op1 = 0;
-  switch (I->getNumOperands()) {
-  default:
-  case 2:
-    Op1 = dyn_cast<Constant>(I->getOperand(1));
-    if (Op1 == 0) return 0;        // Not a constant?, can't fold
-    /* FALL THROUGH */
-  case 1:
-    Op0 = dyn_cast<Constant>(I->getOperand(0));
-    if (Op0 == 0) return 0;        // Not a constant?, can't fold
-    break;
-  case 0: return 0;
-  }
-
   // Scan the operand list, checking to see if they are all constants, if so,
   // hand off to ConstantFoldInstOperands.
   SmallVector<Constant*, 8> Ops;
