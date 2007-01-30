@@ -36,9 +36,9 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// processFunctionBeforeCalleeSavedScan().
   bool HasStackFrame;
 
-  /// LRSpilled - True if the LR register has been spilled.
-  ///
-  bool LRSpilled;
+  /// LRSForceSpilled - True if the LR register has been for spilled to enable
+  /// far jump.
+  bool LRForceSpilled;
 
   /// FramePtrSpillOffset - If HasStackFrame, this records the frame pointer
   /// spill stack offset.
@@ -75,13 +75,13 @@ class ARMFunctionInfo : public MachineFunctionInfo {
 public:
   ARMFunctionInfo() :
     isThumb(false),
-    VarArgsRegSaveSize(0), HasStackFrame(false), LRSpilled(false),
+    VarArgsRegSaveSize(0), HasStackFrame(false), LRForceSpilled(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0), JumpTableUId(0) {}
 
   ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
-    VarArgsRegSaveSize(0), HasStackFrame(false), LRSpilled(false),
+    VarArgsRegSaveSize(0), HasStackFrame(false), LRForceSpilled(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0), JumpTableUId(0) {}
 
@@ -93,8 +93,8 @@ public:
   bool hasStackFrame() const { return HasStackFrame; }
   void setHasStackFrame(bool s) { HasStackFrame = s; }
 
-  bool isLRSpilled() const { return LRSpilled; }
-  void setLRIsSpilled(bool s) { LRSpilled = s; }
+  bool isLRForceSpilled() const { return LRForceSpilled; }
+  void setLRIsForceSpilled(bool s) { LRForceSpilled = s; }
 
   unsigned getFramePtrSpillOffset() const { return FramePtrSpillOffset; }
   void setFramePtrSpillOffset(unsigned o) { FramePtrSpillOffset = o; }

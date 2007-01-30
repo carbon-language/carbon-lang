@@ -29,7 +29,9 @@
 #include <iostream>
 using namespace llvm;
 
-STATISTIC(NumSplit, "Number of uncond branches inserted");
+STATISTIC(NumSplit,    "Number of uncond branches inserted");
+STATISTIC(NumCBrFixed, "Number of cond branches fixed");
+STATISTIC(NumUBrFixed, "Number of uncond branches fixed");
 
 namespace {
   /// ARMConstantIslands - Due to limited pc-relative displacements, ARM
@@ -88,7 +90,16 @@ namespace {
     ///
     std::vector<ImmBranch> ImmBranches;
 
+    /// PushPopMIs - Keep track of all the Thumb push / pop instructions.
+    ///
+    std::vector<MachineInstr*> PushPopMIs;
+
+    /// HasFarJump - True if any far jump instruction has been emitted during
+    /// the branch fix up pass.
+    bool HasFarJump;
+
     const TargetInstrInfo *TII;
+    const ARMFunctionInfo *AFI;
   public:
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -105,7 +116,10 @@ namespace {
     void UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB);
     bool HandleConstantPoolUser(MachineFunction &Fn, CPUser &U);
     bool BBIsInBranchRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned D);
-    bool FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br);
+    bool FixUpImmediateBr(MachineFunction &Fn, ImmBranch &Br);
+    bool FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br);
+    bool FixUpUnconditionalBr(MachineFunction &Fn, ImmBranch &Br);
+    bool UndoLRSpillRestore();
 
     unsigned GetOffsetOf(MachineInstr *MI) const;
     unsigned GetOffsetOf(MachineBasicBlock *MBB) const;
@@ -122,7 +136,10 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   MachineConstantPool &MCP = *Fn.getConstantPool();
   
   TII = Fn.getTarget().getInstrInfo();
-  
+  AFI = Fn.getInfo<ARMFunctionInfo>();
+
+  HasFarJump = false;
+
   // Renumber all of the machine basic blocks in the function, guaranteeing that
   // the numbers agree with the position of the block in the function.
   Fn.RenumberBlocks();
@@ -142,22 +159,31 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   InitialFunctionScan(Fn, CPEMIs);
   CPEMIs.clear();
   
-  // Iteratively place constant pool entries until there is no change.
-  bool MadeChange;
-  do {
-    MadeChange = false;
+  // Iteratively place constant pool entries and fix up branches until there
+  // is no change.
+  bool MadeChange = false;
+  while (true) {
+    bool Change = false;
     for (unsigned i = 0, e = CPUsers.size(); i != e; ++i)
-      MadeChange |= HandleConstantPoolUser(Fn, CPUsers[i]);
+      Change |= HandleConstantPoolUser(Fn, CPUsers[i]);
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
-      MadeChange |= FixUpImmediateBranch(Fn, ImmBranches[i]);
-  } while (MadeChange);
+      Change |= FixUpImmediateBr(Fn, ImmBranches[i]);
+    if (!Change)
+      break;
+    MadeChange = true;
+  }
   
+  // If LR has been forced spilled and no far jumps (i.e. BL) has been issued.
+  // Undo the spill / restore of LR if possible.
+  if (!HasFarJump && AFI->isLRForceSpilled() && AFI->isThumbFunction())
+    MadeChange |= UndoLRSpillRestore();
+
   BBSizes.clear();
   WaterList.clear();
   CPUsers.clear();
   ImmBranches.clear();
-    
-  return true;
+
+  return MadeChange;
 }
 
 /// DoInitialPlacement - Perform the initial placement of the constant pool
@@ -257,6 +283,9 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
         unsigned MaxDisp = (1 << (Bits-1)) * Scale;
         ImmBranches.push_back(ImmBranch(I, MaxDisp, isCond, UOpc));
       }
+
+      if (Opc == ARM::tPUSH || Opc == ARM::tPOP_RET)
+        PushPopMIs.push_back(I);
 
       // Scan the instructions for constant pool operands.
       for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
@@ -380,7 +409,6 @@ void ARMConstantIslands::UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB) {
 /// account for this change.
 void ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   MachineBasicBlock *OrigBB = MI->getParent();
-  const ARMFunctionInfo *AFI = OrigBB->getParent()->getInfo<ARMFunctionInfo>();
   bool isThumb = AFI->isThumbFunction();
 
   // Create a new MBB for the code after the OrigBB.
@@ -524,32 +552,53 @@ bool ARMConstantIslands::BBIsInBranchRange(MachineInstr *MI,
   return false;
 }
 
-static inline unsigned getUncondBranchDisp(int Opc) {
-  return (Opc == ARM::tB) ? (1<<10)*2 : (1<<23)*4;
-}
-
-/// FixUpImmediateBranch - Fix up immediate branches whose destination is too
-/// far away to fit in its displacement field. If it is a conditional branch,
-/// then it is converted to an inverse conditional branch + an unconditional
-/// branch to the destination. If it is an unconditional branch, then it is
-/// converted to a branch to a branch.
-bool
-ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
+/// FixUpImmediateBr - Fix up an immediate branch whose destination is too far
+/// away to fit in its displacement field.
+bool ARMConstantIslands::FixUpImmediateBr(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
   MachineBasicBlock *DestBB = MI->getOperand(0).getMachineBasicBlock();
 
   if (BBIsInBranchRange(MI, DestBB, Br.MaxDisp))
     return false;
 
-  if (!Br.isCond) {
-    // Unconditional branch. We have to insert a branch somewhere to perform
-    // a two level branch (branch to branch). FIXME: not yet implemented.
-    assert(false && "Can't handle unconditional branch yet!");
-    return false;
-  }
+  if (!Br.isCond)
+    return FixUpUnconditionalBr(Fn, Br);
+  return FixUpConditionalBr(Fn, Br);
+}
 
-  // Otherwise, add a unconditional branch to the destination and 
-  // invert the branch condition to jump over it:
+/// FixUpUnconditionalBr - Fix up an unconditional branches whose destination is
+/// too far away to fit in its displacement field. If LR register has been
+/// spilled in the epilogue, then we can use BL to implement a far jump.
+/// Otherwise, add a intermediate branch instruction to to a branch.
+bool
+ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &Fn, ImmBranch &Br) {
+  MachineInstr *MI = Br.MI;
+  MachineBasicBlock *MBB = MI->getParent();
+  assert(AFI->isThumbFunction() && "Expected a Thumb function!");
+
+  // Use BL to implement far jump.
+  Br.MaxDisp = (1 << 21) * 2;
+  MI->setInstrDescriptor(TII->get(ARM::tBfar));
+  BBSizes[MBB->getNumber()] += 2;
+  HasFarJump = true;
+  NumUBrFixed++;
+  return true;
+}
+
+static inline unsigned getUncondBranchDisp(int Opc) {
+  return (Opc == ARM::tB) ? (1<<10)*2 : (1<<23)*4;
+}
+
+/// FixUpConditionalBr - Fix up a conditional branches whose destination is too
+/// far away to fit in its displacement field. It is converted to an inverse
+/// conditional branch + an unconditional branch to the destination.
+bool
+ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
+  MachineInstr *MI = Br.MI;
+  MachineBasicBlock *DestBB = MI->getOperand(0).getMachineBasicBlock();
+
+  // Add a unconditional branch to the destination and invert the branch
+  // condition to jump over it:
   // blt L1
   // =>
   // bge L2
@@ -565,6 +614,7 @@ ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *BackMI = &MBB->back();
   bool NeedSplit = (BackMI != MI) || !BBHasFallthrough(MBB);
 
+  NumCBrFixed++;
   if (BackMI != MI) {
     if (next(MachineBasicBlock::iterator(MI)) == MBB->back() &&
         BackMI->getOpcode() == Br.UncondBr) {
@@ -605,4 +655,22 @@ ARMConstantIslands::FixUpImmediateBranch(MachineFunction &Fn, ImmBranch &Br) {
   // Increase the size of MBB to account for the new unconditional branch.
   BBSizes[MBB->getNumber()] += ARM::GetInstSize(&MBB->back());
   return true;
+}
+
+
+/// UndoLRSpillRestore - Remove Thumb push / pop instructions that only spills
+/// LR / restores LR to pc.
+bool ARMConstantIslands::UndoLRSpillRestore() {
+  bool MadeChange = false;
+  for (unsigned i = 0, e = PushPopMIs.size(); i != e; ++i) {
+    MachineInstr *MI = PushPopMIs[i];
+    if (MI->getNumOperands() == 1) {
+        if (MI->getOpcode() == ARM::tPOP_RET &&
+            MI->getOperand(0).getReg() == ARM::PC)
+          BuildMI(MI->getParent(), TII->get(ARM::tBX_RET));
+        MI->eraseFromParent();
+        MadeChange = true;
+    }
+  }
+  return MadeChange;
 }

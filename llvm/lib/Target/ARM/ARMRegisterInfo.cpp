@@ -770,17 +770,29 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
   }
 
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  bool ForceLRSpill = false;
+  if (!LRSpilled && AFI->isThumbFunction()) {
+    unsigned FnSize = ARM::GetFunctionSize(MF);
+    // Force LR spill if the Thumb function size is > 2048. This enables the
+    // use of BL to implement far jump. If it turns out that it's not needed
+    // the branch fix up path will undo it.
+    if (FnSize >= (1 << 11)) {
+      CanEliminateFrame = false;
+      ForceLRSpill = true;
+    }
+  }
+
   if (!CanEliminateFrame) {
     AFI->setHasStackFrame(true);
 
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
     // Spill LR as well so we can fold BX_RET to the registers restore (LDM).
     if (!LRSpilled && CS1Spilled) {
-      LRSpilled = true;
       MF.changePhyRegUsed(ARM::LR, true);
       NumGPRSpills++;
       UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
                                     UnspilledCS1GPRs.end(), (unsigned)ARM::LR));
+      ForceLRSpill = false;
     }
 
     if (STI.isTargetDarwin()) {
@@ -800,8 +812,10 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
     }
   }
 
-  // Remembe if LR has been spilled.
-  AFI->setLRIsSpilled(LRSpilled);
+  if (ForceLRSpill) {
+    MF.changePhyRegUsed(ARM::LR, true);
+    AFI->setLRIsForceSpilled(true);
+  }
 }
 
 /// Move iterator pass the next bunch of callee save load / store ops for
