@@ -195,6 +195,9 @@ let isCall = 1, noResults = 1,
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   def tB   : TI<(ops brtarget:$dst), "b $dst", [(br bb:$dst)]>;
 
+  // Far jump
+  def tBfar  : TIx2<(ops brtarget:$dst), "bl $dst\t@ far jump", []>;
+
   def tBR_JTr : TJTI<(ops GPR:$dst, jtblock_operand:$jt, i32imm:$id),
                      "cpy pc, $dst \n\t.align\t2\n$jt",
                      [(ARMbrjt GPR:$dst, tjumptable:$jt, imm:$id)]>;
