@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -37,12 +38,21 @@ namespace {
 
 Inliner::Inliner() : InlineThreshold(InlineLimit) {}
 
+/// getAnalysisUsage - For this class, we declare that we require and preserve
+/// the call graph.  If the derived class implements this method, it should
+/// always explicitly call the implementation here.
+void Inliner::getAnalysisUsage(AnalysisUsage &Info) const {
+  Info.addRequired<TargetData>();
+  CallGraphSCCPass::getAnalysisUsage(Info);
+}
+
 // InlineCallIfPossible - If it is possible to inline the specified call site,
 // do so and update the CallGraph for this operation.
 static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
-                                 const std::set<Function*> &SCCFunctions) {
+                                 const std::set<Function*> &SCCFunctions,
+                                 const TargetData &TD) {
   Function *Callee = CS.getCalledFunction();
-  if (!InlineFunction(CS, &CG)) return false;
+  if (!InlineFunction(CS, &CG, &TD)) return false;
 
   // If we inlined the last possible call site to the function, delete the
   // function body now.
@@ -134,7 +144,8 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
                << ", Call: " << *CS.getInstruction();
 
           // Attempt to inline the function...
-          if (InlineCallIfPossible(CS, CG, SCCFunctions)) {
+          if (InlineCallIfPossible(CS, CG, SCCFunctions, 
+                                   getAnalysis<TargetData>())) {
             // Remove this call site from the list.  If possible, use 
             // swap/pop_back for efficiency, but do not use it if doing so would
             // move a call site to a function in this SCC before the

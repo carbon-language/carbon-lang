@@ -29,6 +29,11 @@ namespace llvm {
 struct Inliner : public CallGraphSCCPass {
   Inliner();
 
+  /// getAnalysisUsage - For this class, we declare that we require and preserve
+  /// the call graph.  If the derived class implements this method, it should
+  /// always explicitly call the implementation here.
+  virtual void getAnalysisUsage(AnalysisUsage &Info) const;
+
   // Main run interface method, this implements the interface required by the
   // Pass class.
   virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
