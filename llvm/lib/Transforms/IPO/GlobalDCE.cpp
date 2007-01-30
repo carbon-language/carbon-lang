@@ -57,7 +57,7 @@ bool GlobalDCE::runOnModule(Module &M) {
     Changed |= RemoveUnusedGlobalValue(*I);
     // Functions with external linkage are needed if they have a body
     if ((!I->hasInternalLinkage() && !I->hasLinkOnceLinkage()) &&
-        !I->isExternal())
+        !I->isDeclaration())
       GlobalIsNeeded(I);
   }
 
@@ -66,7 +66,7 @@ bool GlobalDCE::runOnModule(Module &M) {
     // Externally visible & appending globals are needed, if they have an
     // initializer.
     if ((!I->hasInternalLinkage() && !I->hasLinkOnceLinkage()) &&
-        !I->isExternal())
+        !I->isDeclaration())
       GlobalIsNeeded(I);
   }
 
@@ -89,7 +89,7 @@ bool GlobalDCE::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!AliveGlobals.count(I)) {
       DeadFunctions.push_back(I);         // Keep track of dead globals
-      if (!I->isExternal())
+      if (!I->isDeclaration())
         I->deleteBody();
     }
 

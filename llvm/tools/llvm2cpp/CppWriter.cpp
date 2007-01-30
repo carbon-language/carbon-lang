@@ -1452,7 +1452,7 @@ void CppWriter::printFunctionHead(const Function* F) {
   Out << ",";
   nl(Out) << "/*Name=*/\"";
   printEscapedString(F->getName());
-  Out << "\", mod); " << (F->isExternal()? "// (external, no body)" : "");
+  Out << "\", mod); " << (F->isDeclaration()? "// (external, no body)" : "");
   nl(Out,-1);
   printCppName(F);
   Out << "->setCallingConv(";
@@ -1476,7 +1476,7 @@ void CppWriter::printFunctionHead(const Function* F) {
 }
 
 void CppWriter::printFunctionBody(const Function *F) {
-  if (F->isExternal())
+  if (F->isDeclaration())
     return; // external functions have no bodies.
 
   // Clear the DefinedValues and ForwardRefs maps because we can't have 
@@ -1550,7 +1550,7 @@ void CppWriter::printInline(const std::string& fname, const std::string& func) {
     error(std::string("Function '") + func + "' not found in input module");
     return;
   }
-  if (F->isExternal()) {
+  if (F->isDeclaration()) {
     error(std::string("Function '") + func + "' is external!");
     return;
   }
@@ -1611,7 +1611,7 @@ void CppWriter::printModuleBody() {
   nl(Out) << "// Function Definitions"; nl(Out);
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end(); 
        I != E; ++I) {
-    if (!I->isExternal()) {
+    if (!I->isDeclaration()) {
       nl(Out) << "// Function: " << I->getName() << " (" << getCppName(I) 
           << ")";
       nl(Out) << "{";

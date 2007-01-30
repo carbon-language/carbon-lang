@@ -320,7 +320,7 @@ static bool ExtractLoops(BugDriver &BD,
     std::vector<std::pair<std::string, const FunctionType*> > MisCompFunctions;
     for (Module::iterator I = ToOptimizeLoopExtracted->begin(),
            E = ToOptimizeLoopExtracted->end(); I != E; ++I)
-      if (!I->isExternal())
+      if (!I->isDeclaration())
         MisCompFunctions.push_back(std::make_pair(I->getName(),
                                                   I->getFunctionType()));
 
@@ -460,7 +460,7 @@ static bool ExtractBlocks(BugDriver &BD,
   std::vector<std::pair<std::string, const FunctionType*> > MisCompFunctions;
   for (Module::iterator I = Extracted->begin(), E = Extracted->end();
        I != E; ++I)
-    if (!I->isExternal())
+    if (!I->isDeclaration())
       MisCompFunctions.push_back(std::make_pair(I->getName(),
                                                 I->getFunctionType()));
 
@@ -502,7 +502,7 @@ DebugAMiscompilation(BugDriver &BD,
   std::vector<Function*> MiscompiledFunctions;
   Module *Prog = BD.getProgram();
   for (Module::iterator I = Prog->begin(), E = Prog->end(); I != E; ++I)
-    if (!I->isExternal())
+    if (!I->isDeclaration())
       MiscompiledFunctions.push_back(I);
 
   // Do the reduction...
@@ -637,7 +637,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   // the Test module to call into it.  Thus, we create a new function `main'
   // which just calls the old one.
   if (Function *oldMain = Safe->getNamedFunction("main"))
-    if (!oldMain->isExternal()) {
+    if (!oldMain->isDeclaration()) {
       // Rename it
       oldMain->setName("llvm_bugpoint_old_main");
       // Create a NEW `main' function with same type in the test module.
@@ -680,12 +680,12 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
   // Use the function we just added to get addresses of functions we need.
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {
-    if (F->isExternal() && !F->use_empty() && &*F != resolverFunc &&
+    if (F->isDeclaration() && !F->use_empty() && &*F != resolverFunc &&
         F->getIntrinsicID() == 0 /* ignore intrinsics */) {
       Function *TestFn = Test->getNamedFunction(F->getName());
 
       // Don't forward functions which are external in the test module too.
-      if (TestFn && !TestFn->isExternal()) {
+      if (TestFn && !TestFn->isDeclaration()) {
         // 1. Add a string constant with its name to the global file
         Constant *InitArray = ConstantArray::get(F->getName());
         GlobalVariable *funcName =

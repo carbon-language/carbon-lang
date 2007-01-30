@@ -63,7 +63,7 @@ namespace {
       
       Named->setLinkage(GlobalValue::ExternalLinkage);
       Named->deleteBody();
-      assert(Named->isExternal() && "This didn't make the function external!");
+      assert(Named->isDeclaration() && "This didn't make the function external!");
       return true;
     }
 
@@ -73,7 +73,7 @@ namespace {
 
       // Mark all global variables internal
       for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
-        if (!I->isExternal()) {
+        if (!I->isDeclaration()) {
           I->setInitializer(0);  // Make all variables external
           I->setLinkage(GlobalValue::ExternalLinkage);
         }

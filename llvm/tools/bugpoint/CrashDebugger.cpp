@@ -219,7 +219,7 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   // Loop over and delete any functions which we aren't supposed to be playing
   // with...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!I->isExternal() && !Functions.count(I))
+    if (!I->isDeclaration() && !Functions.count(I))
       DeleteFunctionBody(I);
 
   // Try running the hacked up program...
@@ -406,7 +406,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   std::vector<Function*> Functions;
   for (Module::iterator I = BD.getProgram()->begin(),
          E = BD.getProgram()->end(); I != E; ++I)
-    if (!I->isExternal())
+    if (!I->isDeclaration())
       Functions.push_back(I);
 
   if (Functions.size() > 1 && !BugpointIsInterrupted) {
@@ -459,7 +459,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
     unsigned CurInstructionNum = 0;
     for (Module::const_iterator FI = BD.getProgram()->begin(),
            E = BD.getProgram()->end(); FI != E; ++FI)
-      if (!FI->isExternal())
+      if (!FI->isDeclaration())
         for (Function::const_iterator BI = FI->begin(), E = FI->end(); BI != E;
              ++BI)
           for (BasicBlock::const_iterator I = BI->begin(), E = --BI->end();

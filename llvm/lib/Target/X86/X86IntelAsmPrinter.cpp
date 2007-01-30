@@ -347,7 +347,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
 
   // Emit declarations for external functions.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->isExternal()) {
+    if (I->isDeclaration()) {
       std::string Name = Mang->getValueName(I);
       X86SharedAsmPrinter::decorateName(Name, I);
 
@@ -362,7 +362,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
   // external globals to have type byte, and if that's good enough for VC++...
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    if (I->isExternal()) {
+    if (I->isDeclaration()) {
       std::string Name = Mang->getValueName(I);
 
       O << "\textern " ;
@@ -382,7 +382,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    if (I->isExternal()) continue;   // External global require no code
+    if (I->isDeclaration()) continue;   // External global require no code
     
     // Check to see if this is a special global used by LLVM, if so, emit it.
     if (EmitSpecialLLVMGlobal(I))

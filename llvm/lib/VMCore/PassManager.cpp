@@ -751,7 +751,7 @@ Pass *AnalysisResolver::getAnalysisToUpdate(AnalysisID ID, bool dir) const {
 bool
 BBPassManager::runOnFunction(Function &F) {
 
-  if (F.isExternal())
+  if (F.isDeclaration())
     return false;
 
   bool Changed = doInitialization(F);
@@ -952,7 +952,7 @@ bool FPPassManager::runOnFunction(Function &F) {
 
   bool Changed = false;
 
-  if (F.isExternal())
+  if (F.isDeclaration())
     return false;
 
   std::string Msg1 = "Executing Pass '";

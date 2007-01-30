@@ -48,7 +48,7 @@ namespace {
       for(Module::iterator I = M.begin(),
             E = M.end(); I != E; ++I){
         Vals.insert(&*I);
-        if(!I->isExternal()) {
+        if(!I->isDeclaration()) {
           for (Function::arg_iterator AI = I->arg_begin(), AE = I->arg_end();
                AI != AE; ++AI) 
             Vals.insert(&*AI);     

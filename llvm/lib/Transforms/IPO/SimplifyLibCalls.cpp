@@ -177,7 +177,7 @@ public:
         // because they live in a runtime library somewhere and were (probably)
         // not compiled by LLVM.  So, we only act on external functions that
         // have external or dllimport linkage and non-empty uses.
-        if (!FI->isExternal() ||
+        if (!FI->isDeclaration() ||
             !(FI->hasExternalLinkage() || FI->hasDLLImportLinkage()) ||
             FI->use_empty())
           continue;

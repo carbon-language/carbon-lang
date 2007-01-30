@@ -96,7 +96,7 @@ bool InternalizePass::runOnModule(Module &M) {
   //
   if (ExternalNames.empty()) {
     Function *MainFunc = M.getMainFunction();
-    if (MainFunc == 0 || MainFunc->isExternal())
+    if (MainFunc == 0 || MainFunc->isDeclaration())
       return false;  // No main found, must be a library...
     
     // Preserve main, internalize all else.
@@ -107,7 +107,7 @@ bool InternalizePass::runOnModule(Module &M) {
   
   // Found a main function, mark all functions not named main as internal.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal() &&         // Function must be defined here
+    if (!I->isDeclaration() &&         // Function must be defined here
         !I->hasInternalLinkage() &&  // Can't already have internal linkage
         !ExternalNames.count(I->getName())) {// Not marked to keep external?
       I->setLinkage(GlobalValue::InternalLinkage);
@@ -129,7 +129,7 @@ bool InternalizePass::runOnModule(Module &M) {
   // Mark all global variables with initializers as internal as well.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    if (!I->isExternal() && !I->hasInternalLinkage() &&
+    if (!I->isDeclaration() && !I->hasInternalLinkage() &&
         !ExternalNames.count(I->getName())) {
       // Special case handling of the global ctor and dtor list.  When we
       // internalize it, we mark it constant, which allows elimination of

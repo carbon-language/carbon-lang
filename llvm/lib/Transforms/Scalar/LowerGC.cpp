@@ -130,7 +130,7 @@ bool LowerGC::doInitialization(Module &M) {
                                      GlobalValue::LinkOnceLinkage,
                                      Constant::getNullValue(PRLTy),
                                      "llvm_gc_root_chain", &M);
-    } else if (RootChain->hasExternalLinkage() && RootChain->isExternal()) {
+    } else if (RootChain->hasExternalLinkage() && RootChain->isDeclaration()) {
       RootChain->setInitializer(Constant::getNullValue(PRLTy));
       RootChain->setLinkage(GlobalValue::LinkOnceLinkage);
     }

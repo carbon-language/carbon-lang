@@ -1021,7 +1021,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     // Transform load (constant global) into the value loaded.
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr)) {
       if (GV->isConstant()) {
-        if (!GV->isExternal()) {
+        if (!GV->isDeclaration()) {
           markConstant(IV, &I, GV->getInitializer());
           return;
         }
@@ -1040,7 +1040,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
       if (CE->getOpcode() == Instruction::GetElementPtr)
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-      if (GV->isConstant() && !GV->isExternal())
+      if (GV->isConstant() && !GV->isDeclaration())
         if (Constant *V =
              ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE)) {
           markConstant(IV, &I, V);
@@ -1088,7 +1088,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
     return;
   }
 
-  if (F == 0 || !F->isExternal() || !canConstantFoldCallTo(F)) {
+  if (F == 0 || !F->isDeclaration() || !canConstantFoldCallTo(F)) {
     markOverdefined(IV, I);
     return;
   }
@@ -1486,7 +1486,7 @@ bool IPSCCP::runOnModule(Module &M) {
   hash_map<Value*, LatticeVal> &Values = Solver.getValueMapping();
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
     if (!F->hasInternalLinkage() || AddressIsTaken(F)) {
-      if (!F->isExternal())
+      if (!F->isDeclaration())
         Solver.MarkBlockExecutable(F->begin());
       for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
            AI != E; ++AI)

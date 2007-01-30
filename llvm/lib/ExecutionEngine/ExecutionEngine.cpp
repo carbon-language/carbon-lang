@@ -194,7 +194,7 @@ void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
     // an old-style (llvmgcc3) static ctor with __main linked in and in use.  If
     // this is the case, don't execute any of the global ctors, __main will do
     // it.
-    if (!GV || GV->isExternal() || GV->hasInternalLinkage()) continue;
+    if (!GV || GV->isDeclaration() || GV->hasInternalLinkage()) continue;
   
     // Should be an array of '{ int, void ()* }' structs.  The first value is
     // the init priority, which we ignore.
@@ -746,7 +746,7 @@ void ExecutionEngine::emitGlobals() {
       for (Module::const_global_iterator I = M.global_begin(),
            E = M.global_end(); I != E; ++I) {
         const GlobalValue *GV = I;
-        if (GV->hasInternalLinkage() || GV->isExternal() ||
+        if (GV->hasInternalLinkage() || GV->isDeclaration() ||
             GV->hasAppendingLinkage() || !GV->hasName())
           continue;// Ignore external globals and globals with internal linkage.
           
@@ -791,7 +791,7 @@ void ExecutionEngine::emitGlobals() {
         }
       }
       
-      if (!I->isExternal()) {
+      if (!I->isDeclaration()) {
         // Get the type of the global.
         const Type *Ty = I->getType()->getElementType();
 
@@ -829,7 +829,7 @@ void ExecutionEngine::emitGlobals() {
     // and initialize their contents.
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
-      if (!I->isExternal()) {
+      if (!I->isDeclaration()) {
         if (!LinkedGlobalsMap.empty()) {
           if (const GlobalValue *GVEntry = 
                 LinkedGlobalsMap[std::make_pair(I->getName(), I->getType())])

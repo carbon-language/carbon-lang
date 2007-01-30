@@ -184,7 +184,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
 
   const Function *CalledFunc = CS.getCalledFunction();
   if (CalledFunc == 0 ||          // Can't inline external function or indirect
-      CalledFunc->isExternal() || // call, or call to a vararg function!
+      CalledFunc->isDeclaration() || // call, or call to a vararg function!
       CalledFunc->getFunctionType()->isVarArg()) return false;
 
 

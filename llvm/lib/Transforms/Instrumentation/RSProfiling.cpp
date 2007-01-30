@@ -499,7 +499,7 @@ void ProfilerRS::ProcessBackEdge(BasicBlock* src, BasicBlock* dst, Function& F) 
 }
 
 bool ProfilerRS::runOnFunction(Function& F) {
-  if (!F.isExternal()) {
+  if (!F.isDeclaration()) {
     std::set<std::pair<BasicBlock*, BasicBlock*> > BackEdges;
     RSProfilers& LI = getAnalysis<RSProfilers>();
     

@@ -1137,7 +1137,7 @@ void Interpreter::visitCallSite(CallSite CS) {
 
   // Check to see if this is an intrinsic function call...
   if (Function *F = CS.getCalledFunction())
-   if (F->isExternal ())
+   if (F->isDeclaration ())
     switch (F->getIntrinsicID()) {
     case Intrinsic::not_intrinsic:
       break;
@@ -1726,7 +1726,7 @@ void Interpreter::callFunction(Function *F,
   StackFrame.CurFunction = F;
 
   // Special handling for external functions.
-  if (F->isExternal()) {
+  if (F->isDeclaration()) {
     GenericValue Result = callExternalFunction (F, ArgVals);
     // Simulate a 'ret' instruction of the appropriate type.
     popStackAndReturnValueToCaller (F->getReturnType (), Result);

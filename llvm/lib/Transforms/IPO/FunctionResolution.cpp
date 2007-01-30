@@ -174,13 +174,13 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
       // to 'int (int)' or 'int ()' or whatever else is not completely generic.
       //
       Function *F = cast<Function>(Globals[i]);
-      if (!F->isExternal()) {
-        if (Concrete && !Concrete->isExternal())
+      if (!F->isDeclaration()) {
+        if (Concrete && !Concrete->isDeclaration())
           return false;   // Found two different functions types.  Can't choose!
 
         Concrete = Globals[i];
       } else if (Concrete) {
-        if (Concrete->isExternal()) // If we have multiple external symbols...
+        if (Concrete->isDeclaration()) // If we have multiple external symbols...
           if (F->getFunctionType()->getNumParams() >
               cast<Function>(Concrete)->getFunctionType()->getNumParams())
             Concrete = F;  // We are more concrete than "Concrete"!
@@ -190,7 +190,7 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
       }
     } else {
       GlobalVariable *GV = cast<GlobalVariable>(Globals[i]);
-      if (!GV->isExternal()) {
+      if (!GV->isDeclaration()) {
         if (Concrete) {
           cerr << "WARNING: Two global variables with external linkage"
                << " exist with the same name: '" << GV->getName()
@@ -211,7 +211,7 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
     unsigned NumInstancesWithExternalLinkage = 0;
 
     for (unsigned i = 0, e = Globals.size(); i != e; ++i) {
-      if (Globals[i]->isExternal())
+      if (Globals[i]->isDeclaration())
         HasExternal = true;
       else if (!Globals[i]->hasInternalLinkage())
         NumInstancesWithExternalLinkage++;
@@ -306,7 +306,7 @@ bool FunctionResolvingPass::runOnModule(Module &M) {
   bool Changed = false;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
     Function *F = I++;
-    if (F->use_empty() && F->isExternal()) {
+    if (F->use_empty() && F->isDeclaration()) {
       M.getFunctionList().erase(F);
       Changed = true;
     } else if (!F->hasInternalLinkage() && !F->getName().empty() &&
@@ -317,7 +317,7 @@ bool FunctionResolvingPass::runOnModule(Module &M) {
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ) {
     GlobalVariable *GV = I++;
-    if (GV->use_empty() && GV->isExternal()) {
+    if (GV->use_empty() && GV->isDeclaration()) {
       M.getGlobalList().erase(GV);
       Changed = true;
     } else if (!GV->hasInternalLinkage() && !GV->getName().empty())
@@ -337,7 +337,7 @@ bool FunctionResolvingPass::runOnModule(Module &M) {
   // dead.  If so, remove them now.
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; )
-    if (I->isExternal() && I->use_empty()) {
+    if (I->isDeclaration() && I->use_empty()) {
       Function *F = I;
       ++I;
       M.getFunctionList().erase(F);
@@ -349,7 +349,7 @@ bool FunctionResolvingPass::runOnModule(Module &M) {
 
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; )
-    if (I->isExternal() && I->use_empty()) {
+    if (I->isDeclaration() && I->use_empty()) {
       GlobalVariable *GV = I;
       ++I;
       M.getGlobalList().erase(GV);

@@ -367,7 +367,7 @@ Andersens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   // program and modify stuff.  We ignore this technical niggle for now.  This
   // is, after all, a "research quality" implementation of Andersen's analysis.
   if (Function *F = CS.getCalledFunction())
-    if (F->isExternal()) {
+    if (F->isDeclaration()) {
       Node *N1 = getNode(P);
 
       if (N1->begin() == N1->end())
@@ -599,7 +599,7 @@ void Andersens::AddConstraintsForNonInternalLinkage(Function *F) {
 /// constraints and return true.  If this is a call to an unknown function,
 /// return false.
 bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
-  assert(F->isExternal() && "Not an external function!");
+  assert(F->isDeclaration() && "Not an external function!");
 
   // These functions don't induce any points-to constraints.
   if (F->getName() == "atoi" || F->getName() == "atof" ||
@@ -724,7 +724,7 @@ void Andersens::CollectConstraints(Module &M) {
     if (!F->hasInternalLinkage())
       AddConstraintsForNonInternalLinkage(F);
 
-    if (!F->isExternal()) {
+    if (!F->isDeclaration()) {
       // Scan the function body, creating a memory object for each heap/stack
       // allocation in the body of the function and a node to represent all
       // pointer values defined by instructions and used as operands.
@@ -883,7 +883,7 @@ void Andersens::visitVAArg(VAArgInst &I) {
 void Andersens::AddConstraintsForCall(CallSite CS, Function *F) {
   // If this is a call to an external function, handle it directly to get some
   // taste of context sensitivity.
-  if (F->isExternal() && AddConstraintsForExternalCall(CS, F))
+  if (F->isDeclaration() && AddConstraintsForExternalCall(CS, F))
     return;
 
   if (isa<PointerType>(CS.getType())) {

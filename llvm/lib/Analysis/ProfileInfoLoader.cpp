@@ -164,7 +164,7 @@ void ProfileInfoLoader::getFunctionCounts(std::vector<std::pair<Function*,
   unsigned Counter = 0;
   for (Module::iterator I = M.begin(), E = M.end();
        I != E && Counter != FunctionCounts.size(); ++I)
-    if (!I->isExternal())
+    if (!I->isDeclaration())
       Counts.push_back(std::make_pair(I, FunctionCounts[Counter++]));
 }
 

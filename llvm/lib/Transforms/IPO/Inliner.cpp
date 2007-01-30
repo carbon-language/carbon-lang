@@ -84,7 +84,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
           CallSite CS = CallSite::get(I);
           if (CS.getInstruction() && (!CS.getCalledFunction() ||
-                                      !CS.getCalledFunction()->isExternal()))
+                                      !CS.getCalledFunction()->isDeclaration()))
             CallSites.push_back(CS);
         }
 
@@ -109,7 +109,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
     for (unsigned CSi = 0; CSi != CallSites.size(); ++CSi)
       if (Function *Callee = CallSites[CSi].getCalledFunction()) {
         // Calls to external functions are never inlinable.
-        if (Callee->isExternal() ||
+        if (Callee->isDeclaration() ||
             CallSites[CSi].getInstruction()->getParent()->getParent() ==Callee){
           if (SCC.size() == 1) {
             std::swap(CallSites[CSi], CallSites.back());

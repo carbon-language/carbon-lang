@@ -132,7 +132,7 @@ namespace {  // Anonymous namespace for class
         visitGlobalValue(*I);
 
         // Check to make sure function prototypes are okay.
-        if (I->isExternal()) visitFunction(*I);
+        if (I->isDeclaration()) visitFunction(*I);
       }
 
       for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
@@ -274,14 +274,14 @@ namespace {  // Anonymous namespace for class
 
 
 void Verifier::visitGlobalValue(GlobalValue &GV) {
-  Assert1(!GV.isExternal() ||
+  Assert1(!GV.isDeclaration() ||
           GV.hasExternalLinkage() ||
           GV.hasDLLImportLinkage() ||
           GV.hasExternalWeakLinkage(),
   "Global is external, but doesn't have external or dllimport or weak linkage!",
           &GV);
 
-  Assert1(!GV.hasDLLImportLinkage() || GV.isExternal(),
+  Assert1(!GV.hasDLLImportLinkage() || GV.isDeclaration(),
           "Global is marked as dllimport, but not external", &GV);
   
   Assert1(!GV.hasAppendingLinkage() || isa<GlobalVariable>(GV),
@@ -369,7 +369,7 @@ void Verifier::visitFunction(Function &F) {
             "Functions cannot take aggregates as arguments by value!", I);
    }
 
-  if (!F.isExternal()) {
+  if (!F.isDeclaration()) {
     // Verify that this function (which has a body) is not named "llvm.*".  It
     // is not legal to define intrinsics.
     if (F.getName().size() >= 5)
@@ -968,7 +968,7 @@ void Verifier::visitInstruction(Instruction &I) {
 ///
 void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   Function *IF = CI.getCalledFunction();
-  Assert1(IF->isExternal(), "Intrinsic functions should never be defined!", IF);
+  Assert1(IF->isDeclaration(), "Intrinsic functions should never be defined!", IF);
   
 #define GET_INTRINSIC_VERIFIER
 #include "llvm/Intrinsics.gen"
@@ -1070,7 +1070,7 @@ FunctionPass *llvm::createVerifierPass(VerifierFailureAction action) {
 // verifyFunction - Create
 bool llvm::verifyFunction(const Function &f, VerifierFailureAction action) {
   Function &F = const_cast<Function&>(f);
-  assert(!F.isExternal() && "Cannot verify external functions");
+  assert(!F.isDeclaration() && "Cannot verify external functions");
 
   FunctionPassManager FPM(new ExistingModuleProvider(F.getParent()));
   Verifier *V = new Verifier(action);

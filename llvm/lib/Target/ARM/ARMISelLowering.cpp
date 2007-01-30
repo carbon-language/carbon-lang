@@ -467,7 +467,7 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     GlobalValue *GV = G->getGlobal();
     Callee = DAG.getTargetGlobalAddress(GV, getPointerTy());
     isDirect = true;
-    bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
+    bool isExt = (GV->isDeclaration() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
     bool isStub = (isExt && Subtarget->isTargetDarwin()) &&
                    getTargetMachine().getRelocationModel() != Reloc::Static;
@@ -632,7 +632,7 @@ static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
 /// even in dynamic-no-pic mode.
 static bool GVIsIndirectSymbol(GlobalValue *GV) {
   return (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
-          (GV->isExternal() && !GV->hasNotBeenReadFromBytecode()));
+          (GV->isDeclaration() && !GV->hasNotBeenReadFromBytecode()));
 }
 
 SDOperand ARMTargetLowering::LowerGlobalAddress(SDOperand Op,

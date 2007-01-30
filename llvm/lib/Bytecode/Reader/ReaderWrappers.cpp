@@ -298,13 +298,13 @@ bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
 static void getSymbols(Module*M, std::vector<std::string>& symbols) {
   // Loop over global variables
   for (Module::global_iterator GI = M->global_begin(), GE=M->global_end(); GI != GE; ++GI)
-    if (!GI->isExternal() && !GI->hasInternalLinkage())
+    if (!GI->isDeclaration() && !GI->hasInternalLinkage())
       if (!GI->getName().empty())
         symbols.push_back(GI->getName());
 
   // Loop over functions.
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI)
-    if (!FI->isExternal() && !FI->hasInternalLinkage())
+    if (!FI->isDeclaration() && !FI->hasInternalLinkage())
       if (!FI->getName().empty())
         symbols.push_back(FI->getName());
 }

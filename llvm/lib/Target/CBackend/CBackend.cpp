@@ -305,7 +305,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
   std::map<std::string, GlobalValue*> ExtSymbols;
   for (Module::iterator I = M.begin(), E = M.end(); I != E;) {
     Function *GV = I++;
-    if (GV->isExternal() && GV->hasName()) {
+    if (GV->isDeclaration() && GV->hasName()) {
       std::pair<std::map<std::string, GlobalValue*>::iterator, bool> X
         = ExtSymbols.insert(std::make_pair(GV->getName(), GV));
       if (!X.second) {
@@ -321,7 +321,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E;) {
     GlobalVariable *GV = I++;
-    if (GV->isExternal() && GV->hasName()) {
+    if (GV->isDeclaration() && GV->hasName()) {
       std::pair<std::map<std::string, GlobalValue*>::iterator, bool> X
         = ExtSymbols.insert(std::make_pair(GV->getName(), GV));
       if (!X.second) {
@@ -1525,7 +1525,7 @@ bool CWriter::doInitialization(Module &M) {
     Out << "\n\n/* Global Variable Declarations */\n";
     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I)
-      if (!I->isExternal()) {
+      if (!I->isDeclaration()) {
         // Ignore special globals, such as debug info.
         if (getGlobalVariableClass(I))
           continue;
@@ -1554,7 +1554,7 @@ bool CWriter::doInitialization(Module &M) {
     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
     for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
          I != E; ++I)
-      if (!I->isExternal()) {
+      if (!I->isDeclaration()) {
         // Ignore special globals, such as debug info.
         if (getGlobalVariableClass(I))
           continue;
@@ -1777,7 +1777,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   FunctionInnards << Mang->getValueName(F) << '(';
 
   bool PrintedArg = false;
-  if (!F->isExternal()) {
+  if (!F->isDeclaration()) {
     if (!F->arg_empty()) {
       Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
       

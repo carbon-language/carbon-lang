@@ -58,17 +58,16 @@ public:
                  Constant *Initializer, const std::string &Name,
                  GlobalVariable *InsertBefore);
   
-  /// isExternal - Is this global variable lacking an initializer?  If so, the
-  /// global variable is defined in some other translation unit, and is thus
-  /// externally defined here.
-  ///
-  virtual bool isExternal() const { return getNumOperands() == 0; }
+  /// isDeclaration - Is this global variable lacking an initializer?  If so, 
+  /// the global variable is defined in some other translation unit, and is thus
+  /// only a declaration here.
+  virtual bool isDeclaration() const { return getNumOperands() == 0; }
 
   /// hasInitializer - Unless a global variable isExternal(), it has an
   /// initializer.  The initializer for the global variable/constant is held by
   /// Initializer if an initializer is specified.
   ///
-  inline bool hasInitializer() const { return !isExternal(); }
+  inline bool hasInitializer() const { return !isDeclaration(); }
 
   /// getInitializer - Return the initializer for this global variable.  It is
   /// illegal to call this method if the global is external, because we cannot

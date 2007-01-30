@@ -255,11 +255,11 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
         GlobalValue *NewGV = dyn_cast<GlobalValue>(V.second);
 
         if (ExistGV && NewGV) {
-          assert((ExistGV->isExternal() || NewGV->isExternal()) &&
+          assert((ExistGV->isDeclaration() || NewGV->isDeclaration()) &&
                  "Two planes folded together with overlapping value names!");
 
           // Make sure that ExistGV is the one we want to keep!
-          if (!NewGV->isExternal())
+          if (!NewGV->isDeclaration())
             std::swap(NewGV, ExistGV);
 
           // Ok we have two external global values.  Make all uses of the new

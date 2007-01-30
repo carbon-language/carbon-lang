@@ -823,7 +823,7 @@ static ManagedStatic<std::vector<const char*> > OnlyReadsMemoryTable;
 AliasAnalysis::ModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
                                       std::vector<PointerAccessInfo> *Info) {
-  if (!F->isExternal()) return UnknownModRefBehavior;
+  if (!F->isDeclaration()) return UnknownModRefBehavior;
 
   static bool Initialized = false;
   if (!Initialized) {

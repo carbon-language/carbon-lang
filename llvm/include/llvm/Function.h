@@ -89,11 +89,11 @@ public:
   /// arguments.
   bool isVarArg() const;
 
-  /// isExternal - Is the body of this function unknown? (The basic block list
-  /// is empty if so.) This is true for external functions, defined as forward
-  /// "declare"ations
+  /// isDeclaration - Is the body of this function unknown? (The basic block 
+  /// list is empty if so.) This is true for function declarations, but not 
+  /// true for function definitions.
   ///
-  virtual bool isExternal() const { return BasicBlocks.empty(); }
+  virtual bool isDeclaration() const { return BasicBlocks.empty(); }
 
   /// getIntrinsicID - This method returns the ID number of the specified
   /// function, or Intrinsic::not_intrinsic if the function is not an

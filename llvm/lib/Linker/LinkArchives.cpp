@@ -44,12 +44,12 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
   // This is needed for programs where the main function is defined in an
   // archive, such f2c'd programs.
   Function *Main = M->getMainFunction();
-  if (Main == 0 || Main->isExternal())
+  if (Main == 0 || Main->isDeclaration())
     UndefinedSymbols.insert("main");
 
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName()) {
-      if (I->isExternal())
+      if (I->isDeclaration())
         UndefinedSymbols.insert(I->getName());
       else if (!I->hasInternalLinkage()) {
         assert(!I->hasDLLImportLinkage()
@@ -60,7 +60,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
     if (I->hasName()) {
-      if (I->isExternal())
+      if (I->isDeclaration())
         UndefinedSymbols.insert(I->getName());
       else if (!I->hasInternalLinkage()) {
         assert(!I->hasDLLImportLinkage()

@@ -183,7 +183,7 @@ namespace {
       if (TM.getRelocationModel() != Reloc::Static) {
         if (MO.getType() == MachineOperand::MO_GlobalAddress) {
           GlobalValue *GV = MO.getGlobal();
-          if (((GV->isExternal() || GV->hasWeakLinkage() ||
+          if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
                 GV->hasLinkOnceLinkage()))) {
             // Dynamically-resolved functions need a stub for the function.
             std::string Name = Mang->getValueName(GV);
@@ -381,7 +381,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
 
     // External or weakly linked global variables need non-lazily-resolved stubs
     if (TM.getRelocationModel() != Reloc::Static) {
-      if (((GV->isExternal() || GV->hasWeakLinkage() ||
+      if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
             GV->hasLinkOnceLinkage()))) {
         GVStubs.insert(Name);
         O << "L" << Name << "$non_lazy_ptr";

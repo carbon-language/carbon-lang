@@ -250,7 +250,7 @@ Function *Module::getNamedFunction(const std::string &Name) const {
   const Function *Found = 0;
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     if (I->getName() == Name)
-      if (I->isExternal())
+      if (I->isDeclaration())
         Found = I;
       else
         return const_cast<Function*>(&(*I));

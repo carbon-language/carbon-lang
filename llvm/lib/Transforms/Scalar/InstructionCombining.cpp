@@ -7234,7 +7234,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // Check to see if we are changing the return type...
   if (OldRetTy != FT->getReturnType()) {
-    if (Callee->isExternal() && !Caller->use_empty() && 
+    if (Callee->isDeclaration() && !Caller->use_empty() && 
         OldRetTy != FT->getReturnType() &&
         // Conversion is ok if changing from pointer to int of same size.
         !(isa<PointerType>(FT->getReturnType()) &&
@@ -7270,11 +7270,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
        ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()) ||
       (c && ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()
        && c->getSExtValue() > 0);
-    if (Callee->isExternal() && !isConvertible) return false;
+    if (Callee->isDeclaration() && !isConvertible) return false;
   }
 
   if (FT->getNumParams() < NumActualArgs && !FT->isVarArg() &&
-      Callee->isExternal())
+      Callee->isDeclaration())
     return false;   // Do not delete arguments unless we have a function body...
 
   // Okay, we decided that this is a safe thing to do: go ahead and start
@@ -8102,14 +8102,14 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
     // Instcombine load (constant global) into the value loaded.
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
-      if (GV->isConstant() && !GV->isExternal())
+      if (GV->isConstant() && !GV->isDeclaration())
         return ReplaceInstUsesWith(LI, GV->getInitializer());
 
     // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-          if (GV->isConstant() && !GV->isExternal())
+          if (GV->isConstant() && !GV->isDeclaration())
             if (Constant *V = 
                ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
               return ReplaceInstUsesWith(LI, V);

@@ -49,7 +49,7 @@ namespace {
     }
 
     virtual bool runOnFunction(Function &F) {
-      if (!F.isExternal()) {
+      if (!F.isDeclaration()) {
         //give us a clean block
 	BasicBlock* bbold = &F.getEntryBlock();
 	BasicBlock* bbnew = new BasicBlock("allocablock", &F, &F.getEntryBlock());

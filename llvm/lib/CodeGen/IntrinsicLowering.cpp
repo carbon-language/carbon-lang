@@ -61,7 +61,7 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
 
 void IntrinsicLowering::AddPrototypes(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->isExternal() && !I->use_empty())
+    if (I->isDeclaration() && !I->use_empty())
       switch (I->getIntrinsicID()) {
       default: break;
       case Intrinsic::setjmp:

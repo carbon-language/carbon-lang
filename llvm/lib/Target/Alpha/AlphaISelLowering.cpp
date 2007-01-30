@@ -427,7 +427,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     GlobalValue *GV = GSDN->getGlobal();
     SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i64, GSDN->getOffset());
 
-    //    if (!GV->hasWeakLinkage() && !GV->isExternal() && !GV->hasLinkOnceLinkage()) {
+    //    if (!GV->hasWeakLinkage() && !GV->isDeclaration() && !GV->hasLinkOnceLinkage()) {
     if (GV->hasInternalLinkage()) {
       SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, GA,
 				 DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));

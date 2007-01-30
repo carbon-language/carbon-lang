@@ -291,7 +291,7 @@ void *JIT::getPointerToFunction(Function *F) {
     }
   }
 
-  if (F->isExternal()) {
+  if (F->isDeclaration()) {
     void *Addr = getPointerToNamedFunction(F->getName());
     addGlobalMapping(F, Addr);
     return Addr;
@@ -314,7 +314,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
   if (Ptr) return Ptr;
 
   // If the global is external, just remember the address.
-  if (GV->isExternal()) {
+  if (GV->isDeclaration()) {
 #if defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_4) && \
     ((MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4) || \
      (MAC_OS_X_VERSION_MIN_REQUIRED == MAC_OS_X_VERSION_10_4 && \

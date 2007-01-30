@@ -51,7 +51,7 @@ bool IPCP::runOnModule(Module &M) {
   while (LocalChange) {
     LocalChange = false;
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (!I->isExternal()) {
+      if (!I->isDeclaration()) {
         // Delete any klingons.
         I->removeDeadConstantUsers();
         if (I->hasInternalLinkage())

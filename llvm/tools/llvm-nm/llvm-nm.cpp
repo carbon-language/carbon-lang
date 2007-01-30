@@ -67,7 +67,7 @@ namespace {
 }
 
 static char TypeCharForSymbol(GlobalValue &GV) {
-  if (GV.isExternal())                                     return 'U';
+  if (GV.isDeclaration())                                     return 'U';
   if (GV.hasLinkOnceLinkage())                             return 'C';
   if (GV.hasWeakLinkage())                                 return 'W';
   if (isa<Function>(GV) && GV.hasInternalLinkage())       return 't';

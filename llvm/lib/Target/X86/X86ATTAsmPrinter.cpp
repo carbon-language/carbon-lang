@@ -281,7 +281,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (printStub(TM, Subtarget)) {
       // Link-once, External, or Weakly-linked global variables need
       // non-lazily-resolved stubs
-      if (GV->isExternal() ||
+      if (GV->isDeclaration() ||
           GV->hasWeakLinkage() ||
           GV->hasLinkOnceLinkage()) {
         // Dynamically-resolved functions need a stub for the function.
@@ -310,10 +310,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       if (isCallOp && isa<Function>(GV)) {
         if (printGOT(TM, Subtarget)) {
           // Assemble call via PLT for non-local symbols
-          if (!GV->hasHiddenVisibility() || GV->isExternal())
+          if (!GV->hasHiddenVisibility() || GV->isDeclaration())
             O << "@PLT";
         }
-        if (Subtarget->isTargetCygMing() && GV->isExternal())
+        if (Subtarget->isTargetCygMing() && GV->isDeclaration())
           // Save function name for later type emission
           FnStubs.insert(Name);
       }

@@ -1030,12 +1030,12 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     unsigned CC = I->getCallingConv()+1;
     unsigned ID = (Slot << 5) | (CC & 15);
 
-    if (I->isExternal())   // If external, we don't have an FunctionInfo block.
+    if (I->isDeclaration())   // If external, we don't have an FunctionInfo block.
       ID |= 1 << 4;
     
     if (I->getAlignment() || I->hasSection() || (CC & ~15) != 0 ||
-        (I->isExternal() && I->hasDLLImportLinkage()) ||
-        (I->isExternal() && I->hasExternalWeakLinkage())
+        (I->isDeclaration() && I->hasDLLImportLinkage()) ||
+        (I->isDeclaration() && I->hasExternalWeakLinkage())
        )
       ID |= 1 << 31;       // Do we need an extension word?
     
@@ -1046,7 +1046,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
       // convention, bit 10 = hasSectionID., bits 11-12 = external linkage type
       unsigned extLinkage = 0;
 
-      if (I->isExternal()) {
+      if (I->isDeclaration()) {
         if (I->hasDLLImportLinkage()) {
           extLinkage = 1;
         } else if (I->hasExternalWeakLinkage()) {
@@ -1103,7 +1103,7 @@ void BytecodeWriter::outputInstructions(const Function *F) {
 
 void BytecodeWriter::outputFunction(const Function *F) {
   // If this is an external function, there is nothing else to emit!
-  if (F->isExternal()) return;
+  if (F->isDeclaration()) return;
 
   BytecodeBlock FunctionBlock(BytecodeFormat::FunctionBlockID, *this);
   unsigned rWord = (getEncodedVisibility(F) << 16) | getEncodedLinkage(F);

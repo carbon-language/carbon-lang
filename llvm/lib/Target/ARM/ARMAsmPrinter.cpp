@@ -264,7 +264,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
-    bool isExt = (GV->isExternal() || GV->hasWeakLinkage() ||
+    bool isExt = (GV->isDeclaration() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
     if (isExt && isCallOp && Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() != Reloc::Static) {

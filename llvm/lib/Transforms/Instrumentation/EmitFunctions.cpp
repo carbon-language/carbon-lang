@@ -81,7 +81,7 @@ bool EmitFunctionTable::runOnModule(Module &M){
 
   unsigned int counter = 0;
   for(Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
-    if (!MI->isExternal()) {
+    if (!MI->isDeclaration()) {
       vType.push_back(MI->getType());
 
       //std::cerr<<MI;

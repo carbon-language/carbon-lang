@@ -193,17 +193,17 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     bool Needfptr=false; // if we're computing an address @ltoff(X), do
                          // we need to decorate it so it becomes
                          // @ltoff(@fptr(X)) ?
-    if (F && !isBRCALLinsn /*&& F->isExternal()*/)
+    if (F && !isBRCALLinsn /*&& F->isDeclaration()*/)
       Needfptr=true;
 
     // if this is the target of a call instruction, we should define
     // the function somewhere (GNU gas has no problem without this, but
     // Intel ias rightly complains of an 'undefined symbol')
 
-    if (F /*&& isBRCALLinsn*/ && F->isExternal())
+    if (F /*&& isBRCALLinsn*/ && F->isDeclaration())
       ExternalFunctionNames.insert(Mang->getValueName(MO.getGlobal()));
     else
-      if (GV->isExternal()) // e.g. stuff like 'stdin'
+      if (GV->isDeclaration()) // e.g. stuff like 'stdin'
         ExternalObjectNames.insert(Mang->getValueName(MO.getGlobal()));
 
     if (!isBRCALLinsn)

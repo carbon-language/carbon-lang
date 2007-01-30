@@ -1553,7 +1553,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
     if (!GV->hasExternalLinkage() && !GV->hasInternalLinkage())
       return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
-    return !GV->isExternal();  // reject external globals.
+    return !GV->isDeclaration();  // reject external globals.
   }
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     // Handle a constantexpr gep.
@@ -1773,7 +1773,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
         Formals.push_back(getVal(Values, CI->getOperand(i)));
       
-      if (Callee->isExternal()) {
+      if (Callee->isDeclaration()) {
         // If this is a function we can constant fold, do it.
         if (Constant *C = ConstantFoldCall(Callee, Formals)) {
           InstResult = C;

@@ -666,7 +666,7 @@ StackerCompiler::handle_forward( char * name )
         DefinitionType,
         GlobalValue::ExternalLinkage,
         name );
-    assert( the_function->isExternal() );
+    assert( the_function->isDeclaration() );
 
     free( name );
     return the_function;

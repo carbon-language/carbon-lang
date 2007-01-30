@@ -32,7 +32,7 @@ namespace {
   struct ExternalFunctionsPassedConstants : public ModulePass {
     virtual bool runOnModule(Module &M) {
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-        if (I->isExternal()) {
+        if (I->isDeclaration()) {
           bool PrintedFn = false;
           for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
                UI != E; ++UI)

@@ -76,7 +76,7 @@ bool FunctionPass::runOnModule(Module &M) {
   bool Changed = doInitialization(M);
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal())      // Passes are not run on external functions!
+    if (!I->isDeclaration())      // Passes are not run on external functions!
     Changed |= runOnFunction(*I);
 
   return Changed | doFinalization(M);
@@ -85,7 +85,7 @@ bool FunctionPass::runOnModule(Module &M) {
 // run - On a function, we simply initialize, run the function, then finalize.
 //
 bool FunctionPass::run(Function &F) {
-  if (F.isExternal()) return false;// Passes are not run on external functions!
+  if (F.isDeclaration()) return false;// Passes are not run on external functions!
 
   bool Changed = doInitialization(*F.getParent());
   Changed |= runOnFunction(F);

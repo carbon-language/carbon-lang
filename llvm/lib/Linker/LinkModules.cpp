@@ -365,12 +365,12 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
     // Linking something to nothing.
     LinkFromSrc = true;
     LT = Src->getLinkage();
-  } else if (Src->isExternal()) {
+  } else if (Src->isDeclaration()) {
     // If Src is external or if both Src & Drc are external..  Just link the
     // external globals, we aren't adding anything.
     if (Src->hasDLLImportLinkage()) {
       // If one of GVs has DLLImport linkage, result should be dllimport'ed.
-      if (Dest->isExternal()) {
+      if (Dest->isDeclaration()) {
         LinkFromSrc = true;
         LT = Src->getLinkage();
       }      
@@ -382,7 +382,7 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
       LinkFromSrc = false;
       LT = Dest->getLinkage();
     }
-  } else if (Dest->isExternal() && !Dest->hasDLLImportLinkage()) {
+  } else if (Dest->isDeclaration() && !Dest->hasDLLImportLinkage()) {
     // If Dest is external but Src is not:
     LinkFromSrc = true;
     LT = Src->getLinkage();
@@ -536,7 +536,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
         DGV->setInitializer(0);
       } else {
         if (SGV->isConstant() && !DGV->isConstant()) {
-          if (DGV->isExternal())
+          if (DGV->isDeclaration())
             DGV->setConstant(true);
         }
         SGV->setLinkage(GlobalValue::ExternalLinkage);
@@ -637,18 +637,18 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
 
       // ... and remember this mapping...
       ValueMap.insert(std::make_pair(SF, NewDF));
-    } else if (SF->isExternal()) {
+    } else if (SF->isDeclaration()) {
       // If SF is external or if both SF & DF are external..  Just link the
       // external functions, we aren't adding anything.
       if (SF->hasDLLImportLinkage()) {
-        if (DF->isExternal()) {
+        if (DF->isDeclaration()) {
           ValueMap.insert(std::make_pair(SF, DF));
           DF->setLinkage(SF->getLinkage());          
         }        
       } else {
         ValueMap.insert(std::make_pair(SF, DF));
       }      
-    } else if (DF->isExternal() && !DF->hasDLLImportLinkage()) {
+    } else if (DF->isDeclaration() && !DF->hasDLLImportLinkage()) {
       // If DF is external but SF is not...
       // Link the external functions, update linkage qualifiers
       ValueMap.insert(std::make_pair(SF, DF));
@@ -691,7 +691,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
 static bool LinkFunctionBody(Function *Dest, Function *Src,
                              std::map<const Value*, Value*> &GlobalMap,
                              std::string *Err) {
-  assert(Src && Dest && Dest->isExternal() && !Src->isExternal());
+  assert(Src && Dest && Dest->isDeclaration() && !Src->isDeclaration());
 
   // Go through and convert function arguments over, remembering the mapping.
   Function::arg_iterator DI = Dest->arg_begin();
@@ -737,11 +737,11 @@ static bool LinkFunctionBodies(Module *Dest, Module *Src,
   // Loop over all of the functions in the src module, mapping them over as we
   // go
   for (Module::iterator SF = Src->begin(), E = Src->end(); SF != E; ++SF) {
-    if (!SF->isExternal()) {                  // No body if function is external
+    if (!SF->isDeclaration()) {                  // No body if function is external
       Function *DF = cast<Function>(ValueMap[SF]); // Destination function
 
       // DF not external SF external?
-      if (DF->isExternal()) {
+      if (DF->isDeclaration()) {
         // Only provide the function body if there isn't one already.
         if (LinkFunctionBody(DF, SF, ValueMap, Err))
           return true;

@@ -54,7 +54,7 @@ bool FunctionProfiler::runOnModule(Module &M) {
 
   unsigned NumFunctions = 0;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal())
+    if (!I->isDeclaration())
       ++NumFunctions;
 
   const Type *ATy = ArrayType::get(Type::Int32Ty, NumFunctions);
@@ -65,7 +65,7 @@ bool FunctionProfiler::runOnModule(Module &M) {
   // Instrument all of the functions...
   unsigned i = 0;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal())
+    if (!I->isDeclaration())
       // Insert counter at the start of the function
       IncrementCounterInBlock(I->begin(), i++, Counters);
 

@@ -109,8 +109,8 @@ void RaiseAllocations::doInitialization(Module &M) {
   }
 
   // Don't mess with locally defined versions of these functions...
-  if (MallocFunc && !MallocFunc->isExternal()) MallocFunc = 0;
-  if (FreeFunc && !FreeFunc->isExternal())     FreeFunc = 0;
+  if (MallocFunc && !MallocFunc->isDeclaration()) MallocFunc = 0;
+  if (FreeFunc && !FreeFunc->isDeclaration())     FreeFunc = 0;
 }
 
 // run - Transform calls into instructions...

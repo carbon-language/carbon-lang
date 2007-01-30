@@ -300,7 +300,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
         // Okay, easy case.
       } else if (CallInst *CI = dyn_cast<CallInst>(Ptr)) {
         Function *F = CI->getCalledFunction();
-        if (!F || !F->isExternal()) return false;     // Too hard to analyze.
+        if (!F || !F->isDeclaration()) return false;     // Too hard to analyze.
         if (F->getName() != "calloc") return false;   // Not calloc.
       } else {
         return false;  // Too hard to analyze.
@@ -341,7 +341,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
     if ((*I).size() != 1) {
       AnalyzeSCC(*I);
     } else if (Function *F = (*I)[0]->getFunction()) {
-      if (!F->isExternal()) {
+      if (!F->isDeclaration()) {
         // Nonexternal function.
         AnalyzeSCC(*I);
       } else {

@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
       // Run our queue of passes all at once now, efficiently.
       // TODO: this could lazily stream functions out of the module.
       for (Module::iterator I = mod.begin(), E = mod.end(); I != E; ++I)
-        if (!I->isExternal())
+        if (!I->isDeclaration())
           Passes.run(*I);
       
       Passes.doFinalization();

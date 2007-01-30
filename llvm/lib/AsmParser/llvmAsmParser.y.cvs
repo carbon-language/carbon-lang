@@ -2088,11 +2088,11 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
              (Fn = CurModule.CurrentModule->getFunction(FunctionName, FT))) {
     // If this is the case, either we need to be a forward decl, or it needs 
     // to be.
-    if (!CurFun.isDeclare && !Fn->isExternal())
+    if (!CurFun.isDeclare && !Fn->isDeclaration())
       GEN_ERROR("Redefinition of function '" + FunctionName + "'!");
     
     // Make sure to strip off any argument names so we can't get conflicts.
-    if (Fn->isExternal())
+    if (Fn->isDeclaration())
       for (Function::arg_iterator AI = Fn->arg_begin(), AE = Fn->arg_end();
            AI != AE; ++AI)
         AI->setName("");

@@ -45,7 +45,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
   //happen through intrinsics.
   bool changed = false;
   if (Function* F = M.getNamedFunction("free")) {
-    assert(F->isExternal() && "free not external?");
+    assert(F->isDeclaration() && "free not external?");
     if (!F->use_empty()) {
       Function* FN = new Function(F->getFunctionType(), 
 				  GlobalValue::LinkOnceLinkage, 
@@ -60,7 +60,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
     }
   }
   if (Function* F = M.getNamedFunction("malloc")) {
-    assert(F->isExternal() && "malloc not external?");
+    assert(F->isDeclaration() && "malloc not external?");
     if (!F->use_empty()) {
       Function* FN = new Function(F->getFunctionType(), 
 				  GlobalValue::LinkOnceLinkage, 

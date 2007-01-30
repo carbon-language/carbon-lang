@@ -2107,7 +2107,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 void SelectionDAGLowering::visitCall(CallInst &I) {
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction()) {
-    if (F->isExternal())
+    if (F->isDeclaration())
       if (unsigned IID = F->getIntrinsicID()) {
         RenameFn = visitIntrinsicCall(I, IID);
         if (!RenameFn)

@@ -164,7 +164,7 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
 
     LTOLinkageTypes lt = getLTOLinkageType(f);
 
-    if (!f->isExternal() && lt != LTOInternalLinkage
+    if (!f->isDeclaration() && lt != LTOInternalLinkage
         && strncmp (f->getName().c_str(), "llvm.", 5)) {
       int alignment = ( 16 > f->getAlignment() ? 16 : f->getAlignment());
       LLVMSymbol *newSymbol = new LLVMSymbol(lt, f, f->getName(), 
@@ -186,7 +186,7 @@ LTO::readLLVMObjectFile(const std::string &InputFilename,
   for (Module::global_iterator v = m->global_begin(), e = m->global_end();
        v !=  e; ++v) {
     LTOLinkageTypes lt = getLTOLinkageType(v);
-    if (!v->isExternal() && lt != LTOInternalLinkage
+    if (!v->isDeclaration() && lt != LTOInternalLinkage
         && strncmp (v->getName().c_str(), "llvm.", 5)) {
       const TargetData *TD = Target->getTargetData();
       LLVMSymbol *newSymbol = new LLVMSymbol(lt, v, v->getName(), 
@@ -324,7 +324,7 @@ LTO::optimize(Module *M, std::ostream &Out,
   // Run the code generator, if present.
   CodeGenPasses->doInitialization();
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-    if (!I->isExternal())
+    if (!I->isDeclaration())
       CodeGenPasses->run(*I);
   }
   CodeGenPasses->doFinalization();

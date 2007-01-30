@@ -925,7 +925,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 
   if (AnnotationWriter) AnnotationWriter->emitFunctionAnnot(F, Out);
 
-  if (F->isExternal())
+  if (F->isDeclaration())
     switch (F->getLinkage()) {
     case GlobalValue::DLLImportLinkage:    Out << "declare dllimport "; break;
     case GlobalValue::ExternalWeakLinkage: Out << "declare extern_weak "; break;
@@ -996,7 +996,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (F->getAlignment())
     Out << " align " << F->getAlignment();
 
-  if (F->isExternal()) {
+  if (F->isDeclaration()) {
     Out << "\n";
   } else {
     Out << " {";

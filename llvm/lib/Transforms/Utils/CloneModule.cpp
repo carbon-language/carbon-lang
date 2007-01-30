@@ -87,7 +87,7 @@ Module *llvm::CloneModule(const Module *M, std::map<const Value*, Value*> &Value
   //
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
     Function *F = cast<Function>(ValueMap[I]);
-    if (!I->isExternal()) {
+    if (!I->isDeclaration()) {
       Function::arg_iterator DestI = F->arg_begin();
       for (Function::const_arg_iterator J = I->arg_begin(); J != I->arg_end();
            ++J) {

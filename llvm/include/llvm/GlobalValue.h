@@ -113,9 +113,9 @@ public:
   /// Override from Constant class.
   virtual void destroyConstant();
 
-  /// isExternal - Return true if the primary definition of this global value is
-  /// outside of the current translation unit...
-  virtual bool isExternal() const = 0;
+  /// isDeclaration - Return true if the primary definition of this global 
+  /// value is outside of the current translation unit...
+  virtual bool isDeclaration() const = 0;
 
   /// getParent - Get the module that this global value is contained inside
   /// of...
