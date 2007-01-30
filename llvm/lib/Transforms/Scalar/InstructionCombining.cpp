@@ -9167,7 +9167,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     }
     
     // ConstantProp instruction if trivially constant.
-    if (Constant *C = ConstantFoldInstruction(Inst)) {
+    if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
         C = OptimizeConstantExpr(CE, TD);
       DOUT << "IC: ConstFold to: " << *C << " from: " << *Inst;
@@ -9258,7 +9258,7 @@ bool InstCombiner::runOnFunction(Function &F) {
     }
 
     // Instruction isn't dead, see if we can constant propagate it.
-    if (Constant *C = ConstantFoldInstruction(I)) {
+    if (Constant *C = ConstantFoldInstruction(I, TD)) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
         C = OptimizeConstantExpr(CE, TD);
       DOUT << "IC: ConstFold to: " << *C << " from: " << *I;
