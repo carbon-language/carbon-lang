@@ -404,6 +404,7 @@ bool ARMInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   switch (MBB.back().getOpcode()) {
   case ARM::B:
   case ARM::tB:       // Uncond branch.
+  case ARM::tBR_JTr:
   case ARM::BR_JTr:   // Jumptable branch.
   case ARM::BR_JTm:   // Jumptable branch through mem.
   case ARM::BR_JTadd: // Jumptable branch add to pc.
