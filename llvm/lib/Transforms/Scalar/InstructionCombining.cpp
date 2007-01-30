@@ -1355,6 +1355,63 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     break;
   }
     
+  case Instruction::BitCast: {
+    // packed->packed 
+    const PackedType *PTy = dyn_cast<PackedType>(I->getOperand(0)->getType());
+    if (!PTy) break;
+    unsigned InVWidth = PTy->getNumElements();
+    uint64_t InputDemandedElts = 0;
+    unsigned Ratio;
+
+    if (VWidth == InVWidth) {
+      Ratio = 1;
+      InputDemandedElts = DemandedElts;
+    } else if (VWidth > InVWidth) {
+      // If there are more elements in the result than there are in the source,
+      // then an input element is live if any of the corresponding output
+      // elements are live.
+      Ratio = VWidth/InVWidth;
+      for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx) {
+        if (DemandedElts & (1ULL << OutIdx))
+          InputDemandedElts |= 1ULL << (OutIdx/Ratio);
+      }
+    } else {
+      // If there are more elements in the source than there are in the result,
+      // then an input element is live if the corresponding output element is
+      // live.
+      Ratio = InVWidth/VWidth;
+      for (unsigned InIdx = 0; InIdx != InVWidth; ++InIdx)
+        if (DemandedElts & (1ULL << InIdx/Ratio))
+          InputDemandedElts |= 1ULL << InIdx;
+    }
+    
+    // div/rem demand all inputs, because they don't want divide by zero.
+    TmpV = SimplifyDemandedVectorElts(I->getOperand(0), InputDemandedElts,
+                                      UndefElts2, Depth+1);
+    if (TmpV) {
+      I->setOperand(0, TmpV);
+      MadeChange = true;
+    }
+    
+    UndefElts = UndefElts2;
+    if (VWidth > InVWidth) {
+      // If there are more elements in the result than there are in the source,
+      // then an output element is undef if the corresponding input element is
+      // undef.
+      for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx)
+        if (UndefElts2 & (1ULL << (OutIdx/Ratio)))
+          UndefElts |= 1ULL << OutIdx;
+    } else if (VWidth < InVWidth) {
+      // If there are more elements in the source than there are in the result,
+      // then a result element is undef if all of the corresponding input
+      // elements are undef.
+      UndefElts = ~0ULL >> (64-VWidth);  // Start out all undef.
+      for (unsigned InIdx = 0; InIdx != InVWidth; ++InIdx)
+        if ((UndefElts2 & (1ULL << InIdx)) == 0)    // Not undef?
+          UndefElts &= ~(1ULL << (InIdx/Ratio));    // Clear undef bit.
+    }
+    break;
+  }
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
@@ -1756,7 +1813,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     
     ConstantInt *XorRHS = 0;
     Value *XorLHS = 0;
-    if (match(LHS, m_Xor(m_Value(XorLHS), m_ConstantInt(XorRHS)))) {
+    if (isa<ConstantInt>(RHSC) &&
+        match(LHS, m_Xor(m_Value(XorLHS), m_ConstantInt(XorRHS)))) {
       unsigned TySizeBits = I.getType()->getPrimitiveSizeInBits();
       int64_t  RHSSExt = cast<ConstantInt>(RHSC)->getSExtValue();
       uint64_t RHSZExt = cast<ConstantInt>(RHSC)->getZExtValue();
@@ -8985,7 +9043,14 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
       }
     }
   }
-  
+
+  // See if SimplifyDemandedVectorElts can simplify based on this shuffle.  For
+  // example, if this is a splat, then we only demand from one input element.
+  uint64_t UndefElts;
+  if (Value *V = SimplifyDemandedVectorElts(&SVI, (1ULL << Mask.size())-1,
+                                            UndefElts))
+    return ReplaceInstUsesWith(SVI, V);
+    
   return MadeChange ? &SVI : 0;
 }
 
@@ -9028,6 +9093,58 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   return true;
 }
 
+/// IsConstantOffsetFromGlobal - If this constant is actually a constant offset
+/// from a global, return the global and the constant.  Because of
+/// constantexprs, this function is recursive.
+static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
+                                       int64_t &Offset, const TargetData &TD) {
+  // Trivial case, constant is the global.
+  if ((GV = dyn_cast<GlobalValue>(C))) {
+    Offset = 0;
+    return true;
+  }
+  
+  // Otherwise, if this isn't a constant expr, bail out.
+  ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
+  if (!CE) return false;
+  
+  // Look through ptr->int and ptr->ptr casts.
+  if (CE->getOpcode() == Instruction::PtrToInt ||
+      CE->getOpcode() == Instruction::BitCast)
+    return IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD);
+  
+  // i32* getelementptr ([5 x i32]* @a, i32 0, i32 5)    
+  if (CE->getOpcode() == Instruction::GetElementPtr) {
+    // Cannot compute this if the element type of the pointer is missing size
+    // info.
+    if (!cast<PointerType>(CE->getOperand(0)->getType())->getElementType()->isSized())
+      return false;
+    
+    // If the base isn't a global+constant, we aren't either.
+    if (!IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD))
+      return false;
+    
+    // Otherwise, add any offset that our operands provide.
+    gep_type_iterator GTI = gep_type_begin(CE);
+    for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i, ++GTI) {
+      ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(i));
+      if (!CI) return false;  // Index isn't a simple constant?
+      if (CI->getZExtValue() == 0) continue;  // Not adding anything.
+      
+      if (const StructType *ST = dyn_cast<StructType>(*GTI)) {
+        // N = N + Offset
+        Offset += TD.getStructLayout(ST)->MemberOffsets[CI->getZExtValue()];
+      } else {
+        const SequentialType *ST = cast<SequentialType>(*GTI);
+        Offset += TD.getTypeSize(ST->getElementType())*CI->getSExtValue();
+      }
+    }
+    return true;
+  }
+  
+  return false;
+}
+
 /// OptimizeConstantExpr - Given a constant expression and target data layout
 /// information, symbolically evaluate the constant expr to something simpler
 /// if possible.
@@ -9050,6 +9167,30 @@ static Constant *OptimizeConstantExpr(ConstantExpr *CE, const TargetData *TD) {
       return ConstantExpr::getIntToPtr(C, CE->getType());
     }
   }
+  
+  
+  // SROA
+  
+  // Fold (and 0xffffffff00000000, (shl x, 32)) -> shl.
+  // Fold (lshr (or X, Y), 32) -> (lshr [X/Y], 32) if one doesn't contribute
+  // bits.
+  
+  
+  // If the constant expr is something like &A[123] - &A[4].f, fold this into a
+  // constant.  This happens frequently when iterating over a global array.
+  if (CE->getOpcode() == Instruction::Sub) {
+    GlobalValue *GV1, *GV2;
+    int64_t Offs1, Offs2;
+    
+    if (IsConstantOffsetFromGlobal(CE->getOperand(0), GV1, Offs1, *TD))
+      if (IsConstantOffsetFromGlobal(CE->getOperand(1), GV2, Offs2, *TD) &&
+          GV1 == GV2) {
+        // (&GV+C1) - (&GV+C2) -> C1-C2, pointer arithmetic cannot overflow.
+        return ConstantInt::get(CE->getType(), Offs1-Offs2);
+      }
+  }
+  
+  // TODO: Fold icmp setne/seteq as well.
   
   return CE;
 }
