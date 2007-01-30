@@ -1775,7 +1775,8 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       
       if (Callee->isDeclaration()) {
         // If this is a function we can constant fold, do it.
-        if (Constant *C = ConstantFoldCall(Callee, Formals)) {
+        if (Constant *C = ConstantFoldCall(Callee, &Formals[0],
+                                           Formals.size())) {
           InstResult = C;
         } else {
           return false;
