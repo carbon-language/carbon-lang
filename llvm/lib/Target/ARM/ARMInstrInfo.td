@@ -41,7 +41,6 @@ def SDT_ARMPICAdd  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
 
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
-def ARMWrapperCall   : SDNode<"ARMISD::WrapperCall", SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
 
 def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq,
@@ -514,11 +513,11 @@ PseudoInst<(ops i32imm:$line, i32imm:$col, i32imm:$file),
            [(dwarf_loc (i32 imm:$line), (i32 imm:$col), (i32 imm:$file))]>;
 
 def PICADD : AI1<(ops GPR:$dst, GPR:$a, pclabel:$cp),
-                  "\n$cp:\n\tadd $dst, pc, $a",
+                  "$cp:\n\tadd $dst, pc, $a",
                   [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
 let AddedComplexity = 10 in
 def PICLD : AI2<(ops GPR:$dst, addrmodepc:$addr),
-                  "\n${addr:label}:\n\tldr $dst, $addr",
+                  "${addr:label}:\n\tldr $dst, $addr",
                   [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
 //===----------------------------------------------------------------------===//

@@ -14,12 +14,20 @@
 #include "ARMConstantPoolValue.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/GlobalValue.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, unsigned id,
-                                         bool isNonLazy, unsigned char PCAdj)
+                                           ARMCP::ARMCPKind k,
+                                           unsigned char PCAdj)
   : MachineConstantPoolValue((const Type*)gv->getType()),
-    GV(gv), LabelId(id), isNonLazyPtr(isNonLazy), PCAdjust(PCAdj) {}
+    GV(gv), S(NULL), LabelId(id), Kind(k), PCAdjust(PCAdj) {}
+
+ARMConstantPoolValue::ARMConstantPoolValue(const char *s, unsigned id,
+                                           ARMCP::ARMCPKind k,
+                                           unsigned char PCAdj)
+  : MachineConstantPoolValue((const Type*)Type::Int32Ty),
+    GV(NULL), S(s), LabelId(id), Kind(k), PCAdjust(PCAdj) {}
 
 int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
                                                     unsigned Alignment) {
@@ -30,8 +38,11 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
         (Constants[i].Offset & AlignMask) == 0) {
       ARMConstantPoolValue *CPV =
         (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
-      if (CPV->GV == GV && CPV->LabelId == LabelId &&
-          CPV->isNonLazyPtr == isNonLazyPtr)
+      if (CPV->GV == GV &&
+          CPV->S == S &&
+          CPV->LabelId == LabelId &&
+          CPV->Kind == Kind &&
+          CPV->PCAdjust == PCAdjust)
         return i;
     }
   }
@@ -42,14 +53,19 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
 void
 ARMConstantPoolValue::AddSelectionDAGCSEId(FoldingSetNodeID &ID) {
   ID.AddPointer(GV);
+  ID.AddPointer(S);
   ID.AddInteger(LabelId);
-  ID.AddInteger((unsigned)isNonLazyPtr);
+  ID.AddInteger((unsigned)Kind);
   ID.AddInteger(PCAdjust);
 }
 
 void ARMConstantPoolValue::print(std::ostream &O) const {
-  O << GV->getName();
-  if (isNonLazyPtr) O << "$non_lazy_ptr";
+  if (GV)
+    O << GV->getName();
+  else
+    O << S;
+  if (isNonLazyPointer()) O << "$non_lazy_ptr";
+  else if (isStub()) O << "$stub";
   if (PCAdjust != 0) O << "-(LPIC" << LabelId << "+"
                        << (unsigned)PCAdjust << ")";
 }

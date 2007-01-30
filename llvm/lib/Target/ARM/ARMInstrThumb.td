@@ -158,7 +158,7 @@ def t_addrmode_sp : Operand<i32>,
 //
 
 def tPICADD : TIt<(ops GPR:$dst, GPR:$lhs, pclabel:$cp),
-                  "\n$cp:\n\tadd $dst, pc",
+                  "$cp:\n\tadd $dst, pc",
                   [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>;
 
 //===----------------------------------------------------------------------===//
@@ -475,25 +475,18 @@ let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
-def tLEApcrel : TI<(ops GPR:$dst, i32imm:$label),
+def tLEApcrel : TIx2<(ops GPR:$dst, i32imm:$label),
                     !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
                                           "${:private}PCRELL${:uid}+4))\n"),
                                !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                          "add $dst, pc, #PCRELV${:uid}")),
+                                   "mov $dst, #PCRELV${:uid}\n\tadd $dst, pc")),
                     []>;
 
-def tLEApcrelCall : TI<(ops GPR:$dst, i32imm:$label),
-                   !strconcat(!strconcat(".set PCRELV${:uid}, (${label:call}-(",
-                                         "${:private}PCRELL${:uid}+4))\n"),
-                              !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                         "add $dst, pc, #PCRELV${:uid}")),
-                   []>;
-
-def tLEApcrelJT : TI<(ops GPR:$dst, i32imm:$label, i32imm:$id),
+def tLEApcrelJT : TIx2<(ops GPR:$dst, i32imm:$label, i32imm:$id),
           !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
                                          "${:private}PCRELL${:uid}+4))\n"),
                               !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                         "add $dst, pc, #PCRELV${:uid}")),
+                                   "mov $dst, #PCRELV${:uid}\n\tadd $dst, pc")),
                    []>;
 
 //===----------------------------------------------------------------------===//
@@ -503,10 +496,6 @@ def tLEApcrelJT : TI<(ops GPR:$dst, i32imm:$label, i32imm:$id),
 // ConstantPool, GlobalAddress
 def : ThumbPat<(ARMWrapper  tglobaladdr :$dst), (tLEApcrel tglobaladdr :$dst)>;
 def : ThumbPat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
-def : ThumbPat<(ARMWrapperCall tglobaladdr :$dst),
-               (tLEApcrelCall  tglobaladdr :$dst)>;
-def : ThumbPat<(ARMWrapperCall texternalsym:$dst),
-               (tLEApcrelCall  texternalsym:$dst)>;
 
 // JumpTable
 def : ThumbPat<(ARMWrapperJT tjumptable:$dst, imm:$id),

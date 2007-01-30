@@ -18,23 +18,38 @@
 
 namespace llvm {
 
+namespace ARMCP {
+  enum ARMCPKind {
+    CPValue,
+    CPNonLazyPtr,
+    CPStub
+  };
+}
+
 /// ARMConstantPoolValue - ARM specific constantpool value. This is used to
 /// represent PC relative displacement between the address of the load
 /// instruction and the global value being loaded, i.e. (&GV-(LPIC+8)).
 class ARMConstantPoolValue : public MachineConstantPoolValue {
   GlobalValue *GV;         // GlobalValue being loaded.
+  const char *S;           // ExtSymbol being loaded.
   unsigned LabelId;        // Label id of the load.
-  bool isNonLazyPtr;       // True if loading a Mac OS X non_lazy_ptr stub.
+  ARMCP::ARMCPKind Kind;   // non_lazy_ptr or stub?
   unsigned char PCAdjust;  // Extra adjustment if constantpool is pc relative.
                            // 8 for ARM, 4 for Thumb.
 
 public:
-  ARMConstantPoolValue(GlobalValue *gv, unsigned id, bool isNonLazy = false,
+  ARMConstantPoolValue(GlobalValue *gv, unsigned id,
+                       ARMCP::ARMCPKind Kind = ARMCP::CPValue,
+                       unsigned char PCAdj = 0);
+  ARMConstantPoolValue(const char *s, unsigned id,
+                       ARMCP::ARMCPKind Kind = ARMCP::CPValue,
                        unsigned char PCAdj = 0);
 
   GlobalValue *getGV() const { return GV; }
+  const char *getSymbol() const { return S; }
   unsigned getLabelId() const { return LabelId; }
-  bool isNonLazyPointer() const { return isNonLazyPtr; }
+  bool isNonLazyPointer() const { return Kind == ARMCP::CPNonLazyPtr; }
+  bool isStub() const { return Kind == ARMCP::CPStub; }
   unsigned char getPCAdjustment() const { return PCAdjust; }
 
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,

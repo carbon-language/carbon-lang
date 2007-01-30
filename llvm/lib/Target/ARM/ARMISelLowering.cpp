@@ -230,7 +230,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
   case ARMISD::Wrapper:       return "ARMISD::Wrapper";
-  case ARMISD::WrapperCall:   return "ARMISD::WrapperCall";
   case ARMISD::WrapperJT:     return "ARMISD::WrapperJT";
   case ARMISD::CALL:          return "ARMISD::CALL";
   case ARMISD::CALL_NOLINK:   return "ARMISD::CALL_NOLINK";
@@ -465,25 +464,40 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   bool isARMFunc = false;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     GlobalValue *GV = G->getGlobal();
-    Callee = DAG.getTargetGlobalAddress(GV, getPointerTy());
     isDirect = true;
     bool isExt = (GV->isDeclaration() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
     bool isStub = (isExt && Subtarget->isTargetDarwin()) &&
                    getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
-    // Wrap it since tBX takes a register source operand.
-    if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps())
-      Callee = DAG.getNode(ARMISD::WrapperCall, MVT::i32, Callee);
+    // tBX takes a register source operand.
+    if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps()) {
+      ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV, ARMPCLabelIndex,
+                                                           ARMCP::CPStub, 4);
+      SDOperand CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 2);
+      CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+      Callee = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), CPAddr, NULL, 0); 
+      SDOperand PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
+      Callee = DAG.getNode(ARMISD::PIC_ADD, getPointerTy(), Callee, PICLabel);
+   } else
+      Callee = DAG.getTargetGlobalAddress(GV, getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
     isDirect = true;
     bool isStub = Subtarget->isTargetDarwin() &&
                   getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
-    // Wrap it since tBX takes a register source operand.
-    if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps())
-      Callee = DAG.getNode(ARMISD::WrapperCall, MVT::i32, Callee);
+    // tBX takes a register source operand.
+    const char *Sym = S->getSymbol();
+    if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps()) {
+      ARMConstantPoolValue *CPV = new ARMConstantPoolValue(Sym, ARMPCLabelIndex,
+                                                           ARMCP::CPStub, 4);
+      SDOperand CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 2);
+      CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+      Callee = DAG.getLoad(getPointerTy(), DAG.getEntryNode(), CPAddr, NULL, 0); 
+      SDOperand PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
+      Callee = DAG.getNode(ARMISD::PIC_ADD, getPointerTy(), Callee, PICLabel);
+    } else
+      Callee = DAG.getTargetExternalSymbol(Sym, getPointerTy());
   }
 
   std::vector<MVT::ValueType> NodeTys;
@@ -647,8 +661,10 @@ SDOperand ARMTargetLowering::LowerGlobalAddress(SDOperand Op,
   else {
     unsigned PCAdj = (RelocM != Reloc::PIC_)
       ? 0 : (Subtarget->isThumb() ? 4 : 8);
+    ARMCP::ARMCPKind Kind = IsIndirect ? ARMCP::CPNonLazyPtr
+      : ARMCP::CPValue;
     ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV, ARMPCLabelIndex,
-                                                         IsIndirect, PCAdj);
+                                                         Kind, PCAdj);
     CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
   }
   CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
