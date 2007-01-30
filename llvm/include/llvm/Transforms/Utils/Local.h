@@ -24,6 +24,7 @@ class Pass;
 class PHINode;
 class AllocaInst;
 class ConstantExpr;
+class TargetData;
 
 //===----------------------------------------------------------------------===//
 //  Local constant propagation...
@@ -32,7 +33,7 @@ class ConstantExpr;
 /// doConstantPropagation - Constant prop a specific instruction.  Returns true
 /// and potentially moves the iterator if constant propagation was performed.
 ///
-bool doConstantPropagation(BasicBlock::iterator &I);
+bool doConstantPropagation(BasicBlock::iterator &I, const TargetData *TD = 0);
 
 /// ConstantFoldTerminator - If a terminator instruction is predicated on a
 /// constant value, convert it into an unconditional branch to the constant
@@ -46,7 +47,7 @@ bool ConstantFoldTerminator(BasicBlock *BB);
 /// is returned.  Note that this function can only fail when attempting to fold
 /// instructions like loads and stores, which have no constant expression form.
 ///
-Constant *ConstantFoldInstruction(Instruction *I);
+Constant *ConstantFoldInstruction(Instruction *I, const TargetData *TD = 0);
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
 /// specified operands.  If successful, the constant result is returned, if not,
@@ -56,7 +57,9 @@ Constant *ConstantFoldInstruction(Instruction *I);
 ///
 Constant *ConstantFoldInstOperands(
   const Instruction *I, ///< The model instruction
-  const std::vector<Constant*> &Ops ///< The constant operands to use.
+  Constant** Ops,       ///< The array of constant operands to use.
+  unsigned NumOps,      ///< The number of operands provided.
+  const TargetData *TD = 0 ///< Optional target information.
 );
 
 
