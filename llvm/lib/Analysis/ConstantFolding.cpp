@@ -85,23 +85,24 @@ llvm::canConstantFoldCallTo(Function *F) {
   }
 }
 
-Constant *
-llvm::ConstantFoldFP(double (*NativeFP)(double), double V, const Type *Ty) {
+static Constant *ConstantFoldFP(double (*NativeFP)(double), double V, 
+                                const Type *Ty) {
   errno = 0;
   V = NativeFP(V);
   if (errno == 0)
     return ConstantFP::get(Ty, V);
+  errno = 0;
   return 0;
 }
 
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
 /// with the specified arguments, returning null if unsuccessful.
 Constant *
-llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
+llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
   const std::string &Name = F->getName();
   const Type *Ty = F->getReturnType();
 
-  if (Operands.size() == 1) {
+  if (NumOperands == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
       double V = Op->getValue();
       switch (Name[0])
@@ -172,7 +173,7 @@ llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
       else if (Name == "llvm.bswap.i64")
         return ConstantInt::get(Ty, ByteSwap_64(V));
     }
-  } else if (Operands.size() == 2) {
+  } else if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
       double Op1V = Op1->getValue();
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {

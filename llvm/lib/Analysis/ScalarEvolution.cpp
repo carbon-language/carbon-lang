@@ -1761,8 +1761,8 @@ static Constant *ConstantFold(const Instruction *I,
     return ConstantExpr::getSelect(Operands[0], Operands[1], Operands[2]);
   case Instruction::Call:
     if (Function *GV = dyn_cast<Function>(Operands[0])) {
-      Operands.erase(Operands.begin());
-      return ConstantFoldCall(cast<Function>(GV), Operands);
+      return ConstantFoldCall(cast<Function>(GV), &Operands[1],
+                              Operands.size()-1);
     }
     return 0;
   case Instruction::GetElementPtr: {
