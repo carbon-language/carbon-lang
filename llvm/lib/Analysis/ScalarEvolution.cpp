@@ -1746,41 +1746,6 @@ static bool CanConstantFold(const Instruction *I) {
   return false;
 }
 
-/// ConstantFold - Constant fold an instruction of the specified type with the
-/// specified constant operands.  This function may modify the operands vector.
-static Constant *ConstantFold(const Instruction *I,
-                              std::vector<Constant*> &Operands) {
-  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I))
-    return ConstantExpr::get(I->getOpcode(), Operands[0], Operands[1]);
-
-  if (isa<CastInst>(I))
-    return ConstantExpr::getCast(I->getOpcode(), Operands[0], I->getType());
-
-  switch (I->getOpcode()) {
-  case Instruction::Select:
-    return ConstantExpr::getSelect(Operands[0], Operands[1], Operands[2]);
-  case Instruction::Call:
-    if (Function *GV = dyn_cast<Function>(Operands[0])) {
-      return ConstantFoldCall(cast<Function>(GV), &Operands[1],
-                              Operands.size()-1);
-    }
-    return 0;
-  case Instruction::GetElementPtr: {
-    Constant *Base = Operands[0];
-    Operands.erase(Operands.begin());
-    return ConstantExpr::getGetElementPtr(Base, Operands);
-  }
-  case Instruction::ICmp:
-    return ConstantExpr::getICmp(
-        cast<ICmpInst>(I)->getPredicate(), Operands[0], Operands[1]);
-  case Instruction::FCmp:
-    return ConstantExpr::getFCmp(
-        cast<FCmpInst>(I)->getPredicate(), Operands[0], Operands[1]);
-  }
-  return 0;
-}
-
-
 /// getConstantEvolvingPHI - Given an LLVM value and a loop, return a PHI node
 /// in the loop that V is derived from.  We allow arbitrary operations along the
 /// way, but the operands of an operation must either be constants or a value
@@ -1841,7 +1806,7 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
     if (Operands[i] == 0) return 0;
   }
 
-  return ConstantFold(I, Operands);
+  return ConstantFoldInstOperands(I, &Operands[0], Operands.size());
 }
 
 /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
@@ -2006,7 +1971,8 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
             }
           }
         }
-        return SCEVUnknown::get(ConstantFold(I, Operands));
+        Constant *C =ConstantFoldInstOperands(I, &Operands[0], Operands.size());
+        return SCEVUnknown::get(C);
       }
     }
 
