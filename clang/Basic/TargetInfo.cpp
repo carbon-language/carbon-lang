@@ -68,6 +68,24 @@ void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
   std::map<std::string, std::string> PrimaryDefines;
   GetTargetDefineMap(PrimaryTarget, PrimaryDefines);
   
+  // If we have no secondary targets, be a bit more efficient.
+  if (SecondaryTargets.empty()) {
+    for (std::map<std::string, std::string>::iterator I = 
+           PrimaryDefines.begin(), E = PrimaryDefines.end(); I != E; ++I) {
+      // If this define is non-portable, turn it into #define_target, otherwise
+      // just use #define.
+      const char *Command = "#define ";
+      Buffer.insert(Buffer.end(), Command, Command+strlen(Command));
+      
+      // Insert "defname defvalue\n".
+      Buffer.insert(Buffer.end(), I->first.begin(), I->first.end());
+      Buffer.push_back(' ');
+      Buffer.insert(Buffer.end(), I->second.begin(), I->second.end());
+      Buffer.push_back('\n');
+    }
+    return;
+  }
+  
   // Get the sets of secondary #defines.
   std::vector<std::map<std::string, std::string> > SecondaryDefines;
   SecondaryDefines.resize(SecondaryTargets.size());
