@@ -125,8 +125,8 @@ bool FoldingSetImpl::NodeID::operator==(const FoldingSetImpl::NodeID &RHS)const{
 /// singly-linked-list. In order to make deletion more efficient, we make
 /// the list circular, so we can delete a node without computing its hash.
 /// The problem with this is that the start of the hash buckets are not
-/// Nodes.  If NextInBucketPtr is a bucket pointer, this method returns null
-/// : use GetBucketPtr when this happens.
+/// Nodes.  If NextInBucketPtr is a bucket pointer, this method returns null:
+/// use GetBucketPtr when this happens.
 static FoldingSetImpl::Node *GetNextPtr(void *NextInBucketPtr,
                                         void **Buckets, unsigned NumBuckets) {
   if (NextInBucketPtr >= Buckets && NextInBucketPtr < Buckets + NumBuckets)
