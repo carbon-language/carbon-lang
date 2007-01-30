@@ -1112,14 +1112,7 @@ void BytecodeWriter::outputFunction(const Function *F) {
   // Get slot information about the function...
   Table.incorporateFunction(F);
 
-  if (Table.getCompactionTable().empty()) {
-    // Output information about the constants in the function if the compaction
-    // table is not being used.
-    outputConstants(true);
-  } else {
-    // Otherwise, emit the compaction table.
-    outputCompactionTable();
-  }
+  outputConstants(true);
 
   // Output all of the instructions in the body of the function
   outputInstructions(F);
@@ -1130,75 +1123,6 @@ void BytecodeWriter::outputFunction(const Function *F) {
   Table.purgeFunction();
 }
 
-void BytecodeWriter::outputCompactionTablePlane(unsigned PlaneNo,
-                                         const std::vector<const Value*> &Plane,
-                                                unsigned StartNo) {
-  unsigned End = Table.getModuleLevel(PlaneNo);
-  if (Plane.empty() || StartNo == End || End == 0) return;   // Nothing to emit
-  assert(StartNo < End && "Cannot emit negative range!");
-  assert(StartNo < Plane.size() && End <= Plane.size());
-
-  // Do not emit the null initializer!
-  ++StartNo;
-
-  // Figure out which encoding to use.  By far the most common case we have is
-  // to emit 0-2 entries in a compaction table plane.
-  switch (End-StartNo) {
-  case 0:         // Avoid emitting two vbr's if possible.
-  case 1:
-  case 2:
-    output_vbr((PlaneNo << 2) | End-StartNo);
-    break;
-  default:
-    // Output the number of things.
-    output_vbr((unsigned(End-StartNo) << 2) | 3);
-    output_typeid(PlaneNo);                 // Emit the type plane this is
-    break;
-  }
-
-  for (unsigned i = StartNo; i != End; ++i)
-    output_vbr(Table.getGlobalSlot(Plane[i]));
-}
-
-void BytecodeWriter::outputCompactionTypes(unsigned StartNo) {
-  // Get the compaction type table from the slot calculator
-  const std::vector<const Type*> &CTypes = Table.getCompactionTypes();
-
-  // The compaction types may have been uncompactified back to the
-  // global types. If so, we just write an empty table
-  if (CTypes.size() == 0) {
-    output_vbr(0U);
-    return;
-  }
-
-  assert(CTypes.size() >= StartNo && "Invalid compaction types start index");
-
-  // Determine how many types to write
-  unsigned NumTypes = CTypes.size() - StartNo;
-
-  // Output the number of types.
-  output_vbr(NumTypes);
-
-  for (unsigned i = StartNo; i < StartNo+NumTypes; ++i)
-    output_typeid(Table.getGlobalSlot(CTypes[i]));
-}
-
-void BytecodeWriter::outputCompactionTable() {
-  // Avoid writing the compaction table at all if there is no content.
-  if (Table.getCompactionTypes().size() >= Type::FirstDerivedTyID ||
-      (!Table.CompactionTableIsEmpty())) {
-    BytecodeBlock CTB(BytecodeFormat::CompactionTableBlockID, *this,
-                      true/*ElideIfEmpty*/);
-    const std::vector<std::vector<const Value*> > &CT =
-      Table.getCompactionTable();
-
-    // First things first, emit the type compaction table if there is one.
-    outputCompactionTypes(Type::FirstDerivedTyID);
-
-    for (unsigned i = 0, e = CT.size(); i != e; ++i)
-      outputCompactionTablePlane(i, CT[i], 0);
-  }
-}
 
 void BytecodeWriter::outputTypeSymbolTable(const TypeSymbolTable &TST) {
   // Do not output the block for an empty symbol table, it just wastes

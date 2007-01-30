@@ -212,12 +212,6 @@ protected:
   ///  @brief Parse a function body
   void ParseFunctionBody(Function* Func);
 
-  /// @brief Parse the type list portion of a compaction table
-  void ParseCompactionTypes(unsigned NumEntries);
-
-  /// @brief Parse a compaction table
-  void ParseCompactionTable();
-
   /// @brief Parse global types
   void ParseGlobalTypes();
 
@@ -274,15 +268,6 @@ private:
   /// Information about the module, extracted from the bytecode revision number.
   ///
   unsigned char RevisionNum;        // The rev # itself
-
-  /// CompactionTypes - If a compaction table is active in the current function,
-  /// this is the mapping that it contains.  We keep track of what resolved type
-  /// it is as well as what global type entry it is.
-  std::vector<std::pair<const Type*, unsigned> > CompactionTypes;
-
-  /// @brief If a compaction table is active in the current function,
-  /// this is the mapping that it contains.
-  std::vector<std::vector<Value*> > CompactionValues;
 
   /// @brief This vector is used to deal with forward references to types in
   /// a module.
@@ -363,22 +348,11 @@ private:
   /// @brief Converts a Type* to its type slot number
   unsigned getTypeSlot(const Type *Ty);
 
-  /// @brief Converts a normal type slot number to a compacted type slot num.
-  unsigned getCompactionTypeSlot(unsigned type);
-
   /// @brief Gets the global type corresponding to the TypeId
   const Type *getGlobalTableType(unsigned TypeId);
 
-  /// This is just like getTypeSlot, but when a compaction table is in use,
-  /// it is ignored.
-  unsigned getGlobalTableTypeSlot(const Type *Ty);
-
   /// @brief Get a value from its typeid and slot number
   Value* getValue(unsigned TypeID, unsigned num, bool Create = true);
-
-  /// @brief Get a value from its type and slot number, ignoring compaction
-  /// tables.
-  Value *getGlobalTableValue(unsigned TyID, unsigned SlotNo);
 
   /// @brief Get a basic block for current function
   BasicBlock *getBasicBlock(unsigned ID);

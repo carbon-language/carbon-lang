@@ -100,7 +100,6 @@ public:
     bca.BlockSizes[BytecodeFormat::ModuleGlobalInfoBlockID] = 0;
     bca.BlockSizes[BytecodeFormat::GlobalTypePlaneBlockID] = 0;
     bca.BlockSizes[BytecodeFormat::InstructionListBlockID] = 0;
-    bca.BlockSizes[BytecodeFormat::CompactionTableBlockID] = 0;
     bca.BlockSizes[BytecodeFormat::TypeSymbolTableBlockID] = 0;
   }
 
@@ -634,9 +633,6 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
         double(bca.byteSize));
   print(Out, "Instruction List Bytes",
         double(bca.BlockSizes[BytecodeFormat::InstructionListBlockID]),
-        double(bca.byteSize));
-  print(Out, "Compaction Table Bytes",
-        double(bca.BlockSizes[BytecodeFormat::CompactionTableBlockID]),
         double(bca.byteSize));
   print(Out, "Value Symbol Table Bytes",
         double(bca.BlockSizes[BytecodeFormat::ValueSymbolTableBlockID]),

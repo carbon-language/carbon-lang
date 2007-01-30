@@ -186,8 +186,8 @@ inline bool BytecodeReader::hasImplicitNull(unsigned TyID) {
   return TyID != Type::LabelTyID && TyID != Type::VoidTyID;
 }
 
-/// Obtain a type given a typeid and account for things like compaction tables,
-/// function level vs module level, and the offsetting for the primitive types.
+/// Obtain a type given a typeid and account for things like function level vs 
+/// module level, and the offsetting for the primitive types.
 const Type *BytecodeReader::getType(unsigned ID) {
   if (ID <= Type::LastPrimitiveTyID)
     if (const Type *T = Type::getPrimitiveType((Type::TypeID)ID))
@@ -195,12 +195,6 @@ const Type *BytecodeReader::getType(unsigned ID) {
 
   // Otherwise, derived types need offset...
   ID -= Type::FirstDerivedTyID;
-
-  if (!CompactionTypes.empty()) {
-    if (ID >= CompactionTypes.size())
-      error("Type ID out of range for compaction table!");
-    return CompactionTypes[ID].first;
-  }
 
   // Is it a module-level type?
   if (ID < ModuleTypes.size())
@@ -223,19 +217,10 @@ inline const Type* BytecodeReader::readType() {
 }
 
 /// Get the slot number associated with a type accounting for primitive
-/// types, compaction tables, and function level vs module level.
+/// types and function level vs module level.
 unsigned BytecodeReader::getTypeSlot(const Type *Ty) {
   if (Ty->isPrimitiveType())
     return Ty->getTypeID();
-
-  // Scan the compaction table for the type if needed.
-  if (!CompactionTypes.empty()) {
-    for (unsigned i = 0, e = CompactionTypes.size(); i != e; ++i)
-      if (CompactionTypes[i].first == Ty)
-        return Type::FirstDerivedTyID + i;
-
-    error("Couldn't find type specified in compaction table!");
-  }
 
   // Check the function level types first...
   TypeListTy::iterator I = std::find(FunctionTypes.begin(),
@@ -266,84 +251,28 @@ unsigned BytecodeReader::getTypeSlot(const Type *Ty) {
   return Type::FirstDerivedTyID + IT->second;
 }
 
-/// This is just like getType, but when a compaction table is in use, it is
-/// ignored.  It also ignores function level types.
-/// @see getType
-const Type *BytecodeReader::getGlobalTableType(unsigned Slot) {
-  if (Slot < Type::FirstDerivedTyID) {
-    const Type *Ty = Type::getPrimitiveType((Type::TypeID)Slot);
-    if (!Ty)
-      error("Not a primitive type ID?");
-    return Ty;
-  }
-  Slot -= Type::FirstDerivedTyID;
-  if (Slot >= ModuleTypes.size())
-    error("Illegal compaction table type reference!");
-  return ModuleTypes[Slot];
-}
-
-/// This is just like getTypeSlot, but when a compaction table is in use, it
-/// is ignored. It also ignores function level types.
-unsigned BytecodeReader::getGlobalTableTypeSlot(const Type *Ty) {
-  if (Ty->isPrimitiveType())
-    return Ty->getTypeID();
-  
-  // If we don't have our cache yet, build it now.
-  if (ModuleTypeIDCache.empty()) {
-    unsigned N = 0;
-    ModuleTypeIDCache.reserve(ModuleTypes.size());
-    for (TypeListTy::iterator I = ModuleTypes.begin(), E = ModuleTypes.end();
-         I != E; ++I, ++N)
-      ModuleTypeIDCache.push_back(std::make_pair(*I, N));
-    
-    std::sort(ModuleTypeIDCache.begin(), ModuleTypeIDCache.end());
-  }
-  
-  // Binary search the cache for the entry.
-  std::vector<std::pair<const Type*, unsigned> >::iterator IT =
-    std::lower_bound(ModuleTypeIDCache.begin(), ModuleTypeIDCache.end(),
-                     std::make_pair(Ty, 0U));
-  if (IT == ModuleTypeIDCache.end() || IT->first != Ty)
-    error("Didn't find type in ModuleTypes.");
-  
-  return Type::FirstDerivedTyID + IT->second;
-}
-
 /// Retrieve a value of a given type and slot number, possibly creating
 /// it if it doesn't already exist.
 Value * BytecodeReader::getValue(unsigned type, unsigned oNum, bool Create) {
   assert(type != Type::LabelTyID && "getValue() cannot get blocks!");
   unsigned Num = oNum;
 
-  // If there is a compaction table active, it defines the low-level numbers.
-  // If not, the module values define the low-level numbers.
-  if (CompactionValues.size() > type && !CompactionValues[type].empty()) {
-    if (Num < CompactionValues[type].size())
-      return CompactionValues[type][Num];
-    Num -= CompactionValues[type].size();
-  } else {
-    // By default, the global type id is the type id passed in
-    unsigned GlobalTyID = type;
+  // By default, the global type id is the type id passed in
+  unsigned GlobalTyID = type;
 
-    // If the type plane was compactified, figure out the global type ID by
-    // adding the derived type ids and the distance.
-    if (!CompactionTypes.empty() && type >= Type::FirstDerivedTyID)
-      GlobalTyID = CompactionTypes[type-Type::FirstDerivedTyID].second;
-
-    if (hasImplicitNull(GlobalTyID)) {
-      const Type *Ty = getType(type);
-      if (!isa<OpaqueType>(Ty)) {
-        if (Num == 0)
-          return Constant::getNullValue(Ty);
-        --Num;
-      }
+  if (hasImplicitNull(GlobalTyID)) {
+    const Type *Ty = getType(type);
+    if (!isa<OpaqueType>(Ty)) {
+      if (Num == 0)
+        return Constant::getNullValue(Ty);
+      --Num;
     }
+  }
 
-    if (GlobalTyID < ModuleValues.size() && ModuleValues[GlobalTyID]) {
-      if (Num < ModuleValues[GlobalTyID]->size())
-        return ModuleValues[GlobalTyID]->getOperand(Num);
-      Num -= ModuleValues[GlobalTyID]->size();
-    }
+  if (GlobalTyID < ModuleValues.size() && ModuleValues[GlobalTyID]) {
+    if (Num < ModuleValues[GlobalTyID]->size())
+      return ModuleValues[GlobalTyID]->getOperand(Num);
+    Num -= ModuleValues[GlobalTyID]->size();
   }
 
   if (FunctionValues.size() > type &&
@@ -370,38 +299,6 @@ Value * BytecodeReader::getValue(unsigned type, unsigned oNum, bool Create) {
   return 0; // just silence warning, error calls longjmp
 }
 
-/// This is just like getValue, but when a compaction table is in use, it
-/// is ignored.  Also, no forward references or other fancy features are
-/// supported.
-Value* BytecodeReader::getGlobalTableValue(unsigned TyID, unsigned SlotNo) {
-  if (SlotNo == 0)
-    return Constant::getNullValue(getType(TyID));
-
-  if (!CompactionTypes.empty() && TyID >= Type::FirstDerivedTyID) {
-    TyID -= Type::FirstDerivedTyID;
-    if (TyID >= CompactionTypes.size())
-      error("Type ID out of range for compaction table!");
-    TyID = CompactionTypes[TyID].second;
-  }
-
-  --SlotNo;
-
-  if (TyID >= ModuleValues.size() || ModuleValues[TyID] == 0 ||
-      SlotNo >= ModuleValues[TyID]->size()) {
-    if (TyID >= ModuleValues.size() || ModuleValues[TyID] == 0)
-      error("Corrupt compaction table entry!"
-            + utostr(TyID) + ", " + utostr(SlotNo) + ": "
-            + utostr(ModuleValues.size()));
-    else
-      error("Corrupt compaction table entry!"
-            + utostr(TyID) + ", " + utostr(SlotNo) + ": "
-            + utostr(ModuleValues.size()) + ", "
-            + utohexstr(reinterpret_cast<uint64_t>(((void*)ModuleValues[TyID])))
-            + ", "
-            + utostr(ModuleValues[TyID]->size()));
-  }
-  return ModuleValues[TyID]->getOperand(SlotNo);
-}
 
 /// Just like getValue, except that it returns a null pointer
 /// only on error.  It always returns a constant (meaning that if the value is
@@ -1079,76 +976,6 @@ void BytecodeReader::ParseValueSymbolTable(Function *CurrentFunction,
   if (Handler) Handler->handleSymbolTableEnd();
 }
 
-/// Read in the types portion of a compaction table.
-void BytecodeReader::ParseCompactionTypes(unsigned NumEntries) {
-  for (unsigned i = 0; i != NumEntries; ++i) {
-    unsigned TypeSlot = read_vbr_uint();
-    const Type *Typ = getGlobalTableType(TypeSlot);
-    CompactionTypes.push_back(std::make_pair(Typ, TypeSlot));
-    if (Handler) Handler->handleCompactionTableType(i, TypeSlot, Typ);
-  }
-}
-
-/// Parse a compaction table.
-void BytecodeReader::ParseCompactionTable() {
-
-  // Notify handler that we're beginning a compaction table.
-  if (Handler) Handler->handleCompactionTableBegin();
-
-  // Get the types for the compaction table.
-  unsigned NumEntries = read_vbr_uint();
-  ParseCompactionTypes(NumEntries);
-
-  // Compaction tables live in separate blocks so we have to loop
-  // until we've read the whole thing.
-  while (moreInBlock()) {
-    // Read the number of Value* entries in the compaction table
-    unsigned NumEntries = read_vbr_uint();
-    unsigned Ty = 0;
-
-    // Decode the type from value read in. Most compaction table
-    // planes will have one or two entries in them. If that's the
-    // case then the length is encoded in the bottom two bits and
-    // the higher bits encode the type. This saves another VBR value.
-    if ((NumEntries & 3) == 3) {
-      // In this case, both low-order bits are set (value 3). This
-      // is a signal that the typeid follows.
-      NumEntries >>= 2;
-      Ty = read_vbr_uint();
-    } else {
-      // In this case, the low-order bits specify the number of entries
-      // and the high order bits specify the type.
-      Ty = NumEntries >> 2;
-      NumEntries &= 3;
-    }
-
-    // Make sure we have enough room for the plane.
-    if (Ty >= CompactionValues.size())
-      CompactionValues.resize(Ty+1);
-
-    // Make sure the plane is empty or we have some kind of error.
-    if (!CompactionValues[Ty].empty())
-      error("Compaction table plane contains multiple entries!");
-
-    // Notify handler about the plane.
-    if (Handler) Handler->handleCompactionTablePlane(Ty, NumEntries);
-
-    // Push the implicit zero.
-    CompactionValues[Ty].push_back(Constant::getNullValue(getType(Ty)));
-
-    // Read in each of the entries, put them in the compaction table
-    // and notify the handler that we have a new compaction table value.
-    for (unsigned i = 0; i != NumEntries; ++i) {
-      unsigned ValSlot = read_vbr_uint();
-      Value *V = getGlobalTableValue(Ty, ValSlot);
-      CompactionValues[Ty].push_back(V);
-      if (Handler) Handler->handleCompactionTableValue(i, Ty, ValSlot);
-    }
-  }
-  // Notify handler that the compaction table is done.
-  if (Handler) Handler->handleCompactionTableEnd();
-}
-
 // Parse a single type. The typeid is read in first. If its a primitive type
 // then nothing else needs to be read, we know how to instantiate it. If its
 // a derived type, then additional data is read to fill out the type
@@ -1667,8 +1494,7 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
     case BytecodeFormat::ConstantPoolBlockID:
       if (!InsertedArguments) {
         // Insert arguments into the value table before we parse the first basic
-        // block in the function, but after we potentially read in the
-        // compaction table.
+        // block in the function
         insertArguments(F);
         InsertedArguments = true;
       }
@@ -1676,14 +1502,9 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
       ParseConstantPool(FunctionValues, FunctionTypes, true);
       break;
 
-    case BytecodeFormat::CompactionTableBlockID:
-      ParseCompactionTable();
-      break;
-
     case BytecodeFormat::InstructionListBlockID: {
       // Insert arguments into the value table before we parse the instruction
-      // list for the function, but after we potentially read in the compaction
-      // table.
+      // list for the function
       if (!InsertedArguments) {
         insertArguments(F);
         InsertedArguments = true;
@@ -1732,8 +1553,6 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
 
   // Clear out function-level types...
   FunctionTypes.clear();
-  CompactionTypes.clear();
-  CompactionValues.clear();
   freeTable(FunctionValues);
 
   if (Handler) Handler->handleFunctionEnd(F);
