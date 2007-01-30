@@ -21,6 +21,7 @@
 #include "llvm/Support/CFG.h"
 #include "ValueMapper.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 // CloneBasicBlock - See comments in Cloning.h
@@ -281,24 +282,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB) {
 /// mapping its operands through ValueMap if they are available.
 Constant *PruningFunctionCloner::
 ConstantFoldMappedInstruction(const Instruction *I) {
-  if (isa<CmpInst>(I)) {
-    if (Constant *Op0 = dyn_cast_or_null<Constant>(MapValue(I->getOperand(0),
-                                                            ValueMap)))
-      if (Constant *Op1 = dyn_cast_or_null<Constant>(MapValue(I->getOperand(1),
-                                                              ValueMap)))
-        return ConstantExpr::getCompare(cast<CmpInst>(I)->getPredicate(), Op0, 
-                                        Op1);
-    return 0;
-  } else if (isa<BinaryOperator>(I) || isa<ShiftInst>(I))  {
-    if (Constant *Op0 = dyn_cast_or_null<Constant>(MapValue(I->getOperand(0),
-                                                            ValueMap)))
-      if (Constant *Op1 = dyn_cast_or_null<Constant>(MapValue(I->getOperand(1),
-                                                              ValueMap)))
-        return ConstantExpr::get(I->getOpcode(), Op0, Op1);
-    return 0;
-  }
-
-  std::vector<Constant*> Ops;
+  SmallVector<Constant*, 8> Ops;
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
     if (Constant *Op = dyn_cast_or_null<Constant>(MapValue(I->getOperand(i),
                                                            ValueMap)))
@@ -306,7 +290,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
     else
       return 0;  // All operands not constant!
 
-  return ConstantFoldInstOperands(I, Ops);
+  return ConstantFoldInstOperands(I, &Ops[0], Ops.size());
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,

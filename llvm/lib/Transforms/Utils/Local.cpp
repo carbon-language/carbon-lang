@@ -18,8 +18,10 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include <cerrno>
 using namespace llvm;
 
@@ -30,8 +32,9 @@ using namespace llvm;
 /// doConstantPropagation - If an instruction references constants, try to fold
 /// them together...
 ///
-bool llvm::doConstantPropagation(BasicBlock::iterator &II) {
-  if (Constant *C = ConstantFoldInstruction(II)) {
+bool llvm::doConstantPropagation(BasicBlock::iterator &II,
+                                 const TargetData *TD) {
+  if (Constant *C = ConstantFoldInstruction(II, TD)) {
     // Replaces all of the uses of a variable with uses of the constant.
     II->replaceAllUsesWith(C);
 
@@ -48,7 +51,7 @@ bool llvm::doConstantPropagation(BasicBlock::iterator &II) {
 /// is returned.  Note that this function can only fail when attempting to fold
 /// instructions like loads and stores, which have no constant expression form.
 ///
-Constant *llvm::ConstantFoldInstruction(Instruction *I) {
+Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     if (PN->getNumIncomingValues() == 0)
       return Constant::getNullValue(PN->getType());
@@ -79,24 +82,16 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
   case 0: return 0;
   }
 
-  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I)) {
-    return ConstantExpr::get(I->getOpcode(), Op0, Op1);
-  } else if (isa<ICmpInst>(I)) {
-    return ConstantExpr::getICmp(cast<ICmpInst>(I)->getPredicate(), Op0, Op1);
-  } else if (isa<FCmpInst>(I)) {
-    return ConstantExpr::getFCmp(cast<FCmpInst>(I)->getPredicate(), Op0, Op1);
-  }
-
   // Scan the operand list, checking to see if they are all constants, if so,
   // hand off to ConstantFoldInstOperands.
-  std::vector<Constant*> Ops;
+  SmallVector<Constant*, 8> Ops;
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
     if (Constant *Op = dyn_cast<Constant>(I->getOperand(i)))
       Ops.push_back(Op);
     else
       return 0;  // All operands not constant!
 
-  return ConstantFoldInstOperands(I, Ops);
+  return ConstantFoldInstOperands(I, &Ops[0], Ops.size());
 }
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
@@ -106,7 +101,8 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
 /// constant expression form.
 ///
 Constant *llvm::ConstantFoldInstOperands(const Instruction* I, 
-                                         const std::vector<Constant*> &Ops) {
+                                         Constant** Ops, unsigned NumOps,
+                                         const TargetData *TD) {
   unsigned Opc = I->getOpcode();
   const Type *DestTy = I->getType();
 
@@ -117,12 +113,9 @@ Constant *llvm::ConstantFoldInstOperands(const Instruction* I,
   switch (Opc) {
   default: return 0;
   case Instruction::Call:
-    if (Function *F = dyn_cast<Function>(Ops[0])) {
-      if (canConstantFoldCallTo(F)) {
-        std::vector<Constant*> Args(Ops.begin()+1, Ops.end());
-        return ConstantFoldCall(F, Args);
-      }
-    }
+    if (Function *F = dyn_cast<Function>(Ops[0]))
+      if (canConstantFoldCallTo(F))
+        return ConstantFoldCall(F, Ops+1, NumOps);
     return 0;
   case Instruction::ICmp:
   case Instruction::FCmp:
@@ -155,8 +148,8 @@ Constant *llvm::ConstantFoldInstOperands(const Instruction* I,
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
     return ConstantExpr::getGetElementPtr(Ops[0],
-                                          std::vector<Constant*>(Ops.begin()+1, 
-                                                                 Ops.end()));
+                                          std::vector<Constant*>(Ops+1, 
+                                                                 Ops+NumOps));
   }
 }
 
