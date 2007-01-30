@@ -22,11 +22,11 @@
 #include "llvm/Support/CallSite.h"
 using namespace llvm;
 
-bool llvm::InlineFunction(CallInst *CI, CallGraph *CG) {
-  return InlineFunction(CallSite(CI), CG);
+bool llvm::InlineFunction(CallInst *CI, CallGraph *CG, const TargetData *TD) {
+  return InlineFunction(CallSite(CI), CG, TD);
 }
-bool llvm::InlineFunction(InvokeInst *II, CallGraph *CG) {
-  return InlineFunction(CallSite(II), CG);
+bool llvm::InlineFunction(InvokeInst *II, CallGraph *CG, const TargetData *TD) {
+  return InlineFunction(CallSite(II), CG, TD);
 }
 
 /// HandleInlinedInvoke - If we inlined an invoke site, we need to convert calls
@@ -177,7 +177,7 @@ static void UpdateCallGraphAfterInlining(const Function *Caller,
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // function by one level.
 //
-bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
+bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   Instruction *TheCall = CS.getInstruction();
   assert(TheCall->getParent() && TheCall->getParent()->getParent() &&
          "Instruction not in function!");
@@ -225,7 +225,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
     // (which can happen, e.g., because an argument was constant), but we'll be
     // happy with whatever the cloner can do.
     CloneAndPruneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i",
-                              &InlinedFunctionInfo);
+                              &InlinedFunctionInfo, TD);
     
     // Remember the first block that is newly cloned over.
     FirstNewBlock = LastBlock; ++FirstNewBlock;

@@ -33,6 +33,7 @@ class ReturnInst;
 class CallSite;
 class Trace;
 class CallGraph;
+class TargetData;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
@@ -141,7 +142,8 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                std::map<const Value*, Value*> &ValueMap,
                                std::vector<ReturnInst*> &Returns,
                                const char *NameSuffix = "", 
-                               ClonedCodeInfo *CodeInfo = 0);
+                               ClonedCodeInfo *CodeInfo = 0,
+                               const TargetData *TD = 0);
 
 
 /// CloneTraceInto - Clone T into NewFunc. Original<->clone mapping is
@@ -170,9 +172,9 @@ std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace);
 /// If a non-null callgraph pointer is provided, these functions update the
 /// CallGraph to represent the program after inlining.
 ///
-bool InlineFunction(CallInst *C, CallGraph *CG = 0);
-bool InlineFunction(InvokeInst *II, CallGraph *CG = 0);
-bool InlineFunction(CallSite CS, CallGraph *CG = 0);
+bool InlineFunction(CallInst *C, CallGraph *CG = 0, const TargetData *TD = 0);
+bool InlineFunction(InvokeInst *II, CallGraph *CG = 0, const TargetData *TD =0);
+bool InlineFunction(CallSite CS, CallGraph *CG = 0, const TargetData *TD = 0);
 
 } // End llvm namespace
 

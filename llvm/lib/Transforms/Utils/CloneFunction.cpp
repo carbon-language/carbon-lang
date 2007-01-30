@@ -158,15 +158,17 @@ namespace {
     std::vector<ReturnInst*> &Returns;
     const char *NameSuffix;
     ClonedCodeInfo *CodeInfo;
+    const TargetData *TD;
 
   public:
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
                           std::map<const Value*, Value*> &valueMap,
                           std::vector<ReturnInst*> &returns,
                           const char *nameSuffix, 
-                          ClonedCodeInfo *codeInfo)
+                          ClonedCodeInfo *codeInfo,
+                          const TargetData *td)
     : NewFunc(newFunc), OldFunc(oldFunc), ValueMap(valueMap), Returns(returns),
-      NameSuffix(nameSuffix), CodeInfo(codeInfo) {
+      NameSuffix(nameSuffix), CodeInfo(codeInfo), TD(td) {
     }
 
     /// CloneBlock - The specified block is found to be reachable, clone it and
@@ -290,7 +292,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
     else
       return 0;  // All operands not constant!
 
-  return ConstantFoldInstOperands(I, &Ops[0], Ops.size());
+  return ConstantFoldInstOperands(I, &Ops[0], Ops.size(), TD);
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
@@ -304,7 +306,8 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      std::map<const Value*, Value*> &ValueMap,
                                      std::vector<ReturnInst*> &Returns,
                                      const char *NameSuffix, 
-                                     ClonedCodeInfo *CodeInfo) {
+                                     ClonedCodeInfo *CodeInfo,
+                                     const TargetData *TD) {
   assert(NameSuffix && "NameSuffix cannot be null!");
   
 #ifndef NDEBUG
@@ -314,7 +317,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 #endif
   
   PruningFunctionCloner PFC(NewFunc, OldFunc, ValueMap, Returns, 
-                            NameSuffix, CodeInfo);
+                            NameSuffix, CodeInfo, TD);
 
   // Clone the entry block, and anything recursively reachable from it.
   PFC.CloneBlock(&OldFunc->getEntryBlock());
