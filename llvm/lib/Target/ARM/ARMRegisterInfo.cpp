@@ -884,93 +884,100 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   unsigned NumBytes = MFI->getStackSize();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
+  if (isThumb) {
+    // Thumb add/sub sp, imm8 instructions implicitly multiply the offset by 4.
+    NumBytes = (NumBytes + 3) & ~3;
+    MFI->setStackSize(NumBytes);
+  }
+
   // Determine the sizes of each callee-save spill areas and record which frame
   // belongs to which callee-save spill areas.
   unsigned GPRCS1Size = 0, GPRCS2Size = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
-  if (AFI->hasStackFrame()) {
-    if (VARegSaveSize)
-      emitSPUpdate(MBB, MBBI, -VARegSaveSize, isThumb, TII);
+  if (!AFI->hasStackFrame()) {
+    if (NumBytes != 0)
+      emitSPUpdate(MBB, MBBI, -NumBytes, isThumb, TII);
+    return;
+  }
 
-    for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-      unsigned Reg = CSI[i].getReg();
-      int FI = CSI[i].getFrameIdx();
-      switch (Reg) {
-      case ARM::R4:
-      case ARM::R5:
-      case ARM::R6:
-      case ARM::R7:
-      case ARM::LR:
-        if (Reg == FramePtr)
-          FramePtrSpillFI = FI;
+  if (VARegSaveSize)
+    emitSPUpdate(MBB, MBBI, -VARegSaveSize, isThumb, TII);
+
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    unsigned Reg = CSI[i].getReg();
+    int FI = CSI[i].getFrameIdx();
+    switch (Reg) {
+    case ARM::R4:
+    case ARM::R5:
+    case ARM::R6:
+    case ARM::R7:
+    case ARM::LR:
+      if (Reg == FramePtr)
+        FramePtrSpillFI = FI;
+      AFI->addGPRCalleeSavedArea1Frame(FI);
+      GPRCS1Size += 4;
+      break;
+    case ARM::R8:
+    case ARM::R9:
+    case ARM::R10:
+    case ARM::R11:
+      if (Reg == FramePtr)
+        FramePtrSpillFI = FI;
+      if (STI.isTargetDarwin()) {
+        AFI->addGPRCalleeSavedArea2Frame(FI);
+        GPRCS2Size += 4;
+      } else {
         AFI->addGPRCalleeSavedArea1Frame(FI);
         GPRCS1Size += 4;
-        break;
-      case ARM::R8:
-      case ARM::R9:
-      case ARM::R10:
-      case ARM::R11:
-        if (Reg == FramePtr)
-          FramePtrSpillFI = FI;
-        if (STI.isTargetDarwin()) {
-          AFI->addGPRCalleeSavedArea2Frame(FI);
-          GPRCS2Size += 4;
-        } else {
-          AFI->addGPRCalleeSavedArea1Frame(FI);
-          GPRCS1Size += 4;
-        }
-        break;
-      default:
-        AFI->addDPRCalleeSavedAreaFrame(FI);
-        DPRCSSize += 8;
       }
-    }
-
-    if (Align == 8 && (GPRCS1Size & 7) != 0)
-      // Pad CS1 to ensure proper alignment.
-      GPRCS1Size += 4;
-
-    if (!isThumb) {
-      // Build the new SUBri to adjust SP for integer callee-save spill area 1.
-      emitSPUpdate(MBB, MBBI, -GPRCS1Size, isThumb, TII);
-      movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, 1, STI);
-    } else if (MBBI != MBB.end() && MBBI->getOpcode() == ARM::tPUSH)
-      ++MBBI;
-
-    // Point FP to the stack slot that contains the previous FP.
-    if (STI.isTargetDarwin())
-      BuildMI(MBB, MBBI, TII.get(isThumb ? ARM::tADDrSPi : ARM::ADDri), FramePtr)
-        .addFrameIndex(FramePtrSpillFI).addImm(0);
-
-    if (!isThumb) {
-      // Build the new SUBri to adjust SP for integer callee-save spill area 2.
-      emitSPUpdate(MBB, MBBI, -GPRCS2Size, false, TII);
-
-      // Build the new SUBri to adjust SP for FP callee-save spill area.
-      movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, 2, STI);
-      emitSPUpdate(MBB, MBBI, -DPRCSSize, false, TII);
+      break;
+    default:
+      AFI->addDPRCalleeSavedAreaFrame(FI);
+      DPRCSSize += 8;
     }
   }
 
+  if (Align == 8 && (GPRCS1Size & 7) != 0)
+    // Pad CS1 to ensure proper alignment.
+    GPRCS1Size += 4;
+
+  if (!isThumb) {
+    // Build the new SUBri to adjust SP for integer callee-save spill area 1.
+    emitSPUpdate(MBB, MBBI, -GPRCS1Size, isThumb, TII);
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, 1, STI);
+  } else if (MBBI != MBB.end() && MBBI->getOpcode() == ARM::tPUSH)
+    ++MBBI;
+
+  // Point FP to the stack slot that contains the previous FP.
+  if (STI.isTargetDarwin())
+    BuildMI(MBB, MBBI, TII.get(isThumb ? ARM::tADDrSPi : ARM::ADDri), FramePtr)
+      .addFrameIndex(FramePtrSpillFI).addImm(0);
+
+  if (!isThumb) {
+    // Build the new SUBri to adjust SP for integer callee-save spill area 2.
+    emitSPUpdate(MBB, MBBI, -GPRCS2Size, false, TII);
+
+    // Build the new SUBri to adjust SP for FP callee-save spill area.
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, 2, STI);
+    emitSPUpdate(MBB, MBBI, -DPRCSSize, false, TII);
+  }
+
   // Determine starting offsets of spill areas.
-  if (AFI->hasStackFrame()) {
-    unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
-    unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
-    unsigned GPRCS1Offset = GPRCS2Offset + GPRCS2Size;
-    AFI->setFramePtrSpillOffset(MFI->getObjectOffset(FramePtrSpillFI) + NumBytes);
-    AFI->setGPRCalleeSavedArea1Offset(GPRCS1Offset);
-    AFI->setGPRCalleeSavedArea2Offset(GPRCS2Offset);
-    AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
+  unsigned DPRCSOffset  = NumBytes - (GPRCS1Size + GPRCS2Size + DPRCSSize);
+  unsigned GPRCS2Offset = DPRCSOffset + DPRCSSize;
+  unsigned GPRCS1Offset = GPRCS2Offset + GPRCS2Size;
+  AFI->setFramePtrSpillOffset(MFI->getObjectOffset(FramePtrSpillFI) + NumBytes);
+  AFI->setGPRCalleeSavedArea1Offset(GPRCS1Offset);
+  AFI->setGPRCalleeSavedArea2Offset(GPRCS2Offset);
+  AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
   
-    NumBytes = DPRCSOffset;
-    if (NumBytes) {
-      // Insert it after all the callee-save spills.
-      if (!isThumb)
-        movePastCSLoadStoreOps(MBB, MBBI, ARM::FSTD, 3, STI);
-      emitSPUpdate(MBB, MBBI, -NumBytes, isThumb, TII);
-    }
-  } else 
+  NumBytes = DPRCSOffset;
+  if (NumBytes) {
+    // Insert it after all the callee-save spills.
+    if (!isThumb)
+      movePastCSLoadStoreOps(MBB, MBBI, ARM::FSTD, 3, STI);
     emitSPUpdate(MBB, MBBI, -NumBytes, isThumb, TII);
+  }
 
   AFI->setGPRCalleeSavedArea1Size(GPRCS1Size);
   AFI->setGPRCalleeSavedArea2Size(GPRCS2Size);
@@ -1005,58 +1012,60 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   bool isThumb = AFI->isThumbFunction();
   unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
   int NumBytes = (int)MFI->getStackSize();
-  if (AFI->hasStackFrame()) {
-    // Unwind MBBI to point to first LDR / FLDD.
-    const unsigned *CSRegs = getCalleeSavedRegs();
-    if (MBBI != MBB.begin()) {
-      do
-        --MBBI;
-      while (MBBI != MBB.begin() && isCSRestore(MBBI, CSRegs));
-      if (!isCSRestore(MBBI, CSRegs))
-        ++MBBI;
-    }
-
-    // Move SP to start of FP callee save spill area.
-    NumBytes -= (AFI->getGPRCalleeSavedArea1Size() +
-                 AFI->getGPRCalleeSavedArea2Size() +
-                 AFI->getDPRCalleeSavedAreaSize());
-    if (isThumb)
+  if (!AFI->hasStackFrame()) {
+    if (NumBytes != 0)
       emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
-    else {
-      if (STI.isTargetDarwin()) {
-        NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
-        // Reset SP based on frame pointer only if the stack frame extends beyond
-        // frame pointer stack slot.
-        if (AFI->getGPRCalleeSavedArea2Size() ||
-            AFI->getDPRCalleeSavedAreaSize()  ||
-            AFI->getDPRCalleeSavedAreaOffset())
-          if (NumBytes)
-            BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
-              .addImm(NumBytes);
-          else
-            BuildMI(MBB, MBBI, TII.get(ARM::MOVrr), ARM::SP).addReg(FramePtr);
-      } else if (NumBytes) {
-        emitSPUpdate(MBB, MBBI, NumBytes, false, TII);
-      }
+    return;
+  }
 
-      // Move SP to start of integer callee save spill area 2.
-      movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 3, STI);
-      emitSPUpdate(MBB, MBBI, AFI->getDPRCalleeSavedAreaSize(), false, TII);
+  // Unwind MBBI to point to first LDR / FLDD.
+  const unsigned *CSRegs = getCalleeSavedRegs();
+  if (MBBI != MBB.begin()) {
+    do
+      --MBBI;
+    while (MBBI != MBB.begin() && isCSRestore(MBBI, CSRegs));
+    if (!isCSRestore(MBBI, CSRegs))
+      ++MBBI;
+  }
 
-      // Move SP to start of integer callee save spill area 1.
-      movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 2, STI);
-      emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea2Size(), false, TII);
-
-      // Move SP to SP upon entry to the function.
-      movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 1, STI);
-      emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea1Size(), false, TII);
+  // Move SP to start of FP callee save spill area.
+  NumBytes -= (AFI->getGPRCalleeSavedArea1Size() +
+               AFI->getGPRCalleeSavedArea2Size() +
+               AFI->getDPRCalleeSavedAreaSize());
+  if (isThumb)
+    emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
+  else {
+    if (STI.isTargetDarwin()) {
+      NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
+      // Reset SP based on frame pointer only if the stack frame extends beyond
+      // frame pointer stack slot.
+      if (AFI->getGPRCalleeSavedArea2Size() ||
+          AFI->getDPRCalleeSavedAreaSize()  ||
+          AFI->getDPRCalleeSavedAreaOffset())
+        if (NumBytes)
+          BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
+            .addImm(NumBytes);
+        else
+          BuildMI(MBB, MBBI, TII.get(ARM::MOVrr), ARM::SP).addReg(FramePtr);
+    } else if (NumBytes) {
+      emitSPUpdate(MBB, MBBI, NumBytes, false, TII);
     }
 
-    if (VARegSaveSize)
-      emitSPUpdate(MBB, MBBI, VARegSaveSize, isThumb, TII);
-  } else if (NumBytes != 0) {
-    emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
+    // Move SP to start of integer callee save spill area 2.
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 3, STI);
+    emitSPUpdate(MBB, MBBI, AFI->getDPRCalleeSavedAreaSize(), false, TII);
+
+    // Move SP to start of integer callee save spill area 1.
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 2, STI);
+    emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea2Size(), false, TII);
+
+    // Move SP to SP upon entry to the function.
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 1, STI);
+    emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea1Size(), false, TII);
   }
+
+  if (VARegSaveSize)
+    emitSPUpdate(MBB, MBBI, VARegSaveSize, isThumb, TII);
 }
 
 unsigned ARMRegisterInfo::getRARegister() const {
