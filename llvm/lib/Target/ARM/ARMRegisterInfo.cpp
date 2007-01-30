@@ -336,22 +336,27 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   bool isMul4 = (Bytes & 3) == 0;
   bool isTwoAddr = false;
   unsigned NumBits = 1;
+  unsigned Scale = 1;
   unsigned Opc = 0;
   unsigned ExtraOpc = 0;
 
   if (DestReg == BaseReg && BaseReg == ARM::SP) {
     assert(isMul4 && "Thumb sp inc / dec size must be multiple of 4!");
-    Bytes >>= 2;  // Implicitly multiplied by 4.
     NumBits = 7;
+    Scale = 4;
     Opc = isSub ? ARM::tSUBspi : ARM::tADDspi;
     isTwoAddr = true;
   } else if (!isSub && BaseReg == ARM::SP) {
+    // r1 = add sp, 403
+    // =>
+    // r1 = add sp, 100 * 4
+    // r1 = add r1, 3
     if (!isMul4) {
       Bytes &= ~3;
       ExtraOpc = ARM::tADDi3;
     }
-    Bytes >>= 2;  // Implicitly multiplied by 4.
     NumBits = 8;
+    Scale = 4;
     Opc = ARM::tADDrSPi;
   } else {
     if (DestReg != BaseReg) {
@@ -372,10 +377,11 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     isTwoAddr = true;
   }
 
-  unsigned Chunk = (1 << NumBits) - 1;
+  unsigned Chunk = ((1 << NumBits) - 1) * Scale;
   while (Bytes) {
     unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
-    Bytes -= ThisVal;    
+    Bytes -= ThisVal;
+    ThisVal /= Scale;
     // Build the new tADD / tSUB.
     if (isTwoAddr)
       BuildMI(MBB, MBBI, TII.get(Opc), DestReg).addReg(DestReg).addImm(ThisVal);
@@ -388,6 +394,8 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
         // r4 = add r4, imm
         // ...
         NumBits = 8;
+        Scale = 1;
+        Chunk = ((1 << NumBits) - 1) * Scale;
         Opc = isSub ? ARM::tSUBi8 : ARM::tADDi8;
         isTwoAddr = true;
       }
@@ -636,6 +644,13 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     }
 
     // Otherwise, it didn't fit.  Pull in what we can to simplify the immediate.
+    if (AddrMode == ARMII::AddrModeTs) {
+      // Thumb tLDRspi, tSTRspi. These will change to instructions that use a
+      // different base register.
+      NumBits = 5;
+      Mask = (1 << NumBits) - 1;
+    }
+
     ImmedOffset = ImmedOffset & Mask;
     if (isSub)
       ImmedOffset |= 1 << NumBits;
@@ -654,7 +669,9 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       unsigned TmpReg = MI.getOperand(0).getReg();
       emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg,
                                 isSub ? -Offset : Offset, TII);
+      MI.setInstrDescriptor(TII.get(ARM::tLDR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false);
+      MI.addRegOperand(0, false); // tLDR has an extra register operand.
     } else if (TII.isStore(Opcode)) {
       // FIXME! This is horrific!!! We need register scavenging.
       // Our temporary workaround has marked r3 unavailable. Of course, r3 is
@@ -664,16 +681,18 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       // Use r2 to materialize sp + offset
       // str r12, r2
       // r2 = r12
-      unsigned DestReg = MI.getOperand(0).getReg();
+      unsigned ValReg = MI.getOperand(0).getReg();
       unsigned TmpReg = ARM::R3;
-      if (DestReg == ARM::R3) {
+      if (ValReg == ARM::R3) {
         BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R2);
         TmpReg = ARM::R2;
       }
       emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg,
                                 isSub ? -Offset : Offset, TII);
-      MI.getOperand(i).ChangeToRegister(DestReg, false);
-      if (DestReg == ARM::R3)
+      MI.setInstrDescriptor(TII.get(ARM::tSTR));
+      MI.getOperand(i).ChangeToRegister(TmpReg, false);
+      MI.addRegOperand(0, false); // tSTR has an extra register operand.
+      if (ValReg == ARM::R3)
         BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R2).addReg(ARM::R12);
     } else
       assert(false && "Unexpected opcode!");
