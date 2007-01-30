@@ -15,18 +15,171 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include <cerrno>
 #include <cmath>
 using namespace llvm;
 
-//===----------------------------------------------------------------------===//
-//  Constant Folding ...
-//
+/// ConstantFoldInstruction - Attempt to constant fold the specified
+/// instruction.  If successful, the constant result is returned, if not, null
+/// is returned.  Note that this function can only fail when attempting to fold
+/// instructions like loads and stores, which have no constant expression form.
+///
+Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
+  if (PHINode *PN = dyn_cast<PHINode>(I)) {
+    if (PN->getNumIncomingValues() == 0)
+      return Constant::getNullValue(PN->getType());
 
+    Constant *Result = dyn_cast<Constant>(PN->getIncomingValue(0));
+    if (Result == 0) return 0;
+
+    // Handle PHI nodes specially here...
+    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (PN->getIncomingValue(i) != Result && PN->getIncomingValue(i) != PN)
+        return 0;   // Not all the same incoming constants...
+
+    // If we reach here, all incoming values are the same constant.
+    return Result;
+  }
+
+  // Scan the operand list, checking to see if they are all constants, if so,
+  // hand off to ConstantFoldInstOperands.
+  SmallVector<Constant*, 8> Ops;
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+    if (Constant *Op = dyn_cast<Constant>(I->getOperand(i)))
+      Ops.push_back(Op);
+    else
+      return 0;  // All operands not constant!
+
+  return ConstantFoldInstOperands(I, &Ops[0], Ops.size());
+}
+
+/// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
+/// specified opcode and operands.  If successful, the constant result is
+/// returned, if not, null is returned.  Note that this function can fail when
+/// attempting to fold instructions like loads and stores, which have no
+/// constant expression form.
+///
+Constant *llvm::ConstantFoldInstOperands(const Instruction* I, 
+                                         Constant** Ops, unsigned NumOps,
+                                         const TargetData *TD) {
+  unsigned Opc = I->getOpcode();
+  const Type *DestTy = I->getType();
+
+  // Handle easy binops first
+  if (isa<BinaryOperator>(I))
+    return ConstantExpr::get(Opc, Ops[0], Ops[1]);
+  
+  switch (Opc) {
+  default: return 0;
+  case Instruction::Call:
+    if (Function *F = dyn_cast<Function>(Ops[0]))
+      if (canConstantFoldCallTo(F))
+        return ConstantFoldCall(F, Ops+1, NumOps);
+    return 0;
+  case Instruction::ICmp:
+  case Instruction::FCmp:
+    return ConstantExpr::getCompare(cast<CmpInst>(I)->getPredicate(), Ops[0], 
+                                    Ops[1]);
+  case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::AShr:
+    return ConstantExpr::get(Opc, Ops[0], Ops[1]);
+  case Instruction::Trunc:
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::PtrToInt:
+  case Instruction::IntToPtr:
+  case Instruction::BitCast:
+    return ConstantExpr::getCast(Opc, Ops[0], DestTy);
+  case Instruction::Select:
+    return ConstantExpr::getSelect(Ops[0], Ops[1], Ops[2]);
+  case Instruction::ExtractElement:
+    return ConstantExpr::getExtractElement(Ops[0], Ops[1]);
+  case Instruction::InsertElement:
+    return ConstantExpr::getInsertElement(Ops[0], Ops[1], Ops[2]);
+  case Instruction::ShuffleVector:
+    return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
+  case Instruction::GetElementPtr:
+    return ConstantExpr::getGetElementPtr(Ops[0],
+                                          std::vector<Constant*>(Ops+1, 
+                                                                 Ops+NumOps));
+  }
+}
+
+/// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a
+/// getelementptr constantexpr, return the constant value being addressed by the
+/// constant expression, or null if something is funny and we can't decide.
+Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C, 
+                                                       ConstantExpr *CE) {
+  if (CE->getOperand(1) != Constant::getNullValue(CE->getOperand(1)->getType()))
+    return 0;  // Do not allow stepping over the value!
+  
+  // Loop over all of the operands, tracking down which value we are
+  // addressing...
+  gep_type_iterator I = gep_type_begin(CE), E = gep_type_end(CE);
+  for (++I; I != E; ++I)
+    if (const StructType *STy = dyn_cast<StructType>(*I)) {
+      ConstantInt *CU = cast<ConstantInt>(I.getOperand());
+      assert(CU->getZExtValue() < STy->getNumElements() &&
+             "Struct index out of range!");
+      unsigned El = (unsigned)CU->getZExtValue();
+      if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
+        C = CS->getOperand(El);
+      } else if (isa<ConstantAggregateZero>(C)) {
+        C = Constant::getNullValue(STy->getElementType(El));
+      } else if (isa<UndefValue>(C)) {
+        C = UndefValue::get(STy->getElementType(El));
+      } else {
+        return 0;
+      }
+    } else if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
+      if (const ArrayType *ATy = dyn_cast<ArrayType>(*I)) {
+        if (CI->getZExtValue() >= ATy->getNumElements())
+         return 0;
+        if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
+          C = CA->getOperand(CI->getZExtValue());
+        else if (isa<ConstantAggregateZero>(C))
+          C = Constant::getNullValue(ATy->getElementType());
+        else if (isa<UndefValue>(C))
+          C = UndefValue::get(ATy->getElementType());
+        else
+          return 0;
+      } else if (const PackedType *PTy = dyn_cast<PackedType>(*I)) {
+        if (CI->getZExtValue() >= PTy->getNumElements())
+          return 0;
+        if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C))
+          C = CP->getOperand(CI->getZExtValue());
+        else if (isa<ConstantAggregateZero>(C))
+          C = Constant::getNullValue(PTy->getElementType());
+        else if (isa<UndefValue>(C))
+          C = UndefValue::get(PTy->getElementType());
+        else
+          return 0;
+      } else {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
+  return C;
+}
+
+
+//===----------------------------------------------------------------------===//
+//  Constant Folding for Calls
+//
 
 /// canConstantFoldCallTo - Return true if its even possible to fold a call to
 /// the specified function.
