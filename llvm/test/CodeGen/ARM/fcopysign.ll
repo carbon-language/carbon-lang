@@ -6,8 +6,8 @@
 define float @test1(float %x, double %y) {
 	%tmp = fpext float %x to double
 	%tmp2 = tail call double @copysign( double %tmp, double %y )
-	%tmp2 = fptrunc double %tmp2 to float
-	ret float %tmp2
+	%tmp3 = fptrunc double %tmp2 to float
+	ret float %tmp3
 }
 
 define double @test2(double %x, float %y) {

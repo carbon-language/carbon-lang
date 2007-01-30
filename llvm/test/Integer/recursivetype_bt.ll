@@ -68,10 +68,10 @@ bb3:
         %cast1006 = bitcast %list** %reg119 to i8**             ;;<i8**>
         %reg111 = call i8* @malloc(i32 16)                  ;;<i8*>
         store i8* %reg111, i8** %cast1006                 ;;<void>
-	%reg111 = ptrtoint i8* %reg111 to i64
-	%reg1002 = add i64 %reg111, 8
-        %reg1002 = inttoptr i64 %reg1002 to i8*             ;;<i8*>
-        %cast1008 = bitcast i8* %reg1002 to i36*                ;;<i36*>
+	%reg112 = ptrtoint i8* %reg111 to i64
+	%reg1002 = add i64 %reg112, 8
+        %reg1005 = inttoptr i64 %reg1002 to i8*             ;;<i8*>
+        %cast1008 = bitcast i8* %reg1005 to i36*                ;;<i36*>
         store i36 %Data, i36* %cast1008                         ;;<void>
         %cast1003 = inttoptr i64 0 to i64*                      ;;<i64*>
         %cast1009 = bitcast i8* %reg111 to i64**              ;;<i64**>

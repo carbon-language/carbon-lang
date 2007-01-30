@@ -19,8 +19,8 @@ bb:             ; preds = %bb3
 
 bb3:            ; preds = %bb, %entry
         %i.0 = phi i32 [ 0, %entry ], [ %tmp2, %bb ]            ; <i32> [#uses=3]
-        %tmp = icmp sle i32 %i.0, 9999          ; <i1> [#uses=1]
-        br i1 %tmp, label %bb, label %bb5
+        %tmp3 = icmp sle i32 %i.0, 9999          ; <i1> [#uses=1]
+        br i1 %tmp3, label %bb, label %bb5
 
 bb5:            ; preds = %bb3
         br label %return
@@ -28,5 +28,3 @@ bb5:            ; preds = %bb3
 return:         ; preds = %bb5
         ret void
 }
-
-

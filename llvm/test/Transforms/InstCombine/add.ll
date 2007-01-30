@@ -241,7 +241,7 @@ ubyte %test34(ubyte %A) {
         ret ubyte %C
 }
 
-int %test34(int %a) {  ;; -> -1
+int %test35(int %a) {  ;; -> -1
         %tmpnot = xor int %a, -1
         %tmp2 = add int %tmpnot, %a
         ret int %tmp2

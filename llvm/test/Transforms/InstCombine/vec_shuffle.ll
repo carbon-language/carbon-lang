@@ -35,8 +35,8 @@ define i32 @test5(<4 x i32> %X) {
 }
 
 define float @test6(<4 x float> %X) {
-        %X = bitcast <4 x float> %X to <4 x i32>
-        %tmp152.i53899.i = shufflevector <4 x i32> %X, <4 x i32> undef, <4 x i32> zeroinitializer
+        %X1 = bitcast <4 x float> %X to <4 x i32>
+        %tmp152.i53899.i = shufflevector <4 x i32> %X1, <4 x i32> undef, <4 x i32> zeroinitializer
         %tmp152.i53900.i = bitcast <4 x i32> %tmp152.i53899.i to <4 x float>
         %tmp34 = extractelement <4 x float> %tmp152.i53900.i, i32 0
         ret float %tmp34

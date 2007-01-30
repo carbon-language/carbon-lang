@@ -48,6 +48,6 @@ end
 define i32 @"main"()
 begin
   %Result = call i63 @trampoline(i63 10, i63(i63) *@fib)
-  %Result = trunc i63 %Result to i32
-  ret i32 %Result
+  %Result2 = trunc i63 %Result to i32
+  ret i32 %Result2
 end

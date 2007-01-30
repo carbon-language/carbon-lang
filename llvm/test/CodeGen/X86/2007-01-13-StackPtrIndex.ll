@@ -15,11 +15,11 @@ b:
 	%r6 = load i32* %a3
 	%r8 = load i32* %a4
 	%r14 = load i32* %a5
-	%r = sext i32 %r2 to i64
+	%rx = sext i32 %r2 to i64
 	%r9 = sext i32 %r to i64
-	%r11 = add i64 %r, 0
-	%r = icmp slt i64 %r11, 0
-	%r12 = select i1 %r, i64 0, i64 %r11
+	%r11 = add i64 %rx, 0
+	%ras = icmp slt i64 %r11, 0
+	%r12 = select i1 %ras, i64 0, i64 %r11
 	%r16 = sext i32 %r14 to i64
 	%r17 = sext i32 %r8 to i64
 	%r18 = sub i64 %r16, 0
@@ -28,17 +28,17 @@ b:
 	%r19h = add i64 %r18, 0
 	%r22 = select i1 %r20, i64 1, i64 %r19h
 	%r23 = mul i64 %r22, 0
-	%r23 = trunc i64 %r23 to i32
-	%r24 = shl i32 %r23, i8 0
+	%r23a = trunc i64 %r23 to i32
+	%r24 = shl i32 %r23a, i8 0
 	%r25 = add i32 %r24, 0
-	%r = alloca i8, i32 %r25, align 16
-	%r28 = getelementptr i8* %r, i32 0
+	%ras2 = alloca i8, i32 %r25, align 16
+	%r28 = getelementptr i8* %ras2, i32 0
 	%r38 = shl i64 %r12, i8 0
 	%s2013 = add i64 %r38, 0
-	%c22012 = getelementptr i8* %r, i64 %s2013
+	%c22012 = getelementptr i8* %ras2, i64 %s2013
 	%r42 = shl i64 %r12, i8 0
 	%s2011 = add i64 %r42, 16
-	%c22010 = getelementptr i8* %r, i64 %s2011
+	%c22010 = getelementptr i8* %ras2, i64 %s2011
 	%r50 = add i64 %r16, 0
 	%r51 = icmp slt i64 %r50, 0
 	%r50sh = shl i64 %r50, i8 0
@@ -46,7 +46,7 @@ b:
 	%r54 = select i1 %r51, i64 0, i64 %r50j
 	%r56 = mul i64 %r54, %r12
 	%r28s = add i64 %r56, 16
-	%c2 = getelementptr i8* %r, i64 %r28s
+	%c2 = getelementptr i8* %ras2, i64 %r28s
 	%r60 = sub i32 %r2, %r
 	%r61 = icmp slt i32 %r60, 0
 	br i1 %r61, label %a29b, label %b63
@@ -112,9 +112,9 @@ a30b294q:
 	br label %a30b294
 a30b:
 	%w = phi i64 [ 0, %b179 ], [ %v, %a30b ]
-	%b = shl i64 %w, i8 0
-	%r283 = add i64 %b, 0
-	%r286 = add i64 %b, 0
+	%b2 = shl i64 %w, i8 0
+	%r283 = add i64 %b2, 0
+	%r286 = add i64 %b2, 0
 	%r288 = icmp slt i64 %r286, 0
 	%v = add i64 %w, 0
 	br i1 %r288, label %b188, label %a30b
@@ -204,7 +204,7 @@ a45b:
 	%v1853 = add i64 %w1852, 0
 	br i1 %r708, label %b565, label %a45b
 b712:
-	%r795 = add i64 %r, 0
+	%r795 = add i64 %rx, 0
 	%r799 = add i64 %s923, 0
 	%r802 = add i64 %w1855, 0
 	%r807 = icmp slt i64 %r802, 0
@@ -255,7 +255,7 @@ b820:
 	%r846 = sext i32 %r60 to i64
 	%r847 = add i64 %r846, 0
 	%r851 = load float* bitcast ([128 x i64]* @i6000 to float*)
-	%r856 = sub i64 %r, 0
+	%r856 = sub i64 %rx, 0
 	br label %b858
 b858:
 	%w1891 = phi i64 [ 0, %b820 ], [ %v1892, %b1016 ]
@@ -321,7 +321,7 @@ a66b:
 	br i1 %r817, label %a93b, label %b1321
 b1086:
 	%r1089 = sext i32 %r2 to i64
-	%r1090 = add i64 %r, 0
+	%r1090 = add i64 %rx, 0
 	%r1096 = mul i64 %r9, 0
 	%r1101 = sext i32 %r8 to i64
 	%r1104 = add i64 %r1096, 0
@@ -424,7 +424,7 @@ a74b:
 	%v1959 = add i64 %w1958, 0
 	br i1 %r1581, label %a74b, label %b1582
 b1582:
-	%r1587 = add i64 %r, 0
+	%r1587 = add i64 %rx, 0
 	%r1591 = add i64 %s1563, 0
 	%r1596 = add i64 %d1533, 0
 	%r1601 = icmp slt i64 %r1596, 0

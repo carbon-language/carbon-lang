@@ -12,8 +12,8 @@ define i1 @test1(i32 %X) zext {
 
 define i1 @test2(i32 %val, i32 %mask) {
 entry:
-    %mask = trunc i32 %mask to i8
-    %shifted = ashr i32 %val, i8 %mask
+    %maski8 = trunc i32 %mask to i8
+    %shifted = ashr i32 %val, i8 %maski8
     %anded = and i32 %shifted, 1
     %trunced = trunc i32 %anded to i1
     br i1 %trunced, label %ret_true, label %ret_false

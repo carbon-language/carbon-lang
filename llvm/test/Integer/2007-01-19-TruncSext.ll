@@ -16,7 +16,7 @@ define void @multiply(i32 %index, i32 %X, i32 %Y) {
   ret void
 }
 
-define i32 @main(i32 %argc, i8** %argc) {
+define i32 @main(i32 %argc, i8** %argv) {
   %i = bitcast i32 0 to i32
   call void @multiply(i32 %i, i32 -1, i32 255) 
   %P = getelementptr [20 x i17]* @ARRAY, i32 0, i32 0

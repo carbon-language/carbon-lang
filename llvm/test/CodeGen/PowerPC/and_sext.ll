@@ -15,15 +15,15 @@ define i16 @test2(i16 sext %X, i16 sext %x) sext {
         %tmp1 = sext i16 %x to i32
         %tmp2 = add i32 %tmp, %tmp1
         %tmp4 = ashr i32 %tmp2, i8 1
-        %tmp4 = trunc i32 %tmp4 to i16
-        %tmp45 = sext i16 %tmp4 to i32
+        %tmp5 = trunc i32 %tmp4 to i16
+        %tmp45 = sext i16 %tmp5 to i32
         %retval = trunc i32 %tmp45 to i16
         ret i16 %retval
 }
 
 define i16 @test3(i32 zext %X) sext {
         %tmp1 = lshr i32 %X, i8 16
-        %tmp1 = trunc i32 %tmp1 to i16
-        ret i16 %tmp1
+        %tmp2 = trunc i32 %tmp1 to i16
+        ret i16 %tmp2
 }
 

@@ -20,7 +20,7 @@ uint %test3(uint %A) {
 	ret uint %B
 }
 
-bool %test3(int %A) {
+bool %test3a(int %A) {
 	%B = rem int %A, -8   ; & 7
 	%C = setne int %B, 0
 	ret bool %C

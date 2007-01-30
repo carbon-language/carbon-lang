@@ -43,7 +43,7 @@ entry:
 	ret double %tmp
 }
 
-float %h() {
+float %h2() {
 entry:
         ret float 1.000000e+00
 }

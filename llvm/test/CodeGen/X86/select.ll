@@ -43,7 +43,7 @@ int %foldSel2(bool %A, int %B, int %C) {
 	ret int %X
 }
 
-int %foldSel2(bool %A, int %B, int %C, double %X, double %Y) {
+int %foldSel2a(bool %A, int %B, int %C, double %X, double %Y) {
 	%Cond = setlt double %X, %Y
 	%X = select bool %Cond, int %B, int %C
 	ret int %X
