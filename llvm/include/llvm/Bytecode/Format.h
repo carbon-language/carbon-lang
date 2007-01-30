@@ -40,13 +40,7 @@ public:
     GlobalTypePlaneBlockID = 6,  ///< Global type plan identifier
     InstructionListBlockID = 7,  ///< All instructions in a function
 
-    /// Blocks with this id are used to define a function local remapping
-    /// table for the function's values. This allows the indices used within 
-    /// the function to be as small as possible.  This often allows the 
-    /// instructions to be encoded more efficiently because VBR takes fewer
-    /// bytes with smaller values.
-    /// @brief Value Compaction Table Block
-    CompactionTableBlockID = 8,
+    //CompactionTableBlockID = 8, << Placeholder for removed block type
 
     TypeSymbolTableBlockID = 9,  ///< Value Symbol table identifier
     // Not a block id, just used to count them
