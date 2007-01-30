@@ -714,8 +714,16 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     if (!I->hasInitializer())   // External global require no code
       continue;
 
-    if (EmitSpecialLLVMGlobal(I))
+    if (EmitSpecialLLVMGlobal(I)) {
+      if (Subtarget->isTargetDarwin() &&
+          TM.getRelocationModel() == Reloc::Static) {
+        if (I->getName() == "llvm.global_ctors")
+          O << ".reference .constructors_used\n";
+        else if (I->getName() == "llvm.global_dtors")
+          O << ".reference .destructors_used\n";
+      }
       continue;
+    }
 
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();

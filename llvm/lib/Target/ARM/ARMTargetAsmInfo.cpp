@@ -28,8 +28,13 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     JumpTableDataSection = ".const";
     CStringSection = "\t.cstring";
     HasDotTypeDotSizeDirective = false;
-    StaticCtorsSection = ".mod_init_func";
-    StaticDtorsSection = ".mod_term_func";
+    if (TM.getRelocationModel() == Reloc::Static) {
+      StaticCtorsSection = ".constructor";
+      StaticDtorsSection = ".destructor";
+    } else {
+      StaticCtorsSection = ".mod_init_func";
+      StaticDtorsSection = ".mod_term_func";
+    }
     
     // In non-PIC modes, emit a special label before jump tables so that the
     // linker can perform more accurate dead code stripping.

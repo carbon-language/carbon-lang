@@ -59,8 +59,13 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     LCOMMDirective = "\t.lcomm\t";
     COMMDirectiveTakesAlignment = false;
     HasDotTypeDotSizeDirective = false;
-    StaticCtorsSection = ".mod_init_func";
-    StaticDtorsSection = ".mod_term_func";
+    if (TM.getRelocationModel() == Reloc::Static) {
+      StaticCtorsSection = ".constructor";
+      StaticDtorsSection = ".destructor";
+    } else {
+      StaticCtorsSection = ".mod_init_func";
+      StaticDtorsSection = ".mod_term_func";
+    }
     InlineAsmStart = "# InlineAsm Start";
     InlineAsmEnd = "# InlineAsm End";
     SetDirective = "\t.set";

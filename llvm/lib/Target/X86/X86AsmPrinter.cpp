@@ -134,8 +134,16 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       continue;   // External global require no code
     
     // Check to see if this is a special global used by LLVM, if so, emit it.
-    if (EmitSpecialLLVMGlobal(I))
+    if (EmitSpecialLLVMGlobal(I)) {
+      if (Subtarget->isTargetDarwin() &&
+          TM.getRelocationModel() == Reloc::Static) {
+        if (I->getName() == "llvm.global_ctors")
+          O << ".reference .constructors_used\n";
+        else if (I->getName() == "llvm.global_dtors")
+          O << ".reference .destructors_used\n";
+      }
       continue;
+    }
     
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();

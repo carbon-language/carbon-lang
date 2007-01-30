@@ -53,8 +53,13 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   JumpTableDataSection = ".const";
   GlobalDirective = "\t.globl\t";
   CStringSection = "\t.cstring";
-  StaticCtorsSection = ".mod_init_func";
-  StaticDtorsSection = ".mod_term_func";
+  if (TM.getRelocationModel() == Reloc::Static) {
+    StaticCtorsSection = ".constructor";
+    StaticDtorsSection = ".destructor";
+  } else {
+    StaticCtorsSection = ".mod_init_func";
+    StaticDtorsSection = ".mod_term_func";
+  }
   UsedDirective = "\t.no_dead_strip\t";
   WeakRefDirective = "\t.weak_reference\t";
   HiddenDirective = "\t.private_extern\t";
