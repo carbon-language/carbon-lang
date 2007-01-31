@@ -505,10 +505,8 @@ public:
     // Now that we have the destination's length, we must index into the
     // destination's pointer to get the actual memcpy destination (end of
     // the string .. we're concatenating).
-    std::vector<Value*> idx;
-    idx.push_back(strlen_inst);
     GetElementPtrInst* gep =
-      new GetElementPtrInst(dest,idx,dest->getName()+".indexed",ci);
+      new GetElementPtrInst(dest, strlen_inst, dest->getName()+".indexed", ci);
 
     // We have enough information to now generate the memcpy call to
     // do the concatenation for us.
@@ -596,9 +594,8 @@ public:
     // strchr(s,c)  -> offset_of_in(c,s)
     //    (if c is a constant integer and s is a constant string)
     if (char_found) {
-      std::vector<Value*> indices;
-      indices.push_back(ConstantInt::get(Type::Int64Ty,offset));
-      GetElementPtrInst* GEP = new GetElementPtrInst(ci->getOperand(1),indices,
+      Value* Idx = ConstantInt::get(Type::Int64Ty,offset);
+      GetElementPtrInst* GEP = new GetElementPtrInst(ci->getOperand(1), Idx, 
           ci->getOperand(1)->getName()+".strchr",ci);
       ci->replaceAllUsesWith(GEP);
     } else {

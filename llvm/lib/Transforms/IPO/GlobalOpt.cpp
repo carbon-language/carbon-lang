@@ -452,11 +452,11 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
                                                 &Idxs[0], Idxs.size());
       } else {
         GetElementPtrInst *GEPI = cast<GetElementPtrInst>(GEP);
-        std::vector<Value*> Idxs;
+        SmallVector<Value*, 8> Idxs;
         Idxs.push_back(NullInt);
         for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i)
           Idxs.push_back(GEPI->getOperand(i));
-        NewPtr = new GetElementPtrInst(NewPtr, Idxs,
+        NewPtr = new GetElementPtrInst(NewPtr, &Idxs[0], Idxs.size(),
                                        GEPI->getName()+"."+utostr(Val), GEPI);
       }
     GEP->replaceAllUsesWith(NewPtr);
@@ -684,10 +684,9 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     MallocInst *NewMI =
       new MallocInst(NewTy, Constant::getNullValue(Type::Int32Ty),
                      MI->getAlignment(), MI->getName(), MI);
-    std::vector<Value*> Indices;
-    Indices.push_back(Constant::getNullValue(Type::Int32Ty));
-    Indices.push_back(Indices[0]);
-    Value *NewGEP = new GetElementPtrInst(NewMI, Indices,
+    Value* Indices[2];
+    Indices[0] = Indices[1] = Constant::getNullValue(Type::Int32Ty);
+    Value *NewGEP = new GetElementPtrInst(NewMI, Indices, 2,
                                           NewMI->getName()+".el0", MI);
     MI->replaceAllUsesWith(NewGEP);
     MI->eraseFromParent();
