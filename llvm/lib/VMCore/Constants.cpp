@@ -1377,7 +1377,8 @@ namespace llvm {
       case Instruction::GetElementPtr:
         // Make everyone now use a constant of the new type...
         std::vector<Value*> Idx(OldC->op_begin()+1, OldC->op_end());
-        New = ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0), Idx);
+        New = ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0),
+                                               &Idx[0], Idx.size());
         break;
       }
 
@@ -1744,44 +1745,40 @@ Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
 }
 
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
-                                           const std::vector<Value*> &IdxList) {
-  assert(GetElementPtrInst::getIndexedType(C->getType(), IdxList, true) &&
+                                           Value* const *Idxs,
+                                           unsigned NumIdx) {
+  assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs, NumIdx, true) &&
          "GEP indices invalid!");
 
-  if (Constant *FC = ConstantFoldGetElementPtr(C, IdxList))
+  if (Constant *FC = ConstantFoldGetElementPtr(C, (Constant**)Idxs, NumIdx))
     return FC;          // Fold a few common cases...
 
   assert(isa<PointerType>(C->getType()) &&
          "Non-pointer type for constant GetElementPtr expression");
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec;
-  ArgVec.reserve(IdxList.size()+1);
+  ArgVec.reserve(NumIdx+1);
   ArgVec.push_back(C);
-  for (unsigned i = 0, e = IdxList.size(); i != e; ++i)
-    ArgVec.push_back(cast<Constant>(IdxList[i]));
-  const ExprMapKeyType Key(Instruction::GetElementPtr,ArgVec);
+  for (unsigned i = 0; i != NumIdx; ++i)
+    ArgVec.push_back(cast<Constant>(Idxs[i]));
+  const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 
-Constant *ConstantExpr::getGetElementPtr(Constant *C,
-                                         const std::vector<Constant*> &IdxList){
+Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
+                                         unsigned NumIdx) {
   // Get the result type of the getelementptr!
-  std::vector<Value*> VIdxList(IdxList.begin(), IdxList.end());
-
-  const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), VIdxList,
-                                                     true);
+  const Type *Ty = 
+    GetElementPtrInst::getIndexedType(C->getType(), Idxs, NumIdx, true);
   assert(Ty && "GEP indices invalid!");
-  return getGetElementPtrTy(PointerType::get(Ty), C, VIdxList);
+  return getGetElementPtrTy(PointerType::get(Ty), C, Idxs, NumIdx);
 }
 
-Constant *ConstantExpr::getGetElementPtr(Constant *C,
-                                         const std::vector<Value*> &IdxList) {
-  // Get the result type of the getelementptr!
-  const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), IdxList,
-                                                     true);
-  assert(Ty && "GEP indices invalid!");
-  return getGetElementPtrTy(PointerType::get(Ty), C, IdxList);
+Constant *ConstantExpr::getGetElementPtr(Constant *C, Constant* const *Idxs,
+                                         unsigned NumIdx) {
+  return getGetElementPtr(C, (Value* const *)Idxs, NumIdx);
 }
+
 
 Constant *
 ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {

@@ -19,8 +19,6 @@
 #ifndef CONSTANTFOLDING_H
 #define CONSTANTFOLDING_H
 
-#include <vector>
-
 namespace llvm {
   class Value;
   class Constant;
@@ -49,7 +47,7 @@ namespace llvm {
                                            const Constant *C1, 
                                            const Constant *C2);
   Constant *ConstantFoldGetElementPtr(const Constant *C,
-                                      const std::vector<Value*> &IdxList);
+                                      Constant* const *Idxs, unsigned NumIdx);
 } // End llvm namespace
 
 #endif

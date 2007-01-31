@@ -765,12 +765,13 @@ GetElementPtrInst::~GetElementPtrInst() {
 // pointer type.
 //
 const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
-                                              const std::vector<Value*> &Idx,
+                                              Value* const *Idxs,
+                                              unsigned NumIdx,
                                               bool AllowCompositeLeaf) {
   if (!isa<PointerType>(Ptr)) return 0;   // Type isn't a pointer type!
 
   // Handle the special case of the empty set index set...
-  if (Idx.empty())
+  if (NumIdx == 0)
     if (AllowCompositeLeaf ||
         cast<PointerType>(Ptr)->getElementType()->isFirstClassType())
       return cast<PointerType>(Ptr)->getElementType();
@@ -779,12 +780,12 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
 
   unsigned CurIdx = 0;
   while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {
-    if (Idx.size() == CurIdx) {
+    if (NumIdx == CurIdx) {
       if (AllowCompositeLeaf || CT->isFirstClassType()) return Ptr;
       return 0;   // Can't load a whole structure or array!?!?
     }
 
-    Value *Index = Idx[CurIdx++];
+    Value *Index = Idxs[CurIdx++];
     if (isa<PointerType>(CT) && CurIdx != 1)
       return 0;  // Can only index into pointer types at the first index!
     if (!CT->indexValid(Index)) return 0;
@@ -798,7 +799,7 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
       Ptr = Ty;
     }
   }
-  return CurIdx == Idx.size() ? Ptr : 0;
+  return CurIdx == NumIdx ? Ptr : 0;
 }
 
 const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,

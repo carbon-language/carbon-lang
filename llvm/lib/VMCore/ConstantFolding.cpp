@@ -23,6 +23,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -216,7 +217,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     // the first element.  If so, return the appropriate GEP instruction.
     if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
       if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy)) {
-        std::vector<Value*> IdxList;
+        SmallVector<Value*, 8> IdxList;
         IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
         const Type *ElTy = PTy->getElementType();
         while (ElTy != DPTy->getElementType()) {
@@ -236,7 +237,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
 
         if (ElTy == DPTy->getElementType())
           return ConstantExpr::getGetElementPtr(
-              const_cast<Constant*>(V),IdxList);
+              const_cast<Constant*>(V), &IdxList[0], IdxList.size());
       }
         
     // Handle casts from one packed constant to another.  We know that the src 
@@ -1290,28 +1291,31 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
 }
 
 Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
-                                          const std::vector<Value*> &IdxList) {
-  if (IdxList.size() == 0 ||
-      (IdxList.size() == 1 && cast<Constant>(IdxList[0])->isNullValue()))
+                                          Constant* const *Idxs, 
+                                          unsigned NumIdx) {
+  if (NumIdx == 0 ||
+      (NumIdx == 1 && Idxs[0]->isNullValue()))
     return const_cast<Constant*>(C);
 
   if (isa<UndefValue>(C)) {
-    const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), IdxList,
+    const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(),
+                                                       (Value**)Idxs, NumIdx,
                                                        true);
     assert(Ty != 0 && "Invalid indices for GEP!");
     return UndefValue::get(PointerType::get(Ty));
   }
 
-  Constant *Idx0 = cast<Constant>(IdxList[0]);
+  Constant *Idx0 = Idxs[0];
   if (C->isNullValue()) {
     bool isNull = true;
-    for (unsigned i = 0, e = IdxList.size(); i != e; ++i)
-      if (!cast<Constant>(IdxList[i])->isNullValue()) {
+    for (unsigned i = 0, e = NumIdx; i != e; ++i)
+      if (!Idxs[i]->isNullValue()) {
         isNull = false;
         break;
       }
     if (isNull) {
-      const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), IdxList,
+      const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(),
+                                                         (Value**)Idxs, NumIdx,
                                                          true);
       assert(Ty != 0 && "Invalid indices for GEP!");
       return ConstantPointerNull::get(PointerType::get(Ty));
@@ -1330,8 +1334,8 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         LastTy = *I;
 
       if ((LastTy && isa<ArrayType>(LastTy)) || Idx0->isNullValue()) {
-        std::vector<Value*> NewIndices;
-        NewIndices.reserve(IdxList.size() + CE->getNumOperands());
+        SmallVector<Value*, 16> NewIndices;
+        NewIndices.reserve(NumIdx + CE->getNumOperands());
         for (unsigned i = 1, e = CE->getNumOperands()-1; i != e; ++i)
           NewIndices.push_back(CE->getOperand(i));
 
@@ -1353,8 +1357,9 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         }
 
         NewIndices.push_back(Combined);
-        NewIndices.insert(NewIndices.end(), IdxList.begin()+1, IdxList.end());
-        return ConstantExpr::getGetElementPtr(CE->getOperand(0), NewIndices);
+        NewIndices.insert(NewIndices.end(), Idxs+1, Idxs+NumIdx);
+        return ConstantExpr::getGetElementPtr(CE->getOperand(0), &NewIndices[0],
+                                              NewIndices.size());
       }
     }
 
@@ -1363,7 +1368,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
     //                        long 0, long 0)
     // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
     //
-    if (CE->isCast() && IdxList.size() > 1 && Idx0->isNullValue())
+    if (CE->isCast() && NumIdx > 1 && Idx0->isNullValue())
       if (const PointerType *SPT =
           dyn_cast<PointerType>(CE->getOperand(0)->getType()))
         if (const ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))
@@ -1371,7 +1376,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         dyn_cast<ArrayType>(cast<PointerType>(C->getType())->getElementType()))
             if (CAT->getElementType() == SAT->getElementType())
               return ConstantExpr::getGetElementPtr(
-                      (Constant*)CE->getOperand(0), IdxList);
+                      (Constant*)CE->getOperand(0), Idxs, NumIdx);
   }
   return 0;
 }
