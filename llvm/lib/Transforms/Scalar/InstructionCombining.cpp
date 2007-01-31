@@ -8992,13 +8992,6 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     }
   }
 
-  // See if SimplifyDemandedVectorElts can simplify based on this shuffle.  For
-  // example, if this is a splat, then we only demand from one input element.
-  uint64_t UndefElts;
-  if (Value *V = SimplifyDemandedVectorElts(&SVI, (1ULL << Mask.size())-1,
-                                            UndefElts))
-    return ReplaceInstUsesWith(SVI, V);
-    
   return MadeChange ? &SVI : 0;
 }
 
