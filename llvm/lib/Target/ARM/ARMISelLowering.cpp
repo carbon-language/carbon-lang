@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
@@ -36,7 +37,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
 
   // Uses VFP for Thumb libfuncs if available.
-  if (Subtarget->isThumb() && Subtarget->hasVFP2()) {
+  if (!UseSoftFloat && Subtarget->isThumb() && Subtarget->hasVFP2()) {
     // Single-precision floating-point arithmetic.
     setLibcallName(RTLIB::ADD_F32, "__addsf3vfp");
     setLibcallName(RTLIB::SUB_F32, "__subsf3vfp");
@@ -91,7 +92,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
 
   addRegisterClass(MVT::i32, ARM::GPRRegisterClass);
-  if (Subtarget->hasVFP2() && !Subtarget->isThumb()) {
+  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb()) {
     addRegisterClass(MVT::f32, ARM::SPRRegisterClass);
     addRegisterClass(MVT::f64, ARM::DPRRegisterClass);
   }
@@ -173,7 +174,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
-  if (Subtarget->hasVFP2() && !Subtarget->isThumb())
+  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb())
     // Turn f64->i64 into FMRRD iff target supports vfp2.
     setOperationAction(ISD::BIT_CONVERT, MVT::i64, Custom);
   
