@@ -9037,108 +9037,6 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   return true;
 }
 
-/// IsConstantOffsetFromGlobal - If this constant is actually a constant offset
-/// from a global, return the global and the constant.  Because of
-/// constantexprs, this function is recursive.
-static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
-                                       int64_t &Offset, const TargetData &TD) {
-  // Trivial case, constant is the global.
-  if ((GV = dyn_cast<GlobalValue>(C))) {
-    Offset = 0;
-    return true;
-  }
-  
-  // Otherwise, if this isn't a constant expr, bail out.
-  ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
-  if (!CE) return false;
-  
-  // Look through ptr->int and ptr->ptr casts.
-  if (CE->getOpcode() == Instruction::PtrToInt ||
-      CE->getOpcode() == Instruction::BitCast)
-    return IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD);
-  
-  // i32* getelementptr ([5 x i32]* @a, i32 0, i32 5)    
-  if (CE->getOpcode() == Instruction::GetElementPtr) {
-    // Cannot compute this if the element type of the pointer is missing size
-    // info.
-    if (!cast<PointerType>(CE->getOperand(0)->getType())->getElementType()->isSized())
-      return false;
-    
-    // If the base isn't a global+constant, we aren't either.
-    if (!IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD))
-      return false;
-    
-    // Otherwise, add any offset that our operands provide.
-    gep_type_iterator GTI = gep_type_begin(CE);
-    for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i, ++GTI) {
-      ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(i));
-      if (!CI) return false;  // Index isn't a simple constant?
-      if (CI->getZExtValue() == 0) continue;  // Not adding anything.
-      
-      if (const StructType *ST = dyn_cast<StructType>(*GTI)) {
-        // N = N + Offset
-        Offset += TD.getStructLayout(ST)->MemberOffsets[CI->getZExtValue()];
-      } else {
-        const SequentialType *ST = cast<SequentialType>(*GTI);
-        Offset += TD.getTypeSize(ST->getElementType())*CI->getSExtValue();
-      }
-    }
-    return true;
-  }
-  
-  return false;
-}
-
-/// OptimizeConstantExpr - Given a constant expression and target data layout
-/// information, symbolically evaluate the constant expr to something simpler
-/// if possible.
-static Constant *OptimizeConstantExpr(ConstantExpr *CE, const TargetData *TD) {
-  if (!TD) return CE;
-  
-  Constant *Ptr = CE->getOperand(0);
-  if (CE->getOpcode() == Instruction::GetElementPtr && Ptr->isNullValue() &&
-      cast<PointerType>(Ptr->getType())->getElementType()->isSized()) {
-    // If this is a constant expr gep that is effectively computing an
-    // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
-    bool isFoldableGEP = true;
-    for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-      if (!isa<ConstantInt>(CE->getOperand(i)))
-        isFoldableGEP = false;
-    if (isFoldableGEP) {
-      std::vector<Value*> Ops(CE->op_begin()+1, CE->op_end());
-      uint64_t Offset = TD->getIndexedOffset(Ptr->getType(), Ops);
-      Constant *C = ConstantInt::get(TD->getIntPtrType(), Offset);
-      return ConstantExpr::getIntToPtr(C, CE->getType());
-    }
-  }
-  
-  
-  // SROA
-  
-  // Fold (and 0xffffffff00000000, (shl x, 32)) -> shl.
-  // Fold (lshr (or X, Y), 32) -> (lshr [X/Y], 32) if one doesn't contribute
-  // bits.
-  
-  
-  // If the constant expr is something like &A[123] - &A[4].f, fold this into a
-  // constant.  This happens frequently when iterating over a global array.
-  if (CE->getOpcode() == Instruction::Sub) {
-    GlobalValue *GV1, *GV2;
-    int64_t Offs1, Offs2;
-    
-    if (IsConstantOffsetFromGlobal(CE->getOperand(0), GV1, Offs1, *TD))
-      if (IsConstantOffsetFromGlobal(CE->getOperand(1), GV2, Offs2, *TD) &&
-          GV1 == GV2) {
-        // (&GV+C1) - (&GV+C2) -> C1-C2, pointer arithmetic cannot overflow.
-        return ConstantInt::get(CE->getType(), Offs1-Offs2);
-      }
-  }
-  
-  // TODO: Fold icmp setne/seteq as well.
-  
-  return CE;
-}
-
 
 /// AddReachableCodeToWorklist - Walk the function in depth-first order, adding
 /// all reachable code to the worklist.
@@ -9169,8 +9067,6 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     
     // ConstantProp instruction if trivially constant.
     if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-        C = OptimizeConstantExpr(CE, TD);
       DOUT << "IC: ConstFold to: " << *C << " from: " << *Inst;
       Inst->replaceAllUsesWith(C);
       ++NumConstProp;
@@ -9260,8 +9156,6 @@ bool InstCombiner::runOnFunction(Function &F) {
 
     // Instruction isn't dead, see if we can constant propagate it.
     if (Constant *C = ConstantFoldInstruction(I, TD)) {
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-        C = OptimizeConstantExpr(CE, TD);
       DOUT << "IC: ConstFold to: " << *C << " from: " << *I;
 
       // Add operands to the worklist.
