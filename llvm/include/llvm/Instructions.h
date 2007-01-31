@@ -348,7 +348,11 @@ public:
                     const std::string &Name = "", Instruction *InsertBefore =0);
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
                     const std::string &Name, BasicBlock *InsertAtEnd);
-
+  GetElementPtrInst(Value *Ptr, Value* const *Idx, unsigned NumIdx,
+                    const std::string &Name = "", Instruction *InsertBefore =0);
+  GetElementPtrInst(Value *Ptr, Value* const *Idx, unsigned NumIdx,
+                    const std::string &Name, BasicBlock *InsertAtEnd);
+  
   /// Constructors - These two constructors are convenience methods because one
   /// and two index getelementptr instructions are so common.
   GetElementPtrInst(Value *Ptr, Value *Idx,
@@ -375,8 +379,14 @@ public:
   /// pointer type.
   ///
   static const Type *getIndexedType(const Type *Ptr,
-                                    const std::vector<Value*> &Indices,
+                                    Value* const *Idx, unsigned NumIdx,
                                     bool AllowStructLeaf = false);
+  
+  static const Type *getIndexedType(const Type *Ptr,
+                                    const std::vector<Value*> &Indices,
+                                    bool AllowStructLeaf = false) {
+    return getIndexedType(Ptr, &Indices[0], Indices.size(), AllowStructLeaf);
+  }
   static const Type *getIndexedType(const Type *Ptr, Value *Idx0, Value *Idx1,
                                     bool AllowStructLeaf = false);
   static const Type *getIndexedType(const Type *Ptr, Value *Idx);

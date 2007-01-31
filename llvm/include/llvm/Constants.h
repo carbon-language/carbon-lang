@@ -447,7 +447,7 @@ protected:
   static Constant *getSelectTy(const Type *Ty,
                                Constant *C1, Constant *C2, Constant *C3);
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
-                                      const std::vector<Value*> &IdxList);
+                                      Value* const *Idxs, unsigned NumIdxs);
   static Constant *getExtractElementTy(const Type *Ty, Constant *Val,
                                        Constant *Idx);
   static Constant *getInsertElementTy(const Type *Ty, Constant *Val,
@@ -577,10 +577,18 @@ public:
   /// all elements must be Constant's.
   ///
   static Constant *getGetElementPtr(Constant *C,
-                                    const std::vector<Constant*> &IdxList);
+                                    Constant* const *IdxList, unsigned NumIdx);
   static Constant *getGetElementPtr(Constant *C,
-                                    const std::vector<Value*> &IdxList);
-
+                                    Value* const *IdxList, unsigned NumIdx);
+  static Constant *getGetElementPtr(Constant *C,
+                                    const std::vector<Constant*> &IdxList) {
+    return getGetElementPtr(C, &IdxList[0], IdxList.size());
+  }
+  static Constant *getGetElementPtr(Constant *C,
+                                    const std::vector<Value*> &IdxList) {
+    return getGetElementPtr(C, &IdxList[0], IdxList.size());
+  }
+  
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
   static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);
