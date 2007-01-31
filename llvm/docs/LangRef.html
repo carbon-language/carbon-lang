@@ -85,6 +85,9 @@
           <li><a href="#i_urem">'<tt>urem</tt>' Instruction</a></li>
           <li><a href="#i_srem">'<tt>srem</tt>' Instruction</a></li>
           <li><a href="#i_frem">'<tt>frem</tt>' Instruction</a></li>
+          <li><a href="#i_shl">'<tt>shl</tt>' Instruction</a></li>
+          <li><a href="#i_lshr">'<tt>lshr</tt>' Instruction</a></li>
+          <li><a href="#i_ashr">'<tt>ashr</tt>' Instruction</a></li>
         </ol>
       </li>
       <li><a href="#bitwiseops">Bitwise Binary Operations</a>
@@ -92,9 +95,6 @@
           <li><a href="#i_and">'<tt>and</tt>' Instruction</a></li>
           <li><a href="#i_or">'<tt>or</tt>'  Instruction</a></li>
           <li><a href="#i_xor">'<tt>xor</tt>' Instruction</a></li>
-          <li><a href="#i_shl">'<tt>shl</tt>' Instruction</a></li>
-          <li><a href="#i_lshr">'<tt>lshr</tt>' Instruction</a></li>
-          <li><a href="#i_ashr">'<tt>ashr</tt>' Instruction</a></li>
         </ol>
       </li>
       <li><a href="#vectorops">Vector Operations</a>
@@ -1952,6 +1952,88 @@ identical types.</p>
 </pre>
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_shl">'<tt>shl</tt>'
+Instruction</a> </div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = shl &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>shl</tt>' instruction returns the first operand shifted to
+the left a specified number of bits.</p>
+<h5>Arguments:</h5>
+<p>Both arguments to the '<tt>shl</tt>' instruction must be the same <a
+ href="#t_integer">integer</a> type.</p>
+<h5>Semantics:</h5>
+<p>The value produced is <tt>var1</tt> * 2<sup><tt>var2</tt></sup>.</p>
+<h5>Example:</h5><pre>
+  &lt;result&gt; = shl i32 4, %var   <i>; yields {i32}: 4 &lt;&lt; %var</i>
+  &lt;result&gt; = shl i32 4, 2      <i>; yields {i32}: 16</i>
+  &lt;result&gt; = shl i32 1, 10     <i>; yields {i32}: 1024</i>
+</pre>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_lshr">'<tt>lshr</tt>'
+Instruction</a> </div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = lshr &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>lshr</tt>' instruction (logical shift right) returns the first 
+operand shifted to the right a specified number of bits.</p>
+
+<h5>Arguments:</h5>
+<p>Both arguments to the '<tt>lshr</tt>' instruction must be the same 
+<a href="#t_integer">integer</a> type.</p>
+
+<h5>Semantics:</h5>
+<p>This instruction always performs a logical shift right operation. The most
+significant bits of the result will be filled with zero bits after the 
+shift.</p>
+
+<h5>Example:</h5>
+<pre>
+  &lt;result&gt; = lshr i32 4, 1   <i>; yields {i32}:result = 2</i>
+  &lt;result&gt; = lshr i32 4, 2   <i>; yields {i32}:result = 1</i>
+  &lt;result&gt; = lshr i8  4, 3   <i>; yields {i8}:result = 0</i>
+  &lt;result&gt; = lshr i8 -2, 1   <i>; yields {i8}:result = 0x7FFFFFFF </i>
+</pre>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"> <a name="i_ashr">'<tt>ashr</tt>'
+Instruction</a> </div>
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>  &lt;result&gt; = ashr &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>ashr</tt>' instruction (arithmetic shift right) returns the first 
+operand shifted to the right a specified number of bits.</p>
+
+<h5>Arguments:</h5>
+<p>Both arguments to the '<tt>ashr</tt>' instruction must be the same 
+<a href="#t_integer">integer</a> type.</p>
+
+<h5>Semantics:</h5>
+<p>This instruction always performs an arithmetic shift right operation, 
+The most significant bits of the result will be filled with the sign bit 
+of <tt>var1</tt>.</p>
+
+<h5>Example:</h5>
+<pre>
+  &lt;result&gt; = ashr i32 4, 1   <i>; yields {i32}:result = 2</i>
+  &lt;result&gt; = ashr i32 4, 2   <i>; yields {i32}:result = 1</i>
+  &lt;result&gt; = ashr i8  4, 3   <i>; yields {i8}:result = 0</i>
+  &lt;result&gt; = ashr i8 -2, 1   <i>; yields {i8}:result = -1</i>
+</pre>
+</div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="bitwiseops">Bitwise Binary
 Operations</a> </div>
@@ -2125,89 +2207,6 @@ identical types.</p>
   &lt;result&gt; = xor i32 15, 40          <i>; yields {i32}:result = 39</i>
   &lt;result&gt; = xor i32 4, 8            <i>; yields {i32}:result = 12</i>
   &lt;result&gt; = xor i32 %V, -1          <i>; yields {i32}:result = ~%V</i>
-</pre>
-</div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_shl">'<tt>shl</tt>'
-Instruction</a> </div>
-<div class="doc_text">
-<h5>Syntax:</h5>
-<pre>  &lt;result&gt; = shl &lt;ty&gt; &lt;var1&gt;, i8 &lt;var2&gt;   <i>; yields {ty}:result</i>
-</pre>
-<h5>Overview:</h5>
-<p>The '<tt>shl</tt>' instruction returns the first operand shifted to
-the left a specified number of bits.</p>
-<h5>Arguments:</h5>
-<p>The first argument to the '<tt>shl</tt>' instruction must be an <a
- href="#t_integer">integer</a> type.  The second argument must be an '<tt>i8</tt>'
-type.</p>
-<h5>Semantics:</h5>
-<p>The value produced is <tt>var1</tt> * 2<sup><tt>var2</tt></sup>.</p>
-<h5>Example:</h5>
-<pre>  &lt;result&gt; = shl i32 4, i8 %var   <i>; yields {i32}:result = 4 &lt;&lt; %var</i>
-  &lt;result&gt; = shl i32 4, i8 2      <i>; yields {i32}:result = 16</i>
-  &lt;result&gt; = shl i32 1, i8 10     <i>; yields {i32}:result = 1024</i>
-</pre>
-</div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_lshr">'<tt>lshr</tt>'
-Instruction</a> </div>
-<div class="doc_text">
-<h5>Syntax:</h5>
-<pre>  &lt;result&gt; = lshr &lt;ty&gt; &lt;var1&gt;, i8 &lt;var2&gt;   <i>; yields {ty}:result</i>
-</pre>
-
-<h5>Overview:</h5>
-<p>The '<tt>lshr</tt>' instruction (logical shift right) returns the first 
-operand shifted to the right a specified number of bits.</p>
-
-<h5>Arguments:</h5>
-<p>The first argument to the '<tt>lshr</tt>' instruction must be an <a
- href="#t_integer">integer</a> type.  The second argument must be an '<tt>i8</tt>' type.</p>
-
-<h5>Semantics:</h5>
-<p>This instruction always performs a logical shift right operation. The 
-<tt>var2</tt> most significant bits will be filled with zero bits after the 
-shift.</p>
-
-<h5>Example:</h5>
-<pre>
-  &lt;result&gt; = lshr i32 4, i8 1   <i>; yields {i32}:result = 2</i>
-  &lt;result&gt; = lshr i32 4, i8 2    <i>; yields {i32}:result = 1</i>
-  &lt;result&gt; = lshr i8  4, i8 3  <i>; yields {i8 }:result = 0</i>
-  &lt;result&gt; = lshr i8  -2, i8 1 <i>; yields {i8 }:result = 0x7FFFFFFF </i>
-</pre>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsubsection"> <a name="i_ashr">'<tt>ashr</tt>'
-Instruction</a> </div>
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-<pre>  &lt;result&gt; = ashr &lt;ty&gt; &lt;var1&gt;, i8 &lt;var2&gt;   <i>; yields {ty}:result</i>
-</pre>
-
-<h5>Overview:</h5>
-<p>The '<tt>ashr</tt>' instruction (arithmetic shift right) returns the first 
-operand shifted to the right a specified number of bits.</p>
-
-<h5>Arguments:</h5>
-<p>The first argument to the '<tt>ashr</tt>' instruction must be an 
-<a href="#t_integer">integer</a> type.  The second argument must be an
-'<tt>i8</tt>' type.</p>
-
-<h5>Semantics:</h5>
-<p>This instruction always performs an arithmetic shift right operation, 
-regardless of whether the arguments are signed or not. The <tt>var2</tt> most
-significant bits will be filled with the sign bit of <tt>var1</tt>.</p>
-
-<h5>Example:</h5>
-<pre>
-  &lt;result&gt; = ashr i32 4, i8 1    <i>; yields {i32}:result = 2</i>
-  &lt;result&gt; = ashr i32 4, i8 2      <i>; yields {i32}:result = 1</i>
-  &lt;result&gt; = ashr i8 4, i8 3    <i>; yields {i8}:result = 0</i>
-  &lt;result&gt; = ashr i8  -2, i8 1   <i>; yields {i8 }:result = -1</i>
 </pre>
 </div>
 
