@@ -418,6 +418,13 @@ public:
   SmallVector() : SmallVectorImpl<T>(NumTsAvailable) {
   }
   
+  SmallVector(unsigned Size, const T &Value)
+    : SmallVectorImpl<T>(NumTsAvailable) {
+    this->reserve(Size);
+    while (Size--)
+      push_back(Value);
+  }
+  
   template<typename ItTy>
   SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(NumTsAvailable) {
     append(S, E);
