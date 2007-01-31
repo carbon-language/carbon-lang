@@ -245,9 +245,7 @@ Constant *llvm::ConstantFoldInstOperands(const Instruction* I,
     if (Constant *C = SymbolicallyEvaluateGEP(Ops, NumOps, I->getType(), TD))
       return C;
     
-    return ConstantExpr::getGetElementPtr(Ops[0],
-                                          std::vector<Constant*>(Ops+1, 
-                                                                 Ops+NumOps));
+    return ConstantExpr::getGetElementPtr(Ops[0], Ops+1, NumOps-1);
   }
 }
 
