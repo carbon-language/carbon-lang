@@ -181,7 +181,7 @@ void FoldingSetImpl::GrowHashTable() {
   for (unsigned i = 0; i != OldNumBuckets; ++i) {
     void *Probe = OldBuckets[i];
     if (!Probe) continue;
-    while (Node *NodeInBucket = GetNextPtr(Probe, OldBuckets, OldNumBuckets)){
+    while (Node *NodeInBucket = GetNextPtr(Probe, OldBuckets, OldNumBuckets)) {
       // Figure out the next link, remove NodeInBucket from the old link.
       Probe = NodeInBucket->getNextInBucket();
       NodeInBucket->SetNextInBucket(0);
@@ -224,14 +224,15 @@ FoldingSetImpl::Node *FoldingSetImpl::FindNodeOrInsertPos(const NodeID &ID,
 /// is not already in the map.  InsertPos must be obtained from 
 /// FindNodeOrInsertPos.
 void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
-  ++NumNodes;
   // Do we need to grow the hashtable?
-  if (NumNodes > NumBuckets*2) {
+  if (NumNodes+1 > NumBuckets*2) {
     GrowHashTable();
     NodeID ID;
     GetNodeProfile(ID, N);
     InsertPos = GetBucketFor(ID, Buckets, NumBuckets);
   }
+
+  ++NumNodes;
   
   /// The insert position is actually a bucket pointer.
   void **Bucket = static_cast<void**>(InsertPos);
@@ -243,7 +244,7 @@ void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
   if (Next == 0)
     Next = Bucket;
 
-  // Set the nodes next pointer, and make the bucket point to the node.
+  // Set the node's next pointer, and make the bucket point to the node.
   N->SetNextInBucket(Next);
   *Bucket = N;
 }
