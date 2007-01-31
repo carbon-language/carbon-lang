@@ -855,6 +855,18 @@ public:
     return LibcallRoutineNames[Call];
   }
 
+  /// setCmpLibcallCC - Override the default CondCode to be used to test the
+  /// result of the comparison libcall against zero.
+  void setCmpLibcallCC(RTLIB::Libcall Call, ISD::CondCode CC) {
+    CmpLibcallCCs[Call] = CC;
+  }
+
+  /// getCmpLibcallCC - Get the CondCode that's to be used to test the result of
+  /// the comparison libcall against zero.
+  ISD::CondCode getCmpLibcallCC(RTLIB::Libcall Call) const {
+    return CmpLibcallCCs[Call];
+  }
+
 protected:
   /// addLegalAddressScale - Add a integer (> 1) value which can be used as
   /// scale in the target addressing mode. Note: the ordering matters so the
@@ -991,6 +1003,10 @@ private:
   /// LibcallRoutineNames - Stores the name each libcall.
   ///
   const char *LibcallRoutineNames[RTLIB::UNKNOWN_LIBCALL];
+
+  /// CmpLibcallCCs - The ISD::CondCode that should be used to test the result
+  /// of each of the comparison libcall against zero.
+  ISD::CondCode CmpLibcallCCs[RTLIB::UNKNOWN_LIBCALL];
 
 protected:
   /// When lowering %llvm.memset this field specifies the maximum number of

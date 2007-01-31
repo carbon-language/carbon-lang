@@ -3604,72 +3604,58 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
     if (VT == MVT::f32 || VT == MVT::f64) {
       // Expand into one or more soft-fp libcall(s).
       RTLIB::Libcall LC1, LC2 = RTLIB::UNKNOWN_LIBCALL;
-      ISD::CondCode CC1, CC2 = ISD::SETCC_INVALID;
       switch (cast<CondCodeSDNode>(CC)->get()) {
       case ISD::SETEQ:
       case ISD::SETOEQ:
         LC1 = (VT == MVT::f32) ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64;
-        CC1 = ISD::SETEQ;
         break;
       case ISD::SETNE:
       case ISD::SETUNE:
         LC1 = (VT == MVT::f32) ? RTLIB::UNE_F32 : RTLIB::UNE_F64;
-        CC1 = ISD::SETNE;
         break;
       case ISD::SETGE:
       case ISD::SETOGE:
         LC1 = (VT == MVT::f32) ? RTLIB::OGE_F32 : RTLIB::OGE_F64;
-        CC1 = ISD::SETGE;
         break;
       case ISD::SETLT:
       case ISD::SETOLT:
         LC1 = (VT == MVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
-        CC1 = ISD::SETLT;
         break;
       case ISD::SETLE:
       case ISD::SETOLE:
         LC1 = (VT == MVT::f32) ? RTLIB::OLE_F32 : RTLIB::OLE_F64;
-        CC1 = ISD::SETLE;
         break;
       case ISD::SETGT:
       case ISD::SETOGT:
         LC1 = (VT == MVT::f32) ? RTLIB::OGT_F32 : RTLIB::OGT_F64;
-        CC1 = ISD::SETGT;
         break;
       case ISD::SETUO:
+        LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
+        break;
       case ISD::SETO:
         LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
-        CC1 = cast<CondCodeSDNode>(CC)->get() == ISD::SETO
-          ? ISD::SETEQ : ISD::SETNE;
         break;
       default:
         LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
-        CC1 = ISD::SETNE;
         switch (cast<CondCodeSDNode>(CC)->get()) {
         case ISD::SETONE:
           // SETONE = SETOLT | SETOGT
           LC1 = (VT == MVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
-          CC1 = ISD::SETLT;
           // Fallthrough
         case ISD::SETUGT:
           LC2 = (VT == MVT::f32) ? RTLIB::OGT_F32 : RTLIB::OGT_F64;
-          CC2 = ISD::SETGT;
           break;
         case ISD::SETUGE:
           LC2 = (VT == MVT::f32) ? RTLIB::OGE_F32 : RTLIB::OGE_F64;
-          CC2 = ISD::SETGE;
           break;
         case ISD::SETULT:
           LC2 = (VT == MVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
-          CC2 = ISD::SETLT;
           break;
         case ISD::SETULE:
           LC2 = (VT == MVT::f32) ? RTLIB::OLE_F32 : RTLIB::OLE_F64;
-          CC2 = ISD::SETLE;
           break;
         case ISD::SETUEQ:
           LC2 = (VT == MVT::f32) ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64;
-          CC2 = ISD::SETEQ;
           break;
         default: assert(0 && "Unsupported FP setcc!");
         }
@@ -3680,14 +3666,14 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
                            DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, 
                            false /*sign irrelevant*/, Dummy);
       Tmp2 = DAG.getConstant(0, MVT::i32);
-      CC = DAG.getCondCode(CC1);
+      CC = DAG.getCondCode(TLI.getCmpLibcallCC(LC1));
       if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
         Tmp1 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), Tmp1, Tmp2, CC);
         LHS = ExpandLibCall(TLI.getLibcallName(LC2),
                             DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, 
                             false /*sign irrelevant*/, Dummy);
         Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHS, Tmp2,
-                           DAG.getCondCode(CC2));
+                           DAG.getCondCode(TLI.getCmpLibcallCC(LC2)));
         Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
         Tmp2 = SDOperand();
       }

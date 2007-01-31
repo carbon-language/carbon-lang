@@ -94,6 +94,30 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::OGT_F64] = "__gtdf2";
   Names[RTLIB::UO_F32] = "__unordsf2";
   Names[RTLIB::UO_F64] = "__unorddf2";
+  Names[RTLIB::O_F32] = "__unordsf2";
+  Names[RTLIB::O_F64] = "__unorddf2";
+}
+
+/// InitCmpLibcallCCs - Set default comparison libcall CC.
+///
+static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
+  memset(CCs, ISD::SETCC_INVALID, sizeof(ISD::CondCode)*RTLIB::UNKNOWN_LIBCALL);
+  CCs[RTLIB::OEQ_F32] = ISD::SETEQ;
+  CCs[RTLIB::OEQ_F64] = ISD::SETEQ;
+  CCs[RTLIB::UNE_F32] = ISD::SETNE;
+  CCs[RTLIB::UNE_F64] = ISD::SETNE;
+  CCs[RTLIB::OGE_F32] = ISD::SETGE;
+  CCs[RTLIB::OGE_F64] = ISD::SETGE;
+  CCs[RTLIB::OLT_F32] = ISD::SETLT;
+  CCs[RTLIB::OLT_F64] = ISD::SETLT;
+  CCs[RTLIB::OLE_F32] = ISD::SETLE;
+  CCs[RTLIB::OLE_F64] = ISD::SETLE;
+  CCs[RTLIB::OGT_F32] = ISD::SETGT;
+  CCs[RTLIB::OGT_F64] = ISD::SETGT;
+  CCs[RTLIB::UO_F32] = ISD::SETNE;
+  CCs[RTLIB::UO_F64] = ISD::SETNE;
+  CCs[RTLIB::O_F32] = ISD::SETEQ;
+  CCs[RTLIB::O_F64] = ISD::SETEQ;
 }
 
 TargetLowering::TargetLowering(TargetMachine &tm)
@@ -132,6 +156,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   JumpBufAlignment = 0;
 
   InitLibcallNames(LibcallRoutineNames);
+  InitCmpLibcallCCs(CmpLibcallCCs);
 }
 
 TargetLowering::~TargetLowering() {}
