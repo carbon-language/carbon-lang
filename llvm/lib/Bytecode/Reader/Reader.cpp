@@ -30,6 +30,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include <sstream>
 #include <algorithm>
@@ -799,7 +800,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
       if (Oprnds.size() == 0 || !isa<PointerType>(InstTy))
         error("Invalid getelementptr instruction!");
 
-      std::vector<Value*> Idx;
+      SmallVector<Value*, 8> Idx;
 
       const Type *NextTy = InstTy;
       for (unsigned i = 1, e = Oprnds.size(); i != e; ++i) {
@@ -823,10 +824,12 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
           ValIdx >>= 1;
         }
         Idx.push_back(getValue(IdxTy, ValIdx));
-        NextTy = GetElementPtrInst::getIndexedType(InstTy, Idx, true);
+        NextTy = GetElementPtrInst::getIndexedType(InstTy, &Idx[0], Idx.size(),
+                                                   true);
       }
 
-      Result = new GetElementPtrInst(getValue(iType, Oprnds[0]), Idx);
+      Result = new GetElementPtrInst(getValue(iType, Oprnds[0]),
+                                     &Idx[0], Idx.size());
       break;
     }
     case 62:   // volatile load
