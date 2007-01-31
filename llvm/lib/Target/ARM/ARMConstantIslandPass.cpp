@@ -420,6 +420,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   NewBB->splice(NewBB->end(), OrigBB, MI, OrigBB->end());
   
   // Add an unconditional branch from OrigBB to NewBB.
+  // Note the new unconditional branch is not being recorded.
   BuildMI(OrigBB, TII->get(isThumb ? ARM::tB : ARM::B)).addMBB(NewBB);
   NumSplit++;
   
@@ -498,6 +499,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
     assert(BBHasFallthrough(UserMBB) && "Expected a fallthrough BB!");
     NewMBB = next(MachineFunction::iterator(UserMBB));
     // Add an unconditional branch from UserMBB to fallthrough block.
+    // Note the new unconditional branch is not being recorded.
     BuildMI(UserMBB, TII->get(isThumb ? ARM::tB : ARM::B)).addMBB(NewMBB);
     BBSizes[UserMBB->getNumber()] += isThumb ? 2 : 4;
   } else {
@@ -590,7 +592,9 @@ ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   return true;
 }
 
-static inline unsigned getUncondBranchDisp(int Opc) {
+/// getUnconditionalBrDisp - Returns the maximum displacement that can fit in the
+/// specific unconditional branch instruction.
+static inline unsigned getUnconditionalBrDisp(int Opc) {
   return (Opc == ARM::tB) ? (1<<10)*2 : (1<<23)*4;
 }
 
@@ -653,7 +657,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB).addImm(CC);
   Br.MI = &MBB->back();
   BuildMI(MBB, TII->get(Br.UncondBr)).addMBB(DestBB);
-  unsigned MaxDisp = getUncondBranchDisp(Br.UncondBr);
+  unsigned MaxDisp = getUnconditionalBrDisp(Br.UncondBr);
   ImmBranches.push_back(ImmBranch(&MBB->back(), MaxDisp, false, Br.UncondBr));
   MI->eraseFromParent();
 
