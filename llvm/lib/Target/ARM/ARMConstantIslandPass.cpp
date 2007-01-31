@@ -461,6 +461,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
 /// is out-of-range.  If so, pick it up the constant pool value and move it some
 /// place in-range.
 bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
+  bool isThumb = AFI->isThumbFunction();
   MachineInstr *UserMI = U.MI;
   MachineInstr *CPEMI  = U.CPEMI;
 
@@ -477,7 +478,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
     // User before the CPE.
     if (CPEOffset-UserOffset <= U.MaxDisp)
       return false;
-  } else if (!AFI->isThumbFunction()) {
+  } else if (!isThumb) {
     // Thumb LDR cannot encode negative offset.
     if (UserOffset-CPEOffset <= U.MaxDisp)
       return false;
@@ -487,15 +488,26 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
   // Solution guaranteed to work: split the user's MBB right after the user and
   // insert a clone the CPE into the newly created water.
 
-  MachineInstr *NextMI = next(MachineBasicBlock::iterator(UserMI));
+  MachineBasicBlock *UserMBB = UserMI->getParent();
+  MachineBasicBlock *NewMBB;
+
   // TODO: Search for the best place to split the code.  In practice, using
   // loop nesting information to insert these guys outside of loops would be
   // sufficient.    
-  MachineBasicBlock *NewBB = SplitBlockBeforeInstr(NextMI);
+  if (&UserMBB->back() == UserMI) {
+    assert(BBHasFallthrough(UserMBB) && "Expected a fallthrough BB!");
+    NewMBB = next(MachineFunction::iterator(UserMBB));
+    // Add an unconditional branch from UserMBB to fallthrough block.
+    BuildMI(UserMBB, TII->get(isThumb ? ARM::tB : ARM::B)).addMBB(NewMBB);
+    BBSizes[UserMBB->getNumber()] += isThumb ? 2 : 4;
+  } else {
+    MachineInstr *NextMI = next(MachineBasicBlock::iterator(UserMI));
+    NewMBB = SplitBlockBeforeInstr(NextMI);
+  }
 
   // Okay, we know we can put an island before UserMBB now, do it!
   MachineBasicBlock *NewIsland = new MachineBasicBlock();
-  Fn.getBasicBlockList().insert(NewBB, NewIsland);
+  Fn.getBasicBlockList().insert(NewMBB, NewIsland);
 
   // Update internal data structures to account for the newly inserted MBB.
   UpdateForInsertedWaterBlock(NewIsland);
