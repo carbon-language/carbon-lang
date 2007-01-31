@@ -711,7 +711,8 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
                                      const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                          Idx, true))),
+                                                          &Idx[0], Idx.size(), 
+                                                          true))),
                 GetElementPtr, 0, 0, Name, InBe) {
   init(Ptr, &Idx[0], Idx.size());
 }
@@ -719,7 +720,8 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
                                      const std::string &Name, BasicBlock *IAE)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                          Idx, true))),
+                                                          &Idx[0], Idx.size(),
+                                                          true))),
                 GetElementPtr, 0, 0, Name, IAE) {
   init(Ptr, &Idx[0], Idx.size());
 }
@@ -728,7 +730,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx,
                                      unsigned NumIdx,
                                      const std::string &Name, Instruction *InBe)
 : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                        Idx, true))),
+                                                        Idx, NumIdx, true))),
               GetElementPtr, 0, 0, Name, InBe) {
   init(Ptr, Idx, NumIdx);
 }
@@ -737,21 +739,23 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx,
                                      unsigned NumIdx,
                                      const std::string &Name, BasicBlock *IAE)
 : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                        Idx, true))),
+                                                        Idx, NumIdx, true))),
               GetElementPtr, 0, 0, Name, IAE) {
   init(Ptr, Idx, NumIdx);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, Instruction *InBe)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+                                                          Idx))),
                 GetElementPtr, 0, 0, Name, InBe) {
   init(Ptr, Idx);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, BasicBlock *IAE)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+                                                          Idx))),
                 GetElementPtr, 0, 0, Name, IAE) {
   init(Ptr, Idx);
 }
