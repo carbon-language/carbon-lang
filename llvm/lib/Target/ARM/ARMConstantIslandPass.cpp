@@ -472,7 +472,7 @@ bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, MachineInstr *CPEMI,
                   << " at offset " << int(UserOffset-CPEOffset) << "\t"
                   << *MI);
 
-  if (UserOffset < CPEOffset) {
+  if (UserOffset <= CPEOffset) {
     // User before the CPE.
     if (CPEOffset-UserOffset <= MaxDisp)
       return true;
@@ -563,7 +563,7 @@ bool ARMConstantIslands::BBIsInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
                   << " at offset " << int(BrOffset-DestOffset) << "\t"
                   << *MI);
 
-  if (BrOffset < DestOffset) {
+  if (BrOffset <= DestOffset) {
     if (DestOffset - BrOffset < MaxDisp)
       return true;
   } else {
