@@ -173,9 +173,10 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
               /*empty*/;
             if (isa<SequentialType>(*GTI)) {
               // Pull the last index out of the constant expr GEP.
-              std::vector<Value*> CEIdxs(CE->op_begin()+1, CE->op_end()-1);
+              SmallVector<Value*, 8> CEIdxs(CE->op_begin()+1, CE->op_end()-1);
               Constant *NCE = ConstantExpr::getGetElementPtr(CE->getOperand(0),
-                                                             CEIdxs);
+                                                             &CEIdxs[0],
+                                                             CEIdxs.size());
               GetElementPtrInst *NGEPI =
                 new GetElementPtrInst(NCE, Constant::getNullValue(Type::Int32Ty),
                                       NewAdd, GEPI->getName(), GEPI);

@@ -25,6 +25,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
@@ -443,11 +444,12 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     // Form a shorter GEP if needed.
     if (GEP->getNumOperands() > 3)
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GEP)) {
-        std::vector<Constant*> Idxs;
+        SmallVector<Constant*, 8> Idxs;
         Idxs.push_back(NullInt);
         for (unsigned i = 3, e = CE->getNumOperands(); i != e; ++i)
           Idxs.push_back(CE->getOperand(i));
-        NewPtr = ConstantExpr::getGetElementPtr(cast<Constant>(NewPtr), Idxs);
+        NewPtr = ConstantExpr::getGetElementPtr(cast<Constant>(NewPtr),
+                                                &Idxs[0], Idxs.size());
       } else {
         GetElementPtrInst *GEPI = cast<GetElementPtrInst>(GEP);
         std::vector<Value*> Idxs;
@@ -576,16 +578,17 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
       }
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
       // Should handle GEP here.
-      std::vector<Constant*> Indices;
-      Indices.reserve(GEPI->getNumOperands()-1);
+      SmallVector<Constant*, 8> Idxs;
+      Idxs.reserve(GEPI->getNumOperands()-1);
       for (unsigned i = 1, e = GEPI->getNumOperands(); i != e; ++i)
         if (Constant *C = dyn_cast<Constant>(GEPI->getOperand(i)))
-          Indices.push_back(C);
+          Idxs.push_back(C);
         else
           break;
-      if (Indices.size() == GEPI->getNumOperands()-1)
+      if (Idxs.size() == GEPI->getNumOperands()-1)
         Changed |= OptimizeAwayTrappingUsesOfValue(GEPI,
-                                ConstantExpr::getGetElementPtr(NewV, Indices));
+                                ConstantExpr::getGetElementPtr(NewV, &Idxs[0],
+                                                               Idxs.size()));
       if (GEPI->use_empty()) {
         Changed = true;
         GEPI->eraseFromParent();
@@ -1744,10 +1747,10 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
                                            getVal(Values, SI->getOperand(2)));
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(CurInst)) {
       Constant *P = getVal(Values, GEP->getOperand(0));
-      std::vector<Constant*> GEPOps;
+      SmallVector<Constant*, 8> GEPOps;
       for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
         GEPOps.push_back(getVal(Values, GEP->getOperand(i)));
-      InstResult = ConstantExpr::getGetElementPtr(P, GEPOps);
+      InstResult = ConstantExpr::getGetElementPtr(P, &GEPOps[0], GEPOps.size());
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
       if (LI->isVolatile()) return false;  // no volatile accesses.
       InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),

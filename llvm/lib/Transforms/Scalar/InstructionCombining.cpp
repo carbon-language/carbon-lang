@@ -50,6 +50,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -7797,13 +7798,14 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     // constants, we can promote this to a constexpr instead of an instruction.
 
     // Scan for nonconstants...
-    std::vector<Constant*> Indices;
+    SmallVector<Constant*, 8> Indices;
     User::op_iterator I = GEP.idx_begin(), E = GEP.idx_end();
     for (; I != E && isa<Constant>(*I); ++I)
       Indices.push_back(cast<Constant>(*I));
 
     if (I == E) {  // If they are all constants...
-      Constant *CE = ConstantExpr::getGetElementPtr(GV, Indices);
+      Constant *CE = ConstantExpr::getGetElementPtr(GV,
+                                                    &Indices[0],Indices.size());
 
       // Replace all uses of the GEP with the new constexpr...
       return ReplaceInstUsesWith(GEP, CE);
@@ -8001,8 +8003,9 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
       if (const ArrayType *ASrcTy = dyn_cast<ArrayType>(SrcPTy))
         if (Constant *CSrc = dyn_cast<Constant>(CastOp))
           if (ASrcTy->getNumElements() != 0) {
-            std::vector<Value*> Idxs(2, Constant::getNullValue(Type::Int32Ty));
-            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs);
+            Value *Idxs[2];
+            Idxs[0] = Idxs[1] = Constant::getNullValue(Type::Int32Ty);
+            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs, 2);
             SrcTy = cast<PointerType>(CastOp->getType());
             SrcPTy = SrcTy->getElementType();
           }
@@ -8188,8 +8191,9 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
       if (const ArrayType *ASrcTy = dyn_cast<ArrayType>(SrcPTy))
         if (Constant *CSrc = dyn_cast<Constant>(CastOp))
           if (ASrcTy->getNumElements() != 0) {
-            std::vector<Value*> Idxs(2, Constant::getNullValue(Type::Int32Ty));
-            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs);
+            Value* Idxs[2];
+            Idxs[0] = Idxs[1] = Constant::getNullValue(Type::Int32Ty);
+            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs, 2);
             SrcTy = cast<PointerType>(CastOp->getType());
             SrcPTy = SrcTy->getElementType();
           }
