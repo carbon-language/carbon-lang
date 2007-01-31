@@ -900,6 +900,13 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
       ForceLRSpill = false;
     }
 
+    // Darwin ABI requires FP to point to the stack slot that contains the
+    // previous FP.
+    if (STI.isTargetDarwin()) {
+      MF.changePhyRegUsed(FramePtr, true);
+      NumGPRSpills++;
+    }
+
     // If stack and double are 8-byte aligned and we are spilling an odd number
     // of GPRs. Spill one extra callee save GPR so we won't have to pad between
     // the integer and double callee save areas.
@@ -1029,8 +1036,9 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   } else if (MBBI != MBB.end() && MBBI->getOpcode() == ARM::tPUSH)
     ++MBBI;
 
-  // Point FP to the stack slot that contains the previous FP.
-  if (hasFP(MF))
+  // Darwin ABI requires FP to point to the stack slot that contains the
+  // previous FP.
+  if (STI.isTargetDarwin() || hasFP(MF))
     BuildMI(MBB, MBBI, TII.get(isThumb ? ARM::tADDrSPi : ARM::ADDri), FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0);
 
@@ -1116,7 +1124,9 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   if (isThumb)
     emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
   else {
-    if (hasFP(MF)){
+    // Darwin ABI requires FP to point to the stack slot that contains the
+    // previous FP.
+    if (STI.isTargetDarwin() || hasFP(MF)) {
       NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
       // Reset SP based on frame pointer only if the stack frame extends beyond
       // frame pointer stack slot.
@@ -1131,6 +1141,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
     } else if (NumBytes) {
       emitSPUpdate(MBB, MBBI, NumBytes, false, TII);
     }
+
     // Move SP to start of integer callee save spill area 2.
     movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 3, STI);
     emitSPUpdate(MBB, MBBI, AFI->getDPRCalleeSavedAreaSize(), false, TII);
