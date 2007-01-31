@@ -84,6 +84,11 @@ void FunctionTypeProto::Profile(FoldingSetNodeID &ID, TypeRef Result,
   ID.AddInteger(isVariadic);
 }
 
+void FunctionTypeProto::Profile(FoldingSetNodeID &ID) {
+  Profile(ID, getResultType(), ArgInfo, NumArgs, isVariadic());
+}
+
+
 bool RecordType::classof(const Type *T) {
   if (const TaggedType *TT = dyn_cast<TaggedType>(T))
     return isa<RecordDecl>(TT->getDecl());

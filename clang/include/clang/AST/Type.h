@@ -382,9 +382,7 @@ public:
   }
   static bool classof(const FunctionTypeProto *) { return true; }
   
-  void Profile(FoldingSetNodeID &ID) {
-    Profile(ID, getResultType(), ArgInfo, NumArgs, isVariadic());
-  }
+  void Profile(FoldingSetNodeID &ID);
   static void Profile(FoldingSetNodeID &ID, TypeRef Result, TypeRef* ArgTys,
                       unsigned NumArgs, bool isVariadic);
 };
