@@ -19,11 +19,135 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include <cerrno>
 #include <cmath>
 using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+// Constant Folding internal helper functions
+//===----------------------------------------------------------------------===//
+
+/// IsConstantOffsetFromGlobal - If this constant is actually a constant offset
+/// from a global, return the global and the constant.  Because of
+/// constantexprs, this function is recursive.
+static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
+                                       int64_t &Offset, const TargetData &TD) {
+  // Trivial case, constant is the global.
+  if ((GV = dyn_cast<GlobalValue>(C))) {
+    Offset = 0;
+    return true;
+  }
+  
+  // Otherwise, if this isn't a constant expr, bail out.
+  ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
+  if (!CE) return false;
+  
+  // Look through ptr->int and ptr->ptr casts.
+  if (CE->getOpcode() == Instruction::PtrToInt ||
+      CE->getOpcode() == Instruction::BitCast)
+    return IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD);
+  
+  // i32* getelementptr ([5 x i32]* @a, i32 0, i32 5)    
+  if (CE->getOpcode() == Instruction::GetElementPtr) {
+    // Cannot compute this if the element type of the pointer is missing size
+    // info.
+    if (!cast<PointerType>(CE->getOperand(0)->getType())->getElementType()->isSized())
+      return false;
+    
+    // If the base isn't a global+constant, we aren't either.
+    if (!IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, TD))
+      return false;
+    
+    // Otherwise, add any offset that our operands provide.
+    gep_type_iterator GTI = gep_type_begin(CE);
+    for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i, ++GTI) {
+      ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(i));
+      if (!CI) return false;  // Index isn't a simple constant?
+      if (CI->getZExtValue() == 0) continue;  // Not adding anything.
+      
+      if (const StructType *ST = dyn_cast<StructType>(*GTI)) {
+        // N = N + Offset
+        Offset += TD.getStructLayout(ST)->MemberOffsets[CI->getZExtValue()];
+      } else {
+        const SequentialType *ST = cast<SequentialType>(*GTI);
+        Offset += TD.getTypeSize(ST->getElementType())*CI->getSExtValue();
+      }
+    }
+    return true;
+  }
+  
+  return false;
+}
+
+
+/// SymbolicallyEvaluateBinop - One of Op0/Op1 is a constant expression.
+/// Attempt to symbolically evaluate the result of  a binary operator merging
+/// these together.  If target data info is available, it is provided as TD, 
+/// otherwise TD is null.
+static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
+                                           Constant *Op1, const TargetData *TD){
+  // SROA
+  
+  // Fold (and 0xffffffff00000000, (shl x, 32)) -> shl.
+  // Fold (lshr (or X, Y), 32) -> (lshr [X/Y], 32) if one doesn't contribute
+  // bits.
+  
+  
+  // If the constant expr is something like &A[123] - &A[4].f, fold this into a
+  // constant.  This happens frequently when iterating over a global array.
+  if (Opc == Instruction::Sub && TD) {
+    GlobalValue *GV1, *GV2;
+    int64_t Offs1, Offs2;
+    
+    if (IsConstantOffsetFromGlobal(Op0, GV1, Offs1, *TD))
+      if (IsConstantOffsetFromGlobal(Op1, GV2, Offs2, *TD) &&
+          GV1 == GV2) {
+        // (&GV+C1) - (&GV+C2) -> C1-C2, pointer arithmetic cannot overflow.
+        return ConstantInt::get(Op0->getType(), Offs1-Offs2);
+      }
+  }
+    
+  // TODO: Fold icmp setne/seteq as well.
+  return 0;
+}
+
+/// SymbolicallyEvaluateGEP - If we can symbolically evaluate the specified GEP
+/// constant expression, do so.
+static Constant *SymbolicallyEvaluateGEP(Constant** Ops, unsigned NumOps,
+                                         const Type *ResultTy,
+                                         const TargetData *TD) {
+  Constant *Ptr = Ops[0];
+  if (!cast<PointerType>(Ptr->getType())->getElementType()->isSized())
+    return 0;
+  
+  if (TD && Ptr->isNullValue()) {
+    // If this is a constant expr gep that is effectively computing an
+    // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
+    bool isFoldableGEP = true;
+    for (unsigned i = 1; i != NumOps; ++i)
+      if (!isa<ConstantInt>(Ops[i])) {
+        isFoldableGEP = false;
+        break;
+      }
+    if (isFoldableGEP) {
+      std::vector<Value*> NewOps(Ops+1, Ops+NumOps);
+      uint64_t Offset = TD->getIndexedOffset(Ptr->getType(), NewOps);
+      Constant *C = ConstantInt::get(TD->getIntPtrType(), Offset);
+      return ConstantExpr::getIntToPtr(C, ResultTy);
+    }
+  }
+  
+  return 0;
+}
+
+
+//===----------------------------------------------------------------------===//
+// Constant Folding public APIs
+//===----------------------------------------------------------------------===//
+
 
 /// ConstantFoldInstruction - Attempt to constant fold the specified
 /// instruction.  If successful, the constant result is returned, if not, null
@@ -56,7 +180,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
     else
       return 0;  // All operands not constant!
 
-  return ConstantFoldInstOperands(I, &Ops[0], Ops.size());
+  return ConstantFoldInstOperands(I, &Ops[0], Ops.size(), TD);
 }
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
@@ -71,9 +195,15 @@ Constant *llvm::ConstantFoldInstOperands(const Instruction* I,
   unsigned Opc = I->getOpcode();
   const Type *DestTy = I->getType();
 
-  // Handle easy binops first
-  if (isa<BinaryOperator>(I))
+  // Handle easy binops first.
+  if (isa<BinaryOperator>(I)) {
+    if (isa<ConstantExpr>(Ops[0]) || isa<ConstantExpr>(Ops[1]))
+      if (Constant *C = SymbolicallyEvaluateBinop(I->getOpcode(), Ops[0],
+                                                  Ops[1], TD))
+        return C;
+    
     return ConstantExpr::get(Opc, Ops[0], Ops[1]);
+  }
   
   switch (Opc) {
   default: return 0;
@@ -112,6 +242,9 @@ Constant *llvm::ConstantFoldInstOperands(const Instruction* I,
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
+    if (Constant *C = SymbolicallyEvaluateGEP(Ops, NumOps, I->getType(), TD))
+      return C;
+    
     return ConstantExpr::getGetElementPtr(Ops[0],
                                           std::vector<Constant*>(Ops+1, 
                                                                  Ops+NumOps));
