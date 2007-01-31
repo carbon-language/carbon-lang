@@ -263,5 +263,6 @@ int main(int argc, char **argv) {
   } catch (...) {
     cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
+  llvm_shutdown();
   return 1;
 }
