@@ -6418,8 +6418,8 @@ Instruction *InstCombiner::visitBitCast(CastInst &CI) {
 
       // If we found a path from the src to dest, create the getelementptr now.
       if (SrcElTy == DstElTy) {
-        std::vector<Value*> Idxs(NumZeros+1, ZeroUInt);
-        return new GetElementPtrInst(Src, Idxs);
+        SmallVector<Value*, 8> Idxs(NumZeros+1, ZeroUInt);
+        return new GetElementPtrInst(Src, &Idxs[0], Idxs.size());
       }
     }
   }

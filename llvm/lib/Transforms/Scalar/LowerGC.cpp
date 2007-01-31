@@ -229,10 +229,7 @@ bool LowerGC::runOnFunction(Function &F) {
   Constant *One  = ConstantInt::get(Type::Int32Ty, 1);
 
   // Get a pointer to the prev pointer.
-  std::vector<Value*> Par;
-  Par.push_back(Zero);
-  Par.push_back(Zero);
-  Value *PrevPtrPtr = new GetElementPtrInst(AI, Par, "prevptrptr", IP);
+  Value *PrevPtrPtr = new GetElementPtrInst(AI, Zero, Zero, "prevptrptr", IP);
 
   // Load the previous pointer.
   Value *PrevPtr = new LoadInst(RootChain, "prevptr", IP);
@@ -240,12 +237,12 @@ bool LowerGC::runOnFunction(Function &F) {
   new StoreInst(PrevPtr, PrevPtrPtr, IP);
 
   // Set the number of elements in this record.
-  Par[1] = ConstantInt::get(Type::Int32Ty, 1);
-  Value *NumEltsPtr = new GetElementPtrInst(AI, Par, "numeltsptr", IP);
+  Value *NumEltsPtr = new GetElementPtrInst(AI, Zero, One, "numeltsptr", IP);
   new StoreInst(ConstantInt::get(Type::Int32Ty, GCRoots.size()), NumEltsPtr,IP);
 
+  Value* Par[4];
+  Par[0] = Zero;
   Par[1] = ConstantInt::get(Type::Int32Ty, 2);
-  Par.resize(4);
 
   const PointerType *PtrLocTy =
     cast<PointerType>(GCRootInt->getFunctionType()->getParamType(0));
@@ -256,13 +253,13 @@ bool LowerGC::runOnFunction(Function &F) {
     // Initialize the meta-data pointer.
     Par[2] = ConstantInt::get(Type::Int32Ty, i);
     Par[3] = One;
-    Value *MetaDataPtr = new GetElementPtrInst(AI, Par, "MetaDataPtr", IP);
+    Value *MetaDataPtr = new GetElementPtrInst(AI, Par, 4, "MetaDataPtr", IP);
     assert(isa<Constant>(GCRoots[i]->getOperand(2)) && "Must be a constant");
     new StoreInst(GCRoots[i]->getOperand(2), MetaDataPtr, IP);
 
     // Initialize the root pointer to null on entry to the function.
     Par[3] = Zero;
-    Value *RootPtrPtr = new GetElementPtrInst(AI, Par, "RootEntPtr", IP);
+    Value *RootPtrPtr = new GetElementPtrInst(AI, Par, 4, "RootEntPtr", IP);
     new StoreInst(Null, RootPtrPtr, IP);
 
     // Each occurrance of the llvm.gcroot intrinsic now turns into an

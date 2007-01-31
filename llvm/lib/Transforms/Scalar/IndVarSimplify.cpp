@@ -197,8 +197,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
         std::string Name = PN->getName(); PN->setName("");
         Value *PreInc =
           new GetElementPtrInst(PN->getIncomingValue(PreheaderIdx),
-                                std::vector<Value*>(1, NewPhi), Name,
-                                InsertPos);
+                                NewPhi, Name, InsertPos);
         PN->replaceAllUsesWith(PreInc);
       }
 
