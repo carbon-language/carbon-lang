@@ -19,3 +19,7 @@
 * If we know function size is less than (1 << 16) * 2 bytes, we can use 16-bit
   jumptable entries (e.g. (L1 - L2) >> 1). Or even smaller entries if the
   function is even smaller. This also applies to ARM.
+
+* In thumb mode, short, byte, and bool preferred alignments are currently set
+  to 4 to accommodate ISA restriction (i.e. add sp, #imm, imm must be multiple
+  of 4).
