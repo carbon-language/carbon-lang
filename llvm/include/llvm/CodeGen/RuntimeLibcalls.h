@@ -98,6 +98,8 @@ namespace RTLIB {
     OGT_F64,
     UO_F32,
     UO_F64,
+    O_F32,
+    O_F64,
 
     UNKNOWN_LIBCALL
   };
