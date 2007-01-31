@@ -684,12 +684,12 @@ static inline const Type *checkType(const Type *Ty) {
   return Ty;
 }
 
-void GetElementPtrInst::init(Value *Ptr, const std::vector<Value*> &Idx) {
-  NumOperands = 1+Idx.size();
+void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx) {
+  NumOperands = 1+NumIdx;
   Use *OL = OperandList = new Use[NumOperands];
   OL[0].init(Ptr, this);
 
-  for (unsigned i = 0, e = Idx.size(); i != e; ++i)
+  for (unsigned i = 0; i != NumIdx; ++i)
     OL[i+1].init(Idx[i], this);
 }
 
@@ -713,7 +713,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx, true))),
                 GetElementPtr, 0, 0, Name, InBe) {
-  init(Ptr, Idx);
+  init(Ptr, &Idx[0], Idx.size());
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
@@ -721,7 +721,25 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx, true))),
                 GetElementPtr, 0, 0, Name, IAE) {
-  init(Ptr, Idx);
+  init(Ptr, &Idx[0], Idx.size());
+}
+
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx,
+                                     unsigned NumIdx,
+                                     const std::string &Name, Instruction *InBe)
+: Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+                                                        Idx, true))),
+              GetElementPtr, 0, 0, Name, InBe) {
+  init(Ptr, Idx, NumIdx);
+}
+
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx, 
+                                     unsigned NumIdx,
+                                     const std::string &Name, BasicBlock *IAE)
+: Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
+                                                        Idx, true))),
+              GetElementPtr, 0, 0, Name, IAE) {
+  init(Ptr, Idx, NumIdx);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,

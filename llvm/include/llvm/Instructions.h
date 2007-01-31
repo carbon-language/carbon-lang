@@ -336,7 +336,7 @@ class GetElementPtrInst : public Instruction {
     for (unsigned i = 0, E = NumOperands; i != E; ++i)
       OL[i].init(GEPIOL[i], this);
   }
-  void init(Value *Ptr, const std::vector<Value*> &Idx);
+  void init(Value *Ptr, Value* const *Idx, unsigned NumIdx);
   void init(Value *Ptr, Value *Idx0, Value *Idx1);
   void init(Value *Ptr, Value *Idx);
 public:
