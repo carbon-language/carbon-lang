@@ -284,7 +284,7 @@ def tADC : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
                [(set GPR:$dst, (adde GPR:$lhs, GPR:$rhs))]>;
 
 def tADDS : TI<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
-               "adds $dst, $lhs, $rhs",
+               "add $dst, $lhs, $rhs",
                [(set GPR:$dst, (addc GPR:$lhs, GPR:$rhs))]>;
 
 
@@ -423,7 +423,7 @@ def tSBC : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
                 [(set GPR:$dst, (sube GPR:$lhs, GPR:$rhs))]>;
 
 def tSUBS : TI<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
-                "subs $dst, $lhs, $rhs",
+                "sub $dst, $lhs, $rhs",
                [(set GPR:$dst, (subc GPR:$lhs, GPR:$rhs))]>;
 
 
