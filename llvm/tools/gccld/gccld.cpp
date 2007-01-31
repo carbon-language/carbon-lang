@@ -29,6 +29,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
@@ -420,6 +421,7 @@ int main(int argc, char **argv, char **envp ) {
     cerr << argv[0] << ": An unexpected unknown exception occurred.\n";
     exitCode = 3;
   }
-
+  
+  llvm_shutdown();
   return exitCode;
 }
