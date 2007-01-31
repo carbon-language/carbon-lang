@@ -620,7 +620,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
   } else if (Opcode == ARM::tADDrSPi) {
     Offset += MI.getOperand(i+1).getImm();
     assert((Offset & 3) == 0 &&
-           "add/sub sp, #imm immediate must be multiple of 4!");
+           "Thumb add/sub sp, #imm immediate must be multiple of 4!");
     Offset >>= 2;
     if (Offset == 0) {
       // Turn it into a move.
