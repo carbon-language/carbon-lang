@@ -694,10 +694,8 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     }
     break;
   default: {
-    if (InCPMode && AFI->isThumbFunction()) {
-      EmitAlignment(1);
+    if (InCPMode && AFI->isThumbFunction())
       InCPMode = false;
-    }
     switch (Opc) {
     case ARM::PICADD:
     case ARM::PICLD:
