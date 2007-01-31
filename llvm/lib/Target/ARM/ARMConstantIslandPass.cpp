@@ -112,7 +112,7 @@ namespace {
                             std::vector<MachineInstr*> &CPEMIs);
     void InitialFunctionScan(MachineFunction &Fn,
                              const std::vector<MachineInstr*> &CPEMIs);
-    void SplitBlockBeforeInstr(MachineInstr *MI);
+    MachineBasicBlock *SplitBlockBeforeInstr(MachineInstr *MI);
     void UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB);
     bool HandleConstantPoolUser(MachineFunction &Fn, CPUser &U);
     bool BBIsInBranchRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned D);
@@ -406,8 +406,8 @@ void ARMConstantIslands::UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB) {
 
 /// Split the basic block containing MI into two blocks, which are joined by
 /// an unconditional branch.  Update datastructures and renumber blocks to
-/// account for this change.
-void ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
+/// account for this change and returns the newly created block.
+MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   MachineBasicBlock *OrigBB = MI->getParent();
   bool isThumb = AFI->isThumbFunction();
 
@@ -453,6 +453,8 @@ void ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   // We removed instructions from UserMBB, subtract that off from its size.
   // Add 2 or 4 to the block to count the unconditional branch we added to it.
   BBSizes[OrigBB->getNumber()] -= NewBBSize - (isThumb ? 2 : 4);
+
+  return NewBB;
 }
 
 /// HandleConstantPoolUser - Analyze the specified user, checking to see if it
@@ -475,33 +477,25 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
     // User before the CPE.
     if (CPEOffset-UserOffset <= U.MaxDisp)
       return false;
-  } else {
+  } else if (!AFI->isThumbFunction()) {
+    // Thumb LDR cannot encode negative offset.
     if (UserOffset-CPEOffset <= U.MaxDisp)
       return false;
   }
   
- 
-  // Solution guaranteed to work: split the user's MBB right before the user and
+
+  // Solution guaranteed to work: split the user's MBB right after the user and
   // insert a clone the CPE into the newly created water.
-  
-  // If the user isn't at the start of its MBB, or if there is a fall-through
-  // into the user's MBB, split the MBB before the User.
-  MachineBasicBlock *UserMBB = UserMI->getParent();
-  if (&UserMBB->front() != UserMI ||
-      UserMBB == &Fn.front() || // entry MBB of function.
-      BBHasFallthrough(prior(MachineFunction::iterator(UserMBB)))) {
-    // TODO: Search for the best place to split the code.  In practice, using
-    // loop nesting information to insert these guys outside of loops would be
-    // sufficient.    
-    SplitBlockBeforeInstr(UserMI);
-    
-    // UserMI's BB may have changed.
-    UserMBB = UserMI->getParent();
-  }
-  
+
+  MachineInstr *NextMI = next(MachineBasicBlock::iterator(UserMI));
+  // TODO: Search for the best place to split the code.  In practice, using
+  // loop nesting information to insert these guys outside of loops would be
+  // sufficient.    
+  MachineBasicBlock *NewBB = SplitBlockBeforeInstr(NextMI);
+
   // Okay, we know we can put an island before UserMBB now, do it!
   MachineBasicBlock *NewIsland = new MachineBasicBlock();
-  Fn.getBasicBlockList().insert(UserMBB, NewIsland);
+  Fn.getBasicBlockList().insert(NewBB, NewIsland);
 
   // Update internal data structures to account for the newly inserted MBB.
   UpdateForInsertedWaterBlock(NewIsland);
@@ -528,7 +522,6 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
       
   DEBUG(std::cerr << "  Moved CPE to #" << ID << " CPI=" << CPI << "\t"
                   << *UserMI);
-  
       
   return true;
 }
