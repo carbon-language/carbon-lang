@@ -1,6 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-linux | grep mov | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-apple-darwin | grep mov | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-apple-darwin --disable-fp-elim | grep mov | wc -l | grep 2
 
 %str = internal constant [12 x sbyte] c"Hello World\00"
 

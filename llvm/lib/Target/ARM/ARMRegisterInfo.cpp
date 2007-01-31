@@ -573,8 +573,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     // There is alloca()'s in this function, must reference off the frame
     // pointer instead.
     FrameReg = getFrameRegister(MF);
-    if (STI.isTargetDarwin())
-      Offset -= AFI->getFramePtrSpillOffset();
+    Offset -= AFI->getFramePtrSpillOffset();
   }
 
   unsigned Opcode = MI.getOpcode();
@@ -882,6 +881,12 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
     }
   }
 
+  if (hasFP(MF)) {
+    MF.changePhyRegUsed(FramePtr, true);
+    NumGPRSpills++;
+    CanEliminateFrame = false;
+  }
+
   if (!CanEliminateFrame) {
     AFI->setHasStackFrame(true);
 
@@ -893,11 +898,6 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
       UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
                                     UnspilledCS1GPRs.end(), (unsigned)ARM::LR));
       ForceLRSpill = false;
-    }
-
-    if (STI.isTargetDarwin()) {
-      MF.changePhyRegUsed(FramePtr, true);
-      NumGPRSpills++;
     }
 
     // If stack and double are 8-byte aligned and we are spilling an odd number
@@ -1030,7 +1030,7 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
     ++MBBI;
 
   // Point FP to the stack slot that contains the previous FP.
-  if (STI.isTargetDarwin())
+  if (hasFP(MF))
     BuildMI(MBB, MBBI, TII.get(isThumb ? ARM::tADDrSPi : ARM::ADDri), FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0);
 
@@ -1116,7 +1116,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   if (isThumb)
     emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
   else {
-    if (STI.isTargetDarwin()) {
+    if (hasFP(MF)){
       NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
       // Reset SP based on frame pointer only if the stack frame extends beyond
       // frame pointer stack slot.
@@ -1131,7 +1131,6 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
     } else if (NumBytes) {
       emitSPUpdate(MBB, MBBI, NumBytes, false, TII);
     }
-
     // Move SP to start of integer callee save spill area 2.
     movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 3, STI);
     emitSPUpdate(MBB, MBBI, AFI->getDPRCalleeSavedAreaSize(), false, TII);
