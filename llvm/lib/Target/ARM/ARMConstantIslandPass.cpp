@@ -115,7 +115,8 @@ namespace {
     MachineBasicBlock *SplitBlockBeforeInstr(MachineInstr *MI);
     void UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB);
     bool HandleConstantPoolUser(MachineFunction &Fn, CPUser &U);
-    bool BBIsInBranchRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned D);
+    bool CPEIsInRange(MachineInstr *MI, MachineInstr *CPEMI, unsigned Disp);
+    bool BBIsInRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned Disp);
     bool FixUpImmediateBr(MachineFunction &Fn, ImmBranch &Br);
     bool FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br);
     bool FixUpUnconditionalBr(MachineFunction &Fn, ImmBranch &Br);
@@ -458,33 +459,41 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   return NewBB;
 }
 
+/// CPEIsInRange - Returns true is the distance between specific MI and
+/// specific ConstPool entry instruction can fit in MI's displacement field.
+bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, MachineInstr *CPEMI,
+                                      unsigned MaxDisp) {
+  unsigned PCAdj      = AFI->isThumbFunction() ? 4 : 8;
+  unsigned UserOffset = GetOffsetOf(MI) + PCAdj;
+  unsigned CPEOffset  = GetOffsetOf(CPEMI);
+  
+  DEBUG(std::cerr << "User of CPE#" << CPEMI->getOperand(0).getImm()
+                  << " max delta=" << MaxDisp
+                  << " at offset " << int(UserOffset-CPEOffset) << "\t"
+                  << *MI);
+
+  if (UserOffset < CPEOffset) {
+    // User before the CPE.
+    if (CPEOffset-UserOffset <= MaxDisp)
+      return true;
+  } else if (!AFI->isThumbFunction()) {
+    // Thumb LDR cannot encode negative offset.
+    if (UserOffset-CPEOffset <= MaxDisp)
+      return true;
+  }
+  return false;
+}
+
 /// HandleConstantPoolUser - Analyze the specified user, checking to see if it
 /// is out-of-range.  If so, pick it up the constant pool value and move it some
 /// place in-range.
 bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
-  bool isThumb = AFI->isThumbFunction();
   MachineInstr *UserMI = U.MI;
   MachineInstr *CPEMI  = U.CPEMI;
 
-  unsigned UserOffset = GetOffsetOf(UserMI);
-  unsigned CPEOffset  = GetOffsetOf(CPEMI);
-  
-  DEBUG(std::cerr << "User of CPE#" << CPEMI->getOperand(0).getImm()
-                  << " max delta=" << U.MaxDisp
-                  << " at offset " << int(UserOffset-CPEOffset) << "\t"
-                  << *UserMI);
-
   // Check to see if the CPE is already in-range.
-  if (UserOffset < CPEOffset) {
-    // User before the CPE.
-    if (CPEOffset-UserOffset <= U.MaxDisp)
-      return false;
-  } else if (!isThumb) {
-    // Thumb LDR cannot encode negative offset.
-    if (UserOffset-CPEOffset <= U.MaxDisp)
-      return false;
-  }
-  
+  if (CPEIsInRange(UserMI, CPEMI, U.MaxDisp))
+    return false;
 
   // Solution guaranteed to work: split the user's MBB right after the user and
   // insert a clone the CPE into the newly created water.
@@ -500,6 +509,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
     NewMBB = next(MachineFunction::iterator(UserMBB));
     // Add an unconditional branch from UserMBB to fallthrough block.
     // Note the new unconditional branch is not being recorded.
+    bool isThumb = AFI->isThumbFunction();
     BuildMI(UserMBB, TII->get(isThumb ? ARM::tB : ARM::B)).addMBB(NewMBB);
     BBSizes[UserMBB->getNumber()] += isThumb ? 2 : 4;
   } else {
@@ -540,15 +550,19 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
   return true;
 }
 
-/// BBIsInBranchRange - Returns true is the distance between specific MI and
+/// BBIsInRange - Returns true is the distance between specific MI and
 /// specific BB can fit in MI's displacement field.
-bool ARMConstantIslands::BBIsInBranchRange(MachineInstr *MI,
-                                           MachineBasicBlock *DestBB,
-                                           unsigned MaxDisp) {
-  unsigned BrOffset   = GetOffsetOf(MI);
+bool ARMConstantIslands::BBIsInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
+                                     unsigned MaxDisp) {
+  unsigned PCAdj      = AFI->isThumbFunction() ? 4 : 8;
+  unsigned BrOffset   = GetOffsetOf(MI) + PCAdj;
   unsigned DestOffset = GetOffsetOf(DestBB);
 
-  // Check to see if the destination BB is in range.
+  DEBUG(std::cerr << "Branch of destination BB#" << DestBB->getNumber()
+                  << " max delta=" << MaxDisp
+                  << " at offset " << int(BrOffset-DestOffset) << "\t"
+                  << *MI);
+
   if (BrOffset < DestOffset) {
     if (DestOffset - BrOffset < MaxDisp)
       return true;
@@ -565,7 +579,8 @@ bool ARMConstantIslands::FixUpImmediateBr(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
   MachineBasicBlock *DestBB = MI->getOperand(0).getMachineBasicBlock();
 
-  if (BBIsInBranchRange(MI, DestBB, Br.MaxDisp))
+  // Check to see if the DestBB is already in-range.
+  if (BBIsInRange(MI, DestBB, Br.MaxDisp))
     return false;
 
   if (!Br.isCond)
@@ -635,7 +650,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
       // bne L2
       // b   L1
       MachineBasicBlock *NewDest = BackMI->getOperand(0).getMachineBasicBlock();
-      if (BBIsInBranchRange(MI, NewDest, Br.MaxDisp)) {
+      if (BBIsInRange(MI, NewDest, Br.MaxDisp)) {
         BackMI->getOperand(0).setMachineBasicBlock(DestBB);
         MI->getOperand(0).setMachineBasicBlock(NewDest);
         MI->getOperand(1).setImm(CC);
