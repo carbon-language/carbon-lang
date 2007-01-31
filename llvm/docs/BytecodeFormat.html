@@ -1529,34 +1529,41 @@ possible. </p>
       <tr><td>And</td><td>16</td><td>1</td><td>1.0</td></tr>
       <tr><td>Or</td><td>17</td><td>1</td><td>1.0</td></tr>
       <tr><td>Xor</td><td>18</td><td>1</td><td>1.0</td></tr>
-      <tr><td colspan="4"><b>Binary Comparison Operators</b></td></tr>
-      <tr><td>SetEQ</td><td>19</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetNE</td><td>20</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetLE</td><td>21</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetGE</td><td>22</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetLT</td><td>23</td><td>1</td><td>1.0</td></tr>
-      <tr><td>SetGT</td><td>24</td><td>1</td><td>1.0</td></tr>
       <tr><td colspan="4"><b>Memory Operators</b></td></tr>
-      <tr><td>Malloc</td><td>25</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Free</td><td>26</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Alloca</td><td>27</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Load</td><td>28</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Store</td><td>29</td><td>1</td><td>1.0</td></tr>
-      <tr><td>GetElementPtr</td><td>30</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Malloc</td><td>19</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Free</td><td>20</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Alloca</td><td>21</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Load</td><td>22</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Store</td><td>23</td><td>1</td><td>1.0</td></tr>
+      <tr><td>GetElementPtr</td><td>24</td><td>1</td><td>1.0</td></tr>
+      <tr><td colspan="4"><b>Cast Operators</b></td></tr>
+      <tr><td>Trunc</td><td>25</td><td>1</td><td>2.0</td></tr>
+      <tr><td>ZExt</td><td>26</td><td>1</td><td>2.0</td></tr>
+      <tr><td>SExt</td><td>27</td><td>1</td><td>2.0</td></tr>
+      <tr><td>FPToUI</td><td>28</td><td>1</td><td>2.0</td></tr>
+      <tr><td>FPToSI</td><td>29</td><td>1</td><td>2.0</td></tr>
+      <tr><td>UIToFP</td><td>30</td><td>1</td><td>2.0</td></tr>
+      <tr><td>SIToFP</td><td>31</td><td>1</td><td>2.0</td></tr>
+      <tr><td>FPTrunc</td><td>32</td><td>1</td><td>2.0</td></tr>
+      <tr><td>FPExt</td><td>33</td><td>1</td><td>2.0</td></tr>
+      <tr><td>PtrToInt</td><td>34</td><td>1</td><td>2.0</td></tr>
+      <tr><td>IntToPtr</td><td>35</td><td>1</td><td>2.0</td></tr>
+      <tr><td>BitCast</td><td>36</td><td>1</td><td>2.0</td></tr>
       <tr><td colspan="4"><b>Other Operators</b></td></tr>
-      <tr><td>PHI</td><td>31</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Cast</td><td>32</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Call</td><td>33</td><td>1</td><td>1.0</td></tr>
-      <tr><td>Shl</td><td>34</td><td>1</td><td>1.0</td></tr>
-      <tr><td>LShr</td><td>35</td><td>6</td><td>2.0</td></tr>
-      <tr><td>AShr</td><td>36</td><td>6</td><td>2.0</td></tr>
-      <tr><td>Select</td><td>37</td><td>2</td><td>1.2</td></tr>
-      <tr><td>UserOp1</td><td>38</td><td>1</td><td>1.0</td></tr>
-      <tr><td>UserOp2</td><td>39</td><td>1</td><td>1.0</td></tr>
-      <tr><td>VAArg</td><td>40</td><td>5</td><td>1.5</td></tr>
-      <tr><td>ExtractElement</td><td>41</td><td>5</td><td>1.5</td></tr>
-      <tr><td>InsertElement</td><td>42</td><td>5</td><td>1.5</td></tr>
-      <tr><td>ShuffleElement</td><td>43</td><td>5</td><td>1.5</td></tr>
+      <tr><td>ICmp</td><td>37</td><td>1</td><td>1.0</td></tr>
+      <tr><td>FCmp</td><td>38</td><td>1</td><td>1.0</td></tr>
+      <tr><td>PHI</td><td>39</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Call</td><td>40</td><td>1</td><td>1.0</td></tr>
+      <tr><td>Shl</td><td>41</td><td>1</td><td>1.0</td></tr>
+      <tr><td>LShr</td><td>42</td><td>6</td><td>2.0</td></tr>
+      <tr><td>AShr</td><td>43</td><td>6</td><td>2.0</td></tr>
+      <tr><td>Select</td><td>44</td><td>2</td><td>1.2</td></tr>
+      <tr><td>UserOp1</td><td>45</td><td>1</td><td>1.0</td></tr>
+      <tr><td>UserOp2</td><td>46</td><td>1</td><td>1.0</td></tr>
+      <tr><td>VAArg</td><td>47</td><td>5</td><td>1.5</td></tr>
+      <tr><td>ExtractElement</td><td>48</td><td>5</td><td>1.5</td></tr>
+      <tr><td>InsertElement</td><td>49</td><td>5</td><td>1.5</td></tr>
+      <tr><td>ShuffleElement</td><td>50</td><td>5</td><td>1.5</td></tr>
       <tr><td colspan="4">
           <b>Pseudo Instructions<a href="#pi_note">*</a></b>
       </td></tr>
@@ -1970,31 +1977,6 @@ describes the differences between that version and the one that <i>follows</i>.
      Fields</a>.</p>
 </div>
 
-<!--
-<div class="doc_subsubsection">Aligned Data</div>
-<div class="doc_text">
-  <p>In version 1.3, certain data items were aligned to 32-bit boundaries. In
-  version 1.4, alignment of data was done away with completely. The need for
-  alignment has gone away and the only thing it adds is bytecode file size
-  overhead. In most cases this overhead was small. However, in functions with
-  large numbers of format 0 instructions (GEPs and PHIs with lots of parameters)
-  or regular instructions with large valued operands (e.g. because there's just
-  a lot of instructions in the function) the overhead can be extreme. In one
-  test case, the overhead was 44,000 bytes (34% of the total file size).
-  Consequently in release 1.4, the decision was made to eliminate alignment
-  altogether.</p>
-  <p>In version 1.3 format, the following bytecode constructs were aligned (i.e.
-  they were followed by one to three bytes of padding):</p>
-  <ul>
-    <li>All blocks.</li>
-    <li>Instructions using the long format (format 0).</li>
-    <li>All call instructions that called a var args function.</li>
-    <li>The target triple (a string field at the end of the module block).</li>
-    <li>The version field (immediately following the signature).</li>
-  </ul>
-  <p>None of these constructs are aligned in version 1.4</p>
-</div>
--->
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="vers12">Version 1.2 Differences
