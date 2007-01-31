@@ -595,3 +595,30 @@ register of that class.  If it is then later necessary to spill that reg, so be
 it.
 
 ===-------------------------------------------------------------------------===
+
+We compile this:
+int test(_Bool X) {
+  return X ? 524288 : 0;
+}
+
+to: 
+_test:
+        cmplwi cr0, r3, 0
+        lis r2, 8
+        li r3, 0
+        beq cr0, LBB1_2 ;entry
+LBB1_1: ;entry
+        mr r3, r2
+LBB1_2: ;entry
+        blr 
+
+instead of:
+_test:
+        addic r2,r3,-1
+        subfe r0,r2,r3
+        slwi r3,r0,19
+        blr
+
+This sort of thing occurs a lot due to globalopt.
+
+===-------------------------------------------------------------------------===
