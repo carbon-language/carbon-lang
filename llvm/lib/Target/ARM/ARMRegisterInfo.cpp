@@ -881,13 +881,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
     }
   }
 
-  if (hasFP(MF)) {
-    MF.changePhyRegUsed(FramePtr, true);
-    NumGPRSpills++;
-    CanEliminateFrame = false;
-  }
-
-  if (!CanEliminateFrame) {
+  if (!CanEliminateFrame || hasFP(MF)) {
     AFI->setHasStackFrame(true);
 
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
@@ -902,7 +896,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
 
     // Darwin ABI requires FP to point to the stack slot that contains the
     // previous FP.
-    if (STI.isTargetDarwin()) {
+    if (STI.isTargetDarwin() || hasFP(MF)) {
       MF.changePhyRegUsed(FramePtr, true);
       NumGPRSpills++;
     }
