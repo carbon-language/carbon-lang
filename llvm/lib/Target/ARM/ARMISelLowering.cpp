@@ -58,6 +58,16 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLibcallName(RTLIB::OGE_F32, "__gesf2vfp");
     setLibcallName(RTLIB::OGT_F32, "__gtsf2vfp");
     setLibcallName(RTLIB::UO_F32,  "__unordsf2vfp");
+    setLibcallName(RTLIB::O_F32,   "__unordsf2vfp");
+
+    setCmpLibcallCC(RTLIB::OEQ_F32, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::UNE_F32, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::OLT_F32, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::OLE_F32, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::OGE_F32, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::OGT_F32, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::UO_F32,  ISD::SETNE);
+    setCmpLibcallCC(RTLIB::O_F32,   ISD::SETEQ);
 
     // Double-precision comparisons.
     setLibcallName(RTLIB::OEQ_F64, "__eqdf2vfp");
@@ -67,6 +77,16 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLibcallName(RTLIB::OGE_F64, "__gedf2vfp");
     setLibcallName(RTLIB::OGT_F64, "__gtdf2vfp");
     setLibcallName(RTLIB::UO_F64,  "__unorddf2vfp");
+    setLibcallName(RTLIB::O_F64,   "__unorddf2vfp");
+
+    setCmpLibcallCC(RTLIB::OEQ_F64, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::UNE_F64, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::OLT_F64, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::OLE_F64, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::OGE_F64, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::OGT_F64, ISD::SETNE);
+    setCmpLibcallCC(RTLIB::UO_F64,  ISD::SETNE);
+    setCmpLibcallCC(RTLIB::O_F64,   ISD::SETEQ);
 
     // Floating-point to integer conversions.
     // i64 conversions are done via library routines even when generating VFP
