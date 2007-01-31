@@ -210,7 +210,7 @@ Constant *llvm::ConstantFoldInstOperands(const Instruction* I,
   case Instruction::Call:
     if (Function *F = dyn_cast<Function>(Ops[0]))
       if (canConstantFoldCallTo(F))
-        return ConstantFoldCall(F, Ops+1, NumOps);
+        return ConstantFoldCall(F, Ops+1, NumOps-1);
     return 0;
   case Instruction::ICmp:
   case Instruction::FCmp:
