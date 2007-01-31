@@ -38,7 +38,6 @@
       <li><a href="#globalinfo">Module Info Block</a></li>
       <li><a href="#constantpool">Global Constant Pool</a></li>
       <li><a href="#functiondefs">Function Definition</a></li>
-      <li><a href="#compactiontable">Compaction Table</a></li>
       <li><a href="#instructionlist">Instructions List</a></li>
       <li><a href="#instructions">Instructions</a></li>
       <li><a href="#symtab">Symbol Table</a></li>
@@ -403,15 +402,7 @@ anything unless you also specify for which type you want slot #1. Types are
 always written to the file first (in the <a href="#globaltypes">Global Type 
 Pool</a>) and in such a way that both forward and backward references of the 
 types can often be resolved with a single pass through the type pool. </p>
-<p>Slot numbers are also kept small by rearranging their order. Because
-of the structure of LLVM, certain values are much more likely to be used
-frequently in the body of a function. For this reason, a compaction table is
-provided in the body of a function if its use would make the function body 
-smaller.  Suppose you have a function body that uses just the types "int*" and
-"{double}" but uses them thousands of time. Its worthwhile to ensure that the 
-slot number for these types are low so they can be encoded in a single byte 
-(via vbr). This is exactly what the compaction table does.</p>
-<p>In summary then, a slot number can be though of as just a vbr encoded index 
+<p>In summary then, a slot number can be thought of as just a vbr encoded index 
 into a list of Type* or Value*. To keep slot numbers low, Value* are indexed by
 two slot numbers: the "type plane index" (type slot) and the "value index"
 (value slot).</p>
@@ -500,7 +491,7 @@ except function arguments, global values and constant strings.</td>
       <td class="td_left">&nbsp;&nbsp;&nbsp;<a href="#functiondefs">Function&nbsp;Definitions</a>*</td>
       <td class="td_left">One function block is written for each
 function in the module. The function block contains the instructions,
-compaction table, type constant pool, and symbol table for the function.</td>
+type constant pool, and symbol table for the function.</td>
     </tr>
     <tr>
       <td>0x03</td>
@@ -512,18 +503,6 @@ compaction table, type constant pool, and symbol table for the function.</td>
  href="#constantpool">Function&nbsp;Constant&nbsp;Pool</a></td>
       <td class="td_left">Any constants (including types) used solely
 within the function are emitted here in the function constant pool. </td>
-    </tr>
-    <tr>
-      <td>0x08</td>
-      <td>Function</td>
-      <td>Yes</td>
-      <td>No</td>
-      <td>2</td>
-      <td class="td_left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
- href="#compactiontable">Compaction&nbsp;Table</a></td>
-      <td class="td_left">This table reduces bytecode size by providing
-a funtion-local mapping of type and value slot numbers to their global
-slot numbers</td>
     </tr>
     <tr>
       <td>0x07</td>
@@ -1394,9 +1373,9 @@ Notes:
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="functiondefs">Function Definition</a></div>
 <div class="doc_text">
-<p>Function definitions contain the linkage, constant pool or
-compaction table, instruction list, and symbol table for a function.
-The following table shows the structure of a function definition.</p>
+<p>Function definitions contain the linkage, constant pool, instruction list, 
+and symbol table for a function.  The following table shows the structure of 
+a function definition.</p>
 <table>
   <tbody>
     <tr>
@@ -1422,11 +1401,6 @@ block for this function.<sup>2</sup></td>
     </tr>
     <tr>
       <td><a href="#block">block</a></td>
-      <td class="td_left">The <a href="#compactiontable">compaction
-table</a> block for the function.<sup>2</sup></td>
-    </tr>
-    <tr>
-      <td><a href="#block">block</a></td>
       <td class="td_left">The <a href="#instructionlist">instruction
 list</a> for the function.</td>
     </tr>
@@ -1442,9 +1416,6 @@ Notes:
 <ol>
   <li>Note that if the linkage type is "External" then none of the
 other fields will be present as the function is defined elsewhere.</li>
-  <li>Note that only one of the constant pool or compaction table will
-be written. Compaction tables are only written if they will actually
-save bytecode space. If not, then a regular constant pool is written.</li>
 </ol>
 
 <!-- _______________________________________________________________________ -->
@@ -1470,75 +1441,12 @@ save bytecode space. If not, then a regular constant pool is written.</li>
     </tr>
     <tr>
       <td><a href="#bit">bit(19-31)</a></td>
-      <td class="td_left>Currently unassigned.</td>
-    </tr>
-  </tbody>
-</table>
-
-</div>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="compactiontable">Compaction Table</a>
-</div>
-<div class="doc_text">
-<p>Compaction tables are part of a function definition. They are merely
-a device for reducing the size of bytecode files. The size of a
-bytecode file is dependent on the <em>values</em> of the slot numbers
-used because larger values use more bytes in the variable bit rate
-encoding scheme. Furthermore, the compressed instruction format
-reserves only six bits for the type of the instruction. In large
-modules, declaring hundreds or thousands of types, the values of the
-slot numbers can be quite large. However, functions may use only a
-small fraction of the global types. In such cases a compaction table is
-created that maps the global type and value slot numbers to smaller
-values used by a function. Functions will contain either a
-function-specific constant pool <em>or</em> a compaction table but not
-both. Compaction tables have the format shown in the table below.</p>
-<table>
-  <tbody>
-    <tr>
-      <th><b>Type</b></th>
-      <th class="td_left"><b>Field Description</b></th>
-    </tr>
-    <tr>
-      <td><a href="#uint32_vbr">uint32_vbr</a></td>
-      <td class="td_left">The number of types that follow</td>
-    </tr>
-    <tr>
-      <td><a href="#uint24_vbr">uint24_vbr</a>+</td>
-      <td class="td_left">The type slot number in the global types of
-the type that will be referenced in the function with the index of this
-entry in the compaction table.</td>
-    </tr>
-    <tr>
-      <td><a href="#type_len">type_len</a></td>
-      <td class="td_left">An encoding of the type and number of values
-that follow. This field's encoding varies depending on the size of the
-type plane. See <a href="#type_len">Type and Length</a> for further
-details.</td>
-    </tr>
-    <tr>
-      <td><a href="#uint32_vbr">uint32_vbr</a>+</td>
-      <td class="td_left">The value slot number in the global values
-that will be referenced in the function with the index of this entry in
-the compaction table.</td>
+      <td class="td_left">Currently unassigned.</td>
     </tr>
   </tbody>
 </table>
 </div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="type_len">Type and Length</a></div>
-<div class="doc_text">
-<p>The type and length of a compaction table type plane is encoded
-differently depending on the length of the plane. For planes of length
-1 or 2, the length is encoded into bits 0 and 1 of a <a
- href="#uint32_vbr">uint32_vbr</a> and the type is encoded into bits
-2-31. Because type numbers are often small, this often saves an extra
-byte per plane. If the length of the plane is greater than 2 then the
-encoding uses a <a href="#uint32_vbr">uint32_vbr</a> for each of the
-length and type, in that order.</p>
-</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="instructionlist">Instruction List</a></div>
 <div class="doc_text">
