@@ -1171,8 +1171,8 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
-      std::vector<Constant*> IdxList(ArgVec.begin()+1, ArgVec.end());
-      Constant *Result = ConstantExpr::getGetElementPtr(ArgVec[0], IdxList);
+      Constant *Result = ConstantExpr::getGetElementPtr(ArgVec[0], &ArgVec[1],
+                                                        ArgVec.size()-1);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else if (Opcode == Instruction::Select) {
