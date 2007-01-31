@@ -20,6 +20,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
@@ -1733,7 +1734,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if (!IdxTy)
       GEN_ERROR("Index list invalid for constant getelementptr!");
 
-    std::vector<Constant*> IdxVec;
+    SmallVector<Constant*, 8> IdxVec;
     for (unsigned i = 0, e = $4->size(); i != e; ++i)
       if (Constant *C = dyn_cast<Constant>((*$4)[i]))
         IdxVec.push_back(C);
@@ -1742,7 +1743,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
 
     delete $4;
 
-    $$ = ConstantExpr::getGetElementPtr($3, IdxVec);
+    $$ = ConstantExpr::getGetElementPtr($3, &IdxVec[0], IdxVec.size());
     CHECK_FOR_ERROR
   }
   | SELECT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
