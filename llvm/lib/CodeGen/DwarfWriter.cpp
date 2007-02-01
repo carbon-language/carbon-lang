@@ -80,7 +80,7 @@ public:
     if (O) print(*O);
   }
   void print(std::ostream &O) const {
-    O << ".debug_" << Tag;
+    O << ".D" << Tag;
     if (Number) O << Number;
   }
 #endif
@@ -839,7 +839,7 @@ public:
   }
   void PrintLabelName(const char *Tag, unsigned Number) const {
     O << TAI->getPrivateGlobalPrefix()
-      << "debug_"
+      << ((Tag && *Tag) ? "debug_" : "label_")
       << Tag;
     if (Number) O << Number;
   }
@@ -932,7 +932,7 @@ public:
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
           TargetFrameInfo::StackGrowsUp ?
             TAI->getAddressSize() : -TAI->getAddressSize();
-    bool IsLocal = BaseLabel && strcmp(BaseLabel, "loc") == 0;
+    bool IsLocal = BaseLabel && strcmp(BaseLabel, "") == 0;
 
     for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
       MachineMove &Move = Moves[i];
@@ -952,11 +952,11 @@ public:
       if (BaseLabel && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
         Asm->EmitInt8(DW_CFA_advance_loc4);
         Asm->EOL("DW_CFA_advance_loc4");
-        EmitDifference("loc", LabelID, BaseLabel, BaseLabelID, true);
+        EmitDifference("", LabelID, BaseLabel, BaseLabelID, true);
         Asm->EOL("");
         
         BaseLabelID = LabelID;
-        BaseLabel = "loc";
+        BaseLabel = "";
         IsLocal = true;
       }
       
@@ -1850,14 +1850,14 @@ private:
         // Add the scope bounds.
         if (StartID) {
           AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
-                             DWLabel("loc", StartID));
+                             DWLabel("", StartID));
         } else {
           AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
                              DWLabel("func_begin", SubprogramCount));
         }
         if (EndID) {
           AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
-                             DWLabel("loc", EndID));
+                             DWLabel("", EndID));
         } else {
           AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
                              DWLabel("func_end", SubprogramCount));
@@ -2217,7 +2217,7 @@ private:
         Asm->EmitInt8(0); Asm->EOL("Extended Op");
         Asm->EmitInt8(TAI->getAddressSize() + 1); Asm->EOL("Op size");
         Asm->EmitInt8(DW_LNE_set_address); Asm->EOL("DW_LNE_set_address");
-        EmitReference("loc",  LabelID); Asm->EOL("Location label");
+        EmitReference("",  LabelID); Asm->EOL("Location label");
         
         // If change of source, then switch to the new source.
         if (Source != LineInfo.getSourceID()) {
