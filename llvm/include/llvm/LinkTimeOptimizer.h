@@ -96,6 +96,7 @@ namespace llvm {
                                            const char *) = 0;
     virtual void getTargetTriple(const std::string &, std::string &) = 0;
     virtual void removeModule (const std::string &InputFilename) = 0;
+    virtual void printVersion () = 0;
     virtual ~LinkTimeOptimizer() = 0;
   };
 
@@ -119,6 +120,7 @@ namespace llvm {
     void getTargetTriple(const std::string &InputFilename, 
                          std::string &targetTriple);
     void removeModule (const std::string &InputFilename);
+    void printVersion();
 
     // Constructors and destructors
     LTO() { 

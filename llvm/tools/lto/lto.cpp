@@ -457,6 +457,10 @@ LTO::optimizeModules(const std::string &OutputFilename,
   return LTO_OPT_SUCCESS;
 }
 
+void LTO::printVersion() {
+    cl::PrintVersionMessage();
+}
+
 /// Unused pure-virtual destructor. Must remain empty.
 LinkTimeOptimizer::~LinkTimeOptimizer() {}
 
