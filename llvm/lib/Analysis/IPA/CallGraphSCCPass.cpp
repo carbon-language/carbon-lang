@@ -45,6 +45,10 @@ public:
     Info.setPreservesAll();
   }
 
+  virtual const char *getPassName() const {
+    return "CallGraph Pass Manager";
+  }
+
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
     llvm::cerr << std::string(Offset*2, ' ') << "Call Graph SCC Pass Manager\n";
