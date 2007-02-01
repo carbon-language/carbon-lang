@@ -3216,7 +3216,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
           
           // Figure out if there is a Packed type corresponding to this Vector
           // type.  If so, convert to the packed type.
-          MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+          MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy),NumElems);
           if (TVT != MVT::Other && isTypeLegal(TVT)) {
             // Insert a VBIT_CONVERT of the FORMAL_ARGUMENTS to a
             // "N x PTyElementVT" MVT::Vector type.

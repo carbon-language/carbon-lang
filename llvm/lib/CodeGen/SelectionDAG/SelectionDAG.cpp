@@ -1577,7 +1577,8 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
 }
 
 SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
-                                   SDOperand Chain, SDOperand Ptr, const Value *SV,
+                                   SDOperand Chain, SDOperand Ptr,
+                                   const Value *SV,
                                    int SVOffset, MVT::ValueType EVT,
                                    bool isVolatile) {
   // If they are asking for an extending load from/to the same thing, return a
@@ -2228,7 +2229,8 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
   return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                                    SDOperand Op1, SDOperand Op2, SDOperand Op3) {
+                                    SDOperand Op1, SDOperand Op2,
+                                    SDOperand Op3) {
   return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,

@@ -696,7 +696,8 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
 /// CalcNodeSethiUllmanNumber - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
 template<class SF>
-unsigned BURegReductionPriorityQueue<SF>::CalcNodeSethiUllmanNumber(const SUnit *SU) {
+unsigned BURegReductionPriorityQueue<SF>::
+CalcNodeSethiUllmanNumber(const SUnit *SU) {
   unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
@@ -805,7 +806,8 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 /// CalcNodeSethiUllmanNumber - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
 template<class SF>
-unsigned TDRegReductionPriorityQueue<SF>::CalcNodeSethiUllmanNumber(const SUnit *SU) {
+unsigned TDRegReductionPriorityQueue<SF>::
+CalcNodeSethiUllmanNumber(const SUnit *SU) {
   unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
@@ -816,8 +818,8 @@ unsigned TDRegReductionPriorityQueue<SF>::CalcNodeSethiUllmanNumber(const SUnit 
   else if (SU->NumSuccsLeft == 0)
     // If SU does not have a use, i.e. it doesn't produce a value that would
     // be consumed (e.g. store), then it terminates a chain of computation.
-    // Give it a small SethiUllman number so it will be scheduled right before its
-    // predecessors that it doesn't lengthen their live ranges.
+    // Give it a small SethiUllman number so it will be scheduled right before
+    // its predecessors that it doesn't lengthen their live ranges.
     SethiUllmanNumber = 0;
   else if (SU->NumPredsLeft == 0 &&
            (Opc != ISD::CopyFromReg || isCopyFromLiveIn(SU)))
@@ -868,6 +870,6 @@ llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
                                                     MachineBasicBlock *BB) {
   return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), false,
-                               new TDRegReductionPriorityQueue<td_ls_rr_sort>());
+                              new TDRegReductionPriorityQueue<td_ls_rr_sort>());
 }
 

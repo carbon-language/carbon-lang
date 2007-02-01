@@ -1516,7 +1516,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Tmp2 = LegalizeOp(Load.getValue(1));
           break;
         }
-        assert(ExtType != ISD::EXTLOAD && "EXTLOAD should always be supported!");
+        assert(ExtType != ISD::EXTLOAD &&"EXTLOAD should always be supported!");
         // Turn the unsupported load into an EXTLOAD followed by an explicit
         // zero/sign extend inreg.
         Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
@@ -1649,7 +1649,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             // type should be returned by reference!
             SDOperand Lo, Hi;
             SplitVectorOp(Tmp2, Lo, Hi);
-            Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3, Hi, Tmp3);
+            Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3, Hi,Tmp3);
             Result = LegalizeOp(Result);
           }
         }
@@ -4689,7 +4689,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     ISD::LoadExtType ExtType = LD->getExtensionType();
 
     if (ExtType == ISD::NON_EXTLOAD) {
-      Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), LD->getSrcValueOffset());
+      Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(),LD->getSrcValueOffset());
       if (VT == MVT::f32 || VT == MVT::f64) {
         // f32->i32 or f64->i64 one to one expansion.
         // Remember that we legalized the chain.
@@ -4705,7 +4705,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                         getIntPtrConstant(IncrementSize));
       // FIXME: This creates a bogus srcvalue!
-      Hi = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), LD->getSrcValueOffset());
+      Hi = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(),LD->getSrcValueOffset());
 
       // Build a factor node to remember that this load is independent of the
       // other one.

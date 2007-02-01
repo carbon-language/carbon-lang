@@ -277,7 +277,7 @@ public:
 /// ResourceTally - Manages the use of resources over time intervals.  Each
 /// item (slot) in the tally vector represents the resources used at a given
 /// moment.  A bit set to 1 indicates that a resource is in use, otherwise
-/// available.  An assumption is made that the tally is large enough to schedule 
+/// available.  An assumption is made that the tally is large enough to schedule
 /// all current instructions (asserts otherwise.)
 ///
 template<class T>
@@ -377,7 +377,7 @@ private:
       // Try at cursor, if successful return position.
       if (FindAndReserveStages(Cursor, StageBegin, StageEnd)) return Cursor;
       // Locate a better position
-			Cursor = RetrySlot(Cursor + 1, StageBegin->Cycles, StageBegin->Units);
+      Cursor = RetrySlot(Cursor + 1, StageBegin->Cycles, StageBegin->Units);
     }
   }
   

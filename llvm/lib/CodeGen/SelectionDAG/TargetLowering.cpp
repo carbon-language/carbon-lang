@@ -715,7 +715,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     
     // If none of the top bits are demanded, convert this into an any_extend.
     if (NewBits == 0)
-      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ANY_EXTEND,Op.getValueType(),
+      return TLO.CombineTo(Op,TLO.DAG.getNode(ISD::ANY_EXTEND,Op.getValueType(),
                                            Op.getOperand(0)));
     
     // Since some of the sign extended bits are demanded, we know that the sign
