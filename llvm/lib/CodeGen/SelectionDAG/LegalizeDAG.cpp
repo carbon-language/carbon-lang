@@ -2178,7 +2178,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       const char *FnName = 0;
       if (Node->getOpcode() == ISD::MEMSET) {
         Entry.Node = Tmp2; Entry.isSigned = false; Entry.Ty = IntPtrTy;
-        Entry.isInReg = false;
+        Entry.isInReg = false; Entry.isSRet = false;
         Args.push_back(Entry);
         // Extend the (previously legalized) ubyte argument to be an int value
         // for the call.
@@ -2187,7 +2187,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         else
           Tmp3 = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Tmp3);
         Entry.Node = Tmp3; Entry.Ty = Type::Int32Ty; Entry.isSigned = true;
-        Entry.isInReg = false;
+        Entry.isInReg = false; Entry.isSRet = false;
         Args.push_back(Entry);
         Entry.Node = Tmp4; Entry.Ty = IntPtrTy; Entry.isSigned = false;
         Args.push_back(Entry);
@@ -2195,7 +2195,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         FnName = "memset";
       } else if (Node->getOpcode() == ISD::MEMCPY ||
                  Node->getOpcode() == ISD::MEMMOVE) {
-        Entry.Ty = IntPtrTy; Entry.isSigned = false; Entry.isInReg = false;
+        Entry.Ty = IntPtrTy;
+        Entry.isSigned = false; Entry.isInReg = false; Entry.isSRet = false;
         Entry.Node = Tmp2; Args.push_back(Entry);
         Entry.Node = Tmp3; Args.push_back(Entry);
         Entry.Node = Tmp4; Args.push_back(Entry);
@@ -4122,7 +4123,7 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
     MVT::ValueType ArgVT = Node->getOperand(i).getValueType();
     const Type *ArgTy = MVT::getTypeForValueType(ArgVT);
     Entry.Node = Node->getOperand(i); Entry.Ty = ArgTy; 
-    Entry.isSigned = isSigned; Entry.isInReg = false;
+    Entry.isSigned = isSigned; Entry.isInReg = false; Entry.isSRet = false;
     Args.push_back(Entry);
   }
   SDOperand Callee = DAG.getExternalSymbol(Name, TLI.getPointerTy());

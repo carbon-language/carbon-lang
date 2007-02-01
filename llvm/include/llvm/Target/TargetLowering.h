@@ -732,6 +732,8 @@ public:
     bool isSigned;
     bool isInReg;
     bool isSRet;
+
+    ArgListEntry():isSigned(false), isInReg(false), isSRet(false) { };
   };
   typedef std::vector<ArgListEntry> ArgListTy;
   virtual std::pair<SDOperand, SDOperand>

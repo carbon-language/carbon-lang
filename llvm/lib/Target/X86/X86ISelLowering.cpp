@@ -777,6 +777,10 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     }
   }
 
+  // Sanity check: we haven't seen NumSRetBytes > 4
+  assert((NumSRetBytes<=4) &&
+         "Too much space for struct-return pointer requested");
+    
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
