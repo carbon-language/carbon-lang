@@ -10,6 +10,11 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMlto
 
+# Include this here so we can get the configuration of the targets
+# that have been configured for construction. We have to do this 
+# early so we can set up LINK_COMPONENTS before includeing Makefile.rules
+include $(LEVEL)/Makefile.config
+
 LINK_LIBS_IN_SHARED = 1
 ifeq ($(OS),Darwin)
   SHARED_LIBRARY = 1
@@ -18,11 +23,6 @@ ifeq ($(OS),Darwin)
 else
   BUILD_ARCHIVE = 1
 endif
-
-# Include this here so we can get the configuration of the targets
-# that have been configured for construction. We have to do this 
-# early so we can set up LINK_COMPONENTS before includeing Makefile.rules
-include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts linker bcreader bcwriter
 
