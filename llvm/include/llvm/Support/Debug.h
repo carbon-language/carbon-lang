@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a handle way of adding debugging information to your
+// This file implements a handy way of adding debugging information to your
 // code, without it being enabled all of the time, and without having to add
 // command line options to enable it.
 //
