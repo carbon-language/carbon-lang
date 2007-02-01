@@ -522,6 +522,9 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   }
   // Take into account whether it's an add or mem instruction
   unsigned OffIdx = (i == 2) ? 1 : 2;
+  if (MI.getOpcode() == TargetInstrInfo::INLINEASM)
+    OffIdx = i-1;
+      
   // Get the frame index.
   int FrameIndex = MI.getOperand(i).getFrameIndex();
   
