@@ -78,6 +78,10 @@ public:
   bool doFinalization(Module &M);
   bool doFinalization(Function &F);
 
+  virtual const char *getPassName() const {
+    return "BasicBlock Pass  Manager";
+  }
+
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
     llvm::cerr << std::string(Offset*2, ' ') << "BasicBlockPass Manager\n";
@@ -183,6 +187,10 @@ public:
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
     Info.setPreservesAll();
+  }
+
+  virtual const char *getPassName() const {
+    return "Module Pass Manager";
   }
 
   // Print passes managed by this manager
