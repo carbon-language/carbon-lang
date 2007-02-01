@@ -56,6 +56,7 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
     DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
   } else {
+    PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
     StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
     StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
