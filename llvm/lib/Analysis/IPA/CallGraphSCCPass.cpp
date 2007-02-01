@@ -19,6 +19,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/PassManagers.h"
+#include "llvm/Function.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -107,8 +108,11 @@ bool CGPassManager::runOnModule(Module &M) {
 	std::vector<CallGraphNode*> &SCC = *I;
 	for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
 	  Function *F = SCC[i]->getFunction();
-	  if (F) 
+	  if (F) {
+            std::string Msg4 = "' on Function '" + F->getName() + "'...\n";
+            dumpPassInfo(P, Msg1, Msg4);
 	    Changed |= FPP->runOnFunction(*F);
+          }
 	}
       }
       StopPassTimer(P);
