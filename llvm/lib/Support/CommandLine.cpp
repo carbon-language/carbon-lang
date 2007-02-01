@@ -980,9 +980,7 @@ static void (*OverrideVersionPrinter)() = 0;
 namespace {
 class VersionPrinter {
 public:
-  void operator=(bool OptionWasSpecified) {
-    if (OptionWasSpecified) {
-      if (OverrideVersionPrinter == 0) {
+  void print() {
         cout << "Low Level Virtual Machine (http://llvm.org/):\n";
         cout << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
 #ifdef LLVM_VERSION_INFO
@@ -998,6 +996,11 @@ public:
         cout << " with assertions";
 #endif
         cout << ".\n";
+  }
+  void operator=(bool OptionWasSpecified) {
+    if (OptionWasSpecified) {
+      if (OverrideVersionPrinter == 0) {
+        print();
         Options->clear();  // Don't bother making option dtors remove from map.
         exit(1);
       } else {
@@ -1026,6 +1029,11 @@ void cl::PrintHelpMessage() {
   // --help option was given or not. Since we're circumventing that we have
   // to make it look like --help was given, so we assign true.
   NormalPrinter = true;
+}
+
+/// Utility function for printing version number.
+void cl::PrintVersionMessage() {
+  VersionPrinterInstance.print();
 }
 
 void cl::SetVersionPrinter(void (*func)()) {
