@@ -824,11 +824,199 @@ public:
   // Accessors.
   //
   AsmPrinter *getAsm() const { return Asm; }
+  MachineModuleInfo *getMMI() const { return MMI; }
   const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
 
   /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
   ///
   bool ShouldEmitDwarf() const { return shouldEmit; }
+
+
+  /// PrintLabelName - Print label name in form used by Dwarf writer.
+  ///
+  void PrintLabelName(DWLabel Label) const {
+    PrintLabelName(Label.Tag, Label.Number);
+  }
+  void PrintLabelName(const char *Tag, unsigned Number) const {
+    O << TAI->getPrivateGlobalPrefix()
+      << "debug_"
+      << Tag;
+    if (Number) O << Number;
+  }
+  
+  /// EmitLabel - Emit location label for internal use by Dwarf.
+  ///
+  void EmitLabel(DWLabel Label) const {
+    EmitLabel(Label.Tag, Label.Number);
+  }
+  void EmitLabel(const char *Tag, unsigned Number) const {
+    PrintLabelName(Tag, Number);
+    O << ":\n";
+  }
+  
+  /// EmitReference - Emit a reference to a label.
+  ///
+  void EmitReference(DWLabel Label, bool IsPCRelative = false) const {
+    EmitReference(Label.Tag, Label.Number, IsPCRelative);
+  }
+  void EmitReference(const char *Tag, unsigned Number,
+                     bool IsPCRelative = false) const {
+    if (TAI->getAddressSize() == sizeof(int32_t))
+      O << TAI->getData32bitsDirective();
+    else
+      O << TAI->getData64bitsDirective();
+      
+    PrintLabelName(Tag, Number);
+    
+    if (IsPCRelative) O << "-" << TAI->getPCSymbol();
+  }
+  void EmitReference(const std::string &Name, bool IsPCRelative = false) const {
+    if (TAI->getAddressSize() == sizeof(int32_t))
+      O << TAI->getData32bitsDirective();
+    else
+      O << TAI->getData64bitsDirective();
+      
+    O << Name;
+    
+    if (IsPCRelative) O << "-" << TAI->getPCSymbol();
+  }
+
+  /// EmitDifference - Emit the difference between two labels.  Some
+  /// assemblers do not behave with absolute expressions with data directives,
+  /// so there is an option (needsSet) to use an intermediary set expression.
+  void EmitDifference(DWLabel LabelHi, DWLabel LabelLo,
+                      bool IsSmall = false) const {
+    EmitDifference(LabelHi.Tag, LabelHi.Number,
+                   LabelLo.Tag, LabelLo.Number,
+                   IsSmall);
+  }
+  void EmitDifference(const char *TagHi, unsigned NumberHi,
+                      const char *TagLo, unsigned NumberLo,
+                      bool IsSmall = false) const {
+    if (TAI->needsSet()) {
+      static unsigned SetCounter = 1;
+      
+      O << "\t.set\t";
+      PrintLabelName("set", SetCounter);
+      O << ",";
+      PrintLabelName(TagHi, NumberHi);
+      O << "-";
+      PrintLabelName(TagLo, NumberLo);
+      O << "\n";
+      
+      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
+        O << TAI->getData32bitsDirective();
+      else
+        O << TAI->getData64bitsDirective();
+        
+      PrintLabelName("set", SetCounter);
+      
+      ++SetCounter;
+    } else {
+      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
+        O << TAI->getData32bitsDirective();
+      else
+        O << TAI->getData64bitsDirective();
+        
+      PrintLabelName(TagHi, NumberHi);
+      O << "-";
+      PrintLabelName(TagLo, NumberLo);
+    }
+  }
+                      
+  /// EmitFrameMoves - Emit frame instructions to describe the layout of the
+  /// frame.
+  void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
+                                   std::vector<MachineMove> &Moves) {
+    int stackGrowth =
+        Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
+          TargetFrameInfo::StackGrowsUp ?
+            TAI->getAddressSize() : -TAI->getAddressSize();
+    bool IsLocal = BaseLabel && strcmp(BaseLabel, "loc") == 0;
+
+    for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
+      MachineMove &Move = Moves[i];
+      unsigned LabelID = Move.getLabelID();
+      
+      if (LabelID) {
+        LabelID = MMI->MappedLabel(LabelID);
+      
+        // Throw out move if the label is invalid.
+        if (!LabelID) continue;
+      }
+      
+      const MachineLocation &Dst = Move.getDestination();
+      const MachineLocation &Src = Move.getSource();
+      
+      // Advance row if new location.
+      if (BaseLabel && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
+        Asm->EmitInt8(DW_CFA_advance_loc4);
+        Asm->EOL("DW_CFA_advance_loc4");
+        EmitDifference("loc", LabelID, BaseLabel, BaseLabelID, true);
+        Asm->EOL("");
+        
+        BaseLabelID = LabelID;
+        BaseLabel = "loc";
+        IsLocal = true;
+      }
+      
+      // If advancing cfa.
+      if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
+        if (!Src.isRegister()) {
+          if (Src.getRegister() == MachineLocation::VirtualFP) {
+            Asm->EmitInt8(DW_CFA_def_cfa_offset);
+            Asm->EOL("DW_CFA_def_cfa_offset");
+          } else {
+            Asm->EmitInt8(DW_CFA_def_cfa);
+            Asm->EOL("DW_CFA_def_cfa");
+            Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister()));
+            Asm->EOL("Register");
+          }
+          
+          int Offset = -Src.getOffset();
+          
+          Asm->EmitULEB128Bytes(Offset);
+          Asm->EOL("Offset");
+        } else {
+          assert(0 && "Machine move no supported yet.");
+        }
+      } else if (Src.isRegister() &&
+        Src.getRegister() == MachineLocation::VirtualFP) {
+        if (Dst.isRegister()) {
+          Asm->EmitInt8(DW_CFA_def_cfa_register);
+          Asm->EOL("DW_CFA_def_cfa_register");
+          Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister()));
+          Asm->EOL("Register");
+        } else {
+          assert(0 && "Machine move no supported yet.");
+        }
+      } else {
+        unsigned Reg = RI->getDwarfRegNum(Src.getRegister());
+        int Offset = Dst.getOffset() / stackGrowth;
+        
+        if (Offset < 0) {
+          Asm->EmitInt8(DW_CFA_offset_extended_sf);
+          Asm->EOL("DW_CFA_offset_extended_sf");
+          Asm->EmitULEB128Bytes(Reg);
+          Asm->EOL("Reg");
+          Asm->EmitSLEB128Bytes(Offset);
+          Asm->EOL("Offset");
+        } else if (Reg < 64) {
+          Asm->EmitInt8(DW_CFA_offset + Reg);
+          Asm->EOL("DW_CFA_offset + Reg");
+          Asm->EmitULEB128Bytes(Offset);
+          Asm->EOL("Offset");
+        } else {
+          Asm->EmitInt8(DW_CFA_offset_extended);
+          Asm->EOL("DW_CFA_offset_extended");
+          Asm->EmitULEB128Bytes(Reg);
+          Asm->EOL("Reg");
+          Asm->EmitULEB128Bytes(Offset);
+          Asm->EOL("Offset");
+        }
+      }
+    }
+  }
 
 };
 
@@ -881,93 +1069,6 @@ private:
 
 public:
 
-  /// PrintLabelName - Print label name in form used by Dwarf writer.
-  ///
-  void PrintLabelName(DWLabel Label) const {
-    PrintLabelName(Label.Tag, Label.Number);
-  }
-  void PrintLabelName(const char *Tag, unsigned Number) const {
-    O << TAI->getPrivateGlobalPrefix()
-      << "debug_"
-      << Tag;
-    if (Number) O << Number;
-  }
-  
-  /// EmitLabel - Emit location label for internal use by Dwarf.
-  ///
-  void EmitLabel(DWLabel Label) const {
-    EmitLabel(Label.Tag, Label.Number);
-  }
-  void EmitLabel(const char *Tag, unsigned Number) const {
-    PrintLabelName(Tag, Number);
-    O << ":\n";
-  }
-  
-  /// EmitReference - Emit a reference to a label.
-  ///
-  void EmitReference(DWLabel Label) const {
-    EmitReference(Label.Tag, Label.Number);
-  }
-  void EmitReference(const char *Tag, unsigned Number) const {
-    if (TAI->getAddressSize() == sizeof(int32_t))
-      O << TAI->getData32bitsDirective();
-    else
-      O << TAI->getData64bitsDirective();
-      
-    PrintLabelName(Tag, Number);
-  }
-  void EmitReference(const std::string &Name) const {
-    if (TAI->getAddressSize() == sizeof(int32_t))
-      O << TAI->getData32bitsDirective();
-    else
-      O << TAI->getData64bitsDirective();
-      
-    O << Name;
-  }
-
-  /// EmitDifference - Emit the difference between two labels.  Some
-  /// assemblers do not behave with absolute expressions with data directives,
-  /// so there is an option (needsSet) to use an intermediary set expression.
-  void EmitDifference(DWLabel LabelHi, DWLabel LabelLo,
-                      bool IsSmall = false) const {
-    EmitDifference(LabelHi.Tag, LabelHi.Number,
-                   LabelLo.Tag, LabelLo.Number,
-                   IsSmall);
-  }
-  void EmitDifference(const char *TagHi, unsigned NumberHi,
-                      const char *TagLo, unsigned NumberLo,
-                      bool IsSmall = false) const {
-    if (TAI->needsSet()) {
-      static unsigned SetCounter = 0;
-      
-      O << "\t.set\t";
-      PrintLabelName("set", SetCounter);
-      O << ",";
-      PrintLabelName(TagHi, NumberHi);
-      O << "-";
-      PrintLabelName(TagLo, NumberLo);
-      O << "\n";
-      
-      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
-        O << TAI->getData32bitsDirective();
-      else
-        O << TAI->getData64bitsDirective();
-        
-      PrintLabelName("set", SetCounter);
-      
-      ++SetCounter;
-    } else {
-      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
-        O << TAI->getData32bitsDirective();
-      else
-        O << TAI->getData64bitsDirective();
-        
-      PrintLabelName(TagHi, NumberHi);
-      O << "-";
-      PrintLabelName(TagLo, NumberLo);
-    }
-  }
-                      
   /// AssignAbbrevNumber - Define a unique number for the abbreviation.
   ///  
   void AssignAbbrevNumber(DIEAbbrev &Abbrev) {
@@ -1950,98 +2051,6 @@ private:
     SizeAndOffsetDie(Unit->getDie(), Offset, true);
   }
 
-  /// EmitFrameMoves - Emit frame instructions to describe the layout of the
-  /// frame.
-  void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
-                                   std::vector<MachineMove> &Moves) {
-    int stackGrowth =
-        Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
-          TargetFrameInfo::StackGrowsUp ?
-            TAI->getAddressSize() : -TAI->getAddressSize();
-
-    for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
-      MachineMove &Move = Moves[i];
-      unsigned LabelID = Move.getLabelID();
-      
-      if (LabelID) {
-        LabelID = MMI->MappedLabel(LabelID);
-      
-        // Throw out move if the label is invalid.
-        if (!LabelID) continue;
-      }
-      
-      const MachineLocation &Dst = Move.getDestination();
-      const MachineLocation &Src = Move.getSource();
-      
-      // Advance row if new location.
-      if (BaseLabel && LabelID && BaseLabelID != LabelID) {
-        Asm->EmitInt8(DW_CFA_advance_loc4);
-        Asm->EOL("DW_CFA_advance_loc4");
-        EmitDifference("loc", LabelID, BaseLabel, BaseLabelID, true);
-        Asm->EOL("");
-        
-        BaseLabelID = LabelID;
-        BaseLabel = "loc";
-      }
-      
-      // If advancing cfa.
-      if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
-        if (!Src.isRegister()) {
-          if (Src.getRegister() == MachineLocation::VirtualFP) {
-            Asm->EmitInt8(DW_CFA_def_cfa_offset);
-            Asm->EOL("DW_CFA_def_cfa_offset");
-          } else {
-            Asm->EmitInt8(DW_CFA_def_cfa);
-            Asm->EOL("DW_CFA_def_cfa");
-            Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister()));
-            Asm->EOL("Register");
-          }
-          
-          int Offset = Src.getOffset() / stackGrowth;
-          
-          Asm->EmitULEB128Bytes(Offset);
-          Asm->EOL("Offset");
-        } else {
-          assert(0 && "Machine move no supported yet.");
-        }
-      } else if (Src.isRegister() &&
-        Src.getRegister() == MachineLocation::VirtualFP) {
-        if (Dst.isRegister()) {
-          Asm->EmitInt8(DW_CFA_def_cfa_register);
-          Asm->EOL("DW_CFA_def_cfa_register");
-          Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister()));
-          Asm->EOL("Register");
-        } else {
-          assert(0 && "Machine move no supported yet.");
-        }
-      } else {
-        unsigned Reg = RI->getDwarfRegNum(Src.getRegister());
-        int Offset = Dst.getOffset() / stackGrowth;
-        
-        if (Offset < 0) {
-          Asm->EmitInt8(DW_CFA_offset_extended_sf);
-          Asm->EOL("DW_CFA_offset_extended_sf");
-          Asm->EmitULEB128Bytes(Reg);
-          Asm->EOL("Reg");
-          Asm->EmitSLEB128Bytes(Offset);
-          Asm->EOL("Offset");
-        } else if (Reg < 64) {
-          Asm->EmitInt8(DW_CFA_offset + Reg);
-          Asm->EOL("DW_CFA_offset + Reg");
-          Asm->EmitULEB128Bytes(Offset);
-          Asm->EOL("Offset");
-        } else {
-          Asm->EmitInt8(DW_CFA_offset_extended);
-          Asm->EOL("DW_CFA_offset_extended");
-          Asm->EmitULEB128Bytes(Reg);
-          Asm->EOL("Reg");
-          Asm->EmitULEB128Bytes(Offset);
-          Asm->EOL("Offset");
-        }
-      }
-    }
-  }
-
   /// EmitDebugInfo - Emit the debug info section.
   ///
   void EmitDebugInfo() const {
@@ -2317,7 +2326,7 @@ private:
     
     EmitLabel("frame_begin", SubprogramCount);
     
-    EmitDifference("frame_common", 0, "section_frame", 0, true);
+    EmitDifference("frame_common_begin", 0, "section_frame", 0, true);
     Asm->EOL("FDE CIE offset");
 
     EmitReference("func_begin", SubprogramCount);
@@ -2616,19 +2625,13 @@ public:
     EmitLabel("func_begin", ++SubprogramCount);
   }
   
-  /// PreExceptionEndFunction - Close off function before exception handling
-  /// tables.
-  void PreExceptionEndFunction() {
-    if (!ShouldEmitDwarf()) return;
-    
-    // Define end label for subprogram.
-    EmitLabel("func_end", SubprogramCount);
-  }
-
   /// EndFunction - Gather and emit post-function debug information.
   ///
   void EndFunction() {
     if (!ShouldEmitDwarf()) return;
+    
+    // Define end label for subprogram.
+    EmitLabel("func_end", SubprogramCount);
       
     // Get function line info.
     const std::vector<SourceLineInfo> &LineInfos = MMI->getSourceLines();
@@ -2648,12 +2651,6 @@ public:
     
     // Emit function frame information.
     EmitFunctionDebugFrame();
-    
-    // Reset the line numbers for the next function.
-    MMI->ClearLineInfo();
-
-    // Clear function debug information.
-    MMI->EndFunction();
   }
 };
 
@@ -2661,6 +2658,85 @@ public:
 /// DwarfException - Emits Dwarf exception handling directives. 
 ///
 class DwarfException : public Dwarf  {
+
+private:
+
+  /// EmitInitial - Emit initial exception information.
+  ///
+  void EmitInitial() {
+    int stackGrowth =
+        Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
+          TargetFrameInfo::StackGrowsUp ?
+        TAI->getAddressSize() : -TAI->getAddressSize();
+
+    Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
+    O << "EH_frame:\n";
+    EmitLabel("section_eh_frame", 0);
+
+    EmitLabel("eh_frame_common", 0);
+    EmitDifference("eh_frame_common_end", 0,
+                   "eh_frame_common_begin", 0, true);
+    Asm->EOL("Length of Common Information Entry");
+
+    EmitLabel("eh_frame_common_begin", 0);
+    Asm->EmitInt32((int)0);
+    Asm->EOL("CIE Identifier Tag");
+    Asm->EmitInt8(DW_CIE_VERSION);
+    Asm->EOL("CIE Version");
+    Asm->EmitString("zR");
+    Asm->EOL("CIE Augmentation");
+    Asm->EmitULEB128Bytes(1);
+    Asm->EOL("CIE Code Alignment Factor");
+    Asm->EmitSLEB128Bytes(stackGrowth);
+    Asm->EOL("CIE Data Alignment Factor");   
+    Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister()));
+    Asm->EOL("CIE RA Column");
+    Asm->EmitULEB128Bytes(1);
+    Asm->EOL("Augmentation Size");
+    Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
+    Asm->EOL("FDE Encoding (pcrel)");
+    
+    std::vector<MachineMove> Moves;
+    RI->getInitialFrameState(Moves);
+    EmitFrameMoves(NULL, 0, Moves);
+
+    Asm->EmitAlignment(2);
+    EmitLabel("eh_frame_common_end", 0);
+    
+    Asm->EOL("");
+    
+  }
+  
+  
+  /// EmitEHFrame - Emit initial exception information.
+  ///
+  void EmitEHFrame() {
+    EmitDifference("eh_frame_end", SubprogramCount,
+                   "eh_frame_begin", SubprogramCount, true);
+    Asm->EOL("Length of Frame Information Entry");
+    
+    EmitLabel("eh_frame_begin", SubprogramCount);
+    
+    EmitDifference("eh_frame_begin", SubprogramCount,
+                   "section_eh_frame", 0, true);
+    Asm->EOL("FDE CIE offset");
+
+    EmitReference("eh_func_begin", SubprogramCount, true);
+    Asm->EOL("FDE initial location");
+    EmitDifference("eh_func_end", SubprogramCount,
+                   "eh_func_begin", SubprogramCount);
+    Asm->EOL("FDE address range");
+    
+    Asm->EmitULEB128Bytes(0);
+    Asm->EOL("Augmentation size");
+    
+    std::vector<MachineMove> &Moves = MMI->getFrameMoves();
+    
+    EmitFrameMoves("eh_func_begin", SubprogramCount, Moves);
+    
+    Asm->EmitAlignment(2);
+    EmitLabel("eh_frame_end", SubprogramCount);
+  }
 
 public:
   //===--------------------------------------------------------------------===//
@@ -2675,10 +2751,15 @@ public:
   /// SetModuleInfo - Set machine module information when it's known that pass
   /// manager has created it.  Set by the target AsmPrinter.
   void SetModuleInfo(MachineModuleInfo *mmi) {
+#if 1  // Not ready for prime time.
+    return;
+#endif
     // Make sure initial declarations are made.
     if (!MMI && ExceptionHandling && TAI->getSupportsExceptionHandling()) {
       MMI = mmi;
       shouldEmit = true;
+      
+      EmitInitial();
     }
   }
 
@@ -2702,21 +2783,32 @@ public:
     this->MF = MF;
     
     if (!ShouldEmitDwarf()) return;
+    
+    // Assumes in correct section after the entry point.
+    EmitLabel("eh_func_begin", ++SubprogramCount);
   }
 
   /// EndFunction - Gather and emit post-function exception information.
   ///
   void EndFunction() {
     if (!ShouldEmitDwarf()) return;
-#if 0
+
+    EmitLabel("eh_func_end", SubprogramCount);
+
+    Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
+
     if (const char *GlobalDirective = TAI->getGlobalDirective())
       O << GlobalDirective << getAsm()->CurrentFnName << ".eh\n";
-      
-    O << getAsm()->CurrentFnName << ".eh = 0\n";
+     
+    if (0) {
+      O << getAsm()->CurrentFnName << ".eh = 0\n";
+    } else {
+      O << getAsm()->CurrentFnName << ".eh:\n";
+      EmitEHFrame();
+    }
     
     if (const char *UsedDirective = TAI->getUsedDirective())
-      O << UsedDirective << getAsm()->CurrentFnName << ".eh\n";
-#endif
+      O << UsedDirective << getAsm()->CurrentFnName << ".eh\n\n";
   }
 };
 
@@ -3031,8 +3123,8 @@ DwarfWriter::~DwarfWriter() {
 /// SetModuleInfo - Set machine module info when it's known that pass manager
 /// has created it.  Set by the target AsmPrinter.
 void DwarfWriter::SetModuleInfo(MachineModuleInfo *MMI) {
-  DE->SetModuleInfo(MMI);
   DD->SetModuleInfo(MMI);
+  DE->SetModuleInfo(MMI);
 }
 
 /// BeginModule - Emit all Dwarf sections that should come prior to the
@@ -3059,7 +3151,11 @@ void DwarfWriter::BeginFunction(MachineFunction *MF) {
 /// EndFunction - Gather and emit post-function debug information.
 ///
 void DwarfWriter::EndFunction() {
-  DD->PreExceptionEndFunction();
-  DE->EndFunction();
   DD->EndFunction();
+  DE->EndFunction();
+  
+  if (MachineModuleInfo *MMI = DD->getMMI()) {
+    // Clear function debug information.
+    MMI->EndFunction();
+  }
 }

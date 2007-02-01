@@ -1505,6 +1505,9 @@ void MachineModuleInfo::EndFunction() {
     RootScope = NULL;
   }
   
+  // Clean up line info.
+  Lines.clear();
+
   // Clean up frame info.
   FrameMoves.clear();
 }

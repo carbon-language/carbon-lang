@@ -41,11 +41,14 @@ PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
   DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
   DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
+  DwarfEHFrameSection =
+  ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
 }
 
 DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
 : PPCTargetAsmInfo(TM)
 {
+  PCSymbol = ".";
   CommentString = ";";
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "L";

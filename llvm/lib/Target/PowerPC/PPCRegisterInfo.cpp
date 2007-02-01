@@ -902,6 +902,10 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
     }
     
+    MachineLocation LRDst(MachineLocation::VirtualFP, LROffset);
+    MachineLocation LRSrc(IsPPC64 ? PPC::LR8 : PPC::LR);
+    Moves.push_back(MachineMove(FrameLabelId, LRDst, LRSrc));
+    
     // Mark effective beginning of when frame pointer is ready.
     unsigned ReadyLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(PPC::LABEL)).addImm(ReadyLabelId);

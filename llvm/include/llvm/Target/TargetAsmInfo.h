@@ -51,7 +51,7 @@ namespace llvm {
     /// AddressSize - Size of addresses used in file.
     ///
     unsigned AddressSize;                 // Defaults to 4.
-
+    
     /// NeedsSet - True if target asm can't compute addresses on data
     /// directives.
     bool NeedsSet;                        // Defaults to false.
@@ -60,6 +60,10 @@ namespace llvm {
     /// which is needed to compute the size of an inline asm.
     unsigned MaxInstLength;               // Defaults to 4.
     
+    /// PCSymbol - The symbol used to represent the current PC.  Used in PC
+    /// relative expressions.
+    const char *PCSymbol;                 // Defaults to "$".
+
     /// SeparatorChar - This character, if specified, is used to separate
     /// instructions from each other when on the same line.  This is used to
     /// measure inline asm instructions.
@@ -305,6 +309,10 @@ namespace llvm {
     /// DwarfMacInfoSection - Section directive for Dwarf info.
     ///
     const char *DwarfMacInfoSection; // Defaults to ".debug_macinfo".
+    
+    /// DwarfEHFrameSection - Section directive for Exception frames.
+    ///
+    const char *DwarfEHFrameSection; // Defaults to ".eh_frame".
 
     //===--- CBE Asm Translation Table -----------------------------------===//
 
@@ -345,6 +353,12 @@ namespace llvm {
     }
     bool needsSet() const {
       return NeedsSet;
+    }
+    const char *getPCSymbol() const {
+      return PCSymbol;
+    }
+    char getSeparatorChar() const {
+      return SeparatorChar;
     }
     const char *getCommentString() const {
       return CommentString;
@@ -522,6 +536,9 @@ namespace llvm {
     }
     const char *getDwarfMacInfoSection() const {
       return DwarfMacInfoSection;
+    }
+    const char *getDwarfEHFrameSection() const {
+      return DwarfEHFrameSection;
     }
     const char** getAsmCBE() const {
       return AsmTransCBE;

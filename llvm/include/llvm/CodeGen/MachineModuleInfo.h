@@ -1090,11 +1090,6 @@ public:
     return Lines;
   }
   
-  // FIXME: nuke this.
-  void ClearLineInfo() {
-    Lines.clear();
-  }
-  
   /// SetupCompileUnits - Set up the unique vector of compile units.
   ///
   void SetupCompileUnits(Module &M);

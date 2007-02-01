@@ -24,6 +24,7 @@ TargetAsmInfo::TargetAsmInfo() :
   AddressSize(4),
   NeedsSet(false),
   MaxInstLength(4),
+  PCSymbol("$"),
   SeparatorChar(';'),
   CommentString("#"),
   GlobalPrefix(""),
@@ -84,6 +85,7 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfARangesSection(".debug_aranges"),
   DwarfRangesSection(".debug_ranges"),
   DwarfMacInfoSection(".debug_macinfo"),
+  DwarfEHFrameSection(".eh_frame"),
   AsmTransCBE(0) {
 }
 
