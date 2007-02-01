@@ -49,6 +49,7 @@ static inline void check_ltdl_initialization() {
   static bool did_initialize_ltdl = false;
   if (!did_initialize_ltdl) {
     int Err = lt_dlinit();
+    Err = Err; // Silence warning.
     assert(0 == Err && "Can't init the ltdl library");
     did_initialize_ltdl = true;
   }
