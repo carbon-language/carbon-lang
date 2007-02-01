@@ -2,7 +2,6 @@
 ; RUN: llvm-as < %s | llc -march=arm -enable-thumb &&
 ; RUN: llvm-as < %s | llc -march=arm -enable-thumb | \
 ; RUN:    grep 'ldr.*LCP' | wc -l | grep 5
-; XFAIL: *86-pc-linux-gnu
 
 define void @test1() {
     %tmp = alloca [ 64 x i32 ] , align 4
