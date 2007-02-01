@@ -480,17 +480,17 @@ let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
 // assembler.
 def tLEApcrel : TIx2<(ops GPR:$dst, i32imm:$label),
                     !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
-                                          "${:private}PCRELL${:uid}+4))\n"),
-                               !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                   "mov $dst, #PCRELV${:uid}\n\tadd $dst, pc")),
+                                          "${:private}PCRELL${:uid}+6))\n"),
+                               !strconcat("\tmov $dst, #PCRELV${:uid}\n",
+                                  "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
                     []>;
 
 def tLEApcrelJT : TIx2<(ops GPR:$dst, i32imm:$label, i32imm:$id),
           !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
                                          "${:private}PCRELL${:uid}+4))\n"),
-                              !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                   "mov $dst, #PCRELV${:uid}\n\tadd $dst, pc")),
-                   []>;
+                     !strconcat("\tmov $dst, #PCRELV${:uid}\n",
+                                "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
+                    []>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
