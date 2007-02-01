@@ -339,6 +339,13 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
           break;
         }
     }
+
+    // In thumb mode, if this block is a constpool island, pessmisticly assume
+    // it needs to be padded by two byte so it's aligned on 4 byte boundary.
+    if (AFI->isThumbFunction() &&
+        MBB.begin()->getOpcode() == ARM::CONSTPOOL_ENTRY)
+      MBBSize += 2;
+
     BBSizes.push_back(MBBSize);
   }
 }
@@ -465,8 +472,11 @@ bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, MachineInstr *CPEMI,
                                       unsigned MaxDisp) {
   unsigned PCAdj      = AFI->isThumbFunction() ? 4 : 8;
   unsigned UserOffset = GetOffsetOf(MI) + PCAdj;
-  unsigned CPEOffset  = GetOffsetOf(CPEMI);
-  
+  // In thumb mode, pessmisticly assumes the .align 2 before the first CPE
+  // in the island adds two byte padding.
+  unsigned AlignAdj   = AFI->isThumbFunction() ? 2 : 0;
+  unsigned CPEOffset  = GetOffsetOf(CPEMI) + AlignAdj;
+
   DEBUG(std::cerr << "User of CPE#" << CPEMI->getOperand(0).getImm()
                   << " max delta=" << MaxDisp
                   << " at offset " << int(UserOffset-CPEOffset) << "\t"
