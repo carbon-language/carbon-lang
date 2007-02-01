@@ -226,6 +226,7 @@ FoldingSetImpl::Node *FoldingSetImpl::FindNodeOrInsertPos(const NodeID &ID,
 /// is not already in the map.  InsertPos must be obtained from 
 /// FindNodeOrInsertPos.
 void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
+  assert(N->getNextInBucket() == 0);
   // Do we need to grow the hashtable?
   DEBUG(DOUT << "INSERT: " << N << '\n');
   if (NumNodes+1 > NumBuckets*2) {
@@ -256,16 +257,18 @@ void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
 /// removed or false if the node was not in the folding set.
 bool FoldingSetImpl::RemoveNode(Node *N) {
   // Because each bucket is a circular list, we don't need to compute N's hash
-  // to remove it.  Chase around the list until we find the node (or bucket)
-  // which points to N.
+  // to remove it.
   DEBUG(DOUT << "REMOVE: " << N << '\n');
   void *Ptr = N->getNextInBucket();
   if (Ptr == 0) return false;  // Not in folding set.
 
   --NumNodes;
-
-  void *NodeNextPtr = Ptr;
   N->SetNextInBucket(0);
+
+  // Remember what N originally pointed to, either a bucket or another node.
+  void *NodeNextPtr = Ptr;
+  
+  // Chase around the list until we find the node (or bucket) which points to N.
   while (true) {
     if (Node *NodeInBucket = GetNextPtr(Ptr, Buckets, NumBuckets)) {
       // Advance pointer.
