@@ -311,12 +311,10 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
             Scale = 4;  // Taking the address of a CP entry.
             break;
           case ARMII::AddrMode2:
-            Bits = 12;
-            Scale = 2;  // +-offset_12
+            Bits = 12;  // +-offset_12
             break;
           case ARMII::AddrMode3:
-            Bits = 8;
-            Scale = 2;  // +-offset_8
+            Bits = 8;   // +-offset_8
             break;
             // addrmode4 has no immediate offset.
           case ARMII::AddrMode5:
@@ -342,7 +340,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
 
           // Remember that this is a user of a CP entry.
           MachineInstr *CPEMI =CPEMIs[I->getOperand(op).getConstantPoolIndex()];
-          unsigned MaxOffs = (1 << (Bits-1)) * Scale;          
+          unsigned MaxOffs = ((1 << Bits)-1) * Scale;          
           CPUsers.push_back(CPUser(I, CPEMI, MaxOffs));
           
           // Instructions can only use one CP entry, don't bother scanning the
