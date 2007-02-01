@@ -431,18 +431,12 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
         PN->eraseFromParent();
         ++OldI;
       }
-    } else if (PN->getNumIncomingValues() == 1) {
-      BasicBlock::iterator I = NewBB->begin();
-      BasicBlock::const_iterator OldI = OldBB->begin();
-      while ((PN = dyn_cast<PHINode>(I++))) {
-        Value *NV = PN->getIncomingValue(0);
-        PN->replaceAllUsesWith(NV);
-        assert(ValueMap[OldI] == PN && "ValueMap mismatch");
-        ValueMap[OldI] = NV;
-        PN->eraseFromParent();
-        ++OldI;
-      }
     }
+    // NOTE: We cannot eliminate single entry phi nodes here, because of
+    // ValueMap.  Single entry phi nodes can have multiple ValueMap entries
+    // pointing at them.  Thus, deleting one would require scanning the ValueMap
+    // to update any entries in it that would require that.  This would be
+    // really slow.
   }
   
   // Now that the inlined function body has been fully constructed, go through
@@ -454,8 +448,14 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     BranchInst *BI = dyn_cast<BranchInst>(I->getTerminator());
     if (!BI || BI->isConditional()) { ++I; continue; }
     
+    // Note that we can't eliminate uncond branches if the destination has
+    // single-entry PHI nodes.  Eliminating the single-entry phi nodes would
+    // require scanning the ValueMap to update any entries that point to the phi
+    // node.
     BasicBlock *Dest = BI->getSuccessor(0);
-    if (!Dest->getSinglePredecessor()) { ++I; continue; }
+    if (!Dest->getSinglePredecessor() || isa<PHINode>(Dest->begin())) {
+      ++I; continue;
+    }
     
     // We know all single-entry PHI nodes in the inlined function have been
     // removed, so we just need to splice the blocks.
