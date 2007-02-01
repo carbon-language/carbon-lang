@@ -2663,23 +2663,26 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
 
         unsigned NumOps = 
           cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getValue();
-        assert((NumOps & 7) == 2 /*REGDEF*/ &&
-               "Skipped past definitions?");
+        if ((NumOps & 7) == 2 /*REGDEF*/) {
+          // Add NumOps>>3 registers to MatchedRegs.
+          RegsForValue MatchedRegs;
+          MatchedRegs.ValueVT = InOperandVal.getValueType();
+          MatchedRegs.RegVT   = AsmNodeOperands[CurOp+1].getValueType();
+          for (unsigned i = 0, e = NumOps>>3; i != e; ++i) {
+            unsigned Reg =
+              cast<RegisterSDNode>(AsmNodeOperands[++CurOp])->getReg();
+            MatchedRegs.Regs.push_back(Reg);
+          }
         
-        // Add NumOps>>3 registers to MatchedRegs.
-        RegsForValue MatchedRegs;
-        MatchedRegs.ValueVT = InOperandVal.getValueType();
-        MatchedRegs.RegVT   = AsmNodeOperands[CurOp+1].getValueType();
-        for (unsigned i = 0, e = NumOps>>3; i != e; ++i) {
-          unsigned Reg=cast<RegisterSDNode>(AsmNodeOperands[++CurOp])->getReg();
-          MatchedRegs.Regs.push_back(Reg);
+          // Use the produced MatchedRegs object to 
+          MatchedRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag,
+                                    TLI.getPointerTy());
+          MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/, DAG, AsmNodeOperands);
+          break;
+        } else {
+          assert((NumOps & 7) == 4/*MEM*/ && "Unknown matching constraint!");
+          assert(0 && "matching constraints for memory operands unimp");
         }
-        
-        // Use the produced MatchedRegs object to 
-        MatchedRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag,
-                                  TLI.getPointerTy());
-        MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/, DAG, AsmNodeOperands);
-        break;
       }
       
       TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
