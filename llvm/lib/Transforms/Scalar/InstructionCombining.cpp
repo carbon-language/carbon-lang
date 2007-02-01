@@ -7464,12 +7464,36 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
 /// of the block that defines it.  This means that it must be obvious the value
 /// of the load is not changed from the point of the load to the end of the
 /// block it is in.
+///
+/// Finally, it is safe, but not profitable, to sink a load targetting a
+/// non-address-taken alloca.  Doing so will cause us to not promote the alloca
+/// to a register.
 static bool isSafeToSinkLoad(LoadInst *L) {
   BasicBlock::iterator BBI = L, E = L->getParent()->end();
   
   for (++BBI; BBI != E; ++BBI)
     if (BBI->mayWriteToMemory())
       return false;
+  
+  // Check for non-address taken alloca.  If not address-taken already, it isn't
+  // profitable to do this xform.
+  if (AllocaInst *AI = dyn_cast<AllocaInst>(L->getOperand(0))) {
+    bool isAddressTaken = false;
+    for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
+         UI != E; ++UI) {
+      if (isa<LoadInst>(UI)) continue;
+      if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+        // If storing TO the alloca, then the address isn't taken.
+        if (SI->getOperand(1) == AI) continue;
+      }
+      isAddressTaken = true;
+      break;
+    }
+    
+    if (!isAddressTaken)
+      return false;
+  }
+  
   return true;
 }
 
