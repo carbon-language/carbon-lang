@@ -281,8 +281,10 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
           Scale = 2;
           break;
         }
-        unsigned MaxDisp = (1 << (Bits-1)) * Scale;
-        ImmBranches.push_back(ImmBranch(I, MaxDisp, isCond, UOpc));
+
+        // Record this immediate branch.
+        unsigned MaxOffs = (1 << (Bits-1)) * Scale;
+        ImmBranches.push_back(ImmBranch(I, MaxOffs, isCond, UOpc));
       }
 
       if (Opc == ARM::tPUSH || Opc == ARM::tPOP_RET)
@@ -293,9 +295,10 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
         if (I->getOperand(op).isConstantPoolIndex()) {
           // We found one.  The addressing mode tells us the max displacement
           // from the PC that this instruction permits.
-          unsigned MaxOffs = 0;
           
           // Basic size info comes from the TSFlags field.
+          unsigned Bits = 0;
+          unsigned Scale = 1;
           unsigned TSFlags = I->getInstrDescriptor()->TSFlags;
           switch (TSFlags & ARMII::AddrModeMask) {
           default: 
@@ -304,34 +307,42 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
               continue;
             assert(0 && "Unknown addressing mode for CP reference!");
           case ARMII::AddrMode1: // AM1: 8 bits << 2
-            MaxOffs = 1 << (8+2);   // Taking the address of a CP entry.
+            Bits = 8;
+            Scale = 4;  // Taking the address of a CP entry.
             break;
           case ARMII::AddrMode2:
-            MaxOffs = 1 << 12;   // +-offset_12
+            Bits = 12;
+            Scale = 2;  // +-offset_12
             break;
           case ARMII::AddrMode3:
-            MaxOffs = 1 << 8;   // +-offset_8
+            Bits = 8;
+            Scale = 2;  // +-offset_8
             break;
             // addrmode4 has no immediate offset.
           case ARMII::AddrMode5:
-            MaxOffs = 1 << (8+2);   // +-(offset_8*4)
+            Bits = 8;
+            Scale = 4;  // +-(offset_8*4)
             break;
           case ARMII::AddrModeT1:
-            MaxOffs = 1 << 5;
+            Bits = 5;  // +offset_5
             break;
           case ARMII::AddrModeT2:
-            MaxOffs = 1 << (5+1);
+            Bits = 5;
+            Scale = 2;  // +(offset_5*2)
             break;
           case ARMII::AddrModeT4:
-            MaxOffs = 1 << (5+2);
+            Bits = 5;
+            Scale = 4;  // +(offset_5*4)
             break;
           case ARMII::AddrModeTs:
-            MaxOffs = 1 << (8+2);
+            Bits = 8;
+            Scale = 4;  // +(offset_8*4)
             break;
           }
-          
+
           // Remember that this is a user of a CP entry.
           MachineInstr *CPEMI =CPEMIs[I->getOperand(op).getConstantPoolIndex()];
+          unsigned MaxOffs = (1 << (Bits-1)) * Scale;          
           CPUsers.push_back(CPUser(I, CPEMI, MaxOffs));
           
           // Instructions can only use one CP entry, don't bother scanning the
@@ -514,12 +525,12 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
   // TODO: Search for the best place to split the code.  In practice, using
   // loop nesting information to insert these guys outside of loops would be
   // sufficient.    
+  bool isThumb = AFI->isThumbFunction();
   if (&UserMBB->back() == UserMI) {
     assert(BBHasFallthrough(UserMBB) && "Expected a fallthrough BB!");
     NewMBB = next(MachineFunction::iterator(UserMBB));
     // Add an unconditional branch from UserMBB to fallthrough block.
     // Note the new unconditional branch is not being recorded.
-    bool isThumb = AFI->isThumbFunction();
     BuildMI(UserMBB, TII->get(isThumb ? ARM::tB : ARM::B)).addMBB(NewMBB);
     BBSizes[UserMBB->getNumber()] += isThumb ? 2 : 4;
   } else {
@@ -539,11 +550,13 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn, CPUser &U){
   unsigned ID  = NextUID++;
   unsigned CPI = CPEMI->getOperand(1).getConstantPoolIndex();
   unsigned Size = CPEMI->getOperand(2).getImm();
-  
+
   // Build a new CPE for this user.
   U.CPEMI = BuildMI(NewIsland, TII->get(ARM::CONSTPOOL_ENTRY))
                 .addImm(ID).addConstantPoolIndex(CPI).addImm(Size);
   
+  // Compensate for .align 2 in thumb mode.
+  if (isThumb) Size += 2;  
   // Increase the size of the island block to account for the new entry.
   BBSizes[NewIsland->getNumber()] += Size;
   
@@ -574,7 +587,7 @@ bool ARMConstantIslands::BBIsInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
                   << *MI);
 
   if (BrOffset <= DestOffset) {
-    if (DestOffset - BrOffset < MaxDisp)
+    if (DestOffset - BrOffset <= MaxDisp)
       return true;
   } else {
     if (BrOffset - DestOffset <= MaxDisp)
