@@ -465,7 +465,7 @@ public:
   virtual void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 };
 
-// This is useful when building DenseMaps keyed on virtual registers
+// This is useful when building IndexedMaps keyed on virtual registers
 struct VirtReg2IndexFunctor : std::unary_function<unsigned, unsigned> {
   unsigned operator()(unsigned Reg) const {
     return Reg - MRegisterInfo::FirstVirtualRegister;

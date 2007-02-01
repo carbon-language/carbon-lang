@@ -26,7 +26,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
@@ -55,7 +55,7 @@ namespace {
 
     // Virt2PhysRegMap - This map contains entries for each virtual register
     // that is currently available in a physical register.
-    DenseMap<unsigned, VirtReg2IndexFunctor> Virt2PhysRegMap;
+    IndexedMap<unsigned, VirtReg2IndexFunctor> Virt2PhysRegMap;
 
     unsigned &getVirt2PhysRegMapSlot(unsigned VirtReg) {
       return Virt2PhysRegMap[VirtReg];

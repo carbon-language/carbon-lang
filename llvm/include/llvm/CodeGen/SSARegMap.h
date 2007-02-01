@@ -18,14 +18,14 @@
 #define LLVM_CODEGEN_SSAREGMAP_H
 
 #include "llvm/Target/MRegisterInfo.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/IndexedMap.h"
 
 namespace llvm {
 
 class TargetRegisterClass;
 
 class SSARegMap {
-  DenseMap<const TargetRegisterClass*, VirtReg2IndexFunctor> RegClassMap;
+  IndexedMap<const TargetRegisterClass*, VirtReg2IndexFunctor> RegClassMap;
   unsigned NextRegNum;
 
  public:

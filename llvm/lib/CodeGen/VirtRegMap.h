@@ -18,7 +18,7 @@
 #define LLVM_CODEGEN_VIRTREGMAP_H
 
 #include "llvm/Target/MRegisterInfo.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/Support/Streams.h"
 #include <map>
 
@@ -41,12 +41,12 @@ namespace llvm {
     /// it; even spilled virtual registers (the register mapped to a
     /// spilled register is the temporary used to load it from the
     /// stack).
-    DenseMap<unsigned, VirtReg2IndexFunctor> Virt2PhysMap;
+    IndexedMap<unsigned, VirtReg2IndexFunctor> Virt2PhysMap;
     /// Virt2StackSlotMap - This is virtual register to stack slot
     /// mapping. Each spilled virtual register has an entry in it
     /// which corresponds to the stack slot this register is spilled
     /// at.
-    DenseMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
+    IndexedMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
     /// MI2VirtMap - This is MachineInstr to virtual register
     /// mapping. In the case of memory spill code being folded into
     /// instructions, we need to know which virtual register was

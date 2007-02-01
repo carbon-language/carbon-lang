@@ -33,7 +33,7 @@ namespace llvm {
   };
 
   template <typename T, typename ToIndexT = IdentityFunctor>
-  class IndexMap {
+  class IndexedMap {
     typedef typename ToIndexT::argument_type IndexT;
     typedef std::vector<T> StorageT;
     StorageT storage_;
@@ -41,9 +41,9 @@ namespace llvm {
     ToIndexT toIndex_;
 
   public:
-    IndexMap() : nullVal_(T()) { }
+    IndexedMap() : nullVal_(T()) { }
 
-    explicit IndexMap(const T& val) : nullVal_(val) { }
+    explicit IndexedMap(const T& val) : nullVal_(val) { }
 
     typename StorageT::reference operator[](IndexT n) {
       assert(toIndex_(n) < storage_.size() && "index out of bounds!");

@@ -16,8 +16,7 @@
 #define LLVM_CODEGEN_SCHEDULEDAG_H
 
 #include "llvm/CodeGen/SelectionDAG.h"
-
-#include <set>
+#include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
   struct InstrStage;
@@ -183,7 +182,7 @@ namespace llvm {
                                           // represent noop instructions.
     std::map<SDNode*, SUnit*> SUnitMap;   // SDNode to SUnit mapping (n -> 1).
     std::vector<SUnit> SUnits;            // The scheduling units.
-    std::set<SDNode*> CommuteSet;         // Nodes the should be commuted.
+    SmallSet<SDNode*, 16> CommuteSet;     // Nodes the should be commuted.
 
     ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
                 const TargetMachine &tm)

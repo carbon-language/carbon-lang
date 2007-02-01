@@ -20,9 +20,9 @@
 #ifndef LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
 #define LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/ADT/IndexedMap.h"
 
 namespace llvm {
 
@@ -51,7 +51,7 @@ namespace llvm {
     typedef std::map<unsigned, LiveInterval> Reg2IntervalMap;
     Reg2IntervalMap r2iMap_;
 
-    typedef DenseMap<unsigned> Reg2RegMap;
+    typedef IndexedMap<unsigned> Reg2RegMap;
     Reg2RegMap r2rMap_;
 
     std::vector<bool> allocatableRegs_;
