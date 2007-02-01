@@ -104,11 +104,15 @@ bool ARMRegisterInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   if (!AFI->isThumbFunction() || CSI.empty())
     return false;
 
+  bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
   MachineInstr *PopMI = new MachineInstr(TII.get(ARM::tPOP));
   MBB.insert(MI, PopMI);
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
     if (Reg == ARM::LR) {
+      // Special epilogue for vararg functions. See emitEpilogue
+      if (isVarArg)
+        continue;
       Reg = ARM::PC;
       PopMI->setInstrDescriptor(TII.get(ARM::tPOP_RET));
       MBB.erase(MI);
@@ -1115,9 +1119,15 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   NumBytes -= (AFI->getGPRCalleeSavedArea1Size() +
                AFI->getGPRCalleeSavedArea2Size() +
                AFI->getDPRCalleeSavedAreaSize());
-  if (isThumb)
-    emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
-  else {
+  if (isThumb) {
+    if (MBBI->getOpcode() == ARM::tBX_RET &&
+        &MBB.front() != MBBI &&
+        prior(MBBI)->getOpcode() == ARM::tPOP) {
+      MachineBasicBlock::iterator PMBBI = prior(MBBI);
+      emitSPUpdate(MBB, PMBBI, NumBytes, isThumb, TII);
+    } else
+      emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
+  } else {
     // Darwin ABI requires FP to point to the stack slot that contains the
     // previous FP.
     if (STI.isTargetDarwin() || hasFP(MF)) {
@@ -1149,8 +1159,14 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
     emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea1Size(), false, TII);
   }
 
-  if (VARegSaveSize)
+  if (VARegSaveSize) {
+    // Epilogue for vararg functions: pop LR to R3 and branch off it.
+    // FIXME: Verify this is still ok when R3 is no longer being reserved.
+    BuildMI(MBB, MBBI, TII.get(ARM::tPOP)).addReg(ARM::R3);
     emitSPUpdate(MBB, MBBI, VARegSaveSize, isThumb, TII);
+    BuildMI(MBB, MBBI, TII.get(ARM::tBX_RET_vararg)).addReg(ARM::R3);
+    MBB.erase(MBBI);
+  }
 }
 
 unsigned ARMRegisterInfo::getRARegister() const {

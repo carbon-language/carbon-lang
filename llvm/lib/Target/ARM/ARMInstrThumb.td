@@ -165,8 +165,11 @@ def tPICADD : TIt<(ops GPR:$dst, GPR:$lhs, pclabel:$cp),
 //  Control Flow Instructions.
 //
 
-let isReturn = 1, isTerminator = 1 in
+let isReturn = 1, isTerminator = 1 in {
   def tBX_RET : TI<(ops), "bx lr", [(ARMretflag)]>;
+  // Alternative return instruction used by vararg functions.
+  def tBX_RET_vararg : TI<(ops GPR:$dst), "bx $dst", []>;
+}
 
 // FIXME: remove when we have a way to marking a MI with these properties.
 let isLoad = 1, isReturn = 1, isTerminator = 1 in
