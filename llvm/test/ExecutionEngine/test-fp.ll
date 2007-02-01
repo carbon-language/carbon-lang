@@ -18,6 +18,7 @@ double %test(double* %DP, double %Arg) {
 
 int %main() { 
   %X = alloca double
+  store double 0.0, double* %X
   call double %test(double* %X, double 2.0)
   ret int 0 
 }
