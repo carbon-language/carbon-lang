@@ -708,8 +708,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     }
 
     Offset += InstrOffs * Scale;
-    assert((Scale == 1 || (Offset & (Scale-1)) == 0) &&
-           "Can't encode this offset!");
+    assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
     if (Offset < 0) {
       Offset = -Offset;
       isSub = true;
