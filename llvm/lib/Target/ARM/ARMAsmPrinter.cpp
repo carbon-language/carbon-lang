@@ -208,7 +208,10 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (AFI->isThumbFunction()) {
     EmitAlignment(1, F);
     O << "\t.code\t16\n";
-    O << "\t.thumb_func\t" << CurrentFnName << "\n";
+    O << "\t.thumb_func";
+    if (Subtarget->isTargetDarwin())
+      O << "\t" << CurrentFnName;
+    O << "\n";
     InCPMode = false;
   } else
     EmitAlignment(2, F);
