@@ -63,3 +63,64 @@ LPCRELL0:
      ldr r0, LCPI1_0
 =>
      ldr r0, pc, #((LCPI1_0-(LPCRELL0+4))&0xfffffffc)
+
+
+//===---------------------------------------------------------------------===//
+
+We compiles the following using a jump table.
+
+define i16 @func_entry_2E_ce(i32 %i) {
+newFuncRoot:
+        br label %entry.ce
+
+bb12.exitStub:          ; preds = %entry.ce
+        ret i16 0
+
+bb4.exitStub:           ; preds = %entry.ce, %entry.ce, %entry.ce
+        ret i16 1
+
+bb9.exitStub:           ; preds = %entry.ce, %entry.ce, %entry.ce
+        ret i16 2
+
+bb.exitStub:            ; preds = %entry.ce
+        ret i16 3
+
+entry.ce:               ; preds = %newFuncRoot
+        switch i32 %i, label %bb12.exitStub [
+                 i32 0, label %bb4.exitStub
+                 i32 1, label %bb9.exitStub
+                 i32 2, label %bb4.exitStub
+                 i32 3, label %bb4.exitStub
+                 i32 7, label %bb9.exitStub
+                 i32 8, label %bb.exitStub
+                 i32 9, label %bb9.exitStub
+        ]
+}
+
+gcc compiles to:
+
+	cmp	r0, #9
+	@ lr needed for prologue
+	bhi	L2
+	ldr	r3, L11
+	mov	r2, #1
+	mov	r1, r2, asl r0
+	ands	r0, r3, r2, asl r0
+	movne	r0, #2
+	bxne	lr
+	tst	r1, #13
+	beq	L9
+L3:
+	mov	r0, r2
+	bx	lr
+L9:
+	tst	r1, #256
+	movne	r0, #3
+	bxne	lr
+L2:
+	mov	r0, #0
+	bx	lr
+L12:
+	.align 2
+L11:
+	.long	642
