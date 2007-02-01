@@ -154,7 +154,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ROTL,  MVT::i32, Expand);
   setOperationAction(ISD::CTTZ , MVT::i32, Expand);
   setOperationAction(ISD::CTPOP, MVT::i32, Expand);
-  if (!Subtarget->hasV5TOps())
+  if (!Subtarget->hasV5TOps() || Subtarget->isThumb())
     setOperationAction(ISD::CTLZ, MVT::i32, Expand);
 
   // These are expanded into libcalls.
