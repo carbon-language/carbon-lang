@@ -80,7 +80,7 @@ public:
     if (O) print(*O);
   }
   void print(std::ostream &O) const {
-    O << ".D" << Tag;
+    O << ".debug_" << Tag;
     if (Number) O << Number;
   }
 #endif
