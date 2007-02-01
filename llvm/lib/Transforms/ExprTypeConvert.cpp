@@ -697,7 +697,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   assert(BB != 0 && "Instruction not embedded in basic block!");
   std::string Name = I->getName();
   I->setName("");
-  Instruction *Res;     // Result of conversion
+  Instruction *Res = 0;     // Result of conversion
 
   //cerr << endl << endl << "Type:\t" << Ty << "\nInst: " << I
   //     << "BB Before: " << BB << endl;
@@ -916,6 +916,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     assert(0 && "Expression convertible, but don't know how to convert?");
     return;
   }
+
+  assert(Res != 0 && "We didn't get a result conversion?");
 
   // If the instruction was newly created, insert it into the instruction
   // stream.
