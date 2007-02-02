@@ -1200,7 +1200,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     // the shift amount is >= the size of the datatype, which is undefined.
     if (DemandedMask == 1) {
       // Perform the logical shift right.
-      Value *NewVal = BinaryOperator::create(Instruction::LShr, 
+      Value *NewVal = BinaryOperator::createLShr(
                         I->getOperand(0), I->getOperand(1), I->getName());
       InsertNewInstBefore(cast<Instruction>(NewVal), *I);
       return UpdateValueUsesWith(I, NewVal);
@@ -1232,7 +1232,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       // are demanded, turn this into an unsigned shift right.
       if ((KnownZero & SignBit) || (HighBits & ~DemandedMask) == HighBits) {
         // Perform the logical shift right.
-        Value *NewVal = BinaryOperator::create(Instruction::LShr, 
+        Value *NewVal = BinaryOperator::createLShr(
                           I->getOperand(0), SA, I->getName());
         InsertNewInstBefore(cast<Instruction>(NewVal), *I);
         return UpdateValueUsesWith(I, NewVal);
@@ -1549,7 +1549,7 @@ struct AddRHS {
   AddRHS(Value *rhs) : RHS(rhs) {}
   bool shouldApply(Value *LHS) const { return LHS == RHS; }
   Instruction *apply(BinaryOperator &Add) const {
-    return BinaryOperator::create(Instruction::Shl, Add.getOperand(0),
+    return BinaryOperator::createShl(Add.getOperand(0),
                                   ConstantInt::get(Add.getType(), 1));
   }
 };
@@ -1973,7 +1973,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
             if (CU->getZExtValue() == 
                 SI->getType()->getPrimitiveSizeInBits()-1) {
               // Ok, the transformation is safe.  Insert LShr. 
-              return BinaryOperator::create(Instruction::LShr, 
+              return BinaryOperator::createLShr(
                                           SI->getOperand(0), CU, SI->getName());
             }
           }
@@ -2126,7 +2126,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       int64_t Val = (int64_t)cast<ConstantInt>(CI)->getZExtValue();
       if (isPowerOf2_64(Val)) {          // Replace X*(2^C) with X << C
         uint64_t C = Log2_64(Val);
-        return BinaryOperator::create(Instruction::Shl, Op0,
+        return BinaryOperator::createShl(Op0,
                                       ConstantInt::get(Op0->getType(), C));
       }
     } else if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1)) {
@@ -2322,7 +2322,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     if (uint64_t Val = C->getZExtValue())    // Don't break X / 0
       if (isPowerOf2_64(Val)) {
         uint64_t ShiftAmt = Log2_64(Val);
-        return BinaryOperator::create(Instruction::LShr, Op0, 
+        return BinaryOperator::createLShr(Op0, 
                                     ConstantInt::get(Op0->getType(), ShiftAmt));
       }
   }
@@ -2339,7 +2339,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
           Constant *C2V = ConstantInt::get(NTy, C2);
           N = InsertNewInstBefore(BinaryOperator::createAdd(N, C2V, "tmp"), I);
         }
-        return BinaryOperator::create(Instruction::LShr, Op0, N);
+        return BinaryOperator::createLShr(Op0, N);
       }
     }
   }
@@ -2356,13 +2356,13 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
             unsigned TSA = Log2_64(TVA), FSA = Log2_64(FVA);
             // Construct the "on true" case of the select
             Constant *TC = ConstantInt::get(Op0->getType(), TSA);
-            Instruction *TSI = BinaryOperator::create(Instruction::LShr, 
+            Instruction *TSI = BinaryOperator::createLShr(
                                                    Op0, TC, SI->getName()+".t");
             TSI = InsertNewInstBefore(TSI, I);
     
             // Construct the "on false" case of the select
             Constant *FC = ConstantInt::get(Op0->getType(), FSA); 
-            Instruction *FSI = BinaryOperator::create(Instruction::LShr,
+            Instruction *FSI = BinaryOperator::createLShr(
                                                    Op0, FC, SI->getName()+".f");
             FSI = InsertNewInstBefore(FSI, I);
 
@@ -2916,7 +2916,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
         // Make the argument unsigned.
         Value *ShVal = Op->getOperand(0);
         ShVal = InsertNewInstBefore(
-            BinaryOperator::create(Instruction::LShr, ShVal, OpRHS, 
+            BinaryOperator::createLShr(ShVal, OpRHS, 
                                    Op->getName()), TheAnd);
         return BinaryOperator::createAnd(ShVal, AndRHS, TheAnd.getName());
       }
@@ -4681,11 +4681,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             // Compute C << Y.
             Value *NS;
             if (Shift->getOpcode() == Instruction::LShr) {
-              NS = BinaryOperator::create(Instruction::Shl, AndCST, 
+              NS = BinaryOperator::createShl(AndCST, 
                                           Shift->getOperand(1), "tmp");
             } else {
               // Insert a logical shift.
-              NS = BinaryOperator::create(Instruction::LShr, AndCST,
+              NS = BinaryOperator::createLShr(AndCST,
                                           Shift->getOperand(1), "tmp");
             }
             InsertNewInstBefore(cast<Instruction>(NS), I);
@@ -5426,7 +5426,7 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
   if (I.isArithmeticShift()) {
     if (MaskedValueIsZero(Op0,
                           1ULL << (I.getType()->getPrimitiveSizeInBits()-1))) {
-      return BinaryOperator::create(Instruction::LShr, Op0, Op1, I.getName());
+      return BinaryOperator::createLShr(Op0, Op1, I.getName());
     }
   }
 
@@ -5493,7 +5493,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
               match(Op0BO->getOperand(1),
                     m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == Op1) {
-            Instruction *YS = BinaryOperator::create(Instruction::Shl, 
+            Instruction *YS = BinaryOperator::createShl(
                                             Op0BO->getOperand(0), Op1,
                                             Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
@@ -5511,7 +5511,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
               match(Op0BO->getOperand(1), m_And(m_Shr(m_Value(V1), m_Value(V2)),
                     m_ConstantInt(CC))) && V2 == Op1 &&
       cast<BinaryOperator>(Op0BO->getOperand(1))->getOperand(0)->hasOneUse()) {
-            Instruction *YS = BinaryOperator::create(Instruction::Shl, 
+            Instruction *YS = BinaryOperator::createShl(
                                                      Op0BO->getOperand(0), Op1,
                                                      Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
@@ -5529,7 +5529,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
               match(Op0BO->getOperand(0),
                     m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == Op1) {
-            Instruction *YS = BinaryOperator::create(Instruction::Shl, 
+            Instruction *YS = BinaryOperator::createShl(
                                                      Op0BO->getOperand(1), Op1,
                                                      Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
@@ -5549,7 +5549,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                           m_ConstantInt(CC))) && V2 == Op1 &&
               cast<BinaryOperator>(Op0BO->getOperand(0))
                   ->getOperand(0)->hasOneUse()) {
-            Instruction *YS = BinaryOperator::create(Instruction::Shl, 
+            Instruction *YS = BinaryOperator::createShl(
                                                      Op0BO->getOperand(1), Op1,
                                                      Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
@@ -5684,7 +5684,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                                        ShiftAmt2-ShiftAmt1));
       } else if (isShiftOfUnsignedShift || isShiftOfLeftShift) {
         if (isShiftOfUnsignedShift && !isShiftOfLeftShift && isSignedShift) {
-          return BinaryOperator::create(Instruction::LShr, Mask, 
+          return BinaryOperator::createLShr(Mask, 
                                         ConstantInt::get(Mask->getType(), 
                                                          ShiftAmt1-ShiftAmt2));
         } else {
@@ -6191,7 +6191,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
           Instruction::BitCast : Instruction::Trunc);
       Value *Op0c = InsertOperandCastBefore(opcode, Op0, DestTy, SrcI);
       Value *Op1c = InsertOperandCastBefore(opcode, Op1, DestTy, SrcI);
-      return BinaryOperator::create(Instruction::Shl, Op0c, Op1c);
+      return BinaryOperator::createShl(Op0c, Op1c);
     }
     break;
   case Instruction::AShr:
@@ -6203,7 +6203,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       unsigned ShiftAmt = cast<ConstantInt>(Op1)->getZExtValue();
       if (SrcBitSize > ShiftAmt && SrcBitSize-ShiftAmt >= DestBitSize) {
         // Insert the new logical shift right.
-        return BinaryOperator::create(Instruction::LShr, Op0, Op1);
+        return BinaryOperator::createLShr(Op0, Op1);
       }
     }
     break;
@@ -6249,7 +6249,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
             // Perform a logical shr by shiftamt.
             // Insert the shift to put the result in the low bit.
             In = InsertNewInstBefore(
-              BinaryOperator::create(Instruction::LShr, In,
+              BinaryOperator::createLShr(In,
                                      ConstantInt::get(In->getType(), ShiftAmt),
                                      In->getName()+".lobit"), CI);
           }
@@ -6301,7 +6301,7 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
           Value *V1 = InsertCastBefore(Instruction::Trunc, SrcIOp0, Ty, CI);
           Value *V2 = InsertCastBefore(Instruction::Trunc, SrcI->getOperand(1),
                                        Ty, CI);
-          return BinaryOperator::create(Instruction::LShr, V1, V2);
+          return BinaryOperator::createLShr(V1, V2);
         }
       } else {     // This is a variable shr.
         
@@ -6312,7 +6312,7 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
           Value *One = ConstantInt::get(SrcI->getType(), 1);
 
           Value *V = InsertNewInstBefore(
-              BinaryOperator::create(Instruction::Shl, One, SrcI->getOperand(1),
+              BinaryOperator::createShl(One, SrcI->getOperand(1),
                                      "tmp"), CI);
           V = InsertNewInstBefore(BinaryOperator::createAnd(V,
                                                             SrcI->getOperand(0),

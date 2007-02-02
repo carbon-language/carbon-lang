@@ -655,7 +655,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         } else {
           assert(NV->getType()->isInteger() && "Unknown promotion!");
           if (Offset && Offset < TD.getTypeSize(NV->getType())*8) {
-            NV = BinaryOperator::create(Instruction::LShr, NV, 
+            NV = BinaryOperator::createLShr(NV, 
                                         ConstantInt::get(NV->getType(), Offset),
                                         LI->getName(), LI);
           }
@@ -740,7 +740,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
             SV = CastInst::createZExtOrBitCast(SV, AllocaType,
                                                SV->getName(), SI);
           if (Offset && Offset < AllocaType->getPrimitiveSizeInBits())
-            SV = BinaryOperator::create(Instruction::Shl, SV,
+            SV = BinaryOperator::createShl(SV,
                                         ConstantInt::get(SV->getType(), Offset),
                                         SV->getName()+".adj", SI);
           // Mask out the bits we are about to insert from the old value.
