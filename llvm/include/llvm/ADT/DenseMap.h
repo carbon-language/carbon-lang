@@ -233,6 +233,7 @@ private:
         // Insert the key/value into the new table.
         BucketT *DestBucket;
         bool FoundVal = LookupBucketFor(B->first, DestBucket);
+        FoundVal = FoundVal; // silence warning.
         assert(!FoundVal && "Key already in new map?");
         DestBucket->first = B->first;
         new (&DestBucket->second) ValueT(B->second);
