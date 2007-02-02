@@ -41,6 +41,8 @@ struct DenseMapKeyInfo<T*> {
 
 template<typename KeyT, typename ValueT>
 class DenseMapIterator;
+template<typename KeyT, typename ValueT>
+class DenseMapConstIterator;
 
 template<typename KeyT, typename ValueT>
 class DenseMap {
@@ -65,10 +67,23 @@ public:
   }
   
   typedef DenseMapIterator<KeyT, ValueT> iterator;
-  typedef DenseMapIterator<KeyT, ValueT> const_iterator;
-  inline iterator begin() const;
-  inline iterator end() const;
+  typedef DenseMapConstIterator<KeyT, ValueT> const_iterator;
+  inline iterator begin() {
+     return DenseMapIterator<KeyT, ValueT>(Buckets, Buckets+NumBuckets);
+  }
+  inline iterator end() {
+    return DenseMapIterator<KeyT, ValueT>(Buckets+NumBuckets, 
+                                          Buckets+NumBuckets);
+  }
+  inline const_iterator begin() const {
+    return DenseMapConstIterator<KeyT, ValueT>(Buckets, Buckets+NumBuckets);
+  }
+  inline const_iterator end() const {
+    return DenseMapConstIterator<KeyT, ValueT>(Buckets+NumBuckets, 
+                                               Buckets+NumBuckets);
+  }
   
+  bool empty() const { return NumEntries == 0; }
   unsigned size() const { return NumEntries; }
   
   void clear() {
@@ -89,6 +104,31 @@ public:
     return LookupBucketFor(Val, TheBucket);
   }
   
+  iterator find(const KeyT &Val) const {
+    BucketT *TheBucket;
+    if (LookupBucketFor(Val, TheBucket))
+      return iterator(TheBucket, Buckets+NumBuckets);
+    return end();
+  }
+  
+  bool erase(const KeyT &Val) {
+    BucketT *TheBucket;
+    if (!LookupBucketFor(Val, TheBucket))
+      return false; // not in map.
+
+    TheBucket->second.~ValueT();
+    TheBucket->first = getTombstoneKey();
+    --NumEntries;
+    return true;
+  }
+  bool erase(iterator I) {
+    BucketT *TheBucket = &*I;
+    TheBucket->second.~ValueT();
+    TheBucket->first = getTombstoneKey();
+    --NumEntries;
+    return true;
+  }
+  
   ValueT &operator[](const KeyT &Val) {
     BucketT *TheBucket;
     if (LookupBucketFor(Val, TheBucket))
@@ -106,11 +146,13 @@ public:
   }
   
 private:
-  unsigned getHashValue(const KeyT &Val) const {
+  static unsigned getHashValue(const KeyT &Val) {
     return DenseMapKeyInfo<KeyT>::getHashValue(Val);
   }
-  const KeyT getEmptyKey() const { return DenseMapKeyInfo<KeyT>::getEmptyKey();}
-  const KeyT getTombstoneKey() const {
+  static const KeyT getEmptyKey() {
+    return DenseMapKeyInfo<KeyT>::getEmptyKey();
+  }
+  static const KeyT getTombstoneKey() {
     return DenseMapKeyInfo<KeyT>::getTombstoneKey();
   }
   
@@ -209,17 +251,18 @@ private:
 template<typename KeyT, typename ValueT>
 class DenseMapIterator {
   typedef std::pair<KeyT, ValueT> BucketT;
+protected:
   const BucketT *Ptr, *End;
 public:
   DenseMapIterator(const BucketT *Pos, const BucketT *E) : Ptr(Pos), End(E) {
     AdvancePastEmptyBuckets();
   }
   
-  const std::pair<KeyT, ValueT> &operator*() const {
-    return *Ptr;
+  std::pair<KeyT, ValueT> &operator*() const {
+    return *const_cast<BucketT*>(Ptr);
   }
-  const std::pair<KeyT, ValueT> *operator->() const {
-    return Ptr;
+  std::pair<KeyT, ValueT> *operator->() const {
+    return const_cast<BucketT*>(Ptr);
   }
   
   bool operator==(const DenseMapIterator &RHS) const {
@@ -243,20 +286,25 @@ private:
     const KeyT Empty = DenseMapKeyInfo<KeyT>::getEmptyKey();
     const KeyT Tombstone = DenseMapKeyInfo<KeyT>::getTombstoneKey();
 
-    while (Ptr != End && Ptr->first != Empty && Ptr->first != Tombstone)
+    while (Ptr != End && (Ptr->first == Empty || Ptr->first == Tombstone))
       ++Ptr;
   }
 };
 
-
 template<typename KeyT, typename ValueT>
-inline DenseMapIterator<KeyT, ValueT> DenseMap<KeyT, ValueT>::begin() const {
-  return DenseMapIterator<KeyT, ValueT>(Buckets, Buckets+NumBuckets);
-}
-template<typename KeyT, typename ValueT>
-inline DenseMapIterator<KeyT, ValueT> DenseMap<KeyT, ValueT>::end() const {
-  return DenseMapIterator<KeyT, ValueT>(Buckets+NumBuckets, Buckets+NumBuckets);
-}
+class DenseMapConstIterator : public DenseMapIterator<KeyT, ValueT> {
+public:
+  DenseMapConstIterator(const std::pair<KeyT, ValueT> *Pos,
+                        const std::pair<KeyT, ValueT> *E)
+    : DenseMapIterator<KeyT, ValueT>(Pos, E) {
+  }
+  const std::pair<KeyT, ValueT> &operator*() const {
+    return *this->Ptr;
+  }
+  const std::pair<KeyT, ValueT> *operator->() const {
+    return this->Ptr;
+  }
+};
 
 } // end namespace llvm
 
