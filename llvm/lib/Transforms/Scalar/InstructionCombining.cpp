@@ -4605,16 +4605,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           if (Shift && !Shift->isShift())
             Shift = 0;
 
-          // Check to see if there is a noop-cast between the shift and the and.
-          if (!Shift) {
-            if (CastInst *CI = dyn_cast<CastInst>(LHSI->getOperand(0)))
-              if (CI->getOpcode() == Instruction::BitCast) {
-                Shift = dyn_cast<BinaryOperator>(CI->getOperand(0));
-                if (Shift && !Shift->isShift())
-                  Shift = 0;
-              }
-          }
-
           ConstantInt *ShAmt;
           ShAmt = Shift ? dyn_cast<ConstantInt>(Shift->getOperand(1)) : 0;
           const Type *Ty = Shift ? Shift->getType() : 0;  // Type of the shift.
@@ -5487,7 +5477,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         case Instruction::Add:
         case Instruction::And:
         case Instruction::Or:
-        case Instruction::Xor:
+        case Instruction::Xor: {
           // These operators commute.
           // Turn (Y + (X >> C)) << C  ->  (X + (Y << C)) & (~0 << C)
           if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
@@ -5507,10 +5497,11 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           }
           
           // Turn (Y + ((X >> C) & CC)) << C  ->  ((X & (CC << C)) + (Y << C))
-          if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
-              match(Op0BO->getOperand(1), m_And(m_Shr(m_Value(V1), m_Value(V2)),
-                    m_ConstantInt(CC))) && V2 == Op1 &&
-      cast<BinaryOperator>(Op0BO->getOperand(1))->getOperand(0)->hasOneUse()) {
+          Value *Op0BOOp1 = Op0BO->getOperand(1);
+          if (isLeftShift && Op0BOOp1->hasOneUse() && V2 == Op1 &&
+              match(Op0BOOp1, 
+                    m_And(m_Shr(m_Value(V1), m_Value(V2)),m_ConstantInt(CC))) &&
+              cast<BinaryOperator>(Op0BOOp1)->getOperand(0)-> hasOneUse()) {
             Instruction *YS = BinaryOperator::createShl(
                                                      Op0BO->getOperand(0), Op1,
                                                      Op0BO->getName());
@@ -5522,9 +5513,10 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
             
             return BinaryOperator::create(Op0BO->getOpcode(), YS, XM);
           }
+        }
           
-          // FALL THROUGH.
-        case Instruction::Sub:
+        // FALL THROUGH.
+        case Instruction::Sub: {
           // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
           if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
               match(Op0BO->getOperand(0),
@@ -5562,6 +5554,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           }
           
           break;
+        }
       }
       
       
@@ -5616,12 +5609,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   BinaryOperator *ShiftOp = dyn_cast<BinaryOperator>(Op0);
   if (ShiftOp && !ShiftOp->isShift())
     ShiftOp = 0;
-  if (!ShiftOp)
-    if (BitCastInst *CI = dyn_cast<BitCastInst>(Op0))
-      // If this is a noop-integer cast of a shift instruction, use the shift.
-      if (BinaryOperator *SI = dyn_cast<BinaryOperator>(CI->getOperand(0)))
-        if (SI->isShift())
-          ShiftOp = SI;
   
   if (ShiftOp && isa<ConstantInt>(ShiftOp->getOperand(1))) {
     // Find the operands and properties of the input shift.  Note that the
@@ -6594,14 +6581,8 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     else
       return BinaryOperator::create(BO->getOpcode(), NewSI, MatchOp);
   }
-
-  assert(TI->isShift() && "Should only have Shift here");
-  if (MatchIsOpZero)
-    return BinaryOperator::create(Instruction::BinaryOps(TI->getOpcode()), 
-                                  MatchOp, NewSI);
-  else
-    return BinaryOperator::create(Instruction::BinaryOps(TI->getOpcode()), 
-                                  NewSI, MatchOp);
+  assert(0 && "Shouldn't get here");
+  return 0;
 }
 
 Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
