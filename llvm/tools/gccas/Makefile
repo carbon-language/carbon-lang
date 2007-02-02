@@ -2,14 +2,21 @@
 # 
 #                     The LLVM Compiler Infrastructure
 #
-# This file was developed by the LLVM research group and is distributed under
-# the University of Illinois Open Source License. See LICENSE.TXT for details.
+# This file was developed by Reid Spencer and is distributed under the
+# University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 
-TOOLNAME = gccas
-LINK_COMPONENTS = asmparser bcwriter scalaropts ipo ipa transforms
-REQUIRES_EH := 1
-
 include $(LEVEL)/Makefile.common
+
+install-local:: $(PROJ_bindir)/gccas
+	
+$(PROJ_bindir)/gccas : gccas.sh
+	sed "s#@TOOLDIR@#$(PROJ_bindir)#" $< > $@
+
+all-local:: $(ToolDir)/gccas
+	
+$(ToolDir)/gccas : gccas.sh
+	sed "s#@TOOLDIR@#$(ToolDir)#" $< > $@
+
