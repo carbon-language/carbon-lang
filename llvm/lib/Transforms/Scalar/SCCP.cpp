@@ -33,7 +33,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/ADT/hash_map"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -138,18 +138,18 @@ public:
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
   std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
-  hash_map<Value*, LatticeVal> ValueState;  // The state each value is in...
+  DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
 
   /// GlobalValue - If we are tracking any values for the contents of a global
   /// variable, we keep a mapping from the constant accessor to the element of
   /// the global, to the currently known value.  If the value becomes
   /// overdefined, it's entry is simply removed from this map.
-  hash_map<GlobalVariable*, LatticeVal> TrackedGlobals;
+  DenseMap<GlobalVariable*, LatticeVal> TrackedGlobals;
 
   /// TrackedFunctionRetVals - If we are tracking arguments into and the return
   /// value out of a function, it will have an entry in this map, indicating
   /// what the known return value for the function is.
-  hash_map<Function*, LatticeVal> TrackedFunctionRetVals;
+  DenseMap<Function*, LatticeVal> TrackedFunctionRetVals;
 
   // The reason for two worklists is that overdefined is the lowest state
   // on the lattice, and moving things to overdefined as fast as possible
@@ -222,19 +222,19 @@ public:
 
   /// getValueMapping - Once we have solved for constants, return the mapping of
   /// LLVM values to LatticeVals.
-  hash_map<Value*, LatticeVal> &getValueMapping() {
+  DenseMap<Value*, LatticeVal> &getValueMapping() {
     return ValueState;
   }
 
   /// getTrackedFunctionRetVals - Get the inferred return value map.
   ///
-  const hash_map<Function*, LatticeVal> &getTrackedFunctionRetVals() {
+  const DenseMap<Function*, LatticeVal> &getTrackedFunctionRetVals() {
     return TrackedFunctionRetVals;
   }
 
   /// getTrackedGlobals - Get and return the set of inferred initializers for
   /// global variables.
-  const hash_map<GlobalVariable*, LatticeVal> &getTrackedGlobals() {
+  const DenseMap<GlobalVariable*, LatticeVal> &getTrackedGlobals() {
     return TrackedGlobals;
   }
 
@@ -303,14 +303,16 @@ private:
   // Instruction object, then use this accessor to get its value from the map.
   //
   inline LatticeVal &getValueState(Value *V) {
-    hash_map<Value*, LatticeVal>::iterator I = ValueState.find(V);
+    DenseMap<Value*, LatticeVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
 
     if (Constant *C = dyn_cast<Constant>(V)) {
       if (isa<UndefValue>(V)) {
         // Nothing to do, remain undefined.
       } else {
-        ValueState[C].markConstant(C);          // Constants are constant
+        LatticeVal &LV = ValueState[C];
+        LV.markConstant(C);          // Constants are constant
+        return LV;
       }
     }
     // All others are underdefined by default...
@@ -610,7 +612,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
   // If we are tracking the return value of this function, merge it in.
   Function *F = I.getParent()->getParent();
   if (F->hasInternalLinkage() && !TrackedFunctionRetVals.empty()) {
-    hash_map<Function*, LatticeVal>::iterator TFRVI =
+    DenseMap<Function*, LatticeVal>::iterator TFRVI =
       TrackedFunctionRetVals.find(F);
     if (TFRVI != TrackedFunctionRetVals.end() &&
         !TFRVI->second.isOverdefined()) {
@@ -991,7 +993,7 @@ void SCCPSolver::visitStoreInst(Instruction &SI) {
   if (TrackedGlobals.empty() || !isa<GlobalVariable>(SI.getOperand(1)))
     return;
   GlobalVariable *GV = cast<GlobalVariable>(SI.getOperand(1));
-  hash_map<GlobalVariable*, LatticeVal>::iterator I = TrackedGlobals.find(GV);
+  DenseMap<GlobalVariable*, LatticeVal>::iterator I = TrackedGlobals.find(GV);
   if (I == TrackedGlobals.end() || I->second.isOverdefined()) return;
 
   // Get the value we are storing into the global.
@@ -1028,7 +1030,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
         }
       } else if (!TrackedGlobals.empty()) {
         // If we are tracking this global, merge in the known value for it.
-        hash_map<GlobalVariable*, LatticeVal>::iterator It =
+        DenseMap<GlobalVariable*, LatticeVal>::iterator It =
           TrackedGlobals.find(GV);
         if (It != TrackedGlobals.end()) {
           mergeInValue(IV, &I, It->second);
@@ -1059,7 +1061,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
 
   // If we are tracking this function, we must make sure to bind arguments as
   // appropriate.
-  hash_map<Function*, LatticeVal>::iterator TFRVI =TrackedFunctionRetVals.end();
+  DenseMap<Function*, LatticeVal>::iterator TFRVI =TrackedFunctionRetVals.end();
   if (F && F->hasInternalLinkage())
     TFRVI = TrackedFunctionRetVals.find(F);
 
@@ -1363,7 +1365,7 @@ bool SCCP::runOnFunction(Function &F) {
   Solver.MarkBlockExecutable(F.begin());
 
   // Mark all arguments to the function as being overdefined.
-  hash_map<Value*, LatticeVal> &Values = Solver.getValueMapping();
+  DenseMap<Value*, LatticeVal> &Values = Solver.getValueMapping();
   for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
     Values[AI].markOverdefined();
 
@@ -1484,7 +1486,7 @@ bool IPSCCP::runOnModule(Module &M) {
   // Loop over all functions, marking arguments to those with their addresses
   // taken or that are external as overdefined.
   //
-  hash_map<Value*, LatticeVal> &Values = Solver.getValueMapping();
+  DenseMap<Value*, LatticeVal> &Values = Solver.getValueMapping();
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
     if (!F->hasInternalLinkage() || AddressIsTaken(F)) {
       if (!F->isDeclaration())
@@ -1646,8 +1648,8 @@ bool IPSCCP::runOnModule(Module &M) {
   // all call uses with the inferred value.  This means we don't need to bother
   // actually returning anything from the function.  Replace all return
   // instructions with return undef.
-  const hash_map<Function*, LatticeVal> &RV =Solver.getTrackedFunctionRetVals();
-  for (hash_map<Function*, LatticeVal>::const_iterator I = RV.begin(),
+  const DenseMap<Function*, LatticeVal> &RV =Solver.getTrackedFunctionRetVals();
+  for (DenseMap<Function*, LatticeVal>::const_iterator I = RV.begin(),
          E = RV.end(); I != E; ++I)
     if (!I->second.isOverdefined() &&
         I->first->getReturnType() != Type::VoidTy) {
@@ -1660,8 +1662,8 @@ bool IPSCCP::runOnModule(Module &M) {
 
   // If we infered constant or undef values for globals variables, we can delete
   // the global and any stores that remain to it.
-  const hash_map<GlobalVariable*, LatticeVal> &TG = Solver.getTrackedGlobals();
-  for (hash_map<GlobalVariable*, LatticeVal>::const_iterator I = TG.begin(),
+  const DenseMap<GlobalVariable*, LatticeVal> &TG = Solver.getTrackedGlobals();
+  for (DenseMap<GlobalVariable*, LatticeVal>::const_iterator I = TG.begin(),
          E = TG.end(); I != E; ++I) {
     GlobalVariable *GV = I->first;
     assert(!I->second.isOverdefined() &&
