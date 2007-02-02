@@ -5454,10 +5454,10 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   //
   unsigned TypeBits = Op0->getType()->getPrimitiveSizeInBits();
   if (Op1->getZExtValue() >= TypeBits) {
-    if (isUnsignedShift || isLeftShift)
+    if (I.getOpcode() != Instruction::AShr)
       return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
     else {
-      I.setOperand(1, ConstantInt::get(Type::Int8Ty, TypeBits-1));
+      I.setOperand(1, ConstantInt::get(I.getType(), TypeBits-1));
       return &I;
     }
   }
