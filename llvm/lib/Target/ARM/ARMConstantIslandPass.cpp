@@ -352,6 +352,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
     // In thumb mode, if this block is a constpool island, pessmisticly assume
     // it needs to be padded by two byte so it's aligned on 4 byte boundary.
     if (AFI->isThumbFunction() &&
+        MBB.size() &&
         MBB.begin()->getOpcode() == ARM::CONSTPOOL_ENTRY)
       MBBSize += 2;
 
