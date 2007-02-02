@@ -138,7 +138,7 @@ public:
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
   SmallSet<BasicBlock*, 16> BBExecutable;// The basic blocks that are executable
-  DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
+  std::map<Value*, LatticeVal> ValueState;  // The state each value is in.
 
   /// GlobalValue - If we are tracking any values for the contents of a global
   /// variable, we keep a mapping from the constant accessor to the element of
@@ -222,7 +222,7 @@ public:
 
   /// getValueMapping - Once we have solved for constants, return the mapping of
   /// LLVM values to LatticeVals.
-  DenseMap<Value*, LatticeVal> &getValueMapping() {
+  std::map<Value*, LatticeVal> &getValueMapping() {
     return ValueState;
   }
 
@@ -303,7 +303,7 @@ private:
   // Instruction object, then use this accessor to get its value from the map.
   //
   inline LatticeVal &getValueState(Value *V) {
-    DenseMap<Value*, LatticeVal>::iterator I = ValueState.find(V);
+    std::map<Value*, LatticeVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
 
     if (Constant *C = dyn_cast<Constant>(V)) {
@@ -1364,7 +1364,7 @@ bool SCCP::runOnFunction(Function &F) {
   Solver.MarkBlockExecutable(F.begin());
 
   // Mark all arguments to the function as being overdefined.
-  DenseMap<Value*, LatticeVal> &Values = Solver.getValueMapping();
+  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
   for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
     Values[AI].markOverdefined();
 
@@ -1485,7 +1485,7 @@ bool IPSCCP::runOnModule(Module &M) {
   // Loop over all functions, marking arguments to those with their addresses
   // taken or that are external as overdefined.
   //
-  DenseMap<Value*, LatticeVal> &Values = Solver.getValueMapping();
+  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
     if (!F->hasInternalLinkage() || AddressIsTaken(F)) {
       if (!F->isDeclaration())
