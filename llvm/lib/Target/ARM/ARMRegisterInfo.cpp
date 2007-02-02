@@ -1159,12 +1159,17 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 
   if (VARegSaveSize) {
-    // Epilogue for vararg functions: pop LR to R3 and branch off it.
-    // FIXME: Verify this is still ok when R3 is no longer being reserved.
-    BuildMI(MBB, MBBI, TII.get(ARM::tPOP)).addReg(ARM::R3);
+    if (isThumb)
+      // Epilogue for vararg functions: pop LR to R3 and branch off it.
+      // FIXME: Verify this is still ok when R3 is no longer being reserved.
+      BuildMI(MBB, MBBI, TII.get(ARM::tPOP)).addReg(ARM::R3);
+
     emitSPUpdate(MBB, MBBI, VARegSaveSize, isThumb, TII);
-    BuildMI(MBB, MBBI, TII.get(ARM::tBX_RET_vararg)).addReg(ARM::R3);
-    MBB.erase(MBBI);
+
+    if (isThumb) {
+      BuildMI(MBB, MBBI, TII.get(ARM::tBX_RET_vararg)).addReg(ARM::R3);
+      MBB.erase(MBBI);
+    }
   }
 }
 
