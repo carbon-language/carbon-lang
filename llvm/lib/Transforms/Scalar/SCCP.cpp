@@ -968,7 +968,7 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   LatticeVal &IV = ValueState[&I];
   if (IV.isOverdefined()) return;
 
-  std::vector<Constant*> Operands;
+  SmallVector<Constant*, 8> Operands;
   Operands.reserve(I.getNumOperands());
 
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
@@ -986,7 +986,8 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   Constant *Ptr = Operands[0];
   Operands.erase(Operands.begin());  // Erase the pointer from idx list...
 
-  markConstant(IV, &I, ConstantExpr::getGetElementPtr(Ptr, Operands));
+  markConstant(IV, &I, ConstantExpr::getGetElementPtr(Ptr, &Operands[0],
+                                                      Operands.size()));
 }
 
 void SCCPSolver::visitStoreInst(Instruction &SI) {
