@@ -23,6 +23,7 @@ OPTOPTS="-std-compile-opts -f"
 ASOPTS=""
 lastwasdasho=0
 for option in "$@" ; do
+  option=`echo "$option" | sed 's/^--/-/'`
   case "$option" in
     -disable-opt)
        OPTOPTS="$OPTOPTS $option"
@@ -47,8 +48,7 @@ for option in "$@" ; do
        # ignore
        ;;
     -*)
-       echo "gccas: Unrecognized option '$option'"
-       exit 1
+       OPTOPTS="$OPTOPTS $option"
        ;;
     *)
        if test $lastwasdasho -eq 1 ; then
