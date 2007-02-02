@@ -34,11 +34,11 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumInstRemoved, "Number of instructions removed");
@@ -137,7 +137,7 @@ public:
 /// Constant Propagation.
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
-  std::set<BasicBlock*>     BBExecutable;// The basic blocks that are executable
+  SmallSet<BasicBlock*, 16> BBExecutable;// The basic blocks that are executable
   DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
 
   /// GlobalValue - If we are tracking any values for the contents of a global
@@ -216,7 +216,7 @@ public:
 
   /// getExecutableBlocks - Once we have solved for constants, return the set of
   /// blocks that is known to be executable.
-  std::set<BasicBlock*> &getExecutableBlocks() {
+  SmallSet<BasicBlock*, 16> &getExecutableBlocks() {
     return BBExecutable;
   }
 
@@ -1384,7 +1384,7 @@ bool SCCP::runOnFunction(Function &F) {
   // delete their contents now.  Note that we cannot actually delete the blocks,
   // as we cannot modify the CFG of the function.
   //
-  std::set<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
+  SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (!ExecutableBBs.count(BB)) {
       DOUT << "  BasicBlock Dead:" << *BB;
@@ -1523,7 +1523,7 @@ bool IPSCCP::runOnModule(Module &M) {
   // Iterate over all of the instructions in the module, replacing them with
   // constants if we have found them to be of constant values.
   //
-  std::set<BasicBlock*> &ExecutableBBs = Solver.getExecutableBlocks();
+  SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
          AI != E; ++AI)
