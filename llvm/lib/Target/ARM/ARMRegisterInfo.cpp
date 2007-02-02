@@ -625,7 +625,6 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     Offset += MI.getOperand(i+1).getImm();
     assert((Offset & 3) == 0 &&
            "Thumb add/sub sp, #imm immediate must be multiple of 4!");
-    Offset >>= 2;
     if (Offset == 0) {
       // Turn it into a move.
       MI.setInstrDescriptor(TII.get(ARM::tMOVrr));
@@ -635,28 +634,37 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     }
 
     // Common case: small offset, fits into instruction.
-    if ((Offset & ~255U) == 0) {
+    if (((Offset >> 2) & ~255U) == 0) {
       // Replace the FrameIndex with sp / fp
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
-      MI.getOperand(i+1).ChangeToImmediate(Offset);
+      MI.getOperand(i+1).ChangeToImmediate(Offset >> 2);
       return;
     }
 
     unsigned DestReg = MI.getOperand(0).getReg();
+    unsigned Bytes = (Offset > 0) ? Offset : -Offset;
+    unsigned NumMIs = calcNumMI(Opcode, 0, Bytes, 8, 1);
+    // MI would expand into a large number of instructions. Don't try to
+    // simplify the immediate.
+    if (NumMIs > 2) {
+      emitThumbRegPlusImmediate(MBB, II, DestReg, ARM::SP, Offset, TII);
+      MBB.erase(II);
+      return;
+    }
+
     if (Offset > 0) {
       // Translate r0 = add sp, imm to
       // r0 = add sp, 255*4
       // r0 = add r0, (imm - 255*4)
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
       MI.getOperand(i+1).ChangeToImmediate(255);
-      Offset = (Offset - 255) << 2;
+      Offset = (Offset - 255 * 4);
       MachineBasicBlock::iterator NII = next(II);
       emitThumbRegPlusImmediate(MBB, NII, DestReg, DestReg, Offset, TII);
     } else {
       // Translate r0 = add sp, -imm to
       // r0 = -imm (this is then translated into a series of instructons)
       // r0 = add r0, sp
-      Offset <<= 2;
       emitThumbConstant(MBB, II, DestReg, Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tADDhirr));
       MI.getOperand(i).ChangeToRegister(DestReg, false);
