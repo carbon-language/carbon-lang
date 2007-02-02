@@ -384,7 +384,7 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
   }
 
   // Otherwise these instructions are hoistable/sinkable
-  return isa<BinaryOperator>(I) || isa<ShiftInst>(I) || isa<CastInst>(I) ||
+  return isa<BinaryOperator>(I) || isa<CastInst>(I) ||
          isa<SelectInst>(I) || isa<GetElementPtrInst>(I) || isa<CmpInst>(I);
 }
 

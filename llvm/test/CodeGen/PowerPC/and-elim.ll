@@ -3,7 +3,7 @@
 
 define void @test(i8* %P) {
 	%W = load i8* %P
-	%X = shl i8 %W, i8 1
+	%X = shl i8 %W, 1
 	%Y = add i8 %X, 2
 	%Z = and i8 %Y, 254        ; dead and
 	store i8 %Z, i8* %P
@@ -12,7 +12,7 @@ define void @test(i8* %P) {
 
 define i16 @test2(i16 zext %crc) zext { 
         ; No and's should be needed for the i16s here.
-        %tmp.1 = lshr i16 %crc, i8 1
+        %tmp.1 = lshr i16 %crc, 1
         %tmp.7 = xor i16 %tmp.1, 40961
         ret i16 %tmp.7
 }

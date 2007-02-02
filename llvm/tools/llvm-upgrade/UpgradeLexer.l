@@ -274,6 +274,11 @@ setlt           { RET_TOK(BinaryOpVal, SetLT, SETLT); }
 setgt           { RET_TOK(BinaryOpVal, SetGT, SETGT); }
 setle           { RET_TOK(BinaryOpVal, SetLE, SETLE); }
 setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
+shl             { RET_TOK(BinaryOpVal, ShlOp, SHL); }
+shr             { RET_TOK(BinaryOpVal, ShrOp, SHR); }
+lshr            { RET_TOK(BinaryOpVal, LShrOp, LSHR); }
+ashr            { RET_TOK(BinaryOpVal, AShrOp, ASHR); }
+
 icmp            { RET_TOK(OtherOpVal, ICmpOp, ICMP); }
 fcmp            { RET_TOK(OtherOpVal, FCmpOp, FCMP); }
 
@@ -314,10 +319,6 @@ ptrtoint        { RET_TOK(CastOpVal, PtrToIntOp, PTRTOINT); }
 inttoptr        { RET_TOK(CastOpVal, IntToPtrOp, INTTOPTR); }
 bitcast         { RET_TOK(CastOpVal, BitCastOp, BITCAST); }
 select          { RET_TOK(OtherOpVal, SelectOp, SELECT); }
-shl             { RET_TOK(OtherOpVal, ShlOp, SHL); }
-shr             { RET_TOK(OtherOpVal, ShrOp, SHR); }
-lshr            { RET_TOK(OtherOpVal, LShrOp, LSHR); }
-ashr            { RET_TOK(OtherOpVal, AShrOp, ASHR); }
 vanext          { return VANEXT_old; }
 vaarg           { return VAARG_old; }
 va_arg          { RET_TOK(OtherOpVal, VAArg , VAARG); }

@@ -232,6 +232,9 @@ coldcc          { return COLDCC_TOK; }
 x86_stdcallcc   { return X86_STDCALLCC_TOK; }
 x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
+inreg           { return INREG; }
+sret            { return SRET;  }
+
 void            { RET_TY(Type::VoidTy,  VOID);  }
 float           { RET_TY(Type::FloatTy, FLOAT); }
 double          { RET_TY(Type::DoubleTy,DOUBLE);}
@@ -255,11 +258,15 @@ fdiv            { RET_TOK(BinaryOpVal, FDiv, FDIV); }
 urem            { RET_TOK(BinaryOpVal, URem, UREM); }
 srem            { RET_TOK(BinaryOpVal, SRem, SREM); }
 frem            { RET_TOK(BinaryOpVal, FRem, FREM); }
+shl             { RET_TOK(BinaryOpVal, Shl, SHL); }
+lshr            { RET_TOK(BinaryOpVal, LShr, LSHR); }
+ashr            { RET_TOK(BinaryOpVal, AShr, ASHR); }
 and             { RET_TOK(BinaryOpVal, And, AND); }
 or              { RET_TOK(BinaryOpVal, Or , OR ); }
 xor             { RET_TOK(BinaryOpVal, Xor, XOR); }
 icmp            { RET_TOK(OtherOpVal,  ICmp,  ICMP); }
 fcmp            { RET_TOK(OtherOpVal,  FCmp,  FCMP); }
+
 eq              { return EQ;  }
 ne              { return NE;  }
 slt             { return SLT; }
@@ -286,8 +293,6 @@ call            { RET_TOK(OtherOpVal, Call, CALL); }
 trunc           { RET_TOK(CastOpVal, Trunc, TRUNC); }
 zext            { RET_TOK(CastOpVal, ZExt, ZEXT); }
 sext            { RET_TOK(CastOpVal, SExt, SEXT); }
-inreg           { return INREG; }
-sret            { return SRET;  }
 fptrunc         { RET_TOK(CastOpVal, FPTrunc, FPTRUNC); }
 fpext           { RET_TOK(CastOpVal, FPExt, FPEXT); }
 uitofp          { RET_TOK(CastOpVal, UIToFP, UITOFP); }
@@ -298,9 +303,6 @@ inttoptr        { RET_TOK(CastOpVal, IntToPtr, INTTOPTR); }
 ptrtoint        { RET_TOK(CastOpVal, PtrToInt, PTRTOINT); }
 bitcast         { RET_TOK(CastOpVal, BitCast, BITCAST); }
 select          { RET_TOK(OtherOpVal, Select, SELECT); }
-shl             { RET_TOK(OtherOpVal, Shl, SHL); }
-lshr            { RET_TOK(OtherOpVal, LShr, LSHR); }
-ashr            { RET_TOK(OtherOpVal, AShr, ASHR); }
 va_arg          { RET_TOK(OtherOpVal, VAArg , VAARG); }
 ret             { RET_TOK(TermOpVal, Ret, RET); }
 br              { RET_TOK(TermOpVal, Br, BR); }

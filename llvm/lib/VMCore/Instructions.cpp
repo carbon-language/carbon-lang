@@ -1088,6 +1088,14 @@ void BinaryOperator::init(BinaryOps iType)
             cast<PackedType>(getType())->getElementType()->isFloatingPoint())) 
             && "Incorrect operand type (not floating point) for FREM");
     break;
+  case Shl:
+  case LShr:
+  case AShr:
+    assert(getType() == LHS->getType() &&
+           "Shift operation should return same type as operands!");
+    assert(getType()->isInteger() && 
+           "Shift operation requires integer operands");
+    break;
   case And: case Or:
   case Xor:
     assert(getType() == LHS->getType() &&
@@ -2299,7 +2307,6 @@ CastInst   *PtrToIntInst::clone() const { return new PtrToIntInst(*this); }
 CastInst   *IntToPtrInst::clone() const { return new IntToPtrInst(*this); }
 CastInst   *BitCastInst::clone()  const { return new BitCastInst(*this); }
 CallInst   *CallInst::clone()     const { return new CallInst(*this); }
-ShiftInst  *ShiftInst::clone()    const { return new ShiftInst(*this); }
 SelectInst *SelectInst::clone()   const { return new SelectInst(*this); }
 VAArgInst  *VAArgInst::clone()    const { return new VAArgInst(*this); }
 

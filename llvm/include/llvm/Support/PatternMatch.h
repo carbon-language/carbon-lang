@@ -166,27 +166,27 @@ inline BinaryOp_match<LHS, RHS, Instruction::Xor> m_Xor(const LHS &L,
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Shl, 
-                      ShiftInst> m_Shl(const LHS &L, const RHS &R) {
-  return BinaryOp_match<LHS, RHS, Instruction::Shl, ShiftInst>(L, R);
+inline BinaryOp_match<LHS, RHS, Instruction::Shl> m_Shl(const LHS &L, 
+                                                        const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::Shl>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::LShr, 
-                      ShiftInst> m_LShr(const LHS &L, const RHS &R) {
-  return BinaryOp_match<LHS, RHS, Instruction::LShr, ShiftInst>(L, R);
+inline BinaryOp_match<LHS, RHS, Instruction::LShr> m_LShr(const LHS &L, 
+                                                          const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::LShr>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::AShr, 
-                      ShiftInst> m_AShr(const LHS &L, const RHS &R) {
-  return BinaryOp_match<LHS, RHS, Instruction::AShr, ShiftInst>(L, R);
+inline BinaryOp_match<LHS, RHS, Instruction::AShr> m_AShr(const LHS &L, 
+                                                          const RHS &R) {
+  return BinaryOp_match<LHS, RHS, Instruction::AShr>(L, R);
 }
 
 //===----------------------------------------------------------------------===//
 // Matchers for either AShr or LShr .. for convenience
 //
-template<typename LHS_t, typename RHS_t, typename ConcreteTy = ShiftInst>
+template<typename LHS_t, typename RHS_t, typename ConcreteTy = BinaryOperator>
 struct Shr_match {
   LHS_t L;
   RHS_t R;
@@ -248,18 +248,18 @@ struct BinaryOpClass_match {
 };
 
 template<typename LHS, typename RHS>
-inline BinaryOpClass_match<LHS, RHS, ShiftInst, Instruction::OtherOps>
-m_Shift(Instruction::OtherOps &Op, const LHS &L, const RHS &R) {
+inline BinaryOpClass_match<LHS, RHS, BinaryOperator, Instruction::BinaryOps>
+m_Shift(Instruction::BinaryOps &Op, const LHS &L, const RHS &R) {
   return BinaryOpClass_match<LHS, RHS, 
-                             ShiftInst, Instruction::OtherOps>(Op, L, R);
+                             BinaryOperator, Instruction::BinaryOps>(Op, L, R);
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOpClass_match<LHS, RHS, ShiftInst, Instruction::OtherOps>
+inline BinaryOpClass_match<LHS, RHS, BinaryOperator, Instruction::BinaryOps>
 m_Shift(const LHS &L, const RHS &R) {
-  Instruction::OtherOps Op; 
+  Instruction::BinaryOps Op; 
   return BinaryOpClass_match<LHS, RHS, 
-                             ShiftInst, Instruction::OtherOps>(Op, L, R);
+                             BinaryOperator, Instruction::BinaryOps>(Op, L, R);
 }
 
 //===----------------------------------------------------------------------===//

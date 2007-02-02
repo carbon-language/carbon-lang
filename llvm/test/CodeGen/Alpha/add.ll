@@ -69,112 +69,112 @@ entry:
 
 define i32 @a4l(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
-	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
+	%tmp.1.s = shl i32 %y.s, 2		; <i32> [#uses=1]
 	%tmp.3.s = add i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
 define i32 @a8l(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
-	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
+	%tmp.1.s = shl i32 %y.s, 3		; <i32> [#uses=1]
 	%tmp.3.s = add i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
 define i64 @a4q(i64 %x.s, i64 %y.s) {
 entry:
-	%tmp.1.s = shl i64 %y.s, i8 2		; <i64> [#uses=1]
+	%tmp.1.s = shl i64 %y.s, 2		; <i64> [#uses=1]
 	%tmp.3.s = add i64 %tmp.1.s, %x.s		; <i64> [#uses=1]
 	ret i64 %tmp.3.s
 }
 
 define i64 @a8q(i64 %x.s, i64 %y.s) {
 entry:
-	%tmp.1.s = shl i64 %y.s, i8 3		; <i64> [#uses=1]
+	%tmp.1.s = shl i64 %y.s, 3		; <i64> [#uses=1]
 	%tmp.3.s = add i64 %tmp.1.s, %x.s		; <i64> [#uses=1]
 	ret i64 %tmp.3.s
 }
 
 define i32 @a4li(i32 sext %y.s) sext {
 entry:
-	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
+	%tmp.1.s = shl i32 %y.s, 2		; <i32> [#uses=1]
 	%tmp.3.s = add i32 100, %tmp.1.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
 define i32 @a8li(i32 sext %y.s) sext {
 entry:
-	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
+	%tmp.1.s = shl i32 %y.s, 3		; <i32> [#uses=1]
 	%tmp.3.s = add i32 100, %tmp.1.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
 define i64 @a4qi(i64 %y.s) {
 entry:
-	%tmp.1.s = shl i64 %y.s, i8 2		; <i64> [#uses=1]
+	%tmp.1.s = shl i64 %y.s, 2		; <i64> [#uses=1]
 	%tmp.3.s = add i64 100, %tmp.1.s		; <i64> [#uses=1]
 	ret i64 %tmp.3.s
 }
 
 define i64 @a8qi(i64 %y.s) {
 entry:
-	%tmp.1.s = shl i64 %y.s, i8 3		; <i64> [#uses=1]
+	%tmp.1.s = shl i64 %y.s, 3		; <i64> [#uses=1]
 	%tmp.3.s = add i64 100, %tmp.1.s		; <i64> [#uses=1]
 	ret i64 %tmp.3.s
 }
 
 define i32 @s4l(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
-	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
+	%tmp.1.s = shl i32 %y.s, 2		; <i32> [#uses=1]
 	%tmp.3.s = sub i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
 define i32 @s8l(i32 sext %x.s, i32 sext %y.s) sext {
 entry:
-	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
+	%tmp.1.s = shl i32 %y.s, 3		; <i32> [#uses=1]
 	%tmp.3.s = sub i32 %tmp.1.s, %x.s		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
 define i64 @s4q(i64 %x.s, i64 %y.s) {
 entry:
-	%tmp.1.s = shl i64 %y.s, i8 2		; <i64> [#uses=1]
+	%tmp.1.s = shl i64 %y.s, 2		; <i64> [#uses=1]
 	%tmp.3.s = sub i64 %tmp.1.s, %x.s		; <i64> [#uses=1]
 	ret i64 %tmp.3.s
 }
 
 define i64 @s8q(i64 %x.s, i64 %y.s) {
 entry:
-	%tmp.1.s = shl i64 %y.s, i8 3		; <i64> [#uses=1]
+	%tmp.1.s = shl i64 %y.s, 3		; <i64> [#uses=1]
 	%tmp.3.s = sub i64 %tmp.1.s, %x.s		; <i64> [#uses=1]
 	ret i64 %tmp.3.s
 }
 
 define i32 @s4li(i32 sext %y.s) sext {
 entry:
-	%tmp.1.s = shl i32 %y.s, i8 2		; <i32> [#uses=1]
+	%tmp.1.s = shl i32 %y.s, 2		; <i32> [#uses=1]
 	%tmp.3.s = sub i32 %tmp.1.s, 100		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
 define i32 @s8li(i32 sext %y.s) sext {
 entry:
-	%tmp.1.s = shl i32 %y.s, i8 3		; <i32> [#uses=1]
+	%tmp.1.s = shl i32 %y.s, 3		; <i32> [#uses=1]
 	%tmp.3.s = sub i32 %tmp.1.s, 100		; <i32> [#uses=1]
 	ret i32 %tmp.3.s
 }
 
 define i64 @s4qi(i64 %y.s) {
 entry:
-	%tmp.1.s = shl i64 %y.s, i8 2		; <i64> [#uses=1]
+	%tmp.1.s = shl i64 %y.s, 2		; <i64> [#uses=1]
 	%tmp.3.s = sub i64 %tmp.1.s, 100		; <i64> [#uses=1]
 	ret i64 %tmp.3.s
 }
 
 define i64 @s8qi(i64 %y.s) {
 entry:
-	%tmp.1.s = shl i64 %y.s, i8 3		; <i64> [#uses=1]
+	%tmp.1.s = shl i64 %y.s, 3		; <i64> [#uses=1]
 	%tmp.3.s = sub i64 %tmp.1.s, 100		; <i64> [#uses=1]
 	ret i64 %tmp.3.s
 }

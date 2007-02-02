@@ -1736,7 +1736,7 @@ ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
 /// CanConstantFold - Return true if we can constant fold an instruction of the
 /// specified type, assuming that all operands were constants.
 static bool CanConstantFold(const Instruction *I) {
-  if (isa<BinaryOperator>(I) || isa<ShiftInst>(I) || isa<CmpInst>(I) ||
+  if (isa<BinaryOperator>(I) || isa<CmpInst>(I) ||
       isa<SelectInst>(I) || isa<CastInst>(I) || isa<GetElementPtrInst>(I))
     return true;
 

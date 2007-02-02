@@ -10,12 +10,12 @@
 @f = constant i33 sub(i33 0 , i33 8589934591)
 @g = constant i33 sub(i33 2 , i33 8589934591)
 
-@h = constant i33 shl(i33 1 , i8 33)
-@i = constant i33 shl(i33 1 , i8 32)
-@j = constant i33 lshr(i33 8589934591 , i8 32)
-@k = constant i33 lshr(i33 8589934591 , i8 33)
-@l = constant i33 ashr(i33 8589934591 , i8 32)
-@m = constant i33 ashr(i33 8589934591 , i8 33)
+@h = constant i33 shl(i33 1 , i33 33)
+@i = constant i33 shl(i33 1 , i33 32)
+@j = constant i33 lshr(i33 8589934591 , i33 32)
+@k = constant i33 lshr(i33 8589934591 , i33 33)
+@l = constant i33 ashr(i33 8589934591 , i33 32)
+@m = constant i33 ashr(i33 8589934591 , i33 33)
 
 @n = constant i33 mul(i33 8589934591, i33 2)
 @q = constant i33 sdiv(i33 -1,        i33 4294967295)

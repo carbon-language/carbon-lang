@@ -14,11 +14,12 @@ begin
         %t3 = sext i31 %i to i33
         %t4 = or i33 %t3, %j 
         %t5 = xor i31 %t2, 7 
-        %t6 = shl i31 %i, i8 2
+        %t6 = shl i31 %i, 2
         %t7 = trunc i31 %i to i8
-        %t8 = shl i8 %t7, i8 3
-        %t9 = lshr i33 %j, i8 31
-        %t10 = ashr i33 %j, i8 %t7
+        %t8 = shl i8 %t7, 3
+        %t9 = lshr i33 %j, 31
+        %t7z = zext i8 %t7 to i33
+        %t10 = ashr i33 %j, %t7z
 	ret void
 end
 

@@ -442,8 +442,6 @@ protected:
                          Constant *C1, Constant *C2);
   static Constant *getCompareTy(unsigned short pred, Constant *C1, 
                                 Constant *C2);
-  static Constant *getShiftTy(const Type *Ty,
-                              unsigned Opcode, Constant *C1, Constant *C2);
   static Constant *getSelectTy(const Type *Ty,
                                Constant *C1, Constant *C2, Constant *C3);
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,

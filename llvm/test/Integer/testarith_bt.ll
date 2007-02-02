@@ -13,9 +13,9 @@ begin
         %t5 = sdiv i31 %t1, %t2
         %t6 = urem i31 %t1, %t2
         %t7 = srem i31 %t1, %t2
-        %t8 = shl  i31 %t1, i8 9
-        %t9 = lshr i31 %t1, i8 9
-        %t10= ashr i31 %t1, i8 9
+        %t8 = shl  i31 %t1, 9
+        %t9 = lshr i31 %t1, 9
+        %t10= ashr i31 %t1, 9
         %f1 = sitofp i31 %t1 to float
         %f2 = fdiv float 4.0, %f1
 	ret i31 %t3

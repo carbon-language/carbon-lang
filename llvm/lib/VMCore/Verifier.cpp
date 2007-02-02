@@ -196,7 +196,6 @@ namespace {  // Anonymous namespace for class
     void visitBinaryOperator(BinaryOperator &B);
     void visitICmpInst(ICmpInst &IC);
     void visitFCmpInst(FCmpInst &FC);
-    void visitShiftInst(ShiftInst &SI);
     void visitExtractElementInst(ExtractElementInst &EI);
     void visitInsertElementInst(InsertElementInst &EI);
     void visitShuffleVectorInst(ShuffleVectorInst &EI);
@@ -713,9 +712,11 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   Assert1(B.getOperand(0)->getType() == B.getOperand(1)->getType(),
           "Both operands to a binary operator are not of the same type!", &B);
 
+  switch (B.getOpcode()) {
   // Check that logical operators are only used with integral operands.
-  if (B.getOpcode() == Instruction::And || B.getOpcode() == Instruction::Or ||
-      B.getOpcode() == Instruction::Xor) {
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
     Assert1(B.getType()->isInteger() ||
             (isa<PackedType>(B.getType()) && 
              cast<PackedType>(B.getType())->getElementType()->isInteger()),
@@ -723,7 +724,16 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Logical operators must have same type for operands and result!",
             &B);
-  } else {
+    break;
+  case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::AShr:
+    Assert1(B.getType()->isInteger(),
+            "Shift must return an integer result!", &B);
+    Assert1(B.getType() == B.getOperand(0)->getType(),
+            "Shift return type must be same as operands!", &B);
+    /* FALL THROUGH */
+  default:
     // Arithmetic operators only work on integer or fp values
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Arithmetic operators must have same type for operands and result!",
@@ -731,6 +741,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
     Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint() ||
             isa<PackedType>(B.getType()),
             "Arithmetic operators must have integer, fp, or packed type!", &B);
+    break;
   }
 
   visitInstruction(B);
@@ -758,16 +769,6 @@ void Verifier::visitFCmpInst(FCmpInst& FC) {
   Assert1(Op0Ty->isFloatingPoint(),
           "Invalid operand types for FCmp instruction", &FC);
   visitInstruction(FC);
-}
-
-void Verifier::visitShiftInst(ShiftInst &SI) {
-  Assert1(SI.getType()->isInteger(),
-          "Shift must return an integer result!", &SI);
-  Assert1(SI.getType() == SI.getOperand(0)->getType(),
-          "Shift return type must be same as first operand!", &SI);
-  Assert1(SI.getOperand(1)->getType() == Type::Int8Ty,
-          "Second operand to shift must be ubyte type!", &SI);
-  visitInstruction(SI);
 }
 
 void Verifier::visitExtractElementInst(ExtractElementInst &EI) {

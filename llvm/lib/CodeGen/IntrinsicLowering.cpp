@@ -118,22 +118,22 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
   switch(BitSize) {
   default: assert(0 && "Unhandled type size of value to byteswap!");
   case 16: {
-    Value *Tmp1 = new ShiftInst(Instruction::Shl, V,
-                                ConstantInt::get(Type::Int8Ty,8),"bswap.2",IP);
-    Value *Tmp2 = new ShiftInst(Instruction::LShr, V,
-                                ConstantInt::get(Type::Int8Ty,8),"bswap.1",IP);
+    Value *Tmp1 = BinaryOperator::create(Instruction::Shl, V,
+                                ConstantInt::get(V->getType(),8),"bswap.2",IP);
+    Value *Tmp2 = BinaryOperator::create(Instruction::LShr, V,
+                                ConstantInt::get(V->getType(),8),"bswap.1",IP);
     V = BinaryOperator::createOr(Tmp1, Tmp2, "bswap.i16", IP);
     break;
   }
   case 32: {
-    Value *Tmp4 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::Int8Ty,24),"bswap.4", IP);
-    Value *Tmp3 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::Int8Ty,8),"bswap.3",IP);
-    Value *Tmp2 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::Int8Ty,8),"bswap.2",IP);
-    Value *Tmp1 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::Int8Ty,24),"bswap.1", IP);
+    Value *Tmp4 = BinaryOperator::create(Instruction::Shl, V,
+                              ConstantInt::get(V->getType(),24),"bswap.4", IP);
+    Value *Tmp3 = BinaryOperator::create(Instruction::Shl, V,
+                              ConstantInt::get(V->getType(),8),"bswap.3",IP);
+    Value *Tmp2 = BinaryOperator::create(Instruction::LShr, V,
+                              ConstantInt::get(V->getType(),8),"bswap.2",IP);
+    Value *Tmp1 = BinaryOperator::create(Instruction::LShr, V,
+                              ConstantInt::get(V->getType(),24),"bswap.1", IP);
     Tmp3 = BinaryOperator::createAnd(Tmp3, 
                                      ConstantInt::get(Type::Int32Ty, 0xFF0000),
                                      "bswap.and3", IP);
@@ -146,22 +146,22 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
     break;
   }
   case 64: {
-    Value *Tmp8 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::Int8Ty,56),"bswap.8", IP);
-    Value *Tmp7 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::Int8Ty,40),"bswap.7", IP);
-    Value *Tmp6 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::Int8Ty,24),"bswap.6", IP);
-    Value *Tmp5 = new ShiftInst(Instruction::Shl, V,
-                              ConstantInt::get(Type::Int8Ty,8),"bswap.5", IP);
-    Value* Tmp4 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::Int8Ty,8),"bswap.4", IP);
-    Value* Tmp3 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::Int8Ty,24),"bswap.3", IP);
-    Value* Tmp2 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::Int8Ty,40),"bswap.2", IP);
-    Value* Tmp1 = new ShiftInst(Instruction::LShr, V,
-                              ConstantInt::get(Type::Int8Ty,56),"bswap.1", IP);
+    Value *Tmp8 = BinaryOperator::create(Instruction::Shl, V,
+                              ConstantInt::get(V->getType(),56),"bswap.8", IP);
+    Value *Tmp7 = BinaryOperator::create(Instruction::Shl, V,
+                              ConstantInt::get(V->getType(),40),"bswap.7", IP);
+    Value *Tmp6 = BinaryOperator::create(Instruction::Shl, V,
+                              ConstantInt::get(V->getType(),24),"bswap.6", IP);
+    Value *Tmp5 = BinaryOperator::create(Instruction::Shl, V,
+                              ConstantInt::get(V->getType(),8),"bswap.5", IP);
+    Value* Tmp4 = BinaryOperator::create(Instruction::LShr, V,
+                              ConstantInt::get(V->getType(),8),"bswap.4", IP);
+    Value* Tmp3 = BinaryOperator::create(Instruction::LShr, V,
+                              ConstantInt::get(V->getType(),24),"bswap.3", IP);
+    Value* Tmp2 = BinaryOperator::create(Instruction::LShr, V,
+                              ConstantInt::get(V->getType(),40),"bswap.2", IP);
+    Value* Tmp1 = BinaryOperator::create(Instruction::LShr, V,
+                              ConstantInt::get(V->getType(),56),"bswap.1", IP);
     Tmp7 = BinaryOperator::createAnd(Tmp7,
                              ConstantInt::get(Type::Int64Ty, 
                                0xFF000000000000ULL),
@@ -210,8 +210,8 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
   for (unsigned i = 1, ct = 0; i != BitSize; i <<= 1, ++ct) {
     Value *MaskCst = ConstantInt::get(V->getType(), MaskValues[ct]);
     Value *LHS = BinaryOperator::createAnd(V, MaskCst, "cppop.and1", IP);
-    Value *VShift = new ShiftInst(Instruction::LShr, V,
-                      ConstantInt::get(Type::Int8Ty, i), "ctpop.sh", IP);
+    Value *VShift = BinaryOperator::create(Instruction::LShr, V,
+                      ConstantInt::get(V->getType(), i), "ctpop.sh", IP);
     Value *RHS = BinaryOperator::createAnd(VShift, MaskCst, "cppop.and2", IP);
     V = BinaryOperator::createAdd(LHS, RHS, "ctpop.step", IP);
   }
@@ -225,8 +225,8 @@ static Value *LowerCTLZ(Value *V, Instruction *IP) {
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   for (unsigned i = 1; i != BitSize; i <<= 1) {
-    Value *ShVal = ConstantInt::get(Type::Int8Ty, i);
-    ShVal = new ShiftInst(Instruction::LShr, V, ShVal, "ctlz.sh", IP);
+    Value *ShVal = ConstantInt::get(V->getType(), i);
+    ShVal = BinaryOperator::create(Instruction::LShr, V, ShVal, "ctlz.sh", IP);
     V = BinaryOperator::createOr(V, ShVal, "ctlz.step", IP);
   }
 

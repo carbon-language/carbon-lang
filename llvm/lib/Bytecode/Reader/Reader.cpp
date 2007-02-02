@@ -607,13 +607,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
           static_cast<unsigned short>(Oprnds[2]),
           getValue(iType, Oprnds[0]), getValue(iType, Oprnds[1]));
       break;
-    case Instruction::Shl:
-    case Instruction::LShr:
-    case Instruction::AShr:
-      Result = new ShiftInst(Instruction::OtherOps(Opcode),
-                             getValue(iType, Oprnds[0]),
-                             getValue(Int8TySlot, Oprnds[1]));
-      break;
     case Instruction::Ret:
       if (Oprnds.size() == 0)
         Result = new ReturnInst();

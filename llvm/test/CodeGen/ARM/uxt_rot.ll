@@ -17,8 +17,8 @@ define i32 @test2(i32 %A.u, i32 %B.u) zext {
 }
 
 define i32 @test3(i32 %A.u) zext {
-    %B.u = lshr i32 %A.u, i8 8
-    %C.u = shl i32 %A.u, i8 24
+    %B.u = lshr i32 %A.u, 8
+    %C.u = shl i32 %A.u, 24
     %D.u = or i32 %B.u, %C.u
     %E.u = trunc i32 %D.u to i16
     %F.u = zext i16 %E.u to i32

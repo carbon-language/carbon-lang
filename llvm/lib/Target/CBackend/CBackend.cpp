@@ -225,7 +225,6 @@ namespace {
     void visitSelectInst(SelectInst &I);
     void visitCallInst (CallInst &I);
     void visitInlineAsm(CallInst &I);
-    void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
 
     void visitMallocInst(MallocInst &I);
     void visitAllocaInst(AllocaInst &I);
@@ -2160,18 +2159,18 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     writeOperandWithCast(I.getOperand(0), I.getOpcode());
 
     switch (I.getOpcode()) {
-    case Instruction::Add: Out << " + "; break;
-    case Instruction::Sub: Out << " - "; break;
-    case Instruction::Mul: Out << '*'; break;
+    case Instruction::Add:  Out << " + "; break;
+    case Instruction::Sub:  Out << " - "; break;
+    case Instruction::Mul:  Out << " * "; break;
     case Instruction::URem:
     case Instruction::SRem:
-    case Instruction::FRem: Out << '%'; break;
+    case Instruction::FRem: Out << " % "; break;
     case Instruction::UDiv:
     case Instruction::SDiv: 
-    case Instruction::FDiv: Out << '/'; break;
-    case Instruction::And: Out << " & "; break;
-    case Instruction::Or: Out << " | "; break;
-    case Instruction::Xor: Out << " ^ "; break;
+    case Instruction::FDiv: Out << " / "; break;
+    case Instruction::And:  Out << " & "; break;
+    case Instruction::Or:   Out << " | "; break;
+    case Instruction::Xor:  Out << " ^ "; break;
     case Instruction::Shl : Out << " << "; break;
     case Instruction::LShr:
     case Instruction::AShr: Out << " >> "; break;

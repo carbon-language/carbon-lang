@@ -251,8 +251,8 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    Res = new ShiftInst(cast<ShiftInst>(I)->getOpcode(), Dummy,
-                        I->getOperand(1), Name);
+    Res = BinaryOperator::create(cast<BinaryOperator>(I)->getOpcode(), Dummy,
+                                 I->getOperand(1), Name);
     VMC.ExprMap[I] = Res;
     Res->setOperand(0, ConvertExpressionToType(I->getOperand(0), Ty, VMC, TD));
     break;
@@ -472,9 +472,9 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     }
     return false;
   }
+  case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-  case Instruction::Shl:
     if (I->getOperand(1) == V) return false;  // Cannot change shift amount type
     if (!Ty->isInteger()) return false;
     return ValueConvertibleToType(I, Ty, CTMap, TD);
@@ -747,8 +747,8 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   case Instruction::LShr:
   case Instruction::AShr:
     assert(I->getOperand(0) == OldVal);
-    Res = new ShiftInst(cast<ShiftInst>(I)->getOpcode(), NewVal,
-                        I->getOperand(1), Name);
+    Res = BinaryOperator::create(cast<BinaryOperator>(I)->getOpcode(), NewVal,
+                                 I->getOperand(1), Name);
     break;
 
   case Instruction::Free:            // Free can free any pointer type!

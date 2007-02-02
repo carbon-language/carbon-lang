@@ -165,9 +165,10 @@ public:
   void visitUnwindInst(UnwindInst &I);
   void visitUnreachableInst(UnreachableInst &I);
 
-  void visitShl(ShiftInst &I);
-  void visitLShr(ShiftInst &I);
-  void visitAShr(ShiftInst &I);
+  void visitShl(BinaryOperator &I);
+  void visitLShr(BinaryOperator &I);
+  void visitAShr(BinaryOperator &I);
+
   void visitVAArgInst(VAArgInst &I);
   void visitInstruction(Instruction &I) {
     cerr << I;

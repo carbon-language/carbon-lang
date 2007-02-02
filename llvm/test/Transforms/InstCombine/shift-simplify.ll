@@ -1,22 +1,23 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | egrep 'shl|lshr|ashr' | wc -l | grep 3
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN:    egrep 'shl|lshr|ashr' | wc -l | grep 3
 
-int %test0(int %A, int %B, ubyte %C) {
-	%X = shl int %A, ubyte %C
-	%Y = shl int %B, ubyte %C
-	%Z = and int %X, %Y
-	ret int %Z
+define i32 @test0(i32 %A, i32 %B, i32 %C) {
+	%X = shl i32 %A, %C
+	%Y = shl i32 %B, %C
+	%Z = and i32 %X, %Y
+	ret i32 %Z
 }
 
-int %test1(int %A, int %B, ubyte %C) {
-	%X = lshr int %A, ubyte %C
-	%Y = lshr int %B, ubyte %C
-	%Z = or int %X, %Y
-	ret int %Z
+define i32 @test1(i32 %A, i32 %B, i32 %C) {
+	%X = lshr i32 %A, %C
+	%Y = lshr i32 %B, %C
+	%Z = or i32 %X, %Y
+	ret i32 %Z
 }
 
-int %test2(int %A, int %B, ubyte %C) {
-	%X = ashr int %A, ubyte %C
-	%Y = ashr int %B, ubyte %C
-	%Z = xor int %X, %Y
-	ret int %Z
+define i32 @test2(i32 %A, i32 %B, i32 %C) {
+	%X = ashr i32 %A, %C
+	%Y = ashr i32 %B, %C
+	%Z = xor i32 %X, %Y
+	ret i32 %Z
 }

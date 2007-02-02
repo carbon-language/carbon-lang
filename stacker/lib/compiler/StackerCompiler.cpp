@@ -1247,7 +1247,8 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
         CastInst* castop = new TruncInst( op1, Type::Int8Ty );
         bb->getInstList().push_back( castop );
-        ShiftInst* shlop = new ShiftInst( Instruction::Shl, op2, castop );
+        BinaryOperator* shlop = 
+          BinaryOperator::create( Instruction::Shl, op2, castop );
         bb->getInstList().push_back( shlop );
         push_value( bb, shlop );
         break;
@@ -1259,7 +1260,8 @@ StackerCompiler::handle_word( int tkn )
         LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
         CastInst* castop = new TruncInst( op1, Type::Int8Ty );
         bb->getInstList().push_back( castop );
-        ShiftInst* shrop = new ShiftInst( Instruction::AShr, op2, castop );
+        BinaryOperator* shrop = 
+          BinaryOperator::create( Instruction::AShr, op2, castop );
         bb->getInstList().push_back( shrop );
         push_value( bb, shrop );
         break;

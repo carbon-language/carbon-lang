@@ -10,12 +10,12 @@
 @f = constant i9 sub(i9 0 , i9 511)
 @g = constant i9 sub(i9 2 , i9 511)
 
-@h = constant i9 shl(i9 1 , i8 9)
-@i = constant i9 shl(i9 1 , i8 8)
-@j = constant i9 lshr(i9 511 , i8 8)
-@k = constant i9 lshr(i9 511 , i8 9)
-@l = constant i9 ashr(i9 511 , i8 8)
-@m = constant i9 ashr(i9 511 , i8 9)
+@h = constant i9 shl(i9 1 , i9 9)
+@i = constant i9 shl(i9 1 , i9 8)
+@j = constant i9 lshr(i9 511 , i9 8)
+@k = constant i9 lshr(i9 511 , i9 9)
+@l = constant i9 ashr(i9 511 , i9 8)
+@m = constant i9 ashr(i9 511 , i9 9)
 
 @n = constant i9 mul(i9 511, i9 2)
 @q = constant i9 sdiv(i9 511, i9 2)

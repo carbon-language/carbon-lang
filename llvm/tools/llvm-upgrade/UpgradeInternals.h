@@ -194,6 +194,7 @@ enum BinaryOps {
   DivOp, UDivOp, SDivOp, FDivOp, 
   RemOp, URemOp, SRemOp, FRemOp, 
   AndOp, OrOp, XorOp,
+  ShlOp, ShrOp, LShrOp, AShrOp,
   SetEQ, SetNE, SetLE, SetGE, SetLT, SetGT
 };
 
@@ -202,10 +203,9 @@ enum MemoryOps {
 };
 
 enum OtherOps {
-  PHIOp, CallOp, ShlOp, ShrOp, SelectOp, UserOp1, UserOp2, VAArg,
+  PHIOp, CallOp, SelectOp, UserOp1, UserOp2, VAArg,
   ExtractElementOp, InsertElementOp, ShuffleVectorOp,
-  ICmpOp, FCmpOp,
-  LShrOp, AShrOp
+  ICmpOp, FCmpOp
 };
 
 enum CastOps {

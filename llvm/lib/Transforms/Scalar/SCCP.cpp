@@ -377,7 +377,6 @@ private:
   void visitSelectInst(SelectInst &I);
   void visitBinaryOperator(Instruction &I);
   void visitCmpInst(CmpInst &I);
-  void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
   void visitExtractElementInst(ExtractElementInst &I);
   void visitInsertElementInst(InsertElementInst &I);
   void visitShuffleVectorInst(ShuffleVectorInst &I);

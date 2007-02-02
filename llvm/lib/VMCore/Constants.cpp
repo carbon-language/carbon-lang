@@ -1302,10 +1302,7 @@ namespace llvm {
       if (Instruction::isCast(V.opcode))
         return new UnaryConstantExpr(V.opcode, V.operands[0], Ty);
       if ((V.opcode >= Instruction::BinaryOpsBegin &&
-           V.opcode < Instruction::BinaryOpsEnd) ||
-          V.opcode == Instruction::Shl           || 
-          V.opcode == Instruction::LShr          ||
-          V.opcode == Instruction::AShr)
+           V.opcode < Instruction::BinaryOpsEnd))
         return new BinaryConstantExpr(V.opcode, V.operands[0], V.operands[1]);
       if (V.opcode == Instruction::Select)
         return new SelectConstantExpr(V.operands[0], V.operands[1], 
@@ -1361,12 +1358,6 @@ namespace llvm {
         New = ConstantExpr::getSelectTy(NewTy, OldC->getOperand(0),
                                         OldC->getOperand(1),
                                         OldC->getOperand(2));
-        break;
-      case Instruction::Shl:
-      case Instruction::LShr:
-      case Instruction::AShr:
-        New = ConstantExpr::getShiftTy(NewTy, OldC->getOpcode(),
-                                     OldC->getOperand(0), OldC->getOperand(1));
         break;
       default:
         assert(OldC->getOpcode() >= Instruction::BinaryOpsBegin &&
@@ -1603,10 +1594,6 @@ Constant *ConstantExpr::getPtrPtrFromArrayPtr(Constant *C) {
 
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
                               Constant *C1, Constant *C2) {
-  if (Opcode == Instruction::Shl || Opcode == Instruction::LShr ||
-      Opcode == Instruction::AShr)
-    return getShiftTy(ReqTy, Opcode, C1, C2);
-
   // Check the operands for consistency first
   assert(Opcode >= Instruction::BinaryOpsBegin &&
          Opcode <  Instruction::BinaryOpsEnd   &&
@@ -1689,7 +1676,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    assert(C2->getType() == Type::Int8Ty && "Shift should be by i8!");
+    assert(C1->getType() == C2->getType() && "Op types should be identical!");
     assert(C1->getType()->isInteger() &&
            "Tried to create a shift operation on a non-integer type!");
     break;
@@ -1721,26 +1708,6 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
   argVec[1] = V1;
   argVec[2] = V2;
   ExprMapKeyType Key(Instruction::Select, argVec);
-  return ExprConstants->getOrCreate(ReqTy, Key);
-}
-
-/// getShiftTy - Return a shift left or shift right constant expr
-Constant *ConstantExpr::getShiftTy(const Type *ReqTy, unsigned Opcode,
-                                   Constant *C1, Constant *C2) {
-  // Check the operands for consistency first
-  assert((Opcode == Instruction::Shl   ||
-          Opcode == Instruction::LShr  ||
-          Opcode == Instruction::AShr) &&
-         "Invalid opcode in binary constant expression");
-  assert(C1->getType()->isInteger() && C2->getType() == Type::Int8Ty &&
-         "Invalid operand types for Shift constant expr!");
-
-  if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
-    return FC;          // Fold a few common cases...
-
-  // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
-  ExprMapKeyType Key(Opcode, argVec);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }
 

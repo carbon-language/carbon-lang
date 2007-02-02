@@ -1728,10 +1728,6 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       InstResult = ConstantExpr::get(BO->getOpcode(),
                                      getVal(Values, BO->getOperand(0)),
                                      getVal(Values, BO->getOperand(1)));
-    } else if (ShiftInst *SI = dyn_cast<ShiftInst>(CurInst)) {
-      InstResult = ConstantExpr::get(SI->getOpcode(),
-                                     getVal(Values, SI->getOperand(0)),
-                                     getVal(Values, SI->getOperand(1)));
     } else if (CmpInst *CI = dyn_cast<CmpInst>(CurInst)) {
       InstResult = ConstantExpr::getCompare(CI->getPredicate(),
                                             getVal(Values, CI->getOperand(0)),

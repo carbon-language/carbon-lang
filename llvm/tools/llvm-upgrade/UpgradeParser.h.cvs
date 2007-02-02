@@ -119,26 +119,26 @@
      AND = 345,
      OR = 346,
      XOR = 347,
-     SETLE = 348,
-     SETGE = 349,
-     SETLT = 350,
-     SETGT = 351,
-     SETEQ = 352,
-     SETNE = 353,
-     ICMP = 354,
-     FCMP = 355,
-     MALLOC = 356,
-     ALLOCA = 357,
-     FREE = 358,
-     LOAD = 359,
-     STORE = 360,
-     GETELEMENTPTR = 361,
-     PHI_TOK = 362,
-     SELECT = 363,
-     SHL = 364,
-     SHR = 365,
-     ASHR = 366,
-     LSHR = 367,
+     SHL = 348,
+     SHR = 349,
+     ASHR = 350,
+     LSHR = 351,
+     SETLE = 352,
+     SETGE = 353,
+     SETLT = 354,
+     SETGT = 355,
+     SETEQ = 356,
+     SETNE = 357,
+     ICMP = 358,
+     FCMP = 359,
+     MALLOC = 360,
+     ALLOCA = 361,
+     FREE = 362,
+     LOAD = 363,
+     STORE = 364,
+     GETELEMENTPTR = 365,
+     PHI_TOK = 366,
+     SELECT = 367,
      VAARG = 368,
      EXTRACTELEMENT = 369,
      INSERTELEMENT = 370,
@@ -271,26 +271,26 @@
 #define AND 345
 #define OR 346
 #define XOR 347
-#define SETLE 348
-#define SETGE 349
-#define SETLT 350
-#define SETGT 351
-#define SETEQ 352
-#define SETNE 353
-#define ICMP 354
-#define FCMP 355
-#define MALLOC 356
-#define ALLOCA 357
-#define FREE 358
-#define LOAD 359
-#define STORE 360
-#define GETELEMENTPTR 361
-#define PHI_TOK 362
-#define SELECT 363
-#define SHL 364
-#define SHR 365
-#define ASHR 366
-#define LSHR 367
+#define SHL 348
+#define SHR 349
+#define ASHR 350
+#define LSHR 351
+#define SETLE 352
+#define SETGE 353
+#define SETLT 354
+#define SETGT 355
+#define SETEQ 356
+#define SETNE 357
+#define ICMP 358
+#define FCMP 359
+#define MALLOC 360
+#define ALLOCA 361
+#define FREE 362
+#define LOAD 363
+#define STORE 364
+#define GETELEMENTPTR 365
+#define PHI_TOK 366
+#define SELECT 367
 #define VAARG 368
 #define EXTRACTELEMENT 369
 #define INSERTELEMENT 370
@@ -335,7 +335,7 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 1440 "/proj/llvm/llvm-1/tools/llvm-upgrade/UpgradeParser.y"
+#line 1435 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;

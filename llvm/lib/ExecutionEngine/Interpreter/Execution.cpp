@@ -1275,7 +1275,7 @@ static GenericValue executeAShrInst(GenericValue Src1, GenericValue Src2,
   return Dest;
 }
 
-void Interpreter::visitShl(ShiftInst &I) {
+void Interpreter::visitShl(BinaryOperator &I) {
   ExecutionContext &SF = ECStack.back();
   const Type *Ty    = I.getOperand(0)->getType();
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
@@ -1285,7 +1285,7 @@ void Interpreter::visitShl(ShiftInst &I) {
   SetValue(&I, Dest, SF);
 }
 
-void Interpreter::visitLShr(ShiftInst &I) {
+void Interpreter::visitLShr(BinaryOperator &I) {
   ExecutionContext &SF = ECStack.back();
   const Type *Ty    = I.getOperand(0)->getType();
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
@@ -1295,7 +1295,7 @@ void Interpreter::visitLShr(ShiftInst &I) {
   SetValue(&I, Dest, SF);
 }
 
-void Interpreter::visitAShr(ShiftInst &I) {
+void Interpreter::visitAShr(BinaryOperator &I) {
   ExecutionContext &SF = ECStack.back();
   const Type *Ty    = I.getOperand(0)->getType();
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);

@@ -10,10 +10,10 @@
 @f = constant i1 sub(i1 1 , i1 -1)
 @g = constant i1 sub(i1 1 , i1 1)
 
-@h = constant i1 shl(i1 1 , i8 1)
-@i = constant i1 shl(i1 1 , i8 0)
-@j = constant i1 lshr(i1 1, i8 1)
-@m = constant i1 ashr(i1 1, i8 1)
+@h = constant i1 shl(i1 1 , i1 1)
+@i = constant i1 shl(i1 1 , i1 0)
+@j = constant i1 lshr(i1 1, i1 1)
+@m = constant i1 ashr(i1 1, i1 1)
 
 @n = constant i1 mul(i1 -1, i1 1)
 @o = constant i1 sdiv(i1 -1, i1 1)

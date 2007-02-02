@@ -216,10 +216,6 @@ Constant *llvm::ConstantFoldInstOperands(const Instruction* I,
   case Instruction::FCmp:
     return ConstantExpr::getCompare(cast<CmpInst>(I)->getPredicate(), Ops[0], 
                                     Ops[1]);
-  case Instruction::Shl:
-  case Instruction::LShr:
-  case Instruction::AShr:
-    return ConstantExpr::get(Opc, Ops[0], Ops[1]);
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:

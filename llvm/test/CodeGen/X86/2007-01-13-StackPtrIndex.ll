@@ -29,19 +29,19 @@ b:
 	%r22 = select i1 %r20, i64 1, i64 %r19h
 	%r23 = mul i64 %r22, 0
 	%r23a = trunc i64 %r23 to i32
-	%r24 = shl i32 %r23a, i8 0
+	%r24 = shl i32 %r23a, 0
 	%r25 = add i32 %r24, 0
 	%ras2 = alloca i8, i32 %r25, align 16
 	%r28 = getelementptr i8* %ras2, i32 0
-	%r38 = shl i64 %r12, i8 0
+	%r38 = shl i64 %r12, 0
 	%s2013 = add i64 %r38, 0
 	%c22012 = getelementptr i8* %ras2, i64 %s2013
-	%r42 = shl i64 %r12, i8 0
+	%r42 = shl i64 %r12, 0
 	%s2011 = add i64 %r42, 16
 	%c22010 = getelementptr i8* %ras2, i64 %s2011
 	%r50 = add i64 %r16, 0
 	%r51 = icmp slt i64 %r50, 0
-	%r50sh = shl i64 %r50, i8 0
+	%r50sh = shl i64 %r50, 0
 	%r50j = add i64 %r50sh, 0
 	%r54 = select i1 %r51, i64 0, i64 %r50j
 	%r56 = mul i64 %r54, %r12
@@ -69,7 +69,7 @@ a25b140q:
 	br label %a25b140
 a25b:
 	%w1989 = phi i64 [ 0, %b63 ], [ %v1990, %a25b ]
-	%e642 = shl i64 %w1989, i8 0
+	%e642 = shl i64 %w1989, 0
 	%r129 = add i64 %e642, 0
 	%r132 = add i64 %e642, 0
 	%r134 = icmp slt i64 %r132, 0
@@ -112,7 +112,7 @@ a30b294q:
 	br label %a30b294
 a30b:
 	%w = phi i64 [ 0, %b179 ], [ %v, %a30b ]
-	%b2 = shl i64 %w, i8 0
+	%b2 = shl i64 %w, 0
 	%r283 = add i64 %b2, 0
 	%r286 = add i64 %b2, 0
 	%r288 = icmp slt i64 %r286, 0
@@ -152,7 +152,7 @@ b377:
 	br i1 %r462, label %a35b465, label %b463
 a35b:
 	%w1865 = phi i64 [ 0, %b341 ], [ %v1866, %a35b ]
-	%e785 = shl i64 %w1865, i8 0
+	%e785 = shl i64 %w1865, 0
 	%b1877 = mul i64 %w1865, 0
 	%s795 = add i64 %b1877, 0
 	%r399 = add float %r354, 0.000000e+00
@@ -196,7 +196,7 @@ b565:
 	br i1 %r711, label %a45b714, label %b712
 a45b:
 	%w1852 = phi i64 [ 0, %b535 ], [ %v1853, %a45b ]
-	%e945 = shl i64 %w1852, i8 0
+	%e945 = shl i64 %w1852, 0
 	%r609 = add i64 %r562, 0
 	%r703 = add i64 %e945, 0
 	%r706 = add i64 %e945, 0
@@ -261,7 +261,7 @@ b858:
 	%w1891 = phi i64 [ 0, %b820 ], [ %v1892, %b1016 ]
 	%s1193 = phi i64 [ 0, %b820 ], [ %r1068, %b1016 ]
 	%b1894 = mul i64 %r834, 0
-	%b1896 = shl i64 %r823, i8 0
+	%b1896 = shl i64 %r823, 0
 	%b1902 = mul i64 %w1891, 0
 	%s1173 = add i64 %b1902, 0
 	%r859 = add i64 %r856, 0
@@ -285,7 +285,7 @@ a53b1019q:
 	br label %a53b1019
 a53b:
 	%w1881 = phi i64 [ 0, %b858 ], [ %v1882, %a53b ]
-	%e1205 = shl i64 %w1881, i8 0
+	%e1205 = shl i64 %w1881, 0
 	%r1007 = add i64 %e1205, 0
 	%r1010 = add i64 %e1205, 0
 	%r1012 = icmp slt i64 %r1010, 0
@@ -365,7 +365,7 @@ a63b:
 	%b1907 = mul i64 %r1101, 0
 	%b1929 = mul i64 %w1904, 0
 	%s1395 = add i64 %b1929, 0
-	%e1365 = shl i64 %w1904, i8 0
+	%e1365 = shl i64 %w1904, 0
 	%r1163 = add i64 %r1090, 0
 	%r1167 = add i64 %s1375, 0
 	%r1191 = add i64 %r1163, 0

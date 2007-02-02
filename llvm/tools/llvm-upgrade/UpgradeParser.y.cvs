@@ -1008,6 +1008,13 @@ getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
     case URemOp : return Instruction::URem;
     case SRemOp : return Instruction::SRem;
     case FRemOp : return Instruction::FRem;
+    case LShrOp : return Instruction::LShr;
+    case AShrOp : return Instruction::AShr;
+    case ShlOp  : return Instruction::Shl;
+    case ShrOp  : 
+      if (Sign == Signed)
+        return Instruction::AShr;
+      return Instruction::LShr;
     case AndOp  : return Instruction::And;
     case OrOp   : return Instruction::Or;
     case XorOp  : return Instruction::Xor;
@@ -1102,11 +1109,6 @@ getOtherOp(OtherOps op, Signedness Sign) {
     default               : assert(0 && "Invalid OldOtherOps");
     case PHIOp            : return Instruction::PHI;
     case CallOp           : return Instruction::Call;
-    case ShlOp            : return Instruction::Shl;
-    case ShrOp            : 
-      if (Sign == Signed)
-        return Instruction::AShr;
-      return Instruction::LShr;
     case SelectOp         : return Instruction::Select;
     case UserOp1          : return Instruction::UserOp1;
     case UserOp2          : return Instruction::UserOp2;
@@ -1116,8 +1118,6 @@ getOtherOp(OtherOps op, Signedness Sign) {
     case ShuffleVectorOp  : return Instruction::ShuffleVector;
     case ICmpOp           : return Instruction::ICmp;
     case FCmpOp           : return Instruction::FCmp;
-    case LShrOp           : return Instruction::LShr;
-    case AShrOp           : return Instruction::AShr;
   };
 }
 
@@ -1193,7 +1193,6 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
       error("Invalid prototype for " + Name + " prototype");
     return new FCmpInst(FCmpInst::FCMP_UNO, Args[0], Args[1]);
   } else {
-    static unsigned upgradeCount = 1;
     const Type* PtrTy = PointerType::get(Type::Int8Ty);
     std::vector<const Type*> Params;
     if (Name == "llvm.va_start" || Name == "llvm.va_end") {
@@ -1203,9 +1202,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
       const FunctionType *FTy = FunctionType::get(Type::VoidTy, Params, false);
       const PointerType *PFTy = PointerType::get(FTy);
       Value* Func = getVal(PFTy, ID);
-      std::string InstName("va_upgrade");
-      InstName += llvm::utostr(upgradeCount++);
-      Args[0] = new BitCastInst(Args[0], PtrTy, InstName, CurBB);
+      Args[0] = new BitCastInst(Args[0], PtrTy, makeNameUnique("va"), CurBB);
       return new CallInst(Func, Args);
     } else if (Name == "llvm.va_copy") {
       if (Args.size() != 2)
@@ -1215,10 +1212,8 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
       const FunctionType *FTy = FunctionType::get(Type::VoidTy, Params, false);
       const PointerType *PFTy = PointerType::get(FTy);
       Value* Func = getVal(PFTy, ID);
-      std::string InstName0("va_upgrade");
-      InstName0 += llvm::utostr(upgradeCount++);
-      std::string InstName1("va_upgrade");
-      InstName1 += llvm::utostr(upgradeCount++);
+      std::string InstName0(makeNameUnique("va0"));
+      std::string InstName1(makeNameUnique("va1"));
       Args[0] = new BitCastInst(Args[0], PtrTy, InstName0, CurBB);
       Args[1] = new BitCastInst(Args[1], PtrTy, InstName1, CurBB);
       return new CallInst(Func, Args);
@@ -1263,7 +1258,7 @@ const Type* upgradeGEPIndices(const Type* PTy,
               cast<Constant>(Index), Type::Int64Ty);
           else
             Index = CastInst::create(Instruction::ZExt, Index, Type::Int64Ty,
-              makeNameUnique("gep_upgrade"), CurBB);
+              makeNameUnique("gep"), CurBB);
           VIndices[i] = Index;
         }
     }
@@ -1546,8 +1541,9 @@ using namespace llvm;
 
 // Binary Operators
 %type  <BinaryOpVal> ArithmeticOps LogicalOps SetCondOps // Binops Subcatagories
+%type  <BinaryOpVal> ShiftOps
 %token <BinaryOpVal> ADD SUB MUL DIV UDIV SDIV FDIV REM UREM SREM FREM 
-%token <BinaryOpVal> AND OR XOR
+%token <BinaryOpVal> AND OR XOR SHL SHR ASHR LSHR 
 %token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comparators
 %token <OtherOpVal> ICMP FCMP
 
@@ -1555,8 +1551,7 @@ using namespace llvm;
 %token <MemOpVal> MALLOC ALLOCA FREE LOAD STORE GETELEMENTPTR
 
 // Other Operators
-%type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI_TOK SELECT SHL SHR ASHR LSHR VAARG
+%token <OtherOpVal> PHI_TOK SELECT VAARG
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 %token VAARG_old VANEXT_old //OBSOLETE
 
@@ -2303,9 +2298,11 @@ ConstExpr
     if (!$5.C->getType()->isInteger() ||
         cast<IntegerType>($5.C->getType())->getBitWidth() != 8)
       error("Shift count for shift constant must be unsigned byte");
+    const Type* Ty = $3.C->getType();
     if (!$3.C->getType()->isInteger())
       error("Shift constant expression requires integer operand");
-    $$.C = ConstantExpr::get(getOtherOp($1, $3.S), $3.C, $5.C);
+    Constant *ShiftAmt = ConstantExpr::getZExt($5.C, Ty);
+    $$.C = ConstantExpr::get(getBinaryOp($1, Ty, $3.S), $3.C, ShiftAmt);
     $$.S = $3.S;
   }
   | EXTRACTELEMENT '(' ConstVal ',' ConstVal ')' {
@@ -3118,9 +3115,18 @@ InstVal
     if (!$4.V->getType()->isInteger() ||
         cast<IntegerType>($4.V->getType())->getBitWidth() != 8)
       error("Shift amount must be int8");
-    if (!$2.V->getType()->isInteger())
+    const Type* Ty = $2.V->getType();
+    if (!Ty->isInteger())
       error("Shift constant expression requires integer operand");
-    $$.I = new ShiftInst(getOtherOp($1, $2.S), $2.V, $4.V);
+    Value* ShiftAmt = 0;
+    if (cast<IntegerType>(Ty)->getBitWidth() > Type::Int8Ty->getBitWidth())
+      if (Constant *C = dyn_cast<Constant>($4.V))
+        ShiftAmt = ConstantExpr::getZExt(C, Ty);
+      else
+        ShiftAmt = new ZExtInst($4.V, Ty, makeNameUnique("shift"), CurBB);
+    else
+      ShiftAmt = $4.V;
+    $$.I = BinaryOperator::create(getBinaryOp($1, Ty, $2.S), $2.V, ShiftAmt);
     $$.S = $2.S;
   }
   | CastOps ResolvedVal TO Types {

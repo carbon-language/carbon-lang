@@ -997,6 +997,8 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 // Binary Operators
 %type  <BinaryOpVal> ArithmeticOps LogicalOps // Binops Subcatagories
 %token <BinaryOpVal> ADD SUB MUL UDIV SDIV FDIV UREM SREM FREM AND OR XOR
+%token <BinaryOpVal> SHL LSHR ASHR
+
 %token <OtherOpVal> ICMP FCMP
 %type  <IPredicate> IPredicates
 %type  <FPredicate> FPredicates
@@ -1012,8 +1014,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <CastOpVal> UITOFP SITOFP FPTOUI FPTOSI INTTOPTR PTRTOINT
 
 // Other Operators
-%type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI_TOK SELECT SHL LSHR ASHR VAARG
+%token <OtherOpVal> PHI_TOK SELECT VAARG
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 
 // Function Attributes
@@ -1030,10 +1031,10 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
 //
 ArithmeticOps: ADD | SUB | MUL | UDIV | SDIV | FDIV | UREM | SREM | FREM;
-LogicalOps   : AND | OR | XOR;
+LogicalOps   : SHL | LSHR | ASHR | AND | OR | XOR;
 CastOps      : TRUNC | ZEXT | SEXT | FPTRUNC | FPEXT | BITCAST | 
                UITOFP | SITOFP | FPTOUI | FPTOSI | INTTOPTR | PTRTOINT;
-ShiftOps     : SHL | LSHR | ASHR;
+
 IPredicates  
   : EQ   { $$ = ICmpInst::ICMP_EQ; }  | NE   { $$ = ICmpInst::ICMP_NE; }
   | SLT  { $$ = ICmpInst::ICMP_SLT; } | SGT  { $$ = ICmpInst::ICMP_SGT; }
@@ -1764,7 +1765,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if ($3->getType() != $5->getType())
       GEN_ERROR("Logical operator types must match!");
     if (!$3->getType()->isInteger()) {
-      if (!isa<PackedType>($3->getType()) || 
+      if (Instruction::isShift($1) || !isa<PackedType>($3->getType()) || 
           !cast<PackedType>($3->getType())->getElementType()->isInteger())
         GEN_ERROR("Logical operator requires integral operands!");
     }
@@ -1780,15 +1781,6 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if ($4->getType() != $6->getType())
       GEN_ERROR("fcmp operand types must match!");
     $$ = ConstantExpr::getFCmp($2, $4, $6);
-  }
-  | ShiftOps '(' ConstVal ',' ConstVal ')' {
-    if ($5->getType() != Type::Int8Ty)
-      GEN_ERROR("Shift count for shift constant must be i8 type!");
-    if (!$3->getType()->isInteger())
-      GEN_ERROR("Shift constant expression requires integer operand!");
-    CHECK_FOR_ERROR;
-    $$ = ConstantExpr::get($1, $3, $5);
-    CHECK_FOR_ERROR
   }
   | EXTRACTELEMENT '(' ConstVal ',' ConstVal ')' {
     if (!ExtractElementInst::isValidOperands($3, $5))
@@ -2592,7 +2584,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     if (!(*$2)->isInteger()) {
-      if (!isa<PackedType>($2->get()) ||
+      if (Instruction::isShift($1) || !isa<PackedType>($2->get()) ||
           !cast<PackedType>($2->get())->getElementType()->isInteger())
         GEN_ERROR("Logical operator requires integral operands!");
     }
@@ -2630,15 +2622,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("fcmp operator returned null!");
-  }
-  | ShiftOps ResolvedVal ',' ResolvedVal {
-    if ($4->getType() != Type::Int8Ty)
-      GEN_ERROR("Shift amount must be i8 type!");
-    if (!$2->getType()->isInteger())
-      GEN_ERROR("Shift constant expression requires integer operand!");
-    CHECK_FOR_ERROR;
-    $$ = new ShiftInst($1, $2, $4);
-    CHECK_FOR_ERROR
   }
   | CastOps ResolvedVal TO Types {
     if (!UpRefs.empty())

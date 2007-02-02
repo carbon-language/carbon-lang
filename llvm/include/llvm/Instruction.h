@@ -129,6 +129,27 @@ public:
     return getOpcode() >= BinaryOpsBegin && getOpcode() < BinaryOpsEnd;
   }
 
+  /// @brief Determine if the Opcode is one of the shift instructions.
+  static inline bool isShift(unsigned Opcode) {
+    return Opcode >= Shl && Opcode <= AShr;
+  }
+
+  /// @brief Determine if the instruction's opcode is one of the shift 
+  /// instructions.
+  inline bool isShift() { return isShift(getOpcode()); }
+
+  /// isLogicalShift - Return true if this is a logical shift left or a logical
+  /// shift right.
+  inline bool isLogicalShift() {
+    return getOpcode() == Shl || getOpcode() == LShr;
+  }
+
+  /// isLogicalShift - Return true if this is a logical shift left or a logical
+  /// shift right.
+  inline bool isArithmeticShift() {
+    return getOpcode() == AShr;
+  }
+
   /// @brief Determine if the OpCode is one of the CastInst instructions.
   static inline bool isCast(unsigned OpCode) {
     return OpCode >= CastOpsBegin && OpCode < CastOpsEnd;

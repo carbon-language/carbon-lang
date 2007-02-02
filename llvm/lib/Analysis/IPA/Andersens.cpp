@@ -776,9 +776,6 @@ void Andersens::visitInstruction(Instruction &I) {
   case Instruction::Unwind:
   case Instruction::Unreachable:
   case Instruction::Free:
-  case Instruction::Shl:
-  case Instruction::LShr:
-  case Instruction::AShr:
   case Instruction::ICmp:
   case Instruction::FCmp:
     return;

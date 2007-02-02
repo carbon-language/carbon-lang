@@ -190,7 +190,6 @@ public:
   RetTy visitBitCastInst(BitCastInst &I)            { DELEGATE(CastInst); }
   RetTy visitSelectInst(SelectInst &I)              { DELEGATE(Instruction); }
   RetTy visitCallInst(CallInst     &I)              { DELEGATE(Instruction); }
-  RetTy visitShiftInst(ShiftInst   &I)              { DELEGATE(Instruction); }
   RetTy visitVAArgInst(VAArgInst   &I)              { DELEGATE(Instruction); }
   RetTy visitExtractElementInst(ExtractElementInst &I) { DELEGATE(Instruction);}
   RetTy visitInsertElementInst(InsertElementInst &I) { DELEGATE(Instruction); }

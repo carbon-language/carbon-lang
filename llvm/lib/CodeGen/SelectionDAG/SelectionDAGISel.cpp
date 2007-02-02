@@ -1420,7 +1420,10 @@ void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
   
-  Op2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Op2);
+  if (TLI.getShiftAmountTy() < Op2.getValueType())
+    Op2 = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), Op2);
+  else if (TLI.getShiftAmountTy() > Op2.getValueType())
+    Op2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Op2);
   
   setValue(&I, DAG.getNode(Opcode, Op1.getValueType(), Op1, Op2));
 }
