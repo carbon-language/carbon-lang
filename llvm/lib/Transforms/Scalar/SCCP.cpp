@@ -344,7 +344,7 @@ private:
   // getFeasibleSuccessors - Return a vector of booleans to indicate which
   // successors are reachable from a given terminator instruction.
   //
-  void getFeasibleSuccessors(TerminatorInst &TI, std::vector<bool> &Succs);
+  void getFeasibleSuccessors(TerminatorInst &TI, SmallVector<bool, 16> &Succs);
 
   // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
   // block to the 'To' basic block is currently feasible...
@@ -411,7 +411,7 @@ private:
 // successors are reachable from a given terminator instruction.
 //
 void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
-                                       std::vector<bool> &Succs) {
+                                       SmallVector<bool, 16> &Succs) {
   Succs.resize(TI.getNumSuccessors());
   if (BranchInst *BI = dyn_cast<BranchInst>(&TI)) {
     if (BI->isUnconditional()) {
@@ -452,8 +452,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
       Succs[0] = true;
     }
   } else {
-    cerr << "SCCP: Don't know how to handle: " << TI;
-    Succs.assign(TI.getNumSuccessors(), true);
+    assert(0 && "SCCP: Don't know how to handle this terminator!");
   }
 }
 
@@ -543,8 +542,7 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
     std::multimap<PHINode*, Instruction*>::iterator I, E;
     tie(I, E) = UsersOfOverdefinedPHIs.equal_range(&PN);
     if (I != E) {
-      std::vector<Instruction*> Users;
-      Users.reserve(std::distance(I, E));
+      SmallVector<Instruction*, 16> Users;
       for (; I != E; ++I) Users.push_back(I->second);
       while (!Users.empty()) {
         visit(Users.back());
@@ -624,7 +622,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
 
 
 void SCCPSolver::visitTerminatorInst(TerminatorInst &TI) {
-  std::vector<bool> SuccFeasible;
+  SmallVector<bool, 16> SuccFeasible;
   getFeasibleSuccessors(TI, SuccFeasible);
 
   BasicBlock *BB = TI.getParent();
@@ -1385,6 +1383,7 @@ bool SCCP::runOnFunction(Function &F) {
   // as we cannot modify the CFG of the function.
   //
   SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
+  SmallVector<Instruction*, 32> Insts;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (!ExecutableBBs.count(BB)) {
       DOUT << "  BasicBlock Dead:" << *BB;
@@ -1392,7 +1391,6 @@ bool SCCP::runOnFunction(Function &F) {
 
       // Delete the instructions backwards, as it has a reduced likelihood of
       // having to update as many def-use and use-def chains.
-      std::vector<Instruction*> Insts;
       for (BasicBlock::iterator I = BB->begin(), E = BB->getTerminator();
            I != E; ++I)
         Insts.push_back(I);
@@ -1524,6 +1522,9 @@ bool IPSCCP::runOnModule(Module &M) {
   // constants if we have found them to be of constant values.
   //
   SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
+  SmallVector<Instruction*, 32> Insts;
+  SmallVector<BasicBlock*, 32> BlocksToErase;
+
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
          AI != E; ++AI)
@@ -1541,7 +1542,6 @@ bool IPSCCP::runOnModule(Module &M) {
         }
       }
 
-    std::vector<BasicBlock*> BlocksToErase;
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       if (!ExecutableBBs.count(BB)) {
         DOUT << "  BasicBlock Dead:" << *BB;
@@ -1549,7 +1549,6 @@ bool IPSCCP::runOnModule(Module &M) {
 
         // Delete the instructions backwards, as it has a reduced likelihood of
         // having to update as many def-use and use-def chains.
-        std::vector<Instruction*> Insts;
         TerminatorInst *TI = BB->getTerminator();
         for (BasicBlock::iterator I = BB->begin(), E = TI; I != E; ++I)
           Insts.push_back(I);
@@ -1643,6 +1642,7 @@ bool IPSCCP::runOnModule(Module &M) {
       // Finally, delete the basic block.
       F->getBasicBlockList().erase(DeadBB);
     }
+    BlocksToErase.clear();
   }
 
   // If we inferred constant or undef return values for a function, we replaced
