@@ -68,6 +68,24 @@ static cl::opt<bool>
 NoVerify("disable-verify", cl::desc("Do not verify result module"), cl::Hidden);
 
 static cl::opt<bool>
+VerifyEach("verify-each", cl::desc("Verify after each transform"));
+
+static cl::opt<bool>
+StripDebug("strip-debug",
+           cl::desc("Strip debugger symbol info from translation unit"));
+
+static cl::opt<bool>
+DisableInline("disable-inlining", cl::desc("Do not run the inliner pass"));
+
+static cl::opt<bool> 
+DisableOptimizations("disable-opt", 
+                     cl::desc("Do not run any optimization passes"));
+
+static cl::opt<bool>
+StandardCompileOpts("std-compile-opts", 
+                   cl::desc("Include the standard compile time optimizations"));
+
+static cl::opt<bool>
 Quiet("q", cl::desc("Obsolete option"), cl::Hidden);
 
 static cl::alias
@@ -148,6 +166,76 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
   }
 };
 
+inline void addPass(PassManager &PM, Pass *P) {
+  // Add the pass to the pass manager...
+  PM.add(P);
+
+  // If we are verifying all of the intermediate steps, add the verifier...
+  if (VerifyEach) PM.add(createVerifierPass());
+}
+
+void AddStandardCompilePasses(PassManager &PM) {
+  PM.add(createVerifierPass());                  // Verify that input is correct
+
+  addPass(PM, createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
+  addPass(PM, createFunctionResolvingPass());    // Resolve (...) functions
+
+  // If the -strip-debug command line option was specified, do it.
+  if (StripDebug)
+    addPass(PM, createStripSymbolsPass(true));
+
+  if (DisableOptimizations) return;
+
+  addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
+  addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
+  addPass(PM, createPromoteMemoryToRegisterPass());// Kill useless allocas
+  addPass(PM, createGlobalOptimizerPass());      // Optimize out global vars
+  addPass(PM, createGlobalDCEPass());            // Remove unused fns and globs
+  addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation
+  addPass(PM, createDeadArgEliminationPass());   // Dead argument elimination
+  addPass(PM, createInstructionCombiningPass()); // Clean up after IPCP & DAE
+  addPass(PM, createCFGSimplificationPass());    // Clean up after IPCP & DAE
+
+  addPass(PM, createPruneEHPass());              // Remove dead EH info
+
+  if (!DisableInline)
+    addPass(PM, createFunctionInliningPass());   // Inline small functions
+  addPass(PM, createArgumentPromotionPass());    // Scalarize uninlined fn args
+
+  addPass(PM, createRaisePointerReferencesPass());// Recover type information
+  addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
+  addPass(PM, createInstructionCombiningPass()); // Cleanup for scalarrepl.
+  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+  addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
+  addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
+  addPass(PM, createCondPropagationPass());      // Propagate conditionals
+
+  addPass(PM, createTailCallEliminationPass());  // Eliminate tail calls
+  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+  addPass(PM, createReassociatePass());          // Reassociate expressions
+  addPass(PM, createLICMPass());                 // Hoist loop invariants
+  addPass(PM, createLoopUnswitchPass());         // Unswitch loops.
+  addPass(PM, createInstructionCombiningPass()); // Clean up after LICM/reassoc
+  addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
+  addPass(PM, createLoopUnrollPass());           // Unroll small loops
+  addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
+  addPass(PM, createLoadValueNumberingPass());   // GVN for load instructions
+  addPass(PM, createGCSEPass());                 // Remove common subexprs
+  addPass(PM, createSCCPPass());                 // Constant prop with SCCP
+
+  // Run instcombine after redundancy elimination to exploit opportunities
+  // opened up by them.
+  addPass(PM, createInstructionCombiningPass());
+  addPass(PM, createCondPropagationPass());      // Propagate conditionals
+
+  addPass(PM, createDeadStoreEliminationPass()); // Delete dead stores
+  addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
+  addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+  addPass(PM, createSimplifyLibCallsPass());     // Library Call Optimizations
+  addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
+  addPass(PM, createConstantMergePass());        // Merge dup global constants
+}
+
 } // anonymous namespace
 
 
@@ -218,6 +306,16 @@ int main(int argc, char **argv) {
     // Add an appropriate TargetData instance for this module...
     Passes.add(new TargetData(M.get()));
 
+    // If -std-compile-opts is given, add in all the standard compilation 
+    // optimizations first. This will handle -strip-debug, -disable-inline,
+    // and -disable-opt as well.
+    if (StandardCompileOpts)
+      AddStandardCompilePasses(Passes);
+
+    // otherwise if the -strip-debug command line option was specified, add it.
+    else if (StripDebug)
+      addPass(Passes, createStripSymbolsPass(true));
+
     // Create a new optimization pass for each one specified on the command line
     for (unsigned i = 0; i < PassList.size(); ++i) {
       const PassInfo *PassInf = PassList[i];
@@ -228,7 +326,7 @@ int main(int argc, char **argv) {
         cerr << argv[0] << ": cannot create pass: "
              << PassInf->getPassName() << "\n";
       if (P) {
-        Passes.add(P);
+        addPass(Passes, P);
         
         if (AnalyzeOnly) {
           if (dynamic_cast<BasicBlockPass*>(P))
@@ -245,7 +343,7 @@ int main(int argc, char **argv) {
     }
 
     // Check that the module is well formed on completion of optimization
-    if (!NoVerify)
+    if (!NoVerify && !VerifyEach)
       Passes.add(createVerifierPass());
 
     // Write bytecode out to disk or cout as the last step...
