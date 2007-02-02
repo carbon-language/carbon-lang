@@ -859,7 +859,7 @@ static bool isFloatingPointZero(SDOperand Op) {
   return false;
 }
 
-static bool isLegalCmpImmediate(int C, bool isThumb) {
+static bool isLegalCmpImmediate(unsigned C, bool isThumb) {
   return ( isThumb && (C & ~255U) == 0) ||
          (!isThumb && ARM_AM::getSOImmVal(C) != -1);
 }
@@ -869,38 +869,36 @@ static bool isLegalCmpImmediate(int C, bool isThumb) {
 static SDOperand getARMCmp(SDOperand LHS, SDOperand RHS, ISD::CondCode CC,
                            SDOperand &ARMCC, SelectionDAG &DAG, bool isThumb) {
   if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS.Val)) {
-    int C = (int)RHSC->getValue();
+    unsigned C = RHSC->getValue();
     if (!isLegalCmpImmediate(C, isThumb)) {
       // Constant does not fit, try adjusting it by one?
       switch (CC) {
       default: break;
       case ISD::SETLT:
-      case ISD::SETULT:
       case ISD::SETGE:
-      case ISD::SETUGE:
         if (isLegalCmpImmediate(C-1, isThumb)) {
-          switch (CC) {
-          default: break;
-          case ISD::SETLT:  CC = ISD::SETLE;  break;
-          case ISD::SETULT: CC = ISD::SETULE; break;
-          case ISD::SETGE:  CC = ISD::SETGT;  break;
-          case ISD::SETUGE: CC = ISD::SETUGT; break;
-          }
+          CC = (CC == ISD::SETLT) ? ISD::SETLE : ISD::SETGT;
+          RHS = DAG.getConstant(C-1, MVT::i32);
+        }
+        break;
+      case ISD::SETULT:
+      case ISD::SETUGE:
+        if (C > 0 && isLegalCmpImmediate(C-1, isThumb)) {
+          CC = (CC == ISD::SETULT) ? ISD::SETULE : ISD::SETUGT;
           RHS = DAG.getConstant(C-1, MVT::i32);
         }
         break;
       case ISD::SETLE:
-      case ISD::SETULE:
       case ISD::SETGT:
-      case ISD::SETUGT:
         if (isLegalCmpImmediate(C+1, isThumb)) {
-          switch (CC) {
-          default: break;
-          case ISD::SETLE:  CC = ISD::SETLT;  break;
-          case ISD::SETULE: CC = ISD::SETULT; break;
-          case ISD::SETGT:  CC = ISD::SETGE;  break;
-          case ISD::SETUGT: CC = ISD::SETUGE; break;
-          }
+          CC = (CC == ISD::SETLE) ? ISD::SETLT : ISD::SETGE;
+          RHS = DAG.getConstant(C+1, MVT::i32);
+        }
+        break;
+      case ISD::SETULE:
+      case ISD::SETUGT:
+        if (C < 0xffffffff && isLegalCmpImmediate(C+1, isThumb)) {
+          CC = (CC == ISD::SETULE) ? ISD::SETULT : ISD::SETUGE;
           RHS = DAG.getConstant(C+1, MVT::i32);
         }
         break;
