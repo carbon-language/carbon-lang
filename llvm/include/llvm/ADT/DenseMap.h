@@ -16,6 +16,7 @@
 
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
+#include <utility>
 
 namespace llvm {
   
@@ -38,10 +39,12 @@ struct DenseMapKeyInfo<T*> {
   static bool isPod() { return true; }
 };
 
+template<typename KeyT, typename ValueT>
+class DenseMapIterator;
 
 template<typename KeyT, typename ValueT>
 class DenseMap {
-  struct BucketT { KeyT Key; ValueT Value; };
+  typedef std::pair<KeyT, ValueT> BucketT;
   unsigned NumBuckets;
   BucketT *Buckets;
   
@@ -54,21 +57,26 @@ public:
   ~DenseMap() {
     const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
     for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
-      if (P->Key != EmptyKey && P->Key != TombstoneKey)
-        P->Value.~ValueT();
-      P->Key.~KeyT();
+      if (P->first != EmptyKey && P->first != TombstoneKey)
+        P->second.~ValueT();
+      P->first.~KeyT();
     }
     delete[] (char*)Buckets;
   }
+  
+  typedef DenseMapIterator<KeyT, ValueT> iterator;
+  typedef DenseMapIterator<KeyT, ValueT> const_iterator;
+  inline iterator begin() const;
+  inline iterator end() const;
   
   unsigned size() const { return NumEntries; }
   
   void clear() {
     const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
     for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
-      if (P->Key != EmptyKey && P->Key != TombstoneKey) {
-        P->Key = EmptyKey;
-        P->Value.~ValueT();
+      if (P->first != EmptyKey && P->first != TombstoneKey) {
+        P->first = EmptyKey;
+        P->second.~ValueT();
         --NumEntries;
       }
     }
@@ -84,7 +92,7 @@ public:
   ValueT &operator[](const KeyT &Val) {
     BucketT *TheBucket;
     if (LookupBucketFor(Val, TheBucket))
-      return TheBucket->Value;
+      return TheBucket->second;
 
     // If the load of the hash table is more than 3/4, grow it.
     if (NumEntries*4 >= NumBuckets*3) {
@@ -92,9 +100,9 @@ public:
       LookupBucketFor(Val, TheBucket);
     }
     ++NumEntries;
-    TheBucket->Key = Val;
-    new (&TheBucket->Value) ValueT();
-    return TheBucket->Value;
+    TheBucket->first = Val;
+    new (&TheBucket->second) ValueT();
+    return TheBucket->second;
   }
   
 private:
@@ -125,14 +133,14 @@ private:
     while (1) {
       BucketT *ThisBucket = BucketsPtr + (BucketNo & (NumBuckets-1));
       // Found Val's bucket?  If so, return it.
-      if (ThisBucket->Key == Val) {
+      if (ThisBucket->first == Val) {
         FoundBucket = ThisBucket;
         return true;
       }
       
       // If we found an empty bucket, the key doesn't exist in the set.
       // Insert it and return the default value.
-      if (ThisBucket->Key == EmptyKey) {
+      if (ThisBucket->first == EmptyKey) {
         // If we've already seen a tombstone while probing, fill it in instead
         // of the empty bucket we eventually probed to.
         if (FoundTombstone) ThisBucket = FoundTombstone;
@@ -142,7 +150,7 @@ private:
       
       // If this is a tombstone, remember it.  If Val ends up not in the map, we
       // prefer to return it than something that would require more probing.
-      if (ThisBucket->Key == TombstoneKey && !FoundTombstone)
+      if (ThisBucket->first == TombstoneKey && !FoundTombstone)
         FoundTombstone = ThisBucket;  // Remember the first tombstone found.
       
       // Otherwise, it's a hash collision or a tombstone, continue quadratic
@@ -160,7 +168,7 @@ private:
     // Initialize all the keys to EmptyKey.
     const KeyT EmptyKey = getEmptyKey();
     for (unsigned i = 0; i != InitBuckets; ++i)
-      new (&Buckets[i].Key) KeyT(EmptyKey);
+      new (&Buckets[i].first) KeyT(EmptyKey);
   }
   
   void grow() {
@@ -174,29 +182,81 @@ private:
     // Initialize all the keys to EmptyKey.
     const KeyT EmptyKey = getEmptyKey();
     for (unsigned i = 0, e = NumBuckets; i != e; ++i)
-      new (&Buckets[i].Key) KeyT(EmptyKey);
+      new (&Buckets[i].first) KeyT(EmptyKey);
 
     // Insert all the old elements.
     const KeyT TombstoneKey = getTombstoneKey();
     for (BucketT *B = OldBuckets, *E = OldBuckets+OldNumBuckets; B != E; ++B) {
-      if (B->Key != EmptyKey && B->Key != TombstoneKey) {
+      if (B->first != EmptyKey && B->first != TombstoneKey) {
         // Insert the key/value into the new table.
         BucketT *DestBucket;
-        bool FoundVal = LookupBucketFor(B->Key, DestBucket);
+        bool FoundVal = LookupBucketFor(B->first, DestBucket);
         assert(!FoundVal && "Key already in new map?");
-        DestBucket->Key = B->Key;
-        new (&DestBucket->Value) ValueT(B->Value);
+        DestBucket->first = B->first;
+        new (&DestBucket->second) ValueT(B->second);
         
         // Free the value.
-        B->Value.~ValueT();
+        B->second.~ValueT();
       }
-      B->Key.~KeyT();
+      B->first.~KeyT();
     }
     
     // Free the old table.
     delete[] (char*)OldBuckets;
   }
 };
+
+template<typename KeyT, typename ValueT>
+class DenseMapIterator {
+  typedef std::pair<KeyT, ValueT> BucketT;
+  const BucketT *Ptr, *End;
+public:
+  DenseMapIterator(const BucketT *Pos, const BucketT *E) : Ptr(Pos), End(E) {
+    AdvancePastEmptyBuckets();
+  }
+  
+  const std::pair<KeyT, ValueT> &operator*() const {
+    return *Ptr;
+  }
+  const std::pair<KeyT, ValueT> *operator->() const {
+    return Ptr;
+  }
+  
+  bool operator==(const DenseMapIterator &RHS) const {
+    return Ptr == RHS.Ptr;
+  }
+  bool operator!=(const DenseMapIterator &RHS) const {
+    return Ptr != RHS.Ptr;
+  }
+  
+  inline DenseMapIterator& operator++() {          // Preincrement
+    ++Ptr;
+    AdvancePastEmptyBuckets();
+    return *this;
+  }
+  DenseMapIterator operator++(int) {        // Postincrement
+    DenseMapIterator tmp = *this; ++*this; return tmp;
+  }
+  
+private:
+  void AdvancePastEmptyBuckets() {
+    const KeyT Empty = DenseMapKeyInfo<KeyT>::getEmptyKey();
+    const KeyT Tombstone = DenseMapKeyInfo<KeyT>::getTombstoneKey();
+
+    while (Ptr != End && Ptr->first != Empty && Ptr->first != Tombstone)
+      ++Ptr;
+  }
+};
+
+
+template<typename KeyT, typename ValueT>
+inline DenseMapIterator<KeyT, ValueT> DenseMap<KeyT, ValueT>::begin() const {
+  return DenseMapIterator<KeyT, ValueT>(Buckets, Buckets+NumBuckets);
+}
+template<typename KeyT, typename ValueT>
+inline DenseMapIterator<KeyT, ValueT> DenseMap<KeyT, ValueT>::end() const {
+  return DenseMapIterator<KeyT, ValueT>(Buckets+NumBuckets, Buckets+NumBuckets);
+}
 
 } // end namespace llvm
 
