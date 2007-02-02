@@ -1140,10 +1140,11 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
     if (STI.isTargetDarwin() || hasFP(MF)) {
       NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
       // Reset SP based on frame pointer only if the stack frame extends beyond
-      // frame pointer stack slot.
+      // frame pointer stack slot or target is ELF and the function has FP.
       if (AFI->getGPRCalleeSavedArea2Size() ||
           AFI->getDPRCalleeSavedAreaSize()  ||
-          AFI->getDPRCalleeSavedAreaOffset())
+          AFI->getDPRCalleeSavedAreaOffset()||
+          hasFP(MF))
         if (NumBytes)
           BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
             .addImm(NumBytes);
