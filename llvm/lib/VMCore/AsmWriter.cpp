@@ -1270,8 +1270,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     bool PrintAllTypes = false;
     const Type *TheType = Operand->getType();
 
-    // Shift Left & Right print both types even for Ubyte LHS, and select prints
-    // types even if all operands are bools.
+    // Select, Store and ShuffleVector always print all types.
     if (isa<SelectInst>(I) || isa<StoreInst>(I) || isa<ShuffleVectorInst>(I)) {
       PrintAllTypes = true;
     } else {
