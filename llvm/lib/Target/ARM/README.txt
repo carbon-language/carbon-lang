@@ -43,6 +43,20 @@ Among the obvious wins, doing so can eliminate the need to custom expand
 copysign (i.e. we won't need to custom expand it to get the conditional
 negate).
 
+This allows us to eliminate one instruction from:
+
+define i32 @_Z6slow4bii(i32 %x, i32 %y) {
+        %tmp = icmp sgt i32 %x, %y
+        %retval = select i1 %tmp, i32 %x, i32 %y
+        ret i32 %retval
+}
+
+__Z6slow4bii:
+        cmp r0, r1
+        movgt r1, r0
+        mov r0, r1
+        bx lr
+
 //===---------------------------------------------------------------------===//
 
 Implement long long "X-3" with instructions that fold the immediate in.  These
