@@ -85,13 +85,13 @@
           <li><a href="#i_urem">'<tt>urem</tt>' Instruction</a></li>
           <li><a href="#i_srem">'<tt>srem</tt>' Instruction</a></li>
           <li><a href="#i_frem">'<tt>frem</tt>' Instruction</a></li>
-          <li><a href="#i_shl">'<tt>shl</tt>' Instruction</a></li>
-          <li><a href="#i_lshr">'<tt>lshr</tt>' Instruction</a></li>
-          <li><a href="#i_ashr">'<tt>ashr</tt>' Instruction</a></li>
         </ol>
       </li>
       <li><a href="#bitwiseops">Bitwise Binary Operations</a>
         <ol>
+          <li><a href="#i_shl">'<tt>shl</tt>' Instruction</a></li>
+          <li><a href="#i_lshr">'<tt>lshr</tt>' Instruction</a></li>
+          <li><a href="#i_ashr">'<tt>ashr</tt>' Instruction</a></li>
           <li><a href="#i_and">'<tt>and</tt>' Instruction</a></li>
           <li><a href="#i_or">'<tt>or</tt>'  Instruction</a></li>
           <li><a href="#i_xor">'<tt>xor</tt>' Instruction</a></li>
@@ -1952,6 +1952,18 @@ identical types.</p>
 </pre>
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="bitwiseops">Bitwise Binary
+Operations</a> </div>
+<div class="doc_text">
+<p>Bitwise binary operators are used to do various forms of
+bit-twiddling in a program.  They are generally very efficient
+instructions and can commonly be strength reduced from other
+instructions.  They require two operands, execute an operation on them,
+and produce a single value.  The resulting value of the bitwise binary
+operators is always the same type as its first operand.</p>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_shl">'<tt>shl</tt>'
 Instruction</a> </div>
@@ -2003,7 +2015,7 @@ shift.</p>
 </pre>
 </div>
 
-<!-- ======================================================================= -->
+<!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_ashr">'<tt>ashr</tt>'
 Instruction</a> </div>
 <div class="doc_text">
@@ -2034,17 +2046,6 @@ of <tt>var1</tt>.</p>
 </pre>
 </div>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="bitwiseops">Bitwise Binary
-Operations</a> </div>
-<div class="doc_text">
-<p>Bitwise binary operators are used to do various forms of
-bit-twiddling in a program.  They are generally very efficient
-instructions and can commonly be strength reduced from other
-instructions.  They require two operands, execute an operation on them,
-and produce a single value.  The resulting value of the bitwise binary
-operators is always the same type as its first operand.</p>
-</div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_and">'<tt>and</tt>'
 Instruction</a> </div>
