@@ -28,14 +28,6 @@ class TargetLowering;
 
 //===----------------------------------------------------------------------===//
 //
-// RaisePointerReferences - Try to eliminate as many pointer arithmetic
-// expressions as possible, by converting expressions to use getelementptr and
-// friends.
-//
-FunctionPass *createRaisePointerReferencesPass();
-
-//===----------------------------------------------------------------------===//
-//
 // ConstantPropagation - A worklist driven constant propagation pass
 //
 FunctionPass *createConstantPropagationPass();

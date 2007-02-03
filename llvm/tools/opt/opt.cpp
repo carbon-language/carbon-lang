@@ -202,7 +202,6 @@ void AddStandardCompilePasses(PassManager &PM) {
     addPass(PM, createFunctionInliningPass());   // Inline small functions
   addPass(PM, createArgumentPromotionPass());    // Scalarize uninlined fn args
 
-  addPass(PM, createRaisePointerReferencesPass());// Recover type information
   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
   addPass(PM, createInstructionCombiningPass()); // Cleanup for scalarrepl.
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs

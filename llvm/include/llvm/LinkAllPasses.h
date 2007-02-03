@@ -96,7 +96,6 @@ namespace {
       (void) llvm::createDemoteRegisterToMemoryPass();
       (void) llvm::createPruneEHPass();
       (void) llvm::createRaiseAllocationsPass();
-      (void) llvm::createRaisePointerReferencesPass();
       (void) llvm::createReassociatePass();
       (void) llvm::createSCCPPass();
       (void) llvm::createScalarReplAggregatesPass();
