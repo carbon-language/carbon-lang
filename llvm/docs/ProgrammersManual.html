@@ -135,31 +135,27 @@ with another <tt>Value</tt></a> </li>
   <li><a href="#coreclasses">The Core LLVM Class Hierarchy Reference</a>
     <ul>
       <li><a href="#Type">The <tt>Type</tt> class</a> </li>
+      <li><a href="#Module">The <tt>Module</tt> class</a></li>
       <li><a href="#Value">The <tt>Value</tt> class</a>
+      <ul>
+        <li><a href="#User">The <tt>User</tt> class</a>
         <ul>
-          <li><a href="#User">The <tt>User</tt> class</a>
+          <li><a href="#Instruction">The <tt>Instruction</tt> class</a></li>
+          <li><a href="#Constant">The <tt>Constant</tt> class</a>
+          <ul>
+            <li><a href="#GlobalValue">The <tt>GlobalValue</tt> class</a>
             <ul>
-              <li><a href="#Instruction">The <tt>Instruction</tt> class</a>
-                <ul>
-                  <li><a href="#GetElementPtrInst">The <tt>GetElementPtrInst</tt> class</a></li>
-                </ul>
-              </li>
-              <li><a href="#Module">The <tt>Module</tt> class</a></li>
-              <li><a href="#Constant">The <tt>Constant</tt> class</a>
-	        <ul>
-                  <li><a href="#GlobalValue">The <tt>GlobalValue</tt> class</a>
-                    <ul>
-                      <li><a href="#BasicBlock">The <tt>BasicBlock</tt>class</a></li>
-                      <li><a href="#Function">The <tt>Function</tt> class</a></li>
-                      <li><a href="#GlobalVariable">The <tt>GlobalVariable</tt> class</a></li>
-                    </ul>
-                  </li>
-                </ul>
-              </li>
-	    </ul>
-	  </li>
-          <li><a href="#Argument">The <tt>Argument</tt> class</a></li>
+              <li><a href="#Function">The <tt>Function</tt> class</a></li>
+              <li><a href="#GlobalVariable">The <tt>GlobalVariable</tt> class</a></li>
+            </ul>
+            </li>
+          </ul>
+          </li>
         </ul>
+        </li>
+        <li><a href="#BasicBlock">The <tt>BasicBlock</tt> class</a></li>
+        <li><a href="#Argument">The <tt>Argument</tt> class</a></li>
+      </ul>
       </li>
     </ul>
   </li>
@@ -2334,12 +2330,141 @@ the <tt>lib/VMCore</tt> directory.</p>
 </dl>
 </div>
 
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="Module">The <tt>Module</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>#include "<a
+href="/doxygen/Module_8h-source.html">llvm/Module.h</a>"</tt><br> doxygen info:
+<a href="/doxygen/classllvm_1_1Module.html">Module Class</a></p>
+
+<p>The <tt>Module</tt> class represents the top level structure present in LLVM
+programs.  An LLVM module is effectively either a translation unit of the
+original program or a combination of several translation units merged by the
+linker.  The <tt>Module</tt> class keeps track of a list of <a
+href="#Function"><tt>Function</tt></a>s, a list of <a
+href="#GlobalVariable"><tt>GlobalVariable</tt></a>s, and a <a
+href="#SymbolTable"><tt>SymbolTable</tt></a>.  Additionally, it contains a few
+helpful member functions that try to make common operations easy.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="m_Module">Important Public Members of the <tt>Module</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+  <li><tt>Module::Module(std::string name = "")</tt></li>
+</ul>
+
+<p>Constructing a <a href="#Module">Module</a> is easy. You can optionally
+provide a name for it (probably based on the name of the translation unit).</p>
+
+<ul>
+  <li><tt>Module::iterator</tt> - Typedef for function list iterator<br>
+    <tt>Module::const_iterator</tt> - Typedef for const_iterator.<br>
+
+    <tt>begin()</tt>, <tt>end()</tt>
+    <tt>size()</tt>, <tt>empty()</tt>
+
+    <p>These are forwarding methods that make it easy to access the contents of
+    a <tt>Module</tt> object's <a href="#Function"><tt>Function</tt></a>
+    list.</p></li>
+
+  <li><tt>Module::FunctionListType &amp;getFunctionList()</tt>
+
+    <p> Returns the list of <a href="#Function"><tt>Function</tt></a>s.  This is
+    necessary to use when you need to update the list or perform a complex
+    action that doesn't have a forwarding method.</p>
+
+    <p><!--  Global Variable --></p></li> 
+</ul>
+
+<hr>
+
+<ul>
+  <li><tt>Module::global_iterator</tt> - Typedef for global variable list iterator<br>
+
+    <tt>Module::const_global_iterator</tt> - Typedef for const_iterator.<br>
+
+    <tt>global_begin()</tt>, <tt>global_end()</tt>
+    <tt>global_size()</tt>, <tt>global_empty()</tt>
+
+    <p> These are forwarding methods that make it easy to access the contents of
+    a <tt>Module</tt> object's <a
+    href="#GlobalVariable"><tt>GlobalVariable</tt></a> list.</p></li>
+
+  <li><tt>Module::GlobalListType &amp;getGlobalList()</tt>
+
+    <p>Returns the list of <a
+    href="#GlobalVariable"><tt>GlobalVariable</tt></a>s.  This is necessary to
+    use when you need to update the list or perform a complex action that
+    doesn't have a forwarding method.</p>
+
+    <p><!--  Symbol table stuff --> </p></li>
+</ul>
+
+<hr>
+
+<ul>
+  <li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTable()</tt>
+
+    <p>Return a reference to the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
+    for this <tt>Module</tt>.</p>
+
+    <p><!--  Convenience methods --></p></li>
+</ul>
+
+<hr>
+
+<ul>
+  <li><tt><a href="#Function">Function</a> *getFunction(const std::string
+  &amp;Name, const <a href="#FunctionType">FunctionType</a> *Ty)</tt>
+
+    <p>Look up the specified function in the <tt>Module</tt> <a
+    href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist, return
+    <tt>null</tt>.</p></li>
+
+  <li><tt><a href="#Function">Function</a> *getOrInsertFunction(const
+  std::string &amp;Name, const <a href="#FunctionType">FunctionType</a> *T)</tt>
+
+    <p>Look up the specified function in the <tt>Module</tt> <a
+    href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist, add an
+    external declaration for the function and return it.</p></li>
+
+  <li><tt>std::string getTypeName(const <a href="#Type">Type</a> *Ty)</tt>
+
+    <p>If there is at least one entry in the <a
+    href="#SymbolTable"><tt>SymbolTable</tt></a> for the specified <a
+    href="#Type"><tt>Type</tt></a>, return it.  Otherwise return the empty
+    string.</p></li>
+
+  <li><tt>bool addTypeName(const std::string &amp;Name, const <a
+  href="#Type">Type</a> *Ty)</tt>
+
+    <p>Insert an entry in the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
+    mapping <tt>Name</tt> to <tt>Ty</tt>. If there is already an entry for this
+    name, true is returned and the <a
+    href="#SymbolTable"><tt>SymbolTable</tt></a> is not modified.</p></li>
+</ul>
+
+</div>
+
+
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="Value">The <tt>Value</tt> class</a>
 </div>
 
-<div>
+<div class="doc_text">
 
 <p><tt>#include "<a href="/doxygen/Value_8h-source.html">llvm/Value.h</a>"</tt>
 <br> 
@@ -2587,94 +2712,59 @@ and it has no name</p></li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="BasicBlock">The <tt>BasicBlock</tt> class</a>
+  <a name="Constant">The <tt>Constant</tt> class and subclasses</a>
 </div>
 
 <div class="doc_text">
 
-<p><tt>#include "<a
-href="/doxygen/BasicBlock_8h-source.html">llvm/BasicBlock.h</a>"</tt><br>
-doxygen info: <a href="/doxygen/structllvm_1_1BasicBlock.html">BasicBlock
-Class</a><br>
-Superclass: <a href="#Value"><tt>Value</tt></a></p>
-
-<p>This class represents a single entry multiple exit section of the code,
-commonly known as a basic block by the compiler community.  The
-<tt>BasicBlock</tt> class maintains a list of <a
-href="#Instruction"><tt>Instruction</tt></a>s, which form the body of the block.
-Matching the language definition, the last element of this list of instructions
-is always a terminator instruction (a subclass of the <a
-href="#TerminatorInst"><tt>TerminatorInst</tt></a> class).</p>
-
-<p>In addition to tracking the list of instructions that make up the block, the
-<tt>BasicBlock</tt> class also keeps track of the <a
-href="#Function"><tt>Function</tt></a> that it is embedded into.</p>
-
-<p>Note that <tt>BasicBlock</tt>s themselves are <a
-href="#Value"><tt>Value</tt></a>s, because they are referenced by instructions
-like branches and can go in the switch tables. <tt>BasicBlock</tt>s have type
-<tt>label</tt>.</p>
+<p>Constant represents a base class for different types of constants. It
+is subclassed by ConstantInt, ConstantArray, etc. for representing 
+the various types of Constants.  <a href="#GlobalValue">GlobalValue</a> is also
+a subclass, which represents the address of a global variable or function.
+</p>
 
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="m_BasicBlock">Important Public Members of the <tt>BasicBlock</tt>
-  class</a>
-</div>
-
+<div class="doc_subsubsection">Important Subclasses of Constant </div>
 <div class="doc_text">
-
 <ul>
-
-<li><tt>BasicBlock(const std::string &amp;Name = "", </tt><tt><a
- href="#Function">Function</a> *Parent = 0)</tt>
-
-<p>The <tt>BasicBlock</tt> constructor is used to create new basic blocks for
-insertion into a function.  The constructor optionally takes a name for the new
-block, and a <a href="#Function"><tt>Function</tt></a> to insert it into.  If
-the <tt>Parent</tt> parameter is specified, the new <tt>BasicBlock</tt> is
-automatically inserted at the end of the specified <a
-href="#Function"><tt>Function</tt></a>, if not specified, the BasicBlock must be
-manually inserted into the <a href="#Function"><tt>Function</tt></a>.</p></li>
-
-<li><tt>BasicBlock::iterator</tt> - Typedef for instruction list iterator<br>
-<tt>BasicBlock::const_iterator</tt> - Typedef for const_iterator.<br>
-<tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
-<tt>size()</tt>, <tt>empty()</tt>
-STL-style functions for accessing the instruction list.
-
-<p>These methods and typedefs are forwarding functions that have the same
-semantics as the standard library methods of the same names.  These methods
-expose the underlying instruction list of a basic block in a way that is easy to
-manipulate.  To get the full complement of container operations (including
-operations to update the list), you must use the <tt>getInstList()</tt>
-method.</p></li>
-
-<li><tt>BasicBlock::InstListType &amp;getInstList()</tt>
-
-<p>This method is used to get access to the underlying container that actually
-holds the Instructions.  This method must be used when there isn't a forwarding
-function in the <tt>BasicBlock</tt> class for the operation that you would like
-to perform.  Because there are no forwarding functions for "updating"
-operations, you need to use this if you want to update the contents of a
-<tt>BasicBlock</tt>.</p></li>
-
-<li><tt><a href="#Function">Function</a> *getParent()</tt>
-
-<p> Returns a pointer to <a href="#Function"><tt>Function</tt></a> the block is
-embedded into, or a null pointer if it is homeless.</p></li>
-
-<li><tt><a href="#TerminatorInst">TerminatorInst</a> *getTerminator()</tt>
-
-<p> Returns a pointer to the terminator instruction that appears at the end of
-the <tt>BasicBlock</tt>.  If there is no terminator instruction, or if the last
-instruction in the block is not a terminator, then a null pointer is
-returned.</p></li>
-
+  <li>ConstantInt : This subclass of Constant represents an integer constant of
+  any width.
+    <ul>
+      <li><tt>int64_t getSExtValue() const</tt>: Returns the underlying value of
+      this constant as a sign extended signed integer value.</li>
+      <li><tt>uint64_t getZExtValue() const</tt>: Returns the underlying value 
+      of this constant as a zero extended unsigned integer value.</li>
+      <li><tt>static ConstantInt* get(const Type *Ty, uint64_t Val)</tt>: 
+      Returns the ConstantInt object that represents the value provided by 
+      <tt>Val</tt> for integer type <tt>Ty</tt>.</li>
+    </ul>
+  </li>
+  <li>ConstantFP : This class represents a floating point constant.
+    <ul>
+      <li><tt>double getValue() const</tt>: Returns the underlying value of 
+      this constant. </li>
+    </ul>
+  </li>
+  <li>ConstantArray : This represents a constant array.
+    <ul>
+      <li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns 
+      a vector of component constants that makeup this array. </li>
+    </ul>
+  </li>
+  <li>ConstantStruct : This represents a constant struct.
+    <ul>
+      <li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns 
+      a vector of component constants that makeup this array. </li>
+    </ul>
+  </li>
+  <li>GlobalValue : This represents either a global variable or a function. In 
+  either case, the value is a constant fixed address (after linking). 
+  </li>
 </ul>
-
 </div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
@@ -2955,191 +3045,98 @@ never change at runtime).</p>
 
 </div>
 
+
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="Module">The <tt>Module</tt> class</a>
+  <a name="BasicBlock">The <tt>BasicBlock</tt> class</a>
 </div>
 
 <div class="doc_text">
 
 <p><tt>#include "<a
-href="/doxygen/Module_8h-source.html">llvm/Module.h</a>"</tt><br> doxygen info:
-<a href="/doxygen/classllvm_1_1Module.html">Module Class</a></p>
+href="/doxygen/BasicBlock_8h-source.html">llvm/BasicBlock.h</a>"</tt><br>
+doxygen info: <a href="/doxygen/structllvm_1_1BasicBlock.html">BasicBlock
+Class</a><br>
+Superclass: <a href="#Value"><tt>Value</tt></a></p>
 
-<p>The <tt>Module</tt> class represents the top level structure present in LLVM
-programs.  An LLVM module is effectively either a translation unit of the
-original program or a combination of several translation units merged by the
-linker.  The <tt>Module</tt> class keeps track of a list of <a
-href="#Function"><tt>Function</tt></a>s, a list of <a
-href="#GlobalVariable"><tt>GlobalVariable</tt></a>s, and a <a
-href="#SymbolTable"><tt>SymbolTable</tt></a>.  Additionally, it contains a few
-helpful member functions that try to make common operations easy.</p>
+<p>This class represents a single entry multiple exit section of the code,
+commonly known as a basic block by the compiler community.  The
+<tt>BasicBlock</tt> class maintains a list of <a
+href="#Instruction"><tt>Instruction</tt></a>s, which form the body of the block.
+Matching the language definition, the last element of this list of instructions
+is always a terminator instruction (a subclass of the <a
+href="#TerminatorInst"><tt>TerminatorInst</tt></a> class).</p>
 
-</div>
+<p>In addition to tracking the list of instructions that make up the block, the
+<tt>BasicBlock</tt> class also keeps track of the <a
+href="#Function"><tt>Function</tt></a> that it is embedded into.</p>
 
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="m_Module">Important Public Members of the <tt>Module</tt> class</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-  <li><tt>Module::Module(std::string name = "")</tt></li>
-</ul>
-
-<p>Constructing a <a href="#Module">Module</a> is easy. You can optionally
-provide a name for it (probably based on the name of the translation unit).</p>
-
-<ul>
-  <li><tt>Module::iterator</tt> - Typedef for function list iterator<br>
-    <tt>Module::const_iterator</tt> - Typedef for const_iterator.<br>
-
-    <tt>begin()</tt>, <tt>end()</tt>
-    <tt>size()</tt>, <tt>empty()</tt>
-
-    <p>These are forwarding methods that make it easy to access the contents of
-    a <tt>Module</tt> object's <a href="#Function"><tt>Function</tt></a>
-    list.</p></li>
-
-  <li><tt>Module::FunctionListType &amp;getFunctionList()</tt>
-
-    <p> Returns the list of <a href="#Function"><tt>Function</tt></a>s.  This is
-    necessary to use when you need to update the list or perform a complex
-    action that doesn't have a forwarding method.</p>
-
-    <p><!--  Global Variable --></p></li> 
-</ul>
-
-<hr>
-
-<ul>
-  <li><tt>Module::global_iterator</tt> - Typedef for global variable list iterator<br>
-
-    <tt>Module::const_global_iterator</tt> - Typedef for const_iterator.<br>
-
-    <tt>global_begin()</tt>, <tt>global_end()</tt>
-    <tt>global_size()</tt>, <tt>global_empty()</tt>
-
-    <p> These are forwarding methods that make it easy to access the contents of
-    a <tt>Module</tt> object's <a
-    href="#GlobalVariable"><tt>GlobalVariable</tt></a> list.</p></li>
-
-  <li><tt>Module::GlobalListType &amp;getGlobalList()</tt>
-
-    <p>Returns the list of <a
-    href="#GlobalVariable"><tt>GlobalVariable</tt></a>s.  This is necessary to
-    use when you need to update the list or perform a complex action that
-    doesn't have a forwarding method.</p>
-
-    <p><!--  Symbol table stuff --> </p></li>
-</ul>
-
-<hr>
-
-<ul>
-  <li><tt><a href="#SymbolTable">SymbolTable</a> *getSymbolTable()</tt>
-
-    <p>Return a reference to the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
-    for this <tt>Module</tt>.</p>
-
-    <p><!--  Convenience methods --></p></li>
-</ul>
-
-<hr>
-
-<ul>
-  <li><tt><a href="#Function">Function</a> *getFunction(const std::string
-  &amp;Name, const <a href="#FunctionType">FunctionType</a> *Ty)</tt>
-
-    <p>Look up the specified function in the <tt>Module</tt> <a
-    href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist, return
-    <tt>null</tt>.</p></li>
-
-  <li><tt><a href="#Function">Function</a> *getOrInsertFunction(const
-  std::string &amp;Name, const <a href="#FunctionType">FunctionType</a> *T)</tt>
-
-    <p>Look up the specified function in the <tt>Module</tt> <a
-    href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist, add an
-    external declaration for the function and return it.</p></li>
-
-  <li><tt>std::string getTypeName(const <a href="#Type">Type</a> *Ty)</tt>
-
-    <p>If there is at least one entry in the <a
-    href="#SymbolTable"><tt>SymbolTable</tt></a> for the specified <a
-    href="#Type"><tt>Type</tt></a>, return it.  Otherwise return the empty
-    string.</p></li>
-
-  <li><tt>bool addTypeName(const std::string &amp;Name, const <a
-  href="#Type">Type</a> *Ty)</tt>
-
-    <p>Insert an entry in the <a href="#SymbolTable"><tt>SymbolTable</tt></a>
-    mapping <tt>Name</tt> to <tt>Ty</tt>. If there is already an entry for this
-    name, true is returned and the <a
-    href="#SymbolTable"><tt>SymbolTable</tt></a> is not modified.</p></li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="Constant">The <tt>Constant</tt> class and subclasses</a>
-</div>
-
-<div class="doc_text">
-
-<p>Constant represents a base class for different types of constants. It
-is subclassed by  ConstantInt, ConstantArray, etc. for representing 
-the various types of Constants.</p>
+<p>Note that <tt>BasicBlock</tt>s themselves are <a
+href="#Value"><tt>Value</tt></a>s, because they are referenced by instructions
+like branches and can go in the switch tables. <tt>BasicBlock</tt>s have type
+<tt>label</tt>.</p>
 
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="m_Constant">Important Public Methods</a>
-</div>
-<div class="doc_text">
+  <a name="m_BasicBlock">Important Public Members of the <tt>BasicBlock</tt>
+  class</a>
 </div>
 
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">Important Subclasses of Constant </div>
 <div class="doc_text">
 <ul>
-  <li>ConstantInt : This subclass of Constant represents an integer constant of
-  any width, including boolean (1 bit integer).
-    <ul>
-      <li><tt>int64_t getSExtValue() const</tt>: Returns the underlying value of
-      this constant as a sign extended signed integer value.</li>
-      <li><tt>uint64_t getZExtValue() const</tt>: Returns the underlying value 
-      of this constant as a zero extended unsigned integer value.</li>
-      <li><tt>static ConstantInt* get(const Type *Ty, uint64_t Val)</tt>: 
-      Returns the ConstantInt object that represents the value provided by 
-      <tt>Val</tt> for integer type <tt>Ty</tt>.</li>
-    </ul>
-  </li>
-  <li>ConstantFP : This class represents a floating point constant.
-    <ul>
-      <li><tt>double getValue() const</tt>: Returns the underlying value of 
-      this constant. </li>
-    </ul>
-  </li>
-  <li>ConstantArray : This represents a constant array.
-    <ul>
-      <li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns 
-      a vector of component constants that makeup this array. </li>
-    </ul>
-  </li>
-  <li>ConstantStruct : This represents a constant struct.
-    <ul>
-      <li><tt>const std::vector&lt;Use&gt; &amp;getValues() const</tt>: Returns 
-      a vector of component constants that makeup this array. </li>
-    </ul>
-  </li>
-  <li>GlobalValue : This represents either a global variable or a function. In 
-  either case, the value is a constant fixed address (after linking). 
-  </li>
+
+<li><tt>BasicBlock(const std::string &amp;Name = "", </tt><tt><a
+ href="#Function">Function</a> *Parent = 0)</tt>
+
+<p>The <tt>BasicBlock</tt> constructor is used to create new basic blocks for
+insertion into a function.  The constructor optionally takes a name for the new
+block, and a <a href="#Function"><tt>Function</tt></a> to insert it into.  If
+the <tt>Parent</tt> parameter is specified, the new <tt>BasicBlock</tt> is
+automatically inserted at the end of the specified <a
+href="#Function"><tt>Function</tt></a>, if not specified, the BasicBlock must be
+manually inserted into the <a href="#Function"><tt>Function</tt></a>.</p></li>
+
+<li><tt>BasicBlock::iterator</tt> - Typedef for instruction list iterator<br>
+<tt>BasicBlock::const_iterator</tt> - Typedef for const_iterator.<br>
+<tt>begin()</tt>, <tt>end()</tt>, <tt>front()</tt>, <tt>back()</tt>,
+<tt>size()</tt>, <tt>empty()</tt>
+STL-style functions for accessing the instruction list.
+
+<p>These methods and typedefs are forwarding functions that have the same
+semantics as the standard library methods of the same names.  These methods
+expose the underlying instruction list of a basic block in a way that is easy to
+manipulate.  To get the full complement of container operations (including
+operations to update the list), you must use the <tt>getInstList()</tt>
+method.</p></li>
+
+<li><tt>BasicBlock::InstListType &amp;getInstList()</tt>
+
+<p>This method is used to get access to the underlying container that actually
+holds the Instructions.  This method must be used when there isn't a forwarding
+function in the <tt>BasicBlock</tt> class for the operation that you would like
+to perform.  Because there are no forwarding functions for "updating"
+operations, you need to use this if you want to update the contents of a
+<tt>BasicBlock</tt>.</p></li>
+
+<li><tt><a href="#Function">Function</a> *getParent()</tt>
+
+<p> Returns a pointer to <a href="#Function"><tt>Function</tt></a> the block is
+embedded into, or a null pointer if it is homeless.</p></li>
+
+<li><tt><a href="#TerminatorInst">TerminatorInst</a> *getTerminator()</tt>
+
+<p> Returns a pointer to the terminator instruction that appears at the end of
+the <tt>BasicBlock</tt>.  If there is no terminator instruction, or if the last
+instruction in the block is not a terminator, then a null pointer is
+returned.</p></li>
+
 </ul>
+
 </div>
+
+
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="Argument">The <tt>Argument</tt> class</a>
