@@ -5624,25 +5624,14 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     unsigned ShiftAmt2 = (unsigned)Op1->getZExtValue();
     
     // Check for (A << c1) << c2   and   (A >> c1) >> c2.
-    if (isLeftShift == isShiftOfLeftShift) {
-      // Do not fold these shifts if the first one is signed and the second one
-      // is unsigned and this is a right shift.  Further, don't do any folding
-      // on them.
-      if (isShiftOfSignedShift && isUnsignedShift && !isLeftShift)
-        return 0;
-      
+    if (I.getOpcode() == ShiftOp->getOpcode()) {
       unsigned Amt = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
       if (Amt > Op0->getType()->getPrimitiveSizeInBits())
         Amt = Op0->getType()->getPrimitiveSizeInBits();
       
       Value *Op = ShiftOp->getOperand(0);
-      BinaryOperator *ShiftResult = 
-        BinaryOperator::create(I.getOpcode(), Op, 
-                               ConstantInt::get(Op->getType(), Amt));
-      if (I.getType() == ShiftResult->getType())
-        return ShiftResult;
-      InsertNewInstBefore(ShiftResult, I);
-      return CastInst::create(Instruction::BitCast, ShiftResult, I.getType());
+      return BinaryOperator::create(I.getOpcode(), Op, 
+                                    ConstantInt::get(Op->getType(), Amt));
     }
     
     // Check for (A << c1) >> c2 or (A >> c1) << c2.  If we are dealing with
