@@ -55,6 +55,7 @@ option</a></li>
       <li><a href="#dss_deque">&lt;deque&gt;</a></li>
       <li><a href="#dss_list">&lt;list&gt;</a></li>
       <li><a href="#dss_ilist">llvm/ADT/ilist</a></li>
+      <li><a href="#dss_other">Other Sequential Container Options</a></li>
     </ul></li>
     <li><a href="#ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a>
     <ul>
@@ -64,7 +65,8 @@ option</a></li>
       <li><a href="#dss_FoldingSet">"llvm/ADT/FoldingSet.h"</a></li>
       <li><a href="#dss_set">&lt;set&gt;</a></li>
       <li><a href="#dss_setvector">"llvm/ADT/SetVector.h"</a></li>
-      <li><a href="#dss_otherset">Other Options</a></li>
+      <li><a href="#dss_uniquevector">"llvm/ADT/UniqueVector.h"</a></li>
+      <li><a href="#dss_otherset">Other Set-Like ContainerOptions</a></li>
     </ul></li>
     <li><a href="#ds_map">Map-Like Containers (std::map, DenseMap, etc)</a></li>
   </ul>
@@ -850,7 +852,7 @@ basic blocks, which is why these are implemented with ilists.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="dss_other">Other options</a>
+  <a name="dss_other">Other Sequential Container options</a>
 </div>
 
 <div class="doc_text">
@@ -986,13 +988,14 @@ elements.
 
 <div class="doc_text">
 
-<p><tt>std::set</t> is a reasonable all-around set class, which is good at many
-things but great at nothing.  std::set allocates memory for each element
+<p><tt>std::set</tt> is a reasonable all-around set class, which is decent at
+many things but great at nothing.  std::set allocates memory for each element
 inserted (thus it is very malloc intensive) and typically stores three pointers
 per element in the set (thus adding a large amount of per-element space
 overhead).  It offers guaranteed log(n) performance, which is not particularly
-fast, particularly if the elements of the set are expensive to compare (e.g.
-strings).</p>
+fast from a complexity standpoint (particularly if the elements of the set are
+expensive to compare, like strings), and has extremely high constant factors for
+lookup, insertion and removal.</p>
 
 <p>The advantages of std::set are that its iterators are stable (deleting or
 inserting an element from the set does not affect iterators or pointers to other
@@ -1036,14 +1039,34 @@ elements out of (linear time).
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="dss_otherset">Other Options</a>
+  <a name="dss_uniquevector">"llvm/ADT/UniqueVector.h"</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+UniqueVector is similar to <a href="#dss_setvector">SetVector</a>, but it
+retains a unique ID for each element inserted into the set.  It internally
+contains a map and a vector, and it assigns a unique ID for each value inserted
+into the set.</p>
+
+<p>UniqueVector is very expensive: its cost is the sum of the cost of
+maintaining both the map and vector, it has high complexity, high constant
+factors, and produces a lot of malloc traffic.  It should be avoided.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_otherset">Other Set-Like Container Options</a>
 </div>
 
 <div class="doc_text">
 
 <p>
 The STL provides several other options, such as std::multiset and the various 
-"hash_set" like containers (whether from C++TR1 or from the SGI library).</p>
+"hash_set" like containers (whether from C++ TR1 or from the SGI library).</p>
 
 <p>std::multiset is useful if you're not interested in elimination of
 duplicates, but has all the drawbacks of std::set.  A sorted vector (where you 
@@ -1066,13 +1089,151 @@ expensive.  Element iteration does not visit elements in a useful order.</p>
 </div>
 
 <div class="doc_text">
-sorted vector
-std::map
-DenseMap
-UniqueVector
-IndexedMap
-hash_map
-CStringMap
+Map-like containers are useful when you want to associate data to a key.  As
+usual, there are a lot of different ways to do this. :)
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_sortedvectormap">A sorted 'vector'</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+If your usage pattern follows a strict insert-then-query approach, you can
+trivially use the same approach as <a href="#dss_sortedvectorset">sorted vectors
+for set-like containers</a>.  The only difference is that your query function
+(which uses std::lower_bound to get efficient log(n) lookup) should only compare
+the key, not both the key and value.  This yields the same advantages as sorted
+vectors for sets.
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_cstringmap">"llvm/ADT/CStringMap.h"</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+Strings are commonly used as keys in maps, and they are difficult to support
+efficiently: they are variable length, inefficient to hash and compare when
+long, expensive to copy, etc.  CStringMap is a specialized container designed to
+cope with these issues.  It supports mapping an arbitrary range of bytes that
+does not have an embedded nul character in it ("C strings") to an arbitrary
+other object.</p>
+
+<p>The CStringMap implementation uses a quadratically-probed hash table, where
+the buckets store a pointer to the heap allocated entries (and some other
+stuff).  The entries in the map must be heap allocated because the strings are
+variable length.  The string data (key) and the element object (value) are
+stored in the same allocation with the string data immediately after the element
+object.  This container guarantees the "<tt>(char*)(&amp;Value+1)</tt>" points
+to the key string for a value.</p>
+
+<p>The CStringMap is very fast for several reasons: quadratic probing is very
+cache efficient for lookups, the hash value of strings in buckets is not
+recomputed when lookup up an element, CStringMap rarely has to touch the
+memory for unrelated objects when looking up a value (even when hash collisions
+happen), hash table growth does not recompute the hash values for strings
+already in the table, and each pair in the map is store in a single allocation
+(the string data is stored in the same allocation as the Value of a pair).</p>
+
+<p>CStringMap also provides query methods that take byte ranges, so it only ever
+copies a string if a value is inserted into the table.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_indexedmap">"llvm/ADT/IndexedMap.h"</a>
+</div>
+
+<div class="doc_text">
+<p>
+IndexedMap is a specialized container for mapping small dense integers (or
+values that can be mapped to small dense integers) to some other type.  It is
+internally implemented as a vector with a mapping function that maps the keys to
+the dense integer range.
+</p>
+
+<p>
+This is useful for cases like virtual registers in the LLVM code generator: they
+have a dense mapping that is offset by a compile-time constant (the first
+virtual register ID).</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_densemap">"llvm/ADT/DenseMap.h"</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+DenseMap is a simple quadratically probed hash table.  It excels at supporting
+small keys and values: it uses a single allocation to hold all of the pairs that
+are currently inserted in the map.  DenseMap is a great way to map pointers to
+pointers, or map other small types to each other.
+</p>
+
+<p>
+There are several aspects of DenseMap that you should be aware of, however.  The
+iterators in a densemap are invalidated whenever an insertion occurs, unlike
+map.  Also, because DenseMap allocates space for a large number of key/value
+pairs (it starts with 64 by default) if you have large keys or values, it can
+waste a lot of space.  Finally, you must implement a partial specialization of
+DenseMapKeyInfo for the key that you want, if it isn't already supported.  This
+is required to tell DenseMap about two special marker values (which can never be
+inserted into the map).</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_map">&lt;map&gt;</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+std::map has similar characteristics to <a href="#dss_set">std::set</a>: it uses
+a single allocation per pair inserted into the map, it offers log(n) lookup with
+an extremely large constant factor, imposes a space penalty of 3 pointers per
+pair in the map, etc.</p>
+
+<p>std::map is most useful when your keys or values are very large, if you need
+to iterate over the collection in sorted order, or if you need stable iterators
+into the map (i.e. they don't get invalidated if an insertion or deletion of
+another element takes place).</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_othermap">Other Map-Like Container Options</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+The STL provides several other options, such as std::multimap and the various 
+"hash_map" like containers (whether from C++ TR1 or from the SGI library).</p>
+
+<p>std::multimap is useful if you want to map a key to multiple values, but has
+all the drawbacks of std::map.  A sorted vector or some other approach is almost
+always better.</p>
+
+<p>The various hash_map implementations (exposed portably by
+"llvm/ADT/hash_map") are simple chained hash tables.  This algorithm is as
+malloc intensive as std::map (performing an allocation for each element
+inserted, thus having really high constant factors) but (usually) provides O(1)
+insertion/deletion of elements.  This can be useful if your elements are large
+(thus making the constant-factor cost relatively low) or if comparisons are
+expensive.  Element iteration does not visit elements in a useful order.</p>
+
 </div>
 
 
