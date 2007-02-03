@@ -67,7 +67,7 @@ of options available, use the following command:
 
 =over
 
-B<llvm-as < /dev/null | opt -std-compile-opts -disable-output -debug-pass=Arguments>
+   llvm-as < /dev/null | opt -std-compile-opts -disable-output -debug-pass=Arguments
 
 =back
 
@@ -122,11 +122,7 @@ or analysis passes. Once loaded, the object will add new command line options to
 enable various optimizations or analyses.  To see the new complete list of 
 optimizations, use the B<-help> and B<-load> options together. For example:
 
-=over
-
-B<opt -load>=I<plugin> B<-help>
-
-=back
+   opt -load=plugin.so -help
 
 =item B<-p>
 
