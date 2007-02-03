@@ -46,7 +46,7 @@ def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
 def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq,
     		              [SDNPHasChain, SDNPOutFlag]>;
 def ARMcallseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq,
-    		              [SDNPHasChain, SDNPOutFlag]>;
+    		              [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 
 def ARMcall          : SDNode<"ARMISD::CALL", SDT_ARMcall,
                               [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
