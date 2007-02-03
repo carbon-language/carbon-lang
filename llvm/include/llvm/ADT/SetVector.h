@@ -12,31 +12,35 @@
 // visited later but in a deterministic order (insertion order). The interface
 // is purposefully minimal.
 //
+// This file defines SetVector and SmallSetVector, which performs no allocations
+// if the SetVector has less than a certain number of elements.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ADT_SETVECTOR_H
 #define LLVM_ADT_SETVECTOR_H
 
-#include <set>
+#include "llvm/ADT/SmallSet.h"
 #include <vector>
 #include <cassert>
 #include <algorithm>
 
 namespace llvm {
 
-/// This class provides a way to keep a set of things that also has the
+/// This adapter class provides a way to keep a set of things that also has the
 /// property of a deterministic iteration order. The order of iteration is the
 /// order of insertion.
 /// @brief A vector that has set insertion semantics.
-template <typename T>
+template <typename T, typename Vector = std::vector<T>,
+                      typename Set = std::set<T> >
 class SetVector {
 public:
   typedef T value_type;
   typedef T key_type;
   typedef T& reference;
   typedef const T& const_reference;
-  typedef std::set<value_type> set_type;
-  typedef std::vector<value_type> vector_type;
+  typedef Set set_type;
+  typedef Vector vector_type;
   typedef typename vector_type::const_iterator iterator;
   typedef typename vector_type::const_iterator const_iterator;
   typedef typename vector_type::size_type size_type;
@@ -142,6 +146,19 @@ public:
 private:
   set_type set_;         ///< The set.
   vector_type vector_;   ///< The vector.
+};
+
+/// SmallSetVector - A SetVector that performs no allocations if smaller than
+/// a certain size.
+template <typename T, unsigned N>
+class SmallSetVector : public SetVector<T, SmallVector<T, N>, SmallSet<T, N> > {
+  SmallSetVector() {}
+  
+  /// @brief Initialize a SmallSetVector with a range of elements
+  template<typename It>
+  SmallSetVector(It Start, It End) {
+    this->insert(Start, End);
+  }
 };
 
 } // End llvm namespace
