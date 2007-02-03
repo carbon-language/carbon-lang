@@ -430,7 +430,7 @@ namespace {
     RegReductionPriorityQueue() :
     Queue(SF(this)) {}
     
-    virtual void initNodes(std::map<SDNode*, SUnit*> &sumap,
+    virtual void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
                            std::vector<SUnit> &sunits) {}
     virtual void releaseState() {}
     
@@ -464,7 +464,7 @@ namespace {
   class VISIBILITY_HIDDEN BURegReductionPriorityQueue
    : public RegReductionPriorityQueue<SF> {
     // SUnitMap SDNode to SUnit mapping (n -> 1).
-    std::map<SDNode*, SUnit*> *SUnitMap;
+    DenseMap<SDNode*, SUnit*> *SUnitMap;
 
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
@@ -477,7 +477,7 @@ namespace {
     BURegReductionPriorityQueue(const TargetInstrInfo *tii)
       : TII(tii) {}
 
-    void initNodes(std::map<SDNode*, SUnit*> &sumap,
+    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
                    std::vector<SUnit> &sunits) {
       SUnitMap = &sumap;
       SUnits = &sunits;
@@ -541,7 +541,7 @@ namespace {
   template<class SF>
   class TDRegReductionPriorityQueue : public RegReductionPriorityQueue<SF> {
     // SUnitMap SDNode to SUnit mapping (n -> 1).
-    std::map<SDNode*, SUnit*> *SUnitMap;
+    DenseMap<SDNode*, SUnit*> *SUnitMap;
 
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
@@ -552,7 +552,7 @@ namespace {
   public:
     TDRegReductionPriorityQueue() {}
 
-    void initNodes(std::map<SDNode*, SUnit*> &sumap,
+    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
                    std::vector<SUnit> &sunits) {
       SUnitMap = &sumap;
       SUnits = &sunits;

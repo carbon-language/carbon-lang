@@ -328,7 +328,7 @@ public:
     LatencyPriorityQueue() : Queue(latency_sort(this)) {
     }
     
-    void initNodes(std::map<SDNode*, SUnit*> &sumap,
+    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
                    std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Calculate node priorities.

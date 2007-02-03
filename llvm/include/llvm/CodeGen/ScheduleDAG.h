@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_SCHEDULEDAG_H
 
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
@@ -153,7 +154,7 @@ namespace llvm {
   public:
     virtual ~SchedulingPriorityQueue() {}
   
-    virtual void initNodes(std::map<SDNode*, SUnit*> &SUMap,
+    virtual void initNodes(DenseMap<SDNode*, SUnit*> &SUMap,
                            std::vector<SUnit> &SUnits) = 0;
     virtual void releaseState() = 0;
   
@@ -180,7 +181,7 @@ namespace llvm {
     MachineConstantPool *ConstPool;       // Target constant pool
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
                                           // represent noop instructions.
-    std::map<SDNode*, SUnit*> SUnitMap;   // SDNode to SUnit mapping (n -> 1).
+    DenseMap<SDNode*, SUnit*> SUnitMap;   // SDNode to SUnit mapping (n -> 1).
     std::vector<SUnit> SUnits;            // The scheduling units.
     SmallSet<SDNode*, 16> CommuteSet;     // Nodes the should be commuted.
 
