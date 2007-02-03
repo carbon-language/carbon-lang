@@ -46,17 +46,28 @@ option</a></li>
   </li>
   <li><a href="#datastructure">Picking the Right Data Structure for a Task</a>
     <ul>
-    <li><a href="#ds_sequential">Sequential Containers (std::vector, std::list, etc)</a><ul>
-    <li><a href="#dss_fixedarrays">Fixed Size Arrays</a></li>
-    <li><a href="#dss_heaparrays">Heap Allocated Arrays</a></li>
-    <li><a href="#dss_smallvector">"llvm/ADT/SmallVector.h"</a></li>
-    <li><a href="#dss_vector">&lt;vector&gt;</a></li>
-    <li><a href="#dss_ilist">llvm/ADT/ilist</a></li>
-    <li><a href="#dss_list">&lt;list&gt;</a></li>
+    <li><a href="#ds_sequential">Sequential Containers (std::vector, std::list, etc)</a>
+    <ul>
+      <li><a href="#dss_fixedarrays">Fixed Size Arrays</a></li>
+      <li><a href="#dss_heaparrays">Heap Allocated Arrays</a></li>
+      <li><a href="#dss_smallvector">"llvm/ADT/SmallVector.h"</a></li>
+      <li><a href="#dss_vector">&lt;vector&gt;</a></li>
+      <li><a href="#dss_deque">&lt;deque&gt;</a></li>
+      <li><a href="#dss_list">&lt;list&gt;</a></li>
+      <li><a href="#dss_ilist">llvm/ADT/ilist</a></li>
     </ul></li>
-    <li><a href="#ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a></li>
+    <li><a href="#ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a>
+    <ul>
+      <li><a href="#dss_sortedvectorset">A sorted 'vector'</a></li>
+      <li><a href="#dss_smallset">"llvm/ADT/SmallSet.h"</a></li>
+      <li><a href="#dss_smallptrset">"llvm/ADT/SmallPtrSet.h"</a></li>
+      <li><a href="#dss_FoldingSet">"llvm/ADT/FoldingSet.h"</a></li>
+      <li><a href="#dss_set">&lt;set&gt;</a></li>
+      <li><a href="#dss_setvector">"llvm/ADT/SetVector.h"</a></li>
+      <li><a href="#dss_otherset">Other Options</a></li>
+    </ul></li>
     <li><a href="#ds_map">Map-Like Containers (std::map, DenseMap, etc)</a></li>
-    </ul>
+  </ul>
   </li>
   <li><a href="#common">Helpful Hints for Common Operations</a>
     <ul>
@@ -784,6 +795,22 @@ vector is also useful when interfacing with code that expects vectors :).
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
+  <a name="dss_deque">&lt;deque&gt;</a>
+</div>
+
+<div class="doc_text">
+<p>std::deque is, in some senses, a generalized version of std::vector.  Like
+std::vector, it provides constant time random access and other similar
+properties, but it also provides efficient access to the front of the list.  It
+does not guarantee continuity of elements within memory.</p>
+
+<p>In exchange for this extra flexibility, std::deque has significantly higher
+constant factor costs than std::vector.  If possible, use std::vector or
+something cheaper.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
   <a name="dss_list">&lt;list&gt;</a>
 </div>
 
@@ -827,9 +854,7 @@ basic blocks, which is why these are implemented with ilists.</p>
 </div>
 
 <div class="doc_text">
-<p>Other STL containers are available, such as std::deque (which has similar
-characteristics to std::vector, but has higher constant factors and provides
-efficient push_front/pop_front methods) and std::string.</p>
+<p>Other STL containers are available, such as std::string.</p>
 
 <p>There are also various STL adapter classes such as std::queue,
 std::priority_queue, std::stack, etc.  These provide simplified access to an
@@ -845,15 +870,187 @@ underlying container but don't affect the cost of the container itself.</p>
 
 <div class="doc_text">
 
+<p>Set-like containers are useful when you need to canonicalize multiple values
+into a single representation.  There are several different choices for how to do
+this, providing various trade-offs.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_sortedvectorset">A sorted 'vector'</a>
+</div>
+
+<div class="doc_text">
+
+<p>If you intend to insert a lot of elements, then do a lot of queries, one
+great approach is to use a vector (or other sequential container), and then use
+std::sort+std::unique to remove duplicates.  This approach works really well if
+your usage pattern has these two distinct phases (insert then query), and,
+coupled with a good choice of <a href="#ds_sequential">sequential container</a>
+can provide the several nice properties: the result data is contiguous in memory
+(good for cache locality), has few allocations, is easy to address (iterators in
+the final vector are just indices or pointers), and can be efficiently queried
+with a standard binary search.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_smallset">"llvm/ADT/SmallSet.h"</a>
+</div>
+
+<div class="doc_text">
+
+<p>If you have a set-like datastructure that is usually small and whose elements
+are reasonably small, a <tt>SmallSet&lt;Type, N&gt; is a good choice.  This set
+has space for N elements in place (thus, if the set is dynamically smaller than
+N, no malloc traffic is required) and access them with a simple linear search.
+When the set grows beyond 'N', it allocates a more expensive representation that
+guarantees efficient access (for most types, it falls back to std::set, but for
+pointers it uses something far better, see <a 
+href="#dss_smallptrset">SmallPtrSet</a>).</p>
+
+<p>The magic of this class is that it handles small sets extremely efficiently,
+but gracefully handles extremely large sets without loss of efficiency.  The
+drawback is that the interface is quite small: it supports insertion, queries
+and erasing, but does not support iteration.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_smallptrset">"llvm/ADT/SmallPtrSet.h"</a>
+</div>
+
+<div class="doc_text">
+
+<p>SmallPtrSet has all the advantages of SmallSet (and a SmallSet of pointers is 
+transparently implemented with a SmallPtrSet), but also suports iterators.  If
+more than 'N' allocations are performed, a single quadratically
+probed hash table is allocated and grows as needed, providing extremely
+efficient access (constant time insertion/deleting/queries with low constant
+factors) and is very stingy with malloc traffic.</p>
+
+<p>Note that, unlike std::set, the iterators of SmallPtrSet are invalidated
+whenever an insertion occurs.  Also, the values visited by the iterators are not
+visited in sorted order.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_FoldingSet">"llvm/ADT/FoldingSet.h"</a>
+</div>
+
+<div class="doc_text">
+
 <p>
-SmallPtrSet
-SmallSet
-sorted vector
-FoldingSet
-hash_set
-UniqueVector
-SetVector
+FoldingSet is an aggregate class that is really good at uniquing
+expensive-to-create or polymorphic objects.  It is a combination of a chained
+hash table with intrusive links (uniqued objects are required to inherit from
+FoldingSetNode) that uses SmallVector as part of its ID process.</p>
+
+<p>Consider a case where you want to implement a "getorcreate_foo" method for
+a complex object (for example, a node in the code generator).  The client has a
+description of *what* it wants to generate (it knows the opcode and all the
+operands), but we don't want to 'new' a node, then try inserting it into a set
+only to find out it already exists (at which point we would have to delete it
+and return the node that already exists).
 </p>
+
+<p>To support this style of client, FoldingSet perform a query with a
+FoldingSetNodeID (which wraps SmallVector) that can be used to describe the
+element that we want to query for.  The query either returns the element
+matching the ID or it returns an opaque ID that indicates where insertion should
+take place.</p>
+
+<p>Because FoldingSet uses intrusive links, it can support polymorphic objects
+in the set (for example, you can have SDNode instances mixed with LoadSDNodes).
+Because the elements are individually allocated, pointers to the elements are
+stable: inserting or removing elements does not invalidate any pointers to other
+elements.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_set">&lt;set&gt;</a>
+</div>
+
+<div class="doc_text">
+
+<p>std::set is a reasonable all-around set class, which is good at many things
+but great at nothing.  std::set use a allocates memory for every single element
+inserted (thus it is very malloc intensive) and typically stores three pointers
+with every element (thus adding a large amount of per-element space overhead).
+It offers guaranteed log(n) performance, which is not particularly fast.
+</p>
+
+<p>The advantages of std::set is that its iterators are stable (deleting or
+inserting an element from the set does not affect iterators or pointers to other
+elements) and that iteration over the set is guaranteed to be in sorted order.
+If the elements in the set are large, then the relative overhead of the pointers
+and malloc traffic is not a big deal, but if the elements of the set are small,
+std::set is almost never a good choice.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_setvector">"llvm/ADT/SetVector.h"</a>
+</div>
+
+<div class="doc_text">
+<p>LLVM's SetVector&lt;Type&gt; is actually a combination of a set along with
+a <a href="#ds_sequential">Sequential Container</a>.  The important property
+that this provides is efficient insertion with uniquing (duplicate elements are
+ignored) with iteration support.  It implements this by inserting elements into
+both a set-like container and the sequential container, using the set-like
+container for uniquing and the sequential container for iteration.
+</p>
+
+<p>The difference between SetVector and other sets is that the order of
+iteration is guaranteed to match the order of insertion into the SetVector.
+This property is really important for things like sets of pointers.  Because
+pointer values are non-deterministic (e.g. vary across runs of the program on
+different machines), iterating over the pointers in a std::set or other set will
+not be in a well-defined order.</p>
+
+<p>
+The drawback of SetVector is that it requires twice as much space as a normal
+set and has the sum of constant factors from the set-like container and the 
+sequential container that it uses.  Use it *only* if you need to iterate over 
+the elements in a deterministic order.  SetVector is also expensive to delete
+elements out of (linear time).
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_otherset">Other Options</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+The STL provides several other options, such as std::multiset and the various 
+"hash_set" like containers (whether from C++TR1 or from the SGI library).</p>
+
+<p>std::multiset is useful if you're not interested in elimination of
+duplicates, but has all the drawbacks of std::set.  A sorted vector or some
+other approach is almost always better.</p>
+
+<p>The various hash_set implementations (exposed portably by
+"llvm/ADT/hash_set") is a standard chained hashtable.  This algorithm is malloc
+intensive like std::set (performing an allocation for each element inserted,
+thus having really high constant factors) but (usually) provides O(1)
+insertion/deletion of elements.  This can be useful if your elements are large
+(thus making the constant-factor cost relatively low).  Element iteration does
+not visit elements in a useful order.</p>
 
 </div>
 
@@ -866,6 +1063,7 @@ SetVector
 sorted vector
 std::map
 DenseMap
+UniqueVector
 IndexedMap
 hash_map
 CStringMap
