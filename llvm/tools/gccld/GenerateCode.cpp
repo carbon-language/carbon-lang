@@ -239,6 +239,12 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
     // Remove unused arguments from functions...
     addPass(Passes, createDeadArgEliminationPass());
 
+    // Reduce the code after globalopt and ipsccp.  Both can open up significant
+    // simplification opportunities, and both can propagate functions through
+    // function pointers.  When this happens, we often have to resolve varargs
+    // calls, etc, so let instcombine do this.
+    addPass(Passes, createInstructionCombiningPass());
+    
     if (!DisableInline)
       addPass(Passes, createFunctionInliningPass()); // Inline small functions
 
