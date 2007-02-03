@@ -25,6 +25,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <map>
 using namespace llvm;
@@ -290,7 +291,7 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
 /// ComputeTopDownOrdering - Add the specified node to the Order list if it has
 /// not been visited yet and if all of its operands have already been visited.
 static void ComputeTopDownOrdering(SDNode *N, std::vector<SDNode*> &Order,
-                                   std::map<SDNode*, unsigned> &Visited) {
+                                   DenseMap<SDNode*, unsigned> &Visited) {
   if (++Visited[N] != N->getNumOperands())
     return;  // Haven't visited all operands yet
   
@@ -318,7 +319,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
   // practice however, this causes us to run out of stack space on large basic
   // blocks.  To avoid this problem, compute an ordering of the nodes where each
   // node is only legalized after all of its operands are legalized.
-  std::map<SDNode*, unsigned> Visited;
+  DenseMap<SDNode*, unsigned> Visited;
   std::vector<SDNode*> Order;
   
   // Compute ordering from all of the leaves in the graphs, those (like the
