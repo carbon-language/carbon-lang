@@ -364,9 +364,9 @@ HowToPassArgument(MVT::ValueType ObjectVT,
   }
 }
 
-// This transforms a ISD::CALL node into a
-// callseq_star <- ARMISD:CALL <- callseq_end
-// chain
+/// LowerCALL - Lowering a ISD::CALL node into a callseq_start <-
+/// ARMISD:CALL <- callseq_end chain. Also add input and output parameter
+/// nodes.
 SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType RetVT= Op.Val->getValueType(0);
   SDOperand Chain    = Op.getOperand(0);
