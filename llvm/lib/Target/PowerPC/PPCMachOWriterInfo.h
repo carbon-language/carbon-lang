@@ -19,12 +19,35 @@
 namespace llvm {
 
   // Forward declarations
+  class MachineRelocation;
+  class OutputBuffer;
   class PPCTargetMachine;
 
   class PPCMachOWriterInfo : public TargetMachOWriterInfo {
   public:
     PPCMachOWriterInfo(const PPCTargetMachine &TM);
-    virtual ~PPCMachOWriterInfo() {}
+    virtual ~PPCMachOWriterInfo();
+
+    virtual unsigned GetTargetRelocation(MachineRelocation &MR,
+                                         unsigned FromIdx,
+                                         unsigned ToAddr,
+                                         unsigned ToIdx,
+                                         OutputBuffer &RelocOut,
+                                         OutputBuffer &SecOut,
+                                         bool Scattered) const;
+
+    // Constants for the relocation r_type field.
+    // See <mach-o/ppc/reloc.h>
+    enum {
+      PPC_RELOC_VANILLA, // generic relocation
+      PPC_RELOC_PAIR,    // the second relocation entry of a pair
+      PPC_RELOC_BR14,    // 14 bit branch displacement to word address
+      PPC_RELOC_BR24,    // 24 bit branch displacement to word address
+      PPC_RELOC_HI16,    // a PAIR follows with the low 16 bits
+      PPC_RELOC_LO16,    // a PAIR follows with the high 16 bits
+      PPC_RELOC_HA16,    // a PAIR follows, which is sign extended to 32b
+      PPC_RELOC_LO14     // LO16 with low 2 bits implicitly zero
+    };
   };
 
 } // end llvm namespace
