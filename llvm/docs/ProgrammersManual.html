@@ -904,7 +904,7 @@ with a standard binary search.</p>
 <div class="doc_text">
 
 <p>If you have a set-like datastructure that is usually small and whose elements
-are reasonably small, a <tt>SmallSet&lt;Type, N&gt; is a good choice.  This set
+are reasonably small, a <tt>SmallSet&lt;Type, N&gt;</tt> is a good choice.  This set
 has space for N elements in place (thus, if the set is dynamically smaller than
 N, no malloc traffic is required) and access them with a simple linear search.
 When the set grows beyond 'N', it allocates a more expensive representation that
