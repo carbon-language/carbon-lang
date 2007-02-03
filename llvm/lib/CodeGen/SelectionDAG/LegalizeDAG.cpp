@@ -3634,7 +3634,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
         LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
         break;
       case ISD::SETO:
-        LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
+        LC1 = (VT == MVT::f32) ? RTLIB::O_F32 : RTLIB::O_F64;
         break;
       default:
         LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
