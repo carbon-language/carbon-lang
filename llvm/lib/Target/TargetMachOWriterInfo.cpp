@@ -15,6 +15,8 @@
 #include "llvm/CodeGen/MachineRelocation.h"
 using namespace llvm;
 
+TargetMachOWriterInfo::~TargetMachOWriterInfo() {}
+
 MachineRelocation
 TargetMachOWriterInfo::GetJTRelocation(unsigned Offset,
                                        MachineBasicBlock *MBB) const {
