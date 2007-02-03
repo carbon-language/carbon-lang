@@ -13,10 +13,14 @@ include $(LEVEL)/Makefile.common
 install-local:: $(PROJ_bindir)/gccas
 	
 $(PROJ_bindir)/gccas : gccas.sh
-	sed "s#@TOOLDIR@#$(PROJ_bindir)#" $< > $@
+	$(Echo)Installing gccas shell script.
+	$(Verb)sed "s#@TOOLDIR@#$(PROJ_bindir)#" $< > $@
 
 all-local:: $(ToolDir)/gccas
 	
 $(ToolDir)/gccas : gccas.sh
-	sed "s#@TOOLDIR@#$(ToolDir)#" $< > $@
+	$(Echo)Making $(ToolDir)/gccas shell script.
+	$(Verb)sed "s#@TOOLDIR@#$(ToolDir)#" $< > $@
 
+clean-local::
+	$(Verb)$(RM) -f $(ToolDir)/gccas
