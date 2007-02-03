@@ -27,6 +27,7 @@ namespace llvm {
   class Mangler;
   class MachineCodeEmitter;
   class MachOCodeEmitter;
+  class OutputBuffer;
 
   /// MachOSym - This struct contains information about each symbol that is
   /// added to logical symbol table for the module.  This is eventually
@@ -296,37 +297,6 @@ namespace llvm {
         : cmd(is64Bit ? LC_SEGMENT_64 : LC_SEGMENT), cmdsize(0), segname(seg),
           vmaddr(0), vmsize(0), fileoff(0), filesize(0), maxprot(VM_PROT_ALL),
           initprot(VM_PROT_ALL), nsects(0), flags(0) { }
-    };
-
-    /// MachORelocation - This struct contains information about each relocation
-    /// that needs to be emitted to the file.
-    /// see <mach-o/reloc.h>
-    struct MachORelocation {
-      uint32_t r_address;   // offset in the section to what is being  relocated
-      uint32_t r_symbolnum; // symbol index if r_extern == 1 else section index
-      bool     r_pcrel;     // was relocated pc-relative already
-      uint8_t  r_length;    // length = 2 ^ r_length
-      bool     r_extern;    // 
-      uint8_t  r_type;      // if not 0, machine-specific relocation type.
-      bool     r_scattered; // 1 = scattered, 0 = non-scattered
-      int32_t  r_value;     // the value the item to be relocated is referring
-                            // to.
-      
-      uint32_t getPackedFields() {
-        if (r_scattered)
-          return (1 << 31) | (r_pcrel << 30) | ((r_length & 3) << 28) | 
-                 ((r_type & 15) << 24) | (r_address & 0x00FFFFFF);
-        else
-          return (r_symbolnum << 8) | (r_pcrel << 7) | ((r_length & 3) << 5) |
-                 (r_extern << 4) | (r_type & 15);
-      }
-      uint32_t getAddress() { return r_scattered ? r_value : r_address; }
-      
-      MachORelocation(uint32_t addr, uint32_t index, bool pcrel, uint8_t len,
-                      bool ext, uint8_t type, bool scattered = false, 
-                      int32_t value = 0) : 
-        r_address(addr), r_symbolnum(index), r_pcrel(pcrel), r_length(len),
-        r_extern(ext), r_type(type), r_scattered(scattered), r_value(value) {}
     };
 
     /// MachOSection - This struct contains information about each section in a 
@@ -635,8 +605,19 @@ namespace llvm {
                                       MachineBasicBlock *MBB) const {
       return TM.getMachOWriterInfo()->GetJTRelocation(Offset, MBB);
     }
-    virtual void GetTargetRelocation(MachineRelocation &MR, MachOSection &From,
-                                     MachOSection &To, bool Scattered) = 0;
+
+    /// GetTargetRelocation - Returns the number of relocations.
+    unsigned GetTargetRelocation(MachineRelocation &MR,
+                                 unsigned FromIdx,
+                                 unsigned ToAddr,
+                                 unsigned ToIndex,
+                                 OutputBuffer &RelocOut,
+                                 OutputBuffer &SecOut,
+                                 bool Scattered) {
+      return TM.getMachOWriterInfo()->GetTargetRelocation(MR, FromIdx, ToAddr,
+                                                          ToIndex, RelocOut,
+                                                          SecOut, Scattered);
+    }
   };
 }
 
