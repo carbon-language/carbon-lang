@@ -884,15 +884,18 @@ this, providing various trade-offs.</p>
 
 <div class="doc_text">
 
-<p>If you intend to insert a lot of elements, then do a lot of queries, one
-great approach is to use a vector (or other sequential container), and then use
+<p>If you intend to insert a lot of elements, then do a lot of queries, a
+great approach is to use a vector (or other sequential container) with
 std::sort+std::unique to remove duplicates.  This approach works really well if
-your usage pattern has these two distinct phases (insert then query), and,
-coupled with a good choice of <a href="#ds_sequential">sequential container</a>
-can provide the several nice properties: the result data is contiguous in memory
-(good for cache locality), has few allocations, is easy to address (iterators in
-the final vector are just indices or pointers), and can be efficiently queried
-with a standard binary search.</p>
+your usage pattern has these two distinct phases (insert then query), and can be
+coupled with a good choice of <a href="#ds_sequential">sequential container</a>.
+</p>
+
+<p>
+This combination provides the several nice properties: the result data is
+contiguous in memory (good for cache locality), has few allocations, is easy to
+address (iterators in the final vector are just indices or pointers), and can be
+efficiently queried with a standard binary or radix search.</p>
 
 </div>
 
@@ -983,7 +986,7 @@ elements.
 <div class="doc_text">
 
 <p>std::set is a reasonable all-around set class, which is good at many things
-but great at nothing.  std::set use a allocates memory for every single element
+but great at nothing.  std::set allocates memory for each element
 inserted (thus it is very malloc intensive) and typically stores three pointers
 with every element (thus adding a large amount of per-element space overhead).
 It offers guaranteed log(n) performance, which is not particularly fast.
