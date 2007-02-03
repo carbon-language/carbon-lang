@@ -1573,7 +1573,7 @@ MyModule-&gt;addTypeName("mylist", NewSTy);
 This code shows the basic approach used to build recursive types: build a
 non-recursive type using 'opaque', then use type unification to close the cycle.
 The type unification step is performed by the <tt><a
-ref="#refineAbstractTypeTo">refineAbstractTypeTo</a></tt> method, which is
+href="#refineAbstractTypeTo">refineAbstractTypeTo</a></tt> method, which is
 described next.  After that, we describe the <a
 href="#PATypeHolder">PATypeHolder class</a>.
 </p>
@@ -2748,11 +2748,6 @@ the various types of Constants.</p>
     <ul>
       <li><tt>double getValue() const</tt>: Returns the underlying value of 
       this constant. </li>
-    </ul>
-  </li>
-    <ul>
-      <li><tt>bool getValue() const</tt>: Returns the underlying value of this 
-      constant. </li>
     </ul>
   </li>
   <li>ConstantArray : This represents a constant array.
