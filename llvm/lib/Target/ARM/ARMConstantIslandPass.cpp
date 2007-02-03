@@ -283,7 +283,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
         }
 
         // Record this immediate branch.
-        unsigned MaxOffs = (1 << (Bits-1)) * Scale;
+        unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
         ImmBranches.push_back(ImmBranch(I, MaxOffs, isCond, UOpc));
       }
 
@@ -489,7 +489,7 @@ bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, MachineInstr *CPEMI,
 
   DEBUG(std::cerr << "User of CPE#" << CPEMI->getOperand(0).getImm()
                   << " max delta=" << MaxDisp
-                  << " at offset " << int(UserOffset-CPEOffset) << "\t"
+                  << " at offset " << int(CPEOffset-UserOffset) << "\t"
                   << *MI);
 
   if (UserOffset <= CPEOffset) {
@@ -581,8 +581,9 @@ bool ARMConstantIslands::BBIsInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
   unsigned DestOffset = GetOffsetOf(DestBB);
 
   DEBUG(std::cerr << "Branch of destination BB#" << DestBB->getNumber()
+                  << " from BB#" << MI->getParent()->getNumber()
                   << " max delta=" << MaxDisp
-                  << " at offset " << int(BrOffset-DestOffset) << "\t"
+                  << " at offset " << int(DestOffset-BrOffset) << "\t"
                   << *MI);
 
   if (BrOffset <= DestOffset) {
@@ -626,6 +627,9 @@ ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   BBSizes[MBB->getNumber()] += 2;
   HasFarJump = true;
   NumUBrFixed++;
+
+  DEBUG(std::cerr << "  Changed B to long jump " << *MI);
+
   return true;
 }
 
@@ -657,13 +661,13 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   // direct the updated conditional branch to the fall-through block. Otherwise,
   // split the MBB before the next instruction.
   MachineBasicBlock *MBB = MI->getParent();
-  MachineInstr *BackMI = &MBB->back();
-  bool NeedSplit = (BackMI != MI) || !BBHasFallthrough(MBB);
+  MachineInstr *BMI = &MBB->back();
+  bool NeedSplit = (BMI != MI) || !BBHasFallthrough(MBB);
 
   NumCBrFixed++;
-  if (BackMI != MI) {
+  if (BMI != MI) {
     if (next(MachineBasicBlock::iterator(MI)) == MBB->back() &&
-        BackMI->getOpcode() == Br.UncondBr) {
+        BMI->getOpcode() == Br.UncondBr) {
       // Last MI in the BB is a unconditional branch. Can we simply invert the
       // condition and swap destinations:
       // beq L1
@@ -671,9 +675,12 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
       // =>
       // bne L2
       // b   L1
-      MachineBasicBlock *NewDest = BackMI->getOperand(0).getMachineBasicBlock();
+      MachineBasicBlock *NewDest = BMI->getOperand(0).getMachineBasicBlock();
       if (BBIsInRange(MI, NewDest, Br.MaxDisp)) {
-        BackMI->getOperand(0).setMachineBasicBlock(DestBB);
+        DEBUG(std::cerr << "  Invert Bcc condition and swap its destination"
+                        << " with " << *BMI);
+
+        BMI->getOperand(0).setMachineBasicBlock(DestBB);
         MI->getOperand(0).setMachineBasicBlock(NewDest);
         MI->getOperand(1).setImm(CC);
         return true;
@@ -688,6 +695,10 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
     MBB->back().eraseFromParent();
   }
   MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
+ 
+  DEBUG(std::cerr << "  Insert B to BB#" << DestBB->getNumber()
+                  << " also invert condition and change dest. to BB#"
+                  << NextBB->getNumber() << "\n");
 
   // Insert a unconditional branch and replace the conditional branch.
   // Also update the ImmBranch as well as adding a new entry for the new branch.
