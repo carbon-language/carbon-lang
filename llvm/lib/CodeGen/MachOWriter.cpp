@@ -726,8 +726,13 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
       TargetSection = MOSPtr->Index;
       MR.setResultPointer((void*)Offset);
     }
-    
-    GetTargetRelocation(MR, MOS, *SectionList[TargetSection-1], Scattered);
+
+    OutputBuffer RelocOut(MOS.RelocBuffer, is64Bit, isLittleEndian);
+    OutputBuffer SecOut(MOS.SectionData, is64Bit, isLittleEndian);
+    MachOSection &To = *SectionList[TargetSection - 1];
+
+    MOS.nreloc += GetTargetRelocation(MR, MOS.Index, To.addr, To.Index,
+                                      RelocOut, SecOut, Scattered);
   }
 }
 
