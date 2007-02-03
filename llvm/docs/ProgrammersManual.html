@@ -44,6 +44,20 @@ option</a></li>
       <li><a href="#ViewGraph">Viewing graphs while debugging code</a></li>
     </ul>
   </li>
+  <li><a href="#datastructure">Picking the Right Data Structure for a Task</a>
+    <ul>
+    <li><a href="#ds_sequential">Sequential Containers (std::vector, std::list, etc)</a><ul>
+    <li><a href="#dss_fixedarrays">Fixed Size Arrays</a></li>
+    <li><a href="#dss_heaparrays">Heap Allocated Arrays</a></li>
+    <li><a href="#dss_smallvector">"llvm/ADT/SmallVector.h"</a></li>
+    <li><a href="#dss_vector">&lt;vector&gt;</a></li>
+    <li><a href="#dss_ilist">llvm/ADT/ilist</a></li>
+    <li><a href="#dss_list">&lt;list&gt;</a></li>
+    </ul></li>
+    <li><a href="#ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a></li>
+    <li><a href="#ds_map">Map-Like Containers (std::map, DenseMap, etc)</a></li>
+    </ul>
+  </li>
   <li><a href="#common">Helpful Hints for Common Operations</a>
     <ul>
       <li><a href="#inspection">Basic Inspection and Traversal Routines</a>
@@ -630,6 +644,231 @@ found at <a href="http://www.graphviz.org/doc/info/attrs.html">Graph
 Attributes</a>.)  If you want to restart and clear all the current graph
 attributes, then you can <tt>call DAG.clearGraphAttrs()</tt>. </p>
 
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="datastructure">Picking the Right Data Structure for a Task</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>LLVM has a plethora of datastructures in the <tt>llvm/ADT/</tt> directory,
+ and we commonly use STL datastructures.  This section describes the tradeoffs
+ you should consider when you pick one.</p>
+
+<p>
+The first step is a choose your own adventure: do you want a sequential
+container, a set-like container, or a map-like container?  The most important
+thing when choosing a container is the algorithmic properties of how you plan to
+access the container.  Based on that, you should use:</p>
+
+<ul>
+<li>a <a href="#ds_map">map-like</a> container if you need efficient lookup
+    of an value based on another value.  Map-like containers also support
+    efficient queries for containment (whether a key is in the map).  Map-like
+    containers generally do not support efficient reverse mapping (values to
+    keys).  If you need that, use two maps.  Some map-like containers also
+    support efficient iteration through the keys in sorted order.  Map-like
+    containers are the most expensive sort, only use them if you need one of
+    these capabilities.</li>
+
+<li>a <a href="#ds_set">set-like</a> container if you need to put a bunch of
+    stuff into a container that automatically eliminates duplicates.  Some
+    set-like containers support efficient iteration through the elements in
+    sorted order.  Set-like containers are more expensive than sequential
+    containers.
+</li>
+
+<li>a <a href="#ds_sequential">sequential</a> container provides
+    the most efficient way to add elements and keeps track of the order they are
+    added to the collection.  They permit duplicates and support efficient
+    iteration, but do not support efficient lookup based on a key.
+</li>
+
+</ul>
+
+<p>
+Once the proper catagory of container is determined, you can fine tune the
+memory use, constant factors, and cache behaviors of access by intelligently
+picking a member of the catagory.  Note that constant factors and cache behavior
+can be a big deal.  If you have a vector that usually only contains a few
+elements (but could contain many), for example, it's much better to use
+<a href="#dss_smallvector">SmallVector</a> than <a href="#dss_vector">vector</a>
+.  Doing so avoids (relatively) expensive malloc/free calls, which dwarf the
+cost of adding the elements to the container. </p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ds_sequential">Sequential Containers (std::vector, std::list, etc)</a>
+</div>
+
+<div class="doc_text">
+There are a variety of sequential containers available for you, based on your
+needs.  Pick the first in this section that will do what you want.
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_fixedarrays">Fixed Size Arrays</a>
+</div>
+
+<div class="doc_text">
+<p>Fixed size arrays are very simple and very fast.  They are good if you know
+exactly how many elements you have, or you have a (low) upper bound on how many
+you have.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_heaparrays">Heap Allocated Arrays</a>
+</div>
+
+<div class="doc_text">
+<p>Heap allocated arrays (new[] + delete[]) are also simple.  They are good if
+the number of elements is variable, if you know how many elements you will need
+before the array is allocated, and if the array is usually large (if not,
+consider a <a href="#dss_smallvector">SmallVector</a>).  The cost of a heap
+allocated array is the cost of the new/delete (aka malloc/free).  Also note that
+if you are allocating an array of a type with a constructor, the constructor and
+destructors will be run for every element in the array (resizable vectors only
+construct those elements actually used).</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_smallvector">"llvm/ADT/SmallVector.h"</a>
+</div>
+
+<div class="doc_text">
+<p><tt>SmallVector&lt;Type, N&gt;</tt> is a simple class that looks and smells
+just like <tt>vector&lt;Type&gt;</tt>:
+it supports efficient iteration, lays out elements in memory order (so you can
+do pointer arithmetic between elements), supports efficient push_back/pop_back
+operations, supports efficient random access to its elements, etc.</p>
+
+<p>The advantage of SmallVector is that it allocates space for
+some number of elements (N) <b>in the object itself</b>.  Because of this, if
+the SmallVector is dynamically smaller than N, no malloc is performed.  This can
+be a big win in cases where the malloc/free call is far more expensive than the
+code that fiddles around with the elements.</p>
+
+<p>This is good for vectors that are "usually small" (e.g. the number of
+predecessors/successors of a block is usually less than 8).  On the other hand,
+this makes the size of the SmallVector itself large, so you don't want to
+allocate lots of them (doing so will waste a lot of space).  As such,
+SmallVectors are most useful when on the stack.</p>
+
+<p>SmallVector also provides a nice portable and efficient replacement for
+<tt>alloca</tt>.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_vector">&lt;vector&gt;</a>
+</div>
+
+<div class="doc_text">
+<p>
+std::vector is well loved and respected.  It is useful when SmallVector isn't:
+when the size of the vector is often large (thus the small optimization will
+rarely be a benefit) or if you will be allocating many instances of the vector
+itself (which would waste space for elements that aren't in the container).
+vector is also useful when interfacing with code that expects vectors :).
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_list">&lt;list&gt;</a>
+</div>
+
+<div class="doc_text">
+<p>std::list is an extremely inefficient class that is rarely useful.
+It performs a heap allocation for every element inserted into it, thus having an
+extremely high constant factor, particularly for small data types.  std::list
+also only supports bidirectional iteration, not random access iteration.</p>
+
+<p>In exchange for this high cost, std::list supports efficient access to both
+ends of the list (like std::deque, but unlike std::vector or SmallVector).  In
+addition, the iterator invalidation characteristics of std::list are stronger
+than that of a vector class: inserting or removing an element into the list does
+not invalidate iterator or pointers to other elements in the list.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_ilist">llvm/ADT/ilist</a>
+</div>
+
+<div class="doc_text">
+<p><tt>ilist&lt;T&gt;</tt> implements an 'intrusive' doubly-linked list.  It is
+intrusive, because it requires the element to store and provide access to the
+prev/next pointers for the list.</p>
+
+<p>ilist has the same drawbacks as std::list, and additionally requires an
+ilist_traits implementation for the element type, but it provides some novel
+characteristics.  In particular, it can efficiently store polymorphic objects,
+the traits class is informed when an element is inserted or removed from the
+list, and ilists are guaranteed to support a constant-time splice operation.
+</p>
+
+<p>These properties are exactly what we want for things like Instructions and
+basic blocks, which is why these are implemented with ilists.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_other">Other options</a>
+</div>
+
+<div class="doc_text">
+<p>Other STL containers are available, such as std::deque (which has similar
+characteristics to std::vector, but has higher constant factors and provides
+efficient push_front/pop_front methods) and std::string.</p>
+
+<p>There are also various STL adapter classes such as std::queue,
+std::priority_queue, std::stack, etc.  These provide simplified access to an
+underlying container but don't affect the cost of the container itself.</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+SmallPtrSet
+SmallSet
+sorted vector
+FoldingSet
+hash_set
+UniqueVector
+SetVector
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ds_map">Map-Like Containers (std::map, DenseMap, etc)</a>
+</div>
+
+<div class="doc_text">
+sorted vector
+std::map
+DenseMap
+IndexedMap
+hash_map
+CStringMap
 </div>
 
 
