@@ -143,7 +143,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
 static void UpdateCallGraphAfterInlining(const Function *Caller,
                                          const Function *Callee,
                                          Function::iterator FirstNewBlock,
-                                       std::map<const Value*, Value*> &ValueMap,
+                                       DenseMap<const Value*, Value*> &ValueMap,
                                          CallGraph &CG) {
   // Update the call graph by deleting the edge from Callee to Caller
   CallGraphNode *CalleeNode = CG[Callee];
@@ -156,7 +156,7 @@ static void UpdateCallGraphAfterInlining(const Function *Caller,
        E = CalleeNode->end(); I != E; ++I) {
     const Instruction *OrigCall = I->first.getInstruction();
     
-    std::map<const Value*, Value*>::iterator VMI = ValueMap.find(OrigCall);
+    DenseMap<const Value*, Value*>::iterator VMI = ValueMap.find(OrigCall);
     // Only copy the edge if the call was inlined!
     if (VMI != ValueMap.end() && VMI->second) {
       // If the call was inlined, but then constant folded, there is no edge to
@@ -208,7 +208,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   Function::iterator FirstNewBlock;
   
   { // Scope to destroy ValueMap after cloning.
-    std::map<const Value*, Value*> ValueMap;
+    DenseMap<const Value*, Value*> ValueMap;
 
     // Calculate the vector of arguments to pass into the function cloner, which
     // matches up the formal to the actual argument values.

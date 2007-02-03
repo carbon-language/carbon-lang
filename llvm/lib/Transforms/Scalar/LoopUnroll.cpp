@@ -31,9 +31,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IntrinsicInst.h"
 #include <cstdio>
-#include <set>
 #include <algorithm>
 using namespace llvm;
 
@@ -111,10 +111,10 @@ static unsigned ApproximateLoopSize(const Loop *L) {
 // current values into those specified by ValueMap.
 //
 static inline void RemapInstruction(Instruction *I,
-                                    std::map<const Value *, Value*> &ValueMap) {
+                                    DenseMap<const Value *, Value*> &ValueMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
-    std::map<const Value *, Value*>::iterator It = ValueMap.find(Op);
+    DenseMap<const Value *, Value*>::iterator It = ValueMap.find(Op);
     if (It != ValueMap.end()) Op = It->second;
     I->setOperand(op, Op);
   }
@@ -212,7 +212,7 @@ bool LoopUnroll::visitLoop(Loop *L) {
 
   // For the first iteration of the loop, we should use the precloned values for
   // PHI nodes.  Insert associations now.
-  std::map<const Value*, Value*> LastValueMap;
+  DenseMap<const Value*, Value*> LastValueMap;
   std::vector<PHINode*> OrigPHINode;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
@@ -240,7 +240,7 @@ bool LoopUnroll::visitLoop(Loop *L) {
     
     for (std::vector<BasicBlock*>::iterator BB = LoopBlocks.begin(),
          E = LoopBlocks.end(); BB != E; ++BB) {
-      std::map<const Value*, Value*> ValueMap;
+      DenseMap<const Value*, Value*> ValueMap;
       BasicBlock *New = CloneBasicBlock(*BB, ValueMap, SuffixBuffer);
       Header->getParent()->getBasicBlockList().push_back(New);
 
@@ -259,7 +259,7 @@ bool LoopUnroll::visitLoop(Loop *L) {
 
       // Update our running map of newest clones
       LastValueMap[*BB] = New;
-      for (std::map<const Value*, Value*>::iterator VI = ValueMap.begin(),
+      for (DenseMap<const Value*, Value*>::iterator VI = ValueMap.begin(),
            VE = ValueMap.end(); VI != VE; ++VI)
         LastValueMap[VI->first] = VI->second;
 
@@ -303,13 +303,13 @@ bool LoopUnroll::visitLoop(Loop *L) {
  
   // Update PHI nodes that reference the final latch block
   if (TripCount > 1) {
-    std::set<PHINode*> Users;
+    SmallPtrSet<PHINode*, 8> Users;
     for (Value::use_iterator UI = LatchBlock->use_begin(),
          UE = LatchBlock->use_end(); UI != UE; ++UI)
       if (PHINode* phi = dyn_cast<PHINode>(*UI))
         Users.insert(phi);
         
-    for (std::set<PHINode*>::iterator SI = Users.begin(), SE = Users.end();
+    for (SmallPtrSet<PHINode*,8>::iterator SI = Users.begin(), SE = Users.end();
          SI != SE; ++SI) {
       Value* InVal = (*SI)->getIncomingValueForBlock(LatchBlock);
       if (isa<Instruction>(InVal))

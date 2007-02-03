@@ -29,12 +29,12 @@ using namespace llvm;
 Module *llvm::CloneModule(const Module *M) {
   // Create the value map that maps things from the old module over to the new
   // module.
-  std::map<const Value*, Value*> ValueMap;
-
+  DenseMap<const Value*, Value*> ValueMap;
   return CloneModule(M, ValueMap);
 }
 
-Module *llvm::CloneModule(const Module *M, std::map<const Value*, Value*> &ValueMap) {
+Module *llvm::CloneModule(const Module *M,
+                          DenseMap<const Value*, Value*> &ValueMap) {
   // First off, we need to create the new module...
   Module *New = new Module(M->getModuleIdentifier());
   New->setDataLayout(M->getDataLayout());

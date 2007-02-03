@@ -22,11 +22,12 @@
 #include "ValueMapper.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/ADT/SmallVector.h"
+#include <map>
 using namespace llvm;
 
 // CloneBasicBlock - See comments in Cloning.h
 BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
-                                  std::map<const Value*, Value*> &ValueMap,
+                                  DenseMap<const Value*, Value*> &ValueMap,
                                   const char *NameSuffix, Function *F,
                                   ClonedCodeInfo *CodeInfo) {
   BasicBlock *NewBB = new BasicBlock("", F);
@@ -66,7 +67,7 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
 // ArgMap values.
 //
 void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                             std::map<const Value*, Value*> &ValueMap,
+                             DenseMap<const Value*, Value*> &ValueMap,
                              std::vector<ReturnInst*> &Returns,
                              const char *NameSuffix, ClonedCodeInfo *CodeInfo) {
   assert(NameSuffix && "NameSuffix cannot be null!");
@@ -113,7 +114,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// the function from their old to new values.
 ///
 Function *llvm::CloneFunction(const Function *F,
-                              std::map<const Value*, Value*> &ValueMap,
+                              DenseMap<const Value*, Value*> &ValueMap,
                               ClonedCodeInfo *CodeInfo) {
   std::vector<const Type*> ArgTypes;
 
@@ -154,7 +155,7 @@ namespace {
   struct PruningFunctionCloner {
     Function *NewFunc;
     const Function *OldFunc;
-    std::map<const Value*, Value*> &ValueMap;
+    DenseMap<const Value*, Value*> &ValueMap;
     std::vector<ReturnInst*> &Returns;
     const char *NameSuffix;
     ClonedCodeInfo *CodeInfo;
@@ -162,7 +163,7 @@ namespace {
 
   public:
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
-                          std::map<const Value*, Value*> &valueMap,
+                          DenseMap<const Value*, Value*> &valueMap,
                           std::vector<ReturnInst*> &returns,
                           const char *nameSuffix, 
                           ClonedCodeInfo *codeInfo,
@@ -303,7 +304,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
 /// dead.  Since this doesn't produce an exactly copy of the input, it can't be
 /// used for things like CloneFunction or CloneModule.
 void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
-                                     std::map<const Value*, Value*> &ValueMap,
+                                     DenseMap<const Value*, Value*> &ValueMap,
                                      std::vector<ReturnInst*> &Returns,
                                      const char *NameSuffix, 
                                      ClonedCodeInfo *CodeInfo,

@@ -26,7 +26,7 @@ using namespace llvm;
 std::vector<BasicBlock *>
 llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   std::vector<BasicBlock *> clonedTrace;
-  std::map<const Value*, Value*> ValueMap;
+  DenseMap<const Value*, Value*> ValueMap;
 
   //First, loop over all the Basic Blocks in the trace and copy
   //them using CloneBasicBlock. Also fix the phi nodes during
@@ -92,7 +92,7 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
 /// saved in ValueMap.
 ///
 void llvm::CloneTraceInto(Function *NewFunc, Trace &T,
-                          std::map<const Value*, Value*> &ValueMap,
+                          DenseMap<const Value*, Value*> &ValueMap,
                           const char *NameSuffix) {
   assert(NameSuffix && "NameSuffix cannot be null!");
 

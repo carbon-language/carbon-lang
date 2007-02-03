@@ -445,10 +445,10 @@ BasicBlock *LoopUnswitch::SplitEdge(BasicBlock *BB, BasicBlock *Succ) {
 // current values into those specified by ValueMap.
 //
 static inline void RemapInstruction(Instruction *I,
-                                    std::map<const Value *, Value*> &ValueMap) {
+                                    DenseMap<const Value *, Value*> &ValueMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
-    std::map<const Value *, Value*>::iterator It = ValueMap.find(Op);
+    DenseMap<const Value *, Value*>::iterator It = ValueMap.find(Op);
     if (It != ValueMap.end()) Op = It->second;
     I->setOperand(op, Op);
   }
@@ -456,7 +456,7 @@ static inline void RemapInstruction(Instruction *I,
 
 /// CloneLoop - Recursively clone the specified loop and all of its children,
 /// mapping the blocks with the specified map.
-static Loop *CloneLoop(Loop *L, Loop *PL, std::map<const Value*, Value*> &VM,
+static Loop *CloneLoop(Loop *L, Loop *PL, DenseMap<const Value*, Value*> &VM,
                        LoopInfo *LI) {
   Loop *New = new Loop();
 
@@ -632,7 +632,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   // the instructions and blocks.
   std::vector<BasicBlock*> NewBlocks;
   NewBlocks.reserve(LoopBlocks.size());
-  std::map<const Value*, Value*> ValueMap;
+  DenseMap<const Value*, Value*> ValueMap;
   for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
     BasicBlock *New = CloneBasicBlock(LoopBlocks[i], ValueMap, ".us", F);
     NewBlocks.push_back(New);
@@ -669,7 +669,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     for (BasicBlock::iterator I = ExitSucc->begin();
          (PN = dyn_cast<PHINode>(I)); ++I) {
       Value *V = PN->getIncomingValueForBlock(ExitBlocks[i]);
-      std::map<const Value *, Value*>::iterator It = ValueMap.find(V);
+      DenseMap<const Value *, Value*>::iterator It = ValueMap.find(V);
       if (It != ValueMap.end()) V = It->second;
       PN->addIncoming(V, NewExit);
     }
