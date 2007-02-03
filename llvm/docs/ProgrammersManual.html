@@ -1126,7 +1126,7 @@ Strings are commonly used as keys in maps, and they are difficult to support
 efficiently: they are variable length, inefficient to hash and compare when
 long, expensive to copy, etc.  CStringMap is a specialized container designed to
 cope with these issues.  It supports mapping an arbitrary range of bytes that
-does not have an embedded null character in it ("C strings") to an arbitrary
+does not have an embedded nul character in it ("C strings") to an arbitrary
 other object.</p>
 
 <p>The CStringMap implementation uses a quadratically-probed hash table, where
