@@ -19,6 +19,7 @@
 namespace llvm {
 
   class MachineBasicBlock;
+  class OutputBuffer;
 
   //===--------------------------------------------------------------------===//
   //                        TargetMachOWriterInfo
@@ -88,10 +89,18 @@ namespace llvm {
 
     TargetMachOWriterInfo(uint32_t cputype, uint32_t cpusubtype)
       : CPUType(cputype), CPUSubType(cpusubtype) {}
-    virtual ~TargetMachOWriterInfo() {}
+    virtual ~TargetMachOWriterInfo();
 
     virtual MachineRelocation GetJTRelocation(unsigned Offset,
                                               MachineBasicBlock *MBB) const;
+
+    virtual unsigned GetTargetRelocation(MachineRelocation &MR,
+                                         unsigned FromIdx,
+                                         unsigned ToAddr,
+                                         unsigned ToIdx,
+                                         OutputBuffer &RelocOut,
+                                         OutputBuffer &SecOut,
+                                         bool Scattered) const { return 0; }
 
     uint32_t getCPUType() const { return CPUType; }
     uint32_t getCPUSubType() const { return CPUSubType; }
