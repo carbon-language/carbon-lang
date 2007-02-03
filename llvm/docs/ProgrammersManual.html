@@ -909,10 +909,10 @@ efficiently queried with a standard binary or radix search.</p>
 <p>If you have a set-like datastructure that is usually small and whose elements
 are reasonably small, a <tt>SmallSet&lt;Type, N&gt;</tt> is a good choice.  This set
 has space for N elements in place (thus, if the set is dynamically smaller than
-N, no malloc traffic is required) and access them with a simple linear search.
-When the set grows beyond 'N', it allocates a more expensive representation that
+N, no malloc traffic is required) and accesses them with a simple linear search.
+When the set grows beyond 'N' elements, it allocates a more expensive representation that
 guarantees efficient access (for most types, it falls back to std::set, but for
-pointers it uses something far better, see <a 
+pointers it uses something far better, <a
 href="#dss_smallptrset">SmallPtrSet</a>).</p>
 
 <p>The magic of this class is that it handles small sets extremely efficiently,
@@ -931,7 +931,7 @@ and erasing, but does not support iteration.</p>
 
 <p>SmallPtrSet has all the advantages of SmallSet (and a SmallSet of pointers is 
 transparently implemented with a SmallPtrSet), but also suports iterators.  If
-more than 'N' allocations are performed, a single quadratically
+more than 'N' insertions are performed, a single quadratically
 probed hash table is allocated and grows as needed, providing extremely
 efficient access (constant time insertion/deleting/queries with low constant
 factors) and is very stingy with malloc traffic.</p>
@@ -953,21 +953,22 @@ visited in sorted order.</p>
 FoldingSet is an aggregate class that is really good at uniquing
 expensive-to-create or polymorphic objects.  It is a combination of a chained
 hash table with intrusive links (uniqued objects are required to inherit from
-FoldingSetNode) that uses SmallVector as part of its ID process.</p>
+FoldingSetNode) that uses <a href="#dss_smallvector">SmallVector</a> as part of
+its ID process.</p>
 
-<p>Consider a case where you want to implement a "getorcreate_foo" method for
+<p>Consider a case where you want to implement a "getOrCreateFoo" method for
 a complex object (for example, a node in the code generator).  The client has a
 description of *what* it wants to generate (it knows the opcode and all the
 operands), but we don't want to 'new' a node, then try inserting it into a set
-only to find out it already exists (at which point we would have to delete it
-and return the node that already exists).
+only to find out it already exists, at which point we would have to delete it
+and return the node that already exists.
 </p>
 
 <p>To support this style of client, FoldingSet perform a query with a
 FoldingSetNodeID (which wraps SmallVector) that can be used to describe the
 element that we want to query for.  The query either returns the element
 matching the ID or it returns an opaque ID that indicates where insertion should
-take place.</p>
+take place.  Construction of the ID usually does not require heap traffic.</p>
 
 <p>Because FoldingSet uses intrusive links, it can support polymorphic objects
 in the set (for example, you can have SDNode instances mixed with LoadSDNodes).
@@ -985,14 +986,15 @@ elements.
 
 <div class="doc_text">
 
-<p>std::set is a reasonable all-around set class, which is good at many things
-but great at nothing.  std::set allocates memory for each element
+<p><tt>std::set</t> is a reasonable all-around set class, which is good at many
+things but great at nothing.  std::set allocates memory for each element
 inserted (thus it is very malloc intensive) and typically stores three pointers
-with every element (thus adding a large amount of per-element space overhead).
-It offers guaranteed log(n) performance, which is not particularly fast.
-</p>
+per element in the set (thus adding a large amount of per-element space
+overhead).  It offers guaranteed log(n) performance, which is not particularly
+fast, particularly if the elements of the set are expensive to compare (e.g.
+strings).</p>
 
-<p>The advantages of std::set is that its iterators are stable (deleting or
+<p>The advantages of std::set are that its iterators are stable (deleting or
 inserting an element from the set does not affect iterators or pointers to other
 elements) and that iteration over the set is guaranteed to be in sorted order.
 If the elements in the set are large, then the relative overhead of the pointers
@@ -1044,16 +1046,17 @@ The STL provides several other options, such as std::multiset and the various
 "hash_set" like containers (whether from C++TR1 or from the SGI library).</p>
 
 <p>std::multiset is useful if you're not interested in elimination of
-duplicates, but has all the drawbacks of std::set.  A sorted vector or some
-other approach is almost always better.</p>
+duplicates, but has all the drawbacks of std::set.  A sorted vector (where you 
+don't delete duplicate entries) or some other approach is almost always
+better.</p>
 
 <p>The various hash_set implementations (exposed portably by
-"llvm/ADT/hash_set") is a standard chained hashtable.  This algorithm is malloc
-intensive like std::set (performing an allocation for each element inserted,
+"llvm/ADT/hash_set") is a simple chained hashtable.  This algorithm is as malloc
+intensive as std::set (performing an allocation for each element inserted,
 thus having really high constant factors) but (usually) provides O(1)
 insertion/deletion of elements.  This can be useful if your elements are large
-(thus making the constant-factor cost relatively low).  Element iteration does
-not visit elements in a useful order.</p>
+(thus making the constant-factor cost relatively low) or if comparisons are
+expensive.  Element iteration does not visit elements in a useful order.</p>
 
 </div>
 
