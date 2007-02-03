@@ -645,14 +645,14 @@ systems with X11, install the <a href="http://www.graphviz.org">graphviz</a>
 toolkit, and make sure 'dot' and 'gv' are in your path.  If you are running on
 Mac OS/X, download and install the Mac OS/X <a 
 href="http://www.pixelglow.com/graphviz/">Graphviz program</a>, and add
-<tt>/Applications/Graphviz.app/Contents/MacOS/</tt> (or whereever you install
+<tt>/Applications/Graphviz.app/Contents/MacOS/</tt> (or wherever you install
 it) to your path.  Once in your system and path are set up, rerun the LLVM
 configure script and rebuild LLVM to enable this functionality.</p>
 
 <p><tt>SelectionDAG</tt> has been extended to make it easier to locate
 <i>interesting</i> nodes in large complex graphs.  From gdb, if you
 <tt>call DAG.setGraphColor(<i>node</i>, "<i>color</i>")</tt>, then the
-next <tt>call DAG.viewGraph()</tt> would hilight the node in the
+next <tt>call DAG.viewGraph()</tt> would highlight the node in the
 specified color (choices of colors can be found at <a
 href="http://www.graphviz.org/doc/info/colors.html">colors</a>.) More
 complex node attributes can be provided with <tt>call
@@ -671,8 +671,8 @@ attributes, then you can <tt>call DAG.clearGraphAttrs()</tt>. </p>
 
 <div class="doc_text">
 
-<p>LLVM has a plethora of datastructures in the <tt>llvm/ADT/</tt> directory,
- and we commonly use STL datastructures.  This section describes the tradeoffs
+<p>LLVM has a plethora of data structures in the <tt>llvm/ADT/</tt> directory,
+ and we commonly use STL data structures.  This section describes the trade-offs
  you should consider when you pick one.</p>
 
 <p>
@@ -682,7 +682,7 @@ thing when choosing a container is the algorithmic properties of how you plan to
 access the container.  Based on that, you should use:</p>
 
 <ul>
-<li>a <a href="#ds_map">map-like</a> container if you need efficient lookup
+<li>a <a href="#ds_map">map-like</a> container if you need efficient look-up
     of an value based on another value.  Map-like containers also support
     efficient queries for containment (whether a key is in the map).  Map-like
     containers generally do not support efficient reverse mapping (values to
@@ -701,15 +701,15 @@ access the container.  Based on that, you should use:</p>
 <li>a <a href="#ds_sequential">sequential</a> container provides
     the most efficient way to add elements and keeps track of the order they are
     added to the collection.  They permit duplicates and support efficient
-    iteration, but do not support efficient lookup based on a key.
+    iteration, but do not support efficient look-up based on a key.
 </li>
 
 </ul>
 
 <p>
-Once the proper catagory of container is determined, you can fine tune the
+Once the proper category of container is determined, you can fine tune the
 memory use, constant factors, and cache behaviors of access by intelligently
-picking a member of the catagory.  Note that constant factors and cache behavior
+picking a member of the category.  Note that constant factors and cache behavior
 can be a big deal.  If you have a vector that usually only contains a few
 elements (but could contain many), for example, it's much better to use
 <a href="#dss_smallvector">SmallVector</a> than <a href="#dss_vector">vector</a>
@@ -751,7 +751,7 @@ before the array is allocated, and if the array is usually large (if not,
 consider a <a href="#dss_smallvector">SmallVector</a>).  The cost of a heap
 allocated array is the cost of the new/delete (aka malloc/free).  Also note that
 if you are allocating an array of a type with a constructor, the constructor and
-destructors will be run for every element in the array (resizable vectors only
+destructors will be run for every element in the array (re-sizable vectors only
 construct those elements actually used).</p>
 </div>
 
@@ -912,7 +912,7 @@ efficiently queried with a standard binary or radix search.</p>
 
 <div class="doc_text">
 
-<p>If you have a set-like datastructure that is usually small and whose elements
+<p>If you have a set-like data structure that is usually small and whose elements
 are reasonably small, a <tt>SmallSet&lt;Type, N&gt;</tt> is a good choice.  This set
 has space for N elements in place (thus, if the set is dynamically smaller than
 N, no malloc traffic is required) and accesses them with a simple linear search.
@@ -936,7 +936,7 @@ and erasing, but does not support iteration.</p>
 <div class="doc_text">
 
 <p>SmallPtrSet has all the advantages of SmallSet (and a SmallSet of pointers is 
-transparently implemented with a SmallPtrSet), but also suports iterators.  If
+transparently implemented with a SmallPtrSet), but also supports iterators.  If
 more than 'N' insertions are performed, a single quadratically
 probed hash table is allocated and grows as needed, providing extremely
 efficient access (constant time insertion/deleting/queries with low constant
@@ -1126,7 +1126,7 @@ Strings are commonly used as keys in maps, and they are difficult to support
 efficiently: they are variable length, inefficient to hash and compare when
 long, expensive to copy, etc.  CStringMap is a specialized container designed to
 cope with these issues.  It supports mapping an arbitrary range of bytes that
-does not have an embedded nul character in it ("C strings") to an arbitrary
+does not have an embedded null character in it ("C strings") to an arbitrary
 other object.</p>
 
 <p>The CStringMap implementation uses a quadratically-probed hash table, where
@@ -1369,15 +1369,15 @@ small example that shows how to dump all instructions in a function to the stand
 <pre>
 #include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"
 
-// <i>F is a ptr to a Function instance</i>
+// <i>F is a pointer to a Function instance</i>
 for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
   llvm::cerr &lt;&lt; *i &lt;&lt; "\n";
 </pre>
 </div>
 
 <p>Easy, isn't it?  You can also use <tt>InstIterator</tt>s to fill a
-worklist with its initial contents.  For example, if you wanted to
-initialize a worklist to contain all instructions in a <tt>Function</tt>
+work list with its initial contents.  For example, if you wanted to
+initialize a work list to contain all instructions in a <tt>Function</tt>
 F, all you would need to do is something like:</p>
 
 <div class="doc_code">
@@ -1467,7 +1467,7 @@ locations in the entire module (that is, across every <tt>Function</tt>) where a
 certain function (i.e., some <tt>Function</tt>*) is already in scope.  As you'll
 learn later, you may want to use an <tt>InstVisitor</tt> to accomplish this in a
 much more straight-forward manner, but this example will allow us to explore how
-you'd do it if you didn't have <tt>InstVisitor</tt> around. In pseudocode, this
+you'd do it if you didn't have <tt>InstVisitor</tt> around. In pseudo-code, this
 is what we want to do:</p>
 
 <div class="doc_code">
@@ -1635,7 +1635,7 @@ AllocaInst* ai = new AllocaInst(Type::IntTy);
 </div>
 
 <p>will create an <tt>AllocaInst</tt> instance that represents the allocation of
-one integer in the current stack frame, at runtime. Each <tt>Instruction</tt>
+one integer in the current stack frame, at run time. Each <tt>Instruction</tt>
 subclass is likely to have varying default parameters which change the semantics
 of the instruction, so refer to the <a
 href="/doxygen/classllvm_1_1Instruction.html">doxygen documentation for the subclass of
@@ -1649,7 +1649,7 @@ at generated LLVM machine code, you definitely want to have logical names
 associated with the results of instructions!  By supplying a value for the
 <tt>Name</tt> (default) parameter of the <tt>Instruction</tt> constructor, you
 associate a logical name with the result of the instruction's execution at
-runtime.  For example, say that I'm writing a transformation that dynamically
+run time.  For example, say that I'm writing a transformation that dynamically
 allocates space for an integer on the stack, and that integer is going to be
 used as some kind of index by some other code.  To accomplish this, I place an
 <tt>AllocaInst</tt> at the first point in the first <tt>BasicBlock</tt> of some
@@ -1663,7 +1663,7 @@ AllocaInst* pa = new AllocaInst(Type::IntTy, 0, "indexLoc");
 </div>
 
 <p>where <tt>indexLoc</tt> is now the logical name of the instruction's
-execution value, which is a pointer to an integer on the runtime stack.</p>
+execution value, which is a pointer to an integer on the run time stack.</p>
 
 <p><i>Inserting instructions</i></p>
 
