@@ -53,7 +53,7 @@ class DenseMap {
   unsigned NumEntries;
   DenseMap(const DenseMap &); // not implemented.
 public:
-  explicit DenseMap(unsigned NumInitBuckets = 8) {
+  explicit DenseMap(unsigned NumInitBuckets = 64) {
     init(NumInitBuckets);
   }
   ~DenseMap() {
