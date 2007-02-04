@@ -608,7 +608,8 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     }
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     const TargetData *TD = TM.getTargetData();
-    switch(CE->getOpcode()) {
+    unsigned Opcode = CE->getOpcode();    
+    switch (Opcode) {
     case Instruction::GetElementPtr: {
       // generate a symbolic expression for the byte address
       const Constant *ptrVal = CE->getOperand(0);
@@ -666,9 +667,10 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       break;
     }
     case Instruction::Add:
+    case Instruction::Sub:
       O << "(";
       EmitConstantValueOnly(CE->getOperand(0));
-      O << ") + (";
+      O << (Opcode==Instruction::Add ? ") + (" : ") - (");
       EmitConstantValueOnly(CE->getOperand(1));
       O << ")";
       break;
