@@ -44,7 +44,10 @@ void FoldingSetImpl::NodeID::AddInteger(unsigned I) {
 }
 void FoldingSetImpl::NodeID::AddInteger(uint64_t I) {
   Bits.push_back(unsigned(I));
-  Bits.push_back(unsigned(I >> 32));
+  
+  // If the integer is small, encode it just as 32-bits.
+  if ((uint64_t)(int)I != I)
+    Bits.push_back(unsigned(I >> 32));
 }
 void FoldingSetImpl::NodeID::AddFloat(float F) {
   Bits.push_back(FloatToBits(F));
