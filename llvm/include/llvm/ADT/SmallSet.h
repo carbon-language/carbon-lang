@@ -78,7 +78,7 @@ public:
   
   bool erase(const T &V) {
     if (!isSmall())
-      return Set.erase(V).second;
+      return Set.erase(V);
     for (mutable_iterator I = Vector.begin(), E = Vector.end(); I != E; ++I)
       if (*I == V) {
         Vector.erase(I);
