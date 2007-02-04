@@ -2409,8 +2409,9 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     return;
   }
   
-  // Get all of the users in a nice, deterministically ordered, uniqued set.
-  SetVector<SDNode*> Users(From.Val->use_begin(), From.Val->use_end());
+  // Get all of the users of From.Val.  We want these in a nice,
+  // deterministically ordered and uniqued set, so we use a SmallSetVector.
+  SmallSetVector<SDNode*, 16> Users(From.Val->use_begin(), From.Val->use_end());
 
   while (!Users.empty()) {
     // We know that this user uses some value of From.  If it is the right
