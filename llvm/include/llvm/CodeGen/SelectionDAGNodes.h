@@ -995,6 +995,49 @@ inline bool SDOperand::hasOneUse() const {
   return Val->hasNUsesOfValue(1, ResNo);
 }
 
+/// UnarySDNode - This class is used for single-operand SDNodes.  This is solely
+/// to allow co-allocation of node operands with the node itself.
+class UnarySDNode : public SDNode {
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+  SDOperand Op;
+public:
+  UnarySDNode(unsigned Opc, SDVTList VTs, SDOperand X)
+    : SDNode(Opc, VTs), Op(X) {
+    InitOperands(&Op, 1);
+  }
+};
+
+/// BinarySDNode - This class is used for two-operand SDNodes.  This is solely
+/// to allow co-allocation of node operands with the node itself.
+class BinarySDNode : public SDNode {
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+  SDOperand Ops[2];
+public:
+  BinarySDNode(unsigned Opc, SDVTList VTs, SDOperand X, SDOperand Y)
+    : SDNode(Opc, VTs) {
+    Ops[0] = X;
+    Ops[1] = Y;
+    InitOperands(Ops, 2);
+  }
+};
+
+/// TernarySDNode - This class is used for three-operand SDNodes. This is solely
+/// to allow co-allocation of node operands with the node itself.
+class TernarySDNode : public SDNode {
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+  SDOperand Ops[3];
+public:
+  TernarySDNode(unsigned Opc, SDVTList VTs, SDOperand X, SDOperand Y,
+                SDOperand Z)
+    : SDNode(Opc, VTs) {
+    Ops[0] = X;
+    Ops[1] = Y;
+    Ops[2] = Z;
+    InitOperands(Ops, 3);
+  }
+};
+
+
 /// HandleSDNode - This class is used to form a handle around another node that
 /// is persistant and is updated across invocations of replaceAllUsesWith on its
 /// operand.  This node should be directly created by end-users and not added to

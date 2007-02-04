@@ -939,7 +939,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new SDNode(Opcode, SDNode::getSDVTList(VT), 0, 0);
+  SDNode *N = new SDNode(Opcode, SDNode::getSDVTList(VT));
   CSEMap.InsertNode(N, IP);
   
   AllNodes.push_back(N);
@@ -1113,17 +1113,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   SDNode *N;
   SDVTList VTs = getVTList(VT);
-  SDOperand Ops[1] = { Operand };
   if (VT != MVT::Flag) { // Don't CSE flag producing nodes
     FoldingSetNodeID ID;
+    SDOperand Ops[1] = { Operand };
     AddNodeIDNode(ID, Opcode, VTs, Ops, 1);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, VTs, Ops, 1);
+    N = new UnarySDNode(Opcode, VTs, Operand);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, VTs, Ops, 1);
+    N = new UnarySDNode(Opcode, VTs, Operand);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1413,17 +1413,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   // Memoize this node if possible.
   SDNode *N;
   SDVTList VTs = getVTList(VT);
-  SDOperand Ops[] = { N1, N2 };
   if (VT != MVT::Flag) {
+    SDOperand Ops[] = { N1, N2 };
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTs, Ops, 2);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, VTs, Ops, 2);
+    N = new BinarySDNode(Opcode, VTs, N1, N2);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, VTs, Ops, 2);
+    N = new BinarySDNode(Opcode, VTs, N1, N2);
   }
 
   AllNodes.push_back(N);
@@ -1470,17 +1470,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   // Memoize node if it doesn't produce a flag.
   SDNode *N;
   SDVTList VTs = getVTList(VT);
-  SDOperand Ops[] = { N1, N2, N3 };
   if (VT != MVT::Flag) {
+    SDOperand Ops[] = { N1, N2, N3 };
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, VTs, Ops, 3);
+    N = new TernarySDNode(Opcode, VTs, N1, N2, N3);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, VTs, Ops, 3);
+    N = new TernarySDNode(Opcode, VTs, N1, N2, N3);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1809,10 +1809,24 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, VTList, Ops, NumOps);
+    if (NumOps == 1)
+      N = new UnarySDNode(Opcode, VTList, Ops[0]);
+    else if (NumOps == 2)
+      N = new BinarySDNode(Opcode, VTList, Ops[0], Ops[1]);
+    else if (NumOps == 3)
+      N = new TernarySDNode(Opcode, VTList, Ops[0], Ops[1], Ops[2]);
+    else
+      N = new SDNode(Opcode, VTList, Ops, NumOps);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, VTList, Ops, NumOps);
+    if (NumOps == 1)
+      N = new UnarySDNode(Opcode, VTList, Ops[0]);
+    else if (NumOps == 2)
+      N = new BinarySDNode(Opcode, VTList, Ops[0], Ops[1]);
+    else if (NumOps == 3)
+      N = new TernarySDNode(Opcode, VTList, Ops[0], Ops[1], Ops[2]);
+    else
+      N = new SDNode(Opcode, VTList, Ops, NumOps);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -2490,6 +2504,9 @@ unsigned SelectionDAG::AssignTopologicalOrder(std::vector<SDNode*> &TopOrder) {
 
 // Out-of-line virtual method to give class a home.
 void SDNode::ANCHOR() {}
+void UnarySDNode::ANCHOR() {}
+void BinarySDNode::ANCHOR() {}
+void TernarySDNode::ANCHOR() {}
 void HandleSDNode::ANCHOR() {}
 void StringSDNode::ANCHOR() {}
 void ConstantSDNode::ANCHOR() {}
