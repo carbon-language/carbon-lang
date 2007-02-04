@@ -111,6 +111,16 @@ public:
     return end();
   }
   
+  bool insert(const std::pair<KeyT, ValueT> &KV) {
+    BucketT *TheBucket;
+    if (LookupBucketFor(KV.first, TheBucket))
+      return false; // Already in map.
+    
+    // Otherwise, insert the new element.
+    InsertIntoBucket(KV.first, KV.second, TheBucket);
+    return true;
+  }
+  
   bool erase(const KeyT &Val) {
     BucketT *TheBucket;
     if (!LookupBucketFor(Val, TheBucket))
@@ -129,23 +139,28 @@ public:
     return true;
   }
   
-  ValueT &operator[](const KeyT &Val) {
+  ValueT &operator[](const KeyT &Key) {
     BucketT *TheBucket;
-    if (LookupBucketFor(Val, TheBucket))
+    if (LookupBucketFor(Key, TheBucket))
       return TheBucket->second;
 
-    // If the load of the hash table is more than 3/4, grow it.
-    if (NumEntries*4 >= NumBuckets*3) {
-      this->grow();
-      LookupBucketFor(Val, TheBucket);
-    }
-    ++NumEntries;
-    TheBucket->first = Val;
-    new (&TheBucket->second) ValueT();
-    return TheBucket->second;
+    return InsertIntoBucket(Key, ValueT(), TheBucket)->second;
   }
   
 private:
+  BucketT *InsertIntoBucket(const KeyT &Key, const ValueT &Value,
+                            BucketT *TheBucket) {
+    // If the load of the hash table is more than 3/4, grow it.
+    if (NumEntries*4 >= NumBuckets*3) {
+      this->grow();
+      LookupBucketFor(Key, TheBucket);
+    }
+    ++NumEntries;
+    TheBucket->first = Key;
+    new (&TheBucket->second) ValueT(Value);
+    return TheBucket;
+  }
+
   static unsigned getHashValue(const KeyT &Val) {
     return DenseMapKeyInfo<KeyT>::getHashValue(Val);
   }
