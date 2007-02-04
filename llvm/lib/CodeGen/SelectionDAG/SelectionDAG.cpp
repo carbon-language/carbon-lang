@@ -24,9 +24,9 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
-#include <set>
 #include <algorithm>
 #include <cmath>
 using namespace llvm;
@@ -2548,12 +2548,12 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 
   SDOperand TheValue(const_cast<SDNode *>(this), Value);
 
-  std::set<SDNode*> UsersHandled;
+  SmallPtrSet<SDNode*, 32> UsersHandled;
 
   for (SDNode::use_iterator UI = Uses.begin(), E = Uses.end(); UI != E; ++UI) {
     SDNode *User = *UI;
     if (User->getNumOperands() == 1 ||
-        UsersHandled.insert(User).second)     // First time we've seen this?
+        UsersHandled.insert(User))     // First time we've seen this?
       for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
         if (User->getOperand(i) == TheValue) {
           if (NUses == 0)
@@ -2599,8 +2599,8 @@ bool SDNode::isOperand(SDNode *N) const {
 }
 
 static void findPredecessor(SDNode *N, const SDNode *P, bool &found,
-                            std::set<SDNode *> &Visited) {
-  if (found || !Visited.insert(N).second)
+                            SmallPtrSet<SDNode *, 32> &Visited) {
+  if (found || !Visited.insert(N))
     return;
 
   for (unsigned i = 0, e = N->getNumOperands(); !found && i != e; ++i) {
@@ -2618,7 +2618,7 @@ static void findPredecessor(SDNode *N, const SDNode *P, bool &found,
 /// up the operands.
 /// NOTE: this is an expensive method. Use it carefully.
 bool SDNode::isPredecessor(SDNode *N) const {
-  std::set<SDNode *> Visited;
+  SmallPtrSet<SDNode *, 32> Visited;
   bool found = false;
   findPredecessor(N, this, found, Visited);
   return found;
