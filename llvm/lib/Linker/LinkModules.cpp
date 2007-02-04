@@ -269,15 +269,13 @@ static void PrintMap(const std::map<const Value*, Value*> &M) {
 }
 
 
-// RemapOperand - Use ValueMap to convert references from one module to another.
-// This is somewhat sophisticated in that it can automatically handle constant
-// references correctly as well.
+// RemapOperand - Use ValueMap to convert constants from one module to another.
 static Value *RemapOperand(const Value *In,
                            std::map<const Value*, Value*> &ValueMap) {
   std::map<const Value*,Value*>::const_iterator I = ValueMap.find(In);
   if (I != ValueMap.end()) return I->second;
 
-  // Check to see if it's a constant that we are interesting in transforming.
+  // Check to see if it's a constant that we are interested in transforming.
   Value *Result = 0;
   if (const Constant *CPV = dyn_cast<Constant>(In)) {
     if ((!isa<DerivedType>(CPV->getType()) && !isa<ConstantExpr>(CPV)) ||
@@ -296,8 +294,6 @@ static Value *RemapOperand(const Value *In,
       Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstantPointerNull>(CPV) || isa<UndefValue>(CPV)) {
       Result = const_cast<Constant*>(CPV);
-    } else if (isa<GlobalValue>(CPV)) {
-      Result = cast<Constant>(RemapOperand(CPV, ValueMap));
     } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CPV)) {
       std::vector<Constant*> Operands(CP->getNumOperands());
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
@@ -308,6 +304,8 @@ static Value *RemapOperand(const Value *In,
       for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
         Ops.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),ValueMap)));
       Result = CE->getWithOperands(Ops);
+    } else if (isa<GlobalValue>(CPV)) {
+      assert(0 && "Unmapped global?");
     } else {
       assert(0 && "Unknown type of derived type constant value!");
     }
@@ -315,7 +313,7 @@ static Value *RemapOperand(const Value *In,
     Result = const_cast<Value*>(In);
   }
   
-  // Cache the mapping in our local map structure...
+  // Cache the mapping in our local map structure
   if (Result) {
     ValueMap.insert(std::make_pair(In, Result));
     return Result;
@@ -393,7 +391,8 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
     LinkFromSrc = true; // Special cased.
     LT = Src->getLinkage();
   } else if (Src->hasWeakLinkage() || Src->hasLinkOnceLinkage()) {
-    // At this point we know that Dest has LinkOnce, External*, Weak, DLL* linkage.
+    // At this point we know that Dest has LinkOnce, External*, Weak, or
+    // DLL* linkage.
     if ((Dest->hasLinkOnceLinkage() && Src->hasWeakLinkage()) ||
         Dest->hasExternalWeakLinkage()) {
       LinkFromSrc = true;
@@ -613,8 +612,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                std::string *Err) {
   TypeSymbolTable *TST = &Dest->getTypeSymbolTable();
 
-  // Loop over all of the functions in the src module, mapping them over as we
-  // go
+  // Loop over all of the functions in the src module, mapping them over
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
     Function *DF = 0;
@@ -745,7 +743,7 @@ static bool LinkFunctionBodies(Module *Dest, Module *Src,
   // Loop over all of the functions in the src module, mapping them over as we
   // go
   for (Module::iterator SF = Src->begin(), E = Src->end(); SF != E; ++SF) {
-    if (!SF->isDeclaration()) {                  // No body if function is external
+    if (!SF->isDeclaration()) {               // No body if function is external
       Function *DF = cast<Function>(ValueMap[SF]); // Destination function
 
       // DF not external SF external?
@@ -877,6 +875,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
     }
   }
 
+  // COpy the target triple from the source to dest if the dest's is empty
   if (Dest->getTargetTriple().empty() && !Src->getTargetTriple().empty())
     Dest->setTargetTriple(Src->getTargetTriple());
       
@@ -887,6 +886,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
       Dest->getTargetTriple() != Src->getTargetTriple())
     cerr << "WARNING: Linking two modules of different target triples!\n";
 
+  // Append the module inline asm string
   if (!Src->getModuleInlineAsm().empty()) {
     if (Dest->getModuleInlineAsm().empty())
       Dest->setModuleInlineAsm(Src->getModuleInlineAsm());
@@ -908,7 +908,8 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // LinkTypes - Go through the symbol table of the Src module and see if any
   // types are named in the src module that are not named in the Dst module.
   // Make sure there are no type name conflicts.
-  if (LinkTypes(Dest, Src, ErrorMsg)) return true;
+  if (LinkTypes(Dest, Src, ErrorMsg)) 
+    return true;
 
   // ValueMap - Mapping of values from what they used to be in Src, to what they
   // are now in Dest.
