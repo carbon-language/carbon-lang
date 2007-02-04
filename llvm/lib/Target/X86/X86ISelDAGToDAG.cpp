@@ -677,7 +677,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     if (!Available &&
         AM.BaseType == X86ISelAddressMode::RegBase &&
         AM.Base.Reg.Val == 0 &&
-        AM.IndexReg.Val == 0)
+        AM.IndexReg.Val == 0) {
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1)))
         if (CN->getValue() == 3 || CN->getValue() == 5 || CN->getValue() == 9) {
           AM.Scale = unsigned(CN->getValue())-1;
@@ -705,9 +705,10 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
           AM.IndexReg = AM.Base.Reg = Reg;
           return false;
         }
+    }
     break;
 
-  case ISD::ADD: {
+  case ISD::ADD:
     if (!Available) {
       X86ISelAddressMode Backup = AM;
       if (!MatchAddress(N.Val->getOperand(0), AM, false) &&
@@ -720,31 +721,27 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
       AM = Backup;
     }
     break;
-  }
 
-  case ISD::OR: {
+  case ISD::OR:
+    // Handle "X | C" as "X + C" iff X is known to have C bits clear.
     if (!Available) {
-      X86ISelAddressMode Backup = AM;
-      // Look for (x << c1) | c2 where (c2 < c1)
-      ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(0));
-      if (CN && !MatchAddress(N.Val->getOperand(1), AM, false)) {
-        if (AM.GV == NULL && AM.Disp == 0 && CN->getValue() < AM.Scale) {
-          AM.Disp = CN->getValue();
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+        X86ISelAddressMode Backup = AM;
+        // Start with the LHS as an addr mode.
+        if (!MatchAddress(N.getOperand(0), AM, false) &&
+            // Address could not have picked a GV address for the displacement.
+            AM.GV == NULL &&
+            // On x86-64, the resultant disp must fit in 32-bits.
+            isInt32(AM.Disp + CN->getSignExtended()) &&
+            // Check to see if the LHS & C is zero.
+            TLI.MaskedValueIsZero(N.getOperand(0), CN->getValue())) {
+          AM.Disp += CN->getValue();
           return false;
         }
+        AM = Backup;
       }
-      AM = Backup;
-      CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1));
-      if (CN && !MatchAddress(N.Val->getOperand(0), AM, false)) {
-        if (AM.GV == NULL && AM.Disp == 0 && CN->getValue() < AM.Scale) {
-          AM.Disp = CN->getValue();
-          return false;
-        }
-      }
-      AM = Backup;
     }
     break;
-  }
   }
 
   // Is the base register already occupied?
