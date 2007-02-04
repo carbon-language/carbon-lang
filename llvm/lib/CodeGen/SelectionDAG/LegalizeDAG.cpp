@@ -27,6 +27,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <map>
 using namespace llvm;
 
@@ -182,7 +183,7 @@ private:
   SDNode *isShuffleLegal(MVT::ValueType VT, SDOperand Mask) const;
   
   bool LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
-                                    std::set<SDNode*> &NodesLeadingTo);
+                                    SmallPtrSet<SDNode*, 32> &NodesLeadingTo);
 
   void LegalizeSetCCOperands(SDOperand &LHS, SDOperand &RHS, SDOperand &CC);
     
@@ -416,7 +417,7 @@ static SDNode *FindCallStartFromCallEnd(SDNode *Node) {
 /// NodesLeadingTo.  This avoids retraversing them exponential number of times.
 ///
 bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
-                                            std::set<SDNode*> &NodesLeadingTo) {
+                                     SmallPtrSet<SDNode*, 32> &NodesLeadingTo) {
   if (N == Dest) return true;  // N certainly leads to Dest :)
   
   // If we've already processed this node and it does lead to Dest, there is no
@@ -1119,7 +1120,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // Recursively Legalize all of the inputs of the call end that do not lead
     // to this call start.  This ensures that any libcalls that need be inserted
     // are inserted *before* the CALLSEQ_START.
-    {std::set<SDNode*> NodesLeadingTo;
+    {SmallPtrSet<SDNode*, 32> NodesLeadingTo;
     for (unsigned i = 0, e = CallEnd->getNumOperands(); i != e; ++i)
       LegalizeAllNodesNotLeadingTo(CallEnd->getOperand(i).Val, Node,
                                    NodesLeadingTo);
@@ -2072,7 +2073,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Allow SETCC to not be supported for all legal data types
       // Mostly this targets FP
       MVT::ValueType NewInTy = Node->getOperand(0).getValueType();
-      MVT::ValueType OldVT = NewInTy;
+      MVT::ValueType OldVT = NewInTy; OldVT = OldVT;
 
       // Scan for the appropriate larger type to use.
       while (1) {
