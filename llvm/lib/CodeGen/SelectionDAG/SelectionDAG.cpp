@@ -257,66 +257,16 @@ void AddNodeIDValueTypes(FoldingSetNodeID &ID, SDVTList VTList) {
   ID.AddPointer(VTList.VTs);  
 }
 
-/// AddNodeIDOperand - Add an operands data to the NodeID data.
-///
-static void AddNodeIDOperand(FoldingSetNodeID &ID, SDOperand Op) {
-  ID.AddPointer(Op.Val);
-  ID.AddInteger(Op.ResNo);
-}
-
 /// AddNodeIDOperands - Various routines for adding operands to the NodeID data.
 ///
-static void AddNodeIDOperands(FoldingSetNodeID &ID) {
-}
-static void AddNodeIDOperands(FoldingSetNodeID &ID, SDOperand Op) {
-  AddNodeIDOperand(ID, Op);
-}
-static void AddNodeIDOperands(FoldingSetNodeID &ID,
-                             SDOperand Op1, SDOperand Op2) {
-  AddNodeIDOperand(ID, Op1);
-  AddNodeIDOperand(ID, Op2);
-}
-static void AddNodeIDOperands(FoldingSetNodeID &ID,
-                              SDOperand Op1, SDOperand Op2, SDOperand Op3) {
-  AddNodeIDOperand(ID, Op1);
-  AddNodeIDOperand(ID, Op2);
-  AddNodeIDOperand(ID, Op3);
-}
 static void AddNodeIDOperands(FoldingSetNodeID &ID,
                               const SDOperand *Ops, unsigned NumOps) {
-  for (; NumOps; --NumOps, ++Ops)
-    AddNodeIDOperand(ID, *Ops);
+  for (; NumOps; --NumOps, ++Ops) {
+    ID.AddPointer(Ops->Val);
+    ID.AddInteger(Ops->ResNo);
+  }
 }
 
-/// AddNodeIDOperands - Various routines for adding node info to the NodeID
-/// data.
-static void AddNodeIDNode(FoldingSetNodeID &ID,
-                          unsigned short OpC, SDVTList VTList) {
-  AddNodeIDOpcode(ID, OpC);
-  AddNodeIDValueTypes(ID, VTList);
-  AddNodeIDOperands(ID);
-}
-static void AddNodeIDNode(FoldingSetNodeID &ID,
-                          unsigned short OpC, SDVTList VTList,
-                          SDOperand Op) {
-  AddNodeIDOpcode(ID, OpC);
-  AddNodeIDValueTypes(ID, VTList);
-  AddNodeIDOperands(ID, Op);
-}
-static void AddNodeIDNode(FoldingSetNodeID &ID,
-                          unsigned short OpC, SDVTList VTList, 
-                          SDOperand Op1, SDOperand Op2) {
-  AddNodeIDOpcode(ID, OpC);
-  AddNodeIDValueTypes(ID, VTList);
-  AddNodeIDOperands(ID, Op1, Op2);
-}
-static void AddNodeIDNode(FoldingSetNodeID &ID,
-                          unsigned short OpC, SDVTList VTList, 
-                          SDOperand Op1, SDOperand Op2, SDOperand Op3) {
-  AddNodeIDOpcode(ID, OpC);
-  AddNodeIDValueTypes(ID, VTList);
-  AddNodeIDOperands(ID, Op1, Op2, Op3);
-}
 static void AddNodeIDNode(FoldingSetNodeID &ID,
                           unsigned short OpC, SDVTList VTList, 
                           const SDOperand *OpList, unsigned N) {
@@ -447,7 +397,8 @@ void SelectionDAG::RemoveDeadNodes() {
       if (Operand->use_empty())
         DeadNodes.push_back(Operand);
     }
-    delete[] N->OperandList;
+    if (N->OperandsNeedDelete)
+      delete[] N->OperandList;
     N->OperandList = 0;
     N->NumOperands = 0;
     
@@ -482,7 +433,8 @@ void SelectionDAG::RemoveDeadNode(SDNode *N, std::vector<SDNode*> &Deleted) {
       if (Operand->use_empty())
         DeadNodes.push_back(Operand);
     }
-    delete[] N->OperandList;
+    if (N->OperandsNeedDelete)
+      delete[] N->OperandList;
     N->OperandList = 0;
     N->NumOperands = 0;
     
@@ -511,7 +463,8 @@ void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
   // Drop all of the operands and decrement used nodes use counts.
   for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
     I->Val->removeUser(N);
-  delete[] N->OperandList;
+  if (N->OperandsNeedDelete)
+    delete[] N->OperandList;
   N->OperandList = 0;
   N->NumOperands = 0;
   
@@ -598,8 +551,9 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDOperand Op,
     if (N->getValueType(i) == MVT::Flag)
       return 0;   // Never CSE anything that produces a flag.
   
+  SDOperand Ops[] = { Op };
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Op);
+  AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops, 1);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
 
@@ -618,8 +572,9 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
     if (N->getValueType(i) == MVT::Flag)
       return 0;   // Never CSE anything that produces a flag.
                                               
+  SDOperand Ops[] = { Op1, Op2 };
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Op1, Op2);
+  AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops, 2);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
 
@@ -640,7 +595,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
       return 0;   // Never CSE anything that produces a flag.
   
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, N->getOpcode(), N->getVTList());
+  AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), 0, 0);
   
   if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     ID.AddInteger(LD->getAddressingMode());
@@ -669,7 +624,8 @@ SelectionDAG::~SelectionDAG() {
   while (!AllNodes.empty()) {
     SDNode *N = AllNodes.begin();
     N->SetNextInBucket(0);
-    delete [] N->OperandList;
+    if (N->OperandsNeedDelete)
+      delete [] N->OperandList;
     N->OperandList = 0;
     N->NumOperands = 0;
     AllNodes.pop_front();
@@ -701,7 +657,7 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
 
   unsigned Opc = isT ? ISD::TargetConstant : ISD::Constant;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT));
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(Val);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -724,7 +680,7 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
   // we don't have issues with SNANs.
   unsigned Opc = isTarget ? ISD::TargetConstantFP : ISD::ConstantFP;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT));
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddDouble(Val);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -740,7 +696,7 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
                                          bool isTargetGA) {
   unsigned Opc = isTargetGA ? ISD::TargetGlobalAddress : ISD::GlobalAddress;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT));
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddPointer(GV);
   ID.AddInteger(Offset);
   void *IP = 0;
@@ -756,7 +712,7 @@ SDOperand SelectionDAG::getFrameIndex(int FI, MVT::ValueType VT,
                                       bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetFrameIndex : ISD::FrameIndex;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT));
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(FI);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -770,7 +726,7 @@ SDOperand SelectionDAG::getFrameIndex(int FI, MVT::ValueType VT,
 SDOperand SelectionDAG::getJumpTable(int JTI, MVT::ValueType VT, bool isTarget){
   unsigned Opc = isTarget ? ISD::TargetJumpTable : ISD::JumpTable;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT));
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(JTI);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -786,7 +742,7 @@ SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT,
                                         bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT));
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
   ID.AddPointer(C);
@@ -806,7 +762,7 @@ SDOperand SelectionDAG::getConstantPool(MachineConstantPoolValue *C,
                                         bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT));
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
   C->AddSelectionDAGCSEId(ID);
@@ -822,7 +778,7 @@ SDOperand SelectionDAG::getConstantPool(MachineConstantPoolValue *C,
 
 SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BasicBlock, getVTList(MVT::Other));
+  AddNodeIDNode(ID, ISD::BasicBlock, getVTList(MVT::Other), 0, 0);
   ID.AddPointer(MBB);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -874,7 +830,7 @@ SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
 
 SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT::ValueType VT) {
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::Register, getVTList(VT));
+  AddNodeIDNode(ID, ISD::Register, getVTList(VT), 0, 0);
   ID.AddInteger(RegNo);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -890,7 +846,7 @@ SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
          "SrcValue is not a pointer?");
 
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::SRCVALUE, getVTList(MVT::Other));
+  AddNodeIDNode(ID, ISD::SRCVALUE, getVTList(MVT::Other), 0, 0);
   ID.AddPointer(V);
   ID.AddInteger(Offset);
   void *IP = 0;
@@ -979,11 +935,12 @@ SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
 ///
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opcode, getVTList(VT));
+  AddNodeIDNode(ID, Opcode, getVTList(VT), 0, 0);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new SDNode(Opcode, VT);
+  SDNode *N = new SDNode(Opcode, 0, 0);
+  N->setValueTypes(SDNode::getSDVTList(VT));
   CSEMap.InsertNode(N, IP);
   
   AllNodes.push_back(N);
@@ -1157,17 +1114,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   SDNode *N;
   SDVTList VTs = getVTList(VT);
+  SDOperand Ops[1] = { Operand };
   if (VT != MVT::Flag) { // Don't CSE flag producing nodes
     FoldingSetNodeID ID;
-    AddNodeIDNode(ID, Opcode, VTs, Operand);
+    AddNodeIDNode(ID, Opcode, VTs, Ops, 1);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, Operand);
+    N = new SDNode(Opcode, Ops, 1);
     N->setValueTypes(VTs);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, Operand);
+    N = new SDNode(Opcode, Ops, 1);
     N->setValueTypes(VTs);
   }
   AllNodes.push_back(N);
@@ -1458,17 +1416,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   // Memoize this node if possible.
   SDNode *N;
   SDVTList VTs = getVTList(VT);
+  SDOperand Ops[] = { N1, N2 };
   if (VT != MVT::Flag) {
     FoldingSetNodeID ID;
-    AddNodeIDNode(ID, Opcode, VTs, N1, N2);
+    AddNodeIDNode(ID, Opcode, VTs, Ops, 2);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, N1, N2);
+    N = new SDNode(Opcode, Ops, 2);
     N->setValueTypes(VTs);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, N1, N2);
+    N = new SDNode(Opcode, Ops, 2);
     N->setValueTypes(VTs);
   }
 
@@ -1516,17 +1475,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   // Memoize node if it doesn't produce a flag.
   SDNode *N;
   SDVTList VTs = getVTList(VT);
+  SDOperand Ops[] = { N1, N2, N3 };
   if (VT != MVT::Flag) {
     FoldingSetNodeID ID;
-    AddNodeIDNode(ID, Opcode, VTs, N1, N2, N3);
+    AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, N1, N2, N3);
+    N = new SDNode(Opcode, Ops, 3);
     N->setValueTypes(VTs);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, N1, N2, N3);
+    N = new SDNode(Opcode, Ops, 3);
     N->setValueTypes(VTs);
   }
   AllNodes.push_back(N);
@@ -1555,8 +1515,9 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   unsigned Alignment = 1;
   SDVTList VTs = getVTList(VT, MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDOperand Ops[] = { Chain, Ptr, Undef };
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::LOAD, VTs, Chain, Ptr, Undef);
+  AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
   ID.AddInteger(ISD::UNINDEXED);
   ID.AddInteger(ISD::NON_EXTLOAD);
   ID.AddInteger(VT);
@@ -1567,7 +1528,7 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Chain, Ptr, Undef, ISD::UNINDEXED,
+  SDNode *N = new LoadSDNode(Ops, ISD::UNINDEXED,
                              ISD::NON_EXTLOAD, VT, SV, SVOffset, Alignment,
                              isVolatile);
   N->setValueTypes(VTs);
@@ -1599,8 +1560,9 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   unsigned Alignment = 1;
   SDVTList VTs = getVTList(VT, MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
+  SDOperand Ops[] = { Chain, Ptr, Undef };
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::LOAD, VTs, Chain, Ptr, Undef);
+  AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
   ID.AddInteger(ISD::UNINDEXED);
   ID.AddInteger(ExtType);
   ID.AddInteger(EVT);
@@ -1611,7 +1573,7 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Chain, Ptr, Undef, ISD::UNINDEXED, ExtType, EVT,
+  SDNode *N = new LoadSDNode(Ops, ISD::UNINDEXED, ExtType, EVT,
                              SV, SVOffset, Alignment, isVolatile);
   N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
@@ -1627,8 +1589,9 @@ SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
          "Load is already a indexed load!");
   MVT::ValueType VT = OrigLoad.getValueType();
   SDVTList VTs = getVTList(VT, Base.getValueType(), MVT::Other);
+  SDOperand Ops[] = { LD->getChain(), Base, Offset };
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::LOAD, VTs, LD->getChain(), Base, Offset);
+  AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
   ID.AddInteger(AM);
   ID.AddInteger(LD->getExtensionType());
   ID.AddInteger(LD->getLoadedVT());
@@ -1639,7 +1602,7 @@ SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(LD->getChain(), Base, Offset, AM,
+  SDNode *N = new LoadSDNode(Ops, AM,
                              LD->getExtensionType(), LD->getLoadedVT(),
                              LD->getSrcValue(), LD->getSrcValueOffset(),
                              LD->getAlignment(), LD->isVolatile());
@@ -1679,7 +1642,7 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new StoreSDNode(Chain, Val, Ptr, Undef, ISD::UNINDEXED, false,
+  SDNode *N = new StoreSDNode(Ops, ISD::UNINDEXED, false,
                               VT, SV, SVOffset, Alignment, isVolatile);
   N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
@@ -1715,7 +1678,7 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new StoreSDNode(Chain, Val, Ptr, Undef, ISD::UNINDEXED, isTrunc,
+  SDNode *N = new StoreSDNode(Ops, ISD::UNINDEXED, isTrunc,
                               SVT, SV, SVOffset, Alignment, isVolatile);
   N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
@@ -1743,8 +1706,7 @@ SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new StoreSDNode(ST->getChain(), ST->getValue(),
-                              Base, Offset, AM,
+  SDNode *N = new StoreSDNode(Ops, AM,
                               ST->isTruncatingStore(), ST->getStoredVT(),
                               ST->getSrcValue(), ST->getSrcValueOffset(),
                               ST->getAlignment(), ST->isVolatile());
@@ -2077,12 +2039,18 @@ void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
   // use list.
   for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
     I->Val->removeUser(this);
-  delete [] OperandList;
-
+  
+  // If NumOps is larger than the # of operands we currently have, reallocate
+  // the operand list.
+  if (NumOps > NumOperands) {
+    if (OperandsNeedDelete)
+      delete [] OperandList;
+    OperandList = new SDOperand[NumOps];
+    OperandsNeedDelete = true;
+  }
   
   // Assign the new operands.
   NumOperands = NumOps;
-  OperandList = NumOperands ? new SDOperand[NumOperands] : 0;
   
   for (unsigned i = 0, e = NumOps; i != e; ++i) {
     OperandList[i] = Ops[i];
@@ -2103,7 +2071,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    MVT::ValueType VT) {
   SDVTList VTs = getVTList(VT);
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs);
+  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, 0, 0);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
     return ON;
@@ -2120,16 +2088,16 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    MVT::ValueType VT, SDOperand Op1) {
   // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT);
+  SDOperand Ops[] = { Op1 };
+  
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Op1);
+  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 1);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
     return ON;
                                        
   RemoveNodeFromCSEMaps(N);
-  SDOperand OperandList[] = { Op1 };
-  
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, OperandList, 1);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 1);
   CSEMap.InsertNode(N, IP);
   return N;
 }
@@ -2139,17 +2107,17 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    SDOperand Op2) {
   // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT);
+  SDOperand Ops[] = { Op1, Op2 };
+  
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs,  Op1, Op2);
+  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 2);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
     return ON;
                                        
   RemoveNodeFromCSEMaps(N);
   
-  SDOperand OperandList[] = { Op1, Op2 };
-
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, OperandList, 2);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 2);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
@@ -2160,16 +2128,16 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    SDOperand Op2, SDOperand Op3) {
   // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT);
+  SDOperand Ops[] = { Op1, Op2, Op3 };
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs,  Op1, Op2, Op3);
+  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 3);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
     return ON;
                                        
   RemoveNodeFromCSEMaps(N);
   
-  SDOperand OperandList[] = { Op1, Op2, Op3 };
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, OperandList, 3);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 3);
 
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
@@ -2198,16 +2166,14 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    SDOperand Op1, SDOperand Op2) {
   SDVTList VTs = getVTList(VT1, VT2);
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Op1, Op2);
+  SDOperand Ops[] = { Op1, Op2 };
+  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 2);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
     return ON;
 
   RemoveNodeFromCSEMaps(N);
-
-  SDOperand OperandList[] = { Op1, Op2 };
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, OperandList, 2);
-  
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 2);
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
 }
@@ -2218,17 +2184,16 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    SDOperand Op3) {
   // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT1, VT2);
+  SDOperand Ops[] = { Op1, Op2, Op3 };
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Op1, Op2, Op3);
+  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 3);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
     return ON;
 
   RemoveNodeFromCSEMaps(N);
 
-  SDOperand OperandList[] = { Op1, Op2, Op3 };
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, OperandList, 3);
-  
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 3);
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
 }
