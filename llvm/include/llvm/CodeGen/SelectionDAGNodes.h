@@ -908,18 +908,39 @@ protected:
     : NodeType(Opc), NodeId(-1) {
     OperandsNeedDelete = true;
     NumOperands = NumOps;
-    OperandList = new SDOperand[NumOperands];
+    OperandList = NumOps ? new SDOperand[NumOperands] : 0;
     
-    for (unsigned i = 0, e = NumOps; i != e; ++i) {
+    for (unsigned i = 0; i != NumOps; ++i) {
       OperandList[i] = Ops[i];
-      SDNode *N = OperandList[i].Val;
-      N->Uses.push_back(this);
+      Ops[i].Val->Uses.push_back(this);
     }
+    
     ValueList = VTs.VTs;
     NumValues = VTs.NumVTs;
     Prev = 0; Next = 0;
   }
-
+  SDNode(unsigned Opc, SDVTList VTs) : NodeType(Opc), NodeId(-1) {
+    OperandsNeedDelete = false;  // Operands set with InitOperands.
+    NumOperands = 0;
+    OperandList = 0;
+    
+    ValueList = VTs.VTs;
+    NumValues = VTs.NumVTs;
+    Prev = 0; Next = 0;
+  }
+  
+  /// InitOperands - Initialize the operands list of this node with the
+  /// specified values, which are part of the node (thus they don't need to be
+  /// copied in or allocated).
+  void InitOperands(SDOperand *Ops, unsigned NumOps) {
+    assert(OperandList == 0 && "Operands already set!");
+    NumOperands = NumOps;
+    OperandList = Ops;
+    
+    for (unsigned i = 0; i != NumOps; ++i)
+      Ops[i].Val->Uses.push_back(this);
+  }
+  
   /// MorphNodeTo - This frees the operands of the current node, resets the
   /// opcode, types, and operands to the specified value.  This should only be
   /// used by the SelectionDAG class.
@@ -980,11 +1001,14 @@ inline bool SDOperand::hasOneUse() const {
 /// the AllNodes list.
 class HandleSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+  SDOperand Op;
 public:
-  HandleSDNode(SDOperand X) : SDNode(ISD::HANDLENODE, getSDVTList(MVT::Other),
-                                     &X, 1) {}
+  HandleSDNode(SDOperand X)
+    : SDNode(ISD::HANDLENODE, getSDVTList(MVT::Other)), Op(X) {
+    InitOperands(&Op, 1);
+  }
   ~HandleSDNode();  
-  SDOperand getValue() const { return getOperand(0); }
+  SDOperand getValue() const { return Op; }
 };
 
 class StringSDNode : public SDNode {
@@ -993,7 +1017,7 @@ class StringSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   StringSDNode(const std::string &val)
-    : SDNode(ISD::STRING, getSDVTList(MVT::Other), 0, 0), Value(val) {
+    : SDNode(ISD::STRING, getSDVTList(MVT::Other)), Value(val) {
   }
 public:
   const std::string &getValue() const { return Value; }
@@ -1009,8 +1033,8 @@ class ConstantSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   ConstantSDNode(bool isTarget, uint64_t val, MVT::ValueType VT)
-    : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant, getSDVTList(VT),
-             0, 0), Value(val) {
+    : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant, getSDVTList(VT)),
+      Value(val) {
   }
 public:
 
@@ -1040,8 +1064,7 @@ protected:
   friend class SelectionDAG;
   ConstantFPSDNode(bool isTarget, double val, MVT::ValueType VT)
     : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
-             getSDVTList(VT), 0, 0), 
-      Value(val) {
+             getSDVTList(VT)), Value(val) {
   }
 public:
 
@@ -1067,10 +1090,9 @@ class GlobalAddressSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT::ValueType VT,
-                      int o=0)
+                      int o = 0)
     : SDNode(isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress,
-             getSDVTList(VT), 0, 0),
-      Offset(o) {
+             getSDVTList(VT)), Offset(o) {
     TheGlobal = const_cast<GlobalValue*>(GA);
   }
 public:
@@ -1092,8 +1114,8 @@ class FrameIndexSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   FrameIndexSDNode(int fi, MVT::ValueType VT, bool isTarg)
-    : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex, getSDVTList(VT),
-             0, 0), FI(fi) {
+    : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex, getSDVTList(VT)),
+      FI(fi) {
   }
 public:
 
@@ -1112,8 +1134,8 @@ class JumpTableSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   JumpTableSDNode(int jti, MVT::ValueType VT, bool isTarg)
-    : SDNode(isTarg ? ISD::TargetJumpTable : ISD::JumpTable, getSDVTList(VT),
-             0, 0), JTI(jti) {
+    : SDNode(isTarg ? ISD::TargetJumpTable : ISD::JumpTable, getSDVTList(VT)),
+      JTI(jti) {
   }
 public:
     
@@ -1139,22 +1161,21 @@ protected:
   ConstantPoolSDNode(bool isTarget, Constant *c, MVT::ValueType VT,
                      int o=0)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
-             getSDVTList(VT), 0, 0), Offset(o), Alignment(0) {
+             getSDVTList(VT)), Offset(o), Alignment(0) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.ConstVal = c;
   }
   ConstantPoolSDNode(bool isTarget, Constant *c, MVT::ValueType VT, int o,
                      unsigned Align)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 
-             getSDVTList(VT), 0, 0),
-      Offset(o), Alignment(Align) {
+             getSDVTList(VT)), Offset(o), Alignment(Align) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.ConstVal = c;
   }
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
                      MVT::ValueType VT, int o=0)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 
-             getSDVTList(VT), 0, 0), Offset(o), Alignment(0) {
+             getSDVTList(VT)), Offset(o), Alignment(0) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.MachineCPVal = v;
     Offset |= 1 << (sizeof(unsigned)*8-1);
@@ -1162,7 +1183,7 @@ protected:
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
                      MVT::ValueType VT, int o, unsigned Align)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
-             getSDVTList(VT), 0, 0), Offset(o), Alignment(Align) {
+             getSDVTList(VT)), Offset(o), Alignment(Align) {
     assert((int)Offset >= 0 && "Offset is too large");
     Val.MachineCPVal = v;
     Offset |= 1 << (sizeof(unsigned)*8-1);
@@ -1206,7 +1227,7 @@ class BasicBlockSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   BasicBlockSDNode(MachineBasicBlock *mbb)
-    : SDNode(ISD::BasicBlock, getSDVTList(MVT::Other), 0, 0), MBB(mbb) {
+    : SDNode(ISD::BasicBlock, getSDVTList(MVT::Other)), MBB(mbb) {
   }
 public:
 
@@ -1225,7 +1246,7 @@ class SrcValueSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   SrcValueSDNode(const Value* v, int o)
-    : SDNode(ISD::SRCVALUE, getSDVTList(MVT::Other), 0, 0), V(v), offset(o) {
+    : SDNode(ISD::SRCVALUE, getSDVTList(MVT::Other)), V(v), offset(o) {
   }
 
 public:
@@ -1245,7 +1266,7 @@ class RegisterSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   RegisterSDNode(unsigned reg, MVT::ValueType VT)
-    : SDNode(ISD::Register, getSDVTList(VT), 0, 0), Reg(reg) {
+    : SDNode(ISD::Register, getSDVTList(VT)), Reg(reg) {
   }
 public:
 
@@ -1264,7 +1285,7 @@ protected:
   friend class SelectionDAG;
   ExternalSymbolSDNode(bool isTarget, const char *Sym, MVT::ValueType VT)
     : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol,
-             getSDVTList(VT), 0, 0), Symbol(Sym) {
+             getSDVTList(VT)), Symbol(Sym) {
   }
 public:
 
@@ -1283,7 +1304,7 @@ class CondCodeSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   CondCodeSDNode(ISD::CondCode Cond)
-    : SDNode(ISD::CONDCODE, getSDVTList(MVT::Other), 0, 0), Condition(Cond) {
+    : SDNode(ISD::CONDCODE, getSDVTList(MVT::Other)), Condition(Cond) {
   }
 public:
 
@@ -1302,8 +1323,8 @@ class VTSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  VTSDNode(MVT::ValueType VT) : SDNode(ISD::VALUETYPE, getSDVTList(MVT::Other),
-                                       0, 0), ValueType(VT) {
+  VTSDNode(MVT::ValueType VT)
+    : SDNode(ISD::VALUETYPE, getSDVTList(MVT::Other)), ValueType(VT) {
   }
 public:
 
@@ -1319,7 +1340,8 @@ public:
 ///
 class LoadSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-
+  SDOperand Ops[3];
+  
   // AddrMode - unindexed, pre-indexed, post-indexed.
   ISD::MemIndexedMode AddrMode;
 
@@ -1345,9 +1367,13 @@ protected:
   LoadSDNode(SDOperand *ChainPtrOff, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, MVT::ValueType LVT,
              const Value *SV, int O=0, unsigned Align=1, bool Vol=false)
-    : SDNode(ISD::LOAD, VTs, ChainPtrOff, 3),
+    : SDNode(ISD::LOAD, VTs),
       AddrMode(AM), ExtType(ETy), LoadedVT(LVT), SrcValue(SV), SVOffset(O),
       Alignment(Align), IsVolatile(Vol) {
+    Ops[0] = ChainPtrOff[0]; // Chain
+    Ops[1] = ChainPtrOff[1]; // Ptr
+    Ops[2] = ChainPtrOff[2]; // Off
+    InitOperands(Ops, 3);
     assert((getOffset().getOpcode() == ISD::UNDEF ||
             AddrMode != ISD::UNINDEXED) &&
            "Only indexed load has a non-undef offset operand");
@@ -1375,7 +1401,8 @@ public:
 ///
 class StoreSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-
+  SDOperand Ops[4];
+    
   // AddrMode - unindexed, pre-indexed, post-indexed.
   ISD::MemIndexedMode AddrMode;
 
@@ -1401,9 +1428,14 @@ protected:
   StoreSDNode(SDOperand *ChainValuePtrOff, SDVTList VTs,
               ISD::MemIndexedMode AM, bool isTrunc, MVT::ValueType SVT,
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
-    : SDNode(ISD::STORE, VTs, ChainValuePtrOff, 4),
+    : SDNode(ISD::STORE, VTs),
       AddrMode(AM), IsTruncStore(isTrunc), StoredVT(SVT), SrcValue(SV),
       SVOffset(O), Alignment(Align), IsVolatile(Vol) {
+    Ops[0] = ChainValuePtrOff[0]; // Chain
+    Ops[1] = ChainValuePtrOff[1]; // Value
+    Ops[2] = ChainValuePtrOff[2]; // Ptr
+    Ops[3] = ChainValuePtrOff[3]; // Off
+    InitOperands(Ops, 4);
     assert((getOffset().getOpcode() == ISD::UNDEF || 
             AddrMode != ISD::UNINDEXED) &&
            "Only indexed store has a non-undef offset operand");
@@ -1489,7 +1521,7 @@ struct ilist_traits<SDNode> {
   static void setNext(SDNode *N, SDNode *Next) { N->Next = Next; }
   
   static SDNode *createSentinel() {
-    return new SDNode(ISD::EntryToken, SDNode::getSDVTList(MVT::Other), 0, 0);
+    return new SDNode(ISD::EntryToken, SDNode::getSDVTList(MVT::Other));
   }
   static void destroySentinel(SDNode *N) { delete N; }
   //static SDNode *createNode(const SDNode &V) { return new SDNode(V); }
