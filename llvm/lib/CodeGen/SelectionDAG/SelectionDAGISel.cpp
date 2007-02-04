@@ -171,7 +171,7 @@ namespace llvm {
     /// ValueMap - Since we emit code for the function a basic block at a time,
     /// we must remember which virtual registers hold the values for
     /// cross-basic-block values.
-    std::map<const Value*, unsigned> ValueMap;
+    DenseMap<const Value*, unsigned> ValueMap;
 
     /// StaticAllocaMap - Keep track of frame indices for fixed sized allocas in
     /// the entry block.  This allows the allocas to be efficiently referenced
@@ -658,7 +658,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       return DAG.getFrameIndex(SI->second, TLI.getPointerTy());
   }
       
-  std::map<const Value*, unsigned>::const_iterator VMI =
+  DenseMap<const Value*, unsigned>::iterator VMI =
       FuncInfo.ValueMap.find(V);
   assert(VMI != FuncInfo.ValueMap.end() && "Value not in map!");
   
@@ -4026,7 +4026,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   // blocks are available as virtual registers.
   for (BasicBlock::iterator I = LLVMBB->begin(), E = LLVMBB->end(); I != E;++I)
     if (!I->use_empty() && !isa<PHINode>(I)) {
-      std::map<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
+      DenseMap<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
       if (VMI != FuncInfo.ValueMap.end())
         UnorderedChains.push_back(
                                 SDL.CopyValueToVirtualRegister(I, VMI->second));
