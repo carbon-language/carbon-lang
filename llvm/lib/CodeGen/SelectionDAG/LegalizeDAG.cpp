@@ -303,7 +303,7 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
 
 /// ComputeTopDownOrdering - Add the specified node to the Order list if it has
 /// not been visited yet and if all of its operands have already been visited.
-static void ComputeTopDownOrdering(SDNode *N, std::vector<SDNode*> &Order,
+static void ComputeTopDownOrdering(SDNode *N, SmallVector<SDNode*, 64> &Order,
                                    DenseMap<SDNode*, unsigned> &Visited) {
   if (++Visited[N] != N->getNumOperands())
     return;  // Haven't visited all operands yet
@@ -333,7 +333,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
   // blocks.  To avoid this problem, compute an ordering of the nodes where each
   // node is only legalized after all of its operands are legalized.
   DenseMap<SDNode*, unsigned> Visited;
-  std::vector<SDNode*> Order;
+  SmallVector<SDNode*, 64> Order;
   
   // Compute ordering from all of the leaves in the graphs, those (like the
   // entry node) that have no operands.
