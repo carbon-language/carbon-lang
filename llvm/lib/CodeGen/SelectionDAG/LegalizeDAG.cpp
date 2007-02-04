@@ -99,12 +99,12 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   /// PromotedNodes - For nodes that are below legal width, and that have more
   /// than one use, this map indicates what promoted value to use.  This allows
   /// us to avoid promoting the same thing more than once.
-  std::map<SDOperand, SDOperand> PromotedNodes;
+  DenseMap<SDOperand, SDOperand> PromotedNodes;
 
   /// ExpandedNodes - For nodes that need to be expanded this map indicates
   /// which which operands are the expanded version of the input.  This allows
   /// us to avoid expanding the same node more than once.
-  std::map<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
+  DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
 
   /// SplitNodes - For vector nodes that need to be split, this map indicates
   /// which which operands are the split version of the input.  This allows us
@@ -123,7 +123,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
       LegalizedNodes.insert(std::make_pair(To, To));
   }
   void AddPromotedOperand(SDOperand From, SDOperand To) {
-    bool isNew = PromotedNodes.insert(std::make_pair(From, To)).second;
+    bool isNew = PromotedNodes.insert(std::make_pair(From, To));
     assert(isNew && "Got into the map somehow?");
     // If someone requests legalization of the new node, return itself.
     LegalizedNodes.insert(std::make_pair(To, To));
@@ -3103,7 +3103,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   SDOperand Result;
   SDNode *Node = Op.Val;
 
-  std::map<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
+  DenseMap<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
   if (I != PromotedNodes.end()) return I->second;
 
   switch (Node->getOpcode()) {
@@ -4584,7 +4584,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
          "Cannot expand to FP value or to larger int value!");
 
   // See if we already expanded it.
-  std::map<SDOperand, std::pair<SDOperand, SDOperand> >::iterator I
+  DenseMap<SDOperand, std::pair<SDOperand, SDOperand> >::iterator I
     = ExpandedNodes.find(Op);
   if (I != ExpandedNodes.end()) {
     Lo = I->second.first;
@@ -5268,8 +5268,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
 
   // Remember in a map if the values will be reused later.
-  bool isNew =
-    ExpandedNodes.insert(std::make_pair(Op, std::make_pair(Lo, Hi))).second;
+  bool isNew = ExpandedNodes.insert(std::make_pair(Op, std::make_pair(Lo, Hi)));
   assert(isNew && "Value already expanded?!?");
 }
 
@@ -5396,7 +5395,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   }
       
   // Remember in a map if the values will be reused later.
-  bool isNew =
+  bool isNew = 
     SplitNodes.insert(std::make_pair(Op, std::make_pair(Lo, Hi))).second;
   assert(isNew && "Value already expanded?!?");
 }
