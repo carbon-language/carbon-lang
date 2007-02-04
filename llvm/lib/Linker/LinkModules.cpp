@@ -476,11 +476,10 @@ static bool LinkGlobals(Module *Dest, Module *Src,
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                            SGV->getName(), Dest);
-      // Propagate alignment info.
+      // Propagate alignment, visibility and section info.
       NewDGV->setAlignment(SGV->getAlignment());
-
-      // Propagate section info.
       NewDGV->setSection(SGV->getSection());
+      NewDGV->setVisibility(SGV->getVisibility());
 
       // If the LLVM runtime renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename
@@ -503,11 +502,10 @@ static bool LinkGlobals(Module *Dest, Module *Src,
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                            "", Dest);
 
-      // Propagate alignment info.
+      // Propagate alignment, section and visibility  info.
       NewDGV->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
-
-      // Propagate section info.
       NewDGV->setSection(SGV->getSection());
+      NewDGV->setVisibility(SGV->getVisibility());
 
       // Make sure to remember this mapping...
       ValueMap.insert(std::make_pair(SGV, NewDGV));
@@ -515,11 +513,10 @@ static bool LinkGlobals(Module *Dest, Module *Src,
       // Keep track that this is an appending variable...
       AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
     } else {
-      // Propagate alignment info.
+      // Propagate alignment, section, and visibility info.
       DGV->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
-
-      // Propagate section info.
       DGV->setSection(SGV->getSection());
+      DGV->setVisibility(SGV->getVisibility());
 
       // Otherwise, perform the mapping as instructed by GetLinkageResult.  If
       // the types don't match, and if we are to link from the source, nuke DGV
@@ -529,6 +526,8 @@ static bool LinkGlobals(Module *Dest, Module *Src,
           new GlobalVariable(SGV->getType()->getElementType(),
                              DGV->isConstant(), DGV->getLinkage());
         NewDGV->setAlignment(DGV->getAlignment());
+        NewDGV->setSection(DGV->getSection());
+        NewDGV->setVisibility(DGV->getVisibility());
         Dest->getGlobalList().insert(DGV, NewDGV);
         DGV->replaceAllUsesWith(
             ConstantExpr::getBitCast(NewDGV, DGV->getType()));
