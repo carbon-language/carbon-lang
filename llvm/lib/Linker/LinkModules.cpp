@@ -20,7 +20,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
@@ -270,14 +270,14 @@ static void PrintMap(const std::map<const Value*, Value*> &M) {
 
 
 // RemapOperand - Use ValueMap to convert references from one module to another.
-// This is somewhat sophisticated in that it can automatically handle constant
-// references correctly as well.
+// This is somewhat sophisticated in that it can automatically handle constants
+// correctly as well.
 static Value *RemapOperand(const Value *In,
                            std::map<const Value*, Value*> &ValueMap) {
   std::map<const Value*,Value*>::const_iterator I = ValueMap.find(In);
   if (I != ValueMap.end()) return I->second;
 
-  // Check to see if it's a constant that we are interesting in transforming.
+  // Check to see if it's a constant that we are interested in transforming.
   Value *Result = 0;
   if (const Constant *CPV = dyn_cast<Constant>(In)) {
     if ((!isa<DerivedType>(CPV->getType()) && !isa<ConstantExpr>(CPV)) ||
@@ -296,8 +296,6 @@ static Value *RemapOperand(const Value *In,
       Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstantPointerNull>(CPV) || isa<UndefValue>(CPV)) {
       Result = const_cast<Constant*>(CPV);
-    } else if (isa<GlobalValue>(CPV)) {
-      Result = cast<Constant>(RemapOperand(CPV, ValueMap));
     } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CPV)) {
       std::vector<Constant*> Operands(CP->getNumOperands());
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
@@ -308,6 +306,10 @@ static Value *RemapOperand(const Value *In,
       for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
         Ops.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),ValueMap)));
       Result = CE->getWithOperands(Ops);
+    } else if (isa<Function>(CPV)) {
+      Result = const_cast<Constant*>(CPV);// Functions map to themselves.
+    } else if (isa<GlobalValue>(CPV)) {
+      assert(0 && "Unmapped global?");
     } else {
       assert(0 && "Unknown type of derived type constant value!");
     }
@@ -315,12 +317,11 @@ static Value *RemapOperand(const Value *In,
     Result = const_cast<Value*>(In);
   }
   
-  // Cache the mapping in our local map structure...
+  // Cache the mapping in our local map structure
   if (Result) {
     ValueMap.insert(std::make_pair(In, Result));
     return Result;
   }
-  
 
   cerr << "LinkModules ValueMap: \n";
   PrintMap(ValueMap);
@@ -330,25 +331,22 @@ static Value *RemapOperand(const Value *In,
   return 0;
 }
 
-/// ForceRenaming - The LLVM SymbolTable class autorenames globals that conflict
-/// in the symbol table.  This is good for all clients except for us.  Go
-/// through the trouble to force this back.
+/// ForceRenaming - The LLVM ValueSymbolTable class autorenames globals that 
+/// conflict in the symbol table.  This is good for all clients except for us.
+/// Go through the trouble to force this back.
 static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
   assert(GV->getName() != Name && "Can't force rename to self");
-  SymbolTable &ST = GV->getParent()->getValueSymbolTable();
+  ValueSymbolTable &ST = GV->getParent()->getValueSymbolTable();
 
   // If there is a conflict, rename the conflict.
-  Value *ConflictVal = ST.lookup(GV->getType(), Name);
-  assert(ConflictVal&&"Why do we have to force rename if there is no conflic?");
-  GlobalValue *ConflictGV = cast<GlobalValue>(ConflictVal);
-  assert(ConflictGV->hasInternalLinkage() &&
-         "Not conflicting with a static global, should link instead!");
-
-  ConflictGV->setName("");          // Eliminate the conflict
-  GV->setName(Name);                // Force the name back
-  ConflictGV->setName(Name);        // This will cause ConflictGV to get renamed
-  assert(GV->getName() == Name && ConflictGV->getName() != Name &&
-         "ForceRenaming didn't work");
+  GlobalValue *ConflictGV = cast<GlobalValue>(ST.lookup(Name));
+  if (ConflictGV) {
+    ConflictGV->setName("");      // Eliminate the conflict
+    GV->setName(Name);            // Force the name back
+    ConflictGV->setName(Name);    // This will cause ConflictGV to get renamed
+    assert(GV->getName() == Name && ConflictGV->getName() != Name &&
+           "ForceRenaming didn't work");
+  }
 }
 
 /// GetLinkageResult - This analyzes the two global values and determines what
@@ -393,7 +391,8 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
     LinkFromSrc = true; // Special cased.
     LT = Src->getLinkage();
   } else if (Src->hasWeakLinkage() || Src->hasLinkOnceLinkage()) {
-    // At this point we know that Dest has LinkOnce, External*, Weak, DLL* linkage.
+    // At this point we know that Dest has LinkOnce, External*, Weak, DLL* 
+    // linkage.
     if ((Dest->hasLinkOnceLinkage() && Src->hasWeakLinkage()) ||
         Dest->hasExternalWeakLinkage()) {
       LinkFromSrc = true;
@@ -432,11 +431,10 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
 static bool LinkGlobals(Module *Dest, Module *Src,
                         std::map<const Value*, Value*> &ValueMap,
                     std::multimap<std::string, GlobalVariable *> &AppendingVars,
-                        std::map<std::string, GlobalValue*> &GlobalsByName,
                         std::string *Err) {
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
-  TypeSymbolTable *TST = &Dest->getTypeSymbolTable();
+  TypeSymbolTable *TyST = &Dest->getTypeSymbolTable();
 
   // Loop over all of the globals in the src module, mapping them over as we go
   for (Module::global_iterator I = Src->global_begin(), E = Src->global_end();
@@ -444,17 +442,12 @@ static bool LinkGlobals(Module *Dest, Module *Src,
     GlobalVariable *SGV = I;
     GlobalVariable *DGV = 0;
     // Check to see if may have to link the global.
-    if (SGV->hasName() && !SGV->hasInternalLinkage())
-      if (!(DGV = Dest->getGlobalVariable(SGV->getName(),
-                                          SGV->getType()->getElementType()))) {
-        std::map<std::string, GlobalValue*>::iterator EGV =
-          GlobalsByName.find(SGV->getName());
-        if (EGV != GlobalsByName.end())
-          DGV = dyn_cast<GlobalVariable>(EGV->second);
-        if (DGV)
-          // If types don't agree due to opaque types, try to resolve them.
-          RecursiveResolveTypes(SGV->getType(), DGV->getType(), TST, "");
-      }
+    if (SGV->hasName() && !SGV->hasInternalLinkage()) {
+      // See if the gvar exists already in the destination module
+      if ((DGV = Dest->getGlobalVariable(SGV->getName())))
+        // If types don't agree due to opaque types, try to resolve them.
+        RecursiveResolveTypes(SGV->getType(), DGV->getType(), TyST, "");
+    }
 
     if (DGV && DGV->hasInternalLinkage())
       DGV = 0;
@@ -476,11 +469,10 @@ static bool LinkGlobals(Module *Dest, Module *Src,
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                            SGV->getName(), Dest);
-      // Propagate alignment info.
+      // Propagate alignment, section and visibility
       NewDGV->setAlignment(SGV->getAlignment());
-
-      // Propagate section info.
       NewDGV->setSection(SGV->getSection());
+      NewDGV->setVisibility(SGV->getVisibility());
 
       // If the LLVM runtime renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename
@@ -503,11 +495,10 @@ static bool LinkGlobals(Module *Dest, Module *Src,
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                            "", Dest);
 
-      // Propagate alignment info.
+      // Propagate alignment, section and visibility
       NewDGV->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
-
-      // Propagate section info.
       NewDGV->setSection(SGV->getSection());
+      NewDGV->setVisibility(SGV->getVisibility());
 
       // Make sure to remember this mapping...
       ValueMap.insert(std::make_pair(SGV, NewDGV));
@@ -515,11 +506,10 @@ static bool LinkGlobals(Module *Dest, Module *Src,
       // Keep track that this is an appending variable...
       AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
     } else {
-      // Propagate alignment info.
+      // Propagate alignment, section and visibility info.
       DGV->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
-
-      // Propagate section info.
       DGV->setSection(SGV->getSection());
+      DGV->setVisibility(SGV->getVisibility());
 
       // Otherwise, perform the mapping as instructed by GetLinkageResult.  If
       // the types don't match, and if we are to link from the source, nuke DGV
@@ -529,6 +519,8 @@ static bool LinkGlobals(Module *Dest, Module *Src,
           new GlobalVariable(SGV->getType()->getElementType(),
                              DGV->isConstant(), DGV->getLinkage());
         NewDGV->setAlignment(DGV->getAlignment());
+        NewDGV->setVisibility(DGV->getVisibility());
+        NewDGV->setSection(DGV->getSection());
         Dest->getGlobalList().insert(DGV, NewDGV);
         DGV->replaceAllUsesWith(
             ConstantExpr::getBitCast(NewDGV, DGV->getType()));
@@ -543,6 +535,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
         // Inherit const as appropriate
         DGV->setConstant(SGV->isConstant());
         DGV->setInitializer(0);
+        DGV->setVisibility(SGV->getVisibility());
       } else {
         if (SGV->isConstant() && !DGV->isConstant()) {
           if (DGV->isDeclaration())
@@ -609,34 +602,64 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 //
 static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                std::map<const Value*, Value*> &ValueMap,
-                               std::map<std::string, 
-                               GlobalValue*> &GlobalsByName,
                                std::string *Err) {
-  TypeSymbolTable *TST = &Dest->getTypeSymbolTable();
+  TypeSymbolTable *TyST = &Dest->getTypeSymbolTable();
 
   // Loop over all of the functions in the src module, mapping them over as we
   // go
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
     Function *DF = 0;
-    if (SF->hasName() && !SF->hasInternalLinkage()) {
-      // Check to see if may have to link the function.
-      if (!(DF = Dest->getFunction(SF->getName(), SF->getFunctionType()))) {
-        std::map<std::string, GlobalValue*>::iterator EF =
-          GlobalsByName.find(SF->getName());
-        if (EF != GlobalsByName.end())
-          DF = dyn_cast<Function>(EF->second);
-        if (DF && RecursiveResolveTypes(SF->getType(), DF->getType(), TST, ""))
-          DF = 0;  // FIXME: gross.
+    if (SF->hasName() && !SF->hasInternalLinkage())
+      // See if there is a function with the same name in the destination
+      if ((DF = Dest->getFunction(SF->getName()))) {
+        // Resolve Opaque types, etc.
+        RecursiveResolveTypes(SF->getType(), DF->getType(), TyST, "");
       }
-    }
 
-    if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
+    // If we have two globals of the same name but different type
+    if (DF && DF->getType() != SF->getType()) {
+      if (DF->isDeclaration() && !SF->isDeclaration()) {
+        // We have a definition of the same name but different type in the
+        // source module. Copy the prototype to the destination and replace
+        // uses of the destination's prototype with the new prototype.
+        Function *NewDF = new Function(SF->getFunctionType(), SF->getLinkage(),
+                                       SF->getName(), Dest);
+        NewDF->setCallingConv(SF->getCallingConv());
+        NewDF->setVisibility(SF->getVisibility());
+
+        // If the symbol table renamed the function, but it is an externally
+        // visible symbol, DF must be an existing function with internal 
+        // linkage.  Rename it.
+        if (NewDF->getName() != SF->getName() && !NewDF->hasInternalLinkage())
+          ForceRenaming(NewDF, SF->getName());
+
+        // Any uses of DF need to change to NewDF, with cast
+        DF->replaceAllUsesWith(ConstantExpr::getBitCast(NewDF, DF->getType()));
+        DF->eraseFromParent();
+
+        // Remember this mapping so uses in the source module get remapped
+        // later by RemapOperand.
+        ValueMap.insert(std::make_pair(SF, NewDF));
+      } else if (SF->isDeclaration()) {
+        // The source is just a prototype, simply set up a mapping from the
+        // source to the destination function. We can't do the replacement
+        // now so its deferred to LinkFunctionBodies.
+        ValueMap.insert(std::make_pair(SF, DF));
+      } else {
+        // We have two definitions of different function types of the same
+        // name. This is a multiple definition error.
+        return Error(Err, "Function '" + DF->getName() + "' defined as both '" +
+                     ToStr(SF->getFunctionType(), Src) + "' and '" +
+                     ToStr(DF->getFunctionType(), Dest) + "'");
+      }
+    } else if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
       // Function does not already exist, simply insert an function signature
       // identical to SF into the dest module...
       Function *NewDF = new Function(SF->getFunctionType(), SF->getLinkage(),
                                      SF->getName(), Dest);
       NewDF->setCallingConv(SF->getCallingConv());
+      NewDF->setVisibility(SF->getVisibility());
 
       // If the LLVM runtime renamed the function, but it is an externally
       // visible symbol, DF must be an existing function with internal linkage.
@@ -656,7 +679,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
         }        
       } else {
         ValueMap.insert(std::make_pair(SF, DF));
-      }      
+      }
     } else if (DF->isDeclaration() && !DF->hasDLLImportLinkage()) {
       // If DF is external but SF is not...
       // Link the external functions, update linkage qualifiers
@@ -671,8 +694,6 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       if ((DF->hasLinkOnceLinkage() && SF->hasWeakLinkage()) ||
           DF->hasExternalWeakLinkage())
         DF->setLinkage(SF->getLinkage());
-
-
     } else if (DF->hasWeakLinkage() || DF->hasLinkOnceLinkage()) {
       // At this point we know that SF has LinkOnce or External* linkage.
       ValueMap.insert(std::make_pair(SF, DF));
@@ -743,18 +764,24 @@ static bool LinkFunctionBodies(Module *Dest, Module *Src,
                                std::map<const Value*, Value*> &ValueMap,
                                std::string *Err) {
 
-  // Loop over all of the functions in the src module, mapping them over as we
-  // go
+  // Loop over all of the functions in the src module, mapping them over
   for (Module::iterator SF = Src->begin(), E = Src->end(); SF != E; ++SF) {
-    if (!SF->isDeclaration()) {                  // No body if function is external
+    if (!SF->isDeclaration()) {               // No body if function is external
       Function *DF = cast<Function>(ValueMap[SF]); // Destination function
 
       // DF not external SF external?
-      if (DF->isDeclaration()) {
+      if (DF->isDeclaration())
         // Only provide the function body if there isn't one already.
         if (LinkFunctionBody(DF, SF, ValueMap, Err))
           return true;
-      }
+    } else {
+      // The source function is a prototype. If there's a mapping for this,
+      // then replace all its uses with the mapped function, after cast. This
+      // occurs when two functions of the same name but different type
+      // are encountered.
+      Function *DF = cast<Function>(ValueMap[SF]); // Destination function
+      if (DF)
+        SF->replaceAllUsesWith(ConstantExpr::getBitCast(DF, SF->getType()));
     }
   }
   return false;
@@ -878,6 +905,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
     }
   }
 
+  // Copy the target triple from the source to dest if the dest is empty
   if (Dest->getTargetTriple().empty() && !Src->getTargetTriple().empty())
     Dest->setTargetTriple(Src->getTargetTriple());
       
@@ -888,6 +916,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
       Dest->getTargetTriple() != Src->getTargetTriple())
     cerr << "WARNING: Linking two modules of different target triples!\n";
 
+  // Append the module inline asm string
   if (!Src->getModuleInlineAsm().empty()) {
     if (Dest->getModuleInlineAsm().empty())
       Dest->setModuleInlineAsm(Src->getModuleInlineAsm());
@@ -909,7 +938,8 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // LinkTypes - Go through the symbol table of the Src module and see if any
   // types are named in the src module that are not named in the Dst module.
   // Make sure there are no type name conflicts.
-  if (LinkTypes(Dest, Src, ErrorMsg)) return true;
+  if (LinkTypes(Dest, Src, ErrorMsg)) 
+    return true;
 
   // ValueMap - Mapping of values from what they used to be in Src, to what they
   // are now in Dest.
@@ -920,31 +950,17 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // appended and the module is rewritten.
   std::multimap<std::string, GlobalVariable *> AppendingVars;
 
-  // GlobalsByName - The LLVM SymbolTable class fights our best efforts at
-  // linking by separating globals by type.  Until PR411 is fixed, we replicate
-  // it's functionality here.
-  std::map<std::string, GlobalValue*> GlobalsByName;
-
   for (Module::global_iterator I = Dest->global_begin(), E = Dest->global_end();
        I != E; ++I) {
     // Add all of the appending globals already in the Dest module to
     // AppendingVars.
     if (I->hasAppendingLinkage())
       AppendingVars.insert(std::make_pair(I->getName(), I));
-
-    // Keep track of all globals by name.
-    if (!I->hasInternalLinkage() && I->hasName())
-      GlobalsByName[I->getName()] = I;
   }
-
-  // Keep track of all globals by name.
-  for (Module::iterator I = Dest->begin(), E = Dest->end(); I != E; ++I)
-    if (!I->hasInternalLinkage() && I->hasName())
-      GlobalsByName[I->getName()] = I;
 
   // Insert all of the globals in src into the Dest module... without linking
   // initializers (which could refer to functions not yet mapped over).
-  if (LinkGlobals(Dest, Src, ValueMap, AppendingVars, GlobalsByName, ErrorMsg))
+  if (LinkGlobals(Dest, Src, ValueMap, AppendingVars, ErrorMsg))
     return true;
 
   // Link the functions together between the two modules, without doing function
@@ -952,7 +968,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // function...  We do this so that when we begin processing function bodies,
   // all of the global values that may be referenced are available in our
   // ValueMap.
-  if (LinkFunctionProtos(Dest, Src, ValueMap, GlobalsByName, ErrorMsg))
+  if (LinkFunctionProtos(Dest, Src, ValueMap, ErrorMsg))
     return true;
 
   // Update the initializers in the Dest module now that all globals that may
