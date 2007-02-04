@@ -2518,8 +2518,23 @@ unsigned SelectionDAG::AssignTopologicalOrder(std::vector<SDNode*> &TopOrder) {
 //===----------------------------------------------------------------------===//
 
 // Out-of-line virtual method to give class a home.
-void SDNode::ANCHOR() {
-}
+void SDNode::ANCHOR() {}
+void HandleSDNode::ANCHOR() {}
+void StringSDNode::ANCHOR() {}
+void ConstantSDNode::ANCHOR() {}
+void ConstantFPSDNode::ANCHOR() {}
+void GlobalAddressSDNode::ANCHOR() {}
+void FrameIndexSDNode::ANCHOR() {}
+void JumpTableSDNode::ANCHOR() {}
+void ConstantPoolSDNode::ANCHOR() {}
+void BasicBlockSDNode::ANCHOR() {}
+void SrcValueSDNode::ANCHOR() {}
+void RegisterSDNode::ANCHOR() {}
+void ExternalSymbolSDNode::ANCHOR() {}
+void CondCodeSDNode::ANCHOR() {}
+void VTSDNode::ANCHOR() {}
+void LoadSDNode::ANCHOR() {}
+void StoreSDNode::ANCHOR() {}
 
 /// Profile - Gather unique data for the node.
 ///
