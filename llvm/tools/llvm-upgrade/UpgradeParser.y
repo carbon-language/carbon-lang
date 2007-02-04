@@ -1804,7 +1804,6 @@ UpRTypes
     for (std::list<llvm::PATypeInfo>::iterator I = $3->begin(),
            E = $3->end(); I != E; ++I) {
       Params.push_back(I->T->get());
-      delete I->T;
     }
     FunctionType::ParamAttrsList ParamAttrs;
     if (CurFun.LastCC == OldCallingConv::CSRet) {
