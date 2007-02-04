@@ -1016,8 +1016,9 @@ std::set is almost never a good choice.</p>
 </div>
 
 <div class="doc_text">
-<p>LLVM's SetVector&lt;Type&gt; is actually a combination of a set along with
-a <a href="#ds_sequential">Sequential Container</a>.  The important property
+<p>LLVM's SetVector&lt;Type&gt; is an adapter class that combines your choice of
+a set-like container along with a <a href="#ds_sequential">Sequential 
+Container</a>.  The important property
 that this provides is efficient insertion with uniquing (duplicate elements are
 ignored) with iteration support.  It implements this by inserting elements into
 both a set-like container and the sequential container, using the set-like
@@ -1028,7 +1029,7 @@ container for uniquing and the sequential container for iteration.
 iteration is guaranteed to match the order of insertion into the SetVector.
 This property is really important for things like sets of pointers.  Because
 pointer values are non-deterministic (e.g. vary across runs of the program on
-different machines), iterating over the pointers in a std::set or other set will
+different machines), iterating over the pointers in the set will
 not be in a well-defined order.</p>
 
 <p>
@@ -1036,8 +1037,16 @@ The drawback of SetVector is that it requires twice as much space as a normal
 set and has the sum of constant factors from the set-like container and the 
 sequential container that it uses.  Use it *only* if you need to iterate over 
 the elements in a deterministic order.  SetVector is also expensive to delete
-elements out of (linear time).
+elements out of (linear time), unless you use it's "pop_back" method, which is
+faster.
 </p>
+
+<p>SetVector is an adapter class that defaults to using std::vector and std::set
+for the underlying containers, so it is quite expensive.  However,
+<tt>"llvm/ADT/SetVector.h"</tt> also provides a SmallSetVector class, which
+defaults to using a SmallVector and SmallSet of a specified size.  If you use
+this, and if your sets are dynamically smaller than N, you will save a lot of 
+heap traffic.</p>
 
 </div>
 
