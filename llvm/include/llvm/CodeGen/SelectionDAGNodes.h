@@ -967,22 +967,11 @@ protected:
     Prev = 0; Next = 0;
   }
 
-  /// MorphNodeTo - This clears the return value and operands list, and sets the
-  /// opcode of the node to the specified value.  This should only be used by
-  /// the SelectionDAG class.
-  void MorphNodeTo(unsigned Opc, SDVTList L) {
-    NodeType = Opc;
-    ValueList = L.VTs;
-    NumValues = L.NumVTs;
-    
-    // Clear the operands list, updating used nodes to remove this from their
-    // use list.
-    for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
-      I->Val->removeUser(this);
-    delete [] OperandList;
-    OperandList = 0;
-    NumOperands = 0;
-  }
+  /// MorphNodeTo - This frees the operands of the current node, resets the
+  /// opcode, types, and operands to the specified value.  This should only be
+  /// used by the SelectionDAG class.
+  void MorphNodeTo(unsigned Opc, SDVTList L,
+                   const SDOperand *Ops, unsigned NumOps);
   
   void setValueTypes(SDVTList L) {
     assert(NumValues == 0 && "Should not have values yet!");
@@ -990,18 +979,6 @@ protected:
     NumValues = L.NumVTs;
   }
   
-  void setOperands(const SDOperand *Ops, unsigned NumOps) {
-    assert(NumOperands == 0 && "Should not have operands yet!");
-    NumOperands = NumOps;
-    OperandList = new SDOperand[NumOperands];
-
-    for (unsigned i = 0, e = NumOps; i != e; ++i) {
-      OperandList[i] = Ops[i];
-      SDNode *N = OperandList[i].Val;
-      N->Uses.push_back(this);
-    }
-  }
-
   void addUser(SDNode *User) {
     Uses.push_back(User);
   }
