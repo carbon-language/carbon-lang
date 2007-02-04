@@ -904,7 +904,7 @@ protected:
     return Ret;
   }
 
-  SDNode(unsigned Opc, const SDOperand *Ops, unsigned NumOps)
+  SDNode(unsigned Opc, SDVTList VTs, const SDOperand *Ops, unsigned NumOps)
     : NodeType(Opc), NodeId(-1) {
     OperandsNeedDelete = true;
     NumOperands = NumOps;
@@ -915,8 +915,8 @@ protected:
       SDNode *N = OperandList[i].Val;
       N->Uses.push_back(this);
     }
-    ValueList = 0;
-    NumValues = 0;
+    ValueList = VTs.VTs;
+    NumValues = VTs.NumVTs;
     Prev = 0; Next = 0;
   }
 
@@ -925,12 +925,6 @@ protected:
   /// used by the SelectionDAG class.
   void MorphNodeTo(unsigned Opc, SDVTList L,
                    const SDOperand *Ops, unsigned NumOps);
-  
-  void setValueTypes(SDVTList L) {
-    assert(NumValues == 0 && "Should not have values yet!");
-    ValueList = L.VTs;
-    NumValues = L.NumVTs;
-  }
   
   void addUser(SDNode *User) {
     Uses.push_back(User);
@@ -987,7 +981,8 @@ inline bool SDOperand::hasOneUse() const {
 class HandleSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 public:
-  HandleSDNode(SDOperand X) : SDNode(ISD::HANDLENODE, &X, 1) {}
+  HandleSDNode(SDOperand X) : SDNode(ISD::HANDLENODE, getSDVTList(MVT::Other),
+                                     &X, 1) {}
   ~HandleSDNode();  
   SDOperand getValue() const { return getOperand(0); }
 };
@@ -998,8 +993,7 @@ class StringSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   StringSDNode(const std::string &val)
-    : SDNode(ISD::STRING, 0, 0), Value(val) {
-    setValueTypes(getSDVTList(MVT::Other));
+    : SDNode(ISD::STRING, getSDVTList(MVT::Other), 0, 0), Value(val) {
   }
 public:
   const std::string &getValue() const { return Value; }
@@ -1015,8 +1009,8 @@ class ConstantSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   ConstantSDNode(bool isTarget, uint64_t val, MVT::ValueType VT)
-    : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant, 0, 0), Value(val) {
-    setValueTypes(getSDVTList(VT));
+    : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant, getSDVTList(VT),
+             0, 0), Value(val) {
   }
 public:
 
@@ -1045,9 +1039,9 @@ class ConstantFPSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   ConstantFPSDNode(bool isTarget, double val, MVT::ValueType VT)
-    : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP, 0, 0), 
+    : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
+             getSDVTList(VT), 0, 0), 
       Value(val) {
-    setValueTypes(getSDVTList(VT));
   }
 public:
 
@@ -1074,9 +1068,9 @@ protected:
   friend class SelectionDAG;
   GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT::ValueType VT,
                       int o=0)
-    : SDNode(isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress, 0, 0),
+    : SDNode(isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress,
+             getSDVTList(VT), 0, 0),
       Offset(o) {
-    setValueTypes(getSDVTList(VT));
     TheGlobal = const_cast<GlobalValue*>(GA);
   }
 public:
@@ -1098,8 +1092,8 @@ class FrameIndexSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   FrameIndexSDNode(int fi, MVT::ValueType VT, bool isTarg)
-    : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex, 0, 0), FI(fi) {
-    setValueTypes(getSDVTList(VT));
+    : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex, getSDVTList(VT),
+             0, 0), FI(fi) {
   }
 public:
 
@@ -1118,8 +1112,8 @@ class JumpTableSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   JumpTableSDNode(int jti, MVT::ValueType VT, bool isTarg)
-    : SDNode(isTarg ? ISD::TargetJumpTable : ISD::JumpTable, 0, 0), JTI(jti) {
-    setValueTypes(getSDVTList(VT));
+    : SDNode(isTarg ? ISD::TargetJumpTable : ISD::JumpTable, getSDVTList(VT),
+             0, 0), JTI(jti) {
   }
 public:
     
@@ -1144,35 +1138,32 @@ protected:
   friend class SelectionDAG;
   ConstantPoolSDNode(bool isTarget, Constant *c, MVT::ValueType VT,
                      int o=0)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0, 0),
-      Offset(o), Alignment(0) {
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
+             getSDVTList(VT), 0, 0), Offset(o), Alignment(0) {
     assert((int)Offset >= 0 && "Offset is too large");
-    setValueTypes(getSDVTList(VT));
     Val.ConstVal = c;
   }
   ConstantPoolSDNode(bool isTarget, Constant *c, MVT::ValueType VT, int o,
                      unsigned Align)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0, 0),
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 
+             getSDVTList(VT), 0, 0),
       Offset(o), Alignment(Align) {
     assert((int)Offset >= 0 && "Offset is too large");
-    setValueTypes(getSDVTList(VT));
     Val.ConstVal = c;
   }
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
                      MVT::ValueType VT, int o=0)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0, 0),
-      Offset(o), Alignment(0) {
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 
+             getSDVTList(VT), 0, 0), Offset(o), Alignment(0) {
     assert((int)Offset >= 0 && "Offset is too large");
-    setValueTypes(getSDVTList(VT));
     Val.MachineCPVal = v;
     Offset |= 1 << (sizeof(unsigned)*8-1);
   }
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
                      MVT::ValueType VT, int o, unsigned Align)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0, 0),
-      Offset(o), Alignment(Align) {
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
+             getSDVTList(VT), 0, 0), Offset(o), Alignment(Align) {
     assert((int)Offset >= 0 && "Offset is too large");
-    setValueTypes(getSDVTList(VT));
     Val.MachineCPVal = v;
     Offset |= 1 << (sizeof(unsigned)*8-1);
   }
@@ -1215,8 +1206,7 @@ class BasicBlockSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   BasicBlockSDNode(MachineBasicBlock *mbb)
-    : SDNode(ISD::BasicBlock, 0, 0), MBB(mbb) {
-    setValueTypes(getSDVTList(MVT::Other));
+    : SDNode(ISD::BasicBlock, getSDVTList(MVT::Other), 0, 0), MBB(mbb) {
   }
 public:
 
@@ -1235,8 +1225,7 @@ class SrcValueSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   SrcValueSDNode(const Value* v, int o)
-    : SDNode(ISD::SRCVALUE, 0, 0), V(v), offset(o) {
-    setValueTypes(getSDVTList(MVT::Other));
+    : SDNode(ISD::SRCVALUE, getSDVTList(MVT::Other), 0, 0), V(v), offset(o) {
   }
 
 public:
@@ -1256,8 +1245,7 @@ class RegisterSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   RegisterSDNode(unsigned reg, MVT::ValueType VT)
-    : SDNode(ISD::Register, 0, 0), Reg(reg) {
-    setValueTypes(getSDVTList(VT));
+    : SDNode(ISD::Register, getSDVTList(VT), 0, 0), Reg(reg) {
   }
 public:
 
@@ -1275,9 +1263,8 @@ class ExternalSymbolSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   ExternalSymbolSDNode(bool isTarget, const char *Sym, MVT::ValueType VT)
-    : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol, 0, 0),
-      Symbol(Sym) {
-    setValueTypes(getSDVTList(VT));
+    : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol,
+             getSDVTList(VT), 0, 0), Symbol(Sym) {
   }
 public:
 
@@ -1296,8 +1283,7 @@ class CondCodeSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   CondCodeSDNode(ISD::CondCode Cond)
-    : SDNode(ISD::CONDCODE, 0, 0), Condition(Cond) {
-    setValueTypes(getSDVTList(MVT::Other));
+    : SDNode(ISD::CONDCODE, getSDVTList(MVT::Other), 0, 0), Condition(Cond) {
   }
 public:
 
@@ -1316,8 +1302,8 @@ class VTSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  VTSDNode(MVT::ValueType VT) : SDNode(ISD::VALUETYPE, 0, 0), ValueType(VT) {
-    setValueTypes(getSDVTList(MVT::Other));
+  VTSDNode(MVT::ValueType VT) : SDNode(ISD::VALUETYPE, getSDVTList(MVT::Other),
+                                       0, 0), ValueType(VT) {
   }
 public:
 
@@ -1356,10 +1342,10 @@ class LoadSDNode : public SDNode {
   bool IsVolatile;
 protected:
   friend class SelectionDAG;
-  LoadSDNode(SDOperand *ChainPtrOff,
+  LoadSDNode(SDOperand *ChainPtrOff, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, MVT::ValueType LVT,
              const Value *SV, int O=0, unsigned Align=1, bool Vol=false)
-    : SDNode(ISD::LOAD, ChainPtrOff, 3),
+    : SDNode(ISD::LOAD, VTs, ChainPtrOff, 3),
       AddrMode(AM), ExtType(ETy), LoadedVT(LVT), SrcValue(SV), SVOffset(O),
       Alignment(Align), IsVolatile(Vol) {
     assert((getOffset().getOpcode() == ISD::UNDEF ||
@@ -1412,10 +1398,10 @@ class StoreSDNode : public SDNode {
   bool IsVolatile;
 protected:
   friend class SelectionDAG;
-  StoreSDNode(SDOperand *ChainValuePtrOff,
+  StoreSDNode(SDOperand *ChainValuePtrOff, SDVTList VTs,
               ISD::MemIndexedMode AM, bool isTrunc, MVT::ValueType SVT,
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
-    : SDNode(ISD::STORE, ChainValuePtrOff, 4),
+    : SDNode(ISD::STORE, VTs, ChainValuePtrOff, 4),
       AddrMode(AM), IsTruncStore(isTrunc), StoredVT(SVT), SrcValue(SV),
       SVOffset(O), Alignment(Align), IsVolatile(Vol) {
     assert((getOffset().getOpcode() == ISD::UNDEF || 
@@ -1503,9 +1489,7 @@ struct ilist_traits<SDNode> {
   static void setNext(SDNode *N, SDNode *Next) { N->Next = Next; }
   
   static SDNode *createSentinel() {
-    SDNode *N = new SDNode(ISD::EntryToken, 0, 0);
-    N->setValueTypes(SDNode::getSDVTList(MVT::Other));
-    return N;
+    return new SDNode(ISD::EntryToken, SDNode::getSDVTList(MVT::Other), 0, 0);
   }
   static void destroySentinel(SDNode *N) { delete N; }
   //static SDNode *createNode(const SDNode &V) { return new SDNode(V); }

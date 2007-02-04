@@ -939,8 +939,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new SDNode(Opcode, 0, 0);
-  N->setValueTypes(SDNode::getSDVTList(VT));
+  SDNode *N = new SDNode(Opcode, SDNode::getSDVTList(VT), 0, 0);
   CSEMap.InsertNode(N, IP);
   
   AllNodes.push_back(N);
@@ -1121,12 +1120,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, Ops, 1);
-    N->setValueTypes(VTs);
+    N = new SDNode(Opcode, VTs, Ops, 1);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, Ops, 1);
-    N->setValueTypes(VTs);
+    N = new SDNode(Opcode, VTs, Ops, 1);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1423,12 +1420,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, Ops, 2);
-    N->setValueTypes(VTs);
+    N = new SDNode(Opcode, VTs, Ops, 2);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, Ops, 2);
-    N->setValueTypes(VTs);
+    N = new SDNode(Opcode, VTs, Ops, 2);
   }
 
   AllNodes.push_back(N);
@@ -1482,12 +1477,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, Ops, 3);
-    N->setValueTypes(VTs);
+    N = new SDNode(Opcode, VTs, Ops, 3);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, Ops, 3);
-    N->setValueTypes(VTs);
+    N = new SDNode(Opcode, VTs, Ops, 3);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1528,10 +1521,9 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Ops, ISD::UNINDEXED,
+  SDNode *N = new LoadSDNode(Ops, VTs, ISD::UNINDEXED,
                              ISD::NON_EXTLOAD, VT, SV, SVOffset, Alignment,
                              isVolatile);
-  N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1573,9 +1565,8 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Ops, ISD::UNINDEXED, ExtType, EVT,
+  SDNode *N = new LoadSDNode(Ops, VTs, ISD::UNINDEXED, ExtType, EVT,
                              SV, SVOffset, Alignment, isVolatile);
-  N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1602,11 +1593,10 @@ SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new LoadSDNode(Ops, AM,
+  SDNode *N = new LoadSDNode(Ops, VTs, AM,
                              LD->getExtensionType(), LD->getLoadedVT(),
                              LD->getSrcValue(), LD->getSrcValueOffset(),
                              LD->getAlignment(), LD->isVolatile());
-  N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1642,9 +1632,8 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new StoreSDNode(Ops, ISD::UNINDEXED, false,
+  SDNode *N = new StoreSDNode(Ops, VTs, ISD::UNINDEXED, false,
                               VT, SV, SVOffset, Alignment, isVolatile);
-  N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1678,9 +1667,8 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new StoreSDNode(Ops, ISD::UNINDEXED, isTrunc,
+  SDNode *N = new StoreSDNode(Ops, VTs, ISD::UNINDEXED, isTrunc,
                               SVT, SV, SVOffset, Alignment, isVolatile);
-  N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1706,11 +1694,10 @@ SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new StoreSDNode(Ops, AM,
+  SDNode *N = new StoreSDNode(Ops, VTs, AM,
                               ST->isTruncatingStore(), ST->getStoredVT(),
                               ST->getSrcValue(), ST->getSrcValueOffset(),
                               ST->getAlignment(), ST->isVolatile());
-  N->setValueTypes(VTs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1762,12 +1749,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTs);
+    N = new SDNode(Opcode, VTs, Ops, NumOps);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTs);
+    N = new SDNode(Opcode, VTs, Ops, NumOps);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1824,12 +1809,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTList);
+    N = new SDNode(Opcode, VTList, Ops, NumOps);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, Ops, NumOps);
-    N->setValueTypes(VTList);
+    N = new SDNode(Opcode, VTList, Ops, NumOps);
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
