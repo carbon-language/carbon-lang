@@ -39,7 +39,7 @@ $(LibDepsTemp): $(GenLibDeps) $(LibDir) $(wildcard $(LibDir)/*.a $(LibDir)/*.o)
 
 $(LibDeps): $(LibDepsTemp)
 	$(Verb) $(CMP) -s $@ $< || ( $(CP) $< $@ && \
-	  $(EchoCmd) Updated LibDeps.txt because dependencies changes )
+	  $(EchoCmd) Updated LibDeps.txt because dependencies changed )
 
 # Find all the cyclic dependencies between various LLVM libraries, so we
 # don't have to process them at runtime.
