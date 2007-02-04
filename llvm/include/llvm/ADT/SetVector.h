@@ -32,7 +32,7 @@ namespace llvm {
 /// order of insertion.
 /// @brief A vector that has set insertion semantics.
 template <typename T, typename Vector = std::vector<T>,
-                      typename Set = std::set<T> >
+                      typename Set = SmallSet<T, 16> >
 class SetVector {
 public:
   typedef T value_type;
@@ -99,7 +99,7 @@ public:
   /// @returns true iff the element was inserted into the SetVector.
   /// @brief Insert a new element into the SetVector.
   bool insert(const value_type &X) {
-    bool result = set_.insert(X).second;
+    bool result = set_.insert(X);
     if (result)
       vector_.push_back(X);
     return result;
@@ -109,13 +109,13 @@ public:
   template<typename It>
   void insert(It Start, It End) {
     for (; Start != End; ++Start)
-      if (set_.insert(*Start).second)
+      if (set_.insert(*Start))
         vector_.push_back(*Start);
   }
 
   /// @brief Remove an item from the set vector.
   void remove(const value_type& X) {
-    if (0 < set_.erase(X)) {
+    if (set_.erase(X)) {
       typename vector_type::iterator I =
         std::find(vector_.begin(), vector_.end(), X);
       assert(I != vector_.end() && "Corrupted SetVector instances!");
@@ -152,6 +152,7 @@ private:
 /// a certain size.
 template <typename T, unsigned N>
 class SmallSetVector : public SetVector<T, SmallVector<T, N>, SmallSet<T, N> > {
+public:
   SmallSetVector() {}
   
   /// @brief Initialize a SmallSetVector with a range of elements
