@@ -2085,8 +2085,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
    
   RemoveNodeFromCSEMaps(N);
   
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs);
 
   CSEMap.InsertNode(N, IP);
   return N;
@@ -2105,8 +2104,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   RemoveNodeFromCSEMaps(N);
   SDOperand OperandList[] = { Op1 };
   
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   N->setOperands(OperandList, 1);
   CSEMap.InsertNode(N, IP);
   return N;
@@ -2127,8 +2125,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   
   SDOperand OperandList[] = { Op1, Op2 };
 
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   N->setOperands(OperandList, 2);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2149,8 +2146,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   RemoveNodeFromCSEMaps(N);
   
   SDOperand OperandList[] = { Op1, Op2, Op3 };
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   N->setOperands(OperandList, 3);
 
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2169,8 +2165,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
     return ON;
                                        
   RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   N->setOperands(Ops, NumOps);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2190,8 +2185,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   RemoveNodeFromCSEMaps(N);
 
   SDOperand OperandList[] = { Op1, Op2 };
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   N->setOperands(OperandList, 2);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2213,8 +2207,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   RemoveNodeFromCSEMaps(N);
 
   SDOperand OperandList[] = { Op1, Op2, Op3 };
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VTs);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs);
   N->setOperands(OperandList, 3);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
@@ -2546,6 +2539,12 @@ void CondCodeSDNode::ANCHOR() {}
 void VTSDNode::ANCHOR() {}
 void LoadSDNode::ANCHOR() {}
 void StoreSDNode::ANCHOR() {}
+
+HandleSDNode::~HandleSDNode() {
+  SDVTList VTs = { 0, 0 };
+  MorphNodeTo(ISD::HANDLENODE, VTs);  // Drops operand uses.
+}
+
 
 /// Profile - Gather unique data for the node.
 ///

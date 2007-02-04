@@ -970,10 +970,10 @@ protected:
   /// MorphNodeTo - This clears the return value and operands list, and sets the
   /// opcode of the node to the specified value.  This should only be used by
   /// the SelectionDAG class.
-  void MorphNodeTo(unsigned Opc) {
+  void MorphNodeTo(unsigned Opc, SDVTList L) {
     NodeType = Opc;
-    ValueList = 0;
-    NumValues = 0;
+    ValueList = L.VTs;
+    NumValues = L.NumVTs;
     
     // Clear the operands list, updating used nodes to remove this from their
     // use list.
@@ -1058,10 +1058,7 @@ class HandleSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 public:
   HandleSDNode(SDOperand X) : SDNode(ISD::HANDLENODE, X) {}
-  ~HandleSDNode() {
-    MorphNodeTo(ISD::HANDLENODE);  // Drops operand uses.
-  }
-  
+  ~HandleSDNode();  
   SDOperand getValue() const { return getOperand(0); }
 };
 
