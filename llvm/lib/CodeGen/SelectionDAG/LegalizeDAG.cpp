@@ -39,6 +39,18 @@ ViewLegalizeDAGs("view-legalize-dags", cl::Hidden,
 static const bool ViewLegalizeDAGs = 0;
 #endif
 
+namespace llvm {
+template<>
+struct DenseMapKeyInfo<SDOperand> {
+  static inline SDOperand getEmptyKey() { return SDOperand((SDNode*)-1, -1U); }
+  static inline SDOperand getTombstoneKey() { return SDOperand((SDNode*)-1, 0);}
+  static unsigned getHashValue(const SDOperand &Val) {
+    return DenseMapKeyInfo<void*>::getHashValue(Val.Val) + Val.ResNo;
+  }
+  static bool isPod() { return true; }
+};
+}
+
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLegalize - This takes an arbitrary SelectionDAG as input and
 /// hacks on it until the target machine can handle it.  This involves
@@ -82,7 +94,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   /// LegalizedNodes - For nodes that are of legal width, and that have more
   /// than one use, this map indicates what regularized operand to use.  This
   /// allows us to avoid legalizing the same thing more than once.
-  std::map<SDOperand, SDOperand> LegalizedNodes;
+  DenseMap<SDOperand, SDOperand> LegalizedNodes;
 
   /// PromotedNodes - For nodes that are below legal width, and that have more
   /// than one use, this map indicates what promoted value to use.  This allows
@@ -592,7 +604,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   // Note that LegalizeOp may be reentered even from single-use nodes, which
   // means that we always must cache transformed nodes.
-  std::map<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
+  DenseMap<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
   if (I != LegalizedNodes.end()) return I->second;
 
   SDOperand Tmp1, Tmp2, Tmp3, Tmp4;
@@ -1169,7 +1181,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // will cause this node to be legalized as well as handling libcalls right.
     if (LastCALLSEQ_END.Val != Node) {
       LegalizeOp(SDOperand(FindCallStartFromCallEnd(Node), 0));
-      std::map<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
+      DenseMap<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
       assert(I != LegalizedNodes.end() &&
              "Legalizing the call start should have legalized this node!");
       return I->second;
