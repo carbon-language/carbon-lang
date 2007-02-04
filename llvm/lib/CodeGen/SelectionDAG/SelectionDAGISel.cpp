@@ -354,7 +354,7 @@ namespace llvm {
 class SelectionDAGLowering {
   MachineBasicBlock *CurMBB;
 
-  std::map<const Value*, SDOperand> NodeMap;
+  DenseMap<const Value*, SDOperand> NodeMap;
 
   /// PendingLoads - Loads are not emitted to the program immediately.  We bunch
   /// them up and then emit token factor nodes when possible.  This allows us to
@@ -467,10 +467,10 @@ public:
 
   SDOperand getValue(const Value *V);
 
-  const SDOperand &setValue(const Value *V, SDOperand NewN) {
+  void setValue(const Value *V, SDOperand NewN) {
     SDOperand &N = NodeMap[V];
     assert(N.Val == 0 && "Already set a value for this node!");
-    return N = NewN;
+    N = NewN;
   }
   
   RegsForValue GetRegistersForValue(const std::string &ConstrCode,
@@ -593,8 +593,9 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       visit(CE->getOpcode(), *CE);
-      assert(N.Val && "visit didn't populate the ValueMap!");
-      return N;
+      SDOperand N1 = NodeMap[V];
+      assert(N1.Val && "visit didn't populate the ValueMap!");
+      return N1;
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
       return N = DAG.getGlobalAddress(GV, VT);
     } else if (isa<ConstantPointerNull>(C)) {
@@ -642,7 +643,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       // Create a VBUILD_VECTOR node with generic Vector type.
       Ops.push_back(DAG.getConstant(NumElements, MVT::i32));
       Ops.push_back(DAG.getValueType(PVT));
-      return N = DAG.getNode(ISD::VBUILD_VECTOR,MVT::Vector,&Ops[0],Ops.size());
+      return NodeMap[V] = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0],
+                                      Ops.size());
     } else {
       // Canonicalize all constant ints to be unsigned.
       return N = DAG.getConstant(cast<ConstantInt>(C)->getZExtValue(),VT);
@@ -890,6 +892,7 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
         else 
           Condition = FPC;
       } else {
+        Condition = ISD::SETEQ; // silence warning.
         assert(0 && "Unknown compare instruction");
       }
       
@@ -1763,7 +1766,8 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   const MVT::ValueType *VTs = DAG.getNodeValueTypes(AllocSize.getValueType(),
                                                     MVT::Other);
   SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, VTs, 2, Ops, 3);
-  DAG.setRoot(setValue(&I, DSA).getValue(1));
+  setValue(&I, DSA);
+  DAG.setRoot(DSA.getValue(1));
 
   // Inform the Frame Information that we have just allocated a variable-sized
   // object.
