@@ -269,8 +269,8 @@ static unsigned CreateVirtualRegisters(const MRegisterInfo *MRI,
 
 /// getVR - Return the virtual register corresponding to the specified result
 /// of the specified node.
-static unsigned getVR(SDOperand Op, std::map<SDNode*, unsigned> &VRBaseMap) {
-  std::map<SDNode*, unsigned>::iterator I = VRBaseMap.find(Op.Val);
+static unsigned getVR(SDOperand Op, DenseMap<SDNode*, unsigned> &VRBaseMap) {
+  DenseMap<SDNode*, unsigned>::iterator I = VRBaseMap.find(Op.Val);
   assert(I != VRBaseMap.end() && "Node emitted out of order - late");
   return I->second + Op.ResNo;
 }
@@ -283,7 +283,7 @@ static unsigned getVR(SDOperand Op, std::map<SDNode*, unsigned> &VRBaseMap) {
 void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
                              unsigned IIOpNum,
                              const TargetInstrDescriptor *II,
-                             std::map<SDNode*, unsigned> &VRBaseMap) {
+                             DenseMap<SDNode*, unsigned> &VRBaseMap) {
   if (Op.isTargetOpcode()) {
     // Note that this case is redundant with the final else block, but we
     // include it because it is the most common and it makes the logic
@@ -371,7 +371,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
 void ScheduleDAG::EmitNode(SDNode *Node, 
-                           std::map<SDNode*, unsigned> &VRBaseMap) {
+                           DenseMap<SDNode*, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;                 // First virtual register for node
   
   // If machine instruction
@@ -595,7 +595,7 @@ void ScheduleDAG::EmitSchedule() {
   
   
   // Finally, emit the code for all of the scheduled instructions.
-  std::map<SDNode*, unsigned> VRBaseMap;
+  DenseMap<SDNode*, unsigned> VRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i]) {
       for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++)
