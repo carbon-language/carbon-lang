@@ -990,31 +990,6 @@ protected:
     NumValues = L.NumVTs;
   }
   
-  void setOperands(SDOperand Op0) {
-    assert(NumOperands == 0 && "Should not have operands yet!");
-    OperandList = new SDOperand[1];
-    OperandList[0] = Op0;
-    NumOperands = 1;
-    Op0.Val->Uses.push_back(this);
-  }
-  void setOperands(SDOperand Op0, SDOperand Op1) {
-    assert(NumOperands == 0 && "Should not have operands yet!");
-    OperandList = new SDOperand[2];
-    OperandList[0] = Op0;
-    OperandList[1] = Op1;
-    NumOperands = 2;
-    Op0.Val->Uses.push_back(this); Op1.Val->Uses.push_back(this);
-  }
-  void setOperands(SDOperand Op0, SDOperand Op1, SDOperand Op2) {
-    assert(NumOperands == 0 && "Should not have operands yet!");
-    OperandList = new SDOperand[3];
-    OperandList[0] = Op0;
-    OperandList[1] = Op1;
-    OperandList[2] = Op2;
-    NumOperands = 3;
-    Op0.Val->Uses.push_back(this); Op1.Val->Uses.push_back(this);
-    Op2.Val->Uses.push_back(this);
-  }
   void setOperands(const SDOperand *Ops, unsigned NumOps) {
     assert(NumOperands == 0 && "Should not have operands yet!");
     NumOperands = NumOps;

@@ -2103,9 +2103,11 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
     return ON;
                                        
   RemoveNodeFromCSEMaps(N);
+  SDOperand OperandList[] = { Op1 };
+  
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VTs);
-  N->setOperands(Op1);
+  N->setOperands(OperandList, 1);
   CSEMap.InsertNode(N, IP);
   return N;
 }
@@ -2122,9 +2124,12 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
     return ON;
                                        
   RemoveNodeFromCSEMaps(N);
+  
+  SDOperand OperandList[] = { Op1, Op2 };
+
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2);
+  N->setOperands(OperandList, 2);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
@@ -2142,9 +2147,11 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
     return ON;
                                        
   RemoveNodeFromCSEMaps(N);
+  
+  SDOperand OperandList[] = { Op1, Op2, Op3 };
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2, Op3);
+  N->setOperands(OperandList, 3);
 
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
@@ -2181,9 +2188,11 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
     return ON;
 
   RemoveNodeFromCSEMaps(N);
+
+  SDOperand OperandList[] = { Op1, Op2 };
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2);
+  N->setOperands(OperandList, 2);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
@@ -2202,9 +2211,11 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
     return ON;
 
   RemoveNodeFromCSEMaps(N);
+
+  SDOperand OperandList[] = { Op1, Op2, Op3 };
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VTs);
-  N->setOperands(Op1, Op2, Op3);
+  N->setOperands(OperandList, 3);
   
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
