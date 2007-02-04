@@ -360,3 +360,20 @@ void Module::dropAllReferences() {
     I->dropAllReferences();
 }
 
+void Module::addLibrary(const std::string& Lib) {
+  for (Module::lib_iterator I = lib_begin(), E = lib_end(); I != E; ++I)
+    if (*I == Lib)
+      return;
+  LibraryList.push_back(Lib);
+}
+
+void Module::removeLibrary(const std::string& Lib) {
+  LibraryListType::iterator I = LibraryList.begin();
+  LibraryListType::iterator E = LibraryList.end();
+  for (;I != E; ++I)
+    if (*I == Lib) {
+      LibraryList.erase(I);
+      return;
+    }
+}
+

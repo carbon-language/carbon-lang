@@ -48,6 +48,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetLowering.h"
 #include <csetjmp>
+#include <set>
 using namespace llvm;
 
 STATISTIC(NumInvokes, "Number of invokes replaced");

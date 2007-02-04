@@ -16,7 +16,6 @@
 
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -63,7 +62,7 @@ public:
   typedef iplist<Function> FunctionListType;
 
   /// The type for the list of dependent libraries.
-  typedef SetVector<std::string> LibraryListType;
+  typedef std::vector<std::string> LibraryListType;
 
   /// The Global Variable iterator.
   typedef GlobalListType::iterator                     global_iterator;
@@ -290,9 +289,9 @@ public:
   /// @brief Returns the number of items in the list of libraries.
   inline size_t lib_size() const { return LibraryList.size(); }
   /// @brief Add a library to the list of dependent libraries
-  inline void addLibrary(const std::string& Lib){ LibraryList.insert(Lib); }
+  void addLibrary(const std::string& Lib);
   /// @brief Remove a library from the list of dependent libraries
-  inline void removeLibrary(const std::string& Lib) { LibraryList.remove(Lib); }
+  void removeLibrary(const std::string& Lib);
   /// @brief Get all the libraries
   inline const LibraryListType& getLibraries() const { return LibraryList; }
 
