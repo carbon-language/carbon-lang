@@ -1,22 +1,23 @@
-##===- projects/Stacker/test/Makefile ----------------------*- Makefile -*-===##
+#===-- projects/llvm-stacker/test/Makefile ------------------*- Makefile -*-===#
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by Reid Spencer and is distributed under the 
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
 #
 # This is the makefile that tests the various facilities of the Stacker language
 #
-##===----------------------------------------------------------------------===##
+#===------------------------------------------------------------------------===#
 
-#
 # Indicates our relative path to the top of the project's root directory.
-#
 LEVEL = ../
 
-#
 # Directories that need to be built.
-#
 DIRS =
 
-#
 # Include the Master Makefile that knows how to build all.
-#
 include $(LEVEL)/Makefile.common
 
 LOGIC_TESTS = eq ne le ge gt lt false true

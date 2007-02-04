@@ -1,20 +1,16 @@
-##===- projects/Stacker/tools/Makefile ---------------------*- Makefile -*-===##
+#===-- projects/llvm-stacker/tools/Makefile -----------------*- Makefile -*-===#
 #
-# This is the stacker tools makefile
+#                     The LLVM Compiler Infrastructure
 #
-##===----------------------------------------------------------------------===##
+# This file was developed by Reid Spencer and is distributed under the 
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
 
-#
 # Indicates our relative path to the top of the project's root directory.
-#
 LEVEL = ..
 
-#
-# Directories that needs to be built.
-#
+# Directories that need to be built.
 DIRS = stkrc
 
-#
-# Include the Master Makefile that knows how to build all.
-#
 include $(LEVEL)/Makefile.common

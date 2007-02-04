@@ -1,11 +1,11 @@
-##===- projects/Stacker/lib/runtime/Makefile ---------------*- Makefile -*-===##
-# 
+#===-- projects/llvm-stacker/lib/runtime/Makefile -----------*- Makefile -*-===#
+#
 #                     The LLVM Compiler Infrastructure
 #
 # This file was developed by Reid Spencer and is distributed under the 
 # University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
-##===----------------------------------------------------------------------===##
+#===------------------------------------------------------------------------===#
 
 LEVEL = ../..
 DONT_BUILD_RELINKED = 1

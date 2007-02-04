@@ -1,3 +1,11 @@
+#===-- projects/llvm-stacker/Makefile.common.in -------------*- Makefile -*-===#
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by Reid Spencer and is distributed under the 
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
 # Set the name of the project here
 PROJECT_NAME := Stacker
 

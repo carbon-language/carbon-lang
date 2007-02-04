@@ -1,12 +1,17 @@
-##===- projects/sample/Makefile ----------------------------*- Makefile -*-===##
+#===-- projects/llvm-stacker/samples/Makefile ---------------*- Makefile -*-===#
 #
-# This is a sample Makefile for a project that uses LLVM.
+#                     The LLVM Compiler Infrastructure
 #
-##===----------------------------------------------------------------------===##
+# This file was developed by Reid Spencer and is distributed under the 
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
+#
+# This makefile builds some sample stacker programs.
+#
+#===------------------------------------------------------------------------===#
 
-#
 # Indicates our relative path to the top of the project's root directory.
-#
 LEVEL = ../../..
 DIRS = 
 
