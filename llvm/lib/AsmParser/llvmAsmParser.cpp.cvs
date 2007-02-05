@@ -603,7 +603,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
     }
     break;
   default:
-    GenerateError("Internal parser error: Invalid symbol type reference!");
+    GenerateError("Internal parser error: Invalid symbol type reference");
     return 0;
   }
 
@@ -690,7 +690,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     if (!ConstantInt::isValueValidForType(Ty, D.ConstPool64)) {
       GenerateError("Signed integral constant '" +
                      itostr(D.ConstPool64) + "' is invalid for type '" +
-                     Ty->getDescription() + "'!");
+                     Ty->getDescription() + "'");
       return 0;
     }
     return ConstantInt::get(Ty, D.ConstPool64);
@@ -699,7 +699,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     if (!ConstantInt::isValueValidForType(Ty, D.UConstPool64)) {
       if (!ConstantInt::isValueValidForType(Ty, D.ConstPool64)) {
         GenerateError("Integral constant '" + utostr(D.UConstPool64) +
-                       "' is invalid or out of range!");
+                       "' is invalid or out of range");
         return 0;
       } else {     // This is really a signed reference.  Transmogrify.
         return ConstantInt::get(Ty, D.ConstPool64);
@@ -710,14 +710,14 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
 
   case ValID::ConstFPVal:        // Is it a floating point const pool reference?
     if (!ConstantFP::isValueValidForType(Ty, D.ConstPoolFP)) {
-      GenerateError("FP constant invalid for type!!");
+      GenerateError("FP constant invalid for type");
       return 0;
     }
     return ConstantFP::get(Ty, D.ConstPoolFP);
 
   case ValID::ConstNullVal:      // Is it a null value?
     if (!isa<PointerType>(Ty)) {
-      GenerateError("Cannot create a a non pointer null!");
+      GenerateError("Cannot create a a non pointer null");
       return 0;
     }
     return ConstantPointerNull::get(cast<PointerType>(Ty));
@@ -730,7 +730,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     
   case ValID::ConstantVal:       // Fully resolved constant?
     if (D.ConstantValue->getType() != Ty) {
-      GenerateError("Constant expression type different from required type!");
+      GenerateError("Constant expression type different from required type");
       return 0;
     }
     return D.ConstantValue;
@@ -740,7 +740,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     const FunctionType *FTy =
       PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
     if (!FTy || !InlineAsm::Verify(FTy, D.IAD->Constraints)) {
-      GenerateError("Invalid type for asm constraint string!");
+      GenerateError("Invalid type for asm constraint string");
       return 0;
     }
     InlineAsm *IA = InlineAsm::get(FTy, D.IAD->AsmString, D.IAD->Constraints,
@@ -749,11 +749,11 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     return IA;
   }
   default:
-    assert(0 && "Unhandled case!");
+    assert(0 && "Unhandled case");
     return 0;
   }   // End of switch
 
-  assert(0 && "Unhandled case!");
+  assert(0 && "Unhandled case");
   return 0;
 }
 
@@ -775,7 +775,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   if (TriggerError) return 0;
 
   if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty)) {
-    GenerateError("Invalid use of a composite type!");
+    GenerateError("Invalid use of a composite type");
     return 0;
   }
 
@@ -804,7 +804,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
 ///    or may not be a forward reference.
 ///
 static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
-  assert(inFunctionScope() && "Can't get basic block at global scope!");
+  assert(inFunctionScope() && "Can't get basic block at global scope");
 
   std::string Name;
   BasicBlock *BB = 0;
@@ -893,7 +893,7 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
 
       std::map<Value*, std::pair<ValID, int> >::iterator PHI =
         CurModule.PlaceHolderInfo.find(V);
-      assert(PHI != CurModule.PlaceHolderInfo.end() && "Placeholder error!");
+      assert(PHI != CurModule.PlaceHolderInfo.end() && "Placeholder error");
 
       ValID &DID = PHI->second.first;
 
@@ -955,15 +955,15 @@ static void setValueName(Value *V, char *NameStr) {
   free(NameStr);                  // Free old string
 
   if (V->getType() == Type::VoidTy) {
-    GenerateError("Can't assign name '" + Name+"' to value with void type!");
+    GenerateError("Can't assign name '" + Name+"' to value with void type");
     return;
   }
 
-  assert(inFunctionScope() && "Must be in function scope!");
+  assert(inFunctionScope() && "Must be in function scope");
   SymbolTable &ST = CurFun.CurrentFunction->getValueSymbolTable();
   if (ST.lookup(V->getType(), Name)) {
     GenerateError("Redefinition of value '" + Name + "' of type '" +
-                   V->getType()->getDescription() + "'!");
+                   V->getType()->getDescription() + "'");
     return;
   }
 
@@ -980,7 +980,7 @@ ParseGlobalVariable(char *NameStr,
                     bool isConstantGlobal, const Type *Ty,
                     Constant *Initializer) {
   if (isa<FunctionType>(Ty)) {
-    GenerateError("Cannot declare global vars of function type!");
+    GenerateError("Cannot declare global vars of function type");
     return 0;
   }
 
@@ -1022,7 +1022,7 @@ ParseGlobalVariable(char *NameStr,
     // the same as the old one.
     if (CurModule.CurrentModule->getGlobalVariable(Name, Ty)) {
       GenerateError("Redefinition of global variable named '" + Name +
-                     "' of type '" + Ty->getDescription() + "'!");
+                     "' of type '" + Ty->getDescription() + "'");
       return 0;
     }
   }
@@ -1044,7 +1044,7 @@ ParseGlobalVariable(char *NameStr,
 // allowed to be redefined in the specified context.  If the name is a new name
 // for the type plane, it is inserted and false is returned.
 static bool setTypeName(const Type *T, char *NameStr) {
-  assert(!inFunctionScope() && "Can't give types function-local names!");
+  assert(!inFunctionScope() && "Can't give types function-local names");
   if (NameStr == 0) return false;
  
   std::string Name(NameStr);      // Copy string
@@ -1052,7 +1052,7 @@ static bool setTypeName(const Type *T, char *NameStr) {
 
   // We don't allow assigning names to void type
   if (T == Type::VoidTy) {
-    GenerateError("Can't assign name '" + Name + "' to the void type!");
+    GenerateError("Can't assign name '" + Name + "' to the void type");
     return false;
   }
 
@@ -1079,7 +1079,7 @@ static bool setTypeName(const Type *T, char *NameStr) {
 
     // Any other kind of (non-equivalent) redefinition is an error.
     GenerateError("Redefinition of type named '" + Name + "' of type '" +
-                   T->getDescription() + "'!");
+                   T->getDescription() + "'");
   }
 
   return false;
@@ -3271,7 +3271,7 @@ yyreduce:
 #line 1127 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
                    if ((unsigned)(yyvsp[0].UInt64Val) != (yyvsp[0].UInt64Val))
-                     GEN_ERROR("Calling conv too large!");
+                     GEN_ERROR("Calling conv too large");
                    (yyval.UIntVal) = (yyvsp[0].UInt64Val);
                   CHECK_FOR_ERROR
                  ;}
@@ -3336,7 +3336,7 @@ yyreduce:
     {
   (yyval.UIntVal) = (yyvsp[0].UInt64Val);
   if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
-    GEN_ERROR("Alignment must be a power of two!");
+    GEN_ERROR("Alignment must be a power of two");
   CHECK_FOR_ERROR
 ;}
     break;
@@ -3351,7 +3351,7 @@ yyreduce:
     {
   (yyval.UIntVal) = (yyvsp[0].UInt64Val);
   if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
-    GEN_ERROR("Alignment must be a power of two!");
+    GEN_ERROR("Alignment must be a power of two");
   CHECK_FOR_ERROR
 ;}
     break;
@@ -3361,7 +3361,7 @@ yyreduce:
     {
   for (unsigned i = 0, e = strlen((yyvsp[0].StrVal)); i != e; ++i)
     if ((yyvsp[0].StrVal)[i] == '"' || (yyvsp[0].StrVal)[i] == '\\')
-      GEN_ERROR("Invalid character in section name!");
+      GEN_ERROR("Invalid character in section name");
   (yyval.StrVal) = (yyvsp[0].StrVal);
   CHECK_FOR_ERROR
 ;}
@@ -3400,7 +3400,7 @@ yyreduce:
 #line 1195 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[0].UInt64Val) != 0 && !isPowerOf2_32((yyvsp[0].UInt64Val)))
-      GEN_ERROR("Alignment must be a power of two!");
+      GEN_ERROR("Alignment must be a power of two");
     CurGV->setAlignment((yyvsp[0].UInt64Val));
     CHECK_FOR_ERROR
   ;}
@@ -3445,7 +3445,7 @@ yyreduce:
   case 122:
 #line 1231 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {                   // Type UpReference
-    if ((yyvsp[0].UInt64Val) > (uint64_t)~0U) GEN_ERROR("Value out of range!");
+    if ((yyvsp[0].UInt64Val) > (uint64_t)~0U) GEN_ERROR("Value out of range");
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
     UpRefs.push_back(UpRefRecord((unsigned)(yyvsp[0].UInt64Val), OT));  // Add to vector...
     (yyval.TypeVal) = new PATypeHolder(OT);
@@ -3515,7 +3515,7 @@ yyreduce:
      if (!ElemTy->isFloatingPoint() && !ElemTy->isInteger())
         GEN_ERROR("Element type of a PackedType must be primitive");
      if (!isPowerOf2_32((yyvsp[-3].UInt64Val)))
-       GEN_ERROR("Vector length should be a power of 2!");
+       GEN_ERROR("Vector length should be a power of 2");
      (yyval.TypeVal) = new PATypeHolder(HandleUpRefs(PackedType::get(*(yyvsp[-1].TypeVal), (unsigned)(yyvsp[-3].UInt64Val))));
      delete (yyvsp[-1].TypeVal);
      CHECK_FOR_ERROR
@@ -3580,7 +3580,7 @@ yyreduce:
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[0].TypeVal))->getDescription());
     if (!(*(yyvsp[0].TypeVal))->isFirstClassType())
-      GEN_ERROR("LLVM functions cannot return aggregate types!");
+      GEN_ERROR("LLVM functions cannot return aggregate types");
     (yyval.TypeVal) = (yyvsp[0].TypeVal);
   ;}
     break;
@@ -3664,7 +3664,7 @@ yyreduce:
     const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-3].TypeVal)->get());
     if (ATy == 0)
       GEN_ERROR("Cannot make array constant with type: '" + 
-                     (*(yyvsp[-3].TypeVal))->getDescription() + "'!");
+                     (*(yyvsp[-3].TypeVal))->getDescription() + "'");
     const Type *ETy = ATy->getElementType();
     int NumElements = ATy->getNumElements();
 
@@ -3672,7 +3672,7 @@ yyreduce:
     if (NumElements != -1 && NumElements != (int)(yyvsp[-1].ConstVector)->size())
       GEN_ERROR("Type mismatch: constant sized array initialized with " +
                      utostr((yyvsp[-1].ConstVector)->size()) +  " arguments, but has size of " + 
-                     itostr(NumElements) + "!");
+                     itostr(NumElements) + "");
 
     // Verify all elements are correct type!
     for (unsigned i = 0; i < (yyvsp[-1].ConstVector)->size(); i++) {
@@ -3696,12 +3696,12 @@ yyreduce:
     const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal)->get());
     if (ATy == 0)
       GEN_ERROR("Cannot make array constant with type: '" + 
-                     (*(yyvsp[-2].TypeVal))->getDescription() + "'!");
+                     (*(yyvsp[-2].TypeVal))->getDescription() + "'");
 
     int NumElements = ATy->getNumElements();
     if (NumElements != -1 && NumElements != 0) 
       GEN_ERROR("Type mismatch: constant sized array initialized with 0"
-                     " arguments, but has size of " + itostr(NumElements) +"!");
+                     " arguments, but has size of " + itostr(NumElements) +"");
     (yyval.ConstVal) = ConstantArray::get(ATy, std::vector<Constant*>());
     delete (yyvsp[-2].TypeVal);
     CHECK_FOR_ERROR
@@ -3716,7 +3716,7 @@ yyreduce:
     const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal)->get());
     if (ATy == 0)
       GEN_ERROR("Cannot make array constant with type: '" + 
-                     (*(yyvsp[-2].TypeVal))->getDescription() + "'!");
+                     (*(yyvsp[-2].TypeVal))->getDescription() + "'");
 
     int NumElements = ATy->getNumElements();
     const Type *ETy = ATy->getElementType();
@@ -3724,7 +3724,7 @@ yyreduce:
     if (NumElements != -1 && NumElements != (EndStr-(yyvsp[0].StrVal)))
       GEN_ERROR("Can't build string constant of size " + 
                      itostr((int)(EndStr-(yyvsp[0].StrVal))) +
-                     " when array has size " + itostr(NumElements) + "!");
+                     " when array has size " + itostr(NumElements) + "");
     std::vector<Constant*> Vals;
     if (ETy == Type::Int8Ty) {
       for (unsigned char *C = (unsigned char *)(yyvsp[0].StrVal); 
@@ -3732,7 +3732,7 @@ yyreduce:
       Vals.push_back(ConstantInt::get(ETy, *C));
     } else {
       free((yyvsp[0].StrVal));
-      GEN_ERROR("Cannot build string arrays of non byte sized elements!");
+      GEN_ERROR("Cannot build string arrays of non byte sized elements");
     }
     free((yyvsp[0].StrVal));
     (yyval.ConstVal) = ConstantArray::get(ATy, Vals);
@@ -3749,7 +3749,7 @@ yyreduce:
     const PackedType *PTy = dyn_cast<PackedType>((yyvsp[-3].TypeVal)->get());
     if (PTy == 0)
       GEN_ERROR("Cannot make packed constant with type: '" + 
-                     (*(yyvsp[-3].TypeVal))->getDescription() + "'!");
+                     (*(yyvsp[-3].TypeVal))->getDescription() + "'");
     const Type *ETy = PTy->getElementType();
     int NumElements = PTy->getNumElements();
 
@@ -3757,7 +3757,7 @@ yyreduce:
     if (NumElements != -1 && NumElements != (int)(yyvsp[-1].ConstVector)->size())
       GEN_ERROR("Type mismatch: constant sized packed initialized with " +
                      utostr((yyvsp[-1].ConstVector)->size()) +  " arguments, but has size of " + 
-                     itostr(NumElements) + "!");
+                     itostr(NumElements) + "");
 
     // Verify all elements are correct type!
     for (unsigned i = 0; i < (yyvsp[-1].ConstVector)->size(); i++) {
@@ -3779,10 +3779,10 @@ yyreduce:
     const StructType *STy = dyn_cast<StructType>((yyvsp[-3].TypeVal)->get());
     if (STy == 0)
       GEN_ERROR("Cannot make struct constant with type: '" + 
-                     (*(yyvsp[-3].TypeVal))->getDescription() + "'!");
+                     (*(yyvsp[-3].TypeVal))->getDescription() + "'");
 
     if ((yyvsp[-1].ConstVector)->size() != STy->getNumContainedTypes())
-      GEN_ERROR("Illegal number of initializers for structure type!");
+      GEN_ERROR("Illegal number of initializers for structure type");
 
     // Check to ensure that constants are compatible with the type initializer!
     for (unsigned i = 0, e = (yyvsp[-1].ConstVector)->size(); i != e; ++i)
@@ -3790,7 +3790,7 @@ yyreduce:
         GEN_ERROR("Expected type '" +
                        STy->getElementType(i)->getDescription() +
                        "' for element #" + utostr(i) +
-                       " of structure initializer!");
+                       " of structure initializer");
 
     // Check to ensure that Type is not packed
     if (STy->isPacked())
@@ -3810,10 +3810,10 @@ yyreduce:
     const StructType *STy = dyn_cast<StructType>((yyvsp[-2].TypeVal)->get());
     if (STy == 0)
       GEN_ERROR("Cannot make struct constant with type: '" + 
-                     (*(yyvsp[-2].TypeVal))->getDescription() + "'!");
+                     (*(yyvsp[-2].TypeVal))->getDescription() + "'");
 
     if (STy->getNumContainedTypes() != 0)
-      GEN_ERROR("Illegal number of initializers for structure type!");
+      GEN_ERROR("Illegal number of initializers for structure type");
 
     // Check to ensure that Type is not packed
     if (STy->isPacked())
@@ -3831,10 +3831,10 @@ yyreduce:
     const StructType *STy = dyn_cast<StructType>((yyvsp[-5].TypeVal)->get());
     if (STy == 0)
       GEN_ERROR("Cannot make struct constant with type: '" + 
-                     (*(yyvsp[-5].TypeVal))->getDescription() + "'!");
+                     (*(yyvsp[-5].TypeVal))->getDescription() + "'");
 
     if ((yyvsp[-2].ConstVector)->size() != STy->getNumContainedTypes())
-      GEN_ERROR("Illegal number of initializers for structure type!");
+      GEN_ERROR("Illegal number of initializers for structure type");
 
     // Check to ensure that constants are compatible with the type initializer!
     for (unsigned i = 0, e = (yyvsp[-2].ConstVector)->size(); i != e; ++i)
@@ -3842,7 +3842,7 @@ yyreduce:
         GEN_ERROR("Expected type '" +
                        STy->getElementType(i)->getDescription() +
                        "' for element #" + utostr(i) +
-                       " of structure initializer!");
+                       " of structure initializer");
 
     // Check to ensure that Type is packed
     if (!STy->isPacked())
@@ -3862,10 +3862,10 @@ yyreduce:
     const StructType *STy = dyn_cast<StructType>((yyvsp[-4].TypeVal)->get());
     if (STy == 0)
       GEN_ERROR("Cannot make struct constant with type: '" + 
-                     (*(yyvsp[-4].TypeVal))->getDescription() + "'!");
+                     (*(yyvsp[-4].TypeVal))->getDescription() + "'");
 
     if (STy->getNumContainedTypes() != 0)
-      GEN_ERROR("Illegal number of initializers for structure type!");
+      GEN_ERROR("Illegal number of initializers for structure type");
 
     // Check to ensure that Type is packed
     if (!STy->isPacked())
@@ -3885,7 +3885,7 @@ yyreduce:
     const PointerType *PTy = dyn_cast<PointerType>((yyvsp[-1].TypeVal)->get());
     if (PTy == 0)
       GEN_ERROR("Cannot make null pointer constant with type: '" + 
-                     (*(yyvsp[-1].TypeVal))->getDescription() + "'!");
+                     (*(yyvsp[-1].TypeVal))->getDescription() + "'");
 
     (yyval.ConstVal) = ConstantPointerNull::get(PTy);
     delete (yyvsp[-1].TypeVal);
@@ -3911,7 +3911,7 @@ yyreduce:
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
     const PointerType *Ty = dyn_cast<PointerType>((yyvsp[-1].TypeVal)->get());
     if (Ty == 0)
-      GEN_ERROR("Global const reference must be a pointer type!");
+      GEN_ERROR("Global const reference must be a pointer type");
 
     // ConstExprs can exist in the body of a function, thus creating
     // GlobalValues whenever they refer to a variable.  Because we are in
@@ -3933,7 +3933,7 @@ yyreduce:
     // in the future with the right type of variable.
     //
     if (V == 0) {
-      assert(isa<PointerType>(Ty) && "Globals may only be used as pointers!");
+      assert(isa<PointerType>(Ty) && "Globals may only be used as pointers");
       const PointerType *PT = cast<PointerType>(Ty);
 
       // First check to see if the forward references value is already created!
@@ -3995,7 +3995,7 @@ yyreduce:
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
     const Type *Ty = (yyvsp[-1].TypeVal)->get();
     if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || isa<OpaqueType>(Ty))
-      GEN_ERROR("Cannot create a null initialized value of this type!");
+      GEN_ERROR("Cannot create a null initialized value of this type");
     (yyval.ConstVal) = Constant::getNullValue(Ty);
     delete (yyvsp[-1].TypeVal);
     CHECK_FOR_ERROR
@@ -4006,7 +4006,7 @@ yyreduce:
 #line 1687 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {      // integral constants
     if (!ConstantInt::isValueValidForType((yyvsp[-1].PrimType), (yyvsp[0].SInt64Val)))
-      GEN_ERROR("Constant value doesn't fit in type!");
+      GEN_ERROR("Constant value doesn't fit in type");
     (yyval.ConstVal) = ConstantInt::get((yyvsp[-1].PrimType), (yyvsp[0].SInt64Val));
     CHECK_FOR_ERROR
   ;}
@@ -4016,7 +4016,7 @@ yyreduce:
 #line 1693 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {      // integral constants
     if (!ConstantInt::isValueValidForType((yyvsp[-1].PrimType), (yyvsp[0].UInt64Val)))
-      GEN_ERROR("Constant value doesn't fit in type!");
+      GEN_ERROR("Constant value doesn't fit in type");
     (yyval.ConstVal) = ConstantInt::get((yyvsp[-1].PrimType), (yyvsp[0].UInt64Val));
     CHECK_FOR_ERROR
   ;}
@@ -4044,7 +4044,7 @@ yyreduce:
 #line 1709 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {                   // Float & Double constants
     if (!ConstantFP::isValueValidForType((yyvsp[-1].PrimType), (yyvsp[0].FPVal)))
-      GEN_ERROR("Floating point constant invalid for type!!");
+      GEN_ERROR("Floating point constant invalid for type");
     (yyval.ConstVal) = ConstantFP::get((yyvsp[-1].PrimType), (yyvsp[0].FPVal));
     CHECK_FOR_ERROR
   ;}
@@ -4060,7 +4060,7 @@ yyreduce:
     if (!CastInst::castIsValid((yyvsp[-5].CastOpVal), (yyvsp[-3].ConstVal), DestTy))
       GEN_ERROR("invalid cast opcode for cast from '" +
                 Val->getType()->getDescription() + "' to '" +
-                DestTy->getDescription() + "'!"); 
+                DestTy->getDescription() + "'"); 
     (yyval.ConstVal) = ConstantExpr::getCast((yyvsp[-5].CastOpVal), (yyvsp[-3].ConstVal), DestTy);
     delete (yyvsp[-1].TypeVal);
   ;}
@@ -4070,19 +4070,19 @@ yyreduce:
 #line 1729 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<PointerType>((yyvsp[-2].ConstVal)->getType()))
-      GEN_ERROR("GetElementPtr requires a pointer operand!");
+      GEN_ERROR("GetElementPtr requires a pointer operand");
 
     const Type *IdxTy =
       GetElementPtrInst::getIndexedType((yyvsp[-2].ConstVal)->getType(), *(yyvsp[-1].ValueList), true);
     if (!IdxTy)
-      GEN_ERROR("Index list invalid for constant getelementptr!");
+      GEN_ERROR("Index list invalid for constant getelementptr");
 
     SmallVector<Constant*, 8> IdxVec;
     for (unsigned i = 0, e = (yyvsp[-1].ValueList)->size(); i != e; ++i)
       if (Constant *C = dyn_cast<Constant>((*(yyvsp[-1].ValueList))[i]))
         IdxVec.push_back(C);
       else
-        GEN_ERROR("Indices to constant getelementptr must be constants!");
+        GEN_ERROR("Indices to constant getelementptr must be constants");
 
     delete (yyvsp[-1].ValueList);
 
@@ -4095,9 +4095,9 @@ yyreduce:
 #line 1750 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-5].ConstVal)->getType() != Type::Int1Ty)
-      GEN_ERROR("Select condition must be of boolean type!");
+      GEN_ERROR("Select condition must be of boolean type");
     if ((yyvsp[-3].ConstVal)->getType() != (yyvsp[-1].ConstVal)->getType())
-      GEN_ERROR("Select operand types must match!");
+      GEN_ERROR("Select operand types must match");
     (yyval.ConstVal) = ConstantExpr::getSelect((yyvsp[-5].ConstVal), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal));
     CHECK_FOR_ERROR
   ;}
@@ -4107,7 +4107,7 @@ yyreduce:
 #line 1758 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-3].ConstVal)->getType() != (yyvsp[-1].ConstVal)->getType())
-      GEN_ERROR("Binary operator types must match!");
+      GEN_ERROR("Binary operator types must match");
     CHECK_FOR_ERROR;
     (yyval.ConstVal) = ConstantExpr::get((yyvsp[-5].BinaryOpVal), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal));
   ;}
@@ -4117,11 +4117,11 @@ yyreduce:
 #line 1764 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-3].ConstVal)->getType() != (yyvsp[-1].ConstVal)->getType())
-      GEN_ERROR("Logical operator types must match!");
+      GEN_ERROR("Logical operator types must match");
     if (!(yyvsp[-3].ConstVal)->getType()->isInteger()) {
       if (Instruction::isShift((yyvsp[-5].BinaryOpVal)) || !isa<PackedType>((yyvsp[-3].ConstVal)->getType()) || 
           !cast<PackedType>((yyvsp[-3].ConstVal)->getType())->getElementType()->isInteger())
-        GEN_ERROR("Logical operator requires integral operands!");
+        GEN_ERROR("Logical operator requires integral operands");
     }
     (yyval.ConstVal) = ConstantExpr::get((yyvsp[-5].BinaryOpVal), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal));
     CHECK_FOR_ERROR
@@ -4132,7 +4132,7 @@ yyreduce:
 #line 1775 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-3].ConstVal)->getType() != (yyvsp[-1].ConstVal)->getType())
-      GEN_ERROR("icmp operand types must match!");
+      GEN_ERROR("icmp operand types must match");
     (yyval.ConstVal) = ConstantExpr::getICmp((yyvsp[-5].IPredicate), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal));
   ;}
     break;
@@ -4141,7 +4141,7 @@ yyreduce:
 #line 1780 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-3].ConstVal)->getType() != (yyvsp[-1].ConstVal)->getType())
-      GEN_ERROR("fcmp operand types must match!");
+      GEN_ERROR("fcmp operand types must match");
     (yyval.ConstVal) = ConstantExpr::getFCmp((yyvsp[-5].FPredicate), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal));
   ;}
     break;
@@ -4150,7 +4150,7 @@ yyreduce:
 #line 1785 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal)))
-      GEN_ERROR("Invalid extractelement operands!");
+      GEN_ERROR("Invalid extractelement operands");
     (yyval.ConstVal) = ConstantExpr::getExtractElement((yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal));
     CHECK_FOR_ERROR
   ;}
@@ -4160,7 +4160,7 @@ yyreduce:
 #line 1791 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[-5].ConstVal), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal)))
-      GEN_ERROR("Invalid insertelement operands!");
+      GEN_ERROR("Invalid insertelement operands");
     (yyval.ConstVal) = ConstantExpr::getInsertElement((yyvsp[-5].ConstVal), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal));
     CHECK_FOR_ERROR
   ;}
@@ -4170,7 +4170,7 @@ yyreduce:
 #line 1797 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[-5].ConstVal), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal)))
-      GEN_ERROR("Invalid shufflevector operands!");
+      GEN_ERROR("Invalid shufflevector operands");
     (yyval.ConstVal) = ConstantExpr::getShuffleVector((yyvsp[-5].ConstVal), (yyvsp[-3].ConstVal), (yyvsp[-1].ConstVal));
     CHECK_FOR_ERROR
   ;}
@@ -4317,7 +4317,7 @@ yyreduce:
     { 
     /* "Externally Visible" Linkage */
     if ((yyvsp[0].ConstVal) == 0) 
-      GEN_ERROR("Global value initializer is not a constant!");
+      GEN_ERROR("Global value initializer is not a constant");
     CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::ExternalLinkage,
                                 (yyvsp[-2].Visibility), (yyvsp[-1].BoolVal), (yyvsp[0].ConstVal)->getType(), (yyvsp[0].ConstVal));
     CHECK_FOR_ERROR
@@ -4335,7 +4335,7 @@ yyreduce:
 #line 1914 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[0].ConstVal) == 0) 
-      GEN_ERROR("Global value initializer is not a constant!");
+      GEN_ERROR("Global value initializer is not a constant");
     CurGV = ParseGlobalVariable((yyvsp[-4].StrVal), (yyvsp[-3].Linkage), (yyvsp[-2].Visibility), (yyvsp[-1].BoolVal), (yyvsp[0].ConstVal)->getType(), (yyvsp[0].ConstVal));
     CHECK_FOR_ERROR
   ;}
@@ -4444,7 +4444,7 @@ yyreduce:
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-2].TypeVal))->getDescription());
     if (*(yyvsp[-2].TypeVal) == Type::VoidTy)
-      GEN_ERROR("void typed arguments are invalid!");
+      GEN_ERROR("void typed arguments are invalid");
     ArgListEntry E; E.Attrs = (yyvsp[-1].ParamAttrs); E.Ty = (yyvsp[-2].TypeVal); E.Name = (yyvsp[0].StrVal);
     (yyval.ArgList) = (yyvsp[-4].ArgList);
     (yyvsp[-4].ArgList)->push_back(E);
@@ -4458,7 +4458,7 @@ yyreduce:
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-2].TypeVal))->getDescription());
     if (*(yyvsp[-2].TypeVal) == Type::VoidTy)
-      GEN_ERROR("void typed arguments are invalid!");
+      GEN_ERROR("void typed arguments are invalid");
     ArgListEntry E; E.Attrs = (yyvsp[-1].ParamAttrs); E.Ty = (yyvsp[-2].TypeVal); E.Name = (yyvsp[0].StrVal);
     (yyval.ArgList) = new ArgListType;
     (yyval.ArgList)->push_back(E);
@@ -4562,7 +4562,7 @@ yyreduce:
     // If this is the case, either we need to be a forward decl, or it needs 
     // to be.
     if (!CurFun.isDeclare && !Fn->isDeclaration())
-      GEN_ERROR("Redefinition of function '" + FunctionName + "'!");
+      GEN_ERROR("Redefinition of function '" + FunctionName + "'");
     
     // Make sure to strip off any argument names so we can't get conflicts.
     if (Fn->isDeclaration())
@@ -4596,7 +4596,7 @@ yyreduce:
   if ((yyvsp[-4].ArgList)) {                     // Is null if empty...
     if (isVarArg) {  // Nuke the last entry
       assert((yyvsp[-4].ArgList)->back().Ty->get() == Type::VoidTy && (yyvsp[-4].ArgList)->back().Name == 0&&
-             "Not a varargs marker!");
+             "Not a varargs marker");
       delete (yyvsp[-4].ArgList)->back().Ty;
       (yyvsp[-4].ArgList)->pop_back();  // Delete the last entry
     }
@@ -4951,7 +4951,7 @@ yyreduce:
       if (ConstantInt *CI = dyn_cast<ConstantInt>(I->first))
           S->addCase(CI, I->second);
       else
-        GEN_ERROR("Switch case is constant, but not a simple integer!");
+        GEN_ERROR("Switch case is constant, but not a simple integer");
     }
     delete (yyvsp[-1].JumpTable);
     CHECK_FOR_ERROR
@@ -5009,7 +5009,7 @@ yyreduce:
       // Make sure no arguments is a good thing!
       if (Ty->getNumParams() != 0)
         GEN_ERROR("No arguments passed to a function that "
-                       "expects arguments!");
+                       "expects arguments");
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
@@ -5020,7 +5020,7 @@ yyreduce:
       for (; ArgI != ArgE && I != E; ++ArgI, ++I) {
         if (ArgI->Val->getType() != *I)
           GEN_ERROR("Parameter " + ArgI->Val->getName()+ " is not of type '" +
-                         (*I)->getDescription() + "'!");
+                         (*I)->getDescription() + "'");
         Args.push_back(ArgI->Val);
       }
 
@@ -5029,7 +5029,7 @@ yyreduce:
           for (; ArgI != ArgE; ++ArgI)
             Args.push_back(ArgI->Val); // push the remaining varargs
       } else if (I != E || ArgI != ArgE)
-        GEN_ERROR("Invalid number of parameters detected!");
+        GEN_ERROR("Invalid number of parameters detected");
     }
 
     // Create the InvokeInst
@@ -5064,7 +5064,7 @@ yyreduce:
     Constant *V = cast<Constant>(getValNonImprovising((yyvsp[-4].PrimType), (yyvsp[-3].ValIDVal)));
     CHECK_FOR_ERROR
     if (V == 0)
-      GEN_ERROR("May only switch on a constant pool value!");
+      GEN_ERROR("May only switch on a constant pool value");
 
     BasicBlock* tmpBB = getBBVal((yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
@@ -5080,7 +5080,7 @@ yyreduce:
     CHECK_FOR_ERROR
 
     if (V == 0)
-      GEN_ERROR("May only switch on a constant pool value!");
+      GEN_ERROR("May only switch on a constant pool value");
 
     BasicBlock* tmpBB = getBBVal((yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
@@ -5194,19 +5194,19 @@ yyreduce:
     if (!(*(yyvsp[-3].TypeVal))->isInteger() && !(*(yyvsp[-3].TypeVal))->isFloatingPoint() && 
         !isa<PackedType>((*(yyvsp[-3].TypeVal)).get()))
       GEN_ERROR(
-        "Arithmetic operator requires integer, FP, or packed operands!");
+        "Arithmetic operator requires integer, FP, or packed operands");
     if (isa<PackedType>((*(yyvsp[-3].TypeVal)).get()) && 
         ((yyvsp[-4].BinaryOpVal) == Instruction::URem || 
          (yyvsp[-4].BinaryOpVal) == Instruction::SRem ||
          (yyvsp[-4].BinaryOpVal) == Instruction::FRem))
-      GEN_ERROR("U/S/FRem not supported on packed types!");
+      GEN_ERROR("U/S/FRem not supported on packed types");
     Value* val1 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[-2].ValIDVal)); 
     CHECK_FOR_ERROR
     Value* val2 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
     (yyval.InstVal) = BinaryOperator::create((yyvsp[-4].BinaryOpVal), val1, val2);
     if ((yyval.InstVal) == 0)
-      GEN_ERROR("binary operator returned null!");
+      GEN_ERROR("binary operator returned null");
     delete (yyvsp[-3].TypeVal);
   ;}
     break;
@@ -5219,7 +5219,7 @@ yyreduce:
     if (!(*(yyvsp[-3].TypeVal))->isInteger()) {
       if (Instruction::isShift((yyvsp[-4].BinaryOpVal)) || !isa<PackedType>((yyvsp[-3].TypeVal)->get()) ||
           !cast<PackedType>((yyvsp[-3].TypeVal)->get())->getElementType()->isInteger())
-        GEN_ERROR("Logical operator requires integral operands!");
+        GEN_ERROR("Logical operator requires integral operands");
     }
     Value* tmpVal1 = getVal(*(yyvsp[-3].TypeVal), (yyvsp[-2].ValIDVal));
     CHECK_FOR_ERROR
@@ -5227,7 +5227,7 @@ yyreduce:
     CHECK_FOR_ERROR
     (yyval.InstVal) = BinaryOperator::create((yyvsp[-4].BinaryOpVal), tmpVal1, tmpVal2);
     if ((yyval.InstVal) == 0)
-      GEN_ERROR("binary operator returned null!");
+      GEN_ERROR("binary operator returned null");
     delete (yyvsp[-3].TypeVal);
   ;}
     break;
@@ -5245,7 +5245,7 @@ yyreduce:
     CHECK_FOR_ERROR
     (yyval.InstVal) = CmpInst::create((yyvsp[-5].OtherOpVal), (yyvsp[-4].IPredicate), tmpVal1, tmpVal2);
     if ((yyval.InstVal) == 0)
-      GEN_ERROR("icmp operator returned null!");
+      GEN_ERROR("icmp operator returned null");
   ;}
     break;
 
@@ -5262,7 +5262,7 @@ yyreduce:
     CHECK_FOR_ERROR
     (yyval.InstVal) = CmpInst::create((yyvsp[-5].OtherOpVal), (yyvsp[-4].FPredicate), tmpVal1, tmpVal2);
     if ((yyval.InstVal) == 0)
-      GEN_ERROR("fcmp operator returned null!");
+      GEN_ERROR("fcmp operator returned null");
   ;}
     break;
 
@@ -5276,7 +5276,7 @@ yyreduce:
     if (!CastInst::castIsValid((yyvsp[-3].CastOpVal), Val, DestTy))
       GEN_ERROR("invalid cast opcode for cast from '" +
                 Val->getType()->getDescription() + "' to '" +
-                DestTy->getDescription() + "'!"); 
+                DestTy->getDescription() + "'"); 
     (yyval.InstVal) = CastInst::create((yyvsp[-3].CastOpVal), Val, DestTy);
     delete (yyvsp[0].TypeVal);
   ;}
@@ -5286,9 +5286,9 @@ yyreduce:
 #line 2638 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if ((yyvsp[-4].ValueVal)->getType() != Type::Int1Ty)
-      GEN_ERROR("select condition must be boolean!");
+      GEN_ERROR("select condition must be boolean");
     if ((yyvsp[-2].ValueVal)->getType() != (yyvsp[0].ValueVal)->getType())
-      GEN_ERROR("select value types should match!");
+      GEN_ERROR("select value types should match");
     (yyval.InstVal) = new SelectInst((yyvsp[-4].ValueVal), (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal));
     CHECK_FOR_ERROR
   ;}
@@ -5309,7 +5309,7 @@ yyreduce:
 #line 2653 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[-2].ValueVal), (yyvsp[0].ValueVal)))
-      GEN_ERROR("Invalid extractelement operands!");
+      GEN_ERROR("Invalid extractelement operands");
     (yyval.InstVal) = new ExtractElementInst((yyvsp[-2].ValueVal), (yyvsp[0].ValueVal));
     CHECK_FOR_ERROR
   ;}
@@ -5319,7 +5319,7 @@ yyreduce:
 #line 2659 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[-4].ValueVal), (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal)))
-      GEN_ERROR("Invalid insertelement operands!");
+      GEN_ERROR("Invalid insertelement operands");
     (yyval.InstVal) = new InsertElementInst((yyvsp[-4].ValueVal), (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal));
     CHECK_FOR_ERROR
   ;}
@@ -5329,7 +5329,7 @@ yyreduce:
 #line 2665 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[-4].ValueVal), (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal)))
-      GEN_ERROR("Invalid shufflevector operands!");
+      GEN_ERROR("Invalid shufflevector operands");
     (yyval.InstVal) = new ShuffleVectorInst((yyvsp[-4].ValueVal), (yyvsp[-2].ValueVal), (yyvsp[0].ValueVal));
     CHECK_FOR_ERROR
   ;}
@@ -5340,12 +5340,12 @@ yyreduce:
     {
     const Type *Ty = (yyvsp[0].PHIList)->front().first->getType();
     if (!Ty->isFirstClassType())
-      GEN_ERROR("PHI node operands must be of first class type!");
+      GEN_ERROR("PHI node operands must be of first class type");
     (yyval.InstVal) = new PHINode(Ty);
     ((PHINode*)(yyval.InstVal))->reserveOperandSpace((yyvsp[0].PHIList)->size());
     while ((yyvsp[0].PHIList)->begin() != (yyvsp[0].PHIList)->end()) {
       if ((yyvsp[0].PHIList)->front().first->getType() != Ty) 
-        GEN_ERROR("All elements of a PHI node must be of the same type!");
+        GEN_ERROR("All elements of a PHI node must be of the same type");
       cast<PHINode>((yyval.InstVal))->addIncoming((yyvsp[0].PHIList)->front().first, (yyvsp[0].PHIList)->front().second);
       (yyvsp[0].PHIList)->pop_front();
     }
@@ -5388,7 +5388,7 @@ yyreduce:
       // Make sure no arguments is a good thing!
       if (Ty->getNumParams() != 0)
         GEN_ERROR("No arguments passed to a function that "
-                       "expects arguments!");
+                       "expects arguments");
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
@@ -5400,7 +5400,7 @@ yyreduce:
       for (; ArgI != ArgE && I != E; ++ArgI, ++I) {
         if (ArgI->Val->getType() != *I)
           GEN_ERROR("Parameter " + ArgI->Val->getName()+ " is not of type '" +
-                         (*I)->getDescription() + "'!");
+                         (*I)->getDescription() + "'");
         Args.push_back(ArgI->Val);
       }
       if (Ty->isVarArg()) {
@@ -5408,7 +5408,7 @@ yyreduce:
           for (; ArgI != ArgE; ++ArgI)
             Args.push_back(ArgI->Val); // push the remaining varargs
       } else if (I != E || ArgI != ArgE)
-        GEN_ERROR("Invalid number of parameters detected!");
+        GEN_ERROR("Invalid number of parameters detected");
     }
     // Create the call node
     CallInst *CI = new CallInst(V, Args);
@@ -5496,7 +5496,7 @@ yyreduce:
     {
     if (!isa<PointerType>((yyvsp[0].ValueVal)->getType()))
       GEN_ERROR("Trying to free nonpointer type " + 
-                     (yyvsp[0].ValueVal)->getType()->getDescription() + "!");
+                     (yyvsp[0].ValueVal)->getType()->getDescription() + "");
     (yyval.InstVal) = new FreeInst((yyvsp[0].ValueVal));
     CHECK_FOR_ERROR
   ;}
@@ -5532,7 +5532,7 @@ yyreduce:
     const Type *ElTy = PT->getElementType();
     if (ElTy != (yyvsp[-3].ValueVal)->getType())
       GEN_ERROR("Can't store '" + (yyvsp[-3].ValueVal)->getType()->getDescription() +
-                     "' into space of type '" + ElTy->getDescription() + "'!");
+                     "' into space of type '" + ElTy->getDescription() + "'");
 
     Value* tmpVal = getVal(*(yyvsp[-1].TypeVal), (yyvsp[0].ValIDVal));
     CHECK_FOR_ERROR
@@ -5547,11 +5547,11 @@ yyreduce:
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-2].TypeVal))->getDescription());
     if (!isa<PointerType>((yyvsp[-2].TypeVal)->get()))
-      GEN_ERROR("getelementptr insn requires pointer operand!");
+      GEN_ERROR("getelementptr insn requires pointer operand");
 
     if (!GetElementPtrInst::getIndexedType(*(yyvsp[-2].TypeVal), *(yyvsp[0].ValueList), true))
       GEN_ERROR("Invalid getelementptr indices for type '" +
-                     (*(yyvsp[-2].TypeVal))->getDescription()+ "'!");
+                     (*(yyvsp[-2].TypeVal))->getDescription()+ "'");
     Value* tmpVal = getVal(*(yyvsp[-2].TypeVal), (yyvsp[-1].ValIDVal));
     CHECK_FOR_ERROR
     (yyval.InstVal) = new GetElementPtrInst(tmpVal, *(yyvsp[0].ValueList));
