@@ -25,13 +25,15 @@ STATISTIC(NumDeadPrototypes, "Number of dead prototypes removed");
 namespace {
 
 /// @brief Pass to remove unused function declarations.
-class StripDeadPrototypesPass : public ModulePass {
+class VISIBILITY_HIDDEN StripDeadPrototypesPass : public ModulePass {
 public:
   StripDeadPrototypesPass() { }
   virtual bool runOnModule(Module &M);
 };
 RegisterPass<StripDeadPrototypesPass> X("strip-dead-prototypes", 
                                         "Strip Unused Function Prototypes");
+
+} // end anonymous namespace
 
 bool StripDeadPrototypesPass::runOnModule(Module &M) {
   // Collect all the functions we want to erase
@@ -53,8 +55,6 @@ bool StripDeadPrototypesPass::runOnModule(Module &M) {
   // Return an indication of whether we changed anything or not.
   return !FuncsToErase.empty();
 }
-
-} // end anonymous namespace
 
 ModulePass *llvm::createStripDeadPrototypesPass() {
   return new StripDeadPrototypesPass();
