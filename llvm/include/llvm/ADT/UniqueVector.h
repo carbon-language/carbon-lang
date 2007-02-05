@@ -1,4 +1,3 @@
-
 //===-- llvm/ADT/UniqueVector.h ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -56,7 +55,7 @@ public:
   /// not found.
   unsigned idFor(const T &Entry) const {
     // Search for entry in the map.
-    typename std::map<T, unsigned>::iterator MI = Map.find(Entry);
+    typename std::map<T, unsigned>::const_iterator MI = Map.find(Entry);
     
     // See if entry exists, if so return ID.
     if (MI != Map.end()) return MI->second;
