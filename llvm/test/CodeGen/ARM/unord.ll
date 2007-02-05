@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep bne | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep beq | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep movne | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=arm | grep moveq | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm -enable-thumb &&
 ; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep bne | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep beq | wc -l | grep 1
