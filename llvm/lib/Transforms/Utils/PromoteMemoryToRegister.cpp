@@ -84,7 +84,7 @@ namespace {
 
     /// Visited - The set of basic blocks the renamer has already visited.
     ///
-    std::set<BasicBlock*> Visited;
+    SmallPtrSet<BasicBlock*, 16> Visited;
 
     /// BBNumbers - Contains a stable numbering of basic blocks to avoid
     /// non-determinstic behavior.
