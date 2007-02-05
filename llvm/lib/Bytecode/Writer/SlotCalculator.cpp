@@ -21,9 +21,9 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Type.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
@@ -218,8 +218,8 @@ void SlotCalculator::processModule() {
 
 // processTypeSymbolTable - Insert all of the type sin the specified symbol
 // table.
-void SlotCalculator::processTypeSymbolTable(const TypeSymbolTable *ST) {
-  for (TypeSymbolTable::const_iterator TI = ST->begin(), TE = ST->end(); 
+void SlotCalculator::processTypeSymbolTable(const TypeSymbolTable *TST) {
+  for (TypeSymbolTable::const_iterator TI = TST->begin(), TE = TST->end(); 
        TI != TE; ++TI )
     getOrCreateSlot(TI->second);
 }
@@ -227,23 +227,18 @@ void SlotCalculator::processTypeSymbolTable(const TypeSymbolTable *ST) {
 // processSymbolTable - Insert all of the values in the specified symbol table
 // into the values table...
 //
-void SlotCalculator::processValueSymbolTable(const SymbolTable *ST) {
-  for (SymbolTable::plane_const_iterator PI = ST->plane_begin(),
-       PE = ST->plane_end(); PI != PE; ++PI)
-    for (SymbolTable::value_const_iterator VI = PI->second.begin(),
-           VE = PI->second.end(); VI != VE; ++VI)
-      getOrCreateSlot(VI->second);
+void SlotCalculator::processValueSymbolTable(const ValueSymbolTable *VST) {
+  for (ValueSymbolTable::const_iterator VI = VST->begin(), VE = VST->end(); 
+       VI != VE; ++VI)
+    getOrCreateSlot(VI->second);
 }
 
-void SlotCalculator::processSymbolTableConstants(const SymbolTable *ST) {
+void SlotCalculator::processSymbolTableConstants(const ValueSymbolTable *VST) {
   // Now do the constant values in all planes
-  for (SymbolTable::plane_const_iterator PI = ST->plane_begin(),
-       PE = ST->plane_end(); PI != PE; ++PI)
-    for (SymbolTable::value_const_iterator VI = PI->second.begin(),
-           VE = PI->second.end(); VI != VE; ++VI)
-      if (isa<Constant>(VI->second) &&
-          !isa<GlobalValue>(VI->second))
-        getOrCreateSlot(VI->second);
+  for (ValueSymbolTable::const_iterator VI = VST->begin(), VE = VST->end(); 
+       VI != VE; ++VI)
+    if (isa<Constant>(VI->second) && !isa<GlobalValue>(VI->second))
+      getOrCreateSlot(VI->second);
 }
 
 

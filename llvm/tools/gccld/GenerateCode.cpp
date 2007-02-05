@@ -212,12 +212,6 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
   // Add an appropriate TargetData instance for this module...
   addPass(Passes, new TargetData(M));
 
-  // Often if the programmer does not specify proper prototypes for the
-  // functions they are calling, they end up calling a vararg version of the
-  // function that does not get a body filled in (the real function has typed
-  // arguments).  This pass merges the two functions.
-  addPass(Passes, createFunctionResolvingPass());
-
   if (!DisableOptimizations) {
     // Now that composite has been compiled, scan through the module, looking
     // for a main function.  If main is defined, mark all other functions

@@ -17,7 +17,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
@@ -312,8 +312,10 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
         LookupName = I->second;
       else
         LookupName = Name;
-      SymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
-      V = SymTab.lookup(Ty, LookupName);
+      ValueSymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
+      V = SymTab.lookup(LookupName);
+      if (V && V->getType() != Ty)
+        V = 0;
     }
     if (!V) {
       RenameMapType::const_iterator I = CurModule.RenameMap.find(Key);
@@ -322,9 +324,11 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
         LookupName = I->second;
       else
         LookupName = Name;
-      V = CurModule.CurrentModule->getValueSymbolTable().lookup(Ty, LookupName);
+      V = CurModule.CurrentModule->getValueSymbolTable().lookup(LookupName);
+      if (V && V->getType() != Ty)
+        V = 0;
     }
-    if (V == 0) 
+    if (!V) 
       return 0;
 
     D.destroy();  // Free old strdup'd memory...
@@ -416,7 +420,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   // Remember where this forward reference came from.  FIXME, shouldn't we try
   // to recycle these things??
   CurModule.PlaceHolderInfo.insert(
-    std::make_pair(V, std::make_pair(ID, Upgradelineno-1)));
+    std::make_pair(V, std::make_pair(ID, Upgradelineno)));
 
   if (inFunctionScope())
     InsertValue(V, CurFun.LateResolveValues);
@@ -448,7 +452,7 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
   case ValID::NameVal:                  // Is it a named definition?
     Name = ID.Name;
     if (Value *N = CurFun.CurrentFunction->
-                   getValueSymbolTable().lookup(Type::LabelTy, Name)) {
+                   getValueSymbolTable().lookup(Name)) {
       if (N->getType() != Type::LabelTy)
         error("Name '" + Name + "' does not refer to a BasicBlock");
       BB = cast<BasicBlock>(N);
@@ -682,16 +686,8 @@ static void setValueName(Value *V, char *NameStr) {
     assert(inFunctionScope() && "Must be in function scope");
 
     // Search the function's symbol table for an existing value of this name
-    Value* Existing = 0;
-    SymbolTable &ST = CurFun.CurrentFunction->getValueSymbolTable();
-    SymbolTable::plane_const_iterator PI = ST.plane_begin(), PE =ST.plane_end();
-    for ( ; PI != PE; ++PI) {
-      SymbolTable::value_const_iterator VI = PI->second.find(Name);
-      if (VI != PI->second.end()) {
-        Existing = VI->second;
-        break;
-      }
-    }
+    ValueSymbolTable &ST = CurFun.CurrentFunction->getValueSymbolTable();
+    Value* Existing = ST.lookup(Name);
     if (Existing) {
       // An existing value of the same name was found. This might have happened
       // because of the integer type planes collapsing in LLVM 2.0. 
@@ -2561,27 +2557,27 @@ FunctionHeaderH
     if (!RetTy->isFirstClassType() && RetTy != Type::VoidTy)
       error("LLVM functions cannot return aggregate types");
 
-    std::vector<const Type*> ParamTypeList;
+    std::vector<const Type*> ParamTyList;
 
     // In LLVM 2.0 the signatures of three varargs intrinsics changed to take
     // i8*. We check here for those names and override the parameter list
     // types to ensure the prototype is correct.
     if (FunctionName == "llvm.va_start" || FunctionName == "llvm.va_end") {
-      ParamTypeList.push_back(PointerType::get(Type::Int8Ty));
+      ParamTyList.push_back(PointerType::get(Type::Int8Ty));
     } else if (FunctionName == "llvm.va_copy") {
-      ParamTypeList.push_back(PointerType::get(Type::Int8Ty));
-      ParamTypeList.push_back(PointerType::get(Type::Int8Ty));
+      ParamTyList.push_back(PointerType::get(Type::Int8Ty));
+      ParamTyList.push_back(PointerType::get(Type::Int8Ty));
     } else if ($5) {   // If there are arguments...
       for (std::vector<std::pair<PATypeInfo,char*> >::iterator 
            I = $5->begin(), E = $5->end(); I != E; ++I) {
         const Type *Ty = I->first.T->get();
-        ParamTypeList.push_back(Ty);
+        ParamTyList.push_back(Ty);
       }
     }
 
-    bool isVarArg = 
-      ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
-    if (isVarArg) ParamTypeList.pop_back();
+    bool isVarArg = ParamTyList.size() && ParamTyList.back() == Type::VoidTy;
+    if (isVarArg) 
+      ParamTyList.pop_back();
 
     // Convert the CSRet calling convention into the corresponding parameter
     // attribute.
@@ -2591,7 +2587,7 @@ FunctionHeaderH
       ParamAttrs.push_back(FunctionType::StructRetAttribute); // first arg
     }
 
-    const FunctionType *FT = FunctionType::get(RetTy, ParamTypeList, isVarArg,
+    const FunctionType *FT = FunctionType::get(RetTy, ParamTyList, isVarArg,
                                                ParamAttrs);
     const PointerType *PFT = PointerType::get(FT);
     delete $2.T;
@@ -2612,18 +2608,37 @@ FunctionHeaderH
       CurModule.CurrentModule->getFunctionList().remove(Fn);
       CurModule.CurrentModule->getFunctionList().push_back(Fn);
     } else if (!FunctionName.empty() &&     // Merge with an earlier prototype?
-               (Fn = CurModule.CurrentModule->getFunction(FunctionName, FT))) {
-      // If this is the case, either we need to be a forward decl, or it needs 
-      // to be.
-      if (!CurFun.isDeclare && !Fn->isDeclaration())
-        error("Redefinition of function '" + FunctionName + "'");
+               (Fn = CurModule.CurrentModule->getFunction(FunctionName))) {
+      if (Fn->getFunctionType() != FT ) {
+        // The existing function doesn't have the same type. Previously this was
+        // permitted because the symbol tables had "type planes" and names were
+        // distinct within a type plane. After PR411 was fixed, this is no
+        // longer the case. To resolve this we must rename this function.
+        // However, renaming it can cause problems if its linkage is external
+        // because it could cause a link failure. We warn about this.
+        std::string NewName = makeNameUnique(FunctionName);
+        warning("Renaming function '" + FunctionName + "' as '" + NewName +
+                "' may cause linkage errors");
+
+        Fn = new Function(FT, GlobalValue::ExternalLinkage, NewName,
+                          CurModule.CurrentModule);
+        InsertValue(Fn, CurModule.Values);
+        RenameMapKey Key = std::make_pair(FunctionName,PFT);
+        CurModule.RenameMap[Key] = NewName;
+      } else {
+        // The types are the same. Either the existing or the current function
+        // needs to be a forward declaration. If not, they're attempting to
+        // redefine a function.
+        if (!CurFun.isDeclare && !Fn->isDeclaration())
+          error("Redefinition of function '" + FunctionName + "'");
       
-      // Make sure to strip off any argument names so we can't get conflicts.
-      if (Fn->isDeclaration())
-        for (Function::arg_iterator AI = Fn->arg_begin(), AE = Fn->arg_end();
-             AI != AE; ++AI)
-          AI->setName("");
-    } else  {  // Not already defined?
+        // Make sure to strip off any argument names so we can't get conflicts.
+        if (Fn->isDeclaration())
+          for (Function::arg_iterator AI = Fn->arg_begin(), AE = Fn->arg_end();
+               AI != AE; ++AI)
+            AI->setName("");
+      }
+    } else {  // Not already defined?
       Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
                         CurModule.CurrentModule);
 
@@ -2654,8 +2669,10 @@ FunctionHeaderH
         $5->pop_back();  // Delete the last entry
       }
       Function::arg_iterator ArgIt = Fn->arg_begin();
-      for (std::vector<std::pair<PATypeInfo,char*> >::iterator 
-           I = $5->begin(), E = $5->end(); I != E; ++I, ++ArgIt) {
+      Function::arg_iterator ArgEnd = Fn->arg_end();
+      std::vector<std::pair<PATypeInfo,char*> >::iterator I = $5->begin();
+      std::vector<std::pair<PATypeInfo,char*> >::iterator E = $5->end();
+      for ( ; I != E && ArgIt != ArgEnd; ++I, ++ArgIt) {
         delete I->first.T;                        // Delete the typeholder...
         setValueName(ArgIt, I->second);           // Insert arg into symtab...
         InsertValue(ArgIt);

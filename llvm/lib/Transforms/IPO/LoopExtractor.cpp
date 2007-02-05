@@ -167,7 +167,8 @@ bool BlockExtractorPass::runOnModule(Module &M) {
     Function *F = BB->getParent();
 
     // Map the corresponding function in this module.
-    Function *MF = M.getFunction(F->getName(), F->getFunctionType());
+    Function *MF = M.getFunction(F->getName());
+    assert(MF->getFunctionType() == F->getFunctionType() && "Wrong function?");
 
     // Figure out which index the basic block is in its function.
     Function::iterator BBI = MF->begin();

@@ -15,7 +15,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
 

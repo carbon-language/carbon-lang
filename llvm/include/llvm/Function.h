@@ -63,7 +63,7 @@ private:
   BasicBlockListType  BasicBlocks;      // The basic blocks
   ArgumentListType ArgumentList;        // The formal arguments
 
-  SymbolTable *SymTab;
+  ValueSymbolTable *SymTab;
   unsigned CallingConvention;
 
   friend class SymbolTableListTraits<Function, Module, Module>;
@@ -156,8 +156,8 @@ public:
 
   /// getSymbolTable() - Return the symbol table...
   ///
-  inline       SymbolTable &getValueSymbolTable()       { return *SymTab; }
-  inline const SymbolTable &getValueSymbolTable() const { return *SymTab; }
+  inline       ValueSymbolTable &getValueSymbolTable()       { return *SymTab; }
+  inline const ValueSymbolTable &getValueSymbolTable() const { return *SymTab; }
 
 
   //===--------------------------------------------------------------------===//

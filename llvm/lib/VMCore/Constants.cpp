@@ -16,7 +16,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Instructions.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
@@ -24,6 +23,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
+#include <map>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

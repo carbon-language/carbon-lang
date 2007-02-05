@@ -15,7 +15,6 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Constant.h"
 #include "ValueMapper.h"

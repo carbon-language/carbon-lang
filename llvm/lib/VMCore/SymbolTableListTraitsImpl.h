@@ -17,7 +17,7 @@
 #define LLVM_SYMBOLTABLELISTTRAITS_IMPL_H
 
 #include "llvm/SymbolTableListTraits.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/ValueSymbolTable.h"
 
 namespace llvm {
 
@@ -29,7 +29,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
 
   // Remove all of the items from the old symtab..
   if (SymTabObject && !List.empty()) {
-    SymbolTable &SymTab = SymTabObject->getValueSymbolTable();
+    ValueSymbolTable &SymTab = SymTabObject->getValueSymbolTable();
     for (typename iplist<ValueSubClass>::iterator I = List.begin();
          I != List.end(); ++I)
       if (I->hasName()) SymTab.remove(I);
@@ -39,7 +39,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass,SymTabClass,SubClass>
 
   // Add all of the items to the new symtab...
   if (SymTabObject && !List.empty()) {
-    SymbolTable &SymTab = SymTabObject->getValueSymbolTable();
+    ValueSymbolTable &SymTab = SymTabObject->getValueSymbolTable();
     for (typename iplist<ValueSubClass>::iterator I = List.begin();
          I != List.end(); ++I)
       if (I->hasName()) SymTab.insert(I);

@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Function & GlobalVariable classes for the VMCore
-// library.
+// This file implements the Function class for the VMCore library.
 //
 //===----------------------------------------------------------------------===//
 
@@ -82,7 +81,7 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
   BasicBlocks.setParent(this);
   ArgumentList.setItemParent(this);
   ArgumentList.setParent(this);
-  SymTab = new SymbolTable();
+  SymTab = new ValueSymbolTable();
 
   assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy)
          && "LLVM functions cannot return aggregate values!");
@@ -137,7 +136,6 @@ void Function::removeFromParent() {
 void Function::eraseFromParent() {
   getParent()->getFunctionList().erase(this);
 }
-
 
 // dropAllReferences() - This function causes all the subinstructions to "let
 // go" of all references that they are maintaining.  This allows one to

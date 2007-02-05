@@ -20,7 +20,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"

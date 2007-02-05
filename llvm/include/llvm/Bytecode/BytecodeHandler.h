@@ -181,16 +181,14 @@ public:
   virtual void handleCompactionTableEnd() {}
 
   /// @brief Handle start of a symbol table
-  virtual void handleSymbolTableBegin(
-    Function* Func,  ///< The function to which the ST belongs
-    SymbolTable* ST  ///< The symbol table being filled
+  virtual void handleTypeSymbolTableBegin(
+    TypeSymbolTable* ST  ///< The symbol table being filled
   ) {}
 
-  /// @brief Handle start of a symbol table plane
-  virtual void handleSymbolTablePlane(
-    unsigned TySlot,      ///< The slotnum of the type plane
-    unsigned NumEntries,  ///< Number of entries in the plane
-    const Type* Typ       ///< The type of this type plane
+  /// @brief Handle start of a symbol table
+  virtual void handleValueSymbolTableBegin(
+    Function* Func,       ///< The function to which the ST belongs or 0 for Mod
+    ValueSymbolTable* ST  ///< The symbol table being filled
   ) {}
 
   /// @brief Handle a named type in the symbol table
@@ -207,8 +205,11 @@ public:
     const std::string& name  ///< Name of the value.
   ) {}
 
-  /// @brief Handle the end of a symbol table
-  virtual void handleSymbolTableEnd() {}
+  /// @brief Handle the end of a value symbol table
+  virtual void handleTypeSymbolTableEnd() {}
+
+  /// @brief Handle the end of a type symbol table
+  virtual void handleValueSymbolTableEnd() {}
 
   /// @brief Handle the beginning of a function body
   virtual void handleFunctionBegin(
@@ -233,6 +234,7 @@ public:
     unsigned Opcode,                 ///< Opcode of the instruction
     const Type* iType,               ///< Instruction type
     std::vector<unsigned>& Operands, ///< Vector of slot # operands
+    Instruction *Inst,               ///< The resulting instruction
     unsigned Length                  ///< Length of instruction in bc bytes
   ) { return false; }
 

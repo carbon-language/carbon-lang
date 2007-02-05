@@ -110,7 +110,6 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
     I->setLinkage(GlobalValue::ExternalLinkage);
 
   std::vector<const PassInfo*> CleanupPasses;
-  CleanupPasses.push_back(getPI(createFunctionResolvingPass()));
   CleanupPasses.push_back(getPI(createGlobalDCEPass()));
   CleanupPasses.push_back(getPI(createDeadTypeEliminationPass()));
 
@@ -221,7 +220,7 @@ static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2){
           M1Tors.push_back(std::make_pair(F, Priority));
         else {
           // Map to M2's version of the function.
-          F = M2->getFunction(F->getName(), F->getFunctionType());
+          F = M2->getFunction(F->getName());
           M2Tors.push_back(std::make_pair(F, Priority));
         }
       }
@@ -272,9 +271,10 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
   std::set<std::pair<std::string, const PointerType*> > TestFunctions;
   for (unsigned i = 0, e = F.size(); i != e; ++i) {
     TestFunctions.insert(std::make_pair(F[i]->getName(), F[i]->getType()));  
-    Function *TNOF = M->getFunction(F[i]->getName(), F[i]->getFunctionType());
-    DEBUG(std::cerr << "Removing function " << F[i]->getName() << "\n");
+    Function *TNOF = M->getFunction(F[i]->getName());
     assert(TNOF && "Function doesn't exist in module!");
+    assert(TNOF->getFunctionType() == F[i]->getFunctionType() && "wrong type?");
+    DEBUG(std::cerr << "Removing function " << F[i]->getName() << "\n");
     DeleteFunctionBody(TNOF);       // Function is now external in this module!
   }
 
@@ -317,7 +317,7 @@ bool BlockExtractorPass::runOnModule(Module &M) {
     Function *F = BB->getParent();
 
     // Map the corresponding function in this module.
-    Function *MF = M.getFunction(F->getName(), F->getFunctionType());
+    Function *MF = M.getFunction(F->getName());
 
     // Figure out which index the basic block is in its function.
     Function::iterator BBI = MF->begin();

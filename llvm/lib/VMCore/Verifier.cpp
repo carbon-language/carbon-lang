@@ -51,7 +51,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/PassManager.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
@@ -175,7 +175,7 @@ namespace {  // Anonymous namespace for class
 
     // Verification methods...
     void verifyTypeSymbolTable(TypeSymbolTable &ST);
-    void verifyValueSymbolTable(SymbolTable &ST);
+    void verifyValueSymbolTable(ValueSymbolTable &ST);
     void visitGlobalValue(GlobalValue &GV);
     void visitGlobalVariable(GlobalVariable &GV);
     void visitFunction(Function &F);
@@ -307,20 +307,18 @@ void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
 
 // verifySymbolTable - Verify that a function or module symbol table is ok
 //
-void Verifier::verifyValueSymbolTable(SymbolTable &ST) {
+void Verifier::verifyValueSymbolTable(ValueSymbolTable &ST) {
 
-  // Loop over all of the values in all type planes in the symbol table.
-  for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
-       PE = ST.plane_end(); PI != PE; ++PI)
-    for (SymbolTable::value_const_iterator VI = PI->second.begin(),
-         VE = PI->second.end(); VI != VE; ++VI) {
-      Value *V = VI->second;
-      // Check that there are no void typed values in the symbol table.  Values
-      // with a void type cannot be put into symbol tables because they cannot
-      // have names!
-      Assert1(V->getType() != Type::VoidTy,
-        "Values with void type are not allowed to have names!", V);
-    }
+  // Loop over all of the values in the symbol table.
+  for (ValueSymbolTable::const_iterator VI = ST.begin(), VE = ST.end(); 
+       VI != VE; ++VI) {
+    Value *V = VI->second;
+    // Check that there are no void typed values in the symbol table.  Values
+    // with a void type cannot be put into symbol tables because they cannot
+    // have names!
+    Assert1(V->getType() != Type::VoidTy,
+      "Values with void type are not allowed to have names!", V);
+  }
 }
 
 // visitFunction - Verify that a function is ok.

@@ -28,8 +28,10 @@
 
 namespace llvm {
 
-class BytecodeHandler; ///< Forward declare the handler interface
-class TypeSymbolTable; ///< Forward declare
+// Forward declarations
+class BytecodeHandler; 
+class TypeSymbolTable; 
+class ValueSymbolTable; 
 
 /// This class defines the interface for parsing a buffer of bytecode. The
 /// parser itself takes no action except to call the various functions of
@@ -204,7 +206,7 @@ protected:
   void ParseTypeSymbolTable(TypeSymbolTable *ST);
 
   /// @brief Parse a value symbol table
-  void ParseValueSymbolTable(Function* Func, SymbolTable *ST);
+  void ParseValueSymbolTable(Function* Func, ValueSymbolTable *ST);
 
   /// @brief Parse functions lazily.
   void ParseFunctionLazily();

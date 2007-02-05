@@ -31,7 +31,8 @@ class GlobalValue;
 class Function;
 class GlobalVariable;
 class InlineAsm;
-class SymbolTable;
+class ValueSymbolTable;
+class TypeSymbolTable;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class

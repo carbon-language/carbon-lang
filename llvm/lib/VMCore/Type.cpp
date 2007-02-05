@@ -13,7 +13,6 @@
 
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Constants.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/StringExtras.h"

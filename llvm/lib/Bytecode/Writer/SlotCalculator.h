@@ -31,6 +31,7 @@ class Module;
 class Function;
 class SymbolTable;
 class TypeSymbolTable;
+class ValueSymbolTable;
 class ConstantArray;
 
 class SlotCalculator {
@@ -130,8 +131,8 @@ private:
   // into the values table...
   //
   void processTypeSymbolTable(const TypeSymbolTable *ST);
-  void processValueSymbolTable(const SymbolTable *ST);
-  void processSymbolTableConstants(const SymbolTable *ST);
+  void processValueSymbolTable(const ValueSymbolTable *ST);
+  void processSymbolTableConstants(const ValueSymbolTable *ST);
 
   // insertPrimitives - helper for constructors to insert primitive types.
   void insertPrimitives();

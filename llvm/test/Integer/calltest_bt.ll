@@ -5,7 +5,6 @@
 %FunTy = type i28(i28)
 
 declare i28 @"test"(...)   ; Test differences of prototype
-declare i28 @"test"()      ; Differ only by vararg
 
 implementation
 
@@ -17,18 +16,18 @@ define void @"invoke"(%FunTy *%x) {
 
 define i28 @"main"(i28 %argc)   ; TODO: , sbyte **argv, sbyte **envp)
 begin
-        %retval = call i28 (i28) *@test(i28 %argc)
+        %retval = call i28 (i28) *@test2(i28 %argc)
         %two    = add i28 %retval, %retval
-	%retval2 = invoke i28 @test(i28 %argc)
+	%retval2 = invoke i28 @test2(i28 %argc)
 		   to label %Next unwind label %Error
 Next:
 	%two2 = add i28 %two, %retval2
-	call void @invoke (%FunTy* @test)
+	call void @invoke (%FunTy* @test2)
         ret i28 %two2
 Error:
 	ret i28 -1
 end
 
-define i28 @"test"(i28 %i0) {
+define i28 @"test2"(i28 %i0) {
     ret i28 %i0
 }

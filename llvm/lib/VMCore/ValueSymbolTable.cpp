@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "valuesymtab"
 #include "llvm/GlobalValue.h"
 #include "llvm/Type.h"
 #include "llvm/ValueSymbolTable.h"
@@ -19,18 +20,15 @@
 #include <algorithm>
 using namespace llvm;
 
-#define DEBUG_SYMBOL_TABLE 0
-#define DEBUG_ABSTYPE 0
-
 // Class destructor
 ValueSymbolTable::~ValueSymbolTable() {
 #ifndef NDEBUG   // Only do this in -g mode...
   bool LeftoverValues = true;
   for (iterator VI = vmap.begin(), VE = vmap.end(); VI != VE; ++VI)
     if (!isa<Constant>(VI->second) ) {
-      DOUT << "Value still in symbol table! Type = '"
+      DEBUG(DOUT << "Value still in symbol table! Type = '"
            << VI->second->getType()->getDescription() << "' Name = '"
-           << VI->first << "'\n";
+           << VI->first << "'\n");
       LeftoverValues = false;
     }
   assert(LeftoverValues && "Values remain in symbol table!");
@@ -83,29 +81,24 @@ void ValueSymbolTable::insert(Value* V) {
   assert(V && "Can't insert null Value into symbol table!");
   assert(V->hasName() && "Can't insert nameless Value into symbol table");
 
-  // Check to see if there is a naming conflict.  If so, rename this type!
+  // Check to see if there is a naming conflict.  If so, rename this value
   std::string UniqueName = getUniqueName(V->getName());
 
-#if DEBUG_SYMBOL_TABLE
-  dump();
-  DOUT << " Inserting value: " << UniqueName << ": " << V->dump() << "\n";
-#endif
+  DEBUG(DOUT << " Inserting value: " << UniqueName << ": " << *V << "\n");
 
   // Insert the vmap entry
-  vmap.insert(make_pair(UniqueName, V));
+  V->Name = UniqueName;
+  vmap.insert(make_pair(V->Name, V));
 }
 
 // Remove a value
-bool ValueSymbolTable::erase(Value *V) {
+bool ValueSymbolTable::remove(Value *V) {
   assert(V->hasName() && "Value doesn't have name!");
   iterator Entry = vmap.find(V->getName());
   if (Entry == vmap.end())
     return false;
 
-#if DEBUG_SYMBOL_TABLE
-  dump();
-  DOUT << " Removing Value: " << Entry->second->getName() << "\n";
-#endif
+  DEBUG(DOUT << " Removing Value: " << Entry->second->getName() << "\n");
 
   // Remove the value from the plane...
   vmap.erase(Entry);
@@ -143,7 +136,7 @@ bool ValueSymbolTable::rename(Value *V, const std::string &name) {
     vmap.insert(make_pair(V->Name, V));
   } else {
     V->Name = name;
-    vmap.insert(VI, make_pair(name, V));
+    vmap.insert(VI, make_pair(V->Name, V));
   }
 
   return true;

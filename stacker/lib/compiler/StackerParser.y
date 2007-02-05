@@ -13,7 +13,6 @@
 
 %{
 #include "StackerCompiler.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/STLExtras.h"

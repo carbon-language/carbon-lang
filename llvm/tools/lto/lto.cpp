@@ -17,7 +17,6 @@
 #include "llvm/Linker.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CommandLine.h"
@@ -247,12 +246,6 @@ LTO::optimize(Module *M, std::ostream &Out,
   
   // Add an appropriate TargetData instance for this module...
   Passes.add(new TargetData(*Target->getTargetData()));
-  
-  // Often if the programmer does not specify proper prototypes for the
-  // functions they are calling, they end up calling a vararg version of the
-  // function that does not get a body filled in (the real function has typed
-  // arguments).  This pass merges the two functions.
-  Passes.add(createFunctionResolvingPass());
   
   // Internalize symbols if export list is nonemty
   if (!exportList.empty())

@@ -23,8 +23,6 @@ namespace llvm {
 class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class FunctionType;
-class SymbolTable;
-class TypeSymbolTable;
 
 template<> struct ilist_traits<Function>
   : public SymbolTableListTraits<Function, Module, Module> {
@@ -91,7 +89,7 @@ private:
   FunctionListType FunctionList; ///< The Functions in the module
   LibraryListType LibraryList;   ///< The Libraries needed by the module
   std::string GlobalScopeAsm;    ///< Inline Asm at global scope.
-  SymbolTable *ValSymTab;        ///< Symbol table for values
+  ValueSymbolTable *ValSymTab;   ///< Symbol table for values
   TypeSymbolTable *TypeSymTab;   ///< Symbol table for types
   std::string ModuleID;          ///< Human readable identifier for the module
   std::string TargetTriple;      ///< Platform target triple Module compiled on
@@ -178,17 +176,19 @@ public:
 
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.
-  Function *getFunction(const std::string &Name, const FunctionType *Ty);
+  Function *getFunction(const std::string &Name) const;
 
   /// getMainFunction - This function looks up main efficiently.  This is such a
   /// common case, that it is a method in Module.  If main cannot be found, a
   /// null pointer is returned.
-  Function *getMainFunction();
+  Function *getMainFunction() { return getFunction("main"); }
 
   /// getNamedFunction - Return the first function in the module with the
   /// specified name, of arbitrary type.  This method returns null if a function
   /// with the specified name is not found.
-  Function *getNamedFunction(const std::string &Name) const;
+  Function *getNamedFunction(const std::string &Name) const {
+    return getFunction(Name);
+  }
 
 /// @}
 /// @name Global Variable Accessors 
@@ -200,13 +200,15 @@ public:
   /// the top-level PointerType, which represents the address of the global.
   /// If AllowInternal is set to true, this function will return types that
   /// have InternalLinkage. By default, these types are not returned.
-  GlobalVariable *getGlobalVariable(const std::string &Name, const Type *Ty,
-                                    bool AllowInternal = false);
+  GlobalVariable *getGlobalVariable(const std::string &Name, 
+                                    bool AllowInternal = false) const;
 
   /// getNamedGlobal - Return the first global variable in the module with the
   /// specified name, of arbitrary type.  This method returns null if a global
   /// with the specified name is not found.
-  GlobalVariable *getNamedGlobal(const std::string &Name) const;
+  GlobalVariable *getNamedGlobal(const std::string &Name) const {
+    return getGlobalVariable(Name, true);
+  }
   
 /// @}
 /// @name Type Accessors
@@ -238,9 +240,9 @@ public:
   /// Get the Module's list of functions.
   FunctionListType       &getFunctionList()           { return FunctionList; }
   /// Get the symbol table of global variable and function identifiers
-  const SymbolTable      &getValueSymbolTable() const { return *ValSymTab; }
+  const ValueSymbolTable &getValueSymbolTable() const { return *ValSymTab; }
   /// Get the Module's symbol table of global variable and function identifiers.
-  SymbolTable            &getValueSymbolTable()       { return *ValSymTab; }
+  ValueSymbolTable       &getValueSymbolTable()       { return *ValSymTab; }
   /// Get the symbol table of types
   const TypeSymbolTable   &getTypeSymbolTable() const { return *TypeSymTab; }
   /// Get the Module's symbol table of types

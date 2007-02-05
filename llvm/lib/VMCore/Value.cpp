@@ -15,7 +15,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/LeakDetector.h"
 #include <algorithm>
@@ -97,17 +97,20 @@ void Value::setName(const std::string &name) {
   if (Name == name) return;   // Name is already set.
 
   // Get the symbol table to update for this object.
-  SymbolTable *ST = 0;
+  ValueSymbolTable *ST = 0;
   if (Instruction *I = dyn_cast<Instruction>(this)) {
     if (BasicBlock *P = I->getParent())
       if (Function *PP = P->getParent())
         ST = &PP->getValueSymbolTable();
   } else if (BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
-    if (Function *P = BB->getParent()) ST = &P->getValueSymbolTable();
+    if (Function *P = BB->getParent()) 
+      ST = &P->getValueSymbolTable();
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
-    if (Module *P = GV->getParent()) ST = &P->getValueSymbolTable();
+    if (Module *P = GV->getParent()) 
+      ST = &P->getValueSymbolTable();
   } else if (Argument *A = dyn_cast<Argument>(this)) {
-    if (Function *P = A->getParent()) ST = &P->getValueSymbolTable();
+    if (Function *P = A->getParent()) 
+      ST = &P->getValueSymbolTable();
   } else {
     assert(isa<Constant>(this) && "Unknown value type!");
     return;  // no name is setable for this.
@@ -117,7 +120,7 @@ void Value::setName(const std::string &name) {
     Name = name;
   else if (hasName()) {
     if (!name.empty()) {    // Replacing name.
-      ST->changeName(this, name);
+      ST->rename(this, name);
     } else {                // Transitioning from hasName -> noname.
       ST->remove(this);
       Name.clear();

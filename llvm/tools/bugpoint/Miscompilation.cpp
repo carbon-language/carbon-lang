@@ -341,9 +341,11 @@ static bool ExtractLoops(BugDriver &BD,
     // optimized and loop extracted module.
     MiscompiledFunctions.clear();
     for (unsigned i = 0, e = MisCompFunctions.size(); i != e; ++i) {
-      Function *NewF = ToNotOptimize->getFunction(MisCompFunctions[i].first,
-                                                  MisCompFunctions[i].second);
+      Function *NewF = ToNotOptimize->getFunction(MisCompFunctions[i].first);
+                                                  
       assert(NewF && "Function not found??");
+      assert(NewF->getFunctionType() == MisCompFunctions[i].second && 
+             "found wrong function type?");
       MiscompiledFunctions.push_back(NewF);
     }
 
@@ -479,9 +481,10 @@ static bool ExtractBlocks(BugDriver &BD,
   MiscompiledFunctions.clear();
 
   for (unsigned i = 0, e = MisCompFunctions.size(); i != e; ++i) {
-    Function *NewF = ProgClone->getFunction(MisCompFunctions[i].first,
-                                            MisCompFunctions[i].second);
+    Function *NewF = ProgClone->getFunction(MisCompFunctions[i].first);
     assert(NewF && "Function not found??");
+    assert(NewF->getFunctionType() == MisCompFunctions[i].second && 
+           "Function has wrong type??");
     MiscompiledFunctions.push_back(NewF);
   }
 

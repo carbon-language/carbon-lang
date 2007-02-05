@@ -17,7 +17,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
@@ -209,7 +209,7 @@ static struct PerFunctionInfo {
 
   std::map<const Type*, ValueList> Values; // Keep track of #'d definitions
   std::map<const Type*, ValueList> LateResolveValues;
-  bool isDeclare;                    // Is this function a forward declararation?
+  bool isDeclare;                   // Is this function a forward declararation?
   GlobalValue::LinkageTypes Linkage; // Linkage for forward declaration.
   GlobalValue::VisibilityTypes Visibility;
 
@@ -341,24 +341,33 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     
     // Module constants occupy the lowest numbered slots...
     std::map<const Type*,ValueList>::iterator VI = CurModule.Values.find(Ty);
-    if (VI == CurModule.Values.end()) return 0;
-    if (D.Num >= VI->second.size()) return 0;
+    if (VI == CurModule.Values.end()) 
+      return 0;
+    if (D.Num >= VI->second.size()) 
+      return 0;
     return VI->second[Num];
   }
     
   case ValID::LocalName: {                // Is it a named definition?
-    if (!inFunctionScope()) return 0;
-    SymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
-    Value *N = SymTab.lookup(Ty, D.Name);
-    if (N == 0) return 0;
+    if (!inFunctionScope()) 
+      return 0;
+    ValueSymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
+    Value *N = SymTab.lookup(D.Name);
+    if (N == 0) 
+      return 0;
+    if (N->getType() != Ty)
+      return 0;
     
     D.destroy();  // Free old strdup'd memory...
     return N;
   }
   case ValID::GlobalName: {                // Is it a named definition?
-    SymbolTable &SymTab = CurModule.CurrentModule->getValueSymbolTable();
-    Value *N = SymTab.lookup(Ty, D.Name);
-    if (N == 0) return 0;
+    ValueSymbolTable &SymTab = CurModule.CurrentModule->getValueSymbolTable();
+    Value *N = SymTab.lookup(D.Name);
+    if (N == 0) 
+      return 0;
+    if (N->getType() != Ty)
+      return 0;
 
     D.destroy();  // Free old strdup'd memory...
     return N;
@@ -499,8 +508,8 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
     break;
   case ValID::LocalName:                  // Is it a named definition?
     Name = ID.Name;
-    if (Value *N = CurFun.CurrentFunction->
-                   getValueSymbolTable().lookup(Type::LabelTy, Name))
+    Value *N = CurFun.CurrentFunction->getValueSymbolTable().lookup(Name);
+    if (N && N->getType()->getTypeID() == Type::LabelTyID)
       BB = cast<BasicBlock>(N);
     break;
   }
@@ -640,8 +649,8 @@ static void setValueName(Value *V, char *NameStr) {
   }
 
   assert(inFunctionScope() && "Must be in function scope!");
-  SymbolTable &ST = CurFun.CurrentFunction->getValueSymbolTable();
-  if (ST.lookup(V->getType(), Name)) {
+  ValueSymbolTable &ST = CurFun.CurrentFunction->getValueSymbolTable();
+  if (ST.lookup(Name)) {
     GenerateError("Redefinition of value '" + Name + "' of type '" +
                    V->getType()->getDescription() + "'");
     return;
@@ -695,16 +704,21 @@ ParseGlobalVariable(char *NameStr,
     return GV;
   }
 
-  // If this global has a name, check to see if there is already a definition
-  // of this global in the module.  If so, it is an error.
+  // If this global has a name
   if (!Name.empty()) {
-    // We are a simple redefinition of a value, check to see if it is defined
-    // the same as the old one.
-    if (CurModule.CurrentModule->getGlobalVariable(Name, Ty)) {
-      GenerateError("Redefinition of global variable named '" + Name +
-                     "' of type '" + Ty->getDescription() + "'");
-      return 0;
-    }
+    // if the global we're parsing has an initializer (is a definition) and
+    // has external linkage.
+    if (Initializer && Linkage != GlobalValue::InternalLinkage)
+      // If there is already a global with external linkage with this name
+      if (CurModule.CurrentModule->getGlobalVariable(Name, false)) {
+        // If we allow this GVar to get created, it will be renamed in the
+        // symbol table because it conflicts with an existing GVar. We can't
+        // allow redefinition of GVars whose linking indicates that their name
+        // must stay the same. Issue the error.
+        GenerateError("Redefinition of global variable named '" + Name +
+                       "' of type '" + Ty->getDescription() + "'");
+        return 0;
+      }
   }
 
   // Otherwise there is no existing GV to use, create one now.
@@ -2078,17 +2092,21 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     CurModule.CurrentModule->getFunctionList().remove(Fn);
     CurModule.CurrentModule->getFunctionList().push_back(Fn);
   } else if (!FunctionName.empty() &&     // Merge with an earlier prototype?
-             (Fn = CurModule.CurrentModule->getFunction(FunctionName, FT))) {
-    // If this is the case, either we need to be a forward decl, or it needs 
-    // to be.
-    if (!CurFun.isDeclare && !Fn->isDeclaration())
+             (Fn = CurModule.CurrentModule->getFunction(FunctionName))) {
+    if (Fn->getFunctionType() != FT ) {
+      // The existing function doesn't have the same type. This is an overload
+      // error.
+      GEN_ERROR("Overload of function '" + FunctionName + "' not permitted.");
+    } else if (!CurFun.isDeclare && !Fn->isDeclaration()) {
+      // Neither the existing or the current function is a declaration and they
+      // have the same name and same type. Clearly this is a redefinition.
       GEN_ERROR("Redefinition of function '" + FunctionName + "'");
-    
-    // Make sure to strip off any argument names so we can't get conflicts.
-    if (Fn->isDeclaration())
+    } if (Fn->isDeclaration()) {
+      // Make sure to strip off any argument names so we can't get conflicts.
       for (Function::arg_iterator AI = Fn->arg_begin(), AE = Fn->arg_end();
            AI != AE; ++AI)
         AI->setName("");
+    }
   } else  {  // Not already defined?
     Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
                       CurModule.CurrentModule);
@@ -2115,16 +2133,18 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   // Add all of the arguments we parsed to the function...
   if ($5) {                     // Is null if empty...
     if (isVarArg) {  // Nuke the last entry
-      assert($5->back().Ty->get() == Type::VoidTy && $5->back().Name == 0&&
+      assert($5->back().Ty->get() == Type::VoidTy && $5->back().Name == 0 &&
              "Not a varargs marker!");
       delete $5->back().Ty;
       $5->pop_back();  // Delete the last entry
     }
     Function::arg_iterator ArgIt = Fn->arg_begin();
+    Function::arg_iterator ArgEnd = Fn->arg_end();
     unsigned Idx = 1;
-    for (ArgListType::iterator I = $5->begin(); I != $5->end(); ++I, ++ArgIt) {
+    for (ArgListType::iterator I = $5->begin(); 
+         I != $5->end() && ArgIt != ArgEnd; ++I, ++ArgIt) {
       delete I->Ty;                          // Delete the typeholder...
-      setValueName(ArgIt, I->Name);           // Insert arg into symtab...
+      setValueName(ArgIt, I->Name);          // Insert arg into symtab...
       CHECK_FOR_ERROR
       InsertValue(ArgIt);
       Idx++;
@@ -2299,7 +2319,6 @@ BasicBlock : InstructionList OptLocalAssign BBTerminatorInst  {
     setValueName($3, $2);
     CHECK_FOR_ERROR
     InsertValue($3);
-
     $1->getInstList().push_back($3);
     InsertValue($1);
     $$ = $1;
@@ -2494,13 +2513,14 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
   };
 
 Inst : OptLocalAssign InstVal {
-  // Is this definition named?? if so, assign the name...
-  setValueName($2, $1);
-  CHECK_FOR_ERROR
-  InsertValue($2);
-  $$ = $2;
-  CHECK_FOR_ERROR
-};
+    // Is this definition named?? if so, assign the name...
+    setValueName($2, $1);
+    CHECK_FOR_ERROR
+    InsertValue($2);
+    $$ = $2;
+    CHECK_FOR_ERROR
+  };
+
 
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     if (!UpRefs.empty())
@@ -2570,7 +2590,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         ($1 == Instruction::URem || 
          $1 == Instruction::SRem ||
          $1 == Instruction::FRem))
-      GEN_ERROR("U/S/FRem not supported on packed types");
+      GEN_ERROR("Remainder not supported on packed types");
     Value* val1 = getVal(*$2, $3); 
     CHECK_FOR_ERROR
     Value* val2 = getVal(*$2, $5);
@@ -2890,11 +2910,10 @@ int yyerror(const char *ErrorMsg) {
   std::string where 
     = std::string((CurFilename == "-") ? std::string("<stdin>") : CurFilename)
                   + ":" + utostr((unsigned) llvmAsmlineno) + ": ";
-  std::string errMsg = std::string(ErrorMsg) + "\n" + where + " while reading ";
-  if (yychar == YYEMPTY || yychar == 0)
-    errMsg += "end-of-file.";
-  else
-    errMsg += "token: '" + std::string(llvmAsmtext, llvmAsmleng) + "'";
+  std::string errMsg = where + "error: " + std::string(ErrorMsg);
+  if (yychar != YYEMPTY && yychar != 0)
+    errMsg += " while reading token: '" + std::string(llvmAsmtext, llvmAsmleng)+
+              "'";
   GenerateError(errMsg);
   return 0;
 }

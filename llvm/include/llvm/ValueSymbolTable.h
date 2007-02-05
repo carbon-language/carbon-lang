@@ -72,6 +72,12 @@ public:
   /// @brief Get a name unique to this symbol table
   std::string getUniqueName(const std::string &BaseName) const;
 
+  /// @return 1 if the name is in the symbol table, 0 otherwise
+  /// @brief Determine if a name is in the symbol table
+  ValueMap::size_type count(const std::string &name) const { 
+    return vmap.count(name);
+  }
+
   /// This function can be used from the debugger to display the
   /// content of the symbol table while debugging.
   /// @brief Print out symbol table on stderr
@@ -111,10 +117,10 @@ public:
   /// This method removes a value from the symbol table. The name of the
   /// Value is extracted from \p Val and used to lookup the Value in the
   /// symbol table. If the Value is not in the symbol table, this method
-  /// returns false.
-  /// @returns true if \p Val was successfully erased, false otherwise
+  /// returns false. \p Val is not deleted, just removed from the symbol table.
+  /// @returns true if \p Val was successfully removed, false otherwise
   /// @brief Remove a value from the symbol table.
-  bool erase(Value* Val);
+  bool remove(Value* Val);
 
   /// Given a value with a non-empty name, remove its existing
   /// entry from the symbol table and insert a new one for Name.  This is

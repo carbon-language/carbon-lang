@@ -64,7 +64,6 @@ namespace {
       (void) llvm::createEmitFunctionTablePass();
       (void) llvm::createFunctionInliningPass();
       (void) llvm::createFunctionProfilerPass();
-      (void) llvm::createFunctionResolvingPass();
       (void) llvm::createGCSEPass();
       (void) llvm::createGlobalDCEPass();
       (void) llvm::createGlobalOptimizerPass();

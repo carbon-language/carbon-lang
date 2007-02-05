@@ -20,7 +20,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
-#include "llvm/SymbolTable.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CFG.h"
@@ -206,9 +206,9 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
     // FIXME: bugpoint should add names to all stripped symbols.
     assert(!Funcs[i]->getName().empty() &&
            "Bugpoint doesn't work on stripped modules yet PR718!");
-    Function *CMF = M->getFunction(Funcs[i]->getName(),
-                                   Funcs[i]->getFunctionType());
+    Function *CMF = M->getFunction(Funcs[i]->getName());
     assert(CMF && "Function not in module?!");
+    assert(CMF->getFunctionType() == Funcs[i]->getFunctionType() && "wrong ty");
     Functions.insert(CMF);
   }
 
@@ -271,8 +271,9 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   for (unsigned i = 0, e = BBs.size(); i != e; ++i) {
     // Convert the basic block from the original module to the new module...
     const Function *F = BBs[i]->getParent();
-    Function *CMF = M->getFunction(F->getName(), F->getFunctionType());
+    Function *CMF = M->getFunction(F->getName());
     assert(CMF && "Function not in module?!");
+    assert(CMF->getFunctionType() == F->getFunctionType() && "wrong type?");
 
     // Get the mapped basic block...
     Function::iterator CBI = CMF->begin();
@@ -337,10 +338,10 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
     // module, and that they don't include any deleted blocks.
     BBs.clear();
     for (unsigned i = 0, e = BlockInfo.size(); i != e; ++i) {
-      SymbolTable &ST = BlockInfo[i].first->getValueSymbolTable();
-      SymbolTable::plane_iterator PI = ST.find(Type::LabelTy);
-      if (PI != ST.plane_end() && PI->second.count(BlockInfo[i].second))
-        BBs.push_back(cast<BasicBlock>(PI->second[BlockInfo[i].second]));
+      ValueSymbolTable &ST = BlockInfo[i].first->getValueSymbolTable();
+      Value* V = ST.lookup(BlockInfo[i].second);
+      if (V && V->getType() == Type::LabelTy)
+        BBs.push_back(cast<BasicBlock>(V));
     }
     return true;
   }

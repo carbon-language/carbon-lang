@@ -270,19 +270,15 @@ public:
       *os << "      } END BLOCK: CompactionTable\n";
   }
 
-  virtual void handleSymbolTableBegin(Function* CF, SymbolTable* ST) {
+  virtual void handleTypeSymbolTableBegin(TypeSymbolTable* ST) {
     bca.numSymTab++;
     if (os)
-      *os << "    BLOCK: SymbolTable {\n";
+      *os << "    BLOCK: TypeSymbolTable {\n";
   }
-
-  virtual void handleSymbolTablePlane(unsigned Ty, unsigned NumEntries,
-    const Type* Typ) {
-    if (os) {
-      *os << "      Plane: Ty=" << Ty << " Size=" << NumEntries << " Type: ";
-      WriteTypeSymbolic(*os,Typ,M);
-      *os << "\n";
-    }
+  virtual void handleValueSymbolTableBegin(Function* CF, ValueSymbolTable* ST) {
+    bca.numSymTab++;
+    if (os)
+      *os << "    BLOCK: ValueSymbolTable {\n";
   }
 
   virtual void handleSymbolTableType(unsigned i, unsigned TypSlot,
@@ -292,18 +288,23 @@ public:
          << " Name: " << name << "\n";
   }
 
-  virtual void handleSymbolTableValue(unsigned i, unsigned ValSlot,
-    const std::string& name ) {
+  virtual void handleSymbolTableValue(unsigned TySlot, unsigned ValSlot, 
+                                      const std::string& name) {
     if (os)
-      *os << "        Value " << i << " Slot=" << ValSlot
+      *os << "        Value " << TySlot << " Slot=" << ValSlot
          << " Name: " << name << "\n";
     if (ValSlot > bca.maxValueSlot)
       bca.maxValueSlot = ValSlot;
   }
 
-  virtual void handleSymbolTableEnd() {
+  virtual void handleValueSymbolTableEnd() {
     if (os)
-      *os << "    } END BLOCK: SymbolTable\n";
+      *os << "    } END BLOCK: ValueSymbolTable\n";
+  }
+
+  virtual void handleTypeSymbolTableEnd() {
+    if (os)
+      *os << "    } END BLOCK: TypeSymbolTable\n";
   }
 
   virtual void handleFunctionBegin(Function* Func, unsigned Size) {
@@ -358,15 +359,15 @@ public:
   }
 
   virtual bool handleInstruction( unsigned Opcode, const Type* iType,
-                                std::vector<unsigned>& Operands, unsigned Size){
+                                std::vector<unsigned>& Operands, 
+                                Instruction *Inst,
+                                unsigned Size){
     if (os) {
       *os << "        INST: OpCode="
-         << Instruction::getOpcodeName(Opcode) << " Type=\"";
-      WriteTypeSymbolic(*os,iType,M);
-      *os << "\"";
+         << Instruction::getOpcodeName(Opcode);
       for ( unsigned i = 0; i < Operands.size(); ++i )
-        *os << " Op(" << i << ")=Slot(" << Operands[i] << ")";
-      *os << "\n";
+        *os << " Op(" << Operands[i] << ")";
+      *os << *Inst;
     }
 
     bca.numInstructions++;

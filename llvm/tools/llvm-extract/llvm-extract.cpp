@@ -79,7 +79,6 @@ int main(int argc, char **argv) {
     Passes.add(createFunctionExtractionPass(F, DeleteFn, Relink));
     if (!DeleteFn)
       Passes.add(createGlobalDCEPass());           // Delete unreachable globals
-    Passes.add(createFunctionResolvingPass());     // Delete prototypes
     Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
 
     std::ostream *Out = 0;

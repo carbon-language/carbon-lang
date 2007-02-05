@@ -26,8 +26,8 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/MathExtras.h"
@@ -1144,20 +1144,30 @@ void BytecodeWriter::outputTypeSymbolTable(const TypeSymbolTable &TST) {
   }
 }
 
-void BytecodeWriter::outputValueSymbolTable(const SymbolTable &MST) {
+void BytecodeWriter::outputValueSymbolTable(const ValueSymbolTable &VST) {
   // Do not output the Bytecode block for an empty symbol table, it just wastes
   // space!
-  if (MST.isEmpty()) return;
+  if (VST.empty()) return;
 
   BytecodeBlock SymTabBlock(BytecodeFormat::ValueSymbolTableBlockID, *this,
                             true/*ElideIfEmpty*/);
 
-  // Now do each of the type planes in order.
-  for (SymbolTable::plane_const_iterator PI = MST.plane_begin(),
-       PE = MST.plane_end(); PI != PE;  ++PI) {
-    SymbolTable::value_const_iterator I = MST.value_begin(PI->first);
-    SymbolTable::value_const_iterator End = MST.value_end(PI->first);
+  // Organize the symbol table by type
+  typedef std::pair<std::string, const Value*> PlaneMapEntry;
+  typedef std::vector<PlaneMapEntry> PlaneMapVector;
+  typedef std::map<const Type*, PlaneMapVector > PlaneMap;
+  PlaneMap Planes;
+  for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
+       SI != SE; ++SI) 
+    Planes[SI->second->getType()].push_back(
+        std::make_pair(SI->first,SI->second));
+
+  for (PlaneMap::const_iterator PI = Planes.begin(), PE = Planes.end();
+       PI != PE; ++PI) {
     int Slot;
+
+    PlaneMapVector::const_iterator I = PI->second.begin(); 
+    PlaneMapVector::const_iterator End = PI->second.end(); 
 
     if (I == End) continue;  // Don't mess with an absent type...
 

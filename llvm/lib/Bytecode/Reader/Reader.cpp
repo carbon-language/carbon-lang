@@ -23,7 +23,6 @@
 #include "llvm/Constants.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
-#include "llvm/SymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Config/alloca.h"
@@ -55,6 +54,7 @@ namespace {
 inline void BytecodeReader::error(const std::string& err) {
   ErrorMsg = err + " (Vers=" + itostr(RevisionNum) + ", Pos=" 
     + itostr(At-MemStart) + ")";
+  if (Handler) Handler->handleError(ErrorMsg);
   longjmp(context,1);
 }
 
@@ -442,10 +442,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
   // Make the necessary adjustments for dealing with backwards compatibility
   // of opcodes.
   Instruction* Result = 0;
-
-  // We have enough info to inform the handler now.
-  if (Handler) 
-    Handler->handleInstruction(Opcode, InstTy, Oprnds, At-SaveAt);
 
   // First, handle the easy binary operators case
   if (Opcode >= Instruction::BinaryOpsBegin &&
@@ -861,6 +857,10 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
   else
     TypeSlot = getTypeSlot(Result->getType());
 
+  // We have enough info to inform the handler now.
+  if (Handler) 
+    Handler->handleInstruction(Opcode, InstTy, Oprnds, Result, At-SaveAt);
+
   insertValue(Result, TypeSlot, FunctionValues);
 }
 
@@ -936,9 +936,9 @@ void BytecodeReader::ParseTypeSymbolTable(TypeSymbolTable *TST) {
 /// CurrentFunction's symbol table. For Module level symbol tables, the
 /// CurrentFunction argument must be zero.
 void BytecodeReader::ParseValueSymbolTable(Function *CurrentFunction,
-                                           SymbolTable *ST) {
+                                           ValueSymbolTable *VST) {
                                       
-  if (Handler) Handler->handleSymbolTableBegin(CurrentFunction,ST);
+  if (Handler) Handler->handleValueSymbolTableBegin(CurrentFunction,VST);
 
   // Allow efficient basic block lookup by number.
   std::vector<BasicBlock*> BBMap;
@@ -963,13 +963,15 @@ void BytecodeReader::ParseValueSymbolTable(Function *CurrentFunction,
       } else {
         V = getValue(Typ, slot, false); // Find mapping...
       }
+      if (Handler) Handler->handleSymbolTableValue(Typ, slot, Name);
       if (V == 0)
-        error("Failed value look-up for name '" + Name + "'");
+        error("Failed value look-up for name '" + Name + "', type #" + 
+              utostr(Typ) + " slot #" + utostr(slot));
       V->setName(Name);
     }
   }
   checkPastBlockEnd("Symbol Table");
-  if (Handler) Handler->handleSymbolTableEnd();
+  if (Handler) Handler->handleValueSymbolTableEnd();
 }
 
 // Parse a single type. The typeid is read in first. If its a primitive type
