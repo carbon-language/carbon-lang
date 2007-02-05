@@ -27,6 +27,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
@@ -44,7 +45,7 @@ namespace {
   UnrollThreshold("unroll-threshold", cl::init(100), cl::Hidden,
                   cl::desc("The cut-off point for loop unrolling"));
 
-  class LoopUnroll : public FunctionPass {
+  class VISIBILITY_HIDDEN LoopUnroll : public FunctionPass {
     LoopInfo *LI;  // The current loop information
   public:
     virtual bool runOnFunction(Function &F);

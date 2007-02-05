@@ -41,8 +41,9 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
@@ -60,7 +61,7 @@ namespace {
   DisablePromotion("disable-licm-promotion", cl::Hidden,
                    cl::desc("Disable memory promotion in LICM pass"));
 
-  struct LICM : public FunctionPass {
+  struct VISIBILITY_HIDDEN LICM : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 
     /// This transformation requires natural loop information & requires that

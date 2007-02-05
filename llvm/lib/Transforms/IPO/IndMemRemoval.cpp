@@ -23,13 +23,14 @@
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 STATISTIC(NumBounceSites, "Number of sites modified");
 STATISTIC(NumBounce     , "Number of bounce functions created");
 
 namespace {
-  class IndMemRemPass : public ModulePass {
+  class VISIBILITY_HIDDEN IndMemRemPass : public ModulePass {
   public:
     virtual bool runOnModule(Module &M);
   };

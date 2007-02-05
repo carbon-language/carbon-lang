@@ -21,12 +21,13 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Instructions.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include <set>
 using namespace llvm;
 
 namespace {
-  class TraceBasicBlocks : public ModulePass {
+  class VISIBILITY_HIDDEN TraceBasicBlocks : public ModulePass {
     bool runOnModule(Module &M);
   };
 

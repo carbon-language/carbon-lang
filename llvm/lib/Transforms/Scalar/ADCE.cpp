@@ -27,6 +27,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Compiler.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -41,7 +42,7 @@ namespace {
 // This class does all of the work of Aggressive Dead Code Elimination.
 // It's public interface consists of a constructor and a doADCE() method.
 //
-class ADCE : public FunctionPass {
+class VISIBILITY_HIDDEN ADCE : public FunctionPass {
   Function *Func;                       // The function that we are working on
   std::vector<Instruction*> WorkList;   // Instructions that just became live
   std::set<Instruction*>    LiveSet;    // The set of live instructions

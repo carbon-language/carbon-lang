@@ -24,12 +24,13 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {
   /// LowerSelect - Turn select instructions into conditional branches.
   ///
-  class LowerSelect : public FunctionPass {
+  class VISIBILITY_HIDDEN LowerSelect : public FunctionPass {
     bool OnlyFP;   // Only lower FP select instructions?
   public:
     LowerSelect(bool onlyfp = false) : OnlyFP(onlyfp) {}

@@ -25,13 +25,14 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 #include <list>
 using namespace llvm;
 
 STATISTIC(NumDemoted, "Number of registers demoted");
 
 namespace {
-  struct RegToMem : public FunctionPass {
+  struct VISIBILITY_HIDDEN RegToMem : public FunctionPass {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);

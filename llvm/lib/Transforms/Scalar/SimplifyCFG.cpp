@@ -25,6 +25,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
@@ -33,7 +34,7 @@ using namespace llvm;
 STATISTIC(NumSimpl, "Number of blocks simplified");
 
 namespace {
-  struct CFGSimplifyPass : public FunctionPass {
+  struct VISIBILITY_HIDDEN CFGSimplifyPass : public FunctionPass {
     virtual bool runOnFunction(Function &F);
   };
   RegisterPass<CFGSimplifyPass> X("simplifycfg", "Simplify the CFG");

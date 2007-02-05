@@ -26,13 +26,14 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 STATISTIC(NumStores, "Number of stores deleted");
 STATISTIC(NumOther , "Number of other instrs removed");
 
 namespace {
-  struct DSE : public FunctionPass {
+  struct VISIBILITY_HIDDEN DSE : public FunctionPass {
 
     virtual bool runOnFunction(Function &F) {
       bool Changed = false;

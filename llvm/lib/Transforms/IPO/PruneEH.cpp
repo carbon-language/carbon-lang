@@ -24,6 +24,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
@@ -32,7 +33,7 @@ STATISTIC(NumRemoved, "Number of invokes removed");
 STATISTIC(NumUnreach, "Number of noreturn calls optimized");
 
 namespace {
-  struct PruneEH : public CallGraphSCCPass {
+  struct VISIBILITY_HIDDEN PruneEH : public CallGraphSCCPass {
     /// DoesNotUnwind - This set contains all of the functions which we have
     /// determined cannot unwind.
     std::set<CallGraphNode*> DoesNotUnwind;

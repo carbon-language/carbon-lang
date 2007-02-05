@@ -15,10 +15,12 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {
-  class FunctionExtractorPass : public ModulePass {
+  /// @brief A pass to extract specific functions and their dependencies.
+  class VISIBILITY_HIDDEN FunctionExtractorPass : public ModulePass {
     Function *Named;
     bool deleteFunc;
     bool reLink;

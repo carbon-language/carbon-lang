@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include "ValueMapper.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/ADT/SmallVector.h"
@@ -152,7 +153,7 @@ Function *llvm::CloneFunction(const Function *F,
 namespace {
   /// PruningFunctionCloner - This class is a private class used to implement
   /// the CloneAndPruneFunctionInto method.
-  struct PruningFunctionCloner {
+  struct VISIBILITY_HIDDEN PruningFunctionCloner {
     Function *NewFunc;
     const Function *OldFunc;
     DenseMap<const Value*, Value*> &ValueMap;

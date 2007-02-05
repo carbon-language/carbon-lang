@@ -19,6 +19,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/StringExtras.h"
@@ -36,7 +37,8 @@ namespace {
 ///
 /// @brief Transforms packed instructions to simpler instructions.
 ///
-class LowerPacked : public FunctionPass, public InstVisitor<LowerPacked> {
+class VISIBILITY_HIDDEN LowerPacked 
+  : public FunctionPass, public InstVisitor<LowerPacked> {
 public:
    /// @brief Lowers packed operations to scalar operations.
    /// @param F The fuction to process

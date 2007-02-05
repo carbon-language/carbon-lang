@@ -19,12 +19,13 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 STATISTIC(NumKilled, "Number of unused typenames removed from symtab");
 
 namespace {
-  struct DTE : public ModulePass {
+  struct VISIBILITY_HIDDEN DTE : public ModulePass {
     // doPassInitialization - For this pass, it removes global symbol table
     // entries for primitive types.  These are never used for linking in GCC and
     // they make the output uglier to look at, so we nuke them.

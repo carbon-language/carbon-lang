@@ -40,6 +40,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "RSProfiling.h"
@@ -66,7 +67,7 @@ namespace {
   /// NullProfilerRS - The basic profiler that does nothing.  It is the default
   /// profiler and thus terminates RSProfiler chains.  It is useful for 
   /// measuring framework overhead
-  class NullProfilerRS : public RSProfilers {
+  class VISIBILITY_HIDDEN NullProfilerRS : public RSProfilers {
   public:
     bool isProfiling(Value* v) {
       return false;
@@ -85,7 +86,7 @@ namespace {
   static RegisterAnalysisGroup<RSProfilers, true> NPT(NP);
 
   /// Chooser - Something that chooses when to make a sample of the profiled code
-  class Chooser {
+  class VISIBILITY_HIDDEN Chooser {
   public:
     /// ProcessChoicePoint - is called for each basic block inserted to choose 
     /// between normal and sample code
@@ -99,7 +100,7 @@ namespace {
   //Things that implement sampling policies
   //A global value that is read-mod-stored to choose when to sample.
   //A sample is taken when the global counter hits 0
-  class GlobalRandomCounter : public Chooser {
+  class VISIBILITY_HIDDEN GlobalRandomCounter : public Chooser {
     GlobalVariable* Counter;
     Value* ResetValue;
     const Type* T;
@@ -111,7 +112,7 @@ namespace {
   };
 
   //Same is GRC, but allow register allocation of the global counter
-  class GlobalRandomCounterOpt : public Chooser {
+  class VISIBILITY_HIDDEN GlobalRandomCounterOpt : public Chooser {
     GlobalVariable* Counter;
     Value* ResetValue;
     AllocaInst* AI;
@@ -125,7 +126,7 @@ namespace {
 
   //Use the cycle counter intrinsic as a source of pseudo randomness when
   //deciding when to sample.
-  class CycleCounter : public Chooser {
+  class VISIBILITY_HIDDEN CycleCounter : public Chooser {
     uint64_t rm;
     Constant *F;
   public:
@@ -136,7 +137,7 @@ namespace {
   };
 
   /// ProfilerRS - Insert the random sampling framework
-  struct ProfilerRS : public FunctionPass {
+  struct VISIBILITY_HIDDEN ProfilerRS : public FunctionPass {
     std::map<Value*, Value*> TransCache;
     std::set<BasicBlock*> ChoicePoints;
     Chooser* c;

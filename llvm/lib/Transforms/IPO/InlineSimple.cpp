@@ -18,11 +18,12 @@
 #include "llvm/Function.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/IPO.h"
 using namespace llvm;
 
 namespace {
-  struct ArgInfo {
+  struct VISIBILITY_HIDDEN ArgInfo {
     unsigned ConstantWeight;
     unsigned AllocaWeight;
 
@@ -32,7 +33,7 @@ namespace {
 
   // FunctionInfo - For each function, calculate the size of it in blocks and
   // instructions.
-  struct FunctionInfo {
+  struct VISIBILITY_HIDDEN FunctionInfo {
     // NumInsts, NumBlocks - Keep track of how large each function is, which is
     // used to estimate the code size cost of inlining it.
     unsigned NumInsts, NumBlocks;
@@ -50,7 +51,7 @@ namespace {
     void analyzeFunction(Function *F);
   };
 
-  class SimpleInliner : public Inliner {
+  class VISIBILITY_HIDDEN SimpleInliner : public Inliner {
     std::map<const Function*, FunctionInfo> CachedFunctionInfo;
   public:
     int getInlineCost(CallSite CS);

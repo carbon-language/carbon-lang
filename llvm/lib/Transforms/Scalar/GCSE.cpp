@@ -24,6 +24,7 @@
 #include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -35,7 +36,7 @@ STATISTIC(NumNonInsts   , "Number of instructions removed due "
 STATISTIC(NumArgsRepl   , "Number of function arguments replaced "
                           "with constant values");
 namespace {
-  struct GCSE : public FunctionPass {
+  struct VISIBILITY_HIDDEN GCSE : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 
   private:

@@ -31,6 +31,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/ADT/DenseMap.h"
@@ -53,7 +54,7 @@ namespace {
 /// LatticeVal class - This class represents the different lattice values that
 /// an LLVM value may occupy.  It is a simple class with value semantics.
 ///
-class LatticeVal {
+class VISIBILITY_HIDDEN LatticeVal {
   enum {
     /// undefined - This LLVM Value has no known value yet.
     undefined,
@@ -1332,7 +1333,7 @@ namespace {
   /// SCCP Class - This class uses the SCCPSolver to implement a per-function
   /// Sparse Conditional Constant Propagator.
   ///
-  struct SCCP : public FunctionPass {
+  struct VISIBILITY_HIDDEN SCCP : public FunctionPass {
     // runOnFunction - Run the Sparse Conditional Constant Propagation
     // algorithm, and return true if the function was modified.
     //
@@ -1440,7 +1441,7 @@ namespace {
   /// IPSCCP Class - This class implements interprocedural Sparse Conditional
   /// Constant Propagation.
   ///
-  struct IPSCCP : public ModulePass {
+  struct VISIBILITY_HIDDEN IPSCCP : public ModulePass {
     bool runOnModule(Module &M);
   };
 

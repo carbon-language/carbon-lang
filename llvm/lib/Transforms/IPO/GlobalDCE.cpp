@@ -21,6 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 #include <set>
 using namespace llvm;
 
@@ -28,7 +29,7 @@ STATISTIC(NumFunctions, "Number of functions removed");
 STATISTIC(NumVariables, "Number of global variables removed");
 
 namespace {
-  struct GlobalDCE : public ModulePass {
+  struct VISIBILITY_HIDDEN GlobalDCE : public ModulePass {
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.
     //

@@ -46,7 +46,7 @@ namespace {
   /// the stride is stored externally.  The Offset member keeps track of the 
   /// offset from the IV, User is the actual user of the operand, and 'Operand'
   /// is the operand # of the User that is the use.
-  struct IVStrideUse {
+  struct VISIBILITY_HIDDEN IVStrideUse {
     SCEVHandle Offset;
     Instruction *User;
     Value *OperandValToReplace;
@@ -66,7 +66,7 @@ namespace {
   /// have an operand that is based on the trip count multiplied by some stride.
   /// The stride for all of these users is common and kept external to this
   /// structure.
-  struct IVUsersOfOneStride {
+  struct VISIBILITY_HIDDEN IVUsersOfOneStride {
     /// Users - Keep track of all of the users of this stride as well as the
     /// initial value and the operand that uses the IV.
     std::vector<IVStrideUse> Users;
@@ -79,7 +79,7 @@ namespace {
   /// IVInfo - This structure keeps track of one IV expression inserted during
   /// StrengthReduceStridedIVUsers. It contains the stride, the common base, as
   /// well as the PHI node and increment value created for rewrite.
-  struct IVExpr {
+  struct VISIBILITY_HIDDEN IVExpr {
     SCEVHandle  Stride;
     SCEVHandle  Base;
     PHINode    *PHI;
@@ -95,7 +95,7 @@ namespace {
 
   /// IVsOfOneStride - This structure keeps track of all IV expression inserted
   /// during StrengthReduceStridedIVUsers for a particular stride of the IV.
-  struct IVsOfOneStride {
+  struct VISIBILITY_HIDDEN IVsOfOneStride {
     std::vector<IVExpr> IVs;
 
     void addIV(const SCEVHandle &Stride, const SCEVHandle &Base, PHINode *PHI,

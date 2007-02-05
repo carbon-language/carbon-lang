@@ -24,6 +24,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Instrumentation.h"
 using namespace llvm;
 
@@ -36,7 +37,7 @@ namespace {
     BLACK
   };
 
-  struct EmitFunctionTable : public ModulePass {
+  struct VISIBILITY_HIDDEN EmitFunctionTable : public ModulePass {
     bool runOnModule(Module &M);
   };
 

@@ -29,6 +29,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 #include <set>
 using namespace llvm;
 
@@ -38,7 +39,7 @@ STATISTIC(NumRetValsEliminated  , "Number of unused return values removed");
 namespace {
   /// DAE - The dead argument elimination pass.
   ///
-  class DAE : public ModulePass {
+  class VISIBILITY_HIDDEN DAE : public ModulePass {
     /// Liveness enum - During our initial pass over the program, we determine
     /// that things are either definately alive, definately dead, or in need of
     /// interprocedural analysis (MaybeLive).

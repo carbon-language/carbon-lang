@@ -21,6 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/FunctionUtils.h"
 #include "llvm/ADT/Statistic.h"
@@ -32,7 +33,7 @@ namespace {
   // FIXME: This is not a function pass, but the PassManager doesn't allow
   // Module passes to require FunctionPasses, so we can't get loop info if we're
   // not a function pass.
-  struct LoopExtractor : public FunctionPass {
+  struct VISIBILITY_HIDDEN LoopExtractor : public FunctionPass {
     unsigned NumLoops;
 
     LoopExtractor(unsigned numLoops = ~0) : NumLoops(numLoops) {}

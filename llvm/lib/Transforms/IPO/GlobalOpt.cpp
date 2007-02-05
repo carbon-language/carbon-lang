@@ -24,6 +24,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -45,7 +46,7 @@ STATISTIC(NumFastCallFns   , "Number of functions converted to fastcc");
 STATISTIC(NumCtorsEvaluated, "Number of static ctors evaluated");
 
 namespace {
-  struct GlobalOpt : public ModulePass {
+  struct VISIBILITY_HIDDEN GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
     }
@@ -68,7 +69,7 @@ ModulePass *llvm::createGlobalOptimizerPass() { return new GlobalOpt(); }
 /// GlobalStatus - As we analyze each global, keep track of some information
 /// about it.  If we find out that the address of the global is taken, none of
 /// this info will be accurate.
-struct GlobalStatus {
+struct VISIBILITY_HIDDEN GlobalStatus {
   /// isLoaded - True if the global is ever loaded.  If the global isn't ever
   /// loaded it can be deleted.
   bool isLoaded;

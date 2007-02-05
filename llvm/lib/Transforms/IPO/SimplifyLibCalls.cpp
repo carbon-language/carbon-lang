@@ -26,6 +26,7 @@
 #include "llvm/ADT/hash_map"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
@@ -62,7 +63,7 @@ static LibCallOptimization *OptList = 0;
 /// generally short-circuit actually calling the function if there's a simpler
 /// way (e.g. strlen(X) can be reduced to a constant if X is a constant global).
 /// @brief Base class for library call optimizations
-class LibCallOptimization {
+class VISIBILITY_HIDDEN LibCallOptimization {
   LibCallOptimization **Prev, *Next;
   const char *FunctionName; ///< Name of the library call we optimize
 #ifndef NDEBUG
@@ -142,7 +143,7 @@ public:
 /// validate the call (ValidateLibraryCall). If it is validated, then
 /// the OptimizeCall method is also called.
 /// @brief A ModulePass for optimizing well-known function calls.
-class SimplifyLibCalls : public ModulePass {
+class VISIBILITY_HIDDEN SimplifyLibCalls : public ModulePass {
 public:
   /// We need some target data for accurate signature details that are
   /// target dependent. So we require target data in our AnalysisUsage.
@@ -383,15 +384,16 @@ ModulePass *llvm::createSimplifyLibCallsPass() {
 namespace {
 
 // Forward declare utility functions.
-bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** A = 0 );
-Value *CastToCStr(Value *V, Instruction &IP);
+static bool getConstantStringLength(Value* V, uint64_t& len, 
+                                    ConstantArray** A = 0 );
+static Value *CastToCStr(Value *V, Instruction &IP);
 
 /// This LibCallOptimization will find instances of a call to "exit" that occurs
 /// within the "main" function and change it to a simple "ret" instruction with
 /// the same value passed to the exit function. When this is done, it splits the
 /// basic block at the exit(3) call and deletes the call instruction.
 /// @brief Replace calls to exit in main with a simple return
-struct ExitInMainOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN ExitInMainOptimization : public LibCallOptimization {
   ExitInMainOptimization() : LibCallOptimization("exit",
       "Number of 'exit' calls simplified") {}
 
@@ -447,7 +449,7 @@ struct ExitInMainOptimization : public LibCallOptimization {
 /// of the constant string. Both of these calls are further reduced, if possible
 /// on subsequent passes.
 /// @brief Simplify the strcat library function.
-struct StrCatOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN StrCatOptimization : public LibCallOptimization {
 public:
   /// @brief Default constructor
   StrCatOptimization() : LibCallOptimization("strcat",
@@ -530,7 +532,7 @@ public:
 /// function.  It optimizes out cases where the arguments are both constant
 /// and the result can be determined statically.
 /// @brief Simplify the strcmp library function.
-struct StrChrOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN StrChrOptimization : public LibCallOptimization {
 public:
   StrChrOptimization() : LibCallOptimization("strchr",
       "Number of 'strchr' calls simplified") {}
@@ -611,7 +613,7 @@ public:
 /// function.  It optimizes out cases where one or both arguments are constant
 /// and the result can be determined statically.
 /// @brief Simplify the strcmp library function.
-struct StrCmpOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN StrCmpOptimization : public LibCallOptimization {
 public:
   StrCmpOptimization() : LibCallOptimization("strcmp",
       "Number of 'strcmp' calls simplified") {}
@@ -688,7 +690,7 @@ public:
 /// function.  It optimizes out cases where one or both arguments are constant
 /// and the result can be determined statically.
 /// @brief Simplify the strncmp library function.
-struct StrNCmpOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN StrNCmpOptimization : public LibCallOptimization {
 public:
   StrNCmpOptimization() : LibCallOptimization("strncmp",
       "Number of 'strncmp' calls simplified") {}
@@ -781,7 +783,7 @@ public:
 /// (1) If src and dest are the same and not volatile, just return dest
 /// (2) If the src is a constant then we can convert to llvm.memmove
 /// @brief Simplify the strcpy library function.
-struct StrCpyOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN StrCpyOptimization : public LibCallOptimization {
 public:
   StrCpyOptimization() : LibCallOptimization("strcpy",
       "Number of 'strcpy' calls simplified") {}
@@ -859,7 +861,7 @@ public:
 /// function by replacing it with a constant value if the string provided to
 /// it is a constant array.
 /// @brief Simplify the strlen library function.
-struct StrLenOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN StrLenOptimization : public LibCallOptimization {
   StrLenOptimization() : LibCallOptimization("strlen",
       "Number of 'strlen' calls simplified") {}
 
@@ -947,7 +949,7 @@ static bool IsOnlyUsedInEqualsZeroComparison(Instruction *I) {
 
 /// This memcmpOptimization will simplify a call to the memcmp library
 /// function.
-struct memcmpOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN memcmpOptimization : public LibCallOptimization {
   /// @brief Default Constructor
   memcmpOptimization()
     : LibCallOptimization("memcmp", "Number of 'memcmp' calls simplified") {}
@@ -1052,7 +1054,7 @@ struct memcmpOptimization : public LibCallOptimization {
 /// bytes depending on the length of the string and the alignment. Additional
 /// optimizations are possible in code generation (sequence of immediate store)
 /// @brief Simplify the memcpy library function.
-struct LLVMMemCpyMoveOptzn : public LibCallOptimization {
+struct VISIBILITY_HIDDEN LLVMMemCpyMoveOptzn : public LibCallOptimization {
   LLVMMemCpyMoveOptzn(const char* fname, const char* desc)
   : LibCallOptimization(fname, desc) {}
 
@@ -1129,7 +1131,7 @@ LLVMMemCpyMoveOptzn LLVMMemMoveOptimizer64("llvm.memmove.i64",
 /// This LibCallOptimization will simplify a call to the memset library
 /// function by expanding it out to a single store of size 0, 1, 2, 4, or 8
 /// bytes depending on the length argument.
-struct LLVMMemSetOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN LLVMMemSetOptimization : public LibCallOptimization {
   /// @brief Default Constructor
   LLVMMemSetOptimization(const char *Name) : LibCallOptimization(Name,
       "Number of 'llvm.memset' calls simplified") {}
@@ -1232,7 +1234,7 @@ LLVMMemSetOptimization MemSet64Optimizer("llvm.memset.i64");
 /// function. It looks for cases where the result of pow is well known and
 /// substitutes the appropriate value.
 /// @brief Simplify the pow library function.
-struct PowOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN PowOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   PowOptimization() : LibCallOptimization("pow",
@@ -1293,7 +1295,7 @@ public:
 /// function. It looks for cases where the result of printf is not used and the
 /// operation can be reduced to something simpler.
 /// @brief Simplify the printf library function.
-struct PrintfOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN PrintfOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   PrintfOptimization() : LibCallOptimization("printf",
@@ -1371,7 +1373,7 @@ public:
 /// function. It looks for cases where the result of fprintf is not used and the
 /// operation can be reduced to something simpler.
 /// @brief Simplify the fprintf library function.
-struct FPrintFOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN FPrintFOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   FPrintFOptimization() : LibCallOptimization("fprintf",
@@ -1491,7 +1493,7 @@ public:
 /// function. It looks for cases where the result of sprintf is not used and the
 /// operation can be reduced to something simpler.
 /// @brief Simplify the sprintf library function.
-struct SPrintFOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN SPrintFOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   SPrintFOptimization() : LibCallOptimization("sprintf",
@@ -1614,7 +1616,7 @@ public:
 /// function. It looks for cases where the result of fputs is not used and the
 /// operation can be reduced to something simpler.
 /// @brief Simplify the puts library function.
-struct PutsOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN PutsOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   PutsOptimization() : LibCallOptimization("fputs",
@@ -1675,7 +1677,7 @@ public:
 /// This LibCallOptimization will simplify calls to the "isdigit" library
 /// function. It simply does range checks the parameter explicitly.
 /// @brief Simplify the isdigit library function.
-struct isdigitOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN isdigitOptimization : public LibCallOptimization {
 public:
   isdigitOptimization() : LibCallOptimization("isdigit",
       "Number of 'isdigit' calls simplified") {}
@@ -1716,7 +1718,7 @@ public:
   }
 } isdigitOptimizer;
 
-struct isasciiOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN isasciiOptimization : public LibCallOptimization {
 public:
   isasciiOptimization()
     : LibCallOptimization("isascii", "Number of 'isascii' calls simplified") {}
@@ -1746,7 +1748,7 @@ public:
 /// function. It simply does the corresponding and operation to restrict the
 /// range of values to the ASCII character set (0-127).
 /// @brief Simplify the toascii library function.
-struct ToAsciiOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN ToAsciiOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   ToAsciiOptimization() : LibCallOptimization("toascii",
@@ -1775,7 +1777,7 @@ public:
 /// optimization is to compute the result at compile time if the argument is
 /// a constant.
 /// @brief Simplify the ffs library function.
-struct FFSOptimization : public LibCallOptimization {
+struct VISIBILITY_HIDDEN FFSOptimization : public LibCallOptimization {
 protected:
   /// @brief Subclass Constructor
   FFSOptimization(const char* funcName, const char* description)
@@ -1855,7 +1857,7 @@ public:
 /// calls. It simply uses FFSOptimization for which the transformation is
 /// identical.
 /// @brief Simplify the ffsl library function.
-struct FFSLOptimization : public FFSOptimization {
+struct VISIBILITY_HIDDEN FFSLOptimization : public FFSOptimization {
 public:
   /// @brief Default Constructor
   FFSLOptimization() : FFSOptimization("ffsl",
@@ -1867,7 +1869,7 @@ public:
 /// calls. It simply uses FFSOptimization for which the transformation is
 /// identical.
 /// @brief Simplify the ffsl library function.
-struct FFSLLOptimization : public FFSOptimization {
+struct VISIBILITY_HIDDEN FFSLLOptimization : public FFSOptimization {
 public:
   /// @brief Default Constructor
   FFSLLOptimization() : FFSOptimization("ffsll",
@@ -1909,7 +1911,7 @@ struct UnaryDoubleFPOptimizer : public LibCallOptimization {
 };
 
 
-struct FloorOptimization : public UnaryDoubleFPOptimizer {
+struct VISIBILITY_HIDDEN FloorOptimization : public UnaryDoubleFPOptimizer {
   FloorOptimization()
     : UnaryDoubleFPOptimizer("floor", "Number of 'floor' calls simplified") {}
   
@@ -1923,7 +1925,7 @@ struct FloorOptimization : public UnaryDoubleFPOptimizer {
   }
 } FloorOptimizer;
 
-struct CeilOptimization : public UnaryDoubleFPOptimizer {
+struct VISIBILITY_HIDDEN CeilOptimization : public UnaryDoubleFPOptimizer {
   CeilOptimization()
   : UnaryDoubleFPOptimizer("ceil", "Number of 'ceil' calls simplified") {}
   
@@ -1937,7 +1939,7 @@ struct CeilOptimization : public UnaryDoubleFPOptimizer {
   }
 } CeilOptimizer;
 
-struct RoundOptimization : public UnaryDoubleFPOptimizer {
+struct VISIBILITY_HIDDEN RoundOptimization : public UnaryDoubleFPOptimizer {
   RoundOptimization()
   : UnaryDoubleFPOptimizer("round", "Number of 'round' calls simplified") {}
   
@@ -1951,7 +1953,7 @@ struct RoundOptimization : public UnaryDoubleFPOptimizer {
   }
 } RoundOptimizer;
 
-struct RintOptimization : public UnaryDoubleFPOptimizer {
+struct VISIBILITY_HIDDEN RintOptimization : public UnaryDoubleFPOptimizer {
   RintOptimization()
   : UnaryDoubleFPOptimizer("rint", "Number of 'rint' calls simplified") {}
   
@@ -1965,7 +1967,7 @@ struct RintOptimization : public UnaryDoubleFPOptimizer {
   }
 } RintOptimizer;
 
-struct NearByIntOptimization : public UnaryDoubleFPOptimizer {
+struct VISIBILITY_HIDDEN NearByIntOptimization : public UnaryDoubleFPOptimizer {
   NearByIntOptimization()
   : UnaryDoubleFPOptimizer("nearbyint",
                            "Number of 'nearbyint' calls simplified") {}
@@ -1990,7 +1992,8 @@ struct NearByIntOptimization : public UnaryDoubleFPOptimizer {
 /// of the null-terminated string. If false is returned, the conditions were
 /// not met and len is set to 0.
 /// @brief Get the length of a constant string (null-terminated array).
-bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA) {
+static bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA)
+{
   assert(V != 0 && "Invalid args to getConstantStringLength");
   len = 0; // make sure we initialize this
   User* GEP = 0;
@@ -2079,7 +2082,7 @@ bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA) {
 /// CastToCStr - Return V if it is an sbyte*, otherwise cast it to sbyte*,
 /// inserting the cast before IP, and return the cast.
 /// @brief Cast a value to a "C" string.
-Value *CastToCStr(Value *V, Instruction &IP) {
+static Value *CastToCStr(Value *V, Instruction &IP) {
   assert(isa<PointerType>(V->getType()) && 
          "Can't cast non-pointer type to C string type");
   const Type *SBPTy = PointerType::get(Type::Int8Ty);

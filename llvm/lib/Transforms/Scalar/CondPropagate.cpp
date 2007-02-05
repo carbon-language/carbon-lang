@@ -22,6 +22,7 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
 
@@ -29,7 +30,7 @@ STATISTIC(NumBrThread, "Number of CFG edges threaded through branches");
 STATISTIC(NumSwThread, "Number of CFG edges threaded through switches");
 
 namespace {
-  struct CondProp : public FunctionPass {
+  struct VISIBILITY_HIDDEN CondProp : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

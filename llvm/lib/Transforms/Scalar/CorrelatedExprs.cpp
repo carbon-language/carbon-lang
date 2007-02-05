@@ -38,8 +38,9 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -52,7 +53,7 @@ STATISTIC(BranchRevectors, "Number of branches revectored");
 
 namespace {
   class ValueInfo;
-  class Relation {
+  class VISIBILITY_HIDDEN Relation {
     Value *Val;          // Relation to what value?
     unsigned Rel;        // SetCC or ICmp relation, or Add if no information
   public:
@@ -96,7 +97,7 @@ namespace {
   // relationships to other values in the program (specified with Relation) that
   // are known to be valid in a region.
   //
-  class ValueInfo {
+  class VISIBILITY_HIDDEN ValueInfo {
     // RelationShips - this value is know to have the specified relationships to
     // other values.  There can only be one entry per value, and this list is
     // kept sorted by the Val field.
@@ -167,7 +168,7 @@ namespace {
   // the RegionInfo for their dominator, because anything known in a dominator
   // is known to be true in a dominated block as well.
   //
-  class RegionInfo {
+  class VISIBILITY_HIDDEN RegionInfo {
     BasicBlock *BB;
 
     // ValueMap - Tracks the ValueInformation known for this region
@@ -218,7 +219,7 @@ namespace {
   };
 
   /// CEE - Correlated Expression Elimination
-  class CEE : public FunctionPass {
+  class VISIBILITY_HIDDEN CEE : public FunctionPass {
     std::map<Value*, unsigned> RankMap;
     std::map<BasicBlock*, RegionInfo> RegionInfoMap;
     ETForest *EF;

@@ -44,6 +44,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Compiler.h"
 #include <set>
 using namespace llvm;
 
@@ -54,7 +55,7 @@ STATISTIC(NumArgumentsDead     , "Number of dead pointer args eliminated");
 namespace {
   /// ArgPromotion - The 'by reference' to 'by value' argument promotion pass.
   ///
-  struct ArgPromotion : public CallGraphSCCPass {
+  struct VISIBILITY_HIDDEN ArgPromotion : public CallGraphSCCPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<TargetData>();

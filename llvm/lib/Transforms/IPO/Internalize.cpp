@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include <fstream>
@@ -41,7 +42,7 @@ namespace {
           cl::desc("A list of symbol names to preserve"),
           cl::CommaSeparated);
 
-  class InternalizePass : public ModulePass {
+  class VISIBILITY_HIDDEN InternalizePass : public ModulePass {
     std::set<std::string> ExternalNames;
     bool DontInternalize;
   public:

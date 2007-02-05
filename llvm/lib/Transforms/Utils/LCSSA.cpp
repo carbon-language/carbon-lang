@@ -38,6 +38,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <map>
 using namespace llvm;
@@ -45,7 +46,7 @@ using namespace llvm;
 STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 
 namespace {
-  struct LCSSA : public FunctionPass {
+  struct VISIBILITY_HIDDEN LCSSA : public FunctionPass {
     // Cached analysis information for the current function.
     LoopInfo *LI;
     DominatorTree *DT;

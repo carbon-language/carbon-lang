@@ -22,6 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -31,7 +32,7 @@ STATISTIC(NumReturnValProped, "Number of return values turned into constants");
 namespace {
   /// IPCP - The interprocedural constant propagation pass
   ///
-  struct IPCP : public ModulePass {
+  struct VISIBILITY_HIDDEN IPCP : public ModulePass {
     bool runOnModule(Module &M);
   private:
     bool PropagateConstantsIntoArguments(Function &F);

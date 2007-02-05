@@ -30,10 +30,11 @@
 #include "llvm/Pass.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {
-  class StripSymbols : public ModulePass {
+  class VISIBILITY_HIDDEN StripSymbols : public ModulePass {
     bool OnlyDebugInfo;
   public:
     StripSymbols(bool ODI = false) : OnlyDebugInfo(ODI) {}

@@ -39,8 +39,9 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;
@@ -56,7 +57,7 @@ namespace {
   Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
             cl::init(10), cl::Hidden);
   
-  class LoopUnswitch : public FunctionPass {
+  class VISIBILITY_HIDDEN LoopUnswitch : public FunctionPass {
     LoopInfo *LI;  // Loop information
 
     // LoopProcessWorklist - List of loops we need to process.

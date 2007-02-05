@@ -20,6 +20,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -29,7 +30,7 @@ namespace {
   // RaiseAllocations - Turn %malloc and %free calls into the appropriate
   // instruction.
   //
-  class RaiseAllocations : public ModulePass {
+  class VISIBILITY_HIDDEN RaiseAllocations : public ModulePass {
     Function *MallocFunc;   // Functions in the module we are processing
     Function *FreeFunc;     // Initialized by doPassInitializationVirt
   public:

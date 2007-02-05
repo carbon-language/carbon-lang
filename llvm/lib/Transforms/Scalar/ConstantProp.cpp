@@ -24,6 +24,7 @@
 #include "llvm/Constant.h"
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
@@ -32,7 +33,7 @@ using namespace llvm;
 STATISTIC(NumInstKilled, "Number of instructions killed");
 
 namespace {
-  struct ConstantPropagation : public FunctionPass {
+  struct VISIBILITY_HIDDEN ConstantPropagation : public FunctionPass {
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

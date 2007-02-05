@@ -29,6 +29,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -39,7 +40,7 @@ namespace {
   cl::opt<unsigned>
   Threshold("taildup-threshold", cl::desc("Max block size to tail duplicate"),
             cl::init(6), cl::Hidden);
-  class TailDup : public FunctionPass {
+  class VISIBILITY_HIDDEN TailDup : public FunctionPass {
     bool runOnFunction(Function &F);
   private:
     inline bool shouldEliminateUnconditionalBranch(TerminatorInst *TI);

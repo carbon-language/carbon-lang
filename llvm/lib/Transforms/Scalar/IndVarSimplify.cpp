@@ -46,6 +46,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -61,7 +62,7 @@ STATISTIC(NumReplaced, "Number of exit values replaced");
 STATISTIC(NumLFTR    , "Number of loop exit tests replaced");
 
 namespace {
-  class IndVarSimplify : public FunctionPass {
+  class VISIBILITY_HIDDEN IndVarSimplify : public FunctionPass {
     LoopInfo        *LI;
     ScalarEvolution *SE;
     bool Changed;
