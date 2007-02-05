@@ -93,11 +93,11 @@ gcc "$s" -o "$prog" $ldflags || exit 1
 ex1=$?
 
 # Define the list of optimizations to run. This comprises the same set of 
-# optimizations that gccas and gccld run, in the same order.
-all_switches="-verify -lowersetjmp -funcresolve -raiseallocs -simplifycfg -mem2reg -globalopt -globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -prune-eh -inline -simplify-libcalls -argpromotion -raise -tailduplicate -simplifycfg -scalarrepl -instcombine -predsimplify -condprop -tailcallelim -simplifycfg -reassociate -licm -loop-unswitch -instcombine -indvars -loop-unroll -instcombine -load-vn -gcse -sccp -instcombine -condprop -dse -dce -simplifycfg -deadtypeelim -constmerge -funcresolve -internalize -ipsccp -globalopt -constmerge -deadargelim -inline -prune-eh -globalopt -globaldce -argpromotion -instcombine -predsimplify -scalarrepl -globalsmodref-aa -licm -load-vn -gcse -dse -instcombine -simplifycfg -verify"
-# Here's an alternative list of optimizations comprising just the ones that 
-# gccld uses. To use, just comment out the line above, and uncomment this one
-#all_switches="-funcresolve -internalize -ipsccp -globalopt -constmerge -deadargelim -inline -prune-eh -globalopt -globaldce -argpromotion -instcombine -predsimplify -scalarrepl -globalsmodref-aa -licm -load-vn -gcse -dse -instcombine -simplifycfg -verify"
+# optimizations that opt -std-compile-opts and gccld run, in the same order.
+opt_switches=`llvm-as < /dev/null -o - | opt -std-compile-opts -disable-output -debug-pass=Arguments 2>&1 | sed 's/Pass Arguments: //'`
+gccld_switches="-internalize -ipsccp -globalopt -constmerge -deadargelim -inline -prune-eh -globalopt -globaldce -argpromotion -instcombine -predsimplify -scalarrepl -globalsmodref-aa -licm -load-vn -gcse -dse -instcombine -simplifycfg -verify"
+all_switches="$opt_switches $gccld_switches"
+echo "Passes : $all_switches"
 
 # Current set of switches is empty
 function tryit {
