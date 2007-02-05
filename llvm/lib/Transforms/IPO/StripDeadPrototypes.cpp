@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Compiler.h"
 #include <vector>
 using namespace llvm;
 
