@@ -139,12 +139,10 @@ namespace llvm {
         assert(0 && "Emission of 64-bit data not implemented yet!");
     }
 
-    std::vector<unsigned char>::reference
-    operator [] (unsigned Index) {
+    unsigned char &operator[](unsigned Index) {
       return Output[Index];
     }
-    std::vector<unsigned char>::const_reference
-    operator [] (unsigned Index) const {
+    const unsigned char &operator[](unsigned Index) const {
       return Output[Index];
     }
   };
