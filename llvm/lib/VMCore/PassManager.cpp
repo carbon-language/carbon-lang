@@ -377,6 +377,11 @@ void PMTopLevelManager::schedulePass(Pass *P) {
   // TODO : Allocate function manager for this pass, other wise required set
   // may be inserted into previous function manager
 
+  // If this Analysis is already requested by one of the previous pass
+  // and it is still available then do not insert new pass in the queue again.
+  if (findAnalysisPass(P->getPassInfo()))
+      return;
+
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
   const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
