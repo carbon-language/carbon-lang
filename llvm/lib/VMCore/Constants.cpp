@@ -554,10 +554,9 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
 
 bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
   unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth(); // assert okay
-  assert(NumBits <= 64 && "Not implemented: integers > 64-bits");
   if (Ty == Type::Int1Ty)
     return Val == 0 || Val == 1;
-  if (NumBits == 64)
+  if (NumBits >= 64)
     return true; // always true, has to fit in largest type
   uint64_t Max = (1ll << NumBits) - 1;
   return Val <= Max;
@@ -565,10 +564,9 @@ bool ConstantInt::isValueValidForType(const Type *Ty, uint64_t Val) {
 
 bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
   unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth(); // assert okay
-  assert(NumBits <= 64 && "Not implemented: integers > 64-bits");
   if (Ty == Type::Int1Ty)
     return Val == 0 || Val == 1 || Val == -1;
-  if (NumBits == 64)
+  if (NumBits >= 64)
     return true; // always true, has to fit in largest type
   int64_t Min = -(1ll << (NumBits-1));
   int64_t Max = (1ll << (NumBits-1)) - 1;
