@@ -1,5 +1,5 @@
 // RUN: %llvmgcc %s -O3 -S -o - -emit-llvm
-// PR1173
+// PR1176
 
 typedef struct
 {
