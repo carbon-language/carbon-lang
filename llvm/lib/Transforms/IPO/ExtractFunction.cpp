@@ -33,7 +33,7 @@ namespace {
 
     bool runOnModule(Module &M) {
       if (Named == 0) {
-        Named = M.getMainFunction();
+        Named = M.getFunction("main");
         if (Named == 0) return false;  // No function to extract
       }
       

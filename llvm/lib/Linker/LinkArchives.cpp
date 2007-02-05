@@ -43,7 +43,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
   // If the program doesn't define a main, try pulling one in from a .a file.
   // This is needed for programs where the main function is defined in an
   // archive, such f2c'd programs.
-  Function *Main = M->getMainFunction();
+  Function *Main = M->getFunction("main");
   if (Main == 0 || Main->isDeclaration())
     UndefinedSymbols.insert("main");
 

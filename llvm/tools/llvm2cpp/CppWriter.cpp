@@ -1544,7 +1544,7 @@ void CppWriter::printFunctionBody(const Function *F) {
 }
 
 void CppWriter::printInline(const std::string& fname, const std::string& func) {
-  const Function* F = TheModule->getNamedFunction(func);
+  const Function* F = TheModule->getFunction(func);
   if (!F) {
     error(std::string("Function '") + func + "' not found in input module");
     return;
@@ -1719,7 +1719,7 @@ void CppWriter::printFunction(
   const std::string& fname, // Name of generated function
   const std::string& funcName // Name of function to generate
 ) {
-  const Function* F = TheModule->getNamedFunction(funcName);
+  const Function* F = TheModule->getFunction(funcName);
   if (!F) {
     error(std::string("Function '") + funcName + "' not found in input module");
     return;

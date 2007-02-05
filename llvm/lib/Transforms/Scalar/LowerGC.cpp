@@ -98,9 +98,9 @@ const StructType *LowerGC::getRootRecordType(unsigned NumRoots) {
 /// doInitialization - If this module uses the GC intrinsics, find them now.  If
 /// not, this pass does not do anything.
 bool LowerGC::doInitialization(Module &M) {
-  GCRootInt  = M.getNamedFunction("llvm.gcroot");
-  GCReadInt  = M.getNamedFunction("llvm.gcread");
-  GCWriteInt = M.getNamedFunction("llvm.gcwrite");
+  GCRootInt  = M.getFunction("llvm.gcroot");
+  GCReadInt  = M.getFunction("llvm.gcread");
+  GCWriteInt = M.getFunction("llvm.gcwrite");
   if (!GCRootInt && !GCReadInt && !GCWriteInt) return false;
 
   PointerType *VoidPtr = PointerType::get(Type::Int8Ty);

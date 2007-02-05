@@ -103,7 +103,7 @@ int main(int argc, char **argv, char * const *envp) {
     // using the contents of Args to determine argc & argv, and the contents of
     // EnvVars to determine envp.
     //
-    Function *Fn = MP->getModule()->getMainFunction();
+    Function *Fn = MP->getModule()->getFunction("main");
     if (!Fn) {
       std::cerr << "'main' function not found in module.\n";
       return -1;

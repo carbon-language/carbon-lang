@@ -40,7 +40,7 @@ namespace {
 ModulePass *llvm::createEdgeProfilerPass() { return new EdgeProfiler(); }
 
 bool EdgeProfiler::runOnModule(Module &M) {
-  Function *Main = M.getMainFunction();
+  Function *Main = M.getFunction("main");
   if (Main == 0) {
     cerr << "WARNING: cannot insert edge profiling into a module"
          << " with no main function!\n";

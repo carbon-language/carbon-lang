@@ -94,11 +94,11 @@ bool StripSymbols::runOnModule(Module &M) {
   // Strip debug info in the module if it exists.  To do this, we remove
   // llvm.dbg.func.start, llvm.dbg.stoppoint, and llvm.dbg.region.end calls, and
   // any globals they point to if now dead.
-  Function *FuncStart = M.getNamedFunction("llvm.dbg.func.start");
-  Function *StopPoint = M.getNamedFunction("llvm.dbg.stoppoint");
-  Function *RegionStart = M.getNamedFunction("llvm.dbg.region.start");
-  Function *RegionEnd = M.getNamedFunction("llvm.dbg.region.end");
-  Function *Declare = M.getNamedFunction("llvm.dbg.declare");
+  Function *FuncStart = M.getFunction("llvm.dbg.func.start");
+  Function *StopPoint = M.getFunction("llvm.dbg.stoppoint");
+  Function *RegionStart = M.getFunction("llvm.dbg.region.start");
+  Function *RegionEnd = M.getFunction("llvm.dbg.region.end");
+  Function *Declare = M.getFunction("llvm.dbg.declare");
   if (!FuncStart && !StopPoint && !RegionStart && !RegionEnd && !Declare)
     return true;
 

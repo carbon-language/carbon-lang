@@ -95,7 +95,7 @@ bool InternalizePass::runOnModule(Module &M) {
   // internalize the module, it must be a library or something.
   //
   if (ExternalNames.empty()) {
-    Function *MainFunc = M.getMainFunction();
+    Function *MainFunc = M.getFunction("main");
     if (MainFunc == 0 || MainFunc->isDeclaration())
       return false;  // No main found, must be a library...
     

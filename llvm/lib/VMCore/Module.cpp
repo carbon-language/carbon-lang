@@ -142,7 +142,7 @@ Constant *Module::getOrInsertFunction(const std::string &Name,
   ValueSymbolTable &SymTab = getValueSymbolTable();
 
   // See if we have a definition for the specified function already.
-  Function *F = dyn_cast_or_null<Function>(SymTab.lookup(Name));
+  GlobalValue *F = dyn_cast_or_null<GlobalValue>(SymTab.lookup(Name));
   if (F == 0) {
     // Nope, add it
     Function *New = new Function(Ty, GlobalVariable::ExternalLinkage, Name);
@@ -160,7 +160,7 @@ Constant *Module::getOrInsertFunction(const std::string &Name,
 
   // If the function exists but has the wrong type, return a bitcast to the
   // right type.
-  if (F->getFunctionType() != Ty)
+  if (F->getType() != PointerType::get(Ty))
     return ConstantExpr::getBitCast(F, PointerType::get(Ty));
   
   // Otherwise, we just found the existing function or a prototype.

@@ -127,8 +127,8 @@ bool LowerSetJmp::runOnModule(Module& M) {
   bool Changed = false;
 
   // These are what the functions are called.
-  Function* SetJmp = M.getNamedFunction("llvm.setjmp");
-  Function* LongJmp = M.getNamedFunction("llvm.longjmp");
+  Function* SetJmp = M.getFunction("llvm.setjmp");
+  Function* LongJmp = M.getFunction("llvm.longjmp");
 
   // This program doesn't have longjmp and setjmp calls.
   if ((!LongJmp || LongJmp->use_empty()) &&

@@ -54,7 +54,7 @@ ExecutionEngine::~ExecutionEngine() {
 /// general code.
 Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
   for (unsigned i = 0, e = Modules.size(); i != e; ++i) {
-    if (Function *F = Modules[i]->getModule()->getNamedFunction(FnName))
+    if (Function *F = Modules[i]->getModule()->getFunction(FnName))
       return F;
   }
   return 0;

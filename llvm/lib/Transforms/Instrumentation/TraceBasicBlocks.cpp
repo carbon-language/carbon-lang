@@ -58,7 +58,7 @@ static void InsertInstrumentationCall (BasicBlock *BB,
 }
 
 bool TraceBasicBlocks::runOnModule(Module &M) {
-  Function *Main = M.getMainFunction();
+  Function *Main = M.getFunction("main");
   if (Main == 0) {
     cerr << "WARNING: cannot insert basic-block trace instrumentation"
          << " into a module with no main function!\n";

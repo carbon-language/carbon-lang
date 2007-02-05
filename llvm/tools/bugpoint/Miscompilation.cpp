@@ -639,7 +639,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   // First, if the main function is in the Safe module, we must add a stub to
   // the Test module to call into it.  Thus, we create a new function `main'
   // which just calls the old one.
-  if (Function *oldMain = Safe->getNamedFunction("main"))
+  if (Function *oldMain = Safe->getFunction("main"))
     if (!oldMain->isDeclaration()) {
       // Rename it
       oldMain->setName("llvm_bugpoint_old_main");
@@ -685,7 +685,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {
     if (F->isDeclaration() && !F->use_empty() && &*F != resolverFunc &&
         F->getIntrinsicID() == 0 /* ignore intrinsics */) {
-      Function *TestFn = Test->getNamedFunction(F->getName());
+      Function *TestFn = Test->getFunction(F->getName());
 
       // Don't forward functions which are external in the test module too.
       if (TestFn && !TestFn->isDeclaration()) {

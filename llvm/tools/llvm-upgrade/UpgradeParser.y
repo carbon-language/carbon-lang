@@ -569,7 +569,7 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
             if (const FunctionType *FTy =
               dyn_cast<FunctionType>(PTy->getElementType()))
               if (Function *OtherF =
-                CurModule.CurrentModule->getNamedFunction(DID.getName()))
+                CurModule.CurrentModule->getFunction(DID.getName()))
                 if (FuncTysDifferOnlyBySRet(FTy,OtherF->getFunctionType())) {
                   V->replaceAllUsesWith(ConstantExpr::getBitCast(OtherF, PTy));
                   fixed = true;
@@ -1317,10 +1317,10 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
   //Not all functions use vaarg, so make a second check for ObsoleteVarArgs
   {
     Function* F;
-    if ((F = Result->getNamedFunction("llvm.va_start"))
+    if ((F = Result->getFunction("llvm.va_start"))
         && F->getFunctionType()->getNumParams() == 0)
       ObsoleteVarArgs = true;
-    if((F = Result->getNamedFunction("llvm.va_copy"))
+    if((F = Result->getFunction("llvm.va_copy"))
        && F->getFunctionType()->getNumParams() == 1)
       ObsoleteVarArgs = true;
   }
@@ -1331,7 +1331,7 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
   }
 
   if(ObsoleteVarArgs) {
-    if(Function* F = Result->getNamedFunction("llvm.va_start")) {
+    if(Function* F = Result->getFunction("llvm.va_start")) {
       if (F->arg_size() != 0) {
         error("Obsolete va_start takes 0 argument");
         return 0;
@@ -1360,7 +1360,7 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
       Result->getFunctionList().erase(F);
     }
     
-    if(Function* F = Result->getNamedFunction("llvm.va_end")) {
+    if(Function* F = Result->getFunction("llvm.va_end")) {
       if(F->arg_size() != 1) {
         error("Obsolete va_end takes 1 argument");
         return 0;
@@ -1386,7 +1386,7 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
       Result->getFunctionList().erase(F);
     }
 
-    if(Function* F = Result->getNamedFunction("llvm.va_copy")) {
+    if(Function* F = Result->getFunction("llvm.va_copy")) {
       if(F->arg_size() != 1) {
         error("Obsolete va_copy takes 1 argument");
         return 0;
