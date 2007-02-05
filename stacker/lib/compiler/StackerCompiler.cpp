@@ -678,7 +678,7 @@ StackerCompiler::handle_definition( char * name, Function* f )
     // Look up the function name in the module to see if it was forward
     // declared.
 #if 0
-    Function* existing_function = TheModule->getNamedFunction( name );
+    Function* existing_function = TheModule->getFunction( name );
 
     // If the function already exists...
     if ( existing_function )
@@ -742,7 +742,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
 
     // Fill the true block
     std::vector<Value*> args;
-    if ( Function* true_func = TheModule->getNamedFunction(ifTrue) )
+    if ( Function* true_func = TheModule->getFunction(ifTrue) )
     {
         true_bb->getInstList().push_back(
                 new CallInst( true_func, args ) );
@@ -760,7 +760,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
     // Fill the false block
     if ( false_bb )
     {
-        if ( Function* false_func = TheModule->getNamedFunction(ifFalse) )
+        if ( Function* false_func = TheModule->getFunction(ifFalse) )
         {
             false_bb->getInstList().push_back(
                     new CallInst( false_func, args ) );
@@ -815,7 +815,7 @@ StackerCompiler::handle_while( char* todo )
 
     // Fill in the body
     std::vector<Value*> args;
-    if ( Function* body_func = TheModule->getNamedFunction(todo) )
+    if ( Function* body_func = TheModule->getFunction(todo) )
     {
         body->getInstList().push_back( new CallInst( body_func, args ) );
         body->getInstList().push_back( new BranchInst( test ) );
@@ -839,7 +839,7 @@ StackerCompiler::handle_while( char* todo )
 BasicBlock*
 StackerCompiler::handle_identifier( char * name )
 {
-    Function* func = TheModule->getNamedFunction( name );
+    Function* func = TheModule->getFunction( name );
     BasicBlock* bb = new BasicBlock((echo?"call":""));
     if ( func )
     {
