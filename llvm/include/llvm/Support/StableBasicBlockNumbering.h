@@ -18,18 +18,13 @@
 #define LLVM_SUPPORT_STABLEBASICBLOCKNUMBERING_H
 
 #include "llvm/Function.h"
-#include <map>
+#include "llvm/ADT/UniqueVector.h"
 
 namespace llvm {
   class StableBasicBlockNumbering {
-    // BasicBlockNumbering - Holds a numbering of the basic blocks in the
-    // function in a stable order that does not depend on their address.
-    std::map<BasicBlock*, unsigned> BasicBlockNumbering;
-
-    // NumberedBasicBlock - Holds the inverse mapping of BasicBlockNumbering.
-    std::vector<BasicBlock*> NumberedBasicBlock;
+    // BBNumbering - Holds the numbering.
+    UniqueVector<BasicBlock*> BBNumbering;
   public:
-
     StableBasicBlockNumbering(Function *F = 0) {
       if (F) compute(*F);
     }
@@ -37,33 +32,27 @@ namespace llvm {
     /// compute - If we have not computed a numbering for the function yet, do
     /// so.
     void compute(Function &F) {
-      if (NumberedBasicBlock.empty()) {
-        unsigned n = 0;
-        for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I, ++n) {
-          NumberedBasicBlock.push_back(I);
-          BasicBlockNumbering[I] = n;
-        }
+      if (BBNumbering.empty()) {
+        for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+          BBNumbering.insert(I);
       }
     }
 
     /// getNumber - Return the ID number for the specified BasicBlock.
     ///
     unsigned getNumber(BasicBlock *BB) const {
-      std::map<BasicBlock*, unsigned>::const_iterator I =
-        BasicBlockNumbering.find(BB);
-      assert(I != BasicBlockNumbering.end() &&
-             "Invalid basic block or numbering not computed!");
-      return I->second;
+      unsigned Idx = BBNumbering.idFor(BB);
+      assert(Idx && "Invalid basic block or numbering not computed!");
+      return Idx-1;
     }
 
     /// getBlock - Return the BasicBlock corresponding to a particular ID.
     ///
     BasicBlock *getBlock(unsigned N) const {
-      assert(N < NumberedBasicBlock.size() &&
+      assert(N < BBNumbering.size() &&
              "Block ID out of range or numbering not computed!");
-      return NumberedBasicBlock[N];
+      return BBNumbering[N+1];
     }
-
   };
 }
 
