@@ -797,6 +797,33 @@ rarely be a benefit) or if you will be allocating many instances of the vector
 itself (which would waste space for elements that aren't in the container).
 vector is also useful when interfacing with code that expects vectors :).
 </p>
+
+<p>One worthwhile note about std::vector: avoid code like this:</p>
+
+<div class="doc_code">
+<pre>
+for ( ... ) {
+   std::vector<foo> V;
+   use V;
+}
+</pre>
+</div>
+
+<p>Instead, write this as:</p>
+
+<div class="doc_code">
+<pre>
+std::vector<foo> V;
+for ( ... ) {
+   use V;
+   V.clear();
+}
+</pre>
+</div>
+
+<p>Doing so will save (at least) one heap allocation and free per iteration of
+the loop.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
