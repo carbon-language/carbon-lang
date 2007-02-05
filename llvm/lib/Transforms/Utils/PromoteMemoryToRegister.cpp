@@ -23,11 +23,11 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/StableBasicBlockNumbering.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
 using namespace llvm;
@@ -88,7 +88,7 @@ namespace {
 
     /// BBNumbers - Contains a stable numbering of basic blocks to avoid
     /// non-determinstic behavior.
-    StableBasicBlockNumbering BBNumbers;
+    DenseMap<BasicBlock*, unsigned> BBNumbers;
 
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A,
@@ -265,7 +265,11 @@ void PromoteMem2Reg::run() {
 
     // If we haven't computed a numbering for the BB's in the function, do so
     // now.
-    BBNumbers.compute(F);
+    if (BBNumbers.empty()) {
+      unsigned ID = 0;
+      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+        BBNumbers[I] = ID++;
+    }
 
     // Compute the locations where PhiNodes need to be inserted.  Look at the
     // dominance frontier of EACH basic-block we have a write in.
@@ -289,7 +293,7 @@ void PromoteMem2Reg::run() {
         // processing blocks in order of the occurance in the function.
         for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
              PE = S.end(); P != PE; ++P)
-          DFBlocks.push_back(std::make_pair(BBNumbers.getNumber(*P), *P));
+          DFBlocks.push_back(std::make_pair(BBNumbers[*P], *P));
 
         // Sort by which the block ordering in the function.
         std::sort(DFBlocks.begin(), DFBlocks.end());
