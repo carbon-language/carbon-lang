@@ -839,9 +839,19 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) {
   } else if (!strcmp(Code, "uid")) {
     // Assign a unique ID to this machine instruction.
     static const MachineInstr *LastMI = 0;
+    static const Function *F = 0;
     static unsigned Counter = 0U-1;
+
+    // Comparing the address of MI isn't sufficient, because machineinstrs may
+    // be allocated to the same address across functions.
+    const Function *ThisF = MI->getParent()->getParent()->getFunction();
+    
     // If this is a new machine instruction, bump the counter.
-    if (LastMI != MI) { ++Counter; LastMI = MI; }
+    if (LastMI != MI || F != ThisF) {
+      ++Counter;
+      LastMI = MI;
+      ThisF = F;
+    }
     O << Counter;
   } else {
     cerr << "Unknown special formatter '" << Code
