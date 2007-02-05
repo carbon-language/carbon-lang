@@ -23,6 +23,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/StableBasicBlockNumbering.h"
@@ -57,7 +58,7 @@ namespace {
     /// Allocas - The alloca instructions being promoted.
     ///
     std::vector<AllocaInst*> Allocas;
-    std::vector<AllocaInst*> &RetryList;
+    SmallVector<AllocaInst*, 16> &RetryList;
     DominatorTree &DT;
     DominanceFrontier &DF;
     const TargetData &TD;
@@ -90,7 +91,7 @@ namespace {
 
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A,
-                   std::vector<AllocaInst*> &Retry, DominatorTree &dt,
+                   SmallVector<AllocaInst*, 16> &Retry, DominatorTree &dt,
                    DominanceFrontier &df, const TargetData &td,
                    AliasSetTracker *ast)
       : Allocas(A), RetryList(Retry), DT(dt), DF(df), TD(td), AST(ast) {}
@@ -736,11 +737,12 @@ void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
 
-  std::vector<AllocaInst*> RetryList;
+  SmallVector<AllocaInst*, 16> RetryList;
   PromoteMem2Reg(Allocas, RetryList, DT, DF, TD, AST).run();
 
   // PromoteMem2Reg may not have been able to promote all of the allocas in one
   // pass, run it again if needed.
+  std::vector<AllocaInst*> NewAllocas;
   while (!RetryList.empty()) {
     // If we need to retry some allocas, this is due to there being no store
     // before a read in a local block.  To counteract this, insert a store of
@@ -752,8 +754,9 @@ void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                     RetryList[i], ++BBI);
     }
 
-    std::vector<AllocaInst*> NewAllocas;
-    std::swap(NewAllocas, RetryList);
+    NewAllocas.assign(RetryList.begin(), RetryList.end());
+    RetryList.clear();
     PromoteMem2Reg(NewAllocas, RetryList, DT, DF, TD, AST).run();
+    NewAllocas.clear();
   }
 }
