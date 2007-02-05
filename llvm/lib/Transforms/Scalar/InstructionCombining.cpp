@@ -5647,12 +5647,12 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     if (ShiftAmt1 == ShiftAmt2) {
       // If we have ((X >>? C) << C), turn this into X & (-1 << C).
       if (I.getOpcode() == Instruction::Shl) {
-        uint64_t Mask = -1ULL << ShiftAmt1;
+        uint64_t Mask = Ty->getBitMask() << ShiftAmt1;
         return BinaryOperator::createAnd(X, ConstantInt::get(Ty, Mask));
       }
       // If we have ((X << C) >>u C), turn this into X & (-1 >>u C).
       if (I.getOpcode() == Instruction::LShr) {
-        uint64_t Mask = -1ULL >> ShiftAmt1;
+        uint64_t Mask = Ty->getBitMask() >> ShiftAmt1;
         return BinaryOperator::createAnd(X, ConstantInt::get(Ty, Mask));
       }
       // We can simplify ((X << C) >>s C) into a trunc + sext.
