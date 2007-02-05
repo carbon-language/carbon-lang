@@ -110,4 +110,10 @@ srpm: $(LLVM_OBJ_ROOT)/llvm.spec
 rpm: $(LLVM_OBJ_ROOT)/llvm.spec 
 	rpmbuild -bb --target $(TARGET_TRIPLE) $(LLVM_OBJ_ROOT)/llvm.spec
 
+show-footprint:
+	$(Verb) du -sk $(LibDir)
+	$(Verb) du -sk $(ToolDir)
+	$(Verb) du -sk $(ExmplDir)
+	$(Verb) du -sk $(ObjDir)
+
 .PHONY: srpm rpm
