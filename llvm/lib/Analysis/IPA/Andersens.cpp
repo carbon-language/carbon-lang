@@ -55,6 +55,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -71,8 +72,8 @@ STATISTIC(NumEscapingFunctions, "Number of internal functions that escape");
 STATISTIC(NumIndirectCallees  , "Number of indirect callees found");
 
 namespace {
-  class Andersens : public ModulePass, public AliasAnalysis,
-                    private InstVisitor<Andersens> {
+  class VISIBILITY_HIDDEN Andersens : public ModulePass, public AliasAnalysis,
+                                      private InstVisitor<Andersens> {
     /// Node class - This class is used to represent a memory object in the
     /// program, and is the primitive used to build the points-to graph.
     class Node {

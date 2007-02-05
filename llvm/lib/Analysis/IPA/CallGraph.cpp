@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
 #include <ostream>
 using namespace llvm;
@@ -35,7 +36,7 @@ namespace {
 //===----------------------------------------------------------------------===//
 // BasicCallGraph class definition
 //
-class BasicCallGraph : public CallGraph, public ModulePass {
+class VISIBILITY_HIDDEN BasicCallGraph : public CallGraph, public ModulePass {
   // Root is root of the call graph, or the external node if a 'main' function
   // couldn't be found.
   //

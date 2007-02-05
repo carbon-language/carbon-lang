@@ -31,6 +31,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetData.h"
 #include <set>
 #include <algorithm>
@@ -38,7 +39,7 @@ using namespace llvm;
 
 namespace {
   // FIXME: This should not be a FunctionPass.
-  struct LoadVN : public FunctionPass, public ValueNumbering {
+  struct VISIBILITY_HIDDEN LoadVN : public FunctionPass, public ValueNumbering {
 
     /// Pass Implementation stuff.  This doesn't do any analysis.
     ///

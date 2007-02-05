@@ -16,6 +16,7 @@
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include <set>
 using namespace llvm;
 
@@ -82,7 +83,8 @@ unsigned ProfileInfo::getExecutionCount(BasicBlock *BB) const {
 //
 
 namespace {
-  struct NoProfileInfo : public ImmutablePass, public ProfileInfo {};
+  struct VISIBILITY_HIDDEN NoProfileInfo 
+    : public ImmutablePass, public ProfileInfo {};
 
   // Register this pass...
   RegisterPass<NoProfileInfo>

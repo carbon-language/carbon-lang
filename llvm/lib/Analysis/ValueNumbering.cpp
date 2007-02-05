@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 // Register the ValueNumbering interface, providing a nice name to refer to.
@@ -48,7 +49,8 @@ namespace {
   /// lexically identical expressions.  This does not require any ahead of time
   /// analysis, so it is a very fast default implementation.
   ///
-  struct BasicVN : public ImmutablePass, public ValueNumbering {
+  struct VISIBILITY_HIDDEN BasicVN 
+      : public ImmutablePass, public ValueNumbering {
     /// getEqualNumberNodes - Return nodes with the same value number as the
     /// specified Value.  This fills in the argument vector with any equal
     /// values.
@@ -69,7 +71,7 @@ namespace {
   /// BVNImpl - Implement BasicVN in terms of a visitor class that
   /// handles the different types of instructions as appropriate.
   ///
-  struct BVNImpl : public InstVisitor<BVNImpl> {
+  struct VISIBILITY_HIDDEN BVNImpl : public InstVisitor<BVNImpl> {
     std::vector<Value*> &RetVals;
     BVNImpl(std::vector<Value*> &RV) : RetVals(RV) {}
 

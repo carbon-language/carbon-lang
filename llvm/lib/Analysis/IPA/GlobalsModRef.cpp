@@ -23,8 +23,9 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Support/InstIterator.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SCCIterator.h"
 #include <set>
@@ -42,7 +43,7 @@ namespace {
   /// function in the program.  Later, the entries for these functions are
   /// removed if the function is found to call an external function (in which
   /// case we know nothing about it.
-  struct FunctionRecord {
+  struct VISIBILITY_HIDDEN FunctionRecord {
     /// GlobalInfo - Maintain mod/ref info for all of the globals without
     /// addresses taken that are read or written (transitively) by this
     /// function.
@@ -63,7 +64,8 @@ namespace {
   };
 
   /// GlobalsModRef - The actual analysis pass.
-  class GlobalsModRef : public ModulePass, public AliasAnalysis {
+  class VISIBILITY_HIDDEN GlobalsModRef 
+      : public ModulePass, public AliasAnalysis {
     /// NonAddressTakenGlobals - The globals that do not have their addresses
     /// taken.
     std::set<GlobalValue*> NonAddressTakenGlobals;

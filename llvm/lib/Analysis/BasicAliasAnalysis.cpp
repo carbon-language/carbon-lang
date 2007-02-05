@@ -745,7 +745,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
 }
 
 namespace {
-  struct StringCompare {
+  struct VISIBILITY_HIDDEN StringCompare {
     bool operator()(const char *LHS, const char *RHS) {
       return strcmp(LHS, RHS) < 0;
     }

@@ -18,6 +18,7 @@
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
@@ -551,7 +552,7 @@ void AliasSetTracker::dump() const { print(cerr); }
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class AliasSetPrinter : public FunctionPass {
+  class VISIBILITY_HIDDEN AliasSetPrinter : public FunctionPass {
     AliasSetTracker *Tracker;
   public:
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

@@ -15,6 +15,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/Statistic.h"
@@ -33,7 +34,8 @@ STATISTIC(TotalMemInst, "Number of memory instructions");
 
 
 namespace {
-  class InstCount : public FunctionPass, public InstVisitor<InstCount> {
+  class VISIBILITY_HIDDEN InstCount 
+      : public FunctionPass, public InstVisitor<InstCount> {
     friend class InstVisitor<InstCount>;
 
     void visitFunction  (Function &F) { ++TotalFuncs; }

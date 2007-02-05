@@ -19,6 +19,7 @@
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
 
@@ -28,7 +29,7 @@ namespace {
                       cl::value_desc("filename"),
                       cl::desc("Profile file loaded by -profile-loader"));
 
-  class LoaderPass : public ModulePass, public ProfileInfo {
+  class VISIBILITY_HIDDEN LoaderPass : public ModulePass, public ProfileInfo {
     std::string Filename;
   public:
     LoaderPass(const std::string &filename = "")

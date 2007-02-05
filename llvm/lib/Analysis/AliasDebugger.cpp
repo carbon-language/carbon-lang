@@ -23,12 +23,14 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Support/Compiler.h"
 #include <set>
 using namespace llvm;
 
 namespace {
   
-  class AliasDebugger : public ModulePass, public AliasAnalysis {
+  class VISIBILITY_HIDDEN AliasDebugger 
+      : public ModulePass, public AliasAnalysis {
 
     //What we do is simple.  Keep track of every value the AA could
     //know about, and verify that queries are one of those.

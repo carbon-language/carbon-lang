@@ -23,6 +23,7 @@
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Config/config.h"
 #include <iosfwd>
@@ -89,7 +90,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 }
 
 namespace {
-  struct CFGPrinter : public FunctionPass {
+  struct VISIBILITY_HIDDEN CFGPrinter : public FunctionPass {
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getName() + ".dot";
       cerr << "Writing '" << Filename << "'...";
@@ -113,7 +114,7 @@ namespace {
   RegisterPass<CFGPrinter> P1("print-cfg",
                               "Print CFG of function to 'dot' file");
 
-  struct CFGOnlyPrinter : public CFGPrinter {
+  struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
     virtual bool runOnFunction(Function &F) {
       bool OldCFGOnly = CFGOnly;
       CFGOnly = true;
