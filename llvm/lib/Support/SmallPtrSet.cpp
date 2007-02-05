@@ -56,7 +56,7 @@ bool SmallPtrSetImpl::erase(void *Ptr) {
         // Clear the end element.
         E[-1] = getEmptyMarker();
         --NumElements;
-        return false;
+        return true;
       }
     
     return false;
