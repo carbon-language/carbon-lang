@@ -5430,8 +5430,6 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
 Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                                BinaryOperator &I) {
   bool isLeftShift    = I.getOpcode() == Instruction::Shl;
-  bool isSignedShift  = I.getOpcode() == Instruction::AShr;
-  bool isUnsignedShift = !isSignedShift;
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
@@ -5585,7 +5583,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         // the constant which would cause it to be modified for this
         // operation.
         //
-        if (isValid && !isLeftShift && isSignedShift) {
+        if (isValid && !isLeftShift && I.getOpcode() == Instruction::AShr) {
           uint64_t Val = Op0C->getZExtValue();
           isValid = ((Val & (1 << (TypeBits-1))) != 0) == highBitSet;
         }
@@ -5612,93 +5610,124 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     ShiftOp = 0;
   
   if (ShiftOp && isa<ConstantInt>(ShiftOp->getOperand(1))) {
-    // Find the operands and properties of the input shift.  Note that the
-    // signedness of the input shift may differ from the current shift if there
-    // is a noop cast between the two.
-    bool isShiftOfLeftShift   = ShiftOp->getOpcode() == Instruction::Shl;
-    bool isShiftOfSignedShift = ShiftOp->getOpcode() == Instruction::AShr;
-    bool isShiftOfUnsignedShift = !isShiftOfSignedShift;
-    
     ConstantInt *ShiftAmt1C = cast<ConstantInt>(ShiftOp->getOperand(1));
-
     unsigned ShiftAmt1 = (unsigned)ShiftAmt1C->getZExtValue();
     unsigned ShiftAmt2 = (unsigned)Op1->getZExtValue();
+    assert(ShiftAmt2 != 0 && "Should have been simplified earlier");
+    if (ShiftAmt1 == 0) return 0;  // Will be simplified in the future.
+    Value *X = ShiftOp->getOperand(0);
     
-    // Check for (A << c1) << c2   and   (A >> c1) >> c2.
+    unsigned AmtSum = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
+    if (AmtSum > I.getType()->getPrimitiveSizeInBits())
+      AmtSum = I.getType()->getPrimitiveSizeInBits();
+    
+    const IntegerType *Ty = cast<IntegerType>(I.getType());
+    
+    // Check for (X << c1) << c2  and  (X >> c1) >> c2
     if (I.getOpcode() == ShiftOp->getOpcode()) {
-      unsigned Amt = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
-      if (Amt > Op0->getType()->getPrimitiveSizeInBits())
-        Amt = Op0->getType()->getPrimitiveSizeInBits();
-      
-      Value *Op = ShiftOp->getOperand(0);
-      return BinaryOperator::create(I.getOpcode(), Op, 
-                                    ConstantInt::get(Op->getType(), Amt));
+      return BinaryOperator::create(I.getOpcode(), X,
+                                    ConstantInt::get(Ty, AmtSum));
+    } else if (ShiftOp->getOpcode() == Instruction::LShr &&
+               I.getOpcode() == Instruction::AShr) {
+      // ((X >>u C1) >>s C2) -> (X >>u (C1+C2))  since C1 != 0.
+      return BinaryOperator::createLShr(X, ConstantInt::get(Ty, AmtSum));
+    } else if (ShiftOp->getOpcode() == Instruction::AShr &&
+               I.getOpcode() == Instruction::LShr) {
+      // ((X >>s C1) >>u C2) -> ((X >>s (C1+C2)) & mask) since C1 != 0.
+      Instruction *Shift =
+        BinaryOperator::createAShr(X, ConstantInt::get(Ty, AmtSum));
+      InsertNewInstBefore(Shift, I);
+
+      uint64_t Mask = Ty->getBitMask() >> ShiftAmt2;
+      return BinaryOperator::createAnd(Shift, ConstantInt::get(Ty, Mask));
     }
     
-    // Check for (A << c1) >> c2 or (A >> c1) << c2.  If we are dealing with
-    // signed types, we can only support the (A >> c1) << c2 configuration,
-    // because it can not turn an arbitrary bit of A into a sign bit.
-    if (isUnsignedShift || isLeftShift) {
-      // Calculate bitmask for what gets shifted off the edge.
-      Constant *C = ConstantInt::getAllOnesValue(I.getType());
-      if (isLeftShift)
-        C = ConstantExpr::getShl(C, ShiftAmt1C);
-      else
-        C = ConstantExpr::getLShr(C, ShiftAmt1C);
+    // Okay, if we get here, one shift must be left, and the other shift must be
+    // right.  See if the amounts are equal.
+    if (ShiftAmt1 == ShiftAmt2) {
+      // If we have ((X >>? C) << C), turn this into X & (-1 << C).
+      if (I.getOpcode() == Instruction::Shl) {
+        uint64_t Mask = -1ULL << ShiftAmt1;
+        return BinaryOperator::createAnd(X, ConstantInt::get(Ty, Mask));
+      }
+      // If we have ((X << C) >>u C), turn this into X & (-1 >>u C).
+      if (I.getOpcode() == Instruction::LShr) {
+        uint64_t Mask = -1ULL >> ShiftAmt1;
+        return BinaryOperator::createAnd(X, ConstantInt::get(Ty, Mask));
+      }
+      // We can simplify ((X << C) >>s C) into a trunc + sext.
+      // NOTE: we could do this for any C, but that would make 'unusual' integer
+      // types.  For now, just stick to ones well-supported by the code
+      // generators.
+      const Type *SExtType = 0;
+      switch (Ty->getBitWidth() - ShiftAmt1) {
+      case 8 : SExtType = Type::Int8Ty; break;
+      case 16: SExtType = Type::Int16Ty; break;
+      case 32: SExtType = Type::Int32Ty; break;
+      default: break;
+      }
+      if (SExtType) {
+        Instruction *NewTrunc = new TruncInst(X, SExtType, "sext");
+        InsertNewInstBefore(NewTrunc, I);
+        return new SExtInst(NewTrunc, Ty);
+      }
+      // Otherwise, we can't handle it yet.
+    } else if (ShiftAmt1 < ShiftAmt2) {
+      unsigned ShiftDiff = ShiftAmt2-ShiftAmt1;
       
-      Value *Op = ShiftOp->getOperand(0);
-      
-      Instruction *Mask =
-        BinaryOperator::createAnd(Op, C, Op->getName()+".mask");
-      InsertNewInstBefore(Mask, I);
-      
-      // Figure out what flavor of shift we should use...
-      if (ShiftAmt1 == ShiftAmt2) {
-        return ReplaceInstUsesWith(I, Mask);  // (A << c) >> c  === A & c2
-      } else if (ShiftAmt1 < ShiftAmt2) {
-        return BinaryOperator::create(I.getOpcode(), Mask,
-                                      ConstantInt::get(Mask->getType(), 
-                                                       ShiftAmt2-ShiftAmt1));
-      } else if (isShiftOfUnsignedShift || isShiftOfLeftShift) {
-        if (isShiftOfUnsignedShift && !isShiftOfLeftShift && isSignedShift) {
-          return BinaryOperator::createLShr(Mask, 
-                                        ConstantInt::get(Mask->getType(), 
-                                                         ShiftAmt1-ShiftAmt2));
-        } else {
-          return BinaryOperator::create(ShiftOp->getOpcode(), Mask,
-                                        ConstantInt::get(Mask->getType(), 
-                                                         ShiftAmt1-ShiftAmt2));
-        }
-      } else {
-        // (X >>s C1) << C2  where C1 > C2  === (X >>s (C1-C2)) & mask
+      // (X >>? C1) << C2 --> X << (C2-C1) & (-1 << C1)
+      if (I.getOpcode() == Instruction::Shl) {
+        assert(ShiftOp->getOpcode() == Instruction::LShr ||
+               ShiftOp->getOpcode() == Instruction::AShr);
         Instruction *Shift =
-          BinaryOperator::create(ShiftOp->getOpcode(), Mask,
-                                 ConstantInt::get(Mask->getType(), 
-                                                  ShiftAmt1-ShiftAmt2));
+          BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        C = ConstantInt::getAllOnesValue(Shift->getType());
-        C = ConstantExpr::getShl(C, Op1);
-        return BinaryOperator::createAnd(Shift, C, Op->getName()+".mask");
+        uint64_t Mask = Ty->getBitMask() << ShiftAmt1;
+        return BinaryOperator::createAnd(Shift, ConstantInt::get(Ty, Mask));
       }
-    } else {
-      // We can handle signed (X << C1) >>s C2 if it's a sign extend.  In
-      // this case, C1 == C2 and C1 is 8, 16, or 32.
-      if (ShiftAmt1 == ShiftAmt2) {
-        const Type *SExtType = 0;
-        switch (Op0->getType()->getPrimitiveSizeInBits() - ShiftAmt1) {
-        case 8 : SExtType = Type::Int8Ty; break;
-        case 16: SExtType = Type::Int16Ty; break;
-        case 32: SExtType = Type::Int32Ty; break;
-        }
+      
+      // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C1)
+      if (I.getOpcode() == Instruction::LShr) {
+        assert(ShiftOp->getOpcode() == Instruction::Shl);
+        Instruction *Shift =
+          BinaryOperator::createLShr(X, ConstantInt::get(Ty, ShiftDiff));
+        InsertNewInstBefore(Shift, I);
         
-        if (SExtType) {
-          Instruction *NewTrunc = 
-            new TruncInst(ShiftOp->getOperand(0), SExtType, "sext");
-          InsertNewInstBefore(NewTrunc, I);
-          return new SExtInst(NewTrunc, I.getType());
-        }
+        uint64_t Mask = Ty->getBitMask() >> ShiftAmt1;
+        return BinaryOperator::createAnd(Shift, ConstantInt::get(Ty, Mask));
       }
+      
+      // We can't handle (X << C1) >>s C2, it shifts arbitrary bits in.
+    } else {
+      assert(ShiftAmt2 < ShiftAmt1);
+      unsigned ShiftDiff = ShiftAmt1-ShiftAmt2;
+
+      // (X >>? C1) << C2 --> X >>? (C1-C2) & (-1 << C1)
+      if (I.getOpcode() == Instruction::Shl) {
+        assert(ShiftOp->getOpcode() == Instruction::LShr ||
+               ShiftOp->getOpcode() == Instruction::AShr);
+        Instruction *Shift =
+          BinaryOperator::create(ShiftOp->getOpcode(), X,
+                                 ConstantInt::get(Ty, ShiftDiff));
+        InsertNewInstBefore(Shift, I);
+        
+        uint64_t Mask = Ty->getBitMask() << ShiftAmt2;
+        return BinaryOperator::createAnd(Shift, ConstantInt::get(Ty, Mask));
+      }
+      
+      // (X << C1) >>u C2  --> X << (C1-C2) & (-1 >> C1)
+      if (I.getOpcode() == Instruction::LShr) {
+        assert(ShiftOp->getOpcode() == Instruction::Shl);
+        Instruction *Shift =
+          BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
+        InsertNewInstBefore(Shift, I);
+        
+        uint64_t Mask = Ty->getBitMask() >> ShiftAmt2;
+        return BinaryOperator::createAnd(Shift, ConstantInt::get(Ty, Mask));
+      }
+      
+      // We can't handle (X << C1) >>a C2, it shifts arbitrary bits in.
     }
   }
   return 0;
