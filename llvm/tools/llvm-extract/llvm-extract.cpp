@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     }
 
     // Figure out which function we should extract
-    Function *F = M.get()->getNamedFunction(ExtractFunc);
+    Function *F = M.get()->getFunction(ExtractFunc);
     if (F == 0) {
       cerr << argv[0] << ": program doesn't contain function named '"
            << ExtractFunc << "'!\n";
@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
     if (!DeleteFn)
       Passes.add(createGlobalDCEPass());           // Delete unreachable globals
     Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
+    Passes.add(createStripDeadPrototypesPass());   // Remove dead func decls
 
     std::ostream *Out = 0;
 
