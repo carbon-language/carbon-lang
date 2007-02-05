@@ -295,8 +295,10 @@ static inline void getTypeInfoABI(const Type *Ty, const TargetData *TD,
       Size = 4; Alignment = TD->getIntABIAlignment();
     } else if (BitWidth <= 64) {
       Size = 8; Alignment = TD->getLongABIAlignment();
-    } else
-      assert(0 && "Integer types > 64 bits not supported.");
+    } else {
+      Size = ((BitWidth + 7) / 8) & ~1;
+      Alignment = TD->getLongABIAlignment();
+    }
     return;
   }
   case Type::VoidTyID:   Size = 1; Alignment = TD->getByteABIAlignment(); return;
