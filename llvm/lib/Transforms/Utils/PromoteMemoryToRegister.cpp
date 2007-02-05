@@ -23,6 +23,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CFG.h"
@@ -114,7 +115,7 @@ namespace {
 
   private:
     void MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
-                               std::set<PHINode*> &DeadPHINodes);
+                               SmallPtrSet<PHINode*, 16> &DeadPHINodes);
     bool PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI);
     void PromoteLocallyUsedAllocas(BasicBlock *BB,
                                    const std::vector<AllocaInst*> &AIs);
@@ -122,7 +123,7 @@ namespace {
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
                     std::vector<Value*> &IncVals);
     bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version,
-                      std::set<PHINode*> &InsertedPHINodes);
+                      SmallPtrSet<PHINode*, 16> &InsertedPHINodes);
   };
 }  // end of anonymous namespace
 
@@ -270,7 +271,7 @@ void PromoteMem2Reg::run() {
     // dominance frontier of EACH basic-block we have a write in.
     //
     unsigned CurrentVersion = 0;
-    std::set<PHINode*> InsertedPHINodes;
+    SmallPtrSet<PHINode*, 16> InsertedPHINodes;
     std::vector<unsigned> DFBlocks;
     while (!DefiningBlocks.empty()) {
       BasicBlock *BB = DefiningBlocks.back();
@@ -314,7 +315,7 @@ void PromoteMem2Reg::run() {
     UsingBlocks.clear();
 
     // If there are any PHI nodes which are now known to be dead, remove them!
-    for (std::set<PHINode*>::iterator I = InsertedPHINodes.begin(),
+    for (SmallPtrSet<PHINode*, 16>::iterator I = InsertedPHINodes.begin(),
            E = InsertedPHINodes.end(); I != E; ++I) {
       PHINode *PN = *I;
       std::vector<PHINode*> &BBPNs = NewPhiNodes[PN->getParent()];
@@ -408,7 +409,7 @@ void PromoteMem2Reg::run() {
       for (unsigned i = 0, e = PNs.size(); i != e; ++i) {
         if (!PNs[i]) continue;
 
-        // If this PHI node merges  one value and/or undefs, get the value.
+        // If this PHI node merges one value and/or undefs, get the value.
         if (Value *V = PNs[i]->hasConstantValue(true)) {
           if (!isa<Instruction>(V) ||
               properlyDominates(cast<Instruction>(V), PNs[i])) {
@@ -426,8 +427,8 @@ void PromoteMem2Reg::run() {
   }
   
   // At this point, the renamer has added entries to PHI nodes for all reachable
-  // code.  Unfortunately, there may be blocks which are not reachable, which
-  // the renamer hasn't traversed.  If this is the case, the PHI nodes may not
+  // code.  Unfortunately, there may be unreachable blocks which the renamer
+  // hasn't traversed.  If this is the case, the PHI nodes may not
   // have incoming values for all predecessors.  Loop over all PHI nodes we have
   // created, inserting undef values if they are missing any incoming values.
   //
@@ -488,7 +489,7 @@ void PromoteMem2Reg::run() {
 // DeadPHINodes set are removed.
 //
 void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
-                                           std::set<PHINode*> &DeadPHINodes) {
+                                      SmallPtrSet<PHINode*, 16> &DeadPHINodes) {
   // Scan the immediate dominators of this block looking for a block which has a
   // PHI node for Alloca num.  If we find it, mark the PHI node as being alive!
   for (DominatorTree::Node *N = DT[BB]; N; N = N->getIDom()) {
@@ -499,13 +500,9 @@ void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
       // Ok, we found an inserted PHI node which dominates this value.
       PHINode *DominatingPHI = I->second[AllocaNum];
 
-      // Find out if we previously thought it was dead.
-      std::set<PHINode*>::iterator DPNI = DeadPHINodes.find(DominatingPHI);
-      if (DPNI != DeadPHINodes.end()) {
-        // Ok, until now, we thought this PHI node was dead.  Mark it as being
-        // alive/needed.
-        DeadPHINodes.erase(DPNI);
-
+      // Find out if we previously thought it was dead.  If so, mark it as being
+      // live by removing it from the DeadPHINodes set.
+      if (DeadPHINodes.erase(DominatingPHI)) {
         // Now that we have marked the PHI node alive, also mark any PHI nodes
         // which it might use as being alive as well.
         for (pred_iterator PI = pred_begin(DomBB), PE = pred_end(DomBB);
@@ -633,7 +630,7 @@ PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
 //
 bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
                                   unsigned &Version,
-                                  std::set<PHINode*> &InsertedPHINodes) {
+                                  SmallPtrSet<PHINode*, 16> &InsertedPHINodes) {
   // Look up the basic-block in question.
   std::vector<PHINode*> &BBPNs = NewPhiNodes[BB];
   if (BBPNs.empty()) BBPNs.resize(Allocas.size());
