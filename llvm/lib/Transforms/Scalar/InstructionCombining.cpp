@@ -5675,7 +5675,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     } else if (ShiftAmt1 < ShiftAmt2) {
       unsigned ShiftDiff = ShiftAmt2-ShiftAmt1;
       
-      // (X >>? C1) << C2 --> X << (C2-C1) & (-1 << C1)
+      // (X >>? C1) << C2 --> X << (C2-C1) & (-1 << C2)
       if (I.getOpcode() == Instruction::Shl) {
         assert(ShiftOp->getOpcode() == Instruction::LShr ||
                ShiftOp->getOpcode() == Instruction::AShr);
@@ -5683,18 +5683,18 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        uint64_t Mask = Ty->getBitMask() << ShiftAmt1;
+        uint64_t Mask = Ty->getBitMask() << ShiftAmt2;
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Ty, Mask));
       }
       
-      // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C1)
+      // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
       if (I.getOpcode() == Instruction::LShr) {
         assert(ShiftOp->getOpcode() == Instruction::Shl);
         Instruction *Shift =
           BinaryOperator::createLShr(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        uint64_t Mask = Ty->getBitMask() >> ShiftAmt1;
+        uint64_t Mask = Ty->getBitMask() >> ShiftAmt2;
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Ty, Mask));
       }
       
@@ -5703,7 +5703,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       assert(ShiftAmt2 < ShiftAmt1);
       unsigned ShiftDiff = ShiftAmt1-ShiftAmt2;
 
-      // (X >>? C1) << C2 --> X >>? (C1-C2) & (-1 << C1)
+      // (X >>? C1) << C2 --> X >>? (C1-C2) & (-1 << C2)
       if (I.getOpcode() == Instruction::Shl) {
         assert(ShiftOp->getOpcode() == Instruction::LShr ||
                ShiftOp->getOpcode() == Instruction::AShr);
@@ -5716,7 +5716,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Ty, Mask));
       }
       
-      // (X << C1) >>u C2  --> X << (C1-C2) & (-1 >> C1)
+      // (X << C1) >>u C2  --> X << (C1-C2) & (-1 >> C2)
       if (I.getOpcode() == Instruction::LShr) {
         assert(ShiftOp->getOpcode() == Instruction::Shl);
         Instruction *Shift =
