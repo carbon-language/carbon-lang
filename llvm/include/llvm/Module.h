@@ -169,26 +169,17 @@ public:
 
   /// getOrInsertFunction - Look up the specified function in the module symbol
   /// table.  If it does not exist, add a prototype for the function and return
-  /// it.  This version of the method takes a null terminated list of function
-  /// arguments, which makes it easier for clients to use.
+  /// it.  This function guarantees to return a constant of pointer to the
+  /// specified function type or a ConstantExpr BitCast of that type if the 
+  /// named /// function has a different type.  This version of the method 
+  /// takes a null terminated list of function arguments, which makes it 
+  /// easier for clients to use.
   Constant *getOrInsertFunction(const std::string &Name, const Type *RetTy,...)
     END_WITH_NULL;
 
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.
   Function *getFunction(const std::string &Name) const;
-
-  /// getMainFunction - This function looks up main efficiently.  This is such a
-  /// common case, that it is a method in Module.  If main cannot be found, a
-  /// null pointer is returned.
-  Function *getMainFunction() { return getFunction("main"); }
-
-  /// getNamedFunction - Return the first function in the module with the
-  /// specified name, of arbitrary type.  This method returns null if a function
-  /// with the specified name is not found.
-  Function *getNamedFunction(const std::string &Name) const {
-    return getFunction(Name);
-  }
 
 /// @}
 /// @name Global Variable Accessors 
