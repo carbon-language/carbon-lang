@@ -33,13 +33,13 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
+#include <map>
 using namespace llvm;
 
 STATISTIC(NumLCSSA, "Number of live out of a loop variables");
@@ -71,7 +71,7 @@ namespace {
     SetVector<Instruction*> getLoopValuesUsedOutsideLoop(Loop *L);
 
     Value *GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
-                            DenseMap<DominatorTree::Node*, Value*> &Phis);
+                            std::map<DominatorTree::Node*, Value*> &Phis);
 
     /// inLoop - returns true if the given block is within the current loop
     const bool inLoop(BasicBlock* B) {
@@ -139,7 +139,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
   ++NumLCSSA; // We are applying the transformation
 
   // Keep track of the blocks that have the value available already.
-  DenseMap<DominatorTree::Node*, Value*> Phis;
+  std::map<DominatorTree::Node*, Value*> Phis;
 
   DominatorTree::Node *InstrNode = DT->getNode(Instr->getParent());
 
@@ -226,7 +226,7 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
 Value *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
-                               DenseMap<DominatorTree::Node*, Value*> &Phis) {
+                               std::map<DominatorTree::Node*, Value*> &Phis) {
   // If there is no dominator info for this BB, it is unreachable.
   if (BB == 0)
     return UndefValue::get(OrigInst->getType());
