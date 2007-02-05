@@ -272,7 +272,7 @@ void PromoteMem2Reg::run() {
     //
     unsigned CurrentVersion = 0;
     SmallPtrSet<PHINode*, 16> InsertedPHINodes;
-    std::vector<unsigned> DFBlocks;
+    std::vector<std::pair<unsigned, BasicBlock*> > DFBlocks;
     while (!DefiningBlocks.empty()) {
       BasicBlock *BB = DefiningBlocks.back();
       DefiningBlocks.pop_back();
@@ -289,13 +289,13 @@ void PromoteMem2Reg::run() {
         // processing blocks in order of the occurance in the function.
         for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
              PE = S.end(); P != PE; ++P)
-          DFBlocks.push_back(BBNumbers.getNumber(*P));
+          DFBlocks.push_back(std::make_pair(BBNumbers.getNumber(*P), *P));
 
         // Sort by which the block ordering in the function.
         std::sort(DFBlocks.begin(), DFBlocks.end());
 
         for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
-          BasicBlock *BB = BBNumbers.getBlock(DFBlocks[i]);
+          BasicBlock *BB = DFBlocks[i].second;
           if (QueuePhiNode(BB, AllocaNum, CurrentVersion, InsertedPHINodes))
             DefiningBlocks.push_back(BB);
         }
