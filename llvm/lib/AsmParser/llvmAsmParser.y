@@ -429,11 +429,11 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     return IA;
   }
   default:
-    assert(0 && "Unhandled case");
+    assert(0 && "Unhandled case!");
     return 0;
   }   // End of switch
 
-  assert(0 && "Unhandled case");
+  assert(0 && "Unhandled case!");
   return 0;
 }
 
@@ -484,7 +484,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
 ///    or may not be a forward reference.
 ///
 static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
-  assert(inFunctionScope() && "Can't get basic block at global scope");
+  assert(inFunctionScope() && "Can't get basic block at global scope!");
 
   std::string Name;
   BasicBlock *BB = 0;
@@ -573,7 +573,7 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
 
       std::map<Value*, std::pair<ValID, int> >::iterator PHI =
         CurModule.PlaceHolderInfo.find(V);
-      assert(PHI != CurModule.PlaceHolderInfo.end() && "Placeholder error");
+      assert(PHI != CurModule.PlaceHolderInfo.end() && "Placeholder error!");
 
       ValID &DID = PHI->second.first;
 
@@ -639,7 +639,7 @@ static void setValueName(Value *V, char *NameStr) {
     return;
   }
 
-  assert(inFunctionScope() && "Must be in function scope");
+  assert(inFunctionScope() && "Must be in function scope!");
   SymbolTable &ST = CurFun.CurrentFunction->getValueSymbolTable();
   if (ST.lookup(V->getType(), Name)) {
     GenerateError("Redefinition of value '" + Name + "' of type '" +
@@ -724,7 +724,7 @@ ParseGlobalVariable(char *NameStr,
 // allowed to be redefined in the specified context.  If the name is a new name
 // for the type plane, it is inserted and false is returned.
 static bool setTypeName(const Type *T, char *NameStr) {
-  assert(!inFunctionScope() && "Can't give types function-local names");
+  assert(!inFunctionScope() && "Can't give types function-local names!");
   if (NameStr == 0) return false;
  
   std::string Name(NameStr);      // Copy string
@@ -741,7 +741,7 @@ static bool setTypeName(const Type *T, char *NameStr) {
 
   if (AlreadyExists) {   // Inserting a name that is already defined???
     const Type *Existing = CurModule.CurrentModule->getTypeByName(Name);
-    assert(Existing && "Conflict but no matching type?");
+    assert(Existing && "Conflict but no matching type?!");
 
     // There is only one case where this is allowed: when we are refining an
     // opaque type.  In this case, Existing will be an opaque type.
@@ -1625,7 +1625,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     // in the future with the right type of variable.
     //
     if (V == 0) {
-      assert(isa<PointerType>(Ty) && "Globals may only be used as pointers");
+      assert(isa<PointerType>(Ty) && "Globals may only be used as pointers!");
       const PointerType *PT = cast<PointerType>(Ty);
 
       // First check to see if the forward references value is already created!
@@ -2116,7 +2116,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   if ($5) {                     // Is null if empty...
     if (isVarArg) {  // Nuke the last entry
       assert($5->back().Ty->get() == Type::VoidTy && $5->back().Name == 0&&
-             "Not a varargs marker");
+             "Not a varargs marker!");
       delete $5->back().Ty;
       $5->pop_back();  // Delete the last entry
     }
