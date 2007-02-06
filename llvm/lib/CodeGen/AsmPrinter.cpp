@@ -850,7 +850,7 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) {
     if (LastMI != MI || F != ThisF) {
       ++Counter;
       LastMI = MI;
-      ThisF = F;
+      F = ThisF;
     }
     O << Counter;
   } else {
