@@ -10,6 +10,7 @@
 #ifndef LLVM_ADT_UNIQUEVECTOR_H
 #define LLVM_ADT_UNIQUEVECTOR_H
 
+#include <cassert>
 #include <map>
 #include <vector>
 
