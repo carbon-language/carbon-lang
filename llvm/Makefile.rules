@@ -625,6 +625,12 @@ endif
 #---------------------------------------------------------
 ifdef CONFIG_FILES
 
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) UnInstall circumvented with NO_INSTALL
+else
 install-local:: $(PROJ_etcdir) $(CONFIG_FILES)
 	$(Echo) Installing Configuration Files To $(PROJ_etcdir)
 	$(Verb)for file in $(CONFIG_FILES); do \
@@ -642,6 +648,7 @@ uninstall-local::
 	$(Verb)for file in $(CONFIG_FILES); do \
 	  $(RM) -f $(PROJ_etcdir)/$${file} ; \
 	done
+endif
 
 endif
 
@@ -729,6 +736,12 @@ else
 ModuleDestDir := $(PROJ_libdir)
 endif
 
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) Uninstall circumvented with NO_INSTALL
+else
 DestModule := $(ModuleDestDir)/$(MODULE_NAME).bc
 
 install-module:: $(DestModule)
@@ -741,6 +754,7 @@ $(DestModule): $(ModuleDestDir) $(Module)
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Module $(DestModule)
 	-$(Verb) $(RM) -f $(DestModule)
+endif
 
 endif
 endif
@@ -793,6 +807,12 @@ ifneq ($(strip $(LibName.LA)),)
 	-$(Verb) $(RM) -f $(LibName.LA)
 endif
 
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) Uninstall circumvented with NO_INSTALL
+else
 DestSharedLib = $(PROJ_libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
 
 install-local:: $(DestSharedLib)
@@ -805,7 +825,7 @@ $(DestSharedLib): $(PROJ_libdir) $(LibName.LA)
 uninstall-local:: 
 	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
 	-$(Verb) $(RM) -f $(PROJ_libdir)/lib$(LIBRARYNAME).*
-
+endif
 endif
 
 #---------------------------------------------------------
@@ -856,6 +876,12 @@ DestBytecodeLib = $(BytecodeDestDir)/lib$(LIBRARYNAME).a
 
 install-bytecode-local:: $(DestBytecodeLib)
 
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) Uninstall circumvented with NO_INSTALL
+else
 install-local:: $(DestBytecodeLib)
 
 $(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA) 
@@ -865,7 +891,7 @@ $(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA)
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Bytecode Archive $(DestBytecodeLib)
 	-$(Verb) $(RM) -f $(DestBytecodeLib)
-
+endif
 endif
 endif
 
@@ -895,6 +921,12 @@ ifneq ($(strip $(LibName.O)),)
 	-$(Verb) $(RM) -f $(LibName.O)
 endif
 
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) Uninstall circumvented with NO_INSTALL
+else
 DestRelinkedLib = $(PROJ_libdir)/$(LIBRARYNAME).o
 
 install-local:: $(DestRelinkedLib)
@@ -906,7 +938,7 @@ $(DestRelinkedLib): $(PROJ_libdir) $(LibName.O)
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Object Library $(DestRelinkedLib)
 	-$(Verb) $(RM) -f $(DestRelinkedLib)
-
+endif
 endif
 
 #---------------------------------------------------------
@@ -929,6 +961,12 @@ ifneq ($(strip $(LibName.A)),)
 	-$(Verb) $(RM) -f $(LibName.A)
 endif
 
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) Uninstall circumvented with NO_INSTALL
+else
 DestArchiveLib := $(PROJ_libdir)/lib$(LIBRARYNAME).a
 
 install-local:: $(DestArchiveLib)
@@ -941,7 +979,7 @@ $(DestArchiveLib): $(PROJ_libdir) $(LibName.A)
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Archive Library $(DestArchiveLib)
 	-$(Verb) $(RM) -f $(DestArchiveLib)
-
+endif
 endif
 
 # endif LIBRARYNAME
@@ -985,6 +1023,12 @@ $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) \
           $(StripWarnMsg) 
 
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) Uninstall circumvented with NO_INSTALL
+else
 DestTool = $(PROJ_bindir)/$(TOOLNAME)
 
 install-local:: $(DestTool)
@@ -996,7 +1040,7 @@ $(DestTool): $(PROJ_bindir) $(ToolBuildPath)
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) $(DestTool)
 	-$(Verb) $(RM) -f $(DestTool)
-
+endif
 endif
 
 ###############################################################################
@@ -1631,6 +1675,12 @@ ifeq ($(LEVEL),.)
 #------------------------------------------------------------------------
 # Install support for the project's include files:
 #------------------------------------------------------------------------
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) Uninstall circumvented with NO_INSTALL
+else
 install-local::
 	$(Echo) Installing include files
 	$(Verb) $(MKDIR) $(PROJ_includedir)
@@ -1667,7 +1717,7 @@ uninstall-local::
 	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f -name '*.in' \
       -print ')' | sed 's#\.in$$##;s#^#$(PROJ_includedir)/#'` ; \
 	fi
-
+endif
 endif
 
 #------------------------------------------------------------------------
