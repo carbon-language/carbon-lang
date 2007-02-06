@@ -185,6 +185,19 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     abort();
 }
 
+/// isLowRegister - Returns true if the register is low register r0-r7.
+///
+static bool isLowRegister(unsigned Reg) {
+  using namespace ARM;
+  switch (Reg) {
+  case R0:  case R1:  case R2:  case R3:
+  case R4:  case R5:  case R6:  case R7:
+    return true;
+  default:
+    return false;
+  }
+}
+
 MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
                                                  unsigned OpNum, int FI) const {
   unsigned Opc = MI->getOpcode();
@@ -206,10 +219,16 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
   case ARM::tMOVrr: {
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
+      if (!isLowRegister(SrcReg))
+        // tSTRspi cannot take a high register operand.
+        break;
       NewMI = BuildMI(TII.get(ARM::tSTRspi)).addReg(SrcReg).addFrameIndex(FI)
         .addImm(0);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
+      if (!isLowRegister(DstReg))
+        // tLDRspi cannot target a high register operand.
+        break;
       NewMI = BuildMI(TII.get(ARM::tLDRspi), DstReg).addFrameIndex(FI)
         .addImm(0);
     }
@@ -313,19 +332,6 @@ void emitARMRegPlusImmediate(MachineBasicBlock &MBB,
     BuildMI(MBB, MBBI, TII.get(isSub ? ARM::SUBri : ARM::ADDri), DestReg)
       .addReg(BaseReg).addImm(SOImmVal);
     BaseReg = DestReg;
-  }
-}
-
-/// isLowRegister - Returns true if the register is low register r0-r7.
-///
-static bool isLowRegister(unsigned Reg) {
-  using namespace ARM;
-  switch (Reg) {
-  case R0:  case R1:  case R2:  case R3:
-  case R4:  case R5:  case R6:  case R7:
-    return true;
-  default:
-    return false;
   }
 }
 
