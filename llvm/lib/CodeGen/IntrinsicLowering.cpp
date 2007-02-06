@@ -356,58 +356,48 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::dbg_declare:
     break;    // Simply strip out debugging intrinsics
 
-  case Intrinsic::memcpy_i32: {
-    static Constant *MemcpyFCache = 0;
-    Value * Size = cast<Value>(CI->op_end()-1);
-    if (Size->getType() != TD.getIntPtrType())
-      Size->replaceAllUsesWith(new ZExtInst(Size, TD.getIntPtrType()));
-    ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
-                    (*(CI->op_begin()+1))->getType(), MemcpyFCache);
-    break;
-  }
+  case Intrinsic::memcpy_i32:
   case Intrinsic::memcpy_i64: {
     static Constant *MemcpyFCache = 0;
-    Value * Size = cast<Value>(CI->op_end()-1);
-    if (Size->getType() != TD.getIntPtrType())
-      Size->replaceAllUsesWith(new TruncInst(Size, TD.getIntPtrType()));
-    ReplaceCallWith("memcpy", CI, CI->op_begin()+1, CI->op_end()-1,
-                     (*(CI->op_begin()+1))->getType(), MemcpyFCache);
+    Value *Size = CI->getOperand(3);
+    const Type *IntPtr = TD.getIntPtrType();
+    if (Size->getType()->getPrimitiveSizeInBits() <
+        IntPtr->getPrimitiveSizeInBits())
+      Size = new ZExtInst(Size, IntPtr, "", CI);
+    else if (Size->getType()->getPrimitiveSizeInBits() >
+             IntPtr->getPrimitiveSizeInBits())
+      Size = new TruncInst(Size, IntPtr, "", CI);
+    Value *Ops[3];
+    Ops[0] = CI->getOperand(1);
+    Ops[1] = CI->getOperand(2);
+    Ops[2] = Size;
+    ReplaceCallWith("memcpy", CI, Ops, Ops+3, CI->getOperand(1)->getType(),
+                    MemcpyFCache);
     break;
   }
-  case Intrinsic::memmove_i32: {
-    static Constant *MemmoveFCache = 0;
-    Value * Size = cast<Value>(CI->op_end()-1);
-    if (Size->getType() != TD.getIntPtrType())
-      Size->replaceAllUsesWith(new ZExtInst(Size, TD.getIntPtrType()));
-    ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
-                    (*(CI->op_begin()+1))->getType(), MemmoveFCache);
-    break;
-  }
+  case Intrinsic::memmove_i32: 
   case Intrinsic::memmove_i64: {
     static Constant *MemmoveFCache = 0;
-    Value * Size = cast<Value>(CI->op_end()-1);
-    if (Size->getType() != TD.getIntPtrType())
-      Size->replaceAllUsesWith(new TruncInst(Size, TD.getIntPtrType()));
-    ReplaceCallWith("memmove", CI, CI->op_begin()+1, CI->op_end()-1,
-                    (*(CI->op_begin()+1))->getType(), MemmoveFCache);
+    Value *Size = CI->getOperand(3);
+    const Type *IntPtr = TD.getIntPtrType();
+    if (Size->getType()->getPrimitiveSizeInBits() <
+        IntPtr->getPrimitiveSizeInBits())
+      Size = new ZExtInst(Size, IntPtr, "", CI);
+    else if (Size->getType()->getPrimitiveSizeInBits() >
+             IntPtr->getPrimitiveSizeInBits())
+      Size = new TruncInst(Size, IntPtr, "", CI);
+    Value *Ops[3];
+    Ops[0] = CI->getOperand(1);
+    Ops[1] = CI->getOperand(2);
+    Ops[2] = Size;
+    ReplaceCallWith("memmove", CI, Ops, Ops+3, CI->getOperand(1)->getType(),
+                    MemmoveFCache);
     break;
   }
-  case Intrinsic::memset_i32: {
-    static Constant *MemsetFCache = 0;
-    Value *Size = cast<Value>(CI->op_end()-1);
-    const Type *IntPtr = TD.getIntPtrType();
-    if (Size->getType()->getPrimitiveSizeInBits() <
-        IntPtr->getPrimitiveSizeInBits())
-      Size = new ZExtInst(Size, IntPtr, "", CI);
-    else if (Size->getType()->getPrimitiveSizeInBits() >
-             IntPtr->getPrimitiveSizeInBits())
-      Size = new TruncInst(Size, IntPtr, "", CI);
-    ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
-                    (*(CI->op_begin()+1))->getType(), MemsetFCache);
-  }
+  case Intrinsic::memset_i32:
   case Intrinsic::memset_i64: {
     static Constant *MemsetFCache = 0;
-    Value *Size = cast<Value>(CI->op_end()-1);
+    Value *Size = CI->getOperand(3);
     const Type *IntPtr = TD.getIntPtrType();
     if (Size->getType()->getPrimitiveSizeInBits() <
         IntPtr->getPrimitiveSizeInBits())
@@ -415,8 +405,13 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     else if (Size->getType()->getPrimitiveSizeInBits() >
              IntPtr->getPrimitiveSizeInBits())
       Size = new TruncInst(Size, IntPtr, "", CI);
-    ReplaceCallWith("memset", CI, CI->op_begin()+1, CI->op_end()-1,
-                    (*(CI->op_begin()+1))->getType(), MemsetFCache);
+    Value *Ops[3];
+    Ops[0] = CI->getOperand(1);
+    // Extend the amount to i32.
+    Ops[1] = new ZExtInst(CI->getOperand(2), Type::Int32Ty, "", CI);
+    Ops[2] = Size;
+    ReplaceCallWith("memset", CI, Ops, Ops+3, CI->getOperand(1)->getType(),
+                    MemsetFCache);
     break;
   }
   case Intrinsic::sqrt_f32: {
