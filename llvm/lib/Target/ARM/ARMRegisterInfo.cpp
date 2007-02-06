@@ -386,6 +386,8 @@ void emitThumbRegPlusConstPool(MachineBasicBlock &MBB,
     const MachineInstrBuilder MIB = BuildMI(MBB, MBBI, TII.get(Opc), DestReg);
     if (DestReg == ARM::SP)
       MIB.addReg(BaseReg).addReg(LdReg);
+    else if (isSub)
+      MIB.addReg(BaseReg).addReg(LdReg);
     else
       MIB.addReg(LdReg).addReg(BaseReg);
     if (DestReg == ARM::SP)
@@ -647,7 +649,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     // MI would expand into a large number of instructions. Don't try to
     // simplify the immediate.
     if (NumMIs > 2) {
-      emitThumbRegPlusImmediate(MBB, II, DestReg, ARM::SP, Offset, TII);
+      emitThumbRegPlusImmediate(MBB, II, DestReg, FrameReg, Offset, TII);
       MBB.erase(II);
       return;
     }
@@ -705,7 +707,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     case ARMII::AddrModeTs: {
       ImmIdx = i+1;
       InstrOffs = MI.getOperand(ImmIdx).getImm();
-      NumBits = 8;
+      NumBits = (FrameReg == ARM::SP) ? 8 : 5;
       Scale = 4;
       break;
     }
@@ -722,31 +724,33 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       isSub = true;
     }
 
-    MachineOperand &ImmOp = MI.getOperand(ImmIdx);
-    int ImmedOffset = Offset / Scale;
-    unsigned Mask = (1 << NumBits) - 1;
-    if ((unsigned)Offset <= Mask * Scale) {
-      // Replace the FrameIndex with sp
-      MI.getOperand(i).ChangeToRegister(FrameReg, false);
+    if (!isSub || !isThumb) {
+      MachineOperand &ImmOp = MI.getOperand(ImmIdx);
+      int ImmedOffset = Offset / Scale;
+      unsigned Mask = (1 << NumBits) - 1;
+      if ((unsigned)Offset <= Mask * Scale) {
+        // Replace the FrameIndex with sp
+        MI.getOperand(i).ChangeToRegister(FrameReg, false);
+        if (isSub)
+          ImmedOffset |= 1 << NumBits;
+        ImmOp.ChangeToImmediate(ImmedOffset);
+        return;
+      }
+
+      // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
+      if (AddrMode == ARMII::AddrModeTs) {
+        // Thumb tLDRspi, tSTRspi. These will change to instructions that use
+        // a different base register.
+        NumBits = 5;
+        Mask = (1 << NumBits) - 1;
+      }
+
+      ImmedOffset = ImmedOffset & Mask;
       if (isSub)
         ImmedOffset |= 1 << NumBits;
       ImmOp.ChangeToImmediate(ImmedOffset);
-      return;
+      Offset &= ~(Mask*Scale);
     }
-
-    // Otherwise, it didn't fit. Pull in what we can to simplify the immediate.
-    if (AddrMode == ARMII::AddrModeTs) {
-      // Thumb tLDRspi, tSTRspi. These will change to instructions that use a
-      // different base register.
-      NumBits = 5;
-      Mask = (1 << NumBits) - 1;
-    }
-
-    ImmedOffset = ImmedOffset & Mask;
-    if (isSub)
-      ImmedOffset |= 1 << NumBits;
-    ImmOp.ChangeToImmediate(ImmedOffset);
-    Offset &= ~(Mask*Scale);
   }
   
   // If we get here, the immediate doesn't fit into the instruction.  We folded
