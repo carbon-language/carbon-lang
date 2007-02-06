@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/APInt.h"
+
+#if 0
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include <strings.h>
@@ -1111,3 +1113,6 @@ APInt llvm::GreatestCommonDivisor(const APInt& API1, const APInt& API2) {
   }
   return A;
 }
+
+#endif
+
