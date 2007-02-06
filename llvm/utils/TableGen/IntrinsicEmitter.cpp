@@ -108,11 +108,8 @@ EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
-static void EmitTypeVerify(std::ostream &OS, Record *ArgType) {
-  if (ArgType->getValueAsString("TypeVal") == "...") {
-    OS << "-2, ";
-    return;
-  }
+static bool EmitTypeVerify(std::ostream &OS, Record *ArgType) {
+  if (ArgType->getValueAsString("TypeVal") == "...")  return true;
   
   OS << "(int)" << ArgType->getValueAsString("TypeVal") << ", ";
   // If this is an integer type, check the width is correct.
@@ -124,6 +121,8 @@ static void EmitTypeVerify(std::ostream &OS, Record *ArgType) {
     EmitTypeVerify(OS, ArgType->getValueAsDef("ElTy"));
     OS << ArgType->getValueAsInt("NumElts") << ", ";
   }
+  
+  return false;
 }
 
 /// RecordListComparator - Provide a determinstic comparator for lists of
@@ -172,9 +171,17 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
     
     const std::vector<Record*> &ArgTypes = I->first;
     OS << "    VerifyIntrinsicPrototype(IF, ";
-    for (unsigned j = 0; j != ArgTypes.size(); ++j)
-      EmitTypeVerify(OS, ArgTypes[j]);
-    OS << "-1);\n";
+    bool VarArg = false;
+    for (unsigned j = 0; j != ArgTypes.size(); ++j) {
+      VarArg = EmitTypeVerify(OS, ArgTypes[j]);
+      if (VarArg) {
+        if ((j+1) != ArgTypes.size())
+          throw "Var arg type not last argument";
+        break;
+      }
+    }
+      
+    OS << (VarArg ? "-2);\n" : "-1);\n");
     OS << "    break;\n";
   }
   OS << "  }\n";
