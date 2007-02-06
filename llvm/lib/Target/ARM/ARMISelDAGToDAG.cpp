@@ -392,6 +392,17 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDOperand Op, SDOperand N,
     return true;
   }
 
+  // Thumb does not have [sp, r] address mode.
+  RegisterSDNode *LHSR = dyn_cast<RegisterSDNode>(N.getOperand(0));
+  RegisterSDNode *RHSR = dyn_cast<RegisterSDNode>(N.getOperand(1));
+  if ((LHSR && LHSR->getReg() == ARM::SP) ||
+      (RHSR && RHSR->getReg() == ARM::SP)) {
+    Base = N;
+    Offset = CurDAG->getRegister(0, MVT::i32);
+    OffImm = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
+  }
+
   // If the RHS is + imm5 * scale, fold into addr mode.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     int RHSC = (int)RHS->getValue();
@@ -439,16 +450,18 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDOperand Op, SDOperand N,
     return true;
   }
 
-  if (N.getOpcode() == ISD::ADD &&
-      N.getOperand(0).getOpcode() == ISD::FrameIndex) {
+  if (N.getOpcode() != ISD::ADD)
+    return false;
+
+  RegisterSDNode *LHSR = dyn_cast<RegisterSDNode>(N.getOperand(0));
+  if (LHSR && LHSR->getReg() == ARM::SP) {
     // If the RHS is + imm8 * scale, fold into addr mode.
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       int RHSC = (int)RHS->getValue();
       if ((RHSC & 3) == 0) {  // The constant is implicitly multiplied.
         RHSC >>= 2;
         if (RHSC >= 0 && RHSC < 256) {
-          int FI = cast<FrameIndexSDNode>(N.getOperand(0))->getIndex();
-          Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+          Base = N.getOperand(0);
           OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
           return true;
         }
@@ -536,6 +549,23 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
     SDOperand TFI = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
     return CurDAG->SelectNodeTo(N, Opc, MVT::i32, TFI,
                                 CurDAG->getTargetConstant(0, MVT::i32));
+  }
+  case ISD::ADD: {
+    // Select add sp, c to tADDhirr.
+    SDOperand N0 = Op.getOperand(0);
+    SDOperand N1 = Op.getOperand(1);
+    RegisterSDNode *LHSR = dyn_cast<RegisterSDNode>(Op.getOperand(0));
+    RegisterSDNode *RHSR = dyn_cast<RegisterSDNode>(Op.getOperand(1));
+    if (LHSR && LHSR->getReg() == ARM::SP) {
+      std::swap(N0, N1);
+      std::swap(LHSR, RHSR);
+    }
+    if (RHSR && RHSR->getReg() == ARM::SP) {
+      AddToISelQueue(N0);
+      AddToISelQueue(N1);
+      return CurDAG->SelectNodeTo(N, ARM::tADDhirr, Op.getValueType(), N0, N1);
+    }
+    break;
   }
   case ISD::MUL:
     if (Subtarget->isThumb())
