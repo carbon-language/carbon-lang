@@ -683,6 +683,15 @@
     <dt><a name="LIBRARYNAME"><tt>LIBRARYNAME</tt></a></dt>
     <dd>Specify the name of the library to be built. (Required For
     Libraries)</dd>
+    <dt><a name="LINK_COMPONENTS"><tt>LINK_COMPONENTS</tt></a></dt>
+    <dd>When specified for building a tool, the value of this variable will be
+    passed to the <tt>llvm-config</tt> tool to generate a link line for the
+    tool. Unlike <tt>USEDLIBS</tt> and <tt>LLVMLIBS</tt>, not all libraries need
+    to be specified. The <tt>llvm-config</tt> tool will figure out the library
+    dependencies and add any libraries that are needed. The <tt>USEDLIBS</tt>
+    variable can still be used in conjunction with <tt>LINK_COMPONENTS</tt> so
+    that additional project-specific libraries can be linked with the LLVM 
+    libraries specified by <tt>LINK_COMPONENTS</tt></dd>
     <dt><a name="LINK_LIBS_IN_SHARED"><tt>LINK_LIBS_IN_SHARED</tt></a></dt>
     <dd>By default, shared library linking will ignore any libraries specified
     with the <a href="LLVMLIBS">LLVMLIBS</a> or <a href="USEDLIBS">USEDLIBS</a>.
@@ -704,6 +713,12 @@
     module can be specified in conjunction with other kinds of library builds 
     or by itself. It constructs from the sources a single linked bytecode 
     file.</dd>
+    <dt><a name="NO_INSTALL"><tt>NO_INSTALL</tt></a></dt>
+    <dd>Specifies that the build products of the directory should not be
+    installed but should be built even if the <tt>install</tt> target is given.
+    This is handy for directories that build libraries or tools that are only
+    used as part of the build process, such as code generators (e.g.
+    <tt>tblgen</tt>).</dd>
     <dt><a name="OPTIONAL_DIRS"><tt>OPTIONAL_DIRS</tt></a></dt>
     <dd>Specify a set of directories that may be built, if they exist, but its
     not an error for them not to exist.</dd>
