@@ -454,7 +454,8 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDOperand Op, SDOperand N,
     return false;
 
   RegisterSDNode *LHSR = dyn_cast<RegisterSDNode>(N.getOperand(0));
-  if (LHSR && LHSR->getReg() == ARM::SP) {
+  if (N.getOperand(0).getOpcode() == ISD::FrameIndex ||
+      (LHSR && LHSR->getReg() == ARM::SP)) {
     // If the RHS is + imm8 * scale, fold into addr mode.
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       int RHSC = (int)RHS->getValue();
@@ -462,6 +463,10 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDOperand Op, SDOperand N,
         RHSC >>= 2;
         if (RHSC >= 0 && RHSC < 256) {
           Base = N.getOperand(0);
+          if (Base.getOpcode() == ISD::FrameIndex) {
+            int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+            Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+          }
           OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
           return true;
         }
