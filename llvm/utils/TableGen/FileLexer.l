@@ -176,7 +176,7 @@ using namespace llvm;
 
 Comment      \/\/.*
 
-Identifier   [a-zA-Z_][0-9a-zA-Z_]*
+Identifier   [a-zA-Z_][0-9a-zA-Z_]*|\.\.\.
 Integer      [-+]?[0-9]+|0x[0-9a-fA-F]+|0b[01]+
 CodeFragment \[\{([^}]+|\}[^\]])*\}\]
 StringVal    \"[^"]*\"

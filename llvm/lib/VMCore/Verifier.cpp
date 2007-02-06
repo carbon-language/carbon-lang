@@ -987,6 +987,10 @@ void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
   for (unsigned ArgNo = 0; 1; ++ArgNo) {
     int TypeID = va_arg(VA, int);
 
+    if (TypeID == -2) {
+      break;
+    }
+
     if (TypeID == -1) {
       if (ArgNo != FTy->getNumParams()+1)
         CheckFailed("Intrinsic prototype has too many arguments!", F);

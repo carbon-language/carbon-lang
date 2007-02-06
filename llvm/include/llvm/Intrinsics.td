@@ -88,6 +88,8 @@ def llvm_v4i32_ty      : LLVMPackedType<v4i32, 4, llvm_i32_ty>;   //  4 x i32
 def llvm_v4f32_ty      : LLVMPackedType<v4f32, 4, llvm_float_ty>; //  4 x float
 def llvm_v2f64_ty      : LLVMPackedType<v2f64, 2, llvm_double_ty>;//  2 x double
 
+def ...                : LLVMType<isVoid, "...">; // vararg
+
 //===----------------------------------------------------------------------===//
 // Intrinsic Definitions.
 //===----------------------------------------------------------------------===//
@@ -216,6 +218,11 @@ def int_dbg_region_end   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
 def int_dbg_func_start   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
 def int_dbg_declare      : Intrinsic<[llvm_void_ty, llvm_ptr_ty,
                                                     llvm_descriptor_ty]>;
+
+//===------------------ Exception Handling Intrinsics----------------------===//
+//
+def int_eh_exception : Intrinsic<[llvm_ptr_ty]>;
+def int_eh_handlers : Intrinsic<[llvm_ptr_ty, llvm_ptr_ty, ...]>;
 
 //===----------------------------------------------------------------------===//
 // Target-specific intrinsics

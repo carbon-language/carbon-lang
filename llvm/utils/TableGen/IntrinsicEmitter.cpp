@@ -109,6 +109,11 @@ EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints,
 }
 
 static void EmitTypeVerify(std::ostream &OS, Record *ArgType) {
+  if (ArgType->getValueAsString("TypeVal") == "...") {
+    OS << "-2, ";
+    return;
+  }
+  
   OS << "(int)" << ArgType->getValueAsString("TypeVal") << ", ";
   // If this is an integer type, check the width is correct.
   if (ArgType->isSubClassOf("LLVMIntegerType"))
