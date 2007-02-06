@@ -24,6 +24,247 @@
 #include <cstdlib>
 using namespace llvm;
 
+/// mul_1 - This function performs the multiplication operation on a
+/// large integer (represented as an integer array) and a uint64_t integer.
+/// @returns the carry of the multiplication.
+static uint64_t mul_1(uint64_t dest[], uint64_t x[],
+                     unsigned len, uint64_t y) {
+  // Split y into high 32-bit part and low 32-bit part.
+  uint64_t ly = y & 0xffffffffULL, hy = y >> 32;
+  uint64_t carry = 0, lx, hx;
+  for (unsigned i = 0; i < len; ++i) {
+    lx = x[i] & 0xffffffffULL;
+    hx = x[i] >> 32;
+    // hasCarry - A flag to indicate if has carry.
+    // hasCarry == 0, no carry
+    // hasCarry == 1, has carry
+    // hasCarry == 2, no carry and the calculation result == 0.
+    uint8_t hasCarry = 0;
+    dest[i] = carry + lx * ly;
+    // Determine if the add above introduces carry.
+    hasCarry = (dest[i] < carry) ? 1 : 0;
+    carry = hx * ly + (dest[i] >> 32) + (hasCarry ? (1ULL << 32) : 0);
+    // The upper limit of carry can be (2^32 - 1)(2^32 - 1) + 
+    // (2^32 - 1) + 2^32 = 2^64.
+    hasCarry = (!carry && hasCarry) ? 1 : (!carry ? 2 : 0);
+
+    carry += (lx * hy) & 0xffffffffULL;
+    dest[i] = (carry << 32) | (dest[i] & 0xffffffffULL);
+    carry = (((!carry && hasCarry != 2) || hasCarry == 1) ? (1ULL << 32) : 0) + 
+            (carry >> 32) + ((lx * hy) >> 32) + hx * hy;
+  }
+
+  return carry;
+}
+
+/// mul - This function multiplies integer array x[] by integer array y[] and
+/// stores the result into integer array dest[].
+/// Note the array dest[]'s size should no less than xlen + ylen.
+static void mul(uint64_t dest[], uint64_t x[], unsigned xlen,
+               uint64_t y[], unsigned ylen) {
+  dest[xlen] = mul_1(dest, x, xlen, y[0]);
+
+  for (unsigned i = 1; i < ylen; ++i) {
+    uint64_t ly = y[i] & 0xffffffffULL, hy = y[i] >> 32;
+    uint64_t carry = 0, lx, hx;
+    for (unsigned j = 0; j < xlen; ++j) {
+      lx = x[j] & 0xffffffffULL;
+      hx = x[j] >> 32;
+      // hasCarry - A flag to indicate if has carry.
+      // hasCarry == 0, no carry
+      // hasCarry == 1, has carry
+      // hasCarry == 2, no carry and the calculation result == 0.
+      uint8_t hasCarry = 0;
+      uint64_t resul = carry + lx * ly;
+      hasCarry = (resul < carry) ? 1 : 0;
+      carry = (hasCarry ? (1ULL << 32) : 0) + hx * ly + (resul >> 32);
+      hasCarry = (!carry && hasCarry) ? 1 : (!carry ? 2 : 0);
+
+      carry += (lx * hy) & 0xffffffffULL;
+      resul = (carry << 32) | (resul & 0xffffffffULL);
+      dest[i+j] += resul;
+      carry = (((!carry && hasCarry != 2) || hasCarry == 1) ? (1ULL << 32) : 0)+
+              (carry >> 32) + (dest[i+j] < resul ? 1 : 0) + 
+              ((lx * hy) >> 32) + hx * hy;
+    }
+    dest[i+xlen] = carry;
+  }
+}
+
+/// add_1 - This function adds the integer array x[] by integer y and
+/// returns the carry.
+/// @returns the carry of the addition.
+static uint64_t add_1(uint64_t dest[], uint64_t x[],
+                      unsigned len, uint64_t y) {
+  uint64_t carry = y;
+
+  for (unsigned i = 0; i < len; ++i) {
+    dest[i] = carry + x[i];
+    carry = (dest[i] < carry) ? 1 : 0;
+  }
+  return carry;
+}
+
+/// add - This function adds the integer array x[] by integer array
+/// y[] and returns the carry.
+static uint64_t add(uint64_t dest[], uint64_t x[],
+                    uint64_t y[], unsigned len) {
+  unsigned carry = 0;
+  
+  for (unsigned i = 0; i< len; ++i) {
+    carry += x[i];
+    dest[i] = carry + y[i];
+    carry = carry < x[i] ? 1 : (dest[i] < carry ? 1 : 0);
+  }
+  return carry;
+}
+
+/// sub_1 - This function subtracts the integer array x[] by
+/// integer y and returns the borrow-out carry.
+static uint64_t sub_1(uint64_t x[], unsigned len, uint64_t y) {
+  uint64_t cy = y;
+
+  for (unsigned i = 0; i < len; ++i) {
+    uint64_t X = x[i];
+    x[i] -= cy;
+    if (cy > X) 
+      cy = 1;
+    else {
+      cy = 0;
+      break;
+    }
+  }
+
+  return cy;
+}
+
+/// sub - This function subtracts the integer array x[] by
+/// integer array y[], and returns the borrow-out carry.
+static uint64_t sub(uint64_t dest[], uint64_t x[],
+                    uint64_t y[], unsigned len) {
+  // Carry indicator.
+  uint64_t cy = 0;
+  
+  for (unsigned i = 0; i < len; ++i) {
+    uint64_t Y = y[i], X = x[i];
+    Y += cy;
+
+    cy = Y < cy ? 1 : 0;
+    Y = X - Y;
+    cy += Y > X ? 1 : 0;
+    dest[i] = Y;
+  }
+  return cy;
+}
+
+/// UnitDiv - This function divides N by D, 
+/// and returns (remainder << 32) | quotient.
+/// Assumes (N >> 32) < D.
+static uint64_t unitDiv(uint64_t N, unsigned D) {
+  uint64_t q, r;                   // q: quotient, r: remainder.
+  uint64_t a1 = N >> 32;           // a1: high 32-bit part of N.
+  uint64_t a0 = N & 0xffffffffL;   // a0: low 32-bit part of N
+  if (a1 < ((D - a1 - (a0 >> 31)) & 0xffffffffL)) {
+      q = N / D;
+      r = N % D;
+  }
+  else {
+    // Compute c1*2^32 + c0 = a1*2^32 + a0 - 2^31*d
+    uint64_t c = N - ((uint64_t) D << 31);
+    // Divide (c1*2^32 + c0) by d
+    q = c / D;
+    r = c % D;
+    // Add 2^31 to quotient 
+    q += 1 << 31;
+  }
+
+  return (r << 32) | (q & 0xFFFFFFFFl);
+}
+
+/// subMul - This function substracts x[len-1:0] * y from 
+/// dest[offset+len-1:offset], and returns the most significant 
+/// word of the product, minus the borrow-out from the subtraction.
+static unsigned subMul(unsigned dest[], unsigned offset, 
+                        unsigned x[], unsigned len, unsigned y) {
+  uint64_t yl = (uint64_t) y & 0xffffffffL;
+  unsigned carry = 0;
+  unsigned j = 0;
+  do {
+    uint64_t prod = ((uint64_t) x[j] & 0xffffffffL) * yl;
+    unsigned prod_low = (unsigned) prod;
+    unsigned prod_high = (unsigned) (prod >> 32);
+    prod_low += carry;
+    carry = (prod_low < carry ? 1 : 0) + prod_high;
+    unsigned x_j = dest[offset+j];
+    prod_low = x_j - prod_low;
+    if (prod_low > x_j) ++carry;
+    dest[offset+j] = prod_low;
+  } while (++j < len);
+  return carry;
+}
+
+/// div - This is basically Knuth's formulation of the classical algorithm.
+/// Correspondance with Knuth's notation:
+/// Knuth's u[0:m+n] == zds[nx:0].
+/// Knuth's v[1:n] == y[ny-1:0]
+/// Knuth's n == ny.
+/// Knuth's m == nx-ny.
+/// Our nx == Knuth's m+n.
+/// Could be re-implemented using gmp's mpn_divrem:
+/// zds[nx] = mpn_divrem (&zds[ny], 0, zds, nx, y, ny).
+static void div(unsigned zds[], unsigned nx, unsigned y[], unsigned ny) {
+  unsigned j = nx;
+  do {                          // loop over digits of quotient
+    // Knuth's j == our nx-j.
+    // Knuth's u[j:j+n] == our zds[j:j-ny].
+    unsigned qhat;  // treated as unsigned
+    if (zds[j] == y[ny-1]) qhat = -1U;  // 0xffffffff
+    else {
+      uint64_t w = (((uint64_t)(zds[j])) << 32) + 
+                   ((uint64_t)zds[j-1] & 0xffffffffL);
+      qhat = (unsigned) unitDiv(w, y[ny-1]);
+    }
+    if (qhat) {
+      unsigned borrow = subMul(zds, j - ny, y, ny, qhat);
+      unsigned save = zds[j];
+      uint64_t num = ((uint64_t)save&0xffffffffL) - 
+                     ((uint64_t)borrow&0xffffffffL);
+      while (num) {
+        qhat--;
+        uint64_t carry = 0;
+        for (unsigned i = 0;  i < ny; i++) {
+          carry += ((uint64_t) zds[j-ny+i] & 0xffffffffL)
+            + ((uint64_t) y[i] & 0xffffffffL);
+          zds[j-ny+i] = (unsigned) carry;
+          carry >>= 32;
+        }
+        zds[j] += carry;
+        num = carry - 1;
+      }
+    }
+    zds[j] = qhat;
+  } while (--j >= ny);
+}
+
+/// lshift - This function shift x[0:len-1] left by shiftAmt bits, and 
+/// store the len least significant words of the result in 
+/// dest[d_offset:d_offset+len-1]. It returns the bits shifted out from 
+/// the most significant digit.
+static uint64_t lshift(uint64_t dest[], unsigned d_offset,
+                       uint64_t x[], unsigned len, unsigned shiftAmt) {
+  unsigned count = 64 - shiftAmt;
+  int i = len - 1;
+  uint64_t high_word = x[i], retVal = high_word >> count;
+  ++d_offset;
+  while (--i >= 0) {
+    uint64_t low_word = x[i];
+    dest[d_offset+i] = (high_word << shiftAmt) | (low_word >> count);
+    high_word = low_word;
+  }
+  dest[d_offset+i] = high_word << shiftAmt;
+  return retVal;
+}
+
 APInt::APInt(uint64_t val, unsigned numBits, bool sign)
   : bitsnum(numBits), isSigned(sign) {
   assert(bitsnum >= IntegerType::MIN_INT_BITS && "bitwidth too small");
@@ -152,254 +393,6 @@ APInt::~APInt() {
 /// for the specified bit position.
 inline unsigned APInt::whichByte(unsigned bitPosition)
 { return (bitPosition % APINT_BITS_PER_WORD) / 8; }
-
-/// getWord - returns the corresponding word for the specified bit position.
-inline uint64_t& APInt::getWord(unsigned bitPosition)
-{ return isSingleWord() ? VAL : pVal[whichWord(bitPosition)]; }
-
-/// getWord - returns the corresponding word for the specified bit position.
-/// This is a constant version.
-inline uint64_t APInt::getWord(unsigned bitPosition) const
-{ return isSingleWord() ? VAL : pVal[whichWord(bitPosition)]; }
-
-/// mul_1 - This function multiplies the integer array x[] by a integer y and 
-/// returns the carry.
-uint64_t APInt::mul_1(uint64_t dest[], uint64_t x[],
-                     unsigned len, uint64_t y) {
-  // Split y into high 32-bit part and low 32-bit part.
-  uint64_t ly = y & 0xffffffffULL, hy = y >> 32;
-  uint64_t carry = 0, lx, hx;
-  for (unsigned i = 0; i < len; ++i) {
-    lx = x[i] & 0xffffffffULL;
-    hx = x[i] >> 32;
-    // hasCarry - A flag to indicate if has carry.
-    // hasCarry == 0, no carry
-    // hasCarry == 1, has carry
-    // hasCarry == 2, no carry and the calculation result == 0.
-    uint8_t hasCarry = 0;
-    dest[i] = carry + lx * ly;
-    // Determine if the add above introduces carry.
-    hasCarry = (dest[i] < carry) ? 1 : 0;
-    carry = hx * ly + (dest[i] >> 32) + (hasCarry ? (1ULL << 32) : 0);
-    // The upper limit of carry can be (2^32 - 1)(2^32 - 1) + 
-    // (2^32 - 1) + 2^32 = 2^64.
-    hasCarry = (!carry && hasCarry) ? 1 : (!carry ? 2 : 0);
-
-    carry += (lx * hy) & 0xffffffffULL;
-    dest[i] = (carry << 32) | (dest[i] & 0xffffffffULL);
-    carry = (((!carry && hasCarry != 2) || hasCarry == 1) ? (1ULL << 32) : 0) + 
-            (carry >> 32) + ((lx * hy) >> 32) + hx * hy;
-  }
-
-  return carry;
-}
-
-/// mul - This function multiplies integer array x[] by integer array y[] and
-/// stores the result into integer array dest[].
-/// Note the array dest[]'s size should no less than xlen + ylen.
-void APInt::mul(uint64_t dest[], uint64_t x[], unsigned xlen,
-               uint64_t y[], unsigned ylen) {
-  dest[xlen] = mul_1(dest, x, xlen, y[0]);
-
-  for (unsigned i = 1; i < ylen; ++i) {
-    uint64_t ly = y[i] & 0xffffffffULL, hy = y[i] >> 32;
-    uint64_t carry = 0, lx, hx;
-    for (unsigned j = 0; j < xlen; ++j) {
-      lx = x[j] & 0xffffffffULL;
-      hx = x[j] >> 32;
-      // hasCarry - A flag to indicate if has carry.
-      // hasCarry == 0, no carry
-      // hasCarry == 1, has carry
-      // hasCarry == 2, no carry and the calculation result == 0.
-      uint8_t hasCarry = 0;
-      uint64_t resul = carry + lx * ly;
-      hasCarry = (resul < carry) ? 1 : 0;
-      carry = (hasCarry ? (1ULL << 32) : 0) + hx * ly + (resul >> 32);
-      hasCarry = (!carry && hasCarry) ? 1 : (!carry ? 2 : 0);
-
-      carry += (lx * hy) & 0xffffffffULL;
-      resul = (carry << 32) | (resul & 0xffffffffULL);
-      dest[i+j] += resul;
-      carry = (((!carry && hasCarry != 2) || hasCarry == 1) ? (1ULL << 32) : 0)+
-              (carry >> 32) + (dest[i+j] < resul ? 1 : 0) + 
-              ((lx * hy) >> 32) + hx * hy;
-    }
-    dest[i+xlen] = carry;
-  }
-}
-
-/// add_1 - This function adds the integer array x[] by integer y and
-/// returns the carry.
-uint64_t APInt::add_1(uint64_t dest[], uint64_t x[],
-                      unsigned len, uint64_t y) {
-  uint64_t carry = y;
-
-  for (unsigned i = 0; i < len; ++i) {
-    dest[i] = carry + x[i];
-    carry = (dest[i] < carry) ? 1 : 0;
-  }
-  return carry;
-}
-
-/// add - This function adds the integer array x[] by integer array
-/// y[] and returns the carry.
-uint64_t APInt::add(uint64_t dest[], uint64_t x[],
-                    uint64_t y[], unsigned len) {
-  unsigned carry = 0;
-  
-  for (unsigned i = 0; i< len; ++i) {
-    carry += x[i];
-    dest[i] = carry + y[i];
-    carry = carry < x[i] ? 1 : (dest[i] < carry ? 1 : 0);
-  }
-  return carry;
-}
-
-/// sub_1 - This function subtracts the integer array x[] by
-/// integer y and returns the borrow-out carry.
-uint64_t APInt::sub_1(uint64_t x[], unsigned len, uint64_t y) {
-  uint64_t cy = y;
-
-  for (unsigned i = 0; i < len; ++i) {
-    uint64_t X = x[i];
-    x[i] -= cy;
-    if (cy > X) 
-      cy = 1;
-    else {
-      cy = 0;
-      break;
-    }
-  }
-
-  return cy;
-}
-
-/// sub - This function subtracts the integer array x[] by
-/// integer array y[], and returns the borrow-out carry.
-uint64_t APInt::sub(uint64_t dest[], uint64_t x[],
-                    uint64_t y[], unsigned len) {
-  // Carry indicator.
-  uint64_t cy = 0;
-  
-  for (unsigned i = 0; i < len; ++i) {
-    uint64_t Y = y[i], X = x[i];
-    Y += cy;
-
-    cy = Y < cy ? 1 : 0;
-    Y = X - Y;
-    cy += Y > X ? 1 : 0;
-    dest[i] = Y;
-  }
-  return cy;
-}
-
-/// UnitDiv - This function divides N by D, 
-/// and returns (remainder << 32) | quotient.
-/// Assumes (N >> 32) < D.
-uint64_t APInt::unitDiv(uint64_t N, unsigned D) {
-  uint64_t q, r;                   // q: quotient, r: remainder.
-  uint64_t a1 = N >> 32;           // a1: high 32-bit part of N.
-  uint64_t a0 = N & 0xffffffffL;   // a0: low 32-bit part of N
-  if (a1 < ((D - a1 - (a0 >> 31)) & 0xffffffffL)) {
-      q = N / D;
-      r = N % D;
-  }
-  else {
-    // Compute c1*2^32 + c0 = a1*2^32 + a0 - 2^31*d
-    uint64_t c = N - ((uint64_t) D << 31);
-    // Divide (c1*2^32 + c0) by d
-    q = c / D;
-    r = c % D;
-    // Add 2^31 to quotient 
-    q += 1 << 31;
-  }
-
-  return (r << 32) | (q & 0xFFFFFFFFl);
-}
-
-/// subMul - This function substracts x[len-1:0] * y from 
-/// dest[offset+len-1:offset], and returns the most significant 
-/// word of the product, minus the borrow-out from the subtraction.
-unsigned APInt::subMul(unsigned dest[], unsigned offset, 
-                        unsigned x[], unsigned len, unsigned y) {
-  uint64_t yl = (uint64_t) y & 0xffffffffL;
-  unsigned carry = 0;
-  unsigned j = 0;
-  do {
-    uint64_t prod = ((uint64_t) x[j] & 0xffffffffL) * yl;
-    unsigned prod_low = (unsigned) prod;
-    unsigned prod_high = (unsigned) (prod >> 32);
-    prod_low += carry;
-    carry = (prod_low < carry ? 1 : 0) + prod_high;
-    unsigned x_j = dest[offset+j];
-    prod_low = x_j - prod_low;
-    if (prod_low > x_j) ++carry;
-    dest[offset+j] = prod_low;
-  } while (++j < len);
-  return carry;
-}
-
-/// div - This is basically Knuth's formulation of the classical algorithm.
-/// Correspondance with Knuth's notation:
-/// Knuth's u[0:m+n] == zds[nx:0].
-/// Knuth's v[1:n] == y[ny-1:0]
-/// Knuth's n == ny.
-/// Knuth's m == nx-ny.
-/// Our nx == Knuth's m+n.
-/// Could be re-implemented using gmp's mpn_divrem:
-/// zds[nx] = mpn_divrem (&zds[ny], 0, zds, nx, y, ny).
-void APInt::div(unsigned zds[], unsigned nx, unsigned y[], unsigned ny) {
-  unsigned j = nx;
-  do {                          // loop over digits of quotient
-    // Knuth's j == our nx-j.
-    // Knuth's u[j:j+n] == our zds[j:j-ny].
-    unsigned qhat;  // treated as unsigned
-    if (zds[j] == y[ny-1]) qhat = -1U;  // 0xffffffff
-    else {
-      uint64_t w = (((uint64_t)(zds[j])) << 32) + 
-                   ((uint64_t)zds[j-1] & 0xffffffffL);
-      qhat = (unsigned) unitDiv(w, y[ny-1]);
-    }
-    if (qhat) {
-      unsigned borrow = subMul(zds, j - ny, y, ny, qhat);
-      unsigned save = zds[j];
-      uint64_t num = ((uint64_t)save&0xffffffffL) - 
-                     ((uint64_t)borrow&0xffffffffL);
-      while (num) {
-        qhat--;
-        uint64_t carry = 0;
-        for (unsigned i = 0;  i < ny; i++) {
-          carry += ((uint64_t) zds[j-ny+i] & 0xffffffffL)
-            + ((uint64_t) y[i] & 0xffffffffL);
-          zds[j-ny+i] = (unsigned) carry;
-          carry >>= 32;
-        }
-        zds[j] += carry;
-        num = carry - 1;
-      }
-    }
-    zds[j] = qhat;
-  } while (--j >= ny);
-}
-
-/// lshift - This function shift x[0:len-1] left by shiftAmt bits, and 
-/// store the len least significant words of the result in 
-/// dest[d_offset:d_offset+len-1]. It returns the bits shifted out from 
-/// the most significant digit.
-uint64_t APInt::lshift(uint64_t dest[], unsigned d_offset,
-                       uint64_t x[], unsigned len, unsigned shiftAmt) {
-  unsigned count = 64 - shiftAmt;
-  int i = len - 1;
-  uint64_t high_word = x[i], retVal = high_word >> count;
-  ++d_offset;
-  while (--i >= 0) {
-    uint64_t low_word = x[i];
-    dest[d_offset+i] = (high_word << shiftAmt) | (low_word >> count);
-    high_word = low_word;
-  }
-  dest[d_offset+i] = high_word << shiftAmt;
-  return retVal;
-}
 
 /// @brief Copy assignment operator. Create a new object from the given
 /// APInt one by initialization.
