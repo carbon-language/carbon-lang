@@ -81,7 +81,13 @@ void ValueSymbolTable::insert(Value* V) {
   assert(V && "Can't insert null Value into symbol table!");
   assert(V->hasName() && "Can't insert nameless Value into symbol table");
 
-  // Check to see if there is a naming conflict.  If so, rename this value
+  // Try inserting the name, assuming it won't conflict.
+  if (vmap.insert(make_pair(V->Name, V)).second) {
+    DOUT << " Inserted value: " << V->Name << ": " << *V << "\n";
+    return;
+  }
+  
+  // Otherwise, there is a naming conflict.  Rename this value.
   std::string UniqueName = getUniqueName(V->getName());
 
   DEBUG(DOUT << " Inserting value: " << UniqueName << ": " << *V << "\n");
