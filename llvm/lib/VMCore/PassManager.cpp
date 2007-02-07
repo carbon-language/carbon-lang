@@ -157,6 +157,7 @@ public:
       recordAvailableAnalysis(IP);
     } else {
       P->assignPassManager(activeStack);
+      activeStack.handleLastUserOverflow();
     }
 
   }
@@ -255,6 +256,7 @@ public:
       recordAvailableAnalysis(IP);
     } else {
       P->assignPassManager(activeStack);
+      activeStack.handleLastUserOverflow();
     }
 
   }
@@ -1220,6 +1222,7 @@ void PMStack::handleLastUserOverflow() {
       if (!TLU.empty()) {
         Pass *P = dynamic_cast<Pass *>(Parent);
         TPM->setLastUser(TLU, P);
+        TLU.clear();
       }
     }
   }
