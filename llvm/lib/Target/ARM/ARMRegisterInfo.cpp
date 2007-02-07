@@ -371,11 +371,12 @@ static void emitLoadConstPool(MachineBasicBlock &MBB,
   BuildMI(MBB, MBBI, TII.get(ARM::tLDRpci), DestReg).addConstantPoolIndex(Idx);
 }
 
-/// emitThumbRegPlusConstPool - Emits a series of instructions to materialize
-/// a destreg = basereg + immediate in Thumb code. Load the immediate from a
+/// emitThumbRegPlusImmInReg - Emits a series of instructions to materialize
+/// a destreg = basereg + immediate in Thumb code. Materialize the immediate
+/// in a register using mov / mvn sequences or load the immediate from a
 /// constpool entry.
 static
-void emitThumbRegPlusConstPool(MachineBasicBlock &MBB,
+void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator &MBBI,
                                unsigned DestReg, unsigned BaseReg,
                                int NumBytes, bool CanChangeCC,
@@ -471,7 +472,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   if (NumMIs > Threshold) {
     // This will expand into too many instructions. Load the immediate from a
     // constpool entry.
-    emitThumbRegPlusConstPool(MBB, MBBI, DestReg, BaseReg, NumBytes, true, TII);
+    emitThumbRegPlusImmInReg(MBB, MBBI, DestReg, BaseReg, NumBytes, true, TII);
     return;
   }
 
@@ -795,7 +796,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       bool UseRR = false;
       if (Opcode == ARM::tRestore) {
         if (FrameReg == ARM::SP)
-          emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg,Offset,false,TII);
+          emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,Offset,false,TII);
         else {
           emitLoadConstPool(MBB, II, TmpReg, Offset, TII);
           UseRR = true;
@@ -828,7 +829,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
         BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R3);
       if (Opcode == ARM::tSpill) {
         if (FrameReg == ARM::SP)
-          emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg,Offset,false,TII);
+          emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,Offset,false,TII);
         else {
           emitLoadConstPool(MBB, II, TmpReg, Offset, TII);
           UseRR = true;
