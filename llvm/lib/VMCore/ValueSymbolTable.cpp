@@ -23,15 +23,11 @@ using namespace llvm;
 // Class destructor
 ValueSymbolTable::~ValueSymbolTable() {
 #ifndef NDEBUG   // Only do this in -g mode...
-  bool LeftoverValues = true;
   for (iterator VI = vmap.begin(), VE = vmap.end(); VI != VE; ++VI)
-    if (!isa<Constant>(VI->second) ) {
-      DEBUG(DOUT << "Value still in symbol table! Type = '"
-           << VI->second->getType()->getDescription() << "' Name = '"
-           << VI->first << "'\n");
-      LeftoverValues = false;
-    }
-  assert(LeftoverValues && "Values remain in symbol table!");
+    DEBUG(DOUT << "Value still in symbol table! Type = '"
+               << VI->second->getType()->getDescription() << "' Name = '"
+               << VI->first << "'\n");
+  assert(vmap.empty() && "Values remain in symbol table!");
 #endif
 }
 
