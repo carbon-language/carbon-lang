@@ -1,4 +1,4 @@
-//===-- Analyzer.cpp - Analysis and Dumping of Bytecode 000000---*- C++ -*-===//
+//===-- Analyzer.cpp - Analysis and Dumping of Bytecode ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -86,10 +86,6 @@ public:
     bca.functionDensity = 0.0;
     bca.instructionSize = 0;
     bca.longInstructions = 0;
-    bca.vbrCount32 = 0;
-    bca.vbrCount64 = 0;
-    bca.vbrCompBytes = 0;
-    bca.vbrExpdBytes = 0;
     bca.FunctionInfo.clear();
     bca.BlockSizes[BytecodeFormat::Reserved_DoNotUse] = 0;
     bca.BlockSizes[BytecodeFormat::ModuleBlockID] = theSize;
@@ -329,10 +325,6 @@ public:
     currFunc->density = 0.0;
     currFunc->instructionSize = 0;
     currFunc->longInstructions = 0;
-    currFunc->vbrCount32 = 0;
-    currFunc->vbrCount64 = 0;
-    currFunc->vbrCompBytes = 0;
-    currFunc->vbrExpdBytes = 0;
 
   }
 
@@ -648,13 +640,6 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
   print(Out, "Bytes Per Value ",                bca.fileDensity);
   print(Out, "Bytes Per Global",                bca.globalsDensity);
   print(Out, "Bytes Per Function",              bca.functionDensity);
-  print(Out, "# of VBR 32-bit Integers",   bca.vbrCount32);
-  print(Out, "# of VBR 64-bit Integers",   bca.vbrCount64);
-  print(Out, "# of VBR Compressed Bytes",  bca.vbrCompBytes);
-  print(Out, "# of VBR Expanded Bytes",    bca.vbrExpdBytes);
-  print(Out, "Bytes Saved With VBR",
-        double(bca.vbrExpdBytes)-double(bca.vbrCompBytes),
-        double(bca.vbrExpdBytes));
 
   if (bca.detailedResults) {
     Out << "\nDetailed Analysis Of " << bca.ModuleId << " Functions:\n";
@@ -679,12 +664,6 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
         print(Out, "Average Instruction Size",
               double(I->second.instructionSize) / I->second.numInstructions);
         print(Out, "Bytes Per Instruction", I->second.density);
-        print(Out, "# of VBR 32-bit Integers",   I->second.vbrCount32);
-        print(Out, "# of VBR 64-bit Integers",   I->second.vbrCount64);
-        print(Out, "# of VBR Compressed Bytes",  I->second.vbrCompBytes);
-        print(Out, "# of VBR Expanded Bytes",    I->second.vbrExpdBytes);
-        print(Out, "Bytes Saved With VBR",
-              double(I->second.vbrExpdBytes) - I->second.vbrCompBytes);
       }
       ++I;
     }
