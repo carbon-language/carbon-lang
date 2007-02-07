@@ -103,54 +103,15 @@ void ValueSymbolTable::insert(Value* V) {
 }
 
 // Remove a value
-bool ValueSymbolTable::remove(Value *V) {
+void ValueSymbolTable::remove(Value *V) {
   assert(V->hasName() && "Value doesn't have name!");
   iterator Entry = vmap.find(V->getName());
-  if (Entry == vmap.end())
-    return false;
+  assert(Entry != vmap.end() && "Entry was not in the symtab!");
 
   DEBUG(DOUT << " Removing Value: " << Entry->second->getName() << "\n");
 
   // Remove the value from the plane...
   vmap.erase(Entry);
-  return true;
-}
-
-
-// rename - Given a value with a non-empty name, remove its existing entry
-// from the symbol table and insert a new one for Name.  This is equivalent to
-// doing "remove(V), V->Name = Name, insert(V)", 
-//
-bool ValueSymbolTable::rename(Value *V, const std::string &name) {
-  assert(V && "Can't rename a null Value");
-  assert(V->hasName() && "Can't rename a nameless Value");
-  assert(!V->getName().empty() && "Can't rename an Value with null name");
-  assert(V->getName() != name && "Can't rename a Value with same name");
-  assert(!name.empty() && "Can't rename a named Value with a null name");
-
-  // Find the name
-  iterator VI = vmap.find(V->getName());
-
-  // If we didn't find it, we're done
-  if (VI == vmap.end())
-    return false;
-
-  // Remove the old entry.
-  vmap.erase(VI);
-
-  // See if we can insert the new name.
-  VI = vmap.lower_bound(name);
-
-  // Is there a naming conflict?
-  if (VI != vmap.end() && VI->first == name) {
-    V->Name = getUniqueName( name);
-    vmap.insert(make_pair(V->Name, V));
-  } else {
-    V->Name = name;
-    vmap.insert(VI, make_pair(V->Name, V));
-  }
-
-  return true;
 }
 
 // DumpVal - a std::for_each function for dumping a value

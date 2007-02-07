@@ -91,7 +91,7 @@ public:
 
   /// @return 1 if the name is in the symbol table, 0 otherwise
   /// @brief Determine if a name is in the symbol table
-  ValueMap::size_type count(const std::string &name) const { 
+  bool count(const std::string &name) const { 
     return vmap.count(name);
   }
 
@@ -134,18 +134,10 @@ private:
 
   /// This method removes a value from the symbol table. The name of the
   /// Value is extracted from \p Val and used to lookup the Value in the
-  /// symbol table. If the Value is not in the symbol table, this method
-  /// returns false. \p Val is not deleted, just removed from the symbol table.
-  /// @returns true if \p Val was successfully removed, false otherwise
+  /// symbol table.  \p Val is not deleted, just removed from the symbol table.
   /// @brief Remove a value from the symbol table.
-  bool remove(Value* Val);
-
-  /// Given a value with a non-empty name, remove its existing
-  /// entry from the symbol table and insert a new one for Name.  This is
-  /// equivalent to doing "remove(V), V->Name = Name, insert(V)".
-  /// @brief Rename a value in the symbol table
-  bool rename(Value *V, const std::string &Name);
-
+  void remove(Value* Val);
+  
 /// @}
 /// @name Internal Data
 /// @{
@@ -154,7 +146,6 @@ private:
   mutable uint32_t LastUnique; ///< Counter for tracking unique names
 
 /// @}
-
 };
 
 } // End llvm namespace

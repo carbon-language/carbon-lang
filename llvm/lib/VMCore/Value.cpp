@@ -120,7 +120,9 @@ void Value::setName(const std::string &name) {
     Name = name;
   else if (hasName()) {
     if (!name.empty()) {    // Replacing name.
-      ST->rename(this, name);
+      ST->remove(this);
+      Name = name;
+      ST->insert(this);
     } else {                // Transitioning from hasName -> noname.
       ST->remove(this);
       Name.clear();
