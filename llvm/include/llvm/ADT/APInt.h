@@ -45,7 +45,7 @@ class APInt {
   friend double APIntToDouble(const APInt& APIVal);
   friend float APIntToFloat(const APInt& APIVal);
 
-  unsigned bitsnum;      ///< The number of bits.
+  unsigned BitsNum;      ///< The number of bits.
   bool isSigned;         ///< The sign flag for this APInt.
 
   /// This union is used to store the integer value. When the
@@ -64,22 +64,22 @@ class APInt {
   /// Here one word's bitwidth equals to that of uint64_t.
   /// @returns the number of words to hold the integer value of this APInt.
   /// @brief Get the number of words.
-  inline unsigned numWords() const {
-    return bitsnum < 1 ? 0 : (bitsnum + APINT_BITS_PER_WORD - 1) /
-                             APINT_BITS_PER_WORD;
+  inline unsigned getNumWords() const {
+    return (BitsNum + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
   }
 
   /// @returns true if the number of bits <= 64, false otherwise.
   /// @brief Determine if this APInt just has one word to store value.
   inline bool isSingleWord() const
-  { return bitsnum <= APINT_BITS_PER_WORD; }
+  { return BitsNum <= APINT_BITS_PER_WORD; }
 
   /// @returns the word position for the specified bit position.
   static inline unsigned whichWord(unsigned bitPosition)
   { return bitPosition / APINT_BITS_PER_WORD; }
 
   /// @returns the byte position for the specified bit position.
-  static inline unsigned whichByte(unsigned bitPosition);
+  static inline unsigned whichByte(unsigned bitPosition)
+  { return (bitPosition % APINT_BITS_PER_WORD) / 8; }
 
   /// @returns the bit position in a word for the specified bit position 
   /// in APInt.
@@ -93,10 +93,10 @@ class APInt {
 
   inline void TruncToBits() {
     if (isSingleWord())
-      VAL &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - bitsnum);
+      VAL &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitsNum);
     else
-      pVal[numWords() - 1] &= ~uint64_t(0ULL) >> 
-        (APINT_BITS_PER_WORD - (whichBit(bitsnum - 1) + 1));
+      pVal[getNumWords() - 1] &= ~uint64_t(0ULL) >> 
+        (APINT_BITS_PER_WORD - (whichBit(BitsNum - 1) + 1));
   }
 
   /// @returns the corresponding word for the specified bit position.
@@ -107,6 +107,9 @@ class APInt {
   /// This is a constant version.
   inline uint64_t getWord(unsigned bitPosition) const
   { return isSingleWord() ? VAL : pVal[whichWord(bitPosition)]; }
+
+  /// @brief Converts a char array into an integer.
+  void StrToAPInt(const char *StrStart, unsigned slen, uint8_t radix);
 
 public:
   /// @brief Create a new APInt of numBits bit-width, and initialized as val.
@@ -119,7 +122,11 @@ public:
 
   /// @brief Create a new APInt by translating the string represented 
   /// integer value.
-  APInt(std::string& Val, uint8_t radix = 10, bool sign = false);
+  APInt(const std::string& Val, uint8_t radix = 10, bool sign = false);
+
+  /// @brief Create a new APInt by translating the char array represented
+  /// integer value.
+  APInt(const char StrStart[], unsigned slen, uint8_t radix, bool sign = false);
 
   /// @brief Copy Constructor.
   APInt(const APInt& API);
@@ -136,7 +143,10 @@ public:
 
   /// Increments the APInt by one.
   /// @brief Postfix increment operator.
-  const APInt operator++(int);
+  inline const APInt operator++(int) {
+    APInt API(*this);
+    return ++API;
+  }
 
   /// Increments the APInt by one.
   /// @brief Prefix increment operator.
@@ -144,7 +154,10 @@ public:
 
   /// Decrements the APInt by one.
   /// @brief Postfix decrement operator. 
-  const APInt operator--(int);
+  inline const APInt operator--(int) {
+    APInt API(*this);
+    return --API;
+  }
 
   /// Decrements the APInt by one.
   /// @brief Prefix decrement operator. 
@@ -264,11 +277,25 @@ public:
   /// @brief Equality operator. 
   bool operator==(const APInt& RHS) const;
 
+  /// Compare this APInt with the given uint64_t value
+  /// for the validity of the equality relationship.
+  /// @brief Equality operator.
+  bool operator==(uint64_t Val) const;
+
   /// Compare this APInt with the given APInt& RHS 
   /// for the validity of the inequality relationship.
   /// @brief Inequality operator. 
-  bool operator!=(const APInt& RHS) const;
+  inline bool operator!=(const APInt& RHS) const {
+    return !((*this) == RHS);
+  }
 
+  /// Compare this APInt with the given uint64_t value 
+  /// for the validity of the inequality relationship.
+  /// @brief Inequality operator. 
+  inline bool operator!=(uint64_t Val) const {
+    return !((*this) == Val);
+  }
+  
   /// Compare this APInt with the given APInt& RHS for 
   /// the validity of the less-than relationship.
   /// @brief Less-than operator. 
@@ -293,11 +320,10 @@ public:
   /// word, just returns VAL, otherwise pVal[0].
   inline uint64_t getValue() {
     if (isSingleWord())
-      return isSigned ? ((int64_t(VAL) << (APINT_BITS_PER_WORD - bitsnum)) >> 
-                         (APINT_BITS_PER_WORD - bitsnum)) :
+      return isSigned ? ((int64_t(VAL) << (APINT_BITS_PER_WORD - BitsNum)) >> 
+                         (APINT_BITS_PER_WORD - BitsNum)) :
                         VAL;
-    else
-      return pVal[0];
+    assert(0 && "This APInt's bitwidth > 64");
   }
 
   /// @returns the largest value for an APInt of the specified bit-width and 
@@ -344,12 +370,12 @@ public:
   /// @returns a character interpretation of the APInt.
   std::string to_string(uint8_t radix = 10) const;
 
-  /// Get an APInt with the same bitsnum as this APInt, just zero mask
+  /// Get an APInt with the same BitsNum as this APInt, just zero mask
   /// the low bits and right shift to the least significant bit.
   /// @returns the high "numBits" bits of this APInt.
   APInt HiBits(unsigned numBits) const;
 
-  /// Get an APInt with the same bitsnum as this APInt, just zero mask
+  /// Get an APInt with the same BitsNum as this APInt, just zero mask
   /// the high bits.
   /// @returns the low "numBits" bits of this APInt.
   APInt LoBits(unsigned numBits) const;
@@ -372,7 +398,7 @@ public:
 
   /// @returns the total number of bits.
   inline unsigned getNumBits() const
-  { return bitsnum; }
+  { return BitsNum; }
 
 };
 
@@ -404,7 +430,7 @@ APInt ByteSwap(const APInt& APIVal);
 
 /// @returns the floor log base 2 of the specified APInt value.
 inline APInt LogBase2(const APInt& APIVal) {
-  return APIVal.numWords() * APInt::APINT_BITS_PER_WORD - 
+  return APIVal.getNumWords() * APInt::APINT_BITS_PER_WORD - 
          APIVal.CountLeadingZeros();
 }
 
