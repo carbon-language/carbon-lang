@@ -63,10 +63,6 @@ struct BytecodeAnalysis {
   double   functionDensity; ///< Average density of functions (bytes/function)
   unsigned instructionSize; ///< Size of instructions in bytes
   unsigned longInstructions;///< Number of instructions > 4 bytes
-  unsigned vbrCount32;      ///< Number of 32-bit vbr values
-  unsigned vbrCount64;      ///< Number of 64-bit vbr values
-  unsigned vbrCompBytes;    ///< Number of vbr bytes (compressed)
-  unsigned vbrExpdBytes;    ///< Number of vbr bytes (expanded)
 
   typedef std::map<BytecodeFormat::BytecodeBlockIdentifiers,unsigned>
       BlockSizeMap;
@@ -85,10 +81,6 @@ struct BytecodeAnalysis {
     double   density;         ///< Density of function
     unsigned instructionSize; ///< Size of instructions in bytes
     unsigned longInstructions;///< Number of instructions > 4 bytes
-    unsigned vbrCount32;      ///< Number of 32-bit vbr values
-    unsigned vbrCount64;      ///< Number of 64-bit vbr values
-    unsigned vbrCompBytes;    ///< Number of vbr bytes (compressed)
-    unsigned vbrExpdBytes;    ///< Number of vbr bytes (expanded)
   };
 
   /// A mapping of function slot numbers to the collected information about
