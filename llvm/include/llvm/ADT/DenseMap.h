@@ -28,6 +28,7 @@ struct DenseMapKeyInfo {
   //static bool isPod()
 };
 
+// Provide DenseMapKeyInfo for all pointers.
 template<typename T>
 struct DenseMapKeyInfo<T*> {
   static inline T* getEmptyKey() { return (T*)-1; }
@@ -51,6 +52,7 @@ class DenseMap {
   BucketT *Buckets;
   
   unsigned NumEntries;
+  unsigned NumTombstones;
   DenseMap(const DenseMap &); // not implemented.
 public:
   explicit DenseMap(unsigned NumInitBuckets = 64) {
@@ -96,6 +98,7 @@ public:
       }
     }
     assert(NumEntries == 0 && "Node count imbalance!");
+    NumTombstones = 0;
   }
   
   /// count - Return true if the specified key is in the map.
@@ -129,6 +132,7 @@ public:
     TheBucket->second.~ValueT();
     TheBucket->first = getTombstoneKey();
     --NumEntries;
+    ++NumTombstones;
     return true;
   }
   bool erase(iterator I) {
@@ -136,6 +140,7 @@ public:
     TheBucket->second.~ValueT();
     TheBucket->first = getTombstoneKey();
     --NumEntries;
+    ++NumTombstones;
     return true;
   }
   
@@ -150,12 +155,26 @@ public:
 private:
   BucketT *InsertIntoBucket(const KeyT &Key, const ValueT &Value,
                             BucketT *TheBucket) {
-    // If the load of the hash table is more than 3/4, grow it.
-    if (NumEntries*4 >= NumBuckets*3) {
+    // If the load of the hash table is more than 3/4, or if fewer than 1/8 of
+    // the buckets are empty (meaning that many are filled with tombstones),
+    // grow the table.
+    //
+    // The later case is tricky.  For example, if we had one empty bucket with
+    // tons of tombstones, failing lookups (e.g. for insertion) would have to
+    // probe almost the entire table until it found the empty bucket.  If the
+    // table completely filled with tombstones, no lookup would ever succeed,
+    // causing infinite loops in lookup.
+    if (NumEntries*4 >= NumBuckets*3 ||
+        NumBuckets-(NumEntries+NumTombstones) < NumBuckets/8) {        
       this->grow();
       LookupBucketFor(Key, TheBucket);
     }
     ++NumEntries;
+    
+    // If we are writing over a tombstone, remember this.
+    if (TheBucket->first != getEmptyKey())
+      --NumTombstones;
+    
     TheBucket->first = Key;
     new (&TheBucket->second) ValueT(Value);
     return TheBucket;
@@ -218,6 +237,7 @@ private:
 
   void init(unsigned InitBuckets) {
     NumEntries = 0;
+    NumTombstones = 0;
     NumBuckets = InitBuckets;
     assert(InitBuckets && (InitBuckets & InitBuckets-1) == 0 &&
            "# initial buckets must be a power of two!");
@@ -234,6 +254,7 @@ private:
     
     // Double the number of buckets.
     NumBuckets <<= 1;
+    NumTombstones = 0;
     Buckets = (BucketT*)new char[sizeof(BucketT)*NumBuckets];
 
     // Initialize all the keys to EmptyKey.
