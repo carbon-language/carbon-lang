@@ -534,7 +534,7 @@ public:
   }
 
 };
-
+} // end anonymous namespace
 
 /// @brief Utility for printing a titled unsigned value with
 /// an aligned colon.
@@ -574,14 +574,10 @@ inline static void print(std::ostream&Out, const char*title,
       << std::left << val << (nl ? "\n" : "");
 }
 
-}
-
-namespace llvm {
-
 /// This function prints the contents of rhe BytecodeAnalysis structure in
 /// a human legible form.
 /// @brief Print BytecodeAnalysis structure to an ostream
-void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
+void llvm::PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
 {
   Out << "\nSummary Analysis Of " << bca.ModuleId << ": \n\n";
   print(Out, "Bytecode Analysis Of Module",     bca.ModuleId);
@@ -673,11 +669,17 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
     Out << bca.VerifyInfo;
 }
 
-BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca,
-                                               std::ostream* output)
-{
-  return new AnalyzerHandler(bca,output);
+// AnalyzeBytecodeFile - analyze one file
+Module* llvm::AnalyzeBytecodeFile(const std::string &Filename,  ///< File to analyze
+                                  BytecodeAnalysis& bca,        ///< Statistical output
+                                  BCDecompressor_t *BCDC,
+                                  std::string *ErrMsg,          ///< Error output
+                                  std::ostream* output          ///< Dump output
+                                  ) {
+  BytecodeHandler* AH = new AnalyzerHandler(bca, output);
+  ModuleProvider* MP = getBytecodeModuleProvider(Filename, BCDC, ErrMsg, AH);
+  if (!MP) return 0;
+  Module *M = MP->releaseModule(ErrMsg);
+  delete MP;
+  return M;
 }
-
-}
-

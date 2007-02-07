@@ -255,21 +255,6 @@ Module *llvm::ParseBytecodeFile(const std::string &Filename,
   return M;
 }
 
-// AnalyzeBytecodeFile - analyze one file
-Module* llvm::AnalyzeBytecodeFile(
-  const std::string &Filename,  ///< File to analyze
-  BytecodeAnalysis& bca,        ///< Statistical output
-  BCDecompressor_t *BCDC,
-  std::string *ErrMsg,          ///< Error output
-  std::ostream* output          ///< Dump output
-) {
-  BytecodeHandler* AH = createBytecodeAnalyzerHandler(bca,output);
-  ModuleProvider* MP = getBytecodeModuleProvider(Filename, BCDC, ErrMsg, AH);
-  if (!MP) return 0;
-  Module *M = MP->releaseModule(ErrMsg);
-  delete MP;
-  return M;
-}
 
 bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
                                          Module::LibraryListType& deplibs,

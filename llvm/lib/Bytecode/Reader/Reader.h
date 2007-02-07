@@ -18,8 +18,6 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/GlobalValue.h"
-#include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Bytecode/Analyzer.h"
 #include "llvm/ADT/SmallVector.h"
@@ -454,12 +452,6 @@ private:
   inline void read_block(unsigned &Type, unsigned &Size);
 /// @}
 };
-
-/// @brief A function for creating a BytecodeAnalzer as a handler
-/// for the Bytecode reader.
-BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca,
-                                               std::ostream* output );
-
 
 } // End llvm namespace
 
