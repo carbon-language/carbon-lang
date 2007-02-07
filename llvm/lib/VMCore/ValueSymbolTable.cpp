@@ -88,13 +88,18 @@ void ValueSymbolTable::insert(Value* V) {
   }
   
   // Otherwise, there is a naming conflict.  Rename this value.
-  std::string UniqueName = getUniqueName(V->getName());
+  std::string UniqueName = V->getName();
+  unsigned BaseSize = UniqueName.size();
+  do {
+    // Trim any suffix off.
+    UniqueName.resize(BaseSize);
+    UniqueName += utostr(++LastUnique);
+  } while (!vmap.insert(make_pair(UniqueName, V)).second);
 
   DEBUG(DOUT << " Inserting value: " << UniqueName << ": " << *V << "\n");
 
   // Insert the vmap entry
   V->Name = UniqueName;
-  vmap.insert(make_pair(V->Name, V));
 }
 
 // Remove a value
