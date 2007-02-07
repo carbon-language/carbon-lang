@@ -17,10 +17,7 @@
 #if 0
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/MathExtras.h"
-#include <strings.h>
-#include <iostream>
-#include <sstream>
-#include <iomanip>
+#include <cstring>
 #include <cstdlib>
 using namespace llvm;
 
@@ -266,60 +263,74 @@ static uint64_t lshift(uint64_t dest[], unsigned d_offset,
 }
 
 APInt::APInt(uint64_t val, unsigned numBits, bool sign)
-  : bitsnum(numBits), isSigned(sign) {
-  assert(bitsnum >= IntegerType::MIN_INT_BITS && "bitwidth too small");
-  assert(bitsnum <= IntegerType::MAX_INT_BITS && "bitwidth too large");
+  : BitsNum(numBits), isSigned(sign) {
+  assert(BitsNum >= IntegerType::MIN_INT_BITS && "bitwidth too small");
+  assert(BitsNum <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   if (isSingleWord()) 
-    VAL = val & (~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - bitsnum));
+    VAL = val & (~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitsNum));
   else {
     // Memory allocation and check if successful.
-    assert((pVal = new uint64_t[numWords()]) && 
+    assert((pVal = new uint64_t[getNumWords()]) && 
             "APInt memory allocation fails!");
-    bzero(pVal, numWords() * 8);
+    memset(pVal, 0, getNumWords() * 8);
     pVal[0] = val;
   }
 }
 
 APInt::APInt(unsigned numBits, uint64_t bigVal[], bool sign)
-  : bitsnum(numBits), isSigned(sign) {
-  assert(bitsnum >= IntegerType::MIN_INT_BITS && "bitwidth too small");
-  assert(bitsnum <= IntegerType::MAX_INT_BITS && "bitwidth too large");
+  : BitsNum(numBits), isSigned(sign) {
+  assert(BitsNum >= IntegerType::MIN_INT_BITS && "bitwidth too small");
+  assert(BitsNum <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   assert(bigVal && "Null pointer detected!");
   if (isSingleWord())
-    VAL = bigVal[0] & (~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - bitsnum));
+    VAL = bigVal[0] & (~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitsNum));
   else {
     // Memory allocation and check if successful.
-    assert((pVal = new uint64_t[numWords()]) && 
+    assert((pVal = new uint64_t[getNumWords()]) && 
            "APInt memory allocation fails!");
     // Calculate the actual length of bigVal[].
     unsigned n = sizeof(*bigVal) / sizeof(bigVal[0]);
-    unsigned maxN = std::max<unsigned>(n, numWords());
-    unsigned minN = std::min<unsigned>(n, numWords());
+    unsigned maxN = std::max<unsigned>(n, getNumWords());
+    unsigned minN = std::min<unsigned>(n, getNumWords());
     memcpy(pVal, bigVal, (minN - 1) * 8);
-    pVal[minN-1] = bigVal[minN-1] & (~uint64_t(0ULL) >> (64 - bitsnum % 64));
-    if (maxN == numWords())
-      bzero(pVal+n, (numWords() - n) * 8);
+    pVal[minN-1] = bigVal[minN-1] & (~uint64_t(0ULL) >> (64 - BitsNum % 64));
+    if (maxN == getNumWords())
+      memset(pVal+n, 0, (getNumWords() - n) * 8);
   }
 }
 
-APInt::APInt(std::string& Val, uint8_t radix, bool sign)
+/// @brief Create a new APInt by translating the char array represented
+/// integer value.
+APInt::APInt(const char StrStart[], unsigned slen, uint8_t radix, bool sign)
   : isSigned(sign) {
+  StrToAPInt(StrStart, slen, radix);
+}
+
+/// @brief Create a new APInt by translating the string represented
+/// integer value.
+APInt::APInt(const std::string& Val, uint8_t radix, bool sign)
+  : isSigned(sign) {
+  assert(!Val.empty() && "String empty?");
+  StrToAPInt(Val.c_str(), Val.size(), radix);
+}
+
+/// @brief Converts a char array into an integer.
+void APInt::StrToAPInt(const char *StrStart, unsigned slen, uint8_t radix) {
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
-  assert(!Val.empty() && "String empty?");
-  unsigned slen = Val.size();
+  assert(StrStart && "String empty?");
   unsigned size = 0;
   // If the radix is a power of 2, read the input
   // from most significant to least significant.
   if ((radix & (radix - 1)) == 0) {
     unsigned nextBitPos = 0, bits_per_digit = radix / 8 + 2;
     uint64_t resDigit = 0;
-    bitsnum = slen * bits_per_digit;
-    if (numWords() > 1)
-      assert((pVal = new uint64_t[numWords()]) && 
+    BitsNum = slen * bits_per_digit;
+    if (getNumWords() > 1)
+      assert((pVal = new uint64_t[getNumWords()]) && 
              "APInt memory allocation fails!");
     for (int i = slen - 1; i >= 0; --i) {
-      uint64_t digit = Val[i] - 48;             // '0' == 48.
+      uint64_t digit = StrStart[i] - 48;             // '0' == 48.
       resDigit |= digit << nextBitPos;
       nextBitPos += bits_per_digit;
       if (nextBitPos >= 64) {
@@ -332,31 +343,31 @@ APInt::APInt(std::string& Val, uint8_t radix, bool sign)
         resDigit = digit >> (bits_per_digit - nextBitPos);
       }
     }
-    if (!isSingleWord() && size <= numWords()) 
+    if (!isSingleWord() && size <= getNumWords()) 
       pVal[size] = resDigit;
   } else {   // General case.  The radix is not a power of 2.
     // For 10-radix, the max value of 64-bit integer is 18446744073709551615,
     // and its digits number is 14.
     const unsigned chars_per_word = 20;
     if (slen < chars_per_word || 
-        (Val <= "18446744073709551615" && 
-         slen == chars_per_word)) { // In case Val <= 2^64 - 1
-      bitsnum = 64;
-      VAL = strtoull(Val.c_str(), 0, 10);
-    } else { // In case Val > 2^64 - 1
-      bitsnum = (slen / chars_per_word + 1) * 64;
-      assert((pVal = new uint64_t[numWords()]) && 
+        (slen == chars_per_word &&             // In case the value <= 2^64 - 1
+         strcmp(StrStart, "18446744073709551615") <= 0)) {
+      BitsNum = 64;
+      VAL = strtoull(StrStart, 0, 10);
+    } else { // In case the value > 2^64 - 1
+      BitsNum = (slen / chars_per_word + 1) * 64;
+      assert((pVal = new uint64_t[getNumWords()]) && 
              "APInt memory allocation fails!");
-      bzero(pVal, numWords() * 8);
+      memset(pVal, 0, getNumWords() * 8);
       unsigned str_pos = 0;
       while (str_pos < slen) {
         unsigned chunk = slen - str_pos;
         if (chunk > chars_per_word - 1)
           chunk = chars_per_word - 1;
-        uint64_t resDigit = Val[str_pos++] - 48;  // 48 == '0'.
+        uint64_t resDigit = StrStart[str_pos++] - 48;  // 48 == '0'.
         uint64_t big_base = radix;
         while (--chunk > 0) {
-          resDigit = resDigit * radix + Val[str_pos++] - 48;
+          resDigit = resDigit * radix + StrStart[str_pos++] - 48;
           big_base *= radix;
         }
        
@@ -375,13 +386,13 @@ APInt::APInt(std::string& Val, uint8_t radix, bool sign)
 }
 
 APInt::APInt(const APInt& APIVal)
-  : bitsnum(APIVal.bitsnum), isSigned(APIVal.isSigned) {
+  : BitsNum(APIVal.BitsNum), isSigned(APIVal.isSigned) {
   if (isSingleWord()) VAL = APIVal.VAL;
   else {
     // Memory allocation and check if successful.
-    assert((pVal = new uint64_t[numWords()]) && 
+    assert((pVal = new uint64_t[getNumWords()]) && 
            "APInt memory allocation fails!");
-    memcpy(pVal, APIVal.pVal, numWords() * 8);
+    memcpy(pVal, APIVal.pVal, getNumWords() * 8);
   }
 }
 
@@ -389,20 +400,15 @@ APInt::~APInt() {
   if (!isSingleWord() && pVal) delete[] pVal;
 }
 
-/// whichByte - This function returns the word position 
-/// for the specified bit position.
-inline unsigned APInt::whichByte(unsigned bitPosition)
-{ return (bitPosition % APINT_BITS_PER_WORD) / 8; }
-
 /// @brief Copy assignment operator. Create a new object from the given
 /// APInt one by initialization.
 APInt& APInt::operator=(const APInt& RHS) {
   if (isSingleWord()) VAL = RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
   else {
-    unsigned minN = std::min(numWords(), RHS.numWords());
+    unsigned minN = std::min(getNumWords(), RHS.getNumWords());
     memcpy(pVal, RHS.isSingleWord() ? &RHS.VAL : RHS.pVal, minN * 8);
-    if (numWords() != minN)
-      bzero(pVal + minN, (numWords() - minN) * 8);
+    if (getNumWords() != minN)
+      memset(pVal + minN, 0, (getNumWords() - minN) * 8);
   }
   return *this;
 }
@@ -413,45 +419,25 @@ APInt& APInt::operator=(uint64_t RHS) {
   if (isSingleWord()) VAL = RHS;
   else {
     pVal[0] = RHS;
-    bzero(pVal, (numWords() - 1) * 8);
+    memset(pVal, 0, (getNumWords() - 1) * 8);
   }
   return *this;
-}
-
-/// @brief Postfix increment operator. Increments the APInt by one.
-const APInt APInt::operator++(int) {
-  APInt API(*this);
-  if (isSingleWord()) ++VAL;
-  else
-    add_1(pVal, pVal, numWords(), 1);
-  API.TruncToBits();
-  return API;
 }
 
 /// @brief Prefix increment operator. Increments the APInt by one.
 APInt& APInt::operator++() {
   if (isSingleWord()) ++VAL;
   else
-    add_1(pVal, pVal, numWords(), 1);
+    add_1(pVal, pVal, getNumWords(), 1);
   TruncToBits();
   return *this;
-}
-
-/// @brief Postfix decrement operator. Decrements the APInt by one.
-const APInt APInt::operator--(int) {
-  APInt API(*this);
-  if (isSingleWord()) --VAL;
-  else
-    sub_1(API.pVal, API.numWords(), 1);
-  API.TruncToBits();
-  return API;
 }
 
 /// @brief Prefix decrement operator. Decrements the APInt by one.
 APInt& APInt::operator--() {
   if (isSingleWord()) --VAL;
   else
-    sub_1(pVal, numWords(), 1);
+    sub_1(pVal, getNumWords(), 1);
   TruncToBits();
   return *this;
 }
@@ -461,14 +447,14 @@ APInt& APInt::operator--() {
 APInt& APInt::operator+=(const APInt& RHS) {
   if (isSingleWord()) VAL += RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
   else {
-    if (RHS.isSingleWord()) add_1(pVal, pVal, numWords(), RHS.VAL);
+    if (RHS.isSingleWord()) add_1(pVal, pVal, getNumWords(), RHS.VAL);
     else {
-      if (numWords() <= RHS.numWords()) 
-        add(pVal, pVal, RHS.pVal, numWords());
+      if (getNumWords() <= RHS.getNumWords()) 
+        add(pVal, pVal, RHS.pVal, getNumWords());
       else {
-        uint64_t carry = add(pVal, pVal, RHS.pVal, RHS.numWords());
-        add_1(pVal + RHS.numWords(), pVal + RHS.numWords(), 
-              numWords() - RHS.numWords(), carry);
+        uint64_t carry = add(pVal, pVal, RHS.pVal, RHS.getNumWords());
+        add_1(pVal + RHS.getNumWords(), pVal + RHS.getNumWords(), 
+              getNumWords() - RHS.getNumWords(), carry);
       }
     }
   }
@@ -483,14 +469,14 @@ APInt& APInt::operator-=(const APInt& RHS) {
     VAL -= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
   else {
     if (RHS.isSingleWord())
-      sub_1(pVal, numWords(), RHS.VAL);
+      sub_1(pVal, getNumWords(), RHS.VAL);
     else {
-      if (RHS.numWords() < numWords()) { 
-        uint64_t carry = sub(pVal, pVal, RHS.pVal, RHS.numWords());
-        sub_1(pVal + RHS.numWords(), numWords() - RHS.numWords(), carry); 
+      if (RHS.getNumWords() < getNumWords()) { 
+        uint64_t carry = sub(pVal, pVal, RHS.pVal, RHS.getNumWords());
+        sub_1(pVal + RHS.getNumWords(), getNumWords() - RHS.getNumWords(), carry); 
       }
       else
-        sub(pVal, pVal, RHS.pVal, numWords());
+        sub(pVal, pVal, RHS.pVal, getNumWords());
     }
   }
   TruncToBits();
@@ -503,23 +489,24 @@ APInt& APInt::operator*=(const APInt& RHS) {
   if (isSingleWord()) VAL *= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
   else {
     // one-based first non-zero bit position.
-    unsigned first = numWords() * APINT_BITS_PER_WORD - CountLeadingZeros();
+    unsigned first = getNumWords() * APINT_BITS_PER_WORD - CountLeadingZeros();
     unsigned xlen = !first ? 0 : whichWord(first - 1) + 1;
     if (!xlen) 
       return *this;
     else if (RHS.isSingleWord()) 
       mul_1(pVal, pVal, xlen, RHS.VAL);
     else {
-      first = RHS.numWords() * APINT_BITS_PER_WORD - RHS.CountLeadingZeros();
+      first = RHS.getNumWords() * APINT_BITS_PER_WORD - RHS.CountLeadingZeros();
       unsigned ylen = !first ? 0 : whichWord(first - 1) + 1;
       if (!ylen) {
-        bzero(pVal, numWords() * 8);
+        memset(pVal, 0, getNumWords() * 8);
         return *this;
       }
       uint64_t *dest = new uint64_t[xlen+ylen];
       assert(dest && "Memory Allocation Failed!");
       mul(dest, pVal, xlen, RHS.pVal, ylen);
-      memcpy(pVal, dest, ((xlen + ylen >= numWords()) ? numWords() : xlen + ylen) * 8);
+      memcpy(pVal, dest, ((xlen + ylen >= getNumWords()) ? 
+                         getNumWords() : xlen + ylen) * 8);
       delete[] dest;
     }
   }
@@ -530,7 +517,7 @@ APInt& APInt::operator*=(const APInt& RHS) {
 /// @brief Division assignment operator. Divides this APInt by the given APInt
 /// &RHS and assigns the result to this APInt.
 APInt& APInt::operator/=(const APInt& RHS) {
-  unsigned first = RHS.numWords() * APINT_BITS_PER_WORD - 
+  unsigned first = RHS.getNumWords() * APINT_BITS_PER_WORD - 
                    RHS.CountLeadingZeros();
   unsigned ylen = !first ? 0 : whichWord(first - 1) + 1;
   assert(ylen && "Divided by zero???");
@@ -542,14 +529,14 @@ APInt& APInt::operator/=(const APInt& RHS) {
       VAL = RHS.isSingleWord() ? (VAL / RHS.VAL) : 
           (ylen > 1 ? 0 : VAL / RHS.pVal[0]);
   } else {
-    unsigned first2 = numWords() * APINT_BITS_PER_WORD - CountLeadingZeros();
+    unsigned first2 = getNumWords() * APINT_BITS_PER_WORD - CountLeadingZeros();
     unsigned xlen = !first2 ? 0 : whichWord(first2 - 1) + 1;
     if (!xlen)
       return *this;
     else if ((*this) < RHS)
-      bzero(pVal, numWords() * 8);
+      memset(pVal, 0, getNumWords() * 8);
     else if ((*this) == RHS) {
-      bzero(pVal, numWords() * 8);
+      memset(pVal, 0, getNumWords() * 8);
       pVal[0] = 1;
     } else if (xlen == 1)
       pVal[0] /= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
@@ -565,7 +552,7 @@ APInt& APInt::operator/=(const APInt& RHS) {
         xwords[xlen++] = lshift(xwords, 0, xwords, xlentmp, nshift);
       }
       div((unsigned*)xwords, xlen*2-1, (unsigned*)ywords, ylen*2);
-      bzero(pVal, numWords() * 8);
+      memset(pVal, 0, getNumWords() * 8);
       memcpy(pVal, xwords + ylen, (xlen - ylen) * 8);
       delete[] xwords;
       delete[] ywords;
@@ -578,7 +565,7 @@ APInt& APInt::operator/=(const APInt& RHS) {
 /// division of this APInt by the given APInt& RHS and assigns the remainder 
 /// to this APInt.
 APInt& APInt::operator%=(const APInt& RHS) {
-  unsigned first = RHS.numWords() * APINT_BITS_PER_WORD -
+  unsigned first = RHS.getNumWords() * APINT_BITS_PER_WORD -
                    RHS.CountLeadingZeros();
   unsigned ylen = !first ? 0 : whichWord(first - 1) + 1;
   assert(ylen && "Performing remainder operation by zero ???");
@@ -590,12 +577,12 @@ APInt& APInt::operator%=(const APInt& RHS) {
       VAL = RHS.isSingleWord() ? (VAL % RHS.VAL) : 
           (ylen > 1 ? VAL : VAL % RHS.pVal[0]);
   } else {
-    unsigned first2 = numWords() * APINT_BITS_PER_WORD - CountLeadingZeros();
+    unsigned first2 = getNumWords() * APINT_BITS_PER_WORD - CountLeadingZeros();
     unsigned xlen = !first2 ? 0 : whichWord(first2 - 1) + 1;
     if (!xlen || (*this) < RHS)
       return *this;
     else if ((*this) == RHS) 
-      bzero(pVal, numWords() * 8);
+      memset(pVal, 0, getNumWords() * 8);
     else if (xlen == 1) 
       pVal[0] %= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
     else {
@@ -611,7 +598,7 @@ APInt& APInt::operator%=(const APInt& RHS) {
         xwords[xlen++] = lshift(xwords, 0, xwords, xlentmp, nshift);
       }
       div((unsigned*)xwords, xlen*2-1, (unsigned*)ywords, ylen*2);
-      bzero(pVal, numWords() * 8);
+      memset(pVal, 0, getNumWords() * 8);
       for (unsigned i = 0; i < ylen-1; ++i)
         pVal[i] = (xwords[i] >> nshift) | (xwords[i+1] << (64 - nshift));
       pVal[ylen-1] = xwords[ylen-1] >> nshift;
@@ -630,13 +617,15 @@ APInt& APInt::operator&=(const APInt& RHS) {
     else VAL &= RHS.pVal[0];
   } else {
     if (RHS.isSingleWord()) {
-      bzero(pVal, (numWords() - 1) * 8);
+      memset(pVal, 0, (getNumWords() - 1) * 8);
       pVal[0] &= RHS.VAL;
     } else {
-      unsigned minwords = numWords() < RHS.numWords() ? numWords() : RHS.numWords();
+      unsigned minwords = getNumWords() < RHS.getNumWords() ? 
+                          getNumWords() : RHS.getNumWords();
       for (unsigned i = 0; i < minwords; ++i)
         pVal[i] &= RHS.pVal[i];
-      if (numWords() > minwords) bzero(pVal+minwords, (numWords() - minwords) * 8);
+      if (getNumWords() > minwords) 
+        memset(pVal+minwords, 0, (getNumWords() - minwords) * 8);
     }
   }
   return *this;
@@ -652,7 +641,8 @@ APInt& APInt::operator|=(const APInt& RHS) {
     if (RHS.isSingleWord()) {
       pVal[0] |= RHS.VAL;
     } else {
-      unsigned minwords = numWords() < RHS.numWords() ? numWords() : RHS.numWords();
+      unsigned minwords = getNumWords() < RHS.getNumWords() ? 
+                          getNumWords() : RHS.getNumWords();
       for (unsigned i = 0; i < minwords; ++i)
         pVal[i] |= RHS.pVal[i];
     }
@@ -669,14 +659,15 @@ APInt& APInt::operator^=(const APInt& RHS) {
     else VAL ^= RHS.pVal[0];
   } else {
     if (RHS.isSingleWord()) {
-      for (unsigned i = 0; i < numWords(); ++i)
+      for (unsigned i = 0; i < getNumWords(); ++i)
         pVal[i] ^= RHS.VAL;
     } else {
-      unsigned minwords = numWords() < RHS.numWords() ? numWords() : RHS.numWords();
+      unsigned minwords = getNumWords() < RHS.getNumWords() ? 
+                          getNumWords() : RHS.getNumWords();
       for (unsigned i = 0; i < minwords; ++i)
         pVal[i] ^= RHS.pVal[i];
-      if (numWords() > minwords)
-        for (unsigned i = minwords; i < numWords(); ++i)
+      if (getNumWords() > minwords)
+        for (unsigned i = minwords; i < getNumWords(); ++i)
           pVal[i] ^= 0;
     }
   }
@@ -717,7 +708,7 @@ bool APInt::operator&&(const APInt& RHS) const {
   else if (RHS.isSingleWord())
     return RHS.VAL && pVal[0];
   else {
-    unsigned minN = std::min(numWords(), RHS.numWords());
+    unsigned minN = std::min(getNumWords(), RHS.getNumWords());
     for (unsigned i = 0; i < minN; ++i)
       if (pVal[i] && RHS.pVal[i])
         return true;
@@ -733,7 +724,7 @@ bool APInt::operator||(const APInt& RHS) const {
   else if (RHS.isSingleWord())
     return RHS.VAL || pVal[0];
   else {
-    unsigned minN = std::min(numWords(), RHS.numWords());
+    unsigned minN = std::min(getNumWords(), RHS.getNumWords());
     for (unsigned i = 0; i < minN; ++i)
       if (pVal[i] || RHS.pVal[i])
         return true;
@@ -747,7 +738,7 @@ bool APInt::operator !() const {
   if (isSingleWord())
     return !VAL;
   else
-    for (unsigned i = 0; i < numWords(); ++i)
+    for (unsigned i = 0; i < getNumWords(); ++i)
        if (pVal[i]) 
          return false;
   return true;
@@ -800,8 +791,8 @@ bool APInt::operator[](unsigned bitPosition) const {
 /// @brief Equality operator. Compare this APInt with the given APInt& RHS 
 /// for the validity of the equality relationship.
 bool APInt::operator==(const APInt& RHS) const {
-  unsigned n1 = numWords() * APINT_BITS_PER_WORD - CountLeadingZeros(), 
-           n2 = RHS.numWords() * APINT_BITS_PER_WORD - RHS.CountLeadingZeros();
+  unsigned n1 = getNumWords() * APINT_BITS_PER_WORD - CountLeadingZeros(), 
+    n2 = RHS.getNumWords() * APINT_BITS_PER_WORD - RHS.CountLeadingZeros();
   if (n1 != n2) return false;
   else if (isSingleWord()) 
     return VAL == (RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0]);
@@ -814,23 +805,31 @@ bool APInt::operator==(const APInt& RHS) const {
   return true;
 }
 
-/// @brief Inequality operator. Compare this APInt with the given APInt& RHS
-/// for the validity of the inequality relationship.
-bool APInt::operator!=(const APInt& RHS) const {
-  return !((*this) == RHS);
+/// @brief Equality operator. Compare this APInt with the given uint64_t value 
+/// for the validity of the equality relationship.
+bool APInt::operator==(uint64_t Val) const {
+  if (isSingleWord())
+    return VAL == Val;
+  else {
+    unsigned n = getNumWords() * APINT_BITS_PER_WORD - CountLeadingZeros();
+    if (n <= 64)
+      return pVal[0] == Val;
+    else
+      return false;
+  }
 }
 
 /// @brief Less-than operator. Compare this APInt with the given APInt& RHS
 /// for the validity of the less-than relationship.
 bool APInt::operator <(const APInt& RHS) const {
   if (isSigned && RHS.isSigned) {
-    if ((*this)[bitsnum-1] > RHS[RHS.bitsnum-1])
+    if ((*this)[BitsNum-1] > RHS[RHS.BitsNum-1])
       return false;
-    else if ((*this)[bitsnum-1] < RHS[RHS.bitsnum-1])
+    else if ((*this)[BitsNum-1] < RHS[RHS.BitsNum-1])
       return true;
   }
-  unsigned n1 = numWords() * 64 - CountLeadingZeros(), 
-           n2 = RHS.numWords() * 64 - RHS.CountLeadingZeros();
+  unsigned n1 = getNumWords() * 64 - CountLeadingZeros(), 
+           n2 = RHS.getNumWords() * 64 - RHS.CountLeadingZeros();
   if (n1 < n2) return true;
   else if (n1 > n2) return false;
   else if (isSingleWord())
@@ -876,7 +875,7 @@ APInt& APInt::set(unsigned bitPosition) {
 APInt& APInt::set() {
   if (isSingleWord()) VAL = -1ULL;
   else
-    for (unsigned i = 0; i < numWords(); ++i)
+    for (unsigned i = 0; i < getNumWords(); ++i)
       pVal[i] = -1ULL;
   return *this;
 }
@@ -892,19 +891,21 @@ APInt& APInt::clear(unsigned bitPosition) {
 /// @brief Set every bit to 0.
 APInt& APInt::clear() {
   if (isSingleWord()) VAL = 0;
-  else bzero(pVal, numWords() * 8);
+  else 
+    memset(pVal, 0, getNumWords() * 8);
   return *this;
 }
 
 /// @brief Left-shift assignment operator. Left-shift the APInt by shiftAmt
 /// and assigns the result to this APInt.
 APInt& APInt::operator<<=(unsigned shiftAmt) {
-  if (shiftAmt >= bitsnum) {
+  if (shiftAmt >= BitsNum) {
     if (isSingleWord()) VAL = 0;
-    else bzero(pVal, numWords() * 8);
+    else 
+      memset(pVal, 0, getNumWords() * 8);
   } else {
     for (unsigned i = 0; i < shiftAmt; ++i) clear(i);
-    for (unsigned i = shiftAmt; i < bitsnum; ++i) {
+    for (unsigned i = shiftAmt; i < BitsNum; ++i) {
       if ((*this)[i-shiftAmt]) set(i);
       else clear(i);
     }
@@ -922,15 +923,15 @@ APInt APInt::operator<<(unsigned shiftAmt) const {
 /// @brief Right-shift assignment operator. Right-shift the APInt by shiftAmt
 /// and assigns the result to this APInt.
 APInt& APInt::operator>>=(unsigned shiftAmt) {
-  bool isAShr = isSigned && (*this)[bitsnum-1];
+  bool isAShr = isSigned && (*this)[BitsNum-1];
   if (isSingleWord())
     VAL = isAShr ? (int64_t(VAL) >> shiftAmt) : (VAL >> shiftAmt);
   else {
     unsigned i = 0;
-    for (i = 0; i < bitsnum - shiftAmt; ++i)
+    for (i = 0; i < BitsNum - shiftAmt; ++i)
       if ((*this)[i+shiftAmt]) set(i);
       else clear(i);
-    for (; i < bitsnum; ++i)
+    for (; i < BitsNum; ++i)
       isAShr ? set(i) : clear(i);
   }
   return *this;
@@ -953,12 +954,12 @@ APInt APInt::operator~() const {
 
 /// @brief Toggle every bit to its opposite value.
 APInt& APInt::flip() {
-  if (isSingleWord()) VAL = (~(VAL << (64 - bitsnum))) >> (64 - bitsnum);
+  if (isSingleWord()) VAL = (~(VAL << (64 - BitsNum))) >> (64 - BitsNum);
   else {
     unsigned i = 0;
-    for (; i < numWords() - 1; ++i)
+    for (; i < getNumWords() - 1; ++i)
       pVal[i] = ~pVal[i];
-    unsigned offset = 64 - (bitsnum - 64 * (i - 1));
+    unsigned offset = 64 - (BitsNum - 64 * (i - 1));
     pVal[i] = (~(pVal[i] << offset)) >> offset;
   }
   return *this;
@@ -968,7 +969,7 @@ APInt& APInt::flip() {
 /// as "bitPosition".
 /// @brief Toggles a given bit to its opposite value.
 APInt& APInt::flip(unsigned bitPosition) {
-  assert(bitPosition < bitsnum && "Out of the bit-width range!");
+  assert(bitPosition < BitsNum && "Out of the bit-width range!");
   if ((*this)[bitPosition]) clear(bitPosition);
   else set(bitPosition);
   return *this;
@@ -978,27 +979,36 @@ APInt& APInt::flip(unsigned bitPosition) {
 std::string APInt::to_string(uint8_t radix) const {
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
-  std::ostringstream buf;
-  buf << std::setbase(radix);
+  char *buf = 0;
+  unsigned n = getNumWords() * 64 - CountLeadingZeros();
+  std::string format = radix == 8 ? 
+                       "%0*llo" : (radix == 10 ? "%0*llu" : "%0*llx");
   // If the radix is a power of 2, set the format of ostringstream,
   // and output the value into buf.
   if ((radix & (radix - 1)) == 0) {
-    if (isSingleWord()) buf << VAL;
+    assert((buf = new char[n / Log2_32(radix) + 2]) && 
+           "Memory allocation failed");
+    if (isSingleWord())
+      sprintf(buf, format.c_str(), 0, VAL);
     else {
-      buf << pVal[numWords()-1];
-      buf << std::setw(64 / (radix / 8 + 2)) << std::setfill('0');
-      for (int i = numWords() - 2; i >= 0; --i)
-        buf << pVal[i];
+      unsigned offset = sprintf(buf, format.c_str(), 0, pVal[whichWord(n-1)]);
+      for (int i = whichWord(n-1) - 1; i >= 0; --i)
+        offset += sprintf(buf + offset, format.c_str(), 
+          64 / Log2_32(radix) + (64 % Log2_32(radix) ? 1 : 0), pVal[i]);
     }
   }
   else {  // If the radix = 10, need to translate the value into a
           // string.
-    if (isSingleWord()) buf << VAL;
+    assert((buf = new char[(n / 64 + 1) * 20]) && "Memory allocation failed");
+    if (isSingleWord())
+      sprintf(buf, format.c_str(), 0, VAL);
     else {
       // FIXME: To be supported.
     }
   }
-  return buf.str();
+  std::string retStr(buf);
+  delete[] buf;
+  return retStr;
 }
 
 /// getMaxValue - This function returns the largest value
@@ -1032,12 +1042,12 @@ APInt APInt::getNullValue(unsigned numBits) {
 
 /// HiBits - This function returns the high "numBits" bits of this APInt.
 APInt APInt::HiBits(unsigned numBits) const {
-  return (*this) >> (bitsnum - numBits); 
+  return (*this) >> (BitsNum - numBits); 
 }
 
 /// LoBits - This function returns the low "numBits" bits of this APInt.
 APInt APInt::LoBits(unsigned numBits) const {
-  return ((*this) << (bitsnum - numBits)) >> (bitsnum - numBits);
+  return ((*this) << (BitsNum - numBits)) >> (BitsNum - numBits);
 }
 
 /// CountLeadingZeros - This function is a APInt version corresponding to 
@@ -1049,7 +1059,7 @@ unsigned APInt::CountLeadingZeros() const {
   if (isSingleWord())
     return CountLeadingZeros_64(VAL);
   unsigned Count = 0;
-  for (int i = numWords() - 1; i >= 0; --i) {
+  for (int i = getNumWords() - 1; i >= 0; --i) {
     unsigned tmp = CountLeadingZeros_64(pVal[i]);
     Count += tmp;
     if (tmp != 64)
@@ -1067,7 +1077,7 @@ unsigned APInt::CountTrailingZeros() const {
   if (isSingleWord())
     return CountTrailingZeros_64(~VAL & (VAL - 1));
   APInt Tmp = ~(*this) & ((*this) - 1);
-  return numWords() * 64 - Tmp.CountLeadingZeros();
+  return getNumWords() * 64 - Tmp.CountLeadingZeros();
 }
 
 /// CountPopulation - This function is a APInt version corresponding to
@@ -1078,7 +1088,7 @@ unsigned APInt::CountPopulation() const {
   if (isSingleWord())
     return CountPopulation_64(VAL);
   unsigned Count = 0;
-  for (unsigned i = 0; i < numWords(); ++i)
+  for (unsigned i = 0; i < getNumWords(); ++i)
     Count += CountPopulation_64(pVal[i]);
   return Count;
 }
@@ -1087,10 +1097,10 @@ unsigned APInt::CountPopulation() const {
 /// ByteSwap - This function returns a byte-swapped representation of the
 /// APInt argument, APIVal.
 APInt llvm::ByteSwap(const APInt& APIVal) {
-  if (APIVal.bitsnum <= 32)
-    return APInt(APIVal.bitsnum, ByteSwap_32(unsigned(APIVal.VAL)));
-  else if (APIVal.bitsnum <= 64)
-    return APInt(APIVal.bitsnum, ByteSwap_64(APIVal.VAL));
+  if (APIVal.BitsNum <= 32)
+    return APInt(APIVal.BitsNum, ByteSwap_32(unsigned(APIVal.VAL)));
+  else if (APIVal.BitsNum <= 64)
+    return APInt(APIVal.BitsNum, ByteSwap_64(APIVal.VAL));
   else
     return APIVal;
 }
