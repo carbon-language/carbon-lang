@@ -150,7 +150,8 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   unsigned NumArgs = Params.size();
   
   // Create the new function body and insert it into the module...
-  Function *NF = new Function(NFTy, Fn.getLinkage(), Fn.getName());
+  std::string Name = Fn.getName(); Fn.setName("");
+  Function *NF = new Function(NFTy, Fn.getLinkage(), Name);
   NF->setCallingConv(Fn.getCallingConv());
   Fn.getParent()->getFunctionList().insert(&Fn, NF);
   
@@ -508,7 +509,8 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
 
   // Create the new function body and insert it into the module...
-  Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
+  std::string Name = F->getName(); F->setName("");
+  Function *NF = new Function(NFTy, F->getLinkage(), Name);
   NF->setCallingConv(F->getCallingConv());
   F->getParent()->getFunctionList().insert(F, NF);
 
