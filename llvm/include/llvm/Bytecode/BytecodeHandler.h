@@ -233,7 +233,7 @@ public:
   virtual bool handleInstruction(
     unsigned Opcode,                 ///< Opcode of the instruction
     const Type* iType,               ///< Instruction type
-    std::vector<unsigned>& Operands, ///< Vector of slot # operands
+    unsigned *Operands, unsigned NumOps, ///< Vector of slot # operands
     Instruction *Inst,               ///< The resulting instruction
     unsigned Length                  ///< Length of instruction in bc bytes
   ) { return false; }
@@ -249,14 +249,14 @@ public:
   /// @brief Handle a constant expression
   virtual void handleConstantExpression(
     unsigned Opcode,  ///< Opcode of primary expression operator
-    std::vector<Constant*> ArgVec, ///< expression args
+    Constant**Args, unsigned NumArgs, ///< expression args
     Constant* C ///< The constant value
   ) {}
 
   /// @brief Handle a constant array
   virtual void handleConstantArray(
     const ArrayType* AT,                ///< Type of the array
-    std::vector<Constant*>& ElementSlots,///< Slot nums for array values
+    Constant**ElementSlots, unsigned NumElts,///< Slot nums for array values
     unsigned TypeSlot,                  ///< Slot # of type
     Constant* Val                       ///< The constant value
   ) {}
@@ -264,14 +264,14 @@ public:
   /// @brief Handle a constant structure
   virtual void handleConstantStruct(
     const StructType* ST,               ///< Type of the struct
-    std::vector<Constant*>& ElementSlots,///< Slot nums for struct values
+    Constant**ElementSlots, unsigned NumElts,///< Slot nums for struct values
     Constant* Val                       ///< The constant value
   ) {}
 
   /// @brief Handle a constant packed
   virtual void handleConstantPacked(
     const PackedType* PT,                ///< Type of the array
-    std::vector<Constant*>& ElementSlots,///< Slot nums for packed values
+    Constant**ElementSlots, unsigned NumElts,///< Slot nums for packed values
     unsigned TypeSlot,                  ///< Slot # of type
     Constant* Val                       ///< The constant value
   ) {}
