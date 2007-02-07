@@ -62,6 +62,23 @@ void DumpConfigData(CompilerDriver::ConfigData* cd, const std::string& type ){
   DumpAction(&cd->Linker);
 }
 
+static bool GetBytecodeDependentLibraries(const std::string &fname,
+                                          Module::LibraryListType& deplibs,
+                                          BCDecompressor_t *BCDC,
+                                          std::string* ErrMsg) {
+  ModuleProvider* MP = getBytecodeModuleProvider(fname, BCDC, ErrMsg);
+  if (!MP) {
+    deplibs.clear();
+    return true;
+  }
+  Module* M = MP->releaseModule(ErrMsg);
+  deplibs = M->getLibraries();
+  delete M;
+  delete MP;
+  return false;
+}
+
+
 class CompilerDriverImpl : public CompilerDriver {
 /// @name Constructors
 /// @{

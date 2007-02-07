@@ -256,22 +256,6 @@ Module *llvm::ParseBytecodeFile(const std::string &Filename,
 }
 
 
-bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
-                                         Module::LibraryListType& deplibs,
-                                         BCDecompressor_t *BCDC,
-                                         std::string* ErrMsg) {
-  ModuleProvider* MP = getBytecodeModuleProvider(fname, BCDC, ErrMsg);
-  if (!MP) {
-    deplibs.clear();
-    return true;
-  }
-  Module* M = MP->releaseModule(ErrMsg);
-  deplibs = M->getLibraries();
-  delete M;
-  delete MP;
-  return false;
-}
-
 static void getSymbols(Module*M, std::vector<std::string>& symbols) {
   // Loop over global variables
   for (Module::global_iterator GI = M->global_begin(), GE=M->global_end(); GI != GE; ++GI)

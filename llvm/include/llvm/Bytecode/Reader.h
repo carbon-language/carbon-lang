@@ -81,18 +81,6 @@ Module* ParseBytecodeBuffer(
   std::string *ErrMsg = 0         ///< Optional place to return an error message
 );
 
-/// This function will read only the necessary parts of a bytecode file in order
-/// to determine the list of dependent libraries encoded within it. The \p
-/// deplibs parameter will contain a vector of strings of the bytecode module's
-/// dependent libraries.
-/// @returns true on error, false otherwise
-/// @brief Get the list of dependent libraries from a bytecode file.
-bool GetBytecodeDependentLibraries(
-  const std::string &fileName,       ///< File name to read bytecode from
-  Module::LibraryListType& deplibs,  ///< List of dependent libraries extracted
-  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
-  std::string* ErrMsg = 0            ///< Optional error message holder
-);
 
 /// This function will read only the necessary parts of a bytecode file in order
 /// to obtain a list of externally visible global symbols that the bytecode
