@@ -31,7 +31,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <iostream>
 using namespace llvm;
 
 unsigned ARMRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
@@ -70,7 +69,7 @@ unsigned ARMRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   case S30: return 30;
   case S31: return 31;
   default:
-    std::cerr << "Unknown ARM register!\n";
+    assert(0 && "Unknown ARM register!");
     abort();
   }
 }
@@ -738,7 +737,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       break;
     }
     default:
-      std::cerr << "Unsupported addressing mode!\n";
+      assert(0 && "Unsupported addressing mode!");
       abort();
       break;
     }

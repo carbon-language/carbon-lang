@@ -28,7 +28,6 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
-#include <iostream>
 using namespace llvm;
 
 //===--------------------------------------------------------------------===//
