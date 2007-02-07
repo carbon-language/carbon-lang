@@ -20,13 +20,30 @@
 #include <map>
 
 namespace llvm {
-
+  template<typename ValueSubClass, typename ItemParentClass,
+           typename SymTabClass, typename SubClass>
+        class SymbolTableListTraits;
+  template<typename NodeTy> struct ilist_traits;
+  class BasicBlock;
+  class Function;
+  class Module;
+  
 /// This class provides a symbol table of name/value pairs. It is essentially
 /// a std::map<std::string,Value*> but has a controlled interface provided by
 /// LLVM as well as ensuring uniqueness of names.
 ///
 class ValueSymbolTable {
-
+  friend class Value;
+  friend class SymbolTableListTraits<Argument, Function, Function,
+                                     ilist_traits<Argument> >;
+  friend class SymbolTableListTraits<BasicBlock, Function, Function,
+                                     ilist_traits<BasicBlock> >;
+  friend class SymbolTableListTraits<Instruction, BasicBlock, Function,
+                                     ilist_traits<Instruction> >;
+  friend class SymbolTableListTraits<Function, Module, Module, 
+                                     ilist_traits<Function> >;
+  friend class SymbolTableListTraits<GlobalVariable, Module, Module, 
+                                     ilist_traits<GlobalVariable> >;
 /// @name Types
 /// @{
 public:
@@ -108,7 +125,8 @@ public:
   /// This method will strip the symbol table of its names.
   /// @brief Strip the symbol table.
   bool strip();
-
+  
+private:
   /// This method adds the provided value \p N to the symbol table.  The Value
   /// must have a name which is used to place the value in the symbol table. 
   /// @brief Add a named value to the symbol table
