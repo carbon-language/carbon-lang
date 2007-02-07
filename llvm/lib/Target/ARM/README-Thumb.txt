@@ -141,3 +141,7 @@ cheaper sequnce if we know it's ok to clobber the condition register.
 add r2, sp, #255 * 4
 add r2, #132
 ldr r2, [r2, #7 * 4]
+
+This is especially bad when dynamic alloca is used. The all fixed size stack
+objects are referenced off the frame pointer with negative offsets. See
+oggenc for an example.
