@@ -359,13 +359,13 @@ public:
   }
 
   virtual bool handleInstruction( unsigned Opcode, const Type* iType,
-                                std::vector<unsigned>& Operands, 
+                                unsigned *Operands, unsigned NumOps, 
                                 Instruction *Inst,
                                 unsigned Size){
     if (os) {
       *os << "        INST: OpCode="
          << Instruction::getOpcodeName(Opcode);
-      for ( unsigned i = 0; i < Operands.size(); ++i )
+      for (unsigned i = 0; i != NumOps; ++i)
         *os << " Op(" << Operands[i] << ")";
       *os << *Inst;
     }
@@ -374,15 +374,15 @@ public:
     bca.numValues++;
     bca.instructionSize += Size;
     if (Size > 4 ) bca.longInstructions++;
-    bca.numOperands += Operands.size();
-    for (unsigned i = 0; i < Operands.size(); ++i )
+    bca.numOperands += NumOps;
+    for (unsigned i = 0; i != NumOps; ++i)
       if (Operands[i] > bca.maxValueSlot)
         bca.maxValueSlot = Operands[i];
     if ( currFunc ) {
       currFunc->numInstructions++;
       currFunc->instructionSize += Size;
       if (Size > 4 ) currFunc->longInstructions++;
-      if ( Opcode == Instruction::PHI ) currFunc->numPhis++;
+      if (Opcode == Instruction::PHI) currFunc->numPhis++;
     }
     return Instruction::isTerminator(Opcode);
   }
@@ -397,11 +397,11 @@ public:
       *os << "    BLOCK: GlobalConstants {\n";
   }
 
-  virtual void handleConstantExpression( unsigned Opcode,
-      std::vector<Constant*> ArgVec, Constant* C ) {
+  virtual void handleConstantExpression(unsigned Opcode,
+      Constant**ArgVec, unsigned NumArgs, Constant* C) {
     if (os) {
       *os << "      EXPR: " << Instruction::getOpcodeName(Opcode) << "\n";
-      for ( unsigned i = 0; i < ArgVec.size(); ++i ) {
+      for ( unsigned i = 0; i != NumArgs; ++i ) {
         *os << "        Arg#" << i << " "; ArgVec[i]->print(*os);
         *os << "\n";
       }
@@ -424,14 +424,14 @@ public:
   }
 
   virtual void handleConstantArray( const ArrayType* AT,
-          std::vector<Constant*>& Elements,
+          Constant**Elements, unsigned NumElts,
           unsigned TypeSlot,
           Constant* ArrayVal ) {
     if (os) {
       *os << "      ARRAY: ";
       WriteTypeSymbolic(*os,AT,M);
       *os << " TypeSlot=" << TypeSlot << "\n";
-      for ( unsigned i = 0; i < Elements.size(); ++i ) {
+      for (unsigned i = 0; i != NumElts; ++i) {
         *os << "        #" << i;
         Elements[i]->print(*os);
         *os << "\n";
@@ -447,14 +447,14 @@ public:
 
   virtual void handleConstantStruct(
         const StructType* ST,
-        std::vector<Constant*>& Elements,
+        Constant**Elements, unsigned NumElts,
         Constant* StructVal)
   {
     if (os) {
       *os << "      STRUC: ";
       WriteTypeSymbolic(*os,ST,M);
       *os << "\n";
-      for ( unsigned i = 0; i < Elements.size(); ++i ) {
+      for ( unsigned i = 0; i != NumElts; ++i) {
         *os << "        #" << i << " "; Elements[i]->print(*os);
         *os << "\n";
       }
@@ -468,7 +468,7 @@ public:
 
   virtual void handleConstantPacked(
     const PackedType* PT,
-    std::vector<Constant*>& Elements,
+    Constant**Elements, unsigned NumElts,
     unsigned TypeSlot,
     Constant* PackedVal)
   {
@@ -476,7 +476,7 @@ public:
       *os << "      PACKD: ";
       WriteTypeSymbolic(*os,PT,M);
       *os << " TypeSlot=" << TypeSlot << "\n";
-      for ( unsigned i = 0; i < Elements.size(); ++i ) {
+      for ( unsigned i = 0; i != NumElts; ++i ) {
         *os << "        #" << i;
         Elements[i]->print(*os);
         *os << "\n";

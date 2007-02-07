@@ -22,8 +22,8 @@
 #include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Bytecode/Analyzer.h"
+#include "llvm/ADT/SmallVector.h"
 #include <utility>
-#include <map>
 #include <setjmp.h>
 
 namespace llvm {
@@ -228,7 +228,7 @@ protected:
 
   /// @brief Parse a single instruction.
   void ParseInstruction(
-    std::vector<unsigned>& Args,   ///< The arguments to be filled in
+    SmallVector <unsigned, 8>& Args,   ///< The arguments to be filled in
     BasicBlock* BB             ///< The BB the instruction goes in
   );
 

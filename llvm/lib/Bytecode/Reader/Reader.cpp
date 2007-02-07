@@ -366,7 +366,7 @@ void BytecodeReader::insertArguments(Function* F) {
 /// This method parses a single instruction. The instruction is
 /// inserted at the end of the \p BB provided. The arguments of
 /// the instruction are provided in the \p Oprnds vector.
-void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
+void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
                                       BasicBlock* BB) {
   BufPtr SaveAt = At;
 
@@ -859,7 +859,8 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
   // We have enough info to inform the handler now.
   if (Handler) 
-    Handler->handleInstruction(Opcode, InstTy, Oprnds, Result, At-SaveAt);
+    Handler->handleInstruction(Opcode, InstTy, &Oprnds[0], Oprnds.size(),
+                               Result, At-SaveAt);
 
   insertValue(Result, TypeSlot, FunctionValues);
 }
@@ -890,7 +891,7 @@ BasicBlock *BytecodeReader::getBasicBlock(unsigned ID) {
 /// @returns the number of basic blocks encountered.
 unsigned BytecodeReader::ParseInstructionList(Function* F) {
   unsigned BlockNo = 0;
-  std::vector<unsigned> Args;
+  SmallVector<unsigned, 8> Args;
 
   while (moreInBlock()) {
     if (Handler) Handler->handleBasicBlockBegin(BlockNo);
@@ -941,7 +942,7 @@ void BytecodeReader::ParseValueSymbolTable(Function *CurrentFunction,
   if (Handler) Handler->handleValueSymbolTableBegin(CurrentFunction,VST);
 
   // Allow efficient basic block lookup by number.
-  std::vector<BasicBlock*> BBMap;
+  SmallVector<BasicBlock*, 32> BBMap;
   if (CurrentFunction)
     for (Function::iterator I = CurrentFunction->begin(),
            E = CurrentFunction->end(); I != E; ++I)
@@ -1166,26 +1167,30 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
 
       Constant *Result = ConstantExpr::getCast(Opcode, ArgVec[0], 
                                                getType(TypeID));
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      if (Handler) Handler->handleConstantExpression(Opcode, &ArgVec[0],
+                                                     ArgVec.size(), Result);
       return Result;
     } else if (Opcode == Instruction::GetElementPtr) { // GetElementPtr
       Constant *Result = ConstantExpr::getGetElementPtr(ArgVec[0], &ArgVec[1],
                                                         ArgVec.size()-1);
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      if (Handler) Handler->handleConstantExpression(Opcode, &ArgVec[0],
+                                                     ArgVec.size(), Result);
       return Result;
     } else if (Opcode == Instruction::Select) {
       if (ArgVec.size() != 3)
         error("Select instruction must have three arguments.");
       Constant* Result = ConstantExpr::getSelect(ArgVec[0], ArgVec[1],
                                                  ArgVec[2]);
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      if (Handler) Handler->handleConstantExpression(Opcode, &ArgVec[0],
+                                                     ArgVec.size(), Result);
       return Result;
     } else if (Opcode == Instruction::ExtractElement) {
       if (ArgVec.size() != 2 ||
           !ExtractElementInst::isValidOperands(ArgVec[0], ArgVec[1]))
         error("Invalid extractelement constand expr arguments");
       Constant* Result = ConstantExpr::getExtractElement(ArgVec[0], ArgVec[1]);
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      if (Handler) Handler->handleConstantExpression(Opcode, &ArgVec[0],
+                                                     ArgVec.size(), Result);
       return Result;
     } else if (Opcode == Instruction::InsertElement) {
       if (ArgVec.size() != 3 ||
@@ -1194,7 +1199,8 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
         
       Constant *Result = 
         ConstantExpr::getInsertElement(ArgVec[0], ArgVec[1], ArgVec[2]);
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      if (Handler) Handler->handleConstantExpression(Opcode, &ArgVec[0],
+                                                     ArgVec.size(), Result);
       return Result;
     } else if (Opcode == Instruction::ShuffleVector) {
       if (ArgVec.size() != 3 ||
@@ -1202,25 +1208,29 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
         error("Invalid shufflevector constant expr arguments.");
       Constant *Result = 
         ConstantExpr::getShuffleVector(ArgVec[0], ArgVec[1], ArgVec[2]);
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      if (Handler) Handler->handleConstantExpression(Opcode, &ArgVec[0],
+                                                     ArgVec.size(), Result);
       return Result;
     } else if (Opcode == Instruction::ICmp) {
       if (ArgVec.size() != 2) 
         error("Invalid ICmp constant expr arguments.");
       unsigned predicate = read_vbr_uint();
       Constant *Result = ConstantExpr::getICmp(predicate, ArgVec[0], ArgVec[1]);
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      if (Handler) Handler->handleConstantExpression(Opcode, &ArgVec[0],
+                                                     ArgVec.size(), Result);
       return Result;
     } else if (Opcode == Instruction::FCmp) {
       if (ArgVec.size() != 2) 
         error("Invalid FCmp constant expr arguments.");
       unsigned predicate = read_vbr_uint();
       Constant *Result = ConstantExpr::getFCmp(predicate, ArgVec[0], ArgVec[1]);
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      if (Handler) Handler->handleConstantExpression(Opcode, &ArgVec[0], 
+                                                     ArgVec.size(), Result);
       return Result;
     } else {                            // All other 2-operand expressions
       Constant* Result = ConstantExpr::get(Opcode, ArgVec[0], ArgVec[1]);
-      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      if (Handler) Handler->handleConstantExpression(Opcode, &ArgVec[0], 
+                                                     ArgVec.size(), Result);
       return Result;
     }
   }
@@ -1273,7 +1283,8 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       Elements.push_back(getConstantValue(TypeSlot,
                                           read_vbr_uint()));
     Result = ConstantArray::get(AT, Elements);
-    if (Handler) Handler->handleConstantArray(AT, Elements, TypeSlot, Result);
+    if (Handler) Handler->handleConstantArray(AT, &Elements[0], Elements.size(),
+                                              TypeSlot, Result);
     break;
   }
 
@@ -1287,7 +1298,8 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
                                           read_vbr_uint()));
 
     Result = ConstantStruct::get(ST, Elements);
-    if (Handler) Handler->handleConstantStruct(ST, Elements, Result);
+    if (Handler) Handler->handleConstantStruct(ST, &Elements[0],Elements.size(),
+                                               Result);
     break;
   }
 
@@ -1301,7 +1313,8 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       Elements.push_back(getConstantValue(TypeSlot,
                                           read_vbr_uint()));
     Result = ConstantPacked::get(PT, Elements);
-    if (Handler) Handler->handleConstantPacked(PT, Elements, TypeSlot, Result);
+    if (Handler) Handler->handleConstantPacked(PT, &Elements[0],Elements.size(),
+                                               TypeSlot, Result);
     break;
   }
 
