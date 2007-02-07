@@ -366,27 +366,35 @@ static
 void emitThumbRegPlusConstPool(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator &MBBI,
                                unsigned DestReg, unsigned BaseReg,
-                               int NumBytes, const TargetInstrInfo &TII) {
+                               int NumBytes, bool CanChangeCC,
+                               const TargetInstrInfo &TII) {
     MachineFunction &MF = *MBB.getParent();
     MachineConstantPool *ConstantPool = MF.getConstantPool();
     bool isHigh = !isLowRegister(DestReg) || !isLowRegister(BaseReg);
     bool isSub = false;
     // Subtract doesn't have high register version. Load the negative value
-    // if either base or dest register is a high register.
-    if (NumBytes < 0 && !isHigh) {
+    // if either base or dest register is a high register. Also, if do not
+    // issue sub as part of the sequence if condition register is to be
+    // preserved.
+    if (NumBytes < 0 && !isHigh && CanChangeCC) {
       isSub = true;
       NumBytes = -NumBytes;
     }
-    Constant *C = ConstantInt::get(Type::Int32Ty, NumBytes);
-    unsigned Idx = ConstantPool->getConstantPoolIndex(C, 2);
     unsigned LdReg = DestReg;
     if (DestReg == ARM::SP) {
       assert(BaseReg == ARM::SP && "Unexpected!");
       LdReg = ARM::R3;
       BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R3);
     }
-    // Load the constant.
-    BuildMI(MBB, MBBI, TII.get(ARM::tLDRpci), LdReg).addConstantPoolIndex(Idx);
+
+    if (NumBytes <= 255 && NumBytes >= 0)
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVri8), LdReg).addImm(NumBytes);
+    else {
+      // Load the constant.
+      Constant *C = ConstantInt::get(Type::Int32Ty, NumBytes);
+      unsigned Idx = ConstantPool->getConstantPoolIndex(C, 2);
+      BuildMI(MBB, MBBI, TII.get(ARM::tLDRpci), LdReg).addConstantPoolIndex(Idx);
+    }
     // Emit add / sub.
     int Opc = (isSub) ? ARM::tSUBrr : (isHigh ? ARM::tADDhirr : ARM::tADDrr);
     const MachineInstrBuilder MIB = BuildMI(MBB, MBBI, TII.get(Opc), DestReg);
@@ -452,7 +460,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   if (NumMIs > Threshold) {
     // This will expand into too many instructions. Load the immediate from a
     // constpool entry.
-    emitThumbRegPlusConstPool(MBB, MBBI, DestReg, BaseReg, NumBytes, TII);
+    emitThumbRegPlusConstPool(MBB, MBBI, DestReg, BaseReg, NumBytes, true, TII);
     return;
   }
 
@@ -713,8 +721,8 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     case ARMII::AddrModeTs: {
       ImmIdx = i+1;
       InstrOffs = MI.getOperand(ImmIdx).getImm();
-      NumBits = (FrameReg == ARM::SP) ? 8 : 5;
-      Scale = 4;
+      NumBits = isSub ? 3 : ((FrameReg == ARM::SP) ? 8 : 5);
+      Scale = isSub ? 1 : 4;
       break;
     }
     default:
@@ -725,11 +733,12 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
 
     Offset += InstrOffs * Scale;
     assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
-    if (Offset < 0) {
+    if (Offset < 0 && !isThumb) {
       Offset = -Offset;
       isSub = true;
     }
 
+    // Common case: small offset, fits into instruction.
     MachineOperand &ImmOp = MI.getOperand(ImmIdx);
     int ImmedOffset = Offset / Scale;
     unsigned Mask = (1 << NumBits) - 1;
@@ -742,7 +751,16 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       return;
     }
 
-    if (!isThumb) {
+    // If this is a thumb spill / restore, we will be using a constpool load to
+    // materialize the offset.
+    bool isThumSpillRestore = Opcode == ARM::tRestore || Opcode == ARM::tSpill;
+    if (AddrMode == ARMII::AddrModeTs || !isThumSpillRestore) {
+      if (AddrMode == ARMII::AddrModeTs) {
+        // Thumb tLDRspi, tSTRspi. These will change to instructions that use
+        // a different base register.
+        NumBits = 5;
+        Mask = (1 << NumBits) - 1;
+      }
       // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
       ImmedOffset = ImmedOffset & Mask;
       if (isSub)
@@ -762,11 +780,9 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       // Use the destination register to materialize sp + offset.
       unsigned TmpReg = MI.getOperand(0).getReg();
       if (Opcode == ARM::tRestore)
-        emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg,
-                                  isSub ? -Offset : Offset, TII);
+        emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg, Offset, false, TII);
       else
-        emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg,
-                                  isSub ? -Offset : Offset, TII);
+        emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tLDR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false);
       MI.addRegOperand(0, false); // tLDR has an extra register operand.
@@ -786,11 +802,9 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
         TmpReg = ARM::R2;
       }
       if (Opcode == ARM::tSpill)
-        emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg,
-                                  isSub ? -Offset : Offset, TII);
+        emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg, Offset, false, TII);
       else
-        emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg,
-                                  isSub ? -Offset : Offset, TII);
+        emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tSTR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false);
       MI.addRegOperand(0, false); // tSTR has an extra register operand.
