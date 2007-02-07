@@ -16,6 +16,7 @@
 #define LLVM_APINT_H
 
 #include "llvm/Support/DataTypes.h"
+#include <cassert>
 #include <string>
 
 namespace llvm {
