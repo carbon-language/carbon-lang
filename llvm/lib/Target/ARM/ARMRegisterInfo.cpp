@@ -218,14 +218,14 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
   case ARM::tMOVrr: {
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
-      if (!isLowRegister(SrcReg))
+      if (isPhysicalRegister(SrcReg) && !isLowRegister(SrcReg))
         // tSpill cannot take a high register operand.
         break;
       NewMI = BuildMI(TII.get(ARM::tSpill)).addReg(SrcReg).addFrameIndex(FI)
         .addImm(0);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
-      if (!isLowRegister(DstReg))
+      if (isPhysicalRegister(DstReg) && !isLowRegister(DstReg))
         // tRestore cannot target a high register operand.
         break;
       NewMI = BuildMI(TII.get(ARM::tRestore), DstReg).addFrameIndex(FI)
