@@ -122,24 +122,6 @@ bool TypeSymbolTable::strip() {
   return RemovedSymbol;
 }
 
-/// rename - Given a value with a non-empty name, remove its existing entry
-/// from the symbol table and insert a new one for Name.  This is equivalent to
-/// doing "remove(V), V->Name = Name, insert(V)", but is faster, and will not
-/// temporarily remove the symbol table plane if V is the last value in the
-/// symtab with that name (which could invalidate iterators to that plane).
-bool TypeSymbolTable::rename(Type *T, const std::string &name) {
-  for (iterator TI = tmap.begin(), TE = tmap.end(); TI != TE; ++TI) {
-    if (TI->second == T) {
-      // Remove the old entry.
-      tmap.erase(TI);
-      // Add the new entry.
-      this->insert(name,T);
-      return true;
-    }
-  }
-  return false;
-}
-
 // This function is called when one of the types in the type plane are refined
 void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
                                          const Type *NewType) {

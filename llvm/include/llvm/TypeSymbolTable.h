@@ -118,10 +118,6 @@ public:
   /// @returns true if the erase was successful (TI was found)
   bool remove(Type* TI);
 
-  /// Rename a type. This ain't fast, we have to linearly search for it first.
-  /// @returns true if the rename was successful (type was found)
-  bool rename(Type* T, const std::string& new_name);
-
 /// @}
 /// @name AbstractTypeUser Methods
 /// @{
