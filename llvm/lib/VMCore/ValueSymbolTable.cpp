@@ -78,12 +78,12 @@ void ValueSymbolTable::insert(Value* V) {
     // Trim any suffix off.
     UniqueName.resize(BaseSize);
     UniqueName += utostr(++LastUnique);
+    // Try insert the vmap entry with this suffix.
   } while (!vmap.insert(make_pair(UniqueName, V)).second);
 
-  DEBUG(DOUT << " Inserting value: " << UniqueName << ": " << *V << "\n");
-
-  // Insert the vmap entry
   V->Name = UniqueName;
+  
+  DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
 }
 
 // Remove a value
