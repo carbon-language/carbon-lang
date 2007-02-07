@@ -86,7 +86,6 @@ inline unsigned BytecodeReader::read_uint() {
 inline unsigned BytecodeReader::read_vbr_uint() {
   unsigned Shift = 0;
   unsigned Result = 0;
-  BufPtr Save = At;
 
   do {
     if (At == BlockEnd)
@@ -94,7 +93,6 @@ inline unsigned BytecodeReader::read_vbr_uint() {
     Result |= (unsigned)((*At++) & 0x7F) << Shift;
     Shift += 7;
   } while (At[-1] & 0x80);
-  if (Handler) Handler->handleVBR32(At-Save);
   return Result;
 }
 
@@ -102,7 +100,6 @@ inline unsigned BytecodeReader::read_vbr_uint() {
 inline uint64_t BytecodeReader::read_vbr_uint64() {
   unsigned Shift = 0;
   uint64_t Result = 0;
-  BufPtr Save = At;
 
   do {
     if (At == BlockEnd)
@@ -110,7 +107,6 @@ inline uint64_t BytecodeReader::read_vbr_uint64() {
     Result |= (uint64_t)((*At++) & 0x7F) << Shift;
     Shift += 7;
   } while (At[-1] & 0x80);
-  if (Handler) Handler->handleVBR64(At-Save);
   return Result;
 }
 

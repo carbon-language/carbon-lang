@@ -26,7 +26,6 @@
 #include <iomanip>
 #include <sstream>
 #include <ios>
-
 using namespace llvm;
 
 namespace {
@@ -542,27 +541,6 @@ public:
       bca.BlockSizes[llvm::BytecodeFormat::Reserved_DoNotUse] += 4;
   }
 
-  virtual void handleVBR32(unsigned Size ) {
-    bca.vbrCount32++;
-    bca.vbrCompBytes += Size;
-    bca.vbrExpdBytes += sizeof(uint32_t);
-    if (currFunc) {
-      currFunc->vbrCount32++;
-      currFunc->vbrCompBytes += Size;
-      currFunc->vbrExpdBytes += sizeof(uint32_t);
-    }
-  }
-
-  virtual void handleVBR64(unsigned Size ) {
-    bca.vbrCount64++;
-    bca.vbrCompBytes += Size;
-    bca.vbrExpdBytes += sizeof(uint64_t);
-    if ( currFunc ) {
-      currFunc->vbrCount64++;
-      currFunc->vbrCompBytes += Size;
-      currFunc->vbrExpdBytes += sizeof(uint64_t);
-    }
-  }
 };
 
 

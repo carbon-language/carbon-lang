@@ -308,15 +308,6 @@ public:
     unsigned Size                  ///< The size of the block
   ) {}
 
-  /// @brief Handle a variable bit rate 32 bit unsigned
-  virtual void handleVBR32(
-    unsigned Size  ///< Number of bytes the vbr_uint took up
-  ) {}
-
-  /// @brief Handle a variable bit rate 64 bit unsigned
-  virtual void handleVBR64(
-    unsigned Size  ///< Number of byte sthe vbr_uint64 took up
-  ) {}
 /// @}
 
 };
