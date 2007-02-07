@@ -85,7 +85,7 @@ preconditions: $(PreConditions)
 #------------------------------------------------------------------------
 $(filter-out clean clean-local,$(UserTargets)):: $(BUILT_SOURCES)
 
-clean-local::
+clean-all-local::
 ifneq ($(strip $(BUILT_SOURCES)),)
 	-$(Verb) $(RM) -f $(BUILT_SOURCES)
 endif
