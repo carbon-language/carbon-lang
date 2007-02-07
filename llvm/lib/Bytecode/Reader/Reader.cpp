@@ -27,7 +27,6 @@
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Support/Compressor.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1982,6 +1981,7 @@ void BytecodeReader::ParseModule() {
 /// and \p Length parameters.
 bool BytecodeReader::ParseBytecode(volatile BufPtr Buf, unsigned Length,
                                    const std::string &ModuleID,
+                                   Decompressor_t *Decompressor, 
                                    std::string* ErrMsg) {
 
   /// We handle errors by
@@ -2021,8 +2021,8 @@ bool BytecodeReader::ParseBytecode(volatile BufPtr Buf, unsigned Length,
     // file's magic number which is not part of the compressed block. Hence,
     // the Buf+4 and Length-4. The result goes into decompressedBlock, a data
     // member for retention until BytecodeReader is destructed.
-    unsigned decompressedLength = Compressor::decompressToNewBuffer(
-        (char*)Buf+4,Length-4,decompressedBlock);
+    unsigned decompressedLength = 
+      Decompressor((char*)Buf+4,Length-4,decompressedBlock, 0);
 
     // We must adjust the buffer pointers used by the bytecode reader to point
     // into the new decompressed block. After decompression, the

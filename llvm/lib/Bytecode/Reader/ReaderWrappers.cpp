@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/System/MappedFile.h"
 #include "llvm/System/Program.h"
 #include <cerrno>
@@ -63,7 +64,8 @@ bool BytecodeFileReader::read(std::string* ErrMsg) {
     return true;
   }
   unsigned char* buffer = reinterpret_cast<unsigned char*>(mapFile.base());
-  return ParseBytecode(buffer, mapFile.size(), fileName, ErrMsg);
+  return ParseBytecode(buffer, mapFile.size(), fileName,
+                       Compressor::decompressToNewBuffer, ErrMsg);
 }
 
 //===----------------------------------------------------------------------===//
@@ -122,7 +124,8 @@ BytecodeBufferReader::read(std::string* ErrMsg) {
     ParseBegin = Buffer = Buf;
     MustDelete = false;
   }
-  if (ParseBytecode(ParseBegin, Length, ModuleID, ErrMsg)) {
+  if (ParseBytecode(ParseBegin, Length, ModuleID,
+                    Compressor::decompressToNewBuffer, ErrMsg)) {
     if (MustDelete) delete [] Buffer;
     return true;
   }
@@ -177,7 +180,8 @@ BytecodeStdinReader::read(std::string* ErrMsg)
   }
 
   FileBuf = &FileData[0];
-  if (ParseBytecode(FileBuf, FileData.size(), "<stdin>", ErrMsg))
+  if (ParseBytecode(FileBuf, FileData.size(), "<stdin>", 
+                    Compressor::decompressToNewBuffer, ErrMsg))
     return true;
   return false;
 }
