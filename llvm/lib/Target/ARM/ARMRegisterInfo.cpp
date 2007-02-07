@@ -130,7 +130,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     MachineFunction &MF = *MBB.getParent();
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     if (AFI->isThumbFunction())
-      BuildMI(MBB, I, TII.get(ARM::tSTRspi)).addReg(SrcReg)
+      BuildMI(MBB, I, TII.get(ARM::tSpill)).addReg(SrcReg)
         .addFrameIndex(FI).addImm(0);
     else
       BuildMI(MBB, I, TII.get(ARM::STR)).addReg(SrcReg)
@@ -153,7 +153,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     MachineFunction &MF = *MBB.getParent();
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     if (AFI->isThumbFunction())
-      BuildMI(MBB, I, TII.get(ARM::tLDRspi), DestReg)
+      BuildMI(MBB, I, TII.get(ARM::tRestore), DestReg)
         .addFrameIndex(FI).addImm(0);
     else
       BuildMI(MBB, I, TII.get(ARM::LDR), DestReg)
@@ -220,16 +220,16 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
       if (!isLowRegister(SrcReg))
-        // tSTRspi cannot take a high register operand.
+        // tSpill cannot take a high register operand.
         break;
-      NewMI = BuildMI(TII.get(ARM::tSTRspi)).addReg(SrcReg).addFrameIndex(FI)
+      NewMI = BuildMI(TII.get(ARM::tSpill)).addReg(SrcReg).addFrameIndex(FI)
         .addImm(0);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
       if (!isLowRegister(DstReg))
-        // tLDRspi cannot target a high register operand.
+        // tRestore cannot target a high register operand.
         break;
-      NewMI = BuildMI(TII.get(ARM::tLDRspi), DstReg).addFrameIndex(FI)
+      NewMI = BuildMI(TII.get(ARM::tRestore), DstReg).addFrameIndex(FI)
         .addImm(0);
     }
     break;
@@ -412,7 +412,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   if (isSub) Bytes = -NumBytes;
   bool isMul4 = (Bytes & 3) == 0;
   bool isTwoAddr = false;
-  bool DstNeBase = false;
+  bool DstNotEqBase = false;
   unsigned NumBits = 1;
   unsigned Scale = 1;
   int Opc = 0;
@@ -441,14 +441,14 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     // r1 = sub sp, c
     // r8 = sub sp, c
     if (DestReg != BaseReg)
-      DstNeBase = true;
+      DstNotEqBase = true;
     NumBits = 8;
     Opc = isSub ? ARM::tSUBi8 : ARM::tADDi8;
     isTwoAddr = true;
   }
 
   unsigned NumMIs = calcNumMI(Opc, ExtraOpc, Bytes, NumBits, Scale);
-  unsigned Threshold = (DestReg == ARM::SP) ? 4 : 3;
+  unsigned Threshold = (DestReg == ARM::SP) ? 3 : 2;
   if (NumMIs > Threshold) {
     // This will expand into too many instructions. Load the immediate from a
     // constpool entry.
@@ -456,7 +456,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     return;
   }
 
-  if (DstNeBase) {
+  if (DstNotEqBase) {
     if (isLowRegister(DestReg) && isLowRegister(BaseReg)) {
       // If both are low registers, emit DestReg = add BaseReg, max(Imm, 7)
       unsigned Chunk = (1 << 3) - 1;
@@ -730,27 +730,20 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       isSub = true;
     }
 
-    if (!isSub || !isThumb) {
-      MachineOperand &ImmOp = MI.getOperand(ImmIdx);
-      int ImmedOffset = Offset / Scale;
-      unsigned Mask = (1 << NumBits) - 1;
-      if ((unsigned)Offset <= Mask * Scale) {
-        // Replace the FrameIndex with sp
-        MI.getOperand(i).ChangeToRegister(FrameReg, false);
-        if (isSub)
-          ImmedOffset |= 1 << NumBits;
-        ImmOp.ChangeToImmediate(ImmedOffset);
-        return;
-      }
+    MachineOperand &ImmOp = MI.getOperand(ImmIdx);
+    int ImmedOffset = Offset / Scale;
+    unsigned Mask = (1 << NumBits) - 1;
+    if ((unsigned)Offset <= Mask * Scale) {
+      // Replace the FrameIndex with sp
+      MI.getOperand(i).ChangeToRegister(FrameReg, false);
+      if (isSub)
+        ImmedOffset |= 1 << NumBits;
+      ImmOp.ChangeToImmediate(ImmedOffset);
+      return;
+    }
 
+    if (!isThumb) {
       // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
-      if (AddrMode == ARMII::AddrModeTs) {
-        // Thumb tLDRspi, tSTRspi. These will change to instructions that use
-        // a different base register.
-        NumBits = 5;
-        Mask = (1 << NumBits) - 1;
-      }
-
       ImmedOffset = ImmedOffset & Mask;
       if (isSub)
         ImmedOffset |= 1 << NumBits;
@@ -768,8 +761,12 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     if (TII.isLoad(Opcode)) {
       // Use the destination register to materialize sp + offset.
       unsigned TmpReg = MI.getOperand(0).getReg();
-      emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg,
-                                isSub ? -Offset : Offset, TII);
+      if (Opcode == ARM::tRestore)
+        emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg,
+                                  isSub ? -Offset : Offset, TII);
+      else
+        emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg,
+                                  isSub ? -Offset : Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tLDR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false);
       MI.addRegOperand(0, false); // tLDR has an extra register operand.
@@ -788,8 +785,12 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
         BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R2);
         TmpReg = ARM::R2;
       }
-      emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg,
-                                isSub ? -Offset : Offset, TII);
+      if (Opcode == ARM::tSpill)
+        emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg,
+                                  isSub ? -Offset : Offset, TII);
+      else
+        emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg,
+                                  isSub ? -Offset : Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tSTR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false);
       MI.addRegOperand(0, false); // tSTR has an extra register operand.
@@ -1098,7 +1099,7 @@ static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
 static bool isCSRestore(MachineInstr *MI, const unsigned *CSRegs) {
   return ((MI->getOpcode() == ARM::FLDD ||
            MI->getOpcode() == ARM::LDR  ||
-           MI->getOpcode() == ARM::tLDRspi) &&
+           MI->getOpcode() == ARM::tRestore) &&
           MI->getOperand(1).isFrameIndex() &&
           isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs));
 }

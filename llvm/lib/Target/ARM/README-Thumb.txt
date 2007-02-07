@@ -124,3 +124,20 @@ L12:
 	.align 2
 L11:
 	.long	642
+
+//===---------------------------------------------------------------------===//
+
+When spilling in thumb mode and the sp offset is too large to fit in the ldr /
+str offset field, we load the offset from a constpool entry and add it to sp:
+
+ldr r2, LCPI
+add r2, sp
+ldr r2, [r2]
+
+These instructions preserve the condition code which is important if the spill
+is between a cmp and a bcc instruction. However, we can use the (potentially)
+cheaper sequnce if we know it's ok to clobber the condition register.
+
+add r2, sp, #255 * 4
+add r2, #132
+ldr r2, [r2, #7 * 4]

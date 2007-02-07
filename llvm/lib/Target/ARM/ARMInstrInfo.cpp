@@ -83,7 +83,7 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
       return MI->getOperand(0).getReg();
     }
     break;
-  case ARM::tLDRspi:
+  case ARM::tRestore:
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
         MI->getOperand(2).getImmedValue() == 0) {
@@ -117,7 +117,7 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
       return MI->getOperand(0).getReg();
     }
     break;
-  case ARM::tSTRspi:
+  case ARM::tSpill:
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
         MI->getOperand(2).getImmedValue() == 0) {

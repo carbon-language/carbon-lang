@@ -239,6 +239,11 @@ def tLDRspi : TIs<(ops GPR:$dst, t_addrmode_sp:$addr),
                   "ldr $dst, $addr",
                   [(set GPR:$dst, (load t_addrmode_sp:$addr))]>;
 
+// Special instruction for restore. It cannot clobber condition register
+// when it's expanded by eliminateCallFramePseudoInstr().
+def tRestore : TIs<(ops GPR:$dst, t_addrmode_sp:$addr),
+                    "ldr $dst, $addr", []>;
+
 // Load tconstpool
 def tLDRpci : TIs<(ops GPR:$dst, i32imm:$addr),
                   "ldr $dst, $addr",
@@ -261,6 +266,11 @@ def tSTRH : TI2<(ops GPR:$src, t_addrmode_s2:$addr),
 def tSTRspi : TIs<(ops GPR:$src, t_addrmode_sp:$addr),
                    "str $src, $addr",
                    [(store GPR:$src, t_addrmode_sp:$addr)]>;
+
+// Special instruction for spill. It cannot clobber condition register
+// when it's expanded by eliminateCallFramePseudoInstr().
+def tSpill : TIs<(ops GPR:$src, t_addrmode_sp:$addr),
+                  "str $src, $addr", []>;
 }
 
 //===----------------------------------------------------------------------===//
