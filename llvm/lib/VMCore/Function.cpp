@@ -183,6 +183,25 @@ const char *Intrinsic::getName(ID id) {
   return Table[id];
 }
 
+const FunctionType *Intrinsic::getType(ID id) {
+  const Type *ResultTy = NULL;
+  std::vector<const Type*> ArgTys;
+  std::vector<FunctionType::ParameterAttributes> Attrs;
+  bool IsVarArg = false;
+  
+#define GET_INTRINSIC_GENERATOR
+#include "llvm/Intrinsics.gen"
+#undef GET_INTRINSIC_GENERATOR
+
+  return FunctionType::get(ResultTy, ArgTys, IsVarArg, Attrs); 
+}
+
+Function *Intrinsic::getDeclaration(Module *M, ID id) {
+// There can never be multiple globals with the same name of different types,
+// because intrinsics must be a specific type.
+  return cast<Function>(M->getOrInsertFunction(getName(id), getType(id)));
+}
+
 Value *IntrinsicInst::StripPointerCasts(Value *Ptr) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
     if (CE->getOpcode() == Instruction::BitCast) {

@@ -68,6 +68,15 @@ class LLVMPackedType<ValueType VT, int numelts, LLVMType elty>
   LLVMType ElTy = elty;
 } 
 
+class LLVMPointerType<LLVMType elty>
+  : LLVMType<iPTR, "Type::PointerTyID">{
+  LLVMType ElTy = elty;
+} 
+
+class LLVMEmptyStructType
+  : LLVMType<OtherVT, "Type::StructTyID">{
+} 
+
 def llvm_void_ty       : LLVMType<isVoid, "Type::VoidTyID">;
 def llvm_bool_ty       : LLVMIntegerType<i1, 1>;
 def llvm_i8_ty         : LLVMIntegerType<i8 , 8>;
@@ -76,9 +85,10 @@ def llvm_i32_ty        : LLVMIntegerType<i32, 32>;
 def llvm_i64_ty        : LLVMIntegerType<i64, 64>;
 def llvm_float_ty      : LLVMType<f32, "Type::FloatTyID">;
 def llvm_double_ty     : LLVMType<f64, "Type::DoubleTyID">;
-def llvm_ptr_ty        : LLVMType<iPTR, "Type::PointerTyID">;     // i8*
-def llvm_ptrptr_ty     : LLVMType<iPTR, "Type::PointerTyID">;     // i8**
-def llvm_descriptor_ty : LLVMType<iPTR, "Type::PointerTyID">;     // global*
+def llvm_ptr_ty        : LLVMPointerType<llvm_i8_ty>;             // i8*
+def llvm_ptrptr_ty     : LLVMPointerType<llvm_ptr_ty>;            // i8**
+def llvm_empty_ty      : LLVMEmptyStructType;                     // { }
+def llvm_descriptor_ty : LLVMPointerType<llvm_empty_ty>;          // { }*
 
 def llvm_v16i8_ty      : LLVMPackedType<v16i8,16, llvm_i8_ty>;    // 16 x i8
 def llvm_v8i16_ty      : LLVMPackedType<v8i16, 8, llvm_i16_ty>;   //  8 x i16
@@ -123,10 +133,10 @@ class GCCBuiltin<string name> {
 //===--------------- Variable Argument Handling Intrinsics ----------------===//
 //  
 
-def int_vastart : Intrinsic<[llvm_void_ty, llvm_ptrptr_ty], [], "llvm.va_start">;
-def int_vacopy  : Intrinsic<[llvm_void_ty, llvm_ptrptr_ty, llvm_ptrptr_ty], [],
+def int_vastart : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [], "llvm.va_start">;
+def int_vacopy  : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty], [],
                             "llvm.va_copy">;
-def int_vaend   : Intrinsic<[llvm_void_ty, llvm_ptrptr_ty], [], "llvm.va_end">;
+def int_vaend   : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [], "llvm.va_end">;
 
 //===------------------- Garbage Collection Intrinsics --------------------===//
 //  
@@ -216,7 +226,7 @@ def int_dbg_stoppoint    : Intrinsic<[llvm_void_ty,
 def int_dbg_region_start : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
 def int_dbg_region_end   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
 def int_dbg_func_start   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
-def int_dbg_declare      : Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+def int_dbg_declare      : Intrinsic<[llvm_void_ty, llvm_descriptor_ty,
                                                     llvm_descriptor_ty]>;
 
 //===------------------ Exception Handling Intrinsics----------------------===//

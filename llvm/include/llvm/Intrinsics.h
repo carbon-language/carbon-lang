@@ -18,6 +18,10 @@
 
 namespace llvm {
 
+class FunctionType;
+class Function;
+class Module;
+
 /// Intrinsic Namespace - This namespace contains an enum with a value for
 /// every intrinsic/builtin function known by LLVM.  These enum values are
 /// returned by Function::getIntrinsicID().
@@ -36,6 +40,15 @@ namespace Intrinsic {
   /// Intrinsic::getName(ID) - Return the LLVM name for an intrinsic, such as
   /// "llvm.ppc.altivec.lvx".
   const char *getName(ID id);
+  
+  /// Intrinsic::getType(ID) - Return the function type for an intrinsic.
+  ///
+  const FunctionType *getType(ID id);
+
+  /// Intrinsic::getDeclaration(M, ID) - Create or insert an LLVM Function
+  /// declaration for an intrinsic, and return it.
+  Function *getDeclaration(Module *M, ID id);
+  
 } // End Intrinsic namespace
 
 } // End llvm namespace

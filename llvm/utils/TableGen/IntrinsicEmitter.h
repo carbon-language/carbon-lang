@@ -35,6 +35,8 @@ namespace llvm {
                                   std::ostream &OS);
     void EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints, 
                       std::ostream &OS);
+    void EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints, 
+                       std::ostream &OS);
     void EmitModRefInfo(const std::vector<CodeGenIntrinsic> &Ints, 
                         std::ostream &OS);
     void EmitNoMemoryInfo(const std::vector<CodeGenIntrinsic> &Ints, 

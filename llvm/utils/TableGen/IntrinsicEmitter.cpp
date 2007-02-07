@@ -38,6 +38,9 @@ void IntrinsicEmitter::run(std::ostream &OS) {
   // Emit the intrinsic verifier.
   EmitVerifier(Ints, OS);
   
+  // Emit the intrinsic declaration generator.
+  EmitGenerator(Ints, OS);
+  
   // Emit mod/ref info for each function.
   EmitModRefInfo(Ints, OS);
   
@@ -125,6 +128,25 @@ static bool EmitTypeVerify(std::ostream &OS, Record *ArgType) {
   return false;
 }
 
+static void EmitTypeGenerate(std::ostream &OS, Record *ArgType) {
+  if (ArgType->isSubClassOf("LLVMIntegerType")) {
+    OS << "IntegerType::get(" << ArgType->getValueAsInt("Width") << ")";
+  } else if (ArgType->isSubClassOf("LLVMPackedType")) {
+    OS << "PackedType::get(";
+    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"));
+    OS << ", " << ArgType->getValueAsInt("NumElts") << ")";
+  } else if (ArgType->isSubClassOf("LLVMPointerType")) {
+    OS << "PointerType::get(";
+    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"));
+    OS << ")";
+  } else if (ArgType->isSubClassOf("LLVMEmptyStructType")) {
+    OS << "StructType::get(std::vector<const Type *>())";
+  } else {
+    OS << "Type::getPrimitiveType(";
+    OS << ArgType->getValueAsString("TypeVal") << ")";
+  }
+}
+
 /// RecordListComparator - Provide a determinstic comparator for lists of
 /// records.
 namespace {
@@ -182,6 +204,55 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
     }
       
     OS << (VarArg ? "-2);\n" : "-1);\n");
+    OS << "    break;\n";
+  }
+  OS << "  }\n";
+  OS << "#endif\n\n";
+}
+
+void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints, 
+                                     std::ostream &OS) {
+  OS << "// Code for generating Intrinsic function declarations.\n";
+  OS << "#ifdef GET_INTRINSIC_GENERATOR\n";
+  OS << "  switch (id) {\n";
+  OS << "  default: assert(0 && \"Invalid intrinsic!\");\n";
+  
+  // Similar to GET_INTRINSIC_VERIFIER, batch up cases that have identical
+  // types.
+  typedef std::map<std::vector<Record*>, std::vector<unsigned>, 
+    RecordListComparator> MapTy;
+  MapTy UniqueArgInfos;
+  
+  // Compute the unique argument type info.
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i)
+    UniqueArgInfos[Ints[i].ArgTypeDefs].push_back(i);
+
+  // Loop through the array, emitting one generator for each batch.
+  for (MapTy::iterator I = UniqueArgInfos.begin(),
+       E = UniqueArgInfos.end(); I != E; ++I) {
+    for (unsigned i = 0, e = I->second.size(); i != e; ++i) {
+      OS << "  case Intrinsic::" << Ints[I->second[i]].EnumName << ":\t\t// "
+         << Ints[I->second[i]].Name << "\n";
+    }
+    
+    const std::vector<Record*> &ArgTypes = I->first;
+    unsigned N = ArgTypes.size();
+
+    if (ArgTypes[N-1]->getValueAsString("TypeVal") == "...") {
+      OS << "    IsVarArg = true;\n";
+      --N;
+    }
+    
+    OS << "    ResultTy = ";
+    EmitTypeGenerate(OS, ArgTypes[0]);
+    OS << ";\n";
+    
+    for (unsigned j = 1; j != N; ++j) {
+      OS << "    ArgTys.push_back(";
+      EmitTypeGenerate(OS, ArgTypes[j]);
+      OS << ");\n";
+    }
+    
     OS << "    break;\n";
   }
   OS << "  }\n";
