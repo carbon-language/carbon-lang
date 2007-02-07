@@ -65,9 +65,18 @@ namespace llvm {
     bool checkSignature() {
       return 0 == memcmp(fmag, ARFILE_MEMBER_MAGIC,2);
     }
-
   };
-
+  
+  // Get just the externally visible defined symbols from the bytecode
+  bool GetBytecodeSymbols(const sys::Path& fName,
+                          std::vector<std::string>& symbols,
+                          BCDecompressor_t *BCDC, std::string* ErrMsg);
+  
+  ModuleProvider* GetBytecodeSymbols(const unsigned char*Buffer,unsigned Length,
+                                     const std::string& ModuleID,
+                                     std::vector<std::string>& symbols,
+                                     BCDecompressor_t *BCDC,
+                                     std::string* ErrMsg);
 }
 
 #endif

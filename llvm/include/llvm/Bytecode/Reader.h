@@ -81,36 +81,6 @@ Module* ParseBytecodeBuffer(
   std::string *ErrMsg = 0         ///< Optional place to return an error message
 );
 
-
-/// This function will read only the necessary parts of a bytecode file in order
-/// to obtain a list of externally visible global symbols that the bytecode
-/// module defines. This is used for archiving and linking when only the list
-/// of symbols the module defines is needed.
-/// @returns true on error, false otherwise
-/// @brief Get a bytecode file's externally visibile defined global symbols.
-bool GetBytecodeSymbols(
-  const sys::Path& fileName,       ///< Filename to read bytecode from
-  std::vector<std::string>& syms,  ///< Vector to return symbols in
-  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
-  std::string* ErrMsg = 0          ///< Optional error message holder
-);
-
-/// This function will read only the necessary parts of a bytecode buffer in
-/// order to obtain a list of externally visible global symbols that the
-/// bytecode module defines. This is used for archiving and linking when only
-/// the list of symbols the module defines is needed and the bytecode is
-/// already in memory.
-/// @returns the ModuleProvider on success, 0 if the bytecode can't be parsed
-/// @brief Get a bytecode file's externally visibile defined global symbols.
-ModuleProvider* GetBytecodeSymbols(
-  const unsigned char*Buffer,        ///< The buffer to be parsed
-  unsigned Length,                   ///< The length of \p Buffer
-  const std::string& ModuleID,       ///< An identifier for the module
-  std::vector<std::string>& symbols, ///< The symbols defined in the module
-  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
-  std::string* ErrMsg = 0            ///< Optional error message holder
-);
-
 } // End llvm namespace
 
 #endif
