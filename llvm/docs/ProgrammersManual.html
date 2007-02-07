@@ -2122,11 +2122,6 @@ name.</p>
   have both a name and a type which are extracted and used to place the value
   in the correct type plane under the value's name.</dd>
 
-  <dt><tt>void insert(const std::string&amp; Name, Value *Val)</tt>:</dt>
-  <dd> Inserts a constant or type into the symbol table with the specified
-  name. There can be a many to one mapping between names and constants
-  or types.</dd>
-
   <dt><tt>void remove(Value* Val)</tt>:</dt>
  <dd> This method removes a named value from the symbol table. The
   type and name of the Value are extracted from \p N and used to
@@ -2134,20 +2129,6 @@ name.</p>
   not in the symbol table, this method silently ignores the
   request.</dd>
 
-  <dt><tt>Value* remove(const std::string&amp; Name, Value *Val)</tt>:</dt>
-  <dd> Remove a constant or type with the specified name from the 
-  symbol table.</dd>
-
-  <dt><tt>Value *remove(const value_iterator&amp; It)</tt>:</dt>
-  <dd> Removes a specific value from the symbol table. 
-  Returns the removed value.</dd>
-
-  <dt><tt>bool strip()</tt>:</dt>
-  <dd> This method will strip the symbol table of its names leaving
-  the type and values. </dd>
-
-  <dt><tt>void clear()</tt>:</dt>
-  <dd>Empty the symbol table completely.</dd>
 </dl>
 
 <h3>Iteration</h3>
