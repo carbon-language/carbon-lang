@@ -40,6 +40,10 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// far jump.
   bool LRForceSpilled;
 
+  /// R3IsLiveIn - True if R3 is live in to this function.
+  ///
+  bool R3IsLiveIn;
+
   /// FramePtrSpillOffset - If HasStackFrame, this records the frame pointer
   /// spill stack offset.
   unsigned FramePtrSpillOffset;
@@ -75,13 +79,15 @@ class ARMFunctionInfo : public MachineFunctionInfo {
 public:
   ARMFunctionInfo() :
     isThumb(false),
-    VarArgsRegSaveSize(0), HasStackFrame(false), LRForceSpilled(false),
+    VarArgsRegSaveSize(0), HasStackFrame(false),
+    LRForceSpilled(false), R3IsLiveIn(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0), JumpTableUId(0) {}
 
   ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
-    VarArgsRegSaveSize(0), HasStackFrame(false), LRForceSpilled(false),
+    VarArgsRegSaveSize(0), HasStackFrame(false),
+    LRForceSpilled(false), R3IsLiveIn(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0), JumpTableUId(0) {}
 
@@ -95,6 +101,9 @@ public:
 
   bool isLRForceSpilled() const { return LRForceSpilled; }
   void setLRIsForceSpilled(bool s) { LRForceSpilled = s; }
+
+  bool isR3IsLiveIn() const { return R3IsLiveIn; }
+  void setR3IsLiveIn(bool l) { R3IsLiveIn = l; }
 
   unsigned getFramePtrSpillOffset() const { return FramePtrSpillOffset; }
   void setFramePtrSpillOffset(unsigned o) { FramePtrSpillOffset = o; }

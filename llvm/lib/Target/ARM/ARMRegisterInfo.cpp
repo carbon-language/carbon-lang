@@ -401,7 +401,10 @@ void emitThumbRegPlusConstPool(MachineBasicBlock &MBB,
 
     if (NumBytes <= 255 && NumBytes >= 0)
       BuildMI(MBB, MBBI, TII.get(ARM::tMOVri8), LdReg).addImm(NumBytes);
-    else
+    else if (NumBytes < 0 && NumBytes >= -255) {
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVri8), LdReg).addImm(NumBytes);
+      BuildMI(MBB, MBBI, TII.get(ARM::tNEG), LdReg).addReg(LdReg);
+    } else
       emitLoadConstPool(MBB, MBBI, LdReg, NumBytes, TII);
 
     // Emit add / sub.
@@ -811,7 +814,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       // being storing here. If that's the case, we do the following:
       // r12 = r2
       // Use r2 to materialize sp + offset
-      // str r12, r2
+      // str r3, r2
       // r2 = r12
       unsigned ValReg = MI.getOperand(0).getReg();
       unsigned TmpReg = ARM::R3;
@@ -820,6 +823,8 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
         BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R2);
         TmpReg = ARM::R2;
       }
+      if (TmpReg == ARM::R3 && AFI->isR3IsLiveIn())
+        BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R3);
       if (Opcode == ARM::tSpill) {
         if (FrameReg == ARM::SP)
           emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg,Offset,false,TII);
@@ -835,10 +840,12 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
         MI.addRegOperand(FrameReg, false);  // Use [reg, reg] addrmode.
       else
         MI.addRegOperand(0, false); // tSTR has an extra register operand.
-      if (ValReg == ARM::R3) {
-        MachineBasicBlock::iterator NII = next(II);
+
+      MachineBasicBlock::iterator NII = next(II);
+      if (ValReg == ARM::R3)
         BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R2).addReg(ARM::R12);
-      }
+      if (TmpReg == ARM::R3 && AFI->isR3IsLiveIn())
+        BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R3).addReg(ARM::R12);
     } else
       assert(false && "Unexpected opcode!");
   } else {
@@ -1032,6 +1039,15 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
   if (isThumb) {
+    // Check if R3 is live in. It might have to be used as a scratch register.
+    for (MachineFunction::livein_iterator I=MF.livein_begin(),E=MF.livein_end();
+         I != E; ++I) {
+      if ((*I).first == ARM::R3) {
+        AFI->setR3IsLiveIn(true);
+        break;
+      }
+    }
+
     // Thumb add/sub sp, imm8 instructions implicitly multiply the offset by 4.
     NumBytes = (NumBytes + 3) & ~3;
     MFI->setStackSize(NumBytes);
