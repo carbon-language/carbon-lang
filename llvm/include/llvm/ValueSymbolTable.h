@@ -120,12 +120,6 @@ public:
 /// @}
 /// @name Mutators
 /// @{
-public:
-
-  /// This method will strip the symbol table of its names.
-  /// @brief Strip the symbol table.
-  bool strip();
-  
 private:
   /// This method adds the provided value \p N to the symbol table.  The Value
   /// must have a name which is used to place the value in the symbol table. 

@@ -111,17 +111,6 @@ void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
   }
 }
 
-// Strip the symbol table of its names.
-bool TypeSymbolTable::strip() {
-  bool RemovedSymbol = false;
-  for (iterator TI = tmap.begin(); TI != tmap.end(); ) {
-    remove(TI++);
-    RemovedSymbol = true;
-  }
-
-  return RemovedSymbol;
-}
-
 // This function is called when one of the types in the type plane are refined
 void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
                                          const Type *NewType) {

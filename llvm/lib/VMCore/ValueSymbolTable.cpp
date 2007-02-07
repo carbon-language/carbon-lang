@@ -59,22 +59,6 @@ Value *ValueSymbolTable::lookup(const std::string &Name) const {
   return 0;
 }
 
-// Strip the symbol table of its names.
-//
-bool ValueSymbolTable::strip() {
-  bool RemovedSymbol = false;
-  for (iterator VI = vmap.begin(), VE = vmap.end(); VI != VE; ) {
-    Value *V = VI->second;
-    ++VI;
-    if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()) {
-      // Set name to "", removing from symbol table!
-      V->setName("");
-      RemovedSymbol = true;
-    }
-  }
-  return RemovedSymbol;
-}
-
 // Insert a value into the symbol table with the specified name...
 //
 void ValueSymbolTable::insert(Value* V) {

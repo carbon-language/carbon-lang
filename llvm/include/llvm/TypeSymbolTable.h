@@ -98,10 +98,6 @@ public:
 /// @{
 public:
 
-  /// This method will strip the symbol table of its names 
-  /// @brief Strip the symbol table.
-  bool strip();
-
   /// Inserts a type into the symbol table with the specified name. There can be
   /// a many-to-one mapping between names and types. This method allows a type
   /// with an existing entry in the symbol table to get a new name.

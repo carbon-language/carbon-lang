@@ -73,6 +73,27 @@ static void RemoveDeadConstant(Constant *C) {
   }
 }
 
+// Strip the symbol table of its names.
+//
+static void StripSymtab(ValueSymbolTable &ST) {
+  for (ValueSymbolTable::iterator VI = ST.begin(), VE = ST.end(); VI != VE; ) {
+    Value *V = VI->second;
+    ++VI;
+    if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()) {
+      // Set name to "", removing from symbol table!
+      V->setName("");
+    }
+  }
+}
+
+// Strip the symbol table of its names.
+static void StripTypeSymtab(TypeSymbolTable &ST) {
+  for (TypeSymbolTable::iterator TI = ST.begin(), E = ST.end(); TI != E; )
+    ST.remove(TI++);
+}
+
+
+
 bool StripSymbols::runOnModule(Module &M) {
   // If we're not just stripping debug info, strip all symbols from the
   // functions and the names from any internal globals.
@@ -85,11 +106,11 @@ bool StripSymbols::runOnModule(Module &M) {
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
       if (I->hasInternalLinkage())
         I->setName("");     // Internal symbols can't participate in linkage
-      I->getValueSymbolTable().strip();
+      StripSymtab(I->getValueSymbolTable());
     }
     
     // Remove all names from types.
-    M.getTypeSymbolTable().strip();
+    StripTypeSymtab(M.getTypeSymbolTable());
   }
 
   // Strip debug info in the module if it exists.  To do this, we remove
