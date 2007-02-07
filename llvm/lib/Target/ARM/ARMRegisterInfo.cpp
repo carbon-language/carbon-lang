@@ -762,16 +762,18 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       return;
     }
 
+    bool isThumSpillRestore = Opcode == ARM::tRestore || Opcode == ARM::tSpill;
+    if (AddrMode == ARMII::AddrModeTs) {
+      // Thumb tLDRspi, tSTRspi. These will change to instructions that use
+      // a different base register.
+      NumBits = 5;
+      Mask = (1 << NumBits) - 1;
+    }
     // If this is a thumb spill / restore, we will be using a constpool load to
     // materialize the offset.
-    bool isThumSpillRestore = Opcode == ARM::tRestore || Opcode == ARM::tSpill;
-    if (AddrMode == ARMII::AddrModeTs && !isThumSpillRestore) {
-      if (AddrMode == ARMII::AddrModeTs) {
-        // Thumb tLDRspi, tSTRspi. These will change to instructions that use
-        // a different base register.
-        NumBits = 5;
-        Mask = (1 << NumBits) - 1;
-      }
+    if (AddrMode == ARMII::AddrModeTs && isThumSpillRestore)
+      ImmOp.ChangeToImmediate(0);
+    else {
       // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
       ImmedOffset = ImmedOffset & Mask;
       if (isSub)
