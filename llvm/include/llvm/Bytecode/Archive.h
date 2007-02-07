@@ -20,6 +20,7 @@
 #include "llvm/ADT/ilist"
 #include "llvm/System/Path.h"
 #include "llvm/System/MappedFile.h"
+#include "llvm/Support/Compressor.h"
 #include <map>
 #include <set>
 #include <fstream>
@@ -31,6 +32,9 @@ class ModuleProvider;      // From VMCore
 class Module;              // From VMCore
 class Archive;             // Declared below
 class ArchiveMemberHeader; // Internal implementation class
+
+typedef size_t BCDecompressor_t(const char *, size_t, char*&, std::string*);
+
 
 /// This class is the main class manipulated by users of the Archive class. It
 /// holds information about one member of the Archive. It is also the element
@@ -223,7 +227,7 @@ class ArchiveMember {
 /// applications and the linkers. Consequently, the implementation of the class
 /// is optimized for reading.
 class Archive {
-
+  
   /// @name Types
   /// @{
   public:
@@ -468,7 +472,8 @@ class Archive {
   protected:
     /// @brief Construct an Archive for \p filename and optionally  map it
     /// into memory.
-    Archive(const sys::Path& filename);
+    Archive(const sys::Path& filename, BCDecompressor_t *BCDC = 
+            Compressor::decompressToNewBuffer);
 
     /// @param error Set to address of a std::string to get error messages
     /// @returns false on error
@@ -547,7 +552,7 @@ class Archive {
     unsigned firstFileOffset; ///< Offset to first normal file.
     ModuleMap modules;        ///< The modules loaded via symbol lookup.
     ArchiveMember* foreignST; ///< This holds the foreign symbol table.
-
+    BCDecompressor_t *Decompressor;  ///< Optional decompressor
   /// @}
   /// @name Hidden
   /// @{

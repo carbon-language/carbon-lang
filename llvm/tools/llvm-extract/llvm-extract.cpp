@@ -19,6 +19,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
@@ -57,7 +58,8 @@ int main(int argc, char **argv) {
     cl::ParseCommandLineOptions(argc, argv, " llvm extractor\n");
     sys::PrintStackTraceOnErrorSignal();
 
-    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
+    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename,
+                                            Compressor::decompressToNewBuffer));
     if (M.get() == 0) {
       cerr << argv[0] << ": bytecode didn't read correctly.\n";
       return 1;

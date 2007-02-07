@@ -225,8 +225,10 @@ Archive::writeMember(
     std::string FullMemberName = archPath.toString() + "(" +
       member.getPath().toString()
       + ")";
-    ModuleProvider* MP = GetBytecodeSymbols(
-      (const unsigned char*)data,fSize,FullMemberName, symbols, ErrMsg);
+    ModuleProvider* MP = 
+      GetBytecodeSymbols((const unsigned char*)data,fSize,
+                         FullMemberName, symbols,
+                         Compressor::decompressToNewBuffer, ErrMsg);
 
     // If the bytecode parsed successfully
     if ( MP ) {

@@ -1981,7 +1981,7 @@ void BytecodeReader::ParseModule() {
 /// and \p Length parameters.
 bool BytecodeReader::ParseBytecode(volatile BufPtr Buf, unsigned Length,
                                    const std::string &ModuleID,
-                                   Decompressor_t *Decompressor, 
+                                   BCDecompressor_t *Decompressor, 
                                    std::string* ErrMsg) {
 
   /// We handle errors by
@@ -2016,6 +2016,9 @@ bool BytecodeReader::ParseBytecode(volatile BufPtr Buf, unsigned Length,
 
   // If this is a compressed file
   if (Sig == ('l' | ('l' << 8) | ('v' << 16) | ('c' << 24))) {
+    if (!Decompressor) {
+      error("Compressed bytecode found, but not decompressor available");
+    }
 
     // Invoke the decompression of the bytecode. Note that we have to skip the
     // file's magic number which is not part of the compressed block. Hence,

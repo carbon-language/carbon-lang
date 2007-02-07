@@ -32,6 +32,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Analyzer.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
@@ -66,7 +67,9 @@ int main(int argc, char **argv) {
     bca.progressiveVerify = Verify;
 
     /// Analyze the bytecode file
-    Module* M = AnalyzeBytecodeFile(InputFilename, bca, &ErrorMessage, (Dump?Out:0));
+    Module* M = AnalyzeBytecodeFile(InputFilename, bca, 
+                                    Compressor::decompressToNewBuffer,
+                                    &ErrorMessage, (Dump?Out:0));
 
     // All that bcanalyzer does is write the gathered statistics to the output
     PrintBytecodeAnalysis(bca,*Out);

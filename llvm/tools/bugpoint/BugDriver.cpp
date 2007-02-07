@@ -21,6 +21,7 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/Support/FileUtilities.h"
 #include <iostream>
 #include <memory>
@@ -74,7 +75,8 @@ BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
 ///
 Module *llvm::ParseInputFile(const std::string &InputFilename) {
   ParseError Err;
-  Module *Result = ParseBytecodeFile(InputFilename);
+  Module *Result = ParseBytecodeFile(InputFilename,
+                                     Compressor::decompressToNewBuffer);
   if (!Result && !(Result = ParseAssemblyFile(InputFilename,&Err))) {
     std::cerr << "bugpoint: " << Err.getMessage() << "\n"; 
     Result = 0;

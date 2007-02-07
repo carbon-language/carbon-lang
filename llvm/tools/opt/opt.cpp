@@ -254,7 +254,8 @@ int main(int argc, char **argv) {
     std::string ErrorMessage;
 
     // Load the input module...
-    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
+    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, 
+                            Compressor::decompressToNewBuffer, &ErrorMessage));
     if (M.get() == 0) {
       cerr << argv[0] << ": ";
       if (ErrorMessage.size())

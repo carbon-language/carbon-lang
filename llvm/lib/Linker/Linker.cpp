@@ -16,6 +16,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/Compressor.h"
 using namespace llvm;
 
 Linker::Linker(const std::string& progname, const std::string& modname, unsigned flags)
@@ -99,7 +100,9 @@ Linker::releaseModule() {
 std::auto_ptr<Module>
 Linker::LoadObject(const sys::Path &FN) {
   std::string ParseErrorMessage;
-  Module *Result = ParseBytecodeFile(FN.toString(), &ParseErrorMessage);
+  Module *Result = ParseBytecodeFile(FN.toString(), 
+                                     Compressor::decompressToNewBuffer,
+                                     &ParseErrorMessage);
   if (Result)
     return std::auto_ptr<Module>(Result);
   Error = "Bytecode file '" + FN.toString() + "' could not be loaded";

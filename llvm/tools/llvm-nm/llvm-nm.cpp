@@ -127,7 +127,9 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
   }
   // Note: Currently we do not support reading an archive from stdin.
   if (Filename == "-" || aPath.isBytecodeFile()) {
-    Module *Result = ParseBytecodeFile(Filename, &ErrorMessage);
+    Module *Result = ParseBytecodeFile(Filename,
+                                       Compressor::decompressToNewBuffer,
+                                       &ErrorMessage);
     if (Result) {
       DumpSymbolNamesFromModule (Result);
     } else {

@@ -49,7 +49,9 @@ int main(int argc, char **argv) {
   int exitCode = 0;
   std::ostream *Out = 0;
   std::string ErrorMessage;
-  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
+  std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, 
+                                            Compressor::decompressToNewBuffer, 
+                                            &ErrorMessage));
   if (M.get() == 0) {
     std::cerr << argv[0] << ": ";
     if (ErrorMessage.size())

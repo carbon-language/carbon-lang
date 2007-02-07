@@ -22,6 +22,7 @@
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Process.h"
@@ -70,7 +71,9 @@ int main(int argc, char **argv, char * const *envp) {
     // Load the bytecode...
     std::string ErrorMsg;
     ModuleProvider *MP = 0;
-    MP = getBytecodeModuleProvider(InputFile, &ErrorMsg);
+    MP = getBytecodeModuleProvider(InputFile, 
+                                   Compressor::decompressToNewBuffer,
+                                   &ErrorMsg);
     if (!MP) {
       std::cerr << "Error loading program '" << InputFile << "': "
                 << ErrorMsg << "\n";

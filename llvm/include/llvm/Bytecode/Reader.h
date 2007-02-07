@@ -19,15 +19,17 @@
 #ifndef LLVM_BYTECODE_READER_H
 #define LLVM_BYTECODE_READER_H
 
-#include "llvm/System/Path.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Module.h"
-#include <string>
+#include "llvm/Support/Compressor.h"
+#include "llvm/System/Path.h"
 
 namespace llvm {
 
 // Forward declare the handler class
 class BytecodeHandler;
+
+typedef size_t BCDecompressor_t(const char *, size_t, char*&, std::string*);
 
 /// This function returns a ModuleProvider that can be used to do lazy 
 /// function-at-a-time loading from a bytecode file.
@@ -36,6 +38,7 @@ class BytecodeHandler;
 /// @brief Get a ModuleProvide for a bytecode file.
 ModuleProvider *getBytecodeModuleProvider(
   const std::string &Filename,  ///< Name of file to be read
+  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
   std::string* ErrMsg = 0,      ///< Optional error message holder 
   BytecodeHandler* H = 0        ///< Optional handler for reader events
 );
@@ -49,6 +52,7 @@ ModuleProvider *getBytecodeBufferModuleProvider(
   const unsigned char *Buffer,    ///< Start of buffer to parse
   unsigned BufferSize,            ///< Size of the buffer
   const std::string &ModuleID,    ///< Name to give the module
+  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
   std::string* ErrMsg = 0,        ///< Optional place to return an error message
   BytecodeHandler* H = 0          ///< Optional handler for reader events
 );
@@ -61,6 +65,7 @@ ModuleProvider *getBytecodeBufferModuleProvider(
 /// @brief Parse the given bytecode file
 Module* ParseBytecodeFile(
   const std::string &Filename,    ///< Name of file to parse
+  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
   std::string *ErrMsg = 0         ///< Optional place to return an error message
 );
 
@@ -72,6 +77,7 @@ Module* ParseBytecodeBuffer(
   const unsigned char *Buffer,    ///< Start of buffer to parse
   unsigned BufferSize,            ///< Size of the buffer
   const std::string &ModuleID="", ///< Name to give the module
+  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
   std::string *ErrMsg = 0         ///< Optional place to return an error message
 );
 
@@ -84,6 +90,7 @@ Module* ParseBytecodeBuffer(
 bool GetBytecodeDependentLibraries(
   const std::string &fileName,       ///< File name to read bytecode from
   Module::LibraryListType& deplibs,  ///< List of dependent libraries extracted
+  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
   std::string* ErrMsg = 0            ///< Optional error message holder
 );
 
@@ -96,6 +103,7 @@ bool GetBytecodeDependentLibraries(
 bool GetBytecodeSymbols(
   const sys::Path& fileName,       ///< Filename to read bytecode from
   std::vector<std::string>& syms,  ///< Vector to return symbols in
+  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
   std::string* ErrMsg = 0          ///< Optional error message holder
 );
 
@@ -111,6 +119,7 @@ ModuleProvider* GetBytecodeSymbols(
   unsigned Length,                   ///< The length of \p Buffer
   const std::string& ModuleID,       ///< An identifier for the module
   std::vector<std::string>& symbols, ///< The symbols defined in the module
+  BCDecompressor_t *BCDC = Compressor::decompressToNewBuffer,
   std::string* ErrMsg = 0            ///< Optional error message holder
 );
 

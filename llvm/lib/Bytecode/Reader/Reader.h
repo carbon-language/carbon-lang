@@ -140,16 +140,15 @@ public:
 /// @name Methods
 /// @{
 public:
-    
-  typedef size_t Decompressor_t(const char *, size_t, char*&, std::string*);
-  
+  typedef size_t BCDecompressor_t(const char *, size_t, char*&, std::string*);
+
   /// @returns true if an error occurred
   /// @brief Main interface to parsing a bytecode buffer.
   bool ParseBytecode(
      volatile BufPtr Buf,         ///< Beginning of the bytecode buffer
      unsigned Length,             ///< Length of the bytecode buffer
      const std::string &ModuleID, ///< An identifier for the module constructed.
-     Decompressor_t *Decompressor = 0, ///< Optional decompressor.
+     BCDecompressor_t *Decompressor = 0, ///< Optional decompressor.
      std::string* ErrMsg = 0      ///< Optional place for error message 
   );
 

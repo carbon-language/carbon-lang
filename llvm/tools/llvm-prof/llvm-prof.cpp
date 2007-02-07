@@ -115,7 +115,9 @@ int main(int argc, char **argv) {
 
     // Read in the bytecode file...
     std::string ErrorMessage;
-    Module *M = ParseBytecodeFile(BytecodeFile, &ErrorMessage);
+    Module *M = ParseBytecodeFile(BytecodeFile, 
+                                  Compressor::decompressToNewBuffer, 
+                                  &ErrorMessage);
     if (M == 0) {
       std::cerr << argv[0] << ": " << BytecodeFile << ": " 
         << ErrorMessage << "\n";

@@ -20,6 +20,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
@@ -51,7 +52,9 @@ int main(int argc, char **argv) {
     std::ostream *Out = &std::cout;  // Default to printing to stdout.
     std::string ErrorMessage;
 
-    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, &ErrorMessage));
+    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, 
+                                              Compressor::decompressToNewBuffer,
+                                              &ErrorMessage));
     if (M.get() == 0) {
       cerr << argv[0] << ": ";
       if (ErrorMessage.size())

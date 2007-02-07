@@ -59,7 +59,9 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
   std::string ErrorMessage;
   if (Filename.exists()) {
     if (Verbose) cerr << "Loading '" << Filename.c_str() << "'\n";
-    Module* Result = ParseBytecodeFile(Filename.toString(), &ErrorMessage);
+    Module* Result = ParseBytecodeFile(Filename.toString(), 
+                                       Compressor::decompressToNewBuffer,
+                                       &ErrorMessage);
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
     if (Verbose) {

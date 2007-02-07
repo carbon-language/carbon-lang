@@ -13,8 +13,8 @@
 
 #include "ArchiveInternals.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Support/Compressor.h"
 #include <memory>
-
 using namespace llvm;
 
 /// Read a variable-bit-rate encoded unsigned integer
@@ -351,7 +351,9 @@ Archive::getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage) {
       std::string FullMemberName = archPath.toString() +
         "(" + I->getPath().toString() + ")";
       Module* M = ParseBytecodeBuffer((const unsigned char*)I->getData(),
-          I->getSize(), FullMemberName, ErrMessage);
+                                      I->getSize(), FullMemberName,
+                                      Compressor::decompressToNewBuffer,
+                                      ErrMessage);
       if (!M)
         return true;
 
@@ -486,7 +488,7 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
     mbr->getPath().toString() + ")";
   ModuleProvider* mp = getBytecodeBufferModuleProvider(
       (const unsigned char*) mbr->getData(), mbr->getSize(),
-      FullMemberName, ErrMsg, 0);
+      FullMemberName, Decompressor, ErrMsg, 0);
   if (!mp)
     return 0;
 
@@ -500,8 +502,7 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
 bool
 Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
                                     std::set<ModuleProvider*>& result,
-                                    std::string* error)
-{
+                                    std::string* error) {
   if (!mapfile || !base) {
     if (error)
       *error = "Empty archive invalid for finding modules defining symbols";
@@ -533,8 +534,10 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
         std::vector<std::string> symbols;
         std::string FullMemberName = archPath.toString() + "(" +
           mbr->getPath().toString() + ")";
-        ModuleProvider* MP = GetBytecodeSymbols((const unsigned char*)At,
-            mbr->getSize(), FullMemberName, symbols, error);
+        ModuleProvider* MP = 
+          GetBytecodeSymbols((const unsigned char*)At, mbr->getSize(),
+                             FullMemberName, symbols, 
+                             Compressor::decompressToNewBuffer, error);
 
         if (MP) {
           // Insert the module's symbols into the symbol table

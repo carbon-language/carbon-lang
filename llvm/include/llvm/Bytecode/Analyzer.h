@@ -20,9 +20,10 @@
 #define LLVM_BYTECODE_ANALYZER_H
 
 #include "llvm/Bytecode/Format.h"
+#include "llvm/Bytecode/Reader.h"
 #include <string>
 #include <map>
-#include <ostream>
+#include <iosfwd>
 
 namespace llvm {
 
@@ -102,23 +103,11 @@ struct BytecodeAnalysis {
 Module* AnalyzeBytecodeFile(
       const std::string& Filename, ///< The name of the bytecode file to read
       BytecodeAnalysis& Results,   ///< The results of the analysis
+      BCDecompressor_t *BCDC = 0,     ///< Optional decompressor to use.
       std::string* ErrorStr = 0,   ///< Errors, if any.
       std::ostream* output = 0     ///< Stream for dump output, if wanted
     );
 
-/// This function is an alternate entry point into the bytecode analysis
-/// library. It allows you to provide an arbitrary memory buffer which is
-/// assumed to contain a complete bytecode file. The \p Buffer is analyzed and
-/// the \p Results are filled in.
-/// @brief Analyze contents of a bytecode buffer.
-Module* AnalyzeBytecodeBuffer(
-       const unsigned char* Buffer, ///< Pointer to start of bytecode buffer
-       unsigned BufferSize,         ///< Size of the bytecode buffer
-       const std::string& ModuleID, ///< Identifier for the module
-       BytecodeAnalysis& Results,   ///< The results of the analysis
-       std::string* ErrorStr = 0,   ///< Errors, if any.
-       std::ostream* output = 0     ///< Stream for dump output, if wanted
-     );
 
 /// This function prints the contents of rhe BytecodeAnalysis structure in
 /// a human legible form.

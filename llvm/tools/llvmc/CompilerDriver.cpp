@@ -569,7 +569,9 @@ private:
     if (fullpath.isBytecodeFile()) {
       // Process the dependent libraries recursively
       Module::LibraryListType modlibs;
-      if (GetBytecodeDependentLibraries(fullpath.toString(),modlibs,&err)) {
+      if (GetBytecodeDependentLibraries(fullpath.toString(),modlibs,
+                                        Compressor::decompressToNewBuffer,
+                                        &err)) {
         // Traverse the dependent libraries list
         Module::lib_iterator LI = modlibs.begin();
         Module::lib_iterator LE = modlibs.end();

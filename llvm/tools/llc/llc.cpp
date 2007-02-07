@@ -24,6 +24,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/FileUtilities.h"
@@ -175,7 +176,8 @@ int main(int argc, char **argv) {
     sys::PrintStackTraceOnErrorSignal();
 
     // Load the module to be compiled...
-    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename));
+    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, 
+                                            Compressor::decompressToNewBuffer));
     if (M.get() == 0) {
       std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
       return 1;
