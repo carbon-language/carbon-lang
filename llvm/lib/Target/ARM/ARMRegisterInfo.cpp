@@ -359,6 +359,19 @@ static unsigned calcNumMI(int Opc, int ExtraOpc, unsigned Bytes,
   return NumMIs;
 }
 
+/// emitLoadConstPool - Emits a load from constpool to materialize NumBytes
+/// immediate.
+static void emitLoadConstPool(MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator &MBBI,
+                              unsigned DestReg, int NumBytes, 
+                              const TargetInstrInfo &TII) {
+  MachineFunction &MF = *MBB.getParent();
+  MachineConstantPool *ConstantPool = MF.getConstantPool();
+  Constant *C = ConstantInt::get(Type::Int32Ty, NumBytes);
+  unsigned Idx = ConstantPool->getConstantPoolIndex(C, 2);
+  BuildMI(MBB, MBBI, TII.get(ARM::tLDRpci), DestReg).addConstantPoolIndex(Idx);
+}
+
 /// emitThumbRegPlusConstPool - Emits a series of instructions to materialize
 /// a destreg = basereg + immediate in Thumb code. Load the immediate from a
 /// constpool entry.
@@ -368,9 +381,8 @@ void emitThumbRegPlusConstPool(MachineBasicBlock &MBB,
                                unsigned DestReg, unsigned BaseReg,
                                int NumBytes, bool CanChangeCC,
                                const TargetInstrInfo &TII) {
-    MachineFunction &MF = *MBB.getParent();
-    MachineConstantPool *ConstantPool = MF.getConstantPool();
-    bool isHigh = !isLowRegister(DestReg) || !isLowRegister(BaseReg);
+    bool isHigh = !isLowRegister(DestReg) ||
+                  (BaseReg != 0 && !isLowRegister(BaseReg));
     bool isSub = false;
     // Subtract doesn't have high register version. Load the negative value
     // if either base or dest register is a high register. Also, if do not
@@ -389,12 +401,9 @@ void emitThumbRegPlusConstPool(MachineBasicBlock &MBB,
 
     if (NumBytes <= 255 && NumBytes >= 0)
       BuildMI(MBB, MBBI, TII.get(ARM::tMOVri8), LdReg).addImm(NumBytes);
-    else {
-      // Load the constant.
-      Constant *C = ConstantInt::get(Type::Int32Ty, NumBytes);
-      unsigned Idx = ConstantPool->getConstantPoolIndex(C, 2);
-      BuildMI(MBB, MBBI, TII.get(ARM::tLDRpci), LdReg).addConstantPoolIndex(Idx);
-    }
+    else
+      emitLoadConstPool(MBB, MBBI, LdReg, NumBytes, TII);
+
     // Emit add / sub.
     int Opc = (isSub) ? ARM::tSUBrr : (isHigh ? ARM::tADDhirr : ARM::tADDrr);
     const MachineInstrBuilder MIB = BuildMI(MBB, MBBI, TII.get(Opc), DestReg);
@@ -721,8 +730,8 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     case ARMII::AddrModeTs: {
       ImmIdx = i+1;
       InstrOffs = MI.getOperand(ImmIdx).getImm();
-      NumBits = isSub ? 3 : ((FrameReg == ARM::SP) ? 8 : 5);
-      Scale = isSub ? 1 : 4;
+      NumBits = (FrameReg == ARM::SP) ? 8 : 5;
+      Scale = 4;
       break;
     }
     default:
@@ -754,7 +763,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     // If this is a thumb spill / restore, we will be using a constpool load to
     // materialize the offset.
     bool isThumSpillRestore = Opcode == ARM::tRestore || Opcode == ARM::tSpill;
-    if (AddrMode == ARMII::AddrModeTs || !isThumSpillRestore) {
+    if (AddrMode == ARMII::AddrModeTs && !isThumSpillRestore) {
       if (AddrMode == ARMII::AddrModeTs) {
         // Thumb tLDRspi, tSTRspi. These will change to instructions that use
         // a different base register.
@@ -779,12 +788,21 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     if (TII.isLoad(Opcode)) {
       // Use the destination register to materialize sp + offset.
       unsigned TmpReg = MI.getOperand(0).getReg();
-      if (Opcode == ARM::tRestore)
-        emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg, Offset, false, TII);
-      else
+      bool UseRR = false;
+      if (Opcode == ARM::tRestore) {
+        if (FrameReg == ARM::SP)
+          emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg,Offset,false,TII);
+        else {
+          emitLoadConstPool(MBB, II, TmpReg, Offset, TII);
+          UseRR = true;
+        }
+      } else
         emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tLDR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false);
+      if (UseRR)
+        MI.addRegOperand(FrameReg, false);  // Use [reg, reg] addrmode.
+      else
       MI.addRegOperand(0, false); // tLDR has an extra register operand.
     } else if (TII.isStore(Opcode)) {
       // FIXME! This is horrific!!! We need register scavenging.
@@ -797,19 +815,30 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       // r2 = r12
       unsigned ValReg = MI.getOperand(0).getReg();
       unsigned TmpReg = ARM::R3;
+      bool UseRR = false;
       if (ValReg == ARM::R3) {
         BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R2);
         TmpReg = ARM::R2;
       }
-      if (Opcode == ARM::tSpill)
-        emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg, Offset, false, TII);
-      else
+      if (Opcode == ARM::tSpill) {
+        if (FrameReg == ARM::SP)
+          emitThumbRegPlusConstPool(MBB, II, TmpReg, FrameReg,Offset,false,TII);
+        else {
+          emitLoadConstPool(MBB, II, TmpReg, Offset, TII);
+          UseRR = true;
+        }
+      } else
         emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tSTR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false);
-      MI.addRegOperand(0, false); // tSTR has an extra register operand.
-      if (ValReg == ARM::R3)
-        BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R2).addReg(ARM::R12);
+      if (UseRR)
+        MI.addRegOperand(FrameReg, false);  // Use [reg, reg] addrmode.
+      else
+        MI.addRegOperand(0, false); // tSTR has an extra register operand.
+      if (ValReg == ARM::R3) {
+        MachineBasicBlock::iterator NII = next(II);
+        BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R2).addReg(ARM::R12);
+      }
     } else
       assert(false && "Unexpected opcode!");
   } else {
@@ -1152,13 +1181,23 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
                AFI->getGPRCalleeSavedArea2Size() +
                AFI->getDPRCalleeSavedAreaSize());
   if (isThumb) {
-    if (MBBI->getOpcode() == ARM::tBX_RET &&
-        &MBB.front() != MBBI &&
-        prior(MBBI)->getOpcode() == ARM::tPOP) {
-      MachineBasicBlock::iterator PMBBI = prior(MBBI);
-      emitSPUpdate(MBB, PMBBI, NumBytes, isThumb, TII);
-    } else
-      emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
+    if (hasFP(MF)) {
+      NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
+      // Reset SP based on frame pointer only if the stack frame extends beyond
+      // frame pointer stack slot or target is ELF and the function has FP.
+      if (NumBytes)
+        emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, FramePtr, -NumBytes, TII);
+      else
+        BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::SP).addReg(FramePtr);
+    } else {
+      if (MBBI->getOpcode() == ARM::tBX_RET &&
+          &MBB.front() != MBBI &&
+          prior(MBBI)->getOpcode() == ARM::tPOP) {
+        MachineBasicBlock::iterator PMBBI = prior(MBBI);
+        emitSPUpdate(MBB, PMBBI, NumBytes, isThumb, TII);
+      } else
+        emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
+    }
   } else {
     // Darwin ABI requires FP to point to the stack slot that contains the
     // previous FP.
