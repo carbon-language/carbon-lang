@@ -32,6 +32,23 @@
 #include <algorithm>
 using namespace llvm;
 
+// Provide DenseMapKeyInfo for all pointers.
+namespace llvm {
+template<>
+struct DenseMapKeyInfo<std::pair<BasicBlock*, unsigned> > {
+  static inline std::pair<BasicBlock*, unsigned> getEmptyKey() {
+    return std::make_pair((BasicBlock*)-1, ~0U);
+  }
+  static inline std::pair<BasicBlock*, unsigned> getTombstoneKey() {
+    return std::make_pair((BasicBlock*)-2, 0U);
+  }
+  static unsigned getHashValue(const std::pair<BasicBlock*, unsigned> &Val) {
+    return DenseMapKeyInfo<void*>::getHashValue(Val.first) + Val.second*2;
+  }
+  static bool isPod() { return true; }
+};
+}
+
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca.
 ///
@@ -74,8 +91,12 @@ namespace {
 
     /// NewPhiNodes - The PhiNodes we're adding.
     ///
-    std::map<BasicBlock*, std::vector<PHINode*> > NewPhiNodes;
-
+    DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*> NewPhiNodes;
+    
+    /// PhiToAllocaMap - For each PHI node, keep track of which entry in Allocas
+    /// it corresponds to.
+    DenseMap<PHINode*, unsigned> PhiToAllocaMap;
+    
     /// PointerAllocaValues - If we are updating an AliasSetTracker, then for
     /// each alloca that is of pointer type, we keep track of what to copyValue
     /// to the inserted PHI nodes here.
@@ -322,23 +343,14 @@ void PromoteMem2Reg::run() {
     for (SmallPtrSet<PHINode*, 16>::iterator I = InsertedPHINodes.begin(),
            E = InsertedPHINodes.end(); I != E; ++I) {
       PHINode *PN = *I;
-      std::vector<PHINode*> &BBPNs = NewPhiNodes[PN->getParent()];
-      BBPNs[AllocaNum] = 0;
-
-      // Check to see if we just removed the last inserted PHI node from this
-      // basic block.  If so, remove the entry for the basic block.
-      bool HasOtherPHIs = false;
-      for (unsigned i = 0, e = BBPNs.size(); i != e; ++i)
-        if (BBPNs[i]) {
-          HasOtherPHIs = true;
-          break;
-        }
-      if (!HasOtherPHIs)
-        NewPhiNodes.erase(PN->getParent());
-
+      bool Erased=NewPhiNodes.erase(std::make_pair(PN->getParent(), AllocaNum));
+      Erased=Erased;
+      assert(Erased && "PHI already removed?");
+      
       if (AST && isa<PointerType>(PN->getType()))
         AST->deleteValue(PN);
       PN->eraseFromParent();
+      PhiToAllocaMap.erase(PN);
     }
 
     // Keep the reverse mapping of the 'Allocas' array.
@@ -407,26 +419,24 @@ void PromoteMem2Reg::run() {
   while (EliminatedAPHI) {
     EliminatedAPHI = false;
     
-    for (std::map<BasicBlock*, std::vector<PHINode *> >::iterator I =
-           NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E; ++I) {
-      std::vector<PHINode*> &PNs = I->second;
-      for (unsigned i = 0, e = PNs.size(); i != e; ++i) {
-        if (!PNs[i]) continue;
-
-        // If this PHI node merges one value and/or undefs, get the value.
-        if (Value *V = PNs[i]->hasConstantValue(true)) {
-          if (!isa<Instruction>(V) ||
-              properlyDominates(cast<Instruction>(V), PNs[i])) {
-            if (AST && isa<PointerType>(PNs[i]->getType()))
-              AST->deleteValue(PNs[i]);
-            PNs[i]->replaceAllUsesWith(V);
-            PNs[i]->eraseFromParent();
-            PNs[i] = 0;
-            EliminatedAPHI = true;
-            continue;
-          }
+    for (DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*>::iterator I =
+           NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E;) {
+      PHINode *PN = I->second;
+      
+      // If this PHI node merges one value and/or undefs, get the value.
+      if (Value *V = PN->hasConstantValue(true)) {
+        if (!isa<Instruction>(V) ||
+            properlyDominates(cast<Instruction>(V), PN)) {
+          if (AST && isa<PointerType>(PN->getType()))
+            AST->deleteValue(PN);
+          PN->replaceAllUsesWith(V);
+          PN->eraseFromParent();
+          NewPhiNodes.erase(I++);
+          EliminatedAPHI = true;
+          continue;
         }
       }
+      ++I;
     }
   }
   
@@ -436,52 +446,58 @@ void PromoteMem2Reg::run() {
   // have incoming values for all predecessors.  Loop over all PHI nodes we have
   // created, inserting undef values if they are missing any incoming values.
   //
-  for (std::map<BasicBlock*, std::vector<PHINode *> >::iterator I =
+  for (DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*>::iterator I =
          NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E; ++I) {
+    // We want to do this once per basic block.  As such, only process a block
+    // when we find the PHI that is the first entry in the block.
+    PHINode *SomePHI = I->second;
+    BasicBlock *BB = SomePHI->getParent();
+    if (&BB->front() != SomePHI)
+      continue;
 
-    std::vector<BasicBlock*> Preds(pred_begin(I->first), pred_end(I->first));
-    std::vector<PHINode*> &PNs = I->second;
-    assert(!PNs.empty() && "Empty PHI node list??");
-    PHINode *SomePHI = 0;
-    for (unsigned i = 0, e = PNs.size(); i != e; ++i)
-      if (PNs[i]) {
-        SomePHI = PNs[i];
-        break;
-      }
+    // Count the number of preds for BB.
+    SmallVector<BasicBlock*, 16> Preds(pred_begin(BB), pred_end(BB));
 
     // Only do work here if there the PHI nodes are missing incoming values.  We
     // know that all PHI nodes that were inserted in a block will have the same
-    // number of incoming values, so we can just check any PHI node.
-    if (SomePHI && Preds.size() != SomePHI->getNumIncomingValues()) {
-      // Ok, now we know that all of the PHI nodes are missing entries for some
-      // basic blocks.  Start by sorting the incoming predecessors for efficient
-      // access.
-      std::sort(Preds.begin(), Preds.end());
+    // number of incoming values, so we can just check any of them.
+    if (SomePHI->getNumIncomingValues() == Preds.size())
+      continue;
+    
+    // Ok, now we know that all of the PHI nodes are missing entries for some
+    // basic blocks.  Start by sorting the incoming predecessors for efficient
+    // access.
+    std::sort(Preds.begin(), Preds.end());
+    
+    // Now we loop through all BB's which have entries in SomePHI and remove
+    // them from the Preds list.
+    for (unsigned i = 0, e = SomePHI->getNumIncomingValues(); i != e; ++i) {
+      // Do a log(n) search of the Preds list for the entry we want.
+      SmallVector<BasicBlock*, 16>::iterator EntIt =
+        std::lower_bound(Preds.begin(), Preds.end(),
+                         SomePHI->getIncomingBlock(i));
+      assert(EntIt != Preds.end() && *EntIt == SomePHI->getIncomingBlock(i)&&
+             "PHI node has entry for a block which is not a predecessor!");
 
-      // Now we loop through all BB's which have entries in SomePHI and remove
-      // them from the Preds list.
-      for (unsigned i = 0, e = SomePHI->getNumIncomingValues(); i != e; ++i) {
-        // Do a log(n) search of the Preds list for the entry we want.
-        std::vector<BasicBlock*>::iterator EntIt =
-          std::lower_bound(Preds.begin(), Preds.end(),
-                           SomePHI->getIncomingBlock(i));
-        assert(EntIt != Preds.end() && *EntIt == SomePHI->getIncomingBlock(i)&&
-               "PHI node has entry for a block which is not a predecessor!");
+      // Remove the entry
+      Preds.erase(EntIt);
+    }
 
-        // Remove the entry
-        Preds.erase(EntIt);
-      }
-
-      // At this point, the blocks left in the preds list must have dummy
-      // entries inserted into every PHI nodes for the block.
-      for (unsigned i = 0, e = PNs.size(); i != e; ++i)
-        if (PHINode *PN = PNs[i]) {
-          Value *UndefVal = UndefValue::get(PN->getType());
-          for (unsigned pred = 0, e = Preds.size(); pred != e; ++pred)
-            PN->addIncoming(UndefVal, Preds[pred]);
-        }
+    // At this point, the blocks left in the preds list must have dummy
+    // entries inserted into every PHI nodes for the block.  Update all the phi
+    // nodes in this block that we are inserting (there could be phis before
+    // mem2reg runs).
+    unsigned NumBadPreds = SomePHI->getNumIncomingValues();
+    BasicBlock::iterator BBI = BB->begin();
+    while ((SomePHI = dyn_cast<PHINode>(BBI++)) &&
+           SomePHI->getNumIncomingValues() == NumBadPreds) {
+      Value *UndefVal = UndefValue::get(SomePHI->getType());
+      for (unsigned pred = 0, e = Preds.size(); pred != e; ++pred)
+        SomePHI->addIncoming(UndefVal, Preds[pred]);
     }
   }
+        
+  NewPhiNodes.clear();
 }
 
 // MarkDominatingPHILive - Mem2Reg wants to construct "pruned" SSA form, not
@@ -498,11 +514,11 @@ void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
   // PHI node for Alloca num.  If we find it, mark the PHI node as being alive!
   for (DominatorTree::Node *N = DT[BB]; N; N = N->getIDom()) {
     BasicBlock *DomBB = N->getBlock();
-    std::map<BasicBlock*, std::vector<PHINode*> >::iterator
-      I = NewPhiNodes.find(DomBB);
-    if (I != NewPhiNodes.end() && I->second[AllocaNum]) {
+    DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*>::iterator
+      I = NewPhiNodes.find(std::make_pair(DomBB, AllocaNum));
+    if (I != NewPhiNodes.end()) {
       // Ok, we found an inserted PHI node which dominates this value.
-      PHINode *DominatingPHI = I->second[AllocaNum];
+      PHINode *DominatingPHI = I->second;
 
       // Find out if we previously thought it was dead.  If so, mark it as being
       // live by removing it from the DeadPHINodes set.
@@ -636,18 +652,18 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
                                   unsigned &Version,
                                   SmallPtrSet<PHINode*, 16> &InsertedPHINodes) {
   // Look up the basic-block in question.
-  std::vector<PHINode*> &BBPNs = NewPhiNodes[BB];
-  if (BBPNs.empty()) BBPNs.resize(Allocas.size());
+  PHINode *&PN = NewPhiNodes[std::make_pair(BB, AllocaNo)];
 
   // If the BB already has a phi node added for the i'th alloca then we're done!
-  if (BBPNs[AllocaNo]) return false;
+  if (PN) return false;
 
   // Create a PhiNode using the dereferenced type... and add the phi-node to the
   // BasicBlock.
-  PHINode *PN = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
-                            Allocas[AllocaNo]->getName() + "." +
-                                        utostr(Version++), BB->begin());
-  BBPNs[AllocaNo] = PN;
+  PN = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
+                   Allocas[AllocaNo]->getName() + "." +
+                   utostr(Version++), BB->begin());
+  PhiToAllocaMap[PN] = AllocaNo;
+  
   InsertedPHINodes.insert(PN);
 
   if (AST && isa<PointerType>(PN->getType()))
@@ -663,28 +679,65 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
 //
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
                                 std::vector<Value*> &IncomingVals) {
-
-  // If this BB needs a PHI node, update the PHI node for each variable we need
-  // PHI nodes for.
-  std::map<BasicBlock*, std::vector<PHINode *> >::iterator
-    BBPNI = NewPhiNodes.find(BB);
-  if (BBPNI != NewPhiNodes.end()) {
-    std::vector<PHINode *> &BBPNs = BBPNI->second;
-    for (unsigned k = 0; k != BBPNs.size(); ++k)
-      if (PHINode *PN = BBPNs[k]) {
-        // Add this incoming value to the PHI node.
-        PN->addIncoming(IncomingVals[k], Pred);
-
-        // The currently active variable for this block is now the PHI.
-        IncomingVals[k] = PN;
+  // If we are inserting any phi nodes into this BB, they will already be in the
+  // block.
+  if (PHINode *APN = dyn_cast<PHINode>(BB->begin())) {
+    // Pred may have multiple edges to BB.  If so, we want to add N incoming
+    // values to each PHI we are inserting on the first time we see the edge.
+    // Check to see if APN already has incoming values from Pred.  This also
+    // prevents us from modifying PHI nodes that are not currently being
+    // inserted.
+    bool HasPredEntries = false;
+    for (unsigned i = 0, e = APN->getNumIncomingValues(); i != e; ++i) {
+      if (APN->getIncomingBlock(i) == Pred) {
+        HasPredEntries = true;
+        break;
       }
+    }
+    
+    // If we have PHI nodes to update, compute the number of edges from Pred to
+    // BB.
+    if (!HasPredEntries) {
+      TerminatorInst *PredTerm = Pred->getTerminator();
+      unsigned NumEdges = 0;
+      for (unsigned i = 0, e = PredTerm->getNumSuccessors(); i != e; ++i) {
+        if (PredTerm->getSuccessor(i) == BB)
+          ++NumEdges;
+      }
+      assert(NumEdges && "Must be at least one edge from Pred to BB!");
+      
+      // Add entries for all the phis.
+      BasicBlock::iterator PNI = BB->begin();
+      do {
+        unsigned AllocaNo = PhiToAllocaMap[APN];
+        
+        // Add N incoming values to the PHI node.
+        for (unsigned i = 0; i != NumEdges; ++i)
+          APN->addIncoming(IncomingVals[AllocaNo], Pred);
+        
+        // The currently active variable for this block is now the PHI.
+        IncomingVals[AllocaNo] = APN;
+        
+        // Get the next phi node.
+        ++PNI;
+        APN = dyn_cast<PHINode>(PNI);
+        if (APN == 0) break;
+        
+        // Verify it doesn't already have entries for Pred.  If it does, it is
+        // not being inserted by this mem2reg invocation.
+        HasPredEntries = false;
+        for (unsigned i = 0, e = APN->getNumIncomingValues(); i != e; ++i) {
+          if (APN->getIncomingBlock(i) == Pred) {
+            HasPredEntries = true;
+            break;
+          }
+        }
+      } while (!HasPredEntries);
+    }
   }
-
-  // don't revisit nodes
-  if (Visited.count(BB)) return;
-
-  // mark as visited
-  Visited.insert(BB);
+  
+  // Don't revisit blocks.
+  if (!Visited.insert(BB)) return;
 
   for (BasicBlock::iterator II = BB->begin(); !isa<TerminatorInst>(II); ) {
     Instruction *I = II++; // get the instruction, increment iterator
