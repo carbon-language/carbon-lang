@@ -32,7 +32,8 @@ bool SmallPtrSetImpl::insert(void *Ptr) {
   }
   
   // If more than 3/4 of the array is full, grow.
-  if (NumElements*4 >= CurArraySize*3)
+  if (NumElements*4 >= CurArraySize*3 ||
+      CurArraySize-(NumElements+NumTombstones) < CurArraySize/8)
     Grow();
   
   // Okay, we know we have space.  Find a hash bucket.
@@ -40,6 +41,8 @@ bool SmallPtrSetImpl::insert(void *Ptr) {
   if (*Bucket == Ptr) return false; // Already inserted, good.
   
   // Otherwise, insert it!
+  if (*Bucket == getTombstoneMarker())
+    --NumTombstones;
   *Bucket = Ptr;
   ++NumElements;  // Track density.
   return true;
@@ -69,6 +72,7 @@ bool SmallPtrSetImpl::erase(void *Ptr) {
   // Set this as a tombstone.
   *Bucket = getTombstoneMarker();
   --NumElements;
+  ++NumTombstones;
   return true;
 }
 

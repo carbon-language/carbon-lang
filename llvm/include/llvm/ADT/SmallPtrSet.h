@@ -51,6 +51,7 @@ protected:
   
   // If small, this is # elts allocated consequtively
   unsigned NumElements;
+  unsigned NumTombstones;
   void *SmallArray[1];  // Must be last ivar.
 public:
   SmallPtrSetImpl(unsigned SmallSize) {
@@ -82,6 +83,7 @@ public:
     // Fill the array with empty markers.
     memset(CurArray, -1, CurArraySize*sizeof(void*));
     NumElements = 0;
+    NumTombstones = 0;
   }
   
   /// insert - This returns true if the pointer was new to the set, false if it
