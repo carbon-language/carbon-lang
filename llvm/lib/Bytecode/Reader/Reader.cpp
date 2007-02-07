@@ -1147,7 +1147,7 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     --isExprNumArgs;
 
     // FIXME: Encoding of constant exprs could be much more compact!
-    std::vector<Constant*> ArgVec;
+    SmallVector<Constant*, 8> ArgVec;
     ArgVec.reserve(isExprNumArgs);
     unsigned Opcode = read_vbr_uint();
 
