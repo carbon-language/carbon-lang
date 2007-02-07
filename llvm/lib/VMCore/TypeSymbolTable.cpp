@@ -47,17 +47,6 @@ Type* TypeSymbolTable::lookup(const std::string& Name) const {
   return 0;
 }
 
-// Erase a specific type from the symbol table
-bool TypeSymbolTable::remove(Type *N) {
-  for (iterator TI = tmap.begin(), TE = tmap.end(); TI != TE; ++TI) {
-    if (TI->second == N) {
-      this->remove(TI);
-      return true;
-    }
-  }
-  return false;
-}
-
 // remove - Remove a type from the symbol table...
 Type* TypeSymbolTable::remove(iterator Entry) {
   assert(Entry != tmap.end() && "Invalid entry to remove!");
@@ -88,19 +77,30 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
   assert(T && "Can't insert null type into symbol table!");
 
-  // Check to see if there is a naming conflict.  If so, rename this type!
-  std::string UniqueName = Name;
-  if (lookup(Name))
-    UniqueName = getUniqueName(Name);
-
+  if (tmap.insert(make_pair(Name, T)).second) {
+    // Type inserted fine with no conflict.
+    
 #if DEBUG_SYMBOL_TABLE
-  dump();
-  cerr << " Inserting type: " << UniqueName << ": "
-       << T->getDescription() << "\n";
+    dump();
+    cerr << " Inserted type: " << Name << ": " << T->getDescription() << "\n";
+#endif
+  } else {
+    // If there is a name conflict...
+    
+    // Check to see if there is a naming conflict.  If so, rename this type!
+    std::string UniqueName = Name;
+    if (lookup(Name))
+      UniqueName = getUniqueName(Name);
+    
+#if DEBUG_SYMBOL_TABLE
+    dump();
+    cerr << " Inserting type: " << UniqueName << ": "
+        << T->getDescription() << "\n";
 #endif
 
-  // Insert the tmap entry
-  tmap.insert(make_pair(UniqueName, T));
+    // Insert the tmap entry
+    tmap.insert(make_pair(UniqueName, T));
+  }
 
   // If we are adding an abstract type, add the symbol table to it's use list.
   if (T->isAbstract()) {

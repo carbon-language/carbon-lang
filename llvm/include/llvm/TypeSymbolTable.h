@@ -113,11 +113,6 @@ public:
   /// @returns the Type that was erased from the symbol table.
   Type* remove(iterator TI);
 
-  /// Remove a specific Type from the symbol table. This isn't fast, linear
-  /// search, O(n), algorithm.
-  /// @returns true if the erase was successful (TI was found)
-  bool remove(Type* TI);
-
 /// @}
 /// @name AbstractTypeUser Methods
 /// @{
