@@ -590,7 +590,7 @@ $(ParallelTargets) :
 	  $(MKDIR) $(@D); \
 	  $(CP) $(PROJ_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
 	fi; \
-	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@) ;
+	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@)
 endif
 
 #---------------------------------------------------------
