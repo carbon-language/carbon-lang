@@ -39,6 +39,9 @@ OutputFilename("o", cl::desc("Override output filename"),
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
+static cl::opt<bool>
+DontPrint("disable-output", cl::desc("Don't output the .ll file"), cl::Hidden);
+
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
@@ -58,7 +61,9 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (OutputFilename != "") {   // Specified an output filename?
+    if (DontPrint) {
+      // Just use stdout.  We won't actually print anything on it.
+    } else if (OutputFilename != "") {   // Specified an output filename?
       if (OutputFilename != "-") { // Not stdout?
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
@@ -102,10 +107,12 @@ int main(int argc, char **argv) {
     }
 
     // All that llvm-dis does is write the assembly to a file.
-    PassManager Passes;
-    OStream L(*Out);
-    Passes.add(new PrintModulePass(&L));
-    Passes.run(*M.get());
+    if (!DontPrint) {
+      PassManager Passes;
+      OStream L(*Out);
+      Passes.add(new PrintModulePass(&L));
+      Passes.run(*M.get());
+    }
 
     if (Out != &std::cout) {
       ((std::ofstream*)Out)->close();
