@@ -84,8 +84,8 @@ namespace llvm {
       isLittleEndian = TM.getTargetData()->isLittleEndian();
     }
 
-    virtual void startFunction(MachineFunction &F);
-    virtual bool finishFunction(MachineFunction &F);
+    virtual void startFunction(MachineFunction &MF);
+    virtual bool finishFunction(MachineFunction &MF);
 
     virtual void addRelocation(const MachineRelocation &MR) {
       Relocations.push_back(MR);
@@ -130,12 +130,15 @@ namespace llvm {
 
 /// startFunction - This callback is invoked when a new machine function is
 /// about to be emitted.
-void MachOCodeEmitter::startFunction(MachineFunction &F) {
+void MachOCodeEmitter::startFunction(MachineFunction &MF) {
+  const TargetData *TD = TM.getTargetData();
+  const Function *F = MF.getFunction();
+
   // Align the output buffer to the appropriate alignment, power of 2.
-  // FIXME: MachineFunction or TargetData should probably carry an alignment
-  // field for functions that we can query here instead of hard coding 4 in both
-  // the object writer and asm printer.
-  unsigned Align = 4;
+  unsigned FnAlign = F->getAlignment();
+  unsigned TDAlign = TD->getTypeAlignmentPref(F->getType());
+  unsigned Align = Log2_32(std::max(FnAlign, TDAlign));
+  assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
 
   // Get the Mach-O Section that this function belongs in.
   MachOWriter::MachOSection *MOS = MOW.getTextSection();
@@ -172,7 +175,7 @@ void MachOCodeEmitter::startFunction(MachineFunction &F) {
 
 /// finishFunction - This callback is invoked after the function is completely
 /// finished.
-bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
+bool MachOCodeEmitter::finishFunction(MachineFunction &MF) {
   // Get the Mach-O Section that this function belongs in.
   MachOWriter::MachOSection *MOS = MOW.getTextSection();
 
@@ -180,16 +183,16 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &F) {
   // FIXME: it seems like we should call something like AddSymbolToSection
   // in startFunction rather than changing the section size and symbol n_value
   // here.
-  const GlobalValue *FuncV = F.getFunction();
+  const GlobalValue *FuncV = MF.getFunction();
   MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index, TM);
   FnSym.n_value = MOS->size;
   MOS->size = CurBufferPtr - BufferBegin;
   
   // Emit constant pool to appropriate section(s)
-  emitConstantPool(F.getConstantPool());
+  emitConstantPool(MF.getConstantPool());
 
   // Emit jump tables to appropriate section
-  emitJumpTables(F.getJumpTableInfo());
+  emitJumpTables(MF.getJumpTableInfo());
   
   // If we have emitted any relocations to function-specific objects such as 
   // basic blocks, constant pools entries, or jump tables, record their
