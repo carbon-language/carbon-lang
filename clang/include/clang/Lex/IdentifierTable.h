@@ -141,7 +141,7 @@ public:
   /// get - Return the identifier token info for the specified named identifier.
   ///
   IdentifierInfo &get(const char *NameStart, const char *NameEnd) {
-    return HashTable.GetOrCreateValue(NameStart, NameEnd);
+    return HashTable.GetOrCreateValue(NameStart, NameEnd).getValue();
   }
   
   IdentifierInfo &get(const char *Name) {

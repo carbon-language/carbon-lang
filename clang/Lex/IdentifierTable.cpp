@@ -154,8 +154,8 @@ class StatsVisitor : public CStringMapVisitor {
 public:
   StatsVisitor(unsigned &idLenTotal, unsigned &maxIDLen)
     : IDLenTotal(idLenTotal), MaxIDLen(maxIDLen) {}
-  void Visit(const char *Key, void *Value) const {
-    unsigned IdLen = strlen(Key);
+  void Visit(const char *Key, StringMapEntryBase *Value) const {
+    unsigned IdLen = Value->getKeyLength();
     IDLenTotal += IdLen;
     if (MaxIDLen < IdLen)
       MaxIDLen = IdLen;

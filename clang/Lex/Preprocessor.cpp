@@ -891,8 +891,9 @@ struct UnusedIdentifierReporter : public CStringMapVisitor {
   Preprocessor &PP;
   UnusedIdentifierReporter(Preprocessor &pp) : PP(pp) {}
 
-  void Visit(const char *Key, void *Value) const {
-    IdentifierInfo &II = *static_cast<IdentifierInfo*>(Value);
+  void Visit(const char *Key, StringMapEntryBase *Value) const {
+    IdentifierInfo &II =
+      static_cast<StringMapEntry<IdentifierInfo>*>(Value)->getValue();
     if (II.getMacroInfo() && !II.getMacroInfo()->isUsed())
       PP.Diag(II.getMacroInfo()->getDefinitionLoc(), diag::pp_macro_not_used);
   }

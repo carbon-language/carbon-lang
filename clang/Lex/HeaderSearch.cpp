@@ -62,11 +62,11 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
   const char *SlashPos = std::find(FilenameStart, FilenameEnd, '/');
   if (SlashPos == FilenameEnd) return 0;
   
-  const DirectoryEntry *&CacheLookup =
+  StringMapEntry<const DirectoryEntry *> &CacheLookup =
     FrameworkMap.GetOrCreateValue(FilenameStart, SlashPos);
   
   // If it is some other directory, fail.
-  if (CacheLookup && CacheLookup != Dir)
+  if (CacheLookup.getValue() && CacheLookup.getValue() != Dir)
     return 0;
 
   // FrameworkName = "/System/Library/Frameworks/"
@@ -81,7 +81,7 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
   // FrameworkName = "/System/Library/Frameworks/Cocoa.framework/"
   FrameworkName += ".framework/";
  
-  if (CacheLookup == 0) {
+  if (CacheLookup.getValue() == 0) {
     ++NumFrameworkLookups;
     
     // If the framework dir doesn't exist, we fail.
@@ -91,7 +91,7 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
     
     // Otherwise, if it does, remember that this is the right direntry for this
     // framework.
-    CacheLookup = Dir;
+    CacheLookup.setValue(Dir);
   }
   
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
@@ -222,15 +222,18 @@ LookupSubframeworkHeader(const char *FilenameStart,
   FrameworkName.append(FilenameStart, SlashPos);
   FrameworkName += ".framework/";
 
-  const DirectoryEntry *&CacheLookup =
+  StringMapEntry<const DirectoryEntry *> &CacheLookup =
     FrameworkMap.GetOrCreateValue(FilenameStart, SlashPos);
   
   // Some other location?
-  if (CacheLookup && strcmp(CacheLookup->getName(), FrameworkName.c_str()) != 0)
+  if (CacheLookup.getValue() &&
+      CacheLookup.getKeyLength() == FrameworkName.size() &&
+      memcmp(CacheLookup.getKeyData(), &FrameworkName[0],
+             CacheLookup.getKeyLength()) != 0)
     return 0;
   
   // Cache subframework.
-  if (CacheLookup == 0) {
+  if (CacheLookup.getValue() == 0) {
     ++NumSubFrameworkLookups;
     
     // If the framework dir doesn't exist, we fail.
@@ -240,7 +243,7 @@ LookupSubframeworkHeader(const char *FilenameStart,
     
     // Otherwise, if it does, remember that this is the right direntry for this
     // framework.
-    CacheLookup = Dir;
+    CacheLookup.setValue(Dir);
   }
   
   const FileEntry *FE = 0;

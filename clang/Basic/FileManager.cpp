@@ -37,20 +37,22 @@ using namespace clang;
 const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
                                                 const char *NameEnd) {
   ++NumDirLookups;
-  DirectoryEntry *&NamedDirEnt =DirEntries.GetOrCreateValue(NameStart, NameEnd);
+  StringMapEntry<DirectoryEntry *> &NamedDirEnt =
+    DirEntries.GetOrCreateValue(NameStart, NameEnd);
   
   // See if there is already an entry in the map.
-  if (NamedDirEnt)
-    return NamedDirEnt == NON_EXISTANT_DIR ? 0 : NamedDirEnt;
+  if (NamedDirEnt.getValue())
+    return NamedDirEnt.getValue() == NON_EXISTANT_DIR
+              ? 0 : NamedDirEnt.getValue();
   
   ++NumDirCacheMisses;
   
   // By default, initialize it to invalid.
-  NamedDirEnt = NON_EXISTANT_DIR;
+  NamedDirEnt.setValue(NON_EXISTANT_DIR);
   
   // Get the null-terminated directory name as stored as the key of the
   // DirEntries map.
-  const char *InterndDirName = DirEntries.GetKeyForValueInMap(NamedDirEnt);
+  const char *InterndDirName = NamedDirEnt.getKeyData();
   
   // Check to see if the directory exists.
   struct stat StatBuf;
@@ -63,13 +65,14 @@ const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
   DirectoryEntry &UDE = 
     UniqueDirs[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   
-  if (UDE.getName())  // Already have an entry with this inode, return it.
-    return NamedDirEnt = &UDE;
+  NamedDirEnt.setValue(&UDE);
+  if (UDE.getName()) // Already have an entry with this inode, return it.
+    return &UDE;
   
   // Otherwise, we don't have this directory yet, add it.  We use the string
   // key from the DirEntries map as the string.
   UDE.Name  = InterndDirName;
-  return NamedDirEnt = &UDE;
+  return &UDE;
 }
 
 /// NON_EXISTANT_FILE - A special value distinct from null that is used to
@@ -84,16 +87,18 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   ++NumFileLookups;
   
   // See if there is already an entry in the map.
-  FileEntry *&NamedFileEnt = FileEntries.GetOrCreateValue(NameStart, NameEnd);
+  StringMapEntry<FileEntry *> &NamedFileEnt =
+    FileEntries.GetOrCreateValue(NameStart, NameEnd);
 
   // See if there is already an entry in the map.
-  if (NamedFileEnt)
-    return NamedFileEnt == NON_EXISTANT_FILE ? 0 : NamedFileEnt;
+  if (NamedFileEnt.getValue())
+    return NamedFileEnt.getValue() == NON_EXISTANT_FILE
+                 ? 0 : NamedFileEnt.getValue();
   
   ++NumFileCacheMisses;
 
   // By default, initialize it to invalid.
-  NamedFileEnt = NON_EXISTANT_FILE;
+  NamedFileEnt.setValue(NON_EXISTANT_FILE);
 
   // Figure out what directory it is in.   If the string contains a / in it,
   // strip off everything after it.
@@ -117,7 +122,7 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   
   // Get the null-terminated file name as stored as the key of the
   // FileEntries map.
-  const char *InterndFileName = FileEntries.GetKeyForValueInMap(NamedFileEnt);
+  const char *InterndFileName = NamedFileEnt.getKeyData();
   
   // FIXME: Use the directory info to prune this, before doing the stat syscall.
   // FIXME: This will reduce the # syscalls.
@@ -137,8 +142,9 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   // This occurs when one dir is symlinked to another, for example.
   FileEntry &UFE = UniqueFiles[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   
+  NamedFileEnt.setValue(&UFE);
   if (UFE.getName())  // Already have an entry with this inode, return it.
-    return NamedFileEnt = &UFE;
+    return &UFE;
 
   // Otherwise, we don't have this directory yet, add it.
   // FIXME: Change the name to be a char* that points back to the 'FileEntries'
@@ -148,7 +154,7 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   UFE.ModTime = StatBuf.st_mtime;
   UFE.Dir     = DirInfo;
   UFE.UID     = NextFileUID++;
-  return NamedFileEnt = &UFE;
+  return &UFE;
 }
 
 void FileManager::PrintStats() const {
