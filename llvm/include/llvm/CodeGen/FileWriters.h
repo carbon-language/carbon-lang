@@ -1,4 +1,4 @@
-//===-- FileWriters.cpp - File Writers Creation Functions -------*- C++ -*-===//
+//===-- FileWriters.h - File Writers Creation Functions ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
