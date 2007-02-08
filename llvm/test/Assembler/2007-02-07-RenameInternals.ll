@@ -6,6 +6,6 @@ internal void %func(int %x) {
   ret void
 }
 
-internal void %func(int %x) {
+internal void %func(uint %x) {
   ret void
 }
