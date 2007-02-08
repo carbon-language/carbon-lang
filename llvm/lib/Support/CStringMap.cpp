@@ -58,7 +58,7 @@ unsigned CStringMapImpl::LookupBucketFor(const char *NameStart,
   unsigned ProbeAmt = 1;
   while (1) {
     ItemBucket &Bucket = TheTable[BucketNo];
-    void *BucketItem = Bucket.Item;
+    StringMapEntryBase *BucketItem = Bucket.Item;
     // If we found an empty bucket, this key isn't in the table yet, return it.
     if (BucketItem == 0) {
       Bucket.FullHashValue = FullHashValue;
@@ -73,8 +73,9 @@ unsigned CStringMapImpl::LookupBucketFor(const char *NameStart,
       // Do the comparison like this because NameStart isn't necessarily
       // null-terminated!
       char *ItemStr = (char*)BucketItem+ItemSize;
-      if (strlen(ItemStr) == unsigned(NameEnd-NameStart) &&
-          memcmp(ItemStr, NameStart, (NameEnd-NameStart)) == 0) {
+      unsigned ItemStrLen = BucketItem->getKeyLength();
+      if (unsigned(NameEnd-NameStart) == ItemStrLen &&
+          memcmp(ItemStr, NameStart, ItemStrLen) == 0) {
         // We found a match!
         return BucketNo;
       }
@@ -131,7 +132,7 @@ void CStringMapImpl::RehashTable() {
 /// invoking Visitor.Visit for each of them.
 void CStringMapImpl::VisitEntries(const CStringMapVisitor &Visitor) const {
   for (ItemBucket *IB = TheTable, *E = TheTable+NumBuckets; IB != E; ++IB) {
-    if (void *Id = IB->Item)
+    if (StringMapEntryBase *Id = IB->Item)
       Visitor.Visit((char*)Id + ItemSize, Id);
   }
 }
