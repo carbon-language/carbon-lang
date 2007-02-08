@@ -31,17 +31,31 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/ELFWriter.h"
+#include "ELFWriter.h"
 #include "llvm/Module.h"
+#include "llvm/PassManager.h"
+#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetELFWriterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/OutputBuffer.h"
 #include "llvm/Support/Streams.h"
+#include <list>
 using namespace llvm;
+
+/// AddELFWriter - Concrete function to add the ELF writer to the function pass
+/// manager.
+MachineCodeEmitter *llvm::AddELFWriter(FunctionPassManager &FPM,
+                                       std::ostream &O,
+                                       TargetMachine &TM) {
+  ELFWriter *EW = new ELFWriter(O, TM);
+  FPM.add(EW);
+  return &EW->getMachineCodeEmitter();
+}
 
 //===----------------------------------------------------------------------===//
 //                       ELFCodeEmitter Implementation

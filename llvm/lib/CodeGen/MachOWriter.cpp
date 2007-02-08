@@ -22,13 +22,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MachOWriter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/PassManager.h"
+#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
-#include "llvm/CodeGen/MachOWriter.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetJITInfo.h"
@@ -37,8 +39,17 @@
 #include "llvm/Support/OutputBuffer.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
-
 using namespace llvm;
+
+/// AddMachOWriter - Concrete function to add the Mach-O writer to the function
+/// pass manager.
+MachineCodeEmitter *llvm::AddMachOWriter(FunctionPassManager &FPM,
+                                         std::ostream &O,
+                                         TargetMachine &TM) {
+  MachOWriter *MOW = new MachOWriter(O, TM);
+  FPM.add(MOW);
+  return &MOW->getMachineCodeEmitter();
+}
 
 //===----------------------------------------------------------------------===//
 //                       MachOCodeEmitter Implementation
