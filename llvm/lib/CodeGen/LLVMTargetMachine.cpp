@@ -19,10 +19,11 @@
 #include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
-bool LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
-                                            std::ostream &Out,
-                                            CodeGenFileType FileType,
-                                            bool Fast) {
+FileModel::Model
+LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
+                                       std::ostream &Out,
+                                       CodeGenFileType FileType,
+                                       bool Fast) {
   // Standard LLVM-Level Passes.
   
   // Run loop strength reduction before anything else.
@@ -36,29 +37,25 @@ bool LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
-  
-  
+
   // Ask the target for an isel.
   if (addInstSelector(PM, Fast))
-    return true;
-  
-  
+    return FileModel::Error;
+
   // Print the instruction selected machine code...
   if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
+    PM.add(createMachineFunctionPrinterPass(cerr));
   
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
   
   if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
-  
-  
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
   // Run post-ra passes.
   if (addPostRegAlloc(PM, Fast) && PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
-  
-  
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
   
@@ -70,28 +67,40 @@ bool LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   PM.add(createDebugLabelFoldingPass());
   
   if (PrintMachineCode)  // Print the register-allocated code
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
-  
-  
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
-  
-  
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
   switch (FileType) {
-    default: return true;
-    case TargetMachine::AssemblyFile:
-      if (addAssemblyEmitter(PM, Fast, Out))
-        return true;
-      break;
-    case TargetMachine::ObjectFile:
-      if (addObjectWriter(PM, Fast, Out))
-        return true;
-      break;
+  default:
+    break;
+  case TargetMachine::AssemblyFile:
+    if (addAssemblyEmitter(PM, Fast, Out))
+      return FileModel::Error;
+    return FileModel::AsmFile;
+  case TargetMachine::ObjectFile:
+    if (getMachOWriterInfo())
+      return FileModel::MachOFile;
+    else if (getELFWriterInfo())
+      return FileModel::ElfFile;
   }
-  
+
+  return FileModel::Error;
+}
+ 
+/// addPassesToEmitFileFinish - If the passes to emit the specified file had to
+/// be split up (e.g., to add an object writer pass), this method can be used to
+/// finish up adding passes to emit the file, if necessary.
+bool LLVMTargetMachine::addPassesToEmitFileFinish(FunctionPassManager &PM,
+                                                  MachineCodeEmitter *MCE,
+                                                  bool Fast) {
+  if (MCE)
+    addSimpleCodeEmitter(PM, Fast, *MCE);
+
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());
-  
+
   return false; // success!
 }
 
@@ -117,43 +126,38 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
-  
-  
+
   // Ask the target for an isel.
   if (addInstSelector(PM, Fast))
     return true;
-  
-  
+
   // Print the instruction selected machine code...
   if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
+    PM.add(createMachineFunctionPrinterPass(cerr));
   
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
   
   if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
-  
-  
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
   // Run post-ra passes.
   if (addPostRegAlloc(PM, Fast) && PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
-  
-  
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
   
   if (PrintMachineCode)  // Print the register-allocated code
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
+    PM.add(createMachineFunctionPrinterPass(cerr));
   
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (!Fast)
     PM.add(createBranchFoldingPass());
   
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(cerr.stream()));
-  
-  
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
   addCodeEmitter(PM, Fast, MCE);
   
   // Delete machine code for this function
