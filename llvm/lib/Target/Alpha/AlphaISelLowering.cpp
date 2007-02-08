@@ -544,8 +544,9 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getTruncStore(S1, DAG.getConstant(VarArgsOffset, MVT::i64),
                              SA2, NULL, 0, MVT::i32);
   }
-  // Frame & Return address.  Currently unimplemented
-  case ISD::RETURNADDR:         break;
+  case ISD::RETURNADDR:        
+    return DAG.getNode(AlphaISD::GlobalRetAddr, MVT::i64);
+      //FIXME: implement
   case ISD::FRAMEADDR:          break;
   }
 
