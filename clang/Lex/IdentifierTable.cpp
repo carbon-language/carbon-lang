@@ -148,7 +148,7 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
 // Stats Implementation
 //===----------------------------------------------------------------------===//
 
-class StatsVisitor : public CStringMapVisitor {
+class StatsVisitor : public StringMapVisitor {
   unsigned &IDLenTotal;
   unsigned &MaxIDLen;
 public:

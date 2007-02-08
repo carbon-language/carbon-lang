@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_FILEMANAGER_H
 #define LLVM_CLANG_FILEMANAGER_H
 
-#include "llvm/ADT/CStringMap.h"
+#include "llvm/ADT/StringMap.h"
 #include <map>
 #include <string>
 // FIXME: Enhance libsystem to support inode and other fields in stat.
@@ -71,8 +71,8 @@ class FileManager {
   /// DirEntries/FileEntries - This is a cache of directory/file entries we have
   /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
   ///
-  CStringMap<DirectoryEntry*> DirEntries;
-  CStringMap<FileEntry*> FileEntries;
+  StringMap<DirectoryEntry*> DirEntries;
+  StringMap<FileEntry*> FileEntries;
   
   /// NextFileUID - Each FileEntry we create is assigned a unique ID #.
   ///

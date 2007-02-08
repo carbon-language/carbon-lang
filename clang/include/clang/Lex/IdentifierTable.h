@@ -15,7 +15,7 @@
 #define LLVM_CLANG_LEX_IDENTIFIERTABLE_H
 
 #include "clang/Basic/TokenKinds.h"
-#include "llvm/ADT/CStringMap.h"
+#include "llvm/ADT/StringMap.h"
 #include <string> 
 
 namespace llvm {
@@ -132,7 +132,7 @@ public:
 class IdentifierTable {
   // Shark shows that using MallocAllocator is *much* slower than using this
   // BumpPtrAllocator!
-  CStringMap<IdentifierInfo, BumpPtrAllocator> HashTable;
+  StringMap<IdentifierInfo, BumpPtrAllocator> HashTable;
 public:
   /// IdentifierTable ctor - Create the identifier table, populating it with
   /// info about the language keywords for the language specified by LangOpts.
@@ -155,7 +155,7 @@ public:
   
   /// VisitIdentifiers - This method walks through all of the identifiers,
   /// invoking IV->VisitIdentifier for each of them.
-  void VisitIdentifiers(const CStringMapVisitor &IV) {
+  void VisitIdentifiers(const StringMapVisitor &IV) {
     HashTable.VisitEntries(IV);
   }
   

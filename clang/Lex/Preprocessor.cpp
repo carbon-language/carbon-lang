@@ -887,7 +887,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
 }
 
 namespace {
-struct UnusedIdentifierReporter : public CStringMapVisitor {
+struct UnusedIdentifierReporter : public StringMapVisitor {
   Preprocessor &PP;
   UnusedIdentifierReporter(Preprocessor &pp) : PP(pp) {}
 

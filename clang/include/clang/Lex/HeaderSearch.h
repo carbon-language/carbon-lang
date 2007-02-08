@@ -15,7 +15,7 @@
 #define LLVM_CLANG_LEX_HEADERSEARCH_H
 
 #include "clang/Lex/DirectoryLookup.h"
-#include "llvm/ADT/CStringMap.h"
+#include "llvm/ADT/StringMap.h"
 #include <vector>
 
 namespace llvm {
@@ -71,7 +71,7 @@ class HeaderSearch {
 
   /// FrameworkMap - This is a collection mapping a framework or subframework
   /// name like "Carbon" to the Carbon.framework directory.
-  CStringMap<const DirectoryEntry *> FrameworkMap;
+  StringMap<const DirectoryEntry *> FrameworkMap;
 
   // Various statistics we track for performance analysis.
   unsigned NumIncluded;
