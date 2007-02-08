@@ -2626,10 +2626,24 @@ FunctionHeaderH
       if (Conflict && PFT == Conflict->getType()) {
         if (!CurFun.isDeclare && !Conflict->isDeclaration()) {
           // We have two function definitions that conflict, same type, same
-          // name. This wasn't allowed in 1.9, its not allowed here either
-          error("Redefinition of function '" + FunctionName + "' of type '" +
-                PFT->getDescription() + "'");
-        
+          // name. We should really check to make sure that this is the result
+          // of integer type planes collapsing and generate an error if it is
+          // not, but we'll just rename on the assumption that it is. However,
+          // let's do it intelligently and rename the internal linkage one
+          // if there is one.
+          std::string NewName(makeNameUnique(FunctionName));
+          if (Conflict->hasInternalLinkage()) {
+            Conflict->setName(NewName);
+            RenameMapKey Key = std::make_pair(FunctionName,Conflict->getType());
+            CurModule.RenameMap[Key] = NewName;
+            Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
+            InsertValue(Fn, CurModule.Values);
+          } else {
+            Fn = new Function(FT, CurFun.Linkage, NewName, M);
+            InsertValue(Fn, CurModule.Values);
+            RenameMapKey Key = std::make_pair(FunctionName,PFT);
+            CurModule.RenameMap[Key] = NewName;
+          }
         } else {
           // If they are not both definitions, then just use the function we
           // found since the types are the same.
