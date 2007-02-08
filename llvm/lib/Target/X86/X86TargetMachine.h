@@ -53,22 +53,21 @@ public:
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual const X86ELFWriterInfo *getELFWriterInfo() const {
-    return &ELFWriterInfo;
+    return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
   }
 
   static unsigned getModuleMatchQuality(const Module &M);
   static unsigned getJITMatchQuality();
-  
   
   // Set up the pass pipeline.
   virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);  
   virtual bool addPostRegAlloc(FunctionPassManager &PM, bool Fast);
   virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                   std::ostream &Out);
-  virtual bool addObjectWriter(FunctionPassManager &PM, bool Fast,
-                               std::ostream &Out);
   virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast,
                               MachineCodeEmitter &MCE);
+  virtual bool addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                    MachineCodeEmitter &MCE);
 };
 
 /// X86_32TargetMachine - X86 32-bit target machine.

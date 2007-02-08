@@ -2,8 +2,9 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Bill Wendling and is distributed under the
-// University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by Nate Begeman and Bill Wendling and is distributed
+// under the University of Illinois Open Source License. See LICENSE.TXT for
+// details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -24,7 +25,6 @@ PPCMachOWriterInfo::PPCMachOWriterInfo(const PPCTargetMachine &TM)
                           HDR_CPU_TYPE_POWERPC,
                           HDR_CPU_SUBTYPE_POWERPC_ALL) {}
 PPCMachOWriterInfo::~PPCMachOWriterInfo() {}
-
 
 /// GetTargetRelocation - For the MachineRelocation MR, convert it to one or
 /// more PowerPC MachORelocation(s), add the new relocations to the

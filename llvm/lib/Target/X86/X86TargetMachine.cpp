@@ -163,15 +163,6 @@ bool X86TargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
   return false;
 }
 
-bool X86TargetMachine::addObjectWriter(FunctionPassManager &PM, bool Fast,
-                                       std::ostream &Out) {
-  if (Subtarget.isTargetELF()) {
-    addX86ELFObjectWriterPass(PM, Out, *this);
-    return false;
-  }
-  return true;
-}
-
 bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
                                       MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
@@ -182,6 +173,12 @@ bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
   if (Subtarget.is64Bit())
     setCodeModel(CodeModel::Large);
 
+  PM.add(createX86CodeEmitterPass(*this, MCE));
+  return false;
+}
+
+bool X86TargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                            MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
   return false;
 }

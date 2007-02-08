@@ -69,10 +69,10 @@ public:
   virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast);
   virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                   std::ostream &Out);
-  virtual bool addObjectWriter(FunctionPassManager &PM, bool Fast,
-                               std::ostream &Out);
   virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast,
                               MachineCodeEmitter &MCE);
+  virtual bool addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                    MachineCodeEmitter &MCE);
 };
 
 /// PPC32TargetMachine - PowerPC 32-bit target machine.

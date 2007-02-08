@@ -46,12 +46,6 @@ FunctionPass *createX86CodePrinterPass(std::ostream &o, X86TargetMachine &tm);
 FunctionPass *createX86CodeEmitterPass(X86TargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 
-/// addX86ELFObjectWriterPass - Add passes to the FPM that output the generated
-/// code as an ELF object file.
-///
-void addX86ELFObjectWriterPass(FunctionPassManager &FPM,
-                               std::ostream &o, X86TargetMachine &tm);
-
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically
 /// allocated chunk of memory.
