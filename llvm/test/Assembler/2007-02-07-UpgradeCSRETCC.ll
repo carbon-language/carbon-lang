@@ -17,5 +17,7 @@ int %main(int %argc, ubyte** %argv) {
   %fptr = alloca void (%mystruct*, i32)*
   %f = load void (%mystruct*, i32)**%fptr
   call csretcc void %f(%mystruct* %astr, i32 7)
+  store void (%mystruct* , i32)* %nada, void (%mystruct*, i32)** %fptr
+
   ret int 0
 }
