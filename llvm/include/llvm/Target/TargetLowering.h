@@ -513,19 +513,27 @@ public:
   struct DAGCombinerInfo {
     void *DC;  // The DAG Combiner object.
     bool BeforeLegalize;
+    bool CalledByLegalizer;
   public:
     SelectionDAG &DAG;
     
-    DAGCombinerInfo(SelectionDAG &dag, bool bl, void *dc)
-      : DC(dc), BeforeLegalize(bl), DAG(dag) {}
+    DAGCombinerInfo(SelectionDAG &dag, bool bl, bool cl, void *dc)
+      : DC(dc), BeforeLegalize(bl), CalledByLegalizer(cl), DAG(dag) {}
     
     bool isBeforeLegalize() const { return BeforeLegalize; }
+    bool isCalledByLegalizer() const { return CalledByLegalizer; }
     
     void AddToWorklist(SDNode *N);
     SDOperand CombineTo(SDNode *N, const std::vector<SDOperand> &To);
     SDOperand CombineTo(SDNode *N, SDOperand Res);
     SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1);
   };
+
+  /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
+  /// and cc. If it is unable to simplify it, return a null SDOperand.
+  SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
+                          ISD::CondCode Cond, bool foldBooleans,
+                          DAGCombinerInfo &DCI) const;
 
   /// PerformDAGCombine - This method will be invoked for all target nodes and
   /// for any target-independent nodes that the target has registered with
