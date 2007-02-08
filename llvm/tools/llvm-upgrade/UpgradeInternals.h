@@ -216,7 +216,8 @@ enum CastOps {
 // An enumeration for the old calling conventions, ala LLVM 1.9
 namespace OldCallingConv {
   enum ID {
-    C = 0, CSRet = 1, Fast = 8, Cold = 9, X86_StdCall = 64, X86_FastCall = 65 
+    C = 0, CSRet = 1, Fast = 8, Cold = 9, X86_StdCall = 64, X86_FastCall = 65,
+    None = 99999
   };
 }
 
@@ -234,7 +235,7 @@ struct TypeInfo {
 };
 
 struct PATypeInfo {
-  llvm::PATypeHolder* T;
+  llvm::PATypeHolder* PAT;
   Signedness S;
 };
 
