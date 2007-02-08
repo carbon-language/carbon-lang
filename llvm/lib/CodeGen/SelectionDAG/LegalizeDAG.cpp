@@ -3732,7 +3732,8 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
 
       // FIXME: This generated code sucks.
       ISD::CondCode LowCC;
-      switch (cast<CondCodeSDNode>(CC)->get()) {
+      ISD::CondCode CCCode = cast<CondCodeSDNode>(CC)->get();
+      switch (CCCode) {
       default: assert(0 && "Unknown integer setcc!");
       case ISD::SETLT:
       case ISD::SETULT: LowCC = ISD::SETULT; break;
@@ -3750,13 +3751,40 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
 
       // NOTE: on targets without efficient SELECT of bools, we can always use
       // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
-      Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, LowCC);
-      Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHSHi, RHSHi, CC);
-      Result = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETEQ);
-      Result = LegalizeOp(DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
-                                      Result, Tmp1, Tmp2));
-      Tmp1 = Result;
-      Tmp2 = SDOperand();
+      TargetLowering::DAGCombinerInfo DagCombineInfo(DAG, false, true, NULL);
+      Tmp1 = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, LowCC,
+                               false, DagCombineInfo);
+      if (!Tmp1.Val)
+        Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, LowCC);
+      Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi,
+                               CCCode, false, DagCombineInfo);
+      if (!Tmp2.Val)
+        Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHSHi, RHSHi, CC);
+      
+      ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.Val);
+      ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.Val);
+      if ((Tmp1C && Tmp1C->getValue() == 0) ||
+          (Tmp2C && Tmp2C->getValue() == 0 &&
+           (CCCode == ISD::SETLE || CCCode == ISD::SETGE ||
+            CCCode == ISD::SETUGE || CCCode == ISD::SETULE)) ||
+          (Tmp2C && Tmp2C->getValue() == 1 &&
+           (CCCode == ISD::SETLT || CCCode == ISD::SETGT ||
+            CCCode == ISD::SETUGT || CCCode == ISD::SETULT))) {
+        // low part is known false, returns high part.
+        // For LE / GE, if high part is known false, ignore the low part.
+        // For LT / GT, if high part is known true, ignore the low part.
+        Tmp1 = Tmp2;
+        Tmp2 = SDOperand();
+      } else {
+        Result = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi,
+                                   ISD::SETEQ, false, DagCombineInfo);
+        if (!Result.Val)
+          Result=DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETEQ);
+        Result = LegalizeOp(DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
+                                        Result, Tmp1, Tmp2));
+        Tmp1 = Result;
+        Tmp2 = SDOperand();
+      }
     }
   }
   }
