@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
@@ -248,7 +249,30 @@ int main(int argc, char **argv) {
 #endif
     
       // Ask the target to add backend passes as necessary.
-      if (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
+      MachineCodeEmitter *MCE = 0;
+
+      switch (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
+      default:
+        assert(0 && "Invalid file model!");
+        return 1;
+      case FileModel::Error:
+        std::cerr << argv[0] << ": target does not support generation of this"
+                  << " file type!\n";
+        if (Out != &std::cout) delete Out;
+        // And the Out file is empty and useless, so remove it now.
+        sys::Path(OutputFilename).eraseFromDisk();
+        return 1;
+      case FileModel::AsmFile:
+        break;
+      case FileModel::MachOFile:
+        MCE = AddMachOWriter(Passes, *Out, Target);
+        break;
+      case FileModel::ElfFile:
+        MCE = AddELFWriter(Passes, *Out, Target);
+        break;
+      }
+
+      if (Target.addPassesToEmitFileFinish(Passes, MCE, Fast)) {
         std::cerr << argv[0] << ": target does not support generation of this"
                   << " file type!\n";
         if (Out != &std::cout) delete Out;

@@ -27,6 +27,7 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -308,8 +309,31 @@ LTO::optimize(Module *M, std::ostream &Out,
     new FunctionPassManager(new ExistingModuleProvider(M));
 
   CodeGenPasses->add(new TargetData(*Target->getTargetData()));
-  Target->addPassesToEmitFile(*CodeGenPasses, Out, TargetMachine::AssemblyFile, 
-                              true);
+
+  MachineCodeEmitter *MCE = 0;
+
+  switch (Target->addPassesToEmitFile(*CodeGenPasses, Out,
+                                     TargetMachine::AssemblyFile, true)) {
+  default:
+    assert(0 && "Invalid file model!");
+    return LTO_UNKNOWN;
+  case FileModel::Error:
+    // FIXME: Error...
+    return LTO_UNKNOWN;
+  case FileModel::AsmFile:
+    break;
+  case FileModel::MachOFile:
+    MCE = AddMachOWriter(*CodeGenPasses, Out, *Target);
+    break;
+  case FileModel::ElfFile:
+    MCE = AddELFWriter(*CodeGenPasses, Out, *Target);
+    break;
+  }
+
+  if (Target->addPassesToEmitFileFinish(*CodeGenPasses, MCE, true)) {
+    // FIXME: Error...
+    return LTO_UNKNOWN;
+  }
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M);
