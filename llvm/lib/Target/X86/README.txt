@@ -665,20 +665,6 @@ The add\sub pair is really unneeded here.
 
 //===---------------------------------------------------------------------===//
 
-We generate really bad code in some cases due to lowering SETCC/SELECT at 
-legalize time, which prevents the post-legalize dag combine pass from
-understanding the code.  As a silly example, this prevents us from folding 
-stuff like this:
-
-bool %test(ulong %x) {
-  %tmp = setlt ulong %x, 4294967296
-  ret bool %tmp
-}
-
-into x.h == 0
-
-//===---------------------------------------------------------------------===//
-
 We currently compile sign_extend_inreg into two shifts:
 
 long foo(long X) {
