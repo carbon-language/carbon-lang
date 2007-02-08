@@ -313,13 +313,10 @@ LTO::optimize(Module *M, std::ostream &Out,
   MachineCodeEmitter *MCE = 0;
 
   switch (Target->addPassesToEmitFile(*CodeGenPasses, Out,
-                                     TargetMachine::AssemblyFile, true)) {
+                                      TargetMachine::AssemblyFile, true)) {
   default:
-    assert(0 && "Invalid file model!");
-    return LTO_UNKNOWN;
   case FileModel::Error:
-    // FIXME: Error...
-    return LTO_UNKNOWN;
+    return LTO_WRITE_FAILURE;
   case FileModel::AsmFile:
     break;
   case FileModel::MachOFile:
@@ -330,10 +327,8 @@ LTO::optimize(Module *M, std::ostream &Out,
     break;
   }
 
-  if (Target->addPassesToEmitFileFinish(*CodeGenPasses, MCE, true)) {
-    // FIXME: Error...
-    return LTO_UNKNOWN;
-  }
+  if (Target->addPassesToEmitFileFinish(*CodeGenPasses, MCE, true))
+    return LTO_WRITE_FAILURE;
 
   // Run our queue of passes all at once now, efficiently.
   Passes.run(*M);
