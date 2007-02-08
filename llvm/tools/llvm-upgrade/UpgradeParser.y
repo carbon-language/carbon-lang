@@ -171,7 +171,6 @@ static struct PerFunctionInfo {
   std::map<BasicBlock*, std::pair<ValID, int> > BBForwardRefs;
   std::vector<BasicBlock*> NumberedBlocks;
   RenameMapType RenameMap;
-  unsigned LastCC;
   unsigned NextBBNum;
 
   inline PerFunctionInfo() {
@@ -268,6 +267,55 @@ static const Type *getType(const ValID &D, bool DoNotImprovise = false) {
   return Typ;
  }
 
+/// This function determines if two function types differ only in their use of
+/// the sret parameter attribute in the first argument. If they are identical 
+/// in all other respects, it returns true. Otherwise, it returns false.
+bool FuncTysDifferOnlyBySRet(const FunctionType *F1, 
+                                   const FunctionType *F2) {
+  if (F1->getReturnType() != F2->getReturnType() ||
+      F1->getNumParams() != F2->getNumParams() ||
+      F1->getParamAttrs(0) != F2->getParamAttrs(0))
+    return false;
+  unsigned SRetMask = ~unsigned(FunctionType::StructRetAttribute);
+  for (unsigned i = 0; i < F1->getNumParams(); ++i) {
+    if (F1->getParamType(i) != F2->getParamType(i) ||
+        unsigned(F1->getParamAttrs(i+1)) & SRetMask !=
+        unsigned(F2->getParamAttrs(i+1)) & SRetMask)
+      return false;
+  }
+  return true;
+}
+
+// The upgrade of csretcc to sret param attribute may have caused a function 
+// to not be found because the param attribute changed the type of the called 
+// function. This helper function, used in getExistingValue, detects that
+// situation and returns V if it occurs and 0 otherwise. 
+static Value* handleSRetFuncTypeMerge(Value *V, const Type* Ty) {
+  // Handle degenerate cases
+  if (!V)
+    return 0;
+  if (V->getType() == Ty)
+    return V;
+
+  Value* Result = 0;
+  const PointerType *PF1 = dyn_cast<PointerType>(Ty);
+  const PointerType *PF2 = dyn_cast<PointerType>(V->getType());
+  if (PF1 && PF2) {
+    const FunctionType *FT1 =
+      dyn_cast<FunctionType>(PF1->getElementType());
+    const FunctionType *FT2 =
+      dyn_cast<FunctionType>(PF2->getElementType());
+    if (FT1 && FT2 && FuncTysDifferOnlyBySRet(FT1, FT2))
+      if (FT2->paramHasAttr(1, FunctionType::StructRetAttribute))
+        Result = V;
+      else if (Constant *C = dyn_cast<Constant>(V))
+        Result = ConstantExpr::getBitCast(C, PF1);
+      else
+        Result = new BitCastInst(V, PF1, "upgrd.cast", CurBB);
+  }
+  return Result;
+}
+
 // getExistingValue - Look up the value specified by the provided type and
 // the provided ValID.  If the value exists and has already been defined, return
 // it.  Otherwise return null.
@@ -314,8 +362,7 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
         LookupName = Name;
       ValueSymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
       V = SymTab.lookup(LookupName);
-      if (V && V->getType() != Ty)
-        V = 0;
+      V = handleSRetFuncTypeMerge(V, Ty);
     }
     if (!V) {
       RenameMapType::const_iterator I = CurModule.RenameMap.find(Key);
@@ -325,8 +372,7 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
       else
         LookupName = Name;
       V = CurModule.CurrentModule->getValueSymbolTable().lookup(LookupName);
-      if (V && V->getType() != Ty)
-        V = 0;
+      V = handleSRetFuncTypeMerge(V, Ty);
     }
     if (!V) 
       return 0;
@@ -509,25 +555,6 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
 // and back patchs after we are done.
 //
 
-/// This function determines if two function types differ only in their use of
-/// the sret parameter attribute in the first argument. If they are identical 
-/// in all other respects, it returns true. Otherwise, it returns false.
-bool FuncTysDifferOnlyBySRet(const FunctionType *F1, 
-                                   const FunctionType *F2) {
-  if (F1->getReturnType() != F2->getReturnType() ||
-      F1->getNumParams() != F2->getNumParams() ||
-      F1->getParamAttrs(0) != F2->getParamAttrs(0))
-    return false;
-  unsigned SRetMask = ~unsigned(FunctionType::StructRetAttribute);
-  for (unsigned i = 0; i < F1->getNumParams(); ++i) {
-    if (F1->getParamType(i) != F2->getParamType(i) ||
-        unsigned(F1->getParamAttrs(i+1)) & SRetMask !=
-        unsigned(F2->getParamAttrs(i+1)) & SRetMask)
-      return false;
-  }
-  return true;
-}
-
 // ResolveDefinitions - If we could not resolve some defs at parsing
 // time (forward branches, phi functions for loops, etc...) resolve the
 // defs now...
@@ -535,9 +562,11 @@ bool FuncTysDifferOnlyBySRet(const FunctionType *F1,
 static void 
 ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
                    std::map<const Type*,ValueList> *FutureLateResolvers) {
+
   // Loop over LateResolveDefs fixing up stuff that couldn't be resolved
   for (std::map<const Type*,ValueList>::iterator LRI = LateResolvers.begin(),
          E = LateResolvers.end(); LRI != E; ++LRI) {
+    const Type* Ty = LRI->first;
     ValueList &List = LRI->second;
     while (!List.empty()) {
       Value *V = List.back();
@@ -549,7 +578,7 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
 
       ValID &DID = PHI->second.first;
 
-      Value *TheRealValue = getExistingValue(LRI->first, DID);
+      Value *TheRealValue = getExistingValue(Ty, DID);
       if (TheRealValue) {
         V->replaceAllUsesWith(TheRealValue);
         delete V;
@@ -560,26 +589,10 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
         InsertValue(V, *FutureLateResolvers);
       } else {
         if (DID.Type == ValID::NameVal) {
-          // The upgrade of csretcc to sret param attribute may have caused a
-          // function to not be found because the param attribute changed the 
-          // type of the called function. Detect this situation and insert a 
-          // cast as necessary.
-          bool fixed = false;
-          if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
-            if (const FunctionType *FTy =
-              dyn_cast<FunctionType>(PTy->getElementType()))
-              if (Function *OtherF =
-                CurModule.CurrentModule->getFunction(DID.getName()))
-                if (FuncTysDifferOnlyBySRet(FTy,OtherF->getFunctionType())) {
-                  V->replaceAllUsesWith(ConstantExpr::getBitCast(OtherF, PTy));
-                  fixed = true;
-                }
-          if (!fixed) {
-            error("Reference to an invalid definition: '" +DID.getName()+
-                  "' of type '" + V->getType()->getDescription() + "'",
-                  PHI->second.second);
+          error("Reference to an invalid definition: '" + DID.getName() +
+                "' of type '" + V->getType()->getDescription() + "'",
+                PHI->second.second);
             return;
-          }
         } else {
           error("Reference to an invalid definition: #" +
                 itostr(DID.Num) + " of type '" + 
@@ -1488,7 +1501,7 @@ using namespace llvm;
 %type <BoolVal>       OptVolatile                 // 'volatile' or not
 %type <BoolVal>       OptTailCall                 // TAIL CALL or plain CALL.
 %type <BoolVal>       OptSideEffect               // 'sideeffect' or not.
-%type <Linkage>       OptLinkage
+%type <Linkage>       OptLinkage FnDeclareLinkage
 %type <Endianness>    BigOrLittle
 
 // ValueRef - Unresolved reference to a definition or BB
@@ -1666,13 +1679,13 @@ OptLinkage
   ;
 
 OptCallingConv 
-  : /*empty*/          { CurFun.LastCC = $$ = OldCallingConv::C; } 
-  | CCC_TOK            { CurFun.LastCC = $$ = OldCallingConv::C; } 
-  | CSRETCC_TOK        { CurFun.LastCC = $$ = OldCallingConv::CSRet; } 
-  | FASTCC_TOK         { CurFun.LastCC = $$ = OldCallingConv::Fast; } 
-  | COLDCC_TOK         { CurFun.LastCC = $$ = OldCallingConv::Cold; } 
-  | X86_STDCALLCC_TOK  { CurFun.LastCC = $$ = OldCallingConv::X86_StdCall; } 
-  | X86_FASTCALLCC_TOK { CurFun.LastCC = $$ = OldCallingConv::X86_FastCall; } 
+  : /*empty*/          { $$ = OldCallingConv::C; } 
+  | CCC_TOK            { $$ = OldCallingConv::C; } 
+  | CSRETCC_TOK        { $$ = OldCallingConv::CSRet; } 
+  | FASTCC_TOK         { $$ = OldCallingConv::Fast; } 
+  | COLDCC_TOK         { $$ = OldCallingConv::Cold; } 
+  | X86_STDCALLCC_TOK  { $$ = OldCallingConv::X86_StdCall; } 
+  | X86_FASTCALLCC_TOK { $$ = OldCallingConv::X86_FastCall; } 
   | CC_TOK EUINT64VAL  {
     if ((unsigned)$2 != $2)
       error("Calling conv too large");
@@ -1745,7 +1758,7 @@ GlobalVarAttribute
 TypesV    
   : Types
   | VOID { 
-    $$.T = new PATypeHolder($1.T); 
+    $$.PAT = new PATypeHolder($1.T); 
     $$.S = Signless;
   }
   ;
@@ -1753,7 +1766,7 @@ TypesV
 UpRTypesV 
   : UpRTypes 
   | VOID { 
-    $$.T = new PATypeHolder($1.T); 
+    $$.PAT = new PATypeHolder($1.T); 
     $$.S = Signless;
   }
   ;
@@ -1761,7 +1774,7 @@ UpRTypesV
 Types
   : UpRTypes {
     if (!UpRefs.empty())
-      error("Invalid upreference in type: " + (*$1.T)->getDescription());
+      error("Invalid upreference in type: " + (*$1.PAT)->getDescription());
     $$ = $1;
   }
   ;
@@ -1774,16 +1787,16 @@ PrimType
 // Derived types are added later...
 UpRTypes 
   : PrimType { 
-    $$.T = new PATypeHolder($1.T);
+    $$.PAT = new PATypeHolder($1.T);
     $$.S = $1.S;
   }
   | OPAQUE {
-    $$.T = new PATypeHolder(OpaqueType::get());
+    $$.PAT = new PATypeHolder(OpaqueType::get());
     $$.S = Signless;
   }
   | SymbolicValueRef {            // Named types are also simple types...
     const Type* tmp = getType($1);
-    $$.T = new PATypeHolder(tmp);
+    $$.PAT = new PATypeHolder(tmp);
     $$.S = Signless; // FIXME: what if its signed?
   }
   | '\\' EUINT64VAL {                   // Type UpReference
@@ -1791,7 +1804,7 @@ UpRTypes
       error("Value out of range");
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
     UpRefs.push_back(UpRefRecord((unsigned)$2, OT));  // Add to vector...
-    $$.T = new PATypeHolder(OT);
+    $$.PAT = new PATypeHolder(OT);
     $$.S = Signless;
     UR_OUT("New Upreference!\n");
   }
@@ -1799,75 +1812,72 @@ UpRTypes
     std::vector<const Type*> Params;
     for (std::list<llvm::PATypeInfo>::iterator I = $3->begin(),
            E = $3->end(); I != E; ++I) {
-      Params.push_back(I->T->get());
+      Params.push_back(I->PAT->get());
     }
     FunctionType::ParamAttrsList ParamAttrs;
-    if (CurFun.LastCC == OldCallingConv::CSRet) {
-      ParamAttrs.push_back(FunctionType::NoAttributeSet);
-      ParamAttrs.push_back(FunctionType::StructRetAttribute);
-    }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    $$.T = new PATypeHolder(
-      HandleUpRefs(FunctionType::get($1.T->get(),Params,isVarArg, ParamAttrs)));
+    $$.PAT = new PATypeHolder(
+      HandleUpRefs(FunctionType::get($1.PAT->get(), Params, isVarArg, 
+                   ParamAttrs)));
     $$.S = $1.S;
-    delete $1.T;    // Delete the return type handle
+    delete $1.PAT;    // Delete the return type handle
     delete $3;      // Delete the argument list
   }
   | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
-    $$.T = new PATypeHolder(HandleUpRefs(ArrayType::get($4.T->get(), 
+    $$.PAT = new PATypeHolder(HandleUpRefs(ArrayType::get($4.PAT->get(), 
                                                         (unsigned)$2)));
     $$.S = $4.S;
-    delete $4.T;
+    delete $4.PAT;
   }
   | '<' EUINT64VAL 'x' UpRTypes '>' {          // Packed array type?
-     const llvm::Type* ElemTy = $4.T->get();
+     const llvm::Type* ElemTy = $4.PAT->get();
      if ((unsigned)$2 != $2)
         error("Unsigned result not equal to signed result");
      if (!(ElemTy->isInteger() || ElemTy->isFloatingPoint()))
         error("Elements of a PackedType must be integer or floating point");
      if (!isPowerOf2_32($2))
        error("PackedType length should be a power of 2");
-     $$.T = new PATypeHolder(HandleUpRefs(PackedType::get(ElemTy, 
+     $$.PAT = new PATypeHolder(HandleUpRefs(PackedType::get(ElemTy, 
                                           (unsigned)$2)));
      $$.S = $4.S;
-     delete $4.T;
+     delete $4.PAT;
   }
   | '{' TypeListI '}' {                        // Structure type?
     std::vector<const Type*> Elements;
     for (std::list<llvm::PATypeInfo>::iterator I = $2->begin(),
            E = $2->end(); I != E; ++I)
-      Elements.push_back(I->T->get());
-    $$.T = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
+      Elements.push_back(I->PAT->get());
+    $$.PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
     $$.S = Signless;
     delete $2;
   }
   | '{' '}' {                                  // Empty structure type?
-    $$.T = new PATypeHolder(StructType::get(std::vector<const Type*>()));
+    $$.PAT = new PATypeHolder(StructType::get(std::vector<const Type*>()));
     $$.S = Signless;
   }
   | '<' '{' TypeListI '}' '>' {                // Packed Structure type?
     std::vector<const Type*> Elements;
     for (std::list<llvm::PATypeInfo>::iterator I = $3->begin(),
            E = $3->end(); I != E; ++I) {
-      Elements.push_back(I->T->get());
-      delete I->T;
+      Elements.push_back(I->PAT->get());
+      delete I->PAT;
     }
-    $$.T = new PATypeHolder(HandleUpRefs(StructType::get(Elements, true)));
+    $$.PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements, true)));
     $$.S = Signless;
     delete $3;
   }
   | '<' '{' '}' '>' {                          // Empty packed structure type?
-    $$.T = new PATypeHolder(StructType::get(std::vector<const Type*>(),true));
+    $$.PAT = new PATypeHolder(StructType::get(std::vector<const Type*>(),true));
     $$.S = Signless;
   }
   | UpRTypes '*' {                             // Pointer type?
-    if ($1.T->get() == Type::LabelTy)
+    if ($1.PAT->get() == Type::LabelTy)
       error("Cannot form a pointer to a basic block");
-    $$.T = new PATypeHolder(HandleUpRefs(PointerType::get($1.T->get())));
+    $$.PAT = new PATypeHolder(HandleUpRefs(PointerType::get($1.PAT->get())));
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
   }
   ;
 
@@ -1889,14 +1899,14 @@ ArgTypeListI
   : TypeListI
   | TypeListI ',' DOTDOTDOT {
     PATypeInfo VoidTI;
-    VoidTI.T = new PATypeHolder(Type::VoidTy);
+    VoidTI.PAT = new PATypeHolder(Type::VoidTy);
     VoidTI.S = Signless;
     ($$=$1)->push_back(VoidTI);
   }
   | DOTDOTDOT {
     $$ = new std::list<PATypeInfo>();
     PATypeInfo VoidTI;
-    VoidTI.T = new PATypeHolder(Type::VoidTy);
+    VoidTI.PAT = new PATypeHolder(Type::VoidTy);
     VoidTI.S = Signless;
     $$->push_back(VoidTI);
   }
@@ -1913,10 +1923,10 @@ ArgTypeListI
 //
 ConstVal
   : Types '[' ConstVector ']' { // Nonempty unsized arr
-    const ArrayType *ATy = dyn_cast<ArrayType>($1.T->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>($1.PAT->get());
     if (ATy == 0)
       error("Cannot make array constant with type: '" + 
-            $1.T->get()->getDescription() + "'");
+            $1.PAT->get()->getDescription() + "'");
     const Type *ETy = ATy->getElementType();
     int NumElements = ATy->getNumElements();
 
@@ -1939,27 +1949,27 @@ ConstVal
     }
     $$.C = ConstantArray::get(ATy, Elems);
     $$.S = $1.S;
-    delete $1.T; 
+    delete $1.PAT; 
     delete $3;
   }
   | Types '[' ']' {
-    const ArrayType *ATy = dyn_cast<ArrayType>($1.T->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>($1.PAT->get());
     if (ATy == 0)
       error("Cannot make array constant with type: '" + 
-            $1.T->get()->getDescription() + "'");
+            $1.PAT->get()->getDescription() + "'");
     int NumElements = ATy->getNumElements();
     if (NumElements != -1 && NumElements != 0) 
       error("Type mismatch: constant sized array initialized with 0"
             " arguments, but has size of " + itostr(NumElements) +"");
     $$.C = ConstantArray::get(ATy, std::vector<Constant*>());
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
   }
   | Types 'c' STRINGCONSTANT {
-    const ArrayType *ATy = dyn_cast<ArrayType>($1.T->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>($1.PAT->get());
     if (ATy == 0)
       error("Cannot make array constant with type: '" + 
-            $1.T->get()->getDescription() + "'");
+            $1.PAT->get()->getDescription() + "'");
     int NumElements = ATy->getNumElements();
     const Type *ETy = dyn_cast<IntegerType>(ATy->getElementType());
     if (!ETy || cast<IntegerType>(ETy)->getBitWidth() != 8)
@@ -1976,13 +1986,13 @@ ConstVal
     free($3);
     $$.C = ConstantArray::get(ATy, Vals);
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
   }
   | Types '<' ConstVector '>' { // Nonempty unsized arr
-    const PackedType *PTy = dyn_cast<PackedType>($1.T->get());
+    const PackedType *PTy = dyn_cast<PackedType>($1.PAT->get());
     if (PTy == 0)
       error("Cannot make packed constant with type: '" + 
-            $1.T->get()->getDescription() + "'");
+            $1.PAT->get()->getDescription() + "'");
     const Type *ETy = PTy->getElementType();
     int NumElements = PTy->getNumElements();
     // Verify that we have the correct size...
@@ -2003,14 +2013,14 @@ ConstVal
     }
     $$.C = ConstantPacked::get(PTy, Elems);
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
     delete $3;
   }
   | Types '{' ConstVector '}' {
-    const StructType *STy = dyn_cast<StructType>($1.T->get());
+    const StructType *STy = dyn_cast<StructType>($1.PAT->get());
     if (STy == 0)
       error("Cannot make struct constant with type: '" + 
-            $1.T->get()->getDescription() + "'");
+            $1.PAT->get()->getDescription() + "'");
     if ($3->size() != STy->getNumContainedTypes())
       error("Illegal number of initializers for structure type");
 
@@ -2025,25 +2035,25 @@ ConstVal
     }
     $$.C = ConstantStruct::get(STy, Fields);
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
     delete $3;
   }
   | Types '{' '}' {
-    const StructType *STy = dyn_cast<StructType>($1.T->get());
+    const StructType *STy = dyn_cast<StructType>($1.PAT->get());
     if (STy == 0)
       error("Cannot make struct constant with type: '" + 
-              $1.T->get()->getDescription() + "'");
+              $1.PAT->get()->getDescription() + "'");
     if (STy->getNumContainedTypes() != 0)
       error("Illegal number of initializers for structure type");
     $$.C = ConstantStruct::get(STy, std::vector<Constant*>());
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
   }
   | Types '<' '{' ConstVector '}' '>' {
-    const StructType *STy = dyn_cast<StructType>($1.T->get());
+    const StructType *STy = dyn_cast<StructType>($1.PAT->get());
     if (STy == 0)
       error("Cannot make packed struct constant with type: '" + 
-            $1.T->get()->getDescription() + "'");
+            $1.PAT->get()->getDescription() + "'");
     if ($4->size() != STy->getNumContainedTypes())
       error("Illegal number of initializers for packed structure type");
 
@@ -2058,39 +2068,39 @@ ConstVal
     }
     $$.C = ConstantStruct::get(STy, Fields);
     $$.S = $1.S;
-    delete $1.T; 
+    delete $1.PAT; 
     delete $4;
   }
   | Types '<' '{' '}' '>' {
-    const StructType *STy = dyn_cast<StructType>($1.T->get());
+    const StructType *STy = dyn_cast<StructType>($1.PAT->get());
     if (STy == 0)
       error("Cannot make packed struct constant with type: '" + 
-              $1.T->get()->getDescription() + "'");
+              $1.PAT->get()->getDescription() + "'");
     if (STy->getNumContainedTypes() != 0)
       error("Illegal number of initializers for packed structure type");
     $$.C = ConstantStruct::get(STy, std::vector<Constant*>());
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
   }
   | Types NULL_TOK {
-    const PointerType *PTy = dyn_cast<PointerType>($1.T->get());
+    const PointerType *PTy = dyn_cast<PointerType>($1.PAT->get());
     if (PTy == 0)
       error("Cannot make null pointer constant with type: '" + 
-            $1.T->get()->getDescription() + "'");
+            $1.PAT->get()->getDescription() + "'");
     $$.C = ConstantPointerNull::get(PTy);
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
   }
   | Types UNDEF {
-    $$.C = UndefValue::get($1.T->get());
+    $$.C = UndefValue::get($1.PAT->get());
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
   }
   | Types SymbolicValueRef {
-    const PointerType *Ty = dyn_cast<PointerType>($1.T->get());
+    const PointerType *Ty = dyn_cast<PointerType>($1.PAT->get());
     if (Ty == 0)
       error("Global const reference must be a pointer type, not" +
-            $1.T->get()->getDescription());
+            $1.PAT->get()->getDescription());
 
     // ConstExprs can exist in the body of a function, thus creating
     // GlobalValues whenever they refer to a variable.  Because we are in
@@ -2142,22 +2152,22 @@ ConstVal
     }
     $$.C = cast<GlobalValue>(V);
     $$.S = $1.S;
-    delete $1.T;            // Free the type handle
+    delete $1.PAT;            // Free the type handle
   }
   | Types ConstExpr {
-    if ($1.T->get() != $2.C->getType())
+    if ($1.PAT->get() != $2.C->getType())
       error("Mismatched types for constant expression");
     $$ = $2;
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
   }
   | Types ZEROINITIALIZER {
-    const Type *Ty = $1.T->get();
+    const Type *Ty = $1.PAT->get();
     if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || isa<OpaqueType>(Ty))
       error("Cannot create a null initialized value of this type");
     $$.C = Constant::getNullValue(Ty);
     $$.S = $1.S;
-    delete $1.T;
+    delete $1.PAT;
   }
   | SIntType EINT64VAL {      // integral constants
     const Type *Ty = $1.T;
@@ -2192,7 +2202,7 @@ ConstVal
 ConstExpr
   : CastOps '(' ConstVal TO Types ')' {
     const Type* SrcTy = $3.C->getType();
-    const Type* DstTy = $5.T->get();
+    const Type* DstTy = $5.PAT->get();
     Signedness SrcSign = $3.S;
     Signedness DstSign = $5.S;
     if (!SrcTy->isFirstClassType())
@@ -2203,7 +2213,7 @@ ConstExpr
             DstTy->getDescription() + "'");
     $$.C = cast<Constant>(getCast($1, $3.C, SrcSign, DstTy, DstSign));
     $$.S = DstSign;
-    delete $5.T;
+    delete $5.PAT;
   }
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
     const Type *Ty = $3.C->getType();
@@ -2385,7 +2395,7 @@ ConstPool
     // If types are not resolved eagerly, then the two types will not be
     // determined to be the same type!
     //
-    const Type* Ty = $4.T->get();
+    const Type* Ty = $4.PAT->get();
     ResolveTypeTo($2, Ty);
 
     if (!setTypeName(Ty, $2) && !$2) {
@@ -2393,7 +2403,7 @@ ConstPool
       // table.
       CurModule.Types.push_back(Ty);
     }
-    delete $4.T;
+    delete $4.PAT;
   }
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
   }
@@ -2407,24 +2417,24 @@ ConstPool
     CurGV = 0;
   }
   | ConstPool OptAssign EXTERNAL GlobalType Types {
-    const Type *Ty = $5.T->get();
+    const Type *Ty = $5.PAT->get();
     CurGV = ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, Ty, 0);
-    delete $5.T;
+    delete $5.PAT;
   } GlobalVarAttributes {
     CurGV = 0;
   }
   | ConstPool OptAssign DLLIMPORT GlobalType Types {
-    const Type *Ty = $5.T->get();
+    const Type *Ty = $5.PAT->get();
     CurGV = ParseGlobalVariable($2, GlobalValue::DLLImportLinkage, $4, Ty, 0);
-    delete $5.T;
+    delete $5.PAT;
   } GlobalVarAttributes {
     CurGV = 0;
   }
   | ConstPool OptAssign EXTERN_WEAK GlobalType Types {
-    const Type *Ty = $5.T->get();
+    const Type *Ty = $5.PAT->get();
     CurGV = 
       ParseGlobalVariable($2, GlobalValue::ExternalWeakLinkage, $4, Ty, 0);
-    delete $5.T;
+    delete $5.PAT;
   } GlobalVarAttributes {
     CurGV = 0;
   }
@@ -2508,7 +2518,7 @@ OptName
 
 ArgVal 
   : Types OptName {
-    if ($1.T->get() == Type::VoidTy)
+    if ($1.PAT->get() == Type::VoidTy)
       error("void typed arguments are invalid");
     $$ = new std::pair<PATypeInfo, char*>($1, $2);
   }
@@ -2532,14 +2542,14 @@ ArgList
   | ArgListH ',' DOTDOTDOT {
     $$ = $1;
     PATypeInfo VoidTI;
-    VoidTI.T = new PATypeHolder(Type::VoidTy);
+    VoidTI.PAT = new PATypeHolder(Type::VoidTy);
     VoidTI.S = Signless;
     $$->push_back(std::pair<PATypeInfo, char*>(VoidTI, 0));
   }
   | DOTDOTDOT {
     $$ = new std::vector<std::pair<PATypeInfo,char*> >();
     PATypeInfo VoidTI;
-    VoidTI.T = new PATypeHolder(Type::VoidTy);
+    VoidTI.PAT = new PATypeHolder(Type::VoidTy);
     VoidTI.S = Signless;
     $$->push_back(std::pair<PATypeInfo, char*>(VoidTI, 0));
   }
@@ -2552,7 +2562,7 @@ FunctionHeaderH
     std::string FunctionName($3);
     free($3);  // Free strdup'd memory!
 
-    const Type* RetTy = $2.T->get();
+    const Type* RetTy = $2.PAT->get();
     
     if (!RetTy->isFirstClassType() && RetTy != Type::VoidTy)
       error("LLVM functions cannot return aggregate types");
@@ -2570,7 +2580,7 @@ FunctionHeaderH
     } else if ($5) {   // If there are arguments...
       for (std::vector<std::pair<PATypeInfo,char*> >::iterator 
            I = $5->begin(), E = $5->end(); I != E; ++I) {
-        const Type *Ty = I->first.T->get();
+        const Type *Ty = I->first.PAT->get();
         ParamTyList.push_back(Ty);
       }
     }
@@ -2590,7 +2600,7 @@ FunctionHeaderH
     const FunctionType *FT = FunctionType::get(RetTy, ParamTyList, isVarArg,
                                                ParamAttrs);
     const PointerType *PFT = PointerType::get(FT);
-    delete $2.T;
+    delete $2.PAT;
 
     ValID ID;
     if (!FunctionName.empty()) {
@@ -2600,73 +2610,75 @@ FunctionHeaderH
     }
 
     Function *Fn = 0;
+    Module* M = CurModule.CurrentModule;
+
     // See if this function was forward referenced.  If so, recycle the object.
     if (GlobalValue *FWRef = CurModule.GetForwardRefForGlobal(PFT, ID)) {
       // Move the function to the end of the list, from whereever it was 
       // previously inserted.
       Fn = cast<Function>(FWRef);
-      CurModule.CurrentModule->getFunctionList().remove(Fn);
-      CurModule.CurrentModule->getFunctionList().push_back(Fn);
-    } else if (!FunctionName.empty() &&     // Merge with an earlier prototype?
-               (Fn = CurModule.CurrentModule->getFunction(FunctionName))) {
-      if (Fn->getFunctionType() != FT ) {
-        // The existing function doesn't have the same type. Previously this was
-        // permitted because the symbol tables had "type planes" and names were
-        // distinct within a type plane. After PR411 was fixed, this is no
-        // longer the case. To resolve this we must rename this function.
-        // However, renaming it can cause problems if its linkage is external
-        // because it could cause a link failure. We warn about this.
-        std::string NewName = makeNameUnique(FunctionName);
-        warning("Renaming function '" + FunctionName + "' as '" + NewName +
-                "' may cause linkage errors");
+      M->getFunctionList().remove(Fn);
+      M->getFunctionList().push_back(Fn);
+    } else if (!FunctionName.empty()) {
+      GlobalValue *Conflict = M->getFunction(FunctionName);
+      if (!Conflict)
+        Conflict = M->getNamedGlobal(FunctionName);
+      if (Conflict && PFT == Conflict->getType()) {
+        if (!CurFun.isDeclare && !Conflict->isDeclaration()) {
+          // We have two function definitions that conflict, same type, same
+          // name. This wasn't allowed in 1.9, its not allowed here either
+          error("Redefinition of function '" + FunctionName + "' of type '" +
+                PFT->getDescription() + "'");
+        
+        } else {
+          // If they are not both definitions, then just use the function we
+          // found since the types are the same.
+          Fn = cast<Function>(Conflict);
 
-        Fn = new Function(FT, GlobalValue::ExternalLinkage, NewName,
-                          CurModule.CurrentModule);
-        InsertValue(Fn, CurModule.Values);
-        RenameMapKey Key = std::make_pair(FunctionName,PFT);
-        CurModule.RenameMap[Key] = NewName;
-      } else if (Fn->hasInternalLinkage()) {
-        // The function we are creating conflicts in name with another function 
-        // that has internal linkage. We'll rename that one quietly to get rid
-        // of the conflict.
-        Fn->setName(makeNameUnique(Fn->getName()));
-        RenameMapKey Key = std::make_pair(FunctionName,PFT);
-        CurModule.RenameMap[Key] = Fn->getName();
-
-        Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
-                          CurModule.CurrentModule);
-
-        InsertValue(Fn, CurModule.Values);
-      } else if (CurFun.Linkage == GlobalValue::InternalLinkage) {
-        // The function we are creating has internal linkage and conflicts with
-        // another function of the same name. We'll just rename this one 
-        // quietly because its internal linkage can't conflict with anything 
-        // else.  
-        std::string NewName = makeNameUnique(FunctionName);
-        Fn = new Function(FT, GlobalValue::ExternalLinkage, NewName,
-                          CurModule.CurrentModule);
-        InsertValue(Fn, CurModule.Values);
-        RenameMapKey Key = std::make_pair(FunctionName,PFT);
-        CurModule.RenameMap[Key] = NewName;
+          // Make sure to strip off any argument names so we can't get 
+          // conflicts.
+          if (Fn->isDeclaration())
+            for (Function::arg_iterator AI = Fn->arg_begin(), 
+                 AE = Fn->arg_end(); AI != AE; ++AI)
+              AI->setName("");
+        }
+      } else if (Conflict) {
+        // We have two globals with the same name and  different types. 
+        // Previously, this was permitted because the symbol table had 
+        // "type planes" and names only needed to be distinct within a 
+        // type plane. After PR411 was fixed, this is no loner the case. 
+        // To resolve this we must rename one of the two. 
+        if (Conflict->hasInternalLinkage()) {
+          // We can safely renamed the Conflict.
+          Conflict->setName(makeNameUnique(Conflict->getName()));
+          RenameMapKey Key = std::make_pair(FunctionName,Conflict->getType());
+          CurModule.RenameMap[Key] = Conflict->getName();
+          Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
+          InsertValue(Fn, CurModule.Values);
+        } else if (CurFun.Linkage == GlobalValue::InternalLinkage) {
+          // We can safely rename the function we're defining
+          std::string NewName = makeNameUnique(FunctionName);
+          Fn = new Function(FT, CurFun.Linkage, NewName, M);
+          InsertValue(Fn, CurModule.Values);
+          RenameMapKey Key = std::make_pair(FunctionName,PFT);
+          CurModule.RenameMap[Key] = NewName;
+        } else {
+          // We can't quietly rename either of these things, but we must
+          // rename one of them. Generate a warning about the renaming and
+          // elect to rename the thing we're now defining.
+          std::string NewName = makeNameUnique(FunctionName);
+          warning("Renaming function '" + FunctionName + "' as '" + NewName +
+                  "' may cause linkage errors");
+          Fn = new Function(FT, CurFun.Linkage, NewName, M);
+          InsertValue(Fn, CurModule.Values);
+          RenameMapKey Key = std::make_pair(FunctionName,PFT);
+          CurModule.RenameMap[Key] = NewName;
+        }
       } else {
-        // The types are the same and they are both external linkage. Either 
-        // the existing or the current function needs to be a forward 
-        // declaration. If not, they're attempting to redefine two external 
-        // functions. This wasn't allowed in llvm 1.9 and it isn't allowed now.
-        if (!CurFun.isDeclare && !Fn->isDeclaration())
-          error("Redefinition of function '" + FunctionName + "'");
-      
-        // Make sure to strip off any argument names so we can't get conflicts.
-        if (Fn->isDeclaration())
-          for (Function::arg_iterator AI = Fn->arg_begin(), AE = Fn->arg_end();
-               AI != AE; ++AI)
-            AI->setName("");
+        // There's no conflict, just define the function
+        Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
+        InsertValue(Fn, CurModule.Values);
       }
-    } else {  // Not already defined?
-      Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
-                        CurModule.CurrentModule);
-
-      InsertValue(Fn, CurModule.Values);
     }
 
     CurFun.FunctionStart(Fn);
@@ -2687,9 +2699,9 @@ FunctionHeaderH
     // Add all of the arguments we parsed to the function...
     if ($5) {                     // Is null if empty...
       if (isVarArg) {  // Nuke the last entry
-        assert($5->back().first.T->get() == Type::VoidTy && 
+        assert($5->back().first.PAT->get() == Type::VoidTy && 
                $5->back().second == 0 && "Not a varargs marker");
-        delete $5->back().first.T;
+        delete $5->back().first.PAT;
         $5->pop_back();  // Delete the last entry
       }
       Function::arg_iterator ArgIt = Fn->arg_begin();
@@ -2697,7 +2709,7 @@ FunctionHeaderH
       std::vector<std::pair<PATypeInfo,char*> >::iterator I = $5->begin();
       std::vector<std::pair<PATypeInfo,char*> >::iterator E = $5->end();
       for ( ; I != E && ArgIt != ArgEnd; ++I, ++ArgIt) {
-        delete I->first.T;                        // Delete the typeholder...
+        delete I->first.PAT;                      // Delete the typeholder...
         setValueName(ArgIt, I->second);           // Insert arg into symtab...
         InsertValue(ArgIt);
       }
@@ -2730,13 +2742,14 @@ Function
   };
 
 FnDeclareLinkage
-  : /*default*/ 
-  | DLLIMPORT   { CurFun.Linkage = GlobalValue::DLLImportLinkage; } 
-  | EXTERN_WEAK { CurFun.Linkage = GlobalValue::ExternalWeakLinkage; }
+  : /*default*/ { $$ = GlobalValue::ExternalLinkage; }
+  | DLLIMPORT   { $$ = GlobalValue::DLLImportLinkage; } 
+  | EXTERN_WEAK { $$ = GlobalValue::ExternalWeakLinkage; }
   ;
   
 FunctionProto 
-  : DECLARE { CurFun.isDeclare = true; } FnDeclareLinkage FunctionHeaderH {
+  : DECLARE { CurFun.isDeclare = true; } 
+     FnDeclareLinkage { CurFun.Linkage = $3; } FunctionHeaderH {
     $$ = CurFun.CurrentFunction;
     CurFun.FunctionDone();
     
@@ -2816,10 +2829,10 @@ ValueRef
 // pool references (for things like: 'ret [2 x int] [ int 12, int 42]')
 ResolvedVal 
   : Types ValueRef { 
-    const Type *Ty = $1.T->get();
+    const Type *Ty = $1.PAT->get();
     $$.S = $1.S;
     $$.V = getVal(Ty, $2); 
-    delete $1.T;
+    delete $1.PAT;
   }
   ;
 
@@ -2916,7 +2929,7 @@ BBTerminatorInst
     const PointerType *PFTy;
     const FunctionType *Ty;
 
-    if (!(PFTy = dyn_cast<PointerType>($3.T->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>($3.PAT->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
@@ -2932,7 +2945,7 @@ BBTerminatorInst
       }
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
-      Ty = FunctionType::get($3.T->get(), ParamTypes, isVarArg, ParamAttrs);
+      Ty = FunctionType::get($3.PAT->get(), ParamTypes, isVarArg, ParamAttrs);
       PFTy = PointerType::get(Ty);
     }
     Value *V = getVal(PFTy, $4);   // Get the function we're calling...
@@ -2964,7 +2977,7 @@ BBTerminatorInst
       $$ = new InvokeInst(V, Normal, Except, Args);
     }
     cast<InvokeInst>($$)->setCallingConv(upgradeCallingConv($2));
-    delete $3.T;
+    delete $3.PAT;
     delete $6;
   }
   | Unwind {
@@ -3031,10 +3044,10 @@ Inst
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$.P = new std::list<std::pair<Value*, BasicBlock*> >();
     $$.S = $1.S;
-    Value* tmpVal = getVal($1.T->get(), $3);
+    Value* tmpVal = getVal($1.PAT->get(), $3);
     BasicBlock* tmpBB = getBBVal($5);
     $$.P->push_back(std::make_pair(tmpVal, tmpBB));
-    delete $1.T;
+    delete $1.PAT;
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
     $$ = $1;
@@ -3070,7 +3083,7 @@ OptTailCall
 
 InstVal 
   : ArithmeticOps Types ValueRef ',' ValueRef {
-    const Type* Ty = $2.T->get();
+    const Type* Ty = $2.PAT->get();
     if (!Ty->isInteger() && !Ty->isFloatingPoint() && !isa<PackedType>(Ty))
       error("Arithmetic operator requires integer, FP, or packed operands");
     if (isa<PackedType>(Ty) && 
@@ -3084,10 +3097,10 @@ InstVal
     if ($$.I == 0)
       error("binary operator returned null");
     $$.S = $2.S;
-    delete $2.T;
+    delete $2.PAT;
   }
   | LogicalOps Types ValueRef ',' ValueRef {
-    const Type *Ty = $2.T->get();
+    const Type *Ty = $2.PAT->get();
     if (!Ty->isInteger()) {
       if (!isa<PackedType>(Ty) ||
           !cast<PackedType>(Ty)->getElementType()->isInteger())
@@ -3100,10 +3113,10 @@ InstVal
     if ($$.I == 0)
       error("binary operator returned null");
     $$.S = $2.S;
-    delete $2.T;
+    delete $2.PAT;
   }
   | SetCondOps Types ValueRef ',' ValueRef {
-    const Type* Ty = $2.T->get();
+    const Type* Ty = $2.PAT->get();
     if(isa<PackedType>(Ty))
       error("PackedTypes currently not supported in setcc instructions");
     unsigned short pred;
@@ -3114,10 +3127,10 @@ InstVal
     if ($$.I == 0)
       error("binary operator returned null");
     $$.S = Unsigned;
-    delete $2.T;
+    delete $2.PAT;
   }
   | ICMP IPredicates Types ValueRef ',' ValueRef {
-    const Type *Ty = $3.T->get();
+    const Type *Ty = $3.PAT->get();
     if (isa<PackedType>(Ty)) 
       error("PackedTypes currently not supported in icmp instructions");
     else if (!Ty->isInteger() && !isa<PointerType>(Ty))
@@ -3126,10 +3139,10 @@ InstVal
     Value* tmpVal2 = getVal(Ty, $6);
     $$.I = new ICmpInst($2, tmpVal1, tmpVal2);
     $$.S = Unsigned;
-    delete $3.T;
+    delete $3.PAT;
   }
   | FCMP FPredicates Types ValueRef ',' ValueRef {
-    const Type *Ty = $3.T->get();
+    const Type *Ty = $3.PAT->get();
     if (isa<PackedType>(Ty))
       error("PackedTypes currently not supported in fcmp instructions");
     else if (!Ty->isFloatingPoint())
@@ -3138,7 +3151,7 @@ InstVal
     Value* tmpVal2 = getVal(Ty, $6);
     $$.I = new FCmpInst($2, tmpVal1, tmpVal2);
     $$.S = Unsigned;
-    delete $3.T;
+    delete $3.PAT;
   }
   | NOT ResolvedVal {
     warning("Use of obsolete 'not' instruction: Replacing with 'xor");
@@ -3170,13 +3183,13 @@ InstVal
     $$.S = $2.S;
   }
   | CastOps ResolvedVal TO Types {
-    const Type *DstTy = $4.T->get();
+    const Type *DstTy = $4.PAT->get();
     if (!DstTy->isFirstClassType())
       error("cast instruction to a non-primitive type: '" +
             DstTy->getDescription() + "'");
     $$.I = cast<Instruction>(getCast($1, $2.V, $2.S, DstTy, $4.S, true));
     $$.S = $4.S;
-    delete $4.T;
+    delete $4.PAT;
   }
   | SELECT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     if (!$2.V->getType()->isInteger() ||
@@ -3188,15 +3201,15 @@ InstVal
     $$.S = $2.S;
   }
   | VAARG ResolvedVal ',' Types {
-    const Type *Ty = $4.T->get();
+    const Type *Ty = $4.PAT->get();
     NewVarArgs = true;
     $$.I = new VAArgInst($2.V, Ty);
     $$.S = $4.S;
-    delete $4.T;
+    delete $4.PAT;
   }
   | VAARG_old ResolvedVal ',' Types {
     const Type* ArgTy = $2.V->getType();
-    const Type* DstTy = $4.T->get();
+    const Type* DstTy = $4.PAT->get();
     ObsoleteVarArgs = true;
     Function* NF = cast<Function>(CurModule.CurrentModule->
       getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0));
@@ -3213,11 +3226,11 @@ InstVal
     CurBB->getInstList().push_back(new StoreInst(bar, foo));
     $$.I = new VAArgInst(foo, DstTy);
     $$.S = $4.S;
-    delete $4.T;
+    delete $4.PAT;
   }
   | VANEXT_old ResolvedVal ',' Types {
     const Type* ArgTy = $2.V->getType();
-    const Type* DstTy = $4.T->get();
+    const Type* DstTy = $4.PAT->get();
     ObsoleteVarArgs = true;
     Function* NF = cast<Function>(CurModule.CurrentModule->
       getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0));
@@ -3237,7 +3250,7 @@ InstVal
     CurBB->getInstList().push_back(tmp);
     $$.I = new LoadInst(foo);
     $$.S = $4.S;
-    delete $4.T;
+    delete $4.PAT;
   }
   | EXTRACTELEMENT ResolvedVal ',' ResolvedVal {
     if (!ExtractElementInst::isValidOperands($2.V, $4.V))
@@ -3278,7 +3291,7 @@ InstVal
     // Handle the short call syntax
     const PointerType *PFTy;
     const FunctionType *FTy;
-    if (!(PFTy = dyn_cast<PointerType>($3.T->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>($3.PAT->get())) ||
         !(FTy = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
@@ -3296,7 +3309,7 @@ InstVal
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
-      const Type *RetTy = $3.T->get();
+      const Type *RetTy = $3.PAT->get();
       if (!RetTy->isFirstClassType() && RetTy != Type::VoidTy)
         error("Functions cannot return aggregate types");
 
@@ -3348,7 +3361,7 @@ InstVal
       $$.I = CI;
       $$.S = $3.S;
     }
-    delete $3.T;
+    delete $3.PAT;
     delete $6;
   }
   | MemoryInst {
@@ -3370,28 +3383,28 @@ OptVolatile
 
 MemoryInst 
   : MALLOC Types OptCAlign {
-    const Type *Ty = $2.T->get();
+    const Type *Ty = $2.PAT->get();
     $$.S = $2.S;
     $$.I = new MallocInst(Ty, 0, $3);
-    delete $2.T;
+    delete $2.PAT;
   }
   | MALLOC Types ',' UINT ValueRef OptCAlign {
-    const Type *Ty = $2.T->get();
+    const Type *Ty = $2.PAT->get();
     $$.S = $2.S;
     $$.I = new MallocInst(Ty, getVal($4.T, $5), $6);
-    delete $2.T;
+    delete $2.PAT;
   }
   | ALLOCA Types OptCAlign {
-    const Type *Ty = $2.T->get();
+    const Type *Ty = $2.PAT->get();
     $$.S = $2.S;
     $$.I = new AllocaInst(Ty, 0, $3);
-    delete $2.T;
+    delete $2.PAT;
   }
   | ALLOCA Types ',' UINT ValueRef OptCAlign {
-    const Type *Ty = $2.T->get();
+    const Type *Ty = $2.PAT->get();
     $$.S = $2.S;
     $$.I = new AllocaInst(Ty, getVal($4.T, $5), $6);
-    delete $2.T;
+    delete $2.PAT;
   }
   | FREE ResolvedVal {
     const Type *PTy = $2.V->getType();
@@ -3401,7 +3414,7 @@ MemoryInst
     $$.S = Signless;
   }
   | OptVolatile LOAD Types ValueRef {
-    const Type* Ty = $3.T->get();
+    const Type* Ty = $3.PAT->get();
     $$.S = $3.S;
     if (!isa<PointerType>(Ty))
       error("Can't load from nonpointer type: " + Ty->getDescription());
@@ -3410,24 +3423,35 @@ MemoryInst
                      Ty->getDescription());
     Value* tmpVal = getVal(Ty, $4);
     $$.I = new LoadInst(tmpVal, "", $1);
-    delete $3.T;
+    delete $3.PAT;
   }
   | OptVolatile STORE ResolvedVal ',' Types ValueRef {
-    const PointerType *PTy = dyn_cast<PointerType>($5.T->get());
+    const PointerType *PTy = dyn_cast<PointerType>($5.PAT->get());
     if (!PTy)
       error("Can't store to a nonpointer type: " + 
-             $5.T->get()->getDescription());
+             $5.PAT->get()->getDescription());
     const Type *ElTy = PTy->getElementType();
-    if (ElTy != $3.V->getType())
-      error("Can't store '" + $3.V->getType()->getDescription() +
-            "' into space of type '" + ElTy->getDescription() + "'");
+    Value *StoreVal = $3.V;
     Value* tmpVal = getVal(PTy, $6);
-    $$.I = new StoreInst($3.V, tmpVal, $1);
+    if (ElTy != $3.V->getType()) {
+      StoreVal = handleSRetFuncTypeMerge($3.V, ElTy);
+      if (!StoreVal)
+        error("Can't store '" + $3.V->getType()->getDescription() +
+              "' into space of type '" + ElTy->getDescription() + "'");
+      else {
+        PTy = PointerType::get(StoreVal->getType());
+        if (Constant *C = dyn_cast<Constant>(tmpVal))
+          tmpVal = ConstantExpr::getBitCast(C, PTy);
+        else
+          tmpVal = new BitCastInst(tmpVal, PTy, "upgrd.cast", CurBB);
+      }
+    }
+    $$.I = new StoreInst(StoreVal, tmpVal, $1);
     $$.S = Signless;
-    delete $5.T;
+    delete $5.PAT;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
-    const Type* Ty = $2.T->get();
+    const Type* Ty = $2.PAT->get();
     if (!isa<PointerType>(Ty))
       error("getelementptr insn requires pointer operand");
 
@@ -3437,7 +3461,7 @@ MemoryInst
     Value* tmpVal = getVal(Ty, $3);
     $$.I = new GetElementPtrInst(tmpVal, VIndices);
     $$.S = Signless;
-    delete $2.T;
+    delete $2.PAT;
     delete $4;
   };
 
@@ -3447,7 +3471,7 @@ MemoryInst
 int yyerror(const char *ErrorMsg) {
   std::string where 
     = std::string((CurFilename == "-") ? std::string("<stdin>") : CurFilename)
-                  + ":" + llvm::utostr((unsigned) Upgradelineno-1) + ": ";
+                  + ":" + llvm::utostr((unsigned) Upgradelineno) + ": ";
   std::string errMsg = where + "error: " + std::string(ErrorMsg);
   if (yychar != YYEMPTY && yychar != 0)
     errMsg += " while reading token '" + std::string(Upgradetext, Upgradeleng) +
@@ -3460,7 +3484,7 @@ int yyerror(const char *ErrorMsg) {
 void warning(const std::string& ErrorMsg) {
   std::string where 
     = std::string((CurFilename == "-") ? std::string("<stdin>") : CurFilename)
-                  + ":" + llvm::utostr((unsigned) Upgradelineno-1) + ": ";
+                  + ":" + llvm::utostr((unsigned) Upgradelineno) + ": ";
   std::string errMsg = where + "warning: " + std::string(ErrorMsg);
   if (yychar != YYEMPTY && yychar != 0)
     errMsg += " while reading token '" + std::string(Upgradetext, Upgradeleng) +
