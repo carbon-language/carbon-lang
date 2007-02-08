@@ -71,7 +71,7 @@ option</a></li>
     <li><a href="#ds_map">Map-Like Containers (std::map, DenseMap, etc)</a>
     <ul>
       <li><a href="#dss_sortedvectormap">A sorted 'vector'</a></li>
-      <li><a href="#dss_cstringmap">"llvm/ADT/CStringMap.h"</a></li>
+      <li><a href="#dss_stringmap">"llvm/ADT/StringMap.h"</a></li>
       <li><a href="#dss_indexedmap">"llvm/ADT/IndexedMap.h"</a></li>
       <li><a href="#dss_densemap">"llvm/ADT/DenseMap.h"</a></li>
       <li><a href="#dss_map">&lt;map&gt;</a></li>
@@ -1152,7 +1152,7 @@ vectors for sets.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="dss_cstringmap">"llvm/ADT/CStringMap.h"</a>
+  <a name="dss_stringmap">"llvm/ADT/StringMap.h"</a>
 </div>
 
 <div class="doc_text">
@@ -1160,12 +1160,11 @@ vectors for sets.
 <p>
 Strings are commonly used as keys in maps, and they are difficult to support
 efficiently: they are variable length, inefficient to hash and compare when
-long, expensive to copy, etc.  CStringMap is a specialized container designed to
-cope with these issues.  It supports mapping an arbitrary range of bytes that
-does not have an embedded nul character in it ("C strings") to an arbitrary
-other object.</p>
+long, expensive to copy, etc.  StringMap is a specialized container designed to
+cope with these issues.  It supports mapping an arbitrary range of bytes to an
+arbitrary other object.</p>
 
-<p>The CStringMap implementation uses a quadratically-probed hash table, where
+<p>The StringMap implementation uses a quadratically-probed hash table, where
 the buckets store a pointer to the heap allocated entries (and some other
 stuff).  The entries in the map must be heap allocated because the strings are
 variable length.  The string data (key) and the element object (value) are
@@ -1173,15 +1172,15 @@ stored in the same allocation with the string data immediately after the element
 object.  This container guarantees the "<tt>(char*)(&amp;Value+1)</tt>" points
 to the key string for a value.</p>
 
-<p>The CStringMap is very fast for several reasons: quadratic probing is very
+<p>The StringMap is very fast for several reasons: quadratic probing is very
 cache efficient for lookups, the hash value of strings in buckets is not
-recomputed when lookup up an element, CStringMap rarely has to touch the
+recomputed when lookup up an element, StringMap rarely has to touch the
 memory for unrelated objects when looking up a value (even when hash collisions
 happen), hash table growth does not recompute the hash values for strings
 already in the table, and each pair in the map is store in a single allocation
 (the string data is stored in the same allocation as the Value of a pair).</p>
 
-<p>CStringMap also provides query methods that take byte ranges, so it only ever
+<p>StringMap also provides query methods that take byte ranges, so it only ever
 copies a string if a value is inserted into the table.</p>
 </div>
 
