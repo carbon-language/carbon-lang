@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_ELFWRITER_H
-#define LLVM_CODEGEN_ELFWRITER_H
+#ifndef ELFWRITER_H
+#define ELFWRITER_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include <list>
@@ -34,13 +34,12 @@ namespace llvm {
       return *(MachineCodeEmitter*)MCE;
     }
 
+    ELFWriter(std::ostream &O, TargetMachine &TM);
     ~ELFWriter();
 
     typedef std::vector<unsigned char> DataBuffer;
 
   protected:
-    ELFWriter(std::ostream &O, TargetMachine &TM);
-
     /// Output stream to send the resultant object file to.
     ///
     std::ostream &O;

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MACHOWRITER_H
-#define LLVM_CODEGEN_MACHOWRITER_H
+#ifndef MACHOWRITER_H
+#define MACHOWRITER_H
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -87,6 +87,8 @@ namespace llvm {
     MachineCodeEmitter &getMachineCodeEmitter() const {
       return *(MachineCodeEmitter*)MCE;
     }
+
+    MachOWriter(std::ostream &O, TargetMachine &TM);
     virtual ~MachOWriter();
 
     virtual const char *getPassName() const {
@@ -95,8 +97,6 @@ namespace llvm {
 
     typedef std::vector<unsigned char> DataBuffer;
   protected:
-    MachOWriter(std::ostream &O, TargetMachine &TM);
-
     /// Output stream to send the resultant object file to.
     ///
     std::ostream &O;
