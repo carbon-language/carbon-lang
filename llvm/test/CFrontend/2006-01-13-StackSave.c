@@ -1,5 +1,4 @@
 // RUN: %llvmgcc %s -S -o - | gccas | llvm-dis | grep llvm.stacksave
-// XFAIL: llvmgcc3
 
 // PR691
 

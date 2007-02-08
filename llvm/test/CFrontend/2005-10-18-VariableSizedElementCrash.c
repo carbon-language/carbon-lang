@@ -1,5 +1,4 @@
 // RUN: %llvmgcc %s -S -o -
-// XFAIL: llvmgcc3
 
 int sub1(int i, char *pi) {
   typedef int foo[i];
