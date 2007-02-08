@@ -923,19 +923,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         DOUT << "Store:\t" << *next(MII);
         MI.getOperand(i).setReg(PhysReg);
 
-        // Check to see if this is a noop copy.  If so, eliminate the
-        // instruction before considering the dest reg to be changed.
-        {
-          unsigned Src, Dst;
-          if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
-            ++NumDCE;
-            DOUT << "Removing now-noop copy: " << MI;
-            MBB.erase(&MI);
-            VRM.RemoveFromFoldedVirtMap(&MI);
-            goto ProcessNextInst;
-          }
-        }
-        
         // If there is a dead store to this stack slot, nuke it now.
         MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
         if (LastStore) {
@@ -953,6 +940,19 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         Spills.ClobberPhysReg(PhysReg);
         Spills.addAvailable(StackSlot, PhysReg);
         ++NumStores;
+
+        // Check to see if this is a noop copy.  If so, eliminate the
+        // instruction before considering the dest reg to be changed.
+        {
+          unsigned Src, Dst;
+          if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+            ++NumDCE;
+            DOUT << "Removing now-noop copy: " << MI;
+            MBB.erase(&MI);
+            VRM.RemoveFromFoldedVirtMap(&MI);
+            goto ProcessNextInst;
+          }
+        }        
       }
     }
   ProcessNextInst:
