@@ -1655,13 +1655,13 @@ OptAssign
   };
 
 OptLinkage 
-  : INTERNAL    { $$ = GlobalValue::InternalLinkage; } 
+  : INTERNAL    { $$ = GlobalValue::InternalLinkage; }
   | LINKONCE    { $$ = GlobalValue::LinkOnceLinkage; } 
   | WEAK        { $$ = GlobalValue::WeakLinkage; } 
   | APPENDING   { $$ = GlobalValue::AppendingLinkage; } 
   | DLLIMPORT   { $$ = GlobalValue::DLLImportLinkage; } 
   | DLLEXPORT   { $$ = GlobalValue::DLLExportLinkage; } 
-  | EXTERN_WEAK { $$ = GlobalValue::ExternalWeakLinkage; } 
+  | EXTERN_WEAK { $$ = GlobalValue::ExternalWeakLinkage; }
   | /*empty*/   { $$ = GlobalValue::ExternalLinkage; }
   ;
 
@@ -2499,6 +2499,7 @@ LibList
 
 Name 
   : VAR_ID | STRINGCONSTANT
+  //| '@' STRINGCONSTANT { $$ = $2; }
   ;
 
 OptName 
@@ -2625,10 +2626,34 @@ FunctionHeaderH
         InsertValue(Fn, CurModule.Values);
         RenameMapKey Key = std::make_pair(FunctionName,PFT);
         CurModule.RenameMap[Key] = NewName;
+      } else if (Fn->hasInternalLinkage()) {
+        // The function we are creating conflicts in name with another function 
+        // that has internal linkage. We'll rename that one quietly to get rid
+        // of the conflict.
+        Fn->setName(makeNameUnique(Fn->getName()));
+        RenameMapKey Key = std::make_pair(FunctionName,PFT);
+        CurModule.RenameMap[Key] = Fn->getName();
+
+        Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
+                          CurModule.CurrentModule);
+
+        InsertValue(Fn, CurModule.Values);
+      } else if (CurFun.Linkage == GlobalValue::InternalLinkage) {
+        // The function we are creating has internal linkage and conflicts with
+        // another function of the same name. We'll just rename this one 
+        // quietly because its internal linkage can't conflict with anything 
+        // else.  
+        std::string NewName = makeNameUnique(FunctionName);
+        Fn = new Function(FT, GlobalValue::ExternalLinkage, NewName,
+                          CurModule.CurrentModule);
+        InsertValue(Fn, CurModule.Values);
+        RenameMapKey Key = std::make_pair(FunctionName,PFT);
+        CurModule.RenameMap[Key] = NewName;
       } else {
-        // The types are the same. Either the existing or the current function
-        // needs to be a forward declaration. If not, they're attempting to
-        // redefine a function.
+        // The types are the same and they are both external linkage. Either 
+        // the existing or the current function needs to be a forward 
+        // declaration. If not, they're attempting to redefine two external 
+        // functions. This wasn't allowed in llvm 1.9 and it isn't allowed now.
         if (!CurFun.isDeclare && !Fn->isDeclaration())
           error("Redefinition of function '" + FunctionName + "'");
       
