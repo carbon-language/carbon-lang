@@ -1307,7 +1307,7 @@ void Interpreter::visitAShr(BinaryOperator &I) {
 
 #define INTEGER_ASSIGN(DEST, BITWIDTH, VAL)     \
   {                                             \
-    uint64_t Mask = (1ull << BITWIDTH) - 1;     \
+    uint64_t Mask = ~(uint64_t)(0ull) >> (64-BITWIDTH);     \
     if (BITWIDTH == 1) {                        \
       Dest.Int1Val = (bool) (VAL & Mask);       \
     } else if (BITWIDTH <= 8) {                 \

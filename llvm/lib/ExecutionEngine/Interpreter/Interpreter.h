@@ -236,7 +236,7 @@ private:  // Helper functions
 };
 
 inline void maskToBitWidth(GenericValue& GV, unsigned BitWidth) {
-  uint64_t BitMask = (1ull << BitWidth) - 1;
+  uint64_t BitMask = ~(uint64_t)(0ull) >> (64-BitWidth);
   if (BitWidth <= 8)
     GV.Int8Val &= BitMask;
   else if (BitWidth <= 16)
