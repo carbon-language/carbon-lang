@@ -58,6 +58,16 @@ namespace CodeModel {
   };
 }
 
+namespace FileModel {
+  enum Model {
+    Error,
+    None,
+    AsmFile,
+    MachOFile,
+    ElfFile
+  };
+}
+
 //===----------------------------------------------------------------------===//
 ///
 /// TargetMachine - Primary interface to the complete machine description for
@@ -175,14 +185,25 @@ public:
     AssemblyFile, ObjectFile, DynamicLibrary
   };
 
-  /// addPassesToEmitFile - Add passes to the specified pass manager to get
-  /// the specified file emitted.  Typically this will involve several steps of
-  /// code generation.  If Fast is set to true, the code generator should emit
-  /// code as fast as possible, without regard for compile time.  This method
-  /// should return true if emission of this file type is not supported.
+  /// addPassesToEmitFile - Add passes to the specified pass manager to get the
+  /// specified file emitted.  Typically this will involve several steps of code
+  /// generation.  If Fast is set to true, the code generator should emit code
+  /// as fast as possible, without regard for compile time.  This method should
+  /// return FileModel::Error if emission of this file type is not supported.
   ///
-  virtual bool addPassesToEmitFile(FunctionPassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType, bool Fast) {
+  virtual FileModel::Model addPassesToEmitFile(FunctionPassManager &PM,
+                                               std::ostream &Out,
+                                               CodeGenFileType FileType,
+                                               bool Fast) {
+    return FileModel::None;
+  }
+
+  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
+  /// to be split up (e.g., to add an object writer pass), this method can be
+  /// used to finish up adding passes to emit the file, if necessary.
+  ///
+  virtual bool addPassesToEmitFileFinish(FunctionPassManager &PM,
+                                         MachineCodeEmitter *MCE, bool Fast) {
     return true;
   }
  
@@ -196,7 +217,6 @@ public:
                                           MachineCodeEmitter &MCE, bool Fast) {
     return true;
   }
-  
 
   /// addPassesToEmitWholeFile - This method can be implemented by targets that 
   /// require having the entire module at once.  This is not recommended, do not
@@ -216,19 +236,28 @@ protected: // Can only create subclasses.
     LLVMTargetMachine() { }
 public:
   
-  /// addPassesToEmitFile - Add passes to the specified pass manager to get
-  /// the specified file emitted.  Typically this will involve several steps of
-  /// code generation.  If Fast is set to true, the code generator should emit
-  /// code as fast as possible, without regard for compile time.  This method
-  /// should return true if emission of this file type is not supported.
+  /// addPassesToEmitFile - Add passes to the specified pass manager to get the
+  /// specified file emitted.  Typically this will involve several steps of code
+  /// generation.  If Fast is set to true, the code generator should emit code
+  /// as fast as possible, without regard for compile time.  This method should
+  /// return FileModel::Error if emission of this file type is not supported.
   ///
   /// The default implementation of this method adds components from the
   /// LLVM retargetable code generator, invoking the methods below to get
   /// target-specific passes in standard locations.
   ///
-  virtual bool addPassesToEmitFile(FunctionPassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType, bool Fast);
+  virtual FileModel::Model addPassesToEmitFile(FunctionPassManager &PM,
+                                               std::ostream &Out,
+                                               CodeGenFileType FileType,
+                                               bool Fast);
   
+  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
+  /// to be split up (e.g., to add an object writer pass), this method can be
+  /// used to finish up adding passes to emit the file, if necessary.
+  ///
+  virtual bool addPassesToEmitFileFinish(FunctionPassManager &PM,
+                                         MachineCodeEmitter *MCE, bool Fast);
+ 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
   /// actually outputting the machine code and resolving things like the address
@@ -271,19 +300,19 @@ public:
     return true;
   }
   
-  /// addObjectWriter - This pass should be overridden by the target to add
-  /// the object-file writer, if supported.  If this is not supported,
-  /// 'true' should be returned.
-  virtual bool addObjectWriter(FunctionPassManager &PM, bool Fast,
-                               std::ostream &Out) {
-    return true;
-  }
-  
   /// addCodeEmitter - This pass should be overridden by the target to add a
   /// code emitter, if supported.  If this is not supported, 'true' should be
   /// returned.
   virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast, 
                               MachineCodeEmitter &MCE) {
+    return true;
+  }
+
+  /// addSimpleCodeEmitter - This pass should be overridden by the target to add
+  /// a code emitter (without setting flags), if supported.  If this is not
+  /// supported, 'true' should be returned.
+  virtual bool addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast, 
+                                    MachineCodeEmitter &MCE) {
     return true;
   }
 };
