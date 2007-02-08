@@ -64,6 +64,8 @@ public:
                                   std::ostream &Out);
   virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast,
                               MachineCodeEmitter &MCE);
+  virtual bool addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                    MachineCodeEmitter &MCE);
 };
 
 } // end namespace llvm

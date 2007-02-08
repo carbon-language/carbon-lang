@@ -88,3 +88,8 @@ bool AlphaTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
   PM.add(createAlphaCodeEmitterPass(*this, MCE));
   return false;
 }
+bool AlphaTargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM,
+                                              bool Fast,
+                                              MachineCodeEmitter &MCE) {
+  return addCodeEmitter(PM, Fast, MCE);
+}
