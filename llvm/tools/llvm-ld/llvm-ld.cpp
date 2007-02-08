@@ -97,6 +97,11 @@ static cl::opt<bool> CO5("eh-frame-hdr", cl::Hidden,
 static  cl::opt<std::string> CO6("h", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
+static cl::opt<bool> CO7("start-group", cl::Hidden, 
+  cl::desc("Compatibility option: ignored"));
+
+static cl::opt<bool> CO8("end-group", cl::Hidden, 
+  cl::desc("Compatibility option: ignored"));
 
 /// This is just for convenience so it doesn't have to be passed around
 /// everywhere.
