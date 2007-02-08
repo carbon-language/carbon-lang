@@ -1,4 +1,4 @@
-//===--- CStringMap.cpp - CString Hash table map implementation -----------===//
+//===--- StringMap.cpp - String Hash table map implementation -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,18 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the CStringMap class.
+// This file implements the StringMap class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/CStringMap.h"
+#include "llvm/ADT/StringMap.h"
 #include <cassert>
 using namespace llvm;
 
-CStringMapVisitor::~CStringMapVisitor() {
+StringMapVisitor::~StringMapVisitor() {
 }
 
-CStringMapImpl::CStringMapImpl(unsigned InitSize, unsigned itemSize) {
+StringMapImpl::StringMapImpl(unsigned InitSize, unsigned itemSize) {
   assert((InitSize & (InitSize-1)) == 0 &&
          "Init Size must be a power of 2 or zero!");
   NumBuckets = InitSize ? InitSize : 512;
@@ -49,7 +49,7 @@ static unsigned HashString(const char *Start, const char *End) {
 /// specified bucket will be non-null.  Otherwise, it will be null.  In either
 /// case, the FullHashValue field of the bucket will be set to the hash value
 /// of the string.
-unsigned CStringMapImpl::LookupBucketFor(const char *NameStart,
+unsigned StringMapImpl::LookupBucketFor(const char *NameStart,
                                          const char *NameEnd) {
   unsigned HTSize = NumBuckets;
   unsigned FullHashValue = HashString(NameStart, NameEnd);
@@ -92,7 +92,7 @@ unsigned CStringMapImpl::LookupBucketFor(const char *NameStart,
 
 /// RehashTable - Grow the table, redistributing values into the buckets with
 /// the appropriate mod-of-hashtable-size.
-void CStringMapImpl::RehashTable() {
+void StringMapImpl::RehashTable() {
   unsigned NewSize = NumBuckets*2;
   ItemBucket *NewTableArray = new ItemBucket[NewSize]();
   memset(NewTableArray, 0, NewSize*sizeof(ItemBucket));
@@ -130,7 +130,7 @@ void CStringMapImpl::RehashTable() {
 
 /// VisitEntries - This method walks through all of the items,
 /// invoking Visitor.Visit for each of them.
-void CStringMapImpl::VisitEntries(const CStringMapVisitor &Visitor) const {
+void StringMapImpl::VisitEntries(const StringMapVisitor &Visitor) const {
   for (ItemBucket *IB = TheTable, *E = TheTable+NumBuckets; IB != E; ++IB) {
     if (StringMapEntryBase *Id = IB->Item)
       Visitor.Visit((char*)Id + ItemSize, Id);

@@ -1,4 +1,4 @@
-//===--- CStringMap.h - CString Hash table map interface --------*- C++ -*-===//
+//===--- StringMap.h - String Hash table map interface ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the CStringMap class.
+// This file defines the StringMap class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_CSTRINGMAP_H
-#define LLVM_ADT_CSTRINGMAP_H
+#ifndef LLVM_ADT_STRINGMAP_H
+#define LLVM_ADT_STRINGMAP_H
 
 #include "llvm/Support/Allocator.h"
 #include <cstring>
@@ -28,17 +28,17 @@ public:
   unsigned getKeyLength() const { return StrLen; }
 };
   
-/// CStringMapVisitor - Subclasses of this class may be implemented to walk all
-/// of the items in a CStringMap.
-class CStringMapVisitor {
+/// StringMapVisitor - Subclasses of this class may be implemented to walk all
+/// of the items in a StringMap.
+class StringMapVisitor {
 public:
-  virtual ~CStringMapVisitor();
+  virtual ~StringMapVisitor();
   virtual void Visit(const char *Key, StringMapEntryBase *Value) const = 0;
 };
 
-/// CStringMapImpl - This is the base class of CStringMap that is shared among
+/// StringMapImpl - This is the base class of StringMap that is shared among
 /// all of its instantiations.
-class CStringMapImpl {
+class StringMapImpl {
 protected:
   /// ItemBucket - The hash table consists of an array of these.  If Item is
   /// non-null, this is an extant entry, otherwise, it is a hole.
@@ -56,7 +56,7 @@ protected:
   unsigned NumItems;
   unsigned ItemSize;
 protected:
-  CStringMapImpl(unsigned InitSize, unsigned ItemSize);
+  StringMapImpl(unsigned InitSize, unsigned ItemSize);
   void RehashTable();
   
   /// LookupBucketFor - Look up the bucket that the specified string should end
@@ -70,7 +70,7 @@ public:
   unsigned getNumBuckets() const { return NumBuckets; }
   unsigned getNumItems() const { return NumItems; }
 
-  void VisitEntries(const CStringMapVisitor &Visitor) const;
+  void VisitEntries(const StringMapVisitor &Visitor) const;
 };
 
 /// StringMapEntry - This is used to represent one value that is inserted into
@@ -97,17 +97,17 @@ public:
 };
 
 
-/// CStringMap - This is an unconventional map that is specialized for handling
+/// StringMap - This is an unconventional map that is specialized for handling
 /// keys that are "strings", which are basically ranges of bytes. This does some
 /// funky memory allocation and hashing things to make it extremely efficient,
 /// storing the string data *after* the value in the map.
 template<typename ValueTy, typename AllocatorTy = MallocAllocator>
-class CStringMap : public CStringMapImpl {
+class StringMap : public StringMapImpl {
   AllocatorTy Allocator;
   typedef StringMapEntry<ValueTy> MapEntryTy;
 public:
-  CStringMap(unsigned InitialSize = 0)
-    : CStringMapImpl(InitialSize, sizeof(MapEntryTy)) {}
+  StringMap(unsigned InitialSize = 0)
+    : StringMapImpl(InitialSize, sizeof(MapEntryTy)) {}
   
   AllocatorTy &getAllocator() { return Allocator; }
   const AllocatorTy &getAllocator() const { return Allocator; }
@@ -164,7 +164,7 @@ public:
     return *NewItem;
   }
   
-  ~CStringMap() {
+  ~StringMap() {
     for (ItemBucket *I = TheTable, *E = TheTable+NumBuckets; I != E; ++I) {
       if (MapEntryTy *Id = static_cast<MapEntryTy*>(I->Item)) {
         // Free memory referenced by the item.
