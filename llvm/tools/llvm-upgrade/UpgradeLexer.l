@@ -152,14 +152,14 @@ using namespace llvm;
 Comment    ;.*
 
 /* Variable(Value) identifiers start with a % sign */
-VarID       %[-a-zA-Z$._][-a-zA-Z$._0-9]*
+VarID       [%@][-a-zA-Z$._][-a-zA-Z$._0-9]*
 
 /* Label identifiers end with a colon */
 Label       [-a-zA-Z$._0-9]+:
 QuoteLabel \"[^\"]+\":
 
 /* Quoted names can contain any character except " and \ */
-StringConstant \"[^\"]*\"
+StringConstant @?\"[^\"]*\"
 
 
 /* [PN]Integer: match positive and negative literal integer values that
@@ -240,14 +240,19 @@ x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
 sbyte           { RET_TY(SBYTE,  Type::Int8Ty,  Signed);  }
 ubyte           { RET_TY(UBYTE,  Type::Int8Ty,  Unsigned); }
+i8              { RET_TY(UBYTE,  Type::Int8Ty,  Unsigned); }
 short           { RET_TY(SHORT,  Type::Int16Ty, Signed);  }
 ushort          { RET_TY(USHORT, Type::Int16Ty, Unsigned); }
+i16             { RET_TY(USHORT, Type::Int16Ty, Unsigned); }
 int             { RET_TY(INT,    Type::Int32Ty, Signed);  }
 uint            { RET_TY(UINT,   Type::Int32Ty, Unsigned); }
+i32             { RET_TY(UINT,   Type::Int32Ty, Unsigned); }
 long            { RET_TY(LONG,   Type::Int64Ty, Signed);  }
 ulong           { RET_TY(ULONG,  Type::Int64Ty, Unsigned); }
+i64             { RET_TY(ULONG,  Type::Int64Ty, Unsigned); }
 void            { RET_TY(VOID,   Type::VoidTy,  Signless  ); }
 bool            { RET_TY(BOOL,   Type::Int1Ty,  Unsigned  ); }
+i1              { RET_TY(BOOL,   Type::Int1Ty,  Unsigned  ); }
 float           { RET_TY(FLOAT,  Type::FloatTy, Signless ); }
 double          { RET_TY(DOUBLE, Type::DoubleTy,Signless); }
 label           { RET_TY(LABEL,  Type::LabelTy, Signless ); }
