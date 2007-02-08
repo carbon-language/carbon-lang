@@ -475,6 +475,14 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   return V;
 }
 
+/// @brief This just makes any name given to it unique, up to MAX_UINT times.
+static std::string makeNameUnique(const std::string& Name) {
+  static unsigned UniqueNameCounter = 1;
+  std::string Result(Name);
+  Result += ".upgrd." + llvm::utostr(UniqueNameCounter++);
+  return Result;
+}
+
 /// getBBVal - This is used for two purposes:
 ///  * If isDefinition is true, a new basic block with the specified ID is being
 ///    defined.
@@ -499,9 +507,18 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
     Name = ID.Name;
     if (Value *N = CurFun.CurrentFunction->
                    getValueSymbolTable().lookup(Name)) {
-      if (N->getType() != Type::LabelTy)
-        error("Name '" + Name + "' does not refer to a BasicBlock");
-      BB = cast<BasicBlock>(N);
+      if (N->getType() != Type::LabelTy) {
+        // Register names didn't use to conflict with basic block names
+        // because of type planes. Now they all have to be unique. So, we just
+        // rename the register and treat this name as if no basic block
+        // had been found.
+        RenameMapKey Key = std::make_pair(N->getName(),N->getType());
+        N->setName(makeNameUnique(N->getName()));
+        CurModule.RenameMap[Key] = N->getName();
+        BB = 0;
+      } else {
+        BB = cast<BasicBlock>(N);
+      }
     }
     break;
   }
@@ -621,14 +638,6 @@ static void ResolveTypeTo(char *Name, const Type *ToTy) {
     ((DerivedType*)I->second.get())->refineAbstractTypeTo(ToTy);
     CurModule.LateResolveTypes.erase(I);
   }
-}
-
-/// @brief This just makes any name given to it unique, up to MAX_UINT times.
-static std::string makeNameUnique(const std::string& Name) {
-  static unsigned UniqueNameCounter = 1;
-  std::string Result(Name);
-  Result += ".upgrd." + llvm::utostr(UniqueNameCounter++);
-  return Result;
 }
 
 /// This is the implementation portion of TypeHasInteger. It traverses the
