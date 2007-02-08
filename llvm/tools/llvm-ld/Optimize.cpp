@@ -73,12 +73,21 @@ static cl::opt<bool> DisableInternalize("disable-internalize",
 static cl::opt<bool> VerifyEach("verify-each",
  cl::desc("Verify intermediate results of all passes"));
 
-static cl::opt<bool> Strip("s",
-  cl::desc("Strip symbol info from executable"));
-
 static cl::alias ExportDynamic("export-dynamic",
   cl::aliasopt(DisableInternalize),
   cl::desc("Alias for -disable-internalize"));
+
+static cl::opt<bool> Strip("strip-all", 
+  cl::desc("Strip all symbol info from executable"));
+
+static cl::alias A0("s", cl::desc("Alias for --strip-all"), 
+  cl::aliasopt(Strip));
+
+static cl::opt<bool> StripDebug("strip-debug",
+  cl::desc("Strip debugger symbol info from executable"));
+
+static cl::alias A1("S", cl::desc("Alias for --strip-debug"),
+  cl::aliasopt(StripDebug));
 
 // A utility function that adds a pass to the pass manager but will also add
 // a verifier pass after if we're supposed to verify.
@@ -114,6 +123,11 @@ void Optimize(Module* M) {
     // internal.
     addPass(Passes, createInternalizePass(!DisableInternalize));
 
+    // Propagate constants at call sites into the functions they call.  This
+    // opens opportunities for globalopt (and inlining) by substituting function
+    // pointers passed as arguments to direct uses of functions.  
+    addPass(Passes, createIPSCCPPass());
+
     // Now that we internalized some globals, see if we can hack on them!
     addPass(Passes, createGlobalOptimizerPass());
 
@@ -121,22 +135,20 @@ void Optimize(Module* M) {
     // keep one copy of each constant...
     addPass(Passes, createConstantMergePass());
 
-    // If the -s command line option was specified, strip the symbols out of the
-    // resulting program to make it smaller.  -s is a GLD option that we are
-    // supporting.
-    if (Strip)
-      addPass(Passes, createStripSymbolsPass());
-
-    // Propagate constants at call sites into the functions they call.
-    addPass(Passes, createIPConstantPropagationPass());
-
     // Remove unused arguments from functions...
     addPass(Passes, createDeadArgEliminationPass());
+
+    // Reduce the code after globalopt and ipsccp.  Both can open up significant
+    // simplification opportunities, and both can propagate functions through
+    // function pointers.  When this happens, we often have to resolve varargs
+    // calls, etc, so let instcombine do this.
+    addPass(Passes, createInstructionCombiningPass());
 
     if (!DisableInline)
       addPass(Passes, createFunctionInliningPass()); // Inline small functions
 
     addPass(Passes, createPruneEHPass());            // Remove dead EH info
+    addPass(Passes, createGlobalOptimizerPass());    // Optimize globals again.
     addPass(Passes, createGlobalDCEPass());          // Remove dead functions
 
     // If we didn't decide to inline a function, check to see if we can
@@ -148,8 +160,9 @@ void Optimize(Module* M) {
 
     addPass(Passes, createScalarReplAggregatesPass()); // Break up allocas
 
-    // Run a few AA driven optimizations, to cleanup the code.
+    // Run a few AA driven optimizations here and now, to cleanup the code.
     addPass(Passes, createGlobalsModRefPass());      // IP alias analysis
+
     addPass(Passes, createLICMPass());               // Hoist loop invariants
     addPass(Passes, createLoadValueNumberingPass()); // GVN for load instrs
     addPass(Passes, createGCSEPass());               // Remove common subexprs
@@ -164,6 +177,12 @@ void Optimize(Module* M) {
     // Now that we have optimized the program, discard unreachable functions...
     addPass(Passes, createGlobalDCEPass());
   }
+
+  // If the -s or -S command line options were specified, strip the symbols out
+  // of the resulting program to make it smaller.  -s and -S are GNU ld options
+  // that we are supporting; they alias -strip-all and -strip-debug.
+  if (Strip || StripDebug)
+    addPass(Passes, createStripSymbolsPass(StripDebug && !Strip));
 
   // Create a new optimization pass for each one specified on the command line
   std::auto_ptr<TargetMachine> target;
