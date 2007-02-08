@@ -216,19 +216,27 @@ module.</p>
 subtrees of the test suite directory tree are as follows:</p>
     
 <ul>
-<li><tt>llvm/test/Features</tt>
-<p>This directory contains sample codes that test various features of the
-LLVM language.  These pieces of sample code are run through various
-assembler, disassembler, and optimizer passes.</p>
-</li>
-
-<li><tt>llvm/test/Regression</tt>
-<p>This directory contains regression tests for LLVM.  When a bug is found
-in LLVM, a regression test containing just enough code to reproduce the
-problem should be written and placed somewhere underneath this directory.
-In most cases, this will be a small piece of LLVM assembly language code,
-often distilled from an actual application or benchmark.</p>
-</li>
+  <li><tt>llvm/test</tt>
+  <p>This directory contains a large array of small tests
+  that exercise various features of LLVM and to ensure that regressions do not
+  occur. The directory is broken into several sub-directories, each focused on
+  a particular area of LLVM. A few of the important ones are:<ul>
+    <li><tt>Analysis</tt>: checks Analysis passes.</li>
+    <li><tt>Archive</tt>: checks the Archive library.</li>
+    <li><tt>Assembler</tt>: checks Assembly reader/writer functionality.</li>
+    <li><tt>Bytecode</tt>: checks Bytecode reader/writer functionality.</li>
+    <li><tt>CodeGen</tt>: checks code generation and each target.</li>
+    <li><tt>Features</tt>: checks various features of the LLVM language.</li>
+    <li><tt>Linker</tt>: tests bytecode linking.</li>
+    <li><tt>Transforms</tt>: tests each of the scalar, IPO, and utility
+    transforms to ensure they make the right transformations.</li>
+    <li><tt>Verifier</tt>: tests the IR verifier.</li>
+  </ul></p>
+  <p>Typically when a bug is found in LLVM, a regression test containing 
+  just enough code to reproduce the problem should be written and placed 
+  somewhere underneath this directory.  In most cases, this will be a small 
+  piece of LLVM assembly language code, often distilled from an actual 
+  application or benchmark.</p></li>
 
 <li><tt>llvm-test</tt>
 <p>The <tt>llvm-test</tt> CVS module contains programs that can be compiled 
