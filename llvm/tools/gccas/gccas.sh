@@ -18,6 +18,7 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
+echo "gccas: This tool is deprecated, please use opt" 1>&2
 TOOLDIR=@TOOLDIR@
 OPTOPTS="-std-compile-opts -f"
 ASOPTS=""
