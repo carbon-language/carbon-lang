@@ -313,7 +313,7 @@ ifndef TBLGEN
 endif
 LLVM_CONFIG := $(LLVMToolDir)/llvm-config 
 ifndef LLVMLD
-LLVMLD    := $(LLVMToolDir)/gccld$(EXEEXT)
+LLVMLD    := $(LLVMToolDir)/llvm-ld$(EXEEXT)
 endif
 ifndef LLVMDIS
 LLVMDIS  := $(LLVMToolDir)/llvm-dis$(EXEEXT)
@@ -1181,12 +1181,12 @@ $(ObjDir)/%.s: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 ifdef DEBUG_RUNTIME
 $(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(LLVMAS) $(LOPT)
 	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
-	$(Verb) $(LLVMAS) $< -o - | $(LOPT) -std-compile-opts $< -o $@
+	$(Verb) $(LLVMAS) $< -o - | $(LOPT) -std-compile-opts -o $@ -f
 else
 $(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(LLVMAS) $(LOPT)
 	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
 	$(Verb) $(LLVMAS) $< -o - | \
-	  $(LOPT) -std-compile-opts -strip-debug $< -o $@
+	   $(LOPT) -std-compile-opts -strip-debug -o $@ -f
 endif
 
 
