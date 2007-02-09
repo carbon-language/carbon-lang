@@ -24,15 +24,7 @@ namespace llvm {
 /// Forward declaration.
 class APInt;
 namespace APIntOps {
-  bool isIntN(unsigned N, const APInt& APIVal);
-  APInt ByteSwap(const APInt& APIVal);
-  APInt LogBase2(const APInt& APIVal);
-  APInt ashr(const APInt& LHS, unsigned shiftAmt);
-  APInt lshr(const APInt& LHS, unsigned shiftAmt);
-  APInt shl(const APInt& LHS, unsigned shiftAmt);
-  APInt sdiv(const APInt& LHS, const APInt& RHS);
   APInt udiv(const APInt& LHS, const APInt& RHS);
-  APInt srem(const APInt& LHS, const APInt& RHS);
   APInt urem(const APInt& LHS, const APInt& RHS);
 }
 
@@ -53,19 +45,6 @@ namespace APIntOps {
 /// Note: In this class, all bit/byte/word positions are zero-based.
 ///
 class APInt {
-  /// Friend Functions of APInt declared here. For detailed comments,
-  /// see bottom of this file.
-  friend bool APIntOps::isIntN(unsigned N, const APInt& APIVal);
-  friend APInt APIntOps::ByteSwap(const APInt& APIVal);
-  friend APInt APIntOps::LogBase2(const APInt& APIVal);
-  friend APInt APIntOps::ashr(const APInt& LHS, unsigned shiftAmt);
-  friend APInt APIntOps::lshr(const APInt& LHS, unsigned shiftAmt);
-  friend APInt APIntOps::shl(const APInt& LHS, unsigned shiftAmt);
-  friend APInt APIntOps::sdiv(const APInt& LHS, const APInt& RHS);
-  friend APInt APIntOps::udiv(const APInt& LHS, const APInt& RHS);
-  friend APInt APIntOps::srem(const APInt& LHS, const APInt& RHS);
-  friend APInt APIntOps::urem(const APInt& LHS, const APInt& RHS);
-
   unsigned BitsNum;      ///< The number of bits.
 
   /// This union is used to store the integer value. When the
@@ -387,19 +366,68 @@ public:
   inline unsigned getNumBits() const
   { return BitsNum; }
 
+  /// @brief Check if this APInt has a N-bits integer value.
+  inline bool isIntN(unsigned N) const {
+    if (isSingleWord()) {
+      return VAL == VAL & (~uint64_t(0ULL) >> (64 - N));
+    } else {
+      APInt Tmp(N, pVal);
+      return Tmp == (*this);
+    }
+  }
+
+  /// @returns a byte-swapped representation of this APInt Value.
+  APInt ByteSwap() const;
+
+  /// @returns the floor log base 2 of this APInt.
+  inline unsigned LogBase2() const {
+    return getNumWords() * APINT_BITS_PER_WORD - 
+           CountLeadingZeros();
+  }
+
+  /// Arithmetic right-shift this APInt by shiftAmt.
+  /// @brief Arithmetic right-shift function.
+  APInt ashr(unsigned shiftAmt) const;
+
+  /// Logical right-shift this APInt by shiftAmt.
+  /// @brief Logical right-shift function.
+  APInt lshr(unsigned shiftAmt) const;
+
+  /// Left-shift this APInt by shiftAmt.
+  /// @brief Left-shift function.
+  APInt shl(unsigned shiftAmt) const;
+
+  /// Signed divide this APInt by APInt RHS.
+  /// @brief Signed division function for APInt.
+  inline APInt sdiv(const APInt& RHS) const {
+    bool isSignedLHS = (*this)[BitsNum - 1], isSignedRHS = RHS[RHS.BitsNum - 1];
+    APInt API = APIntOps::udiv(isSignedLHS ? -(*this) : (*this), isSignedRHS ? -RHS : RHS);
+    return isSignedLHS != isSignedRHS ? -API : API;;
+  }
+
+  /// Unsigned divide this APInt by APInt RHS.
+  /// @brief Unsigned division function for APInt.
+  APInt udiv(const APInt& RHS) const;
+
+  /// Signed remainder operation on APInt.
+  /// @brief Function for signed remainder operation.
+  inline APInt srem(const APInt& RHS) const {
+    bool isSignedLHS = (*this)[BitsNum - 1], isSignedRHS = RHS[RHS.BitsNum - 1];
+    APInt API = APIntOps::urem(isSignedLHS ? -(*this) : (*this), isSignedRHS ? -RHS : RHS);
+    return isSignedLHS ? -API : API;
+  }
+
+  /// Unsigned remainder operation on APInt.
+  /// @brief Function for unsigned remainder operation.
+  APInt urem(const APInt& RHS) const;
+
 };
 
 namespace APIntOps {
 
 /// @brief Check if the specified APInt has a N-bits integer value.
 inline bool isIntN(unsigned N, const APInt& APIVal) {
-  if (APIVal.isSingleWord()) {
-    APInt Tmp(N, APIVal.VAL);
-    return Tmp == APIVal;
-  } else {
-    APInt Tmp(N, APIVal.pVal);
-    return Tmp == APIVal;
-  }
+  return APIVal.isIntN(N);
 }
 
 /// @returns true if the argument APInt value is a sequence of ones
@@ -415,12 +443,13 @@ inline const bool isShiftedMask(unsigned numBits, const APInt& APIVal) {
 }
 
 /// @returns a byte-swapped representation of the specified APInt Value.
-APInt ByteSwap(const APInt& APIVal);
+inline APInt ByteSwap(const APInt& APIVal) {
+  return APIVal.ByteSwap();
+}
 
 /// @returns the floor log base 2 of the specified APInt value.
-inline APInt LogBase2(const APInt& APIVal) {
-  return APIVal.getNumWords() * APInt::APINT_BITS_PER_WORD - 
-         APIVal.CountLeadingZeros();
+inline unsigned LogBase2(const APInt& APIVal) {
+  return APIVal.LogBase2(); 
 }
 
 /// @returns the greatest common divisor of the two values 
@@ -429,39 +458,45 @@ APInt GreatestCommonDivisor(const APInt& API1, const APInt& API2);
 
 /// Arithmetic right-shift the APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
-APInt ashr(const APInt& LHS, unsigned shiftAmt);
+inline APInt ashr(const APInt& LHS, unsigned shiftAmt) {
+  return LHS.ashr(shiftAmt);
+}
 
 /// Logical right-shift the APInt by shiftAmt.
 /// @brief Logical right-shift function.
-APInt lshr(const APInt& LHS, unsigned shiftAmt);
+inline APInt lshr(const APInt& LHS, unsigned shiftAmt) {
+  return LHS.lshr(shiftAmt);
+}
 
 /// Left-shift the APInt by shiftAmt.
 /// @brief Left-shift function.
-APInt shl(const APInt& LHS, unsigned shiftAmt);
+inline APInt shl(const APInt& LHS, unsigned shiftAmt) {
+  return LHS.shl(shiftAmt);
+}
 
 /// Signed divide APInt LHS by APInt RHS.
 /// @brief Signed division function for APInt.
 inline APInt sdiv(const APInt& LHS, const APInt& RHS) {
-  bool isSignedLHS = LHS[LHS.BitsNum - 1], isSignedRHS = RHS[RHS.BitsNum - 1];
-  APInt API = udiv(isSignedLHS ? -LHS : LHS, isSignedRHS ? -RHS : RHS);
-  return isSignedLHS != isSignedRHS ? -API : API;;
+  return LHS.sdiv(RHS);
 }
 
 /// Unsigned divide APInt LHS by APInt RHS.
 /// @brief Unsigned division function for APInt.
-APInt udiv(const APInt& LHS, const APInt& RHS);
+inline APInt udiv(const APInt& LHS, const APInt& RHS) {
+  return LHS.udiv(RHS);
+}
 
 /// Signed remainder operation on APInt.
 /// @brief Function for signed remainder operation.
 inline APInt srem(const APInt& LHS, const APInt& RHS) {
-  bool isSignedLHS = LHS[LHS.BitsNum - 1], isSignedRHS = RHS[RHS.BitsNum - 1];
-  APInt API = urem(isSignedLHS ? -LHS : LHS, isSignedRHS ? -RHS : RHS);
-  return isSignedLHS ? -API : API;
+  return LHS.srem(RHS);
 }
 
 /// Unsigned remainder operation on APInt.
 /// @brief Function for unsigned remainder operation.
-APInt urem(const APInt& LHS, const APInt& RHS);
+inline APInt urem(const APInt& LHS, const APInt& RHS) {
+  return LHS.urem(RHS);
+}
 
 /// Performs multiplication on APInt values.
 /// @brief Function for multiplication operation.
@@ -479,6 +514,31 @@ inline APInt add(const APInt& LHS, const APInt& RHS) {
 /// @brief Function for subtraction operation.
 inline APInt sub(const APInt& LHS, const APInt& RHS) {
   return LHS - RHS;
+}
+
+/// Performs bitwise AND operation on APInt LHS and 
+/// APInt RHS.
+/// @brief Bitwise AND function for APInt.
+inline APInt And(const APInt& LHS, const APInt& RHS) {
+  return LHS & RHS;
+}
+
+/// Performs bitwise OR operation on APInt LHS and APInt RHS.
+/// @brief Bitwise OR function for APInt. 
+inline APInt Or(const APInt& LHS, const APInt& RHS) {
+  return LHS | RHS;
+}
+
+/// Performs bitwise XOR operation on APInt.
+/// @brief Bitwise XOR function for APInt.
+inline APInt Xor(const APInt& LHS, const APInt& RHS) {
+  return LHS ^ RHS;
+} 
+
+/// Performs a bitwise complement operation on APInt.
+/// @brief Bitwise complement function. 
+inline APInt Not(const APInt& APIVal) {
+  return ~APIVal;
 }
 
 } // End of APIntOps namespace

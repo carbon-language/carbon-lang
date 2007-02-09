@@ -674,8 +674,8 @@ APInt APInt::operator-(const APInt& RHS) const {
 
 /// @brief Array-indexing support.
 bool APInt::operator[](unsigned bitPosition) const {
-  return maskBit(bitPosition) & (isSingleWord() ? 
-         VAL : pVal[whichWord(bitPosition)]) != 0;
+  return (maskBit(bitPosition) & (isSingleWord() ? 
+          VAL : pVal[whichWord(bitPosition)])) != 0;
 }
 
 /// @brief Equality operator. Compare this APInt with the given APInt& RHS 
@@ -932,14 +932,14 @@ unsigned APInt::CountPopulation() const {
 
 
 /// ByteSwap - This function returns a byte-swapped representation of the
-/// APInt argument, APIVal.
-APInt llvm::APIntOps::ByteSwap(const APInt& APIVal) {
-  if (APIVal.BitsNum <= 32)
-    return APInt(APIVal.BitsNum, ByteSwap_32(unsigned(APIVal.VAL)));
-  else if (APIVal.BitsNum <= 64)
-    return APInt(APIVal.BitsNum, ByteSwap_64(APIVal.VAL));
+/// this APInt.
+APInt APInt::ByteSwap() const {
+  if (BitsNum <= 32)
+    return APInt(BitsNum, ByteSwap_32(unsigned(VAL)));
+  else if (BitsNum <= 64)
+    return APInt(BitsNum, ByteSwap_64(VAL));
   else
-    return APIVal;
+    return *this;
 }
 
 /// GreatestCommonDivisor - This function returns the greatest common
@@ -955,10 +955,10 @@ APInt llvm::APIntOps::GreatestCommonDivisor(const APInt& API1,
   return A;
 }
 
-/// Arithmetic right-shift the APInt by shiftAmt.
+/// Arithmetic right-shift this APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
-APInt llvm::APIntOps::ashr(const APInt& LHS, unsigned shiftAmt) {
-  APInt API(LHS);
+APInt APInt::ashr(unsigned shiftAmt) const {
+  APInt API(*this);
   if (API.isSingleWord())
     API.VAL = (((int64_t(API.VAL) << (64 - API.BitsNum)) >> (64 - API.BitsNum))
                >> shiftAmt) & (~uint64_t(0UL) >> (64 - API.BitsNum));
@@ -981,10 +981,10 @@ APInt llvm::APIntOps::ashr(const APInt& LHS, unsigned shiftAmt) {
   return API;
 }
 
-/// Logical right-shift the APInt by shiftAmt.
+/// Logical right-shift this APInt by shiftAmt.
 /// @brief Logical right-shift function.
-APInt llvm::APIntOps::lshr(const APInt& RHS, unsigned shiftAmt) {
-  APInt API(RHS);
+APInt APInt::lshr(unsigned shiftAmt) const {
+  APInt API(*this);
   if (API.isSingleWord())
     API.VAL >>= shiftAmt;
   else {
@@ -1000,10 +1000,10 @@ APInt llvm::APIntOps::lshr(const APInt& RHS, unsigned shiftAmt) {
   return API;
 }
 
-/// Left-shift the APInt by shiftAmt.
+/// Left-shift this APInt by shiftAmt.
 /// @brief Left-shift function.
-APInt llvm::APIntOps::shl(const APInt& RHS, unsigned shiftAmt) {
-  APInt API(RHS);
+APInt APInt::shl(unsigned shiftAmt) const {
+  APInt API(*this);
   if (shiftAmt >= API.BitsNum) {
     if (API.isSingleWord()) 
       API.VAL = 0;
@@ -1019,10 +1019,10 @@ APInt llvm::APIntOps::shl(const APInt& RHS, unsigned shiftAmt) {
   return API;
 }
 
-/// Unsigned divide APInt LHS by APInt RHS.
+/// Unsigned divide this APInt by APInt RHS.
 /// @brief Unsigned division function for APInt.
-APInt llvm::APIntOps::udiv(const APInt& LHS, const APInt& RHS) {
-  APInt API(LHS);
+APInt APInt::udiv(const APInt& RHS) const {
+  APInt API(*this);
   unsigned first = RHS.getNumWords() * APInt::APINT_BITS_PER_WORD - 
                    RHS.CountLeadingZeros();
   unsigned ylen = !first ? 0 : APInt::whichWord(first - 1) + 1;
@@ -1066,8 +1066,8 @@ APInt llvm::APIntOps::udiv(const APInt& LHS, const APInt& RHS) {
 
 /// Unsigned remainder operation on APInt.
 /// @brief Function for unsigned remainder operation.
-APInt llvm::APIntOps::urem(const APInt& LHS, const APInt& RHS) {
-  APInt API(LHS);
+APInt APInt::urem(const APInt& RHS) const {
+  APInt API(*this);
   unsigned first = RHS.getNumWords() * APInt::APINT_BITS_PER_WORD -
                    RHS.CountLeadingZeros();
   unsigned ylen = !first ? 0 : APInt::whichWord(first - 1) + 1;
