@@ -18,6 +18,6 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-echo "gccas: This tool is deprecated, please use opt"
+echo "gccld: This tool is deprecated, please use llvm-ld"
 TOOLDIR=@TOOLDIR@
 $TOOLDIR/llvm-ld "$@"
