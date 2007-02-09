@@ -347,34 +347,21 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 //                          Primitive 'Type' data
 //===----------------------------------------------------------------------===//
 
-#define DeclarePrimType(TY, Str)                       \
-  namespace {                                          \
-    struct VISIBILITY_HIDDEN TY##Type : public Type {  \
-      TY##Type() : Type(Str, Type::TY##TyID) {}        \
-    };                                                 \
-  }                                                    \
-  static ManagedStatic<TY##Type> The##TY##Ty;          \
-  const Type *Type::TY##Ty = &*The##TY##Ty
+const Type *Type::VoidTy   = new Type("void", Type::VoidTyID);
+const Type *Type::FloatTy  = new Type("float", Type::FloatTyID);
+const Type *Type::DoubleTy = new Type("double", Type::DoubleTyID);
+const Type *Type::LabelTy  = new Type("label", Type::LabelTyID);
 
-#define DeclareIntegerType(TY, BitWidth)                     \
-  namespace {                                                \
-    struct VISIBILITY_HIDDEN TY##Type : public IntegerType { \
-      TY##Type() : IntegerType(BitWidth) {}                  \
-    };                                                       \
-  }                                                          \
-  static ManagedStatic<TY##Type> The##TY##Ty;                \
-  const IntegerType *Type::TY##Ty = &*The##TY##Ty
-
-DeclarePrimType(Void,   "void");
-DeclarePrimType(Float,  "float");
-DeclarePrimType(Double, "double");
-DeclarePrimType(Label,  "label");
-DeclareIntegerType(Int1,    1);
-DeclareIntegerType(Int8,    8);
-DeclareIntegerType(Int16,  16);
-DeclareIntegerType(Int32,  32);
-DeclareIntegerType(Int64,  64);
-#undef DeclarePrimType
+namespace {
+  struct BuiltinIntegerType : public IntegerType {
+    BuiltinIntegerType(unsigned W) : IntegerType(W) {}
+  };
+}
+const IntegerType *Type::Int1Ty  = new BuiltinIntegerType(1);
+const IntegerType *Type::Int8Ty  = new BuiltinIntegerType(8);
+const IntegerType *Type::Int16Ty = new BuiltinIntegerType(16);
+const IntegerType *Type::Int32Ty = new BuiltinIntegerType(32);
+const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
 
 
 //===----------------------------------------------------------------------===//
