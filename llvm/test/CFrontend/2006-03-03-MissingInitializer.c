@@ -1,4 +1,5 @@
-// RUN: %llvmgcc %s -S -o - | gccas | llvm-dis | grep nate | grep 'global i32 0'
+// RUN: %llvmgcc %s -S -o - | llvm-as | opt -std-compile-opts | \
+// RUN:    llvm-dis | grep '@nate.*internal global i32 0'
 
 struct X { int *XX; int Y;};
 
