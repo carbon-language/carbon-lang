@@ -1342,11 +1342,10 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
   LLVM assembly.</dd>
 
   <dt><tt><b>llvm-ld</b></tt></dt>
-  <dd><tt>llvm-ld</tt> is very similar to gccld and provides a general purpose
-  and extensible linker for LLVM. This is the linker invoked by <tt>llvmc</tt>.
-  It allows optimization modules to be loaded so that language specific
-  optimizations can be applied at link time. This tool is considered
-  experimental.</dd>
+  <dd><tt>llvm-ld</tt> is a general purpose and extensible linker for LLVM. 
+  This is the linker invoked by <tt>llvmc</tt>. It performsn standard link time
+  optimizations and allows optimization modules to be loaded and run so that 
+  language specific optimizations can be applied at link time.</dd>
 
   <dt><tt><b>llvm-link</b></tt></dt>
   <dd><tt>llvm-link</tt>, not surprisingly, links multiple LLVM modules into 
@@ -1368,36 +1367,13 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
   the -march=c option).</dd>
 
   <dt><tt><b>llvm-gcc</b></tt></dt>
-  <dd><tt>llvm-gcc</tt> is a GCC-based C frontend
-  that has been retargeted to emit LLVM code as the machine code output.  It
-  works just like any other GCC compiler, taking the typical <tt>-c, -S, -E,
-  -o</tt> options that are typically used.  The source code for the
-  <tt>llvm-gcc</tt> tool is available as a separate CVS module.
-  <blockquote>
-    <dl>
-      <dt><tt><b>gccas</b></tt></dt>
-      <dd>This tool is invoked by the <tt>llvm-gcc</tt> frontend as the 
-      "assembler" part of the compiler.  This tool actually assembles LLVM 
-      assembly to LLVM bytecode, performs a variety of optimizations, and 
-      outputs LLVM bytecode.  Thus when you invoke 
-      <tt>llvm-gcc -c x.c -o x.o</tt>, you are causing <tt>gccas</tt> to be 
-      run, which writes the <tt>x.o</tt> file (which is an LLVM bytecode file 
-      that can be disassembled or manipulated just like any other bytecode 
-      file).  The command line interface to <tt>gccas</tt> is designed to be 
-      as close as possible to the <b>system</b> `<tt>as</tt>' utility so that 
-      the gcc frontend itself did not have to be modified to interface to 
-      a "weird" assembler.</dd>
-
-      <dt><tt><b>gccld</b></tt></dt>
-      <dd><tt>gccld</tt> links together several LLVM bytecode files into one 
-      bytecode file and does some optimization.  It is the linker invoked by 
-      the GCC frontend when multiple .o files need to be linked together.  
-      Like <tt>gccas</tt>, the command line interface of <tt>gccld</tt> is 
-      designed to match the system linker, to aid interfacing with the GCC 
-      frontend.</dd>
-    </dl>
-  </blockquote>
-  </dd>
+  <dd><tt>llvm-gcc</tt> is a GCC-based C frontend that has been retargeted to 
+  use LLVM as its backend instead of GCC's RTL backend. It can also emit LLVM 
+  byte code or assembly (with the <tt>-emit-llvm</tt> option) instead of the
+  usual machine code output.  It works just like any other GCC compiler, 
+  taking the typical <tt>-c, -S, -E, -o</tt> options that are typically used.  
+  Additionally, the the source code for <tt>llvm-gcc</tt> is available as a 
+  separate CVS module.</dd>
 
   <dt><tt><b>opt</b></tt></dt>
   <dd><tt>opt</tt> reads LLVM bytecode, applies a series of LLVM to LLVM 

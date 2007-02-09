@@ -314,8 +314,8 @@ sh:
 
       <ul>
         <li>Often targets include special assembler or linker flags which
-            <tt>gccas</tt>/<tt>gccld</tt> does not understand.  In general,
-            these can just be removed.</li>
+            <tt>llvm-as</tt>, <tt>opt</tt>, or <tt>llvm-ld</tt> do not 
+            understand.  In general, these can just be removed.</li>
 
         <li>LLVM currently does not support any floating point values other than
             32-bit and 64-bit IEEE floating point.  The primary effect of this
@@ -331,8 +331,8 @@ sh:
 
         <li>You may have to disable multilib support in your target.  Using
             multilib support causes the GCC compiler driver to add a lot of
-            "<tt>-L</tt>" options to the link line, which do not relate to LLVM
-            and confuse <tt>gccld</tt>.  To disable multilibs, delete any
+            "<tt>-L</tt>" options to the link line, which do not relate to 
+            LLVM.  To disable multilibs, delete any
             <tt>MULTILIB_OPTIONS</tt> lines from your target files.</li>
 
         <li>Did we mention that we don't support inline assembly?  You'll

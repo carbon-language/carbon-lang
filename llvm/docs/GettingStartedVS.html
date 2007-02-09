@@ -258,18 +258,13 @@ All these paths are absolute:</p>
        </pre></li>
 
   <li><p>Next, compile the C file into a LLVM bytecode file:</p>
-      <p><tt>% llvm-gcc hello.c -o hello</tt></p>
+      <p><tt>% llvm-gcc hello.c -emit-llvm -o hello.bc</tt></p>
 
-      <p>Note that you should have already built the tools and they have to be
-      in your path, at least <tt>gccas</tt> and <tt>gccld</tt>.</p>
-
-      <p>This will create two result files: <tt>hello</tt> and
-      <tt>hello.bc</tt>. The <tt>hello.bc</tt> is the LLVM bytecode that
-      corresponds the the compiled program and the library facilities that it
-      required.  <tt>hello</tt> is a simple shell script that runs the bytecode
-      file with <tt>lli</tt>, making the result directly executable.  Note that
-      all LLVM optimizations are enabled by default, so there is no need for a 
-      "-O3" switch.</p>
+      <p>This will create the result file <tt>hello.bc</tt> which is the LLVM 
+      bytecode that corresponds the the compiled program and the library 
+      facilities that it required.  You can execute this file directly using
+      <tt>lli</tt> tool, compile it to native assembly with the <tt>llc</tt>, 
+      optimize or analyze it further with the <tt>opt</tt> tool, etc.</p> 
       
       <p><b>Note: while you cannot do this step on Windows, you can do it on a
         Unix system and transfer <tt>hello.bc</tt> to Windows.</b></p></li>
