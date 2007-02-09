@@ -312,11 +312,8 @@ ifndef TBLGEN
   endif
 endif
 LLVM_CONFIG := $(LLVMToolDir)/llvm-config 
-ifndef GCCAS
-GCCAS    := $(LLVMToolDir)/gccas$(EXEEXT)
-endif
-ifndef GCCLD
-GCCLD    := $(LLVMToolDir)/gccld$(EXEEXT)
+ifndef LLVMLD
+LLVMLD    := $(LLVMToolDir)/gccld$(EXEEXT)
 endif
 ifndef LLVMDIS
 LLVMDIS  := $(LLVMToolDir)/llvm-dis$(EXEEXT)
@@ -712,14 +709,14 @@ $(warning Modules require llvm-gcc but no llvm-gcc is available ****)
 else
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
-LinkModule := $(GCCLD) -L$(CFERuntimeLibDir)
+LinkModule := $(LLVMLD) -L$(CFERuntimeLibDir)
 
 
 ifdef EXPORTED_SYMBOL_FILE
 LinkModule += -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 endif
 
-$(Module): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
+$(Module): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(LLVMLD)
 	$(Echo) Building $(BuildMode) Bytecode Module $(notdir $@)
 	$(Verb) $(LinkModule) -o $@ $(ObjectsBC)
 
@@ -842,10 +839,10 @@ else
 all-local:: $(LibName.BCA)
 
 ifdef EXPORTED_SYMBOL_FILE
-BCLinkLib = $(GCCLD) -L$(CFERuntimeLibDir) \
+BCLinkLib = $(LLVMLD) -L$(CFERuntimeLibDir) \
                      -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 
-$(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(GCCLD) \
+$(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(LLVMLD) \
                 $(LLVMToolDir)/llvm-ar
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@) \
 	  "(internalize)"
@@ -1182,13 +1179,14 @@ $(ObjDir)/%.s: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 
 # make the C and C++ compilers strip debug info out of bytecode libraries.
 ifdef DEBUG_RUNTIME
-$(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(GCCAS)
+$(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(LLVMAS) $(LOPT)
 	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
-	$(Verb) $(GCCAS) $< -o $@
+	$(Verb) $(LLVMAS) $< -o - | $(LOPT) -std-compile-opts $< -o $@
 else
-$(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(GCCAS)
+$(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(LLVMAS) $(LOPT)
 	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
-	$(Verb) $(GCCAS) -strip-debug $< -o $@
+	$(Verb) $(LLVMAS) $< -o - | \
+	  $(LOPT) -std-compile-opts -strip-debug $< -o $@
 endif
 
 
