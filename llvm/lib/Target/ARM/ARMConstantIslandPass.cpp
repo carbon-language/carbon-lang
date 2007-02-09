@@ -52,12 +52,12 @@ namespace {
     
     /// BBSizes - The size of each MachineBasicBlock in bytes of code, indexed
     /// by MBB Number.
-    SmallVector<unsigned, 8> BBSizes;
+    std::vector<unsigned> BBSizes;
     
     /// WaterList - A sorted list of basic blocks where islands could be placed
     /// (i.e. blocks that don't fall through to the following block, due
     /// to a return, unreachable, or unconditional branch).
-    SmallVector<MachineBasicBlock*, 8> WaterList;
+    std::vector<MachineBasicBlock*> WaterList;
 
     /// CPUser - One user of a constant pool, keeping the machine instruction
     /// pointer, the constant pool being referenced, and the max displacement
@@ -72,7 +72,7 @@ namespace {
     
     /// CPUsers - Keep track of all of the machine instructions that use various
     /// constant pools and their max displacement.
-    SmallVector<CPUser, 16> CPUsers;
+    std::vector<CPUser> CPUsers;
     
     /// CPEntry - One per constant pool entry, keeping the machine instruction
     /// pointer, the constpool index, and the number of CPUser's which
@@ -104,7 +104,7 @@ namespace {
 
     /// Branches - Keep track of all the immediate branch instructions.
     ///
-    SmallVector<ImmBranch, 32> ImmBranches;
+    std::vector<ImmBranch> ImmBranches;
 
     /// PushPopMIs - Keep track of all the Thumb push / pop instructions.
     ///
@@ -125,10 +125,10 @@ namespace {
     
   private:
     void DoInitialPlacement(MachineFunction &Fn,
-                            SmallVector<MachineInstr*, 16> &CPEMIs);
+                            std::vector<MachineInstr*> &CPEMIs);
     CPEntry *findConstPoolEntry(unsigned CPI, const MachineInstr *CPEMI);
     void InitialFunctionScan(MachineFunction &Fn,
-                             const SmallVector<MachineInstr*, 16> &CPEMIs);
+                             const std::vector<MachineInstr*> &CPEMIs);
     MachineBasicBlock *SplitBlockBeforeInstr(MachineInstr *MI);
     void UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB);
     bool HandleConstantPoolUser(MachineFunction &Fn, CPUser &U);
@@ -164,7 +164,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
 
   // Perform the initial placement of the constant pool entries.  To start with,
   // we put them all at the end of the function.
-  SmallVector<MachineInstr*, 16> CPEMIs;
+  std::vector<MachineInstr*> CPEMIs;
   if (!MCP.isEmpty())
     DoInitialPlacement(Fn, CPEMIs);
   
@@ -209,7 +209,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
 /// DoInitialPlacement - Perform the initial placement of the constant pool
 /// entries.  To start with, we put them all at the end of the function.
 void ARMConstantIslands::DoInitialPlacement(MachineFunction &Fn,
-                                        SmallVector<MachineInstr*, 16> &CPEMIs){
+                                        std::vector<MachineInstr*> &CPEMIs){
   // Create the basic block to hold the CPE's.
   MachineBasicBlock *BB = new MachineBasicBlock();
   Fn.getBasicBlockList().push_back(BB);
@@ -276,7 +276,7 @@ ARMConstantIslands::CPEntry
 /// information about the sizes of each block, the location of all the water,
 /// and finding all of the constant pool users.
 void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
-                                 const SmallVector<MachineInstr*, 16> &CPEMIs) {
+                                 const std::vector<MachineInstr*> &CPEMIs) {
   for (MachineFunction::iterator MBBI = Fn.begin(), E = Fn.end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock &MBB = *MBBI;
@@ -460,7 +460,7 @@ void ARMConstantIslands::UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB) {
   
   // Next, update WaterList.  Specifically, we need to add NewMBB as having 
   // available water after it.
-  SmallVector<MachineBasicBlock*, 8>::iterator IP =
+  std::vector<MachineBasicBlock*>::iterator IP =
     std::lower_bound(WaterList.begin(), WaterList.end(), NewBB,
                      CompareMBBNumbers);
   WaterList.insert(IP, NewBB);
