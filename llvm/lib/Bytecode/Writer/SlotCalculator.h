@@ -87,7 +87,14 @@ public:
     return ModuleTypeLevel;
   }
 
-  TypePlane &getPlane(unsigned Plane);
+  TypePlane &getPlane(unsigned Plane) {
+    // Okay we are just returning an entry out of the main Table.  Make sure the
+    // plane exists and return it.
+    if (Plane >= Table.size())
+      Table.resize(Plane+1);
+    return Table[Plane];
+  }
+
   TypeList& getTypes() { return Types; }
 
   /// incorporateFunction/purgeFunction - If you'd like to deal with a function,

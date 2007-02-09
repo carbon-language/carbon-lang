@@ -87,14 +87,6 @@ SlotCalculator::SlotCalculator(const Function *M ) {
   incorporateFunction(M);       // Start out in incorporated state
 }
 
-SlotCalculator::TypePlane &SlotCalculator::getPlane(unsigned Plane) {
-  // Okay we are just returning an entry out of the main Table.  Make sure the
-  // plane exists and return it.
-  if (Plane >= Table.size())
-    Table.resize(Plane+1);
-  return Table[Plane];
-}
-
 // processModule - Process all of the module level function declarations and
 // types that are available.
 //
