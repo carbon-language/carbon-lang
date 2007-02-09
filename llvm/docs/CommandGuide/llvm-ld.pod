@@ -71,6 +71,8 @@ and running the system compiler (typically gcc) on the result.
 
 =head2 General Options
 
+=over 
+
 =item B<-help>
 
 Print a summary of command line options.
@@ -88,6 +90,8 @@ Print statistics.
 
 Record the amount of time needed for each pass and print it to standard
 error.
+
+=back 
 
 =head2 Input/Output Options
 
@@ -242,15 +246,10 @@ first argument. The second argument to the program will be the name of a
 temporary file into which the program should place its optimized output. For
 example, the "no-op optimization" would be a simple shell script:
 
-=over
-
-#!/bin/bash
-cp $1 $2
+    #!/bin/bash
+    cp $1 $2
 
 =back
-
-=back
-
 
 =head1 EXIT STATUS
 
