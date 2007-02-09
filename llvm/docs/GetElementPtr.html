@@ -120,13 +120,13 @@
   <pre>
   void %munge(%struct.munger_struct* %P) {
   entry:
-    %tmp = getelementptr %struct.munger_struct* %P, int 1, uint 0
-    %tmp = load int* %tmp
-    %tmp6 = getelementptr %struct.munger_struct* %P, int 2, uint 1
-    %tmp7 = load int* %tmp6
-    %tmp8 = add int %tmp7, %tmp
-    %tmp9 = getelementptr %struct.munger_struct* %P, int 0, uint 0
-    store int %tmp8, int* %tmp9
+    %tmp = getelementptr %struct.munger_struct* %P, i32 1, i32 0
+    %tmp = load i32* %tmp
+    %tmp6 = getelementptr %struct.munger_struct* %P, i32 2, i32 1
+    %tmp7 = load i32* %tmp6
+    %tmp8 = add i32 %tmp7, %tmp
+    %tmp9 = getelementptr %struct.munger_struct* %P, i32 0, i32 0
+    store i32 %tmp8, i32* %tmp9
     ret void
   }</pre>
   <p>In each case the first operand is the pointer through which the GEP
@@ -134,11 +134,11 @@
   argument, allocated memory, or a global variable. </p>
   <p>To make this clear, let's consider a more obtuse example:</p>
   <pre>
-  %MyVar = unintialized global int
+  %MyVar = unintialized global i32
   ...
-  %idx1 = getelementptr int* %MyVar, long 0
-  %idx2 = getelementptr int* %MyVar, long 1
-  %idx3 = getelementptr int* %MyVar, long 2</pre>
+  %idx1 = getelementptr i32* %MyVar, i64 0
+  %idx2 = getelementptr i32* %MyVar, i64 1
+  %idx3 = getelementptr i32* %MyVar, i64 2</pre>
   <p>These GEP instructions are simply making address computations from the 
   base address of <tt>MyVar</tt>.  They compute, as follows (using C syntax):
   </p>
@@ -147,14 +147,14 @@
     <li> idx2 = (char*) &amp;MyVar + 4</li>
     <li> idx3 = (char*) &amp;MyVar + 8</li>
   </ul>
-  <p>Since the type <tt>int</tt> is known to be four bytes long, the indices 
+  <p>Since the type <tt>i32</tt> is known to be four bytes long, the indices 
   0, 1 and 2 translate into memory offsets of 0, 4, and 8, respectively. No 
   memory is accessed to make these computations because the address of 
   <tt>%MyVar</tt> is passed directly to the GEP instructions.</p>
   <p>The obtuse part of this example is in the cases of <tt>%idx2</tt> and 
   <tt>%idx3</tt>. They result in the computation of addresses that point to
   memory past the end of the <tt>%MyVar</tt> global, which is only one
-  <tt>int</tt> long, not three <tt>int</tt>s long.  While this is legal in LLVM,
+  <tt>i32</tt> long, not three <tt>i32</tt>s long.  While this is legal in LLVM,
   it is inadvisable because any load or store with the pointer that results 
   from these GEP instructions would produce undefined results.</p>
 </div>
@@ -169,29 +169,29 @@
   <p>This question arises most often when the GEP instruction is applied to a
   global variable which is always a pointer type. For example, consider
   this:</p><pre>
-  %MyStruct = uninitialized global { float*, int }
+  %MyStruct = uninitialized global { float*, i32 }
   ...
-  %idx = getelementptr { float*, int }* %MyStruct, long 0, ubyte 1</pre>
-  <p>The GEP above yields an <tt>int*</tt> by indexing the <tt>int</tt> typed 
+  %idx = getelementptr { float*, i32 }* %MyStruct, i64 0, i32 1</pre>
+  <p>The GEP above yields an <tt>i32*</tt> by indexing the <tt>i32</tt> typed 
   field of the structure <tt>%MyStruct</tt>. When people first look at it, they 
-  wonder why the <tt>long 0</tt> index is needed. However, a closer inspection 
+  wonder why the <tt>i64 0</tt> index is needed. However, a closer inspection 
   of how globals and GEPs work reveals the need. Becoming aware of the following
   facts will dispell the confusion:</p>
   <ol>
-    <li>The type of <tt>%MyStruct</tt> is <i>not</i> <tt>{ float*, int }</tt> 
-    but rather <tt>{ float*, int }*</tt>. That is, <tt>%MyStruct</tt> is a 
+    <li>The type of <tt>%MyStruct</tt> is <i>not</i> <tt>{ float*, i32 }</tt> 
+    but rather <tt>{ float*, i32 }*</tt>. That is, <tt>%MyStruct</tt> is a 
     pointer to a structure containing a pointer to a <tt>float</tt> and an 
-    <tt>int</tt>.</li>
+    <tt>i32</tt>.</li>
     <li>Point #1 is evidenced by noticing the type of the first operand of 
     the GEP instruction (<tt>%MyStruct</tt>) which is 
-    <tt>{ float*, int }*</tt>.</li>
-    <li>The first index, <tt>long 0</tt> is required to step over the global
+    <tt>{ float*, i32 }*</tt>.</li>
+    <li>The first index, <tt>i64 0</tt> is required to step over the global
     variable <tt>%MyStruct</tt>.  Since the first argument to the GEP
     instruction must always be a value of pointer type, the first index 
     steps through that pointer. A value of 0 means 0 elements offset from that
     pointer.</li>
-    <li>The second index, <tt>ubyte 1</tt> selects the second field of the
-    structure (the <tt>int</tt>). </li>
+    <li>The second index, <tt>i32 1</tt> selects the second field of the
+    structure (the <tt>i32</tt>). </li>
   </ol>
 </div>
 
@@ -206,9 +206,9 @@
   GEP is only involved in the computation of addresses. For example, consider 
   this:</p>
   <pre>
-  %MyVar = uninitialized global { [40 x int ]* }
+  %MyVar = uninitialized global { [40 x i32 ]* }
   ...
-  %idx = getelementptr { [40 x int]* }* %MyVar, long 0, ubyte 0, long 0, long 17</pre>
+  %idx = getelementptr { [40 x i32]* }* %MyVar, i64 0, i32 0, i64 0, i64 17</pre>
   <p>In this example, we have a global variable, <tt>%MyVar</tt> that is a
   pointer to a structure containing a pointer to an array of 40 ints. The 
   GEP instruction seems to be accessing the 18th integer of the structure's
@@ -219,19 +219,19 @@
   <p>In order to access the 18th integer in the array, you would need to do the
   following:</p>
   <pre>
-  %idx = getelementptr { [40 x int]* }* %, long 0, ubyte 0
-  %arr = load [40 x int]** %idx
-  %idx = getelementptr [40 x int]* %arr, long 0, long 17</pre>
+  %idx = getelementptr { [40 x i32]* }* %, i64 0, i32 0
+  %arr = load [40 x i32]** %idx
+  %idx = getelementptr [40 x i32]* %arr, i64 0, i64 17</pre>
   <p>In this case, we have to load the pointer in the structure with a load
   instruction before we can index into the array. If the example was changed 
   to:</p>
   <pre>
-  %MyVar = uninitialized global { [40 x int ] }
+  %MyVar = uninitialized global { [40 x i32 ] }
   ...
-  %idx = getelementptr { [40 x int] }*, long 0, ubyte 0, long 17</pre>
+  %idx = getelementptr { [40 x i32] }*, i64 0, i32 0, i64 17</pre>
   <p>then everything works fine. In this case, the structure does not contain a
   pointer and the GEP instruction can index through the global variable,
-  into the first field of the structure and access the 18th <tt>int</tt> in the 
+  into the first field of the structure and access the 18th <tt>i32</tt> in the 
   array there.</p>
 </div>
 
@@ -245,14 +245,14 @@
   instructions you find that they are different (0 and 1), therefore the address
   computation diverges with that index. Consider this example:</p>
   <pre>
-  %MyVar = global { [10 x int ] }
-  %idx1 = getlementptr { [10 x int ] }* %MyVar, long 0, ubyte 0, long 1
-  %idx2 = getlementptr { [10 x int ] }* %MyVar, long 1</pre>
+  %MyVar = global { [10 x i32 ] }
+  %idx1 = getlementptr { [10 x i32 ] }* %MyVar, i64 0, i32 0, i64 1
+  %idx2 = getlementptr { [10 x i32 ] }* %MyVar, i64 1</pre>
   <p>In this example, <tt>idx1</tt> computes the address of the second integer
   in the array that is in the structure in %MyVar, that is <tt>MyVar+4</tt>. The 
-  type of <tt>idx1</tt> is <tt>int*</tt>. However, <tt>idx2</tt> computes the 
+  type of <tt>idx1</tt> is <tt>i32*</tt>. However, <tt>idx2</tt> computes the 
   address of <i>the next</i> structure after <tt>%MyVar</tt>. The type of 
-  <tt>idx2</tt> is <tt>{ [10 x int] }*</tt> and its value is equivalent 
+  <tt>idx2</tt> is <tt>{ [10 x i32] }*</tt> and its value is equivalent 
   to <tt>MyVar + 40</tt> because it indexes past the ten 4-byte integers 
   in <tt>MyVar</tt>. Obviously, in such a situation, the pointers don't 
   alias.</p>
@@ -268,12 +268,12 @@
   through the 0th element does not change the address. However, it does change
   the type. Consider this example:</p>
   <pre>
-  %MyVar = global { [10 x int ] }
-  %idx1 = getlementptr { [10 x int ] }* %MyVar, long 1, ubyte 0, long 0
-  %idx2 = getlementptr { [10 x int ] }* %MyVar, long 1</pre>
+  %MyVar = global { [10 x i32 ] }
+  %idx1 = getlementptr { [10 x i32 ] }* %MyVar, i64 1, i32 0, i64 0
+  %idx2 = getlementptr { [10 x i32 ] }* %MyVar, i64 1</pre>
   <p>In this example, the value of <tt>%idx1</tt> is <tt>%MyVar+40</tt> and
-  its type is <tt>int*</tt>. The value of <tt>%idx2</tt> is also 
-  <tt>MyVar+40</tt> but its type is <tt>{ [10 x int] }*</tt>.</p>
+  its type is <tt>i32*</tt>. The value of <tt>%idx2</tt> is also 
+  <tt>MyVar+40</tt> but its type is <tt>{ [10 x i32] }*</tt>.</p>
 </div>
 
 <!-- *********************************************************************** -->
