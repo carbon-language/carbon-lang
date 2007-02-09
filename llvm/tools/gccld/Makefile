@@ -9,13 +9,8 @@
 
 LEVEL = ../..
 
-TOOLNAME = gccld
-LINK_COMPONENTS = bcreader bcwriter ipo scalaropts ipa linker
-REQUIRES_EH := 1
-
 include $(LEVEL)/Makefile.common
 
-ifdef DONT_USE_THIS
 install-local:: $(PROJ_bindir)/gccld
 	
 $(PROJ_bindir)/gccld : gccld.sh Makefile
@@ -32,4 +27,3 @@ $(ToolDir)/gccld : gccld.sh Makefile
 
 clean-local::
 	$(Verb)$(RM) -f $(ToolDir)/gccld
-endif
