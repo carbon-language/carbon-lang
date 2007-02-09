@@ -267,32 +267,6 @@ anything though, because the compares still wouldn't be shared.
 
 ===-------------------------------------------------------------------------===
 
-The legalizer should lower this:
-
-bool %test(ulong %x) {
-  %tmp = setlt ulong %x, 4294967296
-  ret bool %tmp
-}
-
-into "if x.high == 0", not:
-
-_test:
-        cntlzw r2, r3
-        xori r3, r3, 1
-        cmplwi cr0, r3, 0
-        srwi r2, r2, 5
-        li r3, 0
-        beq cr0, LBB1_2 ;entry
-LBB1_1: ;entry
-        mr r3, r2
-LBB1_2: ;entry
-        blr 
-
-noticed in 2005-05-11-Popcount-ffs-fls.c.
-
-
-===-------------------------------------------------------------------------===
-
 We should custom expand setcc instead of pretending that we have it.  That
 would allow us to expose the access of the crbit after the mfcr, allowing
 that access to be trivially folded into other ops.  A simple example:
