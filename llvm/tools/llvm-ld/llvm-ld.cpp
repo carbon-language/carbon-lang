@@ -59,6 +59,7 @@ static cl::list<std::string> Libraries("l", cl::Prefix,
   cl::desc("Specify libraries to link to"),
   cl::value_desc("library prefix"));
 
+// Options to control the linking, optimization, and code gen processes
 static cl::opt<bool> LinkAsLibrary("link-as-library",
   cl::desc("Link the .bc files together as a library, not an executable"));
 
@@ -84,7 +85,8 @@ static cl::list<std::string> PostLinkOpts("post-link-opts",
 static cl::list<std::string> XLinker("Xlinker", cl::value_desc("option"),
   cl::desc("Pass options to the system linker"));
 
-// Compatibility options that are ignored but supported by LD
+// Compatibility options that llvm-ld ignores but are supported for 
+// compatibility with LD
 static cl::opt<std::string> CO3("soname", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
@@ -107,15 +109,15 @@ static cl::opt<bool> CO8("end-group", cl::Hidden,
 /// everywhere.
 static std::string progname;
 
-/// PrintAndReturn - Prints a message to standard error and returns true.
+/// PrintAndExit - Prints a message to standard error and exits with error code
 ///
 /// Inputs:
-///  progname - The name of the program (i.e. argv[0]).
 ///  Message  - The message to print to standard error.
 ///
-static int PrintAndReturn(const std::string &Message) {
+static void PrintAndExit(const std::string &Message, int errcode = 1) {
   cerr << progname << ": " << Message << "\n";
-  return 1;
+  llvm_shutdown();
+  exit(errcode);
 }
 
 /// CopyEnv - This function takes an array of environment variables and makes a
@@ -203,10 +205,8 @@ void GenerateBytecode(Module* M, const std::string& FileName) {
   std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                std::ios::binary;
   std::ofstream Out(FileName.c_str(), io_mode);
-  if (!Out.good()) {
-    PrintAndReturn("error opening '" + FileName + "' for writing!");
-    return;
-  }
+  if (!Out.good())
+    PrintAndExit("error opening '" + FileName + "' for writing!");
 
   // Ensure that the bytecode file gets removed from the disk if we get a
   // terminating signal.
@@ -356,15 +356,11 @@ static void EmitShellScript(char **argv) {
   // build tree to the destination file.
   std::string ErrMsg;  
   sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0]);
-  if (llvmstub.isEmpty()) {
-    cerr << "Could not find llvm-stub.exe executable!\n";
-    exit(1);
-  }
+  if (llvmstub.isEmpty())
+    PrintAndExit("Could not find llvm-stub.exe executable!");
 
-  if (0 != sys::CopyFile(sys::Path(OutputFilename), llvmstub, &ErrMsg)) {
-    cerr << argv[0] << ": " << ErrMsg << "\n";
-    exit(1);    
-  }
+  if (0 != sys::CopyFile(sys::Path(OutputFilename), llvmstub, &ErrMsg))
+    PrintAndExit(ErrMsg);
 
   return;
 #endif
@@ -372,7 +368,7 @@ static void EmitShellScript(char **argv) {
   // Output the script to start the program...
   std::ofstream Out2(OutputFilename.c_str());
   if (!Out2.good())
-    exit(PrintAndReturn("error opening '" + OutputFilename + "' for writing!"));
+    PrintAndExit("error opening '" + OutputFilename + "' for writing!");
 
   Out2 << "#!/bin/sh\n";
   // Allow user to setenv LLVMINTERP if lli is not in their PATH.
@@ -481,7 +477,7 @@ int main(int argc, char **argv, char **envp) {
 
       // Link all the items together
       if (TheLinker.LinkInItems(Items,LinkItems) )
-        return 1;
+        return 1; // Error already printed
     }
 
     std::auto_ptr<Module> Composite(TheLinker.releaseModule());
@@ -506,15 +502,15 @@ int main(int argc, char **argv, char **envp) {
           if (!prog.canExecute()) {
             prog = sys::Program::FindProgramByName(*I);
             if (prog.isEmpty())
-              return PrintAndReturn(std::string("Optimization program '") + *I +
+              PrintAndExit(std::string("Optimization program '") + *I +
                 "' is not found or not executable.");
           }
           // Get the program arguments
           sys::Path tmp_output("opt_result");
           std::string ErrMsg;
-          if (tmp_output.createTemporaryFileOnDisk(true, &ErrMsg)) {
-            return PrintAndReturn(ErrMsg);
-          }
+          if (tmp_output.createTemporaryFileOnDisk(true, &ErrMsg))
+            PrintAndExit(ErrMsg);
+
           const char* args[4];
           args[0] = I->c_str();
           args[1] = RealBytecodeOutput.c_str();
@@ -524,16 +520,12 @@ int main(int argc, char **argv, char **envp) {
             if (tmp_output.isBytecodeFile()) {
               sys::Path target(RealBytecodeOutput);
               target.eraseFromDisk();
-              if (tmp_output.renamePathOnDisk(target, &ErrMsg)) {
-                cerr << argv[0] << ": " << ErrMsg << "\n";
-                return 2;
-              }
+              if (tmp_output.renamePathOnDisk(target, &ErrMsg))
+                PrintAndExit(ErrMsg, 2);
             } else
-              return PrintAndReturn(
-                "Post-link optimization output is not bytecode");
+              PrintAndExit("Post-link optimization output is not bytecode");
           } else {
-            cerr << argv[0] << ": " << ErrMsg << "\n";
-            return 2;
+            PrintAndExit(ErrMsg);
           }
         }
       }
@@ -554,27 +546,25 @@ int main(int argc, char **argv, char **envp) {
         // Determine the locations of the llc and gcc programs.
         sys::Path llc = FindExecutable("llc", argv[0]);
         if (llc.isEmpty())
-          return PrintAndReturn("Failed to find llc");
+          PrintAndExit("Failed to find llc");
 
         sys::Path gcc = FindExecutable("gcc", argv[0]);
         if (gcc.isEmpty())
-          return PrintAndReturn("Failed to find gcc");
+          PrintAndExit("Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
-        if (Verbose) cout << "Generating Assembly Code\n";
+        if (Verbose) 
+          cout << "Generating Assembly Code\n";
         std::string ErrMsg;
         if (0 != GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput,
-            llc, ErrMsg)) {
-          cerr << argv[0] << ": " << ErrMsg << "\n";
-          return 1;
-        }
+            llc, ErrMsg))
+          PrintAndExit(ErrMsg);
 
-        if (Verbose) cout << "Generating Native Code\n";
+        if (Verbose) 
+          cout << "Generating Native Code\n";
         if (0 != GenerateNative(OutputFilename, AssemblyFile.toString(),
-            LinkItems,gcc,envp,ErrMsg)) {
-          cerr << argv[0] << ": " << ErrMsg << "\n";
-          return 1;
-        }
+            LinkItems,gcc,envp,ErrMsg))
+          PrintAndExit(ErrMsg);
 
         // Remove the assembly language file.
         AssemblyFile.eraseFromDisk();
@@ -589,27 +579,25 @@ int main(int argc, char **argv, char **envp) {
         // Determine the locations of the llc and gcc programs.
         sys::Path llc = FindExecutable("llc", argv[0]);
         if (llc.isEmpty())
-          return PrintAndReturn("Failed to find llc");
+          PrintAndExit("Failed to find llc");
 
         sys::Path gcc = FindExecutable("gcc", argv[0]);
         if (gcc.isEmpty())
-          return PrintAndReturn("Failed to find gcc");
+          PrintAndExit("Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
-        if (Verbose) cout << "Generating Assembly Code\n";
+        if (Verbose) 
+          cout << "Generating Assembly Code\n";
         std::string ErrMsg;
         if (0 != GenerateCFile(
-            CFile.toString(), RealBytecodeOutput, llc, ErrMsg)) {
-          cerr << argv[0] << ": " << ErrMsg << "\n";
-          return 1;
-        }
+            CFile.toString(), RealBytecodeOutput, llc, ErrMsg))
+          PrintAndExit(ErrMsg);
 
-        if (Verbose) cout << "Generating Native Code\n";
+        if (Verbose) 
+          cout << "Generating Native Code\n";
         if (0 != GenerateNative(OutputFilename, CFile.toString(), LinkItems, 
-            gcc, envp, ErrMsg)) {
-          cerr << argv[0] << ": " << ErrMsg << "\n";
-          return 1;
-        }
+            gcc, envp, ErrMsg))
+          PrintAndExit(ErrMsg);
 
         // Remove the assembly language file.
         CFile.eraseFromDisk();
@@ -620,27 +608,22 @@ int main(int argc, char **argv, char **envp) {
 
       // Make the script executable...
       std::string ErrMsg;
-      if (sys::Path(OutputFilename).makeExecutableOnDisk(&ErrMsg)) {
-        cerr << argv[0] << ": " << ErrMsg << "\n";
-        return 1;
-      }
+      if (sys::Path(OutputFilename).makeExecutableOnDisk(&ErrMsg))
+        PrintAndExit(ErrMsg);
 
       // Make the bytecode file readable and directly executable in LLEE as well
-      if (sys::Path(RealBytecodeOutput).makeExecutableOnDisk(&ErrMsg)) {
-        cerr << argv[0] << ": " << ErrMsg << "\n";
-        return 1;
-      }
-      if (sys::Path(RealBytecodeOutput).makeReadableOnDisk(&ErrMsg)) {
-        cerr << argv[0] << ": " << ErrMsg << "\n";
-        return 1;
-      }
-    }
+      if (sys::Path(RealBytecodeOutput).makeExecutableOnDisk(&ErrMsg))
+        PrintAndExit(ErrMsg);
 
-    return 0;
+      if (sys::Path(RealBytecodeOutput).makeReadableOnDisk(&ErrMsg))
+        PrintAndExit(ErrMsg);
+    }
   } catch (const std::string& msg) {
-    cerr << argv[0] << ": " << msg << "\n";
+    PrintAndExit(msg,2);
   } catch (...) {
-    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    PrintAndExit("Unexpected unknown exception occurred.", 2);
   }
-  return 1;
+
+  // Graceful exit
+  return 0;
 }
