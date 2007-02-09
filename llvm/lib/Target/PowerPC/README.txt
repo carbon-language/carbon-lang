@@ -596,3 +596,32 @@ _test:
 This sort of thing occurs a lot due to globalopt.
 
 ===-------------------------------------------------------------------------===
+
+We currently compile 32-bit bswap:
+
+declare i32 @llvm.bswap.i32(i32 %A)
+define i32 @test(i32 %A) {
+        %B = call i32 @llvm.bswap.i32(i32 %A)
+        ret i32 %B
+}
+
+to:
+
+_test:
+        rlwinm r2, r3, 24, 16, 23
+        slwi r4, r3, 24
+        rlwimi r2, r3, 8, 24, 31
+        rlwimi r4, r3, 8, 8, 15
+        rlwimi r4, r2, 0, 16, 31
+        mr r3, r4
+        blr 
+
+it would be more efficient to produce:
+
+_foo:   mr r0,r3
+        rlwinm r3,r3,8,0xffffffff
+        rlwimi r3,r0,24,0,7
+        rlwimi r3,r0,24,16,23
+        blr
+
+===-------------------------------------------------------------------------===
