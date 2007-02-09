@@ -19,9 +19,6 @@
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Instruction.h"
-#include "llvm/Support/DataTypes.h"
-#include <string>
-#include <vector>
 
 namespace llvm {
   class InlineAsm;
