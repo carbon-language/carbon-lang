@@ -70,8 +70,8 @@ inline void BytecodeWriter::output(unsigned i, int pos) {
   }
 }
 
-inline void BytecodeWriter::output(int i) {
-  output((unsigned)i);
+inline void BytecodeWriter::output(int32_t i) {
+  output((uint32_t)i);
 }
 
 /// output_vbr - Output an unsigned value, by using the least number of bytes
@@ -93,7 +93,7 @@ inline void BytecodeWriter::output_vbr(uint64_t i) {
   }
 }
 
-inline void BytecodeWriter::output_vbr(unsigned i) {
+inline void BytecodeWriter::output_vbr(uint32_t i) {
   while (1) {
     if (i < 0x80) { // done?
       Out.push_back((unsigned char)i);   // We know the high bit is clear...
