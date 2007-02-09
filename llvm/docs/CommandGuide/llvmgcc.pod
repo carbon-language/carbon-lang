@@ -85,7 +85,7 @@ occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<llvm-g++|llvmgxx>, L<gccas|gccas>, L<gccld|gccld>
+L<llvm-g++|llvmgxx>
 
 =head1 AUTHORS
 
