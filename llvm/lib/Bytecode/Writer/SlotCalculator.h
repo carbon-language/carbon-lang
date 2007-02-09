@@ -132,7 +132,6 @@ private:
   //
   void processTypeSymbolTable(const TypeSymbolTable *ST);
   void processValueSymbolTable(const ValueSymbolTable *ST);
-  void processSymbolTableConstants(const ValueSymbolTable *ST);
 
   // insertPrimitives - helper for constructors to insert primitive types.
   void insertPrimitives();

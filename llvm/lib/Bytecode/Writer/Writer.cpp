@@ -1112,8 +1112,6 @@ void BytecodeWriter::outputFunction(const Function *F) {
   // Get slot information about the function...
   Table.incorporateFunction(F);
 
-  outputConstants(true);
-
   // Output all of the instructions in the body of the function
   outputInstructions(F);
 

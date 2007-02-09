@@ -171,7 +171,6 @@ void SlotCalculator::processModule() {
       }
       getOrCreateSlot(I->getType());
     }
-    processSymbolTableConstants(&F->getValueSymbolTable());
   }
 
   // Insert constants that are named at module level into the slot pool so that
@@ -233,15 +232,6 @@ void SlotCalculator::processValueSymbolTable(const ValueSymbolTable *VST) {
     getOrCreateSlot(VI->second);
 }
 
-void SlotCalculator::processSymbolTableConstants(const ValueSymbolTable *VST) {
-  // Now do the constant values in all planes
-  for (ValueSymbolTable::const_iterator VI = VST->begin(), VE = VST->end(); 
-       VI != VE; ++VI)
-    if (isa<Constant>(VI->second) && !isa<GlobalValue>(VI->second))
-      getOrCreateSlot(VI->second);
-}
-
-
 void SlotCalculator::incorporateFunction(const Function *F) {
   assert((ModuleLevel.empty() ||
           ModuleTypeLevel == 0) && "Module already incorporated!");
@@ -270,14 +260,6 @@ void SlotCalculator::incorporateFunction(const Function *F) {
     for (constant_iterator CI = constant_begin(F), CE = constant_end(F);
          CI != CE; ++CI)
       getOrCreateSlot(*CI);
-
-    // If there is a symbol table, it is possible that the user has names for
-    // constants that are not being used.  In this case, we will have problems
-    // if we don't emit the constants now, because otherwise we will get
-    // symbol table references to constants not in the output.  Scan for these
-    // constants now.
-    //
-    processSymbolTableConstants(&F->getValueSymbolTable());
   }
 
   SC_DEBUG("Inserting Instructions:\n");
