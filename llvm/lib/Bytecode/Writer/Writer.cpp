@@ -826,7 +826,7 @@ BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
   outputModuleInfoBlock(M);
 
   // Output module level constants, used for global variable initializers
-  outputConstants(false);
+  outputConstants();
 
   // Do the whole module now! Process each function at a time...
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
@@ -904,30 +904,22 @@ static inline bool hasNullValue(const Type *Ty) {
   return Ty != Type::LabelTy && Ty != Type::VoidTy && !isa<OpaqueType>(Ty);
 }
 
-void BytecodeWriter::outputConstants(bool isFunction) {
+void BytecodeWriter::outputConstants() {
   BytecodeBlock CPool(BytecodeFormat::ConstantPoolBlockID, *this,
                       true  /* Elide block if empty */);
 
   unsigned NumPlanes = Table.getNumPlanes();
 
-  if (isFunction)
-    // Output the type plane before any constants!
-    outputTypes(Table.getModuleTypeLevel());
-  else
-    // Output module-level string constants before any other constants.
-    outputConstantStrings();
+  // Output module-level string constants before any other constants.
+  outputConstantStrings();
 
   for (unsigned pno = 0; pno != NumPlanes; pno++) {
     const std::vector<const Value*> &Plane = Table.getPlane(pno);
     if (!Plane.empty()) {              // Skip empty type planes...
       unsigned ValNo = 0;
-      if (isFunction)                  // Don't re-emit module constants
-        ValNo += Table.getModuleLevel(pno);
-
       if (hasNullValue(Plane[0]->getType())) {
         // Skip zero initializer
-        if (ValNo == 0)
-          ValNo = 1;
+        ValNo = 1;
       }
 
       // Write out constants in the plane

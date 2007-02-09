@@ -35,7 +35,7 @@ public:
   BytecodeWriter(std::vector<unsigned char> &o, const Module *M);
 
 private:
-  void outputConstants(bool isFunction);
+  void outputConstants();
   void outputConstantStrings();
   void outputFunction(const Function *F);
   void outputCompactionTable();
