@@ -370,19 +370,15 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
   return insertValue(V);
 }
 
-int SlotCalculator::insertValue(const Value *V, bool dontIgnore) {
+int SlotCalculator::insertValue(const Value *V) {
   assert(V && "Can't insert a null value!");
   assert(getSlot(V) == -1 && "Value is already in the table!");
 
-  // If this node does not contribute to a plane, or if the node has a
-  // name and we don't want names, then ignore the silly node... Note that types
-  // do need slot numbers so that we can keep track of where other values land.
-  //
-  if (!dontIgnore)                              // Don't ignore nonignorables!
-    if (V->getType() == Type::VoidTy) {         // Ignore void type nodes
-      SC_DEBUG("ignored value " << *V << "\n");
-      return -1;                  // We do need types unconditionally though
-    }
+  // If this node does not contribute to a plane, ignore the node.
+  if (V->getType() == Type::VoidTy) {         // Ignore void type nodes
+    SC_DEBUG("ignored value " << *V << "\n");
+    return -1;
+  }
 
   // Okay, everything is happy, actually insert the silly value now...
   return doInsertValue(V);
