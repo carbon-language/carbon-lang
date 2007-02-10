@@ -48,11 +48,11 @@ static inline void getTypeInfoPref(const Type *Ty, const TargetData *TD,
 StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
   StructAlignment = 0;
   StructSize = 0;
+  NumElements = ST->getNumElements();
 
   // Loop over each of the elements, placing them in memory...
-  for (StructType::element_iterator TI = ST->element_begin(),
-         TE = ST->element_end(); TI != TE; ++TI) {
-    const Type *Ty = *TI;
+  for (unsigned i = 0, e = NumElements; i != e; ++i) {
+    const Type *Ty = ST->getElementType(i);
     unsigned char A;
     unsigned TyAlign;
     uint64_t TySize;
@@ -66,7 +66,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
     // Keep track of maximum alignment constraint
     StructAlignment = std::max(TyAlign, StructAlignment);
 
-    MemberOffsets.push_back(StructSize);
+    MemberOffsets[i] = StructSize;
     StructSize += TySize;                 // Consume space for this data item
   }
 
@@ -83,15 +83,15 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
 /// getElementContainingOffset - Given a valid offset into the structure,
 /// return the structure index that contains it.
 unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
-  std::vector<uint64_t>::const_iterator SI =
-    std::upper_bound(MemberOffsets.begin(), MemberOffsets.end(), Offset);
-  assert(SI != MemberOffsets.begin() && "Offset not in structure type!");
+  const uint64_t *SI =
+    std::upper_bound(&MemberOffsets[0], &MemberOffsets[NumElements], Offset);
+  assert(SI != &MemberOffsets[0] && "Offset not in structure type!");
   --SI;
   assert(*SI <= Offset && "upper_bound didn't work");
-  assert((SI == MemberOffsets.begin() || *(SI-1) < Offset) &&
-         (SI+1 == MemberOffsets.end() || *(SI+1) > Offset) &&
+  assert((SI == &MemberOffsets[0] || *(SI-1) < Offset) &&
+         (SI+1 == &MemberOffsets[NumElements] || *(SI+1) > Offset) &&
          "Upper bound didn't work!");
-  return SI-MemberOffsets.begin();
+  return SI-&MemberOffsets[0];
 }
 
 //===----------------------------------------------------------------------===//
@@ -203,24 +203,65 @@ TargetData::TargetData(const Module *M) {
 }
 
 /// LayoutInfo - The lazy cache of structure layout information maintained by
-/// TargetData.
+/// TargetData.  Note that the struct types must have been free'd before
+/// llvm_shutdown is called (and thus this is deallocated) because all the
+/// targets with cached elements should have been destroyed.
 ///
 typedef std::pair<const TargetData*,const StructType*> LayoutKey;
-static ManagedStatic<std::map<LayoutKey, StructLayout> > LayoutInfo;
+static ManagedStatic<std::map<LayoutKey, StructLayout*> > LayoutInfo;
 
 
 TargetData::~TargetData() {
   if (LayoutInfo.isConstructed()) {
     // Remove any layouts for this TD.
-    std::map<LayoutKey, StructLayout> &TheMap = *LayoutInfo;
-    std::map<LayoutKey, StructLayout>::iterator
+    std::map<LayoutKey, StructLayout*> &TheMap = *LayoutInfo;
+    std::map<LayoutKey, StructLayout*>::iterator
       I = TheMap.lower_bound(LayoutKey(this, (const StructType*)0));
     
-    for (std::map<LayoutKey, StructLayout>::iterator E = TheMap.end();
-         I != E && I->first.first == this; )
+    for (std::map<LayoutKey, StructLayout*>::iterator E = TheMap.end();
+         I != E && I->first.first == this; ) {
+      I->second->~StructLayout();
+      free(I->second);
       TheMap.erase(I++);
+    }
   }
 }
+
+const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
+  std::map<LayoutKey, StructLayout*> &TheMap = *LayoutInfo;
+  
+  std::map<LayoutKey, StructLayout*>::iterator
+  I = TheMap.lower_bound(LayoutKey(this, Ty));
+  if (I != TheMap.end() && I->first.first == this && I->first.second == Ty)
+    return I->second;
+
+  // Otherwise, create the struct layout.  Because it is variable length, we 
+  // malloc it, then use placement new.
+  unsigned NumElts = Ty->getNumElements();
+  StructLayout *L =
+    (StructLayout *)malloc(sizeof(StructLayout)+(NumElts-1)*sizeof(uint64_t));
+  new (L) StructLayout(Ty, *this);
+    
+  TheMap.insert(I, std::make_pair(LayoutKey(this, Ty), L));
+  return L;
+}
+
+/// InvalidateStructLayoutInfo - TargetData speculatively caches StructLayout
+/// objects.  If a TargetData object is alive when types are being refined and
+/// removed, this method must be called whenever a StructType is removed to
+/// avoid a dangling pointer in this cache.
+void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
+  if (!LayoutInfo.isConstructed()) return;  // No cache.
+  
+  std::map<LayoutKey, StructLayout*>::iterator I = 
+    LayoutInfo->find(LayoutKey(this, Ty));
+  if (I != LayoutInfo->end()) {
+    I->second->~StructLayout();
+    free(I->second);
+    LayoutInfo->erase(I);
+  }
+}
+
 
 std::string TargetData::getStringRepresentation() const {
   std::stringstream repr;
@@ -249,33 +290,6 @@ std::string TargetData::getStringRepresentation() const {
   
   return repr.str();
 }
-
-const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
-  std::map<LayoutKey, StructLayout> &TheMap = *LayoutInfo;
-  
-  std::map<LayoutKey, StructLayout>::iterator
-    I = TheMap.lower_bound(LayoutKey(this, Ty));
-  if (I != TheMap.end() && I->first.first == this && I->first.second == Ty)
-    return &I->second;
-  else {
-    return &TheMap.insert(I, std::make_pair(LayoutKey(this, Ty),
-                                            StructLayout(Ty, *this)))->second;
-  }
-}
-
-/// InvalidateStructLayoutInfo - TargetData speculatively caches StructLayout
-/// objects.  If a TargetData object is alive when types are being refined and
-/// removed, this method must be called whenever a StructType is removed to
-/// avoid a dangling pointer in this cache.
-void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
-  if (!LayoutInfo.isConstructed()) return;  // No cache.
-
-  std::map<LayoutKey, StructLayout>::iterator I = 
-    LayoutInfo->find(std::make_pair(this, Ty));
-  if (I != LayoutInfo->end())
-    LayoutInfo->erase(I);
-}
-
 
 
 static inline void getTypeInfoABI(const Type *Ty, const TargetData *TD,

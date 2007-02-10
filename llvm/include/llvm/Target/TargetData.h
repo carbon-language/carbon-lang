@@ -275,9 +275,10 @@ public:
 /// target machine, based on the TargetData structure.
 ///
 class StructLayout {
-  std::vector<uint64_t> MemberOffsets;
-  unsigned StructAlignment;
   uint64_t StructSize;
+  unsigned StructAlignment;
+  unsigned NumElements;
+  uint64_t MemberOffsets[1];  // variable sized array!
 public:
 
   uint64_t getSizeInBytes() const {
@@ -294,7 +295,7 @@ public:
   unsigned getElementContainingOffset(uint64_t Offset) const;
 
   uint64_t getElementOffset(unsigned Idx) const {
-    assert(Idx < MemberOffsets.size() && "Invalid element idx!");
+    assert(Idx < NumElements && "Invalid element idx!");
     return MemberOffsets[Idx];
   }
   
