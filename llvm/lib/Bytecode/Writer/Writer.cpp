@@ -812,21 +812,22 @@ void BytecodeWriter::outputTypes(unsigned TypeNum) {
 // Helper function for outputConstants().
 // Writes out all the constants in the plane Plane starting at entry StartNo.
 //
-void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
-                                            &Plane, unsigned StartNo) {
+void BytecodeWriter::outputConstantsInPlane(const Value *const *Plane,
+                                            unsigned PlaneSize,
+                                            unsigned StartNo) {
   unsigned ValNo = StartNo;
 
   // Scan through and ignore function arguments, global values, and constant
   // strings.
-  for (; ValNo < Plane.size() &&
+  for (; ValNo < PlaneSize &&
          (isa<Argument>(Plane[ValNo]) || isa<GlobalValue>(Plane[ValNo]) ||
           (isa<ConstantArray>(Plane[ValNo]) &&
            cast<ConstantArray>(Plane[ValNo])->isString())); ValNo++)
     /*empty*/;
 
   unsigned NC = ValNo;              // Number of constants
-  for (; NC < Plane.size() && (isa<Constant>(Plane[NC]) || 
-                               isa<InlineAsm>(Plane[NC])); NC++)
+  for (; NC < PlaneSize && (isa<Constant>(Plane[NC]) || 
+                              isa<InlineAsm>(Plane[NC])); NC++)
     /*empty*/;
   NC -= ValNo;                      // Convert from index into count
   if (NC == 0) return;              // Skip empty type planes...
@@ -839,7 +840,7 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   output_vbr(NC);
 
   // Put out the Type ID Number.
-  output_typeid(Table.getTypeSlot(Plane.front()->getType()));
+  output_typeid(Table.getTypeSlot(Plane[0]->getType()));
 
   for (unsigned i = ValNo; i < ValNo+NC; ++i) {
     const Value *V = Plane[i];
@@ -864,7 +865,7 @@ void BytecodeWriter::outputConstants() {
   outputConstantStrings();
 
   for (unsigned pno = 0; pno != NumPlanes; pno++) {
-    const std::vector<const Value*> &Plane = Table.getPlane(pno);
+    const SlotCalculator::TypePlane &Plane = Table.getPlane(pno);
     if (!Plane.empty()) {              // Skip empty type planes...
       unsigned ValNo = 0;
       if (hasNullValue(Plane[0]->getType())) {
@@ -873,7 +874,7 @@ void BytecodeWriter::outputConstants() {
       }
 
       // Write out constants in the plane
-      outputConstantsInPlane(Plane, ValNo);
+      outputConstantsInPlane(&Plane[0], Plane.size(), ValNo);
     }
   }
 }

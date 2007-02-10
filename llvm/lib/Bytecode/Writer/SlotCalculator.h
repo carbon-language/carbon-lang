@@ -21,6 +21,7 @@
 #define LLVM_ANALYSIS_SLOTCALCULATOR_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include <vector>
 
 namespace llvm {
@@ -44,9 +45,10 @@ struct ModuleLevelDenseMapKeyInfo {
 
 class SlotCalculator {
   const Module *TheModule;
-
+public:
   typedef std::vector<const Type*> TypeList;
-  typedef std::vector<const Value*> TypePlane;
+  typedef SmallVector<const Value*, 16> TypePlane;
+private:
   std::vector<TypePlane> Table;
   TypeList Types;
   typedef DenseMap<const Value*, unsigned> NodeMapType;

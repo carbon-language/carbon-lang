@@ -35,11 +35,6 @@ private:
   void outputConstants();
   void outputConstantStrings();
   void outputFunction(const Function *F);
-  void outputCompactionTable();
-  void outputCompactionTypes(unsigned StartNo);
-  void outputCompactionTablePlane(unsigned PlaneNo,
-                                  const std::vector<const Value*> &TypePlane,
-                                  unsigned StartNo);
   void outputInstructions(const Function *F);
   void outputInstruction(const Instruction &I);
   void outputInstructionFormat0(const Instruction *I, unsigned Opcode,
@@ -66,7 +61,7 @@ private:
   void outputTypeSymbolTable(const TypeSymbolTable &TST);
   void outputValueSymbolTable(const ValueSymbolTable &ST);
   void outputTypes(unsigned StartNo);
-  void outputConstantsInPlane(const std::vector<const Value*> &Plane,
+  void outputConstantsInPlane(const Value *const*Plane, unsigned PlaneSize,
                               unsigned StartNo);
   void outputConstant(const Constant *CPV);
   void outputInlineAsm(const InlineAsm *IA);
