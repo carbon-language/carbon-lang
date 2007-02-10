@@ -424,10 +424,8 @@ ArrayType::ArrayType(const Type *ElType, uint64_t NumEl)
 PackedType::PackedType(const Type *ElType, unsigned NumEl)
   : SequentialType(PackedTyID, ElType) {
   NumElements = NumEl;
-
+  setAbstract(ElType->isAbstract());
   assert(NumEl > 0 && "NumEl of a PackedType must be greater than 0");
-  assert((ElType->isInteger() || ElType->isFloatingPoint()) &&
-         "Elements of a PackedType must be a primitive type");
 }
 
 
