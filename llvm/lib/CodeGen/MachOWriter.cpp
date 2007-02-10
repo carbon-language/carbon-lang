@@ -779,9 +779,9 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
       //
       switch (CE->getOpcode()) {
       case Instruction::GetElementPtr: {
-        std::vector<Value*> Indexes(CE->op_begin()+1, CE->op_end());
+        SmallVector<Value*, 8> Indices(CE->op_begin()+1, CE->op_end());
         ScatteredOffset = TD->getIndexedOffset(CE->getOperand(0)->getType(),
-                                               Indexes);
+                                               &Indices[0], Indices.size());
         WorkList.push_back(CPair(CE->getOperand(0), PA));
         break;
       }
