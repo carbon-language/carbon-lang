@@ -65,7 +65,7 @@ public:
   /// getSlot - Return the slot number of the specified value in it's type
   /// plane.  This returns < 0 on error!
   ///
-  int getSlot(const Value *V) const;
+  unsigned getSlot(const Value *V) const;
   int getTypeSlot(const Type* T) const;
 
   inline unsigned getNumPlanes() const { return Table.size(); }

@@ -306,11 +306,10 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     output_vbr(CE->getOpcode());          // Put out the CE op code
 
     for (User::const_op_iterator OI = CE->op_begin(); OI != CE->op_end(); ++OI){
-      int Slot = Table.getSlot(*OI);
-      assert(Slot != -1 && "Unknown constant used in ConstantExpr!!");
-      output_vbr((unsigned)Slot);
+      unsigned Slot = Table.getSlot(*OI);
+      output_vbr(Slot);
       Slot = Table.getTypeSlot((*OI)->getType());
-      output_typeid((unsigned)Slot);
+      output_typeid(Slot);
     }
     if (CE->isCompare())
       output_vbr((unsigned)CE->getPredicate());
@@ -338,33 +337,23 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     const ConstantArray *CPA = cast<ConstantArray>(CPV);
     assert(!CPA->isString() && "Constant strings should be handled specially!");
 
-    for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i) {
-      int Slot = Table.getSlot(CPA->getOperand(i));
-      assert(Slot != -1 && "Constant used but not available!!");
-      output_vbr((unsigned)Slot);
-    }
+    for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
+      output_vbr(Table.getSlot(CPA->getOperand(i)));
     break;
   }
 
   case Type::PackedTyID: {
     const ConstantPacked *CP = cast<ConstantPacked>(CPV);
-
-    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
-      int Slot = Table.getSlot(CP->getOperand(i));
-      assert(Slot != -1 && "Constant used but not available!!");
-      output_vbr((unsigned)Slot);
-    }
+    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
+      output_vbr(Table.getSlot(CP->getOperand(i)));
     break;
   }
 
   case Type::StructTyID: {
     const ConstantStruct *CPS = cast<ConstantStruct>(CPV);
 
-    for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i) {
-      int Slot = Table.getSlot(CPS->getOperand(i));
-      assert(Slot != -1 && "Constant used but not available!!");
-      output_vbr((unsigned)Slot);
-    }
+    for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
+      output_vbr(Table.getSlot(CPS->getOperand(i)));
     break;
   }
 
@@ -452,11 +441,8 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
                         isa<CmpInst>(I) || isa<VAArgInst>(I) || Opcode == 58));
 
   if (!isa<GetElementPtrInst>(&I)) {
-    for (unsigned i = 0; i < NumArgs; ++i) {
-      int Slot = Table.getSlot(I->getOperand(i));
-      assert(Slot >= 0 && "No slot number for value!?!?");
-      output_vbr((unsigned)Slot);
-    }
+    for (unsigned i = 0; i < NumArgs; ++i)
+      output_vbr(Table.getSlot(I->getOperand(i)));
 
     if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
       int Slot = Table.getTypeSlot(I->getType());
@@ -471,16 +457,13 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
                  unsigned(cast<CallInst>(I)->isTailCall()));
     }
   } else {
-    int Slot = Table.getSlot(I->getOperand(0));
-    assert(Slot >= 0 && "No slot number for value!?!?");
-    output_vbr(unsigned(Slot));
+    output_vbr(Table.getSlot(I->getOperand(0)));
 
     // We need to encode the type of sequential type indices into their slot #
     unsigned Idx = 1;
     for (gep_type_iterator TI = gep_type_begin(I), E = gep_type_end(I);
          Idx != NumArgs; ++TI, ++Idx) {
-      Slot = Table.getSlot(I->getOperand(Idx));
-      assert(Slot >= 0 && "No slot number for value!?!?");
+      unsigned Slot = Table.getSlot(I->getOperand(Idx));
 
       if (isa<SequentialType>(*TI)) {
         // These should be either 32-bits or 64-bits, however, with bit
@@ -493,7 +476,7 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
         unsigned IdxId = BitWidth == 32 ? 0 : 1;
         Slot = (Slot << 1) | IdxId;
       }
-      output_vbr(unsigned(Slot));
+      output_vbr(Slot);
     }
   }
 }
@@ -537,11 +520,8 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
 
   // The type for the function has already been emitted in the type field of the
   // instruction.  Just emit the slot # now.
-  for (unsigned i = 0; i != NumFixedOperands; ++i) {
-    int Slot = Table.getSlot(I->getOperand(i));
-    assert(Slot >= 0 && "No slot number for value!?!?");
-    output_vbr((unsigned)Slot);
-  }
+  for (unsigned i = 0; i != NumFixedOperands; ++i)
+    output_vbr(Table.getSlot(I->getOperand(i)));
 
   for (unsigned i = NumFixedOperands, e = I->getNumOperands(); i != e; ++i) {
     // Output Arg Type ID
@@ -550,9 +530,8 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
     output_typeid((unsigned)Slot);
 
     // Output arg ID itself
-    Slot = Table.getSlot(I->getOperand(i));
     assert(Slot >= 0 && "No slot number for value!?!?");
-    output_vbr((unsigned)Slot);
+    output_vbr(Table.getSlot(I->getOperand(i)));
   }
   
   if (isa<InvokeInst>(I)) {
@@ -700,10 +679,9 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
     unsigned Slots[3]; Slots[0] = (1 << 12)-1;   // Marker to signify 0 operands
 
     for (unsigned i = 0; i != NumOperands; ++i) {
-      int slot = Table.getSlot(I.getOperand(i));
-      assert(slot != -1 && "Broken bytecode!");
-      if (unsigned(slot) > MaxOpSlot) MaxOpSlot = unsigned(slot);
-      Slots[i] = unsigned(slot);
+      unsigned Slot = Table.getSlot(I.getOperand(i));
+      if (Slot > MaxOpSlot) MaxOpSlot = Slot;
+      Slots[i] = Slot;
     }
 
     // Handle the special cases for various instructions...
@@ -1005,11 +983,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     }
 
     // If we have an initializer, output it now.
-    if (I->hasInitializer()) {
-      Slot = Table.getSlot((Value*)I->getInitializer());
-      assert(Slot != -1 && "No slot for global var initializer!");
-      output_vbr((unsigned)Slot);
-    }
+    if (I->hasInitializer())
+      output_vbr(Table.getSlot((Value*)I->getInitializer()));
   }
   output_typeid((unsigned)Table.getTypeSlot(Type::VoidTy));
 
@@ -1172,9 +1147,7 @@ void BytecodeWriter::outputValueSymbolTable(const ValueSymbolTable &VST) {
     // Write each of the values in this plane
     for (; I != End; ++I) {
       // Symtab entry: [def slot #][name]
-      Slot = Table.getSlot(I->second);
-      assert(Slot != -1 && "Value in symtab but has no slot number!!");
-      output_vbr((unsigned)Slot);
+      output_vbr(Table.getSlot(I->second));
       output(I->first);
     }
   }

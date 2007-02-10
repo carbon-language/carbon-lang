@@ -278,25 +278,21 @@ void SlotCalculator::purgeFunction() {
   SC_DEBUG("end purgeFunction!\n");
 }
 
-int SlotCalculator::getSlot(const Value *V) const {
+unsigned SlotCalculator::getSlot(const Value *V) const {
   std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(V);
-  if (I != NodeMap.end())
-    return (int)I->second;
-
-  return -1;
+  assert(I != NodeMap.end() && "Value not in slotcalculator!");
+  return (int)I->second;
 }
 
 int SlotCalculator::getTypeSlot(const Type*T) const {
   std::map<const Type*, unsigned>::const_iterator I = TypeMap.find(T);
-  if (I != TypeMap.end())
-    return (int)I->second;
-
-  return -1;
+  assert(I != TypeMap.end() && "Type not in slotcalc!");
+  return (int)I->second;
 }
 
 void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
   // Check to see if it's already in!
-  if (getSlot(V) != -1) return;
+  if (NodeMap.count(V)) return;
 
   const Type *Ty = V->getType();
   assert(Ty != Type::VoidTy && "Can't insert void values!");
@@ -351,8 +347,8 @@ void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
 
 
 unsigned SlotCalculator::getOrCreateTypeSlot(const Type *Ty) {
-  int SlotNo = getTypeSlot(Ty);        // Check to see if it's already in!
-  if (SlotNo != -1) return (unsigned)SlotNo;
+  std::map<const Type*, unsigned>::iterator TyIt = TypeMap.find(Ty);
+  if (TyIt != TypeMap.end()) return TyIt->second;
 
   // Insert into TypeMap.
   unsigned ResultSlot = TypeMap[Ty] = Types.size();
