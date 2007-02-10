@@ -22,7 +22,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include <vector>
-#include <map>
 
 namespace llvm {
 
@@ -53,7 +52,7 @@ class SlotCalculator {
   typedef DenseMap<const Value*, unsigned> NodeMapType;
   NodeMapType NodeMap;
 
-  typedef std::map<const Type*, unsigned> TypeMapType;
+  typedef DenseMap<const Type*, unsigned> TypeMapType;
   TypeMapType TypeMap;
 
   /// ConstantStrings - If we are indexing for a bytecode file, this keeps track
