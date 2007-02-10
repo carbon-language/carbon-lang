@@ -314,11 +314,6 @@ void SlotCalculator::purgeFunction() {
   SC_DEBUG("end purgeFunction!\n");
 }
 
-static inline bool hasNullValue(const Type *Ty) {
-  return Ty != Type::LabelTy && Ty != Type::VoidTy && !isa<OpaqueType>(Ty);
-}
-
-
 int SlotCalculator::getSlot(const Value *V) const {
   std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(V);
   if (I != NodeMap.end())
@@ -336,7 +331,8 @@ int SlotCalculator::getTypeSlot(const Type*T) const {
 }
 
 int SlotCalculator::getOrCreateSlot(const Value *V) {
-  if (V->getType() == Type::VoidTy) return -1;
+  const Type *Ty = V->getType();
+  if (Ty == Type::VoidTy) return -1;
 
   int SlotNo = getSlot(V);        // Check to see if it's already in!
   if (SlotNo != -1) return SlotNo;
@@ -367,43 +363,42 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
       }
     }
 
-  const Type *Typ = V->getType();
-  assert(Typ != Type::VoidTy && "Can't handle voidty");
-
-  unsigned Ty;
-  
-  if (Typ->isDerivedType()) {
-    int ValSlot = getTypeSlot(Typ);
+  unsigned TyPlane;
+  if (Ty->isDerivedType()) {
+    int ValSlot = getTypeSlot(Ty);
     if (ValSlot == -1) {                // Have we already entered this type?
       // Nope, this is the first we have seen the type, process it.
-      ValSlot = insertType(Typ);
+      ValSlot = insertType(Ty);
       assert(ValSlot != -1 && "ProcessType returned -1 for a type?");
     }
-    Ty = (unsigned)ValSlot;
+    TyPlane = (unsigned)ValSlot;
   } else {
-    Ty = Typ->getTypeID();
+    TyPlane = Ty->getTypeID();
   }
   
-  if (Table.size() <= Ty)    // Make sure we have the type plane allocated...
-    Table.resize(Ty+1, TypePlane());
+  if (Table.size() <= TyPlane)    // Make sure we have the type plane allocated.
+    Table.resize(TyPlane+1, TypePlane());
   
   // If this is the first value to get inserted into the type plane, make sure
-  // to insert the implicit null value...
-  if (Table[Ty].empty() && hasNullValue(Typ)) {
-    Value *ZeroInitializer = Constant::getNullValue(Typ);
-    
-    // If we are pushing zeroinit, it will be handled below.
-    if (V != ZeroInitializer) {
-      Table[Ty].push_back(ZeroInitializer);
-      NodeMap[ZeroInitializer] = 0;
+  // to insert the implicit null value.
+  if (Table[TyPlane].empty()) {
+    // Label's and opaque types can't have a null value.
+    if (Ty != Type::LabelTy && !isa<OpaqueType>(Ty)) {
+      Value *ZeroInitializer = Constant::getNullValue(Ty);
+      
+      // If we are pushing zeroinit, it will be handled below.
+      if (V != ZeroInitializer) {
+        Table[TyPlane].push_back(ZeroInitializer);
+        NodeMap[ZeroInitializer] = 0;
+      }
     }
   }
   
   // Insert node into table and NodeMap...
-  unsigned DestSlot = NodeMap[V] = Table[Ty].size();
-  Table[Ty].push_back(V);
+  unsigned DestSlot = NodeMap[V] = Table[TyPlane].size();
+  Table[TyPlane].push_back(V);
   
-  SC_DEBUG("  Inserting value [" << Ty << "] = " << *V << " slot=" <<
+  SC_DEBUG("  Inserting value [" << TyPlane << "] = " << *V << " slot=" <<
            DestSlot << " [");
   // G = Global, C = Constant, T = Type, F = Function, o = other
   SC_DEBUG((isa<GlobalVariable>(V) ? "G" : (isa<Constant>(V) ? "C" :

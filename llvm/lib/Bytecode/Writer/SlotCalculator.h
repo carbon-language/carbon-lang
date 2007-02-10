@@ -122,7 +122,6 @@ private:
   // slot that it occupies, or -1 if the declaration is to be ignored
   // because of the IgnoreNamedNodes flag.
   //
-  int insertValue(const Value *V);
   int insertType(const Type *T);
 
   // doInsertValue - Small helper function to be called only be insertVal.
