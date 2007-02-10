@@ -50,17 +50,17 @@ void SlotCalculator::insertPrimitives() {
   // Reader.h which uses them directly to extract values of these types.
   SC_DEBUG("Inserting primitive types:\n");
                                     // See WellKnownTypeSlots in Reader.h
-  insertType(Type::VoidTy  ); // 0: VoidTySlot
-  insertType(Type::FloatTy ); // 1: FloatTySlot
-  insertType(Type::DoubleTy); // 2: DoubleTySlot
-  insertType(Type::LabelTy ); // 3: LabelTySlot
+  getOrCreateTypeSlot(Type::VoidTy  ); // 0: VoidTySlot
+  getOrCreateTypeSlot(Type::FloatTy ); // 1: FloatTySlot
+  getOrCreateTypeSlot(Type::DoubleTy); // 2: DoubleTySlot
+  getOrCreateTypeSlot(Type::LabelTy ); // 3: LabelTySlot
   assert(TypeMap.size() == Type::FirstDerivedTyID &&"Invalid primitive insert");
   // Above here *must* correspond 1:1 with the primitive types.
-  insertType(Type::Int1Ty  ); // 4: BoolTySlot
-  insertType(Type::Int8Ty  ); // 5: Int8TySlot
-  insertType(Type::Int16Ty ); // 6: Int16TySlot
-  insertType(Type::Int32Ty ); // 7: Int32TySlot
-  insertType(Type::Int64Ty ); // 8: Int64TySlot
+  getOrCreateTypeSlot(Type::Int1Ty  ); // 4: BoolTySlot
+  getOrCreateTypeSlot(Type::Int8Ty  ); // 5: Int8TySlot
+  getOrCreateTypeSlot(Type::Int16Ty ); // 6: Int16TySlot
+  getOrCreateTypeSlot(Type::Int32Ty ); // 7: Int32TySlot
+  getOrCreateTypeSlot(Type::Int64Ty ); // 8: Int64TySlot
 }
 
 SlotCalculator::SlotCalculator(const Module *M) {
@@ -356,15 +356,9 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
 }
 
 
-unsigned SlotCalculator::getOrCreateTypeSlot(const Type* T) {
-  int SlotNo = getTypeSlot(T);        // Check to see if it's already in!
+unsigned SlotCalculator::getOrCreateTypeSlot(const Type *Ty) {
+  int SlotNo = getTypeSlot(Ty);        // Check to see if it's already in!
   if (SlotNo != -1) return (unsigned)SlotNo;
-  return insertType(T);
-}
-
-unsigned SlotCalculator::insertType(const Type *Ty) {
-  assert(Ty && "Can't insert a null type!");
-  assert(getTypeSlot(Ty) == -1 && "Type is already in the table!");
 
   // Insert the current type before any subtypes.  This is important because
   // recursive types elements are inserted in a bottom up order.  Changing

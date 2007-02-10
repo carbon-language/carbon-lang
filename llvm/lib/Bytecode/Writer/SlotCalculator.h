@@ -111,12 +111,6 @@ private:
   int getOrCreateSlot(const Value *V);
   unsigned getOrCreateTypeSlot(const Type *T);
 
-  // insertValue - Insert a value into the value table... Return the
-  // slot that it occupies, or -1 if the declaration is to be ignored
-  // because of the IgnoreNamedNodes flag.
-  //
-  unsigned insertType(const Type *T);
-
   // doInsertValue - Small helper function to be called only be insertVal.
   unsigned doInsertType(const Type *T);
 
