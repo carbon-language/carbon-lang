@@ -55,7 +55,7 @@ void SlotCalculator::insertPrimitives() {
   insertType(Type::FloatTy,  true); // 1: FloatTySlot
   insertType(Type::DoubleTy, true); // 2: DoubleTySlot
   insertType(Type::LabelTy,  true); // 3: LabelTySlot
-  assert(TypeMap.size() == Type::FirstDerivedTyID && "Invalid primitive insert");
+  assert(TypeMap.size() == Type::FirstDerivedTyID &&"Invalid primitive insert");
   // Above here *must* correspond 1:1 with the primitive types.
   insertType(Type::Int1Ty,   true); // 4: BoolTySlot
   insertType(Type::Int8Ty,   true); // 5: Int8TySlot
@@ -161,7 +161,7 @@ void SlotCalculator::processModule() {
             isa<InlineAsm>(*OI))
           getOrCreateSlot(*OI);
       }
-      getOrCreateSlot(I->getType());
+      getOrCreateTypeSlot(I->getType());
     }
   }
 
@@ -212,7 +212,7 @@ void SlotCalculator::processModule() {
 void SlotCalculator::processTypeSymbolTable(const TypeSymbolTable *TST) {
   for (TypeSymbolTable::const_iterator TI = TST->begin(), TE = TST->end(); 
        TI != TE; ++TI )
-    getOrCreateSlot(TI->second);
+    getOrCreateTypeSlot(TI->second);
 }
 
 // processSymbolTable - Insert all of the values in the specified symbol table
@@ -237,7 +237,8 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   ModuleTypeLevel = Types.size();
 
   // Iterate over function arguments, adding them to the value table...
-  for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+  for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+      I != E; ++I)
     getOrCreateSlot(I);
 
   if (!ModuleContainsAllFunctionConstants) {
@@ -326,7 +327,7 @@ int SlotCalculator::getSlot(const Value *V) const {
   return -1;
 }
 
-int SlotCalculator::getSlot(const Type*T) const {
+int SlotCalculator::getTypeSlot(const Type*T) const {
   std::map<const Type*, unsigned>::const_iterator I = TypeMap.find(T);
   if (I != TypeMap.end())
     return (int)I->second;
@@ -369,33 +370,33 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
   return insertValue(V);
 }
 
-int SlotCalculator::getOrCreateSlot(const Type* T) {
-  int SlotNo = getSlot(T);        // Check to see if it's already in!
-  if (SlotNo != -1) return SlotNo;
-  return insertType(T);
-}
-
-int SlotCalculator::insertValue(const Value *D, bool dontIgnore) {
-  assert(D && "Can't insert a null value!");
-  assert(getSlot(D) == -1 && "Value is already in the table!");
+int SlotCalculator::insertValue(const Value *V, bool dontIgnore) {
+  assert(V && "Can't insert a null value!");
+  assert(getSlot(V) == -1 && "Value is already in the table!");
 
   // If this node does not contribute to a plane, or if the node has a
   // name and we don't want names, then ignore the silly node... Note that types
   // do need slot numbers so that we can keep track of where other values land.
   //
-  if (!dontIgnore)                               // Don't ignore nonignorables!
-    if (D->getType() == Type::VoidTy ) {         // Ignore void type nodes
-      SC_DEBUG("ignored value " << *D << "\n");
+  if (!dontIgnore)                              // Don't ignore nonignorables!
+    if (V->getType() == Type::VoidTy) {         // Ignore void type nodes
+      SC_DEBUG("ignored value " << *V << "\n");
       return -1;                  // We do need types unconditionally though
     }
 
   // Okay, everything is happy, actually insert the silly value now...
-  return doInsertValue(D);
+  return doInsertValue(V);
+}
+
+int SlotCalculator::getOrCreateTypeSlot(const Type* T) {
+  int SlotNo = getTypeSlot(T);        // Check to see if it's already in!
+  if (SlotNo != -1) return SlotNo;
+  return insertType(T);
 }
 
 int SlotCalculator::insertType(const Type *Ty, bool dontIgnore) {
   assert(Ty && "Can't insert a null type!");
-  assert(getSlot(Ty) == -1 && "Type is already in the table!");
+  assert(getTypeSlot(Ty) == -1 && "Type is already in the table!");
 
   // Insert the current type before any subtypes.  This is important because
   // recursive types elements are inserted in a bottom up order.  Changing
@@ -414,7 +415,7 @@ int SlotCalculator::insertType(const Type *Ty, bool dontIgnore) {
     if (*I != Ty) {
       const Type *SubTy = *I;
       // If we haven't seen this sub type before, add it to our type table!
-      if (getSlot(SubTy) == -1) {
+      if (getTypeSlot(SubTy) == -1) {
         SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
         doInsertType(SubTy);
         SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << "\n");
@@ -436,7 +437,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
   //  llvm_cerr << "Inserting type '"<<cast<Type>(D)->getDescription() <<"'!\n";
 
   if (Typ->isDerivedType()) {
-    int ValSlot = getSlot(Typ);
+    int ValSlot = getTypeSlot(Typ);
     if (ValSlot == -1) {                // Have we already entered this type?
       // Nope, this is the first we have seen the type, process it.
       ValSlot = insertType(Typ, true);

@@ -214,7 +214,7 @@ void BytecodeWriter::outputType(const Type *T) {
     break;
   case Type::FunctionTyID: {
     const FunctionType *MT = cast<FunctionType>(T);
-    int Slot = Table.getSlot(MT->getReturnType());
+    int Slot = Table.getTypeSlot(MT->getReturnType());
     assert(Slot != -1 && "Type used but not available!!");
     output_typeid((unsigned)Slot);
     output_vbr(unsigned(MT->getParamAttrs(0)));
@@ -226,7 +226,7 @@ void BytecodeWriter::outputType(const Type *T) {
     FunctionType::param_iterator I = MT->param_begin();
     unsigned Idx = 1;
     for (; I != MT->param_end(); ++I) {
-      Slot = Table.getSlot(*I);
+      Slot = Table.getTypeSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");
       output_typeid((unsigned)Slot);
       output_vbr(unsigned(MT->getParamAttrs(Idx)));
@@ -241,7 +241,7 @@ void BytecodeWriter::outputType(const Type *T) {
 
   case Type::ArrayTyID: {
     const ArrayType *AT = cast<ArrayType>(T);
-    int Slot = Table.getSlot(AT->getElementType());
+    int Slot = Table.getTypeSlot(AT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_typeid((unsigned)Slot);
     output_vbr(AT->getNumElements());
@@ -250,7 +250,7 @@ void BytecodeWriter::outputType(const Type *T) {
 
  case Type::PackedTyID: {
     const PackedType *PT = cast<PackedType>(T);
-    int Slot = Table.getSlot(PT->getElementType());
+    int Slot = Table.getTypeSlot(PT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_typeid((unsigned)Slot);
     output_vbr(PT->getNumElements());
@@ -262,7 +262,7 @@ void BytecodeWriter::outputType(const Type *T) {
     // Output all of the element types...
     for (StructType::element_iterator I = ST->element_begin(),
            E = ST->element_end(); I != E; ++I) {
-      int Slot = Table.getSlot(*I);
+      int Slot = Table.getTypeSlot(*I);
       assert(Slot != -1 && "Type used but not available!!");
       output_typeid((unsigned)Slot);
     }
@@ -274,7 +274,7 @@ void BytecodeWriter::outputType(const Type *T) {
 
   case Type::PointerTyID: {
     const PointerType *PT = cast<PointerType>(T);
-    int Slot = Table.getSlot(PT->getElementType());
+    int Slot = Table.getTypeSlot(PT->getElementType());
     assert(Slot != -1 && "Type used but not available!!");
     output_typeid((unsigned)Slot);
     break;
@@ -309,7 +309,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
       int Slot = Table.getSlot(*OI);
       assert(Slot != -1 && "Unknown constant used in ConstantExpr!!");
       output_vbr((unsigned)Slot);
-      Slot = Table.getSlot((*OI)->getType());
+      Slot = Table.getTypeSlot((*OI)->getType());
       output_typeid((unsigned)Slot);
     }
     if (CE->isCompare())
@@ -419,7 +419,7 @@ void BytecodeWriter::outputConstantStrings() {
   // Emit all of the strings.
   for (I = Table.string_begin(); I != E; ++I) {
     const ConstantArray *Str = *I;
-    int Slot = Table.getSlot(Str->getType());
+    int Slot = Table.getTypeSlot(Str->getType());
     assert(Slot != -1 && "Constant string of unknown type?");
     output_typeid((unsigned)Slot);
 
@@ -459,7 +459,7 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
     }
 
     if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
-      int Slot = Table.getSlot(I->getType());
+      int Slot = Table.getTypeSlot(I->getType());
       assert(Slot != -1 && "Cast return type unknown?");
       output_typeid((unsigned)Slot);
     } else if (isa<CmpInst>(I)) {
@@ -545,7 +545,7 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
 
   for (unsigned i = NumFixedOperands, e = I->getNumOperands(); i != e; ++i) {
     // Output Arg Type ID
-    int Slot = Table.getSlot(I->getOperand(i)->getType());
+    int Slot = Table.getTypeSlot(I->getOperand(i)->getType());
     assert(Slot >= 0 && "No slot number for value!?!?");
     output_typeid((unsigned)Slot);
 
@@ -672,7 +672,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
   }
 
   unsigned Type;
-  int Slot = Table.getSlot(Ty);
+  int Slot = Table.getTypeSlot(Ty);
   assert(Slot != -1 && "Type not available!!?!");
   Type = (unsigned)Slot;
 
@@ -710,7 +710,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
     if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
       // Cast has to encode the destination type as the second argument in the
       // packet, or else we won't know what type to cast to!
-      Slots[1] = Table.getSlot(I.getType());
+      Slots[1] = Table.getTypeSlot(I.getType());
       assert(Slots[1] != ~0U && "Cast return type unknown?");
       if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
       NumOperands++;
@@ -887,7 +887,7 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   output_vbr(NC);
 
   // Put out the Type ID Number...
-  int Slot = Table.getSlot(Plane.front()->getType());
+  int Slot = Table.getTypeSlot(Plane.front()->getType());
   assert (Slot != -1 && "Type in constant pool but not in function!!");
   output_typeid((unsigned)Slot);
 
@@ -961,7 +961,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   // Output the types for the global variables in the module...
   for (Module::const_global_iterator I = M->global_begin(),
          End = M->global_end(); I != End; ++I) {
-    int Slot = Table.getSlot(I->getType());
+    int Slot = Table.getTypeSlot(I->getType());
     assert(Slot != -1 && "Module global vars is broken!");
 
     assert((I->hasInitializer() || !I->hasInternalLinkage()) &&
@@ -1011,11 +1011,11 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
       output_vbr((unsigned)Slot);
     }
   }
-  output_typeid((unsigned)Table.getSlot(Type::VoidTy));
+  output_typeid((unsigned)Table.getTypeSlot(Type::VoidTy));
 
   // Output the types of the functions in this module.
   for (Module::const_iterator I = M->begin(), End = M->end(); I != End; ++I) {
-    int Slot = Table.getSlot(I->getType());
+    int Slot = Table.getTypeSlot(I->getType());
     assert(Slot != -1 && "Module slot calculator is broken!");
     assert(Slot >= Type::FirstDerivedTyID && "Derived type not in range!");
     assert(((Slot << 6) >> 6) == Slot && "Slot # too big!");
@@ -1062,7 +1062,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
       }
     }
   }
-  output_vbr((unsigned)Table.getSlot(Type::VoidTy) << 5);
+  output_vbr((unsigned)Table.getTypeSlot(Type::VoidTy) << 5);
 
   // Emit the list of dependent libraries for the Module.
   Module::lib_iterator LI = M->lib_begin();
@@ -1129,7 +1129,7 @@ void BytecodeWriter::outputTypeSymbolTable(const TypeSymbolTable &TST) {
   for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end(); 
        TI != TE; ++TI) {
     // Symtab entry:[def slot #][name]
-    output_typeid((unsigned)Table.getSlot(TI->second));
+    output_typeid((unsigned)Table.getTypeSlot(TI->second));
     output(TI->first);
   }
 }
@@ -1165,7 +1165,7 @@ void BytecodeWriter::outputValueSymbolTable(const ValueSymbolTable &VST) {
     output_vbr((unsigned)PI->second.size());
 
     // Write the slot number of the type for this plane
-    Slot = Table.getSlot(PI->first);
+    Slot = Table.getTypeSlot(PI->first);
     assert(Slot != -1 && "Type in symtab, but not in table!");
     output_typeid((unsigned)Slot);
 

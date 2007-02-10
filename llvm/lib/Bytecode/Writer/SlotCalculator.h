@@ -73,7 +73,7 @@ public:
   /// plane.  This returns < 0 on error!
   ///
   int getSlot(const Value *V) const;
-  int getSlot(const Type* T) const;
+  int getTypeSlot(const Type* T) const;
 
   inline unsigned getNumPlanes() const { return Table.size(); }
   inline unsigned getNumTypes() const { return Types.size(); }
@@ -116,7 +116,7 @@ private:
   // they are ignored.
   //
   int getOrCreateSlot(const Value *V);
-  int getOrCreateSlot(const Type *T);
+  int getOrCreateTypeSlot(const Type *T);
 
   // insertValue - Insert a value into the value table... Return the
   // slot that it occupies, or -1 if the declaration is to be ignored
