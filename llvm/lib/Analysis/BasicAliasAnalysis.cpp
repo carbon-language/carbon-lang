@@ -22,6 +22,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -160,7 +161,8 @@ static const User *isGEP(const Value *V) {
   return 0;
 }
 
-static const Value *GetGEPOperands(const Value *V, std::vector<Value*> &GEPOps){
+static const Value *GetGEPOperands(const Value *V, 
+                                   SmallVector<Value*, 16> &GEPOps){
   assert(GEPOps.empty() && "Expect empty list to populate!");
   GEPOps.insert(GEPOps.end(), cast<User>(V)->op_begin()+1,
                 cast<User>(V)->op_end());
@@ -369,7 +371,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
       // non-aliasing.
 
       // Collect all of the chained GEP operands together into one simple place
-      std::vector<Value*> GEP1Ops, GEP2Ops;
+      SmallVector<Value*, 16> GEP1Ops, GEP2Ops;
       BasePtr1 = GetGEPOperands(V1, GEP1Ops);
       BasePtr2 = GetGEPOperands(V2, GEP2Ops);
 
@@ -398,7 +400,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
 
   if (V1Size != ~0U && V2Size != ~0U)
     if (isGEP(V1)) {
-      std::vector<Value*> GEPOperands;
+      SmallVector<Value*, 16> GEPOperands;
       const Value *BasePtr = GetGEPOperands(V1, GEPOperands);
 
       AliasResult R = alias(BasePtr, V1Size, V2, V2Size);
