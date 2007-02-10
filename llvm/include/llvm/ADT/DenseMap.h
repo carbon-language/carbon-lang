@@ -40,12 +40,15 @@ struct DenseMapKeyInfo<T*> {
   static bool isPod() { return true; }
 };
 
-template<typename KeyT, typename ValueT>
+template<typename KeyT, typename ValueT, 
+         typename KeyInfoT = DenseMapKeyInfo<KeyT> >
 class DenseMapIterator;
-template<typename KeyT, typename ValueT>
+template<typename KeyT, typename ValueT,
+         typename KeyInfoT = DenseMapKeyInfo<KeyT> >
 class DenseMapConstIterator;
 
-template<typename KeyT, typename ValueT>
+template<typename KeyT, typename ValueT,
+         typename KeyInfoT = DenseMapKeyInfo<KeyT> >
 class DenseMap {
   typedef std::pair<KeyT, ValueT> BucketT;
   unsigned NumBuckets;
@@ -68,21 +71,19 @@ public:
     delete[] (char*)Buckets;
   }
   
-  typedef DenseMapIterator<KeyT, ValueT> iterator;
-  typedef DenseMapConstIterator<KeyT, ValueT> const_iterator;
+  typedef DenseMapIterator<KeyT, ValueT, KeyInfoT> iterator;
+  typedef DenseMapConstIterator<KeyT, ValueT, KeyInfoT> const_iterator;
   inline iterator begin() {
-     return DenseMapIterator<KeyT, ValueT>(Buckets, Buckets+NumBuckets);
+     return iterator(Buckets, Buckets+NumBuckets);
   }
   inline iterator end() {
-    return DenseMapIterator<KeyT, ValueT>(Buckets+NumBuckets, 
-                                          Buckets+NumBuckets);
+    return iterator(Buckets+NumBuckets, Buckets+NumBuckets);
   }
   inline const_iterator begin() const {
-    return DenseMapConstIterator<KeyT, ValueT>(Buckets, Buckets+NumBuckets);
+    return const_iterator(Buckets, Buckets+NumBuckets);
   }
   inline const_iterator end() const {
-    return DenseMapConstIterator<KeyT, ValueT>(Buckets+NumBuckets, 
-                                               Buckets+NumBuckets);
+    return const_iterator(Buckets+NumBuckets, Buckets+NumBuckets);
   }
   
   bool empty() const { return NumEntries == 0; }
@@ -181,13 +182,13 @@ private:
   }
 
   static unsigned getHashValue(const KeyT &Val) {
-    return DenseMapKeyInfo<KeyT>::getHashValue(Val);
+    return KeyInfoT::getHashValue(Val);
   }
   static const KeyT getEmptyKey() {
-    return DenseMapKeyInfo<KeyT>::getEmptyKey();
+    return KeyInfoT::getEmptyKey();
   }
   static const KeyT getTombstoneKey() {
-    return DenseMapKeyInfo<KeyT>::getTombstoneKey();
+    return KeyInfoT::getTombstoneKey();
   }
   
   /// LookupBucketFor - Lookup the appropriate bucket for Val, returning it in
@@ -285,7 +286,7 @@ private:
   }
 };
 
-template<typename KeyT, typename ValueT>
+template<typename KeyT, typename ValueT, typename KeyInfoT>
 class DenseMapIterator {
   typedef std::pair<KeyT, ValueT> BucketT;
 protected:
@@ -320,16 +321,16 @@ public:
   
 private:
   void AdvancePastEmptyBuckets() {
-    const KeyT Empty = DenseMapKeyInfo<KeyT>::getEmptyKey();
-    const KeyT Tombstone = DenseMapKeyInfo<KeyT>::getTombstoneKey();
+    const KeyT Empty = KeyInfoT::getEmptyKey();
+    const KeyT Tombstone = KeyInfoT::getTombstoneKey();
 
     while (Ptr != End && (Ptr->first == Empty || Ptr->first == Tombstone))
       ++Ptr;
   }
 };
 
-template<typename KeyT, typename ValueT>
-class DenseMapConstIterator : public DenseMapIterator<KeyT, ValueT> {
+template<typename KeyT, typename ValueT, typename KeyInfoT>
+class DenseMapConstIterator : public DenseMapIterator<KeyT, ValueT, KeyInfoT> {
 public:
   DenseMapConstIterator(const std::pair<KeyT, ValueT> *Pos,
                         const std::pair<KeyT, ValueT> *E)
