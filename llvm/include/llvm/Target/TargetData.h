@@ -247,7 +247,12 @@ public:
   /// specified indices.  This is used to implement getelementptr.
   ///
   uint64_t getIndexedOffset(const Type *Ty,
-                            const std::vector<Value*> &Indices) const;
+                            Value* const* Indices, unsigned NumIndices) const;
+  
+  uint64_t getIndexedOffset(const Type *Ty,
+                            const std::vector<Value*> &Indices) const {
+    return getIndexedOffset(Ty, &Indices[0], Indices.size());
+  }
 
   /// getStructLayout - Return a StructLayout object, indicating the alignment
   /// of the struct, its size, and the offsets of its fields.  Note that this

@@ -452,18 +452,18 @@ const Type *TargetData::getIntPtrType() const {
 }
 
 
-uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
-                                      const std::vector<Value*> &Idx) const {
+uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
+                                      unsigned NumIndices) const {
   const Type *Ty = ptrTy;
   assert(isa<PointerType>(Ty) && "Illegal argument for getIndexedOffset()");
   uint64_t Result = 0;
 
-  generic_gep_type_iterator<std::vector<Value*>::const_iterator>
-    TI = gep_type_begin(ptrTy, Idx.begin(), Idx.end());
-  for (unsigned CurIDX = 0; CurIDX != Idx.size(); ++CurIDX, ++TI) {
+  generic_gep_type_iterator<Value* const*>
+    TI = gep_type_begin(ptrTy, Indices, Indices+NumIndices);
+  for (unsigned CurIDX = 0; CurIDX != NumIndices; ++CurIDX, ++TI) {
     if (const StructType *STy = dyn_cast<StructType>(*TI)) {
-      assert(Idx[CurIDX]->getType() == Type::Int32Ty && "Illegal struct idx");
-      unsigned FieldNo = cast<ConstantInt>(Idx[CurIDX])->getZExtValue();
+      assert(Indices[CurIDX]->getType() == Type::Int32Ty &&"Illegal struct idx");
+      unsigned FieldNo = cast<ConstantInt>(Indices[CurIDX])->getZExtValue();
 
       // Get structure layout information...
       const StructLayout *Layout = getStructLayout(STy);
@@ -479,7 +479,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy,
       Ty = cast<SequentialType>(Ty)->getElementType();
 
       // Get the array index and the size of each array element.
-      int64_t arrayIdx = cast<ConstantInt>(Idx[CurIDX])->getSExtValue();
+      int64_t arrayIdx = cast<ConstantInt>(Indices[CurIDX])->getSExtValue();
       Result += arrayIdx * (int64_t)getTypeSize(Ty);
     }
   }
