@@ -33,6 +33,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Program.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include <cstring>
@@ -1087,15 +1088,15 @@ void BytecodeWriter::outputValueSymbolTable(const ValueSymbolTable &VST) {
 
   // Organize the symbol table by type
   typedef std::pair<const std::string*, const Value*> PlaneMapEntry;
-  typedef std::vector<PlaneMapEntry> PlaneMapVector;
-  typedef std::map<const Type*, PlaneMapVector > PlaneMap;
+  typedef SmallVector<PlaneMapEntry, 8> PlaneMapVector;
+  typedef DenseMap<const Type*, PlaneMapVector > PlaneMap;
   PlaneMap Planes;
   for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
        SI != SE; ++SI) 
     Planes[SI->second->getType()]
       .push_back(std::make_pair(&SI->first, SI->second));
 
-  for (PlaneMap::const_iterator PI = Planes.begin(), PE = Planes.end();
+  for (PlaneMap::iterator PI = Planes.begin(), PE = Planes.end();
        PI != PE; ++PI) {
     PlaneMapVector::const_iterator I = PI->second.begin(); 
     PlaneMapVector::const_iterator End = PI->second.end(); 
