@@ -261,7 +261,8 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     getOrCreateSlot(BB);
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
-      getOrCreateSlot(I);
+      if (I->getType() != Type::VoidTy)
+        getOrCreateSlot(I);
     }
   }
 
@@ -332,7 +333,7 @@ int SlotCalculator::getTypeSlot(const Type*T) const {
 
 int SlotCalculator::getOrCreateSlot(const Value *V) {
   const Type *Ty = V->getType();
-  if (Ty == Type::VoidTy) return -1;
+  assert(Ty != Type::VoidTy && "Can't insert void values!");
 
   int SlotNo = getSlot(V);        // Check to see if it's already in!
   if (SlotNo != -1) return SlotNo;
