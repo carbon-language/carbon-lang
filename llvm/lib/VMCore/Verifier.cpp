@@ -56,6 +56,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
@@ -80,7 +81,7 @@ namespace {  // Anonymous namespace for class
     /// instructions we have seen so far.  This allows us to do efficient
     /// dominance checks for the case when an instruction has an operand that is
     /// an instruction in the same block.
-    std::set<Instruction*> InstsInThisBlock;
+    SmallPtrSet<Instruction*, 16> InstsInThisBlock;
 
     Verifier()
         : Broken(false), RealPass(true), action(AbortProcessAction),
