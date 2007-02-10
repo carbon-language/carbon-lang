@@ -82,21 +82,21 @@ void SlotCalculator::processModule() {
   //
   for (Module::const_global_iterator I = TheModule->global_begin(),
          E = TheModule->global_end(); I != E; ++I)
-    getOrCreateSlot(I);
+    CreateSlotIfNeeded(I);
 
   // Scavenge the types out of the functions, then add the functions themselves
   // to the value table...
   //
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
-    getOrCreateSlot(I);
+    CreateSlotIfNeeded(I);
 
   // Add all of the module level constants used as initializers
   //
   for (Module::const_global_iterator I = TheModule->global_begin(),
          E = TheModule->global_end(); I != E; ++I)
     if (I->hasInitializer())
-      getOrCreateSlot(I->getInitializer());
+      CreateSlotIfNeeded(I->getInitializer());
 
   // Now that all global constants have been added, rearrange constant planes
   // that contain constant strings so that the strings occur at the start of the
@@ -137,7 +137,7 @@ void SlotCalculator::processModule() {
              OI != E; ++OI) {
           if ((isa<Constant>(*OI) && !isa<GlobalValue>(*OI)) ||
               isa<InlineAsm>(*OI))
-            getOrCreateSlot(*OI);
+            CreateSlotIfNeeded(*OI);
         }
         getOrCreateTypeSlot(I->getType());
       }
@@ -199,7 +199,7 @@ void SlotCalculator::processTypeSymbolTable(const TypeSymbolTable *TST) {
 void SlotCalculator::processValueSymbolTable(const ValueSymbolTable *VST) {
   for (ValueSymbolTable::const_iterator VI = VST->begin(), VE = VST->end(); 
        VI != VE; ++VI)
-    getOrCreateSlot(VI->second);
+    CreateSlotIfNeeded(VI->second);
 }
 
 void SlotCalculator::incorporateFunction(const Function *F) {
@@ -217,16 +217,16 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   // Iterate over function arguments, adding them to the value table...
   for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
       I != E; ++I)
-    getOrCreateSlot(I);
+    CreateSlotIfNeeded(I);
 
   SC_DEBUG("Inserting Instructions:\n");
 
   // Add all of the instructions to the type planes...
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-    getOrCreateSlot(BB);
+    CreateSlotIfNeeded(BB);
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
       if (I->getType() != Type::VoidTy)
-        getOrCreateSlot(I);
+        CreateSlotIfNeeded(I);
     }
   }
 
@@ -295,9 +295,9 @@ int SlotCalculator::getTypeSlot(const Type*T) const {
   return -1;
 }
 
-int SlotCalculator::getOrCreateSlot(const Value *V) {
-  int SlotNo = getSlot(V);        // Check to see if it's already in!
-  if (SlotNo != -1) return SlotNo;
+void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
+  // Check to see if it's already in!
+  if (getSlot(V) != -1) return;
 
   const Type *Ty = V->getType();
   assert(Ty != Type::VoidTy && "Can't insert void values!");
@@ -319,7 +319,7 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
       // const ints), that they are inserted also.
       for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
            I != E; ++I)
-        getOrCreateSlot(*I);
+        CreateSlotIfNeeded(*I);
     }
   }
 
@@ -347,12 +347,7 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
   Table[TyPlane].push_back(V);
   
   SC_DEBUG("  Inserting value [" << TyPlane << "] = " << *V << " slot=" <<
-           DestSlot << " [");
-  // G = Global, C = Constant, T = Type, F = Function, o = other
-  SC_DEBUG((isa<GlobalVariable>(V) ? "G" : (isa<Constant>(V) ? "C" :
-                                            (isa<Function>(V) ? "F" : "o"))));
-  SC_DEBUG("]\n");
-  return (int)DestSlot;
+           DestSlot << "\n");
 }
 
 

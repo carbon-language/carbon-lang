@@ -104,11 +104,7 @@ public:
   string_iterator string_end() const   { return ConstantStrings.end(); }
 
 private:
-  // getOrCreateSlot - Values can be crammed into here at will... if
-  // they haven't been inserted already, they get inserted, otherwise
-  // they are ignored.
-  //
-  int getOrCreateSlot(const Value *V);
+  void CreateSlotIfNeeded(const Value *V);
   unsigned getOrCreateTypeSlot(const Type *T);
 
   // doInsertValue - Small helper function to be called only be insertVal.
