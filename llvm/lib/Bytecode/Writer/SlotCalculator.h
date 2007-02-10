@@ -61,8 +61,6 @@ class SlotCalculator {
   void operator=(const SlotCalculator &);  // DO NOT IMPLEMENT
 public:
   SlotCalculator(const Module *M);
-  // Start out in incorp state
-  SlotCalculator(const Function *F);
 
   /// getSlot - Return the slot number of the specified value in it's type
   /// plane.  This returns < 0 on error!

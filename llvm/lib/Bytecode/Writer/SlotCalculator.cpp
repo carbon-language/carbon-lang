@@ -73,17 +73,6 @@ SlotCalculator::SlotCalculator(const Module *M ) {
   processModule();
 }
 
-SlotCalculator::SlotCalculator(const Function *M ) {
-  TheModule = M ? M->getParent() : 0;
-
-  insertPrimitives();
-
-  if (TheModule == 0) return;   // Empty table...
-
-  processModule();              // Process module level stuff
-  incorporateFunction(M);       // Start out in incorporated state
-}
-
 // processModule - Process all of the module level function declarations and
 // types that are available.
 //
