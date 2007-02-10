@@ -23,6 +23,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <cstdlib>
@@ -208,7 +209,20 @@ TargetData::TargetData(const Module *M) {
 /// targets with cached elements should have been destroyed.
 ///
 typedef std::pair<const TargetData*,const StructType*> LayoutKey;
-typedef std::map<LayoutKey, StructLayout*> LayoutInfoTy;
+
+struct DenseMapLayoutKeyInfo {
+  static inline LayoutKey getEmptyKey() { return LayoutKey(0, 0); }
+  static inline LayoutKey getTombstoneKey() {
+    return LayoutKey((TargetData*)(intptr_t)-1, 0);
+  }
+  static unsigned getHashValue(const LayoutKey &Val) {
+    return DenseMapKeyInfo<void*>::getHashValue(Val.first) ^
+           DenseMapKeyInfo<void*>::getHashValue(Val.second);
+  }
+  static bool isPod() { return true; }
+};
+
+typedef DenseMap<LayoutKey, StructLayout*, DenseMapLayoutKeyInfo> LayoutInfoTy;
 static ManagedStatic<LayoutInfoTy> LayoutInfo;
 
 
@@ -216,14 +230,15 @@ TargetData::~TargetData() {
   if (LayoutInfo.isConstructed()) {
     // Remove any layouts for this TD.
     LayoutInfoTy &TheMap = *LayoutInfo;
-    LayoutInfoTy::iterator
-      I = TheMap.lower_bound(LayoutKey(this, (const StructType*)0));
-    
-    for (LayoutInfoTy::iterator E = TheMap.end();
-         I != E && I->first.first == this; ) {
-      I->second->~StructLayout();
-      free(I->second);
-      TheMap.erase(I++);
+    for (LayoutInfoTy::iterator I = TheMap.begin(), E = TheMap.end();
+         I != E; ) {
+      if (I->first.first == this) {
+        I->second->~StructLayout();
+        free(I->second);
+        TheMap.erase(I++);
+      } else {
+        ++I;
+      }
     }
   }
 }
@@ -231,18 +246,21 @@ TargetData::~TargetData() {
 const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
   LayoutInfoTy &TheMap = *LayoutInfo;
   
-  LayoutInfoTy::iterator I = TheMap.lower_bound(LayoutKey(this, Ty));
-  if (I != TheMap.end() && I->first.first == this && I->first.second == Ty)
-    return I->second;
+  StructLayout *&SL = TheMap[LayoutKey(this, Ty)];
+  if (SL) return SL;
 
   // Otherwise, create the struct layout.  Because it is variable length, we 
   // malloc it, then use placement new.
   unsigned NumElts = Ty->getNumElements();
   StructLayout *L =
     (StructLayout *)malloc(sizeof(StructLayout)+(NumElts-1)*sizeof(uint64_t));
+  
+  // Set SL before calling StructLayout's ctor.  The ctor could cause other
+  // entries to be added to TheMap, invalidating our reference.
+  SL = L;
+  
   new (L) StructLayout(Ty, *this);
     
-  TheMap.insert(I, std::make_pair(LayoutKey(this, Ty), L));
   return L;
 }
 
