@@ -22,6 +22,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <cstdlib>
@@ -201,25 +202,23 @@ TargetData::TargetData(const Module *M) {
   init(M->getDataLayout());
 }
 
-/// Layouts - The lazy cache of structure layout information maintained by
+/// LayoutInfo - The lazy cache of structure layout information maintained by
 /// TargetData.
 ///
-static std::map<std::pair<const TargetData*,const StructType*>,
-                StructLayout> *Layouts = 0;
+typedef std::pair<const TargetData*,const StructType*> LayoutKey;
+static ManagedStatic<std::map<LayoutKey, StructLayout> > LayoutInfo;
 
 
 TargetData::~TargetData() {
-  if (Layouts) {
+  if (LayoutInfo.isConstructed()) {
     // Remove any layouts for this TD.
-    std::map<std::pair<const TargetData*,
-      const StructType*>, StructLayout>::iterator
-      I = Layouts->lower_bound(std::make_pair(this, (const StructType*)0));
-    while (I != Layouts->end() && I->first.first == this)
-      Layouts->erase(I++);
-    if (Layouts->empty()) {
-      delete Layouts;
-      Layouts = 0;
-    }
+    std::map<LayoutKey, StructLayout> &TheMap = *LayoutInfo;
+    std::map<LayoutKey, StructLayout>::iterator
+      I = TheMap.lower_bound(LayoutKey(this, (const StructType*)0));
+    
+    for (std::map<LayoutKey, StructLayout>::iterator E = TheMap.end();
+         I != E && I->first.first == this; )
+      TheMap.erase(I++);
   }
 }
 
@@ -252,17 +251,15 @@ std::string TargetData::getStringRepresentation() const {
 }
 
 const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
-  if (Layouts == 0)
-    Layouts = new std::map<std::pair<const TargetData*,const StructType*>,
-                           StructLayout>();
-  std::map<std::pair<const TargetData*,const StructType*>,
-                     StructLayout>::iterator
-    I = Layouts->lower_bound(std::make_pair(this, Ty));
-  if (I != Layouts->end() && I->first.first == this && I->first.second == Ty)
+  std::map<LayoutKey, StructLayout> &TheMap = *LayoutInfo;
+  
+  std::map<LayoutKey, StructLayout>::iterator
+    I = TheMap.lower_bound(LayoutKey(this, Ty));
+  if (I != TheMap.end() && I->first.first == this && I->first.second == Ty)
     return &I->second;
   else {
-    return &Layouts->insert(I, std::make_pair(std::make_pair(this, Ty),
-                                              StructLayout(Ty, *this)))->second;
+    return &TheMap.insert(I, std::make_pair(LayoutKey(this, Ty),
+                                            StructLayout(Ty, *this)))->second;
   }
 }
 
@@ -271,12 +268,12 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 /// removed, this method must be called whenever a StructType is removed to
 /// avoid a dangling pointer in this cache.
 void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
-  if (!Layouts) return;  // No cache.
+  if (!LayoutInfo.isConstructed()) return;  // No cache.
 
-  std::map<std::pair<const TargetData*,const StructType*>,
-           StructLayout>::iterator I = Layouts->find(std::make_pair(this, Ty));
-  if (I != Layouts->end())
-    Layouts->erase(I);
+  std::map<LayoutKey, StructLayout>::iterator I = 
+    LayoutInfo->find(std::make_pair(this, Ty));
+  if (I != LayoutInfo->end())
+    LayoutInfo->erase(I);
 }
 
 
