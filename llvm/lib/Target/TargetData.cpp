@@ -208,17 +208,18 @@ TargetData::TargetData(const Module *M) {
 /// targets with cached elements should have been destroyed.
 ///
 typedef std::pair<const TargetData*,const StructType*> LayoutKey;
-static ManagedStatic<std::map<LayoutKey, StructLayout*> > LayoutInfo;
+typedef std::map<LayoutKey, StructLayout*> LayoutInfoTy;
+static ManagedStatic<LayoutInfoTy> LayoutInfo;
 
 
 TargetData::~TargetData() {
   if (LayoutInfo.isConstructed()) {
     // Remove any layouts for this TD.
-    std::map<LayoutKey, StructLayout*> &TheMap = *LayoutInfo;
-    std::map<LayoutKey, StructLayout*>::iterator
+    LayoutInfoTy &TheMap = *LayoutInfo;
+    LayoutInfoTy::iterator
       I = TheMap.lower_bound(LayoutKey(this, (const StructType*)0));
     
-    for (std::map<LayoutKey, StructLayout*>::iterator E = TheMap.end();
+    for (LayoutInfoTy::iterator E = TheMap.end();
          I != E && I->first.first == this; ) {
       I->second->~StructLayout();
       free(I->second);
@@ -228,10 +229,9 @@ TargetData::~TargetData() {
 }
 
 const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
-  std::map<LayoutKey, StructLayout*> &TheMap = *LayoutInfo;
+  LayoutInfoTy &TheMap = *LayoutInfo;
   
-  std::map<LayoutKey, StructLayout*>::iterator
-  I = TheMap.lower_bound(LayoutKey(this, Ty));
+  LayoutInfoTy::iterator I = TheMap.lower_bound(LayoutKey(this, Ty));
   if (I != TheMap.end() && I->first.first == this && I->first.second == Ty)
     return I->second;
 
@@ -253,8 +253,7 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
   if (!LayoutInfo.isConstructed()) return;  // No cache.
   
-  std::map<LayoutKey, StructLayout*>::iterator I = 
-    LayoutInfo->find(LayoutKey(this, Ty));
+  LayoutInfoTy::iterator I = LayoutInfo->find(LayoutKey(this, Ty));
   if (I != LayoutInfo->end()) {
     I->second->~StructLayout();
     free(I->second);
