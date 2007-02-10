@@ -181,6 +181,13 @@ void SlotCalculator::processModule() {
       }
   }
 
+    
+  // Compute the ModuleLevel entries.
+  ModuleLevel.resize(getNumPlanes());
+  for (unsigned i = 0, e = getNumPlanes(); i != e; ++i)
+    ModuleLevel[i] = getPlane(i).size();
+  ModuleTypeLevel = Types.size();
+    
   SC_DEBUG("end processModule!\n");
 }
 
@@ -278,16 +285,7 @@ unsigned SlotCalculator::getOrCreateTypeSlot(const Type *Ty) {
 
 
 void SlotCalculator::incorporateFunction(const Function *F) {
-  assert((ModuleLevel.empty() ||
-          ModuleTypeLevel == 0) && "Module already incorporated!");
-  
   SC_DEBUG("begin processFunction!\n");
-  
-  // Update the ModuleLevel entries to be accurate.
-  ModuleLevel.resize(getNumPlanes());
-  for (unsigned i = 0, e = getNumPlanes(); i != e; ++i)
-    ModuleLevel[i] = getPlane(i).size();
-  ModuleTypeLevel = Types.size();
   
   // Iterate over function arguments, adding them to the value table...
   for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
@@ -309,8 +307,6 @@ void SlotCalculator::incorporateFunction(const Function *F) {
 }
 
 void SlotCalculator::purgeFunction() {
-  assert((ModuleLevel.size() != 0 ||
-          ModuleTypeLevel != 0) && "Module not incorporated!");
   unsigned NumModuleTypes = ModuleLevel.size();
   
   SC_DEBUG("begin purgeFunction!\n");
@@ -331,10 +327,6 @@ void SlotCalculator::purgeFunction() {
       Plane.pop_back();                  // Shrink plane
     }
   }
-  
-  // We don't need this state anymore, free it up.
-  ModuleLevel.clear();
-  ModuleTypeLevel = 0;
   
   // Finally, remove any type planes defined by the function...
   while (Table.size() > NumModuleTypes) {
