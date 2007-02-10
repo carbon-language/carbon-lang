@@ -22,8 +22,6 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
-#include <vector>
-#include <string>
 
 namespace llvm {
 
@@ -249,11 +247,6 @@ public:
   uint64_t getIndexedOffset(const Type *Ty,
                             Value* const* Indices, unsigned NumIndices) const;
   
-  uint64_t getIndexedOffset(const Type *Ty,
-                            const std::vector<Value*> &Indices) const {
-    return getIndexedOffset(Ty, &Indices[0], Indices.size());
-  }
-
   /// getStructLayout - Return a StructLayout object, indicating the alignment
   /// of the struct, its size, and the offsets of its fields.  Note that this
   /// information is lazily cached.
