@@ -57,6 +57,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
@@ -809,11 +810,13 @@ void Verifier::visitShuffleVectorInst(ShuffleVectorInst &SV) {
 }
 
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
+  SmallVector<Value*, 16> Idxs(GEP.idx_begin(), GEP.idx_end());
   const Type *ElTy =
     GetElementPtrInst::getIndexedType(GEP.getOperand(0)->getType(),
-                   std::vector<Value*>(GEP.idx_begin(), GEP.idx_end()), true);
+                                      &Idxs[0], Idxs.size(), true);
   Assert1(ElTy, "Invalid indices for GEP pointer type!", &GEP);
-  Assert2(PointerType::get(ElTy) == GEP.getType(),
+  Assert2(isa<PointerType>(GEP.getType()) &&
+          cast<PointerType>(GEP.getType())->getElementType() == ElTy,
           "GEP is not of right type for indices!", &GEP, ElTy);
   visitInstruction(GEP);
 }
