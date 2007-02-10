@@ -63,7 +63,7 @@ void SlotCalculator::insertPrimitives() {
   insertType(Type::Int64Ty ); // 8: Int64TySlot
 }
 
-SlotCalculator::SlotCalculator(const Module *M ) {
+SlotCalculator::SlotCalculator(const Module *M) {
   ModuleTypeLevel = 0;
   TheModule = M;
 
@@ -297,37 +297,32 @@ int SlotCalculator::getTypeSlot(const Type*T) const {
 }
 
 int SlotCalculator::getOrCreateSlot(const Value *V) {
-  const Type *Ty = V->getType();
-  assert(Ty != Type::VoidTy && "Can't insert void values!");
-
   int SlotNo = getSlot(V);        // Check to see if it's already in!
   if (SlotNo != -1) return SlotNo;
 
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    assert(GV->getParent() != 0 && "Global not embedded into a module!");
-
-  if (!isa<GlobalValue>(V))  // Initializers for globals are handled explicitly
-    if (const Constant *C = dyn_cast<Constant>(V)) {
-
+  const Type *Ty = V->getType();
+  assert(Ty != Type::VoidTy && "Can't insert void values!");
+  
+  if (const Constant *C = dyn_cast<Constant>(V)) {
+    if (isa<GlobalValue>(C)) {
+      // Initializers for globals are handled explicitly elsewhere.
+    } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
       // Do not index the characters that make up constant strings.  We emit
       // constant strings as special entities that don't require their
       // individual characters to be emitted.
-      if (!isa<ConstantArray>(C) || !cast<ConstantArray>(C)->isString()) {
-        // This makes sure that if a constant has uses (for example an array of
-        // const ints), that they are inserted also.
-        //
-        for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
-             I != E; ++I)
-          getOrCreateSlot(*I);
-      } else {
-        assert(ModuleLevel.empty() &&
-               "How can a constant string be directly accessed in a function?");
-        // Otherwise, if we are emitting a bytecode file and this IS a string,
-        // remember it.
-        if (!C->isNullValue())
-          ConstantStrings.push_back(cast<ConstantArray>(C));
-      }
+      assert(ModuleLevel.empty() &&
+             "How can a constant string be directly accessed in a function?");
+      // Otherwise, this IS a string: remember it.
+      if (!C->isNullValue())
+        ConstantStrings.push_back(cast<ConstantArray>(C));
+    } else {
+      // This makes sure that if a constant has uses (for example an array of
+      // const ints), that they are inserted also.
+      for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
+           I != E; ++I)
+        getOrCreateSlot(*I);
     }
+  }
 
   unsigned TyPlane;
   if (Ty->isDerivedType()) {
