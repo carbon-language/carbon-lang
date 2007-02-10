@@ -367,19 +367,8 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
       }
     }
 
-  return insertValue(V);
-}
-
-int SlotCalculator::insertValue(const Value *V) {
-  assert(V && "Can't insert a null value!");
-  assert(getSlot(V) == -1 && "Value is already in the table!");
-
-  // If this node does not contribute to a plane, ignore the node.
   const Type *Typ = V->getType();
-  if (Typ == Type::VoidTy) {         // Ignore void type nodes
-    SC_DEBUG("ignored value " << *V << "\n");
-    return -1;
-  }
+  assert(Typ != Type::VoidTy && "Can't handle voidty");
 
   unsigned Ty;
   
