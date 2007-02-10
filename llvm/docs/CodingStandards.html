@@ -456,7 +456,8 @@ most cases, you simply don't need the definition of a class... and not
 <tt>#include</tt>'ing speeds up compilation.</p>
 
 <p>It is easy to try to go too overboard on this recommendation, however.  You
-<b>must</b> include all of the header files that you are using, either directly
+<b>must</b> include all of the header files that you are using -- you can 
+include them either directly
 or indirectly (through another header file).  To make sure that you don't
 accidently forget to include a header file in your module header, make sure to
 include your module header <b>first</b> in the implementation file (as mentioned
