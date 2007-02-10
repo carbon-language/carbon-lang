@@ -3822,9 +3822,9 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   bool MadeChange = true;
   while (MadeChange) {
     MadeChange = false;
-  for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+  for (Function::iterator FNI = Fn.begin(), E = Fn.end(); FNI != E; ++FNI) {
     // Split all critical edges where the dest block has a PHI.
-    TerminatorInst *BBTI = BB->getTerminator();
+    TerminatorInst *BBTI = FNI->getTerminator();
     if (BBTI->getNumSuccessors() > 1) {
       for (unsigned i = 0, e = BBTI->getNumSuccessors(); i != e; ++i)
         if (isa<PHINode>(BBTI->getSuccessor(i)->begin()) &&
@@ -3833,7 +3833,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
     }
     
     
-    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
+    for (BasicBlock::iterator BBI = FNI->begin(), E = FNI->end(); BBI != E; ) {
       Instruction *I = BBI++;
       
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
@@ -3843,7 +3843,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
           if (const TargetAsmInfo *TAI = 
                 TLI.getTargetMachine().getTargetAsmInfo()) {
             if (TAI->ExpandInlineAsm(CI))
-              BBI = BB->begin();
+              BBI = FNI->begin();
           }
       } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
         MadeChange |= OptimizeGEPExpression(GEPI, TLI.getTargetData());
@@ -3975,10 +3975,10 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
 }
 
 void SelectionDAGISel::
-LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
+LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL,
                std::vector<SDOperand> &UnorderedChains) {
   // If this is the entry block, emit arguments.
-  Function &F = *BB->getParent();
+  Function &F = *LLVMBB->getParent();
   FunctionLoweringInfo &FuncInfo = SDL.FuncInfo;
   SDOperand OldRoot = SDL.DAG.getRoot();
   std::vector<SDOperand> Args = TLI.LowerArguments(F, SDL.DAG);
