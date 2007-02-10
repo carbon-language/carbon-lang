@@ -63,10 +63,17 @@ public:
   Instructions Insts;
   MachineBasicBlock *Prev, *Next;
   const BasicBlock *BB;
-  std::vector<MachineBasicBlock *> Predecessors;
-  std::vector<MachineBasicBlock *> Successors;
   int Number;
   MachineFunction *Parent;
+
+  /// Predecessors/Successors - Keep track of the predecessor / successor
+  /// basicblocks.
+  std::vector<MachineBasicBlock *> Predecessors;
+  std::vector<MachineBasicBlock *> Successors;
+
+  /// LiveIns - Keep track of the physical registers that are livein of
+  /// the basicblock.
+  std::vector<unsigned> LiveIns;
 
 public:
   MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb),
@@ -124,6 +131,19 @@ public:
   const_succ_iterator  succ_end()   const { return Successors.end();     }
   unsigned             succ_size()  const { return Successors.size();    }
   bool                 succ_empty() const { return Successors.empty();   }
+
+  // LiveIn management methods.
+
+  /// addLiveIn - Add the specified register as a live in.  Note that it
+  /// is an error to add the same register to the same set more than once.
+  void addLiveIn(unsigned Reg)  { LiveIns.push_back(Reg); }
+
+  // Iteration support for live in sets.  These sets are kept in sorted
+  // order by their register number.
+  typedef std::vector<unsigned>::const_iterator livein_iterator;
+  livein_iterator livein_begin() const { return LiveIns.begin(); }
+  livein_iterator livein_end()   const { return LiveIns.end(); }
+  bool            livein_empty() const { return LiveIns.empty(); }
 
   // Code Layout methods.
   

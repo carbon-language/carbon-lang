@@ -15,6 +15,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -89,8 +90,20 @@ void MachineBasicBlock::dump() const {
   print(*cerr.stream());
 }
 
+static inline void OutputReg(std::ostream &os, unsigned RegNo,
+                             const MRegisterInfo *MRI = 0) {
+  if (!RegNo || MRegisterInfo::isPhysicalRegister(RegNo)) {
+    if (MRI)
+      os << " %" << MRI->get(RegNo).Name;
+    else
+      os << " %mreg(" << RegNo << ")";
+  } else
+    os << " %reg" << RegNo;
+}
+
 void MachineBasicBlock::print(std::ostream &OS) const {
-  if(!getParent()) {
+  const MachineFunction *MF = getParent();
+  if(!MF) {
     OS << "Can't print out MachineBasicBlock because parent MachineFunction"
        << " is null\n";
     return;
@@ -101,6 +114,14 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   if (LBB) OS << LBB->getName();
   OS << " (" << (const void*)this
      << ", LLVM BB @" << (const void*) LBB << ", ID#" << getNumber()<< "):\n";
+
+  const MRegisterInfo *MRI = MF->getTarget().getRegisterInfo();  
+  if (livein_begin() != livein_end()) {
+    OS << "Live Ins:";
+    for (livein_iterator I = livein_begin(), E = livein_end(); I != E; ++I)
+      OutputReg(OS, *I, MRI);
+    OS << "\n";
+  }
   // Print the preds of this block according to the CFG.
   if (!pred_empty()) {
     OS << "    Predecessors according to CFG:";
