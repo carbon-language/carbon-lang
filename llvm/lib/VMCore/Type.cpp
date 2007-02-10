@@ -426,6 +426,10 @@ PackedType::PackedType(const Type *ElType, unsigned NumEl)
   NumElements = NumEl;
   setAbstract(ElType->isAbstract());
   assert(NumEl > 0 && "NumEl of a PackedType must be greater than 0");
+  assert((ElType->isInteger() || ElType->isFloatingPoint() || 
+          isa<OpaqueType>(ElType)) && 
+         "Elements of a PackedType must be a primitive type");
+
 }
 
 
