@@ -375,14 +375,54 @@ int SlotCalculator::insertValue(const Value *V) {
   assert(getSlot(V) == -1 && "Value is already in the table!");
 
   // If this node does not contribute to a plane, ignore the node.
-  if (V->getType() == Type::VoidTy) {         // Ignore void type nodes
+  const Type *Typ = V->getType();
+  if (Typ == Type::VoidTy) {         // Ignore void type nodes
     SC_DEBUG("ignored value " << *V << "\n");
     return -1;
   }
 
-  // Okay, everything is happy, actually insert the silly value now...
-  return doInsertValue(V);
+  unsigned Ty;
+  
+  if (Typ->isDerivedType()) {
+    int ValSlot = getTypeSlot(Typ);
+    if (ValSlot == -1) {                // Have we already entered this type?
+      // Nope, this is the first we have seen the type, process it.
+      ValSlot = insertType(Typ);
+      assert(ValSlot != -1 && "ProcessType returned -1 for a type?");
+    }
+    Ty = (unsigned)ValSlot;
+  } else {
+    Ty = Typ->getTypeID();
+  }
+  
+  if (Table.size() <= Ty)    // Make sure we have the type plane allocated...
+    Table.resize(Ty+1, TypePlane());
+  
+  // If this is the first value to get inserted into the type plane, make sure
+  // to insert the implicit null value...
+  if (Table[Ty].empty() && hasNullValue(Typ)) {
+    Value *ZeroInitializer = Constant::getNullValue(Typ);
+    
+    // If we are pushing zeroinit, it will be handled below.
+    if (V != ZeroInitializer) {
+      Table[Ty].push_back(ZeroInitializer);
+      NodeMap[ZeroInitializer] = 0;
+    }
+  }
+  
+  // Insert node into table and NodeMap...
+  unsigned DestSlot = NodeMap[V] = Table[Ty].size();
+  Table[Ty].push_back(V);
+  
+  SC_DEBUG("  Inserting value [" << Ty << "] = " << *V << " slot=" <<
+           DestSlot << " [");
+  // G = Global, C = Constant, T = Type, F = Function, o = other
+  SC_DEBUG((isa<GlobalVariable>(V) ? "G" : (isa<Constant>(V) ? "C" :
+                                            (isa<Function>(V) ? "F" : "o"))));
+  SC_DEBUG("]\n");
+  return (int)DestSlot;
 }
+
 
 int SlotCalculator::getOrCreateTypeSlot(const Type* T) {
   int SlotNo = getTypeSlot(T);        // Check to see if it's already in!
@@ -421,56 +461,6 @@ int SlotCalculator::insertType(const Type *Ty) {
   return ResultSlot;
 }
 
-// doInsertValue - This is a small helper function to be called only
-// be insertValue.
-//
-int SlotCalculator::doInsertValue(const Value *D) {
-  const Type *Typ = D->getType();
-  unsigned Ty;
-
-  // Used for debugging DefSlot=-1 assertion...
-  //if (Typ == Type::TypeTy)
-  //  llvm_cerr << "Inserting type '"<<cast<Type>(D)->getDescription() <<"'!\n";
-
-  if (Typ->isDerivedType()) {
-    int ValSlot = getTypeSlot(Typ);
-    if (ValSlot == -1) {                // Have we already entered this type?
-      // Nope, this is the first we have seen the type, process it.
-      ValSlot = insertType(Typ);
-      assert(ValSlot != -1 && "ProcessType returned -1 for a type?");
-    }
-    Ty = (unsigned)ValSlot;
-  } else {
-    Ty = Typ->getTypeID();
-  }
-
-  if (Table.size() <= Ty)    // Make sure we have the type plane allocated...
-    Table.resize(Ty+1, TypePlane());
-
-  // If this is the first value to get inserted into the type plane, make sure
-  // to insert the implicit null value...
-  if (Table[Ty].empty() && hasNullValue(Typ)) {
-    Value *ZeroInitializer = Constant::getNullValue(Typ);
-
-    // If we are pushing zeroinit, it will be handled below.
-    if (D != ZeroInitializer) {
-      Table[Ty].push_back(ZeroInitializer);
-      NodeMap[ZeroInitializer] = 0;
-    }
-  }
-
-  // Insert node into table and NodeMap...
-  unsigned DestSlot = NodeMap[D] = Table[Ty].size();
-  Table[Ty].push_back(D);
-
-  SC_DEBUG("  Inserting value [" << Ty << "] = " << *D << " slot=" <<
-           DestSlot << " [");
-  // G = Global, C = Constant, T = Type, F = Function, o = other
-  SC_DEBUG((isa<GlobalVariable>(D) ? "G" : (isa<Constant>(D) ? "C" :
-           (isa<Function>(D) ? "F" : "o"))));
-  SC_DEBUG("]\n");
-  return (int)DestSlot;
-}
 
 // doInsertType - This is a small helper function to be called only
 // be insertType.

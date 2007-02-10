@@ -126,7 +126,6 @@ private:
   int insertType(const Type *T);
 
   // doInsertValue - Small helper function to be called only be insertVal.
-  int doInsertValue(const Value *V);
   int doInsertType(const Type *T);
 
   // processModule - Process all of the module level function declarations and
