@@ -334,9 +334,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     case Instruction::GetElementPtr: {
       // Compute the index 
       Result = getConstantValue(CE->getOperand(0));
-      std::vector<Value*> Indexes(CE->op_begin()+1, CE->op_end());
+      SmallVector<Value*, 8> Indices(CE->op_begin()+1, CE->op_end());
       uint64_t Offset =
-        TD->getIndexedOffset(CE->getOperand(0)->getType(), Indexes);
+        TD->getIndexedOffset(CE->getOperand(0)->getType(),
+                             &Indices[0], Indices.size());
 
       if (getTargetData()->getPointerSize() == 4)
         Result.Int32Val += Offset;

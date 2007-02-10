@@ -436,7 +436,9 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
                 GEPOperands[i] =
                   Constant::getNullValue(GEPOperands[i]->getType());
             int64_t Offset =
-              getTargetData().getIndexedOffset(BasePtr->getType(), GEPOperands);
+              getTargetData().getIndexedOffset(BasePtr->getType(),
+                                               &GEPOperands[0],
+                                               GEPOperands.size());
 
             if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
               return NoAlias;
@@ -617,11 +619,13 @@ BasicAliasAnalysis::CheckGEPInstructions(
           // Okay, now get the offset.  This is the relative offset for the full
           // instruction.
           const TargetData &TD = getTargetData();
-          int64_t Offset1 = TD.getIndexedOffset(GEPPointerTy, GEP1Ops);
+          int64_t Offset1 = TD.getIndexedOffset(GEPPointerTy, &GEP1Ops[0],
+                                                GEP1Ops.size());
 
           // Now crop off any constants from the end...
           GEP1Ops.resize(MinOperands);
-          int64_t Offset2 = TD.getIndexedOffset(GEPPointerTy, GEP1Ops);
+          int64_t Offset2 = TD.getIndexedOffset(GEPPointerTy, &GEP1Ops[0],
+                                                GEP1Ops.size());
 
           // If the tail provided a bit enough offset, return noalias!
           if ((uint64_t)(Offset2-Offset1) >= SizeMax)
@@ -731,8 +735,10 @@ BasicAliasAnalysis::CheckGEPInstructions(
   }
 
   if (GEPPointerTy->getElementType()->isSized()) {
-    int64_t Offset1 = getTargetData().getIndexedOffset(GEPPointerTy, GEP1Ops);
-    int64_t Offset2 = getTargetData().getIndexedOffset(GEPPointerTy, GEP2Ops);
+    int64_t Offset1 =
+      getTargetData().getIndexedOffset(GEPPointerTy,&GEP1Ops[0],GEP1Ops.size());
+    int64_t Offset2 = 
+      getTargetData().getIndexedOffset(GEPPointerTy,&GEP2Ops[0],GEP2Ops.size());
     assert(Offset1<Offset2 && "There is at least one different constant here!");
 
     if ((uint64_t)(Offset2-Offset1) >= SizeMax) {
