@@ -75,13 +75,13 @@ public:
   /// plane.  This returns < 0 on error!
   ///
   unsigned getSlot(const Value *V) const {
-    std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(V);
+    NodeMapType::const_iterator I = NodeMap.find(V);
     assert(I != NodeMap.end() && "Value not in slotcalculator!");
     return I->second;
   }
   
   unsigned getTypeSlot(const Type* T) const {
-    std::map<const Type*, unsigned>::const_iterator I = TypeMap.find(T);
+    TypeMapType::const_iterator I = TypeMap.find(T);
     assert(I != TypeMap.end() && "Type not in slotcalc!");
     return I->second;
   }

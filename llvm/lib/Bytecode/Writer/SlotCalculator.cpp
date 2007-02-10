@@ -256,7 +256,7 @@ void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
 
 
 unsigned SlotCalculator::getOrCreateTypeSlot(const Type *Ty) {
-  std::map<const Type*, unsigned>::iterator TyIt = TypeMap.find(Ty);
+  TypeMapType::iterator TyIt = TypeMap.find(Ty);
   if (TyIt != TypeMap.end()) return TyIt->second;
 
   // Insert into TypeMap.
