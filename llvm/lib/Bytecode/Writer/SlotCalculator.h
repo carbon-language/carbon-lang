@@ -65,8 +65,17 @@ public:
   /// getSlot - Return the slot number of the specified value in it's type
   /// plane.  This returns < 0 on error!
   ///
-  unsigned getSlot(const Value *V) const;
-  unsigned getTypeSlot(const Type* T) const;
+  unsigned getSlot(const Value *V) const {
+    std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(V);
+    assert(I != NodeMap.end() && "Value not in slotcalculator!");
+    return I->second;
+  }
+  
+  unsigned getTypeSlot(const Type* T) const {
+    std::map<const Type*, unsigned>::const_iterator I = TypeMap.find(T);
+    assert(I != TypeMap.end() && "Type not in slotcalc!");
+    return I->second;
+  }
 
   inline unsigned getNumPlanes() const { return Table.size(); }
   inline unsigned getNumTypes() const { return Types.size(); }

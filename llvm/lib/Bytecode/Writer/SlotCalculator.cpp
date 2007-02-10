@@ -278,18 +278,6 @@ void SlotCalculator::purgeFunction() {
   SC_DEBUG("end purgeFunction!\n");
 }
 
-unsigned SlotCalculator::getSlot(const Value *V) const {
-  std::map<const Value*, unsigned>::const_iterator I = NodeMap.find(V);
-  assert(I != NodeMap.end() && "Value not in slotcalculator!");
-  return (int)I->second;
-}
-
-unsigned SlotCalculator::getTypeSlot(const Type*T) const {
-  std::map<const Type*, unsigned>::const_iterator I = TypeMap.find(T);
-  assert(I != TypeMap.end() && "Type not in slotcalc!");
-  return I->second;
-}
-
 void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
   // Check to see if it's already in!
   if (NodeMap.count(V)) return;
