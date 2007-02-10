@@ -362,16 +362,14 @@ unsigned SlotCalculator::getOrCreateTypeSlot(const Type *Ty) {
   //    global { \2 * } { { \2 }* null }
   //
   unsigned ResultSlot = doInsertType(Ty);
-  SC_DEBUG("  Inserted type: " << Ty->getDescription() << " slot=" <<
-           ResultSlot << "\n");
 
   // Loop over any contained types in the definition... in post
   // order.
   for (po_iterator<const Type*> I = po_begin(Ty), E = po_end(Ty);
        I != E; ++I) {
-    if (*I != Ty) {
+    if (*I != Ty && !TypeMap.count(*I)) {
       // If we haven't seen this sub type before, add it to our type table!
-      getOrCreateTypeSlot(*I);
+      doInsertType(*I);
     }
   }
   return ResultSlot;
