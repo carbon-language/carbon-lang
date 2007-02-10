@@ -66,7 +66,7 @@ public:
   /// plane.  This returns < 0 on error!
   ///
   unsigned getSlot(const Value *V) const;
-  int getTypeSlot(const Type* T) const;
+  unsigned getTypeSlot(const Type* T) const;
 
   inline unsigned getNumPlanes() const { return Table.size(); }
   inline unsigned getNumTypes() const { return Types.size(); }

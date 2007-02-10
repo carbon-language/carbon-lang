@@ -284,10 +284,10 @@ unsigned SlotCalculator::getSlot(const Value *V) const {
   return (int)I->second;
 }
 
-int SlotCalculator::getTypeSlot(const Type*T) const {
+unsigned SlotCalculator::getTypeSlot(const Type*T) const {
   std::map<const Type*, unsigned>::const_iterator I = TypeMap.find(T);
   assert(I != TypeMap.end() && "Type not in slotcalc!");
-  return (int)I->second;
+  return I->second;
 }
 
 void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
