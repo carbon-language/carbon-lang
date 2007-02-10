@@ -57,11 +57,6 @@ class SlotCalculator {
   std::vector<unsigned> ModuleLevel;
   unsigned ModuleTypeLevel;
 
-  /// ModuleContainsAllFunctionConstants - This flag is set to true if all
-  /// function constants are incorporated into the module constant table.  This
-  /// is only possible if building information for a bytecode file.
-  bool ModuleContainsAllFunctionConstants;
-
   SlotCalculator(const SlotCalculator &);  // DO NOT IMPLEMENT
   void operator=(const SlotCalculator &);  // DO NOT IMPLEMENT
 public:

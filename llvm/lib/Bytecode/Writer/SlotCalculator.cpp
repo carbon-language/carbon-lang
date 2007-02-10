@@ -24,7 +24,6 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Type.h"
 #include "llvm/ValueSymbolTable.h"
-#include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -65,7 +64,6 @@ void SlotCalculator::insertPrimitives() {
 }
 
 SlotCalculator::SlotCalculator(const Module *M ) {
-  ModuleContainsAllFunctionConstants = false;
   ModuleTypeLevel = 0;
   TheModule = M;
 
@@ -76,7 +74,6 @@ SlotCalculator::SlotCalculator(const Module *M ) {
 }
 
 SlotCalculator::SlotCalculator(const Function *M ) {
-  ModuleContainsAllFunctionConstants = false;
   TheModule = M ? M->getParent() : 0;
 
   insertPrimitives();
@@ -142,27 +139,20 @@ void SlotCalculator::processModule() {
   }
 
   // Scan all of the functions for their constants, which allows us to emit
-  // more compact modules.  This is optional, and is just used to compactify
-  // the constants used by different functions together.
-  //
-  // This functionality tends to produce smaller bytecode files.  This should
-  // not be used in the future by clients that want to, for example, build and
-  // emit functions on the fly.  For now, however, it is unconditionally
-  // enabled.
-  ModuleContainsAllFunctionConstants = true;
-
+  // more compact modules.
   SC_DEBUG("Inserting function constants:\n");
   for (Module::const_iterator F = TheModule->begin(), E = TheModule->end();
        F != E; ++F) {
-    for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-      for (User::const_op_iterator OI = I->op_begin(), E = I->op_end(); 
-           OI != E; ++OI) {
-        if ((isa<Constant>(*OI) && !isa<GlobalValue>(*OI)) ||
-            isa<InlineAsm>(*OI))
-          getOrCreateSlot(*OI);
+    for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+      for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
+        for (User::const_op_iterator OI = I->op_begin(), E = I->op_end(); 
+             OI != E; ++OI) {
+          if ((isa<Constant>(*OI) && !isa<GlobalValue>(*OI)) ||
+              isa<InlineAsm>(*OI))
+            getOrCreateSlot(*OI);
+        }
+        getOrCreateTypeSlot(I->getType());
       }
-      getOrCreateTypeSlot(I->getType());
-    }
   }
 
   // Insert constants that are named at module level into the slot pool so that
@@ -240,20 +230,6 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
       I != E; ++I)
     getOrCreateSlot(I);
-
-  if (!ModuleContainsAllFunctionConstants) {
-    // Iterate over all of the instructions in the function, looking for
-    // constant values that are referenced.  Add these to the value pools
-    // before any nonconstant values.  This will be turned into the constant
-    // pool for the bytecode writer.
-    //
-
-    // Emit all of the constants that are being used by the instructions in
-    // the function...
-    for (constant_iterator CI = constant_begin(F), CE = constant_end(F);
-         CI != CE; ++CI)
-      getOrCreateSlot(*CI);
-  }
 
   SC_DEBUG("Inserting Instructions:\n");
 
