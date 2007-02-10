@@ -111,10 +111,10 @@ namespace {
     // must-aliasing base pointers.  This checks to see if the index expressions
     // preclude the pointers from aliasing...
     AliasResult
-    CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
-                         unsigned G1Size,
-                         const Type *BasePtr2Ty, std::vector<Value*> &GEP2Ops,
-                         unsigned G2Size);
+    CheckGEPInstructions(const Type* BasePtr1Ty,
+                         Value **GEP1Ops, unsigned NumGEP1Ops, unsigned G1Size,
+                         const Type *BasePtr2Ty,
+                         Value **GEP2Ops, unsigned NumGEP2Ops, unsigned G2Size);
   };
 
   // Register this pass...
@@ -377,8 +377,10 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
       // do the comparison.
       if (BasePtr1 == BasePtr2) {
         AliasResult GAlias =
-          CheckGEPInstructions(BasePtr1->getType(), GEP1Ops, V1Size,
-                               BasePtr2->getType(), GEP2Ops, V2Size);
+          CheckGEPInstructions(BasePtr1->getType(),
+                               &GEP1Ops[0], GEP1Ops.size(), V1Size,
+                               BasePtr2->getType(),
+                               &GEP2Ops[0], GEP2Ops.size(), V2Size);
         if (GAlias != MayAlias)
           return GAlias;
       }
@@ -472,8 +474,8 @@ static bool IndexOperandsEqual(Value *V1, Value *V2) {
 /// pointers from aliasing...
 AliasAnalysis::AliasResult 
 BasicAliasAnalysis::CheckGEPInstructions(
-  const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops, unsigned G1S,
-  const Type *BasePtr2Ty, std::vector<Value*> &GEP2Ops, unsigned G2S) {
+  const Type* BasePtr1Ty, Value **GEP1Ops, unsigned NumGEP1Ops, unsigned G1S,
+  const Type *BasePtr2Ty, Value **GEP2Ops, unsigned NumGEP2Ops, unsigned G2S) {
   // We currently can't handle the case when the base pointers have different
   // primitive types.  Since this is uncommon anyway, we are happy being
   // extremely conservative.
@@ -484,7 +486,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
 
   // Find the (possibly empty) initial sequence of equal values... which are not
   // necessarily constants.
-  unsigned NumGEP1Operands = GEP1Ops.size(), NumGEP2Operands = GEP2Ops.size();
+  unsigned NumGEP1Operands = NumGEP1Ops, NumGEP2Operands = NumGEP2Ops;
   unsigned MinOperands = std::min(NumGEP1Operands, NumGEP2Operands);
   unsigned MaxOperands = std::max(NumGEP1Operands, NumGEP2Operands);
   unsigned UnequalOper = 0;
@@ -508,7 +510,10 @@ BasicAliasAnalysis::CheckGEPInstructions(
   // getelementptrs, check to see if the tail of the leftover one is all zeros.
   // If so, return mustalias.
   if (UnequalOper == MinOperands) {
-    if (GEP1Ops.size() < GEP2Ops.size()) std::swap(GEP1Ops, GEP2Ops);
+    if (NumGEP1Ops < NumGEP2Ops) {
+      std::swap(GEP1Ops, GEP2Ops);
+      std::swap(NumGEP1Ops, NumGEP2Ops);
+    }
 
     bool AllAreZeros = true;
     for (unsigned i = UnequalOper; i != MaxOperands; ++i)
@@ -585,8 +590,10 @@ BasicAliasAnalysis::CheckGEPInstructions(
               Constant *Compare = ConstantExpr::getICmp(ICmpInst::ICMP_SGT, 
                                                         G1OC, G2OC);
               if (ConstantInt *CV = dyn_cast<ConstantInt>(Compare)) {
-                if (CV->getZExtValue())   // If they are comparable and G2 > G1
+                if (CV->getZExtValue()) {  // If they are comparable and G2 > G1
                   std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2
+                  std::swap(NumGEP1Ops, NumGEP2Ops);
+                }
                 break;
               }
             }
@@ -602,11 +609,13 @@ BasicAliasAnalysis::CheckGEPInstructions(
   // case, there may still be hope.  Check this now.
   if (FirstConstantOper == MinOperands) {
     // Make GEP1Ops be the longer one if there is a longer one.
-    if (GEP1Ops.size() < GEP2Ops.size())
+    if (NumGEP1Ops < NumGEP2Ops) {
       std::swap(GEP1Ops, GEP2Ops);
+      std::swap(NumGEP1Ops, NumGEP2Ops);
+    }
 
     // Is there anything to check?
-    if (GEP1Ops.size() > MinOperands) {
+    if (NumGEP1Ops > MinOperands) {
       for (unsigned i = FirstConstantOper; i != MaxOperands; ++i)
         if (isa<ConstantInt>(GEP1Ops[i]) && 
             !cast<Constant>(GEP1Ops[i])->isNullValue()) {
@@ -619,13 +628,12 @@ BasicAliasAnalysis::CheckGEPInstructions(
           // Okay, now get the offset.  This is the relative offset for the full
           // instruction.
           const TargetData &TD = getTargetData();
-          int64_t Offset1 = TD.getIndexedOffset(GEPPointerTy, &GEP1Ops[0],
-                                                GEP1Ops.size());
+          int64_t Offset1 = TD.getIndexedOffset(GEPPointerTy, GEP1Ops,
+                                                NumGEP1Ops);
 
-          // Now crop off any constants from the end...
-          GEP1Ops.resize(MinOperands);
-          int64_t Offset2 = TD.getIndexedOffset(GEPPointerTy, &GEP1Ops[0],
-                                                GEP1Ops.size());
+          // Now check without any constants at the end.
+          int64_t Offset2 = TD.getIndexedOffset(GEPPointerTy, GEP1Ops,
+                                                MinOperands);
 
           // If the tail provided a bit enough offset, return noalias!
           if ((uint64_t)(Offset2-Offset1) >= SizeMax)
@@ -665,8 +673,8 @@ BasicAliasAnalysis::CheckGEPInstructions(
 
   // Loop over the rest of the operands...
   for (unsigned i = FirstConstantOper+1; i != MaxOperands; ++i) {
-    const Value *Op1 = i < GEP1Ops.size() ? GEP1Ops[i] : 0;
-    const Value *Op2 = i < GEP2Ops.size() ? GEP2Ops[i] : 0;
+    const Value *Op1 = i < NumGEP1Ops ? GEP1Ops[i] : 0;
+    const Value *Op2 = i < NumGEP2Ops ? GEP2Ops[i] : 0;
     // If they are equal, use a zero index...
     if (Op1 == Op2 && BasePtr1Ty == BasePtr2Ty) {
       if (!isa<ConstantInt>(Op1))
@@ -736,9 +744,9 @@ BasicAliasAnalysis::CheckGEPInstructions(
 
   if (GEPPointerTy->getElementType()->isSized()) {
     int64_t Offset1 =
-      getTargetData().getIndexedOffset(GEPPointerTy,&GEP1Ops[0],GEP1Ops.size());
+      getTargetData().getIndexedOffset(GEPPointerTy, GEP1Ops, NumGEP1Ops);
     int64_t Offset2 = 
-      getTargetData().getIndexedOffset(GEPPointerTy,&GEP2Ops[0],GEP2Ops.size());
+      getTargetData().getIndexedOffset(GEPPointerTy, GEP2Ops, NumGEP2Ops);
     assert(Offset1<Offset2 && "There is at least one different constant here!");
 
     if ((uint64_t)(Offset2-Offset1) >= SizeMax) {
