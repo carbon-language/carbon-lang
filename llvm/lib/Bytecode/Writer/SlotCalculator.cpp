@@ -201,83 +201,6 @@ void SlotCalculator::processValueSymbolTable(const ValueSymbolTable *VST) {
     CreateSlotIfNeeded(VI->second);
 }
 
-void SlotCalculator::incorporateFunction(const Function *F) {
-  assert((ModuleLevel.empty() ||
-          ModuleTypeLevel == 0) && "Module already incorporated!");
-
-  SC_DEBUG("begin processFunction!\n");
-
-  // Update the ModuleLevel entries to be accurate.
-  ModuleLevel.resize(getNumPlanes());
-  for (unsigned i = 0, e = getNumPlanes(); i != e; ++i)
-    ModuleLevel[i] = getPlane(i).size();
-  ModuleTypeLevel = Types.size();
-
-  // Iterate over function arguments, adding them to the value table...
-  for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
-      I != E; ++I)
-    CreateSlotIfNeeded(I);
-
-  SC_DEBUG("Inserting Instructions:\n");
-
-  // Add all of the instructions to the type planes...
-  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-    CreateSlotIfNeeded(BB);
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
-      if (I->getType() != Type::VoidTy)
-        CreateSlotIfNeeded(I);
-    }
-  }
-
-  SC_DEBUG("end processFunction!\n");
-}
-
-void SlotCalculator::purgeFunction() {
-  assert((ModuleLevel.size() != 0 ||
-          ModuleTypeLevel != 0) && "Module not incorporated!");
-  unsigned NumModuleTypes = ModuleLevel.size();
-
-  SC_DEBUG("begin purgeFunction!\n");
-
-  // Next, remove values from existing type planes
-  for (unsigned i = 0; i != NumModuleTypes; ++i) {
-    // Size of plane before function came
-    unsigned ModuleLev = getModuleLevel(i);
-    assert(int(ModuleLev) >= 0 && "BAD!");
-
-    TypePlane &Plane = getPlane(i);
-
-    assert(ModuleLev <= Plane.size() && "module levels higher than elements?");
-    while (Plane.size() != ModuleLev) {
-      assert(!isa<GlobalValue>(Plane.back()) &&
-             "Functions cannot define globals!");
-      NodeMap.erase(Plane.back());       // Erase from nodemap
-      Plane.pop_back();                  // Shrink plane
-    }
-  }
-
-  // We don't need this state anymore, free it up.
-  ModuleLevel.clear();
-  ModuleTypeLevel = 0;
-
-  // Finally, remove any type planes defined by the function...
-  while (Table.size() > NumModuleTypes) {
-    TypePlane &Plane = Table.back();
-    SC_DEBUG("Removing Plane " << (Table.size()-1) << " of size "
-             << Plane.size() << "\n");
-    while (Plane.size()) {
-      assert(!isa<GlobalValue>(Plane.back()) &&
-             "Functions cannot define globals!");
-      NodeMap.erase(Plane.back());   // Erase from nodemap
-      Plane.pop_back();              // Shrink plane
-    }
-
-    Table.pop_back();                // Nuke the plane, we don't like it.
-  }
-
-  SC_DEBUG("end purgeFunction!\n");
-}
-
 void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
   // Check to see if it's already in!
   if (NodeMap.count(V)) return;
@@ -326,11 +249,11 @@ void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
   }
   
   // Insert node into table and NodeMap...
-  unsigned DestSlot = NodeMap[V] = Table[TyPlane].size();
+  NodeMap[V] = Table[TyPlane].size();
   Table[TyPlane].push_back(V);
   
   SC_DEBUG("  Inserting value [" << TyPlane << "] = " << *V << " slot=" <<
-           DestSlot << "\n");
+           NodeMap[V] << "\n");
 }
 
 
@@ -351,3 +274,117 @@ unsigned SlotCalculator::getOrCreateTypeSlot(const Type *Ty) {
 
   return ResultSlot;
 }
+
+
+
+void SlotCalculator::incorporateFunction(const Function *F) {
+  assert((ModuleLevel.empty() ||
+          ModuleTypeLevel == 0) && "Module already incorporated!");
+  
+  SC_DEBUG("begin processFunction!\n");
+  
+  // Update the ModuleLevel entries to be accurate.
+  ModuleLevel.resize(getNumPlanes());
+  for (unsigned i = 0, e = getNumPlanes(); i != e; ++i)
+    ModuleLevel[i] = getPlane(i).size();
+  ModuleTypeLevel = Types.size();
+  
+  // Iterate over function arguments, adding them to the value table...
+  for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+      I != E; ++I)
+    CreateFunctionValueSlot(I);
+  
+  SC_DEBUG("Inserting Instructions:\n");
+  
+  // Add all of the instructions to the type planes...
+  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+    CreateFunctionValueSlot(BB);
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
+      if (I->getType() != Type::VoidTy)
+        CreateFunctionValueSlot(I);
+    }
+  }
+  
+  SC_DEBUG("end processFunction!\n");
+}
+
+void SlotCalculator::purgeFunction() {
+  assert((ModuleLevel.size() != 0 ||
+          ModuleTypeLevel != 0) && "Module not incorporated!");
+  unsigned NumModuleTypes = ModuleLevel.size();
+  
+  SC_DEBUG("begin purgeFunction!\n");
+  
+  // Next, remove values from existing type planes
+  for (unsigned i = 0; i != NumModuleTypes; ++i) {
+    // Size of plane before function came
+    unsigned ModuleLev = getModuleLevel(i);
+    assert(int(ModuleLev) >= 0 && "BAD!");
+    
+    TypePlane &Plane = getPlane(i);
+    
+    assert(ModuleLev <= Plane.size() && "module levels higher than elements?");
+    while (Plane.size() != ModuleLev) {
+      assert(!isa<GlobalValue>(Plane.back()) &&
+             "Functions cannot define globals!");
+      NodeMap.erase(Plane.back());       // Erase from nodemap
+      Plane.pop_back();                  // Shrink plane
+    }
+  }
+  
+  // We don't need this state anymore, free it up.
+  ModuleLevel.clear();
+  ModuleTypeLevel = 0;
+  
+  // Finally, remove any type planes defined by the function...
+  while (Table.size() > NumModuleTypes) {
+    TypePlane &Plane = Table.back();
+    SC_DEBUG("Removing Plane " << (Table.size()-1) << " of size "
+             << Plane.size() << "\n");
+    while (Plane.size()) {
+      assert(!isa<GlobalValue>(Plane.back()) &&
+             "Functions cannot define globals!");
+      NodeMap.erase(Plane.back());   // Erase from nodemap
+      Plane.pop_back();              // Shrink plane
+    }
+    
+    Table.pop_back();                // Nuke the plane, we don't like it.
+  }
+  
+  SC_DEBUG("end purgeFunction!\n");
+}
+
+void SlotCalculator::CreateFunctionValueSlot(const Value *V) {
+  assert(!NodeMap.count(V) && "Function-local value can't be inserted!");
+  
+  const Type *Ty = V->getType();
+  assert(Ty != Type::VoidTy && "Can't insert void values!");
+  assert(!isa<Constant>(V) && "Not a function-local value!");
+  
+  unsigned TyPlane = getOrCreateTypeSlot(Ty);
+  if (Table.size() <= TyPlane)    // Make sure we have the type plane allocated.
+    Table.resize(TyPlane+1, TypePlane());
+  
+  // If this is the first value to get inserted into the type plane, make sure
+  // to insert the implicit null value.
+  if (Table[TyPlane].empty()) {
+    // Label's and opaque types can't have a null value.
+    if (Ty != Type::LabelTy && !isa<OpaqueType>(Ty)) {
+      Value *ZeroInitializer = Constant::getNullValue(Ty);
+      
+      // If we are pushing zeroinit, it will be handled below.
+      if (V != ZeroInitializer) {
+        Table[TyPlane].push_back(ZeroInitializer);
+        NodeMap[ZeroInitializer] = 0;
+      }
+    }
+  }
+  
+  // Insert node into table and NodeMap...
+  NodeMap[V] = Table[TyPlane].size();
+  Table[TyPlane].push_back(V);
+  
+  SC_DEBUG("  Inserting value [" << TyPlane << "] = " << *V << " slot=" <<
+           NodeMap[V] << "\n");
+}  
+

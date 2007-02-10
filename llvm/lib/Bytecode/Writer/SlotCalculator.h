@@ -114,6 +114,7 @@ public:
 
 private:
   void CreateSlotIfNeeded(const Value *V);
+  void CreateFunctionValueSlot(const Value *V);
   unsigned getOrCreateTypeSlot(const Type *T);
 
   // processModule - Process all of the module level function declarations and
