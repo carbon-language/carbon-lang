@@ -466,8 +466,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
       const StructLayout *Layout = getStructLayout(STy);
 
       // Add in the offset, as calculated by the structure layout info...
-      assert(FieldNo < Layout->MemberOffsets.size() &&"FieldNo out of range!");
-      Result += Layout->MemberOffsets[FieldNo];
+      Result += Layout->getElementOffset(FieldNo);
 
       // Update Ty to refer to current element
       Ty = STy->getElementType(FieldNo);

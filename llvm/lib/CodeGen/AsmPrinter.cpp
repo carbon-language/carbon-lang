@@ -739,8 +739,8 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       // Check if padding is needed and insert one or more 0s.
       uint64_t fieldSize = TD->getTypeSize(field->getType());
       uint64_t padSize = ((i == e-1? cvsLayout->StructSize
-                           : cvsLayout->MemberOffsets[i+1])
-                          - cvsLayout->MemberOffsets[i]) - fieldSize;
+                           : cvsLayout->getElementOffset(i+1))
+                          - cvsLayout->getElementOffset(i)) - fieldSize;
       sizeSoFar += fieldSize + padSize;
 
       // Now print the actual field value

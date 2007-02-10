@@ -267,7 +267,7 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
     if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
       const StructLayout *SL = TD->getStructLayout(STy);
       unsigned Idx = cast<ConstantInt>(GEP->getOperand(i))->getZExtValue();
-      uint64_t Offset = SL->MemberOffsets[Idx];
+      uint64_t Offset = SL->getElementOffset(Idx);
       GEPVal = SCEVAddExpr::get(GEPVal,
                                 SCEVUnknown::getIntegerSCEV(Offset, UIntPtrTy));
     } else {

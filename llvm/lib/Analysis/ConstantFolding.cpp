@@ -70,7 +70,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
       
       if (const StructType *ST = dyn_cast<StructType>(*GTI)) {
         // N = N + Offset
-        Offset += TD.getStructLayout(ST)->MemberOffsets[CI->getZExtValue()];
+        Offset += TD.getStructLayout(ST)->getElementOffset(CI->getZExtValue());
       } else {
         const SequentialType *ST = cast<SequentialType>(*GTI);
         Offset += TD.getTypeSize(ST->getElementType())*CI->getSExtValue();

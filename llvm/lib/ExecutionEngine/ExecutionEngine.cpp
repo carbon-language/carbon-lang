@@ -716,7 +716,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     const StructLayout *SL =
       getTargetData()->getStructLayout(cast<StructType>(CPS->getType()));
     for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
-      InitializeMemory(CPS->getOperand(i), (char*)Addr+SL->MemberOffsets[i]);
+      InitializeMemory(CPS->getOperand(i), (char*)Addr+SL->getElementOffset(i));
     return;
   }
 

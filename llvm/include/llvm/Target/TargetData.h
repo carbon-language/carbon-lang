@@ -275,16 +275,21 @@ public:
 /// target machine, based on the TargetData structure.
 ///
 class StructLayout {
-public:
   std::vector<uint64_t> MemberOffsets;
-  uint64_t StructSize;
+public:
   unsigned StructAlignment;
+  uint64_t StructSize;
 
   /// getElementContainingOffset - Given a valid offset into the structure,
   /// return the structure index that contains it.
   ///
   unsigned getElementContainingOffset(uint64_t Offset) const;
 
+  uint64_t getElementOffset(unsigned Idx) const {
+    assert(Idx < MemberOffsets.size() && "Invalid element idx!");
+    return MemberOffsets[Idx];
+  }
+  
 private:
   friend class TargetData;   // Only TargetData can create this class
   StructLayout(const StructType *ST, const TargetData &TD);

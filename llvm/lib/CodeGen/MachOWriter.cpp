@@ -878,7 +878,8 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
       const StructLayout *SL =
         TD->getStructLayout(cast<StructType>(CPS->getType()));
       for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
-        WorkList.push_back(CPair(CPS->getOperand(i), PA+SL->MemberOffsets[i]));
+        WorkList.push_back(CPair(CPS->getOperand(i),
+                                 PA+SL->getElementOffset(i)));
     } else {
       cerr << "Bad Type: " << *PC->getType() << "\n";
       assert(0 && "Unknown constant type to initialize memory with!");

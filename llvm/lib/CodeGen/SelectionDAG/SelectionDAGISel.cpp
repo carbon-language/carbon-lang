@@ -1678,7 +1678,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       unsigned Field = cast<ConstantInt>(Idx)->getZExtValue();
       if (Field) {
         // N = N + Offset
-        uint64_t Offset = TD->getStructLayout(StTy)->MemberOffsets[Field];
+        uint64_t Offset = TD->getStructLayout(StTy)->getElementOffset(Field);
         N = DAG.getNode(ISD::ADD, N.getValueType(), N,
                         getIntPtrConstant(Offset));
       }
@@ -3702,7 +3702,7 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
     if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
       unsigned Field = cast<ConstantInt>(Idx)->getZExtValue();
       if (Field)
-        ConstantOffset += TD->getStructLayout(StTy)->MemberOffsets[Field];
+        ConstantOffset += TD->getStructLayout(StTy)->getElementOffset(Field);
       Ty = StTy->getElementType(Field);
     } else {
       Ty = cast<SequentialType>(Ty)->getElementType();

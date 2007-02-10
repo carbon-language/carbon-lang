@@ -801,7 +801,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           else
             NewOffset += AggSizeInBits-ElSizeBits*(Idx+1);
         } else if (const StructType *STy = dyn_cast<StructType>(AggTy)) {
-          unsigned EltBitOffset = TD.getStructLayout(STy)->MemberOffsets[Idx]*8;
+          unsigned EltBitOffset =
+            TD.getStructLayout(STy)->getElementOffset(Idx)*8;
           
           if (TD.isLittleEndian() || isVectorInsert)
             NewOffset += EltBitOffset;

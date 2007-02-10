@@ -1082,7 +1082,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
       const ConstantInt *CPU = cast<ConstantInt>(I.getOperand());
       unsigned Index = unsigned(CPU->getZExtValue());
 
-      Total += (PointerTy)SLO->MemberOffsets[Index];
+      Total += (PointerTy)SLO->getElementOffset(Index);
     } else {
       const SequentialType *ST = cast<SequentialType>(*I);
       // Get the index number for the array... which must be long type...
