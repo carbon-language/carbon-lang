@@ -24,7 +24,6 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Type.h"
 #include "llvm/ValueSymbolTable.h"
-#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <functional>
@@ -355,34 +354,16 @@ unsigned SlotCalculator::getOrCreateTypeSlot(const Type *Ty) {
   int SlotNo = getTypeSlot(Ty);        // Check to see if it's already in!
   if (SlotNo != -1) return (unsigned)SlotNo;
 
-  // Insert the current type before any subtypes.  This is important because
-  // recursive types elements are inserted in a bottom up order.  Changing
-  // this here can break things.  For example:
-  //
-  //    global { \2 * } { { \2 }* null }
-  //
-  unsigned ResultSlot = doInsertType(Ty);
-
-  // Loop over any contained types in the definition... in post
-  // order.
-  for (po_iterator<const Type*> I = po_begin(Ty), E = po_end(Ty);
-       I != E; ++I) {
-    if (*I != Ty && !TypeMap.count(*I)) {
-      // If we haven't seen this sub type before, add it to our type table!
-      doInsertType(*I);
-    }
-  }
-  return ResultSlot;
-}
-
-
-// doInsertType - This is a small helper function to be called only
-// be insertType.
-//
-unsigned SlotCalculator::doInsertType(const Type *Ty) {
   // Insert into TypeMap.
-  unsigned DestSlot = TypeMap[Ty] = Types.size();
+  unsigned ResultSlot = TypeMap[Ty] = Types.size();
   Types.push_back(Ty);
-  SC_DEBUG("  Inserting type [" << DestSlot << "] = " << *Ty << "\n" );
-  return DestSlot;
+  SC_DEBUG("  Inserting type [" << ResultSlot << "] = " << *Ty << "\n" );
+  
+  // Loop over any contained types in the definition, ensuring they are also
+  // inserted.
+  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+       I != E; ++I)
+    getOrCreateTypeSlot(*I);
+
+  return ResultSlot;
 }

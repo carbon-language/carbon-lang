@@ -107,9 +107,6 @@ private:
   void CreateSlotIfNeeded(const Value *V);
   unsigned getOrCreateTypeSlot(const Type *T);
 
-  // doInsertValue - Small helper function to be called only be insertVal.
-  unsigned doInsertType(const Type *T);
-
   // processModule - Process all of the module level function declarations and
   // types that are available.
   //
