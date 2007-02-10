@@ -54,7 +54,7 @@ class SlotCalculator {
   /// ModuleLevel - Used to keep track of which values belong to the module,
   /// and which values belong to the currently incorporated function.
   ///
-  std::vector<unsigned> ModuleLevel;
+  std::vector<int> ModuleLevel;
   unsigned ModuleTypeLevel;
 
   SlotCalculator(const SlotCalculator &);  // DO NOT IMPLEMENT
@@ -79,15 +79,6 @@ public:
 
   inline unsigned getNumPlanes() const { return Table.size(); }
   inline unsigned getNumTypes() const { return Types.size(); }
-
-  inline unsigned getModuleLevel(unsigned Plane) const {
-    return Plane < ModuleLevel.size() ? ModuleLevel[Plane] : 0;
-  }
-
-  /// Returns the number of types in the type list that are at module level
-  inline unsigned getModuleTypeLevel() const {
-    return ModuleTypeLevel;
-  }
 
   TypePlane &getPlane(unsigned Plane) {
     // Okay we are just returning an entry out of the main Table.  Make sure the

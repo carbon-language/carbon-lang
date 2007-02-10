@@ -64,7 +64,6 @@ void SlotCalculator::insertPrimitives() {
 
 SlotCalculator::SlotCalculator(const Module *M) {
   assert(M);
-  ModuleTypeLevel = 0;
   TheModule = M;
 
   insertPrimitives();
@@ -182,11 +181,8 @@ void SlotCalculator::processModule() {
   }
 
     
-  // Compute the ModuleLevel entries.
-  ModuleLevel.resize(getNumPlanes());
-  for (unsigned i = 0, e = getNumPlanes(); i != e; ++i)
-    ModuleLevel[i] = getPlane(i).size();
-  ModuleTypeLevel = Types.size();
+  // Initialize the ModuleLevel entries.
+  ModuleLevel.resize(getNumPlanes(), -1);
     
   SC_DEBUG("end processModule!\n");
 }
@@ -222,9 +218,6 @@ void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
       // Do not index the characters that make up constant strings.  We emit
       // constant strings as special entities that don't require their
       // individual characters to be emitted.
-      assert(ModuleLevel.empty() &&
-             "How can a constant string be directly accessed in a function?");
-      // Otherwise, this IS a string: remember it.
       if (!C->isNullValue())
         ConstantStrings.push_back(cast<ConstantArray>(C));
     } else {
@@ -313,16 +306,16 @@ void SlotCalculator::purgeFunction() {
   
   // Next, remove values from existing type planes
   for (unsigned i = 0; i != NumModuleTypes; ++i) {
-    // Size of plane before function came
-    unsigned ModuleLev = getModuleLevel(i);
-    assert(int(ModuleLev) >= 0 && "BAD!");
+    // If this type is not used by this function, ignore it.
+    int ModuleLev = ModuleLevel[i];
+    if (ModuleLev == -1) continue;
     
+    ModuleLevel[i] = -1;  // Reset for next function.
+
+    // Pop all function-local values in this type-plane off of Table.
     TypePlane &Plane = getPlane(i);
-    
-    assert(ModuleLev <= Plane.size() && "module levels higher than elements?");
-    while (Plane.size() != ModuleLev) {
-      assert(!isa<GlobalValue>(Plane.back()) &&
-             "Functions cannot define globals!");
+    assert(ModuleLev < Plane.size() && "module levels higher than elements?");
+    for (unsigned i = ModuleLev, e = Plane.size(); i != e; ++i) {
       NodeMap.erase(Plane.back());       // Erase from nodemap
       Plane.pop_back();                  // Shrink plane
     }
@@ -333,12 +326,8 @@ void SlotCalculator::purgeFunction() {
     TypePlane &Plane = Table.back();
     SC_DEBUG("Removing Plane " << (Table.size()-1) << " of size "
              << Plane.size() << "\n");
-    while (Plane.size()) {
-      assert(!isa<GlobalValue>(Plane.back()) &&
-             "Functions cannot define globals!");
-      NodeMap.erase(Plane.back());   // Erase from nodemap
-      Plane.pop_back();              // Shrink plane
-    }
+    for (unsigned i = 0, e = Plane.size(); i != e; ++i)
+      NodeMap.erase(Plane[i]);   // Erase from nodemap
     
     Table.pop_back();                // Nuke the plane, we don't like it.
   }
@@ -356,6 +345,12 @@ void SlotCalculator::CreateFunctionValueSlot(const Value *V) {
   unsigned TyPlane = getOrCreateTypeSlot(Ty);
   if (Table.size() <= TyPlane)    // Make sure we have the type plane allocated.
     Table.resize(TyPlane+1, TypePlane());
+  
+  // If this is the first value noticed of this type within this function,
+  // remember the module level for this type plane in ModuleLevel.  This reminds
+  // us to remove the values in purgeFunction and tells us how many to remove.
+  if (TyPlane < ModuleLevel.size() && ModuleLevel[TyPlane] == -1)
+    ModuleLevel[TyPlane] = Table[TyPlane].size();
   
   // If this is the first value to get inserted into the type plane, make sure
   // to insert the implicit null value.
