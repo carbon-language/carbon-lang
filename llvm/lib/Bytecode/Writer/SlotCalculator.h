@@ -20,6 +20,7 @@
 #ifndef LLVM_ANALYSIS_SLOTCALCULATOR_H
 #define LLVM_ANALYSIS_SLOTCALCULATOR_H
 
+#include "llvm/ADT/DenseMap.h"
 #include <vector>
 #include <map>
 
@@ -33,6 +34,14 @@ class SymbolTable;
 class TypeSymbolTable;
 class ValueSymbolTable;
 class ConstantArray;
+
+struct ModuleLevelDenseMapKeyInfo {
+  static inline unsigned getEmptyKey() { return ~0U; }
+  static inline unsigned getTombstoneKey() { return ~1U; }
+  static unsigned getHashValue(unsigned Val) { return Val ^ Val >> 4; }
+  static bool isPod() { return true; }
+};
+
 
 class SlotCalculator {
   const Module *TheModule;
@@ -54,8 +63,8 @@ class SlotCalculator {
   /// ModuleLevel - Used to keep track of which values belong to the module,
   /// and which values belong to the currently incorporated function.
   ///
-  std::vector<int> ModuleLevel;
-  unsigned ModuleTypeLevel;
+  DenseMap<unsigned,unsigned,ModuleLevelDenseMapKeyInfo> ModuleLevel;
+  unsigned NumModuleTypes;
 
   SlotCalculator(const SlotCalculator &);  // DO NOT IMPLEMENT
   void operator=(const SlotCalculator &);  // DO NOT IMPLEMENT

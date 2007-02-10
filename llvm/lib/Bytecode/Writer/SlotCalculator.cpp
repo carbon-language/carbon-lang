@@ -179,11 +179,9 @@ void SlotCalculator::processModule() {
         ++FirstNonValueTypeID;
       }
   }
+    
+  NumModuleTypes = getNumPlanes();
 
-    
-  // Initialize the ModuleLevel entries.
-  ModuleLevel.resize(getNumPlanes(), -1);
-    
   SC_DEBUG("end processModule!\n");
 }
 
@@ -300,27 +298,26 @@ void SlotCalculator::incorporateFunction(const Function *F) {
 }
 
 void SlotCalculator::purgeFunction() {
-  unsigned NumModuleTypes = ModuleLevel.size();
-  
   SC_DEBUG("begin purgeFunction!\n");
   
   // Next, remove values from existing type planes
-  for (unsigned i = 0; i != NumModuleTypes; ++i) {
-    // If this type is not used by this function, ignore it.
-    int ModuleLev = ModuleLevel[i];
-    if (ModuleLev == -1) continue;
+  for (DenseMap<unsigned,unsigned,
+          ModuleLevelDenseMapKeyInfo>::iterator I = ModuleLevel.begin(),
+       E = ModuleLevel.end(); I != E; ++I) {
+    unsigned PlaneNo = I->first;
+    unsigned ModuleLev = I->second;
     
-    ModuleLevel[i] = -1;  // Reset for next function.
-
     // Pop all function-local values in this type-plane off of Table.
-    TypePlane &Plane = getPlane(i);
+    TypePlane &Plane = getPlane(PlaneNo);
     assert(ModuleLev < Plane.size() && "module levels higher than elements?");
     for (unsigned i = ModuleLev, e = Plane.size(); i != e; ++i) {
       NodeMap.erase(Plane.back());       // Erase from nodemap
       Plane.pop_back();                  // Shrink plane
     }
   }
-  
+
+  ModuleLevel.clear();
+
   // Finally, remove any type planes defined by the function...
   while (Table.size() > NumModuleTypes) {
     TypePlane &Plane = Table.back();
@@ -349,8 +346,8 @@ void SlotCalculator::CreateFunctionValueSlot(const Value *V) {
   // If this is the first value noticed of this type within this function,
   // remember the module level for this type plane in ModuleLevel.  This reminds
   // us to remove the values in purgeFunction and tells us how many to remove.
-  if (TyPlane < ModuleLevel.size() && ModuleLevel[TyPlane] == -1)
-    ModuleLevel[TyPlane] = Table[TyPlane].size();
+  if (TyPlane < NumModuleTypes)
+    ModuleLevel.insert(std::make_pair(TyPlane, Table[TyPlane].size()));
   
   // If this is the first value to get inserted into the type plane, make sure
   // to insert the implicit null value.
