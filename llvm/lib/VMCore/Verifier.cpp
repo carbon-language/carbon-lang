@@ -396,7 +396,8 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
   // Check constraints that this basic block imposes on all of the PHI nodes in
   // it.
   if (isa<PHINode>(BB.front())) {
-    std::vector<BasicBlock*> Preds(pred_begin(&BB), pred_end(&BB));
+    SmallVector<BasicBlock*, 8> Preds(pred_begin(&BB), pred_end(&BB));
+    SmallVector<std::pair<BasicBlock*, Value*>, 8> Values;
     std::sort(Preds.begin(), Preds.end());
     PHINode *PN;
     for (BasicBlock::iterator I = BB.begin(); (PN = dyn_cast<PHINode>(I));++I) {
@@ -410,7 +411,7 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
               "parent basic block!", PN);
 
       // Get and sort all incoming values in the PHI node...
-      std::vector<std::pair<BasicBlock*, Value*> > Values;
+      Values.clear();
       Values.reserve(PN->getNumIncomingValues());
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         Values.push_back(std::make_pair(PN->getIncomingBlock(i),
