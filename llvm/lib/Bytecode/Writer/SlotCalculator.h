@@ -123,7 +123,7 @@ private:
   // because of the IgnoreNamedNodes flag.
   //
   int insertValue(const Value *D, bool dontIgnore = false);
-  int insertType(const Type *T, bool dontIgnore = false);
+  int insertType(const Type *T);
 
   // doInsertValue - Small helper function to be called only be insertVal.
   int doInsertValue(const Value *V);

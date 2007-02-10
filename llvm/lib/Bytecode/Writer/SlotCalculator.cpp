@@ -51,17 +51,17 @@ void SlotCalculator::insertPrimitives() {
   // Reader.h which uses them directly to extract values of these types.
   SC_DEBUG("Inserting primitive types:\n");
                                     // See WellKnownTypeSlots in Reader.h
-  insertType(Type::VoidTy,   true); // 0: VoidTySlot
-  insertType(Type::FloatTy,  true); // 1: FloatTySlot
-  insertType(Type::DoubleTy, true); // 2: DoubleTySlot
-  insertType(Type::LabelTy,  true); // 3: LabelTySlot
+  insertType(Type::VoidTy  ); // 0: VoidTySlot
+  insertType(Type::FloatTy ); // 1: FloatTySlot
+  insertType(Type::DoubleTy); // 2: DoubleTySlot
+  insertType(Type::LabelTy ); // 3: LabelTySlot
   assert(TypeMap.size() == Type::FirstDerivedTyID &&"Invalid primitive insert");
   // Above here *must* correspond 1:1 with the primitive types.
-  insertType(Type::Int1Ty,   true); // 4: BoolTySlot
-  insertType(Type::Int8Ty,   true); // 5: Int8TySlot
-  insertType(Type::Int16Ty,  true); // 6: Int16TySlot
-  insertType(Type::Int32Ty,  true); // 7: Int32TySlot
-  insertType(Type::Int64Ty,  true); // 8: Int64TySlot
+  insertType(Type::Int1Ty  ); // 4: BoolTySlot
+  insertType(Type::Int8Ty  ); // 5: Int8TySlot
+  insertType(Type::Int16Ty ); // 6: Int16TySlot
+  insertType(Type::Int32Ty ); // 7: Int32TySlot
+  insertType(Type::Int64Ty ); // 8: Int64TySlot
 }
 
 SlotCalculator::SlotCalculator(const Module *M ) {
@@ -394,7 +394,7 @@ int SlotCalculator::getOrCreateTypeSlot(const Type* T) {
   return insertType(T);
 }
 
-int SlotCalculator::insertType(const Type *Ty, bool dontIgnore) {
+int SlotCalculator::insertType(const Type *Ty) {
   assert(Ty && "Can't insert a null type!");
   assert(getTypeSlot(Ty) == -1 && "Type is already in the table!");
 
@@ -440,7 +440,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
     int ValSlot = getTypeSlot(Typ);
     if (ValSlot == -1) {                // Have we already entered this type?
       // Nope, this is the first we have seen the type, process it.
-      ValSlot = insertType(Typ, true);
+      ValSlot = insertType(Typ);
       assert(ValSlot != -1 && "ProcessType returned -1 for a type?");
     }
     Ty = (unsigned)ValSlot;
