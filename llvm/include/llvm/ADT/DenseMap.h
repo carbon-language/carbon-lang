@@ -108,10 +108,16 @@ public:
     return LookupBucketFor(Val, TheBucket);
   }
   
-  iterator find(const KeyT &Val) const {
+  iterator find(const KeyT &Val) {
     BucketT *TheBucket;
     if (LookupBucketFor(Val, TheBucket))
       return iterator(TheBucket, Buckets+NumBuckets);
+    return end();
+  }
+  const_iterator find(const KeyT &Val) const {
+    BucketT *TheBucket;
+    if (LookupBucketFor(Val, TheBucket))
+      return const_iterator(TheBucket, Buckets+NumBuckets);
     return end();
   }
   
@@ -334,7 +340,7 @@ class DenseMapConstIterator : public DenseMapIterator<KeyT, ValueT, KeyInfoT> {
 public:
   DenseMapConstIterator(const std::pair<KeyT, ValueT> *Pos,
                         const std::pair<KeyT, ValueT> *E)
-    : DenseMapIterator<KeyT, ValueT>(Pos, E) {
+    : DenseMapIterator<KeyT, ValueT, KeyInfoT>(Pos, E) {
   }
   const std::pair<KeyT, ValueT> &operator*() const {
     return *this->Ptr;
