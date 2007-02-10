@@ -55,7 +55,7 @@ void SlotCalculator::insertPrimitives() {
   getOrCreateTypeSlot(Type::LabelTy ); // 3: LabelTySlot
   assert(TypeMap.size() == Type::FirstDerivedTyID &&"Invalid primitive insert");
   // Above here *must* correspond 1:1 with the primitive types.
-  getOrCreateTypeSlot(Type::Int1Ty  ); // 4: BoolTySlot
+  getOrCreateTypeSlot(Type::Int1Ty  ); // 4: Int1TySlot
   getOrCreateTypeSlot(Type::Int8Ty  ); // 5: Int8TySlot
   getOrCreateTypeSlot(Type::Int16Ty ); // 6: Int16TySlot
   getOrCreateTypeSlot(Type::Int32Ty ); // 7: Int32TySlot
