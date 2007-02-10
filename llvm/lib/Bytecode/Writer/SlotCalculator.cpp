@@ -64,12 +64,11 @@ void SlotCalculator::insertPrimitives() {
 }
 
 SlotCalculator::SlotCalculator(const Module *M) {
+  assert(M);
   ModuleTypeLevel = 0;
   TheModule = M;
 
   insertPrimitives();
-
-  if (M == 0) return;   // Empty table...
   processModule();
 }
 
@@ -324,19 +323,7 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
     }
   }
 
-  unsigned TyPlane;
-  if (Ty->isDerivedType()) {
-    int ValSlot = getTypeSlot(Ty);
-    if (ValSlot == -1) {                // Have we already entered this type?
-      // Nope, this is the first we have seen the type, process it.
-      ValSlot = insertType(Ty);
-      assert(ValSlot != -1 && "ProcessType returned -1 for a type?");
-    }
-    TyPlane = (unsigned)ValSlot;
-  } else {
-    TyPlane = Ty->getTypeID();
-  }
-  
+  unsigned TyPlane = getOrCreateTypeSlot(Ty);
   if (Table.size() <= TyPlane)    // Make sure we have the type plane allocated.
     Table.resize(TyPlane+1, TypePlane());
   
@@ -369,13 +356,13 @@ int SlotCalculator::getOrCreateSlot(const Value *V) {
 }
 
 
-int SlotCalculator::getOrCreateTypeSlot(const Type* T) {
+unsigned SlotCalculator::getOrCreateTypeSlot(const Type* T) {
   int SlotNo = getTypeSlot(T);        // Check to see if it's already in!
-  if (SlotNo != -1) return SlotNo;
+  if (SlotNo != -1) return (unsigned)SlotNo;
   return insertType(T);
 }
 
-int SlotCalculator::insertType(const Type *Ty) {
+unsigned SlotCalculator::insertType(const Type *Ty) {
   assert(Ty && "Can't insert a null type!");
   assert(getTypeSlot(Ty) == -1 && "Type is already in the table!");
 
@@ -385,7 +372,7 @@ int SlotCalculator::insertType(const Type *Ty) {
   //
   //    global { \2 * } { { \2 }* null }
   //
-  int ResultSlot = doInsertType(Ty);
+  unsigned ResultSlot = doInsertType(Ty);
   SC_DEBUG("  Inserted type: " << Ty->getDescription() << " slot=" <<
            ResultSlot << "\n");
 
@@ -394,13 +381,8 @@ int SlotCalculator::insertType(const Type *Ty) {
   for (po_iterator<const Type*> I = po_begin(Ty), E = po_end(Ty);
        I != E; ++I) {
     if (*I != Ty) {
-      const Type *SubTy = *I;
       // If we haven't seen this sub type before, add it to our type table!
-      if (getTypeSlot(SubTy) == -1) {
-        SC_DEBUG("  Inserting subtype: " << SubTy->getDescription() << "\n");
-        doInsertType(SubTy);
-        SC_DEBUG("  Inserted subtype: " << SubTy->getDescription() << "\n");
-      }
+      getOrCreateTypeSlot(*I);
     }
   }
   return ResultSlot;
@@ -410,12 +392,10 @@ int SlotCalculator::insertType(const Type *Ty) {
 // doInsertType - This is a small helper function to be called only
 // be insertType.
 //
-int SlotCalculator::doInsertType(const Type *Ty) {
-
-  // Insert node into table and NodeMap...
+unsigned SlotCalculator::doInsertType(const Type *Ty) {
+  // Insert into TypeMap.
   unsigned DestSlot = TypeMap[Ty] = Types.size();
   Types.push_back(Ty);
-
   SC_DEBUG("  Inserting type [" << DestSlot << "] = " << *Ty << "\n" );
-  return (int)DestSlot;
+  return DestSlot;
 }

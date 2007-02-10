@@ -109,16 +109,16 @@ private:
   // they are ignored.
   //
   int getOrCreateSlot(const Value *V);
-  int getOrCreateTypeSlot(const Type *T);
+  unsigned getOrCreateTypeSlot(const Type *T);
 
   // insertValue - Insert a value into the value table... Return the
   // slot that it occupies, or -1 if the declaration is to be ignored
   // because of the IgnoreNamedNodes flag.
   //
-  int insertType(const Type *T);
+  unsigned insertType(const Type *T);
 
   // doInsertValue - Small helper function to be called only be insertVal.
-  int doInsertType(const Type *T);
+  unsigned doInsertType(const Type *T);
 
   // processModule - Process all of the module level function declarations and
   // types that are available.
