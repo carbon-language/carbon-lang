@@ -50,7 +50,7 @@ class SlotCalculator {
   typedef std::vector<const Value*> TypePlane;
   std::vector<TypePlane> Table;
   TypeList Types;
-  typedef std::map<const Value*, unsigned> NodeMapType;
+  typedef DenseMap<const Value*, unsigned> NodeMapType;
   NodeMapType NodeMap;
 
   typedef std::map<const Type*, unsigned> TypeMapType;
