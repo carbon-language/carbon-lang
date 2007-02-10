@@ -276,10 +276,18 @@ public:
 ///
 class StructLayout {
   std::vector<uint64_t> MemberOffsets;
-public:
   unsigned StructAlignment;
   uint64_t StructSize;
+public:
 
+  uint64_t getSizeInBytes() const {
+    return StructSize;
+  }
+  
+  unsigned getAlignment() const {
+    return StructAlignment;
+  }
+    
   /// getElementContainingOffset - Given a valid offset into the structure,
   /// return the structure index that contains it.
   ///

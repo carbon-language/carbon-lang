@@ -325,7 +325,7 @@ static inline void getTypeInfoABI(const Type *Ty, const TargetData *TD,
   case Type::StructTyID: {
     // Get the layout annotation... which is lazily created on demand.
     const StructLayout *Layout = TD->getStructLayout(cast<StructType>(Ty));
-    Size = Layout->StructSize; Alignment = Layout->StructAlignment;
+    Size = Layout->getSizeInBytes(); Alignment = Layout->getAlignment();
     return;
   }
 
@@ -387,9 +387,9 @@ static inline void getTypeInfoPref(const Type *Ty, const TargetData *TD,
     // Get the layout annotation... which is lazily created on demand;
     // enforce minimum aggregate alignment.
     const StructLayout *Layout = TD->getStructLayout(cast<StructType>(Ty));
-    Size = Layout->StructSize;
-    Alignment = std::max(Layout->StructAlignment,
-                         (const unsigned int) TD->getAggMinPrefAlignment());
+    Size = Layout->getSizeInBytes();
+    Alignment = std::max(Layout->getAlignment(),
+                         (const unsigned int)TD->getAggMinPrefAlignment());
     return;
   }
 

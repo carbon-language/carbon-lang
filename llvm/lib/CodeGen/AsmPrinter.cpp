@@ -738,7 +738,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
 
       // Check if padding is needed and insert one or more 0s.
       uint64_t fieldSize = TD->getTypeSize(field->getType());
-      uint64_t padSize = ((i == e-1? cvsLayout->StructSize
+      uint64_t padSize = ((i == e-1? cvsLayout->getSizeInBytes()
                            : cvsLayout->getElementOffset(i+1))
                           - cvsLayout->getElementOffset(i)) - fieldSize;
       sizeSoFar += fieldSize + padSize;
@@ -749,7 +749,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       // Insert the field padding unless it's zero bytes...
       EmitZeros(padSize);
     }
-    assert(sizeSoFar == cvsLayout->StructSize &&
+    assert(sizeSoFar == cvsLayout->getSizeInBytes() &&
            "Layout of constant struct may be incorrect!");
     return;
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
