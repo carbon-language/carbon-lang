@@ -231,40 +231,6 @@ public:
     }
   }
 
-  virtual void handleCompactionTableBegin() {
-    if (os)
-      *os << "      BLOCK: CompactionTable {\n";
-    bca.numCmpctnTables++;
-  }
-
-  virtual void handleCompactionTablePlane( unsigned Ty, unsigned NumEntries) {
-    if (os)
-      *os << "        Plane: Ty=" << Ty << " Size=" << NumEntries << "\n";
-  }
-
-  virtual void handleCompactionTableType( unsigned i, unsigned TypSlot,
-      const Type* Ty ) {
-    if (os) {
-      *os << "          Type: " << i << " Slot:" << TypSlot << " is ";
-      WriteTypeSymbolic(*os,Ty,M);
-      *os << "\n";
-    }
-  }
-
-  virtual void handleCompactionTableValue(unsigned i, unsigned TypSlot,
-                                          unsigned ValSlot) {
-    if (os)
-      *os << "          Value: " << i << " TypSlot: " << TypSlot
-         << " ValSlot:" << ValSlot << "\n";
-    if (ValSlot > bca.maxValueSlot)
-      bca.maxValueSlot = ValSlot;
-  }
-
-  virtual void handleCompactionTableEnd() {
-    if (os)
-      *os << "      } END BLOCK: CompactionTable\n";
-  }
-
   virtual void handleTypeSymbolTableBegin(TypeSymbolTable* ST) {
     bca.numSymTab++;
     if (os)
@@ -624,7 +590,6 @@ void llvm::PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
   print(Out, "Number Of Instructions",          bca.numInstructions);
   print(Out, "Number Of Long Instructions",     bca.longInstructions);
   print(Out, "Number Of Operands",              bca.numOperands);
-  print(Out, "Number Of Compaction Tables",     bca.numCmpctnTables);
   print(Out, "Number Of Symbol Tables",         bca.numSymTab);
   print(Out, "Number Of Dependent Libs",        bca.numLibraries);
   print(Out, "Total Instruction Size",          bca.instructionSize);

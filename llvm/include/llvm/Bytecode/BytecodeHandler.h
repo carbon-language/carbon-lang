@@ -153,33 +153,6 @@ public:
   /// @brief Handle end of module globals block.
   virtual void handleModuleGlobalsEnd() {}
 
-  /// This method is called at the beginning of a compaction table.
-  /// @brief Handle start of compaction table.
-  virtual void handleCompactionTableBegin() {}
-
-  /// @brief Handle start of a compaction table plane
-  virtual void handleCompactionTablePlane(
-    unsigned Ty,         ///< The type of the plane (slot number)
-    unsigned NumEntries  ///< The number of entries in the plane
-  ) {}
-
-  /// @brief Handle a type entry in the compaction table
-  virtual void handleCompactionTableType(
-    unsigned i,       ///< Index in the plane of this type
-    unsigned TypSlot, ///< Slot number for this type
-    const Type*       ///< The type referenced by this slot
-  ) {}
-
-  /// @brief Handle a value entry in the compaction table
-  virtual void handleCompactionTableValue(
-    unsigned i,       ///< Index in the compaction table's type plane
-    unsigned TypSlot, ///< The slot (plane) of the type of this value
-    unsigned ValSlot  ///< The global value slot of the value
-  ) {}
-
-  /// @brief Handle end of a compaction table
-  virtual void handleCompactionTableEnd() {}
-
   /// @brief Handle start of a symbol table
   virtual void handleTypeSymbolTableBegin(
     TypeSymbolTable* ST  ///< The symbol table being filled
