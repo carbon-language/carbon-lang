@@ -3891,6 +3891,14 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     SelectBasicBlock(I, MF, FuncInfo);
 
+  // Add function live-ins to entry block live-in set.
+  BasicBlock *EntryBB = &Fn.getEntryBlock();
+  BB = FuncInfo.MBBMap[EntryBB];
+  if (!MF.livein_empty())
+    for (MachineFunction::livein_iterator I = MF.livein_begin(),
+           E = MF.livein_end(); I != E; ++I)
+      BB->addLiveIn(I->first);
+
   return true;
 }
 
