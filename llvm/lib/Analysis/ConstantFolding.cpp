@@ -133,8 +133,8 @@ static Constant *SymbolicallyEvaluateGEP(Constant** Ops, unsigned NumOps,
         break;
       }
     if (isFoldableGEP) {
-      std::vector<Value*> NewOps(Ops+1, Ops+NumOps);
-      uint64_t Offset = TD->getIndexedOffset(Ptr->getType(), NewOps);
+      uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
+                                             (Value**)Ops+1, NumOps-1);
       Constant *C = ConstantInt::get(TD->getIntPtrType(), Offset);
       return ConstantExpr::getIntToPtr(C, ResultTy);
     }
