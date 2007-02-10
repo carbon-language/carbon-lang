@@ -1086,14 +1086,14 @@ void BytecodeWriter::outputValueSymbolTable(const ValueSymbolTable &VST) {
                             true/*ElideIfEmpty*/);
 
   // Organize the symbol table by type
-  typedef std::pair<std::string, const Value*> PlaneMapEntry;
+  typedef std::pair<const std::string*, const Value*> PlaneMapEntry;
   typedef std::vector<PlaneMapEntry> PlaneMapVector;
   typedef std::map<const Type*, PlaneMapVector > PlaneMap;
   PlaneMap Planes;
   for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
        SI != SE; ++SI) 
-    Planes[SI->second->getType()].push_back(
-        std::make_pair(SI->first,SI->second));
+    Planes[SI->second->getType()]
+      .push_back(std::make_pair(&SI->first, SI->second));
 
   for (PlaneMap::const_iterator PI = Planes.begin(), PE = Planes.end();
        PI != PE; ++PI) {
@@ -1112,7 +1112,7 @@ void BytecodeWriter::outputValueSymbolTable(const ValueSymbolTable &VST) {
     for (; I != End; ++I) {
       // Symtab entry: [def slot #][name]
       output_vbr(Table.getSlot(I->second));
-      output(I->first);
+      output(*I->first);
     }
   }
 }
