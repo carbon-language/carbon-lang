@@ -23,6 +23,7 @@
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <list>
 #include <utility>
 
