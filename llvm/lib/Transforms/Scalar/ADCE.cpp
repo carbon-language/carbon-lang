@@ -189,8 +189,8 @@ bool ADCE::doADCE() {
           // The function cannot unwind.  Convert it to a call with a branch
           // after it to the normal destination.
           std::vector<Value*> Args(II->op_begin()+3, II->op_end());
-          std::string Name = II->getName(); II->setName("");
-          CallInst *NewCall = new CallInst(F, Args, Name, II);
+          CallInst *NewCall = new CallInst(F, Args, "", II);
+          NewCall->takeName(II);
           NewCall->setCallingConv(II->getCallingConv());
           II->replaceAllUsesWith(NewCall);
           new BranchInst(II->getNormalDest(), II);

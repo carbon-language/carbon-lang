@@ -224,12 +224,11 @@ bool SROA::performScalarRepl(Function &F) {
         // getelement ptr instruction to finish the indexing.  This may be
         // expanded itself once the worklist is rerun.
         //
-        std::string OldName = GEPI->getName();  // Steal the old name.
         std::vector<Value*> NewArgs;
         NewArgs.push_back(Constant::getNullValue(Type::Int32Ty));
         NewArgs.insert(NewArgs.end(), GEPI->op_begin()+3, GEPI->op_end());
-        GEPI->setName("");
-        RepValue = new GetElementPtrInst(AllocaToUse, NewArgs, OldName, GEPI);
+        RepValue = new GetElementPtrInst(AllocaToUse, NewArgs, "", GEPI);
+        RepValue->takeName(GEPI);
       }
 
       // Move all of the users over to the new GEP.

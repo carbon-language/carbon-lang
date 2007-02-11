@@ -360,8 +360,9 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // create the new entry block, allowing us to branch back to the old entry.
   if (OldEntry == 0) {
     OldEntry = &F->getEntryBlock();
-    std::string OldName = OldEntry->getName(); OldEntry->setName("tailrecurse");
-    BasicBlock *NewEntry = new BasicBlock(OldName, F, OldEntry);
+    BasicBlock *NewEntry = new BasicBlock("", F, OldEntry);
+    NewEntry->takeName(OldEntry);
+    OldEntry->setName("tailrecurse");
     new BranchInst(OldEntry, NewEntry);
 
     // If this tail call is marked 'tail' and if there are any allocas in the

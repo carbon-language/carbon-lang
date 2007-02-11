@@ -195,10 +195,10 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
       if (!PN->use_empty()) {
         BasicBlock::iterator InsertPos = PN; ++InsertPos;
         while (isa<PHINode>(InsertPos)) ++InsertPos;
-        std::string Name = PN->getName(); PN->setName("");
         Value *PreInc =
           new GetElementPtrInst(PN->getIncomingValue(PreheaderIdx),
-                                NewPhi, Name, InsertPos);
+                                NewPhi, "", InsertPos);
+        PreInc->takeName(PN);
         PN->replaceAllUsesWith(PreInc);
       }
 
@@ -556,9 +556,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
                                            PN->getType());
     DOUT << "INDVARS: Rewrote IV '" << *IndVars.back().second << "' " << *PN
          << "   into = " << *NewVal << "\n";
-    std::string Name = PN->getName();
-    PN->setName("");
-    NewVal->setName(Name);
+    NewVal->takeName(PN);
 
     // Replace the old PHI Node with the inserted computation.
     PN->replaceAllUsesWith(NewVal);
@@ -581,11 +579,8 @@ void IndVarSimplify::runOnLoop(Loop *L) {
           SCEVHandle SH = SE->getSCEV(I);
           Value *V = Rewriter.expandCodeFor(SH, I, I->getType());
           if (V != I) {
-            if (isa<Instruction>(V)) {
-              std::string Name = I->getName();
-              I->setName("");
-              V->setName(Name);
-            }
+            if (isa<Instruction>(V))
+              V->takeName(I);
             I->replaceAllUsesWith(V);
             DeadInsts.insert(I);
             ++NumRemoved;

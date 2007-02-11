@@ -1664,10 +1664,10 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   }
 
   // Okay, we can do the transformation: create the new PHI node.
-  PHINode *NewPN = new PHINode(I.getType(), I.getName());
-  I.setName("");
+  PHINode *NewPN = new PHINode(I.getType(), "");
   NewPN->reserveOperandSpace(PN->getNumOperands()/2);
   InsertNewInstBefore(NewPN, *PN);
+  NewPN->takeName(PN);
 
   // Next, add all of the operands to the PHI.
   if (I.getNumOperands() == 2) {
@@ -2814,9 +2814,9 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
   case Instruction::Xor:
     if (Op->hasOneUse()) {
       // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
-      std::string OpName = Op->getName(); Op->setName("");
-      Instruction *And = BinaryOperator::createAnd(X, AndRHS, OpName);
+      Instruction *And = BinaryOperator::createAnd(X, AndRHS);
       InsertNewInstBefore(And, TheAnd);
+      And->takeName(Op);
       return BinaryOperator::createXor(And, Together);
     }
     break;
@@ -2826,9 +2826,9 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
 
     if (Op->hasOneUse() && Together != OpRHS) {
       // (X | C1) & C2 --> (X | (C1&C2)) & C2
-      std::string Op0Name = Op->getName(); Op->setName("");
-      Instruction *Or = BinaryOperator::createOr(X, Together, Op0Name);
+      Instruction *Or = BinaryOperator::createOr(X, Together);
       InsertNewInstBefore(Or, TheAnd);
+      Or->takeName(Op);
       return BinaryOperator::createAnd(Or, AndRHS);
     }
     break;
@@ -2859,10 +2859,10 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
             TheAnd.setOperand(0, X);
             return &TheAnd;
           } else {
-            std::string Name = Op->getName(); Op->setName("");
             // Pull the XOR out of the AND.
-            Instruction *NewAnd = BinaryOperator::createAnd(X, AndRHS, Name);
+            Instruction *NewAnd = BinaryOperator::createAnd(X, AndRHS);
             InsertNewInstBefore(NewAnd, TheAnd);
+            NewAnd->takeName(Op);
             return BinaryOperator::createXor(NewAnd, AndRHS);
           }
         }
@@ -3554,17 +3554,17 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     ConstantInt *C1 = 0; Value *X = 0;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
     if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))) && isOnlyUse(Op0)) {
-      Instruction *Or = BinaryOperator::createOr(X, RHS, Op0->getName());
-      Op0->setName("");
+      Instruction *Or = BinaryOperator::createOr(X, RHS);
       InsertNewInstBefore(Or, I);
+      Or->takeName(Op0);
       return BinaryOperator::createAnd(Or, ConstantExpr::getOr(RHS, C1));
     }
 
     // (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
     if (match(Op0, m_Xor(m_Value(X), m_ConstantInt(C1))) && isOnlyUse(Op0)) {
-      std::string Op0Name = Op0->getName(); Op0->setName("");
-      Instruction *Or = BinaryOperator::createOr(X, RHS, Op0Name);
+      Instruction *Or = BinaryOperator::createOr(X, RHS);
       InsertNewInstBefore(Or, I);
+      Or->takeName(Op0);
       return BinaryOperator::createXor(Or,
                  ConstantExpr::getAnd(C1, ConstantExpr::getNot(RHS)));
     }
@@ -3601,17 +3601,19 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   // (X^C)|Y -> (X|Y)^C iff Y&C == 0
   if (Op0->hasOneUse() && match(Op0, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
       MaskedValueIsZero(Op1, C1->getZExtValue())) {
-    Instruction *NOr = BinaryOperator::createOr(A, Op1, Op0->getName());
-    Op0->setName("");
-    return BinaryOperator::createXor(InsertNewInstBefore(NOr, I), C1);
+    Instruction *NOr = BinaryOperator::createOr(A, Op1);
+    InsertNewInstBefore(NOr, I);
+    NOr->takeName(Op0);
+    return BinaryOperator::createXor(NOr, C1);
   }
 
   // Y|(X^C) -> (X|Y)^C iff Y&C == 0
   if (Op1->hasOneUse() && match(Op1, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
       MaskedValueIsZero(Op0, C1->getZExtValue())) {
-    Instruction *NOr = BinaryOperator::createOr(A, Op0, Op1->getName());
-    Op0->setName("");
-    return BinaryOperator::createXor(InsertNewInstBefore(NOr, I), C1);
+    Instruction *NOr = BinaryOperator::createOr(A, Op0);
+    InsertNewInstBefore(NOr, I);
+    NOr->takeName(Op0);
+    return BinaryOperator::createXor(NOr, C1);
   }
 
   // (A & C1)|(B & C2)
@@ -4947,9 +4949,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             else if (Value *NegVal = dyn_castNegVal(BOp0))
               return new ICmpInst(I.getPredicate(), NegVal, BOp1);
             else if (BO->hasOneUse()) {
-              Instruction *Neg = BinaryOperator::createNeg(BOp1, BO->getName());
-              BO->setName("");
+              Instruction *Neg = BinaryOperator::createNeg(BOp1);
               InsertNewInstBefore(Neg, I);
+              Neg->takeName(BO);
               return new ICmpInst(I.getPredicate(), BOp0, Neg);
             }
           }
@@ -5592,10 +5594,9 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           Constant *NewRHS = ConstantExpr::get(I.getOpcode(), Op0C, Op1);
           
           Instruction *NewShift =
-            BinaryOperator::create(I.getOpcode(), Op0BO->getOperand(0), Op1,
-                                   Op0BO->getName());
-          Op0BO->setName("");
+            BinaryOperator::create(I.getOpcode(), Op0BO->getOperand(0), Op1);
           InsertNewInstBefore(NewShift, I);
+          NewShift->takeName(Op0BO);
           
           return BinaryOperator::create(Op0BO->getOpcode(), NewShift,
                                         NewRHS);
@@ -5859,13 +5860,13 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
     Amt = InsertNewInstBefore(Tmp, AI);
   }
   
-  std::string Name = AI.getName(); AI.setName("");
   AllocationInst *New;
   if (isa<MallocInst>(AI))
-    New = new MallocInst(CastElTy, Amt, AI.getAlignment(), Name);
+    New = new MallocInst(CastElTy, Amt, AI.getAlignment());
   else
-    New = new AllocaInst(CastElTy, Amt, AI.getAlignment(), Name);
+    New = new AllocaInst(CastElTy, Amt, AI.getAlignment());
   InsertNewInstBefore(New, AI);
+  New->takeName(&AI);
   
   // If the allocation has multiple uses, insert a cast and change all things
   // that used it to use the new cast.  This will also hack on CI, but it will
@@ -6849,11 +6850,10 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
           if (OpToFold) {
             Constant *C = GetSelectFoldableConstant(TVI);
-            std::string Name = TVI->getName(); TVI->setName("");
             Instruction *NewSel =
-              new SelectInst(SI.getCondition(), TVI->getOperand(2-OpToFold), C,
-                             Name);
+              new SelectInst(SI.getCondition(), TVI->getOperand(2-OpToFold), C);
             InsertNewInstBefore(NewSel, SI);
+            NewSel->takeName(TVI);
             if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TVI))
               return BinaryOperator::create(BO->getOpcode(), FalseVal, NewSel);
             else {
@@ -6875,12 +6875,10 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
           if (OpToFold) {
             Constant *C = GetSelectFoldableConstant(FVI);
-            std::string Name = FVI->getName(); 
-            FVI->setName("");
             Instruction *NewSel =
-              new SelectInst(SI.getCondition(), C, FVI->getOperand(2-OpToFold),
-                             Name);
+              new SelectInst(SI.getCondition(), C, FVI->getOperand(2-OpToFold));
             InsertNewInstBefore(NewSel, SI);
+            NewSel->takeName(FVI);
             if (BinaryOperator *BO = dyn_cast<BinaryOperator>(FVI))
               return BinaryOperator::create(BO->getOpcode(), TrueVal, NewSel);
             else
@@ -7349,7 +7347,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
 
   if (FT->getReturnType() == Type::VoidTy)
-    Caller->setName("");   // Void type should not have a name...
+    Caller->setName("");   // Void type should not have a name.
 
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
@@ -7363,7 +7361,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
    cast<CallInst>(NC)->setCallingConv(cast<CallInst>(Caller)->getCallingConv());
   }
 
-  // Insert a cast of the return type as necessary...
+  // Insert a cast of the return type as necessary.
   Value *NV = NC;
   if (Caller->getType() != NV->getType() && !Caller->use_empty()) {
     if (NV->getType() != Type::VoidTy) {
@@ -8459,16 +8457,16 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
     if ((FPred == FCmpInst::FCMP_ONE || FPred == FCmpInst::FCMP_OLE ||
          FPred == FCmpInst::FCMP_OGE) && BI.getCondition()->hasOneUse()) {
       FCmpInst *I = cast<FCmpInst>(BI.getCondition());
-      std::string Name = I->getName(); I->setName("");
       FCmpInst::Predicate NewPred = FCmpInst::getInversePredicate(FPred);
-      Value *NewSCC =  new FCmpInst(NewPred, X, Y, Name, I);
+      Instruction *NewSCC = new FCmpInst(NewPred, X, Y, "", I);
+      NewSCC->takeName(I);
       // Swap Destinations and condition...
       BI.setCondition(NewSCC);
       BI.setSuccessor(0, FalseDest);
       BI.setSuccessor(1, TrueDest);
       removeFromWorkList(I);
-      I->getParent()->getInstList().erase(I);
-      WorkList.push_back(cast<Instruction>(NewSCC));
+      I->eraseFromParent();
+      WorkList.push_back(NewSCC);
       return &BI;
     }
 
@@ -8480,16 +8478,16 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
          IPred == ICmpInst::ICMP_SLE || IPred == ICmpInst::ICMP_UGE ||
          IPred == ICmpInst::ICMP_SGE) && BI.getCondition()->hasOneUse()) {
       ICmpInst *I = cast<ICmpInst>(BI.getCondition());
-      std::string Name = I->getName(); I->setName("");
       ICmpInst::Predicate NewPred = ICmpInst::getInversePredicate(IPred);
-      Value *NewSCC = new ICmpInst(NewPred, X, Y, Name, I);
+      Instruction *NewSCC = new ICmpInst(NewPred, X, Y, "", I);
+      NewSCC->takeName(I);
       // Swap Destinations and condition...
       BI.setCondition(NewSCC);
       BI.setSuccessor(0, FalseDest);
       BI.setSuccessor(1, TrueDest);
       removeFromWorkList(I);
-      I->getParent()->getInstList().erase(I);
-      WorkList.push_back(cast<Instruction>(NewSCC));
+      I->eraseFromParent();;
+      WorkList.push_back(NewSCC);
       return &BI;
     }
 
@@ -9246,9 +9244,8 @@ bool InstCombiner::runOnFunction(Function &F) {
         WorkList.push_back(Result);
         AddUsersToWorkList(*Result);
 
-        // Move the name to the new instruction first...
-        std::string OldName = I->getName(); I->setName("");
-        Result->setName(OldName);
+        // Move the name to the new instruction first.
+        Result->takeName(I);
 
         // Insert the new instruction into the basic block...
         BasicBlock *InstParent = I->getParent();

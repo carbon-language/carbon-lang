@@ -189,9 +189,8 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 static Instruction *LowerNegateToMultiply(Instruction *Neg) {
   Constant *Cst = ConstantInt::getAllOnesValue(Neg->getType());
 
-  std::string NegName = Neg->getName(); Neg->setName("");
-  Instruction *Res = BinaryOperator::createMul(Neg->getOperand(1), Cst, NegName,
-                                               Neg);
+  Instruction *Res = BinaryOperator::createMul(Neg->getOperand(1), Cst, "",Neg);
+  Res->takeName(Neg);
   Neg->replaceAllUsesWith(Res);
   Neg->eraseFromParent();
   return Res;
@@ -405,11 +404,10 @@ static Instruction *BreakUpSubtract(Instruction *Sub) {
   // Calculate the negative value of Operand 1 of the sub instruction...
   // and set it as the RHS of the add instruction we just made...
   //
-  std::string Name = Sub->getName();
-  Sub->setName("");
   Value *NegVal = NegateValue(Sub->getOperand(1), Sub);
   Instruction *New =
-    BinaryOperator::createAdd(Sub->getOperand(0), NegVal, Name, Sub);
+    BinaryOperator::createAdd(Sub->getOperand(0), NegVal, "", Sub);
+  New->takeName(Sub);
 
   // Everyone now refers to the add instruction.
   Sub->replaceAllUsesWith(New);
@@ -432,9 +430,9 @@ static Instruction *ConvertShiftToMul(Instruction *Shl) {
     Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
     MulCst = ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
     
-    std::string Name = Shl->getName();  Shl->setName("");
     Instruction *Mul = BinaryOperator::createMul(Shl->getOperand(0), MulCst,
-                                                 Name, Shl);
+                                                 "", Shl);
+    Mul->takeName(Shl);
     Shl->replaceAllUsesWith(Mul);
     Shl->eraseFromParent();
     return Mul;
