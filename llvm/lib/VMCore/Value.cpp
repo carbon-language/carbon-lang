@@ -93,6 +93,7 @@ unsigned Value::getNumUses() const {
 }
 
 static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
+  ST = 0;
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     if (BasicBlock *P = I->getParent())
       if (Function *PP = P->getParent())
