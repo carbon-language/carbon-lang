@@ -8,7 +8,7 @@ I. Introduction:
  clang: noun
     1. A loud, resonant, metallic sound.
     2. The strident call of a crane or goose.
-    3. C-language front-end toolkit.
+    3. C-language family front-end toolkit.
 
  The world needs better compiler tools, tools which are built as libraries. This
  design point allows reuse of the tools in new and novel ways. However, building
@@ -20,8 +20,8 @@ I. Introduction:
 
  This front-end is built as a component of the LLVM toolkit (which really really
  needs a better name) that can be used with the LLVM backend or independently of
- it.  In this spirit, the API has been carefully designed to include the
- following components:
+ it.  In this spirit, the API has been carefully designed to as the following
+ stack of components:
  
    libsupport  - Basic support library, reused from LLVM.
    libsystem   - System abstraction library, reused from LLVM.
@@ -41,12 +41,13 @@ I. Introduction:
                  declaration at a time, allowing clients to use decl-at-a-time
                  processing, build up entire translation units, or even build
                  'whole program' ASTs depending on how they use the APIs.
+                 Includes a pretty-printer for the ASTs.
    libast2llvm - [Planned] Lower the AST to LLVM IR for optimization & codegen.
-   clang       - An example client of the libraries at various levels.
+   clang       - An example driver, client of the libraries at various levels.
 
- This front-end has been intentionally built as a stack, making it trivial
- to replace anything below a particular point.  For example, if you want a
- preprocessor, you take the Basic and Lexer libraries.  If you want an indexer,
+ This front-end has been intentionally built as a stack, making it trivial to
+ replace anything below (in this list) a particular point. For example, to build
+ a preprocessor, you take the Basic and Lexer libraries. If you want an indexer,
  you take those plus the Parser library and provide some actions for indexing.
  If you want a refactoring, static analysis, or source-to-source compiler tool,
  it makes sense to take those plus the AST building library.  Finally, if you
@@ -54,8 +55,8 @@ I. Introduction:
  AST to LLVM lowering code.
  
  In the future I hope this toolkit will grow to include new and interesting
- components, including a C++ front-end, ObjC support, AST pretty printing
- support, and a whole lot of other things.
+ components, including a C++ front-end, ObjC support, and a whole lot of other
+ things.
 
  Finally, it should be pointed out that the goal here is to build something that
  is high-quality and industrial-strength: all the obnoxious features of the C
@@ -71,12 +72,12 @@ II. Usage of clang driver:
    - To make diagnostics more gcc-like: -fno-caret-diagnostics -fno-show-column
    - Enable metric printing: -stats
 
- * -parse-noop is the default mode.
+ * -fsyntax-only is the default mode.
 
  * -E mode gives output nearly identical to GCC, though not all bugs in
    whitespace calculation have been emulated.
 
- * -fsyntax-only is currently unimplemented.
+ * -fsyntax-only is currently partially implemented.
  
  * -parse-print-callbacks prints almost no callbacks so far.
  
@@ -102,7 +103,7 @@ III. Current advantages over GCC:
  * Defers exposing platform-specific stuff to as late as possible, tracks use of
    platform-specific features (e.g. #ifdef PPC) to allow 'portable bytecodes'.
  * The lexer doesn't rely on the "lexer hack": it has no notion of scope and
-   does not catagorize identifiers as types or variables, this is up to the
+   does not categorize identifiers as types or variables -- this is up to the
    parser to decide.
 
 Future Features:
@@ -145,20 +146,16 @@ Traditional Preprocessor:
  * All.
 
 Parser:
- * C90/K&R modes.  Need to get a copy of the C90 spec.
+ * C90/K&R modes.
  * __extension__, __attribute__ [currently just skipped and ignored].
- * A lot of semantic analysis is missing.
  * "initializers", GCC inline asm.
 
 Parser Actions:
  * All that are missing.
- * SemaActions vs MinimalActions.
- * Would like to either lazily resolve types [refactoring] or aggressively
-   resolve them [c compiler].  Need to know whether something is a type or not
-   to compile, but don't need to know what it is.
  * Implement a little devkit-style "indexer".
  
 AST Builder:
  * Implement more nodes as actions are available.
- * Types.
- * Decls.
+
+Semantic Analysis:
+ * Perhaps 30-40% done.
