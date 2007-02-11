@@ -52,6 +52,7 @@ protected:
   ItemBucket *TheTable;
   unsigned NumBuckets;
   unsigned NumItems;
+  unsigned NumTombstones;
   unsigned ItemSize;
 protected:
   StringMapImpl(unsigned InitSize, unsigned ItemSize);
@@ -68,6 +69,14 @@ protected:
   /// in the map, return the bucket number of the key.  Otherwise return -1.
   /// This does not modify the map.
   int FindKey(const char *KeyStart, const char *KeyEnd) const;
+
+  /// RemoveKey - Remove the specified StringMapEntry from the table, but do not
+  /// delete it.  This aborts if the value isn't in the table.
+  void RemoveKey(StringMapEntryBase *V);
+
+  /// RemoveKey - Remove the StringMapEntry for the specified key from the
+  /// table, returning it.  If the key is not in the table, this returns null.
+  StringMapEntryBase *RemoveKey(const char *KeyStart, const char *KeyEnd);
   
 public:
   static StringMapEntryBase *getTombstoneVal() {
@@ -193,6 +202,28 @@ public:
     return const_iterator(TheTable+Bucket);
   }
   
+  /// insert - Insert the specified key/value pair into the map.  If the key
+  /// already exists in the map, return false and ignore the request, otherwise
+  /// insert it and return true.
+  bool insert(MapEntryTy *KeyValue) {
+    unsigned BucketNo =
+      LookupBucketFor(KeyValue->getKeyData(),
+                      KeyValue->getKeyData()+KeyValue->getKeyLength());
+    ItemBucket &Bucket = TheTable[BucketNo];
+    if (Bucket.Item && Bucket.Item != getTombstoneVal()) 
+      return false;  // Already exists in map.
+    
+    if (Bucket.Item == getTombstoneVal())
+      --NumTombstones;
+    Bucket.Item = KeyValue;
+    ++NumItems;
+    
+    // If the hash table is now more than 3/4 full, rehash into a larger table.
+    if (NumItems > NumBuckets*3/4)
+      RehashTable();
+    return true;
+  }
+  
   /// GetOrCreateValue - Look up the specified key in the table.  If a value
   /// exists, return it.  Otherwise, default construct a value, insert it, and
   /// return.
@@ -200,10 +231,13 @@ public:
                                             const char *KeyEnd) {
     unsigned BucketNo = LookupBucketFor(KeyStart, KeyEnd);
     ItemBucket &Bucket = TheTable[BucketNo];
-    if (Bucket.Item)
+    if (Bucket.Item && Bucket.Item != getTombstoneVal())
       return *static_cast<MapEntryTy*>(Bucket.Item);
     
     MapEntryTy *NewItem = MapEntryTy::Create(KeyStart, KeyEnd, Allocator);
+    
+    if (Bucket.Item == getTombstoneVal())
+      --NumTombstones;
     ++NumItems;
     
     // Fill in the bucket for the hash table.  The FullHashValue was already
@@ -214,6 +248,12 @@ public:
     if (NumItems > NumBuckets*3/4)
       RehashTable();
     return *NewItem;
+  }
+  
+  /// remove - Remove the specified key/value pair from the map, but do not
+  /// erase it.  This aborts if the key is not in the map.
+  void remove(MapEntryTy *KeyValue) {
+    RemoveKey(KeyValue);
   }
   
   ~StringMap() {
@@ -228,6 +268,7 @@ public:
 
 template<typename ValueTy>
 class StringMapConstIterator {
+protected:
   StringMapImpl::ItemBucket *Ptr;
 public:
   StringMapConstIterator(StringMapImpl::ItemBucket *Bucket) : Ptr(Bucket) {
