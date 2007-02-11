@@ -15,9 +15,6 @@
 #include <cassert>
 using namespace llvm;
 
-StringMapVisitor::~StringMapVisitor() {
-}
-
 StringMapImpl::StringMapImpl(unsigned InitSize, unsigned itemSize) {
   assert((InitSize & (InitSize-1)) == 0 &&
          "Init Size must be a power of 2 or zero!");
@@ -132,14 +129,4 @@ void StringMapImpl::RehashTable() {
   
   TheTable = NewTableArray;
   NumBuckets = NewSize;
-}
-
-
-/// VisitEntries - This method walks through all of the items,
-/// invoking Visitor.Visit for each of them.
-void StringMapImpl::VisitEntries(const StringMapVisitor &Visitor) const {
-  for (ItemBucket *IB = TheTable, *E = TheTable+NumBuckets; IB != E; ++IB) {
-    if (StringMapEntryBase *Id = IB->Item)
-      Visitor.Visit((char*)Id + ItemSize, Id);
-  }
 }

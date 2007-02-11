@@ -33,14 +33,6 @@ public:
   unsigned getKeyLength() const { return StrLen; }
 };
   
-/// StringMapVisitor - Subclasses of this class may be implemented to walk all
-/// of the items in a StringMap.
-class StringMapVisitor {
-public:
-  virtual ~StringMapVisitor();
-  virtual void Visit(const char *Key, StringMapEntryBase *Value) const = 0;
-};
-
 /// StringMapImpl - This is the base class of StringMap that is shared among
 /// all of its instantiations.
 class StringMapImpl {
@@ -82,8 +74,6 @@ public:
 
   bool empty() const { return NumItems == 0; }
   unsigned size() const { return NumItems; }
-  
-  void VisitEntries(const StringMapVisitor &Visitor) const;
 };
 
 /// StringMapEntry - This is used to represent one value that is inserted into
