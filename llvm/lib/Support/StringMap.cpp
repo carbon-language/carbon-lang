@@ -25,8 +25,12 @@ StringMapImpl::StringMapImpl(unsigned InitSize, unsigned itemSize) {
   ItemSize = itemSize;
   NumItems = 0;
   
-  TheTable = new ItemBucket[NumBuckets]();
+  TheTable = new ItemBucket[NumBuckets+1]();
   memset(TheTable, 0, NumBuckets*sizeof(ItemBucket));
+  
+  // Allocate one extra bucket, set it to look filled so the iterators stop at
+  // end.
+  TheTable[NumBuckets].Item = (StringMapEntryBase*)2;
 }
 
 
@@ -94,8 +98,11 @@ unsigned StringMapImpl::LookupBucketFor(const char *NameStart,
 /// the appropriate mod-of-hashtable-size.
 void StringMapImpl::RehashTable() {
   unsigned NewSize = NumBuckets*2;
-  ItemBucket *NewTableArray = new ItemBucket[NewSize]();
+  // Allocate one extra bucket which will always be non-empty.  This allows the
+  // iterators to stop at end.
+  ItemBucket *NewTableArray = new ItemBucket[NewSize+1]();
   memset(NewTableArray, 0, NewSize*sizeof(ItemBucket));
+  NewTableArray[NewSize].Item = (StringMapEntryBase*)2;
   
   // Rehash all the items into their new buckets.  Luckily :) we already have
   // the hash values available, so we don't have to rehash any strings.
