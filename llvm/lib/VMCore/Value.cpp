@@ -141,6 +141,12 @@ void Value::setName(const std::string &name) {
 /// takeName - transfer the name from V to this value, setting V's name to
 /// empty.  It is an error to call V->takeName(V). 
 void Value::takeName(Value *V) {
+  if (!V->hasName()) {
+    if (hasName())
+      setName("");
+    return;
+  }
+  
   std::string Name = V->getName();
   V->setName("");
   setName(Name);
