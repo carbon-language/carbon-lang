@@ -218,8 +218,11 @@ public:
     Bucket.Item = KeyValue;
     ++NumItems;
     
-    // If the hash table is now more than 3/4 full, rehash into a larger table.
-    if (NumItems > NumBuckets*3/4)
+    // If the hash table is now more than 3/4 full, or if fewer than 1/8 of
+    // the buckets are empty (meaning that many are filled with tombstones),
+    // grow the table.
+    if (NumItems*4 > NumBuckets*3 ||
+        NumBuckets-(NumItems+NumTombstones) < NumBuckets/8)
       RehashTable();
     return true;
   }
@@ -244,8 +247,11 @@ public:
     // filled in by LookupBucketFor.
     Bucket.Item = NewItem;
     
-    // If the hash table is now more than 3/4 full, rehash into a larger table.
-    if (NumItems > NumBuckets*3/4)
+    // If the hash table is now more than 3/4 full, or if fewer than 1/8 of
+    // the buckets are empty (meaning that many are filled with tombstones),
+    // grow the table.
+    if (NumItems*4 > NumBuckets*3 ||
+        NumBuckets-(NumItems+NumTombstones) < NumBuckets/8)
       RehashTable();
     return *NewItem;
   }
