@@ -18,6 +18,11 @@
 #include <cstring>
 
 namespace llvm {
+  template<typename ValueT>
+  class StringMapConstIterator;
+  template<typename ValueT>
+  class StringMapIterator;
+
   
 /// StringMapEntryBase - Shared base class of StringMapEntry instances.
 class StringMapEntryBase {
@@ -39,7 +44,7 @@ public:
 /// StringMapImpl - This is the base class of StringMap that is shared among
 /// all of its instantiations.
 class StringMapImpl {
-protected:
+public:
   /// ItemBucket - The hash table consists of an array of these.  If Item is
   /// non-null, this is an extant entry, otherwise, it is a hole.
   struct ItemBucket {
@@ -51,6 +56,7 @@ protected:
     StringMapEntryBase *Item;
   };
   
+protected:
   ItemBucket *TheTable;
   unsigned NumBuckets;
   unsigned NumItems;
@@ -67,9 +73,16 @@ protected:
   unsigned LookupBucketFor(const char *KeyStart, const char *KeyEnd);
   
 public:
+  static StringMapEntryBase *getTombstoneVal() {
+    return (StringMapEntryBase*)-1;
+  }
+  
   unsigned getNumBuckets() const { return NumBuckets; }
   unsigned getNumItems() const { return NumItems; }
 
+  bool empty() const { return NumItems == 0; }
+  unsigned size() const { return NumItems; }
+  
   void VisitEntries(const StringMapVisitor &Visitor) const;
 };
 
@@ -164,6 +177,14 @@ public:
   AllocatorTy &getAllocator() { return Allocator; }
   const AllocatorTy &getAllocator() const { return Allocator; }
 
+  typedef StringMapConstIterator<ValueTy> const_iterator;
+  typedef StringMapIterator<ValueTy> iterator;
+  
+  iterator begin() { return iterator(TheTable); }
+  iterator end() { return iterator(TheTable+NumBuckets); }
+  const_iterator begin() const { return const_iterator(TheTable); }
+  const_iterator end() const { return const_iterator(TheTable+NumBuckets); }
+  
   /// FindValue - Look up the specified key in the map.  If it exists, return a
   /// pointer to the element, otherwise return null.
   MapEntryTy *FindValue(const char *KeyStart, const char *KeyEnd) {
@@ -203,6 +224,59 @@ public:
   }
 };
   
+
+template<typename ValueTy>
+class StringMapConstIterator {
+  StringMapImpl::ItemBucket *Ptr;
+public:
+  StringMapConstIterator(StringMapImpl::ItemBucket *Bucket) : Ptr(Bucket) {
+    AdvancePastEmptyBuckets();
+  }
+  
+  const StringMapEntry<ValueTy> &operator*() const {
+    return *static_cast<StringMapEntry<ValueTy>*>(Ptr->Item);
+  }
+  const StringMapEntry<ValueTy> *operator->() const {
+    return static_cast<StringMapEntry<ValueTy>*>(Ptr->Item);
+  }
+  
+  bool operator==(const StringMapConstIterator &RHS) const {
+    return Ptr == RHS.Ptr;
+  }
+  bool operator!=(const StringMapConstIterator &RHS) const {
+    return Ptr != RHS.Ptr;
+  }
+  
+  inline StringMapConstIterator& operator++() {          // Preincrement
+    ++Ptr;
+    AdvancePastEmptyBuckets();
+    return *this;
+  }
+  StringMapConstIterator operator++(int) {        // Postincrement
+    StringMapConstIterator tmp = *this; ++*this; return tmp;
+  }
+  
+private:
+  void AdvancePastEmptyBuckets() {
+    while (Ptr->Item == 0 || Ptr->Item == StringMapImpl::getTombstoneVal())
+      ++Ptr;
+  }
+};
+
+template<typename ValueTy>
+class StringMapIterator : public StringMapConstIterator<ValueTy> {
+public:  
+  StringMapIterator(StringMapImpl::ItemBucket *Bucket)
+    : StringMapConstIterator<ValueTy>(Bucket) {
+  }
+  StringMapEntry<ValueTy> &operator*() const {
+    return *static_cast<StringMapEntry<ValueTy>*>(this->Ptr->Item);
+  }
+  StringMapEntry<ValueTy> *operator->() const {
+    return static_cast<StringMapEntry<ValueTy>*>(this->Ptr->Item);
+  }
+};
+
 }
 
 #endif
