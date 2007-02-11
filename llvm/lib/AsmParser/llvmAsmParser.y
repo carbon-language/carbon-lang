@@ -26,6 +26,7 @@
 #include "llvm/Support/Streams.h"
 #include <algorithm>
 #include <list>
+#include <map>
 #include <utility>
 #ifndef NDEBUG
 #define YYDEBUG 1
