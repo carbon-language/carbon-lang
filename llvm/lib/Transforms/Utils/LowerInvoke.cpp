@@ -201,10 +201,10 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
       // Insert a normal call instruction...
-      std::string Name = II->getName(); II->setName("");
       CallInst *NewCall = new CallInst(II->getCalledValue(),
                                        std::vector<Value*>(II->op_begin()+3,
-                                                       II->op_end()), Name, II);
+                                                       II->op_end()), "", II);
+      NewCall->takeName(II);
       NewCall->setCallingConv(II->getCallingConv());
       II->replaceAllUsesWith(NewCall);
 
@@ -258,11 +258,11 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
   CatchSwitch->addCase(InvokeNoC, II->getUnwindDest());
   
   // Insert a normal call instruction.
-  std::string Name = II->getName(); II->setName("");
   CallInst *NewCall = new CallInst(II->getCalledValue(),
                                    std::vector<Value*>(II->op_begin()+3,
-                                                       II->op_end()), Name,
+                                                       II->op_end()), "",
                                    II);
+  NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
   II->replaceAllUsesWith(NewCall);
   

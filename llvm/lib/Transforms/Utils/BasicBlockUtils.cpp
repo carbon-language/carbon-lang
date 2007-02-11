@@ -29,14 +29,12 @@ void llvm::ReplaceInstWithValue(BasicBlock::InstListType &BIL,
   // Replaces all of the uses of the instruction with uses of the value
   I.replaceAllUsesWith(V);
 
-  std::string OldName = I.getName();
+  // Make sure to propagate a name if there is one already.
+  if (I.hasName() && !V->hasName())
+    V->takeName(&I);
 
   // Delete the unnecessary instruction now...
   BI = BIL.erase(BI);
-
-  // Make sure to propagate a name if there is one already.
-  if (!OldName.empty() && !V->hasName())
-    V->setName(OldName);
 }
 
 

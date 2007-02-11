@@ -85,8 +85,8 @@ bool LowerSelect::runOnFunction(Function &F) {
           new BranchInst(NewTrue, NewCont, SI->getCondition(), BB);
 
           // Create a new PHI node in the cont block with the entries we need.
-          std::string Name = SI->getName(); SI->setName("");
-          PHINode *PN = new PHINode(SI->getType(), Name, NewCont->begin());
+          PHINode *PN = new PHINode(SI->getType(), "", NewCont->begin());
+          PN->takeName(SI);
           PN->addIncoming(SI->getTrueValue(), NewTrue);
           PN->addIncoming(SI->getFalseValue(), BB);
 

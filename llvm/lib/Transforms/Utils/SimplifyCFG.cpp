@@ -213,12 +213,9 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
   }
     
   // Everything that jumped to BB now goes to Succ.
-  std::string OldName = BB->getName();
   BB->replaceAllUsesWith(Succ);
+  if (!Succ->hasName()) Succ->takeName(BB);
   BB->eraseFromParent();              // Delete the old basic block.
-  
-  if (!OldName.empty() && !Succ->hasName())  // Transfer name if we can
-    Succ->setName(OldName);
   return true;
 }
 
@@ -881,7 +878,7 @@ HoistTerminator:
   if (NT->getType() != Type::VoidTy) {
     I1->replaceAllUsesWith(NT);
     I2->replaceAllUsesWith(NT);
-    NT->setName(I1->getName());
+    NT->takeName(I1);
   }
 
   // Hoisting one of the terminators from our successor is a great thing.
@@ -1154,9 +1151,10 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
     Value *FalseVal =
       PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
     
-    std::string Name = PN->getName(); PN->setName("");
-    PN->replaceAllUsesWith(new SelectInst(IfCond, TrueVal, FalseVal,
-                                          Name, AfterPHIIt));
+    Value *NV = new SelectInst(IfCond, TrueVal, FalseVal, "", AfterPHIIt);
+    PN->replaceAllUsesWith(NV);
+    NV->takeName(PN);
+    
     BB->getInstList().erase(PN);
   }
   return true;
@@ -1474,9 +1472,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                   // Clone Cond into the predecessor basic block, and or/and the
                   // two conditions together.
                   Instruction *New = Cond->clone();
-                  New->setName(Cond->getName());
-                  Cond->setName(Cond->getName()+".old");
                   PredBlock->getInstList().insert(PBI, New);
+                  New->takeName(Cond);
+                  Cond->setName(New->getName()+".old");
                   Instruction::BinaryOps Opcode =
                     PBI->getSuccessor(0) == TrueDest ?
                     Instruction::Or : Instruction::And;
@@ -1800,27 +1798,25 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     //
     while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
       PN->replaceAllUsesWith(PN->getIncomingValue(0));
-      BB->getInstList().pop_front();  // Delete the phi node...
+      BB->getInstList().pop_front();  // Delete the phi node.
     }
 
-    // Delete the unconditional branch from the predecessor...
+    // Delete the unconditional branch from the predecessor.
     OnlyPred->getInstList().pop_back();
 
-    // Move all definitions in the successor to the predecessor...
+    // Move all definitions in the successor to the predecessor.
     OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
 
     // Make all PHI nodes that referred to BB now refer to Pred as their
-    // source...
+    // source.
     BB->replaceAllUsesWith(OnlyPred);
 
-    std::string OldName = BB->getName();
-
-    // Erase basic block from the function...
+    // Inherit predecessors name if it exists.
+    if (!OnlyPred->hasName())
+      OnlyPred->takeName(BB);
+    
+    // Erase basic block from the function.
     M->getBasicBlockList().erase(BB);
-
-    // Inherit predecessors name if it exists...
-    if (!OldName.empty() && !OnlyPred->hasName())
-      OnlyPred->setName(OldName);
 
     return true;
   }
