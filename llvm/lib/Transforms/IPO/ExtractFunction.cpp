@@ -90,16 +90,15 @@ namespace {
       for (Module::iterator I = M.begin(); ; ++I) {
         if (&*I != Named) {
           Function *New = new Function(I->getFunctionType(),
-                                       GlobalValue::ExternalLinkage,
-                                       I->getName());
+                                       GlobalValue::ExternalLinkage);
           New->setCallingConv(I->getCallingConv());
-          I->setName("");  // Remove Old name
 
           // If it's not the named function, delete the body of the function
           I->dropAllReferences();
 
           M.getFunctionList().push_back(New);
           NewFunctions.push_back(New);
+          New->takeName(I);
         }
 
         if (&*I == Last) break;  // Stop after processing the last function

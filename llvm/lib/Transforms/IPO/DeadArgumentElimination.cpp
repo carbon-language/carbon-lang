@@ -150,10 +150,10 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   unsigned NumArgs = Params.size();
   
   // Create the new function body and insert it into the module...
-  std::string Name = Fn.getName(); Fn.setName("");
-  Function *NF = new Function(NFTy, Fn.getLinkage(), Name);
+  Function *NF = new Function(NFTy, Fn.getLinkage());
   NF->setCallingConv(Fn.getCallingConv());
   Fn.getParent()->getFunctionList().insert(&Fn, NF);
+  NF->takeName(&Fn);
   
   // Loop over all of the callers of the function, transforming the call sites
   // to pass in a smaller number of arguments into the new function.
@@ -182,11 +182,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     if (!Call->use_empty())
       Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
     
-    if (Call->hasName()) {
-      std::string Name = Call->getName();
-      Call->setName("");
-      New->setName(Name);
-    }
+    New->takeName(Call);
     
     // Finally, remove the old call from the program, reducing the use-count of
     // F.
@@ -206,7 +202,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
        I2 = NF->arg_begin(); I != E; ++I, ++I2) {
     // Move the name and users over to the new version.
     I->replaceAllUsesWith(I2);
-    I2->setName(I->getName());
+    I2->takeName(I);
   }
   
   // Finally, nuke the old function.
@@ -509,10 +505,10 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
 
   // Create the new function body and insert it into the module...
-  std::string Name = F->getName(); F->setName("");
-  Function *NF = new Function(NFTy, F->getLinkage(), Name);
+  Function *NF = new Function(NFTy, F->getLinkage());
   NF->setCallingConv(F->getCallingConv());
   F->getParent()->getFunctionList().insert(F, NF);
+  NF->takeName(F);
 
   // Loop over all of the callers of the function, transforming the call sites
   // to pass in a smaller number of arguments into the new function.
@@ -554,9 +550,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
         Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
       else {
         Call->replaceAllUsesWith(New);
-        std::string Name = Call->getName();
-        Call->setName("");
-        New->setName(Name);
+        New->takeName(Call);
       }
     }
 
@@ -581,7 +575,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
       // If this is a live argument, move the name and users over to the new
       // version.
       I->replaceAllUsesWith(I2);
-      I2->setName(I->getName());
+      I2->takeName(I);
       ++I2;
     } else {
       // If this argument is dead, replace any uses of it with null constants

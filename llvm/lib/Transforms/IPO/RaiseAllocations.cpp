@@ -164,8 +164,8 @@ bool RaiseAllocations::runOnModule(Module &M) {
               CastInst::createIntegerCast(Source, Type::Int32Ty, false/*ZExt*/,
                                           "MallocAmtCast", I);
 
-          std::string Name(I->getName()); I->setName("");
-          MallocInst *MI = new MallocInst(Type::Int8Ty, Source, Name, I);
+          MallocInst *MI = new MallocInst(Type::Int8Ty, Source, "", I);
+          MI->takeName(I);
           I->replaceAllUsesWith(MI);
 
           // If the old instruction was an invoke, add an unconditional branch

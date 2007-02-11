@@ -455,9 +455,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
     if (!Call->use_empty()) {
       Call->replaceAllUsesWith(New);
-      std::string Name = Call->getName();
-      Call->setName("");
-      New->setName(Name);
+      New->takeName(Call);
     }
 
     // Finally, remove the old call from the program, reducing the use-count of
@@ -479,7 +477,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       // If this is an unmodified argument, move the name and users over to the
       // new version.
       I->replaceAllUsesWith(I2);
-      I2->setName(I->getName());
+      I2->takeName(I);
       AA.replaceWithNewValue(I, I2);
       ++I2;
     } else if (I->use_empty()) {

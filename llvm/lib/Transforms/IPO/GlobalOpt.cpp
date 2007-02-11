@@ -1189,14 +1189,13 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
     } else if (!UI->use_empty()) {
       // Change the load into a load of bool then a select.
       LoadInst *LI = cast<LoadInst>(UI);
-
-      std::string Name = LI->getName(); LI->setName("");
-      LoadInst *NLI = new LoadInst(NewGV, Name+".b", LI);
+      LoadInst *NLI = new LoadInst(NewGV, LI->getName()+".b", LI);
       Value *NSI;
       if (IsOneZero)
-        NSI = new ZExtInst(NLI, LI->getType(), Name, LI);
+        NSI = new ZExtInst(NLI, LI->getType(), "", LI);
       else
-        NSI = new SelectInst(NLI, OtherVal, InitVal, Name, LI);
+        NSI = new SelectInst(NLI, OtherVal, InitVal, "", LI);
+      NSI->takeName(LI);
       LI->replaceAllUsesWith(NSI);
     }
     UI->eraseFromParent();
@@ -1519,10 +1518,9 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   
   // Create the new global and insert it next to the existing list.
   GlobalVariable *NGV = new GlobalVariable(CA->getType(), GCL->isConstant(),
-                                           GCL->getLinkage(), CA,
-                                           GCL->getName());
-  GCL->setName("");
+                                           GCL->getLinkage(), CA);
   GCL->getParent()->getGlobalList().insert(GCL, NGV);
+  NGV->takeName(GCL);
   
   // Nuke the old list, replacing any uses with the new one.
   if (!GCL->use_empty()) {
