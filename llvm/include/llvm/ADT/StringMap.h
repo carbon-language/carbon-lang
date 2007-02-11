@@ -64,6 +64,11 @@ protected:
   /// of the string.
   unsigned LookupBucketFor(const char *KeyStart, const char *KeyEnd);
   
+  /// FindKey - Look up the bucket that contains the specified key. If it exists
+  /// in the map, return the bucket number of the key.  Otherwise return -1.
+  /// This does not modify the map.
+  int FindKey(const char *KeyStart, const char *KeyEnd) const;
+  
 public:
   static StringMapEntryBase *getTombstoneVal() {
     return (StringMapEntryBase*)-1;
@@ -175,11 +180,17 @@ public:
   const_iterator begin() const { return const_iterator(TheTable); }
   const_iterator end() const { return const_iterator(TheTable+NumBuckets); }
   
-  /// FindValue - Look up the specified key in the map.  If it exists, return a
-  /// pointer to the element, otherwise return null.
-  MapEntryTy *FindValue(const char *KeyStart, const char *KeyEnd) {
-    unsigned BucketNo = LookupBucketFor(KeyStart, KeyEnd);
-    return static_cast<MapEntryTy*>(TheTable[BucketNo].Item);
+  
+  iterator find(const char *KeyStart, const char *KeyEnd) {
+    int Bucket = FindKey(KeyStart, KeyEnd);
+    if (Bucket == -1) return end();
+    return iterator(TheTable+Bucket);
+  }
+
+  const_iterator find(const char *KeyStart, const char *KeyEnd) const {
+    int Bucket = FindKey(KeyStart, KeyEnd);
+    if (Bucket == -1) return end();
+    return const_iterator(TheTable+Bucket);
   }
   
   /// GetOrCreateValue - Look up the specified key in the table.  If a value

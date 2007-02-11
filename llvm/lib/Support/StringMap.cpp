@@ -91,6 +91,49 @@ unsigned StringMapImpl::LookupBucketFor(const char *NameStart,
   }
 }
 
+
+/// FindKey - Look up the bucket that contains the specified key. If it exists
+/// in the map, return the bucket number of the key.  Otherwise return -1.
+/// This does not modify the map.
+int StringMapImpl::FindKey(const char *KeyStart, const char *KeyEnd) const {
+  unsigned HTSize = NumBuckets;
+  unsigned FullHashValue = HashString(KeyStart, KeyEnd);
+  unsigned BucketNo = FullHashValue & (HTSize-1);
+  
+  unsigned ProbeAmt = 1;
+  while (1) {
+    ItemBucket &Bucket = TheTable[BucketNo];
+    StringMapEntryBase *BucketItem = Bucket.Item;
+    // If we found an empty bucket, this key isn't in the table yet, return.
+    if (BucketItem == 0)
+      return -1;
+    
+    // If the full hash value matches, check deeply for a match.  The common
+    // case here is that we are only looking at the buckets (for item info
+    // being non-null and for the full hash value) not at the items.  This
+    // is important for cache locality.
+    if (Bucket.FullHashValue == FullHashValue) {
+      // Do the comparison like this because NameStart isn't necessarily
+      // null-terminated!
+      char *ItemStr = (char*)BucketItem+ItemSize;
+      unsigned ItemStrLen = BucketItem->getKeyLength();
+      if (unsigned(KeyEnd-KeyStart) == ItemStrLen &&
+          memcmp(ItemStr, KeyStart, ItemStrLen) == 0) {
+        // We found a match!
+        return BucketNo;
+      }
+    }
+    
+    // Okay, we didn't find the item.  Probe to the next bucket.
+    BucketNo = (BucketNo+ProbeAmt) & (HTSize-1);
+    
+    // Use quadratic probing, it has fewer clumping artifacts than linear
+    // probing and has good cache behavior in the common case.
+    ++ProbeAmt;
+  }
+}
+
+
 /// RehashTable - Grow the table, redistributing values into the buckets with
 /// the appropriate mod-of-hashtable-size.
 void StringMapImpl::RehashTable() {
