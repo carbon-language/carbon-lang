@@ -132,7 +132,8 @@ public:
 class IdentifierTable {
   // Shark shows that using MallocAllocator is *much* slower than using this
   // BumpPtrAllocator!
-  StringMap<IdentifierInfo, BumpPtrAllocator> HashTable;
+  typedef StringMap<IdentifierInfo, BumpPtrAllocator> HashTableTy;
+  HashTableTy HashTable;
 public:
   /// IdentifierTable ctor - Create the identifier table, populating it with
   /// info about the language keywords for the language specified by LangOpts.
@@ -153,11 +154,11 @@ public:
     return get(NameBytes, NameBytes+Name.size());
   }
   
-  /// VisitIdentifiers - This method walks through all of the identifiers,
-  /// invoking IV->VisitIdentifier for each of them.
-  void VisitIdentifiers(const StringMapVisitor &IV) {
-    HashTable.VisitEntries(IV);
-  }
+  typedef HashTableTy::const_iterator iterator;
+  typedef HashTableTy::const_iterator const_iterator;
+  
+  iterator begin() const { return HashTable.begin(); }
+  iterator end() const   { return HashTable.end(); }
   
   /// PrintStats - Print some statistics to stderr that indicate how well the
   /// hashing is doing.

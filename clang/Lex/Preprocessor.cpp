@@ -886,20 +886,6 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
   }  
 }
 
-namespace {
-struct UnusedIdentifierReporter : public StringMapVisitor {
-  Preprocessor &PP;
-  UnusedIdentifierReporter(Preprocessor &pp) : PP(pp) {}
-
-  void Visit(const char *Key, StringMapEntryBase *Value) const {
-    IdentifierInfo &II =
-      static_cast<StringMapEntry<IdentifierInfo>*>(Value)->getValue();
-    if (II.getMacroInfo() && !II.getMacroInfo()->isUsed())
-      PP.Diag(II.getMacroInfo()->getDefinitionLoc(), diag::pp_macro_not_used);
-  }
-};
-}
-
 //===----------------------------------------------------------------------===//
 // Lexer Event Handling.
 //===----------------------------------------------------------------------===//
@@ -1035,8 +1021,14 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   // This is the end of the top-level file.  If the diag::pp_macro_not_used
   // diagnostic is enabled, walk all of the identifiers, looking for macros that
   // have not been used.
-  if (Diags.getDiagnosticLevel(diag::pp_macro_not_used) != Diagnostic::Ignored)
-    Identifiers.VisitIdentifiers(UnusedIdentifierReporter(*this));
+  if (Diags.getDiagnosticLevel(diag::pp_macro_not_used) != Diagnostic::Ignored){
+    for (IdentifierTable::iterator I = Identifiers.begin(),
+         E = Identifiers.end(); I != E; ++I) {
+      const IdentifierInfo &II = I->getValue();
+      if (II.getMacroInfo() && !II.getMacroInfo()->isUsed())
+        Diag(II.getMacroInfo()->getDefinitionLoc(), diag::pp_macro_not_used);
+    }
+  }
   
   return true;
 }

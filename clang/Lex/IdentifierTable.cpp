@@ -148,21 +148,6 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
 // Stats Implementation
 //===----------------------------------------------------------------------===//
 
-class StatsVisitor : public StringMapVisitor {
-  unsigned &IDLenTotal;
-  unsigned &MaxIDLen;
-public:
-  StatsVisitor(unsigned &idLenTotal, unsigned &maxIDLen)
-    : IDLenTotal(idLenTotal), MaxIDLen(maxIDLen) {}
-  void Visit(const char *Key, StringMapEntryBase *Value) const {
-    unsigned IdLen = Value->getKeyLength();
-    IDLenTotal += IdLen;
-    if (MaxIDLen < IdLen)
-      MaxIDLen = IdLen;
-  }
-};
-
-
 /// PrintStats - Print statistics about how well the identifier table is doing
 /// at hashing identifiers.
 void IdentifierTable::PrintStats() const {
@@ -173,8 +158,13 @@ void IdentifierTable::PrintStats() const {
   unsigned MaxIdentifierLength = 0;
   
   // TODO: Figure out maximum times an identifier had to probe for -stats.
-  HashTable.VisitEntries(StatsVisitor(AverageIdentifierSize, 
-                                      MaxIdentifierLength));
+  for (StringMap<IdentifierInfo, BumpPtrAllocator>::const_iterator
+       I = HashTable.begin(), E = HashTable.end(); I != E; ++I) {
+    unsigned IdLen = I->getKeyLength();
+    AverageIdentifierSize += IdLen;
+    if (MaxIdentifierLength < IdLen)
+      MaxIdentifierLength = IdLen;
+  }
   
   std::cerr << "\n*** Identifier Table Stats:\n";
   std::cerr << "# Identifiers:   " << NumIdentifiers << "\n";
