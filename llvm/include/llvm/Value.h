@@ -88,6 +88,10 @@ public:
   inline const std::string &getName() const { return Name; }
 
   void setName(const std::string &name);
+  
+  /// takeName - transfer the name from V to this value, setting V's name to
+  /// empty.  It is an error to call V->takeName(V). 
+  void takeName(Value *V);
 
   /// replaceAllUsesWith - Go through the uses list for this definition and make
   /// each use point to "V" instead of "this".  After this completes, 'this's

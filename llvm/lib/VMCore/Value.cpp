@@ -92,29 +92,34 @@ unsigned Value::getNumUses() const {
   return (unsigned)std::distance(use_begin(), use_end());
 }
 
+static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    if (BasicBlock *P = I->getParent())
+      if (Function *PP = P->getParent())
+        ST = &PP->getValueSymbolTable();
+  } else if (BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
+    if (Function *P = BB->getParent()) 
+      ST = &P->getValueSymbolTable();
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    if (Module *P = GV->getParent()) 
+      ST = &P->getValueSymbolTable();
+  } else if (Argument *A = dyn_cast<Argument>(V)) {
+    if (Function *P = A->getParent()) 
+      ST = &P->getValueSymbolTable();
+  } else {
+    assert(isa<Constant>(V) && "Unknown value type!");
+    return true;  // no name is setable for this.
+  }
+  return false;
+}
 
 void Value::setName(const std::string &name) {
   if (Name == name) return;   // Name is already set.
 
   // Get the symbol table to update for this object.
-  ValueSymbolTable *ST = 0;
-  if (Instruction *I = dyn_cast<Instruction>(this)) {
-    if (BasicBlock *P = I->getParent())
-      if (Function *PP = P->getParent())
-        ST = &PP->getValueSymbolTable();
-  } else if (BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
-    if (Function *P = BB->getParent()) 
-      ST = &P->getValueSymbolTable();
-  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
-    if (Module *P = GV->getParent()) 
-      ST = &P->getValueSymbolTable();
-  } else if (Argument *A = dyn_cast<Argument>(this)) {
-    if (Function *P = A->getParent()) 
-      ST = &P->getValueSymbolTable();
-  } else {
-    assert(isa<Constant>(this) && "Unknown value type!");
-    return;  // no name is setable for this.
-  }
+  ValueSymbolTable *ST;
+  if (getSymTab(this, ST))
+    return;  // Cannot set a name on this value (e.g. constant).
 
   if (!ST)  // No symbol table to update?  Just do the change.
     Name = name;
@@ -132,6 +137,15 @@ void Value::setName(const std::string &name) {
     ST->insert(this);
   }
 }
+
+/// takeName - transfer the name from V to this value, setting V's name to
+/// empty.  It is an error to call V->takeName(V). 
+void Value::takeName(Value *V) {
+  std::string Name = V->getName();
+  V->setName("");
+  setName(Name);
+}
+
 
 // uncheckedReplaceAllUsesWith - This is exactly the same as replaceAllUsesWith,
 // except that it doesn't have all of the asserts.  The asserts fail because we
