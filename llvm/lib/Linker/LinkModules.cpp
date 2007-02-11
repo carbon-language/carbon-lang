@@ -337,18 +337,15 @@ static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
   ValueSymbolTable &ST = GV->getParent()->getValueSymbolTable();
 
   // If there is a conflict, rename the conflict.
-  GlobalValue *ConflictGV = cast_or_null<GlobalValue>(ST.lookup(Name));
-  if (ConflictGV) {
+  if (GlobalValue *ConflictGV = cast_or_null<GlobalValue>(ST.lookup(Name))) {
     assert(ConflictGV->hasInternalLinkage() &&
            "Not conflicting with a static global, should link instead!");
-    ConflictGV->setName("");        // Eliminate the conflict
-  }
-  GV->setName(Name);              // Force the name back
-  if (ConflictGV) {
-    ConflictGV->setName(Name);      // This will cause ConflictGV to get renamed
+    GV->takeName(ConflictGV);
+    ConflictGV->setName(Name);    // This will cause ConflictGV to get renamed
     assert(ConflictGV->getName() != Name && "ForceRenaming didn't work");
+  } else {
+    GV->setName(Name);              // Force the name back
   }
-  assert(GV->getName() == Name && "ForceRenaming didn't work");
 }
 
 /// CopyGVAttributes - copy additional attributes (those not needed to construct
