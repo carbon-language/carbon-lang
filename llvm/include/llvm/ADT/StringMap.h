@@ -94,6 +94,58 @@ public:
   /// value.  The string data is always stored immediately after the
   /// StringMapEntry object.
   const char *getKeyData() const {return reinterpret_cast<const char*>(this+1);}
+  
+  /// Create - Create a StringMapEntry for the specified key and default
+  /// construct the value.
+  template<typename AllocatorTy>
+  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
+                                AllocatorTy &Allocator) {
+    unsigned KeyLength = KeyEnd-KeyStart;
+    
+    // Okay, the item doesn't already exist, and 'Bucket' is the bucket to fill
+    // in.  Allocate a new item with space for the string at the end and a null
+    // terminator.
+    unsigned AllocSize = sizeof(StringMapEntry)+KeyLength+1;
+    
+#ifdef __GNUC__
+    unsigned Alignment = __alignof__(StringMapEntry);
+#else
+    // FIXME: ugly.
+    unsigned Alignment = 8;
+#endif
+    StringMapEntry *NewItem = 
+      static_cast<StringMapEntry*>(Allocator.Allocate(AllocSize, Alignment));
+    
+    // Default construct the value.
+    new (NewItem) StringMapEntry(KeyLength);
+    
+    // Copy the string information.
+    char *StrBuffer = const_cast<char*>(NewItem->getKeyData());
+    memcpy(StrBuffer, KeyStart, KeyLength);
+    StrBuffer[KeyLength] = 0;  // Null terminate for convenience of clients.
+    return NewItem;
+  }
+  
+  /// Create - Create a StringMapEntry with normal malloc/free.
+  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd) {
+    MallocAllocator A;
+    return Create(KeyStart, KeyEnd, A);
+  }
+
+  /// Destroy - Destroy this StringMapEntry, releasing memory back to the
+  /// specified allocator.
+  template<typename AllocatorTy>
+  void Destroy(AllocatorTy &Allocator) {
+    // Free memory referenced by the item.
+    this->~StringMapEntry();
+    Allocator.Deallocate(this);
+  }
+  
+  /// Destroy this object, releasing memory back to the malloc allocator.
+  void Destroy() {
+    MallocAllocator A;
+    Destroy(A);
+  }
 };
 
 
@@ -129,30 +181,8 @@ public:
     if (Bucket.Item)
       return *static_cast<MapEntryTy*>(Bucket.Item);
     
-    unsigned KeyLength = KeyEnd-KeyStart;
-    
-    // Okay, the item doesn't already exist, and 'Bucket' is the bucket to fill
-    // in.  Allocate a new item with space for the string at the end and a null
-    // terminator.
-    unsigned AllocSize = sizeof(MapEntryTy)+KeyLength+1;
-    
-#ifdef __GNUC__
-    unsigned Alignment = __alignof__(MapEntryTy);
-#else
-    // FIXME: ugly.
-    unsigned Alignment = 8;
-#endif
-    MapEntryTy *NewItem = 
-      static_cast<MapEntryTy*>(Allocator.Allocate(AllocSize, Alignment));
-    
-    // Default construct the value.
-    new (NewItem) MapEntryTy(KeyLength);
+    MapEntryTy *NewItem = MapEntryTy::Create(KeyStart, KeyEnd, Allocator);
     ++NumItems;
-    
-    // Copy the string information.
-    char *StrBuffer = const_cast<char*>(NewItem->getKeyData());
-    memcpy(StrBuffer, KeyStart, KeyLength);
-    StrBuffer[KeyLength] = 0;  // Null terminate for convenience of clients.
     
     // Fill in the bucket for the hash table.  The FullHashValue was already
     // filled in by LookupBucketFor.
@@ -166,11 +196,8 @@ public:
   
   ~StringMap() {
     for (ItemBucket *I = TheTable, *E = TheTable+NumBuckets; I != E; ++I) {
-      if (MapEntryTy *Id = static_cast<MapEntryTy*>(I->Item)) {
-        // Free memory referenced by the item.
-        Id->~MapEntryTy();
-        Allocator.Deallocate(Id);
-      }
+      if (MapEntryTy *Id = static_cast<MapEntryTy*>(I->Item))
+        Id->Destroy(Allocator);
     }
     delete [] TheTable;
   }
