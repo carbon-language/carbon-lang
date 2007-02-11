@@ -120,19 +120,19 @@ class ConstantRange {
   /// constant range.
   ConstantRange subtract(ConstantInt *CI) const;
 
-  /// intersect - Return the range that results from the intersection of this
-  /// range with another range.  The resultant range is pruned as much as
+  /// intersectWith - Return the range that results from the intersection of
+  /// this range with another range.  The resultant range is pruned as much as
   /// possible, but there may be cases where elements are included that are in
   /// one of the sets but not the other.  For example: [100, 8) intersect [3,
   /// 120) yields [3, 120)
   ///
   ConstantRange intersectWith(const ConstantRange &CR, bool isSigned) const;
 
-  /// union - Return the range that results from the union of this range with
-  /// another range.  The resultant range is guaranteed to include the elements
-  /// of both sets, but may contain more.  For example, [3, 9) union [12,15) is
-  /// [3, 15), which includes 9, 10, and 11, which were not included in either
-  /// set before.
+  /// unionWith - Return the range that results from the union of this range
+  /// with another range.  The resultant range is guaranteed to include the
+  /// elements of both sets, but may contain more.  For example, [3, 9) union
+  /// [12,15) is [3, 15), which includes 9, 10, and 11, which were not included
+  /// in either set before.
   ///
   ConstantRange unionWith(const ConstantRange &CR, bool isSigned) const;
 

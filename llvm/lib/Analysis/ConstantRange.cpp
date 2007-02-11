@@ -274,7 +274,7 @@ static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
   }
 }
 
-/// intersect - Return the range that results from the intersection of this
+/// intersectWith - Return the range that results from the intersection of this
 /// range with another range.
 ///
 ConstantRange ConstantRange::intersectWith(const ConstantRange &CR,
@@ -308,7 +308,7 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR,
   return *this;
 }
 
-/// union - Return the range that results from the union of this range with
+/// unionWith - Return the range that results from the union of this range with
 /// another range.  The resultant range is guaranteed to include the elements of
 /// both sets, but may contain more.  For example, [3, 9) union [12,15) is [3,
 /// 15), which includes 9, 10, and 11, which were not included in either set
