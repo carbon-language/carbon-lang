@@ -259,82 +259,20 @@ unsigned SlotCalculator::getOrCreateTypeSlot(const Type *Ty) {
   TypeMapType::iterator TyIt = TypeMap.find(Ty);
   if (TyIt != TypeMap.end()) return TyIt->second;
 
-  // Try to reduce the number of opaque types the reader has to process by 
-  // first inserting any contained types that can't possibly recurse back to 
-  // this type. Making those types concrete before creating the slot number for
-  // this type means the reader will not have to create OpaqueTy placeholders
-  // for the this type's sub-types.  If the sub-type is a pointer, function
-  // type, structure with pointer/array/struct, or an array with a pointer
-  // element type, then we defer it. Otherwise, we can either ignore the 
-  // primitive types (avoid recursion) or create the slot up front.
-  // Note that this is a trade-off. It slows writing (very slightly) but makes
-  // reading a little faster, especially for large complex types.
-  typedef SmallVector<const Type*, 16> DeferVecType;
-  DeferVecType DeferList;
-  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
-       I != E; ++I)
-    switch ((*I)->getTypeID()) {
-      default: assert(0 && "Invalid TypeID?");
-      case Type::VoidTyID:
-      case Type::FloatTyID:
-      case Type::DoubleTyID:
-      case Type::LabelTyID:
-        // These are all primitive and have been inserted already, just ignore
-        // to avoid the recursion.
-        break;
-      case Type::FunctionTyID:
-      case Type::PointerTyID:
-        // Pointers and Functions can recurse to us, defer it.
-        DeferList.push_back(*I);
-        break;
-      case Type::StructTyID:
-      case Type::PackedStructTyID: {
-        // if any of the fields of the structure are pointers, structures or
-        // arrays with pointer element type, defer it.
-        const StructType *Ty = &cast<StructType>(*(*I));
-        Type::subtype_iterator EI = Ty->subtype_begin();
-        Type::subtype_iterator EE = Ty->subtype_end();
-        for ( ; EI != EE; ++EI) {
-          const Type* SubTy = *EI;
-          if (isa<PointerType>(SubTy) || isa<StructType>(SubTy) || 
-              (isa<ArrayType>(SubTy) && 
-               isa<PointerType>(cast<ArrayType>(SubTy)->getElementType())))
-            break;
-        }
-        if (EI != EE)
-          DeferList.push_back(*I);
-        else
-          getOrCreateTypeSlot(*I);
-        break;
-      }
-      case Type::ArrayTyID:  {
-        const ArrayType* ArrayTy = &cast<ArrayType>(*(*I));
-        if (isa<PointerType>(ArrayTy->getElementType())) {
-          // this might recurse to us, defer it.
-          DeferList.push_back(*I);
-          break;
-        }
-        /* FALL THROUGH (others are okay) */
-      }
-      case Type::OpaqueTyID:  // no elements
-      case Type::IntegerTyID: // no elements
-      case Type::PackedTyID:  // can only have elements of non-recursing types
-        getOrCreateTypeSlot(*I);
-        break;
-    }
-
-  // Now we must create the slot for this type by inserting into TypeMap.
+  // Insert into TypeMap.
   unsigned ResultSlot = TypeMap[Ty] = Types.size();
   Types.push_back(Ty);
   SC_DEBUG("  Inserting type [" << ResultSlot << "] = " << *Ty << "\n" );
   
-  // Finally, process any deferred sub-types and create their slots.
-  for (DeferVecType::iterator I = DeferList.begin(), E = DeferList.end();
+  // Loop over any contained types in the definition, ensuring they are also
+  // inserted.
+  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I)
     getOrCreateTypeSlot(*I);
 
   return ResultSlot;
 }
+
 
 
 void SlotCalculator::incorporateFunction(const Function *F) {
