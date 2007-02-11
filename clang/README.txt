@@ -20,7 +20,7 @@ I. Introduction:
 
  This front-end is built as a component of the LLVM toolkit (which really really
  needs a better name) that can be used with the LLVM backend or independently of
- it.  In this spirit, the API has been carefully designed to as the following
+ it.  In this spirit, the API has been carefully designed as the following
  stack of components:
  
    libsupport  - Basic support library, reused from LLVM.
