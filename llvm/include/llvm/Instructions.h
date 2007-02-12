@@ -17,6 +17,7 @@
 #define LLVM_INSTRUCTIONS_H
 
 #include "llvm/InstrTypes.h"
+#include <vector>  // fixme remove.
 
 namespace llvm {
 

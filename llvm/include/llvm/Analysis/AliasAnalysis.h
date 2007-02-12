@@ -32,6 +32,7 @@
 
 #include "llvm/Support/CallSite.h"
 #include "llvm/System/IncludeFile.h"
+#include <vector>
 
 namespace llvm {
 
