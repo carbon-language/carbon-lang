@@ -132,6 +132,17 @@ inline std::string BytecodeReader::read_str() {
   return std::string((char*)OldAt, Size);
 }
 
+void BytecodeReader::read_str(SmallVectorImpl<char> &StrData) {
+  StrData.clear();
+  unsigned Size = read_vbr_uint();
+  const unsigned char *OldAt = At;
+  At += Size;
+  if (At > BlockEnd)             // Size invalid?
+    error("Ran out of data reading a string!");
+  StrData.append(OldAt, At);
+}
+
+
 /// Read an arbitrary block of data
 inline void BytecodeReader::read_data(void *Ptr, void *End) {
   unsigned char *Start = (unsigned char *)Ptr;
@@ -943,6 +954,8 @@ void BytecodeReader::ParseValueSymbolTable(Function *CurrentFunction,
            E = CurrentFunction->end(); I != E; ++I)
       BBMap.push_back(I);
 
+  SmallVector<char, 32> NameStr;
+  
   while (moreInBlock()) {
     // Symtab block header: [num entries][type id number]
     unsigned NumEntries = read_vbr_uint();
@@ -951,19 +964,22 @@ void BytecodeReader::ParseValueSymbolTable(Function *CurrentFunction,
     for (unsigned i = 0; i != NumEntries; ++i) {
       // Symtab entry: [def slot #][name]
       unsigned slot = read_vbr_uint();
-      std::string Name = read_str();
+      read_str(NameStr);
       Value *V = 0;
       if (Typ == LabelTySlot) {
-        if (slot < BBMap.size())
-          V = BBMap[slot];
+        V = (slot < BBMap.size()) ? BBMap[slot] : 0;
       } else {
-        V = getValue(Typ, slot, false); // Find mapping...
+        V = getValue(Typ, slot, false); // Find mapping.
       }
-      if (Handler) Handler->handleSymbolTableValue(Typ, slot, Name);
+      if (Handler) Handler->handleSymbolTableValue(Typ, slot,
+                                                   &NameStr[0], NameStr.size());
       if (V == 0)
-        error("Failed value look-up for name '" + Name + "', type #" + 
+        error("Failed value look-up for name '" + 
+              std::string(NameStr.begin(), NameStr.end()) + "', type #" + 
               utostr(Typ) + " slot #" + utostr(slot));
-      V->setName(Name);
+      V->setName(&NameStr[0], NameStr.size());
+      
+      NameStr.clear();
     }
   }
   checkPastBlockEnd("Symbol Table");

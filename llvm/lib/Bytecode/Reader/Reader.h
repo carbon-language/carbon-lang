@@ -438,6 +438,7 @@ private:
 
   /// @brief Read a string
   inline std::string read_str();
+  inline void read_str(SmallVectorImpl<char> &StrData);
 
   /// @brief Read a float value
   inline void read_float(float& FloatVal);

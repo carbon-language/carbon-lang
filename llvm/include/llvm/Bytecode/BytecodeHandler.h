@@ -175,7 +175,7 @@ public:
   virtual void handleSymbolTableValue(
     unsigned i,              ///< The index of the value in this plane
     unsigned slot,           ///< Slot number of the named value
-    const std::string& name  ///< Name of the value.
+    const char *name, unsigned NameLen  ///< Name of the value.
   ) {}
 
   /// @brief Handle the end of a value symbol table

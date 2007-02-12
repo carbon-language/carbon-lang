@@ -250,10 +250,10 @@ public:
   }
 
   virtual void handleSymbolTableValue(unsigned TySlot, unsigned ValSlot, 
-                                      const std::string& name) {
+                                      const char *Name, unsigned NameLen) {
     if (os)
       *os << "        Value " << TySlot << " Slot=" << ValSlot
-         << " Name: " << name << "\n";
+          << " Name: " << std::string(Name, Name+NameLen) << "\n";
     if (ValSlot > bca.maxValueSlot)
       bca.maxValueSlot = ValSlot;
   }
