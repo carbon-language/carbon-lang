@@ -868,3 +868,32 @@ _f2:
 
 //===---------------------------------------------------------------------===//
 
+This code:
+
+void test(int X) {
+  if (X) abort();
+}
+
+is currently compiled to (with -static):
+
+_test:
+        subl $12, %esp
+        cmpl $0, 16(%esp)
+        jne LBB1_1      #cond_true
+        addl $12, %esp
+        ret
+LBB1_1: #cond_true
+        call L_abort$stub
+
+It would be better to produce:
+
+_test:
+        subl $12, %esp
+        cmpl $0, 16(%esp)
+        jne L_abort$stub
+        addl $12, %esp
+        ret
+
+This can be applied to any no-return function call that takes no arguments etc.
+
+//===---------------------------------------------------------------------===//
