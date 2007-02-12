@@ -874,15 +874,15 @@ void test(int X) {
   if (X) abort();
 }
 
-is currently compiled to (with -static):
+is currently compiled to:
 
 _test:
         subl $12, %esp
         cmpl $0, 16(%esp)
-        jne LBB1_1      #cond_true
+        jne LBB1_1
         addl $12, %esp
         ret
-LBB1_1: #cond_true
+LBB1_1:
         call L_abort$stub
 
 It would be better to produce:
@@ -895,5 +895,28 @@ _test:
         ret
 
 This can be applied to any no-return function call that takes no arguments etc.
+Alternatively, the stack save/restore logic could be shrink-wrapped, producing
+something like this:
+
+_test:
+        cmpl $0, 4(%esp)
+        jne LBB1_1
+        ret
+LBB1_1:
+        subl $12, %esp
+        call L_abort$stub
+
+Both are useful in different situations.  Finally, it could be shrink-wrapped
+and tail called, like this:
+
+_test:
+        cmpl $0, 4(%esp)
+        jne LBB1_1
+        ret
+LBB1_1:
+        pop %eax   # realign stack.
+        call L_abort$stub
+
+Though this probably isn't worth it.
 
 //===---------------------------------------------------------------------===//
