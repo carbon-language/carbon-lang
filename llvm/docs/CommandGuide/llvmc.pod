@@ -422,8 +422,7 @@ L<http://llvm.org/PR686>
 
 =head1 SEE ALSO
 
-L<gccas|gccas>, L<gccld|gccld>, L<llvm-as|llvm-as>, L<llvm-dis|llvm-dis>, 
-L<llc|llc>, L<llvm-link|llvm-link>
+L<llvm-as|llvm-as>, L<llvm-dis|llvm-dis>, L<llc|llc>, L<llvm-link|llvm-link>
 
 =head1 AUTHORS
 
