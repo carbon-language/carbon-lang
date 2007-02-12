@@ -289,6 +289,9 @@ public:
   inline uint64_t getValue() {
     if (isSingleWord())
       return VAL;
+    unsigned n = getNumWords() * 64 - CountLeadingZeros();
+    if (n <= 64)
+      return pVal[0];
     assert(0 && "This APInt's bitwidth > 64");
   }
 
@@ -385,6 +388,9 @@ public:
            CountLeadingZeros();
   }
 
+  /// @brief Converts this APInt to a double value.
+  double APIntRoundToDouble(bool isSigned = false) const;
+
   /// Arithmetic right-shift this APInt by shiftAmt.
   /// @brief Arithmetic right-shift function.
   APInt ashr(unsigned shiftAmt) const;
@@ -455,6 +461,24 @@ inline unsigned LogBase2(const APInt& APIVal) {
 /// @returns the greatest common divisor of the two values 
 /// using Euclid's algorithm.
 APInt GreatestCommonDivisor(const APInt& API1, const APInt& API2);
+
+/// @brief Converts the given APInt to a double value.
+inline double APIntRoundToDouble(const APInt& APIVal, bool isSigned = false) {
+  return APIVal.APIntRoundToDouble(isSigned);
+}
+
+/// @brief Converts the given APInt to a float vlalue.
+inline float APIntRoundToFloat(const APInt& APIVal) {
+  return float(APIntRoundToDouble(APIVal));
+}
+
+/// @brief Converts the given double value into a APInt.
+APInt DoubleRoundToAPInt(double Double);
+
+/// @brief Converts the given float value into a APInt.
+inline APInt FloatRoundToAPInt(float Float) {
+  return DoubleRoundToAPInt(double(Float));
+}
 
 /// Arithmetic right-shift the APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.

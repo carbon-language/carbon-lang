@@ -955,6 +955,69 @@ APInt llvm::APIntOps::GreatestCommonDivisor(const APInt& API1,
   return A;
 }
 
+/// DoubleRoundToAPInt - This function convert a double value to
+/// a APInt value.
+APInt llvm::APIntOps::DoubleRoundToAPInt(double Double) {
+  union {
+    double D;
+    uint64_t I;
+  } T;
+  T.D = Double;
+  bool isNeg = T.I >> 63;
+  int64_t exp = ((T.I >> 52) & 0x7ff) - 1023;
+  if (exp < 0)
+    return APInt(0);
+  uint64_t mantissa = ((T.I << 12) >> 12) | (1ULL << 52);
+  if (exp < 52)
+    return isNeg ? -APInt(mantissa >> (52 - exp)) : 
+                    APInt(mantissa >> (52 - exp));
+  APInt Tmp(mantissa, exp + 1);
+  Tmp = Tmp.shl(exp - 52);
+  return isNeg ? -Tmp : Tmp;
+}
+
+/// APIntRoundToDouble - This function convert this APInt to a double.
+/// The layout for double is as following (IEEE Standard 754):
+///  --------------------------------------
+/// |  Sign    Exponent    Fraction    Bias |
+/// |-------------------------------------- |
+/// |  1[63]   11[62-52]   52[51-00]   1023 |
+///  -------------------------------------- 
+double APInt::APIntRoundToDouble(bool isSigned) const {
+  bool isNeg = isSigned ? (*this)[BitsNum-1] : false;
+  APInt Tmp(isNeg ? -(*this) : (*this));
+  if (Tmp.isSingleWord())
+    return isSigned ? double(int64_t(Tmp.VAL)) : double(Tmp.VAL);
+  unsigned n = Tmp.getNumWords() * 64 - Tmp.CountLeadingZeros();
+  if (n <= 64) 
+    return isSigned ? double(int64_t(Tmp.pVal[0])) : double(Tmp.pVal[0]);
+  // Exponent when normalized to have decimal point directly after
+  // leading one. This is stored excess 1023 in the exponent bit field.
+  uint64_t exp = n - 1;
+
+  // Gross overflow.
+  assert(exp <= 1023 && "Infinity value!");
+
+  // Number of bits in mantissa including the leading one
+  // equals to 53.
+  uint64_t mantissa;
+  if (n % 64 >= 53)
+    mantissa = Tmp.pVal[whichWord(n - 1)] >> (n % 64 - 53);
+  else
+    mantissa = (Tmp.pVal[whichWord(n - 1)] << (53 - n % 64)) | 
+               (Tmp.pVal[whichWord(n - 1) - 1] >> (11 + n % 64));
+  // The leading bit of mantissa is implicit, so get rid of it.
+  mantissa &= ~(1ULL << 52);
+  uint64_t sign = isNeg ? (1ULL << 63) : 0;
+  exp += 1023;
+  union {
+    double D;
+    uint64_t I;
+  } T;
+  T.I = sign | (exp << 52) | mantissa;
+  return T.D;
+}
+
 /// Arithmetic right-shift this APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
 APInt APInt::ashr(unsigned shiftAmt) const {
@@ -1004,17 +1067,22 @@ APInt APInt::lshr(unsigned shiftAmt) const {
 /// @brief Left-shift function.
 APInt APInt::shl(unsigned shiftAmt) const {
   APInt API(*this);
-  if (shiftAmt >= API.BitsNum) {
-    if (API.isSingleWord()) 
-      API.VAL = 0;
-    else 
-      memset(API.pVal, 0, API.getNumWords() * 8);
-  } else {
-    for (unsigned i = 0; i < shiftAmt; ++i) API.clear(i);
-    for (unsigned i = shiftAmt; i < API.BitsNum; ++i) {
-      if (API[i-shiftAmt]) API.set(i);
-      else API.clear(i);
+  if (API.isSingleWord())
+    API.VAL <<= shiftAmt;
+  else if (shiftAmt >= API.BitsNum)
+    memset(API.pVal, 0, API.getNumWords() * 8);
+  else {
+    if (unsigned offset = shiftAmt / 64) {
+      for (unsigned i = API.getNumWords() - 1; i > offset - 1; --i)
+        API.pVal[i] = API.pVal[i-offset];
+      memset(API.pVal, 0, offset * 8);
     }
+    shiftAmt %= 64;
+    unsigned i;
+    for (i = API.getNumWords() - 1; i > 0; --i)
+      API.pVal[i] = (API.pVal[i] << shiftAmt) | 
+                    (API.pVal[i-1] >> (64-shiftAmt));
+    API.pVal[i] <<= shiftAmt;
   }
   return API;
 }
