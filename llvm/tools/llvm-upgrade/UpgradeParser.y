@@ -1287,7 +1287,7 @@ const Type* upgradeGEPIndices(const Type* PTy,
   }
 
   const Type *IdxTy =
-    GetElementPtrInst::getIndexedType(PTy, VIndices, true);
+    GetElementPtrInst::getIndexedType(PTy, &VIndices[0], VIndices.size(), true);
     if (!IdxTy)
       error("Index list invalid for constant getelementptr");
   return IdxTy;
@@ -3483,7 +3483,7 @@ MemoryInst
     upgradeGEPIndices(Ty, $4, VIndices);
 
     Value* tmpVal = getVal(Ty, $3);
-    $$.I = new GetElementPtrInst(tmpVal, VIndices);
+    $$.I = new GetElementPtrInst(tmpVal, &VIndices[0], VIndices.size());
     $$.S = Signless;
     delete $2.PAT;
     delete $4;
