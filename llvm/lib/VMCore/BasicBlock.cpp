@@ -62,7 +62,7 @@ template class SymbolTableListTraits<Instruction, BasicBlock, Function>;
 
 BasicBlock::BasicBlock(const std::string &Name, Function *Parent,
                        BasicBlock *InsertBefore)
-  : Value(Type::LabelTy, Value::BasicBlockVal, Name) {
+  : Value(Type::LabelTy, Value::BasicBlockVal) {
   // Initialize the instlist...
   InstList.setItemParent(this);
 
@@ -76,6 +76,8 @@ BasicBlock::BasicBlock(const std::string &Name, Function *Parent,
   } else if (Parent) {
     Parent->getBasicBlockList().push_back(this);
   }
+  
+  setName(Name);
 }
 
 

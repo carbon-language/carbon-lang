@@ -51,7 +51,7 @@ template class SymbolTableListTraits<BasicBlock, Function, Function>;
 //===----------------------------------------------------------------------===//
 
 Argument::Argument(const Type *Ty, const std::string &Name, Function *Par)
-  : Value(Ty, Value::ArgumentVal, Name) {
+  : Value(Ty, Value::ArgumentVal) {
   Parent = 0;
 
   // Make sure that we get added to a function
@@ -59,6 +59,7 @@ Argument::Argument(const Type *Ty, const std::string &Name, Function *Par)
 
   if (Par)
     Par->getArgumentList().push_back(this);
+  setName(Name);
 }
 
 void Argument::setParent(Function *parent) {

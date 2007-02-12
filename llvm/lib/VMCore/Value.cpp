@@ -30,15 +30,13 @@ static inline const Type *checkType(const Type *Ty) {
   return Ty;
 }
 
-Value::Value(const Type *ty, unsigned scid, const std::string &name)
+Value::Value(const Type *ty, unsigned scid)
   : SubclassID(scid), SubclassData(0), Ty(checkType(ty)),
-    UseList(0), Name(name) {
+    UseList(0), Name(0) {
   if (!isa<Constant>(this) && !isa<BasicBlock>(this))
     assert((Ty->isFirstClassType() || Ty == Type::VoidTy ||
            isa<OpaqueType>(ty)) &&
            "Cannot create non-first-class values except for constants!");
-  if (ty == Type::VoidTy)
-    assert(name.empty() && "Cannot have named void values!");
 }
 
 Value::~Value() {
@@ -114,29 +112,62 @@ static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
   return false;
 }
 
-void Value::setName(const std::string &name) {
-  if (Name == name) return;   // Name is already set.
+std::string Value::getName() const {
+  if (Name == 0) return "";
+  return std::string(Name->getKeyData(),
+                     Name->getKeyData()+Name->getKeyLength());
+}
 
+void Value::setName(const std::string &name) {
+  if (name.empty() && !hasName()) return;
+  if (getType() != Type::VoidTy && "Cannot assign a name to void values!");
+  
+  
   // Get the symbol table to update for this object.
   ValueSymbolTable *ST;
   if (getSymTab(this, ST))
     return;  // Cannot set a name on this value (e.g. constant).
 
-  if (!ST)  // No symbol table to update?  Just do the change.
-    Name = name;
-  else if (hasName()) {
-    if (!name.empty()) {    // Replacing name.
-      ST->remove(this);
-      Name = name;
-      ST->insert(this);
-    } else {                // Transitioning from hasName -> noname.
-      ST->remove(this);
-      Name.clear();
+  if (!ST) { // No symbol table to update?  Just do the change.
+    if (name.empty()) {
+      // Free the name for this value.
+      Name->Destroy();
+      Name = 0;
+    } else {
+      if (Name) {
+        // Name isn't changing.
+        if (name.size() == Name->getKeyLength() &&
+            !memcmp(Name->getKeyData(), &name[0], name.size()))
+          return;
+        Name->Destroy();
+      }
+      
+      // Create the new name.
+      Name = ValueName::Create(&name[0], &name[name.size()]);
+      Name->setValue(this);
     }
-  } else {                  // Transitioning from noname -> hasName.
-    Name = name;
-    ST->insert(this);
+    return;
   }
+  
+  // NOTE: Could optimize for the case the name is shrinking to not deallocate
+  // then reallocated.
+  if (hasName()) {
+    // Name isn't changing?
+    if (name.size() == Name->getKeyLength() &&
+        !memcmp(Name->getKeyData(), &name[0], name.size()))
+      return;
+
+    // Remove old name.
+    ST->removeValueName(Name);
+    Name->Destroy();
+    Name = 0;
+
+    if (name.empty())
+       return;
+  }
+
+  // Name is changing to something new.
+  Name = ST->createValueName(&name[0], name.size(), this);
 }
 
 /// takeName - transfer the name from V to this value, setting V's name to

@@ -33,6 +33,8 @@ class GlobalVariable;
 class InlineAsm;
 class ValueSymbolTable;
 class TypeSymbolTable;
+template<typename ValueTy> class StringMapEntry;
+typedef StringMapEntry<Value*> ValueName;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -61,13 +63,13 @@ private:
 
   friend class ValueSymbolTable; // Allow ValueSymbolTable to directly mod Name.
   friend class SymbolTable;      // Allow SymbolTable to directly poke Name.
-  std::string Name;
+  ValueName *Name;
 
   void operator=(const Value &);     // Do not implement
   Value(const Value &);              // Do not implement
 
 public:
-  Value(const Type *Ty, unsigned scid, const std::string &name = "");
+  Value(const Type *Ty, unsigned scid);
   virtual ~Value();
 
   /// dump - Support for debugging, callable in GDB: V->dump()
@@ -84,8 +86,9 @@ public:
   inline const Type *getType() const { return Ty; }
 
   // All values can potentially be named...
-  inline bool               hasName() const { return !Name.empty(); }
-  inline const std::string &getName() const { return Name; }
+  inline bool hasName() const { return Name != 0; }
+  std::string getName() const;
+  ValueName *getValueName() const { return Name; }
 
   void setName(const std::string &name);
   

@@ -17,7 +17,7 @@
 #define LLVM_VALUE_SYMBOL_TABLE_H
 
 #include "llvm/Value.h"
-#include <map>
+#include "llvm/ADT/StringMap.h"
 
 namespace llvm {
   template<typename ValueSubClass, typename ItemParentClass,
@@ -47,9 +47,8 @@ class ValueSymbolTable {
 /// @name Types
 /// @{
 public:
-
   /// @brief A mapping of names to values.
-  typedef std::map<const std::string, Value *> ValueMap;
+  typedef StringMap<Value*> ValueMap;
 
   /// @brief An iterator over a ValueMap.
   typedef ValueMap::iterator iterator;
@@ -89,12 +88,6 @@ public:
   /// @brief Get a name unique to this symbol table
   std::string getUniqueName(const std::string &BaseName) const;
 
-  /// @return 1 if the name is in the symbol table, 0 otherwise
-  /// @brief Determine if a name is in the symbol table
-  bool count(const std::string &name) const { 
-    return vmap.count(name);
-  }
-
   /// This function can be used from the debugger to display the
   /// content of the symbol table while debugging.
   /// @brief Print out symbol table on stderr
@@ -104,7 +97,6 @@ public:
 /// @name Iteration
 /// @{
 public:
-
   /// @brief Get an iterator that from the beginning of the symbol table.
   inline iterator begin() { return vmap.begin(); }
 
@@ -116,21 +108,26 @@ public:
 
   /// @brief Get a const_iterator to the end of the symbol table.
   inline const_iterator end() const { return vmap.end(); }
-
+  
 /// @}
 /// @name Mutators
 /// @{
 private:
   /// This method adds the provided value \p N to the symbol table.  The Value
   /// must have a name which is used to place the value in the symbol table. 
+  /// If the inserted name conflicts, this renames the value.
   /// @brief Add a named value to the symbol table
-  void insert(Value *Val);
-
-  /// This method removes a value from the symbol table. The name of the
-  /// Value is extracted from \p Val and used to lookup the Value in the
-  /// symbol table.  \p Val is not deleted, just removed from the symbol table.
-  /// @brief Remove a value from the symbol table.
-  void remove(Value* Val);
+  void reinsertValue(Value *V);
+    
+  /// createValueName - This method attempts to create a value name and insert
+  /// it into the symbol table with the specified name.  If it conflicts, it
+  /// auto-renames the name and returns that instead.
+  ValueName *createValueName(const char *NameStart, unsigned NameLen, Value *V);
+  
+  /// This method removes a value from the symbol table.  It leaves the
+  /// ValueName attached to the value, but it is no longer inserted in the
+  /// symtab.
+  void removeValueName(ValueName *V);
   
 /// @}
 /// @name Internal Data

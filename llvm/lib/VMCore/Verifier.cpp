@@ -51,7 +51,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/PassManager.h"
-#include "llvm/ValueSymbolTable.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
@@ -102,7 +101,6 @@ namespace {  // Anonymous namespace for class
     bool doInitialization(Module &M) {
       Mod = &M;
       verifyTypeSymbolTable(M.getTypeSymbolTable());
-      verifyValueSymbolTable(M.getValueSymbolTable());
 
       // If this is a real pass, in a pass manager, we must abort before
       // returning back to the pass manager, or else the pass manager may try to
@@ -177,7 +175,6 @@ namespace {  // Anonymous namespace for class
 
     // Verification methods...
     void verifyTypeSymbolTable(TypeSymbolTable &ST);
-    void verifyValueSymbolTable(ValueSymbolTable &ST);
     void visitGlobalValue(GlobalValue &GV);
     void visitGlobalVariable(GlobalVariable &GV);
     void visitFunction(Function &F);
@@ -307,22 +304,6 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
 void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
 }
 
-// verifySymbolTable - Verify that a function or module symbol table is ok
-//
-void Verifier::verifyValueSymbolTable(ValueSymbolTable &ST) {
-
-  // Loop over all of the values in the symbol table.
-  for (ValueSymbolTable::const_iterator VI = ST.begin(), VE = ST.end(); 
-       VI != VE; ++VI) {
-    Value *V = VI->second;
-    // Check that there are no void typed values in the symbol table.  Values
-    // with a void type cannot be put into symbol tables because they cannot
-    // have names!
-    Assert1(V->getType() != Type::VoidTy,
-      "Values with void type are not allowed to have names!", V);
-  }
-}
-
 // visitFunction - Verify that a function is ok.
 //
 void Verifier::visitFunction(Function &F) {
@@ -375,8 +356,6 @@ void Verifier::visitFunction(Function &F) {
       Assert1(F.getName().substr(0, 5) != "llvm.",
               "llvm intrinsics cannot be defined!", &F);
     
-    verifyValueSymbolTable(F.getValueSymbolTable());
-
     // Check the entry node
     BasicBlock *Entry = &F.getEntryBlock();
     Assert1(pred_begin(Entry) == pred_end(Entry),

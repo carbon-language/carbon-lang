@@ -77,7 +77,7 @@ static void RemoveDeadConstant(Constant *C) {
 //
 static void StripSymtab(ValueSymbolTable &ST) {
   for (ValueSymbolTable::iterator VI = ST.begin(), VE = ST.end(); VI != VE; ) {
-    Value *V = VI->second;
+    Value *V = VI->getValue();
     ++VI;
     if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()) {
       // Set name to "", removing from symbol table!

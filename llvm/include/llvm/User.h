@@ -20,7 +20,6 @@
 #define LLVM_USER_H
 
 #include "llvm/Value.h"
-#include <vector>
 
 namespace llvm {
 
@@ -39,9 +38,8 @@ protected:
   unsigned NumOperands;
 
 public:
-  User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps,
-       const std::string &name = "")
-    : Value(Ty, vty, name), OperandList(OpList), NumOperands(NumOps) {}
+  User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps)
+    : Value(Ty, vty), OperandList(OpList), NumOperands(NumOps) {}
 
   Value *getOperand(unsigned i) const {
     assert(i < NumOperands && "getOperand() out of range!");

@@ -17,7 +17,6 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
-#include <algorithm>
 using namespace llvm;
 
 // Class destructor
@@ -25,8 +24,8 @@ ValueSymbolTable::~ValueSymbolTable() {
 #ifndef NDEBUG   // Only do this in -g mode...
   for (iterator VI = vmap.begin(), VE = vmap.end(); VI != VE; ++VI)
     DEBUG(DOUT << "Value still in symbol table! Type = '"
-               << VI->second->getType()->getDescription() << "' Name = '"
-               << VI->first << "'\n");
+               << VI->getValue()->getType()->getDescription() << "' Name = '"
+               << VI->getKeyData() << "'\n");
   assert(vmap.empty() && "Values remain in symbol table!");
 #endif
 }
@@ -37,11 +36,11 @@ ValueSymbolTable::~ValueSymbolTable() {
 //
 std::string ValueSymbolTable::getUniqueName(const std::string &BaseName) const {
   std::string TryName = BaseName;
-  const_iterator End = vmap.end();
 
   // See if the name exists
-  while (vmap.find(TryName) != End)            // Loop until we find a free
-    TryName = BaseName + utostr(++LastUnique); // name in the symbol table
+  while (vmap.find(&TryName[0], &TryName[TryName.size()]) != vmap.end())
+    // Loop until we find a free name in the symbol table.
+    TryName = BaseName + utostr(++LastUnique);
   return TryName;
 }
 
@@ -49,62 +48,95 @@ std::string ValueSymbolTable::getUniqueName(const std::string &BaseName) const {
 // lookup a value - Returns null on failure...
 //
 Value *ValueSymbolTable::lookup(const std::string &Name) const {
-  const_iterator VI = vmap.find(Name);
+  const_iterator VI = vmap.find(&Name[0], &Name[Name.size()]);
   if (VI != vmap.end())                   // We found the symbol
-    return const_cast<Value*>(VI->second);
+    return VI->getValue();
   return 0;
 }
 
 // Insert a value into the symbol table with the specified name...
 //
-void ValueSymbolTable::insert(Value* V) {
-  assert(V && "Can't insert null Value into symbol table!");
+void ValueSymbolTable::reinsertValue(Value* V) {
   assert(V->hasName() && "Can't insert nameless Value into symbol table");
 
   // Try inserting the name, assuming it won't conflict.
-  if (vmap.insert(make_pair(V->Name, V)).second) {
+  if (vmap.insert(V->Name)) {
     DOUT << " Inserted value: " << V->Name << ": " << *V << "\n";
     return;
   }
   
+  // FIXME: this could be much more efficient.
+  
   // Otherwise, there is a naming conflict.  Rename this value.
   std::string UniqueName = V->getName();
+  
+  V->Name->Destroy();
+  
   unsigned BaseSize = UniqueName.size();
-  do {
+  while (1) {
     // Trim any suffix off.
     UniqueName.resize(BaseSize);
     UniqueName += utostr(++LastUnique);
     // Try insert the vmap entry with this suffix.
-  } while (!vmap.insert(make_pair(UniqueName, V)).second);
+    ValueName &NewName = vmap.GetOrCreateValue(&UniqueName[0],
+                                               &UniqueName[UniqueName.size()]);
+    if (NewName.getValue() == 0) {
+      // Newly inserted name.  Success!
+      NewName.setValue(V);
+      V->Name = &NewName;
+      DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
+      return;
+    }
+  }
+}
 
-  V->Name = UniqueName;
+void ValueSymbolTable::removeValueName(ValueName *V) {
+  DEBUG(DOUT << " Removing Value: " << V->getKeyData() << "\n");
+  // Remove the value from the plane.
+  vmap.remove(V);
+}
+
+/// createValueName - This method attempts to create a value name and insert
+/// it into the symbol table with the specified name.  If it conflicts, it
+/// auto-renames the name and returns that instead.
+ValueName *ValueSymbolTable::createValueName(const char *NameStart,
+                                             unsigned NameLen, Value *V) {
+  ValueName &Entry = vmap.GetOrCreateValue(NameStart, NameStart+NameLen);
+  if (Entry.getValue() == 0) {
+    Entry.setValue(V);
+    DEBUG(DOUT << " Inserted value: " << Entry.getKeyData() << ": "
+               << *V << "\n");
+    return &Entry;
+  }
   
-  DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
+  // FIXME: this could be much more efficient.
+  
+  // Otherwise, there is a naming conflict.  Rename this value.
+  std::string UniqueName(NameStart, NameStart+NameLen);
+  while (1) {
+    // Trim any suffix off.
+    UniqueName.resize(NameLen);
+    UniqueName += utostr(++LastUnique);
+    // Try insert the vmap entry with this suffix.
+    ValueName &NewName = vmap.GetOrCreateValue(&UniqueName[0],
+                                               &UniqueName[UniqueName.size()]);
+    if (NewName.getValue() == 0) {
+      // Newly inserted name.  Success!
+      NewName.setValue(V);
+      DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
+      return &NewName;
+    }
+  }
 }
 
-// Remove a value
-void ValueSymbolTable::remove(Value *V) {
-  assert(V->hasName() && "Value doesn't have name!");
-  iterator Entry = vmap.find(V->getName());
-  assert(Entry != vmap.end() && "Entry was not in the symtab!");
-
-  DEBUG(DOUT << " Removing Value: " << Entry->second->getName() << "\n");
-
-  // Remove the value from the plane...
-  vmap.erase(Entry);
-}
-
-// DumpVal - a std::for_each function for dumping a value
-//
-static void DumpVal(const std::pair<const std::string, Value *> &V) {
-  DOUT << "  '" << V.first << "' = ";
-  V.second->dump();
-  DOUT << "\n";
-}
 
 // dump - print out the symbol table
 //
 void ValueSymbolTable::dump() const {
   DOUT << "ValueSymbolTable:\n";
-  for_each(vmap.begin(), vmap.end(), DumpVal);
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
+    DOUT << "  '" << I->getKeyData() << "' = ";
+    I->getValue()->dump();
+    DOUT << "\n";
+  }
 }

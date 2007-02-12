@@ -85,7 +85,10 @@ private:
   /// @brief Signed 32-bit variable bit rate output primitive.
   inline void output_vbr(int i);
 
-  inline void output(const std::string &s);
+  inline void output_str(const char *Str, unsigned Len);
+  inline void output(const std::string &s) {
+    output_str(&s[0], s.size());
+  }
 
   inline void output_data(const void *Ptr, const void *End);
 

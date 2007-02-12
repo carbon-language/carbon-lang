@@ -132,10 +132,9 @@ inline void BytecodeWriter::output_vbr(int i) {
     output_vbr((unsigned)i << 1);          // Low order bit is clear.
 }
 
-inline void BytecodeWriter::output(const std::string &s) {
-  unsigned Len = s.length();
+inline void BytecodeWriter::output_str(const char *Str, unsigned Len) {
   output_vbr(Len);             // Strings may have an arbitrary length.
-  Out.insert(Out.end(), s.begin(), s.end());
+  Out.insert(Out.end(), Str, Str+Len);
 }
 
 inline void BytecodeWriter::output_data(const void *Ptr, const void *End) {
@@ -1088,14 +1087,12 @@ void BytecodeWriter::outputValueSymbolTable(const ValueSymbolTable &VST) {
                             true/*ElideIfEmpty*/);
 
   // Organize the symbol table by type
-  typedef std::pair<const std::string*, const Value*> PlaneMapEntry;
-  typedef SmallVector<PlaneMapEntry, 8> PlaneMapVector;
+  typedef SmallVector<const ValueName*, 8> PlaneMapVector;
   typedef DenseMap<const Type*, PlaneMapVector > PlaneMap;
   PlaneMap Planes;
   for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
        SI != SE; ++SI) 
-    Planes[SI->second->getType()]
-      .push_back(std::make_pair(&SI->first, SI->second));
+    Planes[SI->getValue()->getType()].push_back(&*SI);
 
   for (PlaneMap::iterator PI = Planes.begin(), PE = Planes.end();
        PI != PE; ++PI) {
@@ -1113,8 +1110,8 @@ void BytecodeWriter::outputValueSymbolTable(const ValueSymbolTable &VST) {
     // Write each of the values in this plane
     for (; I != End; ++I) {
       // Symtab entry: [def slot #][name]
-      output_vbr(Table.getSlot(I->second));
-      output(*I->first);
+      output_vbr(Table.getSlot((*I)->getValue()));
+      output_str((*I)->getKeyData(), (*I)->getKeyLength());
     }
   }
 }

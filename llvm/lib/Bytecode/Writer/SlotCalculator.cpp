@@ -199,7 +199,7 @@ void SlotCalculator::processTypeSymbolTable(const TypeSymbolTable *TST) {
 void SlotCalculator::processValueSymbolTable(const ValueSymbolTable *VST) {
   for (ValueSymbolTable::const_iterator VI = VST->begin(), VE = VST->end(); 
        VI != VE; ++VI)
-    CreateSlotIfNeeded(VI->second);
+    CreateSlotIfNeeded(VI->getValue());
 }
 
 void SlotCalculator::CreateSlotIfNeeded(const Value *V) {
