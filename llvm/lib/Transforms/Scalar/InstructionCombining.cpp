@@ -7832,7 +7832,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     }
 
     if (!Indices.empty())
-      return new GetElementPtrInst(SrcGEPOperands[0], Indices, GEP.getName());
+      return new GetElementPtrInst(SrcGEPOperands[0], &Indices[0],
+                                   Indices.size(), GEP.getName());
 
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(PtrOp)) {
     // GEP of global variable.  If all of the indices for this GEP are

@@ -33,6 +33,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
@@ -224,10 +225,11 @@ bool SROA::performScalarRepl(Function &F) {
         // getelement ptr instruction to finish the indexing.  This may be
         // expanded itself once the worklist is rerun.
         //
-        std::vector<Value*> NewArgs;
+        SmallVector<Value*, 8> NewArgs;
         NewArgs.push_back(Constant::getNullValue(Type::Int32Ty));
-        NewArgs.insert(NewArgs.end(), GEPI->op_begin()+3, GEPI->op_end());
-        RepValue = new GetElementPtrInst(AllocaToUse, NewArgs, "", GEPI);
+        NewArgs.append(GEPI->op_begin()+3, GEPI->op_end());
+        RepValue = new GetElementPtrInst(AllocaToUse, &NewArgs[0],
+                                         NewArgs.size(), "", GEPI);
         RepValue->takeName(GEPI);
       }
 
@@ -397,12 +399,14 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
                               Constant::getNullValue(I.getOperand()->getType()),
              "isone", GEPI);
           // Insert the new GEP instructions, which are properly indexed.
-          std::vector<Value*> Indices(GEPI->op_begin()+1, GEPI->op_end());
+          SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
           Indices[1] = Constant::getNullValue(Type::Int32Ty);
-          Value *ZeroIdx = new GetElementPtrInst(GEPI->getOperand(0), Indices,
+          Value *ZeroIdx = new GetElementPtrInst(GEPI->getOperand(0),
+                                                 &Indices[0], Indices.size(),
                                                  GEPI->getName()+".0", GEPI);
           Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
-          Value *OneIdx = new GetElementPtrInst(GEPI->getOperand(0), Indices,
+          Value *OneIdx = new GetElementPtrInst(GEPI->getOperand(0),
+                                                &Indices[0], Indices.size(),
                                                 GEPI->getName()+".1", GEPI);
           // Replace all loads of the variable index GEP with loads from both
           // indexes and a select.

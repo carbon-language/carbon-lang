@@ -908,11 +908,12 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr,
     Value *NewPtr = InsertedLoadsForPtr[FieldNo];
 
     // Create the new GEP idx vector.
-    std::vector<Value*> GEPIdx;
+    SmallVector<Value*, 8> GEPIdx;
     GEPIdx.push_back(GEPI->getOperand(1));
-    GEPIdx.insert(GEPIdx.end(), GEPI->op_begin()+3, GEPI->op_end());
+    GEPIdx.append(GEPI->op_begin()+3, GEPI->op_end());
 
-    Value *NGEPI = new GetElementPtrInst(NewPtr, GEPIdx, GEPI->getName(), GEPI);
+    Value *NGEPI = new GetElementPtrInst(NewPtr, &GEPIdx[0], GEPIdx.size(),
+                                         GEPI->getName(), GEPI);
     GEPI->replaceAllUsesWith(NGEPI);
     GEPI->eraseFromParent();
   }

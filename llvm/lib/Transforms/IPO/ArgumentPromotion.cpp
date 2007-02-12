@@ -370,7 +370,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
       // Add a parameter to the function for each element passed in.
       for (ScalarizeTable::iterator SI = ArgIndices.begin(),
              E = ArgIndices.end(); SI != E; ++SI)
-        Params.push_back(GetElementPtrInst::getIndexedType(I->getType(), *SI));
+        Params.push_back(GetElementPtrInst::getIndexedType(I->getType(),
+                                                           &(*SI)[0],
+                                                           SI->size()));
 
       if (ArgIndices.size() == 1 && ArgIndices.begin()->empty())
         ++NumArgumentsPromoted;
@@ -421,7 +423,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
           Value *V = *AI;
           LoadInst *OrigLoad = OriginalLoads[*SI];
           if (!SI->empty()) {
-            V = new GetElementPtrInst(V, *SI, V->getName()+".idx", Call);
+            V = new GetElementPtrInst(V, &(*SI)[0], SI->size(),
+                                      V->getName()+".idx", Call);
             AA.copyValue(OrigLoad->getOperand(0), V);
           }
           Args.push_back(new LoadInst(V, V->getName()+".val", Call));
