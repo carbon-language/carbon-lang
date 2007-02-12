@@ -119,9 +119,12 @@ std::string Value::getName() const {
 }
 
 void Value::setName(const std::string &name) {
-  if (name.empty() && !hasName()) return;
+  setName(&name[0], name.size());
+}
+
+void Value::setName(const char *NameStr, unsigned NameLen) {
+  if (NameLen == 0 && !hasName()) return;
   if (getType() != Type::VoidTy && "Cannot assign a name to void values!");
-  
   
   // Get the symbol table to update for this object.
   ValueSymbolTable *ST;
@@ -129,23 +132,27 @@ void Value::setName(const std::string &name) {
     return;  // Cannot set a name on this value (e.g. constant).
 
   if (!ST) { // No symbol table to update?  Just do the change.
-    if (name.empty()) {
+    if (NameLen == 0) {
       // Free the name for this value.
       Name->Destroy();
       Name = 0;
-    } else {
-      if (Name) {
-        // Name isn't changing.
-        if (name.size() == Name->getKeyLength() &&
-            !memcmp(Name->getKeyData(), &name[0], name.size()))
-          return;
-        Name->Destroy();
-      }
-      
-      // Create the new name.
-      Name = ValueName::Create(&name[0], &name[name.size()]);
-      Name->setValue(this);
+      return;
     }
+    
+    if (Name) {
+      // Name isn't changing?
+      if (NameLen == Name->getKeyLength() &&
+          !memcmp(Name->getKeyData(), NameStr, NameLen))
+        return;
+      Name->Destroy();
+    }
+    
+    // NOTE: Could optimize for the case the name is shrinking to not deallocate
+    // then reallocated.
+      
+    // Create the new name.
+    Name = ValueName::Create(NameStr, NameStr+NameLen);
+    Name->setValue(this);
     return;
   }
   
@@ -153,8 +160,8 @@ void Value::setName(const std::string &name) {
   // then reallocated.
   if (hasName()) {
     // Name isn't changing?
-    if (name.size() == Name->getKeyLength() &&
-        !memcmp(Name->getKeyData(), &name[0], name.size()))
+    if (NameLen == Name->getKeyLength() &&
+        !memcmp(Name->getKeyData(), NameStr, NameLen))
       return;
 
     // Remove old name.
@@ -162,13 +169,14 @@ void Value::setName(const std::string &name) {
     Name->Destroy();
     Name = 0;
 
-    if (name.empty())
-       return;
+    if (NameLen == 0)
+      return;
   }
 
   // Name is changing to something new.
-  Name = ST->createValueName(&name[0], name.size(), this);
+  Name = ST->createValueName(NameStr, NameLen, this);
 }
+
 
 /// takeName - transfer the name from V to this value, setting V's name to
 /// empty.  It is an error to call V->takeName(V). 
