@@ -415,3 +415,7 @@ when it is declared U32.
 
 //===---------------------------------------------------------------------===//
 
+Promote for i32 bswap can use i64 bswap + shr.  Useful on targets with 64-bit
+regs and bswap, like itanium.
+
+//===---------------------------------------------------------------------===//
