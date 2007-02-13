@@ -187,7 +187,7 @@ GenericValue JIT::runFunction(Function *F,
 
   // Convert all of the GenericValue arguments over to constants.  Note that we
   // currently don't support varargs.
-  std::vector<Value*> Args;
+  SmallVector<Value*, 8> Args;
   for (unsigned i = 0, e = ArgValues.size(); i != e; ++i) {
     Constant *C = 0;
     const Type *ArgTy = FTy->getParamType(i);
@@ -225,7 +225,7 @@ GenericValue JIT::runFunction(Function *F,
     Args.push_back(C);
   }
 
-  CallInst *TheCall = new CallInst(F, Args, "", StubBB);
+  CallInst *TheCall = new CallInst(F, &Args[0], Args.size(), "", StubBB);
   TheCall->setTailCall();
   if (TheCall->getType() != Type::VoidTy)
     new ReturnInst(TheCall, StubBB);             // Return result of the call.

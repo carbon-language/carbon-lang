@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 template <class ArgIt>
@@ -52,8 +53,9 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
                                     FunctionType::get(RetTy, ParamTys, false));
   }
 
-  std::vector<Value*> Operands(ArgBegin, ArgEnd);
-  CallInst *NewCI = new CallInst(FCache, Operands, CI->getName(), CI);
+  SmallVector<Value*, 8> Operands(ArgBegin, ArgEnd);
+  CallInst *NewCI = new CallInst(FCache, &Operands[0], Operands.size(),
+                                 CI->getName(), CI);
   if (!CI->use_empty())
     CI->replaceAllUsesWith(NewCI);
   return NewCI;
