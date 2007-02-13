@@ -112,9 +112,13 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     O << MO.getSymbolName();
     return;
 
-  case MachineOperand::MO_GlobalAddress:
-    O << Mang->getValueName(MO.getGlobal());
+  case MachineOperand::MO_GlobalAddress: {
+    GlobalValue *GV = MO.getGlobal();
+    O << Mang->getValueName(GV);
+    if (GV->isDeclaration() && GV->hasExternalWeakLinkage())
+      ExtWeakSymbols.insert(GV);
     return;
+  }
 
   case MachineOperand::MO_JumpTableIndex:
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
@@ -189,88 +193,83 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 bool AlphaAsmPrinter::doInitialization(Module &M)
 {
-  AsmPrinter::doInitialization(M);
   if(TM.getSubtarget<AlphaSubtarget>().hasCT())
     O << "\t.arch ev6\n"; //This might need to be ev67, so leave this test here
   else
     O << "\t.arch ev6\n";
   O << "\t.set noat\n";
+  AsmPrinter::doInitialization(M);
   return false;
 }
 
 bool AlphaAsmPrinter::doFinalization(Module &M) {
   const TargetData *TD = TM.getTargetData();
 
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
-    if (I->hasInitializer()) {   // External global require no code
-      // Check to see if this is a special global used by LLVM, if so, emit it.
-      if (EmitSpecialLLVMGlobal(I))
-        continue;
-      
-      O << "\n\n";
-      std::string name = Mang->getValueName(I);
-      Constant *C = I->getInitializer();
-      unsigned Size = TD->getTypeSize(C->getType());
-      //      unsigned Align = TD->getPreferredTypeAlignmentShift(C->getType());
-      unsigned Align = TD->getPreferredAlignmentLog(I);
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
 
-      if (C->isNullValue() &&
-          (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
-           I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchToDataSection("\t.section .data", I);
-        if (I->hasInternalLinkage())
-          O << "\t.local " << name << "\n";
-
-        O << "\t.comm " << name << "," << TD->getTypeSize(C->getType())
-          << "," << (1 << Align)
-          <<  "\n";
-      } else {
-        switch (I->getLinkage()) {
-        case GlobalValue::LinkOnceLinkage:
-        case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
-          // Nonnull linkonce -> weak
-          O << "\t.weak " << name << "\n";
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
-          SwitchToDataSection("", I);
-          break;
-        case GlobalValue::AppendingLinkage:
-          // FIXME: appending linkage variables should go into a section of
-          // their name or something.  For now, just emit them as external.
-        case GlobalValue::ExternalLinkage:
-          // If external or appending, declare as a global symbol
-          O << "\t.globl " << name << "\n";
-          // FALL THROUGH
-        case GlobalValue::InternalLinkage:
-          SwitchToDataSection(C->isNullValue() ? "\t.section .bss" : 
-                              "\t.section .data", I);
-          break;
-        case GlobalValue::GhostLinkage:
-          cerr << "GhostLinkage cannot appear in AlphaAsmPrinter!\n";
-          abort();
-        case GlobalValue::DLLImportLinkage:
-          cerr << "DLLImport linkage is not supported by this target!\n";
-          abort();
-        case GlobalValue::DLLExportLinkage:
-          cerr << "DLLExport linkage is not supported by this target!\n";
-          abort();
-        default:
-          assert(0 && "Unknown linkage type!");
-        }
-
-        EmitAlignment(Align);
-        O << "\t.type " << name << ",@object\n";
-        O << "\t.size " << name << "," << Size << "\n";
-        O << name << ":\n";
-        EmitGlobalConstant(C);
-      }
+    if (!I->hasInitializer()) continue;  // External global require no code
+    
+    // Check to see if this is a special global used by LLVM, if so, emit it.
+    if (EmitSpecialLLVMGlobal(I))
+      continue;
+    
+    std::string name = Mang->getValueName(I);
+    Constant *C = I->getInitializer();
+    unsigned Size = TD->getTypeSize(C->getType());
+    unsigned Align = TD->getPreferredAlignmentLog(I);
+    
+    //1: hidden?
+    if (I->hasHiddenVisibility())
+      O << TAI->getHiddenDirective() << name << "\n";
+    
+    //2: kind
+    switch (I->getLinkage()) {
+    case GlobalValue::LinkOnceLinkage:
+    case GlobalValue::WeakLinkage:
+      O << TAI->getWeakRefDirective() << name << '\n';
+      break;
+    case GlobalValue::AppendingLinkage:
+    case GlobalValue::ExternalLinkage:
+      O << "\t.globl " << name << "\n";
+      break;
+    case GlobalValue::InternalLinkage:
+      break;
+    default:
+      assert(0 && "Unknown linkage type!");
+      cerr << "Unknown linkage type!\n";
+      abort();
     }
-
-  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->hasExternalWeakLinkage()) {
-      O << "\n\n";
-      std::string name = Mang->getValueName(I);
-      O << "\t.weak " << name << "\n";
+    
+    //3: Section (if changed)
+    if (I->hasSection() &&
+        (I->getSection() == ".ctors" ||
+         I->getSection() == ".dtors")) {
+      std::string SectionName = ".section\t" + I->getSection()
+        + ",\"aw\",@progbits";
+      SwitchToDataSection(SectionName.c_str());
+    } else {
+      if (C->isNullValue())
+        SwitchToDataSection("\t.section\t.bss", I);
+      else
+        SwitchToDataSection("\t.section\t.data", I);
     }
+    
+    //4: Type, Size, Align
+    O << "\t.type\t" << name << ", @object\n";
+    O << "\t.size\t" << name << ", " << Size << "\n";
+    EmitAlignment(Align, I);
+    
+    O << name << ":\n";
+    
+    // If the initializer is a extern weak symbol, remember to emit the weak
+    // reference!
+    if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+      if (GV->hasExternalWeakLinkage())
+        ExtWeakSymbols.insert(GV);
+    
+    EmitGlobalConstant(C);
+    O << '\n';
+  }
 
   AsmPrinter::doFinalization(M);
   return false;
