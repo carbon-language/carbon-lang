@@ -427,7 +427,8 @@ StackerCompiler::get_stack_pointer( BasicBlock* bb, Value* index = 0 )
     }
 
     // Get the address of the indexed stack element
-    GetElementPtrInst* gep = new GetElementPtrInst( TheStack, indexVec );
+    GetElementPtrInst* gep = new GetElementPtrInst(TheStack, &indexVec[0], 
+                                                   indexVec.size() );
     bb->getInstList().push_back( gep );         // Put GEP in Block
 
     return gep;
@@ -1518,7 +1519,8 @@ StackerCompiler::handle_word( int tkn )
         // Get address of op1'th element of the string
         std::vector<Value*> indexVec;
         indexVec.push_back( chr_idx );
-        GetElementPtrInst* gep = new GetElementPtrInst( ptr, indexVec );
+        GetElementPtrInst* gep = new GetElementPtrInst( ptr, &indexVec[0], 
+                                                        indexVec.size() );
         bb->getInstList().push_back( gep );
 
         // Get the value and push it
@@ -1550,7 +1552,8 @@ StackerCompiler::handle_word( int tkn )
         // Get address of op2'th element of the string
         std::vector<Value*> indexVec;
         indexVec.push_back( chr_idx );
-        GetElementPtrInst* gep = new GetElementPtrInst( ptr, indexVec );
+        GetElementPtrInst* gep = new GetElementPtrInst( ptr, &indexVec[0], 
+                                                        indexVec.size());
         bb->getInstList().push_back( gep );
 
         // Cast the value and put it
@@ -1600,7 +1603,7 @@ StackerCompiler::handle_word( int tkn )
         indexVec.push_back( Zero );
         indexVec.push_back( Zero );
         GetElementPtrInst* format_gep =
-            new GetElementPtrInst( ChrFormat, indexVec );
+            new GetElementPtrInst( ChrFormat, &indexVec[0], indexVec.size() );
         bb->getInstList().push_back( format_gep );
 
         // Get the character to print (a tab)
@@ -1622,7 +1625,7 @@ StackerCompiler::handle_word( int tkn )
         indexVec.push_back( Zero );
         indexVec.push_back( Zero );
         GetElementPtrInst* format_gep =
-            new GetElementPtrInst( ChrFormat, indexVec );
+            new GetElementPtrInst( ChrFormat, &indexVec[0], indexVec.size() );
         bb->getInstList().push_back( format_gep );
 
         // Get the character to print (a space)
@@ -1644,7 +1647,7 @@ StackerCompiler::handle_word( int tkn )
         indexVec.push_back( Zero );
         indexVec.push_back( Zero );
         GetElementPtrInst* format_gep =
-            new GetElementPtrInst( ChrFormat, indexVec );
+            new GetElementPtrInst( ChrFormat, &indexVec[0], indexVec.size() );
         bb->getInstList().push_back( format_gep );
 
         // Get the character to print (a newline)
@@ -1742,7 +1745,7 @@ StackerCompiler::handle_word( int tkn )
         indexVec.push_back( Zero );
         indexVec.push_back( Zero );
         GetElementPtrInst* format_gep =
-            new GetElementPtrInst( StrFormat, indexVec );
+            new GetElementPtrInst( StrFormat, &indexVec[0], indexVec.size() );
         bb->getInstList().push_back( format_gep );
         // Build function call arguments
         std::vector<Value*> args;
@@ -1763,7 +1766,7 @@ StackerCompiler::handle_word( int tkn )
         indexVec.push_back( Zero );
         indexVec.push_back( Zero );
         GetElementPtrInst* format_gep =
-            new GetElementPtrInst( NumFormat, indexVec );
+            new GetElementPtrInst( NumFormat, &indexVec[0], indexVec.size() );
         bb->getInstList().push_back( format_gep );
 
         // Build function call arguments
@@ -1786,7 +1789,7 @@ StackerCompiler::handle_word( int tkn )
         indexVec.push_back( Zero );
         indexVec.push_back( Zero );
         GetElementPtrInst* format_gep =
-            new GetElementPtrInst( ChrFormat, indexVec );
+            new GetElementPtrInst( ChrFormat, &indexVec[0], indexVec.size() );
         bb->getInstList().push_back( format_gep );
 
         // Build function call arguments
