@@ -389,8 +389,8 @@ class SelectionDAGLowering {
   struct CaseCmp {
     bool operator () (const Case& C1, const Case& C2) {
       assert(isa<ConstantInt>(C1.first) && isa<ConstantInt>(C2.first));
-      return cast<const ConstantInt>(C1.first)->getZExtValue() <
-        cast<const ConstantInt>(C2.first)->getZExtValue();
+      return cast<const ConstantInt>(C1.first)->getSExtValue() <
+        cast<const ConstantInt>(C2.first)->getSExtValue();
     }
   };
   
