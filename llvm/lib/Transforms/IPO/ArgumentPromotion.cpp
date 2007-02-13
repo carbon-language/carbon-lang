@@ -161,7 +161,8 @@ static bool IsAlwaysValidPointer(Value *V) {
 static bool AllCalleesPassInValidPointerForArgument(Argument *Arg) {
   Function *Callee = Arg->getParent();
 
-  unsigned ArgNo = std::distance(Callee->arg_begin(), Function::arg_iterator(Arg));
+  unsigned ArgNo = std::distance(Callee->arg_begin(),
+                                 Function::arg_iterator(Arg));
 
   // Look at all call sites of the function.  At this pointer we know we only
   // have direct callees.
@@ -442,10 +443,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
-                           Args, "", Call);
+                           &Args[0], Args.size(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
     } else {
-      New = new CallInst(NF, Args, "", Call);
+      New = new CallInst(NF, &Args[0], Args.size(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
@@ -474,8 +475,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // Loop over the argument list, transfering uses of the old arguments over to
   // the new arguments, also transfering over the names as well.
   //
-  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(), I2 = NF->arg_begin();
-       I != E; ++I)
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(),
+       I2 = NF->arg_begin(); I != E; ++I)
     if (!ArgsToPromote.count(I)) {
       // If this is an unmodified argument, move the name and users over to the
       // new version.

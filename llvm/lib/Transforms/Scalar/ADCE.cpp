@@ -25,6 +25,7 @@
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
@@ -188,8 +189,8 @@ bool ADCE::doADCE() {
         if (AA.onlyReadsMemory(F)) {
           // The function cannot unwind.  Convert it to a call with a branch
           // after it to the normal destination.
-          std::vector<Value*> Args(II->op_begin()+3, II->op_end());
-          CallInst *NewCall = new CallInst(F, Args, "", II);
+          SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
+          CallInst *NewCall = new CallInst(F, &Args[0], Args.size(), "", II);
           NewCall->takeName(II);
           NewCall->setCallingConv(II->getCallingConv());
           II->replaceAllUsesWith(NewCall);

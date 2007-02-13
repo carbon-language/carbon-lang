@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CallSite.h"
 using namespace llvm;
 
@@ -80,9 +81,10 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
           
           // Next, create the new invoke instruction, inserting it at the end
           // of the old basic block.
+          SmallVector<Value*, 8> InvokeArgs(CI->op_begin()+1, CI->op_end());
           InvokeInst *II =
             new InvokeInst(CI->getCalledValue(), Split, InvokeDest,
-                           std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
+                           &InvokeArgs[0], InvokeArgs.size(),
                            CI->getName(), BB->getTerminator());
           II->setCallingConv(CI->getCallingConv());
           

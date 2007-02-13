@@ -314,10 +314,10 @@ bool LowerGC::runOnFunction(Function &F) {
       NewBB->getInstList().remove(CI);
 
       // Create a new invoke instruction.
+      std::vector<Value*> Args(CI->op_begin()+1, CI->op_end());
+
       Value *II = new InvokeInst(CI->getCalledValue(), NewBB, Cleanup,
-                                 std::vector<Value*>(CI->op_begin()+1,
-                                                     CI->op_end()),
-                                 CI->getName(), CBB);
+                                 &Args[0], Args.size(), CI->getName(), CBB);
       CI->replaceAllUsesWith(II);
       delete CI;
     }

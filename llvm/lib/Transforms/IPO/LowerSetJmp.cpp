@@ -259,8 +259,7 @@ void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
   // Inst's uses and doesn't get a name.
   CastInst* CI = 
     new BitCastInst(Inst->getOperand(1), SBPTy, "LJBuf", Inst);
-  new CallInst(ThrowLongJmp, make_vector<Value*>(CI, Inst->getOperand(2), 0),
-               "", Inst);
+  new CallInst(ThrowLongJmp, CI, Inst->getOperand(2), "", Inst);
 
   SwitchValuePair& SVP = SwitchValMap[Inst->getParent()->getParent()];
 
@@ -303,7 +302,7 @@ AllocaInst* LowerSetJmp::GetSetJmpMap(Function* Func)
   // Fill in the alloca and call to initialize the SJ map.
   const Type *SBPTy = PointerType::get(Type::Int8Ty);
   AllocaInst* Map = new AllocaInst(SBPTy, 0, "SJMap", Inst);
-  new CallInst(InitSJMap, make_vector<Value*>(Map, 0), "", Inst);
+  new CallInst(InitSJMap, Map, "", Inst);
   return SJMap[Func] = Map;
 }
 
@@ -340,8 +339,7 @@ LowerSetJmp::SwitchValuePair LowerSetJmp::GetSJSwitch(Function* Func,
   PrelimBBMap[Func] = LongJmpPre;
 
   // Grab the exception.
-  CallInst* Cond = new
-    CallInst(IsLJException, std::vector<Value*>(), "IsLJExcept");
+  CallInst* Cond = new CallInst(IsLJException, "IsLJExcept");
   LongJmpPreIL.push_back(Cond);
 
   // The "decision basic block" gets the number associated with the
@@ -353,10 +351,9 @@ LowerSetJmp::SwitchValuePair LowerSetJmp::GetSJSwitch(Function* Func,
   new BranchInst(DecisionBB, Rethrow, Cond, LongJmpPre);
 
   // Fill in the "decision" basic block.
-  CallInst* LJVal = new CallInst(GetLJValue, std::vector<Value*>(), "LJVal");
+  CallInst* LJVal = new CallInst(GetLJValue, "LJVal");
   DecisionBBIL.push_back(LJVal);
-  CallInst* SJNum = new
-    CallInst(TryCatchLJ, make_vector<Value*>(GetSetJmpMap(Func), 0), "SJNum");
+  CallInst* SJNum = new CallInst(TryCatchLJ, GetSetJmpMap(Func), "SJNum");
   DecisionBBIL.push_back(SJNum);
 
   SwitchInst* SI = new SwitchInst(SJNum, Rethrow, 0, DecisionBB);
@@ -376,11 +373,11 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   const Type* SBPTy = PointerType::get(Type::Int8Ty);
   CastInst* BufPtr = 
     new BitCastInst(Inst->getOperand(1), SBPTy, "SBJmpBuf", Inst);
-  new CallInst(AddSJToMap,
-               make_vector<Value*>(GetSetJmpMap(Func), BufPtr,
-                                   ConstantInt::get(Type::Int32Ty,
-                                                     SetJmpIDMap[Func]++), 0),
-               "", Inst);
+  std::vector<Value*> Args = 
+    make_vector<Value*>(GetSetJmpMap(Func), BufPtr,
+                        ConstantInt::get(Type::Int32Ty,
+                                         SetJmpIDMap[Func]++), 0);
+  new CallInst(AddSJToMap, &Args[0], Args.size(), "", Inst);
 
   // We are guaranteed that there are no values live across basic blocks
   // (because we are "not in SSA form" yet), but there can still be values live
@@ -470,7 +467,7 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
   std::vector<Value*> Params(CI.op_begin() + 1, CI.op_end());
   InvokeInst* II = new
     InvokeInst(CI.getCalledValue(), NewBB, PrelimBBMap[Func],
-               Params, CI.getName(), Term);
+               &Params[0], Params.size(), CI.getName(), Term);
 
   // Replace the old call inst with the invoke inst and remove the call.
   CI.replaceAllUsesWith(II);
@@ -504,8 +501,7 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
 
   // If this is a longjmp exception, then branch to the preliminary BB of
   // the longjmp exception handling. Otherwise, go to the old exception.
-  CallInst* IsLJExcept = new
-    CallInst(IsLJException, std::vector<Value*>(), "IsLJExcept");
+  CallInst* IsLJExcept = new CallInst(IsLJException, "IsLJExcept");
   InstList.push_back(IsLJExcept);
 
   new BranchInst(PrelimBBMap[Func], ExceptBB, IsLJExcept, NewExceptBB);
@@ -518,16 +514,14 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
 // function.
 void LowerSetJmp::visitReturnInst(ReturnInst &RI) {
   Function* Func = RI.getParent()->getParent();
-  new CallInst(DestroySJMap, make_vector<Value*>(GetSetJmpMap(Func), 0),
-               "", &RI);
+  new CallInst(DestroySJMap, GetSetJmpMap(Func), "", &RI);
 }
 
 // visitUnwindInst - We want to destroy the setjmp map upon exit from the
 // function.
 void LowerSetJmp::visitUnwindInst(UnwindInst &UI) {
   Function* Func = UI.getParent()->getParent();
-  new CallInst(DestroySJMap, make_vector<Value*>(GetSetJmpMap(Func), 0),
-               "", &UI);
+  new CallInst(DestroySJMap, GetSetJmpMap(Func), "", &UI);
 }
 
 ModulePass *llvm::createLowerSetJmpPass() {

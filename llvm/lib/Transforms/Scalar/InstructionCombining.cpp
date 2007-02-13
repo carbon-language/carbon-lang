@@ -7352,10 +7352,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
     NC = new InvokeInst(Callee, II->getNormalDest(), II->getUnwindDest(),
-                        Args, Caller->getName(), Caller);
+                        &Args[0], Args.size(), Caller->getName(), Caller);
     cast<InvokeInst>(II)->setCallingConv(II->getCallingConv());
   } else {
-    NC = new CallInst(Callee, Args, Caller->getName(), Caller);
+    NC = new CallInst(Callee, &Args[0], Args.size(), Caller->getName(), Caller);
     if (cast<CallInst>(Caller)->isTailCall())
       cast<CallInst>(NC)->setTailCall();
    cast<CallInst>(NC)->setCallingConv(cast<CallInst>(Caller)->getCallingConv());

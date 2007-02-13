@@ -21,6 +21,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/ADT/SmallVector.h"
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -1369,9 +1370,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           Pred->getInstList().remove(II);   // Take out of symbol table
 
           // Insert the call now...
-          std::vector<Value*> Args(II->op_begin()+3, II->op_end());
-          CallInst *CI = new CallInst(II->getCalledValue(), Args,
-                                      II->getName(), BI);
+          SmallVector<Value*,8> Args(II->op_begin()+3, II->op_end());
+          CallInst *CI = new CallInst(II->getCalledValue(),
+                                      &Args[0], Args.size(), II->getName(), BI);
           CI->setCallingConv(II->getCallingConv());
           // If the invoke produced a value, the Call now does instead
           II->replaceAllUsesWith(CI);
@@ -1741,8 +1742,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             II->removeFromParent();   // Take out of symbol table
 
             // Insert the call now...
-            std::vector<Value*> Args(II->op_begin()+3, II->op_end());
-            CallInst *CI = new CallInst(II->getCalledValue(), Args,
+            SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
+            CallInst *CI = new CallInst(II->getCalledValue(),
+                                        &Args[0], Args.size(),
                                         II->getName(), BI);
             CI->setCallingConv(II->getCallingConv());
             // If the invoke produced a value, the Call does now instead.

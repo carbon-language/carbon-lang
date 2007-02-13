@@ -22,6 +22,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
@@ -144,11 +145,10 @@ bool PruneEH::SimplifyFunction(Function *F) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
       if (Function *F = II->getCalledFunction())
         if (DoesNotUnwind.count(CG[F])) {
+          SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
           // Insert a call instruction before the invoke.
           CallInst *Call = new CallInst(II->getCalledValue(),
-                                        std::vector<Value*>(II->op_begin()+3,
-                                                            II->op_end()),
-                                        "", II);
+                                        &Args[0], Args.size(), "", II);
           Call->takeName(II);
           Call->setCallingConv(II->getCallingConv());
 

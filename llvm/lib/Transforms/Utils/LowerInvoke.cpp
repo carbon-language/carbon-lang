@@ -189,21 +189,21 @@ void LowerInvoke::writeAbortMessage(Instruction *IB) {
     createAbortMessage(IB->getParent()->getParent()->getParent());
 
   // These are the arguments we WANT...
-  std::vector<Value*> Args;
-  Args.push_back(ConstantInt::get(Type::Int32Ty, 2));
-  Args.push_back(AbortMessage);
-  Args.push_back(ConstantInt::get(Type::Int32Ty, AbortMessageLength));
-  (new CallInst(WriteFn, Args, "", IB))->setTailCall();
+  Value* Args[3];
+  Args[0] = ConstantInt::get(Type::Int32Ty, 2);
+  Args[1] = AbortMessage;
+  Args[2] = ConstantInt::get(Type::Int32Ty, AbortMessageLength);
+  (new CallInst(WriteFn, Args, 3, "", IB))->setTailCall();
 }
 
 bool LowerInvoke::insertCheapEHSupport(Function &F) {
   bool Changed = false;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
+      std::vector<Value*> CallArgs(II->op_begin()+3, II->op_end());
       // Insert a normal call instruction...
       CallInst *NewCall = new CallInst(II->getCalledValue(),
-                                       std::vector<Value*>(II->op_begin()+3,
-                                                       II->op_end()), "", II);
+                                       &CallArgs[0], CallArgs.size(), "", II);
       NewCall->takeName(II);
       NewCall->setCallingConv(II->getCallingConv());
       II->replaceAllUsesWith(NewCall);
@@ -223,7 +223,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       writeAbortMessage(UI);
 
       // Insert a call to abort()
-      (new CallInst(AbortFn, std::vector<Value*>(), "", UI))->setTailCall();
+      (new CallInst(AbortFn, "", UI))->setTailCall();
 
       // Insert a return instruction.  This really should be a "barrier", as it
       // is unreachable.
@@ -258,9 +258,9 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
   CatchSwitch->addCase(InvokeNoC, II->getUnwindDest());
   
   // Insert a normal call instruction.
+  std::vector<Value*> CallArgs(II->op_begin()+3, II->op_end());
   CallInst *NewCall = new CallInst(II->getCalledValue(),
-                                   std::vector<Value*>(II->op_begin()+3,
-                                                       II->op_end()), "",
+                                   &CallArgs[0], CallArgs.size(), "",
                                    II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
@@ -533,7 +533,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx[0] = new GetElementPtrInst(BufPtr, &Idx[0], 2, "JmpBuf", UnwindBlock);
   Idx[1] = ConstantInt::get(Type::Int32Ty, 1);
-  new CallInst(LongJmpFn, Idx, "", UnwindBlock);
+  new CallInst(LongJmpFn, &Idx[0], Idx.size(), "", UnwindBlock);
   new UnreachableInst(UnwindBlock);
   
   // Set up the term block ("throw without a catch").
@@ -543,7 +543,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   writeAbortMessage(TermBlock->getTerminator());
   
   // Insert a call to abort()
-  (new CallInst(AbortFn, std::vector<Value*>(), "",
+  (new CallInst(AbortFn, "",
                 TermBlock->getTerminator()))->setTailCall();
     
   
