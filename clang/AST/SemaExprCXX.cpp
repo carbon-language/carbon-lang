@@ -40,6 +40,6 @@ Sema::ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
 Action::ExprResult
 Sema::ParseCXXBoolLiteral(SourceLocation, tok::TokenKind Kind) {
   assert((Kind != tok::kw_true || Kind != tok::kw_false) &&
-	 "Unknown C++ Boolean value!");
+         "Unknown C++ Boolean value!");
   return new CXXBoolLiteralExpr(Kind == tok::kw_true);
 }

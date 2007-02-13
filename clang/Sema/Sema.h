@@ -211,7 +211,7 @@ public:
 
   /// ParseCXXBoolLiteral - Parse {true,false} literals.
   virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
-					 tok::TokenKind Kind);
+                                         tok::TokenKind Kind);
 };
 
 
