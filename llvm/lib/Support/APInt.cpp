@@ -14,7 +14,6 @@
 
 #include "llvm/ADT/APInt.h"
 
-#if 0
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
@@ -878,12 +877,12 @@ APInt APInt::getNullValue(unsigned numBits) {
 
 /// HiBits - This function returns the high "numBits" bits of this APInt.
 APInt APInt::HiBits(unsigned numBits) const {
-  return APIntOps::lshr(*this, BitsNum - numBits);
+  return APIntOps::LShr(*this, BitsNum - numBits);
 }
 
 /// LoBits - This function returns the low "numBits" bits of this APInt.
 APInt APInt::LoBits(unsigned numBits) const {
-  return APIntOps::lshr(APIntOps::shl(*this, BitsNum - numBits), 
+  return APIntOps::LShr(APIntOps::Shl(*this, BitsNum - numBits), 
                         BitsNum - numBits);
 }
 
@@ -949,7 +948,7 @@ APInt llvm::APIntOps::GreatestCommonDivisor(const APInt& API1,
   APInt A = API1, B = API2;
   while (!!B) {
     APInt T = B;
-    B = APIntOps::urem(A, B);
+    B = APIntOps::URem(A, B);
     A = T;
   }
   return A;
@@ -972,18 +971,18 @@ APInt llvm::APIntOps::DoubleRoundToAPInt(double Double) {
     return isNeg ? -APInt(mantissa >> (52 - exp)) : 
                     APInt(mantissa >> (52 - exp));
   APInt Tmp(mantissa, exp + 1);
-  Tmp = Tmp.shl(exp - 52);
+  Tmp = Tmp.Shl(exp - 52);
   return isNeg ? -Tmp : Tmp;
 }
 
-/// APIntRoundToDouble - This function convert this APInt to a double.
+/// RoundToDouble - This function convert this APInt to a double.
 /// The layout for double is as following (IEEE Standard 754):
 ///  --------------------------------------
 /// |  Sign    Exponent    Fraction    Bias |
 /// |-------------------------------------- |
 /// |  1[63]   11[62-52]   52[51-00]   1023 |
 ///  -------------------------------------- 
-double APInt::APIntRoundToDouble(bool isSigned) const {
+double APInt::RoundToDouble(bool isSigned) const {
   bool isNeg = isSigned ? (*this)[BitsNum-1] : false;
   APInt Tmp(isNeg ? -(*this) : (*this));
   if (Tmp.isSingleWord())
@@ -1020,7 +1019,7 @@ double APInt::APIntRoundToDouble(bool isSigned) const {
 
 /// Arithmetic right-shift this APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
-APInt APInt::ashr(unsigned shiftAmt) const {
+APInt APInt::AShr(unsigned shiftAmt) const {
   APInt API(*this);
   if (API.isSingleWord())
     API.VAL = (((int64_t(API.VAL) << (64 - API.BitsNum)) >> (64 - API.BitsNum))
@@ -1046,7 +1045,7 @@ APInt APInt::ashr(unsigned shiftAmt) const {
 
 /// Logical right-shift this APInt by shiftAmt.
 /// @brief Logical right-shift function.
-APInt APInt::lshr(unsigned shiftAmt) const {
+APInt APInt::LShr(unsigned shiftAmt) const {
   APInt API(*this);
   if (API.isSingleWord())
     API.VAL >>= shiftAmt;
@@ -1065,7 +1064,7 @@ APInt APInt::lshr(unsigned shiftAmt) const {
 
 /// Left-shift this APInt by shiftAmt.
 /// @brief Left-shift function.
-APInt APInt::shl(unsigned shiftAmt) const {
+APInt APInt::Shl(unsigned shiftAmt) const {
   APInt API(*this);
   if (API.isSingleWord())
     API.VAL <<= shiftAmt;
@@ -1089,7 +1088,7 @@ APInt APInt::shl(unsigned shiftAmt) const {
 
 /// Unsigned divide this APInt by APInt RHS.
 /// @brief Unsigned division function for APInt.
-APInt APInt::udiv(const APInt& RHS) const {
+APInt APInt::UDiv(const APInt& RHS) const {
   APInt API(*this);
   unsigned first = RHS.getNumWords() * APInt::APINT_BITS_PER_WORD - 
                    RHS.CountLeadingZeros();
@@ -1134,7 +1133,7 @@ APInt APInt::udiv(const APInt& RHS) const {
 
 /// Unsigned remainder operation on APInt.
 /// @brief Function for unsigned remainder operation.
-APInt APInt::urem(const APInt& RHS) const {
+APInt APInt::URem(const APInt& RHS) const {
   APInt API(*this);
   unsigned first = RHS.getNumWords() * APInt::APINT_BITS_PER_WORD -
                    RHS.CountLeadingZeros();
@@ -1176,6 +1175,3 @@ APInt APInt::urem(const APInt& RHS) const {
   }
   return API;
 }
-
-#endif
-
