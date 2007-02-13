@@ -159,6 +159,8 @@ namespace ISD {
     /// Bit 0 - signness
     /// Bit 1 - 'inreg' attribute
     /// Bit 2 - 'sret' attribute
+    /// Bits 31:27 - argument ABI alignment in the first argument piece and
+    /// alignment '1' in other argument pieces.
     CALL,
 
     // EXTRACT_ELEMENT - This is used to get the first or second (determined by
