@@ -276,13 +276,29 @@ CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
   init(Func, &Params[0], Params.size());
 }
 
-CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
+CallInst::CallInst(Value *Func, Value* const *Args, unsigned NumArgs,
                    const std::string &Name, BasicBlock *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                  ->getElementType())->getReturnType(),
                 Instruction::Call, 0, 0, Name, InsertAtEnd) {
+  init(Func, Args, NumArgs);
+}
+CallInst::CallInst(Value *Func, Value* const *Args, unsigned NumArgs,
+                   const std::string &Name, Instruction *InsertBefore)
+: Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                 ->getElementType())->getReturnType(),
+              Instruction::Call, 0, 0, Name, InsertBefore) {
+  init(Func, Args, NumArgs);
+}
+
+CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
+                   const std::string &Name, BasicBlock *InsertAtEnd)
+: Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                 ->getElementType())->getReturnType(),
+              Instruction::Call, 0, 0, Name, InsertAtEnd) {
   init(Func, &Params[0], Params.size());
 }
+
 
 CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
                    const std::string &Name, Instruction  *InsertBefore)
@@ -352,9 +368,9 @@ InvokeInst::~InvokeInst() {
 }
 
 void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-                      const std::vector<Value*> &Params) {
-  NumOperands = 3+Params.size();
-  Use *OL = OperandList = new Use[3+Params.size()];
+                      Value* const *Args, unsigned NumArgs) {
+  NumOperands = 3+NumArgs;
+  Use *OL = OperandList = new Use[3+NumArgs];
   OL[0].init(Fn, this);
   OL[1].init(IfNormal, this);
   OL[2].init(IfException, this);
@@ -362,17 +378,37 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
     cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
   FTy = FTy;  // silence warning.
 
-  assert((Params.size() == FTy->getNumParams()) ||
-         (FTy->isVarArg() && Params.size() > FTy->getNumParams()) &&
+  assert((NumArgs == FTy->getNumParams()) ||
+         (FTy->isVarArg() && NumArgs > FTy->getNumParams()) &&
          "Calling a function with bad signature");
 
-  for (unsigned i = 0, e = Params.size(); i != e; i++) {
+  for (unsigned i = 0, e = NumArgs; i != e; i++) {
     assert((i >= FTy->getNumParams() || 
-            FTy->getParamType(i) == Params[i]->getType()) &&
+            FTy->getParamType(i) == Args[i]->getType()) &&
            "Invoking a function with a bad signature!");
     
-    OL[i+3].init(Params[i], this);
+    OL[i+3].init(Args[i], this);
   }
+}
+
+InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
+                       BasicBlock *IfException,
+                       Value* const *Args, unsigned NumArgs,
+                       const std::string &Name, Instruction *InsertBefore)
+  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
+                                    ->getElementType())->getReturnType(),
+                   Instruction::Invoke, 0, 0, Name, InsertBefore) {
+  init(Fn, IfNormal, IfException, Args, NumArgs);
+}
+
+InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
+                       BasicBlock *IfException,
+                       Value* const *Args, unsigned NumArgs,
+                       const std::string &Name, BasicBlock *InsertAtEnd)
+  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
+                                    ->getElementType())->getReturnType(),
+                   Instruction::Invoke, 0, 0, Name, InsertAtEnd) {
+  init(Fn, IfNormal, IfException, Args, NumArgs);
 }
 
 InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
@@ -382,7 +418,7 @@ InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
                                     ->getElementType())->getReturnType(),
                    Instruction::Invoke, 0, 0, Name, InsertBefore) {
-  init(Fn, IfNormal, IfException, Params);
+  init(Fn, IfNormal, IfException, &Params[0], Params.size());
 }
 
 InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
@@ -392,7 +428,7 @@ InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
                                     ->getElementType())->getReturnType(),
                    Instruction::Invoke, 0, 0, Name, InsertAtEnd) {
-  init(Fn, IfNormal, IfException, Params);
+  init(Fn, IfNormal, IfException, &Params[0], Params.size());
 }
 
 InvokeInst::InvokeInst(const InvokeInst &II)

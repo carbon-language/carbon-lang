@@ -695,6 +695,11 @@ class CallInst : public Instruction {
   void init(Value *Func);
 
 public:
+  CallInst(Value *F, Value* const *Args, unsigned NumArgs,
+           const std::string &Name = "", Instruction *InsertBefore = 0);
+  CallInst(Value *F, Value *const *Args, unsigned NumArgs,
+           const std::string &Name, BasicBlock *InsertAtEnd);
+  
   CallInst(Value *F, const std::vector<Value*> &Par,
            const std::string &Name = "", Instruction *InsertBefore = 0);
   CallInst(Value *F, const std::vector<Value*> &Par,
@@ -1479,13 +1484,19 @@ private:
 class InvokeInst : public TerminatorInst {
   InvokeInst(const InvokeInst &BI);
   void init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-            const std::vector<Value*> &Params);
+            Value* const *Args, unsigned NumArgs);
 public:
   InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
              const std::vector<Value*> &Params, const std::string &Name = "",
              Instruction *InsertBefore = 0);
   InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
              const std::vector<Value*> &Params, const std::string &Name,
+             BasicBlock *InsertAtEnd);
+  InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
+             Value* const* Args, unsigned NumArgs, const std::string &Name = "",
+             Instruction *InsertBefore = 0);
+  InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
+             Value* const* Args, unsigned NumArgs, const std::string &Name,
              BasicBlock *InsertAtEnd);
   ~InvokeInst();
 
