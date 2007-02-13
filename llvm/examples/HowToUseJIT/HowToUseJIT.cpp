@@ -89,9 +89,7 @@ int main() {
   Value *Ten = ConstantInt::get(Type::Int32Ty, 10);
 
   // Pass Ten to the call call:
-  std::vector<Value*> Params;
-  Params.push_back(Ten);
-  CallInst *Add1CallRes = new CallInst(Add1F, Params, "add1", BB);
+  CallInst *Add1CallRes = new CallInst(Add1F, Ten, "add1", BB);
   Add1CallRes->setTailCall(true);
 
   // Create the return instruction and add it to the basic block.
