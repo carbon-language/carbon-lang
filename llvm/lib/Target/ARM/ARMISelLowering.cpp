@@ -338,29 +338,36 @@ static bool FPCCToARMCC(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
 }
 
 static void
-HowToPassArgument(MVT::ValueType ObjectVT,
-                  unsigned NumGPRs, unsigned &ObjSize, unsigned &ObjGPRs) {
-  ObjSize = 0;
-  ObjGPRs = 0;
-
+HowToPassArgument(MVT::ValueType ObjectVT, unsigned NumGPRs,
+                  unsigned StackOffset, unsigned &NeededGPRs,
+                  unsigned &NeededStackSize, unsigned &GPRPad,
+                  unsigned &StackPad, unsigned Flags) {
+  NeededStackSize = 0;
+  NeededGPRs = 0;
+  StackPad = 0;
+  GPRPad = 0;
+  unsigned align = (Flags >> 27);
+  GPRPad = NumGPRs % ((align + 3)/4);
+  StackPad = StackOffset % align;
+  unsigned firstGPR = NumGPRs + GPRPad;
   switch (ObjectVT) {
   default: assert(0 && "Unhandled argument type!");
   case MVT::i32:
   case MVT::f32:
-    if (NumGPRs < 4)
-      ObjGPRs = 1;
+    if (firstGPR < 4)
+      NeededGPRs = 1;
     else
-      ObjSize = 4;
+      NeededStackSize = 4;
     break;
   case MVT::i64:
   case MVT::f64:
-    if (NumGPRs < 3)
-      ObjGPRs = 2;
-    else if (NumGPRs == 3) {
-      ObjGPRs = 1;
-      ObjSize = 4;
+    if (firstGPR < 3)
+      NeededGPRs = 2;
+    else if (firstGPR == 3) {
+      NeededGPRs = 1;
+      NeededStackSize = 4;
     } else
-      ObjSize = 8;
+      NeededStackSize = 8;
   }
 }
 
@@ -383,12 +390,16 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
   // Add up all the space actually used.
   for (unsigned i = 0; i < NumOps; ++i) {
-    unsigned ObjSize = 0;
-    unsigned ObjGPRs = 0;
+    unsigned ObjSize;
+    unsigned ObjGPRs;
+    unsigned StackPad;
+    unsigned GPRPad;
     MVT::ValueType ObjectVT = Op.getOperand(5+2*i).getValueType();
-    HowToPassArgument(ObjectVT, NumGPRs, ObjSize, ObjGPRs);
-    NumBytes += ObjSize;
-    NumGPRs += ObjGPRs;
+    unsigned Flags = Op.getConstantOperandVal(5+2*i+1);
+    HowToPassArgument(ObjectVT, NumGPRs, NumBytes, ObjGPRs, ObjSize,
+                      GPRPad, StackPad, Flags);
+    NumBytes += ObjSize + StackPad;
+    NumGPRs += ObjGPRs + GPRPad;
   }
 
   // Adjust the stack pointer for the new arguments...
@@ -407,18 +418,24 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   std::vector<SDOperand> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
+    unsigned Flags = Op.getConstantOperandVal(5+2*i+1);
     MVT::ValueType ArgVT = Arg.getValueType();
 
-    unsigned ObjSize = 0;
-    unsigned ObjGPRs = 0;
-    HowToPassArgument(ArgVT, NumGPRs, ObjSize, ObjGPRs);
+    unsigned ObjSize;
+    unsigned ObjGPRs;
+    unsigned GPRPad;
+    unsigned StackPad;
+    HowToPassArgument(ArgVT, NumGPRs, ArgOffset, ObjGPRs,
+                      ObjSize, GPRPad, StackPad, Flags);
+    NumGPRs += GPRPad;
+    ArgOffset += StackPad;
     if (ObjGPRs > 0) {
       switch (ArgVT) {
       default: assert(0 && "Unexpected ValueType for argument!");
       case MVT::i32:
         RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs], Arg));
         break;
-      case MVT::f32: 
+      case MVT::f32:
         RegsToPass.push_back(std::make_pair(GPRArgRegs[NumGPRs],
                                  DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Arg)));
         break;
@@ -436,7 +453,7 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
           MemOpChains.push_back(DAG.getStore(Chain, Hi, PtrOff, NULL, 0));
         }
         break;
-      } 
+      }
       case MVT::f64: {
         SDOperand Cvt = DAG.getNode(ARMISD::FMRRD,
                                     DAG.getVTList(MVT::i32, MVT::i32),
@@ -715,7 +732,7 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
 }
 
 static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
-				      unsigned *vRegs, unsigned ArgNo,
+                                      unsigned *vRegs, unsigned ArgNo,
                                       unsigned &NumGPRs, unsigned &ArgOffset) {
   MachineFunction &MF = DAG.getMachineFunction();
   MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
@@ -727,9 +744,15 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
     ARM::R0, ARM::R1, ARM::R2, ARM::R3
   };
 
-  unsigned ObjSize = 0;
-  unsigned ObjGPRs = 0;
-  HowToPassArgument(ObjectVT, NumGPRs, ObjSize, ObjGPRs);
+  unsigned ObjSize;
+  unsigned ObjGPRs;
+  unsigned GPRPad;
+  unsigned StackPad;
+  unsigned Flags = Op.getConstantOperandVal(ArgNo + 3);
+  HowToPassArgument(ObjectVT, NumGPRs, ArgOffset, ObjGPRs,
+                    ObjSize, GPRPad, StackPad, Flags);
+  NumGPRs += GPRPad;
+  ArgOffset += StackPad;
 
   SDOperand ArgValue;
   if (ObjGPRs == 1) {
