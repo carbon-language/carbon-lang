@@ -2935,9 +2935,9 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     bool isSRet  = FTy->paramHasAttr(j, FunctionType::StructRetAttribute);
     unsigned OriginalAlignment =
       getTargetData()->getTypeAlignmentABI(I->getType());
-    //Flags[31:27]-> OriginalAlignment
-    //Flags[2] -> isSRet
-    //Flags[1] -> isInReg
+    // Flags[31:27] -> OriginalAlignment
+    // Flags[2] -> isSRet
+    // Flags[1] -> isInReg
     unsigned Flags = (isInReg << 1) | (isSRet << 2) | (OriginalAlignment << 27);
 
     switch (getTypeAction(VT)) {
@@ -2959,7 +2959,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         unsigned NumVals = getNumElements(VT);
         for (unsigned i = 0; i != NumVals; ++i) {
           RetVals.push_back(NVT);
-          //if it isn't first piece, alignment must be 1
+          // if it isn't first piece, alignment must be 1
           if (i == 1) Flags = (Flags & 0x07ffffff) | (1 << 27);
           Ops.push_back(DAG.getConstant(Flags, MVT::i32));
         }
@@ -3067,7 +3067,7 @@ static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
                                  bool isFirst = true) {
 
   if (TLI.getTypeAction(VT) != TargetLowering::Expand) {
-    //if it isn't first piece, alignment must be 1
+    // if it isn't first piece, alignment must be 1
     if (!isFirst)
       Flags = (Flags & 0x07ffffff) | (1 << 27);
     Ops.push_back(Arg);
@@ -3121,10 +3121,10 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     bool isSRet  = Args[i].isSRet;
     unsigned OriginalAlignment =
       getTargetData()->getTypeAlignmentABI(Args[i].Ty);
-    //Flags[31:27]-> OriginalAlignment
-    //Flags[2] -> isSRet
-    //Flags[1] -> isInReg
-    //Flags[0] -> isSigned
+    // Flags[31:27] -> OriginalAlignment
+    // Flags[2] -> isSRet
+    // Flags[1] -> isInReg
+    // Flags[0] -> isSigned
     unsigned Flags = (isSRet << 2) | (isInReg << 1) | isSigned |
       (OriginalAlignment << 27);
 
