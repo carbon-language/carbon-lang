@@ -275,8 +275,8 @@ private:
   
   void destroy_range(T *S, T *E) {
     while (S != E) {
-      E->~T();
       --E;
+      E->~T();
     }
   }
 };
