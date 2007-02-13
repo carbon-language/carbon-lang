@@ -17,7 +17,6 @@
 #define LLVM_INSTRUCTIONS_H
 
 #include "llvm/InstrTypes.h"
-#include <vector>  // fixme remove.
 
 namespace llvm {
 
@@ -700,11 +699,6 @@ public:
   CallInst(Value *F, Value *const *Args, unsigned NumArgs,
            const std::string &Name, BasicBlock *InsertAtEnd);
   
-  CallInst(Value *F, const std::vector<Value*> &Par,
-           const std::string &Name = "", Instruction *InsertBefore = 0);
-  CallInst(Value *F, const std::vector<Value*> &Par,
-           const std::string &Name, BasicBlock *InsertAtEnd);
-
   // Alternate CallInst ctors w/ two actuals, w/ one actual and no
   // actuals, respectively.
   CallInst(Value *F, Value *Actual1, Value *Actual2,
@@ -1486,12 +1480,6 @@ class InvokeInst : public TerminatorInst {
   void init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
             Value* const *Args, unsigned NumArgs);
 public:
-  InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-             const std::vector<Value*> &Params, const std::string &Name = "",
-             Instruction *InsertBefore = 0);
-  InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-             const std::vector<Value*> &Params, const std::string &Name,
-             BasicBlock *InsertAtEnd);
   InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
              Value* const* Args, unsigned NumArgs, const std::string &Name = "",
              Instruction *InsertBefore = 0);
