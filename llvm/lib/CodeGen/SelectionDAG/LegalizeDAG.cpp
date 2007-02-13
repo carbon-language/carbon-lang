@@ -4859,6 +4859,19 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = DAG.getConstant(0, NVT);
     break;
     
+  case ISD::TRUNCATE: {
+    // The input value must be larger than this value.  Expand *it*.
+    SDOperand NewLo;
+    ExpandOp(Node->getOperand(0), NewLo, Hi);
+    
+    // The low part is now either the right size, or it is closer.  If not the
+    // right size, make an illegal truncate so we recursively expand it.
+    if (NewLo.getValueType() != Node->getValueType(0))
+      NewLo = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), NewLo);
+    ExpandOp(NewLo, Lo, Hi);
+    break;
+  }
+    
   case ISD::BIT_CONVERT: {
     SDOperand Tmp;
     if (TLI.getOperationAction(ISD::BIT_CONVERT, VT) == TargetLowering::Custom){
