@@ -254,14 +254,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   /// Get some space for a respectable number of registers...
   VirtRegInfo.resize(64);
 
-  // Mark live-in registers as live-in.
-  for (MachineFunction::livein_iterator I = MF.livein_begin(),
-         E = MF.livein_end(); I != E; ++I) {
-    assert(MRegisterInfo::isPhysicalRegister(I->first) &&
-           "Cannot have a live-in virtual register!");
-    HandlePhysRegDef(I->first, 0);
-  }
-
   analyzePHINodes(MF);
 
   // Calculate live variable information in depth first order on the CFG of the
@@ -274,6 +266,14 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   for (df_ext_iterator<MachineBasicBlock*> DFI = df_ext_begin(Entry, Visited),
          E = df_ext_end(Entry, Visited); DFI != E; ++DFI) {
     MachineBasicBlock *MBB = *DFI;
+
+  // Mark live-in registers as live-in.
+    for (MachineBasicBlock::livein_iterator II = MBB->livein_begin(),
+           EE = MBB->livein_end(); II != EE; ++II) {
+      assert(MRegisterInfo::isPhysicalRegister(*II) &&
+             "Cannot have a live-in virtual register!");
+      HandlePhysRegDef(*II, 0);
+    }
 
     // Loop over all of the instructions, processing them.
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();

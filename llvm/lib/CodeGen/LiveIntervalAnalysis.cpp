@@ -88,28 +88,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   allocatableRegs_ = mri_->getAllocatableSet(fn);
   r2rMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
 
-  // If this function has any live ins, insert a dummy instruction at the
-  // beginning of the function that we will pretend "defines" the values.  This
-  // is to make the interval analysis simpler by providing a number.
-  if (fn.livein_begin() != fn.livein_end()) {
-    unsigned FirstLiveIn = fn.livein_begin()->first;
-
-    // Find a reg class that contains this live in.
-    const TargetRegisterClass *RC = 0;
-    for (MRegisterInfo::regclass_iterator RCI = mri_->regclass_begin(),
-           E = mri_->regclass_end(); RCI != E; ++RCI)
-      if ((*RCI)->contains(FirstLiveIn)) {
-        RC = *RCI;
-        break;
-      }
-
-    MachineInstr *OldFirstMI = fn.begin()->begin();
-    mri_->copyRegToReg(*fn.begin(), fn.begin()->begin(),
-                       FirstLiveIn, FirstLiveIn, RC);
-    assert(OldFirstMI != fn.begin()->begin() &&
-           "copyRetToReg didn't insert anything!");
-  }
-
   // Number MachineInstrs and MachineBasicBlocks.
   // Initialize MBB indexes to a sentinal.
   MBB2IdxMap.resize(mf_->getNumBlockIDs(), ~0U);
@@ -119,6 +97,28 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
        MBB != E; ++MBB) {
     // Set the MBB2IdxMap entry for this MBB.
     MBB2IdxMap[MBB->getNumber()] = MIIndex;
+
+    // If this BB has any live ins, insert a dummy instruction at the
+    // beginning of the function that we will pretend "defines" the values. This
+    // is to make the interval analysis simpler by providing a number.
+    if (MBB->livein_begin() != MBB->livein_end()) {
+      unsigned FirstLiveIn = *MBB->livein_begin();
+
+      // Find a reg class that contains this live in.
+      const TargetRegisterClass *RC = 0;
+      for (MRegisterInfo::regclass_iterator RCI = mri_->regclass_begin(),
+             RCE = mri_->regclass_end(); RCI != RCE; ++RCI)
+        if ((*RCI)->contains(FirstLiveIn)) {
+          RC = *RCI;
+          break;
+        }
+
+      MachineInstr *OldFirstMI = MBB->begin();
+      mri_->copyRegToReg(*MBB, MBB->begin(),
+                         FirstLiveIn, FirstLiveIn, RC);
+      assert(OldFirstMI != MBB->begin() &&
+             "copyRetToReg didn't insert anything!");
+    }
     
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
@@ -126,19 +126,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       assert(inserted && "multiple MachineInstr -> index mappings");
       i2miMap_.push_back(I);
       MIIndex += InstrSlots::NUM;
-    }
-  }
-
-  // Note intervals due to live-in values.
-  if (fn.livein_begin() != fn.livein_end()) {
-    MachineBasicBlock *Entry = fn.begin();
-    for (MachineFunction::livein_iterator I = fn.livein_begin(),
-           E = fn.livein_end(); I != E; ++I) {
-      handlePhysicalRegisterDef(Entry, Entry->begin(), 0,
-                                getOrCreateInterval(I->first), 0);
-      for (const unsigned* AS = mri_->getAliasSet(I->first); *AS; ++AS)
-        handlePhysicalRegisterDef(Entry, Entry->begin(), 0,
-                                  getOrCreateInterval(*AS), 0);
     }
   }
 
@@ -691,8 +678,6 @@ void LiveIntervals::computeIntervals() {
   DOUT << "********** COMPUTING LIVE INTERVALS **********\n"
        << "********** Function: "
        << ((Value*)mf_->getFunction())->getName() << '\n';
-  bool IgnoreFirstInstr = mf_->livein_begin() != mf_->livein_end();
-
   // Track the index of the current machine instr.
   unsigned MIIndex = 0;
   for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
@@ -701,9 +686,18 @@ void LiveIntervals::computeIntervals() {
     DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
 
     MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
-    if (IgnoreFirstInstr) {
+
+    if (MBB->livein_begin() != MBB->livein_end()) {
+      // Process live-ins to this BB first.
+      for (MachineBasicBlock::livein_iterator LI = MBB->livein_begin(),
+             LE = MBB->livein_end(); LI != LE; ++LI) {
+        handlePhysicalRegisterDef(MBB, MBB->begin(), MIIndex,
+                                  getOrCreateInterval(*LI), 0);
+        for (const unsigned* AS = mri_->getAliasSet(*LI); *AS; ++AS)
+          handlePhysicalRegisterDef(MBB, MBB->begin(), MIIndex,
+                                    getOrCreateInterval(*AS), 0);
+      }
       ++MI;
-      IgnoreFirstInstr = false;
       MIIndex += InstrSlots::NUM;
     }
     
