@@ -80,7 +80,7 @@ public:
   /// globals section.
   /// @brief A list of values as a User of those Values.
   class ValueList : public User {
-    std::vector<Use> Uses;
+    SmallVector<Use, 32> Uses;
   public:
     ValueList() : User(Type::VoidTy, Value::ArgumentVal, 0, 0) {}
 
