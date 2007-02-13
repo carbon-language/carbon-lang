@@ -342,6 +342,12 @@ public:
                                    SourceLocation RParenLoc) {
     return 0;
   }
+
+  /// ParseCXXBoolLiteral - Parse {true,false} literals.
+  virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
+					 tok::TokenKind Kind) {
+    return 0;
+  }
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

@@ -26,7 +26,7 @@ Sema::ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
   CXXCastExpr::Opcode Op;
 
   switch (Kind) {
-  default: assert(0 && "Unknown C++ cast!"); abort();
+  default: assert(0 && "Unknown C++ cast!");
   case tok::kw_const_cast:       Op = CXXCastExpr::ConstCast;       break;
   case tok::kw_dynamic_cast:     Op = CXXCastExpr::DynamicCast;     break;
   case tok::kw_reinterpret_cast: Op = CXXCastExpr::ReinterpretCast; break;
@@ -34,4 +34,12 @@ Sema::ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
   }
   
   return new CXXCastExpr(Op, TypeRef::getFromOpaquePtr(Ty), (Expr*)E);
+}
+
+/// ParseCXXBoolLiteral - Parse {true,false} literals.
+Action::ExprResult
+Sema::ParseCXXBoolLiteral(SourceLocation, tok::TokenKind Kind) {
+  assert((Kind != tok::kw_true || Kind != tok::kw_false) &&
+	 "Unknown C++ Boolean value!");
+  return new CXXBoolLiteralExpr(Kind == tok::kw_true);
 }

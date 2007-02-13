@@ -208,6 +208,10 @@ public:
                                    SourceLocation RAngleBracketLoc,
                                    SourceLocation LParenLoc, ExprTy *E,
                                    SourceLocation RParenLoc);
+
+  /// ParseCXXBoolLiteral - Parse {true,false} literals.
+  virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
+					 tok::TokenKind Kind);
 };
 
 

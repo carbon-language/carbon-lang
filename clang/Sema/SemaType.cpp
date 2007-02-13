@@ -68,7 +68,7 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
            "FIXME: imaginary types not supported yet!");
     return isLong ? Ctx.LongDoubleComplexTy : Ctx.DoubleComplexTy;
   }
-  case DeclSpec::TST_bool:         // _Bool
+  case DeclSpec::TST_bool:         // _Bool or bool
     return Ctx.BoolTy;
   case DeclSpec::TST_decimal32:    // _Decimal32
   case DeclSpec::TST_decimal64:    // _Decimal64

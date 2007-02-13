@@ -398,6 +398,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 ///         identifier
 ///         constant
 ///         string-literal
+/// [C++]   boolean-literal  [C++ 2.13.5]
 ///         '(' expression ')'
 ///         '__func__'        [C99 6.4.2.2]
 /// [GNU]   '__FUNCTION__'
@@ -483,6 +484,10 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
+
+  case tok::kw_true:
+  case tok::kw_false:
+    return ParseCXXBoolLiteral();
 
   case tok::identifier: {      // primary-expression: identifier
                                // constant: enumeration-constant

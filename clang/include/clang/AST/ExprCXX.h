@@ -19,30 +19,38 @@
 namespace llvm {
 namespace clang {
 
-//===----------------------------------------------------------------------===//
-// C++ Expressions.
-//===----------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // C++ Expressions.
+  //===--------------------------------------------------------------------===//
 
-/// CXXCastExpr - [C++ 5.2.7, 5.2.9, 5.2.10, 5.2.11] C++ Cast Operators.
-/// 
-class CXXCastExpr : public CastExpr {
-public:
-  enum Opcode {
-    DynamicCast,
-    StaticCast,
-    ReinterpretCast,
-    ConstCast
+  /// CXXCastExpr - [C++ 5.2.7, 5.2.9, 5.2.10, 5.2.11] C++ Cast Operators.
+  /// 
+  class CXXCastExpr : public CastExpr {
+  public:
+    enum Opcode {
+      DynamicCast,
+      StaticCast,
+      ReinterpretCast,
+      ConstCast
+    };
+
+    CXXCastExpr(Opcode op, TypeRef ty, Expr *expr)
+      : CastExpr(ty, expr), Op(op) {}
+
+    Opcode getOpcode() const { return Op; }
+    virtual void visit(StmtVisitor &Visitor);
+  private:
+    Opcode Op;
   };
 
-  CXXCastExpr(Opcode op, TypeRef ty, Expr *expr)
-    : CastExpr(ty, expr), Op(op) {}
+  /// CXXBoolLiteralExpr - [C++ 2.13.5] C++ Boolean Literal.
+  /// 
+  class CXXBoolLiteralExpr : public Expr {
+    bool Value;
+  public:
+    CXXBoolLiteralExpr(bool val) : Value(val) {}
+  };
 
-  Opcode getOpcode() const { return Op; }
-  virtual void visit(StmtVisitor &Visitor);
-private:
-  Opcode Op;
-};
-  
 }  // end namespace clang
 }  // end namespace llvm
 

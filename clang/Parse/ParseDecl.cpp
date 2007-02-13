@@ -230,6 +230,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 ///         struct-or-union-specifier
 ///         enum-specifier
 ///         typedef-name
+/// [C++]   'bool'
 /// [C99]   '_Bool'
 /// [C99]   '_Complex'
 /// [C99]   '_Imaginary'  // Removed in TC2?
@@ -341,6 +342,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     case tok::kw_double:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec);
       break;
+    case tok::kw_bool:          // [C++ 2.11p1]
     case tok::kw__Bool:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec);
       break;

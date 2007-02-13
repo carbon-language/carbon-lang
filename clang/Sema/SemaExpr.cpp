@@ -249,7 +249,7 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
   // Could be enum-constant or decl.
   Decl *D = LookupScopedDecl(&II, Decl::IDNS_Ordinary, Loc, S);
   if (D == 0) {
-    // Otherwise, this could be an imlicitly declared function reference (legal
+    // Otherwise, this could be an implicitly declared function reference (legal
     // in C90, extension in C99).
     if (HasTrailingLParen &&
         // Not in C++.

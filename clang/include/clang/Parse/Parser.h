@@ -297,6 +297,10 @@ private:
   ExprResult ParseCXXCasts();
 
   //===--------------------------------------------------------------------===//
+  // C++ 2.13.5: C++ Boolean Literals
+  ExprResult ParseCXXBoolLiteral();
+
+  //===--------------------------------------------------------------------===//
   // C99 6.7.8: Initialization.
   ExprResult ParseInitializer();
   ExprResult ParseInitializerWithPotentialDesignator();

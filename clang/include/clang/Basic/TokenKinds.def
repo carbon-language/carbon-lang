@@ -228,6 +228,7 @@ KEYWORD(__PRETTY_FUNCTION__         , EXTC90|EXTC99|EXTCPP) // GCC Extension.
 
 // C++ 2.11p1: Keywords.
 KEYWORD(asm                         , EXTC90|EXTC99) // Exts in C90/C99
+KEYWORD(bool                        , NOTC90|NOTC99)
 KEYWORD(catch                       , NOTC90|NOTC99)
 KEYWORD(class                       , NOTC90|NOTC99)
 KEYWORD(const_cast                  , NOTC90|NOTC99)

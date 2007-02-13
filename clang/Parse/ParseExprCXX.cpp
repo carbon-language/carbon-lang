@@ -68,3 +68,13 @@ Parser::ExprResult Parser::ParseCXXCasts() {
 
   return Result;
 }
+
+/// ParseCXXBoolLiteral - This handles the C++ Boolean literals.
+///
+///       boolean-literal: [C++ 2.13.5]
+///         'true'
+///         'false'
+Parser::ExprResult Parser::ParseCXXBoolLiteral() {
+  tok::TokenKind Kind = Tok.getKind();
+  return Actions.ParseCXXBoolLiteral(ConsumeToken(), Kind);
+}
