@@ -512,12 +512,12 @@ public:
 
     // We have enough information to now generate the memcpy call to
     // do the concatenation for us.
-    std::vector<Value*> vals;
-    vals.push_back(gep); // destination
-    vals.push_back(ci->getOperand(2)); // source
-    vals.push_back(ConstantInt::get(SLC.getIntPtrType(),len)); // length
-    vals.push_back(ConstantInt::get(Type::Int32Ty,1)); // alignment
-    new CallInst(SLC.get_memcpy(), vals, "", ci);
+    Value *vals[4];
+    vals[0] = gep; // destination
+    vals[1] = ci->getOperand(2); // source
+    vals[2] = ConstantInt::get(SLC.getIntPtrType(),len); // length
+    vals[3] = ConstantInt::get(Type::Int32Ty,1); // alignment
+    new CallInst(SLC.get_memcpy(), vals, 4, "", ci);
 
     // Finally, substitute the first operand of the strcat call for the
     // strcat call itself since strcat returns its first operand; and,
@@ -565,11 +565,12 @@ public:
       // The second operand is not constant, or not signed. Just lower this to 
       // memchr since we know the length of the string since it is constant.
       Constant *f = SLC.get_memchr();
-      std::vector<Value*> args;
-      args.push_back(ci->getOperand(1));
-      args.push_back(ci->getOperand(2));
-      args.push_back(ConstantInt::get(SLC.getIntPtrType(), len));
-      ci->replaceAllUsesWith(new CallInst(f, args, ci->getName(), ci));
+      Value* args[3] = {
+        ci->getOperand(1),
+        ci->getOperand(2),
+        ConstantInt::get(SLC.getIntPtrType(), len)
+      };
+      ci->replaceAllUsesWith(new CallInst(f, args, 3, ci->getName(), ci));
       ci->eraseFromParent();
       return true;
     }
@@ -841,12 +842,12 @@ public:
 
     // We have enough information to now generate the memcpy call to
     // do the concatenation for us.
-    std::vector<Value*> vals;
-    vals.push_back(dest); // destination
-    vals.push_back(src); // source
-    vals.push_back(ConstantInt::get(SLC.getIntPtrType(),len)); // length
-    vals.push_back(ConstantInt::get(Type::Int32Ty,1)); // alignment
-    new CallInst(SLC.get_memcpy(), vals, "", ci);
+    Value *vals[4] = {
+      dest, src,
+      ConstantInt::get(SLC.getIntPtrType(),len), // length
+      ConstantInt::get(Type::Int32Ty, 1) // alignment
+    };
+    new CallInst(SLC.get_memcpy(), vals, 4, "", ci);
 
     // Finally, substitute the first operand of the strcat call for the
     // strcat call itself since strcat returns its first operand; and,
@@ -1423,12 +1424,13 @@ public:
       if (ci->getOperand(2)->getType() != PointerType::get(Type::Int8Ty))
         return false;
 
-      std::vector<Value*> args;
-      args.push_back(ci->getOperand(2));
-      args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
-      args.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
-      args.push_back(ci->getOperand(1));
-      new CallInst(SLC.get_fwrite(FILEptr_type), args, ci->getName(), ci);
+      Value* args[4] = {
+        ci->getOperand(2),
+        ConstantInt::get(SLC.getIntPtrType(),len),
+        ConstantInt::get(SLC.getIntPtrType(),1),
+        ci->getOperand(1)
+      };
+      new CallInst(SLC.get_fwrite(FILEptr_type), args, 4, ci->getName(), ci);
       ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
       ci->eraseFromParent();
       return true;
@@ -1454,12 +1456,13 @@ public:
         if (getConstantStringLength(ci->getOperand(3), len, &CA)) {
           // fprintf(file,"%s",str) -> fwrite(str,strlen(str),1,file)
           const Type* FILEptr_type = ci->getOperand(1)->getType();
-          std::vector<Value*> args;
-          args.push_back(CastToCStr(ci->getOperand(3), *ci));
-          args.push_back(ConstantInt::get(SLC.getIntPtrType(), len));
-          args.push_back(ConstantInt::get(SLC.getIntPtrType(), 1));
-          args.push_back(ci->getOperand(1));
-          new CallInst(SLC.get_fwrite(FILEptr_type), args, ci->getName(), ci);
+          Value* args[4] = {
+            CastToCStr(ci->getOperand(3), *ci),
+            ConstantInt::get(SLC.getIntPtrType(), len),
+            ConstantInt::get(SLC.getIntPtrType(), 1),
+            ci->getOperand(1)
+          };
+          new CallInst(SLC.get_fwrite(FILEptr_type), args, 4,ci->getName(), ci);
           ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty, len));
         } else {
           // fprintf(file,"%s",str) -> fputs(str,file)
@@ -1542,12 +1545,13 @@ public:
       len++;
 
       // sprintf(str,fmt) -> llvm.memcpy(str,fmt,strlen(fmt),1)
-      std::vector<Value*> args;
-      args.push_back(ci->getOperand(1));
-      args.push_back(ci->getOperand(2));
-      args.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
-      args.push_back(ConstantInt::get(Type::Int32Ty,1));
-      new CallInst(SLC.get_memcpy(), args, "", ci);
+      Value *args[4] = {
+        ci->getOperand(1),
+        ci->getOperand(2),
+        ConstantInt::get(SLC.getIntPtrType(),len),
+        ConstantInt::get(Type::Int32Ty, 1)
+      };
+      new CallInst(SLC.get_memcpy(), args, 4, "", ci);
       ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,len));
       ci->eraseFromParent();
       return true;
@@ -1577,12 +1581,13 @@ public:
       if (Len1->getType() != SLC.getIntPtrType())
         Len1 = CastInst::createIntegerCast(Len1, SLC.getIntPtrType(), false,
                                            Len1->getName(), ci);
-      std::vector<Value*> args;
-      args.push_back(CastToCStr(ci->getOperand(1), *ci));
-      args.push_back(CastToCStr(ci->getOperand(3), *ci));
-      args.push_back(Len1);
-      args.push_back(ConstantInt::get(Type::Int32Ty,1));
-      new CallInst(SLC.get_memcpy(), args, "", ci);
+      Value *args[4] = {
+        CastToCStr(ci->getOperand(1), *ci),
+        CastToCStr(ci->getOperand(3), *ci),
+        Len1,
+        ConstantInt::get(Type::Int32Ty,1)
+      };
+      new CallInst(SLC.get_memcpy(), args, 4, "", ci);
       
       // The strlen result is the unincremented number of bytes in the string.
       if (!ci->use_empty()) {
@@ -1660,12 +1665,13 @@ public:
       {
         // fputs(s,F)  -> fwrite(s,1,len,F) (if s is constant and strlen(s) > 1)
         const Type* FILEptr_type = ci->getOperand(2)->getType();
-        std::vector<Value*> parms;
-        parms.push_back(ci->getOperand(1));
-        parms.push_back(ConstantInt::get(SLC.getIntPtrType(),len));
-        parms.push_back(ConstantInt::get(SLC.getIntPtrType(),1));
-        parms.push_back(ci->getOperand(2));
-        new CallInst(SLC.get_fwrite(FILEptr_type), parms, "", ci);
+        Value *parms[4] = {
+          ci->getOperand(1),
+          ConstantInt::get(SLC.getIntPtrType(),len),
+          ConstantInt::get(SLC.getIntPtrType(),1),
+          ci->getOperand(2)
+        };
+        new CallInst(SLC.get_fwrite(FILEptr_type), parms, 4, "", ci);
         break;
       }
     }
