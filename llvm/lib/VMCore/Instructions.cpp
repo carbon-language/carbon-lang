@@ -531,18 +531,20 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                Instruction *InsertBefore)
   : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
-                     Name, InsertBefore), Alignment(Align) {
+                     0, InsertBefore), Alignment(Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
+  setName(Name);
 }
 
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                BasicBlock *InsertAtEnd)
   : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
-                     Name, InsertAtEnd), Alignment(Align) {
+                     0, InsertAtEnd), Alignment(Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
+  setName(Name);
 }
 
 // Out of line virtual method, so the vtable, etc has a home.
@@ -579,12 +581,12 @@ void FreeInst::AssertOK() {
 }
 
 FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
-  : UnaryInstruction(Type::VoidTy, Free, Ptr, "", InsertBefore) {
+  : UnaryInstruction(Type::VoidTy, Free, Ptr, 0, InsertBefore) {
   AssertOK();
 }
 
 FreeInst::FreeInst(Value *Ptr, BasicBlock *InsertAtEnd)
-  : UnaryInstruction(Type::VoidTy, Free, Ptr, "", InsertAtEnd) {
+  : UnaryInstruction(Type::VoidTy, Free, Ptr, 0, InsertAtEnd) {
   AssertOK();
 }
 
@@ -600,30 +602,66 @@ void LoadInst::AssertOK() {
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, Name, InsertBef) {
+                     Load, Ptr, 0, InsertBef) {
   setVolatile(false);
   AssertOK();
+  setName(Name);
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, Name, InsertAE) {
+                     Load, Ptr, 0, InsertAE) {
   setVolatile(false);
   AssertOK();
+  setName(Name);
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, Name, InsertBef) {
+                     Load, Ptr, 0, InsertBef) {
   setVolatile(isVolatile);
   AssertOK();
+  setName(Name);
 }
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, Name, InsertAE) {
+                     Load, Ptr, 0, InsertAE) {
+  setVolatile(isVolatile);
+  AssertOK();
+  setName(Name);
+}
+
+
+
+LoadInst::LoadInst(Value *Ptr, const char *Name, Instruction *InsertBef)
+: UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                   Load, Ptr, Name, InsertBef) {
+  setVolatile(false);
+  AssertOK();
+}
+
+LoadInst::LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAE)
+: UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                   Load, Ptr, Name, InsertAE) {
+  setVolatile(false);
+  AssertOK();
+}
+
+LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
+                   Instruction *InsertBef)
+: UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                   Load, Ptr, Name, InsertBef) {
+  setVolatile(isVolatile);
+  AssertOK();
+}
+
+LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
+                   BasicBlock *InsertAE)
+: UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                   Load, Ptr, Name, InsertAE) {
   setVolatile(isVolatile);
   AssertOK();
 }

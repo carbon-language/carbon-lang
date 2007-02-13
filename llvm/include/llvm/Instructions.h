@@ -222,11 +222,18 @@ class LoadInst : public UnaryInstruction {
 public:
   LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAtEnd);
-  explicit LoadInst(Value *Ptr, const std::string &Name = "",
-                    bool isVolatile = false, Instruction *InsertBefore = 0);
+  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile = false,
+           Instruction *InsertBefore = 0);
   LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
            BasicBlock *InsertAtEnd);
 
+  LoadInst(Value *Ptr, const char *Name, Instruction *InsertBefore);
+  LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAtEnd);
+  explicit LoadInst(Value *Ptr, const char *Name = 0, bool isVolatile = false,
+                    Instruction *InsertBefore = 0);
+  LoadInst(Value *Ptr, const char *Name, bool isVolatile,
+           BasicBlock *InsertAtEnd);
+  
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
   ///
@@ -828,11 +835,13 @@ class VAArgInst : public UnaryInstruction {
 public:
   VAArgInst(Value *List, const Type *Ty, const std::string &Name = "",
              Instruction *InsertBefore = 0)
-    : UnaryInstruction(Ty, VAArg, List, Name, InsertBefore) {
+    : UnaryInstruction(Ty, VAArg, List, 0, InsertBefore) {
+    setName(Name);
   }
   VAArgInst(Value *List, const Type *Ty, const std::string &Name,
             BasicBlock *InsertAtEnd)
-    : UnaryInstruction(Ty, VAArg, List, Name, InsertAtEnd) {
+    : UnaryInstruction(Ty, VAArg, List, 0, InsertAtEnd) {
+    setName(Name);
   }
 
   virtual VAArgInst *clone() const;

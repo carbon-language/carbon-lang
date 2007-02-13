@@ -44,6 +44,34 @@ Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
   setName(Name);
 }
 
+Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
+                         const char *Name, Instruction *InsertBefore)
+  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0) {
+  // Make sure that we get added to a basicblock
+  LeakDetector::addGarbageObject(this);
+
+  // If requested, insert this instruction into a basic block...
+  if (InsertBefore) {
+    assert(InsertBefore->getParent() &&
+           "Instruction to insert before is not in a basic block!");
+    InsertBefore->getParent()->getInstList().insert(InsertBefore, this);
+  }
+  if (Name && *Name) setName(Name);
+}
+
+Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
+                         const char *Name, BasicBlock *InsertAtEnd)
+  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0) {
+  // Make sure that we get added to a basicblock
+  LeakDetector::addGarbageObject(this);
+
+  // append this instruction into the basic block
+  assert(InsertAtEnd && "Basic block to append to may not be NULL!");
+  InsertAtEnd->getInstList().push_back(this);
+  if (Name && *Name) setName(Name);
+}
+
+
 // Out of line virtual method, so the vtable, etc has a home.
 Instruction::~Instruction() {
   assert(Parent == 0 && "Instruction still linked in the program!");

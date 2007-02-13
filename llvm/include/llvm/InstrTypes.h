@@ -91,11 +91,11 @@ class UnaryInstruction : public Instruction {
   Use Op;
 protected:
   UnaryInstruction(const Type *Ty, unsigned iType, Value *V,
-                   const std::string &Name = "", Instruction *IB = 0)
+                   const char *Name = 0, Instruction *IB = 0)
     : Instruction(Ty, iType, &Op, 1, Name, IB), Op(V, this) {
   }
   UnaryInstruction(const Type *Ty, unsigned iType, Value *V,
-                   const std::string &Name, BasicBlock *IAE)
+                   const char *Name = 0, BasicBlock *IAE)
     : Instruction(Ty, iType, &Op, 1, Name, IAE), Op(V, this) {
   }
 public:
@@ -263,13 +263,15 @@ class CastInst : public UnaryInstruction {
 protected:
   /// @brief Constructor with insert-before-instruction semantics for subclasses
   CastInst(const Type *Ty, unsigned iType, Value *S, 
-      const std::string &Name = "", Instruction *InsertBefore = 0)
-    : UnaryInstruction(Ty, iType, S, Name, InsertBefore) {
+           const std::string &Name = "", Instruction *InsertBefore = 0)
+    : UnaryInstruction(Ty, iType, S, 0, InsertBefore) {
+    setName(Name);
   }
   /// @brief Constructor with insert-at-end-of-block semantics for subclasses
   CastInst(const Type *Ty, unsigned iType, Value *S, 
-      const std::string &Name, BasicBlock *InsertAtEnd)
-    : UnaryInstruction(Ty, iType, S, Name, InsertAtEnd) {
+           const std::string &Name, BasicBlock *InsertAtEnd)
+    : UnaryInstruction(Ty, iType, S, 0, InsertAtEnd) {
+    setName(Name);
   }
 public:
   /// Provides a way to construct any of the CastInst subclasses using an 
