@@ -669,7 +669,7 @@ void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
       const FunctionType *FTy = dyn_cast<FunctionType>(PTy->getElementType());
       if (FTy == 0) error("Call to non function pointer value!");
 
-      std::vector<Value *> Params;
+      SmallVector<Value *, 8> Params;
       if (!FTy->isVarArg()) {
         FunctionType::param_iterator It = FTy->param_begin();
 
@@ -720,7 +720,7 @@ void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
       if (FTy == 0)
         error("Invoke to non function pointer value!");
 
-      std::vector<Value *> Params;
+      SmallVector<Value *, 8> Params;
       BasicBlock *Normal, *Except;
       unsigned CallingConv = Oprnds.back();
       Oprnds.pop_back();
