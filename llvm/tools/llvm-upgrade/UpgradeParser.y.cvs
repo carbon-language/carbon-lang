@@ -1222,7 +1222,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
       const PointerType *PFTy = PointerType::get(FTy);
       Value* Func = getVal(PFTy, ID);
       Args[0] = new BitCastInst(Args[0], PtrTy, makeNameUnique("va"), CurBB);
-      return new CallInst(Func, Args);
+      return new CallInst(Func, &Args[0], Args.size());
     } else if (Name == "llvm.va_copy") {
       if (Args.size() != 2)
         error("Invalid prototype for " + Name + " prototype");
@@ -1235,7 +1235,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
       std::string InstName1(makeNameUnique("va1"));
       Args[0] = new BitCastInst(Args[0], PtrTy, InstName0, CurBB);
       Args[1] = new BitCastInst(Args[1], PtrTy, InstName1, CurBB);
-      return new CallInst(Func, Args);
+      return new CallInst(Func, &Args[0], Args.size());
     }
   }
   return 0;
@@ -2978,7 +2978,7 @@ BBTerminatorInst
 
     // Create the call node...
     if (!$6) {                                   // Has no arguments?
-      $$ = new InvokeInst(V, Normal, Except, std::vector<Value*>());
+      $$ = new InvokeInst(V, Normal, Except, 0, 0);
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
@@ -2998,7 +2998,7 @@ BBTerminatorInst
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
         error("Invalid number of parameters detected");
 
-      $$ = new InvokeInst(V, Normal, Except, Args);
+      $$ = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
     }
     cast<InvokeInst>($$)->setCallingConv(upgradeCallingConv($2));
     delete $3.PAT;
@@ -3379,7 +3379,7 @@ InstVal
       }
 
       // Create the call instruction
-      CallInst *CI = new CallInst(V, Args);
+      CallInst *CI = new CallInst(V, &Args[0], Args.size());
       CI->setTailCall($1);
       CI->setCallingConv(upgradeCallingConv($2));
       $$.I = CI;
