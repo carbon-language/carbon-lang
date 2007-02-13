@@ -34,13 +34,15 @@ namespace {
 ///
 ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
   : Subtarget(M, FS),
-    DataLayout(Subtarget.isTargetDarwin() ?
+    DataLayout(Subtarget.isAPCS_ABI() ?
+               //APCS ABI
           (Subtarget.isThumb() ?
            std::string("e-p:32:32-d:32:32-l:32:32-s:16:32-b:8:32-B:8:32-A:32") :
            std::string("e-p:32:32-d:32:32-l:32:32")) :
+               //AAPCS ABI
           (Subtarget.isThumb() ?
-           std::string("e-p:32:32-d:32:64-l:64:64-s:16:32-b:8:32-B:8:32-A:32") :
-           std::string("e-p:32:32-d:32:64-l:64:64"))),
+           std::string("e-p:32:32-d:64:64-l:64:64-s:16:32-b:8:32-B:8:32-A:32") :
+           std::string("e-p:32:32-d:64:64-l:64:64"))),
     InstrInfo(Subtarget),
     FrameInfo(Subtarget) {}
 

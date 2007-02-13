@@ -26,8 +26,9 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS)
   , HasVFP2(false)
   , UseThumbBacktraces(false)
   , IsR9Reserved(false)
-  , stackAlignment(8)
-  , TargetType(isELF) { // Default to ELF unless otherwise specified.
+  , stackAlignment(4)
+  , TargetType(isELF) // Default to ELF unless otherwise specified.
+  , TargetABI(ARM_ABI_APCS) {
 
   // Determine default and user specified characteristics
   std::string CPU = "generic";
@@ -49,9 +50,14 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS)
 #endif
   }
 
+  if (TT.find("eabi") != std::string::npos)
+    TargetABI = ARM_ABI_AAPCS;
+
+  if (isAAPCS_ABI())
+    stackAlignment = 8;
+
   if (isTargetDarwin()) {
     UseThumbBacktraces = true;
     IsR9Reserved = true;
-    stackAlignment = 4;
-  } 
+  }
 }

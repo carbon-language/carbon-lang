@@ -42,7 +42,7 @@ protected:
 
   /// IsR9Reserved - True if R9 is a not available as general purpose register.
   bool IsR9Reserved;
-  
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -51,6 +51,11 @@ protected:
   enum {
     isELF, isDarwin
   } TargetType;
+
+  enum {
+    ARM_ABI_APCS,
+    ARM_ABI_AAPCS // ARM EABI
+  } TargetABI;
 
   /// This constructor initializes the data members to match that
   /// of the specified module.
@@ -70,6 +75,9 @@ protected:
   
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
+
+  bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
+  bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
 
   bool isThumb() const { return IsThumb; }
 

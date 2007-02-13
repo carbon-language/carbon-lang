@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -mtriple=arm-linux | grep "mov r0, r2" | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | grep "mov r0, r2" | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin | grep "mov r0, r1" | wc -l | grep 1
 
 define i32 @f(i32 %a, i64 %b) {
