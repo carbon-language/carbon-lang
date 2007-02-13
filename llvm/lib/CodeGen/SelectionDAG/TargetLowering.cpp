@@ -2200,6 +2200,7 @@ MVT::ValueType TargetLowering::getValueType(const Type *Ty) const {
       case 16:   return MVT::i16;
       case 32:   return MVT::i32;
       case 64:   return MVT::i64;
+      case 128:  return MVT::i128;
     }
     break;
   case Type::FloatTyID:   return MVT::f32;
