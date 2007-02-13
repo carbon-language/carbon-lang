@@ -702,7 +702,7 @@ void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
           Params.push_back(getValue(Oprnds[i], Oprnds[i+1]));
       }
 
-      Result = new CallInst(F, Params);
+      Result = new CallInst(F, &Params[0], Params.size());
       if (isTailCall) cast<CallInst>(Result)->setTailCall();
       if (CallingConv) cast<CallInst>(Result)->setCallingConv(CallingConv);
       break;
@@ -756,7 +756,7 @@ void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
           Params.push_back(getValue(Oprnds[i], Oprnds[i+1]));
       }
 
-      Result = new InvokeInst(F, Normal, Except, Params);
+      Result = new InvokeInst(F, Normal, Except, &Params[0], Params.size());
       if (CallingConv) cast<InvokeInst>(Result)->setCallingConv(CallingConv);
       break;
     }
