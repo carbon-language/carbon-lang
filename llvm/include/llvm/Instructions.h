@@ -345,10 +345,6 @@ public:
   /// list of indices.  The first ctor can optionally insert before an existing
   /// instruction, the second appends the new instruction to the specified
   /// BasicBlock.
-  GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-                    const std::string &Name = "", Instruction *InsertBefore =0);
-  GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-                    const std::string &Name, BasicBlock *InsertAtEnd);
   GetElementPtrInst(Value *Ptr, Value* const *Idx, unsigned NumIdx,
                     const std::string &Name = "", Instruction *InsertBefore =0);
   GetElementPtrInst(Value *Ptr, Value* const *Idx, unsigned NumIdx,
@@ -383,11 +379,6 @@ public:
                                     Value* const *Idx, unsigned NumIdx,
                                     bool AllowStructLeaf = false);
   
-  static const Type *getIndexedType(const Type *Ptr,
-                                    const std::vector<Value*> &Indices,
-                                    bool AllowStructLeaf = false) {
-    return getIndexedType(Ptr, &Indices[0], Indices.size(), AllowStructLeaf);
-  }
   static const Type *getIndexedType(const Type *Ptr, Value *Idx0, Value *Idx1,
                                     bool AllowStructLeaf = false);
   static const Type *getIndexedType(const Type *Ptr, Value *Idx);
@@ -698,7 +689,7 @@ public:
 ///
 class CallInst : public Instruction {
   CallInst(const CallInst &CI);
-  void init(Value *Func, const std::vector<Value*> &Params);
+  void init(Value *Func, Value* const *Params, unsigned NumParams);
   void init(Value *Func, Value *Actual1, Value *Actual2);
   void init(Value *Func, Value *Actual);
   void init(Value *Func);

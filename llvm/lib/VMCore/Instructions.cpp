@@ -196,19 +196,19 @@ CallInst::~CallInst() {
   delete [] OperandList;
 }
 
-void CallInst::init(Value *Func, const std::vector<Value*> &Params) {
-  NumOperands = Params.size()+1;
-  Use *OL = OperandList = new Use[Params.size()+1];
+void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
+  NumOperands = NumParams+1;
+  Use *OL = OperandList = new Use[NumParams+1];
   OL[0].init(Func, this);
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
   FTy = FTy;  // silence warning.
 
-  assert((Params.size() == FTy->getNumParams() ||
-          (FTy->isVarArg() && Params.size() > FTy->getNumParams())) &&
+  assert((NumParams == FTy->getNumParams() ||
+          (FTy->isVarArg() && NumParams > FTy->getNumParams())) &&
          "Calling a function with bad signature!");
-  for (unsigned i = 0, e = Params.size(); i != e; ++i) {
+  for (unsigned i = 0; i != NumParams; ++i) {
     assert((i >= FTy->getNumParams() || 
             FTy->getParamType(i) == Params[i]->getType()) &&
            "Calling a function with a bad signature!");
@@ -273,7 +273,7 @@ CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                  ->getElementType())->getReturnType(),
                 Instruction::Call, 0, 0, Name, InsertBefore) {
-  init(Func, Params);
+  init(Func, &Params[0], Params.size());
 }
 
 CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
@@ -281,7 +281,7 @@ CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                  ->getElementType())->getReturnType(),
                 Instruction::Call, 0, 0, Name, InsertAtEnd) {
-  init(Func, Params);
+  init(Func, &Params[0], Params.size());
 }
 
 CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
@@ -713,23 +713,6 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
   OL[1].init(Idx, this);
 }
 
-GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-                                     const std::string &Name, Instruction *InBe)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                          &Idx[0], Idx.size(), 
-                                                          true))),
-                GetElementPtr, 0, 0, Name, InBe) {
-  init(Ptr, &Idx[0], Idx.size());
-}
-
-GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
-                                     const std::string &Name, BasicBlock *IAE)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                          &Idx[0], Idx.size(),
-                                                          true))),
-                GetElementPtr, 0, 0, Name, IAE) {
-  init(Ptr, &Idx[0], Idx.size());
-}
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx,
                                      unsigned NumIdx,
