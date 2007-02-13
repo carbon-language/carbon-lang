@@ -663,7 +663,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
       // Call the old main function and return its result
       BasicBlock *BB = new BasicBlock("entry", newMain);
-      CallInst *call = new CallInst(oldMainProto, args, "", BB);
+      CallInst *call = new CallInst(oldMainProto, &args[0], args.size(),
+                                    "", BB);
 
       // If the type of old function wasn't void, return value of call
       new ReturnInst(call, BB);
@@ -734,7 +735,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
           // Resolve the call to function F via the JIT API:
           //
           // call resolver(GetElementPtr...)
-          CallInst *Resolver = new CallInst(resolverFunc, ResolverArgs,
+          CallInst *Resolver = new CallInst(resolverFunc, &ResolverArgs[0],
+                                            ResolverArgs.size(),
                                             "resolver", LookupBB);
           // cast the result from the resolver to correctly-typed function
           CastInst *CastedResolver = new BitCastInst(Resolver, 
@@ -756,10 +758,11 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
           // Pass on the arguments to the real function, return its result
           if (F->getReturnType() == Type::VoidTy) {
-            new CallInst(FuncPtr, Args, "", DoCallBB);
+            new CallInst(FuncPtr, &Args[0], Args.size(), "", DoCallBB);
             new ReturnInst(DoCallBB);
           } else {
-            CallInst *Call = new CallInst(FuncPtr, Args, "retval", DoCallBB);
+            CallInst *Call = new CallInst(FuncPtr, &Args[0], Args.size(),
+                                          "retval", DoCallBB);
             new ReturnInst(Call, DoCallBB);
           }
 
