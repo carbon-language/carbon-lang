@@ -95,7 +95,7 @@ protected:
     : Instruction(Ty, iType, &Op, 1, Name, IB), Op(V, this) {
   }
   UnaryInstruction(const Type *Ty, unsigned iType, Value *V,
-                   const char *Name = 0, BasicBlock *IAE)
+                   const char *Name, BasicBlock *IAE)
     : Instruction(Ty, iType, &Op, 1, Name, IAE), Op(V, this) {
   }
 public:
