@@ -2933,8 +2933,13 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     MVT::ValueType VT = getValueType(I->getType());
     bool isInReg = FTy->paramHasAttr(j, FunctionType::InRegAttribute);
     bool isSRet  = FTy->paramHasAttr(j, FunctionType::StructRetAttribute);
-    unsigned Flags = (isInReg << 1) | (isSRet << 2);
-    
+    unsigned OriginalAlignment =
+      getTargetData()->getTypeAlignmentABI(I->getType());
+    //Flags[31:27]-> OriginalAlignment
+    //Flags[2] -> isSRet
+    //Flags[1] -> isInReg
+    unsigned Flags = (isInReg << 1) | (isSRet << 2) | (OriginalAlignment << 27);
+
     switch (getTypeAction(VT)) {
     default: assert(0 && "Unknown type action!");
     case Legal: 
@@ -2954,6 +2959,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         unsigned NumVals = getNumElements(VT);
         for (unsigned i = 0; i != NumVals; ++i) {
           RetVals.push_back(NVT);
+          //if it isn't first piece, alignment must be 1
+          if (i == 1) Flags = (Flags & 0x07ffffff) | (1 << 27);
           Ops.push_back(DAG.getConstant(Flags, MVT::i32));
         }
       } else {
@@ -3053,11 +3060,16 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 /// ExpandScalarCallArgs - Recursively expand call argument node by
 /// bit_converting it or extract a pair of elements from the larger  node.
 static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
-                                 unsigned Flags, 
+                                 unsigned Flags,
                                  SmallVector<SDOperand, 32> &Ops,
                                  SelectionDAG &DAG,
-                                 TargetLowering &TLI) {
+                                 TargetLowering &TLI,
+                                 bool isFirst = true) {
+
   if (TLI.getTypeAction(VT) != TargetLowering::Expand) {
+    //if it isn't first piece, alignment must be 1
+    if (!isFirst)
+      Flags = (Flags & 0x07ffffff) | (1 << 27);
     Ops.push_back(Arg);
     Ops.push_back(DAG.getConstant(Flags, MVT::i32));
     return;
@@ -3067,7 +3079,7 @@ static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
   unsigned NumVals = MVT::getSizeInBits(VT) / MVT::getSizeInBits(EVT);
   if (NumVals == 1) {
     Arg = DAG.getNode(ISD::BIT_CONVERT, EVT, Arg);
-    ExpandScalarCallArgs(EVT, Arg, Flags, Ops, DAG, TLI);
+    ExpandScalarCallArgs(EVT, Arg, Flags, Ops, DAG, TLI, isFirst);
   } else if (NumVals == 2) {
     SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, EVT, Arg,
                                DAG.getConstant(0, TLI.getPointerTy()));
@@ -3075,8 +3087,8 @@ static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
                                DAG.getConstant(1, TLI.getPointerTy()));
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
-    ExpandScalarCallArgs(EVT, Lo, Flags, Ops, DAG, TLI);
-    ExpandScalarCallArgs(EVT, Hi, Flags, Ops, DAG, TLI);
+    ExpandScalarCallArgs(EVT, Lo, Flags, Ops, DAG, TLI, isFirst);
+    ExpandScalarCallArgs(EVT, Hi, Flags, Ops, DAG, TLI, false);
   } else {
     // Value scalarized into many values.  Unimp for now.
     assert(0 && "Cannot expand i64 -> i16 yet!");
@@ -3106,11 +3118,19 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     SDOperand Op = Args[i].Node;
     bool isSigned = Args[i].isSigned;
     bool isInReg = Args[i].isInReg;
-    bool isSRet  = Args[i].isSRet; 
-    unsigned Flags = (isSRet << 2) | (isInReg << 1) | isSigned;
+    bool isSRet  = Args[i].isSRet;
+    unsigned OriginalAlignment =
+      getTargetData()->getTypeAlignmentABI(Args[i].Ty);
+    //Flags[31:27]-> OriginalAlignment
+    //Flags[2] -> isSRet
+    //Flags[1] -> isInReg
+    //Flags[0] -> isSigned
+    unsigned Flags = (isSRet << 2) | (isInReg << 1) | isSigned |
+      (OriginalAlignment << 27);
+
     switch (getTypeAction(VT)) {
     default: assert(0 && "Unknown type action!");
-    case Legal: 
+    case Legal:
       Ops.push_back(Op);
       Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       break;
