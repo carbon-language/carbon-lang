@@ -223,19 +223,22 @@ inline Shr_match<LHS, RHS> m_Shr(const LHS &L, const RHS &R) {
 
 template<typename LHS_t, typename RHS_t, typename Class, typename OpcType>
 struct BinaryOpClass_match {
-  OpcType &Opcode;
+  OpcType *Opcode;
   LHS_t L;
   RHS_t R;
 
   BinaryOpClass_match(OpcType &Op, const LHS_t &LHS,
                       const RHS_t &RHS)
-    : Opcode(Op), L(LHS), R(RHS) {}
+    : Opcode(&Op), L(LHS), R(RHS) {}
+  BinaryOpClass_match(const LHS_t &LHS, const RHS_t &RHS)
+    : Opcode(0), L(LHS), R(RHS) {}
 
   template<typename OpTy>
   bool match(OpTy *V) {
     if (Class *I = dyn_cast<Class>(V))
       if (L.match(I->getOperand(0)) && R.match(I->getOperand(1))) {
-        Opcode = I->getOpcode();
+        if (Opcode)
+          *Opcode = I->getOpcode();
         return true;
       }
 #if 0  // Doesn't handle constantexprs yet!
@@ -257,9 +260,8 @@ m_Shift(Instruction::BinaryOps &Op, const LHS &L, const RHS &R) {
 template<typename LHS, typename RHS>
 inline BinaryOpClass_match<LHS, RHS, BinaryOperator, Instruction::BinaryOps>
 m_Shift(const LHS &L, const RHS &R) {
-  Instruction::BinaryOps Op; 
   return BinaryOpClass_match<LHS, RHS, 
-                             BinaryOperator, Instruction::BinaryOps>(Op, L, R);
+                             BinaryOperator, Instruction::BinaryOps>(L, R);
 }
 
 //===----------------------------------------------------------------------===//
