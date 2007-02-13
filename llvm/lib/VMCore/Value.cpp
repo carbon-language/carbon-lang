@@ -122,6 +122,10 @@ void Value::setName(const std::string &name) {
   setName(&name[0], name.size());
 }
 
+void Value::setName(const char *Name) {
+  setName(Name, Name ? strlen(Name) : 0);
+}
+
 void Value::setName(const char *NameStr, unsigned NameLen) {
   if (NameLen == 0 && !hasName()) return;
   if (getType() != Type::VoidTy && "Cannot assign a name to void values!");

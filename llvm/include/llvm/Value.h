@@ -92,6 +92,8 @@ public:
 
   void setName(const std::string &name);
   void setName(const char *Name, unsigned NameLen);
+  void setName(const char *Name);  // Takes a null-terminated string.
+
   
   /// takeName - transfer the name from V to this value, setting V's name to
   /// empty.  It is an error to call V->takeName(V). 
