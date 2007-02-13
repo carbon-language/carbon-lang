@@ -2473,7 +2473,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     }
 
     // Create the InvokeInst
-    InvokeInst *II = new InvokeInst(V, Normal, Except, Args);
+    InvokeInst *II = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
     II->setCallingConv($2);
     $$ = II;
     delete $6;
@@ -2761,7 +2761,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         GEN_ERROR("Invalid number of parameters detected");
     }
     // Create the call node
-    CallInst *CI = new CallInst(V, Args);
+    CallInst *CI = new CallInst(V, &Args[0], Args.size());
     CI->setTailCall($1);
     CI->setCallingConv($2);
     $$ = CI;
