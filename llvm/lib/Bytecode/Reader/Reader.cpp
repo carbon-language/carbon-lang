@@ -1265,7 +1265,7 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       Result = ConstantInt::get(IT, Val);
       if (Handler) Handler->handleConstantValue(Result);
     } else 
-      assert("Integer types > 64 bits not supported");
+      assert(0 && "Integer types > 64 bits not supported");
     break;
   }
   case Type::FloatTyID: {

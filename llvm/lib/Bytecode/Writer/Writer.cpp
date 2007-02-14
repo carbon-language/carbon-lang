@@ -313,7 +313,7 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     else if (NumBits <= 64)
       output_vbr(uint64_t(cast<ConstantInt>(CPV)->getZExtValue()));
     else 
-      assert("Integer types > 64 bits not supported.");
+      assert(0 && "Integer types > 64 bits not supported.");
     break;
   }
 

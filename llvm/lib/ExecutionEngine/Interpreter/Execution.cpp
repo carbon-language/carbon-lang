@@ -1690,7 +1690,7 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
       else if (BitWidth <= 64)
         Dest.Int64Val = Src.Int64Val;
       else
-        assert("Integer types > 64 bits not supported");
+        assert(0 && "Integer types > 64 bits not supported");
       maskToBitWidth(Dest, BitWidth);
     }
     IMPLEMENT_VAARG(Pointer);

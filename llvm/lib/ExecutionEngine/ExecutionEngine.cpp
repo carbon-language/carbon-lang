@@ -292,7 +292,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
           const_cast<GlobalVariable *>(dyn_cast<GlobalVariable>(GV)))
     EmitGlobalVariable(GVar);
   else
-    assert("Global hasn't had an address allocated yet!");
+    assert(0 && "Global hasn't had an address allocated yet!");
   return state.getGlobalAddressMap(locked)[GV];
 }
 
@@ -425,7 +425,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     else if (BitWidth <= 64)
       Result.Int64Val = (uint64_t )cast<ConstantInt>(C)->getZExtValue();
     else
-      assert("Integers with > 64-bits not implemented");
+      assert(0 && "Integers with > 64-bits not implemented");
     break;
   }
 
