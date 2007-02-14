@@ -730,10 +730,11 @@ instructions</a> to successfully build the LLVM GCC front-end.</p>
 
 <div class="doc_text">
 
-<p>Before configuring and compiling the LLVM suite, you need to extract the LLVM
-GCC front end from the binary distribution.  It is used for building the
-bytecode libraries later used by the GCC front end for linking programs, and its
-location must be specified when the LLVM suite is configured.</p>
+<p>Before configuring and compiling the LLVM suite, you can optionally extract the 
+LLVM GCC front end from the binary distribution.  It is used for running the 
+llvm-test testsuite and for compiling C/C++ programs.  Note that you can optionally
+<a href="CFEBuildInstrs.html">build llvm-gcc yourself</a> after building the
+main LLVM repository.</p>
 
 <p>To install the GCC front end, do the following:</p>
 
@@ -742,6 +743,14 @@ location must be specified when the LLVM suite is configured.</p>
   <li><tt>gunzip --stdout llvmgcc-<i>version</i>.<i>platform</i>.tar.gz | tar -xvf
       -</tt></li>
 </ol>
+
+<p>Once the binary is uncompressed, you should add a symlink for llvm-gcc and 
+llvm-g++ to some directory in your path.  When you configure LLVM, it will 
+automatically detect llvm-gcc's presence (if it is in your path) enabling its
+use in llvm-test.  Note that you can always build or install llvm-gcc at any
+pointer after building the main LLVM repository: just reconfigure llvm and 
+llvm-test will pick it up.
+</p>
 
 <p>The binary versions of the GCC front end may not suit all of your needs.  For
 example, the binary distribution may include an old version of a system header
