@@ -1205,8 +1205,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   if ((TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
        TLI.isOperationLegal(ISD::BRIND, MVT::Other)) &&
       Cases.size() > 5) {
-    uint64_t First =cast<ConstantInt>(Cases.front().first)->getZExtValue();
-    uint64_t Last  = cast<ConstantInt>(Cases.back().first)->getZExtValue();
+    uint64_t First =cast<ConstantInt>(Cases.front().first)->getSExtValue();
+    uint64_t Last  = cast<ConstantInt>(Cases.back().first)->getSExtValue();
     double Density = (double)Cases.size() / (double)((Last - First) + 1ULL);
     
     if (Density >= 0.3125) {
@@ -1255,7 +1255,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       std::vector<MachineBasicBlock*> DestBBs;
       uint64_t TEI = First;
       for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++TEI)
-        if (cast<ConstantInt>(ii->first)->getZExtValue() == TEI) {
+        if (cast<ConstantInt>(ii->first)->getSExtValue() == TEI) {
           DestBBs.push_back(ii->second);
           ++ii;
         } else {
@@ -1363,8 +1363,8 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // Create a CaseBlock record representing a conditional branch to
       // the LHS node if the value being switched on SV is less than C. 
       // Otherwise, branch to LHS.
-      ISD::CondCode CC =  ISD::SETLT;
-      SelectionDAGISel::CaseBlock CB(CC, SV, C, TrueBB, FalseBB, CR.CaseBB);
+      SelectionDAGISel::CaseBlock CB(ISD::SETLT, SV, C, TrueBB, FalseBB,
+                                     CR.CaseBB);
 
       if (CR.CaseBB == CurMBB)
         visitSwitchCase(CB);
