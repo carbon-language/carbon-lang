@@ -186,16 +186,16 @@
     platform.</li>
     <li>Code must pass the deja gnu (llvm/test) test suite.</li>
   </ol>
-  <p>Additionally, the committer is responsible for all of the following items.
-  The developer should ensure each of the following before the code is 
-  submitted for review or committed.</p>
+  <p>Additionally, the committer is responsible for addressing all of the 
+  following items (preferably before submission):</p>
   <ol>
-    <li>Code must compile cleanly on all platforms.</li>
-    <li>Code must pass the <tt>llvm-test</tt> test suite including 
-    SPEC CINT2000, SPEC CFP2000, SPEC CINT2006, and SPEC CFP2006.</li>
-    <li>The change set must not cause performance or correctness regressions 
+    <li>The code should compile cleanly on all platforms.</li>
+    <li>The changes should not cause regressions in the <tt>llvm-test</tt>
+    suite including SPEC CINT2000, SPEC CFP2000, SPEC CINT2006, and 
+    SPEC CFP2006.</li>
+    <li>The change set should not cause performance or correctness regressions 
     for the LLVM tools.</li>
-    <li>The changes must not cause performance or correctness regressions in 
+    <li>The changes should not cause performance or correctness regressions in 
     code compiled with LLVM on all applicable targets.</li>
   </ol>
 </div>
@@ -213,7 +213,7 @@
     details).</li>
     <li>Test cases should be written in LLVM assembly language unless the
     feature or regression being tested requires another language (e.g. the
-    but being fixed or feature being implemented is in the lvm-gcc C++
+    bug being fixed or feature being implemented is in the lvm-gcc C++
     front-end).</li>
     <li>Test cases, especially for regressions, should be much as reduced as 
     possible, by <a href="CommandGuide/html/bugpoint.html">bugpoint</a> or
