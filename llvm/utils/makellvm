@@ -11,7 +11,7 @@ set DEBUG = 0
 ## Search path for automatically finding the obj-root to use.
 ## Note: The src root directory ${LLVMDIR} will be prepended to this path later.
 ## 
-set OBJROOTDIRLIST = ( "/localhome/$USER/llvm" )
+set OBJROOTDIRLIST = ( )
 
 set doit = 1
 unset options_done
