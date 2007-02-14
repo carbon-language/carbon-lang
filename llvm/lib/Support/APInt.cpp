@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/APInt.h"
-
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
@@ -814,36 +813,44 @@ APInt& APInt::flip(unsigned bitPosition) {
 std::string APInt::to_string(uint8_t radix) const {
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
-  char *buf = 0;
-  unsigned n = getNumWords() * 64 - CountLeadingZeros();
-  std::string format = radix == 8 ? 
-                       "%0*llo" : (radix == 10 ? "%0*llu" : "%0*llx");
-  // If the radix is a power of 2, set the format of ostringstream,
-  // and output the value into buf.
-  if ((radix & (radix - 1)) == 0) {
-    assert((buf = new char[n / Log2_32(radix) + 2]) && 
-           "Memory allocation failed");
-    if (isSingleWord())
-      sprintf(buf, format.c_str(), 0, VAL);
-    else {
-      unsigned offset = sprintf(buf, format.c_str(), 0, pVal[whichWord(n-1)]);
-      for (int i = whichWord(n-1) - 1; i >= 0; --i)
-        offset += sprintf(buf + offset, format.c_str(), 
-          64 / Log2_32(radix) + (64 % Log2_32(radix) ? 1 : 0), pVal[i]);
+  static const char *digits[] = { 
+    "0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F" 
+  };
+  std::string result;
+  unsigned bits_used = getNumWords() * 64 - CountLeadingZeros();
+  if (isSingleWord()) {
+    char buf[65];
+    const char *format = (radix == 10 ? "%llu" :
+       (radix == 16 ? "%llX" : (radix == 8 ? "%llo" : 0)));
+    if (format) {
+      sprintf(buf, format, VAL);
+    } else {
+      memset(buf, 0, 65);
+      uint64_t v = VAL;
+      while (bits_used) {
+        unsigned bit = v & 1;
+        bits_used--;
+        buf[bits_used] = digits[bit][0];
+        v >>=1;
+      }
     }
+    result = buf;
+    return result;
   }
-  else {  // If the radix = 10, need to translate the value into a
-          // string.
-    assert((buf = new char[(n / 64 + 1) * 20]) && "Memory allocation failed");
-    if (isSingleWord())
-      sprintf(buf, format.c_str(), 0, VAL);
-    else {
-      // FIXME: To be supported.
-    }
+
+  APInt tmp(*this);
+  APInt divisor(radix,64);
+  if (tmp == 0)
+    result = "0";
+  else while (tmp != 0) {
+    APInt APdigit = APIntOps::URem(tmp,divisor);
+    unsigned digit = APdigit.getValue();
+    assert(digit < radix && "URem failed");
+    result.insert(0,digits[digit]);
+    tmp = APIntOps::UDiv(tmp, divisor);
   }
-  std::string retStr(buf);
-  delete[] buf;
-  return retStr;
+
+  return result;
 }
 
 /// getMaxValue - This function returns the largest value
