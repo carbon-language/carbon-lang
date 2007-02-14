@@ -36,7 +36,6 @@
   <li><a href="#build">Build Problems</a>
   <ol>
   <li>When I run configure, it finds the wrong C compiler.</li>
-  <li>I compile the code, and I get some error about <tt>/localhome</tt>.</li>
   <li>The <tt>configure</tt> script finds the right C compiler, but it uses the
   LLVM linker from a previous build.  What do I do?</li>
   <li>When creating a dynamic library, I get a strange GLIBC error.</li>
@@ -212,22 +211,6 @@ for the C and C++ compiler, respectively.</p>
 <p>If <tt>configure</tt> finds the wrong compiler, either adjust your
 <tt>PATH</tt> environment variable or set <tt>CC</tt> and <tt>CXX</tt>
 explicitly.</p>
-
-</div>
-
-<div class="question">
-<p>I compile the code, and I get some error about <tt>/localhome</tt>.</p>
-</div>
-
-<div class="answer">
-
-<p>There are several possible causes for this.  The first is that you didn't set
-a pathname properly when using <tt>configure</tt>, and it defaulted to a
-pathname that we use on our research machines.</p>
-
-<p>Another possibility is that we hardcoded a path in our Makefiles.  If you see
-this, please email the LLVM bug mailing list with the name of the offending
-Makefile and a description of what is wrong with it.</p>
 
 </div>
 
