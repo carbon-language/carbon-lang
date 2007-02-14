@@ -12,14 +12,8 @@
 <table class="layout"><tr class="layout"><td class="layout">
 <h2>Contents</h2>
 <ol>
-  <li><a href="#overview">Overview</a></li>
+  <li><a href="#introduction">Introduction</a></li>
   <li><a href="#terms">Terminology</a></li>
-  <li><a href="#candl">Copyright and License</a>
-  <ol>
-    <li><a href="#copyright">Copyright</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#devagree">Developer Agreements</a></li>
-  </ol></li>
   <li><a href="#general">General Policies</a>
   <ol>
     <li><a href="#informed">Stay Informed</a> </li>
@@ -37,6 +31,12 @@
     <li><a href="#p_after">After Submission</a></li>
     <li><a href="#c_access">Obtaining Commit Access</a></li>
     <li><a href="#c_new">New Committers</a></li>
+  </ol></li>
+  <li><a href="#candl">Copyright and License</a>
+  <ol>
+    <li><a href="#copyright">Copyright</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#devagree">Developer Agreements</a></li>
   </ol></li>
 </ol>
 <div class="doc_author">Written by LLVM Oversight Team</div>
@@ -89,74 +89,6 @@
 </td></tr></table>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="candl">Copyright and License</a></div>
-<!--=========================================================================-->
-<div class="doc_text">
-  <p>We address here the issues of copyright and license for the LLVM project.
-  A copyright is literally the "right to copy". It is a set of exclusive rights
-  granted to a party regulating the particular expression of information.
-  In this case, the information is LLVM.  A license is something granted by a
-  copyright holder to other parties that controls the use of the information
-  by them. Currently, the University of Illinois is the LLVM copyright holder 
-  and the terms of its license to LLVM users and developers is the 
-  University of Illinois Open Source License (see LICENSE.txt).</p>
-</div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="copyright">Copyright</a></div>
-<div class="doc_text">
-  <p>The LLVM project believes in correct attribution of contributions to 
-  their contributors. Developers should, therefore, place their name at the 
-  top of any source file they originate and list their contributions in the
-  CREDITS.TXT file. Furthermore, correct attribution of submitted patches 
-  should be made in the commit comments.</p>
-  <p>However, for consistency and ease of management, the project requires the 
-  copyright for all LLVM software to be held by a single copyright holder.  
-  Although UIUC may assign the copyright of the software to another entity, 
-  the intent for the project is to always have a single entity hold the copy 
-  rights to LLVM at any given time.
-  <p>Having multiple copyright holders for various portions of LLVM is
-  problematic in the management of the software. Having a single copyright 
-  holder is in the best interests of all developers and users as it greatly 
-  reduces the managerial burden for any kind of administrative or technical 
-  decisions about LLVM.</p>
-</div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="license">License</a></div>
-<div class="doc_text">
-  <p>LLVM licensing decisions will be made by the LLVM Oversight Group. Any
-  issues, comments or suggestions with the licensing should be sent to 
-  <a href="mailto:oversight@llvm.org">oversight@llvm.org</a>.</p>
-  <p>The LLVM Oversight Group intends to keep LLVM perpetually open source 
-  and to use liberal open source licenses. The current license is the 
-  University of Illinois Open Source License (see LICENSE.TXT), which boils
-  down to this:</p>
-  <ul>
-    <li>You can freely distribute LLVM.</li>
-    <li>You must retain the copyright notice if you redistribute.</li>
-    <li>Binaries derived from LLVM must reproduce the copyright notice.</li>
-    <li>You can't use our names to promote your LLVM derived products.</li>
-    <li>There's no warranty on LLVM at all.</li>
-  </ul>
-  <p>We believe this fosters the widest adoption of LLVM because it allows 
-  commercial products to be derived from LLVM with few restrictions and
-  without a requirement for making any derived works also open source. The 
-  intent of the license is to let people use LLVM freely with only the
-  obligation to be honest about where it came from.</p>
-</div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="devagree">Developer Agreements</a></div>
-<div class="doc_text">
-  <p>With regards to the LLVM copyright and licensing, developers agree to:</p>
-  <ul>
-    <li>give up their copy rights to any contribution made so that the entire 
-    software base can be managed by a single copyright holder.</li>
-    <li>allow their contribution(s) to be licensed as open source by the then
-    current or subsequent license chosen by the LLVM Oversight Group.</li>
-    <li>not make LLVM available under any other licensing agreement.</li>
-  </ul>
-</div>
-
-<!--=========================================================================-->
 <div class="doc_section"><a name="general">General Policies</a></div>
 <!--=========================================================================-->
 <div class="doc_text">
@@ -173,18 +105,19 @@
   anything more than just casual work on LLVM, it is highly suggested that you 
   also subscribe to the llvm-commits list and pay attention to changes being 
   made by others.</p>
-  <p>Active developers must register an email account with bugzilla 
-  (<a href="http://llvm.org/bugs/">http://llvm.org/bugs/</a>) and preferably
-  subscribe to the llvm-bugs email list to keep track of bugs occurring in
-  LLVM.</p>
+  <p>We recommend that active developers register an email account with 
+  <a href="http://llvm.org/bugs/">LLVM Bugzilla</a> and preferably subscribe to
+  the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmbugs">llvm-bugs</a>
+  email list to keep track of bugs and enhancements occurring in LLVM.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"> <a name="newwork">Starting New Work</a></div>
 <div class="doc_text">
-  <p>When a developer begins new work with the aim of contributing it back to
-  LLVM, s/he must inform the community with an email to llvm-dev email list, 
-  to the extent possible. The reason for this is to:
+  <p>When a developer begins a major new project with the aim of contributing 
+  it back to LLVM, s/he should inform the community with an email to 
+  the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvm-dev</a> 
+  email list, to the extent possible. The reason for this is to:
   <ul>
     <li>keep the community informed about future changes to LLVM, </li>
     <li>avoid duplication of effort by having multiple parties working on the
@@ -192,6 +125,10 @@
     <li>ensure that any issues around the proposed work are discussed and
     resolved before any significant work is accomplished.</li>
   </ul>
+  <p>The design of LLVM is carefully controlled to ensure that all the pieces
+  fit together well. If you plan to make a major change to the way LLVM works or
+  a major new extension, it is a good idea to get consensus with the development
+  community before you start working on it.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -406,6 +343,100 @@
     may cause commit access to be revoked, at the sole discretion of the
     LLVM Oversight Group.</li>
   </ol>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="candl">Copyright and License</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+  <p>We address here the issues of copyright and license for the LLVM project.
+  The object of the copyright and license is the LLVM source and documentation.
+  Currently, the University of Illinois is the LLVM copyright holder and the 
+  terms of its license to LLVM users and developers is the 
+  <a href="http://www.opensource.org/licenses/UoI-NCSA.php">University of 
+    Illinois/NCSA Open Source License</a>.
+</div>
+
+<div class="doc_notes">
+  <p>NOTE: This section deals with legal matters but does not provide legal
+  advice. It is intended only as a general guideline.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="copyright">Attribution</a></div>
+<div class="doc_text">
+  <p>The LLVM project believes in correct attribution of contributions to 
+  their contributors, as follows:</p>
+  <ol>
+    <li>Developers who originate new files in LLVM should place their name at
+    the top of the file per the 
+    <a href="CodingStandards.html">Coding Standards</a>.</li>
+    <li>There should be only one name at the top of the file and it should be
+    the person who created the file.</li>
+    <li>Placing your name in the file does not imply copyright but does
+    correctly attribute the file to its author.</li>
+    <li>Developers should be aware that after some time has passed, the name at
+    the top of a file may become meaningless as maintenance/ownership of files
+    changes.</li>
+    <li>Developers should submit or commit patches to the 
+    <a href="http://llvm.org/cvsweb/cvsweb.cgi/llvm/CREDITS.TXT?rev=1.67&content-type=text/x-cvsweb-markup">CREDITS.txt</a> 
+    file to summarize their contributions.</li>
+    <li>Commit comments should contain correct attribution of the person who s
+    submitted the patch if that person is not the committer (i.e. when a 
+    developer with commit privileges commits a patch for someone else).</li>
+  </ol>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="copyright">Copyright</a></div>
+<div class="doc_text">
+  <p>
+  <p>However, for consistency and ease of management, the project requires the 
+  copyright for all LLVM software to be held by a single copyright holder.  
+  Although UIUC may assign the copyright of the software to another entity, 
+  the intent for the project is to always have a single entity hold the copy 
+  rights to LLVM at any given time.
+  <p>Having multiple copyright holders for various portions of LLVM is
+  problematic in the management of the software. Having a single copyright 
+  holder is in the best interests of all developers and users as it greatly 
+  reduces the managerial burden for any kind of administrative or technical 
+  decisions about LLVM.</p>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="license">License</a></div>
+<div class="doc_text">
+  <p>LLVM licensing decisions will be made by the LLVM Oversight Group. Any
+  issues, comments or suggestions with the licensing should be sent to 
+  <a href="mailto:oversight@llvm.org">oversight@llvm.org</a>.</p>
+  <p>The LLVM Oversight Group intends to keep LLVM perpetually open source 
+  and to use liberal open source licenses. The current license is the 
+  University of Illinois Open Source License (see LICENSE.TXT), which boils
+  down to this:</p>
+  <ul>
+    <li>You can freely distribute LLVM.</li>
+    <li>You must retain the copyright notice if you redistribute LLVM.</li>
+    <li>Binaries derived from LLVM must reproduce the copyright notice.</li>
+    <li>You can't use our names to promote your LLVM derived products.</li>
+    <li>There's no warranty on LLVM at all.</li>
+  </ul>
+  <p>We believe this fosters the widest adoption of LLVM because it allows 
+  commercial products to be derived from LLVM with few restrictions and
+  without a requirement for making any derived works also open source. We
+  suggest that you read the 
+  <a href="http://www.opensource.org/licenses/UoI-NCSA.php">License</a> if
+  further clarification is needed.</p>
+</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="devagree">Developer Agreements</a></div>
+<div class="doc_text">
+  <p>With regards to the LLVM copyright and licensing, developers agree to:</p>
+  <ul>
+    <li>assign their copy rights to UIUC for any contribution made so that 
+    the entire software base can be managed by a single copyright holder.</li>
+    <li>allow their contribution(s) to be licensed as open source by the then
+    current license chosen by the LLVM Oversight Group.</li>
+    <li>not make LLVM available under any other licensing agreement.</li>
+  </ul>
 </div>
 
 <!--=========================================================================-->
