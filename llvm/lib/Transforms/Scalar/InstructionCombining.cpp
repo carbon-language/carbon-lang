@@ -366,7 +366,6 @@ static Value *getBitCastOperand(Value *V) {
 
 /// This function is a wrapper around CastInst::isEliminableCastPair. It
 /// simply extracts arguments and returns what that function returns.
-/// @Determine if it is valid to eliminate a Convert pair
 static Instruction::CastOps 
 isEliminableCastPair(
   const CastInst *CI, ///< The first cast instruction
@@ -5813,8 +5812,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   const Type *CastElTy = PTy->getElementType();
   if (!AllocElTy->isSized() || !CastElTy->isSized()) return 0;
 
-  unsigned AllocElTyAlign = TD->getTypeAlignmentABI(AllocElTy);
-  unsigned CastElTyAlign = TD->getTypeAlignmentABI(CastElTy);
+  unsigned AllocElTyAlign = TD->getABITypeAlignment(AllocElTy);
+  unsigned CastElTyAlign = TD->getABITypeAlignment(CastElTy);
   if (CastElTyAlign < AllocElTyAlign) return 0;
 
   // If the allocation has multiple uses, only promote it if we are strictly
@@ -6903,22 +6902,22 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     unsigned Align = GV->getAlignment();
     if (Align == 0 && TD) 
-      Align = TD->getTypeAlignmentPref(GV->getType()->getElementType());
+      Align = TD->getPrefTypeAlignment(GV->getType()->getElementType());
     return Align;
   } else if (AllocationInst *AI = dyn_cast<AllocationInst>(V)) {
     unsigned Align = AI->getAlignment();
     if (Align == 0 && TD) {
       if (isa<AllocaInst>(AI))
-        Align = TD->getTypeAlignmentPref(AI->getType()->getElementType());
+        Align = TD->getPrefTypeAlignment(AI->getType()->getElementType());
       else if (isa<MallocInst>(AI)) {
         // Malloc returns maximally aligned memory.
-        Align = TD->getTypeAlignmentABI(AI->getType()->getElementType());
+        Align = TD->getABITypeAlignment(AI->getType()->getElementType());
         Align =
           std::max(Align,
-                   (unsigned)TD->getTypeAlignmentABI(Type::DoubleTy));
+                   (unsigned)TD->getABITypeAlignment(Type::DoubleTy));
         Align =
           std::max(Align,
-                   (unsigned)TD->getTypeAlignmentABI(Type::Int64Ty));
+                   (unsigned)TD->getABITypeAlignment(Type::Int64Ty));
       }
     }
     return Align;
@@ -6954,11 +6953,11 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
 
     const Type *BasePtrTy = GEPI->getOperand(0)->getType();
     const PointerType *PtrTy = cast<PointerType>(BasePtrTy);
-    if (TD->getTypeAlignmentABI(PtrTy->getElementType())
+    if (TD->getABITypeAlignment(PtrTy->getElementType())
         <= BaseAlignment) {
       const Type *GEPTy = GEPI->getType();
       const PointerType *GEPPtrTy = cast<PointerType>(GEPTy);
-      return TD->getTypeAlignmentABI(GEPPtrTy->getElementType());
+      return TD->getABITypeAlignment(GEPPtrTy->getElementType());
     }
     return 0;
   }
@@ -8550,8 +8549,10 @@ static bool CheapToScalarize(Value *V, bool isConstant) {
   return false;
 }
 
-/// getShuffleMask - Read and decode a shufflevector mask.  It turns undef
-/// elements into values that are larger than the #elts in the input.
+/// Read and decode a shufflevector mask.
+///
+/// It turns undef elements into values that are larger than the number of
+/// elements in the input.
 static std::vector<unsigned> getShuffleMask(const ShuffleVectorInst *SVI) {
   unsigned NElts = SVI->getType()->getNumElements();
   if (isa<ConstantAggregateZero>(SVI->getOperand(2)))

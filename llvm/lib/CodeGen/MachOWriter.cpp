@@ -147,7 +147,7 @@ void MachOCodeEmitter::startFunction(MachineFunction &MF) {
 
   // Align the output buffer to the appropriate alignment, power of 2.
   unsigned FnAlign = F->getAlignment();
-  unsigned TDAlign = TD->getTypeAlignmentPref(F->getType());
+  unsigned TDAlign = TD->getPrefTypeAlignment(F->getType());
   unsigned Align = Log2_32(std::max(FnAlign, TDAlign));
   assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
 
@@ -332,7 +332,7 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
   unsigned Size = TM.getTargetData()->getTypeSize(Ty);
   unsigned Align = GV->getAlignment();
   if (Align == 0)
-    Align = TM.getTargetData()->getTypeAlignmentPref(Ty);
+    Align = TM.getTargetData()->getPrefTypeAlignment(Ty);
   
   MachOSym Sym(GV, Mang->getValueName(GV), Sec->Index, TM);
   

@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
@@ -123,7 +124,7 @@ MachineFunction::MachineFunction(const Function *F,
   const TargetData &TD = *TM.getTargetData();
   bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
   unsigned EntrySize = IsPic ? 4 : TD.getPointerSize();
-  unsigned Alignment = IsPic ? TD.getIntABIAlignment()
+  unsigned Alignment = IsPic ? TD.getABITypeAlignment(Type::Int32Ty)
                              : TD.getPointerABIAlignment();
   JumpTableInfo = new MachineJumpTableInfo(EntrySize, Alignment);
   

@@ -244,7 +244,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
         const Type *Ty = AI->getAllocatedType();
         uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
         unsigned Align = 
-          std::max((unsigned)TLI.getTargetData()->getTypeAlignmentPref(Ty),
+          std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty),
                    AI->getAlignment());
 
         TySize *= CUI->getZExtValue();   // Get total allocated size.
@@ -1733,7 +1733,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   const Type *Ty = I.getAllocatedType();
   uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
   unsigned Align =
-    std::max((unsigned)TLI.getTargetData()->getTypeAlignmentPref(Ty),
+    std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty),
              I.getAlignment());
 
   SDOperand AllocSize = getValue(I.getArraySize());
@@ -2934,7 +2934,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     bool isInReg = FTy->paramHasAttr(j, FunctionType::InRegAttribute);
     bool isSRet  = FTy->paramHasAttr(j, FunctionType::StructRetAttribute);
     unsigned OriginalAlignment =
-      getTargetData()->getTypeAlignmentABI(I->getType());
+      getTargetData()->getABITypeAlignment(I->getType());
     // Flags[31:27] -> OriginalAlignment
     // Flags[2] -> isSRet
     // Flags[1] -> isInReg
@@ -3120,7 +3120,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     bool isInReg = Args[i].isInReg;
     bool isSRet  = Args[i].isSRet;
     unsigned OriginalAlignment =
-      getTargetData()->getTypeAlignmentABI(Args[i].Ty);
+      getTargetData()->getABITypeAlignment(Args[i].Ty);
     // Flags[31:27] -> OriginalAlignment
     // Flags[2] -> isSRet
     // Flags[1] -> isInReg

@@ -3056,7 +3056,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // new ones, as reuse may inhibit scheduling.
         const Type *Ty = MVT::getTypeForValueType(ExtraVT);
         unsigned TySize = (unsigned)TLI.getTargetData()->getTypeSize(Ty);
-        unsigned Align  = TLI.getTargetData()->getTypeAlignmentPref(Ty);
+        unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
         int SSFI =
           MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
@@ -3979,7 +3979,7 @@ SDOperand SelectionDAGLegalize::CreateStackTemporary(MVT::ValueType VT) {
   MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
   unsigned ByteSize = MVT::getSizeInBits(VT)/8;
   const Type *Ty = MVT::getTypeForValueType(VT);
-  unsigned StackAlign = (unsigned)TLI.getTargetData()->getTypeAlignmentPref(Ty);
+  unsigned StackAlign = (unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty);
   int FrameIdx = FrameInfo->CreateStackObject(ByteSize, StackAlign);
   return DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
 }
@@ -4289,7 +4289,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     MachineFunction &MF = DAG.getMachineFunction();
     const Type *F64Type = MVT::getTypeForValueType(MVT::f64);
     unsigned StackAlign =
-      (unsigned)TLI.getTargetData()->getTypeAlignmentPref(F64Type);
+      (unsigned)TLI.getTargetData()->getPrefTypeAlignment(F64Type);
     int SSFI = MF.getFrameInfo()->CreateStackObject(8, StackAlign);
     // get address of 8 byte buffer
     SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
