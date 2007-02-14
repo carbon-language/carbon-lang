@@ -1253,7 +1253,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       // a case statement, push the case's BB onto the vector, otherwise, push
       // the default BB.
       std::vector<MachineBasicBlock*> DestBBs;
-      uint64_t TEI = First;
+      int64_t TEI = First;
       for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++TEI)
         if (cast<ConstantInt>(ii->first)->getSExtValue() == TEI) {
           DestBBs.push_back(ii->second);
