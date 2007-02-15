@@ -1129,7 +1129,7 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
 
 
 //===----------------------------------------------------------------------===//
-// Packed Type Factory...
+// Vector Type Factory...
 //
 namespace llvm {
 class VectorValType {
