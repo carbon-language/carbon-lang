@@ -235,7 +235,9 @@ public:
 
   // Comparison operators.
   bool operator==(const BitVector &RHS) const {
-    assert(Size == RHS.Size && "Illegal operation!");
+    if (Size != RHS.Size)
+      return false;
+
     for (unsigned i = 0; i < NumBitWords(size()); ++i)
       if (Bits[i] != RHS.Bits[i])
         return false;
