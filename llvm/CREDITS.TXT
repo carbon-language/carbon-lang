@@ -85,6 +85,10 @@ N: Saem Ghani
 E: saemghani@gmail.com
 D: Callgraph class cleanups
 
+N: Dan Gohman
+E: djg@cray.com
+D: Miscellaneous bug fixes
+
 N: Paolo Invernizzi
 E: arathorn@fastwebnet.it
 D: Visual C++ compatibility fixes 
