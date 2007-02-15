@@ -36,7 +36,7 @@ class GlobalVariable;
 /// Enum used to categorize the alignment types stored by TargetAlignElem
 enum AlignTypeEnum {
   INTEGER_ALIGN = 'i',               ///< Integer type alignment
-  PACKED_ALIGN = 'v',                ///< Vector type alignment
+  VECTOR_ALIGN = 'v',                ///< Vector type alignment
   FLOAT_ALIGN = 'f',                 ///< Floating point type alignment
   AGGREGATE_ALIGN = 'a'              ///< Aggregate alignment
 };

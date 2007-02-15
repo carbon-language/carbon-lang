@@ -184,8 +184,8 @@ void TargetData::init(const std::string &TargetDescription) {
   setAlignment(INTEGER_ALIGN,   4,  8, 64);  // long
   setAlignment(FLOAT_ALIGN,     4,  4, 32);  // float
   setAlignment(FLOAT_ALIGN,     8,  8, 64);  // double
-  setAlignment(PACKED_ALIGN,    8,  8, 64);  // v2i32
-  setAlignment(PACKED_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
+  setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32
+  setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
   setAlignment(AGGREGATE_ALIGN, 0,  0,  0);  // struct, union, class, ...
   
   while (!temp.empty()) {
@@ -218,7 +218,7 @@ void TargetData::init(const std::string &TargetDescription) {
     case 'a': {
       align_type = (*p == 'i' ? INTEGER_ALIGN :
                     (*p == 'f' ? FLOAT_ALIGN :
-                     (*p == 'v' ? PACKED_ALIGN : AGGREGATE_ALIGN)));
+                     (*p == 'v' ? VECTOR_ALIGN : AGGREGATE_ALIGN)));
       size = (short) atoi(++p);
       abi_align = atoi(getToken(token, ":").c_str()) / 8;
       pref_align = atoi(getToken(token, ":").c_str()) / 8;
@@ -485,7 +485,7 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const
     AlignType = FLOAT_ALIGN;
     break;
   case Type::VectorTyID:
-    AlignType = PACKED_ALIGN;
+    AlignType = VECTOR_ALIGN;
     break;
   default:
     assert(0 && "Bad type for getAlignment!!!");
