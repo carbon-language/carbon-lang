@@ -198,7 +198,7 @@ public:
     return VT;
   }
 
-  /// getVectorTypeBreakdown - Packed types are broken down into some number of
+  /// getVectorTypeBreakdown - Vector types are broken down into some number of
   /// legal first class types.  For example, <8 x float> maps to 2 MVT::v4f32
   /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
   /// Similarly, <2 x long> turns into 4 MVT::i32 values with both PPC and X86.

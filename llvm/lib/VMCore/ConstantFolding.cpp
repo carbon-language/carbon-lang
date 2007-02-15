@@ -36,7 +36,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 /// CastConstantVector - Convert the specified ConstantVector node to the
-/// specified packed type.  At this point, we know that the elements of the
+/// specified vector type.  At this point, we know that the elements of the
 /// input packed constant are all simple integer or FP values.
 static Constant *CastConstantVector(ConstantVector *CP,
                                     const VectorType *DstTy) {

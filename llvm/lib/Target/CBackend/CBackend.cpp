@@ -1727,7 +1727,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
 // Push the struct onto the stack and recursively push all structs
 // this one depends on.
 //
-// TODO:  Make this work properly with packed types
+// TODO:  Make this work properly with vector types
 //
 void CWriter::printContainedStructs(const Type *Ty,
                                     std::set<const StructType*> &StructPrinted){

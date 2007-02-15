@@ -720,7 +720,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
             &B);
     Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint() ||
             isa<VectorType>(B.getType()),
-            "Arithmetic operators must have integer, fp, or packed type!", &B);
+            "Arithmetic operators must have integer, fp, or vector type!", &B);
     break;
   }
 

@@ -110,7 +110,7 @@ bool Type::canLosslesslyBitCastTo(const Type *Ty) const {
   if (!this->isFirstClassType() || !Ty->isFirstClassType())
     return false;
 
-  // Packed -> Packed conversions are always lossless if the two packed types
+  // Vector -> Vector conversions are always lossless if the two vector types
   // have the same size, otherwise not.
   if (const VectorType *thisPTy = dyn_cast<VectorType>(this))
     if (const VectorType *thatPTy = dyn_cast<VectorType>(Ty))

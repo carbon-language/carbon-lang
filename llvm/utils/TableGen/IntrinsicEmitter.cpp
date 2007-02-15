@@ -119,7 +119,7 @@ static bool EmitTypeVerify(std::ostream &OS, Record *ArgType) {
   if (ArgType->isSubClassOf("LLVMIntegerType"))
     OS << ArgType->getValueAsInt("Width") << ", ";
 
-  // If this is a packed type, check that the subtype and size are correct.
+  // If this is a vector type, check that the subtype and size are correct.
   else if (ArgType->isSubClassOf("LLVMVectorType")) {
     EmitTypeVerify(OS, ArgType->getValueAsDef("ElTy"));
     OS << ArgType->getValueAsInt("NumElts") << ", ";

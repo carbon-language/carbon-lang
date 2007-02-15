@@ -561,12 +561,12 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         
         if (const ArrayType *ATy = dyn_cast<ArrayType>(AggTy)) {
           if (Idx >= ATy->getNumElements()) return 0;  // Out of range.
-        } else if (const VectorType *PackedTy = dyn_cast<VectorType>(AggTy)) {
+        } else if (const VectorType *VectorTy = dyn_cast<VectorType>(AggTy)) {
           // Getting an element of the packed vector.
-          if (Idx >= PackedTy->getNumElements()) return 0;  // Out of range.
+          if (Idx >= VectorTy->getNumElements()) return 0;  // Out of range.
 
-          // Merge in the packed type.
-          if (MergeInType(PackedTy, UsedType, TD)) return 0;
+          // Merge in the vector type.
+          if (MergeInType(VectorTy, UsedType, TD)) return 0;
           
           const Type *SubTy = CanConvertToScalar(GEP, IsNotTrivial);
           if (SubTy == 0) return 0;
@@ -640,8 +640,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       Value *NV = new LoadInst(NewAI, LI->getName(), LI);
       if (NV->getType() != LI->getType()) {
         if (const VectorType *PTy = dyn_cast<VectorType>(NV->getType())) {
-          // If the result alloca is a packed type, this is either an element
-          // access or a bitcast to another packed type.
+          // If the result alloca is a vector type, this is either an element
+          // access or a bitcast to another vector type.
           if (isa<VectorType>(LI->getType())) {
             NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
           } else {
@@ -703,8 +703,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
         
         if (const VectorType *PTy = dyn_cast<VectorType>(AllocaType)) {
-          // If the result alloca is a packed type, this is either an element
-          // access or a bitcast to another packed type.
+          // If the result alloca is a vector type, this is either an element
+          // access or a bitcast to another vector type.
           if (isa<VectorType>(SV->getType())) {
             SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
           } else {            

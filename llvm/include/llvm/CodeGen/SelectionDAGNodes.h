@@ -234,7 +234,7 @@ namespace ISD {
     VEXTRACT_VECTOR_ELT,
     
     /// EXTRACT_VECTOR_ELT(VECTOR, IDX) - Returns a single element from VECTOR
-    /// (a legal packed type vector) identified by the (potentially variable)
+    /// (a legal vector type vector) identified by the (potentially variable)
     /// element number IDX.
     EXTRACT_VECTOR_ELT,
     

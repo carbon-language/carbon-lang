@@ -303,7 +303,7 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   // a <2 x int64> -> 4 x i32 registers.
   unsigned NumVectorRegs = 1;
   
-  // If this is a packed type, figure out what type it will decompose into
+  // If this is a vector type, figure out what type it will decompose into
   // and how many of the elements it will use.
   if (VT == MVT::Vector) {
     const VectorType *PTy = cast<VectorType>(V->getType());
@@ -1861,7 +1861,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
     SDOperand Op = getValue(I.getOperand(i));
     
-    // If this is a vector type, force it to the right packed type.
+    // If this is a vector type, force it to the right vector type.
     if (Op.getValueType() == MVT::Vector) {
       const VectorType *OpTy = cast<VectorType>(I.getOperand(i)->getType());
       MVT::ValueType EltVT = TLI.getValueType(OpTy->getElementType());
@@ -2970,7 +2970,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         const Type *EltTy = cast<VectorType>(I->getType())->getElementType();
 
         // Figure out if there is a Packed type corresponding to this Vector
-        // type.  If so, convert to the packed type.
+        // type.  If so, convert to the vector type.
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
           RetVals.push_back(TVT);
@@ -3036,7 +3036,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         const Type *EltTy = PTy->getElementType();
 
         // Figure out if there is a Packed type corresponding to this Vector
-        // type.  If so, convert to the packed type.
+        // type.  If so, convert to the vector type.
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
           SDOperand N = SDOperand(Result, i++);
@@ -3159,10 +3159,10 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         const Type *EltTy = PTy->getElementType();
         
         // Figure out if there is a Packed type corresponding to this Vector
-        // type.  If so, convert to the packed type.
+        // type.  If so, convert to the vector type.
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
-          // Insert a VBIT_CONVERT of the MVT::Vector type to the packed type.
+          // Insert a VBIT_CONVERT of the MVT::Vector type to the vector type.
           Op = DAG.getNode(ISD::VBIT_CONVERT, TVT, Op);
           Ops.push_back(Op);
           Ops.push_back(DAG.getConstant(Flags, MVT::i32));
@@ -3205,7 +3205,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         const Type *EltTy = PTy->getElementType();
         
         // Figure out if there is a Packed type corresponding to this Vector
-        // type.  If so, convert to the packed type.
+        // type.  If so, convert to the vector type.
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
           RetTys.push_back(TVT);
@@ -3242,7 +3242,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
           const Type *EltTy = cast<VectorType>(RetTy)->getElementType();
           
           // Figure out if there is a Packed type corresponding to this Vector
-          // type.  If so, convert to the packed type.
+          // type.  If so, convert to the vector type.
           MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy),NumElems);
           if (TVT != MVT::Other && isTypeLegal(TVT)) {
             // Insert a VBIT_CONVERT of the FORMAL_ARGUMENTS to a

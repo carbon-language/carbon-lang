@@ -1135,7 +1135,7 @@ static std::vector<Constant*> getValType(ConstantVector *CP) {
 }
 
 static ManagedStatic<ValueMap<std::vector<Constant*>, VectorType,
-                              ConstantVector> > PackedConstants;
+                              ConstantVector> > VectorConstants;
 
 Constant *ConstantVector::get(const VectorType *Ty,
                               const std::vector<Constant*> &V) {
@@ -1143,10 +1143,10 @@ Constant *ConstantVector::get(const VectorType *Ty,
   if (!V.empty()) {
     Constant *C = V[0];
     if (!C->isNullValue())
-      return PackedConstants->getOrCreate(Ty, V);
+      return VectorConstants->getOrCreate(Ty, V);
     for (unsigned i = 1, e = V.size(); i != e; ++i)
       if (V[i] != C)
-        return PackedConstants->getOrCreate(Ty, V);
+        return VectorConstants->getOrCreate(Ty, V);
   }
   return ConstantAggregateZero::get(Ty);
 }
@@ -1159,7 +1159,7 @@ Constant *ConstantVector::get(const std::vector<Constant*> &V) {
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantVector::destroyConstant() {
-  PackedConstants->remove(this);
+  VectorConstants->remove(this);
   destroyConstantImpl();
 }
 
@@ -1793,7 +1793,7 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
 
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   assert(isa<VectorType>(Val->getType()) &&
-         "Tried to create extractelement operation on non-packed type!");
+         "Tried to create extractelement operation on non-vector type!");
   assert(Idx->getType() == Type::Int32Ty &&
          "Extractelement index must be i32 type!");
   return getExtractElementTy(cast<VectorType>(Val->getType())->getElementType(),
@@ -1815,7 +1815,7 @@ Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
 Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt, 
                                          Constant *Idx) {
   assert(isa<VectorType>(Val->getType()) &&
-         "Tried to create insertelement operation on non-packed type!");
+         "Tried to create insertelement operation on non-vector type!");
   assert(Elt->getType() == cast<VectorType>(Val->getType())->getElementType()
          && "Insertelement types must match!");
   assert(Idx->getType() == Type::Int32Ty &&

@@ -482,12 +482,12 @@ void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
       break;
     }
     case Instruction::InsertElement: {
-      const VectorType *PackedTy = dyn_cast<VectorType>(InstTy);
-      if (!PackedTy || Oprnds.size() != 3)
+      const VectorType *VectorTy = dyn_cast<VectorType>(InstTy);
+      if (!VectorTy || Oprnds.size() != 3)
         error("Invalid insertelement instruction!");
       
       Value *V1 = getValue(iType, Oprnds[0]);
-      Value *V2 = getValue(getTypeSlot(PackedTy->getElementType()),Oprnds[1]);
+      Value *V2 = getValue(getTypeSlot(VectorTy->getElementType()),Oprnds[1]);
       Value *V3 = getValue(Int32TySlot, Oprnds[2]);
         
       if (!InsertElementInst::isValidOperands(V1, V2, V3))
@@ -496,13 +496,13 @@ void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
       break;
     }
     case Instruction::ShuffleVector: {
-      const VectorType *PackedTy = dyn_cast<VectorType>(InstTy);
-      if (!PackedTy || Oprnds.size() != 3)
+      const VectorType *VectorTy = dyn_cast<VectorType>(InstTy);
+      if (!VectorTy || Oprnds.size() != 3)
         error("Invalid shufflevector instruction!");
       Value *V1 = getValue(iType, Oprnds[0]);
       Value *V2 = getValue(iType, Oprnds[1]);
       const VectorType *EltTy = 
-        VectorType::get(Type::Int32Ty, PackedTy->getNumElements());
+        VectorType::get(Type::Int32Ty, VectorTy->getNumElements());
       Value *V3 = getValue(getTypeSlot(EltTy), Oprnds[2]);
       if (!ShuffleVectorInst::isValidOperands(V1, V2, V3))
         error("Invalid shufflevector instruction!");

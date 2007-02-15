@@ -135,9 +135,9 @@ stuff too.
 
 //===---------------------------------------------------------------------===//
 
-For packed types, TargetData.cpp::getTypeInfo() returns alignment that is equal
+For vector types, TargetData.cpp::getTypeInfo() returns alignment that is equal
 to the type size. It works but can be overly conservative as the alignment of
-specific packed types are target dependent.
+specific vector types are target dependent.
 
 //===---------------------------------------------------------------------===//
 
@@ -150,7 +150,7 @@ v4sf example(float *P) {
 
 //===---------------------------------------------------------------------===//
 
-We should constant fold packed type casts at the LLVM level, regardless of the
+We should constant fold vector type casts at the LLVM level, regardless of the
 cast.  Currently we cannot fold some casts because we don't have TargetData
 information in the constant folder, so we don't know the endianness of the 
 target!

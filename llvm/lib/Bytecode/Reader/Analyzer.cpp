@@ -427,7 +427,7 @@ public:
     const VectorType* PT,
     Constant**Elements, unsigned NumElts,
     unsigned TypeSlot,
-    Constant* PackedVal)
+    Constant* VectorVal)
   {
     if (os) {
       *os << "      PACKD: ";
@@ -439,7 +439,7 @@ public:
         *os << "\n";
       }
       *os << "        Value=";
-      PackedVal->print(*os);
+      VectorVal->print(*os);
       *os << "\n";
     }
 

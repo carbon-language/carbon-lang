@@ -1000,7 +1000,7 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
 bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt, 
                                         const Value *Index) {
   if (!isa<VectorType>(Vec->getType()))
-    return false;   // First operand of insertelement must be packed type.
+    return false;   // First operand of insertelement must be vector type.
   
   if (Elt->getType() != cast<VectorType>(Vec->getType())->getElementType())
     return false;// Second operand of insertelement must be packed element type.

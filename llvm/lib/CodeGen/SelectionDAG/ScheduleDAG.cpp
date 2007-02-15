@@ -332,7 +332,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     if (Align == 0) {
       Align = TM.getTargetData()->getPreferredTypeAlignmentShift(Type);
       if (Align == 0) {
-        // Alignment of packed types.  FIXME!
+        // Alignment of vector types.  FIXME!
         Align = TM.getTargetData()->getTypeSize(Type);
         Align = Log2_64(Align);
       }

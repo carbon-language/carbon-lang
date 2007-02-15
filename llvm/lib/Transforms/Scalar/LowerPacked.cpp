@@ -207,7 +207,7 @@ std::vector<Value*>& LowerPacked::getValues(Value* value)
 
 void LowerPacked::visitLoadInst(LoadInst& LI)
 {
-   // Make sure what we are dealing with is a packed type
+   // Make sure what we are dealing with is a vector type
    if (const VectorType* PKT = dyn_cast<VectorType>(LI.getType())) {
        // Initialization, Idx is needed for getelementptr needed later
        std::vector<Value*> Idx(2);
@@ -217,7 +217,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
                                       PKT->getNumElements());
        PointerType* APT = PointerType::get(AT);
 
-       // Cast the pointer to packed type to an equivalent array
+       // Cast the pointer to vector type to an equivalent array
        Value* array = new BitCastInst(LI.getPointerOperand(), APT, 
                                       LI.getName() + ".a", &LI);
 

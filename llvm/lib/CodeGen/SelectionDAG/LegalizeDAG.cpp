@@ -112,7 +112,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   std::map<SDOperand, std::pair<SDOperand, SDOperand> > SplitNodes;
   
   /// PackedNodes - For nodes that need to be packed from MVT::Vector types to
-  /// concrete packed types, this contains the mapping of ones we have already
+  /// concrete vector types, this contains the mapping of ones we have already
   /// processed to the result.
   std::map<SDOperand, SDOperand> PackedNodes;
   
@@ -1641,10 +1641,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
           
           // Figure out if there is a Packed type corresponding to this Vector
-          // type.  If so, convert to the packed type.
+          // type.  If so, convert to the vector type.
           MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
           if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
-            // Turn this into a return of the packed type.
+            // Turn this into a return of the vector type.
             Tmp2 = PackVectorOp(Tmp2, TVT);
             Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
           } else if (NumElems == 1) {
@@ -1793,10 +1793,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
 
           // Figure out if there is a Packed type corresponding to this Vector
-          // type.  If so, convert to the packed type.
+          // type.  If so, convert to the vector type.
           MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
           if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
-            // Turn this into a normal store of the packed type.
+            // Turn this into a normal store of the vector type.
             Tmp3 = PackVectorOp(Node->getOperand(1), TVT);
             Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
                                   ST->getSrcValueOffset());
@@ -2810,7 +2810,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
     
     // Figure out if there is a Packed type corresponding to this Vector
-    // type.  If so, convert to the packed type.
+    // type.  If so, convert to the vector type.
     MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
     if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
       // Turn this into a bit convert of the packed input.
@@ -3508,7 +3508,7 @@ SDOperand SelectionDAGLegalize::LowerVEXTRACT_VECTOR_ELT(SDOperand Op) {
   MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
   
   // Figure out if there is a Packed type corresponding to this Vector
-  // type.  If so, convert to the packed type.
+  // type.  If so, convert to the vector type.
   MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
   if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
     // Turn this into a packed extract_vector_elt operation.
@@ -5553,7 +5553,7 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
       MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
         
       // Figure out if there is a Packed type corresponding to this Vector
-      // type.  If so, convert to the packed type.
+      // type.  If so, convert to the vector type.
       MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
       if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
         // Turn this into a bit convert of the packed input.

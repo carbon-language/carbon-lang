@@ -940,7 +940,7 @@ public:
 
   virtual bool mayWriteToMemory() const { return false; }
 
-  /// getType - Overload to return most specific packed type.
+  /// getType - Overload to return most specific vector type.
   ///
   inline const VectorType *getType() const {
     return reinterpret_cast<const VectorType*>(Instruction::getType());
@@ -992,7 +992,7 @@ public:
 
   virtual bool mayWriteToMemory() const { return false; }
 
-  /// getType - Overload to return most specific packed type.
+  /// getType - Overload to return most specific vector type.
   ///
   inline const VectorType *getType() const {
     return reinterpret_cast<const VectorType*>(Instruction::getType());

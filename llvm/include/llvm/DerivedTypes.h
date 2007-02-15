@@ -286,7 +286,7 @@ public:
 /// SequentialType - This is the superclass of the array, pointer and packed
 /// type classes.  All of these represent "arrays" in memory.  The array type
 /// represents a specifically sized array, pointer types are unsized/unknown
-/// size arrays, packed types represent specifically sized arrays that
+/// size arrays, vector types represent specifically sized arrays that
 /// allow for use of SIMD instructions.  SequentialType holds the common
 /// features of all, which stem from the fact that all three lay their
 /// components out in memory identically.
@@ -350,7 +350,7 @@ public:
   }
 };
 
-/// VectorType - Class to represent packed types
+/// VectorType - Class to represent vector types
 ///
 class VectorType : public SequentialType {
   friend class TypeMap<VectorValType, VectorType>;

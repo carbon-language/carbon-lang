@@ -338,7 +338,7 @@ CppWriter::getCppName(const Type* Ty)
     case Type::ArrayTyID:       prefix = "ArrayTy_"; break;
     case Type::PointerTyID:     prefix = "PointerTy_"; break;
     case Type::OpaqueTyID:      prefix = "OpaqueTy_"; break;
-    case Type::VectorTyID:      prefix = "PackedTy_"; break;
+    case Type::VectorTyID:      prefix = "VectorTy_"; break;
     default:                    prefix = "OtherTy_"; break; // prevent breakage
   }
 
