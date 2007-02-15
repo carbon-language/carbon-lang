@@ -323,7 +323,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
        std::vector<Value*>& values = getValues(SI.getOperand(0));
 
        assert((values.size() == PKT->getNumElements()) &&
-              "Scalar must have the same number of elements as Packed Type");
+              "Scalar must have the same number of elements as Vector Type");
 
        for (unsigned i = 0, e = PKT->getNumElements(); i != e; ++i) {
             // Generate the indices for getelementptr
