@@ -7748,9 +7748,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // is a getelementptr instruction, combine the indices of the two
   // getelementptr instructions into a single instruction.
   //
-  std::vector<Value*> SrcGEPOperands;
+  SmallVector<Value*, 8> SrcGEPOperands;
   if (User *Src = dyn_castGetElementPtr(PtrOp))
-    SrcGEPOperands.assign(Src->op_begin(), Src->op_end());
+    SrcGEPOperands.append(Src->op_begin(), Src->op_end());
 
   if (!SrcGEPOperands.empty()) {
     // Note that if our source is a gep chain itself that we wait for that
@@ -7761,7 +7761,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         cast<Instruction>(SrcGEPOperands[0])->getNumOperands() == 2)
       return 0;   // Wait until our source is folded to completion.
 
-    std::vector<Value *> Indices;
+    SmallVector<Value*, 8> Indices;
 
     // Find out whether the last index in the source GEP is a sequential idx.
     bool EndsWithSequential = false;
