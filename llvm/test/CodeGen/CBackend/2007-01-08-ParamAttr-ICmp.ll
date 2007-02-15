@@ -1,7 +1,6 @@
-; RUN: llvm-as < %s | llc -march=c | \
-; RUN:   grep 'return ((((ltmp_2_2 == (signed int)ltmp_1_2)) ?  (1) : (0)))'
 ; For PR1099
-; XFAIL: *
+; RUN: llvm-as < %s | llc -march=c | \
+; RUN:   grep 'return ((((ltmp_2_2 == ltmp_1_2)) ? (1) : (0)))'
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8"
@@ -9,21 +8,21 @@ target triple = "i686-apple-darwin8"
 
 implementation   ; Functions:
 
-define bool @prune_match_entry_2E_ce(%struct.Connector* %a, i16 %b.0.0.val) {
+define i1 @prune_match_entry_2E_ce(%struct.Connector* %a, i16 %b.0.0.val) {
 newFuncRoot:
         br label %entry.ce
 
 cond_next.exitStub:             ; preds = %entry.ce
-        ret bool true
+        ret i1 true
 
 entry.return_crit_edge.exitStub:                ; preds = %entry.ce
-        ret bool false
+        ret i1 false
 
 entry.ce:               ; preds = %newFuncRoot
-        %tmp = getelementptr %struct.Connector* %a, i32 0, i32 0                ; <i16*> [#uses=1]
-        %tmp = load i16* %tmp           ; <i16> [#uses=1]
-        %tmp = icmp eq i16 %tmp, %b.0.0.val             ; <bool> [#uses=1]
-        br bool %tmp, label %cond_next.exitStub, label %entry.return_crit_edge.exitStub
+        %tmp1 = getelementptr %struct.Connector* %a, i32 0, i32 0                ; <i16*> [#uses=1]
+        %tmp2 = load i16* %tmp1           ; <i16> [#uses=1]
+        %tmp3 = icmp eq i16 %tmp2, %b.0.0.val             ; <i1> [#uses=1]
+        br i1 %tmp3, label %cond_next.exitStub, label %entry.return_crit_edge.exitStub
 }
 
 
