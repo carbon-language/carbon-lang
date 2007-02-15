@@ -278,7 +278,7 @@ public:
 
     Size = RHS.size();
     unsigned RHSWords = NumBitWords(Size);
-    if (Size > Capacity * BITS_PER_WORD) {
+    if (Size <= Capacity * BITS_PER_WORD) {
       std::copy(RHS.Bits, &RHS.Bits[RHSWords], Bits);
       clear_unused_bits();
       return *this;
