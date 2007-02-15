@@ -93,7 +93,7 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
     }
     
     OS << "    if (Len == " << I->first.size()
-       << " && !strcmp(Name, \"" << I->first << "\")) return Intrinsic::"
+       << " && !memcmp(Name, \"" << I->first << "\", Len)) return Intrinsic::"
        << I->second << ";\n";
   }
   OS << "  }\n";
