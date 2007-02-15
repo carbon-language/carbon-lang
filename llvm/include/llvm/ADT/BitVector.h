@@ -53,14 +53,6 @@ public:
       return *this;
     }
 
-    reference& operator=(const reference& rhs) {
-      if (*rhs.WordRef & (1 << rhs.BitPos))
-        *WordRef |= 1L << BitPos;
-      else
-        *WordRef &= ~(1L << BitPos);
-      return *this;
-    }
-
     operator bool() const {
       return (*WordRef) & (1L << BitPos);
     }
