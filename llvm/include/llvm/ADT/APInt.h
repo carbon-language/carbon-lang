@@ -143,7 +143,8 @@ public:
   /// @brief Postfix increment operator.
   inline const APInt operator++(int) {
     APInt API(*this);
-    return ++API;
+    ++(*this);
+    return API;
   }
 
   /// Increments the APInt by one.
@@ -154,7 +155,8 @@ public:
   /// @brief Postfix decrement operator. 
   inline const APInt operator--(int) {
     APInt API(*this);
-    return --API;
+    --(*this);
+    return API;
   }
 
   /// Decrements the APInt by one.
@@ -286,9 +288,9 @@ public:
 
   /// @returns a uint64_t value from this APInt. If this APInt contains a single
   /// word, just returns VAL, otherwise pVal[0].
-  inline uint64_t getValue() const {
+  inline uint64_t getValue(bool isSigned = false) const {
     if (isSingleWord())
-      return VAL;
+      return isSigned ? int64_t(VAL << (64 - BitsNum)) >> (64 - BitsNum) : VAL;
     unsigned n = getNumWords() * 64 - CountLeadingZeros();
     if (n <= 64)
       return pVal[0];
@@ -371,8 +373,9 @@ public:
 
   /// @brief Check if this APInt has a N-bits integer value.
   inline bool IsIntN(unsigned N) const {
+    assert(N && "N == 0 ???");
     if (isSingleWord()) {
-      return VAL == VAL & (~uint64_t(0ULL) >> (64 - N));
+      return VAL == (VAL & (~0ULL >> (64 - N)));
     } else {
       APInt Tmp(N, pVal);
       return Tmp == (*this);
@@ -384,7 +387,7 @@ public:
 
   /// @returns the floor log base 2 of this APInt.
   inline unsigned LogBase2() const {
-    return getNumWords() * APINT_BITS_PER_WORD - 
+    return getNumWords() * APINT_BITS_PER_WORD - 1 -
            CountLeadingZeros();
   }
 
