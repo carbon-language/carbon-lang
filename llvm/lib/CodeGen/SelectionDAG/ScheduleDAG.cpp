@@ -311,9 +311,9 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
         cerr << "MI = "; MI->print(cerr);
         cerr << "VReg = " << VReg << "\n";
         cerr << "VReg RegClass     size = " << VRC->getSize()
-          << ", align = " << VRC->getAlignment() << "\n";
+             << ", align = " << VRC->getAlignment() << "\n";
         cerr << "Expected RegClass size = " << RC->getSize()
-          << ", align = " << RC->getAlignment() << "\n";
+             << ", align = " << RC->getAlignment() << "\n";
 #endif
         cerr << "Fatal error, aborting.\n";
         abort();
