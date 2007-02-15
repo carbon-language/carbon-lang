@@ -78,6 +78,7 @@ public:
   BitVector(const BitVector &RHS) : Size(RHS.size()) {
     if (Size == 0) {
       Bits = NULL;
+      Capacity = 0;
       return;
     }
 
