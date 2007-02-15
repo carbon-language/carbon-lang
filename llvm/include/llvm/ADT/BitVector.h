@@ -161,23 +161,15 @@ public:
   }
 
   /// resize - Grow or shrink the bitvector.
-  void resize(unsigned N) {
-    if (N > Capacity * BITS_PER_WORD) {
-      unsigned OldCapacity = Capacity;
-      grow(N);
-      init_words(&Bits[OldCapacity], (Capacity-OldCapacity), false);
-    }
-    Size = N;
-  }
-
-  void resize(unsigned N, bool t) {
+  void resize(unsigned N, bool t = false) {
     if (N > Capacity * BITS_PER_WORD) {
       unsigned OldCapacity = Capacity;
       grow(N);
       init_words(&Bits[OldCapacity], (Capacity-OldCapacity), t);
     }
     Size = N;
-    clear_unused_bits();
+    if (t)
+      clear_unused_bits();
   }
 
   void reserve(unsigned N) {
