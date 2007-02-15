@@ -184,7 +184,7 @@ public:
 
   /// isPhysRegUsed - Return true if the specified register is used in this
   /// function.  This only works after register allocation.
-  bool isPhysRegUsed(unsigned Reg) { return UsedPhysRegs[Reg]; }
+  bool isPhysRegUsed(unsigned Reg) const { return UsedPhysRegs[Reg]; }
 
   /// changePhyRegUsed - This method allows code that runs after register
   /// allocation to keep the PhysRegsUsed array up-to-date.
