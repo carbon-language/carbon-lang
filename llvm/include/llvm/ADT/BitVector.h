@@ -157,11 +157,7 @@ public:
 
   /// clear - Clear all bits.
   void clear() {
-    if (Capacity > 0) {
-      delete[] Bits;
-      Bits = NULL;
-      Size = Capacity = 0;
-    }
+    Size = 0;
   }
 
   /// resize - Grow or shrink the bitvector.
