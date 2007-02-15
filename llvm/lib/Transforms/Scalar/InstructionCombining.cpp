@@ -3411,7 +3411,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 /// CollectBSwapParts - Look to see if the specified value defines a single byte
 /// in the result.  If it does, and if the specified byte hasn't been filled in
 /// yet, fill it in and return false.
-static bool CollectBSwapParts(Value *V, std::vector<Value*> &ByteValues) {
+static bool CollectBSwapParts(Value *V, SmallVector<Value*, 8> &ByteValues) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) return true;
 
@@ -3495,7 +3495,7 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   
   /// ByteValues - For each byte of the result, we keep track of which value
   /// defines each byte.
-  std::vector<Value*> ByteValues;
+  SmallVector<Value*, 8> ByteValues;
   ByteValues.resize(TD->getTypeSize(I.getType()));
     
   // Try to find all the pieces corresponding to the bswap.
@@ -5791,7 +5791,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   
   // Remove any uses of AI that are dead.
   assert(!CI.use_empty() && "Dead instructions should be removed earlier!");
-  std::vector<Instruction*> DeadUsers;
+  
   for (Value::use_iterator UI = AI.use_begin(), E = AI.use_end(); UI != E; ) {
     Instruction *User = cast<Instruction>(*UI++);
     if (isInstructionTriviallyDead(User)) {
