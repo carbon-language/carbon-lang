@@ -86,6 +86,7 @@ public:
     Capacity = NumBitWords(s);
     Bits = new BitWord[Capacity];
     init_words(Bits, Capacity, t);
+    clear_unused_bits();
   }
 
   /// BitVector copy ctor.
@@ -175,6 +176,7 @@ public:
       init_words(&Bits[OldCapacity], (Capacity-OldCapacity), t);
     }
     Size = N;
+    clear_unused_bits();
   }
 
   void reserve(unsigned N) {
@@ -274,17 +276,16 @@ public:
   const BitVector &operator=(const BitVector &RHS) {
     if (this == &RHS) return *this;
 
-    unsigned RHSWords = NumBitWords(RHS.size());
-    unsigned NewSize = RHS.size();
-    if (NewSize <= Capacity * BITS_PER_WORD) {
+    Size = RHS.size();
+    unsigned RHSWords = NumBitWords(Size);
+    if (Size > Capacity * BITS_PER_WORD) {
       std::copy(RHS.Bits, &RHS.Bits[RHSWords], Bits);
-      Size = NewSize;
       clear_unused_bits();
       return *this;
     }
   
     // Grow the bitvector to have enough elements.
-    Capacity = NumBitWords(NewSize);
+    Capacity = NumBitWords(Size);
     BitWord *NewBits = new BitWord[Capacity];
     std::copy(RHS.Bits, &RHS.Bits[RHSWords], NewBits);
 
