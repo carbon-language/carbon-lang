@@ -51,6 +51,7 @@
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -9088,11 +9089,11 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 /// whose condition is a known constant, we only visit the reachable successors.
 ///
 static void AddReachableCodeToWorklist(BasicBlock *BB, 
-                                       std::set<BasicBlock*> &Visited,
+                                       SmallPtrSet<BasicBlock*, 64> &Visited,
                                        std::vector<Instruction*> &WorkList,
                                        const TargetData *TD) {
   // We have now visited this block!  If we've already been here, bail out.
-  if (!Visited.insert(BB).second) return;
+  if (!Visited.insert(BB)) return;
     
   for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
     Instruction *Inst = BBI++;
@@ -9154,7 +9155,7 @@ bool InstCombiner::runOnFunction(Function &F) {
     // Do a depth-first traversal of the function, populate the worklist with
     // the reachable instructions.  Ignore blocks that are not reachable.  Keep
     // track of which blocks we visit.
-    std::set<BasicBlock*> Visited;
+    SmallPtrSet<BasicBlock*, 64> Visited;
     AddReachableCodeToWorklist(F.begin(), Visited, WorkList, TD);
 
     // Do a quick scan over the function.  If we find any blocks that are
