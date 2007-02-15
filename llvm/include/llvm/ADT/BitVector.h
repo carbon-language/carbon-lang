@@ -98,7 +98,7 @@ public:
       else if (sizeof(BitWord) == 8)
         NumBits += CountPopulation_64(Bits[i]);
       else
-        assert(0 && "Unsupported!")
+        assert(0 && "Unsupported!");
     return NumBits;
   }
 
@@ -160,8 +160,7 @@ public:
       init_words(&Bits[OldCapacity], (Capacity-OldCapacity), t);
     }
     Size = N;
-    if (t)
-      clear_unused_bits();
+    clear_unused_bits();
   }
 
   void reserve(unsigned N) {
