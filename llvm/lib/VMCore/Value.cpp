@@ -185,15 +185,64 @@ void Value::setName(const char *NameStr, unsigned NameLen) {
 /// takeName - transfer the name from V to this value, setting V's name to
 /// empty.  It is an error to call V->takeName(V). 
 void Value::takeName(Value *V) {
-  if (!V->hasName()) {
-    if (hasName())
-      setName("");
+  ValueSymbolTable *ST = 0;
+  // If this value has a name, drop it.
+  if (hasName()) {
+    // Get the symtab this is in.
+    if (getSymTab(this, ST)) {
+      // We can't set a name on this value, but we need to clear V's name if
+      // it has one.
+      if (V->hasName()) V->setName(0, 0);
+      return;  // Cannot set a name on this value (e.g. constant).
+    }
+    
+    // Remove old name.
+    if (ST)
+      ST->removeValueName(Name);
+    Name->Destroy();
+    Name = 0;
+  } 
+  
+  // Now we know that this has no name.
+  
+  // If V has no name either, we're done.
+  if (!V->hasName()) return;
+   
+  // Get this's symtab if we didn't before.
+  if (!ST) {
+    if (getSymTab(this, ST)) {
+      // Clear V's name.
+      V->setName(0, 0);
+      return;  // Cannot set a name on this value (e.g. constant).
+    }
+  }
+  
+  // Get V's ST, this should always succed, because V has a name.
+  ValueSymbolTable *VST;
+  bool Failure = getSymTab(V, VST);
+  assert(!Failure && "V has a name, so it should have a ST!");
+  
+  // If these values are both in the same symtab, we can do this very fast.
+  // This works even if both values have no symtab yet.
+  if (ST == VST) {
+    // Take the name!
+    Name = V->Name;
+    V->Name = 0;
+    Name->setValue(this);
     return;
   }
   
-  std::string Name = V->getName();
-  V->setName("");
-  setName(Name);
+  // Otherwise, things are slightly more complex.  Remove V's name from VST and
+  // then reinsert it into ST.
+  
+  if (VST)
+    VST->removeValueName(V->Name);
+  Name = V->Name;
+  V->Name = 0;
+  Name->setValue(this);
+  
+  if (ST)
+    ST->reinsertValue(this);
 }
 
 
