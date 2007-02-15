@@ -245,7 +245,8 @@ TargetData::setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
   std::pair<align_iterator, align_iterator> ins_result =
             std::equal_range(Alignments.begin(), Alignments.end(), elt);
   align_iterator I = ins_result.first;
-  if (I->AlignType == align_type && I->TypeBitWidth == bit_width) {
+  if (I != Alignments.end() && I->AlignType == align_type && 
+      I->TypeBitWidth == bit_width) {
     // Update the abi, preferred alignments.
     I->ABIAlign = abi_align;
     I->PrefAlign = pref_align;
