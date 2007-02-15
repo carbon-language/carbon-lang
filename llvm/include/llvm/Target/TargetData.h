@@ -48,7 +48,7 @@ enum AlignTypeEnum {
 /// @note The unusual order of elements in the structure attempts to reduce
 /// padding and make the structure slightly more cache friendly.
 struct TargetAlignElem {
-  unsigned char       AlignType;      //< Alignment type (AlignTypeEnum)
+  AlignTypeEnum       AlignType : 8;  //< Alignment type (AlignTypeEnum)
   unsigned char       ABIAlign;       //< ABI alignment for this type/bitw
   unsigned char       PrefAlign;      //< Pref. alignment for this type/bitw
   short               TypeBitWidth;   //< Type bit width
@@ -64,18 +64,12 @@ struct TargetAlignElem {
   std::ostream &dump(std::ostream &os) const;
 };
 
-//! TargetAlignElem output stream inserter
-/*!
-  @sa TargetAlignElem::dump()
- */
-std::ostream &operator<<(std::ostream &os, const TargetAlignElem &elem);
-
 class TargetData : public ImmutablePass {
 private:
   bool          LittleEndian;          ///< Defaults to false
   unsigned char PointerMemSize;        ///< Pointer size in bytes
   unsigned char PointerABIAlign;       ///< Pointer ABI alignment
-  unsigned char PointerPrefAlign;      ///< Pointer preferred global alignment
+  unsigned char PointerPrefAlign;      ///< Pointer preferred alignment
 
   //! Where the primitive type alignment data is stored.
   /*!
@@ -99,7 +93,8 @@ private:
   void setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
                     unsigned char pref_align, short bit_width);
   //! Get TargetAlignElem from alignment type and bit width
-  const TargetAlignElem &getAlignment(AlignTypeEnum, short) const;
+  const TargetAlignElem &getAlignment(AlignTypeEnum align_type,
+                                      short bit_width) const;
   //! Internal helper method that returns requested alignment for type.
   unsigned char getAlignment(const Type *Ty, bool abi_or_pref) const;
 

@@ -50,8 +50,8 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
     const Type *Ty = ST->getElementType(i);
     unsigned TyAlign;
     uint64_t TySize;
-    TyAlign = (unsigned) TD.getABITypeAlignment(Ty);
-    TySize = (unsigned) TD.getTypeSize(Ty);
+    TyAlign = (ST->isPacked() ? 1 : TD.getABITypeAlignment(Ty));
+    TySize = TD.getTypeSize(Ty);
 
     // Add padding if necessary to make the data element aligned properly...
     if (StructSize % TyAlign != 0)
@@ -94,8 +94,7 @@ unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
 
 TargetAlignElem
 TargetAlignElem::get(AlignTypeEnum align_type, unsigned char abi_align,
-                     unsigned char pref_align, short bit_width)
-{
+                     unsigned char pref_align, short bit_width) {
   TargetAlignElem retval;
   retval.AlignType = align_type;
   retval.ABIAlign = abi_align;
@@ -105,15 +104,13 @@ TargetAlignElem::get(AlignTypeEnum align_type, unsigned char abi_align,
 }
 
 bool
-TargetAlignElem::operator<(const TargetAlignElem &rhs) const
-{
+TargetAlignElem::operator<(const TargetAlignElem &rhs) const {
   return ((AlignType < rhs.AlignType)
           || (AlignType == rhs.AlignType && TypeBitWidth < rhs.TypeBitWidth));
 }
 
 bool
-TargetAlignElem::operator==(const TargetAlignElem &rhs) const
-{
+TargetAlignElem::operator==(const TargetAlignElem &rhs) const {
   return (AlignType == rhs.AlignType
           && ABIAlign == rhs.ABIAlign
           && PrefAlign == rhs.PrefAlign
@@ -121,18 +118,11 @@ TargetAlignElem::operator==(const TargetAlignElem &rhs) const
 }
 
 std::ostream &
-TargetAlignElem::dump(std::ostream &os) const
-{
+TargetAlignElem::dump(std::ostream &os) const {
   return os << AlignType
             << TypeBitWidth
             << ":" << (int) (ABIAlign * 8)
             << ":" << (int) (PrefAlign * 8);
-}
-
-std::ostream &
-llvm::operator<<(std::ostream &os, const TargetAlignElem &elem)
-{
-  return elem.dump(os);
 }
 
 const TargetAlignElem TargetData::InvalidAlignmentElem =
@@ -146,9 +136,9 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
  A TargetDescription string consists of a sequence of hyphen-delimited
  specifiers for target endianness, pointer size and alignments, and various
  primitive type sizes and alignments. A typical string looks something like:
- <br>
+ <br><br>
  "E-p:32:32:32-i1:8:8-i8:8:8-i32:32:32-i64:32:64-f32:32:32-f64:32:64"
- <br>
+ <br><br>
  (note: this string is not fully specified and is only an example.)
  \p
  Alignments come in two flavors: ABI and preferred. ABI alignment (abi_align,
@@ -187,16 +177,16 @@ void TargetData::init(const std::string &TargetDescription) {
   PointerPrefAlign = PointerABIAlign;
 
   // Default alignments
-  setAlignment(INTEGER_ALIGN,   1,  1, 1); // Bool
-  setAlignment(INTEGER_ALIGN,   1,  1, 8); // Byte
-  setAlignment(INTEGER_ALIGN,   2,  2, 16); // short
-  setAlignment(INTEGER_ALIGN,   4,  4, 32); // int
-  setAlignment(INTEGER_ALIGN,   0,  8, 64); // long
-  setAlignment(FLOAT_ALIGN,     4,  4, 32); // float
-  setAlignment(FLOAT_ALIGN,     0,  8, 64); // double
-  setAlignment(PACKED_ALIGN,    8,  8, 64); // v2i32
+  setAlignment(INTEGER_ALIGN,   1,  1, 1);   // Bool
+  setAlignment(INTEGER_ALIGN,   1,  1, 8);   // Byte
+  setAlignment(INTEGER_ALIGN,   2,  2, 16);  // short
+  setAlignment(INTEGER_ALIGN,   4,  4, 32);  // int
+  setAlignment(INTEGER_ALIGN,   4,  8, 64);  // long
+  setAlignment(FLOAT_ALIGN,     4,  4, 32);  // float
+  setAlignment(FLOAT_ALIGN,     8,  8, 64);  // double
+  setAlignment(PACKED_ALIGN,    8,  8, 64);  // v2i32
   setAlignment(PACKED_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
-  setAlignment(AGGREGATE_ALIGN, 0,  0,  0); // struct, union, class, ...
+  setAlignment(AGGREGATE_ALIGN, 0,  0,  0);  // struct, union, class, ...
   
   while (!temp.empty()) {
     std::string token = getToken(temp, "-");
@@ -241,17 +231,6 @@ void TargetData::init(const std::string &TargetDescription) {
       break;
     }
   }
-
-  // Unless explicitly specified, the alignments for longs and doubles is 
-  // capped by pointer size.
-  // FIXME: Is this still necessary?
-  const TargetAlignElem &long_align = getAlignment(INTEGER_ALIGN, 64);
-  if (long_align.ABIAlign == 0)
-    setAlignment(INTEGER_ALIGN, PointerMemSize, PointerMemSize, 64);
-
-  const TargetAlignElem &double_align = getAlignment(FLOAT_ALIGN, 64);
-  if (double_align.ABIAlign == 0)
-    setAlignment(FLOAT_ALIGN, PointerMemSize, PointerMemSize, 64);
 }
 
 TargetData::TargetData(const Module *M) {
@@ -377,44 +356,21 @@ void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
 }
 
 
-struct hyphen_delimited :
-  public std::iterator<std::output_iterator_tag, void, void, void, void>
-{
-  std::ostream &o;
-
-  hyphen_delimited(std::ostream &os) :
-    o(os)
-  { }
-
-  hyphen_delimited &operator=(const TargetAlignElem &elem)
-  {
-    o << "-" << elem;
-    return *this;
-  }
-
-  hyphen_delimited &operator*()
-  {
-    return *this;
-  }
-
-  hyphen_delimited &operator++()
-  {
-    return *this;
-  }
-};
-
-
 std::string TargetData::getStringRepresentation() const {
-  std::stringstream repr;
-
-  if (LittleEndian)
-    repr << "e";
-  else
-    repr << "E";
-  repr << "-p:" << (PointerMemSize * 8) << ":" << (PointerABIAlign * 8)
-       << ":" << (PointerPrefAlign * 8);
-  std::copy(Alignments.begin(), Alignments.end(), hyphen_delimited(repr));
-  return repr.str();
+  std::string repr;
+  repr.append(LittleEndian ? "e" : "E");
+  repr.append("-p:").append(itostr((int64_t) (PointerMemSize * 8))).
+      append(":").append(itostr((int64_t) (PointerABIAlign * 8))).
+      append(":").append(itostr((int64_t) (PointerPrefAlign * 8)));
+  for (align_const_iterator I = Alignments.begin();
+       I != Alignments.end();
+       ++I) {
+    repr.append("-").append(1, (char) I->AlignType).
+      append(utostr((int64_t) I->TypeBitWidth)).
+      append(":").append(utostr((uint64_t) (I->ABIAlign * 8))).
+      append(":").append(utostr((uint64_t) (I->PrefAlign * 8)));
+  }
+  return repr;
 }
 
 
