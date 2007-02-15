@@ -81,17 +81,19 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "// Function name -> enum value recognizer code.\n";
   OS << "#ifdef GET_FUNCTION_RECOGNIZER\n";
   OS << "  switch (Name[5]) {\n";
-  OS << "  default: break;\n";
+  OS << "  default:\n";
   // Emit the intrinsics in sorted order.
   char LastChar = 0;
   for (std::map<std::string, std::string>::iterator I = IntMapping.begin(),
        E = IntMapping.end(); I != E; ++I) {
     if (I->first[5] != LastChar) {
       LastChar = I->first[5];
+      OS << "    break;\n";
       OS << "  case '" << LastChar << "':\n";
     }
     
-    OS << "    if (Name == \"" << I->first << "\") return Intrinsic::"
+    OS << "    if (Len == " << I->first.size()
+       << " && !strcmp(Name, \"" << I->first << "\")) return Intrinsic::"
        << I->second << ";\n";
   }
   OS << "  }\n";
