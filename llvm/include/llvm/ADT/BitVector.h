@@ -73,24 +73,22 @@ public:
   }
 
   /// BitVector ctor - Creates a bitvector of specified number of bits. All
-  /// bits are initialized to false;
-  BitVector(unsigned s) : Size(s) {
-    Capacity = NumBitWords(s);
-    Bits = new BitWord[Capacity];
-    init_words(Bits, Capacity, false);
-  }
-
-  /// BitVector ctor - Creates a bitvector of specified number of bits. All
   /// bits are initialized to the specified value.
-  BitVector(unsigned s, bool t) : Size(s) {
+  explicit BitVector(unsigned s, bool t = false) : Size(s) {
     Capacity = NumBitWords(s);
     Bits = new BitWord[Capacity];
     init_words(Bits, Capacity, t);
-    clear_unused_bits();
+    if (t)
+      clear_unused_bits();
   }
 
   /// BitVector copy ctor.
   BitVector(const BitVector &RHS) : Size(RHS.size()) {
+    if (Size == 0) {
+      Bits = NULL;
+      return;
+    }
+
     Capacity = NumBitWords(RHS.size());
     Bits = new BitWord[Capacity];
     std::copy(RHS.Bits, &RHS.Bits[Capacity], Bits);
