@@ -49,7 +49,7 @@ D: Fixes to the Reassociation pass, various improvement patches
 
 N: Evan Cheng
 E: evan.cheng@apple.com
-D: X86 backend developer
+D: ARM and X86 backends
 D: Instruction scheduler improvements
 D: Loop optimizer improvements
 D: Target-independent code generator improvements
