@@ -22,6 +22,7 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
 
 namespace llvm {
@@ -54,7 +55,7 @@ namespace llvm {
     typedef IndexedMap<unsigned> Reg2RegMap;
     Reg2RegMap r2rMap_;
 
-    std::vector<bool> allocatableRegs_;
+    BitVector allocatableRegs_;
 
   public:
     struct CopyRec {

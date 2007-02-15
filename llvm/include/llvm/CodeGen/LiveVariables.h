@@ -30,6 +30,7 @@
 #define LLVM_CODEGEN_LIVEVARIABLES_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/ADT/BitVector.h"
 #include <map>
 
 namespace llvm {
@@ -75,7 +76,7 @@ public:
     /// through.  This is a bit set which uses the basic block number as an
     /// index.
     ///
-    std::vector<bool> AliveBlocks;
+    BitVector AliveBlocks;
 
     /// Kills - List of MachineInstruction's which are the last use of this
     /// virtual register (kill it) in their basic block.
@@ -111,7 +112,7 @@ private:
   /// are actually register allocatable by the target machine.  We can not track
   /// liveness for values that are not in this set.
   ///
-  std::vector<bool> AllocatablePhysicalRegisters;
+  BitVector AllocatablePhysicalRegisters;
 
 private:   // Intermediate data structures
   const MRegisterInfo *RegInfo;

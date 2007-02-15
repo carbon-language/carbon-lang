@@ -30,6 +30,7 @@ class MachineLocation;
 class MachineMove;
 class TargetRegisterClass;
 class CalleeSavedInfo;
+class BitVector;
 
 /// TargetRegisterDesc - This record contains all of the information known about
 /// a particular register.  The AliasSet field (if not null) contains a pointer
@@ -240,7 +241,7 @@ public:
 
   /// getAllocatableSet - Returns a bitset indexed by register number
   /// indicating if a register is allocatable or not.
-  std::vector<bool> getAllocatableSet(MachineFunction &MF) const;
+  BitVector getAllocatableSet(MachineFunction &MF) const;
 
   const TargetRegisterDesc &operator[](unsigned RegNo) const {
     assert(RegNo < NumRegs &&

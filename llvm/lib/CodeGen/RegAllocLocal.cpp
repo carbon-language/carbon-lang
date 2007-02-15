@@ -789,7 +789,7 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   // is allocatable.  To handle this, we mark all unallocatable registers as
   // being pinned down, permanently.
   {
-    std::vector<bool> Allocable = RegInfo->getAllocatableSet(Fn);
+    BitVector Allocable = RegInfo->getAllocatableSet(Fn);
     for (unsigned i = 0, e = Allocable.size(); i != e; ++i)
       if (!Allocable[i])
         PhysRegsUsed[i] = -2;  // Mark the reg unallocable.

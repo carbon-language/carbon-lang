@@ -14,10 +14,10 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
-
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/ADT/BitVector.h"
 
 using namespace llvm;
 
@@ -34,8 +34,8 @@ MRegisterInfo::MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
 
 MRegisterInfo::~MRegisterInfo() {}
 
-std::vector<bool> MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
-  std::vector<bool> Allocatable(NumRegs);
+BitVector MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
+  BitVector Allocatable(NumRegs);
   for (MRegisterInfo::regclass_iterator I = regclass_begin(),
          E = regclass_end(); I != E; ++I) {
     const TargetRegisterClass *RC = *I;

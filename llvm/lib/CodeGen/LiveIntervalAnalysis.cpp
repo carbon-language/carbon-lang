@@ -461,7 +461,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // If the kill happens after the definition, we have an intra-block
       // live range.
       if (killIdx > defIndex) {
-        assert(vi.AliveBlocks.empty() &&
+        assert(vi.AliveBlocks.none() &&
                "Shouldn't be alive across any blocks!");
         LiveRange LR(defIndex, killIdx, ValNum);
         interval.addRange(LR);
