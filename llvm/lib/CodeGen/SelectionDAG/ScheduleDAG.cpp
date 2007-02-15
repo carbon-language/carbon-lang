@@ -302,8 +302,22 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
       const TargetRegisterClass *RC =
                           getInstrOperandRegClass(MRI, TII, II, IIOpNum);
       assert(RC && "Don't have operand info for this instruction!");
-      assert(RegMap->getRegClass(VReg) == RC &&
-             "Register class of operand and regclass of use don't agree!");
+      const TargetRegisterClass *VRC = RegMap->getRegClass(VReg);
+      if (VRC != RC) {
+        cerr << "Register class of operand and regclass of use don't agree!\n";
+#ifndef NDEBUG
+        cerr << "Operand = " << IIOpNum << "\n";
+        cerr << "Op->Val = "; Op.Val->dump(0); cerr << "\n";
+        cerr << "MI = "; MI->print(cerr);
+        cerr << "VReg = " << VReg << "\n";
+        cerr << "VReg RegClass     size = " << VRC->getSize()
+          << ", align = " << VRC->getAlignment() << "\n";
+        cerr << "Expected RegClass size = " << RC->getSize()
+          << ", align = " << RC->getAlignment() << "\n";
+#endif
+        cerr << "Fatal error, aborting.\n";
+        abort();
+      }
     }
   } else if (ConstantSDNode *C =
              dyn_cast<ConstantSDNode>(Op)) {
