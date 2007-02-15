@@ -225,6 +225,25 @@ bool Instruction::isSameOperationAs(Instruction *I) const {
   return true;
 }
 
+/// mayWriteToMemory - Return true if this instruction may modify memory.
+///
+bool Instruction::mayWriteToMemory() const {
+  switch (getOpcode()) {
+  default: return false;
+  case Instruction::Free:
+  case Instruction::Store:
+  case Instruction::Invoke:
+  case Instruction::VAArg:
+    return true;
+  case Instruction::Call:
+    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(this)) {
+      // If the intrinsic doesn't write memory, it is safe.
+    }
+    return true;
+  case Instruction::Load:
+    return cast<LoadInst>(this)->isVolatile();
+  }
+}
 
 /// isAssociative - Return true if the instruction is associative:
 ///

@@ -54,7 +54,7 @@ public:
   
   /// mayWriteToMemory - Return true if this instruction may modify memory.
   ///
-  virtual bool mayWriteToMemory() const { return false; }
+  bool mayWriteToMemory() const;
 
   /// clone() - Create a copy of 'this' instruction that is identical in all
   /// ways except the following:

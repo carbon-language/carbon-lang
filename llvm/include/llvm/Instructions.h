@@ -189,8 +189,6 @@ public:
 
   virtual FreeInst *clone() const;
 
-  virtual bool mayWriteToMemory() const { return true; }
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FreeInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -244,8 +242,6 @@ public:
   void setVolatile(bool V) { SubclassData = V; }
 
   virtual LoadInst *clone() const;
-
-  virtual bool mayWriteToMemory() const { return isVolatile(); }
 
   Value *getPointerOperand() { return getOperand(0); }
   const Value *getPointerOperand() const { return getOperand(0); }
@@ -309,8 +305,6 @@ public:
 
 
   virtual StoreInst *clone() const;
-
-  virtual bool mayWriteToMemory() const { return true; }
 
   Value *getPointerOperand() { return getOperand(1); }
   const Value *getPointerOperand() const { return getOperand(1); }
@@ -722,8 +716,7 @@ public:
   ~CallInst();
 
   virtual CallInst *clone() const;
-  bool mayWriteToMemory() const { return true; }
-
+  
   bool isTailCall() const           { return SubclassData & 1; }
   void setTailCall(bool isTailCall = true) {
     SubclassData = (SubclassData & ~1) | unsigned(isTailCall);
@@ -845,7 +838,6 @@ public:
   }
 
   virtual VAArgInst *clone() const;
-  bool mayWriteToMemory() const { return true; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const VAArgInst *) { return true; }
@@ -887,8 +879,6 @@ public:
   static bool isValidOperands(const Value *Vec, const Value *Idx);
 
   virtual ExtractElementInst *clone() const;
-
-  virtual bool mayWriteToMemory() const { return false; }
 
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
@@ -937,8 +927,6 @@ public:
                               const Value *Idx);
 
   virtual InsertElementInst *clone() const;
-
-  virtual bool mayWriteToMemory() const { return false; }
 
   /// getType - Overload to return most specific vector type.
   ///
@@ -989,8 +977,6 @@ public:
                               const Value *Mask);
 
   virtual ShuffleVectorInst *clone() const;
-
-  virtual bool mayWriteToMemory() const { return false; }
 
   /// getType - Overload to return most specific vector type.
   ///
@@ -1498,8 +1484,6 @@ public:
   ~InvokeInst();
 
   virtual InvokeInst *clone() const;
-
-  bool mayWriteToMemory() const { return true; }
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
