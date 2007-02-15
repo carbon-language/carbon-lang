@@ -292,7 +292,10 @@ private:
   void clear_unused_bits() {
     if (Size) {
       unsigned ExtraBits = Size % BITS_PER_WORD;
-      Bits[Size / BITS_PER_WORD] &= ~(~0 << ExtraBits);
+      unsigned index = Size / BITS_PER_WORD;
+      if (Size % BITS_PER_WORD == 0)
+        index--;
+      Bits[index] &= ~(~0 << ExtraBits);
     }
   }
 
