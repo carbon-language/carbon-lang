@@ -3874,7 +3874,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
         CV.push_back(UndefValue::get(OpNTy));
       }
     }
-    Constant *CP = ConstantPacked::get(CV);
+    Constant *CP = ConstantVector::get(CV);
     SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
     return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0);
   }

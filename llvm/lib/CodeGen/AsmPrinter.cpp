@@ -805,8 +805,8 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       }
       return;
     }
-  } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CV)) {
-    const PackedType *PTy = CP->getType();
+  } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
+    const VectorType *PTy = CP->getType();
     
     for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
       EmitGlobalConstant(CP->getOperand(I));

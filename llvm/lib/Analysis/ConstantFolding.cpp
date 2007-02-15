@@ -283,10 +283,10 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
           C = UndefValue::get(ATy->getElementType());
         else
           return 0;
-      } else if (const PackedType *PTy = dyn_cast<PackedType>(*I)) {
+      } else if (const VectorType *PTy = dyn_cast<VectorType>(*I)) {
         if (CI->getZExtValue() >= PTy->getNumElements())
           return 0;
-        if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C))
+        if (ConstantVector *CP = dyn_cast<ConstantVector>(C))
           C = CP->getOperand(CI->getZExtValue());
         else if (isa<ConstantAggregateZero>(C))
           C = Constant::getNullValue(PTy->getElementType());

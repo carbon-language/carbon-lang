@@ -174,7 +174,7 @@ getTypePrefix(const Type* Ty ) {
     case Type::StructTyID:   return "struct_"; 
     case Type::ArrayTyID:    return "array_"; 
     case Type::PointerTyID:  return "ptr_"; 
-    case Type::PackedTyID:   return "packed_"; 
+    case Type::VectorTyID:   return "packed_"; 
     case Type::OpaqueTyID:   return "opaque_"; 
     default:                 return "other_"; 
   }
@@ -338,7 +338,7 @@ CppWriter::getCppName(const Type* Ty)
     case Type::ArrayTyID:       prefix = "ArrayTy_"; break;
     case Type::PointerTyID:     prefix = "PointerTy_"; break;
     case Type::OpaqueTyID:      prefix = "OpaqueTy_"; break;
-    case Type::PackedTyID:      prefix = "PackedTy_"; break;
+    case Type::VectorTyID:      prefix = "PackedTy_"; break;
     default:                    prefix = "OtherTy_"; break; // prevent breakage
   }
 
@@ -512,12 +512,12 @@ CppWriter::printTypeInternal(const Type* Ty) {
       nl(Out);
       break;
     }
-    case Type::PackedTyID: {
-      const PackedType* PT = cast<PackedType>(Ty);
+    case Type::VectorTyID: {
+      const VectorType* PT = cast<VectorType>(Ty);
       const Type* ET = PT->getElementType();
       bool isForward = printTypeInternal(ET);
       std::string elemName(getCppName(ET));
-      Out << "PackedType* " << typeName << " = PackedType::get("
+      Out << "VectorType* " << typeName << " = VectorType::get("
           << elemName << (isForward ? "_fwd" : "") 
           << ", " << utostr(PT->getNumElements()) << ");";
       nl(Out);
@@ -560,7 +560,7 @@ CppWriter::printTypeInternal(const Type* Ty) {
       case Type::FunctionTyID: Out << "FunctionType"; break;
       case Type::ArrayTyID:    Out << "ArrayType"; break;
       case Type::StructTyID:   Out << "StructType"; break;
-      case Type::PackedTyID:   Out << "PackedType"; break;
+      case Type::VectorTyID:   Out << "VectorType"; break;
       case Type::PointerTyID:  Out << "PointerType"; break;
       case Type::OpaqueTyID:   Out << "OpaqueType"; break;
       default:                 Out << "NoSuchDerivedType"; break;
@@ -711,7 +711,7 @@ void CppWriter::printConstant(const Constant *CV) {
     }
     Out << "Constant* " << constName << " = ConstantStruct::get(" 
         << typeName << ", " << constName << "_fields);";
-  } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CV)) {
+  } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
     Out << "std::vector<Constant*> " << constName << "_elems;";
     nl(Out);
     unsigned N = CP->getNumOperands();
@@ -721,7 +721,7 @@ void CppWriter::printConstant(const Constant *CV) {
           << getCppName(CP->getOperand(i)) << ");";
       nl(Out);
     }
-    Out << "Constant* " << constName << " = ConstantPacked::get(" 
+    Out << "Constant* " << constName << " = ConstantVector::get(" 
         << typeName << ", " << constName << "_elems);";
   } else if (isa<UndefValue>(CV)) {
     Out << "UndefValue* " << constName << " = UndefValue::get(" 

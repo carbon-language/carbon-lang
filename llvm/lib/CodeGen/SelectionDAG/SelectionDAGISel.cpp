@@ -281,7 +281,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
       else {
         MVT::ValueType VT1,VT2;
         NumElements = 
-          TLI.getPackedTypeBreakdown(cast<PackedType>(PN->getType()),
+          TLI.getVectorTypeBreakdown(cast<VectorType>(PN->getType()),
                                      VT1, VT2);
       }
       unsigned PHIReg = ValueMap[PN];
@@ -306,7 +306,7 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   // If this is a packed type, figure out what type it will decompose into
   // and how many of the elements it will use.
   if (VT == MVT::Vector) {
-    const PackedType *PTy = cast<PackedType>(V->getType());
+    const VectorType *PTy = cast<VectorType>(V->getType());
     unsigned NumElts = PTy->getNumElements();
     MVT::ValueType EltTy = TLI.getValueType(PTy->getElementType());
     
@@ -504,7 +504,7 @@ public:
   void visitEitherBinary(User &I, unsigned ScalarOp, unsigned VectorOp);
   void visitShift(User &I, unsigned Opcode);
   void visitAdd(User &I) { 
-    if (isa<PackedType>(I.getType()))
+    if (isa<VectorType>(I.getType()))
       visitVectorBinary(I, ISD::VADD);
     else if (I.getType()->isFloatingPoint())
       visitScalarBinary(I, ISD::FADD);
@@ -513,7 +513,7 @@ public:
   }
   void visitSub(User &I);
   void visitMul(User &I) {
-    if (isa<PackedType>(I.getType()))
+    if (isa<VectorType>(I.getType()))
       visitVectorBinary(I, ISD::VMUL);
     else if (I.getType()->isFloatingPoint())
       visitScalarBinary(I, ISD::FMUL);
@@ -601,11 +601,11 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     } else if (isa<ConstantPointerNull>(C)) {
       return N = DAG.getConstant(0, TLI.getPointerTy());
     } else if (isa<UndefValue>(C)) {
-      if (!isa<PackedType>(VTy))
+      if (!isa<VectorType>(VTy))
         return N = DAG.getNode(ISD::UNDEF, VT);
 
       // Create a VBUILD_VECTOR of undef nodes.
-      const PackedType *PTy = cast<PackedType>(VTy);
+      const VectorType *PTy = cast<VectorType>(VTy);
       unsigned NumElements = PTy->getNumElements();
       MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
 
@@ -619,7 +619,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
                              &Ops[0], Ops.size());
     } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       return N = DAG.getConstantFP(CFP->getValue(), VT);
-    } else if (const PackedType *PTy = dyn_cast<PackedType>(VTy)) {
+    } else if (const VectorType *PTy = dyn_cast<VectorType>(VTy)) {
       unsigned NumElements = PTy->getNumElements();
       MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
       
@@ -627,7 +627,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       // Constant or ConstantFP node onto the ops list for each element of
       // the packed constant.
       SmallVector<SDOperand, 8> Ops;
-      if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C)) {
+      if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
         for (unsigned i = 0; i != NumElements; ++i)
           Ops.push_back(getValue(CP->getOperand(i)));
       } else {
@@ -691,8 +691,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     // Otherwise, if this is a vector, make it available as a generic vector
     // here.
     MVT::ValueType PTyElementVT, PTyLegalElementVT;
-    const PackedType *PTy = cast<PackedType>(VTy);
-    unsigned NE = TLI.getPackedTypeBreakdown(PTy, PTyElementVT,
+    const VectorType *PTy = cast<VectorType>(VTy);
+    unsigned NE = TLI.getVectorTypeBreakdown(PTy, PTyElementVT,
                                              PTyLegalElementVT);
 
     // Build a VBUILD_VECTOR with the input registers.
@@ -1377,7 +1377,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
 void SelectionDAGLowering::visitSub(User &I) {
   // -0.0 - X --> fneg
   const Type *Ty = I.getType();
-  if (isa<PackedType>(Ty)) {
+  if (isa<VectorType>(Ty)) {
     visitVectorBinary(I, ISD::VSUB);
   } else if (Ty->isFloatingPoint()) {
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
@@ -1400,8 +1400,8 @@ void SelectionDAGLowering::visitScalarBinary(User &I, unsigned OpCode) {
 
 void
 SelectionDAGLowering::visitVectorBinary(User &I, unsigned OpCode) {
-  assert(isa<PackedType>(I.getType()));
-  const PackedType *Ty = cast<PackedType>(I.getType());
+  assert(isa<VectorType>(I.getType()));
+  const VectorType *Ty = cast<VectorType>(I.getType());
   SDOperand Typ = DAG.getValueType(TLI.getValueType(Ty->getElementType()));
 
   setValue(&I, DAG.getNode(OpCode, MVT::Vector,
@@ -1413,7 +1413,7 @@ SelectionDAGLowering::visitVectorBinary(User &I, unsigned OpCode) {
 
 void SelectionDAGLowering::visitEitherBinary(User &I, unsigned ScalarOp,
                                              unsigned VectorOp) {
-  if (isa<PackedType>(I.getType()))
+  if (isa<VectorType>(I.getType()))
     visitVectorBinary(I, VectorOp);
   else
     visitScalarBinary(I, ScalarOp);
@@ -1501,7 +1501,7 @@ void SelectionDAGLowering::visitSelect(User &I) {
   SDOperand Cond     = getValue(I.getOperand(0));
   SDOperand TrueVal  = getValue(I.getOperand(1));
   SDOperand FalseVal = getValue(I.getOperand(2));
-  if (!isa<PackedType>(I.getType())) {
+  if (!isa<VectorType>(I.getType())) {
     setValue(&I, DAG.getNode(ISD::SELECT, TrueVal.getValueType(), Cond,
                              TrueVal, FalseVal));
   } else {
@@ -1611,7 +1611,7 @@ void SelectionDAGLowering::visitBitCast(User &I) {
   if (DestVT == MVT::Vector) {
     // This is a cast to a vector from something else.  
     // Get information about the output vector.
-    const PackedType *DestTy = cast<PackedType>(I.getType());
+    const VectorType *DestTy = cast<VectorType>(I.getType());
     MVT::ValueType EltVT = TLI.getValueType(DestTy->getElementType());
     setValue(&I, DAG.getNode(ISD::VBIT_CONVERT, DestVT, N, 
                              DAG.getConstant(DestTy->getNumElements(),MVT::i32),
@@ -1793,7 +1793,7 @@ SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
                                             const Value *SV, SDOperand Root,
                                             bool isVolatile) {
   SDOperand L;
-  if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
+  if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
     MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
     L = DAG.getVecLoad(PTy->getNumElements(), PVT, Root, Ptr,
                        DAG.getSrcValue(SV));
@@ -1863,7 +1863,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
     
     // If this is a vector type, force it to the right packed type.
     if (Op.getValueType() == MVT::Vector) {
-      const PackedType *OpTy = cast<PackedType>(I.getOperand(i)->getType());
+      const VectorType *OpTy = cast<VectorType>(I.getOperand(i)->getType());
       MVT::ValueType EltVT = TLI.getValueType(OpTy->getElementType());
       
       MVT::ValueType VVT = MVT::getVectorType(EltVT, OpTy->getNumElements());
@@ -1880,7 +1880,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   if (I.getType() != Type::VoidTy) {
     MVT::ValueType VT = TLI.getValueType(I.getType());
     if (VT == MVT::Vector) {
-      const PackedType *DestTy = cast<PackedType>(I.getType());
+      const VectorType *DestTy = cast<VectorType>(I.getType());
       MVT::ValueType EltVT = TLI.getValueType(DestTy->getElementType());
       
       VT = MVT::getVectorType(EltVT, DestTy->getNumElements());
@@ -1915,7 +1915,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
       DAG.setRoot(Chain);
   }
   if (I.getType() != Type::VoidTy) {
-    if (const PackedType *PTy = dyn_cast<PackedType>(I.getType())) {
+    if (const VectorType *PTy = dyn_cast<VectorType>(I.getType())) {
       MVT::ValueType EVT = TLI.getValueType(PTy->getElementType());
       Result = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Result,
                            DAG.getConstant(PTy->getNumElements(), MVT::i32),
@@ -2966,8 +2966,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       } else {
         // Otherwise, this is a vector type.  We only support legal vectors
         // right now.
-        unsigned NumElems = cast<PackedType>(I->getType())->getNumElements();
-        const Type *EltTy = cast<PackedType>(I->getType())->getElementType();
+        unsigned NumElems = cast<VectorType>(I->getType())->getNumElements();
+        const Type *EltTy = cast<VectorType>(I->getType())->getElementType();
 
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the packed type.
@@ -3031,7 +3031,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       } else {
         // Otherwise, this is a vector type.  We only support legal vectors
         // right now.
-        const PackedType *PTy = cast<PackedType>(I->getType());
+        const VectorType *PTy = cast<VectorType>(I->getType());
         unsigned NumElems = PTy->getNumElements();
         const Type *EltTy = PTy->getElementType();
 
@@ -3154,7 +3154,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       } else {
         // Otherwise, this is a vector type.  We only support legal vectors
         // right now.
-        const PackedType *PTy = cast<PackedType>(Args[i].Ty);
+        const VectorType *PTy = cast<VectorType>(Args[i].Ty);
         unsigned NumElems = PTy->getNumElements();
         const Type *EltTy = PTy->getElementType();
         
@@ -3200,7 +3200,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       } else {
         // Otherwise, this is a vector type.  We only support legal vectors
         // right now.
-        const PackedType *PTy = cast<PackedType>(RetTy);
+        const VectorType *PTy = cast<VectorType>(RetTy);
         unsigned NumElems = PTy->getNumElements();
         const Type *EltTy = PTy->getElementType();
         
@@ -3238,8 +3238,8 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         if (VT == MVT::Vector) {
           // Insert a VBITCONVERT to convert from the packed result type to the
           // MVT::Vector type.
-          unsigned NumElems = cast<PackedType>(RetTy)->getNumElements();
-          const Type *EltTy = cast<PackedType>(RetTy)->getElementType();
+          unsigned NumElems = cast<VectorType>(RetTy)->getNumElements();
+          const Type *EltTy = cast<VectorType>(RetTy)->getElementType();
           
           // Figure out if there is a Packed type corresponding to this Vector
           // type.  If so, convert to the packed type.
@@ -3938,7 +3938,7 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
   } else if (SrcVT == MVT::Vector) {
     // Handle copies from generic vectors to registers.
     MVT::ValueType PTyElementVT, PTyLegalElementVT;
-    unsigned NE = TLI.getPackedTypeBreakdown(cast<PackedType>(V->getType()),
+    unsigned NE = TLI.getVectorTypeBreakdown(cast<VectorType>(V->getType()),
                                              PTyElementVT, PTyLegalElementVT);
     
     // Insert a VBIT_CONVERT of the input vector to a "N x PTyElementVT" 
@@ -4133,7 +4133,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       else {
         MVT::ValueType VT1,VT2;
         NumElements = 
-          TLI.getPackedTypeBreakdown(cast<PackedType>(PN->getType()),
+          TLI.getVectorTypeBreakdown(cast<VectorType>(PN->getType()),
                                      VT1, VT2);
       }
       for (unsigned i = 0, e = NumElements; i != e; ++i)

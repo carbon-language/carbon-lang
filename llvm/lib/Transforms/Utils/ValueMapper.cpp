@@ -78,7 +78,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
       for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
         Ops.push_back(cast<Constant>(MapValue(CE->getOperand(i), VM)));
       return VM[V] = CE->getWithOperands(Ops);
-    } else if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C)) {
+    } else if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
         Value *MV = MapValue(CP->getOperand(i), VM);
         if (MV != CP->getOperand(i)) {
@@ -92,7 +92,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
             Values.push_back(cast<Constant>(MapValue(CP->getOperand(i), VM)));
-          return VM[V] = ConstantPacked::get(Values);
+          return VM[V] = ConstantVector::get(Values);
         }
       }
       return VMSlot = C;

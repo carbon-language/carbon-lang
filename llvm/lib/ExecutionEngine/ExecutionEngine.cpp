@@ -687,7 +687,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   if (isa<UndefValue>(Init)) {
     return;
-  } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(Init)) {
+  } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(Init)) {
     unsigned ElementSize =
       getTargetData()->getTypeSize(CP->getType()->getElementType());
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)

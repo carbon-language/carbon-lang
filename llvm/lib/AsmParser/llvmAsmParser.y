@@ -1297,10 +1297,10 @@ Types
      if ((unsigned)$2 != $2)
         GEN_ERROR("Unsigned result not equal to signed result");
      if (!ElemTy->isFloatingPoint() && !ElemTy->isInteger())
-        GEN_ERROR("Element type of a PackedType must be primitive");
+        GEN_ERROR("Element type of a VectorType must be primitive");
      if (!isPowerOf2_32($2))
        GEN_ERROR("Vector length should be a power of 2");
-     $$ = new PATypeHolder(HandleUpRefs(PackedType::get(*$4, (unsigned)$2)));
+     $$ = new PATypeHolder(HandleUpRefs(VectorType::get(*$4, (unsigned)$2)));
      delete $4;
      CHECK_FOR_ERROR
   }
@@ -1481,7 +1481,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   | Types '<' ConstVector '>' { // Nonempty unsized arr
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
-    const PackedType *PTy = dyn_cast<PackedType>($1->get());
+    const VectorType *PTy = dyn_cast<VectorType>($1->get());
     if (PTy == 0)
       GEN_ERROR("Cannot make packed constant with type: '" + 
                      (*$1)->getDescription() + "'");
@@ -1502,7 +1502,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
            (*$3)[i]->getType()->getDescription() + "'.");
     }
 
-    $$ = ConstantPacked::get(PTy, *$3);
+    $$ = ConstantVector::get(PTy, *$3);
     delete $1; delete $3;
     CHECK_FOR_ERROR
   }
@@ -1781,8 +1781,8 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if ($3->getType() != $5->getType())
       GEN_ERROR("Logical operator types must match");
     if (!$3->getType()->isInteger()) {
-      if (Instruction::isShift($1) || !isa<PackedType>($3->getType()) || 
-          !cast<PackedType>($3->getType())->getElementType()->isInteger())
+      if (Instruction::isShift($1) || !isa<VectorType>($3->getType()) || 
+          !cast<VectorType>($3->getType())->getElementType()->isInteger())
         GEN_ERROR("Logical operator requires integral operands");
     }
     $$ = ConstantExpr::get($1, $3, $5);
@@ -2232,10 +2232,10 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     const Type *ETy = (*$2)[0]->getType();
     int NumElements = $2->size(); 
     
-    PackedType* pt = PackedType::get(ETy, NumElements);
+    VectorType* pt = VectorType::get(ETy, NumElements);
     PATypeHolder* PTy = new PATypeHolder(
                                          HandleUpRefs(
-                                            PackedType::get(
+                                            VectorType::get(
                                                 ETy, 
                                                 NumElements)
                                             )
@@ -2249,7 +2249,7 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
                      (*$2)[i]->getType()->getDescription() + "'.");
     }
 
-    $$ = ValID::create(ConstantPacked::get(pt, *$2));
+    $$ = ValID::create(ConstantVector::get(pt, *$2));
     delete PTy; delete $2;
     CHECK_FOR_ERROR
   }
@@ -2585,10 +2585,10 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     if (!(*$2)->isInteger() && !(*$2)->isFloatingPoint() && 
-        !isa<PackedType>((*$2).get()))
+        !isa<VectorType>((*$2).get()))
       GEN_ERROR(
         "Arithmetic operator requires integer, FP, or packed operands");
-    if (isa<PackedType>((*$2).get()) && 
+    if (isa<VectorType>((*$2).get()) && 
         ($1 == Instruction::URem || 
          $1 == Instruction::SRem ||
          $1 == Instruction::FRem))
@@ -2606,8 +2606,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     if (!(*$2)->isInteger()) {
-      if (Instruction::isShift($1) || !isa<PackedType>($2->get()) ||
-          !cast<PackedType>($2->get())->getElementType()->isInteger())
+      if (Instruction::isShift($1) || !isa<VectorType>($2->get()) ||
+          !cast<VectorType>($2->get())->getElementType()->isInteger())
         GEN_ERROR("Logical operator requires integral operands");
     }
     Value* tmpVal1 = getVal(*$2, $3);
@@ -2622,7 +2622,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | ICMP IPredicates Types ValueRef ',' ValueRef  {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
-    if (isa<PackedType>((*$3).get()))
+    if (isa<VectorType>((*$3).get()))
       GEN_ERROR("Packed types not supported by icmp instruction");
     Value* tmpVal1 = getVal(*$3, $4);
     CHECK_FOR_ERROR
@@ -2635,7 +2635,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   | FCMP FPredicates Types ValueRef ',' ValueRef  {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
-    if (isa<PackedType>((*$3).get()))
+    if (isa<VectorType>((*$3).get()))
       GEN_ERROR("Packed types not supported by fcmp instruction");
     Value* tmpVal1 = getVal(*$3, $4);
     CHECK_FOR_ERROR

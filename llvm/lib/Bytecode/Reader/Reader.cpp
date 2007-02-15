@@ -482,7 +482,7 @@ void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
       break;
     }
     case Instruction::InsertElement: {
-      const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
+      const VectorType *PackedTy = dyn_cast<VectorType>(InstTy);
       if (!PackedTy || Oprnds.size() != 3)
         error("Invalid insertelement instruction!");
       
@@ -496,13 +496,13 @@ void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
       break;
     }
     case Instruction::ShuffleVector: {
-      const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
+      const VectorType *PackedTy = dyn_cast<VectorType>(InstTy);
       if (!PackedTy || Oprnds.size() != 3)
         error("Invalid shufflevector instruction!");
       Value *V1 = getValue(iType, Oprnds[0]);
       Value *V2 = getValue(iType, Oprnds[1]);
-      const PackedType *EltTy = 
-        PackedType::get(Type::Int32Ty, PackedTy->getNumElements());
+      const VectorType *EltTy = 
+        VectorType::get(Type::Int32Ty, PackedTy->getNumElements());
       Value *V3 = getValue(getTypeSlot(EltTy), Oprnds[2]);
       if (!ShuffleVectorInst::isValidOperands(V1, V2, V3))
         error("Invalid shufflevector instruction!");
@@ -1029,10 +1029,10 @@ const Type *BytecodeReader::ParseType() {
     Result =  ArrayType::get(ElementType, NumElements);
     break;
   }
-  case Type::PackedTyID: {
+  case Type::VectorTyID: {
     const Type *ElementType = readType();
     unsigned NumElements = read_vbr_uint();
-    Result =  PackedType::get(ElementType, NumElements);
+    Result =  VectorType::get(ElementType, NumElements);
     break;
   }
   case Type::StructTyID: {
@@ -1314,8 +1314,8 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     break;
   }
 
-  case Type::PackedTyID: {
-    const PackedType *PT = cast<PackedType>(Ty);
+  case Type::VectorTyID: {
+    const VectorType *PT = cast<VectorType>(Ty);
     unsigned NumElements = PT->getNumElements();
     unsigned TypeSlot = getTypeSlot(PT->getElementType());
     std::vector<Constant*> Elements;
@@ -1323,8 +1323,8 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     while (NumElements--)     // Read all of the elements of the constant.
       Elements.push_back(getConstantValue(TypeSlot,
                                           read_vbr_uint()));
-    Result = ConstantPacked::get(PT, Elements);
-    if (Handler) Handler->handleConstantPacked(PT, &Elements[0],Elements.size(),
+    Result = ConstantVector::get(PT, Elements);
+    if (Handler) Handler->handleConstantVector(PT, &Elements[0],Elements.size(),
                                                TypeSlot, Result);
     break;
   }

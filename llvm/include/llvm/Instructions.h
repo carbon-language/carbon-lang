@@ -23,7 +23,7 @@ namespace llvm {
 class BasicBlock;
 class ConstantInt;
 class PointerType;
-class PackedType;
+class VectorType;
 
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class
@@ -862,7 +862,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// ExtractElementInst - This instruction extracts a single (scalar)
-/// element from a PackedType value
+/// element from a VectorType value
 ///
 class ExtractElementInst : public Instruction {
   Use Ops[2];
@@ -916,7 +916,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// InsertElementInst - This instruction inserts a single (scalar)
-/// element into a PackedType value
+/// element into a VectorType value
 ///
 class InsertElementInst : public Instruction {
   Use Ops[3];
@@ -942,8 +942,8 @@ public:
 
   /// getType - Overload to return most specific packed type.
   ///
-  inline const PackedType *getType() const {
-    return reinterpret_cast<const PackedType*>(Instruction::getType());
+  inline const VectorType *getType() const {
+    return reinterpret_cast<const VectorType*>(Instruction::getType());
   }
 
   /// Transparently provide more efficient getOperand methods.
@@ -994,8 +994,8 @@ public:
 
   /// getType - Overload to return most specific packed type.
   ///
-  inline const PackedType *getType() const {
-    return reinterpret_cast<const PackedType*>(Instruction::getType());
+  inline const VectorType *getType() const {
+    return reinterpret_cast<const VectorType*>(Instruction::getType());
   }
 
   /// Transparently provide more efficient getOperand methods.

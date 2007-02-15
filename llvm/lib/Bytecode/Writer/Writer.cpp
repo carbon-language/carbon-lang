@@ -242,8 +242,8 @@ void BytecodeWriter::outputType(const Type *T) {
     break;
   }
 
- case Type::PackedTyID: {
-    const PackedType *PT = cast<PackedType>(T);
+ case Type::VectorTyID: {
+    const VectorType *PT = cast<VectorType>(T);
     output_typeid(Table.getTypeSlot(PT->getElementType()));
     output_vbr(PT->getNumElements());
     break;
@@ -326,8 +326,8 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     break;
   }
 
-  case Type::PackedTyID: {
-    const ConstantPacked *CP = cast<ConstantPacked>(CPV);
+  case Type::VectorTyID: {
+    const ConstantVector *CP = cast<ConstantVector>(CPV);
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
       output_vbr(Table.getSlot(CP->getOperand(i)));
     break;

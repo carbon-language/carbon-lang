@@ -278,13 +278,13 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return NULL;
 }
 
-/// getPackedTypeBreakdown - Packed types are broken down into some number of
+/// getVectorTypeBreakdown - Packed types are broken down into some number of
 /// legal first class types. For example, <8 x float> maps to 2 MVT::v4f32
 /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
 ///
 /// This method returns the number and type of the resultant breakdown.
 ///
-unsigned TargetLowering::getPackedTypeBreakdown(const PackedType *PTy, 
+unsigned TargetLowering::getVectorTypeBreakdown(const VectorType *PTy, 
                                                 MVT::ValueType &PTyElementVT,
                                       MVT::ValueType &PTyLegalElementVT) const {
   // Figure out the right, legal destination reg to copy into.
@@ -2206,6 +2206,6 @@ MVT::ValueType TargetLowering::getValueType(const Type *Ty) const {
   case Type::FloatTyID:   return MVT::f32;
   case Type::DoubleTyID:  return MVT::f64;
   case Type::PointerTyID: return PointerTy;
-  case Type::PackedTyID:  return MVT::Vector;
+  case Type::VectorTyID:  return MVT::Vector;
   }
 }

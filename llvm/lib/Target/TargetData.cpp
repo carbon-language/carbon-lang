@@ -414,8 +414,8 @@ uint64_t TargetData::getTypeSize(const Type *Ty) const {
     return 4;
   case Type::DoubleTyID:
     return 8;
-  case Type::PackedTyID: {
-    const PackedType *PTy = cast<PackedType>(Ty);
+  case Type::VectorTyID: {
+    const VectorType *PTy = cast<VectorType>(Ty);
     return PTy->getBitWidth() / 8;
   }
   default:
@@ -483,7 +483,7 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const
   case Type::DoubleTyID:
     AlignType = FLOAT_ALIGN;
     break;
-  case Type::PackedTyID:
+  case Type::VectorTyID:
     AlignType = PACKED_ALIGN;
     break;
   default:

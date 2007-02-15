@@ -96,14 +96,14 @@ const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   case MVT::i128:  return IntegerType::get(128);
   case MVT::f32:   return Type::FloatTy;
   case MVT::f64:   return Type::DoubleTy;
-  case MVT::v8i8:  return PackedType::get(Type::Int8Ty, 8);
-  case MVT::v4i16: return PackedType::get(Type::Int16Ty, 4);
-  case MVT::v2i32: return PackedType::get(Type::Int32Ty, 2);
-  case MVT::v16i8: return PackedType::get(Type::Int8Ty, 16);
-  case MVT::v8i16: return PackedType::get(Type::Int16Ty, 8);
-  case MVT::v4i32: return PackedType::get(Type::Int32Ty, 4);
-  case MVT::v2i64: return PackedType::get(Type::Int64Ty, 2);
-  case MVT::v4f32: return PackedType::get(Type::FloatTy, 4);
-  case MVT::v2f64: return PackedType::get(Type::DoubleTy, 2);
+  case MVT::v8i8:  return VectorType::get(Type::Int8Ty, 8);
+  case MVT::v4i16: return VectorType::get(Type::Int16Ty, 4);
+  case MVT::v2i32: return VectorType::get(Type::Int32Ty, 2);
+  case MVT::v16i8: return VectorType::get(Type::Int8Ty, 16);
+  case MVT::v8i16: return VectorType::get(Type::Int16Ty, 8);
+  case MVT::v4i32: return VectorType::get(Type::Int32Ty, 4);
+  case MVT::v2i64: return VectorType::get(Type::Int64Ty, 2);
+  case MVT::v4f32: return VectorType::get(Type::FloatTy, 4);
+  case MVT::v2f64: return VectorType::get(Type::DoubleTy, 2);
   }
 }

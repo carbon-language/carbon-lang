@@ -323,12 +323,12 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
       //
       // Scalar replacing *just* the outer index of the array is probably not
       // going to be a win anyway, so just give up.
-      for (++I; I != E && (isa<ArrayType>(*I) || isa<PackedType>(*I)); ++I) {
+      for (++I; I != E && (isa<ArrayType>(*I) || isa<VectorType>(*I)); ++I) {
         uint64_t NumElements;
         if (const ArrayType *SubArrayTy = dyn_cast<ArrayType>(*I))
           NumElements = SubArrayTy->getNumElements();
         else
-          NumElements = cast<PackedType>(*I)->getNumElements();
+          NumElements = cast<VectorType>(*I)->getNumElements();
         
         if (!isa<ConstantInt>(I.getOperand())) return 0;
         if (cast<ConstantInt>(I.getOperand())->getZExtValue() >= NumElements)
@@ -440,7 +440,7 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
 static bool MergeInType(const Type *In, const Type *&Accum,
                         const TargetData &TD) {
   // If this is our first type, just use it.
-  const PackedType *PTy;
+  const VectorType *PTy;
   if (Accum == Type::VoidTy || In == Accum) {
     Accum = In;
   } else if (In == Type::VoidTy) {
@@ -452,16 +452,16 @@ static bool MergeInType(const Type *In, const Type *&Accum,
       Accum = In;
   } else if (isa<PointerType>(In) && isa<PointerType>(Accum)) {
     // Pointer unions just stay as one of the pointers.
-  } else if (isa<PackedType>(In) || isa<PackedType>(Accum)) {
-    if ((PTy = dyn_cast<PackedType>(Accum)) && 
+  } else if (isa<VectorType>(In) || isa<VectorType>(Accum)) {
+    if ((PTy = dyn_cast<VectorType>(Accum)) && 
         PTy->getElementType() == In) {
       // Accum is a vector, and we are accessing an element: ok.
-    } else if ((PTy = dyn_cast<PackedType>(In)) && 
+    } else if ((PTy = dyn_cast<VectorType>(In)) && 
                PTy->getElementType() == Accum) {
       // In is a vector, and accum is an element: ok, remember In.
       Accum = In;
-    } else if ((PTy = dyn_cast<PackedType>(In)) && isa<PackedType>(Accum) &&
-               PTy->getBitWidth() == cast<PackedType>(Accum)->getBitWidth()) {
+    } else if ((PTy = dyn_cast<VectorType>(In)) && isa<VectorType>(Accum) &&
+               PTy->getBitWidth() == cast<VectorType>(Accum)->getBitWidth()) {
       // Two vectors of the same size: keep Accum.
     } else {
       // Cannot insert an short into a <4 x int> or handle
@@ -561,7 +561,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         
         if (const ArrayType *ATy = dyn_cast<ArrayType>(AggTy)) {
           if (Idx >= ATy->getNumElements()) return 0;  // Out of range.
-        } else if (const PackedType *PackedTy = dyn_cast<PackedType>(AggTy)) {
+        } else if (const VectorType *PackedTy = dyn_cast<VectorType>(AggTy)) {
           // Getting an element of the packed vector.
           if (Idx >= PackedTy->getNumElements()) return 0;  // Out of range.
 
@@ -630,7 +630,7 @@ void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
 /// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.  By the end of this, there should be no uses of Ptr.
 void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
-  bool isVectorInsert = isa<PackedType>(NewAI->getType()->getElementType());
+  bool isVectorInsert = isa<VectorType>(NewAI->getType()->getElementType());
   const TargetData &TD = getAnalysis<TargetData>();
   while (!Ptr->use_empty()) {
     Instruction *User = cast<Instruction>(Ptr->use_back());
@@ -639,10 +639,10 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       // The load is a bit extract from NewAI shifted right by Offset bits.
       Value *NV = new LoadInst(NewAI, LI->getName(), LI);
       if (NV->getType() != LI->getType()) {
-        if (const PackedType *PTy = dyn_cast<PackedType>(NV->getType())) {
+        if (const VectorType *PTy = dyn_cast<VectorType>(NV->getType())) {
           // If the result alloca is a packed type, this is either an element
           // access or a bitcast to another packed type.
-          if (isa<PackedType>(LI->getType())) {
+          if (isa<VectorType>(LI->getType())) {
             NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
           } else {
             // Must be an element access.
@@ -702,10 +702,10 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       if (SV->getType() != AllocaType) {
         Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
         
-        if (const PackedType *PTy = dyn_cast<PackedType>(AllocaType)) {
+        if (const VectorType *PTy = dyn_cast<VectorType>(AllocaType)) {
           // If the result alloca is a packed type, this is either an element
           // access or a bitcast to another packed type.
-          if (isa<PackedType>(SV->getType())) {
+          if (isa<VectorType>(SV->getType())) {
             SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
           } else {            
             // Must be an element insertion.

@@ -698,8 +698,8 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   case Instruction::Or:
   case Instruction::Xor:
     Assert1(B.getType()->isInteger() ||
-            (isa<PackedType>(B.getType()) && 
-             cast<PackedType>(B.getType())->getElementType()->isInteger()),
+            (isa<VectorType>(B.getType()) && 
+             cast<VectorType>(B.getType())->getElementType()->isInteger()),
             "Logical operators only work with integral types!", &B);
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Logical operators must have same type for operands and result!",
@@ -719,7 +719,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
             "Arithmetic operators must have same type for operands and result!",
             &B);
     Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint() ||
-            isa<PackedType>(B.getType()),
+            isa<VectorType>(B.getType()),
             "Arithmetic operators must have integer, fp, or packed type!", &B);
     break;
   }
@@ -774,7 +774,7 @@ void Verifier::visitShuffleVectorInst(ShuffleVectorInst &SV) {
           "Result of shufflevector must match first operand type!", &SV);
   
   // Check to see if Mask is valid.
-  if (const ConstantPacked *MV = dyn_cast<ConstantPacked>(SV.getOperand(2))) {
+  if (const ConstantVector *MV = dyn_cast<ConstantVector>(SV.getOperand(2))) {
     for (unsigned i = 0, e = MV->getNumOperands(); i != e; ++i) {
       Assert1(isa<ConstantInt>(MV->getOperand(i)) ||
               isa<UndefValue>(MV->getOperand(i)),
@@ -1014,9 +1014,9 @@ void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
                       "incorrect integer width!" + bitmsg, F);
         break;
       }
-    } else if (TypeID == Type::PackedTyID) {
+    } else if (TypeID == Type::VectorTyID) {
       // If this is a packed argument, verify the number and type of elements.
-      const PackedType *PTy = cast<PackedType>(Ty);
+      const VectorType *PTy = cast<VectorType>(Ty);
       int ElemTy = va_arg(VA, int);
       if (ElemTy != PTy->getElementType()->getTypeID()) {
         CheckFailed("Intrinsic prototype has incorrect vector element type!",

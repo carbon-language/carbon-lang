@@ -28,7 +28,7 @@ namespace llvm {
 class ArrayType;
 class StructType;
 class PointerType;
-class PackedType;
+class VectorType;
 
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
@@ -334,31 +334,31 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// ConstantPacked - Constant Packed Declarations
+/// ConstantVector - Constant Vector Declarations
 ///
-class ConstantPacked : public Constant {
-  friend struct ConstantCreator<ConstantPacked, PackedType,
+class ConstantVector : public Constant {
+  friend struct ConstantCreator<ConstantVector, VectorType,
                                     std::vector<Constant*> >;
-  ConstantPacked(const ConstantPacked &);      // DO NOT IMPLEMENT
+  ConstantVector(const ConstantVector &);      // DO NOT IMPLEMENT
 protected:
-  ConstantPacked(const PackedType *T, const std::vector<Constant*> &Val);
-  ~ConstantPacked();
+  ConstantVector(const VectorType *T, const std::vector<Constant*> &Val);
+  ~ConstantVector();
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static Constant *get(const PackedType *T, const std::vector<Constant*> &);
+  static Constant *get(const VectorType *T, const std::vector<Constant*> &);
   static Constant *get(const std::vector<Constant*> &V);
 
-  /// getType - Specialize the getType() method to always return an PackedType,
+  /// getType - Specialize the getType() method to always return an VectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
-  inline const PackedType *getType() const {
-    return reinterpret_cast<const PackedType*>(Value::getType());
+  inline const VectorType *getType() const {
+    return reinterpret_cast<const VectorType*>(Value::getType());
   }
 
   /// @returns the value for an packed integer constant of the given type that
   /// has all its bits set to true.
   /// @brief Get the all ones value
-  static ConstantPacked *getAllOnesValue(const PackedType *Ty);
+  static ConstantVector *getAllOnesValue(const VectorType *Ty);
   
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because zero arrays are always
@@ -375,9 +375,9 @@ public:
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const ConstantPacked *) { return true; }
+  static inline bool classof(const ConstantVector *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == ConstantPackedVal;
+    return V->getValueType() == ConstantVectorVal;
   }
 };
 

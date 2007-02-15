@@ -689,7 +689,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty)) {
             if (Op1C->getZExtValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
-          } else if (const PackedType *PT = dyn_cast<PackedType>(BasePtr1Ty)) {
+          } else if (const VectorType *PT = dyn_cast<VectorType>(BasePtr1Ty)) {
             if (Op1C->getZExtValue() >= PT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
           }
@@ -707,7 +707,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
           //
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
             GEP1Ops[i] = ConstantInt::get(Type::Int64Ty,AT->getNumElements()-1);
-          else if (const PackedType *PT = dyn_cast<PackedType>(BasePtr1Ty))
+          else if (const VectorType *PT = dyn_cast<VectorType>(BasePtr1Ty))
             GEP1Ops[i] = ConstantInt::get(Type::Int64Ty,PT->getNumElements()-1);
 
         }
@@ -719,7 +719,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty)) {
             if (Op2C->getZExtValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
-          } else if (const PackedType *PT = dyn_cast<PackedType>(BasePtr1Ty)) {
+          } else if (const VectorType *PT = dyn_cast<VectorType>(BasePtr1Ty)) {
             if (Op2C->getZExtValue() >= PT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
           }

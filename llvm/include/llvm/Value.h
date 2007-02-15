@@ -167,7 +167,7 @@ public:
     ConstantFPVal,            // This is an instance of ConstantFP
     ConstantArrayVal,         // This is an instance of ConstantArray
     ConstantStructVal,        // This is an instance of ConstantStruct
-    ConstantPackedVal,        // This is an instance of ConstantPacked
+    ConstantVectorVal,        // This is an instance of ConstantPacked
     ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
     InlineAsmVal,             // This is an instance of InlineAsm
     InstructionVal,           // This is an instance of Instruction

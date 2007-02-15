@@ -81,7 +81,7 @@ public:
     ArrayTyID,       ///<  8: Arrays
     PointerTyID,     ///<  9: Pointers
     OpaqueTyID,      ///< 10: Opaque: type with unknown structure
-    PackedTyID,      ///< 11: SIMD 'packed' format, or other vector type
+    VectorTyID,      ///< 11: SIMD 'packed' format, or other vector type
 
     NumTypeIDs,                         // Must remain as last defined ID
     LastPrimitiveTyID = LabelTyID,
@@ -191,7 +191,7 @@ public:
   ///
   inline bool isFirstClassType() const {
     return (ID != VoidTyID && ID <= LastPrimitiveTyID) ||
-            ID == IntegerTyID || ID == PointerTyID || ID == PackedTyID;
+            ID == IntegerTyID || ID == PointerTyID || ID == VectorTyID;
   }
 
   /// isSized - Return true if it makes sense to take the size of this type.  To
@@ -204,7 +204,7 @@ public:
       return true;
     // If it is not something that can have a size (e.g. a function or label),
     // it doesn't have a size.
-    if (ID != StructTyID && ID != ArrayTyID && ID != PackedTyID &&
+    if (ID != StructTyID && ID != ArrayTyID && ID != VectorTyID &&
         ID != PackedStructTyID)
       return false;
     // If it is something that can have a size and it's concrete, it definitely

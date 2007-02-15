@@ -752,7 +752,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
 
     // Reject cases where it is pointless to do this.
     if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPoint() || 
-        isa<PackedType>(BI->getType()))
+        isa<VectorType>(BI->getType()))
       continue;  // Floating point ops are not associative.
 
     // If this is a subtract instruction which is not already in negate form,

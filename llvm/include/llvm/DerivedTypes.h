@@ -28,7 +28,7 @@ class FunctionValType;
 class ArrayValType;
 class StructValType;
 class PointerValType;
-class PackedValType;
+class VectorValType;
 class IntegerValType;
 
 class DerivedType : public Type {
@@ -214,7 +214,7 @@ public:
 
 
 /// CompositeType - Common super class of ArrayType, StructType, PointerType
-/// and PackedType
+/// and VectorType
 class CompositeType : public DerivedType {
 protected:
   inline CompositeType(TypeID id) : DerivedType(id) { }
@@ -232,7 +232,7 @@ public:
     return T->getTypeID() == ArrayTyID ||
            T->getTypeID() == StructTyID ||
            T->getTypeID() == PointerTyID ||
-           T->getTypeID() == PackedTyID;
+           T->getTypeID() == VectorTyID;
   }
 };
 
@@ -317,7 +317,7 @@ public:
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID ||
            T->getTypeID() == PointerTyID ||
-           T->getTypeID() == PackedTyID;
+           T->getTypeID() == VectorTyID;
   }
 };
 
@@ -350,25 +350,25 @@ public:
   }
 };
 
-/// PackedType - Class to represent packed types
+/// VectorType - Class to represent packed types
 ///
-class PackedType : public SequentialType {
-  friend class TypeMap<PackedValType, PackedType>;
+class VectorType : public SequentialType {
+  friend class TypeMap<VectorValType, VectorType>;
   unsigned NumElements;
 
-  PackedType(const PackedType &);                   // Do not implement
-  const PackedType &operator=(const PackedType &);  // Do not implement
-  PackedType(const Type *ElType, unsigned NumEl);
+  VectorType(const VectorType &);                   // Do not implement
+  const VectorType &operator=(const VectorType &);  // Do not implement
+  VectorType(const Type *ElType, unsigned NumEl);
 public:
-  /// PackedType::get - This static method is the primary way to construct an
-  /// PackedType
+  /// VectorType::get - This static method is the primary way to construct an
+  /// VectorType
   ///
-  static PackedType *get(const Type *ElementType, unsigned NumElements);
+  static VectorType *get(const Type *ElementType, unsigned NumElements);
 
-  /// @brief Return the number of elements in the Packed type.
+  /// @brief Return the number of elements in the Vector type.
   inline unsigned getNumElements() const { return NumElements; }
 
-  /// @brief Return the number of bits in the Packed type.
+  /// @brief Return the number of bits in the Vector type.
   inline unsigned getBitWidth() const { 
     return NumElements *getElementType()->getPrimitiveSizeInBits();
   }
@@ -378,9 +378,9 @@ public:
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const PackedType *T) { return true; }
+  static inline bool classof(const VectorType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getTypeID() == PackedTyID;
+    return T->getTypeID() == VectorTyID;
   }
 };
 

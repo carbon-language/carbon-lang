@@ -72,13 +72,13 @@ public:
    /// @param EI the insertelement operator to convert
    void visitInsertElementInst(InsertElementInst& IE);
 
-   /// This function asserts if the instruction is a PackedType but
+   /// This function asserts if the instruction is a VectorType but
    /// is handled by another function.
    ///
-   /// @brief Asserts if PackedType instruction is not handled elsewhere.
+   /// @brief Asserts if VectorType instruction is not handled elsewhere.
    /// @param I the unhandled instruction
    void visitInstruction(Instruction &I) {
-     if (isa<PackedType>(I.getType()))
+     if (isa<VectorType>(I.getType()))
        cerr << "Unhandled Instruction with Packed ReturnType: " << I << '\n';
    }
 private:
@@ -150,8 +150,8 @@ void LowerPacked::setValues(Value* value,const std::vector<Value*>& values)
 // the program.
 std::vector<Value*>& LowerPacked::getValues(Value* value)
 {
-   assert(isa<PackedType>(value->getType()) &&
-          "Value must be PackedType");
+   assert(isa<VectorType>(value->getType()) &&
+          "Value must be VectorType");
 
    // reject further processing if this one has
    // already been handled
@@ -161,7 +161,7 @@ std::vector<Value*>& LowerPacked::getValues(Value* value)
        return it->second;
    }
 
-   if (ConstantPacked* CP = dyn_cast<ConstantPacked>(value)) {
+   if (ConstantVector* CP = dyn_cast<ConstantVector>(value)) {
        // non-zero constant case
        std::vector<Value*> results;
        results.reserve(CP->getNumOperands());
@@ -174,7 +174,7 @@ std::vector<Value*>& LowerPacked::getValues(Value* value)
    else if (ConstantAggregateZero* CAZ =
             dyn_cast<ConstantAggregateZero>(value)) {
        // zero constant
-       const PackedType* PKT = cast<PackedType>(CAZ->getType());
+       const VectorType* PKT = cast<VectorType>(CAZ->getType());
        std::vector<Value*> results;
        results.reserve(PKT->getNumElements());
 
@@ -187,7 +187,7 @@ std::vector<Value*>& LowerPacked::getValues(Value* value)
    }
    else if (isa<Instruction>(value)) {
        // foward reference
-       const PackedType* PKT = cast<PackedType>(value->getType());
+       const VectorType* PKT = cast<VectorType>(value->getType());
        std::vector<Value*> results;
        results.reserve(PKT->getNumElements());
 
@@ -200,7 +200,7 @@ std::vector<Value*>& LowerPacked::getValues(Value* value)
    else {
        // we don't know what it is, and we are trying to retrieve
        // a value for it
-       assert(false && "Unhandled PackedType value");
+       assert(false && "Unhandled VectorType value");
        abort();
    }
 }
@@ -208,7 +208,7 @@ std::vector<Value*>& LowerPacked::getValues(Value* value)
 void LowerPacked::visitLoadInst(LoadInst& LI)
 {
    // Make sure what we are dealing with is a packed type
-   if (const PackedType* PKT = dyn_cast<PackedType>(LI.getType())) {
+   if (const VectorType* PKT = dyn_cast<VectorType>(LI.getType())) {
        // Initialization, Idx is needed for getelementptr needed later
        std::vector<Value*> Idx(2);
        Idx[0] = ConstantInt::get(Type::Int32Ty,0);
@@ -249,8 +249,8 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
 
 void LowerPacked::visitBinaryOperator(BinaryOperator& BO)
 {
-   // Make sure both operands are PackedTypes
-   if (isa<PackedType>(BO.getOperand(0)->getType())) {
+   // Make sure both operands are VectorTypes
+   if (isa<VectorType>(BO.getOperand(0)->getType())) {
        std::vector<Value*>& op0Vals = getValues(BO.getOperand(0));
        std::vector<Value*>& op1Vals = getValues(BO.getOperand(1));
        std::vector<Value*> result;
@@ -277,8 +277,8 @@ void LowerPacked::visitBinaryOperator(BinaryOperator& BO)
 
 void LowerPacked::visitICmpInst(ICmpInst& IC)
 {
-   // Make sure both operands are PackedTypes
-   if (isa<PackedType>(IC.getOperand(0)->getType())) {
+   // Make sure both operands are VectorTypes
+   if (isa<VectorType>(IC.getOperand(0)->getType())) {
        std::vector<Value*>& op0Vals = getValues(IC.getOperand(0));
        std::vector<Value*>& op1Vals = getValues(IC.getOperand(1));
        std::vector<Value*> result;
@@ -306,8 +306,8 @@ void LowerPacked::visitICmpInst(ICmpInst& IC)
 
 void LowerPacked::visitStoreInst(StoreInst& SI)
 {
-   if (const PackedType* PKT =
-       dyn_cast<PackedType>(SI.getOperand(0)->getType())) {
+   if (const VectorType* PKT =
+       dyn_cast<VectorType>(SI.getOperand(0)->getType())) {
        // We will need this for getelementptr
        std::vector<Value*> Idx(2);
        Idx[0] = ConstantInt::get(Type::Int32Ty,0);
@@ -343,8 +343,8 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
 
 void LowerPacked::visitSelectInst(SelectInst& SELI)
 {
-   // Make sure both operands are PackedTypes
-   if (isa<PackedType>(SELI.getType())) {
+   // Make sure both operands are VectorTypes
+   if (isa<VectorType>(SELI.getType())) {
        std::vector<Value*>& op0Vals = getValues(SELI.getTrueValue());
        std::vector<Value*>& op1Vals = getValues(SELI.getFalseValue());
        std::vector<Value*> result;
@@ -369,7 +369,7 @@ void LowerPacked::visitSelectInst(SelectInst& SELI)
 void LowerPacked::visitExtractElementInst(ExtractElementInst& EI)
 {
   std::vector<Value*>& op0Vals = getValues(EI.getOperand(0));
-  const PackedType *PTy = cast<PackedType>(EI.getOperand(0)->getType());
+  const VectorType *PTy = cast<VectorType>(EI.getOperand(0)->getType());
   Value *op1 = EI.getOperand(1);
 
   if (ConstantInt *C = dyn_cast<ConstantInt>(op1)) {

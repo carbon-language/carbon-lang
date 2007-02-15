@@ -38,7 +38,7 @@ namespace llvm {
   class SelectionDAG;
   class MachineBasicBlock;
   class MachineInstr;
-  class PackedType;
+  class VectorType;
 
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to
@@ -198,16 +198,16 @@ public:
     return VT;
   }
 
-  /// getPackedTypeBreakdown - Packed types are broken down into some number of
+  /// getVectorTypeBreakdown - Packed types are broken down into some number of
   /// legal first class types.  For example, <8 x float> maps to 2 MVT::v4f32
   /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
   /// Similarly, <2 x long> turns into 4 MVT::i32 values with both PPC and X86.
   ///
   /// This method returns the number of registers needed, and the VT for each
-  /// register.  It also returns the VT of the PackedType elements before they
+  /// register.  It also returns the VT of the VectorType elements before they
   /// are promoted/expanded.
   ///
-  unsigned getPackedTypeBreakdown(const PackedType *PTy, 
+  unsigned getVectorTypeBreakdown(const VectorType *PTy, 
                                   MVT::ValueType &PTyElementVT,
                                   MVT::ValueType &PTyLegalElementVT) const;
   

@@ -120,7 +120,7 @@ static bool EmitTypeVerify(std::ostream &OS, Record *ArgType) {
     OS << ArgType->getValueAsInt("Width") << ", ";
 
   // If this is a packed type, check that the subtype and size are correct.
-  else if (ArgType->isSubClassOf("LLVMPackedType")) {
+  else if (ArgType->isSubClassOf("LLVMVectorType")) {
     EmitTypeVerify(OS, ArgType->getValueAsDef("ElTy"));
     OS << ArgType->getValueAsInt("NumElts") << ", ";
   }
@@ -131,8 +131,8 @@ static bool EmitTypeVerify(std::ostream &OS, Record *ArgType) {
 static void EmitTypeGenerate(std::ostream &OS, Record *ArgType) {
   if (ArgType->isSubClassOf("LLVMIntegerType")) {
     OS << "IntegerType::get(" << ArgType->getValueAsInt("Width") << ")";
-  } else if (ArgType->isSubClassOf("LLVMPackedType")) {
-    OS << "PackedType::get(";
+  } else if (ArgType->isSubClassOf("LLVMVectorType")) {
+    OS << "VectorType::get(";
     EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"));
     OS << ", " << ArgType->getValueAsInt("NumElts") << ")";
   } else if (ArgType->isSubClassOf("LLVMPointerType")) {

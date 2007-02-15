@@ -1,5 +1,5 @@
-; Test PackedType handling by SCCP. 
-; SCCP ignores PackedTypes until PR 1034 is fixed
+; Test VectorType handling by SCCP. 
+; SCCP ignores VectorTypes until PR 1034 is fixed
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | opt -sccp 
 target datalayout = "E-p:32:32"

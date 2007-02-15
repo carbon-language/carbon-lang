@@ -131,7 +131,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:
   case Type::ArrayTyID:
-  case Type::PackedTyID:
+  case Type::VectorTyID:
     return ConstantAggregateZero::get(Ty);
   default:
     // Function, Label, or Opaque type?
@@ -154,12 +154,12 @@ ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
 /// @returns the value for an packed integer constant of the given type that
 /// has all its bits set to true.
 /// @brief Get the all ones value
-ConstantPacked *ConstantPacked::getAllOnesValue(const PackedType *Ty) {
+ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty) {
   std::vector<Constant*> Elts;
   Elts.resize(Ty->getNumElements(),
               ConstantInt::getAllOnesValue(Ty->getElementType()));
   assert(Elts[0] && "Not a packed integer type!");
-  return cast<ConstantPacked>(ConstantPacked::get(Elts));
+  return cast<ConstantVector>(ConstantVector::get(Elts));
 }
 
 
@@ -229,9 +229,9 @@ ConstantStruct::~ConstantStruct() {
 }
 
 
-ConstantPacked::ConstantPacked(const PackedType *T,
+ConstantVector::ConstantVector(const VectorType *T,
                                const std::vector<Constant*> &V)
-  : Constant(T, ConstantPackedVal, new Use[V.size()], V.size()) {
+  : Constant(T, ConstantVectorVal, new Use[V.size()], V.size()) {
   Use *OL = OperandList;
     for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
          I != E; ++I, ++OL) {
@@ -244,7 +244,7 @@ ConstantPacked::ConstantPacked(const PackedType *T,
   }
 }
 
-ConstantPacked::~ConstantPacked() {
+ConstantVector::~ConstantVector() {
   delete [] OperandList;
 }
 
@@ -293,7 +293,7 @@ class VISIBILITY_HIDDEN ExtractElementConstantExpr : public ConstantExpr {
   Use Ops[2];
 public:
   ExtractElementConstantExpr(Constant *C1, Constant *C2)
-    : ConstantExpr(cast<PackedType>(C1->getType())->getElementType(), 
+    : ConstantExpr(cast<VectorType>(C1->getType())->getElementType(), 
                    Instruction::ExtractElement, Ops, 2) {
     Ops[0].init(C1, this);
     Ops[1].init(C2, this);
@@ -919,7 +919,7 @@ static ManagedStatic<ValueMap<char, Type,
 static char getValType(ConstantAggregateZero *CPZ) { return 0; }
 
 Constant *ConstantAggregateZero::get(const Type *Ty) {
-  assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<PackedType>(Ty)) &&
+  assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) &&
          "Cannot create an aggregate zero of non-aggregate type!");
   return AggZeroConstants->getOrCreate(Ty, 0);
 }
@@ -1108,17 +1108,17 @@ void ConstantStruct::destroyConstant() {
   destroyConstantImpl();
 }
 
-//---- ConstantPacked::get() implementation...
+//---- ConstantVector::get() implementation...
 //
 namespace llvm {
   template<>
-  struct ConvertConstantType<ConstantPacked, PackedType> {
-    static void convert(ConstantPacked *OldC, const PackedType *NewTy) {
+  struct ConvertConstantType<ConstantVector, VectorType> {
+    static void convert(ConstantVector *OldC, const VectorType *NewTy) {
       // Make everyone now use a constant of the new type...
       std::vector<Constant*> C;
       for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
         C.push_back(cast<Constant>(OldC->getOperand(i)));
-      Constant *New = ConstantPacked::get(NewTy, C);
+      Constant *New = ConstantVector::get(NewTy, C);
       assert(New != OldC && "Didn't replace constant??");
       OldC->uncheckedReplaceAllUsesWith(New);
       OldC->destroyConstant();    // This constant is now dead, destroy it.
@@ -1126,7 +1126,7 @@ namespace llvm {
   };
 }
 
-static std::vector<Constant*> getValType(ConstantPacked *CP) {
+static std::vector<Constant*> getValType(ConstantVector *CP) {
   std::vector<Constant*> Elements;
   Elements.reserve(CP->getNumOperands());
   for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
@@ -1134,10 +1134,10 @@ static std::vector<Constant*> getValType(ConstantPacked *CP) {
   return Elements;
 }
 
-static ManagedStatic<ValueMap<std::vector<Constant*>, PackedType,
-                              ConstantPacked> > PackedConstants;
+static ManagedStatic<ValueMap<std::vector<Constant*>, VectorType,
+                              ConstantVector> > PackedConstants;
 
-Constant *ConstantPacked::get(const PackedType *Ty,
+Constant *ConstantVector::get(const VectorType *Ty,
                               const std::vector<Constant*> &V) {
   // If this is an all-zero packed, return a ConstantAggregateZero object
   if (!V.empty()) {
@@ -1151,14 +1151,14 @@ Constant *ConstantPacked::get(const PackedType *Ty,
   return ConstantAggregateZero::get(Ty);
 }
 
-Constant *ConstantPacked::get(const std::vector<Constant*> &V) {
+Constant *ConstantVector::get(const std::vector<Constant*> &V) {
   assert(!V.empty() && "Cannot infer type if V is empty");
-  return get(PackedType::get(V.front()->getType(),V.size()), V);
+  return get(VectorType::get(V.front()->getType(),V.size()), V);
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstantPacked::destroyConstant() {
+void ConstantVector::destroyConstant() {
   PackedConstants->remove(this);
   destroyConstantImpl();
 }
@@ -1167,7 +1167,7 @@ void ConstantPacked::destroyConstant() {
 /// is set to all ones.
 /// @returns true iff this constant's emements are all set to all ones.
 /// @brief Determine if the value is all ones.
-bool ConstantPacked::isAllOnesValue() const {
+bool ConstantVector::isAllOnesValue() const {
   // Check out first element.
   const Constant *Elt = getOperand(0);
   const ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
@@ -1635,40 +1635,40 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Mul: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
     assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint() ||
-            isa<PackedType>(C1->getType())) &&
+            isa<VectorType>(C1->getType())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::UDiv: 
   case Instruction::SDiv: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || (isa<PackedType>(C1->getType()) &&
-      cast<PackedType>(C1->getType())->getElementType()->isInteger())) &&
+    assert((C1->getType()->isInteger() || (isa<VectorType>(C1->getType()) &&
+      cast<VectorType>(C1->getType())->getElementType()->isInteger())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FDiv:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isFloatingPoint() || (isa<PackedType>(C1->getType())
-      && cast<PackedType>(C1->getType())->getElementType()->isFloatingPoint())) 
+    assert((C1->getType()->isFloatingPoint() || (isa<VectorType>(C1->getType())
+      && cast<VectorType>(C1->getType())->getElementType()->isFloatingPoint())) 
       && "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::URem: 
   case Instruction::SRem: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || (isa<PackedType>(C1->getType()) &&
-      cast<PackedType>(C1->getType())->getElementType()->isInteger())) &&
+    assert((C1->getType()->isInteger() || (isa<VectorType>(C1->getType()) &&
+      cast<VectorType>(C1->getType())->getElementType()->isInteger())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FRem:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isFloatingPoint() || (isa<PackedType>(C1->getType())
-      && cast<PackedType>(C1->getType())->getElementType()->isFloatingPoint())) 
+    assert((C1->getType()->isFloatingPoint() || (isa<VectorType>(C1->getType())
+      && cast<VectorType>(C1->getType())->getElementType()->isFloatingPoint())) 
       && "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || isa<PackedType>(C1->getType())) &&
+    assert((C1->getType()->isInteger() || isa<VectorType>(C1->getType())) &&
            "Tried to create a logical operation on a non-integral type!");
     break;
   case Instruction::Shl:
@@ -1792,11 +1792,11 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
 }
 
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
-  assert(isa<PackedType>(Val->getType()) &&
+  assert(isa<VectorType>(Val->getType()) &&
          "Tried to create extractelement operation on non-packed type!");
   assert(Idx->getType() == Type::Int32Ty &&
          "Extractelement index must be i32 type!");
-  return getExtractElementTy(cast<PackedType>(Val->getType())->getElementType(),
+  return getExtractElementTy(cast<VectorType>(Val->getType())->getElementType(),
                              Val, Idx);
 }
 
@@ -1814,13 +1814,13 @@ Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
 
 Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt, 
                                          Constant *Idx) {
-  assert(isa<PackedType>(Val->getType()) &&
+  assert(isa<VectorType>(Val->getType()) &&
          "Tried to create insertelement operation on non-packed type!");
-  assert(Elt->getType() == cast<PackedType>(Val->getType())->getElementType()
+  assert(Elt->getType() == cast<VectorType>(Val->getType())->getElementType()
          && "Insertelement types must match!");
   assert(Idx->getType() == Type::Int32Ty &&
          "Insertelement index must be i32 type!");
-  return getInsertElementTy(cast<PackedType>(Val->getType())->getElementType(),
+  return getInsertElementTy(cast<VectorType>(Val->getType())->getElementType(),
                             Val, Elt, Idx);
 }
 
@@ -1844,11 +1844,11 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
 }
 
 Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
-  if (const PackedType *PTy = dyn_cast<PackedType>(Ty))
+  if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
     if (PTy->getElementType()->isFloatingPoint()) {
       std::vector<Constant*> zeros(PTy->getNumElements(),
                                    ConstantFP::get(PTy->getElementType(),-0.0));
-      return ConstantPacked::get(PTy, zeros);
+      return ConstantVector::get(PTy, zeros);
     }
 
   if (Ty->isFloatingPoint())
@@ -2000,7 +2000,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   destroyConstant();
 }
 
-void ConstantPacked::replaceUsesOfWithOnConstant(Value *From, Value *To,
+void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   
@@ -2012,7 +2012,7 @@ void ConstantPacked::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Values.push_back(Val);
   }
   
-  Constant *Replacement = ConstantPacked::get(getType(), Values);
+  Constant *Replacement = ConstantVector::get(getType(), Values);
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.

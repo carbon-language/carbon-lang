@@ -1262,7 +1262,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
 Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
                                                 uint64_t &UndefElts,
                                                 unsigned Depth) {
-  unsigned VWidth = cast<PackedType>(V->getType())->getNumElements();
+  unsigned VWidth = cast<VectorType>(V->getType())->getNumElements();
   assert(VWidth <= 64 && "Vector too wide to analyze!");
   uint64_t EltMask = ~0ULL >> (64-VWidth);
   assert(DemandedElts != EltMask && (DemandedElts & ~EltMask) == 0 &&
@@ -1278,8 +1278,8 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
   }
   
   UndefElts = 0;
-  if (ConstantPacked *CP = dyn_cast<ConstantPacked>(V)) {
-    const Type *EltTy = cast<PackedType>(V->getType())->getElementType();
+  if (ConstantVector *CP = dyn_cast<ConstantVector>(V)) {
+    const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
     Constant *Undef = UndefValue::get(EltTy);
 
     std::vector<Constant*> Elts;
@@ -1295,19 +1295,19 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
       }
         
     // If we changed the constant, return it.
-    Constant *NewCP = ConstantPacked::get(Elts);
+    Constant *NewCP = ConstantVector::get(Elts);
     return NewCP != CP ? NewCP : 0;
   } else if (isa<ConstantAggregateZero>(V)) {
-    // Simplify the CAZ to a ConstantPacked where the non-demanded elements are
+    // Simplify the CAZ to a ConstantVector where the non-demanded elements are
     // set to undef.
-    const Type *EltTy = cast<PackedType>(V->getType())->getElementType();
+    const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
     Constant *Zero = Constant::getNullValue(EltTy);
     Constant *Undef = UndefValue::get(EltTy);
     std::vector<Constant*> Elts;
     for (unsigned i = 0; i != VWidth; ++i)
       Elts.push_back((DemandedElts & (1ULL << i)) ? Zero : Undef);
     UndefElts = DemandedElts ^ EltMask;
-    return ConstantPacked::get(Elts);
+    return ConstantVector::get(Elts);
   }
   
   if (!V->hasOneUse()) {    // Other users may use these bits.
@@ -1743,7 +1743,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       // See if SimplifyDemandedBits can simplify this.  This handles stuff like
       // (X & 254)+1 -> (X&254)|1
       uint64_t KnownZero, KnownOne;
-      if (!isa<PackedType>(I.getType()) &&
+      if (!isa<VectorType>(I.getType()) &&
           SimplifyDemandedBits(&I, cast<IntegerType>(I.getType())->getBitMask(),
                                KnownZero, KnownOne))
         return &I;
@@ -3064,12 +3064,12 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
-  if (!isa<PackedType>(I.getType())) {
+  if (!isa<VectorType>(I.getType())) {
     if (SimplifyDemandedBits(&I, cast<IntegerType>(I.getType())->getBitMask(),
                              KnownZero, KnownOne))
     return &I;
   } else {
-    if (ConstantPacked *CP = dyn_cast<ConstantPacked>(Op1)) {
+    if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1)) {
       if (CP->isAllOnesValue())
         return ReplaceInstUsesWith(I, I.getOperand(0));
     }
@@ -3543,7 +3543,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
-  if (!isa<PackedType>(I.getType()) &&
+  if (!isa<VectorType>(I.getType()) &&
       SimplifyDemandedBits(&I, cast<IntegerType>(I.getType())->getBitMask(),
                            KnownZero, KnownOne))
     return &I;
@@ -3874,7 +3874,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
-  if (!isa<PackedType>(I.getType()) &&
+  if (!isa<VectorType>(I.getType()) &&
       SimplifyDemandedBits(&I, cast<IntegerType>(I.getType())->getBitMask(),
                            KnownZero, KnownOne))
     return &I;
@@ -6460,8 +6460,8 @@ Instruction *InstCombiner::visitBitCast(CastInst &CI) {
     if (SVI->hasOneUse()) {
       // Okay, we have (bitconvert (shuffle ..)).  Check to see if this is
       // a bitconvert to a vector with the same # elts.
-      if (isa<PackedType>(DestTy) && 
-          cast<PackedType>(DestTy)->getNumElements() == 
+      if (isa<VectorType>(DestTy) && 
+          cast<VectorType>(DestTy)->getNumElements() == 
                 SVI->getType()->getNumElements()) {
         CastInst *Tmp;
         // If either of the operands is a cast from CI.getType(), then
@@ -7082,7 +7082,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       
     case Intrinsic::ppc_altivec_vperm:
       // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
-      if (ConstantPacked *Mask = dyn_cast<ConstantPacked>(II->getOperand(3))) {
+      if (ConstantVector *Mask = dyn_cast<ConstantVector>(II->getOperand(3))) {
         assert(Mask->getNumOperands() == 16 && "Bad type for intrinsic!");
         
         // Check that all of the elements are integer constants or undefs.
@@ -8037,7 +8037,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
     const Type *SrcPTy = SrcTy->getElementType();
 
     if (DestPTy->isInteger() || isa<PointerType>(DestPTy) || 
-         isa<PackedType>(DestPTy)) {
+         isa<VectorType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
       // constants.
@@ -8052,7 +8052,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
           }
 
       if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy) || 
-            isa<PackedType>(SrcPTy)) &&
+            isa<VectorType>(SrcPTy)) &&
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
           (isa<PointerType>(SrcPTy) == isa<PointerType>(LI.getType())) &&
@@ -8516,7 +8516,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
 static bool CheapToScalarize(Value *V, bool isConstant) {
   if (isa<ConstantAggregateZero>(V)) 
     return true;
-  if (ConstantPacked *C = dyn_cast<ConstantPacked>(V)) {
+  if (ConstantVector *C = dyn_cast<ConstantVector>(V)) {
     if (isConstant) return true;
     // If all elts are the same, we can extract.
     Constant *Op0 = C->getOperand(0);
@@ -8561,7 +8561,7 @@ static std::vector<unsigned> getShuffleMask(const ShuffleVectorInst *SVI) {
     return std::vector<unsigned>(NElts, 2*NElts);
 
   std::vector<unsigned> Result;
-  const ConstantPacked *CP = cast<ConstantPacked>(SVI->getOperand(2));
+  const ConstantVector *CP = cast<ConstantVector>(SVI->getOperand(2));
   for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
     if (isa<UndefValue>(CP->getOperand(i)))
       Result.push_back(NElts*2);  // undef -> 8
@@ -8574,8 +8574,8 @@ static std::vector<unsigned> getShuffleMask(const ShuffleVectorInst *SVI) {
 /// value is already around as a register, for example if it were inserted then
 /// extracted from the vector.
 static Value *FindScalarElement(Value *V, unsigned EltNo) {
-  assert(isa<PackedType>(V->getType()) && "Not looking at a vector?");
-  const PackedType *PTy = cast<PackedType>(V->getType());
+  assert(isa<VectorType>(V->getType()) && "Not looking at a vector?");
+  const VectorType *PTy = cast<VectorType>(V->getType());
   unsigned Width = PTy->getNumElements();
   if (EltNo >= Width)  // Out of range access.
     return UndefValue::get(PTy->getElementType());
@@ -8584,7 +8584,7 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
     return UndefValue::get(PTy->getElementType());
   else if (isa<ConstantAggregateZero>(V))
     return Constant::getNullValue(PTy->getElementType());
-  else if (ConstantPacked *CP = dyn_cast<ConstantPacked>(V))
+  else if (ConstantVector *CP = dyn_cast<ConstantVector>(V))
     return CP->getOperand(EltNo);
   else if (InsertElementInst *III = dyn_cast<InsertElementInst>(V)) {
     // If this is an insert to a variable element, we don't know what it is.
@@ -8624,7 +8624,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   if (isa<ConstantAggregateZero>(EI.getOperand(0)))
     return ReplaceInstUsesWith(EI, Constant::getNullValue(EI.getType()));
   
-  if (ConstantPacked *C = dyn_cast<ConstantPacked>(EI.getOperand(0))) {
+  if (ConstantVector *C = dyn_cast<ConstantVector>(EI.getOperand(0))) {
     // If packed val is constant with uniform operands, replace EI
     // with that operand
     Constant *op0 = C->getOperand(0);
@@ -8724,7 +8724,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
                                          std::vector<Constant*> &Mask) {
   assert(V->getType() == LHS->getType() && V->getType() == RHS->getType() &&
          "Invalid CollectSingleShuffleElements");
-  unsigned NumElts = cast<PackedType>(V->getType())->getNumElements();
+  unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
 
   if (isa<UndefValue>(V)) {
     Mask.assign(NumElts, UndefValue::get(Type::Int32Ty));
@@ -8792,10 +8792,10 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
 /// that computes V and the LHS value of the shuffle.
 static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
                                      Value *&RHS) {
-  assert(isa<PackedType>(V->getType()) && 
+  assert(isa<VectorType>(V->getType()) && 
          (RHS == 0 || V->getType() == RHS->getType()) &&
          "Invalid shuffle!");
-  unsigned NumElts = cast<PackedType>(V->getType())->getNumElements();
+  unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
 
   if (isa<UndefValue>(V)) {
     Mask.assign(NumElts, UndefValue::get(Type::Int32Ty));
@@ -8895,7 +8895,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         } 
         Mask[InsertedIdx] = ConstantInt::get(Type::Int32Ty, ExtractedIdx);
         return new ShuffleVectorInst(EI->getOperand(0), VecOp,
-                                     ConstantPacked::get(Mask));
+                                     ConstantVector::get(Mask));
       }
       
       // If this insertelement isn't used by some other insertelement, turn it
@@ -8906,7 +8906,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         Value *LHS = CollectShuffleElements(&IE, Mask, RHS);
         if (RHS == 0) RHS = UndefValue::get(LHS->getType());
         // We now have a shuffle of LHS, RHS, Mask.
-        return new ShuffleVectorInst(LHS, RHS, ConstantPacked::get(Mask));
+        return new ShuffleVectorInst(LHS, RHS, ConstantVector::get(Mask));
       }
     }
   }
@@ -8947,7 +8947,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         else
           Elts.push_back(ConstantInt::get(Type::Int32Ty, Mask[i]));
       }
-      SVI.setOperand(2, ConstantPacked::get(Elts));
+      SVI.setOperand(2, ConstantVector::get(Elts));
     }
   }
   
@@ -8975,7 +8975,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     }
     SVI.setOperand(0, SVI.getOperand(1));
     SVI.setOperand(1, UndefValue::get(RHS->getType()));
-    SVI.setOperand(2, ConstantPacked::get(Elts));
+    SVI.setOperand(2, ConstantVector::get(Elts));
     LHS = SVI.getOperand(0);
     RHS = SVI.getOperand(1);
     MadeChange = true;
@@ -9030,7 +9030,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         }
         return new ShuffleVectorInst(LHSSVI->getOperand(0),
                                      LHSSVI->getOperand(1),
-                                     ConstantPacked::get(Elts));
+                                     ConstantVector::get(Elts));
       }
     }
   }

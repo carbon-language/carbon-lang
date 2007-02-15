@@ -151,7 +151,7 @@ namespace {
     void printConstantWithCast(Constant *CPV, unsigned Opcode);
     bool printConstExprCast(const ConstantExpr *CE);
     void printConstantArray(ConstantArray *CPA);
-    void printConstantPacked(ConstantPacked *CP);
+    void printConstantVector(ConstantVector *CP);
 
     // isInlinableInst - Attempt to inline instructions into their uses to build
     // trees as much as possible.  To do this, we have to consistently decide
@@ -458,7 +458,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     std::string ptrName = "*" + NameSoFar;
 
     if (isa<ArrayType>(PTy->getElementType()) ||
-        isa<PackedType>(PTy->getElementType()))
+        isa<VectorType>(PTy->getElementType()))
       ptrName = "(" + ptrName + ")";
 
     return printType(Out, PTy->getElementType(), false, ptrName);
@@ -472,8 +472,8 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                      NameSoFar + "[" + utostr(NumElements) + "]");
   }
 
-  case Type::PackedTyID: {
-    const PackedType *PTy = cast<PackedType>(Ty);
+  case Type::VectorTyID: {
+    const VectorType *PTy = cast<VectorType>(Ty);
     unsigned NumElements = PTy->getNumElements();
     if (NumElements == 0) NumElements = 1;
     return printType(Out, PTy->getElementType(), false,
@@ -563,7 +563,7 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
   }
 }
 
-void CWriter::printConstantPacked(ConstantPacked *CP) {
+void CWriter::printConstantVector(ConstantVector *CP) {
   Out << '{';
   if (CP->getNumOperands()) {
     Out << ' ';
@@ -926,9 +926,9 @@ void CWriter::printConstant(Constant *CPV) {
     }
     break;
 
-  case Type::PackedTyID:
+  case Type::VectorTyID:
     if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
-      const PackedType *AT = cast<PackedType>(CPV->getType());
+      const VectorType *AT = cast<VectorType>(CPV->getType());
       Out << '{';
       if (AT->getNumElements()) {
         Out << ' ';
@@ -941,7 +941,7 @@ void CWriter::printConstant(Constant *CPV) {
       }
       Out << " }";
     } else {
-      printConstantPacked(cast<ConstantPacked>(CPV));
+      printConstantVector(cast<ConstantVector>(CPV));
     }
     break;
 
@@ -1589,7 +1589,7 @@ bool CWriter::doInitialization(Module &M) {
           Out << " = " ;
           if (isa<StructType>(I->getInitializer()->getType()) ||
               isa<ArrayType>(I->getInitializer()->getType()) ||
-              isa<PackedType>(I->getInitializer()->getType())) {
+              isa<VectorType>(I->getInitializer()->getType())) {
             Out << "{ 0 }";
           } else {
             // Just print it out normally.

@@ -62,8 +62,8 @@ class LLVMIntegerType<ValueType VT, int width>
   int Width = width;
 }
 
-class LLVMPackedType<ValueType VT, int numelts, LLVMType elty>
-  : LLVMType<VT, "Type::PackedTyID">{
+class LLVMVectorType<ValueType VT, int numelts, LLVMType elty>
+  : LLVMType<VT, "Type::VectorTyID">{
   int NumElts = numelts;
   LLVMType ElTy = elty;
 } 
@@ -90,13 +90,13 @@ def llvm_ptrptr_ty     : LLVMPointerType<llvm_ptr_ty>;            // i8**
 def llvm_empty_ty      : LLVMEmptyStructType;                     // { }
 def llvm_descriptor_ty : LLVMPointerType<llvm_empty_ty>;          // { }*
 
-def llvm_v16i8_ty      : LLVMPackedType<v16i8,16, llvm_i8_ty>;    // 16 x i8
-def llvm_v8i16_ty      : LLVMPackedType<v8i16, 8, llvm_i16_ty>;   //  8 x i16
-def llvm_v2i64_ty      : LLVMPackedType<v2i64, 2, llvm_i64_ty>;   //  2 x i64
-def llvm_v2i32_ty      : LLVMPackedType<v2i32, 2, llvm_i32_ty>;   //  2 x i32
-def llvm_v4i32_ty      : LLVMPackedType<v4i32, 4, llvm_i32_ty>;   //  4 x i32
-def llvm_v4f32_ty      : LLVMPackedType<v4f32, 4, llvm_float_ty>; //  4 x float
-def llvm_v2f64_ty      : LLVMPackedType<v2f64, 2, llvm_double_ty>;//  2 x double
+def llvm_v16i8_ty      : LLVMVectorType<v16i8,16, llvm_i8_ty>;    // 16 x i8
+def llvm_v8i16_ty      : LLVMVectorType<v8i16, 8, llvm_i16_ty>;   //  8 x i16
+def llvm_v2i64_ty      : LLVMVectorType<v2i64, 2, llvm_i64_ty>;   //  2 x i64
+def llvm_v2i32_ty      : LLVMVectorType<v2i32, 2, llvm_i32_ty>;   //  2 x i32
+def llvm_v4i32_ty      : LLVMVectorType<v4i32, 4, llvm_i32_ty>;   //  4 x i32
+def llvm_v4f32_ty      : LLVMVectorType<v4f32, 4, llvm_float_ty>; //  4 x float
+def llvm_v2f64_ty      : LLVMVectorType<v2f64, 2, llvm_double_ty>;//  2 x double
 
 def llvm_vararg_ty     : LLVMType<isVoid, "...">; // vararg
 

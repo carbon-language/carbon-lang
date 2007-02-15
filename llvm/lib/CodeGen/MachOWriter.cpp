@@ -769,7 +769,7 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
     
     if (isa<UndefValue>(PC)) {
       continue;
-    } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(PC)) {
+    } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(PC)) {
       unsigned ElementSize = TD->getTypeSize(CP->getType()->getElementType());
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
         WorkList.push_back(CPair(CP->getOperand(i), PA+i*ElementSize));

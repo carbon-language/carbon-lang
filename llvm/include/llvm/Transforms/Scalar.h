@@ -261,7 +261,7 @@ extern const PassInfo *LowerSwitchID;
 
 //===----------------------------------------------------------------------===//
 //
-// LowerPacked - This pass converts PackedType operations into low-level scalar
+// LowerPacked - This pass converts VectorType operations into low-level scalar
 // operations.
 //
 FunctionPass *createLowerPackedPass();

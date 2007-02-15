@@ -423,8 +423,8 @@ public:
     bca.numValues++;
   }
 
-  virtual void handleConstantPacked(
-    const PackedType* PT,
+  virtual void handleConstantVector(
+    const VectorType* PT,
     Constant**Elements, unsigned NumElts,
     unsigned TypeSlot,
     Constant* PackedVal)

@@ -35,11 +35,11 @@ using namespace llvm;
 //                ConstantFold*Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-/// CastConstantPacked - Convert the specified ConstantPacked node to the
+/// CastConstantVector - Convert the specified ConstantVector node to the
 /// specified packed type.  At this point, we know that the elements of the
 /// input packed constant are all simple integer or FP values.
-static Constant *CastConstantPacked(ConstantPacked *CP,
-                                    const PackedType *DstTy) {
+static Constant *CastConstantVector(ConstantVector *CP,
+                                    const VectorType *DstTy) {
   unsigned SrcNumElts = CP->getType()->getNumElements();
   unsigned DstNumElts = DstTy->getNumElements();
   const Type *SrcEltTy = CP->getType()->getElementType();
@@ -57,7 +57,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
       for (unsigned i = 0; i != SrcNumElts; ++i)
         Result.push_back(
           ConstantExpr::getBitCast(CP->getOperand(i), DstEltTy));
-      return ConstantPacked::get(Result);
+      return ConstantVector::get(Result);
     }
     
     // If this is an int-to-fp cast ..
@@ -70,7 +70,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
             BitsToDouble(cast<ConstantInt>(CP->getOperand(i))->getZExtValue());
           Result.push_back(ConstantFP::get(Type::DoubleTy, V));
         }
-        return ConstantPacked::get(Result);
+        return ConstantVector::get(Result);
       }
       assert(DstEltTy == Type::FloatTy && "Unknown fp type!");
       for (unsigned i = 0; i != SrcNumElts; ++i) {
@@ -78,7 +78,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
         BitsToFloat(cast<ConstantInt>(CP->getOperand(i))->getZExtValue());
         Result.push_back(ConstantFP::get(Type::FloatTy, V));
       }
-      return ConstantPacked::get(Result);
+      return ConstantVector::get(Result);
     }
     
     // Otherwise, this is an fp-to-int cast.
@@ -91,7 +91,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
         Constant *C = ConstantInt::get(Type::Int64Ty, V);
         Result.push_back(ConstantExpr::getBitCast(C, DstEltTy ));
       }
-      return ConstantPacked::get(Result);
+      return ConstantVector::get(Result);
     }
 
     assert(SrcEltTy->getTypeID() == Type::FloatTyID);
@@ -100,7 +100,7 @@ static Constant *CastConstantPacked(ConstantPacked *CP,
       Constant *C = ConstantInt::get(Type::Int32Ty, V);
       Result.push_back(ConstantExpr::getBitCast(C, DstEltTy));
     }
-    return ConstantPacked::get(Result);
+    return ConstantVector::get(Result);
   }
   
   // Otherwise, this is a cast that changes element count and size.  Handle
@@ -242,8 +242,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
         
     // Handle casts from one packed constant to another.  We know that the src 
     // and dest type have the same size (otherwise its an illegal cast).
-    if (const PackedType *DestPTy = dyn_cast<PackedType>(DestTy)) {
-      if (const PackedType *SrcTy = dyn_cast<PackedType>(V->getType())) {
+    if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
+      if (const VectorType *SrcTy = dyn_cast<VectorType>(V->getType())) {
         assert(DestPTy->getBitWidth() == SrcTy->getBitWidth() &&
                "Not cast between same sized vectors!");
         // First, check for null and undef
@@ -252,9 +252,9 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
         if (isa<UndefValue>(V))
           return UndefValue::get(DestTy);
 
-        if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(V)) {
-          // This is a cast from a ConstantPacked of one type to a 
-          // ConstantPacked of another type.  Check to see if all elements of 
+        if (const ConstantVector *CP = dyn_cast<ConstantVector>(V)) {
+          // This is a cast from a ConstantVector of one type to a 
+          // ConstantVector of another type.  Check to see if all elements of 
           // the input are simple.
           bool AllSimpleConstants = true;
           for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
@@ -267,7 +267,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
               
           // If all of the elements are simple constants, we can fold this.
           if (AllSimpleConstants)
-            return CastConstantPacked(const_cast<ConstantPacked*>(CP), DestPTy);
+            return CastConstantVector(const_cast<ConstantVector*>(CP), DestPTy);
         }
       }
     }
@@ -329,12 +329,12 @@ Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
 Constant *llvm::ConstantFoldExtractElementInstruction(const Constant *Val,
                                                       const Constant *Idx) {
   if (isa<UndefValue>(Val))  // ee(undef, x) -> undef
-    return UndefValue::get(cast<PackedType>(Val->getType())->getElementType());
+    return UndefValue::get(cast<VectorType>(Val->getType())->getElementType());
   if (Val->isNullValue())  // ee(zero, x) -> zero
     return Constant::getNullValue(
-                          cast<PackedType>(Val->getType())->getElementType());
+                          cast<VectorType>(Val->getType())->getElementType());
   
-  if (const ConstantPacked *CVal = dyn_cast<ConstantPacked>(Val)) {
+  if (const ConstantVector *CVal = dyn_cast<ConstantVector>(Val)) {
     if (const ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx)) {
       return const_cast<Constant*>(CVal->getOperand(CIdx->getZExtValue()));
     } else if (isa<UndefValue>(Idx)) {
@@ -359,7 +359,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
     // Otherwise break the aggregate undef into multiple undefs and do
     // the insertion
     unsigned numOps = 
-      cast<PackedType>(Val->getType())->getNumElements();
+      cast<VectorType>(Val->getType())->getNumElements();
     std::vector<Constant*> Ops; 
     Ops.reserve(numOps);
     for (unsigned i = 0; i < numOps; ++i) {
@@ -367,7 +367,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
         (i == idxVal) ? Elt : UndefValue::get(Elt->getType());
       Ops.push_back(const_cast<Constant*>(Op));
     }
-    return ConstantPacked::get(Ops);
+    return ConstantVector::get(Ops);
   }
   if (isa<ConstantAggregateZero>(Val)) {
     // Insertion of scalar constant into packed aggregate zero
@@ -377,7 +377,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
     // Otherwise break the aggregate zero into multiple zeros and do
     // the insertion
     unsigned numOps = 
-      cast<PackedType>(Val->getType())->getNumElements();
+      cast<VectorType>(Val->getType())->getNumElements();
     std::vector<Constant*> Ops; 
     Ops.reserve(numOps);
     for (unsigned i = 0; i < numOps; ++i) {
@@ -385,9 +385,9 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
         (i == idxVal) ? Elt : Constant::getNullValue(Elt->getType());
       Ops.push_back(const_cast<Constant*>(Op));
     }
-    return ConstantPacked::get(Ops);
+    return ConstantVector::get(Ops);
   }
-  if (const ConstantPacked *CVal = dyn_cast<ConstantPacked>(Val)) {
+  if (const ConstantVector *CVal = dyn_cast<ConstantVector>(Val)) {
     // Insertion of scalar constant into packed constant
     std::vector<Constant*> Ops; 
     Ops.reserve(CVal->getNumOperands());
@@ -396,7 +396,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
         (i == idxVal) ? Elt : cast<Constant>(CVal->getOperand(i));
       Ops.push_back(const_cast<Constant*>(Op));
     }
-    return ConstantPacked::get(Ops);
+    return ConstantVector::get(Ops);
   }
   return 0;
 }
@@ -409,16 +409,16 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
 }
 
 /// EvalVectorOp - Given two packed constants and a function pointer, apply the
-/// function pointer to each element pair, producing a new ConstantPacked
+/// function pointer to each element pair, producing a new ConstantVector
 /// constant.
-static Constant *EvalVectorOp(const ConstantPacked *V1, 
-                              const ConstantPacked *V2,
+static Constant *EvalVectorOp(const ConstantVector *V1, 
+                              const ConstantVector *V2,
                               Constant *(*FP)(Constant*, Constant*)) {
   std::vector<Constant*> Res;
   for (unsigned i = 0, e = V1->getNumOperands(); i != e; ++i)
     Res.push_back(FP(const_cast<Constant*>(V1->getOperand(i)),
                      const_cast<Constant*>(V2->getOperand(i))));
-  return ConstantPacked::get(Res);
+  return ConstantVector::get(Res);
 }
 
 Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
@@ -444,8 +444,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         return Constant::getNullValue(C1->getType());
       return const_cast<Constant*>(C2);            // X / undef -> undef
     case Instruction::Or:                          // X | undef -> -1
-      if (const PackedType *PTy = dyn_cast<PackedType>(C1->getType()))
-        return ConstantPacked::getAllOnesValue(PTy);
+      if (const VectorType *PTy = dyn_cast<VectorType>(C1->getType()))
+        return ConstantVector::getAllOnesValue(PTy);
       return ConstantInt::getAllOnesValue(C1->getType());
     case Instruction::LShr:
       if (isa<UndefValue>(C2) && isa<UndefValue>(C1))
@@ -632,8 +632,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         return ConstantFP::get(CFP1->getType(), std::fmod(C1Val, C2Val));
       }
     }
-  } else if (const ConstantPacked *CP1 = dyn_cast<ConstantPacked>(C1)) {
-    if (const ConstantPacked *CP2 = dyn_cast<ConstantPacked>(C2)) {
+  } else if (const ConstantVector *CP1 = dyn_cast<ConstantVector>(C1)) {
+    if (const ConstantVector *CP2 = dyn_cast<ConstantVector>(C2)) {
       switch (Opcode) {
         default:
           break;
@@ -1115,8 +1115,8 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     case FCmpInst::FCMP_OGE: 
       return ConstantInt::get(Type::Int1Ty, C1Val >= C2Val);
     }
-  } else if (const ConstantPacked *CP1 = dyn_cast<ConstantPacked>(C1)) {
-    if (const ConstantPacked *CP2 = dyn_cast<ConstantPacked>(C2)) {
+  } else if (const ConstantVector *CP1 = dyn_cast<ConstantVector>(C1)) {
+    if (const ConstantVector *CP2 = dyn_cast<ConstantVector>(C2)) {
       if (pred == FCmpInst::FCMP_OEQ || pred == FCmpInst::FCMP_UEQ) {
         for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
           Constant *C= ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ,

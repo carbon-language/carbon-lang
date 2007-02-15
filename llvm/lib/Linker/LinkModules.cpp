@@ -295,11 +295,11 @@ static Value *RemapOperand(const Value *In,
       Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstantPointerNull>(CPV) || isa<UndefValue>(CPV)) {
       Result = const_cast<Constant*>(CPV);
-    } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CPV)) {
+    } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CPV)) {
       std::vector<Constant*> Operands(CP->getNumOperands());
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
         Operands[i] = cast<Constant>(RemapOperand(CP->getOperand(i), ValueMap));
-      Result = ConstantPacked::get(Operands);
+      Result = ConstantVector::get(Operands);
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
       std::vector<Constant*> Ops;
       for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)

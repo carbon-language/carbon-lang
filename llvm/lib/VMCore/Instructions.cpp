@@ -884,7 +884,7 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
                                        const std::string &Name,
                                        Instruction *InsertBef)
-  : Instruction(cast<PackedType>(Val->getType())->getElementType(),
+  : Instruction(cast<VectorType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertBef) {
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
@@ -895,7 +895,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
 ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
                                        const std::string &Name,
                                        Instruction *InsertBef)
-  : Instruction(cast<PackedType>(Val->getType())->getElementType(),
+  : Instruction(cast<VectorType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertBef) {
   Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Val, Index) &&
@@ -908,7 +908,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
                                        const std::string &Name,
                                        BasicBlock *InsertAE)
-  : Instruction(cast<PackedType>(Val->getType())->getElementType(),
+  : Instruction(cast<VectorType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertAE) {
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
@@ -920,7 +920,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
 ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
                                        const std::string &Name,
                                        BasicBlock *InsertAE)
-  : Instruction(cast<PackedType>(Val->getType())->getElementType(),
+  : Instruction(cast<VectorType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertAE) {
   Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Val, Index) &&
@@ -932,7 +932,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
 
 
 bool ExtractElementInst::isValidOperands(const Value *Val, const Value *Index) {
-  if (!isa<PackedType>(Val->getType()) || Index->getType() != Type::Int32Ty)
+  if (!isa<VectorType>(Val->getType()) || Index->getType() != Type::Int32Ty)
     return false;
   return true;
 }
@@ -999,10 +999,10 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
 
 bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt, 
                                         const Value *Index) {
-  if (!isa<PackedType>(Vec->getType()))
+  if (!isa<VectorType>(Vec->getType()))
     return false;   // First operand of insertelement must be packed type.
   
-  if (Elt->getType() != cast<PackedType>(Vec->getType())->getElementType())
+  if (Elt->getType() != cast<VectorType>(Vec->getType())->getElementType())
     return false;// Second operand of insertelement must be packed element type.
     
   if (Index->getType() != Type::Int32Ty)
@@ -1047,12 +1047,12 @@ ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
 
 bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2, 
                                         const Value *Mask) {
-  if (!isa<PackedType>(V1->getType())) return false;
+  if (!isa<VectorType>(V1->getType())) return false;
   if (V1->getType() != V2->getType()) return false;
-  if (!isa<PackedType>(Mask->getType()) ||
-         cast<PackedType>(Mask->getType())->getElementType() != Type::Int32Ty ||
-         cast<PackedType>(Mask->getType())->getNumElements() !=
-         cast<PackedType>(V1->getType())->getNumElements())
+  if (!isa<VectorType>(Mask->getType()) ||
+         cast<VectorType>(Mask->getType())->getElementType() != Type::Int32Ty ||
+         cast<VectorType>(Mask->getType())->getNumElements() !=
+         cast<VectorType>(V1->getType())->getNumElements())
     return false;
   return true;
 }
@@ -1075,37 +1075,37 @@ void BinaryOperator::init(BinaryOps iType)
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
     assert((getType()->isInteger() || getType()->isFloatingPoint() ||
-            isa<PackedType>(getType())) &&
+            isa<VectorType>(getType())) &&
           "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case UDiv: 
   case SDiv: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isInteger() || (isa<PackedType>(getType()) && 
-            cast<PackedType>(getType())->getElementType()->isInteger())) &&
+    assert((getType()->isInteger() || (isa<VectorType>(getType()) && 
+            cast<VectorType>(getType())->getElementType()->isInteger())) &&
            "Incorrect operand type (not integer) for S/UDIV");
     break;
   case FDiv:
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isFloatingPoint() || (isa<PackedType>(getType()) &&
-            cast<PackedType>(getType())->getElementType()->isFloatingPoint())) 
+    assert((getType()->isFloatingPoint() || (isa<VectorType>(getType()) &&
+            cast<VectorType>(getType())->getElementType()->isFloatingPoint())) 
             && "Incorrect operand type (not floating point) for FDIV");
     break;
   case URem: 
   case SRem: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isInteger() || (isa<PackedType>(getType()) && 
-            cast<PackedType>(getType())->getElementType()->isInteger())) &&
+    assert((getType()->isInteger() || (isa<VectorType>(getType()) && 
+            cast<VectorType>(getType())->getElementType()->isInteger())) &&
            "Incorrect operand type (not integer) for S/UREM");
     break;
   case FRem:
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isFloatingPoint() || (isa<PackedType>(getType()) &&
-            cast<PackedType>(getType())->getElementType()->isFloatingPoint())) 
+    assert((getType()->isFloatingPoint() || (isa<VectorType>(getType()) &&
+            cast<VectorType>(getType())->getElementType()->isFloatingPoint())) 
             && "Incorrect operand type (not floating point) for FREM");
     break;
   case Shl:
@@ -1121,8 +1121,8 @@ void BinaryOperator::init(BinaryOps iType)
     assert(getType() == LHS->getType() &&
            "Logical operation should return same type as operands!");
     assert((getType()->isInteger() ||
-            (isa<PackedType>(getType()) && 
-             cast<PackedType>(getType())->getElementType()->isInteger())) &&
+            (isa<VectorType>(getType()) && 
+             cast<VectorType>(getType())->getElementType()->isInteger())) &&
            "Tried to create a logical operation on a non-integral type!");
     break;
   default:
@@ -1166,9 +1166,9 @@ BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
 BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
   Constant *C;
-  if (const PackedType *PTy = dyn_cast<PackedType>(Op->getType())) {
+  if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
     C = ConstantInt::getAllOnesValue(PTy->getElementType());
-    C = ConstantPacked::get(std::vector<Constant*>(PTy->getNumElements(), C));
+    C = ConstantVector::get(std::vector<Constant*>(PTy->getNumElements(), C));
   } else {
     C = ConstantInt::getAllOnesValue(Op->getType());
   }
@@ -1180,11 +1180,11 @@ BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
 BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
                                           BasicBlock *InsertAtEnd) {
   Constant *AllOnes;
-  if (const PackedType *PTy = dyn_cast<PackedType>(Op->getType())) {
+  if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
     // Create a vector of all ones values.
     Constant *Elt = ConstantInt::getAllOnesValue(PTy->getElementType());
     AllOnes = 
-      ConstantPacked::get(std::vector<Constant*>(PTy->getNumElements(), Elt));
+      ConstantVector::get(std::vector<Constant*>(PTy->getNumElements(), Elt));
   } else {
     AllOnes = ConstantInt::getAllOnesValue(Op->getType());
   }
@@ -1680,7 +1680,7 @@ CastInst::getCastOpcode(
         return FPToSI;                              // FP -> sint
       else
         return FPToUI;                              // FP -> uint 
-    } else if (const PackedType *PTy = dyn_cast<PackedType>(SrcTy)) {
+    } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
       assert(DestBits == PTy->getBitWidth() &&
                "Casting packed to integer of different width");
       return BitCast;                             // Same size, no-op cast
@@ -1703,15 +1703,15 @@ CastInst::getCastOpcode(
       } else  {
         return BitCast;                             // same size, no-op cast
       }
-    } else if (const PackedType *PTy = dyn_cast<PackedType>(SrcTy)) {
+    } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
       assert(DestBits == PTy->getBitWidth() &&
              "Casting packed to floating point of different width");
         return BitCast;                             // same size, no-op cast
     } else {
       assert(0 && "Casting pointer or non-first class to float");
     }
-  } else if (const PackedType *DestPTy = dyn_cast<PackedType>(DestTy)) {
-    if (const PackedType *SrcPTy = dyn_cast<PackedType>(SrcTy)) {
+  } else if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
+    if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
       assert(DestPTy->getBitWidth() == SrcPTy->getBitWidth() &&
              "Casting packed to packed of different widths");
       return BitCast;                             // packed -> packed

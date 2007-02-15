@@ -342,8 +342,8 @@ static void calcTypeName(const Type *Ty,
     Result += "]";
     break;
   }
-  case Type::PackedTyID: {
-    const PackedType *PTy = cast<PackedType>(Ty);
+  case Type::VectorTyID: {
+    const VectorType *PTy = cast<VectorType>(Ty);
     Result += "<" + utostr(PTy->getNumElements()) + " x ";
     calcTypeName(PTy->getElementType(), TypeStack, TypeNames, Result);
     Result += ">";
@@ -548,7 +548,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     Out << " }";
     if (CS->getType()->isPacked())
       Out << '>';
-  } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CV)) {
+  } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
       const Type *ETy = CP->getType()->getElementType();
       assert(CP->getNumOperands() > 0 &&
              "Number of operands for a PackedConst must be > 0");
@@ -772,7 +772,7 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     Out << '[' << ATy->getNumElements() << " x ";
     printType(ATy->getElementType()) << ']';
-  } else if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
+  } else if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
     Out << '<' << PTy->getNumElements() << " x ";
     printType(PTy->getElementType()) << '>';
   }

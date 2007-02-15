@@ -998,7 +998,7 @@ getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
       // This is an obsolete instruction so we must upgrade it based on the
       // types of its operands.
       bool isFP = Ty->isFloatingPoint();
-      if (const PackedType* PTy = dyn_cast<PackedType>(Ty))
+      if (const VectorType* PTy = dyn_cast<VectorType>(Ty))
         // If its a packed type we want to use the element type
         isFP = PTy->getElementType()->isFloatingPoint();
       if (isFP)
@@ -1014,7 +1014,7 @@ getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
       // This is an obsolete instruction so we must upgrade it based on the
       // types of its operands.
       bool isFP = Ty->isFloatingPoint();
-      if (const PackedType* PTy = dyn_cast<PackedType>(Ty))
+      if (const VectorType* PTy = dyn_cast<VectorType>(Ty))
         // If its a packed type we want to use the element type
         isFP = PTy->getElementType()->isFloatingPoint();
       // Select correct opcode
@@ -1846,10 +1846,10 @@ UpRTypes
      if ((unsigned)$2 != $2)
         error("Unsigned result not equal to signed result");
      if (!(ElemTy->isInteger() || ElemTy->isFloatingPoint()))
-        error("Elements of a PackedType must be integer or floating point");
+        error("Elements of a VectorType must be integer or floating point");
      if (!isPowerOf2_32($2))
-       error("PackedType length should be a power of 2");
-     $$.PAT = new PATypeHolder(HandleUpRefs(PackedType::get(ElemTy, 
+       error("VectorType length should be a power of 2");
+     $$.PAT = new PATypeHolder(HandleUpRefs(VectorType::get(ElemTy, 
                                           (unsigned)$2)));
      $$.S = $4.S;
      delete $4.PAT;
@@ -1999,7 +1999,7 @@ ConstVal
     delete $1.PAT;
   }
   | Types '<' ConstVector '>' { // Nonempty unsized arr
-    const PackedType *PTy = dyn_cast<PackedType>($1.PAT->get());
+    const VectorType *PTy = dyn_cast<VectorType>($1.PAT->get());
     if (PTy == 0)
       error("Cannot make packed constant with type: '" + 
             $1.PAT->get()->getDescription() + "'");
@@ -2021,7 +2021,7 @@ ConstVal
               ValTy->getDescription() + "'");
       Elems.push_back(C);
     }
-    $$.C = ConstantPacked::get(PTy, Elems);
+    $$.C = ConstantVector::get(PTy, Elems);
     $$.S = $1.S;
     delete $1.PAT;
     delete $3;
@@ -2280,8 +2280,8 @@ ConstExpr
     if (Ty != $5.C->getType())
       error("Logical operator types must match");
     if (!Ty->isInteger()) {
-      if (!isa<PackedType>(Ty) || 
-          !cast<PackedType>(Ty)->getElementType()->isInteger())
+      if (!isa<VectorType>(Ty) || 
+          !cast<VectorType>(Ty)->getElementType()->isInteger())
         error("Logical operator requires integer operands");
     }
     Instruction::BinaryOps Opcode = getBinaryOp($1, Ty, $3.S);
@@ -2802,9 +2802,9 @@ ConstValueRef
   | '<' ConstVector '>' { // Nonempty unsized packed vector
     const Type *ETy = (*$2)[0].C->getType();
     int NumElements = $2->size(); 
-    PackedType* pt = PackedType::get(ETy, NumElements);
+    VectorType* pt = VectorType::get(ETy, NumElements);
     PATypeHolder* PTy = new PATypeHolder(
-      HandleUpRefs(PackedType::get(ETy, NumElements)));
+      HandleUpRefs(VectorType::get(ETy, NumElements)));
     
     // Verify all elements are correct type!
     std::vector<Constant*> Elems;
@@ -2817,7 +2817,7 @@ ConstValueRef
               CTy->getDescription() + "'");
       Elems.push_back(C);
     }
-    $$ = ValID::create(ConstantPacked::get(pt, Elems));
+    $$ = ValID::create(ConstantVector::get(pt, Elems));
     delete PTy; delete $2;
   }
   | ConstExpr {
@@ -3108,9 +3108,9 @@ OptTailCall
 InstVal 
   : ArithmeticOps Types ValueRef ',' ValueRef {
     const Type* Ty = $2.PAT->get();
-    if (!Ty->isInteger() && !Ty->isFloatingPoint() && !isa<PackedType>(Ty))
+    if (!Ty->isInteger() && !Ty->isFloatingPoint() && !isa<VectorType>(Ty))
       error("Arithmetic operator requires integer, FP, or packed operands");
-    if (isa<PackedType>(Ty) && 
+    if (isa<VectorType>(Ty) && 
         ($1 == URemOp || $1 == SRemOp || $1 == FRemOp || $1 == RemOp))
       error("Remainder not supported on packed types");
     // Upgrade the opcode from obsolete versions before we do anything with it.
@@ -3126,8 +3126,8 @@ InstVal
   | LogicalOps Types ValueRef ',' ValueRef {
     const Type *Ty = $2.PAT->get();
     if (!Ty->isInteger()) {
-      if (!isa<PackedType>(Ty) ||
-          !cast<PackedType>(Ty)->getElementType()->isInteger())
+      if (!isa<VectorType>(Ty) ||
+          !cast<VectorType>(Ty)->getElementType()->isInteger())
         error("Logical operator requires integral operands");
     }
     Instruction::BinaryOps Opcode = getBinaryOp($1, Ty, $2.S);
@@ -3141,8 +3141,8 @@ InstVal
   }
   | SetCondOps Types ValueRef ',' ValueRef {
     const Type* Ty = $2.PAT->get();
-    if(isa<PackedType>(Ty))
-      error("PackedTypes currently not supported in setcc instructions");
+    if(isa<VectorType>(Ty))
+      error("VectorTypes currently not supported in setcc instructions");
     unsigned short pred;
     Instruction::OtherOps Opcode = getCompareOp($1, pred, Ty, $2.S);
     Value* tmpVal1 = getVal(Ty, $3);
@@ -3155,8 +3155,8 @@ InstVal
   }
   | ICMP IPredicates Types ValueRef ',' ValueRef {
     const Type *Ty = $3.PAT->get();
-    if (isa<PackedType>(Ty)) 
-      error("PackedTypes currently not supported in icmp instructions");
+    if (isa<VectorType>(Ty)) 
+      error("VectorTypes currently not supported in icmp instructions");
     else if (!Ty->isInteger() && !isa<PointerType>(Ty))
       error("icmp requires integer or pointer typed operands");
     Value* tmpVal1 = getVal(Ty, $4);
@@ -3167,8 +3167,8 @@ InstVal
   }
   | FCMP FPredicates Types ValueRef ',' ValueRef {
     const Type *Ty = $3.PAT->get();
-    if (isa<PackedType>(Ty))
-      error("PackedTypes currently not supported in fcmp instructions");
+    if (isa<VectorType>(Ty))
+      error("VectorTypes currently not supported in fcmp instructions");
     else if (!Ty->isFloatingPoint())
       error("fcmp instruction requires floating point operands");
     Value* tmpVal1 = getVal(Ty, $4);

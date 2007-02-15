@@ -23,7 +23,7 @@ namespace llvm {
 class ArrayType;
 class StructType;
 class PointerType;
-class PackedType;
+class VectorType;
 class ConstantArray;
 class Module;
 
@@ -242,8 +242,8 @@ public:
   ) {}
 
   /// @brief Handle a constant packed
-  virtual void handleConstantPacked(
-    const PackedType* PT,                ///< Type of the array
+  virtual void handleConstantVector(
+    const VectorType* PT,                ///< Type of the array
     Constant**ElementSlots, unsigned NumElts,///< Slot nums for packed values
     unsigned TypeSlot,                  ///< Slot # of type
     Constant* Val                       ///< The constant value

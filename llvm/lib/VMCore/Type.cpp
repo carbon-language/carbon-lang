@@ -93,9 +93,9 @@ const Type *Type::getVAArgsPromotedType() const {
 ///
 bool Type::isFPOrFPVector() const {
   if (ID == Type::FloatTyID || ID == Type::DoubleTyID) return true;
-  if (ID != Type::PackedTyID) return false;
+  if (ID != Type::VectorTyID) return false;
   
-  return cast<PackedType>(this)->getElementType()->isFloatingPoint();
+  return cast<VectorType>(this)->getElementType()->isFloatingPoint();
 }
 
 // canLosslesllyBitCastTo - Return true if this type can be converted to
@@ -112,8 +112,8 @@ bool Type::canLosslesslyBitCastTo(const Type *Ty) const {
 
   // Packed -> Packed conversions are always lossless if the two packed types
   // have the same size, otherwise not.
-  if (const PackedType *thisPTy = dyn_cast<PackedType>(this))
-    if (const PackedType *thatPTy = dyn_cast<PackedType>(Ty))
+  if (const VectorType *thisPTy = dyn_cast<VectorType>(this))
+    if (const VectorType *thatPTy = dyn_cast<VectorType>(Ty))
       return thisPTy->getBitWidth() == thatPTy->getBitWidth();
 
   // At this point we have only various mismatches of the first class types
@@ -129,7 +129,7 @@ unsigned Type::getPrimitiveSizeInBits() const {
   case Type::FloatTyID: return 32;
   case Type::DoubleTyID: return 64;
   case Type::IntegerTyID: return cast<IntegerType>(this)->getBitWidth();
-  case Type::PackedTyID:  return cast<PackedType>(this)->getBitWidth();
+  case Type::VectorTyID:  return cast<VectorType>(this)->getBitWidth();
   default: return 0;
   }
 }
@@ -144,7 +144,7 @@ bool Type::isSizedDerivedType() const {
   if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
     return ATy->getElementType()->isSized();
 
-  if (const PackedType *PTy = dyn_cast<PackedType>(this))
+  if (const VectorType *PTy = dyn_cast<VectorType>(this))
     return PTy->getElementType()->isSized();
 
   if (!isa<StructType>(this)) 
@@ -287,8 +287,8 @@ static std::string getTypeDescription(const Type *Ty,
     Result += getTypeDescription(ATy->getElementType(), TypeStack) + "]";
     break;
   }
-  case Type::PackedTyID: {
-    const PackedType *PTy = cast<PackedType>(Ty);
+  case Type::VectorTyID: {
+    const VectorType *PTy = cast<VectorType>(Ty);
     unsigned NumElements = PTy->getNumElements();
     Result = "<";
     Result += utostr(NumElements) + " x ";
@@ -421,14 +421,14 @@ ArrayType::ArrayType(const Type *ElType, uint64_t NumEl)
   setAbstract(ElType->isAbstract());
 }
 
-PackedType::PackedType(const Type *ElType, unsigned NumEl)
-  : SequentialType(PackedTyID, ElType) {
+VectorType::VectorType(const Type *ElType, unsigned NumEl)
+  : SequentialType(VectorTyID, ElType) {
   NumElements = NumEl;
   setAbstract(ElType->isAbstract());
-  assert(NumEl > 0 && "NumEl of a PackedType must be greater than 0");
+  assert(NumEl > 0 && "NumEl of a VectorType must be greater than 0");
   assert((ElType->isInteger() || ElType->isFloatingPoint() || 
           isa<OpaqueType>(ElType)) && 
-         "Elements of a PackedType must be a primitive type");
+         "Elements of a VectorType must be a primitive type");
 
 }
 
@@ -589,8 +589,8 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
     const ArrayType *ATy2 = cast<ArrayType>(Ty2);
     return ATy->getNumElements() == ATy2->getNumElements() &&
            TypesEqual(ATy->getElementType(), ATy2->getElementType(), EqTypes);
-  } else if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
-    const PackedType *PTy2 = cast<PackedType>(Ty2);
+  } else if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
+    const VectorType *PTy2 = cast<VectorType>(Ty2);
     return PTy->getNumElements() == PTy2->getNumElements() &&
            TypesEqual(PTy->getElementType(), PTy2->getElementType(), EqTypes);
   } else if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
@@ -695,8 +695,8 @@ static unsigned getSubElementHash(const Type *Ty) {
     case Type::ArrayTyID:
       HashVal ^= cast<ArrayType>(SubTy)->getNumElements();
       break;
-    case Type::PackedTyID:
-      HashVal ^= cast<PackedType>(SubTy)->getNumElements();
+    case Type::VectorTyID:
+      HashVal ^= cast<VectorType>(SubTy)->getNumElements();
       break;
     case Type::StructTyID:
       HashVal ^= cast<StructType>(SubTy)->getNumElements();
@@ -1132,39 +1132,39 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
 // Packed Type Factory...
 //
 namespace llvm {
-class PackedValType {
+class VectorValType {
   const Type *ValTy;
   unsigned Size;
 public:
-  PackedValType(const Type *val, int sz) : ValTy(val), Size(sz) {}
+  VectorValType(const Type *val, int sz) : ValTy(val), Size(sz) {}
 
-  static PackedValType get(const PackedType *PT) {
-    return PackedValType(PT->getElementType(), PT->getNumElements());
+  static VectorValType get(const VectorType *PT) {
+    return VectorValType(PT->getElementType(), PT->getNumElements());
   }
 
-  static unsigned hashTypeStructure(const PackedType *PT) {
+  static unsigned hashTypeStructure(const VectorType *PT) {
     return PT->getNumElements();
   }
 
-  inline bool operator<(const PackedValType &MTV) const {
+  inline bool operator<(const VectorValType &MTV) const {
     if (Size < MTV.Size) return true;
     return Size == MTV.Size && ValTy < MTV.ValTy;
   }
 };
 }
-static ManagedStatic<TypeMap<PackedValType, PackedType> > PackedTypes;
+static ManagedStatic<TypeMap<VectorValType, VectorType> > VectorTypes;
 
 
-PackedType *PackedType::get(const Type *ElementType, unsigned NumElements) {
+VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
   assert(ElementType && "Can't get packed of null types!");
   assert(isPowerOf2_32(NumElements) && "Vector length should be a power of 2!");
 
-  PackedValType PVT(ElementType, NumElements);
-  PackedType *PT = PackedTypes->get(PVT);
+  VectorValType PVT(ElementType, NumElements);
+  VectorType *PT = VectorTypes->get(PVT);
   if (PT) return PT;           // Found a match, return it!
 
   // Value not found.  Derive a new type!
-  PackedTypes->add(PVT, PT = new PackedType(ElementType, NumElements));
+  VectorTypes->add(PVT, PT = new VectorType(ElementType, NumElements));
 
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *PT << "\n";
@@ -1429,13 +1429,13 @@ void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
 // concrete - this could potentially change us from an abstract type to a
 // concrete type.
 //
-void PackedType::refineAbstractType(const DerivedType *OldType,
+void VectorType::refineAbstractType(const DerivedType *OldType,
                                    const Type *NewType) {
-  PackedTypes->RefineAbstractType(this, OldType, NewType);
+  VectorTypes->RefineAbstractType(this, OldType, NewType);
 }
 
-void PackedType::typeBecameConcrete(const DerivedType *AbsTy) {
-  PackedTypes->TypeBecameConcrete(this, AbsTy);
+void VectorType::typeBecameConcrete(const DerivedType *AbsTy) {
+  VectorTypes->TypeBecameConcrete(this, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more
