@@ -69,7 +69,7 @@ public:
 
   /// BitVector default ctor - Creates an empty bitvector.
   BitVector() : Size(0), Capacity(0) {
-    Bits = new BitWord[0];
+    Bits = NULL;
   }
 
   /// BitVector ctor - Creates a bitvector of specified number of bits. All
@@ -154,9 +154,11 @@ public:
 
   /// clear - Clear all bits.
   void clear() {
-    delete[] Bits;
-    Bits = new BitWord[0];
-    Size = Capacity = 0;
+    if (Capacity > 0) {
+      delete[] Bits;
+      Bits = NULL;
+      Size = Capacity = 0;
+    }
   }
 
   /// resize - Grow or shrink the bitvector.
@@ -186,8 +188,10 @@ public:
 
   // Set, reset, flip
   BitVector &set() {
-    init_words(Bits, Capacity, true);
-    clear_unused_bits();
+    if (Bits) {
+      init_words(Bits, Capacity, true);
+      clear_unused_bits();
+    }
     return *this;
   }
 
@@ -197,7 +201,8 @@ public:
   }
 
   BitVector &reset() {
-    init_words(Bits, Capacity, false);
+    if (Bits)
+      init_words(Bits, Capacity, false);
     return *this;
   }
 
@@ -303,8 +308,10 @@ private:
 
   // Clear the unused top bits in the high word.
   void clear_unused_bits() {
-    unsigned ExtraBits = Size % BITS_PER_WORD;
-    Bits[Size / BITS_PER_WORD] &= ~(~0 << ExtraBits);
+    if (Size) {
+      unsigned ExtraBits = Size % BITS_PER_WORD;
+      Bits[Size / BITS_PER_WORD] &= ~(~0 << ExtraBits);
+    }
   }
 
   void grow(unsigned NewSize) {
@@ -317,12 +324,14 @@ private:
       std::copy(Bits, &Bits[OldCapacity], NewBits);
 
     // Destroy the old bits.
-    delete[] Bits;
+    if (Bits)
+      delete[] Bits;
     Bits = NewBits;
   }
 
   void init_words(BitWord *B, unsigned NumWords, bool t) {
-    memset(B, 0 - (int)t, NumWords*sizeof(BitWord));
+    if (B)
+      memset(B, 0 - (int)t, NumWords*sizeof(BitWord));
   } 
 };
 
