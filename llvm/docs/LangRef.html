@@ -42,7 +42,7 @@
           <li><a href="#t_pointer">Pointer Type</a></li>
           <li><a href="#t_struct">Structure Type</a></li>
           <li><a href="#t_pstruct">Packed Structure Type</a></li>
-          <li><a href="#t_packed">Packed Type</a></li>
+          <li><a href="#t_vector">Vector Type</a></li>
           <li><a href="#t_opaque">Opaque Type</a></li>
         </ol>
       </li>
@@ -844,7 +844,7 @@ classifications:</p>
     <tr>
       <td><a name="t_firstclass">first class</a></td>
       <td><tt>i1, i8, i16, i32, i64, float, double, <br/>
-          <a href="#t_pointer">pointer</a>,<a href="#t_packed">packed</a></tt>
+          <a href="#t_pointer">pointer</a>,<a href="#t_vector">vector</a></tt>
       </td>
     </tr>
   </tbody>
@@ -1063,17 +1063,17 @@ reference to another object, which must live in memory.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_packed">Packed Type</a> </div>
+<div class="doc_subsubsection"> <a name="t_vector">Vector Type</a> </div>
 <div class="doc_text">
 
 <h5>Overview:</h5>
 
-<p>A packed type is a simple derived type that represents a vector
-of elements.  Packed types are used when multiple primitive data 
+<p>A vector type is a simple derived type that represents a vector
+of elements.  Vector types are used when multiple primitive data 
 are operated in parallel using a single instruction (SIMD). 
-A packed type requires a size (number of
+A vector type requires a size (number of
 elements) and an underlying primitive data type.  Vectors must have a power
-of two length (1, 2, 4, 8, 16 ...).  Packed types are
+of two length (1, 2, 4, 8, 16 ...).  Vector types are
 considered <a href="#t_firstclass">first class</a>.</p>
 
 <h5>Syntax:</h5>
@@ -1095,9 +1095,9 @@ be any integer or floating point type.</p>
       <tt>&lt;2 x i64&gt;</tt><br/>
     </td>
     <td class="left">
-      Packed vector of 4 32-bit integer values.<br/>
-      Packed vector of 8 floating-point values.<br/>
-      Packed vector of 2 64-bit integer values.<br/>
+      Vector of 4 32-bit integer values.<br/>
+      Vector of 8 floating-point values.<br/>
+      Vector of 2 64-bit integer values.<br/>
     </td>
   </tr>
 </table>
@@ -1219,13 +1219,13 @@ and smaller aggregate constants.</p>
   types of elements must match those specified by the type.
   </dd>
 
-  <dt><b>Packed constants</b></dt>
+  <dt><b>Vector constants</b></dt>
 
-  <dd>Packed constants are represented with notation similar to packed type
+  <dd>Vector constants are represented with notation similar to vector type
   definitions (a comma separated list of elements, surrounded by
   less-than/greater-than's (<tt>&lt;&gt;</tt>)).  For example: "<tt>&lt; i32 42,
-  i32 11, i32 74, i32 100 &gt;</tt>".  Packed constants must have <a
-  href="#t_packed">packed type</a>, and the number and types of elements must
+  i32 11, i32 74, i32 100 &gt;</tt>".  VEctor constants must have <a
+  href="#t_vector">vector type</a>, and the number and types of elements must
   match those specified by the type.
   </dd>
 
@@ -1345,7 +1345,7 @@ following is the syntax for constant expressions:</p>
   identical (same number of bits). The conversion is done as if the CST value
   was stored to memory and read back as TYPE. In other words, no bits change 
   with this operator, just the type.  This can be used for conversion of
-  packed types to any other type, as long as they have the same bit width. For
+  vector types to any other type, as long as they have the same bit width. For
   pointers it is only valid to cast to another pointer type.
   </dd>
 
@@ -1737,7 +1737,7 @@ no-return function cannot be reached, and other facts.</p>
 <p>Binary operators are used to do most of the computation in a
 program.  They require two operands, execute an operation on them, and
 produce a single value.  The operands might represent 
-multiple data, as is the case with the <a href="#t_packed">packed</a> data type. 
+multiple data, as is the case with the <a href="#t_vector">vector</a> data type. 
 The result value of a binary operator is not
 necessarily the same type as its operands.</p>
 <p>There are several different binary operators:</p>
@@ -1754,7 +1754,7 @@ Instruction</a> </div>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>add</tt>' instruction must be either <a
  href="#t_integer">integer</a> or <a href="#t_floating">floating point</a> values.
- This instruction can also take <a href="#t_packed">packed</a> versions of the values.
+ This instruction can also take <a href="#t_vector">vector</a> versions of the values.
 Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point sum of the two
@@ -1779,7 +1779,7 @@ instruction present in most other intermediate representations.</p>
 <p>The two arguments to the '<tt>sub</tt>' instruction must be either <a
  href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
 values. 
-This instruction can also take <a href="#t_packed">packed</a> versions of the values.
+This instruction can also take <a href="#t_vector">vector</a> versions of the values.
 Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point difference of
@@ -1803,7 +1803,7 @@ operands.</p>
 <p>The two arguments to the '<tt>mul</tt>' instruction must be either <a
  href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
 values. 
-This instruction can also take <a href="#t_packed">packed</a> versions of the values.
+This instruction can also take <a href="#t_vector">vector</a> versions of the values.
 Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the integer or floating point product of the
@@ -1828,7 +1828,7 @@ operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>udiv</tt>' instruction must be 
 <a href="#t_integer">integer</a> values. Both arguments must have identical 
-types. This instruction can also take <a href="#t_packed">packed</a> versions 
+types. This instruction can also take <a href="#t_vector">vector</a> versions 
 of the values in which case the elements must be integers.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the unsigned integer quotient of the two operands. This
@@ -1851,7 +1851,7 @@ operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>sdiv</tt>' instruction must be
 <a href="#t_integer">integer</a> values.  Both arguments must have identical 
-types. This instruction can also take <a href="#t_packed">packed</a> versions 
+types. This instruction can also take <a href="#t_vector">vector</a> versions 
 of the values in which case the elements must be integers.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the signed integer quotient of the two operands. This
@@ -1874,7 +1874,7 @@ operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>div</tt>' instruction must be
 <a href="#t_floating">floating point</a> values.  Both arguments must have
-identical types.  This instruction can also take <a href="#t_packed">packed</a>
+identical types.  This instruction can also take <a href="#t_vector">vector</a>
 versions of the values in which case the elements must be floating point.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the floating point quotient of the two operands.</p>
@@ -2244,7 +2244,7 @@ target.</p>
 
 <p>
 The '<tt>extractelement</tt>' instruction extracts a single scalar
-element from a packed vector at a specified index.
+element from a vector at a specified index.
 </p>
 
 
@@ -2252,7 +2252,7 @@ element from a packed vector at a specified index.
 
 <p>
 The first operand of an '<tt>extractelement</tt>' instruction is a
-value of <a href="#t_packed">packed</a> type.  The second operand is
+value of <a href="#t_vector">vector</a> type.  The second operand is
 an index indicating the position from which to extract the element.
 The index may be a variable.</p>
 
@@ -2290,7 +2290,7 @@ results are undefined.
 
 <p>
 The '<tt>insertelement</tt>' instruction inserts a scalar
-element into a packed vector at a specified index.
+element into a vector at a specified index.
 </p>
 
 
@@ -2298,7 +2298,7 @@ element into a packed vector at a specified index.
 
 <p>
 The first operand of an '<tt>insertelement</tt>' instruction is a
-value of <a href="#t_packed">packed</a> type.  The second operand is a
+value of <a href="#t_vector">vector</a> type.  The second operand is a
 scalar value whose type must equal the element type of the first
 operand.  The third operand is an index indicating the position at
 which to insert the value.  The index may be a variable.</p>
@@ -2306,7 +2306,7 @@ which to insert the value.  The index may be a variable.</p>
 <h5>Semantics:</h5>
 
 <p>
-The result is a packed vector of the same type as <tt>val</tt>.  Its
+The result is a vector of the same type as <tt>val</tt>.  Its
 element values are those of <tt>val</tt> except at position
 <tt>idx</tt>, where it gets the value <tt>elt</tt>.  If <tt>idx</tt>
 exceeds the length of <tt>val</tt>, the results are undefined.
