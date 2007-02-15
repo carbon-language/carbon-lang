@@ -112,7 +112,7 @@ static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
   return false;
 }
 
-std::string Value::getName() const {
+std::string Value::getNameStr() const {
   if (Name == 0) return "";
   return std::string(Name->getKeyData(),
                      Name->getKeyData()+Name->getKeyLength());

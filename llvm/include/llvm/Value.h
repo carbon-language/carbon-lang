@@ -87,7 +87,8 @@ public:
 
   // All values can potentially be named...
   inline bool hasName() const { return Name != 0; }
-  std::string getName() const;
+  std::string getName() const { return getNameStr(); }
+  std::string getNameStr() const;
   ValueName *getValueName() const { return Name; }
 
   void setName(const std::string &name);
