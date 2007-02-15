@@ -47,22 +47,22 @@ public:
 
     reference& operator=(bool t) {
       if (t)
-        *WordRef |= 1 << BitPos;
+        *WordRef |= 1L << BitPos;
       else
-        *WordRef &= ~(1 << BitPos);
+        *WordRef &= ~(1L << BitPos);
       return *this;
     }
 
     reference& operator=(const reference& rhs) {
       if (*rhs.WordRef & (1 << rhs.BitPos))
-        *WordRef |= 1 << BitPos;
+        *WordRef |= 1L << BitPos;
       else
-        *WordRef &= ~(1 << BitPos);
+        *WordRef &= ~(1L << BitPos);
       return *this;
     }
 
     operator bool() const {
-      return (*WordRef) & (1 << BitPos);
+      return (*WordRef) & (1L << BitPos);
     }
   };
 
@@ -196,7 +196,7 @@ public:
   }
 
   BitVector &set(unsigned Idx) {
-    Bits[Idx / BITS_PER_WORD] |= 1 << (Idx % BITS_PER_WORD);
+    Bits[Idx / BITS_PER_WORD] |= 1L << (Idx % BITS_PER_WORD);
     return *this;
   }
 
@@ -207,7 +207,7 @@ public:
   }
 
   BitVector &reset(unsigned Idx) {
-    Bits[Idx / BITS_PER_WORD] &= ~(1 << (Idx % BITS_PER_WORD));
+    Bits[Idx / BITS_PER_WORD] &= ~(1L << (Idx % BITS_PER_WORD));
     return *this;
   }
 
@@ -219,7 +219,7 @@ public:
   }
 
   BitVector &flip(unsigned Idx) {
-    Bits[Idx / BITS_PER_WORD] ^= 1 << (Idx % BITS_PER_WORD);
+    Bits[Idx / BITS_PER_WORD] ^= 1L << (Idx % BITS_PER_WORD);
     return *this;
   }
 
@@ -234,7 +234,7 @@ public:
   }
 
   bool operator[](unsigned Idx) const {
-    BitWord Mask = 1 << (Idx % BITS_PER_WORD);
+    BitWord Mask = 1L << (Idx % BITS_PER_WORD);
     return (Bits[Idx / BITS_PER_WORD] & Mask) != 0;
   }
 
