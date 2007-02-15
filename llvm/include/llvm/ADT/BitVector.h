@@ -179,10 +179,8 @@ public:
 
   // Set, reset, flip
   BitVector &set() {
-    if (Bits) {
-      init_words(Bits, Capacity, true);
-      clear_unused_bits();
-    }
+    init_words(Bits, Capacity, true);
+    clear_unused_bits();
     return *this;
   }
 
@@ -192,8 +190,7 @@ public:
   }
 
   BitVector &reset() {
-    if (Bits)
-      init_words(Bits, Capacity, false);
+    init_words(Bits, Capacity, false);
     return *this;
   }
 
@@ -317,14 +314,12 @@ private:
       std::copy(Bits, &Bits[OldCapacity], NewBits);
 
     // Destroy the old bits.
-    if (Bits)
-      delete[] Bits;
+    delete[] Bits;
     Bits = NewBits;
   }
 
   void init_words(BitWord *B, unsigned NumWords, bool t) {
-    if (B)
-      memset(B, 0 - (int)t, NumWords*sizeof(BitWord));
+    memset(B, 0 - (int)t, NumWords*sizeof(BitWord));
   } 
 };
 
