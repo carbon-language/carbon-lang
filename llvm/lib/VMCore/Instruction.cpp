@@ -13,6 +13,7 @@
 
 #include "llvm/Type.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
