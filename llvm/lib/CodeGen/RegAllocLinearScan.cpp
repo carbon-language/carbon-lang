@@ -291,6 +291,26 @@ void RA::linearScan()
     i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
   }
 
+  // A brute force way of adding live-ins to every BB.
+  for (MachineFunction::iterator MBB = mf_->begin(), E = mf_->end();
+       MBB != E; ++MBB) {
+    unsigned StartIdx = li_->getMBBStartIdx(MBB->getNumber());
+    for (IntervalPtrs::iterator i = fixed_.begin(), e = fixed_.end();
+         i != e; ++i)
+      if (i->first->liveAt(StartIdx))
+        MBB->addLiveIn(i->first->reg);
+
+    for (unsigned i = 0, e = handled_.size(); i != e; ++i) { 
+      LiveInterval *HI = handled_[i];
+      if (HI->liveAt(StartIdx)) {
+        unsigned Reg = HI->reg;
+        if (MRegisterInfo::isVirtualRegister(Reg))
+          Reg = vrm_->getPhys(Reg);
+        MBB->addLiveIn(Reg);
+      }
+    }
+  }
+
   DOUT << *vrm_;
 }
 
