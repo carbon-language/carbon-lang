@@ -442,8 +442,7 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
   Get the ABI (\a abi_or_pref == true) or preferred alignment (\a abi_or_pref
   == false) for the requested type \a Ty.
  */
-unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const
-{
+unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
   int AlignType = -1;
 
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
@@ -454,27 +453,21 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const
     return (abi_or_pref
             ? getPointerABIAlignment()
             : getPointerPrefAlignment());
-  case Type::ArrayTyID: {
-    const ArrayType *ATy = cast<ArrayType>(Ty);
-    return (abi_or_pref
-            ? getABITypeAlignment(ATy->getElementType())
-            : getPrefTypeAlignment(ATy->getElementType()));
-  }
+  case Type::ArrayTyID:
+    return getAlignment(cast<ArrayType>(Ty)->getElementType(), abi_or_pref);
+    
   case Type::StructTyID: {
-      // Get the layout annotation... which is lazily created on demand.
+    // Packed structure types always have an ABI alignment of one.
+    if (cast<StructType>(Ty)->isPacked() && abi_or_pref)
+      return 1;
+    
+    // Get the layout annotation... which is lazily created on demand.
     const StructLayout *Layout = getStructLayout(cast<StructType>(Ty));
     const TargetAlignElem &elem = getAlignment(AGGREGATE_ALIGN, 0);
     assert(validAlignment(elem)
            && "Aggregate alignment return invalid in getAlignment");
-    if (abi_or_pref) {
-      return (elem.ABIAlign < Layout->getAlignment()
-              ? Layout->StructAlignment
-              : elem.ABIAlign);
-    } else {
-      return (elem.PrefAlign < Layout->getAlignment()
-              ? Layout->StructAlignment
-              : elem.PrefAlign);
-    }
+    unsigned Align = abi_or_pref ? elem.ABIAlign : elem.PrefAlign;
+    return Align < Layout->getAlignment() ? Layout->StructAlignment : Align;
   }
   case Type::IntegerTyID:
   case Type::VoidTyID:
