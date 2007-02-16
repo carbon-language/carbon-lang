@@ -24,8 +24,8 @@ namespace llvm {
 /// Forward declaration.
 class APInt;
 namespace APIntOps {
-  APInt UDiv(const APInt& LHS, const APInt& RHS);
-  APInt URem(const APInt& LHS, const APInt& RHS);
+  APInt udiv(const APInt& LHS, const APInt& RHS);
+  APInt urem(const APInt& LHS, const APInt& RHS);
 }
 
 //===----------------------------------------------------------------------===//
@@ -35,17 +35,31 @@ namespace APIntOps {
 /// APInt - This class represents arbitrary precision constant integral values.
 /// It is a functional replacement for common case unsigned integer type like 
 /// "unsigned", "unsigned long" or "uint64_t", but also allows non-byte-width 
-/// integer type and large integer value types such as 3-bits, 15-bits, or more
+/// integer sizes and large integer value types such as 3-bits, 15-bits, or more
 /// than 64-bits of precision. APInt provides a variety of arithmetic operators 
-/// and methods to manipulate integer values of any bit-width. It supports not 
-/// only all the operations of uint64_t but also bitwise manipulation.
+/// and methods to manipulate integer values of any bit-width. It supports both
+/// the typical integer arithmetic and comparison operations as well as bitwise
+/// manipulation.
+///
+/// The class has several invariants worth noting:
+///   * All bit, byte, and word positions are zero-based.
+///   * Once the bit width is set, it doesn't change except by the Truncate, 
+///     SignExtend, or ZeroExtend operations.
+///   * All binary operators must be on APInt instances of the same bit width.
+///     Attempting to use these operators on instances with different bit 
+///     widths will yield an assertion.
+///   * The value is stored canonically as an unsigned value. For operations
+///     where it makes a difference, there are both signed and unsigned variants
+///     of the operation. For example, sdiv and udiv. However, because the bit
+///     widths must be the same, operations such as Mul and Add produce the same
+///     results regardless of whether the values are interpreted as signed or
+///     not.
+///   * In general, the class tries to follow the style of computation that LLVM
+///     uses in its IR. This simplifies its use for LLVM.
 ///
 /// @brief Class for arbitrary precision integers.
-///
-/// Note: In this class, all bit/byte/word positions are zero-based.
-///
 class APInt {
-  unsigned BitsNum;      ///< The number of bits.
+  unsigned BitWidth;      ///< The number of bits in this APInt.
 
   /// This union is used to store the integer value. When the
   /// integer bit-width <= 64, it uses VAL; 
@@ -64,67 +78,79 @@ class APInt {
   /// @returns the number of words to hold the integer value of this APInt.
   /// @brief Get the number of words.
   inline unsigned getNumWords() const {
-    return (BitsNum + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
+    return (BitWidth + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
   }
 
   /// @returns true if the number of bits <= 64, false otherwise.
   /// @brief Determine if this APInt just has one word to store value.
-  inline bool isSingleWord() const
-  { return BitsNum <= APINT_BITS_PER_WORD; }
+  inline bool isSingleWord() const { 
+    return BitWidth <= APINT_BITS_PER_WORD; 
+  }
 
   /// @returns the word position for the specified bit position.
-  static inline unsigned whichWord(unsigned bitPosition)
-  { return bitPosition / APINT_BITS_PER_WORD; }
+  static inline unsigned whichWord(unsigned bitPosition) { 
+    return bitPosition / APINT_BITS_PER_WORD; 
+  }
 
   /// @returns the byte position for the specified bit position.
-  static inline unsigned whichByte(unsigned bitPosition)
-  { return (bitPosition % APINT_BITS_PER_WORD) / 8; }
+  static inline unsigned whichByte(unsigned bitPosition) { 
+    return (bitPosition % APINT_BITS_PER_WORD) / 8; 
+  }
 
   /// @returns the bit position in a word for the specified bit position 
   /// in APInt.
-  static inline unsigned whichBit(unsigned bitPosition)
-  { return bitPosition % APINT_BITS_PER_WORD; }
+  static inline unsigned whichBit(unsigned bitPosition) { 
+    return bitPosition % APINT_BITS_PER_WORD; 
+  }
 
   /// @returns a uint64_t type integer with just bit position at
   /// "whichBit(bitPosition)" setting, others zero.
-  static inline uint64_t maskBit(unsigned bitPosition)
-  { return (static_cast<uint64_t>(1)) << whichBit(bitPosition); }
+  static inline uint64_t maskBit(unsigned bitPosition) { 
+    return (static_cast<uint64_t>(1)) << whichBit(bitPosition); 
+  }
 
-  inline void TruncToBits() {
+  /// This method is used internally to clear the to "N" bits that are not used
+  /// by the APInt. This is needed after a word is assigned a value to ensure 
+  /// that those bits are zero'd out.
+  /// @brief Clear high order bits
+  inline void clearUnusedBits() {
     if (isSingleWord())
-      VAL &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitsNum);
+      VAL &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth);
     else
       pVal[getNumWords() - 1] &= ~uint64_t(0ULL) >> 
-        (APINT_BITS_PER_WORD - (whichBit(BitsNum - 1) + 1));
+        (APINT_BITS_PER_WORD - (whichBit(BitWidth - 1) + 1));
   }
 
   /// @returns the corresponding word for the specified bit position.
-  inline uint64_t& getWord(unsigned bitPosition)
-  { return isSingleWord() ? VAL : pVal[whichWord(bitPosition)]; }
+  inline uint64_t& getWord(unsigned bitPosition) { 
+    return isSingleWord() ? VAL : pVal[whichWord(bitPosition)]; 
+  }
 
   /// @returns the corresponding word for the specified bit position.
   /// This is a constant version.
-  inline uint64_t getWord(unsigned bitPosition) const
-  { return isSingleWord() ? VAL : pVal[whichWord(bitPosition)]; }
+  inline uint64_t getWord(unsigned bitPosition) const { 
+    return isSingleWord() ? VAL : pVal[whichWord(bitPosition)]; 
+  }
 
   /// @brief Converts a char array into an integer.
-  void StrToAPInt(const char *StrStart, unsigned slen, uint8_t radix);
+  void fromString(unsigned numBits, const char *StrStart, unsigned slen, 
+                  uint8_t radix);
 
 public:
   /// @brief Create a new APInt of numBits bit-width, and initialized as val.
-  APInt(uint64_t val = 0, unsigned numBits = APINT_BITS_PER_WORD);
+  APInt(unsigned numBits, uint64_t val);
 
   /// @brief Create a new APInt of numBits bit-width, and initialized as 
   /// bigVal[].
-  APInt(unsigned numBits, uint64_t bigVal[]);
+  APInt(unsigned numBits, unsigned numWords, uint64_t bigVal[]);
 
   /// @brief Create a new APInt by translating the string represented 
   /// integer value.
-  APInt(const std::string& Val, uint8_t radix = 10);
+  APInt(unsigned numBits, const std::string& Val, uint8_t radix);
 
   /// @brief Create a new APInt by translating the char array represented
   /// integer value.
-  APInt(const char StrStart[], unsigned slen, uint8_t radix);
+  APInt(unsigned numBits, const char StrStart[], unsigned slen, uint8_t radix);
 
   /// @brief Copy Constructor.
   APInt(const APInt& API);
@@ -210,14 +236,6 @@ public:
   /// @brief Bitwise XOR operator. 
   APInt operator^(const APInt& RHS) const;
 
-  /// Performs logical AND operation on this APInt and the given APInt& RHS.
-  /// @brief Logical AND operator. 
-  bool operator&&(const APInt& RHS) const;
-
-  /// Performs logical OR operation on this APInt and the given APInt& RHS.
-  /// @brief Logical OR operator. 
-  bool operator||(const APInt& RHS) const;
-
   /// Performs logical negation operation on this APInt.
   /// @brief Logical negation operator. 
   bool operator !() const;
@@ -234,9 +252,9 @@ public:
   /// @brief Subtraction operator. 
   APInt operator-(const APInt& RHS) const;
 
-  ///
+  /// @brief Unary negation operator
   inline APInt operator-() const {
-    return APInt(0, BitsNum) - (*this);
+    return APInt(0, BitWidth) - (*this);
   }
 
   /// @brief Array-indexing support.
@@ -266,32 +284,147 @@ public:
     return !((*this) == Val);
   }
   
-  /// Compare this APInt with the given APInt& RHS for 
-  /// the validity of the less-than relationship.
-  /// @brief Less-than operator. 
-  bool operator <(const APInt& RHS) const;
+  /// @brief Equality comparison
+  bool eq(const APInt &RHS) const {
+    return (*this) == RHS; 
+  }
 
-  /// Compare this APInt with the given APInt& RHS for the validity 
-  /// of the less-than-or-equal relationship.
-  /// @brief Less-than-or-equal operator. 
-  bool operator<=(const APInt& RHS) const;
+  /// @brief Inequality comparison
+  bool ne(const APInt &RHS) const {
+    return !((*this) == RHS);
+  }
 
-  /// Compare this APInt with the given APInt& RHS for the validity 
-  /// of the greater-than relationship.
-  /// @brief Greater-than operator. 
-  bool operator> (const APInt& RHS) const;
+  /// @brief Unsigned less than comparison
+  bool ult(const APInt& RHS) const;
 
-  /// @brief Greater-than-or-equal operator. 
-  /// Compare this APInt with the given APInt& RHS for the validity 
-  /// of the greater-than-or-equal relationship.
-  bool operator>=(const APInt& RHS) const;
+  /// @brief Signed less than comparison
+  bool slt(const APInt& RHS) const;
+
+  /// @brief Unsigned less or equal comparison
+  bool ule(const APInt& RHS) const {
+    return ult(RHS) || eq(RHS);
+  }
+
+  /// @brief Signed less or equal comparison
+  bool sle(const APInt& RHS) const {
+    return slt(RHS) || eq(RHS);
+  }
+
+  /// @brief Unsigned greather than comparison
+  bool ugt(const APInt& RHS) const {
+    return !ult(RHS) && !eq(RHS);
+  }
+
+  /// @brief Signed greather than comparison
+  bool sgt(const APInt& RHS) const {
+    return !slt(RHS) && !eq(RHS);
+  }
+
+  /// @brief Unsigned greater or equal comparison
+  bool uge(const APInt& RHS) const {
+    return !ult(RHS);
+  }
+
+  /// @brief Signed greather or equal comparison
+  bool sge(const APInt& RHS) const {
+    return !slt(RHS);
+  }
+
+  /// Arithmetic right-shift this APInt by shiftAmt.
+  /// @brief Arithmetic right-shift function.
+  APInt ashr(unsigned shiftAmt) const;
+
+  /// Logical right-shift this APInt by shiftAmt.
+  /// @brief Logical right-shift function.
+  APInt lshr(unsigned shiftAmt) const;
+
+  /// Left-shift this APInt by shiftAmt.
+  /// @brief Left-shift function.
+  APInt shl(unsigned shiftAmt) const;
+
+  /// Signed divide this APInt by APInt RHS.
+  /// @brief Signed division function for APInt.
+  inline APInt sdiv(const APInt& RHS) const {
+    bool isNegativeLHS = (*this)[BitWidth - 1];
+    bool isNegativeRHS = RHS[RHS.BitWidth - 1];
+    APInt API = APIntOps::udiv(
+        isNegativeLHS ? -(*this) : (*this), isNegativeRHS ? -RHS : RHS);
+    return isNegativeLHS != isNegativeRHS ? -API : API;;
+  }
+
+  /// Unsigned divide this APInt by APInt RHS.
+  /// @brief Unsigned division function for APInt.
+  APInt udiv(const APInt& RHS) const;
+
+  /// Signed remainder operation on APInt.
+  /// @brief Function for signed remainder operation.
+  inline APInt srem(const APInt& RHS) const {
+    bool isNegativeLHS = (*this)[BitWidth - 1];
+    bool isNegativeRHS = RHS[RHS.BitWidth - 1];
+    APInt API = APIntOps::urem(
+        isNegativeLHS ? -(*this) : (*this), isNegativeRHS ? -RHS : RHS);
+    return isNegativeLHS ? -API : API;
+  }
+
+  /// Unsigned remainder operation on APInt.
+  /// @brief Function for unsigned remainder operation.
+  APInt urem(const APInt& RHS) const;
+
+  /// Truncate the APInt to a specified width. It is an error to specify a width
+  /// that is greater than or equal to the current width. 
+  /// @brief Truncate to new width.
+  void trunc(unsigned width);
+
+  /// This operation sign extends the APInt to a new width. If the high order
+  /// bit is set, the fill on the left will be done with 1 bits, otherwise zero.
+  /// It is an error to specify a width that is less than or equal to the 
+  /// current width.
+  /// @brief Sign extend to a new width.
+  void sext(unsigned width);
+
+  /// This operation zero extends the APInt to a new width. Thie high order bits
+  /// are filled with 0 bits.  It is an error to specify a width that is less 
+  /// than or equal to the current width.
+  /// @brief Zero extend to a new width.
+  void zext(unsigned width);
+
+  /// @brief Set every bit to 1.
+  APInt& set();
+
+  /// Set the given bit to 1 whose position is given as "bitPosition".
+  /// @brief Set a given bit to 1.
+  APInt& set(unsigned bitPosition);
+
+  /// @brief Set every bit to 0.
+  APInt& clear();
+
+  /// Set the given bit to 0 whose position is given as "bitPosition".
+  /// @brief Set a given bit to 0.
+  APInt& clear(unsigned bitPosition);
+
+  /// @brief Toggle every bit to its opposite value.
+  APInt& flip();
+
+  /// Toggle a given bit to its opposite value whose position is given 
+  /// as "bitPosition".
+  /// @brief Toggles a given bit to its opposite value.
+  APInt& flip(unsigned bitPosition);
+
+  /// This function returns the number of active bits which is defined as the
+  /// bit width minus the number of leading zeros. This is used in several
+  /// computations to see how "wide" the value is.
+  /// @brief Compute the number of active bits in the value
+  inline unsigned getActiveBits() const {
+    return getNumWords() * APINT_BITS_PER_WORD - countLeadingZeros();
+  }
 
   /// @returns a uint64_t value from this APInt. If this APInt contains a single
   /// word, just returns VAL, otherwise pVal[0].
   inline uint64_t getValue(bool isSigned = false) const {
     if (isSingleWord())
-      return isSigned ? int64_t(VAL << (64 - BitsNum)) >> (64 - BitsNum) : VAL;
-    unsigned n = getNumWords() * 64 - CountLeadingZeros();
+      return isSigned ? int64_t(VAL << (64 - BitWidth)) >> 
+                                       (64 - BitWidth) : VAL;
+    unsigned n = getActiveBits();
     if (n <= 64)
       return pVal[0];
     assert(0 && "This APInt's bitwidth > 64");
@@ -316,119 +449,65 @@ public:
   /// @brief Get the '0' value.
   static APInt getNullValue(unsigned numBits);
 
-  /// @brief Set every bit to 1.
-  APInt& set();
-
-  /// Set the given bit to 1 whose position is given as "bitPosition".
-  /// @brief Set a given bit to 1.
-  APInt& set(unsigned bitPosition);
-
-  /// @brief Set every bit to 0.
-  APInt& clear();
-
-  /// Set the given bit to 0 whose position is given as "bitPosition".
-  /// @brief Set a given bit to 0.
-  APInt& clear(unsigned bitPosition);
-
-  /// @brief Toggle every bit to its opposite value.
-  APInt& flip();
-
-  /// Toggle a given bit to its opposite value whose position is given 
-  /// as "bitPosition".
-  /// @brief Toggles a given bit to its opposite value.
-  APInt& flip(unsigned bitPosition);
+  /// This converts the APInt to a boolean valy as a test against zero.
+  /// @brief Boolean conversion function. 
+  inline bool getBoolValue() const {
+    return countLeadingZeros() != BitWidth;
+  }
 
   /// @returns a character interpretation of the APInt.
-  std::string to_string(uint8_t radix = 10) const;
+  std::string toString(uint8_t radix = 10) const;
 
-  /// Get an APInt with the same BitsNum as this APInt, just zero mask
+  /// Get an APInt with the same BitWidth as this APInt, just zero mask
   /// the low bits and right shift to the least significant bit.
   /// @returns the high "numBits" bits of this APInt.
-  APInt HiBits(unsigned numBits) const;
+  APInt getHiBits(unsigned numBits) const;
 
-  /// Get an APInt with the same BitsNum as this APInt, just zero mask
+  /// Get an APInt with the same BitWidth as this APInt, just zero mask
   /// the high bits.
   /// @returns the low "numBits" bits of this APInt.
-  APInt LoBits(unsigned numBits) const;
+  APInt getLoBits(unsigned numBits) const;
 
   /// @returns true if the argument APInt value is a power of two > 0.
-  inline const bool isPowerOf2() const {
-    return (!!*this) && !(*this & (*this - 1));
-  }
+  inline bool isPowerOf2() const; 
 
   /// @returns the number of zeros from the most significant bit to the first
   /// one bits.
-  unsigned CountLeadingZeros() const;
+  unsigned countLeadingZeros() const;
 
   /// @returns the number of zeros from the least significant bit to the first
   /// one bit.
-  unsigned CountTrailingZeros() const;
+  unsigned countTrailingZeros() const;
 
   /// @returns the number of set bits.
-  unsigned CountPopulation() const; 
+  unsigned countPopulation() const; 
 
   /// @returns the total number of bits.
-  inline unsigned getNumBits() const
-  { return BitsNum; }
+  inline unsigned getNumBits() const { 
+    return BitWidth; 
+  }
 
   /// @brief Check if this APInt has a N-bits integer value.
-  inline bool IsIntN(unsigned N) const {
+  inline bool isIntN(unsigned N) const {
     assert(N && "N == 0 ???");
     if (isSingleWord()) {
       return VAL == (VAL & (~0ULL >> (64 - N)));
     } else {
-      APInt Tmp(N, pVal);
+      APInt Tmp(N, getNumWords(), pVal);
       return Tmp == (*this);
     }
   }
 
   /// @returns a byte-swapped representation of this APInt Value.
-  APInt ByteSwap() const;
+  APInt byteSwap() const;
 
   /// @returns the floor log base 2 of this APInt.
-  inline unsigned LogBase2() const {
-    return getNumWords() * APINT_BITS_PER_WORD - 1 -
-           CountLeadingZeros();
+  inline unsigned logBase2() const {
+    return getNumWords() * APINT_BITS_PER_WORD - 1 - countLeadingZeros();
   }
 
   /// @brief Converts this APInt to a double value.
-  double RoundToDouble(bool isSigned = false) const;
-
-  /// Arithmetic right-shift this APInt by shiftAmt.
-  /// @brief Arithmetic right-shift function.
-  APInt AShr(unsigned shiftAmt) const;
-
-  /// Logical right-shift this APInt by shiftAmt.
-  /// @brief Logical right-shift function.
-  APInt LShr(unsigned shiftAmt) const;
-
-  /// Left-shift this APInt by shiftAmt.
-  /// @brief Left-shift function.
-  APInt Shl(unsigned shiftAmt) const;
-
-  /// Signed divide this APInt by APInt RHS.
-  /// @brief Signed division function for APInt.
-  inline APInt SDiv(const APInt& RHS) const {
-    bool isSignedLHS = (*this)[BitsNum - 1], isSignedRHS = RHS[RHS.BitsNum - 1];
-    APInt API = APIntOps::UDiv(isSignedLHS ? -(*this) : (*this), isSignedRHS ? -RHS : RHS);
-    return isSignedLHS != isSignedRHS ? -API : API;;
-  }
-
-  /// Unsigned divide this APInt by APInt RHS.
-  /// @brief Unsigned division function for APInt.
-  APInt UDiv(const APInt& RHS) const;
-
-  /// Signed remainder operation on APInt.
-  /// @brief Function for signed remainder operation.
-  inline APInt SRem(const APInt& RHS) const {
-    bool isSignedLHS = (*this)[BitsNum - 1], isSignedRHS = RHS[RHS.BitsNum - 1];
-    APInt API = APIntOps::URem(isSignedLHS ? -(*this) : (*this), isSignedRHS ? -RHS : RHS);
-    return isSignedLHS ? -API : API;
-  }
-
-  /// Unsigned remainder operation on APInt.
-  /// @brief Function for unsigned remainder operation.
-  APInt URem(const APInt& RHS) const;
+  double roundToDouble(bool isSigned = false) const;
 
 };
 
@@ -436,29 +515,29 @@ namespace APIntOps {
 
 /// @brief Check if the specified APInt has a N-bits integer value.
 inline bool isIntN(unsigned N, const APInt& APIVal) {
-  return APIVal.IsIntN(N);
+  return APIVal.isIntN(N);
 }
 
 /// @returns true if the argument APInt value is a sequence of ones
 /// starting at the least significant bit with the remainder zero.
 inline const bool isMask(unsigned numBits, const APInt& APIVal) {
-  return APIVal && ((APIVal + 1) & APIVal) == 0;
+  return APIVal.getBoolValue() && ((APIVal + APInt(numBits,1)) & APIVal) == 0;
 }
 
 /// @returns true if the argument APInt value contains a sequence of ones
 /// with the remainder zero.
 inline const bool isShiftedMask(unsigned numBits, const APInt& APIVal) {
-  return isMask(numBits, (APIVal - 1) | APIVal);
+  return isMask(numBits, (APIVal - APInt(numBits,1)) | APIVal);
 }
 
 /// @returns a byte-swapped representation of the specified APInt Value.
-inline APInt ByteSwap(const APInt& APIVal) {
-  return APIVal.ByteSwap();
+inline APInt byteSwap(const APInt& APIVal) {
+  return APIVal.byteSwap();
 }
 
 /// @returns the floor log base 2 of the specified APInt value.
-inline unsigned LogBase2(const APInt& APIVal) {
-  return APIVal.LogBase2(); 
+inline unsigned logBase2(const APInt& APIVal) {
+  return APIVal.logBase2(); 
 }
 
 /// @returns the greatest common divisor of the two values 
@@ -466,80 +545,80 @@ inline unsigned LogBase2(const APInt& APIVal) {
 APInt GreatestCommonDivisor(const APInt& API1, const APInt& API2);
 
 /// @brief Converts the given APInt to a double value.
-inline double APIntRoundToDouble(const APInt& APIVal, bool isSigned = false) {
-  return APIVal.RoundToDouble(isSigned);
+inline double RoundAPIntToDouble(const APInt& APIVal, bool isSigned = false) {
+  return APIVal.roundToDouble(isSigned);
 }
 
 /// @brief Converts the given APInt to a float vlalue.
-inline float APIntRoundToFloat(const APInt& APIVal) {
-  return float(APIntRoundToDouble(APIVal));
+inline float RoundAPIntToFloat(const APInt& APIVal) {
+  return float(RoundAPIntToDouble(APIVal));
 }
 
 /// @brief Converts the given double value into a APInt.
-APInt DoubleRoundToAPInt(double Double);
+APInt RoundDoubleToAPInt(double Double);
 
 /// @brief Converts the given float value into a APInt.
-inline APInt FloatRoundToAPInt(float Float) {
-  return DoubleRoundToAPInt(double(Float));
+inline APInt RoundFloatToAPInt(float Float) {
+  return RoundDoubleToAPInt(double(Float));
 }
 
 /// Arithmetic right-shift the APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
-inline APInt AShr(const APInt& LHS, unsigned shiftAmt) {
-  return LHS.AShr(shiftAmt);
+inline APInt ashr(const APInt& LHS, unsigned shiftAmt) {
+  return LHS.ashr(shiftAmt);
 }
 
 /// Logical right-shift the APInt by shiftAmt.
 /// @brief Logical right-shift function.
-inline APInt LShr(const APInt& LHS, unsigned shiftAmt) {
-  return LHS.LShr(shiftAmt);
+inline APInt lshr(const APInt& LHS, unsigned shiftAmt) {
+  return LHS.lshr(shiftAmt);
 }
 
 /// Left-shift the APInt by shiftAmt.
 /// @brief Left-shift function.
-inline APInt Shl(const APInt& LHS, unsigned shiftAmt) {
-  return LHS.Shl(shiftAmt);
+inline APInt shl(const APInt& LHS, unsigned shiftAmt) {
+  return LHS.shl(shiftAmt);
 }
 
 /// Signed divide APInt LHS by APInt RHS.
 /// @brief Signed division function for APInt.
-inline APInt SDiv(const APInt& LHS, const APInt& RHS) {
-  return LHS.SDiv(RHS);
+inline APInt sdiv(const APInt& LHS, const APInt& RHS) {
+  return LHS.sdiv(RHS);
 }
 
 /// Unsigned divide APInt LHS by APInt RHS.
 /// @brief Unsigned division function for APInt.
-inline APInt UDiv(const APInt& LHS, const APInt& RHS) {
-  return LHS.UDiv(RHS);
+inline APInt udiv(const APInt& LHS, const APInt& RHS) {
+  return LHS.udiv(RHS);
 }
 
 /// Signed remainder operation on APInt.
 /// @brief Function for signed remainder operation.
-inline APInt SRem(const APInt& LHS, const APInt& RHS) {
-  return LHS.SRem(RHS);
+inline APInt srem(const APInt& LHS, const APInt& RHS) {
+  return LHS.srem(RHS);
 }
 
 /// Unsigned remainder operation on APInt.
 /// @brief Function for unsigned remainder operation.
-inline APInt URem(const APInt& LHS, const APInt& RHS) {
-  return LHS.URem(RHS);
+inline APInt urem(const APInt& LHS, const APInt& RHS) {
+  return LHS.urem(RHS);
 }
 
 /// Performs multiplication on APInt values.
 /// @brief Function for multiplication operation.
-inline APInt Mul(const APInt& LHS, const APInt& RHS) {
+inline APInt mul(const APInt& LHS, const APInt& RHS) {
   return LHS * RHS;
 }
 
 /// Performs addition on APInt values.
 /// @brief Function for addition operation.
-inline APInt Add(const APInt& LHS, const APInt& RHS) {
+inline APInt add(const APInt& LHS, const APInt& RHS) {
   return LHS + RHS;
 }
 
 /// Performs subtraction on APInt values.
 /// @brief Function for subtraction operation.
-inline APInt Sub(const APInt& LHS, const APInt& RHS) {
+inline APInt sub(const APInt& LHS, const APInt& RHS) {
   return LHS - RHS;
 }
 
