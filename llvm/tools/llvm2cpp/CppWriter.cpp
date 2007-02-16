@@ -1245,18 +1245,18 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
       const CastInst* cst = cast<CastInst>(I);
       Out << "CastInst* " << iName << " = new ";
       switch (I->getOpcode()) {
-        case Instruction::Trunc:    Out << "TruncInst";
-        case Instruction::ZExt:     Out << "ZExtInst";
-        case Instruction::SExt:     Out << "SExtInst";
-        case Instruction::FPTrunc:  Out << "FPTruncInst";
-        case Instruction::FPExt:    Out << "FPExtInst";
-        case Instruction::FPToUI:   Out << "FPToUIInst";
-        case Instruction::FPToSI:   Out << "FPToSIInst";
-        case Instruction::UIToFP:   Out << "UIToFPInst";
-        case Instruction::SIToFP:   Out << "SIToFPInst";
-        case Instruction::PtrToInt: Out << "PtrToInst";
-        case Instruction::IntToPtr: Out << "IntToPtrInst";
-        case Instruction::BitCast:  Out << "BitCastInst";
+        case Instruction::Trunc:    Out << "TruncInst"; break;
+        case Instruction::ZExt:     Out << "ZExtInst"; break;
+        case Instruction::SExt:     Out << "SExtInst"; break;
+        case Instruction::FPTrunc:  Out << "FPTruncInst"; break;
+        case Instruction::FPExt:    Out << "FPExtInst"; break;
+        case Instruction::FPToUI:   Out << "FPToUIInst"; break;
+        case Instruction::FPToSI:   Out << "FPToSIInst"; break;
+        case Instruction::UIToFP:   Out << "UIToFPInst"; break;
+        case Instruction::SIToFP:   Out << "SIToFPInst"; break;
+        case Instruction::PtrToInt: Out << "PtrToInst"; break;
+        case Instruction::IntToPtr: Out << "IntToPtrInst"; break;
+        case Instruction::BitCast:  Out << "BitCastInst"; break;
         default: assert(!"Unreachable"); break;
       }
       Out << "(" << opNames[0] << ", "
