@@ -129,7 +129,7 @@ with another <tt>Value</tt></a> </li>
     <li><a href="#AbstractTypeUser">The AbstractTypeUser Class</a></li>
   </ul></li>
 
-  <li><a href="#SymbolTable">The <tt>SymbolTable</tt> class </a></li>
+  <li><a href="#SymbolTable">The <tt>ValueSymbolTable</tt> and <tt>TypeSymbolTable</tt> classes </a></li>
   </ul></li>
 
   <li><a href="#coreclasses">The Core LLVM Class Hierarchy Reference</a>
@@ -2045,12 +2045,8 @@ Type is maintained by PATypeHolder objects.
 
 <p>
 Some data structures need more to perform more complex updates when types get
-resolved.  The <a href="#SymbolTable">SymbolTable</a> class, for example, needs
-move and potentially merge type planes in its representation when a pointer
-changes.</p>
-
-<p>
-To support this, a class can derive from the AbstractTypeUser class.  This class
+resolved.  To support this, a class can derive from the AbstractTypeUser class.
+This class
 allows it to get callbacks when certain types are resolved.  To register to get
 callbacks for a particular type, the DerivedType::{add/remove}AbstractTypeUser
 methods can be called on a type.  Note that these methods only work for <i>
@@ -2062,16 +2058,19 @@ objects) can never be refined.
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="SymbolTable">The <tt>SymbolTable</tt> class</a>
+  <a name="SymbolTable">The <tt>ValueSymbolTable</tt> and
+   <tt>TypeSymbolTable</tt> classes</a>
 </div>
 
 <div class="doc_text">
-<p>This class provides a symbol table that the <a
+<p>The <tt><a href="http://llvm.org/doxygen/classllvm_1_1ValueSymbolTable.html">
+ValueSymbolTable</a></tt> class provides a symbol table that the <a
 href="#Function"><tt>Function</tt></a> and <a href="#Module">
-<tt>Module</tt></a> classes use for naming definitions. The symbol table can
-provide a name for any <a href="#Value"><tt>Value</tt></a>. 
-<tt>SymbolTable</tt> is an abstract data type. It hides the data it contains 
-and provides access to it through a controlled interface.</p>
+<tt>Module</tt></a> classes use for naming value definitions. The symbol table
+can provide a name for any <a href="#Value"><tt>Value</tt></a>. 
+The <tt><a href="http://llvm.org/doxygen/classllvm_1_1TypeSymbolTable.html">
+TypeSymbolTable</a></tt> class is used by the <tt>Module</tt> class to store
+names for types.</p>
 
 <p>Note that the <tt>SymbolTable</tt> class should not be directly accessed 
 by most clients.  It should only be used when iteration over the symbol table 
@@ -2081,140 +2080,14 @@ all LLVM
 an empty name) do not exist in the symbol table.
 </p>
 
-<p>To use the <tt>SymbolTable</tt> well, you need to understand the 
-structure of the information it holds. The class contains two 
-<tt>std::map</tt> objects. The first, <tt>pmap</tt>, is a map of 
-<tt>Type*</tt> to maps of name (<tt>std::string</tt>) to <tt>Value*</tt>. 
-Thus, Values are stored in two-dimensions and accessed by <tt>Type</tt> and 
-name.</p> 
+<p>These symbol tables support iteration over the values/types in the symbol
+table with <tt>begin/end/iterator</tt> and supports querying to see if a
+specific name is in the symbol table (with <tt>lookup</tt>).  The
+<tt>ValueSymbolTable</tt> class exposes no public mutator methods, instead,
+simply call <tt>setName</tt> on a value, which will autoinsert it into the
+appropriate symbol table.  For types, use the Module::addTypeName method to
+insert entries into the symbol table.</p>
 
-<p>The interface of this class provides three basic types of operations:
-<ol>
-  <li><em>Accessors</em>. Accessors provide read-only access to information
-  such as finding a value for a name with the 
-  <a href="#SymbolTable_lookup">lookup</a> method.</li> 
-  <li><em>Mutators</em>. Mutators allow the user to add information to the
-  <tt>SymbolTable</tt> with methods like 
-  <a href="#SymbolTable_insert"><tt>insert</tt></a>.</li>
-  <li><em>Iterators</em>. Iterators allow the user to traverse the content
-  of the symbol table in well defined ways, such as the method
-  <a href="#SymbolTable_plane_begin"><tt>plane_begin</tt></a>.</li>
-</ol>
-
-<h3>Accessors</h3>
-<dl>
-  <dt><tt>Value* lookup(const Type* Ty, const std::string&amp; name) const</tt>:
-  </dt>
-  <dd>The <tt>lookup</tt> method searches the type plane given by the
-  <tt>Ty</tt> parameter for a <tt>Value</tt> with the provided <tt>name</tt>.
-  If a suitable <tt>Value</tt> is not found, null is returned.</dd>
-
-  <dt><tt>bool isEmpty() const</tt>:</dt>
-  <dd>This function returns true if both the value and types maps are
-  empty</dd>
-</dl>
-
-<h3>Mutators</h3>
-<dl>
-  <dt><tt>void insert(Value *Val)</tt>:</dt>
-  <dd>This method adds the provided value to the symbol table.  The Value must
-  have both a name and a type which are extracted and used to place the value
-  in the correct type plane under the value's name.</dd>
-
-  <dt><tt>void remove(Value* Val)</tt>:</dt>
- <dd> This method removes a named value from the symbol table. The
-  type and name of the Value are extracted from \p N and used to
-  lookup the Value in the correct type plane. If the Value is
-  not in the symbol table, this method silently ignores the
-  request.</dd>
-
-</dl>
-
-<h3>Iteration</h3>
-<p>The following functions describe three types of iterators you can obtain
-the beginning or end of the sequence for both const and non-const. It is
-important to keep track of the different kinds of iterators. There are
-three idioms worth pointing out:</p>
-
-<table>
-  <tr><th>Units</th><th>Iterator</th><th>Idiom</th></tr>
-  <tr>
-    <td align="left">Planes Of name/Value maps</td><td>PI</td>
-    <td align="left"><pre><tt>
-for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
-     PE = ST.plane_end(); PI != PE; ++PI ) {
-  PI-&gt;first  // <i>This is the Type* of the plane</i>
-  PI-&gt;second // <i>This is the SymbolTable::ValueMap of name/Value pairs</i>
-}
-    </tt></pre></td>
-  </tr>
-  <tr>
-    <td align="left">name/Value pairs in a plane</td><td>VI</td>
-    <td align="left"><pre><tt>
-for (SymbolTable::value_const_iterator VI = ST.value_begin(SomeType),
-     VE = ST.value_end(SomeType); VI != VE; ++VI ) {
-  VI-&gt;first  // <i>This is the name of the Value</i>
-  VI-&gt;second // <i>This is the Value* value associated with the name</i>
-}
-    </tt></pre></td>
-  </tr>
-</table>
-
-<p>Using the recommended iterator names and idioms will help you avoid
-making mistakes. Of particular note, make sure that whenever you use
-value_begin(SomeType) that you always compare the resulting iterator
-with value_end(SomeType) not value_end(SomeOtherType) or else you 
-will loop infinitely.</p>
-
-<dl>
-
-  <dt><tt>plane_iterator plane_begin()</tt>:</dt>
-  <dd>Get an iterator that starts at the beginning of the type planes.
-  The iterator will iterate over the Type/ValueMap pairs in the
-  type planes. </dd>
-
-  <dt><tt>plane_const_iterator plane_begin() const</tt>:</dt>
-  <dd>Get a const_iterator that starts at the beginning of the type 
-  planes.  The iterator will iterate over the Type/ValueMap pairs 
-  in the type planes. </dd>
-
-  <dt><tt>plane_iterator plane_end()</tt>:</dt>
-  <dd>Get an iterator at the end of the type planes. This serves as
-  the marker for end of iteration over the type planes.</dd>
-
-  <dt><tt>plane_const_iterator plane_end() const</tt>:</dt>
-  <dd>Get a const_iterator at the end of the type planes. This serves as
-  the marker for end of iteration over the type planes.</dd>
-
-  <dt><tt>value_iterator value_begin(const Type *Typ)</tt>:</dt>
-  <dd>Get an iterator that starts at the beginning of a type plane.
-  The iterator will iterate over the name/value pairs in the type plane.
-  Note: The type plane must already exist before using this.</dd>
-
-  <dt><tt>value_const_iterator value_begin(const Type *Typ) const</tt>:</dt>
-  <dd>Get a const_iterator that starts at the beginning of a type plane.
-  The iterator will iterate over the name/value pairs in the type plane.
-  Note: The type plane must already exist before using this.</dd>
-
-  <dt><tt>value_iterator value_end(const Type *Typ)</tt>:</dt>
-  <dd>Get an iterator to the end of a type plane. This serves as the marker
-  for end of iteration of the type plane.
-  Note: The type plane must already exist before using this.</dd>
-
-  <dt><tt>value_const_iterator value_end(const Type *Typ) const</tt>:</dt>
-  <dd>Get a const_iterator to the end of a type plane. This serves as the
-  marker for end of iteration of the type plane.
-  Note: the type plane must already exist before using this.</dd>
-
-  <dt><tt>plane_const_iterator find(const Type* Typ ) const</tt>:</dt>
-  <dd>This method returns a plane_const_iterator for iteration over
-  the type planes starting at a specific plane, given by \p Ty.</dd>
-
-  <dt><tt>plane_iterator find( const Type* Typ </tt>:</dt>
-  <dd>This method returns a plane_iterator for iteration over the
-  type planes starting at a specific plane, given by \p Ty.</dd>
-
-</dl>
 </div>
 
 
