@@ -46,6 +46,10 @@ TimeoutValue("timeout", cl::init(300), cl::value_desc("seconds"),
              cl::desc("Number of seconds program is allowed to run before it "
                       "is killed (default is 300s), 0 disables timeout"));
 
+static cl::opt<unsigned>
+MemoryLimit("mlimit", cl::init(100), cl::value_desc("MBytes"),
+             cl::desc("Maximum amount of memory to use. 0 disables check."));
+
 // The AnalysesList is automatically populated with registered Passes by the
 // PassNameParser.
 //
@@ -68,7 +72,7 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   sys::SetInterruptFunction(BugpointInterruptFunction);
   
-  BugDriver D(argv[0],AsChild,FindBugs,TimeoutValue);
+  BugDriver D(argv[0], AsChild, FindBugs, TimeoutValue, MemoryLimit);
   if (D.addSources(InputFilenames)) return 1;
   D.addPasses(PassList.begin(), PassList.end());
 

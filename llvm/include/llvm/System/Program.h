@@ -72,6 +72,10 @@ namespace sys {
           ///< expires, the child is killed and this call returns. If zero,
           ///< this function will wait until the child finishes or forever if
           ///< it doesn't.
+        unsigned memoryLimit = 0, ///< If non-zero, this specifies max. amount
+          ///< of memory can be allocated by process. If memory usage will be
+          ///< higher limit, the child is killed and this call returns. If zero -
+          ///< no memory limit.
         std::string* ErrMsg = 0 ///< If non-zero, provides a pointer to a string
           ///< instance in which error messages will be returned. If the string 
           ///< is non-empty upon return an error occurred while invoking the

@@ -22,6 +22,9 @@
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#if HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
 #if HAVE_SIGNAL_H
 #include <signal.h>
 #endif
@@ -106,12 +109,34 @@ static void TimeOutHandler(int Sig) {
   Timeout = true;
 }
 
+static void SetMemoryLimits (unsigned size)
+{
+#if HAVE_SYS_RESOURCE_H
+  struct rlimit r;
+  __typeof__ (r.rlim_cur) limit = (__typeof__ (r.rlim_cur)) (size) * 1048576;
+
+  // Heap size
+  getrlimit (RLIMIT_DATA, &r);
+  r.rlim_cur = limit;
+  setrlimit (RLIMIT_DATA, &r);
+  // Resident set size.
+  getrlimit (RLIMIT_RSS, &r);
+  r.rlim_cur = limit;
+  setrlimit (RLIMIT_RSS, &r);
+  // Virtual memory.
+  getrlimit (RLIMIT_AS, &r);
+  r.rlim_cur = limit;
+  setrlimit (RLIMIT_AS, &r);
+#endif
+}
+
 int 
 Program::ExecuteAndWait(const Path& path, 
                         const char** args,
                         const char** envp,
                         const Path** redirects,
                         unsigned secondsToWait,
+                        unsigned memoryLimit,
                         std::string* ErrMsg) 
 {
   if (!path.canExecute()) {
@@ -160,6 +185,11 @@ Program::ExecuteAndWait(const Path& path,
         }
       }
 
+      // Set memory limits
+      if (memoryLimit!=0) {
+        SetMemoryLimits(memoryLimit);
+      }
+      
       // Execute!
       if (envp != 0)
         execve (path.c_str(), (char** const)args, (char**)envp);

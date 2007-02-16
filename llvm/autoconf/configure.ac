@@ -709,7 +709,8 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 
 AC_CHECK_FUNCS([backtrace ceilf floorf roundf rintf nearbyintf getcwd ])
-AC_CHECK_FUNCS([getpagesize getrusage gettimeofday isatty mkdtemp mkstemp ])
+AC_CHECK_FUNCS([getpagesize getrusage getrlimit setrlimit gettimeofday])
+AC_CHECK_FUNCS([isatty mkdtemp mkstemp ])
 AC_CHECK_FUNCS([mktemp realpath sbrk setrlimit strdup strerror strerror_r ])
 AC_CHECK_FUNCS([strtoll strtoq sysconf malloc_zone_statistics ])
 AC_CHECK_FUNCS([setjmp longjmp sigsetjmp siglongjmp])

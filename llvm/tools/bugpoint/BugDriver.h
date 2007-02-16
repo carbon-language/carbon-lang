@@ -50,6 +50,7 @@ class BugDriver {
   bool run_as_child;
   bool run_find_bugs;
   unsigned Timeout;
+  unsigned MemoryLimit;
 
   // FIXME: sort out public/private distinctions...
   friend class ReducePassList;
@@ -57,7 +58,7 @@ class BugDriver {
 
 public:
   BugDriver(const char *toolname, bool as_child, bool find_bugs,
-            unsigned timeout);
+            unsigned timeout, unsigned memlimit);
 
   const std::string &getToolName() const { return ToolName; }
 

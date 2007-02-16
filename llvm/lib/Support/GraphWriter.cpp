@@ -29,7 +29,7 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
   args.push_back(0);
   
   cerr << "Running 'Graphviz' program... " << std::flush;
-  if (sys::Program::ExecuteAndWait(Graphviz, &args[0],0,0,0,&ErrMsg)) {
+  if (sys::Program::ExecuteAndWait(Graphviz, &args[0],0,0,0,0,&ErrMsg)) {
     cerr << "Error viewing graph: " << ErrMsg << "\n";
   }
 #elif (HAVE_GV && HAVE_DOT)
@@ -49,7 +49,7 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
   args.push_back(0);
   
   cerr << "Running 'dot' program... " << std::flush;
-  if (sys::Program::ExecuteAndWait(dot, &args[0],0,0,0,&ErrMsg)) {
+  if (sys::Program::ExecuteAndWait(dot, &args[0],0,0,0,0,&ErrMsg)) {
     cerr << "Error viewing graph: '" << ErrMsg << "\n";
   } else {
     cerr << " done. \n";
@@ -61,7 +61,7 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
     args.push_back(0);
     
     ErrMsg.clear();
-    if (sys::Program::ExecuteAndWait(gv, &args[0],0,0,0,&ErrMsg)) {
+    if (sys::Program::ExecuteAndWait(gv, &args[0],0,0,0,0,&ErrMsg)) {
       cerr << "Error viewing graph: " << ErrMsg << "\n";
     }
   }
@@ -74,7 +74,7 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
   args.push_back(0);
   
   cerr << "Running 'dotty' program... " << std::flush;
-  if (sys::Program::ExecuteAndWait(dotty, &args[0],0,0,0,&ErrMsg)) {
+  if (sys::Program::ExecuteAndWait(dotty, &args[0],0,0,0,0,&ErrMsg)) {
     cerr << "Error viewing graph: " << ErrMsg << "\n";
   } else {
 #ifdef __MINGW32__ // Dotty spawns another app and doesn't wait until it returns

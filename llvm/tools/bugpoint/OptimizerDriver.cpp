@@ -194,7 +194,8 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
     prog = sys::Program::FindProgramByName("valgrind");
   else
     prog = tool;
-  int result = sys::Program::ExecuteAndWait(prog,args,0,0,Timeout,&ErrMsg);
+  int result = sys::Program::ExecuteAndWait(prog, args, 0, 0,
+                                            Timeout, MemoryLimit, &ErrMsg);
 
   // If we are supposed to delete the bytecode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.

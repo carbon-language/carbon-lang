@@ -499,14 +499,14 @@ private:
         Timer timer(action->program.toString());
         timer.startTimer();
         int resultCode = 
-          sys::Program::ExecuteAndWait(action->program, Args,0,0,0,&ErrMsg);
+          sys::Program::ExecuteAndWait(action->program, Args,0,0,0,0, &ErrMsg);
         timer.stopTimer();
         timer.print(timer,std::cerr);
         return resultCode;
       }
       else
         return 
-          sys::Program::ExecuteAndWait(action->program, Args, 0,0,0, &ErrMsg);
+          sys::Program::ExecuteAndWait(action->program, Args, 0,0,0,0, &ErrMsg);
     }
     return 0;
   }

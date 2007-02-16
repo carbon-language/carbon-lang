@@ -458,7 +458,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
   args.push_back(tmpAsmFilePath.c_str());
   args.push_back(0);
 
-  if (sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 1, &ErrMsg)) {
+  if (sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 1, 0, &ErrMsg)) {
     cerr << "lto: " << ErrMsg << "\n";
     return LTO_ASM_FAILURE;
   }

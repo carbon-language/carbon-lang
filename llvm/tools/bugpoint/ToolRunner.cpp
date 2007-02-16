@@ -32,7 +32,8 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
                                  const sys::Path &StdInFile,
                                  const sys::Path &StdOutFile,
                                  const sys::Path &StdErrFile,
-                                 unsigned NumSeconds = 0) {
+                                 unsigned NumSeconds = 0,
+                                 unsigned MemoryLimit = 0) {
   const sys::Path* redirects[3];
   redirects[0] = &StdInFile;
   redirects[1] = &StdOutFile;
@@ -46,7 +47,8 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
   }
 
   return
-    sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects, NumSeconds);
+    sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects,
+                                 NumSeconds, MemoryLimit);
 }
 
 
@@ -102,7 +104,8 @@ namespace {
                                const std::vector<std::string> &GCCArgs,
                                const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(),
-                               unsigned Timeout = 0);
+                               unsigned Timeout = 0,
+                               unsigned MemoryLimit = 0);
   };
 }
 
@@ -112,7 +115,8 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::vector<std::string> &GCCArgs,
                         const std::vector<std::string> &SharedLibs,
-                        unsigned Timeout) {
+                        unsigned Timeout,
+                        unsigned MemoryLimit) {
   if (!SharedLibs.empty())
     throw ToolExecutionError("LLI currently does not support "
                              "loading shared libraries.");
@@ -142,7 +146,7 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
         );
   return RunProgramWithTimeout(sys::Path(LLIPath), &LLIArgs[0],
       sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
-      Timeout);
+      Timeout, MemoryLimit);
 }
 
 // LLI create method - Try to find the LLI executable
@@ -209,7 +213,8 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::vector<std::string> &ArgsForGCC,
                         const std::vector<std::string> &SharedLibs,
-                        unsigned Timeout) {
+                        unsigned Timeout,
+                        unsigned MemoryLimit) {
 
   sys::Path OutputAsmFile;
   OutputCode(Bytecode, OutputAsmFile);
@@ -220,7 +225,8 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
 
   // Assuming LLC worked, compile the result with GCC and run it.
   return gcc->ExecuteProgram(OutputAsmFile.toString(), Args, GCC::AsmFile,
-                             InputFile, OutputFile, GCCArgs, Timeout);
+                             InputFile, OutputFile, GCCArgs,
+                             Timeout, MemoryLimit);
 }
 
 /// createLLC - Try to find the LLC executable
@@ -265,7 +271,8 @@ namespace {
                                  std::vector<std::string>(),
                                const std::vector<std::string> &SharedLibs =
                                  std::vector<std::string>(), 
-                               unsigned Timeout =0 );
+                               unsigned Timeout =0,
+                               unsigned MemoryLimit =0);
   };
 }
 
@@ -275,7 +282,8 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::vector<std::string> &GCCArgs,
                         const std::vector<std::string> &SharedLibs,
-                        unsigned Timeout) {
+                        unsigned Timeout,
+                        unsigned MemoryLimit) {
   if (!GCCArgs.empty())
     throw ToolExecutionError("JIT does not support GCC Arguments.");
   // Construct a vector of parameters, incorporating those from the command-line
@@ -306,7 +314,7 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
   DEBUG(std::cerr << "\nSending output to " << OutputFile << "\n");
   return RunProgramWithTimeout(sys::Path(LLIPath), &JITArgs[0],
       sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
-      Timeout);
+      Timeout, MemoryLimit);
 }
 
 /// createJIT - Try to find the LLI executable
@@ -370,7 +378,8 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         const std::string &OutputFile,
                         const std::vector<std::string> &ArgsForGCC,
                         const std::vector<std::string> &SharedLibs,
-                        unsigned Timeout) {
+                        unsigned Timeout,
+                        unsigned MemoryLimit) {
   sys::Path OutputCFile;
   OutputCode(Bytecode, OutputCFile);
 
@@ -379,7 +388,8 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
   std::vector<std::string> GCCArgs(ArgsForGCC);
   GCCArgs.insert(GCCArgs.end(),SharedLibs.begin(),SharedLibs.end());
   return gcc->ExecuteProgram(OutputCFile.toString(), Args, GCC::CFile,
-                             InputFile, OutputFile, GCCArgs, Timeout);
+                             InputFile, OutputFile, GCCArgs,
+                             Timeout, MemoryLimit);
 }
 
 /// createCBE - Try to find the 'llc' executable
@@ -412,7 +422,8 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
                         const std::string &InputFile,
                         const std::string &OutputFile,
                         const std::vector<std::string> &ArgsForGCC,
-                        unsigned Timeout ) {
+                        unsigned Timeout,
+                        unsigned MemoryLimit) {
   std::vector<const char*> GCCArgs;
 
   GCCArgs.push_back(GCCPath.c_str());
@@ -488,7 +499,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   FileRemover OutputBinaryRemover(OutputBinary);
   return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
       sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
-      Timeout);
+      Timeout, MemoryLimit);
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,

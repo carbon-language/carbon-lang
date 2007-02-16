@@ -244,7 +244,7 @@ static int GenerateAssembly(const std::string &OutputFilename,
   args.push_back(InputFilename.c_str());
   args.push_back(0);
 
-  return sys::Program::ExecuteAndWait(llc,&args[0],0,0,0,&ErrMsg);
+  return sys::Program::ExecuteAndWait(llc, &args[0], 0, 0, 0, 0, &ErrMsg);
 }
 
 /// GenerateCFile - generates a C source file from the specified bytecode file.
@@ -261,7 +261,7 @@ static int GenerateCFile(const std::string &OutputFile,
   args.push_back(OutputFile.c_str());
   args.push_back(InputFile.c_str());
   args.push_back(0);
-  return sys::Program::ExecuteAndWait(llc, &args[0],0,0,0,&ErrMsg);
+  return sys::Program::ExecuteAndWait(llc, &args[0], 0, 0, 0, 0, &ErrMsg);
 }
 
 /// GenerateNative - generates a native object file from the
@@ -342,7 +342,7 @@ static int GenerateNative(const std::string &OutputFilename,
 
   // Run the compiler to assembly and link together the program.
   int R = sys::Program::ExecuteAndWait(
-      gcc, &args[0], (const char**)clean_env,0,0,&ErrMsg);
+    gcc, &args[0], (const char**)clean_env, 0, 0, 0, &ErrMsg);
   delete [] clean_env;
   return R;
 }
@@ -516,7 +516,7 @@ int main(int argc, char **argv, char **envp) {
           args[1] = RealBytecodeOutput.c_str();
           args[2] = tmp_output.c_str();
           args[3] = 0;
-          if (0 == sys::Program::ExecuteAndWait(prog, args, 0,0,0, &ErrMsg)) {
+          if (0 == sys::Program::ExecuteAndWait(prog, args, 0,0,0,0, &ErrMsg)) {
             if (tmp_output.isBytecodeFile()) {
               sys::Path target(RealBytecodeOutput);
               target.eraseFromDisk();

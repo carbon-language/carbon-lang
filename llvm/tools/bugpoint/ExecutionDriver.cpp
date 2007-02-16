@@ -263,11 +263,11 @@ std::string BugDriver::executeProgram(std::string OutputFile,
       InterpreterSel == CBE_bug)
     RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
                                 OutputFile, AdditionalLinkerArgs, SharedObjs, 
-                                Timeout);
+                                Timeout, MemoryLimit);
   else 
     RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
                                 OutputFile, std::vector<std::string>(), 
-                                SharedObjs, Timeout);
+                                SharedObjs, Timeout, MemoryLimit);
 
   if (RetVal == -1) {
     std::cerr << "<timeout>";

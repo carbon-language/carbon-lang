@@ -104,6 +104,7 @@ Program::ExecuteAndWait(const Path& path,
                         const char** envp,
                         const Path** redirects,
                         unsigned secondsToWait,
+                        unsigned memoryLimit,
                         std::string* ErrMsg) {
   if (!path.canExecute()) {
     if (ErrMsg)

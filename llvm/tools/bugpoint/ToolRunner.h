@@ -64,7 +64,8 @@ public:
                      const std::string &OutputFile,
                      const std::vector<std::string> &GCCArgs =
                          std::vector<std::string>(), 
-                     unsigned Timeout = 0);
+                     unsigned Timeout = 0,
+                     unsigned MemoryLimit = 0);
 
   /// MakeSharedObject - This compiles the specified file (which is either a .c
   /// file or a .s file) into a shared object.
@@ -124,7 +125,8 @@ public:
                                std::vector<std::string>(),
                              const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(),
-                             unsigned Timeout = 0) = 0;
+                             unsigned Timeout = 0,
+                             unsigned MemoryLimit = 0) = 0;
 };
 
 //===---------------------------------------------------------------------===//
@@ -156,7 +158,8 @@ public:
                                std::vector<std::string>(),
                              const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(),
-                             unsigned Timeout = 0);
+                             unsigned Timeout = 0,
+                             unsigned MemoryLimit = 0);
 
   /// OutputCode - Compile the specified program from bytecode to code
   /// understood by the GCC driver (either C or asm).  If the code generator
@@ -196,7 +199,8 @@ public:
                                std::vector<std::string>(),
                              const std::vector<std::string> &SharedLibs =
                                 std::vector<std::string>(),
-                             unsigned Timeout = 0);
+                             unsigned Timeout = 0,
+                             unsigned MemoryLimit = 0);
 
   virtual GCC::FileType OutputCode(const std::string &Bytecode,
                                    sys::Path &OutFile);
