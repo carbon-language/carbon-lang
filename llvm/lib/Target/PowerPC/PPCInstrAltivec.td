@@ -314,7 +314,7 @@ def VMAXUW : VX1_Int< 130, "vmaxuw", int_ppc_altivec_vmaxuw>;
 def VMINFP : VX1_Int<1098, "vminfp", int_ppc_altivec_vminfp>;
 def VMINSB : VX1_Int< 770, "vminsb", int_ppc_altivec_vminsb>;
 def VMINSH : VX1_Int< 834, "vminsh", int_ppc_altivec_vminsh>;
-def VMINSW : VX1_Int< 896, "vminsw", int_ppc_altivec_vminsw>;
+def VMINSW : VX1_Int< 898, "vminsw", int_ppc_altivec_vminsw>;
 def VMINUB : VX1_Int< 514, "vminub", int_ppc_altivec_vminub>;
 def VMINUH : VX1_Int< 578, "vminuh", int_ppc_altivec_vminuh>;
 def VMINUW : VX1_Int< 642, "vminuw", int_ppc_altivec_vminuw>;
