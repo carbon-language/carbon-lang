@@ -186,7 +186,7 @@ void TargetData::init(const std::string &TargetDescription) {
   setAlignment(FLOAT_ALIGN,     8,  8, 64);  // double
   setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32
   setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
-  setAlignment(AGGREGATE_ALIGN, 0,  0,  0);  // struct, union, class, ...
+  setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct, union, class, ...
   
   while (!temp.empty()) {
     std::string token = getToken(temp, "-");
@@ -458,7 +458,7 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
     
   case Type::StructTyID: {
     // Packed structure types always have an ABI alignment of one.
-    if (cast<StructType>(Ty)->isPacked())
+    if (cast<StructType>(Ty)->isPacked() && abi_or_pref)
       return 1;
     
     // Get the layout annotation... which is lazily created on demand.
