@@ -458,7 +458,7 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
     
   case Type::StructTyID: {
     // Packed structure types always have an ABI alignment of one.
-    if (cast<StructType>(Ty)->isPacked() && abi_or_pref)
+    if (cast<StructType>(Ty)->isPacked())
       return 1;
     
     // Get the layout annotation... which is lazily created on demand.
