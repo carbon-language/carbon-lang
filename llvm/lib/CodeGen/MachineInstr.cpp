@@ -263,6 +263,8 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
    // Specialize printing if op#0 is definition
   if (getNumOperands() && getOperand(0).isReg() && getOperand(0).isDef()) {
     ::print(getOperand(0), OS, TM);
+    if (getOperand(0).isDead())
+      OS << "<dead>";
     OS << " = ";
     ++StartOp;   // Don't print this operand again!
   }
