@@ -71,31 +71,11 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
   return VirtRegInfo[RegIdx];
 }
 
-/// registerOverlap - Returns true if register 1 is equal to register 2
-/// or if register 1 is equal to any of alias of register 2.
-static bool registerOverlap(unsigned Reg1, unsigned Reg2,
-                             const MRegisterInfo *RegInfo) {
-  bool isVirt1 = MRegisterInfo::isVirtualRegister(Reg1);
-  bool isVirt2 = MRegisterInfo::isVirtualRegister(Reg2);
-  if (isVirt1 != isVirt2)
-    return false;
-  if (Reg1 == Reg2)
-    return true;
-  else if (isVirt1)
-    return false;
-  for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg2);
-       unsigned Alias = *AliasSet; ++AliasSet) {
-    if (Reg1 == Alias)
-      return true;
-  }
-  return false;
-}
-
 bool LiveVariables::KillsRegister(MachineInstr *MI, unsigned Reg) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isReg() && MO.isKill()) {
-      if (registerOverlap(Reg, MO.getReg(), RegInfo))
+      if (RegInfo->regsOverlap(Reg, MO.getReg()))
         return true;
     }
   }
@@ -106,7 +86,7 @@ bool LiveVariables::RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isReg() && MO.isDead())
-      if (registerOverlap(Reg, MO.getReg(), RegInfo))
+      if (RegInfo->regsOverlap(Reg, MO.getReg()))
         return true;
   }
   return false;
@@ -116,7 +96,7 @@ bool LiveVariables::ModifiesRegister(MachineInstr *MI, unsigned Reg) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isReg() && MO.isDef()) {
-      if (registerOverlap(Reg, MO.getReg(), RegInfo))
+      if (RegInfo->regsOverlap(Reg, MO.getReg()))
         return true;
     }
   }
@@ -240,7 +220,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   RegInfo = MF.getTarget().getRegisterInfo();
   assert(RegInfo && "Target doesn't have register information?");
 
-  AllocatablePhysicalRegisters = RegInfo->getAllocatableSet(MF);
+  ReservedRegisters = RegInfo->getReservedRegs(MF);
 
   // PhysRegInfo - Keep track of which instruction was the last use of a
   // physical register.  This is a purely local property, because all physical
@@ -267,8 +247,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
          E = df_ext_end(Entry, Visited); DFI != E; ++DFI) {
     MachineBasicBlock *MBB = *DFI;
 
-  // Mark live-in registers as live-in.
-    for (MachineBasicBlock::livein_iterator II = MBB->livein_begin(),
+    // Mark live-in registers as live-in.
+    for (MachineBasicBlock::const_livein_iterator II = MBB->livein_begin(),
            EE = MBB->livein_end(); II != EE; ++II) {
       assert(MRegisterInfo::isPhysicalRegister(*II) &&
              "Cannot have a live-in virtual register!");
@@ -295,7 +275,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
           if (MRegisterInfo::isVirtualRegister(MO.getReg())){
             HandleVirtRegUse(getVarInfo(MO.getReg()), MBB, MI);
           } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
-                     AllocatablePhysicalRegisters[MO.getReg()]) {
+                     !ReservedRegisters[MO.getReg()]) {
             HandlePhysRegUse(MO.getReg(), MI);
           }
         }
@@ -313,7 +293,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
             // Defaults to dead
             VRInfo.Kills.push_back(MI);
           } else if (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
-                     AllocatablePhysicalRegisters[MO.getReg()]) {
+                     !ReservedRegisters[MO.getReg()]) {
             HandlePhysRegDef(MO.getReg(), MI);
           }
         }
