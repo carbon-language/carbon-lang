@@ -362,19 +362,13 @@ void PMTopLevelManager::setLastUser(std::vector<Pass *> &AnalysisPasses,
   }
 }
 
-// Walk LastUser map and create inverted map. This should be done
-// after all passes are added and before running first pass.
-void PMTopLevelManager::collectInvertedLU() {
-   for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
-          LUE = LastUser.end(); LUI != LUE; ++LUI)
-     InvertedLU[LUI->second].push_back(LUI->first);
-}
-
 /// Collect passes whose last user is P
 void PMTopLevelManager::collectLastUses(std::vector<Pass *> &LastUses,
                                             Pass *P) {
-   std::vector<Pass *>&LU = InvertedLU[P]; 
-   LastUses.insert(LastUses.end(), LU.begin(), LU.end());
+   for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
+          LUE = LastUser.end(); LUI != LUE; ++LUI)
+      if (LUI->second == P)
+        LastUses.push_back(LUI->first);
 }
 
 /// Schedule pass P for execution. Make sure that passes required by
@@ -944,9 +938,6 @@ bool FunctionPassManagerImpl::run(Function &F) {
   dumpArguments();
   dumpPasses();
 
-  // Collect inverted map of LastUsers. This improves speed of
-  // collectLastUses().
-  TPM->collectInvertedLU();
   initializeAllAnalysisInfo();
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
     FPPassManager *FP = getContainedManager(Index);
@@ -1095,9 +1086,6 @@ bool PassManagerImpl::run(Module &M) {
   dumpArguments();
   dumpPasses();
 
-  // Collect inverted map of LastUsers. This improves speed of
-  // collectLastUses().
-  TPM->collectInvertedLU();
   initializeAllAnalysisInfo();
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index) {  
     MPPassManager *MP = getContainedManager(Index);
