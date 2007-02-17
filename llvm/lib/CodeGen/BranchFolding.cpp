@@ -431,6 +431,9 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
 bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
   MadeChange = false;
   
+  // Make sure blocks are numbered in order
+  MF.RenumberBlocks();
+
   for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
     MachineBasicBlock *MBB = I++;
     OptimizeBlock(MBB);
@@ -849,22 +852,35 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
                       PriorTBB, PriorFBB, PriorCond)) {
     // Now we know that there was no fall-through into this block, check to
     // see if it has a fall-through into its successor.
-    if (!CanFallThrough(MBB, CurUnAnalyzable, CurTBB, CurFBB, CurCond)) {
-      // Check all the predecessors of this block.  If one of them has no fall
-      // throughs, move this block right after it.
-      for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-           E = MBB->pred_end(); PI != E; ++PI) {
-        // Analyze the branch at the end of the pred.
-        MachineBasicBlock *PredBB = *PI;
-        MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
-        std::vector<MachineOperand> PredCond;
-        if (PredBB != MBB && !CanFallThrough(PredBB)) {
-          MBB->moveAfter(PredBB);
-          MadeChange = true;
-          return OptimizeBlock(MBB);
+    bool CurFallsThru = CanFallThrough(MBB, CurUnAnalyzable, CurTBB, CurFBB, 
+                                            CurCond);
+
+    // Check all the predecessors of this block.  If one of them has no fall
+    // throughs, move this block right after it.
+    for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         E = MBB->pred_end(); PI != E; ++PI) {
+      // Analyze the branch at the end of the pred.
+      MachineBasicBlock *PredBB = *PI;
+      MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
+      if (PredBB != MBB && !CanFallThrough(PredBB)
+          && (!CurFallsThru || MBB->getNumber() >= PredBB->getNumber())) {
+        // If the current block doesn't fall through, just move it.
+        // If the current block can fall through and does not end with a
+        // conditional branch, we need to append an unconditional jump to 
+        // the (current) next block.  To avoid a possible compile-time
+        // infinite loop, move blocks only backward in this case.
+        if (CurFallsThru) {
+          MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
+          CurCond.clear();
+          TII->InsertBranch(*MBB, NextBB, 0, CurCond);
         }
+        MBB->moveAfter(PredBB);
+        MadeChange = true;
+        return OptimizeBlock(MBB);
       }
+    }
         
+    if (!CurFallsThru) {
       // Check all successors to see if we can move this block before it.
       for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
            E = MBB->succ_end(); SI != E; ++SI) {
