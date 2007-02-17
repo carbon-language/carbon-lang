@@ -104,12 +104,6 @@ TargetAlignElem::get(AlignTypeEnum align_type, unsigned char abi_align,
 }
 
 bool
-TargetAlignElem::operator<(const TargetAlignElem &rhs) const {
-  return ((AlignType < rhs.AlignType)
-          || (AlignType == rhs.AlignType && TypeBitWidth < rhs.TypeBitWidth));
-}
-
-bool
 TargetAlignElem::operator==(const TargetAlignElem &rhs) const {
   return (AlignType == rhs.AlignType
           && ABIAlign == rhs.ABIAlign
@@ -240,44 +234,53 @@ TargetData::TargetData(const Module *M) {
 void
 TargetData::setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
                          unsigned char pref_align, short bit_width) {
-  TargetAlignElem elt = TargetAlignElem::get(align_type, abi_align,
-                                             pref_align, bit_width);
-  std::pair<align_iterator, align_iterator> ins_result =
-            std::equal_range(Alignments.begin(), Alignments.end(), elt);
-  align_iterator I = ins_result.first;
-  if (I != Alignments.end() && I->AlignType == align_type && 
-      I->TypeBitWidth == bit_width) {
-    // Update the abi, preferred alignments.
-    I->ABIAlign = abi_align;
-    I->PrefAlign = pref_align;
-  } else
-    Alignments.insert(I, elt);
-
-#if 0
-  // Keep around for debugging and testing...
-  align_iterator E = ins_result.second;
-
-  cerr << "setAlignment(" << elt << ")\n";
-  cerr << "I = " << (I - Alignments.begin())
-       << ", E = " << (E - Alignments.begin()) << "\n";
-  std::copy(Alignments.begin(), Alignments.end(),
-            std::ostream_iterator<TargetAlignElem>(*cerr, "\n"));
-  cerr << "=====\n";
-#endif
+  for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
+    if (Alignments[i].AlignType == align_type &&
+        Alignments[i].TypeBitWidth == bit_width) {
+      // Update the abi, preferred alignments.
+      Alignments[i].ABIAlign = abi_align;
+      Alignments[i].PrefAlign = pref_align;
+      return;
+    }
+  }
+  
+  Alignments.push_back(TargetAlignElem::get(align_type, abi_align,
+                                            pref_align, bit_width));
 }
 
-const TargetAlignElem &
-TargetData::getAlignment(AlignTypeEnum align_type, short bit_width) const
-{
-  std::pair<align_const_iterator, align_const_iterator> find_result =
-                std::equal_range(Alignments.begin(), Alignments.end(),
-                                 TargetAlignElem::get(align_type, 0, 0,
-                                                      bit_width));
-  align_const_iterator I = find_result.first;
+/// getAlignmentInfo - Return the alignment (either ABI if ABIInfo = true or 
+/// preferred if ABIInfo = false) the target wants for the specified datatype.
+unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType, short BitWidth,
+                                      bool ABIInfo) const {
+  // Check to see if we have an exact match and remember the best match we see.
+  int BestMatchIdx = -1;
+  for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
+    if (Alignments[i].AlignType == AlignType &&
+        Alignments[i].TypeBitWidth == BitWidth)
+      return ABIInfo ? Alignments[i].ABIAlign : Alignments[i].PrefAlign;
+    
+    // The best match so far depends on what we're looking for.
+    if (AlignType == VECTOR_ALIGN) {
+      // If this is a specification for a smaller vector type, we will fall back
+      // to it.  This happens because <128 x double> can be implemented in terms
+      // of 64 <2 x double>.
+      if (Alignments[i].AlignType == VECTOR_ALIGN && 
+          Alignments[i].TypeBitWidth < BitWidth) {
+        // Verify that we pick the biggest of the fallbacks.
+        if (BestMatchIdx == -1 ||
+            Alignments[BestMatchIdx].TypeBitWidth < BitWidth)
+          BestMatchIdx = i;
+      }
+    }
+    
+    // FIXME: handle things like i37.
+  }
 
-  // Note: This may not be reasonable if variable-width integer sizes are
-  // passed, at which point, more sophisticated searching will need to be done.
-  return *I;
+  // Okay, we didn't find an exact solution.  Fall back here depending on what
+  // is being looked for.
+  assert(BestMatchIdx != -1 && "Didn't find alignment info for this datatype!");
+  return ABIInfo ? Alignments[BestMatchIdx].ABIAlign
+                 : Alignments[BestMatchIdx].PrefAlign;
 }
 
 /// LayoutInfo - The lazy cache of structure layout information maintained by
@@ -337,7 +340,6 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
   SL = L;
   
   new (L) StructLayout(Ty, *this);
-    
   return L;
 }
 
@@ -463,11 +465,8 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
     
     // Get the layout annotation... which is lazily created on demand.
     const StructLayout *Layout = getStructLayout(cast<StructType>(Ty));
-    const TargetAlignElem &elem = getAlignment(AGGREGATE_ALIGN, 0);
-    assert(validAlignment(elem)
-           && "Aggregate alignment return invalid in getAlignment");
-    unsigned Align = abi_or_pref ? elem.ABIAlign : elem.PrefAlign;
-    return Align < Layout->getAlignment() ? Layout->StructAlignment : Align;
+    unsigned Align = getAlignmentInfo(AGGREGATE_ALIGN, 0, abi_or_pref);
+    return std::max(Align, (unsigned)Layout->getAlignment());
   }
   case Type::IntegerTyID:
   case Type::VoidTyID:
@@ -485,17 +484,8 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
     break;
   }
 
-  const TargetAlignElem &elem = getAlignment((AlignTypeEnum) AlignType,
-                                             getTypeSize(Ty) * 8);
-  if (validAlignment(elem))
-    return (abi_or_pref ? elem.ABIAlign : elem.PrefAlign);
-  else {
-    cerr << "TargetData::getAlignment: align type " << AlignType
-         << " size " << getTypeSize(Ty) << " not found in Alignments.\n";
-    abort();
-    /*NOTREACHED*/
-    return 0;
-  }
+  return getAlignmentInfo((AlignTypeEnum)AlignType, getTypeSize(Ty) * 8,
+                          abi_or_pref);
 }
 
 unsigned char TargetData::getABITypeAlignment(const Type *Ty) const {

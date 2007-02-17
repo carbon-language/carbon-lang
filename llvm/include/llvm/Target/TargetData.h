@@ -56,8 +56,6 @@ struct TargetAlignElem {
   /// Initializer
   static TargetAlignElem get(AlignTypeEnum align_type, unsigned char abi_align,
                              unsigned char pref_align, short bit_width);
-  /// Less-than predicate
-  bool operator<(const TargetAlignElem &rhs) const;
   /// Equality predicate
   bool operator==(const TargetAlignElem &rhs) const;
   /// output stream operator
@@ -92,9 +90,8 @@ private:
   //! Set/initialize target alignments
   void setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
                     unsigned char pref_align, short bit_width);
-  //! Get TargetAlignElem from alignment type and bit width
-  const TargetAlignElem &getAlignment(AlignTypeEnum align_type,
-                                      short bit_width) const;
+  unsigned getAlignmentInfo(AlignTypeEnum align_type, short bit_width,
+                            bool ABIAlign) const;
   //! Internal helper method that returns requested alignment for type.
   unsigned char getAlignment(const Type *Ty, bool abi_or_pref) const;
 
