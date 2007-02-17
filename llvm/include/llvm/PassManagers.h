@@ -120,6 +120,10 @@ public:
   /// Collect passes whose last user is P
   void collectLastUses(std::vector<Pass *> &LastUses, Pass *P);
 
+  // Walk LastUser map and create inverted map. This should be done
+  // after all passes are added and before running first pass.
+  void collectInvertedLU();
+
   /// Find the pass that implements Analysis AID. Search immutable
   /// passes and all pass managers. If desired pass is not found
   /// then return NULL.
@@ -171,6 +175,7 @@ private:
   // Map to keep track of last user of the analysis pass.
   // LastUser->second is the last user of Lastuser->first.
   std::map<Pass *, Pass *> LastUser;
+  std::map<Pass *, std::vector <Pass *> > InvertedLU;
 
   /// Immutable passes are managed by top level manager.
   std::vector<ImmutablePass *> ImmutablePasses;
