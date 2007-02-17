@@ -743,14 +743,18 @@ bool PPCTargetLowering::SelectAddressRegImm(SDOperand N, SDOperand &Disp,
       Base = DAG.getRegister(PPC::R0, CN->getValueType(0));
       return true;
     }
-    
-    // FIXME: Handle small sext constant offsets in PPC64 mode also!
-    if (CN->getValueType(0) == MVT::i32) {
+
+    // Handle 32-bit sext immediates with LIS + addr mode.
+    if (CN->getValueType(0) == MVT::i32 ||
+        (int64_t)CN->getValue() == (int)CN->getValue()) {
       int Addr = (int)CN->getValue();
       
       // Otherwise, break this down into an LIS + disp.
-      Disp =  DAG.getTargetConstant((short)Addr, MVT::i32);
-      Base = DAG.getConstant(Addr - (signed short)Addr, MVT::i32);
+      Disp = DAG.getTargetConstant((short)Addr, MVT::i32);
+      
+      Base = DAG.getTargetConstant((Addr - (signed short)Addr) >> 16, MVT::i32);
+      unsigned Opc = CN->getValueType(0) == MVT::i32 ? PPC::LIS : PPC::LIS8;
+      Base = SDOperand(DAG.getTargetNode(Opc, CN->getValueType(0), Base), 0);
       return true;
     }
   }
