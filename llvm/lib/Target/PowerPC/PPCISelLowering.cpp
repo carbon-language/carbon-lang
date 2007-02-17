@@ -841,25 +841,30 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDOperand N, SDOperand &Disp,
       }
     }
   } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
-    // Loading from a constant address.
+    // Loading from a constant address.  Verify low two bits are clear.
+    if ((CN->getValue() & 3) == 0) {
+      // If this address fits entirely in a 14-bit sext immediate field, codegen
+      // this as "d, 0"
+      short Imm;
+      if (isIntS16Immediate(CN, Imm)) {
+        Disp = DAG.getTargetConstant((unsigned short)Imm >> 2, getPointerTy());
+        Base = DAG.getRegister(PPC::R0, CN->getValueType(0));
+        return true;
+      }
     
-    // If this address fits entirely in a 14-bit sext immediate field, codegen
-    // this as "d, 0"
-    short Imm;
-    if (isIntS16Immediate(CN, Imm)) {
-      Disp = DAG.getTargetConstant((unsigned short)Imm >> 2, getPointerTy());
-      Base = DAG.getRegister(PPC::R0, CN->getValueType(0));
-      return true;
-    }
-    
-    // FIXME: Handle small sext constant offsets in PPC64 mode also!
-    if (CN->getValueType(0) == MVT::i32) {
-      int Addr = (int)CN->getValue();
+      // Fold the low-part of 32-bit absolute addresses into addr mode.
+      if (CN->getValueType(0) == MVT::i32 ||
+          (int64_t)CN->getValue() == (int)CN->getValue()) {
+        int Addr = (int)CN->getValue();
       
-      // Otherwise, break this down into an LIS + disp.
-      Disp = DAG.getTargetConstant((short)Addr >> 2, MVT::i32);
-      Base = DAG.getConstant(Addr - (signed short)Addr, MVT::i32);
-      return true;
+        // Otherwise, break this down into an LIS + disp.
+        Disp = DAG.getTargetConstant((short)Addr >> 2, MVT::i32);
+        
+        Base = DAG.getTargetConstant((Addr-(signed short)Addr) >> 16, MVT::i32);
+        unsigned Opc = CN->getValueType(0) == MVT::i32 ? PPC::LIS : PPC::LIS8;
+        Base = SDOperand(DAG.getTargetNode(Opc, CN->getValueType(0), Base), 0);
+        return true;
+      }
     }
   }
   
