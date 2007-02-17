@@ -393,6 +393,10 @@ public:
   /// the specific register or NULL if it is not found.
   MachineOperand *findRegisterUseOperand(unsigned Reg);
   
+  /// findRegisterDefOperand() - Returns the MachineOperand that is a def of
+  /// the specific register or NULL if it is not found.
+  MachineOperand *findRegisterDefOperand(unsigned Reg);
+  
   /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
   ///
   void copyKillDeadInfo(const MachineInstr *MI);
