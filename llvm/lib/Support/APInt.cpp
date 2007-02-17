@@ -213,7 +213,8 @@ static void div(unsigned zds[], unsigned nx, unsigned y[], unsigned ny) {
     // Knuth's j == our nx-j.
     // Knuth's u[j:j+n] == our zds[j:j-ny].
     unsigned qhat;  // treated as unsigned
-    if (zds[j] == y[ny-1]) qhat = -1U;  // 0xffffffff
+    if (zds[j] == y[ny-1]) 
+      qhat = -1U;  // 0xffffffff
     else {
       uint64_t w = (((uint64_t)(zds[j])) << 32) + 
                    ((uint64_t)zds[j-1] & 0xffffffffL);
@@ -1137,76 +1138,100 @@ APInt APInt::shl(unsigned shiftAmt) const {
 /// @brief Unsigned division function for APInt.
 APInt APInt::udiv(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  APInt API(*this);
-  unsigned first = RHS.getActiveBits();
-  unsigned ylen = !first ? 0 : APInt::whichWord(first - 1) + 1;
-  assert(ylen && "Divided by zero???");
-  if (API.isSingleWord()) {
-    API.VAL = RHS.isSingleWord() ? (API.VAL / RHS.VAL) : 
-              (ylen > 1 ? 0 : API.VAL / RHS.pVal[0]);
-  } else {
-    unsigned first2 = API.getActiveBits();
-    unsigned xlen = !first2 ? 0 : APInt::whichWord(first2 - 1) + 1;
-    if (!xlen)
-      return API;
-    else if (xlen < ylen || API.ult(RHS))
-      memset(API.pVal, 0, API.getNumWords() * 8);
-    else if (API == RHS) {
-      memset(API.pVal, 0, API.getNumWords() * 8);
-      API.pVal[0] = 1;
-    } else if (xlen == 1)
-      API.pVal[0] /= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
-    else {
-      APInt X(BitWidth, 0);
-      APInt Y(BitWidth, 0);
-      if (unsigned nshift = 63 - (first - 1) % 64) {
-        Y = APIntOps::shl(RHS, nshift);
-        X = APIntOps::shl(API, nshift);
-        ++xlen;
-      }
-      div((unsigned*)X.pVal, xlen*2-1, 
-          (unsigned*)(Y.isSingleWord() ? &Y.VAL : Y.pVal), ylen*2);
-      memset(API.pVal, 0, API.getNumWords() * 8);
-      memcpy(API.pVal, X.pVal + ylen, (xlen - ylen) * 8);
-    }
+
+  // First, deal with the easy case
+  if (isSingleWord()) {
+    assert(RHS.VAL != 0 && "Divide by zero?");
+    return APInt(BitWidth, VAL / RHS.VAL);
   }
-  return API;
+
+  // Make a temporary to hold the result
+  APInt Result(*this);
+
+  // Get some facts about the LHS and RHS number of bits and words
+  unsigned rhsBits = RHS.getActiveBits();
+  unsigned rhsWords = !rhsBits ? 0 : (APInt::whichWord(rhsBits - 1) + 1);
+  assert(rhsWords && "Divided by zero???");
+  unsigned lhsBits = Result.getActiveBits();
+  unsigned lhsWords = !lhsBits ? 0 : (APInt::whichWord(lhsBits - 1) + 1);
+
+  // Deal with some degenerate cases
+  if (!lhsWords) 
+    return Result; // 0 / X == 0
+  else if (lhsWords < rhsWords || Result.ult(RHS))
+    // X / Y with X < Y == 0
+    memset(Result.pVal, 0, Result.getNumWords() * 8);
+  else if (Result == RHS) {
+    // X / X == 1
+    memset(Result.pVal, 0, Result.getNumWords() * 8);
+    Result.pVal[0] = 1;
+  } else if (lhsWords == 1)
+    // All high words are zero, just use native divide
+    Result.pVal[0] /= RHS.pVal[0];
+  else {
+    // Compute it the hard way ..
+    APInt X(BitWidth, 0);
+    APInt Y(BitWidth, 0);
+    if (unsigned nshift = 63 - ((rhsBits - 1) % 64 )) {
+      Y = APIntOps::shl(RHS, nshift);
+      X = APIntOps::shl(Result, nshift);
+      ++lhsWords;
+    }
+    div((unsigned*)X.pVal, lhsWords * 2 - 1, (unsigned*)Y.pVal, rhsWords*2);
+    memset(Result.pVal, 0, Result.getNumWords() * 8);
+    memcpy(Result.pVal, X.pVal + rhsWords, (lhsWords - rhsWords) * 8);
+  }
+  return Result;
 }
 
 /// Unsigned remainder operation on APInt.
 /// @brief Function for unsigned remainder operation.
 APInt APInt::urem(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  APInt API(*this);
-  unsigned first = RHS.getActiveBits();
-  unsigned ylen = !first ? 0 : APInt::whichWord(first - 1) + 1;
-  assert(ylen && "Performing remainder operation by zero ???");
-  if (API.isSingleWord()) {
-    API.VAL = RHS.isSingleWord() ? (API.VAL % RHS.VAL) : 
-              (ylen > 1 ? API.VAL : API.VAL % RHS.pVal[0]);
-  } else {
-    unsigned first2 = API.getActiveBits();
-    unsigned xlen = !first2 ? 0 : API.whichWord(first2 - 1) + 1;
-    if (!xlen || xlen < ylen || API.ult(RHS))
-      return API;
-    else if (API == RHS)
-      memset(API.pVal, 0, API.getNumWords() * 8);
-    else if (xlen == 1) 
-      API.pVal[0] %= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
-    else {
-      APInt X((xlen+1)*64, 0), Y(ylen*64, 0);
-      unsigned nshift = 63 - (first - 1) % 64;
-      if (nshift) {
-        APIntOps::shl(Y, nshift);
-        APIntOps::shl(X, nshift);
-      }
-      div((unsigned*)X.pVal, xlen*2-1, 
-          (unsigned*)(Y.isSingleWord() ? &Y.VAL : Y.pVal), ylen*2);
-      memset(API.pVal, 0, API.getNumWords() * 8);
-      for (unsigned i = 0; i < ylen-1; ++i)
-        API.pVal[i] = (X.pVal[i] >> nshift) | (X.pVal[i+1] << (64 - nshift));
-      API.pVal[ylen-1] = X.pVal[ylen-1] >> nshift;
-    }
+  if (isSingleWord()) {
+    assert(RHS.VAL != 0 && "Remainder by zero?");
+    return APInt(BitWidth, VAL % RHS.VAL);
   }
-  return API;
+
+  // Make a temporary to hold the result
+  APInt Result(*this);
+
+  // Get some facts about the RHS
+  unsigned rhsBits = RHS.getActiveBits();
+  unsigned rhsWords = !rhsBits ? 0 : (APInt::whichWord(rhsBits - 1) + 1);
+  assert(rhsWords && "Performing remainder operation by zero ???");
+
+  // Get some facts about the LHS
+  unsigned lhsBits = Result.getActiveBits();
+  unsigned lhsWords = !lhsBits ? 0 : (Result.whichWord(lhsBits - 1) + 1);
+
+  // Check the degenerate cases
+  if (lhsWords == 0)
+    // 0 % Y == 0
+    memset(Result.pVal, 0, Result.getNumWords() * 8);
+  else if (lhsWords < rhsWords || Result.ult(RHS))
+    // X % Y == X iff X < Y
+    return Result;
+  else if (Result == RHS)
+    // X % X == 0;
+    memset(Result.pVal, 0, Result.getNumWords() * 8);
+  else if (lhsWords == 1) 
+    // All high words are zero, just use native remainder
+    Result.pVal[0] %=  RHS.pVal[0];
+  else {
+    // Do it the hard way
+    APInt X((lhsWords+1)*64, 0);
+    APInt Y(rhsWords*64, 0);
+    unsigned nshift = 63 - (rhsBits - 1) % 64;
+    if (nshift) {
+      APIntOps::shl(Y, nshift);
+      APIntOps::shl(X, nshift);
+    }
+    div((unsigned*)X.pVal, rhsWords*2-1, (unsigned*)Y.pVal, rhsWords*2);
+    memset(Result.pVal, 0, Result.getNumWords() * 8);
+    for (unsigned i = 0; i < rhsWords-1; ++i)
+      Result.pVal[i] = (X.pVal[i] >> nshift) | (X.pVal[i+1] << (64 - nshift));
+    Result.pVal[rhsWords-1] = X.pVal[rhsWords-1] >> nshift;
+  }
+  return Result;
 }
