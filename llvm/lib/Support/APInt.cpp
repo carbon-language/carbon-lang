@@ -980,7 +980,7 @@ static unsigned subMul(unsigned dest[], unsigned offset,
   unsigned carry = 0;
   unsigned j = 0;
   do {
-    uint64_t prod = ((uint64_t) x[j] & 0xffffffffL) * yl;
+    uint64_t prod = ((uint64_t) x[j] & 0xffffffffUL) * yl;
     unsigned prod_low = (unsigned) prod;
     unsigned prod_high = (unsigned) (prod >> 32);
     prod_low += carry;
@@ -1104,7 +1104,8 @@ APInt APInt::udiv(const APInt& RHS) const {
       X = APIntOps::shl(Result, nshift);
       ++lhsWords;
     }
-    div((unsigned*)X.pVal, lhsWords * 2 - 1, (unsigned*)Y.pVal, rhsWords*2);
+    div((unsigned*)X.pVal, lhsWords * 2 - 1, 
+        (unsigned*)(Y.isSingleWord()? &Y.VAL : Y.pVal), rhsWords*2);
     memset(Result.pVal, 0, Result.getNumWords() * 8);
     memcpy(Result.pVal, X.pVal + rhsWords, (lhsWords - rhsWords) * 8);
   }
@@ -1154,7 +1155,8 @@ APInt APInt::urem(const APInt& RHS) const {
       APIntOps::shl(Y, nshift);
       APIntOps::shl(X, nshift);
     }
-    div((unsigned*)X.pVal, rhsWords*2-1, (unsigned*)Y.pVal, rhsWords*2);
+    div((unsigned*)X.pVal, rhsWords*2-1, 
+        (unsigned*)(Y.isSingleWord()? &Y.VAL : Y.pVal), rhsWords*2);
     memset(Result.pVal, 0, Result.getNumWords() * 8);
     for (unsigned i = 0; i < rhsWords-1; ++i)
       Result.pVal[i] = (X.pVal[i] >> nshift) | (X.pVal[i+1] << (64 - nshift));
