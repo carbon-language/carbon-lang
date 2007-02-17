@@ -307,7 +307,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
         cerr << "Register class of operand and regclass of use don't agree!\n";
 #ifndef NDEBUG
         cerr << "Operand = " << IIOpNum << "\n";
-        cerr << "Op->Val = "; Op.Val->dump(0); cerr << "\n";
+        cerr << "Op->Val = "; Op.Val->dump(&DAG); cerr << "\n";
         cerr << "MI = "; MI->print(cerr);
         cerr << "VReg = " << VReg << "\n";
         cerr << "VReg RegClass     size = " << VRC->getSize()
