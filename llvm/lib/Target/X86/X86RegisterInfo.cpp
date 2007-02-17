@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
@@ -881,6 +882,21 @@ X86RegisterInfo::getCalleeSavedRegClasses() const {
   };
 
   return Is64Bit ? CalleeSavedRegClasses64Bit : CalleeSavedRegClasses32Bit;
+}
+
+BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+  BitVector Reserved(getNumRegs());
+  Reserved.set(X86::RSP);
+  Reserved.set(X86::ESP);
+  Reserved.set(X86::SP);
+  Reserved.set(X86::SPL);
+  if (hasFP(MF)) {
+    Reserved.set(X86::RBP);
+    Reserved.set(X86::EBP);
+    Reserved.set(X86::BP);
+    Reserved.set(X86::BPL);
+  }
+  return Reserved;
 }
 
 //===----------------------------------------------------------------------===//

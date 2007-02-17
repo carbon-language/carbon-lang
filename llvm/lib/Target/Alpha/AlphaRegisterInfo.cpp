@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
 using namespace llvm;
@@ -176,6 +177,14 @@ AlphaRegisterInfo::getCalleeSavedRegClasses() const {
     &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,  0
   };
   return CalleeSavedRegClasses;
+}
+
+BitVector AlphaRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+  BitVector Reserved(getNumRegs());
+  Reserved.set(Alpha::R15);
+  Reserved.set(Alpha::R30);
+  Reserved.set(Alpha::R31);
+  return Reserved;
 }
 
 //===----------------------------------------------------------------------===//

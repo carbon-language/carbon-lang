@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -295,6 +296,20 @@ ARMRegisterInfo::getCalleeSavedRegClasses() const {
     0
   };
   return CalleeSavedRegClasses;
+}
+
+BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+  BitVector Reserved(getNumRegs());
+  Reserved.set(ARM::SP);
+  if (STI.isTargetDarwin() || hasFP(MF))
+    Reserved.set(FramePtr);
+  // Some targets reserve R9.
+  if (STI.isR9Reserved())
+    Reserved.set(ARM::R9);
+  // At PEI time, if LR is used, it will be spilled upon entry.
+  if (MF.getUsedPhysregs() && !MF.isPhysRegUsed((unsigned)ARM::LR))
+    Reserved.set(ARM::LR);
+  return Reserved;
 }
 
 /// hasFP - Return true if the specified function should have a dedicated frame

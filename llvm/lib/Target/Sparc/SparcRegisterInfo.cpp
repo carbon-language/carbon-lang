@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Type.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
@@ -115,6 +116,22 @@ const unsigned* SparcRegisterInfo::getCalleeSavedRegs() const {
   static const unsigned CalleeSavedRegs[] = { 0 };
   return CalleeSavedRegs;
 }
+
+BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+  BitVector Reserved(getNumRegs());
+  Reserved.set(SP::G2);
+  Reserved.set(SP::G3);
+  Reserved.set(SP::G4);
+  Reserved.set(SP::O6);
+  Reserved.set(SP::I6);
+  Reserved.set(SP::I7);
+  Reserved.set(SP::G0);
+  Reserved.set(SP::G5);
+  Reserved.set(SP::G6);
+  Reserved.set(SP::G7);
+  return Reserved;
+}
+
 
 const TargetRegisterClass* const*
 SparcRegisterInfo::getCalleeSavedRegClasses() const {

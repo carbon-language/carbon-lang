@@ -78,6 +78,12 @@ public:
   /// length of this list match the getCalleeSavedRegs() list.
   const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
 
+  /// getReservedRegs - Returns a bitset indexed by physical register number
+  /// indicating if a register is a special register that has particular uses and
+  /// should be considered unavailable at all times, e.g. SP, RA. This is used by
+  /// register scavenger to determine what registers are free.
+  BitVector getReservedRegs(const MachineFunction &MF) const;
+
   bool hasFP(const MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
