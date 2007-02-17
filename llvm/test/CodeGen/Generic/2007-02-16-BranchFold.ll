@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | llc &&
 ; RUN: llvm-as < %s | llc | grep jmp | wc -l | grep 0
+; PR 1200
 
 ; ModuleID = 'bugpoint.test.bc'
 target datalayout = "e-p:32:32"
