@@ -1856,12 +1856,26 @@ SDOperand TargetLowering::isOperandValidForConstraint(SDOperand Op,
                                                       char ConstraintLetter,
                                                       SelectionDAG &DAG) {
   switch (ConstraintLetter) {
-  default: return SDOperand(0,0);
+  default: break;
   case 'i':    // Simple Integer or Relocatable Constant
   case 'n':    // Simple Integer
   case 's':    // Relocatable Constant
-    return Op;   // FIXME: not right.
+    // These are okay if the operand is either a global variable address or a
+    // simple immediate value.  If we have one of these, map to the TargetXXX
+    // version so that the value itself doesn't get selected.
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      // Simple constants are not allowed for 's'.
+      if (ConstraintLetter != 's')
+        return DAG.getTargetConstant(C->getValue(), Op.getValueType());
+    }
+    if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op)) {
+      if (ConstraintLetter != 'n')
+        return DAG.getTargetGlobalAddress(GA->getGlobal(), Op.getValueType(),
+                                          GA->getOffset());
+    }
+    break;
   }
+  return SDOperand(0,0);
 }
 
 std::vector<unsigned> TargetLowering::
