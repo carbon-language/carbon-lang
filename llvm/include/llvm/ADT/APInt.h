@@ -254,7 +254,7 @@ public:
 
   /// @brief Unary negation operator
   inline APInt operator-() const {
-    return APInt(0, BitWidth) - (*this);
+    return APInt(BitWidth, 0) - (*this);
   }
 
   /// @brief Array-indexing support.
@@ -469,7 +469,7 @@ public:
   APInt getLoBits(unsigned numBits) const;
 
   /// @returns true if the argument APInt value is a power of two > 0.
-  inline bool isPowerOf2() const; 
+  bool isPowerOf2() const; 
 
   /// @returns the number of zeros from the most significant bit to the first
   /// one bits.
@@ -483,7 +483,7 @@ public:
   unsigned countPopulation() const; 
 
   /// @returns the total number of bits.
-  inline unsigned getNumBits() const { 
+  inline unsigned getBitWidth() const { 
     return BitWidth; 
   }
 

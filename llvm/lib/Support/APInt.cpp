@@ -449,6 +449,7 @@ APInt& APInt::operator--() {
 /// @brief Addition assignment operator. Adds this APInt by the given APInt&
 /// RHS and assigns the result to this APInt.
 APInt& APInt::operator+=(const APInt& RHS) {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) VAL += RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
   else {
     if (RHS.isSingleWord()) add_1(pVal, pVal, getNumWords(), RHS.VAL);
@@ -469,6 +470,7 @@ APInt& APInt::operator+=(const APInt& RHS) {
 /// @brief Subtraction assignment operator. Subtracts this APInt by the given
 /// APInt &RHS and assigns the result to this APInt.
 APInt& APInt::operator-=(const APInt& RHS) {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) 
     VAL -= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
   else {
@@ -490,6 +492,7 @@ APInt& APInt::operator-=(const APInt& RHS) {
 /// @brief Multiplication assignment operator. Multiplies this APInt by the 
 /// given APInt& RHS and assigns the result to this APInt.
 APInt& APInt::operator*=(const APInt& RHS) {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) VAL *= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
   else {
     // one-based first non-zero bit position.
@@ -521,6 +524,7 @@ APInt& APInt::operator*=(const APInt& RHS) {
 /// @brief Bitwise AND assignment operator. Performs bitwise AND operation on
 /// this APInt and the given APInt& RHS, assigns the result to this APInt.
 APInt& APInt::operator&=(const APInt& RHS) {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
     if (RHS.isSingleWord()) VAL &= RHS.VAL;
     else VAL &= RHS.pVal[0];
@@ -543,6 +547,7 @@ APInt& APInt::operator&=(const APInt& RHS) {
 /// @brief Bitwise OR assignment operator. Performs bitwise OR operation on 
 /// this APInt and the given APInt& RHS, assigns the result to this APInt.
 APInt& APInt::operator|=(const APInt& RHS) {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
     if (RHS.isSingleWord()) VAL |= RHS.VAL;
     else VAL |= RHS.pVal[0];
@@ -563,6 +568,7 @@ APInt& APInt::operator|=(const APInt& RHS) {
 /// @brief Bitwise XOR assignment operator. Performs bitwise XOR operation on
 /// this APInt and the given APInt& RHS, assigns the result to this APInt.
 APInt& APInt::operator^=(const APInt& RHS) {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
     if (RHS.isSingleWord()) VAL ^= RHS.VAL;
     else VAL ^= RHS.pVal[0];
@@ -587,6 +593,7 @@ APInt& APInt::operator^=(const APInt& RHS) {
 /// @brief Bitwise AND operator. Performs bitwise AND operation on this APInt
 /// and the given APInt& RHS.
 APInt APInt::operator&(const APInt& RHS) const {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   APInt API(RHS);
   return API &= *this;
 }
@@ -594,6 +601,7 @@ APInt APInt::operator&(const APInt& RHS) const {
 /// @brief Bitwise OR operator. Performs bitwise OR operation on this APInt 
 /// and the given APInt& RHS.
 APInt APInt::operator|(const APInt& RHS) const {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   APInt API(RHS);
   API |= *this;
   API.clearUnusedBits();
@@ -603,6 +611,7 @@ APInt APInt::operator|(const APInt& RHS) const {
 /// @brief Bitwise XOR operator. Performs bitwise XOR operation on this APInt
 /// and the given APInt& RHS.
 APInt APInt::operator^(const APInt& RHS) const {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   APInt API(RHS);
   API ^= *this;
   API.clearUnusedBits();
@@ -625,6 +634,7 @@ bool APInt::operator !() const {
 /// @brief Multiplication operator. Multiplies this APInt by the given APInt& 
 /// RHS.
 APInt APInt::operator*(const APInt& RHS) const {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   APInt API(RHS);
   API *= *this;
   API.clearUnusedBits();
@@ -633,6 +643,7 @@ APInt APInt::operator*(const APInt& RHS) const {
 
 /// @brief Addition operator. Adds this APInt by the given APInt& RHS.
 APInt APInt::operator+(const APInt& RHS) const {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   APInt API(*this);
   API += RHS;
   API.clearUnusedBits();
@@ -641,6 +652,7 @@ APInt APInt::operator+(const APInt& RHS) const {
 
 /// @brief Subtraction operator. Subtracts this APInt by the given APInt& RHS
 APInt APInt::operator-(const APInt& RHS) const {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   APInt API(*this);
   API -= RHS;
   return API;
@@ -823,10 +835,11 @@ std::string APInt::toString(uint8_t radix) const {
   }
 
   APInt tmp(*this);
-  APInt divisor(radix,64);
+  APInt divisor(tmp.getBitWidth(), radix);
+  APInt zero(tmp.getBitWidth(), 0);
   if (tmp == 0)
     result = "0";
-  else while (tmp != 0) {
+  else while (tmp.ne(zero)) {
     APInt APdigit = APIntOps::urem(tmp,divisor);
     unsigned digit = APdigit.getValue();
     assert(digit < radix && "urem failed");
@@ -841,7 +854,7 @@ std::string APInt::toString(uint8_t radix) const {
 /// for an APInt of the specified bit-width and if isSign == true,
 /// it should be largest signed value, otherwise unsigned value.
 APInt APInt::getMaxValue(unsigned numBits, bool isSign) {
-  APInt APIVal(0, numBits);
+  APInt APIVal(numBits, 0);
   APIVal.set();
   if (isSign) APIVal.clear(numBits - 1);
   return APIVal;
@@ -851,7 +864,7 @@ APInt APInt::getMaxValue(unsigned numBits, bool isSign) {
 /// an APInt of the given bit-width and if isSign == true,
 /// it should be smallest signed value, otherwise zero.
 APInt APInt::getMinValue(unsigned numBits, bool isSign) {
-  APInt APIVal(0, numBits);
+  APInt APIVal(numBits, 0);
   if (isSign) APIVal.set(numBits - 1);
   return APIVal;
 }
@@ -909,7 +922,7 @@ unsigned APInt::countLeadingZeros() const {
 unsigned APInt::countTrailingZeros() const {
   if (isSingleWord())
     return CountTrailingZeros_64(~VAL & (VAL - 1));
-  APInt Tmp = ~(*this) & ((*this) - APInt(BitWidth,1));
+  APInt Tmp( ~(*this) & ((*this) - APInt(BitWidth,1)) );
   return getNumWords() * APINT_BITS_PER_WORD - Tmp.countLeadingZeros();
 }
 
@@ -932,21 +945,21 @@ unsigned APInt::countPopulation() const {
 APInt APInt::byteSwap() const {
   assert(BitWidth >= 16 && BitWidth % 16 == 0 && "Cannot byteswap!");
   if (BitWidth == 16)
-    return APInt(ByteSwap_16(VAL), BitWidth);
+    return APInt(BitWidth, ByteSwap_16(VAL));
   else if (BitWidth == 32)
-    return APInt(ByteSwap_32(VAL), BitWidth);
+    return APInt(BitWidth, ByteSwap_32(VAL));
   else if (BitWidth == 48) {
     uint64_t Tmp1 = ((VAL >> 32) << 16) | (VAL & 0xFFFF);
     Tmp1 = ByteSwap_32(Tmp1);
     uint64_t Tmp2 = (VAL >> 16) & 0xFFFF;
     Tmp2 = ByteSwap_16(Tmp2);
     return 
-      APInt((Tmp1 & 0xff) | ((Tmp1<<16) & 0xffff00000000ULL) | (Tmp2 << 16),
-            BitWidth);
+      APInt(BitWidth, 
+            (Tmp1 & 0xff) | ((Tmp1<<16) & 0xffff00000000ULL) | (Tmp2 << 16));
   } else if (BitWidth == 64)
-    return APInt(ByteSwap_64(VAL), BitWidth);
+    return APInt(BitWidth, ByteSwap_64(VAL));
   else {
-    APInt Result(0, BitWidth);
+    APInt Result(BitWidth, 0);
     char *pByte = (char*)Result.pVal;
     for (unsigned i = 0; i < BitWidth / 8 / 2; ++i) {
       char Tmp = pByte[i];
@@ -1123,6 +1136,7 @@ APInt APInt::shl(unsigned shiftAmt) const {
 /// Unsigned divide this APInt by APInt RHS.
 /// @brief Unsigned division function for APInt.
 APInt APInt::udiv(const APInt& RHS) const {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   APInt API(*this);
   unsigned first = RHS.getActiveBits();
   unsigned ylen = !first ? 0 : APInt::whichWord(first - 1) + 1;
@@ -1143,7 +1157,8 @@ APInt APInt::udiv(const APInt& RHS) const {
     } else if (xlen == 1)
       API.pVal[0] /= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
     else {
-      APInt X(0, (xlen+1)*64), Y(0, ylen*64);
+      APInt X(BitWidth, 0);
+      APInt Y(BitWidth, 0);
       if (unsigned nshift = 63 - (first - 1) % 64) {
         Y = APIntOps::shl(RHS, nshift);
         X = APIntOps::shl(API, nshift);
@@ -1161,6 +1176,7 @@ APInt APInt::udiv(const APInt& RHS) const {
 /// Unsigned remainder operation on APInt.
 /// @brief Function for unsigned remainder operation.
 APInt APInt::urem(const APInt& RHS) const {
+  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   APInt API(*this);
   unsigned first = RHS.getActiveBits();
   unsigned ylen = !first ? 0 : APInt::whichWord(first - 1) + 1;
@@ -1178,7 +1194,7 @@ APInt APInt::urem(const APInt& RHS) const {
     else if (xlen == 1) 
       API.pVal[0] %= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
     else {
-      APInt X(0, (xlen+1)*64), Y(0, ylen*64);
+      APInt X((xlen+1)*64, 0), Y(ylen*64, 0);
       unsigned nshift = 63 - (first - 1) % 64;
       if (nshift) {
         APIntOps::shl(Y, nshift);
