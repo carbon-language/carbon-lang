@@ -12,13 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "strip-dead-prototypes"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
-#include <vector>
 using namespace llvm;
 
 STATISTIC(NumDeadPrototypes, "Number of dead prototypes removed");
@@ -37,24 +36,30 @@ RegisterPass<StripDeadPrototypesPass> X("strip-dead-prototypes",
 } // end anonymous namespace
 
 bool StripDeadPrototypesPass::runOnModule(Module &M) {
-  // Collect all the functions we want to erase
-  std::vector<Function*> FuncsToErase;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->isDeclaration() &&         // Function must be only a prototype
-        I->use_empty()) {             // Function must not be used
-      FuncsToErase.push_back(&(*I));
-    }
-
-  // Erase the functions
-  for (std::vector<Function*>::iterator I = FuncsToErase.begin(), 
-       E = FuncsToErase.end(); I != E; ++I )
-    (*I)->eraseFromParent();
+  bool MadeChange = false;
   
-  // Increment the statistic
-  NumDeadPrototypes += FuncsToErase.size();
+  // Erase dead function prototypes.
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
+    Function *F = I++;
+    // Function must be a prototype and unused.
+    if (F->isDeclaration() && F->use_empty()) {
+      F->eraseFromParent();
+      ++NumDeadPrototypes;
+      MadeChange = true;
+    }
+  }
 
+  // Erase dead function prototypes.
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ) {
+    GlobalVariable *GV = I++;
+    // Global must be a prototype and unused.
+    if (GV->isDeclaration() && GV->use_empty())
+      GV->eraseFromParent();
+  }
+  
   // Return an indication of whether we changed anything or not.
-  return !FuncsToErase.empty();
+  return MadeChange;
 }
 
 ModulePass *llvm::createStripDeadPrototypesPass() {
