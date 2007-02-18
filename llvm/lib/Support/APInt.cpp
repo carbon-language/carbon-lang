@@ -675,8 +675,22 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
     return result;
   }
 
+  if (radix != 10) {
+    uint64_t mask = radix - 1;
+    uint32_t shift = (radix == 16 ? 4 : radix  == 8 ? 3 : 1);
+    uint32_t nibbles = APINT_BITS_PER_WORD / shift;
+    for (uint32_t i = 0; i < getNumWords(); ++i) {
+      uint64_t value = pVal[i];
+      for (uint32_t j = 0; j < nibbles; ++j) {
+        result.insert(0, digits[ value & mask ]);
+        value >>= shift;
+      }
+    }
+    return result;
+  }
+
   APInt tmp(*this);
-  APInt divisor(tmp.getBitWidth(), radix);
+  APInt divisor(tmp.getBitWidth(), 10);
   APInt zero(tmp.getBitWidth(), 0);
   size_t insert_at = 0;
   if (wantSigned && tmp[BitWidth-1]) {
@@ -705,19 +719,21 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
 /// for an APInt of the specified bit-width and if isSign == true,
 /// it should be largest signed value, otherwise unsigned value.
 APInt APInt::getMaxValue(uint32_t numBits, bool isSign) {
-  APInt APIVal(numBits, 0);
-  APIVal.set();
-  if (isSign) APIVal.clear(numBits - 1);
-  return APIVal;
+  APInt Result(numBits, 0);
+  Result.set();
+  if (isSign) 
+    Result.clear(numBits - 1);
+  return Result;
 }
 
 /// getMinValue - This function returns the smallest value for
 /// an APInt of the given bit-width and if isSign == true,
 /// it should be smallest signed value, otherwise zero.
 APInt APInt::getMinValue(uint32_t numBits, bool isSign) {
-  APInt APIVal(numBits, 0);
-  if (isSign) APIVal.set(numBits - 1);
-  return APIVal;
+  APInt Result(numBits, 0);
+  if (isSign) 
+    Result.set(numBits - 1);
+  return Result;
 }
 
 /// getAllOnesValue - This function returns an all-ones value for
