@@ -456,7 +456,7 @@ public:
   }
 
   /// @returns a character interpretation of the APInt.
-  std::string toString(uint8_t radix = 10) const;
+  std::string toString(uint8_t radix = 10, bool wantSigned = true) const;
 
   /// Get an APInt with the same BitWidth as this APInt, just zero mask
   /// the low bits and right shift to the least significant bit.
