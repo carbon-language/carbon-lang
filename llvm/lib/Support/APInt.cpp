@@ -59,12 +59,12 @@ APInt::APInt(uint32_t numBits, uint32_t numWords, uint64_t bigVal[])
     // Calculate the actual length of bigVal[].
     uint32_t maxN = std::max<uint32_t>(numWords, getNumWords());
     uint32_t minN = std::min<uint32_t>(numWords, getNumWords());
-    memcpy(pVal, bigVal, (minN - 1) * sizeof(uint64_t));
+    memcpy(pVal, bigVal, (minN - 1) * APINT_WORD_SIZE);
     pVal[minN-1] = bigVal[minN-1] & 
                     (~uint64_t(0ULL) >> 
                      (APINT_BITS_PER_WORD - BitWidth % APINT_BITS_PER_WORD));
     if (maxN == getNumWords())
-      memset(pVal+numWords, 0, (getNumWords() - numWords) * sizeof(uint64_t));
+      memset(pVal+numWords, 0, (getNumWords() - numWords) * APINT_WORD_SIZE);
   }
 }
 
@@ -82,13 +82,14 @@ APInt::APInt(uint32_t numbits, const std::string& Val, uint8_t radix) {
   fromString(numbits, Val.c_str(), Val.size(), radix);
 }
 
+/// @brief Copy constructor
 APInt::APInt(const APInt& APIVal)
   : BitWidth(APIVal.BitWidth) {
   if (isSingleWord()) 
     VAL = APIVal.VAL;
   else {
     pVal = getMemory(getNumWords());
-    memcpy(pVal, APIVal.pVal, getNumWords() * sizeof(uint64_t));
+    memcpy(pVal, APIVal.pVal, getNumWords() * APINT_WORD_SIZE);
   }
 }
 
@@ -103,7 +104,7 @@ APInt& APInt::operator=(const APInt& RHS) {
   if (isSingleWord()) 
     VAL = RHS.VAL;
   else
-    memcpy(pVal, RHS.pVal, getNumWords() * sizeof(uint64_t));
+    memcpy(pVal, RHS.pVal, getNumWords() * APINT_WORD_SIZE);
   return *this;
 }
 
@@ -114,7 +115,7 @@ APInt& APInt::operator=(uint64_t RHS) {
     VAL = RHS;
   else {
     pVal[0] = RHS;
-    memset(pVal+1, 0, (getNumWords() - 1) * sizeof(uint64_t));
+    memset(pVal+1, 0, (getNumWords() - 1) * APINT_WORD_SIZE);
   }
   return *this;
 }
@@ -339,13 +340,13 @@ APInt& APInt::operator*=(const APInt& RHS) {
       first = RHS.getActiveBits();
       uint32_t ylen = !first ? 0 : whichWord(first - 1) + 1;
       if (!ylen) {
-        memset(pVal, 0, getNumWords() * sizeof(uint64_t));
+        memset(pVal, 0, getNumWords() * APINT_WORD_SIZE);
         return *this;
       }
       uint64_t *dest = getMemory(xlen+ylen);
       mul(dest, pVal, xlen, RHS.pVal, ylen);
       memcpy(pVal, dest, ((xlen + ylen >= getNumWords()) ? 
-                         getNumWords() : xlen + ylen) * sizeof(uint64_t));
+                         getNumWords() : xlen + ylen) * APINT_WORD_SIZE);
       delete[] dest;
     }
   }
@@ -536,23 +537,35 @@ bool APInt::ult(const APInt& RHS) const {
 /// @brief Signed less than comparison
 bool APInt::slt(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be same for comparison");
-  if (isSingleWord())
-    return VAL < RHS.VAL;
-  else {
-    uint32_t n1 = getActiveBits();
-    uint32_t n2 = RHS.getActiveBits();
-    if (n1 < n2)
-      return true;
-    else if (n2 < n1)
-      return false;
-    else if (n1 <= APINT_BITS_PER_WORD && n2 <= APINT_BITS_PER_WORD)
-      return pVal[0] < RHS.pVal[0];
-    for (int i = whichWord(n1 - 1); i >= 0; --i) {
-      if (pVal[i] > RHS.pVal[i]) return false;
-      else if (pVal[i] < RHS.pVal[i]) return true;
-    }
+  if (isSingleWord()) {
+    int64_t lhsSext = (int64_t(VAL) << (64-BitWidth)) >> (64-BitWidth);
+    int64_t rhsSext = (int64_t(RHS.VAL) << (64-BitWidth)) >> (64-BitWidth);
+    return lhsSext < rhsSext;
   }
-  return false;
+
+  APInt lhs(*this);
+  APInt rhs(*this);
+  bool lhsNegative = false;
+  bool rhsNegative = false;
+  if (lhs[BitWidth-1]) {
+    lhsNegative = true;
+    lhs.flip();
+    lhs++;
+  }
+  if (rhs[BitWidth-1]) {
+    rhsNegative = true;
+    rhs.flip();
+    rhs++;
+  }
+  if (lhsNegative)
+    if (rhsNegative)
+      return !lhs.ult(rhs);
+    else
+      return true;
+  else if (rhsNegative)
+    return false;
+  else 
+    return lhs.ult(rhs);
 }
 
 /// Set the given bit to 1 whose poition is given as "bitPosition".
@@ -591,7 +604,7 @@ APInt& APInt::clear() {
   if (isSingleWord()) 
     VAL = 0;
   else 
-    memset(pVal, 0, getNumWords() * sizeof(uint64_t));
+    memset(pVal, 0, getNumWords() * APINT_WORD_SIZE);
   return *this;
 }
 
@@ -801,10 +814,10 @@ APInt APInt::byteSwap() const {
   else {
     APInt Result(BitWidth, 0);
     char *pByte = (char*)Result.pVal;
-    for (uint32_t i = 0; i < BitWidth / sizeof(uint64_t) / 2; ++i) {
+    for (uint32_t i = 0; i < BitWidth / APINT_WORD_SIZE / 2; ++i) {
       char Tmp = pByte[i];
-      pByte[i] = pByte[BitWidth / sizeof(uint64_t) - 1 - i];
-      pByte[BitWidth / sizeof(uint64_t) - i - 1] = Tmp;
+      pByte[i] = pByte[BitWidth / APINT_WORD_SIZE - 1 - i];
+      pByte[BitWidth / APINT_WORD_SIZE - i - 1] = Tmp;
     }
     return Result;
   }
@@ -852,13 +865,17 @@ APInt llvm::APIntOps::RoundDoubleToAPInt(double Double) {
 /// |  1[63]   11[62-52]   52[51-00]   1023 |
 ///  -------------------------------------- 
 double APInt::roundToDouble(bool isSigned) const {
+  if (isSingleWord() || getActiveBits() <= APINT_BITS_PER_WORD) {
+    if (isSigned) {
+      int64_t sext = (int64_t(VAL) << (64-BitWidth)) >> (64-BitWidth);
+      return double(sext);
+    } else
+      return double(VAL);
+  }
+
   bool isNeg = isSigned ? (*this)[BitWidth-1] : false;
   APInt Tmp(isNeg ? -(*this) : (*this));
-  if (Tmp.isSingleWord())
-    return isSigned ? double(int64_t(Tmp.VAL)) : double(Tmp.VAL);
   uint32_t n = Tmp.getActiveBits();
-  if (n <= APINT_BITS_PER_WORD) 
-    return isSigned ? double(int64_t(Tmp.pVal[0])) : double(Tmp.pVal[0]);
   // Exponent when normalized to have decimal point directly after
   // leading one. This is stored excess 1023 in the exponent bit field.
   uint64_t exp = n - 1;
@@ -914,7 +931,7 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
   else {
     if (shiftAmt >= API.BitWidth) {
       memset(API.pVal, API[API.BitWidth-1] ? 1 : 0, 
-             (API.getNumWords()-1) * sizeof(uint64_t));
+             (API.getNumWords()-1) * APINT_WORD_SIZE);
       API.pVal[API.getNumWords() - 1] = 
         ~uint64_t(0UL) >> 
           (APINT_BITS_PER_WORD - API.BitWidth % APINT_BITS_PER_WORD);
@@ -942,7 +959,7 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
     API.VAL >>= shiftAmt;
   else {
     if (shiftAmt >= API.BitWidth)
-      memset(API.pVal, 0, API.getNumWords() * sizeof(uint64_t));
+      memset(API.pVal, 0, API.getNumWords() * APINT_WORD_SIZE);
     uint32_t i = 0;
     for (i = 0; i < API.BitWidth - shiftAmt; ++i)
       if (API[i+shiftAmt]) API.set(i);
@@ -960,12 +977,12 @@ APInt APInt::shl(uint32_t shiftAmt) const {
   if (API.isSingleWord())
     API.VAL <<= shiftAmt;
   else if (shiftAmt >= API.BitWidth)
-    memset(API.pVal, 0, API.getNumWords() * sizeof(uint64_t));
+    memset(API.pVal, 0, API.getNumWords() * APINT_WORD_SIZE);
   else {
     if (uint32_t offset = shiftAmt / APINT_BITS_PER_WORD) {
       for (uint32_t i = API.getNumWords() - 1; i > offset - 1; --i)
         API.pVal[i] = API.pVal[i-offset];
-      memset(API.pVal, 0, offset * sizeof(uint64_t));
+      memset(API.pVal, 0, offset * APINT_WORD_SIZE);
     }
     shiftAmt %= APINT_BITS_PER_WORD;
     uint32_t i;
@@ -1094,10 +1111,10 @@ APInt APInt::udiv(const APInt& RHS) const {
     return Result; // 0 / X == 0
   else if (lhsWords < rhsWords || Result.ult(RHS))
     // X / Y with X < Y == 0
-    memset(Result.pVal, 0, Result.getNumWords() * sizeof(uint64_t));
+    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
   else if (Result == RHS) {
     // X / X == 1
-    memset(Result.pVal, 0, Result.getNumWords() * sizeof(uint64_t));
+    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
     Result.pVal[0] = 1;
   } else if (lhsWords == 1)
     // All high words are zero, just use native divide
@@ -1115,9 +1132,9 @@ APInt APInt::udiv(const APInt& RHS) const {
     }
     div((uint32_t*)X.pVal, lhsWords * 2 - 1, 
         (uint32_t*)(Y.isSingleWord()? &Y.VAL : Y.pVal), rhsWords*2);
-    memset(Result.pVal, 0, Result.getNumWords() * sizeof(uint64_t));
+    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
     memcpy(Result.pVal, X.pVal + rhsWords, 
-           (lhsWords - rhsWords) * sizeof(uint64_t));
+           (lhsWords - rhsWords) * APINT_WORD_SIZE);
   }
   return Result;
 }
@@ -1146,13 +1163,13 @@ APInt APInt::urem(const APInt& RHS) const {
   // Check the degenerate cases
   if (lhsWords == 0)
     // 0 % Y == 0
-    memset(Result.pVal, 0, Result.getNumWords() * sizeof(uint64_t));
+    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
   else if (lhsWords < rhsWords || Result.ult(RHS))
     // X % Y == X iff X < Y
     return Result;
   else if (Result == RHS)
     // X % X == 0;
-    memset(Result.pVal, 0, Result.getNumWords() * sizeof(uint64_t));
+    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
   else if (lhsWords == 1) 
     // All high words are zero, just use native remainder
     Result.pVal[0] %=  RHS.pVal[0];
@@ -1168,7 +1185,7 @@ APInt APInt::urem(const APInt& RHS) const {
     }
     div((uint32_t*)X.pVal, rhsWords*2-1, 
         (uint32_t*)(Y.isSingleWord()? &Y.VAL : Y.pVal), rhsWords*2);
-    memset(Result.pVal, 0, Result.getNumWords() * sizeof(uint64_t));
+    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
     for (uint32_t i = 0; i < rhsWords-1; ++i)
       Result.pVal[i] = (X.pVal[i] >> nshift) | 
                         (X.pVal[i+1] << (APINT_BITS_PER_WORD - nshift));
