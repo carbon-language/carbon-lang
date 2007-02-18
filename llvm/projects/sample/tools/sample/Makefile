@@ -8,7 +8,7 @@ LEVEL=../..
 #
 # Give the name of the tool.
 #
-TOOLNAME=sample
+TOOLNAME=Sample
 
 #
 # List libraries that we'll need
