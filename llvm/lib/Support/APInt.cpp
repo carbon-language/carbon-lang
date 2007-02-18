@@ -139,13 +139,16 @@ APInt& APInt::operator=(uint64_t RHS) {
 /// returns the carry.
 /// @returns the carry of the addition.
 static uint64_t add_1(uint64_t dest[], uint64_t x[], unsigned len, uint64_t y) {
-  uint64_t carry = y;
-
   for (unsigned i = 0; i < len; ++i) {
-    dest[i] = carry + x[i];
-    carry = (dest[i] < carry) ? 1 : 0;
+    dest[i] = y + x[i];
+    if (dest[i] < y)
+      y = 1;
+    else {
+      y = 0;
+      break;
+    }
   }
-  return carry;
+  return y;
 }
 
 /// @brief Prefix increment operator. Increments the APInt by one.
@@ -161,20 +164,17 @@ APInt& APInt::operator++() {
 /// sub_1 - This function subtracts the integer array x[] by
 /// integer y and returns the borrow-out carry.
 static uint64_t sub_1(uint64_t x[], unsigned len, uint64_t y) {
-  uint64_t cy = y;
-
   for (unsigned i = 0; i < len; ++i) {
     uint64_t X = x[i];
-    x[i] -= cy;
-    if (cy > X) 
-      cy = 1;
+    x[i] -= y;
+    if (y > X) 
+      y = 1;
     else {
-      cy = 0;
+      y = 0;
       break;
     }
   }
-
-  return cy;
+  return y;
 }
 
 /// @brief Prefix decrement operator. Decrements the APInt by one.
@@ -188,10 +188,8 @@ APInt& APInt::operator--() {
 
 /// add - This function adds the integer array x[] by integer array
 /// y[] and returns the carry.
-static uint64_t add(uint64_t dest[], uint64_t x[],
-                    uint64_t y[], unsigned len) {
+static uint64_t add(uint64_t dest[], uint64_t x[], uint64_t y[], unsigned len) {
   unsigned carry = 0;
-  
   for (unsigned i = 0; i< len; ++i) {
     carry += x[i];
     dest[i] = carry + y[i];
@@ -223,8 +221,7 @@ APInt& APInt::operator+=(const APInt& RHS) {
 
 /// sub - This function subtracts the integer array x[] by
 /// integer array y[], and returns the borrow-out carry.
-static uint64_t sub(uint64_t dest[], uint64_t x[],
-                    uint64_t y[], unsigned len) {
+static uint64_t sub(uint64_t dest[], uint64_t x[], uint64_t y[], unsigned len) {
   // Carry indicator.
   uint64_t cy = 0;
   
@@ -252,7 +249,8 @@ APInt& APInt::operator-=(const APInt& RHS) {
     else {
       if (RHS.getNumWords() < getNumWords()) { 
         uint64_t carry = sub(pVal, pVal, RHS.pVal, RHS.getNumWords());
-        sub_1(pVal + RHS.getNumWords(), getNumWords() - RHS.getNumWords(), carry); 
+        sub_1(pVal + RHS.getNumWords(), getNumWords() - RHS.getNumWords(), 
+              carry); 
       }
       else
         sub(pVal, pVal, RHS.pVal, getNumWords());
@@ -410,23 +408,12 @@ APInt& APInt::operator|=(const APInt& RHS) {
 APInt& APInt::operator^=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
-    if (RHS.isSingleWord()) VAL ^= RHS.VAL;
-    else VAL ^= RHS.pVal[0];
-  } else {
-    if (RHS.isSingleWord()) {
-      for (unsigned i = 0; i < getNumWords(); ++i)
-        pVal[i] ^= RHS.VAL;
-    } else {
-      unsigned minwords = getNumWords() < RHS.getNumWords() ? 
-                          getNumWords() : RHS.getNumWords();
-      for (unsigned i = 0; i < minwords; ++i)
-        pVal[i] ^= RHS.pVal[i];
-      if (getNumWords() > minwords)
-        for (unsigned i = minwords; i < getNumWords(); ++i)
-          pVal[i] ^= 0;
-    }
-  }
-  clearUnusedBits();
+    VAL ^= RHS.VAL;
+    return *this;
+  } 
+  unsigned numWords = getNumWords();
+  for (unsigned i = 0; i < numWords; ++i)
+      pVal[i] ^= RHS.pVal[i];
   return *this;
 }
 
