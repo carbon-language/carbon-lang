@@ -49,7 +49,7 @@ bool StripDeadPrototypesPass::runOnModule(Module &M) {
     }
   }
 
-  // Erase dead function prototypes.
+  // Erase dead global var prototypes.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ) {
     GlobalVariable *GV = I++;
