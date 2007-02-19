@@ -22,6 +22,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include <algorithm>
 #include <map>
 using namespace llvm;
@@ -482,13 +483,14 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
     Op2 = (OpNo == 2) ? Op : getOperand(2);
     return ConstantExpr::getShuffleVector(Op0, Op1, Op2);
   case Instruction::GetElementPtr: {
-    std::vector<Constant*> Ops;
+    SmallVector<Constant*, 8> Ops;
+    Ops.resize(getNumOperands());
     for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
-      Ops.push_back(getOperand(i));
+      Ops[i] = getOperand(i);
     if (OpNo == 0)
-      return ConstantExpr::getGetElementPtr(Op, Ops);
+      return ConstantExpr::getGetElementPtr(Op, &Ops[0], Ops.size());
     Ops[OpNo-1] = Op;
-    return ConstantExpr::getGetElementPtr(getOperand(0), Ops);
+    return ConstantExpr::getGetElementPtr(getOperand(0), &Ops[0], Ops.size());
   }
   default:
     assert(getNumOperands() == 2 && "Must be binary operator?");
@@ -535,10 +537,8 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
     return ConstantExpr::getExtractElement(Ops[0], Ops[1]);
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
-  case Instruction::GetElementPtr: {
-    std::vector<Constant*> ActualOps(Ops.begin()+1, Ops.end());
-    return ConstantExpr::getGetElementPtr(Ops[0], ActualOps);
-  }
+  case Instruction::GetElementPtr:
+    return ConstantExpr::getGetElementPtr(Ops[0], &Ops[1], Ops.size()-1);
   case Instruction::ICmp:
   case Instruction::FCmp:
     return ConstantExpr::getCompare(getPredicate(), Ops[0], Ops[1]);
@@ -1578,16 +1578,10 @@ Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
 
 Constant *ConstantExpr::getSizeOf(const Type *Ty) {
   // sizeof is implemented as: (ulong) gep (Ty*)null, 1
-  return getCast(Instruction::PtrToInt, getGetElementPtr(getNullValue(
-    PointerType::get(Ty)), std::vector<Constant*>(1, 
-    ConstantInt::get(Type::Int32Ty, 1))), Type::Int64Ty);
-}
-
-Constant *ConstantExpr::getPtrPtrFromArrayPtr(Constant *C) {
-  // pointer from array is implemented as: getelementptr arr ptr, 0, 0
-  static std::vector<Constant*> Indices(2, ConstantInt::get(Type::Int32Ty, 0));
-
-  return ConstantExpr::getGetElementPtr(C, Indices);
+  Constant *GEPIdx = ConstantInt::get(Type::Int32Ty, 1);
+  Constant *GEP =
+    getGetElementPtr(getNullValue(PointerType::get(Ty)), &GEPIdx, 1);
+  return getCast(Instruction::PtrToInt, GEP, Type::Int64Ty);
 }
 
 Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
@@ -2029,7 +2023,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   
   Constant *Replacement = 0;
   if (getOpcode() == Instruction::GetElementPtr) {
-    std::vector<Constant*> Indices;
+    SmallVector<Constant*, 8> Indices;
     Constant *Pointer = getOperand(0);
     Indices.reserve(getNumOperands()-1);
     if (Pointer == From) Pointer = To;
@@ -2039,7 +2033,8 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
       if (Val == From) Val = To;
       Indices.push_back(Val);
     }
-    Replacement = ConstantExpr::getGetElementPtr(Pointer, Indices);
+    Replacement = ConstantExpr::getGetElementPtr(Pointer,
+                                                 &Indices[0], Indices.size());
   } else if (isCast()) {
     assert(getOperand(0) == From && "Cast only has one use!");
     Replacement = ConstantExpr::getCast(getOpcode(), To, getType());

@@ -1292,7 +1292,7 @@ Types
     delete $4;
     CHECK_FOR_ERROR
   }
-  | '<' EUINT64VAL 'x' Types '>' {          // Packed array type?
+  | '<' EUINT64VAL 'x' Types '>' {          // Vector type?
      const llvm::Type* ElemTy = $4->get();
      if ((unsigned)$2 != $2)
         GEN_ERROR("Unsigned result not equal to signed result");
@@ -1525,7 +1525,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     // Check to ensure that Type is not packed
     if (STy->isPacked())
-      GEN_ERROR("Unpacked Initializer to packed type '" + STy->getDescription() + "'");
+      GEN_ERROR("Unpacked Initializer to vector type '" + STy->getDescription() + "'");
 
     $$ = ConstantStruct::get(STy, *$3);
     delete $1; delete $3;
@@ -1544,7 +1544,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     // Check to ensure that Type is not packed
     if (STy->isPacked())
-      GEN_ERROR("Unpacked Initializer to packed type '" + STy->getDescription() + "'");
+      GEN_ERROR("Unpacked Initializer to vector type '" + STy->getDescription() + "'");
 
     $$ = ConstantStruct::get(STy, std::vector<Constant*>());
     delete $1;
@@ -1569,7 +1569,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     // Check to ensure that Type is packed
     if (!STy->isPacked())
-      GEN_ERROR("Packed Initializer to unpacked type '" + STy->getDescription() + "'");
+      GEN_ERROR("Vector initializer to non-vector type '" + 
+                STy->getDescription() + "'");
 
     $$ = ConstantStruct::get(STy, *$4);
     delete $1; delete $4;
@@ -1588,7 +1589,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     // Check to ensure that Type is packed
     if (!STy->isPacked())
-      GEN_ERROR("Packed Initializer to unpacked type '" + STy->getDescription() + "'");
+      GEN_ERROR("Vector initializer to non-vector type '" + 
+                STy->getDescription() + "'");
 
     $$ = ConstantStruct::get(STy, std::vector<Constant*>());
     delete $1;
@@ -2592,7 +2594,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         ($1 == Instruction::URem || 
          $1 == Instruction::SRem ||
          $1 == Instruction::FRem))
-      GEN_ERROR("Remainder not supported on packed types");
+      GEN_ERROR("Remainder not supported on vector types");
     Value* val1 = getVal(*$2, $3); 
     CHECK_FOR_ERROR
     Value* val2 = getVal(*$2, $5);
@@ -2623,7 +2625,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     if (isa<VectorType>((*$3).get()))
-      GEN_ERROR("Packed types not supported by icmp instruction");
+      GEN_ERROR("Vector types not supported by icmp instruction");
     Value* tmpVal1 = getVal(*$3, $4);
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
@@ -2636,7 +2638,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     if (isa<VectorType>((*$3).get()))
-      GEN_ERROR("Packed types not supported by fcmp instruction");
+      GEN_ERROR("Vector types not supported by fcmp instruction");
     Value* tmpVal1 = getVal(*$3, $4);
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
