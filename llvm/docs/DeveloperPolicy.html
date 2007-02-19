@@ -13,13 +13,15 @@
   <li><a href="#general">General Policies</a>
   <ol>
     <li><a href="#informed">Stay Informed</a> </li>
-    <li><a href="#newwork">Starting&nbsp;New&nbsp;Work</a></li>
     <li><a href="#reviews">Code Reviews</a></li>
     <li><a href="#quality">Quality</a></li>
     <li><a href="#testcases">Test Cases</a></li>
     <li><a href="#c_new">Obtaining Commit Access</a></li>
-    <li><a href="#incremental">Incremental Development</a></li>
-    <li><a href="#attribution">Attribution</a></li>
+    <li><a href="#newwork">Making a Major Change</a>
+    <ol>
+      <li><a href="#incremental">Incremental Development</a></li>
+    </ol></li>
+    <li><a href="#attribution">Attribution of Changes</a></li>
   </ol></li>
   <li><a href="#patches">Patch Policies</a>
   <ol>
@@ -54,6 +56,13 @@
     <li>Make life as simple and easy for contributors as possible.</li>
     <li>Keep the top of tree CVS/SVN trees as stable as possible.</li>
   </ol>
+  
+  <p>This policy is aimed at regular contributors to LLVM.  People interested in
+  contributing one-off patches can do so in an informal way by sending them to
+  the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">
+  llvm-commits mailing list</a> and engaging another developer to see it through
+  the process.</p>
+  
 </div>
 
 <!--=========================================================================-->
@@ -81,27 +90,6 @@
   <a href="http://llvm.org/bugs/">LLVM Bugzilla</a> and preferably subscribe to
   the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmbugs">llvm-bugs</a>
   email list to keep track of bugs and enhancements occurring in LLVM.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"> <a name="newwork">Starting New Work</a></div>
-<div class="doc_text">
-  <p>When a developer begins a major new project with the aim of contributing 
-  it back to LLVM, s/he should inform the community with an email to 
-  the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvm-dev</a> 
-  email list, to the extent possible. The reason for this is to:
-  <ol>
-    <li>keep the community informed about future changes to LLVM, </li>
-    <li>avoid duplication of effort by having multiple parties working on the
-    same thing and not knowing about it, and</li>
-    <li>ensure that any technical issues around the proposed work are 
-    discussed and resolved before any significant work is done.</li>
-  </ol>
-  <p>The design of LLVM is carefully controlled to ensure that all the pieces
-  fit together well and are as consistent as possible. If you plan to make a
-  major change to the way LLVM works or
-  a major new extension, it is a good idea to get consensus with the development
-  community before you start working on it.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -226,12 +214,35 @@ quality patches.  If you would like commit access, please send an email to the
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"> <a name="incremental">Incremental Development</a>
+<div class="doc_subsection"> <a name="newwork">Making a Major Change</a></div>
+<div class="doc_text">
+  <p>When a developer begins a major new project with the aim of contributing 
+  it back to LLVM, s/he should inform the community with an email to 
+  the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvm-dev</a> 
+  email list, to the extent possible. The reason for this is to:
+  <ol>
+    <li>keep the community informed about future changes to LLVM, </li>
+    <li>avoid duplication of effort by having multiple parties working on the
+    same thing and not knowing about it, and</li>
+    <li>ensure that any technical issues around the proposed work are 
+    discussed and resolved before any significant work is done.</li>
+  </ol>
+  
+  <p>The design of LLVM is carefully controlled to ensure that all the pieces
+  fit together well and are as consistent as possible. If you plan to make a
+  major change to the way LLVM works or
+  a major new extension, it is a good idea to get consensus with the development
+  community before you start working on it.</p>
+  
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="incremental">Incremental Development</a>
 </div>
 <div class="doc_text">
-  <p>When making a large change to LLVM, we use a incremental style of
-     development instead of having long-term development branches.  Long-term 
-     development branches have a number of drawbacks:</p>
+  <p>Once the design of the new feature is finalized, the work itself should be
+     done as a series of incremental changes, not as a long-term development
+     branch.  Long-term development branches have a number of drawbacks:</p>
      
    <ol>
    <li>Branches must have mainline merged into them periodically.  If the branch
@@ -281,7 +292,8 @@ quality patches.  If you would like commit access, please send an email to the
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="attribution">Attribution</a></div>
+<div class="doc_subsection"><a name="attribution">Attribution of 
+Changes</a></div>
 <div class="doc_text">
   <p>We believe in correct attribution of contributions to 
   their contributors.  However, we do not want the source code to be littered
