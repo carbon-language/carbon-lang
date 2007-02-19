@@ -51,11 +51,11 @@ struct TargetAlignElem {
   AlignTypeEnum       AlignType : 8;  //< Alignment type (AlignTypeEnum)
   unsigned char       ABIAlign;       //< ABI alignment for this type/bitw
   unsigned char       PrefAlign;      //< Pref. alignment for this type/bitw
-  short               TypeBitWidth;   //< Type bit width
+  uint32_t            TypeBitWidth;   //< Type bit width
 
   /// Initializer
   static TargetAlignElem get(AlignTypeEnum align_type, unsigned char abi_align,
-                             unsigned char pref_align, short bit_width);
+                             unsigned char pref_align, uint32_t bit_width);
   /// Equality predicate
   bool operator==(const TargetAlignElem &rhs) const;
   /// output stream operator
@@ -89,8 +89,8 @@ private:
 
   //! Set/initialize target alignments
   void setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
-                    unsigned char pref_align, short bit_width);
-  unsigned getAlignmentInfo(AlignTypeEnum align_type, short bit_width,
+                    unsigned char pref_align, uint32_t bit_width);
+  unsigned getAlignmentInfo(AlignTypeEnum align_type, uint32_t bit_width,
                             bool ABIAlign) const;
   //! Internal helper method that returns requested alignment for type.
   unsigned char getAlignment(const Type *Ty, bool abi_or_pref) const;
@@ -161,11 +161,11 @@ public:
   /// specified type.
   uint64_t getTypeSizeInBits(const Type* Ty) const;
 
-  /// getTypeAlignmentABI - Return the minimum ABI-required alignment for the
+  /// getABITypeAlignment - Return the minimum ABI-required alignment for the
   /// specified type.
   unsigned char getABITypeAlignment(const Type *Ty) const;
 
-  /// getTypeAlignmentPref - Return the preferred stack/global alignment for
+  /// getPrefTypeAlignment - Return the preferred stack/global alignment for
   /// the specified type.
   unsigned char getPrefTypeAlignment(const Type *Ty) const;
 

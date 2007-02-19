@@ -94,7 +94,7 @@ unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
 
 TargetAlignElem
 TargetAlignElem::get(AlignTypeEnum align_type, unsigned char abi_align,
-                     unsigned char pref_align, short bit_width) {
+                     unsigned char pref_align, uint32_t bit_width) {
   TargetAlignElem retval;
   retval.AlignType = align_type;
   retval.ABIAlign = abi_align;
@@ -188,7 +188,7 @@ void TargetData::init(const std::string &TargetDescription) {
     std::string arg0 = getToken(token, ":");
     const char *p = arg0.c_str();
     AlignTypeEnum align_type;
-    short size;
+    uint32_t size;
     unsigned char abi_align;
     unsigned char pref_align;
 
@@ -213,7 +213,7 @@ void TargetData::init(const std::string &TargetDescription) {
       align_type = (*p == 'i' ? INTEGER_ALIGN :
                     (*p == 'f' ? FLOAT_ALIGN :
                      (*p == 'v' ? VECTOR_ALIGN : AGGREGATE_ALIGN)));
-      size = (short) atoi(++p);
+      size = (uint32_t) atoi(++p);
       abi_align = atoi(getToken(token, ":").c_str()) / 8;
       pref_align = atoi(getToken(token, ":").c_str()) / 8;
       if (pref_align == 0)
@@ -233,7 +233,7 @@ TargetData::TargetData(const Module *M) {
 
 void
 TargetData::setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
-                         unsigned char pref_align, short bit_width) {
+                         unsigned char pref_align, uint32_t bit_width) {
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
     if (Alignments[i].AlignType == align_type &&
         Alignments[i].TypeBitWidth == bit_width) {
@@ -250,10 +250,11 @@ TargetData::setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
 
 /// getAlignmentInfo - Return the alignment (either ABI if ABIInfo = true or 
 /// preferred if ABIInfo = false) the target wants for the specified datatype.
-unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType, short BitWidth,
-                                      bool ABIInfo) const {
+unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType, 
+                                      uint32_t BitWidth, bool ABIInfo) const {
   // Check to see if we have an exact match and remember the best match we see.
   int BestMatchIdx = -1;
+  int LargestInt = -1;
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
     if (Alignments[i].AlignType == AlignType &&
         Alignments[i].TypeBitWidth == BitWidth)
@@ -271,14 +272,30 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType, short BitWidth,
             Alignments[BestMatchIdx].TypeBitWidth < BitWidth)
           BestMatchIdx = i;
       }
+    } else if (AlignType == INTEGER_ALIGN && 
+               Alignments[i].AlignType == INTEGER_ALIGN) {
+      // The "best match" for integers is the smallest size that is larger than
+      // the BitWidth requested.
+      if (Alignments[i].TypeBitWidth > BitWidth && (BestMatchIdx == -1 || 
+           Alignments[i].TypeBitWidth < Alignments[BestMatchIdx].TypeBitWidth))
+        BestMatchIdx = i;
+      // However, if there isn't one that's larger, then we must use the
+      // largest one we have (see below)
+      if (LargestInt == -1 || 
+          Alignments[i].TypeBitWidth > Alignments[LargestInt].TypeBitWidth)
+        LargestInt = i;
     }
-    
-    // FIXME: handle things like i37.
   }
+
+  // For integers, if we didn't find a best match, use the largest one found.
+  if (BestMatchIdx == -1)
+    BestMatchIdx = LargestInt;
 
   // Okay, we didn't find an exact solution.  Fall back here depending on what
   // is being looked for.
   assert(BestMatchIdx != -1 && "Didn't find alignment info for this datatype!");
+
+  // Since we got a "best match" index, just return it.
   return ABIInfo ? Alignments[BestMatchIdx].ABIAlign
                  : Alignments[BestMatchIdx].PrefAlign;
 }
@@ -407,8 +424,14 @@ uint64_t TargetData::getTypeSize(const Type *Ty) const {
       return 4;
     } else if (BitWidth <= 64) {
       return 8;
-    } else
-      assert(0 && "Integer types > 64 bits not supported.");
+    } else {
+      // The size of this > 64 bit type is chosen as a multiple of the
+      // preferred alignment of the largest "native" size the target supports. 
+      // We first obtain the the alignment info for this type and then compute
+      // the next largest multiple of that size.
+      uint64_t size = getAlignmentInfo(INTEGER_ALIGN, BitWidth, false) * 8;
+      return (((BitWidth / (size)) + (BitWidth % size != 0)) * size) / 8;
+    }
     break;
   }
   case Type::VoidTyID:
