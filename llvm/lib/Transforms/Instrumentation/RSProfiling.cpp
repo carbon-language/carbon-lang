@@ -335,7 +335,8 @@ void RSProfilers_std::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNu
   std::vector<Constant*> Indices(2);
   Indices[0] = Constant::getNullValue(Type::Int32Ty);
   Indices[1] = ConstantInt::get(Type::Int32Ty, CounterNum);
-  Constant *ElementPtr = ConstantExpr::getGetElementPtr(CounterArray, Indices);
+  Constant *ElementPtr = ConstantExpr::getGetElementPtr(CounterArray,
+                                                        &Indices[0], 2);
   
   // Load, increment and store the value back.
   Value *OldVal = new LoadInst(ElementPtr, "OldCounter", InsertPos);

@@ -43,7 +43,8 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   std::vector<Constant*> GEPIndices(2, Constant::getNullValue(Type::Int32Ty));
   unsigned NumElements = 0;
   if (Array) {
-    Args[2] = ConstantExpr::getGetElementPtr(Array, GEPIndices);
+    Args[2] = ConstantExpr::getGetElementPtr(Array, &GEPIndices[0],
+                                             GEPIndices.size());
     NumElements =
       cast<ArrayType>(Array->getType()->getElementType())->getNumElements();
   } else {
@@ -106,7 +107,8 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
   std::vector<Constant*> Indices(2);
   Indices[0] = Constant::getNullValue(Type::Int32Ty);
   Indices[1] = ConstantInt::get(Type::Int32Ty, CounterNum);
-  Constant *ElementPtr = ConstantExpr::getGetElementPtr(CounterArray, Indices);
+  Constant *ElementPtr = 
+    ConstantExpr::getGetElementPtr(CounterArray, &Indices[0], Indices.size());
 
   // Load, increment and store the value back.
   Value *OldVal = new LoadInst(ElementPtr, "OldFuncCounter", InsertPos);

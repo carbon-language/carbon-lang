@@ -166,7 +166,7 @@ void LowerInvoke::createAbortMessage(Module *M) {
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg", M);
     std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::Int32Ty));
-    AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
+    AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   } else {
     // The abort message for cheap EH support tells the user that EH is not
     // enabled.
@@ -179,7 +179,7 @@ void LowerInvoke::createAbortMessage(Module *M) {
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg", M);
     std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::Int32Ty));
-    AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
+    AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   }
 }
 
