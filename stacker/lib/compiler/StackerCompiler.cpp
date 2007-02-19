@@ -746,7 +746,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
     if ( Function* true_func = TheModule->getFunction(ifTrue) )
     {
         true_bb->getInstList().push_back(
-                new CallInst( true_func, args ) );
+                new CallInst( true_func, &args[0], args.size() ) );
         true_bb->getInstList().push_back(
                 new BranchInst( exit_bb ) );
     }
@@ -764,7 +764,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
         if ( Function* false_func = TheModule->getFunction(ifFalse) )
         {
             false_bb->getInstList().push_back(
-                    new CallInst( false_func, args ) );
+                    new CallInst( false_func, &args[0], args.size() ) );
             false_bb->getInstList().push_back(
                     new BranchInst( exit_bb ) );
         }
@@ -818,7 +818,8 @@ StackerCompiler::handle_while( char* todo )
     std::vector<Value*> args;
     if ( Function* body_func = TheModule->getFunction(todo) )
     {
-        body->getInstList().push_back( new CallInst( body_func, args ) );
+        body->getInstList().push_back( new CallInst( body_func, &args[0], 
+                                                     args.size() ) );
         body->getInstList().push_back( new BranchInst( test ) );
     }
     else
@@ -844,7 +845,7 @@ StackerCompiler::handle_identifier( char * name )
     BasicBlock* bb = new BasicBlock((echo?"call":""));
     if ( func )
     {
-        CallInst* call_def = new CallInst( func , no_arguments );
+        CallInst* call_def = new CallInst( func );
         bb->getInstList().push_back( call_def );
     }
     else
@@ -899,7 +900,7 @@ StackerCompiler::handle_word( int tkn )
         Constant * f = TheModule->getOrInsertFunction(
             "_stacker_dump_stack_", DefinitionType);
         std::vector<Value*> args;
-        bb->getInstList().push_back( new CallInst( f, args ) );
+        bb->getInstList().push_back( new CallInst( f, &args[0], args.size()));
         break;
     }
 
@@ -1568,7 +1569,8 @@ StackerCompiler::handle_word( int tkn )
     {
         if (echo) bb->setName("RECURSE");
         std::vector<Value*> params;
-        CallInst* call_inst = new CallInst( TheFunction, params );
+        CallInst* call_inst = new CallInst(TheFunction, &params[0], 
+                                           params.size());
         bb->getInstList().push_back( call_inst );
         break;
     }
@@ -1591,7 +1593,7 @@ StackerCompiler::handle_word( int tkn )
         // Call exit(3)
         std::vector<Value*> params;
         params.push_back(caster);
-        CallInst* call_inst = new CallInst( TheExit, params );
+        CallInst* call_inst = new CallInst( TheExit, &params[0], params.size());
         bb->getInstList().push_back( call_inst );
         break;
     }
@@ -1614,7 +1616,8 @@ StackerCompiler::handle_word( int tkn )
         std::vector<Value*> args;
         args.push_back( format_gep );
         args.push_back( newline );
-        bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
+        bb->getInstList().push_back( new CallInst(ThePrintf, &args[0], 
+                                                  args.size()));
         break;
     }
     case SPACE :
@@ -1636,7 +1639,8 @@ StackerCompiler::handle_word( int tkn )
         std::vector<Value*> args;
         args.push_back( format_gep );
         args.push_back( newline );
-        bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
+        bb->getInstList().push_back( new CallInst(ThePrintf, &args[0], 
+                                                  args.size()));
         break;
     }
     case CR :
@@ -1658,7 +1662,8 @@ StackerCompiler::handle_word( int tkn )
         std::vector<Value*> args;
         args.push_back( format_gep );
         args.push_back( newline );
-        bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
+        bb->getInstList().push_back( new CallInst(ThePrintf, &args[0], 
+                                                  args.size()));
         break;
     }
     case IN_STR :
@@ -1680,7 +1685,7 @@ StackerCompiler::handle_word( int tkn )
         std::vector<Value*> args;
         args.push_back( InStrFormat );
         args.push_back( caster );
-        CallInst* scanf = new CallInst( TheScanf, args );
+        CallInst* scanf = new CallInst( TheScanf, &args[0], args.size());
         bb->getInstList().push_back( scanf );
 
         // Store the result
@@ -1704,7 +1709,7 @@ StackerCompiler::handle_word( int tkn )
         std::vector<Value*> args;
         args.push_back( InStrFormat );
         args.push_back( gep_value );
-        CallInst* scanf = new CallInst( TheScanf, args );
+        CallInst* scanf = new CallInst( TheScanf, &args[0], args.size());
         bb->getInstList().push_back( scanf );
 
         // Store the result
@@ -1728,7 +1733,7 @@ StackerCompiler::handle_word( int tkn )
         std::vector<Value*> args;
         args.push_back( InChrFormat );
         args.push_back( gep_value );
-        CallInst* scanf = new CallInst( TheScanf, args );
+        CallInst* scanf = new CallInst( TheScanf, &args[0], args.size());
         bb->getInstList().push_back( scanf );
 
         // Store the result
@@ -1752,7 +1757,8 @@ StackerCompiler::handle_word( int tkn )
         args.push_back( format_gep );
         args.push_back( op1 );
         // Call printf
-        bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
+        bb->getInstList().push_back( new CallInst(ThePrintf, &args[0], 
+                                                  args.size()));
         break;
     }
     case OUT_NUM :
@@ -1775,7 +1781,8 @@ StackerCompiler::handle_word( int tkn )
         args.push_back( op1 );
 
         // Call printf
-        bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
+        bb->getInstList().push_back( new CallInst(ThePrintf, &args[0],
+                                                  args.size()));
         break;
     }
     case OUT_CHAR :
@@ -1797,7 +1804,8 @@ StackerCompiler::handle_word( int tkn )
         args.push_back( format_gep );
         args.push_back( op1 );
         // Call printf
-        bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
+        bb->getInstList().push_back( new CallInst(ThePrintf, &args[0],
+                                                  args.size()));
         break;
     }
     default :
