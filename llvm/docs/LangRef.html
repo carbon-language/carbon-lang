@@ -26,6 +26,7 @@
       <li><a href="#functionstructure">Functions</a></li>
       <li><a href="#paramattrs">Parameter Attributes</a></li>
       <li><a href="#moduleasm">Module-Level Inline Assembly</a></li>
+      <li><a href="#datalayout">Data Layout</a></li>
     </ol>
   </li>
   <li><a href="#typesystem">Type System</a>
@@ -771,6 +772,82 @@ desired.  The syntax is very simple:
 </p>
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="datalayout">Data Layout</a>
+</div>
+
+<div class="doc_text">
+<p>A module may specify a target specific data layout string that specifies how
+data is to be laid out in memory. The syntax for the data layout is simply:<br/>
+<pre>    target datalayout = "<i>layout specification</i>"
+</pre>
+The <i>layout specification</i> consists of a list of specifications separated
+by the minus sign character ('-').  Each specification starts with a letter 
+and may include other information after the letter to define some aspect of the
+data layout.  The specifications accepted are as follows: </p>
+<dl>
+  <dt><tt>E</tt></dt>
+  <dd>Specifies that the target lays out data in big-endian form. That is, the
+  bits with the most significance have the lowest address location.</dd>
+  <dt><tt>e</tt></dt>
+  <dd>Specifies that hte target lays out data in little-endian form. That is,
+  the bits with the least significance have the lowest address location.</dd>
+  <dt><tt>p:<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
+  <dd>This specifies the <i>size</i> of a pointer and its <i>abi</i> and 
+  <i>preferred</i> alignments. All sizes are in bits. Specifying the <i>pref</i>
+  alignment is optional. If omitted, the preceding <tt>:</tt> should be omitted
+  too.</dd>
+  <dt><tt>i<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
+  <dd>This specifies the alignment for an integer type of a given bit
+  <i>size</i>. The value of <i>size</i> must be in the range [1,2^23).</dd>
+  <dt><tt>v<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
+  <dd>This specifies the alignment for a vector type of a given bit 
+  <i>size</i>.</dd>
+  <dt><tt>f<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
+  <dd>This specifies the alignment for a floating point type of a given bit 
+  <i>size</i>. The value of <i>size</i> must be either 32 (float) or 64
+  (double).</dd>
+  <dt><tt>a<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
+  <dd>This specifies the alignment for an aggregate type of a given bit
+  <i>size</i>.</dd>
+</dl>
+<p>When constructing the data layout for a given target, LLVM starts with a
+default set of specifications which are then (possibly) overriden by the
+specifications in the <tt>datalayout</tt> keyword. The default specifications
+are given in this list:</p>
+<ul>
+  <li><tt>E</tt> - big endian</li>
+  <li><tt>p:32:64:64</tt> - 32-bit pointers with 64-bit alignment</li>
+  <li><tt>i1:8:8</tt> - i1 is 8-bit (byte) aligned</li>
+  <li><tt>i8:8:8</tt> - i8 is 8-bit (byte) aligned</li>
+  <li><tt>i16:16:16</tt> - i16 is 16-bit aligned</li>
+  <li><tt>i32:32:32</tt> - i32 is 32-bit aligned</li>
+  <li><tt>i64:32:64</tt> - i64 has abi alignment of 32-bits but preferred
+  alignment of 64-bits</li>
+  <li><tt>f32:32:32</tt> - float is 32-bit aligned</li>
+  <li><tt>f64:64:64</tt> - double is 64-bit aligned</li>
+  <li><tt>v64:64:64</tt> - 64-bit vector is 64-bit aligned</li>
+  <li><tt>v128:128:128</tt> - 128-bit vector is 128-bit aligned</li>
+  <li><tt>a0:0:1</tt> - aggregates are 8-bit aligned</li>
+</ul>
+<p>When llvm is determining the alignment for a given type, it uses the 
+following rules:
+<ol>
+  <li>If the type sought is an exact match for one of the specifications, that
+  specification is used.</li>
+  <li>If no match is found, and the type sought is an integer type, then the
+  smallest integer type that is larger than the bitwidth of the sought type is
+  used. If none of the specifications are larger than the bitwidth then the the
+  largest integer type is used. For example, given the default specifications
+  above, the i7 type will use the alignment of i8 (next largest) while both
+  i65 and i256 will use the alignment of i64 (largest specified).</li>
+  <li>If no match is found, and the type sought is a vector type, then the
+  largest vector type that is smaller than the sought vector type will be used
+  as a fall back.  This happens because <128 x double> can be implemented in 
+  terms of 64 <2 x double>, for example.</li>
+</ol>
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="typesystem">Type System</a> </div>
@@ -1527,8 +1604,8 @@ and an unconditional branch.</p>
 <h5>Arguments:</h5>
 <p>The conditional branch form of the '<tt>br</tt>' instruction takes a
 single '<tt>i1</tt>' value and two '<tt>label</tt>' values.  The
-unconditional form of the '<tt>br</tt>' instruction takes a single '<tt>label</tt>'
-value as a target.</p>
+unconditional form of the '<tt>br</tt>' instruction takes a single 
+'<tt>label</tt>' value as a target.</p>
 <h5>Semantics:</h5>
 <p>Upon execution of a conditional '<tt>br</tt>' instruction, the '<tt>i1</tt>'
 argument is evaluated.  If the value is <tt>true</tt>, control flows
