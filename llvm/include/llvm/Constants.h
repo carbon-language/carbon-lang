@@ -248,6 +248,11 @@ protected:
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
+  static Constant *get(const ArrayType *T,
+                       Constant*const*Vals, unsigned NumVals) {
+    // FIXME: make this the primary ctor method.
+    return get(T, std::vector<Constant*>(Vals, Vals+NumVals));
+  }
 
   /// This method constructs a ConstantArray and initializes it with a text
   /// string. The default behavior (AddNull==true) causes a null terminator to
@@ -308,8 +313,13 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   ///
   static Constant *get(const StructType *T, const std::vector<Constant*> &V);
-  static Constant *get(const std::vector<Constant*> &V, bool packed = false);
-
+  static Constant *get(const std::vector<Constant*> &V, bool Packed = false);
+  static Constant *get(Constant*const* Vals, unsigned NumVals,
+                       bool Packed = false) {
+    // FIXME: make this the primary ctor method.
+    return get(std::vector<Constant*>(Vals, Vals+NumVals), Packed);
+  }
+  
   /// getType() specialization - Reduce amount of casting...
   ///
   inline const StructType *getType() const {
@@ -347,7 +357,11 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const VectorType *T, const std::vector<Constant*> &);
   static Constant *get(const std::vector<Constant*> &V);
-
+  static Constant *get(Constant*const* Vals, unsigned NumVals) {
+    // FIXME: make this the primary ctor method.
+    return get(std::vector<Constant*>(Vals, Vals+NumVals));
+  }
+  
   /// getType - Specialize the getType() method to always return an VectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
@@ -578,6 +592,8 @@ public:
                                     Constant* const *IdxList, unsigned NumIdx);
   static Constant *getGetElementPtr(Constant *C,
                                     Value* const *IdxList, unsigned NumIdx);
+  
+  // FIXME: Remove these.
   static Constant *getGetElementPtr(Constant *C,
                                     const std::vector<Constant*> &IdxList) {
     return getGetElementPtr(C, &IdxList[0], IdxList.size());
