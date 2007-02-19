@@ -24,13 +24,6 @@
     </ol></li>
     <li><a href="#attribution">Attribution of Changes</a></li>
   </ol></li>
-  <li><a href="#patches">Patch Policies</a>
-  <ol>
-    <li><a href="#p_form">Patch Form</a></li>
-    <li><a href="#p_submission">Patch Submission</a></li>
-    <li><a href="#p_aftersub">After Submission</a></li>
-    <li><a href="#p_aftercommit">After Commit</a></li>
-  </ol></li>
   <li><a href="#candl">Copyright and License</a>
   <ol>
     <li><a href="#copyright">Copyright</a></li>
@@ -310,12 +303,15 @@ quality patches.  If you would like commit access, please send an email to the
     <li>The remaining inter-related work should be decomposed into unrelated 
     sets of changes if possible.  Once this is done, define the first increment
     and get consensus on what the end goal of the change is.</li>
-    <li>Increments can be stand alone (e.g. to fix a bug), or part of a planned
-    series of increments towards some development goal.</li>
-    <li>Increments should be kept as small as possible. This simplifies your 
+    
+    <li>Each change in the set can be stand alone (e.g. to fix a bug), or part
+    of a planned series of changes that works towards the development goal.</li>
+    
+    <li>Each change should be kept as small as possible. This simplifies your 
     work (into a logical progression), simplifies code review and reduces the
     chance that you will get negative feedback on the change. Small increments
     also facilitate the maintenance of a high quality code base.</li>
+    
     <li>Often, an independent precursor to a big change is to add a new API and
         slowly migrate clients to use the new API.  Each change to use the new
         API is often "obvious" and can be committed without review.  Once the 
