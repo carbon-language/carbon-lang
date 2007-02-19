@@ -62,10 +62,11 @@
 <!--=========================================================================-->
 <div class="doc_text">
   <p>This section contains policies that pertain to frequent LLVM
-  developers.  We always welcome <a href="#patches">random patches</a> from
-  people who do not routinely contribute to LLVM, but expect more from frequent
-  contributors to keep the system as efficient as possible for everyone.
-  Frequent LLVM contributors are expected to meet the following obligations in
+  developers.  We always welcome <a href="#patches">one-off patches</a> from
+  people who do not routinely contribute to LLVM, but we expect more from 
+  frequent contributors to keep the system as efficient as possible for 
+  everyone.
+  Frequent LLVM contributors are expected to meet the following requirements in
   order for LLVM to maintain a high standard of quality.<p>
 </div>
 
@@ -133,15 +134,15 @@
         reviewed after commit.</li>
     <li>The developer responsible for a code change is also responsible for
         making all necessary review-related changes.</li>
-    <li>Code review can be an iterative process, which goes until the patch
+    <li>Code review can be an iterative process, which continues until the patch
         is ready to be committed.</li>
   </ol>
   
   <p>Developers should participate in code reviews as both reviewers and 
-    a reviewees. If someone is kind enough to review your code, you should
+    reviewees. If someone is kind enough to review your code, you should
     return the favor for someone else.  Note that anyone is welcome to review
-    and give feedback on a patch,
-    but only people with CVS write access can approve it.</p>
+    and give feedback on a patch, but only people with CVS write access can 
+    approve it.</p>
 
 </div>
 
@@ -383,8 +384,8 @@ Changes</a></div>
 <!--=========================================================================-->
 
 <div class="doc_text">
-  <p>This section addresses the issues of copyright and license for the LLVM
-  project.
+  <p>This section addresses the issues of copyright, license and patents for 
+  the LLVM project.
   Currently, the University of Illinois is the LLVM copyright holder and the 
   terms of its license to LLVM users and developers is the 
   <a href="http://www.opensource.org/licenses/UoI-NCSA.php">University of 
@@ -392,10 +393,9 @@ Changes</a></div>
 
 <div class="doc_notes">
   <p><b>NOTE: This section deals with legal matters but does not provide
-  official legal advice.  We are not lawyers, please seek legal counsel from an
+  legal advice.  We are not lawyers, please seek legal counsel from an
   attorney.</b></p>
 </div>
-
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -446,7 +446,7 @@ Changes</a></div>
   software (notably, llvm-gcc which is based on the GCC GPL source base).
   This means that anything "linked" into to llvm-gcc must itself be compatible
   with the GPL, and must be releasable under the terms of the GPL.  This implies
-  that you <b>any code linked into llvm-gcc and distributed to others may be
+  that <b>any code linked into llvm-gcc and distributed to others may be
   subject to
   the viral aspects of the GPL</b>.  This is not a problem for the main LLVM
   distribution (which is already licensed under a more liberal license), but may
