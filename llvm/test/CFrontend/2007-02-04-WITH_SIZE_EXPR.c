@@ -1,6 +1,5 @@
 // RUN: %llvmgcc %s -O3 -S -o - -emit-llvm
 // PR1174
-// XFAIL: *
 
 void zzz (char *s1, char *s2, int len, int *q)
 {
