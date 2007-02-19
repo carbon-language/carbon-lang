@@ -239,6 +239,8 @@ bool Instruction::mayWriteToMemory() const {
   case Instruction::Call:
     if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(this)) {
       // If the intrinsic doesn't write memory, it is safe.
+      // FIXME: this is obviously supposed to determine which  intrinsics 
+      // don't write to memory, but hasn't been implemented yet.
     }
     return true;
   case Instruction::Load:
