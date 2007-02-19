@@ -72,7 +72,8 @@ public:
 
   /// This enum is just used to hold a constant we needed for APInt.
   enum {
-    APINT_BITS_PER_WORD = sizeof(uint64_t) * 8
+    APINT_BITS_PER_WORD = sizeof(uint64_t) * 8,
+    APINT_WORD_SIZE = sizeof(uint64_t)
   };
 
   /// Here one word's bitwidth equals to that of uint64_t.
