@@ -292,8 +292,9 @@ void RA::linearScan()
   }
 
   // A brute force way of adding live-ins to every BB.
-  for (MachineFunction::iterator MBB = mf_->begin(), E = mf_->end();
-       MBB != E; ++MBB) {
+  MachineFunction::iterator MBB = mf_->begin();
+  ++MBB; // Skip entry MBB.
+  for (MachineFunction::iterator E = mf_->end(); MBB != E; ++MBB) {
     unsigned StartIdx = li_->getMBBStartIdx(MBB->getNumber());
     for (IntervalPtrs::iterator i = fixed_.begin(), e = fixed_.end();
          i != e; ++i)

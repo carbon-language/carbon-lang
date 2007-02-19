@@ -180,6 +180,17 @@ MachineOperand *MachineInstr::findRegisterUseOperand(unsigned Reg) {
   return NULL;
 }
   
+/// findRegisterDefOperand() - Returns the MachineOperand that is a def of
+/// the specific register or NULL if it is not found.
+MachineOperand *MachineInstr::findRegisterDefOperand(unsigned Reg) {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = getOperand(i);
+    if (MO.isReg() && MO.isDef() && MO.getReg() == Reg)
+      return &MO;
+  }
+  return NULL;
+}
+  
 /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
 ///
 void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {

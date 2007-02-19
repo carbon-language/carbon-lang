@@ -58,6 +58,8 @@ public:
 
   const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
 
+  BitVector getReservedRegs(const MachineFunction &MF) const;
+
   /// targetHandlesStackFrameRounding - Returns true if the target is
   /// responsible for rounding up the stack frame (probably at emitPrologue
   /// time).

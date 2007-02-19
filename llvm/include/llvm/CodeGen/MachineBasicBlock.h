@@ -138,11 +138,18 @@ public:
   /// is an error to add the same register to the same set more than once.
   void addLiveIn(unsigned Reg)  { LiveIns.push_back(Reg); }
 
+  /// removeLiveIn - Remove the specified register from the live in set.
+  ///
+  void removeLiveIn(unsigned Reg);
+
   // Iteration support for live in sets.  These sets are kept in sorted
   // order by their register number.
-  typedef std::vector<unsigned>::const_iterator livein_iterator;
-  livein_iterator livein_begin() const { return LiveIns.begin(); }
-  livein_iterator livein_end()   const { return LiveIns.end(); }
+  typedef std::vector<unsigned>::iterator       livein_iterator;
+  typedef std::vector<unsigned>::const_iterator const_livein_iterator;
+  livein_iterator       livein_begin()       { return LiveIns.begin(); }
+  const_livein_iterator livein_begin() const { return LiveIns.begin(); }
+  livein_iterator       livein_end()         { return LiveIns.end(); }
+  const_livein_iterator livein_end()   const { return LiveIns.end(); }
   bool            livein_empty() const { return LiveIns.empty(); }
 
   // Code Layout methods.

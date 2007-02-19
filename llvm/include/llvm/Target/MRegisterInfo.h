@@ -284,6 +284,17 @@ public:
     return false;
   }
 
+  /// regsOverlap - Returns true if the two registers are equal or alias
+  /// each other. The registers may be virtual register.
+  bool regsOverlap(unsigned regA, unsigned regB) const {
+    if (regA == regB)
+      return true;
+
+    if (isVirtualRegister(regA) || isVirtualRegister(regB))
+      return false;
+    return areAliases(regA, regB);
+  }
+
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee saved registers on this target. The register should be in the
   /// order of desired callee-save stack frame offset. The first register is
@@ -294,6 +305,12 @@ public:
   /// register classes to spill each callee saved register with.  The order and
   /// length of this list match the getCalleeSaveRegs() list.
   virtual const TargetRegisterClass* const *getCalleeSavedRegClasses() const =0;
+
+  /// getReservedRegs - Returns a bitset indexed by physical register number
+  /// indicating if a register is a special register that has particular uses and
+  /// should be considered unavailable at all times, e.g. SP, RA. This is used by
+  /// register scavenger to determine what registers are free.
+  virtual BitVector getReservedRegs(const MachineFunction &MF) const = 0;
 
   //===--------------------------------------------------------------------===//
   // Register Class Information

@@ -41,7 +41,7 @@ BitVector MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
     const TargetRegisterClass *RC = *I;
     for (TargetRegisterClass::iterator I = RC->allocation_order_begin(MF),
            E = RC->allocation_order_end(MF); I != E; ++I)
-      Allocatable[*I] = true;
+      Allocatable.set(*I);
   }
   return Allocatable;
 }
