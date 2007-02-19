@@ -6,44 +6,37 @@
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
 <body>
-  <div class="doc_warning">DRAFT Only. DRAFT Only. DRAFT Only. DRAFT Only.</div>
       
 <div class="doc_title">LLVM Developer Policy</div>
-<table class="layout"><tr class="layout"><td class="layout">
-<h2>Contents</h2>
 <ol>
   <li><a href="#introduction">Introduction</a></li>
   <li><a href="#general">General Policies</a>
   <ol>
     <li><a href="#informed">Stay Informed</a> </li>
-    <li><a href="#newwork">Starting New Work</a></li>
+    <li><a href="#newwork">Starting&nbsp;New&nbsp;Work</a></li>
     <li><a href="#reviews">Code Reviews</a></li>
-    <li><a href="#incremental">Incremental Development</a></li>
     <li><a href="#quality">Quality</a></li>
     <li><a href="#testcases">Test Cases</a></li>
+    <li><a href="#c_new">Obtaining Commit Access</a></li>
+    <li><a href="#incremental">Incremental Development</a></li>
+    <li><a href="#attribution">Attribution</a></li>
   </ol></li>
   <li><a href="#patches">Patch Policies</a>
   <ol>
     <li><a href="#p_form">Patch Form</a></li>
-    <li><a href="#p_testing">Patch Testing</a></li>
     <li><a href="#p_submission">Patch Submission</a></li>
     <li><a href="#p_aftersub">After Submission</a></li>
     <li><a href="#p_aftercommit">After Commit</a></li>
-    <li><a href="#c_access">Obtaining Commit Access</a></li>
-    <li><a href="#c_new">New Committers</a></li>
   </ol></li>
   <li><a href="#candl">Copyright and License</a>
   <ol>
-    <li><a href="#attribution">Attribution</a></li>
     <li><a href="#copyright">Copyright</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#devagree">Developer Agreements</a></li>
   </ol></li>
   <li><a href="#terms">Terminology</a></li>
-  <li><a href="#polnotes">Policy Notes</a></li>
 </ol>
 <div class="doc_author">Written by LLVM Oversight Team</div>
-</td><td class="layout">
 
 <!--=========================================================================-->
 <div class="doc_section"><a name="introduction">Introduction</a></div>
@@ -59,8 +52,7 @@
   <ol>
     <li>Attract both users and developers to the LLVM project.</li>
     <li>Make life as simple and easy for contributors as possible.</li>
-    <li>Indicate that LLVM is a mature project with a thriving community and
-    sensible policies directing its ongoing development.</li>
+    <li>Keep the top of tree CVS/SVN trees as stable as possible.</li>
   </ol>
 </div>
 
@@ -68,9 +60,12 @@
 <div class="doc_section"><a name="general">General Policies</a></div>
 <!--=========================================================================-->
 <div class="doc_text">
-  <p>This section contains policies that pertain generally to LLVM developers. 
-  LLVM Developers are expected to meet the following obligations in order 
-  for LLVM to maintain a high standard of quality.<p>
+  <p>This section contains policies that pertain generally to regular LLVM
+  developers.  We always welcome <a href="#patches">random patches</a> from
+  people who do not routinely contribute to LLVM, but expect more from regular
+  contributors to keep the system as efficient as possible for everyone.
+  Regular LLVM developers are expected to meet the following obligations in
+  order for LLVM to maintain a high standard of quality.<p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -95,78 +90,61 @@
   it back to LLVM, s/he should inform the community with an email to 
   the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvm-dev</a> 
   email list, to the extent possible. The reason for this is to:
-  <ul>
+  <ol>
     <li>keep the community informed about future changes to LLVM, </li>
     <li>avoid duplication of effort by having multiple parties working on the
     same thing and not knowing about it, and</li>
     <li>ensure that any technical issues around the proposed work are 
     discussed and resolved before any significant work is done.</li>
-  </ul>
+  </ol>
   <p>The design of LLVM is carefully controlled to ensure that all the pieces
-  fit together well. If you plan to make a major change to the way LLVM works or
+  fit together well and are as consistent as possible. If you plan to make a
+  major change to the way LLVM works or
   a major new extension, it is a good idea to get consensus with the development
   community before you start working on it.</p>
 </div>
-</td></tr></table>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"> <a name="reviews">Code Reviews</a></div>
 <div class="doc_text">
-  <p>LLVM has a code review policy. Code review is an excellent way to ensure
-  high quality in the software. The following policies apply:</p>
+  <p>LLVM has a code review policy. Code review is one way to increase the
+  quality of software. We generally follow these policies:</p>
   <ol>
     <li>All developers are required to have significant changes reviewed 
     before they are committed to the repository.</li>
-    <li>Code reviews are conducted by email.</li>
-    <li>Code can be reviewed either before it is committed or after.</li>
+    <li>Code reviews are conducted by email, usually on the llvm-commits
+        list.</li>
+    <li>Code can be reviewed either before it is committed or after.  We expect
+        major changes to be reviewed before being committed, but smaller
+        changes (or changes where the developer owns the component) can be
+        reviewed after commit.</li>
     <li>The developer responsible for a code change is also responsible for
-    making all necessary review changes.</li>
+    making all necessary review-related changes.</li>
     <li>Developers should participate in code reviews as both a reviewer and 
     a reviewee. We don't have a dedicated team of reviewers. If someone is
     kind enough to review your code, you should return the favor for someone 
     else.</li>
   </ol>
 </div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"> <a name="incremental">Incremental Development</a>
-</div>
-<div class="doc_text">
-  <p>LLVM uses an incremental development style and all developers are expected
-  to follow this practice. Incremental development is a big key to LLVM's
-  success and it is essential that developers submit incremental patches. The
-  following defines the incremental development approach:</p>
-  <ol>
-    <li>The first task is to define the increment and get consensus (with the
-    LLVM development community) on what the end goal of the change is. Making 
-    random small changes that go nowhere is not useful for anyone.</li>
-    <li>An increment is the smallest patch size necessary to effect one change 
-    in LLVM.</li>
-    <li>Increments can be stand alone (e.g. to fix a bug), or part of a planned
-    series of increments towards some development goal.</li>
-    <li>Increments should be kept as small as possible. This simplifies your 
-    work (into a logical progression), simplifies code review and reduces the
-    chance that you will get negative feedback on the change. Small increments
-    also facilitate the maintenance of a high quality code base.</li>
-    <li>Larger increments require a larger testing effort.</li>
-  </ol>
-</div>
-
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"> <a name="quality">Quality</a></div>
 <div class="doc_text">
-  <p>The minimum quality standards for any change to the main development 
-  branch are:</p>
+  <p>The minimum quality standards that any change must satisfy before being
+    committed to the main development branch are:</p>
   <ol>
     <li>Code must adhere to the 
     <a href="CodingStandards.html">LLVM Coding Standards</a>.</li>
     <li>Code must compile cleanly (no errors, no warnings) on at least one 
     platform.</li>
     <li>Code must pass the deja gnu (llvm/test) test suite.</li>
+    <li>The code must not cause regressions on a reasonable subset of llvm-test,
+        where "reasonable" depends on the contributor's judgement and the scope
+        of the change (more invasive changes require more testing). A reasonable
+        subset is "<tt>llvm-test/MultiSource/Benchmarks</tt>".</li>
   </ol>
-  <p>Additionally, the committer is responsible for addressing all of the 
-  following items (preferably before submission):</p>
-  <ol>
+  <p>Additionally, the committer is responsible for addressing any problems
+  found that the change is responsible for.  For example:</p>
+  <ul>
     <li>The code should compile cleanly on all platforms.</li>
     <li>The changes should not cause regressions in the <tt>llvm-test</tt>
     suite including SPEC CINT2000, SPEC CFP2000, SPEC CINT2006, and 
@@ -175,15 +153,26 @@
     for the LLVM tools.</li>
     <li>The changes should not cause performance or correctness regressions in 
     code compiled by LLVM on all applicable targets.</li>
-  </ol>
+    <li>You are expected to address any <a href="http://llvm.org/bugs/">bugzilla
+    bugs</a> that result from your change.</li>
+  </ul>
+  
+  <p>We prefer for this to be handled before submission but understand that it's
+     not possible to test all of this for every submission.  Our nightly testing
+     infrastructure normally finds these problems.  A good rule of thumb is to 
+     check the nightly testers for regressions the day after your change.</p>
+     
+  <p>Commits that violate these quality standards (e.g. are very broken) may
+    be reverted. This is necessary when the change blocks other developers from
+    making progress. The developer is welcome to re-commit the change after 
+    the problem has been fixed.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"> <a name="testcases">Test Cases</a></div>
 <div class="doc_text">
-  <p>Developers are required to create test cases for regressions and new
-  features and include them with their changes. The following policies
-  apply:</p>
+  <p>Developers are required to create test cases for any bugs fixed and any new
+  features added. The following policies apply:</p>
   <ol>
     <li>All feature and regression test cases must be added to the 
     <tt>llvm/test</tt> directory. The appropriate sub-directory should be 
@@ -192,7 +181,7 @@
     <li>Test cases should be written in 
     <a href="LangRef.html">LLVM assembly language</a> unless the
     feature or regression being tested requires another language (e.g. the
-    bug being fixed or feature being implemented is in the lvm-gcc C++
+    bug being fixed or feature being implemented is in the llvm-gcc C++
     front-end).</li>
     <li>Test cases, especially for regressions, should be reduced as much as 
     possible, by <a href="CommandGuide/html/bugpoint.html">bugpoint</a> or
@@ -201,17 +190,136 @@
     a <i>time-to-test</i> burden on all developers. Please keep them short.</li>
     <li>More extensive test cases (applications, benchmarks, etc.) should be 
     added to the <tt>llvm-test</tt> test suite.  This test suite is for 
-    coverage not features or regressions.</li>
+    coverage: not features or regressions.</li>
   </ol>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"> <a name="c_new">Obtaining Commit Access</a></div>
+<div class="doc_text">
+
+<p>
+We grant commit access to contributors with a track record of submitting high
+quality patches.  If you would like commit access, please send an email to the 
+<a href="mailto:llvm-oversight@cs.uiuc.edu">LLVM oversight group</a>.</p>
+
+<p>If you have recently been granted commit access, these policies apply:</p>
+<ol>
+  <li>You are granted <i>commit-after-approval</i> to all parts of LLVM.
+  To get approval, submit a <a href="#patches">patch</a> to
+  <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">
+  llvm-commits</a>.  When approved you may commit it yourself.</li>
+  <li>You are allowed to commit patches without approval which you think are
+  obvious. This is clearly a subjective decision. We simply expect you to
+  use good judgement.  Examples include: fixing build breakage, reverting
+  obviously broken patches, documentation/comment changes, any other minor
+  changes.</li>
+  <li>You are allowed to commit patches without approval to those portions 
+  of LLVM that you have contributed or maintain (have been assigned 
+  responsibility for), with the proviso that such commits must not break the 
+  build.  This is a "trust but verify" policy and commits of this nature are 
+  reviewed after they are committed.</li>
+  <li>Multiple violations of these policies or a single egregious violation
+  may cause commit access to be revoked.</li>
+</ol>
+  
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"> <a name="incremental">Incremental Development</a>
+</div>
+<div class="doc_text">
+  <p>When making a large change to LLVM, we use a incremental style of
+     development instead of having long-term development branches.  Long-term 
+     development branches have a number of drawbacks:</p>
+     
+   <ol>
+   <li>Branches must have mainline merged into them periodically.  If the branch
+       development and mainline development occur in the same pieces of code,
+       resolving merge conflicts can take a lot of time.</li>
+   <li>Other people in the community tend to ignore work on branches.</li>
+   <li>Huge changes (produced when a branch is merged back onto mainline) are
+       extremely difficult to <a href="#reviews">code review</a>.</li>
+   <li>Branches are not routinely tested by our nightly tester
+       infrastructure.</li>
+   <li>Changes developed as monolithic large changes often don't work until the
+       entire set of changes is done.  Breaking it down into a set of smaller
+       changes increases the odds that any of the work will be committed to the
+       main repository.</li>
+   </ol>    
+  
+  <p>
+  To address these problems, LLVM uses an incremental development style and we
+  require contributors to follow this practice when making a large/invasive
+  change.  Some tips:</p>
+  
+  <ul>
+    <li>Large/invasive changes usually have a number of secondary changes that
+     are required before the big change can be made (e.g. API cleanup, etc).
+     These sorts of changes can often be done before the major change is done,
+     independently of that work.</li>
+    <li>The remaining inter-related work should be decomposed into unrelated 
+    sets of changes if possible.  Once this is done, define the first increment
+    and get consensus on what the end goal of the change is.</li>
+    <li>Increments can be stand alone (e.g. to fix a bug), or part of a planned
+    series of increments towards some development goal.</li>
+    <li>Increments should be kept as small as possible. This simplifies your 
+    work (into a logical progression), simplifies code review and reduces the
+    chance that you will get negative feedback on the change. Small increments
+    also facilitate the maintenance of a high quality code base.</li>
+    <li>Often, an independent precursor to a big change is to add a new API and
+        slowly migrate clients to use the new API.  Each change to use the new
+        API is often "obvious" and can be committed without review.  Once the 
+        new API is in place and used, it is often easy to replace the underlying
+        implementation of the API.</li>
+  </ul>
+  
+  <p>If you are interested in making a large change, and this scares you, please
+     make sure to first <a href="#newwork">discuss the change/gather
+     consensus</a> then feel free to ask about the best way to go about making
+     the change.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="attribution">Attribution</a></div>
+<div class="doc_text">
+  <p>We believe in correct attribution of contributions to 
+  their contributors.  However, we do not want the source code to be littered
+  with random attributions (this is noisy/distracting and revision control
+  keeps a perfect history of this anyway).  As such, we follow these rules:</p>
+  <ol>
+    <li>Developers who originate new files in LLVM should place their name at
+    the top of the file per the 
+    <a href="CodingStandards.html#scf_commenting">Coding Standards</a>.</li>
+    <li>There should be only one name at the top of the file and it should be
+    the person who created the file.</li>
+    <li>Placing your name in the file does not imply <a
+        href="#candl">copyright</a>: it is only used to attribute the file to
+        its original author.</li>
+    <li>Developers should be aware that after some time has passed, the name at
+    the top of a file may become meaningless as maintenance/ownership of files
+    changes.  Revision control keeps an accurate history of contributions.</li>
+    <li>Developers should maintain their entry in the 
+    <a href="http://llvm.org/cvsweb/cvsweb.cgi/llvm/CREDITS.TXT?rev=HEAD&amp;content-type=text/x-cvsweb-markup">CREDITS.txt</a> 
+    file to summarize their contributions.</li>
+    <li>Commit comments should contain correct attribution of the person who
+    submitted the patch if that person is not the committer (i.e. when a 
+    developer with commit privileges commits a patch for someone else).</li>
+  </ol>
+</div>
+
 
 <!--=========================================================================-->
 <div class="doc_section"><a name="patches">Patch Policies</a></div>
 <!--=========================================================================-->
+
 <div class="doc_text">
-  <p>This section contains policies that pertain to submitting patches 
-  to LLVM and committing code to the repository</p>
+  <p>This section describes policies that apply to developers who regularly
+  contribute code to LLVM.  As usual, we often accept small patches and
+  contributions that do not follow this policy.  In this case, one of the
+  regular contributors has to get the code in shape.</p>
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"> <a name="p_form">Patch Form</a></div>
 <div class="doc_text">
@@ -219,31 +327,18 @@
   <ol>
     <li>Patches must be made against the CVS HEAD (main development trunk), 
     not a branch.</li>
-    <li>Patches should be made with this command:<pre>
-    cvs diff -Ntdup -5</pre> or with the utility <tt>utils/mkpatch</tt>.</li>
+    <li>Patches should be made with this command:
+    <pre>cvs diff -Ntdup -5</pre>
+    or with the utility <tt>utils/mkpatch</tt>.</li>
     <li>Patches should not include differences in generated code such as the
     code generated by <tt>flex</tt>, <tt>bison</tt> or <tt>tblgen</tt>. The
     <tt>utils/mkpatch</tt> utility takes care of this for you.</li>
-    <li>Patches must not include any patent violations. To the best of our
-    knowledge, LLVM is free of any existing patent violations and it is our 
-    intent to keep it that way. </li>
+    <li>Contributions must not knowingly infringe on any patents. To the best of
+    our knowledge, LLVM is free of any existing patent violations and it is our
+    intent to keep it that way.</li>
   </ol>
 </div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"> <a name="p_testing">Patch Testing</a></div>
-<div class="doc_text">
-  <p>Before a patch is submitted for review, it should be tested to ensure 
-  that:</p>
-  <ol>
-    <li>The patch must compile against the CVS HEAD cleanly (zero warnings, zero
-    errors).</li>
-    <li>All the llvm/test (Deja Gnu) tests must pass.</li>
-    <li>The patch should cause no regressions in the llvm-test test suite. How
-    much testing is appropriate depends on the nature of the patch. We leave it
-    to your good judgement, but you will be responsible for fixing any
-    regressions or reverting the patch.</li>
-  </ol>
-</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"> <a name="p_submission">Patch Submission</a></div>
 <div class="doc_text">
@@ -290,55 +385,10 @@
   </ol>
 </div>
 
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"> <a name="c_access">Obtaining Commit Access</a></div>
-<div class="doc_text">
-  <p>Commit access to the repository is granted according to this policy:</p>
-  <ol>
-    <li>Commit access is not granted to anyone unless they specifically ask for
-    it.</li>
-    <li>Requests for commit access must be sent to the 
-    <a href="mailto:llvm-oversight@cs.uiuc.edu">LLVM Oversight Group</a>.</li>
-    <li>Granting commit access is at the sole discretion of the LLVM Oversight
-    Group.</li>
-  </ol>
-  <p>Submitting patches to LLVM via the patch policy above will greatly 
-  increase the chance that your request for commit access is granted. Getting 
-  to know the members of the LLVM community (email, IRC, in person contact, 
-  etc.) will also increase your chances.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"> <a name="c_new">New Committers</a></div>
-<div class="doc_text">
-  <p>For those who have recently obtained commit access, the following policies
-  apply:</p>
-  <ol>
-    <li>You are granted <i>commit-after-approval</i> to all parts of LLVM.
-    To get approval, submit a patch to 
-    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">llvm-commits</a>
-    per the <a href="#patches">patch policies</a> above.  When approved you 
-    may commit it yourself.</li>
-    <li>You are allowed to commit patches without approval which you think are
-    obvious. This is clearly a subjective decision. We simply expect you to
-    use good judgement.</li>
-    <li>You are allowed to commit patches without approval to those portions 
-    of LLVM that you own (contributed) or maintain (have been assigned 
-    responsibility for), with the proviso that such commits must not break the 
-    build. This is a "trust but verify" policy and commits of this nature are 
-    reviewed after they are committed.</li>
-    <li>Commits that violate the <a href="quality">quality standards</a> may
-    be reverted. This is necessary when the change blocks other developers from
-    making progress. The developer is welcome to re-commit the change after 
-    the problem has been fixed.</li>
-    <li>Multiple violations of these policies or a single egregious violation
-    may cause commit access to be revoked.</li>
-  </ol>
-</div>
-
 <!--=========================================================================-->
 <div class="doc_section"><a name="candl">Copyright and License</a></div>
 <!--=========================================================================-->
+
 <div class="doc_text">
   <p>We address here the issues of copyright and license for the LLVM project.
   The object of the copyright and license is the LLVM source code and 
@@ -347,36 +397,13 @@
   terms of its license to LLVM users and developers is the 
   <a href="http://www.opensource.org/licenses/UoI-NCSA.php">University of 
     Illinois/NCSA Open Source License</a>.
-</div>
 
 <div class="doc_notes">
-  <p>NOTE: This section deals with legal matters but does not provide legal
-  advice. It is intended only as a general guideline.</p>
+  <p><b>NOTE: This section deals with legal matters but does not provide
+  official legal advice.  We are not lawyers, please seek legal counsel from an
+  attorney.</b></p>
 </div>
 
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="attribution">Attribution</a></div>
-<div class="doc_text">
-  <p>The LLVM project believes in correct attribution of contributions to 
-  their contributors, as follows:</p>
-  <ol>
-    <li>Developers who originate new files in LLVM should place their name at
-    the top of the file per the 
-    <a href="CodingStandards.html">Coding Standards</a>.</li>
-    <li>There should be only one name at the top of the file and it should be
-    the person who created the file.</li>
-    <li>Placing your name in the file does not imply copyright but does
-    correctly attribute the file to its author.</li>
-    <li>Developers should be aware that after some time has passed, the name at
-    the top of a file may become meaningless as maintenance/ownership of files
-    changes.</li>
-    <li>Developers should submit or commit patches to the 
-    <a href="http://llvm.org/cvsweb/cvsweb.cgi/llvm/CREDITS.TXT?rev=1.67&amp;content-type=text/x-cvsweb-markup">CREDITS.txt</a> 
-    file to summarize their contributions.</li>
-    <li>Commit comments should contain correct attribution of the person who
-    submitted the patch if that person is not the committer (i.e. when a 
-    developer with commit privileges commits a patch for someone else).</li>
-  </ol>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -384,24 +411,27 @@
 <div class="doc_text">
   <p>
   <p>For consistency and ease of management, the project requires the 
-  copyright for all LLVM software to be held by a single copyright holder.  
-  Although UIUC may assign the copyright of the software to another entity, 
-  the intent for the project is to always have a single entity hold the copy 
-  rights to LLVM at any given time.
-  <p>Having multiple copyright holders for various portions of LLVM is
-  problematic in the management of the software. Having a single copyright 
+  copyright for all LLVM software to be held by a single copyright holder:
+  the University of Illinois (UIUC).</p>
+  
+  <p>
+  Although UIUC may eventually reassign the copyright of the software to another
+  entity (e.g. a dedicated non-profit "LLVM Organization", or something)
+  the intent for the project is to always have a single entity hold the
+  copyrights to LLVM at any given time.</p>
+  
+  <p>We believe that having a single copyright 
   holder is in the best interests of all developers and users as it greatly 
   reduces the managerial burden for any kind of administrative or technical 
-  decisions about LLVM.</p>
+  decisions about LLVM.  The goal of the LLVM project is to always keep the code
+  open and <a href="#license">licensed under a very liberal license</a>.</p>
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="license">License</a></div>
 <div class="doc_text">
-  <p>LLVM licensing decisions will be made by the LLVM Oversight Group. Any
-  issues, comments or suggestions with the licensing should be sent to the
-  <a href="mailto:llvm-oversight@cs.uiuc.edu">LLVM Oversight Group</a>.</p>
-  <p>The LLVM Oversight Group intends to keep LLVM perpetually open source 
-  and to use liberal open source licenses. The current license is the 
+  <p>We intend to keep LLVM perpetually open source 
+  and to use a liberal open source license. The current license is the 
   <a href="http://www.opensource.org/licenses/UoI-NCSA.php">
     University of Illinois/NCSA Open Source License</a>, which boils
   down to this:</p>
@@ -412,22 +442,37 @@
     <li>You can't use our names to promote your LLVM derived products.</li>
     <li>There's no warranty on LLVM at all.</li>
   </ul>
-  <p>We believe this fosters the widest adoption of LLVM because it allows 
-  commercial products to be derived from LLVM with few restrictions and
+  
+  <p>We believe this fosters the widest adoption of LLVM because it <b>allows 
+  commercial products to be derived from LLVM</b> with few restrictions and
   without a requirement for making any derived works also open source (i.e. 
-  LLVM's license is not a <i>copyleft</i> license). We suggest that you read 
-  the <a href="http://www.opensource.org/licenses/UoI-NCSA.php">License</a> 
+  LLVM's license is not a "copyleft" license like the GPL). We suggest that you
+  read the <a href="http://www.opensource.org/licenses/UoI-NCSA.php">License</a>
   if further clarification is needed.</p>
+  
+  <p>Note that the LLVM Project does distribute some code that includes GPL
+  software (notably, llvm-gcc which is based on the GCC GPL source base).
+  This means that anything "linked" into to llvm-gcc must itself be compatible
+  with the GPL, and must be releasable under the terms of the GPL.  This implies
+  that you <b>any code linked into llvm-gcc and distributed may be subject to
+  the viral aspects of the GPL</b>.  This is not a problem for the main LLVM
+  distribution (which is already licensed under a more liberal license), but may
+  be a problem if you intend to do commercial development without redistributing
+  your source code.</p>
+  
+  <p>We have no plans to change the license of LLVM.  If you have questions
+    or comments about the license, please contact the <a
+    href="mailto:llvm-oversight@cs.uiuc.edu">LLVM Oversight Group</a>.</p>
+
 </div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="devagree">Developer Agreements</a></div>
 <div class="doc_text">
-  <p>With regards to the LLVM copyright and licensing, developers agree to:</p>
-  <ul>
-    <li>assign their copy rights to UIUC for any contribution made so that 
-    the entire software base can be managed by a single copyright holder.</li>
-    <li>allow their contribution(s) to be licensed as open source by the then
-    current license chosen by the LLVM Oversight Group.</li>
+  <p>With regards to the LLVM copyright and licensing, developers agree to 
+  assign their copyrights to UIUC for any contribution made so that 
+  the entire software base can be managed by a single copyright holder.  This
+  implies that any contributions can be licensed under the license that the
+  project uses.</li>
   </ul>
 </div>
 
@@ -445,10 +490,6 @@
     <dt><a name="t_commit">Commit</a><dt>
     <dd>A <a href="t_change">change</a> submitted directly to LLVM software
     repository via the <tt>cvs commit</tt> command.</dd>
-    <dt><a name="t_copleft">Copyleft</a></dt>
-    <dd>A licensing policy that requires the licensee to adopt the terms of the
-    license for <i>derived</i> works. LLVM does not subscribe to this
-    policy.</dd>
     <dt><a name="t_developer">Developer</a></dt>
     <dd>Anyone who submits a <a href="#t_change">change</a> to LLVM.</dd>
     <dt><a name="t_inrement">Increment</a></dt>
@@ -456,29 +497,10 @@
     <a href="#t_patch">patch</a> or <a href="#t_commit">commit</a>, that are 
     related by a single common purpose. Increments are atomic as they 
     leave LLVM in a stable state (both compiling and working properly).</dd> 
-    <dt><a name="t_must">Must</a></dt>
-    <dd>When used in a policy statement, the term <i>must</i> implies a
-    non-optional requirement on the developer.</dd>
     <dt><a name="t_patch">Patch</a></dt>
     <dd>A <a href="#t_change">change</a> submitted by email in patch (diff) 
     format generated by the <tt>cvs diff</tt> command.</dd>
-    <dt><a name="t_should">Should</a></dt>
-    <dd>When used in a policy statement, the term <i>should</i> implies a
-    recommended but optional requirement on the developer.</dd>
   </dl>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_section"><a name="polnotes">Policy Notes</a></div>
-<!--=========================================================================-->
-<div class="doc_text">
-  <p>This section contains some notes on policy topics that need to be
-  resolved and incorporated into the main body of the document above.</p>
-  <ol>
-    <li>When to open a new bug and when to re-use an existing one. For example
-    PR1158. If the same assertion happens do you open a new bug or reopen
-    1158?</li>
-  </ol>
 </div>
 
 <!-- *********************************************************************** -->
@@ -488,7 +510,7 @@
   src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
   <a href="http://validator.w3.org/check/referer"><img
   src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
-  Written By: the 
+  Written by: the 
   <a href="mailto:llvm-oversight@cs.uiuc.edu">LLVM Oversight Group</a><br>
   <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
   Last modified: $Date$
