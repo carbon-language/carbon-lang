@@ -999,7 +999,7 @@ getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
       // types of its operands.
       bool isFP = Ty->isFloatingPoint();
       if (const VectorType* PTy = dyn_cast<VectorType>(Ty))
-        // If its a packed type we want to use the element type
+        // If its a vector type we want to use the element type
         isFP = PTy->getElementType()->isFloatingPoint();
       if (isFP)
         return Instruction::FDiv;
@@ -1015,7 +1015,7 @@ getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
       // types of its operands.
       bool isFP = Ty->isFloatingPoint();
       if (const VectorType* PTy = dyn_cast<VectorType>(Ty))
-        // If its a packed type we want to use the element type
+        // If its a vector type we want to use the element type
         isFP = PTy->getElementType()->isFloatingPoint();
       // Select correct opcode
       if (isFP)
@@ -1841,7 +1841,7 @@ UpRTypes
     $$.S = $4.S;
     delete $4.PAT;
   }
-  | '<' EUINT64VAL 'x' UpRTypes '>' {          // Packed array type?
+  | '<' EUINT64VAL 'x' UpRTypes '>' {          // Vector type?
      const llvm::Type* ElemTy = $4.PAT->get();
      if ((unsigned)$2 != $2)
         error("Unsigned result not equal to signed result");
@@ -2235,7 +2235,7 @@ ConstExpr
     upgradeGEPIndices($3.C->getType(), $4, VIndices, &CIndices);
 
     delete $4;
-    $$.C = ConstantExpr::getGetElementPtr($3.C, CIndices);
+    $$.C = ConstantExpr::getGetElementPtr($3.C, &CIndices[0], CIndices.size());
     $$.S = Signless;
   }
   | SELECT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
@@ -3112,7 +3112,7 @@ InstVal
       error("Arithmetic operator requires integer, FP, or packed operands");
     if (isa<VectorType>(Ty) && 
         ($1 == URemOp || $1 == SRemOp || $1 == FRemOp || $1 == RemOp))
-      error("Remainder not supported on packed types");
+      error("Remainder not supported on vector types");
     // Upgrade the opcode from obsolete versions before we do anything with it.
     Instruction::BinaryOps Opcode = getBinaryOp($1, Ty, $2.S);
     Value* val1 = getVal(Ty, $3); 

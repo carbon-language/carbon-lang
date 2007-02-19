@@ -2235,7 +2235,7 @@ ConstExpr
     upgradeGEPIndices($3.C->getType(), $4, VIndices, &CIndices);
 
     delete $4;
-    $$.C = ConstantExpr::getGetElementPtr($3.C, CIndices);
+    $$.C = ConstantExpr::getGetElementPtr($3.C, &CIndices[0], CIndices.size());
     $$.S = Signless;
   }
   | SELECT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
