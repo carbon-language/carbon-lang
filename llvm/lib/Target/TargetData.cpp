@@ -184,14 +184,8 @@ void TargetData::init(const std::string &TargetDescription) {
   
   while (!temp.empty()) {
     std::string token = getToken(temp, "-");
-    
     std::string arg0 = getToken(token, ":");
     const char *p = arg0.c_str();
-    AlignTypeEnum align_type;
-    uint32_t size;
-    unsigned char abi_align;
-    unsigned char pref_align;
-
     switch(*p) {
     case 'E':
       LittleEndian = false;
@@ -210,12 +204,12 @@ void TargetData::init(const std::string &TargetDescription) {
     case 'v':
     case 'f':
     case 'a': {
-      align_type = (*p == 'i' ? INTEGER_ALIGN :
-                    (*p == 'f' ? FLOAT_ALIGN :
-                     (*p == 'v' ? VECTOR_ALIGN : AGGREGATE_ALIGN)));
-      size = (uint32_t) atoi(++p);
-      abi_align = atoi(getToken(token, ":").c_str()) / 8;
-      pref_align = atoi(getToken(token, ":").c_str()) / 8;
+      AlignTypeEnum align_type = 
+        (*p == 'i' ? INTEGER_ALIGN : (*p == 'f' ? FLOAT_ALIGN :
+           (*p == 'v' ? VECTOR_ALIGN : AGGREGATE_ALIGN)));
+      uint32_t size = (uint32_t) atoi(++p);
+      unsigned char abi_align = atoi(getToken(token, ":").c_str()) / 8;
+      unsigned char pref_align = atoi(getToken(token, ":").c_str()) / 8;
       if (pref_align == 0)
         pref_align = abi_align;
       setAlignment(align_type, abi_align, pref_align, size);
