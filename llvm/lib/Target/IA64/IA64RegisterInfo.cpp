@@ -28,7 +28,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
@@ -105,19 +104,6 @@ IA64RegisterInfo::getCalleeSavedRegClasses() const {
     &IA64::GRRegClass,  0
   };
   return CalleeSavedRegClasses;
-}
-
-BitVector IA64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
-  BitVector Reserved(getNumRegs());
-  Reserved.set(IA64::r0);
-  Reserved.set(IA64::r1);
-  Reserved.set(IA64::r2);
-  Reserved.set(IA64::r5);
-  Reserved.set(IA64::r12);
-  Reserved.set(IA64::r13);
-  Reserved.set(IA64::r22);
-  Reserved.set(IA64::rp);
-  return Reserved;
 }
 
 //===----------------------------------------------------------------------===//

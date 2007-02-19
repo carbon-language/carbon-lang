@@ -118,11 +118,6 @@ namespace llvm {
       return I->second;
     }
 
-    bool hasInterval(unsigned reg) const {
-      Reg2IntervalMap::const_iterator I = r2iMap_.find(reg);
-      return I != r2iMap_.end();
-    }
-
     /// getMBBStartIdx - Return the base index of the first instruction in the
     /// specified MachineBasicBlock.
     unsigned getMBBStartIdx(MachineBasicBlock *MBB) const {
@@ -194,7 +189,6 @@ namespace llvm {
     /// copies that cannot yet be coallesced into the "TryAgain" list.
     void CopyCoallesceInMBB(MachineBasicBlock *MBB,
                             std::vector<CopyRec> &TryAgain);
-
     /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
     /// which are the src/dst of the copy instruction CopyMI.  This returns true
     /// if the copy was successfully coallesced away, or if it is never possible
@@ -239,9 +233,6 @@ namespace llvm {
                                    LiveInterval &interval,
                                    unsigned SrcReg);
 
-    /// handleLiveInRegister - Create interval for a livein register.
-    void handleLiveInRegister(MachineBasicBlock* mbb, LiveInterval &interval);
-
     /// Return true if the two specified registers belong to different
     /// register classes.  The registers may be either phys or virt regs.
     bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
@@ -250,15 +241,10 @@ namespace llvm {
     bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
                               MachineInstr *CopyMI);
 
-    /// hasRegisterUse - Returns true if there is any use of the specific
-    /// reg between indexes Start and End.
-    bool hasRegisterUse(unsigned Reg, unsigned Start, unsigned End);
+    bool overlapsAliases(const LiveInterval *lhs,
+                         const LiveInterval *rhs) const;
 
     static LiveInterval createInterval(unsigned Reg);
-
-    void removeInterval(unsigned Reg) {
-      r2iMap_.erase(Reg);
-    }
 
     LiveInterval &getOrCreateInterval(unsigned reg) {
       Reg2IntervalMap::iterator I = r2iMap_.find(reg);

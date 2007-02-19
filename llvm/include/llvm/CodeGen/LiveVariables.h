@@ -36,7 +36,6 @@
 namespace llvm {
 
 class MRegisterInfo;
-class BitVector;
 
 class LiveVariables : public MachineFunctionPass {
 public:
@@ -109,11 +108,11 @@ private:
   ///
   std::vector<VarInfo> VirtRegInfo;
 
-  /// ReservedRegisters - This vector keeps track of which registers
-  /// are reserved register which are not allocatable by the target machine.
-  /// We can not track liveness for values that are in this set.
+  /// AllocatablePhysicalRegisters - This vector keeps track of which registers
+  /// are actually register allocatable by the target machine.  We can not track
+  /// liveness for values that are not in this set.
   ///
-  BitVector ReservedRegisters;
+  BitVector AllocatablePhysicalRegisters;
 
 private:   // Intermediate data structures
   const MRegisterInfo *RegInfo;

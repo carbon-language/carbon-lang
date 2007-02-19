@@ -34,7 +34,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
 using namespace llvm;
@@ -339,35 +338,6 @@ PPCRegisterInfo::getCalleeSavedRegClasses() const {
                                Darwin32_CalleeSavedRegClasses;
 }
 
-// needsFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
-//
-static bool needsFP(const MachineFunction &MF) {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return NoFramePointerElim || MFI->hasVarSizedObjects();
-}
-
-BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
-  BitVector Reserved(getNumRegs());
-  Reserved.set(PPC::R0);
-  Reserved.set(PPC::R1);
-  Reserved.set(PPC::LR);
-  // In Linux, r2 is reserved for the OS.
-  if (!Subtarget.isDarwin())
-    Reserved.set(PPC::R2);
-  // On PPC64, r13 is the thread pointer.  Never allocate this register.
-  // Note that this is overconservative, as it also prevents allocation of
-  // R31 when the FP is not needed.
-  if (Subtarget.isPPC64()) {
-    Reserved.set(PPC::R13);
-    Reserved.set(PPC::R31);
-  }
-  if (needsFP(MF))
-    Reserved.set(PPC::R31);
-  return Reserved;
-}
-
 /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
 /// copy instructions, turning them into load/store instructions.
 MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
@@ -427,6 +397,15 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
+
+// needsFP - Return true if the specified function should have a dedicated frame
+// pointer register.  This is true if the function has variable sized allocas or
+// if frame pointer elimination is disabled.
+//
+static bool needsFP(const MachineFunction &MF) {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return NoFramePointerElim || MFI->hasVarSizedObjects();
+}
 
 // hasFP - Return true if the specified function actually has a dedicated frame
 // pointer register.  This is true if the function needs a frame pointer and has

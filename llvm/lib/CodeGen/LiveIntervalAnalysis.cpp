@@ -98,6 +98,28 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     // Set the MBB2IdxMap entry for this MBB.
     MBB2IdxMap[MBB->getNumber()] = MIIndex;
 
+    // If this BB has any live ins, insert a dummy instruction at the
+    // beginning of the function that we will pretend "defines" the values. This
+    // is to make the interval analysis simpler by providing a number.
+    if (MBB->livein_begin() != MBB->livein_end()) {
+      unsigned FirstLiveIn = *MBB->livein_begin();
+
+      // Find a reg class that contains this live in.
+      const TargetRegisterClass *RC = 0;
+      for (MRegisterInfo::regclass_iterator RCI = mri_->regclass_begin(),
+             RCE = mri_->regclass_end(); RCI != RCE; ++RCI)
+        if ((*RCI)->contains(FirstLiveIn)) {
+          RC = *RCI;
+          break;
+        }
+
+      MachineInstr *OldFirstMI = MBB->begin();
+      mri_->copyRegToReg(*MBB, MBB->begin(),
+                         FirstLiveIn, FirstLiveIn, RC);
+      assert(OldFirstMI != MBB->begin() &&
+             "copyRetToReg didn't insert anything!");
+    }
+    
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
       bool inserted = mi2iMap_.insert(std::make_pair(I, MIIndex)).second;
@@ -139,16 +161,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       if (tii_->isMoveInstr(*mii, srcReg, dstReg) &&
           (RegRep = rep(srcReg)) == rep(dstReg)) {
         // remove from def list
-        LiveInterval &RegInt = getOrCreateInterval(RegRep);
-        MachineOperand *MO = mii->findRegisterDefOperand(dstReg);
-        // If def of this move instruction is dead, remove its live range from
-        // the dstination register's live interval.
-        if (MO->isDead()) {
-          unsigned MoveIdx = getDefIndex(getInstructionIndex(mii));
-          RegInt.removeRange(*RegInt.FindLiveRangeContaining(MoveIdx));
-          if (RegInt.empty())
-            removeInterval(RegRep);
-        }
+        getOrCreateInterval(RegRep);
         RemoveMachineInstrFromMaps(mii);
         mii = mbbi->erase(mii);
         ++numPeep;
@@ -172,6 +185,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     }
   }
 
+  
   for (iterator I = begin(), E = end(); I != E; ++I) {
     LiveInterval &LI = I->second;
     if (MRegisterInfo::isVirtualRegister(LI.reg)) {
@@ -656,43 +670,6 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
   }
 }
 
-void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
-                                         LiveInterval &interval) {
-  DOUT << "\t\tlivein register: "; DEBUG(printRegName(interval.reg));
-
-  // Look for kills, if it reaches a def before it's killed, then it shouldn't
-  // be considered a livein.
-  MachineBasicBlock::iterator mi = MBB->begin();
-  unsigned baseIndex = 0;
-  unsigned start = 0;
-  unsigned end = start;
-  while (mi != MBB->end()) {
-    if (lv_->KillsRegister(mi, interval.reg)) {
-      DOUT << " killed";
-      end = getUseIndex(baseIndex) + 1;
-      goto exit;
-    } else if (lv_->ModifiesRegister(mi, interval.reg)) {
-      // Another instruction redefines the register before it is ever read.
-      // Then the register is essentially dead at the instruction that defines
-      // it. Hence its interval is:
-      // [defSlot(def), defSlot(def)+1)
-      DOUT << " dead";
-      end = getDefIndex(start) + 1;
-      goto exit;
-    }
-
-    baseIndex += InstrSlots::NUM;
-    ++mi;
-  }
-
-exit:
-  assert(start < end && "did not find end of interval?");
-
-  LiveRange LR(start, end, interval.getNextValue(~0U, 0));
-  interval.addRange(LR);
-  DOUT << " +" << LR << '\n';
-}
-
 /// computeIntervals - computes the live intervals for virtual
 /// registers. for some ordering of the machine instructions [1,N] a
 /// live interval is an interval [i, j) where 1 <= i <= j < N for
@@ -711,13 +688,17 @@ void LiveIntervals::computeIntervals() {
     MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
 
     if (MBB->livein_begin() != MBB->livein_end()) {
-      // Create intervals for live-ins to this BB first.
-      for (MachineBasicBlock::const_livein_iterator LI = MBB->livein_begin(),
+      // Process live-ins to this BB first.
+      for (MachineBasicBlock::livein_iterator LI = MBB->livein_begin(),
              LE = MBB->livein_end(); LI != LE; ++LI) {
-        handleLiveInRegister(MBB, getOrCreateInterval(*LI));
+        handlePhysicalRegisterDef(MBB, MBB->begin(), MIIndex,
+                                  getOrCreateInterval(*LI), 0);
         for (const unsigned* AS = mri_->getAliasSet(*LI); *AS; ++AS)
-          handleLiveInRegister(MBB, getOrCreateInterval(*AS));
+          handlePhysicalRegisterDef(MBB, MBB->begin(), MIIndex,
+                                    getOrCreateInterval(*AS), 0);
       }
+      ++MI;
+      MIIndex += InstrSlots::NUM;
     }
     
     for (; MI != miEnd; ++MI) {
@@ -834,6 +815,7 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   return true;
 }
 
+
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
 /// if the copy was successfully coallesced away, or if it is never possible
@@ -843,93 +825,54 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
 bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
                              unsigned SrcReg, unsigned DstReg) {
   DOUT << getInstructionIndex(CopyMI) << '\t' << *CopyMI;
-
+  
   // Get representative registers.
-  unsigned repSrcReg = rep(SrcReg);
-  unsigned repDstReg = rep(DstReg);
+  SrcReg = rep(SrcReg);
+  DstReg = rep(DstReg);
   
   // If they are already joined we continue.
-  if (repSrcReg == repDstReg) {
+  if (SrcReg == DstReg) {
     DOUT << "\tCopy already coallesced.\n";
     return true;  // Not coallescable.
   }
   
   // If they are both physical registers, we cannot join them.
-  if (MRegisterInfo::isPhysicalRegister(repSrcReg) &&
-      MRegisterInfo::isPhysicalRegister(repDstReg)) {
+  if (MRegisterInfo::isPhysicalRegister(SrcReg) &&
+      MRegisterInfo::isPhysicalRegister(DstReg)) {
     DOUT << "\tCan not coallesce physregs.\n";
     return true;  // Not coallescable.
   }
   
   // We only join virtual registers with allocatable physical registers.
-  if (MRegisterInfo::isPhysicalRegister(repSrcReg) &&
-      !allocatableRegs_[repSrcReg]) {
+  if (MRegisterInfo::isPhysicalRegister(SrcReg) && !allocatableRegs_[SrcReg]){
     DOUT << "\tSrc reg is unallocatable physreg.\n";
     return true;  // Not coallescable.
   }
-  if (MRegisterInfo::isPhysicalRegister(repDstReg) &&
-      !allocatableRegs_[repDstReg]) {
+  if (MRegisterInfo::isPhysicalRegister(DstReg) && !allocatableRegs_[DstReg]){
     DOUT << "\tDst reg is unallocatable physreg.\n";
     return true;  // Not coallescable.
   }
   
   // If they are not of the same register class, we cannot join them.
-  if (differingRegisterClasses(repSrcReg, repDstReg)) {
+  if (differingRegisterClasses(SrcReg, DstReg)) {
     DOUT << "\tSrc/Dest are different register classes.\n";
     return true;  // Not coallescable.
   }
   
-  LiveInterval &SrcInt = getInterval(repSrcReg);
-  LiveInterval &DestInt = getInterval(repDstReg);
-  assert(SrcInt.reg == repSrcReg && DestInt.reg == repDstReg &&
+  LiveInterval &SrcInt = getInterval(SrcReg);
+  LiveInterval &DestInt = getInterval(DstReg);
+  assert(SrcInt.reg == SrcReg && DestInt.reg == DstReg &&
          "Register mapping is horribly broken!");
   
   DOUT << "\t\tInspecting "; SrcInt.print(DOUT, mri_);
   DOUT << " and "; DestInt.print(DOUT, mri_);
   DOUT << ": ";
-
-  // Check if it is necessary to propagate "isDead" property before intervals
-  // are joined.
-  MachineOperand *mopd = CopyMI->findRegisterDefOperand(DstReg);
-  bool isDead = mopd->isDead();
-  unsigned SrcStart = 0;
-  unsigned SrcEnd = 0;
-  if (isDead) {
-    unsigned CopyIdx = getDefIndex(getInstructionIndex(CopyMI));
-    LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx-1);
-    SrcStart = SrcLR->start;
-    SrcEnd   = SrcLR->end;
-    if (hasRegisterUse(repSrcReg, SrcStart, SrcEnd))
-      isDead = false;
-  }
-
+    
   // Okay, attempt to join these two intervals.  On failure, this returns false.
   // Otherwise, if one of the intervals being joined is a physreg, this method
   // always canonicalizes DestInt to be it.  The output "SrcInt" will not have
   // been modified, so we can use this information below to update aliases.
-  if (JoinIntervals(DestInt, SrcInt)) {
-    if (isDead) {
-      // Result of the copy is dead. Propagate this property.
-      if (SrcStart == 0) {
-        // Live-in to the function but dead. Remove it from MBB live-in set.
-        // JoinIntervals may end up swapping the two intervals.
-        LiveInterval &LiveInInt = (repSrcReg == DestInt.reg) ? DestInt:SrcInt;
-        LiveInInt.removeRange(SrcStart, SrcEnd);
-        MachineBasicBlock *MBB = CopyMI->getParent();
-        MBB->removeLiveIn(SrcReg);
-      } else {
-        MachineInstr *SrcMI = getInstructionFromIndex(SrcStart);
-        if (SrcMI) {
-          // FIXME: SrcMI == NULL means the register is livein to a non-entry
-          // MBB. Remove the range from its live interval?
-          MachineOperand *mops = SrcMI->findRegisterDefOperand(SrcReg);
-          if (mops)
-            // FIXME: mops == NULL means SrcMI defines a subregister?
-            mops->setIsDead();
-        }
-      }
-    }
-  } else {
+  if (!JoinIntervals(DestInt, SrcInt)) {
     // Coallescing failed.
     
     // If we can eliminate the copy without merging the live ranges, do so now.
@@ -941,17 +884,17 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
     return false;
   }
 
-  bool Swapped = repSrcReg == DestInt.reg;
+  bool Swapped = SrcReg == DestInt.reg;
   if (Swapped)
-    std::swap(repSrcReg, repDstReg);
-  assert(MRegisterInfo::isVirtualRegister(repSrcReg) &&
+    std::swap(SrcReg, DstReg);
+  assert(MRegisterInfo::isVirtualRegister(SrcReg) &&
          "LiveInterval::join didn't work right!");
                                
   // If we're about to merge live ranges into a physical register live range,
   // we have to update any aliased register's live ranges to indicate that they
   // have clobbered values for this range.
-  if (MRegisterInfo::isPhysicalRegister(repDstReg)) {
-    for (const unsigned *AS = mri_->getAliasSet(repDstReg); *AS; ++AS)
+  if (MRegisterInfo::isPhysicalRegister(DstReg)) {
+    for (const unsigned *AS = mri_->getAliasSet(DstReg); *AS; ++AS)
       getInterval(*AS).MergeInClobberRanges(SrcInt);
   }
 
@@ -961,8 +904,8 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   // If the intervals were swapped by Join, swap them back so that the register
   // mapping (in the r2i map) is correct.
   if (Swapped) SrcInt.swap(DestInt);
-  removeInterval(repSrcReg);
-  r2rMap_[repSrcReg] = repDstReg;
+  r2iMap_.erase(SrcReg);
+  r2rMap_[SrcReg] = DstReg;
 
   // Finally, delete the copy instruction.
   RemoveMachineInstrFromMaps(CopyMI);
@@ -1444,29 +1387,6 @@ bool LiveIntervals::differingRegisterClasses(unsigned RegA,
     return RegClass != mf_->getSSARegMap()->getRegClass(RegB);
   else
     return !RegClass->contains(RegB);
-}
-
-/// hasRegisterUse - Returns true if there is any use of the specific
-/// reg between indexes Start and End.
-bool
-LiveIntervals::hasRegisterUse(unsigned Reg, unsigned Start, unsigned End) {
-  for (unsigned Index = Start+InstrSlots::NUM; Index != End;
-       Index += InstrSlots::NUM) {
-    // Skip deleted instructions
-    while (Index != End && !getInstructionFromIndex(Index))
-      Index += InstrSlots::NUM;
-    if (Index >= End) break;
-
-    MachineInstr *MI = getInstructionFromIndex(Index);
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg() && MO.isUse() && MO.getReg() &&
-          mri_->regsOverlap(rep(MO.getReg()), Reg))
-        return true;
-    }
-  }
-
-  return false;
 }
 
 LiveInterval LiveIntervals::createInterval(unsigned reg) {

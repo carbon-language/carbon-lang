@@ -118,7 +118,7 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   const MRegisterInfo *MRI = MF->getTarget().getRegisterInfo();  
   if (livein_begin() != livein_end()) {
     OS << "Live Ins:";
-    for (const_livein_iterator I = livein_begin(),E = livein_end(); I != E; ++I)
+    for (livein_iterator I = livein_begin(), E = livein_end(); I != E; ++I)
       OutputReg(OS, *I, MRI);
     OS << "\n";
   }
@@ -142,12 +142,6 @@ void MachineBasicBlock::print(std::ostream &OS) const {
       OS << " " << *SI;
     OS << "\n";
   }
-}
-
-void MachineBasicBlock::removeLiveIn(unsigned Reg) {
-  livein_iterator I = std::find(livein_begin(), livein_end(), Reg);
-  assert(I != livein_end() && "Not a live in!");
-  LiveIns.erase(I);
 }
 
 void MachineBasicBlock::moveBefore(MachineBasicBlock *NewAfter) {

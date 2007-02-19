@@ -67,8 +67,6 @@ public:
 
   const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
 
-  BitVector getReservedRegs(const MachineFunction &MF) const;
-
   bool hasFP(const MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
