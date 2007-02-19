@@ -550,10 +550,6 @@ public:
   ///
   static Constant *getSizeOf(const Type *Ty);
 
-  /// getPtrPtrFromArrayPtr constant expr - given a pointer to a constant array,
-  /// return a pointer to a pointer of the array element type.
-  static Constant *getPtrPtrFromArrayPtr(Constant *C);
-
   /// ConstantExpr::get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
@@ -592,16 +588,6 @@ public:
                                     Constant* const *IdxList, unsigned NumIdx);
   static Constant *getGetElementPtr(Constant *C,
                                     Value* const *IdxList, unsigned NumIdx);
-  
-  // FIXME: Remove these.
-  static Constant *getGetElementPtr(Constant *C,
-                                    const std::vector<Constant*> &IdxList) {
-    return getGetElementPtr(C, &IdxList[0], IdxList.size());
-  }
-  static Constant *getGetElementPtr(Constant *C,
-                                    const std::vector<Value*> &IdxList) {
-    return getGetElementPtr(C, &IdxList[0], IdxList.size());
-  }
   
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
