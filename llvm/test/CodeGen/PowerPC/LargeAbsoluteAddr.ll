@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep 'stw r3, 32751' &&
-; RUN: llvm-as < %s | llc -march=ppc64 | grep 'stw r3, 32751' &&
-; RUN: llvm-as < %s | llc -march=ppc64 | grep 'std r2, 9024' &&
+; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin | grep 'stw r3, 32751' &&
+; RUN: llvm-as < %s | llc -march=ppc64 -mtriple=powerpc-apple-darwin | grep 'stw r3, 32751' &&
+; RUN: llvm-as < %s | llc -march=ppc64 -mtriple=powerpc-apple-darwin | grep 'std r2, 9024' &&
 ; RUN: llvm-as < %s | llc
 
 define void @test() {
