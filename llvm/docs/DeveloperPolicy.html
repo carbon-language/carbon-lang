@@ -36,7 +36,6 @@
     <li><a href="#license">License</a></li>
     <li><a href="#devagree">Developer Agreements</a></li>
   </ol></li>
-  <li><a href="#terms">Terminology</a></li>
 </ol>
 <div class="doc_author">Written by LLVM Oversight Team</div>
 
@@ -114,47 +113,6 @@
     else.</li>
   </ol>
 </div>
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsection"> <a name="quality">Quality</a></div>
-<div class="doc_text">
-  <p>The minimum quality standards that any change must satisfy before being
-    committed to the main development branch are:</p>
-  <ol>
-    <li>Code must adhere to the 
-    <a href="CodingStandards.html">LLVM Coding Standards</a>.</li>
-    <li>Code must compile cleanly (no errors, no warnings) on at least one 
-    platform.</li>
-    <li>Code must pass the deja gnu (llvm/test) test suite.</li>
-    <li>The code must not cause regressions on a reasonable subset of llvm-test,
-        where "reasonable" depends on the contributor's judgement and the scope
-        of the change (more invasive changes require more testing). A reasonable
-        subset is "<tt>llvm-test/MultiSource/Benchmarks</tt>".</li>
-  </ol>
-  <p>Additionally, the committer is responsible for addressing any problems
-  found that the change is responsible for.  For example:</p>
-  <ul>
-    <li>The code should compile cleanly on all platforms.</li>
-    <li>The changes should not cause regressions in the <tt>llvm-test</tt>
-    suite including SPEC CINT2000, SPEC CFP2000, SPEC CINT2006, and 
-    SPEC CFP2006.</li>
-    <li>The change set should not cause performance or correctness regressions 
-    for the LLVM tools.</li>
-    <li>The changes should not cause performance or correctness regressions in 
-    code compiled by LLVM on all applicable targets.</li>
-    <li>You are expected to address any <a href="http://llvm.org/bugs/">bugzilla
-    bugs</a> that result from your change.</li>
-  </ul>
-  
-  <p>We prefer for this to be handled before submission but understand that it's
-     not possible to test all of this for every submission.  Our nightly testing
-     infrastructure normally finds these problems.  A good rule of thumb is to 
-     check the nightly testers for regressions the day after your change.</p>
-     
-  <p>Commits that violate these quality standards (e.g. are very broken) may
-    be reverted. This is necessary when the change blocks other developers from
-    making progress. The developer is welcome to re-commit the change after 
-    the problem has been fixed.</p>
-</div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"> <a name="testcases">Test Cases</a></div>
@@ -180,6 +138,51 @@
     added to the <tt>llvm-test</tt> test suite.  This test suite is for 
     coverage: not features or regressions.</li>
   </ol>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"> <a name="quality">Quality</a></div>
+<div class="doc_text">
+  <p>The minimum quality standards that any change must satisfy before being
+    committed to the main development branch are:</p>
+  <ol>
+    <li>Code must adhere to the 
+    <a href="CodingStandards.html">LLVM Coding Standards</a>.</li>
+    <li>Code must compile cleanly (no errors, no warnings) on at least one 
+    platform.</li>
+    <li>Bug fixes and new features should <a href="#testcases">include a
+        testcase</a> so we know if the fix/feature ever regresses in the
+        future.</li>
+    <li>Code must pass the dejagnu (llvm/test) test suite.</li>
+    <li>The code must not cause regressions on a reasonable subset of llvm-test,
+        where "reasonable" depends on the contributor's judgement and the scope
+        of the change (more invasive changes require more testing). A reasonable
+        subset is "<tt>llvm-test/MultiSource/Benchmarks</tt>".</li>
+  </ol>
+  <p>Additionally, the committer is responsible for addressing any problems
+  found in the future that the change is responsible for.  For example:</p>
+  <ul>
+    <li>The code should compile cleanly on all platforms.</li>
+    <li>The changes should not cause regressions in the <tt>llvm-test</tt>
+    suite including SPEC CINT2000, SPEC CFP2000, SPEC CINT2006, and 
+    SPEC CFP2006.</li>
+    <li>The change set should not cause performance or correctness regressions 
+    for the LLVM tools.</li>
+    <li>The changes should not cause performance or correctness regressions in 
+    code compiled by LLVM on all applicable targets.</li>
+    <li>You are expected to address any <a href="http://llvm.org/bugs/">bugzilla
+    bugs</a> that result from your change.</li>
+  </ul>
+  
+  <p>We prefer for this to be handled before submission but understand that it's
+     not possible to test all of this for every submission.  Our nightly testing
+     infrastructure normally finds these problems.  A good rule of thumb is to 
+     check the nightly testers for regressions the day after your change.</p>
+     
+  <p>Commits that violate these quality standards (e.g. are very broken) may
+    be reverted. This is necessary when the change blocks other developers from
+    making progress. The developer is welcome to re-commit the change after 
+    the problem has been fixed.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -486,33 +489,6 @@ Changes</a></div>
   implies that any contributions can be licensed under the license that the
   project uses.</li>
   </ul>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_section"><a name="terms">Terminology</a></div>
-<!--=========================================================================-->
-<div class="doc_text">
-  <p>So that the policies defined in this document are clear, we define some 
-  terms here.</p>
-  <dl>
-    <dt><a name="t_change">Change</a></dt>
-    <dd>Any modification to LLVM including documentation, tests, build system,
-    etc. either in <a href="#t_patch">patch</a> or 
-    <a href="#t_commit">commit</a> form.</dd>
-    <dt><a name="t_commit">Commit</a><dt>
-    <dd>A <a href="t_change">change</a> submitted directly to LLVM software
-    repository via the <tt>cvs commit</tt> command.</dd>
-    <dt><a name="t_developer">Developer</a></dt>
-    <dd>Anyone who submits a <a href="#t_change">change</a> to LLVM.</dd>
-    <dt><a name="t_inrement">Increment</a></dt>
-    <dd>A <a href="#t_change">change</a> or set of changes, whether by
-    <a href="#t_patch">patch</a> or <a href="#t_commit">commit</a>, that are 
-    related by a single common purpose. Increments are atomic as they 
-    leave LLVM in a stable state (both compiling and working properly).</dd> 
-    <dt><a name="t_patch">Patch</a></dt>
-    <dd>A <a href="#t_change">change</a> submitted by email in patch (diff) 
-    format generated by the <tt>cvs diff</tt> command.</dd>
-  </dl>
 </div>
 
 <!-- *********************************************************************** -->
