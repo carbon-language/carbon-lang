@@ -233,12 +233,6 @@ namespace {
     }
   private:
     void RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM);
-    void ClobberPhysReg(unsigned PR, std::map<int, unsigned> &SpillSlots,
-                        std::multimap<unsigned, int> &PhysRegs);
-    void ClobberPhysRegOnly(unsigned PR, std::map<int, unsigned> &SpillSlots,
-                            std::multimap<unsigned, int> &PhysRegs);
-    void ModifyStackSlot(int Slot, std::map<int, unsigned> &SpillSlots,
-                         std::multimap<unsigned, int> &PhysRegs);
   };
 }
 
