@@ -44,10 +44,8 @@ protected:
   uint64_t Val;
 protected:
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
-  ConstantInt(const Type *Ty, uint64_t V);
-  ConstantInt(const Type *Ty, int64_t V);
-  ConstantInt(bool V);
-  friend struct ConstantCreator<ConstantInt, Type, uint64_t>;
+  ConstantInt(const IntegerType *Ty, uint64_t V);
+  friend struct ConstantCreator<ConstantInt, IntegerType, uint64_t>;
 public:
   /// Return the constant as a 64-bit unsigned integer value after it
   /// has been zero extended as appropriate for the type of this constant.
@@ -77,12 +75,12 @@ public:
   static inline ConstantInt *getTrue() {
     static ConstantInt *T = 0;
     if (T) return T;
-    return T = new ConstantInt(true);
+    return T = new ConstantInt(Type::Int1Ty, 1);
   }
   static inline ConstantInt *getFalse() {
     static ConstantInt *F = 0;
     if (F) return F;
-    return F = new ConstantInt(false);
+    return F = new ConstantInt(Type::Int1Ty, 0);
   }
 
   /// Return a ConstantInt with the specified value for the specified type. The

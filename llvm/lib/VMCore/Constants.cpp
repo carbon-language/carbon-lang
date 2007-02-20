@@ -140,12 +140,8 @@ ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty) {
 //===----------------------------------------------------------------------===//
 //                             Normal Constructors
 
-ConstantInt::ConstantInt(bool V) 
-  : Constant(Type::Int1Ty, ConstantIntVal, 0, 0), Val(uint64_t(V)) {
-}
-
-ConstantInt::ConstantInt(const Type *Ty, uint64_t V)
-  : Constant(Ty, ConstantIntVal, 0, 0), Val(Ty == Type::Int1Ty ? bool(V) : V) {
+ConstantInt::ConstantInt(const IntegerType *Ty, uint64_t V)
+  : Constant(Ty, ConstantIntVal, 0, 0), Val(V) {
 }
 
 ConstantFP::ConstantFP(const Type *Ty, double V)
@@ -802,7 +798,7 @@ public:
 
 //---- ConstantInt::get() implementations...
 //
-static ManagedStatic<ValueMap<uint64_t, Type, ConstantInt> > IntConstants;
+static ManagedStatic<ValueMap<uint64_t, IntegerType, ConstantInt> >IntConstants;
 
 // Get a ConstantInt from an int64_t. Note here that we canoncialize the value
 // to a uint64_t value that has been zero extended down to the size of the
@@ -810,12 +806,13 @@ static ManagedStatic<ValueMap<uint64_t, Type, ConstantInt> > IntConstants;
 // just return the stored value while getSExtValue has to convert back to sign
 // extended. getZExtValue is more common in LLVM than getSExtValue().
 ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
-  if (Ty == Type::Int1Ty) 
+  const IntegerType *ITy = cast<IntegerType>(Ty);
+  if (Ty == Type::Int1Ty)
     if (V & 1)
       return getTrue();
     else
       return getFalse();
-  return IntConstants->getOrCreate(Ty, V & cast<IntegerType>(Ty)->getBitMask());
+  return IntConstants->getOrCreate(ITy, V & ITy->getBitMask());
 }
 
 //---- ConstantFP::get() implementation...
