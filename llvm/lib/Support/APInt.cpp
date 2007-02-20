@@ -17,6 +17,7 @@
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
 #include <cstdlib>
+#include <cmath>
 using namespace llvm;
 
 // A utility function for allocating memory, checking for allocation failures,
@@ -837,9 +838,9 @@ double APInt::roundToDouble(bool isSigned) const {
   // Return infinity for exponent overflow
   if (exp > 1023) {
     if (!isSigned || !isNeg)
-      return double(0x0.0p2047L); // positive infinity
+      return double(INFINITY); // positive infinity
     else 
-      return double(-0x0.0p2047L); // negative infinity
+      return double(-INFINITY); // negative infinity
   }
   exp += 1023; // Increment for 1023 bias
 
