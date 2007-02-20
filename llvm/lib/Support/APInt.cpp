@@ -17,7 +17,6 @@
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
 #include <cstdlib>
-#include <cmath>
 using namespace llvm;
 
 // A utility function for allocating memory, checking for allocation failures,
@@ -331,7 +330,8 @@ static void mul(uint64_t dest[], uint64_t x[], uint32_t xlen,
 /// given APInt& RHS and assigns the result to this APInt.
 APInt& APInt::operator*=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord()) VAL *= RHS.isSingleWord() ? RHS.VAL : RHS.pVal[0];
+  if (isSingleWord()) 
+    VAL *= RHS.VAL;
   else {
     // one-based first non-zero bit position.
     uint32_t first = getActiveBits();
@@ -456,10 +456,10 @@ bool APInt::operator !() const {
 /// RHS.
 APInt APInt::operator*(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  APInt API(RHS);
-  API *= *this;
-  API.clearUnusedBits();
-  return API;
+  APInt Result(*this);
+  Result *= RHS;
+  Result.clearUnusedBits();
+  return Result;
 }
 
 /// @brief Addition operator. Adds this APInt by the given APInt& RHS.
@@ -838,9 +838,9 @@ double APInt::roundToDouble(bool isSigned) const {
   // Return infinity for exponent overflow
   if (exp > 1023) {
     if (!isSigned || !isNeg)
-      return double(INFINITY); // positive infinity
+      return double(1.0E300 * 1.0E300); // positive infinity
     else 
-      return double(-INFINITY); // negative infinity
+      return double(-1.0E300 * 1.0E300); // negative infinity
   }
   exp += 1023; // Increment for 1023 bias
 
