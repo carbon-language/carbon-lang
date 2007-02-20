@@ -172,8 +172,6 @@ private:
 ///
 class ConstantFP : public Constant {
   double Val;
-  friend struct ConstantCreator<ConstantFP, Type, uint64_t>;
-  friend struct ConstantCreator<ConstantFP, Type, uint32_t>;
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
 protected:
   ConstantFP(const Type *Ty, double V);
