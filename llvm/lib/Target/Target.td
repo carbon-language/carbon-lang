@@ -39,7 +39,7 @@ class Register<string n> {
   int SpillAlignment = 0;
 
   // Aliases - A list of registers that this register overlaps with.  A read or
-  // modification of this register can potentially read or modifie the aliased
+  // modification of this register can potentially read or modify the aliased
   // registers.
   //
   list<Register> Aliases = [];
