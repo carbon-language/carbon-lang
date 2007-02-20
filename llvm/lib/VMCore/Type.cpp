@@ -783,15 +783,7 @@ public:
     print("add");
   }
   
-  void clear(std::vector<Type *> &DerivedTypes) {
-    for (typename std::map<ValType, PATypeHolder>::iterator I = Map.begin(),
-         E = Map.end(); I != E; ++I)
-      DerivedTypes.push_back(I->second.get());
-    TypesByHash.clear();
-    Map.clear();
-  }
-
- /// RefineAbstractType - This method is called after we have merged a type
+  /// RefineAbstractType - This method is called after we have merged a type
   /// with another one.  We must now either merge the type away with
   /// some other type or reinstall it in the map with it's new configuration.
   void RefineAbstractType(TypeClass *Ty, const DerivedType *OldType,
