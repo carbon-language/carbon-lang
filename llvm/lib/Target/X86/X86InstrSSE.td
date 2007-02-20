@@ -544,10 +544,14 @@ def Int_CMPSSrm : SSI<0xC2, MRMSrcMem,
                                          (load addr:$src), imm:$cc))]>;
 def Int_CMPSDrr : SDI<0xC2, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
-                      "cmp${cc}sd {$src, $dst|$dst, $src}", []>;
+                      "cmp${cc}sd {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse2_cmp_sd VR128:$src1,
+                                         VR128:$src, imm:$cc))]>;
 def Int_CMPSDrm : SDI<0xC2, MRMSrcMem, 
                       (ops VR128:$dst, VR128:$src1, f64mem:$src, SSECC:$cc),
-                      "cmp${cc}sd {$src, $dst|$dst, $src}", []>;
+                      "cmp${cc}sd {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse2_cmp_sd VR128:$src1,
+                                         (load addr:$src), imm:$cc))]>;
 }
 
 def Int_UCOMISSrr: PSI<0x2E, MRMSrcReg, (ops VR128:$src1, VR128:$src2),
