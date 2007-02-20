@@ -30,7 +30,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *ObjPtr,
 }
 
 void ManagedStaticBase::destroy() const {
-  assert(Ptr && DeleterFn && "ManagedStatic not initialized correctly!");
+  assert(DeleterFn && "ManagedStatic not initialized correctly!");
   assert(StaticList == this &&
          "Not destroyed in reverse order of construction?");
   // Unlink from list.
