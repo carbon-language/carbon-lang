@@ -19,29 +19,14 @@ namespace llvm {
 class ModulePass;
 class FunctionPass;
 
-// Reoptimizer support pass: add instrumentation calls to back-edges of loops
-FunctionPass *createLoopInstrumentationPass ();
-
-// Reoptimizer support pass: combine multiple back-edges w/ same target into one
-FunctionPass *createCombineBranchesPass();
-
-// Reoptimizer support pass: emit table of global functions
-ModulePass *createEmitFunctionTablePass ();
-
-// Reoptimizer support pass: insert function profiling instrumentation
+// Insert function profiling instrumentation
 ModulePass *createFunctionProfilerPass();
 
-// Reoptimizer support pass: insert block profiling instrumentation
+// Insert block profiling instrumentation
 ModulePass *createBlockProfilerPass();
 
-// Reoptimizer support pass: insert edge profiling instrumentation
+// Insert edge profiling instrumentation
 ModulePass *createEdgeProfilerPass();
-
-// Reoptimizer support pass: insert basic block tracing instrumentation
-ModulePass *createTraceBasicBlockPass();
-
-// Reoptimizer support pass: insert counting of execute paths instrumentation
-FunctionPass *createProfilePathsPass();
 
 // Random Sampling Profiling Framework
 ModulePass* createNullProfilerRSPass();
