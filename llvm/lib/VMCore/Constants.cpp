@@ -89,45 +89,14 @@ bool Constant::canTrap() const {
   }
 }
 
-
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
-  case Type::IntegerTyID: {
-    const IntegerType *ITy = dyn_cast<IntegerType>(Ty);
-    switch (ITy->getBitWidth()) {
-    case 1: {
-      static Constant *NullBool = ConstantInt::get(Ty, false);
-      return NullBool;
-    } 
-    case 8: {
-      static Constant *NullInt8 = ConstantInt::get(Ty, 0);
-      return NullInt8;
-    } 
-    case 16: {
-      static Constant *NullInt16 = ConstantInt::get(Ty, 0);
-      return NullInt16;
-    } 
-    case 32: {
-      static Constant *NullInt32 = ConstantInt::get(Ty, 0);
-      return NullInt32;
-    } 
-    case 64: {
-      static Constant *NullInt64 = ConstantInt::get(Ty, 0);
-      return NullInt64;
-    }
-    default:
-      return ConstantInt::get(Ty, 0);
-    }
-  }
-  case Type::FloatTyID: {
-    static Constant *NullFloat = ConstantFP::get(Type::FloatTy, 0);
-    return NullFloat;
-  }
-  case Type::DoubleTyID: {
-    static Constant *NullDouble = ConstantFP::get(Type::DoubleTy, 0);
-    return NullDouble;
-  }
+  case Type::IntegerTyID:
+    return ConstantInt::get(Ty, 0);
+  case Type::FloatTyID:
+  case Type::DoubleTyID:
+    return ConstantFP::get(Ty, 0.0);
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:
