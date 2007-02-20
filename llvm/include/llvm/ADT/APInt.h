@@ -128,6 +128,11 @@ public:
   void fromString(uint32_t numBits, const char *StrStart, uint32_t slen, 
                   uint8_t radix);
 
+  /// @brief An internal division function for dividing APInts.
+  static void divide(const APInt LHS, uint32_t lhsWords, 
+                     const APInt &RHS, uint32_t rhsWords,
+                     APInt *Quotient, APInt *Remainder);
+
 public:
   /// @brief Create a new APInt of numBits bit-width, and initialized as val.
   APInt(uint32_t numBits, uint64_t val);
