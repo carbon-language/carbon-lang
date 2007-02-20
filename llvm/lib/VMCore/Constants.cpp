@@ -22,6 +22,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>
 #include <map>
@@ -134,15 +135,73 @@ ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty) {
 
 
 //===----------------------------------------------------------------------===//
-//                            ConstantXXX Classes
+//                                ConstantInt
 //===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//                             Normal Constructors
 
 ConstantInt::ConstantInt(const IntegerType *Ty, uint64_t V)
   : Constant(Ty, ConstantIntVal, 0, 0), Val(V) {
 }
+
+ConstantInt *ConstantInt::TheTrueVal = 0;
+ConstantInt *ConstantInt::TheFalseVal = 0;
+
+namespace llvm {
+  void CleanupTrueFalse(void *) {
+    ConstantInt::ResetTrueFalse();
+  }
+}
+
+static ManagedCleanup<llvm::CleanupTrueFalse> TrueFalseCleanup;
+
+ConstantInt *ConstantInt::CreateTrueFalseVals(bool WhichOne) {
+  assert(TheTrueVal == 0 && TheFalseVal == 0);
+  TheTrueVal  = get(Type::Int1Ty, 1);
+  TheFalseVal = get(Type::Int1Ty, 0);
+  
+  // Ensure that llvm_shutdown nulls out TheTrueVal/TheFalseVal.
+  TrueFalseCleanup.Register();
+  
+  return WhichOne ? TheTrueVal : TheFalseVal;
+}
+
+
+//---- ConstantInt::get() implementations...
+//
+// Provide DenseMapKeyInfo for all pointers.
+namespace {
+  struct DenseMapIntegerKeyInfo {
+    typedef std::pair<uint64_t, const IntegerType*> KeyTy;
+    static inline KeyTy getEmptyKey() { return KeyTy(0, 0); }
+    static inline KeyTy getTombstoneKey() { return KeyTy(1, 0); }
+    static unsigned getHashValue(const KeyTy &Key) {
+      return DenseMapKeyInfo<void*>::getHashValue(Key.second) ^ Key.first;
+    }
+    static bool isPod() { return true; }
+  };
+}
+
+
+typedef DenseMap<DenseMapIntegerKeyInfo::KeyTy, ConstantInt*, 
+DenseMapIntegerKeyInfo> IntMapTy;
+static ManagedStatic<IntMapTy> IntConstants;
+
+// Get a ConstantInt from an int64_t. Note here that we canoncialize the value
+// to a uint64_t value that has been zero extended down to the size of the
+// integer type of the ConstantInt. This allows the getZExtValue method to 
+// just return the stored value while getSExtValue has to convert back to sign
+// extended. getZExtValue is more common in LLVM than getSExtValue().
+ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
+  const IntegerType *ITy = cast<IntegerType>(Ty);
+  V &= ITy->getBitMask();
+  ConstantInt *&Slot = (*IntConstants)[std::make_pair(uint64_t(V), ITy)];
+  if (Slot) return Slot;
+  return Slot = new ConstantInt(ITy, V);
+}
+
+//===----------------------------------------------------------------------===//
+//                            ConstantXXX Classes
+//===----------------------------------------------------------------------===//
+
 
 ConstantFP::ConstantFP(const Type *Ty, double V)
   : Constant(Ty, ConstantFPVal, 0, 0) {
@@ -598,15 +657,6 @@ namespace llvm {
     ///
     AbstractTypeMapTy AbstractTypeMap;
 
-  private:
-    void clear(std::vector<Constant *> &Constants) {
-      for(typename MapTy::iterator I = Map.begin(); I != Map.end(); ++I)
-        Constants.push_back(I->second);
-      Map.clear();
-      AbstractTypeMap.clear();
-      InverseMap.clear();
-    }
-
   public:
     typename MapTy::iterator map_end() { return Map.end(); }
     
@@ -794,43 +844,6 @@ public:
     }
   };
 }
-
-
-//---- ConstantInt::get() implementations...
-//
-static ManagedStatic<ValueMap<uint64_t, IntegerType, ConstantInt> >IntConstants;
-
-
-// Get a ConstantInt from an int64_t. Note here that we canoncialize the value
-// to a uint64_t value that has been zero extended down to the size of the
-// integer type of the ConstantInt. This allows the getZExtValue method to 
-// just return the stored value while getSExtValue has to convert back to sign
-// extended. getZExtValue is more common in LLVM than getSExtValue().
-ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
-  const IntegerType *ITy = cast<IntegerType>(Ty);
-  return IntConstants->getOrCreate(ITy, V & ITy->getBitMask());
-}
-
-ConstantInt *ConstantInt::TheTrueVal = 0;
-ConstantInt *ConstantInt::TheFalseVal = 0;
-
-void CleanupTrueFalse(void *) {
-  ConstantInt::ResetTrueFalse();
-}
-
-static ManagedCleanup<CleanupTrueFalse> TrueFalseCleanup;
-
-ConstantInt *ConstantInt::CreateTrueFalseVals(bool WhichOne) {
-  assert(TheTrueVal == 0 && TheFalseVal == 0);
-  TheTrueVal  = get(Type::Int1Ty, 1);
-  TheFalseVal = get(Type::Int1Ty, 0);
-  
-  // Ensure that llvm_shutdown nulls out TheTrueVal/TheFalseVal.
-  TrueFalseCleanup.Register();
-  
-  return WhichOne ? TheTrueVal : TheFalseVal;
-}
-
 
 
 

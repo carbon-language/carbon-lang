@@ -41,12 +41,9 @@ struct ConvertConstantType;
 /// @brief Class for constant integers.
 class ConstantInt : public Constant {
   static ConstantInt *TheTrueVal, *TheFalseVal;
-protected:
-  uint64_t Val;
-protected:
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
   ConstantInt(const IntegerType *Ty, uint64_t V);
-  friend struct ConstantCreator<ConstantInt, IntegerType, uint64_t>;
+  uint64_t Val;
 public:
   /// Return the constant as a 64-bit unsigned integer value after it
   /// has been zero extended as appropriate for the type of this constant.
