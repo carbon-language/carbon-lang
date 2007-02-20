@@ -61,7 +61,6 @@ namespace {
       (void) llvm::createDeadStoreEliminationPass();
       (void) llvm::createDeadTypeEliminationPass();
       (void) llvm::createEdgeProfilerPass();
-      (void) llvm::createEmitFunctionTablePass();
       (void) llvm::createFunctionInliningPass();
       (void) llvm::createFunctionProfilerPass();
       (void) llvm::createGCSEPass();
@@ -103,7 +102,6 @@ namespace {
       (void) llvm::createStripSymbolsPass();
       (void) llvm::createTailCallEliminationPass();
       (void) llvm::createTailDuplicationPass();
-      (void) llvm::createTraceBasicBlockPass();
       (void) llvm::createUnifyFunctionExitNodesPass();
       (void) llvm::createCondPropagationPass();
       (void) llvm::createNullProfilerRSPass();
