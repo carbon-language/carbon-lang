@@ -248,7 +248,7 @@ ConstantFP *ConstantFP::get(const Type *Ty, double V) {
     uint64_t IntVal = DoubleToBits(V);
     ConstantFP *&Slot = (*DoubleConstants)[std::make_pair(IntVal, Ty)];
     if (Slot) return Slot;
-    return Slot = new ConstantFP(Ty, (float)V);
+    return Slot = new ConstantFP(Ty, V);
   }
 }
 
