@@ -165,12 +165,9 @@ ConstantInt *ConstantInt::CreateTrueFalseVals(bool WhichOne) {
 }
 
 
-//---- ConstantInt::get() implementations...
-//
-// Provide DenseMapKeyInfo for all pointers.
 namespace {
-  struct DenseMapIntegerKeyInfo {
-    typedef std::pair<uint64_t, const IntegerType*> KeyTy;
+  struct DenseMapInt64KeyInfo {
+    typedef std::pair<uint64_t, const Type*> KeyTy;
     static inline KeyTy getEmptyKey() { return KeyTy(0, 0); }
     static inline KeyTy getTombstoneKey() { return KeyTy(1, 0); }
     static unsigned getHashValue(const KeyTy &Key) {
@@ -181,8 +178,8 @@ namespace {
 }
 
 
-typedef DenseMap<DenseMapIntegerKeyInfo::KeyTy, ConstantInt*, 
-DenseMapIntegerKeyInfo> IntMapTy;
+typedef DenseMap<DenseMapInt64KeyInfo::KeyTy, ConstantInt*, 
+                 DenseMapInt64KeyInfo> IntMapTy;
 static ManagedStatic<IntMapTy> IntConstants;
 
 // Get a ConstantInt from an int64_t. Note here that we canoncialize the value
@@ -193,21 +190,73 @@ static ManagedStatic<IntMapTy> IntConstants;
 ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
   const IntegerType *ITy = cast<IntegerType>(Ty);
   V &= ITy->getBitMask();
-  ConstantInt *&Slot = (*IntConstants)[std::make_pair(uint64_t(V), ITy)];
+  ConstantInt *&Slot = (*IntConstants)[std::make_pair(uint64_t(V), Ty)];
   if (Slot) return Slot;
   return Slot = new ConstantInt(ITy, V);
 }
 
 //===----------------------------------------------------------------------===//
-//                            ConstantXXX Classes
+//                                ConstantFP
 //===----------------------------------------------------------------------===//
 
 
 ConstantFP::ConstantFP(const Type *Ty, double V)
   : Constant(Ty, ConstantFPVal, 0, 0) {
-  assert(isValueValidForType(Ty, V) && "Value too large for type!");
   Val = V;
 }
+
+bool ConstantFP::isNullValue() const {
+  return DoubleToBits(Val) == 0;
+}
+
+bool ConstantFP::isExactlyValue(double V) const {
+  return DoubleToBits(V) == DoubleToBits(Val);
+}
+
+
+namespace {
+  struct DenseMapInt32KeyInfo {
+    typedef std::pair<uint32_t, const Type*> KeyTy;
+    static inline KeyTy getEmptyKey() { return KeyTy(0, 0); }
+    static inline KeyTy getTombstoneKey() { return KeyTy(1, 0); }
+    static unsigned getHashValue(const KeyTy &Key) {
+      return DenseMapKeyInfo<void*>::getHashValue(Key.second) ^ Key.first;
+    }
+    static bool isPod() { return true; }
+  };
+}
+
+//---- ConstantFP::get() implementation...
+//
+typedef DenseMap<DenseMapInt32KeyInfo::KeyTy, ConstantFP*, 
+                 DenseMapInt32KeyInfo> FloatMapTy;
+typedef DenseMap<DenseMapInt64KeyInfo::KeyTy, ConstantFP*, 
+                 DenseMapInt64KeyInfo> DoubleMapTy;
+
+static ManagedStatic<FloatMapTy> FloatConstants;
+static ManagedStatic<DoubleMapTy> DoubleConstants;
+
+ConstantFP *ConstantFP::get(const Type *Ty, double V) {
+  if (Ty == Type::FloatTy) {
+    uint32_t IntVal = FloatToBits((float)V);
+    
+    ConstantFP *&Slot = (*FloatConstants)[std::make_pair(IntVal, Ty)];
+    if (Slot) return Slot;
+    return Slot = new ConstantFP(Ty, (float)V);
+  } else {
+    assert(Ty == Type::DoubleTy);
+    uint64_t IntVal = DoubleToBits(V);
+    ConstantFP *&Slot = (*DoubleConstants)[std::make_pair(IntVal, Ty)];
+    if (Slot) return Slot;
+    return Slot = new ConstantFP(Ty, (float)V);
+  }
+}
+
+
+//===----------------------------------------------------------------------===//
+//                            ConstantXXX Classes
+//===----------------------------------------------------------------------===//
+
 
 ConstantArray::ConstantArray(const ArrayType *T,
                              const std::vector<Constant*> &V)
@@ -846,47 +895,6 @@ public:
 }
 
 
-
-//---- ConstantFP::get() implementation...
-//
-namespace llvm {
-  template<>
-  struct ConstantCreator<ConstantFP, Type, uint64_t> {
-    static ConstantFP *create(const Type *Ty, uint64_t V) {
-      assert(Ty == Type::DoubleTy);
-      return new ConstantFP(Ty, BitsToDouble(V));
-    }
-  };
-  template<>
-  struct ConstantCreator<ConstantFP, Type, uint32_t> {
-    static ConstantFP *create(const Type *Ty, uint32_t V) {
-      assert(Ty == Type::FloatTy);
-      return new ConstantFP(Ty, BitsToFloat(V));
-    }
-  };
-}
-
-static ManagedStatic<ValueMap<uint64_t, Type, ConstantFP> > DoubleConstants;
-static ManagedStatic<ValueMap<uint32_t, Type, ConstantFP> > FloatConstants;
-
-bool ConstantFP::isNullValue() const {
-  return DoubleToBits(Val) == 0;
-}
-
-bool ConstantFP::isExactlyValue(double V) const {
-  return DoubleToBits(V) == DoubleToBits(Val);
-}
-
-
-ConstantFP *ConstantFP::get(const Type *Ty, double V) {
-  if (Ty == Type::FloatTy) {
-    // Force the value through memory to normalize it.
-    return FloatConstants->getOrCreate(Ty, FloatToBits(V));
-  } else {
-    assert(Ty == Type::DoubleTy);
-    return DoubleConstants->getOrCreate(Ty, DoubleToBits(V));
-  }
-}
 
 //---- ConstantAggregateZero::get() implementation...
 //
