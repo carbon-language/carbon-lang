@@ -800,6 +800,7 @@ public:
 //
 static ManagedStatic<ValueMap<uint64_t, IntegerType, ConstantInt> >IntConstants;
 
+
 // Get a ConstantInt from an int64_t. Note here that we canoncialize the value
 // to a uint64_t value that has been zero extended down to the size of the
 // integer type of the ConstantInt. This allows the getZExtValue method to 
@@ -807,13 +808,31 @@ static ManagedStatic<ValueMap<uint64_t, IntegerType, ConstantInt> >IntConstants;
 // extended. getZExtValue is more common in LLVM than getSExtValue().
 ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
   const IntegerType *ITy = cast<IntegerType>(Ty);
-  if (Ty == Type::Int1Ty)
-    if (V & 1)
-      return getTrue();
-    else
-      return getFalse();
   return IntConstants->getOrCreate(ITy, V & ITy->getBitMask());
 }
+
+ConstantInt *ConstantInt::TheTrueVal = 0;
+ConstantInt *ConstantInt::TheFalseVal = 0;
+
+void CleanupTrueFalse(void *) {
+  ConstantInt::ResetTrueFalse();
+}
+
+static ManagedCleanup<CleanupTrueFalse> TrueFalseCleanup;
+
+ConstantInt *ConstantInt::CreateTrueFalseVals(bool WhichOne) {
+  assert(TheTrueVal == 0 && TheFalseVal == 0);
+  TheTrueVal  = get(Type::Int1Ty, 1);
+  TheFalseVal = get(Type::Int1Ty, 0);
+  
+  // Ensure that llvm_shutdown nulls out TheTrueVal/TheFalseVal.
+  TrueFalseCleanup.Register();
+  
+  return WhichOne ? TheTrueVal : TheFalseVal;
+}
+
+
+
 
 //---- ConstantFP::get() implementation...
 //

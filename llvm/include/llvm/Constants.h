@@ -40,6 +40,7 @@ struct ConvertConstantType;
 /// represents both boolean and integral constants.
 /// @brief Class for constant integers.
 class ConstantInt : public Constant {
+  static ConstantInt *TheTrueVal, *TheFalseVal;
 protected:
   uint64_t Val;
 protected:
@@ -73,14 +74,12 @@ public:
 
   /// getTrue/getFalse - Return the singleton true/false values.
   static inline ConstantInt *getTrue() {
-    static ConstantInt *T = 0;
-    if (T) return T;
-    return T = new ConstantInt(Type::Int1Ty, 1);
+    if (TheTrueVal) return TheTrueVal;
+    return CreateTrueFalseVals(true);
   }
   static inline ConstantInt *getFalse() {
-    static ConstantInt *F = 0;
-    if (F) return F;
-    return F = new ConstantInt(Type::Int1Ty, 0);
+    if (TheFalseVal) return TheFalseVal;
+    return CreateTrueFalseVals(false);
   }
 
   /// Return a ConstantInt with the specified value for the specified type. The
@@ -165,6 +164,9 @@ public:
   static bool classof(const Value *V) {
     return V->getValueType() == ConstantIntVal;
   }
+  static void ResetTrueFalse() { TheTrueVal = TheFalseVal = 0; }
+private:
+  static ConstantInt *CreateTrueFalseVals(bool WhichOne);
 };
 
 
