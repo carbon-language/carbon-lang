@@ -91,6 +91,14 @@ namespace ISD {
     // to the current function's frame or return address, an index of one to the
     // parent's frame or return address, and so on.
     FRAMEADDR, RETURNADDR,
+    
+    // RESULT, OUTCHAIN = EXCEPTIONADDR(INCHAIN) - This node represents the
+    // address of the exception block on entry to an landing pad block.
+    EXCEPTIONADDR,
+    
+    // RESULT, OUTCHAIN = EHSELECTION(INCHAIN, EXCEPTION) - This node represents
+    // the selection index of the exception thrown.
+    EHSELECTION,
 
     // TargetConstant* - Like Constant*, but the DAG does not do any folding or
     // simplification of the constant.
@@ -457,7 +465,7 @@ namespace ISD {
     //   Operand #0 : input chain.
     //   Operand #1 : module unique number use to identify the label.
     LABEL,
-
+    
     // STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a
     // value, the same type as the pointer type for the system, and an output
     // chain.
