@@ -74,10 +74,15 @@ public:
   /// LiveIns - Keep track of the physical registers that are livein of
   /// the basicblock.
   std::vector<unsigned> LiveIns;
+  
+  /// IsLandingPad - Indicate that this basic block is entered via an
+  /// exception handler.
+  bool IsLandingPad;
 
 public:
   MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb),
-                                                Number(-1), Parent(0) {
+                                                Number(-1), Parent(0),
+                                                IsLandingPad(false) {
     Insts.parent = this;
   }
 
@@ -151,6 +156,18 @@ public:
   livein_iterator       livein_end()         { return LiveIns.end(); }
   const_livein_iterator livein_end()   const { return LiveIns.end(); }
   bool            livein_empty() const { return LiveIns.empty(); }
+
+  /// isLandingPad - Returns true if the block is a landing pad. That is
+  /// this basic block is entered via an exception handler.
+  bool isLandingPad() const { return IsLandingPad; }
+
+  /// setIsLandingPad - Indicates the block is a landing pad.  That is
+  /// this basic block is entered via an exception handler.
+  void setIsLandingPad() { IsLandingPad = true; }
+
+  /// isAccessable - Returns true if the block is alive.  That is, if it has
+  /// predecessors or is an eh landing pad.
+  bool isAccessable() const { return !pred_empty() || isLandingPad(); }
 
   // Code Layout methods.
   
