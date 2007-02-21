@@ -192,9 +192,9 @@ APInt& APInt::operator--() {
 static uint64_t add(uint64_t dest[], uint64_t x[], uint64_t y[], uint32_t len) {
   uint64_t carry = 0;
   for (uint32_t i = 0; i< len; ++i) {
-    uint64_t save = std::max(x[i],y[i]);
     dest[i] = x[i] + y[i] + carry;
-    carry = dest[i] < save ? 1 : 0;
+    uint64_t limit = std::min(x[i],y[i]);
+    carry = dest[i] < limit || (carry && dest[i] == limit);
   }
   return carry;
 }
