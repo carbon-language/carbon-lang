@@ -1472,6 +1472,7 @@ MachineModuleInfo::MachineModuleInfo()
 , ScopeMap()
 , RootScope(NULL)
 , FrameMoves()
+, LandingPads()
 {}
 MachineModuleInfo::~MachineModuleInfo() {
 
@@ -1510,6 +1511,10 @@ void MachineModuleInfo::EndFunction() {
 
   // Clean up frame info.
   FrameMoves.clear();
+  
+  // Clean up exception info.
+  LandingPads.clear();
+  TypeInfos.clear();
 }
 
 /// getDescFor - Convert a Value to a debug information descriptor.
@@ -1639,6 +1644,95 @@ DebugScope *MachineModuleInfo::getOrCreateScope(DebugInfoDesc *ScopeDesc) {
   }
   return Slot;
 }
+
+//===-EH-------------------------------------------------------------------===//
+
+/// getOrCreateLandingPadInfo - Find or create an LandingPadInfo for the
+/// specified MachineBasicBlock.
+LandingPadInfo &MachineModuleInfo::getOrCreateLandingPadInfo
+    (MachineBasicBlock *LandingPad) {
+  unsigned N = LandingPads.size();
+  for (unsigned i = 0; i < N; ++i) {
+    LandingPadInfo &UI = LandingPads[i];
+    if (UI.LandingPadBlock == LandingPad)
+      return UI;
+  }
+  
+  LandingPads.push_back(LandingPadInfo(LandingPad));
+  return LandingPads[N];
+}
+
+/// addInvoke - Provide the begin and end labels of an invoke style call and
+/// associate it with a try landing pad block.
+void MachineModuleInfo::addInvoke(MachineBasicBlock *LandingPad,
+                                  unsigned BeginLabel, unsigned EndLabel) {
+  LandingPadInfo &UI = getOrCreateLandingPadInfo(LandingPad);
+  if (!UI.BeginLabel) UI.BeginLabel = BeginLabel;  
+  UI.EndLabel = EndLabel;  
+}
+
+/// addLandingPad - Provide the label of a try LandingPad block.
+///
+unsigned MachineModuleInfo::addLandingPad(MachineBasicBlock *LandingPad) {
+  unsigned LandingPadLabel = NextLabelID();
+  LandingPadInfo &UI = getOrCreateLandingPadInfo(LandingPad);
+  UI.LandingPadLabel = LandingPadLabel;  
+  return LandingPadLabel;
+}
+
+/// addPersonality - Provide the personality function for the exception
+/// information.
+void MachineModuleInfo::addPersonality(MachineBasicBlock *LandingPad,
+                                       Function *Personality) {
+  LandingPadInfo &UI = getOrCreateLandingPadInfo(LandingPad);
+  UI.Personality = Personality;
+}
+
+/// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.
+///
+void MachineModuleInfo::addCatchTypeInfo(MachineBasicBlock *LandingPad,
+                                        std::vector<GlobalVariable *> &TyInfo) {
+  LandingPadInfo &UI = getOrCreateLandingPadInfo(LandingPad);
+  for (unsigned N = TyInfo.size(); N; --N)
+    UI.TypeIds.push_back(getTypeIDFor(TyInfo[N - 1]));
+}
+                        
+/// TidyLandingPads - Remap landing pad labels and remove any deleted landing
+/// pads.
+void MachineModuleInfo::TidyLandingPads() {
+  for (unsigned i = 0; i != LandingPads.size(); ) {
+    LandingPadInfo &LandingPad = LandingPads[i];
+    LandingPad.BeginLabel = MappedLabel(LandingPad.BeginLabel);
+    LandingPad.EndLabel = MappedLabel(LandingPad.EndLabel);
+    LandingPad.LandingPadLabel = MappedLabel(LandingPad.LandingPadLabel);
+    
+    if (!LandingPad.BeginLabel ||
+        !LandingPad.EndLabel ||
+        !LandingPad.LandingPadLabel) {
+      LandingPads.erase(LandingPads.begin() + i);
+      continue;
+    }
+    
+    ++i;
+  }
+}
+
+/// getTypeIDFor - Return the type id for the specified typeinfo.  This is 
+/// function wide.
+unsigned MachineModuleInfo::getTypeIDFor(GlobalVariable *TI) {
+  for (unsigned i = 0, N = TypeInfos.size(); i != N; ++i)
+    if (TypeInfos[i] == TI) return i + 1;
+
+  TypeInfos.push_back(TI);
+  return TypeInfos.size();
+}
+
+/// getLandingPadInfos - Return a reference to the landing pad info for the
+/// current function.
+Function *MachineModuleInfo::getPersonality() const {
+  return !LandingPads.empty() ? LandingPads[0].Personality : NULL;
+}
+
 
 //===----------------------------------------------------------------------===//
 /// DebugLabelFolding pass - This pass prunes out redundant labels.  This allows

@@ -44,6 +44,7 @@ namespace llvm {
 class Constant;
 class DebugInfoDesc;
 class GlobalVariable;
+class MachineBasicBlock;
 class MachineFunction;
 class MachineMove;
 class Module;
@@ -949,6 +950,27 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// LandingPadInfo - This structure is used to retain landing pad info for
+/// the current function.
+///
+struct LandingPadInfo {
+  MachineBasicBlock *LandingPadBlock;   // Landing pad block.
+  unsigned BeginLabel;                  // Label prior to invoke.
+  unsigned EndLabel;                    // Label after invoke.
+  unsigned LandingPadLabel;             // Label at beginning of landing pad.
+  Function *Personality;                // Personality function.
+  std::vector<unsigned> TypeIds;        // List of type ids.
+  
+  LandingPadInfo(MachineBasicBlock *MBB)
+  : LandingPadBlock(MBB)
+  , BeginLabel(0)
+  , EndLabel(0)
+  , LandingPadLabel(0)
+  , TypeIds()
+  {}
+};
+
+//===----------------------------------------------------------------------===//
 /// MachineModuleInfo - This class contains meta information specific to a
 /// module.  Queries can be made by different debugging and exception handling 
 /// schemes and reformated for specific use.
@@ -987,6 +1009,14 @@ private:
   // FrameMoves - List of moves done by a function's prolog.  Used to construct
   // frame maps by debug and exception handling consumers.
   std::vector<MachineMove> FrameMoves;
+  
+  // LandingPads - List of LandingPadInfo describing the landing pad information
+  // in the current function.
+  std::vector<LandingPadInfo> LandingPads;
+  
+  // TypeInfos - List of C++ TypeInfo used in the currect function.
+  //
+  std::vector<GlobalVariable *> TypeInfos;
 
 public:
   MachineModuleInfo();
@@ -1147,6 +1177,54 @@ public:
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.
   std::vector<MachineMove> &getFrameMoves() { return FrameMoves; }
+  
+  //===-EH-----------------------------------------------------------------===//
+
+  /// getOrCreateLandingPadInfo - Find or create an LandingPadInfo for the
+  /// specified MachineBasicBlock.
+  LandingPadInfo &getOrCreateLandingPadInfo(MachineBasicBlock *LandingPad);
+
+  /// addInvoke - Provide the begin and end labels of an invoke style call and
+  /// associate it with a try landing pad block.
+  void addInvoke(MachineBasicBlock *LandingPad, unsigned BeginLabel,
+                                                unsigned EndLabel);
+  
+  /// addLandingPad - Add a new panding pad.  Returns the label ID for the 
+  /// landing pad entry.
+  unsigned addLandingPad(MachineBasicBlock *LandingPad);
+  
+  /// addPersonality - Provide the personality function for the exception
+  /// information.
+  void addPersonality(MachineBasicBlock *LandingPad, Function *Personality);
+  
+  /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.
+  ///
+  void addCatchTypeInfo(MachineBasicBlock *LandingPad,
+                        std::vector<GlobalVariable *> &TyInfo);
+                        
+  /// getTypeIDFor - Return the type id for the specified typeinfo.  This is 
+  /// function wide.
+  unsigned getTypeIDFor(GlobalVariable *TI);
+  
+  /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
+  /// pads.
+  void TidyLandingPads();
+                        
+  /// getLandingPadInfos - Return a reference to the landing pad info for the
+  /// current function.
+  const std::vector<LandingPadInfo> &getLandingPads() const {
+    return LandingPads;
+  }
+  
+  /// getTypeInfos - Return a reference to the C++ typeinfo for the current
+  /// function.
+  const std::vector<GlobalVariable *> &getTypeInfos() const {
+    return TypeInfos;
+  }
+  
+  /// getPersonality - Return a personality function if available.  The presence
+  /// of one is required to emit exception handling info.
+  Function *getPersonality() const;
 
 }; // End class MachineModuleInfo
 
