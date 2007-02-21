@@ -57,6 +57,9 @@ STATISTIC(NumSpilled, "Number of registers live across unwind edges");
 
 static cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
  cl::desc("Make the -lowerinvoke pass insert expensive, but correct, EH code"));
+ 
+static cl::opt<bool> ItaniumEHSupport("enable-real-eh-support",
+ cl::desc("Make the -lowerinvoke pass insert itanium ABI EH code"));
 
 namespace {
   class VISIBILITY_HIDDEN LowerInvoke : public FunctionPass {
@@ -94,6 +97,7 @@ namespace {
     void splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes);
     void rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                 AllocaInst *InvokeNum, SwitchInst *CatchSwitch);
+    bool insertItaniumEHSupport(Function &F);
     bool insertExpensiveEHSupport(Function &F);
   };
 
@@ -111,46 +115,50 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
-  const Type *VoidPtrTy = PointerType::get(Type::Int8Ty);
-  AbortMessage = 0;
-  if (ExpensiveEHSupport) {
-    // Insert a type for the linked list of jump buffers.
-    unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
-    JBSize = JBSize ? JBSize : 200;
-    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
+  if (ItaniumEHSupport) {
+    // Let Invoke pass through for ItaniumEHSupport support.
+  } else {
+    const Type *VoidPtrTy = PointerType::get(Type::Int8Ty);
+    AbortMessage = 0;
+    if (ExpensiveEHSupport) {
+      // Insert a type for the linked list of jump buffers.
+      unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
+      JBSize = JBSize ? JBSize : 200;
+      const Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
 
-    { // The type is recursive, so use a type holder.
-      std::vector<const Type*> Elements;
-      Elements.push_back(JmpBufTy);
-      OpaqueType *OT = OpaqueType::get();
-      Elements.push_back(PointerType::get(OT));
-      PATypeHolder JBLType(StructType::get(Elements));
-      OT->refineAbstractTypeTo(JBLType.get());  // Complete the cycle.
-      JBLinkTy = JBLType.get();
-      M.addTypeName("llvm.sjljeh.jmpbufty", JBLinkTy);
+      { // The type is recursive, so use a type holder.
+        std::vector<const Type*> Elements;
+        Elements.push_back(JmpBufTy);
+        OpaqueType *OT = OpaqueType::get();
+        Elements.push_back(PointerType::get(OT));
+        PATypeHolder JBLType(StructType::get(Elements));
+        OT->refineAbstractTypeTo(JBLType.get());  // Complete the cycle.
+        JBLinkTy = JBLType.get();
+        M.addTypeName("llvm.sjljeh.jmpbufty", JBLinkTy);
+      }
+
+      const Type *PtrJBList = PointerType::get(JBLinkTy);
+
+      // Now that we've done that, insert the jmpbuf list head global, unless it
+      // already exists.
+      if (!(JBListHead = M.getGlobalVariable("llvm.sjljeh.jblist", PtrJBList))){
+        JBListHead = new GlobalVariable(PtrJBList, false,
+                                        GlobalValue::LinkOnceLinkage,
+                                        Constant::getNullValue(PtrJBList),
+                                        "llvm.sjljeh.jblist", &M);
+      }
+      SetJmpFn = M.getOrInsertFunction("llvm.setjmp", Type::Int32Ty,
+                                       PointerType::get(JmpBufTy), (Type *)0);
+      LongJmpFn = M.getOrInsertFunction("llvm.longjmp", Type::VoidTy,
+                                        PointerType::get(JmpBufTy),
+                                        Type::Int32Ty, (Type *)0);
     }
 
-    const Type *PtrJBList = PointerType::get(JBLinkTy);
-
-    // Now that we've done that, insert the jmpbuf list head global, unless it
-    // already exists.
-    if (!(JBListHead = M.getGlobalVariable("llvm.sjljeh.jblist", PtrJBList))) {
-      JBListHead = new GlobalVariable(PtrJBList, false,
-                                      GlobalValue::LinkOnceLinkage,
-                                      Constant::getNullValue(PtrJBList),
-                                      "llvm.sjljeh.jblist", &M);
-    }
-    SetJmpFn = M.getOrInsertFunction("llvm.setjmp", Type::Int32Ty,
-                                     PointerType::get(JmpBufTy), (Type *)0);
-    LongJmpFn = M.getOrInsertFunction("llvm.longjmp", Type::VoidTy,
-                                      PointerType::get(JmpBufTy),
-                                      Type::Int32Ty, (Type *)0);
+    // We need the 'write' and 'abort' functions for both models.
+    AbortFn = M.getOrInsertFunction("abort", Type::VoidTy, (Type *)0);
+    WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::Int32Ty,
+                                    VoidPtrTy, Type::Int32Ty, (Type *)0);
   }
-
-  // We need the 'write' and 'abort' functions for both models.
-  AbortFn = M.getOrInsertFunction("abort", Type::VoidTy, (Type *)0);
-  WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::Int32Ty,
-                                  VoidPtrTy, Type::Int32Ty, (Type *)0);
   return true;
 }
 
@@ -388,6 +396,10 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
     }
 }
 
+bool LowerInvoke::insertItaniumEHSupport(Function &F) {
+  return true;
+}
+
 bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   std::vector<ReturnInst*> Returns;
   std::vector<UnwindInst*> Unwinds;
@@ -569,6 +581,8 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 }
 
 bool LowerInvoke::runOnFunction(Function &F) {
+  if (ItaniumEHSupport)
+    return insertItaniumEHSupport(F);
   if (ExpensiveEHSupport)
     return insertExpensiveEHSupport(F);
   else
