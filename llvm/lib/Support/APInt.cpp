@@ -280,7 +280,7 @@ static void mul(uint64_t dest[], uint64_t x[], uint32_t xlen,
 
   for (uint32_t i = 1; i < ylen; ++i) {
     uint64_t ly = y[i] & 0xffffffffULL, hy = y[i] >> 32;
-    uint64_t carry = 0, lx, hx;
+    uint64_t carry = 0, lx = 0, hx = 0;
     for (uint32_t j = 0; j < xlen; ++j) {
       lx = x[j] & 0xffffffffULL;
       hx = x[j] >> 32;
@@ -309,29 +309,42 @@ static void mul(uint64_t dest[], uint64_t x[], uint32_t xlen,
 /// given APInt& RHS and assigns the result to this APInt.
 APInt& APInt::operator*=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord())
+  if (isSingleWord()) {
     VAL *= RHS.VAL;
-  else {
-    // one-based first non-zero bit position.
-    uint32_t first = getActiveBits();
-    uint32_t xlen = !first ? 0 : whichWord(first - 1) + 1;
-    if (!xlen) 
-      return *this;
-    else {
-      first = RHS.getActiveBits();
-      uint32_t ylen = !first ? 0 : whichWord(first - 1) + 1;
-      if (!ylen) {
-        memset(pVal, 0, getNumWords() * APINT_WORD_SIZE);
-        return *this;
-      }
-      uint64_t *dest = getMemory(xlen+ylen);
-      mul(dest, pVal, xlen, RHS.pVal, ylen);
-      memcpy(pVal, dest, ((xlen + ylen >= getNumWords()) ? 
-                         getNumWords() : xlen + ylen) * APINT_WORD_SIZE);
-      delete[] dest;
-    }
+    clearUnusedBits();
+    return *this;
   }
-  clearUnusedBits();
+
+  // Get some bit facts about LHS and check for zero
+  uint32_t lhsBits = getActiveBits();
+  uint32_t lhsWords = !lhsBits ? 0 : whichWord(lhsBits - 1) + 1;
+  if (!lhsWords) 
+    // 0 * X ===> 0
+    return *this;
+
+  // Get some bit facts about RHS and check for zero
+  uint32_t rhsBits = RHS.getActiveBits();
+  uint32_t rhsWords = !rhsBits ? 0 : whichWord(rhsBits - 1) + 1;
+  if (!rhsWords) {
+    // X * 0 ===> 0
+    clear();
+    return *this;
+  }
+
+  // Allocate space for the result
+  uint32_t destWords = rhsWords + lhsWords;
+  uint64_t *dest = getMemory(destWords);
+
+  // Perform the long multiply
+  mul(dest, pVal, lhsWords, RHS.pVal, rhsWords);
+
+  // Copy result back into *this
+  clear();
+  uint32_t wordsToCopy = destWords >= getNumWords() ? getNumWords() : destWords;
+  memcpy(pVal, dest, wordsToCopy * APINT_WORD_SIZE);
+
+  // delete dest array and return
+  delete[] dest;
   return *this;
 }
 
@@ -1239,7 +1252,7 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
         delete Quotient->pVal;
       Quotient->BitWidth = LHS.BitWidth;
       if (!Quotient->isSingleWord())
-        Quotient->pVal = getClearedMemory(lhsWords);
+        Quotient->pVal = getClearedMemory(Quotient->getNumWords());
     } else
       Quotient->clear();
 
@@ -1270,7 +1283,7 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
         delete Remainder->pVal;
       Remainder->BitWidth = RHS.BitWidth;
       if (!Remainder->isSingleWord())
-        Remainder->pVal = getClearedMemory(rhsWords);
+        Remainder->pVal = getClearedMemory(Remainder->getNumWords());
     } else
       Remainder->clear();
 
@@ -1316,25 +1329,19 @@ APInt APInt::udiv(const APInt& RHS) const {
   uint32_t lhsBits = this->getActiveBits();
   uint32_t lhsWords = !lhsBits ? 0 : (APInt::whichWord(lhsBits - 1) + 1);
 
-  // Make a temporary to hold the result
-  APInt Result(*this);
-
   // Deal with some degenerate cases
   if (!lhsWords) 
-    return Result; // 0 / X == 0
-  else if (lhsWords < rhsWords || Result.ult(RHS)) {
-    // X / Y with X < Y == 0
-    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
-    return Result;
-  } else if (Result == RHS) {
-    // X / X == 1
-    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
-    Result.pVal[0] = 1;
-    return Result;
+    // 0 / X ===> 0
+    return APInt(BitWidth, 0); 
+  else if (lhsWords < rhsWords || this->ult(RHS)) {
+    // X / Y ===> 0, iff X < Y
+    return APInt(BitWidth, 0);
+  } else if (*this == RHS) {
+    // X / X ===> 1
+    return APInt(BitWidth, 1);
   } else if (lhsWords == 1 && rhsWords == 1) {
     // All high words are zero, just use native divide
-    Result.pVal[0] /= RHS.pVal[0];
-    return Result;
+    return APInt(BitWidth, this->pVal[0] / RHS.pVal[0]);
   }
 
   // We have to compute it the hard way. Invoke the Knuth divide algorithm.
@@ -1352,34 +1359,28 @@ APInt APInt::urem(const APInt& RHS) const {
     return APInt(BitWidth, VAL % RHS.VAL);
   }
 
-  // Make a temporary to hold the result
-  APInt Result(*this);
+  // Get some facts about the LHS
+  uint32_t lhsBits = getActiveBits();
+  uint32_t lhsWords = !lhsBits ? 0 : (whichWord(lhsBits - 1) + 1);
 
   // Get some facts about the RHS
   uint32_t rhsBits = RHS.getActiveBits();
   uint32_t rhsWords = !rhsBits ? 0 : (APInt::whichWord(rhsBits - 1) + 1);
   assert(rhsWords && "Performing remainder operation by zero ???");
 
-  // Get some facts about the LHS
-  uint32_t lhsBits = Result.getActiveBits();
-  uint32_t lhsWords = !lhsBits ? 0 : (Result.whichWord(lhsBits - 1) + 1);
-
   // Check the degenerate cases
   if (lhsWords == 0) {
-    // 0 % Y == 0
-    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
-    return Result;
-  } else if (lhsWords < rhsWords || Result.ult(RHS)) {
-    // X % Y == X iff X < Y
-    return Result;
-  } else if (Result == RHS) {
+    // 0 % Y ===> 0
+    return APInt(BitWidth, 0);
+  } else if (lhsWords < rhsWords || this->ult(RHS)) {
+    // X % Y ===> X, iff X < Y
+    return *this;
+  } else if (*this == RHS) {
     // X % X == 0;
-    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
-    return Result;
+    return APInt(BitWidth, 0);
   } else if (lhsWords == 1) {
     // All high words are zero, just use native remainder
-    Result.pVal[0] %=  RHS.pVal[0];
-    return Result;
+    return APInt(BitWidth, pVal[0] % RHS.pVal[0]);
   }
 
   // We have to compute it the hard way. Invoke the Knute divide algorithm.
