@@ -313,6 +313,11 @@ namespace llvm {
     /// DwarfEHFrameSection - Section directive for Exception frames.
     ///
     const char *DwarfEHFrameSection; // Defaults to ".eh_frame".
+    
+    /// DwarfExceptionSection - Section directive for Exception table.
+    ///
+    const char *DwarfExceptionSection; // Defaults to ".gcc_except_table".
+     
 
     //===--- CBE Asm Translation Table -----------------------------------===//
 
@@ -539,6 +544,9 @@ namespace llvm {
     }
     const char *getDwarfEHFrameSection() const {
       return DwarfEHFrameSection;
+    }
+    const char *getDwarfExceptionSection() const {
+      return DwarfExceptionSection;
     }
     const char** getAsmCBE() const {
       return AsmTransCBE;

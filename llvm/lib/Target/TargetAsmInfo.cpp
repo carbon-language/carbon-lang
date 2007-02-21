@@ -86,6 +86,7 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfRangesSection(".debug_ranges"),
   DwarfMacInfoSection(".debug_macinfo"),
   DwarfEHFrameSection(".eh_frame"),
+  DwarfExceptionSection(".gcc_except_table"),
   AsmTransCBE(0) {
 }
 

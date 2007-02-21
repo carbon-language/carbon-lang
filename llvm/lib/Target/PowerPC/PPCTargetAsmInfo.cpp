@@ -43,6 +43,7 @@ PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
   DwarfEHFrameSection =
   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
+  DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
 }
 
 DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
