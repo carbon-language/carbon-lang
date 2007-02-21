@@ -55,7 +55,7 @@ class DIEValue;
 
 //===----------------------------------------------------------------------===//
 /// DWLabel - Labels are used to track locations in the assembler file.
-/// Labels appear in the form <prefix>debug_<Tag><Number>, where the tag is a
+/// Labels appear in the form <prefix><Tag><Number>, where the tag is a
 /// category of label (Ex. location) and number is a value unique in that
 /// category.
 class DWLabel {
@@ -80,7 +80,7 @@ public:
     if (O) print(*O);
   }
   void print(std::ostream &O) const {
-    O << ".debug_" << Tag;
+    O << "." << Tag;
     if (Number) O << Number;
   }
 #endif
@@ -791,14 +791,6 @@ protected:
   ///
   MachineModuleInfo *MMI;
   
-  /// didInitial - Flag to indicate if initial emission has been done.
-  ///
-  bool didInitial;
-  
-  /// shouldEmit - Flag to indicate if debug information should be emitted.
-  ///
-  bool shouldEmit;
-  
   /// SubprogramCount - The running count of functions being compiled.
   ///
   unsigned SubprogramCount;
@@ -812,8 +804,6 @@ protected:
   , M(NULL)
   , MF(NULL)
   , MMI(NULL)
-  , didInitial(false)
-  , shouldEmit(false)
   , SubprogramCount(0)
   {
   }
@@ -827,20 +817,13 @@ public:
   MachineModuleInfo *getMMI() const { return MMI; }
   const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
 
-  /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
-  ///
-  bool ShouldEmitDwarf() const { return shouldEmit; }
-
-
   /// PrintLabelName - Print label name in form used by Dwarf writer.
   ///
   void PrintLabelName(DWLabel Label) const {
     PrintLabelName(Label.Tag, Label.Number);
   }
   void PrintLabelName(const char *Tag, unsigned Number) const {
-    O << TAI->getPrivateGlobalPrefix()
-      << ((Tag && *Tag) ? "debug_" : "label_")
-      << Tag;
+    O << TAI->getPrivateGlobalPrefix() << Tag;
     if (Number) O << Number;
   }
   
@@ -932,7 +915,7 @@ public:
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
           TargetFrameInfo::StackGrowsUp ?
             TAI->getAddressSize() : -TAI->getAddressSize();
-    bool IsLocal = BaseLabel && strcmp(BaseLabel, "") == 0;
+    bool IsLocal = BaseLabel && strcmp(BaseLabel, "label") == 0;
 
     for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
       MachineMove &Move = Moves[i];
@@ -952,11 +935,11 @@ public:
       if (BaseLabel && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
         Asm->EmitInt8(DW_CFA_advance_loc4);
         Asm->EOL("DW_CFA_advance_loc4");
-        EmitDifference("", LabelID, BaseLabel, BaseLabelID, true);
-        Asm->EOL("");
+        EmitDifference("label", LabelID, BaseLabel, BaseLabelID, true);
+        Asm->EOL();
         
         BaseLabelID = LabelID;
-        BaseLabel = "";
+        BaseLabel = "label";
         IsLocal = true;
       }
       
@@ -1066,8 +1049,19 @@ private:
   ///
   std::vector<std::vector<SourceLineInfo> > SectionSourceLines;
 
+  /// didInitial - Flag to indicate if initial emission has been done.
+  ///
+  bool didInitial;
+  
+  /// shouldEmit - Flag to indicate if debug information should be emitted.
+  ///
+  bool shouldEmit;
 
 public:
+  
+  /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
+  ///
+  bool ShouldEmitDwarf() const { return shouldEmit; }
 
   /// AssignAbbrevNumber - Define a unique number for the abbreviation.
   ///  
@@ -1850,14 +1844,14 @@ private:
         // Add the scope bounds.
         if (StartID) {
           AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
-                             DWLabel("", StartID));
+                             DWLabel("label", StartID));
         } else {
           AddLabel(ScopeDie, DW_AT_low_pc, DW_FORM_addr,
                              DWLabel("func_begin", SubprogramCount));
         }
         if (EndID) {
           AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
-                             DWLabel("", EndID));
+                             DWLabel("label", EndID));
         } else {
           AddLabel(ScopeDie, DW_AT_high_pc, DW_FORM_addr,
                              DWLabel("func_end", SubprogramCount));
@@ -1944,7 +1938,7 @@ private:
     unsigned AbbrevNumber = Die->getAbbrevNumber();
     const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
     
-    Asm->EOL("");
+    Asm->EOL();
 
     // Emit the code (index) for the abbreviation.
     Asm->EmitULEB128Bytes(AbbrevNumber);
@@ -2082,7 +2076,7 @@ private:
     Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
     EmitLabel("info_end", Unit->getID());
     
-    Asm->EOL("");
+    Asm->EOL();
   }
 
   /// EmitAbbreviations - Emit the abbreviation section.
@@ -2107,12 +2101,12 @@ private:
         // Emit the abbreviations data.
         Abbrev->Emit(*this);
     
-        Asm->EOL("");
+        Asm->EOL();
       }
       
       EmitLabel("abbrev_end", 0);
     
-      Asm->EOL("");
+      Asm->EOL();
     }
   }
 
@@ -2217,7 +2211,7 @@ private:
         Asm->EmitInt8(0); Asm->EOL("Extended Op");
         Asm->EmitInt8(TAI->getAddressSize() + 1); Asm->EOL("Op size");
         Asm->EmitInt8(DW_LNE_set_address); Asm->EOL("DW_LNE_set_address");
-        EmitReference("",  LabelID); Asm->EOL("Location label");
+        EmitReference("label",  LabelID); Asm->EOL("Location label");
         
         // If change of source, then switch to the new source.
         if (Source != LineInfo.getSourceID()) {
@@ -2259,13 +2253,13 @@ private:
 
       // Mark end of matrix.
       Asm->EmitInt8(0); Asm->EOL("DW_LNE_end_sequence");
-      Asm->EmitULEB128Bytes(1); Asm->EOL("");
-      Asm->EmitInt8(1); Asm->EOL("");
+      Asm->EmitULEB128Bytes(1); Asm->EOL();
+      Asm->EmitInt8(1); Asm->EOL();
     }
     
     EmitLabel("line_end", 0);
     
-    Asm->EOL("");
+    Asm->EOL();
   }
     
   /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
@@ -2308,7 +2302,7 @@ private:
     Asm->EmitAlignment(2);
     EmitLabel("frame_common_end", 0);
     
-    Asm->EOL("");
+    Asm->EOL();
   }
 
   /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
@@ -2342,7 +2336,7 @@ private:
     Asm->EmitAlignment(2);
     EmitLabel("frame_end", SubprogramCount);
 
-    Asm->EOL("");
+    Asm->EOL();
   }
 
   /// EmitDebugPubNames - Emit visible names into a debug pubnames section.
@@ -2382,7 +2376,7 @@ private:
     Asm->EmitInt32(0); Asm->EOL("End Mark");
     EmitLabel("pubnames_end", Unit->getID());
   
-    Asm->EOL("");
+    Asm->EOL();
   }
 
   /// EmitDebugStr - Emit visible names into a debug str section.
@@ -2400,10 +2394,10 @@ private:
         EmitLabel("string", StringID);
         // Emit the string itself.
         const std::string &String = StringPool[StringID];
-        Asm->EmitString(String); Asm->EOL("");
+        Asm->EmitString(String); Asm->EOL();
       }
     
-      Asm->EOL("");
+      Asm->EOL();
     }
   }
 
@@ -2413,7 +2407,7 @@ private:
     // Start the dwarf loc section.
     Asm->SwitchToDataSection(TAI->getDwarfLocSection());
     
-    Asm->EOL("");
+    Asm->EOL();
   }
 
   /// EmitDebugARanges - Emit visible names into a debug aranges section.
@@ -2448,7 +2442,7 @@ private:
     Asm->EmitInt32(0); Asm->EOL("EOM (1)");
     Asm->EmitInt32(0); Asm->EOL("EOM (2)");
     
-    Asm->EOL("");
+    Asm->EOL();
   #endif
   }
 
@@ -2458,7 +2452,7 @@ private:
     // Start the dwarf ranges section.
     Asm->SwitchToDataSection(TAI->getDwarfRangesSection());
     
-    Asm->EOL("");
+    Asm->EOL();
   }
 
   /// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
@@ -2467,7 +2461,7 @@ private:
     // Start the dwarf macinfo section.
     Asm->SwitchToDataSection(TAI->getDwarfMacInfoSection());
     
-    Asm->EOL("");
+    Asm->EOL();
   }
 
   /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
@@ -2521,6 +2515,8 @@ public:
   , DescToUnitMap()
   , SectionMap()
   , SectionSourceLines()
+  , didInitial(false)
+  , shouldEmit(false)
   {
   }
   virtual ~DwarfDebug() {
@@ -2661,41 +2657,86 @@ class DwarfException : public Dwarf  {
 
 private:
 
-  /// EmitInitial - Emit initial exception information.
+  /// didInitial - Flag to indicate if initial emission has been done.
+  ///
+  bool didInitial;
+  
+  /// shouldEmit - Flag to indicate if debug information should be emitted.
+  ///
+  bool shouldEmit;
+
+  /// EmitInitial - Emit the common eh unwind frame.
   ///
   void EmitInitial() {
+    // If there is a personality present then we need to indicate that
+    // in the common eh frame.
+    Function *Personality = MMI->getPersonality();
+
+    // Size and sign of stack growth.
     int stackGrowth =
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
           TargetFrameInfo::StackGrowsUp ?
         TAI->getAddressSize() : -TAI->getAddressSize();
 
+    // Begin eh frame section.
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
     O << "EH_frame:\n";
     EmitLabel("section_eh_frame", 0);
 
+    // Define base labels.
     EmitLabel("eh_frame_common", 0);
+    
+    // Define the eh frame length.
     EmitDifference("eh_frame_common_end", 0,
                    "eh_frame_common_begin", 0, true);
     Asm->EOL("Length of Common Information Entry");
 
+    // EH frame header.
     EmitLabel("eh_frame_common_begin", 0);
     Asm->EmitInt32((int)0);
     Asm->EOL("CIE Identifier Tag");
     Asm->EmitInt8(DW_CIE_VERSION);
     Asm->EOL("CIE Version");
-    Asm->EmitString("zR");
+    
+    // The personality presence indicates that language specific information
+    // will show up in the eh frame.
+    Asm->EmitString(Personality ? "zPLR" : "zR");
     Asm->EOL("CIE Augmentation");
+    
+    // Round out reader.
     Asm->EmitULEB128Bytes(1);
     Asm->EOL("CIE Code Alignment Factor");
     Asm->EmitSLEB128Bytes(stackGrowth);
     Asm->EOL("CIE Data Alignment Factor");   
     Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister()));
     Asm->EOL("CIE RA Column");
-    Asm->EmitULEB128Bytes(1);
-    Asm->EOL("Augmentation Size");
-    Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
-    Asm->EOL("FDE Encoding (pcrel)");
     
+    // If there is a personality, we need to indicate the functions location.
+    if (Personality) {
+      Asm->EmitULEB128Bytes(7);
+      Asm->EOL("Augmentation Size");
+      Asm->EmitInt8(DW_EH_PE_indirect |
+                            DW_EH_PE_pcrel |
+                            DW_EH_PE_sdata4);
+      Asm->EOL("Personality (indirect pcrel sdata4)");
+      
+      O << TAI->getData32bitsDirective();
+      Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
+      O << "-" << TAI->getPCSymbol();
+      Asm->EOL("Personality");
+      
+      Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
+      Asm->EOL("LSDA Encoding (pcrel)");
+      Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
+      Asm->EOL("FDE Encoding (pcrel)");
+   } else {
+      Asm->EmitULEB128Bytes(1);
+      Asm->EOL("Augmentation Size");
+      Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
+      Asm->EOL("FDE Encoding (pcrel)");
+    }
+
+    // Indicate locations of general callee saved registers in frame.
     std::vector<MachineMove> Moves;
     RI->getInitialFrameState(Moves);
     EmitFrameMoves(NULL, 0, Moves);
@@ -2703,39 +2744,224 @@ private:
     Asm->EmitAlignment(2);
     EmitLabel("eh_frame_common_end", 0);
     
-    Asm->EOL("");
-    
+    Asm->EOL();
   }
-  
   
   /// EmitEHFrame - Emit initial exception information.
   ///
   void EmitEHFrame() {
-    EmitDifference("eh_frame_end", SubprogramCount,
-                   "eh_frame_begin", SubprogramCount, true);
-    Asm->EOL("Length of Frame Information Entry");
-    
-    EmitLabel("eh_frame_begin", SubprogramCount);
-    
-    EmitDifference("eh_frame_begin", SubprogramCount,
-                   "section_eh_frame", 0, true);
-    Asm->EOL("FDE CIE offset");
+    // If there is a personality present then we need to indicate that
+    // in the common eh frame.
+    Function *Personality = MMI->getPersonality();
+    MachineFrameInfo *MFI = MF->getFrameInfo();
 
-    EmitReference("eh_func_begin", SubprogramCount, true);
-    Asm->EOL("FDE initial location");
-    EmitDifference("eh_func_end", SubprogramCount,
-                   "eh_func_begin", SubprogramCount);
-    Asm->EOL("FDE address range");
+    Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
+
+    // Externally visible entry into the functions eh frame info.
+    if (const char *GlobalDirective = TAI->getGlobalDirective())
+      O << GlobalDirective << getAsm()->CurrentFnName << ".eh\n";
     
-    Asm->EmitULEB128Bytes(0);
-    Asm->EOL("Augmentation size");
+    // If there are no calls then you can't unwind.
+    if (!MFI->hasCalls()) { 
+      O << getAsm()->CurrentFnName << ".eh = 0\n";
+    } else {
+      O << getAsm()->CurrentFnName << ".eh:\n";
+      
+      // EH frame header.
+      EmitDifference("eh_frame_end", SubprogramCount,
+                     "eh_frame_begin", SubprogramCount, true);
+      Asm->EOL("Length of Frame Information Entry");
+      
+      EmitLabel("eh_frame_begin", SubprogramCount);
+      
+      EmitDifference("eh_frame_begin", SubprogramCount,
+                     "section_eh_frame", 0, true);
+      Asm->EOL("FDE CIE offset");
+
+      EmitReference("eh_func_begin", SubprogramCount, true);
+      Asm->EOL("FDE initial location");
+      EmitDifference("eh_func_end", SubprogramCount,
+                     "eh_func_begin", SubprogramCount);
+      Asm->EOL("FDE address range");
+      
+      // If there is a personality then point to the language specific data
+      // area in the exception table.
+      if (Personality) {
+        Asm->EmitULEB128Bytes(4);
+        Asm->EOL("Augmentation size");
+        EmitReference("exception", SubprogramCount, true);
+        Asm->EOL("Language Specific Data Area");
+      } else {
+        Asm->EmitULEB128Bytes(0);
+        Asm->EOL("Augmentation size");
+      }
+      
+      // Indicate locations of function specific  callee saved registers in
+      // frame.
+      std::vector<MachineMove> &Moves = MMI->getFrameMoves();
+      EmitFrameMoves("eh_func_begin", SubprogramCount, Moves);
+      
+      Asm->EmitAlignment(2);
+      EmitLabel("eh_frame_end", SubprogramCount);
+    }
     
-    std::vector<MachineMove> &Moves = MMI->getFrameMoves();
+    if (const char *UsedDirective = TAI->getUsedDirective())
+      O << UsedDirective << getAsm()->CurrentFnName << ".eh\n\n";
+  }
+  
+  /// EmitExceptionTable - Emit landpads and actions.
+  ///
+  /// The general organization of the table is complex, but the basic concepts
+  /// are easy.  First there is a header which describes the location and
+  /// organization of the three components that follow.
+  ///  1. The landing pad site information describes the range of code covered
+  ///     by the try.  In our case it's an accumulation of the ranges covered
+  ///     by the invokes in the try.  There is also a reference to the landing
+  ///     pad that handles the exception once processed.  Finally an index into
+  ///     the actions table.
+  ///  2. The action table, in our case, is composed of pairs of type ids
+  ///     and next action offset.  Starting with the action index from the
+  ///     landing pad site, each type Id is checked for a match to the current
+  ///     exception.  If it matches then the exception and type id are passed
+  ///     on to the landing pad.  Otherwise the next action is looked up.  This
+  ///     chain is terminated with a next action of zero.  If no type id is
+  ///     found the the frame is unwound and handling continues.
+  ///  3. Type id table contains references to all the C++ typeinfo for all
+  ///     catches in the function.  This tables is reversed indexed base 1.
+  void EmitExceptionTable() {
+    // Map all labels and get rid of any dead landing pads.
+    MMI->TidyLandingPads();
     
-    EmitFrameMoves("eh_func_begin", SubprogramCount, Moves);
+    const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+    const std::vector<LandingPadInfo> &LandingPads = MMI->getLandingPads();
+    if (LandingPads.empty()) return;
     
+    // FIXME - Should fold actions for multiple landing pads.
+    
+    // Gather first action index for each landing pad site.
+    SmallVector<unsigned, 8> Actions;
+
+    // Compute sizes for exception table.
+    unsigned SizeHeader = sizeof(int8_t) + // LPStart format
+                          sizeof(int8_t) + // TType format
+                          sizeof(int8_t) + // TType base offset (NEED ULEB128)
+                          sizeof(int8_t) + // Call site format
+                          sizeof(int8_t);  // Call-site table length
+    unsigned SizeSites = 0;
+    unsigned SizeActions = 0;
+
+    // Look at each landing pad site to compute size.  We need the size of each
+    // landing pad site info and the size of the landing pad's actions.
+    for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
+      const LandingPadInfo &LandingPad = LandingPads[i];
+      unsigned SizeSiteActions = 0;
+      const std::vector<unsigned> &TypeIds = LandingPad.TypeIds;
+      unsigned SizeAction = 0;
+      
+      // Gather the action sizes
+      for (unsigned j = 0, M = TypeIds.size(); j != M; ++j) {
+        unsigned TypeID = TypeIds[i];
+        unsigned SizeTypeID = Asm->SizeULEB128(TypeID);
+        signed Action = j ? -(SizeAction + SizeTypeID) : 0;
+        SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
+        SizeSiteActions += SizeAction;
+      }
+      
+      // Record the first action of the landing pad site.
+      signed FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
+      Actions.push_back(FirstAction);
+      
+      // Compute this sites contribution to size.
+      SizeActions += SizeSiteActions;
+      SizeSites += sizeof(int32_t) + // Site start.
+                   sizeof(int32_t) + // Site length.
+                   sizeof(int32_t) + // Landing pad.
+                   Asm->SizeULEB128(FirstAction); // Action.
+    }
+    
+    // Final tallies.
+    unsigned SizeTypes = TypeInfos.size() * TAI->getAddressSize();
+    unsigned SizePreType = SizeHeader + SizeSites + SizeActions;
+    unsigned SizeAlign =  (4 - SizePreType) & 3;
+    unsigned TypeOffset = SizePreType +
+                          SizeTypes +
+                          SizeAlign - 
+                          sizeof(int8_t) - // LPStart format
+                          sizeof(int8_t) - // TType format
+                          sizeof(int8_t);  // TType base offset (NEED ULEB128)
+    
+    // Begin the exception table.
+    Asm->SwitchToDataSection(TAI->getDwarfExceptionSection());
+    O << "GCC_except_table" << SubprogramCount << ":\n";
+    EmitLabel("exception", SubprogramCount);
+    
+    // Emit the header.
+    Asm->EmitInt8(DW_EH_PE_omit);
+    Asm->EOL("LPStart format (DW_EH_PE_omit)");
+    Asm->EmitInt8(DW_EH_PE_absptr);
+    Asm->EOL("TType format (DW_EH_PE_absptr)");
+    Asm->EmitULEB128Bytes(TypeOffset);
+    Asm->EOL("TType base offset");
+    Asm->EmitInt8(DW_EH_PE_udata4);
+    Asm->EOL("Call site format (DW_EH_PE_udata4)");
+    Asm->EmitULEB128Bytes(SizeSites);
+    Asm->EOL("Call-site table length");
+    
+    // Emit the landng pad site information.
+    for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
+      const LandingPadInfo &LandingPad = LandingPads[i];
+      EmitDifference("label", LandingPad.BeginLabel,
+                     "eh_func_begin", SubprogramCount);
+      Asm->EOL("Region start");
+      
+      EmitDifference("label", LandingPad.EndLabel,
+                     "label", LandingPad.BeginLabel);
+      Asm->EOL("Region length");
+      
+      EmitDifference("label", LandingPad.LandingPadLabel,
+                     "eh_func_begin", SubprogramCount);
+      Asm->EOL("Landing pad");
+
+      Asm->EmitULEB128Bytes(Actions[i]);
+      Asm->EOL("Action");
+    }
+    
+    // Emit the actions.
+    for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
+      const LandingPadInfo &LandingPad = LandingPads[i];
+      const std::vector<unsigned> &TypeIds = LandingPad.TypeIds;
+      unsigned SizeAction = 0;
+      
+      for (unsigned j = 0, M = TypeIds.size(); j < M; ++j) {
+        unsigned TypeID = TypeIds[j];
+        unsigned SizeTypeID = Asm->SizeULEB128(TypeID);
+        Asm->EmitSLEB128Bytes(TypeID);
+        Asm->EOL("TypeInfo index");
+        signed Action = j ? -(SizeAction + SizeTypeID) : 0;
+        SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
+        Asm->EmitSLEB128Bytes(Action);
+        Asm->EOL("Next action");
+      }
+    }
+
+    // Emit the type ids.
     Asm->EmitAlignment(2);
-    EmitLabel("eh_frame_end", SubprogramCount);
+    for (unsigned M = TypeInfos.size(); M; --M) {
+      GlobalVariable *GV = TypeInfos[M - 1];
+      
+      if (TAI->getAddressSize() == sizeof(int32_t))
+        O << TAI->getData32bitsDirective();
+      else
+        O << TAI->getData64bitsDirective();
+
+      if (GV)
+        O << Asm->getGlobalLinkName(GV);
+      else
+        O << "0";
+      
+      Asm->EOL("TypeInfo");
+    }
+
   }
 
 public:
@@ -2744,18 +2970,24 @@ public:
   //
   DwarfException(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
   : Dwarf(OS, A, T)
+  , didInitial(false)
+  , shouldEmit(false)
   {}
   
   virtual ~DwarfException() {}
 
+  /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
+  ///
+  bool ShouldEmitDwarf() const { return shouldEmit; }
+
   /// SetModuleInfo - Set machine module information when it's known that pass
   /// manager has created it.  Set by the target AsmPrinter.
   void SetModuleInfo(MachineModuleInfo *mmi) {
-#if 1  // Not ready for prime time.
-    return;
-#endif
     // Make sure initial declarations are made.
-    if (!MMI && ExceptionHandling && TAI->getSupportsExceptionHandling()) {
+    if (!MMI &&
+        ExceptionHandling &&
+        TAI->getSupportsExceptionHandling() &&
+        mmi->getPersonality()) {
       MMI = mmi;
       shouldEmit = true;
       
@@ -2794,21 +3026,8 @@ public:
     if (!ShouldEmitDwarf()) return;
 
     EmitLabel("eh_func_end", SubprogramCount);
-
-    Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
-
-    if (const char *GlobalDirective = TAI->getGlobalDirective())
-      O << GlobalDirective << getAsm()->CurrentFnName << ".eh\n";
-     
-    if (0) {
-      O << getAsm()->CurrentFnName << ".eh = 0\n";
-    } else {
-      O << getAsm()->CurrentFnName << ".eh:\n";
-      EmitEHFrame();
-    }
-    
-    if (const char *UsedDirective = TAI->getUsedDirective())
-      O << UsedDirective << getAsm()->CurrentFnName << ".eh\n\n";
+    EmitExceptionTable();
+    EmitEHFrame();
   }
 };
 
@@ -3004,7 +3223,7 @@ void DIEBlock::EmitValue(const DwarfDebug &DD, unsigned Form) const {
   const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
 
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-    DD.getAsm()->EOL("");
+    DD.getAsm()->EOL();
     Values[i]->EmitValue(DD, AbbrevData[i].getForm());
   }
 }

@@ -1059,7 +1059,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 void AsmPrinter::printLabel(const MachineInstr *MI) const {
   O << "\n"
     << TAI->getPrivateGlobalPrefix()
-    << "label_"
+    << "label"
     << MI->getOperand(0).getImmedValue()
     << ":\n";
 }
