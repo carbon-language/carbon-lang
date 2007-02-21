@@ -263,8 +263,8 @@ public:
                                             tok::TokenKind Kind) {
     return 0;
   }
-  virtual ExprResult ParseIntegerConstant(SourceLocation Loc) { return 0; }
-  virtual ExprResult ParseFloatingConstant(SourceLocation Loc) { return 0; }
+  virtual ExprResult ParseStringLiteral(SourceLocation Loc) { return 0; }
+  virtual ExprResult ParseFloatingLiteral(SourceLocation Loc) { return 0; }
   
   /// ParseStringExpr - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").

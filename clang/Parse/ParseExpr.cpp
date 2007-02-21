@@ -476,9 +476,9 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // TODO: Validate whether this is an integer or floating-constant or
     // neither.
     if (1) {
-      Res = Actions.ParseIntegerConstant(Tok.getLocation());
+      Res = Actions.ParseStringLiteral(Tok.getLocation());
     } else {
-      Res = Actions.ParseFloatingConstant(Tok.getLocation());
+      Res = Actions.ParseFloatingLiteral(Tok.getLocation());
     }
     ConsumeToken();
     

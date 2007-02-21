@@ -215,11 +215,11 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   OS << Node->getDecl()->getName();
 }
 
-void StmtPrinter::VisitIntegerConstant(IntegerConstant *Node) {
+void StmtPrinter::VisitStringLiteral(StringLiteral *Node) {
   // FIXME: print value.
   OS << "1";
 }
-void StmtPrinter::VisitFloatingConstant(FloatingConstant *Node) {
+void StmtPrinter::VisitFloatingLiteral(FloatingLiteral *Node) {
   // FIXME: print value.
   OS << "1.0";
 }

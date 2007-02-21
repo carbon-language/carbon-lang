@@ -285,11 +285,11 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
   }
 }
 
-Sema::ExprResult Sema::ParseIntegerConstant(SourceLocation Loc) {
-  return new IntegerConstant();
+Sema::ExprResult Sema::ParseStringLiteral(SourceLocation Loc) {
+  return new StringLiteral();
 }
-Sema::ExprResult Sema::ParseFloatingConstant(SourceLocation Loc) {
-  return new FloatingConstant();
+Sema::ExprResult Sema::ParseFloatingLiteral(SourceLocation Loc) {
+  return new FloatingLiteral();
 }
 
 Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
@@ -339,7 +339,7 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
   if (isa<FunctionType>(ArgTy) && isSizeof) {
     // alignof(function) is allowed.
     Diag(OpLoc, diag::ext_sizeof_function_type);
-    return new IntegerConstant(/*1*/);
+    return new StringLiteral(/*1*/);
   } else if (ArgTy->isVoidType()) {
     Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof");
   } else if (ArgTy->isIncompleteType()) {
@@ -347,7 +347,7 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
     ArgTy->getAsString(TypeName);
     Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
          diag::err_alignof_incomplete_type, TypeName);
-    return new IntegerConstant(/*0*/);
+    return new StringLiteral(/*0*/);
   }
   
   return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy);

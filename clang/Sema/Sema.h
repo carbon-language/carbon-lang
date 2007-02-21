@@ -155,8 +155,8 @@ public:
                                          bool HasTrailingLParen);
   virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
                                             tok::TokenKind Kind);
-  virtual ExprResult ParseIntegerConstant(SourceLocation Loc);
-  virtual ExprResult ParseFloatingConstant(SourceLocation Loc);
+  virtual ExprResult ParseStringLiteral(SourceLocation Loc);
+  virtual ExprResult ParseFloatingLiteral(SourceLocation Loc);
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val);
 

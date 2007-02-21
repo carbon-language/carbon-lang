@@ -51,15 +51,15 @@ public:
   virtual void visit(StmtVisitor &Visitor);
 };
 
-class IntegerConstant : public Expr {
+class StringLiteral : public Expr {
 public:
-  IntegerConstant() {}
+  StringLiteral() {}
   virtual void visit(StmtVisitor &Visitor);
 };
 
-class FloatingConstant : public Expr {
+class FloatingLiteral : public Expr {
 public:
-  FloatingConstant() {}
+  FloatingLiteral() {}
   virtual void visit(StmtVisitor &Visitor);
 };
 
