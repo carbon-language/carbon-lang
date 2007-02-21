@@ -21,8 +21,8 @@ using namespace clang;
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
-StringExpr::StringExpr(const char *strData, unsigned byteLength, bool Wide) {
-  // OPTIMIZE: could allocate this appended to the StringExpr.
+StringLiteral::StringLiteral(const char *strData, unsigned byteLength, bool Wide) {
+  // OPTIMIZE: could allocate this appended to the StringLiteral.
   char *AStrData = new char[byteLength];
   memcpy(AStrData, strData, byteLength);
   StrData = AStrData;
@@ -30,7 +30,7 @@ StringExpr::StringExpr(const char *strData, unsigned byteLength, bool Wide) {
   IsWide = Wide;
 }
 
-StringExpr::~StringExpr() {
+StringLiteral::~StringLiteral() {
   delete[] StrData;
 }
 

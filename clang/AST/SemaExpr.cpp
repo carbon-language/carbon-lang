@@ -35,14 +35,14 @@ static int HexDigitValue(char C) {
   return -1;
 }
 
-/// ParseStringExpr - The specified tokens were lexed as pasted string
+/// ParseStringLiteral - The specified tokens were lexed as pasted string
 /// fragments (e.g. "foo" "bar" L"baz").  The result string has to handle string
 /// concatenation ([C99 5.1.1.2, translation phase #6]), so it may come from
 /// multiple tokens.  However, the common case is that StringToks points to one
 /// string.
 /// 
 Action::ExprResult
-Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
+Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
   assert(NumStringToks && "Must have at least one string!");
 
   // Scan all of the string portions, remember the max individual token length,
@@ -236,7 +236,7 @@ Sema::ParseStringExpr(const LexerToken *StringToks, unsigned NumStringToks) {
   // FIXME: use factory.
   
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
-  return new StringExpr(&ResultBuf[0], ResultPtr-&ResultBuf[0], AnyWide);
+  return new StringLiteral(&ResultBuf[0], ResultPtr-&ResultBuf[0], AnyWide);
 }
 
 
@@ -285,8 +285,8 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
   }
 }
 
-Sema::ExprResult Sema::ParseStringLiteral(SourceLocation Loc) {
-  return new StringLiteral();
+Sema::ExprResult Sema::ParseIntegerLiteral(SourceLocation Loc) {
+  return new IntegerLiteral();
 }
 Sema::ExprResult Sema::ParseFloatingLiteral(SourceLocation Loc) {
   return new FloatingLiteral();
@@ -339,7 +339,7 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
   if (isa<FunctionType>(ArgTy) && isSizeof) {
     // alignof(function) is allowed.
     Diag(OpLoc, diag::ext_sizeof_function_type);
-    return new StringLiteral(/*1*/);
+    return new IntegerLiteral(/*1*/);
   } else if (ArgTy->isVoidType()) {
     Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof");
   } else if (ArgTy->isIncompleteType()) {
@@ -347,7 +347,7 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
     ArgTy->getAsString(TypeName);
     Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
          diag::err_alignof_incomplete_type, TypeName);
-    return new StringLiteral(/*0*/);
+    return new IntegerLiteral(/*0*/);
   }
   
   return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy);

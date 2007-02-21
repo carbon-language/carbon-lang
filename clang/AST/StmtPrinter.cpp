@@ -215,7 +215,7 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   OS << Node->getDecl()->getName();
 }
 
-void StmtPrinter::VisitStringLiteral(StringLiteral *Node) {
+void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
   // FIXME: print value.
   OS << "1";
 }
@@ -223,7 +223,7 @@ void StmtPrinter::VisitFloatingLiteral(FloatingLiteral *Node) {
   // FIXME: print value.
   OS << "1.0";
 }
-void StmtPrinter::VisitStringExpr(StringExpr *Str) {
+void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
   if (Str->isWide()) OS << 'L';
   OS << '"';
   

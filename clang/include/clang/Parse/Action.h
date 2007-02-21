@@ -263,12 +263,12 @@ public:
                                             tok::TokenKind Kind) {
     return 0;
   }
-  virtual ExprResult ParseStringLiteral(SourceLocation Loc) { return 0; }
+  virtual ExprResult ParseIntegerLiteral(SourceLocation Loc) { return 0; }
   virtual ExprResult ParseFloatingLiteral(SourceLocation Loc) { return 0; }
   
-  /// ParseStringExpr - The specified tokens were lexed as pasted string
+  /// ParseStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ParseStringExpr(const LexerToken *Toks, unsigned NumToks) {
+  virtual ExprResult ParseStringLiteral(const LexerToken *Toks, unsigned NumToks) {
     return 0;
   }
   

@@ -476,7 +476,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // TODO: Validate whether this is an integer or floating-constant or
     // neither.
     if (1) {
-      Res = Actions.ParseStringLiteral(Tok.getLocation());
+      Res = Actions.ParseIntegerLiteral(Tok.getLocation());
     } else {
       Res = Actions.ParseFloatingLiteral(Tok.getLocation());
     }
@@ -929,5 +929,5 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
   } while (isTokenStringLiteral());
 
   // Pass the set of string tokens, ready for concatenation, to the actions.
-  return Actions.ParseStringExpr(&StringToks[0], StringToks.size());
+  return Actions.ParseStringLiteral(&StringToks[0], StringToks.size());
 }

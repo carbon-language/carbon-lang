@@ -155,14 +155,14 @@ public:
                                          bool HasTrailingLParen);
   virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
                                             tok::TokenKind Kind);
-  virtual ExprResult ParseStringLiteral(SourceLocation Loc);
+  virtual ExprResult ParseIntegerLiteral(SourceLocation Loc);
   virtual ExprResult ParseFloatingLiteral(SourceLocation Loc);
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val);
 
-  /// ParseStringExpr - The specified tokens were lexed as pasted string
+  /// ParseStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ParseStringExpr(const LexerToken *Toks, unsigned NumToks);
+  virtual ExprResult ParseStringLiteral(const LexerToken *Toks, unsigned NumToks);
     
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   virtual ExprResult ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,

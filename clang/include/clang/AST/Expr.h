@@ -51,9 +51,9 @@ public:
   virtual void visit(StmtVisitor &Visitor);
 };
 
-class StringLiteral : public Expr {
+class IntegerLiteral : public Expr {
 public:
-  StringLiteral() {}
+  IntegerLiteral() {}
   virtual void visit(StmtVisitor &Visitor);
 };
 
@@ -63,13 +63,13 @@ public:
   virtual void visit(StmtVisitor &Visitor);
 };
 
-class StringExpr : public Expr {
+class StringLiteral : public Expr {
   const char *StrData;
   unsigned ByteLength;
   bool IsWide;
 public:
-  StringExpr(const char *strData, unsigned byteLength, bool Wide);
-  virtual ~StringExpr();
+  StringLiteral(const char *strData, unsigned byteLength, bool Wide);
+  virtual ~StringLiteral();
   
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
