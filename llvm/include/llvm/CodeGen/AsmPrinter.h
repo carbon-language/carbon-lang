@@ -105,6 +105,10 @@ namespace llvm {
     /// generate the appropriate value.
     virtual const std::string getGlobalLinkName(const GlobalVariable *GV) const;
 
+    /// EmitExternalGlobal - Emit the external reference to a global variable.
+    /// Should be overridden if an indirect reference should be used.
+    virtual void EmitExternalGlobal(const GlobalVariable *GV);
+
   protected:
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
@@ -204,6 +208,7 @@ namespace llvm {
 
     /// EOL - Print a newline character to asm stream.  If a comment is present
     /// then it will be printed first.  Comments should not contain '\n'.
+    void EOL() const;
     void EOL(const std::string &Comment) const;
     
     /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an

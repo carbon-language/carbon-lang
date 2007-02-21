@@ -280,6 +280,8 @@ namespace {
     
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
+
+    virtual void EmitExternalGlobal(const GlobalVariable *GV);
   };
 
   /// LinuxAsmPrinter - PowerPC assembly printer, customized for Linux
@@ -399,6 +401,18 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     O << "<unknown operand type: " << MO.getType() << ">";
     return;
   }
+}
+
+/// EmitExternalGlobal - In this case we need to use the indirect symbol.
+///
+void PPCAsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
+  std::string Name = getGlobalLinkName(GV);
+  if (TM.getRelocationModel() != Reloc::Static) {
+    GVStubs.insert(Name);
+    O << "L" << Name << "$non_lazy_ptr";
+    return;
+  }
+  O << Name;
 }
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.

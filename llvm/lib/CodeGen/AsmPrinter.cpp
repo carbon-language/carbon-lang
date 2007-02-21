@@ -370,6 +370,14 @@ const std::string AsmPrinter::getGlobalLinkName(const GlobalVariable *GV) const{
   return LinkName;
 }
 
+/// EmitExternalGlobal - Emit the external reference to a global variable.
+/// Should be overridden if an indirect reference should be used.
+void AsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
+  O << getGlobalLinkName(GV);
+}
+
+
+
 //===----------------------------------------------------------------------===//
 /// LEB 128 number encoding.
 
@@ -440,6 +448,9 @@ void AsmPrinter::PrintHex(int Value) const {
 
 /// EOL - Print a newline character to asm stream.  If a comment is present
 /// then it will be printed first.  Comments should not contain '\n'.
+void AsmPrinter::EOL() const {
+  O << "\n";
+}
 void AsmPrinter::EOL(const std::string &Comment) const {
   if (AsmVerbose && !Comment.empty()) {
     O << "\t"
@@ -569,6 +580,7 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
   O << TAI->getAlignDirective() << NumBits << "\n";
 }
 
+    
 /// EmitZeros - Emit a block of zeros.
 ///
 void AsmPrinter::EmitZeros(uint64_t NumZeros) const {
