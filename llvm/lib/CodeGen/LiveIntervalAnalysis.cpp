@@ -658,14 +658,15 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
 }
 
 void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
+                                         unsigned MIIdx,
                                          LiveInterval &interval) {
   DOUT << "\t\tlivein register: "; DEBUG(printRegName(interval.reg));
 
   // Look for kills, if it reaches a def before it's killed, then it shouldn't
   // be considered a livein.
   MachineBasicBlock::iterator mi = MBB->begin();
-  unsigned baseIndex = 0;
-  unsigned start = 0;
+  unsigned baseIndex = MIIdx;
+  unsigned start = baseIndex;
   unsigned end = start;
   while (mi != MBB->end()) {
     if (lv_->KillsRegister(mi, interval.reg)) {
@@ -690,8 +691,8 @@ exit:
   assert(start < end && "did not find end of interval?");
 
   LiveRange LR(start, end, interval.getNextValue(~0U, 0));
-  interval.addRange(LR);
   DOUT << " +" << LR << '\n';
+  interval.addRange(LR);
 }
 
 /// computeIntervals - computes the live intervals for virtual
@@ -715,9 +716,9 @@ void LiveIntervals::computeIntervals() {
       // Create intervals for live-ins to this BB first.
       for (MachineBasicBlock::const_livein_iterator LI = MBB->livein_begin(),
              LE = MBB->livein_end(); LI != LE; ++LI) {
-        handleLiveInRegister(MBB, getOrCreateInterval(*LI));
+        handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*LI));
         for (const unsigned* AS = mri_->getAliasSet(*LI); *AS; ++AS)
-          handleLiveInRegister(MBB, getOrCreateInterval(*AS));
+          handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*AS));
       }
     }
     
