@@ -17,6 +17,11 @@
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
 #include <cstdlib>
+#ifndef NDEBUG
+#include <iostream>
+#include <iomanip>
+#endif
+
 using namespace llvm;
 
 // A utility function for allocating memory, checking for allocation failures,
@@ -36,7 +41,7 @@ inline static uint64_t* getMemory(uint32_t numWords) {
 }
 
 APInt::APInt(uint32_t numBits, uint64_t val)
-  : BitWidth(numBits), pVal(0) {
+  : BitWidth(numBits), VAL(0) {
   assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
   assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   if (isSingleWord()) 
@@ -48,7 +53,7 @@ APInt::APInt(uint32_t numBits, uint64_t val)
 }
 
 APInt::APInt(uint32_t numBits, uint32_t numWords, uint64_t bigVal[])
-  : BitWidth(numBits), pVal(0)  {
+  : BitWidth(numBits), VAL(0)  {
   assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
   assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   assert(bigVal && "Null pointer detected!");
@@ -72,21 +77,21 @@ APInt::APInt(uint32_t numBits, uint32_t numWords, uint64_t bigVal[])
 /// integer value.
 APInt::APInt(uint32_t numbits, const char StrStart[], uint32_t slen, 
              uint8_t radix) 
-  : BitWidth(numbits), pVal(0) {
+  : BitWidth(numbits), VAL(0) {
   fromString(numbits, StrStart, slen, radix);
 }
 
 /// @brief Create a new APInt by translating the string represented
 /// integer value.
 APInt::APInt(uint32_t numbits, const std::string& Val, uint8_t radix)
-  : BitWidth(numbits), pVal(0) {
+  : BitWidth(numbits), VAL(0) {
   assert(!Val.empty() && "String empty?");
   fromString(numbits, Val.c_str(), Val.size(), radix);
 }
 
 /// @brief Copy constructor
 APInt::APInt(const APInt& that)
-  : BitWidth(that.BitWidth), pVal(0) {
+  : BitWidth(that.BitWidth), VAL(0) {
   if (isSingleWord()) 
     VAL = that.VAL;
   else {
@@ -184,11 +189,10 @@ APInt& APInt::operator--() {
 
 /// add - This function adds the integer array x[] by integer array
 /// y[] and returns the carry.
-static uint64_t add(uint64_t dest[], uint64_t x[], 
-                           uint64_t y[], uint32_t len) {
+static uint64_t add(uint64_t dest[], uint64_t x[], uint64_t y[], uint32_t len) {
   uint64_t carry = 0;
   for (uint32_t i = 0; i< len; ++i) {
-    uint64_t save = x[i];
+    uint64_t save = std::max(x[i],y[i]);
     dest[i] = x[i] + y[i] + carry;
     carry = dest[i] < save ? 1 : 0;
   }
@@ -210,13 +214,13 @@ APInt& APInt::operator+=(const APInt& RHS) {
 
 /// sub - This function subtracts the integer array x[] by
 /// integer array y[], and returns the borrow-out carry.
-static uint64_t sub(uint64_t dest[], uint64_t x[], 
-                           uint64_t y[], uint32_t len) {
-  uint64_t borrow = 0;
+static uint64_t sub(uint64_t *dest, const uint64_t *x, const uint64_t *y, 
+                    uint32_t len) {
+  bool borrow = false;
   for (uint32_t i = 0; i < len; ++i) {
-    uint64_t save = x[i];
-    dest[i] = x[i] - borrow - y[i];
-    borrow = save < dest[i] ? 1 : 0;
+    uint64_t x_tmp = borrow ? x[i] - 1 : x[i];
+    borrow = y[i] > x_tmp || (borrow && x[i] == 0);
+    dest[i] = x_tmp - y[i];
   }
   return borrow;
 }
@@ -1385,72 +1389,55 @@ APInt APInt::urem(const APInt& RHS) const {
 }
 
 /// @brief Converts a char array into an integer.
-void APInt::fromString(uint32_t numbits, const char *StrStart, uint32_t slen, 
+void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen, 
                        uint8_t radix) {
+  // Check our assumptions here
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
-  assert(StrStart && "String is null?");
-  uint32_t size = 0;
-  // If the radix is a power of 2, read the input
-  // from most significant to least significant.
-  if ((radix & (radix - 1)) == 0) {
-    uint32_t nextBitPos = 0; 
-    uint32_t bits_per_digit = radix / 8 + 2;
-    uint64_t resDigit = 0;
-    BitWidth = slen * bits_per_digit;
-    if (getNumWords() > 1)
-      pVal = getMemory(getNumWords());
-    for (int i = slen - 1; i >= 0; --i) {
-      uint64_t digit = StrStart[i] - '0';
-      resDigit |= digit << nextBitPos;
-      nextBitPos += bits_per_digit;
-      if (nextBitPos >= APINT_BITS_PER_WORD) {
-        if (isSingleWord()) {
-          VAL = resDigit;
-           break;
-        }
-        pVal[size++] = resDigit;
-        nextBitPos -= APINT_BITS_PER_WORD;
-        resDigit = digit >> (bits_per_digit - nextBitPos);
-      }
-    }
-    if (!isSingleWord() && size <= getNumWords()) 
-      pVal[size] = resDigit;
-  } else {   // General case.  The radix is not a power of 2.
-    // For 10-radix, the max value of 64-bit integer is 18446744073709551615,
-    // and its digits number is 20.
-    const uint32_t chars_per_word = 20;
-    if (slen < chars_per_word || 
-        (slen == chars_per_word &&             // In case the value <= 2^64 - 1
-         strcmp(StrStart, "18446744073709551615") <= 0)) {
-      BitWidth = APINT_BITS_PER_WORD;
-      VAL = strtoull(StrStart, 0, 10);
-    } else { // In case the value > 2^64 - 1
-      BitWidth = (slen / chars_per_word + 1) * APINT_BITS_PER_WORD;
-      pVal = getClearedMemory(getNumWords());
-      uint32_t str_pos = 0;
-      while (str_pos < slen) {
-        uint32_t chunk = slen - str_pos;
-        if (chunk > chars_per_word - 1)
-          chunk = chars_per_word - 1;
-        uint64_t resDigit = StrStart[str_pos++] - '0';
-        uint64_t big_base = radix;
-        while (--chunk > 0) {
-          resDigit = resDigit * radix + StrStart[str_pos++] - '0';
-          big_base *= radix;
-        }
-       
-        uint64_t carry;
-        if (!size)
-          carry = resDigit;
-        else {
-          carry = mul_1(pVal, pVal, size, big_base);
-          carry += add_1(pVal, pVal, size, resDigit);
-        }
-        
-        if (carry) pVal[size++] = carry;
-      }
-    }
+  assert(str && "String is null?");
+  assert(slen <= numbits || radix != 2 && "Insufficient bit width");
+  assert(slen*3 <= numbits || radix != 8 && "Insufficient bit width");
+  assert(slen*4 <= numbits || radix != 16 && "Insufficient bit width");
+  assert((slen*64)/20 <= numbits || radix != 10 && "Insufficient bit width");
+
+  // Allocate memory
+  if (!isSingleWord())
+    pVal = getClearedMemory(getNumWords());
+
+  // Figure out if we can shift instead of multiply
+  uint32_t shift = (radix == 16 ? 4 : radix == 8 ? 3 : radix == 2 ? 1 : 0);
+
+  // Set up an APInt for the digit to add outside the loop so we don't
+  // constantly construct/destruct it.
+  APInt apdigit(getBitWidth(), 0);
+  APInt apradix(getBitWidth(), radix);
+
+  // Enter digit traversal loop
+  for (unsigned i = 0; i < slen; i++) {
+    // Get a digit
+    uint32_t digit = 0;
+    char cdigit = str[i];
+    if (isdigit(cdigit))
+      digit = cdigit - '0';
+    else if (isxdigit(cdigit))
+      if (cdigit >= 'a')
+        digit = cdigit - 'a' + 10;
+      else if (cdigit >= 'A')
+        digit = cdigit - 'A' + 10;
+      else
+        assert(0 && "huh?");
+    else
+      assert(0 && "Invalid character in digit string");
+
+    // Shift or multiple the value by the radix
+    if (shift)
+      this->shl(shift);
+    else
+      *this *= apradix;
+
+    // Add in the digit we just interpreted
+    apdigit.pVal[0] = digit;
+    *this += apdigit;
   }
 }
 
@@ -1519,15 +1506,27 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
     result = "0";
   else while (tmp.ne(zero)) {
     APInt APdigit(1,0);
-    divide(tmp, tmp.getNumWords(), divisor, divisor.getNumWords(), 0, &APdigit);
-    uint32_t digit = APdigit.getValue();
-    assert(digit < radix && "urem failed");
-    result.insert(insert_at,digits[digit]);
     APInt tmp2(tmp.getBitWidth(), 0);
-    divide(tmp, tmp.getNumWords(), divisor, divisor.getNumWords(), &tmp2, 0);
+    divide(tmp, tmp.getNumWords(), divisor, divisor.getNumWords(), &tmp2, 
+           &APdigit);
+    uint32_t digit = APdigit.getValue();
+    assert(digit < radix && "divide failed");
+    result.insert(insert_at,digits[digit]);
     tmp = tmp2;
   }
 
   return result;
 }
 
+#ifndef NDEBUG
+void APInt::dump() const
+{
+  std::cerr << "APInt(" << BitWidth << ")=" << std::setbase(16);
+  if (isSingleWord())
+    std::cerr << VAL;
+  else for (unsigned i = getNumWords(); i > 0; i--) {
+    std::cerr << pVal[i-1] << " ";
+  }
+  std::cerr << " (" << this->toString(10, false) << ")\n" << std::setbase(10);
+}
+#endif
