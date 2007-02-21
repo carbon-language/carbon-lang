@@ -2679,6 +2679,8 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::GLOBAL_OFFSET_TABLE: return "GLOBAL_OFFSET_TABLE";
   case ISD::RETURNADDR: return "RETURNADDR";
   case ISD::FRAMEADDR: return "FRAMEADDR";
+  case ISD::EXCEPTIONADDR: return "EXCEPTIONADDR";
+  case ISD::EHSELECTION: return "EHSELECTION";
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
   case ISD::INTRINSIC_WO_CHAIN: {

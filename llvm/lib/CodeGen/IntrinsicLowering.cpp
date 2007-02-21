@@ -357,6 +357,11 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::dbg_func_start:
   case Intrinsic::dbg_declare:
     break;    // Simply strip out debugging intrinsics
+    
+  case Intrinsic::eh_exception:
+  case Intrinsic::eh_handlers:
+    assert(0 && "Should not have leaked through");
+    break;
 
   case Intrinsic::memcpy_i32:
   case Intrinsic::memcpy_i64: {

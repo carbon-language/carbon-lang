@@ -668,6 +668,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::FRAMEADDR:
   case ISD::RETURNADDR:
+  case ISD::EXCEPTIONADDR:
+  case ISD::EHSELECTION:
     // The only option for these nodes is to custom lower them.  If the target
     // does not custom lower them, then return zero.
     Tmp1 = TLI.LowerOperation(Op, DAG);
