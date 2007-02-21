@@ -40,6 +40,13 @@ ifeq ($(MAKECMDGOALS),tools-only)
   OPTIONAL_DIRS :=
 endif
 
+# Don't install utils, examples, or projects they are only used to 
+# build LLVM.
+ifeq ($(MAKECMDGOALS),install)
+  DIRS := $(filter-out utils, $(DIRS))
+  OPTIONAL_DIRS :=
+endif
+
 # Include the main makefile machinery.
 include $(LLVM_SRC_ROOT)/Makefile.rules
 
