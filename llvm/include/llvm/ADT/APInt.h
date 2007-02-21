@@ -128,12 +128,17 @@ public:
   void fromString(uint32_t numBits, const char *StrStart, uint32_t slen, 
                   uint8_t radix);
 
+#ifndef NDEBUG
+  /// @brief debug method
+  void dump() const;
+#endif
+
+public:
   /// @brief An internal division function for dividing APInts.
   static void divide(const APInt LHS, uint32_t lhsWords, 
                      const APInt &RHS, uint32_t rhsWords,
                      APInt *Quotient, APInt *Remainder);
 
-public:
   /// @brief Create a new APInt of numBits bit-width, and initialized as val.
   APInt(uint32_t numBits, uint64_t val);
 
@@ -412,7 +417,7 @@ public:
   /// computations to see how "wide" the value is.
   /// @brief Compute the number of active bits in the value
   inline uint32_t getActiveBits() const {
-    return getNumWords() * APINT_BITS_PER_WORD - countLeadingZeros();
+    return BitWidth - countLeadingZeros();
   }
 
   /// @returns a uint64_t value from this APInt. If this APInt contains a single
