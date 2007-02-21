@@ -68,6 +68,10 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
 
+  // Exception handling queries.
+  unsigned getEHExceptionRegister() const;
+  unsigned getEHHandlerRegister() const;
+
   static std::string getPrettyName(unsigned reg);
 };
 

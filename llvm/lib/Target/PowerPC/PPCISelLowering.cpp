@@ -2610,6 +2610,30 @@ static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
   }
 }
 
+/// LowerEXCEPTIONADDR - Replace EXCEPTIONADDR with a copy from the exception
+/// register.  The register was made live in the ISel.
+static SDOperand LowerEXCEPTIONADDR(SDOperand Op, SelectionDAG &DAG) {
+  const MRegisterInfo *MRI = DAG.getTargetLoweringInfo().
+                                 getTargetMachine().
+                                 getRegisterInfo();
+  MVT::ValueType VT = Op.Val->getValueType(0);
+  unsigned Reg = MRI->getEHExceptionRegister();
+  SDOperand Result = DAG.getCopyFromReg(Op.getOperand(0), Reg, VT);
+  return Result.getValue(Op.ResNo);
+}
+
+/// LowerEXCEPTIONADDR - Replace EHSELECTION with a copy from the exception
+/// selection register.  The register was made live in the ISel.
+static SDOperand LowerEHSELECTION(SDOperand Op, SelectionDAG &DAG) {
+  const MRegisterInfo *MRI = DAG.getTargetLoweringInfo().
+                                 getTargetMachine().
+                                 getRegisterInfo();
+  MVT::ValueType VT = Op.Val->getValueType(0);
+  unsigned Reg = MRI->getEHHandlerRegister();
+  SDOperand Result = DAG.getCopyFromReg(Op.getOperand(1), Reg, VT);
+  return Result.getValue(Op.ResNo);
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -2647,6 +2671,10 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   // Frame & Return address.  Currently unimplemented
   case ISD::RETURNADDR:         break;
   case ISD::FRAMEADDR:          break;
+  
+  // Exception address and exception selector.
+  case ISD::EXCEPTIONADDR:      return LowerEXCEPTIONADDR(Op, DAG);
+  case ISD::EHSELECTION:        return LowerEHSELECTION(Op, DAG);
   }
   return SDOperand();
 }

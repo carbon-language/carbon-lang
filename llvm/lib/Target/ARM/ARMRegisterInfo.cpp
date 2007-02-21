@@ -1287,5 +1287,15 @@ unsigned ARMRegisterInfo::getFrameRegister(MachineFunction &MF) const {
   return STI.useThumbBacktraces() ? ARM::R7 : ARM::R11;
 }
 
+unsigned ARMRegisterInfo::getEHExceptionRegister() const {
+  assert(0 && "What is the exception register");
+  return 0;
+}
+
+unsigned ARMRegisterInfo::getEHHandlerRegister() const {
+  assert(0 && "What is the exception handler register");
+  return 0;
+}
+
 #include "ARMGenRegisterInfo.inc"
 

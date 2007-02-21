@@ -4675,7 +4675,11 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
+  // Exception address and exception selector.  Currently unimplemented.
+  case ISD::EXCEPTIONADDR: break;
+  case ISD::EHSELECTION:   break;
   }
+  return SDOperand();
 }
 
 const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {

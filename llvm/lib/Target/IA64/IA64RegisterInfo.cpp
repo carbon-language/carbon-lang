@@ -360,5 +360,15 @@ unsigned IA64RegisterInfo::getFrameRegister(MachineFunction &MF) const {
   return hasFP(MF) ? IA64::r5 : IA64::r12;
 }
 
+unsigned IA64RegisterInfo::getEHExceptionRegister() const {
+  assert(0 && "What is the exception register");
+  return 0;
+}
+
+unsigned IA64RegisterInfo::getEHHandlerRegister() const {
+  assert(0 && "What is the exception handler register");
+  return 0;
+}
+
 #include "IA64GenRegisterInfo.inc"
 

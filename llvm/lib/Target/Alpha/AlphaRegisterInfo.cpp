@@ -399,6 +399,16 @@ unsigned AlphaRegisterInfo::getFrameRegister(MachineFunction &MF) const {
   return hasFP(MF) ? Alpha::R15 : Alpha::R30;
 }
 
+unsigned AlphaRegisterInfo::getEHExceptionRegister() const {
+  assert(0 && "What is the exception register");
+  return 0;
+}
+
+unsigned AlphaRegisterInfo::getEHHandlerRegister() const {
+  assert(0 && "What is the exception handler register");
+  return 0;
+}
+
 #include "AlphaGenRegisterInfo.inc"
 
 std::string AlphaRegisterInfo::getPrettyName(unsigned reg)

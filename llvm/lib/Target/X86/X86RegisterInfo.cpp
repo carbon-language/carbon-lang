@@ -1193,6 +1193,16 @@ void X86RegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
   Moves.push_back(MachineMove(0, Dst, Src));
 }
 
+unsigned X86RegisterInfo::getEHExceptionRegister() const {
+  assert(0 && "What is the exception register");
+  return 0;
+}
+
+unsigned X86RegisterInfo::getEHHandlerRegister() const {
+  assert(0 && "What is the exception handler register");
+  return 0;
+}
+
 namespace llvm {
 unsigned getX86SubSuperRegister(unsigned Reg, MVT::ValueType VT, bool High) {
   switch (VT) {

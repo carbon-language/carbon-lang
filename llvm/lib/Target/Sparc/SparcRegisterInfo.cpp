@@ -250,5 +250,15 @@ unsigned SparcRegisterInfo::getFrameRegister(MachineFunction &MF) const {
   return SP::G1;
 }
 
+unsigned SparcRegisterInfo::getEHExceptionRegister() const {
+  assert(0 && "What is the exception register");
+  return 0;
+}
+
+unsigned SparcRegisterInfo::getEHHandlerRegister() const {
+  assert(0 && "What is the exception handler register");
+  return 0;
+}
+
 #include "SparcGenRegisterInfo.inc"
 

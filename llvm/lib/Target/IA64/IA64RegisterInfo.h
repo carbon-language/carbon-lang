@@ -64,6 +64,10 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
+
+  // Exception handling queries.
+  unsigned getEHExceptionRegister() const;
+  unsigned getEHHandlerRegister() const;
 };
 
 } // End llvm namespace

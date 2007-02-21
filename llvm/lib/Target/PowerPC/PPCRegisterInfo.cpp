@@ -1022,7 +1022,6 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
 
 unsigned PPCRegisterInfo::getRARegister() const {
   return !Subtarget.isPPC64() ? PPC::LR : PPC::LR8;
-  
 }
 
 unsigned PPCRegisterInfo::getFrameRegister(MachineFunction &MF) const {
@@ -1038,6 +1037,14 @@ void PPCRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
   MachineLocation Dst(MachineLocation::VirtualFP);
   MachineLocation Src(PPC::R1, 0);
   Moves.push_back(MachineMove(0, Dst, Src));
+}
+
+unsigned PPCRegisterInfo::getEHExceptionRegister() const {
+  return !Subtarget.isPPC64() ? PPC::R3 : PPC::X3;
+}
+
+unsigned PPCRegisterInfo::getEHHandlerRegister() const {
+  return !Subtarget.isPPC64() ? PPC::R4 : PPC::X4;
 }
 
 #include "PPCGenRegisterInfo.inc"

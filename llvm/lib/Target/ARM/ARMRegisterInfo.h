@@ -85,6 +85,10 @@ public:
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
+
+  // Exception handling queries.
+  unsigned getEHExceptionRegister() const;
+  unsigned getEHHandlerRegister() const;
 };
 
 } // end namespace llvm

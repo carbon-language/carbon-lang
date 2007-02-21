@@ -469,7 +469,15 @@ public:
   /// getRARegister - This method should return the register where the return
   /// address can be found.
   virtual unsigned getRARegister() const = 0;
-                            
+  
+  /// getEHExceptionRegister - This method should return the register containing
+  /// the address of the exception info on entry to a landing pad.
+  virtual unsigned getEHExceptionRegister() const = 0;
+  
+  /// getEHHandlerRegister - This method should return the register containing
+  /// the switch table selection on entry to an landing pad.
+  virtual unsigned getEHHandlerRegister() const = 0;
+
   /// getLocation - This method should return the actual location of a frame
   /// variable given the frame index.  The location is returned in ML.
   /// Subclasses should override this method for special handling of frame
