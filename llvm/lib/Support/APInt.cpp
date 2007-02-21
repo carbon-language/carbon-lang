@@ -696,18 +696,20 @@ bool APInt::isPowerOf2() const {
 /// the number of zeros from the most significant bit to the first one bit.
 /// @returns numWord() * 64 if the value is zero.
 uint32_t APInt::countLeadingZeros() const {
-  if (isSingleWord())
-    return CountLeadingZeros_64(VAL) - (APINT_BITS_PER_WORD - BitWidth);
   uint32_t Count = 0;
-  for (uint32_t i = getNumWords(); i > 0u; --i) {
-    uint32_t tmp = CountLeadingZeros_64(pVal[i-1]);
-    Count += tmp;
-    if (tmp != APINT_BITS_PER_WORD)
-      if (i == getNumWords())
-        Count -= (APINT_BITS_PER_WORD - whichBit(BitWidth));
-      break;
+  if (isSingleWord())
+    Count = CountLeadingZeros_64(VAL);
+  else {
+    for (uint32_t i = getNumWords(); i > 0u; --i) {
+      if (pVal[i-1] == 0)
+        Count += APINT_BITS_PER_WORD;
+      else {
+        Count += CountLeadingZeros_64(pVal[i-1]);
+        break;
+      }
+    }
   }
-  return Count;
+  return Count - (APINT_BITS_PER_WORD - (BitWidth % APINT_BITS_PER_WORD));
 }
 
 /// countTrailingZeros - This function is a APInt version corresponding to
@@ -1513,7 +1515,7 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
     result = "-";
     insert_at = 1;
   }
-  if (tmp == 0)
+  if (tmp == APInt(tmp.getBitWidth(), 0))
     result = "0";
   else while (tmp.ne(zero)) {
     APInt APdigit(1,0);
