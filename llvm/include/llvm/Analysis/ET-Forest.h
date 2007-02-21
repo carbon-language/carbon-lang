@@ -141,8 +141,7 @@ public:
   // removeFromForest()
   ~ETNode() {
     delete RightmostOcc;
-    if (ParentOcc)
-      delete ParentOcc;
+    delete ParentOcc;
   }
 
   void removeFromForest() {
