@@ -794,6 +794,8 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     InFlag = Chain.getValue(1);
   }
 
+  // ELF / PIC requires GOT in the EBX register before function calls via PLT
+  // GOT pointer.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       Subtarget->isPICStyleGOT()) {
     Chain = DAG.getCopyToReg(Chain, X86::EBX,
@@ -825,6 +827,11 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
+
+  // Add an implicit use GOT pointer in EBX.
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+      Subtarget->isPICStyleGOT())
+    Ops.push_back(DAG.getRegister(X86::EBX, getPointerTy()));
   
   if (InFlag.Val)
     Ops.push_back(InFlag);
@@ -1788,6 +1795,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
+  // ELF / PIC requires GOT in the EBX register before function calls via PLT
+  // GOT pointer.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       Subtarget->isPICStyleGOT()) {
     Chain = DAG.getCopyToReg(Chain, X86::EBX,
@@ -1808,6 +1817,11 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
+
+  // Add an implicit use GOT pointer in EBX.
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+      Subtarget->isPICStyleGOT())
+    Ops.push_back(DAG.getRegister(X86::EBX, getPointerTy()));
 
   if (InFlag.Val)
     Ops.push_back(InFlag);
