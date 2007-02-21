@@ -67,7 +67,8 @@ FunctionPass *llvm::createBranchFoldingPass() { return new BranchFolder(); }
 /// RemoveDeadBlock - Remove the specified dead machine basic block from the
 /// function, updating the CFG.
 void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
-  assert(MBB->pred_empty() && "MBB must be dead!");
+  assert(!MBB->isAccessable() && "MBB must be dead!");
+  DOUT << "\nRemoving MBB: " << *MBB;
   
   MachineFunction *MF = MBB->getParent();
   // drop all successors.
@@ -439,7 +440,7 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
     OptimizeBlock(MBB);
     
     // If it is dead, remove it.
-    if (MBB->pred_empty()) {
+    if (!MBB->isAccessable()) {
       RemoveDeadBlock(MBB);
       MadeChange = true;
       ++NumDeadBlocks;
@@ -484,6 +485,8 @@ static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB,
       ++SI;
     } else if (*SI == DestB) {
       DestB = 0;
+      ++SI;
+    } else if ((*SI)->isLandingPad()) {
       ++SI;
     } else {
       // Otherwise, this is a superfluous edge, remove it.
@@ -615,14 +618,14 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   // explicitly.
   if (MBB->empty()) {
     // Dead block?  Leave for cleanup later.
-    if (MBB->pred_empty()) return;
+    if (!MBB->isAccessable()) return;
     
     if (FallThrough == MBB->getParent()->end()) {
       // TODO: Simplify preds to not branch here if possible!
     } else {
       // Rewrite all predecessors of the old block to go to the fallthrough
       // instead.
-      while (!MBB->pred_empty()) {
+      while (MBB->isAccessable()) {
         MachineBasicBlock *Pred = *(MBB->pred_end()-1);
         ReplaceUsesOfBlockWith(Pred, MBB, FallThrough, TII);
       }
@@ -855,28 +858,30 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     bool CurFallsThru = CanFallThrough(MBB, CurUnAnalyzable, CurTBB, CurFBB, 
                                             CurCond);
 
-    // Check all the predecessors of this block.  If one of them has no fall
-    // throughs, move this block right after it.
-    for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-         E = MBB->pred_end(); PI != E; ++PI) {
-      // Analyze the branch at the end of the pred.
-      MachineBasicBlock *PredBB = *PI;
-      MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
-      if (PredBB != MBB && !CanFallThrough(PredBB)
-          && (!CurFallsThru || MBB->getNumber() >= PredBB->getNumber())) {
-        // If the current block doesn't fall through, just move it.
-        // If the current block can fall through and does not end with a
-        // conditional branch, we need to append an unconditional jump to 
-        // the (current) next block.  To avoid a possible compile-time
-        // infinite loop, move blocks only backward in this case.
-        if (CurFallsThru) {
-          MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
-          CurCond.clear();
-          TII->InsertBranch(*MBB, NextBB, 0, CurCond);
+    if (!MBB->isLandingPad()) {
+      // Check all the predecessors of this block.  If one of them has no fall
+      // throughs, move this block right after it.
+      for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+           E = MBB->pred_end(); PI != E; ++PI) {
+        // Analyze the branch at the end of the pred.
+        MachineBasicBlock *PredBB = *PI;
+        MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
+        if (PredBB != MBB && !CanFallThrough(PredBB)
+            && (!CurFallsThru || MBB->getNumber() >= PredBB->getNumber())) {
+          // If the current block doesn't fall through, just move it.
+          // If the current block can fall through and does not end with a
+          // conditional branch, we need to append an unconditional jump to 
+          // the (current) next block.  To avoid a possible compile-time
+          // infinite loop, move blocks only backward in this case.
+          if (CurFallsThru) {
+            MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
+            CurCond.clear();
+            TII->InsertBranch(*MBB, NextBB, 0, CurCond);
+          }
+          MBB->moveAfter(PredBB);
+          MadeChange = true;
+          return OptimizeBlock(MBB);
         }
-        MBB->moveAfter(PredBB);
-        MadeChange = true;
-        return OptimizeBlock(MBB);
       }
     }
         
