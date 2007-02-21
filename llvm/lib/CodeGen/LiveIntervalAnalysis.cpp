@@ -1451,10 +1451,10 @@ bool LiveIntervals::differingRegisterClasses(unsigned RegA,
 /// reg between indexes Start and End.
 bool
 LiveIntervals::hasRegisterUse(unsigned Reg, unsigned Start, unsigned End) {
-  for (unsigned Index = Start+InstrSlots::NUM; Index != End;
+  for (unsigned Index = Start+InstrSlots::NUM; Index < End;
        Index += InstrSlots::NUM) {
     // Skip deleted instructions
-    while (Index != End && !getInstructionFromIndex(Index))
+    while (Index < End && !getInstructionFromIndex(Index))
       Index += InstrSlots::NUM;
     if (Index >= End) break;
 
