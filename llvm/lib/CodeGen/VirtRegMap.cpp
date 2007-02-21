@@ -27,6 +27,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
@@ -423,14 +424,10 @@ namespace {
   class VISIBILITY_HIDDEN ReuseInfo {
     MachineInstr &MI;
     std::vector<ReusedOp> Reuses;
-    bool *PhysRegsClobbered;
+    BitVector PhysRegsClobbered;
   public:
     ReuseInfo(MachineInstr &mi, const MRegisterInfo *mri) : MI(mi) {
-      PhysRegsClobbered = new bool[mri->getNumRegs()];
-      std::fill(PhysRegsClobbered, PhysRegsClobbered+mri->getNumRegs(), false);
-    }
-    ~ReuseInfo() {
-      delete[] PhysRegsClobbered;
+      PhysRegsClobbered.resize(mri->getNumRegs());
     }
     
     bool hasReuses() const {
@@ -452,11 +449,11 @@ namespace {
     }
 
     void markClobbered(unsigned PhysReg) {
-      PhysRegsClobbered[PhysReg] = true;
+      PhysRegsClobbered.set(PhysReg);
     }
 
     bool isClobbered(unsigned PhysReg) const {
-      return PhysRegsClobbered[PhysReg];
+      return PhysRegsClobbered.test(PhysReg);
     }
     
     /// GetRegForReload - We are about to emit a reload into PhysReg.  If there
