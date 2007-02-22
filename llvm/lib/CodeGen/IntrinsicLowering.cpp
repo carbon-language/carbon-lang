@@ -358,7 +358,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::dbg_declare:
   case Intrinsic::eh_exception:
   case Intrinsic::eh_handlers:
-    break;    // Simply strip out debugging intrinsics
+    break;    // Simply strip out debugging and eh intrinsics
 
   case Intrinsic::memcpy_i32:
   case Intrinsic::memcpy_i64: {
