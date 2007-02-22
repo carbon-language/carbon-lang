@@ -2104,25 +2104,26 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     
     if (MMI) {
       // Inform the MachineModuleInfo of the personality for this landing pad.
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(2))) {
-        if (CE->getOpcode() == Instruction::BitCast) {
-            MMI->addPersonality(CurMBB,
-                                cast<Function>(CE->getOperand(0)));
-        }
-      }
+      ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(2));
+      assert(CE && CE->getOpcode() == Instruction::BitCast &&
+             isa<Function>(CE->getOperand(0)) &&
+             "Personality should be a function");
+      MMI->addPersonality(CurMBB, cast<Function>(CE->getOperand(0)));
 
       // Gather all the type infos for this landing pad and pass them along to
       // MachineModuleInfo.
       std::vector<GlobalVariable *> TyInfo;
       for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
-        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(i))) {
-          if (CE->getOpcode() == Instruction::BitCast) {
-            TyInfo.push_back(cast<GlobalVariable>(CE->getOperand(0)));
-            continue;
-          }
+        ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(i));
+        if (CE && CE->getOpcode() == Instruction::BitCast &&
+            isa<GlobalVariable>(CE->getOperand(0))) {
+          TyInfo.push_back(cast<GlobalVariable>(CE->getOperand(0)));
+        } else {
+          ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(i));
+          assert(CI && CI->getZExtValue() == 0 &&
+            "TypeInfo must be a global variable typeinfo or NULL");
+          TyInfo.push_back(NULL);
         }
-
-        TyInfo.push_back(NULL);
       }
       MMI->addCatchTypeInfo(CurMBB, TyInfo);
       
@@ -2149,10 +2150,15 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (MMI) {
       // Find the type id for the given typeinfo.
       GlobalVariable *GV = NULL;
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(1))) {
-        if (CE->getOpcode() == Instruction::BitCast) {
-          GV = cast<GlobalVariable>(CE->getOperand(0));
-        }
+      ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(1));
+      if (CE && CE->getOpcode() == Instruction::BitCast &&
+          isa<GlobalVariable>(CE->getOperand(0))) {
+        GV = cast<GlobalVariable>(CE->getOperand(0));
+      } else {
+        ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1));
+        assert(CI && CI->getZExtValue() == 0 &&
+          "TypeInfo must be a global variable typeinfo or NULL");
+        GV = NULL;
       }
       
       unsigned TypeID = MMI->getTypeIDFor(GV);
