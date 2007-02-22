@@ -1177,7 +1177,7 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
   uint32_t *U = new uint32_t[m + n + 1];
   memset(U, 0, (m+n+1)*sizeof(uint32_t));
   for (unsigned i = 0; i < lhsWords; ++i) {
-    uint64_t tmp = (lhsWords == 1 ? LHS.VAL : LHS.pVal[i]);
+    uint64_t tmp = (LHS.getNumWords() == 1 ? LHS.VAL : LHS.pVal[i]);
     U[i * 2] = tmp & mask;
     U[i * 2 + 1] = tmp >> (sizeof(uint32_t)*8);
   }
@@ -1186,7 +1186,7 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
   uint32_t *V = new uint32_t[n];
   memset(V, 0, (n)*sizeof(uint32_t));
   for (unsigned i = 0; i < rhsWords; ++i) {
-    uint64_t tmp = (rhsWords == 1 ? RHS.VAL : RHS.pVal[i]);
+    uint64_t tmp = (RHS.getNumWords() == 1 ? RHS.VAL : RHS.pVal[i]);
     V[i * 2] = tmp & mask;
     V[i * 2 + 1] = tmp >> (sizeof(uint32_t)*8);
   }
