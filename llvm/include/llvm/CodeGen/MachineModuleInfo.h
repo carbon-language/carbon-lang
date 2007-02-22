@@ -1014,7 +1014,7 @@ private:
   // in the current function.
   std::vector<LandingPadInfo> LandingPads;
   
-  // TypeInfos - List of C++ TypeInfo used in the currect function.
+  // TypeInfos - List of C++ TypeInfo used in the current function.
   //
   std::vector<GlobalVariable *> TypeInfos;
 
