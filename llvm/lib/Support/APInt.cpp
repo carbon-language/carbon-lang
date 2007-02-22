@@ -726,7 +726,10 @@ uint32_t APInt::countLeadingZeros() const {
       }
     }
   }
-  return Count - (APINT_BITS_PER_WORD - (BitWidth % APINT_BITS_PER_WORD));
+  uint32_t remainder = BitWidth % APINT_BITS_PER_WORD;
+  if (remainder)
+    Count -= APINT_BITS_PER_WORD - remainder;
+  return Count;
 }
 
 /// countTrailingZeros - This function is a APInt version corresponding to
