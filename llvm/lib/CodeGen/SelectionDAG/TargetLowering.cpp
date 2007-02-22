@@ -151,6 +151,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   IntDivIsCheap = false;
   Pow2DivIsCheap = false;
   StackPointerRegisterToSaveRestore = 0;
+  ExceptionPointerRegister = 0;
+  ExceptionSelectorRegister = 0;
   SchedPreferenceInfo = SchedulingForLatency;
   JumpBufSize = 0;
   JumpBufAlignment = 0;
