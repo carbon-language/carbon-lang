@@ -959,10 +959,22 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
 
   DOUT << "\n\t\tJoined.  Result = "; DestInt.print(DOUT, mri_);
   DOUT << "\n";
-  
+
   // If the intervals were swapped by Join, swap them back so that the register
   // mapping (in the r2i map) is correct.
   if (Swapped) SrcInt.swap(DestInt);
+
+  // Live range has been lengthened due to colaescing, eliminate the
+  // unnecessary kills at the end of the source live ranges.
+  LiveVariables::VarInfo& vi = lv_->getVarInfo(repSrcReg);
+  for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
+    MachineInstr *Kill = vi.Kills[i];
+    if (Kill == CopyMI || isRemoved(Kill))
+      continue;
+    if (DestInt.liveAt(getInstructionIndex(Kill) + InstrSlots::NUM))
+      unsetRegisterKill(Kill, repSrcReg);
+  }
+
   removeInterval(repSrcReg);
   r2rMap_[repSrcReg] = repDstReg;
 
@@ -1469,6 +1481,17 @@ LiveIntervals::hasRegisterUse(unsigned Reg, unsigned Start, unsigned End) {
   }
 
   return false;
+}
+
+/// unsetRegisterKill - Unset IsKill property of all uses of specific register
+/// of the specific instruction.
+void LiveIntervals::unsetRegisterKill(MachineInstr *MI, unsigned Reg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isUse() && MO.isKill() && MO.getReg() &&
+        mri_->regsOverlap(rep(MO.getReg()), Reg))
+      MO.unsetIsKill();
+  }
 }
 
 LiveInterval LiveIntervals::createInterval(unsigned reg) {

@@ -172,6 +172,13 @@ namespace llvm {
     }
 
   private:
+    /// isRemoved - returns true if the specified machine instr has been
+    /// removed.
+    bool isRemoved(MachineInstr* instr) const {
+      Mi2IndexMap::const_iterator it = mi2iMap_.find(instr);
+      return it == mi2iMap_.end();
+    }
+
     /// RemoveMachineInstrFromMaps - This marks the specified machine instr as
     /// deleted.
     void RemoveMachineInstrFromMaps(MachineInstr *MI) {
@@ -255,6 +262,10 @@ namespace llvm {
     /// hasRegisterUse - Returns true if there is any use of the specific
     /// reg between indexes Start and End.
     bool hasRegisterUse(unsigned Reg, unsigned Start, unsigned End);
+
+    /// unsetRegisterKill - Unset IsKill property of all uses of specific
+    /// register of the specific instruction.
+    void unsetRegisterKill(MachineInstr *MI, unsigned Reg);
 
     static LiveInterval createInterval(unsigned Reg);
 
