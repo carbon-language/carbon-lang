@@ -165,10 +165,6 @@ public:
   /// this basic block is entered via an exception handler.
   void setIsLandingPad() { IsLandingPad = true; }
 
-  /// isAccessable - Returns true if the block is alive.  That is, if it has
-  /// predecessors or is an eh landing pad.
-  bool isAccessable() const { return !pred_empty() || isLandingPad(); }
-
   // Code Layout methods.
   
   /// moveBefore/moveAfter - move 'this' block before or after the specified

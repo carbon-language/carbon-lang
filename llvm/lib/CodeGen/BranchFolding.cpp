@@ -67,7 +67,7 @@ FunctionPass *llvm::createBranchFoldingPass() { return new BranchFolder(); }
 /// RemoveDeadBlock - Remove the specified dead machine basic block from the
 /// function, updating the CFG.
 void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
-  assert(!MBB->isAccessable() && "MBB must be dead!");
+  assert(MBB->pred_empty() && "MBB must be dead!");
   DOUT << "\nRemoving MBB: " << *MBB;
   
   MachineFunction *MF = MBB->getParent();
@@ -440,7 +440,7 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
     OptimizeBlock(MBB);
     
     // If it is dead, remove it.
-    if (!MBB->isAccessable()) {
+    if (MBB->pred_empty()) {
       RemoveDeadBlock(MBB);
       MadeChange = true;
       ++NumDeadBlocks;
@@ -618,14 +618,14 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   // explicitly.
   if (MBB->empty()) {
     // Dead block?  Leave for cleanup later.
-    if (!MBB->isAccessable()) return;
+    if (MBB->pred_empty()) return;
     
     if (FallThrough == MBB->getParent()->end()) {
       // TODO: Simplify preds to not branch here if possible!
     } else {
       // Rewrite all predecessors of the old block to go to the fallthrough
       // instead.
-      while (MBB->isAccessable()) {
+      while (!MBB->pred_empty()) {
         MachineBasicBlock *Pred = *(MBB->pred_end()-1);
         ReplaceUsesOfBlockWith(Pred, MBB, FallThrough, TII);
       }
