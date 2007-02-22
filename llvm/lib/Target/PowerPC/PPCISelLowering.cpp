@@ -140,14 +140,18 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
   // We cannot sextinreg(i1).  Expand to shifts.
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
-  
-  
+
   // Support label based line numbers.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  // FIXME - use subtarget debug flags
-  if (!TM.getSubtarget<PPCSubtarget>().isDarwin())
+  if (!TM.getSubtarget<PPCSubtarget>().isDarwin()) {
     setOperationAction(ISD::LABEL, MVT::Other, Expand);
+  } else {
+    setOperationAction(ISD::EXCEPTIONADDR, MVT::i64, Expand);
+    setOperationAction(ISD::EHSELECTION,   MVT::i64, Expand);
+    setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
+    setOperationAction(ISD::EHSELECTION,   MVT::i32, Expand);
+  }
   
   // We want to legalize GlobalAddress and ConstantPool nodes into the 
   // appropriate instructions to materialize the address.
@@ -283,10 +287,15 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setShiftAmountType(MVT::i32);
   setSetCCResultContents(ZeroOrOneSetCCResult);
   
-  if (TM.getSubtarget<PPCSubtarget>().isPPC64())
+  if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {
     setStackPointerRegisterToSaveRestore(PPC::X1);
-  else 
+    setExceptionPointerRegister(PPC::X3);
+    setExceptionSelectorRegister(PPC::X4);
+  } else {
     setStackPointerRegisterToSaveRestore(PPC::R1);
+    setExceptionPointerRegister(PPC::R3);
+    setExceptionSelectorRegister(PPC::R4);
+  }
   
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::SINT_TO_FP);
@@ -2610,30 +2619,6 @@ static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
   }
 }
 
-/// LowerEXCEPTIONADDR - Replace EXCEPTIONADDR with a copy from the exception
-/// register.  The register was made live in the ISel.
-static SDOperand LowerEXCEPTIONADDR(SDOperand Op, SelectionDAG &DAG) {
-  const MRegisterInfo *MRI = DAG.getTargetLoweringInfo().
-                                 getTargetMachine().
-                                 getRegisterInfo();
-  MVT::ValueType VT = Op.Val->getValueType(0);
-  unsigned Reg = MRI->getEHExceptionRegister();
-  SDOperand Result = DAG.getCopyFromReg(Op.getOperand(0), Reg, VT);
-  return Result.getValue(Op.ResNo);
-}
-
-/// LowerEXCEPTIONADDR - Replace EHSELECTION with a copy from the exception
-/// selection register.  The register was made live in the ISel.
-static SDOperand LowerEHSELECTION(SDOperand Op, SelectionDAG &DAG) {
-  const MRegisterInfo *MRI = DAG.getTargetLoweringInfo().
-                                 getTargetMachine().
-                                 getRegisterInfo();
-  MVT::ValueType VT = Op.Val->getValueType(0);
-  unsigned Reg = MRI->getEHHandlerRegister();
-  SDOperand Result = DAG.getCopyFromReg(Op.getOperand(1), Reg, VT);
-  return Result.getValue(Op.ResNo);
-}
-
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -2671,10 +2656,6 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   // Frame & Return address.  Currently unimplemented
   case ISD::RETURNADDR:         break;
   case ISD::FRAMEADDR:          break;
-  
-  // Exception address and exception selector.
-  case ISD::EXCEPTIONADDR:      return LowerEXCEPTIONADDR(Op, DAG);
-  case ISD::EHSELECTION:        return LowerEHSELECTION(Op, DAG);
   }
   return SDOperand();
 }

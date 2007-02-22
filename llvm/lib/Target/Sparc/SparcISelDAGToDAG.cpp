@@ -871,9 +871,6 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   // Frame & Return address.  Currently unimplemented
   case ISD::RETURNADDR:         break;
   case ISD::FRAMEADDR:          break;
-  // Exception address and exception selector.  Currently unimplemented.
-  case ISD::EXCEPTIONADDR: break;
-  case ISD::EHSELECTION:   break;
   }
   return SDOperand();
 }

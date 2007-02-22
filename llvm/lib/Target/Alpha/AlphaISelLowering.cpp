@@ -548,9 +548,6 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(AlphaISD::GlobalRetAddr, MVT::i64);
       //FIXME: implement
   case ISD::FRAMEADDR:          break;
-  // Exception address and exception selector.  Currently unimplemented.
-  case ISD::EXCEPTIONADDR: break;
-  case ISD::EHSELECTION:   break;
   }
   
   return SDOperand();
