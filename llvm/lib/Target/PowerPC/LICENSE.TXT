@@ -1,7 +1,0 @@
-PowerPC Backend
--------------------------------------------------------------------------------
-The PowerPC Backend is licensed under the Illinois Open Source License and has
-the following additional copyright:
-
-Copyright (C) 2004 Nate Begeman and Louis Gerbarg
-
