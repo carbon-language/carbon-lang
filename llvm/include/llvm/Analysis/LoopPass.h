@@ -25,6 +25,7 @@ namespace llvm {
 class LPPassManager;
 class Loop;
 class Function;
+class LoopQueue;
 
 class LoopPass : public Pass {
 
@@ -41,7 +42,8 @@ class LoopPass : public Pass {
 class LPPassManager : public FunctionPass, public PMDataManager {
 
 public:
-  LPPassManager(int Depth) : PMDataManager(Depth) { }
+  LPPassManager(int Depth);
+  ~LPPassManager();
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
@@ -78,6 +80,9 @@ public:
   virtual PassManagerType getPassManagerType() { 
     return PMT_LoopPassManager; 
   }
+
+ private:
+  LoopQueue *LQ;
 
 };
 

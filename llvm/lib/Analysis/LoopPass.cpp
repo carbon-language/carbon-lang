@@ -14,12 +14,48 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoopPass.h"
+#include <queue>
 using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+// LoopQueue
+
+namespace llvm {
+
+// Compare Two loops based on their depth in loop nest.
+class LoopCompare {
+public:
+  bool operator()( Loop *L1, Loop *L2) const {
+    return L1->getLoopDepth() > L2->getLoopDepth();
+  }
+};
+
+// Loop queue used by Loop Pass Manager. This is a wrapper class
+// that hides implemenation detail (use of priority_queue) inside .cpp file.
+class LoopQueue {
+
+  inline void push(Loop *L) { LPQ.push(L); }
+  inline void pop() { LPQ.pop(); }
+  inline Loop *top() { return LPQ.top(); }
+
+private:
+  std::priority_queue<Loop *, std::vector<Loop *>, LoopCompare> LPQ;
+};
+
+} // End of LLVM namespace
 
 //===----------------------------------------------------------------------===//
 // LPPassManager
 //
 /// LPPassManager manages FPPassManagers and CalLGraphSCCPasses.
+
+LPPassManager::LPPassManager(int Depth) : PMDataManager(Depth) { 
+  LQ = new LoopQueue(); 
+}
+
+LPPassManager::~LPPassManager() {
+  delete LQ;
+}
 
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the function, and if so, return true.
