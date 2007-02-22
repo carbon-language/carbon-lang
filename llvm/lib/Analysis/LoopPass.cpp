@@ -33,11 +33,11 @@ public:
 // Loop queue used by Loop Pass Manager. This is a wrapper class
 // that hides implemenation detail (use of priority_queue) inside .cpp file.
 class LoopQueue {
-
+public:
   inline void push(Loop *L) { LPQ.push(L); }
   inline void pop() { LPQ.pop(); }
   inline Loop *top() { return LPQ.top(); }
-
+  inline bool empty() { return LPQ.empty(); }
 private:
   std::priority_queue<Loop *, std::vector<Loop *>, LoopCompare> LPQ;
 };
@@ -57,22 +57,33 @@ LPPassManager::~LPPassManager() {
   delete LQ;
 }
 
+// Recurse through all subloops and all loops  into LQ.
+static void addLoopIntoQueue(Loop *L, LoopQueue *LQ) {
+  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    addLoopIntoQueue(*I, LQ);
+  LQ->push(L);
+}
+
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the function, and if so, return true.
 bool LPPassManager::runOnFunction(Function &F) {
   LoopInfo &LI = getAnalysis<LoopInfo>();
   bool Changed = false;
 
+  // Populate Loop Queue
+  for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
+    addLoopIntoQueue(*I, LQ);
+
   std::string Msg1 = "Executing Pass '";
   std::string Msg3 = "' Made Modification '";
 
   // Walk Loops
-  for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I) {
-
-    Loop *L  = *I;
+  while (!LQ->empty()) {
+      
+    Loop *L  = LQ->top();
     // Run all passes on current SCC
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-
+        
       Pass *P = getContainedPass(Index);
       AnalysisUsage AnUsage;
       P->getAnalysisUsage(AnUsage);
@@ -97,6 +108,9 @@ bool LPPassManager::runOnFunction(Function &F) {
       recordAvailableAnalysis(P);
       removeDeadPasses(P, Msg2);
     }
+    
+    // Pop the loop from queue after running all passes.
+    LQ->pop();
   }
 
   return Changed;
