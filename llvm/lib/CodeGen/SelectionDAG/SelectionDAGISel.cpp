@@ -484,7 +484,8 @@ public:
                             unsigned Opc);
   bool isExportableFromCurrentBlock(Value *V, const BasicBlock *FromBB);
   void ExportFromCurrentBlock(Value *V);
-    
+  void LowerCallTo(CallInst &I, SDOperand Callee, unsigned OpIdx);
+                                         
   // Terminator instructions.
   void visitRet(ReturnInst &I);
   void visitBr(BranchInst &I);
@@ -1117,17 +1118,7 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
   DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
                           DAG.getConstant(BeginLabel, MVT::i32)));
 
-  // Insert a normal call instruction.
-  std::vector<Value*> Args;
-  for (InvokeInst::op_iterator OI = I.op_begin() + 3, E = I.op_end();
-       OI != E; ++OI) {
-    Args.push_back(*OI);
-  }
-  CallInst *NewCall = new CallInst(I.getCalledValue(), &Args[0], Args.size(),
-                                   I.getName(), &I);
-  NewCall->setCallingConv(I.getCallingConv());
-  I.replaceAllUsesWith(NewCall);
-  visitCall(*NewCall);
+  LowerCallTo((CallInst&)I, getValue(I.getOperand(0)), 3);
 
   // Insert a label before the invoke call to mark the try range.
   // This can be used to detect deletion of the invoke via the
@@ -2086,84 +2077,87 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_exception: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     
-    // Add a label to mark the beginning of the landing pad.  Deletion of the
-    // landing pad can thus be detected via the MachineModuleInfo.
-    unsigned LabelID = MMI->addLandingPad(CurMBB);
-    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, DAG.getEntryNode(),
-                            DAG.getConstant(LabelID, MVT::i32)));
-    
-    // Mark exception register as live in.
-    const MRegisterInfo *MRI = DAG.getTarget().getRegisterInfo();
-    unsigned Reg = MRI->getEHExceptionRegister();
-    if (Reg) CurMBB->addLiveIn(Reg);
-    
-    // Insert the EXCEPTIONADDR instruction.
-    SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
-    SDOperand Ops[1];
-    Ops[0] = DAG.getRoot();
-    SDOperand Op = DAG.getNode(ISD::EXCEPTIONADDR, VTs, Ops, 1);
-    setValue(&I, Op);
-    DAG.setRoot(Op.getValue(1));
-    
+    if (MMI) {
+      // Add a label to mark the beginning of the landing pad.  Deletion of the
+      // landing pad can thus be detected via the MachineModuleInfo.
+      unsigned LabelID = MMI->addLandingPad(CurMBB);
+      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, DAG.getEntryNode(),
+                              DAG.getConstant(LabelID, MVT::i32)));
+      
+      // Mark exception register as live in.
+      unsigned Reg = TLI.getExceptionAddressRegister();
+      if (Reg) CurMBB->addLiveIn(Reg);
+      
+      // Insert the EXCEPTIONADDR instruction.
+      SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
+      SDOperand Ops[1];
+      Ops[0] = DAG.getRoot();
+      SDOperand Op = DAG.getNode(ISD::EXCEPTIONADDR, VTs, Ops, 1);
+      setValue(&I, Op);
+      DAG.setRoot(Op.getValue(1));
+    }
     return 0;
   }
 
   case Intrinsic::eh_handlers: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     
-    // Inform the MachineModuleInfo of the personality for this landing pad.
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(2))) {
-      if (CE->getOpcode() == Instruction::BitCast) {
-          MMI->addPersonality(CurMBB,
-                              cast<Function>(CE->getOperand(0)));
-      }
-    }
-
-    // Gather all the type infos for this landing pad and pass them along to
-    // MachineModuleInfo.
-    std::vector<GlobalVariable *> TyInfo;
-    for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(i))) {
+    if (MMI) {
+      // Inform the MachineModuleInfo of the personality for this landing pad.
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(2))) {
         if (CE->getOpcode() == Instruction::BitCast) {
-          TyInfo.push_back(cast<GlobalVariable>(CE->getOperand(0)));
-          continue;
+            MMI->addPersonality(CurMBB,
+                                cast<Function>(CE->getOperand(0)));
         }
       }
 
-      TyInfo.push_back(NULL);
-    }
-    MMI->addCatchTypeInfo(CurMBB, TyInfo);
-    
-    // Mark exception selector register as live in.
-    const MRegisterInfo *MRI = DAG.getTarget().getRegisterInfo();
-    unsigned Reg = MRI->getEHHandlerRegister();
-    if (Reg) CurMBB->addLiveIn(Reg);
+      // Gather all the type infos for this landing pad and pass them along to
+      // MachineModuleInfo.
+      std::vector<GlobalVariable *> TyInfo;
+      for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
+        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(i))) {
+          if (CE->getOpcode() == Instruction::BitCast) {
+            TyInfo.push_back(cast<GlobalVariable>(CE->getOperand(0)));
+            continue;
+          }
+        }
 
-    // Insert the EHSELECTION instruction.
-    SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
-    SDOperand Ops[2];
-    Ops[0] = getValue(I.getOperand(1));
-    Ops[1] = getRoot();
-    SDOperand Op = DAG.getNode(ISD::EHSELECTION, VTs, Ops, 2);
-    setValue(&I, Op);
-    DAG.setRoot(Op.getValue(1));
+        TyInfo.push_back(NULL);
+      }
+      MMI->addCatchTypeInfo(CurMBB, TyInfo);
+      
+      // Mark exception selector register as live in.
+      unsigned Reg = TLI.getExceptionSelectorRegister();
+      if (Reg) CurMBB->addLiveIn(Reg);
+
+      // Insert the EHSELECTION instruction.
+      SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
+      SDOperand Ops[2];
+      Ops[0] = getValue(I.getOperand(1));
+      Ops[1] = getRoot();
+      SDOperand Op = DAG.getNode(ISD::EHSELECTION, VTs, Ops, 2);
+      setValue(&I, Op);
+      DAG.setRoot(Op.getValue(1));
+    }
     
     return 0;
   }
   
   case Intrinsic::eh_typeid_for: {
-    GlobalVariable *GV = NULL;
-    
-    // Find the type id for the given typeinfo.
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(1))) {
-      if (CE->getOpcode() == Instruction::BitCast) {
-        GV = cast<GlobalVariable>(CE->getOperand(0));
-      }
-    }
     
-    unsigned TypeID = MMI->getTypeIDFor(GV);
-    setValue(&I, DAG.getConstant(TypeID, MVT::i32));
+    if (MMI) {
+      // Find the type id for the given typeinfo.
+      GlobalVariable *GV = NULL;
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(1))) {
+        if (CE->getOpcode() == Instruction::BitCast) {
+          GV = cast<GlobalVariable>(CE->getOperand(0));
+        }
+      }
+      
+      unsigned TypeID = MMI->getTypeIDFor(GV);
+      setValue(&I, DAG.getConstant(TypeID, MVT::i32));
+    }
 
     return 0;
   }
@@ -2246,6 +2240,35 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 }
 
 
+void SelectionDAGLowering::LowerCallTo(CallInst &I,
+                                       SDOperand Callee, unsigned OpIdx) {
+  const PointerType *PT = cast<PointerType>(I.getCalledValue()->getType());
+  const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  Args.reserve(I.getNumOperands());
+  for (unsigned i = OpIdx, e = I.getNumOperands(); i != e; ++i) {
+    Value *Arg = I.getOperand(i);
+    SDOperand ArgNode = getValue(Arg);
+    Entry.Node = ArgNode; Entry.Ty = Arg->getType();
+    Entry.isSigned = FTy->paramHasAttr(i, FunctionType::SExtAttribute);
+    Entry.isInReg  = FTy->paramHasAttr(i, FunctionType::InRegAttribute);
+    Entry.isSRet   = FTy->paramHasAttr(i, FunctionType::StructRetAttribute);
+    Args.push_back(Entry);
+  }
+
+  std::pair<SDOperand,SDOperand> Result =
+    TLI.LowerCallTo(getRoot(), I.getType(), 
+                    FTy->paramHasAttr(0,FunctionType::SExtAttribute),
+                    FTy->isVarArg(), I.getCallingConv(), I.isTailCall(), 
+                    Callee, Args, DAG);
+  if (I.getType() != Type::VoidTy)
+    setValue(&I, Result.first);
+  DAG.setRoot(Result.second);
+}
+
+
 void SelectionDAGLowering::visitCall(CallInst &I) {
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction()) {
@@ -2298,36 +2321,15 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     return;
   }
 
-  const PointerType *PT = cast<PointerType>(I.getCalledValue()->getType());
-  const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
-
   SDOperand Callee;
   if (!RenameFn)
     Callee = getValue(I.getOperand(0));
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
-  TargetLowering::ArgListTy Args;
-  TargetLowering::ArgListEntry Entry;
-  Args.reserve(I.getNumOperands());
-  for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
-    Value *Arg = I.getOperand(i);
-    SDOperand ArgNode = getValue(Arg);
-    Entry.Node = ArgNode; Entry.Ty = Arg->getType();
-    Entry.isSigned = FTy->paramHasAttr(i, FunctionType::SExtAttribute);
-    Entry.isInReg  = FTy->paramHasAttr(i, FunctionType::InRegAttribute);
-    Entry.isSRet   = FTy->paramHasAttr(i, FunctionType::StructRetAttribute);
-    Args.push_back(Entry);
-  }
-
-  std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), I.getType(), 
-                    FTy->paramHasAttr(0,FunctionType::SExtAttribute),
-                    FTy->isVarArg(), I.getCallingConv(), I.isTailCall(), 
-                    Callee, Args, DAG);
-  if (I.getType() != Type::VoidTy)
-    setValue(&I, Result.first);
-  DAG.setRoot(Result.second);
+    
+  LowerCallTo(I, Callee, 1);
 }
+
 
 SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
                                         SDOperand &Chain, SDOperand &Flag)const{
