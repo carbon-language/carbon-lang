@@ -442,13 +442,13 @@ Changes</a></div>
   read the <a href="http://www.opensource.org/licenses/UoI-NCSA.php">License</a>
   if further clarification is needed.</p>
   
-  <p>Note that the LLVM Project does distribute some code that includes GPL
-  software (notably, llvm-gcc which is based on the GCC GPL source base).
+  <p>Note that the LLVM Project does distribute llvm-gcc, <b>which is GPL.</b>
   This means that anything "linked" into llvm-gcc must itself be compatible
   with the GPL, and must be releasable under the terms of the GPL.  This implies
-  that <b>any code linked into llvm-gcc and distributed to others may be
-  subject to
-  the viral aspects of the GPL</b>.  This is not a problem for the main LLVM
+  that <b>any code linked into llvm-gcc and distributed to others may be subject
+  to the viral aspects of the GPL</b> (for example, a proprietary code generator
+  linked into llvm-gcc must be made available under
+  the GPL).  This is not a problem for the main LLVM
   distribution (which is already licensed under a more liberal license), but may
   be a problem if you intend to base commercial development on llvm-gcc without
   redistributing your source code.</p>
