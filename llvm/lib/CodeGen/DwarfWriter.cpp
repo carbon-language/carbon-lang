@@ -2104,6 +2104,9 @@ private:
         Asm->EOL();
       }
       
+      // Mark end of abbreviations.
+      DD.getAsm()->EmitULEB128Bytes(0); DD.getAsm()->EOL("EOM(3)");
+
       EmitLabel("abbrev_end", 0);
     
       Asm->EOL();
