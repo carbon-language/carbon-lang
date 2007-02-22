@@ -668,8 +668,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::FRAMEADDR:
   case ISD::RETURNADDR:
-  case ISD::EXCEPTIONADDR:
-  case ISD::EHSELECTION:
     // The only option for these nodes is to custom lower them.  If the target
     // does not custom lower them, then return zero.
     Tmp1 = TLI.LowerOperation(Op, DAG);
@@ -677,6 +675,32 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = Tmp1;
     else
       Result = DAG.getConstant(0, TLI.getPointerTy());
+    break;
+  case ISD::EHSELECTION:
+    LegalizeOp(Node->getOperand(1));
+    // Fall Thru
+  case ISD::EXCEPTIONADDR: {
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    MVT::ValueType VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Expand: {
+        unsigned Reg = Node->getOpcode() == ISD::EXCEPTIONADDR ?
+                          TLI.getExceptionAddressRegister() :
+                          TLI.getExceptionSelectorRegister();
+        Result = DAG.getCopyFromReg(Tmp1, Reg, VT).getValue(Op.ResNo);
+      }
+      break;
+    case TargetLowering::Custom:
+      Result = TLI.LowerOperation(Op, DAG);
+      if (Result.Val) break;
+      // Fall Thru
+    case TargetLowering::Legal:
+      Result = DAG.getNode(ISD::MERGE_VALUES, VT, DAG.getConstant(0, VT), Tmp1).
+                  getValue(Op.ResNo);
+      break;
+    }
+    }
     break;
   case ISD::AssertSext:
   case ISD::AssertZext:
