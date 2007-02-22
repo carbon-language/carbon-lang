@@ -175,8 +175,7 @@ namespace llvm {
     /// isRemoved - returns true if the specified machine instr has been
     /// removed.
     bool isRemoved(MachineInstr* instr) const {
-      Mi2IndexMap::const_iterator it = mi2iMap_.find(instr);
-      return it == mi2iMap_.end();
+      return !mi2iMap_.count(instr);
     }
 
     /// RemoveMachineInstrFromMaps - This marks the specified machine instr as
