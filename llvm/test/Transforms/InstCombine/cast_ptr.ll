@@ -1,6 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep '\([sz]ext\)\|\(trunc\)'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep '\([sz]ext\)\|\(trunc\)|\(ptrtoint\)'
 
 target pointersize = 32
 
@@ -13,3 +13,9 @@ sbyte* %test1(sbyte* %t) {
 	ret sbyte* %tv
 }
 
+bool %test2(sbyte* %a, sbyte* %b) {
+%tmpa = cast sbyte* %a to uint
+%tmpb = cast sbyte* %b to uint
+%r = seteq uint %tmpa, %tmpb
+ret bool %r
+}
