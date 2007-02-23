@@ -50,6 +50,8 @@ private:
 /// LPPassManager manages FPPassManagers and CalLGraphSCCPasses.
 
 LPPassManager::LPPassManager(int Depth) : PMDataManager(Depth) { 
+  skipThisLoop = false;
+  redoThisLoop = false;
   LQ = new LoopQueue(); 
 }
 
@@ -62,6 +64,13 @@ LPPassManager::~LPPassManager() {
 void LPPassManager::deleteLoopFromQueue(Loop *L) {
   // Do not pop loop from LQ here. It will be done by runOnFunction while loop.
   skipThisLoop = true;
+}
+
+// Reoptimize this loop. LPPassManager will re-insert this loop into the
+// queue. This allows LoopPass to change loop nest for the loop. This
+// utility may send LPPassManager into infinite loops so use caution.
+void LPPassManager::redoLoop(Loop *L) {
+  redoThisLoop = true;
 }
 
 // Recurse through all subloops and all loops  into LQ.
@@ -89,6 +98,7 @@ bool LPPassManager::runOnFunction(Function &F) {
       
     Loop *L  = LQ->top();
     skipThisLoop = false;
+    redoThisLoop = false;
 
     // Run all passes on current SCC
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
@@ -124,6 +134,9 @@ bool LPPassManager::runOnFunction(Function &F) {
     
     // Pop the loop from queue after running all passes.
     LQ->pop();
+    
+    if (redoThisLoop)
+      LQ->push(L);
   }
 
   return Changed;

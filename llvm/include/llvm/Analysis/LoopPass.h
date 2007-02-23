@@ -85,10 +85,15 @@ public:
   // Delete loop from the loop queue. This is used by Loop pass to inform
   // Loop Pass Manager that it should skip rest of the passes for this loop.
   void deleteLoopFromQueue(Loop *L);
+
+  // Reoptimize this loop. LPPassManager will re-insert this loop into the
+  // queue. This allows LoopPass to change loop nest for the loop. This
+  // utility may send LPPassManager into infinite loops so use caution.
+  void redoLoop(Loop *L);
 private:
   LoopQueue *LQ;
   bool skipThisLoop;
-
+  bool redoThisLoop;
 };
 
 } // End llvm namespace
