@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=c | grep 'llvm_cbe_A = *llvm_cbe_G;' &&
-; RUN: llvm-as < %s | llc -march=c | grep 'llvm_cbe_B = *(&ltmp_0_1);' &&
+; RUN: llvm-as < %s | llc -march=c | grep 'llvm_cbe_A = \*llvm_cbe_G;' &&
+; RUN: llvm-as < %s | llc -march=c | grep 'llvm_cbe_B = \*(&ltmp_0_1);' &&
 ; RUN: llvm-as < %s | llc -march=c | grep 'return (llvm_cbe_A + llvm_cbe_B);'
 ; PR1164
 @G = global i32 123
