@@ -17,20 +17,20 @@ Reimplement 'select' in terms of 'SEL'.
 
 //===---------------------------------------------------------------------===//
 
-The constant island pass is extremely naive.  If a constant pool entry is
-out of range, it *always* splits a block and inserts a copy of the cp 
-entry inline.  It should:
+The constant island pass has been much improved; all the todo items in the
+previous version of this document have been addressed.  However, there are still
+things that can be done:
 
-1. Check to see if there is already a copy of this constant nearby.  If so, 
-   reuse it.
-2. Instead of always splitting blocks to insert the constant, insert it in 
-   nearby 'water'.
-3. Constant island references should be ref counted.  If a constant reference
-   is out-of-range, and the last reference to a constant is relocated, the
-   dead constant should be removed.
+1.  When there isn't an existing water, the current MBB is split right after the 
+use.  It would be profitable to look farther forward, especially on Thumb,
+where negative offsets won't work.
 
-This pass has all the framework needed to implement this, but it hasn't 
-been done.
+2. WaterBlockListOffsets might be maintained throughout, rather than computed
+when it is needed.  This would probably lead to faster compile times.
+Similarly, the offsets of blocks might be maintained throughout.
+
+3.  There may be some advantage to trying to be smarter about the initial
+placement, rather than putting everything at the end.
 
 //===---------------------------------------------------------------------===//
 
