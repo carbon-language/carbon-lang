@@ -8,5 +8,5 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../..
-PARALLEL_DIRS := crtend libc libgcc libm 
+PARALLEL_DIRS := libc libgcc libm 
 include $(LEVEL)/Makefile.common
