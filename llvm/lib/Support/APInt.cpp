@@ -190,10 +190,10 @@ APInt& APInt::operator--() {
 /// add - This function adds the integer array x[] by integer array
 /// y[] and returns the carry.
 static uint64_t add(uint64_t dest[], uint64_t x[], uint64_t y[], uint32_t len) {
-  uint64_t carry = 0;
+  bool carry = 0;
   for (uint32_t i = 0; i< len; ++i) {
+    uint64_t limit = std::min(x[i],y[i]); // must come first in case dest == x
     dest[i] = x[i] + y[i] + carry;
-    uint64_t limit = std::min(x[i],y[i]);
     carry = dest[i] < limit || (carry && dest[i] == limit);
   }
   return carry;
@@ -979,65 +979,6 @@ APInt APInt::shl(uint32_t shiftAmt) const {
   return API;
 }
 
-#if 0
-/// subMul - This function substracts x[len-1:0] * y from 
-/// dest[offset+len-1:offset], and returns the most significant 
-/// word of the product, minus the borrow-out from the subtraction.
-static uint32_t subMul(uint32_t dest[], uint32_t offset, 
-                        uint32_t x[], uint32_t len, uint32_t y) {
-  uint64_t yl = (uint64_t) y & 0xffffffffL;
-  uint32_t carry = 0;
-  uint32_t j = 0;
-  do {
-    uint64_t prod = ((uint64_t) x[j] & 0xffffffffUL) * yl;
-    uint32_t prod_low = (uint32_t) prod;
-    uint32_t prod_high = (uint32_t) (prod >> 32);
-    prod_low += carry;
-    carry = (prod_low < carry ? 1 : 0) + prod_high;
-    uint32_t x_j = dest[offset+j];
-    prod_low = x_j - prod_low;
-    if (prod_low > x_j) ++carry;
-    dest[offset+j] = prod_low;
-  } while (++j < len);
-  return carry;
-}
-
-/// unitDiv - This function divides N by D, 
-/// and returns (remainder << 32) | quotient.
-/// Assumes (N >> 32) < D.
-static uint64_t unitDiv(uint64_t N, uint32_t D) {
-  uint64_t q, r;                   // q: quotient, r: remainder.
-  uint64_t a1 = N >> 32;           // a1: high 32-bit part of N.
-  uint64_t a0 = N & 0xffffffffL;   // a0: low 32-bit part of N
-  if (a1 < ((D - a1 - (a0 >> 31)) & 0xffffffffL)) {
-      q = N / D;
-      r = N % D;
-  }
-  else {
-    // Compute c1*2^32 + c0 = a1*2^32 + a0 - 2^31*d
-    uint64_t c = N - ((uint64_t) D << 31);
-    // Divide (c1*2^32 + c0) by d
-    q = c / D;
-    r = c % D;
-    // Add 2^31 to quotient 
-    q += 1 << 31;
-  }
-
-  return (r << 32) | (q & 0xFFFFFFFFl);
-}
-
-#endif
-
-/// div - This is basically Knuth's formulation of the classical algorithm.
-/// Correspondance with Knuth's notation:
-/// Knuth's u[0:m+n] == zds[nx:0].
-/// Knuth's v[1:n] == y[ny-1:0]
-/// Knuth's n == ny.
-/// Knuth's m == nx-ny.
-/// Our nx == Knuth's m+n.
-/// Could be re-implemented using gmp's mpn_divrem:
-/// zds[nx] = mpn_divrem (&zds[ny], 0, zds, nx, y, ny).
-
 /// Implementation of Knuth's Algorithm D (Division of nonnegative integers)
 /// from "Art of Computer Programming, Volume 2", section 4.3.1, p. 272. The
 /// variables here have the same names as in the algorithm. Comments explain
@@ -1089,32 +1030,42 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     // on v[n-2] determines at high speed most of the cases in which the trial
     // value qp is one too large, and it eliminates all cases where qp is two 
     // too large. 
-    uint64_t qp = ((uint64_t(u[j+n]) << 32) | uint64_t(u[j+n-1])) / v[n-1];
-    uint64_t rp = ((uint64_t(u[j+n]) << 32) | uint64_t(u[j+n-1])) % v[n-1];
+    uint64_t dividend = ((uint64_t(u[j+n]) << 32) + u[j+n-1]);
+    uint64_t qp = dividend / v[n-1];
+    uint64_t rp = dividend % v[n-1];
     if (qp == b || qp*v[n-2] > b*rp + u[j+n-2]) {
       qp--;
       rp += v[n-1];
-    }
-    if (rp < b) 
-      if (qp == b || qp*v[n-2] > b*rp + u[j+n-2]) {
-        qp--;
-        rp += v[n-1];
+      if (rp < b) {
+        if (qp == b || qp*v[n-2] > b*rp + u[j+n-2]) {
+          qp--;
+          rp += v[n-1];
+        }
       }
+    }
 
-    // D4. [Multiply and subtract.] Replace u with u - q*v (for each word).
-    uint32_t borrow = 0;
-    for (uint32_t i = 0; i < n; i++) {
-      uint32_t save = u[j+i];
-      u[j+i] = uint64_t(u[j+i]) - (qp * v[i]) - borrow;
-      if (u[j+i] > save) {
-        borrow = 1;
-        u[j+i+1] += b;
-      } else {
-        borrow = 0;
-      }
+    // D4. [Multiply and subtract.] Replace (u[j+n]u[j+n-1]...u[j]) with
+    // (u[j+n]u[j+n-1]..u[j]) - qp * (v[n-1]...v[1]v[0]). This computation
+    // consists of a simple multiplication by a one-place number, combined with
+    // a subtraction. The digits (u[j+n]...u[j]) should be kept positive;
+    bool borrow = 0;
+    for (uint32_t i = 0; i < n; ++i) {
+      uint64_t u_tmp = borrow ? u[j+i] - 1 : u[j+i];
+      uint64_t subtrahend = qp * v[i];
+      borrow = subtrahend > u_tmp || (borrow && u[j+i] == 0);
+      u[j+i] = u_tmp - subtrahend;
     }
-    if (borrow)
-      u[j+n] += 1;
+    // if the result of this step is actually negative, (u[j+n]...u[j]) should
+    // be left as the true value plus b**(n+1), names as the b's complement of
+    // the true value, and a "borrow" to the left should be remembered.
+    //
+    if (borrow) {
+      borrow = u[j+n] == 0;
+      u[j+n]--;
+//      for (uint32_t i = 0; i < n; ++i) {
+//        u[j+i] = ~u[j+i] + 1; // b's complement
+//      }
+    }
 
     // D5. [Test remainder.] Set q[j] = qp. If the result of step D4 was 
     // negative, go to step D6; otherwise go on to step D7.
@@ -1122,20 +1073,22 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     if (borrow) {
       // D6. [Add back]. The probability that this step is necessary is very 
       // small, on the order of only 2/b. Make sure that test data accounts for
-      // this possibility. Decreate qj by 1 and add v[...] to u[...]. A carry 
-      // will occur to the left of u[j+n], and it should be ignored since it 
-      // cancels with the borrow that occurred in D4.
-      uint32_t carry = 0;
+      // this possibility. Decrease q[j] by 1 
+      q[j]--;
+      // and add (0v[n-1]...v[1]v[0]) to (u[j+n]u[j+n-1]...u[j+1]u[j]). 
+      // A carry will occur to the left of u[j+n], and it should be ignored 
+      // since it cancels with the borrow that occurred in D4.
+      bool carry = false;
       for (uint32_t i = 0; i < n; i++) {
         uint32_t save = u[j+i];
         u[j+i] += v[i] + carry;
-        carry = u[j+i] < save;
+        uint32_t limit = std::min(save,v[i]);
+        carry = u[j+i] < limit || (carry && u[j+1] == limit);
       }
     }
 
-    // D7. [Loop on j.]  Decreate j by one. Now if j >= 0, go back to D3.
-    j--;
-  } while (j >= 0);
+  // D7. [Loop on j.]  Decrease j by one. Now if j >= 0, go back to D3.
+  } while (--j >= 0);
 
   // D8. [Unnormalize]. Now q[...] is the desired quotient, and the desired
   // remainder may be obtained by dividing u[...] by d. If r is non-null we
@@ -1144,12 +1097,10 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     // The value d is expressed by the "shift" value above since we avoided
     // multiplication by d by using a shift left. So, all we have to do is
     // shift right here. In order to mak
-    uint32_t mask = ~0u >> (32 - shift);
     uint32_t carry = 0;
     for (int i = n-1; i >= 0; i--) {
-      uint32_t save = u[i] & mask;
       r[i] = (u[i] >> shift) | carry;
-      carry = save;
+      carry = u[i] << shift;
     }
   }
 }
