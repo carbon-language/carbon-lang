@@ -143,3 +143,44 @@ bool LPPassManager::runOnFunction(Function &F) {
 }
 
 
+//===----------------------------------------------------------------------===//
+// LoopPass
+
+/// Assign pass manager to manage this pass.
+void LoopPass::assignPassManager(PMStack &PMS,
+                                 PassManagerType PreferredType) {
+  // Find LPPassManager 
+  while (!PMS.empty()) {
+    if (PMS.top()->getPassManagerType() > PMT_LoopPassManager)
+      PMS.pop();
+    else;
+    break;
+  }
+
+  LPPassManager *LPPM = dynamic_cast<LPPassManager *>(PMS.top());
+
+  // Create new Loop Pass Manager if it does not exist. 
+  if (!LPPM) {
+
+    assert (!PMS.empty() && "Unable to create Loop Pass Manager");
+    PMDataManager *PMD = PMS.top();
+
+    // [1] Create new Call Graph Pass Manager
+    LPPM = new LPPassManager(PMD->getDepth() + 1);
+
+    // [2] Set up new manager's top level manager
+    PMTopLevelManager *TPM = PMD->getTopLevelManager();
+    TPM->addIndirectPassManager(LPPM);
+
+    // [3] Assign manager to manage this new manager. This may create
+    // and push new managers into PMS
+    Pass *P = dynamic_cast<Pass *>(LPPM);
+    P->assignPassManager(PMS);
+
+    // [4] Push new manager into PMS
+    PMS.push(LPPM);
+  }
+
+  LPPM->add(this);
+}
+
