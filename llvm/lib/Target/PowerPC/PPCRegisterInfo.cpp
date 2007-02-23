@@ -439,8 +439,8 @@ bool PPCRegisterInfo::hasFP(const MachineFunction &MF) const {
 /// usesLR - Returns if the link registers (LR) has been used in the function.
 ///
 bool PPCRegisterInfo::usesLR(MachineFunction &MF) const {
-  const bool *PhysRegsUsed = MF.getUsedPhysregs();
-  return PhysRegsUsed[getRARegister()];
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+  return FI->usesLR();
 }
 
 void PPCRegisterInfo::
@@ -772,6 +772,15 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
 
   // Update frame info.
   MFI->setStackSize(FrameSize);
+}
+
+void PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF)
+  const {
+  //  Save and clear the LR state.
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+  unsigned LR = getRARegister();
+  FI->setUsesLR(MF.isPhysRegUsed(LR));
+  MF.changePhyRegUsed(LR, false);
 }
 
 void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
