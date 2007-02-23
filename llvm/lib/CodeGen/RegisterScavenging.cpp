@@ -43,6 +43,12 @@ RegScavenger::RegScavenger(MachineBasicBlock *mbb)
   if (CSRegs != NULL)
     for (unsigned i = 0; CSRegs[i]; ++i)
       CalleeSavedRegs.set(CSRegs[i]);
+
+  // Live-in registers are in use.
+  if (!MBB->livein_empty())
+    for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
+           E = MBB->livein_end(); I != E; ++I)
+      setUsed(*I);
 }
 
 void RegScavenger::forward() {
