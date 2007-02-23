@@ -93,7 +93,10 @@ BumpPtrAllocator::~BumpPtrAllocator() {
 }
 
 void *BumpPtrAllocator::Allocate(unsigned Size, unsigned Align) {
-  return ((MemRegion*)TheMemory)->Allocate(Size, Align,(MemRegion**)&TheMemory);
+  MemRegion *MRP = (MemRegion*)TheMemory;
+  void *Ptr = MRP->Allocate(Size, Align, &MRP);
+  TheMemory = MRP;
+  return Ptr;
 }
 
 void BumpPtrAllocator::PrintStats() const {
