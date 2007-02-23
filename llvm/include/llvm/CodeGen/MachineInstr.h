@@ -390,8 +390,9 @@ public:
   }
 
   /// findRegisterUseOperand() - Returns the MachineOperand that is a use of
-  /// the specific register or NULL if it is not found.
-  MachineOperand *findRegisterUseOperand(unsigned Reg);
+  /// the specific register or NULL if it is not found. It further tightening
+  /// the search criteria to a use that kills the register if isKill is true.
+  MachineOperand *findRegisterUseOperand(unsigned Reg, bool isKill = false);
   
   /// findRegisterDefOperand() - Returns the MachineOperand that is a def of
   /// the specific register or NULL if it is not found.

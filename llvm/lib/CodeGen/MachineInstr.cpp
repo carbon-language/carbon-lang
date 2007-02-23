@@ -170,12 +170,14 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
 }
 
 /// findRegisterUseOperand() - Returns the MachineOperand that is a use of
-/// the specific register or NULL if it is not found.
-MachineOperand *MachineInstr::findRegisterUseOperand(unsigned Reg) {
+/// the specific register or NULL if it is not found. It further tightening
+/// the search criteria to a use that kills the register if isKill is true.
+MachineOperand *MachineInstr::findRegisterUseOperand(unsigned Reg, bool isKill){
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     MachineOperand &MO = getOperand(i);
     if (MO.isReg() && MO.isUse() && MO.getReg() == Reg)
-      return &MO;
+      if (!isKill || MO.isKill())
+        return &MO;
   }
   return NULL;
 }
