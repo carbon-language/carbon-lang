@@ -106,7 +106,8 @@ X86_64TargetMachine::X86_64TargetMachine(const Module &M, const std::string &FS)
 
 /// X86TargetMachine ctor - Create an ILP32 architecture model
 ///
-X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS, bool is64Bit)
+X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
+                                   bool is64Bit)
   : Subtarget(M, FS, is64Bit),
     DataLayout(Subtarget.is64Bit() ?
                std::string("e-p:64:64-f64:32:64-i64:32:64") :
