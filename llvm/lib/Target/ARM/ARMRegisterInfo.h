@@ -69,6 +69,8 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
+  bool requiresRegisterScavenging() const;
+
   bool hasFP(const MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,

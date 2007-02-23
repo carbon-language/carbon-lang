@@ -31,8 +31,12 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 using namespace llvm;
+
+static cl::opt<bool> EnableScavenging("enable-arm-reg-scavenging", cl::Hidden,
+                                 cl::desc("Enable register scavenging on ARM"));
 
 unsigned ARMRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   using namespace ARM;
@@ -91,8 +95,12 @@ bool ARMRegisterInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     return false;
 
   MachineInstrBuilder MIB = BuildMI(MBB, MI, TII.get(ARM::tPUSH));
-  for (unsigned i = CSI.size(); i != 0; --i)
-    MIB.addReg(CSI[i-1].getReg());
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    // Add the callee-saved register as live-in. It's killed at the spill.
+    MBB.addLiveIn(Reg);
+    MIB.addReg(Reg, false/*isDef*/,false/*isImp*/,true/*isKill*/);
+  }
   return true;
 }
 
@@ -130,17 +138,17 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     MachineFunction &MF = *MBB.getParent();
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     if (AFI->isThumbFunction())
-      BuildMI(MBB, I, TII.get(ARM::tSpill)).addReg(SrcReg)
+      BuildMI(MBB, I, TII.get(ARM::tSpill)).addReg(SrcReg, false, false, true)
         .addFrameIndex(FI).addImm(0);
     else
-      BuildMI(MBB, I, TII.get(ARM::STR)).addReg(SrcReg)
+      BuildMI(MBB, I, TII.get(ARM::STR)).addReg(SrcReg, false, false, true)
           .addFrameIndex(FI).addReg(0).addImm(0);
   } else if (RC == ARM::DPRRegisterClass) {
-    BuildMI(MBB, I, TII.get(ARM::FSTD)).addReg(SrcReg)
+    BuildMI(MBB, I, TII.get(ARM::FSTD)).addReg(SrcReg, false, false, true)
     .addFrameIndex(FI).addImm(0);
   } else {
     assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
-    BuildMI(MBB, I, TII.get(ARM::FSTS)).addReg(SrcReg)
+    BuildMI(MBB, I, TII.get(ARM::FSTS)).addReg(SrcReg, false, false, true)
       .addFrameIndex(FI).addImm(0);
   }
 }
@@ -318,6 +326,10 @@ BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 ///
 bool ARMRegisterInfo::hasFP(const MachineFunction &MF) const {
   return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
+}
+
+bool ARMRegisterInfo::requiresRegisterScavenging() const {
+  return EnableScavenging;
 }
 
 /// emitARMRegPlusImmediate - Emits a series of instructions to materialize
