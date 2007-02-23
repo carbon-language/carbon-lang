@@ -131,6 +131,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     // Set up DWARF directives
     HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
     PrivateGlobalPrefix = "L";  // Prefix for private global symbols
+    WeakRefDirective = "\t.weak\t";
     DwarfRequiresFrameSection = false;
     DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"dr\"";
     DwarfInfoSection =    "\t.section\t.debug_info,\"dr\"";
