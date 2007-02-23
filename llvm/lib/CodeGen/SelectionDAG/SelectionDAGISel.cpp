@@ -484,7 +484,9 @@ public:
                             unsigned Opc);
   bool isExportableFromCurrentBlock(Value *V, const BasicBlock *FromBB);
   void ExportFromCurrentBlock(Value *V);
-  void LowerCallTo(CallInst &I, SDOperand Callee, unsigned OpIdx);
+  void LowerCallTo(Instruction &I,
+                   const Type *CalledValueTy, unsigned CallingConv,
+                   bool IsTailCall, SDOperand Callee, unsigned OpIdx);
                                          
   // Terminator instructions.
   void visitRet(ReturnInst &I);
@@ -1118,7 +1120,11 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
   DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
                           DAG.getConstant(BeginLabel, MVT::i32)));
 
-  LowerCallTo((CallInst&)I, getValue(I.getOperand(0)), 3);
+  LowerCallTo(I, I.getCalledValue()->getType(),
+                 I.getCallingConv(),
+                 false,
+                 getValue(I.getOperand(0)),
+                 3);
 
   // Insert a label before the invoke call to mark the try range.
   // This can be used to detect deletion of the invoke via the
@@ -2246,9 +2252,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 }
 
 
-void SelectionDAGLowering::LowerCallTo(CallInst &I,
+void SelectionDAGLowering::LowerCallTo(Instruction &I,
+                                       const Type *CalledValueTy,
+                                       unsigned CallingConv,
+                                       bool IsTailCall,
                                        SDOperand Callee, unsigned OpIdx) {
-  const PointerType *PT = cast<PointerType>(I.getCalledValue()->getType());
+  const PointerType *PT = cast<PointerType>(CalledValueTy);
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
 
   TargetLowering::ArgListTy Args;
@@ -2267,7 +2276,7 @@ void SelectionDAGLowering::LowerCallTo(CallInst &I,
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), 
                     FTy->paramHasAttr(0,FunctionType::SExtAttribute),
-                    FTy->isVarArg(), I.getCallingConv(), I.isTailCall(), 
+                    FTy->isVarArg(), CallingConv, IsTailCall, 
                     Callee, Args, DAG);
   if (I.getType() != Type::VoidTy)
     setValue(&I, Result.first);
@@ -2333,7 +2342,11 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
     
-  LowerCallTo(I, Callee, 1);
+  LowerCallTo(I, I.getCalledValue()->getType(),
+                 I.getCallingConv(),
+                 I.isTailCall(),
+                 Callee,
+                 1);
 }
 
 
