@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -231,10 +232,12 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
   MachineBasicBlock::iterator I = MBB->begin();
   if (!RegInfo->spillCalleeSavedRegisters(*MBB, I, CSI)) {
     for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+      // Add the callee-saved register as live-in. It's killed at the spill.
+      MBB->addLiveIn(CSI[i].getReg());
+
       // Insert the spill to the stack frame.
       RegInfo->storeRegToStackSlot(*MBB, I, CSI[i].getReg(),
-                                   CSI[i].getFrameIdx(),
-                                   CSI[i].getRegClass());
+                                   CSI[i].getFrameIdx(), CSI[i].getRegClass());
     }
   }
 
@@ -440,8 +443,9 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   assert(TM.getRegisterInfo() && "TM::getRegisterInfo() must be implemented!");
   const MRegisterInfo &MRI = *TM.getRegisterInfo();
 
-  for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
-    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I)
+  for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+    RegScavenger RS(BB);
+    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (I->getOperand(i).isFrameIndex()) {
           // If this instruction has a FrameIndex operand, we need to use that
@@ -449,4 +453,9 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
           MRI.eliminateFrameIndex(I);
           break;
         }
+      // Update register states.
+      if (MRI.requiresRegisterScavenging())
+        RS.forward();
+    }
+  }
 }
