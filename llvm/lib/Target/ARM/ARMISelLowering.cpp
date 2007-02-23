@@ -831,13 +831,16 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
     SSARegMap *RegMap = MF.getSSARegMap();
     MachineFrameInfo *MFI = MF.getFrameInfo();
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-    unsigned VARegSaveSize = (4 - NumGPRs) * 4;
+    unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+    unsigned VARegSize = (4 - NumGPRs) * 4;
+    unsigned VARegSaveSize = (VARegSize + Align - 1) & ~(Align - 1);
     if (VARegSaveSize) {
       // If this function is vararg, store any remaining integer argument regs
       // to their spots on the stack so that they may be loaded by deferencing
       // the result of va_next.
       AFI->setVarArgsRegSaveSize(VARegSaveSize);
-      VarArgsFrameIndex = MFI->CreateFixedObject(VARegSaveSize, ArgOffset);
+      VarArgsFrameIndex = MFI->CreateFixedObject(VARegSaveSize, ArgOffset +
+                                                 VARegSaveSize - VARegSize);
       SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
 
       SmallVector<SDOperand, 4> MemOps;
