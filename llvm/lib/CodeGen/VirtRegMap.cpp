@@ -665,8 +665,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // Extend the live range of the MI that last kill the register if
           // necessary.
           MachineOperand *MOK = SSMI->findRegisterUseOperand(PhysReg, true);
-          if (MOK)
+          if (MOK) {
             MOK->unsetIsKill();
+            if (ti == -1)
+              // Unless it's the use of a two-address code, transfer the kill
+              // of the reused register to this use.
+              MI.getOperand(i).setIsKill();
+          }
 
           // The only technical detail we have is that we don't know that
           // PhysReg won't be clobbered by a reloaded stack slot that occurs
