@@ -32,7 +32,7 @@ class LoopPass : public Pass {
  public:
   // runOnLoop - THis method should be implemented by the subclass to perform
   // whatever action is necessary for the specfied Loop. 
-  virtual bool runOnLoop (Loop &L, LPPassManager &LPM) = 0;
+  virtual bool runOnLoop (Loop *L, LPPassManager &LPM) = 0;
   virtual bool runOnFunctionBody (Function &F, LPPassManager &LPM) { 
     return false; 
   }

@@ -116,7 +116,7 @@ bool LPPassManager::runOnFunction(Function &F) {
       StartPassTimer(P);
       LoopPass *LP = dynamic_cast<LoopPass *>(P);
       assert (LP && "Invalid LPPassManager member");
-      LP->runOnLoop(*L, *this);
+      LP->runOnLoop(L, *this);
       StopPassTimer(P);
 
       if (Changed)
