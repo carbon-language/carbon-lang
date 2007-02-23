@@ -95,7 +95,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
           return VM[V] = ConstantVector::get(Values);
         }
       }
-      return VMSlot = C;
+      return VM[V] = C;
       
     } else {
       assert(0 && "Unknown type of constant!");
