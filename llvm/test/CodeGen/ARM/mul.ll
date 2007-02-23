@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=arm &&
 ; RUN: llvm-as < %s | llc -march=arm | grep mul | wc -l | grep 2 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep lsl | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep mul | wc -l | grep 3 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep lsl | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=thumb | grep mul | wc -l | grep 3 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep lsl | wc -l | grep 1
 
 define i32 @f1(i32 %u) {
     %tmp = mul i32 %u, %u

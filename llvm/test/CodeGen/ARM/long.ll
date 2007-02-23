@@ -7,11 +7,11 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "sbc" | wc -l | grep 1 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "smull" | wc -l | grep 1 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "umull" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -enable-thumb &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -enable-thumb | grep "mvn" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -enable-thumb | grep "adc" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -enable-thumb | grep "sbc" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -enable-thumb | grep "__muldi3"
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | grep "mvn" | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | grep "adc" | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | grep "sbc" | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | grep "__muldi3"
 
 long %f1() {
 entry:

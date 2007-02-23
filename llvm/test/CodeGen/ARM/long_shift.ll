@@ -3,7 +3,7 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep __ashldi3 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep __ashrdi3 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep __lshrdi3 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb
+; RUN: llvm-as < %s | llc -march=thumb
 
 define i64 @f0(i64 %A, i64 %B) {
 	%tmp = bitcast i64 %A to i64

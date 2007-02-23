@@ -6,13 +6,13 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep movls | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep movhi | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | grep fcpydmi | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep beq | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep bgt | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep blt | wc -l | grep 3 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep ble | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep bls | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep bhi | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep __ltdf2
+; RUN: llvm-as < %s | llc -march=thumb | grep beq | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep bgt | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep blt | wc -l | grep 3 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep ble | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep bls | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep bhi | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep __ltdf2
 
 define i32 @f1(i32 %a.s) {
 entry:

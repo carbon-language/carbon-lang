@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -enable-thumb
+; RUN: llvm-as < %s | llc -mtriple=thumb-apple-darwin
 
 %struct.rtx_def = type { i8 }
 @str = external global [7 x i8]

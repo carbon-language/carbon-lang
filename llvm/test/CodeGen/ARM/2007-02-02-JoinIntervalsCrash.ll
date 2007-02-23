@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -enable-thumb
+; RUN: llvm-as < %s | llc -mtriple=thumb-apple-darwin
 
 	%struct.color_sample = type { i32 }
 	%struct.ref = type { %struct.color_sample, i16, i16 }

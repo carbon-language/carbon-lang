@@ -3,10 +3,10 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep "ldrh"  | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep "ldrsb" | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=arm | grep "ldrsh" | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep "ldrb"  | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep "ldrh"  | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep "ldrsb" | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | grep "ldrsh" | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=thumb | grep "ldrb"  | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep "ldrh"  | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep "ldrsb" | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=thumb | grep "ldrsh" | wc -l | grep 1
 
 define i32 @test1(i8* %v.pntr.s0.u1) {
     %tmp.u = load i8* %v.pntr.s0.u1

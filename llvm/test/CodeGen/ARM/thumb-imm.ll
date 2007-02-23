@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | not grep CPI
+; RUN: llvm-as < %s | llc -march=thumb &&
+; RUN: llvm-as < %s | llc -march=thumb | not grep CPI
 
 
 define i32 @test1() {

@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb &&
-; RUN: llvm-as < %s | llc -march=arm -enable-thumb | \
+; RUN: llvm-as < %s | llc -march=thumb &&
+; RUN: llvm-as < %s | llc -march=thumb | \
 ; RUN:    grep 'ldr.*LCP' | wc -l | grep 5
 
 define void @test1() {
