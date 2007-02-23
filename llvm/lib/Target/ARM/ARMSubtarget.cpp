@@ -14,16 +14,12 @@
 #include "ARMSubtarget.h"
 #include "ARMGenSubtarget.inc"
 #include "llvm/Module.h"
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-// FIXME: this is temporary.
-static cl::opt<bool> Thumb("enable-thumb",
-                           cl::desc("Switch to thumb mode in ARM backend"));
-
-ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS)
+ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS, bool thumb)
   : ARMArchVersion(V4T)
   , HasVFP2(false)
+  , IsThumb(thumb)
   , UseThumbBacktraces(false)
   , IsR9Reserved(false)
   , stackAlignment(4)
@@ -36,8 +32,6 @@ ARMSubtarget::ARMSubtarget(const Module &M, const std::string &FS)
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);
 
-  IsThumb = Thumb;
-  
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();

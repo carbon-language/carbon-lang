@@ -32,7 +32,7 @@ class ARMTargetMachine : public LLVMTargetMachine {
   ARMInstrInfo      InstrInfo;
   ARMFrameInfo      FrameInfo;
 public:
-  ARMTargetMachine(const Module &M, const std::string &FS);
+  ARMTargetMachine(const Module &M, const std::string &FS, bool isThumb = false);
 
   virtual const ARMInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
@@ -50,6 +50,15 @@ public:
   virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast);
   virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                   std::ostream &Out);
+};
+
+/// ThumbTargetMachine - Thumb target machine.
+///
+class ThumbTargetMachine : public ARMTargetMachine {
+public:
+  ThumbTargetMachine(const Module &M, const std::string &FS);
+
+  static unsigned getModuleMatchQuality(const Module &M);
 };
 
 } // end namespace llvm

@@ -27,21 +27,37 @@ static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
 
 namespace {
   // Register the target.
-  RegisterTarget<ARMTargetMachine> X("arm", "  ARM");
+  RegisterTarget<ARMTargetMachine>   X("arm",   "  ARM");
+  RegisterTarget<ThumbTargetMachine> Y("thumb", "  Thumb");
 }
 
-/// TargetMachine ctor - Create an ILP32 architecture model
+/// ThumbTargetMachine - Create an Thumb architecture model.
 ///
-ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
-  : Subtarget(M, FS),
+unsigned ThumbTargetMachine::getModuleMatchQuality(const Module &M) {
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 6 && std::string(TT.begin(), TT.begin()+6) == "thumb-")
+    return 20;
+
+  return M.getPointerSize() == Module::Pointer32;
+}
+
+ThumbTargetMachine::ThumbTargetMachine(const Module &M, const std::string &FS) 
+  : ARMTargetMachine(M, FS, true) {
+}
+
+/// TargetMachine ctor - Create an ARM architecture model.
+///
+ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS,
+                                   bool isThumb)
+  : Subtarget(M, FS, isThumb),
     DataLayout(Subtarget.isAPCS_ABI() ?
                // APCS ABI
-          (Subtarget.isThumb() ?
+          (isThumb ?
            std::string("e-p:32:32-f64:32:32-i64:32:32-"
                        "i16:16:32-i8:8:32-i1:8:32-a:0:32") :
            std::string("e-p:32:32-f64:32:32-i64:32:32")) :
                // AAPCS ABI
-          (Subtarget.isThumb() ?
+          (isThumb ?
            std::string("e-p:32:32-f64:64:64-i64:64:64-"
                        "i16:16:32-i8:8:32-i1:8:32-a:0:32") :
            std::string("e-p:32:32-f64:64:64-i64:64:64"))),
@@ -53,10 +69,7 @@ unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
   if (TT.size() >= 4 && std::string(TT.begin(), TT.begin()+4) == "arm-")
     return 20;
 
-  if (M.getPointerSize() == Module::Pointer32)
-    return 1;
-  else
-    return 0;
+  return M.getPointerSize() == Module::Pointer32;
 }
 
 
