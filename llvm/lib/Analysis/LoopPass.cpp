@@ -57,6 +57,13 @@ LPPassManager::~LPPassManager() {
   delete LQ;
 }
 
+/// Delete loop from the loop queue. This is used by Loop pass to inform
+/// Loop Pass Manager that it should skip rest of the passes for this loop.
+void LPPassManager::deleteLoopFromQueue(Loop *L) {
+  // Do not pop loop from LQ here. It will be done by runOnFunction while loop.
+  skipThisLoop = true;
+}
+
 // Recurse through all subloops and all loops  into LQ.
 static void addLoopIntoQueue(Loop *L, LoopQueue *LQ) {
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
@@ -81,6 +88,8 @@ bool LPPassManager::runOnFunction(Function &F) {
   while (!LQ->empty()) {
       
     Loop *L  = LQ->top();
+    skipThisLoop = false;
+
     // Run all passes on current SCC
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
         
@@ -107,6 +116,10 @@ bool LPPassManager::runOnFunction(Function &F) {
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
       removeDeadPasses(P, Msg2);
+
+      if (skipThisLoop)
+        // Do not run other passes on this loop.
+        break;
     }
     
     // Pop the loop from queue after running all passes.

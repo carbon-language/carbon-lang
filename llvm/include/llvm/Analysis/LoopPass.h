@@ -81,8 +81,13 @@ public:
     return PMT_LoopPassManager; 
   }
 
- private:
+public:
+  // Delete loop from the loop queue. This is used by Loop pass to inform
+  // Loop Pass Manager that it should skip rest of the passes for this loop.
+  void deleteLoopFromQueue(Loop *L);
+private:
   LoopQueue *LQ;
+  bool skipThisLoop;
 
 };
 
