@@ -42,17 +42,18 @@ void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                            const TargetRegisterClass *RC) const{
 
   if (RC == IA64::FPRegisterClass) {
-    BuildMI(MBB, MI, TII.get(IA64::STF_SPILL)).addFrameIndex(FrameIdx).addReg(SrcReg);
+    BuildMI(MBB, MI, TII.get(IA64::STF_SPILL)).addFrameIndex(FrameIdx)
+      .addReg(SrcReg, false, false, true);
   } else if (RC == IA64::GRRegisterClass) {
-    BuildMI(MBB, MI, TII.get(IA64::ST8)).addFrameIndex(FrameIdx).addReg(SrcReg);
- }
-  else if (RC == IA64::PRRegisterClass) {
+    BuildMI(MBB, MI, TII.get(IA64::ST8)).addFrameIndex(FrameIdx)
+      .addReg(SrcReg, false, false, true);
+  } else if (RC == IA64::PRRegisterClass) {
     /* we use IA64::r2 as a temporary register for doing this hackery. */
     // first we load 0:
     BuildMI(MBB, MI, TII.get(IA64::MOV), IA64::r2).addReg(IA64::r0);
     // then conditionally add 1:
     BuildMI(MBB, MI, TII.get(IA64::CADDIMM22), IA64::r2).addReg(IA64::r2)
-      .addImm(1).addReg(SrcReg);
+      .addImm(1).addReg(SrcReg, false, false, true);
     // and then store it to the stack
     BuildMI(MBB, MI, TII.get(IA64::ST8)).addFrameIndex(FrameIdx).addReg(IA64::r2);
   } else assert(0 &&

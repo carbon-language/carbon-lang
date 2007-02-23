@@ -68,13 +68,16 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
   if (RC == Alpha::F4RCRegisterClass)
     BuildMI(MBB, MI, TII.get(Alpha::STS))
-      .addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      .addReg(SrcReg, false, false, true)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::F8RCRegisterClass)
     BuildMI(MBB, MI, TII.get(Alpha::STT))
-      .addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      .addReg(SrcReg, false, false, true)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::GPRCRegisterClass)
     BuildMI(MBB, MI, TII.get(Alpha::STQ))
-      .addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+      .addReg(SrcReg, false, false, true)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
 }

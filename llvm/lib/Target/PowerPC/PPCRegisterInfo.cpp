@@ -104,34 +104,34 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      const TargetRegisterClass *RC) const {
   if (RC == PPC::GPRCRegisterClass) {
     if (SrcReg != PPC::LR) {
-      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STW)).addReg(SrcReg),
-                        FrameIdx);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STW))
+                        .addReg(SrcReg, false, false, true), FrameIdx);
     } else {
       // FIXME: this spills LR immediately to memory in one step.  To do this,
       // we use R11, which we know cannot be used in the prolog/epilog.  This is
       // a hack.
       BuildMI(MBB, MI, TII.get(PPC::MFLR), PPC::R11);
-      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STW)).addReg(PPC::R11),
-                        FrameIdx);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STW))
+                        .addReg(PPC::R11, false, false, true), FrameIdx);
     }
   } else if (RC == PPC::G8RCRegisterClass) {
     if (SrcReg != PPC::LR8) {
-      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STD)).addReg(SrcReg),
-                        FrameIdx);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STD))
+                        .addReg(SrcReg, false, false, true), FrameIdx);
     } else {
       // FIXME: this spills LR immediately to memory in one step.  To do this,
       // we use R11, which we know cannot be used in the prolog/epilog.  This is
       // a hack.
       BuildMI(MBB, MI, TII.get(PPC::MFLR8), PPC::X11);
-      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STD)).addReg(PPC::X11),
-                        FrameIdx);
+      addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STD))
+                        .addReg(PPC::X11, false, false, true), FrameIdx);
     }
   } else if (RC == PPC::F8RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STFD)).addReg(SrcReg),
-                      FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STFD))
+                      .addReg(SrcReg, false, false, true), FrameIdx);
   } else if (RC == PPC::F4RCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STFS)).addReg(SrcReg),
-                      FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STFS))
+                      .addReg(SrcReg, false, false, true), FrameIdx);
   } else if (RC == PPC::CRRCRegisterClass) {
     // FIXME: We use R0 here, because it isn't available for RA.
     // We need to store the CR in the low 4-bits of the saved value.  First,
@@ -147,8 +147,8 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
         .addReg(PPC::R0).addImm(ShiftBits).addImm(0).addImm(31);
     }
     
-    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STW)).addReg(PPC::R0),
-                      FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, TII.get(PPC::STW))
+                      .addReg(PPC::R0, false, false, true), FrameIdx);
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R11 = ADDI FI#
@@ -158,7 +158,7 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     addFrameReference(BuildMI(MBB, MI, TII.get(PPC::ADDI), PPC::R0),
                       FrameIdx, 0, 0);
     BuildMI(MBB, MI, TII.get(PPC::STVX))
-      .addReg(SrcReg).addReg(PPC::R0).addReg(PPC::R0);
+      .addReg(SrcReg, false, false, true).addReg(PPC::R0).addReg(PPC::R0);
   } else {
     assert(0 && "Unknown regclass!");
     abort();

@@ -37,13 +37,13 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
   if (RC == SP::IntRegsRegisterClass)
     BuildMI(MBB, I, TII.get(SP::STri)).addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg);
+      .addReg(SrcReg, false, false, true);
   else if (RC == SP::FPRegsRegisterClass)
     BuildMI(MBB, I, TII.get(SP::STFri)).addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg);
+      .addReg(SrcReg, false, false, true);
   else if (RC == SP::DFPRegsRegisterClass)
     BuildMI(MBB, I, TII.get(SP::STDFri)).addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg);
+      .addReg(SrcReg, false, false, true);
   else
     assert(0 && "Can't store this register to stack slot");
 }

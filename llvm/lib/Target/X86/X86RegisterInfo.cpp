@@ -93,7 +93,8 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     assert(0 && "Unknown regclass");
     abort();
   }
-  addFrameReference(BuildMI(MBB, MI, TII.get(Opc)), FrameIdx).addReg(SrcReg);
+  addFrameReference(BuildMI(MBB, MI, TII.get(Opc)), FrameIdx)
+    .addReg(SrcReg, false, false, true);
 }
 
 void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
