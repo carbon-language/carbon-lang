@@ -960,21 +960,31 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   DOUT << "\n\t\tJoined.  Result = "; DestInt.print(DOUT, mri_);
   DOUT << "\n";
 
-  // If the intervals were swapped by Join, swap them back so that the register
-  // mapping (in the r2i map) is correct.
-  if (Swapped) SrcInt.swap(DestInt);
-
   // Live range has been lengthened due to colaescing, eliminate the
   // unnecessary kills at the end of the source live ranges.
-  LiveVariables::VarInfo& vi = lv_->getVarInfo(repSrcReg);
-  for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
-    MachineInstr *Kill = vi.Kills[i];
+  LiveVariables::VarInfo& svi = lv_->getVarInfo(repSrcReg);
+  for (unsigned i = 0, e = svi.Kills.size(); i != e; ++i) {
+    MachineInstr *Kill = svi.Kills[i];
     if (Kill == CopyMI || isRemoved(Kill))
       continue;
     if (DestInt.liveAt(getInstructionIndex(Kill) + InstrSlots::NUM))
       unsetRegisterKill(Kill, repSrcReg);
   }
+  if (MRegisterInfo::isVirtualRegister(repDstReg)) {
+    // If both are virtual registers...
+    LiveVariables::VarInfo& dvi = lv_->getVarInfo(repDstReg);
+    for (unsigned i = 0, e = dvi.Kills.size(); i != e; ++i) {
+      MachineInstr *Kill = dvi.Kills[i];
+      if (Kill == CopyMI || isRemoved(Kill))
+        continue;
+      if (DestInt.liveAt(getInstructionIndex(Kill) + InstrSlots::NUM))
+        unsetRegisterKill(Kill, repDstReg);
+    }
+  }
 
+  // If the intervals were swapped by Join, swap them back so that the register
+  // mapping (in the r2i map) is correct.
+  if (Swapped) SrcInt.swap(DestInt);
   removeInterval(repSrcReg);
   r2rMap_[repSrcReg] = repDstReg;
 
