@@ -1086,14 +1086,15 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // belongs to which callee-save spill areas.
   unsigned GPRCS1Size = 0, GPRCS2Size = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
+
+  if (VARegSaveSize)
+    emitSPUpdate(MBB, MBBI, -VARegSaveSize, isThumb, TII);
+
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)
       emitSPUpdate(MBB, MBBI, -NumBytes, isThumb, TII);
     return;
   }
-
-  if (VARegSaveSize)
-    emitSPUpdate(MBB, MBBI, -VARegSaveSize, isThumb, TII);
 
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
@@ -1208,72 +1209,71 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   if (!AFI->hasStackFrame()) {
     if (NumBytes != 0)
       emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
-    return;
-  }
-
-  // Unwind MBBI to point to first LDR / FLDD.
-  const unsigned *CSRegs = getCalleeSavedRegs();
-  if (MBBI != MBB.begin()) {
-    do
-      --MBBI;
-    while (MBBI != MBB.begin() && isCSRestore(MBBI, CSRegs));
-    if (!isCSRestore(MBBI, CSRegs))
-      ++MBBI;
-  }
-
-  // Move SP to start of FP callee save spill area.
-  NumBytes -= (AFI->getGPRCalleeSavedArea1Size() +
-               AFI->getGPRCalleeSavedArea2Size() +
-               AFI->getDPRCalleeSavedAreaSize());
-  if (isThumb) {
-    if (hasFP(MF)) {
-      NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
-      // Reset SP based on frame pointer only if the stack frame extends beyond
-      // frame pointer stack slot or target is ELF and the function has FP.
-      if (NumBytes)
-        emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, FramePtr, -NumBytes, TII);
-      else
-        BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::SP).addReg(FramePtr);
-    } else {
-      if (MBBI->getOpcode() == ARM::tBX_RET &&
-          &MBB.front() != MBBI &&
-          prior(MBBI)->getOpcode() == ARM::tPOP) {
-        MachineBasicBlock::iterator PMBBI = prior(MBBI);
-        emitSPUpdate(MBB, PMBBI, NumBytes, isThumb, TII);
-      } else
-        emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
-    }
   } else {
-    // Darwin ABI requires FP to point to the stack slot that contains the
-    // previous FP.
-    if (STI.isTargetDarwin() || hasFP(MF)) {
-      NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
-      // Reset SP based on frame pointer only if the stack frame extends beyond
-      // frame pointer stack slot or target is ELF and the function has FP.
-      if (AFI->getGPRCalleeSavedArea2Size() ||
-          AFI->getDPRCalleeSavedAreaSize()  ||
-          AFI->getDPRCalleeSavedAreaOffset()||
-          hasFP(MF))
-        if (NumBytes)
-          BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
-            .addImm(NumBytes);
-        else
-          BuildMI(MBB, MBBI, TII.get(ARM::MOVrr), ARM::SP).addReg(FramePtr);
-    } else if (NumBytes) {
-      emitSPUpdate(MBB, MBBI, NumBytes, false, TII);
+    // Unwind MBBI to point to first LDR / FLDD.
+    const unsigned *CSRegs = getCalleeSavedRegs();
+    if (MBBI != MBB.begin()) {
+      do
+        --MBBI;
+      while (MBBI != MBB.begin() && isCSRestore(MBBI, CSRegs));
+      if (!isCSRestore(MBBI, CSRegs))
+        ++MBBI;
     }
 
-    // Move SP to start of integer callee save spill area 2.
-    movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 3, STI);
-    emitSPUpdate(MBB, MBBI, AFI->getDPRCalleeSavedAreaSize(), false, TII);
+    // Move SP to start of FP callee save spill area.
+    NumBytes -= (AFI->getGPRCalleeSavedArea1Size() +
+                 AFI->getGPRCalleeSavedArea2Size() +
+                 AFI->getDPRCalleeSavedAreaSize());
+    if (isThumb) {
+      if (hasFP(MF)) {
+        NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
+        // Reset SP based on frame pointer only if the stack frame extends beyond
+        // frame pointer stack slot or target is ELF and the function has FP.
+        if (NumBytes)
+          emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, FramePtr, -NumBytes, TII);
+        else
+          BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::SP).addReg(FramePtr);
+      } else {
+        if (MBBI->getOpcode() == ARM::tBX_RET &&
+            &MBB.front() != MBBI &&
+            prior(MBBI)->getOpcode() == ARM::tPOP) {
+          MachineBasicBlock::iterator PMBBI = prior(MBBI);
+          emitSPUpdate(MBB, PMBBI, NumBytes, isThumb, TII);
+        } else
+          emitSPUpdate(MBB, MBBI, NumBytes, isThumb, TII);
+      }
+    } else {
+      // Darwin ABI requires FP to point to the stack slot that contains the
+      // previous FP.
+      if (STI.isTargetDarwin() || hasFP(MF)) {
+        NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
+        // Reset SP based on frame pointer only if the stack frame extends beyond
+        // frame pointer stack slot or target is ELF and the function has FP.
+        if (AFI->getGPRCalleeSavedArea2Size() ||
+            AFI->getDPRCalleeSavedAreaSize()  ||
+            AFI->getDPRCalleeSavedAreaOffset()||
+            hasFP(MF))
+          if (NumBytes)
+            BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
+              .addImm(NumBytes);
+          else
+            BuildMI(MBB, MBBI, TII.get(ARM::MOVrr), ARM::SP).addReg(FramePtr);
+      } else if (NumBytes) {
+        emitSPUpdate(MBB, MBBI, NumBytes, false, TII);
+      }
 
-    // Move SP to start of integer callee save spill area 1.
-    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 2, STI);
-    emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea2Size(), false, TII);
+      // Move SP to start of integer callee save spill area 2.
+      movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 3, STI);
+      emitSPUpdate(MBB, MBBI, AFI->getDPRCalleeSavedAreaSize(), false, TII);
 
-    // Move SP to SP upon entry to the function.
-    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 1, STI);
-    emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea1Size(), false, TII);
+      // Move SP to start of integer callee save spill area 1.
+      movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 2, STI);
+      emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea2Size(), false, TII);
+
+      // Move SP to SP upon entry to the function.
+      movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, 1, STI);
+      emitSPUpdate(MBB, MBBI, AFI->getGPRCalleeSavedArea1Size(), false, TII);
+    }
   }
 
   if (VARegSaveSize) {
