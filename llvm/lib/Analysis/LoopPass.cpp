@@ -26,7 +26,8 @@ namespace llvm {
 class LoopCompare {
 public:
   bool operator()( Loop *L1, Loop *L2) const {
-    return L1->getLoopDepth() > L2->getLoopDepth();
+    // Loops with highest depth has the highest priority.
+    return L1->getLoopDepth() < L2->getLoopDepth();
   }
 };
 
