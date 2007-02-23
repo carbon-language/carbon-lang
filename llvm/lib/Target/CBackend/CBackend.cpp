@@ -239,7 +239,7 @@ namespace {
     }
 
     void outputLValue(Instruction *I) {
-      Out << "  " << Mang->getValueName(I) << " = ";
+      Out << "  " << GetValueName(I) << " = ";
     }
 
     bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To);
@@ -249,6 +249,8 @@ namespace {
                             unsigned Indent);
     void printIndexingExpression(Value *Ptr, gep_type_iterator I,
                                  gep_type_iterator E);
+
+    std::string GetValueName(const Value *Operand);
   };
 }
 
@@ -1080,6 +1082,34 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
     printConstant(CPV);
 }
 
+std::string CWriter::GetValueName(const Value *Operand) {
+  std::string Name;
+
+  if (!isa<GlobalValue>(Operand) && Operand->getName() != "") {
+    std::string VarName;
+
+    Name = Operand->getName();
+    VarName.reserve(Name.capacity());
+
+    for (std::string::iterator I = Name.begin(), E = Name.end();
+         I != E; ++I) {
+      char ch = *I;
+
+      if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+            (ch >= '0' && ch <= '9') || ch == '_'))
+        VarName += '_';
+      else
+        VarName += ch;
+    }
+
+    Name = "llvm_cbe_" + VarName;
+  } else {
+    Name = Mang->getValueName(Operand);
+  }
+
+  return Name;
+}
+
 void CWriter::writeOperandInternal(Value *Operand) {
   if (Instruction *I = dyn_cast<Instruction>(Operand))
     if (isInlinableInst(*I) && !isDirectAlloca(I)) {
@@ -1091,11 +1121,11 @@ void CWriter::writeOperandInternal(Value *Operand) {
     }
 
   Constant* CPV = dyn_cast<Constant>(Operand);
-  if (CPV && !isa<GlobalValue>(CPV)) {
+
+  if (CPV && !isa<GlobalValue>(CPV))
     printConstant(CPV);
-  } else {
-    Out << Mang->getValueName(Operand);
-  }
+  else
+    Out << GetValueName(Operand);
 }
 
 void CWriter::writeOperandRaw(Value *Operand) {
@@ -1103,7 +1133,7 @@ void CWriter::writeOperandRaw(Value *Operand) {
   if (CPV && !isa<GlobalValue>(CPV)) {
     printConstant(CPV);
   } else {
-    Out << Mang->getValueName(Operand);
+    Out << GetValueName(Operand);
   }
 }
 
@@ -1472,17 +1502,17 @@ bool CWriter::doInitialization(Module &M) {
       if (I->hasExternalLinkage()) {
         Out << "extern ";
         printType(Out, I->getType()->getElementType(), false, 
-                  Mang->getValueName(I));
+                  GetValueName(I));
         Out << ";\n";
       } else if (I->hasDLLImportLinkage()) {
         Out << "__declspec(dllimport) ";
         printType(Out, I->getType()->getElementType(), false, 
-                  Mang->getValueName(I));
+                  GetValueName(I));
         Out << ";\n";        
       } else if (I->hasExternalWeakLinkage()) {
         Out << "extern ";
         printType(Out, I->getType()->getElementType(), false,
-                  Mang->getValueName(I));
+                  GetValueName(I));
         Out << " __EXTERNAL_WEAK__ ;\n";
       }
     }
@@ -1533,7 +1563,7 @@ bool CWriter::doInitialization(Module &M) {
         else
           Out << "extern ";
         printType(Out, I->getType()->getElementType(), false, 
-                  Mang->getValueName(I));
+                  GetValueName(I));
 
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
@@ -1565,7 +1595,7 @@ bool CWriter::doInitialization(Module &M) {
           Out << "__declspec(dllexport) ";
             
         printType(Out, I->getType()->getElementType(), false, 
-                  Mang->getValueName(I));
+                  GetValueName(I));
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
         else if (I->hasWeakLinkage())
@@ -1772,7 +1802,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   std::stringstream FunctionInnards;
 
   // Print out the name...
-  FunctionInnards << Mang->getValueName(F) << '(';
+  FunctionInnards << GetValueName(F) << '(';
 
   bool PrintedArg = false;
   if (!F->isDeclaration()) {
@@ -1791,7 +1821,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
       for (; I != E; ++I) {
         if (PrintedArg) FunctionInnards << ", ";
         if (I->hasName() || !Prototype)
-          ArgName = Mang->getValueName(I);
+          ArgName = GetValueName(I);
         else
           ArgName = "";
         printType(FunctionInnards, I->getType(), 
@@ -1874,7 +1904,7 @@ void CWriter::printFunction(Function &F) {
 
     Out << "  ";
     printType(Out, F.arg_begin()->getType(), false, 
-              Mang->getValueName(F.arg_begin()));
+              GetValueName(F.arg_begin()));
     Out << " = &StructReturn;\n";
   }
 
@@ -1884,18 +1914,18 @@ void CWriter::printFunction(Function &F) {
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
     if (const AllocaInst *AI = isDirectAlloca(&*I)) {
       Out << "  ";
-      printType(Out, AI->getAllocatedType(), false, Mang->getValueName(AI));
+      printType(Out, AI->getAllocatedType(), false, GetValueName(AI));
       Out << ";    /* Address-exposed local */\n";
       PrintedVar = true;
     } else if (I->getType() != Type::VoidTy && !isInlinableInst(*I)) {
       Out << "  ";
-      printType(Out, I->getType(), false, Mang->getValueName(&*I));
+      printType(Out, I->getType(), false, GetValueName(&*I));
       Out << ";\n";
 
       if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
         Out << "  ";
         printType(Out, I->getType(), false,
-                  Mang->getValueName(&*I)+"__PHI_TEMPORARY");
+                  GetValueName(&*I)+"__PHI_TEMPORARY");
         Out << ";\n";
       }
       PrintedVar = true;
@@ -1904,7 +1934,7 @@ void CWriter::printFunction(Function &F) {
     // of a union to do the BitCast. This is separate from the need for a
     // variable to hold the result of the BitCast. 
     if (isFPIntBitCast(*I)) {
-      Out << "  llvmBitCastUnion " << Mang->getValueName(&*I)
+      Out << "  llvmBitCastUnion " << GetValueName(&*I)
           << "__BITCAST_TEMPORARY;\n";
       PrintedVar = true;
     }
@@ -1958,7 +1988,7 @@ void CWriter::printBasicBlock(BasicBlock *BB) {
       break;
     }
 
-  if (NeedsLabel) Out << Mang->getValueName(BB) << ":\n";
+  if (NeedsLabel) Out << GetValueName(BB) << ":\n";
 
   // Output all of the instructions in the basic block...
   for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E;
@@ -2054,7 +2084,7 @@ void CWriter::printPHICopiesForSuccessor (BasicBlock *CurBlock,
     Value *IV = PN->getIncomingValueForBlock(CurBlock);
     if (!isa<UndefValue>(IV)) {
       Out << std::string(Indent, ' ');
-      Out << "  " << Mang->getValueName(I) << "__PHI_TEMPORARY = ";
+      Out << "  " << GetValueName(I) << "__PHI_TEMPORARY = ";
       writeOperand(IV);
       Out << ";   /* for PHI node */\n";
     }
@@ -2281,10 +2311,10 @@ void CWriter::visitCastInst(CastInst &I) {
   Out << '(';
   if (isFPIntBitCast(I)) {
     // These int<->float and long<->double casts need to be handled specially
-    Out << Mang->getValueName(&I) << "__BITCAST_TEMPORARY." 
+    Out << GetValueName(&I) << "__BITCAST_TEMPORARY." 
         << getFloatBitCastField(I.getOperand(0)->getType()) << " = ";
     writeOperand(I.getOperand(0));
-    Out << ", " << Mang->getValueName(&I) << "__BITCAST_TEMPORARY."
+    Out << ", " << GetValueName(&I) << "__BITCAST_TEMPORARY."
         << getFloatBitCastField(I.getType());
   } else {
     printCast(I.getOpcode(), SrcTy, DstTy);
