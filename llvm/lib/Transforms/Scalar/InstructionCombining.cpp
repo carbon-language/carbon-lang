@@ -1641,11 +1641,12 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
 
   // Check to see if all of the operands of the PHI are constants.  If there is
   // one non-constant value, remember the BB it is.  If there is more than one
-  // bail out.
+  // or if *it* is a PHI, bail out.
   BasicBlock *NonConstBB = 0;
   for (unsigned i = 0; i != NumPHIValues; ++i)
     if (!isa<Constant>(PN->getIncomingValue(i))) {
       if (NonConstBB) return 0;  // More than one non-const value.
+      if (isa<PHINode>(PN->getIncomingValue(i))) return 0;  // Itself a phi.
       NonConstBB = PN->getIncomingBlock(i);
       
       // If the incoming non-constant value is in I's block, we have an infinite
