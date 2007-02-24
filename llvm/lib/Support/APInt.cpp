@@ -12,8 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "apint"
 #include "llvm/ADT/APInt.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
 #include <cstdlib>
@@ -189,8 +191,9 @@ APInt& APInt::operator--() {
 
 /// add - This function adds the integer array x[] by integer array
 /// y[] and returns the carry.
-static uint64_t add(uint64_t dest[], uint64_t x[], uint64_t y[], uint32_t len) {
-  bool carry = 0;
+static bool add(uint64_t *dest, const uint64_t *x, const uint64_t *y, 
+                uint32_t len) {
+  bool carry = false;
   for (uint32_t i = 0; i< len; ++i) {
     uint64_t limit = std::min(x[i],y[i]); // must come first in case dest == x
     dest[i] = x[i] + y[i] + carry;
@@ -214,8 +217,8 @@ APInt& APInt::operator+=(const APInt& RHS) {
 
 /// sub - This function subtracts the integer array x[] by
 /// integer array y[], and returns the borrow-out carry.
-static uint64_t sub(uint64_t *dest, const uint64_t *x, const uint64_t *y, 
-                    uint32_t len) {
+static bool sub(uint64_t *dest, const uint64_t *x, const uint64_t *y, 
+                uint32_t len) {
   bool borrow = false;
   for (uint32_t i = 0; i < len; ++i) {
     uint64_t x_tmp = borrow ? x[i] - 1 : x[i];
@@ -988,12 +991,19 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
   assert(u && "Must provide dividend");
   assert(v && "Must provide divisor");
   assert(q && "Must provide quotient");
+  assert(u != v && u != q && v != q && "Must us different memory");
   assert(n>1 && "n must be > 1");
 
   // Knuth uses the value b as the base of the number system. In our case b
   // is 2^31 so we just set it to -1u.
   uint64_t b = uint64_t(1) << 32;
 
+  DEBUG(cerr << "KnuthDiv: m=" << m << " n=" << n << '\n');
+  DEBUG(cerr << "KnuthDiv: original:");
+  DEBUG(for (int i = m+n; i >=0; i--) cerr << " " << std::setbase(16) << u[i]);
+  DEBUG(cerr << " by");
+  DEBUG(for (int i = n; i >0; i--) cerr << " " << std::setbase(16) << v[i-1]);
+  DEBUG(cerr << '\n');
   // D1. [Normalize.] Set d = b / (v[n-1] + 1) and multiply all the digits of 
   // u and v by d. Note that we have taken Knuth's advice here to use a power 
   // of 2 value for d such that d * v[n-1] >= b/2 (b is the base). A power of 
@@ -1018,10 +1028,16 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     }
   }
   u[m+n] = u_carry;
+  DEBUG(cerr << "KnuthDiv:   normal:");
+  DEBUG(for (int i = m+n; i >=0; i--) cerr << " " << std::setbase(16) << u[i]);
+  DEBUG(cerr << " by");
+  DEBUG(for (int i = n; i >0; i--) cerr << " " << std::setbase(16) << v[i-1]);
+  DEBUG(cerr << '\n');
 
   // D2. [Initialize j.]  Set j to m. This is the loop counter over the places.
   int j = m;
   do {
+    DEBUG(cerr << "KnuthDiv: quotient digit #" << j << '\n');
     // D3. [Calculate q'.]. 
     //     Set qp = (u[j+n]*b + u[j+n-1]) / v[n-1]. (qp=qprime=q')
     //     Set rp = (u[j+n]*b + u[j+n-1]) % v[n-1]. (rp=rprime=r')
@@ -1031,41 +1047,54 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     // value qp is one too large, and it eliminates all cases where qp is two 
     // too large. 
     uint64_t dividend = ((uint64_t(u[j+n]) << 32) + u[j+n-1]);
+    DEBUG(cerr << "KnuthDiv: dividend == " << dividend << '\n');
     uint64_t qp = dividend / v[n-1];
     uint64_t rp = dividend % v[n-1];
     if (qp == b || qp*v[n-2] > b*rp + u[j+n-2]) {
       qp--;
       rp += v[n-1];
-      if (rp < b) {
-        if (qp == b || qp*v[n-2] > b*rp + u[j+n-2]) {
-          qp--;
-          rp += v[n-1];
-        }
+      if (rp < b && (qp == b || qp*v[n-2] > b*rp + u[j+n-2])) {
+        qp--;
+        //rp += v[n-1];
       }
     }
+    DEBUG(cerr << "KnuthDiv: qp == " << qp << ", rp == " << rp << '\n');
 
     // D4. [Multiply and subtract.] Replace (u[j+n]u[j+n-1]...u[j]) with
     // (u[j+n]u[j+n-1]..u[j]) - qp * (v[n-1]...v[1]v[0]). This computation
     // consists of a simple multiplication by a one-place number, combined with
     // a subtraction. The digits (u[j+n]...u[j]) should be kept positive;
-    bool borrow = 0;
+    bool borrow = false;
     for (uint32_t i = 0; i < n; ++i) {
-      uint64_t u_tmp = borrow ? u[j+i] - 1 : u[j+i];
-      uint64_t subtrahend = qp * v[i];
+      uint64_t u_tmp = borrow ? uint64_t(u[j+i] - 1) : uint64_t(u[j+i]);
+      uint64_t subtrahend = uint64_t(qp) * uint64_t(v[i]);
+      DEBUG(cerr << "KnuthDiv: u_tmp == " << u_tmp 
+                 << ", subtrahend == " << subtrahend << '\n');
+
       borrow = subtrahend > u_tmp || (borrow && u[j+i] == 0);
       u[j+i] = u_tmp - subtrahend;
     }
+    if (borrow) {
+      borrow = u[j+n] == 0;            // Was result negative?
+      u[j+n]--;  // handle the borrow
+    }
+    DEBUG(cerr << "KnuthDiv: after subtraction:");
+    DEBUG(for (int i = m+n; i >=0; i--) cerr << " " << u[i]);
+    DEBUG(cerr << '\n');
     // if the result of this step is actually negative, (u[j+n]...u[j]) should
-    // be left as the true value plus b**(n+1), names as the b's complement of
+    // be left as the true value plus b**(n+1), namely as the b's complement of
     // the true value, and a "borrow" to the left should be remembered.
     //
     if (borrow) {
-      borrow = u[j+n] == 0;
-      u[j+n]--;
-//      for (uint32_t i = 0; i < n; ++i) {
-//        u[j+i] = ~u[j+i] + 1; // b's complement
-//      }
+      bool carry = true;
+      for (uint32_t i = 0; i <= n; ++i) {
+        u[j+i] = ~u[j+i] + carry; // b's complement
+        carry = u[j+i] == 0;
+      }
     }
+    DEBUG(cerr << "KnuthDiv: after complement:");
+    DEBUG(for (int i = m+n; i >=0; i--) cerr << " " << u[i]);
+    DEBUG(cerr << '\n');
 
     // D5. [Test remainder.] Set q[j] = qp. If the result of step D4 was 
     // negative, go to step D6; otherwise go on to step D7.
@@ -1080,15 +1109,22 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
       // since it cancels with the borrow that occurred in D4.
       bool carry = false;
       for (uint32_t i = 0; i < n; i++) {
-        uint32_t save = u[j+i];
+        uint32_t limit = std::min(u[j+i],v[i]);
         u[j+i] += v[i] + carry;
-        uint32_t limit = std::min(save,v[i]);
-        carry = u[j+i] < limit || (carry && u[j+1] == limit);
+        carry = u[j+i] < limit || (carry && u[j+i] == limit);
       }
+      u[j+n] += carry;
     }
+    DEBUG(cerr << "KnuthDiv: after correction:");
+    DEBUG(for (int i = m+n; i >=0; i--) cerr <<" " << u[i]);
+    DEBUG(cerr << "\nKnuthDiv: digit result = " << q[j] << '\n');
 
   // D7. [Loop on j.]  Decrease j by one. Now if j >= 0, go back to D3.
   } while (--j >= 0);
+
+  DEBUG(cerr << "KnuthDiv: quotient:");
+  DEBUG(for (int i = m; i >=0; i--) cerr <<" " << q[i]);
+  DEBUG(cerr << '\n');
 
   // D8. [Unnormalize]. Now q[...] is the desired quotient, and the desired
   // remainder may be obtained by dividing u[...] by d. If r is non-null we
@@ -1098,11 +1134,15 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     // multiplication by d by using a shift left. So, all we have to do is
     // shift right here. In order to mak
     uint32_t carry = 0;
+    DEBUG(cerr << "KnuthDiv: remainder:");
     for (int i = n-1; i >= 0; i--) {
       r[i] = (u[i] >> shift) | carry;
       carry = u[i] << shift;
+      DEBUG(cerr << " " << r[i]);
     }
+    DEBUG(cerr << '\n');
   }
+  DEBUG(cerr << std::setbase(10) << '\n');
 }
 
 // This function makes calling KnuthDiv a little more convenient. It uses
