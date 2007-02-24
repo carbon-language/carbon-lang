@@ -457,9 +457,6 @@ namespace {
   /// JITResolver - Keep track of, and resolve, call sites for functions that
   /// have not yet been compiled.
   class JITResolver {
-    /// MCE - The MachineCodeEmitter to use to emit stubs with.
-    MachineCodeEmitter &MCE;
-
     /// LazyResolverFn - The target lazy resolver function that we actually
     /// rewrite instructions to use.
     TargetJITInfo::LazyResolverFn LazyResolverFn;
@@ -474,10 +471,18 @@ namespace {
     std::map<void*, unsigned> revGOTMap;
     unsigned nextGOTIndex;
 
+    static JITResolver *TheJITResolver;
   public:
-    JITResolver(MachineCodeEmitter &mce) : MCE(mce), nextGOTIndex(0) {
-      LazyResolverFn =
-        TheJIT->getJITInfo().getLazyResolverFunction(JITCompilerFn);
+    JITResolver(JIT &jit) : nextGOTIndex(0) {
+      TheJIT = &jit;
+
+      LazyResolverFn = jit.getJITInfo().getLazyResolverFunction(JITCompilerFn);
+      assert(TheJITResolver == 0 && "Multiple JIT resolvers?");
+      TheJITResolver = this;
+    }
+    
+    ~JITResolver() {
+      TheJITResolver = 0;
     }
 
     /// getFunctionStub - This returns a pointer to a function stub, creating
@@ -510,12 +515,7 @@ namespace {
   };
 }
 
-/// getJITResolver - This function returns the one instance of the JIT resolver.
-///
-static JITResolver &getJITResolver(MachineCodeEmitter *MCE = 0) {
-  static JITResolver TheJITResolver(*MCE);
-  return TheJITResolver;
-}
+JITResolver *JITResolver::TheJITResolver = 0;
 
 #if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
     defined(__APPLE__)
@@ -548,7 +548,8 @@ void *JITResolver::getFunctionStub(Function *F) {
 
   // Otherwise, codegen a new stub.  For now, the stub will call the lazy
   // resolver function.
-  Stub = TheJIT->getJITInfo().emitFunctionStub(Actual, MCE);
+  Stub = TheJIT->getJITInfo().emitFunctionStub(Actual,
+                                               *TheJIT->getCodeEmitter());
 
   if (Actual != (void*)(intptr_t)LazyResolverFn) {
     // If we are getting the stub for an external function, we really want the
@@ -558,7 +559,8 @@ void *JITResolver::getFunctionStub(Function *F) {
   }
 
   // Invalidate the icache if necessary.
-  synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
+  synchronizeICache(Stub, TheJIT->getCodeEmitter()->getCurrentPCValue() -
+                          (intptr_t)Stub);
 
   DOUT << "JIT: Stub emitted at [" << Stub << "] for function '"
        << F->getName() << "'\n";
@@ -576,10 +578,12 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
   void *&Stub = ExternalFnToStubMap[FnAddr];
   if (Stub) return Stub;
 
-  Stub = TheJIT->getJITInfo().emitFunctionStub(FnAddr, MCE);
+  Stub = TheJIT->getJITInfo().emitFunctionStub(FnAddr,
+                                               *TheJIT->getCodeEmitter());
 
   // Invalidate the icache if necessary.
-  synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
+  synchronizeICache(Stub, TheJIT->getCodeEmitter()->getCurrentPCValue() -
+                    (intptr_t)Stub);
 
   DOUT << "JIT: Stub emitted at [" << Stub
        << "] for external function at '" << FnAddr << "'\n";
@@ -602,7 +606,7 @@ unsigned JITResolver::getGOTIndexForAddr(void* addr) {
 /// been entered.  It looks up which function this stub corresponds to, compiles
 /// it if necessary, then returns the resultant function pointer.
 void *JITResolver::JITCompilerFn(void *Stub) {
-  JITResolver &JR = getJITResolver();
+  JITResolver &JR = *TheJITResolver;
 
   MutexGuard locked(TheJIT->lock);
 
@@ -688,11 +692,16 @@ namespace {
     /// JumpTableBase - A pointer to the first entry in the jump table.
     ///
     void *JumpTableBase;
-public:
-    JITEmitter(JIT &jit) : MemMgr(jit.getJITInfo().needsGOT()) {
-      TheJIT = &jit;
+    
+    /// Resolver - This contains info about the currently resolved functions.
+    JITResolver Resolver;
+  public:
+    JITEmitter(JIT &jit)
+       : MemMgr(jit.getJITInfo().needsGOT()), Resolver(jit) {
       if (MemMgr.isManagingGOT()) DOUT << "JIT is managing a GOT\n";
     }
+    
+    JITResolver &getJITResolver() { return Resolver; }
 
     virtual void startFunction(MachineFunction &F);
     virtual bool finishFunction(MachineFunction &F);
@@ -752,17 +761,17 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
     if (DoesntNeedStub)
       return TheJIT->getPointerToFunction(F);
 
-    return getJITResolver(this).getFunctionStub(F);
+    return Resolver.getFunctionStub(F);
   }
 
   // Okay, the function has not been compiled yet, if the target callback
   // mechanism is capable of rewriting the instruction directly, prefer to do
   // that instead of emitting a stub.
   if (DoesntNeedStub)
-    return getJITResolver(this).AddCallbackAtLocation(F, Reference);
+    return Resolver.AddCallbackAtLocation(F, Reference);
 
   // Otherwise, we have to emit a lazy resolving stub.
-  return getJITResolver(this).getFunctionStub(F);
+  return Resolver.getFunctionStub(F);
 }
 
 void JITEmitter::startFunction(MachineFunction &F) {
@@ -813,7 +822,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
 
         // If the target REALLY wants a stub for this function, emit it now.
         if (!MR.doesntNeedFunctionStub())
-          ResultPtr = getJITResolver(this).getExternalFunctionStub(ResultPtr);
+          ResultPtr = Resolver.getExternalFunctionStub(ResultPtr);
       } else if (MR.isGlobalValue()) {
         ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                        BufferBegin+MR.getMachineCodeOffset(),
@@ -832,7 +841,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       // if we are managing the GOT and the relocation wants an index,
       // give it one
       if (MemMgr.isManagingGOT() && MR.isGOTRelative()) {
-        unsigned idx = getJITResolver(this).getGOTIndexForAddr(ResultPtr);
+        unsigned idx = Resolver.getGOTIndexForAddr(ResultPtr);
         MR.setGOTIndex(idx);
         if (((void**)MemMgr.getGOTBase())[idx] != ResultPtr) {
           DOUT << "GOT was out of date for " << ResultPtr
@@ -849,7 +858,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
 
   // Update the GOT entry for F to point to the new code.
   if (MemMgr.isManagingGOT()) {
-    unsigned idx = getJITResolver(this).getGOTIndexForAddr((void*)BufferBegin);
+    unsigned idx = Resolver.getGOTIndexForAddr((void*)BufferBegin);
     if (((void**)MemMgr.getGOTBase())[idx] != (void*)BufferBegin) {
       DOUT << "GOT was out of date for " << (void*)BufferBegin
            << " pointing at " << ((void**)MemMgr.getGOTBase())[idx] << "\n";
@@ -1030,8 +1039,10 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
   if (void *Addr = getPointerToGlobalIfAvailable(F))
     return Addr;
   
-  // Get a stub if the target supports it
-  return getJITResolver(MCE).getFunctionStub(F);
+  // Get a stub if the target supports it.
+  assert(dynamic_cast<JITEmitter*>(MCE) && "Unexpected MCE?");
+  JITEmitter *JE = static_cast<JITEmitter*>(getCodeEmitter());
+  return JE->getJITResolver().getFunctionStub(F);
 }
 
 /// freeMachineCodeForFunction - release machine code memory for given Function.
@@ -1043,6 +1054,6 @@ void JIT::freeMachineCodeForFunction(Function *F) {
 
   // Free the actual memory for the function body and related stuff.
   assert(dynamic_cast<JITEmitter*>(MCE) && "Unexpected MCE?");
-  dynamic_cast<JITEmitter*>(MCE)->deallocateMemForFunction(F);
+  static_cast<JITEmitter*>(MCE)->deallocateMemForFunction(F);
 }
 

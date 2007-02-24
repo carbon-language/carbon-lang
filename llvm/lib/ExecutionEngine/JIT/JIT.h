@@ -118,6 +118,8 @@ public:
   ///
   void freeMachineCodeForFunction(Function *F);
 
+  /// getCodeEmitter - Return the code emitter this JIT is emitting into.
+  MachineCodeEmitter *getCodeEmitter() const { return MCE; }
 private:
   static MachineCodeEmitter *createEmitter(JIT &J);
   void runJITOnFunction (Function *F);
