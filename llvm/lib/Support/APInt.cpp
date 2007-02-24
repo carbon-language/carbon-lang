@@ -2,8 +2,9 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Sheng Zhou and is distributed under the
-// University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by Sheng Zhou and Reid Spencer and is distributed 
+// under the // University of Illinois Open Source License. See LICENSE.TXT 
+// for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -20,14 +21,13 @@
 #include <cstring>
 #include <cstdlib>
 #ifndef NDEBUG
-#include <iostream>
 #include <iomanip>
 #endif
 
 using namespace llvm;
 
 // A utility function for allocating memory, checking for allocation failures,
-// and ensuring the contents is zeroed.
+// and ensuring the contents are zeroed.
 inline static uint64_t* getClearedMemory(uint32_t numWords) {
   uint64_t * result = new uint64_t[numWords];
   assert(result && "APInt memory allocation fails!");
@@ -36,6 +36,7 @@ inline static uint64_t* getClearedMemory(uint32_t numWords) {
 }
 
 // A utility function for allocating memory and checking for allocation failure.
+// The content is not zero'd
 inline static uint64_t* getMemory(uint32_t numWords) {
   uint64_t * result = new uint64_t[numWords];
   assert(result && "APInt memory allocation fails!");
@@ -60,38 +61,31 @@ APInt::APInt(uint32_t numBits, uint32_t numWords, uint64_t bigVal[])
   assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   assert(bigVal && "Null pointer detected!");
   if (isSingleWord())
-    VAL = bigVal[0] & (~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth));
+    VAL = bigVal[0];
   else {
-    pVal = getMemory(getNumWords());
-    // Calculate the actual length of bigVal[].
-    uint32_t maxN = std::max<uint32_t>(numWords, getNumWords());
-    uint32_t minN = std::min<uint32_t>(numWords, getNumWords());
-    memcpy(pVal, bigVal, (minN - 1) * APINT_WORD_SIZE);
-    pVal[minN-1] = bigVal[minN-1] & 
-                    (~uint64_t(0ULL) >> 
-                     (APINT_BITS_PER_WORD - BitWidth % APINT_BITS_PER_WORD));
-    if (maxN == getNumWords())
-      memset(pVal+numWords, 0, (getNumWords() - numWords) * APINT_WORD_SIZE);
+    // Get memory, cleared to 0
+    pVal = getClearedMemory(getNumWords());
+    // Calculate the number of words to copy
+    uint32_t words = std::min<uint32_t>(numWords, getNumWords());
+    // Copy the words from bigVal to pVal
+    memcpy(pVal, bigVal, words * APINT_WORD_SIZE);
   }
+  // Make sure unused high bits are cleared
+  clearUnusedBits();
 }
 
-/// @brief Create a new APInt by translating the char array represented
-/// integer value.
 APInt::APInt(uint32_t numbits, const char StrStart[], uint32_t slen, 
              uint8_t radix) 
   : BitWidth(numbits), VAL(0) {
   fromString(numbits, StrStart, slen, radix);
 }
 
-/// @brief Create a new APInt by translating the string represented
-/// integer value.
 APInt::APInt(uint32_t numbits, const std::string& Val, uint8_t radix)
   : BitWidth(numbits), VAL(0) {
   assert(!Val.empty() && "String empty?");
   fromString(numbits, Val.c_str(), Val.size(), radix);
 }
 
-/// @brief Copy constructor
 APInt::APInt(const APInt& that)
   : BitWidth(that.BitWidth), VAL(0) {
   if (isSingleWord()) 
@@ -107,8 +101,6 @@ APInt::~APInt() {
     delete[] pVal;
 }
 
-/// @brief Copy assignment operator. Create a new object from the given
-/// APInt one by initialization.
 APInt& APInt::operator=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) 
@@ -118,8 +110,6 @@ APInt& APInt::operator=(const APInt& RHS) {
   return *this;
 }
 
-/// @brief Assignment operator. Assigns a common case integer value to 
-/// the APInt.
 APInt& APInt::operator=(uint64_t RHS) {
   if (isSingleWord()) 
     VAL = RHS;
@@ -134,15 +124,13 @@ APInt& APInt::operator=(uint64_t RHS) {
 /// "digit" integer array,  x[]. x[] is modified to reflect the addition and
 /// 1 is returned if there is a carry out, otherwise 0 is returned.
 /// @returns the carry of the addition.
-static uint64_t add_1(uint64_t dest[], 
-                             uint64_t x[], uint32_t len, 
-                             uint64_t y) {
+static uint64_t add_1(uint64_t dest[], uint64_t x[], uint32_t len, uint64_t y) {
   for (uint32_t i = 0; i < len; ++i) {
     dest[i] = y + x[i];
     if (dest[i] < y)
-      y = 1;
+      y = 1; // Carry one to next digit.
     else {
-      y = 0;
+      y = 0; // No need to carry so exit early
       break;
     }
   }
@@ -216,7 +204,7 @@ APInt& APInt::operator+=(const APInt& RHS) {
 }
 
 /// sub - This function subtracts the integer array x[] by
-/// integer array y[], and returns the borrow-out carry.
+/// integer array y[], and returns the borrow-out.
 static bool sub(uint64_t *dest, const uint64_t *x, const uint64_t *y, 
                 uint32_t len) {
   bool borrow = false;
@@ -243,10 +231,8 @@ APInt& APInt::operator-=(const APInt& RHS) {
 /// mul_1 - This function performs the multiplication operation on a
 /// large integer (represented as an integer array) and a uint64_t integer.
 /// @returns the carry of the multiplication.
-static uint64_t mul_1(uint64_t dest[], 
-                             uint64_t x[], uint32_t len, 
-                             uint64_t y) {
-  // Split y into high 32-bit part and low 32-bit part.
+static uint64_t mul_1(uint64_t dest[], uint64_t x[], uint32_t len, uint64_t y) {
+  // Split y into high 32-bit part (hy)  and low 32-bit part (ly)
   uint64_t ly = y & 0xffffffffULL, hy = y >> 32;
   uint64_t carry = 0, lx, hx;
   for (uint32_t i = 0; i < len; ++i) {
@@ -277,10 +263,9 @@ static uint64_t mul_1(uint64_t dest[],
 /// mul - This function multiplies integer array x[] by integer array y[] and
 /// stores the result into integer array dest[].
 /// Note the array dest[]'s size should no less than xlen + ylen.
-static void mul(uint64_t dest[], uint64_t x[], uint32_t xlen,
-                uint64_t y[], uint32_t ylen) {
+static void mul(uint64_t dest[], uint64_t x[], uint32_t xlen, uint64_t y[], 
+                uint32_t ylen) {
   dest[xlen] = mul_1(dest, x, xlen, y[0]);
-
   for (uint32_t i = 1; i < ylen; ++i) {
     uint64_t ly = y[i] & 0xffffffffULL, hy = y[i] >> 32;
     uint64_t carry = 0, lx = 0, hx = 0;
@@ -1053,43 +1038,50 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     if (qp == b || qp*v[n-2] > b*rp + u[j+n-2]) {
       qp--;
       rp += v[n-1];
-      if (rp < b && (qp == b || qp*v[n-2] > b*rp + u[j+n-2])) {
+      if (rp < b && (qp == b || qp*v[n-2] > b*rp + u[j+n-2]))
         qp--;
-        //rp += v[n-1];
-      }
     }
     DEBUG(cerr << "KnuthDiv: qp == " << qp << ", rp == " << rp << '\n');
 
     // D4. [Multiply and subtract.] Replace (u[j+n]u[j+n-1]...u[j]) with
     // (u[j+n]u[j+n-1]..u[j]) - qp * (v[n-1]...v[1]v[0]). This computation
     // consists of a simple multiplication by a one-place number, combined with
-    // a subtraction. The digits (u[j+n]...u[j]) should be kept positive;
-    bool borrow = false;
+    // a subtraction. 
+    bool isNegative = false;
     for (uint32_t i = 0; i < n; ++i) {
-      uint64_t u_tmp = borrow ? uint64_t(u[j+i] - 1) : uint64_t(u[j+i]);
+      uint64_t u_tmp = uint64_t(u[j+i]) | (uint64_t(u[j+i+1]) << 32);
       uint64_t subtrahend = uint64_t(qp) * uint64_t(v[i]);
+      bool borrow = subtrahend > u_tmp;
       DEBUG(cerr << "KnuthDiv: u_tmp == " << u_tmp 
-                 << ", subtrahend == " << subtrahend << '\n');
+                 << ", subtrahend == " << subtrahend
+                 << ", borrow = " << borrow << '\n');
 
-      borrow = subtrahend > u_tmp || (borrow && u[j+i] == 0);
-      u[j+i] = u_tmp - subtrahend;
-    }
-    if (borrow) {
-      borrow = u[j+n] == 0;            // Was result negative?
-      u[j+n]--;  // handle the borrow
+      uint64_t result = u_tmp - subtrahend;
+      uint32_t k = j + i;
+      u[k++] = result & (b-1); // subtract low word
+      u[k++] = result >> 32;   // subtract high word
+      while (borrow && k <= m+n) { // deal with borrow to the left
+        borrow = u[k] == 0;
+        u[k]--;
+        k++;
+      }
+      isNegative |= borrow;
+      DEBUG(cerr << "KnuthDiv: u[j+i] == " << u[j+i] << ",  u[j+i+1] == " << 
+                    u[j+i+1] << '\n'); 
     }
     DEBUG(cerr << "KnuthDiv: after subtraction:");
     DEBUG(for (int i = m+n; i >=0; i--) cerr << " " << u[i]);
     DEBUG(cerr << '\n');
-    // if the result of this step is actually negative, (u[j+n]...u[j]) should
-    // be left as the true value plus b**(n+1), namely as the b's complement of
+    // The digits (u[j+n]...u[j]) should be kept positive; if the result of 
+    // this step is actually negative, (u[j+n]...u[j]) should be left as the 
+    // true value plus b**(n+1), namely as the b's complement of
     // the true value, and a "borrow" to the left should be remembered.
     //
-    if (borrow) {
-      bool carry = true;
-      for (uint32_t i = 0; i <= n; ++i) {
-        u[j+i] = ~u[j+i] + carry; // b's complement
-        carry = u[j+i] == 0;
+    if (isNegative) {
+      bool carry = true;  // true because b's complement is "complement + 1"
+      for (uint32_t i = 0; i <= m+n; ++i) {
+        u[i] = ~u[i] + carry; // b's complement
+        carry = carry && u[i] == 0;
       }
     }
     DEBUG(cerr << "KnuthDiv: after complement:");
@@ -1099,7 +1091,7 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     // D5. [Test remainder.] Set q[j] = qp. If the result of step D4 was 
     // negative, go to step D6; otherwise go on to step D7.
     q[j] = qp;
-    if (borrow) {
+    if (isNegative) {
       // D6. [Add back]. The probability that this step is necessary is very 
       // small, on the order of only 2/b. Make sure that test data accounts for
       // this possibility. Decrease q[j] by 1 
@@ -1516,12 +1508,12 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
 #ifndef NDEBUG
 void APInt::dump() const
 {
-  std::cerr << "APInt(" << BitWidth << ")=" << std::setbase(16);
+  cerr << "APInt(" << BitWidth << ")=" << std::setbase(16);
   if (isSingleWord())
-    std::cerr << VAL;
+    cerr << VAL;
   else for (unsigned i = getNumWords(); i > 0; i--) {
-    std::cerr << pVal[i-1] << " ";
+    cerr << pVal[i-1] << " ";
   }
-  std::cerr << " (" << this->toString(10, false) << ")\n" << std::setbase(10);
+  cerr << " (" << this->toString(10, false) << ")\n" << std::setbase(10);
 }
 #endif
