@@ -14,10 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "foldingset"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Debug.h"
 #include <cassert>
 using namespace llvm;
 
@@ -231,7 +229,6 @@ FoldingSetImpl::Node *FoldingSetImpl::FindNodeOrInsertPos(const NodeID &ID,
 void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
   assert(N->getNextInBucket() == 0);
   // Do we need to grow the hashtable?
-  DEBUG(DOUT << "INSERT: " << N << '\n');
   if (NumNodes+1 > NumBuckets*2) {
     GrowHashTable();
     NodeID ID;
@@ -261,7 +258,6 @@ void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
 bool FoldingSetImpl::RemoveNode(Node *N) {
   // Because each bucket is a circular list, we don't need to compute N's hash
   // to remove it.
-  DEBUG(DOUT << "REMOVE: " << N << '\n');
   void *Ptr = N->getNextInBucket();
   if (Ptr == 0) return false;  // Not in folding set.
 
