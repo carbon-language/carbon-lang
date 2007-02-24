@@ -677,8 +677,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getConstant(0, TLI.getPointerTy());
     break;
   case ISD::EHSELECTION:
-    LegalizeOp(Node->getOperand(1));
-    // Fall Thru
   case ISD::EXCEPTIONADDR: {
     Tmp1 = LegalizeOp(Node->getOperand(0));
     MVT::ValueType VT = Node->getValueType(0);
