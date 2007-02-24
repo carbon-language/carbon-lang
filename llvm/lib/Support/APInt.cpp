@@ -945,24 +945,33 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
 /// Left-shift this APInt by shiftAmt.
 /// @brief Left-shift function.
 APInt APInt::shl(uint32_t shiftAmt) const {
+  assert(shiftAmt <= BitWidth && "Invalid shift amount");
   APInt API(*this);
-  if (API.isSingleWord())
-    API.VAL <<= shiftAmt;
-  else if (shiftAmt >= API.BitWidth)
-    memset(API.pVal, 0, API.getNumWords() * APINT_WORD_SIZE);
-  else {
-    if (uint32_t offset = shiftAmt / APINT_BITS_PER_WORD) {
-      for (uint32_t i = API.getNumWords() - 1; i > offset - 1; --i)
-        API.pVal[i] = API.pVal[i-offset];
-      memset(API.pVal, 0, offset * APINT_WORD_SIZE);
-    }
-    shiftAmt %= APINT_BITS_PER_WORD;
-    uint32_t i;
-    for (i = API.getNumWords() - 1; i > 0; --i)
-      API.pVal[i] = (API.pVal[i] << shiftAmt) | 
-                    (API.pVal[i-1] >> (APINT_BITS_PER_WORD - shiftAmt));
-    API.pVal[i] <<= shiftAmt;
+  if (API.isSingleWord()) {
+    if (shiftAmt == BitWidth)
+      API.VAL = 0;
+    else 
+      API.VAL <<= shiftAmt;
+    API.clearUnusedBits();
+    return API;
   }
+
+  if (shiftAmt == BitWidth) {
+    memset(API.pVal, 0, getNumWords() * APINT_WORD_SIZE);
+    return API;
+  }
+
+  if (uint32_t offset = shiftAmt / APINT_BITS_PER_WORD) {
+    for (uint32_t i = API.getNumWords() - 1; i > offset - 1; --i)
+      API.pVal[i] = API.pVal[i-offset];
+    memset(API.pVal, 0, offset * APINT_WORD_SIZE);
+  }
+  shiftAmt %= APINT_BITS_PER_WORD;
+  uint32_t i;
+  for (i = API.getNumWords() - 1; i > 0; --i)
+    API.pVal[i] = (API.pVal[i] << shiftAmt) | 
+                  (API.pVal[i-1] >> (APINT_BITS_PER_WORD - shiftAmt));
+  API.pVal[i] <<= shiftAmt;
   API.clearUnusedBits();
   return API;
 }
@@ -1423,7 +1432,10 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
       *this *= apradix;
 
     // Add in the digit we just interpreted
-    apdigit.pVal[0] = digit;
+    if (apdigit.isSingleWord())
+      apdigit.VAL = digit;
+    else
+      apdigit.pVal[0] = digit;
     *this += apdigit;
   }
 }
