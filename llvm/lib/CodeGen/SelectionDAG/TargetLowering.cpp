@@ -1459,11 +1459,11 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
           case ISD::SETGT:
           case ISD::SETGE:
             // True if the sign bit of C1 is set.
-            return DAG.getConstant((C1 & (1ULL << VSize)) != 0, VT);
+            return DAG.getConstant((C1 & (1ULL << (VSize-1))) != 0, VT);
           case ISD::SETLT:
           case ISD::SETLE:
             // True if the sign bit of C1 isn't set.
-            return DAG.getConstant((C1 & (1ULL << VSize)) == 0, VT);
+            return DAG.getConstant((C1 & (1ULL << (VSize-1))) == 0, VT);
           default:
             break;
           }
