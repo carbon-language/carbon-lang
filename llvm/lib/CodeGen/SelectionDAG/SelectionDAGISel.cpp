@@ -2101,6 +2101,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       SDOperand Op = DAG.getNode(ISD::EXCEPTIONADDR, VTs, Ops, 1);
       setValue(&I, Op);
       DAG.setRoot(Op.getValue(1));
+    } else {
+      SDOperand Op = DAG.getNode(ISD::MERGE_VALUES, TLI.getPointerTy(),
+                                 DAG.getConstant(0, TLI.getPointerTy()),
+                                 DAG.getRoot());
+      setValue(&I, Op);
+      DAG.setRoot(Op.getValue(1));
     }
     return 0;
   }
@@ -2145,6 +2151,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       SDOperand Op = DAG.getNode(ISD::EHSELECTION, VTs, Ops, 2);
       setValue(&I, Op);
       DAG.setRoot(Op.getValue(1));
+    } else {
+      SDOperand Op = DAG.getNode(ISD::MERGE_VALUES, TLI.getPointerTy(),
+                                 DAG.getConstant(0, TLI.getPointerTy()),
+                                 getValue(I.getOperand(1)));
+      setValue(&I, Op);
+      DAG.setRoot(Op.getValue(1));
     }
     
     return 0;
@@ -2169,6 +2181,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       
       unsigned TypeID = MMI->getTypeIDFor(GV);
       setValue(&I, DAG.getConstant(TypeID, MVT::i32));
+    } else {
+      setValue(&I, DAG.getConstant(0, MVT::i32));
     }
 
     return 0;
