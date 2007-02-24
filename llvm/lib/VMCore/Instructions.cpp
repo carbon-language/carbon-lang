@@ -40,16 +40,6 @@ void CallSite::setCallingConv(unsigned CC) {
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
 
-TerminatorInst::TerminatorInst(Instruction::TermOps iType,
-                               Use *Ops, unsigned NumOps, Instruction *IB)
-  : Instruction(Type::VoidTy, iType, Ops, NumOps, "", IB) {
-}
-
-TerminatorInst::TerminatorInst(Instruction::TermOps iType,
-                               Use *Ops, unsigned NumOps, BasicBlock *IAE)
-  : Instruction(Type::VoidTy, iType, Ops, NumOps, "", IAE) {
-}
-
 // Out of line virtual method, so the vtable, etc has a home.
 TerminatorInst::~TerminatorInst() {
 }
@@ -272,63 +262,71 @@ CallInst::CallInst(Value *Func, Value* const *Args, unsigned NumArgs,
                    const std::string &Name, BasicBlock *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                  ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, Name, InsertAtEnd) {
+                Instruction::Call, 0, 0, InsertAtEnd) {
   init(Func, Args, NumArgs);
+  setName(Name);
 }
 CallInst::CallInst(Value *Func, Value* const *Args, unsigned NumArgs,
                    const std::string &Name, Instruction *InsertBefore)
 : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                  ->getElementType())->getReturnType(),
-              Instruction::Call, 0, 0, Name, InsertBefore) {
+              Instruction::Call, 0, 0, InsertBefore) {
   init(Func, Args, NumArgs);
+  setName(Name);
 }
 
 CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
                    const std::string &Name, Instruction  *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, Name, InsertBefore) {
+                Instruction::Call, 0, 0, InsertBefore) {
   init(Func, Actual1, Actual2);
+  setName(Name);
 }
 
 CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
                    const std::string &Name, BasicBlock  *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, Name, InsertAtEnd) {
+                Instruction::Call, 0, 0, InsertAtEnd) {
   init(Func, Actual1, Actual2);
+  setName(Name);
 }
 
 CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
-                   Instruction  *InsertBefore)
+                   Instruction *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, Name, InsertBefore) {
+                Instruction::Call, 0, 0, InsertBefore) {
   init(Func, Actual);
+  setName(Name);
 }
 
 CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
                    BasicBlock  *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, Name, InsertAtEnd) {
+                Instruction::Call, 0, 0, InsertAtEnd) {
   init(Func, Actual);
+  setName(Name);
 }
 
 CallInst::CallInst(Value *Func, const std::string &Name,
                    Instruction *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, Name, InsertBefore) {
+                Instruction::Call, 0, 0, InsertBefore) {
   init(Func);
+  setName(Name);
 }
 
 CallInst::CallInst(Value *Func, const std::string &Name,
                    BasicBlock *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, Name, InsertAtEnd) {
+                Instruction::Call, 0, 0, InsertAtEnd) {
   init(Func);
+  setName(Name);
 }
 
 CallInst::CallInst(const CallInst &CI)
@@ -380,8 +378,9 @@ InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
                        const std::string &Name, Instruction *InsertBefore)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
                                     ->getElementType())->getReturnType(),
-                   Instruction::Invoke, 0, 0, Name, InsertBefore) {
+                   Instruction::Invoke, 0, 0, InsertBefore) {
   init(Fn, IfNormal, IfException, Args, NumArgs);
+  setName(Name);
 }
 
 InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
@@ -390,8 +389,9 @@ InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
                        const std::string &Name, BasicBlock *InsertAtEnd)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
                                     ->getElementType())->getReturnType(),
-                   Instruction::Invoke, 0, 0, Name, InsertAtEnd) {
+                   Instruction::Invoke, 0, 0, InsertAtEnd) {
   init(Fn, IfNormal, IfException, Args, NumArgs);
+  setName(Name);
 }
 
 InvokeInst::InvokeInst(const InvokeInst &II)
@@ -417,6 +417,27 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 //===----------------------------------------------------------------------===//
 //                        ReturnInst Implementation
 //===----------------------------------------------------------------------===//
+
+ReturnInst::ReturnInst(const ReturnInst &RI)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret,
+                   &RetVal, RI.getNumOperands()) {
+  if (RI.getNumOperands())
+    RetVal.init(RI.RetVal, this);
+}
+
+ReturnInst::ReturnInst(Value *retVal, Instruction *InsertBefore)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertBefore) {
+  init(retVal);
+}
+ReturnInst::ReturnInst(Value *retVal, BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertAtEnd) {
+  init(retVal);
+}
+ReturnInst::ReturnInst(BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Ret, &RetVal, 0, InsertAtEnd) {
+}
+
+
 
 void ReturnInst::init(Value *retVal) {
   if (retVal && retVal->getType() != Type::VoidTy) {
@@ -448,6 +469,14 @@ BasicBlock *ReturnInst::getSuccessorV(unsigned idx) const {
 //                        UnwindInst Implementation
 //===----------------------------------------------------------------------===//
 
+UnwindInst::UnwindInst(Instruction *InsertBefore)
+  : TerminatorInst(Type::VoidTy, Instruction::Unwind, 0, 0, InsertBefore) {
+}
+UnwindInst::UnwindInst(BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Unwind, 0, 0, InsertAtEnd) {
+}
+
+
 unsigned UnwindInst::getNumSuccessorsV() const {
   return getNumSuccessors();
 }
@@ -465,6 +494,13 @@ BasicBlock *UnwindInst::getSuccessorV(unsigned idx) const {
 //===----------------------------------------------------------------------===//
 //                      UnreachableInst Implementation
 //===----------------------------------------------------------------------===//
+
+UnreachableInst::UnreachableInst(Instruction *InsertBefore)
+  : TerminatorInst(Type::VoidTy, Instruction::Unreachable, 0, 0, InsertBefore) {
+}
+UnreachableInst::UnreachableInst(BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Unreachable, 0, 0, InsertAtEnd) {
+}
 
 unsigned UnreachableInst::getNumSuccessorsV() const {
   return getNumSuccessors();
@@ -490,8 +526,42 @@ void BranchInst::AssertOK() {
            "May only branch on boolean predicates!");
 }
 
+BranchInst::BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore)
+  : TerminatorInst(Type::VoidTy, Instruction::Br, Ops, 1, InsertBefore) {
+  assert(IfTrue != 0 && "Branch destination may not be null!");
+  Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
+}
+BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
+                       Instruction *InsertBefore)
+: TerminatorInst(Type::VoidTy, Instruction::Br, Ops, 3, InsertBefore) {
+  Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
+  Ops[1].init(reinterpret_cast<Value*>(IfFalse), this);
+  Ops[2].init(Cond, this);
+#ifndef NDEBUG
+  AssertOK();
+#endif
+}
+
+BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Br, Ops, 1, InsertAtEnd) {
+  assert(IfTrue != 0 && "Branch destination may not be null!");
+  Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
+}
+
+BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
+           BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Br, Ops, 3, InsertAtEnd) {
+  Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
+  Ops[1].init(reinterpret_cast<Value*>(IfFalse), this);
+  Ops[2].init(Cond, this);
+#ifndef NDEBUG
+  AssertOK();
+#endif
+}
+
+
 BranchInst::BranchInst(const BranchInst &BI) :
-  TerminatorInst(Instruction::Br, Ops, BI.getNumOperands()) {
+  TerminatorInst(Type::VoidTy, Instruction::Br, Ops, BI.getNumOperands()) {
   OperandList[0].init(BI.getOperand(0), this);
   if (BI.getNumOperands() != 1) {
     assert(BI.getNumOperands() == 3 && "BR can have 1 or 3 operands!");
@@ -531,7 +601,7 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                Instruction *InsertBefore)
   : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
-                     0, InsertBefore), Alignment(Align) {
+                     InsertBefore), Alignment(Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
   setName(Name);
@@ -541,7 +611,7 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                BasicBlock *InsertAtEnd)
   : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
-                     0, InsertAtEnd), Alignment(Align) {
+                     InsertAtEnd), Alignment(Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
   setName(Name);
@@ -581,12 +651,12 @@ void FreeInst::AssertOK() {
 }
 
 FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
-  : UnaryInstruction(Type::VoidTy, Free, Ptr, 0, InsertBefore) {
+  : UnaryInstruction(Type::VoidTy, Free, Ptr, InsertBefore) {
   AssertOK();
 }
 
 FreeInst::FreeInst(Value *Ptr, BasicBlock *InsertAtEnd)
-  : UnaryInstruction(Type::VoidTy, Free, Ptr, 0, InsertAtEnd) {
+  : UnaryInstruction(Type::VoidTy, Free, Ptr, InsertAtEnd) {
   AssertOK();
 }
 
@@ -602,7 +672,7 @@ void LoadInst::AssertOK() {
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, 0, InsertBef) {
+                     Load, Ptr, InsertBef) {
   setVolatile(false);
   AssertOK();
   setName(Name);
@@ -610,7 +680,7 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
 
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, 0, InsertAE) {
+                     Load, Ptr, InsertAE) {
   setVolatile(false);
   AssertOK();
   setName(Name);
@@ -619,7 +689,7 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAE)
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, 0, InsertBef) {
+                     Load, Ptr, InsertBef) {
   setVolatile(isVolatile);
   AssertOK();
   setName(Name);
@@ -628,7 +698,7 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, 0, InsertAE) {
+                     Load, Ptr, InsertAE) {
   setVolatile(isVolatile);
   AssertOK();
   setName(Name);
@@ -637,33 +707,37 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
 
 
 LoadInst::LoadInst(Value *Ptr, const char *Name, Instruction *InsertBef)
-: UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                   Load, Ptr, Name, InsertBef) {
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, InsertBef) {
   setVolatile(false);
   AssertOK();
+  if (Name && Name[0]) setName(Name);
 }
 
 LoadInst::LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAE)
-: UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                   Load, Ptr, Name, InsertAE) {
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, InsertAE) {
   setVolatile(false);
   AssertOK();
+  if (Name && Name[0]) setName(Name);
 }
 
 LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
                    Instruction *InsertBef)
 : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                   Load, Ptr, Name, InsertBef) {
+                   Load, Ptr, InsertBef) {
   setVolatile(isVolatile);
   AssertOK();
+  if (Name && Name[0]) setName(Name);
 }
 
 LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
                    BasicBlock *InsertAE)
-: UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                   Load, Ptr, Name, InsertAE) {
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, InsertAE) {
   setVolatile(isVolatile);
   AssertOK();
+  if (Name && Name[0]) setName(Name);
 }
 
 
@@ -681,7 +755,7 @@ void StoreInst::AssertOK() {
 
 
 StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertBefore) {
+  : Instruction(Type::VoidTy, Store, Ops, 2, InsertBefore) {
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
   setVolatile(false);
@@ -689,7 +763,7 @@ StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
 }
 
 StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertAtEnd) {
+  : Instruction(Type::VoidTy, Store, Ops, 2, InsertAtEnd) {
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
   setVolatile(false);
@@ -698,7 +772,7 @@ StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
 
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                      Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertBefore) {
+  : Instruction(Type::VoidTy, Store, Ops, 2, InsertBefore) {
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
   setVolatile(isVolatile);
@@ -707,7 +781,7 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
 
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                      BasicBlock *InsertAtEnd)
-  : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertAtEnd) {
+  : Instruction(Type::VoidTy, Store, Ops, 2, InsertAtEnd) {
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
   setVolatile(isVolatile);
@@ -756,8 +830,9 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx,
                                      const std::string &Name, Instruction *InBe)
 : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                         Idx, NumIdx, true))),
-              GetElementPtr, 0, 0, Name, InBe) {
+              GetElementPtr, 0, 0, InBe) {
   init(Ptr, Idx, NumIdx);
+  setName(Name);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx, 
@@ -765,40 +840,43 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx,
                                      const std::string &Name, BasicBlock *IAE)
 : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                         Idx, NumIdx, true))),
-              GetElementPtr, 0, 0, Name, IAE) {
+              GetElementPtr, 0, 0, IAE) {
   init(Ptr, Idx, NumIdx);
+  setName(Name);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, Instruction *InBe)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                          Idx))),
-                GetElementPtr, 0, 0, Name, InBe) {
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
+                GetElementPtr, 0, 0, InBe) {
   init(Ptr, Idx);
+  setName(Name);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, BasicBlock *IAE)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                          Idx))),
-                GetElementPtr, 0, 0, Name, IAE) {
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
+                GetElementPtr, 0, 0, IAE) {
   init(Ptr, Idx);
+  setName(Name);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
                                      const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx0, Idx1, true))),
-                GetElementPtr, 0, 0, Name, InBe) {
+                GetElementPtr, 0, 0, InBe) {
   init(Ptr, Idx0, Idx1);
+  setName(Name);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
                                      const std::string &Name, BasicBlock *IAE)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx0, Idx1, true))),
-                GetElementPtr, 0, 0, Name, IAE) {
+                GetElementPtr, 0, 0, IAE) {
   init(Ptr, Idx0, Idx1);
+  setName(Name);
 }
 
 GetElementPtrInst::~GetElementPtrInst() {
@@ -885,23 +963,25 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
                                        const std::string &Name,
                                        Instruction *InsertBef)
   : Instruction(cast<VectorType>(Val->getType())->getElementType(),
-                ExtractElement, Ops, 2, Name, InsertBef) {
+                ExtractElement, Ops, 2, InsertBef) {
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
   Ops[0].init(Val, this);
   Ops[1].init(Index, this);
+  setName(Name);
 }
 
 ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
                                        const std::string &Name,
                                        Instruction *InsertBef)
   : Instruction(cast<VectorType>(Val->getType())->getElementType(),
-                ExtractElement, Ops, 2, Name, InsertBef) {
+                ExtractElement, Ops, 2, InsertBef) {
   Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
   Ops[0].init(Val, this);
   Ops[1].init(Index, this);
+  setName(Name);
 }
 
 
@@ -909,25 +989,27 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
                                        const std::string &Name,
                                        BasicBlock *InsertAE)
   : Instruction(cast<VectorType>(Val->getType())->getElementType(),
-                ExtractElement, Ops, 2, Name, InsertAE) {
+                ExtractElement, Ops, 2, InsertAE) {
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
 
   Ops[0].init(Val, this);
   Ops[1].init(Index, this);
+  setName(Name);
 }
 
 ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
                                        const std::string &Name,
                                        BasicBlock *InsertAE)
   : Instruction(cast<VectorType>(Val->getType())->getElementType(),
-                ExtractElement, Ops, 2, Name, InsertAE) {
+                ExtractElement, Ops, 2, InsertAE) {
   Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
   
   Ops[0].init(Val, this);
   Ops[1].init(Index, this);
+  setName(Name);
 }
 
 
@@ -951,43 +1033,46 @@ InsertElementInst::InsertElementInst(const InsertElementInst &IE)
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
                                      const std::string &Name,
                                      Instruction *InsertBef)
-  : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertBef) {
+  : Instruction(Vec->getType(), InsertElement, Ops, 3, InsertBef) {
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
   Ops[0].init(Vec, this);
   Ops[1].init(Elt, this);
   Ops[2].init(Index, this);
+  setName(Name);
 }
 
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
                                      const std::string &Name,
                                      Instruction *InsertBef)
-  : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertBef) {
+  : Instruction(Vec->getType(), InsertElement, Ops, 3, InsertBef) {
   Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
   Ops[0].init(Vec, this);
   Ops[1].init(Elt, this);
   Ops[2].init(Index, this);
+  setName(Name);
 }
 
 
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
                                      const std::string &Name,
                                      BasicBlock *InsertAE)
-  : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertAE) {
+  : Instruction(Vec->getType(), InsertElement, Ops, 3, InsertAE) {
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
 
   Ops[0].init(Vec, this);
   Ops[1].init(Elt, this);
   Ops[2].init(Index, this);
+  setName(Name);
 }
 
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
                                      const std::string &Name,
                                      BasicBlock *InsertAE)
-: Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertAE) {
+: Instruction(Vec->getType(), InsertElement, Ops, 3, InsertAE) {
   Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
@@ -995,6 +1080,7 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
   Ops[0].init(Vec, this);
   Ops[1].init(Elt, this);
   Ops[2].init(Index, this);
+  setName(Name);
 }
 
 bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt, 
@@ -1025,24 +1111,26 @@ ShuffleVectorInst::ShuffleVectorInst(const ShuffleVectorInst &SV)
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                                      const std::string &Name,
                                      Instruction *InsertBefore)
-  : Instruction(V1->getType(), ShuffleVector, Ops, 3, Name, InsertBefore) {
+  : Instruction(V1->getType(), ShuffleVector, Ops, 3, InsertBefore) {
   assert(isValidOperands(V1, V2, Mask) &&
          "Invalid shuffle vector instruction operands!");
   Ops[0].init(V1, this);
   Ops[1].init(V2, this);
   Ops[2].init(Mask, this);
+  setName(Name);
 }
 
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                                      const std::string &Name, 
                                      BasicBlock *InsertAtEnd)
-  : Instruction(V1->getType(), ShuffleVector, Ops, 3, Name, InsertAtEnd) {
+  : Instruction(V1->getType(), ShuffleVector, Ops, 3, InsertAtEnd) {
   assert(isValidOperands(V1, V2, Mask) &&
          "Invalid shuffle vector instruction operands!");
 
   Ops[0].init(V1, this);
   Ops[1].init(V2, this);
   Ops[2].init(Mask, this);
+  setName(Name);
 }
 
 bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2, 
@@ -1062,8 +1150,28 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
 //                             BinaryOperator Class
 //===----------------------------------------------------------------------===//
 
-void BinaryOperator::init(BinaryOps iType)
-{
+BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
+                               const Type *Ty, const std::string &Name,
+                               Instruction *InsertBefore)
+  : Instruction(Ty, iType, Ops, 2, InsertBefore) {
+  Ops[0].init(S1, this);
+  Ops[1].init(S2, this);
+  init(iType);
+  setName(Name);
+}
+
+BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
+                               const Type *Ty, const std::string &Name,
+                               BasicBlock *InsertAtEnd)
+  : Instruction(Ty, iType, Ops, 2, InsertAtEnd) {
+  Ops[0].init(S1, this);
+  Ops[1].init(S2, this);
+  init(iType);
+  setName(Name);
+}
+
+
+void BinaryOperator::init(BinaryOps iType) {
   Value *LHS = getOperand(0), *RHS = getOperand(1);
   LHS = LHS; RHS = RHS; // Silence warnings.
   assert(LHS->getType() == RHS->getType() &&
@@ -1947,7 +2055,7 @@ BitCastInst::BitCastInst(
 
 CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
                  const std::string &Name, Instruction *InsertBefore)
-  : Instruction(Type::Int1Ty, op, Ops, 2, Name, InsertBefore) {
+  : Instruction(Type::Int1Ty, op, Ops, 2, InsertBefore) {
     Ops[0].init(LHS, this);
     Ops[1].init(RHS, this);
   SubclassData = predicate;
@@ -1974,11 +2082,12 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
   // Check that the operands are the right type
   assert(Op0Ty->isFloatingPoint() &&
          "Invalid operand types for FCmp instruction");
+  setName(Name);
 }
   
 CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
                  const std::string &Name, BasicBlock *InsertAtEnd)
-  : Instruction(Type::Int1Ty, op, Ops, 2, Name, InsertAtEnd) {
+  : Instruction(Type::Int1Ty, op, Ops, 2, InsertAtEnd) {
   Ops[0].init(LHS, this);
   Ops[1].init(RHS, this);
   SubclassData = predicate;
@@ -2006,6 +2115,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
   // Check that the operands are the right type
   assert(Op0Ty->isFloatingPoint() &&
         "Invalid operand types for FCmp instruction");
+  setName(Name);
 }
 
 CmpInst *
@@ -2197,9 +2307,29 @@ void SwitchInst::init(Value *Value, BasicBlock *Default, unsigned NumCases) {
   OperandList[1].init(Default, this);
 }
 
+/// SwitchInst ctor - Create a new switch instruction, specifying a value to
+/// switch on and a default destination.  The number of additional cases can
+/// be specified here to make memory allocation more efficient.  This
+/// constructor can also autoinsert before another instruction.
+SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
+                       Instruction *InsertBefore)
+  : TerminatorInst(Type::VoidTy, Instruction::Switch, 0, 0, InsertBefore) {
+  init(Value, Default, NumCases);
+}
+
+/// SwitchInst ctor - Create a new switch instruction, specifying a value to
+/// switch on and a default destination.  The number of additional cases can
+/// be specified here to make memory allocation more efficient.  This
+/// constructor also autoinserts at the end of the specified BasicBlock.
+SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
+                       BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::VoidTy, Instruction::Switch, 0, 0, InsertAtEnd) {
+  init(Value, Default, NumCases);
+}
+
 SwitchInst::SwitchInst(const SwitchInst &SI)
-  : TerminatorInst(Instruction::Switch, new Use[SI.getNumOperands()],
-                   SI.getNumOperands()) {
+  : TerminatorInst(Type::VoidTy, Instruction::Switch,
+                   new Use[SI.getNumOperands()], SI.getNumOperands()) {
   Use *OL = OperandList, *InOL = SI.OperandList;
   for (unsigned i = 0, E = SI.getNumOperands(); i != E; i+=2) {
     OL[i].init(InOL[i], this);

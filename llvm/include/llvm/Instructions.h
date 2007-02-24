@@ -773,15 +773,15 @@ class SelectInst : public Instruction {
 public:
   SelectInst(Value *C, Value *S1, Value *S2, const std::string &Name = "",
              Instruction *InsertBefore = 0)
-    : Instruction(S1->getType(), Instruction::Select, Ops, 3,
-                  Name, InsertBefore) {
+    : Instruction(S1->getType(), Instruction::Select, Ops, 3, InsertBefore) {
     init(C, S1, S2);
+    setName(Name);
   }
   SelectInst(Value *C, Value *S1, Value *S2, const std::string &Name,
              BasicBlock *InsertAtEnd)
-    : Instruction(S1->getType(), Instruction::Select, Ops, 3,
-                  Name, InsertAtEnd) {
+    : Instruction(S1->getType(), Instruction::Select, Ops, 3, InsertAtEnd) {
     init(C, S1, S2);
+    setName(Name);
   }
 
   Value *getCondition() const { return Ops[0]; }
@@ -828,12 +828,12 @@ class VAArgInst : public UnaryInstruction {
 public:
   VAArgInst(Value *List, const Type *Ty, const std::string &Name = "",
              Instruction *InsertBefore = 0)
-    : UnaryInstruction(Ty, VAArg, List, 0, InsertBefore) {
+    : UnaryInstruction(Ty, VAArg, List, InsertBefore) {
     setName(Name);
   }
   VAArgInst(Value *List, const Type *Ty, const std::string &Name,
             BasicBlock *InsertAtEnd)
-    : UnaryInstruction(Ty, VAArg, List, 0, InsertAtEnd) {
+    : UnaryInstruction(Ty, VAArg, List, InsertAtEnd) {
     setName(Name);
   }
 
@@ -1022,13 +1022,15 @@ class PHINode : public Instruction {
 public:
   explicit PHINode(const Type *Ty, const std::string &Name = "",
                    Instruction *InsertBefore = 0)
-    : Instruction(Ty, Instruction::PHI, 0, 0, Name, InsertBefore),
+    : Instruction(Ty, Instruction::PHI, 0, 0, InsertBefore),
       ReservedSpace(0) {
+    setName(Name);
   }
 
   PHINode(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
-    : Instruction(Ty, Instruction::PHI, 0, 0, Name, InsertAtEnd),
+    : Instruction(Ty, Instruction::PHI, 0, 0, InsertAtEnd),
       ReservedSpace(0) {
+    setName(Name);
   }
 
   ~PHINode();
@@ -1143,13 +1145,8 @@ public:
 /// does not continue in this function any longer.
 ///
 class ReturnInst : public TerminatorInst {
-  Use RetVal;  // Possibly null retval.
-  ReturnInst(const ReturnInst &RI) : TerminatorInst(Instruction::Ret, &RetVal,
-                                                    RI.getNumOperands()) {
-    if (RI.getNumOperands())
-      RetVal.init(RI.RetVal, this);
-  }
-
+  Use RetVal;  // Return Value: null if 'void'.
+  ReturnInst(const ReturnInst &RI);
   void init(Value *RetVal);
 
 public:
@@ -1164,17 +1161,9 @@ public:
   //
   // NOTE: If the Value* passed is of type void then the constructor behaves as
   // if it was passed NULL.
-  explicit ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Ret, &RetVal, 0, InsertBefore) {
-    init(retVal);
-  }
-  ReturnInst(Value *retVal, BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Ret, &RetVal, 0, InsertAtEnd) {
-    init(retVal);
-  }
-  explicit ReturnInst(BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Ret, &RetVal, 0, InsertAtEnd) {
-  }
+  explicit ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0);
+  ReturnInst(Value *retVal, BasicBlock *InsertAtEnd);
+  explicit ReturnInst(BasicBlock *InsertAtEnd);
 
   virtual ReturnInst *clone() const;
 
@@ -1228,39 +1217,12 @@ public:
   // BranchInst(BB* T, BB *F, Value *C, Inst *I) - 'br C, T, F', insert before I
   // BranchInst(BB* B, BB *I)                    - 'br B'        insert at end
   // BranchInst(BB* T, BB *F, Value *C, BB *I)   - 'br C, T, F', insert at end
-  explicit BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Br, Ops, 1, InsertBefore) {
-    assert(IfTrue != 0 && "Branch destination may not be null!");
-    Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
-  }
+  explicit BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore = 0);
   BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
-             Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Br, Ops, 3, InsertBefore) {
-    Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
-    Ops[1].init(reinterpret_cast<Value*>(IfFalse), this);
-    Ops[2].init(Cond, this);
-#ifndef NDEBUG
-    AssertOK();
-#endif
-  }
-
-  BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Br, Ops, 1, InsertAtEnd) {
-    assert(IfTrue != 0 && "Branch destination may not be null!");
-    Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
-  }
-
+             Instruction *InsertBefore = 0);
+  BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd);
   BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
-             BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Br, Ops, 3, InsertAtEnd) {
-    Ops[0].init(reinterpret_cast<Value*>(IfTrue), this);
-    Ops[1].init(reinterpret_cast<Value*>(IfFalse), this);
-    Ops[2].init(Cond, this);
-#ifndef NDEBUG
-    AssertOK();
-#endif
-  }
-
+             BasicBlock *InsertAtEnd);
 
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
@@ -1348,20 +1310,14 @@ public:
   /// be specified here to make memory allocation more efficient.  This
   /// constructor can also autoinsert before another instruction.
   SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
-             Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Switch, 0, 0, InsertBefore) {
-    init(Value, Default, NumCases);
-  }
-
+             Instruction *InsertBefore = 0);
+  
   /// SwitchInst ctor - Create a new switch instruction, specifying a value to
   /// switch on and a default destination.  The number of additional cases can
   /// be specified here to make memory allocation more efficient.  This
   /// constructor also autoinserts at the end of the specified BasicBlock.
   SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
-             BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Switch, 0, 0, InsertAtEnd) {
-    init(Value, Default, NumCases);
-  }
+             BasicBlock *InsertAtEnd);
   ~SwitchInst();
 
 
@@ -1554,12 +1510,8 @@ private:
 ///
 class UnwindInst : public TerminatorInst {
 public:
-  explicit UnwindInst(Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Unwind, 0, 0, InsertBefore) {
-  }
-  explicit UnwindInst(BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Unwind, 0, 0, InsertAtEnd) {
-  }
+  explicit UnwindInst(Instruction *InsertBefore = 0);
+  explicit UnwindInst(BasicBlock *InsertAtEnd);
 
   virtual UnwindInst *clone() const;
 
@@ -1590,12 +1542,8 @@ private:
 ///
 class UnreachableInst : public TerminatorInst {
 public:
-  explicit UnreachableInst(Instruction *InsertBefore = 0)
-    : TerminatorInst(Instruction::Unreachable, 0, 0, InsertBefore) {
-  }
-  explicit UnreachableInst(BasicBlock *InsertAtEnd)
-    : TerminatorInst(Instruction::Unreachable, 0, 0, InsertAtEnd) {
-  }
+  explicit UnreachableInst(Instruction *InsertBefore = 0);
+  explicit UnreachableInst(BasicBlock *InsertAtEnd);
 
   virtual UnreachableInst *clone() const;
 

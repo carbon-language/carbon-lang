@@ -41,13 +41,9 @@ class Instruction : public User {
   void setParent(BasicBlock *P);
 protected:
   Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
-              const std::string &Name, Instruction *InsertBefore = 0);
+              Instruction *InsertBefore = 0);
   Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
-              const std::string &Name, BasicBlock *InsertAtEnd);
-  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
-              const char *Name = 0, Instruction *InsertBefore = 0);
-  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
-              const char *Name, BasicBlock *InsertAtEnd);
+              BasicBlock *InsertAtEnd);
 public:
   // Out of line virtual method, so the vtable, etc has a home.
   ~Instruction();

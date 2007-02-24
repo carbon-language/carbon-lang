@@ -29,19 +29,14 @@ namespace llvm {
 ///
 class TerminatorInst : public Instruction {
 protected:
-  TerminatorInst(Instruction::TermOps iType, Use *Ops, unsigned NumOps,
-                 Instruction *InsertBefore = 0);
   TerminatorInst(const Type *Ty, Instruction::TermOps iType,
-                  Use *Ops, unsigned NumOps,
-                 const std::string &Name = "", Instruction *InsertBefore = 0)
-    : Instruction(Ty, iType, Ops, NumOps, Name, InsertBefore) {}
+                 Use *Ops, unsigned NumOps,
+                 Instruction *InsertBefore = 0)
+    : Instruction(Ty, iType, Ops, NumOps, InsertBefore) {}
 
-  TerminatorInst(Instruction::TermOps iType, Use *Ops, unsigned NumOps,
-                 BasicBlock *InsertAtEnd);
   TerminatorInst(const Type *Ty, Instruction::TermOps iType,
-                  Use *Ops, unsigned NumOps,
-                 const std::string &Name, BasicBlock *InsertAtEnd)
-    : Instruction(Ty, iType, Ops, NumOps, Name, InsertAtEnd) {}
+                 Use *Ops, unsigned NumOps, BasicBlock *InsertAtEnd)
+    : Instruction(Ty, iType, Ops, NumOps, InsertAtEnd) {}
 
   // Out of line virtual method, so the vtable, etc has a home.
   ~TerminatorInst();
@@ -90,13 +85,11 @@ public:
 class UnaryInstruction : public Instruction {
   Use Op;
 protected:
-  UnaryInstruction(const Type *Ty, unsigned iType, Value *V,
-                   const char *Name = 0, Instruction *IB = 0)
-    : Instruction(Ty, iType, &Op, 1, Name, IB), Op(V, this) {
+  UnaryInstruction(const Type *Ty, unsigned iType, Value *V, Instruction *IB =0)
+    : Instruction(Ty, iType, &Op, 1, IB), Op(V, this) {
   }
-  UnaryInstruction(const Type *Ty, unsigned iType, Value *V,
-                   const char *Name, BasicBlock *IAE)
-    : Instruction(Ty, iType, &Op, 1, Name, IAE), Op(V, this) {
+  UnaryInstruction(const Type *Ty, unsigned iType, Value *V, BasicBlock *IAE)
+    : Instruction(Ty, iType, &Op, 1, IAE), Op(V, this) {
   }
 public:
   // Out of line virtual method, so the vtable, etc has a home.
@@ -123,20 +116,9 @@ class BinaryOperator : public Instruction {
 protected:
   void init(BinaryOps iType);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
-                 const std::string &Name, Instruction *InsertBefore)
-    : Instruction(Ty, iType, Ops, 2, Name, InsertBefore) {
-      Ops[0].init(S1, this);
-      Ops[1].init(S2, this);
-    init(iType);
-  }
+                 const std::string &Name, Instruction *InsertBefore);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
-                 const std::string &Name, BasicBlock *InsertAtEnd)
-    : Instruction(Ty, iType, Ops, 2, Name, InsertAtEnd) {
-    Ops[0].init(S1, this);
-    Ops[1].init(S2, this);
-    init(iType);
-  }
-
+                 const std::string &Name, BasicBlock *InsertAtEnd);
 public:
 
   /// Transparently provide more efficient getOperand methods.
@@ -264,13 +246,13 @@ protected:
   /// @brief Constructor with insert-before-instruction semantics for subclasses
   CastInst(const Type *Ty, unsigned iType, Value *S, 
            const std::string &Name = "", Instruction *InsertBefore = 0)
-    : UnaryInstruction(Ty, iType, S, 0, InsertBefore) {
+    : UnaryInstruction(Ty, iType, S, InsertBefore) {
     setName(Name);
   }
   /// @brief Constructor with insert-at-end-of-block semantics for subclasses
   CastInst(const Type *Ty, unsigned iType, Value *S, 
            const std::string &Name, BasicBlock *InsertAtEnd)
-    : UnaryInstruction(Ty, iType, S, 0, InsertAtEnd) {
+    : UnaryInstruction(Ty, iType, S, InsertAtEnd) {
     setName(Name);
   }
 public:
