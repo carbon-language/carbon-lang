@@ -81,7 +81,7 @@ information:</p>
 
 <div class="doc_text">
 
-<p>More often than not, bugs in the compiler cause it to crash - often due to an
+<p>More often than not, bugs in the compiler cause it to crash&mdash;often due to an
 assertion failure of some sort.  If you are running <tt><b>opt</b></tt> 
 directly, and something crashes, jump to the section on
 <a href="#passes">bugs in LLVM passes</a>.  Otherwise, the most important
@@ -126,12 +126,16 @@ bunch of stuff, and should end with telling you that one of
 <tt>llvm-gcc</tt> command that resulted in the crash, but add the
 <tt>-save-temps</tt> option.  The compiler will crash again, but it will leave
 behind a <tt><i>foo</i>.i</tt> file (containing preprocessed C source code) and
-possibly <tt><i>foo</i>.s</tt> (containing LLVM assembly code), for each
+possibly <tt><i>foo</i>.s</tt> (containing LLVM assembly code) for each
 compiled <tt><i>foo</i>.c</tt> file. Send us the <tt><i>foo</i>.i</tt> file,
-along with a brief description of the error it caused. A tool that might help
-you reduce a front-end testcase to a more manageable size is
-<a href="http://delta.tigris.org/">delta</a>.
-</p>
+along with a brief description of the error it caused.</p>
+
+<p>The <a href="http://delta.tigris.org/">delta</a> tool helps to reduce the
+preprocessed file down to the smallest amount of code that still replicates the
+problem. You're encouraged to use delta to reduce the code to make the
+developers' lives easier. <a
+href="http://gcc.gnu.org/wiki/A_guide_to_testcase_reduction">This website</a>
+has instructions on the best way to use delta.</p>
 
 </div>
 
