@@ -1134,12 +1134,19 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     // The value d is expressed by the "shift" value above since we avoided
     // multiplication by d by using a shift left. So, all we have to do is
     // shift right here. In order to mak
-    uint32_t carry = 0;
-    DEBUG(cerr << "KnuthDiv: remainder:");
-    for (int i = n-1; i >= 0; i--) {
-      r[i] = (u[i] >> shift) | carry;
-      carry = u[i] << shift;
-      DEBUG(cerr << " " << r[i]);
+    if (shift) {
+      uint32_t carry = 0;
+      DEBUG(cerr << "KnuthDiv: remainder:");
+      for (int i = n-1; i >= 0; i--) {
+        r[i] = (u[i] >> shift) | carry;
+        carry = u[i] << (32 - shift);
+        DEBUG(cerr << " " << r[i]);
+      }
+    } else {
+      for (int i = n-1; i >= 0; i--) {
+        r[i] = u[i];
+        DEBUG(cerr << " " << r[i]);
+      }
     }
     DEBUG(cerr << '\n');
   }
