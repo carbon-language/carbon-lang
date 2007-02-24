@@ -107,8 +107,8 @@ public:
   }
 
   /// This method is used internally to clear the to "N" bits that are not used
-  /// by the APInt. This is needed after a word is assigned a value to ensure 
-  /// that those bits are zero'd out.
+  /// by the APInt. This is needed after the most significant word is assigned 
+  /// a value to ensure that those bits are zero'd out.
   /// @brief Clear high order bits
   inline void clearUnusedBits() {
     if (isSingleWord())
@@ -119,14 +119,22 @@ public:
   }
 
   /// @returns the corresponding word for the specified bit position.
-  /// This is a constant version.
+  /// @brief Get the word corresponding to a bit position
   inline uint64_t getWord(uint32_t bitPosition) const { 
     return isSingleWord() ? VAL : pVal[whichWord(bitPosition)]; 
   }
 
-  /// @brief Converts a char array into an integer.
+  /// This is used by the constructors that take string arguments.
+  /// @brief Converts a char array into an APInt
   void fromString(uint32_t numBits, const char *StrStart, uint32_t slen, 
                   uint8_t radix);
+
+  /// This is used by the toString method to divide by the radix. It simply
+  /// provides a more convenient form of divide for internal use.
+  /// @brief An internal division function for dividing APInts.
+  static void divide(const APInt LHS, uint32_t lhsWords, 
+                     const APInt &RHS, uint32_t rhsWords,
+                     APInt *Quotient, APInt *Remainder);
 
 #ifndef NDEBUG
   /// @brief debug method
@@ -134,16 +142,12 @@ public:
 #endif
 
 public:
-  /// @brief An internal division function for dividing APInts.
-  static void divide(const APInt LHS, uint32_t lhsWords, 
-                     const APInt &RHS, uint32_t rhsWords,
-                     APInt *Quotient, APInt *Remainder);
-
-  /// @brief Create a new APInt of numBits bit-width, and initialized as val.
+  /// @brief Create a new APInt of numBits width, initialized as val.
   APInt(uint32_t numBits, uint64_t val);
 
-  /// @brief Create a new APInt of numBits bit-width, and initialized as 
-  /// bigVal[].
+  /// Note that numWords can be smaller or larger than the corresponding bit
+  /// width but any extraneous bits will be dropped.
+  /// @brief Create a new APInt of numBits width, initialized as bigVal[].
   APInt(uint32_t numBits, uint32_t numWords, uint64_t bigVal[]);
 
   /// @brief Create a new APInt by translating the string represented 
