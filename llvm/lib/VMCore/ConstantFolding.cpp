@@ -574,7 +574,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         if (CI2->isAllOnesValue() &&
             (((CI1->getType()->getPrimitiveSizeInBits() == 64) && 
               (CI1->getSExtValue() == INT64_MIN)) ||
-             (CI1->getSExtValue() == -CI1->getSExtValue())))
+             (CI1->getSExtValue() == -CI1->getSExtValue() &&
+              CI1->getSExtValue())))
           return 0;                              // MIN_INT / -1 -> overflow
         return ConstantInt::get(C1->getType(), 
                                 CI1->getSExtValue() / CI2->getSExtValue());
