@@ -889,7 +889,7 @@ void APInt::sext(uint32_t width) {
     return;
   }
 
-  uint64_t mask = ~0ULL << wordBits;
+  uint64_t mask = wordBits == 0 ? 0 : ~0ULL << wordBits;
   uint64_t *newVal = getMemory(wordsAfter);
   if (wordsBefore == 1)
     newVal[0] = VAL | mask;
