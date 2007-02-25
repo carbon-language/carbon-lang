@@ -19,9 +19,8 @@
   <li><a href="#crashers">Crashing Bugs</a>
     <ul>
     <li><a href="#front-end">Front-end bugs</a>
-    <li><a href="#gccas">GCCAS bugs</a>
-    <li><a href="#gccld">GCCLD bugs</a>
-    <li><a href="#passes">Bugs in LLVM passes</a>
+    <li><a href="#ct_optimizer">Compile-time optimization bugs</a>
+    <li><a href="#ct_codegen">Code generator bugs</a>
     </ul></li>
   <li><a href="#miscompilations">Miscompilations</a></li>
   <li><a href="#codegen">Incorrect code generation (JIT and LLC)</a></li>
@@ -51,15 +50,18 @@ getting it fixed quickly.</p>
 
 <p>Basically you have to do two things at a minimum.  First, decide whether the
 bug <a href="#crashers">crashes the compiler</a> (or an LLVM pass), or if the
-compiler is <a href="#miscompilations">miscompiling</a> the program.  Based on
+compiler is <a href="#miscompilations">miscompiling</a> the program (i.e., the
+compiler successfully produces an executable, but it doesn't run right).  Based
+on
 what type of bug it is, follow the instructions in the linked section to narrow
 down the bug so that the person who fixes it will be able to find the problem
 more easily.</p>
 
 <p>Once you have a reduced test-case, go to <a
 href="http://llvm.org/bugs/enter_bug.cgi">the LLVM Bug Tracking
-System</a>, select the category in which the bug falls, and fill out the form
-with the necessary details.  The bug description should contain the following
+System</a> and fill out the form with the necessary details (note that you don't
+need to pick a catagory, just use the "new-bugs" catagory if you're not sure).
+The bug description should contain the following
 information:</p>
 
 <ul>
@@ -81,35 +83,29 @@ information:</p>
 
 <div class="doc_text">
 
-<p>More often than not, bugs in the compiler cause it to crash&mdash;often due to an
-assertion failure of some sort.  If you are running <tt><b>opt</b></tt> 
-directly, and something crashes, jump to the section on
-<a href="#passes">bugs in LLVM passes</a>.  Otherwise, the most important
-piece of the puzzle is to figure out if it is the GCC-based front-end that is
-buggy or if it's one of the LLVM tools that has problems.</p>
+<p>More often than not, bugs in the compiler cause it to crash&mdash;often due
+to an assertion failure of some sort. The most important
+piece of the puzzle is to figure out if it is crashing in the GCC front-end
+or if it is one of the LLVM libraries (e.g. the optimizer or code generator)
+that has problems.</p>
 
-<p>To figure out which program is crashing (the front-end,
-<tt><b>gccas</b></tt>, or <tt><b>gccld</b></tt>), run the
+<p>To figure out which component is crashing (the front-end,
+optimizer or code generator), run the
 <tt><b>llvm-gcc</b></tt> command line as you were when the crash occurred, but
-add a <tt>-v</tt> option to the command line.  The compiler will print out a
-bunch of stuff, and should end with telling you that one of
-<tt><b>cc1</b>/<b>cc1plus</b></tt>, <tt><b>gccas</b></tt>, or
-<tt><b>gccld</b></tt> crashed.</p>
+with the following extra command line options:</p>
 
 <ul>
+  <li><tt><b>-O0 -emit-llvm</b></tt>: If <tt>llvm-gcc</tt> still crashes when
+  passed these options (which disable the optimizer and code generator), then
+  the crash is in the front-end.  Jump ahead to the section on <a
+  href="#front-end">front-end bugs</a>.</li>
 
-  <li>If <tt><b>cc1</b></tt> or <tt><b>cc1plus</b></tt> crashed, you found a
-  problem with the front-end.
-  Jump ahead to the section on <a href="#front-end">front-end bugs</a>.</li>
+  <li><tt><b>-emit-llvm</b></tt>: If <tt>llvm-gcc</tt> crashes with this option
+  (which disables the code generator), you found an optimizer bug.  Jump ahead
+  to <a href="#ct_optimizer"> compile-time optimization bugs</a>.</li>
 
-  <li>If <tt><b>gccas</b></tt> crashed, you found a bug in <a href="#gccas">one
-  of the passes in <tt><b>gccas</b></tt></a>.</li>
-
-  <li>If <tt><b>gccld</b></tt> crashed, you found a bug in <a href="#gccld">one
-  of the passes in <tt><b>gccld</b></tt></a>.</li>
-
-  <li>Otherwise, something really weird happened. Email the list with what you
-  have at this point.</li>
+  <li>Otherwise, you have a code generator crash.  Jump ahead to <a
+  href="#ct_codegen">code generator bugs</a>.</li>
 
 </ul>
 
@@ -126,9 +122,10 @@ bunch of stuff, and should end with telling you that one of
 <tt>llvm-gcc</tt> command that resulted in the crash, but add the
 <tt>-save-temps</tt> option.  The compiler will crash again, but it will leave
 behind a <tt><i>foo</i>.i</tt> file (containing preprocessed C source code) and
-possibly <tt><i>foo</i>.s</tt> (containing LLVM assembly code) for each
+possibly <tt><i>foo</i>.s</tt> for each
 compiled <tt><i>foo</i>.c</tt> file. Send us the <tt><i>foo</i>.i</tt> file,
-along with a brief description of the error it caused.</p>
+along with the options you passed to llvm-gcc, and a brief description of the
+error it caused.</p>
 
 <p>The <a href="http://delta.tigris.org/">delta</a> tool helps to reduce the
 preprocessed file down to the smallest amount of code that still replicates the
@@ -141,81 +138,72 @@ has instructions on the best way to use delta.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="gccas">GCCAS bugs</a>
+  <a name="ct_optimizer">Compile-time optimization bugs</a>
 </div>
 
 <div class="doc_text">
 
-<p>If you find that a bug crashes in the <tt><b>gccas</b></tt> stage of
-compilation, compile your test-case to a <tt>.s</tt> file with the
-<tt>-save-temps</tt> option to <tt><b>llvm-gcc</b></tt>. Then run:</p>
+<p>If you find that a bug crashes in the optimizer, compile your test-case to a
+<tt>.bc</tt> file by passing "<tt><b>-emit-llvm -O0 -c -o foo.bc</b></tt>".
+Then run:</p>
 
 <div class="doc_code">
-<p><tt><b>gccas</b> -debug-pass=Arguments &lt; /dev/null -o - &gt; /dev/null</tt></p>
+<p><tt><b>opt</b> -std-compile-opts -debug-pass=Arguments foo.bc
+    -disable-output</tt></p>
 </div>
 
-<p>... which will print a list of arguments, indicating the list of passes that
-<tt><b>gccas</b></tt> runs.  Once you have the input file and the list of
-passes, go to the section on <a href="#passes">debugging bugs in LLVM
-passes</a>.</p>
+<p>This command should do two things: it should print out a list of passes, and
+then it should crash in the same was as llvm-gcc.  If it doesn't crash, please
+follow the instructions for a <a href="#front-end">front-end bug</a>.</p>
+
+<p>If this does crash, then you should be able to debug this with the following
+bugpoint command:</p>
+
+<div class="doc_code">
+<p><tt><b>bugpoint</b> foo.bc &lt;list of passes printed by 
+<b>opt</b>&gt;</tt></p>
+</div>
+
+<p>Please run this, then file a bug with the instructions and reduced .bc files
+that bugpoint emits.  If something goes wrong with bugpoint, please submit the
+"foo.bc" file and the list of passes printed by <b>opt</b>.</p>
 
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="gccld">GCCLD bugs</a>
+  <a name="ct_codegen">Code generator bugs</a>
 </div>
 
 <div class="doc_text">
 
-<p>If you find that a bug crashes in the <tt><b>gccld</b></tt> stage of
-compilation, gather all of the <tt>.o</tt> bytecode files and libraries that are
-being linked together (the "<tt><b>llvm-gcc</b> -v</tt>" output should include
-the full list of objects linked).  Then run:</p>
+<p>If you find a bug that crashes llvm-gcc in the code generator, compile your
+source file to a .bc file by passing "<tt><b>-emit-llvm -c -o foo.bc</b></tt>"
+to llvm-gcc (in addition to the options you already pass).  Once your have
+foo.bc, one of the following commands should fail:</p>
 
-<div class="doc_code">
-<p><tt><b>llvm-as</b> &lt; /dev/null &gt; null.bc<br>
-<b>gccld</b> -debug-pass=Arguments null.bc</tt>
-</p>
-</div>
+<ol>
+<li><tt><b>llc</b> foo.bc -f</tt></li>
+<li><tt><b>llc</b> foo.bc -f -relocation-model=pic</tt></li>
+<li><tt><b>llc</b> foo.bc -f -relocation-model=static</tt></li>
+</ol>
 
-<p>... which will print a list of arguments, indicating the list of passes that
-<tt><b>gccld</b></tt> runs.  Once you have the input files and the list of
-passes, go to the section on <a href="#passes">debugging bugs in LLVM
-passes</a>.</p>
+<p>If none of these crash, please follow the instructions for a
+<a href="#front-end">front-end bug</a>.  If one of these do crash, you should
+be able to reduce this with one of the following bugpoint command lines (use
+the one corresponding to the command above that failed):</p>
 
-</div>
+<ol>
+<li><tt><b>bugpoint</b> -run-llc foo.bc --tool-args</tt></li>
+<li><tt><b>bugpoint</b> -run-llc foo.bc --tool-args
+           -relocation-model=pic</tt></li>
+<li><tt><b>bugpoint</b> -run-llc foo.bc --tool-args
+           -relocation-model=static</tt></li>
+</ol>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="passes">Bugs in LLVM passes</a>
-</div>
-
-<div class="doc_text">
-
-<p>At this point, you should have some number of LLVM assembly files or bytecode
-files and a list of passes which crash when run on the specified input.  In
-order to reduce the list of passes (which is probably large) and the input to
-something tractable, use the <tt><b>bugpoint</b></tt> tool as follows:</p>
-
-<div class="doc_code">
-<p><tt><b>bugpoint</b> &lt;input files&gt; &lt;list of passes&gt;</tt></p>
-</div>
-
-<p><tt><b>bugpoint</b></tt> will print a bunch of output as it reduces the
-test-case, but it should eventually print something like this:</p>
-
-<div class="doc_code">
-<p><tt>
-...<br>
-Emitted bytecode to 'bugpoint-reduced-simplified.bc'<br>
-<br>
-*** You can reproduce the problem with: opt bugpoint-reduced-simplified.bc -licm<br>
-</tt></p>
-</div>
-
-<p>Once you complete this, please send the LLVM bytecode file and the command
-line to reproduce the problem to the llvmbugs mailing list.</p>
+<p>Please run this, then file a bug with the instructions and reduced .bc file
+that bugpoint emits.  If something goes wrong with bugpoint, please submit the
+"foo.bc" file and the option that llc crashes with.</p>
 
 </div>
 
@@ -227,18 +215,14 @@ line to reproduce the problem to the llvmbugs mailing list.</p>
 
 <div class="doc_text">
 
-<p>A miscompilation occurs when a pass does not correctly transform a program,
-thus producing errors that are only noticed during execution. This is different
-from producing invalid LLVM code (i.e., code not in SSA form, using values
-before defining them, etc.) which the verifier will check for after a pass
-finishes its run.</p>
-
-<p>If it looks like the LLVM compiler is miscompiling a program, the very first
-thing to check is to make sure it is not using undefined behavior.  In
-particular, check to see if the program <a
-href="http://valgrind.kde.org/">valgrind</a>s clean, passes purify, or some
-other memory checker tool.  Many of the "LLVM bugs" that we have chased down
-ended up being bugs in the program being compiled, not LLVM.</p>
+<p>If llvm-gcc successfully produces an executable, but that executable doesn't
+run right, this is either a bug in the code or a bug in the
+compiler.  The first thing to check is to make sure it is not using undefined
+behavior (e.g. reading a variable before it is defined).  In particular, check
+to see if the program <a href="http://valgrind.org/">valgrind</a>s clean,
+passes purify, or some other memory checker tool.  Many of the "LLVM bugs" that
+we have chased down ended up being bugs in the program being compiled, not
+ LLVM.</p>
 
 <p>Once you determine that the program itself is not buggy, you should choose 
 which code generator you wish to compile the program with (e.g. C backend, the 
