@@ -1423,7 +1423,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
       break;
     case MVT::f32:
     case MVT::f64:
-      if (isVarArg || isPPC64) {
+      if (isVarArg) {
         // Float varargs need to be promoted to double.
         if (Arg.getValueType() == MVT::f32)
           Arg = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Arg);
