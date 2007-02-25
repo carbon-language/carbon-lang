@@ -894,52 +894,59 @@ void APInt::zext(uint32_t width) {
 /// Arithmetic right-shift this APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
 APInt APInt::ashr(uint32_t shiftAmt) const {
-  APInt API(*this);
-  if (API.isSingleWord())
-    API.VAL = 
-      (((int64_t(API.VAL) << (APINT_BITS_PER_WORD - API.BitWidth)) >> 
-          (APINT_BITS_PER_WORD - API.BitWidth)) >> shiftAmt) & 
-      (~uint64_t(0UL) >> (APINT_BITS_PER_WORD - API.BitWidth));
-  else {
-    if (shiftAmt >= API.BitWidth) {
-      memset(API.pVal, API[API.BitWidth-1] ? 1 : 0, 
-             (API.getNumWords()-1) * APINT_WORD_SIZE);
-      API.pVal[API.getNumWords() - 1] = 
-        ~uint64_t(0UL) >> 
-          (APINT_BITS_PER_WORD - API.BitWidth % APINT_BITS_PER_WORD);
-    } else {
-      uint32_t i = 0;
-      for (; i < API.BitWidth - shiftAmt; ++i)
-        if (API[i+shiftAmt]) 
-          API.set(i);
-        else
-          API.clear(i);
-      for (; i < API.BitWidth; ++i)
-        if (API[API.BitWidth-1]) 
-          API.set(i);
-        else API.clear(i);
-    }
+  if (isSingleWord()) {
+    if (shiftAmt == BitWidth)
+      return APInt(BitWidth, -1ull);
+    else
+      return APInt(BitWidth, 
+        (((int64_t(VAL) << (APINT_BITS_PER_WORD - BitWidth)) >> 
+            (APINT_BITS_PER_WORD - BitWidth)) >> shiftAmt) & 
+        (~uint64_t(0UL) >> (APINT_BITS_PER_WORD - BitWidth)));
   }
-  return API;
+
+  APInt Result(*this);
+  if (shiftAmt >= BitWidth) {
+    memset(Result.pVal, Result[BitWidth-1] ? 1 : 0, 
+           (getNumWords()-1) * APINT_WORD_SIZE);
+    Result.pVal[getNumWords() - 1] = ~uint64_t(0UL) >> 
+        (APINT_BITS_PER_WORD - BitWidth % APINT_BITS_PER_WORD);
+  } else {
+    uint32_t i = 0;
+    for (; i < BitWidth - shiftAmt; ++i)
+      if (Result[i+shiftAmt]) 
+        Result.set(i);
+      else
+        Result.clear(i);
+    for (; i < BitWidth; ++i)
+      if (Result[BitWidth-1]) 
+        Result.set(i);
+      else 
+        Result.clear(i);
+  }
+  return Result;
 }
 
 /// Logical right-shift this APInt by shiftAmt.
 /// @brief Logical right-shift function.
 APInt APInt::lshr(uint32_t shiftAmt) const {
-  APInt API(*this);
-  if (API.isSingleWord())
-    API.VAL >>= shiftAmt;
-  else {
-    if (shiftAmt >= API.BitWidth)
-      memset(API.pVal, 0, API.getNumWords() * APINT_WORD_SIZE);
-    uint32_t i = 0;
-    for (i = 0; i < API.BitWidth - shiftAmt; ++i)
-      if (API[i+shiftAmt]) API.set(i);
-      else API.clear(i);
-    for (; i < API.BitWidth; ++i)
-      API.clear(i);
-  }
-  return API;
+  if (isSingleWord())
+    if (shiftAmt == BitWidth)
+      return APInt(BitWidth, 0);
+    else 
+      return APInt(BitWidth, this->VAL >> shiftAmt);
+
+  APInt Result(*this);
+  if (shiftAmt >= Result.BitWidth)
+    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
+  uint32_t i = 0;
+  for (i = 0; i < Result.BitWidth - shiftAmt; ++i)
+    if (Result[i+shiftAmt]) 
+      Result.set(i);
+    else 
+      Result.clear(i);
+  for (; i < Result.BitWidth; ++i)
+    Result.clear(i);
+  return Result;
 }
 
 /// Left-shift this APInt by shiftAmt.
@@ -1197,8 +1204,29 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
   uint64_t mask = ~0ull >> (sizeof(uint32_t)*8);
   uint32_t n = rhsWords * 2;
   uint32_t m = (lhsWords * 2) - n;
-  // FIXME: allocate space on stack if m and n are sufficiently small.
-  uint32_t *U = new uint32_t[m + n + 1];
+
+  // Allocate space for the temporary values we need either on the stack, if
+  // it will fit, or on the heap if it won't.
+  uint32_t SPACE[128];
+  uint32_t *U = 0;
+  uint32_t *V = 0;
+  uint32_t *Q = 0;
+  uint32_t *R = 0;
+  if ((Remainder?4:3)*n+2*m+1 <= 128) {
+    U = &SPACE[0];
+    V = &SPACE[m+n+1];
+    Q = &SPACE[(m+n+1) + n];
+    if (Remainder)
+      R = &SPACE[(m+n+1) + n + (m+n)];
+  } else {
+    U = new uint32_t[m + n + 1];
+    V = new uint32_t[n];
+    Q = new uint32_t[m+n];
+    if (Remainder)
+      R = new uint32_t[n];
+  }
+
+  // Initialize the dividend
   memset(U, 0, (m+n+1)*sizeof(uint32_t));
   for (unsigned i = 0; i < lhsWords; ++i) {
     uint64_t tmp = (LHS.getNumWords() == 1 ? LHS.VAL : LHS.pVal[i]);
@@ -1207,7 +1235,7 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
   }
   U[m+n] = 0; // this extra word is for "spill" in the Knuth algorithm.
 
-  uint32_t *V = new uint32_t[n];
+  // Initialize the divisor
   memset(V, 0, (n)*sizeof(uint32_t));
   for (unsigned i = 0; i < rhsWords; ++i) {
     uint64_t tmp = (RHS.getNumWords() == 1 ? RHS.VAL : RHS.pVal[i]);
@@ -1215,14 +1243,10 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
     V[i * 2 + 1] = tmp >> (sizeof(uint32_t)*8);
   }
 
-  // Set up the quotient and remainder
-  uint32_t *Q = new uint32_t[m+n];
+  // initialize the quotient and remainder
   memset(Q, 0, (m+n) * sizeof(uint32_t));
-  uint32_t *R = 0;
-  if (Remainder) {
-    R = new uint32_t[n];
+  if (Remainder)
     memset(R, 0, n * sizeof(uint32_t));
-  }
 
   // Now, adjust m and n for the Knuth division. n is the number of words in 
   // the divisor. m is the number of words by which the dividend exceeds the
@@ -1332,10 +1356,12 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
   }
 
   // Clean up the memory we allocated.
-  delete [] U;
-  delete [] V;
-  delete [] Q;
-  delete [] R;
+  if (U != &SPACE[0]) {
+    delete [] U;
+    delete [] V;
+    delete [] Q;
+    delete [] R;
+  }
 }
 
 /// Unsigned divide this APInt by APInt RHS.
