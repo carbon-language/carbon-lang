@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a class to represent arbitrary precision integral
-// constant values.
+// This file implements a class to represent arbitrary precision integer
+// constant values and provide a variety of arithmetic operations on them.
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,8 +26,8 @@
 
 using namespace llvm;
 
-// A utility function for allocating memory, checking for allocation failures,
-// and ensuring the contents are zeroed.
+/// A utility function for allocating memory, checking for allocation failures,
+/// and ensuring the contents are zeroed.
 inline static uint64_t* getClearedMemory(uint32_t numWords) {
   uint64_t * result = new uint64_t[numWords];
   assert(result && "APInt memory allocation fails!");
@@ -35,8 +35,8 @@ inline static uint64_t* getClearedMemory(uint32_t numWords) {
   return result;
 }
 
-// A utility function for allocating memory and checking for allocation failure.
-// The content is not zero'd
+/// A utility function for allocating memory and checking for allocation 
+/// failure.  The content is not zeroed.
 inline static uint64_t* getMemory(uint32_t numWords) {
   uint64_t * result = new uint64_t[numWords];
   assert(result && "APInt memory allocation fails!");
@@ -47,12 +47,13 @@ APInt::APInt(uint32_t numBits, uint64_t val)
   : BitWidth(numBits), VAL(0) {
   assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
   assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
-  if (isSingleWord()) 
-    VAL = val & (~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth));
+  if (isSingleWord())
+    VAL = val;
   else {
     pVal = getClearedMemory(getNumWords());
     pVal[0] = val;
   }
+  clearUnusedBits();
 }
 
 APInt::APInt(uint32_t numBits, uint32_t numWords, uint64_t bigVal[])
@@ -124,7 +125,7 @@ APInt& APInt::operator=(uint64_t RHS) {
 /// "digit" integer array,  x[]. x[] is modified to reflect the addition and
 /// 1 is returned if there is a carry out, otherwise 0 is returned.
 /// @returns the carry of the addition.
-static uint64_t add_1(uint64_t dest[], uint64_t x[], uint32_t len, uint64_t y) {
+static bool add_1(uint64_t dest[], uint64_t x[], uint32_t len, uint64_t y) {
   for (uint32_t i = 0; i < len; ++i) {
     dest[i] = y + x[i];
     if (dest[i] < y)
@@ -143,8 +144,7 @@ APInt& APInt::operator++() {
     ++VAL;
   else
     add_1(pVal, pVal, getNumWords(), 1);
-  clearUnusedBits();
-  return *this;
+  return clearUnusedBits();
 }
 
 /// sub_1 - This function subtracts a single "digit" (64-bit word), y, from 
@@ -152,8 +152,8 @@ APInt& APInt::operator++() {
 /// no further borrowing is neeeded or it runs out of "digits" in x.  The result
 /// is 1 if "borrowing" exhausted the digits in x, or 0 if x was not exhausted.
 /// In other words, if y > x then this function returns 1, otherwise 0.
-static uint64_t sub_1(uint64_t x[], uint32_t len, 
-                             uint64_t y) {
+/// @returns the borrow out of the subtraction
+static bool sub_1(uint64_t x[], uint32_t len, uint64_t y) {
   for (uint32_t i = 0; i < len; ++i) {
     uint64_t X = x[i];
     x[i] -= y;
@@ -164,7 +164,7 @@ static uint64_t sub_1(uint64_t x[], uint32_t len,
       break;  // Remaining digits are unchanged so exit early
     }
   }
-  return y;
+  return bool(y);
 }
 
 /// @brief Prefix decrement operator. Decrements the APInt by one.
@@ -173,12 +173,13 @@ APInt& APInt::operator--() {
     --VAL;
   else
     sub_1(pVal, getNumWords(), 1);
-  clearUnusedBits();
-  return *this;
+  return clearUnusedBits();
 }
 
-/// add - This function adds the integer array x[] by integer array
-/// y[] and returns the carry.
+/// add - This function adds the integer array x to the integer array Y and
+/// places the result in dest. 
+/// @returns the carry out from the addition
+/// @brief General addition of 64-bit integer arrays
 static bool add(uint64_t *dest, const uint64_t *x, const uint64_t *y, 
                 uint32_t len) {
   bool carry = false;
@@ -190,8 +191,9 @@ static bool add(uint64_t *dest, const uint64_t *x, const uint64_t *y,
   return carry;
 }
 
-/// @brief Addition assignment operator. Adds this APInt by the given APInt&
-/// RHS and assigns the result to this APInt.
+/// Adds the RHS APint to this APInt.
+/// @returns this, after addition of RHS.
+/// @brief Addition assignment operator. 
 APInt& APInt::operator+=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) 
@@ -199,12 +201,12 @@ APInt& APInt::operator+=(const APInt& RHS) {
   else {
     add(pVal, pVal, RHS.pVal, getNumWords());
   }
-  clearUnusedBits();
-  return *this;
+  return clearUnusedBits();
 }
 
-/// sub - This function subtracts the integer array x[] by
-/// integer array y[], and returns the borrow-out.
+/// Subtracts the integer array y from the integer array x 
+/// @returns returns the borrow out.
+/// @brief Generalized subtraction of 64-bit integer arrays.
 static bool sub(uint64_t *dest, const uint64_t *x, const uint64_t *y, 
                 uint32_t len) {
   bool borrow = false;
@@ -216,29 +218,33 @@ static bool sub(uint64_t *dest, const uint64_t *x, const uint64_t *y,
   return borrow;
 }
 
-/// @brief Subtraction assignment operator. Subtracts this APInt by the given
-/// APInt &RHS and assigns the result to this APInt.
+/// Subtracts the RHS APInt from this APInt
+/// @returns this, after subtraction
+/// @brief Subtraction assignment operator. 
 APInt& APInt::operator-=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) 
     VAL -= RHS.VAL;
   else
     sub(pVal, pVal, RHS.pVal, getNumWords());
-  clearUnusedBits();
-  return *this;
+  return clearUnusedBits();
 }
 
-/// mul_1 - This function performs the multiplication operation on a
-/// large integer (represented as an integer array) and a uint64_t integer.
-/// @returns the carry of the multiplication.
+/// Multiplies an integer array, x by a a uint64_t integer and places the result
+/// into dest. 
+/// @returns the carry out of the multiplication.
+/// @brief Multiply a multi-digit APInt by a single digit (64-bit) integer.
 static uint64_t mul_1(uint64_t dest[], uint64_t x[], uint32_t len, uint64_t y) {
   // Split y into high 32-bit part (hy)  and low 32-bit part (ly)
   uint64_t ly = y & 0xffffffffULL, hy = y >> 32;
-  uint64_t carry = 0, lx, hx;
+  uint64_t carry = 0;
+
+  // For each digit of x.
   for (uint32_t i = 0; i < len; ++i) {
-    lx = x[i] & 0xffffffffULL;
-    hx = x[i] >> 32;
-    // hasCarry - A flag to indicate if has carry.
+    // Split x into high and low words
+    uint64_t lx = x[i] & 0xffffffffULL;
+    uint64_t hx = x[i] >> 32;
+    // hasCarry - A flag to indicate if there is a carry to the next digit.
     // hasCarry == 0, no carry
     // hasCarry == 1, has carry
     // hasCarry == 2, no carry and the calculation result == 0.
@@ -256,13 +262,12 @@ static uint64_t mul_1(uint64_t dest[], uint64_t x[], uint32_t len, uint64_t y) {
     carry = (((!carry && hasCarry != 2) || hasCarry == 1) ? (1ULL << 32) : 0) + 
             (carry >> 32) + ((lx * hy) >> 32) + hx * hy;
   }
-
   return carry;
 }
 
-/// mul - This function multiplies integer array x[] by integer array y[] and
-/// stores the result into integer array dest[].
-/// Note the array dest[]'s size should no less than xlen + ylen.
+/// Multiplies integer array x by integer array y and stores the result into 
+/// the integer array dest. Note that dest's size must be >= xlen + ylen.
+/// @brief Generalized multiplicate of integer arrays.
 static void mul(uint64_t dest[], uint64_t x[], uint32_t xlen, uint64_t y[], 
                 uint32_t ylen) {
   dest[xlen] = mul_1(dest, x, xlen, y[0]);
@@ -293,8 +298,6 @@ static void mul(uint64_t dest[], uint64_t x[], uint32_t xlen, uint64_t y[],
   }
 }
 
-/// @brief Multiplication assignment operator. Multiplies this APInt by the 
-/// given APInt& RHS and assigns the result to this APInt.
 APInt& APInt::operator*=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
@@ -336,8 +339,6 @@ APInt& APInt::operator*=(const APInt& RHS) {
   return *this;
 }
 
-/// @brief Bitwise AND assignment operator. Performs bitwise AND operation on
-/// this APInt and the given APInt& RHS, assigns the result to this APInt.
 APInt& APInt::operator&=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
@@ -350,8 +351,6 @@ APInt& APInt::operator&=(const APInt& RHS) {
   return *this;
 }
 
-/// @brief Bitwise OR assignment operator. Performs bitwise OR operation on 
-/// this APInt and the given APInt& RHS, assigns the result to this APInt.
 APInt& APInt::operator|=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
@@ -364,8 +363,6 @@ APInt& APInt::operator|=(const APInt& RHS) {
   return *this;
 }
 
-/// @brief Bitwise XOR assignment operator. Performs bitwise XOR operation on
-/// this APInt and the given APInt& RHS, assigns the result to this APInt.
 APInt& APInt::operator^=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
@@ -376,56 +373,47 @@ APInt& APInt::operator^=(const APInt& RHS) {
   uint32_t numWords = getNumWords();
   for (uint32_t i = 0; i < numWords; ++i)
     pVal[i] ^= RHS.pVal[i];
-  this->clearUnusedBits();
-  return *this;
+  return clearUnusedBits();
 }
 
-/// @brief Bitwise AND operator. Performs bitwise AND operation on this APInt
-/// and the given APInt& RHS.
 APInt APInt::operator&(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord())
     return APInt(getBitWidth(), VAL & RHS.VAL);
 
-  APInt Result(*this);
   uint32_t numWords = getNumWords();
+  uint64_t* val = getMemory(numWords);
   for (uint32_t i = 0; i < numWords; ++i)
-    Result.pVal[i] &= RHS.pVal[i];
-  return Result;
+    val[i] = pVal[i] & RHS.pVal[i];
+  return APInt(val, getBitWidth());
 }
 
-/// @brief Bitwise OR operator. Performs bitwise OR operation on this APInt 
-/// and the given APInt& RHS.
 APInt APInt::operator|(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord())
     return APInt(getBitWidth(), VAL | RHS.VAL);
 
-  APInt Result(*this);
   uint32_t numWords = getNumWords();
+  uint64_t *val = getMemory(numWords);
   for (uint32_t i = 0; i < numWords; ++i)
-    Result.pVal[i] |= RHS.pVal[i];
-  return Result;
+    val[i] = pVal[i] | RHS.pVal[i];
+  return APInt(val, getBitWidth());
 }
 
-/// @brief Bitwise XOR operator. Performs bitwise XOR operation on this APInt
-/// and the given APInt& RHS.
 APInt APInt::operator^(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord()) {
-    APInt Result(BitWidth, VAL ^ RHS.VAL);
-    Result.clearUnusedBits();
-    return Result;
-  }
-  APInt Result(*this);
+  if (isSingleWord())
+    return APInt(BitWidth, VAL ^ RHS.VAL).clearUnusedBits();
+
   uint32_t numWords = getNumWords();
+  uint64_t *val = getMemory(numWords);
   for (uint32_t i = 0; i < numWords; ++i)
-    Result.pVal[i] ^= RHS.pVal[i];
-  return Result;
+    val[i] = pVal[i] ^ RHS.pVal[i];
+
+  // 0^0==1 so clear the high bits in case they got set.
+  return APInt(val, getBitWidth()).clearUnusedBits();
 }
 
-/// @brief Logical negation operator. Performs logical negation operation on
-/// this APInt.
 bool APInt::operator !() const {
   if (isSingleWord())
     return !VAL;
@@ -436,77 +424,61 @@ bool APInt::operator !() const {
   return true;
 }
 
-/// @brief Multiplication operator. Multiplies this APInt by the given APInt& 
-/// RHS.
 APInt APInt::operator*(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord()) {
-    APInt Result(BitWidth, VAL * RHS.VAL);
-    Result.clearUnusedBits();
-    return Result;
-  }
+  if (isSingleWord())
+    return APInt(BitWidth, VAL * RHS.VAL).clearUnusedBits();
   APInt Result(*this);
   Result *= RHS;
-  Result.clearUnusedBits();
-  return Result;
+  return Result.clearUnusedBits();
 }
 
-/// @brief Addition operator. Adds this APInt by the given APInt& RHS.
 APInt APInt::operator+(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord()) {
-    APInt Result(BitWidth, VAL + RHS.VAL);
-    Result.clearUnusedBits();
-    return Result;
-  }
+  if (isSingleWord())
+    return APInt(BitWidth, VAL + RHS.VAL).clearUnusedBits();
   APInt Result(BitWidth, 0);
   add(Result.pVal, this->pVal, RHS.pVal, getNumWords());
-  Result.clearUnusedBits();
-  return Result;
+  return Result.clearUnusedBits();
 }
 
-/// @brief Subtraction operator. Subtracts this APInt by the given APInt& RHS
 APInt APInt::operator-(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord()) {
-    APInt Result(BitWidth, VAL - RHS.VAL);
-    Result.clearUnusedBits();
-    return Result;
-  }
+  if (isSingleWord())
+    return APInt(BitWidth, VAL - RHS.VAL).clearUnusedBits();
   APInt Result(BitWidth, 0);
   sub(Result.pVal, this->pVal, RHS.pVal, getNumWords());
-  Result.clearUnusedBits();
-  return Result;
+  return Result.clearUnusedBits();
 }
 
-/// @brief Array-indexing support.
 bool APInt::operator[](uint32_t bitPosition) const {
-  return (maskBit(bitPosition) & (isSingleWord() ? 
-          VAL : pVal[whichWord(bitPosition)])) != 0;
+  return (maskBit(bitPosition) & 
+          (isSingleWord() ?  VAL : pVal[whichWord(bitPosition)])) != 0;
 }
 
-/// @brief Equality operator. Compare this APInt with the given APInt& RHS 
-/// for the validity of the equality relationship.
 bool APInt::operator==(const APInt& RHS) const {
   if (isSingleWord())
     return VAL == RHS.VAL;
 
+  // Get some facts about the number of bits used in the two operands.
   uint32_t n1 = getActiveBits();
   uint32_t n2 = RHS.getActiveBits();
+
+  // If the number of bits isn't the same, they aren't equal
   if (n1 != n2) 
     return false;
 
+  // If the number of bits fits in a word, we only need to compare the low word.
   if (n1 <= APINT_BITS_PER_WORD)
     return pVal[0] == RHS.pVal[0];
 
+  // Otherwise, compare everything
   for (int i = whichWord(n1 - 1); i >= 0; --i)
     if (pVal[i] != RHS.pVal[i]) 
       return false;
   return true;
 }
 
-/// @brief Equality operator. Compare this APInt with the given uint64_t value 
-/// for the validity of the equality relationship.
 bool APInt::operator==(uint64_t Val) const {
   if (isSingleWord())
     return VAL == Val;
@@ -518,29 +490,37 @@ bool APInt::operator==(uint64_t Val) const {
     return false;
 }
 
-/// @brief Unsigned less than comparison
 bool APInt::ult(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be same for comparison");
   if (isSingleWord())
     return VAL < RHS.VAL;
-  else {
-    uint32_t n1 = getActiveBits();
-    uint32_t n2 = RHS.getActiveBits();
-    if (n1 < n2)
-      return true;
-    else if (n2 < n1)
+
+  // Get active bit length of both operands
+  uint32_t n1 = getActiveBits();
+  uint32_t n2 = RHS.getActiveBits();
+
+  // If magnitude of LHS is less than RHS, return true.
+  if (n1 < n2)
+    return true;
+
+  // If magnitude of RHS is greather than LHS, return false.
+  if (n2 < n1)
+    return false;
+
+  // If they bot fit in a word, just compare the low order word
+  if (n1 <= APINT_BITS_PER_WORD && n2 <= APINT_BITS_PER_WORD)
+    return pVal[0] < RHS.pVal[0];
+
+  // Otherwise, compare all words
+  for (int i = whichWord(n1 - 1); i >= 0; --i) {
+    if (pVal[i] > RHS.pVal[i]) 
       return false;
-    else if (n1 <= APINT_BITS_PER_WORD && n2 <= APINT_BITS_PER_WORD)
-      return pVal[0] < RHS.pVal[0];
-    for (int i = whichWord(n1 - 1); i >= 0; --i) {
-      if (pVal[i] > RHS.pVal[i]) return false;
-      else if (pVal[i] < RHS.pVal[i]) return true;
-    }
+    if (pVal[i] < RHS.pVal[i]) 
+      return true;
   }
   return false;
 }
 
-/// @brief Signed less than comparison
 bool APInt::slt(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be same for comparison");
   if (isSingleWord()) {
@@ -554,15 +534,20 @@ bool APInt::slt(const APInt& RHS) const {
   bool lhsNegative = false;
   bool rhsNegative = false;
   if (lhs[BitWidth-1]) {
+    // Sign bit is set so make a note of it and perform two's complement
     lhsNegative = true;
     lhs.flip();
     lhs++;
   }
   if (rhs[BitWidth-1]) {
+    // Sign bit is set so make a note of it and perform two's complement
     rhsNegative = true;
     rhs.flip();
     rhs++;
   }
+
+  // Now we have unsigned values to compare so do the comparison if necessary
+  // based on the negativeness of the values.
   if (lhsNegative)
     if (rhsNegative)
       return !lhs.ult(rhs);
@@ -574,25 +559,25 @@ bool APInt::slt(const APInt& RHS) const {
     return lhs.ult(rhs);
 }
 
-/// Set the given bit to 1 whose poition is given as "bitPosition".
-/// @brief Set a given bit to 1.
 APInt& APInt::set(uint32_t bitPosition) {
-  if (isSingleWord()) VAL |= maskBit(bitPosition);
-  else pVal[whichWord(bitPosition)] |= maskBit(bitPosition);
+  if (isSingleWord()) 
+    VAL |= maskBit(bitPosition);
+  else 
+    pVal[whichWord(bitPosition)] |= maskBit(bitPosition);
   return *this;
 }
 
-/// @brief Set every bit to 1.
 APInt& APInt::set() {
-  if (isSingleWord()) 
-    VAL = ~0ULL >> (APINT_BITS_PER_WORD - BitWidth);
-  else {
-    for (uint32_t i = 0; i < getNumWords() - 1; ++i)
-      pVal[i] = -1ULL;
-    pVal[getNumWords() - 1] = ~0ULL >> 
-      (APINT_BITS_PER_WORD - BitWidth % APINT_BITS_PER_WORD);
+  if (isSingleWord()) {
+    VAL = -1ULL;
+    return clearUnusedBits();
   }
-  return *this;
+
+  // Set all the bits in all the words.
+  for (uint32_t i = 0; i < getNumWords() - 1; ++i)
+    pVal[i] = -1ULL;
+  // Clear the unused ones
+  return clearUnusedBits();
 }
 
 /// Set the given bit to 0 whose position is given as "bitPosition".
@@ -695,11 +680,6 @@ bool APInt::isPowerOf2() const {
   return (!!*this) && !(*this & (*this - APInt(BitWidth,1)));
 }
 
-/// countLeadingZeros - This function is a APInt version corresponding to 
-/// llvm/include/llvm/Support/MathExtras.h's function 
-/// countLeadingZeros_{32, 64}. It performs platform optimal form of counting 
-/// the number of zeros from the most significant bit to the first one bit.
-/// @returns numWord() * 64 if the value is zero.
 uint32_t APInt::countLeadingZeros() const {
   uint32_t Count = 0;
   if (isSingleWord())
@@ -720,11 +700,6 @@ uint32_t APInt::countLeadingZeros() const {
   return Count;
 }
 
-/// countTrailingZeros - This function is a APInt version corresponding to
-/// llvm/include/llvm/Support/MathExtras.h's function 
-/// countTrailingZeros_{32, 64}. It performs platform optimal form of counting 
-/// the number of zeros from the least significant bit to the first one bit.
-/// @returns numWord() * 64 if the value is zero.
 uint32_t APInt::countTrailingZeros() const {
   if (isSingleWord())
     return CountTrailingZeros_64(VAL);
@@ -732,10 +707,6 @@ uint32_t APInt::countTrailingZeros() const {
   return getNumWords() * APINT_BITS_PER_WORD - Tmp.countLeadingZeros();
 }
 
-/// countPopulation - This function is a APInt version corresponding to
-/// llvm/include/llvm/Support/MathExtras.h's function
-/// countPopulation_{32, 64}. It counts the number of set bits in a value.
-/// @returns 0 if the value is zero.
 uint32_t APInt::countPopulation() const {
   if (isSingleWord())
     return CountPopulation_64(VAL);
@@ -745,9 +716,6 @@ uint32_t APInt::countPopulation() const {
   return Count;
 }
 
-
-/// byteSwap - This function returns a byte-swapped representation of the
-/// this APInt.
 APInt APInt::byteSwap() const {
   assert(BitWidth >= 16 && BitWidth % 16 == 0 && "Cannot byteswap!");
   if (BitWidth == 16)
@@ -776,8 +744,6 @@ APInt APInt::byteSwap() const {
   }
 }
 
-/// GreatestCommonDivisor - This function returns the greatest common
-/// divisor of the two APInt values using Enclid's algorithm.
 APInt llvm::APIntOps::GreatestCommonDivisor(const APInt& API1, 
                                             const APInt& API2) {
   APInt A = API1, B = API2;
@@ -789,8 +755,6 @@ APInt llvm::APIntOps::GreatestCommonDivisor(const APInt& API1,
   return A;
 }
 
-/// DoubleRoundToAPInt - This function convert a double value to
-/// a APInt value.
 APInt llvm::APIntOps::RoundDoubleToAPInt(double Double) {
   union {
     double D;
@@ -879,16 +843,19 @@ double APInt::roundToDouble(bool isSigned) const {
 // Truncate to new width.
 void APInt::trunc(uint32_t width) {
   assert(width < BitWidth && "Invalid APInt Truncate request");
+  // FIXME: implement
 }
 
 // Sign extend to a new width.
 void APInt::sext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt SignExtend request");
+  // FIXME: implement
 }
 
 //  Zero extend to a new width.
 void APInt::zext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt ZeroExtend request");
+  // FIXME: implement
 }
 
 /// Arithmetic right-shift this APInt by shiftAmt.
@@ -896,33 +863,32 @@ void APInt::zext(uint32_t width) {
 APInt APInt::ashr(uint32_t shiftAmt) const {
   if (isSingleWord()) {
     if (shiftAmt == BitWidth)
-      return APInt(BitWidth, -1ull);
+      return APInt(BitWidth, -1ULL);
     else
       return APInt(BitWidth, 
         (((int64_t(VAL) << (APINT_BITS_PER_WORD - BitWidth)) >> 
-            (APINT_BITS_PER_WORD - BitWidth)) >> shiftAmt) & 
-        (~uint64_t(0UL) >> (APINT_BITS_PER_WORD - BitWidth)));
+            (APINT_BITS_PER_WORD - BitWidth)) >> shiftAmt)).clearUnusedBits();
   }
 
   APInt Result(*this);
   if (shiftAmt >= BitWidth) {
     memset(Result.pVal, Result[BitWidth-1] ? 1 : 0, 
            (getNumWords()-1) * APINT_WORD_SIZE);
-    Result.pVal[getNumWords() - 1] = ~uint64_t(0UL) >> 
-        (APINT_BITS_PER_WORD - BitWidth % APINT_BITS_PER_WORD);
-  } else {
-    uint32_t i = 0;
-    for (; i < BitWidth - shiftAmt; ++i)
-      if (Result[i+shiftAmt]) 
-        Result.set(i);
-      else
-        Result.clear(i);
-    for (; i < BitWidth; ++i)
-      if (Result[BitWidth-1]) 
-        Result.set(i);
-      else 
-        Result.clear(i);
-  }
+    return Result.clearUnusedBits();
+  } 
+
+  // FIXME: bit-at-a-time shift is really slow.
+  uint32_t i = 0;
+  for (; i < BitWidth - shiftAmt; ++i)
+    if (Result[i+shiftAmt]) 
+      Result.set(i);
+    else
+      Result.clear(i);
+  for (; i < BitWidth; ++i)
+    if (Result[BitWidth-1]) 
+      Result.set(i);
+    else 
+      Result.clear(i);
   return Result;
 }
 
@@ -936,8 +902,12 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
       return APInt(BitWidth, this->VAL >> shiftAmt);
 
   APInt Result(*this);
-  if (shiftAmt >= Result.BitWidth)
-    memset(Result.pVal, 0, Result.getNumWords() * APINT_WORD_SIZE);
+  if (shiftAmt >= BitWidth) {
+    Result.clear();
+    return Result;
+  }
+
+  // FIXME: bit at a time shift is really slow
   uint32_t i = 0;
   for (i = 0; i < Result.BitWidth - shiftAmt; ++i)
     if (Result[i+shiftAmt]) 
@@ -956,9 +926,7 @@ APInt APInt::shl(uint32_t shiftAmt) const {
   if (isSingleWord()) {
     if (shiftAmt == BitWidth)
       return APInt(BitWidth, 0); // avoid undefined shift results
-    return APInt(BitWidth, (VAL << shiftAmt) &  
-                           (~uint64_t(0ULL) >> 
-                            (APINT_BITS_PER_WORD - BitWidth)));
+    return APInt(BitWidth, VAL << shiftAmt).clearUnusedBits();
   }
 
   // If all the bits were shifted out, the result is 0. This avoids issues
@@ -978,8 +946,7 @@ APInt APInt::shl(uint32_t shiftAmt) const {
       val[i] = pVal[i] << shiftAmt | carry;
       carry = pVal[i] >> (APINT_BITS_PER_WORD - shiftAmt);
     }
-    val[getNumWords()-1] &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth);
-    return APInt(val, BitWidth);
+    return APInt(val, BitWidth).clearUnusedBits();
   }
 
   // Compute some values needed by the remaining shift algorithms
@@ -992,8 +959,7 @@ APInt APInt::shl(uint32_t shiftAmt) const {
       val[i] = 0;
     for (uint32_t i = offset; i < getNumWords(); i++)
       val[i] = pVal[i-offset];
-    val[getNumWords()-1] &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth);
-    return APInt(val,BitWidth);
+    return APInt(val,BitWidth).clearUnusedBits();
   }
 
   // Copy whole words from this to Result.
@@ -1004,8 +970,7 @@ APInt APInt::shl(uint32_t shiftAmt) const {
   val[offset] = pVal[0] << wordShift;
   for (i = 0; i < offset; ++i)
     val[i] = 0;
-  val[getNumWords()-1] &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth);
-  return APInt(val, BitWidth);
+  return APInt(val, BitWidth).clearUnusedBits();
 }
 
 /// Implementation of Knuth's Algorithm D (Division of nonnegative integers)
@@ -1185,9 +1150,6 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
   DEBUG(cerr << std::setbase(10) << '\n');
 }
 
-// This function makes calling KnuthDiv a little more convenient. It uses
-// APInt parameters instead of uint32_t* parameters. It can also divide APInt
-// values of different widths.
 void APInt::divide(const APInt LHS, uint32_t lhsWords, 
                    const APInt &RHS, uint32_t rhsWords,
                    APInt *Quotient, APInt *Remainder)
@@ -1364,8 +1326,6 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
   }
 }
 
-/// Unsigned divide this APInt by APInt RHS.
-/// @brief Unsigned division function for APInt.
 APInt APInt::udiv(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
 
@@ -1403,8 +1363,6 @@ APInt APInt::udiv(const APInt& RHS) const {
   return Quotient;
 }
 
-/// Unsigned remainder operation on APInt.
-/// @brief Function for unsigned remainder operation.
 APInt APInt::urem(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord()) {
@@ -1442,7 +1400,6 @@ APInt APInt::urem(const APInt& RHS) const {
   return Remainder;
 }
 
-/// @brief Converts a char array into an integer.
 void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen, 
                        uint8_t radix) {
   // Check our assumptions here
@@ -1498,7 +1455,6 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
   }
 }
 
-/// to_string - This function translates the APInt into a string.
 std::string APInt::toString(uint8_t radix, bool wantSigned) const {
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
