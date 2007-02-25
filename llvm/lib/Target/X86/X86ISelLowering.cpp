@@ -1301,12 +1301,6 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   unsigned NumIntRegs = 0;  // Int regs used for parameter passing.
   unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
 
-  static const unsigned GPR8ArgRegs[] = {
-    X86::DIL, X86::SIL, X86::DL,  X86::CL,  X86::R8B, X86::R9B
-  };
-  static const unsigned GPR16ArgRegs[] = {
-    X86::DI,  X86::SI,  X86::DX,  X86::CX,  X86::R8W, X86::R9W
-  };
   static const unsigned GPR32ArgRegs[] = {
     X86::EDI, X86::ESI, X86::EDX, X86::ECX, X86::R8D, X86::R9D
   };
@@ -1366,7 +1360,16 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
     MVT::ValueType ArgVT = Arg.getValueType();
+    unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
 
+    if (MVT::isInteger(ArgVT) && ArgVT < MVT::i32) {
+      // Promote the integer to 32 bits.  If the input type is signed use a
+      // sign extend, otherwise use a zero extend.
+      unsigned ExtOpc = (ArgFlags & 1) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+      Arg = DAG.getNode(ExtOpc, MVT::i32, Arg);
+      ArgVT = MVT::i32;
+    }
+    
     switch (ArgVT) {
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i8:
@@ -1376,10 +1379,10 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
       if (NumIntRegs < 6) {
         unsigned Reg = 0;
         switch (ArgVT) {
-        default: break;
-        case MVT::i8:  Reg = GPR8ArgRegs[NumIntRegs];  break;
-        case MVT::i16: Reg = GPR16ArgRegs[NumIntRegs]; break;
-        case MVT::i32: Reg = GPR32ArgRegs[NumIntRegs]; break;
+        default: assert(0 && "Unknown integer size!");
+        case MVT::i32:
+          Reg = GPR32ArgRegs[NumIntRegs];
+          break;
         case MVT::i64: Reg = GPR64ArgRegs[NumIntRegs]; break;
         }
         RegsToPass.push_back(std::make_pair(Reg, Arg));
