@@ -366,18 +366,16 @@ namespace llvm {
     // C and StdCall Calling Convention implementation.
     SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
                                 bool isStdCall = false);
-    SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
-                             bool isStdCall = false);
+    SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC);
 
     // X86-64 C Calling Convention implementation.
     SDOperand LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,unsigned CC);
 
     // Fast and FastCall Calling Convention implementation.
     SDOperand LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
                                    bool isFastCall = false);
-    SDOperand LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
-                                bool isFastCall = false);
+    SDOperand LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC);
 
     SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);

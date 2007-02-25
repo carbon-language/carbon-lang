@@ -763,7 +763,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
 }
 
 SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
-                                            bool isStdCall) {
+                                            unsigned CC) {
   SDOperand Chain     = Op.getOperand(0);
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
@@ -808,7 +808,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
                           ArgInRegs[i],
                           NumIntRegs, NumXMMRegs, 3,
                           ObjSize, ObjIntRegs, ObjXMMRegs,
-                          !isStdCall);
+                          CC != CallingConv::X86_StdCall);
     if (ObjSize > 4)
       ArgIncrement = ObjSize;
 
@@ -842,7 +842,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
                           ArgInRegs[i],
                           NumIntRegs, NumXMMRegs, 3,
                           ObjSize, ObjIntRegs, ObjXMMRegs,
-                          !isStdCall);
+                          CC != CallingConv::X86_StdCall);
     
     if (ObjSize > 4)
       ArgIncrement = ObjSize;
@@ -868,7 +868,6 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
       case MVT::v2i64:
       case MVT::v4f32:
       case MVT::v2f64:
-       assert(!isStdCall && "Unhandled argument type!");
        RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
        break;
       }
@@ -956,12 +955,11 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   // Create the CALLSEQ_END node.
   unsigned NumBytesForCalleeToPush = 0;
 
-  if (isStdCall) {
-    if (isVarArg) {
+  if (CC == CallingConv::X86_StdCall) {
+    if (isVarArg)
       NumBytesForCalleeToPush = NumSRetBytes;
-    } else {
+    else
       NumBytesForCalleeToPush = NumBytes;
-    }
   } else {
     // If this is is a call to a struct-return function, the callee
     // pops the hidden struct pointer, so we have to push it back.
@@ -980,8 +978,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return SDOperand(LowerCallResult(Chain, InFlag, Op.Val, CallingConv::C, DAG),
-                   Op.ResNo);
+  return SDOperand(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.ResNo);
 }
 
 
@@ -1219,7 +1216,8 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand
-X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
+X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
+                                        unsigned CallingConv) {
   SDOperand Chain     = Op.getOperand(0);
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
@@ -1652,7 +1650,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
 }
 
 SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
-                                               bool isFastCall) {
+                                               unsigned CC) {
   SDOperand Chain     = Op.getOperand(0);
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
@@ -1677,7 +1675,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
     X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
   };
 
-  unsigned GPRInd = (isFastCall ? 1 : 0);  
+  bool isFastCall = CC == CallingConv::X86_FastCall;
+  unsigned GPRInd = isFastCall ? 1 : 0;
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
 
@@ -3935,21 +3934,20 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
 
   if (Subtarget->is64Bit())
-    return LowerX86_64CCCCallTo(Op, DAG);
+    return LowerX86_64CCCCallTo(Op, DAG, CallingConv);
   else
     switch (CallingConv) {
     default:
       assert(0 && "Unsupported calling convention");
     case CallingConv::Fast:
       if (EnableFastCC)
-        return LowerFastCCCallTo(Op, DAG);
+        return LowerFastCCCallTo(Op, DAG, CallingConv);
       // Falls through
     case CallingConv::C:
-      return LowerCCCCallTo(Op, DAG);
     case CallingConv::X86_StdCall:
-      return LowerCCCCallTo(Op, DAG, true);
+      return LowerCCCCallTo(Op, DAG, CallingConv);
     case CallingConv::X86_FastCall:
-      return LowerFastCCCallTo(Op, DAG, true);
+      return LowerFastCCCallTo(Op, DAG, CallingConv);
     }
 }
 
