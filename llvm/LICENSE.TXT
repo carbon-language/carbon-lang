@@ -63,7 +63,6 @@ Program             Directory
 -------             ---------
 System Library      llvm/lib/System
 Compiler Driver     llvm/tools/llvmc
-PowerPC Backend     llvm/lib/Target/PowerPC
 bzip2               llvm/lib/Support/bzip2/LICENSE 
 Autoconf            llvm/autoconf
                     llvm/projects/ModuleMaker/autoconf
