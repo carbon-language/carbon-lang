@@ -828,6 +828,12 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
     IntB.MergeValueNumberInto(BValNo, ValLR->ValId);
   DOUT << "   result = "; IntB.print(DOUT, mri_);
   DOUT << "\n";
+
+  // If the source instruction was killing the source register before the
+  // merge, unset the isKill marker given the live range has been extended.
+  MachineOperand *MOK = ValLREndInst->findRegisterUseOperand(IntB.reg, true);
+  if (MOK)
+    MOK->unsetIsKill();
   
   // Finally, delete the copy instruction.
   RemoveMachineInstrFromMaps(CopyMI);
