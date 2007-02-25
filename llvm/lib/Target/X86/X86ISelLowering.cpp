@@ -446,24 +446,96 @@ static void GetRetValueLocs(const MVT::ValueType *VTs, unsigned NumVTs,
   // Otherwise, NumVTs is 1.
   MVT::ValueType ArgVT = VTs[0];
   
-  if (MVT::isVector(ArgVT))        // Integer or FP vector result -> XMM0.
-    ResultRegs[0] = X86::XMM0;
-  else if (MVT::isFloatingPoint(ArgVT) && Subtarget->is64Bit())
-    // FP values in X86-64 go in XMM0.
-    ResultRegs[0] = X86::XMM0;
-  else if (MVT::isFloatingPoint(ArgVT))
-    // FP values in X86-32 go in ST0.
-    ResultRegs[0] = X86::ST0;
-  else {
-    assert(MVT::isInteger(ArgVT) && "Unknown return value type!");
-    
-    // Integer result -> EAX / RAX.
-    // The C calling convention guarantees the return value has been
-    // promoted to at least MVT::i32. The X86-64 ABI doesn't require the
-    // value to be promoted MVT::i64. So we don't have to extend it to
-    // 64-bit.
-    ResultRegs[0] = (ArgVT == MVT::i64) ? X86::RAX : X86::EAX;
+  unsigned Reg;
+  switch (ArgVT) {
+  case MVT::i8:  Reg = X86::AL; break;
+  case MVT::i16: Reg = X86::AX; break;
+  case MVT::i32: Reg = X86::EAX; break;
+  case MVT::i64: Reg = X86::RAX; break;
+  case MVT::f32:
+  case MVT::f64:
+    if (Subtarget->is64Bit())
+      Reg = X86::XMM0;         // FP values in X86-64 go in XMM0.
+    else
+      Reg = X86::ST0;          // FP values in X86-32 go in ST0.
+    break;
+  default:
+    assert(MVT::isVector(ArgVT) && "Unknown return value type!");
+    Reg = X86::XMM0; // Int/FP vector result -> XMM0.
+    break;
   }
+  ResultRegs[0] = Reg;
+}
+
+/// LowerCallResult - Lower the result values of an ISD::CALL into the
+/// appropriate copies out of appropriate physical registers.  This assumes that
+/// Chain/InFlag are the input chain/flag to use, and that TheCall is the call
+/// being lowered.  The returns a SDNode with the same number of values as the
+/// ISD::CALL.
+SDNode *X86TargetLowering::
+LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall, 
+                unsigned CallingConv, SelectionDAG &DAG) {
+  SmallVector<SDOperand, 8> ResultVals;
+
+  // We support returning up to two registers.
+  MVT::ValueType VTs[2];
+  unsigned DestRegs[2];
+  unsigned NumRegs = TheCall->getNumValues() - 1;
+  assert(NumRegs <= 2 && "Can only return up to two regs!");
+  
+  for (unsigned i = 0; i != NumRegs; ++i)
+    VTs[i] = TheCall->getValueType(i);
+  
+  // Determine which register each value should be copied into.
+  GetRetValueLocs(VTs, NumRegs, DestRegs, Subtarget, CallingConv);
+  
+  // Copy all of the result registers out of their specified physreg.
+  if (NumRegs != 1 || DestRegs[0] != X86::ST0) {
+    for (unsigned i = 0; i != NumRegs; ++i) {
+      Chain = DAG.getCopyFromReg(Chain, DestRegs[i], VTs[i],
+                                 InFlag).getValue(1);
+      InFlag = Chain.getValue(2);
+      ResultVals.push_back(Chain.getValue(0));
+    }
+  } else {
+    // Copies from the FP stack are special, as ST0 isn't a valid register
+    // before the fp stackifier runs.
+    
+    // Copy ST0 into an RFP register with FP_GET_RESULT.
+    SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
+    SDOperand GROps[] = { Chain, InFlag };
+    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, GROps, 2);
+    Chain  = RetVal.getValue(1);
+    InFlag = RetVal.getValue(2);
+    
+    // If we are using ScalarSSE, store ST(0) to the stack and reload it into
+    // an XMM register.
+    if (X86ScalarSSE) {
+      // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
+      // shouldn't be necessary except that RFP cannot be live across
+      // multiple blocks. When stackifier is fixed, they can be uncoupled.
+      MachineFunction &MF = DAG.getMachineFunction();
+      int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+      SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+      SDOperand Ops[] = {
+        Chain, RetVal, StackSlot, DAG.getValueType(VTs[0]), InFlag
+      };
+      Chain = DAG.getNode(X86ISD::FST, MVT::Other, Ops, 5);
+      RetVal = DAG.getLoad(VTs[0], Chain, StackSlot, NULL, 0);
+      Chain = RetVal.getValue(1);
+    }
+    
+    if (VTs[0] == MVT::f32 && !X86ScalarSSE)
+      // FIXME: we would really like to remember that this FP_ROUND
+      // operation is okay to eliminate if we allow excess FP precision.
+      RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+    ResultVals.push_back(RetVal);
+  }
+  
+  // Merge everything together with a MERGE_VALUES node.
+  ResultVals.push_back(Chain);
+  return DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(),
+                     &ResultVals[0], ResultVals.size()).Val;
 }
 
 
@@ -696,7 +768,6 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
-  MVT::ValueType RetVT= Op.Val->getValueType(0);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
   static const unsigned XMMArgRegs[] = {
@@ -905,88 +976,12 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   Ops.push_back(DAG.getConstant(NumBytesForCalleeToPush, getPointerTy()));
   Ops.push_back(InFlag);
   Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
-  if (RetVT != MVT::Other)
-    InFlag = Chain.getValue(1);
+  InFlag = Chain.getValue(1);
 
-  SmallVector<SDOperand, 8> ResultVals;
-  switch (RetVT) {
-  default: assert(0 && "Unknown value type to return!");
-  case MVT::Other:
-    NodeTys = DAG.getVTList(MVT::Other);
-    break;
-  case MVT::i8:
-    Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys = DAG.getVTList(MVT::i8, MVT::Other);
-    break;
-  case MVT::i16:
-    Chain = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys = DAG.getVTList(MVT::i16, MVT::Other);
-    break;
-  case MVT::i32:
-    if (Op.Val->getValueType(1) == MVT::i32) {
-      Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-      Chain = DAG.getCopyFromReg(Chain, X86::EDX, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-      NodeTys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
-    } else {
-      Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-      NodeTys = DAG.getVTList(MVT::i32, MVT::Other);
-    }
-    break;
-  case MVT::v16i8:
-  case MVT::v8i16:
-  case MVT::v4i32:
-  case MVT::v2i64:
-  case MVT::v4f32:
-  case MVT::v2f64:
-    assert(!isStdCall && "Unknown value type to return!");
-    Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys = DAG.getVTList(RetVT, MVT::Other);
-    break;
-  case MVT::f32:
-  case MVT::f64: {
-    SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
-    SDOperand GROps[] = { Chain, InFlag };
-    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, GROps, 2);
-    Chain  = RetVal.getValue(1);
-    InFlag = RetVal.getValue(2);
-    if (X86ScalarSSE) {
-      // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
-      // shouldn't be necessary except that RFP cannot be live across
-      // multiple blocks. When stackifier is fixed, they can be uncoupled.
-      MachineFunction &MF = DAG.getMachineFunction();
-      int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-      SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-      Tys = DAG.getVTList(MVT::Other);
-      SDOperand Ops[] = {
-        Chain, RetVal, StackSlot, DAG.getValueType(RetVT), InFlag
-      };
-      Chain = DAG.getNode(X86ISD::FST, Tys, Ops, 5);
-      RetVal = DAG.getLoad(RetVT, Chain, StackSlot, NULL, 0);
-      Chain = RetVal.getValue(1);
-    }
-
-    if (RetVT == MVT::f32 && !X86ScalarSSE)
-      // FIXME: we would really like to remember that this FP_ROUND
-      // operation is okay to eliminate if we allow excess FP precision.
-      RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
-    ResultVals.push_back(RetVal);
-    NodeTys = DAG.getVTList(RetVT, MVT::Other);
-    break;
-  }
-  }
-
-  // Merge everything together with a MERGE_VALUES node.
-  ResultVals.push_back(Chain);
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
-                              &ResultVals[0], ResultVals.size());
-  return Res.getValue(Op.ResNo);
+  // Handle result values, copying them out of physregs into vregs that we
+  // return.
+  return SDOperand(LowerCallResult(Chain, InFlag, Op.Val, CallingConv::C, DAG),
+                   Op.ResNo);
 }
 
 
@@ -3946,9 +3941,8 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     default:
       assert(0 && "Unsupported calling convention");
     case CallingConv::Fast:
-      if (EnableFastCC) {
+      if (EnableFastCC)
         return LowerFastCCCallTo(Op, DAG);
-      }
       // Falls through
     case CallingConv::C:
       return LowerCCCCallTo(Op, DAG);

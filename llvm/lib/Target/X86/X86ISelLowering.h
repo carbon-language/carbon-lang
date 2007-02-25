@@ -360,6 +360,9 @@ namespace llvm {
     /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
     bool X86ScalarSSE;
 
+    SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
+                            unsigned CallingConv, SelectionDAG &DAG);
+        
     // C and StdCall Calling Convention implementation.
     SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
                                 bool isStdCall = false);
