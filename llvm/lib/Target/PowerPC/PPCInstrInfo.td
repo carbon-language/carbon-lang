@@ -407,11 +407,11 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
   def BLA_ELF : IForm<18, 1, 1,
                       (ops aaddr:$func, variable_ops),
                       "bla $func", BrB,
-                      [(PPCcall_ELF (i32 imm:$func))]>;
+                      [/*(PPCcall_ELF (i32 imm:$func))*/]>;
   def BCTRL_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
                                (ops variable_ops),
                                "bctrl", BrB,
-                               [(PPCbctrl_ELF)]>;
+                               [/*(PPCbctrl_ELF)*/]>;
 }
 
 // DCB* instructions.
@@ -1102,8 +1102,12 @@ def : Pat<(and (rotl GPRC:$in, GPRC:$sh), maskimm32:$imm),
 // Calls
 def : Pat<(PPCcall_Macho (i32 tglobaladdr:$dst)),
           (BL_Macho tglobaladdr:$dst)>;
+def : Pat<(PPCcall_Macho (i32 texternalsym:$dst)),
+          (BL_Macho texternalsym:$dst)>;
+/*def : Pat<(PPCcall_ELF (i32 tglobaladdr:$dst)),
+          (BL_ELF tglobaladdr:$dst)>;
 def : Pat<(PPCcall_ELF (i32 texternalsym:$dst)),
-          (BL_ELF texternalsym:$dst)>;
+          (BL_ELF texternalsym:$dst)>;*/
 
 // Hi and Lo for Darwin Global Addresses.
 def : Pat<(PPChi tglobaladdr:$in, 0), (LIS tglobaladdr:$in)>;
