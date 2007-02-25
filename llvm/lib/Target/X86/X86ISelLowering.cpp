@@ -1217,12 +1217,11 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand
 X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
-                                        unsigned CallingConv) {
+                                        unsigned CC) {
   SDOperand Chain     = Op.getOperand(0);
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
-  MVT::ValueType RetVT= Op.Val->getValueType(0);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
   // Count how many bytes are to be pushed on the stack.
@@ -1412,65 +1411,11 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   Ops.push_back(DAG.getConstant(0, getPointerTy()));
   Ops.push_back(InFlag);
   Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
-  if (RetVT != MVT::Other)
-    InFlag = Chain.getValue(1);
-
-  SmallVector<SDOperand, 8> ResultVals;
-  switch (RetVT) {
-  default: assert(0 && "Unknown value type to return!");
-  case MVT::Other:
-    NodeTys = DAG.getVTList(MVT::Other);
-    break;
-  case MVT::i8:
-    Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys = DAG.getVTList(MVT::i8, MVT::Other);
-    break;
-  case MVT::i16:
-    Chain = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys = DAG.getVTList(MVT::i16, MVT::Other);
-    break;
-  case MVT::i32:
-    Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys = DAG.getVTList(MVT::i32, MVT::Other);
-    break;
-  case MVT::i64:
-    if (Op.Val->getValueType(1) == MVT::i64) {
-      // FIXME: __int128 support?
-      Chain = DAG.getCopyFromReg(Chain, X86::RAX, MVT::i64, InFlag).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-      Chain = DAG.getCopyFromReg(Chain, X86::RDX, MVT::i64,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-      NodeTys = DAG.getVTList(MVT::i64, MVT::i64, MVT::Other);
-    } else {
-      Chain = DAG.getCopyFromReg(Chain, X86::RAX, MVT::i64, InFlag).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-      NodeTys = DAG.getVTList(MVT::i64, MVT::Other);
-    }
-    break;
-  case MVT::f32:
-  case MVT::f64:
-  case MVT::v16i8:
-  case MVT::v8i16:
-  case MVT::v4i32:
-  case MVT::v2i64:
-  case MVT::v4f32:
-  case MVT::v2f64:
-    // FIXME: long double support?
-    Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys = DAG.getVTList(RetVT, MVT::Other);
-    break;
-  }
-
-  // Merge everything together with a MERGE_VALUES node.
-  ResultVals.push_back(Chain);
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
-                              &ResultVals[0], ResultVals.size());
-  return Res.getValue(Op.ResNo);
+  InFlag = Chain.getValue(1);
+  
+  // Handle result values, copying them out of physregs into vregs that we
+  // return.
+  return SDOperand(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.ResNo);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1654,7 +1599,6 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand Chain     = Op.getOperand(0);
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
-  MVT::ValueType RetVT= Op.Val->getValueType(0);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
   // Count how many bytes are to be pushed on the stack.
@@ -1848,98 +1792,11 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
   Ops.push_back(InFlag);
   Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
-  if (RetVT != MVT::Other)
-    InFlag = Chain.getValue(1);
+  InFlag = Chain.getValue(1);
 
-  SmallVector<SDOperand, 8> ResultVals;
-  switch (RetVT) {
-  default: assert(0 && "Unknown value type to return!");
-  case MVT::Other:
-    NodeTys = DAG.getVTList(MVT::Other);
-    break;
-  case MVT::i8:
-    Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys = DAG.getVTList(MVT::i8, MVT::Other);
-    break;
-  case MVT::i16:
-    Chain = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag).getValue(1);
-    ResultVals.push_back(Chain.getValue(0));
-    NodeTys = DAG.getVTList(MVT::i16, MVT::Other);
-    break;
-  case MVT::i32:
-    if (Op.Val->getValueType(1) == MVT::i32) {
-      Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-      Chain = DAG.getCopyFromReg(Chain, X86::EDX, MVT::i32,
-                                 Chain.getValue(2)).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-      NodeTys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
-    } else {
-      Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
-      ResultVals.push_back(Chain.getValue(0));
-      NodeTys = DAG.getVTList(MVT::i32, MVT::Other);
-    }
-    break;
-  case MVT::v16i8:
-  case MVT::v8i16:
-  case MVT::v4i32:
-  case MVT::v2i64:
-  case MVT::v4f32:
-  case MVT::v2f64:
-   if (isFastCall) {
-     assert(0 && "Unknown value type to return!");
-   } else {
-     Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
-     ResultVals.push_back(Chain.getValue(0));
-     NodeTys = DAG.getVTList(RetVT, MVT::Other);
-   }
-   break;
-  case MVT::f32:
-  case MVT::f64: {
-    SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
-    SmallVector<SDOperand, 8> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(InFlag);
-    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys,
-                                   &Ops[0], Ops.size());
-    Chain  = RetVal.getValue(1);
-    InFlag = RetVal.getValue(2);
-    if (X86ScalarSSE) {
-      // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
-      // shouldn't be necessary except that RFP cannot be live across
-      // multiple blocks. When stackifier is fixed, they can be uncoupled.
-      MachineFunction &MF = DAG.getMachineFunction();
-      int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-      SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-      Tys = DAG.getVTList(MVT::Other);
-      Ops.clear();
-      Ops.push_back(Chain);
-      Ops.push_back(RetVal);
-      Ops.push_back(StackSlot);
-      Ops.push_back(DAG.getValueType(RetVT));
-      Ops.push_back(InFlag);
-      Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
-      RetVal = DAG.getLoad(RetVT, Chain, StackSlot, NULL, 0);
-      Chain = RetVal.getValue(1);
-    }
-
-    if (RetVT == MVT::f32 && !X86ScalarSSE)
-      // FIXME: we would really like to remember that this FP_ROUND
-      // operation is okay to eliminate if we allow excess FP precision.
-      RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
-    ResultVals.push_back(RetVal);
-    NodeTys = DAG.getVTList(RetVT, MVT::Other);
-
-    break;
-  }
-  }
-
-  // Merge everything together with a MERGE_VALUES node.
-  ResultVals.push_back(Chain);
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
-                              &ResultVals[0], ResultVals.size());
-  return Res.getValue(Op.ResNo);
+  // Handle result values, copying them out of physregs into vregs that we
+  // return.
+  return SDOperand(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.ResNo);
 }
 
 SDOperand X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
