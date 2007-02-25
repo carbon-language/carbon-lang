@@ -4014,13 +4014,9 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
         if (DAG.getMachineFunction().liveout_empty())
           DAG.getMachineFunction().addLiveOut(X86::ST0);
 
-        std::vector<MVT::ValueType> Tys;
-        Tys.push_back(MVT::Other);
-        Tys.push_back(MVT::Flag);
-        std::vector<SDOperand> Ops;
-        Ops.push_back(Op.getOperand(0));
-        Ops.push_back(Op.getOperand(1));
-        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, &Ops[0], Ops.size());
+        SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+        SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1) };
+        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops, 2);
       } else {
         // FP return with ScalarSSE (return on fp-stack).
         if (DAG.getMachineFunction().liveout_empty())
@@ -4042,21 +4038,14 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
           MemLoc = DAG.getFrameIndex(SSFI, getPointerTy());
           Chain = DAG.getStore(Op.getOperand(0), Value, MemLoc, NULL, 0);
         }
-        std::vector<MVT::ValueType> Tys;
-        Tys.push_back(MVT::f64);
-        Tys.push_back(MVT::Other);
-        std::vector<SDOperand> Ops;
-        Ops.push_back(Chain);
-        Ops.push_back(MemLoc);
-        Ops.push_back(DAG.getValueType(ArgVT));
-        Copy = DAG.getNode(X86ISD::FLD, Tys, &Ops[0], Ops.size());
-        Tys.clear();
-        Tys.push_back(MVT::Other);
-        Tys.push_back(MVT::Flag);
-        Ops.clear();
-        Ops.push_back(Copy.getValue(1));
-        Ops.push_back(Copy);
-        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, &Ops[0], Ops.size());
+        SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other);
+        SDOperand Ops[] = { Chain, MemLoc, DAG.getValueType(ArgVT) };
+        Copy = DAG.getNode(X86ISD::FLD, Tys, Ops, 3);
+        
+        Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+        Ops[0] = Copy.getValue(1);
+        Ops[1] = Copy;
+        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops, 2);
       }
       break;
     }
