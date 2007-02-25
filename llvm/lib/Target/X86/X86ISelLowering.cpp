@@ -423,6 +423,50 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   allowUnalignedMemoryAccesses = true; // x86 supports it!
 }
 
+
+//===----------------------------------------------------------------------===//
+//               Return Value Calling Convention Implementation
+//===----------------------------------------------------------------------===//
+
+/// GetRetValueLocs - If we are returning a set of values with the specified
+/// value types, determine the set of registers each one will land in.  This
+/// sets one element of the ResultRegs array for each element in the VTs array.
+static void GetRetValueLocs(const MVT::ValueType *VTs, unsigned NumVTs,
+                            unsigned *ResultRegs,
+                            const X86Subtarget *Subtarget,
+                            unsigned CallingConv) {
+  if (NumVTs == 0) return;
+  
+  if (NumVTs == 2) {
+    ResultRegs[0] = VTs[0] == MVT::i64 ? X86::RAX : X86::EAX;
+    ResultRegs[1] = VTs[1] == MVT::i64 ? X86::RDX : X86::EDX;
+    return;
+  }
+  
+  // Otherwise, NumVTs is 1.
+  MVT::ValueType ArgVT = VTs[0];
+  
+  if (MVT::isVector(ArgVT))        // Integer or FP vector result -> XMM0.
+    ResultRegs[0] = X86::XMM0;
+  else if (MVT::isFloatingPoint(ArgVT) && Subtarget->is64Bit())
+    // FP values in X86-64 go in XMM0.
+    ResultRegs[0] = X86::XMM0;
+  else if (MVT::isFloatingPoint(ArgVT))
+    // FP values in X86-32 go in ST0.
+    ResultRegs[0] = X86::ST0;
+  else {
+    assert(MVT::isInteger(ArgVT) && "Unknown return value type!");
+    
+    // Integer result -> EAX / RAX.
+    // The C calling convention guarantees the return value has been
+    // promoted to at least MVT::i32. The X86-64 ABI doesn't require the
+    // value to be promoted MVT::i64. So we don't have to extend it to
+    // 64-bit.
+    ResultRegs[0] = (ArgVT == MVT::i64) ? X86::RAX : X86::EAX;
+  }
+}
+
+
 //===----------------------------------------------------------------------===//
 //                C & StdCall Calling Convention implementation
 //===----------------------------------------------------------------------===//
@@ -3915,44 +3959,6 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     }
 }
 
-/// GetRetValueLocs - If we are returning a set of values with the specified
-/// value types, determine the set of registers each one will land in.  This
-/// sets one element of the ResultRegs array for each element in the VTs array.
-static void GetRetValueLocs(const MVT::ValueType *VTs, unsigned NumVTs,
-                            unsigned *ResultRegs,
-                            const X86Subtarget *Subtarget) {
-  if (NumVTs == 0) return;
-  
-  if (NumVTs == 2) {
-    ResultRegs[0] = VTs[0] == MVT::i64 ? X86::RAX : X86::EAX;
-    ResultRegs[1] = VTs[1] == MVT::i64 ? X86::RDX : X86::EDX;
-    return;
-  }
-  
-  // Otherwise, NumVTs is 1.
-  MVT::ValueType ArgVT = VTs[0];
-  
-  if (MVT::isVector(ArgVT))        // Integer or FP vector result -> XMM0.
-    ResultRegs[0] = X86::XMM0;
-  else if (MVT::isFloatingPoint(ArgVT) && Subtarget->is64Bit())
-    // FP values in X86-64 go in XMM0.
-    ResultRegs[0] = X86::XMM0;
-  else if (MVT::isFloatingPoint(ArgVT))
-    // FP values in X86-32 go in ST0.
-    ResultRegs[0] = X86::ST0;
-  else {
-    assert(MVT::isInteger(ArgVT) && "Unknown return value type!");
-    
-    // Integer result -> EAX / RAX.
-    // The C calling convention guarantees the return value has been
-    // promoted to at least MVT::i32. The X86-64 ABI doesn't require the
-    // value to be promoted MVT::i64. So we don't have to extend it to
-    // 64-bit.
-    ResultRegs[0] = (ArgVT == MVT::i64) ? X86::RAX : X86::EAX;
-  }
-}
-
-
 SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   assert((Op.getNumOperands() & 1) == 1 && "ISD::RET should have odd # args");
   
@@ -3966,7 +3972,8 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     VTs[i] = Op.getOperand(i*2+1).getValueType();
   
   // Determine which register each value should be copied into.
-  GetRetValueLocs(VTs, NumRegs, DestRegs, Subtarget);
+  GetRetValueLocs(VTs, NumRegs, DestRegs, Subtarget,
+                  DAG.getMachineFunction().getFunction()->getCallingConv());
   
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
