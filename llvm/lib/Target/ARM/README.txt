@@ -21,16 +21,18 @@ The constant island pass has been much improved; all the todo items in the
 previous version of this document have been addressed.  However, there are still
 things that can be done:
 
-1.  When there isn't an existing water, the current MBB is split right after the 
-use.  It would be profitable to look farther forward, especially on Thumb,
+1.  When there isn't an existing water, the current MBB is split right after 
+the use.  It would be profitable to look farther forward, especially on Thumb,
 where negative offsets won't work.
+Now it will put the island at the end of the block if that is in range.  If it
+is not in range things still work as above, which is poor on Thumb.
 
-2. WaterBlockListOffsets might be maintained throughout, rather than computed
-when it is needed.  This would probably lead to faster compile times.
-Similarly, the offsets of blocks might be maintained throughout.
-
-3.  There may be some advantage to trying to be smarter about the initial
+2.  There may be some advantage to trying to be smarter about the initial
 placement, rather than putting everything at the end.
+
+3.  The handling of 2-byte padding for Thumb is overly conservative.  There 
+would be a small gain to keeping accurate track of the padding (which would
+require aligning functions containing constant pools to 4-byte boundaries).
 
 //===---------------------------------------------------------------------===//
 
