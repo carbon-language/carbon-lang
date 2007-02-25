@@ -26,6 +26,8 @@
 
 using namespace llvm;
 
+#if 0
+
 // A utility function for allocating memory, checking for allocation failures,
 // and ensuring the contents are zeroed.
 inline static uint64_t* getClearedMemory(uint32_t numWords) {
@@ -1586,4 +1588,6 @@ void APInt::dump() const
   }
   cerr << " (" << this->toString(10, false) << ")\n" << std::setbase(10);
 }
+#endif
+
 #endif
