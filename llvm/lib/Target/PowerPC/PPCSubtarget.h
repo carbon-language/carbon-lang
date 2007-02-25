@@ -134,6 +134,9 @@ public:
 
   bool isDarwin() const { return IsDarwin; }
 
+  bool isMachoABI() const { return IsDarwin; }
+  bool isELF_ABI() const { return !IsDarwin; }
+
   unsigned getAsmFlavor() const {
     return AsmFlavor != Unset ? unsigned(AsmFlavor) : 0;
   }

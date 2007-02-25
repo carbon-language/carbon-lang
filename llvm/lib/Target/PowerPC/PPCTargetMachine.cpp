@@ -35,14 +35,14 @@ const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
 }
 
 unsigned PPC32TargetMachine::getJITMatchQuality() {
-#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
+#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)
   if (sizeof(void*) == 4)
     return 10;
 #endif
   return 0;
 }
 unsigned PPC64TargetMachine::getJITMatchQuality() {
-#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
+#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)
   if (sizeof(void*) == 8)
     return 10;
 #endif
