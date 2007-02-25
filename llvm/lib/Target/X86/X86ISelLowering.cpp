@@ -815,9 +815,8 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
-  std::vector<MVT::ValueType> NodeTys;
-  NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  // Returns a chain & a flag for retval copy to use.
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -856,10 +855,10 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     NumBytesForCalleeToPush = NumSRetBytes;
   }
   
-  NodeTys.clear();
-  NodeTys.push_back(MVT::Other);   // Returns a chain
   if (RetVT != MVT::Other)
-    NodeTys.push_back(MVT::Flag);  // Returns a flag for retval copy to use.
+    NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  else
+    NodeTys = DAG.getVTList(MVT::Other);
   Ops.clear();
   Ops.push_back(Chain);
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
@@ -870,19 +869,18 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     InFlag = Chain.getValue(1);
 
   std::vector<SDOperand> ResultVals;
-  NodeTys.clear();
   switch (RetVT) {
   default: assert(0 && "Unknown value type to return!");
   case MVT::Other: break;
   case MVT::i8:
     Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(MVT::i8);
+    NodeTys = DAG.getVTList(MVT::i8, MVT::Other);
     break;
   case MVT::i16:
     Chain = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(MVT::i16);
+    NodeTys = DAG.getVTList(MVT::i16, MVT::Other);
     break;
   case MVT::i32:
     if (Op.Val->getValueType(1) == MVT::i32) {
@@ -891,12 +889,12 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
       Chain = DAG.getCopyFromReg(Chain, X86::EDX, MVT::i32,
                                  Chain.getValue(2)).getValue(1);
       ResultVals.push_back(Chain.getValue(0));
-      NodeTys.push_back(MVT::i32);
+      NodeTys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
     } else {
       Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
       ResultVals.push_back(Chain.getValue(0));
+      NodeTys = DAG.getVTList(MVT::i32, MVT::Other);
     }
-    NodeTys.push_back(MVT::i32);
     break;
   case MVT::v16i8:
   case MVT::v8i16:
@@ -907,7 +905,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     assert(!isStdCall && "Unknown value type to return!");
     Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(RetVT);
+    NodeTys = DAG.getVTList(RetVT, MVT::Other);
     break;
   case MVT::f32:
   case MVT::f64: {
@@ -947,7 +945,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
       // operation is okay to eliminate if we allow excess FP precision.
       RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
     ResultVals.push_back(RetVal);
-    NodeTys.push_back(RetVT);
+    NodeTys = DAG.getVTList(RetVT, MVT::Other);
     break;
   }
   }
@@ -957,7 +955,6 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     return Chain;
 
   // Otherwise, merge everything together with a MERGE_VALUES node.
-  NodeTys.push_back(MVT::Other);
   ResultVals.push_back(Chain);
   SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
                               &ResultVals[0], ResultVals.size());
@@ -1367,9 +1364,8 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
-  std::vector<MVT::ValueType> NodeTys;
-  NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  // Returns a chain & a flag for retval copy to use.
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -1388,10 +1384,11 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
                       NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  NodeTys.clear();
-  NodeTys.push_back(MVT::Other);   // Returns a chain
   if (RetVT != MVT::Other)
-    NodeTys.push_back(MVT::Flag);  // Returns a flag for retval copy to use.
+    // Returns a flag for retval copy to use.
+    NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  else
+    NodeTys = DAG.getVTList(MVT::Other);
   Ops.clear();
   Ops.push_back(Chain);
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
@@ -1402,24 +1399,23 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
 
   std::vector<SDOperand> ResultVals;
-  NodeTys.clear();
   switch (RetVT) {
   default: assert(0 && "Unknown value type to return!");
   case MVT::Other: break;
   case MVT::i8:
     Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(MVT::i8);
+    NodeTys = DAG.getVTList(MVT::i8, MVT::Other);
     break;
   case MVT::i16:
     Chain = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(MVT::i16);
+    NodeTys = DAG.getVTList(MVT::i16, MVT::Other);
     break;
   case MVT::i32:
     Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(MVT::i32);
+    NodeTys = DAG.getVTList(MVT::i32, MVT::Other);
     break;
   case MVT::i64:
     if (Op.Val->getValueType(1) == MVT::i64) {
@@ -1429,12 +1425,12 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
       Chain = DAG.getCopyFromReg(Chain, X86::RDX, MVT::i64,
                                  Chain.getValue(2)).getValue(1);
       ResultVals.push_back(Chain.getValue(0));
-      NodeTys.push_back(MVT::i64);
+      NodeTys = DAG.getVTList(MVT::i64, MVT::i64, MVT::Other);
     } else {
       Chain = DAG.getCopyFromReg(Chain, X86::RAX, MVT::i64, InFlag).getValue(1);
       ResultVals.push_back(Chain.getValue(0));
+      NodeTys = DAG.getVTList(MVT::i64, MVT::Other);
     }
-    NodeTys.push_back(MVT::i64);
     break;
   case MVT::f32:
   case MVT::f64:
@@ -1447,7 +1443,7 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     // FIXME: long double support?
     Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(RetVT);
+    NodeTys = DAG.getVTList(RetVT, MVT::Other);
     break;
   }
 
@@ -1456,7 +1452,6 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     return Chain;
 
   // Otherwise, merge everything together with a MERGE_VALUES node.
-  NodeTys.push_back(MVT::Other);
   ResultVals.push_back(Chain);
   SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
                               &ResultVals[0], ResultVals.size());
@@ -1805,9 +1800,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
     InFlag = Chain.getValue(1);
   }
 
-  std::vector<MVT::ValueType> NodeTys;
-  NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  // Returns a chain & a flag for retval copy to use.
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -1831,10 +1825,11 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
                       NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  NodeTys.clear();
-  NodeTys.push_back(MVT::Other);   // Returns a chain
   if (RetVT != MVT::Other)
-    NodeTys.push_back(MVT::Flag);  // Returns a flag for retval copy to use.
+    // Returns a flag for retval copy to use.
+    NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  else
+    NodeTys = DAG.getVTList(MVT::Other);
   Ops.clear();
   Ops.push_back(Chain);
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
@@ -1845,19 +1840,18 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
     InFlag = Chain.getValue(1);
 
   std::vector<SDOperand> ResultVals;
-  NodeTys.clear();
   switch (RetVT) {
   default: assert(0 && "Unknown value type to return!");
   case MVT::Other: break;
   case MVT::i8:
     Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(MVT::i8);
+    NodeTys = DAG.getVTList(MVT::i8, MVT::Other);
     break;
   case MVT::i16:
     Chain = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
-    NodeTys.push_back(MVT::i16);
+    NodeTys = DAG.getVTList(MVT::i16, MVT::Other);
     break;
   case MVT::i32:
     if (Op.Val->getValueType(1) == MVT::i32) {
@@ -1866,12 +1860,12 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
       Chain = DAG.getCopyFromReg(Chain, X86::EDX, MVT::i32,
                                  Chain.getValue(2)).getValue(1);
       ResultVals.push_back(Chain.getValue(0));
-      NodeTys.push_back(MVT::i32);
+      NodeTys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
     } else {
       Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
       ResultVals.push_back(Chain.getValue(0));
+      NodeTys = DAG.getVTList(MVT::i32, MVT::Other);
     }
-    NodeTys.push_back(MVT::i32);
     break;
   case MVT::v16i8:
   case MVT::v8i16:
@@ -1884,7 +1878,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
    } else {
      Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
      ResultVals.push_back(Chain.getValue(0));
-     NodeTys.push_back(RetVT);
+     NodeTys = DAG.getVTList(RetVT, MVT::Other);
    }
    break;
   case MVT::f32:
@@ -1925,7 +1919,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
       // operation is okay to eliminate if we allow excess FP precision.
       RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
     ResultVals.push_back(RetVal);
-    NodeTys.push_back(RetVT);
+    NodeTys = DAG.getVTList(RetVT, MVT::Other);
+
     break;
   }
   }
@@ -1936,7 +1931,6 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
     return Chain;
 
   // Otherwise, merge everything together with a MERGE_VALUES node.
-  NodeTys.push_back(MVT::Other);
   ResultVals.push_back(Chain);
   SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
                               &ResultVals[0], ResultVals.size());
@@ -3771,9 +3765,7 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   }
   Constant *CS = ConstantStruct::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  std::vector<MVT::ValueType> Tys;
-  Tys.push_back(SrcVT);
-  Tys.push_back(MVT::Other);
+  SDVTList Tys = DAG.getVTList(SrcVT, MVT::Other);
   SmallVector<SDOperand, 3> Ops;
   Ops.push_back(DAG.getEntryNode());
   Ops.push_back(CPIdx);
@@ -3805,9 +3797,7 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   }
   CS = ConstantStruct::get(CV);
   CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  Tys.clear();
-  Tys.push_back(VT);
-  Tys.push_back(MVT::Other);
+  Tys = DAG.getVTList(VT, MVT::Other);
   Ops.clear();
   Ops.push_back(DAG.getEntryNode());
   Ops.push_back(CPIdx);
@@ -4202,9 +4192,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
                             Op.getOperand(1), InFlag);
   InFlag = Chain.getValue(1);
 
-  std::vector<MVT::ValueType> Tys;
-  Tys.push_back(MVT::Other);
-  Tys.push_back(MVT::Flag);
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
@@ -4220,9 +4208,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     Chain  = DAG.getCopyToReg(Chain, (CVT == MVT::i64) ? X86::RCX : X86::ECX,
                               Left, InFlag);
     InFlag = Chain.getValue(1);
-    Tys.clear();
-    Tys.push_back(MVT::Other);
-    Tys.push_back(MVT::Flag);
+    Tys = DAG.getVTList(MVT::Other, MVT::Flag);
     Ops.clear();
     Ops.push_back(Chain);
     Ops.push_back(DAG.getValueType(MVT::i8));
@@ -4338,9 +4324,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
                             Op.getOperand(2), InFlag);
   InFlag = Chain.getValue(1);
 
-  std::vector<MVT::ValueType> Tys;
-  Tys.push_back(MVT::Other);
-  Tys.push_back(MVT::Flag);
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
@@ -4356,9 +4340,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
     Chain  = DAG.getCopyToReg(Chain, (CVT == MVT::i64) ? X86::RCX : X86::ECX,
                               Left, InFlag);
     InFlag = Chain.getValue(1);
-    Tys.clear();
-    Tys.push_back(MVT::Other);
-    Tys.push_back(MVT::Flag);
+    Tys = DAG.getVTList(MVT::Other, MVT::Flag);
     Ops.clear();
     Ops.push_back(Chain);
     Ops.push_back(DAG.getValueType(MVT::i8));
@@ -4417,9 +4399,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand
 X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
-  std::vector<MVT::ValueType> Tys;
-  Tys.push_back(MVT::Other);
-  Tys.push_back(MVT::Flag);
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
   std::vector<SDOperand> Ops;
   Ops.push_back(Op.getOperand(0));
   SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &Ops[0], Ops.size());
@@ -4432,8 +4412,8 @@ X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
                                 DAG.getConstant(32, MVT::i8));
     Ops.push_back(DAG.getNode(ISD::OR, MVT::i64, Copy1, Tmp));
     Ops.push_back(Copy2.getValue(1));
-    Tys[0] = MVT::i64;
-    Tys[1] = MVT::Other;
+    
+    Tys = DAG.getVTList(MVT::i64, MVT::Other);
   } else {
     SDOperand Copy1 = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
     SDOperand Copy2 = DAG.getCopyFromReg(Copy1.getValue(1), X86::EDX,
@@ -4441,8 +4421,7 @@ X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(Copy1);
     Ops.push_back(Copy2);
     Ops.push_back(Copy2.getValue(1));
-    Tys[0] = Tys[1] = MVT::i32;
-    Tys.push_back(MVT::Other);
+    Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
   }
   return DAG.getNode(ISD::MERGE_VALUES, Tys, &Ops[0], Ops.size());
 }
@@ -5058,9 +5037,7 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                        LD->getSrcValueOffset());
   } else {
     // Just use movups, it's shorter.
-    std::vector<MVT::ValueType> Tys;
-    Tys.push_back(MVT::v4f32);
-    Tys.push_back(MVT::Other);
+    SDVTList Tys = DAG.getVTList(MVT::v4f32, MVT::Other);
     SmallVector<SDOperand, 3> Ops;
     Ops.push_back(Base->getOperand(0));
     Ops.push_back(Base->getOperand(1));
