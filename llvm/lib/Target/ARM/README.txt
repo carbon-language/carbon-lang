@@ -24,8 +24,9 @@ things that can be done:
 1.  When there isn't an existing water, the current MBB is split right after 
 the use.  It would be profitable to look farther forward, especially on Thumb,
 where negative offsets won't work.
-Now it will put the island at the end of the block if that is in range.  If it
-is not in range things still work as above, which is poor on Thumb.
+(Partially fixed:  it will put the island at the end of the block if that is 
+in range.  If it is not in range things still work as above, which is poor on 
+Thumb.)
 
 2.  There may be some advantage to trying to be smarter about the initial
 placement, rather than putting everything at the end.

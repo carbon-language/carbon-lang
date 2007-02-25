@@ -558,7 +558,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   return NewBB;
 }
 
-//// OffsetIsInRange - Checks whether UserOffset is within MaxDisp of
+/// OffsetIsInRange - Checks whether UserOffset is within MaxDisp of
 /// TrialOffset.
 bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset, 
                       unsigned TrialOffset, unsigned MaxDisp, bool NegativeOK) {
@@ -631,7 +631,7 @@ static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
 void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB, int delta)
 {
   MachineFunction::iterator MBBI = BB->getParent()->end();
-  for(int i=BB->getNumber()+1; i<=prior(MBBI)->getNumber(); i++)
+  for(unsigned i=BB->getNumber()+1; i<BB->getParent()->getNumBlockIDs(); i++)
     BBOffsets[i] += delta;
 }
 
