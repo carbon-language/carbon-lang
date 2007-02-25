@@ -148,6 +148,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   allowUnalignedMemoryAccesses = false;
   UseUnderscoreSetJmp = false;
   UseUnderscoreLongJmp = false;
+  SelectIsExpensive = false;
   IntDivIsCheap = false;
   Pow2DivIsCheap = false;
   StackPointerRegisterToSaveRestore = 0;
