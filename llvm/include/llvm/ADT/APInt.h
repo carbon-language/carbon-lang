@@ -60,6 +60,7 @@ namespace APIntOps {
 /// @brief Class for arbitrary precision integers.
 class APInt {
 public:
+
   uint32_t BitWidth;      ///< The number of bits in this APInt.
 
   /// This union is used to store the integer value. When the
@@ -75,6 +76,9 @@ public:
     APINT_BITS_PER_WORD = sizeof(uint64_t) * 8,
     APINT_WORD_SIZE = sizeof(uint64_t)
   };
+
+  // Fast internal constructor
+  APInt(uint64_t* val, uint32_t bits) : BitWidth(bits), pVal(val) { }
 
   /// Here one word's bitwidth equals to that of uint64_t.
   /// @returns the number of words to hold the integer value of this APInt.
