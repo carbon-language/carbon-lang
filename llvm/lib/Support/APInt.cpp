@@ -994,7 +994,7 @@ APInt APInt::shl(uint32_t shiftAmt) const {
   for (; i > offset; --i)
     val[i] = pVal[i-offset] << wordShift |
              pVal[i-offset-1] >> (APINT_BITS_PER_WORD - wordShift);
-  val[offset] = pVal[offset-1] << wordShift;
+  val[offset] = pVal[0] << wordShift;
   for (i = 0; i < offset; ++i)
     val[i] = 0;
   val[getNumWords()-1] &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth);
