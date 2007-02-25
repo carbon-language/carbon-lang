@@ -500,6 +500,7 @@ public:
   
   // These all get lowered before this pass.
   void visitInvoke(InvokeInst &I);
+  void visitInvoke(InvokeInst &I, bool AsTerminator);
   void visitUnwind(UnwindInst &I);
 
   void visitScalarBinary(User &I, unsigned OpCode);
@@ -1102,44 +1103,49 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
 }
 
 void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
+  assert(0 && "Should never be visited directly");
+}
+void SelectionDAGLowering::visitInvoke(InvokeInst &I, bool AsTerminator) {
   // Retrieve successors.
   MachineBasicBlock *Return = FuncInfo.MBBMap[I.getSuccessor(0)];
   MachineBasicBlock *LandingPad = FuncInfo.MBBMap[I.getSuccessor(1)];
   
-  // Mark landing pad so that it doesn't get deleted in branch folding.
-  LandingPad->setIsLandingPad();
-  
-  // Insert a label before the invoke call to mark the try range.
-  // This can be used to detect deletion of the invoke via the
-  // MachineModuleInfo.
-  MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-  unsigned BeginLabel = MMI->NextLabelID();
-  DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
-                          DAG.getConstant(BeginLabel, MVT::i32)));
+  if (!AsTerminator) {
+    // Mark landing pad so that it doesn't get deleted in branch folding.
+    LandingPad->setIsLandingPad();
+    
+    // Insert a label before the invoke call to mark the try range.
+    // This can be used to detect deletion of the invoke via the
+    // MachineModuleInfo.
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+    unsigned BeginLabel = MMI->NextLabelID();
+    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
+                            DAG.getConstant(BeginLabel, MVT::i32)));
 
-  LowerCallTo(I, I.getCalledValue()->getType(),
-                 I.getCallingConv(),
-                 false,
-                 getValue(I.getOperand(0)),
-                 3);
+    LowerCallTo(I, I.getCalledValue()->getType(),
+                   I.getCallingConv(),
+                   false,
+                   getValue(I.getOperand(0)),
+                   3);
 
-  // Insert a label before the invoke call to mark the try range.
-  // This can be used to detect deletion of the invoke via the
-  // MachineModuleInfo.
-  unsigned EndLabel = MMI->NextLabelID();
-  DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
-                          DAG.getConstant(EndLabel, MVT::i32)));
-                          
-  // Inform MachineModuleInfo of range.    
-  MMI->addInvoke(LandingPad, BeginLabel, EndLabel);
-
-  // Drop into normal successor.
-  DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(), 
-                          DAG.getBasicBlock(Return)));
-                          
-  // Update successor info
-  CurMBB->addSuccessor(Return);
-  CurMBB->addSuccessor(LandingPad);
+    // Insert a label before the invoke call to mark the try range.
+    // This can be used to detect deletion of the invoke via the
+    // MachineModuleInfo.
+    unsigned EndLabel = MMI->NextLabelID();
+    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
+                            DAG.getConstant(EndLabel, MVT::i32)));
+                            
+    // Inform MachineModuleInfo of range.    
+    MMI->addInvoke(LandingPad, BeginLabel, EndLabel);
+                            
+    // Update successor info
+    CurMBB->addSuccessor(Return);
+    CurMBB->addSuccessor(LandingPad);
+  } else {
+    // Drop into normal successor.
+    DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(), 
+                            DAG.getBasicBlock(Return)));
+  }
 }
 
 void SelectionDAGLowering::visitUnwind(UnwindInst &I) {
@@ -4216,6 +4222,10 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   for (BasicBlock::iterator I = LLVMBB->begin(), E = --LLVMBB->end();
        I != E; ++I)
     SDL.visit(*I);
+    
+  // Lower call part of invoke.
+  InvokeInst *Invoke = dyn_cast<InvokeInst>(LLVMBB->getTerminator());
+  if (Invoke) SDL.visitInvoke(*Invoke, false);
   
   // Ensure that all instructions which are used outside of their defining
   // blocks are available as virtual registers.
@@ -4328,7 +4338,12 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   }
 
   // Lower the terminator after the copies are emitted.
-  SDL.visit(*LLVMBB->getTerminator());
+  if (Invoke) {
+    // Just the branch part of invoke.
+    SDL.visitInvoke(*Invoke, true);
+  } else {
+    SDL.visit(*LLVMBB->getTerminator());
+  }
 
   // Copy over any CaseBlock records that may now exist due to SwitchInst
   // lowering, as well as any jump table information.
