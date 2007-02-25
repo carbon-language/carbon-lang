@@ -609,17 +609,13 @@ APInt APInt::operator~() const {
 
 /// @brief Toggle every bit to its opposite value.
 APInt& APInt::flip() {
-  if (isSingleWord()) VAL = (~(VAL << 
-        (APINT_BITS_PER_WORD - BitWidth))) >> (APINT_BITS_PER_WORD - BitWidth);
-  else {
-    uint32_t i = 0;
-    for (; i < getNumWords() - 1; ++i)
-      pVal[i] = ~pVal[i];
-    uint32_t offset = 
-      APINT_BITS_PER_WORD - (BitWidth - APINT_BITS_PER_WORD * (i - 1));
-    pVal[i] = (~(pVal[i] << offset)) >> offset;
+  if (isSingleWord()) {
+    VAL = ~VAL;
+    return clearUnusedBits();
   }
-  return *this;
+  for (uint32_t i = 0; i < getNumWords(); ++i)
+    pVal[i] = ~pVal[i];
+  return clearUnusedBits();
 }
 
 /// Toggle a given bit to its opposite value whose position is given 
@@ -843,19 +839,91 @@ double APInt::roundToDouble(bool isSigned) const {
 // Truncate to new width.
 void APInt::trunc(uint32_t width) {
   assert(width < BitWidth && "Invalid APInt Truncate request");
-  // FIXME: implement
+  assert(width >= IntegerType::MIN_INT_BITS && "Can't truncate to 0 bits");
+  uint32_t wordsBefore = getNumWords();
+  BitWidth = width;
+  uint32_t wordsAfter = getNumWords();
+  if (wordsBefore != wordsAfter) {
+    if (wordsAfter == 1) {
+      uint64_t *tmp = pVal;
+      VAL = pVal[0];
+      delete tmp;
+    } else {
+      uint64_t *newVal = getClearedMemory(wordsAfter);
+      for (uint32_t i = 0; i < wordsAfter; ++i)
+        newVal[i] = pVal[i];
+      delete pVal;
+      pVal = newVal;
+    }
+  }
+  clearUnusedBits();
 }
 
 // Sign extend to a new width.
 void APInt::sext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt SignExtend request");
-  // FIXME: implement
+  assert(width <= IntegerType::MAX_INT_BITS && "Too many bits");
+  bool isNegative = (*this)[BitWidth-1];
+  // If the sign bit isn't set, this is the same as zext.
+  if (!isNegative) {
+    zext(width);
+    return;
+  }
+
+  // The sign bit is set. First, get some facts
+  uint32_t wordsBefore = getNumWords();
+  uint32_t wordBits = BitWidth % APINT_BITS_PER_WORD;
+  BitWidth = width;
+  uint32_t wordsAfter = getNumWords();
+
+  // Mask the high order word appropriately
+  if (wordsBefore == wordsAfter) {
+    uint32_t newWordBits = width % APINT_BITS_PER_WORD;
+    // The extension is contained to the wordsBefore-1th word.
+    uint64_t mask = (~0ULL >> (APINT_BITS_PER_WORD - newWordBits)) <<  wordBits;
+    if (wordsBefore == 1)
+      VAL |= mask;
+    else
+      pVal[wordsBefore-1] |= mask;
+    clearUnusedBits();
+    return;
+  }
+
+  uint64_t mask = ~0ULL << wordBits;
+  uint64_t *newVal = getMemory(wordsAfter);
+  if (wordsBefore == 1)
+    newVal[0] = VAL | mask;
+  else {
+    for (uint32_t i = 0; i < wordsBefore; ++i)
+      newVal[i] = pVal[i];
+    newVal[wordsBefore-1] |= mask;
+  }
+  for (uint32_t i = wordsBefore; i < wordsAfter; i++)
+    newVal[i] = -1ULL;
+  if (wordsBefore != 1)
+    delete pVal;
+  pVal = newVal;
+  clearUnusedBits();
 }
 
 //  Zero extend to a new width.
 void APInt::zext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt ZeroExtend request");
-  // FIXME: implement
+  assert(width <= IntegerType::MAX_INT_BITS && "Too many bits");
+  uint32_t wordsBefore = getNumWords();
+  BitWidth = width;
+  uint32_t wordsAfter = getNumWords();
+  if (wordsBefore != wordsAfter) {
+    uint64_t *newVal = getClearedMemory(wordsAfter);
+    if (wordsBefore == 1)
+      newVal[0] = VAL;
+    else 
+      for (uint32_t i = 0; i < wordsBefore; ++i)
+        newVal[i] = pVal[i];
+    if (wordsBefore != 1)
+      delete pVal;
+    pVal = newVal;
+  }
 }
 
 /// Arithmetic right-shift this APInt by shiftAmt.
@@ -1406,6 +1474,9 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
   assert(str && "String is null?");
+  bool isNegative = str[0] == '-';
+  if (isNegative)
+    str++, slen--;
   assert(slen <= numbits || radix != 2 && "Insufficient bit width");
   assert(slen*3 <= numbits || radix != 8 && "Insufficient bit width");
   assert(slen*4 <= numbits || radix != 16 && "Insufficient bit width");
@@ -1452,6 +1523,11 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
     else
       apdigit.pVal[0] = digit;
     *this += apdigit;
+  }
+  // If its negative, put it in two's complement form
+  if (isNegative) {
+    this->flip();
+    (*this)++;
   }
 }
 
