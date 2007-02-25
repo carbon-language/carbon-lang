@@ -128,10 +128,6 @@ public:
   /// off of this global value, remove them.  This method is useful for clients
   /// that want to check to see if a global is unused, but don't want to deal
   /// with potentially dead constants hanging off of the globals.
-  ///
-  /// This method tries to make the global dead.  If it detects a user that
-  /// would prevent it from becoming completely dead, it gives up early,
-  /// potentially leaving some dead constant users around.
   void removeDeadConstantUsers();
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
