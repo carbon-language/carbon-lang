@@ -456,7 +456,7 @@ static void GetRetValueLocs(const MVT::ValueType *VTs, unsigned NumVTs,
   case MVT::f64:
     if (Subtarget->is64Bit())
       Reg = X86::XMM0;         // FP values in X86-64 go in XMM0.
-    else if (CC == CallingConv::Fast)
+    else if (CC == CallingConv::Fast && Subtarget->hasSSE2())
       Reg = X86::XMM0;         // FP values in X86-32 with fastcc go in XMM0.
     else
       Reg = X86::ST0;          // FP values in X86-32 go in ST0.
