@@ -114,12 +114,22 @@ public:
   /// by the APInt. This is needed after the most significant word is assigned 
   /// a value to ensure that those bits are zero'd out.
   /// @brief Clear high order bits
-  inline void clearUnusedBits() {
+  inline APInt& clearUnusedBits() {
+    // Compute how many bits are used in the final word
+    uint32_t wordBits = BitWidth % APINT_BITS_PER_WORD;
+    if (wordBits == 0)
+      // If all bits are used, we want to leave the value alone. This also
+      // avoids the undefined behavior of >> when the shfit is the same size as
+      // the word size (64).
+      return *this;
+
+    // Mask out the hight bits.
+    uint64_t mask = ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - wordBits);
     if (isSingleWord())
-      VAL &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth);
+      VAL &= mask;
     else
-      pVal[getNumWords() - 1] &= ~uint64_t(0ULL) >> 
-        (APINT_BITS_PER_WORD - (whichBit(BitWidth - 1) + 1));
+      pVal[getNumWords() - 1] &= mask;
+    return *this;
   }
 
   /// @returns the corresponding word for the specified bit position.
@@ -134,7 +144,9 @@ public:
                   uint8_t radix);
 
   /// This is used by the toString method to divide by the radix. It simply
-  /// provides a more convenient form of divide for internal use.
+  /// provides a more convenient form of divide for internal use since KnuthDiv
+  /// has specific constraints on its inputs. If those constraints are not met
+  /// then it provides a simpler form of divide.
   /// @brief An internal division function for dividing APInts.
   static void divide(const APInt LHS, uint32_t lhsWords, 
                      const APInt &RHS, uint32_t rhsWords,
@@ -481,15 +493,30 @@ public:
   /// @returns true if the argument APInt value is a power of two > 0.
   bool isPowerOf2() const; 
 
+  /// countLeadingZeros - This function is an APInt version of the
+  /// countLeadingZeros_{32,64} functions in MathExtras.h. It counts the number
+  /// of zeros from the most significant bit to the first one bit.
+  /// @returns getNumWords() * APINT_BITS_PER_WORD if the value is zero.
   /// @returns the number of zeros from the most significant bit to the first
   /// one bits.
+  /// @brief Count the number of trailing one bits.
   uint32_t countLeadingZeros() const;
 
+  /// countTrailingZeros - This function is an APInt version of the 
+  /// countTrailingZoers_{32,64} functions in MathExtras.h. It counts 
+  /// the number of zeros from the least significant bit to the first one bit.
+  /// @returns getNumWords() * APINT_BITS_PER_WORD if the value is zero.
   /// @returns the number of zeros from the least significant bit to the first
   /// one bit.
+  /// @brief Count the number of trailing zero bits.
   uint32_t countTrailingZeros() const;
 
+  /// countPopulation - This function is an APInt version of the
+  /// countPopulation_{32,64} functions in MathExtras.h. It counts the number
+  /// of 1 bits in the APInt value. 
+  /// @returns 0 if the value is zero.
   /// @returns the number of set bits.
+  /// @brief Count the number of bits set.
   uint32_t countPopulation() const; 
 
   /// @returns the total number of bits.
@@ -550,9 +577,11 @@ inline uint32_t logBase2(const APInt& APIVal) {
   return APIVal.logBase2(); 
 }
 
-/// @returns the greatest common divisor of the two values 
-/// using Euclid's algorithm.
-APInt GreatestCommonDivisor(const APInt& API1, const APInt& API2);
+/// GreatestCommonDivisor - This function returns the greatest common
+/// divisor of the two APInt values using Enclid's algorithm.
+/// @returns the greatest common divisor of Val1 and Val2
+/// @brief Compute GCD of two APInt values.
+APInt GreatestCommonDivisor(const APInt& Val1, const APInt& Val2);
 
 /// @brief Converts the given APInt to a double value.
 inline double RoundAPIntToDouble(const APInt& APIVal, bool isSigned = false) {
@@ -564,10 +593,12 @@ inline float RoundAPIntToFloat(const APInt& APIVal) {
   return float(RoundAPIntToDouble(APIVal));
 }
 
+/// RoundDoubleToAPInt - This function convert a double value to an APInt value.
 /// @brief Converts the given double value into a APInt.
 APInt RoundDoubleToAPInt(double Double);
 
-/// @brief Converts the given float value into a APInt.
+/// RoundFloatToAPInt - Converts a float value into an APInt value.
+/// @brief Converts a float value into a APInt.
 inline APInt RoundFloatToAPInt(float Float) {
   return RoundDoubleToAPInt(double(Float));
 }
