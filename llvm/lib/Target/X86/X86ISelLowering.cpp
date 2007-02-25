@@ -434,7 +434,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 static void GetRetValueLocs(const MVT::ValueType *VTs, unsigned NumVTs,
                             unsigned *ResultRegs,
                             const X86Subtarget *Subtarget,
-                            unsigned CallingConv) {
+                            unsigned CC) {
   if (NumVTs == 0) return;
   
   if (NumVTs == 2) {
@@ -456,6 +456,8 @@ static void GetRetValueLocs(const MVT::ValueType *VTs, unsigned NumVTs,
   case MVT::f64:
     if (Subtarget->is64Bit())
       Reg = X86::XMM0;         // FP values in X86-64 go in XMM0.
+    else if (CC == CallingConv::Fast)
+      Reg = X86::XMM0;         // FP values in X86-32 with fastcc go in XMM0.
     else
       Reg = X86::ST0;          // FP values in X86-32 go in ST0.
     break;
