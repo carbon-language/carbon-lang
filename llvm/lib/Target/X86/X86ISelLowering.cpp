@@ -520,7 +520,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
-  std::vector<SDOperand> ArgValues;
+  SmallVector<SDOperand, 8> ArgValues;
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
 
   // Add DAG nodes to load the arguments...  On entry to a function on the X86,
@@ -549,8 +549,8 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
   };
   
   // Handle regparm attribute
-  std::vector<bool> ArgInRegs(NumArgs, false);
-  std::vector<bool> SRetArgs(NumArgs, false);
+  SmallVector<bool, 8> ArgInRegs(NumArgs, false);
+  SmallVector<bool, 8> SRetArgs(NumArgs, false);
   if (!isVarArg) {
     for (unsigned i = 0; i<NumArgs; ++i) {
       unsigned Flags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
@@ -642,9 +642,8 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
   MF.getInfo<X86FunctionInfo>()->setBytesToPopOnReturn(BytesToPopOnReturn);
 
   // Return the new list of results.
-  std::vector<MVT::ValueType> RetVTs(Op.Val->value_begin(),
-                                     Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVTs, &ArgValues[0],ArgValues.size());
+  return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
+                     &ArgValues[0], ArgValues.size());
 }
 
 SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
@@ -673,8 +672,8 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   unsigned NumSRetBytes= 0; 
 
   // Handle regparm attribute
-  std::vector<bool> ArgInRegs(NumOps, false);
-  std::vector<bool> SRetArgs(NumOps, false);
+  SmallVector<bool, 8> ArgInRegs(NumOps, false);
+  SmallVector<bool, 8> SRetArgs(NumOps, false);
   for (unsigned i = 0; i<NumOps; ++i) {
     unsigned Flags =
       dyn_cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
@@ -714,8 +713,8 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   unsigned ArgOffset = 0;
   NumXMMRegs = 0;
   NumIntRegs = 0;
-  std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
-  std::vector<SDOperand> MemOpChains;
+  SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
+  SmallVector<SDOperand, 8> MemOpChains;
   SDOperand StackPtr = DAG.getRegister(X86StackPtr, getPointerTy());
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
@@ -817,7 +816,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
   // Returns a chain & a flag for retval copy to use.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
 
@@ -868,7 +867,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   if (RetVT != MVT::Other)
     InFlag = Chain.getValue(1);
 
-  std::vector<SDOperand> ResultVals;
+  SmallVector<SDOperand, 8> ResultVals;
   switch (RetVT) {
   default: assert(0 && "Unknown value type to return!");
   case MVT::Other: break;
@@ -909,15 +908,9 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     break;
   case MVT::f32:
   case MVT::f64: {
-    std::vector<MVT::ValueType> Tys;
-    Tys.push_back(MVT::f64);
-    Tys.push_back(MVT::Other);
-    Tys.push_back(MVT::Flag);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(InFlag);
-    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys,
-                                   &Ops[0], Ops.size());
+    SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
+    SDOperand GROps[] = { Chain, InFlag };
+    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, GROps, 2);
     Chain  = RetVal.getValue(1);
     InFlag = RetVal.getValue(2);
     if (X86ScalarSSE) {
@@ -927,15 +920,11 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
       MachineFunction &MF = DAG.getMachineFunction();
       int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
       SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-      Tys.clear();
-      Tys.push_back(MVT::Other);
-      Ops.clear();
-      Ops.push_back(Chain);
-      Ops.push_back(RetVal);
-      Ops.push_back(StackSlot);
-      Ops.push_back(DAG.getValueType(RetVT));
-      Ops.push_back(InFlag);
-      Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
+      Tys = DAG.getVTList(MVT::Other);
+      SDOperand Ops[] = {
+        Chain, RetVal, StackSlot, DAG.getValueType(RetVT), InFlag
+      };
+      Chain = DAG.getNode(X86ISD::FST, Tys, Ops, 5);
       RetVal = DAG.getLoad(RetVT, Chain, StackSlot, NULL, 0);
       Chain = RetVal.getValue(1);
     }
@@ -1031,7 +1020,7 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  std::vector<SDOperand> ArgValues;
+  SmallVector<SDOperand, 8> ArgValues;
 
   // Add DAG nodes to load the arguments...  On entry to a function on the X86,
   // the stack frame looks like this:
@@ -1153,7 +1142,7 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
     RegSaveFrameIndex = MFI->CreateStackObject(6 * 8 + 8 * 16, 16);
 
     // Store the integer parameter registers.
-    std::vector<SDOperand> MemOps;
+    SmallVector<SDOperand, 8> MemOps;
     SDOperand RSFIN = DAG.getFrameIndex(RegSaveFrameIndex, getPointerTy());
     SDOperand FIN = DAG.getNode(ISD::ADD, getPointerTy(), RSFIN,
                               DAG.getConstant(VarArgsGPOffset, getPointerTy()));
@@ -1191,9 +1180,8 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   BytesCallerReserves = ArgOffset;
 
   // Return the new list of results.
-  std::vector<MVT::ValueType> RetVTs(Op.Val->value_begin(),
-                                     Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVTs, &ArgValues[0],ArgValues.size());
+  return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
+                     &ArgValues[0], ArgValues.size());
 }
 
 SDOperand
@@ -1269,8 +1257,8 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   unsigned ArgOffset = 0;
   NumIntRegs = 0;
   NumXMMRegs = 0;
-  std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
-  std::vector<SDOperand> MemOpChains;
+  SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
+  SmallVector<SDOperand, 8> MemOpChains;
   SDOperand StackPtr = DAG.getRegister(X86StackPtr, getPointerTy());
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
@@ -1366,7 +1354,7 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
 
   // Returns a chain & a flag for retval copy to use.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
 
@@ -1398,7 +1386,7 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   if (RetVT != MVT::Other)
     InFlag = Chain.getValue(1);
 
-  std::vector<SDOperand> ResultVals;
+  SmallVector<SDOperand, 8> ResultVals;
   switch (RetVT) {
   default: assert(0 && "Unknown value type to return!");
   case MVT::Other: break;
@@ -1492,7 +1480,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
-  std::vector<SDOperand> ArgValues;
+  SmallVector<SDOperand, 8> ArgValues;
 
   // Add DAG nodes to load the arguments...  On entry to a function the stack
   // frame looks like this:
@@ -1630,9 +1618,8 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
   }
 
   // Return the new list of results.
-  std::vector<MVT::ValueType> RetVTs(Op.Val->value_begin(),
-                                     Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVTs, &ArgValues[0],ArgValues.size());
+  return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
+                     &ArgValues[0], ArgValues.size());
 }
 
 SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
@@ -1710,8 +1697,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   // Arguments go on the stack in reverse order, as specified by the ABI.
   unsigned ArgOffset = 0;
   NumIntRegs = 0;
-  std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
-  std::vector<SDOperand> MemOpChains;
+  SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
+  SmallVector<SDOperand, 8> MemOpChains;
   SDOperand StackPtr = DAG.getRegister(X86StackPtr, getPointerTy());
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
@@ -1802,7 +1789,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
   // Returns a chain & a flag for retval copy to use.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
 
@@ -1839,7 +1826,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   if (RetVT != MVT::Other)
     InFlag = Chain.getValue(1);
 
-  std::vector<SDOperand> ResultVals;
+  SmallVector<SDOperand, 8> ResultVals;
   switch (RetVT) {
   default: assert(0 && "Unknown value type to return!");
   case MVT::Other: break;
@@ -1883,11 +1870,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
    break;
   case MVT::f32:
   case MVT::f64: {
-    std::vector<MVT::ValueType> Tys;
-    Tys.push_back(MVT::f64);
-    Tys.push_back(MVT::Other);
-    Tys.push_back(MVT::Flag);
-    std::vector<SDOperand> Ops;
+    SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
+    SmallVector<SDOperand, 8> Ops;
     Ops.push_back(Chain);
     Ops.push_back(InFlag);
     SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys,
@@ -1901,8 +1885,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
       MachineFunction &MF = DAG.getMachineFunction();
       int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
       SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-      Tys.clear();
-      Tys.push_back(MVT::Other);
+      Tys = DAG.getVTList(MVT::Other);
       Ops.clear();
       Ops.push_back(Chain);
       Ops.push_back(RetVal);
@@ -2133,16 +2116,15 @@ bool X86::isPSHUFLWMask(SDNode *N) {
 
 /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to SHUFP*.
-static bool isSHUFPMask(std::vector<SDOperand> &N) {
-  unsigned NumElems = N.size();
+static bool isSHUFPMask(const SDOperand *Elems, unsigned NumElems) {
   if (NumElems != 2 && NumElems != 4) return false;
 
   unsigned Half = NumElems / 2;
   for (unsigned i = 0; i < Half; ++i)
-    if (!isUndefOrInRange(N[i], 0, NumElems))
+    if (!isUndefOrInRange(Elems[i], 0, NumElems))
       return false;
   for (unsigned i = Half; i < NumElems; ++i)
-    if (!isUndefOrInRange(N[i], NumElems, NumElems*2))
+    if (!isUndefOrInRange(Elems[i], NumElems, NumElems*2))
       return false;
 
   return true;
@@ -2150,32 +2132,29 @@ static bool isSHUFPMask(std::vector<SDOperand> &N) {
 
 bool X86::isSHUFPMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
-  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-  return ::isSHUFPMask(Ops);
+  return ::isSHUFPMask(N->op_begin(), N->getNumOperands());
 }
 
 /// isCommutedSHUFP - Returns true if the shuffle mask is except
 /// the reverse of what x86 shuffles want. x86 shuffles requires the lower
 /// half elements to come from vector 1 (which would equal the dest.) and
 /// the upper half to come from vector 2.
-static bool isCommutedSHUFP(std::vector<SDOperand> &Ops) {
-  unsigned NumElems = Ops.size();
-  if (NumElems != 2 && NumElems != 4) return false;
+static bool isCommutedSHUFP(const SDOperand *Ops, unsigned NumOps) {
+  if (NumOps != 2 && NumOps != 4) return false;
 
-  unsigned Half = NumElems / 2;
+  unsigned Half = NumOps / 2;
   for (unsigned i = 0; i < Half; ++i)
-    if (!isUndefOrInRange(Ops[i], NumElems, NumElems*2))
+    if (!isUndefOrInRange(Ops[i], NumOps, NumOps*2))
       return false;
-  for (unsigned i = Half; i < NumElems; ++i)
-    if (!isUndefOrInRange(Ops[i], 0, NumElems))
+  for (unsigned i = Half; i < NumOps; ++i)
+    if (!isUndefOrInRange(Ops[i], 0, NumOps))
       return false;
   return true;
 }
 
 static bool isCommutedSHUFP(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
-  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-  return isCommutedSHUFP(Ops);
+  return isCommutedSHUFP(N->op_begin(), N->getNumOperands());
 }
 
 /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -2254,21 +2233,21 @@ bool X86::isMOVHPMask(SDNode *N) {
 
 /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKL.
-bool static isUNPCKLMask(std::vector<SDOperand> &N, bool V2IsSplat = false) {
-  unsigned NumElems = N.size();
-  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
+bool static isUNPCKLMask(const SDOperand *Elts, unsigned NumElts,
+                         bool V2IsSplat = false) {
+  if (NumElts != 2 && NumElts != 4 && NumElts != 8 && NumElts != 16)
     return false;
 
-  for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
-    SDOperand BitI  = N[i];
-    SDOperand BitI1 = N[i+1];
+  for (unsigned i = 0, j = 0; i != NumElts; i += 2, ++j) {
+    SDOperand BitI  = Elts[i];
+    SDOperand BitI1 = Elts[i+1];
     if (!isUndefOrEqual(BitI, j))
       return false;
     if (V2IsSplat) {
-      if (isUndefOrEqual(BitI1, NumElems))
+      if (isUndefOrEqual(BitI1, NumElts))
         return false;
     } else {
-      if (!isUndefOrEqual(BitI1, j + NumElems))
+      if (!isUndefOrEqual(BitI1, j + NumElts))
         return false;
     }
   }
@@ -2278,27 +2257,26 @@ bool static isUNPCKLMask(std::vector<SDOperand> &N, bool V2IsSplat = false) {
 
 bool X86::isUNPCKLMask(SDNode *N, bool V2IsSplat) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
-  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-  return ::isUNPCKLMask(Ops, V2IsSplat);
+  return ::isUNPCKLMask(N->op_begin(), N->getNumOperands(), V2IsSplat);
 }
 
 /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKH.
-bool static isUNPCKHMask(std::vector<SDOperand> &N, bool V2IsSplat = false) {
-  unsigned NumElems = N.size();
-  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
+bool static isUNPCKHMask(const SDOperand *Elts, unsigned NumElts,
+                         bool V2IsSplat = false) {
+  if (NumElts != 2 && NumElts != 4 && NumElts != 8 && NumElts != 16)
     return false;
 
-  for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
-    SDOperand BitI  = N[i];
-    SDOperand BitI1 = N[i+1];
-    if (!isUndefOrEqual(BitI, j + NumElems/2))
+  for (unsigned i = 0, j = 0; i != NumElts; i += 2, ++j) {
+    SDOperand BitI  = Elts[i];
+    SDOperand BitI1 = Elts[i+1];
+    if (!isUndefOrEqual(BitI, j + NumElts/2))
       return false;
     if (V2IsSplat) {
-      if (isUndefOrEqual(BitI1, NumElems))
+      if (isUndefOrEqual(BitI1, NumElts))
         return false;
     } else {
-      if (!isUndefOrEqual(BitI1, j + NumElems/2 + NumElems))
+      if (!isUndefOrEqual(BitI1, j + NumElts/2 + NumElts))
         return false;
     }
   }
@@ -2308,8 +2286,7 @@ bool static isUNPCKHMask(std::vector<SDOperand> &N, bool V2IsSplat = false) {
 
 bool X86::isUNPCKHMask(SDNode *N, bool V2IsSplat) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
-  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-  return ::isUNPCKHMask(Ops, V2IsSplat);
+  return ::isUNPCKHMask(N->op_begin(), N->getNumOperands(), V2IsSplat);
 }
 
 /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
@@ -2338,17 +2315,15 @@ bool X86::isUNPCKL_v_undef_Mask(SDNode *N) {
 /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVSS,
 /// MOVSD, and MOVD, i.e. setting the lowest element.
-static bool isMOVLMask(std::vector<SDOperand> &N) {
-  unsigned NumElems = N.size();
-  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
+static bool isMOVLMask(const SDOperand *Elts, unsigned NumElts) {
+  if (NumElts != 2 && NumElts != 4 && NumElts != 8 && NumElts != 16)
     return false;
 
-  if (!isUndefOrEqual(N[0], NumElems))
+  if (!isUndefOrEqual(Elts[0], NumElts))
     return false;
 
-  for (unsigned i = 1; i < NumElems; ++i) {
-    SDOperand Arg = N[i];
-    if (!isUndefOrEqual(Arg, i))
+  for (unsigned i = 1; i < NumElts; ++i) {
+    if (!isUndefOrEqual(Elts[i], i))
       return false;
   }
 
@@ -2357,27 +2332,26 @@ static bool isMOVLMask(std::vector<SDOperand> &N) {
 
 bool X86::isMOVLMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
-  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-  return ::isMOVLMask(Ops);
+  return ::isMOVLMask(N->op_begin(), N->getNumOperands());
 }
 
 /// isCommutedMOVL - Returns true if the shuffle mask is except the reverse
 /// of what x86 movss want. X86 movs requires the lowest  element to be lowest
 /// element of vector 2 and the other elements to come from vector 1 in order.
-static bool isCommutedMOVL(std::vector<SDOperand> &Ops, bool V2IsSplat = false,
+static bool isCommutedMOVL(const SDOperand *Ops, unsigned NumOps,
+                           bool V2IsSplat = false,
                            bool V2IsUndef = false) {
-  unsigned NumElems = Ops.size();
-  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
+  if (NumOps != 2 && NumOps != 4 && NumOps != 8 && NumOps != 16)
     return false;
 
   if (!isUndefOrEqual(Ops[0], 0))
     return false;
 
-  for (unsigned i = 1; i < NumElems; ++i) {
+  for (unsigned i = 1; i < NumOps; ++i) {
     SDOperand Arg = Ops[i];
-    if (!(isUndefOrEqual(Arg, i+NumElems) ||
-          (V2IsUndef && isUndefOrInRange(Arg, NumElems, NumElems*2)) ||
-          (V2IsSplat && isUndefOrEqual(Arg, NumElems))))
+    if (!(isUndefOrEqual(Arg, i+NumOps) ||
+          (V2IsUndef && isUndefOrInRange(Arg, NumOps, NumOps*2)) ||
+          (V2IsSplat && isUndefOrEqual(Arg, NumOps))))
       return false;
   }
 
@@ -2387,8 +2361,8 @@ static bool isCommutedMOVL(std::vector<SDOperand> &Ops, bool V2IsSplat = false,
 static bool isCommutedMOVL(SDNode *N, bool V2IsSplat = false,
                            bool V2IsUndef = false) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
-  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-  return isCommutedMOVL(Ops, V2IsSplat, V2IsUndef);
+  return isCommutedMOVL(N->op_begin(), N->getNumOperands(),
+                        V2IsSplat, V2IsUndef);
 }
 
 /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -2607,7 +2581,7 @@ static SDOperand CommuteVectorShuffle(SDOperand Op, SDOperand &V1,
   MVT::ValueType MaskVT = Mask.getValueType();
   MVT::ValueType EltVT = MVT::getVectorBaseType(MaskVT);
   unsigned NumElems = Mask.getNumOperands();
-  std::vector<SDOperand> MaskVec;
+  SmallVector<SDOperand, 8> MaskVec;
 
   for (unsigned i = 0; i != NumElems; ++i) {
     SDOperand Arg = Mask.getOperand(i);
@@ -2722,7 +2696,7 @@ static SDOperand NormalizeMask(SDOperand Mask, SelectionDAG &DAG) {
   assert(Mask.getOpcode() == ISD::BUILD_VECTOR);
 
   bool Changed = false;
-  std::vector<SDOperand> MaskVec;
+  SmallVector<SDOperand, 8> MaskVec;
   unsigned NumElems = Mask.getNumOperands();
   for (unsigned i = 0; i != NumElems; ++i) {
     SDOperand Arg = Mask.getOperand(i);
@@ -2748,7 +2722,7 @@ static SDOperand getMOVLMask(unsigned NumElems, SelectionDAG &DAG) {
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
   MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
 
-  std::vector<SDOperand> MaskVec;
+  SmallVector<SDOperand, 8> MaskVec;
   MaskVec.push_back(DAG.getConstant(NumElems, BaseVT));
   for (unsigned i = 1; i != NumElems; ++i)
     MaskVec.push_back(DAG.getConstant(i, BaseVT));
@@ -2760,7 +2734,7 @@ static SDOperand getMOVLMask(unsigned NumElems, SelectionDAG &DAG) {
 static SDOperand getUnpacklMask(unsigned NumElems, SelectionDAG &DAG) {
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
   MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
-  std::vector<SDOperand> MaskVec;
+  SmallVector<SDOperand, 8> MaskVec;
   for (unsigned i = 0, e = NumElems/2; i != e; ++i) {
     MaskVec.push_back(DAG.getConstant(i,            BaseVT));
     MaskVec.push_back(DAG.getConstant(i + NumElems, BaseVT));
@@ -2774,7 +2748,7 @@ static SDOperand getUnpackhMask(unsigned NumElems, SelectionDAG &DAG) {
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
   MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
   unsigned Half = NumElems/2;
-  std::vector<SDOperand> MaskVec;
+  SmallVector<SDOperand, 8> MaskVec;
   for (unsigned i = 0; i != Half; ++i) {
     MaskVec.push_back(DAG.getConstant(i + Half,            BaseVT));
     MaskVec.push_back(DAG.getConstant(i + NumElems + Half, BaseVT));
@@ -2790,7 +2764,7 @@ static SDOperand getZeroVector(MVT::ValueType VT, SelectionDAG &DAG) {
   MVT::ValueType EVT = MVT::getVectorBaseType(VT);
   bool isFP = MVT::isFloatingPoint(EVT);
   SDOperand Zero = isFP ? DAG.getConstantFP(0.0, EVT) : DAG.getConstant(0, EVT);
-  std::vector<SDOperand> ZeroVec(NumElems, Zero);
+  SmallVector<SDOperand, 8> ZeroVec(NumElems, Zero);
   return DAG.getNode(ISD::BUILD_VECTOR, VT, &ZeroVec[0], ZeroVec.size());
 }
 
@@ -2833,7 +2807,7 @@ static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, MVT::ValueType VT,
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
   MVT::ValueType EVT = MVT::getVectorBaseType(MaskVT);
   SDOperand Zero = DAG.getConstant(0, EVT);
-  std::vector<SDOperand> MaskVec(NumElems, Zero);
+  SmallVector<SDOperand, 8> MaskVec(NumElems, Zero);
   MaskVec[Idx] = DAG.getConstant(NumElems, EVT);
   SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                &MaskVec[0], MaskVec.size());
@@ -2968,7 +2942,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
                                          DAG);
       MVT::ValueType MaskVT  = MVT::getIntVectorWithNumElements(NumElems);
       MVT::ValueType MaskEVT = MVT::getVectorBaseType(MaskVT);
-      std::vector<SDOperand> MaskVec;
+      SmallVector<SDOperand, 8> MaskVec;
       for (unsigned i = 0; i < NumElems; i++)
         MaskVec.push_back(DAG.getConstant((i == Idx) ? 0 : 1, MaskEVT));
       SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
@@ -2996,7 +2970,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   }
 
   // If element VT is == 32 bits, turn it into a number of shuffles.
-  std::vector<SDOperand> V(NumElems);
+  SmallVector<SDOperand, 8> V;
+  V.resize(NumElems);
   if (NumElems == 4 && NumZero > 0) {
     for (unsigned i = 0; i < 4; ++i) {
       bool isZero = !(NonZeros & (1 << i));
@@ -3036,7 +3011,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       return V[0];
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
     MVT::ValueType EVT = MVT::getVectorBaseType(MaskVT);
-    std::vector<SDOperand> MaskVec;
+    SmallVector<SDOperand, 8> MaskVec;
     bool Reverse = (NonZeros & 0x3) == 2;
     for (unsigned i = 0; i < 2; ++i)
       if (Reverse)
@@ -3187,7 +3162,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     if (VT == MVT::v8i16 && isPSHUFHW_PSHUFLWMask(PermMask.Val)) {
       MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
       MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
-      std::vector<SDOperand> MaskVec;
+      SmallVector<SDOperand, 8> MaskVec;
       for (unsigned i = 0; i != 4; ++i)
         MaskVec.push_back(PermMask.getOperand(i));
       for (unsigned i = 4; i != 8; ++i)
@@ -3220,10 +3195,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   if (NumElems == 4) {
     MVT::ValueType MaskVT = PermMask.getValueType();
     MVT::ValueType MaskEVT = MVT::getVectorBaseType(MaskVT);
-    std::vector<std::pair<int, int> > Locs;
+    SmallVector<std::pair<int, int>, 8> Locs;
     Locs.reserve(NumElems);
-    std::vector<SDOperand> Mask1(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
-    std::vector<SDOperand> Mask2(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
+    SmallVector<SDOperand, 8> Mask1(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
+    SmallVector<SDOperand, 8> Mask2(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
     unsigned NumHi = 0;
     unsigned NumLo = 0;
     // If no more than two elements come from either vector. This can be
@@ -3269,9 +3244,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
 
     // Break it into (shuffle shuffle_hi, shuffle_lo).
     Locs.clear();
-    std::vector<SDOperand> LoMask(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
-    std::vector<SDOperand> HiMask(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
-    std::vector<SDOperand> *MaskPtr = &LoMask;
+    SmallVector<SDOperand,8> LoMask(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
+    SmallVector<SDOperand,8> HiMask(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
+    SmallVector<SDOperand,8> *MaskPtr = &LoMask;
     unsigned MaskIdx = 0;
     unsigned LoIdx = 0;
     unsigned HiIdx = NumElems/2;
@@ -3304,7 +3279,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
                   DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                               &HiMask[0], HiMask.size()));
-    std::vector<SDOperand> MaskOps;
+    SmallVector<SDOperand, 8> MaskOps;
     for (unsigned i = 0; i != NumElems; ++i) {
       if (Locs[i].first == -1) {
         MaskOps.push_back(DAG.getNode(ISD::UNDEF, MaskEVT));
@@ -3343,7 +3318,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
       return Op;
     // SHUFPS the element to the lowest double word, then movss.
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
-    std::vector<SDOperand> IdxVec;
+    SmallVector<SDOperand, 8> IdxVec;
     IdxVec.push_back(DAG.getConstant(Idx, MVT::getVectorBaseType(MaskVT)));
     IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
     IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
@@ -3364,7 +3339,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     // Note if the lower 64 bits of the result of the UNPCKHPD is then stored
     // to a f64mem, the whole operation is folded into a single MOVHPDmr.
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
-    std::vector<SDOperand> IdxVec;
+    SmallVector<SDOperand, 8> IdxVec;
     IdxVec.push_back(DAG.getConstant(1, MVT::getVectorBaseType(MaskVT)));
     IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
     SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
@@ -3400,7 +3375,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
       N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, N1);
       MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
       MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
-      std::vector<SDOperand> MaskVec;
+      SmallVector<SDOperand, 8> MaskVec;
       MaskVec.push_back(DAG.getConstant(4, BaseVT));
       for (unsigned i = 1; i <= 3; ++i)
         MaskVec.push_back(DAG.getConstant(i, BaseVT));
@@ -3604,11 +3579,12 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
                                  StackSlot, NULL, 0);
 
   // Build the FILD
-  std::vector<MVT::ValueType> Tys;
-  Tys.push_back(MVT::f64);
-  Tys.push_back(MVT::Other);
-  if (X86ScalarSSE) Tys.push_back(MVT::Flag);
-  std::vector<SDOperand> Ops;
+  SDVTList Tys;
+  if (X86ScalarSSE)
+    Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
+  else
+    Tys = DAG.getVTList(MVT::f64, MVT::Other);
+  SmallVector<SDOperand, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(StackSlot);
   Ops.push_back(DAG.getValueType(SrcVT));
@@ -3625,9 +3601,8 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
     MachineFunction &MF = DAG.getMachineFunction();
     int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
     SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-    std::vector<MVT::ValueType> Tys;
-    Tys.push_back(MVT::Other);
-    std::vector<SDOperand> Ops;
+    Tys = DAG.getVTList(MVT::Other);
+    SmallVector<SDOperand, 8> Ops;
     Ops.push_back(Chain);
     Ops.push_back(Result);
     Ops.push_back(StackSlot);
@@ -3663,25 +3638,19 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   if (X86ScalarSSE) {
     assert(Op.getValueType() == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, Value, StackSlot, NULL, 0);
-    std::vector<MVT::ValueType> Tys;
-    Tys.push_back(MVT::f64);
-    Tys.push_back(MVT::Other);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(StackSlot);
-    Ops.push_back(DAG.getValueType(Op.getOperand(0).getValueType()));
-    Value = DAG.getNode(X86ISD::FLD, Tys, &Ops[0], Ops.size());
+    SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other);
+    SDOperand Ops[] = {
+      Chain, StackSlot, DAG.getValueType(Op.getOperand(0).getValueType())
+    };
+    Value = DAG.getNode(X86ISD::FLD, Tys, Ops, 3);
     Chain = Value.getValue(1);
     SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize);
     StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
   }
 
   // Build the FP_TO_INT*_IN_MEM
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(Value);
-  Ops.push_back(StackSlot);
-  SDOperand FIST = DAG.getNode(Opc, MVT::Other, &Ops[0], Ops.size());
+  SDOperand Ops[] = { Chain, Value, StackSlot };
+  SDOperand FIST = DAG.getNode(Opc, MVT::Other, Ops, 3);
 
   // Load the result.
   return DAG.getLoad(Op.getValueType(), FIST, StackSlot, NULL, 0);
@@ -3702,9 +3671,7 @@ SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
   }
   Constant *CS = ConstantStruct::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  std::vector<MVT::ValueType> Tys;
-  Tys.push_back(VT);
-  Tys.push_back(MVT::Other);
+  SDVTList Tys = DAG.getVTList(VT, MVT::Other);
   SmallVector<SDOperand, 3> Ops;
   Ops.push_back(DAG.getEntryNode());
   Ops.push_back(CPIdx);
@@ -3728,9 +3695,7 @@ SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
   }
   Constant *CS = ConstantStruct::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  std::vector<MVT::ValueType> Tys;
-  Tys.push_back(VT);
-  Tys.push_back(MVT::Other);
+  SDVTList Tys = DAG.getVTList(VT, MVT::Other);
   SmallVector<SDOperand, 3> Ops;
   Ops.push_back(DAG.getEntryNode());
   Ops.push_back(CPIdx);
@@ -4193,7 +4158,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
   InFlag = Chain.getValue(1);
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
   Ops.push_back(InFlag);
@@ -4325,7 +4290,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   InFlag = Chain.getValue(1);
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
   Ops.push_back(InFlag);
@@ -4400,30 +4365,28 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
 SDOperand
 X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Op.getOperand(0));
-  SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &Ops[0], Ops.size());
-  Ops.clear();
+  SDOperand TheOp = Op.getOperand(0);
+  SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &TheOp, 1);
   if (Subtarget->is64Bit()) {
     SDOperand Copy1 = DAG.getCopyFromReg(rd, X86::RAX, MVT::i64, rd.getValue(1));
     SDOperand Copy2 = DAG.getCopyFromReg(Copy1.getValue(1), X86::RDX,
                                          MVT::i64, Copy1.getValue(2));
     SDOperand Tmp = DAG.getNode(ISD::SHL, MVT::i64, Copy2,
                                 DAG.getConstant(32, MVT::i8));
-    Ops.push_back(DAG.getNode(ISD::OR, MVT::i64, Copy1, Tmp));
-    Ops.push_back(Copy2.getValue(1));
+    SDOperand Ops[] = {
+      DAG.getNode(ISD::OR, MVT::i64, Copy1, Tmp), Copy2.getValue(1)
+    };
     
     Tys = DAG.getVTList(MVT::i64, MVT::Other);
-  } else {
-    SDOperand Copy1 = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
-    SDOperand Copy2 = DAG.getCopyFromReg(Copy1.getValue(1), X86::EDX,
-                                         MVT::i32, Copy1.getValue(2));
-    Ops.push_back(Copy1);
-    Ops.push_back(Copy2);
-    Ops.push_back(Copy2.getValue(1));
-    Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
+    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 2);
   }
-  return DAG.getNode(ISD::MERGE_VALUES, Tys, &Ops[0], Ops.size());
+  
+  SDOperand Copy1 = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
+  SDOperand Copy2 = DAG.getCopyFromReg(Copy1.getValue(1), X86::EDX,
+                                       MVT::i32, Copy1.getValue(2));
+  SDOperand Ops[] = { Copy1, Copy2, Copy2.getValue(1) };
+  Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
+  return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 3);
 }
 
 SDOperand X86TargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG) {
@@ -4442,7 +4405,7 @@ SDOperand X86TargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG) {
   //   fp_offset         (48 - 48 + 8 * 16)
   //   overflow_arg_area (point to parameters coming in memory).
   //   reg_save_area
-  std::vector<SDOperand> MemOps;
+  SmallVector<SDOperand, 8> MemOps;
   SDOperand FIN = Op.getOperand(1);
   // Store gp_offset
   SDOperand Store = DAG.getStore(Op.getOperand(0),
@@ -4730,8 +4693,10 @@ bool X86TargetLowering::isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
   if (MVT::getSizeInBits(EVT) * NumElts == 64) return false;
   if (NumElts == 2) return true;
   if (NumElts == 4) {
-    return (isMOVLMask(BVOps)  || isCommutedMOVL(BVOps, true) ||
-            isSHUFPMask(BVOps) || isCommutedSHUFP(BVOps));
+    return (isMOVLMask(&BVOps[0], 4)  ||
+            isCommutedMOVL(&BVOps[0], 4, true) ||
+            isSHUFPMask(&BVOps[0], 4) || 
+            isCommutedSHUFP(&BVOps[0], 4));
   }
   return false;
 }
