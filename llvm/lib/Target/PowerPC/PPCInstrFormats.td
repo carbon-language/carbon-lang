@@ -349,21 +349,31 @@ class DSS_Form<bits<10> xo, dag OL, string asmstr,
 
 // 1.7.7 XL-Form
 class XLForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
-               InstrItinClass itin>
+               InstrItinClass itin, list<dag> pattern>
     : I<opcode, OL, asmstr, itin> {
-  bits<3> CRD;
-  bits<2> CRDb;
-  bits<3> CRA;
-  bits<2> CRAb;
-  bits<3> CRB;
-  bits<2> CRBb;
+  bits<5> CRD;
+  bits<5> CRA;
+  bits<5> CRB;
   
-  let Inst{6-8}   = CRD;
-  let Inst{9-10}  = CRDb;
-  let Inst{11-13} = CRA;
-  let Inst{14-15} = CRAb;
-  let Inst{16-18} = CRB;
-  let Inst{19-20} = CRBb;
+  let Pattern = pattern;
+  
+  let Inst{6-10}  = CRD;
+  let Inst{11-15} = CRA;
+  let Inst{16-20} = CRB;
+  let Inst{21-30} = xo;
+  let Inst{31}    = 0;
+}
+
+class XLForm_1_ext<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : I<opcode, OL, asmstr, itin> {
+  bits<5> CRD;
+  
+  let Pattern = pattern;
+  
+  let Inst{6-10}  = CRD;
+  let Inst{11-15} = CRD;
+  let Inst{16-20} = CRD;
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
 }
