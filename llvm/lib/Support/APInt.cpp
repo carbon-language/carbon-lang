@@ -946,34 +946,59 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
 /// @brief Left-shift function.
 APInt APInt::shl(uint32_t shiftAmt) const {
   assert(shiftAmt <= BitWidth && "Invalid shift amount");
-  APInt API(*this);
-  if (API.isSingleWord()) {
+  if (isSingleWord()) {
     if (shiftAmt == BitWidth)
-      API.VAL = 0;
-    else 
-      API.VAL <<= shiftAmt;
-    API.clearUnusedBits();
-    return API;
+      return APInt(BitWidth, 0); // avoid undefined shift results
+    return APInt(BitWidth, (VAL << shiftAmt) &  
+                           (~uint64_t(0ULL) >> 
+                            (APINT_BITS_PER_WORD - BitWidth)));
   }
 
-  if (shiftAmt == BitWidth) {
-    memset(API.pVal, 0, getNumWords() * APINT_WORD_SIZE);
-    return API;
+  // If all the bits were shifted out, the result is 0. This avoids issues
+  // with shifting by the size of the integer type, which produces undefined
+  // results. We define these "undefined results" to always be 0.
+  if (shiftAmt == BitWidth)
+    return APInt(BitWidth, 0);
+
+  // Create some space for the result.
+  uint64_t * val = new uint64_t[getNumWords()];
+
+  // If we are shifting less than a word, do it the easy way
+  if (shiftAmt < APINT_BITS_PER_WORD) {
+    uint64_t carry = 0;
+    shiftAmt %= APINT_BITS_PER_WORD;
+    for (uint32_t i = 0; i < getNumWords(); i++) {
+      val[i] = pVal[i] << shiftAmt | carry;
+      carry = pVal[i] >> (APINT_BITS_PER_WORD - shiftAmt);
+    }
+    val[getNumWords()-1] &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth);
+    return APInt(val, BitWidth);
   }
 
-  if (uint32_t offset = shiftAmt / APINT_BITS_PER_WORD) {
-    for (uint32_t i = API.getNumWords() - 1; i > offset - 1; --i)
-      API.pVal[i] = API.pVal[i-offset];
-    memset(API.pVal, 0, offset * APINT_WORD_SIZE);
+  // Compute some values needed by the remaining shift algorithms
+  uint32_t wordShift = shiftAmt % APINT_BITS_PER_WORD;
+  uint32_t offset = shiftAmt / APINT_BITS_PER_WORD;
+
+  // If we are shifting whole words, just move whole words
+  if (wordShift == 0) {
+    for (uint32_t i = 0; i < offset; i++) 
+      val[i] = 0;
+    for (uint32_t i = offset; i < getNumWords(); i++)
+      val[i] = pVal[i-offset];
+    val[getNumWords()-1] &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth);
+    return APInt(val,BitWidth);
   }
-  shiftAmt %= APINT_BITS_PER_WORD;
-  uint32_t i;
-  for (i = API.getNumWords() - 1; i > 0; --i)
-    API.pVal[i] = (API.pVal[i] << shiftAmt) | 
-                  (API.pVal[i-1] >> (APINT_BITS_PER_WORD - shiftAmt));
-  API.pVal[i] <<= shiftAmt;
-  API.clearUnusedBits();
-  return API;
+
+  // Copy whole words from this to Result.
+  uint32_t i = getNumWords() - 1;
+  for (; i > offset; --i)
+    val[i] = pVal[i-offset] << wordShift |
+             pVal[i-offset-1] >> (APINT_BITS_PER_WORD - wordShift);
+  val[offset] = pVal[offset-1] << wordShift;
+  for (i = 0; i < offset; ++i)
+    val[i] = 0;
+  val[getNumWords()-1] &= ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - BitWidth);
+  return APInt(val, BitWidth);
 }
 
 /// Implementation of Knuth's Algorithm D (Division of nonnegative integers)
