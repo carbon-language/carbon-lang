@@ -854,10 +854,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     NumBytesForCalleeToPush = NumSRetBytes;
   }
   
-  if (RetVT != MVT::Other)
-    NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  else
-    NodeTys = DAG.getVTList(MVT::Other);
+  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   Ops.clear();
   Ops.push_back(Chain);
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
@@ -870,7 +867,9 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SmallVector<SDOperand, 8> ResultVals;
   switch (RetVT) {
   default: assert(0 && "Unknown value type to return!");
-  case MVT::Other: break;
+  case MVT::Other:
+    NodeTys = DAG.getVTList(MVT::Other);
+    break;
   case MVT::i8:
     Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
@@ -939,11 +938,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   }
   }
 
-  // If the function returns void, just return the chain.
-  if (ResultVals.empty())
-    return Chain;
-
-  // Otherwise, merge everything together with a MERGE_VALUES node.
+  // Merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
   SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
                               &ResultVals[0], ResultVals.size());
@@ -1372,11 +1367,8 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
                       NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  if (RetVT != MVT::Other)
-    // Returns a flag for retval copy to use.
-    NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  else
-    NodeTys = DAG.getVTList(MVT::Other);
+  // Returns a flag for retval copy to use.
+  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   Ops.clear();
   Ops.push_back(Chain);
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
@@ -1389,7 +1381,9 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   SmallVector<SDOperand, 8> ResultVals;
   switch (RetVT) {
   default: assert(0 && "Unknown value type to return!");
-  case MVT::Other: break;
+  case MVT::Other:
+    NodeTys = DAG.getVTList(MVT::Other);
+    break;
   case MVT::i8:
     Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
@@ -1435,11 +1429,7 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     break;
   }
 
-  // If the function returns void, just return the chain.
-  if (ResultVals.empty())
-    return Chain;
-
-  // Otherwise, merge everything together with a MERGE_VALUES node.
+  // Merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
   SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
                               &ResultVals[0], ResultVals.size());
@@ -1812,11 +1802,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
                       NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  if (RetVT != MVT::Other)
-    // Returns a flag for retval copy to use.
-    NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  else
-    NodeTys = DAG.getVTList(MVT::Other);
+  // Returns a flag for retval copy to use.
+  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   Ops.clear();
   Ops.push_back(Chain);
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
@@ -1829,7 +1816,9 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SmallVector<SDOperand, 8> ResultVals;
   switch (RetVT) {
   default: assert(0 && "Unknown value type to return!");
-  case MVT::Other: break;
+  case MVT::Other:
+    NodeTys = DAG.getVTList(MVT::Other);
+    break;
   case MVT::i8:
     Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
@@ -1908,12 +1897,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   }
   }
 
-
-  // If the function returns void, just return the chain.
-  if (ResultVals.empty())
-    return Chain;
-
-  // Otherwise, merge everything together with a MERGE_VALUES node.
+  // Merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
   SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
                               &ResultVals[0], ResultVals.size());
