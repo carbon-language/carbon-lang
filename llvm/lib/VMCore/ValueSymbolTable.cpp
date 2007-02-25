@@ -23,9 +23,9 @@ using namespace llvm;
 ValueSymbolTable::~ValueSymbolTable() {
 #ifndef NDEBUG   // Only do this in -g mode...
   for (iterator VI = vmap.begin(), VE = vmap.end(); VI != VE; ++VI)
-    DEBUG(DOUT << "Value still in symbol table! Type = '"
-               << VI->getValue()->getType()->getDescription() << "' Name = '"
-               << VI->getKeyData() << "'\n");
+    cerr << "Value still in symbol table! Type = '"
+         << VI->getValue()->getType()->getDescription() << "' Name = '"
+         << VI->getKeyData() << "'\n";
   assert(vmap.empty() && "Values remain in symbol table!");
 #endif
 }
@@ -61,7 +61,7 @@ void ValueSymbolTable::reinsertValue(Value* V) {
 
   // Try inserting the name, assuming it won't conflict.
   if (vmap.insert(V->Name)) {
-    DOUT << " Inserted value: " << V->Name << ": " << *V << "\n";
+    //DOUT << " Inserted value: " << V->Name << ": " << *V << "\n";
     return;
   }
   
@@ -84,14 +84,14 @@ void ValueSymbolTable::reinsertValue(Value* V) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
       V->Name = &NewName;
-      DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
+      //DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
       return;
     }
   }
 }
 
 void ValueSymbolTable::removeValueName(ValueName *V) {
-  DEBUG(DOUT << " Removing Value: " << V->getKeyData() << "\n");
+  //DEBUG(DOUT << " Removing Value: " << V->getKeyData() << "\n");
   // Remove the value from the plane.
   vmap.remove(V);
 }
@@ -104,8 +104,8 @@ ValueName *ValueSymbolTable::createValueName(const char *NameStart,
   ValueName &Entry = vmap.GetOrCreateValue(NameStart, NameStart+NameLen);
   if (Entry.getValue() == 0) {
     Entry.setValue(V);
-    DEBUG(DOUT << " Inserted value: " << Entry.getKeyData() << ": "
-               << *V << "\n");
+    //DEBUG(DOUT << " Inserted value: " << Entry.getKeyData() << ": "
+    //           << *V << "\n");
     return &Entry;
   }
   
@@ -123,7 +123,7 @@ ValueName *ValueSymbolTable::createValueName(const char *NameStart,
     if (NewName.getValue() == 0) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
-      DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
+      //DEBUG(DOUT << " Inserted value: " << UniqueName << ": " << *V << "\n");
       return &NewName;
     }
   }
@@ -133,10 +133,10 @@ ValueName *ValueSymbolTable::createValueName(const char *NameStart,
 // dump - print out the symbol table
 //
 void ValueSymbolTable::dump() const {
-  DOUT << "ValueSymbolTable:\n";
+  //DOUT << "ValueSymbolTable:\n";
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    DOUT << "  '" << I->getKeyData() << "' = ";
+    //DOUT << "  '" << I->getKeyData() << "' = ";
     I->getValue()->dump();
-    DOUT << "\n";
+    //DOUT << "\n";
   }
 }
