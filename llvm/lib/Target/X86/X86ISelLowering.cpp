@@ -645,8 +645,7 @@ HowToPassCallArgument(MVT::ValueType ObjectVT,
                       unsigned NumIntRegs, unsigned NumXMMRegs,
                       unsigned MaxNumIntRegs,
                       unsigned &ObjSize, unsigned &ObjIntRegs,
-                      unsigned &ObjXMMRegs,
-                      bool AllowVectors = true) {
+                      unsigned &ObjXMMRegs) {
   ObjSize = 0;
   ObjIntRegs = 0;
   ObjXMMRegs = 0;
@@ -696,14 +695,11 @@ HowToPassCallArgument(MVT::ValueType ObjectVT,
   case MVT::v2i64:
   case MVT::v4f32:
   case MVT::v2f64:
-   if (AllowVectors) {
-     if (NumXMMRegs < 4)
-       ObjXMMRegs = 1;
-     else
-       ObjSize = 16;
-     break;
-   } else
-     assert(0 && "Unhandled argument type [vector]!");
+    if (NumXMMRegs < 4)
+      ObjXMMRegs = 1;
+    else
+      ObjSize = 16;
+    break;
   }
 }
 
@@ -764,8 +760,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
     HowToPassCallArgument(ObjectVT,
                           ArgInRegs[i],
                           NumIntRegs, NumXMMRegs, 3,
-                          ObjSize, ObjIntRegs, ObjXMMRegs,
-                          !isStdCall);
+                          ObjSize, ObjIntRegs, ObjXMMRegs);
 
     if (ObjSize > 4)
       ArgIncrement = ObjSize;
@@ -884,8 +879,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     HowToPassCallArgument(Arg.getValueType(),
                           ArgInRegs[i],
                           NumIntRegs, NumXMMRegs, 3,
-                          ObjSize, ObjIntRegs, ObjXMMRegs,
-                          CC != CallingConv::X86_StdCall);
+                          ObjSize, ObjIntRegs, ObjXMMRegs);
     if (ObjSize > 4)
       ArgIncrement = ObjSize;
 
@@ -918,8 +912,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     HowToPassCallArgument(Arg.getValueType(),
                           ArgInRegs[i],
                           NumIntRegs, NumXMMRegs, 3,
-                          ObjSize, ObjIntRegs, ObjXMMRegs,
-                          CC != CallingConv::X86_StdCall);
+                          ObjSize, ObjIntRegs, ObjXMMRegs);
     
     if (ObjSize > 4)
       ArgIncrement = ObjSize;
@@ -1574,8 +1567,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
                           true, // Use as much registers as possible
                           NumIntRegs, NumXMMRegs,
                           (isFastCall ? 2 : FASTCC_NUM_INT_ARGS_INREGS),
-                          ObjSize, ObjIntRegs, ObjXMMRegs,
-                          !isFastCall);
+                          ObjSize, ObjIntRegs, ObjXMMRegs);
     
     if (ObjSize > 4)
       ArgIncrement = ObjSize;
