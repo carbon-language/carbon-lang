@@ -1351,6 +1351,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // Fold operations.
   switch (Opcode) {
+  case ISD::TokenFactor:
+    // Fold trivial token factors.
+    if (N1.getOpcode() == ISD::EntryToken) return N2;
+    if (N2.getOpcode() == ISD::EntryToken) return N1;
+    break;
+      
   case ISD::AND:
     // (X & 0) -> 0.  This commonly occurs when legalizing i64 values, so it's
     // worth handling here.
