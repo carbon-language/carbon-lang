@@ -3915,96 +3915,116 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     }
 }
 
-SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand Copy;
-
-  switch(Op.getNumOperands()) {
-    default:
-      assert(0 && "Do not know how to return this many arguments!");
-      abort();
-    case 1:    // ret void.
-      return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Op.getOperand(0),
-                        DAG.getConstant(getBytesToPopOnReturn(), MVT::i16));
-    case 3: {
-      MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
-
-      if (MVT::isVector(ArgVT) ||
-          (Subtarget->is64Bit() && MVT::isFloatingPoint(ArgVT))) {
-        // Integer or FP vector result -> XMM0.
-        if (DAG.getMachineFunction().liveout_empty())
-          DAG.getMachineFunction().addLiveOut(X86::XMM0);
-        Copy = DAG.getCopyToReg(Op.getOperand(0), X86::XMM0, Op.getOperand(1),
-                                SDOperand());
-      } else if (MVT::isInteger(ArgVT)) {
-        // Integer result -> EAX / RAX.
-        // The C calling convention guarantees the return value has been
-        // promoted to at least MVT::i32. The X86-64 ABI doesn't require the
-        // value to be promoted MVT::i64. So we don't have to extend it to
-        // 64-bit. Return the value in EAX, but mark RAX as liveout.
-        unsigned Reg = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
-        if (DAG.getMachineFunction().liveout_empty())
-          DAG.getMachineFunction().addLiveOut(Reg);
-
-        Reg = (ArgVT == MVT::i64) ? X86::RAX : X86::EAX;
-        Copy = DAG.getCopyToReg(Op.getOperand(0), Reg, Op.getOperand(1),
-                                SDOperand());
-      } else if (!X86ScalarSSE) {
-        // FP return with fp-stack value.
-        if (DAG.getMachineFunction().liveout_empty())
-          DAG.getMachineFunction().addLiveOut(X86::ST0);
-
-        SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-        SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1) };
-        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops, 2);
-      } else {
-        // FP return with ScalarSSE (return on fp-stack).
-        if (DAG.getMachineFunction().liveout_empty())
-          DAG.getMachineFunction().addLiveOut(X86::ST0);
-
-        SDOperand MemLoc;
-        SDOperand Chain = Op.getOperand(0);
-        SDOperand Value = Op.getOperand(1);
-
-        if (ISD::isNON_EXTLoad(Value.Val) &&
-            (Chain == Value.getValue(1) || Chain == Value.getOperand(0))) {
-          Chain  = Value.getOperand(0);
-          MemLoc = Value.getOperand(1);
-        } else {
-          // Spill the value to memory and reload it into top of stack.
-          unsigned Size = MVT::getSizeInBits(ArgVT)/8;
-          MachineFunction &MF = DAG.getMachineFunction();
-          int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
-          MemLoc = DAG.getFrameIndex(SSFI, getPointerTy());
-          Chain = DAG.getStore(Op.getOperand(0), Value, MemLoc, NULL, 0);
-        }
-        SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other);
-        SDOperand Ops[] = { Chain, MemLoc, DAG.getValueType(ArgVT) };
-        Copy = DAG.getNode(X86ISD::FLD, Tys, Ops, 3);
-        
-        Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-        Ops[0] = Copy.getValue(1);
-        Ops[1] = Copy;
-        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops, 2);
-      }
-      break;
-    }
-    case 5: {
-      unsigned Reg1 = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
-      unsigned Reg2 = Subtarget->is64Bit() ? X86::RDX : X86::EDX;
-      if (DAG.getMachineFunction().liveout_empty()) {
-        DAG.getMachineFunction().addLiveOut(Reg1);
-        DAG.getMachineFunction().addLiveOut(Reg2);
-      }
-
-      Copy = DAG.getCopyToReg(Op.getOperand(0), Reg2, Op.getOperand(3),
-                              SDOperand());
-      Copy = DAG.getCopyToReg(Copy, Reg1, Op.getOperand(1), Copy.getValue(1));
-      break;
-    }
+/// GetRetValueLocs - If we are returning a set of values with the specified
+/// value types, determine the set of registers each one will land in.  This
+/// sets one element of the ResultRegs array for each element in the VTs array.
+static void GetRetValueLocs(const MVT::ValueType *VTs, unsigned NumVTs,
+                            unsigned *ResultRegs,
+                            const X86Subtarget *Subtarget) {
+  if (NumVTs == 0) return;
+  
+  if (NumVTs == 2) {
+    ResultRegs[0] = VTs[0] == MVT::i64 ? X86::RAX : X86::EAX;
+    ResultRegs[1] = VTs[1] == MVT::i64 ? X86::RDX : X86::EDX;
+    return;
   }
-  return DAG.getNode(X86ISD::RET_FLAG, MVT::Other,
-                     Copy, DAG.getConstant(getBytesToPopOnReturn(), MVT::i16),
-                     Copy.getValue(1));
+  
+  // Otherwise, NumVTs is 1.
+  MVT::ValueType ArgVT = VTs[0];
+  
+  if (MVT::isVector(ArgVT))        // Integer or FP vector result -> XMM0.
+    ResultRegs[0] = X86::XMM0;
+  else if (MVT::isFloatingPoint(ArgVT) && Subtarget->is64Bit())
+    // FP values in X86-64 go in XMM0.
+    ResultRegs[0] = X86::XMM0;
+  else if (MVT::isFloatingPoint(ArgVT))
+    // FP values in X86-32 go in ST0.
+    ResultRegs[0] = X86::ST0;
+  else {
+    assert(MVT::isInteger(ArgVT) && "Unknown return value type!");
+    
+    // Integer result -> EAX / RAX.
+    // The C calling convention guarantees the return value has been
+    // promoted to at least MVT::i32. The X86-64 ABI doesn't require the
+    // value to be promoted MVT::i64. So we don't have to extend it to
+    // 64-bit.
+    ResultRegs[0] = (ArgVT == MVT::i64) ? X86::RAX : X86::EAX;
+  }
+}
+
+
+SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
+  assert((Op.getNumOperands() & 1) == 1 && "ISD::RET should have odd # args");
+  
+  // Support up returning up to two registers.
+  MVT::ValueType VTs[2];
+  unsigned DestRegs[2];
+  unsigned NumRegs = Op.getNumOperands() / 2;
+  assert(NumRegs <= 2 && "Can only return up to two regs!");
+  
+  for (unsigned i = 0; i != NumRegs; ++i)
+    VTs[i] = Op.getOperand(i*2+1).getValueType();
+  
+  // Determine which register each value should be copied into.
+  GetRetValueLocs(VTs, NumRegs, DestRegs, Subtarget);
+  
+  // If this is the first return lowered for this function, add the regs to the
+  // liveout set for the function.
+  if (DAG.getMachineFunction().liveout_empty()) {
+    for (unsigned i = 0; i != NumRegs; ++i)
+      DAG.getMachineFunction().addLiveOut(DestRegs[i]);
+  }
+  
+  SDOperand Chain = Op.getOperand(0);
+  SDOperand Flag;
+  
+  // Copy the result values into the output registers.
+  if (NumRegs != 1 || DestRegs[0] != X86::ST0) {
+    for (unsigned i = 0; i != NumRegs; ++i) {
+      Chain = DAG.getCopyToReg(Chain, DestRegs[i], Op.getOperand(i*2+1), Flag);
+      Flag = Chain.getValue(1);
+    }
+  } else {
+    // We need to handle a destination of ST0 specially, because it isn't really
+    // a register.
+    SDOperand Value = Op.getOperand(1);
+    
+    // If this is an FP return with ScalarSSE, we need to move the value from
+    // an XMM register onto the fp-stack.
+    if (X86ScalarSSE) {
+      SDOperand MemLoc;
+      
+      // If this is a load into a scalarsse value, don't store the loaded value
+      // back to the stack, only to reload it: just replace the scalar-sse load.
+      if (ISD::isNON_EXTLoad(Value.Val) &&
+          (Chain == Value.getValue(1) || Chain == Value.getOperand(0))) {
+        Chain  = Value.getOperand(0);
+        MemLoc = Value.getOperand(1);
+      } else {
+        // Spill the value to memory and reload it into top of stack.
+        unsigned Size = MVT::getSizeInBits(VTs[0])/8;
+        MachineFunction &MF = DAG.getMachineFunction();
+        int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
+        MemLoc = DAG.getFrameIndex(SSFI, getPointerTy());
+        Chain = DAG.getStore(Op.getOperand(0), Value, MemLoc, NULL, 0);
+      }
+      SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other);
+      SDOperand Ops[] = { Chain, MemLoc, DAG.getValueType(VTs[0]) };
+      Value = DAG.getNode(X86ISD::FLD, Tys, Ops, 3);
+      Chain = Value.getValue(1);
+    }
+    
+    SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+    SDOperand Ops[] = { Chain, Value };
+    Chain = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops, 2);
+    Flag = Chain.getValue(1);
+  }
+  
+  SDOperand BytesToPop = DAG.getConstant(getBytesToPopOnReturn(), MVT::i16);
+  if (Flag.Val)
+    return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Chain, BytesToPop, Flag);
+  else
+    return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Chain, BytesToPop);
 }
 
 SDOperand

@@ -76,14 +76,14 @@ namespace llvm {
       /// as.
       FST,
 
-      /// FP_SET_RESULT - This corresponds to FpGETRESULT pseudo instrcuction
-      /// which copies from ST(0) to the destination. It takes a chain and writes
-      /// a RFP result and a chain.
+      /// FP_GET_RESULT - This corresponds to FpGETRESULT pseudo instruction
+      /// which copies from ST(0) to the destination. It takes a chain and
+      /// writes a RFP result and a chain.
       FP_GET_RESULT,
 
-      /// FP_SET_RESULT - This corresponds to FpSETRESULT pseudo instrcuction
-      /// which copies the source operand to ST(0). It takes a chain and writes
-      /// a chain and a flag.
+      /// FP_SET_RESULT - This corresponds to FpSETRESULT pseudo instruction
+      /// which copies the source operand to ST(0). It takes a chain+value and
+      /// returns a chain and a flag.
       FP_SET_RESULT,
 
       /// CALL/TAILCALL - These operations represent an abstract X86 call
