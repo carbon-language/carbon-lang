@@ -903,11 +903,16 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   unsigned SrcStart = 0;
   unsigned SrcEnd = 0;
   if (isDead) {
-    unsigned CopyIdx = getDefIndex(getInstructionIndex(CopyMI));
-    LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx-1);
+    unsigned CopyIdx = getInstructionIndex(CopyMI);
+    LiveInterval::iterator SrcLR =
+      SrcInt.FindLiveRangeContaining(getUseIndex(CopyIdx));
     SrcStart = SrcLR->start;
     SrcEnd   = SrcLR->end;
-    if (hasRegisterUse(repSrcReg, SrcStart, SrcEnd))
+    // The instruction which defines the src is only truly dead if there are
+    // no intermediate uses and there isn't a use beyond the copy.
+    // FIXME: find the last use, mark is kill and shorten the live range.
+    if (SrcEnd > getDefIndex(CopyIdx) ||
+        hasRegisterUse(repSrcReg, SrcStart, CopyIdx))
       isDead = false;
   }
 
@@ -918,10 +923,10 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   if (JoinIntervals(DestInt, SrcInt)) {
     if (isDead) {
       // Result of the copy is dead. Propagate this property.
-      if (SrcStart == 0) {
+      if (SrcStart == 0 && MRegisterInfo::isPhysicalRegister(SrcReg)) {
         // Live-in to the function but dead. Remove it from MBB live-in set.
         // JoinIntervals may end up swapping the two intervals.
-        LiveInterval &LiveInInt = (repSrcReg == DestInt.reg) ? DestInt:SrcInt;
+        LiveInterval &LiveInInt = (repSrcReg == DestInt.reg) ? DestInt : SrcInt;
         LiveInInt.removeRange(SrcStart, SrcEnd);
         MachineBasicBlock *MBB = CopyMI->getParent();
         MBB->removeLiveIn(SrcReg);
