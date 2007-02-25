@@ -661,17 +661,14 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       return DAG.getFrameIndex(SI->second, TLI.getPointerTy());
   }
       
-  DenseMap<const Value*, unsigned>::iterator VMI =
-      FuncInfo.ValueMap.find(V);
-  assert(VMI != FuncInfo.ValueMap.end() && "Value not in map!");
-  
-  unsigned InReg = VMI->second;
+  unsigned InReg = FuncInfo.ValueMap[V];
+  assert(InReg && "Value not in map!");
   
   // If this type is not legal, make it so now.
   if (VT != MVT::Vector) {
     if (TLI.getTypeAction(VT) == TargetLowering::Expand) {
       // Source must be expanded.  This input value is actually coming from the
-      // register pair VMI->second and VMI->second+1.
+      // register pair InReg and InReg+1.
       MVT::ValueType DestVT = TLI.getTypeToExpandTo(VT);
       unsigned NumVals = TLI.getNumElements(VT);
       N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
@@ -4189,9 +4186,9 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL,
 
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
-      if (FuncInfo.ValueMap.count(AI)) {
-        SDOperand Copy =
-          SDL.CopyValueToVirtualRegister(AI, FuncInfo.ValueMap[AI]);
+      DenseMap<const Value*, unsigned>::iterator VMI=FuncInfo.ValueMap.find(AI);
+      if (VMI != FuncInfo.ValueMap.end()) {
+        SDOperand Copy = SDL.CopyValueToVirtualRegister(AI, VMI->second);
         UnorderedChains.push_back(Copy);
       }
     }
