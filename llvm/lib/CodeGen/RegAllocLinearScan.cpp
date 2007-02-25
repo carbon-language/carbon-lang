@@ -303,10 +303,10 @@ void RA::linearScan()
 
     for (unsigned i = 0, e = handled_.size(); i != e; ++i) { 
       LiveInterval *HI = handled_[i];
-      if (HI->liveAt(StartIdx)) {
-        unsigned Reg = HI->reg;
-        if (MRegisterInfo::isVirtualRegister(Reg))
-          Reg = vrm_->getPhys(Reg);
+      unsigned Reg = HI->reg;
+      if (!vrm_->hasStackSlot(Reg) && HI->liveAt(StartIdx)) {
+        assert(MRegisterInfo::isVirtualRegister(Reg));
+        Reg = vrm_->getPhys(Reg);
         MBB->addLiveIn(Reg);
       }
     }
