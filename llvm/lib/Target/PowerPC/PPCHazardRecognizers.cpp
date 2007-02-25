@@ -157,7 +157,7 @@ getHazardType(SDNode *Node) {
   }
   
   // Do not allow MTCTR and BCTRL to be in the same dispatch group.
-  if (HasCTRSet && Opcode == PPC::BCTRL)
+  if (HasCTRSet && Opcode == PPC::BCTRL_Macho || Opcode == PPC::BCTRL_ELF)
     return NoopHazard;
   
   // If this is a load following a store, make sure it's not to the same or

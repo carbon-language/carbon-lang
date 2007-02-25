@@ -261,6 +261,28 @@ const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
     
     PPC::LR,  0
   };
+  
+  static const unsigned ELF32_CalleeSavedRegs[] = {
+              PPC::R13, PPC::R14, PPC::R15,
+    PPC::R16, PPC::R17, PPC::R18, PPC::R19,
+    PPC::R20, PPC::R21, PPC::R22, PPC::R23,
+    PPC::R24, PPC::R25, PPC::R26, PPC::R27,
+    PPC::R28, PPC::R29, PPC::R30, PPC::R31,
+
+              PPC::F11, PPC::F12, PPC::F13,
+    PPC::F14, PPC::F15, PPC::F16, PPC::F17,
+    PPC::F18, PPC::F19, PPC::F20, PPC::F21,
+    PPC::F22, PPC::F23, PPC::F24, PPC::F25,
+    PPC::F26, PPC::F27, PPC::F28, PPC::F29,
+    PPC::F30, PPC::F31,
+    
+    PPC::CR2, PPC::CR3, PPC::CR4,
+    PPC::V20, PPC::V21, PPC::V22, PPC::V23,
+    PPC::V24, PPC::V25, PPC::V26, PPC::V27,
+    PPC::V28, PPC::V29, PPC::V30, PPC::V31,
+    
+    PPC::LR,  0
+  };
   // 64-bit Darwin calling convention. 
   static const unsigned Darwin64_CalleeSavedRegs[] = {
     PPC::X14, PPC::X15,
@@ -283,8 +305,34 @@ const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
     PPC::LR8,  0
   };
   
-  return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegs :
-                               Darwin32_CalleeSavedRegs;
+  static const unsigned ELF64_CalleeSavedRegs[] = {
+    PPC::X14, PPC::X15,
+    PPC::X16, PPC::X17, PPC::X18, PPC::X19,
+    PPC::X20, PPC::X21, PPC::X22, PPC::X23,
+    PPC::X24, PPC::X25, PPC::X26, PPC::X27,
+    PPC::X28, PPC::X29, PPC::X30, PPC::X31,
+    
+              PPC::F11, PPC::F12, PPC::F13,
+    PPC::F14, PPC::F15, PPC::F16, PPC::F17,
+    PPC::F18, PPC::F19, PPC::F20, PPC::F21,
+    PPC::F22, PPC::F23, PPC::F24, PPC::F25,
+    PPC::F26, PPC::F27, PPC::F28, PPC::F29,
+    PPC::F30, PPC::F31,
+    
+    PPC::CR2, PPC::CR3, PPC::CR4,
+    PPC::V20, PPC::V21, PPC::V22, PPC::V23,
+    PPC::V24, PPC::V25, PPC::V26, PPC::V27,
+    PPC::V28, PPC::V29, PPC::V30, PPC::V31,
+    
+    PPC::LR8,  0
+  };
+  
+  if (Subtarget.isMachoABI())
+    return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegs :
+                                 Darwin32_CalleeSavedRegs;
+  
+  // ELF.
+  return Subtarget.isPPC64() ? ELF64_CalleeSavedRegs : ELF32_CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const*
@@ -297,6 +345,29 @@ PPCRegisterInfo::getCalleeSavedRegClasses() const {
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
 
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    
+    &PPC::CRRCRegClass,&PPC::CRRCRegClass,&PPC::CRRCRegClass,
+    
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    
+    &PPC::GPRCRegClass, 0
+  };
+  
+  static const TargetRegisterClass * const ELF32_CalleeSavedRegClasses[] = {
+                       &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+
+                       &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
     &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
     &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
     &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
@@ -334,9 +405,37 @@ PPCRegisterInfo::getCalleeSavedRegClasses() const {
     
     &PPC::G8RCRegClass, 0
   };
+  
+  static const TargetRegisterClass * const ELF64_CalleeSavedRegClasses[] = {
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    
+                       &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    
+    &PPC::CRRCRegClass,&PPC::CRRCRegClass,&PPC::CRRCRegClass,
+    
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    
+    &PPC::G8RCRegClass, 0
+  };
  
-  return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegClasses :
-                               Darwin32_CalleeSavedRegClasses;
+  if (Subtarget.isMachoABI())
+    return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegClasses :
+                                 Darwin32_CalleeSavedRegClasses;
+  
+  // ELF.
+  return Subtarget.isPPC64() ? ELF64_CalleeSavedRegClasses :
+                               ELF32_CalleeSavedRegClasses;
 }
 
 // needsFP - Return true if the specified function should have a dedicated frame
@@ -753,7 +852,8 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   
   // Maximum call frame needs to be at least big enough for linkage and 8 args.
   unsigned minCallFrameSize =
-    PPCFrameInfo::getMinCallFrameSize(Subtarget.isPPC64());
+    PPCFrameInfo::getMinCallFrameSize(Subtarget.isPPC64(), 
+                                      Subtarget.isMachoABI());
   maxCallFrameSize = std::max(maxCallFrameSize, minCallFrameSize);
 
   // If we have dynamic alloca then maxCallFrameSize needs to be aligned so
@@ -766,7 +866,7 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   
   // Include call frame size in total.
   FrameSize += maxCallFrameSize;
-
+  
   // Make sure the frame is aligned.
   FrameSize = (FrameSize + AlignMask) & ~AlignMask;
 
@@ -815,13 +915,15 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   
   // Get processor type.
   bool IsPPC64 = Subtarget.isPPC64();
+  // Get operating system
+  bool IsMachoABI = Subtarget.isMachoABI();
   // Check if the link register (LR) has been used.
   bool UsesLR = MFI->hasCalls() || usesLR(MF);
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF);
   
-  int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64);
-  int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64);
+  int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, IsMachoABI);
+  int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, IsMachoABI);
   
   if (IsPPC64) {
     if (UsesLR)
@@ -976,11 +1078,16 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   
   // Get processor type.
   bool IsPPC64 = Subtarget.isPPC64();
+  // Get operating system
+  bool IsMachoABI = Subtarget.isMachoABI();
   // Check if the link register (LR) has been used.
   bool UsesLR = MFI->hasCalls() || usesLR(MF);
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF);
-
+  
+  int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, IsMachoABI);
+  int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, IsMachoABI);
+  
   // The loaded (or persistent) stack pointer value is offset by the 'stwu'
   // on entry to the function.  Add this offset back now.
   if (!Subtarget.isPPC64()) {
@@ -1001,8 +1108,6 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     }
   }
   
-  int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64);
-  int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64);
 
   if (IsPPC64) {
     if (UsesLR)

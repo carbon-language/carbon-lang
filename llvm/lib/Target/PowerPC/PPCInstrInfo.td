@@ -81,11 +81,16 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,
                            [SDNPHasChain, SDNPOutFlag]>;
 
 def SDT_PPCCall   : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
-def PPCcall       : SDNode<"PPCISD::CALL", SDT_PPCCall,
+def PPCcall_Macho : SDNode<"PPCISD::CALL", SDT_PPCCall,
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def PPCcall_ELF   : SDNode<"PPCISD::CALL", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
-def PPCbctrl      : SDNode<"PPCISD::BCTRL", SDTRet,
+def PPCbctrl_Macho  : SDNode<"PPCISD::BCTRL_Macho", SDTRet,
+	                   [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+
+def PPCbctrl_ELF  : SDNode<"PPCISD::BCTRL_ELF", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDTRet,
@@ -366,6 +371,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1,
                   /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
 }
 
+// Macho ABI Calls.
 let isCall = 1, noResults = 1, PPC970_Unit = 7, 
   // All calls clobber the non-callee saved registers...
   Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
@@ -374,12 +380,38 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
           LR,CTR,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
-  def BL  : IForm<18, 0, 1, (ops calltarget:$func, variable_ops), 
-                            "bl $func", BrB, []>;  // See Pat patterns below.
-  def BLA : IForm<18, 1, 1, (ops aaddr:$func, variable_ops),
-                            "bla $func", BrB, [(PPCcall (i32 imm:$func))]>;
-  def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (ops variable_ops), "bctrl", BrB,
-                           [(PPCbctrl)]>;
+  def BL_Macho  : IForm<18, 0, 1,
+                        (ops calltarget:$func, variable_ops), 
+                        "bl $func", BrB, []>;  // See Pat patterns below.
+  def BLA_Macho : IForm<18, 1, 1, 
+                        (ops aaddr:$func, variable_ops),
+                        "bla $func", BrB, [(PPCcall_Macho (i32 imm:$func))]>;
+  def BCTRL_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
+                                 (ops variable_ops),
+                                 "bctrl", BrB,
+                                 [(PPCbctrl_Macho)]>;
+}
+
+// ELF ABI Calls.
+let isCall = 1, noResults = 1, PPC970_Unit = 7, 
+  // All calls clobber the non-callee saved registers...
+  Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
+          F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,
+          V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,V13,V14,V15,V16,V17,V18,V19,
+          LR,CTR,
+          CR0,CR1,CR5,CR6,CR7] in {
+  // Convenient aliases for call instructions
+  def BL_ELF  : IForm<18, 0, 1,
+                      (ops calltarget:$func, variable_ops), 
+                      "bl $func", BrB, []>;  // See Pat patterns below.
+  def BLA_ELF : IForm<18, 1, 1,
+                      (ops aaddr:$func, variable_ops),
+                      "bla $func", BrB,
+                      [(PPCcall_ELF (i32 imm:$func))]>;
+  def BCTRL_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
+                               (ops variable_ops),
+                               "bctrl", BrB,
+                               [(PPCbctrl_ELF)]>;
 }
 
 // DCB* instructions.
@@ -791,6 +823,14 @@ def MCRF   : XLForm_3<19, 0, (ops CRRC:$BF, CRRC:$BFA),
                       "mcrf $BF, $BFA", BrMCR>,
              PPC970_DGroup_First, PPC970_Unit_CRU;
 
+def CREQV  : XLForm_1<19, 289, (ops CRRC:$CRD, CRRC:$CRA, CRRC:$CRB),
+                      "creqv $CRD, $CRA, $CRB", BrCR,
+                      []>;
+
+def SETCR  : XLForm_1_ext<19, 289, (ops CRRC:$dst),
+              "creqv $dst, $dst, $dst", BrCR,
+              []>;
+
 // XFX-Form instructions.  Instructions that deal with SPRs.
 //
 def MFCTR : XFXForm_1_ext<31, 339, 9, (ops GPRC:$rT), "mfctr $rT", SprMFSPR>,
@@ -1060,10 +1100,10 @@ def : Pat<(and (rotl GPRC:$in, GPRC:$sh), maskimm32:$imm),
           (RLWNM GPRC:$in, GPRC:$sh, (MB maskimm32:$imm), (ME maskimm32:$imm))>;
 
 // Calls
-def : Pat<(PPCcall (i32 tglobaladdr:$dst)),
-          (BL tglobaladdr:$dst)>;
-def : Pat<(PPCcall (i32 texternalsym:$dst)),
-          (BL texternalsym:$dst)>;
+def : Pat<(PPCcall_Macho (i32 tglobaladdr:$dst)),
+          (BL_Macho tglobaladdr:$dst)>;
+def : Pat<(PPCcall_ELF (i32 texternalsym:$dst)),
+          (BL_ELF texternalsym:$dst)>;
 
 // Hi and Lo for Darwin Global Addresses.
 def : Pat<(PPChi tglobaladdr:$in, 0), (LIS tglobaladdr:$in)>;

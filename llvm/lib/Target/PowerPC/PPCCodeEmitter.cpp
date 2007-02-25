@@ -133,7 +133,8 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isGlobalAddress() || MO.isExternalSymbol() ||
              MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
     unsigned Reloc = 0;
-    if (MI.getOpcode() == PPC::BL || MI.getOpcode() == PPC::BL8)
+    if (MI.getOpcode() == PPC::BL_Macho || MI.getOpcode() == PPC::BL8_Macho ||
+        MI.getOpcode() == PPC::BL_ELF || MI.getOpcode() == PPC::BL8_ELF)
       Reloc = PPC::reloc_pcrel_bx;
     else {
       if (TM.getRelocationModel() == Reloc::PIC_) {
@@ -213,7 +214,9 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isMachineBasicBlock()) {
     unsigned Reloc = 0;
     unsigned Opcode = MI.getOpcode();
-    if (Opcode == PPC::B || Opcode == PPC::BL || Opcode == PPC::BLA)
+    if (Opcode == PPC::B || Opcode == PPC::BL_Macho ||
+        Opcode == PPC::BLA_Macho || Opcode == PPC::BL_ELF || 
+        Opcode == PPC::BLA_ELF)
       Reloc = PPC::reloc_pcrel_bx;
     else // BCC instruction
       Reloc = PPC::reloc_pcrel_bcx;

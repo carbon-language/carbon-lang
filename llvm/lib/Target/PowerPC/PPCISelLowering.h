@@ -90,7 +90,7 @@ namespace llvm {
       
       /// CHAIN,FLAG = BCTRL(CHAIN, INFLAG) - Directly corresponds to a
       /// BCTRL instruction.
-      BCTRL,
+      BCTRL_Macho, BCTRL_ELF,
       
       /// Return with a flag operand, matched by 'blr'
       RET_FLAG,

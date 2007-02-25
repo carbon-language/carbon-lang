@@ -328,7 +328,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::STD_32:        return "PPCISD::STD_32";
   case PPCISD::CALL:          return "PPCISD::CALL";
   case PPCISD::MTCTR:         return "PPCISD::MTCTR";
-  case PPCISD::BCTRL:         return "PPCISD::BCTRL";
+  case PPCISD::BCTRL_Macho:   return "PPCISD::BCTRL_Macho";
+  case PPCISD::BCTRL_ELF:     return "PPCISD::BCTRL_ELF";
   case PPCISD::RET_FLAG:      return "PPCISD::RET_FLAG";
   case PPCISD::MFCR:          return "PPCISD::MFCR";
   case PPCISD::VCMP:          return "PPCISD::VCMP";
@@ -1094,8 +1095,28 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
                       SV->getOffset());
 }
 
+/// GetFPR - Get the set of FP registers that should be allocated for arguments,
+/// depending on which subtarget is selected.
+static const unsigned *GetFPR(const PPCSubtarget &Subtarget) {
+  if (Subtarget.isMachoABI()) {
+    static const unsigned FPR[] = {
+      PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
+      PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
+    };
+    return FPR;
+  }
+  
+  
+  static const unsigned FPR[] = {
+    PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
+    PPC::F8, PPC::F9, PPC::F10
+  };
+  return FPR;
+}
+
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
-                                       int &VarArgsFrameIndex) {
+                                       int &VarArgsFrameIndex,
+                                       const PPCSubtarget &Subtarget) {
   // TODO: add description of PPC stack frame format, or at least some docs.
   //
   MachineFunction &MF = DAG.getMachineFunction();
@@ -1106,9 +1127,10 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
+  bool isMachoABI = Subtarget.isMachoABI();
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
-  unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64);
+  unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64, isMachoABI);
   
   static const unsigned GPR_32[] = {           // 32-bit registers.
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
@@ -1118,17 +1140,16 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-  static const unsigned FPR[] = {
-    PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
-    PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
-  };
+  
+  static const unsigned *FPR = GetFPR(Subtarget);
+  
   static const unsigned VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
 
   const unsigned Num_GPR_Regs = sizeof(GPR_32)/sizeof(GPR_32[0]);
-  const unsigned Num_FPR_Regs = sizeof(FPR)/sizeof(FPR[0]);
+  const unsigned Num_FPR_Regs = isMachoABI ? 13 : 10;
   const unsigned Num_VR_Regs  = sizeof( VR)/sizeof( VR[0]);
 
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
@@ -1149,9 +1170,6 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");
     case MVT::i32:
-      // All int arguments reserve stack space.
-      ArgOffset += PtrByteSize;
-
       if (GPR_idx != Num_GPR_Regs) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
         MF.addLiveIn(GPR[GPR_idx], VReg);
@@ -1161,11 +1179,11 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
         needsLoad = true;
         ArgSize = PtrByteSize;
       }
+      // All int arguments reserve stack space in Macho ABI.
+      if (isMachoABI || needsLoad) ArgOffset += PtrByteSize;
       break;
-    case MVT::i64:  // PPC64
-      // All int arguments reserve stack space.
-      ArgOffset += 8;
       
+    case MVT::i64:  // PPC64
       if (GPR_idx != Num_GPR_Regs) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::G8RCRegClass);
         MF.addLiveIn(GPR[GPR_idx], VReg);
@@ -1174,12 +1192,12 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       } else {
         needsLoad = true;
       }
+      // All int arguments reserve stack space in Macho ABI.
+      if (isMachoABI || needsLoad) ArgOffset += 8;
       break;
+      
     case MVT::f32:
     case MVT::f64:
-      // All FP arguments reserve stack space.
-      ArgOffset += isPPC64 ? 8 : ObjSize;
-
       // Every 4 bytes of argument space consumes one of the GPRs available for
       // argument passing.
       if (GPR_idx != Num_GPR_Regs) {
@@ -1199,6 +1217,9 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       } else {
         needsLoad = true;
       }
+      
+      // All FP arguments reserve stack space in Macho ABI.
+      if (isMachoABI || needsLoad) ArgOffset += isPPC64 ? 8 : ObjSize;
       break;
     case MVT::v4f32:
     case MVT::v4i32:
@@ -1290,11 +1311,15 @@ static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getConstant((int)C->getValue() >> 2, MVT::i32).Val;
 }
 
-static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand Chain = Op.getOperand(0);
-  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  SDOperand Callee    = Op.getOperand(4);
-  unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
+
+static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
+                           const PPCSubtarget &Subtarget) {
+  SDOperand Chain  = Op.getOperand(0);
+  bool isVarArg    = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  SDOperand Callee = Op.getOperand(4);
+  unsigned NumOps  = (Op.getNumOperands() - 5) / 2;
+  
+  bool isMachoABI = Subtarget.isMachoABI();
 
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
@@ -1307,7 +1332,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.  We start with 24/48 bytes, which is
   // prereserved space for [SP][CR][LR][3 x unused].
-  unsigned NumBytes = PPCFrameInfo::getLinkageSize(isPPC64);
+  unsigned NumBytes = PPCFrameInfo::getLinkageSize(isPPC64, isMachoABI);
   
   // Add up all the space actually used.
   for (unsigned i = 0; i != NumOps; ++i) {
@@ -1321,7 +1346,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // Because we cannot tell if this is needed on the caller side, we have to
   // conservatively assume that it is needed.  As such, make sure we have at
   // least enough stack space for the caller to store the 8 GPRs.
-  NumBytes = std::max(NumBytes, PPCFrameInfo::getMinCallFrameSize(isPPC64));
+  NumBytes = std::max(NumBytes,
+                      PPCFrameInfo::getMinCallFrameSize(isPPC64, isMachoABI));
   
   // Adjust the stack pointer for the new arguments...
   // These operations are automatically eliminated by the prolog/epilog pass
@@ -1341,7 +1367,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // memory.  Also, if this is a vararg function, floating point operations
   // must be stored to our stack, and loaded into integer regs as well, if
   // any integer regs are available for argument passing.
-  unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64);
+  unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64, isMachoABI);
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
   
   static const unsigned GPR_32[] = {           // 32-bit registers.
@@ -1352,16 +1378,14 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-  static const unsigned FPR[] = {
-    PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
-    PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
-  };
+  static const unsigned *FPR = GetFPR(Subtarget);
+  
   static const unsigned VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
   const unsigned NumGPRs = sizeof(GPR_32)/sizeof(GPR_32[0]);
-  const unsigned NumFPRs = sizeof(FPR)/sizeof(FPR[0]);
+  const unsigned NumFPRs = isMachoABI ? 13 : 10;
   const unsigned NumVRs  = sizeof( VR)/sizeof( VR[0]);
   
   const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
@@ -1369,6 +1393,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
   SmallVector<SDOperand, 8> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
+    bool inMem = false;
     SDOperand Arg = Op.getOperand(5+2*i);
     
     // PtrOff will be used to store the current argument to the stack if a
@@ -1392,8 +1417,9 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
         RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Arg));
       } else {
         MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+        inMem = true;
       }
-      ArgOffset += PtrByteSize;
+      if (inMem || isMachoABI) ArgOffset += PtrByteSize;
       break;
     case MVT::f32:
     case MVT::f64:
@@ -1414,31 +1440,39 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
           if (GPR_idx != NumGPRs) {
             SDOperand Load = DAG.getLoad(PtrVT, Store, PtrOff, NULL, 0);
             MemOpChains.push_back(Load.getValue(1));
-            RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
+            if (isMachoABI) RegsToPass.push_back(std::make_pair(GPR[GPR_idx++],
+                                                                Load));
           }
           if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64 && !isPPC64){
             SDOperand ConstFour = DAG.getConstant(4, PtrOff.getValueType());
             PtrOff = DAG.getNode(ISD::ADD, PtrVT, PtrOff, ConstFour);
             SDOperand Load = DAG.getLoad(PtrVT, Store, PtrOff, NULL, 0);
             MemOpChains.push_back(Load.getValue(1));
-            RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
+            if (isMachoABI) RegsToPass.push_back(std::make_pair(GPR[GPR_idx++],
+                                                                Load));
           }
         } else {
           // If we have any FPRs remaining, we may also have GPRs remaining.
           // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
           // GPRs.
-          if (GPR_idx != NumGPRs)
-            ++GPR_idx;
-          if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64 && !isPPC64)
-            ++GPR_idx;
+          if (isMachoABI) {
+            if (GPR_idx != NumGPRs)
+              ++GPR_idx;
+            if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64 &&
+                !isPPC64)  // PPC64 has 64-bit GPR's obviously :)
+              ++GPR_idx;
+          }
         }
       } else {
         MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+        inMem = true;
       }
-      if (isPPC64)
-        ArgOffset += 8;
-      else
-        ArgOffset += Arg.getValueType() == MVT::f32 ? 4 : 8;
+      if (inMem || isMachoABI) {
+        if (isPPC64)
+          ArgOffset += 8;
+        else
+          ArgOffset += Arg.getValueType() == MVT::f32 ? 4 : 8;
+      }
       break;
     case MVT::v4f32:
     case MVT::v4i32:
@@ -1463,7 +1497,14 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
                              InFlag);
     InFlag = Chain.getValue(1);
   }
-  
+ 
+  // With the ELF ABI, set CR6 to true if this is a vararg call.
+  if (isVarArg && !isMachoABI) {
+    SDOperand SetCR(DAG.getTargetNode(PPC::SETCR, MVT::i32), 0);
+    Chain = DAG.getCopyToReg(Chain, PPC::CR6, SetCR, InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
@@ -1489,14 +1530,16 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
     
     // Copy the callee address into R12 on darwin.
-    Chain = DAG.getCopyToReg(Chain, PPC::R12, Callee, InFlag);
-    InFlag = Chain.getValue(1);
+    if (isMachoABI) {
+      Chain = DAG.getCopyToReg(Chain, PPC::R12, Callee, InFlag);
+      InFlag = Chain.getValue(1);
+    }
 
     NodeTys.clear();
     NodeTys.push_back(MVT::Other);
     NodeTys.push_back(MVT::Flag);
     Ops.push_back(Chain);
-    CallOpc = PPCISD::BCTRL;
+    CallOpc = isMachoABI ? PPCISD::BCTRL_Macho : PPCISD::BCTRL_ELF;
     Callee.Val = 0;
   }
 
@@ -1656,18 +1699,20 @@ static SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG,
                                          const PPCSubtarget &Subtarget) {
   MachineFunction &MF = DAG.getMachineFunction();
   bool IsPPC64 = Subtarget.isPPC64();
+  bool isMachoABI = Subtarget.isMachoABI();
 
   // Get current frame pointer save index.  The users of this index will be
   // primarily DYNALLOC instructions.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   int FPSI = FI->getFramePointerSaveIndex();
-  
+   
   // If the frame pointer save index hasn't been defined yet.
   if (!FPSI) {
     // Find out what the fix offset of the frame pointer save area.
-    int Offset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64);
+    int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, isMachoABI);
+    
     // Allocate the frame index for frame pointer save area.
-    FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, Offset); 
+    FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, FPOffset); 
     // Save the result.
     FI->setFramePointerSaveIndex(FPSI);                      
   }
@@ -2630,12 +2675,12 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG, VarArgsFrameIndex);
   case ISD::FORMAL_ARGUMENTS:
-      return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
-  case ISD::CALL:               return LowerCALL(Op, DAG);
+    return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex, PPCSubTarget);
+  case ISD::CALL:               return LowerCALL(Op, DAG, PPCSubTarget);
   case ISD::RET:                return LowerRET(Op, DAG);
   case ISD::STACKRESTORE:       return LowerSTACKRESTORE(Op, DAG, PPCSubTarget);
-  case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG,
-                                                               PPCSubTarget);
+  case ISD::DYNAMIC_STACKALLOC:
+    return LowerDYNAMIC_STACKALLOC(Op, DAG, PPCSubTarget);
     
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
