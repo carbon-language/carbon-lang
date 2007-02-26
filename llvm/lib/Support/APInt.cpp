@@ -969,22 +969,50 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
     else 
       return APInt(BitWidth, this->VAL >> shiftAmt);
 
-  APInt Result(*this);
-  if (shiftAmt >= BitWidth) {
-    Result.clear();
-    return Result;
+  // If all the bits were shifted out, the result is 0. This avoids issues
+  // with shifting by the size of the integer type, which produces undefined
+  // results. We define these "undefined results" to always be 0.
+  if (shiftAmt == BitWidth)
+    return APInt(BitWidth, 0);
+
+  // Create some space for the result.
+  uint64_t * val = new uint64_t[getNumWords()];
+
+  // If we are shifting less than a word, compute the shift with a simple carry
+  if (shiftAmt < APINT_BITS_PER_WORD) {
+    uint64_t carry = 0;
+    for (int i = getNumWords()-1; i >= 0; --i) {
+      val[i] = pVal[i] >> shiftAmt | carry;
+      carry = pVal[i] << (APINT_BITS_PER_WORD - shiftAmt);
+    }
+    return APInt(val, BitWidth).clearUnusedBits();
   }
 
-  // FIXME: bit at a time shift is really slow
-  uint32_t i = 0;
-  for (i = 0; i < Result.BitWidth - shiftAmt; ++i)
-    if (Result[i+shiftAmt]) 
-      Result.set(i);
-    else 
-      Result.clear(i);
-  for (; i < Result.BitWidth; ++i)
-    Result.clear(i);
-  return Result;
+  // Compute some values needed by the remaining shift algorithms
+  uint32_t wordShift = shiftAmt % APINT_BITS_PER_WORD;
+  uint32_t offset = shiftAmt / APINT_BITS_PER_WORD;
+
+  // If we are shifting whole words, just move whole words
+  if (wordShift == 0) {
+    for (uint32_t i = 0; i < getNumWords() - offset; ++i) 
+      val[i] = pVal[i+offset];
+    for (uint32_t i = getNumWords()-offset; i < getNumWords(); i++)
+      val[i] = 0;
+    return APInt(val,BitWidth).clearUnusedBits();
+  }
+
+  // Shift the low order words 
+  uint32_t breakWord = getNumWords() - offset -1;
+  for (uint32_t i = 0; i < breakWord; ++i)
+    val[i] = pVal[i+offset] >> wordShift |
+             pVal[i+offset+1] << (APINT_BITS_PER_WORD - wordShift);
+  // Shift the break word.
+  val[breakWord] = pVal[breakWord+offset] >> wordShift;
+
+  // Remaining words are 0
+  for (uint32_t i = breakWord+1; i < getNumWords(); ++i)
+    val[i] = 0;
+  return APInt(val, BitWidth).clearUnusedBits();
 }
 
 /// Left-shift this APInt by shiftAmt.
@@ -1009,7 +1037,6 @@ APInt APInt::shl(uint32_t shiftAmt) const {
   // If we are shifting less than a word, do it the easy way
   if (shiftAmt < APINT_BITS_PER_WORD) {
     uint64_t carry = 0;
-    shiftAmt %= APINT_BITS_PER_WORD;
     for (uint32_t i = 0; i < getNumWords(); i++) {
       val[i] = pVal[i] << shiftAmt | carry;
       carry = pVal[i] >> (APINT_BITS_PER_WORD - shiftAmt);
