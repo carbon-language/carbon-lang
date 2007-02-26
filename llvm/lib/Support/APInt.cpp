@@ -99,16 +99,43 @@ APInt::APInt(const APInt& that)
 
 APInt::~APInt() {
   if (!isSingleWord() && pVal) 
-    delete[] pVal;
+    delete [] pVal;
 }
 
 APInt& APInt::operator=(const APInt& RHS) {
-  assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-  if (isSingleWord()) 
+  // Don't do anything for X = X
+  if (this == &RHS)
+    return *this;
+
+  // If the bitwidths are the same, we can avoid mucking with memory
+  if (BitWidth == RHS.getBitWidth()) {
+    if (isSingleWord()) 
+      VAL = RHS.VAL;
+    else
+      memcpy(pVal, RHS.pVal, getNumWords() * APINT_WORD_SIZE);
+    return *this;
+  }
+
+  if (isSingleWord())
+    if (RHS.isSingleWord())
+      VAL = RHS.VAL;
+    else {
+      VAL = 0;
+      pVal = getMemory(RHS.getNumWords());
+      memcpy(pVal, RHS.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
+    }
+  else if (getNumWords() == RHS.getNumWords()) 
+    memcpy(pVal, RHS.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
+  else if (RHS.isSingleWord()) {
+    delete [] pVal;
     VAL = RHS.VAL;
-  else
-    memcpy(pVal, RHS.pVal, getNumWords() * APINT_WORD_SIZE);
-  return *this;
+  } else {
+    delete [] pVal;
+    pVal = getMemory(RHS.getNumWords());
+    memcpy(pVal, RHS.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
+  }
+  BitWidth = RHS.BitWidth;
+  return clearUnusedBits();
 }
 
 APInt& APInt::operator=(uint64_t RHS) {
@@ -118,7 +145,7 @@ APInt& APInt::operator=(uint64_t RHS) {
     pVal[0] = RHS;
     memset(pVal+1, 0, (getNumWords() - 1) * APINT_WORD_SIZE);
   }
-  return *this;
+  return clearUnusedBits();
 }
 
 /// add_1 - This function adds a single "digit" integer, y, to the multiple 
@@ -457,6 +484,7 @@ bool APInt::operator[](uint32_t bitPosition) const {
 }
 
 bool APInt::operator==(const APInt& RHS) const {
+  assert(BitWidth == RHS.BitWidth && "Comparison requires equal bit widths");
   if (isSingleWord())
     return VAL == RHS.VAL;
 
@@ -662,17 +690,15 @@ APInt APInt::getNullValue(uint32_t numBits) {
 }
 
 uint64_t APInt::getHashValue() const {
-  // LLVM only supports bit widths up to 2^23 so shift the bitwidth into the
-  // high range. This makes the hash unique for integer values < 2^41 bits and
-  // doesn't hurt for larger values.
-  uint64_t hash = uint64_t(BitWidth) << (APINT_BITS_PER_WORD - 23);
+  // Put the bit width into the low order bits.
+  uint64_t hash = BitWidth;
 
   // Add the sum of the words to the hash.
   if (isSingleWord())
-    hash += VAL;
+    hash += VAL << 6; // clear separation of up to 64 bits
   else
     for (uint32_t i = 0; i < getNumWords(); ++i)
-      hash += pVal[i];
+      hash += pVal[i] << 6; // clear sepration of up to 64 bits
   return hash;
 }
 
@@ -867,12 +893,12 @@ void APInt::trunc(uint32_t width) {
     if (wordsAfter == 1) {
       uint64_t *tmp = pVal;
       VAL = pVal[0];
-      delete tmp;
+      delete [] tmp;
     } else {
       uint64_t *newVal = getClearedMemory(wordsAfter);
       for (uint32_t i = 0; i < wordsAfter; ++i)
         newVal[i] = pVal[i];
-      delete pVal;
+      delete [] pVal;
       pVal = newVal;
     }
   }
@@ -920,7 +946,7 @@ void APInt::sext(uint32_t width) {
   for (uint32_t i = wordsBefore; i < wordsAfter; i++)
     newVal[i] = -1ULL;
   if (wordsBefore != 1)
-    delete pVal;
+    delete [] pVal;
   pVal = newVal;
   clearUnusedBits();
 }
@@ -940,7 +966,7 @@ void APInt::zext(uint32_t width) {
       for (uint32_t i = 0; i < wordsBefore; ++i)
         newVal[i] = pVal[i];
     if (wordsBefore != 1)
-      delete pVal;
+      delete [] pVal;
     pVal = newVal;
   }
 }
@@ -1407,7 +1433,7 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
       if (Quotient->isSingleWord())
         Quotient->VAL = 0;
       else
-        delete Quotient->pVal;
+        delete [] Quotient->pVal;
       Quotient->BitWidth = LHS.BitWidth;
       if (!Quotient->isSingleWord())
         Quotient->pVal = getClearedMemory(Quotient->getNumWords());
@@ -1438,7 +1464,7 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
       if (Remainder->isSingleWord())
         Remainder->VAL = 0;
       else
-        delete Remainder->pVal;
+        delete [] Remainder->pVal;
       Remainder->BitWidth = RHS.BitWidth;
       if (!Remainder->isSingleWord())
         Remainder->pVal = getClearedMemory(Remainder->getNumWords());
