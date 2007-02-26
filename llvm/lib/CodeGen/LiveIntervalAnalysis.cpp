@@ -900,6 +900,7 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   // are joined.
   MachineOperand *mopd = CopyMI->findRegisterDefOperand(DstReg);
   bool isDead = mopd->isDead();
+  bool isShorten = false;
   unsigned SrcStart = 0;
   unsigned SrcEnd = 0;
   if (isDead) {
@@ -911,9 +912,22 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
     // The instruction which defines the src is only truly dead if there are
     // no intermediate uses and there isn't a use beyond the copy.
     // FIXME: find the last use, mark is kill and shorten the live range.
-    if (SrcEnd > getDefIndex(CopyIdx) ||
-        hasRegisterUse(repSrcReg, SrcStart, CopyIdx))
+    if (SrcEnd > getDefIndex(CopyIdx))
       isDead = false;
+    else {
+      MachineOperand *MOU;
+      MachineInstr *LastUse =
+        lastRegisterUse(repSrcReg, SrcStart, CopyIdx, MOU);
+      if (LastUse) {
+        // Shorten the liveinterval to the end of last use.
+        MOU->setIsKill();
+        isDead = false;
+        isShorten = true;
+        SrcEnd = getUseIndex(getInstructionIndex(LastUse));
+      }
+    }
+    if (isDead)
+      isShorten = true;
   }
 
   // Okay, attempt to join these two intervals.  On failure, this returns false.
@@ -926,21 +940,23 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
       if (SrcStart == 0 && MRegisterInfo::isPhysicalRegister(SrcReg)) {
         // Live-in to the function but dead. Remove it from MBB live-in set.
         // JoinIntervals may end up swapping the two intervals.
-        LiveInterval &LiveInInt = (repSrcReg == DestInt.reg) ? DestInt : SrcInt;
-        LiveInInt.removeRange(SrcStart, SrcEnd);
         MachineBasicBlock *MBB = CopyMI->getParent();
         MBB->removeLiveIn(SrcReg);
       } else {
         MachineInstr *SrcMI = getInstructionFromIndex(SrcStart);
         if (SrcMI) {
-          // FIXME: SrcMI == NULL means the register is livein to a non-entry
-          // MBB. Remove the range from its live interval?
           MachineOperand *mops = SrcMI->findRegisterDefOperand(SrcReg);
           if (mops)
             // FIXME: mops == NULL means SrcMI defines a subregister?
             mops->setIsDead();
         }
       }
+    }
+
+    if (isShorten) {
+      // Shorten the live interval.
+      LiveInterval &LiveInInt = (repSrcReg == DestInt.reg) ? DestInt : SrcInt;
+      LiveInInt.removeRange(SrcStart, SrcEnd);
     }
   } else {
     // Coallescing failed.
@@ -1481,27 +1497,37 @@ bool LiveIntervals::differingRegisterClasses(unsigned RegA,
     return !RegClass->contains(RegB);
 }
 
-/// hasRegisterUse - Returns true if there is any use of the specific
-/// reg between indexes Start and End.
-bool
-LiveIntervals::hasRegisterUse(unsigned Reg, unsigned Start, unsigned End) {
-  for (unsigned Index = Start+InstrSlots::NUM; Index < End;
-       Index += InstrSlots::NUM) {
+/// lastRegisterUse - Returns the last use of the specific register between
+/// cycles Start and End. It also returns the use operand by reference. It
+/// returns NULL if there are no uses.
+MachineInstr *
+LiveIntervals::lastRegisterUse(unsigned Reg, unsigned Start, unsigned End,
+                               MachineOperand *&MOU) {
+  int e = (End-1) / InstrSlots::NUM * InstrSlots::NUM;
+  int s = Start;
+  while (e >= s) {
     // Skip deleted instructions
-    while (Index < End && !getInstructionFromIndex(Index))
-      Index += InstrSlots::NUM;
-    if (Index >= End) break;
+    MachineInstr *MI = getInstructionFromIndex(e);
+    while ((e - InstrSlots::NUM) >= s && !MI) {
+      e -= InstrSlots::NUM;
+      MI = getInstructionFromIndex(e);
+    }
+    if (e < s || MI == NULL)
+      return NULL;
 
-    MachineInstr *MI = getInstructionFromIndex(Index);
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (MO.isReg() && MO.isUse() && MO.getReg() &&
-          mri_->regsOverlap(rep(MO.getReg()), Reg))
-        return true;
+          mri_->regsOverlap(rep(MO.getReg()), Reg)) {
+        MOU = &MO;
+        return MI;
+      }
     }
+
+    e -= InstrSlots::NUM;
   }
 
-  return false;
+  return NULL;
 }
 
 /// unsetRegisterKill - Unset IsKill property of all uses of specific register

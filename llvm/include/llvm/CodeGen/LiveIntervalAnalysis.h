@@ -258,9 +258,11 @@ namespace llvm {
     bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
                               MachineInstr *CopyMI);
 
-    /// hasRegisterUse - Returns true if there is any use of the specific
-    /// reg between indexes Start and End.
-    bool hasRegisterUse(unsigned Reg, unsigned Start, unsigned End);
+    /// lastRegisterUse - Returns the last use of the specific register between
+    /// cycles Start and End. It also returns the use operand by reference. It
+    /// returns NULL if there are no uses.
+    MachineInstr *lastRegisterUse(unsigned Reg, unsigned Start, unsigned End,
+                                  MachineOperand *&MOU);
 
     /// unsetRegisterKill - Unset IsKill property of all uses of specific
     /// register of the specific instruction.
