@@ -16,6 +16,7 @@
 
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/Expr.h"
 #include <vector>
 
 namespace llvm {
@@ -59,7 +60,7 @@ public:
   /// getArrayType - Return the unique reference to the type for an array of the
   /// specified element type.
   TypeRef getArrayType(TypeRef EltTy, ArrayType::ArraySizeModifier ASM,
-                       unsigned EltTypeQuals, void *NumElts);
+                       unsigned EltTypeQuals, Expr *NumElts);
 
   /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
   ///

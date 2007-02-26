@@ -160,14 +160,14 @@ TypeRef ASTContext::getPointerType(TypeRef T) {
 /// getArrayType - Return the unique reference to the type for an array of the
 /// specified element type.
 TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
-                                 unsigned EltTypeQuals, void *NumElts) {
+                                 unsigned EltTypeQuals, Expr *NumElts) {
 #warning "IGNORING SIZE"
   
   // Unique array types, to guarantee there is only one array of a particular
   // structure.
   FoldingSetNodeID ID;
   ArrayType::Profile(ID, ASM, EltTypeQuals, EltTy);
-  
+      
   void *InsertPos = 0;
   if (ArrayType *ATP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
     return ATP;

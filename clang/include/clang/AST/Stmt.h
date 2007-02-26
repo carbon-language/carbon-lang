@@ -28,14 +28,27 @@ namespace clang {
 ///
 class Stmt {
 public:
-  Stmt() {}
+  enum StmtClass {
+#define STMT(CLASS, PARENT) CLASS##Class,
+#include "clang/AST/StmtNodes.def"
+    LastStmtClass
+  };
+private:
+  StmtClass sClass;
+public:
+  Stmt(StmtClass SC) : sClass(SC) {}
   virtual ~Stmt() {}
-  
+
+  StmtClass getStmtClass() const { return sClass; }
+
   void dump() const;
   void print(std::ostream &OS) const;
   
   // Implement visitor support.
   virtual void visit(StmtVisitor &Visitor);
+
+  // Implement isa<T> support.
+  static bool classof(const Stmt *) { return true; }
 };
 
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
@@ -44,13 +57,17 @@ class CompoundStmt : public Stmt {
   SmallVector<Stmt*, 16> Body;
 public:
   CompoundStmt(Stmt **StmtStart, unsigned NumStmts)
-    : Body(StmtStart, StmtStart+NumStmts) {}
+    : Stmt(CompoundStmtClass), Body(StmtStart, StmtStart+NumStmts) {}
   
   typedef SmallVector<Stmt*, 16>::iterator body_iterator;
   body_iterator body_begin() { return Body.begin(); }
   body_iterator body_end() { return Body.end(); }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CompoundStmtClass; 
+  }
+  static bool classof(const CompoundStmt *) { return true; }
 };
 
 class CaseStmt : public Stmt {
@@ -59,23 +76,31 @@ class CaseStmt : public Stmt {
   Stmt *SubStmt;
 public:
   CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt) 
-    : LHSVal(lhs), RHSVal(rhs), SubStmt(substmt) {}
+    : Stmt(CaseStmtClass), LHSVal(lhs), RHSVal(rhs), SubStmt(substmt) {}
   
   Expr *getLHS() { return LHSVal; }
   Expr *getRHS() { return RHSVal; }
   Stmt *getSubStmt() { return SubStmt; }
 
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CaseStmtClass; 
+  }
+  static bool classof(const CaseStmt *) { return true; }
 };
 
 class DefaultStmt : public Stmt {
   Stmt *SubStmt;
 public:
-  DefaultStmt(Stmt *substmt) : SubStmt(substmt) {}
+  DefaultStmt(Stmt *substmt) : Stmt(DefaultStmtClass), SubStmt(substmt) {}
   
   Stmt *getSubStmt() { return SubStmt; }
 
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == DefaultStmtClass; 
+  }
+  static bool classof(const DefaultStmt *) { return true; }
 };
 
 class LabelStmt : public Stmt {
@@ -83,12 +108,16 @@ class LabelStmt : public Stmt {
   Stmt *SubStmt;
 public:
   LabelStmt(IdentifierInfo *label, Stmt *substmt)
-    : Label(label), SubStmt(substmt) {}
+    : Stmt(LabelStmtClass), Label(label), SubStmt(substmt) {}
   
   IdentifierInfo *getLabel() { return Label; }
   Stmt *getSubStmt() { return SubStmt; }
 
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == LabelStmtClass; 
+  }
+  static bool classof(const LabelStmt *) { return true; }
 };
 
 
@@ -99,7 +128,7 @@ class IfStmt : public Stmt {
   Stmt *Then, *Else;
 public:
   IfStmt(Expr *cond, Stmt *then, Stmt *elsev = 0)
-    : Cond(cond), Then(then), Else(elsev) {}
+    : Stmt(IfStmtClass), Cond(cond), Then(then), Else(elsev) {}
   
   const Expr *getCond() const { return Cond; }
   const Stmt *getThen() const { return Then; }
@@ -110,6 +139,10 @@ public:
   Stmt *getElse() { return Else; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == IfStmtClass; 
+  }
+  static bool classof(const IfStmt *) { return true; }
 };
 
 /// SwitchStmt - This represents a 'switch' stmt.
@@ -119,12 +152,16 @@ class SwitchStmt : public Stmt {
   Stmt *Body;
 public:
   SwitchStmt(Expr *cond, Stmt *body)
-    : Cond(cond), Body(body) {}
+    : Stmt(SwitchStmtClass), Cond(cond), Body(body) {}
   
   Expr *getCond() { return Cond; }
   Stmt *getBody() { return Body; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == SwitchStmtClass; 
+  }
+  static bool classof(const SwitchStmt *) { return true; }
 };
 
 
@@ -135,12 +172,16 @@ class WhileStmt : public Stmt {
   Stmt *Body;
 public:
   WhileStmt(Expr *cond, Stmt *body)
-    : Cond(cond), Body(body) {}
+    : Stmt(WhileStmtClass), Cond(cond), Body(body) {}
   
   Expr *getCond() { return Cond; }
   Stmt *getBody() { return Body; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == WhileStmtClass; 
+  }
+  static bool classof(const WhileStmt *) { return true; }
 };
 
 /// DoStmt - This represents a 'do/while' stmt.
@@ -150,12 +191,16 @@ class DoStmt : public Stmt {
   Expr *Cond;
 public:
   DoStmt(Stmt *body, Expr *cond)
-    : Body(body), Cond(cond) {}
+    : Stmt(DoStmtClass), Body(body), Cond(cond) {}
   
   Stmt *getBody() { return Body; }
   Expr *getCond() { return Cond; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == DoStmtClass; 
+  }
+  static bool classof(const DoStmt *) { return true; }
 };
 
 
@@ -167,7 +212,8 @@ class ForStmt : public Stmt {
   Stmt *Body;
 public:
   ForStmt(Stmt *first, Expr *second, Expr *third, Stmt *body)
-    : First(first), Second(second), Third(third), Body(body) {}
+    : Stmt(ForStmtClass),
+      First(first), Second(second), Third(third), Body(body) {}
   
   Stmt *getFirst() { return First; }
   Expr *getSecond() { return Second; }
@@ -175,6 +221,10 @@ public:
   Stmt *getBody() { return Body; }
  
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ForStmtClass; 
+  }
+  static bool classof(const ForStmt *) { return true; }
 };
 
 /// GotoStmt - This represents a direct goto.
@@ -182,11 +232,15 @@ public:
 class GotoStmt : public Stmt {
   IdentifierInfo *Label;
 public:
-  GotoStmt(IdentifierInfo *label) : Label(label) {}
+  GotoStmt(IdentifierInfo *label) : Stmt(GotoStmtClass), Label(label) {}
   
   IdentifierInfo *getLabel() { return Label; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == GotoStmtClass; 
+  }
+  static bool classof(const GotoStmt *) { return true; }
 };
 
 /// IndirectGotoStmt - This represents an indirect goto.
@@ -194,11 +248,16 @@ public:
 class IndirectGotoStmt : public Stmt {
   Expr *Target;
 public:
-  IndirectGotoStmt(Expr *target) : Target(target) {}
+  IndirectGotoStmt(Expr *target) : Stmt(IndirectGotoStmtClass), 
+                                   Target(target) {}
   
   Expr *getTarget() { return Target; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == IndirectGotoStmtClass; 
+  }
+  static bool classof(const IndirectGotoStmt *) { return true; }
 };
 
 
@@ -206,14 +265,24 @@ public:
 ///
 class ContinueStmt : public Stmt {
 public:
+  ContinueStmt() : Stmt(ContinueStmtClass) {}
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ContinueStmtClass; 
+  }
+  static bool classof(const ContinueStmt *) { return true; }
 };
 
 /// BreakStmt - This represents a break.
 ///
 class BreakStmt : public Stmt {
 public:
+  BreakStmt() : Stmt(BreakStmtClass) {}
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == BreakStmtClass; 
+  }
+  static bool classof(const BreakStmt *) { return true; }
 };
 
 
@@ -222,11 +291,15 @@ public:
 class ReturnStmt : public Stmt {
   Expr *RetExpr;
 public:
-  ReturnStmt(Expr *E = 0) : RetExpr(E) {}
+  ReturnStmt(Expr *E = 0) : Stmt(ReturnStmtClass), RetExpr(E) {}
   
   Expr *getRetValue() { return RetExpr; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ReturnStmtClass; 
+  }
+  static bool classof(const ReturnStmt *) { return true; }
 };
 
 

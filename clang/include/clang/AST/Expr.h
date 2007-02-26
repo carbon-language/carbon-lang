@@ -29,10 +29,15 @@ namespace clang {
 class Expr : public Stmt {
   /// TODO: Type.
 public:
-  Expr() {}
+  Expr() : Stmt(ExprClass) {}
+  Expr(StmtClass SC) : Stmt(SC) {}
   ~Expr() {}
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ExprClass; 
+  }
+  static bool classof(const Expr *) { return true; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -44,23 +49,35 @@ public:
 class DeclRefExpr : public Expr {
   Decl *D;
 public:
-  DeclRefExpr(Decl *d) : D(d) {}
+  DeclRefExpr(Decl *d) : Expr(DeclRefExprClass), D(d) {}
   
   Decl *getDecl() const { return D; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == DeclRefExprClass; 
+  }
+  static bool classof(const DeclRefExpr *) { return true; }
 };
 
 class IntegerLiteral : public Expr {
 public:
-  IntegerLiteral() {}
+  IntegerLiteral() : Expr(IntegerLiteralClass) {}
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == IntegerLiteralClass; 
+  }
+  static bool classof(const IntegerLiteral *) { return true; }
 };
 
 class FloatingLiteral : public Expr {
 public:
-  FloatingLiteral() {}
+  FloatingLiteral() : Expr(FloatingLiteralClass) {}
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == FloatingLiteralClass; 
+  }
+  static bool classof(const FloatingLiteral *) { return true; }
 };
 
 class StringLiteral : public Expr {
@@ -76,6 +93,10 @@ public:
   bool isWide() const { return IsWide; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == StringLiteralClass; 
+  }
+  static bool classof(const StringLiteral *) { return true; }
 };
 
 /// ParenExpr - This represents a parethesized expression, e.g. "(1)".  This
@@ -85,11 +106,15 @@ class ParenExpr : public Expr {
   Expr *Val;
 public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
-    : L(l), R(r), Val(val) {}
+    : Expr(ParenExprClass), L(l), R(r), Val(val) {}
   
   Expr *getSubExpr() { return Val; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ParenExprClass; 
+  }
+  static bool classof(const ParenExpr *) { return true; }
 };
 
 
@@ -111,7 +136,7 @@ public:
   };
 
   UnaryOperator(Expr *input, Opcode opc)
-    : Val(input), Opc(opc) {}
+    : Expr(UnaryOperatorClass), Val(input), Opc(opc) {}
   
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "sizeof" or "[pre]++"
@@ -127,7 +152,11 @@ public:
   bool isPostfix() const { return isPostfix(Opc); }
   
   virtual void visit(StmtVisitor &Visitor);
-
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == UnaryOperatorClass; 
+  }
+  static bool classof(const UnaryOperator *) { return true; }
+  
 private:
   Expr *Val;
   Opcode Opc;
@@ -139,13 +168,18 @@ class SizeOfAlignOfTypeExpr : public Expr {
   bool isSizeof;  // true if sizeof, false if alignof.
   TypeRef Ty;
 public:
-  SizeOfAlignOfTypeExpr(bool issizeof, TypeRef ty) : isSizeof(issizeof), Ty(ty){
-  }
+  SizeOfAlignOfTypeExpr(bool issizeof, TypeRef ty) : 
+    Expr(SizeOfAlignOfTypeExprClass),
+    isSizeof(issizeof), Ty(ty) {}
   
   bool isSizeOf() const { return isSizeof; }
   TypeRef getArgumentType() const { return Ty; }
 
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == SizeOfAlignOfTypeExprClass; 
+  }
+  static bool classof(const SizeOfAlignOfTypeExpr *) { return true; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -156,12 +190,18 @@ public:
 class ArraySubscriptExpr : public Expr {
   Expr *Base, *Idx;
 public:
-  ArraySubscriptExpr(Expr *base, Expr *idx) : Base(base), Idx(idx) {}
+  ArraySubscriptExpr(Expr *base, Expr *idx) : 
+    Expr(ArraySubscriptExprClass),
+    Base(base), Idx(idx) {}
   
   Expr *getBase() { return Base; }
   Expr *getIdx() { return Idx; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ArraySubscriptExprClass; 
+  }
+  static bool classof(const ArraySubscriptExpr *) { return true; }
 };
 
 
@@ -194,6 +234,10 @@ public:
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CallExprClass; 
+  }
+  static bool classof(const CallExpr *) { return true; }
 };
 
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.
@@ -204,14 +248,18 @@ class MemberExpr : public Expr {
   bool IsArrow;      // True if this is "X->F", false if this is "X.F".
 public:
   MemberExpr(Expr *base, bool isarrow, Decl *memberdecl) 
-    : Base(base), MemberDecl(memberdecl), IsArrow(isarrow) {
-  }
+    : Expr(MemberExprClass),
+      Base(base), MemberDecl(memberdecl), IsArrow(isarrow) {}
   
   Expr *getBase() { return Base; }
   Decl *getMemberDecl() { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == MemberExprClass; 
+  }
+  static bool classof(const MemberExpr *) { return true; }
 };
 
 /// CastExpr - [C99 6.5.4] Cast Operators.
@@ -220,12 +268,16 @@ class CastExpr : public Expr {
   TypeRef Ty;
   Expr *Op;
 public:
-  CastExpr(TypeRef ty, Expr *op) : Ty(ty), Op(op) {}
+  CastExpr(TypeRef ty, Expr *op) : Expr(CastExprClass), Ty(ty), Op(op) {}
   
   TypeRef getDestType() const { return Ty; }
   
   Expr *getSubExpr() { return Op; }
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CastExprClass; 
+  }
+  static bool classof(const CastExpr *) { return true; }
 };
 
 
@@ -253,7 +305,7 @@ public:
   };
   
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc)
-    : LHS(lhs), RHS(rhs), Opc(opc) {}
+    : Expr(BinaryOperatorClass), LHS(lhs), RHS(rhs), Opc(opc) {}
 
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "<<=".
@@ -264,7 +316,11 @@ public:
   Expr *getRHS() { return RHS; }
   
   virtual void visit(StmtVisitor &Visitor);
-
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == BinaryOperatorClass; 
+  }
+  static bool classof(const BinaryOperator *) { return true; }
+  
 private:
   Expr *LHS, *RHS;
   Opcode Opc;
@@ -277,14 +333,17 @@ class ConditionalOperator : public Expr {
   Expr *Cond, *LHS, *RHS;  // Left/Middle/Right hand sides.
 public:
   ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs)
-    : Cond(cond), LHS(lhs), RHS(rhs) {}
+    : Expr(ConditionalOperatorClass), Cond(cond), LHS(lhs), RHS(rhs) {}
 
   Expr *getCond() { return Cond; }
   Expr *getLHS() { return LHS; }
   Expr *getRHS() { return RHS; }
-
   
   virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ConditionalOperatorClass; 
+  }
+  static bool classof(const ConditionalOperator *) { return true; }
 };
 
   

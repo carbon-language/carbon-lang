@@ -21,7 +21,8 @@ using namespace clang;
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
-StringLiteral::StringLiteral(const char *strData, unsigned byteLength, bool Wide) {
+StringLiteral::StringLiteral(const char *strData, unsigned byteLength, 
+                             bool Wide) : Expr(StringLiteralClass) {
   // OPTIMIZE: could allocate this appended to the StringLiteral.
   char *AStrData = new char[byteLength];
   memcpy(AStrData, strData, byteLength);
@@ -72,7 +73,7 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 //===----------------------------------------------------------------------===//
 
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs)
-  : Fn(fn), NumArgs(numargs) {
+  : Expr(CallExprClass), Fn(fn), NumArgs(numargs) {
   Args = new Expr*[numargs];
   for (unsigned i = 0; i != numargs; ++i)
     Args[i] = args[i];

@@ -141,7 +141,8 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         }
       }
       
-      T = Context.getArrayType(T, ASM, ATI.TypeQuals, ATI.NumElts);
+      T = Context.getArrayType(T, ASM, ATI.TypeQuals, 
+                               static_cast<Expr *>(ATI.NumElts));
       break;
     }
     case DeclaratorChunk::Function:
