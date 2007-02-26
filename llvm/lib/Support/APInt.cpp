@@ -403,7 +403,7 @@ APInt APInt::operator|(const APInt& RHS) const {
 APInt APInt::operator^(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord())
-    return APInt(BitWidth, VAL ^ RHS.VAL).clearUnusedBits();
+    return APInt(BitWidth, VAL ^ RHS.VAL);
 
   uint32_t numWords = getNumWords();
   uint64_t *val = getMemory(numWords);
@@ -427,7 +427,7 @@ bool APInt::operator !() const {
 APInt APInt::operator*(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord())
-    return APInt(BitWidth, VAL * RHS.VAL).clearUnusedBits();
+    return APInt(BitWidth, VAL * RHS.VAL);
   APInt Result(*this);
   Result *= RHS;
   return Result.clearUnusedBits();
@@ -436,7 +436,7 @@ APInt APInt::operator*(const APInt& RHS) const {
 APInt APInt::operator+(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord())
-    return APInt(BitWidth, VAL + RHS.VAL).clearUnusedBits();
+    return APInt(BitWidth, VAL + RHS.VAL);
   APInt Result(BitWidth, 0);
   add(Result.pVal, this->pVal, RHS.pVal, getNumWords());
   return Result.clearUnusedBits();
@@ -445,7 +445,7 @@ APInt APInt::operator+(const APInt& RHS) const {
 APInt APInt::operator-(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord())
-    return APInt(BitWidth, VAL - RHS.VAL).clearUnusedBits();
+    return APInt(BitWidth, VAL - RHS.VAL);
   APInt Result(BitWidth, 0);
   sub(Result.pVal, this->pVal, RHS.pVal, getNumWords());
   return Result.clearUnusedBits();
@@ -602,19 +602,19 @@ APInt& APInt::clear() {
 /// @brief Bitwise NOT operator. Performs a bitwise logical NOT operation on
 /// this APInt.
 APInt APInt::operator~() const {
-  APInt API(*this);
-  API.flip();
-  return API;
+  APInt Result(*this);
+  Result.flip();
+  return Result;
 }
 
 /// @brief Toggle every bit to its opposite value.
 APInt& APInt::flip() {
   if (isSingleWord()) {
-    VAL = ~VAL;
+    VAL ^= -1ULL;
     return clearUnusedBits();
   }
   for (uint32_t i = 0; i < getNumWords(); ++i)
-    pVal[i] = ~pVal[i];
+    pVal[i] ^= -1ULL;
   return clearUnusedBits();
 }
 
@@ -699,8 +699,13 @@ uint32_t APInt::countLeadingZeros() const {
 uint32_t APInt::countTrailingZeros() const {
   if (isSingleWord())
     return CountTrailingZeros_64(VAL);
-  APInt Tmp( ~(*this) & ((*this) - APInt(BitWidth,1)) );
-  return getNumWords() * APINT_BITS_PER_WORD - Tmp.countLeadingZeros();
+  uint32_t Count = 0;
+  uint32_t i = 0;
+  for (; i < getNumWords() && pVal[i] == 0; ++i)
+    Count += APINT_BITS_PER_WORD;
+  if (i < getNumWords())
+    Count += CountTrailingZeros_64(pVal[i]);
+  return Count;
 }
 
 uint32_t APInt::countPopulation() const {
@@ -863,9 +868,8 @@ void APInt::trunc(uint32_t width) {
 void APInt::sext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt SignExtend request");
   assert(width <= IntegerType::MAX_INT_BITS && "Too many bits");
-  bool isNegative = (*this)[BitWidth-1];
   // If the sign bit isn't set, this is the same as zext.
-  if (!isNegative) {
+  if (!isNegative()) {
     zext(width);
     return;
   }
@@ -929,35 +933,66 @@ void APInt::zext(uint32_t width) {
 /// Arithmetic right-shift this APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
 APInt APInt::ashr(uint32_t shiftAmt) const {
+  assert(shiftAmt <= BitWidth && "Invalid shift amount");
   if (isSingleWord()) {
     if (shiftAmt == BitWidth)
-      return APInt(BitWidth, -1ULL);
-    else
+      return APInt(BitWidth, 0); // undefined
+    else {
+      uint32_t SignBit = APINT_BITS_PER_WORD - BitWidth;
       return APInt(BitWidth, 
-        (((int64_t(VAL) << (APINT_BITS_PER_WORD - BitWidth)) >> 
-            (APINT_BITS_PER_WORD - BitWidth)) >> shiftAmt)).clearUnusedBits();
+        (((int64_t(VAL) << SignBit) >> SignBit) >> shiftAmt));
+    }
   }
 
-  APInt Result(*this);
-  if (shiftAmt >= BitWidth) {
-    memset(Result.pVal, Result[BitWidth-1] ? 1 : 0, 
-           (getNumWords()-1) * APINT_WORD_SIZE);
-    return Result.clearUnusedBits();
-  } 
-
-  // FIXME: bit-at-a-time shift is really slow.
-  uint32_t i = 0;
-  for (; i < BitWidth - shiftAmt; ++i)
-    if (Result[i+shiftAmt]) 
-      Result.set(i);
+  // If all the bits were shifted out, the result is 0 or -1. This avoids issues
+  // with shifting by the size of the integer type, which produces undefined
+  // results. 
+  if (shiftAmt == BitWidth)
+    if (isNegative())
+      return APInt(BitWidth, -1ULL);
     else
-      Result.clear(i);
-  for (; i < BitWidth; ++i)
-    if (Result[BitWidth-1]) 
-      Result.set(i);
-    else 
-      Result.clear(i);
-  return Result;
+      return APInt(BitWidth, 0);
+
+  // Create some space for the result.
+  uint64_t * val = new uint64_t[getNumWords()];
+
+  // If we are shifting less than a word, compute the shift with a simple carry
+  if (shiftAmt < APINT_BITS_PER_WORD) {
+    uint64_t carry = 0;
+    for (int i = getNumWords()-1; i >= 0; --i) {
+      val[i] = pVal[i] >> shiftAmt | carry;
+      carry = pVal[i] << (APINT_BITS_PER_WORD - shiftAmt);
+    }
+    return APInt(val, BitWidth).clearUnusedBits();
+  }
+
+  // Compute some values needed by the remaining shift algorithms
+  uint32_t wordShift = shiftAmt % APINT_BITS_PER_WORD;
+  uint32_t offset = shiftAmt / APINT_BITS_PER_WORD;
+
+  // If we are shifting whole words, just move whole words
+  if (wordShift == 0) {
+    for (uint32_t i = 0; i < getNumWords() - offset; ++i) 
+      val[i] = pVal[i+offset];
+    for (uint32_t i = getNumWords()-offset; i < getNumWords(); i++)
+      val[i] = (isNegative() ? -1ULL : 0);
+    return APInt(val,BitWidth).clearUnusedBits();
+  }
+
+  // Shift the low order words 
+  uint32_t breakWord = getNumWords() - offset -1;
+  for (uint32_t i = 0; i < breakWord; ++i)
+    val[i] = pVal[i+offset] >> wordShift |
+             pVal[i+offset+1] << (APINT_BITS_PER_WORD - wordShift);
+  // Shift the break word.
+  uint32_t SignBit = APINT_BITS_PER_WORD - (BitWidth % APINT_BITS_PER_WORD);
+  val[breakWord] = uint64_t(
+    (((int64_t(pVal[breakWord+offset]) << SignBit) >> SignBit) >> wordShift));
+
+  // Remaining words are 0 or -1
+  for (uint32_t i = breakWord+1; i < getNumWords(); ++i)
+    val[i] = (isNegative() ? -1ULL : 0);
+  return APInt(val, BitWidth).clearUnusedBits();
 }
 
 /// Logical right-shift this APInt by shiftAmt.
@@ -1022,7 +1057,7 @@ APInt APInt::shl(uint32_t shiftAmt) const {
   if (isSingleWord()) {
     if (shiftAmt == BitWidth)
       return APInt(BitWidth, 0); // avoid undefined shift results
-    return APInt(BitWidth, VAL << shiftAmt).clearUnusedBits();
+    return APInt(BitWidth, VAL << shiftAmt);
   }
 
   // If all the bits were shifted out, the result is 0. This avoids issues
@@ -1148,7 +1183,7 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     // (u[j+n]u[j+n-1]..u[j]) - qp * (v[n-1]...v[1]v[0]). This computation
     // consists of a simple multiplication by a one-place number, combined with
     // a subtraction. 
-    bool isNegative = false;
+    bool isNeg = false;
     for (uint32_t i = 0; i < n; ++i) {
       uint64_t u_tmp = uint64_t(u[j+i]) | (uint64_t(u[j+i+1]) << 32);
       uint64_t subtrahend = uint64_t(qp) * uint64_t(v[i]);
@@ -1166,7 +1201,7 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
         u[k]--;
         k++;
       }
-      isNegative |= borrow;
+      isNeg |= borrow;
       DEBUG(cerr << "KnuthDiv: u[j+i] == " << u[j+i] << ",  u[j+i+1] == " << 
                     u[j+i+1] << '\n'); 
     }
@@ -1178,7 +1213,7 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     // true value plus b**(n+1), namely as the b's complement of
     // the true value, and a "borrow" to the left should be remembered.
     //
-    if (isNegative) {
+    if (isNeg) {
       bool carry = true;  // true because b's complement is "complement + 1"
       for (uint32_t i = 0; i <= m+n; ++i) {
         u[i] = ~u[i] + carry; // b's complement
@@ -1192,7 +1227,7 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     // D5. [Test remainder.] Set q[j] = qp. If the result of step D4 was 
     // negative, go to step D6; otherwise go on to step D7.
     q[j] = qp;
-    if (isNegative) {
+    if (isNeg) {
       // D6. [Add back]. The probability that this step is necessary is very 
       // small, on the order of only 2/b. Make sure that test data accounts for
       // this possibility. Decrease q[j] by 1 
@@ -1501,8 +1536,8 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
   assert(str && "String is null?");
-  bool isNegative = str[0] == '-';
-  if (isNegative)
+  bool isNeg = str[0] == '-';
+  if (isNeg)
     str++, slen--;
   assert(slen <= numbits || radix != 2 && "Insufficient bit width");
   assert(slen*3 <= numbits || radix != 8 && "Insufficient bit width");
@@ -1552,9 +1587,9 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
     *this += apdigit;
   }
   // If its negative, put it in two's complement form
-  if (isNegative) {
+  if (isNeg) {
+    (*this)--;
     this->flip();
-    (*this)++;
   }
 }
 
