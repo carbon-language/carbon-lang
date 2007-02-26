@@ -123,6 +123,17 @@ def X86InstrInfo : InstrInfo {
                        24];
 }
 
+//===----------------------------------------------------------------------===//
+// Calling Conventions
+//===----------------------------------------------------------------------===//
+
+include "X86CallingConv.td"
+
+
+//===----------------------------------------------------------------------===//
+// Assembly Printers
+//===----------------------------------------------------------------------===//
+
 // The X86 target supports two different syntaxes for emitting machine code.
 // This is controlled by the -x86-asm-syntax={att|intel}
 def ATTAsmWriter : AsmWriter {
