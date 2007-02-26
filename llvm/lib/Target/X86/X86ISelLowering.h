@@ -288,6 +288,10 @@ namespace llvm {
     // to this function.
     unsigned getBytesCallerReserves() const { return BytesCallerReserves; }
  
+    /// getStackPtrReg - Return the stack pointer register we are using: either
+    /// ESP or RSP.
+    unsigned getStackPtrReg() const { return X86StackPtr; }
+    
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
