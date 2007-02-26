@@ -62,6 +62,8 @@ namespace {
 
     // LoopProcessWorklist - List of loops we need to process.
     std::vector<Loop*> LoopProcessWorklist;
+    std::set<Value *> UnswitchedVals;
+
   public:
     virtual bool runOnFunction(Function &F);
     bool visitLoop(Loop *L);
@@ -186,6 +188,11 @@ bool LoopUnswitch::visitLoop(Loop *L) {
         // Find a value to unswitch on:
         // FIXME: this should chose the most expensive case!
         Constant *UnswitchVal = SI->getCaseValue(1);
+        // Do not process same value again and again.
+        if (UnswitchedVals.count(UnswitchVal) != 0)
+          continue;
+        UnswitchedVals.insert(UnswitchVal);
+
         if (UnswitchIfProfitable(LoopCond, UnswitchVal, L)) {
           ++NumSwitches;
           return true;
