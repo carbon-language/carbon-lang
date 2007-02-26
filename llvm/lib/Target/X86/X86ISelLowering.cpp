@@ -1200,8 +1200,8 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
             unsigned ExtOpc = (ArgFlags & 1) ? ISD::AssertSext :ISD::AssertZext;
             ArgValue = DAG.getNode(ExtOpc, MVT::i32, ArgValue,
                                    DAG.getValueType(ObjectVT));
-            ArgValue = DAG.getNode(ISD::TRUNCATE, ObjectVT, ArgValue);
           }
+          ArgValue = DAG.getNode(ISD::TRUNCATE, ObjectVT, ArgValue);
         }
         break;
       }
