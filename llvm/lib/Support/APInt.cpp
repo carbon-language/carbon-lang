@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if 0
 #define DEBUG_TYPE "apint"
 #include "llvm/ADT/APInt.h"
 #include "llvm/DerivedTypes.h"
@@ -1681,3 +1682,6 @@ void APInt::dump() const
   cerr << " (" << this->toString(10, false) << ")\n" << std::setbase(10);
 }
 #endif
+
+#endif
+
