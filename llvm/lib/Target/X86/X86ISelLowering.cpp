@@ -1059,17 +1059,15 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 //===----------------------------------------------------------------------===//
 
 class CallingConvState {
-  uint32_t UsedRegs[(X86::NUM_TARGET_REGS+31)/32];
   unsigned StackOffset;
   const MRegisterInfo &MRI;
+  SmallVector<uint32_t, 32> UsedRegs;
 public:
   CallingConvState(const MRegisterInfo &mri) : MRI(mri) {
     // No stack is used.
     StackOffset = 0;
     
     UsedRegs.resize(MRI.getNumRegs());
-    // No registers are used.
-    memset(UsedRegs, 0, sizeof(UsedRegs));
   }
   
   unsigned getNextStackOffset() const { return StackOffset; }
