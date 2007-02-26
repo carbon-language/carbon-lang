@@ -22,18 +22,20 @@ using namespace llvm;
 //                            GlobalValue Class
 //===----------------------------------------------------------------------===//
 
-/// removeDeadUsersOfConstant - If the specified constantexpr is dead, remove
-/// it.  This involves recursively eliminating any dead users of the
-/// constantexpr.
-static bool removeDeadUsersOfConstant(Constant *C) {
+/// This could be named "SafeToDestroyGlobalValue". It just makes sure that
+/// there are no non-constant uses of this GlobalValue. If there aren't then
+/// this and the transitive closure of the constants can be deleted. See the
+/// destructor for details.
+static bool removeDeadConstantUsers(Constant* C) {
   if (isa<GlobalValue>(C)) return false; // Cannot remove this
 
-  while (!C->use_empty()) {
-    Constant *User = dyn_cast<Constant>(C->use_back());
-    if (!User) return false; // Non-constant usage;
-    if (!removeDeadUsersOfConstant(User))
-      return false; // Constant wasn't dead
-  }
+  while (!C->use_empty())
+    if (Constant *User = dyn_cast<Constant>(C->use_back())) {
+      if (!removeDeadConstantUsers(User))
+        return false; // Constant wasn't dead
+    } else {
+      return false; // Non-constant usage;
+    }
 
   C->destroyConstant();
   return true;
@@ -43,27 +45,17 @@ static bool removeDeadUsersOfConstant(Constant *C) {
 /// off of this global value, remove them.  This method is useful for clients
 /// that want to check to see if a global is unused, but don't want to deal
 /// with potentially dead constants hanging off of the globals.
+///
+/// This function returns true if the global value is now dead.  If all
+/// users of this global are not dead, this method may return false and
+/// leave some of them around.
 void GlobalValue::removeDeadConstantUsers() {
-  
-  Value::use_iterator I = use_begin(), E = use_end();
-  Value::use_iterator LastNonDeadUser = E;
-  for (; I != E; ++I) {
-    if (Constant *User = dyn_cast<Constant>(*I)) {
-      if (!removeDeadUsersOfConstant(User)) {
-        // If the constant wasn't dead, remember that this was the last live use
-        // and move on to the next constant.
-        LastNonDeadUser = I;
-      } else {
-        // If the constant was dead, then the iterator is invalidated.
-        if (LastNonDeadUser == E) {
-          I = use_begin();
-          if (I == E) break;
-        } else {
-          I = LastNonDeadUser;
-        }
-      }
+  while(!use_empty()) {
+    if (Constant* User = dyn_cast<Constant>(use_back())) {
+      if (!::removeDeadConstantUsers(User))
+        return; // Constant wasn't dead
     } else {
-      LastNonDeadUser = I;
+      return; // Non-constant usage;
     }
   }
 }
