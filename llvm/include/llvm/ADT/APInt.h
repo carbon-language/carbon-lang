@@ -467,7 +467,7 @@ public:
       return int64_t(VAL << (APINT_BITS_PER_WORD - BitWidth)) >> 
                      (APINT_BITS_PER_WORD - BitWidth);
     assert(getActiveBits() <= 64 && "Too many bits for int64_t");
-      return int64_t(pVal[0]);
+    return int64_t(pVal[0]);
   }
 
   /// @returns the largest value for an APInt of the specified bit-width and 
