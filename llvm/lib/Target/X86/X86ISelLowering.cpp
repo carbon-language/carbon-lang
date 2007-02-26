@@ -1137,12 +1137,6 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumIntRegs = 0;  // Int regs used for parameter passing.
   unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
 
-  static const unsigned GPR8ArgRegs[] = {
-    X86::DIL, X86::SIL, X86::DL,  X86::CL,  X86::R8B, X86::R9B
-  };
-  static const unsigned GPR16ArgRegs[] = {
-    X86::DI,  X86::SI,  X86::DX,  X86::CX,  X86::R8W, X86::R9W
-  };
   static const unsigned GPR32ArgRegs[] = {
     X86::EDI, X86::ESI, X86::EDX, X86::ECX, X86::R8D, X86::R9D
   };
@@ -1156,6 +1150,7 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
 
   for (unsigned i = 0; i < NumArgs; ++i) {
     MVT::ValueType ObjectVT = Op.getValue(i).getValueType();
+    unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
     unsigned ArgIncrement = 8;
     unsigned ObjSize = 0;
     unsigned ObjIntRegs = 0;
@@ -1178,26 +1173,36 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
       case MVT::i64: {
         TargetRegisterClass *RC = NULL;
         switch (ObjectVT) {
-        default: break;
+        default: assert(0 && "Unknown integer VT!");
         case MVT::i8:
-          RC = X86::GR8RegisterClass;
-          Reg = GPR8ArgRegs[NumIntRegs];
-          break;
         case MVT::i16:
-          RC = X86::GR16RegisterClass;
-          Reg = GPR16ArgRegs[NumIntRegs];
-          break;
         case MVT::i32:
           RC = X86::GR32RegisterClass;
           Reg = GPR32ArgRegs[NumIntRegs];
+          ArgValue = DAG.getCopyFromReg(Root, Reg, MVT::i32);
           break;
         case MVT::i64:
           RC = X86::GR64RegisterClass;
           Reg = GPR64ArgRegs[NumIntRegs];
+          ArgValue = DAG.getCopyFromReg(Root, Reg, MVT::i64);
           break;
         }
         Reg = AddLiveIn(MF, Reg, RC);
-        ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
+
+        // If this is an 8 or 16-bit value, it is really passed promoted to 32
+        // bits.  Insert an assert[sz]ext to capture this, then truncate to the
+        // right size.
+        if (ObjectVT == MVT::i8 || ObjectVT == MVT::i16) {
+          // FIXME: FORMAL_ARGUMENTS can't currently distinguish between an
+          // argument with undefined high bits, so we can't insert a assertzext
+          // yet.
+          if (ArgFlags & 1) {
+            unsigned ExtOpc = (ArgFlags & 1) ? ISD::AssertSext :ISD::AssertZext;
+            ArgValue = DAG.getNode(ExtOpc, MVT::i32, ArgValue,
+                                   DAG.getValueType(ObjectVT));
+            ArgValue = DAG.getNode(ISD::TRUNCATE, ObjectVT, ArgValue);
+          }
+        }
         break;
       }
       case MVT::f32:
