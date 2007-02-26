@@ -661,6 +661,21 @@ APInt APInt::getNullValue(uint32_t numBits) {
   return getMinValue(numBits, false);
 }
 
+uint64_t APInt::getHashValue() const {
+  // LLVM only supports bit widths up to 2^23 so shift the bitwidth into the
+  // high range. This makes the hash unique for integer values < 2^41 bits and
+  // doesn't hurt for larger values.
+  uint64_t hash = uint64_t(BitWidth) << (APINT_BITS_PER_WORD - 23);
+
+  // Add the sum of the words to the hash.
+  if (isSingleWord())
+    hash += VAL;
+  else
+    for (uint32_t i = 0; i < getNumWords(); ++i)
+      hash += pVal[i];
+  return hash;
+}
+
 /// HiBits - This function returns the high "numBits" bits of this APInt.
 APInt APInt::getHiBits(uint32_t numBits) const {
   return APIntOps::lshr(*this, BitWidth - numBits);
@@ -1660,7 +1675,7 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
     APInt tmp2(tmp.getBitWidth(), 0);
     divide(tmp, tmp.getNumWords(), divisor, divisor.getNumWords(), &tmp2, 
            &APdigit);
-    uint32_t digit = APdigit.getValue();
+    uint32_t digit = APdigit.getZExtValue();
     assert(digit < radix && "divide failed");
     result.insert(insert_at,digits[digit]);
     tmp = tmp2;
