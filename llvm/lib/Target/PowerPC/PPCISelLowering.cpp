@@ -1626,13 +1626,13 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
 }
 
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand Copy;
+  SDOperand Chain = Op.getOperand(0);
   switch(Op.getNumOperands()) {
   default:
     assert(0 && "Do not know how to return this many arguments!");
     abort();
   case 1: 
-    return SDOperand(); // ret void is legal
+    return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain);
   case 3: {
     MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
     unsigned ArgReg;
@@ -1647,8 +1647,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
       ArgReg = PPC::F1;
     }
     
-    Copy = DAG.getCopyToReg(Op.getOperand(0), ArgReg, Op.getOperand(1),
-                            SDOperand());
+    Chain = DAG.getCopyToReg(Chain, ArgReg, Op.getOperand(1), SDOperand());
     
     // If we haven't noted the R3/F1 are live out, do so now.
     if (DAG.getMachineFunction().liveout_empty())
@@ -1656,9 +1655,9 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
     break;
   }
   case 5:
-    Copy = DAG.getCopyToReg(Op.getOperand(0), PPC::R3, Op.getOperand(3), 
-                            SDOperand());
-    Copy = DAG.getCopyToReg(Copy, PPC::R4, Op.getOperand(1),Copy.getValue(1));
+    Chain = DAG.getCopyToReg(Chain, PPC::R3, Op.getOperand(3), SDOperand());
+    Chain = DAG.getCopyToReg(Chain, PPC::R4, Op.getOperand(1),
+                             Chain.getValue(1));
     // If we haven't noted the R3+R4 are live out, do so now.
     if (DAG.getMachineFunction().liveout_empty()) {
       DAG.getMachineFunction().addLiveOut(PPC::R3);
@@ -1666,7 +1665,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
     }
     break;
   }
-  return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
+  return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain, Chain.getValue(1));
 }
 
 static SDOperand LowerSTACKRESTORE(SDOperand Op, SelectionDAG &DAG,

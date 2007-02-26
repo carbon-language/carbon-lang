@@ -1080,9 +1080,6 @@ def : Pat<(xor GPRC:$in, imm:$imm),
 def : Pat<(sub  immSExt16:$imm, GPRC:$in),
           (SUBFIC GPRC:$in, imm:$imm)>;
 
-// Return void support.
-def : Pat<(ret), (BLR)>;
-
 // SHL/SRL
 def : Pat<(shl GPRC:$in, (i32 imm:$imm)),
           (RLWINM GPRC:$in, imm:$imm, 0, (SHL32 imm:$imm))>;
