@@ -1940,18 +1940,42 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0.getOperand(0));
   
-  // fold (sext (truncate x)) -> (sextinreg x).
-  if (N0.getOpcode() == ISD::TRUNCATE && 
-      (!AfterLegalize || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG,
-                                              N0.getValueType()))) {
+  if (N0.getOpcode() == ISD::TRUNCATE) {
+    // See if the value being truncated is already sign extended.  If so, just
+    // eliminate the trunc/sext pair.
     SDOperand Op = N0.getOperand(0);
-    if (Op.getValueType() < VT) {
-      Op = DAG.getNode(ISD::ANY_EXTEND, VT, Op);
-    } else if (Op.getValueType() > VT) {
-      Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
+    unsigned OpBits   = MVT::getSizeInBits(Op.getValueType());
+    unsigned MidBits  = MVT::getSizeInBits(N0.getValueType());
+    unsigned DestBits = MVT::getSizeInBits(VT);
+    unsigned NumSignBits = TLI.ComputeNumSignBits(Op);
+    
+    if (OpBits == DestBits) {
+      // Op is i32, Mid is i8, and Dest is i32.  If Op has more than 24 sign
+      // bits, it is already ready.
+      if (NumSignBits > DestBits-MidBits)
+        return Op;
+    } else if (OpBits < DestBits) {
+      // Op is i32, Mid is i8, and Dest is i64.  If Op has more than 24 sign
+      // bits, just sext from i32.
+      if (NumSignBits > OpBits-MidBits)
+        return DAG.getNode(ISD::SIGN_EXTEND, VT, Op);
+    } else {
+      // Op is i64, Mid is i8, and Dest is i32.  If Op has more than 56 sign
+      // bits, just truncate to i32.
+      if (NumSignBits > OpBits-MidBits)
+        return DAG.getNode(ISD::TRUNCATE, VT, Op);
     }
-    return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, Op,
-                       DAG.getValueType(N0.getValueType()));
+    
+    // fold (sext (truncate x)) -> (sextinreg x).
+    if (!AfterLegalize || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG,
+                                               N0.getValueType())) {
+      if (Op.getValueType() < VT)
+        Op = DAG.getNode(ISD::ANY_EXTEND, VT, Op);
+      else if (Op.getValueType() > VT)
+        Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
+      return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, Op,
+                         DAG.getValueType(N0.getValueType()));
+    }
   }
   
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
