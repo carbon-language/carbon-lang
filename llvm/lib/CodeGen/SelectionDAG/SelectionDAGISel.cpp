@@ -3111,8 +3111,16 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // Flags[31:27] -> OriginalAlignment
     // Flags[2] -> isSRet
     // Flags[1] -> isInReg
+    // Flags[0] -> isSigned
     unsigned Flags = (isInReg << 1) | (isSRet << 2) | (OriginalAlignment << 27);
 
+    // FIXME: Distinguish between a formal with no [sz]ext attribute from one
+    // that is zero extended!
+    if (FTy->paramHasAttr(j, FunctionType::ZExtAttribute))
+      Flags |= 0;
+    if (FTy->paramHasAttr(j, FunctionType::SExtAttribute))
+      Flags |= 1;
+    
     switch (getTypeAction(VT)) {
     default: assert(0 && "Unknown type action!");
     case Legal: 
