@@ -352,6 +352,13 @@ public:
     return !slt(RHS);
   }
 
+  /// This just tests the high bit of this APInt to determine if it is negative.
+  /// @returns true if this APInt is negative, false otherwise
+  /// @brief Determine sign of this APInt.
+  bool isNegative() {
+    return (*this)[BitWidth - 1];
+  }
+
   /// Arithmetic right-shift this APInt by shiftAmt.
   /// @brief Arithmetic right-shift function.
   APInt ashr(uint32_t shiftAmt) const;
