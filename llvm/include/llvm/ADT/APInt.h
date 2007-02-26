@@ -463,12 +463,12 @@ public:
   /// if isSign == true, it should be largest signed value, otherwise largest
   /// unsigned value.
   /// @brief Gets max value of the APInt with bitwidth <= 64.
-  static APInt getMaxValue(uint32_t numBits, bool isSign);
+  static APInt getMaxValue(uint32_t numBits, bool isSigned);
 
   /// @returns the smallest value for an APInt of the given bit-width and
   /// if isSign == true, it should be smallest signed value, otherwise zero.
   /// @brief Gets min value of the APInt with bitwidth <= 64.
-  static APInt getMinValue(uint32_t numBits, bool isSign);
+  static APInt getMinValue(uint32_t numBits, bool isSigned);
 
   /// @returns the all-ones value for an APInt of the specified bit-width.
   /// @brief Get the all-ones value.
@@ -482,6 +482,42 @@ public:
   /// @brief Boolean conversion function. 
   inline bool getBoolValue() const {
     return countLeadingZeros() != BitWidth;
+  }
+
+  /// This checks to see if the value has all bits of the APInt are set or not.
+  /// @brief Determine if all bits are set
+  inline bool isAllOnesValue() const {
+    return countPopulation() == BitWidth;
+  }
+
+  /// This checks to see if the value of this APInt is the maximum unsigned
+  /// value for the APInt's bit width.
+  /// @brief Determine if this is the largest unsigned value.
+  bool isMaxValue() const {
+    return countPopulation() == BitWidth;
+  }
+
+  /// This checks to see if the value of this APInt is the maximum signed
+  /// value for the APInt's bit width.
+  /// @brief Determine if this is the largest signed value.
+  bool isMaxSignedValue() const {
+    return BitWidth == 1 ? VAL == 0 :
+                          !isNegative() && countPopulation() == BitWidth - 1;
+  }
+
+  /// This checks to see if the value of this APInt is the minimum signed
+  /// value for the APInt's bit width.
+  /// @brief Determine if this is the smallest unsigned value.
+  bool isMinValue() const {
+    return countPopulation() == 0;
+  }
+
+  /// This checks to see if the value of this APInt is the minimum signed
+  /// value for the APInt's bit width.
+  /// @brief Determine if this is the smallest signed value.
+  bool isMinSignedValue() const {
+    return BitWidth == 1 ? VAL == 1 :
+                           isNegative() && countPopulation() == 1;
   }
 
   /// @returns a character interpretation of the APInt.
