@@ -447,16 +447,27 @@ public:
     return BitWidth - countLeadingZeros();
   }
 
-  /// @returns a uint64_t value from this APInt. If this APInt contains a single
-  /// word, just returns VAL, otherwise pVal[0].
-  inline uint64_t getValue(bool isSigned = false) const {
+  /// This method attempts to return the value of this APInt as a zero extended
+  /// uint64_t. The bitwidth must be <= 64 or the value must fit within a
+  /// uint64_t. Otherwise an assertion will result.
+  /// @brief Get zero extended value
+  inline uint64_t getZExtValue() const {
     if (isSingleWord())
-      return isSigned ? int64_t(VAL << (64 - BitWidth)) >> 
-                                       (64 - BitWidth) : VAL;
-    uint32_t n = getActiveBits();
-    if (n <= 64)
-      return pVal[0];
-    assert(0 && "This APInt's bitwidth > 64");
+      return VAL;
+    assert(getActiveBits() <= 64 && "Too many bits for uint64_t");
+    return pVal[0];
+  }
+
+  /// This method attempts to return the value of this APInt as a sign extended
+  /// int64_t. The bit width must be <= 64 or the value must fit within an
+  /// int64_t. Otherwise an assertion will result.
+  /// @brief Get sign extended value
+  inline int64_t getSExtValue() const {
+    if (isSingleWord())
+      return int64_t(VAL << (APINT_BITS_PER_WORD - BitWidth)) >> 
+                     (APINT_BITS_PER_WORD - BitWidth);
+    assert(getActiveBits() <= 64 && "Too many bits for int64_t");
+      return int64_t(pVal[0]);
   }
 
   /// @returns the largest value for an APInt of the specified bit-width and 
@@ -477,6 +488,11 @@ public:
   /// @returns the '0' value for an APInt of the specified bit-width.
   /// @brief Get the '0' value.
   static APInt getNullValue(uint32_t numBits);
+
+  /// The hash value is computed as the sum of the words and the bit width.
+  /// @returns A hash value computed from the sum of the APInt words.
+  /// @brief Get a hash value based on this APInt
+  uint64_t getHashValue() const;
 
   /// This converts the APInt to a boolean valy as a test against zero.
   /// @brief Boolean conversion function. 
