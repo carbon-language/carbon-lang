@@ -138,8 +138,9 @@ ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty) {
 //                                ConstantInt
 //===----------------------------------------------------------------------===//
 
-ConstantInt::ConstantInt(const IntegerType *Ty, uint64_t V)
+ConstantInt::ConstantInt(const IntegerType *Ty, const APInt& V)
   : Constant(Ty, ConstantIntVal, 0, 0), Val(V) {
+  assert(V.getBitWidth() == Ty->getBitWidth() && "Invalid constant for type");
 }
 
 ConstantInt *ConstantInt::TheTrueVal = 0;
@@ -166,32 +167,55 @@ ConstantInt *ConstantInt::CreateTrueFalseVals(bool WhichOne) {
 
 
 namespace {
-  struct DenseMapInt64KeyInfo {
-    typedef std::pair<uint64_t, const Type*> KeyTy;
-    static inline KeyTy getEmptyKey() { return KeyTy(0, 0); }
-    static inline KeyTy getTombstoneKey() { return KeyTy(1, 0); }
+  struct DenseMapAPIntKeyInfo {
+    struct KeyTy {
+      APInt val;
+      const Type* type;
+      KeyTy(const APInt& V, const Type* Ty) : val(V), type(Ty) {}
+      KeyTy(const KeyTy& that) : val(that.val), type(that.type) {}
+      bool operator==(const KeyTy& that) const {
+        return type == that.type && this->val == that.val;
+      }
+      bool operator!=(const KeyTy& that) const {
+        return !this->operator==(that);
+      }
+    };
+    static inline KeyTy getEmptyKey() { return KeyTy(APInt(1,0), 0); }
+    static inline KeyTy getTombstoneKey() { return KeyTy(APInt(1,1), 0); }
     static unsigned getHashValue(const KeyTy &Key) {
-      return DenseMapKeyInfo<void*>::getHashValue(Key.second) ^ Key.first;
+      return DenseMapKeyInfo<void*>::getHashValue(Key.type) ^ 
+        Key.val.getHashValue();
     }
     static bool isPod() { return true; }
   };
 }
 
 
-typedef DenseMap<DenseMapInt64KeyInfo::KeyTy, ConstantInt*, 
-                 DenseMapInt64KeyInfo> IntMapTy;
+typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 
+                 DenseMapAPIntKeyInfo> IntMapTy;
 static ManagedStatic<IntMapTy> IntConstants;
 
-// Get a ConstantInt from an int64_t. Note here that we canoncialize the value
-// to a uint64_t value that has been zero extended down to the size of the
-// integer type of the ConstantInt. This allows the getZExtValue method to 
-// just return the stored value while getSExtValue has to convert back to sign
-// extended. getZExtValue is more common in LLVM than getSExtValue().
 ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
   const IntegerType *ITy = cast<IntegerType>(Ty);
-  V &= ITy->getBitMask();
-  ConstantInt *&Slot = (*IntConstants)[std::make_pair(uint64_t(V), Ty)];
-  if (Slot) return Slot;
+  APInt Tmp(ITy->getBitWidth(), V);
+  return get(Ty, Tmp);
+}
+
+// Get a ConstantInt from a Type and APInt. Note that the value stored in 
+// the DenseMap as the key is a DensMapAPIntKeyInfo::KeyTy which has provided
+// operator== and operator!= to ensure that the DenseMap doesn't attempt to
+// compare APInt's of different widths, which would violate an APInt class
+// invariant which generates an assertion.
+ConstantInt *ConstantInt::get(const Type *Ty, const APInt& V) {
+  const IntegerType *ITy = cast<IntegerType>(Ty);
+  assert(ITy->getBitWidth() == V.getBitWidth() && "Invalid type for constant");
+  // get an existing value or the insertion position
+  DenseMapAPIntKeyInfo::KeyTy Key(V, Ty);
+  ConstantInt *&Slot = (*IntConstants)[Key]; 
+  // if it exists, return it.
+  if (Slot)
+    return Slot;
+  // otherwise create a new one, insert it, and return it.
   return Slot = new ConstantInt(ITy, V);
 }
 
@@ -215,6 +239,15 @@ bool ConstantFP::isExactlyValue(double V) const {
 
 
 namespace {
+  struct DenseMapInt64KeyInfo {
+    typedef std::pair<uint64_t, const Type*> KeyTy;
+    static inline KeyTy getEmptyKey() { return KeyTy(0, 0); }
+    static inline KeyTy getTombstoneKey() { return KeyTy(1, 0); }
+    static unsigned getHashValue(const KeyTy &Key) {
+      return DenseMapKeyInfo<void*>::getHashValue(Key.second) ^ Key.first;
+    }
+    static bool isPod() { return true; }
+  };
   struct DenseMapInt32KeyInfo {
     typedef std::pair<uint32_t, const Type*> KeyTy;
     static inline KeyTy getEmptyKey() { return KeyTy(0, 0); }

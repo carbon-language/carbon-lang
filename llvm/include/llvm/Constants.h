@@ -22,6 +22,7 @@
 
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
+#include "llvm/ADT/APInt.h"
 
 namespace llvm {
 
@@ -42,30 +43,39 @@ struct ConvertConstantType;
 class ConstantInt : public Constant {
   static ConstantInt *TheTrueVal, *TheFalseVal;
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
-  ConstantInt(const IntegerType *Ty, uint64_t V);
-  uint64_t Val;
+  ConstantInt(const IntegerType *Ty, const APInt& V);
+  APInt Val;
 public:
-  /// Return the constant as a 64-bit unsigned integer value after it
-  /// has been zero extended as appropriate for the type of this constant.
-  /// @brief Return the zero extended value.
-  inline uint64_t getZExtValue() const {
+  /// Return the constant as an APInt value reference. This allows clients to
+  /// obtain a copy of the value, with all its precision in tact.
+  /// @brief Return the constant's value.
+  inline const APInt& getValue() const {
     return Val;
   }
 
+  /// Return the constant as a 64-bit unsigned integer value after it
+  /// has been zero extended as appropriate for the type of this constant. Note
+  /// that this method can assert if the value does not fit in 64 bits.
+  /// @deprecated
+  /// @brief Return the zero extended value.
+  inline uint64_t getZExtValue() const {
+    return Val.getZExtValue();
+  }
+
   /// Return the constant as a 64-bit integer value after it has been sign
-  /// sign extended as appropriate for the type of this constant.
+  /// sign extended as appropriate for the type of this constant. Note that
+  /// this method can assert if the value does not fit in 64 bits.
+  /// @deprecated
   /// @brief Return the sign extended value.
   inline int64_t getSExtValue() const {
-    unsigned Size = Value::getType()->getPrimitiveSizeInBits();
-    return (int64_t(Val) << (64-Size)) >> (64-Size);
+    return Val.getSExtValue();
   }
+
   /// A helper method that can be used to determine if the constant contained 
   /// within is equal to a constant.  This only works for very small values, 
   /// because this is all that can be represented with all types.
   /// @brief Determine if this constant's value is same as an unsigned char.
-  bool equalsInt(unsigned char V) const {
-    assert(V <= 127 &&
-           "equalsInt: Can only be used with very small positive constants!");
+  bool equalsInt(uint64_t V) const {
     return Val == V;
   }
 
@@ -85,6 +95,7 @@ public:
   /// sized/signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific value.
   static ConstantInt *get(const Type *Ty, int64_t V);
+  static ConstantInt *get(const Type *Ty, const APInt& V);
 
   /// getType - Specialize the getType() method to always return an IntegerType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -118,7 +129,7 @@ public:
   /// @returns true iff this constant's bits are all set to true.
   /// @brief Determine if the value is all ones.
   bool isAllOnesValue() const { 
-    return getSExtValue() == -1; 
+    return Val.isAllOnesValue();
   }
 
   /// This function will return true iff this constant represents the largest
@@ -127,13 +138,10 @@ public:
   /// by this type.
   /// @brief Determine if the value is maximal.
   bool isMaxValue(bool isSigned) const {
-    if (isSigned) {
-      int64_t V = getSExtValue();
-      if (V < 0) return false;    // Be careful about wrap-around on 'long's
-      ++V;
-      return !isValueValidForType(Value::getType(), V) || V < 0;
-    }
-    return isAllOnesValue();
+    if (isSigned) 
+      return Val.isMaxSignedValue();
+    else
+      return Val.isMaxValue();
   }
 
   /// This function will return true iff this constant represents the smallest
@@ -142,13 +150,10 @@ public:
   /// this type.
   /// @brief Determine if the value is minimal.
   bool isMinValue(bool isSigned) const {
-    if (isSigned) {
-      int64_t V = getSExtValue();
-      if (V > 0) return false;    // Be careful about wrap-around on 'long's
-      --V;
-      return !isValueValidForType(Value::getType(), V) || V > 0;
-    }
-    return getZExtValue() == 0;
+    if (isSigned) 
+      return Val.isMinSignedValue();
+    else
+      return Val.isMinValue();
   }
 
   /// @returns the value for an integer constant of the given type that has all
