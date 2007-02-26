@@ -38,6 +38,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
@@ -62,7 +63,7 @@ namespace {
 
     // LoopProcessWorklist - List of loops we need to process.
     std::vector<Loop*> LoopProcessWorklist;
-    std::set<Value *> UnswitchedVals;
+    SmallPtrSet<Value *,8> UnswitchedVals;
 
   public:
     virtual bool runOnFunction(Function &F);
@@ -129,6 +130,7 @@ bool LoopUnswitch::runOnFunction(Function &F) {
     Changed |= visitLoop(L);
   }
 
+  UnswitchedVals.clear();
   return Changed;
 }
 
@@ -189,9 +191,8 @@ bool LoopUnswitch::visitLoop(Loop *L) {
         // FIXME: this should chose the most expensive case!
         Constant *UnswitchVal = SI->getCaseValue(1);
         // Do not process same value again and again.
-        if (UnswitchedVals.count(UnswitchVal) != 0)
+        if (!UnswitchedVals.insert(UnswitchVal))
           continue;
-        UnswitchedVals.insert(UnswitchVal);
 
         if (UnswitchIfProfitable(LoopCond, UnswitchVal, L)) {
           ++NumSwitches;
