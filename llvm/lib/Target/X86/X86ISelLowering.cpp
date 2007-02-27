@@ -429,79 +429,103 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-
-/// GetRetValueLocs - If we are returning a set of values with the specified
-/// value types, determine the set of registers each one will land in.  This
-/// sets one element of the ResultRegs array for each element in the VTs array.
-static void GetRetValueLocs(const MVT::ValueType *VTs, unsigned NumVTs,
-                            unsigned *ResultRegs,
-                            const X86Subtarget *Subtarget,
-                            unsigned CC) {
-  if (NumVTs == 0) return;
+/// X86_RetCC_Assign - Implement the X86 return value conventions.  This returns
+/// true if the value wasn't handled by this CC.
+static bool X86_RetCC_Assign(unsigned ValNo, MVT::ValueType ValVT, 
+                             unsigned ArgFlags, CCState &State) {
+  MVT::ValueType LocVT = ValVT;
+  CCValAssign::LocInfo LocInfo = CCValAssign::Full;
   
-  if (NumVTs == 2) {
-    ResultRegs[0] = VTs[0] == MVT::i64 ? X86::RAX : X86::EAX;
-    ResultRegs[1] = VTs[1] == MVT::i64 ? X86::RDX : X86::EDX;
-    return;
+  // If this is a 32-bit value, assign to a 32-bit register if any are
+  // available.
+  if (LocVT == MVT::i8) {
+    static const unsigned GPR8ArgRegs[] = { X86::AL, X86::DL };
+    if (unsigned Reg = State.AllocateReg(GPR8ArgRegs, 2)) {
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+      return false;
+    }
   }
-  
-  // Otherwise, NumVTs is 1.
-  MVT::ValueType ArgVT = VTs[0];
-  
-  unsigned Reg;
-  switch (ArgVT) {
-  case MVT::i8:  Reg = X86::AL; break;
-  case MVT::i16: Reg = X86::AX; break;
-  case MVT::i32: Reg = X86::EAX; break;
-  case MVT::i64: Reg = X86::RAX; break;
-  case MVT::f32:
-  case MVT::f64:
-    if (Subtarget->is64Bit())
+  if (LocVT == MVT::i16) {
+    static const unsigned GPR16ArgRegs[] = { X86::AX, X86::DX };
+    if (unsigned Reg = State.AllocateReg(GPR16ArgRegs, 2)) {
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+      return false;
+    }
+  }
+  if (LocVT == MVT::i32) {
+    static const unsigned GPR32ArgRegs[] = { X86::EAX, X86::EDX };
+    if (unsigned Reg = State.AllocateReg(GPR32ArgRegs, 2)) {
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+      return false;
+    }
+  }
+  if (LocVT == MVT::i64) {
+    static const unsigned GPR64ArgRegs[] = { X86::RAX, X86::RDX };
+    if (unsigned Reg = State.AllocateReg(GPR64ArgRegs, 2)) {
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+      return false;
+    }
+  }
+  if (MVT::isVector(LocVT)) {
+    if (unsigned Reg = State.AllocateReg(X86::XMM0)) {
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+      return false;
+    }
+  }
+  if (LocVT == MVT::f32 || LocVT == MVT::f64) {
+    unsigned Reg;
+    if (State.getTarget().getSubtarget<X86Subtarget>().is64Bit())
       Reg = X86::XMM0;         // FP values in X86-64 go in XMM0.
-    else if (CC == CallingConv::Fast && Subtarget->hasSSE2())
+    else if (State.getCallingConv() == CallingConv::Fast &&
+             State.getTarget().getSubtarget<X86Subtarget>().hasSSE2())
       Reg = X86::XMM0;         // FP values in X86-32 with fastcc go in XMM0.
     else
       Reg = X86::ST0;          // FP values in X86-32 go in ST0.
-    break;
-  default:
-    assert(MVT::isVector(ArgVT) && "Unknown return value type!");
-    Reg = X86::XMM0; // Int/FP vector result -> XMM0.
-    break;
+    
+    if ((Reg = State.AllocateReg(Reg))) {
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+      return false;
+    }
   }
-  ResultRegs[0] = Reg;
+  
+  return true;
 }
-
+    
 /// LowerRET - Lower an ISD::RET node.
 SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   assert((Op.getNumOperands() & 1) == 1 && "ISD::RET should have odd # args");
   
-  // Support up returning up to two registers.
-  MVT::ValueType VTs[2];
-  unsigned DestRegs[2];
-  unsigned NumRegs = Op.getNumOperands() / 2;
-  assert(NumRegs <= 2 && "Can only return up to two regs!");
-  
-  for (unsigned i = 0; i != NumRegs; ++i)
-    VTs[i] = Op.getOperand(i*2+1).getValueType();
+  SmallVector<CCValAssign, 16> RVLocs;
+  unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
+  CCState CCInfo(CC, getTargetMachine(), RVLocs);
   
   // Determine which register each value should be copied into.
-  GetRetValueLocs(VTs, NumRegs, DestRegs, Subtarget,
-                  DAG.getMachineFunction().getFunction()->getCallingConv());
+  for (unsigned i = 0; i != Op.getNumOperands() / 2; ++i) {
+    if (X86_RetCC_Assign(i, Op.getOperand(i*2+1).getValueType(),
+                         cast<ConstantSDNode>(Op.getOperand(i*2+2))->getValue(),
+                         CCInfo))
+      assert(0 && "Unhandled result type!");
+  }
   
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
   if (DAG.getMachineFunction().liveout_empty()) {
-    for (unsigned i = 0; i != NumRegs; ++i)
-      DAG.getMachineFunction().addLiveOut(DestRegs[i]);
+    for (unsigned i = 0; i != RVLocs.size(); ++i)
+      if (RVLocs[i].isRegLoc())
+        DAG.getMachineFunction().addLiveOut(RVLocs[i].getLocReg());
   }
   
   SDOperand Chain = Op.getOperand(0);
   SDOperand Flag;
   
   // Copy the result values into the output registers.
-  if (NumRegs != 1 || DestRegs[0] != X86::ST0) {
-    for (unsigned i = 0; i != NumRegs; ++i) {
-      Chain = DAG.getCopyToReg(Chain, DestRegs[i], Op.getOperand(i*2+1), Flag);
+  if (RVLocs.size() != 1 || !RVLocs[0].isRegLoc() ||
+      RVLocs[0].getLocReg() != X86::ST0) {
+    for (unsigned i = 0; i != RVLocs.size(); ++i) {
+      CCValAssign &VA = RVLocs[i];
+      assert(VA.isRegLoc() && "Can only return in registers!");
+      Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), Op.getOperand(i*2+1),
+                               Flag);
       Flag = Chain.getValue(1);
     }
   } else {
@@ -522,14 +546,14 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
         MemLoc = Value.getOperand(1);
       } else {
         // Spill the value to memory and reload it into top of stack.
-        unsigned Size = MVT::getSizeInBits(VTs[0])/8;
+        unsigned Size = MVT::getSizeInBits(RVLocs[0].getValVT())/8;
         MachineFunction &MF = DAG.getMachineFunction();
         int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
         MemLoc = DAG.getFrameIndex(SSFI, getPointerTy());
         Chain = DAG.getStore(Op.getOperand(0), Value, MemLoc, NULL, 0);
       }
       SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other);
-      SDOperand Ops[] = { Chain, MemLoc, DAG.getValueType(VTs[0]) };
+      SDOperand Ops[] = {Chain, MemLoc, DAG.getValueType(RVLocs[0].getValVT())};
       Value = DAG.getNode(X86ISD::FLD, Tys, Ops, 3);
       Chain = Value.getValue(1);
     }
@@ -558,23 +582,19 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
                 unsigned CallingConv, SelectionDAG &DAG) {
   SmallVector<SDOperand, 8> ResultVals;
 
-  // We support returning up to two registers.
-  MVT::ValueType VTs[2];
-  unsigned DestRegs[2];
-  unsigned NumRegs = TheCall->getNumValues() - 1;
-  assert(NumRegs <= 2 && "Can only return up to two regs!");
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallingConv, getTargetMachine(), RVLocs);
   
-  for (unsigned i = 0; i != NumRegs; ++i)
-    VTs[i] = TheCall->getValueType(i);
-  
-  // Determine which register each value should be copied into.
-  GetRetValueLocs(VTs, NumRegs, DestRegs, Subtarget, CallingConv);
+  for (unsigned i = 0, e = TheCall->getNumValues() - 1; i != e; ++i) {
+    if (X86_RetCC_Assign(i, TheCall->getValueType(i), 0, CCInfo))
+      assert(0 && "Unhandled result type!");
+  }
   
   // Copy all of the result registers out of their specified physreg.
-  if (NumRegs != 1 || DestRegs[0] != X86::ST0) {
-    for (unsigned i = 0; i != NumRegs; ++i) {
-      Chain = DAG.getCopyFromReg(Chain, DestRegs[i], VTs[i],
-                                 InFlag).getValue(1);
+  if (RVLocs.size() != 1 || RVLocs[0].getLocReg() != X86::ST0) {
+    for (unsigned i = 0; i != RVLocs.size(); ++i) {
+      Chain = DAG.getCopyFromReg(Chain, RVLocs[i].getLocReg(),
+                                 RVLocs[i].getValVT(), InFlag).getValue(1);
       InFlag = Chain.getValue(2);
       ResultVals.push_back(Chain.getValue(0));
     }
@@ -599,14 +619,14 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
       int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
       SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
       SDOperand Ops[] = {
-        Chain, RetVal, StackSlot, DAG.getValueType(VTs[0]), InFlag
+        Chain, RetVal, StackSlot, DAG.getValueType(RVLocs[0].getValVT()), InFlag
       };
       Chain = DAG.getNode(X86ISD::FST, MVT::Other, Ops, 5);
-      RetVal = DAG.getLoad(VTs[0], Chain, StackSlot, NULL, 0);
+      RetVal = DAG.getLoad(RVLocs[0].getValVT(), Chain, StackSlot, NULL, 0);
       Chain = RetVal.getValue(1);
     }
     
-    if (VTs[0] == MVT::f32 && !X86ScalarSSE)
+    if (RVLocs[0].getValVT() == MVT::f32 && !X86ScalarSSE)
       // FIXME: we would really like to remember that this FP_ROUND
       // operation is okay to eliminate if we allow excess FP precision.
       RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
