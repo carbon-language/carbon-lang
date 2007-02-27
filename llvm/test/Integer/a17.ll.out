@@ -5,7 +5,7 @@
 @e = constant i17 -1		; <i17*> [#uses=0]
 @f = constant i17 1		; <i17*> [#uses=0]
 @g = constant i17 3		; <i17*> [#uses=0]
-@h = constant i17 0		; <i17*> [#uses=0]
+@h = constant i17 undef		; <i17*> [#uses=0]
 @i = constant i17 -65536		; <i17*> [#uses=0]
 @j = constant i17 1		; <i17*> [#uses=0]
 @l = constant i17 -1		; <i17*> [#uses=0]

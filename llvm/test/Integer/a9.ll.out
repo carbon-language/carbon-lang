@@ -5,7 +5,7 @@
 @e = constant i9 -1		; <i9*> [#uses=0]
 @f = constant i9 1		; <i9*> [#uses=0]
 @g = constant i9 3		; <i9*> [#uses=0]
-@h = constant i9 0		; <i9*> [#uses=0]
+@h = constant i9 undef		; <i9*> [#uses=0]
 @i = constant i9 -256		; <i9*> [#uses=0]
 @j = constant i9 1		; <i9*> [#uses=0]
 @l = constant i9 -1		; <i9*> [#uses=0]

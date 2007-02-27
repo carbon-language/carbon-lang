@@ -5,7 +5,7 @@
 @e = constant i15 -1		; <i15*> [#uses=0]
 @f = constant i15 1		; <i15*> [#uses=0]
 @g = constant i15 3		; <i15*> [#uses=0]
-@h = constant i15 0		; <i15*> [#uses=0]
+@h = constant i15 undef		; <i15*> [#uses=0]
 @i = constant i15 -16384		; <i15*> [#uses=0]
 @j = constant i15 1		; <i15*> [#uses=0]
 @l = constant i15 -1		; <i15*> [#uses=0]

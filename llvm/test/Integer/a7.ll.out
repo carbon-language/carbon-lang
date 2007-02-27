@@ -8,7 +8,7 @@
 @g = constant i7 3		; <i7*> [#uses=0]
 @r = constant i7 5		; <i7*> [#uses=0]
 @s = constant i7 5		; <i7*> [#uses=0]
-@h = constant i7 0		; <i7*> [#uses=0]
+@h = constant i7 undef		; <i7*> [#uses=0]
 @i = constant i7 -64		; <i7*> [#uses=0]
 @j = constant i7 1		; <i7*> [#uses=0]
 @l = constant i7 -1		; <i7*> [#uses=0]

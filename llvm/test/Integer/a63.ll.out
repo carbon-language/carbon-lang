@@ -5,7 +5,7 @@
 @e = constant i63 -1		; <i63*> [#uses=0]
 @f = constant i63 1		; <i63*> [#uses=0]
 @g = constant i63 3		; <i63*> [#uses=0]
-@h = constant i63 0		; <i63*> [#uses=0]
+@h = constant i63 undef		; <i63*> [#uses=0]
 @i = constant i63 -4611686018427387904		; <i63*> [#uses=0]
 @j = constant i63 1		; <i63*> [#uses=0]
 @l = constant i63 -1		; <i63*> [#uses=0]
