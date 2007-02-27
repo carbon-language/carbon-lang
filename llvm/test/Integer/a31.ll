@@ -13,9 +13,7 @@
 @h = constant i31 shl(i31 1 , i31 31)
 @i = constant i31 shl(i31 1 , i31 30)
 @j = constant i31 lshr(i31 2147483647 , i31 30)
-@k = constant i31 lshr(i31 2147483647 , i31 31)
 @l = constant i31 ashr(i31 2147483647 , i31 30)
-@m = constant i31 ashr(i31 2147483647 , i31 31)
 
 @n = constant i31 mul(i31 2147483647, i31 2)
 @q = constant i31 sdiv(i31 -1,        i31 1073741823)

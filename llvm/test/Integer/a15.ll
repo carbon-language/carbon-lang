@@ -13,9 +13,7 @@
 @h = constant i15 shl(i15 1 , i15 15)
 @i = constant i15 shl(i15 1 , i15 14)
 @j = constant i15 lshr(i15 32767 , i15 14)
-@k = constant i15 lshr(i15 32767 , i15 15)
 @l = constant i15 ashr(i15 32767 , i15 14)
-@m = constant i15 ashr(i15 32767 , i15 15)
 
 @n = constant i15 mul(i15 32767, i15 2)
 @q = constant i15 mul(i15 -16383,i15 -3)

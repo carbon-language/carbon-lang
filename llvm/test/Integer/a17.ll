@@ -13,9 +13,7 @@
 @h = constant i17 shl(i17 1 , i17 17)
 @i = constant i17 shl(i17 1 , i17 16)
 @j = constant i17 lshr(i17 131071 , i17 16)
-@k = constant i17 lshr(i17 131071 , i17 17)
 @l = constant i17 ashr(i17 131071 , i17 16)
-@m = constant i17 ashr(i17 131071 , i17 17)
 
 @n = constant i17 mul(i17 131071, i17 2) 
 @q = constant i17 sdiv(i17 -1,    i17 65535)

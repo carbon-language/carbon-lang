@@ -13,9 +13,7 @@
 @h = constant i63 shl(i63 1 , i63 63)
 @i = constant i63 shl(i63 1 , i63 62)
 @j = constant i63 lshr(i63 9223372036854775807 , i63 62)
-@k = constant i63 lshr(i63 9223372036854775807 , i63 63)
 @l = constant i63 ashr(i63 9223372036854775807 , i63 62)
-@m = constant i63 ashr(i63 9223372036854775807 , i63 63)
 
 @n = constant i63 mul(i63 9223372036854775807, i63 2) 
 @q = constant i63 sdiv(i63 -1,                 i63 4611686018427387903)

@@ -16,9 +16,7 @@
 @h = constant i7 shl(i7 1 , i7 7)
 @i = constant i7 shl(i7 1 , i7 6)
 @j = constant i7 lshr(i7 127 , i7 6)
-@k = constant i7 lshr(i7 127 , i7 7)
 @l = constant i7 ashr(i7 127 , i7 6)
-@m = constant i7 ashr(i7 127 , i7 7)
 @m2= constant i7 ashr(i7 -1  , i7 3)
 
 @n = constant i7 mul(i7 127, i7 2)
