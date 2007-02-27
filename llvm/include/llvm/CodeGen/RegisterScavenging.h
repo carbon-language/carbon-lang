@@ -27,6 +27,7 @@ class TargetRegisterClass;
 class RegScavenger {
   MachineBasicBlock *MBB;
   MachineBasicBlock::iterator MBBI;
+  bool MBBIInited;
   unsigned NumPhysRegs;
 
   /// RegStates - The current state of all the physical registers immediately
@@ -41,6 +42,11 @@ public:
   /// states.
   void forward();
   void backward();
+
+  /// forward / backward - Move the internal MBB iterator and update register
+  /// states until it has reached but not processed the specific iterator.
+  void forward(MachineBasicBlock::iterator I);
+  void backward(MachineBasicBlock::iterator I);
 
   /// isReserved - Returns true if a register is reserved. It is never "unused".
   bool isReserved(unsigned Reg) const { return ReservedRegs[Reg]; }

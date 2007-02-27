@@ -455,7 +455,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
         }
       // Update register states.
       if (MRI.requiresRegisterScavenging())
-        RS.forward();
+        RS.forward(I);
     }
   }
 }

@@ -22,10 +22,11 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 RegScavenger::RegScavenger(MachineBasicBlock *mbb)
-  : MBB(mbb), MBBI(mbb->begin()) {
+  : MBB(mbb), MBBIInited(false) {
   const MachineFunction &MF = *MBB->getParent();
   const TargetMachine &TM = MF.getTarget();
   const MRegisterInfo *RegInfo = TM.getRegisterInfo();
@@ -52,6 +53,14 @@ RegScavenger::RegScavenger(MachineBasicBlock *mbb)
 }
 
 void RegScavenger::forward() {
+  assert(MBBI != MBB->end() && "Already at the end of the basic block!");
+  // Move ptr forward.
+  if (!MBBIInited) {
+    MBBI = MBB->begin();
+    MBBIInited = true;
+  } else
+    MBBI = next(MBBI);
+
   MachineInstr *MI = MBBI;
   // Process uses first.
   BitVector ChangedRegs(NumPhysRegs);
@@ -86,12 +95,14 @@ void RegScavenger::forward() {
     if (!MO.isDead())
       setUsed(Reg);
   }
-
-  ++MBBI;
 }
 
 void RegScavenger::backward() {
-  MachineInstr *MI = --MBBI;
+  assert(MBBI != MBB->begin() && "Already at start of basic block!");
+  // Move ptr backward.
+  MBBI = prior(MBBI);
+
+  MachineInstr *MI = MBBI;
   // Process defs first.
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -120,6 +131,16 @@ void RegScavenger::backward() {
     ChangedRegs.set(Reg);
   }
   setUsed(ChangedRegs);
+}
+
+void RegScavenger::forward(MachineBasicBlock::iterator I) {
+  while (MBBI != I)
+    forward();
+}
+
+void RegScavenger::backward(MachineBasicBlock::iterator I) {
+  while (MBBI != I)
+    backward();
 }
 
 /// CreateRegClassMask - Set the bits that represent the registers in the
