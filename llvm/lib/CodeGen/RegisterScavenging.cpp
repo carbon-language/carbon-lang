@@ -25,12 +25,12 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
-RegScavenger::RegScavenger(MachineBasicBlock *mbb)
-  : MBB(mbb), MBBIInited(false) {
+void RegScavenger::init() {
   const MachineFunction &MF = *MBB->getParent();
   const TargetMachine &TM = MF.getTarget();
   const MRegisterInfo *RegInfo = TM.getRegisterInfo();
 
+  MBBI = MBB->begin();
   NumPhysRegs = RegInfo->getNumRegs();
   RegStates.resize(NumPhysRegs, true);
 
@@ -50,15 +50,16 @@ RegScavenger::RegScavenger(MachineBasicBlock *mbb)
     for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
            E = MBB->livein_end(); I != E; ++I)
       setUsed(*I);
+
+  Initialized = true;
 }
 
 void RegScavenger::forward() {
   assert(MBBI != MBB->end() && "Already at the end of the basic block!");
   // Move ptr forward.
-  if (!MBBIInited) {
-    MBBI = MBB->begin();
-    MBBIInited = true;
-  } else
+  if (!Initialized)
+    init();
+  else
     MBBI = next(MBBI);
 
   MachineInstr *MI = MBBI;
@@ -133,16 +134,6 @@ void RegScavenger::backward() {
   setUsed(ChangedRegs);
 }
 
-void RegScavenger::forward(MachineBasicBlock::iterator I) {
-  while (MBBI != I)
-    forward();
-}
-
-void RegScavenger::backward(MachineBasicBlock::iterator I) {
-  while (MBBI != I)
-    backward();
-}
-
 /// CreateRegClassMask - Set the bits that represent the registers in the
 /// TargetRegisterClass.
 static void CreateRegClassMask(const TargetRegisterClass *RC, BitVector &Mask) {
@@ -166,4 +157,15 @@ unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
   // Returns the first unused (bit is set) register, or 0 is none is found.
   int Reg = RegStatesCopy.find_first();
   return (Reg == -1) ? 0 : Reg;
+}
+
+void RegScavenger::clear() {
+  if (MBB) {
+    MBBI = MBB->end();
+    MBB = NULL;
+  }
+
+  NumPhysRegs = 0;
+  Initialized = false;
+  RegStates.clear();
 }

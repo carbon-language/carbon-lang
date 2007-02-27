@@ -27,8 +27,10 @@ class TargetRegisterClass;
 class RegScavenger {
   MachineBasicBlock *MBB;
   MachineBasicBlock::iterator MBBI;
-  bool MBBIInited;
   unsigned NumPhysRegs;
+
+  /// Initialized - All states are initialized and ready to go!
+  bool Initialized;
 
   /// RegStates - The current state of all the physical registers immediately
   /// before MBBI. One bit per physical register. If bit is set that means it's
@@ -36,7 +38,23 @@ class RegScavenger {
   BitVector RegStates;
 
 public:
-  RegScavenger(MachineBasicBlock *mbb);
+  RegScavenger()
+    : MBB(NULL), Initialized(false) {};
+
+  RegScavenger(MachineBasicBlock *mbb)
+    : MBB(mbb), Initialized(false) {};
+
+  /// Init - Initialize the states.
+  ///
+  void init();
+
+  /// Reset - Discard previous states and re-initialize the states given for
+  /// the specific basic block.
+  void reset(MachineBasicBlock *mbb) {
+    MBB = mbb;
+    clear();
+    init();
+  }
 
   /// forward / backward - Move the internal MBB iterator and update register
   /// states.
@@ -45,8 +63,12 @@ public:
 
   /// forward / backward - Move the internal MBB iterator and update register
   /// states until it has reached but not processed the specific iterator.
-  void forward(MachineBasicBlock::iterator I);
-  void backward(MachineBasicBlock::iterator I);
+  void forward(MachineBasicBlock::iterator I) {
+    while (MBBI != I) forward();
+  }
+  void backward(MachineBasicBlock::iterator I) {
+    while (MBBI != I) backward();
+  }
 
   /// isReserved - Returns true if a register is reserved. It is never "unused".
   bool isReserved(unsigned Reg) const { return ReservedRegs[Reg]; }
@@ -69,10 +91,16 @@ public:
                          bool ExCalleeSaved = false) const;
 
 private:
+  /// clear - Clear states.
+  ///
+  void clear();
+
   /// CalleeSavedrRegs - A bitvector of callee saved registers for the target.
+  ///
   BitVector CalleeSavedRegs;
 
   /// ReservedRegs - A bitvector of reserved registers.
+  ///
   BitVector ReservedRegs;
 };
  
