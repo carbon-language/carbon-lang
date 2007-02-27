@@ -429,6 +429,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
+
 /// GetRetValueLocs - If we are returning a set of values with the specified
 /// value types, determine the set of registers each one will land in.  This
 /// sets one element of the ResultRegs array for each element in the VTs array.
@@ -1060,11 +1061,11 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 //===----------------------------------------------------------------------===//
 
 
-/// X86_64_CCC_AssignArgument - Implement the X86-64 C Calling Convention.
-static void X86_64_CCC_AssignArgument(unsigned ValNo,
+/// X86_64_CCC_AssignArgument - Implement the X86-64 C Calling Convention.  This
+/// returns true if the value was not handled by this calling convention.
+static bool X86_64_CCC_AssignArgument(unsigned ValNo,
                                       MVT::ValueType ArgVT, unsigned ArgFlags,
-                                      CCState &State,
-                                      SmallVector<CCValAssign, 16> &Locs) {
+                                      CCState &State) {
   MVT::ValueType LocVT = ArgVT;
   CCValAssign::LocInfo LocInfo = CCValAssign::Full;
   
@@ -1082,8 +1083,8 @@ static void X86_64_CCC_AssignArgument(unsigned ValNo,
       X86::EDI, X86::ESI, X86::EDX, X86::ECX, X86::R8D, X86::R9D
     };
     if (unsigned Reg = State.AllocateReg(GPR32ArgRegs, 6)) {
-      Locs.push_back(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
-      return;
+      State.addLoc(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
+      return false;
     }
   }
   
@@ -1094,8 +1095,8 @@ static void X86_64_CCC_AssignArgument(unsigned ValNo,
       X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
     };
     if (unsigned Reg = State.AllocateReg(GPR64ArgRegs, 6)) {
-      Locs.push_back(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
-      return;
+      State.addLoc(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
+      return false;
     }
   }
   
@@ -1107,8 +1108,8 @@ static void X86_64_CCC_AssignArgument(unsigned ValNo,
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };
     if (unsigned Reg = State.AllocateReg(XMMArgRegs, 8)) {
-      Locs.push_back(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
-      return;
+      State.addLoc(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
+      return false;
     }
   }
   
@@ -1117,17 +1118,17 @@ static void X86_64_CCC_AssignArgument(unsigned ValNo,
   if (LocVT == MVT::i32 || LocVT == MVT::i64 ||
       LocVT == MVT::f32 || LocVT == MVT::f64) {
     unsigned Offset = State.AllocateStack(8, 8);
-    Locs.push_back(CCValAssign::getMem(ValNo, ArgVT, Offset, LocVT, LocInfo));
-    return;
+    State.addLoc(CCValAssign::getMem(ValNo, ArgVT, Offset, LocVT, LocInfo));
+    return false;
   }
   
   // Vectors get 16-byte stack slots that are 16-byte aligned.
   if (MVT::isVector(LocVT)) {
     unsigned Offset = State.AllocateStack(16, 16);
-    Locs.push_back(CCValAssign::getMem(ValNo, ArgVT, Offset, LocVT, LocInfo));
-    return;
+    State.addLoc(CCValAssign::getMem(ValNo, ArgVT, Offset, LocVT, LocInfo));
+    return false;
   }
-  assert(0 && "Unknown argument type!");
+  return true;
 }
 
 
@@ -1147,18 +1148,18 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
     X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
   };
 
-  SmallVector<SDOperand, 8> ArgValues;
-  
-  
-  CCState CCInfo(*getTargetMachine().getRegisterInfo());
   SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(MF.getFunction()->getCallingConv(), getTargetMachine(),
+                 ArgLocs);
   
   for (unsigned i = 0; i != NumArgs; ++i) {
     MVT::ValueType ArgVT = Op.getValue(i).getValueType();
     unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
-    X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCInfo, ArgLocs);
+    if (X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCInfo)) 
+      assert(0 && "Unhandled argument type!");
   }
   
+  SmallVector<SDOperand, 8> ArgValues;
   unsigned LastVal = ~0U;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
@@ -1280,13 +1281,14 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand Callee    = Op.getOperand(4);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
-  CCState CCInfo(*getTargetMachine().getRegisterInfo());
   SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, getTargetMachine(), ArgLocs);
 
   for (unsigned i = 0; i != NumOps; ++i) {
     MVT::ValueType ArgVT = Op.getOperand(5+2*i).getValueType();
     unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCInfo, ArgLocs);
+    if (X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCInfo)) 
+      assert(0 && "Unhandled argument type!");
   }
     
   // Get a count of how many bytes are to be pushed on the stack.

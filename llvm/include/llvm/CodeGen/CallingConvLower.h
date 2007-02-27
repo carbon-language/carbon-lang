@@ -20,62 +20,8 @@
 
 namespace llvm {
   class MRegisterInfo;
+  class TargetMachine;
   
-/// CCState - This class holds information needed while lowering arguments and
-/// return values.  It captures which registers are already assigned and which
-/// stack slots are used.  It provides accessors to allocate these values.
-class CCState {
-  unsigned StackOffset;
-  const MRegisterInfo &MRI;
-  SmallVector<uint32_t, 16> UsedRegs;
-public:
-  CCState(const MRegisterInfo &mri);
-  
-  unsigned getNextStackOffset() const { return StackOffset; }
-
-  /// isAllocated - Return true if the specified register (or an alias) is
-  /// allocated.
-  bool isAllocated(unsigned Reg) const {
-    return UsedRegs[Reg/32] & (1 << (Reg&31));
-  }
-
-  /// getFirstUnallocated - Return the first unallocated register in the set, or
-  /// NumRegs if they are all allocated.
-  unsigned getFirstUnallocated(const unsigned *Regs, unsigned NumRegs) const {
-    for (unsigned i = 0; i != NumRegs; ++i)
-      if (!isAllocated(Regs[i]))
-        return i;
-    return NumRegs;
-  }
-  
-  /// AllocateReg - Attempt to allocate one of the specified registers.  If none
-  /// are available, return zero.  Otherwise, return the first one available,
-  /// marking it and any aliases as allocated.
-  unsigned AllocateReg(const unsigned *Regs, unsigned NumRegs) {
-    unsigned FirstUnalloc = getFirstUnallocated(Regs, NumRegs);
-    if (FirstUnalloc == NumRegs)
-      return 0;    // Didn't find the reg.
-     
-    // Mark the register and any aliases as allocated.
-    unsigned Reg = Regs[FirstUnalloc];
-    MarkAllocated(Reg);
-    return Reg;
-  }
-  
-  /// AllocateStack - Allocate a chunk of stack space with the specified size
-  /// and alignment.
-  unsigned AllocateStack(unsigned Size, unsigned Align) {
-    assert(Align && ((Align-1) & Align) == 0); // Align is power of 2.
-    StackOffset = ((StackOffset + Align-1) & ~(Align-1));
-    unsigned Result = StackOffset;
-    StackOffset += Size;
-    return Result;
-  }
-private:
-  /// MarkAllocated - Mark a register and all of its aliases as allocated.
-  void MarkAllocated(unsigned Reg);
-};
-
 /// CCValAssign - Represent assignment of one arg/retval to a location.
 class CCValAssign {
 public:
@@ -142,6 +88,84 @@ public:
   MVT::ValueType getLocVT() const { return LocVT; }
   
   LocInfo getLocInfo() const { return HTP; }
+};
+
+
+  
+/// CCState - This class holds information needed while lowering arguments and
+/// return values.  It captures which registers are already assigned and which
+/// stack slots are used.  It provides accessors to allocate these values.
+class CCState {
+  unsigned CallingConv;
+  const TargetMachine &TM;
+  const MRegisterInfo &MRI;
+  SmallVector<CCValAssign, 16> &Locs;
+  
+  unsigned StackOffset;
+  SmallVector<uint32_t, 16> UsedRegs;
+public:
+  CCState(unsigned CC, const TargetMachine &TM,
+          SmallVector<CCValAssign, 16> &locs);
+  
+  void addLoc(const CCValAssign &V) {
+    Locs.push_back(V);
+  }
+  
+  const TargetMachine &getTarget() const { return TM; }
+  unsigned getCallingConv() const { return CallingConv; }
+  
+  unsigned getNextStackOffset() const { return StackOffset; }
+
+  /// isAllocated - Return true if the specified register (or an alias) is
+  /// allocated.
+  bool isAllocated(unsigned Reg) const {
+    return UsedRegs[Reg/32] & (1 << (Reg&31));
+  }
+
+  /// getFirstUnallocated - Return the first unallocated register in the set, or
+  /// NumRegs if they are all allocated.
+  unsigned getFirstUnallocated(const unsigned *Regs, unsigned NumRegs) const {
+    for (unsigned i = 0; i != NumRegs; ++i)
+      if (!isAllocated(Regs[i]))
+        return i;
+    return NumRegs;
+  }
+  
+  /// AllocateReg - Attempt to allocate one register.  If it is not available,
+  /// return zero.  Otherwise, return the register, marking it and any aliases
+  /// as allocated.
+  unsigned AllocateReg(unsigned Reg) {
+    if (isAllocated(Reg)) return 0;
+    MarkAllocated(Reg);
+    return Reg;
+  }
+  
+  /// AllocateReg - Attempt to allocate one of the specified registers.  If none
+  /// are available, return zero.  Otherwise, return the first one available,
+  /// marking it and any aliases as allocated.
+  unsigned AllocateReg(const unsigned *Regs, unsigned NumRegs) {
+    unsigned FirstUnalloc = getFirstUnallocated(Regs, NumRegs);
+    if (FirstUnalloc == NumRegs)
+      return 0;    // Didn't find the reg.
+     
+    // Mark the register and any aliases as allocated.
+    unsigned Reg = Regs[FirstUnalloc];
+    MarkAllocated(Reg);
+    return Reg;
+  }
+  
+  /// AllocateStack - Allocate a chunk of stack space with the specified size
+  /// and alignment.
+  unsigned AllocateStack(unsigned Size, unsigned Align) {
+    assert(Align && ((Align-1) & Align) == 0); // Align is power of 2.
+    StackOffset = ((StackOffset + Align-1) & ~(Align-1));
+    unsigned Result = StackOffset;
+    StackOffset += Size;
+    return Result;
+  }
+private:
+  /// MarkAllocated - Mark a register and all of its aliases as allocated.
+  void MarkAllocated(unsigned Reg);
 };
 
 } // end namespace llvm
