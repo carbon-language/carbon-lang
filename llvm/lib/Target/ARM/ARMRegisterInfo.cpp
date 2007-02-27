@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -84,6 +85,15 @@ ARMRegisterInfo::ARMRegisterInfo(const TargetInstrInfo &tii,
   : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     TII(tii), STI(sti),
     FramePtr(STI.useThumbBacktraces() ? ARM::R7 : ARM::R11) {
+  RS = new RegScavenger();
+}
+
+ARMRegisterInfo::~ARMRegisterInfo() {
+  delete RS;
+}
+
+RegScavenger *ARMRegisterInfo::getRegScavenger() const {
+  return EnableScavenging ? RS : NULL;
 }
 
 bool ARMRegisterInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
@@ -328,10 +338,6 @@ bool ARMRegisterInfo::hasFP(const MachineFunction &MF) const {
   return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-bool ARMRegisterInfo::requiresRegisterScavenging() const {
-  return EnableScavenging;
-}
-
 /// emitARMRegPlusImmediate - Emits a series of instructions to materialize
 /// a destreg = basereg + immediate in ARM code.
 static
@@ -356,7 +362,7 @@ void emitARMRegPlusImmediate(MachineBasicBlock &MBB,
     
     // Build the new ADD / SUB.
     BuildMI(MBB, MBBI, TII.get(isSub ? ARM::SUBri : ARM::ADDri), DestReg)
-      .addReg(BaseReg).addImm(SOImmVal);
+      .addReg(BaseReg, false, false, true).addImm(SOImmVal);
     BaseReg = DestReg;
   }
 }
@@ -423,28 +429,29 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     if (DestReg == ARM::SP) {
       assert(BaseReg == ARM::SP && "Unexpected!");
       LdReg = ARM::R3;
-      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R3);
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::R12)
+        .addReg(ARM::R3, false, false, true);
     }
 
     if (NumBytes <= 255 && NumBytes >= 0)
       BuildMI(MBB, MBBI, TII.get(ARM::tMOVri8), LdReg).addImm(NumBytes);
     else if (NumBytes < 0 && NumBytes >= -255) {
       BuildMI(MBB, MBBI, TII.get(ARM::tMOVri8), LdReg).addImm(NumBytes);
-      BuildMI(MBB, MBBI, TII.get(ARM::tNEG), LdReg).addReg(LdReg);
+      BuildMI(MBB, MBBI, TII.get(ARM::tNEG), LdReg)
+        .addReg(LdReg, false, false, true);
     } else
       emitLoadConstPool(MBB, MBBI, LdReg, NumBytes, TII);
 
     // Emit add / sub.
     int Opc = (isSub) ? ARM::tSUBrr : (isHigh ? ARM::tADDhirr : ARM::tADDrr);
     const MachineInstrBuilder MIB = BuildMI(MBB, MBBI, TII.get(Opc), DestReg);
-    if (DestReg == ARM::SP)
-      MIB.addReg(BaseReg).addReg(LdReg);
-    else if (isSub)
-      MIB.addReg(BaseReg).addReg(LdReg);
+    if (DestReg == ARM::SP || isSub)
+      MIB.addReg(BaseReg).addReg(LdReg, false, false, true);
     else
-      MIB.addReg(LdReg).addReg(BaseReg);
+      MIB.addReg(LdReg).addReg(BaseReg, false, false, true);
     if (DestReg == ARM::SP)
-      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::R3).addReg(ARM::R12);
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::R3)
+        .addReg(ARM::R12, false, false, true);
 }
 
 /// emitThumbRegPlusImmediate - Emits a series of instructions to materialize
@@ -510,9 +517,10 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
       unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
       Bytes -= ThisVal;
       BuildMI(MBB, MBBI, TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3), DestReg)
-        .addReg(BaseReg).addImm(ThisVal);
+        .addReg(BaseReg, false, false, true).addImm(ThisVal);
     } else {
-      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), DestReg).addReg(BaseReg);
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), DestReg)
+        .addReg(BaseReg, false, false, true);
     }
     BaseReg = DestReg;
   }
@@ -526,7 +534,9 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     if (isTwoAddr)
       BuildMI(MBB, MBBI, TII.get(Opc), DestReg).addReg(DestReg).addImm(ThisVal);
     else {
-      BuildMI(MBB, MBBI, TII.get(Opc), DestReg).addReg(BaseReg).addImm(ThisVal);
+      bool isKill = BaseReg != ARM::SP;
+      BuildMI(MBB, MBBI, TII.get(Opc), DestReg)
+        .addReg(BaseReg, false, false, isKill).addImm(ThisVal);
       BaseReg = DestReg;
 
       if (Opc == ARM::tADDrSPi) {
@@ -543,7 +553,8 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   }
 
   if (ExtraOpc)
-    BuildMI(MBB, MBBI, TII.get(ExtraOpc), DestReg).addReg(DestReg)
+    BuildMI(MBB, MBBI, TII.get(ExtraOpc), DestReg)
+      .addReg(DestReg, false, false, true)
       .addImm(((unsigned)NumBytes) & 3);
 }
 
@@ -601,7 +612,8 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
   if (Imm > 0) 
     emitThumbRegPlusImmediate(MBB, MBBI, DestReg, DestReg, Imm, TII);
   if (isSub)
-    BuildMI(MBB, MBBI, TII.get(ARM::tNEG), DestReg).addReg(DestReg);
+    BuildMI(MBB, MBBI, TII.get(ARM::tNEG), DestReg)
+      .addReg(DestReg, false, false, true);
 }
 
 void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
@@ -722,7 +734,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       // r0 = add r0, sp
       emitThumbConstant(MBB, II, DestReg, Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tADDhirr));
-      MI.getOperand(i).ChangeToRegister(DestReg, false);
+      MI.getOperand(i).ChangeToRegister(DestReg, false, false, true);
       MI.getOperand(i+1).ChangeToRegister(FrameReg, false);
     }
     return;
@@ -831,11 +843,11 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       } else
         emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tLDR));
-      MI.getOperand(i).ChangeToRegister(TmpReg, false);
+      MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
       if (UseRR)
         MI.addRegOperand(FrameReg, false);  // Use [reg, reg] addrmode.
       else
-      MI.addRegOperand(0, false); // tLDR has an extra register operand.
+        MI.addRegOperand(0, false); // tLDR has an extra register operand.
     } else if (TII.isStore(Opcode)) {
       // FIXME! This is horrific!!! We need register scavenging.
       // Our temporary workaround has marked r3 unavailable. Of course, r3 is
@@ -849,11 +861,13 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       unsigned TmpReg = ARM::R3;
       bool UseRR = false;
       if (ValReg == ARM::R3) {
-        BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R2);
+        BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12)
+          .addReg(ARM::R2, false, false, true);
         TmpReg = ARM::R2;
       }
       if (TmpReg == ARM::R3 && AFI->isR3IsLiveIn())
-        BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12).addReg(ARM::R3);
+        BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12)
+          .addReg(ARM::R3, false, false, true);
       if (Opcode == ARM::tSpill) {
         if (FrameReg == ARM::SP)
           emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,Offset,false,TII);
@@ -864,7 +878,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
       } else
         emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tSTR));
-      MI.getOperand(i).ChangeToRegister(TmpReg, false);
+      MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
       if (UseRR)
         MI.addRegOperand(FrameReg, false);  // Use [reg, reg] addrmode.
       else
@@ -872,9 +886,11 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
 
       MachineBasicBlock::iterator NII = next(II);
       if (ValReg == ARM::R3)
-        BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R2).addReg(ARM::R12);
+        BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R2)
+          .addReg(ARM::R12, false, false, true);
       if (TmpReg == ARM::R3 && AFI->isR3IsLiveIn())
-        BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R3).addReg(ARM::R12);
+        BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R3)
+          .addReg(ARM::R12, false, false, true);
     } else
       assert(false && "Unexpected opcode!");
   } else {
@@ -884,7 +900,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     // out of 'Offset'.
     emitARMRegPlusImmediate(MBB, II, ARM::R12, FrameReg,
                             isSub ? -Offset : Offset, TII);
-    MI.getOperand(i).ChangeToRegister(ARM::R12, false);
+    MI.getOperand(i).ChangeToRegister(ARM::R12, false, false, true);
   }
 }
 

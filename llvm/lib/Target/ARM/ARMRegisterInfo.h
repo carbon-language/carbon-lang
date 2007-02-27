@@ -19,19 +19,26 @@
 #include "ARMGenRegisterInfo.h.inc"
 
 namespace llvm {
-  class TargetInstrInfo;
   class ARMSubtarget;
+  class TargetInstrInfo;
   class Type;
 
 struct ARMRegisterInfo : public ARMGenRegisterInfo {
   const TargetInstrInfo &TII;
   const ARMSubtarget &STI;
 private:
+  /// RS - An instance of the register scavenger.
+  RegScavenger *RS;
+
   /// FramePtr - ARM physical register used as frame ptr.
   unsigned FramePtr;
 
 public:
   ARMRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
+
+  ~ARMRegisterInfo();
+
+  RegScavenger *getRegScavenger() const;
 
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// ARM::LR, return the number that it corresponds to (e.g. 14).
@@ -68,8 +75,6 @@ public:
   const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
-
-  bool requiresRegisterScavenging() const;
 
   bool hasFP(const MachineFunction &MF) const;
 
