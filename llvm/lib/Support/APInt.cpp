@@ -654,39 +654,6 @@ APInt& APInt::flip(uint32_t bitPosition) {
   return *this;
 }
 
-/// getMaxValue - This function returns the largest value
-/// for an APInt of the specified bit-width and if isSign == true,
-/// it should be largest signed value, otherwise unsigned value.
-APInt APInt::getMaxValue(uint32_t numBits, bool isSign) {
-  APInt Result(numBits, 0);
-  Result.set();
-  if (isSign) 
-    Result.clear(numBits - 1);
-  return Result;
-}
-
-/// getMinValue - This function returns the smallest value for
-/// an APInt of the given bit-width and if isSign == true,
-/// it should be smallest signed value, otherwise zero.
-APInt APInt::getMinValue(uint32_t numBits, bool isSign) {
-  APInt Result(numBits, 0);
-  if (isSign) 
-    Result.set(numBits - 1);
-  return Result;
-}
-
-/// getAllOnesValue - This function returns an all-ones value for
-/// an APInt of the specified bit-width.
-APInt APInt::getAllOnesValue(uint32_t numBits) {
-  return getMaxValue(numBits, false);
-}
-
-/// getNullValue - This function creates an '0' value for an
-/// APInt of the specified bit-width.
-APInt APInt::getNullValue(uint32_t numBits) {
-  return getMinValue(numBits, false);
-}
-
 uint64_t APInt::getHashValue() const {
   // Put the bit width into the low order bits.
   uint64_t hash = BitWidth;
@@ -1734,6 +1701,6 @@ void APInt::dump() const
   else for (unsigned i = getNumWords(); i > 0; i--) {
     cerr << pVal[i-1] << " ";
   }
-  cerr << " (" << this->toString(10, false) << ")\n" << std::setbase(10);
+  cerr << " (" << this->toString(10) << ")\n" << std::setbase(10);
 }
 #endif

@@ -59,7 +59,6 @@ namespace APIntOps {
 ///
 /// @brief Class for arbitrary precision integers.
 class APInt {
-public:
 
   uint32_t BitWidth;      ///< The number of bits in this APInt.
 
@@ -374,8 +373,8 @@ public:
   /// Signed divide this APInt by APInt RHS.
   /// @brief Signed division function for APInt.
   inline APInt sdiv(const APInt& RHS) const {
-    bool isNegativeLHS = (*this)[BitWidth - 1];
-    bool isNegativeRHS = RHS[RHS.BitWidth - 1];
+    bool isNegativeLHS = isNegative();
+    bool isNegativeRHS = RHS.isNegative();
     APInt Result = APIntOps::udiv(
         isNegativeLHS ? -(*this) : (*this), isNegativeRHS ? -RHS : RHS);
     return isNegativeLHS != isNegativeRHS ? -Result : Result;
@@ -388,8 +387,8 @@ public:
   /// Signed remainder operation on APInt.
   /// @brief Function for signed remainder operation.
   inline APInt srem(const APInt& RHS) const {
-    bool isNegativeLHS = (*this)[BitWidth - 1];
-    bool isNegativeRHS = RHS[RHS.BitWidth - 1];
+    bool isNegativeLHS = isNegative();
+    bool isNegativeRHS = RHS.isNegative();
     APInt Result = APIntOps::urem(
         isNegativeLHS ? -(*this) : (*this), isNegativeRHS ? -RHS : RHS);
     return isNegativeLHS ? -Result : Result;
@@ -470,24 +469,37 @@ public:
     return int64_t(pVal[0]);
   }
 
-  /// @returns the largest value for an APInt of the specified bit-width and 
-  /// if isSign == true, it should be largest signed value, otherwise largest
-  /// unsigned value.
-  /// @brief Gets max value of the APInt with bitwidth <= 64.
-  static APInt getMaxValue(uint32_t numBits, bool isSigned);
+  /// @brief Gets maximum unsigned value of APInt for specific bit width.
+  static APInt getMaxValue(uint32_t numBits) {
+    return APInt(numBits, 0).set();
+  }
 
-  /// @returns the smallest value for an APInt of the given bit-width and
-  /// if isSign == true, it should be smallest signed value, otherwise zero.
-  /// @brief Gets min value of the APInt with bitwidth <= 64.
-  static APInt getMinValue(uint32_t numBits, bool isSigned);
+  /// @brief Gets maximum signed value of APInt for a specific bit width.
+  static APInt getSignedMaxValue(uint32_t numBits) {
+    return APInt(numBits, 0).set().clear(numBits - 1);
+  }
+
+  /// @brief Gets minimum unsigned value of APInt for a specific bit width.
+  static APInt getMinValue(uint32_t numBits) {
+    return APInt(numBits, 0);
+  }
+
+  /// @brief Gets minimum signed value of APInt for a specific bit width.
+  static APInt getSignedMinValue(uint32_t numBits) {
+    return APInt(numBits, 0).set(numBits - 1);
+  }
 
   /// @returns the all-ones value for an APInt of the specified bit-width.
   /// @brief Get the all-ones value.
-  static APInt getAllOnesValue(uint32_t numBits);
+  static APInt getAllOnesValue(uint32_t numBits) {
+    return APInt(numBits, 0).set();
+  }
 
   /// @returns the '0' value for an APInt of the specified bit-width.
   /// @brief Get the '0' value.
-  static APInt getNullValue(uint32_t numBits);
+  static APInt getNullValue(uint32_t numBits) {
+    return APInt(numBits, 0);
+  }
 
   /// The hash value is computed as the sum of the words and the bit width.
   /// @returns A hash value computed from the sum of the APInt words.
@@ -536,8 +548,25 @@ public:
                            isNegative() && countPopulation() == 1;
   }
 
-  /// @returns a character interpretation of the APInt.
-  std::string toString(uint8_t radix = 10, bool wantSigned = true) const;
+  /// This is used internally to convert an APInt to a string.
+  /// @brief Converts an APInt to a std::string
+  std::string toString(uint8_t radix, bool wantSigned) const;
+
+  /// Considers the APInt to be unsigned and converts it into a string in the
+  /// radix given. The radix can be 2, 8, 10 or 16.
+  /// @returns a character interpretation of the APInt
+  /// @brief Convert unsigned APInt to string representation.
+  inline std::string toString(uint8_t radix = 10) const {
+    return toString(radix, false);
+  }
+
+  /// Considers the APInt to be unsigned and converts it into a string in the
+  /// radix given. The radix can be 2, 8, 10 or 16.
+  /// @returns a character interpretation of the APInt
+  /// @brief Convert unsigned APInt to string representation.
+  inline std::string toStringSigned(uint8_t radix = 10) const {
+    return toString(radix, true);
+  }
 
   /// Get an APInt with the same BitWidth as this APInt, just zero mask
   /// the low bits and right shift to the least significant bit.
@@ -603,8 +632,17 @@ public:
   }
 
   /// @brief Converts this APInt to a double value.
-  double roundToDouble(bool isSigned = false) const;
+  double roundToDouble(bool isSigned) const;
 
+  /// @brief Converts this unsigned APInt to a double value.
+  double roundToDouble() const {
+    return roundToDouble(false);
+  }
+
+  /// @brief Converts this signed APInt to a double value.
+  double signedRoundToDouble() const {
+    return roundToDouble(true);
+  }
 };
 
 namespace APIntOps {
@@ -642,9 +680,16 @@ inline uint32_t logBase2(const APInt& APIVal) {
 /// @brief Compute GCD of two APInt values.
 APInt GreatestCommonDivisor(const APInt& Val1, const APInt& Val2);
 
+/// Treats the APInt as an unsigned value for conversion purposes.
 /// @brief Converts the given APInt to a double value.
-inline double RoundAPIntToDouble(const APInt& APIVal, bool isSigned = false) {
-  return APIVal.roundToDouble(isSigned);
+inline double RoundAPIntToDouble(const APInt& APIVal) {
+  return APIVal.roundToDouble();
+}
+
+/// Treats the APInt as a signed value for conversion purposes.
+/// @brief Converts the given APInt to a double value.
+inline double RoundSignedAPIntToDouble(const APInt& APIVal) {
+  return APIVal.signedRoundToDouble();
 }
 
 /// @brief Converts the given APInt to a float vlalue.
