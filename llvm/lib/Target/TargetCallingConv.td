@@ -23,7 +23,8 @@ class CCPredicateAction<CCAction A> : CCAction {
 
 /// CCMatchType - If the current argument is one of the specified types, apply
 /// Action A.
-class CCMatchType<list<ValueType> VTs, CCAction A> : CCPredicateAction<A> {
+class CCMatchType<list<ValueType> vts, CCAction A> : CCPredicateAction<A> {
+  list<ValueType> VTs = vts;
 }
 
 /// CCMatchIf - If the predicate matches, apply A.
@@ -32,9 +33,8 @@ class CCMatchIf<string predicate, CCAction A> : CCPredicateAction<A> {
 }
 
 /// CCMatchIfCC - Match of the current calling convention is 'CC'.
-class CCMatchIfCC<string CC, CCAction A> : CCPredicateAction<A> {
-  string CallingConv = CC;
-}
+class CCMatchIfCC<string CC, CCAction A>
+  : CCMatchIf<!strconcat("State.getCallingConv() == ", CC), A> {}
 
 /// CCAssignToReg - This action matches if there is a register in the specified
 /// list that is still available.  If so, it assigns the value to the first
