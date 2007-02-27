@@ -464,7 +464,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     if (CI->getType() == Type::Int1Ty) 
       Out << (CI->getZExtValue() ? "true" : "false");
     else 
-      Out << CI->getValue().toString(10,/*wantSigned=*/true);
+      Out << CI->getValue().toStringSigned(10);
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     // We would like to output the FP constant value in exponential notation,
     // but we cannot do this if doing so will lose precision.  Check here to
