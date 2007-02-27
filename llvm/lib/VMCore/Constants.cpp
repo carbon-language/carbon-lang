@@ -118,7 +118,7 @@ ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
     if (ITy->getBitWidth() == 1)
       return ConstantInt::getTrue();
     else
-      return ConstantInt::get(Ty, int64_t(-1));
+      return ConstantInt::get(Ty, APInt::getAllOnesValue(ITy->getBitWidth()));
   return 0;
 }
 
