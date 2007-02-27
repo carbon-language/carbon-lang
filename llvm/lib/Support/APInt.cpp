@@ -540,7 +540,8 @@ bool APInt::ult(const APInt& RHS) const {
     return pVal[0] < RHS.pVal[0];
 
   // Otherwise, compare all words
-  for (int i = whichWord(n1 - 1); i >= 0; --i) {
+  uint32_t topWord = whichWord(std::max(n1,n2)-1);
+  for (int i = topWord; i >= 0; --i) {
     if (pVal[i] > RHS.pVal[i]) 
       return false;
     if (pVal[i] < RHS.pVal[i]) 
@@ -558,30 +559,28 @@ bool APInt::slt(const APInt& RHS) const {
   }
 
   APInt lhs(*this);
-  APInt rhs(*this);
-  bool lhsNegative = false;
-  bool rhsNegative = false;
-  if (lhs[BitWidth-1]) {
-    // Sign bit is set so make a note of it and perform two's complement
-    lhsNegative = true;
+  APInt rhs(RHS);
+  bool lhsNeg = isNegative();
+  bool rhsNeg = rhs.isNegative();
+  if (lhsNeg) {
+    // Sign bit is set so perform two's complement to make it positive
     lhs.flip();
     lhs++;
   }
-  if (rhs[BitWidth-1]) {
-    // Sign bit is set so make a note of it and perform two's complement
-    rhsNegative = true;
+  if (rhsNeg) {
+    // Sign bit is set so perform two's complement to make it positive
     rhs.flip();
     rhs++;
   }
 
   // Now we have unsigned values to compare so do the comparison if necessary
   // based on the negativeness of the values.
-  if (lhsNegative)
-    if (rhsNegative)
-      return !lhs.ult(rhs);
+  if (lhsNeg)
+    if (rhsNeg)
+      return lhs.ugt(rhs);
     else
       return true;
-  else if (rhsNegative)
+  else if (rhsNeg)
     return false;
   else 
     return lhs.ult(rhs);
@@ -797,7 +796,7 @@ APInt llvm::APIntOps::GreatestCommonDivisor(const APInt& API1,
   return A;
 }
 
-APInt llvm::APIntOps::RoundDoubleToAPInt(double Double) {
+APInt llvm::APIntOps::RoundDoubleToAPInt(double Double, uint32_t width) {
   union {
     double D;
     uint64_t I;
@@ -819,11 +818,16 @@ APInt llvm::APIntOps::RoundDoubleToAPInt(double Double) {
 
   // If the exponent doesn't shift all bits out of the mantissa
   if (exp < 52)
-    return isNeg ? -APInt(64u, mantissa >> (52 - exp)) : 
-                    APInt(64u, mantissa >> (52 - exp));
+    return isNeg ? -APInt(width, mantissa >> (52 - exp)) : 
+                    APInt(width, mantissa >> (52 - exp));
+
+  // If the client didn't provide enough bits for us to shift the mantissa into
+  // then the result is undefined, just return 0
+  if (width <= exp - 52)
+    return APInt(width, 0);
 
   // Otherwise, we have to shift the mantissa bits up to the right location
-  APInt Tmp(exp+1, mantissa);
+  APInt Tmp(width, mantissa);
   Tmp = Tmp.shl(exp - 52);
   return isNeg ? -Tmp : Tmp;
 }
