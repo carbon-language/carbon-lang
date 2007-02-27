@@ -654,7 +654,7 @@ inline float RoundAPIntToFloat(const APInt& APIVal) {
 
 /// RoundDoubleToAPInt - This function convert a double value to an APInt value.
 /// @brief Converts the given double value into a APInt.
-APInt RoundDoubleToAPInt(double Double);
+APInt RoundDoubleToAPInt(double Double, uint32_t width = 64);
 
 /// RoundFloatToAPInt - Converts a float value into an APInt value.
 /// @brief Converts a float value into a APInt.
