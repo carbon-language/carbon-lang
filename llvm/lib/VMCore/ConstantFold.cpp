@@ -198,13 +198,11 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     return 0;                   // Other pointer types cannot be casted
   case Instruction::UIToFP:
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      if (CI->getType()->getBitWidth() <= 64)
-        return ConstantFP::get(DestTy, CI->getValue().roundToDouble());
+      return ConstantFP::get(DestTy, CI->getValue().roundToDouble());
     return 0;
   case Instruction::SIToFP:
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      if (CI->getType()->getBitWidth() <= 64)
-        return ConstantFP::get(DestTy, CI->getValue().signedRoundToDouble()); 
+      return ConstantFP::get(DestTy, CI->getValue().signedRoundToDouble()); 
     return 0;
   case Instruction::ZExt:
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
