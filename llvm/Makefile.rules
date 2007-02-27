@@ -1275,6 +1275,11 @@ $(ObjDir)/%GenSubtarget.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) subtarget information with tblgen"
 	$(Verb) $(TableGen) -gen-subtarget -o $@ $<
 
+$(TARGET:%=$(ObjDir)/%GenCallingConv.inc.tmp): \
+$(ObjDir)/%GenCallingConv.inc.tmp : %.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) calling convention information with tblgen"
+	$(Verb) $(TableGen) -gen-callingconv -o $@ $<
+
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)
 
