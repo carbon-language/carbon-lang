@@ -78,6 +78,11 @@ D: Portions of X86 static and JIT compilers; initial SparcV8 backend
 D: Dynamic trace optimizer 
 D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
 
+N: Nicolas Geoffray
+E: nicolas.geoffray@lip6.fr
+W: http://www-src.lip6.fr/homepages/Nicolas.Geoffray/
+D: PPC backend fixes for Linux
+
 N: Louis Gerbarg
 D: Portions of the PowerPC backend
 
