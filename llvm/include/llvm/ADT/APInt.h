@@ -446,6 +446,29 @@ public:
     return BitWidth - countLeadingZeros();
   }
 
+  /// This function returns the number of active words in the value of this
+  /// APInt. This is used in conjunction with getActiveData to extract the raw
+  /// value of the APInt.
+  inline uint32_t getActiveWords() const {
+    return whichWord(getActiveBits()-1);
+  }
+
+  /// This function returns a pointer to the internal storage of the APInt. 
+  /// This is useful for writing out the APInt in binary form without any
+  /// conversions.
+  inline const uint64_t* getRawData() const {
+    if (isSingleWord())
+      return &VAL;
+    return &pVal[0];
+  }
+
+  /// Computes the minimum bit width for this APInt while considering it to be
+  /// a signed (and probably negative) value. If the value is not negative, 
+  /// this function returns the same value as getActiveBits(). Otherwise, it
+  /// returns the smallest bit width that will retain the negative value. For
+  /// example, -1 can be written as 0b1 or 0xFFFFFFFFFF. 0b1 is shorter and so
+  /// for -1, this function will always return 1.
+  /// @brief Get the minimum bit size for this signed APInt 
   inline uint32_t getMinSignedBits() const {
     if (isNegative())
       return BitWidth - countLeadingOnes() + 1;
@@ -657,6 +680,14 @@ public:
     return roundToDouble(true);
   }
 };
+
+inline bool operator==(uint64_t V1, const APInt& V2) {
+  return V2 == V1;
+}
+
+inline bool operator!=(uint64_t V1, const APInt& V2) {
+  return V2 != V1;
+}
 
 namespace APIntOps {
 
