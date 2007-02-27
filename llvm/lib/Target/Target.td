@@ -355,6 +355,11 @@ class Processor<string n, ProcessorItineraries pi, list<SubtargetFeature> f> {
 }
 
 //===----------------------------------------------------------------------===//
-// Pull in the common support for DAG isel generation
+// Pull in the common support for calling conventions.
+//
+include "TargetCallingConv.td"
+
+//===----------------------------------------------------------------------===//
+// Pull in the common support for DAG isel generation.
 //
 include "TargetSelectionDAG.td"

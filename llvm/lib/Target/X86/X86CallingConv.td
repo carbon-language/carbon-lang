@@ -71,7 +71,11 @@ def RetCC_X86_64 : CallingConv<[
   CCDelegateTo<RetCC_X86_64_C>
 ]>;
 
-
+// This is the return-value convention used for the entire X86 backend.
+def RetCC_X86 : CallingConv<[
+  CCMatchIf<"Subtarget->is64Bit()", CCDelegateTo<RetCC_X86_64>>,
+  CCDelegateTo<RetCC_X86_32>
+]>;
 
 //===----------------------------------------------------------------------===//
 // Argument Calling Conventions
