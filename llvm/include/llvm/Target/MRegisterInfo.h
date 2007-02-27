@@ -23,14 +23,15 @@
 
 namespace llvm {
 
-class Type;
+class BitVector;
+class CalleeSavedInfo;
 class MachineFunction;
 class MachineInstr;
 class MachineLocation;
 class MachineMove;
+class RegScavenger;
 class TargetRegisterClass;
-class CalleeSavedInfo;
-class BitVector;
+class Type;
 
 /// TargetRegisterDesc - This record contains all of the information known about
 /// a particular register.  The AliasSet field (if not null) contains a pointer
@@ -213,6 +214,12 @@ protected:
   virtual ~MRegisterInfo();
 public:
 
+  /// getRegScavenger - Returns pointer to an instance of register scavenger it
+  /// the specific target is making use of one.
+  virtual RegScavenger *getRegScavenger() const {
+    return NULL;
+  }
+  
   enum {                        // Define some target independent constants
     /// NoRegister - This physical register is not a real target register.  It
     /// is useful as a sentinal.
@@ -391,12 +398,6 @@ public:
     return false;
   }
 
-  /// requiresRegisterScavenging - returns true if the target requires (and
-  /// can make use of) the register scavenger.
-  virtual bool requiresRegisterScavenging() const {
-    return false;
-  }
-  
   /// hasFP - Return true if the specified function should have a dedicated frame
   /// pointer register. For most targets this is true only if the function has
   /// variable sized allocas or if frame pointer elimination is disabled.
