@@ -81,7 +81,7 @@ public:
     return FP;
   }
 
-  virtual PassManagerType getPassManagerType() { 
+  virtual PassManagerType getPassManagerType() const { 
     return PMT_LoopPassManager; 
   }
 

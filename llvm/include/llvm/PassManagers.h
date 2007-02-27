@@ -250,7 +250,7 @@ public:
     return PassVector.size();
   }
 
-  virtual PassManagerType getPassManagerType() { 
+  virtual PassManagerType getPassManagerType() const { 
     assert ( 0 && "Invalid use of getPassManagerType");
     return PMT_Unknown; 
   }
@@ -322,7 +322,7 @@ public:
     return FP;
   }
 
-  virtual PassManagerType getPassManagerType() { 
+  virtual PassManagerType getPassManagerType() const { 
     return PMT_FunctionPassManager; 
   }
 };

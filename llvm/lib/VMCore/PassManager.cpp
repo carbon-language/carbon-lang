@@ -98,7 +98,7 @@ public:
     return BP;
   }
 
-  virtual PassManagerType getPassManagerType() { 
+  virtual PassManagerType getPassManagerType() const { 
     return PMT_BasicBlockPassManager; 
   }
 };
@@ -210,7 +210,9 @@ public:
     return MP;
   }
 
-  virtual PassManagerType getPassManagerType() { return PMT_ModulePassManager; }
+  virtual PassManagerType getPassManagerType() const { 
+    return PMT_ModulePassManager; 
+  }
 };
 
 //===----------------------------------------------------------------------===//
