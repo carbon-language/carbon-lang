@@ -446,6 +446,12 @@ public:
     return BitWidth - countLeadingZeros();
   }
 
+  inline uint32_t getMinSignedBits() const {
+    if (isNegative())
+      return BitWidth - countLeadingOnes() + 1;
+    return getActiveBits();
+  }
+
   /// This method attempts to return the value of this APInt as a zero extended
   /// uint64_t. The bitwidth must be <= 64 or the value must fit within a
   /// uint64_t. Otherwise an assertion will result.
@@ -587,8 +593,15 @@ public:
   /// @returns getNumWords() * APINT_BITS_PER_WORD if the value is zero.
   /// @returns the number of zeros from the most significant bit to the first
   /// one bits.
-  /// @brief Count the number of trailing one bits.
+  /// @brief Count the number of leading one bits.
   uint32_t countLeadingZeros() const;
+
+  /// countLeadingOnes - This function counts the number of contiguous 1 bits
+  /// in the high order bits. The count stops when the first 0 bit is reached.
+  /// @returns 0 if the high order bit is not set
+  /// @returns the number of 1 bits from the most significant to the least
+  /// @brief Count the number of leading one bits.
+  uint32_t countLeadingOnes() const;
 
   /// countTrailingZeros - This function is an APInt version of the 
   /// countTrailingZoers_{32,64} functions in MathExtras.h. It counts 

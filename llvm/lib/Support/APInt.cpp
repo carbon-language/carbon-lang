@@ -702,6 +702,38 @@ uint32_t APInt::countLeadingZeros() const {
   return Count;
 }
 
+static uint32_t countLeadingOnes_64(uint64_t V, uint32_t skip) {
+  uint32_t Count = 0;
+  if (skip)
+    V <<= skip;
+  while (V && (V & (1ULL << 63))) {
+    Count++;
+    V <<= 1;
+  }
+  return Count;
+}
+
+uint32_t APInt::countLeadingOnes() const {
+  if (isSingleWord())
+    return countLeadingOnes_64(VAL, APINT_BITS_PER_WORD - BitWidth);
+
+  uint32_t highWordBits = BitWidth % APINT_BITS_PER_WORD;
+  uint32_t shift = (highWordBits == 0 ? 0 : APINT_BITS_PER_WORD - highWordBits);
+  int i = getNumWords() - 1;
+  uint32_t Count = countLeadingOnes_64(pVal[i], shift);
+  if (Count == highWordBits) {
+    for (i--; i >= 0; --i) {
+      if (pVal[i] == -1ULL)
+        Count += APINT_BITS_PER_WORD;
+      else {
+        Count += countLeadingOnes_64(pVal[i], 0);
+        break;
+      }
+    }
+  }
+  return Count;
+}
+
 uint32_t APInt::countTrailingZeros() const {
   if (isSingleWord())
     return CountTrailingZeros_64(VAL);
@@ -1701,6 +1733,7 @@ void APInt::dump() const
   else for (unsigned i = getNumWords(); i > 0; i--) {
     cerr << pVal[i-1] << " ";
   }
-  cerr << " (" << this->toString(10) << ")\n" << std::setbase(10);
+  cerr << " U(" << this->toString(10) << ") S(" << this->toStringSigned(10)
+       << ")\n" << std::setbase(10);
 }
 #endif
