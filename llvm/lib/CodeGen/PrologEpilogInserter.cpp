@@ -442,9 +442,10 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
   assert(TM.getRegisterInfo() && "TM::getRegisterInfo() must be implemented!");
   const MRegisterInfo &MRI = *TM.getRegisterInfo();
+  RegScavenger *RS = MRI.getRegScavenger();
 
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
-    RegScavenger RS(BB);
+    if (RS) RS->reset(BB);
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (I->getOperand(i).isFrameIndex()) {
@@ -454,8 +455,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
           break;
         }
       // Update register states.
-      if (MRI.requiresRegisterScavenging())
-        RS.forward(I);
+      if (RS) RS->forward(I);
     }
   }
 }
