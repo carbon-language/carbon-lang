@@ -115,10 +115,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
 // Static constructor to create an integral constant with all bits set
 ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
   if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
-    if (ITy->getBitWidth() == 1)
-      return ConstantInt::getTrue();
-    else
-      return ConstantInt::get(Ty, APInt::getAllOnesValue(ITy->getBitWidth()));
+    return ConstantInt::get(Ty, APInt::getAllOnesValue(ITy->getBitWidth()));
   return 0;
 }
 
