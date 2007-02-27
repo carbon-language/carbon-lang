@@ -626,8 +626,6 @@ public:
     return Values[i];
   }
 
-  Record *getElementAsRecord(unsigned i) const;
-  
   Init *convertInitListSlice(const std::vector<unsigned> &Elements);
 
   virtual Init *convertInitializerTo(RecTy *Ty) {

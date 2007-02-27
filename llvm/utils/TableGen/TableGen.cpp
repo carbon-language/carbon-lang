@@ -20,7 +20,6 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Support/FileUtilities.h"
-#include "CallingConvEmitter.h"
 #include "CodeEmitterGen.h"
 #include "RegisterInfoEmitter.h"
 #include "InstrInfoEmitter.h"
@@ -39,7 +38,6 @@ enum ActionType {
   GenEmitter,
   GenRegisterEnums, GenRegister, GenRegisterHeader,
   GenInstrEnums, GenInstrs, GenAsmWriter, 
-  GenCallingConv,
   GenDAGISel,
   GenSubtarget,
   GenIntrinsic,
@@ -63,8 +61,6 @@ namespace {
                                "Generate enum values for instructions"),
                     clEnumValN(GenInstrs, "gen-instr-desc",
                                "Generate instruction descriptions"),
-                    clEnumValN(GenCallingConv, "gen-callingconv",
-                               "Generate calling convention descriptions"),
                     clEnumValN(GenAsmWriter, "gen-asm-writer",
                                "Generate assembly writer"),
                     clEnumValN(GenDAGISel, "gen-dag-isel",
@@ -142,9 +138,7 @@ int main(int argc, char **argv) {
     case GenInstrs:
       InstrInfoEmitter(Records).run(*Out);
       break;
-    case GenCallingConv:
-      CallingConvEmitter(Records).run(*Out);
-      break;
+
     case GenAsmWriter:
       AsmWriterEmitter(Records).run(*Out);
       break;
