@@ -26,44 +26,50 @@
 using namespace llvm;
 
 void RegScavenger::init(MachineBasicBlock *mbb) {
-  if (mbb)
-    MBB = mbb;
-
-  const MachineFunction &MF = *MBB->getParent();
+  const MachineFunction &MF = *mbb->getParent();
   const TargetMachine &TM = MF.getTarget();
   const MRegisterInfo *RegInfo = TM.getRegisterInfo();
 
-  MBBI = MBB->begin();
-  NumPhysRegs = RegInfo->getNumRegs();
-  RegStates.resize(NumPhysRegs, true);
+  assert((NumPhysRegs == 0 || NumPhysRegs == RegInfo->getNumRegs()) &&
+         "Target changed?");
+
+  if (!MBB) {
+    NumPhysRegs = RegInfo->getNumRegs();
+    ReservedRegs = RegInfo->getReservedRegs(MF);
+    RegStates.resize(NumPhysRegs);
+
+    // Create callee-saved registers bitvector.
+    CalleeSavedRegs.resize(NumPhysRegs);
+    const unsigned *CSRegs = RegInfo->getCalleeSavedRegs();
+    if (CSRegs != NULL)
+      for (unsigned i = 0; CSRegs[i]; ++i)
+        CalleeSavedRegs.set(CSRegs[i]);
+  }
+
+  MBB = mbb;
+
+  // All registers started out unused.
+  RegStates.set();
 
   // Create reserved registers bitvector.
-  ReservedRegs = RegInfo->getReservedRegs(MF);
   RegStates ^= ReservedRegs;
-
-  // Create callee-saved registers bitvector.
-  CalleeSavedRegs.resize(NumPhysRegs);
-  const unsigned *CSRegs = RegInfo->getCalleeSavedRegs();
-  if (CSRegs != NULL)
-    for (unsigned i = 0; CSRegs[i]; ++i)
-      CalleeSavedRegs.set(CSRegs[i]);
 
   // Live-in registers are in use.
   if (!MBB->livein_empty())
     for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
            E = MBB->livein_end(); I != E; ++I)
       setUsed(*I);
-
-  Initialized = true;
 }
 
 void RegScavenger::forward() {
-  assert(MBBI != MBB->end() && "Already at the end of the basic block!");
   // Move ptr forward.
-  if (!Initialized)
-    init();
-  else
+  if (!Tracking) {
+    MBBI = MBB->begin();
+    Tracking = true;
+  } else {
+    assert(MBBI != MBB->end() && "Already at the end of the basic block!");
     MBBI = next(MBBI);
+  }
 
   MachineInstr *MI = MBBI;
   // Process uses first.
@@ -102,6 +108,7 @@ void RegScavenger::forward() {
 }
 
 void RegScavenger::backward() {
+  assert(Tracking && "Not tracking states!");
   assert(MBBI != MBB->begin() && "Already at start of basic block!");
   // Move ptr backward.
   MBBI = prior(MBBI);
@@ -168,7 +175,6 @@ void RegScavenger::clear() {
     MBB = NULL;
   }
 
-  NumPhysRegs = 0;
-  Initialized = false;
+  Tracking = false;
   RegStates.clear();
 }

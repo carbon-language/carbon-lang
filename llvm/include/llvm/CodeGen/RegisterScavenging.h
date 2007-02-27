@@ -29,8 +29,9 @@ class RegScavenger {
   MachineBasicBlock::iterator MBBI;
   unsigned NumPhysRegs;
 
-  /// Initialized - All states are initialized and ready to go!
-  bool Initialized;
+  /// Tracking - True if RegScavenger is currently tracking the liveness of 
+  /// registers.
+  bool Tracking;
 
   /// RegStates - The current state of all the physical registers immediately
   /// before MBBI. One bit per physical register. If bit is set that means it's
@@ -39,14 +40,14 @@ class RegScavenger {
 
 public:
   RegScavenger()
-    : MBB(NULL), Initialized(false) {};
+    : MBB(NULL), NumPhysRegs(0), Tracking(false) {};
 
   RegScavenger(MachineBasicBlock *mbb)
-    : MBB(mbb), Initialized(false) {};
+    : MBB(mbb), NumPhysRegs(0), Tracking(false) {};
 
   /// Init - Initialize the states.
   ///
-  void init(MachineBasicBlock *mbb = NULL);
+  void init(MachineBasicBlock *mbb);
 
   /// Reset - Discard previous states and re-initialize the states given for
   /// the specific basic block.
