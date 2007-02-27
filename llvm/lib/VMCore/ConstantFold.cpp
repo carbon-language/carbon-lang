@@ -18,7 +18,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ConstantFolding.h"
+#include "ConstantFold.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
