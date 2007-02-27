@@ -25,7 +25,10 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
-void RegScavenger::init() {
+void RegScavenger::init(MachineBasicBlock *mbb) {
+  if (mbb)
+    MBB = mbb;
+
   const MachineFunction &MF = *MBB->getParent();
   const TargetMachine &TM = MF.getTarget();
   const MRegisterInfo *RegInfo = TM.getRegisterInfo();

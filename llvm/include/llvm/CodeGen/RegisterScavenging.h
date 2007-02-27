@@ -46,14 +46,13 @@ public:
 
   /// Init - Initialize the states.
   ///
-  void init();
+  void init(MachineBasicBlock *mbb = NULL);
 
   /// Reset - Discard previous states and re-initialize the states given for
   /// the specific basic block.
   void reset(MachineBasicBlock *mbb) {
-    MBB = mbb;
     clear();
-    init();
+    init(mbb);
   }
 
   /// forward / backward - Move the internal MBB iterator and update register
