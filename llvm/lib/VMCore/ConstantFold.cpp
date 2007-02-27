@@ -176,23 +176,15 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     return 0; // Can't fold.
   case Instruction::FPToUI: 
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
-      APInt Val(APIntOps::RoundDoubleToAPInt(FPC->getValue()));
       uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
-      if (Val.getBitWidth() > DestBitWidth)
-        Val.trunc(DestBitWidth);
-      else if (Val.getBitWidth() < DestBitWidth)
-        Val.zext(DestBitWidth);
+      APInt Val(APIntOps::RoundDoubleToAPInt(FPC->getValue(), DestBitWidth));
       return ConstantInt::get(DestTy, Val);
     }
     return 0; // Can't fold.
   case Instruction::FPToSI:
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
-      APInt Val(APIntOps::RoundDoubleToAPInt(FPC->getValue()));
       uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
-      if (Val.getBitWidth() > DestBitWidth)
-        Val.trunc(DestBitWidth);
-      else if (Val.getBitWidth() < DestBitWidth)
-        Val.sext(DestBitWidth);
+      APInt Val(APIntOps::RoundDoubleToAPInt(FPC->getValue(), DestBitWidth));
       return ConstantInt::get(DestTy, Val);
     }
     return 0; // Can't fold.
@@ -604,7 +596,6 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       case Instruction::SDiv:
         if (CI2->isNullValue()) 
           return 0;        // X / 0 -> can't fold
-        return ConstantInt::get(C1->getType(), C1V.sdiv(C2V));
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
           return 0;        // MIN_INT / -1 -> overflow
         return ConstantInt::get(C1->getType(), C1V.sdiv(C2V));
@@ -626,21 +617,21 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         return ConstantInt::get(C1->getType(), C1V ^ C2V);
       case Instruction::Shl:
         if (uint32_t shiftAmt = C2V.getZExtValue())
-          if (shiftAmt <= C1V.getBitWidth())
+          if (shiftAmt < C1V.getBitWidth())
             return ConstantInt::get(C1->getType(), C1V.shl(shiftAmt));
           else
             return UndefValue::get(C1->getType()); // too big shift is undef
         return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       case Instruction::LShr:
         if (uint32_t shiftAmt = C2V.getZExtValue())
-          if (shiftAmt <= C1V.getBitWidth())
+          if (shiftAmt < C1V.getBitWidth())
             return ConstantInt::get(C1->getType(), C1V.lshr(shiftAmt));
           else
             return UndefValue::get(C1->getType()); // too big shift is undef
         return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       case Instruction::AShr:
         if (uint32_t shiftAmt = C2V.getZExtValue())
-          if (shiftAmt <= C1V.getBitWidth())
+          if (shiftAmt < C1V.getBitWidth())
             return ConstantInt::get(C1->getType(), C1V.ashr(shiftAmt));
           else
             return UndefValue::get(C1->getType()); // too big shift is undef
