@@ -803,15 +803,27 @@ APInt llvm::APIntOps::RoundDoubleToAPInt(double Double) {
     uint64_t I;
   } T;
   T.D = Double;
+
+  // Get the sign bit from the highest order bit
   bool isNeg = T.I >> 63;
+
+  // Get the 11-bit exponent and adjust for the 1023 bit bias
   int64_t exp = ((T.I >> 52) & 0x7ff) - 1023;
+
+  // If the exponent is negative, the value is < 0 so just return 0.
   if (exp < 0)
-    return APInt(64ull, 0u);
-  uint64_t mantissa = ((T.I << 12) >> 12) | (1ULL << 52);
+    return APInt(64u, 0u);
+
+  // Extract the mantissa by clearing the top 12 bits (sign + exponent).
+  uint64_t mantissa = (T.I & (~0ULL >> 12)) | 1ULL << 52;
+
+  // If the exponent doesn't shift all bits out of the mantissa
   if (exp < 52)
     return isNeg ? -APInt(64u, mantissa >> (52 - exp)) : 
                     APInt(64u, mantissa >> (52 - exp));
-  APInt Tmp(exp + 1, mantissa);
+
+  // Otherwise, we have to shift the mantissa bits up to the right location
+  APInt Tmp(exp+1, mantissa);
   Tmp = Tmp.shl(exp - 52);
   return isNeg ? -Tmp : Tmp;
 }
