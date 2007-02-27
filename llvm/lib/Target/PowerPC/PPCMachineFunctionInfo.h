@@ -26,6 +26,10 @@ private:
   /// stored.  Also used as an anchor for instructions that need to be altered
   /// when using frame pointers (dyna_add, dyna_sub.)
   int FramePointerSaveIndex;
+  
+  /// UsesLR - Indicates whether LR is used in the current function.
+  ///
+  bool UsesLR;
 
 public:
   PPCFunctionInfo(MachineFunction& MF) 
@@ -34,6 +38,9 @@ public:
 
   int getFramePointerSaveIndex() const { return FramePointerSaveIndex; }
   void setFramePointerSaveIndex(int Idx) { FramePointerSaveIndex = Idx; }
+  
+  void setUsesLR(bool U) { UsesLR = U; }
+  bool usesLR()          { return UsesLR; }
 
 };
 

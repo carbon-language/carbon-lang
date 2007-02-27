@@ -538,8 +538,8 @@ bool PPCRegisterInfo::hasFP(const MachineFunction &MF) const {
 /// usesLR - Returns if the link registers (LR) has been used in the function.
 ///
 bool PPCRegisterInfo::usesLR(MachineFunction &MF) const {
-  const bool *PhysRegsUsed = MF.getUsedPhysregs();
-  return PhysRegsUsed[getRARegister()];
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+  return FI->usesLR();
 }
 
 void PPCRegisterInfo::
@@ -874,6 +874,15 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   MFI->setStackSize(FrameSize);
 }
 
+void PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF)
+  const {
+  //  Save and clear the LR state.
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+  unsigned LR = getRARegister();
+  FI->setUsesLR(MF.isPhysRegUsed(LR));
+  MF.changePhyRegUsed(LR, false);
+}
+
 void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
@@ -899,9 +908,6 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   determineFrameLayout(MF);
   unsigned FrameSize = MFI->getStackSize();
   
-  // Skip if a leaf routine.
-  if (!FrameSize) return;
-  
   int NegFrameSize = -FrameSize;
   
   // Get processor type.
@@ -911,7 +917,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Check if the link register (LR) has been used.
   bool UsesLR = MFI->hasCalls() || usesLR(MF);
   // Do we have a frame pointer for this function?
-  bool HasFP = hasFP(MF);
+  bool HasFP = hasFP(MF) && FrameSize;
   
   int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, IsMachoABI);
   int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, IsMachoABI);
@@ -939,6 +945,9 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, TII.get(PPC::STW))
         .addReg(PPC::R0).addImm(LROffset).addReg(PPC::R1);
   }
+  
+  // Skip if a leaf routine.
+  if (!FrameSize) return;
   
   // Get stack alignments.
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
@@ -1065,8 +1074,6 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Get the number of bytes allocated from the FrameInfo.
   unsigned FrameSize = MFI->getStackSize();
 
-  if (!FrameSize) return;
-  
   // Get processor type.
   bool IsPPC64 = Subtarget.isPPC64();
   // Get operating system
@@ -1074,31 +1081,32 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Check if the link register (LR) has been used.
   bool UsesLR = MFI->hasCalls() || usesLR(MF);
   // Do we have a frame pointer for this function?
-  bool HasFP = hasFP(MF);
+  bool HasFP = hasFP(MF) && FrameSize;
   
   int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, IsMachoABI);
   int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, IsMachoABI);
   
-  // The loaded (or persistent) stack pointer value is offset by the 'stwu'
-  // on entry to the function.  Add this offset back now.
-  if (!Subtarget.isPPC64()) {
-    if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
-          !MFI->hasVarSizedObjects()) {
-        BuildMI(MBB, MBBI, TII.get(PPC::ADDI), PPC::R1)
-            .addReg(PPC::R1).addImm(FrameSize);
+  if (FrameSize) {
+    // The loaded (or persistent) stack pointer value is offset by the 'stwu'
+    // on entry to the function.  Add this offset back now.
+    if (!Subtarget.isPPC64()) {
+      if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
+            !MFI->hasVarSizedObjects()) {
+          BuildMI(MBB, MBBI, TII.get(PPC::ADDI), PPC::R1)
+              .addReg(PPC::R1).addImm(FrameSize);
+      } else {
+        BuildMI(MBB, MBBI, TII.get(PPC::LWZ),PPC::R1).addImm(0).addReg(PPC::R1);
+      }
     } else {
-      BuildMI(MBB, MBBI, TII.get(PPC::LWZ),PPC::R1).addImm(0).addReg(PPC::R1);
-    }
-  } else {
-    if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
-          !MFI->hasVarSizedObjects()) {
-      BuildMI(MBB, MBBI, TII.get(PPC::ADDI8), PPC::X1)
-         .addReg(PPC::X1).addImm(FrameSize);
-    } else {
-      BuildMI(MBB, MBBI, TII.get(PPC::LD), PPC::X1).addImm(0).addReg(PPC::X1);
+      if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
+            !MFI->hasVarSizedObjects()) {
+        BuildMI(MBB, MBBI, TII.get(PPC::ADDI8), PPC::X1)
+           .addReg(PPC::X1).addImm(FrameSize);
+      } else {
+        BuildMI(MBB, MBBI, TII.get(PPC::LD), PPC::X1).addImm(0).addReg(PPC::X1);
+      }
     }
   }
-  
 
   if (IsPPC64) {
     if (UsesLR)
