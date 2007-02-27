@@ -3,6 +3,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'bl ' | wc -l | grep 2 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'bctrl' | wc -l | grep 1 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'bla ' | wc -l | grep 1
+; XFAIL: [0-9x]86-pc-linux.*
 
 declare void %foo()
 
