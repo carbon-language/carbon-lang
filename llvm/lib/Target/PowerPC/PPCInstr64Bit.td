@@ -102,7 +102,7 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
                             
   def BLA8_ELF : IForm<18, 1, 1,
                        (ops aaddr:$func, variable_ops),
-                       "bla $func", BrB, [/*(PPCcall_ELF (i64 imm:$func))*/]>;
+                       "bla $func", BrB, [(PPCcall_ELF (i64 imm:$func))]>;
 }
 
 
@@ -111,12 +111,11 @@ def : Pat<(PPCcall_Macho (i64 tglobaladdr:$dst)),
           (BL8_Macho tglobaladdr:$dst)>;
 def : Pat<(PPCcall_Macho (i64 texternalsym:$dst)),
           (BL8_Macho texternalsym:$dst)>;
-/*
+
 def : Pat<(PPCcall_ELF (i64 tglobaladdr:$dst)),
           (BL8_ELF tglobaladdr:$dst)>;
 def : Pat<(PPCcall_ELF (i64 texternalsym:$dst)),
           (BL8_ELF texternalsym:$dst)>;
-*/
 
 //===----------------------------------------------------------------------===//
 // 64-bit SPR manipulation instrs.

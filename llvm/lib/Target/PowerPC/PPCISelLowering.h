@@ -82,7 +82,7 @@ namespace llvm {
       STD_32,
       
       /// CALL - A direct function call.
-      CALL,
+      CALL_Macho, CALL_ELF,
       
       /// CHAIN,FLAG = MTCTR(VAL, CHAIN[, INFLAG]) - Directly corresponds to a
       /// MTCTR instruction.

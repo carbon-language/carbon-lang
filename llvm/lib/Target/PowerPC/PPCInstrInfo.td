@@ -81,9 +81,9 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,
                            [SDNPHasChain, SDNPOutFlag]>;
 
 def SDT_PPCCall   : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
-def PPCcall_Macho : SDNode<"PPCISD::CALL", SDT_PPCCall,
+def PPCcall_Macho : SDNode<"PPCISD::CALL_Macho", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
-def PPCcall_ELF   : SDNode<"PPCISD::CALL", SDT_PPCCall,
+def PPCcall_ELF   : SDNode<"PPCISD::CALL_ELF", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
@@ -407,11 +407,11 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
   def BLA_ELF : IForm<18, 1, 1,
                       (ops aaddr:$func, variable_ops),
                       "bla $func", BrB,
-                      [/*(PPCcall_ELF (i32 imm:$func))*/]>;
+                      [(PPCcall_ELF (i32 imm:$func))]>;
   def BCTRL_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
                                (ops variable_ops),
                                "bctrl", BrB,
-                               [/*(PPCbctrl_ELF)*/]>;
+                               [(PPCbctrl_ELF)]>;
 }
 
 // DCB* instructions.
@@ -1101,10 +1101,10 @@ def : Pat<(PPCcall_Macho (i32 tglobaladdr:$dst)),
           (BL_Macho tglobaladdr:$dst)>;
 def : Pat<(PPCcall_Macho (i32 texternalsym:$dst)),
           (BL_Macho texternalsym:$dst)>;
-/*def : Pat<(PPCcall_ELF (i32 tglobaladdr:$dst)),
+def : Pat<(PPCcall_ELF (i32 tglobaladdr:$dst)),
           (BL_ELF tglobaladdr:$dst)>;
 def : Pat<(PPCcall_ELF (i32 texternalsym:$dst)),
-          (BL_ELF texternalsym:$dst)>;*/
+          (BL_ELF texternalsym:$dst)>;
 
 // Hi and Lo for Darwin Global Addresses.
 def : Pat<(PPChi tglobaladdr:$in, 0), (LIS tglobaladdr:$in)>;

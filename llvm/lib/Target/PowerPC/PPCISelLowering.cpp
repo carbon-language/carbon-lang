@@ -326,7 +326,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::SHL:           return "PPCISD::SHL";
   case PPCISD::EXTSW_32:      return "PPCISD::EXTSW_32";
   case PPCISD::STD_32:        return "PPCISD::STD_32";
-  case PPCISD::CALL:          return "PPCISD::CALL";
+  case PPCISD::CALL_ELF:      return "PPCISD::CALL_ELF";
+  case PPCISD::CALL_Macho:    return "PPCISD::CALL_Macho";
   case PPCISD::MTCTR:         return "PPCISD::MTCTR";
   case PPCISD::BCTRL_Macho:   return "PPCISD::BCTRL_Macho";
   case PPCISD::BCTRL_ELF:     return "PPCISD::BCTRL_ELF";
@@ -1510,7 +1511,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
 
   SmallVector<SDOperand, 8> Ops;
-  unsigned CallOpc = PPCISD::CALL;
+  unsigned CallOpc = isMachoABI? PPCISD::CALL_Macho : PPCISD::CALL_ELF;
   
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
