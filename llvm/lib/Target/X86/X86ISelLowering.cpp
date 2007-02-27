@@ -24,6 +24,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -1058,140 +1059,11 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 //                 X86-64 C Calling Convention implementation
 //===----------------------------------------------------------------------===//
 
-class CallingConvState {
-  unsigned StackOffset;
-  const MRegisterInfo &MRI;
-  SmallVector<uint32_t, 16> UsedRegs;
-public:
-  CallingConvState(const MRegisterInfo &mri) : MRI(mri) {
-    // No stack is used.
-    StackOffset = 0;
-    
-    UsedRegs.resize(MRI.getNumRegs());
-  }
-  
-  unsigned getNextStackOffset() const { return StackOffset; }
-
-  /// isAllocated - Return true if the specified register (or an alias) is
-  /// allocated.
-  bool isAllocated(unsigned Reg) const {
-    return UsedRegs[Reg/32] & (1 << (Reg&31));
-  }
-
-  /// getFirstUnallocated - Return the first unallocated register in the set, or
-  /// NumRegs if they are all allocated.
-  unsigned getFirstUnallocated(const unsigned *Regs, unsigned NumRegs) const {
-    for (unsigned i = 0; i != NumRegs; ++i)
-      if (!isAllocated(Regs[i]))
-        return i;
-    return NumRegs;
-  }
-  
-  /// AllocateReg - Attempt to allocate one of the specified registers.  If none
-  /// are available, return zero.  Otherwise, return the first one available,
-  /// marking it and any aliases as allocated.
-  unsigned AllocateReg(const unsigned *Regs, unsigned NumRegs) {
-    unsigned FirstUnalloc = getFirstUnallocated(Regs, NumRegs);
-    if (FirstUnalloc == NumRegs)
-      return 0;    // Didn't find the reg.
-     
-    // Mark the register and any aliases as allocated.
-    unsigned Reg = Regs[FirstUnalloc];
-    MarkAllocated(Reg);
-    if (const unsigned *RegAliases = MRI.getAliasSet(Reg))
-      for (; *RegAliases; ++RegAliases)
-        MarkAllocated(*RegAliases);
-    return Reg;
-  }
-  
-  /// AllocateStack - Allocate a chunk of stack space with the specified size
-  /// and alignment.
-  unsigned AllocateStack(unsigned Size, unsigned Align) {
-    assert(Align && ((Align-1) & Align) == 0); // Align is power of 2.
-    StackOffset = ((StackOffset + Align-1) & ~(Align-1));
-    unsigned Result = StackOffset;
-    StackOffset += Size;
-    return Result;
-  }
-private:
-  void MarkAllocated(unsigned Reg) {
-    UsedRegs[Reg/32] |= 1 << (Reg&31);
-  }
-};
-
-/// CCValAssign - Represent assignment of one arg/retval to a location.
-class CCValAssign {
-public:
-  enum LocInfo {
-    Full,   // The value fills the full location.
-    SExt,   // The value is sign extended in the location.
-    ZExt,   // The value is zero extended in the location.
-    AExt    // The value is extended with undefined upper bits.
-    // TODO: a subset of the value is in the location.
-  };
-private:
-  /// ValNo - This is the value number begin assigned (e.g. an argument number).
-  unsigned ValNo;
-  
-  /// Loc is either a stack offset or a register number.
-  unsigned Loc;
-  
-  /// isMem - True if this is a memory loc, false if it is a register loc.
-  bool isMem : 1;
-  
-  /// Information about how the value is assigned.
-  LocInfo HTP : 7;
-  
-  /// ValVT - The type of the value being assigned.
-  MVT::ValueType ValVT : 8;
-
-  /// LocVT - The type of the location being assigned to.
-  MVT::ValueType LocVT : 8;
-public:
-    
-  static CCValAssign getReg(unsigned ValNo, MVT::ValueType ValVT,
-                            unsigned RegNo, MVT::ValueType LocVT,
-                            LocInfo HTP) {
-    CCValAssign Ret;
-    Ret.ValNo = ValNo;
-    Ret.Loc = RegNo;
-    Ret.isMem = false;
-    Ret.HTP = HTP;
-    Ret.ValVT = ValVT;
-    Ret.LocVT = LocVT;
-    return Ret;
-  }
-  static CCValAssign getMem(unsigned ValNo, MVT::ValueType ValVT,
-                            unsigned Offset, MVT::ValueType LocVT,
-                            LocInfo HTP) {
-    CCValAssign Ret;
-    Ret.ValNo = ValNo;
-    Ret.Loc = Offset;
-    Ret.isMem = true;
-    Ret.HTP = HTP;
-    Ret.ValVT = ValVT;
-    Ret.LocVT = LocVT;
-    return Ret;
-  }
-  
-  unsigned getValNo() const { return ValNo; }
-  MVT::ValueType getValVT() const { return ValVT; }
-
-  bool isRegLoc() const { return !isMem; }
-  bool isMemLoc() const { return isMem; }
-  
-  unsigned getLocReg() const { assert(isRegLoc()); return Loc; }
-  unsigned getLocMemOffset() const { assert(isMemLoc()); return Loc; }
-  MVT::ValueType getLocVT() const { return LocVT; }
-  
-  LocInfo getLocInfo() const { return HTP; }
-};
-
 
 /// X86_64_CCC_AssignArgument - Implement the X86-64 C Calling Convention.
 static void X86_64_CCC_AssignArgument(unsigned ValNo,
                                       MVT::ValueType ArgVT, unsigned ArgFlags,
-                                      CallingConvState &State,
+                                      CCState &State,
                                       SmallVector<CCValAssign, 16> &Locs) {
   MVT::ValueType LocVT = ArgVT;
   CCValAssign::LocInfo LocInfo = CCValAssign::Full;
@@ -1278,18 +1150,23 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   SmallVector<SDOperand, 8> ArgValues;
   
   
-  CallingConvState CCState(*getTargetMachine().getRegisterInfo());
+  CCState CCInfo(*getTargetMachine().getRegisterInfo());
   SmallVector<CCValAssign, 16> ArgLocs;
   
   for (unsigned i = 0; i != NumArgs; ++i) {
     MVT::ValueType ArgVT = Op.getValue(i).getValueType();
     unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
-    X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCState, ArgLocs);
+    X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCInfo, ArgLocs);
   }
   
+  unsigned LastVal = ~0U;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-  
+    // TODO: If an arg is passed in two places (e.g. reg and stack), skip later
+    // places.
+    assert(VA.getValNo() != LastVal &&
+           "Don't support value assigned to multiple locs yet");
+    LastVal = VA.getValNo();
     
     if (VA.isRegLoc()) {
       MVT::ValueType RegVT = VA.getLocVT();
@@ -1335,13 +1212,13 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
     }
   }
   
-  unsigned StackSize = CCState.getNextStackOffset();
+  unsigned StackSize = CCInfo.getNextStackOffset();
   
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (isVarArg) {
-    unsigned NumIntRegs = CCState.getFirstUnallocated(GPR64ArgRegs, 6);
-    unsigned NumXMMRegs = CCState.getFirstUnallocated(XMMArgRegs, 8);
+    unsigned NumIntRegs = CCInfo.getFirstUnallocated(GPR64ArgRegs, 6);
+    unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
     
     // For X86-64, if there are vararg parameters that are passed via
     // registers, then we must store them to their spots on the stack so they
@@ -1403,17 +1280,17 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand Callee    = Op.getOperand(4);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
-  CallingConvState CCState(*getTargetMachine().getRegisterInfo());
+  CCState CCInfo(*getTargetMachine().getRegisterInfo());
   SmallVector<CCValAssign, 16> ArgLocs;
 
   for (unsigned i = 0; i != NumOps; ++i) {
     MVT::ValueType ArgVT = Op.getOperand(5+2*i).getValueType();
     unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCState, ArgLocs);
+    X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCInfo, ArgLocs);
   }
     
   // Get a count of how many bytes are to be pushed on the stack.
-  unsigned NumBytes = CCState.getNextStackOffset();
+  unsigned NumBytes = CCInfo.getNextStackOffset();
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
   SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
@@ -1422,14 +1299,8 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand StackPtr;
   
   // Walk the register/memloc assignments, inserting copies/loads.
-  unsigned LastVal = ~0U;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-    
-    assert(VA.getValNo() != LastVal &&
-           "Don't support value assigned to multiple locs yet");
-    LastVal = VA.getValNo();
-
     SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
     
     // Promote the value if needed.
@@ -1486,7 +1357,7 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
       X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };
-    unsigned NumXMMRegs = CCState.getFirstUnallocated(XMMArgRegs, 8);
+    unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
     
     Chain = DAG.getCopyToReg(Chain, X86::AL,
                              DAG.getConstant(NumXMMRegs, MVT::i8), InFlag);
