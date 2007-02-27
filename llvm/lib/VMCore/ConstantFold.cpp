@@ -1,4 +1,4 @@
-//===- ConstantFolding.cpp - LLVM constant folder -------------------------===//
+//===- ConstantFold.cpp - LLVM constant folder ----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements folding of constants for LLVM.  This implements the
-// (internal) ConstantFolding.h interface, which is used by the
+// (internal) ConstantFold.h interface, which is used by the
 // ConstantExpr::get* methods to automatically fold constants when possible.
 //
 // The current constant folding implementation is implemented in two pieces: the
@@ -38,11 +38,11 @@ using namespace llvm;
 /// CastConstantVector - Convert the specified ConstantVector node to the
 /// specified vector type.  At this point, we know that the elements of the
 /// input packed constant are all simple integer or FP values.
-static Constant *CastConstantVector(ConstantVector *CP,
+static Constant *CastConstantVector(ConstantVector *CV,
                                     const VectorType *DstTy) {
-  unsigned SrcNumElts = CP->getType()->getNumElements();
+  unsigned SrcNumElts = CV->getType()->getNumElements();
   unsigned DstNumElts = DstTy->getNumElements();
-  const Type *SrcEltTy = CP->getType()->getElementType();
+  const Type *SrcEltTy = CV->getType()->getElementType();
   const Type *DstEltTy = DstTy->getElementType();
   
   // If both vectors have the same number of elements (thus, the elements
@@ -56,7 +56,7 @@ static Constant *CastConstantVector(ConstantVector *CP,
         (SrcEltTy->isFloatingPoint() && DstEltTy->isFloatingPoint())) {
       for (unsigned i = 0; i != SrcNumElts; ++i)
         Result.push_back(
-          ConstantExpr::getBitCast(CP->getOperand(i), DstEltTy));
+          ConstantExpr::getBitCast(CV->getOperand(i), DstEltTy));
       return ConstantVector::get(Result);
     }
     
@@ -67,7 +67,7 @@ static Constant *CastConstantVector(ConstantVector *CP,
       if (DstEltTy->getTypeID() == Type::DoubleTyID) {
         for (unsigned i = 0; i != SrcNumElts; ++i) {
           double V =
-            BitsToDouble(cast<ConstantInt>(CP->getOperand(i))->getZExtValue());
+            BitsToDouble(cast<ConstantInt>(CV->getOperand(i))->getZExtValue());
           Result.push_back(ConstantFP::get(Type::DoubleTy, V));
         }
         return ConstantVector::get(Result);
@@ -75,7 +75,7 @@ static Constant *CastConstantVector(ConstantVector *CP,
       assert(DstEltTy == Type::FloatTy && "Unknown fp type!");
       for (unsigned i = 0; i != SrcNumElts; ++i) {
         float V =
-        BitsToFloat(cast<ConstantInt>(CP->getOperand(i))->getZExtValue());
+          BitsToFloat(cast<ConstantInt>(CV->getOperand(i))->getZExtValue());
         Result.push_back(ConstantFP::get(Type::FloatTy, V));
       }
       return ConstantVector::get(Result);
@@ -86,9 +86,10 @@ static Constant *CastConstantVector(ConstantVector *CP,
     
     if (SrcEltTy->getTypeID() == Type::DoubleTyID) {
       for (unsigned i = 0; i != SrcNumElts; ++i) {
-        uint64_t V =
-          DoubleToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
-        Constant *C = ConstantInt::get(Type::Int64Ty, V);
+        double V =
+          DoubleToBits(cast<ConstantFP>(CV->getOperand(i))->getValue());
+        Constant *C = ConstantInt::get(Type::Int64Ty, 
+                                       APIntOps::RoundDoubleToAPInt(V));
         Result.push_back(ConstantExpr::getBitCast(C, DstEltTy ));
       }
       return ConstantVector::get(Result);
@@ -96,7 +97,7 @@ static Constant *CastConstantVector(ConstantVector *CP,
 
     assert(SrcEltTy->getTypeID() == Type::FloatTyID);
     for (unsigned i = 0; i != SrcNumElts; ++i) {
-      uint32_t V = FloatToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
+      uint32_t V = FloatToBits(cast<ConstantFP>(CV->getOperand(i))->getValue());
       Constant *C = ConstantInt::get(Type::Int32Ty, V);
       Result.push_back(ConstantExpr::getBitCast(C, DstEltTy));
     }
@@ -174,12 +175,26 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       return ConstantFP::get(DestTy, FPC->getValue());
     return 0; // Can't fold.
   case Instruction::FPToUI: 
-    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V))
-      return ConstantInt::get(DestTy,(uint64_t) FPC->getValue());
+    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
+      APInt Val(APIntOps::RoundDoubleToAPInt(FPC->getValue()));
+      uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
+      if (Val.getBitWidth() > DestBitWidth)
+        Val.trunc(DestBitWidth);
+      else if (Val.getBitWidth() < DestBitWidth)
+        Val.zext(DestBitWidth);
+      return ConstantInt::get(DestTy, Val);
+    }
     return 0; // Can't fold.
   case Instruction::FPToSI:
-    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V))
-      return ConstantInt::get(DestTy,(int64_t) FPC->getValue());
+    if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
+      APInt Val(APIntOps::RoundDoubleToAPInt(FPC->getValue()));
+      uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
+      if (Val.getBitWidth() > DestBitWidth)
+        Val.trunc(DestBitWidth);
+      else if (Val.getBitWidth() < DestBitWidth)
+        Val.sext(DestBitWidth);
+      return ConstantInt::get(DestTy, Val);
+    }
     return 0; // Can't fold.
   case Instruction::IntToPtr:   //always treated as unsigned
     if (V->isNullValue())       // Is it an integral null value?
@@ -191,23 +206,37 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     return 0;                   // Other pointer types cannot be casted
   case Instruction::UIToFP:
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return ConstantFP::get(DestTy, double(CI->getZExtValue()));
+      if (CI->getType()->getBitWidth() <= APInt::APINT_BITS_PER_WORD)
+        return ConstantFP::get(DestTy, CI->getValue().roundToDouble(false));
     return 0;
   case Instruction::SIToFP:
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return ConstantFP::get(DestTy, double(CI->getSExtValue()));
+      if (CI->getType()->getBitWidth() <= APInt::APINT_BITS_PER_WORD)
+        return ConstantFP::get(DestTy, CI->getValue().roundToDouble(true)); 
     return 0;
   case Instruction::ZExt:
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return ConstantInt::get(DestTy, CI->getZExtValue());
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
+      APInt Result(CI->getValue());
+      Result.zext(BitWidth);
+      return ConstantInt::get(DestTy, Result);
+    }
     return 0;
   case Instruction::SExt:
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return ConstantInt::get(DestTy, CI->getSExtValue());
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
+      APInt Result(CI->getValue());
+      Result.sext(BitWidth);
+      return ConstantInt::get(DestTy, Result);
+    }
     return 0;
   case Instruction::Trunc:
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) // Can't trunc a bool
-      return ConstantInt::get(DestTy, CI->getZExtValue());
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
+      APInt Result(CI->getValue());
+      Result.trunc(BitWidth);
+      return ConstantInt::get(DestTy, Result);
+    }
     return 0;
   case Instruction::BitCast:
     if (SrcTy == DestTy) 
@@ -252,14 +281,14 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
         if (isa<UndefValue>(V))
           return UndefValue::get(DestTy);
 
-        if (const ConstantVector *CP = dyn_cast<ConstantVector>(V)) {
+        if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
           // This is a cast from a ConstantVector of one type to a 
           // ConstantVector of another type.  Check to see if all elements of 
           // the input are simple.
           bool AllSimpleConstants = true;
-          for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
-            if (!isa<ConstantInt>(CP->getOperand(i)) &&
-                !isa<ConstantFP>(CP->getOperand(i))) {
+          for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
+            if (!isa<ConstantInt>(CV->getOperand(i)) &&
+                !isa<ConstantFP>(CV->getOperand(i))) {
               AllSimpleConstants = false;
               break;
             }
@@ -267,7 +296,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
               
           // If all of the elements are simple constants, we can fold this.
           if (AllSimpleConstants)
-            return CastConstantVector(const_cast<ConstantVector*>(CP), DestPTy);
+            return CastConstantVector(const_cast<ConstantVector*>(CV), DestPTy);
         }
       }
     }
@@ -279,9 +308,10 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
 
     // Handle integral constant input.
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      // Integral -> Integral, must be changing sign.
       if (DestTy->isInteger())
-        return ConstantInt::get(DestTy, CI->getZExtValue());
+        // Integral -> Integral. This is a no-op because the bit widths must
+        // be the same. Consequently, we just fold to V.
+        return const_cast<Constant*>(V);
 
       if (DestTy->isFloatingPoint()) {
         if (DestTy == Type::FloatTy)
@@ -350,7 +380,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
                                                      const Constant *Idx) {
   const ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx);
   if (!CIdx) return 0;
-  uint64_t idxVal = CIdx->getZExtValue();
+  APInt idxVal = CIdx->getValue();
   if (isa<UndefValue>(Val)) { 
     // Insertion of scalar constant into packed undef
     // Optimize away insertion of undef
@@ -364,7 +394,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
     Ops.reserve(numOps);
     for (unsigned i = 0; i < numOps; ++i) {
       const Constant *Op =
-        (i == idxVal) ? Elt : UndefValue::get(Elt->getType());
+        (idxVal == i) ? Elt : UndefValue::get(Elt->getType());
       Ops.push_back(const_cast<Constant*>(Op));
     }
     return ConstantVector::get(Ops);
@@ -382,7 +412,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
     Ops.reserve(numOps);
     for (unsigned i = 0; i < numOps; ++i) {
       const Constant *Op =
-        (i == idxVal) ? Elt : Constant::getNullValue(Elt->getType());
+        (idxVal == i) ? Elt : Constant::getNullValue(Elt->getType());
       Ops.push_back(const_cast<Constant*>(Op));
     }
     return ConstantVector::get(Ops);
@@ -393,7 +423,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
     Ops.reserve(CVal->getNumOperands());
     for (unsigned i = 0; i < CVal->getNumOperands(); ++i) {
       const Constant *Op =
-        (i == idxVal) ? Elt : cast<Constant>(CVal->getOperand(i));
+        (idxVal == i) ? Elt : cast<Constant>(CVal->getOperand(i));
       Ops.push_back(const_cast<Constant*>(Op));
     }
     return ConstantVector::get(Ops);
@@ -482,19 +512,19 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       case Instruction::Mul:
         if (C2->isNullValue()) return const_cast<Constant*>(C2);  // X * 0 == 0
         if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
-          if (CI->getZExtValue() == 1)
+          if (CI->equalsInt(1))
             return const_cast<Constant*>(C1);                     // X * 1 == X
         break;
       case Instruction::UDiv:
       case Instruction::SDiv:
         if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
-          if (CI->getZExtValue() == 1)
+          if (CI->equalsInt(1))
             return const_cast<Constant*>(C1);                     // X / 1 == X
         break;
       case Instruction::URem:
       case Instruction::SRem:
         if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
-          if (CI->getZExtValue() == 1)
+          if (CI->equalsInt(1))
             return Constant::getNullValue(CI->getType());         // X % 1 == 0
         break;
       case Instruction::And:
@@ -508,7 +538,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
           // Functions are at least 4-byte aligned.  If and'ing the address of a
           // function with a constant < 4, fold it to zero.
           if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
-            if (CI->getZExtValue() < 4 && isa<Function>(CPR))
+            if (CI->getValue().ult(APInt(CI->getType()->getBitWidth(),4)) && 
+                isa<Function>(CPR))
               return Constant::getNullValue(CI->getType());
         }
         break;
@@ -554,56 +585,66 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   // so look at directly computing the value.
   if (const ConstantInt *CI1 = dyn_cast<ConstantInt>(C1)) {
     if (const ConstantInt *CI2 = dyn_cast<ConstantInt>(C2)) {
-      uint64_t C1Val = CI1->getZExtValue();
-      uint64_t C2Val = CI2->getZExtValue();
+      using namespace APIntOps;
+      APInt C1V = CI1->getValue();
+      APInt C2V = CI2->getValue();
       switch (Opcode) {
       default:
         break;
       case Instruction::Add:     
-        return ConstantInt::get(C1->getType(), C1Val + C2Val);
+        return ConstantInt::get(C1->getType(), C1V + C2V);
       case Instruction::Sub:     
-        return ConstantInt::get(C1->getType(), C1Val - C2Val);
+        return ConstantInt::get(C1->getType(), C1V - C2V);
       case Instruction::Mul:     
-        return ConstantInt::get(C1->getType(), C1Val * C2Val);
+        return ConstantInt::get(C1->getType(), C1V * C2V);
       case Instruction::UDiv:
-        if (CI2->isNullValue())                  // X / 0 -> can't fold
-          return 0;
-        return ConstantInt::get(C1->getType(), C1Val / C2Val);
+        if (CI2->isNullValue())                  
+          return 0;        // X / 0 -> can't fold
+        return ConstantInt::get(C1->getType(), C1V.udiv(C2V));
       case Instruction::SDiv:
-        if (CI2->isNullValue()) return 0;        // X / 0 -> can't fold
-        if (CI2->isAllOnesValue() &&
-            (((CI1->getType()->getPrimitiveSizeInBits() == 64) && 
-              (CI1->getSExtValue() == INT64_MIN)) ||
-             (CI1->getSExtValue() == -CI1->getSExtValue() &&
-              CI1->getSExtValue())))
-          return 0;                              // MIN_INT / -1 -> overflow
-        return ConstantInt::get(C1->getType(), 
-                                CI1->getSExtValue() / CI2->getSExtValue());
-      case Instruction::URem:    
-        if (C2->isNullValue()) return 0;         // X / 0 -> can't fold
-        return ConstantInt::get(C1->getType(), C1Val % C2Val);
+        if (CI2->isNullValue()) 
+          return 0;        // X / 0 -> can't fold
+        return ConstantInt::get(C1->getType(), C1V.sdiv(C2V));
+        if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
+          return 0;        // MIN_INT / -1 -> overflow
+        return ConstantInt::get(C1->getType(), C1V.sdiv(C2V));
+      case Instruction::URem:
+        if (C2->isNullValue()) 
+          return 0;        // X / 0 -> can't fold
+        return ConstantInt::get(C1->getType(), C1V.urem(C2V));
       case Instruction::SRem:    
-        if (CI2->isNullValue()) return 0;        // X % 0 -> can't fold
-        if (CI2->isAllOnesValue() &&              
-            (((CI1->getType()->getPrimitiveSizeInBits() == 64) && 
-              (CI1->getSExtValue() == INT64_MIN)) ||
-             (CI1->getSExtValue() == -CI1->getSExtValue())))
-          return 0;                              // MIN_INT % -1 -> overflow
-        return ConstantInt::get(C1->getType(), 
-                                CI1->getSExtValue() % CI2->getSExtValue());
+        if (CI2->isNullValue()) 
+          return 0;        // X % 0 -> can't fold
+        if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
+          return 0;        // MIN_INT % -1 -> overflow
+        return ConstantInt::get(C1->getType(), C1V.srem(C2V));
       case Instruction::And:
-        return ConstantInt::get(C1->getType(), C1Val & C2Val);
+        return ConstantInt::get(C1->getType(), C1V & C2V);
       case Instruction::Or:
-        return ConstantInt::get(C1->getType(), C1Val | C2Val);
+        return ConstantInt::get(C1->getType(), C1V | C2V);
       case Instruction::Xor:
-        return ConstantInt::get(C1->getType(), C1Val ^ C2Val);
+        return ConstantInt::get(C1->getType(), C1V ^ C2V);
       case Instruction::Shl:
-        return ConstantInt::get(C1->getType(), C1Val << C2Val);
+        if (uint32_t shiftAmt = C2V.getZExtValue())
+          if (shiftAmt <= C1V.getBitWidth())
+            return ConstantInt::get(C1->getType(), C1V.shl(shiftAmt));
+          else
+            return UndefValue::get(C1->getType()); // too big shift is undef
+        return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       case Instruction::LShr:
-        return ConstantInt::get(C1->getType(), C1Val >> C2Val);
+        if (uint32_t shiftAmt = C2V.getZExtValue())
+          if (shiftAmt <= C1V.getBitWidth())
+            return ConstantInt::get(C1->getType(), C1V.lshr(shiftAmt));
+          else
+            return UndefValue::get(C1->getType()); // too big shift is undef
+        return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       case Instruction::AShr:
-        return ConstantInt::get(C1->getType(), 
-                                CI1->getSExtValue() >> C2Val);
+        if (uint32_t shiftAmt = C2V.getZExtValue())
+          if (shiftAmt <= C1V.getBitWidth())
+            return ConstantInt::get(C1->getType(), C1V.ashr(shiftAmt));
+          else
+            return UndefValue::get(C1->getType()); // too big shift is undef
+        return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       }
     }
   } else if (const ConstantFP *CFP1 = dyn_cast<ConstantFP>(C1)) {
@@ -752,15 +793,15 @@ static FCmpInst::Predicate evaluateFCmpRelation(const Constant *V1,
       Constant *C2 = const_cast<Constant*>(V2);
       R = dyn_cast<ConstantInt>(
                              ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ, C1, C2));
-      if (R && R->getZExtValue()) 
+      if (R && !R->isNullValue()) 
         return FCmpInst::FCMP_OEQ;
       R = dyn_cast<ConstantInt>(
                              ConstantExpr::getFCmp(FCmpInst::FCMP_OLT, C1, C2));
-      if (R && R->getZExtValue()) 
+      if (R && !R->isNullValue()) 
         return FCmpInst::FCMP_OLT;
       R = dyn_cast<ConstantInt>(
                              ConstantExpr::getFCmp(FCmpInst::FCMP_OGT, C1, C2));
-      if (R && R->getZExtValue()) 
+      if (R && !R->isNullValue()) 
         return FCmpInst::FCMP_OGT;
 
       // Nothing more we can do
@@ -819,15 +860,15 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
       Constant *C2 = const_cast<Constant*>(V2);
       ICmpInst::Predicate pred = ICmpInst::ICMP_EQ;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
-      if (R && R->getZExtValue()) 
+      if (R && !R->isNullValue()) 
         return pred;
       pred = isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
-      if (R && R->getZExtValue())
+      if (R && !R->isNullValue())
         return pred;
       pred = isSigned ?  ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
-      if (R && R->getZExtValue())
+      if (R && !R->isNullValue())
         return pred;
       
       // If we couldn't figure it out, bail.
@@ -1045,28 +1086,20 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   }
 
   if (isa<ConstantInt>(C1) && isa<ConstantInt>(C2)) {
-    if (ICmpInst::isSignedPredicate(ICmpInst::Predicate(pred))) {
-      int64_t V1 = cast<ConstantInt>(C1)->getSExtValue();
-      int64_t V2 = cast<ConstantInt>(C2)->getSExtValue();
-      switch (pred) {
-      default: assert(0 && "Invalid ICmp Predicate"); return 0;
-      case ICmpInst::ICMP_SLT:return ConstantInt::get(Type::Int1Ty, V1 <  V2);
-      case ICmpInst::ICMP_SGT:return ConstantInt::get(Type::Int1Ty, V1 >  V2);
-      case ICmpInst::ICMP_SLE:return ConstantInt::get(Type::Int1Ty, V1 <= V2);
-      case ICmpInst::ICMP_SGE:return ConstantInt::get(Type::Int1Ty, V1 >= V2);
-      }
-    } else {
-      uint64_t V1 = cast<ConstantInt>(C1)->getZExtValue();
-      uint64_t V2 = cast<ConstantInt>(C2)->getZExtValue();
-      switch (pred) {
-      default: assert(0 && "Invalid ICmp Predicate"); return 0;
-      case ICmpInst::ICMP_EQ: return ConstantInt::get(Type::Int1Ty, V1 == V2);
-      case ICmpInst::ICMP_NE: return ConstantInt::get(Type::Int1Ty, V1 != V2);
-      case ICmpInst::ICMP_ULT:return ConstantInt::get(Type::Int1Ty, V1 <  V2);
-      case ICmpInst::ICMP_UGT:return ConstantInt::get(Type::Int1Ty, V1 >  V2);
-      case ICmpInst::ICMP_ULE:return ConstantInt::get(Type::Int1Ty, V1 <= V2);
-      case ICmpInst::ICMP_UGE:return ConstantInt::get(Type::Int1Ty, V1 >= V2);
-      }
+    APInt V1 = cast<ConstantInt>(C1)->getValue();
+    APInt V2 = cast<ConstantInt>(C2)->getValue();
+    switch (pred) {
+    default: assert(0 && "Invalid ICmp Predicate"); return 0;
+    case ICmpInst::ICMP_EQ: return ConstantInt::get(Type::Int1Ty, V1 == V2);
+    case ICmpInst::ICMP_NE: return ConstantInt::get(Type::Int1Ty, V1 != V2);
+    case ICmpInst::ICMP_SLT:return ConstantInt::get(Type::Int1Ty, V1.slt(V2));
+    case ICmpInst::ICMP_SGT:return ConstantInt::get(Type::Int1Ty, V1.sgt(V2));
+    case ICmpInst::ICMP_SLE:return ConstantInt::get(Type::Int1Ty, V1.sle(V2));
+    case ICmpInst::ICMP_SGE:return ConstantInt::get(Type::Int1Ty, V1.sge(V2));
+    case ICmpInst::ICMP_ULT:return ConstantInt::get(Type::Int1Ty, V1.ult(V2));
+    case ICmpInst::ICMP_UGT:return ConstantInt::get(Type::Int1Ty, V1.ugt(V2));
+    case ICmpInst::ICMP_ULE:return ConstantInt::get(Type::Int1Ty, V1.ule(V2));
+    case ICmpInst::ICMP_UGE:return ConstantInt::get(Type::Int1Ty, V1.uge(V2));
     }
   } else if (isa<ConstantFP>(C1) && isa<ConstantFP>(C2)) {
     double C1Val = cast<ConstantFP>(C1)->getValue();
