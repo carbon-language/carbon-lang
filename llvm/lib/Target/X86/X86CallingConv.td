@@ -12,19 +12,28 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 class CCAction;
 class CallingConv;
 
+/// CCPredicateAction - Instances of this class check some predicate, then
+/// delegate to another action if the predicate is true.
+class CCPredicateAction<CCAction A> : CCAction {
+  CCAction SubAction = A;
+}
 
 /// CCMatchType - If the current argument is one of the specified types, apply
 /// Action A.
-class CCMatchType<list<ValueType> VTs, CCAction A> : CCAction {
+class CCMatchType<list<ValueType> VTs, CCAction A> : CCPredicateAction<A> {
 }
 
 /// CCMatchIf - If the predicate matches, apply A.
-class CCMatchIf<string predicate, CCAction A> : CCAction {
+class CCMatchIf<string predicate, CCAction A> : CCPredicateAction<A> {
   string Predicate = predicate;
+}
+
+/// CCMatchIfCC - Match of the current calling convention is 'CC'.
+class CCMatchIfCC<string CC, CCAction A> : CCPredicateAction<A> {
+  string CallingConv = CC;
 }
 
 /// CCAssignToReg - This action matches if there is a register in the specified
@@ -40,7 +49,6 @@ class CCAssignToStack<int size, int align> : CCAction {
   int Size = size;
   int Align = align;
 }
-
 
 
 /// CCPromoteToType - If applied, this promotes the specified current value to
@@ -64,6 +72,7 @@ class CallingConv<list<CCAction> actions> {
 // Return Value Calling Conventions
 //===----------------------------------------------------------------------===//
 
+// Return-value conventions common to all X86 CC's.
 def RetCC_X86Common : CallingConv<[
   // Scalar values are returned in AX first, then DX.
   CCMatchType<[i8] , CCAssignToReg<[AL]>>,
@@ -76,7 +85,7 @@ def RetCC_X86Common : CallingConv<[
   CCMatchType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToReg<[XMM0]>>
 ]>;
 
-// Return conventions for the X86-32 C calling convention.
+// X86-32 C return-value convention.
 def RetCC_X86_32_C : CallingConv<[
   // The X86-32 calling convention returns FP values in ST0, otherwise it is the
   // same as the common X86 calling conv.
@@ -85,7 +94,7 @@ def RetCC_X86_32_C : CallingConv<[
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
-// Return conventions for the X86-32 Fast calling convention.
+// X86-32 FastCC return-value convention.
 def RetCC_X86_32_Fast : CallingConv<[
   // The X86-32 fastcc returns FP values in XMM0 if the target has SSE2,
   // otherwise it is the the C calling conventions.
@@ -94,13 +103,30 @@ def RetCC_X86_32_Fast : CallingConv<[
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
-// Return conventions for the X86-64 C calling convention.
+// X86-64 C return-value convention.
 def RetCC_X86_64_C : CallingConv<[
   // The X86-64 calling convention always returns FP values in XMM0.
   CCMatchType<[f32], CCAssignToReg<[XMM0]>>,
   CCMatchType<[f64], CCAssignToReg<[XMM0]>>,
   CCDelegateTo<RetCC_X86Common>
 ]>;
+
+
+
+// This is the root return-value convention for the X86-32 backend.
+def RetCC_X86_32 : CallingConv<[
+  // If FastCC, use RetCC_X86_32_Fast.
+  CCMatchIfCC<"CallingConv::Fast", CCDelegateTo<RetCC_X86_32_Fast>>,
+  // Otherwise, use RetCC_X86_32_C.
+  CCDelegateTo<RetCC_X86_32_C>
+]>;
+
+// This is the root return-value convention for the X86-64 backend.
+def RetCC_X86_64 : CallingConv<[
+  // Always just the same as C calling conv for X86-64.
+  CCDelegateTo<RetCC_X86_64_C>
+]>;
+
 
 
 //===----------------------------------------------------------------------===//
