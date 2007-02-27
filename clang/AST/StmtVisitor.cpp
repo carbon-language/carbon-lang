@@ -21,7 +21,7 @@ StmtVisitor::~StmtVisitor() {
 }
 
 // Implement all of the delegation visitor methods.
-#define STMT(FROM, TO) \
+#define STMT(N, FROM, TO) \
   void StmtVisitor::Visit##FROM(FROM *Node) { Visit##TO(Node); }
 #include "clang/AST/StmtNodes.def"
 

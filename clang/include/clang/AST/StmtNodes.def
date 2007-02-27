@@ -11,39 +11,58 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Normal Statements.
-STMT(CompoundStmt    , Stmt)
-STMT(CaseStmt        , Stmt)
-STMT(DefaultStmt     , Stmt)
-STMT(LabelStmt       , Stmt)
-STMT(IfStmt          , Stmt)
-STMT(SwitchStmt      , Stmt)
-STMT(WhileStmt       , Stmt)
-STMT(DoStmt          , Stmt)
-STMT(ForStmt         , Stmt)
-STMT(GotoStmt        , Stmt)
-STMT(IndirectGotoStmt, Stmt)
-STMT(ContinueStmt    , Stmt)
-STMT(BreakStmt       , Stmt)
-STMT(ReturnStmt      , Stmt)
+#ifndef FIRST_STMT
+#define FIRST_STMT(n)
+#define LAST_STMT(n)
+#endif
 
+#ifndef FIRST_EXPR
+#define FIRST_EXPR(n)
+#define LAST_EXPR(n)
+#endif
+
+// Normal Statements.
+FIRST_STMT(1)
+STMT(1, CompoundStmt    , Stmt)
+STMT(2, CaseStmt        , Stmt)
+STMT(3, DefaultStmt     , Stmt)
+STMT(4, LabelStmt       , Stmt)
+STMT(5, IfStmt          , Stmt)
+STMT(6, SwitchStmt      , Stmt)
+STMT(7, WhileStmt       , Stmt)
+STMT(8, DoStmt          , Stmt)
+STMT(9, ForStmt         , Stmt)
+STMT(10, GotoStmt        , Stmt)
+STMT(11, IndirectGotoStmt, Stmt)
+STMT(12, ContinueStmt    , Stmt)
+STMT(13, BreakStmt       , Stmt)
+STMT(14, ReturnStmt      , Stmt)
+LAST_STMT(14)
+
+FIRST_EXPR(32)
 // Expressions.
-STMT(Expr                 , Stmt)
-STMT(DeclRefExpr          , Expr)
-STMT(IntegerLiteral       , Expr)
-STMT(FloatingLiteral      , Expr)
-STMT(StringLiteral        , Expr)
-STMT(ParenExpr            , Expr)
-STMT(UnaryOperator        , Expr)
-STMT(SizeOfAlignOfTypeExpr, Expr)
-STMT(ArraySubscriptExpr   , Expr)
-STMT(CallExpr             , Expr)
-STMT(MemberExpr           , Expr)
-STMT(CastExpr             , Expr)
-STMT(BinaryOperator       , Expr)
-STMT(ConditionalOperator  , Expr)
+STMT(32, Expr                 , Stmt)
+STMT(33, DeclRefExpr          , Expr)
+STMT(34, IntegerLiteral       , Expr)
+STMT(35, FloatingLiteral      , Expr)
+STMT(36, StringLiteral        , Expr)
+STMT(37, ParenExpr            , Expr)
+STMT(38, UnaryOperator        , Expr)
+STMT(39, SizeOfAlignOfTypeExpr, Expr)
+STMT(40, ArraySubscriptExpr   , Expr)
+STMT(41, CallExpr             , Expr)
+STMT(42, MemberExpr           , Expr)
+STMT(43, CastExpr             , Expr)
+STMT(44, BinaryOperator       , Expr)
+STMT(45, ConditionalOperator  , Expr)
 
 // C++ Expressions.
-STMT(CXXCastExpr          , CastExpr)
+STMT(46, CXXCastExpr          , CastExpr)
+STMT(47, CXXBoolLiteralExpr   , Expr)
+LAST_EXPR(47)
 
 #undef STMT
+#undef FIRST_STMT
+#undef LAST_STMT
+#undef FIRST_EXPR
+#undef LAST_EXPR

@@ -29,12 +29,15 @@ namespace clang {
 class Stmt {
 public:
   enum StmtClass {
-#define STMT(CLASS, PARENT) CLASS##Class,
+#define STMT(N, CLASS, PARENT) CLASS##Class = N,
+#define FIRST_STMT(N) firstStmtConstant = N,
+#define LAST_STMT(N) lastStmtConstant = N,
+#define FIRST_EXPR(N) firstExprConstant = N,
+#define LAST_EXPR(N) lastExprConstant = N
 #include "clang/AST/StmtNodes.def"
-    LastStmtClass
-  };
+};
 private:
-  StmtClass sClass;
+  const StmtClass sClass;
 public:
   Stmt(StmtClass SC) : sClass(SC) {}
   virtual ~Stmt() {}

@@ -18,7 +18,7 @@ namespace llvm {
 namespace clang {
   class Stmt;
   // Add prototypes for all AST node classes.
-#define STMT(CLASS, PARENT) \
+#define STMT(N, CLASS, PARENT) \
   class CLASS;
 #include "clang/AST/StmtNodes.def"
   
@@ -31,7 +31,7 @@ public:
   virtual void VisitStmt(Stmt *Node) {}
   
   // Implement all the methods with the StmtNodes.def file.
-#define STMT(CLASS, PARENT) \
+#define STMT(N, CLASS, PARENT) \
   virtual void Visit##CLASS(CLASS *Node);
 #include "clang/AST/StmtNodes.def"
 };

@@ -29,13 +29,13 @@ namespace clang {
 class Expr : public Stmt {
   /// TODO: Type.
 public:
-  Expr() : Stmt(ExprClass) {}
   Expr(StmtClass SC) : Stmt(SC) {}
   ~Expr() {}
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ExprClass; 
+    return T->getStmtClass() >= firstExprConstant &&
+           T->getStmtClass() <= lastExprConstant; 
   }
   static bool classof(const Expr *) { return true; }
 };
@@ -269,6 +269,7 @@ class CastExpr : public Expr {
   Expr *Op;
 public:
   CastExpr(TypeRef ty, Expr *op) : Expr(CastExprClass), Ty(ty), Op(op) {}
+  CastExpr(StmtClass SC, TypeRef ty, Expr *op) : Expr(SC), Ty(ty), Op(op) {}
   
   TypeRef getDestType() const { return Ty; }
   

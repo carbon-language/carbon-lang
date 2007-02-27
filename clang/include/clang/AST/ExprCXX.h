@@ -35,7 +35,7 @@ namespace clang {
     };
 
     CXXCastExpr(Opcode op, TypeRef ty, Expr *expr)
-      : CastExpr(ty, expr), Op(op) {}
+      : CastExpr(CXXCastExprClass, ty, expr), Op(op) {}
 
     Opcode getOpcode() const { return Op; }
     virtual void visit(StmtVisitor &Visitor);
@@ -48,7 +48,8 @@ namespace clang {
   class CXXBoolLiteralExpr : public Expr {
     bool Value;
   public:
-    CXXBoolLiteralExpr(bool val) : Value(val) {}
+    CXXBoolLiteralExpr(bool val) : Expr(CXXBoolLiteralExprClass), Value(val) {}
+    virtual void visit(StmtVisitor &Visitor);
   };
 
 }  // end namespace clang

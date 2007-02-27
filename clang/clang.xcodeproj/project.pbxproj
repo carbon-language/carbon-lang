@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1A30A9E90B93A4C800201A91 /* ExprCXX.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1A30A9E80B93A4C800201A91 /* ExprCXX.h */; };
 		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
 		DE06B73E0A8307640050E87E /* LangOptions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06B73D0A8307640050E87E /* LangOptions.h */; };
 		DE06BECB0A854E4B0050E87E /* Scope.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06BECA0A854E4B0050E87E /* Scope.h */; };
@@ -143,12 +144,14 @@
 				DED676FA0B6C797B00AAD4A3 /* Builtins.h in CopyFiles */,
 				DED67AEE0B6DB92A00AAD4A3 /* X86Builtins.def in CopyFiles */,
 				DED67AF00B6DB92F00AAD4A3 /* PPCBuiltins.def in CopyFiles */,
+				1A30A9E90B93A4C800201A91 /* ExprCXX.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1A30A9E80B93A4C800201A91 /* ExprCXX.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ExprCXX.h; path = clang/AST/ExprCXX.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06B73D0A8307640050E87E /* LangOptions.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = LangOptions.h; sourceTree = "<group>"; };
@@ -330,6 +333,7 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				1A30A9E80B93A4C800201A91 /* ExprCXX.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
 				DEC8DABF0A94402500353FCA /* ASTStreamer.h */,

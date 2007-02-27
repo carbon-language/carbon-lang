@@ -78,7 +78,7 @@ namespace  {
     }
     
     virtual void VisitStmt(Stmt *Node);
-#define STMT(CLASS, PARENT) \
+#define STMT(N, CLASS, PARENT) \
     virtual void Visit##CLASS(CLASS *Node);
 #include "clang/AST/StmtNodes.def"
   };
@@ -311,6 +311,11 @@ void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {
   PrintExpr(Node->getSubExpr());
   OS << ")";
 }
+
+void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
+  assert(0 && "TODO: should print CXXBoolLiteralExpr!");
+}
+
 void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
   PrintExpr(Node->getLHS());
   OS << " " << BinaryOperator::getOpcodeStr(Node->getOpcode()) << " ";
