@@ -337,6 +337,13 @@ Init *ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
   return new ListInit(Vals);
 }
 
+Record *ListInit::getElementAsRecord(unsigned i) const {
+  assert(i < Values.size() && "List element index out of range!");
+  DefInit *DI = dynamic_cast<DefInit*>(Values[i]);
+  if (DI == 0) throw "Expected record in list!";
+  return DI->getDef();
+}
+
 Init *ListInit::resolveReferences(Record &R, const RecordVal *RV) {
   std::vector<Init*> Resolved;
   Resolved.reserve(getSize());

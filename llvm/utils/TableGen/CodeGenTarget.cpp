@@ -604,9 +604,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
   // Parse the list of argument types.
   ListInit *TypeList = R->getValueAsListInit("Types");
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
-    DefInit *DI = dynamic_cast<DefInit*>(TypeList->getElement(i));
-    assert(DI && "Invalid list type!");
-    Record *TyEl = DI->getDef();
+    Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
     
@@ -620,9 +618,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
   // Parse the intrinsic properties.
   ListInit *PropList = R->getValueAsListInit("Properties");
   for (unsigned i = 0, e = PropList->getSize(); i != e; ++i) {
-    DefInit *DI = dynamic_cast<DefInit*>(PropList->getElement(i));
-    assert(DI && "Invalid list type!");
-    Record *Property = DI->getDef();
+    Record *Property = PropList->getElementAsRecord(i);
     assert(Property->isSubClassOf("IntrinsicProperty") &&
            "Expected a property!");
     
