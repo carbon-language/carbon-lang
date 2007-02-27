@@ -42,8 +42,7 @@ inline static uint64_t* getMemory(uint32_t numWords) {
   return result;
 }
 
-APInt::APInt(uint32_t numBits, uint64_t val)
-  : BitWidth(numBits), VAL(0) {
+APInt::APInt(uint32_t numBits, uint64_t val) : BitWidth(numBits), VAL(0) {
   assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
   assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   if (isSingleWord())
