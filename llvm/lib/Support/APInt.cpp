@@ -2,9 +2,8 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Sheng Zhou and Reid Spencer and is distributed 
-// under the University of Illinois Open Source License. See LICENSE.TXT 
-// for details.
+// This file was developed by Sheng Zhou and is distributed under the 
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
