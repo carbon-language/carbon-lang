@@ -1061,7 +1061,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 class CallingConvState {
   unsigned StackOffset;
   const MRegisterInfo &MRI;
-  SmallVector<uint32_t, 32> UsedRegs;
+  SmallVector<uint32_t, 16> UsedRegs;
 public:
   CallingConvState(const MRegisterInfo &mri) : MRI(mri) {
     // No stack is used.
@@ -1119,19 +1119,88 @@ private:
   }
 };
 
+/// CCValAssign - Represent assignment of one arg/retval to a location.
+class CCValAssign {
+public:
+  enum LocInfo {
+    Full,   // The value fills the full location.
+    SExt,   // The value is sign extended in the location.
+    ZExt,   // The value is zero extended in the location.
+    AExt    // The value is extended with undefined upper bits.
+    // TODO: a subset of the value is in the location.
+  };
+private:
+  /// ValNo - This is the value number begin assigned (e.g. an argument number).
+  unsigned ValNo;
+  
+  /// Loc is either a stack offset or a register number.
+  unsigned Loc;
+  
+  /// isMem - True if this is a memory loc, false if it is a register loc.
+  bool isMem : 1;
+  
+  /// Information about how the value is assigned.
+  LocInfo HTP : 7;
+  
+  /// ValVT - The type of the value being assigned.
+  MVT::ValueType ValVT : 8;
+
+  /// LocVT - The type of the location being assigned to.
+  MVT::ValueType LocVT : 8;
+public:
+    
+  static CCValAssign getReg(unsigned ValNo, MVT::ValueType ValVT,
+                            unsigned RegNo, MVT::ValueType LocVT,
+                            LocInfo HTP) {
+    CCValAssign Ret;
+    Ret.ValNo = ValNo;
+    Ret.Loc = RegNo;
+    Ret.isMem = false;
+    Ret.HTP = HTP;
+    Ret.ValVT = ValVT;
+    Ret.LocVT = LocVT;
+    return Ret;
+  }
+  static CCValAssign getMem(unsigned ValNo, MVT::ValueType ValVT,
+                            unsigned Offset, MVT::ValueType LocVT,
+                            LocInfo HTP) {
+    CCValAssign Ret;
+    Ret.ValNo = ValNo;
+    Ret.Loc = Offset;
+    Ret.isMem = true;
+    Ret.HTP = HTP;
+    Ret.ValVT = ValVT;
+    Ret.LocVT = LocVT;
+    return Ret;
+  }
+  
+  unsigned getValNo() const { return ValNo; }
+  MVT::ValueType getValVT() const { return ValVT; }
+
+  bool isRegLoc() const { return !isMem; }
+  bool isMemLoc() const { return isMem; }
+  
+  unsigned getLocReg() const { assert(isRegLoc()); return Loc; }
+  unsigned getLocMemOffset() const { assert(isMemLoc()); return Loc; }
+  MVT::ValueType getLocVT() const { return LocVT; }
+  
+  LocInfo getLocInfo() const { return HTP; }
+};
+
+
 /// X86_64_CCC_AssignArgument - Implement the X86-64 C Calling Convention.
-template<typename Client, typename DataTy>
-static void X86_64_CCC_AssignArgument(Client &C, CallingConvState &State,
+static void X86_64_CCC_AssignArgument(unsigned ValNo,
                                       MVT::ValueType ArgVT, unsigned ArgFlags,
-                                      DataTy Data) {
+                                      CallingConvState &State,
+                                      SmallVector<CCValAssign, 16> &Locs) {
   MVT::ValueType LocVT = ArgVT;
-  unsigned ExtendType = ISD::ANY_EXTEND;
+  CCValAssign::LocInfo LocInfo = CCValAssign::Full;
   
   // Promote the integer to 32 bits.  If the input type is signed use a
   // sign extend, otherwise use a zero extend.
   if (ArgVT == MVT::i8 || ArgVT == MVT::i16) {
     LocVT = MVT::i32;
-    ExtendType = (ArgFlags & 1) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+    LocInfo = (ArgFlags & 1) ? CCValAssign::SExt : CCValAssign::ZExt;
   }
   
   // If this is a 32-bit value, assign to a 32-bit register if any are
@@ -1141,7 +1210,7 @@ static void X86_64_CCC_AssignArgument(Client &C, CallingConvState &State,
       X86::EDI, X86::ESI, X86::EDX, X86::ECX, X86::R8D, X86::R9D
     };
     if (unsigned Reg = State.AllocateReg(GPR32ArgRegs, 6)) {
-      C.AssignToReg(Data, Reg, ArgVT, LocVT, ExtendType);
+      Locs.push_back(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
       return;
     }
   }
@@ -1153,7 +1222,7 @@ static void X86_64_CCC_AssignArgument(Client &C, CallingConvState &State,
       X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
     };
     if (unsigned Reg = State.AllocateReg(GPR64ArgRegs, 6)) {
-      C.AssignToReg(Data, Reg, ArgVT, LocVT, ExtendType);
+      Locs.push_back(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
       return;
     }
   }
@@ -1166,7 +1235,7 @@ static void X86_64_CCC_AssignArgument(Client &C, CallingConvState &State,
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };
     if (unsigned Reg = State.AllocateReg(XMMArgRegs, 8)) {
-      C.AssignToReg(Data, Reg, ArgVT, LocVT, ExtendType);
+      Locs.push_back(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
       return;
     }
   }
@@ -1176,143 +1245,18 @@ static void X86_64_CCC_AssignArgument(Client &C, CallingConvState &State,
   if (LocVT == MVT::i32 || LocVT == MVT::i64 ||
       LocVT == MVT::f32 || LocVT == MVT::f64) {
     unsigned Offset = State.AllocateStack(8, 8);
-    C.AssignToStack(Data, Offset, ArgVT, LocVT, ExtendType);
+    Locs.push_back(CCValAssign::getMem(ValNo, ArgVT, Offset, LocVT, LocInfo));
     return;
   }
   
   // Vectors get 16-byte stack slots that are 16-byte aligned.
   if (MVT::isVector(LocVT)) {
     unsigned Offset = State.AllocateStack(16, 16);
-    C.AssignToStack(Data, Offset, ArgVT, LocVT, ExtendType);
+    Locs.push_back(CCValAssign::getMem(ValNo, ArgVT, Offset, LocVT, LocInfo));
     return;
   }
   assert(0 && "Unknown argument type!");
 }
-
-class LowerArgumentsClient {
-  SelectionDAG &DAG;
-  X86TargetLowering &TLI;
-  SmallVector<SDOperand, 8> &ArgValues;
-  SDOperand Chain;
-public:
-  LowerArgumentsClient(SelectionDAG &dag, X86TargetLowering &tli,
-                       SmallVector<SDOperand, 8> &argvalues,
-                       SDOperand chain)
-    : DAG(dag), TLI(tli), ArgValues(argvalues), Chain(chain) {
-      
-  }
-  
-  void AssignToReg(SDOperand Arg, unsigned RegNo,
-                   MVT::ValueType ArgVT, MVT::ValueType RegVT,
-                   unsigned ExtendType) {
-    TargetRegisterClass *RC = NULL;
-    if (RegVT == MVT::i32)
-      RC = X86::GR32RegisterClass;
-    else if (RegVT == MVT::i64)
-      RC = X86::GR64RegisterClass;
-    else if (RegVT == MVT::f32)
-      RC = X86::FR32RegisterClass;
-    else if (RegVT == MVT::f64)
-      RC = X86::FR64RegisterClass;
-    else {
-      RC = X86::VR128RegisterClass;
-    }
-      
-    SDOperand ArgValue = DAG.getCopyFromReg(Chain, RegNo, RegVT);
-    AddLiveIn(DAG.getMachineFunction(), RegNo, RC);
-
-    // If this is an 8 or 16-bit value, it is really passed promoted to 32
-    // bits.  Insert an assert[sz]ext to capture this, then truncate to the
-    // right size.
-    if (ArgVT < RegVT) {
-      if (ExtendType == ISD::SIGN_EXTEND) {
-        ArgValue = DAG.getNode(ISD::AssertSext, RegVT, ArgValue,
-                               DAG.getValueType(ArgVT));
-      } else if (ExtendType == ISD::ZERO_EXTEND) {
-        ArgValue = DAG.getNode(ISD::AssertZext, RegVT, ArgValue,
-                               DAG.getValueType(ArgVT));
-      }
-      ArgValue = DAG.getNode(ISD::TRUNCATE, ArgVT, ArgValue);
-    }
-    
-    ArgValues.push_back(ArgValue);
-  }
-  
-  void AssignToStack(SDOperand Arg, unsigned Offset,
-                     MVT::ValueType ArgVT, MVT::ValueType DestVT,
-                     unsigned ExtendType) {
-    // Create the SelectionDAG nodes corresponding to a load from this
-    // parameter.
-    MachineFunction &MF = DAG.getMachineFunction();
-    MachineFrameInfo *MFI = MF.getFrameInfo();
-    int FI = MFI->CreateFixedObject(MVT::getSizeInBits(ArgVT)/8, Offset);
-    SDOperand FIN = DAG.getFrameIndex(FI, TLI.getPointerTy());
-    ArgValues.push_back(DAG.getLoad(ArgVT, Chain, FIN, NULL, 0));
-  }
-};
-
-class LowerCallArgumentsClient {
-  SelectionDAG &DAG;
-  X86TargetLowering &TLI;
-  SmallVector<std::pair<unsigned, SDOperand>, 8> &RegsToPass;
-  SmallVector<SDOperand, 8> &MemOpChains;
-  SDOperand Chain;
-  SDOperand StackPtr;
-public:
-  LowerCallArgumentsClient(SelectionDAG &dag, X86TargetLowering &tli,
-                           SmallVector<std::pair<unsigned, SDOperand>, 8> &rtp,
-                           SmallVector<SDOperand, 8> &moc,
-                           SDOperand chain)
-    : DAG(dag), TLI(tli), RegsToPass(rtp), MemOpChains(moc), Chain(chain) {
-      
-  }
-  
-  void AssignToReg(SDOperand Arg, unsigned RegNo,
-                   MVT::ValueType ArgVT, MVT::ValueType RegVT,
-                   unsigned ExtendType) {
-    // If the argument has to be extended somehow before being passed, do so.
-    if (ArgVT < RegVT)
-      Arg = DAG.getNode(ExtendType, RegVT, Arg);
-    
-    RegsToPass.push_back(std::make_pair(RegNo, Arg));
-  }
-  
-  void AssignToStack(SDOperand Arg, unsigned Offset,
-                     MVT::ValueType ArgVT, MVT::ValueType DestVT,
-                     unsigned ExtendType) {
-    // If the argument has to be extended somehow before being stored, do so.
-    if (ArgVT < DestVT)
-      Arg = DAG.getNode(ExtendType, DestVT, Arg);
-    
-    SDOperand SP = getSP();
-    SDOperand PtrOff = DAG.getConstant(Offset, SP.getValueType());
-    PtrOff = DAG.getNode(ISD::ADD, SP.getValueType(), SP, PtrOff);
-    MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
-  }
-private:
-  SDOperand getSP() {
-    if (StackPtr.Val == 0) {
-      MVT::ValueType PtrTy = TLI.getPointerTy();
-      StackPtr = DAG.getRegister(TLI.getStackPtrReg(), PtrTy);
-    }
-    return StackPtr;
-  }
-};
-
-class EmptyArgumentsClient {
-public:
-  EmptyArgumentsClient() {}
-  
-  void AssignToReg(SDOperand Arg, unsigned RegNo,
-                   MVT::ValueType ArgVT, MVT::ValueType RegVT,
-                   unsigned ExtendType) {
-  }
-  
-  void AssignToStack(SDOperand Arg, unsigned Offset,
-                     MVT::ValueType ArgVT, MVT::ValueType DestVT,
-                     unsigned ExtendType) {
-  }
-};
 
 
 SDOperand
@@ -1335,15 +1279,62 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   
   
   CallingConvState CCState(*getTargetMachine().getRegisterInfo());
-  LowerArgumentsClient Client(DAG, *this, ArgValues, Root);
-    
+  SmallVector<CCValAssign, 16> ArgLocs;
+  
   for (unsigned i = 0; i != NumArgs; ++i) {
     MVT::ValueType ArgVT = Op.getValue(i).getValueType();
     unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
-
-    X86_64_CCC_AssignArgument(Client, CCState, ArgVT, ArgFlags, SDOperand());
+    X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCState, ArgLocs);
   }
-
+  
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+  
+    
+    if (VA.isRegLoc()) {
+      MVT::ValueType RegVT = VA.getLocVT();
+      TargetRegisterClass *RC;
+      if (RegVT == MVT::i32)
+        RC = X86::GR32RegisterClass;
+      else if (RegVT == MVT::i64)
+        RC = X86::GR64RegisterClass;
+      else if (RegVT == MVT::f32)
+        RC = X86::FR32RegisterClass;
+      else if (RegVT == MVT::f64)
+        RC = X86::FR64RegisterClass;
+      else {
+        assert(MVT::isVector(RegVT));
+        RC = X86::VR128RegisterClass;
+      }
+      
+      SDOperand ArgValue = DAG.getCopyFromReg(Root, VA.getLocReg(), RegVT);
+      AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      
+      // If this is an 8 or 16-bit value, it is really passed promoted to 32
+      // bits.  Insert an assert[sz]ext to capture this, then truncate to the
+      // right size.
+      if (VA.getLocInfo() == CCValAssign::SExt)
+        ArgValue = DAG.getNode(ISD::AssertSext, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+      else if (VA.getLocInfo() == CCValAssign::ZExt)
+        ArgValue = DAG.getNode(ISD::AssertZext, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+      
+      if (VA.getLocInfo() != CCValAssign::Full)
+        ArgValue = DAG.getNode(ISD::TRUNCATE, VA.getValVT(), ArgValue);
+      
+      ArgValues.push_back(ArgValue);
+    } else {
+      assert(VA.isMemLoc());
+    
+      // Create the nodes corresponding to a load from this parameter slot.
+      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
+                                      VA.getLocMemOffset());
+      SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
+      ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
+    }
+  }
+  
   unsigned StackSize = CCState.getNextStackOffset();
   
   // If the function takes variable number of arguments, make a frame index for
@@ -1412,40 +1403,62 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand Callee    = Op.getOperand(4);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
-  // Count how many bytes are to be pushed on the stack.
-  unsigned NumBytes = 0;
-  {
-    CallingConvState CCState(*getTargetMachine().getRegisterInfo());
-    EmptyArgumentsClient Client;
+  CallingConvState CCState(*getTargetMachine().getRegisterInfo());
+  SmallVector<CCValAssign, 16> ArgLocs;
 
-    for (unsigned i = 0; i != NumOps; ++i) {
-      SDOperand Arg = Op.getOperand(5+2*i);
-      MVT::ValueType ArgVT = Arg.getValueType();
-      unsigned ArgFlags =
-        cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-      X86_64_CCC_AssignArgument(Client, CCState, ArgVT, ArgFlags, Arg);
-    }
-    
-    NumBytes = CCState.getNextStackOffset();
+  for (unsigned i = 0; i != NumOps; ++i) {
+    MVT::ValueType ArgVT = Op.getOperand(5+2*i).getValueType();
+    unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
+    X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCState, ArgLocs);
   }
     
-
+  // Get a count of how many bytes are to be pushed on the stack.
+  unsigned NumBytes = CCState.getNextStackOffset();
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
   SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
   SmallVector<SDOperand, 8> MemOpChains;
 
-  CallingConvState CCState(*getTargetMachine().getRegisterInfo());
-  LowerCallArgumentsClient Client(DAG, *this, RegsToPass, MemOpChains, Chain);
+  SDOperand StackPtr;
+  
+  // Walk the register/memloc assignments, inserting copies/loads.
+  unsigned LastVal = ~0U;
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
     
-  for (unsigned i = 0; i != NumOps; ++i) {
-    SDOperand Arg = Op.getOperand(5+2*i);
-    MVT::ValueType ArgVT = Arg.getValueType();
-    unsigned ArgFlags =
-      cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    X86_64_CCC_AssignArgument(Client, CCState, ArgVT, ArgFlags, Arg);
+    assert(VA.getValNo() != LastVal &&
+           "Don't support value assigned to multiple locs yet");
+    LastVal = VA.getValNo();
+
+    SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
+    
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+    default: assert(0 && "Unknown loc info!");
+    case CCValAssign::Full: break;
+    case CCValAssign::SExt:
+      Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::ZExt:
+      Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::AExt:
+      Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
+      break;
+    }
+    
+    if (VA.isRegLoc()) {
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+    } else {
+      assert(VA.isMemLoc());
+      if (StackPtr.Val == 0)
+        StackPtr = DAG.getRegister(getStackPtrReg(), getPointerTy());
+      SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
+      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+      MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+    }
   }
-    
+  
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
