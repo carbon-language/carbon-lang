@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -enable-x86-fastcc
+; RUN: llvm-upgrade < %s | llvm-as | llc 
 ; PR933
 
 fastcc bool %test() {
