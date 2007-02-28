@@ -66,7 +66,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
   if (Action->isSubClassOf("CCPredicateAction")) {
     O << IndentStr << "if (";
     
-    if (Action->isSubClassOf("CCMatchType")) {
+    if (Action->isSubClassOf("CCIfType")) {
       ListInit *VTs = Action->getValueAsListInit("VTs");
       for (unsigned i = 0, e = VTs->getSize(); i != e; ++i) {
         Record *VT = VTs->getElementAsRecord(i);
@@ -74,7 +74,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
         O << "LocVT == " << getEnumName(getValueType(VT));
       }
 
-    } else if (Action->isSubClassOf("CCMatchIf")) {
+    } else if (Action->isSubClassOf("CCIf")) {
       O << Action->getValueAsString("Predicate");
     } else {
       Action->dump();
