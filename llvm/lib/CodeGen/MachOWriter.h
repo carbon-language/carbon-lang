@@ -583,7 +583,7 @@ namespace llvm {
     /// PendingSyms - This is a list of externally defined symbols that we have
     /// been asked to emit, but have not seen a reference to.  When a reference
     /// is seen, the symbol will move from this list to the SymbolTable.
-    std::vector<MachOSym> PendingSyms;
+    std::vector<GlobalValue*> PendingGlobals;
     
     /// DynamicSymbolTable - This is just a vector of indices into
     /// SymbolTable to aid in emitting the DYSYMTAB load command.
@@ -613,10 +613,12 @@ namespace llvm {
                                  unsigned ToIndex,
                                  OutputBuffer &RelocOut,
                                  OutputBuffer &SecOut,
-                                 bool Scattered) {
+                                 bool Scattered,
+                                 bool Extern) {
       return TM.getMachOWriterInfo()->GetTargetRelocation(MR, FromIdx, ToAddr,
                                                           ToIndex, RelocOut,
-                                                          SecOut, Scattered);
+                                                          SecOut, Scattered,
+                                                          Extern);
     }
   };
 }

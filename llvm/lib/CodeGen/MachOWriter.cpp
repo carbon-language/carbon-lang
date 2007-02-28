@@ -107,7 +107,7 @@ namespace llvm {
     
     virtual intptr_t getConstantPoolEntryAddress(unsigned Index) const {
       assert(CPLocations.size() > Index && "CP not emitted!");
-      return CPLocations[Index];
+      return CPLocations[Index];\
     }
     virtual intptr_t getJumpTableEntryAddress(unsigned Index) const {
       assert(JTLocations.size() > Index && "JT not emitted!");
@@ -225,7 +225,10 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &MF) {
       Addr = getConstantPoolEntryAddress(MR.getConstantPoolIndex());
       MR.setConstantVal(CPSections[MR.getConstantPoolIndex()]);
       MR.setResultPointer((void*)Addr);
-    } else if (!MR.isGlobalValue()) {
+    } else if (MR.isGlobalValue()) {
+      // FIXME: This should be a set or something that uniques
+      MOW.PendingGlobals.push_back(MR.getGlobalValue());
+    } else {
       assert(0 && "Unhandled relocation type");
     }
     MOS->Relocations.push_back(MR);
@@ -334,8 +337,6 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
   if (Align == 0)
     Align = TM.getTargetData()->getPrefTypeAlignment(Ty);
   
-  MachOSym Sym(GV, Mang->getValueName(GV), Sec->Index, TM);
-  
   // Reserve space in the .bss section for this symbol while maintaining the
   // desired section alignment, which must be at least as much as required by
   // this symbol.
@@ -353,12 +354,17 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
     for (unsigned i = 0; i < AlignedSize; ++i)
       SecDataOut.outbyte(0);
   }
+  // Globals without external linkage apparently do not go in the symbol table.
+  if (GV->getLinkage() != GlobalValue::InternalLinkage) {
+    MachOSym Sym(GV, Mang->getValueName(GV), Sec->Index, TM);
+    Sym.n_value = Sec->size;
+    SymbolTable.push_back(Sym);
+  }
+
   // Record the offset of the symbol, and then allocate space for it.
   // FIXME: remove when we have unified size + output buffer
-  Sym.n_value = Sec->size;
   Sec->size += Size;
-  SymbolTable.push_back(Sym);
-
+  
   // Now that we know what section the GlovalVariable is going to be emitted 
   // into, update our mappings.
   // FIXME: We may also need to update this when outputting non-GlobalVariable
@@ -387,12 +393,9 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
       // For undefined (N_UNDF) external (N_EXT) types, n_value is the size in
       // bytes of the symbol.
       ExtOrCommonSym.n_value = Size;
-      // If the symbol is external, we'll put it on a list of symbols whose
-      // addition to the symbol table is being pended until we find a reference
-      if (NoInit)
-        PendingSyms.push_back(ExtOrCommonSym);
-      else
-        SymbolTable.push_back(ExtOrCommonSym);
+      SymbolTable.push_back(ExtOrCommonSym);
+      // Remember that we've seen this symbol
+      GVOffset[GV] = Size;
       return;
     }
     // Otherwise, this symbol is part of the .bss section.
@@ -526,7 +529,13 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
     currentAddr += MOS->size;
   }
   
-  // Step #6: Calculate the number of relocations for each section and write out
+  // Step #6: Emit the symbol table to temporary buffers, so that we know the
+  // size of the string table when we write the next load command.  This also
+  // sorts and assigns indices to each of the symbols, which is necessary for
+  // emitting relocations to externally-defined objects.
+  BufferSymbolAndStringTable();
+  
+  // Step #7: Calculate the number of relocations for each section and write out
   // the section commands for each section
   currentAddr += SEG.fileoff;
   for (std::vector<MachOSection*>::iterator I = SectionList.begin(),
@@ -553,10 +562,6 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
     if (is64Bit)
       FHOut.outword(MOS->reserved3);
   }
-  
-  // Step #7: Emit the symbol table to temporary buffers, so that we know the
-  // size of the string table when we write the next load command.
-  BufferSymbolAndStringTable();
   
   // Step #8: Emit LC_SYMTAB/LC_DYSYMTAB load commands
   SymTab.symoff  = currentAddr;
@@ -632,6 +637,17 @@ void MachOWriter::BufferSymbolAndStringTable() {
   // 2. defined external symbols (sorted by name)
   // 3. undefined external symbols (sorted by name)
   
+  // Before sorting the symbols, check the PendingGlobals for any undefined
+  // globals that need to be put in the symbol table.
+  for (std::vector<GlobalValue*>::iterator I = PendingGlobals.begin(),
+         E = PendingGlobals.end(); I != E; ++I) {
+    if (GVOffset[*I] == 0 && GVSection[*I] == 0) {
+      MachOSym UndfSym(*I, Mang->getValueName(*I), MachOSym::NO_SECT, TM);
+      SymbolTable.push_back(UndfSym);
+      GVOffset[*I] = -1;
+    }
+  }
+  
   // Sort the symbols by name, so that when we partition the symbols by scope
   // of definition, we won't have to sort by name within each partition.
   std::sort(SymbolTable.begin(), SymbolTable.end(), MachOSymCmp());
@@ -690,14 +706,17 @@ void MachOWriter::BufferSymbolAndStringTable() {
 
   OutputBuffer SymTOut(SymT, is64Bit, isLittleEndian);
 
+  unsigned index = 0;
   for (std::vector<MachOSym>::iterator I = SymbolTable.begin(),
-         E = SymbolTable.end(); I != E; ++I) {
+         E = SymbolTable.end(); I != E; ++I, ++index) {
     // Add the section base address to the section offset in the n_value field
     // to calculate the full address.
     // FIXME: handle symbols where the n_value field is not the address
     GlobalValue *GV = const_cast<GlobalValue*>(I->GV);
     if (GV && GVSection[GV])
       I->n_value += GVSection[GV]->addr;
+    if (GV && (GVOffset[GV] == -1))
+      GVOffset[GV] = index;
          
     // Emit nlist to buffer
     SymTOut.outword(I->n_strx);
@@ -717,10 +736,13 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
   for (unsigned i = 0, e = MOS.Relocations.size(); i != e; ++i) {
     MachineRelocation &MR = MOS.Relocations[i];
     unsigned TargetSection = MR.getConstantVal();
+    unsigned TargetAddr;
+    unsigned TargetIndex;
 
     // This is a scattered relocation entry if it points to a global value with
     // a non-zero offset.
     bool Scattered = false;
+    bool Extern = false;
     
     // Since we may not have seen the GlobalValue we were interested in yet at
     // the time we emitted the relocation for it, fix it up now so that it
@@ -729,24 +751,29 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
       GlobalValue *GV = MR.getGlobalValue();
       MachOSection *MOSPtr = GVSection[GV];
       intptr_t Offset = GVOffset[GV];
-      Scattered = TargetSection != 0;
       
+      // If we have never seen the global before, it must be to a symbol
+      // defined in another module (N_UNDF).
       if (!MOSPtr) {
-        cerr << "Trying to relocate unknown global " << *GV << '\n';
-        continue;
-        //abort();
+        // FIXME: need to append stub suffix
+        Extern = true;
+        TargetAddr = 0;
+        TargetIndex = GVOffset[GV];
+      } else {
+        Scattered = TargetSection != 0;
+        TargetSection = MOSPtr->Index;
+        MachOSection &To = *SectionList[TargetSection - 1];
+        TargetAddr = To.addr;
+        TargetIndex = To.Index;
       }
-      
-      TargetSection = MOSPtr->Index;
       MR.setResultPointer((void*)Offset);
     }
 
     OutputBuffer RelocOut(MOS.RelocBuffer, is64Bit, isLittleEndian);
     OutputBuffer SecOut(MOS.SectionData, is64Bit, isLittleEndian);
-    MachOSection &To = *SectionList[TargetSection - 1];
-
-    MOS.nreloc += GetTargetRelocation(MR, MOS.Index, To.addr, To.Index,
-                                      RelocOut, SecOut, Scattered);
+    
+    MOS.nreloc += GetTargetRelocation(MR, MOS.Index, TargetAddr, TargetIndex,
+                                      RelocOut, SecOut, Scattered, Extern);
   }
 }
 

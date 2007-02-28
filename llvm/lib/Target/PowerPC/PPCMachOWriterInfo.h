@@ -34,7 +34,7 @@ namespace llvm {
                                          unsigned ToIdx,
                                          OutputBuffer &RelocOut,
                                          OutputBuffer &SecOut,
-                                         bool Scattered) const;
+                                         bool Scattered, bool Extern) const;
 
     // Constants for the relocation r_type field.
     // See <mach-o/ppc/reloc.h>

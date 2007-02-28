@@ -35,12 +35,10 @@ unsigned PPCMachOWriterInfo::GetTargetRelocation(MachineRelocation &MR,
                                                  unsigned ToIdx,
                                                  OutputBuffer &RelocOut,
                                                  OutputBuffer &SecOut,
-                                                 bool Scattered) const {
+                                                 bool Scattered,
+                                                 bool isExtern) const {
   unsigned NumRelocs = 0;
   uint64_t Addr = 0;
-
-  // Keep track of whether or not this is an externally defined relocation.
-  bool     isExtern = false;
 
   // Get the address of whatever it is we're relocating, if possible.
   if (!isExtern)
@@ -83,12 +81,24 @@ unsigned PPCMachOWriterInfo::GetTargetRelocation(MachineRelocation &MR,
     break;
   case PPC::reloc_pcrel_bx:
     {
+      // FIXME: Presumably someday we will need to branch to other, non-extern
+      // functions too.  Need to figure out some way to distinguish between
+      // target is BB and target is function.
+      if (isExtern) {
+        MachORelocation BR24(MR.getMachineCodeOffset(), ToIdx, true, 2, 
+                             isExtern, PPC_RELOC_BR24, Scattered, 
+                             (intptr_t)MR.getMachineCodeOffset());
+        RelocOut.outword(BR24.getAddress());
+        RelocOut.outword(BR24.getPackedFields());
+        ++NumRelocs;
+      }
+
       Addr -= MR.getMachineCodeOffset();
       Addr >>= 2;
       Addr &= 0xFFFFFF;
       Addr <<= 2;
       Addr |= (SecOut[MR.getMachineCodeOffset()] << 24);
-
+      Addr |= (SecOut[MR.getMachineCodeOffset()+3] & 0x3);
       SecOut.fixword(Addr, MR.getMachineCodeOffset());
       break;
     }

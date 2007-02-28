@@ -100,7 +100,8 @@ namespace llvm {
                                          unsigned ToIdx,
                                          OutputBuffer &RelocOut,
                                          OutputBuffer &SecOut,
-                                         bool Scattered) const { return 0; }
+                                         bool Scattered,
+                                         bool Extern) const { return 0; }
 
     uint32_t getCPUType() const { return CPUType; }
     uint32_t getCPUSubType() const { return CPUSubType; }
