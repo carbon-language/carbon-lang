@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
@@ -2667,13 +2668,21 @@ private:
   /// shouldEmit - Flag to indicate if debug information should be emitted.
   ///
   bool shouldEmit;
-
-  /// EmitInitial - Emit the common eh unwind frame.
+  
+  /// FuncCPPPersonality - C++ persoanlity function.
   ///
-  void EmitInitial() {
+  Function *FuncCPPPersonality;
+
+  /// EmitCommonEHFrame - Emit the common eh unwind frame.
+  ///
+  void EmitCommonEHFrame() {
+    // Only do it once.
+    if (didInitial) return;
+    didInitial = true;
+    
     // If there is a personality present then we need to indicate that
     // in the common eh frame.
-    Function *Personality = MMI->getPersonality();
+    Function *Personality = FuncCPPPersonality;
 
     // Size and sign of stack growth.
     int stackGrowth =
@@ -2755,7 +2764,8 @@ private:
   void EmitEHFrame() {
     // If there is a personality present then we need to indicate that
     // in the common eh frame.
-    Function *Personality = MMI->getPersonality();
+    Function *Personality = FuncCPPPersonality;
+//    Function *Personality = MMI->getPersonality();
     MachineFrameInfo *MFI = MF->getFrameInfo();
 
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
@@ -2787,12 +2797,19 @@ private:
                      "eh_func_begin", SubprogramCount);
       Asm->EOL("FDE address range");
       
-      // If there is a personality then point to the language specific data
-      // area in the exception table.
+      // If there is a personality and landing pads then point to the language
+      // specific data area in the exception table.
       if (Personality) {
         Asm->EmitULEB128Bytes(4);
         Asm->EOL("Augmentation size");
-        EmitReference("exception", SubprogramCount, true);
+        
+        if (!MMI->getLandingPads().empty()) {
+          EmitReference("exception", SubprogramCount, true);
+        } else if(TAI->getAddressSize() == 8) {
+          Asm->EmitInt64((int)0);
+        } else {
+          Asm->EmitInt32((int)0);
+        }
         Asm->EOL("Language Specific Data Area");
       } else {
         Asm->EmitULEB128Bytes(0);
@@ -2975,41 +2992,27 @@ public:
   : Dwarf(OS, A, T)
   , didInitial(false)
   , shouldEmit(false)
+  , FuncCPPPersonality(NULL)
   {}
   
   virtual ~DwarfException() {}
 
-  /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
-  ///
-  bool ShouldEmitDwarf() const { return shouldEmit; }
-
   /// SetModuleInfo - Set machine module information when it's known that pass
   /// manager has created it.  Set by the target AsmPrinter.
   void SetModuleInfo(MachineModuleInfo *mmi) {
-    // Make sure initial declarations are made.
-    if (!MMI &&
-        ExceptionHandling &&
-        TAI->getSupportsExceptionHandling() &&
-        mmi->getPersonality()) {
-      MMI = mmi;
-      shouldEmit = true;
-      
-      EmitInitial();
-    }
+    MMI = mmi;
   }
 
   /// BeginModule - Emit all exception information that should come prior to the
   /// content.
   void BeginModule(Module *M) {
     this->M = M;
-    
-    if (!ShouldEmitDwarf()) return;
+    FuncCPPPersonality = M->getFunction("__gxx_personality_v0");
   }
 
   /// EndModule - Emit all exception information that should come after the
   /// content.
   void EndModule() {
-    if (!ShouldEmitDwarf()) return;
   }
 
   /// BeginFunction - Gather pre-function exception information.  Assumes being 
@@ -3017,19 +3020,23 @@ public:
   void BeginFunction(MachineFunction *MF) {
     this->MF = MF;
     
-    if (!ShouldEmitDwarf()) return;
-    
-    // Assumes in correct section after the entry point.
-    EmitLabel("eh_func_begin", ++SubprogramCount);
+    if (MMI &&
+        ExceptionHandling &&
+        TAI->getSupportsExceptionHandling()) {
+      shouldEmit = true;
+      // Assumes in correct section after the entry point.
+      EmitLabel("eh_func_begin", ++SubprogramCount);
+    }
   }
 
   /// EndFunction - Gather and emit post-function exception information.
   ///
   void EndFunction() {
-    if (!ShouldEmitDwarf()) return;
+    if (!shouldEmit) return;
 
     EmitLabel("eh_func_end", SubprogramCount);
     EmitExceptionTable();
+    EmitCommonEHFrame();
     EmitEHFrame();
   }
 };
@@ -3376,7 +3383,7 @@ void DwarfWriter::EndFunction() {
   DD->EndFunction();
   DE->EndFunction();
   
-  if (MachineModuleInfo *MMI = DD->getMMI()) {
+  if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI()) {
     // Clear function debug information.
     MMI->EndFunction();
   }
