@@ -601,66 +601,6 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
   return VReg;
 }
 
-/// HowToPassArgument - Returns how an formal argument of the specified type
-/// should be passed. If it is through stack, returns the size of the stack
-/// slot; if it is through integer or XMM register, returns the number of
-/// integer or XMM registers are needed.
-static void
-HowToPassCallArgument(MVT::ValueType ObjectVT,
-                      bool ArgInReg,
-                      unsigned NumIntRegs, unsigned NumXMMRegs,
-                      unsigned MaxNumIntRegs,
-                      unsigned &ObjSize, unsigned &ObjIntRegs,
-                      unsigned &ObjXMMRegs) {
-  ObjSize = 0;
-  ObjIntRegs = 0;
-  ObjXMMRegs = 0;
-
-  if (MaxNumIntRegs>3) {
-    // We don't have too much registers on ia32! :)
-    MaxNumIntRegs = 3;
-  }
-
-  switch (ObjectVT) {
-  default: assert(0 && "Unhandled argument type!");
-  case MVT::i8:
-   if (ArgInReg && (NumIntRegs < MaxNumIntRegs))
-     ObjIntRegs = 1;
-   else
-     ObjSize = 1;
-   break;
-  case MVT::i16:
-   if (ArgInReg && (NumIntRegs < MaxNumIntRegs))
-     ObjIntRegs = 1;
-   else
-     ObjSize = 2;
-   break;
-  case MVT::i32:
-   if (ArgInReg && (NumIntRegs < MaxNumIntRegs))
-     ObjIntRegs = 1;
-   else
-     ObjSize = 4;
-   break;
-  case MVT::f32:
-    ObjSize = 4;
-    break;
-  case MVT::f64:
-    ObjSize = 8;
-    break;
-  case MVT::v16i8:
-  case MVT::v8i16:
-  case MVT::v4i32:
-  case MVT::v2i64:
-  case MVT::v4f32:
-  case MVT::v2f64:
-    if (NumXMMRegs < 4)
-      ObjXMMRegs = 1;
-    else
-      ObjSize = 16;
-    break;
-  }
-}
-
 SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
                                                bool isStdCall) {
   unsigned NumArgs = Op.Val->getNumValues() - 1;
@@ -929,137 +869,82 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
-  SmallVector<SDOperand, 8> ArgValues;
 
-  // Add DAG nodes to load the arguments...  On entry to a function the stack
-  // frame looks like this:
-  //
-  // [ESP] -- return address
-  // [ESP + 4] -- first nonreg argument (leftmost lexically)
-  // [ESP + 8] -- second nonreg argument, if 1st argument is <= 4 bytes in size
-  //    ...
-  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
-
-  // Keep track of the number of integer regs passed so far.  This can be either
-  // 0 (neither EAX/ECX or EDX used), 1 (EAX/ECX is used) or 2 (EAX/ECX and EDX
-  // are both used).
-  unsigned NumIntRegs = 0;
-  unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
-
-  static const unsigned XMMArgRegs[] = {
-    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
-  };
-
-  static const unsigned GPRArgRegs[][2] = {
-    { X86::CL,  X86::DL },
-    { X86::CX,  X86::DX },
-    { X86::ECX,  X86::EDX }
-  };
-
-  static const TargetRegisterClass* GPRClasses[3] = {
-    X86::GR8RegisterClass, X86::GR16RegisterClass, X86::GR32RegisterClass
-  };
-
-  for (unsigned i = 0; i < NumArgs; ++i) {
-    MVT::ValueType ObjectVT = Op.getValue(i).getValueType();
-    unsigned ArgIncrement = 4;
-    unsigned ObjSize = 0;
-    unsigned ObjXMMRegs = 0;
-    unsigned ObjIntRegs = 0;
-    unsigned Reg = 0;
-    SDOperand ArgValue;   
-
-    HowToPassCallArgument(ObjectVT,
-                          true, // Use as much registers as possible
-                          NumIntRegs, NumXMMRegs, 2,
-                          ObjSize, ObjIntRegs, ObjXMMRegs);
-    
-    if (ObjSize > 4)
-      ArgIncrement = ObjSize;
-
-    if (ObjIntRegs || ObjXMMRegs) {
-      switch (ObjectVT) {
-      default: assert(0 && "Unhandled argument type!");
-      case MVT::i8:
-      case MVT::i16:
-      case MVT::i32: {
-        unsigned RegToUse = GPRArgRegs[ObjectVT-MVT::i8][NumIntRegs];
-        Reg = AddLiveIn(MF, RegToUse, GPRClasses[ObjectVT-MVT::i8]);
-        ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
-        break;
-      }
-      case MVT::v16i8:
-      case MVT::v8i16:
-      case MVT::v4i32:
-      case MVT::v2i64:
-      case MVT::v4f32:
-      case MVT::v2f64: {
-        Reg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs], X86::VR128RegisterClass);
-        ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
-        break;
-      }
-      }
-      NumIntRegs += ObjIntRegs;
-      NumXMMRegs += ObjXMMRegs;
-    }
-    if (ObjSize) {
-      // XMM arguments have to be aligned on 16-byte boundary.
-      if (ObjSize == 16)
-        ArgOffset = ((ArgOffset + 15) / 16) * 16;
-      // Create the SelectionDAG nodes corresponding to a load from this
-      // parameter.
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-      SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN, NULL, 0);
-      
-      ArgOffset += ArgIncrement;   // Move on to the next argument.
-    }
-
-    ArgValues.push_back(ArgValue);
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(MF.getFunction()->getCallingConv(), getTargetMachine(),
+                 ArgLocs);
+  
+  for (unsigned i = 0; i != NumArgs; ++i) {
+    MVT::ValueType ArgVT = Op.getValue(i).getValueType();
+    unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
+    if (CC_X86_32_FastCall(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags,CCInfo)) 
+      assert(0 && "Unhandled argument type!");
   }
-
+  
+  SmallVector<SDOperand, 8> ArgValues;
+  unsigned LastVal = ~0U;
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    // TODO: If an arg is passed in two places (e.g. reg and stack), skip later
+    // places.
+    assert(VA.getValNo() != LastVal &&
+           "Don't support value assigned to multiple locs yet");
+    LastVal = VA.getValNo();
+    
+    if (VA.isRegLoc()) {
+      MVT::ValueType RegVT = VA.getLocVT();
+      TargetRegisterClass *RC;
+      if (RegVT == MVT::i32)
+        RC = X86::GR32RegisterClass;
+      else {
+        assert(MVT::isVector(RegVT));
+        RC = X86::VR128RegisterClass;
+      }
+      
+      SDOperand ArgValue = DAG.getCopyFromReg(Root, VA.getLocReg(), RegVT);
+      AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      
+      // If this is an 8 or 16-bit value, it is really passed promoted to 32
+      // bits.  Insert an assert[sz]ext to capture this, then truncate to the
+      // right size.
+      if (VA.getLocInfo() == CCValAssign::SExt)
+        ArgValue = DAG.getNode(ISD::AssertSext, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+      else if (VA.getLocInfo() == CCValAssign::ZExt)
+        ArgValue = DAG.getNode(ISD::AssertZext, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+      
+      if (VA.getLocInfo() != CCValAssign::Full)
+        ArgValue = DAG.getNode(ISD::TRUNCATE, VA.getValVT(), ArgValue);
+      
+      ArgValues.push_back(ArgValue);
+    } else {
+      assert(VA.isMemLoc());
+      
+      // Create the nodes corresponding to a load from this parameter slot.
+      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
+                                      VA.getLocMemOffset());
+      SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
+      ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
+    }
+  }
+  
   ArgValues.push_back(Root);
 
+  unsigned StackSize = CCInfo.getNextStackOffset();
+  
   // Make sure the instruction takes 8n+4 bytes to make sure the start of the
   // arguments and the arguments after the retaddr has been pushed are aligned.
-  if ((ArgOffset & 7) == 0)
-    ArgOffset += 4;
+  if ((StackSize & 7) == 0)
+    StackSize += 4;
 
   VarArgsFrameIndex = 0xAAAAAAA;   // fastcc functions can't have varargs.
   RegSaveFrameIndex = 0xAAAAAAA;   // X86-64 only.
   ReturnAddrIndex = 0;             // No return address slot generated yet.
-  BytesToPopOnReturn = ArgOffset;  // Callee pops all stack arguments.
+  BytesToPopOnReturn = StackSize;  // Callee pops all stack arguments.
   BytesCallerReserves = 0;
 
   MF.getInfo<X86FunctionInfo>()->setBytesToPopOnReturn(BytesToPopOnReturn);
-
-  // Finally, inform the code generator which regs we return values in.
-  switch (getValueType(MF.getFunction()->getReturnType())) {
-  default: assert(0 && "Unknown type!");
-  case MVT::isVoid: break;
-  case MVT::i1:
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i32:
-    MF.addLiveOut(X86::EAX);
-    break;
-  case MVT::i64:
-    MF.addLiveOut(X86::EAX);
-    MF.addLiveOut(X86::EDX);
-    break;
-  case MVT::f32:
-  case MVT::f64:
-    MF.addLiveOut(X86::ST0);
-    break;
-  case MVT::v16i8:
-  case MVT::v8i16:
-  case MVT::v4i32:
-  case MVT::v2i64:
-  case MVT::v4f32:
-  case MVT::v2f64:
-    MF.addLiveOut(X86::XMM0);
-    break;
-  }
 
   // Return the new list of results.
   return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
