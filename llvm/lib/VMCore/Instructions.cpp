@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/ConstantRange.h"
 using namespace llvm;
 
 unsigned CallSite::getCallingConv() const {
@@ -2215,6 +2216,41 @@ bool ICmpInst::isSignedPredicate(Predicate pred) {
     case ICMP_UGE: case ICMP_ULE:
       return false;
   }
+}
+
+/// Initialize a set of values that all satisfy the condition with C.
+///
+ConstantRange 
+ICmpInst::makeConstantRange(Predicate pred, const APInt &C) {
+  APInt Lower(C);
+  APInt Upper(C);
+  uint32_t BitWidth = C.getBitWidth();
+  switch (pred) {
+  default: assert(0 && "Invalid ICmp opcode to ConstantRange ctor!");
+  case ICmpInst::ICMP_EQ: Upper++; break;
+  case ICmpInst::ICMP_NE: Lower++; break;
+  case ICmpInst::ICMP_ULT: Lower = APInt::getMinValue(BitWidth); break;
+  case ICmpInst::ICMP_SLT: Lower = APInt::getSignedMinValue(BitWidth); break;
+  case ICmpInst::ICMP_UGT: 
+    Lower++; Upper = APInt::getMinValue(BitWidth);        // Min = Next(Max)
+    break;
+  case ICmpInst::ICMP_SGT:
+    Lower++; Upper = APInt::getSignedMinValue(BitWidth);  // Min = Next(Max)
+    break;
+  case ICmpInst::ICMP_ULE: 
+    Lower = APInt::getMinValue(BitWidth); Upper++; 
+    break;
+  case ICmpInst::ICMP_SLE: 
+    Lower = APInt::getSignedMinValue(BitWidth); Upper++; 
+    break;
+  case ICmpInst::ICMP_UGE:
+    Upper = APInt::getMinValue(BitWidth);        // Min = Next(Max)
+    break;
+  case ICmpInst::ICMP_SGE:
+    Upper = APInt::getSignedMinValue(BitWidth);  // Min = Next(Max)
+    break;
+  }
+  return ConstantRange(Lower, Upper);
 }
 
 FCmpInst::Predicate FCmpInst::getInversePredicate(Predicate pred) {

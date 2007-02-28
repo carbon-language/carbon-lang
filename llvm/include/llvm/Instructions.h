@@ -24,6 +24,8 @@ class BasicBlock;
 class ConstantInt;
 class PointerType;
 class VectorType;
+class ConstantRange;
+class APInt;
 
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class
@@ -535,6 +537,10 @@ public:
   /// @returns true if the predicate provided is signed, false otherwise
   /// @brief Determine if the predicate is signed.
   static bool isSignedPredicate(Predicate pred);
+
+  /// Initialize a set of values that all satisfy the predicate with C. 
+  /// @brief Make a ConstantRange for a relation with a constant value.
+  static ConstantRange makeConstantRange(Predicate pred, const APInt &C);
 
   /// Exchange the two operands to this instruction in such a way that it does
   /// not modify the semantics of the instruction. The predicate value may be
