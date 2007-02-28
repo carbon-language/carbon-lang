@@ -394,7 +394,7 @@ public:
 
   /// requiresRegisterScavenging - returns true if the target requires (and
   /// can make use of) the register scavenger.
-  virtual bool requiresRegisterScavenging() const {
+  virtual bool requiresRegisterScavenging(const MachineFunction &MF) const {
     return false;
   }
   

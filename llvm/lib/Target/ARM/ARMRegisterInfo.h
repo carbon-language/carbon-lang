@@ -74,7 +74,7 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  bool requiresRegisterScavenging() const;
+  bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
   bool hasFP(const MachineFunction &MF) const;
 

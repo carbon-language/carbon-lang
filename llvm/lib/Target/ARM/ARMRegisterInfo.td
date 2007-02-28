@@ -163,14 +163,14 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
         return THUMB_GPR_AO;
       if (Subtarget.useThumbBacktraces()) {
         if (Subtarget.isR9Reserved())
-          return RI->requiresRegisterScavenging() ? ARM_GPR_AO_8 : ARM_GPR_AO_4;
+          return RI->requiresRegisterScavenging(MF) ? ARM_GPR_AO_8:ARM_GPR_AO_4;
         else
-          return RI->requiresRegisterScavenging() ? ARM_GPR_AO_7 : ARM_GPR_AO_3;
+          return RI->requiresRegisterScavenging(MF) ? ARM_GPR_AO_7:ARM_GPR_AO_3;
       } else {
         if (Subtarget.isR9Reserved())
-          return RI->requiresRegisterScavenging() ? ARM_GPR_AO_6 : ARM_GPR_AO_2;
+          return RI->requiresRegisterScavenging(MF) ? ARM_GPR_AO_6:ARM_GPR_AO_2;
         else
-          return RI->requiresRegisterScavenging() ? ARM_GPR_AO_5 : ARM_GPR_AO_1;
+          return RI->requiresRegisterScavenging(MF) ? ARM_GPR_AO_5:ARM_GPR_AO_1;
       }
     }
 
@@ -184,24 +184,24 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
         I = THUMB_GPR_AO + (sizeof(THUMB_GPR_AO)/sizeof(unsigned));
       else if (Subtarget.useThumbBacktraces()) {
         if (Subtarget.isR9Reserved()) {
-          if (RI->requiresRegisterScavenging())
+          if (RI->requiresRegisterScavenging(MF))
             I = ARM_GPR_AO_8 + (sizeof(ARM_GPR_AO_8)/sizeof(unsigned));
           else
             I = ARM_GPR_AO_4 + (sizeof(ARM_GPR_AO_4)/sizeof(unsigned));
         } else {
-          if (RI->requiresRegisterScavenging())
+          if (RI->requiresRegisterScavenging(MF))
             I = ARM_GPR_AO_7 + (sizeof(ARM_GPR_AO_7)/sizeof(unsigned));
           else
             I = ARM_GPR_AO_3 + (sizeof(ARM_GPR_AO_3)/sizeof(unsigned));
         }
       } else {
         if (Subtarget.isR9Reserved()) {
-          if (RI->requiresRegisterScavenging())
+          if (RI->requiresRegisterScavenging(MF))
             I = ARM_GPR_AO_6 + (sizeof(ARM_GPR_AO_6)/sizeof(unsigned));
           else
             I = ARM_GPR_AO_2 + (sizeof(ARM_GPR_AO_2)/sizeof(unsigned));
         } else {
-          if (RI->requiresRegisterScavenging())
+          if (RI->requiresRegisterScavenging(MF))
             I = ARM_GPR_AO_5 + (sizeof(ARM_GPR_AO_5)/sizeof(unsigned));
           else
             I = ARM_GPR_AO_1 + (sizeof(ARM_GPR_AO_1)/sizeof(unsigned));

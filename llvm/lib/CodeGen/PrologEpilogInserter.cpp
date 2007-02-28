@@ -442,7 +442,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
   assert(TM.getRegisterInfo() && "TM::getRegisterInfo() must be implemented!");
   const MRegisterInfo &MRI = *TM.getRegisterInfo();
-  RegScavenger *RS = MRI.requiresRegisterScavenging() ? new RegScavenger():NULL;
+  RegScavenger *RS=MRI.requiresRegisterScavenging(Fn) ? new RegScavenger():NULL;
 
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     if (RS) RS->reset(BB);

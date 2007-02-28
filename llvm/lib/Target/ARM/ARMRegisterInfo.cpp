@@ -326,8 +326,10 @@ BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-bool ARMRegisterInfo::requiresRegisterScavenging() const {
-  return EnableScavenging;
+bool
+ARMRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
+  const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  return EnableScavenging && !AFI->isThumbFunction();
 }
 
 /// hasFP - Return true if the specified function should have a dedicated frame
