@@ -30,6 +30,7 @@
 #ifndef LLVM_SUPPORT_CONSTANT_RANGE_H
 #define LLVM_SUPPORT_CONSTANT_RANGE_H
 
+#include "llvm/ADT/APInt.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
 #include <iosfwd>
@@ -40,7 +41,9 @@ class ConstantInt;
 class Type;
 
 class ConstantRange {
-  ConstantInt *Lower, *Upper;
+  APInt Lower, Upper;
+  static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
+                                         const ConstantRange &RHS, bool sign);
  public:
   /// Initialize a full (the default) or empty set for the specified type.
   ///
@@ -56,6 +59,9 @@ class ConstantRange {
   ///
   ConstantRange(Constant *Lower, Constant *Upper);
 
+  /// @brief Initialize a range of values explicitly.
+  ConstantRange(const APInt& Lower, const APInt& Upper);
+
   /// Initialize a set of values that all satisfy the predicate with C. The
   /// predicate should be either an ICmpInst::Predicate or FCmpInst::Predicate
   /// value.
@@ -64,11 +70,11 @@ class ConstantRange {
 
   /// getLower - Return the lower value for this range...
   ///
-  ConstantInt *getLower() const { return Lower; }
+  ConstantInt *getLower() const; 
 
   /// getUpper - Return the upper value for this range...
   ///
-  ConstantInt *getUpper() const { return Upper; }
+  ConstantInt *getUpper() const; 
 
   /// getType - Return the LLVM data type of this range.
   ///
@@ -105,7 +111,7 @@ class ConstantRange {
 
   /// getSetSize - Return the number of elements in this set.
   ///
-  uint64_t getSetSize() const;
+  APInt getSetSize() const;
 
   /// operator== - Return true if this range is equal to another range.
   ///
