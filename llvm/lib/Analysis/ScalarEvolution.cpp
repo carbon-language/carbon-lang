@@ -1328,31 +1328,33 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
 
 /// GetConstantFactor - Determine the largest constant factor that S has.  For
 /// example, turn {4,+,8} -> 4.    (S umod result) should always equal zero.
-static uint64_t GetConstantFactor(SCEVHandle S) {
+static APInt GetConstantFactor(SCEVHandle S) {
   if (SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
-    if (uint64_t V = C->getValue()->getZExtValue())
+    APInt V = C->getValue()->getValue();
+    if (!V.isMinValue())
       return V;
     else   // Zero is a multiple of everything.
-      return 1ULL << (S->getType()->getPrimitiveSizeInBits()-1);
+      return APInt(C->getBitWidth(), 1).shl(C->getBitWidth()-1);
   }
 
   if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S))
     return GetConstantFactor(T->getOperand()) &
-           cast<IntegerType>(T->getType())->getBitMask();
+           cast<IntegerType>(T->getType())->getMask();
   if (SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S))
     return GetConstantFactor(E->getOperand());
   
   if (SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
     // The result is the min of all operands.
-    uint64_t Res = GetConstantFactor(A->getOperand(0));
-    for (unsigned i = 1, e = A->getNumOperands(); i != e && Res > 1; ++i)
-      Res = std::min(Res, GetConstantFactor(A->getOperand(i)));
+    APInt Res = GetConstantFactor(A->getOperand(0));
+    for (unsigned i = 1, e = A->getNumOperands(); 
+         i != e && Res.ugt(APInt(Res.getBitWidth(),1)); ++i)
+      Res = APIntOps::umin(Res, GetConstantFactor(A->getOperand(i)));
     return Res;
   }
 
   if (SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S)) {
     // The result is the product of all the operands.
-    uint64_t Res = GetConstantFactor(M->getOperand(0));
+    APInt Res = GetConstantFactor(M->getOperand(0));
     for (unsigned i = 1, e = M->getNumOperands(); i != e; ++i)
       Res *= GetConstantFactor(M->getOperand(i));
     return Res;
@@ -1362,15 +1364,16 @@ static uint64_t GetConstantFactor(SCEVHandle S) {
     // For now, we just handle linear expressions.
     if (A->getNumOperands() == 2) {
       // We want the GCD between the start and the stride value.
-      uint64_t Start = GetConstantFactor(A->getOperand(0));
-      if (Start == 1) return 1;
-      uint64_t Stride = GetConstantFactor(A->getOperand(1));
-      return GreatestCommonDivisor64(Start, Stride);
+      APInt Start = GetConstantFactor(A->getOperand(0));
+      if (Start == 1) 
+        return APInt(A->getBitWidth(),1);
+      APInt Stride = GetConstantFactor(A->getOperand(1));
+      return APIntOps::GreatestCommonDivisor(Start, Stride);
     }
   }
   
   // SCEVSDivExpr, SCEVUnknown.
-  return 1;
+  return APInt(S->getBitWidth(), 1);
 }
 
 /// createSCEV - We know that there is no SCEV for the specified value.
@@ -1399,9 +1402,10 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       // optimizations will transparently handle this case.
       if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
         SCEVHandle LHS = getSCEV(I->getOperand(0));
-        uint64_t CommonFact = GetConstantFactor(LHS);
-        assert(CommonFact && "Common factor should at least be 1!");
-        if (CommonFact > CI->getZExtValue()) {
+        APInt CommonFact = GetConstantFactor(LHS);
+        assert(!CommonFact.isMinValue() &&
+               "Common factor should at least be 1!");
+        if (CommonFact.ugt(CI->getValue())) {
           // If the LHS is a multiple that is larger than the RHS, use +.
           return SCEVAddExpr::get(LHS,
                                   getSCEV(I->getOperand(1)));
