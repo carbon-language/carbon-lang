@@ -442,7 +442,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
   assert(TM.getRegisterInfo() && "TM::getRegisterInfo() must be implemented!");
   const MRegisterInfo &MRI = *TM.getRegisterInfo();
-  RegScavenger *RS = MRI.getRegScavenger();
+  RegScavenger *RS = MRI.requiresRegisterScavenging() ? new RegScavenger():NULL;
 
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     if (RS) RS->reset(BB);
@@ -451,7 +451,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
         if (I->getOperand(i).isFrameIndex()) {
           // If this instruction has a FrameIndex operand, we need to use that
           // target machine register info object to eliminate it.
-          MRI.eliminateFrameIndex(I);
+          MRI.eliminateFrameIndex(I, RS);
           break;
         }
       // Update register states.

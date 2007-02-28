@@ -214,12 +214,6 @@ protected:
   virtual ~MRegisterInfo();
 public:
 
-  /// getRegScavenger - Returns pointer to an instance of register scavenger it
-  /// the specific target is making use of one.
-  virtual RegScavenger *getRegScavenger() const {
-    return NULL;
-  }
-  
   enum {                        // Define some target independent constants
     /// NoRegister - This physical register is not a real target register.  It
     /// is useful as a sentinal.
@@ -398,6 +392,12 @@ public:
     return false;
   }
 
+  /// requiresRegisterScavenging - returns true if the target requires (and
+  /// can make use of) the register scavenger.
+  virtual bool requiresRegisterScavenging() const {
+    return false;
+  }
+  
   /// hasFP - Return true if the specified function should have a dedicated frame
   /// pointer register. For most targets this is true only if the function has
   /// variable sized allocas or if frame pointer elimination is disabled.
@@ -452,7 +452,8 @@ public:
   /// finished product. The return value is the number of instructions
   /// added to (negative if removed from) the basic block.
   ///
-  virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI) const = 0;
+  virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
+                                   RegScavenger *RS = NULL) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function. The return value is the number of instructions
