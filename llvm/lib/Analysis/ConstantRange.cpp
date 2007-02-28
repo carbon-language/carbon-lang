@@ -45,28 +45,7 @@ ConstantRange::ConstantRange(const Type *Ty, bool Full) :
 
 /// Initialize a range to hold the single specified value.
 ///
-ConstantRange::ConstantRange(Constant *V) 
-  : Lower(cast<ConstantInt>(V)->getValue()), 
-    Upper(cast<ConstantInt>(V)->getValue() + 1) { }
-
-/// Initialize a range of values explicitly... this will assert out if
-/// Lower==Upper and Lower != Min or Max for its type (or if the two constants
-/// have different types)
-///
-ConstantRange::ConstantRange(Constant *L, Constant *U) 
-  : Lower(cast<ConstantInt>(L)->getValue()), 
-    Upper(cast<ConstantInt>(U)->getValue()) {
-  assert(L->getType() == U->getType() && "Invalid ConstantRange types!");
-  assert(L->getType()->isInteger() && "Invalid ConstantRange types!");
-
-  // Make sure that if L & U are equal that they are either Min or Max...
-  
-  uint32_t BitWidth = cast<IntegerType>(L->getType())->getBitWidth();
-  const IntegerType *Ty = cast<IntegerType>(L->getType());
-  assert((L != U || (L == ConstantInt::get(Ty, APInt::getMaxValue(BitWidth)) 
-                 ||  L == ConstantInt::get(Ty, APInt::getMinValue(BitWidth))))
-          && "Lower == Upper, but they aren't min or max for type!");
-}
+ConstantRange::ConstantRange(const APInt & V) : Lower(V), Upper(V + 1) { }
 
 ConstantRange::ConstantRange(const APInt &L, const APInt &U) :
   Lower(L), Upper(U) {
@@ -80,45 +59,43 @@ ConstantRange::ConstantRange(const APInt &L, const APInt &U) :
 
 /// Initialize a set of values that all satisfy the condition with C.
 ///
-ConstantRange::ConstantRange(unsigned short ICmpOpcode, ConstantInt *C) 
-  : Lower(cast<IntegerType>(C->getType())->getBitWidth(), 0),
-    Upper(cast<IntegerType>(C->getType())->getBitWidth(), 0) {
-  const APInt& Val = C->getValue();
-  uint32_t BitWidth = cast<IntegerType>(C->getType())->getBitWidth();
+ConstantRange::ConstantRange(unsigned short ICmpOpcode, const APInt &C) 
+  : Lower(C.getBitWidth(), 0), Upper(C.getBitWidth(), 0) {
+  uint32_t BitWidth = C.getBitWidth();
   switch (ICmpOpcode) {
   default: assert(0 && "Invalid ICmp opcode to ConstantRange ctor!");
-  case ICmpInst::ICMP_EQ: Lower = Val; Upper = Val + 1; return;
-  case ICmpInst::ICMP_NE: Upper = Val; Lower = Val + 1; return;
+  case ICmpInst::ICMP_EQ: Lower = C; Upper = C + 1; return;
+  case ICmpInst::ICMP_NE: Upper = C; Lower = C + 1; return;
   case ICmpInst::ICMP_ULT:
     Lower = APInt::getMinValue(BitWidth);
-    Upper = Val;
+    Upper = C;
     return;
   case ICmpInst::ICMP_SLT:
     Lower = APInt::getSignedMinValue(BitWidth);
-    Upper = Val;
+    Upper = C;
     return;
   case ICmpInst::ICMP_UGT:
-    Lower = Val + 1;
+    Lower = C + 1;
     Upper = APInt::getMinValue(BitWidth);        // Min = Next(Max)
     return;
   case ICmpInst::ICMP_SGT:
-    Lower = Val + 1;
+    Lower = C + 1;
     Upper = APInt::getSignedMinValue(BitWidth);  // Min = Next(Max)
     return;
   case ICmpInst::ICMP_ULE:
     Lower = APInt::getMinValue(BitWidth);
-    Upper = Val + 1;
+    Upper = C + 1;
     return;
   case ICmpInst::ICMP_SLE:
     Lower = APInt::getSignedMinValue(BitWidth);
-    Upper = Val + 1;
+    Upper = C + 1;
     return;
   case ICmpInst::ICMP_UGE:
-    Lower = Val;
+    Lower = C;
     Upper = APInt::getMinValue(BitWidth);        // Min = Next(Max)
     return;
   case ICmpInst::ICMP_SGE:
-    Lower = Val;
+    Lower = C;
     Upper = APInt::getSignedMinValue(BitWidth);  // Min = Next(Max)
     return;
   }
@@ -243,14 +220,14 @@ ConstantRange::intersect1Wrapped(const ConstantRange &LHS,
 
     } else {
       // No overlap on the right, just on the left.
-      return ConstantRange(RHS.getLower(), LHS.getUpper());
+      return ConstantRange(RHS.Lower, LHS.Upper);
     }
   } else {
     // We don't overlap on the left side of RHS, see if we overlap on the right
     // of RHS...
     if (GT) {
       // Simple overlap...
-      return ConstantRange(LHS.getLower(), RHS.getUpper());
+      return ConstantRange(LHS.Lower, RHS.Upper);
     } else {
       // No overlap...
       return ConstantRange(LHS.getType(), false);
@@ -319,11 +296,9 @@ ConstantRange ConstantRange::zeroExtend(const Type *Ty) const {
   unsigned SrcTySize = Lower.getBitWidth();
   unsigned DstTySize = Ty->getPrimitiveSizeInBits();
   assert(SrcTySize < DstTySize && "Not a value extension");
-  if (isFullSet()) {
+  if (isFullSet())
     // Change a source full set into [0, 1 << 8*numbytes)
-    return ConstantRange(Constant::getNullValue(Ty),
-                         ConstantInt::get(Ty, 1ULL << SrcTySize));
-  }
+    return ConstantRange(APInt(DstTySize,0), APInt(DstTySize,1).shl(SrcTySize));
 
   APInt L = Lower; L.zext(DstTySize);
   APInt U = Upper; U.zext(DstTySize);

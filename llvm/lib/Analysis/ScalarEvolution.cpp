@@ -177,7 +177,7 @@ SCEVHandle SCEVConstant::get(ConstantInt *V) {
 }
 
 ConstantRange SCEVConstant::getValueRange() const {
-  return ConstantRange(V);
+  return ConstantRange(V->getValue());
 }
 
 const Type *SCEVConstant::getType() const { return V->getType(); }
@@ -490,12 +490,11 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
   // Handle this case efficiently, it is common to have constant iteration
   // counts while computing loop exit values.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
-    uint64_t Val = SC->getValue()->getZExtValue();
-    uint64_t Result = 1;
+    APInt Val = SC->getValue()->getValue();
+    APInt Result(Val.getBitWidth(), 1);
     for (; NumSteps; --NumSteps)
       Result *= Val-(NumSteps-1);
-    Constant *Res = ConstantInt::get(Type::Int64Ty, Result);
-    return SCEVUnknown::get(ConstantExpr::getTruncOrBitCast(Res, V->getType()));
+    return SCEVUnknown::get(ConstantInt::get(V->getType(), Result));
   }
 
   const Type *Ty = V->getType();
@@ -1567,7 +1566,7 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
           ConstantExpr::getBitCast(CompVal, RealTy));
         if (CompVal) {
           // Form the constant range.
-          ConstantRange CompRange(Cond, CompVal);
+          ConstantRange CompRange(Cond, CompVal->getValue());
 
           SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange, 
               false /*Always treat as unsigned range*/);

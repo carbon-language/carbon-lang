@@ -51,22 +51,18 @@ class ConstantRange {
 
   /// Initialize a range to hold the single specified value.
   ///
-  ConstantRange(Constant *Value);
+  ConstantRange(const APInt &Value);
 
-  /// Initialize a range of values explicitly... this will assert out if
-  /// Lower==Upper and Lower != Min or Max for its type, if the two constants
-  /// have different types, or if the constant are not integral values.
-  ///
-  ConstantRange(Constant *Lower, Constant *Upper);
-
-  /// @brief Initialize a range of values explicitly.
+  /// @brief Initialize a range of values explicitly. This will assert out if
+  /// Lower==Upper and Lower != Min or Max value for its type. It will also
+  /// assert out if the two APInt's are not the same bit width.
   ConstantRange(const APInt& Lower, const APInt& Upper);
 
   /// Initialize a set of values that all satisfy the predicate with C. The
   /// predicate should be either an ICmpInst::Predicate or FCmpInst::Predicate
   /// value.
   /// @brief Get a range for a relation with a constant integral.
-  ConstantRange(unsigned short predicate, ConstantInt *C);
+  ConstantRange(unsigned short predicate, const APInt &C);
 
   /// getLower - Return the lower value for this range...
   ///

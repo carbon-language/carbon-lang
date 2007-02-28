@@ -1150,7 +1150,7 @@ Relation::KnownResult CEE::getCmpResult(CmpInst *CI,
     //
     if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
       // Check to see if we already know the result of this comparison...
-      ConstantRange R = ConstantRange(predicate, C);
+      ConstantRange R = ConstantRange(predicate, C->getValue());
       ConstantRange Int = R.intersectWith(Op0VI->getBounds(),
           ICmpInst::isSignedPredicate(ICmpInst::Predicate(predicate)));
 
@@ -1197,7 +1197,7 @@ bool Relation::contradicts(unsigned Op,
   if (ConstantInt *C = dyn_cast<ConstantInt>(Val))
     if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
         Op <= ICmpInst::LAST_ICMP_PREDICATE)
-      if (ConstantRange(Op, C).intersectWith(VI.getBounds(),
+      if (ConstantRange(Op, C->getValue()).intersectWith(VI.getBounds(),
           ICmpInst::isSignedPredicate(ICmpInst::Predicate(Op))).isEmptySet())
         return true;
 
@@ -1255,8 +1255,9 @@ bool Relation::incorporate(unsigned Op, ValueInfo &VI) {
   if (ConstantInt *C = dyn_cast<ConstantInt>(Val))
     if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
         Op <= ICmpInst::LAST_ICMP_PREDICATE)
-      VI.getBounds() = ConstantRange(Op, C).intersectWith(VI.getBounds(),
-          ICmpInst::isSignedPredicate(ICmpInst::Predicate(Op)));
+      VI.getBounds() = 
+        ConstantRange(Op, C->getValue()).intersectWith(VI.getBounds(),
+                          ICmpInst::isSignedPredicate(ICmpInst::Predicate(Op)));
 
   switch (Rel) {
   default: assert(0 && "Unknown prior value!");
