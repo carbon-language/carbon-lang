@@ -307,13 +307,23 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
 
   switch (CPV->getType()->getTypeID()) {
   case Type::IntegerTyID: { // Integer types...
+    const ConstantInt *CI = cast<ConstantInt>(CPV);
     unsigned NumBits = cast<IntegerType>(CPV->getType())->getBitWidth();
     if (NumBits <= 32)
-      output_vbr(uint32_t(cast<ConstantInt>(CPV)->getZExtValue()));
+      output_vbr(uint32_t(CI->getZExtValue()));
     else if (NumBits <= 64)
-      output_vbr(uint64_t(cast<ConstantInt>(CPV)->getZExtValue()));
-    else 
-      assert(0 && "Integer types > 64 bits not supported.");
+      output_vbr(uint64_t(CI->getZExtValue()));
+    else {
+      // We have an arbitrary precision integer value to write whose 
+      // bit width is > 64. However, in canonical unsigned integer 
+      // format it is likely that the high bits are going to be zero.
+      // So, we only write the number of active words. 
+      uint32_t activeWords = CI->getValue().getActiveWords();
+      const uint64_t *rawData = CI->getValue().getRawData();
+      output_vbr(activeWords);
+      for (uint32_t i = 0; i < activeWords; ++i)
+        output_vbr(rawData[i]);
+    }
     break;
   }
 
