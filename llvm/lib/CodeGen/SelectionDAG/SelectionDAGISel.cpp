@@ -2105,16 +2105,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       setValue(&I, Op);
       DAG.setRoot(Op.getValue(1));
     } else {
-      SDOperand Op = DAG.getNode(ISD::MERGE_VALUES, TLI.getPointerTy(),
-                                 DAG.getConstant(0, TLI.getPointerTy()),
-                                 DAG.getRoot());
-      setValue(&I, Op);
-      DAG.setRoot(Op.getValue(1));
+      setValue(&I, DAG.getConstant(0, TLI.getPointerTy()));
     }
     return 0;
   }
 
-  case Intrinsic::eh_handlers: {
+  case Intrinsic::eh_selector: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     
     if (MMI) {
@@ -2147,7 +2143,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       if (Reg) CurMBB->addLiveIn(Reg);
 
       // Insert the EHSELECTION instruction.
-      SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
+      SDVTList VTs = DAG.getVTList(MVT::i32, MVT::Other);
       SDOperand Ops[2];
       Ops[0] = getValue(I.getOperand(1));
       Ops[1] = getRoot();
@@ -2155,11 +2151,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       setValue(&I, Op);
       DAG.setRoot(Op.getValue(1));
     } else {
-      SDOperand Op = DAG.getNode(ISD::MERGE_VALUES, TLI.getPointerTy(),
-                                 DAG.getConstant(0, TLI.getPointerTy()),
-                                 getValue(I.getOperand(1)));
-      setValue(&I, Op);
-      DAG.setRoot(Op.getValue(1));
+      setValue(&I, DAG.getConstant(0, MVT::i32));
     }
     
     return 0;
