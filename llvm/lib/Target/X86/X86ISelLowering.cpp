@@ -438,15 +438,8 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   CCState CCInfo(CC, getTargetMachine(), RVLocs);
+  CCInfo.AnalyzeReturn(Op.Val, RetCC_X86);
   
-  // Determine which register each value should be copied into.
-  for (unsigned i = 0; i != Op.getNumOperands() / 2; ++i) {
-    MVT::ValueType VT = Op.getOperand(i*2+1).getValueType();
-    if (RetCC_X86(i, VT, VT, CCValAssign::Full,
-                  cast<ConstantSDNode>(Op.getOperand(i*2+2))->getValue(),
-                  CCInfo))
-      assert(0 && "Unhandled result type!");
-  }
   
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
@@ -521,16 +514,14 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
 SDNode *X86TargetLowering::
 LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall, 
                 unsigned CallingConv, SelectionDAG &DAG) {
-  SmallVector<SDOperand, 8> ResultVals;
-
+  
+  // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallingConv, getTargetMachine(), RVLocs);
+  CCInfo.AnalyzeCallResult(TheCall, RetCC_X86);
+
   
-  for (unsigned i = 0, e = TheCall->getNumValues() - 1; i != e; ++i) {
-    MVT::ValueType VT = TheCall->getValueType(i);
-    if (RetCC_X86(i, VT, VT, CCValAssign::Full, 0, CCInfo))
-      assert(0 && "Unhandled result type!");
-  }
+  SmallVector<SDOperand, 8> ResultVals;
   
   // Copy all of the result registers out of their specified physreg.
   if (RVLocs.size() != 1 || RVLocs[0].getLocReg() != X86::ST0) {
