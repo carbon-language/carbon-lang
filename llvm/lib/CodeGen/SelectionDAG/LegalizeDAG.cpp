@@ -676,16 +676,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     else
       Result = DAG.getConstant(0, TLI.getPointerTy());
     break;
-  case ISD::EHSELECTION:
   case ISD::EXCEPTIONADDR: {
     Tmp1 = LegalizeOp(Node->getOperand(0));
     MVT::ValueType VT = Node->getValueType(0);
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
-        unsigned Reg = Node->getOpcode() == ISD::EXCEPTIONADDR ?
-                          TLI.getExceptionAddressRegister() :
-                          TLI.getExceptionSelectorRegister();
+        unsigned Reg = TLI.getExceptionAddressRegister();
         Result = DAG.getCopyFromReg(Tmp1, Reg, VT).getValue(Op.ResNo);
       }
       break;
@@ -695,6 +692,28 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Fall Thru
     case TargetLowering::Legal:
       Result = DAG.getNode(ISD::MERGE_VALUES, VT, DAG.getConstant(0, VT), Tmp1).
+                  getValue(Op.ResNo);
+      break;
+    }
+    }
+    break;
+  case ISD::EHSELECTION: {
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    MVT::ValueType VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Expand: {
+        unsigned Reg = TLI.getExceptionSelectorRegister();
+        Result = DAG.getCopyFromReg(Tmp2, Reg, VT).getValue(Op.ResNo);
+      }
+      break;
+    case TargetLowering::Custom:
+      Result = TLI.LowerOperation(Op, DAG);
+      if (Result.Val) break;
+      // Fall Thru
+    case TargetLowering::Legal:
+      Result = DAG.getNode(ISD::MERGE_VALUES, VT, DAG.getConstant(0, VT), Tmp2).
                   getValue(Op.ResNo);
       break;
     }
