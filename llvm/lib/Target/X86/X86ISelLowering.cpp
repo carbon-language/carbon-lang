@@ -32,13 +32,9 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
-// FIXME: temporary.
-static cl::opt<bool> EnableFastCC("enable-x86-fastcc", cl::Hidden,
-                                  cl::desc("Enable fastcc on X86"));
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
