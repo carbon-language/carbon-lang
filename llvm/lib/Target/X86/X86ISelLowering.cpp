@@ -819,7 +819,6 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SmallVector<SDOperand, 8> MemOpChains;
 
   SDOperand StackPtr;
-  unsigned NumSRetBytes = 0; 
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -850,19 +849,12 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
       SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
       PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
       MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
-
-      // FIXME: What is this doing?
-      unsigned Flags =
-        cast<ConstantSDNode>(Op.getOperand(5+2*VA.getValNo()+1))->getValue();
-      if ((Flags >> 2) & 1)
-        NumSRetBytes += 4;
     }
   }
 
-  // Sanity check: we haven't seen NumSRetBytes > 4
-  assert((NumSRetBytes<=4) &&
-         "Too much space for struct-return pointer requested");
-    
+  // If the first argument is an sret pointer, remember it.
+  bool isSRet = NumOps &&(cast<ConstantSDNode>(Op.getOperand(6))->getValue()&4);
+  
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
@@ -926,14 +918,14 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
   if (CC == CallingConv::X86_StdCall) {
     if (isVarArg)
-      NumBytesForCalleeToPush = NumSRetBytes;
+      NumBytesForCalleeToPush = isSRet ? 4 : 0;
     else
       NumBytesForCalleeToPush = NumBytes;
   } else {
     // If this is is a call to a struct-return function, the callee
     // pops the hidden struct pointer, so we have to push it back.
     // This is common for Darwin/X86, Linux & Mingw32 targets.
-    NumBytesForCalleeToPush = NumSRetBytes;
+    NumBytesForCalleeToPush = isSRet ? 4 : 0;
   }
   
   NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
