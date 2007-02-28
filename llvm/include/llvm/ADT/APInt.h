@@ -268,10 +268,17 @@ public:
   /// Adds this APInt by the given APInt& RHS.
   /// @brief Addition operator. 
   APInt operator+(const APInt& RHS) const;
+  APInt operator+(uint64_t RHS) const {
+    return (*this) + APInt(BitWidth, RHS);
+  }
+
 
   /// Subtracts this APInt by the given APInt& RHS
   /// @brief Subtraction operator. 
   APInt operator-(const APInt& RHS) const;
+  APInt operator-(uint64_t RHS) const {
+    return (*this) - APInt(BitWidth, RHS);
+  }
 
   /// @brief Unary negation operator
   inline APInt operator-() const {
@@ -401,20 +408,20 @@ public:
   /// Truncate the APInt to a specified width. It is an error to specify a width
   /// that is greater than or equal to the current width. 
   /// @brief Truncate to new width.
-  void trunc(uint32_t width);
+  APInt &trunc(uint32_t width);
 
   /// This operation sign extends the APInt to a new width. If the high order
   /// bit is set, the fill on the left will be done with 1 bits, otherwise zero.
   /// It is an error to specify a width that is less than or equal to the 
   /// current width.
   /// @brief Sign extend to a new width.
-  void sext(uint32_t width);
+  APInt &sext(uint32_t width);
 
   /// This operation zero extends the APInt to a new width. Thie high order bits
   /// are filled with 0 bits.  It is an error to specify a width that is less 
   /// than or equal to the current width.
   /// @brief Zero extend to a new width.
-  void zext(uint32_t width);
+  APInt &zext(uint32_t width);
 
   /// @brief Set every bit to 1.
   APInt& set();
@@ -690,6 +697,26 @@ inline bool operator!=(uint64_t V1, const APInt& V2) {
 }
 
 namespace APIntOps {
+
+/// @brief Determine the smaller of two APInts considered to be signed.
+inline APInt smin(const APInt &A, const APInt &B) {
+  return A.slt(B) ? A : B;
+}
+
+/// @brief Determine the larger of two APInts considered to be signed.
+inline APInt smax(const APInt &A, const APInt &B) {
+  return A.sgt(B) ? A : B;
+}
+
+/// @brief Determine the smaller of two APInts considered to be signed.
+inline APInt umin(const APInt &A, const APInt &B) {
+  return A.ult(B) ? A : B;
+}
+
+/// @brief Determine the larger of two APInts considered to be unsigned.
+inline APInt umax(const APInt &A, const APInt &B) {
+  return A.ugt(B) ? A : B;
+}
 
 /// @brief Check if the specified APInt has a N-bits integer value.
 inline bool isIntN(uint32_t N, const APInt& APIVal) {
