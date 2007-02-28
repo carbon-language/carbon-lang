@@ -47,14 +47,12 @@ class Sema : public Action {
   /// ASTStreamer.
   std::vector<Decl*> &LastInGroupList;
 public:
-  Sema(Preprocessor &pp, std::vector<Decl*> &prevInGroup);
+  Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   
   const LangOptions &getLangOptions() const;
   
   void Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());
-  
-  void PrintStats();
   
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.

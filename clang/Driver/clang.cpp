@@ -803,13 +803,15 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
 //===----------------------------------------------------------------------===//
 
 static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID);
+  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
   while (ASTStreamer_ReadTopLevelDecl(Streamer))
     /* keep reading */;
 
   if (Stats) {
     std::cerr << "\nSTATISTICS:\n";
     ASTStreamer_PrintStats(Streamer);
+    Context.PrintStats();
   }
   
   ASTStreamer_Terminate(Streamer);
@@ -860,7 +862,8 @@ static void PrintTypeDefDecl(TypedefDecl *TD) {
 }
 
 static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, MainFileID);
+  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
@@ -875,6 +878,7 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
   if (Stats) {
     std::cerr << "\nSTATISTICS:\n";
     ASTStreamer_PrintStats(Streamer);
+    Context.PrintStats();
   }
   
   ASTStreamer_Terminate(Streamer);

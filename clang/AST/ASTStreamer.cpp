@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTStreamer.h"
+#include "clang/AST/ASTContext.h"
 #include "Sema.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
@@ -23,8 +24,8 @@ namespace {
     Parser P;
     std::vector<Decl*> LastInGroupList;
   public:
-    ASTStreamer(Preprocessor &pp, unsigned MainFileID)
-      : P(pp, *new Sema(pp, LastInGroupList)) {
+    ASTStreamer(Preprocessor &pp, ASTContext &ctxt, unsigned MainFileID)
+      : P(pp, *new Sema(pp, ctxt, LastInGroupList)) {
       pp.EnterSourceFile(MainFileID, 0, true);
       
       // Initialize the parser.
@@ -78,7 +79,6 @@ Decl *ASTStreamer::ReadTopLevelDecl() {
 }
 
 void ASTStreamer::PrintStats() const {
-  static_cast<Sema &>(P.getActions()).PrintStats();
 }
 
 //===----------------------------------------------------------------------===//
@@ -88,8 +88,9 @@ void ASTStreamer::PrintStats() const {
 /// ASTStreamer_Init - Create an ASTStreamer with the specified preprocessor
 /// and FileID.
 ASTStreamerTy *llvm::clang::ASTStreamer_Init(Preprocessor &pp,
+                                             ASTContext &ctxt,
                                              unsigned MainFileID) {
-  return new ASTStreamer(pp, MainFileID);
+  return new ASTStreamer(pp, ctxt, MainFileID);
 }
 
 /// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration. This

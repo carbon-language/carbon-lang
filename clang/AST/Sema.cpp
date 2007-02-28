@@ -18,14 +18,8 @@
 using namespace llvm;
 using namespace clang;
 
-Sema::Sema(Preprocessor &pp, std::vector<Decl*> &prevInGroup)
-  : PP(pp), 
-    Context(*new ASTContext(pp.getTargetInfo(), pp.getIdentifierTable())),
-    CurFunctionDecl(0), LastInGroupList(prevInGroup) {
-}
-
-void Sema::PrintStats() { 
-  Context.PrintStats(); 
+Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
+  : PP(pp), Context(ctxt), CurFunctionDecl(0), LastInGroupList(prevInGroup) {
 }
 
 //===----------------------------------------------------------------------===//
