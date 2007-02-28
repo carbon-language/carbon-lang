@@ -37,7 +37,6 @@
 
 namespace llvm {
 class Constant;
-class ConstantInt;
 class Type;
 
 class ConstantRange {
@@ -66,11 +65,11 @@ class ConstantRange {
 
   /// getLower - Return the lower value for this range...
   ///
-  ConstantInt *getLower() const; 
+  const APInt &getLower() const { return Lower; }
 
   /// getUpper - Return the upper value for this range...
   ///
-  ConstantInt *getUpper() const; 
+  const APInt &getUpper() const { return Upper; } 
 
   /// getType - Return the LLVM data type of this range.
   ///
@@ -94,12 +93,16 @@ class ConstantRange {
   /// The isSigned parameter indicates whether the comparisons should be
   /// performed as if the values are signed or not.
   ///
-  bool contains(ConstantInt *Val, bool isSigned) const;
+  bool contains(const APInt &Val, bool isSigned) const;
 
   /// getSingleElement - If this set contains a single element, return it,
   /// otherwise return null.
   ///
-  ConstantInt *getSingleElement() const;
+  const APInt *getSingleElement() const {
+    if (Upper == Lower + 1)
+      return &Lower;
+    return 0;
+  }
 
   /// isSingleElement - Return true if this set contains exactly one member.
   ///
@@ -120,7 +123,7 @@ class ConstantRange {
 
   /// subtract - Subtract the specified constant from the endpoints of this
   /// constant range.
-  ConstantRange subtract(ConstantInt *CI) const;
+  ConstantRange subtract(const APInt &CI) const;
 
   /// intersectWith - Return the range that results from the intersection of
   /// this range with another range.  The resultant range is pruned as much as

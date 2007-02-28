@@ -1018,7 +1018,10 @@ void CEE::ComputeReplacements(RegionInfo &RI) {
 
     // If we know that this value is a particular constant, set Replacement to
     // the constant...
-    Value *Replacement = VI.getBounds().getSingleElement();
+    Value *Replacement = 0;
+    const APInt * Rplcmnt = VI.getBounds().getSingleElement();
+    if (Rplcmnt)
+      Replacement = ConstantInt::get(*Rplcmnt);
 
     // If this value is not known to be some constant, figure out the lowest
     // rank value that it is known to be equal to (if anything).

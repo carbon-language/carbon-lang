@@ -22,7 +22,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ConstantRange.h"
-#include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
@@ -107,14 +106,6 @@ const Type *ConstantRange::getType() const {
   return IntegerType::get(Lower.getBitWidth()); 
 }
 
-ConstantInt *ConstantRange::getLower() const {
-  return ConstantInt::get(getType(), Lower);
-}
-
-ConstantInt *ConstantRange::getUpper() const {
-  return ConstantInt::get(getType(), Upper);
-}
-
 /// isFullSet - Return true if this set contains all of the elements possible
 /// for this data-type
 bool ConstantRange::isFullSet() const {
@@ -136,14 +127,6 @@ bool ConstantRange::isWrappedSet(bool isSigned) const {
   return Lower.ugt(Upper);
 }
 
-/// getSingleElement - If this set contains a single element, return it,
-/// otherwise return null.
-ConstantInt *ConstantRange::getSingleElement() const {
-  if (Upper == Lower + 1)  // Is it a single element range?
-    return ConstantInt::get(getType(), Lower);
-  return 0;
-}
-
 /// getSetSize - Return the number of elements in this set.
 ///
 APInt ConstantRange::getSetSize() const {
@@ -161,14 +144,13 @@ APInt ConstantRange::getSetSize() const {
 
 /// contains - Return true if the specified value is in the set.
 ///
-bool ConstantRange::contains(ConstantInt *Val, bool isSigned) const {
+bool ConstantRange::contains(const APInt &V, bool isSigned) const {
   if (Lower == Upper) {
     if (isFullSet()) 
       return true;
     return false;
   }
 
-  const APInt &V = Val->getValue();
   if (!isWrappedSet(isSigned))
     if (isSigned)
       return Lower.sle(V) && V.slt(Upper);
@@ -182,14 +164,11 @@ bool ConstantRange::contains(ConstantInt *Val, bool isSigned) const {
 
 /// subtract - Subtract the specified constant from the endpoints of this
 /// constant range.
-ConstantRange ConstantRange::subtract(ConstantInt *CI) const {
-  assert(CI->getType() == getType() && 
-         "Cannot subtract from different type range or non-integer!");
+ConstantRange ConstantRange::subtract(const APInt &Val) const {
+  assert(Val.getBitWidth() == Lower.getBitWidth() && "Wrong bit width");
   // If the set is empty or full, don't modify the endpoints.
   if (Lower == Upper) 
     return *this;
-  
-  const APInt &Val = CI->getValue();
   return ConstantRange(Lower - Val, Upper - Val);
 }
 

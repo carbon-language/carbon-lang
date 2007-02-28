@@ -127,6 +127,12 @@ ConstantRange SCEV::getValueRange() const {
   return ConstantRange(getType());
 }
 
+uint32_t SCEV::getBitWidth() const {
+  if (const IntegerType* ITy = dyn_cast<IntegerType>(getType()))
+    return ITy->getBitWidth();
+  return 0;
+}
+
 
 SCEVCouldNotCompute::SCEVCouldNotCompute() : SCEV(scCouldNotCompute) {}
 
@@ -2320,7 +2326,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
       SCEVHandle Shifted = SCEVAddRecExpr::get(Operands, getLoop());
       if (SCEVAddRecExpr *ShiftedAddRec = dyn_cast<SCEVAddRecExpr>(Shifted))
         return ShiftedAddRec->getNumIterationsInRange(
-                                      Range.subtract(SC->getValue()),isSigned);
+                           Range.subtract(SC->getValue()->getValue()),isSigned);
       // This is strange and shouldn't happen.
       return new SCEVCouldNotCompute();
     }
@@ -2337,8 +2343,8 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
   // First check to see if the range contains zero.  If not, the first
   // iteration exits.
-  ConstantInt *Zero = ConstantInt::get(getType(), 0);
-  if (!Range.contains(Zero, isSigned)) return SCEVConstant::get(Zero);
+  if (!Range.contains(APInt(getBitWidth(),0), isSigned)) 
+    return SCEVConstant::get(ConstantInt::get(getType(),0));
 
   if (isAffine()) {
     // If this is an affine expression then we have this situation:
@@ -2347,29 +2353,27 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // Since we know that zero is in the range, we know that the upper value of
     // the range must be the first possible exit value.  Also note that we
     // already checked for a full range.
-    ConstantInt *Upper = cast<ConstantInt>(Range.getUpper());
-    ConstantInt *A     = cast<SCEVConstant>(getOperand(1))->getValue();
-    ConstantInt *One   = ConstantInt::get(getType(), 1);
+    const APInt &Upper = Range.getUpper();
+    APInt A     = cast<SCEVConstant>(getOperand(1))->getValue()->getValue();
+    APInt One(getBitWidth(),1);
 
     // The exit value should be (Upper+A-1)/A.
-    Constant *ExitValue = Upper;
-    if (A != One) {
-      ExitValue = ConstantExpr::getSub(ConstantExpr::getAdd(Upper, A), One);
-      ExitValue = ConstantExpr::getSDiv(ExitValue, A);
-    }
-    assert(isa<ConstantInt>(ExitValue) &&
-           "Constant folding of integers not implemented?");
+    APInt ExitVal(Upper);
+    if (A != One)
+      ExitVal = (Upper + A - One).sdiv(A);
+    ConstantInt *ExitValue = ConstantInt::get(getType(), ExitVal);
 
     // Evaluate at the exit value.  If we really did fall out of the valid
     // range, then we computed our trip count, otherwise wrap around or other
     // things must have happened.
     ConstantInt *Val = EvaluateConstantChrecAtConstant(this, ExitValue);
-    if (Range.contains(Val, isSigned))
+    if (Range.contains(Val->getValue(), isSigned))
       return new SCEVCouldNotCompute();  // Something strange happened
 
     // Ensure that the previous value is in the range.  This is a sanity check.
-    assert(Range.contains(EvaluateConstantChrecAtConstant(this,
-                          ConstantExpr::getSub(ExitValue, One)), isSigned) &&
+    assert(Range.contains(
+           EvaluateConstantChrecAtConstant(this, 
+           ConstantInt::get(getType(), ExitVal - One))->getValue(), isSigned) &&
            "Linear scev computation is off in a bad way!");
     return SCEVConstant::get(cast<ConstantInt>(ExitValue));
   } else if (isQuadratic()) {
@@ -2378,7 +2382,8 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // terms of figuring out when zero is crossed, instead of when
     // Range.getUpper() is crossed.
     std::vector<SCEVHandle> NewOps(op_begin(), op_end());
-    NewOps[0] = SCEV::getNegativeSCEV(SCEVUnknown::get(Range.getUpper()));
+    NewOps[0] = SCEV::getNegativeSCEV(SCEVUnknown::get(
+                                ConstantInt::get(getType(), Range.getUpper())));
     SCEVHandle NewAddRec = SCEVAddRecExpr::get(NewOps, getLoop());
 
     // Next, solve the constructed addrec
@@ -2399,14 +2404,14 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
         // for "X*X < 5", for example, we should not return a root of 2.
         ConstantInt *R1Val = EvaluateConstantChrecAtConstant(this,
                                                              R1->getValue());
-        if (Range.contains(R1Val, isSigned)) {
+        if (Range.contains(R1Val->getValue(), isSigned)) {
           // The next iteration must be out of the range...
           Constant *NextVal =
             ConstantExpr::getAdd(R1->getValue(),
                                  ConstantInt::get(R1->getType(), 1));
 
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
-          if (!Range.contains(R1Val, isSigned))
+          if (!Range.contains(R1Val->getValue(), isSigned))
             return SCEVUnknown::get(NextVal);
           return new SCEVCouldNotCompute();  // Something strange happened
         }
@@ -2417,7 +2422,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
           ConstantExpr::getSub(R1->getValue(),
                                ConstantInt::get(R1->getType(), 1));
         R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
-        if (Range.contains(R1Val, isSigned))
+        if (Range.contains(R1Val->getValue(), isSigned))
           return R1;
         return new SCEVCouldNotCompute();  // Something strange happened
       }
@@ -2439,7 +2444,8 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
       return new SCEVCouldNotCompute();
 
     // Check to see if we found the value!
-    if (!Range.contains(cast<SCEVConstant>(Val)->getValue(), isSigned))
+    if (!Range.contains(cast<SCEVConstant>(Val)->getValue()->getValue(), 
+                        isSigned))
       return SCEVConstant::get(TestVal);
 
     // Increment to test the next index.

@@ -85,6 +85,10 @@ namespace llvm {
     ///
     virtual const Type *getType() const = 0;
 
+    /// getBitWidth - Get the bit width of the type, if it has one, 0 otherwise.
+    /// 
+    uint32_t getBitWidth() const;
+
     /// replaceSymbolicValuesWithConcrete - If this SCEV internally references
     /// the symbolic value "Sym", construct and return a new SCEV that produces
     /// the same value, but which uses the concrete value Conc instead of the
