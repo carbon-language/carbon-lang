@@ -315,6 +315,7 @@ ARMRegisterInfo::getCalleeSavedRegClasses() const {
 BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(ARM::SP);
+  Reserved.set(ARM::PC);
   if (STI.isTargetDarwin() || hasFP(MF))
     Reserved.set(FramePtr);
   // Some targets reserve R9.
