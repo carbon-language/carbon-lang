@@ -429,67 +429,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-/// X86_RetCC_Assign - Implement the X86 return value conventions.  This returns
-/// true if the value wasn't handled by this CC.
-static bool X86_RetCC_Assign(unsigned ValNo, MVT::ValueType ValVT, 
-                             unsigned ArgFlags, CCState &State) {
-  MVT::ValueType LocVT = ValVT;
-  CCValAssign::LocInfo LocInfo = CCValAssign::Full;
-  
-  // If this is a 32-bit value, assign to a 32-bit register if any are
-  // available.
-  if (LocVT == MVT::i8) {
-    static const unsigned GPR8ArgRegs[] = { X86::AL, X86::DL };
-    if (unsigned Reg = State.AllocateReg(GPR8ArgRegs, 2)) {
-      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
-      return false;
-    }
-  }
-  if (LocVT == MVT::i16) {
-    static const unsigned GPR16ArgRegs[] = { X86::AX, X86::DX };
-    if (unsigned Reg = State.AllocateReg(GPR16ArgRegs, 2)) {
-      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
-      return false;
-    }
-  }
-  if (LocVT == MVT::i32) {
-    static const unsigned GPR32ArgRegs[] = { X86::EAX, X86::EDX };
-    if (unsigned Reg = State.AllocateReg(GPR32ArgRegs, 2)) {
-      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
-      return false;
-    }
-  }
-  if (LocVT == MVT::i64) {
-    static const unsigned GPR64ArgRegs[] = { X86::RAX, X86::RDX };
-    if (unsigned Reg = State.AllocateReg(GPR64ArgRegs, 2)) {
-      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
-      return false;
-    }
-  }
-  if (MVT::isVector(LocVT)) {
-    if (unsigned Reg = State.AllocateReg(X86::XMM0)) {
-      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
-      return false;
-    }
-  }
-  if (LocVT == MVT::f32 || LocVT == MVT::f64) {
-    unsigned Reg;
-    if (State.getTarget().getSubtarget<X86Subtarget>().is64Bit())
-      Reg = X86::XMM0;         // FP values in X86-64 go in XMM0.
-    else if (State.getCallingConv() == CallingConv::Fast &&
-             State.getTarget().getSubtarget<X86Subtarget>().hasSSE2())
-      Reg = X86::XMM0;         // FP values in X86-32 with fastcc go in XMM0.
-    else
-      Reg = X86::ST0;          // FP values in X86-32 go in ST0.
-    
-    if ((Reg = State.AllocateReg(Reg))) {
-      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
-      return false;
-    }
-  }
-  
-  return true;
-}
+#include "X86GenCallingConv.inc"
     
 /// LowerRET - Lower an ISD::RET node.
 SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
@@ -501,9 +441,10 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   
   // Determine which register each value should be copied into.
   for (unsigned i = 0; i != Op.getNumOperands() / 2; ++i) {
-    if (X86_RetCC_Assign(i, Op.getOperand(i*2+1).getValueType(),
-                         cast<ConstantSDNode>(Op.getOperand(i*2+2))->getValue(),
-                         CCInfo))
+    MVT::ValueType VT = Op.getOperand(i*2+1).getValueType();
+    if (RetCC_X86(i, VT, VT, CCValAssign::Full,
+                  cast<ConstantSDNode>(Op.getOperand(i*2+2))->getValue(),
+                  CCInfo))
       assert(0 && "Unhandled result type!");
   }
   
@@ -586,7 +527,8 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
   CCState CCInfo(CallingConv, getTargetMachine(), RVLocs);
   
   for (unsigned i = 0, e = TheCall->getNumValues() - 1; i != e; ++i) {
-    if (X86_RetCC_Assign(i, TheCall->getValueType(i), 0, CCInfo))
+    MVT::ValueType VT = TheCall->getValueType(i);
+    if (RetCC_X86(i, VT, VT, CCValAssign::Full, 0, CCInfo))
       assert(0 && "Unhandled result type!");
   }
   
@@ -1081,76 +1023,6 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 //===----------------------------------------------------------------------===//
 
 
-/// X86_64_CCC_AssignArgument - Implement the X86-64 C Calling Convention.  This
-/// returns true if the value was not handled by this calling convention.
-static bool X86_64_CCC_AssignArgument(unsigned ValNo,
-                                      MVT::ValueType ArgVT, unsigned ArgFlags,
-                                      CCState &State) {
-  MVT::ValueType LocVT = ArgVT;
-  CCValAssign::LocInfo LocInfo = CCValAssign::Full;
-  
-  // Promote the integer to 32 bits.  If the input type is signed use a
-  // sign extend, otherwise use a zero extend.
-  if (ArgVT == MVT::i8 || ArgVT == MVT::i16) {
-    LocVT = MVT::i32;
-    LocInfo = (ArgFlags & 1) ? CCValAssign::SExt : CCValAssign::ZExt;
-  }
-  
-  // If this is a 32-bit value, assign to a 32-bit register if any are
-  // available.
-  if (LocVT == MVT::i32) {
-    static const unsigned GPR32ArgRegs[] = {
-      X86::EDI, X86::ESI, X86::EDX, X86::ECX, X86::R8D, X86::R9D
-    };
-    if (unsigned Reg = State.AllocateReg(GPR32ArgRegs, 6)) {
-      State.addLoc(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
-      return false;
-    }
-  }
-  
-  // If this is a 64-bit value, assign to a 64-bit register if any are
-  // available.
-  if (LocVT == MVT::i64) {
-    static const unsigned GPR64ArgRegs[] = {
-      X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
-    };
-    if (unsigned Reg = State.AllocateReg(GPR64ArgRegs, 6)) {
-      State.addLoc(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
-      return false;
-    }
-  }
-  
-  // If this is a FP or vector type, assign to an XMM reg if any are
-  // available.
-  if (MVT::isVector(LocVT) || MVT::isFloatingPoint(LocVT)) {
-    static const unsigned XMMArgRegs[] = {
-      X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
-      X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
-    };
-    if (unsigned Reg = State.AllocateReg(XMMArgRegs, 8)) {
-      State.addLoc(CCValAssign::getReg(ValNo, ArgVT, Reg, LocVT, LocInfo));
-      return false;
-    }
-  }
-  
-  // Integer/FP values get stored in stack slots that are 8 bytes in size and
-  // 8-byte aligned if there are no more registers to hold them.
-  if (LocVT == MVT::i32 || LocVT == MVT::i64 ||
-      LocVT == MVT::f32 || LocVT == MVT::f64) {
-    unsigned Offset = State.AllocateStack(8, 8);
-    State.addLoc(CCValAssign::getMem(ValNo, ArgVT, Offset, LocVT, LocInfo));
-    return false;
-  }
-  
-  // Vectors get 16-byte stack slots that are 16-byte aligned.
-  if (MVT::isVector(LocVT)) {
-    unsigned Offset = State.AllocateStack(16, 16);
-    State.addLoc(CCValAssign::getMem(ValNo, ArgVT, Offset, LocVT, LocInfo));
-    return false;
-  }
-  return true;
-}
-
 
 SDOperand
 X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
@@ -1175,7 +1047,7 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   for (unsigned i = 0; i != NumArgs; ++i) {
     MVT::ValueType ArgVT = Op.getValue(i).getValueType();
     unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
-    if (X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCInfo)) 
+    if (CC_X86_64_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
       assert(0 && "Unhandled argument type!");
   }
   
@@ -1307,7 +1179,7 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   for (unsigned i = 0; i != NumOps; ++i) {
     MVT::ValueType ArgVT = Op.getOperand(5+2*i).getValueType();
     unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    if (X86_64_CCC_AssignArgument(i, ArgVT, ArgFlags, CCInfo)) 
+    if (CC_X86_64_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
       assert(0 && "Unhandled argument type!");
   }
     
