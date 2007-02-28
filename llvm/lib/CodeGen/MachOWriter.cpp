@@ -107,7 +107,7 @@ namespace llvm {
     
     virtual intptr_t getConstantPoolEntryAddress(unsigned Index) const {
       assert(CPLocations.size() > Index && "CP not emitted!");
-      return CPLocations[Index];\
+      return CPLocations[Index];
     }
     virtual intptr_t getJumpTableEntryAddress(unsigned Index) const {
       assert(JTLocations.size() > Index && "JT not emitted!");
