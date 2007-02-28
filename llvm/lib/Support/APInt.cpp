@@ -808,7 +808,7 @@ APInt llvm::APIntOps::RoundDoubleToAPInt(double Double, uint32_t width) {
 
   // If the exponent is negative, the value is < 0 so just return 0.
   if (exp < 0)
-    return APInt(64u, 0u);
+    return APInt(width, 0u);
 
   // Extract the mantissa by clearing the top 12 bits (sign + exponent).
   uint64_t mantissa = (T.I & (~0ULL >> 12)) | 1ULL << 52;
