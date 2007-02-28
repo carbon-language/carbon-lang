@@ -186,6 +186,7 @@ HexFPConstant 0x[0-9A-Fa-f]+
  * it to deal with 64 bit numbers.
  */
 HexIntConstant [us]0x[0-9A-Fa-f]+
+
 %%
 
 {Comment}       { /* Ignore comments for now */ }
@@ -361,20 +362,51 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                      return ATSTRINGCONSTANT;
                    }
 
-
-
-{PInteger}      { llvmAsmlval.UInt64Val = atoull(yytext); return EUINT64VAL; }
-{NInteger}      {
-                  uint64_t Val = atoull(yytext+1);
-                  // +1:  we have bigger negative range
-                  if (Val > (uint64_t)INT64_MAX+1)
-                    GenerateError("Constant too large for signed 64 bits!");
-                  llvmAsmlval.SInt64Val = -Val;
-                  return ESINT64VAL;
+{PInteger}      { int len = strlen(yytext); 
+                  uint32_t numBits = ((len * 64) / 19) + 1;
+                  APInt Tmp(numBits, yytext, len, 10);
+                  uint32_t activeBits = Tmp.getActiveBits();
+                  if (activeBits > 0 && activeBits < numBits)
+                    Tmp.trunc(activeBits);
+                  if (Tmp.getBitWidth() > 64) {
+                    llvmAsmlval.APIntVal = new APInt(Tmp);
+                    return EUAPINTVAL; 
+                  } else {
+                    llvmAsmlval.UInt64Val = Tmp.getZExtValue();
+                    return EUINT64VAL;
+                  }
                 }
-{HexIntConstant} {
-                   llvmAsmlval.UInt64Val = HexIntToVal(yytext+3);
-                   return yytext[0] == 's' ? ESINT64VAL : EUINT64VAL;
+{NInteger}      { int len = strlen(yytext); 
+                  uint32_t numBits = (((len-1) * 64) / 19) + 1;
+                  APInt Tmp(numBits, yytext, len, 10);
+                  uint32_t minBits = Tmp.getMinSignedBits();
+                  if (minBits > 0 && minBits < numBits)
+                    Tmp.trunc(minBits);
+                  if (Tmp.getBitWidth() > 64) {
+                    llvmAsmlval.APIntVal = new APInt(Tmp);
+                    return ESAPINTVAL;
+                  } else {
+                    llvmAsmlval.SInt64Val = Tmp.getSExtValue();
+                    return ESINT64VAL;
+                  }
+                }
+
+{HexIntConstant} { int len = strlen(yytext+3) - 3;
+                   uint32_t bits = len * 4;
+                   APInt Tmp(bits, yytext+3, len, 16);
+                   uint32_t activeBits = Tmp.getActiveBits();
+                   if (activeBits > 0 && activeBits < bits)
+                     Tmp.trunc(activeBits);
+                   if (Tmp.getBitWidth() > 64) {
+                     llvmAsmlval.APIntVal = new APInt(Tmp);
+                     return yytext[0] == 's' ? ESAPINTVAL : EUAPINTVAL;
+                   } else if (yytext[0] == 's') {
+                     llvmAsmlval.SInt64Val = Tmp.getSExtValue();
+                     return ESINT64VAL;
+                   } else {
+                     llvmAsmlval.UInt64Val = Tmp.getZExtValue();
+                     return EUINT64VAL;
+                   }
                  }
 
 {LocalVarID}     {
