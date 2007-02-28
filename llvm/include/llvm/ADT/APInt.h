@@ -450,7 +450,7 @@ public:
   /// APInt. This is used in conjunction with getActiveData to extract the raw
   /// value of the APInt.
   inline uint32_t getActiveWords() const {
-    return whichWord(getActiveBits()-1);
+    return whichWord(getActiveBits()-1) + 1;
   }
 
   /// This function returns a pointer to the internal storage of the APInt. 
