@@ -1223,8 +1223,7 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
 // bytes, which is needed for tail recursion elimination and stack alignment
 // reasons.
 SDOperand
-X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
-                                        bool isFastCall) {
+X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumArgs = Op.Val->getNumValues()-1;
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -1250,17 +1249,16 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
     X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
   };
 
-  static const unsigned GPRArgRegs[][2][2] = {
-    {{ X86::AL,  X86::DL },  { X86::CL,  X86::DL }},
-    {{ X86::AX,  X86::DX },  { X86::CX,  X86::DX }},
-    {{ X86::EAX, X86::EDX }, { X86::ECX,  X86::EDX }}
+  static const unsigned GPRArgRegs[][2] = {
+    { X86::CL,  X86::DL },
+    { X86::CX,  X86::DX },
+    { X86::ECX,  X86::EDX }
   };
 
   static const TargetRegisterClass* GPRClasses[3] = {
     X86::GR8RegisterClass, X86::GR16RegisterClass, X86::GR32RegisterClass
   };
 
-  unsigned GPRInd = (isFastCall ? 1 : 0);
   for (unsigned i = 0; i < NumArgs; ++i) {
     MVT::ValueType ObjectVT = Op.getValue(i).getValueType();
     unsigned ArgIncrement = 4;
@@ -1272,8 +1270,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
 
     HowToPassCallArgument(ObjectVT,
                           true, // Use as much registers as possible
-                          NumIntRegs, NumXMMRegs,
-                          (isFastCall ? 2 : FASTCC_NUM_INT_ARGS_INREGS),
+                          NumIntRegs, NumXMMRegs, 2,
                           ObjSize, ObjIntRegs, ObjXMMRegs);
     
     if (ObjSize > 4)
@@ -1285,7 +1282,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
       case MVT::i8:
       case MVT::i16:
       case MVT::i32: {
-        unsigned RegToUse = GPRArgRegs[ObjectVT-MVT::i8][GPRInd][NumIntRegs];
+        unsigned RegToUse = GPRArgRegs[ObjectVT-MVT::i8][NumIntRegs];
         Reg = AddLiveIn(MF, RegToUse, GPRClasses[ObjectVT-MVT::i8]);
         ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
         break;
@@ -1296,7 +1293,6 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
       case MVT::v2i64:
       case MVT::v4f32:
       case MVT::v2f64: {
-        assert(!isFastCall && "Unhandled argument type!");
         Reg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs], X86::VR128RegisterClass);
         ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
         break;
@@ -1360,7 +1356,6 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG,
   case MVT::v2i64:
   case MVT::v4f32:
   case MVT::v2f64:
-    assert(!isFastCall && "Unknown result type");
     MF.addLiveOut(X86::XMM0);
     break;
   }
@@ -1386,17 +1381,15 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   unsigned NumIntRegs = 0;
   unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
 
-  static const unsigned GPRArgRegs[][2][2] = {
-    {{ X86::AL,  X86::DL },  { X86::CL,  X86::DL }},
-    {{ X86::AX,  X86::DX },  { X86::CX,  X86::DX }},
-    {{ X86::EAX, X86::EDX }, { X86::ECX,  X86::EDX }}
+  static const unsigned GPRArgRegs[][2] = {
+    { X86::CL,  X86::DL },
+    { X86::CX,  X86::DX },
+    { X86::ECX,  X86::EDX }
   };
   static const unsigned XMMArgRegs[] = {
     X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
   };
 
-  bool isFastCall = CC == CallingConv::X86_FastCall;
-  unsigned GPRInd = isFastCall ? 1 : 0;
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
 
@@ -1404,12 +1397,10 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
     default: assert(0 && "Unknown value type!");
     case MVT::i8:
     case MVT::i16:
-    case MVT::i32: {
-     unsigned MaxNumIntRegs = (isFastCall ? 2 : FASTCC_NUM_INT_ARGS_INREGS);
-     if (NumIntRegs < MaxNumIntRegs) {
+    case MVT::i32:
+     if (NumIntRegs < 2) {
        ++NumIntRegs;
        break;
-     }
      } // Fall through
     case MVT::f32:
       NumBytes += 4;
@@ -1423,7 +1414,6 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
     case MVT::v2i64:
     case MVT::v4f32:
     case MVT::v2f64:
-      assert(!isFastCall && "Unknown value type!");
       if (NumXMMRegs < 4)
         NumXMMRegs++;
       else {
@@ -1455,16 +1445,14 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i8:
     case MVT::i16:
-    case MVT::i32: {
-     unsigned MaxNumIntRegs = (isFastCall ? 2 : FASTCC_NUM_INT_ARGS_INREGS);
-     if (NumIntRegs < MaxNumIntRegs) {
-       unsigned RegToUse =
-         GPRArgRegs[Arg.getValueType()-MVT::i8][GPRInd][NumIntRegs];
-       RegsToPass.push_back(std::make_pair(RegToUse, Arg));
-       ++NumIntRegs;
-       break;
-     }
-    } // Fall through
+    case MVT::i32:
+      if (NumIntRegs < 2) {
+        unsigned RegToUse =
+          GPRArgRegs[Arg.getValueType()-MVT::i8][NumIntRegs];
+        RegsToPass.push_back(std::make_pair(RegToUse, Arg));
+        ++NumIntRegs;
+        break;
+      } // Fall through
     case MVT::f32: {
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
       PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
@@ -1485,7 +1473,6 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
     case MVT::v2i64:
     case MVT::v4f32:
     case MVT::v2f64:
-      assert(!isFastCall && "Unexpected ValueType for argument!");
       if (NumXMMRegs < 4) {
         RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
         NumXMMRegs++;
@@ -3573,8 +3560,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     default:
       assert(0 && "Unsupported calling convention");
     case CallingConv::Fast:
-      if (EnableFastCC)
-        return LowerFastCCCallTo(Op, DAG, CallingConv);
+      // TODO: Implement fastcc
       // Falls through
     case CallingConv::C:
     case CallingConv::X86_StdCall:
@@ -3601,9 +3587,8 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
     default:
       assert(0 && "Unsupported calling convention");
     case CallingConv::Fast:
-      if (EnableFastCC) {
-        return LowerFastCCArguments(Op, DAG);
-      }
+      // TODO: implement fastcc.
+      
       // Falls through
     case CallingConv::C:
       return LowerCCCArguments(Op, DAG);
@@ -3612,7 +3597,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
       return LowerCCCArguments(Op, DAG, true);
     case CallingConv::X86_FastCall:
       MF.getInfo<X86FunctionInfo>()->setDecorationStyle(FastCall);
-      return LowerFastCCArguments(Op, DAG, true);
+      return LowerFastCCArguments(Op, DAG);
     }
 }
 
