@@ -85,15 +85,11 @@ ARMRegisterInfo::ARMRegisterInfo(const TargetInstrInfo &tii,
   : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     TII(tii), STI(sti),
     FramePtr(STI.useThumbBacktraces() ? ARM::R7 : ARM::R11) {
-  RS = new RegScavenger();
+  RS = (EnableScavenging) ? new RegScavenger() : NULL;
 }
 
 ARMRegisterInfo::~ARMRegisterInfo() {
   delete RS;
-}
-
-RegScavenger *ARMRegisterInfo::getRegScavenger() const {
-  return EnableScavenging ? RS : NULL;
 }
 
 bool ARMRegisterInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
@@ -328,6 +324,10 @@ BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   if (MF.getUsedPhysregs() && !MF.isPhysRegUsed((unsigned)ARM::LR))
     Reserved.set(ARM::LR);
   return Reserved;
+}
+
+bool ARMRegisterInfo::requiresRegisterScavenging() const {
+  return EnableScavenging;
 }
 
 /// hasFP - Return true if the specified function should have a dedicated frame
@@ -616,7 +616,8 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
       .addReg(DestReg, false, false, true);
 }
 
-void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
+void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                          RegScavenger *RS) const{
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
@@ -898,9 +899,12 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
     // If the offset we have is too large to fit into the instruction, we need
     // to form it with a series of ADDri's.  Do this by taking 8-bit chunks
     // out of 'Offset'.
-    emitARMRegPlusImmediate(MBB, II, ARM::R12, FrameReg,
+    unsigned ScratchReg = RS
+      ? RS->FindUnusedReg(&ARM::GPRRegClass, true) : (unsigned)ARM::R12;
+    assert(ScratchReg != 0 && "Unable to find a free call-clobbered register!");
+    emitARMRegPlusImmediate(MBB, II, ScratchReg, FrameReg,
                             isSub ? -Offset : Offset, TII);
-    MI.getOperand(i).ChangeToRegister(ARM::R12, false, false, true);
+    MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
   }
 }
 
