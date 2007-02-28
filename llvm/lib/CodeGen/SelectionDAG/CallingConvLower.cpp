@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
@@ -34,4 +35,37 @@ void CCState::MarkAllocated(unsigned Reg) {
   if (const unsigned *RegAliases = MRI.getAliasSet(Reg))
     for (; (Reg = *RegAliases); ++RegAliases)
       UsedRegs[Reg/32] |= 1 << (Reg&31);
+}
+
+/// AnalyzeCallOperands - Analyze an ISD::CALL node, incorporating info
+/// about the passed values into this state.
+void CCState::AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn) {
+  unsigned NumOps = (TheCall->getNumOperands() - 5) / 2;
+  for (unsigned i = 0; i != NumOps; ++i) {
+    MVT::ValueType ArgVT = TheCall->getOperand(5+2*i).getValueType();
+    SDOperand FlagOp = TheCall->getOperand(5+2*i+1);
+    unsigned ArgFlags =cast<ConstantSDNode>(FlagOp)->getValue();
+    if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
+      cerr << "Call operand #" << i << " has unhandled type "
+           << MVT::getValueTypeString(ArgVT) << "\n";
+      abort();
+    }
+  }
+}
+
+/// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,
+/// incorporating info about the formals into this state.
+void CCState::AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn) {
+  unsigned NumArgs = TheArgs->getNumValues()-1;
+
+  for (unsigned i = 0; i != NumArgs; ++i) {
+    MVT::ValueType ArgVT = TheArgs->getValueType(i);
+    SDOperand FlagOp = TheArgs->getOperand(3+i);
+    unsigned ArgFlags = cast<ConstantSDNode>(FlagOp)->getValue();
+    if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
+      cerr << "Formal argument #" << i << " has unhandled type "
+           << MVT::getValueTypeString(ArgVT) << "\n";
+      abort();
+    }
+  }
 }

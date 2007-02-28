@@ -21,7 +21,9 @@
 namespace llvm {
   class MRegisterInfo;
   class TargetMachine;
-  
+  class CCState;
+  class SDNode;
+
 /// CCValAssign - Represent assignment of one arg/retval to a location.
 class CCValAssign {
 public:
@@ -91,6 +93,12 @@ public:
 };
 
 
+/// CCAssignFn - This function assigns a location for Val, updating State to
+/// reflect the change.
+typedef bool CCAssignFn(unsigned ValNo, MVT::ValueType ValVT,
+                        MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
+                        unsigned ArgFlags, CCState &State);
+
   
 /// CCState - This class holds information needed while lowering arguments and
 /// return values.  It captures which registers are already assigned and which
@@ -121,6 +129,15 @@ public:
   bool isAllocated(unsigned Reg) const {
     return UsedRegs[Reg/32] & (1 << (Reg&31));
   }
+  
+  /// AnalyzeCallOperands - Analyze an ISD::CALL node, incorporating info
+  /// about the passed values into this state.
+  void AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn);
+
+  /// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,
+  /// incorporating info about the formals into this state.
+  void AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn);
+  
 
   /// getFirstUnallocated - Return the first unallocated register in the set, or
   /// NumRegs if they are all allocated.
@@ -167,6 +184,8 @@ private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.
   void MarkAllocated(unsigned Reg);
 };
+
+
 
 } // end namespace llvm
 
