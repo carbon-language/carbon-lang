@@ -124,7 +124,7 @@ ConstantRange SCEV::getValueRange() const {
   const Type *Ty = getType();
   assert(Ty->isInteger() && "Can't get range for a non-integer SCEV!");
   // Default to a full range if no better information is available.
-  return ConstantRange(getType());
+  return ConstantRange(getBitWidth());
 }
 
 uint32_t SCEV::getBitWidth() const {
@@ -211,7 +211,7 @@ SCEVTruncateExpr::~SCEVTruncateExpr() {
 }
 
 ConstantRange SCEVTruncateExpr::getValueRange() const {
-  return getOperand()->getValueRange().truncate(getType());
+  return getOperand()->getValueRange().truncate(getBitWidth());
 }
 
 void SCEVTruncateExpr::print(std::ostream &OS) const {
@@ -237,7 +237,7 @@ SCEVZeroExtendExpr::~SCEVZeroExtendExpr() {
 }
 
 ConstantRange SCEVZeroExtendExpr::getValueRange() const {
-  return getOperand()->getValueRange().zeroExtend(getType());
+  return getOperand()->getValueRange().zeroExtend(getBitWidth());
 }
 
 void SCEVZeroExtendExpr::print(std::ostream &OS) const {
@@ -1572,7 +1572,8 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
           ConstantExpr::getBitCast(CompVal, RealTy));
         if (CompVal) {
           // Form the constant range.
-          ConstantRange CompRange(Cond, CompVal->getValue());
+          ConstantRange CompRange(
+              ICmpInst::makeConstantRange(Cond, CompVal->getValue()));
 
           SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange, 
               false /*Always treat as unsigned range*/);

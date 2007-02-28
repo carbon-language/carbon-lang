@@ -113,7 +113,8 @@ namespace {
     Value *Replacement;
   public:
     ValueInfo(const Type *Ty)
-      : Bounds(Ty->isInteger() ? Ty : Type::Int32Ty), Replacement(0) {}
+      : Bounds(Ty->isInteger() ? cast<IntegerType>(Ty)->getBitWidth()  : 32), 
+               Replacement(0) {}
 
     // getBounds() - Return the constant bounds of the value...
     const ConstantRange &getBounds() const { return Bounds; }
@@ -1153,9 +1154,10 @@ Relation::KnownResult CEE::getCmpResult(CmpInst *CI,
     //
     if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
       // Check to see if we already know the result of this comparison...
-      ConstantRange R = ConstantRange(predicate, C->getValue());
+      ICmpInst::Predicate ipred = ICmpInst::Predicate(predicate);
+      ConstantRange R = ICmpInst::makeConstantRange(ipred, C->getValue());
       ConstantRange Int = R.intersectWith(Op0VI->getBounds(),
-          ICmpInst::isSignedPredicate(ICmpInst::Predicate(predicate)));
+          ICmpInst::isSignedPredicate(ipred));
 
       // If the intersection of the two ranges is empty, then the condition
       // could never be true!
@@ -1199,10 +1201,12 @@ bool Relation::contradicts(unsigned Op,
   //
   if (ConstantInt *C = dyn_cast<ConstantInt>(Val))
     if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
-        Op <= ICmpInst::LAST_ICMP_PREDICATE)
-      if (ConstantRange(Op, C->getValue()).intersectWith(VI.getBounds(),
-          ICmpInst::isSignedPredicate(ICmpInst::Predicate(Op))).isEmptySet())
+        Op <= ICmpInst::LAST_ICMP_PREDICATE) {
+      ICmpInst::Predicate ipred = ICmpInst::Predicate(Op);
+      if (ICmpInst::makeConstantRange(ipred, C->getValue()).intersectWith(
+            VI.getBounds(), ICmpInst::isSignedPredicate(ipred)).isEmptySet())
         return true;
+    }
 
   switch (Rel) {
   default: assert(0 && "Unknown Relationship code!");
@@ -1257,10 +1261,12 @@ bool Relation::incorporate(unsigned Op, ValueInfo &VI) {
   //
   if (ConstantInt *C = dyn_cast<ConstantInt>(Val))
     if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
-        Op <= ICmpInst::LAST_ICMP_PREDICATE)
+        Op <= ICmpInst::LAST_ICMP_PREDICATE) {
+      ICmpInst::Predicate ipred = ICmpInst::Predicate(Op);
       VI.getBounds() = 
-        ConstantRange(Op, C->getValue()).intersectWith(VI.getBounds(),
-                          ICmpInst::isSignedPredicate(ICmpInst::Predicate(Op)));
+        ICmpInst::makeConstantRange(ipred, C->getValue()).intersectWith(
+            VI.getBounds(), ICmpInst::isSignedPredicate(ipred));
+    }
 
   switch (Rel) {
   default: assert(0 && "Unknown prior value!");
