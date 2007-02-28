@@ -667,123 +667,91 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
-  SmallVector<SDOperand, 8> ArgValues;
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
 
-  // Add DAG nodes to load the arguments...  On entry to a function on the X86,
-  // the stack frame looks like this:
-  //
-  // [ESP] -- return address
-  // [ESP + 4] -- first argument (leftmost lexically)
-  // [ESP + 8] -- second argument, if first argument is <= 4 bytes in size
-  //    ...
-  //
-  unsigned ArgOffset   = 0; // Frame mechanisms handle retaddr slot
-  unsigned NumSRetBytes= 0; // How much bytes on stack used for struct return
-  unsigned NumXMMRegs  = 0; // XMM regs used for parameter passing.
-  unsigned NumIntRegs  = 0; // Integer regs used for parameter passing
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(MF.getFunction()->getCallingConv(), getTargetMachine(),
+                 ArgLocs);
   
-  static const unsigned XMMArgRegs[] = {
-    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
-  };
-  static const unsigned GPRArgRegs[][3] = {
-    { X86::AL,  X86::DL,  X86::CL  },
-    { X86::AX,  X86::DX,  X86::CX  },
-    { X86::EAX, X86::EDX, X86::ECX }
-  };
-  static const TargetRegisterClass* GPRClasses[3] = {
-    X86::GR8RegisterClass, X86::GR16RegisterClass, X86::GR32RegisterClass
-  };
-  
-  // Handle regparm attribute
-  SmallVector<bool, 8> ArgInRegs(NumArgs, false);
-  SmallVector<bool, 8> SRetArgs(NumArgs, false);
-  if (!isVarArg) {
-    for (unsigned i = 0; i<NumArgs; ++i) {
-      unsigned Flags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
-      ArgInRegs[i]   = (Flags >> 1) & 1;
-      SRetArgs[i]    = (Flags >> 2) & 1;
-    }
+  for (unsigned i = 0; i != NumArgs; ++i) {
+    MVT::ValueType ArgVT = Op.getValue(i).getValueType();
+    unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
+    if (CC_X86_32_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
+      assert(0 && "Unhandled argument type!");
   }
   
-  for (unsigned i = 0; i < NumArgs; ++i) {
-    MVT::ValueType ObjectVT = Op.getValue(i).getValueType();
-    unsigned ArgIncrement = 4;
-    unsigned ObjSize = 0;
-    unsigned ObjXMMRegs = 0;
-    unsigned ObjIntRegs = 0;
-    unsigned Reg = 0;
-    SDOperand ArgValue;   
-
-    HowToPassCallArgument(ObjectVT,
-                          ArgInRegs[i],
-                          NumIntRegs, NumXMMRegs, 3,
-                          ObjSize, ObjIntRegs, ObjXMMRegs);
-
-    if (ObjSize > 4)
-      ArgIncrement = ObjSize;
-
-    if (ObjIntRegs || ObjXMMRegs) {
-      switch (ObjectVT) {
-      default: assert(0 && "Unhandled argument type!");
-      case MVT::i8:
-      case MVT::i16:
-      case MVT::i32: {          
-       unsigned RegToUse = GPRArgRegs[ObjectVT-MVT::i8][NumIntRegs];
-       Reg = AddLiveIn(MF, RegToUse, GPRClasses[ObjectVT-MVT::i8]);
-       ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
-       break;
-      }       
-      case MVT::v16i8:
-      case MVT::v8i16:
-      case MVT::v4i32:
-      case MVT::v2i64:
-      case MVT::v4f32:
-      case MVT::v2f64:
-       assert(!isStdCall && "Unhandled argument type!");
-       Reg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs], X86::VR128RegisterClass);
-       ArgValue = DAG.getCopyFromReg(Root, Reg, ObjectVT);
-       break;
+  SmallVector<SDOperand, 8> ArgValues;
+  unsigned LastVal = ~0U;
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    // TODO: If an arg is passed in two places (e.g. reg and stack), skip later
+    // places.
+    assert(VA.getValNo() != LastVal &&
+           "Don't support value assigned to multiple locs yet");
+    LastVal = VA.getValNo();
+    
+    if (VA.isRegLoc()) {
+      MVT::ValueType RegVT = VA.getLocVT();
+      TargetRegisterClass *RC;
+      if (RegVT == MVT::i32)
+        RC = X86::GR32RegisterClass;
+      else {
+        assert(MVT::isVector(RegVT));
+        RC = X86::VR128RegisterClass;
       }
-      NumIntRegs += ObjIntRegs;
-      NumXMMRegs += ObjXMMRegs;
-    }
-    if (ObjSize) {
-      // XMM arguments have to be aligned on 16-byte boundary.
-      if (ObjSize == 16)
-        ArgOffset = ((ArgOffset + 15) / 16) * 16;
-      // Create the SelectionDAG nodes corresponding to a load from this
-      // parameter.
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-      SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValue = DAG.getLoad(Op.Val->getValueType(i), Root, FIN, NULL, 0);
       
-      ArgOffset += ArgIncrement;   // Move on to the next argument.
-      if (SRetArgs[i])
-        NumSRetBytes += ArgIncrement;
+      SDOperand ArgValue = DAG.getCopyFromReg(Root, VA.getLocReg(), RegVT);
+      AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      
+      // If this is an 8 or 16-bit value, it is really passed promoted to 32
+      // bits.  Insert an assert[sz]ext to capture this, then truncate to the
+      // right size.
+      if (VA.getLocInfo() == CCValAssign::SExt)
+        ArgValue = DAG.getNode(ISD::AssertSext, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+      else if (VA.getLocInfo() == CCValAssign::ZExt)
+        ArgValue = DAG.getNode(ISD::AssertZext, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+      
+      if (VA.getLocInfo() != CCValAssign::Full)
+        ArgValue = DAG.getNode(ISD::TRUNCATE, VA.getValVT(), ArgValue);
+      
+      ArgValues.push_back(ArgValue);
+    } else {
+      assert(VA.isMemLoc());
+      
+      // Create the nodes corresponding to a load from this parameter slot.
+      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
+                                      VA.getLocMemOffset());
+      SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
+      ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
     }
-
-    ArgValues.push_back(ArgValue);
   }
+  
+  unsigned StackSize = CCInfo.getNextStackOffset();
 
   ArgValues.push_back(Root);
 
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (isVarArg)
-    VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
+    VarArgsFrameIndex = MFI->CreateFixedObject(1, StackSize);
 
   if (isStdCall && !isVarArg) {
-    BytesToPopOnReturn  = ArgOffset;    // Callee pops everything..
+    BytesToPopOnReturn  = StackSize;    // Callee pops everything..
     BytesCallerReserves = 0;
   } else {
-    BytesToPopOnReturn  = NumSRetBytes; // Callee pops hidden struct pointer.
-    BytesCallerReserves = ArgOffset;
+    BytesToPopOnReturn  = 0; // Callee pops hidden struct pointer.
+    
+    // If this is an sret function, the return should pop the hidden pointer.
+    if (NumArgs && (cast<ConstantSDNode>(Op.getOperand(3))->getValue() & 4))
+      BytesToPopOnReturn = 4;  
+    
+    BytesCallerReserves = StackSize;
   }
   
   RegSaveFrameIndex = 0xAAAAAAA;  // X86-64 only.
   ReturnAddrIndex = 0;            // No return address slot generated yet.
-
 
   MF.getInfo<X86FunctionInfo>()->setBytesToPopOnReturn(BytesToPopOnReturn);
 
