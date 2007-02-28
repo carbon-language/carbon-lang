@@ -958,58 +958,19 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand Callee    = Op.getOperand(4);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
-  // Count how many bytes are to be pushed on the stack.
-  unsigned NumBytes = 0;
-
-  // Keep track of the number of integer regs passed so far.  This can be either
-  // 0 (neither EAX/ECX or EDX used), 1 (EAX/ECX is used) or 2 (EAX/ECX and EDX
-  // are both used).
-  unsigned NumIntRegs = 0;
-  unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
-
-  static const unsigned GPRArgRegs[][2] = {
-    { X86::CL,  X86::DL },
-    { X86::CX,  X86::DX },
-    { X86::ECX,  X86::EDX }
-  };
-  static const unsigned XMMArgRegs[] = {
-    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
-  };
-
+  
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, getTargetMachine(), ArgLocs);
+  
   for (unsigned i = 0; i != NumOps; ++i) {
-    SDOperand Arg = Op.getOperand(5+2*i);
-
-    switch (Arg.getValueType()) {
-    default: assert(0 && "Unknown value type!");
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-     if (NumIntRegs < 2) {
-       ++NumIntRegs;
-       break;
-     } // Fall through
-    case MVT::f32:
-      NumBytes += 4;
-      break;
-    case MVT::f64:
-      NumBytes += 8;
-      break;
-    case MVT::v16i8:
-    case MVT::v8i16:
-    case MVT::v4i32:
-    case MVT::v2i64:
-    case MVT::v4f32:
-    case MVT::v2f64:
-      if (NumXMMRegs < 4)
-        NumXMMRegs++;
-      else {
-        // XMM arguments have to be aligned on 16-byte boundary.
-        NumBytes = ((NumBytes + 15) / 16) * 16;
-        NumBytes += 16;
-      }
-      break;
-    }
+    MVT::ValueType ArgVT = Op.getOperand(5+2*i).getValueType();
+    unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
+    if (CC_X86_32_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
+      assert(0 && "Unhandled argument type!");
   }
+  
+  // Get a count of how many bytes are to be pushed on the stack.
+  unsigned NumBytes = CCInfo.getNextStackOffset();
 
   // Make sure the instruction takes 8n+4 bytes to make sure the start of the
   // arguments and the arguments after the retaddr has been pushed are aligned.
@@ -1018,59 +979,41 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
-  // Arguments go on the stack in reverse order, as specified by the ABI.
-  unsigned ArgOffset = 0;
-  NumIntRegs = 0;
+  
   SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
   SmallVector<SDOperand, 8> MemOpChains;
-  SDOperand StackPtr = DAG.getRegister(X86StackPtr, getPointerTy());
-  for (unsigned i = 0; i != NumOps; ++i) {
-    SDOperand Arg = Op.getOperand(5+2*i);
-
-    switch (Arg.getValueType()) {
-    default: assert(0 && "Unexpected ValueType for argument!");
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-      if (NumIntRegs < 2) {
-        unsigned RegToUse =
-          GPRArgRegs[Arg.getValueType()-MVT::i8][NumIntRegs];
-        RegsToPass.push_back(std::make_pair(RegToUse, Arg));
-        ++NumIntRegs;
+  
+  SDOperand StackPtr;
+  
+  // Walk the register/memloc assignments, inserting copies/loads.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
+    
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+      default: assert(0 && "Unknown loc info!");
+      case CCValAssign::Full: break;
+      case CCValAssign::SExt:
+        Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
         break;
-      } // Fall through
-    case MVT::f32: {
-      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+      case CCValAssign::ZExt:
+        Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
+        break;
+      case CCValAssign::AExt:
+        Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
+        break;
+    }
+    
+    if (VA.isRegLoc()) {
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+    } else {
+      assert(VA.isMemLoc());
+      if (StackPtr.Val == 0)
+        StackPtr = DAG.getRegister(getStackPtrReg(), getPointerTy());
+      SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
       PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
       MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
-      ArgOffset += 4;
-      break;
-    }
-    case MVT::f64: {
-      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
-      MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
-      ArgOffset += 8;
-      break;
-    }
-    case MVT::v16i8:
-    case MVT::v8i16:
-    case MVT::v4i32:
-    case MVT::v2i64:
-    case MVT::v4f32:
-    case MVT::v2f64:
-      if (NumXMMRegs < 4) {
-        RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
-        NumXMMRegs++;
-      } else {
-        // XMM arguments have to be aligned on 16-byte boundary.
-        ArgOffset = ((ArgOffset + 15) / 16) * 16;
-        SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-        PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
-        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
-        ArgOffset += 16;
-      }
-      break;
     }
   }
 
