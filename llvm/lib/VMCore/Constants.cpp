@@ -216,6 +216,10 @@ ConstantInt *ConstantInt::get(const Type *Ty, const APInt& V) {
   return Slot = new ConstantInt(ITy, V);
 }
 
+ConstantInt *ConstantInt::get(const APInt &V) {
+  return ConstantInt::get(IntegerType::get(V.getBitWidth()), V);
+}
+
 //===----------------------------------------------------------------------===//
 //                                ConstantFP
 //===----------------------------------------------------------------------===//

@@ -97,6 +97,10 @@ public:
   static ConstantInt *get(const Type *Ty, int64_t V);
   static ConstantInt *get(const Type *Ty, const APInt& V);
 
+  /// Return a ConstantInt with the specified value and an implied Type. The
+  /// type is the integer type that corresponds to the bit width of the value.
+  static ConstantInt *get(const APInt &V);
+
   /// getType - Specialize the getType() method to always return an IntegerType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
