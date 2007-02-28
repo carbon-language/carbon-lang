@@ -33,6 +33,8 @@ namespace clang {
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
+  Preprocessor &PP;
+  
   ASTContext &Context;
   
   /// CurFunctionDecl - If inside of a function body, this contains a pointer to
@@ -45,14 +47,14 @@ class Sema : public Action {
   /// ASTStreamer.
   std::vector<Decl*> &LastInGroupList;
 public:
-  Sema(ASTContext &ctx, std::vector<Decl*> &prevInGroup)
-    : Context(ctx), CurFunctionDecl(0), LastInGroupList(prevInGroup) {
-  }
+  Sema(Preprocessor &pp, std::vector<Decl*> &prevInGroup);
   
   const LangOptions &getLangOptions() const;
   
   void Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());
+  
+  void PrintStats();
   
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.

@@ -21,7 +21,6 @@
 
 namespace llvm {
 namespace clang {
-  class Preprocessor;
   class TargetInfo;
   
 /// ASTContext - This class holds long-lived AST nodes (such as types and
@@ -33,7 +32,6 @@ class ASTContext {
   FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   FoldingSet<FunctionTypeProto> FunctionTypeProtos;
 public:
-  Preprocessor &PP;
   TargetInfo &Target;
   Builtin::Context BuiltinInfo;
 
@@ -47,7 +45,10 @@ public:
   TypeRef FloatTy, DoubleTy, LongDoubleTy;
   TypeRef FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   
-  ASTContext(Preprocessor &pp);
+  ASTContext(TargetInfo &t, IdentifierTable &idents) : Target(t) {
+    InitBuiltinTypes();
+    BuiltinInfo.InitializeBuiltins(idents, Target);
+  }    
   ~ASTContext();
   
   void PrintStats() const;

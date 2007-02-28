@@ -16,7 +16,7 @@
 
 namespace llvm {
 namespace clang {
-  class ASTContext;
+  class Preprocessor;
   class Decl;
   
   /// ASTStreamerTy - This is an opaque type used to reference ASTStreamer
@@ -25,7 +25,7 @@ namespace clang {
   
   /// ASTStreamer_Init - Create an ASTStreamer with the specified ASTContext
   /// and FileID.
-  ASTStreamerTy *ASTStreamer_Init(ASTContext &Context, unsigned MainFileID);
+  ASTStreamerTy *ASTStreamer_Init(Preprocessor &pp, unsigned MainFileID);
   
   /// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration.
   /// This returns null at end of file.

@@ -101,7 +101,7 @@ Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
     // Get the spelling of the token, which eliminates trigraphs, etc.  We know
     // that ThisTokBuf points to a buffer that is big enough for the whole token
     // and 'spelled' tokens can only shrink.
-    unsigned ThisTokLen = Context.PP.getSpelling(StringToks[i], ThisTokBuf);
+    unsigned ThisTokLen = PP.getSpelling(StringToks[i], ThisTokBuf);
     const char *ThisTokEnd = ThisTokBuf+ThisTokLen-1;  // Skip end quote.
     
     // TODO: Input character set mapping support.
@@ -196,7 +196,7 @@ Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
       // Otherwise, these are not valid escapes.
       case '(': case '{': case '[': case '%':
         // GCC accepts these as extensions.  We warn about them as such though.
-        if (!Context.PP.getLangOptions().NoExtensions) {
+        if (!PP.getLangOptions().NoExtensions) {
           Diag(StringToks[i].getLocation(), diag::ext_nonstandard_escape,
                std::string()+(char)ResultChar);
           break;

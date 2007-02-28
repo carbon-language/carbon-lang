@@ -18,15 +18,24 @@
 using namespace llvm;
 using namespace clang;
 
+Sema::Sema(Preprocessor &pp, std::vector<Decl*> &prevInGroup)
+  : PP(pp), 
+    Context(*new ASTContext(pp.getTargetInfo(), pp.getIdentifierTable())),
+    CurFunctionDecl(0), LastInGroupList(prevInGroup) {
+}
+
+void Sema::PrintStats() { 
+  Context.PrintStats(); 
+}
 
 //===----------------------------------------------------------------------===//
 // Helper functions.
 //===----------------------------------------------------------------------===//
 
 void Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
-  Context.PP.Diag(Loc, DiagID, Msg);
+  PP.Diag(Loc, DiagID, Msg);
 }
 
 const LangOptions &Sema::getLangOptions() const {
-  return Context.PP.getLangOptions();
+  return PP.getLangOptions();
 }

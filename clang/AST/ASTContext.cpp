@@ -18,12 +18,6 @@
 using namespace llvm;
 using namespace clang;
 
-ASTContext::ASTContext(Preprocessor &pp)
-  : PP(pp), Target(pp.getTargetInfo()) {
-  InitBuiltinTypes();
-  BuiltinInfo.InitializeBuiltins(PP.getIdentifierTable(), Target);
-}
-
 ASTContext::~ASTContext() {
   // Deallocate all the types.
   while (!Types.empty()) {
