@@ -245,8 +245,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 //variable locals
 //<- SP
 
-void
-AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
+void AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                            RegScavenger *RS) const {
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();

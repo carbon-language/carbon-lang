@@ -57,7 +57,8 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
 
-  void eliminateFrameIndex(MachineBasicBlock::iterator II) const;
+  void eliminateFrameIndex(MachineBasicBlock::iterator II,
+                           RegScavenger *RS = NULL) const;
 
   //void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 

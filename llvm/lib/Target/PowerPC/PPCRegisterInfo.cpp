@@ -623,8 +623,8 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   MBB.erase(II);
 }
 
-void
-PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
+void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                          RegScavenger *RS) const {
   // Get the instruction.
   MachineInstr &MI = *II;
   // Get the instruction's basic block.

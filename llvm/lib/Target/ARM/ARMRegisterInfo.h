@@ -38,8 +38,6 @@ public:
 
   ~ARMRegisterInfo();
 
-  RegScavenger *getRegScavenger() const;
-
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// ARM::LR, return the number that it corresponds to (e.g. 14).
   static unsigned getRegisterNumbering(unsigned RegEnum);
@@ -76,13 +74,16 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
+  bool requiresRegisterScavenging() const;
+
   bool hasFP(const MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
 
-  void eliminateFrameIndex(MachineBasicBlock::iterator II) const;
+  void eliminateFrameIndex(MachineBasicBlock::iterator II,
+                           RegScavenger *RS = NULL) const;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const;
 

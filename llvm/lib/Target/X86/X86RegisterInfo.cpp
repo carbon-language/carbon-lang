@@ -968,7 +968,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
-void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
+void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                          RegScavenger *RS) const{
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
