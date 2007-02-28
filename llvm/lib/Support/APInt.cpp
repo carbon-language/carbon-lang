@@ -896,7 +896,7 @@ double APInt::roundToDouble(bool isSigned) const {
 }
 
 // Truncate to new width.
-void APInt::trunc(uint32_t width) {
+APInt &APInt::trunc(uint32_t width) {
   assert(width < BitWidth && "Invalid APInt Truncate request");
   assert(width >= IntegerType::MIN_INT_BITS && "Can't truncate to 0 bits");
   uint32_t wordsBefore = getNumWords();
@@ -915,17 +915,17 @@ void APInt::trunc(uint32_t width) {
       pVal = newVal;
     }
   }
-  clearUnusedBits();
+  return clearUnusedBits();
 }
 
 // Sign extend to a new width.
-void APInt::sext(uint32_t width) {
+APInt &APInt::sext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt SignExtend request");
   assert(width <= IntegerType::MAX_INT_BITS && "Too many bits");
   // If the sign bit isn't set, this is the same as zext.
   if (!isNegative()) {
     zext(width);
-    return;
+    return *this;
   }
 
   // The sign bit is set. First, get some facts
@@ -944,7 +944,7 @@ void APInt::sext(uint32_t width) {
     else
       pVal[wordsBefore-1] |= mask;
     clearUnusedBits();
-    return;
+    return *this;
   }
 
   uint64_t mask = wordBits == 0 ? 0 : ~0ULL << wordBits;
@@ -961,11 +961,11 @@ void APInt::sext(uint32_t width) {
   if (wordsBefore != 1)
     delete [] pVal;
   pVal = newVal;
-  clearUnusedBits();
+  return clearUnusedBits();
 }
 
 //  Zero extend to a new width.
-void APInt::zext(uint32_t width) {
+APInt &APInt::zext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt ZeroExtend request");
   assert(width <= IntegerType::MAX_INT_BITS && "Too many bits");
   uint32_t wordsBefore = getNumWords();
@@ -982,6 +982,7 @@ void APInt::zext(uint32_t width) {
       delete [] pVal;
     pVal = newVal;
   }
+  return *this;
 }
 
 /// Arithmetic right-shift this APInt by shiftAmt.
