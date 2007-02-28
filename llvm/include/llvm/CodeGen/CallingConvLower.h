@@ -130,13 +130,21 @@ public:
     return UsedRegs[Reg/32] & (1 << (Reg&31));
   }
   
+  /// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,
+  /// incorporating info about the formals into this state.
+  void AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn);
+  
+  /// AnalyzeReturn - Analyze the returned values of an ISD::RET node,
+  /// incorporating info about the result values into this state.
+  void AnalyzeReturn(SDNode *TheRet, CCAssignFn Fn);
+  
   /// AnalyzeCallOperands - Analyze an ISD::CALL node, incorporating info
   /// about the passed values into this state.
   void AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn);
 
-  /// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,
-  /// incorporating info about the formals into this state.
-  void AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn);
+  /// AnalyzeCallResult - Analyze the return values of an ISD::CALL node,
+  /// incorporating info about the passed values into this state.
+  void AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn);
   
 
   /// getFirstUnallocated - Return the first unallocated register in the set, or

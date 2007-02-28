@@ -37,6 +37,39 @@ void CCState::MarkAllocated(unsigned Reg) {
       UsedRegs[Reg/32] |= 1 << (Reg&31);
 }
 
+/// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,
+/// incorporating info about the formals into this state.
+void CCState::AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn) {
+  unsigned NumArgs = TheArgs->getNumValues()-1;
+  
+  for (unsigned i = 0; i != NumArgs; ++i) {
+    MVT::ValueType ArgVT = TheArgs->getValueType(i);
+    SDOperand FlagOp = TheArgs->getOperand(3+i);
+    unsigned ArgFlags = cast<ConstantSDNode>(FlagOp)->getValue();
+    if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
+      cerr << "Formal argument #" << i << " has unhandled type "
+           << MVT::getValueTypeString(ArgVT) << "\n";
+      abort();
+    }
+  }
+}
+
+/// AnalyzeReturn - Analyze the returned values of an ISD::RET node,
+/// incorporating info about the result values into this state.
+void CCState::AnalyzeReturn(SDNode *TheRet, CCAssignFn Fn) {
+  // Determine which register each value should be copied into.
+  for (unsigned i = 0, e = TheRet->getNumOperands() / 2; i != e; ++i) {
+    MVT::ValueType VT = TheRet->getOperand(i*2+1).getValueType();
+    if (Fn(i, VT, VT, CCValAssign::Full,
+           cast<ConstantSDNode>(TheRet->getOperand(i*2+2))->getValue(), *this)){
+      cerr << "Return operand #" << i << " has unhandled type "
+           << MVT::getValueTypeString(VT) << "\n";
+      abort();
+    }
+  }
+}
+
+
 /// AnalyzeCallOperands - Analyze an ISD::CALL node, incorporating info
 /// about the passed values into this state.
 void CCState::AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn) {
@@ -53,19 +86,16 @@ void CCState::AnalyzeCallOperands(SDNode *TheCall, CCAssignFn Fn) {
   }
 }
 
-/// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,
-/// incorporating info about the formals into this state.
-void CCState::AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn) {
-  unsigned NumArgs = TheArgs->getNumValues()-1;
-
-  for (unsigned i = 0; i != NumArgs; ++i) {
-    MVT::ValueType ArgVT = TheArgs->getValueType(i);
-    SDOperand FlagOp = TheArgs->getOperand(3+i);
-    unsigned ArgFlags = cast<ConstantSDNode>(FlagOp)->getValue();
-    if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
-      cerr << "Formal argument #" << i << " has unhandled type "
-           << MVT::getValueTypeString(ArgVT) << "\n";
+/// AnalyzeCallResult - Analyze the return values of an ISD::CALL node,
+/// incorporating info about the passed values into this state.
+void CCState::AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn) {
+  for (unsigned i = 0, e = TheCall->getNumValues() - 1; i != e; ++i) {
+    MVT::ValueType VT = TheCall->getValueType(i);
+    if (Fn(i, VT, VT, CCValAssign::Full, 0, *this)) {
+      cerr << "Call result #" << i << " has unhandled type "
+           << MVT::getValueTypeString(VT) << "\n";
       abort();
     }
   }
 }
+
