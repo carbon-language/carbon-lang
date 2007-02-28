@@ -925,6 +925,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
   llvm::GlobalValue::LinkageTypes         Linkage;
   llvm::GlobalValue::VisibilityTypes      Visibility;
   llvm::FunctionType::ParameterAttributes ParamAttrs;
+  llvm::APInt                       *APIntVal;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
   int                               SIntVal;
@@ -977,6 +978,12 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 // EUINT64VAL - A positive number within uns. long long range
 %token <UInt64Val> EUINT64VAL
+
+// ESAPINTVAL - A negative number with arbitrary precision 
+%token <APIntVal>  ESAPINTVAL
+
+// EUAPINTVAL - A positive number with arbitrary precision 
+%token <APIntVal>  EUAPINTVAL
 
 %token  <UIntVal>   LOCALVAL_ID GLOBALVAL_ID  // %123 @123
 %token  <FPVal>     FPVAL     // Float or Double constant
@@ -1704,13 +1711,45 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   | IntType ESINT64VAL {      // integral constants
     if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type");
-    $$ = ConstantInt::get($1, $2);
+    APInt Val(64, $2);
+    uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
+    if (BitWidth > 64)
+      Val.sext(BitWidth);
+    else if (BitWidth < 64)
+      Val.trunc(BitWidth);
+    $$ = ConstantInt::get($1, Val);
+    CHECK_FOR_ERROR
+  }
+  | IntType ESAPINTVAL {      // arbitrary precision integer constants
+    uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
+    if ($2->getBitWidth() > BitWidth) {
+      GEN_ERROR("Constant value does not fit in type");
+    } else if ($2->getBitWidth() < BitWidth)
+      $2->sext(BitWidth);
+    else if ($2->getBitWidth() > BitWidth)
+      $2->trunc(BitWidth);
+    $$ = ConstantInt::get($1, *$2);
+    delete $2;
     CHECK_FOR_ERROR
   }
   | IntType EUINT64VAL {      // integral constants
     if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type");
-    $$ = ConstantInt::get($1, $2);
+    uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
+    APInt Val(BitWidth, $2);
+    $$ = ConstantInt::get($1, Val);
+    CHECK_FOR_ERROR
+  }
+  | IntType EUAPINTVAL {      // arbitrary precision integer constants
+    uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
+    if ($2->getBitWidth() > BitWidth) {
+      GEN_ERROR("Constant value does not fit in type");
+    } else if ($2->getBitWidth() < BitWidth)
+      $2->zext(BitWidth);
+    else if ($2->getBitWidth() > BitWidth)
+      $2->trunc(BitWidth);
+    $$ = ConstantInt::get($1, *$2);
+    delete $2;
     CHECK_FOR_ERROR
   }
   | INTTYPE TRUETOK {                      // Boolean constants
