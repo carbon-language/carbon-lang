@@ -2,10 +2,10 @@
 
 target triple = "i686-pc-linux-gnu"
 
-declare fastcc void %func(int *%X, long %Y)
+declare x86_fastcallcc void %func(int *%X, long %Y)
 
-fastcc void %caller(int, long) {
+x86_fastcallcc void %caller(int, long) {
 	%X = alloca int
-	call fastcc void %func(int* %X, long 0)   ;; not a tail call
+	call x86_fastcallcc void %func(int* %X, long 0)   ;; not a tail call
 	ret void
 }

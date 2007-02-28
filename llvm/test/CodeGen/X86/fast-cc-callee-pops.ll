@@ -2,6 +2,6 @@
 
 ; Check that a fastcc function pops its stack variables before returning.
 
-cc65 void %func(long %X, long %Y, float %G, double %Z) {
+x86_fastcallcc void %func(long %X, long %Y, float %G, double %Z) {
 	ret void
 }
