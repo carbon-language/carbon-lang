@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep 'add r0, r0, r1, lsl r2' &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep 'bic r0, r0, r1, asr r2'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep add | grep lsl &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep bic | grep asr
 
 int %test1(int %X, int %Y, ubyte %sh) {
   %A = shl int %Y, ubyte %sh
