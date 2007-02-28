@@ -12,6 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+/// CCMatchIfSubtarget - Match if the current subtarget has a feature F.
+class CCMatchIfSubtarget<string F, CCAction A>
+ : CCMatchIf<!strconcat("State.getTarget().getSubtarget<X86Subtarget>().",F),A>;
+
 //===----------------------------------------------------------------------===//
 // Return Value Calling Conventions
 //===----------------------------------------------------------------------===//
@@ -42,8 +46,8 @@ def RetCC_X86_32_C : CallingConv<[
 def RetCC_X86_32_Fast : CallingConv<[
   // The X86-32 fastcc returns FP values in XMM0 if the target has SSE2,
   // otherwise it is the the C calling conventions.
-  CCMatchType<[f32], CCMatchIf<"Subtarget->hasSSE2()", CCAssignToReg<[XMM0]>>>,
-  CCMatchType<[f64], CCMatchIf<"Subtarget->hasSSE2()", CCAssignToReg<[XMM0]>>>,
+  CCMatchType<[f32], CCMatchIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0]>>>,
+  CCMatchType<[f64], CCMatchIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0]>>>,
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
@@ -73,7 +77,7 @@ def RetCC_X86_64 : CallingConv<[
 
 // This is the return-value convention used for the entire X86 backend.
 def RetCC_X86 : CallingConv<[
-  CCMatchIf<"Subtarget->is64Bit()", CCDelegateTo<RetCC_X86_64>>,
+  CCMatchIfSubtarget<"is64Bit()", CCDelegateTo<RetCC_X86_64>>,
   CCDelegateTo<RetCC_X86_32>
 ]>;
 
