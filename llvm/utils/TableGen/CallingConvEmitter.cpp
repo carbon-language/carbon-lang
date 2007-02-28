@@ -26,9 +26,11 @@ void CallingConvEmitter::run(std::ostream &O) {
   // other.
   for (unsigned i = 0, e = CCs.size(); i != e; ++i) {
     O << "static bool " << CCs[i]->getName()
-      << "(unsigned ValNo, MVT::ValueType ValVT, MVT::ValueType LocVT,\n"
+      << "(unsigned ValNo, MVT::ValueType ValVT,\n"
       << std::string(CCs[i]->getName().size()+13, ' ')
-      << "CCValAssign::LocInfo LocInfo, unsigned ArgFlags, CCState &State);\n";
+      << "MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,\n"
+      << std::string(CCs[i]->getName().size()+13, ' ')
+      << "unsigned ArgFlags, CCState &State);\n";
   }
   
   // Emit each calling convention description in full.
@@ -42,11 +44,11 @@ void CallingConvEmitter::EmitCallingConv(Record *CC, std::ostream &O) {
   Counter = 0;
 
   O << "\n\nstatic bool " << CC->getName()
-    << "(unsigned ValNo, MVT::ValueType ValVT, MVT::ValueType LocVT,\n"
+    << "(unsigned ValNo, MVT::ValueType ValVT,\n"
     << std::string(CC->getName().size()+13, ' ')
-    << "CCValAssign::LocInfo LocInfo, "
+    << "MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,\n"
+    << std::string(CC->getName().size()+13, ' ')
     << "unsigned ArgFlags, CCState &State) {\n";
-      
   // Emit all of the actions, in order.
   for (unsigned i = 0, e = CCActions->getSize(); i != e; ++i) {
     O << "\n";
@@ -68,7 +70,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
       ListInit *VTs = Action->getValueAsListInit("VTs");
       for (unsigned i = 0, e = VTs->getSize(); i != e; ++i) {
         Record *VT = VTs->getElementAsRecord(i);
-        if (i != 0) O << " || \n    " << IndentStr;
+        if (i != 0) O << " ||\n    " << IndentStr;
         O << "LocVT == " << getEnumName(getValueType(VT));
       }
 
@@ -115,11 +117,14 @@ void CallingConvEmitter::EmitAction(Record *Action,
       
       O << IndentStr << "unsigned Offset" << ++Counter
         << " = State.AllocateStack(" << Size << ", " << Align << ");\n";
-      O << IndentStr << "State.addLoc(CCValAssign::getMem(ValNo, ArgVT, Offset"
+      O << IndentStr << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
         << Counter << ", LocVT, LocInfo));\n";
       O << IndentStr << "return false;\n";
     } else if (Action->isSubClassOf("CCPromoteToType")) {
-      
+      Record *DestTy = Action->getValueAsDef("DestTy");
+      O << IndentStr << "LocVT = " << getEnumName(getValueType(DestTy)) <<";\n";
+      O << IndentStr << "LocInfo = (ArgFlags & 1) ? CCValAssign::SExt"
+        << " : CCValAssign::ZExt;\n";
     } else {
       Action->dump();
       throw "Unknown CCAction!";
