@@ -1275,10 +1275,18 @@ field definitions, based on type:</p>
 <ul>
   <li><b>Bool</b>. This is written as an <a href="#uint32_vbr">uint32_vbr</a> of
   value 1U or 0U.</li>
-  <li><b>Signed Integers (sbyte,short,int,long)</b>. These are written as an 
-  <a href="#int64_vbr">int64_vbr</a> with the corresponding value.</li>
-  <li><b>Unsigned Integers (ubyte,ushort,uint,ulong)</b>. These are written as 
-  an <a href="#uint64_vbr">uint64_vbr</a> with the corresponding value. </li>
+  <li><b>Signed Integers (sbyte,short,int,long) &le; 64 bits</b>. These are 
+  written as an <a href="#int64_vbr">int64_vbr</a> with the corresponding 
+  value.</li>
+  <li><b>Unsigned Integers (ubyte,ushort,uint,ulong) &le; 64 bits</b>. These 
+  are written as an <a href="#uint64_vbr">uint64_vbr</a> with the corresponding
+  value. </li>
+  <li><b>Integers &gt; 64 bits</b>. These are written as a length followed by a
+  series of 64-bit words. The length specifies the number of words that follow.
+  Any zero-valued high order words are elided. Words with the least significant
+  bits are written to the lowest file offsets (little endian). The length is 
+  written as an <a href="#uint32_vbr">uint32_vbr</a>. Each word of the value
+  is written as an <a href="#uint64_vbr">uint64_vbr</a>.</li>
   <li><b>Floating Point</b>. Both the float and double types are written 
   literally in binary format.</li>
   <li><b>Arrays</b>. Arrays are written simply as a list of 
