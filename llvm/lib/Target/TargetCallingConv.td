@@ -21,20 +21,25 @@ class CCPredicateAction<CCAction A> : CCAction {
   CCAction SubAction = A;
 }
 
-/// CCMatchType - If the current argument is one of the specified types, apply
+/// CCIfType - If the current argument is one of the specified types, apply
 /// Action A.
-class CCMatchType<list<ValueType> vts, CCAction A> : CCPredicateAction<A> {
+class CCIfType<list<ValueType> vts, CCAction A> : CCPredicateAction<A> {
   list<ValueType> VTs = vts;
 }
 
-/// CCMatchIf - If the predicate matches, apply A.
-class CCMatchIf<string predicate, CCAction A> : CCPredicateAction<A> {
+/// CCIf - If the predicate matches, apply A.
+class CCIf<string predicate, CCAction A> : CCPredicateAction<A> {
   string Predicate = predicate;
 }
 
-/// CCMatchIfCC - Match of the current calling convention is 'CC'.
-class CCMatchIfCC<string CC, CCAction A>
-  : CCMatchIf<!strconcat("State.getCallingConv() == ", CC), A> {}
+/// CCIfCC - Match of the current calling convention is 'CC'.
+class CCIfCC<string CC, CCAction A>
+  : CCIf<!strconcat("State.getCallingConv() == ", CC), A> {}
+
+/// CCIfInReg - If this argument is marked with the 'inreg' attribute, apply
+/// the specified action.
+class CCIfInReg<CCAction A> : CCIf<"ArgFlags & 2", A> {}
+
 
 /// CCAssignToReg - This action matches if there is a register in the specified
 /// list that is still available.  If so, it assigns the value to the first
