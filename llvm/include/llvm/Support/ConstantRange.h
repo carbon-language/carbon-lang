@@ -36,17 +36,15 @@
 #include <iosfwd>
 
 namespace llvm {
-class Constant;
-class Type;
 
 class ConstantRange {
   APInt Lower, Upper;
   static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
                                          const ConstantRange &RHS, bool sign);
  public:
-  /// Initialize a full (the default) or empty set for the specified type.
+  /// Initialize a full (the default) or empty set for the specified bit width.
   ///
-  ConstantRange(const Type *Ty, bool isFullSet = true);
+  ConstantRange(uint32_t BitWidth, bool isFullSet = true);
 
   /// Initialize a range to hold the single specified value.
   ///
@@ -57,12 +55,6 @@ class ConstantRange {
   /// assert out if the two APInt's are not the same bit width.
   ConstantRange(const APInt& Lower, const APInt& Upper);
 
-  /// Initialize a set of values that all satisfy the predicate with C. The
-  /// predicate should be either an ICmpInst::Predicate or FCmpInst::Predicate
-  /// value.
-  /// @brief Get a range for a relation with a constant integral.
-  ConstantRange(unsigned short predicate, const APInt &C);
-
   /// getLower - Return the lower value for this range...
   ///
   const APInt &getLower() const { return Lower; }
@@ -71,9 +63,9 @@ class ConstantRange {
   ///
   const APInt &getUpper() const { return Upper; } 
 
-  /// getType - Return the LLVM data type of this range.
+  /// getBitWidth - get the bit width of this ConstantRange
   ///
-  const Type *getType() const;
+  uint32_t getBitWidth() const { return Lower.getBitWidth(); }
 
   /// isFullSet - Return true if this set contains all of the elements possible
   /// for this data-type
@@ -144,14 +136,14 @@ class ConstantRange {
   /// zeroExtend - Return a new range in the specified integer type, which must
   /// be strictly larger than the current type.  The returned range will
   /// correspond to the possible range of values if the source range had been
-  /// zero extended.
-  ConstantRange zeroExtend(const Type *Ty) const;
+  /// zero extended to BitWidth.
+  ConstantRange zeroExtend(uint32_t BitWidth) const;
 
   /// truncate - Return a new range in the specified integer type, which must be
   /// strictly smaller than the current type.  The returned range will
   /// correspond to the possible range of values if the source range had been
   /// truncated to the specified type.
-  ConstantRange truncate(const Type *Ty) const;
+  ConstantRange truncate(uint32_t BitWidth) const;
 
   /// print - Print out the bounds to a stream...
   ///
