@@ -107,4 +107,32 @@ def CC_X86_64_C : CallingConv<[
 ]>;
 
 
+//===----------------------------------------------------------------------===//
+// X86 C Calling Convention
+//===----------------------------------------------------------------------===//
+
+def CC_X86_32_C : CallingConv<[
+  // Promote i8/i16 arguments to i32.
+  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  
+  // The first 3 integer arguments, if marked 'inreg', are passed in integer
+  // registers.
+  CCIfInReg<CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>>,
+  
+  // Other Integer/Float values get stored in stack slots that are 4 bytes in
+  // size and 4-byte aligned.
+  CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
+  
+  // Doubles get 8-byte slots that are 4-byte aligned.
+  CCIfType<[f64], CCAssignToStack<8, 4>>,
+  
+  // The first 4 Vector arguments are passed in XMM registers.
+  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+              CCAssignToReg<[XMM0, XMM1, XMM2, XMM3]>>,
+
+  // Other vectors get 16-byte stack slots that are 16-byte aligned.
+  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToStack<16, 16>>
+]>;
+
+
 

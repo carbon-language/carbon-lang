@@ -641,14 +641,6 @@ HowToPassCallArgument(MVT::ValueType ObjectVT,
    else
      ObjSize = 4;
    break;
-  case MVT::i64:
-   if (ArgInReg && (NumIntRegs+2 <= MaxNumIntRegs)) {
-     ObjIntRegs = 2;
-   } else if (ArgInReg && (NumIntRegs+1 <= MaxNumIntRegs)) {
-     ObjIntRegs = 1;
-     ObjSize = 4;
-   } else
-     ObjSize = 8;
   case MVT::f32:
     ObjSize = 4;
     break;
@@ -808,121 +800,62 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand Callee    = Op.getOperand(4);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
-  static const unsigned XMMArgRegs[] = {
-    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
-  };
-  static const unsigned GPR32ArgRegs[] = {
-    X86::EAX, X86::EDX,  X86::ECX
-  };
-
-  // Count how many bytes are to be pushed on the stack.
-  unsigned NumBytes   = 0;
-  // Keep track of the number of integer regs passed so far.
-  unsigned NumIntRegs = 0;
-  // Keep track of the number of XMM regs passed so far.
-  unsigned NumXMMRegs = 0;
-  // How much bytes on stack used for struct return
-  unsigned NumSRetBytes= 0; 
-
-  // Handle regparm attribute
-  SmallVector<bool, 8> ArgInRegs(NumOps, false);
-  SmallVector<bool, 8> SRetArgs(NumOps, false);
-  for (unsigned i = 0; i<NumOps; ++i) {
-    unsigned Flags =
-      dyn_cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    ArgInRegs[i] = (Flags >> 1) & 1;
-    SRetArgs[i]  = (Flags >> 2) & 1;
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, getTargetMachine(), ArgLocs);
+  
+  for (unsigned i = 0; i != NumOps; ++i) {
+    MVT::ValueType ArgVT = Op.getOperand(5+2*i).getValueType();
+    unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
+    if (CC_X86_32_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
+      assert(0 && "Unhandled argument type!");
   }
   
-  // Calculate stack frame size
-  for (unsigned i = 0; i != NumOps; ++i) {
-    SDOperand Arg = Op.getOperand(5+2*i);
-    unsigned ArgIncrement = 4;
-    unsigned ObjSize = 0;
-    unsigned ObjIntRegs = 0;
-    unsigned ObjXMMRegs = 0;
-
-    HowToPassCallArgument(Arg.getValueType(),
-                          ArgInRegs[i],
-                          NumIntRegs, NumXMMRegs, 3,
-                          ObjSize, ObjIntRegs, ObjXMMRegs);
-    if (ObjSize > 4)
-      ArgIncrement = ObjSize;
-
-    NumIntRegs += ObjIntRegs;
-    NumXMMRegs += ObjXMMRegs;
-    if (ObjSize) {
-      // XMM arguments have to be aligned on 16-byte boundary.
-      if (ObjSize == 16)
-        NumBytes = ((NumBytes + 15) / 16) * 16;
-      NumBytes += ArgIncrement;
-    }
-  }
+  // Get a count of how many bytes are to be pushed on the stack.
+  unsigned NumBytes = CCInfo.getNextStackOffset();
 
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
-  // Arguments go on the stack in reverse order, as specified by the ABI.
-  unsigned ArgOffset = 0;
-  NumXMMRegs = 0;
-  NumIntRegs = 0;
   SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
   SmallVector<SDOperand, 8> MemOpChains;
-  SDOperand StackPtr = DAG.getRegister(X86StackPtr, getPointerTy());
-  for (unsigned i = 0; i != NumOps; ++i) {
-    SDOperand Arg = Op.getOperand(5+2*i);
-    unsigned ArgIncrement = 4;
-    unsigned ObjSize = 0;
-    unsigned ObjIntRegs = 0;
-    unsigned ObjXMMRegs = 0;
 
-    HowToPassCallArgument(Arg.getValueType(),
-                          ArgInRegs[i],
-                          NumIntRegs, NumXMMRegs, 3,
-                          ObjSize, ObjIntRegs, ObjXMMRegs);
+  SDOperand StackPtr;
+  unsigned NumSRetBytes = 0; 
+
+  // Walk the register/memloc assignments, inserting copies/loads.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
     
-    if (ObjSize > 4)
-      ArgIncrement = ObjSize;
-
-    if (Arg.getValueType() == MVT::i8 || Arg.getValueType() == MVT::i16) {
-      // Promote the integer to 32 bits.  If the input type is signed use a
-      // sign extend, otherwise use a zero extend.
-      unsigned Flags = cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-
-      unsigned ExtOp = (Flags & 1) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
-      Arg = DAG.getNode(ExtOp, MVT::i32, Arg);
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+    default: assert(0 && "Unknown loc info!");
+    case CCValAssign::Full: break;
+    case CCValAssign::SExt:
+      Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::ZExt:
+      Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::AExt:
+      Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
+      break;
     }
-
-    if (ObjIntRegs || ObjXMMRegs) {
-      switch (Arg.getValueType()) {
-      default: assert(0 && "Unhandled argument type!");
-      case MVT::i32:
-       RegsToPass.push_back(std::make_pair(GPR32ArgRegs[NumIntRegs], Arg));
-       break;
-      case MVT::v16i8:
-      case MVT::v8i16:
-      case MVT::v4i32:
-      case MVT::v2i64:
-      case MVT::v4f32:
-      case MVT::v2f64:
-       RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
-       break;
-      }
-
-      NumIntRegs += ObjIntRegs;
-      NumXMMRegs += ObjXMMRegs;
-    }
-    if (ObjSize) {
-      // XMM arguments have to be aligned on 16-byte boundary.
-      if (ObjSize == 16)
-        ArgOffset = ((ArgOffset + 15) / 16) * 16;
-      
-      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+    
+    if (VA.isRegLoc()) {
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+    } else {
+      assert(VA.isMemLoc());
+      if (StackPtr.Val == 0)
+        StackPtr = DAG.getRegister(getStackPtrReg(), getPointerTy());
+      SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
       PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
       MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
-      
-      ArgOffset += ArgIncrement;   // Move on to the next argument.
-      if (SRetArgs[i])
-        NumSRetBytes += ArgIncrement;
+
+      // FIXME: What is this doing?
+      unsigned Flags =
+        cast<ConstantSDNode>(Op.getOperand(5+2*VA.getValNo()+1))->getValue();
+      if ((Flags >> 2) & 1)
+        NumSRetBytes += 4;
     }
   }
 
