@@ -1264,8 +1264,14 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
         error("Invalid constant integer read.");
       Result = ConstantInt::get(IT, Val);
       if (Handler) Handler->handleConstantValue(Result);
-    } else 
-      assert(0 && "Integer types > 64 bits not supported");
+    } else {
+      uint32_t numWords = read_vbr_uint();
+      uint64_t *data = new uint64_t[numWords];
+      for (uint32_t i = 0; i < numWords; ++i)
+        data[i] = read_vbr_uint64();
+      Result = ConstantInt::get(IT, APInt(IT->getBitWidth(), numWords, data));
+      if (Handler) Handler->handleConstantValue(Result);
+    }
     break;
   }
   case Type::FloatTyID: {
@@ -1356,8 +1362,7 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
   // to a null value in a way that isn't predicted when a .bc file is initially
   // produced.
   assert((!isa<Constant>(Result) || !cast<Constant>(Result)->isNullValue()) ||
-         !hasImplicitNull(TypeID) &&
-         "Cannot read null values from bytecode!");
+         !hasImplicitNull(TypeID) && "Cannot read null values from bytecode!");
   return Result;
 }
 
