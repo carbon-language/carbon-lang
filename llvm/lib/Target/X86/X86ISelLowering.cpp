@@ -609,17 +609,12 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
   SDOperand Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
 
+  // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(MF.getFunction()->getCallingConv(), getTargetMachine(),
                  ArgLocs);
-  
-  for (unsigned i = 0; i != NumArgs; ++i) {
-    MVT::ValueType ArgVT = Op.getValue(i).getValueType();
-    unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
-    if (CC_X86_32_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
-      assert(0 && "Unhandled argument type!");
-  }
-  
+  CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_32_C);
+   
   SmallVector<SDOperand, 8> ArgValues;
   unsigned LastVal = ~0U;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -708,15 +703,10 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand Callee    = Op.getOperand(4);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
+  // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, getTargetMachine(), ArgLocs);
-  
-  for (unsigned i = 0; i != NumOps; ++i) {
-    MVT::ValueType ArgVT = Op.getOperand(5+2*i).getValueType();
-    unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    if (CC_X86_32_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
-      assert(0 && "Unhandled argument type!");
-  }
+  CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_32_C);
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
@@ -865,21 +855,15 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 // reasons.
 SDOperand
 X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
-  unsigned NumArgs = Op.Val->getNumValues()-1;
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
 
+  // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(MF.getFunction()->getCallingConv(), getTargetMachine(),
                  ArgLocs);
-  
-  for (unsigned i = 0; i != NumArgs; ++i) {
-    MVT::ValueType ArgVT = Op.getValue(i).getValueType();
-    unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
-    if (CC_X86_32_FastCall(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags,CCInfo)) 
-      assert(0 && "Unhandled argument type!");
-  }
+  CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_32_FastCall);
   
   SmallVector<SDOperand, 8> ArgValues;
   unsigned LastVal = ~0U;
@@ -956,18 +940,11 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   SDOperand Chain     = Op.getOperand(0);
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
-  unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
-  
+  // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, getTargetMachine(), ArgLocs);
-  
-  for (unsigned i = 0; i != NumOps; ++i) {
-    MVT::ValueType ArgVT = Op.getOperand(5+2*i).getValueType();
-    unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    if (CC_X86_32_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
-      assert(0 && "Unhandled argument type!");
-  }
+  CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_32_FastCall);
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
@@ -1098,7 +1075,6 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
 SDOperand
 X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
-  unsigned NumArgs = Op.Val->getNumValues() - 1;
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
@@ -1112,16 +1088,12 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
     X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
   };
 
+  
+  // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(MF.getFunction()->getCallingConv(), getTargetMachine(),
                  ArgLocs);
-  
-  for (unsigned i = 0; i != NumArgs; ++i) {
-    MVT::ValueType ArgVT = Op.getValue(i).getValueType();
-    unsigned ArgFlags = cast<ConstantSDNode>(Op.getOperand(3+i))->getValue();
-    if (CC_X86_64_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
-      assert(0 && "Unhandled argument type!");
-  }
+  CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_64_C);
   
   SmallVector<SDOperand, 8> ArgValues;
   unsigned LastVal = ~0U;
@@ -1243,17 +1215,11 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
-  unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
-
+  
+  // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, getTargetMachine(), ArgLocs);
-
-  for (unsigned i = 0; i != NumOps; ++i) {
-    MVT::ValueType ArgVT = Op.getOperand(5+2*i).getValueType();
-    unsigned ArgFlags =cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue();
-    if (CC_X86_64_C(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo)) 
-      assert(0 && "Unhandled argument type!");
-  }
+  CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_64_C);
     
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
