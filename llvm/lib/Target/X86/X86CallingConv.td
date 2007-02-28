@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// CCMatchIfSubtarget - Match if the current subtarget has a feature F.
-class CCMatchIfSubtarget<string F, CCAction A>
- : CCMatchIf<!strconcat("State.getTarget().getSubtarget<X86Subtarget>().",F),A>;
+/// CCIfSubtarget - Match if the current subtarget has a feature F.
+class CCIfSubtarget<string F, CCAction A>
+ : CCIf<!strconcat("State.getTarget().getSubtarget<X86Subtarget>().", F), A>;
 
 //===----------------------------------------------------------------------===//
 // Return Value Calling Conventions
@@ -23,22 +23,22 @@ class CCMatchIfSubtarget<string F, CCAction A>
 // Return-value conventions common to all X86 CC's.
 def RetCC_X86Common : CallingConv<[
   // Scalar values are returned in AX first, then DX.
-  CCMatchType<[i8] , CCAssignToReg<[AL]>>,
-  CCMatchType<[i16], CCAssignToReg<[AX]>>,
-  CCMatchType<[i32], CCAssignToReg<[EAX, EDX]>>,
-  CCMatchType<[i64], CCAssignToReg<[RAX, RDX]>>,
+  CCIfType<[i8] , CCAssignToReg<[AL]>>,
+  CCIfType<[i16], CCAssignToReg<[AX]>>,
+  CCIfType<[i32], CCAssignToReg<[EAX, EDX]>>,
+  CCIfType<[i64], CCAssignToReg<[RAX, RDX]>>,
   
   // Vector types are always returned in XMM0.  If the target doesn't have XMM0,
   // it won't have vector types.
-  CCMatchType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToReg<[XMM0]>>
+  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToReg<[XMM0]>>
 ]>;
 
 // X86-32 C return-value convention.
 def RetCC_X86_32_C : CallingConv<[
   // The X86-32 calling convention returns FP values in ST0, otherwise it is the
   // same as the common X86 calling conv.
-  CCMatchType<[f32], CCAssignToReg<[ST0]>>,
-  CCMatchType<[f64], CCAssignToReg<[ST0]>>,
+  CCIfType<[f32], CCAssignToReg<[ST0]>>,
+  CCIfType<[f64], CCAssignToReg<[ST0]>>,
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
@@ -46,16 +46,16 @@ def RetCC_X86_32_C : CallingConv<[
 def RetCC_X86_32_Fast : CallingConv<[
   // The X86-32 fastcc returns FP values in XMM0 if the target has SSE2,
   // otherwise it is the the C calling conventions.
-  CCMatchType<[f32], CCMatchIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0]>>>,
-  CCMatchType<[f64], CCMatchIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0]>>>,
+  CCIfType<[f32], CCIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0]>>>,
+  CCIfType<[f64], CCIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0]>>>,
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
 // X86-64 C return-value convention.
 def RetCC_X86_64_C : CallingConv<[
   // The X86-64 calling convention always returns FP values in XMM0.
-  CCMatchType<[f32], CCAssignToReg<[XMM0]>>,
-  CCMatchType<[f64], CCAssignToReg<[XMM0]>>,
+  CCIfType<[f32], CCAssignToReg<[XMM0]>>,
+  CCIfType<[f64], CCAssignToReg<[XMM0]>>,
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
@@ -64,7 +64,7 @@ def RetCC_X86_64_C : CallingConv<[
 // This is the root return-value convention for the X86-32 backend.
 def RetCC_X86_32 : CallingConv<[
   // If FastCC, use RetCC_X86_32_Fast.
-  CCMatchIfCC<"CallingConv::Fast", CCDelegateTo<RetCC_X86_32_Fast>>,
+  CCIfCC<"CallingConv::Fast", CCDelegateTo<RetCC_X86_32_Fast>>,
   // Otherwise, use RetCC_X86_32_C.
   CCDelegateTo<RetCC_X86_32_C>
 ]>;
@@ -77,34 +77,34 @@ def RetCC_X86_64 : CallingConv<[
 
 // This is the return-value convention used for the entire X86 backend.
 def RetCC_X86 : CallingConv<[
-  CCMatchIfSubtarget<"is64Bit()", CCDelegateTo<RetCC_X86_64>>,
+  CCIfSubtarget<"is64Bit()", CCDelegateTo<RetCC_X86_64>>,
   CCDelegateTo<RetCC_X86_32>
 ]>;
 
 //===----------------------------------------------------------------------===//
-// Argument Calling Conventions
+// X86-64 Argument Calling Conventions
 //===----------------------------------------------------------------------===//
-
 
 def CC_X86_64_C : CallingConv<[
   // Promote i8/i16 arguments to i32.
-  CCMatchType<[i8, i16], CCPromoteToType<i32>>,
+  CCIfType<[i8, i16], CCPromoteToType<i32>>,
   
   // The first 6 integer arguments are passed in integer registers.
-  CCMatchType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D, R9D]>>,
-  CCMatchType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX, R8 , R9 ]>>,
+  CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D, R9D]>>,
+  CCIfType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX, R8 , R9 ]>>,
   
   // The first 8 FP/Vector arguments are passed in XMM registers.
-  CCMatchType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+  CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
               CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>,
 
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
-  CCMatchType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>,
+  CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>,
   
   // Vectors get 16-byte stack slots that are 16-byte aligned.
-  CCMatchType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
               CCAssignToStack<16, 16>>
 ]>;
+
 
 
