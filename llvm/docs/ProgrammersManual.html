@@ -2621,10 +2621,20 @@ a subclass, which represents the address of a global variable or function.
   <li>ConstantInt : This subclass of Constant represents an integer constant of
   any width.
     <ul>
-      <li><tt>int64_t getSExtValue() const</tt>: Returns the underlying value of
-      this constant as a sign extended signed integer value.</li>
-      <li><tt>uint64_t getZExtValue() const</tt>: Returns the underlying value 
-      of this constant as a zero extended unsigned integer value.</li>
+      <li><tt>const APInt&amp; getValue() const</tt>: Returns the underlying
+      value of this constant, an APInt value.</li>
+      <li><tt>int64_t getSExtValue() const</tt>: Converts the underlying APInt
+      value to an int64_t via sign extension. If the value (not the bit width)
+      of the APInt is too large to fit in an int64_t, an assertion will result.
+      For this reason, use of this method is discouraged.</li>
+      <li><tt>uint64_t getZExtValue() const</tt>: Converts the underlying APInt
+      value to a uint64_t via zero extension. IF the value (not the bit width)
+      of the APInt is too large to fit in a uint64_t, an assertion will result.
+      For this reason, use of this method is discourage.</li>
+      <li><tt>static ConstantInt* get(const APInt&amp; Val)</tt>: Returns the
+      ConstantInt object that represents the value provided by <tt>Val</tt>.
+      The type is implied as the IntegerType that corresponds to the bit width
+      of <tt>Val</tt>.</li>
       <li><tt>static ConstantInt* get(const Type *Ty, uint64_t Val)</tt>: 
       Returns the ConstantInt object that represents the value provided by 
       <tt>Val</tt> for integer type <tt>Ty</tt>.</li>
