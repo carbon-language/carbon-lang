@@ -541,7 +541,8 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
     TI = gep_type_begin(ptrTy, Indices, Indices+NumIndices);
   for (unsigned CurIDX = 0; CurIDX != NumIndices; ++CurIDX, ++TI) {
     if (const StructType *STy = dyn_cast<StructType>(*TI)) {
-      assert(Indices[CurIDX]->getType() == Type::Int32Ty &&"Illegal struct idx");
+      assert(Indices[CurIDX]->getType() == Type::Int32Ty &&
+             "Illegal struct idx");
       unsigned FieldNo = cast<ConstantInt>(Indices[CurIDX])->getZExtValue();
 
       // Get structure layout information...
