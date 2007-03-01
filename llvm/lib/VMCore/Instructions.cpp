@@ -623,8 +623,8 @@ AllocationInst::~AllocationInst() {
 }
 
 bool AllocationInst::isArrayAllocation() const {
-  if (ConstantInt *CUI = dyn_cast<ConstantInt>(getOperand(0)))
-    return CUI->getZExtValue() != 1;
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(getOperand(0)))
+    return CI->getZExtValue() != 1;
   return true;
 }
 
