@@ -1405,6 +1405,7 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
         APInt CommonFact = GetConstantFactor(LHS);
         assert(!CommonFact.isMinValue() &&
                "Common factor should at least be 1!");
+        CommonFact.zextOrTrunc(CI->getValue().getBitWidth());
         if (CommonFact.ugt(CI->getValue())) {
           // If the LHS is a multiple that is larger than the RHS, use +.
           return SCEVAddExpr::get(LHS,
