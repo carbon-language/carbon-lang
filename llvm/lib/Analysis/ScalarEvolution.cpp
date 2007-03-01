@@ -2345,7 +2345,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
   // First check to see if the range contains zero.  If not, the first
   // iteration exits.
-  if (!Range.contains(APInt(getBitWidth(),0), isSigned)) 
+  if (!Range.contains(APInt(getBitWidth(),0))) 
     return SCEVConstant::get(ConstantInt::get(getType(),0));
 
   if (isAffine()) {
@@ -2369,13 +2369,13 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // range, then we computed our trip count, otherwise wrap around or other
     // things must have happened.
     ConstantInt *Val = EvaluateConstantChrecAtConstant(this, ExitValue);
-    if (Range.contains(Val->getValue(), isSigned))
+    if (Range.contains(Val->getValue()))
       return new SCEVCouldNotCompute();  // Something strange happened
 
     // Ensure that the previous value is in the range.  This is a sanity check.
     assert(Range.contains(
            EvaluateConstantChrecAtConstant(this, 
-           ConstantInt::get(getType(), ExitVal - One))->getValue(), isSigned) &&
+           ConstantInt::get(getType(), ExitVal - One))->getValue()) &&
            "Linear scev computation is off in a bad way!");
     return SCEVConstant::get(cast<ConstantInt>(ExitValue));
   } else if (isQuadratic()) {
@@ -2406,14 +2406,14 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
         // for "X*X < 5", for example, we should not return a root of 2.
         ConstantInt *R1Val = EvaluateConstantChrecAtConstant(this,
                                                              R1->getValue());
-        if (Range.contains(R1Val->getValue(), isSigned)) {
+        if (Range.contains(R1Val->getValue())) {
           // The next iteration must be out of the range...
           Constant *NextVal =
             ConstantExpr::getAdd(R1->getValue(),
                                  ConstantInt::get(R1->getType(), 1));
 
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
-          if (!Range.contains(R1Val->getValue(), isSigned))
+          if (!Range.contains(R1Val->getValue()))
             return SCEVUnknown::get(NextVal);
           return new SCEVCouldNotCompute();  // Something strange happened
         }
@@ -2424,7 +2424,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
           ConstantExpr::getSub(R1->getValue(),
                                ConstantInt::get(R1->getType(), 1));
         R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
-        if (Range.contains(R1Val->getValue(), isSigned))
+        if (Range.contains(R1Val->getValue()))
           return R1;
         return new SCEVCouldNotCompute();  // Something strange happened
       }
@@ -2446,8 +2446,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
       return new SCEVCouldNotCompute();
 
     // Check to see if we found the value!
-    if (!Range.contains(cast<SCEVConstant>(Val)->getValue()->getValue(), 
-                        isSigned))
+    if (!Range.contains(cast<SCEVConstant>(Val)->getValue()->getValue()))
       return SCEVConstant::get(TestVal);
 
     // Increment to test the next index.

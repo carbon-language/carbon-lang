@@ -1156,8 +1156,7 @@ Relation::KnownResult CEE::getCmpResult(CmpInst *CI,
       // Check to see if we already know the result of this comparison...
       ICmpInst::Predicate ipred = ICmpInst::Predicate(predicate);
       ConstantRange R = ICmpInst::makeConstantRange(ipred, C->getValue());
-      ConstantRange Int = R.intersectWith(Op0VI->getBounds(),
-          ICmpInst::isSignedPredicate(ipred));
+      ConstantRange Int = R.intersectWith(Op0VI->getBounds());
 
       // If the intersection of the two ranges is empty, then the condition
       // could never be true!
@@ -1203,8 +1202,8 @@ bool Relation::contradicts(unsigned Op,
     if (Op >= ICmpInst::FIRST_ICMP_PREDICATE && 
         Op <= ICmpInst::LAST_ICMP_PREDICATE) {
       ICmpInst::Predicate ipred = ICmpInst::Predicate(Op);
-      if (ICmpInst::makeConstantRange(ipred, C->getValue()).intersectWith(
-            VI.getBounds(), ICmpInst::isSignedPredicate(ipred)).isEmptySet())
+      if (ICmpInst::makeConstantRange(ipred, C->getValue())
+                    .intersectWith(VI.getBounds()).isEmptySet())
         return true;
     }
 
@@ -1264,8 +1263,8 @@ bool Relation::incorporate(unsigned Op, ValueInfo &VI) {
         Op <= ICmpInst::LAST_ICMP_PREDICATE) {
       ICmpInst::Predicate ipred = ICmpInst::Predicate(Op);
       VI.getBounds() = 
-        ICmpInst::makeConstantRange(ipred, C->getValue()).intersectWith(
-            VI.getBounds(), ICmpInst::isSignedPredicate(ipred));
+        ICmpInst::makeConstantRange(ipred, C->getValue())
+                  .intersectWith(VI.getBounds());
     }
 
   switch (Rel) {

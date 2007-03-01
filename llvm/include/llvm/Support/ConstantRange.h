@@ -40,7 +40,7 @@ namespace llvm {
 class ConstantRange {
   APInt Lower, Upper;
   static ConstantRange intersect1Wrapped(const ConstantRange &LHS,
-                                         const ConstantRange &RHS, bool sign);
+                                         const ConstantRange &RHS);
  public:
   /// Initialize a full (the default) or empty set for the specified bit width.
   ///
@@ -79,13 +79,11 @@ class ConstantRange {
   /// isWrappedSet - Return true if this set wraps around the top of the range,
   /// for example: [100, 8)
   ///
-  bool isWrappedSet(bool isSigned) const;
+  bool isWrappedSet() const;
 
   /// contains - Return true if the specified value is in the set.
-  /// The isSigned parameter indicates whether the comparisons should be
-  /// performed as if the values are signed or not.
   ///
-  bool contains(const APInt &Val, bool isSigned) const;
+  bool contains(const APInt &Val) const;
 
   /// getSingleElement - If this set contains a single element, return it,
   /// otherwise return null.
@@ -123,7 +121,7 @@ class ConstantRange {
   /// one of the sets but not the other.  For example: [100, 8) intersect [3,
   /// 120) yields [3, 120)
   ///
-  ConstantRange intersectWith(const ConstantRange &CR, bool isSigned) const;
+  ConstantRange intersectWith(const ConstantRange &CR) const;
 
   /// unionWith - Return the range that results from the union of this range
   /// with another range.  The resultant range is guaranteed to include the
@@ -131,7 +129,7 @@ class ConstantRange {
   /// [12,15) is [3, 15), which includes 9, 10, and 11, which were not included
   /// in either set before.
   ///
-  ConstantRange unionWith(const ConstantRange &CR, bool isSigned) const;
+  ConstantRange unionWith(const ConstantRange &CR) const;
 
   /// zeroExtend - Return a new range in the specified integer type, which must
   /// be strictly larger than the current type.  The returned range will

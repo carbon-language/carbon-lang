@@ -65,9 +65,7 @@ bool ConstantRange::isEmptySet() const {
 /// isWrappedSet - Return true if this set wraps around the top of the range,
 /// for example: [100, 8)
 ///
-bool ConstantRange::isWrappedSet(bool isSigned) const {
-  if (isSigned)
-    return Lower.sgt(Upper);
+bool ConstantRange::isWrappedSet() const {
   return Lower.ugt(Upper);
 }
 
@@ -88,20 +86,12 @@ APInt ConstantRange::getSetSize() const {
 
 /// contains - Return true if the specified value is in the set.
 ///
-bool ConstantRange::contains(const APInt &V, bool isSigned) const {
-  if (Lower == Upper) {
-    if (isFullSet()) 
-      return true;
-    return false;
-  }
+bool ConstantRange::contains(const APInt &V) const {
+  if (Lower == Upper)
+    return isFullSet();
 
-  if (!isWrappedSet(isSigned))
-    if (isSigned)
-      return Lower.sle(V) && V.slt(Upper);
-    else
-      return Lower.ule(V) && V.ult(Upper);
-  if (isSigned)
-    return Lower.sle(V) || V.slt(Upper);
+  if (!isWrappedSet())
+    return Lower.ule(V) && V.ult(Upper);
   else
     return Lower.ule(V) || V.ult(Upper);
 }
@@ -122,17 +112,15 @@ ConstantRange ConstantRange::subtract(const APInt &Val) const {
 //
 ConstantRange 
 ConstantRange::intersect1Wrapped(const ConstantRange &LHS,
-                                 const ConstantRange &RHS, bool isSigned) {
-  assert(LHS.isWrappedSet(isSigned) && !RHS.isWrappedSet(isSigned));
+                                 const ConstantRange &RHS) {
+  assert(LHS.isWrappedSet() && !RHS.isWrappedSet());
 
   // Check to see if we overlap on the Left side of RHS...
   //
-  bool LT = (isSigned ? RHS.Lower.slt(LHS.Upper) : RHS.Lower.ult(LHS.Upper));
-  bool GT = (isSigned ? RHS.Upper.sgt(LHS.Lower) : RHS.Upper.ugt(LHS.Lower));
-  if (LT) {
+  if (RHS.Lower.ult(LHS.Upper)) {
     // We do overlap on the left side of RHS, see if we overlap on the right of
     // RHS...
-    if (GT) {
+    if (RHS.Upper.ugt(LHS.Lower)) {
       // Ok, the result overlaps on both the left and right sides.  See if the
       // resultant interval will be smaller if we wrap or not...
       //
@@ -148,7 +136,7 @@ ConstantRange::intersect1Wrapped(const ConstantRange &LHS,
   } else {
     // We don't overlap on the left side of RHS, see if we overlap on the right
     // of RHS...
-    if (GT) {
+    if (RHS.Upper.ugt(LHS.Lower)) {
       // Simple overlap...
       return ConstantRange(LHS.Lower, RHS.Upper);
     } else {
@@ -161,8 +149,7 @@ ConstantRange::intersect1Wrapped(const ConstantRange &LHS,
 /// intersectWith - Return the range that results from the intersection of this
 /// range with another range.
 ///
-ConstantRange ConstantRange::intersectWith(const ConstantRange &CR,
-                                           bool isSigned) const {
+ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
   assert(getBitWidth() == CR.getBitWidth() && 
          "ConstantRange types don't agree!");
   // Handle common special cases
@@ -171,26 +158,26 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR,
   if (isFullSet()  || CR.isEmptySet()) 
     return CR;
 
-  if (!isWrappedSet(isSigned)) {
-    if (!CR.isWrappedSet(isSigned)) {
+  if (!isWrappedSet()) {
+    if (!CR.isWrappedSet()) {
       using namespace APIntOps;
-      APInt L = isSigned ? smax(Lower, CR.Lower) : umax(Lower, CR.Lower);
-      APInt U = isSigned ? smin(Upper, CR.Upper) : umin(Upper, CR.Upper);
+      APInt L = umax(Lower, CR.Lower);
+      APInt U = umin(Upper, CR.Upper);
 
-      if (isSigned ? L.slt(U) : L.ult(U)) // If range isn't empty...
+      if (L.ult(U)) // If range isn't empty...
         return ConstantRange(L, U);
       else
         return ConstantRange(getBitWidth(), false);// Otherwise, empty set
     } else
-      return intersect1Wrapped(CR, *this, isSigned);
+      return intersect1Wrapped(CR, *this);
   } else {   // We know "this" is wrapped...
-    if (!CR.isWrappedSet(isSigned))
-      return intersect1Wrapped(*this, CR, isSigned);
+    if (!CR.isWrappedSet())
+      return intersect1Wrapped(*this, CR);
     else {
       // Both ranges are wrapped...
       using namespace APIntOps;
-      APInt L = isSigned ? smax(Lower, CR.Lower) : umax(Lower, CR.Lower);
-      APInt U = isSigned ? smin(Upper, CR.Upper) : umin(Upper, CR.Upper);
+      APInt L = umax(Lower, CR.Lower);
+      APInt U = umin(Upper, CR.Upper);
       return ConstantRange(L, U);
     }
   }
@@ -203,8 +190,7 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR,
 /// 15), which includes 9, 10, and 11, which were not included in either set
 /// before.
 ///
-ConstantRange ConstantRange::unionWith(const ConstantRange &CR,
-                                       bool isSigned) const {
+ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
   assert(getBitWidth() == CR.getBitWidth() && 
          "ConstantRange types don't agree!");
 
