@@ -88,8 +88,7 @@ static Constant *CastConstantVector(ConstantVector *CV,
       for (unsigned i = 0; i != SrcNumElts; ++i) {
         double V =
           DoubleToBits(cast<ConstantFP>(CV->getOperand(i))->getValue());
-        Constant *C = ConstantInt::get(Type::Int64Ty, 
-                                       APIntOps::RoundDoubleToAPInt(V));
+        Constant *C = ConstantInt::get(APIntOps::RoundDoubleToAPInt(V));
         Result.push_back(ConstantExpr::getBitCast(C, DstEltTy ));
       }
       return ConstantVector::get(Result);
@@ -178,14 +177,14 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
       uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Val(APIntOps::RoundDoubleToAPInt(FPC->getValue(), DestBitWidth));
-      return ConstantInt::get(DestTy, Val);
+      return ConstantInt::get(Val);
     }
     return 0; // Can't fold.
   case Instruction::FPToSI:
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
       uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Val(APIntOps::RoundDoubleToAPInt(FPC->getValue(), DestBitWidth));
-      return ConstantInt::get(DestTy, Val);
+      return ConstantInt::get(Val);
     }
     return 0; // Can't fold.
   case Instruction::IntToPtr:   //always treated as unsigned
@@ -209,7 +208,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Result(CI->getValue());
       Result.zext(BitWidth);
-      return ConstantInt::get(DestTy, Result);
+      return ConstantInt::get(Result);
     }
     return 0;
   case Instruction::SExt:
@@ -217,7 +216,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Result(CI->getValue());
       Result.sext(BitWidth);
-      return ConstantInt::get(DestTy, Result);
+      return ConstantInt::get(Result);
     }
     return 0;
   case Instruction::Trunc:
@@ -225,7 +224,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Result(CI->getValue());
       Result.trunc(BitWidth);
-      return ConstantInt::get(DestTy, Result);
+      return ConstantInt::get(Result);
     }
     return 0;
   case Instruction::BitCast:
@@ -582,55 +581,55 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       default:
         break;
       case Instruction::Add:     
-        return ConstantInt::get(C1->getType(), C1V + C2V);
+        return ConstantInt::get(C1V + C2V);
       case Instruction::Sub:     
-        return ConstantInt::get(C1->getType(), C1V - C2V);
+        return ConstantInt::get(C1V - C2V);
       case Instruction::Mul:     
-        return ConstantInt::get(C1->getType(), C1V * C2V);
+        return ConstantInt::get(C1V * C2V);
       case Instruction::UDiv:
         if (CI2->isNullValue())                  
           return 0;        // X / 0 -> can't fold
-        return ConstantInt::get(C1->getType(), C1V.udiv(C2V));
+        return ConstantInt::get(C1V.udiv(C2V));
       case Instruction::SDiv:
         if (CI2->isNullValue()) 
           return 0;        // X / 0 -> can't fold
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
           return 0;        // MIN_INT / -1 -> overflow
-        return ConstantInt::get(C1->getType(), C1V.sdiv(C2V));
+        return ConstantInt::get(C1V.sdiv(C2V));
       case Instruction::URem:
         if (C2->isNullValue()) 
           return 0;        // X / 0 -> can't fold
-        return ConstantInt::get(C1->getType(), C1V.urem(C2V));
+        return ConstantInt::get(C1V.urem(C2V));
       case Instruction::SRem:    
         if (CI2->isNullValue()) 
           return 0;        // X % 0 -> can't fold
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
           return 0;        // MIN_INT % -1 -> overflow
-        return ConstantInt::get(C1->getType(), C1V.srem(C2V));
+        return ConstantInt::get(C1V.srem(C2V));
       case Instruction::And:
-        return ConstantInt::get(C1->getType(), C1V & C2V);
+        return ConstantInt::get(C1V & C2V);
       case Instruction::Or:
-        return ConstantInt::get(C1->getType(), C1V | C2V);
+        return ConstantInt::get(C1V | C2V);
       case Instruction::Xor:
-        return ConstantInt::get(C1->getType(), C1V ^ C2V);
+        return ConstantInt::get(C1V ^ C2V);
       case Instruction::Shl:
         if (uint32_t shiftAmt = C2V.getZExtValue())
           if (shiftAmt < C1V.getBitWidth())
-            return ConstantInt::get(C1->getType(), C1V.shl(shiftAmt));
+            return ConstantInt::get(C1V.shl(shiftAmt));
           else
             return UndefValue::get(C1->getType()); // too big shift is undef
         return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       case Instruction::LShr:
         if (uint32_t shiftAmt = C2V.getZExtValue())
           if (shiftAmt < C1V.getBitWidth())
-            return ConstantInt::get(C1->getType(), C1V.lshr(shiftAmt));
+            return ConstantInt::get(C1V.lshr(shiftAmt));
           else
             return UndefValue::get(C1->getType()); // too big shift is undef
         return const_cast<ConstantInt*>(CI1); // Zero shift is identity
       case Instruction::AShr:
         if (uint32_t shiftAmt = C2V.getZExtValue())
           if (shiftAmt < C1V.getBitWidth())
-            return ConstantInt::get(C1->getType(), C1V.ashr(shiftAmt));
+            return ConstantInt::get(C1V.ashr(shiftAmt));
           else
             return UndefValue::get(C1->getType()); // too big shift is undef
         return const_cast<ConstantInt*>(CI1); // Zero shift is identity
