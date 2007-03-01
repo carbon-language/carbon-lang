@@ -686,6 +686,9 @@ public:
   double signedRoundToDouble() const {
     return roundToDouble(true);
   }
+
+  /// @brief Compute the square root
+  APInt sqrt() const;
 };
 
 inline bool operator==(uint64_t V1, const APInt& V2) {
