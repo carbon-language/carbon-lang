@@ -960,6 +960,8 @@ struct LandingPadInfo {
   unsigned LandingPadLabel;             // Label at beginning of landing pad.
   Function *Personality;                // Personality function.
   std::vector<unsigned> TypeIds;        // List of type ids.
+  bool IsFilter;                        // Indicate if the landing pad is a
+                                        // throw filter.
   
   LandingPadInfo(MachineBasicBlock *MBB)
   : LandingPadBlock(MBB)
@@ -967,6 +969,7 @@ struct LandingPadInfo {
   , EndLabel(0)
   , LandingPadLabel(0)
   , TypeIds()
+  , IsFilter(false)
   {}
 };
 
@@ -1201,6 +1204,10 @@ public:
   ///
   void addCatchTypeInfo(MachineBasicBlock *LandingPad,
                         std::vector<GlobalVariable *> &TyInfo);
+                        
+  /// setIsFilterLandingPad - Indicates that the landing pad is a throw filter.
+  ///
+  void setIsFilterLandingPad(MachineBasicBlock *LandingPad);
                         
   /// getTypeIDFor - Return the type id for the specified typeinfo.  This is 
   /// function wide.

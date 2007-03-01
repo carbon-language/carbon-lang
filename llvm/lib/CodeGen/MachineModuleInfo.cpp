@@ -1653,9 +1653,9 @@ LandingPadInfo &MachineModuleInfo::getOrCreateLandingPadInfo
     (MachineBasicBlock *LandingPad) {
   unsigned N = LandingPads.size();
   for (unsigned i = 0; i < N; ++i) {
-    LandingPadInfo &UI = LandingPads[i];
-    if (UI.LandingPadBlock == LandingPad)
-      return UI;
+    LandingPadInfo &LP = LandingPads[i];
+    if (LP.LandingPadBlock == LandingPad)
+      return LP;
   }
   
   LandingPads.push_back(LandingPadInfo(LandingPad));
@@ -1666,17 +1666,17 @@ LandingPadInfo &MachineModuleInfo::getOrCreateLandingPadInfo
 /// associate it with a try landing pad block.
 void MachineModuleInfo::addInvoke(MachineBasicBlock *LandingPad,
                                   unsigned BeginLabel, unsigned EndLabel) {
-  LandingPadInfo &UI = getOrCreateLandingPadInfo(LandingPad);
-  if (!UI.BeginLabel) UI.BeginLabel = BeginLabel;  
-  UI.EndLabel = EndLabel;  
+  LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
+  if (!LP.BeginLabel) LP.BeginLabel = BeginLabel;  
+  LP.EndLabel = EndLabel;  
 }
 
 /// addLandingPad - Provide the label of a try LandingPad block.
 ///
 unsigned MachineModuleInfo::addLandingPad(MachineBasicBlock *LandingPad) {
   unsigned LandingPadLabel = NextLabelID();
-  LandingPadInfo &UI = getOrCreateLandingPadInfo(LandingPad);
-  UI.LandingPadLabel = LandingPadLabel;  
+  LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
+  LP.LandingPadLabel = LandingPadLabel;  
   return LandingPadLabel;
 }
 
@@ -1684,19 +1684,26 @@ unsigned MachineModuleInfo::addLandingPad(MachineBasicBlock *LandingPad) {
 /// information.
 void MachineModuleInfo::addPersonality(MachineBasicBlock *LandingPad,
                                        Function *Personality) {
-  LandingPadInfo &UI = getOrCreateLandingPadInfo(LandingPad);
-  UI.Personality = Personality;
+  LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
+  LP.Personality = Personality;
 }
 
 /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.
 ///
 void MachineModuleInfo::addCatchTypeInfo(MachineBasicBlock *LandingPad,
                                         std::vector<GlobalVariable *> &TyInfo) {
-  LandingPadInfo &UI = getOrCreateLandingPadInfo(LandingPad);
+  LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
   for (unsigned N = TyInfo.size(); N; --N)
-    UI.TypeIds.push_back(getTypeIDFor(TyInfo[N - 1]));
+    LP.TypeIds.push_back(getTypeIDFor(TyInfo[N - 1]));
 }
                         
+/// setIsFilterLandingPad - Indicates that the landing pad is a throw filter.
+///
+void MachineModuleInfo::setIsFilterLandingPad(MachineBasicBlock *LandingPad) {
+  LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
+  LP.IsFilter = true;
+}
+
 /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
 /// pads.
 void MachineModuleInfo::TidyLandingPads() {
