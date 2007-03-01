@@ -423,6 +423,16 @@ public:
   /// @brief Zero extend to a new width.
   APInt &zext(uint32_t width);
 
+  /// Make this APInt have the bit width given by \p width. The value is sign
+  /// extended, truncated, or left alone to make it that width.
+  /// @brief Sign extend or truncate to width
+  APInt &sextOrTrunc(uint32_t width);
+
+  /// Make this APInt have the bit width given by \p width. The value is zero
+  /// extended, truncated, or left alone to make it that width.
+  /// @brief Zero extend or truncate to width
+  APInt &zextOrTrunc(uint32_t width);
+
   /// @brief Set every bit to 1.
   APInt& set();
 

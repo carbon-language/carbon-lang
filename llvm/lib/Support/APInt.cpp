@@ -985,6 +985,22 @@ APInt &APInt::zext(uint32_t width) {
   return *this;
 }
 
+APInt &APInt::zextOrTrunc(uint32_t width) {
+  if (BitWidth < width)
+    return zext(width);
+  if (BitWidth > width)
+    return trunc(width);
+  return *this;
+}
+
+APInt &APInt::sextOrTrunc(uint32_t width) {
+  if (BitWidth < width)
+    return sext(width);
+  if (BitWidth > width)
+    return trunc(width);
+  return *this;
+}
+
 /// Arithmetic right-shift this APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
 APInt APInt::ashr(uint32_t shiftAmt) const {
