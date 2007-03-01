@@ -66,16 +66,16 @@ static Constant *CastConstantVector(ConstantVector *CV,
       assert(DstEltTy->isFloatingPoint());
       if (DstEltTy->getTypeID() == Type::DoubleTyID) {
         for (unsigned i = 0; i != SrcNumElts; ++i) {
-          double V =
-            BitsToDouble(cast<ConstantInt>(CV->getOperand(i))->getZExtValue());
+          ConstantInt *CI = cast<ConstantInt>(CV->getOperand(i));
+          double V = CI->getValue().bitsToDouble();
           Result.push_back(ConstantFP::get(Type::DoubleTy, V));
         }
         return ConstantVector::get(Result);
       }
       assert(DstEltTy == Type::FloatTy && "Unknown fp type!");
       for (unsigned i = 0; i != SrcNumElts; ++i) {
-        float V =
-          BitsToFloat(cast<ConstantInt>(CV->getOperand(i))->getZExtValue());
+        ConstantInt *CI = cast<ConstantInt>(CV->getOperand(i));
+        float V = CI->getValue().bitsToFloat();
         Result.push_back(ConstantFP::get(Type::FloatTy, V));
       }
       return ConstantVector::get(Result);
@@ -304,9 +304,9 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
 
       if (DestTy->isFloatingPoint()) {
         if (DestTy == Type::FloatTy)
-          return ConstantFP::get(DestTy, BitsToFloat(CI->getZExtValue()));
+          return ConstantFP::get(DestTy, CI->getValue().bitsToFloat());
         assert(DestTy == Type::DoubleTy && "Unknown FP type!");
-        return ConstantFP::get(DestTy, BitsToDouble(CI->getZExtValue()));
+        return ConstantFP::get(DestTy, CI->getValue().bitsToDouble());
       }
       // Otherwise, can't fold this (packed?)
       return 0;
@@ -316,10 +316,12 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     if (const ConstantFP *FP = dyn_cast<ConstantFP>(V)) {
       // FP -> Integral.
       if (DestTy == Type::Int32Ty) {
-        return ConstantInt::get(DestTy, FloatToBits(FP->getValue()));
+        APInt Val(32, 0);
+        return ConstantInt::get(Val.floatToBits(FP->getValue()));
       } else {
         assert(DestTy == Type::Int64Ty && "only support f32/f64 for now!");
-        return ConstantInt::get(DestTy, DoubleToBits(FP->getValue()));
+        APInt Val(64, 0);
+        return ConstantInt::get(Val.doubleToBits(FP->getValue()));
       }
     }
     return 0;
