@@ -2700,7 +2700,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   
   // Frame & Return address.  Currently unimplemented
   case ISD::RETURNADDR:         break;
-  case ISD::FRAMEADDR:          break;
+  case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
   }
   return SDOperand();
 }
@@ -3170,4 +3170,26 @@ bool PPCTargetLowering::isLegalAddressImmediate(int64_t V) const {
 
 bool PPCTargetLowering::isLegalAddressImmediate(llvm::GlobalValue* GV) const {
   return TargetLowering::isLegalAddressImmediate(GV); 
+}
+
+SDOperand PPCTargetLowering::LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG)
+{
+  // Depths > 0 not supported yet! 
+  if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
+    return SDOperand();
+  
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  bool isPPC64 = PtrVT == MVT::i64;
+  
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  bool is31 = (NoFramePointerElim || MFI->hasVarSizedObjects()) 
+                  && MFI->getStackSize();
+
+  if (isPPC64)
+    return DAG.getCopyFromReg(DAG.getEntryNode(), is31 ? PPC::X31 : PPC::X1,
+      MVT::i32);
+  else
+    return DAG.getCopyFromReg(DAG.getEntryNode(), is31 ? PPC::R31 : PPC::R1,
+      MVT::i32);
 }

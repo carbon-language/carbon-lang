@@ -240,6 +240,8 @@ namespace llvm {
     /// as the offset of the target addressing mode.
     virtual bool isLegalAddressImmediate(int64_t V) const;
     virtual bool isLegalAddressImmediate(llvm::GlobalValue*) const;
+
+    SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
   };
 }
 
