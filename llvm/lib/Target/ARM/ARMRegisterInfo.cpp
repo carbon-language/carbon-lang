@@ -313,6 +313,7 @@ ARMRegisterInfo::getCalleeSavedRegClasses() const {
 }
 
 BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+  // FIXME: avoid re-calculating this everytime.
   BitVector Reserved(getNumRegs());
   Reserved.set(ARM::SP);
   Reserved.set(ARM::PC);
@@ -619,6 +620,20 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
       .addReg(DestReg, false, false, true);
 }
 
+/// findScratchRegister - Find a 'free' ARM register. If register scavenger
+/// is not being used, R12 is available. Otherwise, try for a call-clobbered
+/// register first and then a spilled callee-saved register if that fails.
+static
+unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
+                             ARMFunctionInfo *AFI) {
+  unsigned Reg = RS ? RS->FindUnusedReg(RC, true) : (unsigned) ARM::R12;
+  if (Reg == 0)
+    // Try a already spilled CS register.
+    Reg = RS->FindUnusedReg(RC, AFI->getSpilledCSRegisters());
+
+  return Reg;
+}
+
 void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                           RegScavenger *RS) const{
   unsigned i = 0;
@@ -902,9 +917,8 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // If the offset we have is too large to fit into the instruction, we need
     // to form it with a series of ADDri's.  Do this by taking 8-bit chunks
     // out of 'Offset'.
-    unsigned ScratchReg = RS
-      ? RS->FindUnusedReg(&ARM::GPRRegClass, true) : (unsigned)ARM::R12;
-    assert(ScratchReg != 0 && "Unable to find a free call-clobbered register!");
+    unsigned ScratchReg = findScratchRegister(RS, &ARM::GPRRegClass, AFI);
+    assert(ScratchReg && "Unable to find a free register!");
     emitARMRegPlusImmediate(MBB, II, ScratchReg, FrameReg,
                             isSub ? -Offset : Offset, TII);
     MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
