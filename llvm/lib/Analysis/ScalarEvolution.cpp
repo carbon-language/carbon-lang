@@ -500,7 +500,7 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
     APInt Result(Val.getBitWidth(), 1);
     for (; NumSteps; --NumSteps)
       Result *= Val-(NumSteps-1);
-    return SCEVUnknown::get(ConstantInt::get(V->getType(), Result));
+    return SCEVUnknown::get(ConstantInt::get(Result));
   }
 
   const Type *Ty = V->getType();
@@ -2364,7 +2364,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     APInt ExitVal(Upper);
     if (A != One)
       ExitVal = (Upper + A - One).sdiv(A);
-    ConstantInt *ExitValue = ConstantInt::get(getType(), ExitVal);
+    ConstantInt *ExitValue = ConstantInt::get(ExitVal);
 
     // Evaluate at the exit value.  If we really did fall out of the valid
     // range, then we computed our trip count, otherwise wrap around or other
@@ -2376,7 +2376,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // Ensure that the previous value is in the range.  This is a sanity check.
     assert(Range.contains(
            EvaluateConstantChrecAtConstant(this, 
-           ConstantInt::get(getType(), ExitVal - One))->getValue()) &&
+           ConstantInt::get(ExitVal - One))->getValue()) &&
            "Linear scev computation is off in a bad way!");
     return SCEVConstant::get(cast<ConstantInt>(ExitValue));
   } else if (isQuadratic()) {
@@ -2386,7 +2386,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // Range.getUpper() is crossed.
     std::vector<SCEVHandle> NewOps(op_begin(), op_end());
     NewOps[0] = SCEV::getNegativeSCEV(SCEVUnknown::get(
-                                ConstantInt::get(getType(), Range.getUpper())));
+                                           ConstantInt::get(Range.getUpper())));
     SCEVHandle NewAddRec = SCEVAddRecExpr::get(NewOps, getLoop());
 
     // Next, solve the constructed addrec
