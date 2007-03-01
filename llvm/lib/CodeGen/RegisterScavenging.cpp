@@ -25,7 +25,7 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
-void RegScavenger::init(MachineBasicBlock *mbb) {
+void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   const MachineFunction &MF = *mbb->getParent();
   const TargetMachine &TM = MF.getTarget();
   const MRegisterInfo *RegInfo = TM.getRegisterInfo();
@@ -35,8 +35,10 @@ void RegScavenger::init(MachineBasicBlock *mbb) {
 
   if (!MBB) {
     NumPhysRegs = RegInfo->getNumRegs();
-    ReservedRegs = RegInfo->getReservedRegs(MF);
     RegStates.resize(NumPhysRegs);
+
+    // Create reserved registers bitvector.
+    ReservedRegs = RegInfo->getReservedRegs(MF);
 
     // Create callee-saved registers bitvector.
     CalleeSavedRegs.resize(NumPhysRegs);
@@ -51,7 +53,7 @@ void RegScavenger::init(MachineBasicBlock *mbb) {
   // All registers started out unused.
   RegStates.set();
 
-  // Create reserved registers bitvector.
+  // Reserved registers are always used.
   RegStates ^= ReservedRegs;
 
   // Live-in registers are in use.
@@ -59,6 +61,8 @@ void RegScavenger::init(MachineBasicBlock *mbb) {
     for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
            E = MBB->livein_end(); I != E; ++I)
       setUsed(*I);
+
+  Tracking = false;
 }
 
 void RegScavenger::forward() {
@@ -167,14 +171,4 @@ unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
   // Returns the first unused (bit is set) register, or 0 is none is found.
   int Reg = RegStatesCopy.find_first();
   return (Reg == -1) ? 0 : Reg;
-}
-
-void RegScavenger::clear() {
-  if (MBB) {
-    MBBI = MBB->end();
-    MBB = NULL;
-  }
-
-  Tracking = false;
-  RegStates.clear();
 }
