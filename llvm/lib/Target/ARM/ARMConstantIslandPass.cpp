@@ -213,7 +213,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   
   // If LR has been forced spilled and no far jumps (i.e. BL) has been issued.
   // Undo the spill / restore of LR if possible.
-  if (!HasFarJump && AFI->isLRForceSpilled() && isThumb)
+  if (!HasFarJump && AFI->isLRSpilledForFarJump() && isThumb)
     MadeChange |= UndoLRSpillRestore();
 
   BBSizes.clear();

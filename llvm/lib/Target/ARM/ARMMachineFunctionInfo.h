@@ -16,6 +16,7 @@
 
 #include "ARMSubtarget.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 
@@ -37,9 +38,9 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// processFunctionBeforeCalleeSavedScan().
   bool HasStackFrame;
 
-  /// LRSForceSpilled - True if the LR register has been for spilled to enable
-  /// far jump.
-  bool LRForceSpilled;
+  /// LRSpilledForFarJump - True if the LR register has been for spilled to
+  /// enable far jump.
+  bool LRSpilledForFarJump;
 
   /// R3IsLiveIn - True if R3 is live in to this function.
   /// FIXME: Remove when register scavenger for Thumb is done.
@@ -73,6 +74,10 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   BitVector GPRCS2Frames;
   BitVector DPRCSFrames;
 
+  /// SpilledCSRegs - A BitVector mask of all spilled callee-saved registers.
+  ///
+  BitVector SpilledCSRegs;
+
   /// JumpTableUId - Unique id for jumptables.
   ///
   unsigned JumpTableUId;
@@ -81,19 +86,20 @@ public:
   ARMFunctionInfo() :
     isThumb(false),
     VarArgsRegSaveSize(0), HasStackFrame(false),
-    LRForceSpilled(false), R3IsLiveIn(false),
+    LRSpilledForFarJump(false), R3IsLiveIn(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
-    GPRCS1Frames(32), GPRCS2Frames(32), DPRCSFrames(32),
+    GPRCS1Frames(0), GPRCS2Frames(0), DPRCSFrames(0),
     JumpTableUId(0) {}
 
   ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
     VarArgsRegSaveSize(0), HasStackFrame(false),
-    LRForceSpilled(false), R3IsLiveIn(false),
+    LRSpilledForFarJump(false), R3IsLiveIn(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
     GPRCS1Frames(32), GPRCS2Frames(32), DPRCSFrames(32),
+    SpilledCSRegs(MF.getTarget().getRegisterInfo()->getNumRegs()),
     JumpTableUId(0) {}
 
   bool isThumbFunction() const { return isThumb; }
@@ -104,10 +110,11 @@ public:
   bool hasStackFrame() const { return HasStackFrame; }
   void setHasStackFrame(bool s) { HasStackFrame = s; }
 
-  bool isLRForceSpilled() const { return LRForceSpilled; }
-  void setLRIsForceSpilled(bool s) { LRForceSpilled = s; }
+  bool isLRSpilledForFarJump() const { return LRSpilledForFarJump; }
+  void setLRIsSpilledForFarJump(bool s) { LRSpilledForFarJump = s; }
 
-  bool isR3IsLiveIn() const { return R3IsLiveIn; }
+  // FIXME: Remove when register scavenger for Thumb is done.
+  bool isR3LiveIn() const { return R3IsLiveIn; }
   void setR3IsLiveIn(bool l) { R3IsLiveIn = l; }
 
   unsigned getFramePtrSpillOffset() const { return FramePtrSpillOffset; }
@@ -180,6 +187,18 @@ public:
       }
       DPRCSFrames[fi] = true;
     }
+  }
+
+  void setCSRegisterIsSpilled(unsigned Reg) {
+    SpilledCSRegs.set(Reg);
+  }
+
+  bool isCSRegisterSpilled(unsigned Reg) {
+    return SpilledCSRegs[Reg];
+  }
+
+  const BitVector &getSpilledCSRegisters() const {
+    return SpilledCSRegs;
   }
 
   unsigned createJumpTableUId() {

@@ -869,7 +869,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
           .addReg(ARM::R2, false, false, true);
         TmpReg = ARM::R2;
       }
-      if (TmpReg == ARM::R3 && AFI->isR3IsLiveIn())
+      if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
         BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12)
           .addReg(ARM::R3, false, false, true);
       if (Opcode == ARM::tSpill) {
@@ -892,7 +892,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       if (ValReg == ARM::R3)
         BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R2)
           .addReg(ARM::R12, false, false, true);
-      if (TmpReg == ARM::R3 && AFI->isR3IsLiveIn())
+      if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
         BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R3)
           .addReg(ARM::R12, false, false, true);
     } else
@@ -923,6 +923,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
   unsigned NumGPRSpills = 0;
   SmallVector<unsigned, 4> UnspilledCS1GPRs;
   SmallVector<unsigned, 4> UnspilledCS2GPRs;
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
   // Don't spill FP if the frame can be eliminated. This is determined
   // by scanning the callee-save registers to see if any is used.
@@ -932,6 +933,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
     unsigned Reg = CSRegs[i];
     bool Spilled = false;
     if (MF.isPhysRegUsed(Reg)) {
+      AFI->setCSRegisterIsSpilled(Reg);
       Spilled = true;
       CanEliminateFrame = false;
     } else {
@@ -992,13 +994,12 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
     }
   }
 
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   bool ForceLRSpill = false;
   if (!LRSpilled && AFI->isThumbFunction()) {
     unsigned FnSize = ARM::GetFunctionSize(MF);
-    // Force LR spill if the Thumb function size is > 2048. This enables the
+    // Force LR to be spilled if the Thumb function size is > 2048. This enables
     // use of BL to implement far jump. If it turns out that it's not needed
-    // the branch fix up path will undo it.
+    // then the branch fix up path will undo it.
     if (FnSize >= (1 << 11)) {
       CanEliminateFrame = false;
       ForceLRSpill = true;
@@ -1012,6 +1013,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
     // Spill LR as well so we can fold BX_RET to the registers restore (LDM).
     if (!LRSpilled && CS1Spilled) {
       MF.changePhyRegUsed(ARM::LR, true);
+      AFI->setCSRegisterIsSpilled(ARM::LR);
       NumGPRSpills++;
       UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
                                     UnspilledCS1GPRs.end(), (unsigned)ARM::LR));
@@ -1030,16 +1032,22 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
     // the integer and double callee save areas.
     unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
     if (TargetAlign == 8 && (NumGPRSpills & 1)) {
-      if (CS1Spilled && !UnspilledCS1GPRs.empty())
-        MF.changePhyRegUsed(UnspilledCS1GPRs.front(), true);
-      else if (!UnspilledCS2GPRs.empty())
-        MF.changePhyRegUsed(UnspilledCS2GPRs.front(), true);
+      if (CS1Spilled && !UnspilledCS1GPRs.empty()) {
+        unsigned Reg = UnspilledCS1GPRs.front();
+        MF.changePhyRegUsed(Reg, true);
+        AFI->setCSRegisterIsSpilled(Reg);
+      } else if (!UnspilledCS2GPRs.empty()) {
+        unsigned Reg = UnspilledCS2GPRs.front();
+        MF.changePhyRegUsed(Reg, true);
+        AFI->setCSRegisterIsSpilled(Reg);
+      }
     }
   }
 
   if (ForceLRSpill) {
     MF.changePhyRegUsed(ARM::LR, true);
-    AFI->setLRIsForceSpilled(true);
+    AFI->setCSRegisterIsSpilled(ARM::LR);
+    AFI->setLRIsSpilledForFarJump(true);
   }
 }
 
