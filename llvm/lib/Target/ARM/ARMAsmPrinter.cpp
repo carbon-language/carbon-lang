@@ -36,7 +36,6 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include <cctype>
-#include <iostream>
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
