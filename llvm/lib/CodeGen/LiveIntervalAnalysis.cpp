@@ -988,7 +988,6 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   DOUT << "\n\t\tJoined.  Result = "; DestInt.print(DOUT, mri_);
   DOUT << "\n";
 
-#if 1
   // Remember these liveintervals have been joined.
   JoinedLIs.set(repSrcReg - MRegisterInfo::FirstVirtualRegister);
   if (MRegisterInfo::isVirtualRegister(repDstReg))
