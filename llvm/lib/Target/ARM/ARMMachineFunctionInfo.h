@@ -17,6 +17,7 @@
 #include "ARMSubtarget.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/BitVector.h"
 
 namespace llvm {
 
@@ -41,7 +42,7 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   bool LRForceSpilled;
 
   /// R3IsLiveIn - True if R3 is live in to this function.
-  ///
+  /// FIXME: Remove when register scavenger for Thumb is done.
   bool R3IsLiveIn;
 
   /// FramePtrSpillOffset - If HasStackFrame, this records the frame pointer
@@ -68,9 +69,9 @@ class ARMFunctionInfo : public MachineFunctionInfo {
 
   /// GPRCS1Frames, GPRCS2Frames, DPRCSFrames - Keeps track of frame indices
   /// which belong to these spill areas.
-  std::vector<bool> GPRCS1Frames;
-  std::vector<bool> GPRCS2Frames;
-  std::vector<bool> DPRCSFrames;
+  BitVector GPRCS1Frames;
+  BitVector GPRCS2Frames;
+  BitVector DPRCSFrames;
 
   /// JumpTableUId - Unique id for jumptables.
   ///
@@ -82,14 +83,18 @@ public:
     VarArgsRegSaveSize(0), HasStackFrame(false),
     LRForceSpilled(false), R3IsLiveIn(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
-    GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0), JumpTableUId(0) {}
+    GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
+    GPRCS1Frames(32), GPRCS2Frames(32), DPRCSFrames(32),
+    JumpTableUId(0) {}
 
   ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
     VarArgsRegSaveSize(0), HasStackFrame(false),
     LRForceSpilled(false), R3IsLiveIn(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
-    GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0), JumpTableUId(0) {}
+    GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
+    GPRCS1Frames(32), GPRCS2Frames(32), DPRCSFrames(32),
+    JumpTableUId(0) {}
 
   bool isThumbFunction() const { return isThumb; }
 
@@ -142,22 +147,37 @@ public:
 
   void addGPRCalleeSavedArea1Frame(int fi) {
     if (fi >= 0) {
-      if (fi >= (int)GPRCS1Frames.size())
-        GPRCS1Frames.resize(fi+1);
+      int Size = GPRCS1Frames.size();
+      if (fi >= Size) {
+        Size *= 2;
+        if (fi >= Size)
+          Size = fi+1;
+        GPRCS1Frames.resize(Size);
+      }
       GPRCS1Frames[fi] = true;
     }
   }
   void addGPRCalleeSavedArea2Frame(int fi) {
     if (fi >= 0) {
-      if (fi >= (int)GPRCS2Frames.size())
-        GPRCS2Frames.resize(fi+1);
+      int Size = GPRCS2Frames.size();
+      if (fi >= Size) {
+        Size *= 2;
+        if (fi >= Size)
+          Size = fi+1;
+        GPRCS2Frames.resize(Size);
+      }
       GPRCS2Frames[fi] = true;
     }
   }
   void addDPRCalleeSavedAreaFrame(int fi) {
     if (fi >= 0) {
-      if (fi >= (int)DPRCSFrames.size())
-        DPRCSFrames.resize(fi+1);
+      int Size = DPRCSFrames.size();
+      if (fi >= Size) {
+        Size *= 2;
+        if (fi >= Size)
+          Size = fi+1;
+        DPRCSFrames.resize(Size);
+      }
       DPRCSFrames[fi] = true;
     }
   }
