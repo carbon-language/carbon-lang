@@ -49,10 +49,8 @@ static X86FunctionInfo calculateFunctionInfo(const Function *F,
 
   for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
        AI != AE; ++AI)
-    Size += TD->getTypeSize(AI->getType());
-
-  // Size should be aligned to DWORD boundary
-  Size = ((Size + 3)/4)*4;
+    // Size should be aligned to DWORD boundary
+    Size += ((TD->getTypeSize(AI->getType()) + 3)/4)*4;
   
   // We're not supporting tooooo huge arguments :)
   Info.setBytesToPopOnReturn((unsigned int)Size);

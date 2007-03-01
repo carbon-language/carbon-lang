@@ -30,10 +30,15 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
+
+static cl::opt<bool> FastCallAlignStack("x86-fastcc-align-stack", cl::Hidden,
+             cl::desc("Align stack to 8-byte boundary for fastcall function"),
+                                        cl::init(false));
 
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
@@ -903,11 +908,13 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   ArgValues.push_back(Root);
 
   unsigned StackSize = CCInfo.getNextStackOffset();
-  
-  // Make sure the instruction takes 8n+4 bytes to make sure the start of the
-  // arguments and the arguments after the retaddr has been pushed are aligned.
-  if ((StackSize & 7) == 0)
-    StackSize += 4;
+
+  if (FastCallAlignStack) {
+    // Make sure the instruction takes 8n+4 bytes to make sure the start of the
+    // arguments and the arguments after the retaddr has been pushed are aligned.
+    if ((StackSize & 7) == 0)
+      StackSize += 4;
+  }
 
   VarArgsFrameIndex = 0xAAAAAAA;   // fastcc functions can't have varargs.
   RegSaveFrameIndex = 0xAAAAAAA;   // X86-64 only.
@@ -936,10 +943,12 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
-  // Make sure the instruction takes 8n+4 bytes to make sure the start of the
-  // arguments and the arguments after the retaddr has been pushed are aligned.
-  if ((NumBytes & 7) == 0)
-    NumBytes += 4;
+  if (FastCallAlignStack) {
+    // Make sure the instruction takes 8n+4 bytes to make sure the start of the
+    // arguments and the arguments after the retaddr has been pushed are aligned.
+    if ((NumBytes & 7) == 0)
+      NumBytes += 4;
+  }
 
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 

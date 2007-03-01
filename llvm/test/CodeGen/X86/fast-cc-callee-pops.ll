@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel -mcpu=yonah | grep 'ret 28'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel -mcpu=yonah | grep 'ret 20'
 
 ; Check that a fastcc function pops its stack variables before returning.
 
