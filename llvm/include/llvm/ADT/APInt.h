@@ -723,6 +723,40 @@ public:
     return T.F;
   }
 
+  /// The conversion does not do a translation from double to integer, it just
+  /// re-interprets the bits of the double. Note that it is valid to do this on
+  /// any bit width but bits from V may get truncated.
+  /// @brief Converts a double to APInt bits.
+  APInt& doubleToBits(double V) {
+    union {
+      uint64_t I;
+      double D;
+    } T;
+    T.D = V;
+    if (isSingleWord())
+      VAL = T.I;
+    else
+      pVal[0] = T.I;
+    return clearUnusedBits();
+  }
+
+  /// The conversion does not do a translation from float to integer, it just
+  /// re-interprets the bits of the float. Note that it is valid to do this on
+  /// any bit width but bits from V may get truncated.
+  /// @brief Converts a float to APInt bits.
+  APInt& floatToBits(float V) {
+    union {
+      uint32_t I;
+      float F;
+    } T;
+    T.F = V;
+    if (isSingleWord())
+      VAL = T.I;
+    else
+      pVal[0] = T.I;
+    return clearUnusedBits();
+  }
+
   /// @brief Compute the square root
   APInt sqrt() const;
 };
