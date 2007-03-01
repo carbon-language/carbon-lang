@@ -19,7 +19,6 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
-#include "llvm/ADT/APInt.h"
 
 namespace llvm {
 
@@ -31,6 +30,7 @@ class StructValType;
 class PointerValType;
 class VectorValType;
 class IntegerValType;
+class APInt;
 
 class DerivedType : public Type {
   friend class Type;
@@ -112,9 +112,7 @@ public:
   /// For example, this is 0xFF for an 8 bit integer, 0xFFFF for i16, etc.
   /// @returns a bit mask with ones set for all the bits of this type.
   /// @brief Get a bit mask for this type.
-  APInt getMask() const {
-    return APInt::getAllOnesValue(getBitWidth());
-  }
+  APInt getMask() const;
 
   /// This method determines if the width of this IntegerType is a power-of-2
   /// in terms of 8 bit bytes. 

@@ -972,6 +972,10 @@ bool IntegerType::isPowerOf2ByteWidth() const {
   return (BitWidth > 7) && isPowerOf2_32(BitWidth);
 }
 
+APInt IntegerType::getMask() const {
+  return APInt::getAllOnesValue(getBitWidth());
+}
+
 // FunctionValType - Define a class to hold the key that goes into the TypeMap
 //
 namespace llvm {
