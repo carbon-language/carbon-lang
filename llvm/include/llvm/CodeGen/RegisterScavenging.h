@@ -45,16 +45,9 @@ public:
   RegScavenger(MachineBasicBlock *mbb)
     : MBB(mbb), NumPhysRegs(0), Tracking(false) {};
 
-  /// Init - Initialize the states.
-  ///
-  void init(MachineBasicBlock *mbb);
-
-  /// Reset - Discard previous states and re-initialize the states given for
-  /// the specific basic block.
-  void reset(MachineBasicBlock *mbb) {
-    clear();
-    init(mbb);
-  }
+  /// enterBasicBlock - Start tracking liveness from the begin of the specific
+  /// basic block.
+  void enterBasicBlock(MachineBasicBlock *mbb);
 
   /// forward / backward - Move the internal MBB iterator and update register
   /// states.
@@ -91,10 +84,6 @@ public:
                          bool ExCalleeSaved = false) const;
 
 private:
-  /// clear - Clear states.
-  ///
-  void clear();
-
   /// CalleeSavedrRegs - A bitvector of callee saved registers for the target.
   ///
   BitVector CalleeSavedRegs;
