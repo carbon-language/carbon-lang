@@ -19,6 +19,7 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
+#include "llvm/ADT/APInt.h"
 
 namespace llvm {
 
@@ -106,6 +107,13 @@ public:
   /// sbyte/ubyte, 0xFFFF for shorts, etc.
   uint64_t getBitMask() const {
     return ~uint64_t(0UL) >> (64-getPrimitiveSizeInBits());
+  }
+
+  /// For example, this is 0xFF for an 8 bit integer, 0xFFFF for i16, etc.
+  /// @returns a bit mask with ones set for all the bits of this type.
+  /// @brief Get a bit mask for this type.
+  APInt getMask() const {
+    return APInt::getAllOnesValue(getBitWidth());
   }
 
   /// This method determines if the width of this IntegerType is a power-of-2
