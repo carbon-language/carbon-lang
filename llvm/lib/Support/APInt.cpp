@@ -1190,7 +1190,7 @@ APInt APInt::sqrt() const {
   // Use a fast table for some small values. This also gets rid of some
   // rounding errors in libc sqrt for small values.
   if (magnitude <= 5) {
-    static uint8_t results[32] = {
+    static const uint8_t results[32] = {
       /*     0 */ 0,
       /*  1- 2 */ 1, 1,
       /*  3- 6 */ 2, 2, 2, 2, 
