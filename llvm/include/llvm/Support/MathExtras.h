@@ -208,22 +208,27 @@ inline unsigned CountTrailingZeros_64(uint64_t Value) {
 /// CountPopulation_32 - this function counts the number of set bits in a value.
 /// Ex. CountPopulation(0xF000F000) = 8
 /// Returns 0 if the word is zero.
-inline unsigned CountPopulation_32(unsigned Value) {
-  unsigned x, t;
-  x = Value - ((Value >> 1) & 0x55555555);
-  t = ((x >> 2) & 0x33333333);
-  x = (x & 0x33333333) + t;
-  x = (x + (x >> 4)) & 0x0F0F0F0F;
-  x = x + (x << 8);
-  x = x + (x << 16);
-  return x >> 24;
+inline unsigned CountPopulation_32(uint32_t Value) {
+#if __GNUC__ >= 4
+  return __builtin_popcount(Value);
+#else
+ 	uint32_t v = v - ((v >> 1) & 0x55555555);
+	v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+	return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+#endif
 }
 
 /// CountPopulation_64 - this function counts the number of set bits in a value,
 /// (64 bit edition.)
 inline unsigned CountPopulation_64(uint64_t Value) {
-  return CountPopulation_32(unsigned(Value >> 32)) +
-         CountPopulation_32(unsigned(Value));
+#if __GNUC__ >= 4
+  return __builtin_popcountll(Value);
+#else
+	uint64_t v = Value - ((Value >> 1) & 0x5555555555555555ULL);
+	v = (v & 0x3333333333333333ULL) + ((v >> 2) & 0x3333333333333333ULL);
+	v = (v + (v >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
+	return (uint64_t)(v * 0x0101010101010101ULL) >> 56;
+#endif
 }
 
 /// Log2_32 - This function returns the floor log base 2 of the specified value, 
