@@ -58,7 +58,6 @@ public:
 class BasicBlock;
 
 class MachineBasicBlock {
-public:
   typedef ilist<MachineInstr> Instructions;
   Instructions Insts;
   MachineBasicBlock *Prev, *Next;
