@@ -90,12 +90,11 @@ public:
   }
 
   /// Return a ConstantInt with the specified value for the specified type. The
-  /// value V will be canonicalized to a uint64_t but accessing it with either
-  /// getSExtValue() or getZExtValue() (ConstantInt) will yield the correct
-  /// sized/signed value for the type Ty.
+  /// value V will be canonicalized to a an unsigned APInt. Accessing it with
+  /// either getSExtValue() or getZExtValue() will yield a correctly sized and
+  /// signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific value.
-  static ConstantInt *get(const Type *Ty, int64_t V);
-  static ConstantInt *get(const Type *Ty, const APInt& V);
+  static ConstantInt *get(const Type *Ty, uint64_t V);
 
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.

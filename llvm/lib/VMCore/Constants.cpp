@@ -115,7 +115,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
 // Static constructor to create an integral constant with all bits set
 ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
   if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
-    return ConstantInt::get(Ty, APInt::getAllOnesValue(ITy->getBitWidth()));
+    return ConstantInt::get(APInt::getAllOnesValue(ITy->getBitWidth()));
   return 0;
 }
 
@@ -192,32 +192,27 @@ typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*,
                  DenseMapAPIntKeyInfo> IntMapTy;
 static ManagedStatic<IntMapTy> IntConstants;
 
-ConstantInt *ConstantInt::get(const Type *Ty, int64_t V) {
+ConstantInt *ConstantInt::get(const Type *Ty, uint64_t V) {
   const IntegerType *ITy = cast<IntegerType>(Ty);
-  APInt Tmp(ITy->getBitWidth(), V);
-  return get(Ty, Tmp);
+  return get(APInt(ITy->getBitWidth(), V));
 }
 
-// Get a ConstantInt from a Type and APInt. Note that the value stored in 
-// the DenseMap as the key is a DensMapAPIntKeyInfo::KeyTy which has provided
+// Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
+// as the key, is a DensMapAPIntKeyInfo::KeyTy which has provided the
 // operator== and operator!= to ensure that the DenseMap doesn't attempt to
 // compare APInt's of different widths, which would violate an APInt class
 // invariant which generates an assertion.
-ConstantInt *ConstantInt::get(const Type *Ty, const APInt& V) {
-  const IntegerType *ITy = cast<IntegerType>(Ty);
-  assert(ITy->getBitWidth() == V.getBitWidth() && "Invalid type for constant");
+ConstantInt *ConstantInt::get(const APInt& V) {
+  // Get the corresponding integer type for the bit width of the value.
+  const IntegerType *ITy = IntegerType::get(V.getBitWidth());
   // get an existing value or the insertion position
-  DenseMapAPIntKeyInfo::KeyTy Key(V, Ty);
+  DenseMapAPIntKeyInfo::KeyTy Key(V, ITy);
   ConstantInt *&Slot = (*IntConstants)[Key]; 
   // if it exists, return it.
   if (Slot)
     return Slot;
   // otherwise create a new one, insert it, and return it.
   return Slot = new ConstantInt(ITy, V);
-}
-
-ConstantInt *ConstantInt::get(const APInt &V) {
-  return ConstantInt::get(IntegerType::get(V.getBitWidth()), V);
 }
 
 //===----------------------------------------------------------------------===//
