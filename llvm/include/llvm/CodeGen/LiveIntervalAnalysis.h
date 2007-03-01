@@ -57,6 +57,10 @@ namespace llvm {
 
     BitVector allocatableRegs_;
 
+    /// JoinedLIs - Keep track which register intervals have been coalesced
+    /// with other intervals.
+    BitVector JoinedLIs;
+
   public:
     struct CopyRec {
       MachineInstr *MI;
@@ -119,8 +123,7 @@ namespace llvm {
     }
 
     bool hasInterval(unsigned reg) const {
-      Reg2IntervalMap::const_iterator I = r2iMap_.find(reg);
-      return I != r2iMap_.end();
+      return r2iMap_.count(reg);
     }
 
     /// getMBBStartIdx - Return the base index of the first instruction in the
@@ -264,9 +267,13 @@ namespace llvm {
     MachineInstr *lastRegisterUse(unsigned Reg, unsigned Start, unsigned End,
                                   MachineOperand *&MOU);
 
-    /// unsetRegisterKill - Unset IsKill property of all uses of specific
+    /// unsetRegisterKill - Unset IsKill property of all uses of the specific
     /// register of the specific instruction.
     void unsetRegisterKill(MachineInstr *MI, unsigned Reg);
+
+    /// hasRegisterDef - True if the instruction defines the specific register.
+    ///
+    bool hasRegisterDef(MachineInstr *MI, unsigned Reg);
 
     static LiveInterval createInterval(unsigned Reg);
 

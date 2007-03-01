@@ -65,6 +65,7 @@ void LiveIntervals::releaseMemory() {
   i2miMap_.clear();
   r2iMap_.clear();
   r2rMap_.clear();
+  JoinedLIs.clear();
 }
 
 
@@ -987,27 +988,11 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   DOUT << "\n\t\tJoined.  Result = "; DestInt.print(DOUT, mri_);
   DOUT << "\n";
 
-  // Live range has been lengthened due to colaescing, eliminate the
-  // unnecessary kills at the end of the source live ranges.
-  LiveVariables::VarInfo& svi = lv_->getVarInfo(repSrcReg);
-  for (unsigned i = 0, e = svi.Kills.size(); i != e; ++i) {
-    MachineInstr *Kill = svi.Kills[i];
-    if (Kill == CopyMI || isRemoved(Kill))
-      continue;
-    if (DestInt.liveAt(getInstructionIndex(Kill) + InstrSlots::NUM))
-      unsetRegisterKill(Kill, repSrcReg);
-  }
-  if (MRegisterInfo::isVirtualRegister(repDstReg)) {
-    // If both are virtual registers...
-    LiveVariables::VarInfo& dvi = lv_->getVarInfo(repDstReg);
-    for (unsigned i = 0, e = dvi.Kills.size(); i != e; ++i) {
-      MachineInstr *Kill = dvi.Kills[i];
-      if (Kill == CopyMI || isRemoved(Kill))
-        continue;
-      if (DestInt.liveAt(getInstructionIndex(Kill) + InstrSlots::NUM))
-        unsetRegisterKill(Kill, repDstReg);
-    }
-  }
+#if 1
+  // Remember these liveintervals have been joined.
+  JoinedLIs.set(repSrcReg - MRegisterInfo::FirstVirtualRegister);
+  if (MRegisterInfo::isVirtualRegister(repDstReg))
+    JoinedLIs.set(repDstReg - MRegisterInfo::FirstVirtualRegister);
 
   // If the intervals were swapped by Join, swap them back so that the register
   // mapping (in the r2i map) is correct.
@@ -1427,8 +1412,10 @@ void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
 void LiveIntervals::joinIntervals() {
   DOUT << "********** JOINING INTERVALS ***********\n";
 
+  JoinedLIs.resize(getNumIntervals());
+  JoinedLIs.reset();
+
   std::vector<CopyRec> TryAgainList;
-  
   const LoopInfo &LI = getAnalysis<LoopInfo>();
   if (LI.begin() == LI.end()) {
     // If there are no loops in the function, join intervals in function order.
@@ -1466,6 +1453,27 @@ void LiveIntervals::joinIntervals() {
         ProgressMade = true;
       }
     }
+  }
+
+  // Some live range has been lengthened due to colaescing, eliminate the
+  // unnecessary kills.
+  int RegNum = JoinedLIs.find_first();
+  while (RegNum != -1) {
+    unsigned Reg = RegNum + MRegisterInfo::FirstVirtualRegister;
+    unsigned repReg = rep(Reg);
+    LiveInterval &LI = getInterval(repReg);
+    LiveVariables::VarInfo& svi = lv_->getVarInfo(Reg);
+    for (unsigned i = 0, e = svi.Kills.size(); i != e; ++i) {
+      MachineInstr *Kill = svi.Kills[i];
+      // Suppose vr1 = op vr2, x
+      // and vr1 and vr2 are coalesced. vr2 should still be marked kill
+      // unless it is a two-address operand.
+      if (isRemoved(Kill) || hasRegisterDef(Kill, repReg))
+        continue;
+      if (LI.liveAt(getInstructionIndex(Kill) + InstrSlots::NUM))
+        unsetRegisterKill(Kill, repReg);
+    }
+    RegNum = JoinedLIs.find_next(RegNum);
   }
   
   DOUT << "*** Register mapping ***\n";
@@ -1539,6 +1547,18 @@ void LiveIntervals::unsetRegisterKill(MachineInstr *MI, unsigned Reg) {
         mri_->regsOverlap(rep(MO.getReg()), Reg))
       MO.unsetIsKill();
   }
+}
+
+/// hasRegisterDef - True if the instruction defines the specific register.
+///
+bool LiveIntervals::hasRegisterDef(MachineInstr *MI, unsigned Reg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isDef() &&
+        mri_->regsOverlap(rep(MO.getReg()), Reg))
+      return true;
+  }
+  return false;
 }
 
 LiveInterval LiveIntervals::createInterval(unsigned reg) {
