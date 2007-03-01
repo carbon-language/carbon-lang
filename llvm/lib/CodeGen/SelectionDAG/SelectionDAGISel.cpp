@@ -2110,7 +2110,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
 
-  case Intrinsic::eh_selector: {
+  case Intrinsic::eh_selector:
+  case Intrinsic::eh_filter:{
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     
     if (MMI) {
@@ -2120,6 +2121,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
              isa<Function>(CE->getOperand(0)) &&
              "Personality should be a function");
       MMI->addPersonality(CurMBB, cast<Function>(CE->getOperand(0)));
+      if (Intrinsic == Intrinsic::eh_filter)
+        MMI->setIsFilterLandingPad(CurMBB);
 
       // Gather all the type infos for this landing pad and pass them along to
       // MachineModuleInfo.
