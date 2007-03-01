@@ -127,6 +127,13 @@ public:
     return Val == 0; 
   }
 
+  /// This is just a convenience method to make client code smaller for a 
+  /// common case.
+  /// @brief Determine if the value is one.
+  virtual bool isUnitValue() const {
+    return Val == 1;
+  }
+
   /// This function will return true iff every bit in this constant is set
   /// to true.
   /// @returns true iff this constant's bits are all set to true.
