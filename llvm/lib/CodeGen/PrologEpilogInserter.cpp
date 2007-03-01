@@ -458,5 +458,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
       if (RS) RS->forward(I);
     }
   }
+
+  delete RS;
 }
 
