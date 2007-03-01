@@ -759,6 +759,14 @@ public:
 
   /// @brief Compute the square root
   APInt sqrt() const;
+
+  /// If *this is < 0 then return -(*this), otherwise *this;
+  /// @brief Get the absolute value;
+  APInt abs() const {
+    if (isNegative())
+      return -(*this);
+    return *this;
+  }
 };
 
 inline bool operator==(uint64_t V1, const APInt& V2) {
