@@ -102,19 +102,27 @@ inline unsigned short ByteSwap_16(unsigned short Value) {
 /// ByteSwap_32 - This function returns a byte-swapped representation of the
 /// 32-bit argument, Value.
 inline unsigned ByteSwap_32(unsigned Value) {
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+	return __builtin_bswap32(Value);
+#else
   unsigned Byte0 = Value & 0x000000FF;
   unsigned Byte1 = Value & 0x0000FF00;
   unsigned Byte2 = Value & 0x00FF0000;
   unsigned Byte3 = Value & 0xFF000000;
   return (Byte0 << 24) | (Byte1 << 8) | (Byte2 >> 8) | (Byte3 >> 24);
+#endif
 }
 
 /// ByteSwap_64 - This function returns a byte-swapped representation of the
 /// 64-bit argument, Value.
 inline uint64_t ByteSwap_64(uint64_t Value) {
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+	return __builtin_bswap64(Value);
+#else
   uint64_t Hi = ByteSwap_32(unsigned(Value));
   uint64_t Lo = ByteSwap_32(unsigned(Value >> 32));
   return (Hi << 32) | Lo;
+#endif
 }
 
 /// CountLeadingZeros_32 - this function performs the platform optimal form of
@@ -194,7 +202,14 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
 /// bit.  Ex. CountTrailingZeros_32(0xFF00FF00) == 8.
 /// Returns 32 if the word is zero.
 inline unsigned CountTrailingZeros_32(unsigned Value) {
-  return 32 - CountLeadingZeros_32(~Value & (Value - 1));
+#if __GNUC__ >= 4
+  return Value ? __builtin_ctz(Value) : 32;
+#else
+	const unsigned Mod37BitPosition[] = {32, 0, 1, 26, 2, 23, 27, 0, 3, 16, 24, 30, 28, 11, 0, 13,
+		                                   4, 7, 17, 0, 25, 22, 31, 15, 29, 10, 12, 6, 0, 21, 14, 9,
+		                                   5, 20, 8, 19, 18 };
+	return Mod37BitPosition[(-Value & Value) % 37];
+#endif
 }
 
 /// CountTrailingZeros_64 - This function performs the platform optimal form
@@ -202,7 +217,16 @@ inline unsigned CountTrailingZeros_32(unsigned Value) {
 /// one bit (64 bit edition.)
 /// Returns 64 if the word is zero.
 inline unsigned CountTrailingZeros_64(uint64_t Value) {
-  return 64 - CountLeadingZeros_64(~Value & (Value - 1));
+#if __GNUC__ >= 4
+  return Value ? __builtin_ctzll(Value) : 64;
+#else
+  const unsigned Mod67Position[] = { 64, 0, 1, 39, 2, 15, 40, 23, 3, 12, 16, 59, 41, 19, 24, 54,
+	                                   4, 64, 13, 10, 17, 62, 60, 28, 42, 30, 20, 51, 25, 44, 55,
+	                                   47, 5, 32, 65, 38, 14, 22, 11, 58, 18, 53, 63, 9, 61, 27,
+	                                   29, 50, 43, 46, 31, 37, 21, 57, 52, 8, 26, 49, 45, 36, 56,
+	                                   7, 48, 35, 6, 34, 33, 0 };
+	return Mod67Position[(-Value & Value) % 37];
+#endif
 }
 
 /// CountPopulation_32 - this function counts the number of set bits in a value.
