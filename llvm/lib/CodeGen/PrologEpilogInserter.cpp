@@ -445,7 +445,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   RegScavenger *RS=MRI.requiresRegisterScavenging(Fn) ? new RegScavenger():NULL;
 
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
-    if (RS) RS->reset(BB);
+    if (RS) RS->enterBasicBlock(BB);
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (I->getOperand(i).isFrameIndex()) {
