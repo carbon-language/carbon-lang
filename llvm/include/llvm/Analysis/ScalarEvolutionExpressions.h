@@ -19,6 +19,7 @@
 namespace llvm {
   class ConstantInt;
   class ConstantRange;
+  class APInt;
 
   enum SCEVTypes {
     // These should be ordered in terms of increasing complexity to make the
@@ -463,6 +464,7 @@ namespace llvm {
     /// getIntegerSCEV - Given an integer or FP type, create a constant for the
     /// specified signed integer value and return a SCEV for the constant.
     static SCEVHandle getIntegerSCEV(int Val, const Type *Ty);
+    static SCEVHandle getIntegerSCEV(const APInt& Val);
 
     Value *getValue() const { return V; }
 

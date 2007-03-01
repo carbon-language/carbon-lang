@@ -460,6 +460,10 @@ SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
   return SCEVUnknown::get(C);
 }
 
+SCEVHandle SCEVUnknown::getIntegerSCEV(const APInt& Val) {
+  return SCEVUnknown::get(ConstantInt::get(Val));
+}
+
 /// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion of the
 /// input value to the specified type.  If the type must be extended, it is zero
 /// extended.
