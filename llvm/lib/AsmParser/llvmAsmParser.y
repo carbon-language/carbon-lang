@@ -1713,22 +1713,17 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       GEN_ERROR("Constant value doesn't fit in type");
     APInt Val(64, $2);
     uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
-    if (BitWidth > 64)
-      Val.sext(BitWidth);
-    else if (BitWidth < 64)
-      Val.trunc(BitWidth);
-    $$ = ConstantInt::get($1, Val);
+    Val.sextOrTrunc(BitWidth);
+    $$ = ConstantInt::get(Val);
     CHECK_FOR_ERROR
   }
   | IntType ESAPINTVAL {      // arbitrary precision integer constants
     uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
     if ($2->getBitWidth() > BitWidth) {
       GEN_ERROR("Constant value does not fit in type");
-    } else if ($2->getBitWidth() < BitWidth)
-      $2->sext(BitWidth);
-    else if ($2->getBitWidth() > BitWidth)
-      $2->trunc(BitWidth);
-    $$ = ConstantInt::get($1, *$2);
+    }
+    $2->sextOrTrunc(BitWidth);
+    $$ = ConstantInt::get(*$2);
     delete $2;
     CHECK_FOR_ERROR
   }
@@ -1737,18 +1732,16 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       GEN_ERROR("Constant value doesn't fit in type");
     uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
     APInt Val(BitWidth, $2);
-    $$ = ConstantInt::get($1, Val);
+    $$ = ConstantInt::get(Val);
     CHECK_FOR_ERROR
   }
   | IntType EUAPINTVAL {      // arbitrary precision integer constants
     uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
     if ($2->getBitWidth() > BitWidth) {
       GEN_ERROR("Constant value does not fit in type");
-    } else if ($2->getBitWidth() < BitWidth)
-      $2->zext(BitWidth);
-    else if ($2->getBitWidth() > BitWidth)
-      $2->trunc(BitWidth);
-    $$ = ConstantInt::get($1, *$2);
+    } 
+    $2->zextOrTrunc(BitWidth);
+    $$ = ConstantInt::get(*$2);
     delete $2;
     CHECK_FOR_ERROR
   }
