@@ -5063,7 +5063,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               ConstantInt *CUI = cast<ConstantInt>(CI);
               if (CUI->getZExtValue() == 1ULL << (SrcTySize-1))
                 return new ICmpInst(ICmpInst::ICMP_SGT, CastOp, 
-                                    ConstantInt::get(SrcTy, -1));
+                                    ConstantInt::get(SrcTy, -1ULL));
               break;
             }
             case ICmpInst::ICMP_UGT: { // X u> 127 => X s< 0
