@@ -855,14 +855,15 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
               } else
                 DOUT << "Removing now-noop copy: " << MI;
 
-              // Extend the live range of the MI that last kill the register if
-              // the next MI reuse it.
+              // Either way, the live range of the last kill of InReg has been
+              // extended. Remove its kill.
               MachineOperand *MOK = SSMI->findRegisterUseOperand(InReg, true);
               if (MOK && NextMII != MBB.end()) {
+                MOK->unsetIsKill();
+                // If NextMII uses InReg (must be the copy?), mark it killed.
                 MachineOperand *MOU = NextMII->findRegisterUseOperand(InReg);
                 if (MOU) {
                   MOU->setIsKill();
-                  MOK->unsetIsKill();
                   Spills.UpdateLastUse(InReg, &(*NextMII));
                 }
               }
