@@ -157,6 +157,21 @@ static void CreateRegClassMask(const TargetRegisterClass *RC, BitVector &Mask) {
 }
 
 unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
+                                     const BitVector &Candidates) const {
+  // Mask off the registers which are not in the TargetRegisterClass.
+  BitVector RegStatesCopy(NumPhysRegs, false);
+  CreateRegClassMask(RegClass, RegStatesCopy);
+  RegStatesCopy &= RegStates;
+
+  // Restrict the search to candidates.
+  RegStatesCopy &= Candidates;
+
+  // Returns the first unused (bit is set) register, or 0 is none is found.
+  int Reg = RegStatesCopy.find_first();
+  return (Reg == -1) ? 0 : Reg;
+}
+
+unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
                                      bool ExCalleeSaved) const {
   // Mask off the registers which are not in the TargetRegisterClass.
   BitVector RegStatesCopy(NumPhysRegs, false);

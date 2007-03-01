@@ -78,6 +78,11 @@ public:
   void setUnused(unsigned Reg)   { RegStates.set(Reg); }
   void setUnused(BitVector Regs) { RegStates |= Regs; }
 
+  /// FindUnusedReg - Find a unused register of the specified register class
+  /// from the specified set of registers. It return 0 is none is found.
+  unsigned FindUnusedReg(const TargetRegisterClass *RegClass,
+                         const BitVector &Candidates) const;
+
   /// FindUnusedReg - Find a unused register of the specified register class.
   /// Exclude callee saved registers if directed. It return 0 is none is found.
   unsigned FindUnusedReg(const TargetRegisterClass *RegClass,
