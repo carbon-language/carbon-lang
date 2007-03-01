@@ -1174,20 +1174,16 @@ APInt APInt::sqrt() const {
   // Use a fast table for some small values. This also gets rid of some
   // rounding errors in libc sqrt for small values.
   if (magnitude <= 5) {
-    uint64_t result = 0;
-    switch (isSingleWord() ? VAL : pVal[0]) {
-      case 0 : break;
-      case 1 : case 2 : result = 1; break;
-      case 3 : case 4 : case 5: case 6: result = 2; break;
-      case 7 : case 8 : case 9: case 10: case 11: case 12: 
-        result = 3; break;
-      case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 20:
-        result = 4; break;
-      case 21: case 22: case 23: case 24: case 25: case 26: case 27: case 28:
-      case 29: case 30: result = 5; break;
-      case 31: result = 6; break;
-    }
-    return APInt(BitWidth, result);
+    static uint8_t results[32] = {
+      /*     0 */ 0,
+      /*  1- 2 */ 1, 1,
+      /*  3- 6 */ 2, 2, 2, 2, 
+      /*  7-12 */ 3, 3, 3, 3, 3, 3,
+      /* 13-20 */ 4, 4, 4, 4, 4, 4, 4, 4,
+      /* 21-30 */ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+      /*    31 */ 6
+    };
+    return APInt(BitWidth, results[ (isSingleWord() ? VAL : pVal[0]) ]);
   }
 
   // If the magnitude of the value fits in less than 52 bits (the precision of
