@@ -943,8 +943,7 @@ APInt &APInt::sext(uint32_t width) {
       VAL |= mask;
     else
       pVal[wordsBefore-1] |= mask;
-    clearUnusedBits();
-    return *this;
+    return clearUnusedBits();
   }
 
   uint64_t mask = wordBits == 0 ? 0 : ~0ULL << wordBits;
