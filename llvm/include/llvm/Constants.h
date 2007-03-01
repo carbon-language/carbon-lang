@@ -130,7 +130,7 @@ public:
   /// This is just a convenience method to make client code smaller for a 
   /// common case.
   /// @brief Determine if the value is one.
-  virtual bool isUnitValue() const {
+  bool isUnitValue() const {
     return Val == 1;
   }
 
