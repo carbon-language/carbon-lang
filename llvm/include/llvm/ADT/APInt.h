@@ -697,6 +697,32 @@ public:
     return roundToDouble(true);
   }
 
+  /// The conversion does not do a translation from integer to double, it just
+  /// re-interprets the bits as a double. Note that it is valid to do this on
+  /// any bit width. Exactly 64 bits will be translated.
+  /// @brief Converts APInt bits to a double
+  double bitsToDouble() const {
+    union {
+      uint64_t I;
+      double D;
+    } T;
+    T.I = (isSingleWord() ? VAL : pVal[0]);
+    return T.D;
+  }
+
+  /// The conversion does not do a translation from integer to float, it just
+  /// re-interprets the bits as a float. Note that it is valid to do this on
+  /// any bit width. Exactly 32 bits will be translated.
+  /// @brief Converts APInt bits to a double
+  float bitsToFloat() const {
+    union {
+      uint32_t I;
+      float F;
+    } T;
+    T.I = uint32_t((isSingleWord() ? VAL : pVal[0]));
+    return T.F;
+  }
+
   /// @brief Compute the square root
   APInt sqrt() const;
 };
