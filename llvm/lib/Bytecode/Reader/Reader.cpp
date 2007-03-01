@@ -1269,7 +1269,7 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       uint64_t *data = new uint64_t[numWords];
       for (uint32_t i = 0; i < numWords; ++i)
         data[i] = read_vbr_uint64();
-      Result = ConstantInt::get(IT, APInt(IT->getBitWidth(), numWords, data));
+      Result = ConstantInt::get(APInt(IT->getBitWidth(), numWords, data));
       if (Handler) Handler->handleConstantValue(Result);
     }
     break;
