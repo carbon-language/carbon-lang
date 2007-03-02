@@ -5799,13 +5799,9 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
       while (UI != E && *UI == User)
         ++UI; // If this instruction uses AI more than once, don't break UI.
       
-      // Add operands to the worklist.
-      AddUsesToWorkList(*User);
       ++NumDeadInst;
       DOUT << "IC: DCE: " << *User;
-      
-      User->eraseFromParent();
-      removeFromWorkList(User);
+      EraseInstFromFunction(*User);
     }
   }
   
@@ -7389,7 +7385,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   if (Caller->getType() != Type::VoidTy && !Caller->use_empty())
     Caller->replaceAllUsesWith(NV);
-  Caller->getParent()->getInstList().erase(Caller);
+  Caller->eraseFromParent();
   removeFromWorkList(Caller);
   return true;
 }
