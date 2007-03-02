@@ -194,9 +194,18 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
   assert(getBitWidth() == CR.getBitWidth() && 
          "ConstantRange types don't agree!");
 
-  assert(0 && "Range union not implemented yet!");
+  if (   isFullSet() || CR.isEmptySet()) return *this;
+  if (CR.isFullSet() ||    isEmptySet()) return CR;
 
-  return *this;
+  APInt L = Lower, U = Upper;
+
+  if (!contains(CR.Lower))
+    L = APIntOps::umin(L, CR.Lower);
+
+  if (!contains(CR.Upper - 1))
+    U = APIntOps::umax(U, CR.Upper);
+
+  return ConstantRange(L, U);
 }
 
 /// zeroExtend - Return a new range in the specified integer type, which must
