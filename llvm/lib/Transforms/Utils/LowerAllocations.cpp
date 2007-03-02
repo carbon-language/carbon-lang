@@ -121,7 +121,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
 
       if (MI->isArrayAllocation()) {
         if (isa<ConstantInt>(MallocArg) &&
-            cast<ConstantInt>(MallocArg)->getZExtValue() == 1) {
+            cast<ConstantInt>(MallocArg)->isOne()) {
           MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
         } else if (Constant *CO = dyn_cast<Constant>(MI->getOperand(0))) {
           CO = ConstantExpr::getIntegerCast(CO, IntPtrTy, false /*ZExt*/);
