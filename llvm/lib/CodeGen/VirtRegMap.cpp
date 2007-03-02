@@ -254,9 +254,9 @@ class VISIBILITY_HIDDEN AvailableSpills {
 
   // SpillSlotsAvailable - This map keeps track of all of the spilled virtual
   // register values that are still available, due to being loaded or stored to,
-  // but not invalidated yet. It also tracks the instruction that last defined
+  // but not invalidated yet. It also tracks the instructions that defined
   // or used the register.
-  typedef std::pair<unsigned, MachineInstr*> SSInfo;
+  typedef std::pair<unsigned, std::vector<MachineInstr*> > SSInfo;
   std::map<int, SSInfo> SpillSlotsAvailable;
     
   // PhysRegsAvailable - This is the inverse of SpillSlotsAvailable, indicating
@@ -281,15 +281,16 @@ public:
   unsigned getSpillSlotPhysReg(int Slot, MachineInstr *&SSMI) const {
     std::map<int, SSInfo>::const_iterator I = SpillSlotsAvailable.find(Slot);
     if (I != SpillSlotsAvailable.end()) {
-      SSMI = I->second.second;
+      if (!I->second.second.empty())
+        SSMI = I->second.second.back();
       return I->second.first >> 1;  // Remove the CanClobber bit.
     }
     return 0;
   }
 
-  /// UpdateLastUses - Update the last use information of all stack slots whose
+  /// addLastUse - Add the last use information of all stack slots whose
   /// values are available in the specific register.
-  void UpdateLastUse(unsigned PhysReg, MachineInstr *Use) {
+  void addLastUse(unsigned PhysReg, MachineInstr *Use) {
     std::multimap<unsigned, int>::iterator I =
       PhysRegsAvailable.lower_bound(PhysReg);
     while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
@@ -300,8 +301,25 @@ public:
       assert(II != SpillSlotsAvailable.end() && "Slot not available!");
       unsigned Val = II->second.first;
       assert((Val >> 1) == PhysReg && "Bidirectional map mismatch!");
-      SpillSlotsAvailable.erase(Slot);
-      SpillSlotsAvailable[Slot] = std::make_pair(Val, Use);
+      II->second.second.push_back(Use);
+    }
+  }
+  
+  /// removeLastUse - Remove the last use information of all stack slots whose
+  /// values are available in the specific register.
+  void removeLastUse(unsigned PhysReg, MachineInstr *Use) {
+    std::multimap<unsigned, int>::iterator I =
+      PhysRegsAvailable.lower_bound(PhysReg);
+    while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
+      int Slot = I->second;
+      I++;
+
+      std::map<int, SSInfo>::iterator II = SpillSlotsAvailable.find(Slot);
+      assert(II != SpillSlotsAvailable.end() && "Slot not available!");
+      unsigned Val = II->second.first;
+      assert((Val >> 1) == PhysReg && "Bidirectional map mismatch!");
+      if (II->second.second.back() == Use)
+        II->second.second.pop_back();
     }
   }
   
@@ -315,8 +333,10 @@ public:
     ModifyStackSlot(Slot);
     
     PhysRegsAvailable.insert(std::make_pair(Reg, Slot));
+    std::vector<MachineInstr*> DefUses;
+    DefUses.push_back(MI);
     SpillSlotsAvailable[Slot] =
-      std::make_pair((Reg << 1) | (unsigned)CanClobber, MI);
+      std::make_pair((Reg << 1) | (unsigned)CanClobber, DefUses);
   
     DOUT << "Remembering SS#" << Slot << " in physreg "
          << MRI->getName(Reg) << "\n";
@@ -683,15 +703,16 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
           // Extend the live range of the MI that last kill the register if
           // necessary.
-          MachineOperand *MOK = SSMI->findRegisterUseOperand(PhysReg, true);
-          if (MOK) {
-            MOK->unsetIsKill();
-            if (ti == -1) {
-              // Unless it's the use of a two-address code, transfer the kill
-              // of the reused register to this use.
-              MI.getOperand(i).setIsKill();
-              Spills.UpdateLastUse(PhysReg, &MI);
-            }
+          if (SSMI) {
+            MachineOperand *MOK = SSMI->findRegisterUseOperand(PhysReg, true);
+            if (MOK)
+              MOK->unsetIsKill();
+          }
+          if (ti == -1) {
+            // Unless it's the use of a two-address code, transfer the kill
+            // of the reused register to this use.
+            MI.getOperand(i).setIsKill();
+            Spills.addLastUse(PhysReg, &MI);
           }
 
           // The only technical detail we have is that we don't know that
@@ -763,14 +784,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // necessary.
         if (SSMI) {
           MachineOperand *MOK = SSMI->findRegisterUseOperand(PhysReg, true);
-          if (MOK) {
-            MachineInstr *CopyMI = prior(MII);
-            MachineOperand *MOU = CopyMI->findRegisterUseOperand(PhysReg);
-            MOU->setIsKill();
+          if (MOK)
             MOK->unsetIsKill();
-            Spills.UpdateLastUse(PhysReg, &MI);
-          }
         }
+        MachineInstr *CopyMI = prior(MII);
+        MachineOperand *MOU = CopyMI->findRegisterUseOperand(PhysReg);
+        MOU->setIsKill();
+        Spills.addLastUse(PhysReg, &MI);
 
         // This invalidates DesignatedReg.
         Spills.ClobberPhysReg(DesignatedReg);
@@ -857,14 +877,17 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
               // Either way, the live range of the last kill of InReg has been
               // extended. Remove its kill.
-              MachineOperand *MOK = SSMI->findRegisterUseOperand(InReg, true);
-              if (MOK && NextMII != MBB.end()) {
-                MOK->unsetIsKill();
+              if (SSMI) {
+                MachineOperand *MOK = SSMI->findRegisterUseOperand(InReg, true);
+                if (MOK)
+                  MOK->unsetIsKill();
+              }
+              if (NextMII != MBB.end()) {
                 // If NextMII uses InReg (must be the copy?), mark it killed.
                 MachineOperand *MOU = NextMII->findRegisterUseOperand(InReg);
                 if (MOU) {
                   MOU->setIsKill();
-                  Spills.UpdateLastUse(InReg, &(*NextMII));
+                  Spills.addLastUse(InReg, &(*NextMII));
                 }
               }
 
@@ -935,9 +958,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
             ++NumDCE;
             DOUT << "Removing now-noop copy: " << MI;
+            Spills.removeLastUse(Src, &MI);
             MBB.erase(&MI);
             VRM.RemoveFromFoldedVirtMap(&MI);
-            Spills.UpdateLastUse(Src, NULL);
             Spills.disallowClobberPhysReg(VirtReg);
             goto ProcessNextInst;
           }
