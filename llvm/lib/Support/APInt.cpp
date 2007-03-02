@@ -1239,19 +1239,23 @@ APInt APInt::sqrt() const {
   }
 
   // Make sure we return the closest approximation
-  // FIXME: This still has an off-by-one error in it. Test case:
-  // 190 bits: sqrt(694114394047834196220892040454508646882614255319893124270) =
-  // 26346050824513229049493703285 (not 26346050824513229049493703284)
+  // NOTE: The rounding calculation below is correct. It will produce an 
+  // off-by-one discrepancy with results from pari/gp. That discrepancy has been
+  // determined to be a rounding issue with pari/gp as it begins to use a 
+  // floating point representation after 192 bits. There are no discrepancies
+  // between this algorithm and pari/gp for bit widths < 192 bits.
   APInt square(x_old * x_old);
   APInt nextSquare((x_old + 1) * (x_old +1));
   if (this->ult(square))
     return x_old;
-  else if (this->ule(nextSquare))
-    if ((nextSquare - *this).ult(*this - square))
-      return x_old + 1;
-    else
+  else if (this->ule(nextSquare)) {
+    APInt midpoint((nextSquare - square).udiv(two));
+    APInt offset(*this - square);
+    if (offset.ult(midpoint))
       return x_old;
-  else
+    else
+      return x_old + 1;
+  } else
     assert(0 && "Error in APInt::sqrt computation");
   return x_old + 1;
 }
