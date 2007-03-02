@@ -127,8 +127,9 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   DOUT << "RHS: " << RHS << "\n";
 
   Case& Pivot = *(Begin + Mid);
-  DOUT << "Pivot ==> "
-       << cast<ConstantInt>(Pivot.first)->getValue().toStringSigned(10) << "\n";
+  DEBUG( DOUT << "Pivot ==> " 
+              << cast<ConstantInt>(Pivot.first)->getValue().toStringSigned(10) 
+              << "\n");
 
   BasicBlock* LBranch = switchConvert(LHS.begin(), LHS.end(), Val,
                                       OrigBlock, Default);
