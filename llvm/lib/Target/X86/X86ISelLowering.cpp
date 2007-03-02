@@ -30,15 +30,10 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
-
-static cl::opt<bool> FastCallAlignStack("x86-fastcc-align-stack", cl::Hidden,
-             cl::desc("Align stack to 8-byte boundary for fastcall function"),
-                                        cl::init(false));
 
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
@@ -909,7 +904,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
 
   unsigned StackSize = CCInfo.getNextStackOffset();
 
-  if (FastCallAlignStack) {
+  if (!Subtarget->isTargetCygMing() && !Subtarget->isTargetWindows()) {
     // Make sure the instruction takes 8n+4 bytes to make sure the start of the
     // arguments and the arguments after the retaddr has been pushed are aligned.
     if ((StackSize & 7) == 0)
@@ -943,7 +938,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
-  if (FastCallAlignStack) {
+  if (!Subtarget->isTargetCygMing() && !Subtarget->isTargetWindows()) {
     // Make sure the instruction takes 8n+4 bytes to make sure the start of the
     // arguments and the arguments after the retaddr has been pushed are aligned.
     if ((NumBytes & 7) == 0)
@@ -951,7 +946,6 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   }
 
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
-
   
   SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
   SmallVector<SDOperand, 8> MemOpChains;
