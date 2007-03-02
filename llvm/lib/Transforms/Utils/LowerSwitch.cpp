@@ -59,7 +59,7 @@ namespace {
 
       const ConstantInt* CI1 = cast<const ConstantInt>(C1.first);
       const ConstantInt* CI2 = cast<const ConstantInt>(C2.first);
-      return CI1->getZExtValue() < CI2->getZExtValue();
+      return CI1->getValue().ult(CI2->getValue());
     }
   };
 
@@ -128,7 +128,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
 
   Case& Pivot = *(Begin + Mid);
   DOUT << "Pivot ==> "
-       << cast<ConstantInt>(Pivot.first)->getSExtValue() << "\n";
+       << cast<ConstantInt>(Pivot.first)->getValue().toStringSigned(10) << "\n";
 
   BasicBlock* LBranch = switchConvert(LHS.begin(), LHS.end(), Val,
                                       OrigBlock, Default);
