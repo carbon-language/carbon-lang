@@ -236,11 +236,13 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
-
-  // Use the default implementation.
   setOperationAction(ISD::VAARG             , MVT::Other, Expand);
-  setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
+  if (Subtarget->is64Bit())
+    setOperationAction(ISD::VACOPY          , MVT::Other, Custom);
+  else
+    setOperationAction(ISD::VACOPY          , MVT::Other, Expand);
+
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
   if (Subtarget->is64Bit())
@@ -3761,6 +3763,33 @@ SDOperand X86TargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::TokenFactor, MVT::Other, &MemOps[0], MemOps.size());
 }
 
+SDOperand X86TargetLowering::LowerVACOPY(SDOperand Op, SelectionDAG &DAG) {
+  // X86-64 va_list is a struct { i32, i32, i8*, i8* }.
+  SDOperand Chain = Op.getOperand(0);
+  SDOperand DstPtr = Op.getOperand(1);
+  SDOperand SrcPtr = Op.getOperand(2);
+  SrcValueSDNode *DstSV = cast<SrcValueSDNode>(Op.getOperand(3));
+  SrcValueSDNode *SrcSV = cast<SrcValueSDNode>(Op.getOperand(4));
+
+  SrcPtr = DAG.getLoad(getPointerTy(), Chain, SrcPtr,
+                       SrcSV->getValue(), SrcSV->getOffset());
+  Chain = SrcPtr.getValue(1);
+  for (unsigned i = 0; i < 3; ++i) {
+    SDOperand Val = DAG.getLoad(MVT::i64, Chain, SrcPtr,
+                                SrcSV->getValue(), SrcSV->getOffset());
+    Chain = Val.getValue(1);
+    Chain = DAG.getStore(Chain, Val, DstPtr,
+                         DstSV->getValue(), DstSV->getOffset());
+    if (i == 2)
+      break;
+    SrcPtr = DAG.getNode(ISD::ADD, getPointerTy(), SrcPtr, 
+                         DAG.getConstant(8, getPointerTy()));
+    DstPtr = DAG.getNode(ISD::ADD, getPointerTy(), DstPtr, 
+                         DAG.getConstant(8, getPointerTy()));
+  }
+  return Chain;
+}
+
 SDOperand
 X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
@@ -3925,6 +3954,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::MEMCPY:             return LowerMEMCPY(Op, DAG);
   case ISD::READCYCLECOUNTER:   return LowerREADCYCLCECOUNTER(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG);
+  case ISD::VACOPY:             return LowerVACOPY(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
