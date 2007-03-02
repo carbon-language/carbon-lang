@@ -1007,6 +1007,11 @@ APInt &APInt::sextOrTrunc(uint32_t width) {
 /// @brief Arithmetic right-shift function.
 APInt APInt::ashr(uint32_t shiftAmt) const {
   assert(shiftAmt <= BitWidth && "Invalid shift amount");
+  // Handle a degenerate case
+  if (shiftAmt == 0)
+    return *this;
+
+  // Handle single word shifts with built-in ashr
   if (isSingleWord()) {
     if (shiftAmt == BitWidth)
       return APInt(BitWidth, 0); // undefined
@@ -1017,9 +1022,9 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
     }
   }
 
-  // If all the bits were shifted out, the result is 0 or -1. This avoids issues
-  // with shifting by the size of the integer type, which produces undefined
-  // results. 
+  // If all the bits were shifted out, the result is, technically, undefined.
+  // We return -1 if it was negative, 0 otherwise. We check this early to avoid
+  // issues in the algorithm below.
   if (shiftAmt == BitWidth)
     if (isNegative())
       return APInt(BitWidth, -1ULL);
@@ -1029,42 +1034,53 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
   // Create some space for the result.
   uint64_t * val = new uint64_t[getNumWords()];
 
-  // If we are shifting less than a word, compute the shift with a simple carry
-  if (shiftAmt < APINT_BITS_PER_WORD) {
-    uint64_t carry = 0;
-    for (int i = getNumWords()-1; i >= 0; --i) {
-      val[i] = (pVal[i] >> shiftAmt) | carry;
-      carry = pVal[i] << (APINT_BITS_PER_WORD - shiftAmt);
-    }
-    return APInt(val, BitWidth).clearUnusedBits();
-  }
-
-  // Compute some values needed by the remaining shift algorithms
-  uint32_t wordShift = shiftAmt % APINT_BITS_PER_WORD;
-  uint32_t offset = shiftAmt / APINT_BITS_PER_WORD;
+  // Compute some values needed by the following shift algorithms
+  uint32_t wordShift = shiftAmt % APINT_BITS_PER_WORD; // bits to shift per word
+  uint32_t offset = shiftAmt / APINT_BITS_PER_WORD; // word offset for shift
+  uint32_t breakWord = getNumWords() - 1 - offset; // last word affected
+  uint32_t bitsInWord = whichBit(BitWidth); // how many bits in last word?
+  if (bitsInWord == 0)
+    bitsInWord = APINT_BITS_PER_WORD;
 
   // If we are shifting whole words, just move whole words
   if (wordShift == 0) {
-    for (uint32_t i = 0; i < getNumWords() - offset; ++i) 
-      val[i] = pVal[i+offset];
-    for (uint32_t i = getNumWords()-offset; i < getNumWords(); i++)
-      val[i] = (isNegative() ? -1ULL : 0);
-    return APInt(val,BitWidth).clearUnusedBits();
+    // Move the words containing significant bits
+    for (uint32_t i = 0; i <= breakWord; ++i) 
+      val[i] = pVal[i+offset]; // move whole word
+
+    // Adjust the top significant word for sign bit fill, if negative
+    if (isNegative())
+      if (bitsInWord < APINT_BITS_PER_WORD)
+        val[breakWord] |= ~0ULL << bitsInWord; // set high bits
+  } else {
+    // Shift the low order words 
+    for (uint32_t i = 0; i < breakWord; ++i) {
+      // This combines the shifted corresponding word with the low bits from
+      // the next word (shifted into this word's high bits).
+      val[i] = (pVal[i+offset] >> wordShift) | 
+               (pVal[i+offset+1] << (APINT_BITS_PER_WORD - wordShift));
+    }
+
+    // Shift the break word. In this case there are no bits from the next word
+    // to include in this word.
+    val[breakWord] = pVal[breakWord+offset] >> wordShift;
+
+    // Deal with sign extenstion in the break word, and possibly the word before
+    // it.
+    if (isNegative())
+      if (wordShift > bitsInWord) {
+        if (breakWord > 0)
+          val[breakWord-1] |= 
+            ~0ULL << (APINT_BITS_PER_WORD - (wordShift - bitsInWord));
+        val[breakWord] |= ~0ULL;
+      } else 
+        val[breakWord] |= (~0ULL << (bitsInWord - wordShift));
   }
 
-  // Shift the low order words 
-  uint32_t breakWord = getNumWords() - offset -1;
-  for (uint32_t i = 0; i < breakWord; ++i)
-    val[i] = (pVal[i+offset] >> wordShift) |
-             (pVal[i+offset+1] << (APINT_BITS_PER_WORD - wordShift));
-  // Shift the break word.
-  uint32_t SignBit = APINT_BITS_PER_WORD - (BitWidth % APINT_BITS_PER_WORD);
-  val[breakWord] = uint64_t(
-    (((int64_t(pVal[breakWord+offset]) << SignBit) >> SignBit) >> wordShift));
-
-  // Remaining words are 0 or -1
+  // Remaining words are 0 or -1, just assign them.
+  uint64_t fillValue = (isNegative() ? -1ULL : 0);
   for (uint32_t i = breakWord+1; i < getNumWords(); ++i)
-    val[i] = (isNegative() ? -1ULL : 0);
+    val[i] = fillValue;
   return APInt(val, BitWidth).clearUnusedBits();
 }
 
