@@ -175,7 +175,8 @@ namespace {
 
     /// CloneBlock - The specified block is found to be reachable, clone it and
     /// anything that it can reach.
-    void CloneBlock(const BasicBlock *BB);
+    void CloneBlock(const BasicBlock *BB,
+                    std::vector<const BasicBlock*> &ToClone);
     
   public:
     /// ConstantFoldMappedInstruction - Constant fold the specified instruction,
@@ -186,7 +187,8 @@ namespace {
 
 /// CloneBlock - The specified block is found to be reachable, clone it and
 /// anything that it can reach.
-void PruningFunctionCloner::CloneBlock(const BasicBlock *BB) {
+void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
+                                       std::vector<const BasicBlock*> &ToClone){
   Value *&BBEntry = ValueMap[BB];
 
   // Have we already cloned this block?
@@ -240,7 +242,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB) {
       if (Cond) {
         BasicBlock *Dest = BI->getSuccessor(!Cond->getZExtValue());
         ValueMap[OldTI] = new BranchInst(Dest, NewBB);
-        CloneBlock(Dest);
+        ToClone.push_back(Dest);
         TerminatorDone = true;
       }
     }
@@ -252,7 +254,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB) {
     if (Cond) {     // Constant fold to uncond branch!
       BasicBlock *Dest = SI->getSuccessor(SI->findCaseValue(Cond));
       ValueMap[OldTI] = new BranchInst(Dest, NewBB);
-      CloneBlock(Dest);
+      ToClone.push_back(Dest);
       TerminatorDone = true;
     }
   }
@@ -267,7 +269,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB) {
     // Recursively clone any reachable successor blocks.
     const TerminatorInst *TI = BB->getTerminator();
     for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-      CloneBlock(TI->getSuccessor(i));
+      ToClone.push_back(TI->getSuccessor(i));
   }
   
   if (CodeInfo) {
@@ -322,7 +324,13 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                             NameSuffix, CodeInfo, TD);
 
   // Clone the entry block, and anything recursively reachable from it.
-  PFC.CloneBlock(&OldFunc->getEntryBlock());
+  std::vector<const BasicBlock*> CloneWorklist;
+  CloneWorklist.push_back(&OldFunc->getEntryBlock());
+  while (!CloneWorklist.empty()) {
+    const BasicBlock *BB = CloneWorklist.back();
+    CloneWorklist.pop_back();
+    PFC.CloneBlock(BB, CloneWorklist);
+  }
   
   // Loop over all of the basic blocks in the old function.  If the block was
   // reachable, we have cloned it and the old block is now in the value map:
