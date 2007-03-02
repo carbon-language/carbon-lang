@@ -627,8 +627,8 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
         RC = X86::VR128RegisterClass;
       }
       
-      SDOperand ArgValue = DAG.getCopyFromReg(Root, VA.getLocReg(), RegVT);
-      AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      SDOperand ArgValue = DAG.getCopyFromReg(Root, Reg, RegVT);
       
       // If this is an 8 or 16-bit value, it is really passed promoted to 32
       // bits.  Insert an assert[sz]ext to capture this, then truncate to the
@@ -877,8 +877,8 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
         RC = X86::VR128RegisterClass;
       }
       
-      SDOperand ArgValue = DAG.getCopyFromReg(Root, VA.getLocReg(), RegVT);
-      AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      SDOperand ArgValue = DAG.getCopyFromReg(Root, Reg, RegVT);
       
       // If this is an 8 or 16-bit value, it is really passed promoted to 32
       // bits.  Insert an assert[sz]ext to capture this, then truncate to the
@@ -1116,9 +1116,9 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
         assert(MVT::isVector(RegVT));
         RC = X86::VR128RegisterClass;
       }
-      
-      SDOperand ArgValue = DAG.getCopyFromReg(Root, VA.getLocReg(), RegVT);
-      AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+
+      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      SDOperand ArgValue = DAG.getCopyFromReg(Root, Reg, RegVT);
       
       // If this is an 8 or 16-bit value, it is really passed promoted to 32
       // bits.  Insert an assert[sz]ext to capture this, then truncate to the
