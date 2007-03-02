@@ -100,14 +100,18 @@ void RegScavenger::forward() {
     if (!MO.isReg() || !MO.isDef())
       continue;
     unsigned Reg = MO.getReg();
+    // If it's dead upon def, then it is now free.
+    if (MO.isDead()) {
+      setUnused(Reg);
+      continue;
+    }
     // Skip two-address destination operand.
     if (TID->findTiedToSrcOperand(i) != -1) {
       assert(isUsed(Reg));
       continue;
     }
     assert(isUnused(Reg) || isReserved(Reg));
-    if (!MO.isDead())
-      setUsed(Reg);
+    setUsed(Reg);
   }
 }
 
