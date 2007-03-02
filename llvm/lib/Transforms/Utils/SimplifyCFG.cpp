@@ -1167,7 +1167,7 @@ namespace {
   /// applications that sort ConstantInt's to ensure uniqueness.
   struct ConstantIntOrdering {
     bool operator()(const ConstantInt *LHS, const ConstantInt *RHS) const {
-      return LHS->getZExtValue() < RHS->getZExtValue();
+      return LHS->getValue().ult(RHS->getValue());
     }
   };
 }
