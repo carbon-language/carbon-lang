@@ -1239,6 +1239,9 @@ APInt APInt::sqrt() const {
   }
 
   // Make sure we return the closest approximation
+  // FIXME: This still has an off-by-one error in it. Test case:
+  // 190 bits: sqrt(694114394047834196220892040454508646882614255319893124270) =
+  // 26346050824513229049493703285 (not 26346050824513229049493703284)
   APInt square(x_old * x_old);
   APInt nextSquare((x_old + 1) * (x_old +1));
   if (this->ult(square))
