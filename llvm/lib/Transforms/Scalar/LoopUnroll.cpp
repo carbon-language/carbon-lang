@@ -190,9 +190,14 @@ bool LoopUnroll::visitLoop(Loop *L) {
   ConstantInt *TripCountC = dyn_cast_or_null<ConstantInt>(L->getTripCount());
   if (!TripCountC) return Changed;  // Must have constant trip count!
 
-  uint64_t TripCountFull = TripCountC->getZExtValue();
-  if (TripCountFull != TripCountC->getZExtValue() || TripCountFull == 0)
+  // Guard against huge trip counts. This also guards against assertions in
+  // APInt from the use of getZExtValue, below.
+  if (TripCountC->getValue().getActiveBits() > 32)
     return Changed; // More than 2^32 iterations???
+
+  uint64_t TripCountFull = TripCountC->getZExtValue();
+  if (TripCountFull == 0)
+    return Changed; // Zero iteraitons?
 
   unsigned LoopSize = ApproximateLoopSize(L);
   DOUT << "Loop Unroll: F[" << Header->getParent()->getName()
