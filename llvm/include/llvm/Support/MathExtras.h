@@ -205,10 +205,10 @@ inline unsigned CountTrailingZeros_32(unsigned Value) {
 #if __GNUC__ >= 4
   return Value ? __builtin_ctz(Value) : 32;
 #else
-	const unsigned Mod37BitPosition[] = {32, 0, 1, 26, 2, 23, 27, 0, 3, 16, 24, 30, 28, 11, 0, 13,
-		                                   4, 7, 17, 0, 25, 22, 31, 15, 29, 10, 12, 6, 0, 21, 14, 9,
-		                                   5, 20, 8, 19, 18 };
-	return Mod37BitPosition[(-Value & Value) % 37];
+  const unsigned Mod37BitPosition[] = {32, 0, 1, 26, 2, 23, 27, 0, 3, 16, 24, 30, 28, 11, 0, 13,
+                                       4, 7, 17, 0, 25, 22, 31, 15, 29, 10, 12, 6, 0, 21, 14, 9,
+                                       5, 20, 8, 19, 18 };
+  return Mod37BitPosition[(-Value & Value) % 37];
 #endif
 }
 
@@ -220,12 +220,12 @@ inline unsigned CountTrailingZeros_64(uint64_t Value) {
 #if __GNUC__ >= 4
   return Value ? __builtin_ctzll(Value) : 64;
 #else
-  const unsigned Mod67Position[] = { 64, 0, 1, 39, 2, 15, 40, 23, 3, 12, 16, 59, 41, 19, 24, 54,
-	                                   4, 64, 13, 10, 17, 62, 60, 28, 42, 30, 20, 51, 25, 44, 55,
-	                                   47, 5, 32, 65, 38, 14, 22, 11, 58, 18, 53, 63, 9, 61, 27,
-	                                   29, 50, 43, 46, 31, 37, 21, 57, 52, 8, 26, 49, 45, 36, 56,
-	                                   7, 48, 35, 6, 34, 33, 0 };
-	return Mod67Position[(-Value & Value) % 67];
+  const unsigned Mod67Position[] = {64, 0, 1, 39, 2, 15, 40, 23, 3, 12, 16, 59, 41, 19, 24, 54,
+                                    4, 64, 13, 10, 17, 62, 60, 28, 42, 30, 20, 51, 25, 44, 55,
+                                    47, 5, 32, 65, 38, 14, 22, 11, 58, 18, 53, 63, 9, 61, 27,
+                                    29, 50, 43, 46, 31, 37, 21, 57, 52, 8, 26, 49, 45, 36, 56,
+                                    7, 48, 35, 6, 34, 33, 0 };
+  return Mod67Position[(-Value & Value) % 67];
 #endif
 }
 
@@ -236,9 +236,9 @@ inline unsigned CountPopulation_32(uint32_t Value) {
 #if __GNUC__ >= 4
   return __builtin_popcount(Value);
 #else
- 	uint32_t v = v - ((v >> 1) & 0x55555555);
-	v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-	return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+  uint32_t v = Value - ((Value >> 1) & 0x55555555);
+  v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+  return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
 #endif
 }
 
@@ -248,10 +248,10 @@ inline unsigned CountPopulation_64(uint64_t Value) {
 #if __GNUC__ >= 4
   return __builtin_popcountll(Value);
 #else
-	uint64_t v = Value - ((Value >> 1) & 0x5555555555555555ULL);
-	v = (v & 0x3333333333333333ULL) + ((v >> 2) & 0x3333333333333333ULL);
-	v = (v + (v >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
-	return (uint64_t)(v * 0x0101010101010101ULL) >> 56;
+  uint64_t v = Value - ((Value >> 1) & 0x5555555555555555ULL);
+  v = (v & 0x3333333333333333ULL) + ((v >> 2) & 0x3333333333333333ULL);
+  v = (v + (v >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
+  return (uint64_t)(v * 0x0101010101010101ULL) >> 56;
 #endif
 }
 
@@ -259,13 +259,13 @@ inline unsigned CountPopulation_64(uint64_t Value) {
 /// -1 if the value is zero. (32 bit edition.)
 /// Ex. Log2_32(32) == 5, Log2_32(1) == 0, Log2_32(0) == -1, Log2_32(6) == 2
 inline unsigned Log2_32(unsigned Value) {
-    return 31 - CountLeadingZeros_32(Value);
+  return 31 - CountLeadingZeros_32(Value);
 }
 
 /// Log2_64 - This function returns the floor log base 2 of the specified value, 
 /// -1 if the value is zero. (64 bit edition.)
 inline unsigned Log2_64(uint64_t Value) {
-    return 63 - CountLeadingZeros_64(Value);
+  return 63 - CountLeadingZeros_64(Value);
 }
 
 /// Log2_32_Ceil - This function returns the ceil log base 2 of the specified
