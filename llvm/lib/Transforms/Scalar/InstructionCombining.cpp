@@ -50,6 +50,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -70,9 +71,36 @@ namespace {
     : public FunctionPass,
       public InstVisitor<InstCombiner, Instruction*> {
     // Worklist of all of the instructions that need to be simplified.
-    std::vector<Instruction*> WorkList;
+    std::vector<Instruction*> Worklist;
+    DenseMap<Instruction*, unsigned> WorklistMap;
     TargetData *TD;
+  public:
+    /// AddToWorkList - Add the specified instruction to the worklist if it
+    /// isn't already in it.
+    void AddToWorkList(Instruction *I) {
+      if (WorklistMap.insert(std::make_pair(I, Worklist.size())))
+        Worklist.push_back(I);
+    }
+    
+    // RemoveFromWorkList - remove I from the worklist if it exists.
+    void RemoveFromWorkList(Instruction *I) {
+      DenseMap<Instruction*, unsigned>::iterator It = WorklistMap.find(I);
+      if (It == WorklistMap.end()) return; // Not in worklist.
+      
+      // Don't bother moving everything down, just null out the slot.
+      Worklist[It->second] = 0;
+      
+      WorklistMap.erase(It);
+    }
+    
+    Instruction *RemoveOneFromWorkList() {
+      Instruction *I = Worklist.back();
+      Worklist.pop_back();
+      WorklistMap.erase(I);
+      return I;
+    }
 
+    
     /// AddUsersToWorkList - When an instruction is simplified, add all users of
     /// the instruction to the work lists because they might get more simplified
     /// now.
@@ -80,7 +108,7 @@ namespace {
     void AddUsersToWorkList(Value &I) {
       for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
            UI != UE; ++UI)
-        WorkList.push_back(cast<Instruction>(*UI));
+        AddToWorkList(cast<Instruction>(*UI));
     }
 
     /// AddUsesToWorkList - When an instruction is simplified, add operands to
@@ -89,7 +117,7 @@ namespace {
     void AddUsesToWorkList(Instruction &I) {
       for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
         if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i)))
-          WorkList.push_back(Op);
+          AddToWorkList(Op);
     }
     
     /// AddSoonDeadInstToWorklist - The specified instruction is about to become
@@ -103,7 +131,7 @@ namespace {
       
       for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
         if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i))) {
-          WorkList.push_back(Op);
+          AddToWorkList(Op);
           // Set the operand to undef to drop the use.
           I.setOperand(i, UndefValue::get(Op->getType()));
         }
@@ -111,8 +139,6 @@ namespace {
       return R;
     }
 
-    // removeFromWorkList - remove all instances of I from the worklist.
-    void removeFromWorkList(Instruction *I);
   public:
     virtual bool runOnFunction(Function &F);
 
@@ -206,7 +232,7 @@ namespace {
              "New instruction already inserted into a basic block!");
       BasicBlock *BB = Old.getParent();
       BB->getInstList().insert(&Old, New);  // Insert inst
-      WorkList.push_back(New);              // Add to worklist
+      AddToWorkList(New);
       return New;
     }
 
@@ -221,7 +247,7 @@ namespace {
         return ConstantExpr::getCast(opc, CV, Ty);
       
       Instruction *C = CastInst::create(opc, V, Ty, V->getName(), &Pos);
-      WorkList.push_back(C);
+      AddToWorkList(C);
       return C;
     }
 
@@ -255,9 +281,9 @@ namespace {
       if (Old != New)
         Old->replaceAllUsesWith(New);
       if (Instruction *I = dyn_cast<Instruction>(Old))
-        WorkList.push_back(I);
+        AddToWorkList(I);
       if (Instruction *I = dyn_cast<Instruction>(New))
-        WorkList.push_back(I);
+        AddToWorkList(I);
       return true;
     }
     
@@ -268,7 +294,7 @@ namespace {
     Instruction *EraseInstFromFunction(Instruction &I) {
       assert(I.use_empty() && "Cannot erase instruction that is used!");
       AddUsesToWorkList(I);
-      removeFromWorkList(&I);
+      RemoveFromWorkList(&I);
       I.eraseFromParent();
       return 0;  // Don't do anything with FI
     }
@@ -452,7 +478,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
           Instruction *New = BinaryOperator::create(Opcode, Op->getOperand(0),
                                                     Op1->getOperand(0),
                                                     Op1->getName(), &I);
-          WorkList.push_back(New);
+          AddToWorkList(New);
           I.setOperand(0, New);
           I.setOperand(1, Folded);
           return true;
@@ -1694,7 +1720,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
         else
           assert(0 && "Unknown binop!");
         
-        WorkList.push_back(cast<Instruction>(InV));
+        AddToWorkList(cast<Instruction>(InV));
       }
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
@@ -1710,7 +1736,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
         InV = CastInst::create(CI->getOpcode(), PN->getIncomingValue(i), 
                                I.getType(), "phitmp", 
                                NonConstBB->getTerminator());
-        WorkList.push_back(cast<Instruction>(InV));
+        AddToWorkList(cast<Instruction>(InV));
       }
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
@@ -3929,7 +3955,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
             Constant *CommonBits = ConstantExpr::getAnd(Op0CI, RHS);
             NewRHS = ConstantExpr::getAnd(NewRHS, 
                                           ConstantExpr::getNot(CommonBits));
-            WorkList.push_back(Op0I);
+            AddToWorkList(Op0I);
             I.setOperand(0, Op0I->getOperand(0));
             I.setOperand(1, NewRHS);
             return &I;
@@ -4659,7 +4685,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                   NewAndCST = ConstantExpr::getShl(AndCST, ShAmt);
                 LHSI->setOperand(1, NewAndCST);
                 LHSI->setOperand(0, Shift->getOperand(0));
-                WorkList.push_back(Shift); // Shift is dead.
+                AddToWorkList(Shift); // Shift is dead.
                 AddUsesToWorkList(I);
                 return &I;
               }
@@ -5025,21 +5051,21 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         default: break;
         case Intrinsic::bswap_i16: 
           // icmp eq (bswap(x)), c -> icmp eq (x,bswap(c))
-          WorkList.push_back(II);  // Dead?
+          AddToWorkList(II);  // Dead?
           I.setOperand(0, II->getOperand(1));
           I.setOperand(1, ConstantInt::get(Type::Int16Ty,
                                            ByteSwap_16(CI->getZExtValue())));
           return &I;
         case Intrinsic::bswap_i32:   
           // icmp eq (bswap(x)), c -> icmp eq (x,bswap(c))
-          WorkList.push_back(II);  // Dead?
+          AddToWorkList(II);  // Dead?
           I.setOperand(0, II->getOperand(1));
           I.setOperand(1, ConstantInt::get(Type::Int32Ty,
                                            ByteSwap_32(CI->getZExtValue())));
           return &I;
         case Intrinsic::bswap_i64:   
           // icmp eq (bswap(x)), c -> icmp eq (x,bswap(c))
-          WorkList.push_back(II);  // Dead?
+          AddToWorkList(II);  // Dead?
           I.setOperand(0, II->getOperand(1));
           I.setOperand(1, ConstantInt::get(Type::Int64Ty,
                                            ByteSwap_64(CI->getZExtValue())));
@@ -7386,7 +7412,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (Caller->getType() != Type::VoidTy && !Caller->use_empty())
     Caller->replaceAllUsesWith(NV);
   Caller->eraseFromParent();
-  removeFromWorkList(Caller);
+  RemoveFromWorkList(Caller);
   return true;
 }
 
@@ -8343,7 +8369,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     if (!isa<UndefValue>(Val)) {
       SI.setOperand(0, UndefValue::get(Val->getType()));
       if (Instruction *U = dyn_cast<Instruction>(Val))
-        WorkList.push_back(U);  // Dropped a use.
+        AddToWorkList(U);  // Dropped a use.
       ++NumCombined;
     }
     return 0;  // Do not modify these!
@@ -8462,9 +8488,9 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
       BI.setCondition(NewSCC);
       BI.setSuccessor(0, FalseDest);
       BI.setSuccessor(1, TrueDest);
-      removeFromWorkList(I);
+      RemoveFromWorkList(I);
       I->eraseFromParent();
-      WorkList.push_back(NewSCC);
+      AddToWorkList(NewSCC);
       return &BI;
     }
 
@@ -8483,9 +8509,9 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
       BI.setCondition(NewSCC);
       BI.setSuccessor(0, FalseDest);
       BI.setSuccessor(1, TrueDest);
-      removeFromWorkList(I);
+      RemoveFromWorkList(I);
       I->eraseFromParent();;
-      WorkList.push_back(NewSCC);
+      AddToWorkList(NewSCC);
       return &BI;
     }
 
@@ -8502,7 +8528,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
           SI.setOperand(i,ConstantExpr::getSub(cast<Constant>(SI.getOperand(i)),
                                                 AddRHS));
         SI.setOperand(0, I->getOperand(0));
-        WorkList.push_back(I);
+        AddToWorkList(I);
         return &SI;
       }
   }
@@ -9038,11 +9064,6 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
 
 
 
-void InstCombiner::removeFromWorkList(Instruction *I) {
-  WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), I),
-                 WorkList.end());
-}
-
 
 /// TryToSinkInstruction - Try to move the specified instruction from its
 /// current block into the beginning of DestBlock, which can only happen if it's
@@ -9087,7 +9108,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 ///
 static void AddReachableCodeToWorklist(BasicBlock *BB, 
                                        SmallPtrSet<BasicBlock*, 64> &Visited,
-                                       std::vector<Instruction*> &WorkList,
+                                       InstCombiner &IC,
                                        const TargetData *TD) {
   // We have now visited this block!  If we've already been here, bail out.
   if (!Visited.insert(BB)) return;
@@ -9112,7 +9133,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
       continue;
     }
     
-    WorkList.push_back(Inst);
+    IC.AddToWorkList(Inst);
   }
 
   // Recursively visit successors.  If this is a branch or switch on a constant,
@@ -9121,8 +9142,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
   if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
     if (BI->isConditional() && isa<ConstantInt>(BI->getCondition())) {
       bool CondVal = cast<ConstantInt>(BI->getCondition())->getZExtValue();
-      AddReachableCodeToWorklist(BI->getSuccessor(!CondVal), Visited, WorkList,
-                                 TD);
+      AddReachableCodeToWorklist(BI->getSuccessor(!CondVal), Visited, IC, TD);
       return;
     }
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
@@ -9130,18 +9150,18 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
       // See if this is an explicit destination.
       for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i)
         if (SI->getCaseValue(i) == Cond) {
-          AddReachableCodeToWorklist(SI->getSuccessor(i), Visited, WorkList,TD);
+          AddReachableCodeToWorklist(SI->getSuccessor(i), Visited, IC, TD);
           return;
         }
       
       // Otherwise it is the default destination.
-      AddReachableCodeToWorklist(SI->getSuccessor(0), Visited, WorkList, TD);
+      AddReachableCodeToWorklist(SI->getSuccessor(0), Visited, IC, TD);
       return;
     }
   }
   
   for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-    AddReachableCodeToWorklist(TI->getSuccessor(i), Visited, WorkList, TD);
+    AddReachableCodeToWorklist(TI->getSuccessor(i), Visited, IC, TD);
 }
 
 bool InstCombiner::runOnFunction(Function &F) {
@@ -9153,7 +9173,7 @@ bool InstCombiner::runOnFunction(Function &F) {
     // the reachable instructions.  Ignore blocks that are not reachable.  Keep
     // track of which blocks we visit.
     SmallPtrSet<BasicBlock*, 64> Visited;
-    AddReachableCodeToWorklist(F.begin(), Visited, WorkList, TD);
+    AddReachableCodeToWorklist(F.begin(), Visited, *this, TD);
 
     // Do a quick scan over the function.  If we find any blocks that are
     // unreachable, remove any instructions inside of them.  This prevents
@@ -9174,9 +9194,9 @@ bool InstCombiner::runOnFunction(Function &F) {
       }
   }
 
-  while (!WorkList.empty()) {
-    Instruction *I = WorkList.back();  // Get an instruction from the worklist
-    WorkList.pop_back();
+  while (!Worklist.empty()) {
+    Instruction *I = RemoveOneFromWorkList();
+    if (I == 0) continue;  // skip null values.
 
     // Check to see if we can DCE the instruction.
     if (isInstructionTriviallyDead(I)) {
@@ -9188,7 +9208,7 @@ bool InstCombiner::runOnFunction(Function &F) {
       DOUT << "IC: DCE: " << *I;
 
       I->eraseFromParent();
-      removeFromWorkList(I);
+      RemoveFromWorkList(I);
       continue;
     }
 
@@ -9202,7 +9222,7 @@ bool InstCombiner::runOnFunction(Function &F) {
 
       ++NumConstProp;
       I->eraseFromParent();
-      removeFromWorkList(I);
+      RemoveFromWorkList(I);
       continue;
     }
 
@@ -9241,7 +9261,7 @@ bool InstCombiner::runOnFunction(Function &F) {
         I->replaceAllUsesWith(Result);
 
         // Push the new instruction and any users onto the worklist.
-        WorkList.push_back(Result);
+        AddToWorkList(Result);
         AddUsersToWorkList(*Result);
 
         // Move the name to the new instruction first.
@@ -9259,13 +9279,11 @@ bool InstCombiner::runOnFunction(Function &F) {
 
         // Make sure that we reprocess all operands now that we reduced their
         // use counts.
-        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-          if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(i)))
-            WorkList.push_back(OpI);
+        AddUsesToWorkList(*I);
 
         // Instructions can end up on the worklist more than once.  Make sure
         // we do not process an instruction that has been deleted.
-        removeFromWorkList(I);
+        RemoveFromWorkList(I);
 
         // Erase the old instruction.
         InstParent->getInstList().erase(I);
@@ -9277,16 +9295,14 @@ bool InstCombiner::runOnFunction(Function &F) {
         if (isInstructionTriviallyDead(I)) {
           // Make sure we process all operands now that we are reducing their
           // use counts.
-          for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-            if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(i)))
-              WorkList.push_back(OpI);
+          AddUsesToWorkList(*I);;
 
           // Instructions may end up in the worklist more than once.  Erase all
           // occurrences of this instruction.
-          removeFromWorkList(I);
+          RemoveFromWorkList(I);
           I->eraseFromParent();
         } else {
-          WorkList.push_back(Result);
+          AddToWorkList(Result);
           AddUsersToWorkList(*Result);
         }
       }
