@@ -5,7 +5,6 @@
 C90/C99/C++ Comparisons:
 http://david.tribble.com/text/cdiffs.htm
 
-
 //===---------------------------------------------------------------------===//
 Extensions:
 
