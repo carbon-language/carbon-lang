@@ -225,7 +225,7 @@ inline unsigned CountTrailingZeros_64(uint64_t Value) {
 	                                   47, 5, 32, 65, 38, 14, 22, 11, 58, 18, 53, 63, 9, 61, 27,
 	                                   29, 50, 43, 46, 31, 37, 21, 57, 52, 8, 26, 49, 45, 36, 56,
 	                                   7, 48, 35, 6, 34, 33, 0 };
-	return Mod67Position[(-Value & Value) % 37];
+	return Mod67Position[(-Value & Value) % 67];
 #endif
 }
 
