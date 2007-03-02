@@ -127,10 +127,18 @@ public:
     return Val == 0; 
   }
 
+  /// This is just a convenience method to make client code smaller for a
+  /// common code. It also correctly performs the comparison without the
+  /// potential for an assertion from getZExtValue().
+  bool isZero() const {
+    return Val == 0;
+  }
+
   /// This is just a convenience method to make client code smaller for a 
-  /// common case.
+  /// common case. It also correctly performs the comparison without the
+  /// potential for an assertion from getZExtValue().
   /// @brief Determine if the value is one.
-  bool isUnitValue() const {
+  bool isOne() const {
     return Val == 1;
   }
 
