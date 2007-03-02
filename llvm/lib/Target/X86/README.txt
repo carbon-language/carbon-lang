@@ -920,3 +920,25 @@ LBB1_1:
 Though this probably isn't worth it.
 
 //===---------------------------------------------------------------------===//
+
+We need to teach the codegen to convert two-address INC instructions to LEA
+when the flags are dead.  For example, on X86-64, compile:
+
+int foo(int A, int B) {
+  return A+1;
+}
+
+to:
+
+_foo:
+        leal    1(%edi), %eax
+        ret
+
+instead of:
+
+_foo:
+        incl %edi
+        movl %edi, %eax
+        ret
+
+//===---------------------------------------------------------------------===//
