@@ -187,8 +187,7 @@ struct NextPowerOfTwoH<N, false> {
   enum {
     // We could just use NextVal = N+1, but this converges faster.  N|(N-1) sets
     // the right-most zero bits to one all at once, e.g. 0b0011000 -> 0b0011111.
-    NextVal = (N|(N-1)) + 1,
-    Val = NextPowerOfTwo<NextVal>::Val
+    Val = NextPowerOfTwo<(N|(N-1)) + 1>::Val
   };
 };
 
