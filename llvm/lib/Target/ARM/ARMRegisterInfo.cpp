@@ -1290,7 +1290,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
     } else {
       // Darwin ABI requires FP to point to the stack slot that contains the
       // previous FP.
-      if (STI.isTargetDarwin() || hasFP(MF)) {
+      if ((STI.isTargetDarwin() && NumBytes) || hasFP(MF)) {
         NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
         // Reset SP based on frame pointer only if the stack frame extends beyond
         // frame pointer stack slot or target is ELF and the function has FP.
