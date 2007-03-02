@@ -540,7 +540,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
   
   // If there is no immediate value, skip the next part.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Imm))
-    if (SC->getValue()->isNullValue())
+    if (SC->getValue()->isZero())
       return Rewriter.expandCodeFor(NewBase, BaseInsertPt,
                                     OperandValToReplace->getType());
 
@@ -779,7 +779,7 @@ static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
       SeparateSubExprs(SubExprs, SARE->getOperand(0));
     }
   } else if (!isa<SCEVConstant>(Expr) ||
-             !cast<SCEVConstant>(Expr)->getValue()->isNullValue()) {
+             !cast<SCEVConstant>(Expr)->getValue()->isZero()) {
     // Do not add zero.
     SubExprs.push_back(Expr);
   }
@@ -869,7 +869,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
 ///
 static bool isZero(SCEVHandle &V) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V))
-    return SC->getValue()->getZExtValue() == 0;
+    return SC->getValue()->isZero();
   return false;
 }
 
@@ -883,17 +883,18 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
   if (!TLI) return 0;
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
-    int64_t SInt = SC->getValue()->getSExtValue();
-    if (SInt == 1) return 0;
+    APInt SInt(SC->getValue()->getValue());
+    if (SInt == 1)
+      return 0;
 
     for (TargetLowering::legal_am_scale_iterator
            I = TLI->legal_am_scale_begin(), E = TLI->legal_am_scale_end();
          I != E; ++I) {
-      unsigned Scale = *I;
-      if (unsigned(abs(SInt)) < Scale || (SInt % Scale) != 0)
+      APInt Scale(SInt.getBitWidth(), *I);
+      if (SInt.abs().ult(Scale) || SInt.srem(Scale) != 0)
         continue;
       std::map<SCEVHandle, IVsOfOneStride>::iterator SI =
-        IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt/Scale, UIntPtrTy));
+        IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt.sdiv(Scale)));
       if (SI == IVsByStride.end())
         continue;
       for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
@@ -902,7 +903,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
         // Only reuse previous IV if it would not require a type conversion.
         if (isZero(II->Base) && II->Base->getType() == Ty) {
           IV = *II;
-          return Scale;
+          return Scale.getZExtValue();
         }
     }
   }
@@ -1148,14 +1149,14 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // are reusing an IV, it has not been used to initialize the PHI node.
         // Add it to the expression used to rewrite the uses.
         if (!isa<ConstantInt>(CommonBaseV) ||
-            !cast<ConstantInt>(CommonBaseV)->isNullValue())
+            !cast<ConstantInt>(CommonBaseV)->isZero())
           RewriteExpr = SCEVAddExpr::get(RewriteExpr,
                                          SCEVUnknown::get(CommonBaseV));
       }
 
       // Now that we know what we need to do, insert code before User for the
       // immediate and any loop-variant expressions.
-      if (!isa<ConstantInt>(BaseV) || !cast<ConstantInt>(BaseV)->isNullValue())
+      if (!isa<ConstantInt>(BaseV) || !cast<ConstantInt>(BaseV)->isZero())
         // Add BaseV to the PHI value if needed.
         RewriteExpr = SCEVAddExpr::get(RewriteExpr, SCEVUnknown::get(BaseV));
 

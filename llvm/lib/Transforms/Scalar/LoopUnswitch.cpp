@@ -1048,7 +1048,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1))) 
         if (CB->getType() == Type::Int1Ty) {
-          if (CB->getZExtValue())   // X & 1 -> X
+          if (CB->isOne())      // X & 1 -> X
             ReplaceUsesOfWith(I, I->getOperand(0), Worklist);
           else                  // X & 0 -> 0
             ReplaceUsesOfWith(I, I->getOperand(1), Worklist);
@@ -1061,7 +1061,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1)))
         if (CB->getType() == Type::Int1Ty) {
-          if (CB->getZExtValue())   // X | 1 -> 1
+          if (CB->isOne())   // X | 1 -> 1
             ReplaceUsesOfWith(I, I->getOperand(1), Worklist);
           else                  // X | 0 -> X
             ReplaceUsesOfWith(I, I->getOperand(0), Worklist);
