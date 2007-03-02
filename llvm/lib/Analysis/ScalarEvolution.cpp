@@ -1341,9 +1341,12 @@ static APInt GetConstantFactor(SCEVHandle S) {
       return APInt(C->getBitWidth(), 1).shl(C->getBitWidth()-1);
   }
 
-  if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S))
-    return GetConstantFactor(T->getOperand()) &
-           cast<IntegerType>(T->getType())->getMask();
+  if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S)) {
+    APInt Mask(cast<IntegerType>(T->getType())->getMask());
+    APInt GCF(GetConstantFactor(T->getOperand()));
+    Mask.zextOrTrunc(GCF.getBitWidth());
+    return GCF & Mask;
+  }
   if (SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S))
     return GetConstantFactor(E->getOperand());
   
