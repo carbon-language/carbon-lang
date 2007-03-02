@@ -139,7 +139,7 @@ void CondProp::SimplifyPredecessors(BranchInst *BI) {
       // ultimate destination.
       bool PHIGone = PN->getNumIncomingValues() == 2;
       RevectorBlockTo(PN->getIncomingBlock(i-1),
-                      BI->getSuccessor(CB->isNullValue()));
+                      BI->getSuccessor(CB->isZero()));
       ++NumBrThread;
 
       // If there were two predecessors before this simplification, the PHI node

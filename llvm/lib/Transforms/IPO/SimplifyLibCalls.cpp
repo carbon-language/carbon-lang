@@ -584,7 +584,7 @@ public:
     for (uint64_t i = 0; i < len; ++i) {
       if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(i))) {
         // Check for the null terminator
-        if (CI->isNullValue())
+        if (CI->isZero())
           break; // we found end of string
         else if (CI->getSExtValue() == chr) {
           char_found = true;
@@ -2023,7 +2023,7 @@ static bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA)
   // Check to make sure that the first operand of the GEP is an integer and
   // has value 0 so that we are sure we're indexing into the initializer.
   if (ConstantInt* op1 = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
-    if (!op1->isNullValue())
+    if (!op1->isZero())
       return false;
   } else
     return false;
@@ -2069,7 +2069,7 @@ static bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA)
   for (len = start_idx; len < max_elems; len++) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(A->getOperand(len))) {
       // Check for the null terminator
-      if (CI->isNullValue())
+      if (CI->isZero())
         break; // we found end of string
     } else
       return false; // This array isn't suitable, non-int initializer

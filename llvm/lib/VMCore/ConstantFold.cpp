@@ -783,15 +783,15 @@ static FCmpInst::Predicate evaluateFCmpRelation(const Constant *V1,
       Constant *C2 = const_cast<Constant*>(V2);
       R = dyn_cast<ConstantInt>(
                              ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ, C1, C2));
-      if (R && !R->isNullValue()) 
+      if (R && !R->isZero()) 
         return FCmpInst::FCMP_OEQ;
       R = dyn_cast<ConstantInt>(
                              ConstantExpr::getFCmp(FCmpInst::FCMP_OLT, C1, C2));
-      if (R && !R->isNullValue()) 
+      if (R && !R->isZero()) 
         return FCmpInst::FCMP_OLT;
       R = dyn_cast<ConstantInt>(
                              ConstantExpr::getFCmp(FCmpInst::FCMP_OGT, C1, C2));
-      if (R && !R->isNullValue()) 
+      if (R && !R->isZero()) 
         return FCmpInst::FCMP_OGT;
 
       // Nothing more we can do
@@ -850,15 +850,15 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
       Constant *C2 = const_cast<Constant*>(V2);
       ICmpInst::Predicate pred = ICmpInst::ICMP_EQ;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
-      if (R && !R->isNullValue()) 
+      if (R && !R->isZero()) 
         return pred;
       pred = isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
-      if (R && !R->isNullValue())
+      if (R && !R->isZero())
         return pred;
       pred = isSigned ?  ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
-      if (R && !R->isNullValue())
+      if (R && !R->isZero())
         return pred;
       
       // If we couldn't figure it out, bail.

@@ -178,9 +178,9 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
               Constant *NCE = ConstantExpr::getGetElementPtr(CE->getOperand(0),
                                                              &CEIdxs[0],
                                                              CEIdxs.size());
-              GetElementPtrInst *NGEPI =
-                new GetElementPtrInst(NCE, Constant::getNullValue(Type::Int32Ty),
-                                      NewAdd, GEPI->getName(), GEPI);
+              GetElementPtrInst *NGEPI = new GetElementPtrInst(
+                  NCE, Constant::getNullValue(Type::Int32Ty), NewAdd, 
+                  GEPI->getName(), GEPI);
               GEPI->replaceAllUsesWith(NGEPI);
               GEPI->eraseFromParent();
               GEPI = NGEPI;

@@ -617,7 +617,7 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
     }
 
     // If we are left with a constant zero being added, strip it off.
-    if (cast<SCEVConstant>(Ops[0])->getValue()->isNullValue()) {
+    if (cast<SCEVConstant>(Ops[0])->getValue()->isZero()) {
       Ops.erase(Ops.begin());
       --Idx;
     }
@@ -857,7 +857,7 @@ SCEVHandle SCEVMulExpr::get(std::vector<SCEVHandle> &Ops) {
     if (cast<SCEVConstant>(Ops[0])->getValue()->equalsInt(1)) {
       Ops.erase(Ops.begin());
       --Idx;
-    } else if (cast<SCEVConstant>(Ops[0])->getValue()->isNullValue()) {
+    } else if (cast<SCEVConstant>(Ops[0])->getValue()->isZero()) {
       // If we have a multiply of zero, it will always be zero.
       return Ops[0];
     }
@@ -1026,7 +1026,7 @@ SCEVHandle SCEVAddRecExpr::get(std::vector<SCEVHandle> &Operands,
   if (Operands.size() == 1) return Operands[0];
 
   if (SCEVConstant *StepC = dyn_cast<SCEVConstant>(Operands.back()))
-    if (StepC->getValue()->isNullValue()) {
+    if (StepC->getValue()->isZero()) {
       Operands.pop_back();
       return get(Operands, L);             // { X,+,0 }  -->  X
     }
@@ -2124,7 +2124,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
   // If the value is a constant
   if (SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
     // If the value is already zero, the branch will execute zero times.
-    if (C->getValue()->isNullValue()) return C;
+    if (C->getValue()->isZero()) return C;
     return UnknownValue;  // Otherwise it will loop infinitely.
   }
 
@@ -2187,7 +2187,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
         // should not accept a root of 2.
         SCEVHandle Val = AddRec->evaluateAtIteration(R1);
         if (SCEVConstant *EvalVal = dyn_cast<SCEVConstant>(Val))
-          if (EvalVal->getValue()->isNullValue())
+          if (EvalVal->getValue()->isZero())
             return R1;  // We found a quadratic root!
       }
     }
@@ -2327,7 +2327,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
   // If the start is a non-zero constant, shift the range to simplify things.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(getStart()))
-    if (!SC->getValue()->isNullValue()) {
+    if (!SC->getValue()->isZero()) {
       std::vector<SCEVHandle> Operands(op_begin(), op_end());
       Operands[0] = SCEVUnknown::getIntegerSCEV(0, SC->getType());
       SCEVHandle Shifted = SCEVAddRecExpr::get(Operands, getLoop());

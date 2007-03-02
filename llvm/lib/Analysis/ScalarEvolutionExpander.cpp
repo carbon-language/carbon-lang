@@ -96,7 +96,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
 
   // {X,+,F} --> X + {0,+,F}
   if (!isa<SCEVConstant>(S->getStart()) ||
-      !cast<SCEVConstant>(S->getStart())->getValue()->isNullValue()) {
+      !cast<SCEVConstant>(S->getStart())->getValue()->isZero()) {
     Value *Start = expandInTy(S->getStart(), Ty);
     std::vector<SCEVHandle> NewOps(S->op_begin(), S->op_end());
     NewOps[0] = SCEVUnknown::getIntegerSCEV(0, Ty);

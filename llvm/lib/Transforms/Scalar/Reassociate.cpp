@@ -536,7 +536,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     switch (Opcode) {
     default: break;
     case Instruction::And:
-      if (CstVal->isNullValue()) {           // ... & 0 -> 0
+      if (CstVal->isZero()) {                // ... & 0 -> 0
         ++NumAnnihil;
         return CstVal;
       } else if (CstVal->isAllOnesValue()) { // ... & -1 -> ...
@@ -544,10 +544,10 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
       }
       break;
     case Instruction::Mul:
-      if (CstVal->isNullValue()) {           // ... * 0 -> 0
+      if (CstVal->isZero()) {                // ... * 0 -> 0
         ++NumAnnihil;
         return CstVal;
-      } else if (cast<ConstantInt>(CstVal)->isUnitValue()) {
+      } else if (cast<ConstantInt>(CstVal)->isOne()) {
         Ops.pop_back();                      // ... * 1 -> ...
       }
       break;
@@ -559,7 +559,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
       // FALLTHROUGH!
     case Instruction::Add:
     case Instruction::Xor:
-      if (CstVal->isNullValue())             // ... [|^+] 0 -> ...
+      if (CstVal->isZero())                  // ... [|^+] 0 -> ...
         Ops.pop_back();
       break;
     }

@@ -1155,7 +1155,7 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   // instead of a select to synthesize the desired value.
   bool IsOneZero = false;
   if (ConstantInt *CI = dyn_cast<ConstantInt>(OtherVal))
-    IsOneZero = InitVal->isNullValue() && CI->equalsInt(1);
+    IsOneZero = InitVal->isNullValue() && CI->isOne();
 
   while (!GV->use_empty()) {
     Instruction *UI = cast<Instruction>(GV->use_back());
