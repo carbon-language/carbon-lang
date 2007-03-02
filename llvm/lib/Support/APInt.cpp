@@ -938,7 +938,10 @@ APInt &APInt::sext(uint32_t width) {
   if (wordsBefore == wordsAfter) {
     uint32_t newWordBits = width % APINT_BITS_PER_WORD;
     // The extension is contained to the wordsBefore-1th word.
-    uint64_t mask = (~0ULL >> (APINT_BITS_PER_WORD - newWordBits)) <<  wordBits;
+    uint64_t mask = ~0ULL;
+    if (newWordBits)
+      mask >>= APINT_BITS_PER_WORD - newWordBits;
+    mask <<= wordBits;
     if (wordsBefore == 1)
       VAL |= mask;
     else
