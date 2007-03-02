@@ -937,6 +937,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             DOUT << "Removing now-noop copy: " << MI;
             MBB.erase(&MI);
             VRM.RemoveFromFoldedVirtMap(&MI);
+            Spills.UpdateLastUse(Src, NULL);
             Spills.disallowClobberPhysReg(VirtReg);
             goto ProcessNextInst;
           }
