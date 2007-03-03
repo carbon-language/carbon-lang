@@ -17,6 +17,7 @@
 #include "llvm/Function.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
@@ -75,6 +76,18 @@ struct ExecutionContext {
   CallSite             Caller;     // Holds the call that called subframes.
                                    // NULL if main func or debugger invoked fn
   AllocaHolderHandle    Allocas;    // Track memory allocated by alloca
+  std::vector<APInt*>   APInts;     // Track memory allocated for APInts
+  APInt* getAPInt(uint32_t BitWidth) {
+    APInt* Result = new APInt(BitWidth, 0);
+    APInts.push_back(Result);
+    return Result;
+  }
+  ~ExecutionContext() {
+    while (!APInts.empty()) {
+      delete APInts.back();
+      APInts.pop_back();
+    }
+  }
 };
 
 // Interpreter - This class represents the entirety of the interpreter.
@@ -235,17 +248,6 @@ private:  // Helper functions
 
 };
 
-inline void maskToBitWidth(GenericValue& GV, unsigned BitWidth) {
-  uint64_t BitMask = ~(uint64_t)(0ull) >> (64-BitWidth);
-  if (BitWidth <= 8)
-    GV.Int8Val &= BitMask;
-  else if (BitWidth <= 16)
-    GV.Int16Val &= BitMask;
-  else if (BitWidth <= 32)
-    GV.Int32Val &= BitMask;
-  else 
-    GV.Int64Val &= BitMask;
-}
 } // End llvm namespace
 
 #endif
