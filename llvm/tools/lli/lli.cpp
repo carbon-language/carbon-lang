@@ -54,11 +54,18 @@ namespace {
                    cl::desc("Disable emission of core files if possible"));
 }
 
+static ExecutionEngine *EE = 0;
+
+static void do_shutdown() {
+  delete EE;
+  llvm_shutdown();
+}
+
 //===----------------------------------------------------------------------===//
 // main Driver function
 //
 int main(int argc, char **argv, char * const *envp) {
-  atexit(llvm_shutdown);  // Call llvm_shutdown() on exit.
+  atexit(do_shutdown);  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv,
                                 " llvm interpreter & dynamic compiler\n");
@@ -70,22 +77,27 @@ int main(int argc, char **argv, char * const *envp) {
     
     // Load the bytecode...
     std::string ErrorMsg;
-    ModuleProvider *MP = 0;
-    MP = getBytecodeModuleProvider(InputFile, 
-                                   Compressor::decompressToNewBuffer,
-                                   &ErrorMsg);
+    ModuleProvider *MP = getBytecodeModuleProvider(InputFile, 
+                                              Compressor::decompressToNewBuffer,
+                                              &ErrorMsg);
     if (!MP) {
-      std::cerr << "Error loading program '" << InputFile << "': "
+      std::cerr << argv[0] << ": error loading program '" << InputFile << "': "
                 << ErrorMsg << "\n";
       exit(1);
     }
 
+    // Get the module as the MP could go away once EE takes over.
+    Module *Mod = MP->getModule();
+
     // If we are supposed to override the target triple, do so now.
     if (!TargetTriple.empty())
-      MP->getModule()->setTargetTriple(TargetTriple);
+      Mod->setTargetTriple(TargetTriple);
     
-    ExecutionEngine *EE = ExecutionEngine::create(MP, ForceInterpreter);
-    assert(EE &&"Couldn't create an ExecutionEngine, not even an interpreter?");
+    EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg);
+    if (!EE && !ErrorMsg.empty()) {
+      std::cerr << argv[0] << ":error creating EE: " << ErrorMsg << "\n";
+      exit(1);
+    }
 
     // If the user specifically requested an argv[0] to pass into the program,
     // do it now.
@@ -106,7 +118,7 @@ int main(int argc, char **argv, char * const *envp) {
     // using the contents of Args to determine argc & argv, and the contents of
     // EnvVars to determine envp.
     //
-    Function *Fn = MP->getModule()->getFunction("main");
+    Function *Fn = Mod->getFunction("main");
     if (!Fn) {
       std::cerr << "'main' function not found in module.\n";
       return -1;
@@ -123,7 +135,7 @@ int main(int argc, char **argv, char * const *envp) {
     
     // If the program didn't explicitly call exit, call exit now, for the
     // program. This ensures that any atexit handlers get called correctly.
-    Constant *Exit = MP->getModule()->getOrInsertFunction("exit", Type::VoidTy,
+    Constant *Exit = Mod->getOrInsertFunction("exit", Type::VoidTy,
                                                           Type::Int32Ty, NULL);
     if (Function *ExitF = dyn_cast<Function>(Exit)) {
       std::vector<GenericValue> Args;
