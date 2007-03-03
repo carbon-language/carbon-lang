@@ -217,7 +217,8 @@ protected:
   void EmitGlobalVariable(const GlobalVariable *GV);
 
   GenericValue getConstantValue(const Constant *C);
-  GenericValue LoadValueFromMemory(GenericValue *Ptr, const Type *Ty);
+  void LoadValueFromMemory(GenericValue &Result, GenericValue *Ptr, 
+                           const Type *Ty);
 };
 
 } // End llvm namespace
