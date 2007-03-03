@@ -106,7 +106,7 @@ class APInt {
   /// @returns a uint64_t type integer with just bit position at
   /// "whichBit(bitPosition)" setting, others zero.
   static inline uint64_t maskBit(uint32_t bitPosition) { 
-    return (static_cast<uint64_t>(1)) << whichBit(bitPosition); 
+    return 1ULL << whichBit(bitPosition); 
   }
 
   /// This method is used internally to clear the to "N" bits that are not used
@@ -363,6 +363,13 @@ public:
   /// @brief Determine sign of this APInt.
   bool isNegative() const {
     return (*this)[BitWidth - 1];
+  }
+
+  /// This just tests the high bit of the APInt to determine if the value is
+  /// positove or not.
+  /// @brief Determine if this APInt Value is positive.
+  bool isPositive() const {
+    return !isNegative();
   }
 
   /// Arithmetic right-shift this APInt by shiftAmt.
