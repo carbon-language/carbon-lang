@@ -76,7 +76,7 @@ protected:
   // To avoid having libexecutionengine depend on the JIT and interpreter
   // libraries, the JIT and Interpreter set these functions to ctor pointers
   // at startup time if they are linked in.
-  typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*);
+  typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*, std::string*);
   static EECtorFn JITCtor, InterpCtor;
     
 public:
@@ -106,7 +106,8 @@ public:
   /// create - This is the factory method for creating an execution engine which
   /// is appropriate for the current machine.
   static ExecutionEngine *create(ModuleProvider *MP,
-                                 bool ForceInterpreter = false);
+                                 bool ForceInterpreter = false,
+                                 std::string *ErrorStr = 0);
 
   /// runFunction - Execute the specified function with the specified arguments,
   /// and return the result.
