@@ -5908,35 +5908,62 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
 }
 
 /// CanEvaluateInDifferentType - Return true if we can take the specified value
-/// and return it without inserting any new casts.  This is used by code that
-/// tries to decide whether promoting or shrinking integer operations to wider
-/// or smaller types will allow us to eliminate a truncate or extend.
-static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
+/// and return it as type Ty without inserting any new casts and without
+/// changing the computed value.  This is used by code that tries to decide
+/// whether promoting or shrinking integer operations to wider or smaller types
+/// will allow us to eliminate a truncate or extend.
+///
+/// This is a truncation operation if Ty is smaller than V->getType(), or an
+/// extension operation if Ty is larger.
+static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
                                        int &NumCastsRemoved) {
-  if (isa<Constant>(V)) return true;
+  // We can always evaluate constants in another type.
+  if (isa<ConstantInt>(V))
+    return true;
   
   Instruction *I = dyn_cast<Instruction>(V);
-  if (!I || !I->hasOneUse()) return false;
+  if (!I) return false;
+  
+  const IntegerType *OrigTy = cast<IntegerType>(V->getType());
   
   switch (I->getOpcode()) {
+  case Instruction::Add:
+  case Instruction::Sub:
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
+    if (!I->hasOneUse()) return false;
     // These operators can all arbitrarily be extended or truncated.
     return CanEvaluateInDifferentType(I->getOperand(0), Ty, NumCastsRemoved) &&
            CanEvaluateInDifferentType(I->getOperand(1), Ty, NumCastsRemoved);
-  case Instruction::AShr:
-  case Instruction::LShr:
+
   case Instruction::Shl:
-    // If this is just a bitcast changing the sign of the operation, we can
-    // convert if the operand can be converted.
-    if (V->getType()->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
-      return CanEvaluateInDifferentType(I->getOperand(0), Ty, NumCastsRemoved);
+    if (!I->hasOneUse()) return false;
+    // If we are truncating the result of this SHL, and if it's a shift of a
+    // constant amount, we can always perform a SHL in a smaller type.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      if (Ty->getBitWidth() < OrigTy->getBitWidth() &&
+          CI->getZExtValue() < Ty->getBitWidth())
+        return CanEvaluateInDifferentType(I->getOperand(0), Ty,NumCastsRemoved);
+    }
+    break;
+  case Instruction::LShr:
+    if (!I->hasOneUse()) return false;
+    // If this is a truncate of a logical shr, we can truncate it to a smaller
+    // lshr iff we know that the bits we would otherwise be shifting in are
+    // already zeros.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      if (Ty->getBitWidth() < OrigTy->getBitWidth() &&
+          MaskedValueIsZero(I->getOperand(0),
+                            OrigTy->getBitMask() & ~Ty->getBitMask()) &&
+          CI->getZExtValue() < Ty->getBitWidth()) {
+        return CanEvaluateInDifferentType(I->getOperand(0), Ty, NumCastsRemoved);
+      }
+    }
     break;
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
-  case Instruction::BitCast:
     // If this is a cast from the destination type, we can trivially eliminate
     // it, and this will remove a cast overall.
     if (I->getOperand(0)->getType() == Ty) {
@@ -5962,7 +5989,7 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
 /// CanEvaluateInDifferentType returns true for, actually insert the code to
 /// evaluate the expression.
 Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty, 
-                                             bool isSigned ) {
+                                             bool isSigned) {
   if (Constant *C = dyn_cast<Constant>(V))
     return ConstantExpr::getIntegerCast(C, Ty, isSigned /*Sext or ZExt*/);
 
@@ -5970,21 +5997,18 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
   Instruction *I = cast<Instruction>(V);
   Instruction *Res = 0;
   switch (I->getOpcode()) {
+  case Instruction::Add:
+  case Instruction::Sub:
   case Instruction::And:
   case Instruction::Or:
-  case Instruction::Xor: {
-    Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty, isSigned);
-    Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
-    Res = BinaryOperator::create((Instruction::BinaryOps)I->getOpcode(),
-                                 LHS, RHS, I->getName());
-    break;
-  }
+  case Instruction::Xor:
   case Instruction::AShr:
   case Instruction::LShr:
   case Instruction::Shl: {
     Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty, isSigned);
-    Res = BinaryOperator::create(Instruction::BinaryOps(I->getOpcode()), LHS, 
-                                 I->getOperand(1), I->getName());
+    Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
+    Res = BinaryOperator::create((Instruction::BinaryOps)I->getOpcode(),
+                                 LHS, RHS, I->getName());
     break;
   }    
   case Instruction::Trunc:
@@ -6066,8 +6090,8 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   return 0;
 }
 
-/// Only the TRUNC, ZEXT, SEXT, and BITCONVERT can have both operands as
-/// integers. This function implements the common transforms for all those
+/// Only the TRUNC, ZEXT, SEXT, and BITCAST can both operand and result as
+/// integer types. This function implements the common transforms for all those
 /// cases.
 /// @brief Implement the transforms common to CastInst with integer operands
 Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
@@ -6093,9 +6117,11 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   if (!SrcI || !Src->hasOneUse())
     return 0;
 
-  // Attempt to propagate the cast into the instruction.
+  // Attempt to propagate the cast into the instruction for int->int casts.
   int NumCastsRemoved = 0;
-  if (CanEvaluateInDifferentType(SrcI, DestTy, NumCastsRemoved)) {
+  if (!isa<BitCastInst>(CI) &&
+      CanEvaluateInDifferentType(SrcI, cast<IntegerType>(DestTy),
+                                 NumCastsRemoved)) {
     // If this cast is a truncate, evaluting in a different type always
     // eliminates the cast, so it is always a win.  If this is a noop-cast
     // this just removes a noop cast which isn't pointful, but simplifies
@@ -6104,27 +6130,24 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     // the input have eliminated at least one cast.  If this is a sign
     // extension, we insert two new casts (to do the extension) so we
     // require that two casts have been eliminated.
-    bool DoXForm = CI.isNoopCast(TD->getIntPtrType());
-    if (!DoXForm) {
-      switch (CI.getOpcode()) {
-        case Instruction::Trunc:
-          DoXForm = true;
-          break;
-        case Instruction::ZExt:
-          DoXForm = NumCastsRemoved >= 1;
-          break;
-        case Instruction::SExt:
-          DoXForm = NumCastsRemoved >= 2;
-          break;
-        case Instruction::BitCast:
-          DoXForm = false;
-          break;
-        default:
-          // All the others use floating point so we shouldn't actually 
-          // get here because of the check above.
-          assert(!"Unknown cast type .. unreachable");
-          break;
-      }
+    bool DoXForm;
+    switch (CI.getOpcode()) {
+    default:
+      // All the others use floating point so we shouldn't actually 
+      // get here because of the check above.
+      assert(0 && "Unknown cast type");
+    case Instruction::Trunc:
+      DoXForm = true;
+      break;
+    case Instruction::ZExt:
+      DoXForm = NumCastsRemoved >= 1;
+      break;
+    case Instruction::SExt:
+      DoXForm = NumCastsRemoved >= 2;
+      break;
+    case Instruction::BitCast:
+      DoXForm = false;
+      break;
     }
     
     if (DoXForm) {
