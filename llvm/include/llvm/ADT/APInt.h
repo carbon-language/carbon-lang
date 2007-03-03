@@ -865,14 +865,20 @@ inline float RoundAPIntToFloat(const APInt& APIVal) {
   return float(RoundAPIntToDouble(APIVal));
 }
 
+/// Treast the APInt as a signed value for conversion purposes.
+/// @brief Converts the given APInt to a float value.
+inline float RoundSignedAPIntToFloat(const APInt& APIVal) {
+  return float(APIVal.signedRoundToDouble());
+}
+
 /// RoundDoubleToAPInt - This function convert a double value to an APInt value.
 /// @brief Converts the given double value into a APInt.
-APInt RoundDoubleToAPInt(double Double, uint32_t width = 64);
+APInt RoundDoubleToAPInt(double Double, uint32_t width);
 
 /// RoundFloatToAPInt - Converts a float value into an APInt value.
 /// @brief Converts a float value into a APInt.
-inline APInt RoundFloatToAPInt(float Float) {
-  return RoundDoubleToAPInt(double(Float));
+inline APInt RoundFloatToAPInt(float Float, uint32_t width) {
+  return RoundDoubleToAPInt(double(Float), width);
 }
 
 /// Arithmetic right-shift the APInt by shiftAmt.
