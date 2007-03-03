@@ -578,9 +578,9 @@ Store4BytesLittleEndian:
 
 /// FIXME: document
 ///
-GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
+void ExecutionEngine::LoadValueFromMemory(GenericValue &Result, 
+                                                  GenericValue *Ptr,
                                                   const Type *Ty) {
-  GenericValue Result;
   if (getTargetData()->isLittleEndian()) {
     switch (Ty->getTypeID()) {
     case Type::IntegerTyID: {
@@ -605,7 +605,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                           ((uint64_t)Ptr->Untyped[6] << 48) |
                           ((uint64_t)Ptr->Untyped[7] << 56);
       } else
-        Result.APIntVal = new APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
+        *(Result.APIntVal) = APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
       break;
     }
     Load4BytesLittleEndian:
@@ -657,7 +657,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                           ((uint64_t)Ptr->Untyped[1] << 48) |
                           ((uint64_t)Ptr->Untyped[0] << 56);
       } else
-        Result.APIntVal = new APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
+        *(Result.APIntVal) = APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
       break;
     }
     Load4BytesBigEndian:
@@ -686,7 +686,6 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
       abort();
     }
   }
-  return Result;
 }
 
 // InitializeMemory - Recursive function to apply a Constant value into the
