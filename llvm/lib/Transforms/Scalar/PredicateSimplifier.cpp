@@ -1461,7 +1461,8 @@ namespace {
 
                   const IntegerType *Ty = CI->getType();
                   LV = LT;
-                  add(O.LHS, ConstantInt::get(Ty->getMask().lshr(1)),
+                  add(O.LHS, ConstantInt::get(
+                        APInt::getSignedMaxValue(Ty->getBitWidth())),
                       ICmpInst::ICMP_UGT);
                 } else if (LV == SGT && CI->getValue().isPositive()) {
                   // i8 %x s> 5 implies %x > 5 and %x u< 128
