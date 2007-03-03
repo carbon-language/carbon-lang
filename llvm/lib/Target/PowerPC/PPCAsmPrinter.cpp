@@ -215,24 +215,28 @@ namespace {
       if (MI->getOperand(OpNo).isImmediate()) {
         printS16ImmOperand(MI, OpNo);
       } else {
-        O << "ha16(";
+        if (Subtarget.isDarwin()) O << "ha16(";
         printOp(MI->getOperand(OpNo));
         if (TM.getRelocationModel() == Reloc::PIC_)
-          O << "-\"L" << getFunctionNumber() << "$pb\")";
-        else
+          O << "-\"L" << getFunctionNumber() << "$pb\"";
+        if (Subtarget.isDarwin())
           O << ')';
+        else
+          O << "@ha";
       }
     }
     void printSymbolLo(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImmediate()) {
         printS16ImmOperand(MI, OpNo);
       } else {
-        O << "lo16(";
+        if (Subtarget.isDarwin()) O << "lo16(";
         printOp(MI->getOperand(OpNo));
         if (TM.getRelocationModel() == Reloc::PIC_)
-          O << "-\"L" << getFunctionNumber() << "$pb\")";
-        else
+          O << "-\"L" << getFunctionNumber() << "$pb\"";
+        if (Subtarget.isDarwin())
           O << ')';
+        else
+          O << "@l";
       }
     }
     void printcrbitm(const MachineInstr *MI, unsigned OpNo) {
