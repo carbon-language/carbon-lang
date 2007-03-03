@@ -20,6 +20,8 @@
 namespace llvm {
 
 typedef uintptr_t PointerTy;
+class APInt;
+class Type;
 
 union GenericValue {
   bool            Int1Val;
@@ -27,6 +29,7 @@ union GenericValue {
   unsigned short  Int16Val;
   unsigned int    Int32Val;
   uint64_t        Int64Val;
+  APInt          *APIntVal;
   double          DoubleVal;
   float           FloatVal;
   struct { unsigned int first; unsigned int second; } UIntPairVal;
