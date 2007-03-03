@@ -322,102 +322,105 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
 
   std::set<Instruction*> InstructionsToDelete;
 
-  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
-    if (LI->getLoopFor(L->getBlocks()[i]) == L) {  // Not in a subloop...
-      BasicBlock *BB = L->getBlocks()[i];
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
-        if (I->getType()->isInteger()) {      // Is an integer instruction
-          SCEVHandle SH = SE->getSCEV(I);
-          if (SH->hasComputableLoopEvolution(L) ||    // Varies predictably
-              HasConstantItCount) {
-            // Find out if this predictably varying value is actually used
-            // outside of the loop.  "extra" as opposed to "intra".
-            std::vector<Instruction*> ExtraLoopUsers;
-            for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-                 UI != E; ++UI) {
-              Instruction *User = cast<Instruction>(*UI);
-              if (!L->contains(User->getParent())) {
-                // If this is a PHI node in the exit block and we're inserting,
-                // into the exit block, it must have a single entry.  In this
-                // case, we can't insert the code after the PHI and have the PHI
-                // still use it.  Instead, don't insert the the PHI.
-                if (PHINode *PN = dyn_cast<PHINode>(User)) {
-                  // FIXME: This is a case where LCSSA pessimizes code, this
-                  // should be fixed better.
-                  if (PN->getNumOperands() == 2 && 
-                      PN->getParent() == BlockToInsertInto)
-                    continue;
-                }
-                ExtraLoopUsers.push_back(User);
-              }
-            }
-            
-            if (!ExtraLoopUsers.empty()) {
-              // Okay, this instruction has a user outside of the current loop
-              // and varies predictably in this loop.  Evaluate the value it
-              // contains when the loop exits, and insert code for it.
-              SCEVHandle ExitValue = SE->getSCEVAtScope(I, L->getParentLoop());
-              if (!isa<SCEVCouldNotCompute>(ExitValue)) {
-                Changed = true;
-                ++NumReplaced;
-                // Remember the next instruction.  The rewriter can move code
-                // around in some cases.
-                BasicBlock::iterator NextI = I; ++NextI;
-
-                Value *NewVal = Rewriter.expandCodeFor(ExitValue, InsertPt,
-                                                       I->getType());
-
-                DOUT << "INDVARS: RLEV: AfterLoopVal = " << *NewVal
-                     << "  LoopVal = " << *I << "\n";
-                
-                // Rewrite any users of the computed value outside of the loop
-                // with the newly computed value.
-                for (unsigned i = 0, e = ExtraLoopUsers.size(); i != e; ++i) {
-                  PHINode* PN = dyn_cast<PHINode>(ExtraLoopUsers[i]);
-                  if (PN && PN->getNumOperands() == 2 &&
-                      !L->contains(PN->getParent())) {
-                    // We're dealing with an LCSSA Phi.  Handle it specially.
-                    Instruction* LCSSAInsertPt = BlockToInsertInto->begin();
-                    
-                    Instruction* NewInstr = dyn_cast<Instruction>(NewVal);
-                    if (NewInstr && !isa<PHINode>(NewInstr) &&
-                        !L->contains(NewInstr->getParent()))
-                      for (unsigned j = 0; j < NewInstr->getNumOperands(); ++j){
-                        Instruction* PredI = 
-                                 dyn_cast<Instruction>(NewInstr->getOperand(j));
-                        if (PredI && L->contains(PredI->getParent())) {
-                          PHINode* NewLCSSA = new PHINode(PredI->getType(),
-                                                    PredI->getName() + ".lcssa",
-                                                    LCSSAInsertPt);
-                          NewLCSSA->addIncoming(PredI, 
-                                     BlockToInsertInto->getSinglePredecessor());
-                        
-                          NewInstr->replaceUsesOfWith(PredI, NewLCSSA);
-                        }
-                      }
-                    
-                    PN->replaceAllUsesWith(NewVal);
-                    PN->eraseFromParent();
-                  } else {
-                    ExtraLoopUsers[i]->replaceUsesOfWith(I, NewVal);
-                  }
-                }
-
-                // If this instruction is dead now, schedule it to be removed.
-                if (I->use_empty())
-                  InstructionsToDelete.insert(I);
-                I = NextI;
-                continue;  // Skip the ++I
-              }
-            }
-          }
-        }
-
-        // Next instruction.  Continue instruction skips this.
-        ++I;
+  // Loop over all of the integer-valued instructions in this loop, but that are
+  // not in a subloop.
+  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i) {
+    if (LI->getLoopFor(L->getBlocks()[i]) != L) 
+      continue; // The Block is in a subloop, skip it.
+    BasicBlock *BB = L->getBlocks()[i];
+    for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ) {
+      Instruction *I = II++;
+      
+      if (!I->getType()->isInteger())
+        continue;          // SCEV only supports integer expressions for now.
+      
+      SCEVHandle SH = SE->getSCEV(I);
+      if (!HasConstantItCount &&
+          !SH->hasComputableLoopEvolution(L)) {    // Varies predictably
+        continue;          // Cannot exit evolution for the loop value.
       }
-    }
+      
+      // Find out if this predictably varying value is actually used
+      // outside of the loop.  "Extra" is as opposed to "intra".
+      std::vector<Instruction*> ExtraLoopUsers;
+      for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+           UI != E; ++UI) {
+        Instruction *User = cast<Instruction>(*UI);
+        if (!L->contains(User->getParent())) {
+          // If this is a PHI node in the exit block and we're inserting,
+          // into the exit block, it must have a single entry.  In this
+          // case, we can't insert the code after the PHI and have the PHI
+          // still use it.  Instead, don't insert the the PHI.
+          if (PHINode *PN = dyn_cast<PHINode>(User)) {
+            // FIXME: This is a case where LCSSA pessimizes code, this
+            // should be fixed better.
+            if (PN->getNumOperands() == 2 && 
+                PN->getParent() == BlockToInsertInto)
+              continue;
+          }
+          ExtraLoopUsers.push_back(User);
+        }
+      }
+      
+      // If nothing outside the loop uses this value, don't rewrite it.
+      if (ExtraLoopUsers.empty())
+        continue;
+      
+      // Okay, this instruction has a user outside of the current loop
+      // and varies predictably *inside* the loop.  Evaluate the value it
+      // contains when the loop exits if possible.
+      SCEVHandle ExitValue = SE->getSCEVAtScope(I, L->getParentLoop());
+      if (isa<SCEVCouldNotCompute>(ExitValue))
+        continue;
+      
+      Changed = true;
+      ++NumReplaced;
+      
+      Value *NewVal = Rewriter.expandCodeFor(ExitValue, InsertPt,
+                                             I->getType());
 
+      DOUT << "INDVARS: RLEV: AfterLoopVal = " << *NewVal
+           << "  LoopVal = " << *I << "\n";
+      
+      // Rewrite any users of the computed value outside of the loop
+      // with the newly computed value.
+      for (unsigned i = 0, e = ExtraLoopUsers.size(); i != e; ++i) {
+        PHINode* PN = dyn_cast<PHINode>(ExtraLoopUsers[i]);
+        if (PN && PN->getNumOperands() == 2 &&
+            !L->contains(PN->getParent())) {
+          // We're dealing with an LCSSA Phi.  Handle it specially.
+          Instruction* LCSSAInsertPt = BlockToInsertInto->begin();
+          
+          Instruction* NewInstr = dyn_cast<Instruction>(NewVal);
+          if (NewInstr && !isa<PHINode>(NewInstr) &&
+              !L->contains(NewInstr->getParent()))
+            for (unsigned j = 0; j != NewInstr->getNumOperands(); ++j) {
+              Instruction* PredI = 
+                                dyn_cast<Instruction>(NewInstr->getOperand(j));
+              if (PredI && L->contains(PredI->getParent())) {
+                PHINode* NewLCSSA = new PHINode(PredI->getType(),
+                                                PredI->getName() + ".lcssa",
+                                                LCSSAInsertPt);
+                NewLCSSA->addIncoming(PredI, 
+                           BlockToInsertInto->getSinglePredecessor());
+              
+                NewInstr->replaceUsesOfWith(PredI, NewLCSSA);
+              }
+            }
+          
+          PN->replaceAllUsesWith(NewVal);
+          PN->eraseFromParent();
+        } else {
+          ExtraLoopUsers[i]->replaceUsesOfWith(I, NewVal);
+        }
+      }
+
+      // If this instruction is dead now, schedule it to be removed.
+      if (I->use_empty())
+        InstructionsToDelete.insert(I);
+    }
+  }
+  
   DeleteTriviallyDeadInstructions(InstructionsToDelete);
 }
 
