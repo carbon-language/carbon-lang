@@ -141,6 +141,8 @@ namespace {
 
   public:
     virtual bool runOnFunction(Function &F);
+    
+    bool DoOneIteration(Function &F, unsigned ItNum);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
@@ -9164,9 +9166,12 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     AddReachableCodeToWorklist(TI->getSuccessor(i), Visited, IC, TD);
 }
 
-bool InstCombiner::runOnFunction(Function &F) {
+bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   bool Changed = false;
   TD = &getAnalysis<TargetData>();
+  
+  DEBUG(DOUT << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
+             << F.getNameStr() << "\n");
 
   {
     // Do a depth-first traversal of the function, populate the worklist with
@@ -9295,22 +9300,34 @@ bool InstCombiner::runOnFunction(Function &F) {
         if (isInstructionTriviallyDead(I)) {
           // Make sure we process all operands now that we are reducing their
           // use counts.
-          AddUsesToWorkList(*I);;
+          AddUsesToWorkList(*I);
 
           // Instructions may end up in the worklist more than once.  Erase all
           // occurrences of this instruction.
           RemoveFromWorkList(I);
           I->eraseFromParent();
         } else {
-          AddToWorkList(Result);
-          AddUsersToWorkList(*Result);
+          AddToWorkList(I);
+          AddUsersToWorkList(*I);
         }
       }
       Changed = true;
     }
   }
 
+  assert(WorklistMap.empty() && "Worklist empty, but map not?");
   return Changed;
+}
+
+
+bool InstCombiner::runOnFunction(Function &F) {
+  bool EverMadeChange = false;
+
+  // Iterate while there is work to do.
+  unsigned Iteration = 0;
+  while (DoOneIteration(F, Iteration++)) 
+    EverMadeChange = true;
+  return EverMadeChange;
 }
 
 FunctionPass *llvm::createInstructionCombiningPass() {
