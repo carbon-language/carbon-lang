@@ -879,6 +879,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the label id.
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
       break;
+    case TargetLowering::Expand:
+      Result = LegalizeOp(Node->getOperand(0));
+      break;
     }
     break;
 
