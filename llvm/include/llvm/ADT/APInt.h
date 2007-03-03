@@ -79,13 +79,6 @@ class APInt {
   // Fast internal constructor
   APInt(uint64_t* val, uint32_t bits) : BitWidth(bits), pVal(val) { }
 
-  /// Here one word's bitwidth equals to that of uint64_t.
-  /// @returns the number of words to hold the integer value of this APInt.
-  /// @brief Get the number of words.
-  inline uint32_t getNumWords() const {
-    return (BitWidth + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
-  }
-
   /// @returns true if the number of bits <= 64, false otherwise.
   /// @brief Determine if this APInt just has one word to store value.
   inline bool isSingleWord() const { 
@@ -484,6 +477,13 @@ public:
   /// value of the APInt.
   inline uint32_t getActiveWords() const {
     return whichWord(getActiveBits()-1) + 1;
+  }
+
+  /// Here one word's bitwidth equals to that of uint64_t.
+  /// @returns the number of words to hold the integer value of this APInt.
+  /// @brief Get the number of words.
+  inline uint32_t getNumWords() const {
+    return (BitWidth + APINT_BITS_PER_WORD - 1) / APINT_BITS_PER_WORD;
   }
 
   /// This function returns a pointer to the internal storage of the APInt. 
