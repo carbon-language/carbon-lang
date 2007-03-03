@@ -48,8 +48,7 @@ ushort %test5(ushort %a) {
         %tmp1 = and int %tmp, 65280
         %tmp2 = ashr int %tmp1, ubyte 8
         %tmp2 = trunc int %tmp2 to short
-        %tmp3 = zext ushort %a to int
-        %tmp4 = and int %tmp3, 255
+        %tmp4 = and int %tmp, 255
         %tmp5 = shl int %tmp4, ubyte 8
         %tmp5 = trunc int %tmp5 to short
         %tmp = or short %tmp2, %tmp5
