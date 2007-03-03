@@ -736,14 +736,14 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
   for (unsigned i = 0, e = MOS.Relocations.size(); i != e; ++i) {
     MachineRelocation &MR = MOS.Relocations[i];
     unsigned TargetSection = MR.getConstantVal();
-    unsigned TargetAddr;
-    unsigned TargetIndex;
+    unsigned TargetAddr = 0;
+    unsigned TargetIndex = 0;
 
     // This is a scattered relocation entry if it points to a global value with
     // a non-zero offset.
     bool Scattered = false;
     bool Extern = false;
-    
+
     // Since we may not have seen the GlobalValue we were interested in yet at
     // the time we emitted the relocation for it, fix it up now so that it
     // points to the offset into the correct section.
@@ -762,11 +762,16 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
       } else {
         Scattered = TargetSection != 0;
         TargetSection = MOSPtr->Index;
+      }
+      MR.setResultPointer((void*)Offset);
+    }
+    
+    // If the symbol is locally defined, pass in the address of the section and
+    // the section index to the code which will generate the target relocation.
+    if (!Extern) {
         MachOSection &To = *SectionList[TargetSection - 1];
         TargetAddr = To.addr;
         TargetIndex = To.Index;
-      }
-      MR.setResultPointer((void*)Offset);
     }
 
     OutputBuffer RelocOut(MOS.RelocBuffer, is64Bit, isLittleEndian);
