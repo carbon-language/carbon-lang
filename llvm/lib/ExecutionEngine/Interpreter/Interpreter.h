@@ -120,7 +120,7 @@ public:
   
   /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
-  static ExecutionEngine *create(ModuleProvider *M);
+  static ExecutionEngine *create(ModuleProvider *M, std::string *ErrorStr = 0);
 
   /// run - Start execution with the specified function and arguments.
   ///

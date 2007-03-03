@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
+#include <iostream>
 using namespace llvm;
 
 static struct RegisterInterp {
@@ -31,13 +32,20 @@ namespace llvm {
 
 /// create - Create a new interpreter object.  This can never fail.
 ///
-ExecutionEngine *Interpreter::create(ModuleProvider *MP) {
-  Module *M;
-  try {
-    M = MP->materializeModule();
-  } catch (...) {
-    return 0;  // error materializing the module.
-  }
+ExecutionEngine *Interpreter::create(ModuleProvider *MP, std::string* ErrStr) {
+  // Tell this ModuleProvide to materialize and release the module
+  Module *M = MP->releaseModule(ErrStr);
+  if (!M)
+    // We got an error, just return 0
+    return 0;
+
+  // This is a bit nasty, but the ExecutionEngine won't be able to delete the
+  // module due to use/def issues if we don't delete this MP here. Below we
+  // construct a new Interpreter with the Module we just got. This creates a
+  // new ExistingModuleProvider in the EE instance. Consequently, MP is left
+  // dangling and it contains references into the module which cause problems
+  // when the module is deleted via the ExistingModuleProvide via EE.
+  delete MP;
   
   // FIXME: This should probably compute the entire data layout
   std::string DataLayout;

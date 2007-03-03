@@ -71,7 +71,7 @@ public:
   /// create - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise, return null.
   ///
-  static ExecutionEngine *create(ModuleProvider *MP);
+  static ExecutionEngine *create(ModuleProvider *MP, std::string* = 0);
 
   /// run - Start execution with the specified function and arguments.
   ///

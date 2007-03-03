@@ -45,6 +45,7 @@ ExecutionEngine::ExecutionEngine(Module *M) {
 }
 
 ExecutionEngine::~ExecutionEngine() {
+  clearAllGlobalMappings();
   for (unsigned i = 0, e = Modules.size(); i != e; ++i)
     delete Modules[i];
 }
@@ -252,16 +253,17 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
 /// NULL is returned.
 ///
 ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
-                                         bool ForceInterpreter) {
+                                         bool ForceInterpreter,
+                                         std::string *ErrorStr) {
   ExecutionEngine *EE = 0;
 
   // Unless the interpreter was explicitly selected, try making a JIT.
   if (!ForceInterpreter && JITCtor)
-    EE = JITCtor(MP);
+    EE = JITCtor(MP, ErrorStr);
 
   // If we can't make a JIT, make an interpreter instead.
   if (EE == 0 && InterpCtor)
-    EE = InterpCtor(MP);
+    EE = InterpCtor(MP, ErrorStr);
 
   if (EE) {
     // Make sure we can resolve symbols in the program as well. The zero arg
