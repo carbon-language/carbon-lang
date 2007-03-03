@@ -938,11 +938,12 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   if (JoinIntervals(DestInt, SrcInt)) {
     if (isDead) {
       // Result of the copy is dead. Propagate this property.
-      if (SrcStart == 0 && MRegisterInfo::isPhysicalRegister(repSrcReg)) {
-        // Live-in to the function but dead. Remove it from MBB live-in set.
+      if (SrcStart == 0) {
+        assert(MRegisterInfo::isPhysicalRegister(repSrcReg) &&
+               "Live-in must be a physical register!");
+        // Live-in to the function but dead. Remove it from entry live-in set.
         // JoinIntervals may end up swapping the two intervals.
-        MachineBasicBlock *MBB = CopyMI->getParent();
-        MBB->removeLiveIn(repSrcReg);
+        mf_->begin()->removeLiveIn(repSrcReg);
       } else {
         MachineInstr *SrcMI = getInstructionFromIndex(SrcStart);
         if (SrcMI) {
