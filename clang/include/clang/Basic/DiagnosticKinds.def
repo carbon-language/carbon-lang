@@ -470,6 +470,8 @@ DIAG(err_sizeof_incomplete_type, ERROR,
      "invalid application of 'sizeof' to an incomplete type '%s'")
 DIAG(err_alignof_incomplete_type, ERROR,
      "invalid application of '__alignof' to an incomplete type '%s'")
+DIAG(err_invalid_suffix_integer_constant, ERROR,
+     "invalid suffix on integer constant")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

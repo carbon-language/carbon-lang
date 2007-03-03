@@ -291,6 +291,7 @@ private:
     return ParseParenExpression(Op, CastTy, RParenLoc);
   }
   ExprResult ParseStringLiteralExpression();
+  ExprResult ParseNumericConstant();
   
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
