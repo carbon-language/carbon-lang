@@ -377,7 +377,7 @@ namespace {
             RHS.first->getType()->getBitWidth())
           return LHS.first->getType()->getBitWidth() <
                  RHS.first->getType()->getBitWidth();
-        return LHS.first->getZExtValue() < RHS.first->getZExtValue();
+        return LHS.first->getValue().ult(RHS.first->getValue());
       }
     };
 
@@ -407,40 +407,43 @@ namespace {
       iULT = (iUGT == begin || begin == end) ? end : iUGT - 1;
 
       if (iUGT != end && iULT != end &&
-          (iULT->first->getSExtValue() >> 63) ==
-          (iUGT->first->getSExtValue() >> 63)) { // signs match
+          iULT->first->getValue().isNegative() == 
+          iUGT->first->getValue().isNegative()) { // signs match
         iSGT = iUGT;
         iSLT = iULT;
       } else {
         if (iULT == end || iUGT == end) {
           if (iULT == end) iSLT = last;  else iSLT = iULT;
           if (iUGT == end) iSGT = begin; else iSGT = iUGT;
-        } else if (iULT->first->getSExtValue() < 0) {
-          assert(iUGT->first->getSExtValue() >= 0 && "Bad sign comparison.");
+        } else if (iULT->first->getValue().isNegative()) {
+          assert(iUGT->first->getValue().isPositive() && 
+                 "Bad sign comparison.");
           iSGT = iUGT;
           iSLT = iULT;
         } else {
-          assert(iULT->first->getSExtValue() >= 0 &&
-                 iUGT->first->getSExtValue() < 0 && "Bad sign comparison.");
+          assert(iULT->first->getValue().isPositive() >= 0 &&
+                 iUGT->first->getValue().isNegative() &&"Bad sign comparison.");
           iSGT = iULT;
           iSLT = iUGT;
         }
 
         if (iSGT != end &&
-            iSGT->first->getSExtValue() < CI->getSExtValue()) iSGT = end;
+            iSGT->first->getValue().slt(CI->getValue())) 
+          iSGT = end;
         if (iSLT != end &&
-            iSLT->first->getSExtValue() > CI->getSExtValue()) iSLT = end;
+            iSLT->first->getValue().sgt(CI->getValue())) 
+          iSLT = end;
 
         if (begin != end) {
-          if (begin->first->getSExtValue() < CI->getSExtValue())
+          if (begin->first->getValue().slt(CI->getValue()))
             if (iSLT == end ||
-                begin->first->getSExtValue() > iSLT->first->getSExtValue())
+                begin->first->getValue().sgt(iSLT->first->getValue()))
               iSLT = begin;
         }
         if (last != end) {
-          if (last->first->getSExtValue() > CI->getSExtValue())
+          if (last->first->getValue().sgt(CI->getValue()))
             if (iSGT == end ||
-                last->first->getSExtValue() < iSGT->first->getSExtValue())
+                last->first->getValue().slt(iSGT->first->getValue()))
               iSGT = last;
         }
       }
@@ -1201,8 +1204,7 @@ namespace {
 
             if (ConstantInt *CI = dyn_cast<ConstantInt>(Canonical)) {
               if (ConstantInt *Arg = dyn_cast<ConstantInt>(LHS)) {
-                add(RHS, ConstantInt::get(CI->getType(), CI->getZExtValue() ^
-                                          Arg->getZExtValue()),
+                add(RHS, ConstantInt::get(CI->getValue() ^ Arg->getValue()),
                     ICmpInst::ICMP_EQ, NewContext);
               }
             }
@@ -1454,21 +1456,22 @@ namespace {
             if (ConstantInt *CI = dyn_cast<ConstantInt>(O.RHS)) {
               // xform doesn't apply to i1
               if (CI->getType()->getBitWidth() > 1) {
-                if (LV == SLT && CI->getSExtValue() < 0) {
+                if (LV == SLT && CI->getValue().isNegative()) {
                   // i8 %x s< -5 implies %x < -5 and %x u> 127
 
                   const IntegerType *Ty = CI->getType();
                   LV = LT;
-                  add(O.LHS, ConstantInt::get(Ty, Ty->getBitMask() >> 1),
+                  add(O.LHS, ConstantInt::get(Ty->getMask().lshr(1)),
                       ICmpInst::ICMP_UGT);
-                } else if (LV == SGT && CI->getSExtValue() >= 0) {
+                } else if (LV == SGT && CI->getValue().isPositive()) {
                   // i8 %x s> 5 implies %x > 5 and %x u< 128
 
                   const IntegerType *Ty = CI->getType();
                   LV = LT;
-                  add(O.LHS, ConstantInt::get(Ty, 1 << Ty->getBitWidth()),
+                  add(O.LHS, ConstantInt::get(
+                        APInt::getSignedMinValue(Ty->getBitWidth())),
                       ICmpInst::ICMP_ULT);
-                } else if (CI->getSExtValue() >= 0) {
+                } else if (CI->getValue().isPositive()) {
                   if (LV == ULT || LV == SLT) LV = LT;
                   if (LV == UGT || LV == SGT) LV = GT;
                 }
@@ -1772,19 +1775,24 @@ namespace {
 
   void PredicateSimplifier::Forwards::visitSExtInst(SExtInst &SI) {
     VRPSolver VRP(IG, UB, PS->Forest, PS->modified, &SI);
-    const IntegerType *Ty = cast<IntegerType>(SI.getSrcTy());
-    VRP.add(ConstantInt::get(SI.getDestTy(), ~(Ty->getBitMask() >> 1)),
-            &SI, ICmpInst::ICMP_SLE);
-    VRP.add(ConstantInt::get(SI.getDestTy(), (1 << (Ty->getBitWidth()-1)) - 1),
-            &SI, ICmpInst::ICMP_SGE);
+    uint32_t SrcBitWidth = cast<IntegerType>(SI.getSrcTy())->getBitWidth();
+    uint32_t DstBitWidth = cast<IntegerType>(SI.getDestTy())->getBitWidth();
+    APInt Min(APInt::getSignedMinValue(SrcBitWidth));
+    APInt Max(APInt::getSignedMaxValue(SrcBitWidth));
+    Min.sext(DstBitWidth);
+    Max.sext(DstBitWidth);
+    VRP.add(ConstantInt::get(Min), &SI, ICmpInst::ICMP_SLE);
+    VRP.add(ConstantInt::get(Max), &SI, ICmpInst::ICMP_SGE);
     VRP.solve();
   }
 
   void PredicateSimplifier::Forwards::visitZExtInst(ZExtInst &ZI) {
     VRPSolver VRP(IG, UB, PS->Forest, PS->modified, &ZI);
-    const IntegerType *Ty = cast<IntegerType>(ZI.getSrcTy());
-    VRP.add(ConstantInt::get(ZI.getDestTy(), Ty->getBitMask()),
-            &ZI, ICmpInst::ICMP_UGE);
+    uint32_t SrcBitWidth = cast<IntegerType>(ZI.getSrcTy())->getBitWidth();
+    uint32_t DstBitWidth = cast<IntegerType>(ZI.getDestTy())->getBitWidth();
+    APInt Max(APInt::getMaxValue(SrcBitWidth));
+    Max.zext(DstBitWidth);
+    VRP.add(ConstantInt::get(Max), &ZI, ICmpInst::ICMP_UGE);
     VRP.solve();
   }
 
