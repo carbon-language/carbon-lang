@@ -86,9 +86,9 @@ static Constant *CastConstantVector(ConstantVector *CV,
     
     if (SrcEltTy->getTypeID() == Type::DoubleTyID) {
       for (unsigned i = 0; i != SrcNumElts; ++i) {
-        double V =
+        uint64_t V =
           DoubleToBits(cast<ConstantFP>(CV->getOperand(i))->getValue());
-        Constant *C = ConstantInt::get(APIntOps::RoundDoubleToAPInt(V));
+        Constant *C = ConstantInt::get(Type::Int64Ty, V);
         Result.push_back(ConstantExpr::getBitCast(C, DstEltTy ));
       }
       return ConstantVector::get(Result);
