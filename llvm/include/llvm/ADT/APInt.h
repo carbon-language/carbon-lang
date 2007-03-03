@@ -248,14 +248,23 @@ public:
   /// the given APInt& RHS.
   /// @brief Bitwise AND operator. 
   APInt operator&(const APInt& RHS) const;
+  APInt And(const APInt& RHS) const {
+    return this->operator&(RHS);
+  }
 
   /// Performs bitwise OR operation on this APInt and the given APInt& RHS.
   /// @brief Bitwise OR operator. 
   APInt operator|(const APInt& RHS) const;
+  APInt Or(const APInt& RHS) const {
+    return this->operator|(RHS);
+  }
 
   /// Performs bitwise XOR operation on this APInt and the given APInt& RHS.
   /// @brief Bitwise XOR operator. 
   APInt operator^(const APInt& RHS) const;
+  APInt Xor(const APInt& RHS) const {
+    return this->operator^(RHS);
+  }
 
   /// Performs logical negation operation on this APInt.
   /// @brief Logical negation operator. 
