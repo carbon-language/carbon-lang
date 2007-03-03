@@ -703,15 +703,19 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
           // Extend the live range of the MI that last kill the register if
           // necessary.
+          bool WasKill = false;
           if (SSMI) {
             MachineOperand *MOK = SSMI->findRegisterUseOperand(PhysReg, true);
-            if (MOK)
+            if (MOK) {
+              WasKill = MOK->isKill();
               MOK->unsetIsKill();
+            }
           }
           if (ti == -1) {
             // Unless it's the use of a two-address code, transfer the kill
             // of the reused register to this use.
-            MI.getOperand(i).setIsKill();
+            if (WasKill)
+              MI.getOperand(i).setIsKill();
             Spills.addLastUse(PhysReg, &MI);
           }
 
@@ -782,15 +786,21 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
         // Extend the live range of the MI that last kill the register if
         // necessary.
+        bool WasKill = false;
         if (SSMI) {
           MachineOperand *MOK = SSMI->findRegisterUseOperand(PhysReg, true);
-          if (MOK)
+          if (MOK) {
+            WasKill = MOK->isKill();
             MOK->unsetIsKill();
+          }
         }
         MachineInstr *CopyMI = prior(MII);
-        MachineOperand *MOU = CopyMI->findRegisterUseOperand(PhysReg);
-        MOU->setIsKill();
-        Spills.addLastUse(PhysReg, &MI);
+        if (WasKill) {
+          // Transfer kill to the next use.
+          MachineOperand *MOU = CopyMI->findRegisterUseOperand(PhysReg);
+          MOU->setIsKill();
+        }
+        Spills.addLastUse(PhysReg, CopyMI);
 
         // This invalidates DesignatedReg.
         Spills.ClobberPhysReg(DesignatedReg);
@@ -877,16 +887,20 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
               // Either way, the live range of the last kill of InReg has been
               // extended. Remove its kill.
+              bool WasKill = false;
               if (SSMI) {
                 MachineOperand *MOK = SSMI->findRegisterUseOperand(InReg, true);
-                if (MOK)
+                if (MOK) {
+                  WasKill = MOK->isKill();
                   MOK->unsetIsKill();
+                }
               }
               if (NextMII != MBB.end()) {
                 // If NextMII uses InReg (must be the copy?), mark it killed.
                 MachineOperand *MOU = NextMII->findRegisterUseOperand(InReg);
                 if (MOU) {
-                  MOU->setIsKill();
+                  if (WasKill)
+                    MOU->setIsKill();
                   Spills.addLastUse(InReg, &(*NextMII));
                 }
               }
