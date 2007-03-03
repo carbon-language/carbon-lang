@@ -18,7 +18,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
-#include <iostream>
 using namespace llvm;
 
 static struct RegisterInterp {
