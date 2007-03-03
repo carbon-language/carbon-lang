@@ -3328,6 +3328,18 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
                            DAG.getValueType(VT));
     break;
 
+  case ISD::FPOWI: {
+    // Promote f32 powi to f64 powi.  Note that this could insert a libcall
+    // directly as well, which may be better.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    assert(Tmp1.getValueType() == NVT);
+    Result = DAG.getNode(ISD::FPOWI, NVT, Tmp1, Node->getOperand(1));
+    if (NoExcessFPPrecision)
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
+                           DAG.getValueType(VT));
+    break;
+  }
+    
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
