@@ -425,7 +425,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     else if (BitWidth <= 64)
       Result.Int64Val = (uint64_t )cast<ConstantInt>(C)->getZExtValue();
     else
-      assert(0 && "Integers with > 64-bits not implemented");
+      Result.APIntVal = const_cast<APInt*>(&cast<ConstantInt>(C)->getValue());
     break;
   }
 
@@ -481,8 +481,12 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
         Ptr->Untyped[5] = (unsigned char)(TmpVal.Int64Val >> 40);
         Ptr->Untyped[6] = (unsigned char)(TmpVal.Int64Val >> 48);
         Ptr->Untyped[7] = (unsigned char)(TmpVal.Int64Val >> 56);
-      } else
-        assert(0 && "Integer types > 64 bits not supported");
+      } else {
+        uint64_t *Dest = (uint64_t*)Ptr;
+        const uint64_t *Src = Val.APIntVal->getRawData();
+        for (uint32_t i = 0; i < Val.APIntVal->getNumWords(); ++i)
+          Dest[i] = Src[i];
+      }
       break;
     }
 Store4BytesLittleEndian:
@@ -537,8 +541,12 @@ Store4BytesLittleEndian:
         Ptr->Untyped[2] = (unsigned char)(TmpVal.Int64Val >> 40);
         Ptr->Untyped[1] = (unsigned char)(TmpVal.Int64Val >> 48);
         Ptr->Untyped[0] = (unsigned char)(TmpVal.Int64Val >> 56);
-      } else
-        assert(0 && "Integer types > 64 bits not supported");
+      } else {
+        uint64_t *Dest = (uint64_t*)Ptr;
+        const uint64_t *Src = Val.APIntVal->getRawData();
+        for (uint32_t i = 0; i < Val.APIntVal->getNumWords(); ++i)
+          Dest[i] = Src[i];
+      }
       break;
     }
     Store4BytesBigEndian:
@@ -597,7 +605,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                           ((uint64_t)Ptr->Untyped[6] << 48) |
                           ((uint64_t)Ptr->Untyped[7] << 56);
       } else
-        assert(0 && "Integer types > 64 bits not supported");
+        Result.APIntVal = new APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
       break;
     }
     Load4BytesLittleEndian:
@@ -628,7 +636,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
   } else {
     switch (Ty->getTypeID()) {
     case Type::IntegerTyID: {
-      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+      uint32_t BitWidth = cast<IntegerType>(Ty)->getBitWidth();
       if (BitWidth <= 8)
         Result.Int8Val  = Ptr->Untyped[0];
       else if (BitWidth <= 16) {
@@ -649,7 +657,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                           ((uint64_t)Ptr->Untyped[1] << 48) |
                           ((uint64_t)Ptr->Untyped[0] << 56);
       } else
-        assert(0 && "Integer types > 64 bits not supported");
+        Result.APIntVal = new APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
       break;
     }
     Load4BytesBigEndian:
