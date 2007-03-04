@@ -209,6 +209,13 @@ class SmallPtrSet : public SmallPtrSetImpl {
 public:
   SmallPtrSet() : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {}
   
+  template<typename It>
+  SmallPtrSet(It I, It E)
+    : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {
+    for (; I != E; ++I)
+      insert(*I);
+  }
+  
   typedef SmallPtrSetIterator<PtrType> iterator;
   typedef SmallPtrSetIterator<PtrType> const_iterator;
   inline iterator begin() const {
