@@ -106,9 +106,15 @@ public:
   /// that can be set by an unsigned version of this type.  This is 0xFF for
   /// sbyte/ubyte, 0xFFFF for shorts, etc.
   uint64_t getBitMask() const {
-    return ~uint64_t(0UL) >> (64-getPrimitiveSizeInBits());
+    return ~uint64_t(0UL) >> (64-getBitWidth());
   }
 
+  /// getSignBit - Return a uint64_t with just the most significant bit set (the
+  /// sign bit, if the value is treated as a signed number).
+  uint64_t getSignBit() const {
+    return 1ULL << (getBitWidth()-1);
+  }
+  
   /// For example, this is 0xFF for an 8 bit integer, 0xFFFF for i16, etc.
   /// @returns a bit mask with ones set for all the bits of this type.
   /// @brief Get a bit mask for this type.
