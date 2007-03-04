@@ -74,6 +74,7 @@ namespace {
     std::vector<Instruction*> Worklist;
     DenseMap<Instruction*, unsigned> WorklistMap;
     TargetData *TD;
+    bool MustPreserveLCSSA;
   public:
     /// AddToWorkList - Add the specified instruction to the worklist if it
     /// isn't already in it.
@@ -7685,7 +7686,7 @@ static bool DeadPHICycle(PHINode *PN, std::set<PHINode*> &PotentiallyDeadPHIs) {
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // If LCSSA is around, don't mess with Phi nodes
-  if (mustPreserveAnalysisID(LCSSAID)) return 0;
+  if (MustPreserveLCSSA) return 0;
   
   if (Value *V = PN.hasConstantValue())
     return ReplaceInstUsesWith(PN, V);
@@ -9344,6 +9345,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
 
 bool InstCombiner::runOnFunction(Function &F) {
+  MustPreserveLCSSA = mustPreserveAnalysisID(LCSSAID);
+  
   bool EverMadeChange = false;
 
   // Iterate while there is work to do.
