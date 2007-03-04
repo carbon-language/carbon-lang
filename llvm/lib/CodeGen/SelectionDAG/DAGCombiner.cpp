@@ -757,8 +757,10 @@ SDOperand DAGCombiner::visitADDC(SDNode *N) {
                      SDOperand(N, 1));
   
   // canonicalize constant to RHS.
-  if (N0C && !N1C)
-    return DAG.getNode(ISD::ADDC, VT, N1, N0);
+  if (N0C && !N1C) {
+    SDOperand Ops[] = { N1, N0 };
+    return DAG.getNode(ISD::ADDC, N->getVTList(), Ops, 2);
+  }
   
   // fold (add x, 0) -> x + no carry out
   //if (N1C && N1C->isNullValue())
@@ -772,11 +774,13 @@ SDOperand DAGCombiner::visitADDE(SDNode *N) {
   SDOperand N1 = N->getOperand(1);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
-  MVT::ValueType VT = N0.getValueType();
+  //MVT::ValueType VT = N0.getValueType();
   
   // canonicalize constant to RHS
-  if (N0C && !N1C)
-    return DAG.getNode(ISD::ADDE, VT, N1, N0, N->getOperand(2));
+  if (N0C && !N1C) {
+    SDOperand Ops[] = { N1, N0, N->getOperand(2) };
+    return DAG.getNode(ISD::ADDE, N->getVTList(), Ops, 3);
+  }
   
   // fold (add x, 0) -> x
   //if (N1C && N1C->isNullValue())
