@@ -205,6 +205,8 @@ namespace {
     SDOperand visitTokenFactor(SDNode *N);
     SDOperand visitADD(SDNode *N);
     SDOperand visitSUB(SDNode *N);
+    SDOperand visitADDC(SDNode *N);
+    SDOperand visitADDE(SDNode *N);
     SDOperand visitMUL(SDNode *N);
     SDOperand visitSDIV(SDNode *N);
     SDOperand visitUDIV(SDNode *N);
@@ -502,6 +504,8 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::TokenFactor:        return visitTokenFactor(N);
   case ISD::ADD:                return visitADD(N);
   case ISD::SUB:                return visitSUB(N);
+  case ISD::ADDC:               return visitADDC(N);
+  case ISD::ADDE:               return visitADDE(N);
   case ISD::MUL:                return visitMUL(N);
   case ISD::SDIV:               return visitSDIV(N);
   case ISD::UDIV:               return visitUDIV(N);
@@ -739,6 +743,49 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
 
   return SDOperand();
 }
+
+SDOperand DAGCombiner::visitADDC(SDNode *N) {
+  SDOperand N0 = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
+  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  MVT::ValueType VT = N0.getValueType();
+  
+  // If the flag result is dead, turn this into an ADD.
+  if (N->hasNUsesOfValue(0, 1))
+    return CombineTo(N, DAG.getNode(ISD::ADD, VT, N1, N0),
+                     SDOperand(N, 1));
+  
+  // canonicalize constant to RHS.
+  if (N0C && !N1C)
+    return DAG.getNode(ISD::ADDC, VT, N1, N0);
+  
+  // fold (add x, 0) -> x + no carry out
+  //if (N1C && N1C->isNullValue())
+  //  return N0;
+  
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitADDE(SDNode *N) {
+  SDOperand N0 = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
+  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  MVT::ValueType VT = N0.getValueType();
+  
+  // canonicalize constant to RHS
+  if (N0C && !N1C)
+    return DAG.getNode(ISD::ADDE, VT, N1, N0, N->getOperand(2));
+  
+  // fold (add x, 0) -> x
+  //if (N1C && N1C->isNullValue())
+  //  return N0;
+  
+  return SDOperand();
+}
+
+
 
 SDOperand DAGCombiner::visitSUB(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
