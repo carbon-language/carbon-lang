@@ -1354,16 +1354,22 @@ static APInt GetConstantFactor(SCEVHandle S) {
     // The result is the min of all operands.
     APInt Res = GetConstantFactor(A->getOperand(0));
     for (unsigned i = 1, e = A->getNumOperands(); 
-         i != e && Res.ugt(APInt(Res.getBitWidth(),1)); ++i)
-      Res = APIntOps::umin(Res, GetConstantFactor(A->getOperand(i)));
+         i != e && Res.ugt(APInt(Res.getBitWidth(),1)); ++i) {
+      APInt Tmp(GetConstantFactor(A->getOperand(i)));
+      Tmp.zextOrTrunc(Res.getBitWidth());
+      Res = APIntOps::umin(Res, Tmp);
+    }
     return Res;
   }
 
   if (SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S)) {
     // The result is the product of all the operands.
     APInt Res = GetConstantFactor(M->getOperand(0));
-    for (unsigned i = 1, e = M->getNumOperands(); i != e; ++i)
-      Res *= GetConstantFactor(M->getOperand(i));
+    for (unsigned i = 1, e = M->getNumOperands(); i != e; ++i) {
+      APInt Tmp(GetConstantFactor(M->getOperand(i)));
+      Tmp.zextOrTrunc(Res.getBitWidth());
+      Res *= Tmp;
+    }
     return Res;
   }
     
@@ -1375,6 +1381,7 @@ static APInt GetConstantFactor(SCEVHandle S) {
       if (Start == 1) 
         return APInt(A->getBitWidth(),1);
       APInt Stride = GetConstantFactor(A->getOperand(1));
+      Start.zextOrTrunc(Stride.getBitWidth());
       return APIntOps::GreatestCommonDivisor(Start, Stride);
     }
   }
