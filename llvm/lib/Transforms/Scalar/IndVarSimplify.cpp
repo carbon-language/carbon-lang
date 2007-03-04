@@ -79,6 +79,7 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequiredID(LCSSAID);
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<ScalarEvolution>();
       AU.addRequired<LoopInfo>();
@@ -334,11 +335,13 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
       if (!I->getType()->isInteger())
         continue;          // SCEV only supports integer expressions for now.
       
+      // We require that this value either have a computable evolution or that
+      // the loop have a constant iteration count.  In the case where the loop
+      // has a constant iteration count, we can sometimes force evaluation of
+      // the exit value through brute force.
       SCEVHandle SH = SE->getSCEV(I);
-      if (!HasConstantItCount &&
-          !SH->hasComputableLoopEvolution(L)) {    // Varies predictably
-        continue;          // Cannot exit evolution for the loop value.
-      }
+      if (!SH->hasComputableLoopEvolution(L) && !HasConstantItCount)
+        continue;          // Cannot get exit evolution for the loop value.
       
       // Find out if this predictably varying value is actually used
       // outside of the loop.  "Extra" is as opposed to "intra".
@@ -346,20 +349,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
            UI != E; ++UI) {
         Instruction *User = cast<Instruction>(*UI);
-        if (!L->contains(User->getParent())) {
-          // If this is a PHI node in the exit block and we're inserting,
-          // into the exit block, it must have a single entry.  In this
-          // case, we can't insert the code after the PHI and have the PHI
-          // still use it.  Instead, don't insert the the PHI.
-          if (PHINode *PN = dyn_cast<PHINode>(User)) {
-            // FIXME: This is a case where LCSSA pessimizes code, this
-            // should be fixed better.
-            if (PN->getNumOperands() == 2 && 
-                PN->getParent() == BlockToInsertInto)
-              continue;
-          }
+        if (!L->contains(User->getParent()))
           ExtraLoopUsers.push_back(User);
-        }
       }
       
       // If nothing outside the loop uses this value, don't rewrite it.
@@ -370,7 +361,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
       // and varies predictably *inside* the loop.  Evaluate the value it
       // contains when the loop exits if possible.
       SCEVHandle ExitValue = SE->getSCEVAtScope(I, L->getParentLoop());
-      if (isa<SCEVCouldNotCompute>(ExitValue))
+      if (isa<SCEVCouldNotCompute>(ExitValue) ||
+          !ExitValue->isLoopInvariant(L))
         continue;
       
       Changed = true;
@@ -385,33 +377,18 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
       // Rewrite any users of the computed value outside of the loop
       // with the newly computed value.
       for (unsigned i = 0, e = ExtraLoopUsers.size(); i != e; ++i) {
-        PHINode* PN = dyn_cast<PHINode>(ExtraLoopUsers[i]);
-        if (PN && PN->getNumOperands() == 2 &&
-            !L->contains(PN->getParent())) {
-          // We're dealing with an LCSSA Phi.  Handle it specially.
-          Instruction* LCSSAInsertPt = BlockToInsertInto->begin();
-          
-          Instruction* NewInstr = dyn_cast<Instruction>(NewVal);
-          if (NewInstr && !isa<PHINode>(NewInstr) &&
-              !L->contains(NewInstr->getParent()))
-            for (unsigned j = 0; j != NewInstr->getNumOperands(); ++j) {
-              Instruction* PredI = 
-                                dyn_cast<Instruction>(NewInstr->getOperand(j));
-              if (PredI && L->contains(PredI->getParent())) {
-                PHINode* NewLCSSA = new PHINode(PredI->getType(),
-                                                PredI->getName() + ".lcssa",
-                                                LCSSAInsertPt);
-                NewLCSSA->addIncoming(PredI, 
-                           BlockToInsertInto->getSinglePredecessor());
-              
-                NewInstr->replaceUsesOfWith(PredI, NewLCSSA);
-              }
-            }
-          
-          PN->replaceAllUsesWith(NewVal);
-          PN->eraseFromParent();
-        } else {
-          ExtraLoopUsers[i]->replaceUsesOfWith(I, NewVal);
+        Instruction *User = ExtraLoopUsers[i];
+        
+        User->replaceUsesOfWith(I, NewVal);
+
+        // See if this is an LCSSA PHI node.  If so, we can (and have to) remove
+        // the PHI entirely.  This is safe, because the NewVal won't be variant
+        // in the loop, so we don't need an LCSSA phi node anymore.
+        PHINode *LCSSAPN = dyn_cast<PHINode>(User);
+        if (LCSSAPN && LCSSAPN->getNumOperands() == 2 &&
+            L->contains(LCSSAPN->getIncomingBlock(0))) {
+          LCSSAPN->replaceAllUsesWith(NewVal);
+          LCSSAPN->eraseFromParent();
         }
       }
 
@@ -447,6 +424,9 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   // Next, transform all loops nesting inside of this loop.
   for (LoopInfo::iterator I = L->begin(), E = L->end(); I != E; ++I)
     runOnLoop(*I);
+
+  // Verify the input to the pass in already in LCSSA form.
+  assert(L->isLCSSAForm());
 
   // Check to see if this loop has a computable loop-invariant execution count.
   // If so, this means that we can compute the final value of any expressions
@@ -595,5 +575,5 @@ void IndVarSimplify::runOnLoop(Loop *L) {
 
   DeleteTriviallyDeadInstructions(DeadInsts);
   
-  if (mustPreserveAnalysisID(LCSSAID)) assert(L->isLCSSAForm());
+  assert(L->isLCSSAForm());
 }
