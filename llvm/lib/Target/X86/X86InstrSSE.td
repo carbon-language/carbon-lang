@@ -217,19 +217,19 @@ class S3I<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
 
 multiclass SS_IntUnary<bits<8> o, string OpcodeStr, Intrinsic IntId> {
   def r : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
+              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
               [(set VR128:$dst, (v4f32 (IntId VR128:$src)))]>;
   def m : SSI<o, MRMSrcMem, (ops VR128:$dst, ssmem:$src),
-              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
+              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
               [(set VR128:$dst, (v4f32 (IntId sse_load_f32:$src)))]>;
 }
 
 multiclass SD_IntUnary<bits<8> o, string OpcodeStr, Intrinsic IntId> {
   def r : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
+              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
               [(set VR128:$dst, (v2f64 (IntId VR128:$src)))]>;
   def m : SDI<o, MRMSrcMem, (ops VR128:$dst, sdmem:$src),
-              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src"),
+              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
               [(set VR128:$dst, (v2f64 (IntId sse_load_f64:$src)))]>;
 }
 
@@ -337,41 +337,41 @@ multiclass scalar_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                     Intrinsic F64Int, bit Commutable = 0> {
   // Scalar operation, reg+reg.
   def SSrr : SSI<opc, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-               !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
                [(set FR32:$dst, (OpNode FR32:$src1, FR32:$src2))]> {
     let isCommutable = Commutable;
   }
   def SDrr : SDI<opc, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-               !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
                [(set FR64:$dst, (OpNode FR64:$src1, FR64:$src2))]> {
     let isCommutable = Commutable;
   }
   // Scalar operation, reg+mem.
   def SSrm : SSI<opc, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                 !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
+                 !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
                  [(set FR32:$dst, (OpNode FR32:$src1, (load addr:$src2)))]>;
   def SDrm : SDI<opc, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
-                 !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
+                 !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
                  [(set FR64:$dst, (OpNode FR64:$src1, (load addr:$src2)))]>;
                  
   // Vector intrinsic operation, reg+reg.
   def SSrr_Int : SSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                     !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
+                     !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
                      [(set VR128:$dst, (F32Int VR128:$src1, VR128:$src2))]> {
     let isCommutable = Commutable;
   }
   def SDrr_Int : SDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (F64Int VR128:$src1, VR128:$src2))]> {
     let isCommutable = Commutable;
   }
   // Vector intrinsic operation, reg+mem.
   def SSrm_Int : SSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, ssmem:$src2),
-                     !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2"),
+                     !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
                      [(set VR128:$dst, (F32Int VR128:$src1,
                                                sse_load_f32:$src2))]>;
   def SDrm_Int : SDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, sdmem:$src2),
-                     !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2"),
+                     !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
                      [(set VR128:$dst, (F64Int VR128:$src1,
                                                sse_load_f64:$src2))]>;
 }
@@ -937,21 +937,21 @@ multiclass packed_sse12_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                     SDNode OpNode, bit Commutable = 0> {
   // Packed operation, reg+reg.
   def PSrr : PSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (v4f32 (OpNode VR128:$src1, VR128:$src2)))]> {
     let isCommutable = Commutable;
   }
   def PDrr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (v2f64 (OpNode VR128:$src1, VR128:$src2)))]> {
     let isCommutable = Commutable;
   }
   // Packed operation, reg+mem.
   def PSrm : PSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                 !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2"),
+                 !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
                  [(set VR128:$dst, (OpNode VR128:$src1, (loadv4f32 addr:$src2)))]>;
   def PDrm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                 !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2"),
+                 !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
                  [(set VR128:$dst, (OpNode VR128:$src1, (loadv2f64 addr:$src2)))]>;
 }
 }
@@ -1249,12 +1249,12 @@ let isTwoAddress = 1 in {
 multiclass PDI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
                             bit Commutable = 0> {
   def rr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]> {
     let isCommutable = Commutable;
   }
   def rm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId VR128:$src1,
                                         (bitconvert (loadv2i64 addr:$src2))))]>;
 }
@@ -1264,14 +1264,14 @@ let isTwoAddress = 1 in {
 multiclass PDI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
                              string OpcodeStr, Intrinsic IntId> {
   def rr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
   def rm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId VR128:$src1,
                                         (bitconvert (loadv2i64 addr:$src2))))]>;
   def ri : PDIi8<opc2, ImmForm, (ops VR128:$dst, VR128:$src1, i32i8imm:$src2),
-               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId VR128:$src1,
                                         (scalar_to_vector (i32 imm:$src2))))]>;
 }
@@ -1283,12 +1283,12 @@ let isTwoAddress = 1 in {
 multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                         ValueType OpVT, bit Commutable = 0> {
   def rr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (OpVT (OpNode VR128:$src1, VR128:$src2)))]> {
     let isCommutable = Commutable;
   }
   def rm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (OpVT (OpNode VR128:$src1,
                                        (bitconvert (loadv2i64 addr:$src2)))))]>;
 }
@@ -1301,12 +1301,12 @@ multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
 multiclass PDI_binop_rm_v2i64<bits<8> opc, string OpcodeStr, SDNode OpNode,
                               bit Commutable = 0> {
   def rr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (v2i64 (OpNode VR128:$src1, VR128:$src2)))]> {
     let isCommutable = Commutable;
   }
   def rm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2"),
+               !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (OpNode VR128:$src1,(loadv2i64 addr:$src2)))]>;
 }
 }
