@@ -22,6 +22,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <algorithm>
 #include <ostream>
 using namespace llvm;
@@ -565,25 +566,22 @@ Value *Loop::getTripCount() const {
 bool Loop::isLCSSAForm() const { 
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
-  std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
-  std::sort(LoopBBs.begin(), LoopBBs.end());
+  SmallPtrSet<BasicBlock*, 16> LoopBBs(block_begin(), block_end());
   
-  for (unsigned i = 0, e = LoopBBs.size(); i != e; ++i) {
-    BasicBlock *BB = LoopBBs[i];
+  for (block_iterator BI = block_begin(), E = block_end(); BI != E; ++BI) {
+    BasicBlock *BB = *BI;
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (PHINode* p = dyn_cast<PHINode>(*UI)) {
+        if (PHINode *P = dyn_cast<PHINode>(*UI)) {
           unsigned OperandNo = UI.getOperandNo();
-          UserBB = p->getIncomingBlock(OperandNo/2);
+          UserBB = P->getIncomingBlock(OperandNo/2);
         }
         
         // Check the current block, as a fast-path.  Most values are used in the
         // same block they are defined in.
-        if (UserBB != BB &&
-            // Otherwise, binary search LoopBBs for this block.
-            !std::binary_search(LoopBBs.begin(), LoopBBs.end(), UserBB))
+        if (UserBB != BB && !LoopBBs.count(UserBB))
           return false;
       }
   }
