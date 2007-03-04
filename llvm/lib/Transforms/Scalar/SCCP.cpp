@@ -239,6 +239,9 @@ public:
     return TrackedGlobals;
   }
 
+  inline void markOverdefined(Value *V) {
+    markOverdefined(ValueState[V], V);
+  }
 
 private:
   // markConstant - Make a value be marked as "constant".  If the value
@@ -276,9 +279,6 @@ private:
       // Only instructions go on the work list
       OverdefinedInstWorkList.push_back(V);
     }
-  }
-  inline void markOverdefined(Value *V) {
-    markOverdefined(ValueState[V], V);
   }
 
   inline void mergeInValue(LatticeVal &IV, Value *V, LatticeVal &MergeWithV) {
@@ -1365,9 +1365,8 @@ bool SCCP::runOnFunction(Function &F) {
   Solver.MarkBlockExecutable(F.begin());
 
   // Mark all arguments to the function as being overdefined.
-  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
   for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
-    Values[AI].markOverdefined();
+    Solver.markOverdefined(AI);
 
   // Solve for constants.
   bool ResolvedUndefs = true;
@@ -1385,6 +1384,8 @@ bool SCCP::runOnFunction(Function &F) {
   //
   SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
   SmallVector<Instruction*, 32> Insts;
+  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
+
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (!ExecutableBBs.count(BB)) {
       DOUT << "  BasicBlock Dead:" << *BB;
@@ -1486,14 +1487,13 @@ bool IPSCCP::runOnModule(Module &M) {
   // Loop over all functions, marking arguments to those with their addresses
   // taken or that are external as overdefined.
   //
-  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
     if (!F->hasInternalLinkage() || AddressIsTaken(F)) {
       if (!F->isDeclaration())
         Solver.MarkBlockExecutable(F->begin());
       for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
            AI != E; ++AI)
-        Values[AI].markOverdefined();
+        Solver.markOverdefined(AI);
     } else {
       Solver.AddTrackedFunction(F);
     }
@@ -1525,6 +1525,7 @@ bool IPSCCP::runOnModule(Module &M) {
   SmallSet<BasicBlock*, 16> &ExecutableBBs = Solver.getExecutableBlocks();
   SmallVector<Instruction*, 32> Insts;
   SmallVector<BasicBlock*, 32> BlocksToErase;
+  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
