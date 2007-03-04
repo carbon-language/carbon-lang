@@ -1325,6 +1325,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   if (N2.getOpcode() == ISD::UNDEF) {
     switch (Opcode) {
     case ISD::ADD:
+    case ISD::ADDC:
+    case ISD::ADDE:
     case ISD::SUB:
     case ISD::FADD:
     case ISD::FSUB:
