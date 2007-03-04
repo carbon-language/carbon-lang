@@ -31,7 +31,6 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Support/Mangler.h"
