@@ -54,11 +54,11 @@ std::string llvm::sys::disassembleBuffer(uint8_t* start, size_t length,
     res << ud_insn_off(&ud_obj) << ":\t" << ud_insn_asm(&ud_obj) << "\n";
   }
 # else
-  res << "No disassembler available. See configure help for avaiable options.\n";
+  res << "No disassembler available. See configure help for options.\n";
 # endif
   
 #else
-  res << "No disassembler available. See configure help for avaiable options.\n";
+  res << "No disassembler available. See configure help for options.\n";
 #endif
 
   return res.str();
