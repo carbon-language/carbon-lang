@@ -192,6 +192,10 @@ namespace ISD {
     // Simple integer binary arithmetic operators.
     ADD, SUB, MUL, SDIV, UDIV, SREM, UREM,
     
+    // CARRY_FALSE - This node is used when folding other nodes,
+    // like ADDC/SUBC, which indicate the carry result is always false.
+    CARRY_FALSE,
+    
     // Carry-setting nodes for multiple precision addition and subtraction.
     // These nodes take two operands of the same value type, and produce two
     // results.  The first result is the normal add or sub result, the second
