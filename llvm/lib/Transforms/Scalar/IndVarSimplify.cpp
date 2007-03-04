@@ -311,7 +311,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
   // multiple exit blocks, or in the exit block if there is exactly one.
   BasicBlock *BlockToInsertInto;
   std::vector<BasicBlock*> ExitBlocks;
-  L->getExitBlocks(ExitBlocks);
+  L->getUniqueExitBlocks(ExitBlocks);
   if (ExitBlocks.size() == 1)
     BlockToInsertInto = ExitBlocks[0];
   else
@@ -322,79 +322,88 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
   bool HasConstantItCount = isa<SCEVConstant>(SE->getIterationCount(L));
 
   std::set<Instruction*> InstructionsToDelete;
+  std::map<Instruction*, Value*> ExitValues;
 
-  // Loop over all of the integer-valued instructions in this loop, but that are
-  // not in a subloop.
-  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i) {
-    if (LI->getLoopFor(L->getBlocks()[i]) != L) 
-      continue; // The Block is in a subloop, skip it.
-    BasicBlock *BB = L->getBlocks()[i];
-    for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ) {
-      Instruction *I = II++;
+  // Find all values that are computed inside the loop, but used outside of it.
+  // Because of LCSSA, these values will only occur in LCSSA PHI Nodes.  Scan
+  // the exit blocks of the loop to find them.
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+    BasicBlock *ExitBB = ExitBlocks[i];
+    
+    // If there are no PHI nodes in this exit block, then no values defined
+    // inside the loop are used on this path, skip it.
+    PHINode *PN = dyn_cast<PHINode>(ExitBB->begin());
+    if (!PN) continue;
+    
+    unsigned NumPreds = PN->getNumIncomingValues();
+    
+    // Iterate over all of the PHI nodes.
+    BasicBlock::iterator BBI = ExitBB->begin();
+    while ((PN = dyn_cast<PHINode>(BBI++))) {
       
-      if (!I->getType()->isInteger())
-        continue;          // SCEV only supports integer expressions for now.
-      
-      // We require that this value either have a computable evolution or that
-      // the loop have a constant iteration count.  In the case where the loop
-      // has a constant iteration count, we can sometimes force evaluation of
-      // the exit value through brute force.
-      SCEVHandle SH = SE->getSCEV(I);
-      if (!SH->hasComputableLoopEvolution(L) && !HasConstantItCount)
-        continue;          // Cannot get exit evolution for the loop value.
-      
-      // Find out if this predictably varying value is actually used
-      // outside of the loop.  "Extra" is as opposed to "intra".
-      std::vector<Instruction*> ExtraLoopUsers;
-      for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-           UI != E; ++UI) {
-        Instruction *User = cast<Instruction>(*UI);
-        if (!L->contains(User->getParent()))
-          ExtraLoopUsers.push_back(User);
-      }
-      
-      // If nothing outside the loop uses this value, don't rewrite it.
-      if (ExtraLoopUsers.empty())
-        continue;
-      
-      // Okay, this instruction has a user outside of the current loop
-      // and varies predictably *inside* the loop.  Evaluate the value it
-      // contains when the loop exits if possible.
-      SCEVHandle ExitValue = SE->getSCEVAtScope(I, L->getParentLoop());
-      if (isa<SCEVCouldNotCompute>(ExitValue) ||
-          !ExitValue->isLoopInvariant(L))
-        continue;
-      
-      Changed = true;
-      ++NumReplaced;
-      
-      Value *NewVal = Rewriter.expandCodeFor(ExitValue, InsertPt,
-                                             I->getType());
+      // Iterate over all of the values in all the PHI nodes.
+      for (unsigned i = 0; i != NumPreds; ++i) {
+        // If the value being merged in is not integer or is not defined
+        // in the loop, skip it.
+        Value *InVal = PN->getIncomingValue(i);
+        if (!isa<Instruction>(InVal) ||
+            // SCEV only supports integer expressions for now.
+            !isa<IntegerType>(InVal->getType()))
+          continue;
 
-      DOUT << "INDVARS: RLEV: AfterLoopVal = " << *NewVal
-           << "  LoopVal = " << *I << "\n";
-      
-      // Rewrite any users of the computed value outside of the loop
-      // with the newly computed value.
-      for (unsigned i = 0, e = ExtraLoopUsers.size(); i != e; ++i) {
-        Instruction *User = ExtraLoopUsers[i];
+        // If this pred is for a subloop, not L itself, skip it.
+        if (LI->getLoopFor(PN->getIncomingBlock(i)) != L) 
+          continue; // The Block is in a subloop, skip it.
+
+        // Check that InVal is defined in the loop.
+        Instruction *Inst = cast<Instruction>(InVal);
+        if (!L->contains(Inst->getParent()))
+          continue;
         
-        User->replaceUsesOfWith(I, NewVal);
+        // We require that this value either have a computable evolution or that
+        // the loop have a constant iteration count.  In the case where the loop
+        // has a constant iteration count, we can sometimes force evaluation of
+        // the exit value through brute force.
+        SCEVHandle SH = SE->getSCEV(Inst);
+        if (!SH->hasComputableLoopEvolution(L) && !HasConstantItCount)
+          continue;          // Cannot get exit evolution for the loop value.
+        
+        // Okay, this instruction has a user outside of the current loop
+        // and varies predictably *inside* the loop.  Evaluate the value it
+        // contains when the loop exits, if possible.
+        SCEVHandle ExitValue = SE->getSCEVAtScope(Inst, L->getParentLoop());
+        if (isa<SCEVCouldNotCompute>(ExitValue) ||
+            !ExitValue->isLoopInvariant(L))
+          continue;
 
-        // See if this is an LCSSA PHI node.  If so, we can (and have to) remove
+        Changed = true;
+        ++NumReplaced;
+        
+        // See if we already computed the exit value for the instruction, if so,
+        // just reuse it.
+        Value *&ExitVal = ExitValues[Inst];
+        if (!ExitVal)
+          ExitVal = Rewriter.expandCodeFor(ExitValue, InsertPt,Inst->getType());
+        
+        DOUT << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal
+             << "  LoopVal = " << *Inst << "\n";
+
+        PN->setIncomingValue(i, ExitVal);
+        
+        // If this instruction is dead now, schedule it to be removed.
+        if (Inst->use_empty())
+          InstructionsToDelete.insert(Inst);
+        
+        // See if this is a single-entry LCSSA PHI node.  If so, we can (and
+        // have to) remove
         // the PHI entirely.  This is safe, because the NewVal won't be variant
         // in the loop, so we don't need an LCSSA phi node anymore.
-        PHINode *LCSSAPN = dyn_cast<PHINode>(User);
-        if (LCSSAPN && LCSSAPN->getNumOperands() == 2 &&
-            L->contains(LCSSAPN->getIncomingBlock(0))) {
-          LCSSAPN->replaceAllUsesWith(NewVal);
-          LCSSAPN->eraseFromParent();
+        if (NumPreds == 1) {
+          PN->replaceAllUsesWith(ExitVal);
+          PN->eraseFromParent();
+          break;
         }
       }
-
-      // If this instruction is dead now, schedule it to be removed.
-      if (I->use_empty())
-        InstructionsToDelete.insert(I);
     }
   }
   
