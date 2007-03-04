@@ -27,8 +27,8 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumSimpl, "Number of blocks simplified");
@@ -45,9 +45,9 @@ FunctionPass *llvm::createCFGSimplificationPass() {
   return new CFGSimplifyPass();
 }
 
-static bool MarkAliveBlocks(BasicBlock *BB, std::set<BasicBlock*> &Reachable) {
-  if (Reachable.count(BB)) return false;
-  Reachable.insert(BB);
+static bool MarkAliveBlocks(BasicBlock *BB,
+                            SmallPtrSet<BasicBlock*, 16> &Reachable) {
+  if (!Reachable.insert(BB)) return false;
 
   // Do a quick scan of the basic block, turning any obviously unreachable
   // instructions into LLVM unreachable insts.  The instruction combining pass
@@ -85,7 +85,7 @@ static bool MarkAliveBlocks(BasicBlock *BB, std::set<BasicBlock*> &Reachable) {
 // simplify the CFG.
 //
 bool CFGSimplifyPass::runOnFunction(Function &F) {
-  std::set<BasicBlock*> Reachable;
+  SmallPtrSet<BasicBlock*, 16> Reachable;
   bool Changed = MarkAliveBlocks(F.begin(), Reachable);
 
   // If there are unreachable blocks in the CFG...
