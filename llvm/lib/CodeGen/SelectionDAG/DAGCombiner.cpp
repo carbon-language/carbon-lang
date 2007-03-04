@@ -754,7 +754,7 @@ SDOperand DAGCombiner::visitADDC(SDNode *N) {
   // If the flag result is dead, turn this into an ADD.
   if (N->hasNUsesOfValue(0, 1))
     return CombineTo(N, DAG.getNode(ISD::ADD, VT, N1, N0),
-                     SDOperand(N, 1));
+                     DAG.getNode(ISD::CARRY_FALSE, MVT::Flag));
   
   // canonicalize constant to RHS.
   if (N0C && !N1C) {
@@ -762,9 +762,25 @@ SDOperand DAGCombiner::visitADDC(SDNode *N) {
     return DAG.getNode(ISD::ADDC, N->getVTList(), Ops, 2);
   }
   
-  // fold (add x, 0) -> x + no carry out
-  //if (N1C && N1C->isNullValue())
-  //  return N0;
+  // fold (addc x, 0) -> x + no carry out
+  if (N1C && N1C->isNullValue())
+    return CombineTo(N, N0, DAG.getNode(ISD::CARRY_FALSE, MVT::Flag));
+  
+  // fold (addc a, b) -> (or a, b), CARRY_FALSE iff a and b share no bits.
+  uint64_t LHSZero, LHSOne;
+  uint64_t RHSZero, RHSOne;
+  uint64_t Mask = MVT::getIntVTBitMask(VT);
+  TLI.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
+  if (LHSZero) {
+    TLI.ComputeMaskedBits(N1, Mask, RHSZero, RHSOne);
+    
+    // If all possibly-set bits on the LHS are clear on the RHS, return an OR.
+    // If all possibly-set bits on the RHS are clear on the LHS, return an OR.
+    if ((RHSZero & (~LHSZero & Mask)) == (~LHSZero & Mask) ||
+        (LHSZero & (~RHSZero & Mask)) == (~RHSZero & Mask))
+      return CombineTo(N, DAG.getNode(ISD::OR, VT, N0, N1),
+                       DAG.getNode(ISD::CARRY_FALSE, MVT::Flag));
+  }
   
   return SDOperand();
 }
@@ -772,19 +788,22 @@ SDOperand DAGCombiner::visitADDC(SDNode *N) {
 SDOperand DAGCombiner::visitADDE(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  SDOperand CarryIn = N->getOperand(2);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   //MVT::ValueType VT = N0.getValueType();
   
   // canonicalize constant to RHS
   if (N0C && !N1C) {
-    SDOperand Ops[] = { N1, N0, N->getOperand(2) };
+    SDOperand Ops[] = { N1, N0, CarryIn };
     return DAG.getNode(ISD::ADDE, N->getVTList(), Ops, 3);
   }
   
-  // fold (add x, 0) -> x
-  //if (N1C && N1C->isNullValue())
-  //  return N0;
+  // fold (adde x, y, false) -> (addc x, y)
+  if (CarryIn.getOpcode() == ISD::CARRY_FALSE) {
+    SDOperand Ops[] = { N1, N0 };
+    return DAG.getNode(ISD::ADDC, N->getVTList(), Ops, 2);
+  }
   
   return SDOperand();
 }

@@ -2774,6 +2774,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::VECTOR_SHUFFLE:      return "vector_shuffle";
   case ISD::VVECTOR_SHUFFLE:     return "vvector_shuffle";
   case ISD::VBIT_CONVERT:        return "vbit_convert";
+  case ISD::CARRY_FALSE:         return "carry_false";
   case ISD::ADDC:        return "addc";
   case ISD::ADDE:        return "adde";
   case ISD::SUBC:        return "subc";
