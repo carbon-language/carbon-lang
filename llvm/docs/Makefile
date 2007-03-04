@@ -13,10 +13,17 @@ DIRS       := CommandGuide
 ifdef BUILD_FOR_WEBSITE
 PROJ_OBJ_DIR = .
 DOXYGEN = doxygen
+# Extract version number from the AC_INT line in configure.ac
+# AC_INIT([[llvm]],[[2.0cvs]],[llvmbugs@cs.uiuc.edu])
+PACKAGE_VERSION = $(shell grep AC_INIT ../autoconf/configure.ac | sed -e 's/[^,]*,[[][[]//' -e 's/]],.*//')
+$(warning VERSION=$(VERSION))
 
 doxygen.cfg: doxygen.cfg.in
-	cat $< | sed 's/@abs_top_srcdir@/../g' | sed 's/@DOT@/dot/g' | \
-        sed 's/@PACKAGE_VERSION@/CVS/g' | sed 's/@abs_top_builddir@/../g' > $@
+	cat $< | sed \
+	  -e 's/@abs_top_srcdir@/../g' \
+	  -e 's/@DOT@/dot/g' \
+	  -e 's/@PACKAGE_VERSION@/$(PACKAGE_VERSION)/g' \
+	  -e 's/@abs_top_builddir@/../g' > $@
 endif
 
 include $(LEVEL)/Makefile.common
