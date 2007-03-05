@@ -697,7 +697,7 @@ public:
 
   /// @returns the floor log base 2 of this APInt.
   inline uint32_t logBase2() const {
-    return getNumWords() * APINT_BITS_PER_WORD - 1 - countLeadingZeros();
+    return BitWidth - 1 - countLeadingZeros();
   }
 
   /// @brief Converts this APInt to a double value.
