@@ -181,10 +181,12 @@ public:
   /// getValueType - Return an ID for the concrete type of this object.  This is
   /// used to implement the classof checks.  This should not be used for any
   /// other purpose, as the values may change as LLVM evolves.  Also, note that
-  /// starting with the InstructionVal value, the value stored is actually the
-  /// Instruction opcode, so there are more than just these values possible here
-  /// (and Instruction must be last).
-  ///
+  /// for instructions, the Instruction's opcode is added to InstructionVal. So
+  /// this means three things:
+  /// # there is no value with code InstructionVal (no opcode==0).
+  /// # there are more possible values for the value type than in ValueTy enum.
+  /// # the InstructionVal enumerator must be the highest valued enumerator in
+  ///   the ValueTy enum.
   unsigned getValueType() const {
     return SubclassID;
   }
