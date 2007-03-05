@@ -24,8 +24,9 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/Pass.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
@@ -60,10 +61,14 @@ namespace {
 
   private:
     int isSafeElementUse(Value *Ptr);
-    int isSafeUseOfAllocation(Instruction *User);
+    int isSafeUseOfAllocation(Instruction *User, AllocationInst *AI);
+    bool isSafeUseOfBitCastedAllocation(BitCastInst *User, AllocationInst *AI);
     int isSafeAllocaToScalarRepl(AllocationInst *AI);
     void CanonicalizeAllocaUsers(AllocationInst *AI);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocationInst *Base);
+    
+    void RewriteBitCastUserOfAlloca(BitCastInst *BCInst, AllocationInst *AI,
+                                    SmallVector<AllocaInst*, 32> &NewElts);
     
     const Type *CanConvertToScalar(Value *V, bool &IsNotTrivial);
     void ConvertToScalar(AllocationInst *AI, const Type *Ty);
@@ -180,7 +185,7 @@ bool SROA::performScalarRepl(Function &F) {
     DOUT << "Found inst to xform: " << *AI;
     Changed = true;
 
-    std::vector<AllocaInst*> ElementAllocas;
+    SmallVector<AllocaInst*, 32> ElementAllocas;
     if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
       ElementAllocas.reserve(ST->getNumContainedTypes());
       for (unsigned i = 0, e = ST->getNumContainedTypes(); i != e; ++i) {
@@ -207,6 +212,11 @@ bool SROA::performScalarRepl(Function &F) {
     //
     while (!AI->use_empty()) {
       Instruction *User = cast<Instruction>(AI->use_back());
+      if (BitCastInst *BCInst = dyn_cast<BitCastInst>(User)) {
+        RewriteBitCastUserOfAlloca(BCInst, AI, ElementAllocas);
+        continue;
+      }
+      
       GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
       // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
       unsigned Idx =
@@ -291,7 +301,9 @@ static bool AllUsersAreLoads(Value *Ptr) {
 /// isSafeUseOfAllocation - Check to see if this user is an allowed use for an
 /// aggregate allocation.
 ///
-int SROA::isSafeUseOfAllocation(Instruction *User) {
+int SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI) {
+  if (BitCastInst *C = dyn_cast<BitCastInst>(User))
+    return 0 && (isSafeUseOfBitCastedAllocation(C, AI) ? 3 : 0);
   if (!isa<GetElementPtrInst>(User)) return 0;
 
   GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
@@ -352,6 +364,145 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
   return isSafeElementUse(GEPI);
 }
 
+/// isSafeUseOfBitCastedAllocation - Return true if all users of this bitcast
+/// are 
+bool SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI) {
+  for (Value::use_iterator UI = BC->use_begin(), E = BC->use_end();
+       UI != E; ++UI) {
+    if (BitCastInst *BCU = dyn_cast<BitCastInst>(UI)) {
+      if (!isSafeUseOfBitCastedAllocation(BCU, AI)) 
+        return false;
+    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
+      // If not constant length, give up.
+      ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
+      if (!Length) return false;
+
+      // If not the whole aggregate, give up.
+      const TargetData &TD = getAnalysis<TargetData>();
+      if (Length->getZExtValue() != 
+          TD.getTypeSize(AI->getType()->getElementType()))
+        return false;
+      
+      // We only know about memcpy/memset/memmove.
+      if (!isa<MemCpyInst>(MI) && !isa<MemSetInst>(MI) &&
+          !isa<MemMoveInst>(MI))
+        return false;
+      // Otherwise, we can transform it.
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+/// RewriteBitCastUserOfAlloca - BCInst (transitively) casts AI.  Transform
+/// users of the cast to use the new values instead.
+void SROA::RewriteBitCastUserOfAlloca(BitCastInst *BCInst, AllocationInst *AI,
+                                      SmallVector<AllocaInst*, 32> &NewElts) {
+  Constant *Zero = Constant::getNullValue(Type::Int32Ty);
+  const TargetData &TD = getAnalysis<TargetData>();
+  while (!BCInst->use_empty()) {
+    if (BitCastInst *BCU = dyn_cast<BitCastInst>(BCInst->use_back())) {
+      RewriteBitCastUserOfAlloca(BCU, AI, NewElts);
+      continue;
+    }
+
+    // Otherwise, must be memcpy/memmove/memset of the entire aggregate.  Split
+    // into one per element.
+    MemIntrinsic *MI = cast<MemIntrinsic>(BCInst->use_back());
+    
+    // If this is a memcpy/memmove, construct the other pointer as the
+    // appropriate type.
+    Value *OtherPtr = 0;
+    if (MemCpyInst *MCI = dyn_cast<MemCpyInst>(MI)) {
+      if (BCInst == MCI->getRawDest())
+        OtherPtr = MCI->getRawSource();
+      else {
+        assert(BCInst == MCI->getRawSource());
+        OtherPtr = MCI->getRawDest();
+      }
+    } else if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(MI)) {
+      if (BCInst == MMI->getRawDest())
+        OtherPtr = MMI->getRawSource();
+      else {
+        assert(BCInst == MMI->getRawSource());
+        OtherPtr = MMI->getRawDest();
+      }
+    }
+    
+    // If there is an other pointer, we want to convert it to the same pointer
+    // type as AI has, so we can GEP through it.
+    if (OtherPtr) {
+      // It is likely that OtherPtr is a bitcast, if so, remove it.
+      if (BitCastInst *BC = dyn_cast<BitCastInst>(OtherPtr))
+        OtherPtr = BC->getOperand(0);
+      if (ConstantExpr *BCE = dyn_cast<ConstantExpr>(OtherPtr))
+        if (BCE->getOpcode() == Instruction::BitCast)
+          OtherPtr = BCE->getOperand(0);
+      
+      // If the pointer is not the right type, insert a bitcast to the right
+      // type.
+      if (OtherPtr->getType() != AI->getType())
+        OtherPtr = new BitCastInst(OtherPtr, AI->getType(), OtherPtr->getName(),
+                                   MI);
+    }
+
+    // Process each element of the aggregate.
+    Value *TheFn = MI->getOperand(0);
+    const Type *BytePtrTy = MI->getRawDest()->getType();
+    bool SROADest = MI->getRawDest() == BCInst;
+
+    for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
+      // If this is a memcpy/memmove, emit a GEP of the other element address.
+      Value *OtherElt = 0;
+      if (OtherPtr) {
+        OtherElt = new GetElementPtrInst(OtherPtr, Zero,
+                                         ConstantInt::get(Type::Int32Ty, i),
+                                         OtherPtr->getNameStr()+"."+utostr(i),
+                                         MI);
+        if (OtherElt->getType() != BytePtrTy)
+          OtherElt = new BitCastInst(OtherElt, BytePtrTy,OtherElt->getNameStr(),
+                                     MI);
+      }
+
+      Value *EltPtr = NewElts[i];
+      unsigned EltSize =
+        TD.getTypeSize(cast<PointerType>(EltPtr->getType())->getElementType());
+      
+      // Cast the element pointer to BytePtrTy.
+      if (EltPtr->getType() != BytePtrTy)
+        EltPtr = new BitCastInst(EltPtr, BytePtrTy, EltPtr->getNameStr(), MI);
+      
+      
+      // Finally, insert the meminst for this element.
+      if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
+        Value *Ops[] = {
+          SROADest ? EltPtr : OtherElt,  // Dest ptr
+          SROADest ? OtherElt : EltPtr,  // Src ptr
+          ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
+          Zero  // Align
+        };
+        new CallInst(TheFn, Ops, 4, "", MI);
+      } else if (isa<MemSetInst>(MI)) {
+        Value *Ops[] = {
+          EltPtr, MI->getOperand(2),  // Dest, Value,
+          ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
+          Zero  // Align
+        };
+        new CallInst(TheFn, Ops, 4, "", MI);
+      }
+   }
+
+    // Finally, MI is now dead, as we've modified its actions to occur on all of
+    // the elements of the aggregate.
+    MI->eraseFromParent();
+  }
+  
+  // The cast is dead, remove it.
+  BCInst->eraseFromParent();
+}
+
+
 /// isSafeStructAllocaToScalarRepl - Check to see if the specified allocation of
 /// an aggregate can be broken down into elements.  Return 0 if not, 3 if safe,
 /// or 1 if safe after canonicalization has been performed.
@@ -363,7 +514,7 @@ int SROA::isSafeAllocaToScalarRepl(AllocationInst *AI) {
   int isSafe = 3;
   for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
        I != E; ++I) {
-    isSafe &= isSafeUseOfAllocation(cast<Instruction>(*I));
+    isSafe &= isSafeUseOfAllocation(cast<Instruction>(*I), AI);
     if (isSafe == 0) {
       DOUT << "Cannot transform: " << *AI << "  due to user: " << **I;
       return 0;
