@@ -222,7 +222,6 @@ public:
 
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 
-    TransferLastUses.clear();
     AvailableAnalysis.clear();
   }
 
@@ -255,10 +254,6 @@ public:
   void dumpAnalysisSetInfo(const char *Msg, Pass *P,
                            const std::vector<AnalysisID> &Set) const;
 
-  std::vector<Pass *>& getTransferredLastUses() {
-    return TransferLastUses;
-  }
-
   virtual unsigned getNumContainedPasses() { 
     return PassVector.size();
   }
@@ -268,12 +263,6 @@ public:
     return PMT_Unknown; 
   }
 protected:
-
-  // If a FunctionPass F is the last user of ModulePass info M
-  // then the F's manager, not F, records itself as a last user of M.
-  // Current pass manage is requesting parent manager to record parent
-  // manager as the last user of these TrransferLastUses passes.
-  std::vector<Pass *> TransferLastUses;
 
   // Top level manager.
   PMTopLevelManager *TPM;

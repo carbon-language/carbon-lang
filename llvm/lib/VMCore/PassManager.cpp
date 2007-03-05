@@ -158,7 +158,6 @@ public:
       recordAvailableAnalysis(IP);
     } else {
       P->assignPassManager(activeStack);
-      activeStack.handleLastUserOverflow();
     }
 
   }
@@ -259,7 +258,6 @@ public:
       recordAvailableAnalysis(IP);
     } else {
       P->assignPassManager(activeStack);
-      activeStack.handleLastUserOverflow();
     }
 
   }
@@ -587,6 +585,10 @@ void PMDataManager::add(Pass *P,
   AnalysisResolver *AR = new AnalysisResolver(*this);
   P->setResolver(AR);
 
+  // If a FunctionPass F is the last user of ModulePass info M
+  // then the F's manager, not F, records itself as a last user of M.
+  std::vector<Pass *> TransferLastUses;
+
   if (ProcessAnalysis) {
 
     // At the moment, this pass is the last user of all required passes.
@@ -621,6 +623,12 @@ void PMDataManager::add(Pass *P,
     if (!dynamic_cast<PMDataManager *>(P))
       LastUses.push_back(P);
     TPM->setLastUser(LastUses, P);
+
+    if (!TransferLastUses.empty()) {
+      Pass *My_PM = dynamic_cast<Pass *>(this);
+      TPM->setLastUser(TransferLastUses, My_PM);
+      TransferLastUses.clear();
+    }
 
     // Take a note of analysis required and made available by this pass.
     // Remove the analysis not preserved by this pass
@@ -1229,26 +1237,6 @@ void PMStack::dump() {
   }
   if (!S.empty())
     printf ("\n");
-}
-
-// Walk Pass Manager stack and set LastUse markers if any
-// manager is transfering this priviledge to its parent manager
-void PMStack::handleLastUserOverflow() {
-
-  for(PMStack::iterator I = this->begin(), E = this->end(); I != E;) {
-
-    PMDataManager *Child = *I++;
-    if (I != E) {
-      PMDataManager *Parent = *I++;
-      PMTopLevelManager *TPM = Parent->getTopLevelManager();
-      std::vector<Pass *> &TLU = Child->getTransferredLastUses();
-      if (!TLU.empty()) {
-        Pass *P = dynamic_cast<Pass *>(Parent);
-        TPM->setLastUser(TLU, P);
-        TLU.clear();
-      }
-    }
-  }
 }
 
 /// Find appropriate Module Pass Manager in the PM Stack and
