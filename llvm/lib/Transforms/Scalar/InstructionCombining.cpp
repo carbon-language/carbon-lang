@@ -2407,31 +2407,29 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   
   // udiv X, (Select Cond, C1, C2) --> Select Cond, (shr X, C1), (shr X, C2)
   // where C1&C2 are powers of two.
-  if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
+  if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) 
     if (ConstantInt *STO = dyn_cast<ConstantInt>(SI->getOperand(1)))
-      if (ConstantInt *SFO = dyn_cast<ConstantInt>(SI->getOperand(2))) 
-        if (!STO->isNullValue() && !STO->isNullValue()) {
-          uint64_t TVA = STO->getZExtValue(), FVA = SFO->getZExtValue();
-          if (isPowerOf2_64(TVA) && isPowerOf2_64(FVA)) {
-            // Compute the shift amounts
-            unsigned TSA = Log2_64(TVA), FSA = Log2_64(FVA);
-            // Construct the "on true" case of the select
-            Constant *TC = ConstantInt::get(Op0->getType(), TSA);
-            Instruction *TSI = BinaryOperator::createLShr(
-                                                   Op0, TC, SI->getName()+".t");
-            TSI = InsertNewInstBefore(TSI, I);
-    
-            // Construct the "on false" case of the select
-            Constant *FC = ConstantInt::get(Op0->getType(), FSA); 
-            Instruction *FSI = BinaryOperator::createLShr(
-                                                   Op0, FC, SI->getName()+".f");
-            FSI = InsertNewInstBefore(FSI, I);
+      if (ConstantInt *SFO = dyn_cast<ConstantInt>(SI->getOperand(2)))  {
+        uint64_t TVA = STO->getZExtValue(), FVA = SFO->getZExtValue();
+        if (isPowerOf2_64(TVA) && isPowerOf2_64(FVA)) {
+          // Compute the shift amounts
+          unsigned TSA = Log2_64(TVA), FSA = Log2_64(FVA);
+          // Construct the "on true" case of the select
+          Constant *TC = ConstantInt::get(Op0->getType(), TSA);
+          Instruction *TSI = BinaryOperator::createLShr(
+                                                 Op0, TC, SI->getName()+".t");
+          TSI = InsertNewInstBefore(TSI, I);
+  
+          // Construct the "on false" case of the select
+          Constant *FC = ConstantInt::get(Op0->getType(), FSA); 
+          Instruction *FSI = BinaryOperator::createLShr(
+                                                 Op0, FC, SI->getName()+".f");
+          FSI = InsertNewInstBefore(FSI, I);
 
-            // construct the select instruction and return it.
-            return new SelectInst(SI->getOperand(0), TSI, FSI, SI->getName());
-          }
+          // construct the select instruction and return it.
+          return new SelectInst(SI->getOperand(0), TSI, FSI, SI->getName());
         }
-  }
+      }
   return 0;
 }
 
