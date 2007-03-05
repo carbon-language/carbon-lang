@@ -564,9 +564,9 @@ void PMDataManager::removeDeadPasses(Pass *P, std::string &Msg) {
     std::string Msg1 = "  Freeing Pass '";
     dumpPassInfo(*I, Msg1, Msg);
 
-    if (TheTimeInfo) TheTimeInfo->passStarted(P);
+    if (TheTimeInfo) TheTimeInfo->passStarted(*I);
     (*I)->releaseMemory();
-    if (TheTimeInfo) TheTimeInfo->passEnded(P);
+    if (TheTimeInfo) TheTimeInfo->passEnded(*I);
 
     std::map<AnalysisID, Pass*>::iterator Pos = 
       AvailableAnalysis.find((*I)->getPassInfo());
