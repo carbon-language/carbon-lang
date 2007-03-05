@@ -58,8 +58,13 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   } else {
     PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
-    StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
-    StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
+    if (Subtarget->isAAPCS_ABI()) {
+      StaticCtorsSection = "\t.section .init_array,\"aw\",%init_array";
+      StaticDtorsSection = "\t.section .fini_array,\"aw\",%fini_array";
+    } else {
+      StaticCtorsSection = "\t.section .ctors,\"aw\",%progbits";
+      StaticDtorsSection = "\t.section .dtors,\"aw\",%progbits";
+    }
   }
 
   ZeroDirective = "\t.space\t";
