@@ -217,7 +217,7 @@ Program::ExecuteAndWait(const Path& path,
       JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli;
       memset(&jeli, 0, sizeof(jeli));
       jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_PROCESS_MEMORY;
-      jeli.ProcessMemoryLimit = memoryLimit * 1048576;
+      jeli.ProcessMemoryLimit = uintptr_t(memoryLimit) * 1048576;
       if (SetInformationJobObject(hJob, JobObjectExtendedLimitInformation,
                                   &jeli, sizeof(jeli))) {
         if (AssignProcessToJobObject(hJob, pi.hProcess))
