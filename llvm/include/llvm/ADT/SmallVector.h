@@ -20,19 +20,20 @@
 
 #ifdef _MSC_VER
 namespace std {
-  // Fix bug in VC++ implementation of std::uninitialized_copy.  Define
-  // additional overloads so that the copy is recognized as a scalar and
-  // not an object copy.
+  // Work around flawed VC++ implementation of std::uninitialized_copy.  Define
+  // additional overloads so that elements with pointer types are recognized as
+  // scalars and not objects, causing bizarre type conversion errors.
+  // FIXME: this hack may or may not be correct for Visual Studio 2005.
   template<class T1, class T2>
   inline _Scalar_ptr_iterator_tag _Ptr_cat(T1 **, T2 **) {
-	  _Scalar_ptr_iterator_tag _Cat;
-	  return _Cat;
+    _Scalar_ptr_iterator_tag _Cat;
+    return _Cat;
   }
 
   template<class T1, class T2>
   inline _Scalar_ptr_iterator_tag _Ptr_cat(T1* const *, T2 **) {
-	  _Scalar_ptr_iterator_tag _Cat;
-	  return _Cat;
+    _Scalar_ptr_iterator_tag _Cat;
+    return _Cat;
   }
 }
 #endif
