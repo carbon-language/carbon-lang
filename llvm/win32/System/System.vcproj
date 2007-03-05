@@ -113,6 +113,9 @@
 				RelativePath="..\..\lib\System\Alarm.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\System\Disassembler.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\System\DynamicLibrary.cpp">
 			</File>
 			<File
@@ -149,6 +152,9 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath="..\..\include\llvm\System\Alarm.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\System\Disassembler.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\System\DynamicLibrary.h">

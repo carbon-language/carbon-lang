@@ -62,6 +62,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include <algorithm>
 #include <set>
 using namespace llvm;
 

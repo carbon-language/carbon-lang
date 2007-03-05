@@ -19,6 +19,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
+#include <algorithm>
 #include <vector>
 #include <map>
 

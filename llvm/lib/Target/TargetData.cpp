@@ -400,7 +400,7 @@ uint64_t TargetData::getTypeSize(const Type *Ty) const {
     unsigned char Alignment;
     Size = getTypeSize(ATy->getElementType());
     Alignment = getABITypeAlignment(ATy->getElementType());
-    unsigned AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
+    uint64_t AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
     return AlignedSize*ATy->getNumElements();
   }
   case Type::StructTyID: {

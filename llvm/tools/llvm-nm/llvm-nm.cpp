@@ -22,6 +22,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Signals.h"
+#include <algorithm>
 #include <cctype>
 #include <cerrno>
 #include <cstring>

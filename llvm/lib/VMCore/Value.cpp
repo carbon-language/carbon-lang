@@ -128,7 +128,7 @@ void Value::setName(const char *Name) {
 
 void Value::setName(const char *NameStr, unsigned NameLen) {
   if (NameLen == 0 && !hasName()) return;
-  if (getType() != Type::VoidTy && "Cannot assign a name to void values!");
+  assert(getType() != Type::VoidTy && "Cannot assign a name to void values!");
   
   // Get the symbol table to update for this object.
   ValueSymbolTable *ST;

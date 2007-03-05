@@ -133,9 +133,6 @@
 				RelativePath="..\..\lib\Analysis\ConstantFolding.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\ConstantRange.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\Analysis\InstCount.cpp">
 			</File>
 			<File
@@ -149,6 +146,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Analysis\LoopInfo.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Analysis\LoopPass.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Analysis\PostDominators.cpp">
@@ -239,6 +239,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\LoopInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Analysis\LoopPass.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\Passes.h">

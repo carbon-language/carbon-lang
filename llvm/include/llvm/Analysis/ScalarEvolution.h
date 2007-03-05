@@ -22,6 +22,7 @@
 #define LLVM_ANALYSIS_SCALAREVOLUTION_H
 
 #include "llvm/Pass.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
 #include <set>
 

@@ -129,6 +129,9 @@
 				RelativePath="..\..\utils\TableGen\AsmWriterEmitter.cpp">
 			</File>
 			<File
+				RelativePath="..\..\utils\TableGen\CallingConvEmitter.cpp">
+			</File>
+			<File
 				RelativePath="..\..\utils\TableGen\CodeEmitterGen.cpp">
 			</File>
 			<File
@@ -207,6 +210,9 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath="..\..\utils\TableGen\AsmWriterEmitter.h">
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\CallingConvEmitter.h">
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\CodeEmitterGen.h">

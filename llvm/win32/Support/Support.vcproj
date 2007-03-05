@@ -116,6 +116,9 @@
 				RelativePath="..\..\lib\Support\Annotation.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Support\APInt.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\CommandLine.cpp">
 			</File>
 			<File
@@ -128,7 +131,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\CStringMap.cpp">
+				RelativePath="..\..\lib\Support\ConstantRange.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\Debug.cpp">
@@ -173,6 +176,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\lib\Support\SmallPtrSet.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\Statistic.cpp">
 			</File>
 			<File
@@ -180,6 +186,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\StringExtras.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Support\StringMap.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\SystemUtils.cpp">
@@ -302,6 +311,9 @@
 				RelativePath="..\..\include\llvm\Support\MathExtras.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Support\OutputBuffer.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Support\PassNameParser.h">
 			</File>
 			<File
@@ -342,10 +354,10 @@
 			Name="ADT"
 			Filter="">
 			<File
-				RelativePath="..\..\include\llvm\Adt\BitSetVector.h">
+				RelativePath="..\..\include\llvm\ADT\APInt.h">
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\CStringMap.h">
+				RelativePath="..\..\include\llvm\ADT\BitVector.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Adt\DenseMap.h">
@@ -375,6 +387,9 @@
 				RelativePath="..\..\include\llvm\Adt\ilist">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\ADT\IndexedMap.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Adt\iterator">
 			</File>
 			<File
@@ -390,6 +405,12 @@
 				RelativePath="..\..\include\llvm\Adt\SetVector.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\ADT\SmallPtrSet.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\ADT\SmallSet.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\ADT\SmallString.h">
 			</File>
 			<File
@@ -403,6 +424,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Adt\StringExtras.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\ADT\StringMap.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Adt\Tree.h">

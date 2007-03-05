@@ -421,7 +421,7 @@ namespace {
           iSGT = iUGT;
           iSLT = iULT;
         } else {
-          assert(iULT->first->getValue().isPositive() >= 0 &&
+          assert(iULT->first->getValue().isPositive() &&
                  iUGT->first->getValue().isNegative() &&"Bad sign comparison.");
           iSGT = iULT;
           iSLT = iUGT;

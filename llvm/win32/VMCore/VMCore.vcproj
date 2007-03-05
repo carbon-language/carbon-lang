@@ -116,7 +116,7 @@
 				RelativePath="..\..\lib\VMCore\BasicBlock.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\VMCore\ConstantFolding.cpp">
+				RelativePath="..\..\lib\VMCore\ConstantFold.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\VMCore\Constants.cpp">
@@ -149,7 +149,8 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen
+						CommandLine="echo Building $(InputFileName) code emitter with tblgen
+..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen
 "
 						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe;$(InputDir)IntrinsicsX86.td;$(InputDir)IntrinsicsPowerPC.td"
 						Outputs="$(SolutionDir)llvm\intrinsics.gen"/>
@@ -159,7 +160,8 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen
+						CommandLine="echo Building $(InputFileName) code emitter with tblgen
+..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen
 "
 						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe;$(InputDir)IntrinsicsX86.td;$(InputDir)IntrinsicsPowerPC.td"
 						Outputs="$(SolutionDir)llvm\intrinsics.gen"/>
@@ -182,9 +184,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\VMCore\PassManager.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\VMCore\SymbolTable.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\VMCore\Type.cpp">
@@ -228,7 +227,7 @@
 				RelativePath="..\..\include\llvm\Constant.h">
 			</File>
 			<File
-				RelativePath="..\..\lib\VMCore\ConstantFolding.h">
+				RelativePath="..\..\lib\VMCore\ConstantFold.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Constants.h">
@@ -298,9 +297,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Assembly\PrintModulePass.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\SymbolTable.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\SymbolTableListTraits.h">

@@ -7663,6 +7663,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
                            PhiVal, ConstantOp);
   else
     assert(0 && "Unknown operation");
+  return 0;
 }
 
 /// DeadPHICycle - Return true if this PHI node is only used by a PHI node cycle

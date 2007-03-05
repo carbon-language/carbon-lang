@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include <math.h>
 #include <cstring>
 #include <cstdlib>
 #ifndef NDEBUG
@@ -1224,9 +1225,16 @@ APInt APInt::sqrt() const {
   // an IEEE double precision floating point value), then we can use the
   // libc sqrt function which will probably use a hardware sqrt computation.
   // This should be faster than the algorithm below.
-  if (magnitude < 52)
+  if (magnitude < 52) {
+#ifdef _MSC_VER
+    // Amazingly, VC++ doesn't have round().
+    return APInt(BitWidth, 
+                 uint64_t(::sqrt(double(isSingleWord()?VAL:pVal[0]))) + 0.5);
+#else
     return APInt(BitWidth, 
                  uint64_t(::round(::sqrt(double(isSingleWord()?VAL:pVal[0])))));
+#endif
+  }
 
   // Okay, all the short cuts are exhausted. We must compute it. The following
   // is a classical Babylonian method for computing the square root. This code

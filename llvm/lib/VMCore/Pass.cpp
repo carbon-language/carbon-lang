@@ -19,6 +19,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TypeInfo.h"
+#include <algorithm>
 #include <set>
 using namespace llvm;
 

@@ -133,6 +133,9 @@
 				RelativePath="..\..\lib\Target\TargetMachineRegistry.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\TargetMachOWriterInfo.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\TargetSubtarget.cpp">
 			</File>
 		</Filter>
@@ -151,6 +154,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetData.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetELFWriterInfo.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetFrameInfo.h">
@@ -172,6 +178,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetMachineRegistry.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetMachOWriterInfo.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetOptions.h">

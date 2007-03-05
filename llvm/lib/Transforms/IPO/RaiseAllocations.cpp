@@ -22,6 +22,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
+#include <algorithm>
 using namespace llvm;
 
 STATISTIC(NumRaised, "Number of allocations raised");

@@ -108,18 +108,6 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
-			<File
-				RelativePath="..\..\lib\Transforms\ExprTypeConvert.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\Transforms\LevelRaise.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\Transforms\TransformInternals.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\Transforms\TransformInternals.h">
-			</File>
 			<Filter
 				Name="Instrumentation"
 				Filter="">
@@ -128,9 +116,6 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Instrumentation\EdgeProfiling.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Instrumentation\EmitFunctions.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Instrumentation\ProfilingUtils.cpp">
@@ -143,9 +128,6 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Instrumentation\RSProfiling.h">
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Instrumentation\TraceBasicBlocks.cpp">
 				</File>
 			</Filter>
 			<Filter
@@ -165,9 +147,6 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Ipo\ExtractFunction.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Ipo\FunctionResolution.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Ipo\GlobalDCE.cpp">
@@ -207,6 +186,9 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Ipo\SimplifyLibCalls.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\IPO\StripDeadPrototypes.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Ipo\StripSymbols.cpp">

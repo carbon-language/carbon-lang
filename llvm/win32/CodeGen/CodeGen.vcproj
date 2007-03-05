@@ -121,6 +121,9 @@
 				RelativePath="..\..\lib\CodeGen\ELFWriter.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\ELFWriter.h">
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\IntrinsicLowering.cpp">
 			</File>
 			<File
@@ -139,16 +142,22 @@
 				RelativePath="..\..\lib\CodeGen\MachineBasicBlock.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\CodeGen\MachineDebugInfo.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\CodeGen\MachineFunction.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\MachineInstr.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\MachineModuleInfo.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\MachinePassRegistry.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\MachOWriter.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\MachOWriter.h">
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\Passes.cpp">
@@ -169,6 +178,9 @@
 				RelativePath="..\..\lib\CodeGen\RegAllocSimple.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\RegisterScavenging.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\TwoAddressInstructionPass.cpp">
 			</File>
 			<File
@@ -180,6 +192,9 @@
 			<Filter
 				Name="SelectionDAG"
 				Filter="">
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\CallingConvLower.cpp">
+				</File>
 				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\DAGCombiner.cpp">
 				</File>
@@ -220,10 +235,13 @@
 				RelativePath="..\..\include\llvm\CodeGen\AsmPrinter.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\CodeGen\CallingConvLower.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\CodeGen\DwarfWriter.h">
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\CodeGen\ELFWriter.h">
+				RelativePath="..\..\include\llvm\CodeGen\FileWriters.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\InstrScheduling.h">
@@ -274,13 +292,16 @@
 				RelativePath="..\..\include\llvm\CodeGen\MachineLocation.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\CodeGen\MachineModuleInfo.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\CodeGen\MachinePassRegistry.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\MachineRelocation.h">
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\CodeGen\MachOWriter.h">
+				RelativePath="..\..\include\llvm\CodeGen\MachORelocation.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\Passes.h">
@@ -290,6 +311,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\RegAllocRegistry.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\RegisterScavenging.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\RuntimeLibcalls.h">

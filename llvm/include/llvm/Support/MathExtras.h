@@ -255,7 +255,7 @@ inline unsigned CountPopulation_64(uint64_t Value) {
   uint64_t v = Value - ((Value >> 1) & 0x5555555555555555ULL);
   v = (v & 0x3333333333333333ULL) + ((v >> 2) & 0x3333333333333333ULL);
   v = (v + (v >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
-  return (uint64_t)(v * 0x0101010101010101ULL) >> 56;
+  return unsigned((uint64_t)(v * 0x0101010101010101ULL) >> 56);
 #endif
 }
 

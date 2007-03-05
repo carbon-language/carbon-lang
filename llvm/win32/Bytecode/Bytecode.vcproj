@@ -134,9 +134,6 @@
 					RelativePath="..\..\lib\Bytecode\Writer\SlotCalculator.h">
 				</File>
 				<File
-					RelativePath="..\..\lib\Bytecode\Writer\SlotTable.h">
-				</File>
-				<File
 					RelativePath="..\..\lib\Bytecode\Writer\Writer.cpp">
 				</File>
 				<File

@@ -3301,7 +3301,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     // Flags[2] -> isSRet
     // Flags[1] -> isInReg
     // Flags[0] -> isSigned
-    unsigned Flags = (isSRet << 2) | (isInReg << 1) | isSigned |
+    unsigned Flags = (isSRet << 2) | (isInReg << 1) | unsigned(isSigned) |
       (OriginalAlignment << 27);
 
     switch (getTypeAction(VT)) {
