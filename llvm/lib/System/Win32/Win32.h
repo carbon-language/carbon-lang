@@ -34,3 +34,24 @@ inline bool MakeErrMsg(std::string* ErrMsg, const std::string& prefix) {
   LocalFree(buffer);
   return true;
 }
+
+class AutoHandle {
+  HANDLE handle;
+
+public:
+  AutoHandle(HANDLE h) : handle(h) {}
+
+  ~AutoHandle() {
+    if (handle)
+      CloseHandle(handle);
+  }
+
+  operator HANDLE() {
+    return handle;
+  }
+
+  AutoHandle &operator=(HANDLE h) {
+    handle = h;
+    return *this;
+  }
+};

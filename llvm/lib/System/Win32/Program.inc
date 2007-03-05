@@ -93,8 +93,8 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
   if (h == INVALID_HANDLE_VALUE) {
     MakeErrMsg(ErrMsg, std::string(fname) + ": Can't open file for " +
         (fd ? "input: " : "output: "));
-    return h;
   }
+
   return h;
 }
 
@@ -179,7 +179,7 @@ Program::ExecuteAndWait(const Path& path,
                       0, TRUE, DUPLICATE_SAME_ACCESS);
     }
   }
-
+  
   PROCESS_INFORMATION pi;
   memset(&pi, 0, sizeof(pi));
 
@@ -204,6 +204,35 @@ Program::ExecuteAndWait(const Path& path,
     return -1;
   }
 
+  // Make sure these get closed no matter what.
+  AutoHandle hProcess(pi.hProcess);
+  AutoHandle hThread(pi.hThread);
+
+  // Assign the process to a job if a memory limit is defined.
+  AutoHandle hJob(0);
+  if (memoryLimit != 0) {
+    hJob = CreateJobObject(0, 0);
+    bool success = false;
+    if (hJob != 0) {
+      JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli;
+      memset(&jeli, 0, sizeof(jeli));
+      jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_PROCESS_MEMORY;
+      jeli.ProcessMemoryLimit = memoryLimit * 1048576;
+      if (SetInformationJobObject(hJob, JobObjectExtendedLimitInformation,
+                                  &jeli, sizeof(jeli))) {
+        if (AssignProcessToJobObject(hJob, pi.hProcess))
+          success = true;
+      }
+    }
+    if (!success) {
+      SetLastError(GetLastError());
+      MakeErrMsg(ErrMsg, std::string("Unable to set memory limit"));
+      TerminateProcess(pi.hProcess, 1);
+      WaitForSingleObject(pi.hProcess, INFINITE);
+      return -1;
+    }
+  }
+
   // Wait for it to terminate.
   DWORD millisecondsToWait = INFINITE;
   if (secondsToWait > 0)
@@ -222,10 +251,6 @@ Program::ExecuteAndWait(const Path& path,
   DWORD status;
   rc = GetExitCodeProcess(pi.hProcess, &status);
   err = GetLastError();
-
-  // Done with the handles; go close them.
-  CloseHandle(pi.hProcess);
-  CloseHandle(pi.hThread);
 
   if (!rc) {
     SetLastError(err);
