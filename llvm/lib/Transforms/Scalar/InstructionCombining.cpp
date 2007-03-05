@@ -5559,10 +5559,11 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           
           // Turn (Y + ((X >> C) & CC)) << C  ->  ((X & (CC << C)) + (Y << C))
           Value *Op0BOOp1 = Op0BO->getOperand(1);
-          if (isLeftShift && Op0BOOp1->hasOneUse() && V2 == Op1 &&
+          if (isLeftShift && Op0BOOp1->hasOneUse() &&
               match(Op0BOOp1, 
                     m_And(m_Shr(m_Value(V1), m_Value(V2)),m_ConstantInt(CC))) &&
-              cast<BinaryOperator>(Op0BOOp1)->getOperand(0)-> hasOneUse()) {
+              cast<BinaryOperator>(Op0BOOp1)->getOperand(0)->hasOneUse() &&
+              V2 == Op1) {
             Instruction *YS = BinaryOperator::createShl(
                                                      Op0BO->getOperand(0), Op1,
                                                      Op0BO->getName());
