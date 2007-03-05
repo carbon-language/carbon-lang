@@ -33,6 +33,10 @@ def IMPLICIT_DEF_VR64 : I<0, Pseudo, (ops VR64:$dst),
 def : Pat<(v4i16 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
 def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
 
+// EMMS
+def EMMS : I<0x77, RawFrm, (ops), "emms", [(int_x86_mmx_emms)]>, TB,
+           Requires<[HasMMX]>;
+
 // Move Instructions
 def MOVD64rr : I<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
                  "movd {$src, $dst|$dst, $src}", []>, TB,
@@ -94,4 +98,3 @@ def MOVNTQ   : I<0xE7, MRMDestMem, (ops i64mem:$dst, VR64:$src),
 def MASKMOVQ : I<0xF7, MRMDestMem, (ops VR64:$src, VR64:$mask),
                  "maskmovq {$mask, $src|$src, $mask}", []>, TB,
                Requires<[HasMMX]>;
-

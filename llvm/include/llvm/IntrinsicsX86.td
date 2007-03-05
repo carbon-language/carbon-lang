@@ -535,3 +535,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_void_ty, llvm_i32_ty,
                          llvm_i32_ty], [IntrWriteMem]>;
 }
+
+//===----------------------------------------------------------------------===//
+// MMX
+
+// Empty MMX state op.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_mmx_emms : GCCBuiltin<"__builtin_ia32_emms">,
+              Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
+}
