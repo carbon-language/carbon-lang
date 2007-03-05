@@ -77,9 +77,6 @@ bool CGPassManager::runOnModule(Module &M) {
   CallGraph &CG = getAnalysis<CallGraph>();
   bool Changed = doInitialization(CG);
 
-  std::string Msg1 = "Executing Pass '";
-  std::string Msg3 = "' Made Modification '";
-
   // Walk SCC
   for (scc_iterator<CallGraph*> I = scc_begin(&CG), E = scc_end(&CG);
        I != E; ++I) {
@@ -91,8 +88,7 @@ bool CGPassManager::runOnModule(Module &M) {
       AnalysisUsage AnUsage;
       P->getAnalysisUsage(AnUsage);
 
-      std::string Msg2 = "' on Call Graph ...\n'";
-      dumpPassInfo(P, Msg1, Msg2);
+      dumpPassInfo(P, EXECUTION_MSG, ON_CG_MSG, "");
       dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
 
       initializeAnalysisImpl(P);
@@ -109,21 +105,20 @@ bool CGPassManager::runOnModule(Module &M) {
 	for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
 	  Function *F = SCC[i]->getFunction();
 	  if (F) {
-            std::string Msg4 = "' on Function '" + F->getName() + "'...\n";
-            dumpPassInfo(P, Msg1, Msg4);
-	    Changed |= FPP->runOnFunction(*F);
+            dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
+            Changed |= FPP->runOnFunction(*F);
           }
 	}
       }
       StopPassTimer(P);
 
       if (Changed)
-	dumpPassInfo(P, Msg3, Msg2);
+        dumpPassInfo(P, MODIFICATION_MSG, ON_CG_MSG, "");
       dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
       
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
-      removeDeadPasses(P, Msg2);
+      removeDeadPasses(P, "", ON_CG_MSG);
     }
   }
   Changed |= doFinalization(CG);

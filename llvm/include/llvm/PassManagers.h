@@ -93,6 +93,18 @@ enum TopLevelManagerType {
   TLM_Pass       // PassManager
 };
     
+// enums for debugging strings
+enum PassDebuggingString {
+  EXECUTION_MSG, // "Executing Pass '"
+  MODIFICATION_MSG, // "' Made Modification '"
+  FREEING_MSG, // " Freeing Pass '"
+  ON_BASICBLOCK_MSG, // "'  on BasicBlock '" + PassName + "'...\n"
+  ON_FUNCTION_MSG, // "' on Function '" + FunctionName + "'...\n"
+  ON_MODULE_MSG, // "' on Module '" + ModuleName + "'...\n"
+  ON_LOOP_MSG, // " 'on Loop ...\n'"
+  ON_CG_MSG // "' on Call Graph ...\n'"
+};  
+
 //===----------------------------------------------------------------------===//
 // PMTopLevelManager
 //
@@ -202,7 +214,7 @@ public:
   void removeNotPreservedAnalysis(Pass *P);
   
   /// Remove dead passes
-  void removeDeadPasses(Pass *P, std::string &Msg);
+  void removeDeadPasses(Pass *P, std::string Msg, enum PassDebuggingString);
 
   /// Add pass P into the PassVector. Update 
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
@@ -238,7 +250,8 @@ public:
   // Print routines used by debug-pass
   void dumpLastUses(Pass *P, unsigned Offset) const;
   void dumpPassArguments() const;
-  void dumpPassInfo(Pass *P,  std::string &Msg1, std::string &Msg2) const;
+  void dumpPassInfo(Pass *P, enum PassDebuggingString S1,
+                    enum PassDebuggingString S2, std::string Msg);
   void dumpAnalysisSetInfo(const char *Msg, Pass *P,
                            const std::vector<AnalysisID> &Set) const;
 

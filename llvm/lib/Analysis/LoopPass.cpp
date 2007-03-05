@@ -91,9 +91,6 @@ bool LPPassManager::runOnFunction(Function &F) {
   for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
 
-  std::string Msg1 = "Executing Pass '";
-  std::string Msg3 = "' Made Modification '";
-
   // Walk Loops
   while (!LQ->empty()) {
       
@@ -108,8 +105,7 @@ bool LPPassManager::runOnFunction(Function &F) {
       AnalysisUsage AnUsage;
       P->getAnalysisUsage(AnUsage);
 
-      std::string Msg2 = "' on Loop ...\n'";
-      dumpPassInfo(P, Msg1, Msg2);
+      dumpPassInfo(P, EXECUTION_MSG, ON_LOOP_MSG, "");
       dumpAnalysisSetInfo("Required", P, AnUsage.getRequiredSet());
 
       initializeAnalysisImpl(P);
@@ -121,12 +117,12 @@ bool LPPassManager::runOnFunction(Function &F) {
       StopPassTimer(P);
 
       if (Changed)
-	dumpPassInfo(P, Msg3, Msg2);
+        dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG, "");
       dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
       
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
-      removeDeadPasses(P, Msg2);
+      removeDeadPasses(P, "", ON_LOOP_MSG);
 
       if (skipThisLoop)
         // Do not run other passes on this loop.

@@ -553,7 +553,8 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 }
 
 /// Remove analysis passes that are not used any longer
-void PMDataManager::removeDeadPasses(Pass *P, std::string &Msg) {
+void PMDataManager::removeDeadPasses(Pass *P, std::string Msg,
+                                     enum PassDebuggingString DBG_STR) {
 
   std::vector<Pass *> DeadPasses;
   TPM->collectLastUses(DeadPasses, P);
@@ -561,8 +562,7 @@ void PMDataManager::removeDeadPasses(Pass *P, std::string &Msg) {
   for (std::vector<Pass *>::iterator I = DeadPasses.begin(),
          E = DeadPasses.end(); I != E; ++I) {
 
-    std::string Msg1 = "  Freeing Pass '";
-    dumpPassInfo(*I, Msg1, Msg);
+    dumpPassInfo(*I, FREEING_MSG, DBG_STR, Msg);
 
     if (TheTimeInfo) TheTimeInfo->passStarted(*I);
     (*I)->releaseMemory();
@@ -720,14 +720,44 @@ void PMDataManager::dumpPassArguments() const {
   }
 }
 
-void PMDataManager:: dumpPassInfo(Pass *P,  std::string &Msg1, 
-                                  std::string &Msg2) const {
+void PMDataManager:: dumpPassInfo(Pass *P, enum PassDebuggingString S1,
+                                  enum PassDebuggingString S2,
+                                  std::string Msg) {
   if (PassDebugging < Executions)
     return;
   cerr << (void*)this << std::string(getDepth()*2+1, ' ');
-  cerr << Msg1;
-  cerr << P->getPassName();
-  cerr << Msg2;
+  switch (S1) {
+  case EXECUTION_MSG:
+    cerr << "Executing Pass '" << P->getPassName();
+    break;
+  case MODIFICATION_MSG:
+    cerr << "' Made Modification '" << P->getPassName();
+    break;
+  case FREEING_MSG:
+    cerr << " Freeing Pass '" << P->getPassName();
+    break;
+  default:
+    break;
+  }
+  switch (S2) {
+  case ON_BASICBLOCK_MSG:
+    cerr << "' on BasicBlock '" << Msg << "...\n";
+    break;
+  case ON_FUNCTION_MSG:
+    cerr << "' on Function '" << Msg << "...\n";
+    break;
+  case ON_MODULE_MSG:
+    cerr << "' on Module '"  << Msg << "...\n";
+    break;
+  case ON_LOOP_MSG:
+    cerr << "' on Loop " << Msg << "...\n";
+    break;
+  case ON_CG_MSG:
+    cerr << "' on Call Graph " << Msg << "...\n";
+    break;
+  default:
+    break;
+  }
 }
 
 void PMDataManager::dumpAnalysisSetInfo(const char *Msg, Pass *P,
@@ -774,17 +804,13 @@ BBPassManager::runOnFunction(Function &F) {
 
   bool Changed = doInitialization(F);
 
-  std::string Msg1 = "Executing Pass '";
-  std::string Msg3 = "' Made Modification '";
-
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
       AnalysisUsage AnUsage;
       BP->getAnalysisUsage(AnUsage);
 
-      std::string Msg2 = "' on BasicBlock '" + (*I).getName() + "'...\n";
-      dumpPassInfo(BP, Msg1, Msg2);
+      dumpPassInfo(BP, EXECUTION_MSG, ON_BASICBLOCK_MSG, (*I).getName());
       dumpAnalysisSetInfo("Required", BP, AnUsage.getRequiredSet());
 
       initializeAnalysisImpl(BP);
@@ -793,13 +819,14 @@ BBPassManager::runOnFunction(Function &F) {
       Changed |= BP->runOnBasicBlock(*I);
       if (TheTimeInfo) TheTimeInfo->passEnded(BP);
 
-      if (Changed)
-        dumpPassInfo(BP, Msg3, Msg2);
+      if (Changed) 
+        dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG, (*I).getName());
       dumpAnalysisSetInfo("Preserved", BP, AnUsage.getPreservedSet());
 
       removeNotPreservedAnalysis(BP);
       recordAvailableAnalysis(BP);
-      removeDeadPasses(BP, Msg2);
+      removeDeadPasses(BP, (*I).getName(), ON_BASICBLOCK_MSG);
+                       
     }
   return Changed |= doFinalization(F);
 }
@@ -973,17 +1000,13 @@ bool FPPassManager::runOnFunction(Function &F) {
   if (F.isDeclaration())
     return false;
 
-  std::string Msg1 = "Executing Pass '";
-  std::string Msg3 = "' Made Modification '";
-
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     FunctionPass *FP = getContainedPass(Index);
 
     AnalysisUsage AnUsage;
     FP->getAnalysisUsage(AnUsage);
 
-    std::string Msg2 = "' on Function '" + F.getName() + "'...\n";
-    dumpPassInfo(FP, Msg1, Msg2);
+    dumpPassInfo(FP, EXECUTION_MSG, ON_FUNCTION_MSG, F.getName());
     dumpAnalysisSetInfo("Required", FP, AnUsage.getRequiredSet());
 
     initializeAnalysisImpl(FP);
@@ -992,13 +1015,13 @@ bool FPPassManager::runOnFunction(Function &F) {
     Changed |= FP->runOnFunction(F);
     if (TheTimeInfo) TheTimeInfo->passEnded(FP);
 
-    if (Changed)
-      dumpPassInfo(FP, Msg3, Msg2);
+    if (Changed) 
+      dumpPassInfo(FP, MODIFICATION_MSG, ON_FUNCTION_MSG, F.getName());
     dumpAnalysisSetInfo("Preserved", FP, AnUsage.getPreservedSet());
 
     removeNotPreservedAnalysis(FP);
     recordAvailableAnalysis(FP);
-    removeDeadPasses(FP, Msg2);
+    removeDeadPasses(FP, F.getName(), ON_FUNCTION_MSG);
   }
   return Changed;
 }
@@ -1045,17 +1068,13 @@ bool
 MPPassManager::runOnModule(Module &M) {
   bool Changed = false;
 
-  std::string Msg1 = "Executing Pass '";
-  std::string Msg3 = "' Made Modification '";
-
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     ModulePass *MP = getContainedPass(Index);
 
     AnalysisUsage AnUsage;
     MP->getAnalysisUsage(AnUsage);
 
-    std::string Msg2 = "' on Module '" + M.getModuleIdentifier() + "'...\n";
-    dumpPassInfo(MP, Msg1, Msg2);
+    dumpPassInfo(MP, EXECUTION_MSG, ON_MODULE_MSG, M.getModuleIdentifier());
     dumpAnalysisSetInfo("Required", MP, AnUsage.getRequiredSet());
 
     initializeAnalysisImpl(MP);
@@ -1064,13 +1083,14 @@ MPPassManager::runOnModule(Module &M) {
     Changed |= MP->runOnModule(M);
     if (TheTimeInfo) TheTimeInfo->passEnded(MP);
 
-    if (Changed)
-      dumpPassInfo(MP, Msg3, Msg2);
+    if (Changed) 
+      dumpPassInfo(MP, MODIFICATION_MSG, ON_MODULE_MSG,
+                   M.getModuleIdentifier());
     dumpAnalysisSetInfo("Preserved", MP, AnUsage.getPreservedSet());
       
     removeNotPreservedAnalysis(MP);
     recordAvailableAnalysis(MP);
-    removeDeadPasses(MP, Msg2);
+    removeDeadPasses(MP, M.getModuleIdentifier(), ON_MODULE_MSG);
   }
   return Changed;
 }
