@@ -20,10 +20,10 @@
 
 #ifdef _MSC_VER
 namespace std {
+#if _MSC_VER <= 1310
   // Work around flawed VC++ implementation of std::uninitialized_copy.  Define
   // additional overloads so that elements with pointer types are recognized as
   // scalars and not objects, causing bizarre type conversion errors.
-  // FIXME: this hack may or may not be correct for Visual Studio 2005.
   template<class T1, class T2>
   inline _Scalar_ptr_iterator_tag _Ptr_cat(T1 **, T2 **) {
     _Scalar_ptr_iterator_tag _Cat;
@@ -35,6 +35,10 @@ namespace std {
     _Scalar_ptr_iterator_tag _Cat;
     return _Cat;
   }
+#else
+// FIXME: It is not clear if the problem is fixed in VS 2005.  What is clear
+// is that the above hack won't work if it wasn't fixed.
+#endif
 }
 #endif
 
