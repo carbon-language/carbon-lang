@@ -1186,6 +1186,37 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       // Bits are known zero if they are known zero in both operands and there
       // is no input carry.
       KnownZero = KnownZero2 & ~RHSVal & ~CarryBits;
+    } else {
+      // If the high-bits of this ADD are not demanded, then it does not demand
+      // the high bits of its LHS or RHS.
+      if ((DemandedMask & VTy->getSignBit()) == 0) {
+        // Right fill the mask of bits for this ADD to demand the most
+        // significant bit and all those below it.
+        unsigned NLZ = CountLeadingZeros_64(DemandedMask);
+        uint64_t DemandedFromOps = ~0ULL >> NLZ;
+        if (SimplifyDemandedBits(I->getOperand(0), DemandedFromOps,
+                                 KnownZero2, KnownOne2, Depth+1))
+          return true;
+        if (SimplifyDemandedBits(I->getOperand(1), DemandedFromOps,
+                                 KnownZero2, KnownOne2, Depth+1))
+          return true;
+      }
+    }
+    break;
+  case Instruction::Sub:
+    // If the high-bits of this SUB are not demanded, then it does not demand
+    // the high bits of its LHS or RHS.
+    if ((DemandedMask & VTy->getSignBit()) == 0) {
+      // Right fill the mask of bits for this SUB to demand the most
+      // significant bit and all those below it.
+      unsigned NLZ = CountLeadingZeros_64(DemandedMask);
+      uint64_t DemandedFromOps = ~0ULL >> NLZ;
+      if (SimplifyDemandedBits(I->getOperand(0), DemandedFromOps,
+                               KnownZero2, KnownOne2, Depth+1))
+        return true;
+      if (SimplifyDemandedBits(I->getOperand(1), DemandedFromOps,
+                               KnownZero2, KnownOne2, Depth+1))
+        return true;
     }
     break;
   case Instruction::Shl:
