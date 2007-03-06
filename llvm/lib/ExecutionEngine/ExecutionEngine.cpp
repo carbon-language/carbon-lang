@@ -410,7 +410,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
 /// It is not a pointer to a GenericValue containing the address at which to
 /// store Val.
 ///
-void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
+void ExecutionEngine::StoreValueToMemory(const GenericValue &Val, GenericValue *Ptr,
                                          const Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID: {
@@ -423,7 +423,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
     } else if (BitWidth <= 32) {
       *((uint32_t*)Ptr) = uint32_t(Val.IntVal.getZExtValue());
     } else if (BitWidth <= 64) {
-      *((uint64_t*)Ptr) = uint32_t(Val.IntVal.getZExtValue());
+      *((uint64_t*)Ptr) = uint64_t(Val.IntVal.getZExtValue());
     } else {
       uint64_t *Dest = (uint64_t*)Ptr;
       const uint64_t *Src = Val.IntVal.getRawData();
