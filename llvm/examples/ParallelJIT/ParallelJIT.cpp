@@ -221,12 +221,12 @@ void* callFunc( void* param )
 
   // Call the `foo' function with no arguments:
   std::vector<GenericValue> Args(1);
-  Args[0].Int32Val = p->value;
+  Args[0].IntVal = APInt(32, p->value);
 
   synchronize.block(); // wait until other threads are at this point
   GenericValue gv = p->EE->runFunction(p->F, Args);
 
-  return (void*) intptr_t(gv.Int32Val);
+  return (void*)(intptr_t)gv.IntVal.getZExtValue();
 }
 
 int main()

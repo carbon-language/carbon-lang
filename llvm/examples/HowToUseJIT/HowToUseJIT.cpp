@@ -107,6 +107,6 @@ int main() {
   GenericValue gv = EE->runFunction(FooF, noargs);
 
   // Import result of execution:
-  std::cout << "Result: " << gv.Int32Val << "\n";
+  std::cout << "Result: " << gv.IntVal.toString(10) << "\n";
   return 0;
 }

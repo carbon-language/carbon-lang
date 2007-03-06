@@ -112,10 +112,10 @@ int main(int argc, char **argv) {
 
   // Call the Fibonacci function with argument n:
   std::vector<GenericValue> Args(1);
-  Args[0].Int32Val = n;
+  Args[0].IntVal = APInt(32, n);
   GenericValue GV = EE->runFunction(FibF, Args);
 
   // import result of execution
-  std::cout << "Result: " << GV.Int32Val << "\n";
+  std::cout << "Result: " << GV.IntVal.toString(10) << "\n";
   return 0;
 }
