@@ -69,12 +69,8 @@ public:
   bool runOnFunction(Function &F);
 
   /// Pass Manager itself does not invalidate any analysis info.
-  void getAnalysisUsage(AnalysisUsage &Info) const {
-    // LPPassManager needs LoopInfo. In the long term LoopInfo class will 
-    // be consumed by LPPassManager.
-    Info.addRequired<LoopInfo>();
-    Info.setPreservesAll();
-  }
+  // LPPassManager needs LoopInfo. 
+  void getAnalysisUsage(AnalysisUsage &Info) const; 
   
   virtual const char *getPassName() const {
     return "Loop Pass Manager";

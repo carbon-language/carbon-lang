@@ -143,14 +143,22 @@ static void addLoopIntoQueue(Loop *L, std::deque<Loop *> &LQ) {
   LQ.push_back(L);
 }
 
+/// Pass Manager itself does not invalidate any analysis info.
+void LPPassManager::getAnalysisUsage(AnalysisUsage &Info) const {
+  // LPPassManager needs LoopInfo. In the long term LoopInfo class will 
+  // become part of LPPassManager.
+  Info.addRequired<LoopInfo>();
+  Info.setPreservesAll();
+}
+
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the function, and if so, return true.
 bool LPPassManager::runOnFunction(Function &F) {
-  LoopInfo &LI = getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfo>();
   bool Changed = false;
 
   // Populate Loop Queue
-  for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
+  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
 
   // Initialization
@@ -279,7 +287,7 @@ void LoopPass::assignPassManager(PMStack &PMS,
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
     Pass *P = dynamic_cast<Pass *>(LPPM);
-    P->assignPassManager(PMS);
+    TPM->schedulePass(P);
 
     // [4] Push new manager into PMS
     PMS.push(LPPM);
