@@ -119,8 +119,13 @@ public:
   void print(std::ostream *O, const Module *M) const { if (O) print(*O, M); }
   void dump() const; // dump - call print(std::cerr, 0);
 
+  /// Each pass is responsible for assigning a pass manager to itself.
+  /// PMS is the stack of available pass manager. 
   virtual void assignPassManager(PMStack &PMS, 
 				 PassManagerType T = PMT_Unknown) {}
+  /// Check if available pass managers are suitable for this pass or not.
+  virtual void preparePassManager(PMStack &PMS) {}
+
   // Access AnalysisResolver
   inline void setResolver(AnalysisResolver *AR) { Resolver = AR; }
   inline AnalysisResolver *getResolver() { return Resolver; }

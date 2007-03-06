@@ -385,6 +385,9 @@ void PMTopLevelManager::schedulePass(Pass *P) {
   if (findAnalysisPass(P->getPassInfo()))
       return;
 
+  // Give pass a chance to prepare the stage.
+  P->preparePassManager(activeStack);
+
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
   const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
