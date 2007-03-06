@@ -24,7 +24,7 @@
 
 namespace llvm {
 
-union GenericValue;
+struct GenericValue;
 class Constant;
 class Function;
 class GlobalVariable;

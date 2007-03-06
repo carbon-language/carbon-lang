@@ -15,37 +15,30 @@
 #ifndef GENERIC_VALUE_H
 #define GENERIC_VALUE_H
 
+#include "llvm/ADT/APInt.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
-typedef uintptr_t PointerTy;
+typedef void* PointerTy;
 class APInt;
-class Type;
 
-union GenericValue {
-  bool            Int1Val;
-  unsigned char   Int8Val;
-  unsigned short  Int16Val;
-  unsigned int    Int32Val;
-  uint64_t        Int64Val;
-  APInt          *APIntVal;
-  double          DoubleVal;
-  float           FloatVal;
-  struct { unsigned int first; unsigned int second; } UIntPairVal;
-  PointerTy       PointerVal;
-  unsigned char   Untyped[8];
+struct GenericValue {
+  union {
+    double          DoubleVal;
+    float           FloatVal;
+    PointerTy       PointerVal;
+    struct { unsigned int first; unsigned int second; } UIntPairVal;
+    unsigned char   Untyped[8];
+  };
+  APInt IntVal;
 
-  GenericValue() {}
-  GenericValue(void *V) {
-    PointerVal = (PointerTy)(intptr_t)V;
-  }
+  GenericValue() : DoubleVal(0.0), IntVal(1,0) {}
+  GenericValue(void *V) : PointerVal(V), IntVal(1,0) { }
 };
 
 inline GenericValue PTOGV(void *P) { return GenericValue(P); }
-inline void* GVTOP(const GenericValue &GV) {
-  return (void*)(intptr_t)GV.PointerVal;
-}
+inline void* GVTOP(const GenericValue &GV) { return GV.PointerVal; }
 
 } // End llvm namespace
 #endif
