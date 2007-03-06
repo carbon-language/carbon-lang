@@ -89,7 +89,7 @@ used to test the LLVM tools and the GCC front end.</p>
 
 <p>The second piece is the GCC front end.  This component provides a version of
 GCC that compiles C and C++ code into LLVM bytecode.  Currently, the GCC front
-end is a modified version of GCC 3.4 (we track the GCC 3.4 development).  Once
+end uses the GCC parser to convert code to LLVM.  Once
 compiled into LLVM bytecode, a program can be manipulated with the LLVM tools
 from the LLVM suite.</p>
 
@@ -712,14 +712,9 @@ you get it from the CVS repository:</p>
 configured by the LLVM configure script as well as automatically updated when
 you run <tt>cvs update</tt>.</p>
 
-<p>If you would like to get the GCC 3.4 front end source code, you can also get it from the CVS repository:</p>
-
-<pre>
-  cvs -z3 -d :pserver:anon@llvm.org:/var/cvs/llvm co llvm-gcc
-</pre>
-
-<p>Please note that you must follow <a href="CFEBuildInstrs.html">these 
-instructions</a> to successfully build the LLVM GCC front-end.</p>
+<p>If you would like to get the GCC front end source code, you can also get it 
+and build it yourself.  Please follow <a href="CFEBuildInstrs.html">these 
+instructions</a> to successfully get and build the LLVM GCC front-end.</p>
 
 </div>
 
