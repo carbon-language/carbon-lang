@@ -46,18 +46,6 @@ ExecutionEngine *Interpreter::create(ModuleProvider *MP, std::string* ErrStr) {
   // when the module is deleted via the ExistingModuleProvide via EE.
   delete MP;
   
-  // FIXME: This should probably compute the entire data layout
-  std::string DataLayout;
-  int Test = 0;
-  *(char*)&Test = 1;    // Return true if the host is little endian
-  bool isLittleEndian = (Test == 1);
-  DataLayout.append(isLittleEndian ? "e" : "E");
-
-  bool Ptr64 = sizeof(void*) == 8;
-  DataLayout.append(Ptr64 ? "-p:64:64" : "-p:32:32");
-	
-  M->setDataLayout(DataLayout);
-
   return new Interpreter(M);
 }
 
