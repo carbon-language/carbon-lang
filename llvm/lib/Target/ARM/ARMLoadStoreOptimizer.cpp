@@ -23,7 +23,9 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
@@ -36,6 +38,8 @@ STATISTIC(NumFSTMGened, "Number of fstm instructions generated");
 namespace {
   struct VISIBILITY_HIDDEN ARMLoadStoreOpt : public MachineFunctionPass {
     const TargetInstrInfo *TII;
+    const MRegisterInfo *MRI;
+    RegScavenger *RS;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -448,6 +452,25 @@ static bool mergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   return true;
 }
 
+/// isMemoryOp - Returns true if instruction is a memory operations (that this
+/// pass is capable of operating on).
+static bool isMemoryOp(MachineInstr *MI) {
+  int Opcode = MI->getOpcode();
+  switch (Opcode) {
+  default: break;
+  case ARM::LDR:
+  case ARM::STR:
+    return MI->getOperand(1).isRegister() && MI->getOperand(2).getReg() == 0;
+  case ARM::FLDS:
+  case ARM::FSTS:
+    return MI->getOperand(1).isRegister();
+  case ARM::FLDD:
+  case ARM::FSTD:
+    return MI->getOperand(1).isRegister();
+  }
+  return false;
+}
+
 /// LoadStoreMultipleOpti - An optimization pass to turn multiple LDR / STR
 /// ops of the same base and incrementing offset into LDM / STM ops.
 bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
@@ -458,34 +481,20 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   int CurrOpc = -1;
   unsigned CurrSize = 0;
   unsigned Position = 0;
+
+  if (RS) RS->enterBasicBlock(&MBB);
   MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
   while (MBBI != E) {
     bool Advance  = false;
     bool TryMerge = false;
     bool Clobber  = false;
 
-    int Opcode = MBBI->getOpcode();
-    bool isMemOp = false;
-    bool isAM2 = false;
-    unsigned Size = 4;
-    switch (Opcode) {
-    case ARM::LDR:
-    case ARM::STR:
-      isMemOp =
-        (MBBI->getOperand(1).isRegister() && MBBI->getOperand(2).getReg() == 0);
-      isAM2 = true;
-      break;
-    case ARM::FLDS:
-    case ARM::FSTS:
-      isMemOp = MBBI->getOperand(1).isRegister();
-      break;
-    case ARM::FLDD:
-    case ARM::FSTD:
-      isMemOp = MBBI->getOperand(1).isRegister();
-      Size = 8;
-      break;
-    }
+    bool isMemOp = isMemoryOp(MBBI);
     if (isMemOp) {
+      int Opcode = MBBI->getOpcode();
+      bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
+      unsigned Size = getLSMultipleTransferSize(MBBI);
+
       unsigned Base = MBBI->getOperand(1).getReg();
       unsigned OffIdx = MBBI->getNumOperands()-1;
       unsigned OffField = MBBI->getOperand(OffIdx).getImm();
@@ -616,7 +625,11 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
 }
 
 bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
-  TII = Fn.getTarget().getInstrInfo();
+  const TargetMachine &TM = Fn.getTarget();
+  TII = TM.getInstrInfo();
+  MRI = TM.getRegisterInfo();
+  RS = MRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
+
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
        ++MFI) {
@@ -624,5 +637,7 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
     Modified |= LoadStoreMultipleOpti(MBB);
     Modified |= MergeReturnIntoLDM(MBB);
   }
+
+  delete RS;
   return Modified;
 }
