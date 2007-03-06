@@ -22,6 +22,8 @@
 
 namespace llvm {
 
+class MRegisterInfo;
+class TargetInstrInfo;
 class TargetRegisterClass;
 
 class RegScavenger {
@@ -33,6 +35,18 @@ class RegScavenger {
   /// registers.
   bool Tracking;
 
+  /// ScavengingFrameIndex - Special spill slot used for scavenging a register
+  /// post register allocation.
+  int ScavengingFrameIndex;
+
+  /// ScavengedReg - If none zero, the specific register is currently being
+  /// scavenged. That is, it is spilled to the special scavenging stack slot.
+  unsigned ScavengedReg;
+
+  /// ScavengedRC - Register class of the scavenged register.
+  ///
+  const TargetRegisterClass *ScavengedRC;
+
   /// RegStates - The current state of all the physical registers immediately
   /// before MBBI. One bit per physical register. If bit is set that means it's
   /// available, unset means the register is currently being used.
@@ -40,10 +54,12 @@ class RegScavenger {
 
 public:
   RegScavenger()
-    : MBB(NULL), NumPhysRegs(0), Tracking(false) {};
+    : MBB(NULL), NumPhysRegs(0), Tracking(false),
+      ScavengingFrameIndex(-1), ScavengedReg(0), ScavengedRC(NULL) {};
 
   RegScavenger(MachineBasicBlock *mbb)
-    : MBB(mbb), NumPhysRegs(0), Tracking(false) {};
+    : MBB(mbb), NumPhysRegs(0), Tracking(false),
+      ScavengingFrameIndex(-1), ScavengedReg(0), ScavengedRC(NULL) {};
 
   /// enterBasicBlock - Start tracking liveness from the begin of the specific
   /// basic block.
@@ -88,7 +104,24 @@ public:
   unsigned FindUnusedReg(const TargetRegisterClass *RegClass,
                          bool ExCalleeSaved = false) const;
 
+  /// setScavengingFrameIndex / getScavengingFrameIndex - accessor and setter of
+  /// ScavengingFrameIndex.
+  void setScavengingFrameIndex(int FI) { ScavengingFrameIndex = FI; }
+  int getScavengingFrameIndex() const { return ScavengingFrameIndex; }
+
+  /// scavengeRegister - Make a register of the specific register class
+  /// available and do the appropriate bookkeeping. Returns the scavenged
+  /// register.
+  unsigned scavengeRegister(const TargetRegisterClass *RegClass,
+                            MachineBasicBlock::iterator I);
+  unsigned scavengeRegister(const TargetRegisterClass *RegClass) {
+    return scavengeRegister(RegClass, MBBI);
+  }
+
 private:
+  const MRegisterInfo *RegInfo;
+  const TargetInstrInfo *TII;
+
   /// CalleeSavedrRegs - A bitvector of callee saved registers for the target.
   ///
   BitVector CalleeSavedRegs;
@@ -96,6 +129,10 @@ private:
   /// ReservedRegs - A bitvector of reserved registers.
   ///
   BitVector ReservedRegs;
+
+  /// restoreScavengedReg - Restore scavenged by loading it back from the
+  /// emergency spill slot. Mark it used.
+  void restoreScavengedReg();
 };
  
 } // End llvm namespace

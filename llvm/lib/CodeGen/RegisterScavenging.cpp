@@ -28,7 +28,8 @@ using namespace llvm;
 void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   const MachineFunction &MF = *mbb->getParent();
   const TargetMachine &TM = MF.getTarget();
-  const MRegisterInfo *RegInfo = TM.getRegisterInfo();
+  TII = TM.getInstrInfo();
+  RegInfo = TM.getRegisterInfo();
 
   assert((NumPhysRegs == 0 || NumPhysRegs == RegInfo->getNumRegs()) &&
          "Target changed?");
@@ -65,6 +66,19 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   Tracking = false;
 }
 
+void RegScavenger::restoreScavengedReg() {
+  if (!ScavengedReg)
+    return;
+
+  RegInfo->loadRegFromStackSlot(*MBB, MBBI, ScavengedReg,
+                                ScavengingFrameIndex, ScavengedRC);
+  MachineBasicBlock::iterator II = prior(MBBI);
+  RegInfo->eliminateFrameIndex(II, this);
+  setUsed(ScavengedReg);
+  ScavengedReg = 0;
+  ScavengedRC = NULL;
+}
+
 void RegScavenger::forward() {
   // Move ptr forward.
   if (!Tracking) {
@@ -76,6 +90,12 @@ void RegScavenger::forward() {
   }
 
   MachineInstr *MI = MBBI;
+
+  // Reaching a terminator instruction. Restore a scavenged register (which
+  // must be life out.
+  if (TII->isTerminatorInstr(MI->getOpcode()))
+    restoreScavengedReg();
+
   // Process uses first.
   BitVector ChangedRegs(NumPhysRegs);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -85,7 +105,13 @@ void RegScavenger::forward() {
     unsigned Reg = MO.getReg();
     if (Reg == 0)
       continue;
-    assert(isUsed(Reg));
+    if (!isUsed(Reg)) {
+      // Register has been scavenged. Restore it!
+      if (Reg != ScavengedReg)
+        assert(false);
+      else
+        restoreScavengedReg();
+    }
     if (MO.isKill() && !isReserved(Reg))
       ChangedRegs.set(Reg);
   }
@@ -190,4 +216,66 @@ unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
   // Returns the first unused (bit is set) register, or 0 is none is found.
   int Reg = RegStatesCopy.find_first();
   return (Reg == -1) ? 0 : Reg;
+}
+
+/// calcDistanceToUse - Calculate the distance to the first use of the
+/// specified register.
+static unsigned calcDistanceToUse(MachineBasicBlock *MBB,
+                                  MachineBasicBlock::iterator I, unsigned Reg) {
+  unsigned Dist = 0;
+  I = next(I);
+  while (I != MBB->end()) {
+    Dist++;
+    if (I->findRegisterUseOperand(Reg))
+        return Dist;
+    I = next(I);    
+  }
+  return Dist + 1;
+}
+
+unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
+                                        MachineBasicBlock::iterator I) {
+  assert(ScavengingFrameIndex >= 0 &&
+         "Cannot scavenge a register without an emergency spill slot!");
+
+  // Mask off the registers which are not in the TargetRegisterClass.
+  BitVector Candidates(NumPhysRegs, false);
+  CreateRegClassMask(RC, Candidates);
+  Candidates ^= ReservedRegs;  // Do not include reserved registers.
+
+  // Exclude all the registers being used by the instruction.
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = I->getOperand(i);
+    if (MO.isReg())
+      Candidates.reset(MO.getReg());
+  }
+
+  // Find the register whose use is furtherest aaway.
+  unsigned SReg = 0;
+  unsigned MaxDist = 0;
+  int Reg = Candidates.find_first();
+  while (Reg != -1) {
+    unsigned Dist = calcDistanceToUse(MBB, I, Reg);
+    if (Dist >= MaxDist) {
+      MaxDist = Dist;
+      SReg = Reg;
+    }
+    Reg = Candidates.find_next(Reg);
+  }
+
+  if (ScavengedReg != 0) {
+    // First restore previously scavenged register.
+    RegInfo->loadRegFromStackSlot(*MBB, I, ScavengedReg,
+                                  ScavengingFrameIndex, ScavengedRC);
+    MachineBasicBlock::iterator II = prior(I);
+    RegInfo->eliminateFrameIndex(II, this);
+  }
+
+  RegInfo->storeRegToStackSlot(*MBB, I, SReg, ScavengingFrameIndex, RC);
+  MachineBasicBlock::iterator II = prior(I);
+  RegInfo->eliminateFrameIndex(II, this);
+  ScavengedReg = SReg;
+  ScavengedRC = RC;
+
+  return SReg;
 }
