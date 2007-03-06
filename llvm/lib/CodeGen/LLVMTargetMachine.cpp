@@ -14,6 +14,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"

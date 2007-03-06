@@ -23,6 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -104,7 +105,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN LoopStrengthReduce : public FunctionPass {
+  class VISIBILITY_HIDDEN LoopStrengthReduce : public LoopPass {
     LoopInfo *LI;
     ETForest *EF;
     ScalarEvolution *SE;
@@ -143,19 +144,7 @@ namespace {
       : TLI(tli) {
     }
 
-    virtual bool runOnFunction(Function &) {
-      LI = &getAnalysis<LoopInfo>();
-      EF = &getAnalysis<ETForest>();
-      SE = &getAnalysis<ScalarEvolution>();
-      TD = &getAnalysis<TargetData>();
-      UIntPtrTy = TD->getIntPtrType();
-      Changed = false;
-
-      for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
-        runOnLoop(*I);
-      
-      return Changed;
-    }
+    bool runOnLoop(Loop *L, LPPassManager &LPM);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       // We split critical edges, so we change the CFG.  However, we do update
@@ -179,7 +168,6 @@ namespace {
     ///
     Value *getCastedVersionOf(Instruction::CastOps opcode, Value *V);
 private:
-    void runOnLoop(Loop *L);
     bool AddUsersIfInteresting(Instruction *I, Loop *L,
                                std::set<Instruction*> &Processed);
     SCEVHandle GetExpressionSCEV(Instruction *E, Loop *L);
@@ -196,7 +184,7 @@ private:
   RegisterPass<LoopStrengthReduce> X("loop-reduce", "Loop Strength Reduction");
 }
 
-FunctionPass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
+LoopPass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
   return new LoopStrengthReduce(TLI);
 }
 
@@ -1271,12 +1259,15 @@ namespace {
   };
 }
 
-void LoopStrengthReduce::runOnLoop(Loop *L) {
-  // First step, transform all loops nesting inside of this loop.
-  for (LoopInfo::iterator I = L->begin(), E = L->end(); I != E; ++I)
-    runOnLoop(*I);
+bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 
-  // Next, find all uses of induction variables in this loop, and catagorize
+  LI = &getAnalysis<LoopInfo>();
+  EF = &getAnalysis<ETForest>();
+  SE = &getAnalysis<ScalarEvolution>();
+  TD = &getAnalysis<TargetData>();
+  UIntPtrTy = TD->getIntPtrType();
+
+  // Find all uses of induction variables in this loop, and catagorize
   // them by stride.  Start by finding all of the PHI nodes in the header for
   // this loop.  If they are induction variables, inspect their uses.
   std::set<Instruction*> Processed;   // Don't reprocess instructions.
@@ -1284,7 +1275,7 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
     AddUsersIfInteresting(I, L, Processed);
 
   // If we have nothing to do, return.
-  if (IVUsesByStride.empty()) return;
+  if (IVUsesByStride.empty()) return false;
 
   // Optimize induction variables.  Some indvar uses can be transformed to use
   // strides that will be needed for other purposes.  A common example of this
@@ -1368,5 +1359,5 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   CastedPointers.clear();
   IVUsesByStride.clear();
   StrideOrder.clear();
-  return;
+  return false;
 }

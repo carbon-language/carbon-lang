@@ -20,6 +20,7 @@
 namespace llvm {
 
 class FunctionPass;
+class LoopPass;
 class Pass;
 class GetElementPtrInst;
 class PassInfo;
@@ -120,7 +121,7 @@ FunctionPass *createLICMPass();
 // optional parameter used to consult the target machine whether certain
 // transformations are profitable.
 //
-FunctionPass *createLoopStrengthReducePass(const TargetLowering *TLI = NULL);
+LoopPass *createLoopStrengthReducePass(const TargetLowering *TLI = NULL);
 
 //===----------------------------------------------------------------------===//
 //
