@@ -176,7 +176,7 @@ public:
   const GlobalValue *getGlobalValueAtAddress(void *Addr);
 
 
-  void StoreValueToMemory(GenericValue Val, GenericValue *Ptr, const Type *Ty);
+  void StoreValueToMemory(const GenericValue &Val, GenericValue *Ptr, const Type *Ty);
   void InitializeMemory(const Constant *Init, void *Addr);
 
   /// recompileAndRelinkFunction - This method is used to force a function
