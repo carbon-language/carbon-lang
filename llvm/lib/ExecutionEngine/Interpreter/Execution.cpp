@@ -1058,7 +1058,11 @@ GenericValue Interpreter::executeIntToPtrInst(Value *SrcVal, const Type *DstTy,
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
   assert(isa<PointerType>(DstTy) && "Invalid PtrToInt instruction");
 
-  Dest.PointerVal = (PointerTy) Src.IntVal.trunc(64).getZExtValue();
+  uint32_t PtrSize = TD.getPointerSize();
+  if (PtrSize != Src.IntVal.getBitWidth())
+    Src.IntVal = Src.IntVal.trunc(PtrSize);
+
+  Dest.PointerVal = (PointerTy) Src.IntVal.getZExtValue();
   return Dest;
 }
 
