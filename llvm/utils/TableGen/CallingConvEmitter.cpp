@@ -123,8 +123,8 @@ void CallingConvEmitter::EmitAction(Record *Action,
     } else if (Action->isSubClassOf("CCPromoteToType")) {
       Record *DestTy = Action->getValueAsDef("DestTy");
       O << IndentStr << "LocVT = " << getEnumName(getValueType(DestTy)) <<";\n";
-      O << IndentStr << "LocInfo = (ArgFlags & 1) ? CCValAssign::SExt"
-        << " : CCValAssign::ZExt;\n";
+      O << IndentStr << "LocInfo = (ArgFlags & SDISelParamFlags::Signed) ? \n"
+        << IndentStr << IndentStr << "CCValAssign::SExt : CCValAssign::ZExt;\n";
     } else {
       Action->dump();
       throw "Unknown CCAction!";

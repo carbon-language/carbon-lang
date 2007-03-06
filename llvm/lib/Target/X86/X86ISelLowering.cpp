@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
@@ -665,10 +666,12 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
     BytesToPopOnReturn  = StackSize;    // Callee pops everything..
     BytesCallerReserves = 0;
   } else {
-    BytesToPopOnReturn  = 0; // Callee pops hidden struct pointer.
+    BytesToPopOnReturn  = 0; // Callee pops nothing.
     
     // If this is an sret function, the return should pop the hidden pointer.
-    if (NumArgs && (cast<ConstantSDNode>(Op.getOperand(3))->getValue() & 4))
+    if (NumArgs &&
+        (cast<ConstantSDNode>(Op.getOperand(3))->getValue() &
+         SDISelParamFlags::StructReturn))
       BytesToPopOnReturn = 4;  
     
     BytesCallerReserves = StackSize;
@@ -740,7 +743,9 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   }
 
   // If the first argument is an sret pointer, remember it.
-  bool isSRet = NumOps &&(cast<ConstantSDNode>(Op.getOperand(6))->getValue()&4);
+  bool isSRet = NumOps &&
+    (cast<ConstantSDNode>(Op.getOperand(6))->getValue() &
+     SDISelParamFlags::StructReturn);
   
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
