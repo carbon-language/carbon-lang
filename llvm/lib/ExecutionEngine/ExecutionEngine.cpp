@@ -302,82 +302,191 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
 /// part is if C is a ConstantExpr.
 /// @brief Get a GenericValue for a Constnat*
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
-  // Declare the result as garbage.
-  GenericValue Result;
-
   // If its undefined, return the garbage.
-  if (isa<UndefValue>(C)) return Result;
+  if (isa<UndefValue>(C)) 
+    return GenericValue();
 
   // If the value is a ConstantExpr
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    Constant *Op0 = CE->getOperand(0);
     switch (CE->getOpcode()) {
     case Instruction::GetElementPtr: {
       // Compute the index 
-      Result = getConstantValue(CE->getOperand(0));
+      GenericValue Result = getConstantValue(Op0);
       SmallVector<Value*, 8> Indices(CE->op_begin()+1, CE->op_end());
       uint64_t Offset =
-        TD->getIndexedOffset(CE->getOperand(0)->getType(),
-                             &Indices[0], Indices.size());
+        TD->getIndexedOffset(Op0->getType(), &Indices[0], Indices.size());
 
       char* tmp = (char*) Result.PointerVal;
       Result = PTOGV(tmp + Offset);
       return Result;
     }
-    case Instruction::Trunc:
-    case Instruction::ZExt:
-    case Instruction::SExt:
-    case Instruction::FPTrunc:
-    case Instruction::FPExt:
-    case Instruction::UIToFP:
-    case Instruction::SIToFP:
-    case Instruction::FPToUI:
-    case Instruction::FPToSI:
-      break;
+    case Instruction::Trunc: {
+      GenericValue GV = getConstantValue(Op0);
+      uint32_t BitWidth = cast<IntegerType>(CE->getType())->getBitWidth();
+      GV.IntVal = GV.IntVal.trunc(BitWidth);
+      return GV;
+    }
+    case Instruction::ZExt: {
+      GenericValue GV = getConstantValue(Op0);
+      uint32_t BitWidth = cast<IntegerType>(CE->getType())->getBitWidth();
+      GV.IntVal = GV.IntVal.zext(BitWidth);
+      return GV;
+    }
+    case Instruction::SExt: {
+      GenericValue GV = getConstantValue(Op0);
+      uint32_t BitWidth = cast<IntegerType>(CE->getType())->getBitWidth();
+      GV.IntVal = GV.IntVal.sext(BitWidth);
+      return GV;
+    }
+    case Instruction::FPTrunc: {
+      GenericValue GV = getConstantValue(Op0);
+      GV.FloatVal = float(GV.DoubleVal);
+      return GV;
+    }
+    case Instruction::FPExt:{
+      GenericValue GV = getConstantValue(Op0);
+      GV.DoubleVal = double(GV.FloatVal);
+      return GV;
+    }
+    case Instruction::UIToFP: {
+      GenericValue GV = getConstantValue(Op0);
+      if (CE->getType() == Type::FloatTy)
+        GV.FloatVal = float(GV.IntVal.roundToDouble());
+      else
+        GV.DoubleVal = GV.IntVal.roundToDouble();
+      return GV;
+    }
+    case Instruction::SIToFP: {
+      GenericValue GV = getConstantValue(Op0);
+      if (CE->getType() == Type::FloatTy)
+        GV.FloatVal = float(GV.IntVal.signedRoundToDouble());
+      else
+        GV.DoubleVal = GV.IntVal.signedRoundToDouble();
+      return GV;
+    }
+    case Instruction::FPToUI: // double->APInt conversion handles sign
+    case Instruction::FPToSI: {
+      GenericValue GV = getConstantValue(Op0);
+      uint32_t BitWidth = cast<IntegerType>(CE->getType())->getBitWidth();
+      if (Op0->getType() == Type::FloatTy)
+        GV.IntVal = APIntOps::RoundFloatToAPInt(GV.FloatVal, BitWidth);
+      else
+        GV.IntVal = APIntOps::RoundDoubleToAPInt(GV.DoubleVal, BitWidth);
+      return GV;
+    }
     case Instruction::PtrToInt: {
-      Constant *Op = CE->getOperand(0);
-      GenericValue GV = getConstantValue(Op);
+      GenericValue GV = getConstantValue(Op0);
+      uint32_t PtrWidth = TD->getPointerSizeInBits();
+      GV.IntVal = APInt(PtrWidth, uintptr_t(GV.PointerVal));
+      return GV;
+    }
+    case Instruction::IntToPtr: {
+      GenericValue GV = getConstantValue(Op0);
+      uint32_t PtrWidth = TD->getPointerSizeInBits();
+      if (PtrWidth != GV.IntVal.getBitWidth())
+        GV.IntVal = GV.IntVal.zextOrTrunc(PtrWidth);
+      assert(GV.IntVal.getBitWidth() <= 64 && "Bad pointer width");
+      GV.PointerVal = PointerTy(uintptr_t(GV.IntVal.getZExtValue()));
       return GV;
     }
     case Instruction::BitCast: {
-      // Bit casts are no-ops but we can only return the GV of the operand if
-      // they are the same basic type (pointer->pointer, packed->packed, etc.)
-      Constant *Op = CE->getOperand(0);
-      GenericValue GV = getConstantValue(Op);
-      if (Op->getType()->getTypeID() == C->getType()->getTypeID())
-        return GV;
-      break;
-    }
-    case Instruction::IntToPtr: {
-      // IntToPtr casts are just so special. Cast to intptr_t first.
-      Constant *Op = CE->getOperand(0);
-      GenericValue GV = getConstantValue(Op);
-      return PTOGV((void*)(uintptr_t)GV.IntVal.getZExtValue());
-      break;
+      GenericValue GV = getConstantValue(Op0);
+      const Type* DestTy = CE->getType();
+      switch (Op0->getType()->getTypeID()) {
+        default: assert(0 && "Invalid bitcast operand");
+        case Type::IntegerTyID:
+          assert(DestTy->isFloatingPoint() && "invalid bitcast");
+          if (DestTy == Type::FloatTy)
+            GV.FloatVal = GV.IntVal.bitsToFloat();
+          else if (DestTy == Type::DoubleTy)
+            GV.DoubleVal = GV.IntVal.bitsToDouble();
+          break;
+        case Type::FloatTyID: 
+          assert(DestTy == Type::Int32Ty && "Invalid bitcast");
+          GV.IntVal.floatToBits(GV.FloatVal);
+          break;
+        case Type::DoubleTyID:
+          assert(DestTy == Type::Int64Ty && "Invalid bitcast");
+          GV.IntVal.doubleToBits(GV.DoubleVal);
+          break;
+        case Type::PointerTyID:
+          assert(isa<PointerType>(DestTy) && "Invalid bitcast");
+          break; // getConstantValue(Op0)  above already converted it
+      }
+      return GV;
     }
     case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::Mul:
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor: {
+      GenericValue LHS = getConstantValue(Op0);
+      GenericValue RHS = getConstantValue(CE->getOperand(1));
+      GenericValue GV;
       switch (CE->getOperand(0)->getType()->getTypeID()) {
       default: assert(0 && "Bad add type!"); abort();
       case Type::IntegerTyID:
-        Result.IntVal = getConstantValue(CE->getOperand(0)).IntVal + \
-                        getConstantValue(CE->getOperand(1)).IntVal;
+        switch (CE->getOpcode()) {
+          default: assert(0 && "Invalid integer opcode");
+          case Instruction::Add: GV.IntVal = LHS.IntVal + RHS.IntVal; break;
+          case Instruction::Sub: GV.IntVal = LHS.IntVal - RHS.IntVal; break;
+          case Instruction::Mul: GV.IntVal = LHS.IntVal * RHS.IntVal; break;
+          case Instruction::UDiv:GV.IntVal = LHS.IntVal.udiv(RHS.IntVal); break;
+          case Instruction::SDiv:GV.IntVal = LHS.IntVal.sdiv(RHS.IntVal); break;
+          case Instruction::URem:GV.IntVal = LHS.IntVal.urem(RHS.IntVal); break;
+          case Instruction::SRem:GV.IntVal = LHS.IntVal.srem(RHS.IntVal); break;
+          case Instruction::And: GV.IntVal = LHS.IntVal & RHS.IntVal; break;
+          case Instruction::Or:  GV.IntVal = LHS.IntVal | RHS.IntVal; break;
+          case Instruction::Xor: GV.IntVal = LHS.IntVal ^ RHS.IntVal; break;
+        }
         break;
       case Type::FloatTyID:
-        Result.FloatVal = getConstantValue(CE->getOperand(0)).FloatVal +
-                          getConstantValue(CE->getOperand(1)).FloatVal;
+        switch (CE->getOpcode()) {
+          default: assert(0 && "Invalid float opcode"); abort();
+          case Instruction::Add:  
+            GV.FloatVal = LHS.FloatVal + RHS.FloatVal; break;
+          case Instruction::Sub:  
+            GV.FloatVal = LHS.FloatVal - RHS.FloatVal; break;
+          case Instruction::Mul:  
+            GV.FloatVal = LHS.FloatVal * RHS.FloatVal; break;
+          case Instruction::FDiv: 
+            GV.FloatVal = LHS.FloatVal / RHS.FloatVal; break;
+          case Instruction::FRem: 
+            GV.FloatVal = ::fmodf(LHS.FloatVal,RHS.FloatVal); break;
+        }
         break;
       case Type::DoubleTyID:
-        Result.DoubleVal = getConstantValue(CE->getOperand(0)).DoubleVal +
-                           getConstantValue(CE->getOperand(1)).DoubleVal;
+        switch (CE->getOpcode()) {
+          default: assert(0 && "Invalid double opcode"); abort();
+          case Instruction::Add:  
+            GV.DoubleVal = LHS.DoubleVal + RHS.DoubleVal; break;
+          case Instruction::Sub:  
+            GV.DoubleVal = LHS.DoubleVal - RHS.DoubleVal; break;
+          case Instruction::Mul:  
+            GV.DoubleVal = LHS.DoubleVal * RHS.DoubleVal; break;
+          case Instruction::FDiv: 
+            GV.DoubleVal = LHS.DoubleVal / RHS.DoubleVal; break;
+          case Instruction::FRem: 
+            GV.DoubleVal = ::fmod(LHS.DoubleVal,RHS.DoubleVal); break;
+        }
         break;
       }
-      return Result;
+      return GV;
+    }
     default:
       break;
     }
-    cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
+    cerr << "ConstantExpr not handled: " << *CE << "\n";
     abort();
   }
 
+  GenericValue Result;
   switch (C->getType()->getTypeID()) {
   case Type::FloatTyID: 
     Result.FloatVal = (float)cast<ConstantFP>(C)->getValue(); 
@@ -399,7 +508,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       assert(0 && "Unknown constant pointer type!");
     break;
   default:
-    cerr << "ERROR: Constant unimp for type: " << *C->getType() << "\n";
+    cerr << "ERROR: Constant unimplemented for type: " << *C->getType() << "\n";
     abort();
   }
   return Result;
