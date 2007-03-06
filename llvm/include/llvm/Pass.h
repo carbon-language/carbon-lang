@@ -64,7 +64,8 @@ enum PassManagerType {
   PMT_CallGraphPassManager,  /// CGPassManager
   PMT_FunctionPassManager,   /// FPPassManager
   PMT_LoopPassManager,       /// LPPassManager
-  PMT_BasicBlockPassManager  /// BBPassManager
+  PMT_BasicBlockPassManager, /// BBPassManager
+  PMT_Last
 };
 
 typedef enum PassManagerType PassManagerType;

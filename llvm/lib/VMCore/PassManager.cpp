@@ -551,6 +551,27 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
         AvailableAnalysis.erase(Info);
     }
   }
+
+  // Check inherited analysis also. If P is not preserving analysis
+  // provided by parent manager then remove it here.
+  for (unsigned Index = 0; Index < PMT_Last; ++Index) {
+
+    if (!InheritedAnalysis[Index])
+      continue;
+
+    for (std::map<AnalysisID, Pass*>::iterator 
+           I = InheritedAnalysis[Index]->begin(),
+           E = InheritedAnalysis[Index]->end(); I != E; ) {
+      std::map<AnalysisID, Pass *>::iterator Info = I++;
+      if (std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
+          PreservedSet.end()) {
+        // Remove this analysis
+        if (!dynamic_cast<ImmutablePass*>(Info->second))
+          InheritedAnalysis[Index]->erase(Info);
+      }
+    }
+  }
+
 }
 
 /// Remove analysis passes that are not used any longer

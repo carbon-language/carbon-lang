@@ -197,6 +197,7 @@ private:
 /// used by pass managers.
 class PMDataManager {
 public:
+
   PMDataManager(int Depth) : TPM(NULL), Depth(Depth) {
     initializeAnalysisInfo();
   }
@@ -223,6 +224,8 @@ public:
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 
     AvailableAnalysis.clear();
+    for (unsigned i = 0; i < PMT_Last; ++i)
+      InheritedAnalysis[i] = NULL;
   }
 
   /// Populate RequiredPasses with the analysis pass that are required by
@@ -262,6 +265,19 @@ public:
     assert ( 0 && "Invalid use of getPassManagerType");
     return PMT_Unknown; 
   }
+
+  std::map<AnalysisID, Pass*> *getAvailableAnalysis() {
+    return &AvailableAnalysis;
+  }
+
+  // Collect AvailableAnalysis from all the active Pass Managers.
+  void populateInheritedAnalysis(PMStack &PMS) {
+    unsigned Index = 0;
+    for (PMStack::iterator I = PMS.begin(), E = PMS.end();
+         I != E; ++I)
+      InheritedAnalysis[Index++] = (*I)->getAvailableAnalysis();
+  }
+
 protected:
 
   // Top level manager.
@@ -269,6 +285,11 @@ protected:
 
   // Collection of pass that are managed by this manager
   std::vector<Pass *> PassVector;
+
+  // Collection of Analysis provided by Parent pass manager and
+  // used by current pass manager. At at time there can not be more
+  // then PMT_Last active pass mangers.
+  std::map<AnalysisID, Pass *> *InheritedAnalysis[PMT_Last];
 
 private:
   // Set of available Analysis. This information is used while scheduling 
