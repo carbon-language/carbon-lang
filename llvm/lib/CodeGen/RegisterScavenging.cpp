@@ -50,6 +50,8 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   }
 
   MBB = mbb;
+  ScavengedReg = 0;
+  ScavengedRC = NULL;
 
   // All registers started out unused.
   RegStates.set();
