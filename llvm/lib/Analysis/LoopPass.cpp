@@ -129,6 +129,31 @@ bool LPPassManager::runOnFunction(Function &F) {
 //===----------------------------------------------------------------------===//
 // LoopPass
 
+// Check if this pass is suitable for the current LPPassManager, if
+// available. This pass P is not suitable for a LPPassManager if P
+// is not preserving higher level analysis info used by other
+// LPPassManager passes. In such case, pop LPPassManager from the
+// stack. This will force assignPassManager() to create new
+// LPPassManger as expected.
+void LoopPass::preparePassManager(PMStack &PMS) {
+
+  // Find LPPassManager 
+  while (!PMS.empty()) {
+    if (PMS.top()->getPassManagerType() > PMT_LoopPassManager)
+      PMS.pop();
+    else;
+    break;
+  }
+
+  LPPassManager *LPPM = dynamic_cast<LPPassManager *>(PMS.top());
+
+  // If this pass is destroying high level information that is used
+  // by other passes that are managed by LPM then do not insert
+  // this pass in current LPM. Use new LPPassManager.
+  if (LPPM && !LPPM->preserveHigherLevelAnalysis(this)) 
+    PMS.pop();
+}
+
 /// Assign pass manager to manage this pass.
 void LoopPass::assignPassManager(PMStack &PMS,
                                  PassManagerType PreferredType) {

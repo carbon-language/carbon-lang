@@ -44,7 +44,15 @@ class LoopPass : public Pass {
   // Finalization hook does not supply Loop because at this time
   // loop nest is completely different.
   virtual bool doFinalization() { return false; }
- 
+
+  // Check if this pass is suitable for the current LPPassManager, if
+  // available. This pass P is not suitable for a LPPassManager if P
+  // is not preserving higher level analysis info used by other
+  // LPPassManager passes. In such case, pop LPPassManager from the
+  // stack. This will force assignPassManager() to create new
+  // LPPassManger as expected.
+  void preparePassManager(PMStack &PMS);
+
   /// Assign pass manager to manager this pass
   virtual void assignPassManager(PMStack &PMS,
 				 PassManagerType PMT = PMT_LoopPassManager);
