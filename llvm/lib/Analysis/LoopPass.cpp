@@ -24,13 +24,77 @@ using namespace llvm;
 LPPassManager::LPPassManager(int Depth) : PMDataManager(Depth) { 
   skipThisLoop = false;
   redoThisLoop = false;
+  LI = NULL;
+  CurrentLoop = NULL;
 }
 
-/// Delete loop from the loop queue. This is used by Loop pass to inform
-/// Loop Pass Manager that it should skip rest of the passes for this loop.
+/// Delete loop from the loop queue and loop hierarcy (LoopInfo). 
 void LPPassManager::deleteLoopFromQueue(Loop *L) {
-  // Do not pop loop from LQ here. It will be done by runOnFunction while loop.
-  skipThisLoop = true;
+
+  if (Loop *ParentLoop = L->getParentLoop()) { // Not a top-level loop.
+    // Reparent all of the blocks in this loop.  Since BBLoop had a parent,
+    // they are now all in it.
+    for (Loop::block_iterator I = L->block_begin(), E = L->block_end(); 
+         I != E; ++I)
+      if (LI->getLoopFor(*I) == L)    // Don't change blocks in subloops.
+        LI->changeLoopFor(*I, ParentLoop);
+    
+    // Remove the loop from its parent loop.
+    for (Loop::iterator I = ParentLoop->begin(), E = ParentLoop->end();;
+         ++I) {
+      assert(I != E && "Couldn't find loop");
+      if (*I == L) {
+        ParentLoop->removeChildLoop(I);
+        break;
+      }
+    }
+    
+    // Move all subloops into the parent loop.
+    while (L->begin() != L->end())
+      ParentLoop->addChildLoop(L->removeChildLoop(L->end()-1));
+  } else {
+    // Reparent all of the blocks in this loop.  Since BBLoop had no parent,
+    // they no longer in a loop at all.
+    
+    for (unsigned i = 0; i != L->getBlocks().size(); ++i) {
+      // Don't change blocks in subloops.
+      if (LI->getLoopFor(L->getBlocks()[i]) == L) {
+        LI->removeBlock(L->getBlocks()[i]);
+        --i;
+      }
+    }
+
+    // Remove the loop from the top-level LoopInfo object.
+    for (LoopInfo::iterator I = LI->begin(), E = LI->end();; ++I) {
+      assert(I != E && "Couldn't find loop");
+      if (*I == L) {
+        LI->removeLoop(I);
+        break;
+      }
+    }
+
+    // Move all of the subloops to the top-level.
+    while (L->begin() != L->end())
+      LI->addTopLevelLoop(L->removeChildLoop(L->end()-1));
+  }
+
+  delete L;
+
+  // If L is current loop then skip rest of the passes and let
+  // runOnFunction remove L from LQ. Otherwise, remove L from LQ now
+  // and continue applying other passes on CurrentLoop.
+  if (CurrentLoop == L) {
+    skipThisLoop = true;
+    return;
+  }
+
+  for (std::deque<Loop *>::iterator I = LQ.begin(),
+         E = LQ.end(); I != E; ++I) {
+    if (*I == L) {
+      LQ.erase(I);
+      break;
+    }
+  }
 }
 
 // Reoptimize this loop. LPPassManager will re-insert this loop into the
@@ -72,7 +136,7 @@ bool LPPassManager::runOnFunction(Function &F) {
   // Walk Loops
   while (!LQ.empty()) {
       
-    Loop *L  = LQ.back();
+    CurrentLoop  = LQ.back();
     skipThisLoop = false;
     redoThisLoop = false;
 
@@ -91,7 +155,7 @@ bool LPPassManager::runOnFunction(Function &F) {
       StartPassTimer(P);
       LoopPass *LP = dynamic_cast<LoopPass *>(P);
       assert (LP && "Invalid LPPassManager member");
-      LP->runOnLoop(L, *this);
+      LP->runOnLoop(CurrentLoop, *this);
       StopPassTimer(P);
 
       if (Changed)
@@ -111,7 +175,7 @@ bool LPPassManager::runOnFunction(Function &F) {
     LQ.pop_back();
     
     if (redoThisLoop)
-      LQ.push_back(L);
+      LQ.push_back(CurrentLoop);
   }
   
   // Finalization

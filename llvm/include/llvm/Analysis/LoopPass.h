@@ -113,6 +113,8 @@ private:
   std::deque<Loop *> LQ;
   bool skipThisLoop;
   bool redoThisLoop;
+  LoopInfo *LI;
+  Loop *CurrentLoop;
 };
 
 } // End llvm namespace
