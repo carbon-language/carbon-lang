@@ -39,6 +39,9 @@ namespace {
     /// frame indexes with appropriate references.
     ///
     bool runOnMachineFunction(MachineFunction &Fn) {
+      const MRegisterInfo *MRI = Fn.getTarget().getRegisterInfo();
+      RS = MRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
+
       // Get MachineModuleInfo so that we can track the construction of the
       // frame.
       if (MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>()) {
@@ -47,8 +50,7 @@ namespace {
 
       // Allow the target machine to make some adjustments to the function
       // e.g. UsedPhysRegs before calculateCalleeSavedRegisters.
-      Fn.getTarget().getRegisterInfo()
-        ->processFunctionBeforeCalleeSavedScan(Fn);
+      MRI->processFunctionBeforeCalleeSavedScan(Fn, RS);
 
       // Scan the function for modified callee saved registers and insert spill
       // code for any callee saved registers that are modified.  Also calculate
@@ -78,10 +80,13 @@ namespace {
       //
       replaceFrameIndices(Fn);
 
+      delete RS;
       return true;
     }
   
   private:
+    RegScavenger *RS;
+
     // MinCSFrameIndex, MaxCSFrameIndex - Keeps the range of callee saved
     // stack frame indexes.
     unsigned MinCSFrameIndex, MaxCSFrameIndex;
@@ -363,10 +368,36 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     }
   }
 
+  // Make sure the special register scavenging spill slot is closest to the
+  // frame pointer if a frame pointer is required.
+  const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
+  if (RS && RegInfo->hasFP(Fn)) {
+    int SFI = RS->getScavengingFrameIndex();
+    if (SFI >= 0) {
+      // If stack grows down, we need to add size of find the lowest
+      // address of the object.
+      if (StackGrowsDown)
+        Offset += FFI->getObjectSize(SFI);
+
+      unsigned Align = FFI->getObjectAlignment(SFI);
+      // Adjust to alignment boundary
+      Offset = (Offset+Align-1)/Align*Align;
+
+      if (StackGrowsDown) {
+        FFI->setObjectOffset(SFI, -Offset);        // Set the computed offset
+      } else {
+        FFI->setObjectOffset(SFI, Offset);
+        Offset += FFI->getObjectSize(SFI);
+      }
+    }
+  }
+
   // Then assign frame offsets to stack objects that are not used to spill
   // callee saved registers.
   for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
     if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
+      continue;
+    if (RS && (int)i == RS->getScavengingFrameIndex())
       continue;
 
     // If stack grows down, we need to add size of find the lowest
@@ -389,10 +420,32 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     }
   }
 
+  // Make sure the special register scavenging spill slot is closest to the
+  // stack pointer.
+  if (RS) {
+    int SFI = RS->getScavengingFrameIndex();
+    if (SFI >= 0) {
+      // If stack grows down, we need to add size of find the lowest
+      // address of the object.
+      if (StackGrowsDown)
+        Offset += FFI->getObjectSize(SFI);
+
+      unsigned Align = FFI->getObjectAlignment(SFI);
+      // Adjust to alignment boundary
+      Offset = (Offset+Align-1)/Align*Align;
+
+      if (StackGrowsDown) {
+        FFI->setObjectOffset(SFI, -Offset);        // Set the computed offset
+      } else {
+        FFI->setObjectOffset(SFI, Offset);
+        Offset += FFI->getObjectSize(SFI);
+      }
+    }
+  }
+
   // Round up the size to a multiple of the alignment, but only if there are
   // calls or alloca's in the function.  This ensures that any calls to
   // subroutines have their stack frames suitable aligned.
-  const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
   if (!RegInfo->targetHandlesStackFrameRounding() &&
       (FFI->hasCalls() || FFI->hasVarSizedObjects())) {
     // When we have no frame pointer, we reserve argument space for call sites
@@ -442,7 +495,6 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
   assert(TM.getRegisterInfo() && "TM::getRegisterInfo() must be implemented!");
   const MRegisterInfo &MRI = *TM.getRegisterInfo();
-  RegScavenger *RS=MRI.requiresRegisterScavenging(Fn) ? new RegScavenger():NULL;
 
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     if (RS) RS->enterBasicBlock(BB);
@@ -458,7 +510,4 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
       if (RS) RS->forward(I);
     }
   }
-
-  delete RS;
 }
-
