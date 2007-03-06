@@ -18,6 +18,7 @@
 #include "PPCPerfectShuffle.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -1096,6 +1097,8 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
                       SV->getOffset());
 }
 
+#include "PPCGenCallingConv.inc"
+
 /// GetFPR - Get the set of FP registers that should be allocated for arguments,
 /// depending on which subtarget is selected.
 static const unsigned *GetFPR(const PPCSubtarget &Subtarget) {
@@ -1626,47 +1629,34 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
   return Res.getValue(Op.ResNo);
 }
 
-static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
+static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, TargetMachine &TM) {
+  SmallVector<CCValAssign, 16> RVLocs;
+  unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
+  CCState CCInfo(CC, TM, RVLocs);
+  CCInfo.AnalyzeReturn(Op.Val, RetCC_PPC);
+  
+  // If this is the first return lowered for this function, add the regs to the
+  // liveout set for the function.
+  if (DAG.getMachineFunction().liveout_empty()) {
+    for (unsigned i = 0; i != RVLocs.size(); ++i)
+      DAG.getMachineFunction().addLiveOut(RVLocs[i].getLocReg());
+  }
+
   SDOperand Chain = Op.getOperand(0);
-  switch(Op.getNumOperands()) {
-  default:
-    assert(0 && "Do not know how to return this many arguments!");
-    abort();
-  case 1: 
+  SDOperand Flag;
+  
+  // Copy the result values into the output registers.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    CCValAssign &VA = RVLocs[i];
+    assert(VA.isRegLoc() && "Can only return in registers!");
+    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), Op.getOperand(i*2+1), Flag);
+    Flag = Chain.getValue(1);
+  }
+
+  if (Flag.Val)
+    return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain, Flag);
+  else
     return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain);
-  case 3: {
-    MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
-    unsigned ArgReg;
-    if (ArgVT == MVT::i32) {
-      ArgReg = PPC::R3;
-    } else if (ArgVT == MVT::i64) {
-      ArgReg = PPC::X3;
-    } else if (MVT::isVector(ArgVT)) {
-      ArgReg = PPC::V2;
-    } else {
-      assert(MVT::isFloatingPoint(ArgVT));
-      ArgReg = PPC::F1;
-    }
-    
-    Chain = DAG.getCopyToReg(Chain, ArgReg, Op.getOperand(1), SDOperand());
-    
-    // If we haven't noted the R3/F1 are live out, do so now.
-    if (DAG.getMachineFunction().liveout_empty())
-      DAG.getMachineFunction().addLiveOut(ArgReg);
-    break;
-  }
-  case 5:
-    Chain = DAG.getCopyToReg(Chain, PPC::R3, Op.getOperand(3), SDOperand());
-    Chain = DAG.getCopyToReg(Chain, PPC::R4, Op.getOperand(1),
-                             Chain.getValue(1));
-    // If we haven't noted the R3+R4 are live out, do so now.
-    if (DAG.getMachineFunction().liveout_empty()) {
-      DAG.getMachineFunction().addLiveOut(PPC::R3);
-      DAG.getMachineFunction().addLiveOut(PPC::R4);
-    }
-    break;
-  }
-  return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Chain, Chain.getValue(1));
 }
 
 static SDOperand LowerSTACKRESTORE(SDOperand Op, SelectionDAG &DAG,
@@ -2677,7 +2667,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FORMAL_ARGUMENTS:
     return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex, PPCSubTarget);
   case ISD::CALL:               return LowerCALL(Op, DAG, PPCSubTarget);
-  case ISD::RET:                return LowerRET(Op, DAG);
+  case ISD::RET:                return LowerRET(Op, DAG, getTargetMachine());
   case ISD::STACKRESTORE:       return LowerSTACKRESTORE(Op, DAG, PPCSubTarget);
   case ISD::DYNAMIC_STACKALLOC:
     return LowerDYNAMIC_STACKALLOC(Op, DAG, PPCSubTarget);

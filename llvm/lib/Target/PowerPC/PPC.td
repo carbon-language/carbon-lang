@@ -89,6 +89,12 @@ def : Processor<"ppc64", G5Itineraries,
                    Feature64Bit /*, Feature64BitRegs */]>;
 
 
+//===----------------------------------------------------------------------===//
+// Calling Conventions
+//===----------------------------------------------------------------------===//
+
+include "PPCCallingConv.td"
+
 def PPCInstrInfo : InstrInfo {
   // Define how we want to layout our TargetSpecific information field... This
   // should be kept up-to-date with the fields in the PPCInstrInfo.h file.
