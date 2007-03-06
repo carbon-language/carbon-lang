@@ -1675,6 +1675,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         if (Tmp2.getValueType() != MVT::Vector) {
           SDOperand Lo, Hi;
           ExpandOp(Tmp2, Lo, Hi);
+
+          // Big endian systems want the hi reg first.
+          if (!TLI.isLittleEndian())
+            std::swap(Lo, Hi);
+          
           if (Hi.Val)
             Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3, Hi,Tmp3);
           else
