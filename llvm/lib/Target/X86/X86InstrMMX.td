@@ -13,7 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
 // Instruction templates
+//===----------------------------------------------------------------------===//
+
 // MMXI   - MMX instructions with TB prefix.
 // MMX2I  - MMX / SSE2 instructions with TB and OpSize prefixes.
 // MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
@@ -30,33 +33,42 @@ def IMPLICIT_DEF_VR64 : I<0, Pseudo, (ops VR64:$dst),
                           [(set VR64:$dst, (v8i8 (undef)))]>,
                         Requires<[HasMMX]>;
 
+def : Pat<(v8i8  (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
 def : Pat<(v4i16 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
 def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
 
-// EMMS
-def EMMS : I<0x77, RawFrm, (ops), "emms", [(int_x86_mmx_emms)]>, TB,
-           Requires<[HasMMX]>;
+//===----------------------------------------------------------------------===//
+// MMX Pattern Fragments
+//===----------------------------------------------------------------------===//
+
+def loadv2i32 : PatFrag<(ops node:$ptr), (v2i32 (load node:$ptr))>;
+
+//===----------------------------------------------------------------------===//
+// MMX EMMS Instruction
+//===----------------------------------------------------------------------===//
+
+def EMMS : MMXI<0x77, RawFrm, (ops), "emms", [(int_x86_mmx_emms)]>;
+
+//===----------------------------------------------------------------------===//
+// MMX Scalar Instructions
+//===----------------------------------------------------------------------===//
 
 // Move Instructions
-def MOVD64rr : I<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
-                 "movd {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasMMX]>;
-def MOVD64rm : I<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),
-                 "movd {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasMMX]>;
-def MOVD64mr : I<0x7E, MRMDestMem, (ops i32mem:$dst, VR64:$src),
-                 "movd {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasMMX]>;
+def MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
+                    "movd {$src, $dst|$dst, $src}", []>;
+def MOVD64rm : MMXI<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),
+                    "movd {$src, $dst|$dst, $src}", []>;
+def MOVD64mr : MMXI<0x7E, MRMDestMem, (ops i32mem:$dst, VR64:$src),
+                    "movd {$src, $dst|$dst, $src}", []>;
 
-def MOVQ64rr : I<0x6F, MRMSrcReg, (ops VR64:$dst, VR64:$src),
-                 "movq {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasMMX]>;
-def MOVQ64rm : I<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
-                 "movq {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasMMX]>;
-def MOVQ64mr : I<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
-                 "movq {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasMMX]>;
+def MOVQ64rr : MMXI<0x6F, MRMSrcReg, (ops VR64:$dst, VR64:$src),
+                    "movq {$src, $dst|$dst, $src}", []>;
+def MOVQ64rm : MMXI<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
+                    "movq {$src, $dst|$dst, $src}",
+                    [(set VR64:$dst, (loadv2i32 addr:$src))]>;
+def MOVQ64mr : MMXI<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
+                    "movq {$src, $dst|$dst, $src}",
+                    [(store (v2i32 VR64:$src), addr:$dst)]>;
 
 // Conversion instructions
 def CVTPI2PSrr : MMXI<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
@@ -98,3 +110,13 @@ def MOVNTQ   : I<0xE7, MRMDestMem, (ops i64mem:$dst, VR64:$src),
 def MASKMOVQ : I<0xF7, MRMDestMem, (ops VR64:$src, VR64:$mask),
                  "maskmovq {$mask, $src|$src, $mask}", []>, TB,
                Requires<[HasMMX]>;
+
+//===----------------------------------------------------------------------===//
+// Non-Instruction Patterns
+//===----------------------------------------------------------------------===//
+
+// Store 64-bit integer vector values.
+def : Pat<(store (v8i8  VR64:$src), addr:$dst),
+          (MOVQ64mr addr:$dst, VR64:$src)>;
+def : Pat<(store (v4i16 VR64:$src), addr:$dst),
+          (MOVQ64mr addr:$dst, VR64:$src)>;
