@@ -97,10 +97,42 @@ void LPPassManager::deleteLoopFromQueue(Loop *L) {
   }
 }
 
+// Inset loop into loop nest (LoopInfo) and loop queue (LQ).
+void LPPassManager::insertLoop(Loop *L, Loop *ParentLoop) {
+
+  assert (CurrentLoop != L && "Cannot insert CurrentLoop");
+
+  // Insert into loop nest
+  if (ParentLoop)
+    ParentLoop->addChildLoop(L);
+  else
+    LI->addTopLevelLoop(L);
+
+  // Insert L into loop queue
+  if (L == CurrentLoop) 
+    redoLoop(L);
+  else if (!ParentLoop)
+    // This is top level loop. 
+    LQ.push_front(L);
+  else {
+    // Insert L after ParentLoop
+    for (std::deque<Loop *>::iterator I = LQ.begin(),
+           E = LQ.end(); I != E; ++I) {
+      if (*I == ParentLoop) {
+        // deque does not support insert after.
+        ++I;
+        LQ.insert(I, 1, L);
+        break;
+      }
+    }
+  }
+}
+
 // Reoptimize this loop. LPPassManager will re-insert this loop into the
 // queue. This allows LoopPass to change loop nest for the loop. This
 // utility may send LPPassManager into infinite loops so use caution.
 void LPPassManager::redoLoop(Loop *L) {
+  assert (CurrentLoop != L && "Can redo only CurrentLoop");
   redoThisLoop = true;
 }
 

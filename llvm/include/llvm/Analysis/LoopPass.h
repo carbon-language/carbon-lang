@@ -101,9 +101,11 @@ public:
   }
 
 public:
-  // Delete loop from the loop queue. This is used by Loop pass to inform
-  // Loop Pass Manager that it should skip rest of the passes for this loop.
+  // Delete loop from the loop queue and loop nest (LoopInfo).
   void deleteLoopFromQueue(Loop *L);
+  
+  // Inset loop into the loop nest(LoopInfo) and loop queue(LQ).
+  void insertLoop(Loop *L, Loop *ParentLoop);
 
   // Reoptimize this loop. LPPassManager will re-insert this loop into the
   // queue. This allows LoopPass to change loop nest for the loop. This
