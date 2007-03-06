@@ -26,6 +26,16 @@
 
 using namespace llvm;
 
+bool llvm::sys::hasDisassembler(void) 
+{
+#if defined (__i386__) || defined (__amd64__) || defined (__x86_64__)
+  // We have option to enable udis86 library.
+  return true;
+#else
+  return false;
+#endif
+}
+
 std::string llvm::sys::disassembleBuffer(uint8_t* start, size_t length,
                                          uint64_t pc) {
   std::stringstream res;

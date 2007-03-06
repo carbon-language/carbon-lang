@@ -21,6 +21,10 @@
 namespace llvm {
 namespace sys {
 
+/// This function returns true, if there is possible to use some external
+/// disassembler library. False otherwise.
+bool hasDisassembler(void); 
+
 /// This function provides some "glue" code to call external disassembler
 /// libraries.
 std::string disassembleBuffer(uint8_t* start, size_t length, uint64_t pc = 0);

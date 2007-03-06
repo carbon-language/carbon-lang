@@ -876,8 +876,9 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   Relocations.clear();
 
 #ifndef NDEBUG
-  DOUT << "Disassembled code:\n"
-       << sys::disassembleBuffer(FnStart, FnEnd-FnStart, (uintptr_t)FnStart);
+  if (sys::hasDisassembler())
+    DOUT << "Disassembled code:\n"
+         << sys::disassembleBuffer(FnStart, FnEnd-FnStart, (uintptr_t)FnStart);
 #endif
   
   return false;
