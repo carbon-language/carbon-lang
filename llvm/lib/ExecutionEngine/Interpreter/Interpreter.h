@@ -76,18 +76,6 @@ struct ExecutionContext {
   CallSite             Caller;     // Holds the call that called subframes.
                                    // NULL if main func or debugger invoked fn
   AllocaHolderHandle    Allocas;    // Track memory allocated by alloca
-  std::vector<APInt*>   APInts;     // Track memory allocated for APInts
-  APInt* getAPInt(uint32_t BitWidth) {
-    APInt* Result = new APInt(BitWidth, 0);
-    APInts.push_back(Result);
-    return Result;
-  }
-  ~ExecutionContext() {
-    while (!APInts.empty()) {
-      delete APInts.back();
-      APInts.pop_back();
-    }
-  }
 };
 
 // Interpreter - This class represents the entirety of the interpreter.
