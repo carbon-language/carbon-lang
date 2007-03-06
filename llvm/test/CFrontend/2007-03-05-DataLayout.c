@@ -1,5 +1,5 @@
 // Testcase for PR1242
-// RUN: %llvmgcc -c %s -o %t && lli --force-interpreter=1 %t
+// RUN: %llvmgcc -S %s -o - | grep datalayout | wc -c | grep 130
 #include <stdlib.h>
 #define NDIM 3
 #define BODY 01
