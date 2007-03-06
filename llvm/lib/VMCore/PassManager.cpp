@@ -532,6 +532,30 @@ void PMDataManager::recordAvailableAnalysis(Pass *P) {
   }
 }
 
+// Return true if P preserves high level analysis used by other
+// passes managed by this manager
+bool PMDataManager::preserveHigherLevelAnalysis(Pass *P) {
+
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
+  
+  if (AnUsage.getPreservesAll())
+    return true;
+  
+  const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
+  for (std::vector<Pass *>::iterator I = HigherLevelAnalysis.begin(),
+         E = HigherLevelAnalysis.end(); I  != E; ++I) {
+    Pass *P1 = *I;
+    if (std::find(PreservedSet.begin(), PreservedSet.end(), P1->getPassInfo()) == 
+        PreservedSet.end()) {
+      if (!dynamic_cast<ImmutablePass*>(P1))
+        return false;
+    }
+  }
+  
+  return true;
+}
+
 /// Remove Analyss not preserved by Pass P
 void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
   AnalysisUsage AnUsage;
@@ -634,6 +658,8 @@ void PMDataManager::add(Pass *P,
       else if (PDepth >  RDepth) {
         // Let the parent claim responsibility of last use
         TransferLastUses.push_back(PRequired);
+        // Keep track of higher level analysis used by this manager.
+        HigherLevelAnalysis.push_back(PRequired);
       } else {
         // Note : This feature is not yet implemented
         assert (0 && 

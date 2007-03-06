@@ -228,6 +228,11 @@ public:
       InheritedAnalysis[i] = NULL;
   }
 
+  // Return true if P preserves high level analysis used by other
+  // passes that are managed by this manager.
+  bool preserveHigherLevelAnalysis(Pass *P);
+
+
   /// Populate RequiredPasses with the analysis pass that are required by
   /// pass P.
   void collectRequiredAnalysisPasses(std::vector<Pass *> &RequiredPasses,
@@ -297,6 +302,10 @@ private:
   // equired analysis pass is scheduled to run before the pass itself is 
   // scheduled to run.
   std::map<AnalysisID, Pass*> AvailableAnalysis;
+
+  // Collection of higher level analysis used by the pass managed by
+  // this manager.
+  std::vector<Pass *> HigherLevelAnalysis;
 
   unsigned Depth;
 };
