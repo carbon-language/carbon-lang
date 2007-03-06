@@ -27,16 +27,11 @@ struct ARMRegisterInfo : public ARMGenRegisterInfo {
   const TargetInstrInfo &TII;
   const ARMSubtarget &STI;
 private:
-  /// RS - An instance of the register scavenger.
-  RegScavenger *RS;
-
   /// FramePtr - ARM physical register used as frame ptr.
   unsigned FramePtr;
 
 public:
   ARMRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
-
-  ~ARMRegisterInfo();
 
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// ARM::LR, return the number that it corresponds to (e.g. 14).
@@ -74,6 +69,8 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
+  bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
+
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
   bool hasFP(const MachineFunction &MF) const;
@@ -85,7 +82,8 @@ public:
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            RegScavenger *RS = NULL) const;
 
-  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const;
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS = NULL) const;
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;

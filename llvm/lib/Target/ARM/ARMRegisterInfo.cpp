@@ -85,11 +85,6 @@ ARMRegisterInfo::ARMRegisterInfo(const TargetInstrInfo &tii,
   : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     TII(tii), STI(sti),
     FramePtr(STI.useThumbBacktraces() ? ARM::R7 : ARM::R11) {
-  RS = (EnableScavenging) ? new RegScavenger() : NULL;
-}
-
-ARMRegisterInfo::~ARMRegisterInfo() {
-  delete RS;
 }
 
 bool ARMRegisterInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
@@ -326,6 +321,25 @@ BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   if (MF.getUsedPhysregs() && !MF.isPhysRegUsed((unsigned)ARM::LR))
     Reserved.set(ARM::LR);
   return Reserved;
+}
+
+bool
+ARMRegisterInfo::isReservedReg(const MachineFunction &MF, unsigned Reg) const {
+  switch (Reg) {
+  default: break;
+  case ARM::SP:
+  case ARM::PC:
+    return true;
+  case ARM::R7:
+  case ARM::R11:
+    if (FramePtr == Reg && (STI.isTargetDarwin() || hasFP(MF)))
+      return true;
+    break;
+  case ARM::R9:
+    return STI.isR9Reserved();
+  }
+
+  return false;
 }
 
 bool
@@ -918,15 +932,34 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // to form it with a series of ADDri's.  Do this by taking 8-bit chunks
     // out of 'Offset'.
     unsigned ScratchReg = findScratchRegister(RS, &ARM::GPRRegClass, AFI);
-    assert(ScratchReg && "Unable to find a free register!");
+    if (ScratchReg == 0)
+      // No register is "free". Scavenge a register.
+      ScratchReg = RS->scavengeRegister(&ARM::GPRRegClass, II);
     emitARMRegPlusImmediate(MBB, II, ScratchReg, FrameReg,
                             isSub ? -Offset : Offset, TII);
     MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
   }
 }
 
-void ARMRegisterInfo::
-processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
+static unsigned estimateStackSize(MachineFunction &MF, MachineFrameInfo *MFI) {
+  const MachineFrameInfo *FFI = MF.getFrameInfo();
+  int Offset = 0;
+  for (int i = FFI->getObjectIndexBegin(); i != 0; ++i) {
+    int FixedOff = -FFI->getObjectOffset(i);
+    if (FixedOff > Offset) Offset = FixedOff;
+  }
+  for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
+    Offset += FFI->getObjectSize(i);
+    unsigned Align = FFI->getObjectAlignment(i);
+    // Adjust to alignment boundary
+    Offset = (Offset+Align-1)/Align*Align;
+  }
+  return (unsigned)Offset;
+}
+
+void
+ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                      RegScavenger *RS) const {
   // This tells PEI to spill the FP as if it is any other callee-save register
   // to take advantage the eliminateFrameIndex machinery. This also ensures it
   // is spilled in the order specified by getCalleeSavedRegs() to make it easier
@@ -1020,6 +1053,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
     }
   }
 
+  bool ExtraCSSpill = false;
   if (!CanEliminateFrame || hasFP(MF)) {
     AFI->setHasStackFrame(true);
 
@@ -1032,6 +1066,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
       UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
                                     UnspilledCS1GPRs.end(), (unsigned)ARM::LR));
       ForceLRSpill = false;
+      ExtraCSSpill = true;
     }
 
     // Darwin ABI requires FP to point to the stack slot that contains the
@@ -1050,10 +1085,74 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
         unsigned Reg = UnspilledCS1GPRs.front();
         MF.changePhyRegUsed(Reg, true);
         AFI->setCSRegisterIsSpilled(Reg);
+        if (!isReservedReg(MF, Reg))
+          ExtraCSSpill = true;
       } else if (!UnspilledCS2GPRs.empty()) {
         unsigned Reg = UnspilledCS2GPRs.front();
         MF.changePhyRegUsed(Reg, true);
         AFI->setCSRegisterIsSpilled(Reg);
+        if (!isReservedReg(MF, Reg))
+          ExtraCSSpill = true;
+      }
+    }
+
+    // Estimate if we might need to scavenge a register at some point in order
+    // to materialize a stack offset. If so, either spill one additiona
+    // callee-saved register or reserve a special spill slot to facilitate
+    // register scavenging.
+    if (RS && !ExtraCSSpill && !AFI->isThumbFunction()) {
+      MachineFrameInfo  *MFI = MF.getFrameInfo();
+      unsigned Size = estimateStackSize(MF, MFI);
+      unsigned Limit = (1 << 12) - 1;
+      for (MachineFunction::iterator BB = MF.begin(),E = MF.end();BB != E; ++BB)
+        for (MachineBasicBlock::iterator I= BB->begin(); I != BB->end(); ++I) {
+          for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+            if (I->getOperand(i).isFrameIndex()) {
+              unsigned Opcode = I->getOpcode();
+              const TargetInstrDescriptor &Desc = TII.get(Opcode);
+              unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
+              if (AddrMode == ARMII::AddrMode3) {
+                Limit = (1 << 8) - 1;
+                goto DoneEstimating;
+              } else if (AddrMode == ARMII::AddrMode5) {
+                Limit = ((1 << 8) - 1) * 4;
+                goto DoneEstimating;
+              }
+            }
+        }
+    DoneEstimating:
+      if (Size >= Limit) {
+        // If any non-reserved CS register isn't spilled, just spill one or two
+        // extra. That should take care of it!
+        unsigned NumExtras = TargetAlign / 4;
+        SmallVector<unsigned, 2> Extras;
+        while (NumExtras && !UnspilledCS1GPRs.empty()) {
+          unsigned Reg = UnspilledCS1GPRs.back();
+          UnspilledCS1GPRs.pop_back();
+          if (!isReservedReg(MF, Reg)) {
+            Extras.push_back(Reg);
+            NumExtras--;
+          }
+        }
+        while (NumExtras && !UnspilledCS2GPRs.empty()) {
+          unsigned Reg = UnspilledCS2GPRs.back();
+          UnspilledCS2GPRs.pop_back();
+          if (!isReservedReg(MF, Reg)) {
+            Extras.push_back(Reg);
+            NumExtras--;
+          }
+        }
+        if (Extras.size() && NumExtras == 0) {
+          for (unsigned i = 0, e = Extras.size(); i != e; ++i) {
+            MF.changePhyRegUsed(Extras[i], true);
+            AFI->setCSRegisterIsSpilled(Extras[i]);
+          }
+        } else {
+          // Reserve a slot closest to SP or frame pointer.
+          const TargetRegisterClass *RC = &ARM::GPRRegClass;
+          RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+                                                           RC->getAlignment()));
+        }
       }
     }
   }
