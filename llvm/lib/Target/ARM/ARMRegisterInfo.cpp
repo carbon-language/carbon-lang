@@ -36,8 +36,9 @@
 #include <algorithm>
 using namespace llvm;
 
-static cl::opt<bool> EnableScavenging("enable-arm-reg-scavenging", cl::Hidden,
-                                 cl::desc("Enable register scavenging on ARM"));
+static cl::opt<bool> ThumbRegScavenging("enable-thumb-reg-scavenging",
+                               cl::Hidden,
+                               cl::desc("Enable register scavenging on Thumb"));
 
 unsigned ARMRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   using namespace ARM;
@@ -345,7 +346,7 @@ ARMRegisterInfo::isReservedReg(const MachineFunction &MF, unsigned Reg) const {
 bool
 ARMRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  return EnableScavenging && !AFI->isThumbFunction();
+  return ThumbRegScavenging || !AFI->isThumbFunction();
 }
 
 /// hasFP - Return true if the specified function should have a dedicated frame
