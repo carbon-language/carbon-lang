@@ -30,6 +30,7 @@ namespace clang {
   class TypeRef;
   class LangOptions;
   class DeclaratorChunk;
+  class LexerToken;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -53,6 +54,8 @@ public:
   
   void Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());
+  void Diag(const LexerToken &Tok, unsigned DiagID,
+            const std::string &M = std::string());
   
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
@@ -155,8 +158,7 @@ public:
                                          bool HasTrailingLParen);
   virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
                                             tok::TokenKind Kind);
-  virtual ExprResult ParseIntegerLiteral(SourceLocation Loc);
-  virtual ExprResult ParseFloatingLiteral(SourceLocation Loc);
+  virtual ExprResult ParseNumericConstant(const LexerToken &);
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val);
 

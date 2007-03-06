@@ -285,11 +285,234 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
   }
 }
 
-Sema::ExprResult Sema::ParseIntegerLiteral(SourceLocation Loc) {
-  return new IntegerLiteral();
-}
-Sema::ExprResult Sema::ParseFloatingLiteral(SourceLocation Loc) {
-  return new FloatingLiteral();
+///       integer-constant: [C99 6.4.4.1]
+///         decimal-constant integer-suffix
+///         octal-constant integer-suffix
+///         hexadecimal-constant integer-suffix
+///       decimal-constant: 
+///         nonzero-digit
+///         decimal-constant digit
+///       octal-constant: 
+///         0
+///         octal-constant octal-digit
+///       hexadecimal-constant: 
+///         hexadecimal-prefix hexadecimal-digit
+///         hexadecimal-constant hexadecimal-digit
+///       hexadecimal-prefix: one of
+///         0x 0X
+///       integer-suffix:
+///         unsigned-suffix [long-suffix]
+///         unsigned-suffix [long-long-suffix]
+///         long-suffix [unsigned-suffix]
+///         long-long-suffix [unsigned-sufix]
+///       nonzero-digit:
+///         1 2 3 4 5 6 7 8 9
+///       octal-digit:
+///         0 1 2 3 4 5 6 7
+///       hexadecimal-digit:
+///         0 1 2 3 4 5 6 7 8 9
+///         a b c d e f
+///         A B C D E F
+///       unsigned-suffix: one of
+///         u U
+///       long-suffix: one of
+///         l L
+///       long-long-suffix: one of 
+///         ll LL
+///
+///       floating-constant: [C99 6.4.4.2]
+///         TODO: add rules...
+///
+Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
+  SmallString<512> IntegerBuffer;
+  IntegerBuffer.resize(Tok.getLength());
+  const char *ThisTokBegin = &IntegerBuffer[0];
+  
+  // Get the spelling of the token, which eliminates trigraphs, etc.  Notes:
+  // - We know that ThisTokBuf points to a buffer that is big enough for the 
+  //   whole token and 'spelled' tokens can only shrink.
+  // - In practice, the local buffer is only used when the spelling doesn't
+  //   match the original token (which is rare). The common case simply returns
+  //   a pointer to a *constant* buffer (avoiding a copy). 
+  
+  unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
+  ExprResult Res;
+
+  // This is an optimization for single digits (which are very common).
+  if (ActualLength == 1) {
+    return ExprResult(new IntegerLiteral());
+  }
+  const char *ThisTokEnd = ThisTokBegin+ActualLength; 
+  const char *s = ThisTokBegin;
+  unsigned int radix;
+  bool saw_exponent = false, saw_period = false;
+  Expr *literal_expr = 0;
+  
+  if (*s == '0') { // parse radix
+    s++;
+    if ((*s == 'x' || *s == 'X') && isxdigit(s[1])) { // need 1 digit
+      s++;
+      radix = 16;
+      while (s < ThisTokEnd) {
+        if (isxdigit(*s)) {
+          s++;
+        } else if (*s == '.') {
+          s++;
+          if (saw_period) {
+            Diag(Tok, diag::err_too_many_decimal_points);
+            return ExprResult(true);
+          } else
+            saw_period = true;
+        } else if (*s == 'p' || *s == 'P') { // binary exponent
+          saw_exponent = true;
+          s++;
+          if (*s == '+' || *s == '-')  s++; // sign is optional
+          if (isdigit(*s)) { 
+            do { s++; } while (isdigit(*s)); // a decimal integer
+          } else {
+            Diag(Tok, diag::err_exponent_has_no_digits);
+            return ExprResult(true);
+          }
+          break;
+        } else
+          break;
+      }
+      if (saw_period && !saw_exponent) { 
+        Diag(Tok, diag::err_hexconstant_requires_exponent);
+        return ExprResult(true);
+      }
+    } else {
+      // For now, the radix is set to 8. If we discover that we have a
+      // floating point constant, the radix will change to 10. Octal floating
+      // point constants are not permitted (only decimal and hexadecimal). 
+      radix = 8;
+      while (s < ThisTokEnd) {
+        if ((*s >= '0') && (*s <= '7')) {
+          s++;
+        } else if (*s == '.') {
+          s++;
+          if (saw_period) {
+            Diag(Tok, diag::err_too_many_decimal_points);
+            return ExprResult(true);
+          }
+          saw_period = true;
+          radix = 10;
+        } else if (*s == 'e' || *s == 'E') { // exponent
+          saw_exponent = true;
+          s++;
+          if (*s == '+' || *s == '-')  s++; // sign
+          if (isdigit(*s)) { 
+            do { s++; } while (isdigit(*s)); // a decimal integer
+          } else {
+            Diag(Tok, diag::err_exponent_has_no_digits);
+            return ExprResult(true);
+          }
+          radix = 10;
+          break;
+        } else
+          break;
+      }
+    }
+  } else { // the first digit is non-zero
+    radix = 10;
+    while (s < ThisTokEnd) {
+      if (isdigit(*s)) {
+        s++;
+      } else if (*s == '.') {
+        s++;
+        if (saw_period) {
+          Diag(Tok, diag::err_too_many_decimal_points);
+          return ExprResult(true);
+        } else
+          saw_period = true;
+      } else if (*s == 'e' || *s == 'E') { // exponent
+        saw_exponent = true;
+        s++;
+        if (*s == '+' || *s == '-')  s++; // sign
+        if (isdigit(*s)) { 
+          do { s++; } while (isdigit(*s)); // a decimal integer
+        } else {
+          Diag(Tok, diag::err_exponent_has_no_digits);
+          return ExprResult(true);
+        }
+        break;
+      } else
+        break;
+    }
+  }
+
+  const char *suffix_start = s;
+  bool invalid_suffix = false;
+  
+  if (saw_period || saw_exponent) {
+    bool saw_float_suffix = false, saw_long_suffix = false;
+        
+    while (s < ThisTokEnd) {
+      // parse float suffix - they can appear in any order.
+      if (*s == 'f' || *s == 'F') {
+        if (saw_float_suffix) {
+          invalid_suffix = true;
+          break;
+        } else {
+          saw_float_suffix = true;
+          s++;
+        }
+      } else if (*s == 'l' || *s == 'L') {
+        if (saw_long_suffix) {
+          invalid_suffix = true;
+          break;
+        } else {
+          saw_long_suffix = true;
+          s++;
+        }
+      } else {
+        invalid_suffix = true;
+        break;
+      }
+    }
+    if (invalid_suffix) {
+      Diag(Tok, diag::err_invalid_suffix_float_constant, 
+           std::string(suffix_start, ThisTokEnd));
+      return ExprResult(true);
+    }
+    literal_expr = new FloatingLiteral();
+  } else {
+    bool saw_unsigned = false;
+    int long_cnt = 0;
+
+    // if there is no suffix, this loop won't be executed (s == ThisTokEnd)
+    while (s < ThisTokEnd) {
+      // parse int suffix - they can appear in any order ("ul", "lu", "llu").
+      if (*s == 'u' || *s == 'U') {
+        if (saw_unsigned) {
+          invalid_suffix = true;
+          break;
+        } else {
+          saw_unsigned = true;
+          s++;
+        }
+      } else if (*s == 'l' || *s == 'L') {
+        long_cnt++;
+        // l's need to be adjacent and the same case.
+        if ((long_cnt == 2 && (*s != *(s-1))) || long_cnt == 3) {
+          invalid_suffix = true;
+          break;
+        } else {
+          s++;
+        }
+      } else {
+        invalid_suffix = true;
+        break;
+      }
+    }
+    if (invalid_suffix) {
+      Diag(Tok, diag::err_invalid_suffix_integer_constant, 
+           std::string(suffix_start, ThisTokEnd));
+      return ExprResult(true);
+    }
+    literal_expr = new IntegerLiteral();
+  }
+  return ExprResult(literal_expr);
 }
 
 Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,

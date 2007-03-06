@@ -473,7 +473,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // constant: integer-constant
     // constant: floating-constant
     
-    ParseNumericConstant();
+    Actions.ParseNumericConstant(Tok);
     ConsumeToken();
     
     // These can be followed by postfix-expr pieces.
@@ -924,115 +924,4 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
 
   // Pass the set of string tokens, ready for concatenation, to the actions.
   return Actions.ParseStringLiteral(&StringToks[0], StringToks.size());
-}
-
-///       integer-constant: [C99 6.4.4.1]
-///         decimal-constant integer-suffix
-///         octal-constant integer-suffix
-///         hexidecimal-constant integer-suffix
-///       decimal-constant: 
-///         nonzero-digit
-///         decimal-constant digit
-///       octal-constant: 
-///         0
-///         octal-constant octal-digit
-///       hexidecimal-constant: 
-///         hexidecimal-prefix hexidecimal-digit
-///         hexidecimal-constant hexidecimal-digit
-///       hexidecimal-prefix: one of
-///         0x 0X
-///       integer-suffix:
-///         unsigned-suffix [long-suffix]
-///         unsigned-suffix [long-long-suffix]
-///         long-suffix [unsigned-suffix]
-///         long-long-suffix [unsigned-sufix]
-///       nonzero-digit:
-///         1 2 3 4 5 6 7 8 9
-///       octal-digit:
-///         0 1 2 3 4 5 6 7
-///       hexadecimal-digit:
-///         0 1 2 3 4 5 6 7 8 9
-///         a b c d e f
-///         A B C D E F
-///       unsigned-suffix: one of
-///         u U
-///       long-suffix: one of
-///         l L
-///       long-long-suffix: one of 
-///         ll LL
-///
-///       floating-constant: [C99 6.4.4.2]
-///
-Parser::ExprResult Parser::ParseNumericConstant() {
-  SmallString<512> IntegerBuffer;
-  IntegerBuffer.resize(Tok.getLength());
-  const char *ThisTokBegin = &IntegerBuffer[0];
-  
-  // Get the spelling of the token, which eliminates trigraphs, etc.  Notes:
-  // - We know that ThisTokBuf points to a buffer that is big enough for the 
-  //   whole token and 'spelled' tokens can only shrink.
-  // - In practice, the local buffer is only used when the spelling doesn't
-  //   match the original token (which is rare). The common case simply returns
-  //   a pointer to a *constant* buffer (avoiding a copy). 
-  
-  unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
-  ExprResult Res;
-
-  if (ActualLength == 1) {
-	// need to change interface...just a placeholder
-    Res = Actions.ParseIntegerLiteral(Tok.getLocation()); 
-  } else if (ActualLength > 1) {
-    const char *ThisTokEnd = ThisTokBegin+ActualLength; 
-    const char *s = ThisTokBegin;
-    unsigned int radix;
-    
-    if (*s == '0') { // parse radix
-      s++;
-      if (*s == 'x' || *s == 'X') {
-        s++;
-        radix = 16;
-        while (s < ThisTokEnd && isxdigit(*s)) *s++;
-      } else {
-        radix = 8;
-        while (s < ThisTokEnd && ((*s >= '0') && (*s <= '7'))) *s++;
-      }
-    } else { // the first digit is non-zero
-      radix = 10;
-      while (s < ThisTokEnd && isdigit(*s)) *s++;
-    }
-    
-    if (*s == '.') { // TODO: Parse Floats...
-      Res = Actions.ParseFloatingLiteral(Tok.getLocation());
-    } else {
-      int unsigned_cnt = 0, long_cnt = 0, invalid_suffix = 0;
-
-      // if there is no suffix, this loop won't be executed (s == ThisTokEnd)
-      while (s < ThisTokEnd && !invalid_suffix) {
-        // parse type suffix - they can appear in any order "ul", "lu", "llu"
-        if (*s == 'u' || *s == 'U') {
-          unsigned_cnt++;
-          if (unsigned_cnt == 2)
-            invalid_suffix = 1;
-          else
-            s++;
-        } else if (*s == 'l' || *s == 'L') {
-          long_cnt++;
-          // l's need to be adjacent and the same case
-          if ((long_cnt == 2 && (*s != *(s-1))) || long_cnt == 3) 
-            invalid_suffix = 1;
-          else
-            s++;
-        } else {
-          invalid_suffix = 1;
-        }
-      }
-      if (invalid_suffix) {
-        Diag(Tok, diag::err_invalid_suffix_integer_constant);
-        return ExprResult(true);
-      } else {
-        // need to change interface...just a placeholder
-        Res = Actions.ParseIntegerLiteral(Tok.getLocation()); 
-      }
-    }
-  }
 }

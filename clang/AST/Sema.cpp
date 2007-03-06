@@ -30,6 +30,10 @@ void Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
   PP.Diag(Loc, DiagID, Msg);
 }
 
+void Sema::Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M) {
+  Diag(Tok.getLocation(), DiagID, M);
+}
+
 const LangOptions &Sema::getLangOptions() const {
   return PP.getLangOptions();
 }
