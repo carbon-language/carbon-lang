@@ -124,6 +124,10 @@ int main(int argc, char **argv, char * const *envp) {
       return -1;
     }
 
+    // If the program doesn't explicitly call exit, we will need the Exit 
+    // function later on to make an explicit call, so get the function now. 
+    Constant *Exit = Mod->getOrInsertFunction("exit", Type::VoidTy,
+                                                          Type::Int32Ty, NULL);
     // Run static constructors.
     EE->runStaticConstructorsDestructors(false);
     
@@ -133,14 +137,12 @@ int main(int argc, char **argv, char * const *envp) {
     // Run static destructors.
     EE->runStaticConstructorsDestructors(true);
     
-    // If the program didn't explicitly call exit, call exit now, for the
-    // program. This ensures that any atexit handlers get called correctly.
-    Constant *Exit = Mod->getOrInsertFunction("exit", Type::VoidTy,
-                                                          Type::Int32Ty, NULL);
+    // If the program didn't call exit explicitly, we should call it now. 
+    // This ensures that any atexit handlers get called correctly.
     if (Function *ExitF = dyn_cast<Function>(Exit)) {
       std::vector<GenericValue> Args;
       GenericValue ResultGV;
-      ResultGV.Int32Val = Result;
+      ResultGV.IntVal = APInt(32, Result);
       Args.push_back(ResultGV);
       EE->runFunction(ExitF, Args);
       std::cerr << "ERROR: exit(" << Result << ") returned!\n";
