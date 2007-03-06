@@ -14,36 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoopPass.h"
-#include <queue>
 using namespace llvm;
-
-//===----------------------------------------------------------------------===//
-// LoopQueue
-
-namespace llvm {
-
-// Compare Two loops based on their depth in loop nest.
-class LoopCompare {
-public:
-  bool operator()( Loop *L1, Loop *L2) const {
-    // Loops with highest depth has the highest priority.
-    return L1->getLoopDepth() < L2->getLoopDepth();
-  }
-};
-
-// Loop queue used by Loop Pass Manager. This is a wrapper class
-// that hides implemenation detail (use of priority_queue) inside .cpp file.
-class LoopQueue {
-public:
-  inline void push(Loop *L) { LPQ.push(L); }
-  inline void pop() { LPQ.pop(); }
-  inline Loop *top() { return LPQ.top(); }
-  inline bool empty() { return LPQ.empty(); }
-private:
-  std::priority_queue<Loop *, std::vector<Loop *>, LoopCompare> LPQ;
-};
-
-} // End of LLVM namespace
 
 //===----------------------------------------------------------------------===//
 // LPPassManager
@@ -53,11 +24,6 @@ private:
 LPPassManager::LPPassManager(int Depth) : PMDataManager(Depth) { 
   skipThisLoop = false;
   redoThisLoop = false;
-  LQ = new LoopQueue(); 
-}
-
-LPPassManager::~LPPassManager() {
-  delete LQ;
 }
 
 /// Delete loop from the loop queue. This is used by Loop pass to inform
@@ -75,10 +41,10 @@ void LPPassManager::redoLoop(Loop *L) {
 }
 
 // Recurse through all subloops and all loops  into LQ.
-static void addLoopIntoQueue(Loop *L, LoopQueue *LQ) {
+static void addLoopIntoQueue(Loop *L, std::deque<Loop *> &LQ) {
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
-  LQ->push(L);
+  LQ.push_back(L);
 }
 
 /// run - Execute all of the passes scheduled for execution.  Keep track of
@@ -92,9 +58,9 @@ bool LPPassManager::runOnFunction(Function &F) {
     addLoopIntoQueue(*I, LQ);
 
   // Walk Loops
-  while (!LQ->empty()) {
+  while (!LQ.empty()) {
       
-    Loop *L  = LQ->top();
+    Loop *L  = LQ.back();
     skipThisLoop = false;
     redoThisLoop = false;
 
@@ -130,10 +96,10 @@ bool LPPassManager::runOnFunction(Function &F) {
     }
     
     // Pop the loop from queue after running all passes.
-    LQ->pop();
+    LQ.pop_back();
     
     if (redoThisLoop)
-      LQ->push(L);
+      LQ.push_back(L);
   }
 
   return Changed;

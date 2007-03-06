@@ -25,7 +25,6 @@ namespace llvm {
 class LPPassManager;
 class Loop;
 class Function;
-class LoopQueue;
 
 class LoopPass : public Pass {
 
@@ -47,7 +46,6 @@ class LPPassManager : public FunctionPass, public PMDataManager {
 
 public:
   LPPassManager(int Depth);
-  ~LPPassManager();
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
@@ -95,7 +93,7 @@ public:
   // utility may send LPPassManager into infinite loops so use caution.
   void redoLoop(Loop *L);
 private:
-  LoopQueue *LQ;
+  std::deque<Loop *> LQ;
   bool skipThisLoop;
   bool redoThisLoop;
 };
