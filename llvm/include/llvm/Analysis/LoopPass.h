@@ -36,6 +36,15 @@ class LoopPass : public Pass {
     return false; 
   }
 
+  // Initialization and finalization hooks.
+  virtual bool doInitialization(Loop *L, LPPassManager &LPM) { 
+    return false; 
+  }
+
+  // Finalization hook does not supply Loop because at this time
+  // loop nest is completely different.
+  virtual bool doFinalization() { return false; }
+ 
   /// Assign pass manager to manager this pass
   virtual void assignPassManager(PMStack &PMS,
 				 PassManagerType PMT = PMT_LoopPassManager);

@@ -57,6 +57,18 @@ bool LPPassManager::runOnFunction(Function &F) {
   for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
 
+  // Initialization
+  for (std::deque<Loop *>::const_iterator I = LQ.begin(), E = LQ.end();
+       I != E; ++I) {
+    Loop *L = *I;
+    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
+      Pass *P = getContainedPass(Index);
+      LoopPass *LP = dynamic_cast<LoopPass *>(P);
+      if (LP)
+        Changed |= LP->doInitialization(L, *this);
+    }
+  }
+
   // Walk Loops
   while (!LQ.empty()) {
       
@@ -100,6 +112,14 @@ bool LPPassManager::runOnFunction(Function &F) {
     
     if (redoThisLoop)
       LQ.push_back(L);
+  }
+  
+  // Finalization
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+    Pass *P = getContainedPass(Index);
+    LoopPass *LP = dynamic_cast <LoopPass *>(P);
+    if (LP)
+      Changed |= LP->doFinalization();
   }
 
   return Changed;
