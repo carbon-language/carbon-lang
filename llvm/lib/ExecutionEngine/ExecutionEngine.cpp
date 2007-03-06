@@ -229,7 +229,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
                                        const char * const * envp) {
   std::vector<GenericValue> GVArgs;
   GenericValue GVArgc;
-  GVArgc.Int32Val = argv.size();
+  GVArgc.IntVal = APInt(32, argv.size());
   unsigned NumArgs = Fn->getFunctionType()->getNumParams();
   if (NumArgs) {
     GVArgs.push_back(GVArgc); // Arg #0 = argc.
@@ -245,7 +245,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
       }
     }
   }
-  return runFunction(Fn, GVArgs).Int32Val;
+  return runFunction(Fn, GVArgs).IntVal.getZExtValue();
 }
 
 /// If possible, create a JIT, unless the caller specifically requests an
@@ -298,28 +298,6 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
   return state.getGlobalAddressMap(locked)[GV];
 }
 
-/// This macro is used to handle a variety of situations involing integer
-/// values where the action should be done to one of the GenericValue members.
-/// THEINTTY is a const Type * for the integer type. ACTION1 comes before
-/// the GenericValue, ACTION2 comes after.
-#define DO_FOR_INTEGER(THEINTTY, ACTION) \
-   { \
-      unsigned BitWidth = cast<IntegerType>(THEINTTY)->getBitWidth(); \
-      if (BitWidth == 1) {\
-        ACTION(Int1Val); \
-      } else if (BitWidth <= 8) {\
-        ACTION(Int8Val); \
-      } else if (BitWidth <= 16) {\
-        ACTION(Int16Val); \
-      } else if (BitWidth <= 32) { \
-        ACTION(Int32Val); \
-      } else if (BitWidth <= 64) { \
-        ACTION(Int64Val); \
-      } else   {\
-        assert(0 && "Not implemented: integer types > 64 bits"); \
-      } \
-   }
-
 /// This function converts a Constant* into a GenericValue. The interesting 
 /// part is if C is a ConstantExpr.
 /// @brief Get a GenericValue for a Constnat*
@@ -341,10 +319,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         TD->getIndexedOffset(CE->getOperand(0)->getType(),
                              &Indices[0], Indices.size());
 
-      if (getTargetData()->getPointerSize() == 4)
-        Result.Int32Val += Offset;
-      else
-        Result.Int64Val += Offset;
+      char* tmp = (char*) Result.PointerVal;
+      Result = PTOGV(tmp + Offset);
       return Result;
     }
     case Instruction::Trunc:
@@ -375,21 +351,15 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       // IntToPtr casts are just so special. Cast to intptr_t first.
       Constant *Op = CE->getOperand(0);
       GenericValue GV = getConstantValue(Op);
-#define INT_TO_PTR_ACTION(FIELD) \
-        return PTOGV((void*)(uintptr_t)GV.FIELD)
-      DO_FOR_INTEGER(Op->getType(), INT_TO_PTR_ACTION)
-#undef INT_TO_PTR_ACTION
+      return PTOGV((void*)(uintptr_t)GV.IntVal.getZExtValue());
       break;
     }
     case Instruction::Add:
       switch (CE->getOperand(0)->getType()->getTypeID()) {
       default: assert(0 && "Bad add type!"); abort();
       case Type::IntegerTyID:
-#define ADD_ACTION(FIELD) \
-        Result.FIELD = getConstantValue(CE->getOperand(0)).FIELD + \
-                       getConstantValue(CE->getOperand(1)).FIELD;
-        DO_FOR_INTEGER(CE->getOperand(0)->getType(),ADD_ACTION);
-#undef ADD_ACTION
+        Result.IntVal = getConstantValue(CE->getOperand(0)).IntVal + \
+                        getConstantValue(CE->getOperand(1)).IntVal;
         break;
       case Type::FloatTyID:
         Result.FloatVal = getConstantValue(CE->getOperand(0)).FloatVal +
@@ -409,28 +379,15 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   }
 
   switch (C->getType()->getTypeID()) {
-#define GET_CONST_VAL(TY, CTY, CLASS, GETMETH) \
-  case Type::TY##TyID: Result.TY##Val = (CTY)cast<CLASS>(C)->GETMETH(); break
-    GET_CONST_VAL(Float , float         , ConstantFP, getValue);
-    GET_CONST_VAL(Double, double        , ConstantFP, getValue);
-#undef GET_CONST_VAL
-  case Type::IntegerTyID: {
-    unsigned BitWidth = cast<IntegerType>(C->getType())->getBitWidth();
-    if (BitWidth == 1)
-      Result.Int1Val = (bool)cast<ConstantInt>(C)->getZExtValue();
-    else if (BitWidth <= 8)
-      Result.Int8Val = (uint8_t )cast<ConstantInt>(C)->getZExtValue();
-    else if (BitWidth <= 16)
-      Result.Int16Val = (uint16_t )cast<ConstantInt>(C)->getZExtValue();
-    else if (BitWidth <= 32)
-      Result.Int32Val = (uint32_t )cast<ConstantInt>(C)->getZExtValue();
-    else if (BitWidth <= 64)
-      Result.Int64Val = (uint64_t )cast<ConstantInt>(C)->getZExtValue();
-    else
-      Result.APIntVal = const_cast<APInt*>(&cast<ConstantInt>(C)->getValue());
+  case Type::FloatTyID: 
+    Result.FloatVal = (float)cast<ConstantFP>(C)->getValue(); 
     break;
-  }
-
+  case Type::DoubleTyID:
+    Result.DoubleVal = (double)cast<ConstantFP>(C)->getValue(); 
+    break;
+  case Type::IntegerTyID:
+    Result.IntVal = cast<ConstantInt>(C)->getValue();
+    break;
   case Type::PointerTyID:
     if (isa<ConstantPointerNull>(C))
       Result.PointerVal = 0;
@@ -455,126 +412,37 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
 ///
 void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                                          const Type *Ty) {
-  if (getTargetData()->isLittleEndian()) {
-    switch (Ty->getTypeID()) {
-    case Type::IntegerTyID: {
-      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-      uint64_t BitMask = cast<IntegerType>(Ty)->getBitMask();
-      GenericValue TmpVal = Val;
-      if (BitWidth <= 8)
-        Ptr->Untyped[0] = Val.Int8Val & BitMask;
-      else if (BitWidth <= 16) {
-        TmpVal.Int16Val &= BitMask;
-        Ptr->Untyped[0] = TmpVal.Int16Val        & 255;
-        Ptr->Untyped[1] = (TmpVal.Int16Val >> 8) & 255;
-      } else if (BitWidth <= 32) {
-        TmpVal.Int32Val &= BitMask;
-        Ptr->Untyped[0] =  TmpVal.Int32Val        & 255;
-        Ptr->Untyped[1] = (TmpVal.Int32Val >>  8) & 255;
-        Ptr->Untyped[2] = (TmpVal.Int32Val >> 16) & 255;
-        Ptr->Untyped[3] = (TmpVal.Int32Val >> 24) & 255;
-      } else if (BitWidth <= 64) {
-        TmpVal.Int64Val &= BitMask;
-        Ptr->Untyped[0] = (unsigned char)(TmpVal.Int64Val      );
-        Ptr->Untyped[1] = (unsigned char)(TmpVal.Int64Val >>  8);
-        Ptr->Untyped[2] = (unsigned char)(TmpVal.Int64Val >> 16);
-        Ptr->Untyped[3] = (unsigned char)(TmpVal.Int64Val >> 24);
-        Ptr->Untyped[4] = (unsigned char)(TmpVal.Int64Val >> 32);
-        Ptr->Untyped[5] = (unsigned char)(TmpVal.Int64Val >> 40);
-        Ptr->Untyped[6] = (unsigned char)(TmpVal.Int64Val >> 48);
-        Ptr->Untyped[7] = (unsigned char)(TmpVal.Int64Val >> 56);
-      } else {
-        uint64_t *Dest = (uint64_t*)Ptr;
-        const uint64_t *Src = Val.APIntVal->getRawData();
-        for (uint32_t i = 0; i < Val.APIntVal->getNumWords(); ++i)
-          Dest[i] = Src[i];
-      }
-      break;
+  switch (Ty->getTypeID()) {
+  case Type::IntegerTyID: {
+    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+    GenericValue TmpVal = Val;
+    if (BitWidth <= 8)
+      *((uint8_t*)Ptr) = uint8_t(Val.IntVal.getZExtValue());
+    else if (BitWidth <= 16) {
+      *((uint16_t*)Ptr) = uint16_t(Val.IntVal.getZExtValue());
+    } else if (BitWidth <= 32) {
+      *((uint32_t*)Ptr) = uint32_t(Val.IntVal.getZExtValue());
+    } else if (BitWidth <= 64) {
+      *((uint64_t*)Ptr) = uint32_t(Val.IntVal.getZExtValue());
+    } else {
+      uint64_t *Dest = (uint64_t*)Ptr;
+      const uint64_t *Src = Val.IntVal.getRawData();
+      for (uint32_t i = 0; i < Val.IntVal.getNumWords(); ++i)
+        Dest[i] = Src[i];
     }
-Store4BytesLittleEndian:
-    case Type::FloatTyID:
-      Ptr->Untyped[0] =  Val.Int32Val        & 255;
-      Ptr->Untyped[1] = (Val.Int32Val >>  8) & 255;
-      Ptr->Untyped[2] = (Val.Int32Val >> 16) & 255;
-      Ptr->Untyped[3] = (Val.Int32Val >> 24) & 255;
-      break;
-    case Type::PointerTyID: 
-      if (getTargetData()->getPointerSize() == 4)
-        goto Store4BytesLittleEndian;
-      /* FALL THROUGH */
-    case Type::DoubleTyID:
-      Ptr->Untyped[0] = (unsigned char)(Val.Int64Val      );
-      Ptr->Untyped[1] = (unsigned char)(Val.Int64Val >>  8);
-      Ptr->Untyped[2] = (unsigned char)(Val.Int64Val >> 16);
-      Ptr->Untyped[3] = (unsigned char)(Val.Int64Val >> 24);
-      Ptr->Untyped[4] = (unsigned char)(Val.Int64Val >> 32);
-      Ptr->Untyped[5] = (unsigned char)(Val.Int64Val >> 40);
-      Ptr->Untyped[6] = (unsigned char)(Val.Int64Val >> 48);
-      Ptr->Untyped[7] = (unsigned char)(Val.Int64Val >> 56);
-      break;
-    default:
-      cerr << "Cannot store value of type " << *Ty << "!\n";
-    }
-  } else {
-    switch (Ty->getTypeID()) {
-    case Type::IntegerTyID: {
-      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-      uint64_t BitMask = cast<IntegerType>(Ty)->getBitMask();
-      GenericValue TmpVal = Val;
-      if (BitWidth <= 8)
-        Ptr->Untyped[0] = Val.Int8Val & BitMask;
-      else if (BitWidth <= 16) {
-        TmpVal.Int16Val &= BitMask;
-        Ptr->Untyped[1] =  TmpVal.Int16Val       & 255;
-        Ptr->Untyped[0] = (TmpVal.Int16Val >> 8) & 255;
-      } else if (BitWidth <= 32) {
-        TmpVal.Int32Val &= BitMask;
-        Ptr->Untyped[3] =  TmpVal.Int32Val        & 255;
-        Ptr->Untyped[2] = (TmpVal.Int32Val >>  8) & 255;
-        Ptr->Untyped[1] = (TmpVal.Int32Val >> 16) & 255;
-        Ptr->Untyped[0] = (TmpVal.Int32Val >> 24) & 255;
-      } else if (BitWidth <= 64) {
-        TmpVal.Int64Val &= BitMask;
-        Ptr->Untyped[7] = (unsigned char)(TmpVal.Int64Val      );
-        Ptr->Untyped[6] = (unsigned char)(TmpVal.Int64Val >>  8);
-        Ptr->Untyped[5] = (unsigned char)(TmpVal.Int64Val >> 16);
-        Ptr->Untyped[4] = (unsigned char)(TmpVal.Int64Val >> 24);
-        Ptr->Untyped[3] = (unsigned char)(TmpVal.Int64Val >> 32);
-        Ptr->Untyped[2] = (unsigned char)(TmpVal.Int64Val >> 40);
-        Ptr->Untyped[1] = (unsigned char)(TmpVal.Int64Val >> 48);
-        Ptr->Untyped[0] = (unsigned char)(TmpVal.Int64Val >> 56);
-      } else {
-        uint64_t *Dest = (uint64_t*)Ptr;
-        const uint64_t *Src = Val.APIntVal->getRawData();
-        for (uint32_t i = 0; i < Val.APIntVal->getNumWords(); ++i)
-          Dest[i] = Src[i];
-      }
-      break;
-    }
-    Store4BytesBigEndian:
-    case Type::FloatTyID:
-      Ptr->Untyped[3] =  Val.Int32Val        & 255;
-      Ptr->Untyped[2] = (Val.Int32Val >>  8) & 255;
-      Ptr->Untyped[1] = (Val.Int32Val >> 16) & 255;
-      Ptr->Untyped[0] = (Val.Int32Val >> 24) & 255;
-      break;
-    case Type::PointerTyID: 
-      if (getTargetData()->getPointerSize() == 4)
-        goto Store4BytesBigEndian;
-      /* FALL THROUGH */
-    case Type::DoubleTyID:
-      Ptr->Untyped[7] = (unsigned char)(Val.Int64Val      );
-      Ptr->Untyped[6] = (unsigned char)(Val.Int64Val >>  8);
-      Ptr->Untyped[5] = (unsigned char)(Val.Int64Val >> 16);
-      Ptr->Untyped[4] = (unsigned char)(Val.Int64Val >> 24);
-      Ptr->Untyped[3] = (unsigned char)(Val.Int64Val >> 32);
-      Ptr->Untyped[2] = (unsigned char)(Val.Int64Val >> 40);
-      Ptr->Untyped[1] = (unsigned char)(Val.Int64Val >> 48);
-      Ptr->Untyped[0] = (unsigned char)(Val.Int64Val >> 56);
-      break;
-    default:
-      cerr << "Cannot store value of type " << *Ty << "!\n";
-    }
+    break;
+  }
+  case Type::FloatTyID:
+    *((float*)Ptr) = Val.FloatVal;
+    break;
+  case Type::DoubleTyID:
+    *((double*)Ptr) = Val.DoubleVal;
+    break;
+  case Type::PointerTyID: 
+    *((PointerTy*)Ptr) = Val.PointerVal;
+    break;
+  default:
+    cerr << "Cannot store value of type " << *Ty << "!\n";
   }
 }
 
@@ -583,110 +451,33 @@ Store4BytesLittleEndian:
 void ExecutionEngine::LoadValueFromMemory(GenericValue &Result, 
                                                   GenericValue *Ptr,
                                                   const Type *Ty) {
-  if (getTargetData()->isLittleEndian()) {
-    switch (Ty->getTypeID()) {
-    case Type::IntegerTyID: {
-      unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-      if (BitWidth <= 8)
-        Result.Int8Val  = Ptr->Untyped[0];
-      else if (BitWidth <= 16) {
-        Result.Int16Val =  (unsigned)Ptr->Untyped[0] |
-                          ((unsigned)Ptr->Untyped[1] << 8);
-      } else if (BitWidth <= 32) {
-        Result.Int32Val =  (unsigned)Ptr->Untyped[0] |
-                          ((unsigned)Ptr->Untyped[1] <<  8) |
-                          ((unsigned)Ptr->Untyped[2] << 16) |
-                          ((unsigned)Ptr->Untyped[3] << 24);
-      } else if (BitWidth <= 64) {
-        Result.Int64Val =  (uint64_t)Ptr->Untyped[0] |
-                          ((uint64_t)Ptr->Untyped[1] <<  8) |
-                          ((uint64_t)Ptr->Untyped[2] << 16) |
-                          ((uint64_t)Ptr->Untyped[3] << 24) |
-                          ((uint64_t)Ptr->Untyped[4] << 32) |
-                          ((uint64_t)Ptr->Untyped[5] << 40) |
-                          ((uint64_t)Ptr->Untyped[6] << 48) |
-                          ((uint64_t)Ptr->Untyped[7] << 56);
-      } else
-        *(Result.APIntVal) = APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
-      break;
-    }
-    Load4BytesLittleEndian:
-    case Type::FloatTyID:
-      Result.Int32Val =  (unsigned)Ptr->Untyped[0] |
-                        ((unsigned)Ptr->Untyped[1] <<  8) |
-                        ((unsigned)Ptr->Untyped[2] << 16) |
-                        ((unsigned)Ptr->Untyped[3] << 24);
-      break;
-    case Type::PointerTyID: 
-      if (getTargetData()->getPointerSize() == 4)
-        goto Load4BytesLittleEndian;
-      /* FALL THROUGH */
-    case Type::DoubleTyID:
-      Result.Int64Val =  (uint64_t)Ptr->Untyped[0] |
-                        ((uint64_t)Ptr->Untyped[1] <<  8) |
-                        ((uint64_t)Ptr->Untyped[2] << 16) |
-                        ((uint64_t)Ptr->Untyped[3] << 24) |
-                        ((uint64_t)Ptr->Untyped[4] << 32) |
-                        ((uint64_t)Ptr->Untyped[5] << 40) |
-                        ((uint64_t)Ptr->Untyped[6] << 48) |
-                        ((uint64_t)Ptr->Untyped[7] << 56);
-       break;
-    default:
-      cerr << "Cannot load value of type " << *Ty << "!\n";
-      abort();
-    }
-  } else {
-    switch (Ty->getTypeID()) {
-    case Type::IntegerTyID: {
-      uint32_t BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-      if (BitWidth <= 8)
-        Result.Int8Val  = Ptr->Untyped[0];
-      else if (BitWidth <= 16) {
-        Result.Int16Val =  (unsigned)Ptr->Untyped[1] |
-                          ((unsigned)Ptr->Untyped[0] << 8);
-      } else if (BitWidth <= 32) {
-        Result.Int32Val =  (unsigned)Ptr->Untyped[3] |
-                          ((unsigned)Ptr->Untyped[2] <<  8) |
-                          ((unsigned)Ptr->Untyped[1] << 16) |
-                          ((unsigned)Ptr->Untyped[0] << 24);
-      } else if (BitWidth <= 64) {
-        Result.Int64Val =  (uint64_t)Ptr->Untyped[7] |
-                          ((uint64_t)Ptr->Untyped[6] <<  8) |
-                          ((uint64_t)Ptr->Untyped[5] << 16) |
-                          ((uint64_t)Ptr->Untyped[4] << 24) |
-                          ((uint64_t)Ptr->Untyped[3] << 32) |
-                          ((uint64_t)Ptr->Untyped[2] << 40) |
-                          ((uint64_t)Ptr->Untyped[1] << 48) |
-                          ((uint64_t)Ptr->Untyped[0] << 56);
-      } else
-        *(Result.APIntVal) = APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
-      break;
-    }
-    Load4BytesBigEndian:
-    case Type::FloatTyID:
-      Result.Int32Val =  (unsigned)Ptr->Untyped[3] |
-                        ((unsigned)Ptr->Untyped[2] <<  8) |
-                        ((unsigned)Ptr->Untyped[1] << 16) |
-                        ((unsigned)Ptr->Untyped[0] << 24);
-                            break;
-    case Type::PointerTyID: 
-      if (getTargetData()->getPointerSize() == 4)
-        goto Load4BytesBigEndian;
-      /* FALL THROUGH */
-    case Type::DoubleTyID:
-      Result.Int64Val =  (uint64_t)Ptr->Untyped[7] |
-                        ((uint64_t)Ptr->Untyped[6] <<  8) |
-                        ((uint64_t)Ptr->Untyped[5] << 16) |
-                        ((uint64_t)Ptr->Untyped[4] << 24) |
-                        ((uint64_t)Ptr->Untyped[3] << 32) |
-                        ((uint64_t)Ptr->Untyped[2] << 40) |
-                        ((uint64_t)Ptr->Untyped[1] << 48) |
-                        ((uint64_t)Ptr->Untyped[0] << 56);
-      break;
-    default:
-      cerr << "Cannot load value of type " << *Ty << "!\n";
-      abort();
-    }
+  switch (Ty->getTypeID()) {
+  case Type::IntegerTyID: {
+    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+    if (BitWidth <= 8)
+      Result.IntVal = APInt(BitWidth, *((uint8_t*)Ptr));
+    else if (BitWidth <= 16) {
+      Result.IntVal = APInt(BitWidth, *((uint16_t*)Ptr));
+    } else if (BitWidth <= 32) {
+      Result.IntVal = APInt(BitWidth, *((uint32_t*)Ptr));
+    } else if (BitWidth <= 64) {
+      Result.IntVal = APInt(BitWidth, *((uint64_t*)Ptr));
+    } else
+      Result.IntVal = APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
+    break;
+  }
+  case Type::FloatTyID:
+    Result.FloatVal = *((float*)Ptr);
+    break;
+  case Type::DoubleTyID:
+    Result.DoubleVal = *((double*)Ptr); 
+    break;
+  case Type::PointerTyID: 
+    Result.PointerVal = *((PointerTy*)Ptr);
+    break;
+  default:
+    cerr << "Cannot load value of type " << *Ty << "!\n";
+    abort();
   }
 }
 
