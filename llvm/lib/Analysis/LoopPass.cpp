@@ -138,9 +138,9 @@ void LPPassManager::redoLoop(Loop *L) {
 
 // Recurse through all subloops and all loops  into LQ.
 static void addLoopIntoQueue(Loop *L, std::deque<Loop *> &LQ) {
+  LQ.push_back(L);
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
-  LQ.push_back(L);
 }
 
 /// Pass Manager itself does not invalidate any analysis info.
