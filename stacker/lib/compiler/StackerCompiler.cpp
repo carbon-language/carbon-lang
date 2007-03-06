@@ -1092,7 +1092,7 @@ StackerCompiler::handle_word( int tkn )
         // bb->getInstList().push_back( negop );
         // So we'll multiply by -1 (ugh)
         BinaryOperator* multop = BinaryOperator::create( Instruction::Mul, op1,
-            ConstantInt::get( Type::Int64Ty, -1 ) );
+            ConstantInt::get( Type::Int64Ty, -1ULL ) );
         bb->getInstList().push_back( multop );
         push_value( bb, multop );
         break;
