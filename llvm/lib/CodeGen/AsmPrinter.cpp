@@ -559,13 +559,20 @@ static void printStringChar(std::ostream &O, unsigned char C) {
 /// Special characters are emitted properly.
 /// \literal (Eg. '\t') \endliteral
 void AsmPrinter::EmitString(const std::string &String) const {
-  O << TAI->getAsciiDirective()
-    << "\"";
+  const char* AscizDirective = TAI->getAscizDirective();
+  if (AscizDirective)
+    O << AscizDirective;
+  else
+    O << TAI->getAsciiDirective();
+  O << "\"";
   for (unsigned i = 0, N = String.size(); i < N; ++i) {
     unsigned char C = String[i];
     printStringChar(O, C);
   }
-  O << "\\0\"";
+  if (AscizDirective)
+    O << "\"";
+  else
+    O << "\\0\"";
 }
 
 
