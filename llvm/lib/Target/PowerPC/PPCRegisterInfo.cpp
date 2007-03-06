@@ -874,7 +874,8 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   MFI->setStackSize(FrameSize);
 }
 
-void PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF)
+void PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                           RegScavenger *RS)
   const {
   //  Save and clear the LR state.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();

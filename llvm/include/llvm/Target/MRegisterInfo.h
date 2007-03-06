@@ -433,7 +433,9 @@ public:
   /// processFunctionBeforeCalleeSavedScan - This method is called immediately
   /// before PrologEpilogInserter scans the physical registers used to determine
   /// what callee saved registers should be spilled. This method is optional.
-  virtual void processFunctionBeforeCalleeSavedScan(MachineFunction &MF) const {
+  virtual void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                RegScavenger *RS = NULL) const {
+
   }
 
   /// processFunctionBeforeFrameFinalized - This method is called immediately
