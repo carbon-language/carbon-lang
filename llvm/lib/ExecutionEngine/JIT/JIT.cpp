@@ -107,8 +107,9 @@ GenericValue JIT::runFunction(Function *F,
 
         // Call the function.
         GenericValue rv;
-        rv.Int32Val = PF(ArgValues[0].Int32Val, (char **)GVTOP(ArgValues[1]),
-                       (const char **)GVTOP(ArgValues[2]));
+        rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue(), 
+                                 (char **)GVTOP(ArgValues[1]),
+                                 (const char **)GVTOP(ArgValues[2])));
         return rv;
       }
       break;
@@ -120,7 +121,8 @@ GenericValue JIT::runFunction(Function *F,
 
         // Call the function.
         GenericValue rv;
-        rv.Int32Val = PF(ArgValues[0].Int32Val, (char **)GVTOP(ArgValues[1]));
+        rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue(), 
+                                 (char **)GVTOP(ArgValues[1])));
         return rv;
       }
       break;
@@ -130,7 +132,7 @@ GenericValue JIT::runFunction(Function *F,
            FTy->getParamType(0) == Type::Int32Ty)) {
         GenericValue rv;
         int (*PF)(int) = (int(*)(int))(intptr_t)FPtr;
-        rv.Int32Val = PF(ArgValues[0].Int32Val);
+        rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue()));
         return rv;
       }
       break;
@@ -145,21 +147,21 @@ GenericValue JIT::runFunction(Function *F,
     case Type::IntegerTyID: {
       unsigned BitWidth = cast<IntegerType>(RetTy)->getBitWidth();
       if (BitWidth == 1)
-        rv.Int1Val = ((bool(*)())(intptr_t)FPtr)();
+        rv.IntVal = APInt(BitWidth, ((bool(*)())(intptr_t)FPtr)());
       else if (BitWidth <= 8)
-        rv.Int8Val = ((char(*)())(intptr_t)FPtr)();
+        rv.IntVal = APInt(BitWidth, ((char(*)())(intptr_t)FPtr)());
       else if (BitWidth <= 16)
-        rv.Int16Val = ((short(*)())(intptr_t)FPtr)();
+        rv.IntVal = APInt(BitWidth, ((short(*)())(intptr_t)FPtr)());
       else if (BitWidth <= 32)
-        rv.Int32Val = ((int(*)())(intptr_t)FPtr)();
+        rv.IntVal = APInt(BitWidth, ((int(*)())(intptr_t)FPtr)());
       else if (BitWidth <= 64)
-        rv.Int64Val = ((int64_t(*)())(intptr_t)FPtr)();
+        rv.IntVal = APInt(BitWidth, ((int64_t(*)())(intptr_t)FPtr)());
       else 
         assert(0 && "Integer types > 64 bits not supported");
       return rv;
     }
     case Type::VoidTyID:
-      rv.Int32Val = ((int(*)())(intptr_t)FPtr)();
+      rv.IntVal = APInt(32, ((int(*)())(intptr_t)FPtr)());
       return rv;
     case Type::FloatTyID:
       rv.FloatVal = ((float(*)())(intptr_t)FPtr)();
@@ -194,24 +196,9 @@ GenericValue JIT::runFunction(Function *F,
     const GenericValue &AV = ArgValues[i];
     switch (ArgTy->getTypeID()) {
     default: assert(0 && "Unknown argument type for function call!");
-    case Type::IntegerTyID: {
-      unsigned BitWidth = cast<IntegerType>(ArgTy)->getBitWidth();
-      if (BitWidth == 1)
-        C = ConstantInt::get(ArgTy, AV.Int1Val);
-      else if (BitWidth <= 8)
-        C = ConstantInt::get(ArgTy, AV.Int8Val);
-      else if (BitWidth <= 16)
-        C = ConstantInt::get(ArgTy, AV.Int16Val);
-      else if (BitWidth <= 32)
-        C = ConstantInt::get(ArgTy, AV.Int32Val); 
-      else if (BitWidth <= 64)
-        C = ConstantInt::get(ArgTy, AV.Int64Val);
-      else
-        assert(0 && "Integer types > 64 bits not supported");
-      break;
-    }
-    case Type::FloatTyID:  C = ConstantFP ::get(ArgTy, AV.FloatVal);  break;
-    case Type::DoubleTyID: C = ConstantFP ::get(ArgTy, AV.DoubleVal); break;
+    case Type::IntegerTyID: C = ConstantInt::get(AV.IntVal); break;
+    case Type::FloatTyID:   C = ConstantFP ::get(ArgTy, AV.FloatVal);  break;
+    case Type::DoubleTyID:  C = ConstantFP ::get(ArgTy, AV.DoubleVal); break;
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);
       if (sizeof(void*) == 4) {
