@@ -59,6 +59,8 @@ namespace {
     typedef SmallVector<MemOpQueueEntry,8> MemOpQueue;
     typedef MemOpQueue::iterator MemOpQueueIter;
 
+    void AdvanceRS(MachineBasicBlock *MBB, MemOpQueue &MemOps);
+
     SmallVector<MachineBasicBlock::iterator, 4>
     MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex, unsigned Base,
                  int Opcode, unsigned Size, MemOpQueue &MemOps);
@@ -103,8 +105,9 @@ static int getLoadStoreMultipleOpcode(int Opcode) {
 /// registers in Regs as the register operands that would be loaded / stored.
 /// It returns true if the transformation is done. 
 static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                     int Offset, unsigned Base, int Opcode,
-                     SmallVector<unsigned, 8> &Regs,
+                     int Offset, unsigned Base, bool BaseKill, int Opcode,
+                     SmallVector<std::pair<unsigned, bool>, 8> &Regs,
+                     RegScavenger *RS,
                      const TargetInstrInfo *TII) {
   // Only a single register to load / store. Don't bother.
   unsigned NumRegs = Regs.size();
@@ -130,10 +133,12 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
     if (Opcode == ARM::LDR)
       // If it is a load, then just use one of the destination register to
       // use as the new base.
-      NewBase = Regs[NumRegs-1];
+      NewBase = Regs[NumRegs-1].first;
     else {
-      // FIXME: Try scavenging a register to use as a new base.
-      NewBase = ARM::R12;
+      // Try to find a free register to use as a new base.
+      NewBase = RS ? RS->FindUnusedReg(&ARM::GPRRegClass) : (unsigned)ARM::R12;
+      if (NewBase == 0)
+        return false;
     }
     int BaseOpc = ARM::ADDri;
     if (Offset < 0) {
@@ -143,52 +148,78 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
     int ImmedOffset = ARM_AM::getSOImmVal(Offset);
     if (ImmedOffset == -1)
       return false;  // Probably not worth it then.
-    BuildMI(MBB, MBBI, TII->get(BaseOpc), NewBase).addReg(Base).addImm(ImmedOffset);
+
+    BuildMI(MBB, MBBI, TII->get(BaseOpc), NewBase)
+      .addReg(Base, false, false, BaseKill).addImm(ImmedOffset);
     Base = NewBase;
+    BaseKill = true;  // New base is always killed right its use.
   }
 
   bool isDPR = Opcode == ARM::FLDD || Opcode == ARM::FSTD;
   bool isDef = Opcode == ARM::LDR || Opcode == ARM::FLDS || Opcode == ARM::FLDD;
   Opcode = getLoadStoreMultipleOpcode(Opcode);
   MachineInstrBuilder MIB = (isAM4)
-    ? BuildMI(MBB, MBBI, TII->get(Opcode)).addReg(Base)
+    ? BuildMI(MBB, MBBI, TII->get(Opcode)).addReg(Base, false, false, BaseKill)
         .addImm(ARM_AM::getAM4ModeImm(Mode))
-    : BuildMI(MBB, MBBI, TII->get(Opcode)).addReg(Base)
+    : BuildMI(MBB, MBBI, TII->get(Opcode)).addReg(Base, false, false, BaseKill)
         .addImm(ARM_AM::getAM5Opc(Mode, false, isDPR ? NumRegs<<1 : NumRegs));
   for (unsigned i = 0; i != NumRegs; ++i)
-    MIB = MIB.addReg(Regs[i], Opcode == isDef);
+    MIB = MIB.addReg(Regs[i].first, isDef, false, Regs[i].second);
 
   return true;
 }
 
+/// AdvanceRS - Advance register scavenger to just before the earliest memory
+/// op that is being merged.
+void ARMLoadStoreOpt::AdvanceRS(MachineBasicBlock *MBB, MemOpQueue &MemOps) {
+  MachineBasicBlock::iterator Loc = MemOps[0].MBBI;
+  unsigned Position = MemOps[0].Position;
+  for (unsigned i = 1, e = MemOps.size(); i != e; ++i) {
+    if (MemOps[i].Position < Position) {
+      Position = MemOps[i].Position;
+      Loc = MemOps[i].MBBI;
+    }
+  }
+
+  if (Loc != MBB->begin())
+    RS->forward(prior(Loc));
+}
+
+/// MergeLDR_STR - Merge a number of load / store instructions into one or more
+/// load / store multiple instructions.
 SmallVector<MachineBasicBlock::iterator, 4>
 ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB,
                               unsigned SIndex, unsigned Base, int Opcode,
                               unsigned Size, MemOpQueue &MemOps) {
-  bool isAM4 = Opcode == ARM::LDR || Opcode == ARM::STR;
+  if (RS && SIndex == 0)
+    AdvanceRS(&MBB, MemOps);
+
   SmallVector<MachineBasicBlock::iterator, 4> Merges;
+  SmallVector<std::pair<unsigned,bool>, 8> Regs;
+  bool isAM4 = Opcode == ARM::LDR || Opcode == ARM::STR;
   int Offset = MemOps[SIndex].Offset;
   int SOffset = Offset;
   unsigned Pos = MemOps[SIndex].Position;
   MachineBasicBlock::iterator Loc = MemOps[SIndex].MBBI;
-  SmallVector<unsigned, 8> Regs;
   unsigned PReg = MemOps[SIndex].MBBI->getOperand(0).getReg();
   unsigned PRegNum = ARMRegisterInfo::getRegisterNumbering(PReg);
-  Regs.push_back(PReg);
+  bool isKill = MemOps[SIndex].MBBI->getOperand(0).isKill();
+  Regs.push_back(std::make_pair(PReg, isKill));
   for (unsigned i = SIndex+1, e = MemOps.size(); i != e; ++i) {
     int NewOffset = MemOps[i].Offset;
     unsigned Reg = MemOps[i].MBBI->getOperand(0).getReg();
     unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
+    isKill = MemOps[i].MBBI->getOperand(0).isKill();
     // AM4 - register numbers in ascending order.
     // AM5 - consecutive register numbers in ascending order.
     if (NewOffset == Offset + (int)Size &&
         ((isAM4 && RegNum > PRegNum) || RegNum == PRegNum+1)) {
       Offset += Size;
-      Regs.push_back(Reg);
+      Regs.push_back(std::make_pair(Reg, isKill));
       PRegNum = RegNum;
     } else {
       // Can't merge this in. Try merge the earlier ones first.
-      if (mergeOps(MBB, ++Loc, SOffset, Base, Opcode, Regs, TII)) {
+      if (mergeOps(MBB, ++Loc, SOffset, Base, false, Opcode, Regs, RS, TII)) {
         Merges.push_back(prior(Loc));
         for (unsigned j = SIndex; j < i; ++j) {
           MBB.erase(MemOps[j].MBBI);
@@ -207,7 +238,8 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB,
     }
   }
 
-  if (mergeOps(MBB, ++Loc, SOffset, Base, Opcode, Regs, TII)) {
+  bool BaseKill = Loc->findRegisterUseOperand(Base, true) != NULL;
+  if (mergeOps(MBB, ++Loc, SOffset, Base, BaseKill, Opcode, Regs, RS, TII)) {
     Merges.push_back(prior(Loc));
     for (unsigned i = SIndex, e = MemOps.size(); i != e; ++i) {
       MBB.erase(MemOps[i].MBBI);
@@ -381,6 +413,7 @@ static bool mergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
                                      const TargetInstrInfo *TII) {
   MachineInstr *MI = MBBI;
   unsigned Base = MI->getOperand(1).getReg();
+  bool BaseKill = MI->getOperand(1).isKill();
   unsigned Bytes = getLSMultipleTransferSize(MI);
   int Opcode = MI->getOpcode();
   bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
@@ -434,18 +467,23 @@ static bool mergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
                         true, isDPR ? 2 : 1);
   if (isLd) {
     if (isAM2)
+      // LDR_PRE, LDR_POST;
       BuildMI(MBB, MBBI, TII->get(NewOpc), MI->getOperand(0).getReg())
-        .addReg(Base, true).addReg(Base).addReg(0).addImm(Offset);
+        .addReg(Base, true)
+        .addReg(Base).addReg(0).addImm(Offset);
     else
-      BuildMI(MBB, MBBI, TII->get(NewOpc)).addReg(Base)
+      BuildMI(MBB, MBBI, TII->get(NewOpc)).addReg(Base, false, false, BaseKill)
         .addImm(Offset).addReg(MI->getOperand(0).getReg(), true);
   } else {
+    MachineOperand &MO = MI->getOperand(0);
     if (isAM2)
-      BuildMI(MBB, MBBI, TII->get(NewOpc), Base).addReg(MI->getOperand(0).getReg())
+      // STR_PRE, STR_POST;
+      BuildMI(MBB, MBBI, TII->get(NewOpc), Base)
+        .addReg(MO.getReg(), false, false, MO.isKill())
         .addReg(Base).addReg(0).addImm(Offset);
     else
       BuildMI(MBB, MBBI, TII->get(NewOpc)).addReg(Base)
-        .addImm(Offset).addReg(MI->getOperand(0).getReg(), false);
+        .addImm(Offset).addReg(MO.getReg(), false, false, MO.isKill());
   }
   MBB.erase(MBBI);
 
@@ -494,7 +532,6 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
       int Opcode = MBBI->getOpcode();
       bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
       unsigned Size = getLSMultipleTransferSize(MBBI);
-
       unsigned Base = MBBI->getOperand(1).getReg();
       unsigned OffIdx = MBBI->getNumOperands()-1;
       unsigned OffField = MBBI->getOperand(OffIdx).getImm();
@@ -564,7 +601,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
     if (TryMerge) {
       if (NumMemOps > 1) {
         SmallVector<MachineBasicBlock::iterator,4> MBBII =
-          MergeLDR_STR(MBB, 0, CurrBase, CurrOpc, CurrSize,MemOps);
+          MergeLDR_STR(MBB, 0, CurrBase, CurrOpc, CurrSize, MemOps);
         // Try folding preceeding/trailing base inc/dec into the generated
         // LDM/STM ops.
         for (unsigned i = 0, e = MBBII.size(); i < e; ++i)
