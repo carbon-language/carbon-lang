@@ -3099,22 +3099,21 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
        I != E; ++I, ++j) {
     MVT::ValueType VT = getValueType(I->getType());
-    bool isInReg = FTy->paramHasAttr(j, FunctionType::InRegAttribute);
-    bool isSRet  = FTy->paramHasAttr(j, FunctionType::StructRetAttribute);
+    unsigned Flags = SDISelParamFlags::NoFlagSet;
     unsigned OriginalAlignment =
       getTargetData()->getABITypeAlignment(I->getType());
-    // Flags[31:27] -> OriginalAlignment
-    // Flags[2] -> isSRet
-    // Flags[1] -> isInReg
-    // Flags[0] -> isSigned
-    unsigned Flags = (isInReg << 1) | (isSRet << 2) | (OriginalAlignment << 27);
 
     // FIXME: Distinguish between a formal with no [sz]ext attribute from one
     // that is zero extended!
     if (FTy->paramHasAttr(j, FunctionType::ZExtAttribute))
-      Flags |= 0;
+      Flags &= ~(SDISelParamFlags::Signed);
     if (FTy->paramHasAttr(j, FunctionType::SExtAttribute))
-      Flags |= 1;
+      Flags |= SDISelParamFlags::Signed;
+    if (FTy->paramHasAttr(j, FunctionType::InRegAttribute))
+      Flags |= SDISelParamFlags::InReg;
+    if (FTy->paramHasAttr(j, FunctionType::StructRetAttribute))
+      Flags |= SDISelParamFlags::StructReturn;
+    Flags |= (OriginalAlignment << SDISelParamFlags::OrigAlignmentOffs);
     
     switch (getTypeAction(VT)) {
     default: assert(0 && "Unknown type action!");
@@ -3136,7 +3135,9 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         for (unsigned i = 0; i != NumVals; ++i) {
           RetVals.push_back(NVT);
           // if it isn't first piece, alignment must be 1
-          if (i == 1) Flags = (Flags & 0x07ffffff) | (1 << 27);
+          if (i > 0)
+            Flags = (Flags & (~SDISelParamFlags::OrigAlignment)) |
+              (1 << SDISelParamFlags::OrigAlignmentOffs);
           Ops.push_back(DAG.getConstant(Flags, MVT::i32));
         }
       } else {
@@ -3245,7 +3246,8 @@ static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
   if (TLI.getTypeAction(VT) != TargetLowering::Expand) {
     // if it isn't first piece, alignment must be 1
     if (!isFirst)
-      Flags = (Flags & 0x07ffffff) | (1 << 27);
+      Flags = (Flags & (~SDISelParamFlags::OrigAlignment)) |
+        (1 << SDISelParamFlags::OrigAlignmentOffs);
     Ops.push_back(Arg);
     Ops.push_back(DAG.getConstant(Flags, MVT::i32));
     return;
@@ -3292,18 +3294,18 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     MVT::ValueType VT = getValueType(Args[i].Ty);
     SDOperand Op = Args[i].Node;
-    bool isSigned = Args[i].isSigned;
-    bool isInReg = Args[i].isInReg;
-    bool isSRet  = Args[i].isSRet;
+    unsigned Flags = SDISelParamFlags::NoFlagSet;
     unsigned OriginalAlignment =
       getTargetData()->getABITypeAlignment(Args[i].Ty);
-    // Flags[31:27] -> OriginalAlignment
-    // Flags[2] -> isSRet
-    // Flags[1] -> isInReg
-    // Flags[0] -> isSigned
-    unsigned Flags = (isSRet << 2) | (isInReg << 1) | unsigned(isSigned) |
-      (OriginalAlignment << 27);
-
+    
+    if (Args[i].isSigned)
+      Flags |= SDISelParamFlags::Signed;
+    if (Args[i].isInReg)
+      Flags |= SDISelParamFlags::InReg;
+    if (Args[i].isSRet)
+      Flags |= SDISelParamFlags::StructReturn;
+    Flags |= OriginalAlignment << SDISelParamFlags::OrigAlignmentOffs;
+    
     switch (getTypeAction(VT)) {
     default: assert(0 && "Unknown type action!");
     case Legal:
@@ -3312,7 +3314,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       break;
     case Promote:
       if (MVT::isInteger(VT)) {
-        unsigned ExtOp = isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND; 
+        unsigned ExtOp = Args[i].isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
         Op = DAG.getNode(ExtOp, getTypeToTransformTo(VT), Op);
       } else {
         assert(MVT::isFloatingPoint(VT) && "Not int or FP?");
