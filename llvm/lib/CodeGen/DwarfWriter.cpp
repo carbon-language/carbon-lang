@@ -237,7 +237,7 @@ public:
   unsigned getOffset()                       const { return Offset; }
   unsigned getSize()                         const { return Size; }
   const std::vector<DIE *> &getChildren()    const { return Children; }
-  const std::vector<DIEValue *> &getValues() const { return Values; }
+  std::vector<DIEValue *> &getValues()       { return Values; }
   void setTag(unsigned Tag)                  { Abbrev.setTag(Tag); }
   void setOffset(unsigned O)                 { Offset = O; }
   void setSize(unsigned S)                   { Size = S; }
@@ -315,7 +315,7 @@ public:
   
   /// EmitValue - Emit value via the Dwarf writer.
   ///
-  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const = 0;
+  virtual void EmitValue(DwarfDebug &DD, unsigned Form) = 0;
   
   /// SizeOf - Return the size of a value in bytes.
   ///
@@ -365,7 +365,7 @@ public:
     
   /// EmitValue - Emit integer of appropriate size.
   ///
-  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
+  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
   
   /// SizeOf - Determine size of integer value in bytes.
   ///
@@ -402,7 +402,7 @@ public:
   
   /// EmitValue - Emit string value.
   ///
-  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
+  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
   
   /// SizeOf - Determine size of string value in bytes.
   ///
@@ -441,7 +441,7 @@ public:
   
   /// EmitValue - Emit label value.
   ///
-  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
+  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
   
   /// SizeOf - Determine size of label value in bytes.
   ///
@@ -479,7 +479,7 @@ public:
   
   /// EmitValue - Emit label value.
   ///
-  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
+  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
   
   /// SizeOf - Determine size of label value in bytes.
   ///
@@ -517,7 +517,7 @@ public:
   
   /// EmitValue - Emit delta value.
   ///
-  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
+  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
   
   /// SizeOf - Determine size of delta value in bytes.
   ///
@@ -559,7 +559,7 @@ public:
   
   /// EmitValue - Emit debug information entry offset.
   ///
-  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
+  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
   
   /// SizeOf - Determine size of debug information entry in bytes.
   ///
@@ -624,7 +624,7 @@ public:
 
   /// EmitValue - Emit block data.
   ///
-  virtual void EmitValue(const DwarfDebug &DD, unsigned Form) const;
+  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
   
   /// SizeOf - Determine size of block data in bytes.
   ///
@@ -795,7 +795,8 @@ protected:
   /// SubprogramCount - The running count of functions being compiled.
   ///
   unsigned SubprogramCount;
-  
+
+  unsigned SetCounter;
   Dwarf(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
   : O(OS)
   , Asm(A)
@@ -806,6 +807,7 @@ protected:
   , MF(NULL)
   , MMI(NULL)
   , SubprogramCount(0)
+  , SetCounter(1)
   {
   }
 
@@ -873,17 +875,15 @@ public:
   /// assemblers do not behave with absolute expressions with data directives,
   /// so there is an option (needsSet) to use an intermediary set expression.
   void EmitDifference(DWLabel LabelHi, DWLabel LabelLo,
-                      bool IsSmall = false) const {
+                      bool IsSmall = false) {
     EmitDifference(LabelHi.Tag, LabelHi.Number,
                    LabelLo.Tag, LabelLo.Number,
                    IsSmall);
   }
   void EmitDifference(const char *TagHi, unsigned NumberHi,
                       const char *TagLo, unsigned NumberLo,
-                      bool IsSmall = false) const {
+                      bool IsSmall = false) {
     if (TAI->needsSet()) {
-      static unsigned SetCounter = 1;
-      
       O << "\t.set\t";
       PrintLabelName("set", SetCounter);
       O << ",";
@@ -914,10 +914,8 @@ public:
 
   void EmitSectionOffset(const char* Label, const char* Section,
                          unsigned LabelNumber, unsigned SectionNumber,
-                         bool IsSmall = false) const {
+                         bool IsSmall = false) {
     if (TAI->needsSet()) {
-      static unsigned SetCounter = 1;
-      
       O << "\t.set\t";
       PrintLabelName("set", SetCounter);
       O << ",";
@@ -1978,7 +1976,7 @@ private:
 
   /// EmitDIE - Recusively Emits a debug information entry.
   ///
-  void EmitDIE(DIE *Die) const {
+  void EmitDIE(DIE *Die) {
     // Get the abbreviation for this DIE.
     unsigned AbbrevNumber = Die->getAbbrevNumber();
     const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
@@ -1993,7 +1991,7 @@ private:
              ":0x" + utohexstr(Die->getSize()) + " " +
              TagString(Abbrev->getTag())));
     
-    const std::vector<DIEValue *> &Values = Die->getValues();
+    std::vector<DIEValue *> &Values = Die->getValues();
     const std::vector<DIEAbbrevData> &AbbrevData = Abbrev->getData();
     
     // Emit the DIE attribute values.
@@ -2092,7 +2090,7 @@ private:
 
   /// EmitDebugInfo - Emit the debug info section.
   ///
-  void EmitDebugInfo() const {
+  void EmitDebugInfo() {
     // Start debug info section.
     Asm->SwitchToDataSection(TAI->getDwarfInfoSection());
     
@@ -2160,7 +2158,7 @@ private:
 
   /// EmitDebugLines - Emit source line information.
   ///
-  void EmitDebugLines() const {
+  void EmitDebugLines() {
     // Minimum line delta, thus ranging from -10..(255-10).
     const int MinLineDelta = -(DW_LNS_fixed_advance_pc + 1);
     // Maximum line delta, thus ranging from -10..(255-10).
@@ -3199,7 +3197,7 @@ void DIEValue::dump() {
 
 /// EmitValue - Emit integer of appropriate size.
 ///
-void DIEInteger::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+void DIEInteger::EmitValue(DwarfDebug &DD, unsigned Form) {
   switch (Form) {
   case DW_FORM_flag:  // Fall thru
   case DW_FORM_ref1:  // Fall thru
@@ -3240,7 +3238,7 @@ unsigned DIEInteger::SizeOf(const DwarfDebug &DD, unsigned Form) const {
 
 /// EmitValue - Emit string value.
 ///
-void DIEString::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+void DIEString::EmitValue(DwarfDebug &DD, unsigned Form) {
   DD.getAsm()->EmitString(String);
 }
 
@@ -3248,7 +3246,7 @@ void DIEString::EmitValue(const DwarfDebug &DD, unsigned Form) const {
 
 /// EmitValue - Emit label value.
 ///
-void DIEDwarfLabel::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+void DIEDwarfLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
   DD.EmitReference(Label);
 }
 
@@ -3262,7 +3260,7 @@ unsigned DIEDwarfLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
 
 /// EmitValue - Emit label value.
 ///
-void DIEObjectLabel::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+void DIEObjectLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
   DD.EmitReference(Label);
 }
 
@@ -3276,7 +3274,7 @@ unsigned DIEObjectLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
 
 /// EmitValue - Emit delta value.
 ///
-void DIEDelta::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+void DIEDelta::EmitValue(DwarfDebug &DD, unsigned Form) {
   bool IsSmall = Form == DW_FORM_data4;
   DD.EmitDifference(LabelHi, LabelLo, IsSmall);
 }
@@ -3292,7 +3290,7 @@ unsigned DIEDelta::SizeOf(const DwarfDebug &DD, unsigned Form) const {
 
 /// EmitValue - Emit debug information entry offset.
 ///
-void DIEntry::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+void DIEntry::EmitValue(DwarfDebug &DD, unsigned Form) {
   DD.getAsm()->EmitInt32(Entry->getOffset());
 }
     
@@ -3313,7 +3311,7 @@ unsigned DIEBlock::ComputeSize(DwarfDebug &DD) {
 
 /// EmitValue - Emit block data.
 ///
-void DIEBlock::EmitValue(const DwarfDebug &DD, unsigned Form) const {
+void DIEBlock::EmitValue(DwarfDebug &DD, unsigned Form) {
   switch (Form) {
   case DW_FORM_block1: DD.getAsm()->EmitInt8(Size);         break;
   case DW_FORM_block2: DD.getAsm()->EmitInt16(Size);        break;
