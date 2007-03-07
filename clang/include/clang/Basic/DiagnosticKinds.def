@@ -476,8 +476,6 @@ DIAG(err_invalid_suffix_float_constant, ERROR,
      "invalid suffix '%s' on floating constant")
 DIAG(err_exponent_has_no_digits, ERROR,
      "exponent has no digits")
-DIAG(err_too_many_decimal_points, ERROR,
-     "too many decimal points in number")
 DIAG(err_hexconstant_requires_exponent, ERROR,
      "hexadecimal floating constants require an exponent")
 

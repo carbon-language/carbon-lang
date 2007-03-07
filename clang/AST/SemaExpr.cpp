@@ -285,6 +285,30 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
   }
 }
 
+/// SkipHexDigits - Read and skip over any hex digits, up to End.
+/// Return a pointer to the first non-hex digit or End.
+static const char *SkipHexDigits(const char *ptr, const char *end) {
+  while (ptr != end && isxdigit(*ptr))
+    ptr++;
+  return ptr;
+}
+
+/// SkipOctalDigits - Read and skip over any octal digits, up to End.
+/// Return a pointer to the first non-hex digit or End.
+static const char *SkipOctalDigits(const char *ptr, const char *end) {
+  while (ptr != end && ((*ptr >= '0') && (*ptr <= '7')))
+    ptr++;
+  return ptr;
+}
+
+/// SkipDigits - Read and skip over any digits, up to End.
+/// Return a pointer to the first non-hex digit or End.
+static const char *SkipDigits(const char *ptr, const char *end) {
+  while (ptr != end && isdigit(*ptr))
+    ptr++;
+  return ptr;
+}
+                
 ///       integer-constant: [C99 6.4.4.1]
 ///         decimal-constant integer-suffix
 ///         octal-constant integer-suffix
@@ -350,34 +374,30 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
   
   if (*s == '0') { // parse radix
     s++;
-    if ((*s == 'x' || *s == 'X') && isxdigit(s[1])) { // need 1 digit
+    if ((*s == 'x' || *s == 'X') && (isxdigit(s[1]) || s[1] == '.')) {
       s++;
       radix = 16;
-      while (s < ThisTokEnd) {
-        if (isxdigit(*s)) {
-          s++;
-        } else if (*s == '.') {
-          s++;
-          if (saw_period) {
-            Diag(Tok, diag::err_too_many_decimal_points);
-            return ExprResult(true);
-          } else
-            saw_period = true;
-        } else if (*s == 'p' || *s == 'P') { // binary exponent
-          saw_exponent = true;
-          s++;
-          if (*s == '+' || *s == '-')  s++; // sign is optional
-          if (isdigit(*s)) { 
-            do { s++; } while (isdigit(*s)); // a decimal integer
-          } else {
-            Diag(Tok, diag::err_exponent_has_no_digits);
-            return ExprResult(true);
-          }
-          break;
-        } else
-          break;
+      s = SkipHexDigits(s, ThisTokEnd);
+      if (s == ThisTokEnd) {
+      } else if (*s == '.') {
+        s++;
+        saw_period = true;
+        s = SkipHexDigits(s, ThisTokEnd);
       }
-      if (saw_period && !saw_exponent) { 
+      // A binary exponent can appear with or with a '.'. If dotted, the
+      // binary exponent is required. 
+      if (*s == 'p' || *s == 'P') { 
+        s++;
+        saw_exponent = true;
+        if (*s == '+' || *s == '-')  s++; // sign
+        const char *first_non_digit = SkipDigits(s, ThisTokEnd);
+        if (first_non_digit == s) {
+          Diag(Tok, diag::err_exponent_has_no_digits);
+          return ExprResult(true);
+        } else {
+          s = first_non_digit;
+        }
+      } else if (saw_period) {
         Diag(Tok, diag::err_hexconstant_requires_exponent);
         return ExprResult(true);
       }
@@ -386,126 +406,95 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
       // floating point constant, the radix will change to 10. Octal floating
       // point constants are not permitted (only decimal and hexadecimal). 
       radix = 8;
-      while (s < ThisTokEnd) {
-        if ((*s >= '0') && (*s <= '7')) {
-          s++;
-        } else if (*s == '.') {
-          s++;
-          if (saw_period) {
-            Diag(Tok, diag::err_too_many_decimal_points);
-            return ExprResult(true);
-          }
-          saw_period = true;
-          radix = 10;
-        } else if (*s == 'e' || *s == 'E') { // exponent
-          saw_exponent = true;
-          s++;
-          if (*s == '+' || *s == '-')  s++; // sign
-          if (isdigit(*s)) { 
-            do { s++; } while (isdigit(*s)); // a decimal integer
-          } else {
-            Diag(Tok, diag::err_exponent_has_no_digits);
-            return ExprResult(true);
-          }
-          radix = 10;
-          break;
-        } else
-          break;
+      s = SkipOctalDigits(s, ThisTokEnd);
+      if (s == ThisTokEnd) {
+      } else if (*s == '.') {
+        s++;
+        radix = 10;
+        saw_period = true;
+        s = SkipDigits(s, ThisTokEnd);
+      }
+      if (*s == 'e' || *s == 'E') { // exponent
+        s++;
+        radix = 10;
+        saw_exponent = true;
+        if (*s == '+' || *s == '-')  s++; // sign
+        const char *first_non_digit = SkipDigits(s, ThisTokEnd);
+        if (first_non_digit == s) {
+          Diag(Tok, diag::err_exponent_has_no_digits);
+          return ExprResult(true);
+        } else {
+          s = first_non_digit;
+        }
       }
     }
   } else { // the first digit is non-zero
     radix = 10;
-    while (s < ThisTokEnd) {
-      if (isdigit(*s)) {
-        s++;
-      } else if (*s == '.') {
-        s++;
-        if (saw_period) {
-          Diag(Tok, diag::err_too_many_decimal_points);
-          return ExprResult(true);
-        } else
-          saw_period = true;
-      } else if (*s == 'e' || *s == 'E') { // exponent
-        saw_exponent = true;
-        s++;
-        if (*s == '+' || *s == '-')  s++; // sign
-        if (isdigit(*s)) { 
-          do { s++; } while (isdigit(*s)); // a decimal integer
-        } else {
-          Diag(Tok, diag::err_exponent_has_no_digits);
-          return ExprResult(true);
-        }
-        break;
-      } else
-        break;
+    s = SkipDigits(s, ThisTokEnd);
+    if (s == ThisTokEnd) {
+    } else if (*s == '.') {
+      s++;
+      saw_period = true;
+      s = SkipDigits(s, ThisTokEnd);
+    } 
+    if (*s == 'e' || *s == 'E') { // exponent
+      s++;
+      saw_exponent = true;
+      if (*s == '+' || *s == '-')  s++; // sign
+      const char *first_non_digit = SkipDigits(s, ThisTokEnd);
+      if (first_non_digit == s) {
+        Diag(Tok, diag::err_exponent_has_no_digits);
+        return ExprResult(true);
+      } else {
+        s = first_non_digit;
+      }
     }
   }
 
   const char *suffix_start = s;
-  bool invalid_suffix = false;
   
   if (saw_period || saw_exponent) {
     bool saw_float_suffix = false, saw_long_suffix = false;
-        
-    while (s < ThisTokEnd) {
-      // parse float suffix - they can appear in any order.
+    
+    if (s < ThisTokEnd) { // parse size suffix (float, long double)
       if (*s == 'f' || *s == 'F') {
-        if (saw_float_suffix) {
-          invalid_suffix = true;
-          break;
-        } else {
-          saw_float_suffix = true;
-          s++;
-        }
+        saw_float_suffix = true;
+        s++;
       } else if (*s == 'l' || *s == 'L') {
-        if (saw_long_suffix) {
-          invalid_suffix = true;
-          break;
-        } else {
-          saw_long_suffix = true;
-          s++;
-        }
-      } else {
-        invalid_suffix = true;
-        break;
+        saw_long_suffix = true;
+        s++;
       }
-    }
-    if (invalid_suffix) {
-      Diag(Tok, diag::err_invalid_suffix_float_constant, 
-           std::string(suffix_start, ThisTokEnd));
-      return ExprResult(true);
+      if (s != ThisTokEnd) {
+        Diag(Tok, diag::err_invalid_suffix_float_constant, 
+             std::string(suffix_start, ThisTokEnd));
+        return ExprResult(true);
+      }
     }
     literal_expr = new FloatingLiteral();
   } else {
-    bool saw_unsigned = false;
-    int long_cnt = 0;
+    bool saw_unsigned = false, saw_long = false, saw_longlong = false;
 
     // if there is no suffix, this loop won't be executed (s == ThisTokEnd)
     while (s < ThisTokEnd) {
       // parse int suffix - they can appear in any order ("ul", "lu", "llu").
       if (*s == 'u' || *s == 'U') {
-        if (saw_unsigned) {
-          invalid_suffix = true;
-          break;
-        } else {
-          saw_unsigned = true;
-          s++;
-        }
+        if (saw_unsigned) break; // only allowed to have one 
+        saw_unsigned = true;
+        s++;
       } else if (*s == 'l' || *s == 'L') {
-        long_cnt++;
-        // l's need to be adjacent and the same case.
-        if ((long_cnt == 2 && (*s != *(s-1))) || long_cnt == 3) {
-          invalid_suffix = true;
-          break;
-        } else {
+        if (saw_long || saw_longlong) break; // only allowed to have one
+        s++;
+        if (s < ThisTokEnd && (*s == *(s-1))) {
+          saw_longlong = true; // l's need to be adjacent and same case.
           s++;
+        } else {
+          saw_long = true;
         }
       } else {
-        invalid_suffix = true;
         break;
       }
     }
-    if (invalid_suffix) {
+    if (s != ThisTokEnd) {
       Diag(Tok, diag::err_invalid_suffix_integer_constant, 
            std::string(suffix_start, ThisTokEnd));
       return ExprResult(true);
