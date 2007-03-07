@@ -398,7 +398,7 @@ static unsigned calcNumMI(int Opc, int ExtraOpc, unsigned Bytes,
     Bytes -= ThisVal;
     NumMIs++;
     NumBits = 8;
-    Scale = 1;
+    Scale = 1;  // Followed by a number of tADDi8.
     Chunk = ((1 << NumBits) - 1) * Scale;
   }
 
@@ -685,7 +685,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const TargetInstrDescriptor &Desc = TII.get(Opcode);
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   bool isSub = false;
-  
+
   if (Opcode == ARM::ADDri) {
     Offset += MI.getOperand(i+1).getImm();
     if (Offset == 0) {
@@ -724,8 +724,21 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.getOperand(i+1).ChangeToImmediate(ThisSOImmVal);
   } else if (Opcode == ARM::tADDrSPi) {
     Offset += MI.getOperand(i+1).getImm();
-    assert((Offset & 3) == 0 &&
-           "Thumb add/sub sp, #imm immediate must be multiple of 4!");
+
+    // Can't use tADDrSPi if it's based off the frame pointer.
+    unsigned NumBits = 0;
+    unsigned Scale = 1;
+    if (FrameReg != ARM::SP) {
+      Opcode = ARM::tADDi3;
+      MI.setInstrDescriptor(TII.get(ARM::tADDi3));
+      NumBits = 3;
+    } else {
+      NumBits = 8;
+      Scale = 4;
+      assert((Offset & 3) == 0 &&
+             "Thumb add/sub sp, #imm immediate must be multiple of 4!");
+    }
+
     if (Offset == 0) {
       // Turn it into a move.
       MI.setInstrDescriptor(TII.get(ARM::tMOVrr));
@@ -735,16 +748,17 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
 
     // Common case: small offset, fits into instruction.
-    if (((Offset >> 2) & ~255U) == 0) {
+    unsigned Mask = (1 << NumBits) - 1;
+    if (((Offset / Scale) & ~Mask) == 0) {
       // Replace the FrameIndex with sp / fp
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
-      MI.getOperand(i+1).ChangeToImmediate(Offset >> 2);
+      MI.getOperand(i+1).ChangeToImmediate(Offset / Scale);
       return;
     }
 
     unsigned DestReg = MI.getOperand(0).getReg();
     unsigned Bytes = (Offset > 0) ? Offset : -Offset;
-    unsigned NumMIs = calcNumMI(Opcode, 0, Bytes, 8, 1);
+    unsigned NumMIs = calcNumMI(Opcode, 0, Bytes, NumBits, Scale);
     // MI would expand into a large number of instructions. Don't try to
     // simplify the immediate.
     if (NumMIs > 2) {
@@ -758,8 +772,8 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       // r0 = add sp, 255*4
       // r0 = add r0, (imm - 255*4)
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
-      MI.getOperand(i+1).ChangeToImmediate(255);
-      Offset = (Offset - 255 * 4);
+      MI.getOperand(i+1).ChangeToImmediate(Mask);
+      Offset = (Offset - Mask * Scale);
       MachineBasicBlock::iterator NII = next(II);
       emitThumbRegPlusImmediate(MBB, NII, DestReg, DestReg, Offset, TII);
     } else {
