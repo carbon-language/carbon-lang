@@ -823,8 +823,12 @@ public:
   void PrintLabelName(DWLabel Label) const {
     PrintLabelName(Label.Tag, Label.Number);
   }
-  void PrintLabelName(const char *Tag, unsigned Number) const {
-    O << TAI->getPrivateGlobalPrefix() << Tag;
+  void PrintLabelName(const char *Tag, unsigned Number,
+                      bool isInSection = false) const {
+    if (isInSection && TAI->getDwarfSectionOffsetDirective())
+      O << TAI->getDwarfSectionOffsetDirective() << Tag;
+    else
+      O << TAI->getPrivateGlobalPrefix() << Tag;
     if (Number) O << Number;
   }
   
@@ -907,7 +911,44 @@ public:
       PrintLabelName(TagLo, NumberLo);
     }
   }
-                      
+
+  void EmitSectionOffset(const char* Label, const char* Section,
+                         unsigned LabelNumber, unsigned SectionNumber,
+                         bool IsSmall = false) const {
+    if (TAI->needsSet()) {
+      static unsigned SetCounter = 1;
+      
+      O << "\t.set\t";
+      PrintLabelName("set", SetCounter);
+      O << ",";
+      PrintLabelName(Label, LabelNumber, true);
+      if (!TAI->isAbsoluteSectionOffsets()) {
+        O << "-";
+        PrintLabelName(Section, SectionNumber);
+      }      
+      O << "\n";
+      
+      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
+        O << TAI->getData32bitsDirective();
+      else
+        O << TAI->getData64bitsDirective();
+        
+      PrintLabelName("set", SetCounter);
+      ++SetCounter;
+    } else {
+      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
+        O << TAI->getData32bitsDirective();
+      else
+        O << TAI->getData64bitsDirective();
+        
+      PrintLabelName(Label, LabelNumber, true);
+      if (!TAI->isAbsoluteSectionOffsets()) {
+        O << "-";
+        PrintLabelName(Section, SectionNumber);
+      }
+    }    
+  }
+  
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.
   void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
@@ -1649,8 +1690,11 @@ private:
   CompileUnit *NewCompileUnit(CompileUnitDesc *UnitDesc, unsigned ID) {
     // Construct debug information entry.
     DIE *Die = new DIE(DW_TAG_compile_unit);
-    AddDelta(Die, DW_AT_stmt_list, DW_FORM_data4, DWLabel("section_line", 0),
-                                                  DWLabel("section_line", 0));
+    if (TAI->isAbsoluteSectionOffsets())
+      AddLabel(Die, DW_AT_stmt_list, DW_FORM_data4, DWLabel("section_line", 0));
+    else
+      AddDelta(Die, DW_AT_stmt_list, DW_FORM_data4, DWLabel("section_line", 0),
+               DWLabel("section_line", 0));      
     AddString(Die, DW_AT_producer,  DW_FORM_string, UnitDesc->getProducer());
     AddUInt  (Die, DW_AT_language,  DW_FORM_data1,  UnitDesc->getLanguage());
     AddString(Die, DW_AT_name,      DW_FORM_string, UnitDesc->getFileName());
@@ -2065,7 +2109,7 @@ private:
                            
     Asm->EmitInt32(ContentSize);  Asm->EOL("Length of Compilation Unit Info");
     Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF version number");
-    EmitDifference("abbrev_begin", 0, "section_abbrev", 0, true);
+    EmitSectionOffset("abbrev_begin", "section_abbrev", 0, 0, true);
     Asm->EOL("Offset Into Abbrev. Section");
     Asm->EmitInt8(TAI->getAddressSize()); Asm->EOL("Address Size (in bytes)");
   
@@ -2323,8 +2367,8 @@ private:
     Asm->EOL("Length of Frame Information Entry");
     
     EmitLabel("frame_begin", SubprogramCount);
-    
-    EmitDifference("frame_common_begin", 0, "section_frame", 0, true);
+
+    EmitSectionOffset("frame_common_begin", "section_frame", 0, 0, true);
     Asm->EOL("FDE CIE offset");
 
     EmitReference("func_begin", SubprogramCount);
@@ -2358,8 +2402,8 @@ private:
     EmitLabel("pubnames_begin", Unit->getID());
     
     Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF Version");
-    
-    EmitDifference("info_begin", Unit->getID(), "section_info", 0, true);
+
+    EmitSectionOffset("info_begin", "section_info", Unit->getID(), 0, true);
     Asm->EOL("Offset of Compilation Unit Info");
 
     EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),true);
@@ -2786,9 +2830,9 @@ private:
       Asm->EOL("Length of Frame Information Entry");
       
       EmitLabel("eh_frame_begin", SubprogramCount);
-      
-      EmitDifference("eh_frame_begin", SubprogramCount,
-                     "section_eh_frame", 0, true);
+
+      EmitSectionOffset("eh_frame_begin", "section_eh_frame",
+                        SubprogramCount, 0, true);
       Asm->EOL("FDE CIE offset");
 
       EmitReference("eh_func_begin", SubprogramCount, true);
@@ -2951,8 +2995,8 @@ private:
     // Emit the landng pad site information.
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
       const LandingPadInfo &LandingPad = LandingPads[i];
-      EmitDifference("label", LandingPad.BeginLabel,
-                     "eh_func_begin", SubprogramCount);
+      EmitSectionOffset("label", "eh_func_begin",
+                        LandingPad.BeginLabel, SubprogramCount);
       Asm->EOL("Region start");
       
       EmitDifference("label", LandingPad.EndLabel,
@@ -2965,8 +3009,8 @@ private:
         else
           Asm->EmitInt64(0);
       } else {
-        EmitDifference("label", LandingPad.LandingPadLabel,
-                       "eh_func_begin", SubprogramCount);
+        EmitSectionOffset("label", "eh_func_begin",
+                          LandingPad.LandingPadLabel, SubprogramCount);
       }
       Asm->EOL("Landing pad");
 

@@ -246,6 +246,10 @@ namespace llvm {
     
     //===--- Dwarf Emission Directives -----------------------------------===//
 
+    /// AbsoluteSectionOffsets - True if we should emit abolute section
+    /// offsets. Defaults to false.
+    bool AbsoluteSectionOffsets;
+    
     /// HasLEB128 - True if target asm supports leb128 directives.
     ///
     bool HasLEB128; // Defaults to false.
@@ -266,6 +270,9 @@ namespace llvm {
     ///
     bool DwarfRequiresFrameSection; // Defaults to true.
 
+    /// DwarfSectionOffsetDirective - Special section offset directive.
+    const char* DwarfSectionOffsetDirective; // Defaults to NULL
+    
     /// DwarfAbbrevSection - Section directive for Dwarf abbrev.
     ///
     const char *DwarfAbbrevSection; // Defaults to ".debug_abbrev".
@@ -494,6 +501,9 @@ namespace llvm {
     const char *getHiddenDirective() const {
       return HiddenDirective;
     }
+    bool isAbsoluteSectionOffsets() const {
+      return AbsoluteSectionOffsets;
+    }
     bool hasLEB128() const {
       return HasLEB128;
     }
@@ -509,6 +519,9 @@ namespace llvm {
     bool getDwarfRequiresFrameSection() const {
       return DwarfRequiresFrameSection;
     }
+    const char *getDwarfSectionOffsetDirective() const {
+      return DwarfSectionOffsetDirective;
+    }    
     const char *getDwarfAbbrevSection() const {
       return DwarfAbbrevSection;
     }

@@ -69,11 +69,13 @@ TargetAsmInfo::TargetAsmInfo() :
   UsedDirective(0),
   WeakRefDirective(0),
   HiddenDirective("\t.hidden\t"),
+  AbsoluteSectionOffsets(false),
   HasLEB128(false),
   HasDotLoc(false),
   HasDotFile(false),
   SupportsExceptionHandling(false),
   DwarfRequiresFrameSection(true),
+  DwarfSectionOffsetDirective(0),
   DwarfAbbrevSection(".debug_abbrev"),
   DwarfInfoSection(".debug_info"),
   DwarfLineSection(".debug_line"),
@@ -106,3 +108,4 @@ unsigned TargetAsmInfo::getInlineAsmLength(const char *Str) const {
   // Multiply by the worst-case length for each instruction.
   return NumInsts * MaxInstLength;
 }
+
