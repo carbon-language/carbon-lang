@@ -1,6 +1,6 @@
 // Testcase for PR1242
 // RUN: %llvmgcc -S %s -o - | grep datalayout | \
-// RUN:    not grep '"[Ee]-p:[36][24]:[36]:[24]"'
+// RUN:    not grep '"[Ee]-p:[36][24]:[36][24]"'
 #include <stdlib.h>
 #define NDIM 3
 #define BODY 01
