@@ -1620,6 +1620,13 @@ namespace ISD {
       cast<LoadSDNode>(N)->getExtensionType() == ISD::ZEXTLOAD;
   }
 
+  /// isUNINDEXEDLoad - Returns true if the specified node is a unindexed load.
+  ///
+  inline bool isUNINDEXEDLoad(const SDNode *N) {
+    return N->getOpcode() == ISD::LOAD &&
+      cast<LoadSDNode>(N)->getAddressingMode() == ISD::UNINDEXED;
+  }
+
   /// isNON_TRUNCStore - Returns true if the specified node is a non-truncating
   /// store.
   inline bool isNON_TRUNCStore(const SDNode *N) {
