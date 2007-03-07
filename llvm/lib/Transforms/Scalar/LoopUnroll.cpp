@@ -24,6 +24,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CFG.h"
@@ -45,11 +46,10 @@ namespace {
   UnrollThreshold("unroll-threshold", cl::init(100), cl::Hidden,
                   cl::desc("The cut-off point for loop unrolling"));
 
-  class VISIBILITY_HIDDEN LoopUnroll : public FunctionPass {
+  class VISIBILITY_HIDDEN LoopUnroll : public LoopPass {
     LoopInfo *LI;  // The current loop information
   public:
-    virtual bool runOnFunction(Function &F);
-    bool visitLoop(Loop *L);
+    bool runOnLoop(Loop *L, LPPassManager &LPM);
     BasicBlock* FoldBlockIntoPredecessor(BasicBlock* BB);
 
     /// This transformation requires natural loop information & requires that
@@ -66,20 +66,7 @@ namespace {
   RegisterPass<LoopUnroll> X("loop-unroll", "Unroll loops");
 }
 
-FunctionPass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }
-
-bool LoopUnroll::runOnFunction(Function &F) {
-  bool Changed = false;
-  LI = &getAnalysis<LoopInfo>();
-
-  // Transform all the top-level loops.  Copy the loop list so that the child
-  // can update the loop tree if it needs to delete the loop.
-  std::vector<Loop*> SubLoops(LI->begin(), LI->end());
-  for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
-    Changed |= visitLoop(SubLoops[i]);
-
-  return Changed;
-}
+LoopPass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }
 
 /// ApproximateLoopSize - Approximate the size of the loop after it has been
 /// unrolled.
@@ -171,15 +158,9 @@ BasicBlock* LoopUnroll::FoldBlockIntoPredecessor(BasicBlock* BB) {
   return OnlyPred;
 }
 
-bool LoopUnroll::visitLoop(Loop *L) {
+bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   bool Changed = false;
-
-  // Recurse through all subloops before we process this loop.  Copy the loop
-  // list so that the child can update the loop tree if it needs to delete the
-  // loop.
-  std::vector<Loop*> SubLoops(L->begin(), L->end());
-  for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
-    Changed |= visitLoop(SubLoops[i]);
+  LI = &getAnalysis<LoopInfo>();
 
   BasicBlock* Header = L->getHeader();
   BasicBlock* LatchBlock = L->getLoopLatch();
@@ -367,18 +348,8 @@ bool LoopUnroll::visitLoop(Loop *L) {
     }
 
   // Update the loop information for this loop.
-  Loop *Parent = L->getParentLoop();
-
-  // Move all of the basic blocks in the loop into the parent loop.
-  for (std::vector<BasicBlock*>::const_iterator BB = NewLoopBlocks.begin(),
-       E = NewLoopBlocks.end(); BB != E; ++BB)
-    LI->changeLoopFor(*BB, Parent);
-
   // Remove the loop from the parent.
-  if (Parent)
-    delete Parent->removeChildLoop(std::find(Parent->begin(), Parent->end(),L));
-  else
-    delete LI->removeLoop(std::find(LI->begin(), LI->end(), L));
+  LPM.deleteLoopFromQueue(L);
 
   ++NumUnrolled;
   return true;

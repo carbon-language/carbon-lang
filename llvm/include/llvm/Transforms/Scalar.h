@@ -133,7 +133,7 @@ LoopPass *createLoopUnswitchPass();
 //
 // LoopUnroll - This pass is a simple loop unrolling pass.
 //
-FunctionPass *createLoopUnrollPass();
+LoopPass *createLoopUnrollPass();
 
 //===----------------------------------------------------------------------===//
 //
