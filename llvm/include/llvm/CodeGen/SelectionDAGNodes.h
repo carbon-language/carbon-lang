@@ -48,11 +48,26 @@ struct SDVTList {
   unsigned short NumVTs;
 };
 
-
 /// ISD namespace - This namespace contains an enum which represents all of the
 /// SelectionDAG node types and value types.
 ///
 namespace ISD {
+  namespace ParamFlags {    
+  enum Flags {
+    NoFlagSet         = 0,
+    ZExt              = 1<<0,  ///< Parameter should be zero extended
+    ZExtOffs          = 0,
+    SExt              = 1<<1,  ///< Parameter should be sign extended
+    SExtOffs          = 1,
+    InReg             = 1<<2,  ///< Parameter should be passed in register
+    InRegOffs         = 2,
+    StructReturn      = 1<<3,  ///< Hidden struct-return pointer
+    StructReturnOffs  = 3,
+    OrigAlignment     = 0x1F<<27,
+    OrigAlignmentOffs = 27
+  };
+  }
+
   //===--------------------------------------------------------------------===//
   /// ISD::NodeType enum - This enum defines all of the operators valid in a
   /// SelectionDAG.

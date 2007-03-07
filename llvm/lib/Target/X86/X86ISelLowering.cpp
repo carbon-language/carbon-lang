@@ -29,7 +29,6 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
@@ -677,7 +676,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
     // If this is an sret function, the return should pop the hidden pointer.
     if (NumArgs &&
         (cast<ConstantSDNode>(Op.getOperand(3))->getValue() &
-         SDISelParamFlags::StructReturn))
+         ISD::ParamFlags::StructReturn))
       BytesToPopOnReturn = 4;  
     
     BytesCallerReserves = StackSize;
@@ -751,7 +750,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   // If the first argument is an sret pointer, remember it.
   bool isSRet = NumOps &&
     (cast<ConstantSDNode>(Op.getOperand(6))->getValue() &
-     SDISelParamFlags::StructReturn);
+     ISD::ParamFlags::StructReturn);
   
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
@@ -3408,16 +3407,10 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     TargetLowering::ArgListEntry Entry;
     Entry.Node = Op.getOperand(1);
     Entry.Ty = IntPtrTy;
-    Entry.isSigned = false;
-    Entry.isInReg = false;
-    Entry.isSRet = false;
     Args.push_back(Entry);
     // Extend the unsigned i8 argument to be an int value for the call.
     Entry.Node = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Op.getOperand(2));
     Entry.Ty = IntPtrTy;
-    Entry.isSigned = false;
-    Entry.isInReg = false;
-    Entry.isSRet = false;
     Args.push_back(Entry);
     Entry.Node = Op.getOperand(3);
     Args.push_back(Entry);
@@ -3568,9 +3561,6 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
     TargetLowering::ArgListTy Args;
     TargetLowering::ArgListEntry Entry;
     Entry.Ty = getTargetData()->getIntPtrType();
-    Entry.isSigned = false;
-    Entry.isInReg = false;
-    Entry.isSRet = false;
     Entry.Node = Op.getOperand(1); Args.push_back(Entry);
     Entry.Node = Op.getOperand(2); Args.push_back(Entry);
     Entry.Node = Op.getOperand(3); Args.push_back(Entry);

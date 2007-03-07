@@ -341,9 +341,11 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
       case MVT::i32: {
         //promote to 64-bits, sign/zero extending based on type
         //of the argument
-        ISD::NodeType ExtendKind = ISD::ZERO_EXTEND;
-        if (Args[i].isSigned)
+        ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+        if (Args[i].isSExt)
           ExtendKind = ISD::SIGN_EXTEND;
+        else if (Args[i].isZExt)
+          ExtendKind = ISD::ZERO_EXTEND;
         Val = DAG.getNode(ExtendKind, MVT::i64, Val);
         // XXX: fall through
       }

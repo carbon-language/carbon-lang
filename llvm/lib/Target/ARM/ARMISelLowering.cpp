@@ -27,7 +27,6 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
@@ -347,7 +346,7 @@ HowToPassArgument(MVT::ValueType ObjectVT, unsigned NumGPRs,
   NeededGPRs = 0;
   StackPad = 0;
   GPRPad = 0;
-  unsigned align = (Flags >> SDISelParamFlags::OrigAlignmentOffs);
+  unsigned align = (Flags >> ISD::ParamFlags::OrigAlignmentOffs);
   GPRPad = NumGPRs % ((align + 3)/4);
   StackPad = StackOffset % align;
   unsigned firstGPR = NumGPRs + GPRPad;

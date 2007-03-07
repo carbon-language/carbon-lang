@@ -2279,7 +2279,8 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     Value *Arg = I.getOperand(i);
     SDOperand ArgNode = getValue(Arg);
     Entry.Node = ArgNode; Entry.Ty = Arg->getType();
-    Entry.isSigned = FTy->paramHasAttr(i, FunctionType::SExtAttribute);
+    Entry.isSExt   = FTy->paramHasAttr(i, FunctionType::SExtAttribute);
+    Entry.isZExt   = FTy->paramHasAttr(i, FunctionType::ZExtAttribute);
     Entry.isInReg  = FTy->paramHasAttr(i, FunctionType::InRegAttribute);
     Entry.isSRet   = FTy->paramHasAttr(i, FunctionType::StructRetAttribute);
     Args.push_back(Entry);
@@ -2983,9 +2984,6 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   TargetLowering::ArgListEntry Entry;
   Entry.Node = Src;
   Entry.Ty = TLI.getTargetData()->getIntPtrType();
-  Entry.isSigned = false;
-  Entry.isInReg = false;
-  Entry.isSRet = false;
   Args.push_back(Entry);
 
   std::pair<SDOperand,SDOperand> Result =
@@ -3001,9 +2999,6 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   TargetLowering::ArgListEntry Entry;
   Entry.Node = getValue(I.getOperand(0));
   Entry.Ty = TLI.getTargetData()->getIntPtrType();
-  Entry.isSigned = false;
-  Entry.isInReg = false;
-  Entry.isSRet = false;
   Args.push_back(Entry);
   MVT::ValueType IntPtr = TLI.getPointerTy();
   std::pair<SDOperand,SDOperand> Result =
@@ -3099,21 +3094,21 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
        I != E; ++I, ++j) {
     MVT::ValueType VT = getValueType(I->getType());
-    unsigned Flags = SDISelParamFlags::NoFlagSet;
+    unsigned Flags = ISD::ParamFlags::NoFlagSet;
     unsigned OriginalAlignment =
       getTargetData()->getABITypeAlignment(I->getType());
 
     // FIXME: Distinguish between a formal with no [sz]ext attribute from one
     // that is zero extended!
     if (FTy->paramHasAttr(j, FunctionType::ZExtAttribute))
-      Flags &= ~(SDISelParamFlags::Signed);
+      Flags &= ~(ISD::ParamFlags::SExt);
     if (FTy->paramHasAttr(j, FunctionType::SExtAttribute))
-      Flags |= SDISelParamFlags::Signed;
+      Flags |= ISD::ParamFlags::SExt;
     if (FTy->paramHasAttr(j, FunctionType::InRegAttribute))
-      Flags |= SDISelParamFlags::InReg;
+      Flags |= ISD::ParamFlags::InReg;
     if (FTy->paramHasAttr(j, FunctionType::StructRetAttribute))
-      Flags |= SDISelParamFlags::StructReturn;
-    Flags |= (OriginalAlignment << SDISelParamFlags::OrigAlignmentOffs);
+      Flags |= ISD::ParamFlags::StructReturn;
+    Flags |= (OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs);
     
     switch (getTypeAction(VT)) {
     default: assert(0 && "Unknown type action!");
@@ -3136,8 +3131,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
           RetVals.push_back(NVT);
           // if it isn't first piece, alignment must be 1
           if (i > 0)
-            Flags = (Flags & (~SDISelParamFlags::OrigAlignment)) |
-              (1 << SDISelParamFlags::OrigAlignmentOffs);
+            Flags = (Flags & (~ISD::ParamFlags::OrigAlignment)) |
+              (1 << ISD::ParamFlags::OrigAlignmentOffs);
           Ops.push_back(DAG.getConstant(Flags, MVT::i32));
         }
       } else {
@@ -3246,8 +3241,8 @@ static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
   if (TLI.getTypeAction(VT) != TargetLowering::Expand) {
     // if it isn't first piece, alignment must be 1
     if (!isFirst)
-      Flags = (Flags & (~SDISelParamFlags::OrigAlignment)) |
-        (1 << SDISelParamFlags::OrigAlignmentOffs);
+      Flags = (Flags & (~ISD::ParamFlags::OrigAlignment)) |
+        (1 << ISD::ParamFlags::OrigAlignmentOffs);
     Ops.push_back(Arg);
     Ops.push_back(DAG.getConstant(Flags, MVT::i32));
     return;
@@ -3294,17 +3289,19 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     MVT::ValueType VT = getValueType(Args[i].Ty);
     SDOperand Op = Args[i].Node;
-    unsigned Flags = SDISelParamFlags::NoFlagSet;
+    unsigned Flags = ISD::ParamFlags::NoFlagSet;
     unsigned OriginalAlignment =
       getTargetData()->getABITypeAlignment(Args[i].Ty);
     
-    if (Args[i].isSigned)
-      Flags |= SDISelParamFlags::Signed;
+    if (Args[i].isSExt)
+      Flags |= ISD::ParamFlags::SExt;
+    if (Args[i].isZExt)
+      Flags |= ISD::ParamFlags::ZExt;
     if (Args[i].isInReg)
-      Flags |= SDISelParamFlags::InReg;
+      Flags |= ISD::ParamFlags::InReg;
     if (Args[i].isSRet)
-      Flags |= SDISelParamFlags::StructReturn;
-    Flags |= OriginalAlignment << SDISelParamFlags::OrigAlignmentOffs;
+      Flags |= ISD::ParamFlags::StructReturn;
+    Flags |= OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs;
     
     switch (getTypeAction(VT)) {
     default: assert(0 && "Unknown type action!");
@@ -3314,7 +3311,13 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       break;
     case Promote:
       if (MVT::isInteger(VT)) {
-        unsigned ExtOp = Args[i].isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+        unsigned ExtOp;
+        if (Args[i].isSExt)
+          ExtOp = ISD::SIGN_EXTEND;
+        else if (Args[i].isZExt)
+          ExtOp = ISD::ZERO_EXTEND;
+        else
+          ExtOp = ISD::ANY_EXTEND;
         Op = DAG.getNode(ExtOp, getTypeToTransformTo(VT), Op);
       } else {
         assert(MVT::isFloatingPoint(VT) && "Not int or FP?");

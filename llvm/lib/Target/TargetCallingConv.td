@@ -38,7 +38,7 @@ class CCIfCC<string CC, CCAction A>
 
 /// CCIfInReg - If this argument is marked with the 'inreg' attribute, apply
 /// the specified action.
-class CCIfInReg<CCAction A> : CCIf<"ArgFlags & SDISelParamFlags::InReg", A> {}
+class CCIfInReg<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::InReg", A> {}
 
 
 /// CCAssignToReg - This action matches if there is a register in the specified

@@ -516,9 +516,11 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     case MVT::i16: {
       // Promote the integer to 32-bits.  If the input type is signed, use a
       // sign extend, otherwise use a zero extend.
-      ISD::NodeType ExtendKind = ISD::ZERO_EXTEND;
-      if (Args[i].isSigned)
+      ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+      if (Args[i].isSExt)
         ExtendKind = ISD::SIGN_EXTEND;
+      else if (Args[i].isZExt)
+        ExtendKind = ISD::ZERO_EXTEND;
       Val = DAG.getNode(ExtendKind, MVT::i32, Val);
       // FALL THROUGH
     }

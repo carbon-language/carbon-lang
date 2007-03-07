@@ -30,21 +30,7 @@ namespace llvm {
   class TargetLowering;
   class FunctionLoweringInfo;
   class HazardRecognizer;
-
-  namespace SDISelParamFlags {
-    enum Flags {
-      NoFlagSet         = 0,
-      Signed            = 1<<0,
-      SignedOffs        = 0,
-      InReg             = 1<<1,
-      InRegOffs         = 1,
-      StructReturn      = 1<<2,
-      StructReturnOffs  = 2,
-      OrigAlignment     = 0x1F<<27,
-      OrigAlignmentOffs = 27
-    };
-  }
-  
+ 
 /// SelectionDAGISel - This is the common base class used for SelectionDAG-based
 /// pattern-matching instruction selectors.
 class SelectionDAGISel : public FunctionPass {

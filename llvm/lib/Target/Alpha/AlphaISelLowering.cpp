@@ -337,10 +337,12 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     case MVT::i32:
       // Promote the integer to 64 bits.  If the input type is signed use a
       // sign extend, otherwise use a zero extend.
-      if (Args[i].isSigned)
+      if (Args[i].isSExt)
         Args[i].Node = DAG.getNode(ISD::SIGN_EXTEND, MVT::i64, Args[i].Node);
-      else
+      else if (Args[i].isZExt)
         Args[i].Node = DAG.getNode(ISD::ZERO_EXTEND, MVT::i64, Args[i].Node);
+      else
+        Args[i].Node = DAG.getNode(ISD::ANY_EXTEND, MVT::i64, Args[i].Node);
       break;
     case MVT::i64:
     case MVT::f64:

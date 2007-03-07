@@ -765,11 +765,12 @@ public:
   struct ArgListEntry {
     SDOperand Node;
     const Type* Ty;
-    bool isSigned;
+    bool isSExt;
+    bool isZExt;
     bool isInReg;
     bool isSRet;
 
-    ArgListEntry():isSigned(false), isInReg(false), isSRet(false) { };
+    ArgListEntry():isSExt(false), isZExt(false), isInReg(false), isSRet(false) { };
   };
   typedef std::vector<ArgListEntry> ArgListTy;
   virtual std::pair<SDOperand, SDOperand>
