@@ -38,6 +38,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"
@@ -61,8 +62,8 @@ namespace {
   DisablePromotion("disable-licm-promotion", cl::Hidden,
                    cl::desc("Disable memory promotion in LICM pass"));
 
-  struct VISIBILITY_HIDDEN LICM : public FunctionPass {
-    virtual bool runOnFunction(Function &F);
+  struct VISIBILITY_HIDDEN LICM : public LoopPass {
+    virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG...
@@ -74,6 +75,11 @@ namespace {
       AU.addRequired<DominatorTree>();
       AU.addRequired<DominanceFrontier>();  // For scalar promotion (mem2reg)
       AU.addRequired<AliasAnalysis>();
+    }
+
+    bool doFinalize() {
+      LoopToAliasMap.clear();
+      return false;
     }
 
   private:
@@ -88,10 +94,7 @@ namespace {
     BasicBlock *Preheader;   // The preheader block of the current loop...
     Loop *CurLoop;           // The current loop we are working on...
     AliasSetTracker *CurAST; // AliasSet information for the current loop...
-
-    /// visitLoop - Hoist expressions out of the specified loop...
-    ///
-    void visitLoop(Loop *L, AliasSetTracker &AST);
+    std::map<Loop *, AliasSetTracker *> LoopToAliasMap;
 
     /// SinkRegion - Walk the specified region of the CFG (defined by all blocks
     /// dominated by the specified block, and that are in the current loop) in
@@ -199,12 +202,11 @@ namespace {
   RegisterPass<LICM> X("licm", "Loop Invariant Code Motion");
 }
 
-FunctionPass *llvm::createLICMPass() { return new LICM(); }
+LoopPass *llvm::createLICMPass() { return new LICM(); }
 
-/// runOnFunction - For LICM, this simply traverses the loop structure of the
-/// function, hoisting expressions out of loops if possible.
+/// Hoist expressions out of the specified loop...
 ///
-bool LICM::runOnFunction(Function &) {
+bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   Changed = false;
 
   // Get our Loop and Alias Analysis information...
@@ -213,28 +215,19 @@ bool LICM::runOnFunction(Function &) {
   DF = &getAnalysis<DominanceFrontier>();
   DT = &getAnalysis<DominatorTree>();
 
-  // Hoist expressions out of all of the top-level loops.
-  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I) {
-    AliasSetTracker AST(*AA);
-    visitLoop(*I, AST);
+  CurAST = new AliasSetTracker(*AA);
+  // Collect Alias info frmo subloops
+  for (Loop::iterator LoopItr = L->begin(), LoopItrE = L->end();
+       LoopItr != LoopItrE; ++LoopItr) {
+    Loop *InnerL = *LoopItr;
+    AliasSetTracker *InnerAST = LoopToAliasMap[InnerL];
+    assert (InnerAST && "Where is my AST?");
+
+    // What if InnerLoop was modified by other passes ?
+    CurAST->add(*InnerAST);
   }
-  return Changed;
-}
-
-
-/// visitLoop - Hoist expressions out of the specified loop...
-///
-void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
-  // Recurse through all subloops before we process this loop...
-  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I) {
-    AliasSetTracker SubAST(*AA);
-    visitLoop(*I, SubAST);
-
-    // Incorporate information about the subloops into this loop...
-    AST.add(SubAST);
-  }
+  
   CurLoop = L;
-  CurAST = &AST;
 
   // Get the preheader block to move instructions into...
   Preheader = L->getLoopPreheader();
@@ -247,7 +240,7 @@ void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   for (std::vector<BasicBlock*>::const_iterator I = L->getBlocks().begin(),
          E = L->getBlocks().end(); I != E; ++I)
     if (LI->getLoopFor(*I) == L)        // Ignore blocks in subloops...
-      AST.add(**I);                     // Incorporate the specified basic block
+      CurAST->add(**I);                     // Incorporate the specified basic block
 
   // We want to visit all of the instructions in this loop... that are not parts
   // of our subloops (they have already had their invariants hoisted out of
@@ -270,6 +263,9 @@ void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   // Clear out loops state information for the next iteration
   CurLoop = 0;
   Preheader = 0;
+
+  LoopToAliasMap[L] = CurAST;
+  return Changed;
 }
 
 /// SinkRegion - Walk the specified region of the CFG (defined by all blocks

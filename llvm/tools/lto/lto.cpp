@@ -26,6 +26,7 @@
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/Target/SubtargetFeature.h"

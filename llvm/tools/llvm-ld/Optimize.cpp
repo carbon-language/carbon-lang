@@ -15,6 +15,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/System/DynamicLibrary.h"

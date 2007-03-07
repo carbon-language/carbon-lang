@@ -112,7 +112,7 @@ FunctionPass *createInstructionCombiningPass();
 //
 // LICM - This pass is a loop invariant code motion and memory promotion pass.
 //
-FunctionPass *createLICMPass();
+LoopPass *createLICMPass();
 
 //===----------------------------------------------------------------------===//
 //
