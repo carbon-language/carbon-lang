@@ -1245,7 +1245,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
       SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand(N, 0);
   // fold (zext_inreg (extload x)) -> (zextload x)
-  if (ISD::isEXTLoad(N0.Val)) {
+  if (ISD::isEXTLoad(N0.Val) && ISD::isUNINDEXEDLoad(N0.Val)) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT::ValueType EVT = LN0->getLoadedVT();
     // If we zero all the possible extended bits, then we can turn this into
@@ -1261,7 +1261,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     }
   }
   // fold (zext_inreg (sextload x)) -> (zextload x) iff load has one use
-  if (ISD::isSEXTLoad(N0.Val) && N0.hasOneUse()) {
+  if (ISD::isSEXTLoad(N0.Val) && ISD::isUNINDEXEDLoad(N0.Val) &&
+      N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT::ValueType EVT = LN0->getLoadedVT();
     // If we zero all the possible extended bits, then we can turn this into
@@ -1282,6 +1283,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::LOAD) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     if (LN0->getExtensionType() != ISD::SEXTLOAD &&
+        LN0->getAddressingMode() == ISD::UNINDEXED &&
         N0.hasOneUse()) {
       MVT::ValueType EVT, LoadedVT;
       if (N1C->getValue() == 255)
@@ -2064,7 +2066,8 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
 
   // fold (sext (sextload x)) -> (sext (truncate (sextload x)))
   // fold (sext ( extload x)) -> (sext (truncate (sextload x)))
-  if ((ISD::isSEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) && N0.hasOneUse()) {
+  if ((ISD::isSEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) &&
+      ISD::isUNINDEXEDLoad(N0.Val) && N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT::ValueType EVT = LN0->getLoadedVT();
     if (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT)) {
@@ -2135,7 +2138,8 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
 
   // fold (zext (zextload x)) -> (zext (truncate (zextload x)))
   // fold (zext ( extload x)) -> (zext (truncate (zextload x)))
-  if ((ISD::isZEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) && N0.hasOneUse()) {
+  if ((ISD::isZEXTLoad(N0.Val) || ISD::isEXTLoad(N0.Val)) &&
+      ISD::isUNINDEXEDLoad(N0.Val) && N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT::ValueType EVT = LN0->getLoadedVT();
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
@@ -2205,7 +2209,8 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   // fold (aext (zextload x)) -> (aext (truncate (zextload x)))
   // fold (aext (sextload x)) -> (aext (truncate (sextload x)))
   // fold (aext ( extload x)) -> (aext (truncate (extload  x)))
-  if (N0.getOpcode() == ISD::LOAD && !ISD::isNON_EXTLoad(N0.Val) &&
+  if (N0.getOpcode() == ISD::LOAD &&
+      !ISD::isNON_EXTLoad(N0.Val) && ISD::isUNINDEXEDLoad(N0.Val) &&
       N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT::ValueType EVT = LN0->getLoadedVT();
@@ -2263,6 +2268,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   
   // fold (sext_inreg (extload x)) -> (sextload x)
   if (ISD::isEXTLoad(N0.Val) && 
+      ISD::isUNINDEXEDLoad(N0.Val) &&
       EVT == cast<LoadSDNode>(N0)->getLoadedVT() &&
       (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
@@ -2274,7 +2280,8 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
   // fold (sext_inreg (zextload x)) -> (sextload x) iff load has one use
-  if (ISD::isZEXTLoad(N0.Val) && N0.hasOneUse() &&
+  if (ISD::isZEXTLoad(N0.Val) && ISD::isUNINDEXEDLoad(N0.Val) &&
+      N0.hasOneUse() &&
       EVT == cast<LoadSDNode>(N0)->getLoadedVT() &&
       (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
@@ -2868,8 +2875,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     if (LD->getAddressingMode() != ISD::UNINDEXED)
       return false;
     VT = LD->getLoadedVT();
-    if (LD->getAddressingMode() != ISD::UNINDEXED &&
-        !TLI.isIndexedLoadLegal(ISD::PRE_INC, VT) &&
+    if (!TLI.isIndexedLoadLegal(ISD::PRE_INC, VT) &&
         !TLI.isIndexedLoadLegal(ISD::PRE_DEC, VT))
       return false;
     Ptr = LD->getBasePtr();
