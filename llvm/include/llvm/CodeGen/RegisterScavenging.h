@@ -79,6 +79,10 @@ public:
     while (MBBI != I) backward();
   }
 
+  /// skipTo - Move the internal MBB iterator but do not update register states.
+  ///
+  void skipTo(MachineBasicBlock::iterator I) { MBBI = I; }
+
   /// isReserved - Returns true if a register is reserved. It is never "unused".
   bool isReserved(unsigned Reg) const { return ReservedRegs[Reg]; }
 
