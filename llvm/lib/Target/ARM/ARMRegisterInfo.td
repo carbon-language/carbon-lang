@@ -99,51 +99,26 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
   // generate large stack offset. Make it available once we have register
   // scavenging. Similarly r3 is reserved in Thumb mode for now.
   let MethodBodies = [{
-    // FP is R11, R9 is available.
-    static const unsigned ARM_GPR_AO_1[] = {
-      ARM::R3, ARM::R2, ARM::R1, ARM::R0,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-      ARM::R8, ARM::R9, ARM::R10,
-      ARM::LR, ARM::R11 };
-    // FP is R11, R9 is not available.
-    static const unsigned ARM_GPR_AO_2[] = {
-      ARM::R3, ARM::R2, ARM::R1, ARM::R0,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-      ARM::R8, ARM::R10,
-      ARM::LR, ARM::R11 };
-    // FP is R7, R9 is available.
-    static const unsigned ARM_GPR_AO_3[] = {
-      ARM::R3, ARM::R2, ARM::R1, ARM::R0,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R8,
-      ARM::R9, ARM::R10,ARM::R11,
-      ARM::LR, ARM::R7 };
-    // FP is R7, R9 is not available.
-    static const unsigned ARM_GPR_AO_4[] = {
-      ARM::R3, ARM::R2, ARM::R1, ARM::R0,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R8,
-      ARM::R10,ARM::R11,
-      ARM::LR, ARM::R7 };
-
     // FP is R11, R9 is available, R12 is available.
-    static const unsigned ARM_GPR_AO_5[] = {
+    static const unsigned ARM_GPR_AO_1[] = {
       ARM::R3, ARM::R2, ARM::R1, ARM::R0,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7,
       ARM::R8, ARM::R9, ARM::R10,ARM::R12,
       ARM::LR, ARM::R11 };
     // FP is R11, R9 is not available, R12 is available.
-    static const unsigned ARM_GPR_AO_6[] = {
+    static const unsigned ARM_GPR_AO_2[] = {
       ARM::R3, ARM::R2, ARM::R1, ARM::R0,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7,
       ARM::R8, ARM::R10,ARM::R12,
       ARM::LR, ARM::R11 };
     // FP is R7, R9 is available, R12 is available.
-    static const unsigned ARM_GPR_AO_7[] = {
+    static const unsigned ARM_GPR_AO_3[] = {
       ARM::R3, ARM::R2, ARM::R1, ARM::R0,
       ARM::R4, ARM::R5, ARM::R6, ARM::R8,
       ARM::R9, ARM::R10,ARM::R11,ARM::R12,
       ARM::LR, ARM::R7 };
     // FP is R7, R9 is not available, R12 is available.
-    static const unsigned ARM_GPR_AO_8[] = {
+    static const unsigned ARM_GPR_AO_4[] = {
       ARM::R3, ARM::R2, ARM::R1, ARM::R0,
       ARM::R4, ARM::R5, ARM::R6, ARM::R8,
       ARM::R10,ARM::R11,ARM::R12,
@@ -157,20 +132,19 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
     GPRClass::iterator
     GPRClass::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const MRegisterInfo *RI = TM.getRegisterInfo();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       if (Subtarget.isThumb())
         return THUMB_GPR_AO;
       if (Subtarget.useThumbBacktraces()) {
         if (Subtarget.isR9Reserved())
-          return RI->requiresRegisterScavenging(MF) ? ARM_GPR_AO_8:ARM_GPR_AO_4;
+          return ARM_GPR_AO_4;
         else
-          return RI->requiresRegisterScavenging(MF) ? ARM_GPR_AO_7:ARM_GPR_AO_3;
+          return ARM_GPR_AO_3;
       } else {
         if (Subtarget.isR9Reserved())
-          return RI->requiresRegisterScavenging(MF) ? ARM_GPR_AO_6:ARM_GPR_AO_2;
+          return ARM_GPR_AO_2;
         else
-          return RI->requiresRegisterScavenging(MF) ? ARM_GPR_AO_5:ARM_GPR_AO_1;
+          return ARM_GPR_AO_1;
       }
     }
 
@@ -184,27 +158,15 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
         I = THUMB_GPR_AO + (sizeof(THUMB_GPR_AO)/sizeof(unsigned));
       else if (Subtarget.useThumbBacktraces()) {
         if (Subtarget.isR9Reserved()) {
-          if (RI->requiresRegisterScavenging(MF))
-            I = ARM_GPR_AO_8 + (sizeof(ARM_GPR_AO_8)/sizeof(unsigned));
-          else
-            I = ARM_GPR_AO_4 + (sizeof(ARM_GPR_AO_4)/sizeof(unsigned));
+          I = ARM_GPR_AO_4 + (sizeof(ARM_GPR_AO_4)/sizeof(unsigned));
         } else {
-          if (RI->requiresRegisterScavenging(MF))
-            I = ARM_GPR_AO_7 + (sizeof(ARM_GPR_AO_7)/sizeof(unsigned));
-          else
-            I = ARM_GPR_AO_3 + (sizeof(ARM_GPR_AO_3)/sizeof(unsigned));
+          I = ARM_GPR_AO_3 + (sizeof(ARM_GPR_AO_3)/sizeof(unsigned));
         }
       } else {
         if (Subtarget.isR9Reserved()) {
-          if (RI->requiresRegisterScavenging(MF))
-            I = ARM_GPR_AO_6 + (sizeof(ARM_GPR_AO_6)/sizeof(unsigned));
-          else
-            I = ARM_GPR_AO_2 + (sizeof(ARM_GPR_AO_2)/sizeof(unsigned));
+          I = ARM_GPR_AO_2 + (sizeof(ARM_GPR_AO_2)/sizeof(unsigned));
         } else {
-          if (RI->requiresRegisterScavenging(MF))
-            I = ARM_GPR_AO_5 + (sizeof(ARM_GPR_AO_5)/sizeof(unsigned));
-          else
-            I = ARM_GPR_AO_1 + (sizeof(ARM_GPR_AO_1)/sizeof(unsigned));
+          I = ARM_GPR_AO_1 + (sizeof(ARM_GPR_AO_1)/sizeof(unsigned));
         }
       }
 
