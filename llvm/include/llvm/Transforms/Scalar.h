@@ -92,7 +92,7 @@ FunctionPass *createGCSEPass();
 // InductionVariableSimplify - Transform induction variables in a program to all
 // use a single canonical induction variable per loop.
 //
-FunctionPass *createIndVarSimplifyPass();
+LoopPass *createIndVarSimplifyPass();
 
 //===----------------------------------------------------------------------===//
 //

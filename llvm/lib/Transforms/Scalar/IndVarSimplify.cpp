@@ -45,6 +45,7 @@
 #include "llvm/Type.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -62,33 +63,26 @@ STATISTIC(NumReplaced, "Number of exit values replaced");
 STATISTIC(NumLFTR    , "Number of loop exit tests replaced");
 
 namespace {
-  class VISIBILITY_HIDDEN IndVarSimplify : public FunctionPass {
+  class VISIBILITY_HIDDEN IndVarSimplify : public LoopPass {
     LoopInfo        *LI;
     ScalarEvolution *SE;
     bool Changed;
   public:
-    virtual bool runOnFunction(Function &) {
-      LI = &getAnalysis<LoopInfo>();
-      SE = &getAnalysis<ScalarEvolution>();
-      Changed = false;
+    
+   bool runOnLoop(Loop *L, LPPassManager &LPM);
+   bool doInitialization(Loop *L, LPPassManager &LPM);
+   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+     AU.addRequiredID(LCSSAID);
+     AU.addRequiredID(LoopSimplifyID);
+     AU.addRequired<ScalarEvolution>();
+     AU.addRequired<LoopInfo>();
+     AU.addPreservedID(LoopSimplifyID);
+     AU.addPreservedID(LCSSAID);
+     AU.setPreservesCFG();
+   }
 
-      // Induction Variables live in the header nodes of loops
-      for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
-        runOnLoop(*I);
-      return Changed;
-    }
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequiredID(LCSSAID);
-      AU.addRequiredID(LoopSimplifyID);
-      AU.addRequired<ScalarEvolution>();
-      AU.addRequired<LoopInfo>();
-      AU.addPreservedID(LoopSimplifyID);
-      AU.addPreservedID(LCSSAID);
-      AU.setPreservesCFG();
-    }
   private:
-    void runOnLoop(Loop *L);
+
     void EliminatePointerRecurrence(PHINode *PN, BasicBlock *Preheader,
                                     std::set<Instruction*> &DeadInsts);
     Instruction *LinearFunctionTestReplace(Loop *L, SCEV *IterationCount,
@@ -100,7 +94,7 @@ namespace {
   RegisterPass<IndVarSimplify> X("indvars", "Canonicalize Induction Variables");
 }
 
-FunctionPass *llvm::createIndVarSimplifyPass() {
+LoopPass *llvm::createIndVarSimplifyPass() {
   return new IndVarSimplify();
 }
 
@@ -410,14 +404,16 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
   DeleteTriviallyDeadInstructions(InstructionsToDelete);
 }
 
+bool IndVarSimplify::doInitialization(Loop *L, LPPassManager &LPM) {
 
-void IndVarSimplify::runOnLoop(Loop *L) {
+  Changed = false;
   // First step.  Check to see if there are any trivial GEP pointer recurrences.
   // If there are, change them into integer recurrences, permitting analysis by
   // the SCEV routines.
   //
   BasicBlock *Header    = L->getHeader();
   BasicBlock *Preheader = L->getLoopPreheader();
+  SE = &LPM.getAnalysis<ScalarEvolution>();
 
   std::set<Instruction*> DeadInsts;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
@@ -429,11 +425,19 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   if (!DeadInsts.empty())
     DeleteTriviallyDeadInstructions(DeadInsts);
 
+  return Changed;
+}
 
-  // Next, transform all loops nesting inside of this loop.
-  for (LoopInfo::iterator I = L->begin(), E = L->end(); I != E; ++I)
-    runOnLoop(*I);
+bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
+
+  LI = &getAnalysis<LoopInfo>();
+  SE = &getAnalysis<ScalarEvolution>();
+
+  Changed = false;
+  BasicBlock *Header    = L->getHeader();
+  std::set<Instruction*> DeadInsts;
+  
   // Verify the input to the pass in already in LCSSA form.
   assert(L->isLCSSAForm());
 
@@ -483,7 +487,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
         DeleteTriviallyDeadInstructions(InstructionsToDelete);
       }
     }
-    return;
+    return Changed;
   }
 
   // Compute the type of the largest recurrence expression.
@@ -585,4 +589,5 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   DeleteTriviallyDeadInstructions(DeadInsts);
   
   assert(L->isLCSSAForm());
+  return Changed;
 }

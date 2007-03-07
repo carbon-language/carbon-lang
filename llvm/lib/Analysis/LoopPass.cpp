@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/ScalarEvolutionExpander.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -148,6 +149,8 @@ void LPPassManager::getAnalysisUsage(AnalysisUsage &Info) const {
   // LPPassManager needs LoopInfo. In the long term LoopInfo class will 
   // become part of LPPassManager.
   Info.addRequired<LoopInfo>();
+  // Used by IndVar doInitialization.
+  Info.addRequired<ScalarEvolution>();
   Info.setPreservesAll();
 }
 
