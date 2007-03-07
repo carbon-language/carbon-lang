@@ -42,8 +42,6 @@ def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>;
 // MMX Pattern Fragments
 //===----------------------------------------------------------------------===//
 
-def loadv8i8  : PatFrag<(ops node:$ptr), (v8i8  (load node:$ptr))>;
-def loadv4i16 : PatFrag<(ops node:$ptr), (v4i16 (load node:$ptr))>;
 def loadv2i32 : PatFrag<(ops node:$ptr), (v2i32 (load node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
