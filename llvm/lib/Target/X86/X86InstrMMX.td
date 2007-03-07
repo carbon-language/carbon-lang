@@ -1,4 +1,4 @@
-//====- X86InstrMMX.td - Describe the X86 Instruction Set -------*- C++ -*-===//
+//====- X86InstrMMX.td - Describe the X86 Instruction Set --*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -33,14 +33,17 @@ def IMPLICIT_DEF_VR64 : I<0, Pseudo, (ops VR64:$dst),
                           [(set VR64:$dst, (v8i8 (undef)))]>,
                         Requires<[HasMMX]>;
 
-def : Pat<(v8i8  (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
-def : Pat<(v4i16 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
-def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
+// 64-bit vector undef's.
+def : Pat<(v8i8  (undef)), (IMPLICIT_DEF_VR64)>;
+def : Pat<(v4i16 (undef)), (IMPLICIT_DEF_VR64)>;
+def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>;
 
 //===----------------------------------------------------------------------===//
 // MMX Pattern Fragments
 //===----------------------------------------------------------------------===//
 
+def loadv8i8  : PatFrag<(ops node:$ptr), (v8i8  (load node:$ptr))>;
+def loadv4i16 : PatFrag<(ops node:$ptr), (v4i16 (load node:$ptr))>;
 def loadv2i32 : PatFrag<(ops node:$ptr), (v2i32 (load node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
@@ -120,3 +123,11 @@ def : Pat<(store (v8i8  VR64:$src), addr:$dst),
           (MOVQ64mr addr:$dst, VR64:$src)>;
 def : Pat<(store (v4i16 VR64:$src), addr:$dst),
           (MOVQ64mr addr:$dst, VR64:$src)>;
+
+// Bit convert.
+def : Pat<(v8i8  (bitconvert (v2i32 VR64:$src))), (v8i8  VR64:$src)>;
+def : Pat<(v8i8  (bitconvert (v4i16 VR64:$src))), (v8i8  VR64:$src)>;
+def : Pat<(v4i16 (bitconvert (v2i32 VR64:$src))), (v4i16 VR64:$src)>;
+def : Pat<(v4i16 (bitconvert (v8i8  VR64:$src))), (v4i16 VR64:$src)>;
+def : Pat<(v2i32 (bitconvert (v4i16 VR64:$src))), (v2i32 VR64:$src)>;
+def : Pat<(v2i32 (bitconvert (v8i8  VR64:$src))), (v2i32 VR64:$src)>;
