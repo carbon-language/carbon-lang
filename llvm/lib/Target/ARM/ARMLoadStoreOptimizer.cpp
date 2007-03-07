@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "arm-ldst-opt"
 #include "ARM.h"
 #include "ARMAddressingModes.h"
+#include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -39,6 +40,7 @@ namespace {
   struct VISIBILITY_HIDDEN ARMLoadStoreOpt : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     const MRegisterInfo *MRI;
+    ARMFunctionInfo *AFI;
     RegScavenger *RS;
     MachineBasicBlock::iterator RSI;
 
@@ -587,8 +589,11 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         // First advance to the instruction just before the start of the chain.
         if (RSI != MBB.begin())
           RS->forward(prior(RSI));
-        // Find a scratch register.
-        Scratch = RS->FindUnusedReg(&ARM::GPRRegClass);
+        // Find a scratch register. Make sure it's a call clobbered register or
+        // a spilled callee-saved register.
+        Scratch = RS->FindUnusedReg(&ARM::GPRRegClass, true);
+        if (!Scratch)
+          RS->FindUnusedReg(&ARM::GPRRegClass, AFI->getSpilledCSRegisters());
         // Process the load / store instructions.
         RS->forward(prior(MBBI));
 
@@ -661,6 +666,7 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
 
 bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
+  AFI = Fn.getInfo<ARMFunctionInfo>();
   TII = TM.getInstrInfo();
   MRI = TM.getRegisterInfo();
   RS = new RegScavenger();
