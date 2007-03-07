@@ -34,6 +34,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -58,16 +59,17 @@ namespace {
   Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
             cl::init(10), cl::Hidden);
   
-  class VISIBILITY_HIDDEN LoopUnswitch : public FunctionPass {
+  class VISIBILITY_HIDDEN LoopUnswitch : public LoopPass {
     LoopInfo *LI;  // Loop information
+    LPPassManager *LPM;
 
-    // LoopProcessWorklist - List of loops we need to process.
+    // LoopProcessWorklist - Used to check if second loop needs processing
+    // after RewriteLoopBodyWithConditionConstant rewrites first loop.
     std::vector<Loop*> LoopProcessWorklist;
     SmallPtrSet<Value *,8> UnswitchedVals;
 
   public:
-    virtual bool runOnFunction(Function &F);
-    bool visitLoop(Loop *L);
+    bool runOnLoop(Loop *L, LPPassManager &LPM);
 
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG...
@@ -110,29 +112,7 @@ namespace {
   RegisterPass<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
 
-FunctionPass *llvm::createLoopUnswitchPass() { return new LoopUnswitch(); }
-
-bool LoopUnswitch::runOnFunction(Function &F) {
-  bool Changed = false;
-  LI = &getAnalysis<LoopInfo>();
-
-  // Populate the worklist of loops to process in post-order.
-  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
-    for (po_iterator<Loop*> LI = po_begin(*I), E = po_end(*I); LI != E; ++LI)
-      LoopProcessWorklist.push_back(*LI);
-
-  // Process the loops in worklist order, this is a post-order visitation of
-  // the loops.  We use a worklist of loops so that loops can be removed at any
-  // time if they are deleted (e.g. the backedge of a loop is removed).
-  while (!LoopProcessWorklist.empty()) {
-    Loop *L = LoopProcessWorklist.back();
-    LoopProcessWorklist.pop_back();    
-    Changed |= visitLoop(L);
-  }
-
-  UnswitchedVals.clear();
-  return Changed;
-}
+LoopPass *llvm::createLoopUnswitchPass() { return new LoopUnswitch(); }
 
 /// FindLIVLoopCondition - Cond is a condition that occurs in L.  If it is
 /// invariant in the loop, or has an invariant piece, return the invariant.
@@ -160,9 +140,10 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
       return 0;
 }
 
-bool LoopUnswitch::visitLoop(Loop *L) {
+bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   assert(L->isLCSSAForm());
-  
+  LI = &getAnalysis<LoopInfo>();
+  LPM = &LPM_Ref;
   bool Changed = false;
   
   // Loop over all of the basic blocks in the loop.  If we find an interior
@@ -466,13 +447,10 @@ static inline void RemapInstruction(Instruction *I,
 /// CloneLoop - Recursively clone the specified loop and all of its children,
 /// mapping the blocks with the specified map.
 static Loop *CloneLoop(Loop *L, Loop *PL, DenseMap<const Value*, Value*> &VM,
-                       LoopInfo *LI) {
+                       LoopInfo *LI, LPPassManager *LPM) {
   Loop *New = new Loop();
 
-  if (PL)
-    PL->addChildLoop(New);
-  else
-    LI->addTopLevelLoop(New);
+  LPM->insertLoop(New, PL);
 
   // Add all of the blocks in L to the new loop.
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
@@ -482,7 +460,7 @@ static Loop *CloneLoop(Loop *L, Loop *PL, DenseMap<const Value*, Value*> &VM,
 
   // Add all of the subloops to the new loop.
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
-    CloneLoop(*I, New, VM, LI);
+    CloneLoop(*I, New, VM, LI, LPM);
 
   return New;
 }
@@ -545,7 +523,7 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   OrigPH->getTerminator()->eraseFromParent();
 
   // We need to reprocess this loop, it could be unswitched again.
-  LoopProcessWorklist.push_back(L);
+  LPM->redoLoop(L);
   
   // Now that we know that the loop is never entered when this condition is a
   // particular value, rewrite the loop with this info.  We know that this will
@@ -654,7 +632,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
                                 NewBlocks[0], F->end());
 
   // Now we create the new Loop object for the versioned loop.
-  Loop *NewLoop = CloneLoop(L, L->getParentLoop(), ValueMap, LI);
+  Loop *NewLoop = CloneLoop(L, L->getParentLoop(), ValueMap, LI, LPM);
   Loop *ParentLoop = L->getParentLoop();
   if (ParentLoop) {
     // Make sure to add the cloned preheader and exit blocks to the parent loop
@@ -699,8 +677,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   EmitPreheaderBranchOnCondition(LIC, Val, NewBlocks[0], LoopBlocks[0], OldBR);
   OldBR->eraseFromParent();
   
-  LoopProcessWorklist.push_back(L);
   LoopProcessWorklist.push_back(NewLoop);
+  LPM->redoLoop(L);
 
   // Now we rewrite the original code to know that the condition is true and the
   // new code to know that the condition is false.
@@ -855,54 +833,7 @@ void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
 /// so they just reparent loops.  If the loops are actually dead, they will be
 /// removed later.
 void LoopUnswitch::RemoveLoopFromHierarchy(Loop *L) {
-  if (Loop *ParentLoop = L->getParentLoop()) { // Not a top-level loop.
-    // Reparent all of the blocks in this loop.  Since BBLoop had a parent,
-    // they are now all in it.
-    for (Loop::block_iterator I = L->block_begin(), E = L->block_end(); 
-         I != E; ++I)
-      if (LI->getLoopFor(*I) == L)    // Don't change blocks in subloops.
-        LI->changeLoopFor(*I, ParentLoop);
-    
-    // Remove the loop from its parent loop.
-    for (Loop::iterator I = ParentLoop->begin(), E = ParentLoop->end();;
-         ++I) {
-      assert(I != E && "Couldn't find loop");
-      if (*I == L) {
-        ParentLoop->removeChildLoop(I);
-        break;
-      }
-    }
-    
-    // Move all subloops into the parent loop.
-    while (L->begin() != L->end())
-      ParentLoop->addChildLoop(L->removeChildLoop(L->end()-1));
-  } else {
-    // Reparent all of the blocks in this loop.  Since BBLoop had no parent,
-    // they no longer in a loop at all.
-    
-    for (unsigned i = 0; i != L->getBlocks().size(); ++i) {
-      // Don't change blocks in subloops.
-      if (LI->getLoopFor(L->getBlocks()[i]) == L) {
-        LI->removeBlock(L->getBlocks()[i]);
-        --i;
-      }
-    }
-
-    // Remove the loop from the top-level LoopInfo object.
-    for (LoopInfo::iterator I = LI->begin(), E = LI->end();; ++I) {
-      assert(I != E && "Couldn't find loop");
-      if (*I == L) {
-        LI->removeLoop(I);
-        break;
-      }
-    }
-
-    // Move all of the subloops to the top-level.
-    while (L->begin() != L->end())
-      LI->addTopLevelLoop(L->removeChildLoop(L->end()-1));
-  }
-
-  delete L;
+  LPM->deleteLoopFromQueue(L);
   RemoveLoopFromWorklist(L);
 }
 

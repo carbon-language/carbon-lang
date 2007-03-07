@@ -132,7 +132,7 @@ void LPPassManager::insertLoop(Loop *L, Loop *ParentLoop) {
 // queue. This allows LoopPass to change loop nest for the loop. This
 // utility may send LPPassManager into infinite loops so use caution.
 void LPPassManager::redoLoop(Loop *L) {
-  assert (CurrentLoop != L && "Can redo only CurrentLoop");
+  assert (CurrentLoop == L && "Can redo only CurrentLoop");
   redoThisLoop = true;
 }
 
@@ -279,6 +279,7 @@ void LoopPass::assignPassManager(PMStack &PMS,
 
     // [1] Create new Call Graph Pass Manager
     LPPM = new LPPassManager(PMD->getDepth() + 1);
+    LPPM->populateInheritedAnalysis(PMS);
 
     // [2] Set up new manager's top level manager
     PMTopLevelManager *TPM = PMD->getTopLevelManager();
