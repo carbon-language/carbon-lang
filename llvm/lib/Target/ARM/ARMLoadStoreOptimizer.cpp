@@ -40,6 +40,7 @@ namespace {
     const TargetInstrInfo *TII;
     const MRegisterInfo *MRI;
     RegScavenger *RS;
+    MachineBasicBlock::iterator RSI;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -59,11 +60,10 @@ namespace {
     typedef SmallVector<MemOpQueueEntry,8> MemOpQueue;
     typedef MemOpQueue::iterator MemOpQueueIter;
 
-    void AdvanceRS(MachineBasicBlock *MBB, MemOpQueue &MemOps);
-
     SmallVector<MachineBasicBlock::iterator, 4>
     MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex, unsigned Base,
-                 int Opcode, unsigned Size, MemOpQueue &MemOps);
+                 int Opcode, unsigned Size, unsigned Scratch,
+                 MemOpQueue &MemOps);
 
     bool LoadStoreMultipleOpti(MachineBasicBlock &MBB);
     bool MergeReturnIntoLDM(MachineBasicBlock &MBB);
@@ -106,8 +106,8 @@ static int getLoadStoreMultipleOpcode(int Opcode) {
 /// It returns true if the transformation is done. 
 static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                      int Offset, unsigned Base, bool BaseKill, int Opcode,
+                     unsigned Scratch,
                      SmallVector<std::pair<unsigned, bool>, 8> &Regs,
-                     RegScavenger *RS,
                      const TargetInstrInfo *TII) {
   // Only a single register to load / store. Don't bother.
   unsigned NumRegs = Regs.size();
@@ -135,8 +135,8 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
       // use as the new base.
       NewBase = Regs[NumRegs-1].first;
     else {
-      // Try to find a free register to use as a new base.
-      NewBase = RS ? RS->FindUnusedReg(&ARM::GPRRegClass) : (unsigned)ARM::R12;
+      // Use the scratch register to use as a new base.
+      NewBase = Scratch;
       if (NewBase == 0)
         return false;
     }
@@ -169,31 +169,12 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
   return true;
 }
 
-/// AdvanceRS - Advance register scavenger to just before the earliest memory
-/// op that is being merged.
-void ARMLoadStoreOpt::AdvanceRS(MachineBasicBlock *MBB, MemOpQueue &MemOps) {
-  MachineBasicBlock::iterator Loc = MemOps[0].MBBI;
-  unsigned Position = MemOps[0].Position;
-  for (unsigned i = 1, e = MemOps.size(); i != e; ++i) {
-    if (MemOps[i].Position < Position) {
-      Position = MemOps[i].Position;
-      Loc = MemOps[i].MBBI;
-    }
-  }
-
-  if (Loc != MBB->begin())
-    RS->forward(prior(Loc));
-}
-
 /// MergeLDR_STR - Merge a number of load / store instructions into one or more
 /// load / store multiple instructions.
 SmallVector<MachineBasicBlock::iterator, 4>
-ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB,
-                              unsigned SIndex, unsigned Base, int Opcode,
-                              unsigned Size, MemOpQueue &MemOps) {
-  if (RS && SIndex == 0)
-    AdvanceRS(&MBB, MemOps);
-
+ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
+                              unsigned Base, int Opcode, unsigned Size,
+                              unsigned Scratch, MemOpQueue &MemOps) {
   SmallVector<MachineBasicBlock::iterator, 4> Merges;
   SmallVector<std::pair<unsigned,bool>, 8> Regs;
   bool isAM4 = Opcode == ARM::LDR || Opcode == ARM::STR;
@@ -219,7 +200,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB,
       PRegNum = RegNum;
     } else {
       // Can't merge this in. Try merge the earlier ones first.
-      if (mergeOps(MBB, ++Loc, SOffset, Base, false, Opcode, Regs, RS, TII)) {
+      if (mergeOps(MBB, ++Loc, SOffset, Base, false, Opcode,Scratch,Regs,TII)) {
         Merges.push_back(prior(Loc));
         for (unsigned j = SIndex; j < i; ++j) {
           MBB.erase(MemOps[j].MBBI);
@@ -227,7 +208,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB,
         }
       }
       SmallVector<MachineBasicBlock::iterator, 4> Merges2 =
-        MergeLDR_STR(MBB, i, Base, Opcode, Size, MemOps);
+        MergeLDR_STR(MBB, i, Base, Opcode, Size, Scratch, MemOps);
       Merges.append(Merges2.begin(), Merges2.end());
       return Merges;
     }
@@ -239,7 +220,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB,
   }
 
   bool BaseKill = Loc->findRegisterUseOperand(Base, true) != NULL;
-  if (mergeOps(MBB, ++Loc, SOffset, Base, BaseKill, Opcode, Regs, RS, TII)) {
+  if (mergeOps(MBB, ++Loc, SOffset, Base, BaseKill, Opcode,Scratch,Regs, TII)) {
     Merges.push_back(prior(Loc));
     for (unsigned i = SIndex, e = MemOps.size(); i != e; ++i) {
       MBB.erase(MemOps[i].MBBI);
@@ -520,7 +501,8 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   unsigned CurrSize = 0;
   unsigned Position = 0;
 
-  if (RS) RS->enterBasicBlock(&MBB);
+  RS->enterBasicBlock(&MBB);
+  RSI = MBB.begin();
   MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
   while (MBBI != E) {
     bool Advance  = false;
@@ -600,22 +582,38 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
 
     if (TryMerge) {
       if (NumMemOps > 1) {
+        // Try to find a free register to use as a new base in case it's needed.
+        unsigned Scratch = ARM::R12;
+        // First advance to the instruction just before the start of the chain.
+        if (RSI != MBB.begin())
+          RS->forward(prior(RSI));
+        // Find a scratch register.
+        Scratch = RS->FindUnusedReg(&ARM::GPRRegClass);
+        // Process the load / store instructions.
+        RS->forward(prior(MBBI));
+
+        // Merge ops.
         SmallVector<MachineBasicBlock::iterator,4> MBBII =
-          MergeLDR_STR(MBB, 0, CurrBase, CurrOpc, CurrSize, MemOps);
+          MergeLDR_STR(MBB, 0, CurrBase, CurrOpc, CurrSize, Scratch, MemOps);
+
         // Try folding preceeding/trailing base inc/dec into the generated
         // LDM/STM ops.
         for (unsigned i = 0, e = MBBII.size(); i < e; ++i)
           if (mergeBaseUpdateLSMultiple(MBB, MBBII[i]))
             NumMerges++;
         NumMerges += MBBII.size();
-      }
 
-      // Try folding preceeding/trailing base inc/dec into those load/store
-      // that were not merged to form LDM/STM ops.
-      for (unsigned i = 0; i != NumMemOps; ++i)
-        if (!MemOps[i].Merged)
-          if (mergeBaseUpdateLoadStore(MBB, MemOps[i].MBBI, TII))
-            NumMerges++;
+        // Try folding preceeding/trailing base inc/dec into those load/store
+        // that were not merged to form LDM/STM ops.
+        for (unsigned i = 0; i != NumMemOps; ++i)
+          if (!MemOps[i].Merged)
+            if (mergeBaseUpdateLoadStore(MBB, MemOps[i].MBBI, TII))
+              NumMerges++;
+
+        // RS may be pointing to an instruction that's deleted. 
+        RS->skipTo(prior(MBBI));
+        RSI = MBBI;
+      }
 
       CurrBase = 0;
       CurrOpc = -1;
@@ -665,7 +663,7 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
   TII = TM.getInstrInfo();
   MRI = TM.getRegisterInfo();
-  RS = MRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
+  RS = new RegScavenger();
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
