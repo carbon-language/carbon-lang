@@ -979,6 +979,16 @@ static bool MaskedValueIsZero(Value *V, uint64_t Mask, unsigned Depth = 0) {
   return (KnownZero & Mask) == Mask;
 }
 
+/// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
+/// this predicate to simplify operations downstream.  Mask is known to be zero
+/// for bits that V cannot have.
+static bool MaskedValueIsZero(Value *V, const APInt& Mask, unsigned Depth = 0) {
+  APInt KnownZero(Mask), KnownOne(Mask);
+  ComputeMaskedBits(V, Mask, KnownZero, KnownOne, Depth);
+  assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+  return (KnownZero & Mask) == Mask;
+}
+
 /// ShrinkDemandedConstant - Check to see if the specified operand of the 
 /// specified instruction is a constant integer.  If so, check to see if there
 /// are any bits set in the constant that are not demanded.  If so, shrink the
