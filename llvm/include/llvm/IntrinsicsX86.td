@@ -544,3 +544,20 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_mmx_emms : GCCBuiltin<"__builtin_ia32_emms">,
               Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
 }
+
+// Integer arithmetic ops.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_mmx_padds_b : GCCBuiltin<"__builtin_ia32_paddsb">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
+  def int_x86_mmx_padds_w : GCCBuiltin<"__builtin_ia32_paddsw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+
+  def int_x86_mmx_paddus_b : GCCBuiltin<"__builtin_ia32_paddusb">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
+  def int_x86_mmx_paddus_w : GCCBuiltin<"__builtin_ia32_paddusw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+}

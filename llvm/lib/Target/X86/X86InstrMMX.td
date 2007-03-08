@@ -45,6 +45,42 @@ def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>;
 def loadv2i32 : PatFrag<(ops node:$ptr), (v2i32 (load node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
+// MMX Multiclasses
+//===----------------------------------------------------------------------===//
+
+let isTwoAddress = 1 in {
+  // MMXI_binop_rm - Simple MMX binary operator.
+  multiclass MMXI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                           ValueType OpVT, bit Commutable = 0> {
+    def rr : MMXI<opc, MRMSrcReg, (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                  !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                  [(set VR64:$dst, (OpVT (OpNode VR64:$src1, VR64:$src2)))]> {
+      let isCommutable = Commutable;
+    }
+    def rm : MMXI<opc, MRMSrcMem, (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                  !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                  [(set VR64:$dst, (OpVT (OpNode VR64:$src1,
+                                         (bitconvert
+                                          (loadv2i32 addr:$src2)))))]>;
+  }
+}
+
+let isTwoAddress = 1 in {
+  multiclass MMXI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
+                               bit Commutable = 0> {
+    def rr : MMXI<opc, MRMSrcReg, (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                 !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                 [(set VR64:$dst, (IntId VR64:$src1, VR64:$src2))]> {
+      let isCommutable = Commutable;
+    }
+    def rm : MMXI<opc, MRMSrcMem, (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                 !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                 [(set VR64:$dst, (IntId VR64:$src1,
+                                   (bitconvert (loadv2i32 addr:$src2))))]>;
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // MMX EMMS Instruction
 //===----------------------------------------------------------------------===//
 
@@ -53,6 +89,17 @@ def EMMS : MMXI<0x77, RawFrm, (ops), "emms", [(int_x86_mmx_emms)]>;
 //===----------------------------------------------------------------------===//
 // MMX Scalar Instructions
 //===----------------------------------------------------------------------===//
+
+// Arithmetic Instructions
+defm MMX_PADDB : MMXI_binop_rm<0xFC, "paddb", add, v8i8, 1>;
+defm MMX_PADDW : MMXI_binop_rm<0xFD, "paddw", add, v4i16, 1>;
+defm MMX_PADDD : MMXI_binop_rm<0xFE, "paddd", add, v2i32, 1>;
+
+defm MMX_PADDSB  : MMXI_binop_rm_int<0xEC, "paddsb" , int_x86_mmx_padds_b, 1>;
+defm MMX_PADDSW  : MMXI_binop_rm_int<0xED, "paddsw" , int_x86_mmx_padds_w, 1>;
+
+defm MMX_PADDUSB : MMXI_binop_rm_int<0xDC, "paddusb", int_x86_mmx_paddus_b, 1>;
+defm MMX_PADDUSW : MMXI_binop_rm_int<0xDD, "paddusw", int_x86_mmx_paddus_w, 1>;
 
 // Move Instructions
 def MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),

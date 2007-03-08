@@ -98,6 +98,10 @@ def llvm_v4i32_ty      : LLVMVectorType<v4i32, 4, llvm_i32_ty>;   //  4 x i32
 def llvm_v4f32_ty      : LLVMVectorType<v4f32, 4, llvm_float_ty>; //  4 x float
 def llvm_v2f64_ty      : LLVMVectorType<v2f64, 2, llvm_double_ty>;//  2 x double
 
+// MMX Vector Types
+def llvm_v8i8_ty       : LLVMVectorType<v8i8,  8, llvm_i8_ty>;    //  8 x i8
+def llvm_v4i16_ty      : LLVMVectorType<v4i16, 4, llvm_i16_ty>;   //  4 x i16
+
 def llvm_vararg_ty     : LLVMType<isVoid, "...">; // vararg
 
 //===----------------------------------------------------------------------===//
