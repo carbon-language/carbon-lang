@@ -353,6 +353,10 @@ void PMTopLevelManager::setLastUser(std::vector<Pass *> &AnalysisPasses,
          E = AnalysisPasses.end(); I != E; ++I) {
     Pass *AP = *I;
     LastUser[AP] = P;
+    
+    if (P == AP)
+      continue;
+
     // If AP is the last user of other passes then make P last user of
     // such passes.
     for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
@@ -546,11 +550,10 @@ bool PMDataManager::preserveHigherLevelAnalysis(Pass *P) {
   for (std::vector<Pass *>::iterator I = HigherLevelAnalysis.begin(),
          E = HigherLevelAnalysis.end(); I  != E; ++I) {
     Pass *P1 = *I;
-    if (std::find(PreservedSet.begin(), PreservedSet.end(), P1->getPassInfo()) == 
-        PreservedSet.end()) {
-      if (!dynamic_cast<ImmutablePass*>(P1))
-        return false;
-    }
+    if (!dynamic_cast<ImmutablePass*>(P1) 
+        && std::find(PreservedSet.begin(), PreservedSet.end(), P1->getPassInfo()) == 
+           PreservedSet.end())
+      return false;
   }
   
   return true;
@@ -568,12 +571,11 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
   for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ) {
     std::map<AnalysisID, Pass*>::iterator Info = I++;
-    if (std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
-        PreservedSet.end()) {
+    if (!dynamic_cast<ImmutablePass*>(Info->second)
+        && std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
+           PreservedSet.end())
       // Remove this analysis
-      if (!dynamic_cast<ImmutablePass*>(Info->second))
-        AvailableAnalysis.erase(Info);
-    }
+      AvailableAnalysis.erase(Info);
   }
 
   // Check inherited analysis also. If P is not preserving analysis
@@ -587,12 +589,11 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
            I = InheritedAnalysis[Index]->begin(),
            E = InheritedAnalysis[Index]->end(); I != E; ) {
       std::map<AnalysisID, Pass *>::iterator Info = I++;
-      if (std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
-          PreservedSet.end()) {
+      if (!dynamic_cast<ImmutablePass*>(Info->second)
+          && std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
+             PreservedSet.end())
         // Remove this analysis
-        if (!dynamic_cast<ImmutablePass*>(Info->second))
-          InheritedAnalysis[Index]->erase(Info);
-      }
+        InheritedAnalysis[Index]->erase(Info);
     }
   }
 
