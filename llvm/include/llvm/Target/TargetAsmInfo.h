@@ -203,7 +203,12 @@ namespace llvm {
     const char *FourByteConstantSection;
     const char *EightByteConstantSection;
     const char *SixteenByteConstantSection;
-    
+
+    /// ReadOnlySection - This is the directive that is emitted to switch to a
+    /// read-only section for constant data (e.g. data declared const,
+    /// jump tables).
+    const char *ReadOnlySection;          // Defaults to NULL
+
     //===--- Global Variable Emission Directives --------------------------===//
     
     /// GlobalDirective - This is the directive used to declare a global entity.
@@ -473,6 +478,9 @@ namespace llvm {
     }
     const char *getSixteenByteConstantSection() const {
       return SixteenByteConstantSection;
+    }
+    const char *getReadOnlySection() const {
+      return ReadOnlySection;
     }
     const char *getGlobalDirective() const {
       return GlobalDirective;

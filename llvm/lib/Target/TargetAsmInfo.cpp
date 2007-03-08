@@ -60,6 +60,7 @@ TargetAsmInfo::TargetAsmInfo() :
   FourByteConstantSection(0),
   EightByteConstantSection(0),
   SixteenByteConstantSection(0),
+  ReadOnlySection(0),
   GlobalDirective(0),
   SetDirective(0),
   LCOMMDirective(0),
