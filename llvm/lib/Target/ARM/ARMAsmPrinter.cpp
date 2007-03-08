@@ -662,6 +662,9 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
+    case 'c': // Don't print "$" before a global var name or constant.
+      printOperand(MI, OpNo);
+      return false;
     case 'Q':
       if (TM.getTargetData()->isLittleEndian())
         break;
