@@ -568,9 +568,214 @@ static ConstantInt *SubOne(ConstantInt *C) {
 
 /// ComputeMaskedBits - Determine which of the bits specified in Mask are
 /// known to be either zero or one and return them in the KnownZero/KnownOne
+/// bit sets.  This code only analyzes bits in Mask, in order to short-circuit
+/// processing.
+/// NOTE: we cannot consider 'undef' to be "IsZero" here.  The problem is that
+/// we cannot optimize based on the assumption that it is zero without changing
+/// it to be an explicit zero.  If we don't change it to zero, other code could
+/// optimized based on the contradictory assumption that it is non-zero.
+/// Because instcombine aggressively folds operations with undef args anyway,
+/// this won't lose us code quality.
+static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero, 
+                              APInt& KnownOne, unsigned Depth = 0) {
+  uint32_t BitWidth = Mask.getBitWidth();
+  assert(KnownZero.getBitWidth() == BitWidth && 
+         KnownOne.getBitWidth() == BitWidth &&
+         "Mask, KnownOne and KnownZero should have same BitWidth");
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+    // We know all of the bits for a constant!
+    APInt Tmp(CI->getValue());
+    Tmp.zextOrTrunc(BitWidth);
+    KnownOne = Tmp & Mask;
+    KnownZero = ~KnownOne & Mask;
+    return;
+  }
+
+  KnownZero.clear(); KnownOne.clear();   // Don't know anything.
+  if (Depth == 6 || Mask == 0)
+    return;  // Limit search depth.
+
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return;
+
+  APInt KnownZero2(KnownZero), KnownOne2(KnownOne);
+  Mask &= APInt::getAllOnesValue(
+    cast<IntegerType>(V->getType())->getBitWidth()).zextOrTrunc(BitWidth);
+  
+  switch (I->getOpcode()) {
+  case Instruction::And:
+    // If either the LHS or the RHS are Zero, the result is zero.
+    ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
+    Mask &= ~KnownZero;
+    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    
+    // Output known-1 bits are only known if set in both the LHS & RHS.
+    KnownOne &= KnownOne2;
+    // Output known-0 are known to be clear if zero in either the LHS | RHS.
+    KnownZero |= KnownZero2;
+    return;
+  case Instruction::Or:
+    ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
+    Mask &= ~KnownOne;
+    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    
+    // Output known-0 bits are only known if clear in both the LHS & RHS.
+    KnownZero &= KnownZero2;
+    // Output known-1 are known to be set if set in either the LHS | RHS.
+    KnownOne |= KnownOne2;
+    return;
+  case Instruction::Xor: {
+    ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
+    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    
+    // Output known-0 bits are known if clear or set in both the LHS & RHS.
+    APInt KnownZeroOut = (KnownZero & KnownZero2) | (KnownOne & KnownOne2);
+    // Output known-1 are known to be set if set in only one of the LHS, RHS.
+    KnownOne = (KnownZero & KnownOne2) | (KnownOne & KnownZero2);
+    KnownZero = KnownZeroOut;
+    return;
+  }
+  case Instruction::Select:
+    ComputeMaskedBits(I->getOperand(2), Mask, KnownZero, KnownOne, Depth+1);
+    ComputeMaskedBits(I->getOperand(1), Mask, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+
+    // Only known if known in both the LHS and RHS.
+    KnownOne &= KnownOne2;
+    KnownZero &= KnownZero2;
+    return;
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  case Instruction::SIToFP:
+  case Instruction::PtrToInt:
+  case Instruction::UIToFP:
+  case Instruction::IntToPtr:
+    return; // Can't work with floating point or pointers
+  case Instruction::Trunc: 
+    // All these have integer operands
+    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    return;
+  case Instruction::BitCast: {
+    const Type *SrcTy = I->getOperand(0)->getType();
+    if (SrcTy->isInteger()) {
+      ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+      return;
+    }
+    break;
+  }
+  case Instruction::ZExt:  {
+    // Compute the bits in the result that are not present in the input.
+    const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
+    APInt NotIn(~SrcTy->getMask());
+    APInt NewBits = APInt::getAllOnesValue(BitWidth) & 
+                    NotIn.zext(BitWidth);
+      
+    Mask &= ~NotIn;
+    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    // The top bits are known to be zero.
+    KnownZero |= NewBits;
+    return;
+  }
+  case Instruction::SExt: {
+    // Compute the bits in the result that are not present in the input.
+    const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
+    APInt NotIn(~SrcTy->getMask());
+    APInt NewBits = APInt::getAllOnesValue(BitWidth) & 
+                    NotIn.zext(BitWidth);
+      
+    Mask &= ~NotIn;
+    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+
+    // If the sign bit of the input is known set or clear, then we know the
+    // top bits of the result.
+    APInt InSignBit(APInt::getSignedMinValue(SrcTy->getBitWidth()));
+    InSignBit.zextOrTrunc(BitWidth);
+    if ((KnownZero & InSignBit) != 0) {          // Input sign bit known zero
+      KnownZero |= NewBits;
+      KnownOne &= ~NewBits;
+    } else if ((KnownOne & InSignBit) != 0) {    // Input sign bit known set
+      KnownOne |= NewBits;
+      KnownZero &= ~NewBits;
+    } else {                              // Input sign bit unknown
+      KnownZero &= ~NewBits;
+      KnownOne &= ~NewBits;
+    }
+    return;
+  }
+  case Instruction::Shl:
+    // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
+    if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      uint64_t ShiftAmt = SA->getZExtValue();
+      Mask = APIntOps::lshr(Mask, ShiftAmt);
+      ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+      assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+      KnownZero = APIntOps::shl(KnownZero, ShiftAmt);
+      KnownOne  = APIntOps::shl(KnownOne, ShiftAmt);
+      KnownZero |= APInt(BitWidth, 1ULL).shl(ShiftAmt)-1;  // low bits known zero.
+      return;
+    }
+    break;
+  case Instruction::LShr:
+    // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+    if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      // Compute the new bits that are at the top now.
+      uint64_t ShiftAmt = SA->getZExtValue();
+      APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth-ShiftAmt));
+      
+      // Unsigned shift right.
+      Mask = APIntOps::shl(Mask, ShiftAmt);
+      ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
+      assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
+      KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
+      KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
+      KnownZero |= HighBits;  // high bits known zero.
+      return;
+    }
+    break;
+  case Instruction::AShr:
+    // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+    if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      // Compute the new bits that are at the top now.
+      uint64_t ShiftAmt = SA->getZExtValue();
+      APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth-ShiftAmt));
+      
+      // Signed shift right.
+      Mask = APIntOps::shl(Mask, ShiftAmt);
+      ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
+      assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
+      KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
+      KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
+        
+      // Handle the sign bits and adjust to where it is now in the mask.
+      APInt SignBit = APInt::getSignedMinValue(BitWidth).lshr(ShiftAmt);
+        
+      if ((KnownZero & SignBit) != 0) {       // New bits are known zero.
+        KnownZero |= HighBits;
+      } else if ((KnownOne & SignBit) != 0) { // New bits are known one.
+        KnownOne |= HighBits;
+      }
+      return;
+    }
+    break;
+  }
+}
+
+/// ComputeMaskedBits - Determine which of the bits specified in Mask are
+/// known to be either zero or one and return them in the KnownZero/KnownOne
 /// bitsets.  This code only analyzes bits in Mask, in order to short-circuit
 /// processing.
-static void ComputeMaskedBits(Value *V, uint64_t Mask, uint64_t &KnownZero,
+static void ComputeMaskedBits(Value *V, uint64_t Mask, uint64_t &KnownZero, 
                               uint64_t &KnownOne, unsigned Depth = 0) {
   // Note, we cannot consider 'undef' to be "IsZero" here.  The problem is that
   // we cannot optimize based on the assumption that it is zero without changing
