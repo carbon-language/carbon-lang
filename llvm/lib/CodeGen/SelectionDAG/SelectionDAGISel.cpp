@@ -2882,9 +2882,14 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       } else if (CTy == TargetLowering::C_Memory) {
         // Memory input.
         
-        // Check that the operand isn't a float.
+        // If the operand is a float, spill to a constant pool entry to get its
+        // address.
+        if (ConstantFP *Val = dyn_cast<ConstantFP>(I.getOperand(OpNum-1)))
+          InOperandVal = DAG.getConstantPool(Val, TLI.getPointerTy());
+        
         if (!MVT::isInteger(InOperandVal.getValueType())) {
-          cerr << "Match failed, can't handle floats yet!\n";
+          cerr << "Match failed, cannot handle this yet!\n";
+          InOperandVal.Val->dump();
           exit(1);
         }
         
