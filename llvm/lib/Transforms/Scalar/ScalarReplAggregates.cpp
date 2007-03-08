@@ -460,20 +460,77 @@ void SROA::RewriteBitCastUserOfAlloca(BitCastInst *BCInst, AllocationInst *AI,
                                          ConstantInt::get(Type::Int32Ty, i),
                                          OtherPtr->getNameStr()+"."+utostr(i),
                                          MI);
-        if (OtherElt->getType() != BytePtrTy)
-          OtherElt = new BitCastInst(OtherElt, BytePtrTy,OtherElt->getNameStr(),
-                                     MI);
       }
 
       Value *EltPtr = NewElts[i];
-      unsigned EltSize =
-        TD.getTypeSize(cast<PointerType>(EltPtr->getType())->getElementType());
+      const Type *EltTy =cast<PointerType>(EltPtr->getType())->getElementType();
+      
+      // If we got down to a scalar, insert a load or store as appropriate.
+      if (EltTy->isFirstClassType()) {
+        if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
+          Value *Elt = new LoadInst(SROADest ? OtherElt : EltPtr, "tmp",
+                                    MI);
+          new StoreInst(Elt, SROADest ? EltPtr : OtherElt, MI);
+          continue;
+        } else {
+          assert(isa<MemSetInst>(MI));
+
+          // If the stored element is zero (common case), just store a null
+          // constant.
+          Constant *StoreVal;
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(MI->getOperand(2))) {
+            if (CI->isZero()) {
+              StoreVal = Constant::getNullValue(EltTy);  // 0.0, null, 0, <0,0>
+            } else {
+              // If EltTy is a packed type, get the element type.
+              const Type *ValTy = EltTy;
+              if (const VectorType *VTy = dyn_cast<VectorType>(ValTy))
+                ValTy = VTy->getElementType();
+              
+              // Construct an integer with the right value.
+              unsigned EltSize = TD.getTypeSize(ValTy);
+              APInt OneVal(EltSize*8, CI->getZExtValue());
+              APInt TotalVal(OneVal);
+              // Set each byte.
+              for (unsigned i = 0; i != EltSize-1; ++i) {
+                TotalVal = TotalVal.shl(8);
+                TotalVal |= OneVal;
+              }
+              
+              // Convert the integer value to the appropriate type.
+              StoreVal = ConstantInt::get(TotalVal);
+              if (isa<PointerType>(ValTy))
+                StoreVal = ConstantExpr::getIntToPtr(StoreVal, ValTy);
+              else if (ValTy->isFloatingPoint())
+                StoreVal = ConstantExpr::getBitCast(StoreVal, ValTy);
+              assert(StoreVal->getType() == ValTy && "Type mismatch!");
+              
+              // If the requested value was a vector constant, create it.
+              if (EltTy != ValTy) {
+                unsigned NumElts = cast<VectorType>(ValTy)->getNumElements();
+                SmallVector<Constant*, 16> Elts(NumElts, StoreVal);
+                StoreVal = ConstantVector::get(&Elts[0], NumElts);
+              }
+            }
+            new StoreInst(StoreVal, EltPtr, MI);
+            continue;
+          }
+          // Otherwise, if we're storing a byte variable, use a memset call for
+          // this element.
+        }
+      }
       
       // Cast the element pointer to BytePtrTy.
       if (EltPtr->getType() != BytePtrTy)
         EltPtr = new BitCastInst(EltPtr, BytePtrTy, EltPtr->getNameStr(), MI);
-      
-      
+    
+      // Cast the other pointer (if we have one) to BytePtrTy. 
+      if (OtherElt && OtherElt->getType() != BytePtrTy)
+        OtherElt = new BitCastInst(OtherElt, BytePtrTy,OtherElt->getNameStr(),
+                                   MI);
+    
+      unsigned EltSize = TD.getTypeSize(EltTy);
+
       // Finally, insert the meminst for this element.
       if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
         Value *Ops[] = {
@@ -483,7 +540,8 @@ void SROA::RewriteBitCastUserOfAlloca(BitCastInst *BCInst, AllocationInst *AI,
           Zero  // Align
         };
         new CallInst(TheFn, Ops, 4, "", MI);
-      } else if (isa<MemSetInst>(MI)) {
+      } else {
+        assert(isa<MemSetInst>(MI));
         Value *Ops[] = {
           EltPtr, MI->getOperand(2),  // Dest, Value,
           ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
@@ -491,7 +549,7 @@ void SROA::RewriteBitCastUserOfAlloca(BitCastInst *BCInst, AllocationInst *AI,
         };
         new CallInst(TheFn, Ops, 4, "", MI);
       }
-   }
+    }
 
     // Finally, MI is now dead, as we've modified its actions to occur on all of
     // the elements of the aggregate.
