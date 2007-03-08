@@ -42,7 +42,6 @@ namespace {
     const MRegisterInfo *MRI;
     ARMFunctionInfo *AFI;
     RegScavenger *RS;
-    MachineBasicBlock::iterator RSI;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -67,6 +66,7 @@ namespace {
                  int Opcode, unsigned Size, unsigned Scratch,
                  MemOpQueue &MemOps);
 
+    void AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps);
     bool LoadStoreMultipleOpti(MachineBasicBlock &MBB);
     bool MergeReturnIntoLDM(MachineBasicBlock &MBB);
   };
@@ -492,6 +492,22 @@ static bool isMemoryOp(MachineInstr *MI) {
   return false;
 }
 
+/// AdvanceRS - Advance register scavenger to just before the earliest memory
+/// op that is being merged.
+void ARMLoadStoreOpt::AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps) {
+  MachineBasicBlock::iterator Loc = MemOps[0].MBBI;
+  unsigned Position = MemOps[0].Position;
+  for (unsigned i = 1, e = MemOps.size(); i != e; ++i) {
+    if (MemOps[i].Position < Position) {
+      Position = MemOps[i].Position;
+      Loc = MemOps[i].MBBI;
+    }
+  }
+
+  if (Loc != MBB.begin())
+    RS->forward(prior(Loc));
+}
+
 /// LoadStoreMultipleOpti - An optimization pass to turn multiple LDR / STR
 /// ops of the same base and incrementing offset into LDM / STM ops.
 bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
@@ -504,7 +520,6 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   unsigned Position = 0;
 
   RS->enterBasicBlock(&MBB);
-  RSI = MBB.begin();
   MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
   while (MBBI != E) {
     bool Advance  = false;
@@ -585,15 +600,14 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
     if (TryMerge) {
       if (NumMemOps > 1) {
         // Try to find a free register to use as a new base in case it's needed.
-        unsigned Scratch = ARM::R12;
         // First advance to the instruction just before the start of the chain.
-        if (RSI != MBB.begin())
-          RS->forward(prior(RSI));
+        AdvanceRS(MBB, MemOps);
         // Find a scratch register. Make sure it's a call clobbered register or
         // a spilled callee-saved register.
-        Scratch = RS->FindUnusedReg(&ARM::GPRRegClass, true);
+        unsigned Scratch = RS->FindUnusedReg(&ARM::GPRRegClass, true);
         if (!Scratch)
-          RS->FindUnusedReg(&ARM::GPRRegClass, AFI->getSpilledCSRegisters());
+          Scratch = RS->FindUnusedReg(&ARM::GPRRegClass,
+                                      AFI->getSpilledCSRegisters());
         // Process the load / store instructions.
         RS->forward(prior(MBBI));
 
@@ -617,7 +631,6 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
 
         // RS may be pointing to an instruction that's deleted. 
         RS->skipTo(prior(MBBI));
-        RSI = MBBI;
       }
 
       CurrBase = 0;
