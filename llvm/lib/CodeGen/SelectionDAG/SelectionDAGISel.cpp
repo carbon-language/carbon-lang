@@ -2883,8 +2883,10 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         // Memory input.
         
         // Check that the operand isn't a float.
-        if (!MVT::isInteger(InOperandVal.getValueType()))
-          assert(0 && "MATCH FAIL!");
+        if (!MVT::isInteger(InOperandVal.getValueType())) {
+          cerr << "Match failed, can't handle floats yet!\n";
+          exit(1);
+        }
         
         // Extend/truncate to the right pointer type if needed.
         MVT::ValueType PtrType = TLI.getPointerTy();
