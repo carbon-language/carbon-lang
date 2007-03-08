@@ -56,6 +56,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     EightByteConstantSection = "\t.literal8\n";
     if (Subtarget->is64Bit())
       SixteenByteConstantSection = "\t.literal16\n";
+    ReadOnlySection = "\t.const\n";
     LCOMMDirective = "\t.lcomm\t";
     COMMDirectiveTakesAlignment = false;
     HasDotTypeDotSizeDirective = false;
@@ -103,6 +104,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     // bool HasDotLoc; // Defaults to false.
     // HasDotFile - True if target asm supports .file directives.
     // bool HasDotFile; // Defaults to false.
+    ReadOnlySection = "\t.section\t.rodata\n";
     PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
     DwarfRequiresFrameSection = false;
