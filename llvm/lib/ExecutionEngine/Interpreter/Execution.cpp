@@ -753,7 +753,7 @@ void Interpreter::visitAllocationInst(AllocationInst &I) {
 
   DOUT << "Allocated Type: " << *Ty << " (" << TypeSize << " bytes) x " 
        << NumElements << " (Total: " << MemToAlloc << ") at "
-       << std::hex << Memory << '\n';
+       << uintptr_t(Memory) << '\n';
 
   GenericValue Result = PTOGV(Memory);
   assert(Result.PointerVal != 0 && "Null pointer returned by malloc!");
