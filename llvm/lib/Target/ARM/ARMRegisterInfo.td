@@ -99,30 +99,34 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
   // generate large stack offset. Make it available once we have register
   // scavenging. Similarly r3 is reserved in Thumb mode for now.
   let MethodBodies = [{
-    // FP is R11, R9 is available, R12 is available.
+    // FP is R11, R9 is available.
     static const unsigned ARM_GPR_AO_1[] = {
       ARM::R3, ARM::R2, ARM::R1, ARM::R0,
+      ARM::R12,ARM::LR,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-      ARM::R8, ARM::R9, ARM::R10,ARM::R12,
-      ARM::LR, ARM::R11 };
-    // FP is R11, R9 is not available, R12 is available.
+      ARM::R8, ARM::R9, ARM::R10,
+      ARM::R11 };
+    // FP is R11, R9 is not available.
     static const unsigned ARM_GPR_AO_2[] = {
       ARM::R3, ARM::R2, ARM::R1, ARM::R0,
+      ARM::R12,ARM::LR,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-      ARM::R8, ARM::R10,ARM::R12,
-      ARM::LR, ARM::R11 };
-    // FP is R7, R9 is available, R12 is available.
+      ARM::R8, ARM::R10,
+      ARM::R11 };
+    // FP is R7, R9 is available.
     static const unsigned ARM_GPR_AO_3[] = {
       ARM::R3, ARM::R2, ARM::R1, ARM::R0,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R8,
-      ARM::R9, ARM::R10,ARM::R11,ARM::R12,
-      ARM::LR, ARM::R7 };
-    // FP is R7, R9 is not available, R12 is available.
+      ARM::R12,ARM::LR,
+      ARM::R4, ARM::R5, ARM::R6,
+      ARM::R8, ARM::R9, ARM::R10,ARM::R11,
+      ARM::R7 };
+    // FP is R7, R9 is not available.
     static const unsigned ARM_GPR_AO_4[] = {
       ARM::R3, ARM::R2, ARM::R1, ARM::R0,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R8,
-      ARM::R10,ARM::R11,ARM::R12,
-      ARM::LR, ARM::R7 };
+      ARM::R12,ARM::LR,
+      ARM::R4, ARM::R5, ARM::R6,
+      ARM::R8, ARM::R10,ARM::R11,
+      ARM::R7 };
 
     // FP is R7, only low registers available.
     static const unsigned THUMB_GPR_AO[] = {
