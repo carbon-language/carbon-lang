@@ -27,6 +27,9 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     HiddenDirective = "\t.private_extern\t";
     JumpTableDataSection = ".const";
     CStringSection = "\t.cstring";
+    FourByteConstantSection = "\t.literal4\n";
+    EightByteConstantSection = "\t.literal8\n";
+    ReadOnlySection = "\t.const\n";
     HasDotTypeDotSizeDirective = false;
     if (TM.getRelocationModel() == Reloc::Static) {
       StaticCtorsSection = ".constructor";

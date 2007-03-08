@@ -893,7 +893,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         O << Directive << name << "\n";
     
     Constant *C = I->getInitializer();
-    unsigned Size = TD->getTypeSize(C->getType());
+    const Type *Type = C->getType();
+    unsigned Size = TD->getTypeSize(Type);
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
@@ -937,7 +938,28 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
           }
         }
 
-        SwitchToDataSection("\t.data", I);
+        if (!I->isConstant())
+          SwitchToDataSection(TAI->getDataSection(), I);
+        else {
+          // Read-only data.
+          bool isIntFPLiteral = Type->isInteger()  || Type->isFloatingPoint();
+          if (C->ContainsRelocations() &&
+              TM.getRelocationModel() != Reloc::Static)
+            SwitchToDataSection("\t.const_data\n");
+          else if (isIntFPLiteral && Size == 4 &&
+                   TAI->getFourByteConstantSection())
+            SwitchToDataSection(TAI->getFourByteConstantSection(), I);
+          else if (isIntFPLiteral && Size == 8 &&
+                   TAI->getEightByteConstantSection())
+            SwitchToDataSection(TAI->getEightByteConstantSection(), I);
+          else if (isIntFPLiteral && Size == 16 &&
+                   TAI->getSixteenByteConstantSection())
+            SwitchToDataSection(TAI->getSixteenByteConstantSection(), I);
+          else if (TAI->getReadOnlySection())
+            SwitchToDataSection(TAI->getReadOnlySection(), I);
+          else
+            SwitchToDataSection(TAI->getDataSection(), I);
+        }
         break;
       default:
         cerr << "Unknown linkage type!";

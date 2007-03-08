@@ -57,6 +57,9 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   JumpTableDataSection = ".const";
   GlobalDirective = "\t.globl\t";
   CStringSection = "\t.cstring";
+  FourByteConstantSection = "\t.literal4\n";
+  EightByteConstantSection = "\t.literal8\n";
+  ReadOnlySection = "\t.const\n";
   if (TM.getRelocationModel() == Reloc::Static) {
     StaticCtorsSection = ".constructor";
     StaticDtorsSection = ".destructor";
