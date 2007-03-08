@@ -59,6 +59,10 @@ public:
   /// true for things like constant expressions that could divide by zero.
   bool canTrap() const;
 
+  /// ContaintsRelocations - Return true if the constant value contains
+  /// relocations which cannot be resolved at compile time.
+  bool ContainsRelocations() const;
+
   // Specialize get/setOperand for Constant's as their operands are always
   // constants as well.
   Constant *getOperand(unsigned i) {

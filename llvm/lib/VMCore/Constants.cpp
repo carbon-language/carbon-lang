@@ -90,6 +90,17 @@ bool Constant::canTrap() const {
   }
 }
 
+/// ContaintsRelocations - Return true if the constant value contains
+/// relocations which cannot be resolved at compile time.
+bool Constant::ContainsRelocations() const {
+  if (isa<GlobalValue>(this))
+    return true;
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    if (getOperand(i)->ContainsRelocations())
+      return true;
+  return false;
+}
+
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
