@@ -303,7 +303,7 @@ static bool AllUsersAreLoads(Value *Ptr) {
 ///
 int SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI) {
   if (BitCastInst *C = dyn_cast<BitCastInst>(User))
-    return 0 && (isSafeUseOfBitCastedAllocation(C, AI) ? 3 : 0);
+    return isSafeUseOfBitCastedAllocation(C, AI) ? 3 : 0;
   if (!isa<GetElementPtrInst>(User)) return 0;
 
   GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
