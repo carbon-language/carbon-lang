@@ -675,11 +675,9 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
   case Instruction::ZExt:  {
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
-    APInt NotIn(~SrcTy->getMask());
-    APInt NewBits = APInt::getAllOnesValue(BitWidth) & 
-                    NotIn.zext(BitWidth);
+    APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
       
-    Mask &= ~NotIn;
+    Mask &= SrcTy->getMask().zext(BitWidth);
     ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     // The top bits are known to be zero.
@@ -689,11 +687,9 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
-    APInt NotIn(~SrcTy->getMask());
-    APInt NewBits = APInt::getAllOnesValue(BitWidth) & 
-                    NotIn.zext(BitWidth);
+    APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
       
-    Mask &= ~NotIn;
+    Mask &= SrcTy->getMask().zext(BitWidth);
     ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
 
