@@ -406,7 +406,6 @@ void PromoteMem2Reg::run() {
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
   //
-  //RenamePass(F.begin(), 0, Values);
   RenamePassWorkList.clear();
   RenamePassData *RPD = new RenamePassData(F.begin(), 0, Values);
   RenamePassWorkList.push_back(RPD);
@@ -799,8 +798,6 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
     RenamePassData *RPD = new RenamePassData(TI->getSuccessor(i), BB,
                                              IncomingVals);
     RenamePassWorkList.push_back(RPD);
-    //    std::vector<Value*> OutgoingVals(IncomingVals);
-    //    RenamePass(TI->getSuccessor(i), BB, OutgoingVals);
   }
 }
 
