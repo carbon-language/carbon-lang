@@ -30,6 +30,10 @@ require aligning functions containing constant pools to 4-byte boundaries).
 3.  There might be some compile-time efficiency to be had by representing
 consecutive islands as a single block rather than multiple blocks.
 
+4.  Use a priority queue to sort constant pool users in inverse order of
+    position so we always process the one closed to the end of functions
+    first. This may simply CreateNewWater.
+
 //===---------------------------------------------------------------------===//
 
 We need to start generating predicated instructions.  The .td files have a way
