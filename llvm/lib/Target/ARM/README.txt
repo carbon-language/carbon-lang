@@ -140,7 +140,7 @@ odd/even pair. However, we probably would pay a penalty if the address is not
 aligned on 8-byte boundary. This requires more information on load / store
 nodes (and MI's?) then we currently carry.
 
-6) (From CoreGraphics):  struct copies appear to be done field by field 
+6) struct copies appear to be done field by field 
 instead of by words, at least sometimes:
 
 struct foo { int x; short s; char c1; char c2; };
@@ -427,7 +427,7 @@ http://www.inf.u-szeged.hu/gcc-arm/
 http://citeseer.ist.psu.edu/debus04linktime.html
 
 //===---------------------------------------------------------------------===//
-(CoreGraphics):  gcc generates smaller code for this function at -O2 or -Os:
+gcc generates smaller code for this function at -O2 or -Os:
 
 void foo(signed char* p) {
   if (*p == 3)
