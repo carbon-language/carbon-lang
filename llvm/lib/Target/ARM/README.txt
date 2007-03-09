@@ -140,6 +140,29 @@ odd/even pair. However, we probably would pay a penalty if the address is not
 aligned on 8-byte boundary. This requires more information on load / store
 nodes (and MI's?) then we currently carry.
 
+6) (From CoreGraphics):  struct copies appear to be done field by field 
+instead of by words, at least sometimes:
+
+struct foo { int x; short s; char c1; char c2; };
+void cpy(struct foo*a, struct foo*b) { *a = *b; }
+
+llvm code (-O2)
+        ldrb r3, [r1, #+6]
+        ldr r2, [r1]
+        ldrb r12, [r1, #+7]
+        ldrh r1, [r1, #+4]
+        str r2, [r0]
+        strh r1, [r0, #+4]
+        strb r3, [r0, #+6]
+        strb r12, [r0, #+7]
+gcc code (-O2)
+        ldmia   r1, {r1-r2}
+        stmia   r0, {r1-r2}
+
+In this benchmark poor handling of aggregate copies has shown up as
+having a large effect on size, and possibly speed as well (we don't have
+a good way to measure on ARM).
+
 //===---------------------------------------------------------------------===//
 
 * Consider this silly example:
@@ -282,53 +305,8 @@ See McCat/18-imp/ComputeBoundingBoxes for an example.
 
 //===---------------------------------------------------------------------===//
 
-We need register scavenging.  Currently, the 'ip' register is reserved in case
-frame indexes are too big.  This means that we generate extra code for stuff 
-like this:
-
-void foo(unsigned x, unsigned y, unsigned z, unsigned *a, unsigned *b, unsigned *c) { 
-   short Rconst = (short) (16384.0f * 1.40200 + 0.5 );
-   *a = x * Rconst;
-   *b = y * Rconst;
-   *c = z * Rconst;
-}
-
-we compile it to:
-
-_foo:
-***     stmfd sp!, {r4, r7}
-***     add r7, sp, #4
-        mov r4, #186
-        orr r4, r4, #89, 24 @ 22784
-        mul r0, r0, r4
-        str r0, [r3]
-        mul r0, r1, r4
-        ldr r1, [sp, #+8]
-        str r0, [r1]
-        mul r0, r2, r4
-        ldr r1, [sp, #+12]
-        str r0, [r1]
-***     sub sp, r7, #4
-***     ldmfd sp!, {r4, r7}
-        bx lr
-
-GCC produces:
-
-_foo:
-        ldr     ip, L4
-        mul     r0, ip, r0
-        mul     r1, ip, r1
-        str     r0, [r3, #0]
-        ldr     r3, [sp, #0]
-        mul     r2, ip, r2
-        str     r1, [r3, #0]
-        ldr     r3, [sp, #4]
-        str     r2, [r3, #0]
-        bx      lr
-L4:
-        .long   22970
-
-This is apparently all because we couldn't use ip here.
+Register scavenging is now implemented.  The example in the previous version
+of this document produces optimal code at -O2.
 
 //===---------------------------------------------------------------------===//
 
@@ -449,3 +427,25 @@ http://www.inf.u-szeged.hu/gcc-arm/
 http://citeseer.ist.psu.edu/debus04linktime.html
 
 //===---------------------------------------------------------------------===//
+(CoreGraphics):  gcc generates smaller code for this function at -O2 or -Os:
+
+void foo(signed char* p) {
+  if (*p == 3)
+     bar();
+   else if (*p == 4)
+    baz();
+  else if (*p == 5)
+    quux();
+}
+
+llvm decides it's a good idea to turn the repeated if...else into a
+binary tree, as if it were a switch; the resulting code requires -1 
+compare-and-branches when *p<=2 or *p==5, the same number if *p==4
+or *p>6, and +1 if *p==3.  So it should be a speed win
+(on balance).  However, the revised code is larger, with 4 conditional 
+branches instead of 3.
+
+More seriously, there is a byte->word extend before
+each comparison, where there should be only one, and the condition codes
+are not remembered when the same two values are compared twice.
+
