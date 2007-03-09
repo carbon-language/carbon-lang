@@ -126,7 +126,7 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   if (!pred_empty()) {
     OS << "    Predecessors according to CFG:";
     for (const_pred_iterator PI = pred_begin(), E = pred_end(); PI != E; ++PI)
-      OS << " " << *PI;
+      OS << " " << *PI << " (#" << (*PI)->getNumber() << ")";
     OS << "\n";
   }
   
@@ -139,7 +139,7 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   if (!succ_empty()) {
     OS << "    Successors according to CFG:";
     for (const_succ_iterator SI = succ_begin(), E = succ_end(); SI != E; ++SI)
-      OS << " " << *SI;
+      OS << " " << *SI << " (#" << (*SI)->getNumber() << ")";
     OS << "\n";
   }
 }
