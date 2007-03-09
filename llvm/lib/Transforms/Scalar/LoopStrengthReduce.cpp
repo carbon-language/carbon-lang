@@ -400,9 +400,13 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
   SCEVHandle Stride = Start;
   if (!getSCEVStartAndStride(ISE, L, Start, Stride))
     return false;  // Non-reducible symbolic expression, bail out.
-  
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;++UI){
+
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;) {
     Instruction *User = cast<Instruction>(*UI);
+
+    // Increment iterator now because IVUseShouldUsePostIncValue may remove 
+    // User from the list of I users.
+    ++UI;
 
     // Do not infinitely recurse on PHI nodes.
     if (isa<PHINode>(User) && Processed.count(User))
