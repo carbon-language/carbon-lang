@@ -377,7 +377,7 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                   }
                 }
 {NInteger}      { int len = strlen(yytext); 
-                  uint32_t numBits = (((len-1) * 64) / 19) + 1;
+                  uint32_t numBits = (((len-1) * 64) / 19) + 2;
                   APInt Tmp(numBits, yytext, len, 10);
                   uint32_t minBits = Tmp.getMinSignedBits();
                   if (minBits > 0 && minBits < numBits)

@@ -1940,7 +1940,7 @@ case 126:
 YY_RULE_SETUP
 #line 379 "/proj/llvm/llvm-1/lib/AsmParser/Lexer.l"
 { int len = strlen(yytext); 
-                  uint32_t numBits = (((len-1) * 64) / 19) + 1;
+                  uint32_t numBits = (((len-1) * 64) / 19) + 2;
                   APInt Tmp(numBits, yytext, len, 10);
                   uint32_t minBits = Tmp.getMinSignedBits();
                   if (minBits > 0 && minBits < numBits)
