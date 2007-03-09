@@ -72,6 +72,17 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
 }
 
 namespace {
+
+  // Data package used by RenamePass()
+  class VISIBILITY_HIDDEN RenamePassData {
+  public:
+    RenamePassData(BasicBlock *B, BasicBlock *P,
+                   std::vector<Value *> V) : BB(B), Pred(P), Values(V) {}
+    BasicBlock *BB;
+    BasicBlock *Pred;
+    std::vector<Value *> Values;
+  };
+
   struct VISIBILITY_HIDDEN PromoteMem2Reg {
     /// Allocas - The alloca instructions being promoted.
     ///
@@ -111,6 +122,9 @@ namespace {
     /// non-determinstic behavior.
     DenseMap<BasicBlock*, unsigned> BBNumbers;
 
+    /// RenamePassWorkList - Worklist used by RenamePass()
+    std::vector<RenamePassData *> RenamePassWorkList;
+
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A,
                    SmallVector<AllocaInst*, 16> &Retry, DominatorTree &dt,
@@ -146,6 +160,7 @@ namespace {
     bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version,
                       SmallPtrSet<PHINode*, 16> &InsertedPHINodes);
   };
+
 }  // end of anonymous namespace
 
 void PromoteMem2Reg::run() {
@@ -391,8 +406,17 @@ void PromoteMem2Reg::run() {
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
   //
-  RenamePass(F.begin(), 0, Values);
-
+  //RenamePass(F.begin(), 0, Values);
+  RenamePassWorkList.clear();
+  RenamePassData *RPD = new RenamePassData(F.begin(), 0, Values);
+  RenamePassWorkList.push_back(RPD);
+  while(!RenamePassWorkList.empty()) {
+    RenamePassData *RPD = RenamePassWorkList.back(); RenamePassWorkList.pop_back();
+    // RenamePass may add new worklist entries.
+    RenamePass(RPD->BB, RPD->Pred, RPD->Values);
+    delete RPD;
+  }
+  
   // The renamer uses the Visited set to avoid infinite loops.  Clear it now.
   Visited.clear();
 
@@ -772,8 +796,11 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
   // Recurse to our successors.
   TerminatorInst *TI = BB->getTerminator();
   for (unsigned i = 0; i != TI->getNumSuccessors(); i++) {
-    std::vector<Value*> OutgoingVals(IncomingVals);
-    RenamePass(TI->getSuccessor(i), BB, OutgoingVals);
+    RenamePassData *RPD = new RenamePassData(TI->getSuccessor(i), BB,
+                                             IncomingVals);
+    RenamePassWorkList.push_back(RPD);
+    //    std::vector<Value*> OutgoingVals(IncomingVals);
+    //    RenamePass(TI->getSuccessor(i), BB, OutgoingVals);
   }
 }
 
