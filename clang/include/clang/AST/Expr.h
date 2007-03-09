@@ -60,9 +60,30 @@ public:
   static bool classof(const DeclRefExpr *) { return true; }
 };
 
+
+// FIXME: The "type" will eventually be moved to Stmt.
 class IntegerLiteral : public Expr {
+  TypeRef Type; // IntTy, LongTy, LongLongTy
+                // UnsignedIntTy, UnsignedLongTy, UnsignedLongLongTy
+  intmax_t Value;
 public:
-  IntegerLiteral() : Expr(IntegerLiteralClass) {}
+  // FIXME: To satisfy some of the current adhoc usage...
+  IntegerLiteral() : Expr(IntegerLiteralClass),
+     Type(0), Value(0) {
+  }
+  // constructor for the single digit case
+  IntegerLiteral(intmax_t value) : Expr(IntegerLiteralClass), 
+     Type(0), Value(value) {
+  }
+  IntegerLiteral(intmax_t value, TypeRef type)
+    : Expr(IntegerLiteralClass), Type(type), Value(value) {
+#if 0
+      std::cout << "Value=" << Value;
+      std::cout << " Type= ";
+      std::cout << static_cast<BuiltinType *>(type.getTypePtr())->getName();
+      std::cout << "\n";
+#endif
+  }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IntegerLiteralClass; 

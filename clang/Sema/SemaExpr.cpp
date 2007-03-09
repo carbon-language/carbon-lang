@@ -16,6 +16,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/LiteralSupport.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
@@ -24,7 +25,7 @@
 using namespace llvm;
 using namespace clang;
 
-
+#include <iostream>
 
 /// HexDigitValue - Return the value of the specified hex digit, or -1 if it's
 /// not valid.
@@ -285,68 +286,6 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
   }
 }
 
-/// SkipHexDigits - Read and skip over any hex digits, up to End.
-/// Return a pointer to the first non-hex digit or End.
-static const char *SkipHexDigits(const char *ptr, const char *end) {
-  while (ptr != end && isxdigit(*ptr))
-    ptr++;
-  return ptr;
-}
-
-/// SkipOctalDigits - Read and skip over any octal digits, up to End.
-/// Return a pointer to the first non-hex digit or End.
-static const char *SkipOctalDigits(const char *ptr, const char *end) {
-  while (ptr != end && ((*ptr >= '0') && (*ptr <= '7')))
-    ptr++;
-  return ptr;
-}
-
-/// SkipDigits - Read and skip over any digits, up to End.
-/// Return a pointer to the first non-hex digit or End.
-static const char *SkipDigits(const char *ptr, const char *end) {
-  while (ptr != end && isdigit(*ptr))
-    ptr++;
-  return ptr;
-}
-                
-///       integer-constant: [C99 6.4.4.1]
-///         decimal-constant integer-suffix
-///         octal-constant integer-suffix
-///         hexadecimal-constant integer-suffix
-///       decimal-constant: 
-///         nonzero-digit
-///         decimal-constant digit
-///       octal-constant: 
-///         0
-///         octal-constant octal-digit
-///       hexadecimal-constant: 
-///         hexadecimal-prefix hexadecimal-digit
-///         hexadecimal-constant hexadecimal-digit
-///       hexadecimal-prefix: one of
-///         0x 0X
-///       integer-suffix:
-///         unsigned-suffix [long-suffix]
-///         unsigned-suffix [long-long-suffix]
-///         long-suffix [unsigned-suffix]
-///         long-long-suffix [unsigned-sufix]
-///       nonzero-digit:
-///         1 2 3 4 5 6 7 8 9
-///       octal-digit:
-///         0 1 2 3 4 5 6 7
-///       hexadecimal-digit:
-///         0 1 2 3 4 5 6 7 8 9
-///         a b c d e f
-///         A B C D E F
-///       unsigned-suffix: one of
-///         u U
-///       long-suffix: one of
-///         l L
-///       long-long-suffix: one of 
-///         ll LL
-///
-///       floating-constant: [C99 6.4.4.2]
-///         TODO: add rules...
-///
 Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
   SmallString<512> IntegerBuffer;
   IntegerBuffer.resize(Tok.getLength());
@@ -360,148 +299,37 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
   //   a pointer to a *constant* buffer (avoiding a copy). 
   
   unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
-  ExprResult Res;
 
   // This is an optimization for single digits (which are very common).
-  if (ActualLength == 1) {
-    return ExprResult(new IntegerLiteral());
-  }
-  const char *ThisTokEnd = ThisTokBegin+ActualLength; 
-  const char *s = ThisTokBegin;
-  unsigned int radix;
-  bool saw_exponent = false, saw_period = false;
-  Expr *literal_expr = 0;
-  
-  if (*s == '0') { // parse radix
-    s++;
-    if ((*s == 'x' || *s == 'X') && (isxdigit(s[1]) || s[1] == '.')) {
-      s++;
-      radix = 16;
-      s = SkipHexDigits(s, ThisTokEnd);
-      if (s == ThisTokEnd) {
-      } else if (*s == '.') {
-        s++;
-        saw_period = true;
-        s = SkipHexDigits(s, ThisTokEnd);
-      }
-      // A binary exponent can appear with or with a '.'. If dotted, the
-      // binary exponent is required. 
-      if (*s == 'p' || *s == 'P') { 
-        s++;
-        saw_exponent = true;
-        if (*s == '+' || *s == '-')  s++; // sign
-        const char *first_non_digit = SkipDigits(s, ThisTokEnd);
-        if (first_non_digit == s) {
-          Diag(Tok, diag::err_exponent_has_no_digits);
-          return ExprResult(true);
-        } else {
-          s = first_non_digit;
-        }
-      } else if (saw_period) {
-        Diag(Tok, diag::err_hexconstant_requires_exponent);
-        return ExprResult(true);
-      }
-    } else {
-      // For now, the radix is set to 8. If we discover that we have a
-      // floating point constant, the radix will change to 10. Octal floating
-      // point constants are not permitted (only decimal and hexadecimal). 
-      radix = 8;
-      s = SkipOctalDigits(s, ThisTokEnd);
-      if (s == ThisTokEnd) {
-      } else if (*s == '.') {
-        s++;
-        radix = 10;
-        saw_period = true;
-        s = SkipDigits(s, ThisTokEnd);
-      }
-      if (*s == 'e' || *s == 'E') { // exponent
-        s++;
-        radix = 10;
-        saw_exponent = true;
-        if (*s == '+' || *s == '-')  s++; // sign
-        const char *first_non_digit = SkipDigits(s, ThisTokEnd);
-        if (first_non_digit == s) {
-          Diag(Tok, diag::err_exponent_has_no_digits);
-          return ExprResult(true);
-        } else {
-          s = first_non_digit;
-        }
-      }
-    }
-  } else { // the first digit is non-zero
-    radix = 10;
-    s = SkipDigits(s, ThisTokEnd);
-    if (s == ThisTokEnd) {
-    } else if (*s == '.') {
-      s++;
-      saw_period = true;
-      s = SkipDigits(s, ThisTokEnd);
-    } 
-    if (*s == 'e' || *s == 'E') { // exponent
-      s++;
-      saw_exponent = true;
-      if (*s == '+' || *s == '-')  s++; // sign
-      const char *first_non_digit = SkipDigits(s, ThisTokEnd);
-      if (first_non_digit == s) {
-        Diag(Tok, diag::err_exponent_has_no_digits);
-        return ExprResult(true);
-      } else {
-        s = first_non_digit;
-      }
-    }
-  }
-
-  const char *suffix_start = s;
-  
-  if (saw_period || saw_exponent) {
-    bool saw_float_suffix = false, saw_long_suffix = false;
+  if (ActualLength == 1)
+    return ExprResult(new IntegerLiteral(atoi(ThisTokBegin)));
     
-    if (s < ThisTokEnd) { // parse size suffix (float, long double)
-      if (*s == 'f' || *s == 'F') {
-        saw_float_suffix = true;
-        s++;
-      } else if (*s == 'l' || *s == 'L') {
-        saw_long_suffix = true;
-        s++;
-      }
-      if (s != ThisTokEnd) {
-        Diag(Tok, diag::err_invalid_suffix_float_constant, 
-             std::string(suffix_start, ThisTokEnd));
-        return ExprResult(true);
-      }
-    }
-    literal_expr = new FloatingLiteral();
-  } else {
-    bool saw_unsigned = false, saw_long = false, saw_longlong = false;
-
-    // if there is no suffix, this loop won't be executed (s == ThisTokEnd)
-    while (s < ThisTokEnd) {
-      // parse int suffix - they can appear in any order ("ul", "lu", "llu").
-      if (*s == 'u' || *s == 'U') {
-        if (saw_unsigned) break; // only allowed to have one 
-        saw_unsigned = true;
-        s++;
-      } else if (*s == 'l' || *s == 'L') {
-        if (saw_long || saw_longlong) break; // only allowed to have one
-        s++;
-        if (s < ThisTokEnd && (*s == *(s-1))) {
-          saw_longlong = true; // l's need to be adjacent and same case.
-          s++;
-        } else {
-          saw_long = true;
-        }
-      } else {
-        break;
-      }
-    }
-    if (s != ThisTokEnd) {
-      Diag(Tok, diag::err_invalid_suffix_integer_constant, 
-           std::string(suffix_start, ThisTokEnd));
-      return ExprResult(true);
-    }
-    literal_expr = new IntegerLiteral();
+  NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
+                               Tok.getLocation(), PP, Context.Target);
+  if (Literal.hadError) {
+    return ExprResult(true);
   }
-  return ExprResult(literal_expr);
+  Expr *literal_expr;
+    
+  if (Literal.isIntegerLiteral()) {
+    TypeRef t;
+    if (Literal.hasSuffix()) {
+      if (Literal.isLong) 
+        t = Literal.isUnsigned ? Context.UnsignedLongTy : Context.LongTy;
+      else if (Literal.isLongLong) 
+        t = Literal.isUnsigned ? Context.UnsignedLongLongTy : Context.LongLongTy;
+      else 
+        t = Context.UnsignedIntTy;
+    } else {
+      t = Context.IntTy; // implicit type is "int"
+    }
+    intmax_t val;
+    if (Literal.GetValue(val)) {
+      literal_expr = new IntegerLiteral(val, t);
+    } 
+  } else if (Literal.isFloatingLiteral()) {
+    // TODO: add floating point processing...
+  }
 }
 
 Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
