@@ -463,3 +463,7 @@ More register scavenging work:
    resulting live interval is not assigned a physical register. It may be
    possible (with the help of the scavenger) to turn some spill / restore
    pairs into register copies.
+
+//===---------------------------------------------------------------------===//
+
+Teach LSR about ARM addressing modes.
