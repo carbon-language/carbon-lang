@@ -152,7 +152,12 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
          "Should have kill for defblock!");
 
   // Add a new kill entry for this basic block.
-  VRInfo.Kills.push_back(MI);
+  unsigned BBNum = MBB->getNumber();
+  // If this virtual register is already marked as alive in this basic block,
+  // that means it is alive in at least one of the successor block, it's not
+  // a kill.
+  if (VRInfo.AliveBlocks.size() <= BBNum || !VRInfo.AliveBlocks[BBNum])
+    VRInfo.Kills.push_back(MI);
 
   // Update all dominating blocks to mark them known live.
   for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
