@@ -427,6 +427,7 @@ http://www.inf.u-szeged.hu/gcc-arm/
 http://citeseer.ist.psu.edu/debus04linktime.html
 
 //===---------------------------------------------------------------------===//
+
 gcc generates smaller code for this function at -O2 or -Os:
 
 void foo(signed char* p) {
@@ -449,3 +450,16 @@ More seriously, there is a byte->word extend before
 each comparison, where there should be only one, and the condition codes
 are not remembered when the same two values are compared twice.
 
+//===---------------------------------------------------------------------===//
+
+More register scavenging work:
+
+1. Use the register scavenger to track frame index materialized into registers
+   (those that do not fit in addressing modes) to allow reuse in the same BB.
+2. Finish scavenging for Thumb.
+3. We know some spills and restores are unnecessary. The issue is once live
+   intervals are merged, they are not never split. So every def is spilled
+   and every use requires a restore if the register allocator decides the
+   resulting live interval is not assigned a physical register. It may be
+   possible (with the help of the scavenger) to turn some spill / restore
+   pairs into register copies.
