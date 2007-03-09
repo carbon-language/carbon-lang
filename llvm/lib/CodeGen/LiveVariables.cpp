@@ -341,8 +341,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   // Convert and transfer the dead / killed information we have gathered into
   // VirtRegInfo onto MI's.
   //
-  for (unsigned i = 0, e = VirtRegInfo.size(); i != e; ++i)
-    for (unsigned j = 0, e = VirtRegInfo[i].Kills.size(); j != e; ++j) {
+  for (unsigned i = 0, e1 = VirtRegInfo.size(); i != e1; ++i)
+    for (unsigned j = 0, e2 = VirtRegInfo[i].Kills.size(); j != e2; ++j) {
       if (VirtRegInfo[i].Kills[j] == VirtRegInfo[i].DefInst)
         addRegisterDead(i + MRegisterInfo::FirstVirtualRegister,
                         VirtRegInfo[i].Kills[j]);
