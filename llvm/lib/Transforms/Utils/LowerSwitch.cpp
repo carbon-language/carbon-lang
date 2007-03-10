@@ -40,26 +40,38 @@ namespace {
       AU.addPreservedID(LowerInvokePassID);
       AU.addPreservedID(LowerAllocationsID);
     }
-        
-    typedef std::pair<Constant*, BasicBlock*> Case;
-    typedef std::vector<Case>::iterator       CaseItr;
+
+    struct CaseRange {
+      Constant* Low;
+      Constant* High;
+      BasicBlock* BB;
+
+      CaseRange(Constant* _Low = NULL, Constant* _High = NULL,
+                BasicBlock* _BB = NULL):
+        Low(_Low), High(_High), BB(_BB) { }
+    };
+
+    typedef std::vector<CaseRange>           CaseVector;
+    typedef std::vector<CaseRange>::iterator CaseItr;
   private:
     void processSwitchInst(SwitchInst *SI);
 
     BasicBlock* switchConvert(CaseItr Begin, CaseItr End, Value* Val,
                               BasicBlock* OrigBlock, BasicBlock* Default);
-    BasicBlock* newLeafBlock(Case& Leaf, Value* Val,
+    BasicBlock* newLeafBlock(CaseRange& Leaf, Value* Val,
                              BasicBlock* OrigBlock, BasicBlock* Default);
+    unsigned Clusterify(CaseVector& Cases, SwitchInst *SI);
   };
 
   /// The comparison function for sorting the switch case values in the vector.
+  /// WARNING: Case ranges should be disjoint!
   struct CaseCmp {
-    bool operator () (const LowerSwitch::Case& C1,
-                      const LowerSwitch::Case& C2) {
+    bool operator () (const LowerSwitch::CaseRange& C1,
+                      const LowerSwitch::CaseRange& C2) {
 
-      const ConstantInt* CI1 = cast<const ConstantInt>(C1.first);
-      const ConstantInt* CI2 = cast<const ConstantInt>(C2.first);
-      return CI1->getValue().ult(CI2->getValue());
+      const ConstantInt* CI1 = cast<const ConstantInt>(C1.Low);
+      const ConstantInt* CI2 = cast<const ConstantInt>(C2.High);
+      return CI1->getValue().slt(CI2->getValue());
     }
   };
 
@@ -91,19 +103,20 @@ bool LowerSwitch::runOnFunction(Function &F) {
 
 // operator<< - Used for debugging purposes.
 //
-std::ostream& operator<<(std::ostream &O,
-                         const std::vector<LowerSwitch::Case> &C) {
+static std::ostream& operator<<(std::ostream &O,
+                                const LowerSwitch::CaseVector &C) {
   O << "[";
 
-  for (std::vector<LowerSwitch::Case>::const_iterator B = C.begin(),
+  for (LowerSwitch::CaseVector::const_iterator B = C.begin(),
          E = C.end(); B != E; ) {
-    O << *B->first;
+    O << *B->Low << " -" << *B->High;
     if (++B != E) O << ", ";
   }
 
   return O << "]";
 }
-OStream& operator<<(OStream &O, const std::vector<LowerSwitch::Case> &C) {
+
+static OStream& operator<<(OStream &O, const LowerSwitch::CaseVector &C) {
   if (O.stream()) *O.stream() << C;
   return O;
 }
@@ -121,14 +134,16 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
     return newLeafBlock(*Begin, Val, OrigBlock, Default);
 
   unsigned Mid = Size / 2;
-  std::vector<Case> LHS(Begin, Begin + Mid);
+  std::vector<CaseRange> LHS(Begin, Begin + Mid);
   DOUT << "LHS: " << LHS << "\n";
-  std::vector<Case> RHS(Begin + Mid, End);
+  std::vector<CaseRange> RHS(Begin + Mid, End);
   DOUT << "RHS: " << RHS << "\n";
 
-  Case& Pivot = *(Begin + Mid);
+  CaseRange& Pivot = *(Begin + Mid);
   DEBUG( DOUT << "Pivot ==> " 
-              << cast<ConstantInt>(Pivot.first)->getValue().toStringSigned(10) 
+              << cast<ConstantInt>(Pivot.Low)->getValue().toStringSigned(10)
+              << " -"
+              << cast<ConstantInt>(Pivot.High)->getValue().toStringSigned(10)
               << "\n");
 
   BasicBlock* LBranch = switchConvert(LHS.begin(), LHS.end(), Val,
@@ -142,7 +157,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   BasicBlock* NewNode = new BasicBlock("NodeBlock");
   F->getBasicBlockList().insert(OrigBlock->getNext(), NewNode);
 
-  ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_ULT, Val, Pivot.first, "Pivot");
+  ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_SLT, Val, Pivot.Low, "Pivot");
   NewNode->getInstList().push_back(Comp);
   new BranchInst(LBranch, RBranch, Comp, NewNode);
   return NewNode;
@@ -154,7 +169,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
 // can't be another valid case value, so the jump to the "default" branch
 // is warranted.
 //
-BasicBlock* LowerSwitch::newLeafBlock(Case& Leaf, Value* Val,
+BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                                       BasicBlock* OrigBlock,
                                       BasicBlock* Default)
 {
@@ -162,25 +177,93 @@ BasicBlock* LowerSwitch::newLeafBlock(Case& Leaf, Value* Val,
   BasicBlock* NewLeaf = new BasicBlock("LeafBlock");
   F->getBasicBlockList().insert(OrigBlock->getNext(), NewLeaf);
 
-  // Make the seteq instruction...
-  ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_EQ, Val,
-                                Leaf.first, "SwitchLeaf");
-  NewLeaf->getInstList().push_back(Comp);
+  // Emit comparison
+  ICmpInst* Comp = NULL;
+  if (Leaf.Low == Leaf.High) {
+    // Make the seteq instruction...
+    Comp = new ICmpInst(ICmpInst::ICMP_EQ, Val, Leaf.Low,
+                        "SwitchLeaf", NewLeaf);
+  } else {
+    // Make range comparison
+    if (cast<ConstantInt>(Leaf.Low)->isMinValue(true /*isSigned*/)) {
+      // Val >= Min && Val <= Hi --> Val <= Hi
+      Comp = new ICmpInst(ICmpInst::ICMP_SLE, Val, Leaf.High,
+                          "SwitchLeaf", NewLeaf);
+    } else if (cast<ConstantInt>(Leaf.Low)->isZero()) {
+      // Val >= 0 && Val <= Hi --> Val <=u Hi
+      Comp = new ICmpInst(ICmpInst::ICMP_ULE, Val, Leaf.High,
+                          "SwitchLeaf", NewLeaf);      
+    } else {
+      // Emit V-Lo <=u Hi-Lo
+      Constant* NegLo = ConstantExpr::getNeg(Leaf.Low);
+      Instruction* Add = BinaryOperator::createAdd(Val, NegLo,
+                                                   Val->getName()+".off",
+                                                   NewLeaf);
+      Constant *UpperBound = ConstantExpr::getAdd(NegLo, Leaf.High);
+      Comp = new ICmpInst(ICmpInst::ICMP_ULE, Add, UpperBound,
+                          "SwitchLeaf", NewLeaf);
+    }
+  }
 
   // Make the conditional branch...
-  BasicBlock* Succ = Leaf.second;
+  BasicBlock* Succ = Leaf.BB;
   new BranchInst(Succ, Default, Comp, NewLeaf);
 
   // If there were any PHI nodes in this successor, rewrite one entry
   // from OrigBlock to come from NewLeaf.
   for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
     PHINode* PN = cast<PHINode>(I);
+    // Remove all but one incoming entries from the cluster
+    uint64_t Range = cast<ConstantInt>(Leaf.High)->getSExtValue() -
+                     cast<ConstantInt>(Leaf.Low)->getSExtValue();    
+    for (uint64_t j = 0; j < Range; ++j) {
+      PN->removeIncomingValue(OrigBlock);
+    }
+    
     int BlockIdx = PN->getBasicBlockIndex(OrigBlock);
     assert(BlockIdx != -1 && "Switch didn't go to this successor??");
     PN->setIncomingBlock((unsigned)BlockIdx, NewLeaf);
   }
 
   return NewLeaf;
+}
+
+// Clusterify - Transform simple list of Cases into list of CaseRange's
+unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
+  unsigned numCmps = 0;
+
+  // Start with "simple" cases
+  for (unsigned i = 1; i < SI->getNumSuccessors(); ++i)
+    Cases.push_back(CaseRange(SI->getSuccessorValue(i),
+                              SI->getSuccessorValue(i),
+                              SI->getSuccessor(i)));
+  sort(Cases.begin(), Cases.end(), CaseCmp());
+
+  // Merge case into clusters
+  if (Cases.size()>=2)
+    for (CaseItr I=Cases.begin(), J=++(Cases.begin()), E=Cases.end(); J!=E; ) {
+      int64_t nextValue = cast<ConstantInt>(J->Low)->getSExtValue();
+      int64_t currentValue = cast<ConstantInt>(I->High)->getSExtValue();
+      BasicBlock* nextBB = J->BB;
+      BasicBlock* currentBB = I->BB;
+
+      // If the two neighboring cases go to the same destination, merge them
+      // into a single case.
+      if ((nextValue-currentValue==1) && (currentBB == nextBB)) {
+        I->High = J->High;
+        J = Cases.erase(J);
+      } else {
+        I = J++;
+      }
+    }
+
+  for (CaseItr I=Cases.begin(), E=Cases.end(); I!=E; ++I, ++numCmps) {
+    if (I->Low != I->High)
+      // A range counts double, since it requires two compares.
+      ++numCmps;
+  }
+
+  return numCmps;
 }
 
 // processSwitchInst - Replace the specified switch instruction with a sequence
@@ -216,14 +299,14 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
     PN->setIncomingBlock((unsigned)BlockIdx, NewDefault);
   }
 
-  std::vector<Case> Cases;
+  // Prepare cases vector.
+  CaseVector Cases;
+  unsigned numCmps = Clusterify(Cases, SI);
 
-  // Expand comparisons for all of the non-default cases...
-  for (unsigned i = 1; i < SI->getNumSuccessors(); ++i)
-    Cases.push_back(Case(SI->getSuccessorValue(i), SI->getSuccessor(i)));
-
-  std::sort(Cases.begin(), Cases.end(), CaseCmp());
+  DOUT << "Clusterify finished. Total clusters: " << Cases.size()
+       << ". Total compares: " << numCmps << "\n";
   DOUT << "Cases: " << Cases << "\n";
+  
   BasicBlock* SwitchBlock = switchConvert(Cases.begin(), Cases.end(), Val,
                                           OrigBlock, NewDefault);
 
