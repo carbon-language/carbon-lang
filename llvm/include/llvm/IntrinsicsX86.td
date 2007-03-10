@@ -547,6 +547,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // Integer arithmetic ops.
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  // Addition
   def int_x86_mmx_padds_b : GCCBuiltin<"__builtin_ia32_paddsb">,
               Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
                          llvm_v8i8_ty], [IntrNoMem]>;
@@ -558,6 +559,21 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
                          llvm_v8i8_ty], [IntrNoMem]>;
   def int_x86_mmx_paddus_w : GCCBuiltin<"__builtin_ia32_paddusw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+
+  // Subtraction
+  def int_x86_mmx_psubs_b : GCCBuiltin<"__builtin_ia32_psubsb">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
+  def int_x86_mmx_psubs_w : GCCBuiltin<"__builtin_ia32_psubsw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+
+  def int_x86_mmx_psubus_b : GCCBuiltin<"__builtin_ia32_psubusb">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
+  def int_x86_mmx_psubus_w : GCCBuiltin<"__builtin_ia32_psubusw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
                          llvm_v4i16_ty], [IntrNoMem]>;
 }
