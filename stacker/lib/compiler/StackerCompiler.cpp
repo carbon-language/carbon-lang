@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "stacker"
 #include "llvm/PassManager.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/Parser.h"
