@@ -102,6 +102,26 @@ class ConstantRange {
   ///
   APInt getSetSize() const;
 
+  /// getUnsignedMax - Return the largest unsigned value contained in the
+  /// ConstantRange.
+  ///
+  APInt getUnsignedMax() const;
+
+  /// getUnsignedMin - Return the smallest unsigned value contained in the
+  /// ConstantRange.
+  ///
+  APInt getUnsignedMin() const;
+
+  /// getSignedMax - Return the largest signed value contained in the
+  /// ConstantRange.
+  ///
+  APInt getSignedMax() const;
+
+  /// getSignedMin - Return the smallest signed value contained in the
+  /// ConstantRange.
+  ///
+  APInt getSignedMin() const;
+
   /// operator== - Return true if this range is equal to another range.
   ///
   bool operator==(const ConstantRange &CR) const {

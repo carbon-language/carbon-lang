@@ -84,6 +84,70 @@ APInt ConstantRange::getSetSize() const {
   return Upper - Lower;
 }
 
+/// getUnsignedMax - Return the largest unsigned value contained in the
+/// ConstantRange.
+///
+APInt ConstantRange::getUnsignedMax() const {
+  if (isFullSet() || isWrappedSet())
+    return APInt::getMaxValue(getBitWidth());
+  else
+    return getUpper() - 1;
+}
+
+/// getUnsignedMin - Return the smallest unsigned value contained in the
+/// ConstantRange.
+///
+APInt ConstantRange::getUnsignedMin() const {
+  if (isFullSet() || (isWrappedSet() && getUpper() != 0))
+    return APInt::getMinValue(getBitWidth());
+  else
+    return getLower();
+}
+
+/// getSignedMax - Return the largest signed value contained in the
+/// ConstantRange.
+///
+APInt ConstantRange::getSignedMax() const {
+  APInt SignedMax = APInt::getSignedMaxValue(getBitWidth());
+  if (!isWrappedSet()) {
+    if (getLower().slt(getUpper() - 1))
+      return getUpper() - 1;
+    else
+      return SignedMax;
+  } else {
+    if ((getUpper() - 1).slt(getLower())) {
+      if (getLower() != SignedMax)
+        return SignedMax;
+      else
+        return getUpper() - 1;
+    } else {
+      return getUpper() - 1;
+    }
+  }
+}
+
+/// getSignedMin - Return the smallest signed value contained in the
+/// ConstantRange.
+///
+APInt ConstantRange::getSignedMin() const {
+  APInt SignedMin = APInt::getSignedMinValue(getBitWidth());
+  if (!isWrappedSet()) {
+    if (getLower().slt(getUpper() - 1))
+      return getLower();
+    else
+      return SignedMin;
+  } else {
+    if ((getUpper() - 1).slt(getLower())) {
+      if (getUpper() != SignedMin)
+        return SignedMin;
+      else
+        return getLower();
+    } else {
+      return getLower();
+    }
+  }
+}
+
 /// contains - Return true if the specified value is in the set.
 ///
 bool ConstantRange::contains(const APInt &V) const {
