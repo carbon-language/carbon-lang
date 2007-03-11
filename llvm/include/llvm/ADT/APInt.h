@@ -386,6 +386,14 @@ public:
   /// @brief Left-shift function.
   APInt shl(uint32_t shiftAmt) const;
 
+  /// Left-shift this APInt by shiftAmt and
+  /// assigns the result to this APInt.
+  /// @brief Lef-shift assignment function.
+  inline APInt& operator<<=(uint32_t shiftAmt) {
+    *this = shl(shiftAmt);
+    return *this;
+  }
+
   /// Signed divide this APInt by APInt RHS.
   /// @brief Signed division function for APInt.
   inline APInt sdiv(const APInt& RHS) const {
@@ -463,6 +471,14 @@ public:
   /// as "bitPosition".
   /// @brief Toggles a given bit to its opposite value.
   APInt& flip(uint32_t bitPosition);
+
+  inline void setWordToValue(uint32_t idx, uint64_t Val) {
+    assert(idx < getNumWords() && "Invalid word array index");
+    if (isSingleWord())
+      VAL = Val;
+    else
+      pVal[idx] = Val;
+  }
 
   /// This function returns the number of active bits which is defined as the
   /// bit width minus the number of leading zeros. This is used in several
@@ -549,6 +565,13 @@ public:
   /// @brief Gets minimum signed value of APInt for a specific bit width.
   static APInt getSignedMinValue(uint32_t numBits) {
     return APInt(numBits, 0).set(numBits - 1);
+  }
+
+  /// getSignBit - This is just a wrapper function of getSignedMinValue(), and
+  /// it helps code readability when we want to get a SignBit.
+  /// @brief Get the SignBit for a specific bit width.
+  inline static APInt getSignBit(uint32_t BitWidth) {
+    return getSignedMinValue(BitWidth);
   }
 
   /// @returns the all-ones value for an APInt of the specified bit-width.
