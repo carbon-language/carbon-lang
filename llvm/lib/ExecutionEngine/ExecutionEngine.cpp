@@ -24,6 +24,7 @@
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
+#include <math.h>
 using namespace llvm;
 
 STATISTIC(NumInitBytes, "Number of bytes of global vars initialized");
