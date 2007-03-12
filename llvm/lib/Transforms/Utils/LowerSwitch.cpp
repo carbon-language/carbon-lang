@@ -46,9 +46,9 @@ namespace {
       Constant* High;
       BasicBlock* BB;
 
-      CaseRange(Constant* _Low = NULL, Constant* _High = NULL,
-                BasicBlock* _BB = NULL):
-        Low(_Low), High(_High), BB(_BB) { }
+      CaseRange() : Low(0), High(0), BB(0) { }
+      CaseRange(Constant* low, Constant* high, BasicBlock* bb) :
+        Low(low), High(high), BB(bb) { }
     };
 
     typedef std::vector<CaseRange>           CaseVector;
