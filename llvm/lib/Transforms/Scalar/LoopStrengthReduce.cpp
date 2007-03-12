@@ -612,12 +612,12 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
 /// immediate field of a target instruction.
 static bool isTargetConstant(const SCEVHandle &V, const TargetLowering *TLI) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
-    int64_t V = SC->getValue()->getSExtValue();
+    int64_t VC = SC->getValue()->getSExtValue();
     if (TLI)
-      return TLI->isLegalAddressImmediate(V);
+      return TLI->isLegalAddressImmediate(VC, V->getType());
     else
       // Defaults to PPC. PPC allows a sign-extended 16-bit immediate field.
-      return (V > -(1 << 16) && V < (1 << 16)-1);
+      return (VC > -(1 << 16) && VC < (1 << 16)-1);
   }
 
   if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V))
@@ -878,24 +878,22 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
     int64_t SInt = SC->getValue()->getSExtValue();
     if (SInt == 1) return 0;
 
-    for (TargetLowering::legal_am_scale_iterator
-           I = TLI->legal_am_scale_begin(), E = TLI->legal_am_scale_end();
-         I != E; ++I) {
-      unsigned Scale = *I;
-      if (unsigned(abs(SInt)) < Scale || (SInt % Scale) != 0)
+    for (std::map<SCEVHandle, IVsOfOneStride>::iterator SI= IVsByStride.begin(),
+           SE = IVsByStride.end(); SI != SE; ++SI) {
+      int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
+      if (unsigned(abs(SInt)) < SSInt || (SInt % SSInt) != 0)
         continue;
-      std::map<SCEVHandle, IVsOfOneStride>::iterator SI =
-        IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt/Scale, UIntPtrTy));
-      if (SI == IVsByStride.end())
-        continue;
-      for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
-             IE = SI->second.IVs.end(); II != IE; ++II)
-        // FIXME: Only handle base == 0 for now.
-        // Only reuse previous IV if it would not require a type conversion.
-        if (isZero(II->Base) && II->Base->getType() == Ty) {
-          IV = *II;
-          return Scale;
-        }
+      int64_t Scale = SInt / SSInt;
+      if (TLI->isLegalAddressScale(Scale, Ty)) {
+        for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
+               IE = SI->second.IVs.end(); II != IE; ++II)
+          // FIXME: Only handle base == 0 for now.
+          // Only reuse previous IV if it would not require a type conversion.
+          if (isZero(II->Base) && II->Base->getType() == Ty) {
+            IV = *II;
+            return Scale;
+          }
+      }
     }
   }
 
