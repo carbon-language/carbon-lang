@@ -370,9 +370,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ADD,                MVT::v16i8, Legal);
     setOperationAction(ISD::ADD,                MVT::v8i16, Legal);
     setOperationAction(ISD::ADD,                MVT::v4i32, Legal);
+    setOperationAction(ISD::ADD,                MVT::v2i64, Legal);
     setOperationAction(ISD::SUB,                MVT::v16i8, Legal);
     setOperationAction(ISD::SUB,                MVT::v8i16, Legal);
     setOperationAction(ISD::SUB,                MVT::v4i32, Legal);
+    setOperationAction(ISD::SUB,                MVT::v2i64, Legal);
     setOperationAction(ISD::MUL,                MVT::v8i16, Legal);
     setOperationAction(ISD::FADD,               MVT::v2f64, Legal);
     setOperationAction(ISD::FSUB,               MVT::v2f64, Legal);
