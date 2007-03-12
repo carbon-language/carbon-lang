@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
@@ -1268,15 +1269,85 @@ ARMTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 //                           ARM Optimization Hooks
 //===----------------------------------------------------------------------===//
 
-/// isLegalAddressImmediate - Return true if the integer value or
-/// GlobalValue can be used as the offset of the target addressing mode.
-bool ARMTargetLowering::isLegalAddressImmediate(int64_t V) const {
-  // ARM allows a 12-bit immediate field.
-  return V == V & ((1LL << 12) - 1);
+/// isLegalAddressImmediate - Return true if the integer value can be used
+/// as the offset of the target addressing mode for load / store of the
+/// given type.
+bool ARMTargetLowering::isLegalAddressImmediate(int64_t V,const Type *Ty) const{
+  MVT::ValueType VT = getValueType(Ty);
+  if (Subtarget->isThumb()) {
+    if (V < 0)
+      return false;
+
+    unsigned Scale = 1;
+    switch (VT) {
+    default: return false;
+    case MVT::i1:
+    case MVT::i8:
+      // Scale == 1;
+      break;
+    case MVT::i16:
+      // Scale == 2;
+      Scale = 2;
+      break;
+    case MVT::i32:
+      // Scale == 4;
+      Scale = 4;
+      break;
+    }
+
+    if ((V & (Scale - 1)) != 0)
+      return false;
+    V /= Scale;
+    return V == V & ((1LL << 5) - 1);
+  }
+
+  if (V < 0)
+    V = - V;
+  switch (VT) {
+  default: return false;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i32:
+    // +- imm12
+    return V == V & ((1LL << 12) - 1);
+  case MVT::i16:
+    // +- imm8
+    return V == V & ((1LL << 8) - 1);
+  case MVT::f32:
+  case MVT::f64:
+    if (!Subtarget->hasVFP2())
+      return false;
+    if ((V % 3) != 0)
+      return false;
+    V >>= 2;
+    return V == V & ((1LL << 8) - 1);
+  }
 }
 
 bool ARMTargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
   return false;
+}
+
+/// isLegalAddressScale - Return true if the integer value can be used as
+/// the scale of the target addressing mode for load / store of the given
+/// type.
+bool ARMTargetLowering::isLegalAddressScale(int64_t S, const Type *Ty) const {
+  if (Subtarget->isThumb())
+    return false;
+
+  MVT::ValueType VT = getValueType(Ty);
+  switch (VT) {
+  default: return false;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i32:
+    // r + r
+    if (S == 2)
+      return true;
+    // r + r << imm
+    S &= ~1;
+    return isPowerOf2_32(S);
+  }
 }
 
 static bool getIndexedAddressParts(SDNode *Ptr, MVT::ValueType VT,
