@@ -64,16 +64,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setUseUnderscoreLongJmp(true);
   }
   
-  // Add legal addressing mode scale values.
-  addLegalAddressScale(8);
-  addLegalAddressScale(4);
-  addLegalAddressScale(2);
-  // Enter the ones which require both scale + index last. These are more
-  // expensive.
-  addLegalAddressScale(9);
-  addLegalAddressScale(5);
-  addLegalAddressScale(3);
-
   // Set up the register classes.
   addRegisterClass(MVT::i8, X86::GR8RegisterClass);
   addRegisterClass(MVT::i16, X86::GR16RegisterClass);
@@ -4016,13 +4006,16 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-/// isLegalAddressImmediate - Return true if the integer value or
-/// GlobalValue can be used as the offset of the target addressing mode.
-bool X86TargetLowering::isLegalAddressImmediate(int64_t V) const {
+/// isLegalAddressImmediate - Return true if the integer value can be used
+/// as the offset of the target addressing mode for load / store of the
+/// given type.
+bool X86TargetLowering::isLegalAddressImmediate(int64_t V,const Type *Ty) const{
   // X86 allows a sign-extended 32-bit immediate field.
   return (V > -(1LL << 32) && V < (1LL << 32)-1);
 }
 
+/// isLegalAddressImmediate - Return true if the GlobalValue can be used as
+/// the offset of the target addressing mode.
 bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
   // In 64-bit mode, GV is 64-bit so it won't fit in the 32-bit displacement 
   // field unless we are in small code model.
@@ -4031,6 +4024,21 @@ bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
     return false;
   
   return (!Subtarget->GVRequiresExtraLoad(GV, getTargetMachine(), false));
+}
+
+/// isLegalAddressScale - Return true if the integer value can be used as the
+/// scale of the target addressing mode for load / store of the given type.
+bool X86TargetLowering::isLegalAddressScale(int64_t S, const Type *Ty) const {
+  switch (S) {
+  default:
+    return false;
+  case 2: case 4: case 8:
+    return true;
+  // FIXME: These require both scale + index last and thus more expensive.
+  // How to tell LSR to try for 2, 4, 8 first?
+  case 3: case 5: case 9:
+    return true;
+  }
 }
 
 /// isShuffleMaskLegal - Targets can use this to indicate that they only
