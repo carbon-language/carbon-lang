@@ -979,7 +979,7 @@ static bool MaskedValueIsZero(Value *V, uint64_t Mask, unsigned Depth = 0) {
 /// this predicate to simplify operations downstream.  Mask is known to be zero
 /// for bits that V cannot have.
 static bool MaskedValueIsZero(Value *V, const APInt& Mask, unsigned Depth = 0) {
-  APInt KnownZero(Mask), KnownOne(Mask);
+  APInt KnownZero(Mask.getBitWidth(), 0), KnownOne(Mask.getBitWidth(), 0);
   ComputeMaskedBits(V, Mask, KnownZero, KnownOne, Depth);
   assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
   return (KnownZero & Mask) == Mask;
