@@ -1004,6 +1004,30 @@ static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
   return true;
 }
 
+/// ShrinkDemandedConstant - Check to see if the specified operand of the 
+/// specified instruction is a constant integer.  If so, check to see if there
+/// are any bits set in the constant that are not demanded.  If so, shrink the
+/// constant and return true.
+static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo, 
+                                   APInt Demanded) {
+  assert(I && "No instruction?");
+  assert(OpNo < I->getNumOperands() && "Operand index too large");
+
+  // If the operand is not a constant integer, nothing to do.
+  ConstantInt *OpC = dyn_cast<ConstantInt>(I->getOperand(OpNo));
+  if (!OpC) return false;
+
+  // If there are no bits set that aren't demanded, nothing to do.
+  Demanded.zextOrTrunc(OpC->getValue().getBitWidth());
+  if ((~Demanded & OpC->getValue()) == 0)
+    return false;
+
+  // This instruction is producing bits that are not demanded. Shrink the RHS.
+  Demanded &= OpC->getValue();
+  I->setOperand(OpNo, ConstantInt::get(Demanded));
+  return true;
+}
+
 // ComputeSignedMinMaxValuesFromKnownBits - Given a signed integer type and a 
 // set of known zero and one bits, compute the maximum and minimum values that
 // could have the specified known zero and known one bits, returning them in
