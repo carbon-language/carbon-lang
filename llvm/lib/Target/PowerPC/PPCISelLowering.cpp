@@ -3152,8 +3152,9 @@ isOperandValidForConstraint(SDOperand Op, char Letter, SelectionDAG &DAG) {
 }
 
 /// isLegalAddressImmediate - Return true if the integer value can be used
-/// as the offset of the target addressing mode.
-bool PPCTargetLowering::isLegalAddressImmediate(int64_t V) const {
+/// as the offset of the target addressing mode for load / store of the
+/// given type.
+bool PPCTargetLowering::isLegalAddressImmediate(int64_t V,const Type *Ty) const{
   // PPC allows a sign-extended 16-bit immediate field.
   return (V > -(1 << 16) && V < (1 << 16)-1);
 }

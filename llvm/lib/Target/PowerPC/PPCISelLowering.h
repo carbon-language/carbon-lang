@@ -237,9 +237,13 @@ namespace llvm {
                                           SelectionDAG &DAG);
 
     /// isLegalAddressImmediate - Return true if the integer value can be used
-    /// as the offset of the target addressing mode.
-    virtual bool isLegalAddressImmediate(int64_t V) const;
-    virtual bool isLegalAddressImmediate(llvm::GlobalValue*) const;
+    /// as the offset of the target addressing mode for load / store of the
+    /// given type.
+    virtual bool isLegalAddressImmediate(int64_t V, const Type *Ty) const;
+
+    /// isLegalAddressImmediate - Return true if the GlobalValue can be used as
+    /// the offset of the target addressing mode.
+    virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
 
     SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
   };
