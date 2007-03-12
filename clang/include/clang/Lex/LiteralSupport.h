@@ -25,10 +25,9 @@ class TargetInfo;
     
 struct NumericLiteralParser {
   NumericLiteralParser(const char *begin, const char *end,
-                       SourceLocation Loc, Preprocessor &PP, TargetInfo &T);
+                       SourceLocation Loc, Preprocessor &PP);
 private:
   Preprocessor &PP; // needed for diagnostics
-  TargetInfo &Target; // needed to compute the size
   
   const char *const ThisTokBegin;
   const char *const ThisTokEnd;
@@ -47,21 +46,22 @@ public:
   bool isLongLong;
   
   bool isIntegerLiteral() { 
-    return !saw_period && !saw_exponent ? true : false;
+    return !saw_period && !saw_exponent && !hadError ? true : false;
   }
   bool isFloatingLiteral() {
-    return saw_period || saw_exponent ? true : false;
+    return saw_period || saw_exponent && !hadError ? true : false;
   }
   bool hasSuffix() {
     return SuffixBegin != ThisTokEnd;
   }
-  /// getValue - Convert the string into a number. At this point, we know
-  /// the digit characters are valid (0...9, a...f, A...F). We don't know
-  /// how many bits are needed to store the number. We return true if the
-  /// value fit into intmax_t (typically 64-bit's), false otherwise. This
-  /// API will likely be replaced by sizing hooks and APInt. Nevertheless,
-  /// this provides basic conversion support for now.
-  bool GetValue(intmax_t &val);
+  /// getIntegerValue - Convert the string into a number. At this point, we 
+  /// know the digit characters are valid (0...9, a...f, A...F). We don't know
+  /// how many bits are needed to store the number. Sizing of the integer
+  /// type (int, unsigned, long, unsigned long, long long, unsigned long long) 
+  /// will be done elsewhere - the computation is target dependent. We return 
+  /// true if the value fit into uintmax_t, false otherwise. 
+  bool GetIntegerValue(uintmax_t &val);
+  bool GetIntegerValue(int &val);
 
 private:  
   void Diag(SourceLocation Loc, unsigned DiagID, 

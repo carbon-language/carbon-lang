@@ -60,8 +60,8 @@ using namespace clang;
 
 NumericLiteralParser::
 NumericLiteralParser(const char *begin, const char *end,
-                     SourceLocation TokLoc, Preprocessor &pp, TargetInfo &t) :
-  PP(pp), Target(t), ThisTokBegin(begin), ThisTokEnd(end)
+                     SourceLocation TokLoc, Preprocessor &pp) :
+  PP(pp), ThisTokBegin(begin), ThisTokEnd(end)
 {
   s = DigitsBegin = begin;
   saw_exponent = false;
@@ -216,13 +216,38 @@ NumericLiteralParser(const char *begin, const char *end,
   }
 }
 
-bool NumericLiteralParser::GetValue(intmax_t &val) {
-  intmax_t cutoff = INTMAX_MAX;
-  int cutlim = cutoff % radix;
+bool NumericLiteralParser::GetIntegerValue(uintmax_t &val) {
+  uintmax_t cutoff = UINTMAX_MAX / radix;
+  int cutlim = UINTMAX_MAX % radix;
   char c;
   
   val = 0;
-  cutoff /= radix;
+  s = DigitsBegin;
+  while (s < SuffixBegin) {
+    c = *s++;
+    if (c >= '0' && c <= '9')
+      c -= '0';
+    else if (c >= 'A' && c <= 'F') // 10...15
+      c -= 'A' - 10;
+    else if (c >= 'a' && c <= 'f') // 10...15
+      c -= 'a' - 10;
+    
+    if (val > cutoff || (val == cutoff && c > cutlim)) {
+      return false; // Overflow!
+    } else {
+      val *= radix;
+      val += c;
+    }
+  }
+  return true;
+}
+
+bool NumericLiteralParser::GetIntegerValue(int &val) {
+  intmax_t cutoff = INT_MAX / radix;
+  int cutlim = INT_MAX % radix;
+  char c;
+  
+  val = 0;
   s = DigitsBegin;
   while (s < SuffixBegin) {
     c = *s++;

@@ -305,11 +305,8 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
     return ExprResult(new IntegerLiteral(atoi(ThisTokBegin)));
     
   NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
-                               Tok.getLocation(), PP, Context.Target);
-  if (Literal.hadError) {
-    return ExprResult(true);
-  }
-  Expr *literal_expr;
+                               Tok.getLocation(), PP);
+  Expr *literal_expr = 0;
     
   if (Literal.isIntegerLiteral()) {
     TypeRef t;
@@ -323,13 +320,14 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
     } else {
       t = Context.IntTy; // implicit type is "int"
     }
-    intmax_t val;
-    if (Literal.GetValue(val)) {
+    uintmax_t val;
+    if (Literal.GetIntegerValue(val)) {
       literal_expr = new IntegerLiteral(val, t);
     } 
   } else if (Literal.isFloatingLiteral()) {
     // TODO: add floating point processing...
   }
+  return literal_expr ? ExprResult(literal_expr) : ExprResult(true);
 }
 
 Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,

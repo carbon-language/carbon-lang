@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 //
 // FIXME: implement testing for asserts.
-// FIXME: Parse integer constants correctly.  Reject 123.0, etc.
 // FIXME: Track signed/unsigned correctly.
 // FIXME: Track and report integer overflow correctly.
 //
@@ -21,9 +20,11 @@
 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/LiteralSupport.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/SmallString.h"
 using namespace llvm;
 using namespace clang;
 
@@ -144,10 +145,18 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
     PP.Diag(PeekTok, diag::err_pp_expected_value_in_expr);
     return true;
   case tok::numeric_constant: {
-    // FIXME: faster.  FIXME: track signs.
-    std::string Spell = PP.getSpelling(PeekTok);
-    // FIXME: COMPUTE integer constants CORRECTLY.
-    Result = atoi(Spell.c_str());
+    // FIXME: track signs. ?? snaroff: talk to Chris...
+    SmallString<512> IntegerBuffer;
+    IntegerBuffer.resize(PeekTok.getLength());
+    const char *ThisTokBegin = &IntegerBuffer[0];
+    unsigned ActualLength = PP.getSpelling(PeekTok, ThisTokBegin);
+    NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
+                                 PeekTok.getLocation(), PP);
+    if (Literal.isIntegerLiteral()) {
+      Literal.GetIntegerValue(Result);
+    } else if (Literal.isFloatingLiteral()) {
+      PP.Diag(PeekTok, diag::err_pp_illegal_floating_literal);
+    }
     PP.LexNonComment(PeekTok);
     return false;
   }
