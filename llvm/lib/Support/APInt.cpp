@@ -921,8 +921,6 @@ APInt &APInt::trunc(uint32_t width) {
 
 // Sign extend to a new width.
 APInt &APInt::sext(uint32_t width) {
-  if (width == BitWidth)
-    return *this;
   assert(width > BitWidth && "Invalid APInt SignExtend request");
   assert(width <= IntegerType::MAX_INT_BITS && "Too many bits");
   // If the sign bit isn't set, this is the same as zext.
@@ -971,8 +969,6 @@ APInt &APInt::sext(uint32_t width) {
 
 //  Zero extend to a new width.
 APInt &APInt::zext(uint32_t width) {
-  if (width == BitWidth)
-    return *this;
   assert(width > BitWidth && "Invalid APInt ZeroExtend request");
   assert(width <= IntegerType::MAX_INT_BITS && "Too many bits");
   uint32_t wordsBefore = getNumWords();
