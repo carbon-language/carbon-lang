@@ -856,18 +856,18 @@ public:
   // Loop Strength Reduction hooks
   //
   
-  /// isLegalAddressImmediate - Return true if the integer value or GlobalValue
-  /// can be used as the offset of the target addressing mode.
-  virtual bool isLegalAddressImmediate(int64_t V) const;
+  /// isLegalAddressImmediate - Return true if the integer value can be used as
+  /// the offset of the target addressing mode for load / store of the given
+  /// type.
+  virtual bool isLegalAddressImmediate(int64_t V, const Type *Ty) const;
+
+  /// isLegalAddressImmediate - Return true if the GlobalValue can be used as
+  /// the offset of the target addressing mode.
   virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
 
-  typedef std::vector<unsigned>::const_iterator legal_am_scale_iterator;
-  legal_am_scale_iterator legal_am_scale_begin() const {
-    return LegalAddressScales.begin();
-  }
-  legal_am_scale_iterator legal_am_scale_end() const {
-    return LegalAddressScales.end();
-  }
+  /// isLegalAddressScale - Return true if the integer value can be used as the
+  /// scale of the target addressing mode for load / store of the given type.
+  virtual bool isLegalAddressScale(int64_t S, const Type *Ty) const;
 
   //===--------------------------------------------------------------------===//
   // Div utility functions
@@ -906,17 +906,7 @@ public:
     return CmpLibcallCCs[Call];
   }
 
-protected:
-  /// addLegalAddressScale - Add a integer (> 1) value which can be used as
-  /// scale in the target addressing mode. Note: the ordering matters so the
-  /// least efficient ones should be entered first.
-  void addLegalAddressScale(unsigned Scale) {
-    LegalAddressScales.push_back(Scale);
-  }
-
 private:
-  std::vector<unsigned> LegalAddressScales;
-  
   TargetMachine &TM;
   const TargetData *TD;
 
