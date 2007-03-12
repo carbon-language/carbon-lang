@@ -695,7 +695,7 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
 
     // If the sign bit of the input is known set or clear, then we know the
     // top bits of the result.
-    APInt InSignBit(APInt::getSignedMinValue(SrcTy->getBitWidth()));
+    APInt InSignBit(APInt::getSignBit(SrcTy->getBitWidth()));
     InSignBit.zextOrTrunc(BitWidth);
     if ((KnownZero & InSignBit) != 0) {          // Input sign bit known zero
       KnownZero |= NewBits;
@@ -716,8 +716,8 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
       Mask = APIntOps::lshr(Mask, ShiftAmt);
       ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-      KnownZero = APIntOps::shl(KnownZero, ShiftAmt);
-      KnownOne  = APIntOps::shl(KnownOne, ShiftAmt);
+      KnownZero <<= ShiftAmt;
+      KnownOne  <<= ShiftAmt;
       KnownZero |= APInt(BitWidth, 1ULL).shl(ShiftAmt)-1;  // low bits known zero.
       return;
     }
@@ -730,7 +730,7 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
       APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth-ShiftAmt));
       
       // Unsigned shift right.
-      Mask = APIntOps::shl(Mask, ShiftAmt);
+      Mask <<= ShiftAmt;
       ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
       assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
       KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
@@ -747,14 +747,14 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
       APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth-ShiftAmt));
       
       // Signed shift right.
-      Mask = APIntOps::shl(Mask, ShiftAmt);
+      Mask <<= ShiftAmt;
       ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
       assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
       KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
       KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
         
       // Handle the sign bits and adjust to where it is now in the mask.
-      APInt SignBit = APInt::getSignedMinValue(BitWidth).lshr(ShiftAmt);
+      APInt SignBit(APInt::getSignBit(BitWidth).lshr(ShiftAmt));
         
       if ((KnownZero & SignBit) != 0) {       // New bits are known zero.
         KnownZero |= HighBits;
