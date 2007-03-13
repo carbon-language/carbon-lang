@@ -102,6 +102,29 @@ void ARMDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 bool ARMDAGToDAGISel::SelectAddrMode2(SDOperand Op, SDOperand N,
                                       SDOperand &Base, SDOperand &Offset,
                                       SDOperand &Opc) {
+  if (N.getOpcode() == ISD::MUL) {
+    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      // X * [3,5,9] -> X + X * [2,4,8] etc.
+      int RHSC = (int)RHS->getValue();
+      if (RHSC & 1) {
+        RHSC = RHSC & ~1;
+        ARM_AM::AddrOpc AddSub = ARM_AM::add;
+        if (RHSC < 0) {
+          AddSub = ARM_AM::sub;
+          RHSC = - RHSC;
+        }
+        if (isPowerOf2_32(RHSC)) {
+          unsigned ShAmt = Log2_32(RHSC);
+          Base = Offset = N.getOperand(0);
+          Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, ShAmt,
+                                                            ARM_AM::lsl),
+                                          MVT::i32);
+          return true;
+        }
+      }
+    }
+  }
+
   if (N.getOpcode() != ISD::ADD && N.getOpcode() != ISD::SUB) {
     Base = N;
     if (N.getOpcode() == ISD::FrameIndex) {
