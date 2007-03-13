@@ -15,12 +15,14 @@
 #define LLVM_CLANG_LITERALSUPPORT_H
 
 #include <string>
+#include "llvm/ADT/SmallString.h"
 
 namespace llvm {
 namespace clang {
 
 class Diagnostic;
 class Preprocessor;
+class LexerToken;
 class SourceLocation;
 class TargetInfo;
     
@@ -89,6 +91,37 @@ private:
     while (ptr != ThisTokEnd && isdigit(*ptr))
       ptr++;
     return ptr;
+  }
+};
+
+class StringLiteralParser {
+  Preprocessor &PP;
+  TargetInfo &Target;
+  
+  unsigned MaxTokenLength;
+  unsigned SizeBound;
+  unsigned wchar_tByteWidth;
+  SmallString<512> ResultBuf;
+  char *ResultPtr; // cursor
+public:
+  StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
+                      Preprocessor &PP, TargetInfo &T);
+  bool hadError;
+  bool AnyWide;
+  
+  const char *GetString() { return &ResultBuf[0]; }
+  unsigned GetStringLength() { return ResultPtr-&ResultBuf[0]; }
+private:
+  void Diag(SourceLocation Loc, unsigned DiagID, 
+            const std::string &M = std::string());
+
+  /// HexDigitValue - Return the value of the specified hex digit, or -1 if it's
+  /// not valid.
+  static int HexDigitValue(char C) {
+    if (C >= '0' && C <= '9') return C-'0';
+    if (C >= 'a' && C <= 'f') return C-'a'+10;
+    if (C >= 'A' && C <= 'F') return C-'A'+10;
+    return -1;
   }
 };
   
