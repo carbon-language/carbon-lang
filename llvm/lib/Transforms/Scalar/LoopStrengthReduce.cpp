@@ -610,11 +610,12 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
 
 /// isTargetConstant - Return true if the following can be referenced by the
 /// immediate field of a target instruction.
-static bool isTargetConstant(const SCEVHandle &V, const TargetLowering *TLI) {
+static bool isTargetConstant(const SCEVHandle &V, const Type *UseTy,
+                             const TargetLowering *TLI) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
     int64_t VC = SC->getValue()->getSExtValue();
     if (TLI)
-      return TLI->isLegalAddressImmediate(VC, V->getType());
+      return TLI->isLegalAddressImmediate(VC, UseTy);
     else
       // Defaults to PPC. PPC allows a sign-extended 16-bit immediate field.
       return (VC > -(1 << 16) && VC < (1 << 16)-1);
@@ -674,15 +675,20 @@ static void MoveLoopVariantsToImediateField(SCEVHandle &Val, SCEVHandle &Imm,
 /// that can fit into the immediate field of instructions in the target.
 /// Accumulate these immediate values into the Imm value.
 static void MoveImmediateValues(const TargetLowering *TLI,
+                                Instruction *User,
                                 SCEVHandle &Val, SCEVHandle &Imm,
                                 bool isAddress, Loop *L) {
+  const Type *UseTy = User->getType();
+  if (StoreInst *SI = dyn_cast<StoreInst>(User))
+    UseTy = SI->getOperand(0)->getType();
+
   if (SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
     std::vector<SCEVHandle> NewOps;
     NewOps.reserve(SAE->getNumOperands());
     
     for (unsigned i = 0; i != SAE->getNumOperands(); ++i) {
       SCEVHandle NewOp = SAE->getOperand(i);
-      MoveImmediateValues(TLI, NewOp, Imm, isAddress, L);
+      MoveImmediateValues(TLI, User, NewOp, Imm, isAddress, L);
       
       if (!NewOp->isLoopInvariant(L)) {
         // If this is a loop-variant expression, it must stay in the immediate
@@ -701,7 +707,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
   } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
     // Try to pull immediates out of the start value of nested addrec's.
     SCEVHandle Start = SARE->getStart();
-    MoveImmediateValues(TLI, Start, Imm, isAddress, L);
+    MoveImmediateValues(TLI, User, Start, Imm, isAddress, L);
     
     if (Start != SARE->getStart()) {
       std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
@@ -711,12 +717,12 @@ static void MoveImmediateValues(const TargetLowering *TLI,
     return;
   } else if (SCEVMulExpr *SME = dyn_cast<SCEVMulExpr>(Val)) {
     // Transform "8 * (4 + v)" -> "32 + 8*V" if "32" fits in the immed field.
-    if (isAddress && isTargetConstant(SME->getOperand(0), TLI) &&
+    if (isAddress && isTargetConstant(SME->getOperand(0), UseTy, TLI) &&
         SME->getNumOperands() == 2 && SME->isLoopInvariant(L)) {
 
       SCEVHandle SubImm = SCEVUnknown::getIntegerSCEV(0, Val->getType());
       SCEVHandle NewOp = SME->getOperand(1);
-      MoveImmediateValues(TLI, NewOp, SubImm, isAddress, L);
+      MoveImmediateValues(TLI, User, NewOp, SubImm, isAddress, L);
       
       // If we extracted something out of the subexpressions, see if we can 
       // simplify this!
@@ -724,7 +730,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
         // Scale SubImm up by "8".  If the result is a target constant, we are
         // good.
         SubImm = SCEVMulExpr::get(SubImm, SME->getOperand(0));
-        if (isTargetConstant(SubImm, TLI)) {
+        if (isTargetConstant(SubImm, UseTy, TLI)) {
           // Accumulate the immediate.
           Imm = SCEVAddExpr::get(Imm, SubImm);
           
@@ -738,7 +744,7 @@ static void MoveImmediateValues(const TargetLowering *TLI,
 
   // Loop-variant expressions must stay in the immediate field of the
   // expression.
-  if ((isAddress && isTargetConstant(Val, TLI)) ||
+  if ((isAddress && isTargetConstant(Val, UseTy, TLI)) ||
       !Val->isLoopInvariant(L)) {
     Imm = SCEVAddExpr::get(Imm, Val);
     Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
@@ -979,8 +985,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         if (SI->getOperand(1) == UsersToProcess[i].OperandValToReplace)
           isAddress = true;
       
-      MoveImmediateValues(TLI, UsersToProcess[i].Base, UsersToProcess[i].Imm,
-                          isAddress, L);
+      MoveImmediateValues(TLI, UsersToProcess[i].Inst, UsersToProcess[i].Base,
+                          UsersToProcess[i].Imm, isAddress, L);
     }
   }
 
@@ -1034,7 +1040,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     Constant *C = dyn_cast<Constant>(CommonBaseV);
     if (!C ||
         (!C->isNullValue() &&
-         !isTargetConstant(SCEVUnknown::get(CommonBaseV), TLI)))
+         !isTargetConstant(SCEVUnknown::get(CommonBaseV), ReplacedTy, TLI)))
       // We want the common base emitted into the preheader! This is just
       // using cast as a copy so BitCast (no-op cast) is appropriate
       CommonBaseV = new BitCastInst(CommonBaseV, CommonBaseV->getType(), 
@@ -1087,7 +1093,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // this by forcing a BitCast (noop cast) to be inserted into the preheader 
     // in this case.
     if (Constant *C = dyn_cast<Constant>(BaseV)) {
-      if (!C->isNullValue() && !isTargetConstant(Base, TLI)) {
+      if (!C->isNullValue() && !isTargetConstant(Base, ReplacedTy, TLI)) {
         // We want this constant emitted into the preheader! This is just
         // using cast as a copy so BitCast (no-op cast) is appropriate
         BaseV = new BitCastInst(BaseV, BaseV->getType(), "preheaderinsert",
