@@ -450,6 +450,15 @@ public:
   /// @brief Zero extend or truncate to width
   APInt &zextOrTrunc(uint32_t width);
 
+  /// This is a help function for convenience. If the given \p width equals to
+  /// this APInt's BitWidth, just return this APInt, otherwise, just zero 
+  /// extend it.
+  inline APInt &zextOrCopy(uint32_t width) {
+    if (width == BitWidth)
+      return *this;
+    return zext(width);
+  }
+
   /// @brief Set every bit to 1.
   APInt& set();
 
