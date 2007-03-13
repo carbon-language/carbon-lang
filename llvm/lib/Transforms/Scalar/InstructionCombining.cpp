@@ -582,29 +582,30 @@ static ConstantInt *SubOne(ConstantInt *C) {
 /// this won't lose us code quality.
 static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero, 
                               APInt& KnownOne, unsigned Depth = 0) {
+  assert(V && "No Value?");
+  assert(Depth <= 6 && "Limit Search Depth");
   uint32_t BitWidth = Mask.getBitWidth();
-  assert(KnownZero.getBitWidth() == BitWidth && 
+  const IntegerType *VTy = cast<IntegerType>(V->getType());
+  assert(VTy->getBitWidth() == BitWidth &&
+         KnownZero.getBitWidth() == BitWidth && 
          KnownOne.getBitWidth() == BitWidth &&
-         "Mask, KnownOne and KnownZero should have same BitWidth");
+         "VTy, Mask, KnownOne and KnownZero should have same BitWidth");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     // We know all of the bits for a constant!
-    APInt Tmp(CI->getValue());
-    Tmp.zextOrTrunc(BitWidth);
-    KnownOne = Tmp & Mask;
+    KnownOne = CI->getValue() & Mask;
     KnownZero = ~KnownOne & Mask;
     return;
   }
 
-  KnownZero.clear(); KnownOne.clear();   // Don't know anything.
   if (Depth == 6 || Mask == 0)
     return;  // Limit search depth.
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return;
 
+  KnownZero.clear(); KnownOne.clear();   // Don't know anything.
   APInt KnownZero2(KnownZero), KnownOne2(KnownOne);
-  Mask &= APInt::getAllOnesValue(
-    cast<IntegerType>(V->getType())->getBitWidth()).zextOrTrunc(BitWidth);
+  Mask &= APInt::getAllOnesValue(BitWidth);
   
   switch (I->getOpcode()) {
   case Instruction::And:
@@ -664,10 +665,16 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
   case Instruction::UIToFP:
   case Instruction::IntToPtr:
     return; // Can't work with floating point or pointers
-  case Instruction::Trunc: 
+  case Instruction::Trunc: {
     // All these have integer operands
-    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    uint32_t SrcBitWidth = 
+      cast<IntegerType>(I->getOperand(0)->getType())->getBitWidth();
+    ComputeMaskedBits(I->getOperand(0), Mask.zext(SrcBitWidth), 
+      KnownZero.zext(SrcBitWidth), KnownOne.zext(SrcBitWidth), Depth+1);
+    KnownZero.trunc(BitWidth);
+    KnownOne.trunc(BitWidth);
     return;
+  }
   case Instruction::BitCast: {
     const Type *SrcTy = I->getOperand(0)->getType();
     if (SrcTy->isInteger()) {
@@ -681,10 +688,13 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
     APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
       
-    Mask &= SrcTy->getMask().zextOrTrunc(BitWidth);
-    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    uint32_t SrcBitWidth = SrcTy->getBitWidth();
+    ComputeMaskedBits(I->getOperand(0), Mask.trunc(SrcBitWidth), 
+      KnownZero.trunc(SrcBitWidth), KnownOne.trunc(SrcBitWidth), Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     // The top bits are known to be zero.
+    KnownZero.zext(BitWidth);
+    KnownOne.zext(BitWidth);
     KnownZero |= NewBits;
     return;
   }
@@ -693,14 +703,17 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
     APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
       
-    Mask &= SrcTy->getMask().zextOrTrunc(BitWidth);
-    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    uint32_t SrcBitWidth = SrcTy->getBitWidth();
+    ComputeMaskedBits(I->getOperand(0), Mask.trunc(SrcBitWidth), 
+      KnownZero.trunc(SrcBitWidth), KnownOne.trunc(SrcBitWidth), Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    KnownZero.zext(BitWidth);
+    KnownOne.zext(BitWidth);
 
     // If the sign bit of the input is known set or clear, then we know the
     // top bits of the result.
     APInt InSignBit(APInt::getSignBit(SrcTy->getBitWidth()));
-    InSignBit.zextOrTrunc(BitWidth);
+    InSignBit.zext(BitWidth);
     if ((KnownZero & InSignBit) != 0) {          // Input sign bit known zero
       KnownZero |= NewBits;
       KnownOne &= ~NewBits;
