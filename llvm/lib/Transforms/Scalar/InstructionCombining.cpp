@@ -992,6 +992,7 @@ static bool MaskedValueIsZero(Value *V, uint64_t Mask, unsigned Depth = 0) {
   return (KnownZero & Mask) == Mask;
 }
 
+#if 0
 /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
 /// this predicate to simplify operations downstream.  Mask is known to be zero
 /// for bits that V cannot have.
@@ -1001,6 +1002,7 @@ static bool MaskedValueIsZero(Value *V, const APInt& Mask, unsigned Depth = 0) {
   assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
   return (KnownZero & Mask) == Mask;
 }
+#endif
 
 /// ShrinkDemandedConstant - Check to see if the specified operand of the 
 /// specified instruction is a constant integer.  If so, check to see if there
@@ -3608,8 +3610,9 @@ struct FoldICmpLogical {
       ICI->swapOperands();  // Swap the LHS and RHS of the ICmp
     }
 
+    ICmpInst *RHSICI = cast<ICmpInst>(Log.getOperand(1));
     unsigned LHSCode = getICmpCode(ICI);
-    unsigned RHSCode = getICmpCode(cast<ICmpInst>(Log.getOperand(1)));
+    unsigned RHSCode = getICmpCode(RHSICI);
     unsigned Code;
     switch (Log.getOpcode()) {
     case Instruction::And: Code = LHSCode & RHSCode; break;
@@ -3618,7 +3621,10 @@ struct FoldICmpLogical {
     default: assert(0 && "Illegal logical opcode!"); return 0;
     }
 
-    Value *RV = getICmpValue(ICmpInst::isSignedPredicate(pred), Code, LHS, RHS);
+    bool isSigned = ICmpInst::isSignedPredicate(RHSICI->getPredicate()) || 
+                    ICmpInst::isSignedPredicate(ICI->getPredicate());
+      
+    Value *RV = getICmpValue(isSigned, Code, LHS, RHS);
     if (Instruction *I = dyn_cast<Instruction>(RV))
       return I;
     // Otherwise, it's a constant boolean value...
