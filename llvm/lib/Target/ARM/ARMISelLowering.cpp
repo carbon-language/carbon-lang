@@ -1273,6 +1273,9 @@ ARMTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 /// as the offset of the target addressing mode for load / store of the
 /// given type.
 bool ARMTargetLowering::isLegalAddressImmediate(int64_t V,const Type *Ty) const{
+  if (V == 0)
+    return true;
+
   MVT::ValueType VT = getValueType(Ty);
   if (Subtarget->isThumb()) {
     if (V < 0)
