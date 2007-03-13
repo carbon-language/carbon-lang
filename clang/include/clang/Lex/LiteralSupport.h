@@ -14,19 +14,17 @@
 #ifndef LLVM_CLANG_LITERALSUPPORT_H
 #define LLVM_CLANG_LITERALSUPPORT_H
 
-#include "clang/Lex/Preprocessor.h"
+#include <string>
 
 namespace llvm {
 namespace clang {
 
 class Diagnostic;
 class Preprocessor;
+class SourceLocation;
 class TargetInfo;
     
-struct NumericLiteralParser {
-  NumericLiteralParser(const char *begin, const char *end,
-                       SourceLocation Loc, Preprocessor &PP);
-private:
+class NumericLiteralParser {
   Preprocessor &PP; // needed for diagnostics
   
   const char *const ThisTokBegin;
@@ -40,35 +38,34 @@ private:
   bool saw_float_suffix;
   
 public:
+  NumericLiteralParser(const char *begin, const char *end,
+                       SourceLocation Loc, Preprocessor &PP);
   bool hadError;
   bool isUnsigned;
   bool isLong;
   bool isLongLong;
   
-  bool isIntegerLiteral() { 
-    return !saw_period && !saw_exponent && !hadError ? true : false;
+  bool isIntegerLiteral() const { 
+    return !saw_period && !saw_exponent ? true : false;
   }
-  bool isFloatingLiteral() {
-    return saw_period || saw_exponent && !hadError ? true : false;
+  bool isFloatingLiteral() const {
+    return saw_period || saw_exponent ? true : false;
   }
-  bool hasSuffix() {
+  bool hasSuffix() const {
     return SuffixBegin != ThisTokEnd;
   }
   /// getIntegerValue - Convert the string into a number. At this point, we 
   /// know the digit characters are valid (0...9, a...f, A...F). We don't know
   /// how many bits are needed to store the number. Sizing of the integer
   /// type (int, unsigned, long, unsigned long, long long, unsigned long long) 
-  /// will be done elsewhere - the computation is target dependent. We return 
-  /// true if the value fit into uintmax_t, false otherwise. 
+  /// will be done elsewhere - the size computation is target dependent. We  
+  /// return true if the value fit into "val", false otherwise. 
   bool GetIntegerValue(uintmax_t &val);
   bool GetIntegerValue(int &val);
 
 private:  
   void Diag(SourceLocation Loc, unsigned DiagID, 
-            const std::string &M = std::string()) {
-    PP.Diag(Loc, DiagID, M);
-    hadError = true;
-  }
+            const std::string &M = std::string());
   
   /// SkipHexDigits - Read and skip over any hex digits, up to End.
   /// Return a pointer to the first non-hex digit or End.

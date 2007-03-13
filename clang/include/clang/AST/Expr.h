@@ -71,10 +71,6 @@ public:
   IntegerLiteral() : Expr(IntegerLiteralClass),
      Type(0), Value(0) {
   }
-  // constructor for the single digit case
-  IntegerLiteral(intmax_t value) : Expr(IntegerLiteralClass), 
-     Type(0), Value(value) {
-  }
   IntegerLiteral(intmax_t value, TypeRef type)
     : Expr(IntegerLiteralClass), Type(type), Value(value) {
 #if 0

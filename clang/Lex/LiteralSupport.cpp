@@ -217,8 +217,8 @@ NumericLiteralParser(const char *begin, const char *end,
 }
 
 bool NumericLiteralParser::GetIntegerValue(uintmax_t &val) {
-  uintmax_t cutoff = UINTMAX_MAX / radix;
-  int cutlim = UINTMAX_MAX % radix;
+  uintmax_t max_value = UINTMAX_MAX / radix;
+  int max_digit = UINTMAX_MAX % radix;
   char c;
   
   val = 0;
@@ -227,12 +227,12 @@ bool NumericLiteralParser::GetIntegerValue(uintmax_t &val) {
     c = *s++;
     if (c >= '0' && c <= '9')
       c -= '0';
-    else if (c >= 'A' && c <= 'F') // 10...15
-      c -= 'A' - 10;
-    else if (c >= 'a' && c <= 'f') // 10...15
+    else if (c >= 'A' && c <= 'F') 
+      c -= 'A' - 10; 
+    else if (c >= 'a' && c <= 'f') 
       c -= 'a' - 10;
     
-    if (val > cutoff || (val == cutoff && c > cutlim)) {
+    if (val > max_value || (val == max_value && c > max_digit)) {
       return false; // Overflow!
     } else {
       val *= radix;
@@ -243,8 +243,8 @@ bool NumericLiteralParser::GetIntegerValue(uintmax_t &val) {
 }
 
 bool NumericLiteralParser::GetIntegerValue(int &val) {
-  intmax_t cutoff = INT_MAX / radix;
-  int cutlim = INT_MAX % radix;
+  intmax_t max_value = INT_MAX / radix;
+  int max_digit = INT_MAX % radix;
   char c;
   
   val = 0;
@@ -253,12 +253,12 @@ bool NumericLiteralParser::GetIntegerValue(int &val) {
     c = *s++;
     if (c >= '0' && c <= '9')
       c -= '0';
-    else if (c >= 'A' && c <= 'F') // 10...15
+    else if (c >= 'A' && c <= 'F') 
       c -= 'A' - 10;
-    else if (c >= 'a' && c <= 'f') // 10...15
+    else if (c >= 'a' && c <= 'f')
       c -= 'a' - 10;
     
-    if (val > cutoff || (val == cutoff && c > cutlim)) {
+    if (val > max_value || (val == max_value && c > max_digit)) {
       return false; // Overflow!
     } else {
       val *= radix;
@@ -266,4 +266,10 @@ bool NumericLiteralParser::GetIntegerValue(int &val) {
     }
   }
   return true;
+}
+
+void NumericLiteralParser::Diag(SourceLocation Loc, unsigned DiagID, 
+          const std::string &M) {
+  PP.Diag(Loc, DiagID, M);
+  hadError = true;
 }

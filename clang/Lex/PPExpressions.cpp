@@ -145,20 +145,33 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
     PP.Diag(PeekTok, diag::err_pp_expected_value_in_expr);
     return true;
   case tok::numeric_constant: {
-    // FIXME: track signs. ?? snaroff: talk to Chris...
     SmallString<512> IntegerBuffer;
     IntegerBuffer.resize(PeekTok.getLength());
     const char *ThisTokBegin = &IntegerBuffer[0];
     unsigned ActualLength = PP.getSpelling(PeekTok, ThisTokBegin);
     NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
                                  PeekTok.getLocation(), PP);
-    if (Literal.isIntegerLiteral()) {
-      Literal.GetIntegerValue(Result);
-    } else if (Literal.isFloatingLiteral()) {
+    if (Literal.hadError) 
+      return true; // a diagnostic was already reported.
+    else if (Literal.isIntegerLiteral()) {
+      if (!Literal.GetIntegerValue(Result)) {
+        // FIXME: C99 (6.10.1) dictates that all preprocessor arithmetic be
+        // performed using the largest integer type found on the target 
+        // computer, which is intmax_t (the default) or uintmax_t (if the 
+        // literal contains an unsigned suffix) defined in stdint.h.
+        // Since "Result" is typed as "int", the maximum legal integer 
+        // literal is currently INT32_MAX (or 2147483647). If the literal
+        // value is larger, we will overflow and trigger this assert.
+        assert(0 && "Integer Overflow in preprocessor expression"); 
+        return true;
+      }
+      PP.LexNonComment(PeekTok);
+      return false;
+    } else {
+      assert(Literal.isFloatingLiteral() && "Unknown ppnumber");
       PP.Diag(PeekTok, diag::err_pp_illegal_floating_literal);
+      return true;
     }
-    PP.LexNonComment(PeekTok);
-    return false;
   }
   case tok::l_paren:
     PP.LexNonComment(PeekTok);  // Eat the (.

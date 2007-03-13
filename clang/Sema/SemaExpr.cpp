@@ -17,6 +17,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LiteralSupport.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
@@ -287,6 +288,12 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
 }
 
 Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
+  // fast path for a single digit (which is quite common). A single digit 
+  // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
+  if (Tok.getLength() == 1) {
+    const char *t = PP.getSourceManager().getCharacterData(Tok.getLocation());
+    return ExprResult(new IntegerLiteral(*t-'0', Context.IntTy));
+  }
   SmallString<512> IntegerBuffer;
   IntegerBuffer.resize(Tok.getLength());
   const char *ThisTokBegin = &IntegerBuffer[0];
@@ -299,15 +306,11 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
   //   a pointer to a *constant* buffer (avoiding a copy). 
   
   unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
-
-  // This is an optimization for single digits (which are very common).
-  if (ActualLength == 1)
-    return ExprResult(new IntegerLiteral(atoi(ThisTokBegin)));
-    
   NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
                                Tok.getLocation(), PP);
-  Expr *literal_expr = 0;
-    
+  if (Literal.hadError)
+    return ExprResult(true);
+
   if (Literal.isIntegerLiteral()) {
     TypeRef t;
     if (Literal.hasSuffix()) {
@@ -322,12 +325,12 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
     }
     uintmax_t val;
     if (Literal.GetIntegerValue(val)) {
-      literal_expr = new IntegerLiteral(val, t);
+      return new IntegerLiteral(val, t);
     } 
   } else if (Literal.isFloatingLiteral()) {
     // TODO: add floating point processing...
   }
-  return literal_expr ? ExprResult(literal_expr) : ExprResult(true);
+  return ExprResult(true);
 }
 
 Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
