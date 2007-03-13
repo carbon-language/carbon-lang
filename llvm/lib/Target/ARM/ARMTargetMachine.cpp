@@ -62,7 +62,8 @@ ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS,
                        "i16:16:32-i8:8:32-i1:8:32-a:0:32") :
            std::string("e-p:32:32-f64:64:64-i64:64:64"))),
     InstrInfo(Subtarget),
-    FrameInfo(Subtarget) {}
+    FrameInfo(Subtarget),
+    TLInfo(*this) {}
 
 unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
   std::string TT = M.getTargetTriple();

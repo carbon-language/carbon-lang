@@ -21,6 +21,7 @@
 #include "ARMInstrInfo.h"
 #include "ARMFrameInfo.h"
 #include "ARMSubtarget.h"
+#include "ARMISelLowering.h"
 
 namespace llvm {
 
@@ -31,6 +32,8 @@ class ARMTargetMachine : public LLVMTargetMachine {
   const TargetData  DataLayout;       // Calculates type size & alignment
   ARMInstrInfo      InstrInfo;
   ARMFrameInfo      FrameInfo;
+  ARMTargetLowering TLInfo;
+
 public:
   ARMTargetMachine(const Module &M, const std::string &FS, bool isThumb = false);
 
@@ -41,6 +44,9 @@ public:
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
+  virtual       ARMTargetLowering *getTargetLowering() const { 
+    return const_cast<ARMTargetLowering*>(&TLInfo); 
+  }
   static unsigned getModuleMatchQuality(const Module &M);
 
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
