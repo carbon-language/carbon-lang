@@ -576,6 +576,15 @@ namespace {
   };
 }
 
+static unsigned closestSucc(const SUnit *SU) {
+  unsigned MaxCycle = 0;
+  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I)
+    if (I->first->Cycle > MaxCycle)
+      MaxCycle = I->first->Cycle;
+  return MaxCycle;
+}
+
 // Bottom up
 bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   bool LIsTarget = left->Node->isTargetOpcode();
@@ -596,15 +605,38 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   unsigned RPriority = SPQ->getNodePriority(right);
   if (LPriority > RPriority)
     return true;
-  else if (LPriority == RPriority)
-    if (left->Height > right->Height)
+  else if (LPriority == RPriority) {
+    // Try schedule def + use closer whne Sethi-Ullman numbers are the same.
+    // e.g.
+    // t1 = op t2, c1
+    // t3 = op t4, c2
+    //
+    // and the following instructions are both ready.
+    // t2 = op c3
+    // t4 = op c4
+    //
+    // Then schedule t2 = op first.
+    // i.e.
+    // t4 = op c4
+    // t2 = op c3
+    // t1 = op t2, c1
+    // t3 = op t4, c2
+    //
+    // This creates more short live intervals.
+    unsigned LDist = closestSucc(left);
+    unsigned RDist = closestSucc(right);
+    if (LDist < RDist)
       return true;
-    else if (left->Height == right->Height)
-      if (left->Depth < right->Depth)
+    else if (LDist == RDist)
+      if (left->Height > right->Height)
         return true;
-      else if (left->Depth == right->Depth)
-        if (left->CycleBound > right->CycleBound) 
+      else if (left->Height == right->Height)
+        if (left->Depth < right->Depth)
           return true;
+        else if (left->Depth == right->Depth)
+          if (left->CycleBound > right->CycleBound) 
+            return true;
+  }
   return false;
 }
 
