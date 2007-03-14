@@ -306,10 +306,21 @@ void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   bool NotCC = Fn != (void*)(intptr_t)X86CompilationCallback;
 #endif
   if (NotCC) {
+#ifdef __x86_64__
+    MCE.startFunctionStub(13, 4);
+    MCE.emitByte(0x49);          // REX prefix
+    MCE.emitByte(0xB8+2);        // movabsq r10
+    MCE.emitWordLE(((unsigned *)&Fn)[0]);
+    MCE.emitWordLE(((unsigned *)&Fn)[1]);
+    MCE.emitByte(0x41);          // REX prefix
+    MCE.emitByte(0xFF);          // jmpq *r10
+    MCE.emitByte(2 | (4 << 3) | (3 << 6));
+#else
     MCE.startFunctionStub(5, 4);
     MCE.emitByte(0xE9);
     MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
     return MCE.finishFunctionStub(0);
+#endif
   }
 
 #ifdef __x86_64__
