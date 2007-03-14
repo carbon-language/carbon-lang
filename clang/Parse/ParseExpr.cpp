@@ -473,7 +473,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // constant: integer-constant
     // constant: floating-constant
     
-    Actions.ParseNumericConstant(Tok);
+    Res = Actions.ParseNumericConstant(Tok);
     ConsumeToken();
     
     // These can be followed by postfix-expr pieces.

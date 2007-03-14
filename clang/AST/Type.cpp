@@ -41,11 +41,16 @@ bool Type::isIncompleteType() const {
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
     return !cast<TaggedType>(this)->getDecl()->isDefinition();
-    
   case Array:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
-    // FIXME: Implement this.
-    return true; // cast<ArrayType>(this)-> blah.
+    // In C99, an unknown size is permitted in 4 instances:
+    // - The array being declared is a formal parameter of a function.
+    // - The declarator is accompanied by an initializer from which the array 
+    //   can be deduced (char foo[] = "whatever").
+    // - Forward declarations (extern int matrix[][7]).
+    // - The last component of a structure (flexible array idiom).
+    // Clients of this routine will need to determine if the size is required.
+    return cast<ArrayType>(this)->getSizeExpression() == 0;
   }
 }
 

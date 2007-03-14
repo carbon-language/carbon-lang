@@ -25,6 +25,7 @@ namespace clang {
   class TagDecl;
   class RecordDecl;
   class EnumDecl;
+  class Expr;
   
 /// TypeRef - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -267,29 +268,34 @@ private:
   /// ElementType - The element type of the array.
   TypeRef ElementType;
   
-  /// FIXME: Capture size for VLA or constant size.
-  /// FIXME: Update Profile()!
-  /// Use this to implement Type::isIncompleteType.
-
-  ArrayType(TypeRef et, ArraySizeModifier sm, unsigned tq, Type *can)
-    : Type(Array, can), SizeModifier(sm), IndexTypeQuals(tq), ElementType(et) {}
+  /// SizeExpr - The size is either a constant or assignment expression (for 
+  /// Variable Length Arrays). VLA's are only permitted within a function block. 
+  Expr *SizeExpr;
+  
+  ArrayType(TypeRef et, ArraySizeModifier sm, unsigned tq, Type *can, Expr *e)
+    : Type(Array, can), SizeModifier(sm), IndexTypeQuals(tq), ElementType(et),
+      SizeExpr(e) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
     
   TypeRef getElementType() const { return ElementType; }
   ArraySizeModifier getSizeModifier() const { return SizeModifier; }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
+  Expr *getSizeExpression() const { return SizeExpr; }
   
   virtual void getAsString(std::string &InnerString) const;
   
   void Profile(FoldingSetNodeID &ID) {
-    Profile(ID, getSizeModifier(), getIndexTypeQualifier(), getElementType());
+    Profile(ID, getSizeModifier(), getIndexTypeQualifier(), getElementType(),
+            getSizeExpression());
   }
   static void Profile(FoldingSetNodeID &ID, ArraySizeModifier SizeModifier,
-                      unsigned IndexTypeQuals, TypeRef ElementType) {
+                      unsigned IndexTypeQuals, TypeRef ElementType,
+                      Expr *SizeExpr) {
     ID.AddInteger(SizeModifier);
     ID.AddInteger(IndexTypeQuals);
     ID.AddPointer(ElementType.getAsOpaquePtr());
+    ID.AddPointer(SizeExpr);
   }
   
   static bool classof(const Type *T) { return T->getTypeClass() == Array; }

@@ -253,7 +253,8 @@ struct DeclaratorChunk {
     bool isStar : 1;
     
     /// This is the size of the array, or null if [] or [*] was specified.
-    /// FIXME: make this be an expression* when we have expressions.
+    /// Since the parser is multi-purpose, and we don't want to impose a root
+    /// expression class on all clients, NumElts is untyped.
     void *NumElts;
     void destroy() {}
   };

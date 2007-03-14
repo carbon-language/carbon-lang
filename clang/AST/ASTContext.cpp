@@ -155,12 +155,10 @@ TypeRef ASTContext::getPointerType(TypeRef T) {
 /// specified element type.
 TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
                                  unsigned EltTypeQuals, Expr *NumElts) {
-#warning "IGNORING SIZE"
-  
   // Unique array types, to guarantee there is only one array of a particular
   // structure.
   FoldingSetNodeID ID;
-  ArrayType::Profile(ID, ASM, EltTypeQuals, EltTy);
+  ArrayType::Profile(ID, ASM, EltTypeQuals, EltTy, NumElts);
       
   void *InsertPos = 0;
   if (ArrayType *ATP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
@@ -178,7 +176,7 @@ TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
     assert(NewIP == 0 && "Shouldn't be in the map!");
   }
   
-  ArrayType *New = new ArrayType(EltTy, ASM, EltTypeQuals, Canonical);
+  ArrayType *New = new ArrayType(EltTy, ASM, EltTypeQuals, Canonical, NumElts);
   ArrayTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return New;
