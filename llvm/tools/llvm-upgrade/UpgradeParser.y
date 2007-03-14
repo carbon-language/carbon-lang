@@ -3186,7 +3186,7 @@ InstVal
     $$.I = BinaryOperator::create(Instruction::Xor, $2.V, Ones);
     if ($$.I == 0)
       error("Could not create a xor instruction");
-    $$.S = $2.S
+    $$.S = $2.S;
   }
   | ShiftOps ResolvedVal ',' ResolvedVal {
     if (!$4.V->getType()->isInteger() ||
