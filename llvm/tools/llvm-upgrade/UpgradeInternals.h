@@ -59,6 +59,10 @@ struct InlineAsmDescriptor {
     : AsmString(as), Constraints(c), HasSideEffects(HSE) {}
 };
 
+/// An enumeration for defining the Signedness of a type or value. Signless
+/// means the signedness is not relevant to the type or value.
+enum Signedness { Signless, Unsigned, Signed };
+
 
 // ValID - Represents a reference of a definition of some sort.  This may either
 // be a numeric reference or a symbolic (%var) reference.  This is just a
@@ -82,41 +86,51 @@ struct ValID {
     Constant *ConstantValue; // Fully resolved constant for ConstantVal case.
     InlineAsmDescriptor *IAD;
   };
+  Signedness S;
 
-  static ValID create(int Num) {
-    ValID D; D.Type = NumberVal; D.Num = Num; return D;
+  static ValID create(int Num, Signedness Sign) {
+    ValID D; D.Type = NumberVal; D.Num = Num; D.S = Sign;
+    return D;
   }
 
-  static ValID create(char *Name) {
-    ValID D; D.Type = NameVal; D.Name = Name; return D;
+  static ValID create(char *Name, Signedness Sign) {
+    ValID D; D.Type = NameVal; D.Name = Name; D.S = Sign; 
+    return D;
   }
 
   static ValID create(int64_t Val) {
-    ValID D; D.Type = ConstSIntVal; D.ConstPool64 = Val; return D;
+    ValID D; D.Type = ConstSIntVal; D.ConstPool64 = Val; D.S = Signed; 
+    return D;
   }
 
   static ValID create(uint64_t Val) {
-    ValID D; D.Type = ConstUIntVal; D.UConstPool64 = Val; return D;
+    ValID D; D.Type = ConstUIntVal; D.UConstPool64 = Val; D.S = Unsigned; 
+    return D;
   }
 
   static ValID create(double Val) {
-    ValID D; D.Type = ConstFPVal; D.ConstPoolFP = Val; return D;
+    ValID D; D.Type = ConstFPVal; D.ConstPoolFP = Val; D.S = Signless;
+    return D;
   }
 
   static ValID createNull() {
-    ValID D; D.Type = ConstNullVal; return D;
+    ValID D; D.Type = ConstNullVal; D.S = Signless;
+    return D;
   }
 
   static ValID createUndef() {
-    ValID D; D.Type = ConstUndefVal; return D;
+    ValID D; D.Type = ConstUndefVal; D.S = Signless;
+    return D;
   }
 
   static ValID createZeroInit() {
-    ValID D; D.Type = ConstZeroVal; return D;
+    ValID D; D.Type = ConstZeroVal; D.S = Signless;
+    return D;
   }
   
-  static ValID create(Constant *Val) {
-    ValID D; D.Type = ConstantVal; D.ConstantValue = Val; return D;
+  static ValID create(Constant *Val, Signedness Sign) {
+    ValID D; D.Type = ConstantVal; D.ConstantValue = Val; D.S = Sign;
+    return D;
   }
   
   static ValID createInlineAsm(const std::string &AsmString,
@@ -221,10 +235,6 @@ namespace OldCallingConv {
   };
 }
 
-/// An enumeration for defining the Signedness of a type or value. Signless
-/// means the signedness is not relevant to the type or value.
-enum Signedness { Signless, Unsigned, Signed };
-
 /// These structures are used as the semantic values returned from various
 /// productions in the grammar. They simply bundle an LLVM IR object with
 /// its Signedness value. These help track signedness through the various
@@ -232,6 +242,16 @@ enum Signedness { Signless, Unsigned, Signed };
 struct TypeInfo {
   const llvm::Type *T;
   Signedness S;
+  bool operator<(const TypeInfo& that) const {
+    if (this == &that)
+      return false;
+    return (T < that.T) || (T == that.T && S < that.S);
+  }
+  bool operator==(const TypeInfo& that) const {
+    if (this == &that)
+      return true;
+    return T == that.T && S == that.S;
+  }
 };
 
 struct PATypeInfo {
