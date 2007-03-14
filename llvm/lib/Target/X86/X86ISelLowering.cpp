@@ -1304,11 +1304,13 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     // We should use extra load for direct calls to dllimported functions in
     // non-JIT mode.
-    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
-                                        getTargetMachine(), true))
+    if (getTargetMachine().getCodeModel() != CodeModel::Large
+	&& !Subtarget->GVRequiresExtraLoad(G->getGlobal(),
+					   getTargetMachine(), true))
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
+    if (getTargetMachine().getCodeModel() != CodeModel::Large)
+      Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
   // Returns a chain & a flag for retval copy to use.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
