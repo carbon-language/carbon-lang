@@ -1997,7 +1997,8 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       RHSKnownZero <<= ShiftAmt;
       RHSKnownOne  <<= ShiftAmt;
       // low bits known zero.
-      RHSKnownZero |= APInt::getAllOnesValue(ShiftAmt).zextOrCopy(BitWidth);
+      if (ShiftAmt)
+        RHSKnownZero |= APInt::getAllOnesValue(ShiftAmt).zextOrCopy(BitWidth);
     }
     break;
   case Instruction::LShr:
@@ -2013,14 +2014,16 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
         return true;
       assert((RHSKnownZero & RHSKnownOne) == 0 && 
              "Bits known to be one AND zero?"); 
-      // Compute the new bits that are at the top now.
-      APInt HighBits(APInt::getAllOnesValue(ShiftAmt).zextOrCopy(BitWidth).shl(
-              BitWidth - ShiftAmt));
       RHSKnownZero &= TypeMask;
       RHSKnownOne  &= TypeMask;
       RHSKnownZero = APIntOps::lshr(RHSKnownZero, ShiftAmt);
       RHSKnownOne  = APIntOps::lshr(RHSKnownOne, ShiftAmt);
-      RHSKnownZero |= HighBits;  // high bits known zero.
+      if (ShiftAmt) {
+        // Compute the new bits that are at the top now.
+        APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(
+                         BitWidth - ShiftAmt));
+        RHSKnownZero |= HighBits;  // high bits known zero.
+      }
     }
     break;
   case Instruction::AShr:
@@ -2048,8 +2051,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       assert((RHSKnownZero & RHSKnownOne) == 0 && 
              "Bits known to be one AND zero?"); 
       // Compute the new bits that are at the top now.
-      APInt HighBits(APInt::getAllOnesValue(ShiftAmt).zextOrCopy(BitWidth).shl(
-              BitWidth - ShiftAmt));
+      APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth - ShiftAmt));
       RHSKnownZero &= TypeMask;
       RHSKnownOne  &= TypeMask;
       RHSKnownZero = APIntOps::lshr(RHSKnownZero, ShiftAmt);
