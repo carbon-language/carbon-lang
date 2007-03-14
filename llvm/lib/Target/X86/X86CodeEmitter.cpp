@@ -656,9 +656,10 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       if (MO.isMachineBasicBlock()) {
         emitPCRelativeBlockAddress(MO.getMachineBasicBlock());
       } else if (MO.isGlobalAddress()) {
-        bool isTailCall = Opcode == X86::TAILJMPd ||
-                          Opcode == X86::TAILJMPr || Opcode == X86::TAILJMPm;
-        emitGlobalAddressForCall(MO.getGlobal(), !isTailCall && !Is64BitMode);
+        bool NeedStub = Is64BitMode ||
+                        Opcode == X86::TAILJMPd ||
+                        Opcode == X86::TAILJMPr || Opcode == X86::TAILJMPm;
+        emitGlobalAddressForCall(MO.getGlobal(), !NeedStub);
       } else if (MO.isExternalSymbol()) {
         emitExternalSymbolAddress(MO.getSymbolName(), X86::reloc_pcrel_word);
       } else if (MO.isImmediate()) {
