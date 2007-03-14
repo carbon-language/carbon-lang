@@ -339,6 +339,53 @@ lambda, siod, optimizer-eval, ackermann, hash2, nestedloop, strcat, and Treesor.
 
 //===---------------------------------------------------------------------===//
 
+We are generating far worse code than gcc:
+
+volatile short X, Y;
+
+void foo(int N) {
+  int i;
+  for (i = 0; i < N; i++) { X = i; Y = i*4; }
+}
+
+LBB1_1:	#bb.preheader
+	xorl %ecx, %ecx
+	xorw %dx, %dx
+LBB1_2:	#bb
+	movl L_X$non_lazy_ptr, %esi
+	movw %dx, (%esi)
+	movw %dx, %si
+	shlw $2, %si
+	movl L_Y$non_lazy_ptr, %edi
+	movw %si, (%edi)
+	incl %ecx
+	incw %dx
+	cmpl %eax, %ecx
+	jne LBB1_2	#bb
+
+vs.
+
+	xorl	%edx, %edx
+	movl	L_X$non_lazy_ptr-"L00000000001$pb"(%ebx), %esi
+	movl	L_Y$non_lazy_ptr-"L00000000001$pb"(%ebx), %ecx
+L4:
+	movw	%dx, (%esi)
+	leal	0(,%edx,4), %eax
+	movw	%ax, (%ecx)
+	addl	$1, %edx
+	cmpl	%edx, %edi
+	jne	L4
+
+There are 3 issues:
+
+1. Lack of post regalloc LICM.
+2. Poor sub-regclass support. That leads to inability to promote the 16-bit
+   arithmetic op to 32-bit and making use of leal.
+3. LSR unable to reused IV for a different type (i16 vs. i32) even though
+   the cast would be free.
+
+//===---------------------------------------------------------------------===//
+
 Teach the coalescer to coalesce vregs of different register classes. e.g. FR32 /
 FR64 to VR128.
 
