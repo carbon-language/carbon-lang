@@ -319,8 +319,8 @@ void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     MCE.startFunctionStub(5, 4);
     MCE.emitByte(0xE9);
     MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
-    return MCE.finishFunctionStub(0);
 #endif
+    return MCE.finishFunctionStub(0);
   }
 
 #ifdef __x86_64__
