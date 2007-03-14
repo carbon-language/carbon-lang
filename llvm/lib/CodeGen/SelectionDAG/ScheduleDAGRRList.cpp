@@ -576,13 +576,41 @@ namespace {
   };
 }
 
+/// closestSucc - Returns the scheduled cycle of the successor which is
+/// closet to the current cycle.
 static unsigned closestSucc(const SUnit *SU) {
   unsigned MaxCycle = 0;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I)
-    if (I->first->Cycle > MaxCycle)
-      MaxCycle = I->first->Cycle;
+       I != E; ++I) {
+    unsigned Cycle = I->first->Cycle;
+    // If there are bunch of CopyToRegs stacked up, they should be considered
+    // to be at the same position.
+    if (I->first->Node->getOpcode() == ISD::CopyToReg)
+      Cycle = closestSucc(I->first)+1;
+    if (Cycle > MaxCycle)
+      MaxCycle = Cycle;
+  }
   return MaxCycle;
+}
+
+/// calcMaxScratches - Returns an cost estimate of the worse case requirement
+/// for scratch registers. Live-in operands and live-out results don't count
+/// since they are "fixed".
+static unsigned calcMaxScratches(const SUnit *SU) {
+  unsigned Scratches = 0;
+  for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
+    if (I->second) continue;  // ignore chain preds
+    if (I->first->Node->getOpcode() != ISD::CopyFromReg)
+      Scratches++;
+  }
+  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    if (I->second) continue;  // ignore chain succs
+    if (I->first->Node->getOpcode() != ISD::CopyToReg)
+      Scratches += 10;
+  }
+  return Scratches;
 }
 
 // Bottom up
@@ -627,15 +655,25 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
     unsigned RDist = closestSucc(right);
     if (LDist < RDist)
       return true;
-    else if (LDist == RDist)
-      if (left->Height > right->Height)
+    else if (LDist == RDist) {
+      // Intuitively, it's good to push down instructions whose results are
+      // liveout so their long live ranges won't conflict with other values
+      // which are needed inside the BB. Further prioritize liveout instructions
+      // by the number of operands which are calculated within the BB.
+      unsigned LScratch = calcMaxScratches(left);
+      unsigned RScratch = calcMaxScratches(right);
+      if (LScratch > RScratch)
         return true;
-      else if (left->Height == right->Height)
-        if (left->Depth < right->Depth)
+      else if (LScratch == RScratch)
+        if (left->Height > right->Height)
           return true;
-        else if (left->Depth == right->Depth)
-          if (left->CycleBound > right->CycleBound) 
+        else if (left->Height == right->Height)
+          if (left->Depth < right->Depth)
             return true;
+          else if (left->Depth == right->Depth)
+            if (left->CycleBound > right->CycleBound) 
+              return true;
+    }
   }
   return false;
 }
