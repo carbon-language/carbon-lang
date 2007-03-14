@@ -1598,8 +1598,8 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     return false;
   }
   
-  //KnownZero.clear(); 
-  //KnownOne.clear();
+  KnownZero.clear(); 
+  KnownOne.clear();
   if (!V->hasOneUse()) {    // Other users may use these bits.
     if (Depth != 0) {       // Not at the root.
       // Just compute the KnownZero/KnownOne bits to simplify things downstream.
