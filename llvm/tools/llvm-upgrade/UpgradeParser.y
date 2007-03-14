@@ -67,7 +67,7 @@ static GlobalVariable *CurGV;
 //
 typedef std::vector<Value *> ValueList;           // Numbered defs
 
-typedef std::pair<std::string,const Type*> RenameMapKey;
+typedef std::pair<std::string,TypeInfo> RenameMapKey;
 typedef std::map<RenameMapKey,std::string> RenameMapType;
 
 static void 
@@ -286,11 +286,24 @@ bool FuncTysDifferOnlyBySRet(const FunctionType *F1,
   }
   return true;
 }
+bool TypesDifferOnlyBySRet(Value *V, const Type* Ty) {
+  if (V->getType() == Ty)
+    return true;
+  const PointerType *PF1 = dyn_cast<PointerType>(Ty);
+  const PointerType *PF2 = dyn_cast<PointerType>(V->getType());
+  if (PF1 && PF2) {
+    const FunctionType* FT1 = dyn_cast<FunctionType>(PF1->getElementType());
+    const FunctionType* FT2 = dyn_cast<FunctionType>(PF2->getElementType());
+    if (FT1 && FT2)
+      return FuncTysDifferOnlyBySRet(FT1, FT2);
+  }
+  return false;
+}
 
 // The upgrade of csretcc to sret param attribute may have caused a function 
 // to not be found because the param attribute changed the type of the called 
 // function. This helper function, used in getExistingValue, detects that
-// situation and returns V if it occurs and 0 otherwise. 
+// situation and bitcasts the function to the correct type.
 static Value* handleSRetFuncTypeMerge(Value *V, const Type* Ty) {
   // Handle degenerate cases
   if (!V)
@@ -302,10 +315,8 @@ static Value* handleSRetFuncTypeMerge(Value *V, const Type* Ty) {
   const PointerType *PF1 = dyn_cast<PointerType>(Ty);
   const PointerType *PF2 = dyn_cast<PointerType>(V->getType());
   if (PF1 && PF2) {
-    const FunctionType *FT1 =
-      dyn_cast<FunctionType>(PF1->getElementType());
-    const FunctionType *FT2 =
-      dyn_cast<FunctionType>(PF2->getElementType());
+    const FunctionType *FT1 = dyn_cast<FunctionType>(PF1->getElementType());
+    const FunctionType *FT2 = dyn_cast<FunctionType>(PF2->getElementType());
     if (FT1 && FT2 && FuncTysDifferOnlyBySRet(FT1, FT2))
       if (FT2->paramHasAttr(1, FunctionType::StructRetAttribute))
         Result = V;
@@ -352,7 +363,8 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
     // Get the name out of the ID
     std::string Name(D.Name);
     Value* V = 0;
-    RenameMapKey Key = std::make_pair(Name, Ty);
+    TypeInfo TI; TI.T = Ty; TI.S = D.S;
+    RenameMapKey Key = std::make_pair(Name, TI);
     if (inFunctionScope()) {
       // See if the name was renamed
       RenameMapType::const_iterator I = CurFun.RenameMap.find(Key);
@@ -364,6 +376,7 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
       ValueSymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
       V = SymTab.lookup(LookupName);
       V = handleSRetFuncTypeMerge(V, Ty);
+      assert((!V || TypesDifferOnlyBySRet(V, Ty)) && "Found wrong type!");
     }
     if (!V) {
       RenameMapType::const_iterator I = CurModule.RenameMap.find(Key);
@@ -374,6 +387,7 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
         LookupName = Name;
       V = CurModule.CurrentModule->getValueSymbolTable().lookup(LookupName);
       V = handleSRetFuncTypeMerge(V, Ty);
+      assert((!V || TypesDifferOnlyBySRet(V, Ty)) && "Found wrong type!");
     }
     if (!V) 
       return 0;
@@ -513,7 +527,8 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
         // because of type planes. Now they all have to be unique. So, we just
         // rename the register and treat this name as if no basic block
         // had been found.
-        RenameMapKey Key = std::make_pair(N->getName(),N->getType());
+        TypeInfo TI; TI.T = N->getType(); TI.S = ID.S;
+        RenameMapKey Key = std::make_pair(N->getName(),TI);
         N->setName(makeNameUnique(N->getName()));
         CurModule.RenameMap[Key] = N->getName();
         BB = 0;
@@ -628,10 +643,12 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
 // name is not null) things referencing Name can be resolved.  Otherwise, things
 // refering to the number can be resolved.  Do this now.
 //
-static void ResolveTypeTo(char *Name, const Type *ToTy) {
+static void ResolveTypeTo(char *Name, const Type *ToTy, Signedness Sign) {
   ValID D;
-  if (Name) D = ValID::create(Name);
-  else      D = ValID::create((int)CurModule.Types.size());
+  if (Name) 
+    D = ValID::create(Name, Sign);
+  else      
+    D = ValID::create((int)CurModule.Types.size(), Sign);
 
   std::map<ValID, PATypeHolder>::iterator I =
     CurModule.LateResolveTypes.find(D);
@@ -696,12 +713,12 @@ static inline bool TypeHasInteger(const Type *Ty) {
 // null potentially, in which case this is a noop.  The string passed in is
 // assumed to be a malloc'd string buffer, and is free'd by this function.
 //
-static void setValueName(Value *V, char *NameStr) {
+static void setValueName(const ValueInfo &V, char *NameStr) {
   if (NameStr) {
     std::string Name(NameStr);      // Copy string
     free(NameStr);                  // Free old string
 
-    if (V->getType() == Type::VoidTy) {
+    if (V.V->getType() == Type::VoidTy) {
       error("Can't assign name '" + Name + "' to value with void type");
       return;
     }
@@ -714,13 +731,13 @@ static void setValueName(Value *V, char *NameStr) {
     if (Existing) {
       // An existing value of the same name was found. This might have happened
       // because of the integer type planes collapsing in LLVM 2.0. 
-      if (Existing->getType() == V->getType() &&
+      if (Existing->getType() == V.V->getType() &&
           !TypeHasInteger(Existing->getType())) {
         // If the type does not contain any integers in them then this can't be
         // a type plane collapsing issue. It truly is a redefinition and we 
         // should error out as the assembly is invalid.
         error("Redefinition of value named '" + Name + "' of type '" +
-              V->getType()->getDescription() + "'");
+              V.V->getType()->getDescription() + "'");
         return;
       } 
       // In LLVM 2.0 we don't allow names to be re-used for any values in a 
@@ -734,13 +751,16 @@ static void setValueName(Value *V, char *NameStr) {
       // We're changing the name but it will probably be used by other 
       // instructions as operands later on. Consequently we have to retain
       // a mapping of the renaming that we're doing.
-      RenameMapKey Key = std::make_pair(Name,V->getType());
+      TypeInfo TI;
+      TI.T = V.V->getType();
+      TI.S = V.S;
+      RenameMapKey Key = std::make_pair(Name,TI);
       CurFun.RenameMap[Key] = NewName;
       Name = NewName;
     }
 
     // Set the name.
-    V->setName(Name);
+    V.V->setName(Name);
   }
 }
 
@@ -749,7 +769,8 @@ static void setValueName(Value *V, char *NameStr) {
 static GlobalVariable *
 ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
                     bool isConstantGlobal, const Type *Ty,
-                    Constant *Initializer) {
+                    Constant *Initializer,
+                    Signedness Sign) {
   if (isa<FunctionType>(Ty))
     error("Cannot declare global vars of function type");
 
@@ -765,9 +786,9 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   // object.
   ValID ID;
   if (!Name.empty()) {
-    ID = ValID::create((char*)Name.c_str());
+    ID = ValID::create((char*)Name.c_str(), Sign);
   } else {
-    ID = ValID::create((int)CurModule.Values[PTy].size());
+    ID = ValID::create((int)CurModule.Values[PTy].size(), Sign);
   }
 
   if (GlobalValue *FWGV = CurModule.GetForwardRefForGlobal(PTy, ID)) {
@@ -811,7 +832,8 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
       }
 
       // Put the renaming in the global rename map
-      RenameMapKey Key = std::make_pair(Name,PointerType::get(Ty));
+      TypeInfo TI; TI.T = PointerType::get(Ty); TI.S = Signless;
+      RenameMapKey Key = std::make_pair(Name,TI);
       CurModule.RenameMap[Key] = NewName;
 
       // Rename it
@@ -1807,7 +1829,7 @@ UpRTypes
   | SymbolicValueRef {            // Named types are also simple types...
     const Type* tmp = getType($1);
     $$.PAT = new PATypeHolder(tmp);
-    $$.S = Signless; // FIXME: what if its signed?
+    $$.S = $1.S; // FIXME: what if its signed?
   }
   | '\\' EUINT64VAL {                   // Type UpReference
     if ($2 > (uint64_t)~0U) 
@@ -2406,7 +2428,7 @@ ConstPool
     // determined to be the same type!
     //
     const Type* Ty = $4.PAT->get();
-    ResolveTypeTo($2, Ty);
+    ResolveTypeTo($2, Ty, $4.S);
 
     if (!setTypeName(Ty, $2) && !$2) {
       // If this is a named type that is not a redefinition, add it to the slot
@@ -2422,20 +2444,22 @@ ConstPool
   | ConstPool OptAssign OptLinkage GlobalType ConstVal {
     if ($5.C == 0) 
       error("Global value initializer is not a constant");
-    CurGV = ParseGlobalVariable($2, $3, $4, $5.C->getType(), $5.C);
+    CurGV = ParseGlobalVariable($2, $3, $4, $5.C->getType(), $5.C, $5.S);
   } GlobalVarAttributes {
     CurGV = 0;
   }
   | ConstPool OptAssign EXTERNAL GlobalType Types {
     const Type *Ty = $5.PAT->get();
-    CurGV = ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, Ty, 0);
+    CurGV = ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, Ty, 0,
+                                $5.S);
     delete $5.PAT;
   } GlobalVarAttributes {
     CurGV = 0;
   }
   | ConstPool OptAssign DLLIMPORT GlobalType Types {
     const Type *Ty = $5.PAT->get();
-    CurGV = ParseGlobalVariable($2, GlobalValue::DLLImportLinkage, $4, Ty, 0);
+    CurGV = ParseGlobalVariable($2, GlobalValue::DLLImportLinkage, $4, Ty, 0,
+                                $5.S);
     delete $5.PAT;
   } GlobalVarAttributes {
     CurGV = 0;
@@ -2443,7 +2467,8 @@ ConstPool
   | ConstPool OptAssign EXTERN_WEAK GlobalType Types {
     const Type *Ty = $5.PAT->get();
     CurGV = 
-      ParseGlobalVariable($2, GlobalValue::ExternalWeakLinkage, $4, Ty, 0);
+      ParseGlobalVariable($2, GlobalValue::ExternalWeakLinkage, $4, Ty, 0, 
+                          $5.S);
     delete $5.PAT;
   } GlobalVarAttributes {
     CurGV = 0;
@@ -2614,9 +2639,9 @@ FunctionHeaderH
 
     ValID ID;
     if (!FunctionName.empty()) {
-      ID = ValID::create((char*)FunctionName.c_str());
+      ID = ValID::create((char*)FunctionName.c_str(), $2.S);
     } else {
-      ID = ValID::create((int)CurModule.Values[PFT].size());
+      ID = ValID::create((int)CurModule.Values[PFT].size(), $2.S);
     }
 
     Function *Fn = 0;
@@ -2644,14 +2669,16 @@ FunctionHeaderH
           std::string NewName(makeNameUnique(FunctionName));
           if (Conflict->hasInternalLinkage()) {
             Conflict->setName(NewName);
-            RenameMapKey Key = std::make_pair(FunctionName,Conflict->getType());
+            TypeInfo TI; TI.T = Conflict->getType(); TI.S = ID.S;
+            RenameMapKey Key = std::make_pair(FunctionName,TI);
             CurModule.RenameMap[Key] = NewName;
             Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
             InsertValue(Fn, CurModule.Values);
           } else {
             Fn = new Function(FT, CurFun.Linkage, NewName, M);
             InsertValue(Fn, CurModule.Values);
-            RenameMapKey Key = std::make_pair(FunctionName,PFT);
+            TypeInfo TI; TI.T = PFT; TI.S = ID.S;
+            RenameMapKey Key = std::make_pair(FunctionName,TI);
             CurModule.RenameMap[Key] = NewName;
           }
         } else {
@@ -2675,7 +2702,8 @@ FunctionHeaderH
         if (Conflict->hasInternalLinkage()) {
           // We can safely renamed the Conflict.
           Conflict->setName(makeNameUnique(Conflict->getName()));
-          RenameMapKey Key = std::make_pair(FunctionName,Conflict->getType());
+          TypeInfo TI; TI.T = Conflict->getType(); TI.S = ID.S;
+          RenameMapKey Key = std::make_pair(FunctionName,TI);
           CurModule.RenameMap[Key] = Conflict->getName();
           Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
           InsertValue(Fn, CurModule.Values);
@@ -2684,7 +2712,8 @@ FunctionHeaderH
           std::string NewName = makeNameUnique(FunctionName);
           Fn = new Function(FT, CurFun.Linkage, NewName, M);
           InsertValue(Fn, CurModule.Values);
-          RenameMapKey Key = std::make_pair(FunctionName,PFT);
+          TypeInfo TI; TI.T = PFT; TI.S = ID.S;
+          RenameMapKey Key = std::make_pair(FunctionName,TI);
           CurModule.RenameMap[Key] = NewName;
         } else {
           // We can't quietly rename either of these things, but we must
@@ -2695,7 +2724,8 @@ FunctionHeaderH
                   "' may cause linkage errors");
           Fn = new Function(FT, CurFun.Linkage, NewName, M);
           InsertValue(Fn, CurModule.Values);
-          RenameMapKey Key = std::make_pair(FunctionName,PFT);
+          TypeInfo TI; TI.T = PFT; TI.S = ID.S;
+          RenameMapKey Key = std::make_pair(FunctionName,TI);
           CurModule.RenameMap[Key] = NewName;
         }
       } else {
@@ -2734,7 +2764,8 @@ FunctionHeaderH
       std::vector<std::pair<PATypeInfo,char*> >::iterator E = $5->end();
       for ( ; I != E && ArgIt != ArgEnd; ++I, ++ArgIt) {
         delete I->first.PAT;                      // Delete the typeholder...
-        setValueName(ArgIt, I->second);           // Insert arg into symtab...
+        ValueInfo VI; VI.V = ArgIt; VI.S = Signless; // FIXME: Sign
+        setValueName(VI, I->second);           // Insert arg into symtab...
         InsertValue(ArgIt);
       }
       delete $5;                     // We're now done with the argument list
@@ -2794,8 +2825,12 @@ ConstValueRef
   : ESINT64VAL {    $$ = ValID::create($1); }
   | EUINT64VAL { $$ = ValID::create($1); }
   | FPVAL { $$ = ValID::create($1); } 
-  | TRUETOK { $$ = ValID::create(ConstantInt::get(Type::Int1Ty, true)); } 
-  | FALSETOK { $$ = ValID::create(ConstantInt::get(Type::Int1Ty, false)); }
+  | TRUETOK { 
+    $$ = ValID::create(ConstantInt::get(Type::Int1Ty, true), Signed);
+  }
+  | FALSETOK { 
+    $$ = ValID::create(ConstantInt::get(Type::Int1Ty, false), Unsigned); 
+  }
   | NULL_TOK { $$ = ValID::createNull(); }
   | UNDEF { $$ = ValID::createUndef(); }
   | ZEROINITIALIZER { $$ = ValID::createZeroInit(); }
@@ -2817,11 +2852,11 @@ ConstValueRef
               CTy->getDescription() + "'");
       Elems.push_back(C);
     }
-    $$ = ValID::create(ConstantVector::get(pt, Elems));
+    $$ = ValID::create(ConstantVector::get(pt, Elems), Signless);
     delete PTy; delete $2;
   }
   | ConstExpr {
-    $$ = ValID::create($1.C);
+    $$ = ValID::create($1.C, $1.S);
   }
   | ASM_TOK OptSideEffect STRINGCONSTANT ',' STRINGCONSTANT {
     char *End = UnEscapeLexed($3, true);
@@ -2834,12 +2869,11 @@ ConstValueRef
   }
   ;
 
-// SymbolicValueRef - Reference to one of two ways of symbolically refering to
-// another value.
+// SymbolicValueRef - Reference to one of two ways of symbolically refering to // another value.
 //
 SymbolicValueRef 
-  : INTVAL {  $$ = ValID::create($1); }
-  | Name   {  $$ = ValID::create($1); }
+  : INTVAL {  $$ = ValID::create($1,Signless); }
+  | Name   {  $$ = ValID::create($1,Signless); }
   ;
 
 // ValueRef - A reference to a definition... either constant or symbolic
@@ -2854,8 +2888,9 @@ ValueRef
 ResolvedVal 
   : Types ValueRef { 
     const Type *Ty = $1.PAT->get();
-    $$.S = $1.S;
+    $2.S = $1.S;
     $$.V = getVal(Ty, $2); 
+    $$.S = $1.S;
     delete $1.PAT;
   }
   ;
@@ -2874,7 +2909,8 @@ BasicBlockList
 //
 BasicBlock 
   : InstructionList OptAssign BBTerminatorInst  {
-    setValueName($3, $2);
+    ValueInfo VI; VI.V = $3; VI.S = Signless;
+    setValueName(VI, $2);
     InsertValue($3);
     $1->getInstList().push_back($3);
     InsertValue($1);
@@ -2889,7 +2925,7 @@ InstructionList
     $$ = $1;
   }
   | /* empty */ {
-    $$ = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
+    $$ = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++,Signless),true);
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
     // referenced.
@@ -2898,7 +2934,7 @@ InstructionList
     BBL.splice(BBL.end(), BBL, $$);
   }
   | LABELSTR {
-    $$ = CurBB = getBBVal(ValID::create($1), true);
+    $$ = CurBB = getBBVal(ValID::create($1,Signless), true);
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
     // referenced.
@@ -2928,6 +2964,7 @@ BBTerminatorInst
     $$ = new BranchInst(tmpBBA, tmpBBB, tmpVal);
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
+    $3.S = $2.S;
     Value* tmpVal = getVal($2.T, $3);
     BasicBlock* tmpBB = getBBVal($6);
     SwitchInst *S = new SwitchInst(tmpVal, tmpBB, $8->size());
@@ -2943,6 +2980,7 @@ BBTerminatorInst
     delete $8;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
+    $3.S = $2.S;
     Value* tmpVal = getVal($2.T, $3);
     BasicBlock* tmpBB = getBBVal($6);
     SwitchInst *S = new SwitchInst(tmpVal, tmpBB, 0);
@@ -3015,6 +3053,7 @@ BBTerminatorInst
 JumpTable 
   : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$ = $1;
+    $3.S = $2.S;
     Constant *V = cast<Constant>(getExistingValue($2.T, $3));
     
     if (V == 0)
@@ -3025,6 +3064,7 @@ JumpTable
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $$ = new std::vector<std::pair<Constant*, BasicBlock*> >();
+    $2.S = $1.S;
     Constant *V = cast<Constant>(getExistingValue($1.T, $2));
 
     if (V == 0)
@@ -3059,7 +3099,8 @@ Inst
       $$.I = 0;
       $$.S = Signless;
     } else {
-      setValueName($2.I, $1);
+      ValueInfo VI; VI.V = $2.I; VI.S = $2.S;
+      setValueName(VI, $1);
       InsertValue($2.I);
       $$ = $2;
     }
@@ -3068,6 +3109,7 @@ Inst
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$.P = new std::list<std::pair<Value*, BasicBlock*> >();
     $$.S = $1.S;
+    $3.S = $1.S;
     Value* tmpVal = getVal($1.PAT->get(), $3);
     BasicBlock* tmpBB = getBBVal($5);
     $$.P->push_back(std::make_pair(tmpVal, tmpBB));
@@ -3075,6 +3117,7 @@ PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
     $$ = $1;
+    $4.S = $1.S;
     Value* tmpVal = getVal($1.P->front().first->getType(), $4);
     BasicBlock* tmpBB = getBBVal($6);
     $1.P->push_back(std::make_pair(tmpVal, tmpBB));
@@ -3107,6 +3150,7 @@ OptTailCall
 
 InstVal 
   : ArithmeticOps Types ValueRef ',' ValueRef {
+    $3.S = $5.S = $2.S;
     const Type* Ty = $2.PAT->get();
     if (!Ty->isInteger() && !Ty->isFloatingPoint() && !isa<VectorType>(Ty))
       error("Arithmetic operator requires integer, FP, or packed operands");
@@ -3124,6 +3168,7 @@ InstVal
     delete $2.PAT;
   }
   | LogicalOps Types ValueRef ',' ValueRef {
+    $3.S = $5.S = $2.S;
     const Type *Ty = $2.PAT->get();
     if (!Ty->isInteger()) {
       if (!isa<VectorType>(Ty) ||
@@ -3140,6 +3185,7 @@ InstVal
     delete $2.PAT;
   }
   | SetCondOps Types ValueRef ',' ValueRef {
+    $3.S = $5.S = $2.S;
     const Type* Ty = $2.PAT->get();
     if(isa<VectorType>(Ty))
       error("VectorTypes currently not supported in setcc instructions");
@@ -3154,6 +3200,7 @@ InstVal
     delete $2.PAT;
   }
   | ICMP IPredicates Types ValueRef ',' ValueRef {
+    $4.S = $6.S = $3.S;
     const Type *Ty = $3.PAT->get();
     if (isa<VectorType>(Ty)) 
       error("VectorTypes currently not supported in icmp instructions");
@@ -3166,6 +3213,7 @@ InstVal
     delete $3.PAT;
   }
   | FCMP FPredicates Types ValueRef ',' ValueRef {
+    $4.S = $6.S = $3.S;
     const Type *Ty = $3.PAT->get();
     if (isa<VectorType>(Ty))
       error("VectorTypes currently not supported in fcmp instructions");
@@ -3311,7 +3359,6 @@ InstVal
     delete $2.P;  // Free the list...
   }
   | OptTailCall OptCallingConv TypesV ValueRef '(' ValueRefListE ')'  {
-
     // Handle the short call syntax
     const PointerType *PFTy;
     const FunctionType *FTy;
@@ -3415,6 +3462,7 @@ MemoryInst
   | MALLOC Types ',' UINT ValueRef OptCAlign {
     const Type *Ty = $2.PAT->get();
     $$.S = $2.S;
+    $5.S = Unsigned;
     $$.I = new MallocInst(Ty, getVal($4.T, $5), $6);
     delete $2.PAT;
   }
@@ -3427,6 +3475,7 @@ MemoryInst
   | ALLOCA Types ',' UINT ValueRef OptCAlign {
     const Type *Ty = $2.PAT->get();
     $$.S = $2.S;
+    $5.S = Unsigned;
     $$.I = new AllocaInst(Ty, getVal($4.T, $5), $6);
     delete $2.PAT;
   }
@@ -3440,6 +3489,7 @@ MemoryInst
   | OptVolatile LOAD Types ValueRef {
     const Type* Ty = $3.PAT->get();
     $$.S = $3.S;
+    $4.S = $3.S;
     if (!isa<PointerType>(Ty))
       error("Can't load from nonpointer type: " + Ty->getDescription());
     if (!cast<PointerType>(Ty)->getElementType()->isFirstClassType())
@@ -3450,6 +3500,7 @@ MemoryInst
     delete $3.PAT;
   }
   | OptVolatile STORE ResolvedVal ',' Types ValueRef {
+    $6.S = $5.S;
     const PointerType *PTy = dyn_cast<PointerType>($5.PAT->get());
     if (!PTy)
       error("Can't store to a nonpointer type: " + 
@@ -3475,6 +3526,7 @@ MemoryInst
     delete $5.PAT;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
+    $3.S = $2.S;
     const Type* Ty = $2.PAT->get();
     if (!isa<PointerType>(Ty))
       error("getelementptr insn requires pointer operand");
