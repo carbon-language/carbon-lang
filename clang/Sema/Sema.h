@@ -72,27 +72,13 @@ public:
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
   virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
                                   DeclTy *LastInGroup);
-  VarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
-                                Scope *FnBodyScope);
   virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
-  Decl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, SourceLocation IdLoc,
-                         Scope *S);
-  
-  Decl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
-  
-  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D);
-  TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
-  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
-  VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
 
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.
   virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);  
-  
-  Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
-                                 Scope *S);
   
   virtual DeclTy *ParseTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
@@ -106,10 +92,25 @@ public:
                                     SourceLocation EqualLoc, ExprTy *Val);
   virtual void ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
                              DeclTy **Elements, unsigned NumElements);
+private:
+  /// Subroutines of ParseDeclarator()...
+  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D);
+  TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
+  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
+  VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
+  
+  /// More parsing and symbol table subroutines...
+  VarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
+                                Scope *FnBodyScope);
+  Decl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, SourceLocation IdLoc,
+                         Scope *S);  
+  Decl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
+  Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
+                                 Scope *S);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
-
+public:
   virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts);
   virtual StmtResult ParseExprStmt(ExprTy *Expr) {
