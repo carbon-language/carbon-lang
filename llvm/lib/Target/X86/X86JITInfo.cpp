@@ -205,9 +205,9 @@ extern "C" {
 #ifdef _MSC_VER
 extern "C" void X86CompilationCallback2() {
   assert(sizeof(size_t) == 4); // FIXME: handle Win64
-  unsigned *RetAddrLoc = (unsigned *)_AddressOfReturnAddress();
+  intptr_t *RetAddrLoc = (intptr_t *)_AddressOfReturnAddress();
   RetAddrLoc += 4;  // skip over ret addr, edx, eax, ecx
-  unsigned RetAddr = *RetAddrLoc;
+  intptr_t RetAddr = *RetAddrLoc;
 #else
 extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   intptr_t *RetAddrLoc = &StackPtr[1];
@@ -219,7 +219,11 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   bool isStub = ((unsigned char*)RetAddr)[0] == 0xCD;
 
   // The call instruction should have pushed the return value onto the stack...
+#ifdef __x86_64__
+  RetAddr--;     // Backtrack to the reference itself...
+#else
   RetAddr -= 4;  // Backtrack to the reference itself...
+#endif
 
 #if 0
   DOUT << "In callback! Addr=" << (void*)RetAddr
@@ -229,24 +233,41 @@ extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
 #endif
 
   // Sanity check to make sure this really is a call instruction.
+#ifdef __x86_64__
+  assert(((unsigned char*)RetAddr)[-2] == 0x41 &&"Not a call instr!");
+  assert(((unsigned char*)RetAddr)[-1] == 0xFF &&"Not a call instr!");
+#else
   assert(((unsigned char*)RetAddr)[-1] == 0xE8 &&"Not a call instr!");
+#endif
 
   intptr_t NewVal = (intptr_t)JITCompilerFunction((void*)RetAddr);
 
   // Rewrite the call target... so that we don't end up here every time we
   // execute the call.
-  *(unsigned *)RetAddr = (unsigned)(NewVal-RetAddr-4);
+#ifdef __x86_64__
+  *(intptr_t *)(RetAddr - 0xa) = NewVal;
+#else
+  *(intptr_t *)RetAddr = (intptr_t)(NewVal-RetAddr-4);
+#endif
 
   if (isStub) {
     // If this is a stub, rewrite the call into an unconditional branch
     // instruction so that two return addresses are not pushed onto the stack
     // when the requested function finally gets called.  This also makes the
     // 0xCD byte (interrupt) dead, so the marker doesn't effect anything.
+#ifdef __x86_64__
+    ((unsigned char*)RetAddr)[0] = (2 | (4 << 3) | (3 << 6));
+#else
     ((unsigned char*)RetAddr)[-1] = 0xE9;
+#endif
   }
 
   // Change the return address to reexecute the call instruction...
+#ifdef __x86_64__
+  *RetAddrLoc -= 0xd;
+#else
   *RetAddrLoc -= 5;
+#endif
 }
 
 TargetJITInfo::LazyResolverFn
@@ -291,10 +312,21 @@ void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     return MCE.finishFunctionStub(0);
   }
 
+#ifdef __x86_64__
+  MCE.startFunctionStub(14, 4);
+  MCE.emitByte(0x49);          // REX prefix
+  MCE.emitByte(0xB8+2);        // movabsq r10
+  MCE.emitWordLE(((unsigned *)&Fn)[0]);
+  MCE.emitWordLE(((unsigned *)&Fn)[1]);
+  MCE.emitByte(0x41);          // REX prefix
+  MCE.emitByte(0xFF);          // callq *r10
+  MCE.emitByte(2 | (2 << 3) | (3 << 6));
+#else
   MCE.startFunctionStub(6, 4);
   MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
 
   MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
+#endif
 
   MCE.emitByte(0xCD);   // Interrupt - Just a marker identifying the stub!
   return MCE.finishFunctionStub(0);
