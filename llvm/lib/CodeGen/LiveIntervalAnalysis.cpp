@@ -535,7 +535,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       if (lv_->RegisterDefIsDead(mi, interval.reg))
         interval.addRange(LiveRange(RedefIndex, RedefIndex+1, 0));
 
-      DOUT << "RESULT: ";
+      DOUT << " RESULT: ";
       interval.print(DOUT, mri_);
 
     } else {
@@ -550,17 +550,17 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         MachineInstr *Killer = vi.Kills[0];
         unsigned Start = getMBBStartIdx(Killer->getParent());
         unsigned End = getUseIndex(getInstructionIndex(Killer))+1;
-        DOUT << "Removing [" << Start << "," << End << "] from: ";
+        DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, mri_); DOUT << "\n";
         interval.removeRange(Start, End);
-        DOUT << "RESULT: "; interval.print(DOUT, mri_);
+        DOUT << " RESULT: "; interval.print(DOUT, mri_);
 
         // Replace the interval with one of a NEW value number.  Note that this
         // value number isn't actually defined by an instruction, weird huh? :)
         LiveRange LR(Start, End, interval.getNextValue(~0U, 0));
         DOUT << " replace range with " << LR;
         interval.addRange(LR);
-        DOUT << "RESULT: "; interval.print(DOUT, mri_);
+        DOUT << " RESULT: "; interval.print(DOUT, mri_);
       }
 
       // In the case of PHI elimination, each variable definition is only
