@@ -325,6 +325,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SUB,                MVT::v4i16, Legal);
     setOperationAction(ISD::SUB,                MVT::v2i32, Legal);
 
+    setOperationAction(ISD::MULHS,              MVT::v4i16, Legal);
+    setOperationAction(ISD::MUL,                MVT::v4i16, Legal);
+
     setOperationAction(ISD::LOAD,               MVT::v8i8,  Promote);
     AddPromotedToType (ISD::LOAD,               MVT::v8i8,  MVT::v2i32);
     setOperationAction(ISD::LOAD,               MVT::v4i16, Promote);

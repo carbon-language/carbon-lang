@@ -111,6 +111,11 @@ defm MMX_PSUBSW  : MMXI_binop_rm_int<0xE9, "psubsw" , int_x86_mmx_psubs_w>;
 defm MMX_PSUBUSB : MMXI_binop_rm_int<0xD8, "psubusb", int_x86_mmx_psubus_b>;
 defm MMX_PSUBUSW : MMXI_binop_rm_int<0xD9, "psubusw", int_x86_mmx_psubus_w>;
 
+defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>;
+
+defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw" , int_x86_mmx_pmulh_w , 1>;
+defm MMX_PMADDWD : MMXI_binop_rm_int<0xF5, "pmaddwd", int_x86_mmx_pmadd_wd, 1>;
+
 // Move Instructions
 def MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
                     "movd {$src, $dst|$dst, $src}", []>;
@@ -139,7 +144,7 @@ def CVTPI2PDrm : MMX2I<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
                        "cvtpi2pd {$src, $dst|$dst, $src}", []>;
 def CVTTPS2PIrr: I<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
                    "cvttps2pi {$src, $dst|$dst, $src}", []>, TB,
-                 Requires<[HasSSE2]>;
+                   Requires<[HasMMX]>;
 def CVTTPS2PIrm: I<0x2C, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
                    "cvttps2pi {$src, $dst|$dst, $src}", []>, TB,
                  Requires<[HasMMX]>;

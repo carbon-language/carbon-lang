@@ -23,6 +23,9 @@ entry:
 	%tmp89 = load <8 x i8>* %B		; <<8 x i8>> [#uses=1]
 	%tmp105 = tail call <8 x i8> @llvm.x86.mmx.psubus.b( <8 x i8> %tmp80, <8 x i8> %tmp89 )		; <<8 x i8>> [#uses=1]
 	store <8 x i8> %tmp105, <8 x i8>* %A
+        %tmp13 = load <8 x i8>* %A              ; <<8 x i8>> [#uses=1]
+        %tmp16 = mul <8 x i8> %tmp13, %tmp105            ; <<8 x i8>> [#uses=1]
+        store <8 x i8> %tmp16, <8 x i8>* %B
 	tail call void @llvm.x86.mmx.emms( )
 	ret void
 }
@@ -36,6 +39,9 @@ entry:
 	%tmp9 = load <2 x i32>* %B		; <<2 x i32>> [#uses=1]
 	%tmp10 = sub <2 x i32> %tmp4, %tmp9		; <<2 x i32>> [#uses=1]
 	store <2 x i32> %tmp10, <2 x i32>* %B
+        %tmp13 = load <2 x i32>* %A             ; <<2 x i32>> [#uses=1]
+        %tmp16 = mul <2 x i32> %tmp13, %tmp10           ; <<2 x i32>> [#uses=1]
+        store <2 x i32> %tmp16, <2 x i32>* %B
 	tail call void @llvm.x86.mmx.emms( )
 	ret void
 }
@@ -61,6 +67,13 @@ entry:
 	%tmp89 = load <4 x i16>* %B		; <<4 x i16>> [#uses=1]
 	%tmp105 = tail call <4 x i16> @llvm.x86.mmx.psubus.w( <4 x i16> %tmp80, <4 x i16> %tmp89 )		; <<4 x i16>> [#uses=1]
 	store <4 x i16> %tmp105, <4 x i16>* %A
+        %tmp22 = load <4 x i16>* %A             ; <<4 x i16>> [#uses=1]
+        %tmp24 = tail call <4 x i16> @llvm.x86.mmx.pmulh.w( <4 x i16> %tmp22, <4 x i16> %tmp105 )                ; <<4 x i16>> [#uses=2]
+        store <4 x i16> %tmp24, <4 x i16>* %A
+        %tmp28 = load <4 x i16>* %B             ; <<4 x i16>> [#uses=1]
+        %tmp33 = tail call <2 x i32> @llvm.x86.mmx.pmadd.wd( <4 x i16> %tmp24, <4 x i16> %tmp28 )               ; <<2 x i32>> [#uses=1]
+        %tmp34 = bitcast <2 x i32> %tmp33 to <4 x i16>          ; <<4 x i16>> [#uses=1]
+        store <4 x i16> %tmp34, <4 x i16>* %A
 	tail call void @llvm.x86.mmx.emms( )
 	ret void
 }
@@ -80,5 +93,9 @@ declare <8 x i8> @llvm.x86.mmx.paddus.b(<8 x i8>, <8 x i8>)
 declare <8 x i8> @llvm.x86.mmx.psubs.b(<8 x i8>, <8 x i8>)
 
 declare <8 x i8> @llvm.x86.mmx.psubus.b(<8 x i8>, <8 x i8>)
+
+declare <4 x i16> @llvm.x86.mmx.pmulh.w(<4 x i16>, <4 x i16>)
+
+declare <2 x i32> @llvm.x86.mmx.pmadd.wd(<4 x i16>, <4 x i16>)
 
 declare void @llvm.x86.mmx.emms()

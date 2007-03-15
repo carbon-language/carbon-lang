@@ -576,4 +576,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_mmx_psubus_w : GCCBuiltin<"__builtin_ia32_psubusw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
                          llvm_v4i16_ty], [IntrNoMem]>;
+
+  // Multiplication
+  def int_x86_mmx_pmulh_w : GCCBuiltin<"__builtin_ia32_pmulhw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+  def int_x86_mmx_pmadd_wd : GCCBuiltin<"__builtin_ia32_pmaddwd">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
 }
