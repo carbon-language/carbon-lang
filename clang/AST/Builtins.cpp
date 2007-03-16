@@ -99,6 +99,11 @@ static TypeRef DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
     if (Long)
       return Context.LongDoubleTy;
     return Context.DoubleTy;
+  case 's':
+    assert(!LongLong && "Bad modifiers used with 's'!");
+    if (Unsigned)
+      return Context.UnsignedShortTy;
+    return Context.ShortTy;
   //case 'i':
   }
 }

@@ -50,7 +50,7 @@ bool Type::isIncompleteType() const {
     // - Forward declarations (extern int matrix[][7]).
     // - The last component of a structure (flexible array idiom).
     // Clients of this routine will need to determine if the size is required.
-    return cast<ArrayType>(this)->getSizeExpression() == 0;
+    return cast<ArrayType>(this)->getSize() == 0;
   }
 }
 

@@ -281,13 +281,13 @@ public:
   TypeRef getElementType() const { return ElementType; }
   ArraySizeModifier getSizeModifier() const { return SizeModifier; }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
-  Expr *getSizeExpression() const { return SizeExpr; }
+  Expr *getSize() const { return SizeExpr; }
   
   virtual void getAsString(std::string &InnerString) const;
   
   void Profile(FoldingSetNodeID &ID) {
     Profile(ID, getSizeModifier(), getIndexTypeQualifier(), getElementType(),
-            getSizeExpression());
+            getSize());
   }
   static void Profile(FoldingSetNodeID &ID, ArraySizeModifier SizeModifier,
                       unsigned IndexTypeQuals, TypeRef ElementType,

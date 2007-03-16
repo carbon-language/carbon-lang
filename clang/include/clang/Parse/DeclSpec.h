@@ -255,7 +255,7 @@ struct DeclaratorChunk {
     /// This is the size of the array, or null if [] or [*] was specified.
     /// Since the parser is multi-purpose, and we don't want to impose a root
     /// expression class on all clients, NumElts is untyped.
-    void *NumElts;
+    Action::ExprTy *NumElts;
     void destroy() {}
   };
   

@@ -48,5 +48,6 @@ BUILTIN(__builtin_infl , "Ld"  , "nc")
 BUILTIN(__builtin_fabs , "dd"  , "nc")
 BUILTIN(__builtin_fabsf, "ff"  , "nc")
 BUILTIN(__builtin_fabsl, "LdLd", "nc")
+BUILTIN(__builtin_constant_p, "UsUs", "nc")
 
 #undef BUILTIN
