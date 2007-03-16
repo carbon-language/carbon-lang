@@ -159,6 +159,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   if (!Subtarget->hasV5TOps() || Subtarget->isThumb())
     setOperationAction(ISD::CTLZ, MVT::i32, Expand);
 
+  // Only ARMv6 has BSWAP.
+  if (!Subtarget->hasV6Ops())
+      setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+
   // These are expanded into libcalls.
   setOperationAction(ISD::SDIV,  MVT::i32, Expand);
   setOperationAction(ISD::UDIV,  MVT::i32, Expand);
