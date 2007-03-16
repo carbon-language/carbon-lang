@@ -63,9 +63,7 @@ let isTwoAddress = 1 in {
                                          (bitconvert
                                           (loadv2i32 addr:$src2)))))]>;
   }
-}
 
-let isTwoAddress = 1 in {
   multiclass MMXI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
                                bit Commutable = 0> {
     def rr : MMXI<opc, MRMSrcReg, (ops VR64:$dst, VR64:$src1, VR64:$src2),
@@ -77,6 +75,24 @@ let isTwoAddress = 1 in {
                  !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                  [(set VR64:$dst, (IntId VR64:$src1,
                                    (bitconvert (loadv2i32 addr:$src2))))]>;
+  }
+
+  // MMXI_binop_rm_v2i32 - Simple MMX binary operator whose type is v2i32.
+  //
+  // FIXME: we could eliminate this and use MMXI_binop_rm instead if tblgen knew
+  // to collapse (bitconvert VT to VT) into its operand.
+  //
+  multiclass MMXI_binop_rm_v2i32<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                 bit Commutable = 0> {
+    def rr : MMXI<opc, MRMSrcReg, (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                  !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                  [(set VR64:$dst, (v2i32 (OpNode VR64:$src1, VR64:$src2)))]> {
+      let isCommutable = Commutable;
+    }
+    def rm : MMXI<opc, MRMSrcMem, (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                  !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                  [(set VR64:$dst,
+                    (OpNode VR64:$src1,(loadv2i32 addr:$src2)))]>;
   }
 }
 
@@ -115,6 +131,24 @@ defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>;
 
 defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw" , int_x86_mmx_pmulh_w , 1>;
 defm MMX_PMADDWD : MMXI_binop_rm_int<0xF5, "pmaddwd", int_x86_mmx_pmadd_wd, 1>;
+
+// Logical Instructions
+defm MMX_PAND : MMXI_binop_rm_v2i32<0xDB, "pand", and, 1>;
+defm MMX_POR  : MMXI_binop_rm_v2i32<0xEB, "por" , or,  1>;
+defm MMX_PXOR : MMXI_binop_rm_v2i32<0xEF, "pxor", xor, 1>;
+
+let isTwoAddress = 1 in {
+  def MMX_PANDNrr : MMXI<0xDF, MRMSrcReg,
+                         (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                         "pandn {$src2, $dst|$dst, $src2}",
+                         [(set VR64:$dst, (v2i32 (and (vnot VR64:$src1),
+                                                  VR64:$src2)))]>;
+  def MMX_PANDNrm : MMXI<0xDF, MRMSrcMem,
+                         (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                         "pandn {$src2, $dst|$dst, $src2}",
+                         [(set VR64:$dst, (v2i32 (and (vnot VR64:$src1),
+                                                  (load addr:$src2))))]>;
+}
 
 // Move Instructions
 def MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
