@@ -98,7 +98,7 @@ private:
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
   FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
-  
+
   /// More parsing and symbol table subroutines...
   VarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
                                 Scope *FnBodyScope);

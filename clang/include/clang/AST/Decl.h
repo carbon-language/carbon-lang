@@ -95,14 +95,21 @@ public:
 
 /// ObjectDecl - Represents a declaration of a value.
 class ObjectDecl : public Decl {
-  TypeRef DeclType;
-protected:
-  ObjectDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T)
-    : Decl(DK, L, Id), DeclType(T) {}
 public:
-
+  enum StorageClass {
+    None, Extern, Static, Auto, Register
+  };
+private:
+  TypeRef DeclType;
+  StorageClass SClass;
+protected:
+  ObjectDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T,
+             StorageClass S = None): Decl(DK, L, Id), DeclType(T), SClass(S) {}
+public:
   TypeRef getType() const { return DeclType; }
-
+  TypeRef getCanonicalType() const { return DeclType.getCanonicalType(); }
+  StorageClass getStorageClass() const { return SClass; }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() == Variable || D->getKind() == Function;
@@ -115,8 +122,8 @@ public:
 class VarDecl : public ObjectDecl {
   // TODO: Initializer.
 public:
-  VarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
-    : ObjectDecl(Variable, L, Id, T) {}
+  VarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
+    : ObjectDecl(Variable, L, Id, T, S) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Variable; }

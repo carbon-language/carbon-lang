@@ -302,7 +302,7 @@ public:
   static bool classof(const ArrayType *) { return true; }
 };
 
-/// FunctionType - C99 6.7.5.3 - Array Declarators.  This is the common base
+/// FunctionType - C99 6.7.5.3 - Function Declarators.  This is the common base
 /// class of FunctionTypeNoProto and FunctionTypeProto.
 ///
 class FunctionType : public Type {
@@ -396,7 +396,9 @@ public:
 
 class TypedefType : public Type {
   TypedefDecl *Decl;
-  TypedefType(TypedefDecl *D, Type *can) : Type(TypeName, can), Decl(D) {}
+  TypedefType(TypedefDecl *D, Type *can) : Type(TypeName, can), Decl(D) {
+    assert(!isa<TypedefType>(can) && "Invalid canonoical type");
+  }
   friend class ASTContext;  // ASTContext creates these.
 public:
   

@@ -96,7 +96,6 @@ Decl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
       Context.Target.DiagnoseNonPortability(IdLoc,
                                             diag::port_target_builtin_use);
     }
-    
     // If this is a builtin on this (or all) targets, create the decl.
     if (unsigned BuiltinID = II->getBuiltinID())
       return LazilyCreateBuiltin(II, BuiltinID, S);
@@ -172,7 +171,8 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // This is not right, but it's a start.  If 'Old' is a function prototype with
   // the same type as 'New', silently allow this.  FIXME: We should link up decl
   // objects here.
-  if (Old->getBody() == 0 && Old->getType() == New->getType()) {
+  if (Old->getBody() == 0 && 
+      Old->getCanonicalType() == New->getCanonicalType()) {
     return New;
   }
   
@@ -197,12 +197,17 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     Diag(OldD->getLocation(), diag::err_previous_definition);
     return New;
   }
-  
-  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
-  // TODO: This is totally simplistic.  It should handle merging functions
-  // together etc, merging extern int X; int X; ...
-  Diag(New->getLocation(), diag::err_redefinition, New->getName());
-  Diag(Old->getLocation(), diag::err_previous_definition);
+  // Verify the types match.
+  if (Old->getCanonicalType() != New->getCanonicalType()) {
+    Diag(New->getLocation(), diag::err_redefinition, New->getName());
+    Diag(Old->getLocation(), diag::err_previous_definition);
+    return New;
+  }
+  // We've verified the types match, now check if Old is "extern".
+  if (Old->getStorageClass() != ObjectDecl::Extern) {
+    Diag(New->getLocation(), diag::err_redefinition, New->getName());
+    Diag(Old->getLocation(), diag::err_previous_definition);
+  }
   return New;
 }
 
@@ -254,8 +259,19 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   } else {
     TypeRef R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0;
-    VarDecl *NewVD = new VarDecl(D.getIdentifierLoc(), II, R);
 
+    ObjectDecl::StorageClass S;
+    switch (D.getDeclSpec().getStorageClassSpec()) {
+      default: assert(0 && "Unknown storage class!");
+      case 0: S = ObjectDecl::None;
+      case DeclSpec::SCS_extern:   S = ObjectDecl::Extern; break;
+      case DeclSpec::SCS_static:   S = ObjectDecl::Static; break;
+      // The following 2 should never be seen in this context.
+      case DeclSpec::SCS_auto:     S = ObjectDecl::Auto; break;
+      case DeclSpec::SCS_register: S = ObjectDecl::Register; break;
+    }
+    VarDecl *NewVD = new VarDecl(D.getIdentifierLoc(), II, R, S);
+    
     // Merge the decl with the existing one if appropriate.
     if (PrevDecl) {
       NewVD = MergeVarDecl(NewVD, PrevDecl);
@@ -294,9 +310,11 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
     
   }
   
+  // FIXME: Handle storage class (auto, register). No declarator?
   VarDecl *New = new VarDecl(PI.IdentLoc, II, 
-                             TypeRef::getFromOpaquePtr(PI.TypeInfo));
-  
+                             TypeRef::getFromOpaquePtr(PI.TypeInfo), 
+                             ObjectDecl::None);
+
   // If this has an identifier, add it to the scope stack.
   if (II) {
     New->setNext(II->getFETokenInfo<Decl>());

@@ -15,6 +15,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/SmallVector.h"
+
 using namespace llvm;
 using namespace clang;
 
@@ -268,7 +269,7 @@ TypeRef ASTContext::getTypedefType(TypedefDecl *Decl) {
   if (Decl->TypeForDecl) return Decl->TypeForDecl;
   
   // FIXME: does this lose qualifiers from the typedef??
-  Type *Canonical = Decl->getUnderlyingType().getTypePtr();
+  Type *Canonical = Decl->getUnderlyingType().getCanonicalType().getTypePtr();
   Types.push_back(Decl->TypeForDecl = new TypedefType(Decl, Canonical));
   return Types.back();
 }
