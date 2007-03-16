@@ -4009,7 +4009,7 @@ static bool SinkInvariantGEPIndex(BinaryOperator *BinOp, LoopInfo *loopInfo,
       Loop *L = loopInfo->getLoopFor(UserBB);
 
       // Only sink if expression is a loop invariant in the use BB.
-      if (isLoopInvariantInst(BinOp, L) && !User->use_empty()) {
+      if (L && isLoopInvariantInst(BinOp, L) && !User->use_empty()) {
         const Type *UseTy = NULL;
         // FIXME: We are assuming all the uses of the GEP will have the
         // same type.
