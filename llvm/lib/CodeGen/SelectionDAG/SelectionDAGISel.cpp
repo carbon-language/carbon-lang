@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "isel"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CallingConv.h"
@@ -58,6 +59,9 @@ ViewSchedDAGs("view-sched-dags", cl::Hidden,
 static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0;
 #endif
 
+static cl::opt<bool>
+EnableGEPIndexSink("enable-gep-index-sinking", cl::Hidden,
+              cl::desc("Sink invariant GEP index computation into use blocks"));
 
 //===---------------------------------------------------------------------===//
 ///
@@ -3703,6 +3707,8 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   // FIXME: we only modify the CFG to split critical edges.  This
   // updates dom and loop info.
   AU.addRequired<AliasAnalysis>();
+  AU.addRequired<LoopInfo>();
+  AU.setPreservesAll();
 }
 
 
@@ -3959,6 +3965,88 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   return true;
 }
 
+/// isLoopInvariantInst - Returns true if all operands of the instruction are
+/// loop invariants in the specified loop.
+static bool isLoopInvariantInst(Instruction *I, Loop *L) {
+  // The instruction is loop invariant if all of its operands are loop-invariant
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+    if (!L->isLoopInvariant(I->getOperand(i)))
+      return false;
+  return true;
+}
+
+/// SinkInvariantGEPIndex - If a GEP instruction has a variable index that has
+/// been hoisted out of the loop by LICM pass, sink it back into the use BB
+/// if it can be determined that the index computation can be folded into the
+/// addressing mode of the load / store uses.
+static bool SinkInvariantGEPIndex(BinaryOperator *BinOp, LoopInfo *loopInfo,
+                             const TargetLowering &TLI) {
+  if (!EnableGEPIndexSink)
+    return false;
+
+  // Only look at Add / Sub for now.
+  if (BinOp->getOpcode() != Instruction::Add &&
+      BinOp->getOpcode() != Instruction::Sub)
+    return false;
+
+  /// InsertedOps - Only insert a duplicate in each block once.
+  std::map<BasicBlock*, BinaryOperator*> InsertedOps;
+
+  bool MadeChange = false;
+  BasicBlock *DefBB = BinOp->getParent();
+  for (Value::use_iterator UI = BinOp->use_begin(), E = BinOp->use_end(); 
+       UI != E; ) {
+    Instruction *User = cast<Instruction>(*UI);
+
+    // Preincrement use iterator so we don't invalidate it.
+    ++UI;
+
+    // Only look for GEP use in another block.
+    if (User->getParent() == DefBB) continue;
+
+    if (isa<GetElementPtrInst>(User)) {
+      BasicBlock *UserBB = User->getParent();
+      Loop *L = loopInfo->getLoopFor(UserBB);
+
+      // Only sink if expression is a loop invariant in the use BB.
+      if (isLoopInvariantInst(BinOp, L) && !User->use_empty()) {
+        const Type *UseTy = NULL;
+        // FIXME: We are assuming all the uses of the GEP will have the
+        // same type.
+        Instruction *GEPUser = cast<Instruction>(*User->use_begin());
+        if (LoadInst *Load = dyn_cast<LoadInst>(GEPUser))
+          UseTy = Load->getType();
+        else if (StoreInst *Store = dyn_cast<StoreInst>(GEPUser))
+          UseTy = Store->getOperand(0)->getType();
+
+        // Check if it is possible to fold the expression to address mode.
+        if (UseTy &&
+            TLI.isLegalAddressExpression(Instruction::Add, BinOp->getOperand(0),
+                                         BinOp->getOperand(1), UseTy)) {
+          // Sink it into user block.
+          BinaryOperator *&InsertedOp = InsertedOps[UserBB];
+          if (!InsertedOp) {
+            BasicBlock::iterator InsertPt = UserBB->begin();
+            while (isa<PHINode>(InsertPt)) ++InsertPt;
+      
+            InsertedOp =
+              BinaryOperator::create(BinOp->getOpcode(), BinOp->getOperand(0),
+                                     BinOp->getOperand(1), "", InsertPt);
+          }
+
+          User->replaceUsesOfWith(BinOp, InsertedOp);
+          MadeChange = true;
+        }
+      }
+    }
+  }
+
+  if (BinOp->use_empty())
+      BinOp->eraseFromParent();
+
+  return MadeChange;
+}
+
 
 /// SplitEdgeNicely - Split the critical edge from TI to it's specified
 /// successor if it will improve codegen.  We only do this if the successor has
@@ -4020,6 +4108,8 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
   RegMap = MF.getSSARegMap();
   DOUT << "\n\n\n=== " << Fn.getName() << "\n";
+
+  LoopInfo *loopInfo = &getAnalysis<LoopInfo>();
 
   // First, split all critical edges.
   //
@@ -4089,6 +4179,8 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
         // If, after promotion, these are the same types, this is a noop copy.
         if (SrcVT == DstVT)
           MadeChange |= OptimizeNoopCopyExpression(CI);
+      } else if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(I)) {
+        MadeChange |= SinkInvariantGEPIndex(BinOp, loopInfo, TLI);
       }
     }
   }
