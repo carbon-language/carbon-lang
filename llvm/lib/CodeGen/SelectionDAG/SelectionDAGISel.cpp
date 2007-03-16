@@ -59,10 +59,6 @@ ViewSchedDAGs("view-sched-dags", cl::Hidden,
 static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0;
 #endif
 
-static cl::opt<bool>
-EnableGEPIndexSink("enable-gep-index-sinking", cl::Hidden,
-              cl::desc("Sink invariant GEP index computation into use blocks"));
-
 //===---------------------------------------------------------------------===//
 ///
 /// RegisterScheduler class - Track the registration of instruction schedulers.
@@ -3981,9 +3977,6 @@ static bool isLoopInvariantInst(Instruction *I, Loop *L) {
 /// addressing mode of the load / store uses.
 static bool SinkInvariantGEPIndex(BinaryOperator *BinOp, LoopInfo *loopInfo,
                              const TargetLowering &TLI) {
-  if (!EnableGEPIndexSink)
-    return false;
-
   // Only look at Add / Sub for now.
   if (BinOp->getOpcode() != Instruction::Add &&
       BinOp->getOpcode() != Instruction::Sub)
