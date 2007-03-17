@@ -4523,6 +4523,17 @@ SDOperand X86TargetLowering::
 isOperandValidForConstraint(SDOperand Op, char Constraint, SelectionDAG &DAG) {
   switch (Constraint) {
   default: break;
+  case 'I':
+    if (isa<ConstantSDNode>(Op)) {
+      unsigned Value = cast<ConstantSDNode>(Op)->getValue();
+      if (Value >= 0 && Value <= 31)
+        return Op;
+      else 
+        return SDOperand(0,0);
+    } else {
+        return SDOperand(0,0);
+    }
+    break;
   case 'i':
     // Literal immediates are always ok.
     if (isa<ConstantSDNode>(Op)) return Op;
