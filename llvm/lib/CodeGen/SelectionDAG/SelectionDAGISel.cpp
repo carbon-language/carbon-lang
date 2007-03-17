@@ -3983,7 +3983,7 @@ static bool SinkInvariantGEPIndex(BinaryOperator *BinOp, LoopInfo *loopInfo,
     return false;
 
   // DestBBs - These are the blocks where a copy of BinOp will be inserted.
-  std::set<BasicBlock*> DestBBs;
+  SmallSet<BasicBlock*, 8> DestBBs;
   BasicBlock *DefBB = BinOp->getParent();
   bool MadeChange = false;
   for (Value::use_iterator UI = BinOp->use_begin(), E = BinOp->use_end(); 
