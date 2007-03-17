@@ -3982,18 +3982,13 @@ static bool SinkInvariantGEPIndex(BinaryOperator *BinOp, LoopInfo *loopInfo,
       BinOp->getOpcode() != Instruction::Sub)
     return false;
 
-  /// InsertedOps - Only insert a duplicate in each block once.
-  std::map<BasicBlock*, BinaryOperator*> InsertedOps;
-
-  bool MadeChange = false;
+  // DestBBs - These are the blocks where a copy of BinOp will be inserted.
+  std::set<BasicBlock*> DestBBs;
   BasicBlock *DefBB = BinOp->getParent();
+  bool MadeChange = false;
   for (Value::use_iterator UI = BinOp->use_begin(), E = BinOp->use_end(); 
-       UI != E; ) {
+       UI != E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
-
-    // Preincrement use iterator so we don't invalidate it.
-    ++UI;
-
     // Only look for GEP use in another block.
     if (User->getParent() == DefBB) continue;
 
@@ -4016,28 +4011,48 @@ static bool SinkInvariantGEPIndex(BinaryOperator *BinOp, LoopInfo *loopInfo,
         if (UseTy &&
             TLI.isLegalAddressExpression(Instruction::Add, BinOp->getOperand(0),
                                          BinOp->getOperand(1), UseTy)) {
-          // Sink it into user block.
-          BinaryOperator *&InsertedOp = InsertedOps[UserBB];
-          if (!InsertedOp) {
-            BasicBlock::iterator InsertPt = UserBB->begin();
-            while (isa<PHINode>(InsertPt)) ++InsertPt;
-      
-            InsertedOp =
-              BinaryOperator::create(BinOp->getOpcode(), BinOp->getOperand(0),
-                                     BinOp->getOperand(1), "", InsertPt);
-          }
-
-          User->replaceUsesOfWith(BinOp, InsertedOp);
+          DestBBs.insert(UserBB);
           MadeChange = true;
         }
       }
     }
   }
 
+  // Nothing to do.
+  if (!MadeChange)
+    return false;
+
+  /// InsertedOps - Only insert a duplicate in each block once.
+  std::map<BasicBlock*, BinaryOperator*> InsertedOps;
+  for (Value::use_iterator UI = BinOp->use_begin(), E = BinOp->use_end(); 
+       UI != E; ) {
+    Instruction *User = cast<Instruction>(*UI);
+    BasicBlock *UserBB = User->getParent();
+
+    // Preincrement use iterator so we don't invalidate it.
+    ++UI;
+
+    // If any user in this BB wants it, replace all the uses in the BB.
+    if (DestBBs.count(UserBB)) {
+      // Sink it into user block.
+      BinaryOperator *&InsertedOp = InsertedOps[UserBB];
+      if (!InsertedOp) {
+        BasicBlock::iterator InsertPt = UserBB->begin();
+        while (isa<PHINode>(InsertPt)) ++InsertPt;
+      
+        InsertedOp =
+          BinaryOperator::create(BinOp->getOpcode(), BinOp->getOperand(0),
+                                 BinOp->getOperand(1), "", InsertPt);
+      }
+
+      User->replaceUsesOfWith(BinOp, InsertedOp);
+    }
+  }
+
   if (BinOp->use_empty())
       BinOp->eraseFromParent();
 
-  return MadeChange;
+  return true;
 }
 
 
