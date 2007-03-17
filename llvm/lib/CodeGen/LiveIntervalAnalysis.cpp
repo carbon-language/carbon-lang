@@ -41,6 +41,8 @@ STATISTIC(numIntervalsAfter, "Number of intervals after coalescing");
 STATISTIC(numJoins    , "Number of interval joins performed");
 STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
 STATISTIC(numFolded   , "Number of loads/stores folded into instructions");
+STATISTIC(numAborts   , "Number of times interval joining aborted");
+static cl::opt<bool> ReduceJoinPhys("reduce-joining-phy-regs", cl::Hidden);
 
 namespace {
   RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
@@ -931,6 +933,58 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
       isShorten = true;
   }
 
+  // We need to be careful about coalescing a source physical register with a
+  // virtual register. Once the coalescing is done, it cannot be broken and
+  // these are not spillable! If the destination interval uses are far away,
+  // think twice about coalescing them!
+  if (ReduceJoinPhys && !isDead &&
+      MRegisterInfo::isPhysicalRegister(repSrcReg)) {
+    // Small function. No need to worry!
+    if (r2iMap_.size() <= allocatableRegs_.size() * 2)
+      goto TryJoin;
+
+    LiveVariables::VarInfo& dvi = lv_->getVarInfo(repDstReg);
+    // Is the value used in the current BB or any immediate successroe BB?
+    MachineBasicBlock *SrcBB = CopyMI->getParent();
+    if (!dvi.UsedBlocks[SrcBB->getNumber()]) {
+      for (MachineBasicBlock::succ_iterator SI = SrcBB->succ_begin(),
+             SE = SrcBB->succ_end(); SI != SE; ++SI) {
+        MachineBasicBlock *SuccMBB = *SI;
+        if (dvi.UsedBlocks[SuccMBB->getNumber()])
+          goto TryJoin;
+      }
+    }
+
+    // Ok, no use in this BB and no use in immediate successor BB's. Be really
+    // careful now!
+    // It's only used in one BB, forget about it!
+    if (dvi.UsedBlocks.count() <= 1) {
+      ++numAborts;
+      return false;
+    }
+
+    // Examine all the blocks where the value is used. If any is in the same
+    // loop, then it's ok. Or if the current BB is a preheader of any of the
+    // loop that uses this value, that's ok as well.
+    const LoopInfo &LI = getAnalysis<LoopInfo>();
+    const Loop *L = LI.getLoopFor(SrcBB->getBasicBlock());
+    int UseBBNum = dvi.UsedBlocks.find_first();
+    while (UseBBNum != -1) {
+      MachineBasicBlock *UseBB = mf_->getBlockNumbered(UseBBNum);
+      const Loop *UL = LI.getLoopFor(UseBB->getBasicBlock());
+      if ((UL && UL == L) ||  // A use in the same loop
+          (UL && L &&         // A use in a loop and this BB is the preheader
+           UL->getLoopPreheader() == SrcBB->getBasicBlock()))
+        goto TryJoin;
+      UseBBNum = dvi.UsedBlocks.find_next(UseBBNum);
+    }
+
+    // Don't do it!
+    ++numAborts;
+    return false;
+  }
+
+TryJoin:
   // Okay, attempt to join these two intervals.  On failure, this returns false.
   // Otherwise, if one of the intervals being joined is a physreg, this method
   // always canonicalizes DestInt to be it.  The output "SrcInt" will not have
