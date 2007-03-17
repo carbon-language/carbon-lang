@@ -2054,8 +2054,8 @@ namespace {
         case ICmpInst::ICMP_SLT:
         case ICmpInst::ICMP_ULT:
           if (Op1->getValue() != 0)
-            NextVal = cast<ConstantInt>(ConstantExpr::getAdd(
-                          Op1, ConstantInt::get(Op1->getType(), -1)));
+            NextVal = cast<ConstantInt>(ConstantExpr::getSub(
+                          Op1, ConstantInt::get(Op1->getType(), 1)));
          break;
         case ICmpInst::ICMP_SGT:
         case ICmpInst::ICMP_UGT:
