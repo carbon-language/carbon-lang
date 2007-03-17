@@ -48,6 +48,9 @@ void LiveVariables::VarInfo::dump() const {
   cerr << "  Alive in blocks: ";
   for (unsigned i = 0, e = AliveBlocks.size(); i != e; ++i)
     if (AliveBlocks[i]) cerr << i << ", ";
+  cerr << "  Used in blocks: ";
+  for (unsigned i = 0, e = UsedBlocks.size(); i != e; ++i)
+    if (UsedBlocks[i]) cerr << i << ", ";
   cerr << "\n  Killed by:";
   if (Kills.empty())
     cerr << " No instructions.\n";
@@ -68,7 +71,10 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
     else
       VirtRegInfo.resize(2*VirtRegInfo.size());
   }
-  return VirtRegInfo[RegIdx];
+  VarInfo &VI = VirtRegInfo[RegIdx];
+  VI.AliveBlocks.resize(MF->getNumBlockIDs());
+  VI.UsedBlocks.resize(MF->getNumBlockIDs());
+  return VI;
 }
 
 bool LiveVariables::KillsRegister(MachineInstr *MI, unsigned Reg) const {
@@ -117,9 +123,6 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
 
   if (MBB == VRInfo.DefInst->getParent()) return;  // Terminate recursion
 
-  if (VRInfo.AliveBlocks.size() <= BBNum)
-    VRInfo.AliveBlocks.resize(BBNum+1);  // Make space...
-
   if (VRInfo.AliveBlocks[BBNum])
     return;  // We already know the block is live
 
@@ -134,6 +137,10 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
 void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
                                      MachineInstr *MI) {
   assert(VRInfo.DefInst && "Register use before def!");
+
+  unsigned BBNum = MBB->getNumber();
+
+  VRInfo.UsedBlocks[BBNum] = true;
 
   // Check to see if this basic block is already a kill block...
   if (!VRInfo.Kills.empty() && VRInfo.Kills.back()->getParent() == MBB) {
@@ -152,11 +159,10 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
          "Should have kill for defblock!");
 
   // Add a new kill entry for this basic block.
-  unsigned BBNum = MBB->getNumber();
   // If this virtual register is already marked as alive in this basic block,
   // that means it is alive in at least one of the successor block, it's not
   // a kill.
-  if (VRInfo.AliveBlocks.size() <= BBNum || !VRInfo.AliveBlocks[BBNum])
+  if (!VRInfo.AliveBlocks[BBNum])
     VRInfo.Kills.push_back(MI);
 
   // Update all dominating blocks to mark them known live.
@@ -220,12 +226,13 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
   }
 }
 
-bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
-  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-  RegInfo = MF.getTarget().getRegisterInfo();
+bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
+  MF = &mf;
+  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+  RegInfo = MF->getTarget().getRegisterInfo();
   assert(RegInfo && "Target doesn't have register information?");
 
-  ReservedRegisters = RegInfo->getReservedRegs(MF);
+  ReservedRegisters = RegInfo->getReservedRegs(mf);
 
   // PhysRegInfo - Keep track of which instruction was the last use of a
   // physical register.  This is a purely local property, because all physical
@@ -239,14 +246,14 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   /// Get some space for a respectable number of registers...
   VirtRegInfo.resize(64);
 
-  analyzePHINodes(MF);
+  analyzePHINodes(mf);
 
   // Calculate live variable information in depth first order on the CFG of the
   // function.  This guarantees that we will see the definition of a virtual
   // register before its uses due to dominance properties of SSA (except for PHI
   // nodes, which are treated as a special case).
   //
-  MachineBasicBlock *Entry = MF.begin();
+  MachineBasicBlock *Entry = MF->begin();
   std::set<MachineBasicBlock*> Visited;
   for (df_ext_iterator<MachineBasicBlock*> DFI = df_ext_begin(Entry, Visited),
          E = df_ext_end(Entry, Visited); DFI != E; ++DFI) {
@@ -326,8 +333,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     // it as using all of the live-out values in the function.
     if (!MBB->empty() && TII.isReturn(MBB->back().getOpcode())) {
       MachineInstr *Ret = &MBB->back();
-      for (MachineFunction::liveout_iterator I = MF.liveout_begin(),
-             E = MF.liveout_end(); I != E; ++I) {
+      for (MachineFunction::liveout_iterator I = MF->liveout_begin(),
+             E = MF->liveout_end(); I != E; ++I) {
         assert(MRegisterInfo::isPhysicalRegister(*I) &&
                "Cannot have a live-in virtual register!");
         HandlePhysRegUse(*I, Ret);
@@ -360,7 +367,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   // function.  If so, it is due to a bug in the instruction selector or some
   // other part of the code generator if this happens.
 #ifndef NDEBUG
-  for(MachineFunction::iterator i = MF.begin(), e = MF.end(); i != e; ++i)
+  for(MachineFunction::iterator i = MF->begin(), e = MF->end(); i != e; ++i)
     assert(Visited.count(&*i) != 0 && "unreachable basic block found");
 #endif
 

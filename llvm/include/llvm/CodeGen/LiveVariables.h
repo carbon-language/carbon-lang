@@ -79,6 +79,10 @@ public:
     ///
     BitVector AliveBlocks;
 
+    /// UsedBlocks - Set of blocks of which this value is actually used. This
+    /// is a bit set which uses the basic block number as an index.
+    BitVector UsedBlocks;
+
     /// Kills - List of MachineInstruction's which are the last use of this
     /// virtual register (kill it) in their basic block.
     ///
@@ -116,6 +120,8 @@ private:
   BitVector ReservedRegisters;
 
 private:   // Intermediate data structures
+  MachineFunction *MF;
+
   const MRegisterInfo *RegInfo;
 
   MachineInstr **PhysRegInfo;
