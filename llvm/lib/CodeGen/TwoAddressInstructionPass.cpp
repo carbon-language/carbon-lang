@@ -198,6 +198,9 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           varInfo.DefInst = prevMi;
 
           // update live variables for regB
+          LiveVariables::VarInfo& varInfoB = LV.getVarInfo(regB);
+          // regB is used in this BB.
+          varInfoB.UsedBlocks[mbbi->getNumber()] = true;
           if (LV.removeVirtualRegisterKilled(regB, mbbi, mi))
             LV.addVirtualRegisterKilled(regB, prevMi);
 
