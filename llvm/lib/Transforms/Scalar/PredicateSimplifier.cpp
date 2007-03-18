@@ -1543,13 +1543,26 @@ namespace {
         // "%x = mul i32 %y, 0" then %x EQ 0
 
         Instruction::BinaryOps Opcode = BO->getOpcode();
+        const Type *Ty = BO->getType();
+        assert(!Ty->isFPOrFPVector() && "Float in work queue!");
+
+        Constant *Zero = Constant::getNullValue(Ty);
+        Constant *AllOnes = ConstantInt::getAllOnesValue(Ty);
 
         switch (Opcode) {
           default: break;
           case Instruction::Sub:
+            if (Op1 == Zero) {
+              add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            }
+            break;
+          case Instruction::Or:
+            if (Op0 == AllOnes || Op1 == AllOnes) {
+              add(BO, AllOnes, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            } // fall-through
           case Instruction::Add:
-          case Instruction::Or: {
-            Constant *Zero = Constant::getNullValue(BO->getType());
             if (Op0 == Zero) {
               add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
               return;
@@ -1557,9 +1570,8 @@ namespace {
               add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
               return;
             }
-	  } break;
-          case Instruction::And: {
-            Constant *AllOnes = ConstantInt::getAllOnesValue(BO->getType());
+            break;
+          case Instruction::And:
             if (Op0 == AllOnes) {
               add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
               return;
@@ -1567,26 +1579,19 @@ namespace {
               add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
               return;
             }
-          } break;
-          case Instruction::Mul: {
-            Constant *Zero = Constant::getNullValue(BO->getType());
-            if (Op0 == Zero) {
-              add(BO, Zero, ICmpInst::ICMP_EQ, NewContext);
-              return;
-            } else if (Op1 == Zero) {
+            // fall-through
+          case Instruction::Mul:
+            if (Op0 == Zero || Op1 == Zero) {
               add(BO, Zero, ICmpInst::ICMP_EQ, NewContext);
               return;
             }
-	  } break;
+            break;
         }
 
         // "%x = add i32 %y, %z" and %x EQ %y then %z EQ 0
         // "%x = mul i32 %y, %z" and %x EQ %y then %z EQ 1
         // 1. Repeat all of the above, with order of operands reversed.
         // "%x = udiv i32 %y, %z" and %x EQ %y then %z EQ 1
-
-        const Type *Ty = BO->getType();
-        assert(!Ty->isFPOrFPVector() && "Float in work queue!");
 
         Value *Known = Op0, *Unknown = Op1;
         if (Known != BO) std::swap(Known, Unknown);
@@ -1596,8 +1601,7 @@ namespace {
             case Instruction::Xor:
             case Instruction::Add:
             case Instruction::Sub:
-              add(Unknown, Constant::getNullValue(Ty), ICmpInst::ICMP_EQ,
-                  NewContext);
+              add(Unknown, Zero, ICmpInst::ICMP_EQ, NewContext);
               break;
             case Instruction::UDiv:
             case Instruction::SDiv:
