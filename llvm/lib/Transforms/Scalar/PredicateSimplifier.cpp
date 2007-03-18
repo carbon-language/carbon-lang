@@ -833,6 +833,10 @@ namespace {
       return 0;
     }
 
+#ifndef NDEBUG
+    bool isCanonical(Value *V, ETNode *Subtree, VRPSolver *VRP);
+#endif
+
   public:
 
     bool isRelatedBy(Value *V1, Value *V2, ETNode *Subtree, LatticeVal LV) {
@@ -893,9 +897,37 @@ namespace {
     void addToWorklist(Value *V, const APInt *I, ICmpInst::Predicate Pred,
                        VRPSolver *VRP);
 
+    void mergeInto(Value **I, unsigned n, Value *New, ETNode *Subtree,
+                   VRPSolver *VRP) {
+      assert(isCanonical(New, Subtree, VRP) && "Best choice not canonical?");
+
+      uint32_t W = widthOfValue(New);
+      if (!W) return;
+
+      ConstantRange CR_New = rangeFromValue(New, Subtree, W);
+      ConstantRange Merged = CR_New;
+
+      for (; n != 0; ++I, --n) {
+        ConstantRange CR_Kill = rangeFromValue(*I, Subtree, W);
+        if (CR_Kill.isFullSet()) continue;
+        Merged = Merged.intersectWith(CR_Kill);
+      }
+
+      if (Merged.isFullSet() || Merged == CR_New) return;
+
+      if (Merged.isSingleElement())
+        addToWorklist(New, Merged.getSingleElement(),
+                      ICmpInst::ICMP_EQ, VRP);
+      else
+        update(New, Merged, Subtree);
+    }
+
     void addInequality(Value *V1, Value *V2, ETNode *Subtree, LatticeVal LV,
                        VRPSolver *VRP) {
       assert(!isRelatedBy(V1, V2, Subtree, LV) && "Asked to do useless work.");
+
+      assert(isCanonical(V1, Subtree, VRP) && "Value not canonical.");
+      assert(isCanonical(V2, Subtree, VRP) && "Value not canonical.");
 
       if (LV == NE) return; // we can't represent those.
       // XXX: except in the case where isSingleElement and equal to either
@@ -1150,7 +1182,7 @@ namespace {
       // The first iteration through this loop operates on V2 before going
       // through the Remove list and operating on those too. If all of the
       // iterations performed simple replacements then we exit early.
-      bool exitEarly = true;
+      bool mergeIGNode = false;
       unsigned i = 0;
       for (Value *R = V2; i == 0 || i < Remove.size(); ++i) {
         if (i) R = IG.node(Remove[i])->getValue(); // skip n2.
@@ -1206,64 +1238,98 @@ namespace {
 
         // If we make it to here, then we will need to create a node for N1.
         // Otherwise, we can skip out early!
-        exitEarly = false;
+        mergeIGNode = true;
       }
 
-      if (exitEarly) return true;
+      if (!isa<Constant>(V1)) {
+        if (Remove.empty()) {
+          VR.mergeInto(&V2, 1, V1, Top, this);
+        } else {
+          std::vector<Value*> RemoveVals;
+          RemoveVals.reserve(Remove.size());
 
-      // Create N1.
-      if (!n1) n1 = IG.newNode(V1);
+          for (SetVector<unsigned>::iterator I = Remove.begin(),
+               E = Remove.end(); I != E; ++I) {
+            Value *V = IG.node(*I)->getValue();
+            if (!V->use_empty())
+              RemoveVals.push_back(V);
+          }
+          VR.mergeInto(&RemoveVals[0], RemoveVals.size(), V1, Top, this);
+        }
+      }
 
-      // Migrate relationships from removed nodes to N1.
-      Node *N1 = IG.node(n1);
-      for (SetVector<unsigned>::iterator I = Remove.begin(), E = Remove.end();
-           I != E; ++I) {
-        unsigned n = *I;
-        Node *N = IG.node(n);
-        for (Node::iterator NI = N->begin(), NE = N->end(); NI != NE; ++NI) {
-          if (NI->Subtree->DominatedBy(Top)) {
-            if (NI->To == n1) {
-              assert((NI->LV & EQ_BIT) && "Node inequal to itself.");
-              continue;
+      if (mergeIGNode) {
+        // Create N1.
+        if (!n1) n1 = IG.newNode(V1);
+
+        // Migrate relationships from removed nodes to N1.
+        Node *N1 = IG.node(n1);
+        for (SetVector<unsigned>::iterator I = Remove.begin(), E = Remove.end();
+             I != E; ++I) {
+          unsigned n = *I;
+          Node *N = IG.node(n);
+          for (Node::iterator NI = N->begin(), NE = N->end(); NI != NE; ++NI) {
+            if (NI->Subtree->DominatedBy(Top)) {
+              if (NI->To == n1) {
+                assert((NI->LV & EQ_BIT) && "Node inequal to itself.");
+                continue;
+              }
+              if (Remove.count(NI->To))
+                continue;
+
+              IG.node(NI->To)->update(n1, reversePredicate(NI->LV), Top);
+              N1->update(NI->To, NI->LV, Top);
             }
-            if (Remove.count(NI->To))
-              continue;
+          }
+        }
 
-            IG.node(NI->To)->update(n1, reversePredicate(NI->LV), Top);
-            N1->update(NI->To, NI->LV, Top);
+        // Point V2 (and all items in Remove) to N1.
+        if (!n2)
+          IG.addEquality(n1, V2, Top);
+        else {
+          for (SetVector<unsigned>::iterator I = Remove.begin(),
+               E = Remove.end(); I != E; ++I) {
+            IG.addEquality(n1, IG.node(*I)->getValue(), Top);
+          }
+        }
+
+        // If !Remove.empty() then V2 = Remove[0]->getValue().
+        // Even when Remove is empty, we still want to process V2.
+        i = 0;
+        for (Value *R = V2; i == 0 || i < Remove.size(); ++i) {
+          if (i) R = IG.node(Remove[i])->getValue(); // skip n2.
+
+          if (Instruction *I2 = dyn_cast<Instruction>(R)) {
+            if (below(I2) ||
+                Top->DominatedBy(Forest->getNodeForBlock(I2->getParent())))
+            defToOps(I2);
+          }
+          for (Value::use_iterator UI = V2->use_begin(), UE = V2->use_end();
+               UI != UE;) {
+            Use &TheUse = UI.getUse();
+            ++UI;
+            if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
+              if (below(I) ||
+                  Top->DominatedBy(Forest->getNodeForBlock(I->getParent())))
+                opsToDef(I);
+            }
           }
         }
       }
 
-      // Point V2 (and all items in Remove) to N1.
-      if (!n2)
-        IG.addEquality(n1, V2, Top);
-      else {
-        for (SetVector<unsigned>::iterator I = Remove.begin(),
-             E = Remove.end(); I != E; ++I) {
-          IG.addEquality(n1, IG.node(*I)->getValue(), Top);
-        }
-      }
-
-      // If !Remove.empty() then V2 = Remove[0]->getValue().
-      // Even when Remove is empty, we still want to process V2.
-      i = 0;
-      for (Value *R = V2; i == 0 || i < Remove.size(); ++i) {
-        if (i) R = IG.node(Remove[i])->getValue(); // skip n2.
-
-        if (Instruction *I2 = dyn_cast<Instruction>(R)) {
-          if (below(I2) ||
-              Top->DominatedBy(Forest->getNodeForBlock(I2->getParent())))
-          defToOps(I2);
-        }
-        for (Value::use_iterator UI = V2->use_begin(), UE = V2->use_end();
+      // re-opsToDef all dominated users of V1.
+      if (Instruction *I = dyn_cast<Instruction>(V1)) {
+        for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
              UI != UE;) {
           Use &TheUse = UI.getUse();
           ++UI;
-          if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
-            if (below(I) ||
-                Top->DominatedBy(Forest->getNodeForBlock(I->getParent())))
-              opsToDef(I);
+          Value *V = TheUse.getUser();
+          if (!V->use_empty()) {
+            if (Instruction *Inst = dyn_cast<Instruction>(V)) {
+              if (below(Inst) ||
+                  Top->DominatedBy(Forest->getNodeForBlock(Inst->getParent())))
+                opsToDef(Inst);
+            }
           }
         }
       }
@@ -1471,26 +1537,47 @@ namespace {
             return;
           }
 
-        // "%y = and i1 true, %x" then %x EQ %y.
-        // "%y = or i1 false, %x" then %x EQ %y.
-        if (BO->getOpcode() == Instruction::Or) {
-          Constant *Zero = Constant::getNullValue(BO->getType());
-          if (Op0 == Zero) {
-            add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
-            return;
-          } else if (Op1 == Zero) {
-            add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
-            return;
-          }
-        } else if (BO->getOpcode() == Instruction::And) {
-          Constant *AllOnes = ConstantInt::getAllOnesValue(BO->getType());
-          if (Op0 == AllOnes) {
-            add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
-            return;
-          } else if (Op1 == AllOnes) {
-            add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
-            return;
-          }
+        // "%y = and i1 true, %x" then %x EQ %y
+        // "%y = or i1 false, %x" then %x EQ %y
+        // "%x = add i32 %y, 0" then %x EQ %y
+        // "%x = mul i32 %y, 0" then %x EQ 0
+
+        Instruction::BinaryOps Opcode = BO->getOpcode();
+
+        switch (Opcode) {
+          default: break;
+          case Instruction::Sub:
+          case Instruction::Add:
+          case Instruction::Or: {
+            Constant *Zero = Constant::getNullValue(BO->getType());
+            if (Op0 == Zero) {
+              add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            } else if (Op1 == Zero) {
+              add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            }
+	  } break;
+          case Instruction::And: {
+            Constant *AllOnes = ConstantInt::getAllOnesValue(BO->getType());
+            if (Op0 == AllOnes) {
+              add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            } else if (Op1 == AllOnes) {
+              add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            }
+          } break;
+          case Instruction::Mul: {
+            Constant *Zero = Constant::getNullValue(BO->getType());
+            if (Op0 == Zero) {
+              add(BO, Zero, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            } else if (Op1 == Zero) {
+              add(BO, Zero, ICmpInst::ICMP_EQ, NewContext);
+              return;
+            }
+	  } break;
         }
 
         // "%x = add i32 %y, %z" and %x EQ %y then %z EQ 0
@@ -1498,7 +1585,6 @@ namespace {
         // 1. Repeat all of the above, with order of operands reversed.
         // "%x = udiv i32 %y, %z" and %x EQ %y then %z EQ 1
 
-        Instruction::BinaryOps Opcode = BO->getOpcode();
         const Type *Ty = BO->getType();
         assert(!Ty->isFPOrFPVector() && "Float in work queue!");
 
@@ -1703,6 +1789,12 @@ namespace {
                                   ICmpInst::Predicate Pred, VRPSolver *VRP) {
     VRP->add(V, ConstantInt::get(*I), Pred, VRP->TopInst);
   }
+
+#ifndef NDEBUG
+  bool ValueRanges::isCanonical(Value *V, ETNode *Subtree, VRPSolver *VRP) {
+    return V == VRP->IG.canonicalize(V, Subtree);
+  }
+#endif
 
   /// PredicateSimplifier - This class is a simplifier that replaces
   /// one equivalent variable with another. It also tracks what
