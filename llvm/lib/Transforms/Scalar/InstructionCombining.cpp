@@ -12,10 +12,10 @@
 // simplification happens.
 //
 // This pass combines things like:
-//    %Y = add int %X, 1
-//    %Z = add int %Y, 1
+//    %Y = add i32 %X, 1
+//    %Z = add i32 %Y, 1
 // into:
-//    %Z = add int %X, 2
+//    %Z = add i32 %X, 2
 //
 // This is a simple worklist driven algorithm.
 //
@@ -4789,58 +4789,115 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   if (Value *X = dyn_castNotVal(Op1))   // A ^ ~A == -1
     if (X == Op0)
-      return ReplaceInstUsesWith(I,
-                                ConstantInt::getAllOnesValue(I.getType()));
+      return ReplaceInstUsesWith(I, ConstantInt::getAllOnesValue(I.getType()));
 
-  if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
-    if (Op1I->getOpcode() == Instruction::Or) {
-      if (Op1I->getOperand(0) == Op0) {              // B^(B|A) == (A|B)^B
+  
+  BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1);
+  if (Op1I) {
+    Value *A, *B;
+    if (match(Op1I, m_Or(m_Value(A), m_Value(B)))) {
+      if (A == Op0) {              // B^(B|A) == (A|B)^B
         Op1I->swapOperands();
         I.swapOperands();
         std::swap(Op0, Op1);
-      } else if (Op1I->getOperand(1) == Op0) {       // B^(A|B) == (A|B)^B
+      } else if (B == Op0) {       // B^(A|B) == (A|B)^B
         I.swapOperands();     // Simplified below.
         std::swap(Op0, Op1);
       }
-    } else if (Op1I->getOpcode() == Instruction::Xor) {
-      if (Op0 == Op1I->getOperand(0))                        // A^(A^B) == B
-        return ReplaceInstUsesWith(I, Op1I->getOperand(1));
-      else if (Op0 == Op1I->getOperand(1))                   // A^(B^A) == B
-        return ReplaceInstUsesWith(I, Op1I->getOperand(0));
-    } else if (Op1I->getOpcode() == Instruction::And && Op1I->hasOneUse()) {
-      if (Op1I->getOperand(0) == Op0)                      // A^(A&B) -> A^(B&A)
+    } else if (match(Op1I, m_Xor(m_Value(A), m_Value(B)))) {
+      if (Op0 == A)                                          // A^(A^B) == B
+        return ReplaceInstUsesWith(I, B);
+      else if (Op0 == B)                                     // A^(B^A) == B
+        return ReplaceInstUsesWith(I, A);
+    } else if (match(Op1I, m_And(m_Value(A), m_Value(B))) && Op1I->hasOneUse()){
+      if (A == Op0)                                        // A^(A&B) -> A^(B&A)
         Op1I->swapOperands();
-      if (Op0 == Op1I->getOperand(1)) {                    // A^(B&A) -> (B&A)^A
+      if (B == Op0) {                                      // A^(B&A) -> (B&A)^A
         I.swapOperands();     // Simplified below.
         std::swap(Op0, Op1);
       }
     }
-
-  if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
-    if (Op0I->getOpcode() == Instruction::Or && Op0I->hasOneUse()) {
-      if (Op0I->getOperand(0) == Op1)                // (B|A)^B == (A|B)^B
-        Op0I->swapOperands();
-      if (Op0I->getOperand(1) == Op1) {              // (A|B)^B == A & ~B
-        Instruction *NotB = BinaryOperator::createNot(Op1, "tmp");
-        InsertNewInstBefore(NotB, I);
-        return BinaryOperator::createAnd(Op0I->getOperand(0), NotB);
+  }
+  
+  BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0);
+  if (Op0I) {
+    Value *A, *B;
+    if (match(Op0I, m_Or(m_Value(A), m_Value(B))) && Op0I->hasOneUse()) {
+      if (A == Op1)                                  // (B|A)^B == (A|B)^B
+        std::swap(A, B);
+      if (B == Op1) {                                // (A|B)^B == A & ~B
+        Instruction *NotB =
+          InsertNewInstBefore(BinaryOperator::createNot(Op1, "tmp"), I);
+        return BinaryOperator::createAnd(A, NotB);
       }
-    } else if (Op0I->getOpcode() == Instruction::Xor) {
-      if (Op1 == Op0I->getOperand(0))                        // (A^B)^A == B
-        return ReplaceInstUsesWith(I, Op0I->getOperand(1));
-      else if (Op1 == Op0I->getOperand(1))                   // (B^A)^A == B
-        return ReplaceInstUsesWith(I, Op0I->getOperand(0));
-    } else if (Op0I->getOpcode() == Instruction::And && Op0I->hasOneUse()) {
-      if (Op0I->getOperand(0) == Op1)                      // (A&B)^A -> (B&A)^A
-        Op0I->swapOperands();
-      if (Op0I->getOperand(1) == Op1 &&                    // (B&A)^A == ~B & A
+    } else if (match(Op0I, m_Xor(m_Value(A), m_Value(B)))) {
+      if (Op1 == A)                                          // (A^B)^A == B
+        return ReplaceInstUsesWith(I, B);
+      else if (Op1 == B)                                     // (B^A)^A == B
+        return ReplaceInstUsesWith(I, A);
+    } else if (match(Op0I, m_And(m_Value(A), m_Value(B))) && Op0I->hasOneUse()){
+      if (A == Op1)                                        // (A&B)^A -> (B&A)^A
+        std::swap(A, B);
+      if (B == Op1 &&                                      // (B&A)^A == ~B & A
           !isa<ConstantInt>(Op1)) {  // Canonical form is (B&C)^C
-        Instruction *N = BinaryOperator::createNot(Op0I->getOperand(0), "tmp");
-        InsertNewInstBefore(N, I);
+        Instruction *N =
+          InsertNewInstBefore(BinaryOperator::createNot(A, "tmp"), I);
         return BinaryOperator::createAnd(N, Op1);
       }
     }
-
+  }
+  
+  // (X >> Z) ^ (Y >> Z)  -> (X^Y) >> Z  for all shifts.
+  if (Op0I && Op1I && Op0I->isShift() && 
+      Op0I->getOpcode() == Op1I->getOpcode() && 
+      Op0I->getOperand(1) == Op1I->getOperand(1) &&
+      (Op1I->hasOneUse() || Op1I->hasOneUse())) {
+    Instruction *NewOp =
+      InsertNewInstBefore(BinaryOperator::createXor(Op0I->getOperand(0),
+                                                    Op1I->getOperand(0),
+                                                    Op0I->getName()), I);
+    return BinaryOperator::create(Op1I->getOpcode(), NewOp, 
+                                  Op1I->getOperand(1));
+  }
+    
+  if (Op0I && Op1I) {
+    Value *A, *B, *C, *D;
+    // (A & B)^(A | B) -> A ^ B
+    if (match(Op0I, m_And(m_Value(A), m_Value(B))) &&
+        match(Op1I, m_Or(m_Value(C), m_Value(D)))) {
+      if ((A == C && B == D) || (A == D && B == C)) 
+        return BinaryOperator::createXor(A, B);
+    }
+    // (A | B)^(A & B) -> A ^ B
+    if (match(Op0I, m_Or(m_Value(A), m_Value(B))) &&
+        match(Op1I, m_And(m_Value(C), m_Value(D)))) {
+      if ((A == C && B == D) || (A == D && B == C)) 
+        return BinaryOperator::createXor(A, B);
+    }
+    
+    // (A & B)^(C & D)
+    if ((Op0I->hasOneUse() || Op1I->hasOneUse()) &&
+        match(Op0I, m_And(m_Value(A), m_Value(B))) &&
+        match(Op1I, m_And(m_Value(C), m_Value(D)))) {
+      // (X & Y)^(X & Y) -> (Y^Z) & X
+      Value *X = 0, *Y = 0, *Z = 0;
+      if (A == C)
+        X = A, Y = B, Z = D;
+      else if (A == D)
+        X = A, Y = B, Z = C;
+      else if (B == C)
+        X = B, Y = A, Z = D;
+      else if (B == D)
+        X = B, Y = A, Z = C;
+      
+      if (X) {
+        Instruction *NewOp =
+        InsertNewInstBefore(BinaryOperator::createXor(Y, Z, Op0->getName()), I);
+        return BinaryOperator::createAnd(NewOp, X);
+      }
+    }
+  }
+    
   // (icmp1 A, B) ^ (icmp2 A, B) --> (icmp3 A, B)
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1)))
     if (Instruction *R = AssociativeOpt(I, FoldICmpLogical(*this, RHS)))
@@ -4865,21 +4922,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         }
       }
 
-  // (X >> Z) ^ (Y >> Z)  -> (X^Y) >> Z  for all shifts.
-  if (BinaryOperator *SI1 = dyn_cast<BinaryOperator>(Op1)) {
-    if (BinaryOperator *SI0 = dyn_cast<BinaryOperator>(Op0))
-      if (SI0->isShift() && SI0->getOpcode() == SI1->getOpcode() && 
-          SI0->getOperand(1) == SI1->getOperand(1) &&
-          (SI0->hasOneUse() || SI1->hasOneUse())) {
-        Instruction *NewOp =
-        InsertNewInstBefore(BinaryOperator::createXor(SI0->getOperand(0),
-                                                      SI1->getOperand(0),
-                                                      SI0->getName()), I);
-        return BinaryOperator::create(SI1->getOpcode(), NewOp, 
-                                      SI1->getOperand(1));
-      }
-  }
-    
   return Changed ? &I : 0;
 }
 
