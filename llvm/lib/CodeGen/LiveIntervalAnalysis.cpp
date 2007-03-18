@@ -940,48 +940,50 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   if (ReduceJoinPhys && !isDead &&
       MRegisterInfo::isPhysicalRegister(repSrcReg)) {
     // Small function. No need to worry!
-    if (r2iMap_.size() <= allocatableRegs_.size() * 2)
+    unsigned Threshold = allocatableRegs_.count() * 2;
+    if (r2iMap_.size() <= Threshold)
       goto TryJoin;
 
     LiveVariables::VarInfo& dvi = lv_->getVarInfo(repDstReg);
     // Is the value used in the current BB or any immediate successroe BB?
-    MachineBasicBlock *SrcBB = CopyMI->getParent();
-    if (!dvi.UsedBlocks[SrcBB->getNumber()]) {
-      for (MachineBasicBlock::succ_iterator SI = SrcBB->succ_begin(),
-             SE = SrcBB->succ_end(); SI != SE; ++SI) {
-        MachineBasicBlock *SuccMBB = *SI;
-        if (dvi.UsedBlocks[SuccMBB->getNumber()])
+    MachineBasicBlock *CopyBB = CopyMI->getParent();
+    if (dvi.UsedBlocks[CopyBB->getNumber()])
+      goto TryJoin;
+    for (MachineBasicBlock::succ_iterator SI = CopyBB->succ_begin(),
+           SE = CopyBB->succ_end(); SI != SE; ++SI) {
+      MachineBasicBlock *SuccMBB = *SI;
+      if (dvi.UsedBlocks[SuccMBB->getNumber()])
           goto TryJoin;
-      }
     }
 
     // Ok, no use in this BB and no use in immediate successor BB's. Be really
     // careful now!
     // It's only used in one BB, forget about it!
-    if (dvi.UsedBlocks.count() <= 1) {
+    if (dvi.UsedBlocks.count() < 2) {
       ++numAborts;
       return false;
     }
 
-    // Examine all the blocks where the value is used. If any is in the same
-    // loop, then it's ok. Or if the current BB is a preheader of any of the
-    // loop that uses this value, that's ok as well.
-    const LoopInfo &LI = getAnalysis<LoopInfo>();
-    const Loop *L = LI.getLoopFor(SrcBB->getBasicBlock());
+    // Determine whether to allow coalescing based on how far the closest
+    // use is.
+    unsigned CopyIdx = getInstructionIndex(CopyMI);
+    unsigned MinDist = i2miMap_.size() * InstrSlots::NUM;
     int UseBBNum = dvi.UsedBlocks.find_first();
     while (UseBBNum != -1) {
       MachineBasicBlock *UseBB = mf_->getBlockNumbered(UseBBNum);
-      const Loop *UL = LI.getLoopFor(UseBB->getBasicBlock());
-      if ((UL && UL == L) ||  // A use in the same loop
-          (UL && L &&         // A use in a loop and this BB is the preheader
-           UL->getLoopPreheader() == SrcBB->getBasicBlock()))
-        goto TryJoin;
+      unsigned UseIdx = getMBBStartIdx(UseBB);
+      if (UseIdx > CopyIdx) {
+        MinDist = std::min(MinDist, UseIdx - CopyIdx);
+        if (MinDist <= Threshold)
+          break;
+      }
       UseBBNum = dvi.UsedBlocks.find_next(UseBBNum);
     }
-
-    // Don't do it!
-    ++numAborts;
-    return false;
+    if (MinDist > Threshold) {
+      // Don't do it!
+      ++numAborts;
+      return false;
+    }
   }
 
 TryJoin:
@@ -1038,6 +1040,11 @@ TryJoin:
   if (MRegisterInfo::isPhysicalRegister(repDstReg)) {
     for (const unsigned *AS = mri_->getAliasSet(repDstReg); *AS; ++AS)
       getInterval(*AS).MergeInClobberRanges(SrcInt);
+  } else {
+    // Merge UsedBlocks info if the destination is a virtual register.
+    LiveVariables::VarInfo& dVI = lv_->getVarInfo(repDstReg);
+    LiveVariables::VarInfo& sVI = lv_->getVarInfo(repSrcReg);
+    dVI.UsedBlocks |= sVI.UsedBlocks;
   }
 
   DOUT << "\n\t\tJoined.  Result = "; DestInt.print(DOUT, mri_);
