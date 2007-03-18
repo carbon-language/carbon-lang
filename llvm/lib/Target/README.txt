@@ -20,12 +20,14 @@ This has a number of uses:
 
 FreeBench/mason contains code like this:
 
-static p_type m0u(p_type p) {
+typedef struct { int a; int b; int c; } p_type;
+extern int m[];
+p_type m0u(p_type *p) {
   int m[]={0, 8, 1, 2, 16, 5, 13, 7, 14, 9, 3, 4, 11, 12, 15, 10, 17, 6};
   p_type pu;
-  pu.a = m[p.a];
-  pu.b = m[p.b];
-  pu.c = m[p.c];
+  pu.a = m[p->a];
+  pu.b = m[p->b];
+  pu.c = m[p->c];
   return pu;
 }
 
@@ -119,10 +121,6 @@ int h(int *j, int *l) {  return *j - *l; }
 
 this could be done in SelectionDAGISel.cpp, along with other special cases,
 for 1,2,4,8 bytes.
-
-//===---------------------------------------------------------------------===//
-
-Add LSR exit value substitution. It'll probably be a win for Ackermann, etc.
 
 //===---------------------------------------------------------------------===//
 
