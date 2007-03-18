@@ -348,46 +348,6 @@ pass.
 
 //===---------------------------------------------------------------------===//
 
--predsimplify should transform this:
-
-void bad(unsigned x)
-{
-  if (x > 4)
-    bar(12);
-  else if (x > 3)
-    bar(523);
-  else if (x > 2)
-    bar(36);
-  else if (x > 1)
-    bar(65);
-  else if (x > 0)
-    bar(45);
-  else
-    bar(367);
-}
-
-into:
-
-void good(unsigned x)
-{
-  if (x == 4)
-    bar(523);
-  else if (x == 3)
-    bar(36);
-  else if (x == 2)
-    bar(65);
-  else if (x == 1)
-    bar(45);
-  else if (x == 0)
-    bar(367);
-  else
-    bar(12);
-}
-
-to enable further optimizations.
-
-//===---------------------------------------------------------------------===//
-
 Consider:
 
 typedef unsigned U32;
