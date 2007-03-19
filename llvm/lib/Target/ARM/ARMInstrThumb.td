@@ -248,6 +248,11 @@ def tRestore : TIs<(ops GPR:$dst, t_addrmode_sp:$addr),
 def tLDRpci : TIs<(ops GPR:$dst, i32imm:$addr),
                   "ldr $dst, $addr",
                   [(set GPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
+
+// Special LDR for loads from non-pc-relative constpools.
+let isReMaterializable = 1 in
+def tLDRcp  : TIs<(ops GPR:$dst, i32imm:$addr),
+                  "ldr $dst, $addr", []>;
 } // isLoad
 
 let isStore = 1 in {

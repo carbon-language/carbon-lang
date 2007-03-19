@@ -551,7 +551,7 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
 
       SDNode *ResNode;
       if (Subtarget->isThumb())
-        ResNode = CurDAG->getTargetNode(ARM::tLDRpci, MVT::i32, MVT::Other,
+        ResNode = CurDAG->getTargetNode(ARM::tLDRcp, MVT::i32, MVT::Other,
                                         CPIdx, CurDAG->getEntryNode());
       else {
         SDOperand Ops[] = {
@@ -560,7 +560,7 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
           CurDAG->getTargetConstant(0, MVT::i32),
           CurDAG->getEntryNode()
         };
-        ResNode = CurDAG->getTargetNode(ARM::LDR, MVT::i32, MVT::Other, Ops, 4);
+        ResNode=CurDAG->getTargetNode(ARM::LDRcp, MVT::i32, MVT::Other, Ops, 4);
       }
       ReplaceUses(Op, SDOperand(ResNode, 0));
       return NULL;

@@ -580,6 +580,11 @@ def LDR  : AI2<(ops GPR:$dst, addrmode2:$addr),
                "ldr $dst, $addr",
                [(set GPR:$dst, (load addrmode2:$addr))]>;
 
+// Special LDR for loads from non-pc-relative constpools.
+let isReMaterializable = 1 in
+def LDRcp : AI2<(ops GPR:$dst, addrmode2:$addr),
+                 "ldr $dst, $addr", []>;
+
 // Loads with zero extension
 def LDRH  : AI3<(ops GPR:$dst, addrmode3:$addr),
                  "ldrh $dst, $addr",
