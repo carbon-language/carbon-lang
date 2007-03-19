@@ -137,7 +137,7 @@ def so_imm_neg :
   PatLeaf<(imm), [{ return ARM_AM::getSOImmVal(-(int)N->getValue()) != -1; }],
           so_imm_neg_XFORM>;
 
-def so_imm_not : 
+def so_imm_not :
   PatLeaf<(imm), [{ return ARM_AM::getSOImmVal(~(int)N->getValue()) != -1; }],
           so_imm_not_XFORM>;
 
@@ -709,6 +709,8 @@ def MOVrr : AI1<(ops GPR:$dst, GPR:$src),
                 "mov $dst, $src", []>;
 def MOVrs : AI1<(ops GPR:$dst, so_reg:$src),
                 "mov $dst, $src", [(set GPR:$dst, so_reg:$src)]>;
+
+let isReMaterializable = 1 in
 def MOVri : AI1<(ops GPR:$dst, so_imm:$src),
                 "mov $dst, $src", [(set GPR:$dst, so_imm:$src)]>;
 
@@ -806,10 +808,13 @@ defm ORR   : AI1_bin_irs<"orr", BinOpFrag<(or  node:$LHS, node:$RHS)>>;
 defm EOR   : AI1_bin_irs<"eor", BinOpFrag<(xor node:$LHS, node:$RHS)>>;
 defm BIC   : AI1_bin_irs<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
-defm MVN   : AI1_unary_irs<"mvn", not>;
-
-def : ARMPat<(i32  so_imm_not:$imm),
-             (MVNi so_imm_not:$imm)>;
+def  MVNr  : AI<(ops GPR:$dst, GPR:$src),
+                "mvn $dst, $src", [(set GPR:$dst, (not GPR:$src))]>;
+def  MVNs  : AI<(ops GPR:$dst, so_reg:$src),
+                "mvn $dst, $src", [(set GPR:$dst, (not so_reg:$src))]>;
+let isReMaterializable = 1 in
+def  MVNi  : AI<(ops GPR:$dst, so_imm:$imm),
+                "mvn $dst, $imm", [(set GPR:$dst, so_imm_not:$imm)]>;
 
 def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
              (BICri GPR:$src, so_imm_not:$imm)>;
