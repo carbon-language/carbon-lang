@@ -8158,7 +8158,6 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // Check to see if we are changing the return type...
   if (OldRetTy != FT->getReturnType()) {
     if (Callee->isDeclaration() && !Caller->use_empty() && 
-        OldRetTy != FT->getReturnType() &&
         // Conversion is ok if changing from pointer to int of same size.
         !(isa<PointerType>(FT->getReturnType()) &&
           TD->getIntPtrType() == OldRetTy))
