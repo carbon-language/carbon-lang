@@ -1,14 +1,12 @@
 ; Test that bugpoint can narrow down the testcase to the important function
 ;
-; RUN: llvm-upgrade < %s > %t1.ll
-; RUN: bugpoint %t1.ll -bugpoint-crashcalls
+; RUN: bugpoint %s -bugpoint-crashcalls
 
-int %foo() { ret int 1 }
+define i32 @foo() { ret i32 1 }
 
-int %test() {
-	call int %test()
-	ret int %0
+define i32 @test() {
+	call i32 @test()
+	ret i32 %1
 }
 
-int %bar() { ret int 2 }
-
+define i32 @bar() { ret i32 2 }

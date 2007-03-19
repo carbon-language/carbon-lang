@@ -1,9 +1,8 @@
 ; Basic test for bugpoint.
-; RUN: llvm-upgrade < %s > %t1.ll
-; RUN: bugpoint %t1.ll -domset -idom -domset -bugpoint-crashcalls \
+; RUN: bugpoint %s -domset -idom -domset -bugpoint-crashcalls \
 ; RUN:   -domset -idom -domset
 
-int %test() {
-	call int %test()
-	ret int %0
+define i32 @test() {
+	call i32 @test()
+	ret i32 %1
 }
