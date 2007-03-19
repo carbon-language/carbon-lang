@@ -43,6 +43,14 @@
         <li><a href="#doFinalization_mod">The <tt>doFinalization(Module
                                             &amp;)</tt> method</a></li>
         </ul></li>
+     <li><a href="#LoopPass">The <tt>LoopPass</tt> class</a>
+        <ul>
+        <li><a href="#doInitialization_loop">The <tt>doInitialization(Loop *,
+                                            LPPassManager &amp;)</tt> method</a></li>
+        <li><a href="#runOnLoop">The <tt>runOnLoop</tt> method</a></li>
+        <li><a href="#doFinalization_loop">The <tt>doFinalization()
+                                            </tt> method</a></li>
+        </ul></li>
      <li><a href="#BasicBlockPass">The <tt>BasicBlockPass</tt> class</a>
         <ul>
         <li><a href="#doInitialization_fn">The <tt>doInitialization(Function
@@ -126,6 +134,7 @@ from <tt>Pass</tt>.  Depending on how your pass works, you should inherit from
 the <tt><a href="#ModulePass">ModulePass</a></tt>, <tt><a
 href="#CallGraphSCCPass">CallGraphSCCPass</a></tt>, <tt><a
 href="#FunctionPass">FunctionPass</a></tt>, or <tt><a
+href="#LoopPass">LoopPass</a></tt>, or <tt><a
 href="#BasicBlockPass">BasicBlockPass</a></tt> classes, which gives the system
 more information about what your pass does, and how it can be combined with
 other passes.  One of the main features of the LLVM Pass Framework is that it
@@ -686,6 +695,85 @@ href="#runOnFunction"><tt>runOnFunction</tt></a> for every function in the
 program being compiled.</p>
 
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="LoopPass">The <tt>LoopPass</tt> class </a>
+</div>
+
+<div class="doc_text">
+
+<p> All <tt>LoopPass</tt> execute on each loop in the function independent of
+all of the other loops in the function. <tt>LoopPass</tt> processes loops in
+loop nest order such that outer most loop is processed last. </p>
+
+<p> <tt>LoopPass</tt> subclasses are allowed to update loop nest using
+<tt>LPPassManager</tt> interface. Implementing a loop pass is usually
+straightforward. <tt>Looppass</tt>'s may overload three virtual methods to
+do their work. All these methods should return true if they modified the 
+program, or false if they didn't. </p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="doInitialization_loop">The <tt>doInitialization(Loop *,
+                                                 LPPassManager &amp;)</tt>
+  method</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><pre>
+  <b>virtual bool</b> doInitialization(Loop *, LPPassManager &amp;LPM);
+</pre></div>
+
+The <tt>doInitialization</tt> method is designed to do simple initialization 
+type of stuff that does not depend on the functions being processed.  The 
+<tt>doInitialization</tt> method call is not scheduled to overlap with any 
+other pass executions (thus it should be very fast). LPPassManager 
+interface should be used to access Function or Module level analysis
+information.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="runOnLoop">The <tt>runOnLoop</tt> method</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><pre>
+  <b>virtual bool</b> runOnLoop(Loop *, LPPassManager &amp;LPM) = 0;
+</pre></div><p>
+
+<p>The <tt>runOnLoop</tt> method must be implemented by your subclass to do
+the transformation or analysis work of your pass.  As usual, a true value should
+be returned if the function is modified. <tt>LPPassManager</tt> interface
+should be used to update loop nest.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="doFinalization_loop">The <tt>doFinalization()</tt> method</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code"><pre>
+  <b>virtual bool</b> doFinalization();
+</pre></div>
+
+<p>The <tt>doFinalization</tt> method is an infrequently used method that is
+called when the pass framework has finished calling <a
+href="#runOnLoop"><tt>runOnLoop</tt></a> for every loop in the
+program being compiled. </p>
+
+</div>
+
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
