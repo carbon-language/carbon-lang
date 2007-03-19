@@ -3474,8 +3474,7 @@ static bool isMinValuePlusOne(const ConstantInt *C, bool isSigned) {
 // isOneBitSet - Return true if there is exactly one bit set in the specified
 // constant.
 static bool isOneBitSet(const ConstantInt *CI) {
-  uint64_t V = CI->getZExtValue();
-  return V && (V & (V-1)) == 0;
+  return CI->getValue().countPopulation() == 1;
 }
 
 #if 0   // Currently unused
