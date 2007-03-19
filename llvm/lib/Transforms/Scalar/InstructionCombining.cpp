@@ -3463,12 +3463,11 @@ static bool isMaxValueMinusOne(const ConstantInt *C, bool isSigned) {
 static bool isMinValuePlusOne(const ConstantInt *C, bool isSigned) {
   if (isSigned) {
     // Calculate 1111111111000000000000
-    unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
-    int64_t Val = -1;                    // All ones
-    Val <<= TypeBits-1;                  // Shift over to the right spot
-    return C->getSExtValue() == Val+1;
+    uint32_t TypeBits = C->getType()->getPrimitiveSizeInBits();
+    APInt Val(APInt::getSignedMinValue(TypeBits));
+    return C->getValue() == Val+1;
   }
-  return C->getZExtValue() == 1; // unsigned
+  return C->getValue() == 1; // unsigned
 }
 
 // isOneBitSet - Return true if there is exactly one bit set in the specified
