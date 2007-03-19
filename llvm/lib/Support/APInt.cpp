@@ -43,7 +43,8 @@ inline static uint64_t* getMemory(uint32_t numWords) {
   return result;
 }
 
-APInt::APInt(uint32_t numBits, uint64_t val) : BitWidth(numBits), VAL(0) {
+APInt::APInt(uint32_t numBits, uint64_t val, bool isSigned ) 
+  : BitWidth(numBits), VAL(0) {
   assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
   assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   if (isSingleWord())
@@ -51,6 +52,9 @@ APInt::APInt(uint32_t numBits, uint64_t val) : BitWidth(numBits), VAL(0) {
   else {
     pVal = getClearedMemory(getNumWords());
     pVal[0] = val;
+    if (isSigned && int64_t(val) < 0) 
+      for (unsigned i = 1; i < getNumWords(); ++i)
+        pVal[i] = -1ULL;
   }
   clearUnusedBits();
 }
