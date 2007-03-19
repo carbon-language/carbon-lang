@@ -24,8 +24,8 @@ global i63  s0x012312   ; hexadecimal signed integer constants
 @t9 = global i33 fptosi (float sitofp (i33 8 to float) to i33) ;; Nested cast expression
 
 
-global i32* bitcast (float* @0 to i32*)   ;; Forward numeric reference
-global float* @0                       ;; Duplicate forward numeric reference
+global i32* bitcast (float* @4 to i32*)   ;; Forward numeric reference
+global float* @4                       ;; Duplicate forward numeric reference
 global float 0.0
 
 

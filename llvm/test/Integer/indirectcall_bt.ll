@@ -8,8 +8,8 @@ declare i32 @"atoi"(i8 *)
 
 define i63 @"fib"(i63 %n)
 begin
-  icmp ult i63 %n, 2       ; {i1}:0
-  br i1 %0, label %BaseCase, label %RecurseCase
+  icmp ult i63 %n, 2       ; {i1}:1
+  br i1 %1, label %BaseCase, label %RecurseCase
 
 BaseCase:
   ret i63 1
@@ -25,8 +25,8 @@ end
 
 define i63 @"realmain"(i32 %argc, i8 ** %argv)
 begin
-  icmp eq i32 %argc, 2      ; {i1}:0
-  br i1 %0, label %HasArg, label %Continue
+  icmp eq i32 %argc, 2      ; {i1}:1
+  br i1 %1, label %HasArg, label %Continue
 HasArg:
   ; %n1 = atoi(argv[1])
   %n1 = add i32 1, 1

@@ -1,14 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce
+; RUN:  llvm-as %s -o - | opt -adce
 
 implementation
 
-int "main"(int %argc)
+define i32 @"main"(i32 %argc)
 begin
 	br label %2
 
-	%retval = phi int [ %argc, %2 ]		; <int>	[#uses=2]
-	%two = add int %retval, %retval		; <int>	[#uses=1]
-	ret int %two
+	%retval = phi i32 [ %argc, %2 ]		; <i32>	[#uses=2]
+	%two = add i32 %retval, %retval		; <i32>	[#uses=1]
+	ret i32 %two
 
 	br label %1
 end

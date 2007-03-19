@@ -16,10 +16,10 @@
 
 @t2 = global i40 * @t1
 
-global float * @0                ;; Forward numeric reference
-global float * @0                ;; Duplicate forward numeric reference
+global float * @2                ;; Forward numeric reference
+global float * @2                ;; Duplicate forward numeric reference
 global float 0.0
-global float * @0                ;; Numeric reference
+global float * @2                ;; Numeric reference
 
 
 @fptr = global void() * @f       ;; Forward ref method defn
