@@ -1,4 +1,5 @@
-// RUN: %llvmgcc -std=c99 %s -S -o - | gccas -o /dev/null
+// RUN: %llvmgcc -std=c99 %s -S -o - | llvm-as | \
+// RUN:    opt -std-compile-opts -disable-output
 // PR580
 
 int X, Y;
