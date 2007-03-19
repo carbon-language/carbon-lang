@@ -157,7 +157,7 @@ public:
   /// type.
   uint64_t getTypeSize(const Type *Ty) const;
 
-  /// getTypeSizeInBits - Return the number of bytes necessary to hold the
+  /// getTypeSizeInBits - Return the number of bits necessary to hold the
   /// specified type.
   uint64_t getTypeSizeInBits(const Type* Ty) const;
 
