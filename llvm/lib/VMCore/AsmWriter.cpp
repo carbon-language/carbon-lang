@@ -48,17 +48,7 @@ class SlotMachine {
 public:
 
   /// @brief A mapping of Values to slot numbers
-  typedef std::map<const Value*, unsigned> ValueMap;
-
-  /// @brief A plane with next slot number and ValueMap
-  struct ValuePlane {
-    unsigned next_slot;        ///< The next slot number to use
-    ValueMap map;              ///< The map of Value* -> unsigned
-    ValuePlane() { next_slot = 0; } ///< Make sure we start at 0
-  };
-
-  /// @brief The map of planes by Type
-  typedef std::map<const Type*, ValuePlane> TypedPlanes;
+  typedef std::map<const Value*,unsigned> ValueMap;
 
 /// @}
 /// @name Constructors
@@ -131,10 +121,12 @@ public:
   bool FunctionProcessed;
 
   /// @brief The TypePlanes map for the module level data
-  TypedPlanes mMap;
+  ValueMap mMap;
+  unsigned mNext;
 
   /// @brief The TypePlanes map for the function level data
-  TypedPlanes fMap;
+  ValueMap fMap;
+  unsigned fNext;
 
 /// @}
 
@@ -1385,6 +1377,7 @@ SlotMachine::SlotMachine(const Module *M)
   : TheModule(M)    ///< Saved for lazy initialization.
   , TheFunction(0)
   , FunctionProcessed(false)
+  , mMap(), mNext(0), fMap(), fNext(0)
 {
 }
 
@@ -1394,6 +1387,7 @@ SlotMachine::SlotMachine(const Function *F)
   : TheModule(F ? F->getParent() : 0) ///< Saved for lazy initialization
   , TheFunction(F) ///< Saved for lazy initialization
   , FunctionProcessed(false)
+  , mMap(), mNext(0), fMap(), fNext(0)
 {
 }
 
@@ -1430,6 +1424,7 @@ void SlotMachine::processModule() {
 // Process the arguments, basic blocks, and instructions  of a function.
 void SlotMachine::processFunction() {
   SC_DEBUG("begin processFunction!\n");
+  fNext = 0;
 
   // Add all the function arguments with no names.
   for(Function::const_arg_iterator AI = TheFunction->arg_begin(),
@@ -1471,12 +1466,10 @@ int SlotMachine::getGlobalSlot(const GlobalValue *V) {
   initialize();
   
   // Find the type plane in the module map
-  TypedPlanes::const_iterator MI = mMap.find(V->getType());
+  ValueMap::const_iterator MI = mMap.find(V);
   if (MI == mMap.end()) return -1;
-  
-  // Lookup the value in the module plane's map.
-  ValueMap::const_iterator MVI = MI->second.map.find(V);
-  return MVI != MI->second.map.end() ? int(MVI->second) : -1;
+
+  return MI->second;
 }
 
 
@@ -1487,33 +1480,23 @@ int SlotMachine::getLocalSlot(const Value *V) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
 
-  // Get the type of the value
-  const Type *VTy = V->getType();
-
-  TypedPlanes::const_iterator FI = fMap.find(VTy);
+  ValueMap::const_iterator FI = fMap.find(V);
   if (FI == fMap.end()) return -1;
   
-  // Lookup the Value in the function and module maps.
-  ValueMap::const_iterator FVI = FI->second.map.find(V);
-  
-  // If the value doesn't exist in the function map, it is a <badref>
-  if (FVI == FI->second.map.end()) return -1;
-  
-  return FVI->second;
+  return FI->second;
 }
 
 
 /// CreateModuleSlot - Insert the specified GlobalValue* into the slot table.
 void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
   assert(V && "Can't insert a null Value into SlotMachine!");
+  assert(V->getType() != Type::VoidTy && "Doesn't need a slot!");
+  assert(!V->hasName() && "Doesn't need a slot!");
   
-  unsigned DestSlot = 0;
-  const Type *VTy = V->getType();
+  unsigned DestSlot = mNext++;
+  mMap[V] = DestSlot;
   
-  ValuePlane &PlaneMap = mMap[VTy];
-  DestSlot = PlaneMap.map[V] = PlaneMap.next_slot++;
-  
-  SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" <<
+  SC_DEBUG("  Inserting value [" << V->getType() << "] = " << V << " slot=" <<
            DestSlot << " [");
   // G = Global, F = Function, o = other
   SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : 'F') << "]\n");
@@ -1525,10 +1508,8 @@ void SlotMachine::CreateFunctionSlot(const Value *V) {
   const Type *VTy = V->getType();
   assert(VTy != Type::VoidTy && !V->hasName() && "Doesn't need a slot!");
   
-  unsigned DestSlot = 0;
-  
-  ValuePlane &PlaneMap = fMap[VTy];
-  DestSlot = PlaneMap.map[V] = PlaneMap.next_slot++;
+  unsigned DestSlot = fNext++;
+  fMap[V] = DestSlot;
   
   // G = Global, F = Function, o = other
   SC_DEBUG("  Inserting value [" << VTy << "] = " << V << " slot=" <<
