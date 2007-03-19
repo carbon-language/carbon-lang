@@ -84,13 +84,12 @@ static GlobalVariable *CurGV;
 typedef std::vector<Value *> ValueList;           // Numbered defs
 
 static void 
-ResolveDefinitions(std::map<const Type *,ValueList> &LateResolvers,
-                   std::map<const Type *,ValueList> *FutureLateResolvers = 0);
+ResolveDefinitions(ValueList &LateResolvers, ValueList *FutureLateResolvers=0);
 
 static struct PerModuleInfo {
   Module *CurrentModule;
-  std::map<const Type *, ValueList> Values; // Module level numbered definitions
-  std::map<const Type *,ValueList> LateResolveValues;
+  ValueList Values; // Module level numbered definitions
+  ValueList LateResolveValues;
   std::vector<PATypeHolder>    Types;
   std::map<ValID, PATypeHolder> LateResolveTypes;
 
@@ -208,17 +207,16 @@ static struct PerModuleInfo {
 static struct PerFunctionInfo {
   Function *CurrentFunction;     // Pointer to current function being created
 
-  std::map<const Type*, ValueList> Values; // Keep track of #'d definitions
-  std::map<const Type*, ValueList> LateResolveValues;
+  ValueList Values; // Keep track of #'d definitions
+  unsigned NextValNum;
+  ValueList LateResolveValues;
   bool isDeclare;                   // Is this function a forward declararation?
   GlobalValue::LinkageTypes Linkage; // Linkage for forward declaration.
   GlobalValue::VisibilityTypes Visibility;
 
   /// BBForwardRefs - When we see forward references to basic blocks, keep
   /// track of them here.
-  std::map<BasicBlock*, std::pair<ValID, int> > BBForwardRefs;
-  std::vector<BasicBlock*> NumberedBlocks;
-  unsigned NextBBNum;
+  std::map<ValID, BasicBlock*> BBForwardRefs;
 
   inline PerFunctionInfo() {
     CurrentFunction = 0;
@@ -229,16 +227,14 @@ static struct PerFunctionInfo {
 
   inline void FunctionStart(Function *M) {
     CurrentFunction = M;
-    NextBBNum = 0;
+    NextValNum = 0;
   }
 
   void FunctionDone() {
-    NumberedBlocks.clear();
-
     // Any forward referenced blocks left?
     if (!BBForwardRefs.empty()) {
       GenerateError("Undefined reference to label " +
-                     BBForwardRefs.begin()->first->getName());
+                     BBForwardRefs.begin()->second->getName());
       return;
     }
 
@@ -246,6 +242,7 @@ static struct PerFunctionInfo {
     ResolveDefinitions(LateResolveValues, &CurModule.LateResolveValues);
 
     Values.clear();         // Clear out function local definitions
+    BBForwardRefs.clear();
     CurrentFunction = 0;
     isDeclare = false;
     Linkage = GlobalValue::ExternalLinkage;
@@ -260,14 +257,23 @@ static bool inFunctionScope() { return CurFun.CurrentFunction != 0; }
 //               Code to handle definitions of all the types
 //===----------------------------------------------------------------------===//
 
-static int InsertValue(Value *V,
-                  std::map<const Type*,ValueList> &ValueTab = CurFun.Values) {
-  if (V->hasName()) return -1;           // Is this a numbered definition?
+static void InsertValue(Value *V, ValueList &ValueTab = CurFun.Values) {
+  // Things that have names or are void typed don't get slot numbers
+  if (V->hasName() || (V->getType() == Type::VoidTy))
+    return;
 
-  // Yes, insert the value into the value table...
-  ValueList &List = ValueTab[V->getType()];
-  List.push_back(V);
-  return List.size()-1;
+  // In the case of function values, we have to allow for the forward reference
+  // of basic blocks, which are included in the numbering. Consequently, we keep
+  // track of the next insertion location with NextValNum. When a BB gets 
+  // inserted, it could change the size of the CurFun.Values vector.
+  if (&ValueTab == &CurFun.Values) {
+    if (ValueTab.size() <= CurFun.NextValNum)
+      ValueTab.resize(CurFun.NextValNum+1);
+    ValueTab[CurFun.NextValNum++] = V;
+    return;
+  } 
+  // For all other lists, its okay to just tack it on the back of the vector.
+  ValueTab.push_back(V);
 }
 
 static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
@@ -314,11 +320,11 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   return Typ;
  }
 
-// getValNonImprovising - Look up the value specified by the provided type and
+// getExistingVal - Look up the value specified by the provided type and
 // the provided ValID.  If the value exists and has already been defined, return
 // it.  Otherwise return null.
 //
-static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
+static Value *getExistingVal(const Type *Ty, const ValID &D) {
   if (isa<FunctionType>(Ty)) {
     GenerateError("Functions are not values and "
                    "must be referenced as pointers");
@@ -327,26 +333,29 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
 
   switch (D.Type) {
   case ValID::LocalID: {                 // Is it a numbered definition?
-    // Module constants occupy the lowest numbered slots.
-    std::map<const Type*,ValueList>::iterator VI = CurFun.Values.find(Ty);
-    // Make sure that our type is within bounds.
-    if (VI == CurFun.Values.end()) return 0;
-
     // Check that the number is within bounds.
-    if (D.Num >= VI->second.size()) return 0;
-
-    return VI->second[D.Num];
+    if (D.Num >= CurFun.Values.size()) 
+      return 0;
+    Value *Result = CurFun.Values[D.Num];
+    if (Ty != Result->getType()) {
+      GenerateError("Numbered value (%" + utostr(D.Num) + ") of type '" +
+                    Result->getType()->getDescription() + "' does not match " 
+                    "expected type, '" + Ty->getDescription() + "'");
+      return 0;
+    }
+    return Result;
   }
   case ValID::GlobalID: {                 // Is it a numbered definition?
-    unsigned Num = D.Num;
-    
-    // Module constants occupy the lowest numbered slots...
-    std::map<const Type*,ValueList>::iterator VI = CurModule.Values.find(Ty);
-    if (VI == CurModule.Values.end()) 
+    if (D.Num >= CurModule.Values.size()) 
       return 0;
-    if (D.Num >= VI->second.size()) 
+    Value *Result = CurModule.Values[D.Num];
+    if (Ty != Result->getType()) {
+      GenerateError("Numbered value (@" + utostr(D.Num) + ") of type '" +
+                    Result->getType()->getDescription() + "' does not match " 
+                    "expected type, '" + Ty->getDescription() + "'");
       return 0;
-    return VI->second[Num];
+    }
+    return Result;
   }
     
   case ValID::LocalName: {                // Is it a named definition?
@@ -447,7 +456,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   return 0;
 }
 
-// getVal - This function is identical to getValNonImprovising, except that if a
+// getVal - This function is identical to getExistingVal, except that if a
 // value is not already defined, it "improvises" by creating a placeholder var
 // that looks and acts just like the requested variable.  When the value is
 // defined later, all uses of the placeholder variable are replaced with the
@@ -460,7 +469,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   }
 
   // See if the value has already been defined.
-  Value *V = getValNonImprovising(Ty, ID);
+  Value *V = getExistingVal(Ty, ID);
   if (V) return V;
   if (TriggerError) return 0;
 
@@ -487,69 +496,97 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   return V;
 }
 
-/// getBBVal - This is used for two purposes:
-///  * If isDefinition is true, a new basic block with the specified ID is being
-///    defined.
-///  * If isDefinition is true, this is a reference to a basic block, which may
-///    or may not be a forward reference.
-///
-static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
+/// defineBBVal - This is a definition of a new basic block with the specified
+/// identifier which must be the same as CurFun.NextValNum, if its numeric.
+static BasicBlock *defineBBVal(const ValID &ID) {
   assert(inFunctionScope() && "Can't get basic block at global scope!");
 
-  std::string Name;
   BasicBlock *BB = 0;
-  switch (ID.Type) {
-  default: 
-    GenerateError("Illegal label reference " + ID.getName());
-    return 0;
-  case ValID::LocalID:                // Is it a numbered definition?
-    if (ID.Num >= CurFun.NumberedBlocks.size())
-      CurFun.NumberedBlocks.resize(ID.Num+1);
-    BB = CurFun.NumberedBlocks[ID.Num];
-    break;
-  case ValID::LocalName:                  // Is it a named definition?
-    Name = ID.Name;
-    Value *N = CurFun.CurrentFunction->getValueSymbolTable().lookup(Name);
-    if (N && N->getType()->getTypeID() == Type::LabelTyID)
-      BB = cast<BasicBlock>(N);
-    break;
-  }
 
-  // See if the block has already been defined.
-  if (BB) {
-    // If this is the definition of the block, make sure the existing value was
-    // just a forward reference.  If it was a forward reference, there will be
-    // an entry for it in the PlaceHolderInfo map.
-    if (isDefinition && !CurFun.BBForwardRefs.erase(BB)) {
-      // The existing value was a definition, not a forward reference.
-      GenerateError("Redefinition of label " + ID.getName());
-      return 0;
-    }
+  // First, see if this was forward referenced
 
-    ID.destroy();                       // Free strdup'd memory.
-    return BB;
-  }
-
-  // Otherwise this block has not been seen before.
-  BB = new BasicBlock("", CurFun.CurrentFunction);
-  if (ID.Type == ValID::LocalName) {
-    BB->setName(ID.Name);
-  } else {
-    CurFun.NumberedBlocks[ID.Num] = BB;
-  }
-
-  // If this is not a definition, keep track of it so we can use it as a forward
-  // reference.
-  if (!isDefinition) {
-    // Remember where this forward reference came from.
-    CurFun.BBForwardRefs[BB] = std::make_pair(ID, llvmAsmlineno);
-  } else {
+  std::map<ValID, BasicBlock*>::iterator BBI = CurFun.BBForwardRefs.find(ID);
+  if (BBI != CurFun.BBForwardRefs.end()) {
+    BB = BBI->second;
     // The forward declaration could have been inserted anywhere in the
     // function: insert it into the correct place now.
     CurFun.CurrentFunction->getBasicBlockList().remove(BB);
     CurFun.CurrentFunction->getBasicBlockList().push_back(BB);
+
+    // Erase the forward ref from the map as its no longer "forward"
+    CurFun.BBForwardRefs.erase(ID);
+
+    // If its a numbered definition, bump the number and set the BB value.
+    if (ID.Type == ValID::LocalID) {
+      assert(ID.Num == CurFun.NextValNum && "Invalid new block number");
+      InsertValue(BB);
+    }
+
+    ID.destroy();
+    return BB;
+  } 
+  
+  // We haven't seen this BB before and its first mention is a definition. 
+  // Just create it and return it.
+  std::string Name (ID.Type == ValID::LocalName ? ID.Name : "");
+  BB = new BasicBlock(Name, CurFun.CurrentFunction);
+  if (ID.Type == ValID::LocalID) {
+    assert(ID.Num == CurFun.NextValNum && "Invalid new block number");
+    InsertValue(BB);
   }
-  ID.destroy();
+
+  ID.destroy(); // Free strdup'd memory
+  return BB;
+}
+
+/// getBBVal - get an existing BB value or create a forward reference for it.
+/// 
+static BasicBlock *getBBVal(const ValID &ID) {
+  assert(inFunctionScope() && "Can't get basic block at global scope!");
+
+  BasicBlock *BB =  0;
+
+  std::map<ValID, BasicBlock*>::iterator BBI = CurFun.BBForwardRefs.find(ID);
+  if (BBI != CurFun.BBForwardRefs.end()) {
+    BB = BBI->second;
+  } if (ID.Type == ValID::LocalName) {
+    std::string Name = ID.Name;
+    Value *N = CurFun.CurrentFunction->getValueSymbolTable().lookup(Name);
+    if (N)
+      if (N->getType()->getTypeID() == Type::LabelTyID)
+        BB = cast<BasicBlock>(N);
+      else
+        GenerateError("Reference to label '" + Name + "' is actually of type '"+
+          N->getType()->getDescription() + "'");
+  } else if (ID.Type == ValID::LocalID) {
+    if (ID.Num < CurFun.NextValNum && ID.Num < CurFun.Values.size()) {
+      if (CurFun.Values[ID.Num]->getType()->getTypeID() == Type::LabelTyID)
+        BB = cast<BasicBlock>(CurFun.Values[ID.Num]);
+      else
+        GenerateError("Reference to label '%" + utostr(ID.Num) + 
+          "' is actually of type '"+ 
+          CurFun.Values[ID.Num]->getType()->getDescription() + "'");
+    }
+  } else {
+    GenerateError("Illegal label reference " + ID.getName());
+    return 0;
+  }
+
+  // If its already been defined, return it now.
+  if (BB) {
+    ID.destroy(); // Free strdup'd memory.
+    return BB;
+  }
+
+  // Otherwise, this block has not been seen before, create it.
+  std::string Name;
+  if (ID.Type == ValID::LocalName)
+    Name = ID.Name;
+  BB = new BasicBlock(Name, CurFun.CurrentFunction);
+
+  // Insert it in the forward refs map.
+  CurFun.BBForwardRefs[ID] = BB;
+
   return BB;
 }
 
@@ -571,50 +608,44 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
 // defs now...
 //
 static void 
-ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
-                   std::map<const Type*,ValueList> *FutureLateResolvers) {
+ResolveDefinitions(ValueList &LateResolvers, ValueList *FutureLateResolvers) {
   // Loop over LateResolveDefs fixing up stuff that couldn't be resolved
-  for (std::map<const Type*,ValueList>::iterator LRI = LateResolvers.begin(),
-         E = LateResolvers.end(); LRI != E; ++LRI) {
-    ValueList &List = LRI->second;
-    while (!List.empty()) {
-      Value *V = List.back();
-      List.pop_back();
+  while (!LateResolvers.empty()) {
+    Value *V = LateResolvers.back();
+    LateResolvers.pop_back();
 
-      std::map<Value*, std::pair<ValID, int> >::iterator PHI =
-        CurModule.PlaceHolderInfo.find(V);
-      assert(PHI != CurModule.PlaceHolderInfo.end() && "Placeholder error!");
+    std::map<Value*, std::pair<ValID, int> >::iterator PHI =
+      CurModule.PlaceHolderInfo.find(V);
+    assert(PHI != CurModule.PlaceHolderInfo.end() && "Placeholder error!");
 
-      ValID &DID = PHI->second.first;
+    ValID &DID = PHI->second.first;
 
-      Value *TheRealValue = getValNonImprovising(LRI->first, DID);
-      if (TriggerError)
+    Value *TheRealValue = getExistingVal(V->getType(), DID);
+    if (TriggerError)
+      return;
+    if (TheRealValue) {
+      V->replaceAllUsesWith(TheRealValue);
+      delete V;
+      CurModule.PlaceHolderInfo.erase(PHI);
+    } else if (FutureLateResolvers) {
+      // Functions have their unresolved items forwarded to the module late
+      // resolver table
+      InsertValue(V, *FutureLateResolvers);
+    } else {
+      if (DID.Type == ValID::LocalName || DID.Type == ValID::GlobalName) {
+        GenerateError("Reference to an invalid definition: '" +DID.getName()+
+                       "' of type '" + V->getType()->getDescription() + "'",
+                       PHI->second.second);
         return;
-      if (TheRealValue) {
-        V->replaceAllUsesWith(TheRealValue);
-        delete V;
-        CurModule.PlaceHolderInfo.erase(PHI);
-      } else if (FutureLateResolvers) {
-        // Functions have their unresolved items forwarded to the module late
-        // resolver table
-        InsertValue(V, *FutureLateResolvers);
       } else {
-        if (DID.Type == ValID::LocalName || DID.Type == ValID::GlobalName) {
-          GenerateError("Reference to an invalid definition: '" +DID.getName()+
-                         "' of type '" + V->getType()->getDescription() + "'",
-                         PHI->second.second);
-          return;
-        } else {
-          GenerateError("Reference to an invalid definition: #" +
-                         itostr(DID.Num) + " of type '" +
-                         V->getType()->getDescription() + "'",
-                         PHI->second.second);
-          return;
-        }
+        GenerateError("Reference to an invalid definition: #" +
+                       itostr(DID.Num) + " of type '" +
+                       V->getType()->getDescription() + "'",
+                       PHI->second.second);
+        return;
       }
     }
   }
-
   LateResolvers.clear();
 }
 
@@ -688,7 +719,7 @@ ParseGlobalVariable(char *NameStr,
   if (!Name.empty()) {
     ID = ValID::createGlobalName((char*)Name.c_str());
   } else {
-    ID = ValID::createGlobalID(CurModule.Values[PTy].size());
+    ID = ValID::createGlobalID(CurModule.Values.size());
   }
 
   if (GlobalValue *FWGV = CurModule.GetForwardRefForGlobal(PTy, ID)) {
@@ -1631,15 +1662,15 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     // ConstExprs can exist in the body of a function, thus creating
     // GlobalValues whenever they refer to a variable.  Because we are in
-    // the context of a function, getValNonImprovising will search the functions
+    // the context of a function, getExistingVal will search the functions
     // symbol table instead of the module symbol table for the global symbol,
     // which throws things all off.  To get around this, we just tell
-    // getValNonImprovising that we are at global scope here.
+    // getExistingVal that we are at global scope here.
     //
     Function *SavedCurFn = CurFun.CurrentFunction;
     CurFun.CurrentFunction = 0;
 
-    Value *V = getValNonImprovising(Ty, $2);
+    Value *V = getExistingVal(Ty, $2);
     CHECK_FOR_ERROR
 
     CurFun.CurrentFunction = SavedCurFn;
@@ -2116,7 +2147,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   if (!FunctionName.empty()) {
     ID = ValID::createGlobalName((char*)FunctionName.c_str());
   } else {
-    ID = ValID::createGlobalID(CurModule.Values[PFT].size());
+    ID = ValID::createGlobalID(CurModule.Values.size());
   }
 
   Function *Fn = 0;
@@ -2356,7 +2387,6 @@ BasicBlock : InstructionList OptLocalAssign BBTerminatorInst  {
     CHECK_FOR_ERROR
     InsertValue($3);
     $1->getInstList().push_back($3);
-    InsertValue($1);
     $$ = $1;
     CHECK_FOR_ERROR
   };
@@ -2370,28 +2400,12 @@ InstructionList : InstructionList Inst {
     $$ = $1;
     CHECK_FOR_ERROR
   }
-  | /* empty */ {
-    $$ = getBBVal(ValID::createLocalID(CurFun.NextBBNum++), true);
-    CHECK_FOR_ERROR
-
-    // Make sure to move the basic block to the correct location in the
-    // function, instead of leaving it inserted wherever it was first
-    // referenced.
-    Function::BasicBlockListType &BBL = 
-      CurFun.CurrentFunction->getBasicBlockList();
-    BBL.splice(BBL.end(), BBL, $$);
+  | /* empty */ {          // Empty space between instruction lists
+    $$ = defineBBVal(ValID::createLocalID(CurFun.NextValNum));
     CHECK_FOR_ERROR
   }
-  | LABELSTR {
-    $$ = getBBVal(ValID::createLocalName($1), true);
-    CHECK_FOR_ERROR
-
-    // Make sure to move the basic block to the correct location in the
-    // function, instead of leaving it inserted wherever it was first
-    // referenced.
-    Function::BasicBlockListType &BBL = 
-      CurFun.CurrentFunction->getBasicBlockList();
-    BBL.splice(BBL.end(), BBL, $$);
+  | LABELSTR {             // Labelled (named) basic block
+    $$ = defineBBVal(ValID::createLocalName($1));
     CHECK_FOR_ERROR
   };
 
@@ -2399,15 +2413,15 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = new ReturnInst($2);
     CHECK_FOR_ERROR
   }
-  | RET VOID {                                       // Return with no result...
+  | RET VOID {                                    // Return with no result...
     $$ = new ReturnInst();
     CHECK_FOR_ERROR
   }
-  | BR LABEL ValueRef {                         // Unconditional Branch...
+  | BR LABEL ValueRef {                           // Unconditional Branch...
     BasicBlock* tmpBB = getBBVal($3);
     CHECK_FOR_ERROR
     $$ = new BranchInst(tmpBB);
-  }                                                  // Conditional Branch...
+  }                                               // Conditional Branch...
   | BR INTTYPE ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
     assert(cast<IntegerType>($2)->getBitWidth() == 1 && "Not Bool?");
     BasicBlock* tmpBBA = getBBVal($6);
@@ -2526,7 +2540,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
 
 JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$ = $1;
-    Constant *V = cast<Constant>(getValNonImprovising($2, $3));
+    Constant *V = cast<Constant>(getExistingVal($2, $3));
     CHECK_FOR_ERROR
     if (V == 0)
       GEN_ERROR("May only switch on a constant pool value");
@@ -2537,7 +2551,7 @@ JumpTable : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $$ = new std::vector<std::pair<Constant*, BasicBlock*> >();
-    Constant *V = cast<Constant>(getValNonImprovising($1, $2));
+    Constant *V = cast<Constant>(getExistingVal($1, $2));
     CHECK_FOR_ERROR
 
     if (V == 0)
