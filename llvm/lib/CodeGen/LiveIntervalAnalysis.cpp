@@ -937,7 +937,7 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   // virtual register. Once the coalescing is done, it cannot be broken and
   // these are not spillable! If the destination interval uses are far away,
   // think twice about coalescing them!
-  if (ReduceJoinPhys && !isDead &&
+  if (ReduceJoinPhys && !mopd->isDead() &&
       MRegisterInfo::isPhysicalRegister(repSrcReg)) {
     // Small function. No need to worry!
     unsigned Threshold = allocatableRegs_.count() * 2;
