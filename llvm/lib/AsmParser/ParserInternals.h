@@ -207,6 +207,26 @@ struct ValID {
     default:  assert(0 && "Unknown value type!"); return false;
     }
   }
+
+  bool operator==(const ValID &V) const {
+    if (Type == V.Type) {
+      switch (Type) {
+        case LocalID:
+        case GlobalID: return Num == V.Num;
+        case LocalName:
+        case GlobalName: return strcmp(Name, V.Name) == 0;
+        case ConstSIntVal:  return ConstPool64  == V.ConstPool64;
+        case ConstUIntVal:  return UConstPool64 == V.UConstPool64;
+        case ConstFPVal:    return ConstPoolFP  == V.ConstPoolFP;
+        case ConstantVal:   return ConstantValue == V.ConstantValue;
+        case ConstNullVal:  return true;
+        case ConstUndefVal: return true;
+        case ConstZeroVal:  return true;
+        default:  assert(0 && "Unknown value type!"); return false;
+      }
+    }
+    return false;
+  }
 };
 
 struct TypeWithAttrs {
