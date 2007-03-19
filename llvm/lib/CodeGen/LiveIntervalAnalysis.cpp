@@ -42,7 +42,6 @@ STATISTIC(numJoins    , "Number of interval joins performed");
 STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
 STATISTIC(numFolded   , "Number of loads/stores folded into instructions");
 STATISTIC(numAborts   , "Number of times interval joining aborted");
-static cl::opt<bool> ReduceJoinPhys("reduce-joining-phy-regs", cl::Hidden);
 
 namespace {
   RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
@@ -937,8 +936,7 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   // virtual register. Once the coalescing is done, it cannot be broken and
   // these are not spillable! If the destination interval uses are far away,
   // think twice about coalescing them!
-  if (ReduceJoinPhys && !mopd->isDead() &&
-      MRegisterInfo::isPhysicalRegister(repSrcReg)) {
+  if (!mopd->isDead() && MRegisterInfo::isPhysicalRegister(repSrcReg)) {
     // Small function. No need to worry!
     unsigned Threshold = allocatableRegs_.count() * 2;
     if (r2iMap_.size() <= Threshold)
