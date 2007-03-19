@@ -374,6 +374,12 @@ public:
     return !isNegative();
   }
 
+  /// This just tests if the value of this APInt is strictly positive (> 0).
+  /// @brief Determine if this APInt Value is strictly positive.
+  inline bool isStrictPositive() const {
+    return isPositive() && (*this) != 0;
+  }
+
   /// Arithmetic right-shift this APInt by shiftAmt.
   /// @brief Arithmetic right-shift function.
   APInt ashr(uint32_t shiftAmt) const;
