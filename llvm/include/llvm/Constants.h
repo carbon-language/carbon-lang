@@ -94,7 +94,7 @@ public:
   /// either getSExtValue() or getZExtValue() will yield a correctly sized and
   /// signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific value.
-  static ConstantInt *get(const Type *Ty, uint64_t V);
+  static ConstantInt *get(const Type *Ty, uint64_t V, bool isSigned = false);
 
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.

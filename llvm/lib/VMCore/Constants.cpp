@@ -203,9 +203,9 @@ typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*,
                  DenseMapAPIntKeyInfo> IntMapTy;
 static ManagedStatic<IntMapTy> IntConstants;
 
-ConstantInt *ConstantInt::get(const Type *Ty, uint64_t V) {
+ConstantInt *ConstantInt::get(const Type *Ty, uint64_t V, bool isSigned) {
   const IntegerType *ITy = cast<IntegerType>(Ty);
-  return get(APInt(ITy->getBitWidth(), V));
+  return get(APInt(ITy->getBitWidth(), V, isSigned));
 }
 
 // Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
