@@ -672,7 +672,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
 // one of the above mentioned nodes. It has to be wrapped because otherwise
 // Select(N) returns N. So the raw TargetGlobalAddress nodes, etc. can only
 // be used to form addressing mode. These wrapped nodes will be selected
-// into MOVri.
+// into MOVi.
 static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);

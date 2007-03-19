@@ -185,7 +185,7 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   if (RC == ARM::GPRRegisterClass) {
     MachineFunction &MF = *MBB.getParent();
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-    BuildMI(MBB, I, TII.get(AFI->isThumbFunction() ? ARM::tMOVrr : ARM::MOVrr),
+    BuildMI(MBB, I, TII.get(AFI->isThumbFunction() ? ARM::tMOVr : ARM::MOVr),
             DestReg).addReg(SrcReg);
   } else if (RC == ARM::SPRRegisterClass)
     BuildMI(MBB, I, TII.get(ARM::FCPYS), DestReg).addReg(SrcReg);
@@ -214,7 +214,7 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
   MachineInstr *NewMI = NULL;
   switch (Opc) {
   default: break;
-  case ARM::MOVrr: {
+  case ARM::MOVr: {
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
       NewMI = BuildMI(TII.get(ARM::STR)).addReg(SrcReg).addFrameIndex(FI)
@@ -226,7 +226,7 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
     }
     break;
   }
-  case ARM::tMOVrr: {
+  case ARM::tMOVr: {
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
       if (isPhysicalRegister(SrcReg) && !isLowRegister(SrcReg))
@@ -448,14 +448,14 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     if (DestReg == ARM::SP) {
       assert(BaseReg == ARM::SP && "Unexpected!");
       LdReg = ARM::R3;
-      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::R12)
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVr), ARM::R12)
         .addReg(ARM::R3, false, false, true);
     }
 
     if (NumBytes <= 255 && NumBytes >= 0)
-      BuildMI(MBB, MBBI, TII.get(ARM::tMOVri8), LdReg).addImm(NumBytes);
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVi8), LdReg).addImm(NumBytes);
     else if (NumBytes < 0 && NumBytes >= -255) {
-      BuildMI(MBB, MBBI, TII.get(ARM::tMOVri8), LdReg).addImm(NumBytes);
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVi8), LdReg).addImm(NumBytes);
       BuildMI(MBB, MBBI, TII.get(ARM::tNEG), LdReg)
         .addReg(LdReg, false, false, true);
     } else
@@ -469,7 +469,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     else
       MIB.addReg(LdReg).addReg(BaseReg, false, false, true);
     if (DestReg == ARM::SP)
-      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::R3)
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVr), ARM::R3)
         .addReg(ARM::R12, false, false, true);
 }
 
@@ -538,7 +538,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
       BuildMI(MBB, MBBI, TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3), DestReg)
         .addReg(BaseReg, false, false, true).addImm(ThisVal);
     } else {
-      BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), DestReg)
+      BuildMI(MBB, MBBI, TII.get(ARM::tMOVr), DestReg)
         .addReg(BaseReg, false, false, true);
     }
     BaseReg = DestReg;
@@ -627,7 +627,7 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
   int Chunk = (1 << 8) - 1;
   int ThisVal = (Imm > Chunk) ? Chunk : Imm;
   Imm -= ThisVal;
-  BuildMI(MBB, MBBI, TII.get(ARM::tMOVri8), DestReg).addImm(ThisVal);
+  BuildMI(MBB, MBBI, TII.get(ARM::tMOVi8), DestReg).addImm(ThisVal);
   if (Imm > 0) 
     emitThumbRegPlusImmediate(MBB, MBBI, DestReg, DestReg, Imm, TII);
   if (isSub)
@@ -690,7 +690,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset += MI.getOperand(i+1).getImm();
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setInstrDescriptor(TII.get(ARM::MOVrr));
+      MI.setInstrDescriptor(TII.get(ARM::MOVr));
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(i+1);
       return;
@@ -741,7 +741,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setInstrDescriptor(TII.get(ARM::tMOVrr));
+      MI.setInstrDescriptor(TII.get(ARM::tMOVr));
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(i+1);
       return;
@@ -909,12 +909,12 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       unsigned TmpReg = ARM::R3;
       bool UseRR = false;
       if (ValReg == ARM::R3) {
-        BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12)
+        BuildMI(MBB, II, TII.get(ARM::tMOVr), ARM::R12)
           .addReg(ARM::R2, false, false, true);
         TmpReg = ARM::R2;
       }
       if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
-        BuildMI(MBB, II, TII.get(ARM::tMOVrr), ARM::R12)
+        BuildMI(MBB, II, TII.get(ARM::tMOVr), ARM::R12)
           .addReg(ARM::R3, false, false, true);
       if (Opcode == ARM::tSpill) {
         if (FrameReg == ARM::SP)
@@ -934,10 +934,10 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
       MachineBasicBlock::iterator NII = next(II);
       if (ValReg == ARM::R3)
-        BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R2)
+        BuildMI(MBB, NII, TII.get(ARM::tMOVr), ARM::R2)
           .addReg(ARM::R12, false, false, true);
       if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
-        BuildMI(MBB, NII, TII.get(ARM::tMOVrr), ARM::R3)
+        BuildMI(MBB, NII, TII.get(ARM::tMOVr), ARM::R3)
           .addReg(ARM::R12, false, false, true);
     } else
       assert(false && "Unexpected opcode!");
@@ -1391,7 +1391,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
         if (NumBytes)
           emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, FramePtr, -NumBytes, TII);
         else
-          BuildMI(MBB, MBBI, TII.get(ARM::tMOVrr), ARM::SP).addReg(FramePtr);
+          BuildMI(MBB, MBBI, TII.get(ARM::tMOVr), ARM::SP).addReg(FramePtr);
       } else {
         if (MBBI->getOpcode() == ARM::tBX_RET &&
             &MBB.front() != MBBI &&
@@ -1416,7 +1416,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
             BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
               .addImm(NumBytes);
           else
-            BuildMI(MBB, MBBI, TII.get(ARM::MOVrr), ARM::SP).addReg(FramePtr);
+            BuildMI(MBB, MBBI, TII.get(ARM::MOVr), ARM::SP).addReg(FramePtr);
       } else if (NumBytes) {
         emitSPUpdate(MBB, MBBI, NumBytes, false, TII);
       }

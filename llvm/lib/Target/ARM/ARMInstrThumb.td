@@ -380,7 +380,7 @@ def tLSRrr : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
                  [(set GPR:$dst, (srl GPR:$lhs, GPR:$rhs))]>;
 
 let isReMaterializable = 1 in
-def tMOVri8 : TI<(ops GPR:$dst, i32imm:$src),
+def tMOVi8 : TI<(ops GPR:$dst, i32imm:$src),
                  "mov $dst, $src",
                  [(set GPR:$dst, imm0_255:$src)]>;
 
@@ -389,7 +389,7 @@ def tMOVri8 : TI<(ops GPR:$dst, i32imm:$src),
 
 // Note: MOV(2) of two low regs updates the flags, so we emit this as 'cpy',
 // which is MOV(3).  This also supports high registers.
-def tMOVrr  : TI<(ops GPR:$dst, GPR:$src),
+def tMOVr  : TI<(ops GPR:$dst, GPR:$src),
                  "cpy $dst, $src", []>;
 
 def tMUL : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
@@ -544,8 +544,8 @@ def : ThumbPat<(truncstorei1 GPR:$src, t_addrmode_s1:$dst),
 
 // Two piece imms.
 def : ThumbPat<(i32 thumb_immshifted:$src),
-               (tLSLri (tMOVri8 (thumb_immshifted_val imm:$src)),
+               (tLSLri (tMOVi8 (thumb_immshifted_val imm:$src)),
                        (thumb_immshifted_shamt imm:$src))>;
 
 def : ThumbPat<(i32 imm0_255_comp:$src),
-               (tMVN (tMOVri8 (imm_comp_XFORM imm:$src)))>;
+               (tMVN (tMOVi8 (imm_comp_XFORM imm:$src)))>;

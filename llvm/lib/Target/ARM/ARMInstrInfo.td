@@ -710,13 +710,13 @@ def STM : AI4<(ops addrmode4:$addr, reglist:$src1, variable_ops),
 //  Move Instructions.
 //
 
-def MOVrr : AI1<(ops GPR:$dst, GPR:$src),
+def MOVr : AI1<(ops GPR:$dst, GPR:$src),
                 "mov $dst, $src", []>;
-def MOVrs : AI1<(ops GPR:$dst, so_reg:$src),
+def MOVs : AI1<(ops GPR:$dst, so_reg:$src),
                 "mov $dst, $src", [(set GPR:$dst, so_reg:$src)]>;
 
 let isReMaterializable = 1 in
-def MOVri : AI1<(ops GPR:$dst, so_imm:$src),
+def MOVi : AI1<(ops GPR:$dst, so_imm:$src),
                 "mov $dst, $src", [(set GPR:$dst, so_imm:$src)]>;
 
 // These aren't really mov instructions, but we have to define them this way
@@ -728,7 +728,7 @@ def MOVsrl_flag : AI1<(ops GPR:$dst, GPR:$src),
 def MOVsra_flag : AI1<(ops GPR:$dst, GPR:$src),
                       "movs $dst, $src, asr #1",
                       [(set GPR:$dst, (ARMsra_flag GPR:$src))]>;
-def MOVrrx      : AI1<(ops GPR:$dst, GPR:$src),
+def MOVrx       : AI1<(ops GPR:$dst, GPR:$src),
                       "mov $dst, $src, rrx",
                       [(set GPR:$dst, (ARMrrx GPR:$src))]>;
 
@@ -1070,7 +1070,7 @@ def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 
 // Two piece so_imms.
 def : ARMPat<(i32 so_imm2part:$src),
-             (ORRri (MOVri (so_imm2part_1 imm:$src)),
+             (ORRri (MOVi (so_imm2part_1 imm:$src)),
                     (so_imm2part_2 imm:$src))>;
 
 def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),

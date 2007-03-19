@@ -384,7 +384,7 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDOperand Op, SDOperand N,
     // We must materialize a zero in a reg! Returning an constant here won't
     // work since its node is -1 so it won't get added to the selection queue.
     // Explicitly issue a tMOVri8 node!
-    Offset = SDOperand(CurDAG->getTargetNode(ARM::tMOVri8, MVT::i32,
+    Offset = SDOperand(CurDAG->getTargetNode(ARM::tMOVi8, MVT::i32,
                                     CurDAG->getTargetConstant(0, MVT::i32)), 0);
     return true;
   }
