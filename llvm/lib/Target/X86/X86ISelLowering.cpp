@@ -4526,7 +4526,7 @@ isOperandValidForConstraint(SDOperand Op, char Constraint, SelectionDAG &DAG) {
   case 'I':
     if (isa<ConstantSDNode>(Op)) {
       unsigned Value = cast<ConstantSDNode>(Op)->getValue();
-      if (Value >= 0 && Value <= 31)
+      if (Value <= 31)
         return Op;
       else 
         return SDOperand(0,0);
