@@ -733,13 +733,24 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
     }
     
     AddPath("/usr/local/include", System, false, false, false, FM);
+    // leopard
     AddPath("/usr/lib/gcc/i686-apple-darwin9/4.0.1/include", System, 
             false, false, false, FM);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin9/4.0.1/include", 
             System, false, false, false, FM);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin9/"
+            "4.0.1/../../../../powerpc-apple-darwin0/include", 
+            System, false, false, false, FM);
+
+    // tiger
+    AddPath("/usr/lib/gcc/i686-apple-darwin8/4.0.1/include", System, 
+            false, false, false, FM);
+    AddPath("/usr/lib/gcc/powerpc-apple-darwin8/4.0.1/include", 
+            System, false, false, false, FM);
+    AddPath("/usr/lib/gcc/powerpc-apple-darwin8/"
             "4.0.1/../../../../powerpc-apple-darwin8/include", 
             System, false, false, false, FM);
+
     AddPath("/usr/include", System, false, false, false, FM);
     AddPath("/System/Library/Frameworks", System, true, false, true, FM);
     AddPath("/Library/Frameworks", System, true, false, true, FM);
