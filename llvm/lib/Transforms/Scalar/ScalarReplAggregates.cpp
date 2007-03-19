@@ -60,14 +60,15 @@ namespace {
     }
 
   private:
-    int isSafeElementUse(Value *Ptr);
+    int isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI);
     int isSafeUseOfAllocation(Instruction *User, AllocationInst *AI);
+    bool isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI);
     bool isSafeUseOfBitCastedAllocation(BitCastInst *User, AllocationInst *AI);
     int isSafeAllocaToScalarRepl(AllocationInst *AI);
     void CanonicalizeAllocaUsers(AllocationInst *AI);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocationInst *Base);
     
-    void RewriteBitCastUserOfAlloca(BitCastInst *BCInst, AllocationInst *AI,
+    void RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
                                     SmallVector<AllocaInst*, 32> &NewElts);
     
     const Type *CanConvertToScalar(Value *V, bool &IsNotTrivial);
@@ -214,6 +215,7 @@ bool SROA::performScalarRepl(Function &F) {
       Instruction *User = cast<Instruction>(AI->use_back());
       if (BitCastInst *BCInst = dyn_cast<BitCastInst>(User)) {
         RewriteBitCastUserOfAlloca(BCInst, AI, ElementAllocas);
+        BCInst->eraseFromParent();
         continue;
       }
       
@@ -242,6 +244,25 @@ bool SROA::performScalarRepl(Function &F) {
                                          NewArgs.size(), "", GEPI);
         RepValue->takeName(GEPI);
       }
+      
+      // If this GEP is to the start of the aggregate, check for memcpys.
+      if (Idx == 0) {
+        bool IsStartOfAggregateGEP = true;
+        for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i) {
+          if (!isa<ConstantInt>(GEPI->getOperand(i))) {
+            IsStartOfAggregateGEP = false;
+            break;
+          }
+          if (!cast<ConstantInt>(GEPI->getOperand(i))->isZero()) {
+            IsStartOfAggregateGEP = false;
+            break;
+          }
+        }
+        
+        if (IsStartOfAggregateGEP)
+          RewriteBitCastUserOfAlloca(GEPI, AI, ElementAllocas);
+      }
+      
 
       // Move all of the users over to the new GEP.
       GEPI->replaceAllUsesWith(RepValue);
@@ -259,9 +280,10 @@ bool SROA::performScalarRepl(Function &F) {
 
 
 /// isSafeElementUse - Check to see if this use is an allowed use for a
-/// getelementptr instruction of an array aggregate allocation.
+/// getelementptr instruction of an array aggregate allocation.  isFirstElt
+/// indicates whether Ptr is known to the start of the aggregate.
 ///
-int SROA::isSafeElementUse(Value *Ptr) {
+int SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI) {
   for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
        I != E; ++I) {
     Instruction *User = cast<Instruction>(*I);
@@ -273,14 +295,38 @@ int SROA::isSafeElementUse(Value *Ptr) {
       break;
     case Instruction::GetElementPtr: {
       GetElementPtrInst *GEP = cast<GetElementPtrInst>(User);
+      bool AreAllZeroIndices = isFirstElt;
       if (GEP->getNumOperands() > 1) {
-        if (!isa<Constant>(GEP->getOperand(1)) ||
-            !cast<Constant>(GEP->getOperand(1))->isNullValue())
-          return 0;  // Using pointer arithmetic to navigate the array...
+        if (!isa<ConstantInt>(GEP->getOperand(1)) ||
+            !cast<ConstantInt>(GEP->getOperand(1))->isZero())
+          return 0;  // Using pointer arithmetic to navigate the array.
+       
+        if (AreAllZeroIndices) {
+          for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i) {
+            if (!isa<ConstantInt>(GEP->getOperand(i)) ||    
+                !cast<ConstantInt>(GEP->getOperand(i))->isZero()) {
+              AreAllZeroIndices = false;
+              break;
+            }
+          }
+        }
       }
-      if (!isSafeElementUse(GEP)) return 0;
+      if (!isSafeElementUse(GEP, AreAllZeroIndices, AI)) return 0;
       break;
     }
+    case Instruction::BitCast:
+      if (isFirstElt &&
+          isSafeUseOfBitCastedAllocation(cast<BitCastInst>(User), AI)) 
+        break;
+      DOUT << "  Transformation preventing inst: " << *User;
+      return 0;
+    case Instruction::Call:
+      if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
+        if (isFirstElt && isSafeMemIntrinsicOnAllocation(MI, AI))
+          break;
+      }
+      DOUT << "  Transformation preventing inst: " << *User;
+      return 0;
     default:
       DOUT << "  Transformation preventing inst: " << *User;
       return 0;
@@ -317,15 +363,19 @@ int SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI) {
   ++I;
   if (I == E) return 0;  // ran out of GEP indices??
 
+  bool IsAllZeroIndices = true;
+  
   // If this is a use of an array allocation, do a bit more checking for sanity.
   if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
     uint64_t NumElements = AT->getNumElements();
 
-    if (isa<ConstantInt>(I.getOperand())) {
+    if (ConstantInt *Idx = dyn_cast<ConstantInt>(I.getOperand())) {
+      IsAllZeroIndices &= Idx->isZero();
+      
       // Check to make sure that index falls within the array.  If not,
       // something funny is going on, so we won't do the optimization.
       //
-      if (cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue() >= NumElements)
+      if (Idx->getZExtValue() >= NumElements)
         return 0;
 
       // We cannot scalar repl this level of the array unless any array
@@ -342,12 +392,16 @@ int SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI) {
         else
           NumElements = cast<VectorType>(*I)->getNumElements();
         
-        if (!isa<ConstantInt>(I.getOperand())) return 0;
-        if (cast<ConstantInt>(I.getOperand())->getZExtValue() >= NumElements)
+        ConstantInt *IdxVal = dyn_cast<ConstantInt>(I.getOperand());
+        if (!IdxVal) return 0;
+        if (IdxVal->getZExtValue() >= NumElements)
           return 0;
+        IsAllZeroIndices &= IdxVal->isZero();
       }
       
     } else {
+      IsAllZeroIndices = 0;
+      
       // If this is an array index and the index is not constant, we cannot
       // promote... that is unless the array has exactly one or two elements in
       // it, in which case we CAN promote it, but we have to canonicalize this
@@ -361,7 +415,27 @@ int SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI) {
 
   // If there are any non-simple uses of this getelementptr, make sure to reject
   // them.
-  return isSafeElementUse(GEPI);
+  return isSafeElementUse(GEPI, IsAllZeroIndices, AI);
+}
+
+/// isSafeMemIntrinsicOnAllocation - Return true if the specified memory
+/// intrinsic can be promoted by SROA.  At this point, we know that the operand
+/// of the memintrinsic is a pointer to the beginning of the allocation.
+bool SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI){
+  // If not constant length, give up.
+  ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
+  if (!Length) return false;
+  
+  // If not the whole aggregate, give up.
+  const TargetData &TD = getAnalysis<TargetData>();
+  if (Length->getZExtValue() != TD.getTypeSize(AI->getType()->getElementType()))
+    return false;
+  
+  // We only know about memcpy/memset/memmove.
+  if (!isa<MemCpyInst>(MI) && !isa<MemSetInst>(MI) && !isa<MemMoveInst>(MI))
+    return false;
+  // Otherwise, we can transform it.
+  return true;
 }
 
 /// isSafeUseOfBitCastedAllocation - Return true if all users of this bitcast
@@ -373,21 +447,8 @@ bool SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI) {
       if (!isSafeUseOfBitCastedAllocation(BCU, AI)) 
         return false;
     } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
-      // If not constant length, give up.
-      ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
-      if (!Length) return false;
-
-      // If not the whole aggregate, give up.
-      const TargetData &TD = getAnalysis<TargetData>();
-      if (Length->getZExtValue() != 
-          TD.getTypeSize(AI->getType()->getElementType()))
+      if (!isSafeMemIntrinsicOnAllocation(MI, AI))
         return false;
-      
-      // We only know about memcpy/memset/memmove.
-      if (!isa<MemCpyInst>(MI) && !isa<MemSetInst>(MI) &&
-          !isa<MemMoveInst>(MI))
-        return false;
-      // Otherwise, we can transform it.
     } else {
       return false;
     }
@@ -395,21 +456,33 @@ bool SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI) {
   return true;
 }
 
-/// RewriteBitCastUserOfAlloca - BCInst (transitively) casts AI.  Transform
-/// users of the cast to use the new values instead.
-void SROA::RewriteBitCastUserOfAlloca(BitCastInst *BCInst, AllocationInst *AI,
+/// RewriteBitCastUserOfAlloca - BCInst (transitively) bitcasts AI, or indexes
+/// to its first element.  Transform users of the cast to use the new values
+/// instead.
+void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts) {
   Constant *Zero = Constant::getNullValue(Type::Int32Ty);
   const TargetData &TD = getAnalysis<TargetData>();
-  while (!BCInst->use_empty()) {
-    if (BitCastInst *BCU = dyn_cast<BitCastInst>(BCInst->use_back())) {
+  
+  Value::use_iterator UI = BCInst->use_begin(), UE = BCInst->use_end();
+  while (UI != UE) {
+    if (BitCastInst *BCU = dyn_cast<BitCastInst>(*UI)) {
       RewriteBitCastUserOfAlloca(BCU, AI, NewElts);
+      ++UI;
+      BCU->eraseFromParent();
       continue;
     }
 
     // Otherwise, must be memcpy/memmove/memset of the entire aggregate.  Split
     // into one per element.
-    MemIntrinsic *MI = cast<MemIntrinsic>(BCInst->use_back());
+    MemIntrinsic *MI = dyn_cast<MemIntrinsic>(*UI);
+    
+    // If it's not a mem intrinsic, it must be some other user of a gep of the
+    // first pointer.  Just leave these alone.
+    if (!MI) {
+      ++UI;
+      continue;
+    }
     
     // If this is a memcpy/memmove, construct the other pointer as the
     // appropriate type.
@@ -553,11 +626,9 @@ void SROA::RewriteBitCastUserOfAlloca(BitCastInst *BCInst, AllocationInst *AI,
 
     // Finally, MI is now dead, as we've modified its actions to occur on all of
     // the elements of the aggregate.
+    ++UI;
     MI->eraseFromParent();
   }
-  
-  // The cast is dead, remove it.
-  BCInst->eraseFromParent();
 }
 
 
