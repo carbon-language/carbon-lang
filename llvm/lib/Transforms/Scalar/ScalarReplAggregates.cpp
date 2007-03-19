@@ -661,7 +661,8 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
   // up.
   for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
        UI != E; ) {
-    GetElementPtrInst *GEPI = cast<GetElementPtrInst>(*UI++);
+    GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI++);
+    if (!GEPI) continue;
     gep_type_iterator I = gep_type_begin(GEPI);
     ++I;
 
