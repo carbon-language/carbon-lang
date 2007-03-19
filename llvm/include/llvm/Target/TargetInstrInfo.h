@@ -78,6 +78,10 @@ const unsigned M_VARIABLE_OPS = 1 << 11;
 // execution.
 const unsigned M_PREDICATED = 1 << 12;
 
+// M_REMATERIALIZIBLE - Set if this instruction can be trivally re-materialized
+// at any time, e.g. constant generation, load from constant pool.
+const unsigned M_REMATERIALIZIBLE = 1 << 13;
+
 
 // Machine operand flags
 // M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
@@ -206,6 +210,9 @@ public:
 
   bool isPredicated(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_PREDICATED;
+  }
+  bool isReMaterializable(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_REMATERIALIZIBLE;
   }
   bool isCommutableInstr(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_COMMUTABLE;
