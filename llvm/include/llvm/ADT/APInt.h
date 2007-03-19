@@ -151,7 +151,7 @@ class APInt {
 
 public:
   /// @brief Create a new APInt of numBits width, initialized as val.
-  APInt(uint32_t numBits, uint64_t val);
+  APInt(uint32_t numBits, uint64_t val, bool isSigned = false);
 
   /// Note that numWords can be smaller or larger than the corresponding bit
   /// width but any extraneous bits will be dropped.
