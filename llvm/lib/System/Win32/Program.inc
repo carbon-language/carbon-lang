@@ -100,6 +100,7 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
 
 #ifdef __MINGW32__
   // Due to unknown reason, mingw32's w32api doesn't have this declaration.
+  extern "C"
   BOOL WINAPI SetInformationJobObject(HANDLE hJob,
                                       JOBOBJECTINFOCLASS JobObjectInfoClass,
                                       LPVOID lpJobObjectInfo,
