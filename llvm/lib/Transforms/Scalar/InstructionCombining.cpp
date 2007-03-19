@@ -3491,14 +3491,15 @@ static bool isLowOnes(const ConstantInt *CI) {
 // isHighOnes - Return true if the constant is of the form 1+0+.
 // This is the same as lowones(~X).
 static bool isHighOnes(const ConstantInt *CI) {
-  uint64_t V = ~CI->getZExtValue();
-  if (~V == 0) return false;  // 0's does not match "1+"
+  if (CI->getValue() == 0) return false;  // 0's does not match "1+"
+
+  APInt V(~CI->getValue());
 
   // There won't be bits set in parts that the type doesn't contain.
-  V &= ConstantInt::getAllOnesValue(CI->getType())->getZExtValue();
+  V &= APInt::getAllOnesValue(CI->getType()->getBitWidth());
 
-  uint64_t U = V+1;  // If it is low ones, this should be a power of two.
-  return U && V && (U & V) == 0;
+  APInt U(V+1);  // If it is low ones, this should be a power of two.
+  return (U!=0) && (V!=0) && (U & V) == 0;
 }
 
 /// getICmpCode - Encode a icmp predicate into a three bit mask.  These bits
