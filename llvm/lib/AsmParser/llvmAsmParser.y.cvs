@@ -392,7 +392,7 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
                      Ty->getDescription() + "'");
       return 0;
     }
-    return ConstantInt::get(Ty, D.ConstPool64);
+    return ConstantInt::get(Ty, D.ConstPool64, true);
 
   case ValID::ConstUIntVal:     // Is it an unsigned const pool reference?
     if (!ConstantInt::isValueValidForType(Ty, D.UConstPool64)) {
@@ -401,7 +401,7 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
                        "' is invalid or out of range");
         return 0;
       } else {     // This is really a signed reference.  Transmogrify.
-        return ConstantInt::get(Ty, D.ConstPool64);
+        return ConstantInt::get(Ty, D.ConstPool64, true);
       }
     } else {
       return ConstantInt::get(Ty, D.UConstPool64);
@@ -1742,10 +1742,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   | IntType ESINT64VAL {      // integral constants
     if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type");
-    APInt Val(64, $2);
-    uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
-    Val.sextOrTrunc(BitWidth);
-    $$ = ConstantInt::get(Val);
+    $$ = ConstantInt::get($1, $2, true);
     CHECK_FOR_ERROR
   }
   | IntType ESAPINTVAL {      // arbitrary precision integer constants
@@ -1761,9 +1758,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
   | IntType EUINT64VAL {      // integral constants
     if (!ConstantInt::isValueValidForType($1, $2))
       GEN_ERROR("Constant value doesn't fit in type");
-    uint32_t BitWidth = cast<IntegerType>($1)->getBitWidth();
-    APInt Val(BitWidth, $2);
-    $$ = ConstantInt::get(Val);
+    $$ = ConstantInt::get($1, $2, false);
     CHECK_FOR_ERROR
   }
   | IntType EUAPINTVAL {      // arbitrary precision integer constants
