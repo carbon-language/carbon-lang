@@ -3449,14 +3449,13 @@ Instruction *InstCombiner::visitFRem(BinaryOperator &I) {
 
 // isMaxValueMinusOne - return true if this is Max-1
 static bool isMaxValueMinusOne(const ConstantInt *C, bool isSigned) {
+  uint32_t TypeBits = C->getType()->getPrimitiveSizeInBits();
   if (isSigned) {
     // Calculate 0111111111..11111
-    unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
-    int64_t Val = INT64_MAX;             // All ones
-    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-    return C->getSExtValue() == Val-1;
+    APInt Val(APInt::getSignedMaxValue(TypeBits));
+    return C->getValue() == Val-1;
   }
-  return C->getZExtValue() == C->getType()->getBitMask()-1;
+  return C->getValue() == APInt::getAllOnesValue(TypeBits) - 1;
 }
 
 // isMinValuePlusOne - return true if this is Min+1
