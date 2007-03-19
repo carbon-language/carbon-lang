@@ -2760,7 +2760,7 @@ FoundSExt:
 // highest order bit set.
 static bool isSignBit(ConstantInt *CI) {
   unsigned NumBits = CI->getType()->getPrimitiveSizeInBits();
-  return (CI->getZExtValue() & (~0ULL >> (64-NumBits))) == (1ULL << (NumBits-1));
+  return CI->getValue() == APInt::getSignBit(NumBits);
 }
 
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
@@ -4925,10 +4925,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
-static bool isPositive(ConstantInt *C) {
-  return C->getSExtValue() >= 0;
-}
-
 /// AddWithOverflow - Compute Result = In1+In2, returning true if the result
 /// overflowed for this type.
 static bool AddWithOverflow(ConstantInt *&Result, ConstantInt *In1,
@@ -5707,12 +5703,12 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             LoBound = Prod;
             LoOverflow = ProdOV;
             HiOverflow = ProdOV || AddWithOverflow(HiBound, LoBound, DivRHS);
-          } else if (isPositive(DivRHS)) { // Divisor is > 0.
+          } else if (DivRHS->getValue().isPositive()) { // Divisor is > 0.
             if (CI->isNullValue()) {       // (X / pos) op 0
               // Can't overflow.
               LoBound = cast<ConstantInt>(ConstantExpr::getNeg(SubOne(DivRHS)));
               HiBound = DivRHS;
-            } else if (isPositive(CI)) {   // (X / pos) op pos
+            } else if (CI->getValue().isPositive()) {   // (X / pos) op pos
               LoBound = Prod;
               LoOverflow = ProdOV;
               HiOverflow = ProdOV || AddWithOverflow(HiBound, Prod, DivRHS);
@@ -5729,7 +5725,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               HiBound = cast<ConstantInt>(ConstantExpr::getNeg(DivRHS));
               if (HiBound == DivRHS)
                 LoBound = 0;               // - INTMIN = INTMIN
-            } else if (isPositive(CI)) {   // (X / neg) op pos
+            } else if (CI->getValue().isPositive()) {   // (X / neg) op pos
               HiOverflow = LoOverflow = ProdOV;
               if (!LoOverflow)
                 LoOverflow = AddWithOverflow(LoBound, Prod, AddOne(DivRHS));
