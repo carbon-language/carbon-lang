@@ -44,7 +44,7 @@ STATISTIC(NumVariable, "Number of PHIs with variable strides");
 
 namespace {
 
-  class BasedUser;
+  struct BasedUser;
 
   /// IVStrideUse - Keep track of one use of a strided induction variable, where
   /// the stride is stored externally.  The Offset member keeps track of the 

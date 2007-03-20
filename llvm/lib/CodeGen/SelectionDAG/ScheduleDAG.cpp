@@ -394,6 +394,7 @@ static const TargetRegisterClass *getPhysicalRegisterRegClass(
     if ((*I)->hasType(VT) && (*I)->contains(reg))
       return *I;
   assert(false && "Couldn't find the register class");
+  return 0;
 }
 
 /// EmitNode - Generate machine code for an node and needed dependencies.
