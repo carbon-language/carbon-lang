@@ -50,6 +50,11 @@ namespace {
   EnableJoining("join-liveintervals",
                 cl::desc("Coallesce copies (default=true)"),
                 cl::init(true));
+
+  static cl::opt<bool>
+  EnableReMat("enable-rematerialization",
+                cl::desc("Perform trivial re-materialization"),
+                cl::init(false));
 }
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -155,8 +160,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         RemoveMachineInstrFromMaps(mii);
         mii = mbbi->erase(mii);
         ++numPeep;
-      }
-      else {
+      } else {
         for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
           const MachineOperand &mop = mii->getOperand(i);
           if (mop.isRegister() && mop.getReg() &&
@@ -165,9 +169,13 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
             unsigned reg = rep(mop.getReg());
             mii->getOperand(i).setReg(reg);
 
+            // If the definition instruction is re-materializable, its spill
+            // weight is zero.
             LiveInterval &RegInt = getInterval(reg);
-            RegInt.weight +=
-              (mop.isUse() + mop.isDef()) * pow(10.0F, (int)loopDepth);
+            if (!RegInt.remat) {
+              RegInt.weight +=
+                (mop.isUse() + mop.isDef()) * pow(10.0F, (int)loopDepth);
+            }
           }
         }
         ++mii;
@@ -300,7 +308,9 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
       for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
         MachineOperand& mop = MI->getOperand(i);
         if (mop.isRegister() && mop.getReg() == li.reg) {
-          if (MachineInstr *fmi = mri_->foldMemoryOperand(MI, i, slot)) {
+          MachineInstr *fmi = li.remat ? NULL
+            : mri_->foldMemoryOperand(MI, i, slot);
+          if (fmi) {
             // Attempt to fold the memory reference into the instruction.  If we
             // can do this, we don't need to insert spill code.
             if (lv_)
@@ -345,8 +355,11 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
             // create a new register for this spill
             vrm.grow();
+            if (li.remat)
+              vrm.setVirtIsReMaterialized(NewVReg, li.remat);
             vrm.assignVirt2StackSlot(NewVReg, slot);
             LiveInterval &nI = getOrCreateInterval(NewVReg);
+            nI.remat = li.remat;
             assert(nI.empty());
 
             // the spill weight is now infinity as it
@@ -422,6 +435,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   // done once for the vreg.  We use an empty interval to detect the first
   // time we see a vreg.
   if (interval.empty()) {
+    // Remember if the definition can be rematerialized.
+    if (EnableReMat &&
+        vi.DefInst && tii_->isReMaterializable(vi.DefInst->getOpcode()))
+      interval.remat = vi.DefInst;
+
     // Get the Idx of the defining instructions.
     unsigned defIndex = getDefIndex(MIIdx);
 
@@ -497,6 +515,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     }
 
   } else {
+    // Can't safely assume definition is rematierializable anymore.
+    interval.remat = NULL;
+
     // If this is the second time we see a virtual register definition, it
     // must be due to phi elimination or two addr elimination.  If this is
     // the result of two address elimination, then the vreg is one of the

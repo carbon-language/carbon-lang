@@ -28,6 +28,7 @@
 #include <cassert>
 
 namespace llvm {
+  class MachineInstr;
   class MRegisterInfo;
 
   /// LiveRange structure - This represents a simple register range in the
@@ -81,6 +82,7 @@ namespace llvm {
     typedef SmallVector<LiveRange,4> Ranges;
     unsigned reg;        // the register of this interval
     float weight;        // weight of this interval
+    MachineInstr* remat; // definition if the definition rematerializable
     Ranges ranges;       // the ranges in which this register is live
   private:
     /// ValueNumberInfo - If this value number is not defined by a copy, this
@@ -92,7 +94,7 @@ namespace llvm {
   public:
 
     LiveInterval(unsigned Reg, float Weight)
-      : reg(Reg), weight(Weight) {
+      : reg(Reg), weight(Weight), remat(NULL) {
     }
 
     typedef Ranges::iterator iterator;
@@ -119,6 +121,7 @@ namespace llvm {
     void swap(LiveInterval& other) {
       std::swap(reg, other.reg);
       std::swap(weight, other.weight);
+      std::swap(remat, other.remat);
       std::swap(ranges, other.ranges);
       std::swap(ValueNumberInfo, other.ValueNumberInfo);
     }

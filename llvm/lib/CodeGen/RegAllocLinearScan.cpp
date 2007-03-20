@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
+#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
@@ -600,7 +601,12 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // linearscan.
   if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DOUT << "\t\t\tspilling(c): " << *cur << '\n';
-    int slot = vrm_->assignVirt2StackSlot(cur->reg);
+    // if the current interval is re-materializable, remember so and don't
+    // assign it a spill slot.
+    if (cur->remat)
+      vrm_->setVirtIsReMaterialized(cur->reg, cur->remat);
+    int slot = cur->remat ? vrm_->assignVirtReMatId(cur->reg)
+      : vrm_->assignVirt2StackSlot(cur->reg);
     std::vector<LiveInterval*> added =
       li_->addIntervalsForSpills(*cur, *vrm_, slot);
     if (added.empty())
@@ -627,7 +633,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   std::vector<LiveInterval*> added;
   assert(MRegisterInfo::isPhysicalRegister(minReg) &&
          "did not choose a register to spill?");
-  std::vector<bool> toSpill(mri_->getNumRegs(), false);
+  BitVector toSpill(mri_->getNumRegs());
 
   // We are going to spill minReg and all its aliases.
   toSpill[minReg] = true;
@@ -653,7 +659,10 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         cur->overlapsFrom(*i->first, i->second)) {
       DOUT << "\t\t\tspilling(a): " << *i->first << '\n';
       earliestStart = std::min(earliestStart, i->first->beginNumber());
-      int slot = vrm_->assignVirt2StackSlot(i->first->reg);
+      if (i->first->remat)
+        vrm_->setVirtIsReMaterialized(reg, i->first->remat);
+      int slot = i->first->remat ? vrm_->assignVirtReMatId(reg)
+        : vrm_->assignVirt2StackSlot(reg);
       std::vector<LiveInterval*> newIs =
         li_->addIntervalsForSpills(*i->first, *vrm_, slot);
       std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
@@ -667,7 +676,10 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         cur->overlapsFrom(*i->first, i->second-1)) {
       DOUT << "\t\t\tspilling(i): " << *i->first << '\n';
       earliestStart = std::min(earliestStart, i->first->beginNumber());
-      int slot = vrm_->assignVirt2StackSlot(reg);
+      if (i->first->remat)
+        vrm_->setVirtIsReMaterialized(reg, i->first->remat);
+      int slot = i->first->remat ? vrm_->assignVirtReMatId(reg)
+        : vrm_->assignVirt2StackSlot(reg);
       std::vector<LiveInterval*> newIs =
         li_->addIntervalsForSpills(*i->first, *vrm_, slot);
       std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));

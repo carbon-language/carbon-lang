@@ -18,6 +18,7 @@
 #define LLVM_CODEGEN_VIRTREGMAP_H
 
 #include "llvm/Target/MRegisterInfo.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Support/Streams.h"
 #include <map>
@@ -28,6 +29,12 @@ namespace llvm {
 
   class VirtRegMap {
   public:
+    enum {
+      NO_PHYS_REG = 0,
+      NO_STACK_SLOT = ~0 >> 1,
+      MAX_STACK_SLOT = (1 << 18)-1
+    };
+
     enum ModRef { isRef = 1, isMod = 2, isModRef = 3 };
     typedef std::multimap<MachineInstr*,
                           std::pair<unsigned, ModRef> > MI2VirtMapTy;
@@ -53,13 +60,19 @@ namespace llvm {
     /// read/written by this instruction.
     MI2VirtMapTy MI2VirtMap;
 
+    /// ReMatMap - This is irtual register to re-materialized instruction
+    /// mapping. Each virtual register whose definition is going to be
+    /// re-materialized has an entry in it.
+    std::map<unsigned, const MachineInstr*> ReMatMap;
+
+    /// ReMatId - Instead of assigning a stack slot to a to be rematerialized
+    /// virtaul register, an unique id is being assinged. This keeps track of
+    /// the highest id used so far. Note, this starts at (1<<18) to avoid
+    /// conflicts with stack slot numbers.
+    int ReMatId;
+
     VirtRegMap(const VirtRegMap&);     // DO NOT IMPLEMENT
     void operator=(const VirtRegMap&); // DO NOT IMPLEMENT
-
-    enum {
-      NO_PHYS_REG = 0,
-      NO_STACK_SLOT = ~0 >> 1
-    };
 
   public:
     VirtRegMap(MachineFunction &mf);
@@ -124,6 +137,29 @@ namespace llvm {
     /// @brief create a mapping for the specified virtual register to
     /// the specified stack slot
     void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
+
+    /// @brief assign an unique re-materialization id to the specified
+    /// virtual register.
+    int assignVirtReMatId(unsigned virtReg);
+
+    /// @brief returns true if the specified virtual register is being
+    /// re-materialized.
+    bool isReMaterialized(unsigned virtReg) const {
+      return ReMatMap.count(virtReg) != 0;
+    }
+
+    /// @brief returns the original machine instruction being re-issued
+    /// to re-materialize the specified virtual register.
+    const MachineInstr *getReMaterializedMI(unsigned virtReg) {
+      return ReMatMap[virtReg];
+    }
+
+    /// @brief records the specified virtual register will be
+    /// re-materialized and the original instruction which will be re-issed
+    /// for this purpose.
+    void setVirtIsReMaterialized(unsigned virtReg, MachineInstr *def) {
+      ReMatMap[virtReg] = def;
+    }
 
     /// @brief Updates information about the specified virtual register's value
     /// folded into newMI machine instruction.  The OpNum argument indicates the
