@@ -180,6 +180,13 @@ void RegScavenger::backward() {
   setUsed(ChangedRegs);
 }
 
+void RegScavenger::getRegsUsed(BitVector &used, bool includeReserved) {
+  if (includeReserved)
+    used = RegStates;
+  else
+    used = RegStates & ~ReservedRegs;
+}
+
 /// CreateRegClassMask - Set the bits that represent the registers in the
 /// TargetRegisterClass.
 static void CreateRegClassMask(const TargetRegisterClass *RC, BitVector &Mask) {

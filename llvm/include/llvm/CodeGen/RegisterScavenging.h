@@ -91,6 +91,9 @@ public:
   bool isUsed(unsigned Reg) const   { return !RegStates[Reg]; }
   bool isUnused(unsigned Reg) const { return RegStates[Reg]; }
 
+  /// getRegsUsed - return all registers currently in use in used.
+  void getRegsUsed(BitVector &used, bool includeReserved);
+
   /// setUsed / setUnused - Mark the state of one or a number of registers.
   ///
   void setUsed(unsigned Reg)     { RegStates.reset(Reg); }

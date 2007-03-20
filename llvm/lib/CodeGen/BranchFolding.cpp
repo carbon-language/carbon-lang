@@ -21,8 +21,10 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
@@ -49,7 +51,9 @@ namespace {
                                  MachineBasicBlock *NewDest);
     MachineBasicBlock *SplitMBBAt(MachineBasicBlock &CurMBB,
                                   MachineBasicBlock::iterator BBI1);
-        
+
+    const MRegisterInfo *RegInfo;
+    RegScavenger *RS;
     // Branch optzn.
     bool OptimizeBranches(MachineFunction &MF);
     void OptimizeBlock(MachineBasicBlock *MBB);
@@ -94,6 +98,9 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
 bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
+
+  RegInfo = MF.getTarget().getRegisterInfo();
+  RS = RegInfo->requiresRegisterScavenging(MF) ? new RegScavenger() : NULL;
 
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
   
@@ -153,6 +160,7 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
       }
   }
   
+  delete RS;
   return EverMadeChange;
 }
 
@@ -280,6 +288,19 @@ MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
   
   // Splice the code over.
   NewMBB->splice(NewMBB->end(), &CurMBB, BBI1, CurMBB.end());
+
+  // For targets that use the register scavenger, we must maintain LiveIns.
+  if (RS) {
+    RS->enterBasicBlock(&CurMBB);
+    if (!CurMBB.empty())
+      RS->forward(prior(CurMBB.end()));
+    BitVector RegsLiveAtExit(RegInfo->getNumRegs());
+    RS->getRegsUsed(RegsLiveAtExit, false);
+    for (unsigned int i=0, e=RegInfo->getNumRegs(); i!=e; i++)
+      if (RegsLiveAtExit[i])
+        NewMBB->addLiveIn(i);
+  }
+
   return NewMBB;
 }
 
