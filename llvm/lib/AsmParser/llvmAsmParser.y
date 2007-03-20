@@ -513,8 +513,15 @@ static BasicBlock *defineBBVal(const ValID &ID) {
     CurFun.CurrentFunction->getBasicBlockList().remove(BB);
     CurFun.CurrentFunction->getBasicBlockList().push_back(BB);
 
+    // We're about to erase the entry, save the key so we can clean it up.
+    ValID Tmp = BBI->first;
+
     // Erase the forward ref from the map as its no longer "forward"
     CurFun.BBForwardRefs.erase(ID);
+
+    // The key has been removed from the map but so we don't want to leave 
+    // strdup'd memory around so destroy it too.
+    Tmp.destroy();
 
     // If its a numbered definition, bump the number and set the BB value.
     if (ID.Type == ValID::LocalID) {
@@ -1294,8 +1301,10 @@ Types
     std::vector<FunctionType::ParameterAttributes> Attrs;
     Attrs.push_back($5);
     for (TypeWithAttrsList::iterator I=$3->begin(), E=$3->end(); I != E; ++I) {
-      Params.push_back(I->Ty->get());
-      if (I->Ty->get() != Type::VoidTy)
+      const Type *Ty = I->Ty->get();
+      delete I->Ty; I->Ty = 0;
+      Params.push_back(Ty);
+      if (Ty != Type::VoidTy)
         Attrs.push_back(I->Attrs);
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
@@ -1312,8 +1321,10 @@ Types
     std::vector<FunctionType::ParameterAttributes> Attrs;
     Attrs.push_back($5);
     for (TypeWithAttrsList::iterator I=$3->begin(), E=$3->end(); I != E; ++I) {
-      Params.push_back(I->Ty->get());
-      if (I->Ty->get() != Type::VoidTy)
+      const Type* Ty = I->Ty->get();
+      delete I->Ty; I->Ty = 0;
+      Params.push_back(Ty);
+      if (Ty != Type::VoidTy)
         Attrs.push_back(I->Attrs);
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
@@ -1429,11 +1440,13 @@ ArgTypeListI
 //
 TypeListI : Types {
     $$ = new std::list<PATypeHolder>();
-    $$->push_back(*$1); delete $1;
+    $$->push_back(*$1); 
+    delete $1;
     CHECK_FOR_ERROR
   }
   | TypeListI ',' Types {
-    ($$=$1)->push_back(*$3); delete $3;
+    ($$=$1)->push_back(*$3); 
+    delete $3;
     CHECK_FOR_ERROR
   };
 
@@ -2479,6 +2492,8 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       PFTy = PointerType::get(Ty);
     }
 
+    delete $3;
+
     Value *V = getVal(PFTy, $4);   // Get the function we're calling...
     CHECK_FOR_ERROR
     BasicBlock *Normal = getBBVal($11);
@@ -2595,6 +2610,7 @@ ValueRefList : Types ValueRef OptParamAttrs {
     $$ = new ValueRefList();
     ValueRefListEntry E; E.Attrs = $3; E.Val = getVal($1->get(), $2);
     $$->push_back(E);
+    delete $1;
   }
   | ValueRefList ',' Types ValueRef OptParamAttrs {
     if (!UpRefs.empty())
@@ -2602,6 +2618,7 @@ ValueRefList : Types ValueRef OptParamAttrs {
     $$ = $1;
     ValueRefListEntry E; E.Attrs = $5; E.Val = getVal($3->get(), $4);
     $$->push_back(E);
+    delete $3;
     CHECK_FOR_ERROR
   }
   | /*empty*/ { $$ = new ValueRefList(); };
@@ -2674,6 +2691,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("icmp operator returned null");
+    delete $3;
   }
   | FCMP FPredicates Types ValueRef ',' ValueRef  {
     if (!UpRefs.empty())
@@ -2687,6 +2705,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("fcmp operator returned null");
+    delete $3;
   }
   | CastOps ResolvedVal TO Types {
     if (!UpRefs.empty())
