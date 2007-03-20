@@ -46,6 +46,19 @@ using namespace llvm;
 static RegisterPass<ImmediateDominators>
 C("idom", "Immediate Dominators Construction", true);
 
+namespace {
+  class  DFCalculateWorkObject  {
+  public:
+    DFCalculateWorkObject(BasicBlock *B, BasicBlock *P, 
+                          const DominatorTree::Node *N,
+                          const DominatorTree::Node *PN)
+      : currentBB(B), parentBB(P), Node(N), parentNode(PN) {}
+    BasicBlock *currentBB;
+    BasicBlock *parentBB;
+    const DominatorTree::Node *Node;
+    const DominatorTree::Node *parentNode;
+  };
+}
 unsigned ImmediateDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
                                       unsigned N) {
   VInfo.Semi = ++N;
@@ -439,34 +452,76 @@ G("domfrontier", "Dominance Frontier Construction", true);
 const DominanceFrontier::DomSetType &
 DominanceFrontier::calculate(const DominatorTree &DT,
                              const DominatorTree::Node *Node) {
-  // Loop over CFG successors to calculate DFlocal[Node]
   BasicBlock *BB = Node->getBlock();
-  DomSetType &S = Frontiers[BB];       // The new set to fill in...
+  DomSetType *Result = NULL;
 
-  for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
-       SI != SE; ++SI) {
-    // Does Node immediately dominate this successor?
-    if (DT[*SI]->getIDom() != Node)
-      S.insert(*SI);
-  }
+  std::vector<DFCalculateWorkObject *> workList;
+  std::set<BasicBlock *> visited;
 
-  // At this point, S is DFlocal.  Now we union in DFup's of our children...
-  // Loop through and visit the nodes that Node immediately dominates (Node's
-  // children in the IDomTree)
-  //
-  for (DominatorTree::Node::const_iterator NI = Node->begin(), NE = Node->end();
-       NI != NE; ++NI) {
-    DominatorTree::Node *IDominee = *NI;
-    const DomSetType &ChildDF = calculate(DT, IDominee);
+  DFCalculateWorkObject *W = new DFCalculateWorkObject(BB, NULL, Node, NULL);
+  workList.push_back(W);
+  do {
+    DFCalculateWorkObject *currentW = workList.back();
+    assert (currentW && "Missing work object.");
 
-    DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();
-    for (; CDFI != CDFE; ++CDFI) {
-      if (!Node->properlyDominates(DT[*CDFI]))
-        S.insert(*CDFI);
+    BasicBlock *currentBB = currentW->currentBB;
+    BasicBlock *parentBB = currentW->parentBB;
+    const DominatorTree::Node *currentNode = currentW->Node;
+    const DominatorTree::Node *parentNode = currentW->parentNode;
+    assert (currentBB && "Invalid work object. Missing current Basic Block");
+    assert (currentNode && "Invalid work object. Missing current Node");
+    DomSetType &S = Frontiers[currentBB];
+
+    // Visit each block only once.
+    if (visited.count(currentBB) == 0) {
+      visited.insert(currentBB);
+
+      // Loop over CFG successors to calculate DFlocal[currentNode]
+      for (succ_iterator SI = succ_begin(currentBB), SE = succ_end(currentBB);
+           SI != SE; ++SI) {
+        // Does Node immediately dominate this successor?
+        if (DT[*SI]->getIDom() != currentNode)
+          S.insert(*SI);
+      }
     }
-  }
 
-  return S;
+    // At this point, S is DFlocal.  Now we union in DFup's of our children...
+    // Loop through and visit the nodes that Node immediately dominates (Node's
+    // children in the IDomTree)
+    bool visitChild = false;
+    for (DominatorTree::Node::const_iterator NI = currentNode->begin(), 
+           NE = currentNode->end(); NI != NE; ++NI) {
+      DominatorTree::Node *IDominee = *NI;
+      BasicBlock *childBB = IDominee->getBlock();
+      if (visited.count(childBB) == 0) {
+        DFCalculateWorkObject *newW = 
+          new DFCalculateWorkObject(childBB, currentBB, IDominee, currentNode);
+        workList.push_back(newW);
+        visitChild = true;
+      }
+    }
+
+    // If all children are visited or there is any child then pop this block
+    // from the workList.
+    if (!visitChild) {
+
+      if (!parentBB) {
+        Result = &S;
+        break;
+      }
+
+      DomSetType::const_iterator CDFI = S.begin(), CDFE = S.end();
+      DomSetType &parentSet = Frontiers[parentBB];
+      for (; CDFI != CDFE; ++CDFI) {
+        if (!parentNode->properlyDominates(DT[*CDFI]))
+          parentSet.insert(*CDFI);
+      }
+      workList.pop_back();
+    }
+
+  } while (!workList.empty());
+
+  return *Result;
 }
 
 void DominanceFrontierBase::print(std::ostream &o, const Module* ) const {
