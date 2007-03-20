@@ -4009,7 +4009,8 @@ static bool SinkInvariantGEPIndex(BinaryOperator *BinOp, LoopInfo *loopInfo,
 
         // Check if it is possible to fold the expression to address mode.
         if (UseTy &&
-            TLI.isLegalAddressExpression(Instruction::Add, BinOp->getOperand(0),
+            TLI.isLegalAddressExpression(BinOp->getOpcode(),
+                                         BinOp->getOperand(0),
                                          BinOp->getOperand(1), UseTy)) {
           DestBBs.insert(UserBB);
           MadeChange = true;
