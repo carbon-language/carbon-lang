@@ -82,6 +82,7 @@ namespace {
     void printOperand(const MachineInstr *MI, int opNum,
                       const char *Modifier = 0);
     void printSOImmOperand(const MachineInstr *MI, int opNum);
+    void printSOImm2PartOperand(const MachineInstr *MI, int opNum);
     void printSORegOperand(const MachineInstr *MI, int opNum);
     void printAddrMode2Operand(const MachineInstr *MI, int OpNo);
     void printAddrMode2OffsetOperand(const MachineInstr *MI, int OpNo);
@@ -309,14 +310,10 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   }
 }
 
-/// printSOImmOperand - SOImm is 4-bit rotate amount in bits 8-11 with 8-bit
-/// immediate in bits 0-7.
-void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
-  const MachineOperand &MO = MI->getOperand(OpNum);
-  assert(MO.isImmediate() && (MO.getImmedValue() < (1 << 12)) &&
-         "Not a valid so_imm value!");
-  unsigned Imm = ARM_AM::getSOImmValImm(MO.getImmedValue());
-  unsigned Rot = ARM_AM::getSOImmValRot(MO.getImmedValue());
+static void printSOImm(std::ostream &O, int64_t V, const TargetAsmInfo *TAI) {
+  assert(V < (1 << 12) && "Not a valid so_imm value!");
+  unsigned Imm = ARM_AM::getSOImmValImm(V);
+  unsigned Rot = ARM_AM::getSOImmValRot(V);
   
   // Print low-level immediate formation info, per
   // A5.1.3: "Data-processing operands - Immediate".
@@ -327,6 +324,30 @@ void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
   } else {
     O << "#" << Imm;
   }
+}
+
+/// printSOImmOperand - SOImm is 4-bit rotate amount in bits 8-11 with 8-bit
+/// immediate in bits 0-7.
+void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  assert(MO.isImmediate() && "Not a valid so_imm value!");
+  printSOImm(O, MO.getImmedValue(), TAI);
+}
+
+/// printSOImm2PartOperand - SOImm is broken into two pieces using a mov
+/// followed by a or to materialize.
+void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  assert(MO.isImmediate() && "Not a valid so_imm value!");
+  unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO.getImmedValue());
+  unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO.getImmedValue());
+  printSOImm(O, ARM_AM::getSOImmVal(V1), TAI);
+  O << "\n\torr ";
+  printOperand(MI, 0); 
+  O << ", ";
+  printOperand(MI, 0); 
+  O << ", ";
+  printSOImm(O, ARM_AM::getSOImmVal(V2), TAI);
 }
 
 // so_reg is a 4-operand unit corresponding to register forms of the A5.1

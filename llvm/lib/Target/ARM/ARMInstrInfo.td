@@ -147,24 +147,6 @@ def sext_16_node : PatLeaf<(i32 GPR:$a), [{
 }]>;
 
 
-// Break so_imm's up into two pieces.  This handles immediates with up to 16
-// bits set in them.  This uses so_imm2part to match and so_imm2part_[12] to
-// get the first/second pieces.
-def so_imm2part : PatLeaf<(imm), [{
-  return ARM_AM::isSOImmTwoPartVal((unsigned)N->getValue());
-}]>;
-
-def so_imm2part_1 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getSOImmTwoPartFirst((unsigned)N->getValue());
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(V), MVT::i32);
-}]>;
-
-def so_imm2part_2 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getSOImmTwoPartSecond((unsigned)N->getValue());
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(V), MVT::i32);
-}]>;
-
-
 
 //===----------------------------------------------------------------------===//
 // Operand Definitions.
@@ -216,6 +198,25 @@ def so_imm : Operand<i32>,
                      so_imm_XFORM> {
   let PrintMethod = "printSOImmOperand";
 }
+
+// Break so_imm's up into two pieces.  This handles immediates with up to 16
+// bits set in them.  This uses so_imm2part to match and so_imm2part_[12] to
+// get the first/second pieces.
+def so_imm2part : Operand<i32>,
+                  PatLeaf<(imm),
+             [{ return ARM_AM::isSOImmTwoPartVal((unsigned)N->getValue()); }]> {
+  let PrintMethod = "printSOImm2PartOperand";
+}
+
+def so_imm2part_1 : SDNodeXForm<imm, [{
+  unsigned V = ARM_AM::getSOImmTwoPartFirst((unsigned)N->getValue());
+  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(V), MVT::i32);
+}]>;
+
+def so_imm2part_2 : SDNodeXForm<imm, [{
+  unsigned V = ARM_AM::getSOImmTwoPartSecond((unsigned)N->getValue());
+  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(V), MVT::i32);
+}]>;
 
 
 // Define ARM specific addressing modes.
@@ -371,6 +372,8 @@ class AI4<dag ops, string asm, list<dag> pattern>
   : I<ops, AddrMode4, Size4Bytes, IndexModeNone, asm, "", pattern>;
 class AIx2<dag ops, string asm, list<dag> pattern>
   : I<ops, AddrModeNone, Size8Bytes, IndexModeNone, asm, "", pattern>;
+class AI1x2<dag ops, string asm, list<dag> pattern>
+  : I<ops, AddrMode1, Size8Bytes, IndexModeNone, asm, "", pattern>;
 
 // Pre-indexed ops
 class AI2pr<dag ops, string asm, string cstr, list<dag> pattern>
@@ -1064,14 +1067,15 @@ def LEApcrelJT : AI1<(ops GPR:$dst, i32imm:$label, i32imm:$id),
 def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>;
 def : ARMPat<(ARMWrapper  tconstpool  :$dst), (LEApcrel tconstpool  :$dst)>;
 def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
-          (LEApcrelJT tjumptable:$dst, imm:$id)>;
+             (LEApcrelJT tjumptable:$dst, imm:$id)>;
 
 // Large immediate handling.
 
 // Two piece so_imms.
-def : ARMPat<(i32 so_imm2part:$src),
-             (ORRri (MOVi (so_imm2part_1 imm:$src)),
-                    (so_imm2part_2 imm:$src))>;
+let isReMaterializable = 1 in
+def MOVi2pieces : AI1x2<(ops GPR:$dst, so_imm2part:$src),
+                         "mov $dst, $src",
+                         [(set GPR:$dst, so_imm2part:$src)]>;
 
 def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
               (ORRri (ORRri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
