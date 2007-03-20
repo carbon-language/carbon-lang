@@ -544,6 +544,24 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
       Callee = DAG.getTargetExternalSymbol(Sym, getPointerTy());
   }
 
+  // FIXME: handle tail calls differently.
+  unsigned CallOpc;
+  if (Subtarget->isThumb()) {
+    if (!Subtarget->hasV5TOps() && (!isDirect || isARMFunc))
+      CallOpc = ARMISD::CALL_NOLINK;
+    else
+      CallOpc = isARMFunc ? ARMISD::CALL : ARMISD::tCALL;
+  } else {
+    CallOpc = (isDirect || Subtarget->hasV5TOps())
+      ? ARMISD::CALL : ARMISD::CALL_NOLINK;
+  }
+  if (CallOpc == ARMISD::CALL_NOLINK) {
+    // On CALL_NOLINK we must move PC to LR
+    Chain = DAG.getCopyToReg(Chain, ARM::LR,
+                             DAG.getRegister(ARM::PC, MVT::i32), InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
@@ -558,17 +576,6 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
 
-  // FIXME: handle tail calls differently.
-  unsigned CallOpc;
-  if (Subtarget->isThumb()) {
-    if (!Subtarget->hasV5TOps() && (!isDirect || isARMFunc))
-      CallOpc = ARMISD::CALL_NOLINK;
-    else
-      CallOpc = isARMFunc ? ARMISD::CALL : ARMISD::tCALL;
-  } else {
-    CallOpc = (isDirect || Subtarget->hasV5TOps())
-      ? ARMISD::CALL : ARMISD::CALL_NOLINK;
-  }
   if (InFlag.Val)
     Ops.push_back(InFlag);
   Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());

@@ -370,8 +370,6 @@ class AI3<dag ops, string asm, list<dag> pattern>
   : I<ops, AddrMode3, Size4Bytes, IndexModeNone, asm, "", pattern>;
 class AI4<dag ops, string asm, list<dag> pattern>
   : I<ops, AddrMode4, Size4Bytes, IndexModeNone, asm, "", pattern>;
-class AIx2<dag ops, string asm, list<dag> pattern>
-  : I<ops, AddrModeNone, Size8Bytes, IndexModeNone, asm, "", pattern>;
 class AI1x2<dag ops, string asm, list<dag> pattern>
   : I<ops, AddrMode1, Size8Bytes, IndexModeNone, asm, "", pattern>;
 
@@ -546,10 +544,12 @@ let isCall = 1, noResults = 1,
   def BLX : AI<(ops GPR:$dst, variable_ops),
                "blx $dst",
                [(ARMcall GPR:$dst)]>, Requires<[IsARM, HasV5T]>;
-  // ARMv4T
-  def BX : AIx2<(ops GPR:$dst, variable_ops),
-                "mov lr, pc\n\tbx $dst",
+  let Uses = [LR] in {
+    // ARMv4T
+    def BX : AI<(ops GPR:$dst, variable_ops),
+                "bx $dst",
                 [(ARMcall_nolink GPR:$dst)]>;
+  }
 }
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
