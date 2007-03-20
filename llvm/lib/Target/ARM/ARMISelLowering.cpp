@@ -161,7 +161,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   // Only ARMv6 has BSWAP.
   if (!Subtarget->hasV6Ops())
-      setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+    setOperationAction(ISD::BSWAP, MVT::i32, Expand);
 
   // These are expanded into libcalls.
   setOperationAction(ISD::SDIV,  MVT::i32, Expand);
