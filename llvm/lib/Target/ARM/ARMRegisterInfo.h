@@ -60,6 +60,9 @@ public:
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
 
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, const MachineInstr *Orig) const;
+
   MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
                                   int FrameIndex) const;
 

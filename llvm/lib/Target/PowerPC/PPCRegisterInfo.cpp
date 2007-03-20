@@ -239,6 +239,15 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
+void PPCRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator I,
+                                    unsigned DestReg,
+                                    const MachineInstr *Orig) const {
+  MachineInstr *MI = Orig->clone();
+  MI->getOperand(0).setReg(DestReg);
+  MBB.insert(I, MI);
+}
+
 const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
   // 32-bit Darwin calling convention. 
   static const unsigned Darwin32_CalleeSavedRegs[] = {

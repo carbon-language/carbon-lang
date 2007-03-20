@@ -155,6 +155,15 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
+void AlphaRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator I,
+                                      unsigned DestReg,
+                                      const MachineInstr *Orig) const {
+  MachineInstr *MI = Orig->clone();
+  MI->getOperand(0).setReg(DestReg);
+  MBB.insert(I, MI);
+}
+
 const unsigned* AlphaRegisterInfo::getCalleeSavedRegs() const {
   static const unsigned CalleeSavedRegs[] = {
     Alpha::R9, Alpha::R10,

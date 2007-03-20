@@ -58,6 +58,9 @@ public:
                     MachineBasicBlock::iterator MI,
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
+ 
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, const MachineInstr *Orig) const;
 
   /// foldMemoryOperand - If this target supports it, fold a load or store of
   /// the specified stack slot into the specified machine instruction for the

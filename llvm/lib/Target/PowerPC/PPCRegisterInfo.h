@@ -49,6 +49,9 @@ public:
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
 
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, const MachineInstr *Orig) const;
+
   /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
   /// copy instructions, turning them into load/store instructions.
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,

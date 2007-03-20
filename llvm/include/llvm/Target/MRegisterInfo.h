@@ -374,6 +374,13 @@ public:
                             unsigned DestReg, unsigned SrcReg,
                             const TargetRegisterClass *RC) const = 0;
 
+  /// reMaterialize - Re-issue the specified 'original' instruction at the
+  /// specific location targeting a new destination register.
+  virtual void reMaterialize(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator MI,
+                             unsigned DestReg,
+                             const MachineInstr *Orig) const = 0;
+
   /// foldMemoryOperand - Attempt to fold a load or store of the
   /// specified stack slot into the specified machine instruction for
   /// the specified operand.  If this is possible, a new instruction

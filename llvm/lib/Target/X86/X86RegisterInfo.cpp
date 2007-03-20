@@ -167,6 +167,16 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   BuildMI(MBB, MI, TII.get(Opc), DestReg).addReg(SrcReg);
 }
 
+
+void X86RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator I,
+                                    unsigned DestReg,
+                                    const MachineInstr *Orig) const {
+  MachineInstr *MI = Orig->clone();
+  MI->getOperand(0).setReg(DestReg);
+  MBB.insert(I, MI);
+}
+
 static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
                                      MachineInstr *MI,
                                      const TargetInstrInfo &TII) {

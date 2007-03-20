@@ -44,6 +44,9 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
 
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, const MachineInstr *Orig) const;
+
   const unsigned *getCalleeSavedRegs() const;
 
   const TargetRegisterClass* const* getCalleeSavedRegClasses() const;

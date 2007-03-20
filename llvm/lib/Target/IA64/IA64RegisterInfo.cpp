@@ -93,6 +93,15 @@ void IA64RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, TII.get(IA64::MOV), DestReg).addReg(SrcReg);
 }
 
+void IA64RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I,
+                                     unsigned DestReg,
+                                     const MachineInstr *Orig) const {
+  MachineInstr *MI = Orig->clone();
+  MI->getOperand(0).setReg(DestReg);
+  MBB.insert(I, MI);
+}
+
 const unsigned* IA64RegisterInfo::getCalleeSavedRegs() const {
   static const unsigned CalleeSavedRegs[] = {
     IA64::r5,  0

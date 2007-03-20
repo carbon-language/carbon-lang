@@ -195,6 +195,38 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     abort();
 }
 
+/// emitLoadConstPool - Emits a load from constpool to materialize the
+/// specified immediate.
+static void emitLoadConstPool(MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator &MBBI,
+                              unsigned DestReg, int Val, 
+                              const TargetInstrInfo &TII, bool isThumb) {
+  MachineFunction &MF = *MBB.getParent();
+  MachineConstantPool *ConstantPool = MF.getConstantPool();
+  Constant *C = ConstantInt::get(Type::Int32Ty, Val);
+  unsigned Idx = ConstantPool->getConstantPoolIndex(C, 2);
+  if (isThumb)
+    BuildMI(MBB, MBBI, TII.get(ARM::tLDRcp), DestReg).addConstantPoolIndex(Idx);
+  else
+    BuildMI(MBB, MBBI, TII.get(ARM::LDRcp), DestReg).addConstantPoolIndex(Idx)
+      .addReg(0).addImm(0);
+}
+
+void ARMRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator I,
+                                    unsigned DestReg,
+                                    const MachineInstr *Orig) const {
+  if (Orig->getOpcode() == ARM::MOVi2pieces) {
+    emitLoadConstPool(MBB, I, DestReg, Orig->getOperand(1).getImmedValue(),
+                      TII, false);
+    return;
+  }
+
+  MachineInstr *MI = Orig->clone();
+  MI->getOperand(0).setReg(DestReg);
+  MBB.insert(I, MI);
+}
+
 /// isLowRegister - Returns true if the register is low register r0-r7.
 ///
 static bool isLowRegister(unsigned Reg) {
@@ -410,19 +442,6 @@ static unsigned calcNumMI(int Opc, int ExtraOpc, unsigned Bytes,
   return NumMIs;
 }
 
-/// emitLoadConstPool - Emits a load from constpool to materialize NumBytes
-/// immediate.
-static void emitLoadConstPool(MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator &MBBI,
-                              unsigned DestReg, int NumBytes, 
-                              const TargetInstrInfo &TII) {
-  MachineFunction &MF = *MBB.getParent();
-  MachineConstantPool *ConstantPool = MF.getConstantPool();
-  Constant *C = ConstantInt::get(Type::Int32Ty, NumBytes);
-  unsigned Idx = ConstantPool->getConstantPoolIndex(C, 2);
-  BuildMI(MBB, MBBI, TII.get(ARM::tLDRpci), DestReg).addConstantPoolIndex(Idx);
-}
-
 /// emitThumbRegPlusImmInReg - Emits a series of instructions to materialize
 /// a destreg = basereg + immediate in Thumb code. Materialize the immediate
 /// in a register using mov / mvn sequences or load the immediate from a
@@ -459,7 +478,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
       BuildMI(MBB, MBBI, TII.get(ARM::tNEG), LdReg)
         .addReg(LdReg, false, false, true);
     } else
-      emitLoadConstPool(MBB, MBBI, LdReg, NumBytes, TII);
+      emitLoadConstPool(MBB, MBBI, LdReg, NumBytes, TII, true);
 
     // Emit add / sub.
     int Opc = (isSub) ? ARM::tSUBrr : (isHigh ? ARM::tADDhirr : ARM::tADDrr);
@@ -885,7 +904,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         if (FrameReg == ARM::SP)
           emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,Offset,false,TII);
         else {
-          emitLoadConstPool(MBB, II, TmpReg, Offset, TII);
+          emitLoadConstPool(MBB, II, TmpReg, Offset, TII, true);
           UseRR = true;
         }
       } else
@@ -920,7 +939,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         if (FrameReg == ARM::SP)
           emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,Offset,false,TII);
         else {
-          emitLoadConstPool(MBB, II, TmpReg, Offset, TII);
+          emitLoadConstPool(MBB, II, TmpReg, Offset, TII, true);
           UseRR = true;
         }
       } else
