@@ -875,6 +875,16 @@ public:
   /// scale of the target addressing mode for load / store of the given type.
   virtual bool isLegalAddressScale(int64_t S, const Type *Ty) const;
 
+  /// isLegalAddressScaleAndImm - Return true if S works for IsLegalAddressScale
+  /// and V works for isLegalAddressImmediate _and_ both can be applied
+  /// simultaneously to the same instruction.
+  virtual bool isLegalAddressScaleAndImm(int64_t S, int64_t V, 
+                                                    const Type* Ty) const;
+  /// isLegalAddressScaleAndImm - Return true if S works for IsLegalAddressScale
+  /// and GV works for isLegalAddressImmediate _and_ both can be applied
+  /// simultaneously to the same instruction.
+  virtual bool isLegalAddressScaleAndImm(int64_t S, GlobalValue *GV) const;
+
   //===--------------------------------------------------------------------===//
   // Div utility functions
   //

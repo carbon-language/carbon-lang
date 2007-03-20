@@ -883,9 +883,16 @@ static bool isZero(SCEVHandle &V) {
 ///
 bool LoopStrengthReduce::ValidStride(int64_t Scale, 
                                const std::vector<BasedUser>& UsersToProcess) {
-  for (unsigned i=0, e = UsersToProcess.size(); i!=e; ++i)
-    if (!TLI->isLegalAddressScale(Scale, UsersToProcess[i].Inst->getType()))
+  int64_t Imm;
+  for (unsigned i=0, e = UsersToProcess.size(); i!=e; ++i) {
+    if (SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
+      Imm = SC->getValue()->getSExtValue();
+    else
+      Imm = 0;
+    if (!TLI->isLegalAddressScaleAndImm(Scale, Imm, 
+                                  UsersToProcess[i].Inst->getType()))
       return false;
+  }
   return true;
 }
 
@@ -968,22 +975,6 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   SCEVHandle CommonExprs =
     RemoveCommonExpressionsFromUseBases(UsersToProcess);
   
-  // Check if it is possible to reuse a IV with stride that is factor of this
-  // stride. And the multiple is a number that can be encoded in the scale
-  // field of the target addressing mode.
-  PHINode *NewPHI = NULL;
-  Value   *IncV   = NULL;
-  IVExpr   ReuseIV;
-  unsigned RewriteFactor = CheckForIVReuse(Stride, ReuseIV,
-                                           CommonExprs->getType(),
-                                           UsersToProcess);
-  if (RewriteFactor != 0) {
-    DOUT << "BASED ON IV of STRIDE " << *ReuseIV.Stride
-         << " and BASE " << *ReuseIV.Base << " :\n";
-    NewPHI = ReuseIV.PHI;
-    IncV   = ReuseIV.IncV;
-  }
-
   // Next, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
   // fields of the BasedUsers.  We do this so that it increases the commonality
@@ -1009,6 +1000,23 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       MoveImmediateValues(TLI, UsersToProcess[i].Inst, UsersToProcess[i].Base,
                           UsersToProcess[i].Imm, isAddress, L);
     }
+  }
+
+  // Check if it is possible to reuse a IV with stride that is factor of this
+  // stride. And the multiple is a number that can be encoded in the scale
+  // field of the target addressing mode.  And we will have a valid
+  // instruction after this substition, including the immediate field, if any.
+  PHINode *NewPHI = NULL;
+  Value   *IncV   = NULL;
+  IVExpr   ReuseIV;
+  unsigned RewriteFactor = CheckForIVReuse(Stride, ReuseIV,
+                                           CommonExprs->getType(),
+                                           UsersToProcess);
+  if (RewriteFactor != 0) {
+    DOUT << "BASED ON IV of STRIDE " << *ReuseIV.Stride
+         << " and BASE " << *ReuseIV.Base << " :\n";
+    NewPHI = ReuseIV.PHI;
+    IncV   = ReuseIV.IncV;
   }
 
   // Now that we know what we need to do, insert the PHI node itself.
