@@ -376,7 +376,7 @@ public:
 
   /// This just tests if the value of this APInt is strictly positive (> 0).
   /// @brief Determine if this APInt Value is strictly positive.
-  inline bool isStrictPositive() const {
+  inline bool isStrictlyPositive() const {
     return isPositive() && (*this) != 0;
   }
 
