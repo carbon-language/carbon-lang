@@ -132,29 +132,57 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 
   MachineInstr *NewMI = NULL;
   // FIXME: 16-bit LEA's are really slow on Athlons, but not bad on P4's.  When
-  // we have subtarget support, enable the 16-bit LEA generation here.
+  // we have better subtarget support, enable the 16-bit LEA generation here.
   bool DisableLEA16 = true;
 
   switch (MI->getOpcode()) {
-  default: break;
+  default: return 0;
   case X86::SHUFPSrri: {
     assert(MI->getNumOperands() == 4 && "Unknown shufps instruction!");
-    const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
+    if (!TM.getSubtarget<X86Subtarget>().hasSSE2()) return 0;
+    
     unsigned A = MI->getOperand(0).getReg();
     unsigned B = MI->getOperand(1).getReg();
     unsigned C = MI->getOperand(2).getReg();
-    unsigned M = MI->getOperand(3).getImmedValue();
-    if (!Subtarget->hasSSE2() || B != C) return 0;
+    unsigned M = MI->getOperand(3).getImm();
+    if (B != C) return 0;
     NewMI = BuildMI(get(X86::PSHUFDri), A).addReg(B).addImm(M);
-    goto Done;
+    break;
+  }
+  case X86::SHL32ri: {
+    assert(MI->getNumOperands() == 3 && "Unknown shift instruction!");
+    // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
+    // the flags produced by a shift yet, so this is safe.
+    unsigned Dest = MI->getOperand(0).getReg();
+    unsigned Src = MI->getOperand(1).getReg();
+    unsigned ShAmt = MI->getOperand(2).getImm();
+    if (ShAmt == 0 || ShAmt >= 4) return 0;
+    
+    NewMI = BuildMI(get(X86::LEA32r), Dest)
+      .addReg(0).addImm(1 << ShAmt).addReg(Src).addImm(0);
+    break;
+  }
+  case X86::SHL16ri: {
+    assert(MI->getNumOperands() == 3 && "Unknown shift instruction!");
+    if (DisableLEA16) return 0;
+    
+    // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
+    // the flags produced by a shift yet, so this is safe.
+    unsigned Dest = MI->getOperand(0).getReg();
+    unsigned Src = MI->getOperand(1).getReg();
+    unsigned ShAmt = MI->getOperand(2).getImm();
+    if (ShAmt == 0 || ShAmt >= 4) return 0;
+    
+    NewMI = BuildMI(get(X86::LEA16r), Dest)
+      .addReg(0).addImm(1 << ShAmt).addReg(Src).addImm(0);
+    break;
   }
   }
 
   // FIXME: None of these instructions are promotable to LEAs without
   // additional information.  In particular, LEA doesn't set the flags that
   // add and inc do.  :(
-  return 0;
-
+  if (0)
   switch (MI->getOpcode()) {
   case X86::INC32r:
   case X86::INC64_32r:
@@ -220,7 +248,6 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     break;
   }
 
-Done:
   if (NewMI) {
     NewMI->copyKillDeadInfo(MI);
     LV.instructionChanged(MI, NewMI);  // Update live variables

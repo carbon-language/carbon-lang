@@ -886,10 +886,9 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand Op, SDOperand N,
   else
     AM.IndexReg = CurDAG->getRegister(0, VT);
 
-  if (AM.Scale > 2) 
-    Complexity += 2;
-  // Don't match just leal(,%reg,2). It's cheaper to do addl %reg, %reg
-  else if (AM.Scale > 1)
+  // Don't match just leal(,%reg,2). It's cheaper to do addl %reg, %reg, or with
+  // a simple shift.
+  if (AM.Scale > 1)
     Complexity++;
 
   // FIXME: We are artificially lowering the criteria to turn ADD %reg, $GA
