@@ -43,6 +43,9 @@ STATISTIC(NumInserted, "Number of PHIs inserted");
 STATISTIC(NumVariable, "Number of PHIs with variable strides");
 
 namespace {
+
+  class BasedUser;
+
   /// IVStrideUse - Keep track of one use of a strided induction variable, where
   /// the stride is stored externally.  The Offset member keeps track of the 
   /// offset from the IV, User is the actual user of the operand, and 'Operand'
@@ -174,7 +177,10 @@ private:
 
     void OptimizeIndvars(Loop *L);
 
-    unsigned CheckForIVReuse(const SCEVHandle&, IVExpr&, const Type*);
+    unsigned CheckForIVReuse(const SCEVHandle&, IVExpr&, const Type*,
+                             const std::vector<BasedUser>& UsersToProcess);
+
+    bool ValidStride(int64_t, const std::vector<BasedUser>& UsersToProcess);
 
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
@@ -871,13 +877,25 @@ static bool isZero(SCEVHandle &V) {
   return false;
 }
 
+/// ValidStride - Check whether the given Scale is valid for all loads and 
+/// stores in UsersToProcess.  Pulled into a function to avoid disturbing the
+/// sensibilities of those who dislike goto's.
+///
+bool LoopStrengthReduce::ValidStride(int64_t Scale, 
+                               const std::vector<BasedUser>& UsersToProcess) {
+  for (unsigned i=0, e = UsersToProcess.size(); i!=e; ++i)
+    if (!TLI->isLegalAddressScale(Scale, UsersToProcess[i].Inst->getType()))
+      return false;
+  return true;
+}
 
 /// CheckForIVReuse - Returns the multiple if the stride is the multiple
 /// of a previous stride and it is a legal value for the target addressing
 /// mode scale component. This allows the users of this stride to be rewritten
 /// as prev iv * factor. It returns 0 if no reuse is possible.
-unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
-                                             IVExpr &IV, const Type *Ty) {
+unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride, 
+                                IVExpr &IV, const Type *Ty,
+                                const std::vector<BasedUser>& UsersToProcess) {
   if (!TLI) return 0;
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
@@ -890,7 +908,11 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
       if (unsigned(abs(SInt)) < SSInt || (SInt % SSInt) != 0)
         continue;
       int64_t Scale = SInt / SSInt;
-      if (TLI->isLegalAddressScale(Scale, Ty)) {
+      // Check that this stride is valid for all the types used for loads and
+      // stores; if it can be used for some and not others, we might as well use
+      // the original stride everywhere, since we have to create the IV for it
+      // anyway.
+      if (ValidStride(Scale, UsersToProcess))
         for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
                IE = SI->second.IVs.end(); II != IE; ++II)
           // FIXME: Only handle base == 0 for now.
@@ -899,10 +921,8 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
             IV = *II;
             return Scale;
           }
-      }
     }
   }
-
   return 0;
 }
 
@@ -955,7 +975,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   Value   *IncV   = NULL;
   IVExpr   ReuseIV;
   unsigned RewriteFactor = CheckForIVReuse(Stride, ReuseIV,
-                                           CommonExprs->getType());
+                                           CommonExprs->getType(),
+                                           UsersToProcess);
   if (RewriteFactor != 0) {
     DOUT << "BASED ON IV of STRIDE " << *ReuseIV.Stride
          << " and BASE " << *ReuseIV.Base << " :\n";
