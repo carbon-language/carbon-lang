@@ -18,6 +18,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <math.h>
+#include <limits>
 #include <cstring>
 #include <cstdlib>
 #ifndef NDEBUG
@@ -762,17 +763,15 @@ uint32_t APInt::countPopulation() const {
 APInt APInt::byteSwap() const {
   assert(BitWidth >= 16 && BitWidth % 16 == 0 && "Cannot byteswap!");
   if (BitWidth == 16)
-    return APInt(BitWidth, ByteSwap_16(VAL));
+    return APInt(BitWidth, ByteSwap_16(uint16_t(VAL)));
   else if (BitWidth == 32)
-    return APInt(BitWidth, ByteSwap_32(VAL));
+    return APInt(BitWidth, ByteSwap_32(uint32_t(VAL)));
   else if (BitWidth == 48) {
-    uint64_t Tmp1 = ((VAL >> 32) << 16) | (VAL & 0xFFFF);
+    uint32_t Tmp1 = uint32_t(VAL >> 16);
     Tmp1 = ByteSwap_32(Tmp1);
-    uint64_t Tmp2 = (VAL >> 16) & 0xFFFF;
+    uint16_t Tmp2 = uint16_t(VAL);
     Tmp2 = ByteSwap_16(Tmp2);
-    return 
-      APInt(BitWidth, 
-            (Tmp1 & 0xff) | ((Tmp1<<16) & 0xffff00000000ULL) | (Tmp2 << 16));
+    return APInt(BitWidth, (uint64_t(Tmp2) << 32) | Tmp1);
   } else if (BitWidth == 64)
     return APInt(BitWidth, ByteSwap_64(VAL));
   else {
@@ -869,9 +868,9 @@ double APInt::roundToDouble(bool isSigned) const {
   // Return infinity for exponent overflow
   if (exp > 1023) {
     if (!isSigned || !isNeg)
-      return double(1.0E300 * 1.0E300); // positive infinity
+      return std::numeric_limits<double>::infinity();
     else 
-      return double(-1.0E300 * 1.0E300); // negative infinity
+      return -std::numeric_limits<double>::infinity();
   }
   exp += 1023; // Increment for 1023 bias
 
