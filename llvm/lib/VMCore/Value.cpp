@@ -56,6 +56,11 @@ Value::~Value() {
 #endif
   assert(use_begin() == use_end() && "Uses remain when a value is destroyed!");
 
+  // If this value is named, destroy the name.  This should not be in a symtab
+  // at this point.
+  if (Name)
+    Name->Destroy();
+  
   // There should be no uses of this object anymore, remove it.
   LeakDetector::removeGarbageObject(this);
 }
