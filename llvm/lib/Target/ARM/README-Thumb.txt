@@ -154,3 +154,16 @@ is done, we should save R3 to a high callee saved reg at emitPrologue time
 (when hasFP is true or stack size is large) and restore R3 from that register
 instead. This allows us to at least get rid of the save to r12 everytime it is
 used.
+
+//===---------------------------------------------------------------------===//
+
+Poor codegen test/CodeGen/ARM/select.ll f7:
+
+	ldr r5, LCPI1_0
+LPC0:
+	add r5, pc
+	ldr r6, LCPI1_1
+	ldr r2, LCPI1_2
+	cpy r3, r6
+	cpy lr, pc
+	bx r5
