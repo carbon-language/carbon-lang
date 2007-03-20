@@ -86,6 +86,10 @@ public:
     Bits = new BitWord[Capacity];
     std::copy(RHS.Bits, &RHS.Bits[Capacity], Bits);
   }
+  
+  ~BitVector() {
+    delete[] Bits;
+  }
 
   /// size - Returns the number of bits in this bitvector.
   unsigned size() const { return Size; }
