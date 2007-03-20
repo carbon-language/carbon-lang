@@ -470,4 +470,9 @@ More register scavenging work:
 
 //===---------------------------------------------------------------------===//
 
-Teach LSR about ARM addressing modes.
+More LSR enhancements possible:
+
+1. Teach LSR about pre- and post- indexed ops to allow iv increment be merged
+   in a load / store.
+2. Allow iv reuse even when a type conversion is required. For example, i8
+   and i32 load / store addressing modes are identical.
