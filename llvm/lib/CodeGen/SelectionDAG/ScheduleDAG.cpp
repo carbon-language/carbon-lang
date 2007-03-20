@@ -381,6 +381,20 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
   
 }
 
+// Returns the Register Class of a physical register
+static const TargetRegisterClass *getPhysicalRegisterRegClass(
+        const MRegisterInfo *MRI,
+        MVT::ValueType VT,
+        unsigned reg) {
+  assert(MRegisterInfo::isPhysicalRegister(reg) &&
+         "reg must be a physical register");
+  // Pick the register class of the right type that contains this physreg.
+  for (MRegisterInfo::regclass_iterator I = MRI->regclass_begin(),
+         E = MRI->regclass_end(); I != E; ++I)
+    if ((*I)->hasType(VT) && (*I)->contains(reg))
+      return *I;
+  assert(false && "Couldn't find the register class");
+}
 
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
@@ -478,20 +492,12 @@ void ScheduleDAG::EmitNode(SDNode *Node,
       if (InReg != DestReg)  {// Coalesced away the copy?
         const TargetRegisterClass *TRC = 0;
         // Get the target register class
-        if (MRegisterInfo::isVirtualRegister(InReg)) {
+        if (MRegisterInfo::isVirtualRegister(InReg))
           TRC = RegMap->getRegClass(InReg);
-        } else {
-          // Pick the register class of the right type that contains this
-          // physreg.
-          for (MRegisterInfo::regclass_iterator I = MRI->regclass_begin(),
-                 E = MRI->regclass_end(); I != E; ++I)
-            if ((*I)->hasType(Node->getOperand(2).getValueType()) &&
-                (*I)->contains(InReg)) {
-              TRC = *I;
-              break;
-            }
-          assert(TRC && "Couldn't find register class for reg copy!");
-        }
+        else
+          TRC = getPhysicalRegisterRegClass(MRI,
+                                            Node->getOperand(2).getValueType(),
+                                            InReg);
         MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg, TRC);
       }
       break;
@@ -523,17 +529,8 @@ void ScheduleDAG::EmitNode(SDNode *Node,
       if (VRBase) {
         TRC = RegMap->getRegClass(VRBase);
       } else {
+        TRC = getPhysicalRegisterRegClass(MRI, Node->getValueType(0), SrcReg);
 
-        // Pick the register class of the right type that contains this physreg.
-        for (MRegisterInfo::regclass_iterator I = MRI->regclass_begin(),
-             E = MRI->regclass_end(); I != E; ++I)
-          if ((*I)->hasType(Node->getValueType(0)) &&
-              (*I)->contains(SrcReg)) {
-            TRC = *I;
-            break;
-          }
-        assert(TRC && "Couldn't find register class for reg copy!");
-      
         // Create the reg, emit the copy.
         VRBase = RegMap->createVirtualRegister(TRC);
       }
