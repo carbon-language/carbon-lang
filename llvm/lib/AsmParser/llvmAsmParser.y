@@ -1302,7 +1302,6 @@ Types
     Attrs.push_back($5);
     for (TypeWithAttrsList::iterator I=$3->begin(), E=$3->end(); I != E; ++I) {
       const Type *Ty = I->Ty->get();
-      delete I->Ty; I->Ty = 0;
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
         Attrs.push_back(I->Attrs);
@@ -1322,7 +1321,6 @@ Types
     Attrs.push_back($5);
     for (TypeWithAttrsList::iterator I=$3->begin(), E=$3->end(); I != E; ++I) {
       const Type* Ty = I->Ty->get();
-      delete I->Ty; I->Ty = 0;
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
         Attrs.push_back(I->Attrs);
