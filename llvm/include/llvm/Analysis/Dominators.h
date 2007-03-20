@@ -516,6 +516,10 @@ public:
     }
   }
 
+  // dominates - Return true if A dominates B. THis performs the
+  // special checks necessary if A and B are in the same basic block.
+  bool dominates(Instruction *A, Instruction *B);
+
   /// properlyDominates - Return true if A dominates B and A != B.
   ///
   bool properlyDominates(BasicBlock *A, BasicBlock *B) {
