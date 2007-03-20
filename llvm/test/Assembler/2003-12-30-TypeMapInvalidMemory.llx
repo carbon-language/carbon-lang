@@ -1,6 +1,56 @@
-; RUN: llvm-as      2>&1 < %s -o /dev/null -f | grep 'Reference to an undef'
+; RUN: llvm-as  2>&1 < %s -o /dev/null -f | grep 'Reference to an undef'
 
+@d_reduction_0_dparser_gram = global { 
+  i32 (i8*, i8**, i32, i32, { 
+    %struct.Grammar*, void (\4, %struct.d_loc_t*, i8**)*, %struct.D_Scope*, 
+    void (\4)*, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, 
+      void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, 
+      %struct.ParseNode_User }* (\4, i32, { i32, %struct.d_loc_t, i8*, i8*, 
+        %struct.D_Scope*, void (\9, %struct.d_loc_t*, i8**)*, %struct.Grammar*,
+        %struct.ParseNode_User }**)*, 
+        void ({ i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, 
+          void (\8, %struct.d_loc_t*, i8**)*, 
+          %struct.Grammar*, %struct.ParseNode_User }*)*, 
+        %struct.d_loc_t, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32,
+        i32 }*)*, 
+        i32 (i8*, i8**, i32, i32, { %struct.Grammar*, 
+        void (\4, %struct.d_loc_t*, i8**)*, %struct.D_Scope*, void (\4)*, { 
+          i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, 
+          void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, 
+          %struct.ParseNode_User }* (\4, i32, { i32, %struct.d_loc_t, i8*, i8*, 
+            %struct.D_Scope*, void (\9, %struct.d_loc_t*, i8**)*, 
+            %struct.Grammar*, %struct.ParseNode_User }**)*, 
+            void ({ i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, 
+              void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, 
+              %struct.ParseNode_User }*)*, %struct.d_loc_t, i32, i32, i32, i32,
+              i32, i32, i32, i32, i32, i32, i32, i32 }*)** }
 
-@d_reduction_0_dparser_gram = global { i32 (i8*, i8**, i32, i32, { %struct.Grammar*, void (\4, %struct.d_loc_t*, i8**)*, %struct.D_Scope*, void (\4)*, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }* (\4, i32, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\9, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }**)*, void ({ i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }*)*, %struct.d_loc_t, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }*)*, i32 (i8*, i8**, i32, i32, { %struct.Grammar*, void (\4, %struct.d_loc_t*, i8**)*, %struct.D_Scope*, void (\4)*, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }* (\4, i32, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\9, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }**)*, void ({ i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }*)*, %struct.d_loc_t, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }*)** } { i32 (i8*, i8**, i32, i32, { %struct.Grammar*, void (\4, %struct.d_loc_t*, i8**)*, %struct.D_Scope*, void (\4)*, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }* (\4, i32, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\9, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }**)*, void ({ i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }*)*, %struct.d_loc_t, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }*)* null, i32 (i8*, i8**, i32, i32, { %struct.Grammar*, void (\4, %struct.d_loc_t*, i8**)*, %struct.D_Scope*, void (\4)*, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }* (\4, i32, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\9, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }**)*, void ({ i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, %struct.ParseNode_User }*)*, %struct.d_loc_t, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }*)** null }
+        { i32 (i8*, i8**, i32, i32, { 
+          %struct.Grammar*, void (\4, %struct.d_loc_t*, i8**)*, 
+          %struct.D_Scope*, void (\4)*, { 
+            i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, 
+            void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, 
+            %struct.ParseNode_User 
+          }* (\4, i32, { i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, 
+            void (\9, %struct.d_loc_t*, i8**)*, %struct.Grammar*, 
+            %struct.ParseNode_User }**)*, 
+          void ({ i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, 
+            void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, 
+            %struct.ParseNode_User }*)*, 
+          %struct.d_loc_t, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, 
+          i32, i32 }*)* null, 
+        i32 (i8*, i8**, i32, i32, { 
+          %struct.Grammar*, void (\4, %struct.d_loc_t*, i8**)*, 
+          %struct.D_Scope*, void (\4)*, { i32, %struct.d_loc_t, i8*, i8*, 
+            %struct.D_Scope*, void (\8, %struct.d_loc_t*, i8**)*, 
+            %struct.Grammar*, %struct.ParseNode_User }* (\4, i32, { i32, 
+              %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, 
+              void (\9, %struct.d_loc_t*, i8**)*, %struct.Grammar*, 
+              %struct.ParseNode_User }**)*, 
+              void ({ i32, %struct.d_loc_t, i8*, i8*, %struct.D_Scope*, 
+                void (\8, %struct.d_loc_t*, i8**)*, %struct.Grammar*, 
+                %struct.ParseNode_User }*)*, %struct.d_loc_t, i32, i32, i32, 
+                i32, i32, i32, i32, i32, i32, i32, i32, i32 }*)** null 
+        }
 
 implementation
