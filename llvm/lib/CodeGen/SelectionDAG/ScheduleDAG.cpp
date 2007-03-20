@@ -475,9 +475,25 @@ void ScheduleDAG::EmitNode(SDNode *Node,
       else
         InReg = getVR(Node->getOperand(2), VRBaseMap);
       unsigned DestReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
-      if (InReg != DestReg)   // Coalesced away the copy?
-        MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg,
-                          RegMap->getRegClass(InReg));
+      if (InReg != DestReg)  {// Coalesced away the copy?
+        const TargetRegisterClass *TRC = 0;
+        // Get the target register class
+        if (MRegisterInfo::isVirtualRegister(InReg)) {
+          TRC = RegMap->getRegClass(InReg);
+        } else {
+          // Pick the register class of the right type that contains this
+          // physreg.
+          for (MRegisterInfo::regclass_iterator I = MRI->regclass_begin(),
+                 E = MRI->regclass_end(); I != E; ++I)
+            if ((*I)->hasType(Node->getOperand(2).getValueType()) &&
+                (*I)->contains(InReg)) {
+              TRC = *I;
+              break;
+            }
+          assert(TRC && "Couldn't find register class for reg copy!");
+        }
+        MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg, TRC);
+      }
       break;
     }
     case ISD::CopyFromReg: {
