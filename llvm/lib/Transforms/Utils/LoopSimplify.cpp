@@ -66,6 +66,7 @@ namespace {
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorSet>();
       AU.addRequired<DominatorTree>();
+      AU.addRequired<ETForest>();
 
       AU.addPreserved<LoopInfo>();
       AU.addPreserved<DominatorSet>();
@@ -417,13 +418,13 @@ static void AddBlockAndPredsToSet(BasicBlock *BB, BasicBlock *StopBlock,
 
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
 /// PHI node that tells us how to partition the loops.
-static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorSet &DS,
-                                        AliasAnalysis *AA) {
+static PHINode *FindPHIToPartitionLoops(Loop *L, ETForest *EF, 
+					AliasAnalysis *AA) {
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
     if (Value *V = PN->hasConstantValue())
-      if (!isa<Instruction>(V) || DS.dominates(cast<Instruction>(V), PN)) {
+      if (!isa<Instruction>(V) || EF->dominates(cast<Instruction>(V), PN)) {
         // This is a degenerate PHI already, don't modify it!
         PN->replaceAllUsesWith(V);
         if (AA) AA->deleteValue(PN);
@@ -497,7 +498,8 @@ void LoopSimplify::PlaceSplitBlockCarefully(BasicBlock *NewBB,
 /// created.
 ///
 Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
-  PHINode *PN = FindPHIToPartitionLoops(L, getAnalysis<DominatorSet>(), AA);
+  ETForest *EF = getAnalysisToUpdate<ETForest>();
+  PHINode *PN = FindPHIToPartitionLoops(L, EF, AA);
   if (PN == 0) return 0;  // No known way to partition.
 
   // Pull out all predecessors that have varying values in the loop.  This

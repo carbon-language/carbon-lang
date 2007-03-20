@@ -883,6 +883,25 @@ void ETForestBase::updateDFSNumbers()
   DFSInfoValid = true;
 }
 
+// dominates - Return true if A dominates B. THis performs the
+// special checks necessary if A and B are in the same basic block.
+bool ETForestBase::dominates(Instruction *A, Instruction *B) {
+  BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
+  if (BBA != BBB) return dominates(BBA, BBB);
+  
+  // Loop through the basic block until we find A or B.
+  BasicBlock::iterator I = BBA->begin();
+  for (; &*I != A && &*I != B; ++I) /*empty*/;
+  
+  if(!IsPostDominators) {
+    // A dominates B if it is found first in the basic block.
+    return &*I == A;
+  } else {
+    // A post-dominates B if B is found first in the basic block.
+    return &*I == B;
+  }
+}
+
 ETNode *ETForest::getNodeForBlock(BasicBlock *BB) {
   ETNode *&BBNode = Nodes[BB];
   if (BBNode) return BBNode;
