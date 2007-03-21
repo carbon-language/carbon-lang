@@ -3627,11 +3627,11 @@ instruction and the variable argument handling intrinsic functions are
 used.</p>
 
 <pre>
-define i32 %test(i32 %X, ...) {
+define i32 @test(i32 %X, ...) {
   ; Initialize variable argument processing
   %ap = alloca i8 *
   %ap2 = bitcast i8** %ap to i8*
-  call void %<a href="#i_va_start">llvm.va_start</a>(i8* %ap2)
+  call void @llvm.va_start(i8* %ap2)
 
   ; Read a single integer argument
   %tmp = va_arg i8 ** %ap, i32
@@ -3639,13 +3639,17 @@ define i32 %test(i32 %X, ...) {
   ; Demonstrate usage of llvm.va_copy and llvm.va_end
   %aq = alloca i8 *
   %aq2 = bitcast i8** %aq to i8*
-  call void %<a href="#i_va_copy">llvm.va_copy</a>(i8 *%aq2, i8* %ap2)
-  call void %<a href="#i_va_end">llvm.va_end</a>(i8* %aq2)
+  call void @llvm.va_copy(i8 *%aq2, i8* %ap2)
+  call void @llvm.va_end(i8* %aq2)
 
   ; Stop processing of arguments.
-  call void %<a href="#i_va_end">llvm.va_end</a>(i8* %ap2)
+  call void @llvm.va_end(i8* %ap2)
   ret i32 %tmp
 }
+
+declare void @llvm.va_start(i8*)
+declare void @llvm.va_copy(i8*, i8*)
+declare void @llvm.va_end(i8*)
 </pre>
 </div>
 
