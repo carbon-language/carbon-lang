@@ -376,7 +376,7 @@ case "$enableval" in
   done 
   ;;
 esac
-TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD"
+TARGETS_TO_BUILD="CBackend MSIL $TARGETS_TO_BUILD"
 AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
 
 dnl Prevent the CBackend from using printf("%a") for floating point so older

@@ -4730,7 +4730,7 @@ echo "$as_me: error: Unrecognized target $a_target" >&2;}
   done
   ;;
 esac
-TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD"
+TARGETS_TO_BUILD="CBackend MSIL $TARGETS_TO_BUILD"
 TARGETS_TO_BUILD=$TARGETS_TO_BUILD
 
 
