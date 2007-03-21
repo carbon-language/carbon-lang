@@ -109,7 +109,8 @@ namespace llvm {
     /// isLegalAddressScaleAndImm - Return true if S works for 
     /// IsLegalAddressScale and GV works for isLegalAddressImmediate _and_
     /// both can be applied simultaneously to the same instruction.
-    virtual bool isLegalAddressScaleAndImm(int64_t S, GlobalValue *GV) const;
+    virtual bool isLegalAddressScaleAndImm(int64_t S, GlobalValue *GV,
+                                           const Type *Ty) const;
 
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address

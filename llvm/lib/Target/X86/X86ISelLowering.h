@@ -349,6 +349,18 @@ namespace llvm {
     /// type.
     virtual bool isLegalAddressScale(int64_t S, const Type *Ty) const;
 
+    /// isLegalAddressScaleAndImm - Return true if S works for 
+    /// IsLegalAddressScale and V works for isLegalAddressImmediate _and_ 
+    /// both can be applied simultaneously to the same instruction.
+    virtual bool isLegalAddressScaleAndImm(int64_t S, int64_t V, 
+                                           const Type *Ty) const;
+
+    /// isLegalAddressScaleAndImm - Return true if S works for 
+    /// IsLegalAddressScale and GV works for isLegalAddressImmediate _and_
+    /// both can be applied simultaneously to the same instruction.
+    virtual bool isLegalAddressScaleAndImm(int64_t S, GlobalValue *GV,
+                                           const Type *Ty) const;
+
     /// isShuffleMaskLegal - Targets can use this to indicate that they only
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask

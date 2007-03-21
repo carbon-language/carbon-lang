@@ -883,7 +883,8 @@ public:
   /// isLegalAddressScaleAndImm - Return true if S works for IsLegalAddressScale
   /// and GV works for isLegalAddressImmediate _and_ both can be applied
   /// simultaneously to the same instruction.
-  virtual bool isLegalAddressScaleAndImm(int64_t S, GlobalValue *GV) const;
+  virtual bool isLegalAddressScaleAndImm(int64_t S, GlobalValue *GV,
+                                                    const Type* Ty) const;
 
   //===--------------------------------------------------------------------===//
   // Div utility functions
