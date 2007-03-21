@@ -14,7 +14,9 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
+
 #include <iostream>
+
 using namespace llvm;
 using namespace clang;
 
@@ -22,16 +24,105 @@ Type::~Type() {}
 
 /// isVoidType - Helper method to determine if this is the 'void' type.
 bool Type::isVoidType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(getCanonicalType()))
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Void;
   return false;
 }
 
+bool Type::isFunctionType() const {
+  return isa<FunctionType>(CanonicalType) ? true : false;
+}
+
+bool Type::isPointerType() const {
+  return isa<PointerType>(CanonicalType) ? true : false;
+}
+
+bool Type::isArrayType() const {
+  return isa<ArrayType>(CanonicalType) ? true : false;
+}
+
+bool Type::isStructureType() const { 
+  if (const TaggedType *TT = dyn_cast<TaggedType>(CanonicalType)) {
+    if (TT->getDecl()->getKind() == Decl::Struct)
+      return true;
+  }
+  return false;
+}
+
+bool Type::isUnionType() const { 
+  if (const TaggedType *TT = dyn_cast<TaggedType>(CanonicalType)) {
+    if (TT->getDecl()->getKind() == Decl::Union)
+      return true;
+  }
+  return false;
+}
+
+bool Type::isIntegralType() const {
+  switch (CanonicalType->getTypeClass()) {
+  default: return false;
+  case Builtin:
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    return BT->getKind() >= BuiltinType::Bool &&
+           BT->getKind() <= BuiltinType::ULongLong;
+  case Tagged:
+    const TaggedType *TT = static_cast<TaggedType*>(CanonicalType);
+    if (TT->getDecl()->getKind() == Decl::Enum)
+      return true;
+    return false;
+  }
+}
+
+bool Type::isFloatingType() const {
+  switch (CanonicalType->getTypeClass()) {
+  default: return false;
+  case Builtin:
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    return BT->getKind() >= BuiltinType::Float &&
+           BT->getKind() <= BuiltinType::LongDoubleComplex;
+  }
+}
+
+bool Type::isArithmeticType() const {
+  switch (CanonicalType->getTypeClass()) {
+  default: return false;
+  case Builtin:
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    return BT->getKind() >= BuiltinType::Bool &&
+           BT->getKind() <= BuiltinType::LongDoubleComplex;
+  }
+}
+
+bool Type::isScalarType() const {
+  switch (CanonicalType->getTypeClass()) {
+  default: return false;
+  case Builtin:
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    return BT->getKind() >= BuiltinType::Bool &&
+           BT->getKind() <= BuiltinType::LongDoubleComplex;
+  case Pointer:
+    return true;
+  }
+}
+
+bool Type::isAggregateType() const {
+  switch (CanonicalType->getTypeClass()) {
+  default: return false;
+  case Array:
+    return true;
+  case Tagged:
+    const TaggedType *TT = static_cast<TaggedType*>(CanonicalType);
+    if (TT->getDecl()->getKind() == Decl::Struct)
+      return true;
+    return true;
+  }
+}
+
+
 /// isIncompleteType - Return true if this is an incomplete type (C99 6.2.5p1)
 /// - a type that can describe objects, but which lacks information needed to
 /// determine its size.
-bool Type::isIncompleteType() const {
-  switch (getTypeClass()) {
+bool Type::isIncompleteType() const { 
+  switch (CanonicalType->getTypeClass()) { 
   default: return false;
   case Builtin:
     // Void is the only incomplete builtin type.  Per C99 6.2.5p19, it can never
@@ -40,17 +131,10 @@ bool Type::isIncompleteType() const {
   case Tagged:
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
-    return !cast<TaggedType>(this)->getDecl()->isDefinition();
+    return !cast<TaggedType>(CanonicalType)->getDecl()->isDefinition();
   case Array:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
-    // In C99, an unknown size is permitted in 4 instances:
-    // - The array being declared is a formal parameter of a function.
-    // - The declarator is accompanied by an initializer from which the array 
-    //   can be deduced (char foo[] = "whatever").
-    // - Forward declarations (extern int matrix[][7]).
-    // - The last component of a structure (flexible array idiom).
-    // Clients of this routine will need to determine if the size is required.
-    return cast<ArrayType>(this)->getSize() == 0;
+    return cast<ArrayType>(CanonicalType)->getSize() == 0;
   }
 }
 

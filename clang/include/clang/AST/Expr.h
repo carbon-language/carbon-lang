@@ -27,9 +27,9 @@ namespace clang {
 /// is required.
 ///
 class Expr : public Stmt {
-  /// TODO: Type.
+  TypeRef Type;
 public:
-  Expr(StmtClass SC) : Stmt(SC) {}
+  Expr(StmtClass SC, TypeRef T=0) : Stmt(SC), Type(T) {}
   ~Expr() {}
   
   virtual void visit(StmtVisitor &Visitor);
@@ -60,25 +60,14 @@ public:
   static bool classof(const DeclRefExpr *) { return true; }
 };
 
-
-// FIXME: The "type" will eventually be moved to Stmt.
 class IntegerLiteral : public Expr {
-  TypeRef Type; // IntTy, LongTy, LongLongTy
-                // UnsignedIntTy, UnsignedLongTy, UnsignedLongLongTy
   intmax_t Value;
 public:
-  // FIXME: To satisfy some of the current adhoc usage...
-  IntegerLiteral() : Expr(IntegerLiteralClass),
-     Type(0), Value(0) {
-  }
+  // type should be IntTy, LongTy, LongLongTy, UnsignedIntTy, UnsignedLongTy, 
+  // or UnsignedLongLongTy
   IntegerLiteral(intmax_t value, TypeRef type)
-    : Expr(IntegerLiteralClass), Type(type), Value(value) {
-#if 0
-      std::cout << "Value=" << Value;
-      std::cout << " Type= ";
-      std::cout << static_cast<BuiltinType *>(type.getTypePtr())->getName();
-      std::cout << "\n";
-#endif
+    : Expr(IntegerLiteralClass, type), Value(value) {
+    assert(type->isIntegralType() && "Illegal type in IntegerLiteral");
   }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -89,7 +78,7 @@ public:
 
 class FloatingLiteral : public Expr {
 public:
-  FloatingLiteral() : Expr(FloatingLiteralClass) {}
+  FloatingLiteral() : Expr(FloatingLiteralClass) {} 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == FloatingLiteralClass; 
@@ -328,6 +317,15 @@ public:
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "<<=".
   static const char *getOpcodeStr(Opcode Op);
+
+  /// predicates to categorize the respective opcodes.
+  static bool isMultiplicativeOp(Opcode Op) { return Op >= Mul && Op <= Rem; }
+  static bool isAdditiveOp(Opcode Op) { return Op == Add || Op == Sub; }
+  static bool isShiftOp(Opcode Op) { return Op == Shl || Op == Shr; }
+  static bool isRelationalOp(Opcode Op) { return Op >= LT && Op <= GE; }
+  static bool isEqualityOp(Opcode Op) { return Op == EQ || Op == NE; }
+  static bool isBitwiseOp(Opcode Op) { return Op >= And && Op <= Or; }
+  static bool isLogicalOp(Opcode Op) { return Op == LAnd || Op == LOr; }
   
   Opcode getOpcode() const { return Opc; }
   Expr *getLHS() { return LHS; }
@@ -338,7 +336,6 @@ public:
     return T->getStmtClass() == BinaryOperatorClass; 
   }
   static bool classof(const BinaryOperator *) { return true; }
-  
 private:
   Expr *LHS, *RHS;
   Opcode Opc;

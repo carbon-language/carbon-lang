@@ -182,13 +182,26 @@ public:
   
   bool isCanonical() const { return CanonicalType == this; }
   Type *getCanonicalType() const { return CanonicalType; }
+
+  /// Helper methods to distinguish type categories. All type predicates
+  /// operate on the canonical type, ignoring typedefs.
+  bool isIntegralType() const;   // short/int/long, char, bool, enum { ... }
+  bool isFloatingType() const;   // float, double, long double, complex
+  bool isArithmeticType() const; // integral + floating
+  bool isScalarType() const;     // arithmetic + pointers
+  bool isAggregateType() const;  // arrays, structures
   
-  /// isVoidType - Helper method to determine if this is the 'void' type.
-  bool isVoidType() const;
+  bool isVoidType() const;       
+  bool isFunctionType() const;   
+  bool isPointerType() const;
+  bool isArrayType() const;
+  bool isStructureType() const;
+  bool isUnionType() const;
   
   /// isIncompleteType - Return true if this is an incomplete type (C99 6.2.5p1)
   /// - a type that can describe objects, but which lacks information needed to
-  /// determine its size (e.g. void, or a fwd declared struct).
+  /// determine its size (e.g. void, or a fwd declared struct). Clients of this
+  /// routine will need to determine if the size is actually required.  
   bool isIncompleteType() const;
   
   virtual void getAsString(std::string &InnerString) const = 0;
@@ -397,7 +410,7 @@ public:
 class TypedefType : public Type {
   TypedefDecl *Decl;
   TypedefType(TypedefDecl *D, Type *can) : Type(TypeName, can), Decl(D) {
-    assert(!isa<TypedefType>(can) && "Invalid canonoical type");
+    assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
 public:

@@ -24,6 +24,7 @@ namespace clang {
   class ASTContext;
   class Preprocessor;
   class Decl;
+  class Expr;
   class VarDecl;
   class TypedefDecl;
   class FunctionDecl;
@@ -65,7 +66,7 @@ public:
   virtual TypeResult ParseTypeName(Scope *S, Declarator &D);
   
   virtual TypeResult ParseParamDeclaratorType(Scope *S, Declarator &D);
-  
+private:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
@@ -98,6 +99,9 @@ private:
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
   FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
+  /// AddTopLevelDecl - called after the decl has been fully processed.
+  /// Allows for bookkeeping and post-processing of each declaration.
+  void AddTopLevelDecl(Decl *current, Decl *last);
 
   /// More parsing and symbol table subroutines...
   VarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
@@ -215,6 +219,15 @@ public:
   /// ParseCXXBoolLiteral - Parse {true,false} literals.
   virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind);
+private:
+  /// type checking binary operators (subroutines of ParseBinOp).
+  void CheckMultiplicativeOperands(Expr *op1, Expr *op2); // C99 6.5.5
+  void CheckAdditiveOperands(Expr *op1, Expr *op2);       // C99 6.5.6
+  void CheckShiftOperands(Expr *op1, Expr *op2);          // C99 6.5.7
+  void CheckRelationalOperands(Expr *op1, Expr *op2);     // C99 6.5.8
+  void CheckEqualityOperands(Expr *op1, Expr *op2);       // C99 6.5.9
+  void CheckBitwiseOperands(Expr *op1, Expr *op2);        // C99 6.5.[10...12]
+  void CheckLogicalOperands(Expr *op1, Expr *op2);        // C99 6.5.[13,14]
 };
 
 

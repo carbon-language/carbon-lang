@@ -188,7 +188,7 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
   if (isa<FunctionType>(ArgTy) && isSizeof) {
     // alignof(function) is allowed.
     Diag(OpLoc, diag::ext_sizeof_function_type);
-    return new IntegerLiteral(/*1*/);
+    return new IntegerLiteral(1, Context.IntTy);
   } else if (ArgTy->isVoidType()) {
     Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof");
   } else if (ArgTy->isIncompleteType()) {
@@ -196,7 +196,7 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
     ArgTy->getAsString(TypeName);
     Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
          diag::err_alignof_incomplete_type, TypeName);
-    return new IntegerLiteral(/*0*/);
+    return new IntegerLiteral(0, Context.IntTy);
   }
   
   return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy);
@@ -289,6 +289,21 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   case tok::comma:                Opc = BinaryOperator::Comma; break;
   }
   
+  if (BinaryOperator::isMultiplicativeOp(Opc)) 
+    CheckMultiplicativeOperands((Expr*)LHS, (Expr*)RHS);
+  else if (BinaryOperator::isAdditiveOp(Opc))
+    CheckAdditiveOperands((Expr*)LHS, (Expr*)RHS);
+  else if (BinaryOperator::isShiftOp(Opc))
+    CheckShiftOperands((Expr*)LHS, (Expr*)RHS);
+  else if (BinaryOperator::isRelationalOp(Opc))
+    CheckRelationalOperands((Expr*)LHS, (Expr*)RHS);
+  else if (BinaryOperator::isEqualityOp(Opc))
+    CheckEqualityOperands((Expr*)LHS, (Expr*)RHS);
+  else if (BinaryOperator::isBitwiseOp(Opc))
+    CheckBitwiseOperands((Expr*)LHS, (Expr*)RHS);
+  else if (BinaryOperator::isLogicalOp(Opc))
+    CheckLogicalOperands((Expr*)LHS, (Expr*)RHS);
+  
   return new BinaryOperator((Expr*)LHS, (Expr*)RHS, Opc);
 }
 
@@ -299,5 +314,26 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
                                             ExprTy *Cond, ExprTy *LHS,
                                             ExprTy *RHS) {
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
+}
+
+void Sema::CheckMultiplicativeOperands(Expr *op1, Expr *op2) {
+}
+
+void Sema::CheckAdditiveOperands(Expr *op1, Expr *op2) {
+}
+
+void Sema::CheckShiftOperands(Expr *op1, Expr *op2) {
+}
+
+void Sema::CheckRelationalOperands(Expr *op1, Expr *op2) {
+}
+
+void Sema::CheckEqualityOperands(Expr *op1, Expr *op2) {
+}
+
+void Sema::CheckBitwiseOperands(Expr *op1, Expr *op2) {
+}
+
+void Sema::CheckLogicalOperands(Expr *op1, Expr *op2) {
 }
 

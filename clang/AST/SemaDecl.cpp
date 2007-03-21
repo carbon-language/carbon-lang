@@ -288,10 +288,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
     S->AddDecl(New);
   }
   
-  // If this is a top-level decl that is chained to some other (e.g. int A,B,C;)
-  // remember this in the LastInGroupList list.
-  if (LastInGroup && S->getParent() == 0)
-    LastInGroupList.push_back((Decl*)LastInGroup);
+  if (S->getParent() == 0)
+    AddTopLevelDecl(New, (Decl *)LastInGroup);
   
   return New;
 }
@@ -714,3 +712,12 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   Enum->defineElements(&Values[0], Values.size());
 }
 
+void Sema::AddTopLevelDecl(Decl *current, Decl *last) {
+  if (!current) return;
+
+  // If this is a top-level decl that is chained to some other (e.g. int A,B,C;)
+  // remember this in the LastInGroupList list.
+  if (last) {
+    LastInGroupList.push_back((Decl*)last);
+  }
+}
