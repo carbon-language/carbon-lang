@@ -2298,6 +2298,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
 SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   MVT::ValueType VT = N->getValueType(0);
+  unsigned VTBits = MVT::getSizeInBits(VT);
 
   // noop truncate
   if (N0.getValueType() == N->getValueType(0))
@@ -2322,30 +2323,47 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
       // and the truncate
       return N0.getOperand(0);
   }
+
   // fold (truncate (load x)) -> (smaller load x)
+  // fold (truncate (srl (load x), c)) -> (smaller load (x+c/evtbits))
+  unsigned ShAmt = 0;
+  if (N0.getOpcode() == ISD::SRL && N0.hasOneUse()) {
+    if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+      ShAmt = N01->getValue();
+      // Is the shift amount a multiple of size of VT?
+      if ((ShAmt & (VTBits-1)) == 0) {
+        N0 = N0.getOperand(0);
+        if (MVT::getSizeInBits(N0.getValueType()) <= VTBits)
+          return SDOperand();
+        ShAmt /= VTBits;
+      }
+    }
+  }
   if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
       // Do not allow folding to i1 here.  i1 is implicitly stored in memory in
       // zero extended form: by shrinking the load, we lose track of the fact
       // that it is already zero extended.
       // FIXME: This should be reevaluated.
       VT != MVT::i1) {
-    assert(MVT::getSizeInBits(N0.getValueType()) > MVT::getSizeInBits(VT) &&
+    assert(MVT::getSizeInBits(N0.getValueType()) > VTBits &&
            "Cannot truncate to larger type!");
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT::ValueType PtrType = N0.getOperand(1).getValueType();
     // For big endian targets, we need to add an offset to the pointer to load
     // the correct bytes.  For little endian systems, we merely need to read
     // fewer bytes from the same pointer.
-    uint64_t PtrOff = 
-      (MVT::getSizeInBits(N0.getValueType()) - MVT::getSizeInBits(VT)) / 8;
-    SDOperand NewPtr = TLI.isLittleEndian() ? LN0->getBasePtr() : 
-      DAG.getNode(ISD::ADD, PtrType, LN0->getBasePtr(),
-                  DAG.getConstant(PtrOff, PtrType));
+    uint64_t PtrOff =  ShAmt
+      ? ShAmt : (TLI.isLittleEndian() ? 0
+                 : (MVT::getSizeInBits(N0.getValueType()) - VTBits) / 8);
+    SDOperand NewPtr = DAG.getNode(ISD::ADD, PtrType, LN0->getBasePtr(),
+                                   DAG.getConstant(PtrOff, PtrType));
     AddToWorkList(NewPtr.Val);
     SDOperand Load = DAG.getLoad(VT, LN0->getChain(), NewPtr,
                                  LN0->getSrcValue(), LN0->getSrcValueOffset());
     AddToWorkList(N);
     CombineTo(N0.Val, Load, Load.getValue(1));
+    if (ShAmt)
+      return DAG.getNode(ISD::TRUNCATE, VT, Load);
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
   return SDOperand();
