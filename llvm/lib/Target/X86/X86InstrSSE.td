@@ -1666,6 +1666,7 @@ def MWAIT   : I<0xC9, RawFrm, (ops), "mwait",
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+let isReMaterializable = 1 in {
 def V_SET0 : PSI<0x57, MRMInitReg, (ops VR128:$dst),
                  "xorps $dst, $dst",
                  [(set VR128:$dst, (v4f32 immAllZerosV))]>;
@@ -1673,6 +1674,7 @@ def V_SET0 : PSI<0x57, MRMInitReg, (ops VR128:$dst),
 def V_SETALLONES : PDI<0x76, MRMInitReg, (ops VR128:$dst),
                        "pcmpeqd $dst, $dst",
                        [(set VR128:$dst, (v2f64 immAllOnesV))]>;
+}
 
 // FR32 / FR64 to 128-bit vector conversion.
 def MOVSS2PSrr : SSI<0x10, MRMSrcReg, (ops VR128:$dst, FR32:$src),

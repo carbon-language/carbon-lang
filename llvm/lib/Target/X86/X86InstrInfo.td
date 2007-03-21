@@ -601,6 +601,7 @@ def MOV16rr : I<0x89, MRMDestReg, (ops GR16:$dst, GR16:$src),
                 "mov{w} {$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32rr : I<0x89, MRMDestReg, (ops GR32:$dst, GR32:$src),
                 "mov{l} {$src, $dst|$dst, $src}", []>;
+let isReMaterializable = 1 in {
 def MOV8ri  : Ii8 <0xB0, AddRegFrm, (ops GR8 :$dst, i8imm :$src),
                    "mov{b} {$src, $dst|$dst, $src}",
                    [(set GR8:$dst, imm:$src)]>;
@@ -610,6 +611,7 @@ def MOV16ri : Ii16<0xB8, AddRegFrm, (ops GR16:$dst, i16imm:$src),
 def MOV32ri : Ii32<0xB8, AddRegFrm, (ops GR32:$dst, i32imm:$src),
                    "mov{l} {$src, $dst|$dst, $src}",
                    [(set GR32:$dst, imm:$src)]>;
+}
 def MOV8mi  : Ii8 <0xC6, MRM0m, (ops i8mem :$dst, i8imm :$src),
                    "mov{b} {$src, $dst|$dst, $src}",
                    [(store (i8 imm:$src), addr:$dst)]>;
