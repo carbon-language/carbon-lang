@@ -67,7 +67,7 @@ static GlobalVariable *CurGV;
 //
 typedef std::vector<Value *> ValueList;           // Numbered defs
 
-typedef std::pair<std::string,const Type*> RenameMapKey;
+typedef std::pair<std::string,TypeInfo> RenameMapKey;
 typedef std::map<RenameMapKey,std::string> RenameMapType;
 
 static void 
@@ -78,7 +78,10 @@ static struct PerModuleInfo {
   Module *CurrentModule;
   std::map<const Type *, ValueList> Values; // Module level numbered definitions
   std::map<const Type *,ValueList> LateResolveValues;
-  std::vector<PATypeHolder>    Types;
+  std::vector<PATypeHolder> Types;
+  std::vector<Signedness> TypeSigns;
+  std::map<std::string,Signedness> NamedTypeSigns;
+  std::map<std::string,Signedness> NamedValueSigns;
   std::map<ValID, PATypeHolder> LateResolveTypes;
   static Module::Endianness Endian;
   static Module::PointerSize PointerSize;
@@ -135,6 +138,9 @@ static struct PerModuleInfo {
 
     Values.clear();         // Clear out function local definitions
     Types.clear();
+    TypeSigns.clear();
+    NamedTypeSigns.clear();
+    NamedValueSigns.clear();
     CurrentModule = 0;
   }
 
@@ -208,6 +214,24 @@ static struct PerFunctionInfo {
 
 static bool inFunctionScope() { return CurFun.CurrentFunction != 0; }
 
+/// This function is just a utility to make a Key value for the rename map.
+/// The Key is a combination of the name, type, Signedness of the original 
+/// value (global/function). This just constructs the key and ensures that
+/// named Signedness values are resolved to the actual Signedness.
+/// @brief Make a key for the RenameMaps
+static RenameMapKey makeRenameMapKey(const std::string &Name, const Type* Ty, 
+                                     const Signedness &Sign) {
+  TypeInfo TI; 
+  TI.T = Ty; 
+  if (Sign.isNamed())
+    // Don't allow Named Signedness nodes because they won't match. The actual
+    // Signedness must be looked up in the NamedTypeSigns map.
+    TI.S.copy(CurModule.NamedTypeSigns[Sign.getName()]);
+  else
+    TI.S.copy(Sign);
+  return std::make_pair(Name, TI);
+}
+
 
 //===----------------------------------------------------------------------===//
 //               Code to handle definitions of all the types
@@ -233,7 +257,6 @@ static const Type *getType(const ValID &D, bool DoNotImprovise = false) {
     break;
   case ValID::NameVal:                 // Is it a named definition?
     if (const Type *N = CurModule.CurrentModule->getTypeByName(D.Name)) {
-      D.destroy();  // Free old strdup'd memory...
       return N;
     }
     break;
@@ -247,7 +270,6 @@ static const Type *getType(const ValID &D, bool DoNotImprovise = false) {
   // forward, so just create an entry to be resolved later and get to it...
   //
   if (DoNotImprovise) return 0;  // Do we just want a null to be returned?
-
 
   if (inFunctionScope()) {
     if (D.Type == ValID::NameVal) {
@@ -266,13 +288,94 @@ static const Type *getType(const ValID &D, bool DoNotImprovise = false) {
   Type *Typ = OpaqueType::get();
   CurModule.LateResolveTypes.insert(std::make_pair(D, Typ));
   return Typ;
- }
+}
+
+/// This is like the getType method except that instead of looking up the type
+/// for a given ID, it looks up that type's sign.
+/// @brief Get the signedness of a referenced type
+static Signedness getTypeSign(const ValID &D) {
+  switch (D.Type) {
+  case ValID::NumberVal:               // Is it a numbered definition?
+    // Module constants occupy the lowest numbered slots...
+    if ((unsigned)D.Num < CurModule.TypeSigns.size()) {
+      return CurModule.TypeSigns[(unsigned)D.Num];
+    }
+    break;
+  case ValID::NameVal: {               // Is it a named definition?
+    std::map<std::string,Signedness>::const_iterator I = 
+      CurModule.NamedTypeSigns.find(D.Name);
+    if (I != CurModule.NamedTypeSigns.end())
+      return I->second;
+    // Perhaps its a named forward .. just cache the name
+    Signedness S;
+    S.makeNamed(D.Name);
+    return S;
+  }
+  default: 
+    break;
+  }
+  // If we don't find it, its signless
+  Signedness S;
+  S.makeSignless();
+  return S;
+}
+
+/// This function is analagous to getElementType in LLVM. It provides the same
+/// function except that it looks up the Signedness instead of the type. This is
+/// used when processing GEP instructions that need to extract the type of an
+/// indexed struct/array/ptr member. 
+/// @brief Look up an element's sign.
+static Signedness getElementSign(const ValueInfo& VI, 
+                                 const std::vector<Value*> &Indices) {
+  const Type *Ptr = VI.V->getType();
+  assert(isa<PointerType>(Ptr) && "Need pointer type");
+
+  unsigned CurIdx = 0;
+  Signedness S(VI.S);
+  while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {
+    if (CurIdx == Indices.size())
+      break;
+
+    Value *Index = Indices[CurIdx++];
+    assert(!isa<PointerType>(CT) || CurIdx == 1 && "Invalid type");
+    Ptr = CT->getTypeAtIndex(Index);
+    if (const Type* Ty = Ptr->getForwardedType())
+      Ptr = Ty;
+    assert(S.isComposite() && "Bad Signedness type");
+    if (isa<StructType>(CT)) {
+      S = S.get(cast<ConstantInt>(Index)->getZExtValue());
+    } else {
+      S = S.get(0UL);
+    }
+    if (S.isNamed())
+      S = CurModule.NamedTypeSigns[S.getName()];
+  }
+  Signedness Result;
+  Result.makeComposite(S);
+  return Result;
+}
+
+/// This function just translates a ConstantInfo into a ValueInfo and calls
+/// getElementSign(ValueInfo,...). Its just a convenience.
+/// @brief ConstantInfo version of getElementSign.
+static Signedness getElementSign(const ConstInfo& CI, 
+                                 const std::vector<Constant*> &Indices) {
+  ValueInfo VI;
+  VI.V = CI.C;
+  VI.S.copy(CI.S);
+  std::vector<Value*> Idx;
+  for (unsigned i = 0; i < Indices.size(); ++i)
+    Idx.push_back(Indices[i]);
+  Signedness result = getElementSign(VI, Idx);
+  VI.destroy();
+  return result;
+}
 
 /// This function determines if two function types differ only in their use of
 /// the sret parameter attribute in the first argument. If they are identical 
 /// in all other respects, it returns true. Otherwise, it returns false.
-bool FuncTysDifferOnlyBySRet(const FunctionType *F1, 
-                                   const FunctionType *F2) {
+static bool FuncTysDifferOnlyBySRet(const FunctionType *F1, 
+                                    const FunctionType *F2) {
   if (F1->getReturnType() != F2->getReturnType() ||
       F1->getNumParams() != F2->getNumParams() ||
       F1->getParamAttrs(0) != F2->getParamAttrs(0))
@@ -287,10 +390,27 @@ bool FuncTysDifferOnlyBySRet(const FunctionType *F1,
   return true;
 }
 
+/// This function determines if the type of V and Ty differ only by the SRet
+/// parameter attribute. This is a more generalized case of
+/// FuncTysDIfferOnlyBySRet since it doesn't require FunctionType arguments.
+static bool TypesDifferOnlyBySRet(Value *V, const Type* Ty) {
+  if (V->getType() == Ty)
+    return true;
+  const PointerType *PF1 = dyn_cast<PointerType>(Ty);
+  const PointerType *PF2 = dyn_cast<PointerType>(V->getType());
+  if (PF1 && PF2) {
+    const FunctionType* FT1 = dyn_cast<FunctionType>(PF1->getElementType());
+    const FunctionType* FT2 = dyn_cast<FunctionType>(PF2->getElementType());
+    if (FT1 && FT2)
+      return FuncTysDifferOnlyBySRet(FT1, FT2);
+  }
+  return false;
+}
+
 // The upgrade of csretcc to sret param attribute may have caused a function 
 // to not be found because the param attribute changed the type of the called 
 // function. This helper function, used in getExistingValue, detects that
-// situation and returns V if it occurs and 0 otherwise. 
+// situation and bitcasts the function to the correct type.
 static Value* handleSRetFuncTypeMerge(Value *V, const Type* Ty) {
   // Handle degenerate cases
   if (!V)
@@ -298,23 +418,21 @@ static Value* handleSRetFuncTypeMerge(Value *V, const Type* Ty) {
   if (V->getType() == Ty)
     return V;
 
-  Value* Result = 0;
   const PointerType *PF1 = dyn_cast<PointerType>(Ty);
   const PointerType *PF2 = dyn_cast<PointerType>(V->getType());
   if (PF1 && PF2) {
-    const FunctionType *FT1 =
-      dyn_cast<FunctionType>(PF1->getElementType());
-    const FunctionType *FT2 =
-      dyn_cast<FunctionType>(PF2->getElementType());
+    const FunctionType *FT1 = dyn_cast<FunctionType>(PF1->getElementType());
+    const FunctionType *FT2 = dyn_cast<FunctionType>(PF2->getElementType());
     if (FT1 && FT2 && FuncTysDifferOnlyBySRet(FT1, FT2))
       if (FT2->paramHasAttr(1, FunctionType::StructRetAttribute))
-        Result = V;
+        return V;
       else if (Constant *C = dyn_cast<Constant>(V))
-        Result = ConstantExpr::getBitCast(C, PF1);
+        return ConstantExpr::getBitCast(C, PF1);
       else
-        Result = new BitCastInst(V, PF1, "upgrd.cast", CurBB);
+        return new BitCastInst(V, PF1, "upgrd.cast", CurBB);
+      
   }
-  return Result;
+  return 0;
 }
 
 // getExistingValue - Look up the value specified by the provided type and
@@ -350,9 +468,8 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
 
   case ValID::NameVal: {                // Is it a named definition?
     // Get the name out of the ID
-    std::string Name(D.Name);
-    Value* V = 0;
-    RenameMapKey Key = std::make_pair(Name, Ty);
+    RenameMapKey Key = makeRenameMapKey(D.Name, Ty, D.S);
+    Value *V = 0;
     if (inFunctionScope()) {
       // See if the name was renamed
       RenameMapType::const_iterator I = CurFun.RenameMap.find(Key);
@@ -360,10 +477,12 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
       if (I != CurFun.RenameMap.end())
         LookupName = I->second;
       else
-        LookupName = Name;
+        LookupName = D.Name;
       ValueSymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
       V = SymTab.lookup(LookupName);
-      V = handleSRetFuncTypeMerge(V, Ty);
+      if (V && V->getType() != Ty)
+        V = handleSRetFuncTypeMerge(V, Ty);
+      assert((!V || TypesDifferOnlyBySRet(V, Ty)) && "Found wrong type");
     }
     if (!V) {
       RenameMapType::const_iterator I = CurModule.RenameMap.find(Key);
@@ -371,9 +490,11 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
       if (I != CurModule.RenameMap.end())
         LookupName = I->second;
       else
-        LookupName = Name;
+        LookupName = D.Name;
       V = CurModule.CurrentModule->getValueSymbolTable().lookup(LookupName);
-      V = handleSRetFuncTypeMerge(V, Ty);
+      if (V && V->getType() != Ty)
+        V = handleSRetFuncTypeMerge(V, Ty);
+      assert((!V || TypesDifferOnlyBySRet(V, Ty)) && "Found wrong type");
     }
     if (!V) 
       return 0;
@@ -506,14 +627,13 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
     break;
   case ValID::NameVal:                  // Is it a named definition?
     Name = ID.Name;
-    if (Value *N = CurFun.CurrentFunction->
-                   getValueSymbolTable().lookup(Name)) {
+    if (Value *N = CurFun.CurrentFunction->getValueSymbolTable().lookup(Name)) {
       if (N->getType() != Type::LabelTy) {
         // Register names didn't use to conflict with basic block names
         // because of type planes. Now they all have to be unique. So, we just
         // rename the register and treat this name as if no basic block
         // had been found.
-        RenameMapKey Key = std::make_pair(N->getName(),N->getType());
+        RenameMapKey Key = makeRenameMapKey(ID.Name, N->getType(), ID.S);
         N->setName(makeNameUnique(N->getName()));
         CurModule.RenameMap[Key] = N->getName();
         BB = 0;
@@ -624,19 +744,33 @@ ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
   LateResolvers.clear();
 }
 
-// ResolveTypeTo - A brand new type was just declared.  This means that (if
-// name is not null) things referencing Name can be resolved.  Otherwise, things
-// refering to the number can be resolved.  Do this now.
-//
-static void ResolveTypeTo(char *Name, const Type *ToTy) {
+/// This function is used for type resolution and upref handling. When a type
+/// becomes concrete, this function is called to adjust the signedness for the
+/// concrete type.
+static void ResolveTypeSign(const Type* oldTy, const Signedness &Sign) {
+  std::string TyName = CurModule.CurrentModule->getTypeName(oldTy);
+  if (!TyName.empty())
+    CurModule.NamedTypeSigns[TyName] = Sign;
+}
+
+/// ResolveTypeTo - A brand new type was just declared.  This means that (if
+/// name is not null) things referencing Name can be resolved.  Otherwise, 
+/// things refering to the number can be resolved.  Do this now.
+static void ResolveTypeTo(char *Name, const Type *ToTy, const Signedness& Sign){
   ValID D;
-  if (Name) D = ValID::create(Name);
-  else      D = ValID::create((int)CurModule.Types.size());
+  if (Name)
+    D = ValID::create(Name);
+  else      
+    D = ValID::create((int)CurModule.Types.size());
+  D.S.copy(Sign);
+
+  CurModule.NamedTypeSigns[Name] = Sign;
 
   std::map<ValID, PATypeHolder>::iterator I =
     CurModule.LateResolveTypes.find(D);
   if (I != CurModule.LateResolveTypes.end()) {
-    ((DerivedType*)I->second.get())->refineAbstractTypeTo(ToTy);
+    const Type *OldTy = I->second.get();
+    ((DerivedType*)OldTy)->refineAbstractTypeTo(ToTy);
     CurModule.LateResolveTypes.erase(I);
   }
 }
@@ -696,12 +830,12 @@ static inline bool TypeHasInteger(const Type *Ty) {
 // null potentially, in which case this is a noop.  The string passed in is
 // assumed to be a malloc'd string buffer, and is free'd by this function.
 //
-static void setValueName(Value *V, char *NameStr) {
+static void setValueName(const ValueInfo &V, char *NameStr) {
   if (NameStr) {
     std::string Name(NameStr);      // Copy string
     free(NameStr);                  // Free old string
 
-    if (V->getType() == Type::VoidTy) {
+    if (V.V->getType() == Type::VoidTy) {
       error("Can't assign name '" + Name + "' to value with void type");
       return;
     }
@@ -714,13 +848,13 @@ static void setValueName(Value *V, char *NameStr) {
     if (Existing) {
       // An existing value of the same name was found. This might have happened
       // because of the integer type planes collapsing in LLVM 2.0. 
-      if (Existing->getType() == V->getType() &&
+      if (Existing->getType() == V.V->getType() &&
           !TypeHasInteger(Existing->getType())) {
         // If the type does not contain any integers in them then this can't be
         // a type plane collapsing issue. It truly is a redefinition and we 
         // should error out as the assembly is invalid.
         error("Redefinition of value named '" + Name + "' of type '" +
-              V->getType()->getDescription() + "'");
+              V.V->getType()->getDescription() + "'");
         return;
       } 
       // In LLVM 2.0 we don't allow names to be re-used for any values in a 
@@ -734,13 +868,13 @@ static void setValueName(Value *V, char *NameStr) {
       // We're changing the name but it will probably be used by other 
       // instructions as operands later on. Consequently we have to retain
       // a mapping of the renaming that we're doing.
-      RenameMapKey Key = std::make_pair(Name,V->getType());
+      RenameMapKey Key = makeRenameMapKey(Name, V.V->getType(), V.S);
       CurFun.RenameMap[Key] = NewName;
       Name = NewName;
     }
 
     // Set the name.
-    V->setName(Name);
+    V.V->setName(Name);
   }
 }
 
@@ -749,7 +883,8 @@ static void setValueName(Value *V, char *NameStr) {
 static GlobalVariable *
 ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
                     bool isConstantGlobal, const Type *Ty,
-                    Constant *Initializer) {
+                    Constant *Initializer,
+                    const Signedness &Sign) {
   if (isa<FunctionType>(Ty))
     error("Cannot declare global vars of function type");
 
@@ -769,6 +904,7 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   } else {
     ID = ValID::create((int)CurModule.Values[PTy].size());
   }
+  ID.S.makeComposite(Sign);
 
   if (GlobalValue *FWGV = CurModule.GetForwardRefForGlobal(PTy, ID)) {
     // Move the global to the end of the list, from whereever it was
@@ -794,13 +930,7 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
       // There is alread a global of the same name which means there is a
       // conflict. Let's see what we can do about it.
       std::string NewName(makeNameUnique(Name));
-      if (Linkage == GlobalValue::InternalLinkage) {
-        // The linkage type is internal so just warn about the rename without
-        // invoking "scarey language" about linkage failures. GVars with
-        // InternalLinkage can be renamed at will.
-        warning("Global variable '" + Name + "' was renamed to '"+ 
-                NewName + "'");
-      } else {
+      if (Linkage != GlobalValue::InternalLinkage) {
         // The linkage of this gval is external so we can't reliably rename 
         // it because it could potentially create a linking problem.  
         // However, we can't leave the name conflict in the output either or 
@@ -811,7 +941,7 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
       }
 
       // Put the renaming in the global rename map
-      RenameMapKey Key = std::make_pair(Name,PointerType::get(Ty));
+      RenameMapKey Key = makeRenameMapKey(Name, PointerType::get(Ty), ID.S);
       CurModule.RenameMap[Key] = NewName;
 
       // Rename it
@@ -824,6 +954,8 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
     new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name,
                        CurModule.CurrentModule);
   InsertValue(GV, CurModule.Values);
+  // Remember the sign of this global.
+  CurModule.NamedValueSigns[Name] = ID.S;
   return GV;
 }
 
@@ -834,21 +966,26 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
 // This function returns true if the type has already been defined, but is
 // allowed to be redefined in the specified context.  If the name is a new name
 // for the type plane, it is inserted and false is returned.
-static bool setTypeName(const Type *T, char *NameStr) {
+static bool setTypeName(const PATypeInfo& TI, char *NameStr) {
   assert(!inFunctionScope() && "Can't give types function-local names");
   if (NameStr == 0) return false;
  
   std::string Name(NameStr);      // Copy string
   free(NameStr);                  // Free old string
 
+  const Type* Ty = TI.PAT->get();
+
   // We don't allow assigning names to void type
-  if (T == Type::VoidTy) {
+  if (Ty == Type::VoidTy) {
     error("Can't assign name '" + Name + "' to the void type");
     return false;
   }
 
   // Set the type name, checking for conflicts as we do so.
-  bool AlreadyExists = CurModule.CurrentModule->addTypeName(Name, T);
+  bool AlreadyExists = CurModule.CurrentModule->addTypeName(Name, Ty);
+
+  // Save the sign information for later use 
+  CurModule.NamedTypeSigns[Name] = TI.S;
 
   if (AlreadyExists) {   // Inserting a name that is already defined???
     const Type *Existing = CurModule.CurrentModule->getTypeByName(Name);
@@ -858,7 +995,7 @@ static bool setTypeName(const Type *T, char *NameStr) {
     // opaque type.  In this case, Existing will be an opaque type.
     if (const OpaqueType *OpTy = dyn_cast<OpaqueType>(Existing)) {
       // We ARE replacing an opaque type!
-      const_cast<OpaqueType*>(OpTy)->refineAbstractTypeTo(T);
+      const_cast<OpaqueType*>(OpTy)->refineAbstractTypeTo(Ty);
       return true;
     }
 
@@ -866,11 +1003,11 @@ static bool setTypeName(const Type *T, char *NameStr) {
     // the redefinition is identical to the original. This will be so if
     // Existing and T point to the same Type object. In this one case we
     // allow the equivalent redefinition.
-    if (Existing == T) return true;  // Yes, it's equal.
+    if (Existing == Ty) return true;  // Yes, it's equal.
 
     // Any other kind of (non-equivalent) redefinition is an error.
     error("Redefinition of type named '" + Name + "' in the '" +
-          T->getDescription() + "' type plane");
+          Ty->getDescription() + "' type plane");
   }
 
   return false;
@@ -902,7 +1039,7 @@ namespace {
     OpaqueType *UpRefTy;
 
     UpRefRecord(unsigned NL, OpaqueType *URTy)
-      : NestingLevel(NL), LastContainedTy(URTy), UpRefTy(URTy) {}
+      : NestingLevel(NL), LastContainedTy(URTy), UpRefTy(URTy) { }
   };
 }
 
@@ -916,7 +1053,7 @@ static std::vector<UpRefRecord> UpRefs;
 /// count reaches zero, the upreferenced type is the type that is passed in:
 /// thus we can complete the cycle.
 ///
-static PATypeHolder HandleUpRefs(const Type *ty) {
+static PATypeHolder HandleUpRefs(const Type *ty, const Signedness& Sign) {
   // If Ty isn't abstract, or if there are no up-references in it, then there is
   // nothing to resolve here.
   if (!ty->isAbstract() || UpRefs.empty()) return ty;
@@ -932,10 +1069,11 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
   // this variable.
   OpaqueType *TypeToResolve = 0;
 
-  for (unsigned i = 0; i != UpRefs.size(); ++i) {
+  unsigned i = 0;
+  for (; i != UpRefs.size(); ++i) {
     UR_OUT("  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", "
-           << UpRefs[i].second->getDescription() << ") = "
-           << (TypeContains(Ty, UpRefs[i].second) ? "true" : "false") << "\n");
+           << UpRefs[i].UpRefTy->getDescription() << ") = "
+           << (TypeContains(Ty, UpRefs[i].UpRefTy) ? "true" : "false") << "\n");
     if (TypeContains(Ty, UpRefs[i].LastContainedTy)) {
       // Decrement level of upreference
       unsigned Level = --UpRefs[i].NestingLevel;
@@ -946,8 +1084,9 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
           TypeToResolve = UpRefs[i].UpRefTy;
         } else {
           UR_OUT("  * Resolving upreference for "
-                 << UpRefs[i].second->getDescription() << "\n";
-                 std::string OldName = UpRefs[i].UpRefTy->getDescription());
+                 << UpRefs[i].UpRefTy->getDescription() << "\n";
+          std::string OldName = UpRefs[i].UpRefTy->getDescription());
+          ResolveTypeSign(UpRefs[i].UpRefTy, Sign);
           UpRefs[i].UpRefTy->refineAbstractTypeTo(TypeToResolve);
           UR_OUT("  * Type '" << OldName << "' refined upreference to: "
                  << (const void*)Ty << ", " << Ty->getDescription() << "\n");
@@ -960,12 +1099,111 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 
   if (TypeToResolve) {
     UR_OUT("  * Resolving upreference for "
-           << UpRefs[i].second->getDescription() << "\n";
+           << UpRefs[i].UpRefTy->getDescription() << "\n";
            std::string OldName = TypeToResolve->getDescription());
+    ResolveTypeSign(TypeToResolve, Sign);
     TypeToResolve->refineAbstractTypeTo(Ty);
   }
 
   return Ty;
+}
+
+bool Signedness::operator<(const Signedness &that) const {
+  if (isNamed()) {
+    if (that.isNamed()) 
+      return *(this->name) < *(that.name);
+    else
+      return CurModule.NamedTypeSigns[*name] < that;
+  } else if (that.isNamed()) {
+    return *this < CurModule.NamedTypeSigns[*that.name];
+  }
+
+  if (isComposite() && that.isComposite()) {
+    if (sv->size() == that.sv->size()) {
+      SignVector::const_iterator thisI = sv->begin(), thisE = sv->end();
+      SignVector::const_iterator thatI = that.sv->begin(), 
+                                 thatE = that.sv->end();
+      for (; thisI != thisE; ++thisI, ++thatI) {
+        if (*thisI < *thatI)
+          return true;
+        else if (!(*thisI == *thatI))
+          return false;
+      }
+      return false;
+    }
+    return sv->size() < that.sv->size();
+  }  
+  return kind < that.kind;
+}
+
+bool Signedness::operator==(const Signedness &that) const {
+  if (isNamed())
+    if (that.isNamed())
+      return *(this->name) == *(that.name);
+    else 
+      return CurModule.NamedTypeSigns[*(this->name)] == that;
+  else if (that.isNamed())
+    return *this == CurModule.NamedTypeSigns[*(that.name)];
+  if (isComposite() && that.isComposite()) {
+    if (sv->size() == that.sv->size()) {
+      SignVector::const_iterator thisI = sv->begin(), thisE = sv->end();
+      SignVector::const_iterator thatI = that.sv->begin(), 
+                                 thatE = that.sv->end();
+      for (; thisI != thisE; ++thisI, ++thatI) {
+        if (!(*thisI == *thatI))
+          return false;
+      }
+      return true;
+    }
+    return false;
+  }
+  return kind == that.kind;
+}
+
+void Signedness::copy(const Signedness &that) {
+  if (that.isNamed()) {
+    kind = Named;
+    name = new std::string(*that.name);
+  } else if (that.isComposite()) {
+    kind = Composite;
+    sv = new SignVector();
+    *sv = *that.sv;
+  } else {
+    kind = that.kind;
+    sv = 0;
+  }
+}
+
+void Signedness::destroy() {
+  if (isNamed()) {
+    delete name;
+  } else if (isComposite()) {
+    delete sv;
+  } 
+}
+
+void Signedness::dump() const {
+  if (isComposite()) {
+    if (sv->size() == 1) {
+      (*sv)[0].dump();
+      std::cerr << "*";
+    } else {
+      std::cerr << "{ " ;
+      for (unsigned i = 0; i < sv->size(); ++i) {
+        if (i != 0)
+          std::cerr << ", ";
+        (*sv)[i].dump();
+      }
+      std::cerr << "} " ;
+    }
+  } else if (isNamed()) {
+    std::cerr << *name;
+  } else if (isSigned()) {
+    std::cerr << "S";
+  } else if (isUnsigned()) {
+    std::cerr << "U";
+  } else
+    std::cerr << ".";
 }
 
 static inline Instruction::TermOps 
@@ -982,7 +1220,7 @@ getTermOp(TermOps op) {
 }
 
 static inline Instruction::BinaryOps 
-getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
+getBinaryOp(BinaryOps op, const Type *Ty, const Signedness& Sign) {
   switch (op) {
     default     : assert(0 && "Invalid OldBinaryOps");
     case SetEQ  : 
@@ -1003,7 +1241,7 @@ getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
         isFP = PTy->getElementType()->isFloatingPoint();
       if (isFP)
         return Instruction::FDiv;
-      else if (Sign == Signed)
+      else if (Sign.isSigned())
         return Instruction::SDiv;
       return Instruction::UDiv;
     }
@@ -1020,7 +1258,7 @@ getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
       // Select correct opcode
       if (isFP)
         return Instruction::FRem;
-      else if (Sign == Signed)
+      else if (Sign.isSigned())
         return Instruction::SRem;
       return Instruction::URem;
     }
@@ -1031,7 +1269,7 @@ getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
     case AShrOp : return Instruction::AShr;
     case ShlOp  : return Instruction::Shl;
     case ShrOp  : 
-      if (Sign == Signed)
+      if (Sign.isSigned())
         return Instruction::AShr;
       return Instruction::LShr;
     case AndOp  : return Instruction::And;
@@ -1042,8 +1280,8 @@ getBinaryOp(BinaryOps op, const Type *Ty, Signedness Sign) {
 
 static inline Instruction::OtherOps 
 getCompareOp(BinaryOps op, unsigned short &predicate, const Type* &Ty,
-             Signedness Sign) {
-  bool isSigned = Sign == Signed;
+             const Signedness &Sign) {
+  bool isSigned = Sign.isSigned();
   bool isFP = Ty->isFloatingPoint();
   switch (op) {
     default     : assert(0 && "Invalid OldSetCC");
@@ -1123,7 +1361,7 @@ static inline Instruction::MemoryOps getMemoryOp(MemoryOps op) {
 }
 
 static inline Instruction::OtherOps 
-getOtherOp(OtherOps op, Signedness Sign) {
+getOtherOp(OtherOps op, const Signedness &Sign) {
   switch (op) {
     default               : assert(0 && "Invalid OldOtherOps");
     case PHIOp            : return Instruction::PHI;
@@ -1141,8 +1379,8 @@ getOtherOp(OtherOps op, Signedness Sign) {
 }
 
 static inline Value*
-getCast(CastOps op, Value *Src, Signedness SrcSign, const Type *DstTy, 
-        Signedness DstSign, bool ForceInstruction = false) {
+getCast(CastOps op, Value *Src, const Signedness &SrcSign, const Type *DstTy, 
+        const Signedness &DstSign, bool ForceInstruction = false) {
   Instruction::CastOps Opcode;
   const Type* SrcTy = Src->getType();
   if (op == CastOp) {
@@ -1179,7 +1417,8 @@ getCast(CastOps op, Value *Src, Signedness SrcSign, const Type *DstTy,
     }
     // Determine the opcode to use by calling CastInst::getCastOpcode
     Opcode = 
-      CastInst::getCastOpcode(Src, SrcSign == Signed, DstTy, DstSign == Signed);
+      CastInst::getCastOpcode(Src, SrcSign.isSigned(), DstTy, 
+                              DstSign.isSigned());
 
   } else switch (op) {
     default: assert(0 && "Invalid cast token");
@@ -1271,7 +1510,7 @@ const Type* upgradeGEPIndices(const Type* PTy,
       // all indices for SequentialType elements. We must retain the same 
       // semantic (zext) for unsigned types.
       if (const IntegerType *Ity = dyn_cast<IntegerType>(Index->getType()))
-        if (Ity->getBitWidth() < 64 && (*Indices)[i].S == Unsigned) {
+        if (Ity->getBitWidth() < 64 && (*Indices)[i].S.isUnsigned()) {
           if (CIndices)
             Index = ConstantExpr::getCast(Instruction::ZExt, 
               cast<Constant>(Index), Type::Int64Ty);
@@ -1456,7 +1695,7 @@ using namespace llvm;
   llvm::Function                         *FunctionVal;
   std::pair<llvm::PATypeInfo, char*>     *ArgVal;
   llvm::BasicBlock                       *BasicBlockVal;
-  llvm::TerminatorInst                   *TermInstVal;
+  llvm::TermInstInfo                     TermInstVal;
   llvm::InstrInfo                        InstVal;
   llvm::ConstInfo                        ConstVal;
   llvm::ValueInfo                        ValueVal;
@@ -1769,7 +2008,7 @@ TypesV
   : Types
   | VOID { 
     $$.PAT = new PATypeHolder($1.T); 
-    $$.S = Signless;
+    $$.S.makeSignless();
   }
   ;
 
@@ -1777,7 +2016,7 @@ UpRTypesV
   : UpRTypes 
   | VOID { 
     $$.PAT = new PATypeHolder($1.T); 
-    $$.S = Signless;
+    $$.S.makeSignless();
   }
   ;
 
@@ -1798,16 +2037,16 @@ PrimType
 UpRTypes 
   : PrimType { 
     $$.PAT = new PATypeHolder($1.T);
-    $$.S = $1.S;
+    $$.S.copy($1.S);
   }
   | OPAQUE {
     $$.PAT = new PATypeHolder(OpaqueType::get());
-    $$.S = Signless;
+    $$.S.makeSignless();
   }
   | SymbolicValueRef {            // Named types are also simple types...
+    $$.S.copy(getTypeSign($1));
     const Type* tmp = getType($1);
     $$.PAT = new PATypeHolder(tmp);
-    $$.S = Signless; // FIXME: what if its signed?
   }
   | '\\' EUINT64VAL {                   // Type UpReference
     if ($2 > (uint64_t)~0U) 
@@ -1815,14 +2054,16 @@ UpRTypes
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
     UpRefs.push_back(UpRefRecord((unsigned)$2, OT));  // Add to vector...
     $$.PAT = new PATypeHolder(OT);
-    $$.S = Signless;
+    $$.S.makeSignless();
     UR_OUT("New Upreference!\n");
   }
   | UpRTypesV '(' ArgTypeListI ')' {           // Function derived type?
+    $$.S.makeComposite($1.S);
     std::vector<const Type*> Params;
     for (std::list<llvm::PATypeInfo>::iterator I = $3->begin(),
            E = $3->end(); I != E; ++I) {
       Params.push_back(I->PAT->get());
+      $$.S.add(I->S);
     }
     FunctionType::ParamAttrsList ParamAttrs;
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
@@ -1830,63 +2071,67 @@ UpRTypes
 
     $$.PAT = new PATypeHolder(
       HandleUpRefs(FunctionType::get($1.PAT->get(), Params, isVarArg, 
-                   ParamAttrs)));
-    $$.S = $1.S;
-    delete $1.PAT;    // Delete the return type handle
+                   ParamAttrs), $$.S));
+    delete $1.PAT;  // Delete the return type handle
     delete $3;      // Delete the argument list
   }
   | '[' EUINT64VAL 'x' UpRTypes ']' {          // Sized array type?
+    $$.S.makeComposite($4.S);
     $$.PAT = new PATypeHolder(HandleUpRefs(ArrayType::get($4.PAT->get(), 
-                                                        (unsigned)$2)));
-    $$.S = $4.S;
+                                           (unsigned)$2), $$.S));
     delete $4.PAT;
   }
   | '<' EUINT64VAL 'x' UpRTypes '>' {          // Vector type?
-     const llvm::Type* ElemTy = $4.PAT->get();
-     if ((unsigned)$2 != $2)
-        error("Unsigned result not equal to signed result");
-     if (!(ElemTy->isInteger() || ElemTy->isFloatingPoint()))
-        error("Elements of a VectorType must be integer or floating point");
-     if (!isPowerOf2_32($2))
-       error("VectorType length should be a power of 2");
-     $$.PAT = new PATypeHolder(HandleUpRefs(VectorType::get(ElemTy, 
-                                          (unsigned)$2)));
-     $$.S = $4.S;
-     delete $4.PAT;
+    const llvm::Type* ElemTy = $4.PAT->get();
+    if ((unsigned)$2 != $2)
+       error("Unsigned result not equal to signed result");
+    if (!(ElemTy->isInteger() || ElemTy->isFloatingPoint()))
+       error("Elements of a VectorType must be integer or floating point");
+    if (!isPowerOf2_32($2))
+      error("VectorType length should be a power of 2");
+    $$.S.makeComposite($4.S);
+    $$.PAT = new PATypeHolder(HandleUpRefs(VectorType::get(ElemTy, 
+                                         (unsigned)$2), $$.S));
+    delete $4.PAT;
   }
   | '{' TypeListI '}' {                        // Structure type?
     std::vector<const Type*> Elements;
+    $$.S.makeComposite();
     for (std::list<llvm::PATypeInfo>::iterator I = $2->begin(),
-           E = $2->end(); I != E; ++I)
+           E = $2->end(); I != E; ++I) {
       Elements.push_back(I->PAT->get());
-    $$.PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
-    $$.S = Signless;
+      $$.S.add(I->S);
+    }
+    $$.PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements), $$.S));
     delete $2;
   }
   | '{' '}' {                                  // Empty structure type?
     $$.PAT = new PATypeHolder(StructType::get(std::vector<const Type*>()));
-    $$.S = Signless;
+    $$.S.makeComposite();
   }
   | '<' '{' TypeListI '}' '>' {                // Packed Structure type?
+    $$.S.makeComposite();
     std::vector<const Type*> Elements;
     for (std::list<llvm::PATypeInfo>::iterator I = $3->begin(),
            E = $3->end(); I != E; ++I) {
       Elements.push_back(I->PAT->get());
+      $$.S.add(I->S);
       delete I->PAT;
     }
-    $$.PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements, true)));
-    $$.S = Signless;
+    $$.PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements, true), 
+                                           $$.S));
     delete $3;
   }
   | '<' '{' '}' '>' {                          // Empty packed structure type?
     $$.PAT = new PATypeHolder(StructType::get(std::vector<const Type*>(),true));
-    $$.S = Signless;
+    $$.S.makeComposite();
   }
   | UpRTypes '*' {                             // Pointer type?
     if ($1.PAT->get() == Type::LabelTy)
       error("Cannot form a pointer to a basic block");
-    $$.PAT = new PATypeHolder(HandleUpRefs(PointerType::get($1.PAT->get())));
-    $$.S = $1.S;
+    $$.S.makeComposite($1.S);
+    $$.PAT = new PATypeHolder(HandleUpRefs(PointerType::get($1.PAT->get()),
+                                           $$.S));
     delete $1.PAT;
   }
   ;
@@ -1910,14 +2155,14 @@ ArgTypeListI
   | TypeListI ',' DOTDOTDOT {
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
-    VoidTI.S = Signless;
+    VoidTI.S.makeSignless();
     ($$=$1)->push_back(VoidTI);
   }
   | DOTDOTDOT {
     $$ = new std::list<PATypeInfo>();
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
-    VoidTI.S = Signless;
+    VoidTI.S.makeSignless();
     $$->push_back(VoidTI);
   }
   | /*empty*/ {
@@ -1958,7 +2203,7 @@ ConstVal
       Elems.push_back(C);
     }
     $$.C = ConstantArray::get(ATy, Elems);
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT; 
     delete $3;
   }
@@ -1972,7 +2217,7 @@ ConstVal
       error("Type mismatch: constant sized array initialized with 0"
             " arguments, but has size of " + itostr(NumElements) +"");
     $$.C = ConstantArray::get(ATy, std::vector<Constant*>());
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
   }
   | Types 'c' STRINGCONSTANT {
@@ -1995,7 +2240,7 @@ ConstVal
       Vals.push_back(ConstantInt::get(ETy, *C));
     free($3);
     $$.C = ConstantArray::get(ATy, Vals);
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
   }
   | Types '<' ConstVector '>' { // Nonempty unsized arr
@@ -2022,7 +2267,7 @@ ConstVal
       Elems.push_back(C);
     }
     $$.C = ConstantVector::get(PTy, Elems);
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
     delete $3;
   }
@@ -2044,7 +2289,7 @@ ConstVal
       Fields.push_back(C);
     }
     $$.C = ConstantStruct::get(STy, Fields);
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
     delete $3;
   }
@@ -2056,7 +2301,7 @@ ConstVal
     if (STy->getNumContainedTypes() != 0)
       error("Illegal number of initializers for structure type");
     $$.C = ConstantStruct::get(STy, std::vector<Constant*>());
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
   }
   | Types '<' '{' ConstVector '}' '>' {
@@ -2077,7 +2322,7 @@ ConstVal
       Fields.push_back(C);
     }
     $$.C = ConstantStruct::get(STy, Fields);
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT; 
     delete $4;
   }
@@ -2089,7 +2334,7 @@ ConstVal
     if (STy->getNumContainedTypes() != 0)
       error("Illegal number of initializers for packed structure type");
     $$.C = ConstantStruct::get(STy, std::vector<Constant*>());
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
   }
   | Types NULL_TOK {
@@ -2098,12 +2343,12 @@ ConstVal
       error("Cannot make null pointer constant with type: '" + 
             $1.PAT->get()->getDescription() + "'");
     $$.C = ConstantPointerNull::get(PTy);
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
   }
   | Types UNDEF {
     $$.C = UndefValue::get($1.PAT->get());
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
   }
   | Types SymbolicValueRef {
@@ -2121,6 +2366,7 @@ ConstVal
     //
     Function *SavedCurFn = CurFun.CurrentFunction;
     CurFun.CurrentFunction = 0;
+    $2.S.copy($1.S);
     Value *V = getExistingValue(Ty, $2);
     CurFun.CurrentFunction = SavedCurFn;
 
@@ -2161,14 +2407,14 @@ ConstVal
       }
     }
     $$.C = cast<GlobalValue>(V);
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;            // Free the type handle
   }
   | Types ConstExpr {
     if ($1.PAT->get() != $2.C->getType())
       error("Mismatched types for constant expression");
     $$ = $2;
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
   }
   | Types ZEROINITIALIZER {
@@ -2176,7 +2422,7 @@ ConstVal
     if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || isa<OpaqueType>(Ty))
       error("Cannot create a null initialized value of this type");
     $$.C = Constant::getNullValue(Ty);
-    $$.S = $1.S;
+    $$.S.copy($1.S);
     delete $1.PAT;
   }
   | SIntType EINT64VAL {      // integral constants
@@ -2184,28 +2430,28 @@ ConstVal
     if (!ConstantInt::isValueValidForType(Ty, $2))
       error("Constant value doesn't fit in type");
     $$.C = ConstantInt::get(Ty, $2);
-    $$.S = Signed;
+    $$.S.makeSigned();
   }
   | UIntType EUINT64VAL {            // integral constants
     const Type *Ty = $1.T;
     if (!ConstantInt::isValueValidForType(Ty, $2))
       error("Constant value doesn't fit in type");
     $$.C = ConstantInt::get(Ty, $2);
-    $$.S = Unsigned;
+    $$.S.makeUnsigned();
   }
   | BOOL TRUETOK {                      // Boolean constants
     $$.C = ConstantInt::get(Type::Int1Ty, true);
-    $$.S = Unsigned;
+    $$.S.makeUnsigned();
   }
   | BOOL FALSETOK {                     // Boolean constants
     $$.C = ConstantInt::get(Type::Int1Ty, false);
-    $$.S = Unsigned;
+    $$.S.makeUnsigned();
   }
   | FPType FPVAL {                   // Float & Double constants
     if (!ConstantFP::isValueValidForType($1.T, $2))
       error("Floating point constant invalid for type");
     $$.C = ConstantFP::get($1.T, $2);
-    $$.S = Signless;
+    $$.S.makeSignless();
   }
   ;
 
@@ -2213,8 +2459,8 @@ ConstExpr
   : CastOps '(' ConstVal TO Types ')' {
     const Type* SrcTy = $3.C->getType();
     const Type* DstTy = $5.PAT->get();
-    Signedness SrcSign = $3.S;
-    Signedness DstSign = $5.S;
+    Signedness SrcSign($3.S);
+    Signedness DstSign($5.S);
     if (!SrcTy->isFirstClassType())
       error("cast constant expression from a non-primitive type: '" +
             SrcTy->getDescription() + "'");
@@ -2222,7 +2468,7 @@ ConstExpr
       error("cast constant expression to a non-primitive type: '" +
             DstTy->getDescription() + "'");
     $$.C = cast<Constant>(getCast($1, $3.C, SrcSign, DstTy, DstSign));
-    $$.S = DstSign;
+    $$.S.copy(DstSign);
     delete $5.PAT;
   }
   | GETELEMENTPTR '(' ConstVal IndexList ')' {
@@ -2236,7 +2482,7 @@ ConstExpr
 
     delete $4;
     $$.C = ConstantExpr::getGetElementPtr($3.C, &CIndices[0], CIndices.size());
-    $$.S = Signless;
+    $$.S.copy(getElementSign($3, CIndices));
   }
   | SELECT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
     if (!$3.C->getType()->isInteger() ||
@@ -2245,7 +2491,7 @@ ConstExpr
     if ($5.C->getType() != $7.C->getType())
       error("Select operand types must match");
     $$.C = ConstantExpr::getSelect($3.C, $5.C, $7.C);
-    $$.S = Unsigned;
+    $$.S.copy($5.S);
   }
   | ArithmeticOps '(' ConstVal ',' ConstVal ')' {
     const Type *Ty = $3.C->getType();
@@ -2273,7 +2519,7 @@ ConstExpr
              ConstantExpr::getCast(Instruction::PtrToInt, $5.C, IntPtrTy));
       $$.C = ConstantExpr::getCast(Instruction::IntToPtr, $$.C, Ty);
     }
-    $$.S = $3.S; 
+    $$.S.copy($3.S); 
   }
   | LogicalOps '(' ConstVal ',' ConstVal ')' {
     const Type* Ty = $3.C->getType();
@@ -2286,7 +2532,7 @@ ConstExpr
     }
     Instruction::BinaryOps Opcode = getBinaryOp($1, Ty, $3.S);
     $$.C = ConstantExpr::get(Opcode, $3.C, $5.C);
-    $$.S = $3.S;
+    $$.S.copy($3.S);
   }
   | SetCondOps '(' ConstVal ',' ConstVal ')' {
     const Type* Ty = $3.C->getType();
@@ -2295,19 +2541,19 @@ ConstExpr
     unsigned short pred;
     Instruction::OtherOps Opcode = getCompareOp($1, pred, Ty, $3.S);
     $$.C = ConstantExpr::getCompare(Opcode, $3.C, $5.C);
-    $$.S = Unsigned;
+    $$.S.makeUnsigned();
   }
   | ICMP IPredicates '(' ConstVal ',' ConstVal ')' {
     if ($4.C->getType() != $6.C->getType()) 
       error("icmp operand types must match");
     $$.C = ConstantExpr::getCompare($2, $4.C, $6.C);
-    $$.S = Unsigned;
+    $$.S.makeUnsigned();
   }
   | FCMP FPredicates '(' ConstVal ',' ConstVal ')' {
     if ($4.C->getType() != $6.C->getType()) 
       error("fcmp operand types must match");
     $$.C = ConstantExpr::getCompare($2, $4.C, $6.C);
-    $$.S = Unsigned;
+    $$.S.makeUnsigned();
   }
   | ShiftOps '(' ConstVal ',' ConstVal ')' {
     if (!$5.C->getType()->isInteger() ||
@@ -2318,25 +2564,25 @@ ConstExpr
       error("Shift constant expression requires integer operand");
     Constant *ShiftAmt = ConstantExpr::getZExt($5.C, Ty);
     $$.C = ConstantExpr::get(getBinaryOp($1, Ty, $3.S), $3.C, ShiftAmt);
-    $$.S = $3.S;
+    $$.S.copy($3.S);
   }
   | EXTRACTELEMENT '(' ConstVal ',' ConstVal ')' {
     if (!ExtractElementInst::isValidOperands($3.C, $5.C))
       error("Invalid extractelement operands");
     $$.C = ConstantExpr::getExtractElement($3.C, $5.C);
-    $$.S = $3.S;
+    $$.S.copy($3.S.get(0));
   }
   | INSERTELEMENT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
     if (!InsertElementInst::isValidOperands($3.C, $5.C, $7.C))
       error("Invalid insertelement operands");
     $$.C = ConstantExpr::getInsertElement($3.C, $5.C, $7.C);
-    $$.S = $3.S;
+    $$.S.copy($3.S);
   }
   | SHUFFLEVECTOR '(' ConstVal ',' ConstVal ',' ConstVal ')' {
     if (!ShuffleVectorInst::isValidOperands($3.C, $5.C, $7.C))
       error("Invalid shufflevector operands");
     $$.C = ConstantExpr::getShuffleVector($3.C, $5.C, $7.C);
-    $$.S = $3.S;
+    $$.S.copy($3.S);
   }
   ;
 
@@ -2405,13 +2651,13 @@ ConstPool
     // If types are not resolved eagerly, then the two types will not be
     // determined to be the same type!
     //
-    const Type* Ty = $4.PAT->get();
-    ResolveTypeTo($2, Ty);
+    ResolveTypeTo($2, $4.PAT->get(), $4.S);
 
-    if (!setTypeName(Ty, $2) && !$2) {
-      // If this is a named type that is not a redefinition, add it to the slot
-      // table.
-      CurModule.Types.push_back(Ty);
+    if (!setTypeName($4, $2) && !$2) {
+      // If this is a numbered type that is not a redefinition, add it to the 
+      // slot table.
+      CurModule.Types.push_back($4.PAT->get());
+      CurModule.TypeSigns.push_back($4.S);
     }
     delete $4.PAT;
   }
@@ -2422,20 +2668,22 @@ ConstPool
   | ConstPool OptAssign OptLinkage GlobalType ConstVal {
     if ($5.C == 0) 
       error("Global value initializer is not a constant");
-    CurGV = ParseGlobalVariable($2, $3, $4, $5.C->getType(), $5.C);
+    CurGV = ParseGlobalVariable($2, $3, $4, $5.C->getType(), $5.C, $5.S);
   } GlobalVarAttributes {
     CurGV = 0;
   }
   | ConstPool OptAssign EXTERNAL GlobalType Types {
     const Type *Ty = $5.PAT->get();
-    CurGV = ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, Ty, 0);
+    CurGV = ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, Ty, 0,
+                                $5.S);
     delete $5.PAT;
   } GlobalVarAttributes {
     CurGV = 0;
   }
   | ConstPool OptAssign DLLIMPORT GlobalType Types {
     const Type *Ty = $5.PAT->get();
-    CurGV = ParseGlobalVariable($2, GlobalValue::DLLImportLinkage, $4, Ty, 0);
+    CurGV = ParseGlobalVariable($2, GlobalValue::DLLImportLinkage, $4, Ty, 0,
+                                $5.S);
     delete $5.PAT;
   } GlobalVarAttributes {
     CurGV = 0;
@@ -2443,7 +2691,8 @@ ConstPool
   | ConstPool OptAssign EXTERN_WEAK GlobalType Types {
     const Type *Ty = $5.PAT->get();
     CurGV = 
-      ParseGlobalVariable($2, GlobalValue::ExternalWeakLinkage, $4, Ty, 0);
+      ParseGlobalVariable($2, GlobalValue::ExternalWeakLinkage, $4, Ty, 0, 
+                          $5.S);
     delete $5.PAT;
   } GlobalVarAttributes {
     CurGV = 0;
@@ -2553,14 +2802,14 @@ ArgList
     $$ = $1;
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
-    VoidTI.S = Signless;
+    VoidTI.S.makeSignless();
     $$->push_back(std::pair<PATypeInfo, char*>(VoidTI, 0));
   }
   | DOTDOTDOT {
     $$ = new std::vector<std::pair<PATypeInfo,char*> >();
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
-    VoidTI.S = Signless;
+    VoidTI.S.makeSignless();
     $$->push_back(std::pair<PATypeInfo, char*>(VoidTI, 0));
   }
   | /* empty */ { $$ = 0; }
@@ -2577,6 +2826,8 @@ FunctionHeaderH
     if (!RetTy->isFirstClassType() && RetTy != Type::VoidTy)
       error("LLVM functions cannot return aggregate types");
 
+    Signedness FTySign;
+    FTySign.makeComposite($2.S);
     std::vector<const Type*> ParamTyList;
 
     // In LLVM 2.0 the signatures of three varargs intrinsics changed to take
@@ -2592,6 +2843,7 @@ FunctionHeaderH
            I = $5->begin(), E = $5->end(); I != E; ++I) {
         const Type *Ty = I->first.PAT->get();
         ParamTyList.push_back(Ty);
+        FTySign.add(I->first.S);
       }
     }
 
@@ -2618,6 +2870,7 @@ FunctionHeaderH
     } else {
       ID = ValID::create((int)CurModule.Values[PFT].size());
     }
+    ID.S.makeComposite(FTySign);
 
     Function *Fn = 0;
     Module* M = CurModule.CurrentModule;
@@ -2644,14 +2897,16 @@ FunctionHeaderH
           std::string NewName(makeNameUnique(FunctionName));
           if (Conflict->hasInternalLinkage()) {
             Conflict->setName(NewName);
-            RenameMapKey Key = std::make_pair(FunctionName,Conflict->getType());
+            RenameMapKey Key = 
+              makeRenameMapKey(FunctionName, Conflict->getType(), ID.S);
             CurModule.RenameMap[Key] = NewName;
             Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
             InsertValue(Fn, CurModule.Values);
           } else {
             Fn = new Function(FT, CurFun.Linkage, NewName, M);
             InsertValue(Fn, CurModule.Values);
-            RenameMapKey Key = std::make_pair(FunctionName,PFT);
+            RenameMapKey Key = 
+              makeRenameMapKey(FunctionName, PFT, ID.S);
             CurModule.RenameMap[Key] = NewName;
           }
         } else {
@@ -2673,9 +2928,11 @@ FunctionHeaderH
         // type plane. After PR411 was fixed, this is no loner the case. 
         // To resolve this we must rename one of the two. 
         if (Conflict->hasInternalLinkage()) {
-          // We can safely renamed the Conflict.
+          // We can safely rename the Conflict.
+          RenameMapKey Key = 
+            makeRenameMapKey(Conflict->getName(), Conflict->getType(), 
+              CurModule.NamedValueSigns[Conflict->getName()]);
           Conflict->setName(makeNameUnique(Conflict->getName()));
-          RenameMapKey Key = std::make_pair(FunctionName,Conflict->getType());
           CurModule.RenameMap[Key] = Conflict->getName();
           Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
           InsertValue(Fn, CurModule.Values);
@@ -2684,7 +2941,7 @@ FunctionHeaderH
           std::string NewName = makeNameUnique(FunctionName);
           Fn = new Function(FT, CurFun.Linkage, NewName, M);
           InsertValue(Fn, CurModule.Values);
-          RenameMapKey Key = std::make_pair(FunctionName,PFT);
+          RenameMapKey Key = makeRenameMapKey(FunctionName, PFT, ID.S);
           CurModule.RenameMap[Key] = NewName;
         } else {
           // We can't quietly rename either of these things, but we must
@@ -2695,7 +2952,7 @@ FunctionHeaderH
                   "' may cause linkage errors");
           Fn = new Function(FT, CurFun.Linkage, NewName, M);
           InsertValue(Fn, CurModule.Values);
-          RenameMapKey Key = std::make_pair(FunctionName,PFT);
+          RenameMapKey Key = makeRenameMapKey(FunctionName, PFT, ID.S);
           CurModule.RenameMap[Key] = NewName;
         }
       } else {
@@ -2734,7 +2991,8 @@ FunctionHeaderH
       std::vector<std::pair<PATypeInfo,char*> >::iterator E = $5->end();
       for ( ; I != E && ArgIt != ArgEnd; ++I, ++ArgIt) {
         delete I->first.PAT;                      // Delete the typeholder...
-        setValueName(ArgIt, I->second);           // Insert arg into symtab...
+        ValueInfo VI; VI.V = ArgIt; VI.S.copy(I->first.S); 
+        setValueName(VI, I->second);           // Insert arg into symtab...
         InsertValue(ArgIt);
       }
       delete $5;                     // We're now done with the argument list
@@ -2791,11 +3049,17 @@ OptSideEffect
 
 ConstValueRef 
     // A reference to a direct constant
-  : ESINT64VAL {    $$ = ValID::create($1); }
+  : ESINT64VAL { $$ = ValID::create($1); }
   | EUINT64VAL { $$ = ValID::create($1); }
   | FPVAL { $$ = ValID::create($1); } 
-  | TRUETOK { $$ = ValID::create(ConstantInt::get(Type::Int1Ty, true)); } 
-  | FALSETOK { $$ = ValID::create(ConstantInt::get(Type::Int1Ty, false)); }
+  | TRUETOK { 
+    $$ = ValID::create(ConstantInt::get(Type::Int1Ty, true));
+    $$.S.makeUnsigned();
+  }
+  | FALSETOK { 
+    $$ = ValID::create(ConstantInt::get(Type::Int1Ty, false)); 
+    $$.S.makeUnsigned();
+  }
   | NULL_TOK { $$ = ValID::createNull(); }
   | UNDEF { $$ = ValID::createUndef(); }
   | ZEROINITIALIZER { $$ = ValID::createZeroInit(); }
@@ -2803,8 +3067,8 @@ ConstValueRef
     const Type *ETy = (*$2)[0].C->getType();
     int NumElements = $2->size(); 
     VectorType* pt = VectorType::get(ETy, NumElements);
-    PATypeHolder* PTy = new PATypeHolder(
-      HandleUpRefs(VectorType::get(ETy, NumElements)));
+    $$.S.makeComposite((*$2)[0].S);
+    PATypeHolder* PTy = new PATypeHolder(HandleUpRefs(pt, $$.S));
     
     // Verify all elements are correct type!
     std::vector<Constant*> Elems;
@@ -2822,6 +3086,7 @@ ConstValueRef
   }
   | ConstExpr {
     $$ = ValID::create($1.C);
+    $$.S.copy($1.S);
   }
   | ASM_TOK OptSideEffect STRINGCONSTANT ',' STRINGCONSTANT {
     char *End = UnEscapeLexed($3, true);
@@ -2834,12 +3099,11 @@ ConstValueRef
   }
   ;
 
-// SymbolicValueRef - Reference to one of two ways of symbolically refering to
-// another value.
+// SymbolicValueRef - Reference to one of two ways of symbolically refering to // another value.
 //
 SymbolicValueRef 
-  : INTVAL {  $$ = ValID::create($1); }
-  | Name   {  $$ = ValID::create($1); }
+  : INTVAL {  $$ = ValID::create($1); $$.S.makeSignless(); }
+  | Name   {  $$ = ValID::create($1); $$.S.makeSignless(); }
   ;
 
 // ValueRef - A reference to a definition... either constant or symbolic
@@ -2854,8 +3118,9 @@ ValueRef
 ResolvedVal 
   : Types ValueRef { 
     const Type *Ty = $1.PAT->get();
-    $$.S = $1.S;
+    $2.S.copy($1.S);
     $$.V = getVal(Ty, $2); 
+    $$.S.copy($1.S);
     delete $1.PAT;
   }
   ;
@@ -2874,9 +3139,10 @@ BasicBlockList
 //
 BasicBlock 
   : InstructionList OptAssign BBTerminatorInst  {
-    setValueName($3, $2);
-    InsertValue($3);
-    $1->getInstList().push_back($3);
+    ValueInfo VI; VI.V = $3.TI; VI.S.copy($3.S);
+    setValueName(VI, $2);
+    InsertValue($3.TI);
+    $1->getInstList().push_back($3.TI);
     InsertValue($1);
     $$ = $1;
   }
@@ -2889,7 +3155,7 @@ InstructionList
     $$ = $1;
   }
   | /* empty */ {
-    $$ = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
+    $$ = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++),true);
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
     // referenced.
@@ -2912,26 +3178,36 @@ Unwind : UNWIND | EXCEPT;
 
 BBTerminatorInst 
   : RET ResolvedVal {              // Return with a result...
-    $$ = new ReturnInst($2.V);
+    $$.TI = new ReturnInst($2.V);
+    $$.S.makeSignless();
   }
   | RET VOID {                                       // Return with no result...
-    $$ = new ReturnInst();
+    $$.TI = new ReturnInst();
+    $$.S.makeSignless();
   }
   | BR LABEL ValueRef {                         // Unconditional Branch...
     BasicBlock* tmpBB = getBBVal($3);
-    $$ = new BranchInst(tmpBB);
+    $$.TI = new BranchInst(tmpBB);
+    $$.S.makeSignless();
   }                                                  // Conditional Branch...
   | BR BOOL ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
+    $6.S.makeSignless();
+    $9.S.makeSignless();
     BasicBlock* tmpBBA = getBBVal($6);
     BasicBlock* tmpBBB = getBBVal($9);
+    $3.S.makeUnsigned();
     Value* tmpVal = getVal(Type::Int1Ty, $3);
-    $$ = new BranchInst(tmpBBA, tmpBBB, tmpVal);
+    $$.TI = new BranchInst(tmpBBA, tmpBBB, tmpVal);
+    $$.S.makeSignless();
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' JumpTable ']' {
+    $3.S.copy($2.S);
     Value* tmpVal = getVal($2.T, $3);
+    $6.S.makeSignless();
     BasicBlock* tmpBB = getBBVal($6);
     SwitchInst *S = new SwitchInst(tmpVal, tmpBB, $8->size());
-    $$ = S;
+    $$.TI = S;
+    $$.S.makeSignless();
     std::vector<std::pair<Constant*,BasicBlock*> >::iterator I = $8->begin(),
       E = $8->end();
     for (; I != E; ++I) {
@@ -2943,24 +3219,31 @@ BBTerminatorInst
     delete $8;
   }
   | SWITCH IntType ValueRef ',' LABEL ValueRef '[' ']' {
+    $3.S.copy($2.S);
     Value* tmpVal = getVal($2.T, $3);
+    $6.S.makeSignless();
     BasicBlock* tmpBB = getBBVal($6);
     SwitchInst *S = new SwitchInst(tmpVal, tmpBB, 0);
-    $$ = S;
+    $$.TI = S;
+    $$.S.makeSignless();
   }
   | INVOKE OptCallingConv TypesV ValueRef '(' ValueRefListE ')'
     TO LABEL ValueRef Unwind LABEL ValueRef {
     const PointerType *PFTy;
     const FunctionType *Ty;
+    Signedness FTySign;
 
     if (!(PFTy = dyn_cast<PointerType>($3.PAT->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
+      FTySign.makeComposite($3.S);
       if ($6) {
         for (std::vector<ValueInfo>::iterator I = $6->begin(), E = $6->end();
-             I != E; ++I)
+             I != E; ++I) {
           ParamTypes.push_back((*I).V->getType());
+          FTySign.add(I->S);
+        }
       }
       FunctionType::ParamAttrsList ParamAttrs;
       if ($2 == OldCallingConv::CSRet) {
@@ -2971,14 +3254,19 @@ BBTerminatorInst
       if (isVarArg) ParamTypes.pop_back();
       Ty = FunctionType::get($3.PAT->get(), ParamTypes, isVarArg, ParamAttrs);
       PFTy = PointerType::get(Ty);
+      $$.S.copy($3.S);
+    } else {
+      FTySign = $3.S;
+      $$.S.copy($3.S.get(0)); // 0th element of FuncTy sign is result ty
     }
+    $4.S.makeComposite(FTySign);
     Value *V = getVal(PFTy, $4);   // Get the function we're calling...
     BasicBlock *Normal = getBBVal($10);
     BasicBlock *Except = getBBVal($13);
 
     // Create the call node...
     if (!$6) {                                   // Has no arguments?
-      $$ = new InvokeInst(V, Normal, Except, 0, 0);
+      $$.TI = new InvokeInst(V, Normal, Except, 0, 0);
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
@@ -2998,38 +3286,44 @@ BBTerminatorInst
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
         error("Invalid number of parameters detected");
 
-      $$ = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
+      $$.TI = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
     }
-    cast<InvokeInst>($$)->setCallingConv(upgradeCallingConv($2));
+    cast<InvokeInst>($$.TI)->setCallingConv(upgradeCallingConv($2));
     delete $3.PAT;
     delete $6;
   }
   | Unwind {
-    $$ = new UnwindInst();
+    $$.TI = new UnwindInst();
+    $$.S.makeSignless();
   }
   | UNREACHABLE {
-    $$ = new UnreachableInst();
+    $$.TI = new UnreachableInst();
+    $$.S.makeSignless();
   }
   ;
 
 JumpTable 
   : JumpTable IntType ConstValueRef ',' LABEL ValueRef {
     $$ = $1;
+    $3.S.copy($2.S);
     Constant *V = cast<Constant>(getExistingValue($2.T, $3));
     
     if (V == 0)
       error("May only switch on a constant pool value");
 
+    $6.S.makeSignless();
     BasicBlock* tmpBB = getBBVal($6);
     $$->push_back(std::make_pair(V, tmpBB));
   }
   | IntType ConstValueRef ',' LABEL ValueRef {
     $$ = new std::vector<std::pair<Constant*, BasicBlock*> >();
+    $2.S.copy($1.S);
     Constant *V = cast<Constant>(getExistingValue($1.T, $2));
 
     if (V == 0)
       error("May only switch on a constant pool value");
 
+    $5.S.makeSignless();
     BasicBlock* tmpBB = getBBVal($5);
     $$->push_back(std::make_pair(V, tmpBB)); 
   }
@@ -3057,9 +3351,10 @@ Inst
           omit = true;
     if (omit) {
       $$.I = 0;
-      $$.S = Signless;
+      $$.S.makeSignless();
     } else {
-      setValueName($2.I, $1);
+      ValueInfo VI; VI.V = $2.I; VI.S.copy($2.S);
+      setValueName(VI, $1);
       InsertValue($2.I);
       $$ = $2;
     }
@@ -3067,15 +3362,19 @@ Inst
 
 PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
     $$.P = new std::list<std::pair<Value*, BasicBlock*> >();
-    $$.S = $1.S;
+    $$.S.copy($1.S);
+    $3.S.copy($1.S);
     Value* tmpVal = getVal($1.PAT->get(), $3);
+    $5.S.makeSignless();
     BasicBlock* tmpBB = getBBVal($5);
     $$.P->push_back(std::make_pair(tmpVal, tmpBB));
     delete $1.PAT;
   }
   | PHIList ',' '[' ValueRef ',' ValueRef ']' {
     $$ = $1;
+    $4.S.copy($1.S);
     Value* tmpVal = getVal($1.P->front().first->getType(), $4);
+    $6.S.makeSignless();
     BasicBlock* tmpBB = getBBVal($6);
     $1.P->push_back(std::make_pair(tmpVal, tmpBB));
   }
@@ -3107,6 +3406,8 @@ OptTailCall
 
 InstVal 
   : ArithmeticOps Types ValueRef ',' ValueRef {
+    $3.S.copy($2.S);
+    $5.S.copy($2.S);
     const Type* Ty = $2.PAT->get();
     if (!Ty->isInteger() && !Ty->isFloatingPoint() && !isa<VectorType>(Ty))
       error("Arithmetic operator requires integer, FP, or packed operands");
@@ -3120,10 +3421,12 @@ InstVal
     $$.I = BinaryOperator::create(Opcode, val1, val2);
     if ($$.I == 0)
       error("binary operator returned null");
-    $$.S = $2.S;
+    $$.S.copy($2.S);
     delete $2.PAT;
   }
   | LogicalOps Types ValueRef ',' ValueRef {
+    $3.S.copy($2.S);
+    $5.S.copy($2.S);
     const Type *Ty = $2.PAT->get();
     if (!Ty->isInteger()) {
       if (!isa<VectorType>(Ty) ||
@@ -3136,10 +3439,12 @@ InstVal
     $$.I = BinaryOperator::create(Opcode, tmpVal1, tmpVal2);
     if ($$.I == 0)
       error("binary operator returned null");
-    $$.S = $2.S;
+    $$.S.copy($2.S);
     delete $2.PAT;
   }
   | SetCondOps Types ValueRef ',' ValueRef {
+    $3.S.copy($2.S);
+    $5.S.copy($2.S);
     const Type* Ty = $2.PAT->get();
     if(isa<VectorType>(Ty))
       error("VectorTypes currently not supported in setcc instructions");
@@ -3150,10 +3455,12 @@ InstVal
     $$.I = CmpInst::create(Opcode, pred, tmpVal1, tmpVal2);
     if ($$.I == 0)
       error("binary operator returned null");
-    $$.S = Unsigned;
+    $$.S.makeUnsigned();
     delete $2.PAT;
   }
   | ICMP IPredicates Types ValueRef ',' ValueRef {
+    $4.S.copy($3.S);
+    $6.S.copy($3.S);
     const Type *Ty = $3.PAT->get();
     if (isa<VectorType>(Ty)) 
       error("VectorTypes currently not supported in icmp instructions");
@@ -3162,10 +3469,12 @@ InstVal
     Value* tmpVal1 = getVal(Ty, $4);
     Value* tmpVal2 = getVal(Ty, $6);
     $$.I = new ICmpInst($2, tmpVal1, tmpVal2);
-    $$.S = Unsigned;
+    $$.S.makeUnsigned();
     delete $3.PAT;
   }
   | FCMP FPredicates Types ValueRef ',' ValueRef {
+    $4.S.copy($3.S);
+    $6.S.copy($3.S);
     const Type *Ty = $3.PAT->get();
     if (isa<VectorType>(Ty))
       error("VectorTypes currently not supported in fcmp instructions");
@@ -3174,7 +3483,7 @@ InstVal
     Value* tmpVal1 = getVal(Ty, $4);
     Value* tmpVal2 = getVal(Ty, $6);
     $$.I = new FCmpInst($2, tmpVal1, tmpVal2);
-    $$.S = Unsigned;
+    $$.S.makeUnsigned();
     delete $3.PAT;
   }
   | NOT ResolvedVal {
@@ -3186,7 +3495,7 @@ InstVal
     $$.I = BinaryOperator::create(Instruction::Xor, $2.V, Ones);
     if ($$.I == 0)
       error("Could not create a xor instruction");
-    $$.S = $2.S;
+    $$.S.copy($2.S);
   }
   | ShiftOps ResolvedVal ',' ResolvedVal {
     if (!$4.V->getType()->isInteger() ||
@@ -3204,7 +3513,7 @@ InstVal
     else
       ShiftAmt = $4.V;
     $$.I = BinaryOperator::create(getBinaryOp($1, Ty, $2.S), $2.V, ShiftAmt);
-    $$.S = $2.S;
+    $$.S.copy($2.S);
   }
   | CastOps ResolvedVal TO Types {
     const Type *DstTy = $4.PAT->get();
@@ -3212,7 +3521,7 @@ InstVal
       error("cast instruction to a non-primitive type: '" +
             DstTy->getDescription() + "'");
     $$.I = cast<Instruction>(getCast($1, $2.V, $2.S, DstTy, $4.S, true));
-    $$.S = $4.S;
+    $$.S.copy($4.S);
     delete $4.PAT;
   }
   | SELECT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
@@ -3222,13 +3531,13 @@ InstVal
     if ($4.V->getType() != $6.V->getType())
       error("select value types should match");
     $$.I = new SelectInst($2.V, $4.V, $6.V);
-    $$.S = $2.S;
+    $$.S.copy($4.S);
   }
   | VAARG ResolvedVal ',' Types {
     const Type *Ty = $4.PAT->get();
     NewVarArgs = true;
     $$.I = new VAArgInst($2.V, Ty);
-    $$.S = $4.S;
+    $$.S.copy($4.S);
     delete $4.PAT;
   }
   | VAARG_old ResolvedVal ',' Types {
@@ -3249,7 +3558,7 @@ InstVal
     CurBB->getInstList().push_back(bar);
     CurBB->getInstList().push_back(new StoreInst(bar, foo));
     $$.I = new VAArgInst(foo, DstTy);
-    $$.S = $4.S;
+    $$.S.copy($4.S);
     delete $4.PAT;
   }
   | VANEXT_old ResolvedVal ',' Types {
@@ -3273,26 +3582,26 @@ InstVal
     Instruction* tmp = new VAArgInst(foo, DstTy);
     CurBB->getInstList().push_back(tmp);
     $$.I = new LoadInst(foo);
-    $$.S = $4.S;
+    $$.S.copy($4.S);
     delete $4.PAT;
   }
   | EXTRACTELEMENT ResolvedVal ',' ResolvedVal {
     if (!ExtractElementInst::isValidOperands($2.V, $4.V))
       error("Invalid extractelement operands");
     $$.I = new ExtractElementInst($2.V, $4.V);
-    $$.S = $2.S;
+    $$.S.copy($2.S.get(0));
   }
   | INSERTELEMENT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     if (!InsertElementInst::isValidOperands($2.V, $4.V, $6.V))
       error("Invalid insertelement operands");
     $$.I = new InsertElementInst($2.V, $4.V, $6.V);
-    $$.S = $2.S;
+    $$.S.copy($2.S);
   }
   | SHUFFLEVECTOR ResolvedVal ',' ResolvedVal ',' ResolvedVal {
     if (!ShuffleVectorInst::isValidOperands($2.V, $4.V, $6.V))
       error("Invalid shufflevector operands");
     $$.I = new ShuffleVectorInst($2.V, $4.V, $6.V);
-    $$.S = $2.S;
+    $$.S.copy($2.S);
   }
   | PHI_TOK PHIList {
     const Type *Ty = $2.P->front().first->getType();
@@ -3307,22 +3616,25 @@ InstVal
       $2.P->pop_front();
     }
     $$.I = PHI;
-    $$.S = $2.S;
+    $$.S.copy($2.S);
     delete $2.P;  // Free the list...
   }
   | OptTailCall OptCallingConv TypesV ValueRef '(' ValueRefListE ')'  {
-
     // Handle the short call syntax
     const PointerType *PFTy;
     const FunctionType *FTy;
+    Signedness FTySign;
     if (!(PFTy = dyn_cast<PointerType>($3.PAT->get())) ||
         !(FTy = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
+      FTySign.makeComposite($3.S);
       if ($6) {
         for (std::vector<ValueInfo>::iterator I = $6->begin(), E = $6->end();
-             I != E; ++I)
+             I != E; ++I) {
           ParamTypes.push_back((*I).V->getType());
+          FTySign.add(I->S);
+        }
       }
 
       FunctionType::ParamAttrsList ParamAttrs;
@@ -3339,7 +3651,12 @@ InstVal
 
       FTy = FunctionType::get(RetTy, ParamTypes, isVarArg, ParamAttrs);
       PFTy = PointerType::get(FTy);
+      $$.S.copy($3.S);
+    } else {
+      FTySign = $3.S;
+      $$.S.copy($3.S.get(0)); // 0th element of FuncTy signedness is result sign
     }
+    $4.S.makeComposite(FTySign);
 
     // First upgrade any intrinsic calls.
     std::vector<Value*> Args;
@@ -3351,7 +3668,6 @@ InstVal
     // If we got an upgraded intrinsic
     if (Inst) {
       $$.I = Inst;
-      $$.S = Signless;
     } else {
       // Get the function we're calling
       Value *V = getVal(PFTy, $4);
@@ -3383,7 +3699,6 @@ InstVal
       CI->setTailCall($1);
       CI->setCallingConv(upgradeCallingConv($2));
       $$.I = CI;
-      $$.S = $3.S;
     }
     delete $3.PAT;
     delete $6;
@@ -3408,25 +3723,27 @@ OptVolatile
 MemoryInst 
   : MALLOC Types OptCAlign {
     const Type *Ty = $2.PAT->get();
-    $$.S = $2.S;
+    $$.S.makeComposite($2.S);
     $$.I = new MallocInst(Ty, 0, $3);
     delete $2.PAT;
   }
   | MALLOC Types ',' UINT ValueRef OptCAlign {
     const Type *Ty = $2.PAT->get();
-    $$.S = $2.S;
+    $5.S.makeUnsigned();
+    $$.S.makeComposite($2.S);
     $$.I = new MallocInst(Ty, getVal($4.T, $5), $6);
     delete $2.PAT;
   }
   | ALLOCA Types OptCAlign {
     const Type *Ty = $2.PAT->get();
-    $$.S = $2.S;
+    $$.S.makeComposite($2.S);
     $$.I = new AllocaInst(Ty, 0, $3);
     delete $2.PAT;
   }
   | ALLOCA Types ',' UINT ValueRef OptCAlign {
     const Type *Ty = $2.PAT->get();
-    $$.S = $2.S;
+    $5.S.makeUnsigned();
+    $$.S.makeComposite($4.S);
     $$.I = new AllocaInst(Ty, getVal($4.T, $5), $6);
     delete $2.PAT;
   }
@@ -3435,11 +3752,11 @@ MemoryInst
     if (!isa<PointerType>(PTy))
       error("Trying to free nonpointer type '" + PTy->getDescription() + "'");
     $$.I = new FreeInst($2.V);
-    $$.S = Signless;
+    $$.S.makeSignless();
   }
   | OptVolatile LOAD Types ValueRef {
     const Type* Ty = $3.PAT->get();
-    $$.S = $3.S;
+    $4.S.copy($3.S);
     if (!isa<PointerType>(Ty))
       error("Can't load from nonpointer type: " + Ty->getDescription());
     if (!cast<PointerType>(Ty)->getElementType()->isFirstClassType())
@@ -3447,9 +3764,11 @@ MemoryInst
                      Ty->getDescription());
     Value* tmpVal = getVal(Ty, $4);
     $$.I = new LoadInst(tmpVal, "", $1);
+    $$.S.copy($3.S.get(0));
     delete $3.PAT;
   }
   | OptVolatile STORE ResolvedVal ',' Types ValueRef {
+    $6.S.copy($5.S);
     const PointerType *PTy = dyn_cast<PointerType>($5.PAT->get());
     if (!PTy)
       error("Can't store to a nonpointer type: " + 
@@ -3471,10 +3790,11 @@ MemoryInst
       }
     }
     $$.I = new StoreInst(StoreVal, tmpVal, $1);
-    $$.S = Signless;
+    $$.S.makeSignless();
     delete $5.PAT;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
+    $3.S.copy($2.S);
     const Type* Ty = $2.PAT->get();
     if (!isa<PointerType>(Ty))
       error("getelementptr insn requires pointer operand");
@@ -3484,7 +3804,8 @@ MemoryInst
 
     Value* tmpVal = getVal(Ty, $3);
     $$.I = new GetElementPtrInst(tmpVal, &VIndices[0], VIndices.size());
-    $$.S = Signless;
+    ValueInfo VI; VI.V = tmpVal; VI.S.copy($2.S);
+    $$.S.copy(getElementSign(VI, VIndices));
     delete $2.PAT;
     delete $4;
   };

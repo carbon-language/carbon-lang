@@ -51,7 +51,12 @@
 
 #define RET_TY(sym,NewTY,sign) \
   Upgradelval.PrimType.T = NewTY; \
-  Upgradelval.PrimType.S = sign; \
+  switch (sign) { \
+    case 0: Upgradelval.PrimType.S.makeSignless(); break; \
+    case 1: Upgradelval.PrimType.S.makeUnsigned(); break; \
+    case 2: Upgradelval.PrimType.S.makeSigned(); break; \
+    default: assert(0 && "Invalid sign kind"); break; \
+  }\
   return sym
 
 namespace llvm {
@@ -238,24 +243,24 @@ coldcc          { return COLDCC_TOK; }
 x86_stdcallcc   { return X86_STDCALLCC_TOK; }
 x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
-sbyte           { RET_TY(SBYTE,  Type::Int8Ty,  Signed);  }
-ubyte           { RET_TY(UBYTE,  Type::Int8Ty,  Unsigned); }
-i8              { RET_TY(UBYTE,  Type::Int8Ty,  Unsigned); }
-short           { RET_TY(SHORT,  Type::Int16Ty, Signed);  }
-ushort          { RET_TY(USHORT, Type::Int16Ty, Unsigned); }
-i16             { RET_TY(USHORT, Type::Int16Ty, Unsigned); }
-int             { RET_TY(INT,    Type::Int32Ty, Signed);  }
-uint            { RET_TY(UINT,   Type::Int32Ty, Unsigned); }
-i32             { RET_TY(UINT,   Type::Int32Ty, Unsigned); }
-long            { RET_TY(LONG,   Type::Int64Ty, Signed);  }
-ulong           { RET_TY(ULONG,  Type::Int64Ty, Unsigned); }
-i64             { RET_TY(ULONG,  Type::Int64Ty, Unsigned); }
-void            { RET_TY(VOID,   Type::VoidTy,  Signless  ); }
-bool            { RET_TY(BOOL,   Type::Int1Ty,  Unsigned  ); }
-i1              { RET_TY(BOOL,   Type::Int1Ty,  Unsigned  ); }
-float           { RET_TY(FLOAT,  Type::FloatTy, Signless ); }
-double          { RET_TY(DOUBLE, Type::DoubleTy,Signless); }
-label           { RET_TY(LABEL,  Type::LabelTy, Signless ); }
+sbyte           { RET_TY(SBYTE,  Type::Int8Ty,  2); }
+ubyte           { RET_TY(UBYTE,  Type::Int8Ty,  1); }
+i8              { RET_TY(UBYTE,  Type::Int8Ty,  1); }
+short           { RET_TY(SHORT,  Type::Int16Ty, 2); }
+ushort          { RET_TY(USHORT, Type::Int16Ty, 1); }
+i16             { RET_TY(USHORT, Type::Int16Ty, 1); }
+int             { RET_TY(INT,    Type::Int32Ty, 2); }
+uint            { RET_TY(UINT,   Type::Int32Ty, 1); }
+i32             { RET_TY(UINT,   Type::Int32Ty, 1); }
+long            { RET_TY(LONG,   Type::Int64Ty, 2); }
+ulong           { RET_TY(ULONG,  Type::Int64Ty, 1); }
+i64             { RET_TY(ULONG,  Type::Int64Ty, 1); }
+void            { RET_TY(VOID,   Type::VoidTy,  0); }
+bool            { RET_TY(BOOL,   Type::Int1Ty,  1); }
+i1              { RET_TY(BOOL,   Type::Int1Ty,  1); }
+float           { RET_TY(FLOAT,  Type::FloatTy, 0); }
+double          { RET_TY(DOUBLE, Type::DoubleTy,0); }
+label           { RET_TY(LABEL,  Type::LabelTy, 0); }
 type            { return TYPE;   }
 opaque          { return OPAQUE; }
 
