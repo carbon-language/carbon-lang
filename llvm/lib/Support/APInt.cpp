@@ -605,7 +605,7 @@ APInt& APInt::set() {
   }
 
   // Set all the bits in all the words.
-  for (uint32_t i = 0; i < getNumWords() - 1; ++i)
+  for (uint32_t i = 0; i < getNumWords(); ++i)
     pVal[i] = -1ULL;
   // Clear the unused ones
   return clearUnusedBits();
