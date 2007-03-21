@@ -891,6 +891,26 @@ void PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   unsigned LR = getRARegister();
   FI->setUsesLR(MF.isPhysRegUsed(LR));
   MF.changePhyRegUsed(LR, false);
+
+
+  //  Save R31 if necessary
+  int FPSI = FI->getFramePointerSaveIndex();
+  bool IsPPC64 = Subtarget.isPPC64();
+  bool IsELF_ABI = Subtarget.isELF_ABI();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+ 
+  // If the frame pointer save index hasn't been defined yet.
+  if (!FPSI &&  (NoFramePointerElim || MFI->hasVarSizedObjects()) 
+                                                  && IsELF_ABI) {
+    // Find out what the fix offset of the frame pointer save area.
+    int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, 
+                                                              !IsELF_ABI);
+    // Allocate the frame index for frame pointer save area.
+    FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, FPOffset);
+    // Save the result.
+    FI->setFramePointerSaveIndex(FPSI);                      
+  }
+
 }
 
 void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
