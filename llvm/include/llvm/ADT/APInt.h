@@ -633,7 +633,7 @@ public:
                           !isNegative() && countPopulation() == BitWidth - 1;
   }
 
-  /// This checks to see if the value of this APInt is the minimum signed
+  /// This checks to see if the value of this APInt is the minimum unsigned
   /// value for the APInt's bit width.
   /// @brief Determine if this is the smallest unsigned value.
   bool isMinValue() const {
