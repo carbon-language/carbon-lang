@@ -335,13 +335,13 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 1454 "/proj/llvm/llvm-1/tools/llvm-upgrade/UpgradeParser.y"
+#line 1693 "/proj/llvm/llvm-1/tools/llvm-upgrade/UpgradeParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
   std::pair<llvm::PATypeInfo, char*>     *ArgVal;
   llvm::BasicBlock                       *BasicBlockVal;
-  llvm::TerminatorInst                   *TermInstVal;
+  llvm::TermInstInfo                     TermInstVal;
   llvm::InstrInfo                        InstVal;
   llvm::ConstInfo                        ConstVal;
   llvm::ValueInfo                        ValueVal;
