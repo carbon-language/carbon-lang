@@ -3773,7 +3773,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
 
     // V >= Min && V < Hi --> V < Hi
     if (cast<ConstantInt>(Lo)->isMinValue(isSigned)) {
-    ICmpInst::Predicate pred = (isSigned ? 
+      ICmpInst::Predicate pred = (isSigned ? 
         ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT);
       return new ICmpInst(pred, V, Hi);
     }
@@ -3789,7 +3789,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   if (Lo == Hi)  // Trivially true.
     return new ICmpInst(ICmpInst::ICMP_EQ, V, V);
 
-  // V < Min || V >= Hi ->'V > Hi-1'
+  // V < Min || V >= Hi -> V > Hi-1
   Hi = SubOne(cast<ConstantInt>(Hi));
   if (cast<ConstantInt>(Lo)->isMinValue(isSigned)) {
     ICmpInst::Predicate pred = (isSigned ? 
@@ -3797,8 +3797,9 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
     return new ICmpInst(pred, V, Hi);
   }
 
-  // Emit V-Lo > Hi-1-Lo
-  Constant *NegLo = ConstantExpr::getNeg(Lo);
+  // Emit V-Lo >u Hi-1-Lo
+  // Note that Hi has already had one subtracted from it, above.
+  ConstantInt *NegLo = cast<ConstantInt>(ConstantExpr::getNeg(Lo));
   Instruction *Add = BinaryOperator::createAdd(V, NegLo, V->getName()+".off");
   InsertNewInstBefore(Add, IB);
   Constant *LowerBound = ConstantExpr::getAdd(NegLo, Hi);
@@ -4918,11 +4919,16 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 /// AddWithOverflow - Compute Result = In1+In2, returning true if the result
 /// overflowed for this type.
 static bool AddWithOverflow(ConstantInt *&Result, ConstantInt *In1,
-                            ConstantInt *In2) {
+                            ConstantInt *In2, bool IsSigned = false) {
   Result = cast<ConstantInt>(ConstantExpr::getAdd(In1, In2));
 
-  return cast<ConstantInt>(Result)->getZExtValue() <
-         cast<ConstantInt>(In1)->getZExtValue();
+  if (IsSigned)
+    if (In2->getValue().isNegative())
+      return Result->getValue().sgt(In1->getValue());
+    else
+      return Result->getValue().slt(In1->getValue());
+  else
+    return Result->getValue().ult(In1->getValue());
 }
 
 /// EmitGEPOffset - Given a getelementptr instruction/constantexpr, emit the
@@ -5664,6 +5670,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           bool DivIsSigned = LHSI->getOpcode() == Instruction::SDiv;
           if (!I.isEquality() && DivIsSigned != I.isSignedPredicate())
             break;
+          if (DivRHS->isZero())
+            break; // Don't hack on div by zero
 
           // Initialize the variables that will indicate the nature of the
           // range check.
@@ -5680,19 +5688,17 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           // Determine if the product overflows by seeing if the product is
           // not equal to the divide. Make sure we do the same kind of divide
           // as in the LHS instruction that we're folding. 
-          bool ProdOV = !DivRHS->isNullValue() && 
-            (DivIsSigned ?  ConstantExpr::getSDiv(Prod, DivRHS) :
-              ConstantExpr::getUDiv(Prod, DivRHS)) != CI;
+          bool ProdOV = (DivIsSigned ? ConstantExpr::getSDiv(Prod, DivRHS) :
+                                     ConstantExpr::getUDiv(Prod, DivRHS)) != CI;
 
           // Get the ICmp opcode
           ICmpInst::Predicate predicate = I.getPredicate();
 
-          if (DivRHS->isNullValue()) {  
-            // Don't hack on divide by zeros!
-          } else if (!DivIsSigned) {  // udiv
+          if (!DivIsSigned) {  // udiv
             LoBound = Prod;
             LoOverflow = ProdOV;
-            HiOverflow = ProdOV || AddWithOverflow(HiBound, LoBound, DivRHS);
+            HiOverflow = ProdOV || 
+                         AddWithOverflow(HiBound, LoBound, DivRHS, false);
           } else if (DivRHS->getValue().isPositive()) { // Divisor is > 0.
             if (CI->isNullValue()) {       // (X / pos) op 0
               // Can't overflow.
@@ -5701,12 +5707,13 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             } else if (CI->getValue().isPositive()) {   // (X / pos) op pos
               LoBound = Prod;
               LoOverflow = ProdOV;
-              HiOverflow = ProdOV || AddWithOverflow(HiBound, Prod, DivRHS);
+              HiOverflow = ProdOV || 
+                           AddWithOverflow(HiBound, Prod, DivRHS, true);
             } else {                       // (X / pos) op neg
               Constant *DivRHSH = ConstantExpr::getNeg(SubOne(DivRHS));
               LoOverflow = AddWithOverflow(LoBound, Prod,
-                                           cast<ConstantInt>(DivRHSH));
-              HiBound = Prod;
+                                           cast<ConstantInt>(DivRHSH), true);
+              HiBound = AddOne(Prod);
               HiOverflow = ProdOV;
             }
           } else {                         // Divisor is < 0.
@@ -5718,7 +5725,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             } else if (CI->getValue().isPositive()) {   // (X / neg) op pos
               HiOverflow = LoOverflow = ProdOV;
               if (!LoOverflow)
-                LoOverflow = AddWithOverflow(LoBound, Prod, AddOne(DivRHS));
+                LoOverflow = AddWithOverflow(LoBound, Prod, AddOne(DivRHS),
+                                             true);
               HiBound = AddOne(Prod);
             } else {                       // (X / neg) op neg
               LoBound = Prod;
