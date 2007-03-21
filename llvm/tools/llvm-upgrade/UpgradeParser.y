@@ -2936,25 +2936,21 @@ FunctionHeaderH
           CurModule.RenameMap[Key] = Conflict->getName();
           Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
           InsertValue(Fn, CurModule.Values);
-        } else if (CurFun.Linkage == GlobalValue::InternalLinkage) {
-          // We can safely rename the function we're defining
-          std::string NewName = makeNameUnique(FunctionName);
-          Fn = new Function(FT, CurFun.Linkage, NewName, M);
-          InsertValue(Fn, CurModule.Values);
-          RenameMapKey Key = makeRenameMapKey(FunctionName, PFT, ID.S);
-          CurModule.RenameMap[Key] = NewName;
-        } else {
+        } else { 
           // We can't quietly rename either of these things, but we must
-          // rename one of them. Generate a warning about the renaming and
-          // elect to rename the thing we're now defining.
+          // rename one of them. Only if the function's linkage is internal can
+          // we forgo a warning message about the renamed function. 
           std::string NewName = makeNameUnique(FunctionName);
-          warning("Renaming function '" + FunctionName + "' as '" + NewName +
-                  "' may cause linkage errors");
+          if (CurFun.Linkage != GlobalValue::InternalLinkage) {
+            warning("Renaming function '" + FunctionName + "' as '" + NewName +
+                    "' may cause linkage errors");
+          }
+          // Elect to rename the thing we're now defining.
           Fn = new Function(FT, CurFun.Linkage, NewName, M);
           InsertValue(Fn, CurModule.Values);
           RenameMapKey Key = makeRenameMapKey(FunctionName, PFT, ID.S);
           CurModule.RenameMap[Key] = NewName;
-        }
+        } 
       } else {
         // There's no conflict, just define the function
         Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
@@ -3005,7 +3001,7 @@ BEGIN
   ;
 
 FunctionHeader 
-  : OptLinkage FunctionHeaderH BEGIN {
+  : OptLinkage { CurFun.Linkage = $1; } FunctionHeaderH BEGIN {
     $$ = CurFun.CurrentFunction;
 
     // Make sure that we keep track of the linkage type even if there was a
