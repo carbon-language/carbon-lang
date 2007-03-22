@@ -992,7 +992,6 @@ static bool MaskedValueIsZero(Value *V, uint64_t Mask, unsigned Depth = 0) {
   return (KnownZero & Mask) == Mask;
 }
 
-#if 0
 /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
 /// this predicate to simplify operations downstream.  Mask is known to be zero
 /// for bits that V cannot have.
@@ -1002,7 +1001,6 @@ static bool MaskedValueIsZero(Value *V, const APInt& Mask, unsigned Depth = 0) {
   assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
   return (KnownZero & Mask) == Mask;
 }
-#endif
 
 /// ShrinkDemandedConstant - Check to see if the specified operand of the 
 /// specified instruction is a constant integer.  If so, check to see if there
@@ -1052,28 +1050,28 @@ static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
 // could have the specified known zero and known one bits, returning them in
 // min/max.
 static void ComputeSignedMinMaxValuesFromKnownBits(const Type *Ty,
-                                                   uint64_t KnownZero,
-                                                   uint64_t KnownOne,
-                                                   int64_t &Min, int64_t &Max) {
-  uint64_t TypeBits = cast<IntegerType>(Ty)->getBitMask();
-  uint64_t UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
+                                                   const APInt& KnownZero,
+                                                   const APInt& KnownOne,
+                                                   APInt& Min, APInt& Max) {
+  uint32_t BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+  assert(KnownZero.getBitWidth() == BitWidth && 
+         KnownOne.getBitWidth() == BitWidth &&
+         Min.getBitWidth() == BitWidth && Max.getBitWidth() == BitWidth &&
+         "Ty, KnownZero, KnownOne and Min, Max must have equal bitwidth.");
+  APInt TypeBits(APInt::getAllOnesValue(BitWidth));
+  APInt UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
 
-  uint64_t SignBit = 1ULL << (Ty->getPrimitiveSizeInBits()-1);
+  APInt SignBit(APInt::getSignBit(BitWidth));
   
   // The minimum value is when all unknown bits are zeros, EXCEPT for the sign
   // bit if it is unknown.
   Min = KnownOne;
   Max = KnownOne|UnknownBits;
   
-  if (SignBit & UnknownBits) { // Sign bit is unknown
+  if ((SignBit & UnknownBits) != 0) { // Sign bit is unknown
     Min |= SignBit;
     Max &= ~SignBit;
   }
-  
-  // Sign extend the min/max values.
-  int ShAmt = 64-Ty->getPrimitiveSizeInBits();
-  Min = (Min << ShAmt) >> ShAmt;
-  Max = (Max << ShAmt) >> ShAmt;
 }
 
 // ComputeUnsignedMinMaxValuesFromKnownBits - Given an unsigned integer type and
@@ -1081,19 +1079,23 @@ static void ComputeSignedMinMaxValuesFromKnownBits(const Type *Ty,
 // could have the specified known zero and known one bits, returning them in
 // min/max.
 static void ComputeUnsignedMinMaxValuesFromKnownBits(const Type *Ty,
-                                                     uint64_t KnownZero,
-                                                     uint64_t KnownOne,
-                                                     uint64_t &Min,
-                                                     uint64_t &Max) {
-  uint64_t TypeBits = cast<IntegerType>(Ty)->getBitMask();
-  uint64_t UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
+                                                     const APInt& KnownZero,
+                                                     const APInt& KnownOne,
+                                                     APInt& Min,
+                                                     APInt& Max) {
+  uint32_t BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+  assert(KnownZero.getBitWidth() == BitWidth && 
+         KnownOne.getBitWidth() == BitWidth &&
+         Min.getBitWidth() == BitWidth && Max.getBitWidth() &&
+         "Ty, KnownZero, KnownOne and Min, Max must have equal bitwidth.");
+  APInt TypeBits(APInt::getAllOnesValue(BitWidth));
+  APInt UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
   
   // The minimum value is when the unknown bits are all zeros.
   Min = KnownOne;
   // The maximum value is when the unknown bits are all ones.
   Max = KnownOne|UnknownBits;
 }
-
 
 /// SimplifyDemandedBits - Look at V.  At this point, we know that only the
 /// DemandedMask bits of the result of V are ever used downstream.  If we can
@@ -5377,59 +5379,57 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     
     // See if we can fold the comparison based on bits known to be zero or one
     // in the input.
-    uint64_t KnownZero, KnownOne;
-    if (SimplifyDemandedBits(Op0, cast<IntegerType>(Ty)->getBitMask(),
+    uint32_t BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+    APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+    if (SimplifyDemandedBits(Op0, APInt::getAllOnesValue(BitWidth),
                              KnownZero, KnownOne, 0))
       return &I;
         
     // Given the known and unknown bits, compute a range that the LHS could be
     // in.
-    if (KnownOne | KnownZero) {
+    if ((KnownOne | KnownZero) != 0) {
       // Compute the Min, Max and RHS values based on the known bits. For the
       // EQ and NE we use unsigned values.
-      uint64_t UMin = 0, UMax = 0, URHSVal = 0;
-      int64_t SMin = 0, SMax = 0, SRHSVal = 0;
+      APInt Min(BitWidth, 0), Max(BitWidth, 0), RHSVal(CI->getValue());
       if (ICmpInst::isSignedPredicate(I.getPredicate())) {
-        SRHSVal = CI->getSExtValue();
-        ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, SMin, 
-                                               SMax);
+        ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, Min, 
+                                               Max);
       } else {
-        URHSVal = CI->getZExtValue();
-        ComputeUnsignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, UMin, 
-                                                 UMax);
+        ComputeUnsignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, Min, 
+                                                 Max);
       }
       switch (I.getPredicate()) {  // LE/GE have been folded already.
       default: assert(0 && "Unknown icmp opcode!");
       case ICmpInst::ICMP_EQ:
-        if (UMax < URHSVal || UMin > URHSVal)
+        if (Max.ult(RHSVal) || Min.ugt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getFalse());
         break;
       case ICmpInst::ICMP_NE:
-        if (UMax < URHSVal || UMin > URHSVal)
+        if (Max.ult(RHSVal) || Min.ugt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getTrue());
         break;
       case ICmpInst::ICMP_ULT:
-        if (UMax < URHSVal)
+        if (Max.ult(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (UMin > URHSVal)
+        if (Min.ugt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getFalse());
         break;
       case ICmpInst::ICMP_UGT:
-        if (UMin > URHSVal)
+        if (Min.ugt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (UMax < URHSVal)
+        if (Max.ult(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getFalse());
         break;
       case ICmpInst::ICMP_SLT:
-        if (SMax < SRHSVal)
+        if (Max.slt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (SMin > SRHSVal)
+        if (Min.sgt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getFalse());
         break;
       case ICmpInst::ICMP_SGT: 
-        if (SMin > SRHSVal)
+        if (Min.sgt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (SMax < SRHSVal)
+        if (Max.slt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getFalse());
         break;
       }
@@ -5454,15 +5454,15 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             // Extending a relational comparison when we're checking the sign
             // bit would not work.
             if (Cast->hasOneUse() && isa<TruncInst>(Cast) &&
-                (I.isEquality() ||
-                 (AndCST->getZExtValue() == (uint64_t)AndCST->getSExtValue()) &&
-                 (CI->getZExtValue() == (uint64_t)CI->getSExtValue()))) {
+                (I.isEquality() || AndCST->getValue().isPositive() && 
+                 CI->getValue().isPositive())) {
               ConstantInt *NewCST;
               ConstantInt *NewCI;
-              NewCST = ConstantInt::get(Cast->getOperand(0)->getType(),
-                                         AndCST->getZExtValue());
-              NewCI = ConstantInt::get(Cast->getOperand(0)->getType(),
-                                        CI->getZExtValue());
+              APInt NewCSTVal(AndCST->getValue()), NewCIVal(CI->getValue());
+              uint32_t BitWidth = cast<IntegerType>(
+                Cast->getOperand(0)->getType())->getBitWidth();
+              NewCST = ConstantInt::get(NewCSTVal.zext(BitWidth));
+              NewCI = ConstantInt::get(NewCIVal.zext(BitWidth));
               Instruction *NewAnd = 
                 BinaryOperator::createAnd(Cast->getOperand(0), NewCST, 
                                           LHSI->getName());
@@ -5634,10 +5634,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               unsigned ShAmtVal = (unsigned)ShAmt->getZExtValue();
 
               // Otherwise strength reduce the shift into an and.
-              uint64_t Val = ~0ULL;          // All ones.
-              Val <<= ShAmtVal;              // Shift over to the right spot.
-              Val &= ~0ULL >> (64-TypeBits);
-              Constant *Mask = ConstantInt::get(CI->getType(), Val);
+              APInt Val(APInt::getAllOnesValue(TypeBits).shl(ShAmtVal));
+              Constant *Mask = ConstantInt::get(Val);
 
               Instruction *AndI =
                 BinaryOperator::createAnd(LHSI->getOperand(0),
@@ -5795,10 +5793,10 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         switch (BO->getOpcode()) {
         case Instruction::SRem:
           // If we have a signed (X % (2^c)) == 0, turn it into an unsigned one.
-          if (CI->isNullValue() && isa<ConstantInt>(BO->getOperand(1)) &&
+          if (CI->isZero() && isa<ConstantInt>(BO->getOperand(1)) &&
               BO->hasOneUse()) {
-            int64_t V = cast<ConstantInt>(BO->getOperand(1))->getSExtValue();
-            if (V > 1 && isPowerOf2_64(V)) {
+            APInt V(cast<ConstantInt>(BO->getOperand(1))->getValue());
+            if (V.sgt(APInt(V.getBitWidth(), 1)) && V.isPowerOf2()) {
               Value *NewRem = InsertNewInstBefore(BinaryOperator::createURem(
                   BO->getOperand(0), BO->getOperand(1), BO->getName()), I);
               return new ICmpInst(I.getPredicate(), NewRem, 
@@ -5839,7 +5837,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           // FALLTHROUGH
         case Instruction::Sub:
           // Replace (([sub|xor] A, B) != 0) with (A != B)
-          if (CI->isNullValue())
+          if (CI->isZero())
             return new ICmpInst(I.getPredicate(), BO->getOperand(0),
                                 BO->getOperand(1));
           break;
@@ -5933,14 +5931,14 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             default: break;
             case ICmpInst::ICMP_ULT: { // X u< 128 => X s> -1
               ConstantInt *CUI = cast<ConstantInt>(CI);
-              if (CUI->getZExtValue() == 1ULL << (SrcTySize-1))
+              if (CUI->getValue() == APInt::getSignBit(SrcTySize))
                 return new ICmpInst(ICmpInst::ICMP_SGT, CastOp, 
-                                    ConstantInt::get(SrcTy, -1ULL));
+                  ConstantInt::get(APInt::getAllOnesValue(SrcTySize)));
               break;
             }
             case ICmpInst::ICMP_UGT: { // X u> 127 => X s< 0
               ConstantInt *CUI = cast<ConstantInt>(CI);
-              if (CUI->getZExtValue() == (1ULL << (SrcTySize-1))-1)
+              if (CUI->getValue() == APInt::getSignedMaxValue(SrcTySize))
                 return new ICmpInst(ICmpInst::ICMP_SLT, CastOp, 
                                     Constant::getNullValue(SrcTy));
               break;
@@ -6208,7 +6206,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
   Value *Result;
   if (isSignedCmp) {
     // We're performing a signed comparison.
-    if (cast<ConstantInt>(CI)->getSExtValue() < 0)
+    if (cast<ConstantInt>(CI)->getValue().isNegative())
       Result = ConstantInt::getFalse();          // X < (small) --> false
     else
       Result = ConstantInt::getTrue();           // X < (large) --> true
@@ -6798,10 +6796,12 @@ static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
     // lshr iff we know that the bits we would otherwise be shifting in are
     // already zeros.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      uint32_t BitWidth = OrigTy->getBitWidth();
       if (Ty->getBitWidth() < OrigTy->getBitWidth() &&
           MaskedValueIsZero(I->getOperand(0),
-                            OrigTy->getBitMask() & ~Ty->getBitMask()) &&
-          CI->getZExtValue() < Ty->getBitWidth()) {
+            APInt::getAllOnesValue(BitWidth) & 
+         APInt::getAllOnesValue(Ty->getBitWidth()).zextOrTrunc(BitWidth).flip())
+         && CI->getZExtValue() < Ty->getBitWidth()) {
         return CanEvaluateInDifferentType(I->getOperand(0), Ty, NumCastsRemoved);
       }
     }
