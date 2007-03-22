@@ -1182,6 +1182,7 @@ void Signedness::destroy() {
   } 
 }
 
+#ifndef NDEBUG
 void Signedness::dump() const {
   if (isComposite()) {
     if (sv->size() == 1) {
@@ -1205,6 +1206,7 @@ void Signedness::dump() const {
   } else
     std::cerr << ".";
 }
+#endif
 
 static inline Instruction::TermOps 
 getTermOp(TermOps op) {
