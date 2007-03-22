@@ -8,9 +8,9 @@
 declare i16 @"test"(i16 sext %arg) sext 
 declare i8 @"test2" (i16 zext %a2) zext 
 
-implementation
+declare void @exit(i32) noreturn nounwind
 
-define i32 @main(i32 %argc, i8 **%argv) {
+define i32 @main(i32 %argc, i8 **%argv) nounwind inreg {
     %val = trunc i32 %argc to i16
     %res1 = call i16 (i16 sext) sext *@test(i16 %val)
     %two = add i16 %res1, %res1
