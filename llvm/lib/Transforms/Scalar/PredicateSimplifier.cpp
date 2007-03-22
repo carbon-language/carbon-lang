@@ -1516,13 +1516,27 @@ namespace {
             add(SI->getCondition(), ConstantInt::getFalse(),
                 ICmpInst::ICMP_EQ, NewContext);
         }
+      } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
+        for (GetElementPtrInst::op_iterator OI = GEPI->idx_begin(),
+             OE = GEPI->idx_end(); OI != OE; ++OI) {
+          ConstantInt *Op = dyn_cast<ConstantInt>(IG.canonicalize(*OI, Top));
+          if (!Op || !Op->isZero()) return;
+        }
+        // TODO: The GEPI indices are all zero. Copy from definition to operand,
+        // jumping the type plane as needed.
+        if (isRelatedBy(GEPI, Constant::getNullValue(GEPI->getType()),
+                        ICmpInst::ICMP_NE)) {
+          Value *Ptr = GEPI->getPointerOperand();
+          add(Ptr, Constant::getNullValue(Ptr->getType()), ICmpInst::ICMP_NE,
+              NewContext);
+        }
       }
       // TODO: CastInst "%a = cast ... %b" where %a is EQ or NE a constant.
     }
 
     /// opsToDef - A new relationship was discovered involving one of this
     /// instruction's operands. Find any new relationship involving the
-    /// definition.
+    /// definition, or another operand.
     void opsToDef(Instruction *I) {
       Instruction *NewContext = below(I) ? I : TopInst;
 
@@ -1551,6 +1565,9 @@ namespace {
 
         switch (Opcode) {
           default: break;
+          case Instruction::LShr:
+          case Instruction::AShr:
+          case Instruction::Shl:
           case Instruction::Sub:
             if (Op1 == Zero) {
               add(BO, Op0, ICmpInst::ICMP_EQ, NewContext);
@@ -1562,6 +1579,7 @@ namespace {
               add(BO, AllOnes, ICmpInst::ICMP_EQ, NewContext);
               return;
             } // fall-through
+          case Instruction::Xor:
           case Instruction::Add:
             if (Op0 == Zero) {
               add(BO, Op1, ICmpInst::ICMP_EQ, NewContext);
@@ -1589,25 +1607,32 @@ namespace {
         }
 
         // "%x = add i32 %y, %z" and %x EQ %y then %z EQ 0
-        // "%x = mul i32 %y, %z" and %x EQ %y then %z EQ 1
-        // 1. Repeat all of the above, with order of operands reversed.
+        // "%x = add i32 %y, %z" and %x EQ %z then %y EQ 0
+        // "%x = shl i32 %y, %z" and %x EQ %y and %y NE 0 then %z EQ 0
         // "%x = udiv i32 %y, %z" and %x EQ %y then %z EQ 1
 
-        Value *Known = Op0, *Unknown = Op1;
-        if (Known != BO) std::swap(Known, Unknown);
-        if (Known == BO) {
+        Value *Known = Op0, *Unknown = Op1,
+              *TheBO = IG.canonicalize(BO, Top);
+        if (Known != TheBO) std::swap(Known, Unknown);
+        if (Known == TheBO) {
           switch (Opcode) {
             default: break;
+            case Instruction::LShr:
+            case Instruction::AShr:
+            case Instruction::Shl:
+              if (!isRelatedBy(Known, Zero, ICmpInst::ICMP_NE)) break;
+              // otherwise, fall-through.
+            case Instruction::Sub:
+              if (Unknown == Op1) break;
+              // otherwise, fall-through.
             case Instruction::Xor:
             case Instruction::Add:
-            case Instruction::Sub:
               add(Unknown, Zero, ICmpInst::ICMP_EQ, NewContext);
               break;
             case Instruction::UDiv:
             case Instruction::SDiv:
-              if (Unknown == Op0) break; // otherwise, fallthrough
-            case Instruction::Mul:
-              if (isa<ConstantInt>(Unknown)) {
+              if (Unknown == Op1) break;
+              if (isRelatedBy(Known, Zero, ICmpInst::ICMP_NE)) {
                 Constant *One = ConstantInt::get(Ty, 1);
                 add(Unknown, One, ICmpInst::ICMP_EQ, NewContext);
               }
@@ -1633,6 +1658,8 @@ namespace {
         }
 
       } else if (SelectInst *SI = dyn_cast<SelectInst>(I)) {
+        if (I->getType()->isFPOrFPVector()) return;
+
         // Given: "%a = select i1 %x, i32 %b, i32 %c"
         // %x EQ true  then %a EQ %b
         // %x EQ false then %a EQ %c
@@ -1658,6 +1685,20 @@ namespace {
         }
 
         // TODO: "%a = cast ... %b" where %b is NE/LT/GT a constant.
+      } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
+        for (GetElementPtrInst::op_iterator OI = GEPI->idx_begin(),
+             OE = GEPI->idx_end(); OI != OE; ++OI) {
+          ConstantInt *Op = dyn_cast<ConstantInt>(IG.canonicalize(*OI, Top));
+          if (!Op || !Op->isZero()) return;
+        }
+        // TODO: The GEPI indices are all zero. Copy from operand to definition,
+        // jumping the type plane as needed.
+        Value *Ptr = GEPI->getPointerOperand();
+        if (isRelatedBy(Ptr, Constant::getNullValue(Ptr->getType()),
+                        ICmpInst::ICMP_NE)) {
+          add(GEPI, Constant::getNullValue(GEPI->getType()), ICmpInst::ICMP_NE,
+              NewContext);
+        }
       }
     }
 
