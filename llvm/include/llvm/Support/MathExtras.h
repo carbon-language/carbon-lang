@@ -23,39 +23,39 @@ namespace llvm {
 // ambiguity.
 
 /// Hi_32 - This function returns the high 32 bits of a 64 bit value.
-inline unsigned Hi_32(uint64_t Value) {
-  return static_cast<unsigned>(Value >> 32);
+inline uint32_t Hi_32(uint64_t Value) {
+  return static_cast<uint32_t>(Value >> 32);
 }
 
 /// Lo_32 - This function returns the low 32 bits of a 64 bit value.
-inline unsigned Lo_32(uint64_t Value) {
-  return static_cast<unsigned>(Value);
+inline uint32_t Lo_32(uint64_t Value) {
+  return static_cast<uint32_t>(Value);
 }
 
 /// is?Type - these functions produce optimal testing for integer data types.
 inline bool isInt8  (int64_t Value) { 
-  return static_cast<signed char>(Value) == Value; 
+  return static_cast<int8_t>(Value) == Value; 
 }
 inline bool isUInt8 (int64_t Value) { 
-  return static_cast<unsigned char>(Value) == Value; 
+  return static_cast<uint8_t>(Value) == Value; 
 }
 inline bool isInt16 (int64_t Value) { 
-  return static_cast<signed short>(Value) == Value; 
+  return static_cast<int16_t>(Value) == Value; 
 }
 inline bool isUInt16(int64_t Value) { 
-  return static_cast<unsigned short>(Value) == Value; 
+  return static_cast<uint16_t>(Value) == Value; 
 }
 inline bool isInt32 (int64_t Value) { 
-  return static_cast<signed int>(Value) == Value; 
+  return static_cast<int32_t>(Value) == Value; 
 }
 inline bool isUInt32(int64_t Value) { 
-  return static_cast<unsigned int>(Value) == Value; 
+  return static_cast<uint32_t>(Value) == Value; 
 }
 
 /// isMask_32 - This function returns true if the argument is a sequence of ones
 /// starting at the least significant bit with the remainder zero (32 bit
 /// version).   Ex. isMask_32(0x0000FFFFU) == true.
-inline const bool isMask_32(unsigned Value) {
+inline const bool isMask_32(uint32_t Value) {
   return Value && ((Value + 1) & Value) == 0;
 }
 
@@ -69,7 +69,7 @@ inline const bool isMask_64(uint64_t Value) {
 /// isShiftedMask_32 - This function returns true if the argument contains a  
 /// sequence of ones with the remainder zero (32 bit version.)
 /// Ex. isShiftedMask_32(0x0000FF00U) == true.
-inline const bool isShiftedMask_32(unsigned Value) {
+inline const bool isShiftedMask_32(uint32_t Value) {
   return isMask_32((Value - 1) | Value);
 }
 
@@ -81,7 +81,7 @@ inline const bool isShiftedMask_64(uint64_t Value) {
 
 /// isPowerOf2_32 - This function returns true if the argument is a power of 
 /// two > 0. Ex. isPowerOf2_32(0x00100000U) == true (32 bit edition.)
-inline bool isPowerOf2_32(unsigned Value) {
+inline bool isPowerOf2_32(uint32_t Value) {
   return Value && !(Value & (Value - 1));
 }
 
@@ -93,22 +93,30 @@ inline bool isPowerOf2_64(uint64_t Value) {
 
 /// ByteSwap_16 - This function returns a byte-swapped representation of the
 /// 16-bit argument, Value.
-inline unsigned short ByteSwap_16(unsigned short Value) {
-  unsigned short Hi = Value << 8;
-  unsigned short Lo = Value >> 8;
+inline uint16_t ByteSwap_16(uint16_t Value) {
+#if defined(_MSC_VER) && !defined(_DEBUG)
+  // The DLL version of the runtime lacks these functions (bug!?), but in a
+  // release build they're replaced with BSWAP instructions anyway.
+  return _byteswap_ushort(Value);
+#else
+  uint16_t Hi = Value << 8;
+  uint16_t Lo = Value >> 8;
   return Hi | Lo;
+#endif
 }
 
 /// ByteSwap_32 - This function returns a byte-swapped representation of the
 /// 32-bit argument, Value.
-inline unsigned ByteSwap_32(unsigned Value) {
+inline uint32_t ByteSwap_32(uint32_t Value) {
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 	return __builtin_bswap32(Value);
+#elif defined(_MSC_VER) && !defined(_DEBUG)
+  return _byteswap_ulong(Value);
 #else
-  unsigned Byte0 = Value & 0x000000FF;
-  unsigned Byte1 = Value & 0x0000FF00;
-  unsigned Byte2 = Value & 0x00FF0000;
-  unsigned Byte3 = Value & 0xFF000000;
+  uint32_t Byte0 = Value & 0x000000FF;
+  uint32_t Byte1 = Value & 0x0000FF00;
+  uint32_t Byte2 = Value & 0x00FF0000;
+  uint32_t Byte3 = Value & 0xFF000000;
   return (Byte0 << 24) | (Byte1 << 8) | (Byte2 >> 8) | (Byte3 >> 24);
 #endif
 }
@@ -118,9 +126,11 @@ inline unsigned ByteSwap_32(unsigned Value) {
 inline uint64_t ByteSwap_64(uint64_t Value) {
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 	return __builtin_bswap64(Value);
+#elif defined(_MSC_VER) && !defined(_DEBUG)
+  return _byteswap_uint64(Value);
 #else
-  uint64_t Hi = ByteSwap_32(unsigned(Value));
-  uint64_t Lo = ByteSwap_32(unsigned(Value >> 32));
+  uint64_t Hi = ByteSwap_32(uint32_t(Value));
+  uint32_t Lo = ByteSwap_32(uint32_t(Value >> 32));
   return (Hi << 32) | Lo;
 #endif
 }
@@ -129,7 +139,7 @@ inline uint64_t ByteSwap_64(uint64_t Value) {
 /// counting the number of zeros from the most significant bit to the first one
 /// bit.  Ex. CountLeadingZeros_32(0x00F000FF) == 8.
 /// Returns 32 if the word is zero.
-inline unsigned CountLeadingZeros_32(unsigned Value) {
+inline unsigned CountLeadingZeros_32(uint32_t Value) {
   unsigned Count; // result
 #if __GNUC__ >= 4
   // PowerPC is defined for __builtin_clz(0)
@@ -142,7 +152,7 @@ inline unsigned CountLeadingZeros_32(unsigned Value) {
   Count = 0;
   // bisecton method for count leading zeros
   for (unsigned Shift = 32 >> 1; Shift; Shift >>= 1) {
-    unsigned Tmp = Value >> Shift;
+    uint32_t Tmp = Value >> Shift;
     if (Tmp) {
       Value = Tmp;
     } else {
@@ -170,7 +180,7 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
     if (!Value) return 64;
     Count = 0;
     // bisecton method for count leading zeros
-    for (uint64_t Shift = 64 >> 1; Shift; Shift >>= 1) {
+    for (unsigned Shift = 64 >> 1; Shift; Shift >>= 1) {
       uint64_t Tmp = Value >> Shift;
       if (Tmp) {
         Value = Tmp;
@@ -180,7 +190,7 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
     }
   } else {
     // get hi portion
-    unsigned Hi = Hi_32(Value);
+    uint32_t Hi = Hi_32(Value);
 
     // if some bits in hi portion
     if (Hi) {
@@ -188,7 +198,7 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
         Count = CountLeadingZeros_32(Hi);
     } else {
         // get lo portion
-        unsigned Lo = Lo_32(Value);
+        uint32_t Lo = Lo_32(Value);
         // same as 32 bit value
         Count = CountLeadingZeros_32(Lo)+32;
     }
@@ -201,7 +211,7 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
 /// counting the number of zeros from the least significant bit to the first one
 /// bit.  Ex. CountTrailingZeros_32(0xFF00FF00) == 8.
 /// Returns 32 if the word is zero.
-inline unsigned CountTrailingZeros_32(unsigned Value) {
+inline unsigned CountTrailingZeros_32(uint32_t Value) {
 #if __GNUC__ >= 4
   return Value ? __builtin_ctz(Value) : 32;
 #else
@@ -262,7 +272,7 @@ inline unsigned CountPopulation_64(uint64_t Value) {
 /// Log2_32 - This function returns the floor log base 2 of the specified value, 
 /// -1 if the value is zero. (32 bit edition.)
 /// Ex. Log2_32(32) == 5, Log2_32(1) == 0, Log2_32(0) == -1, Log2_32(6) == 2
-inline unsigned Log2_32(unsigned Value) {
+inline unsigned Log2_32(uint32_t Value) {
   return 31 - CountLeadingZeros_32(Value);
 }
 
@@ -275,7 +285,7 @@ inline unsigned Log2_64(uint64_t Value) {
 /// Log2_32_Ceil - This function returns the ceil log base 2 of the specified
 /// value, 32 if the value is zero. (32 bit edition).
 /// Ex. Log2_32_Ceil(32) == 5, Log2_32_Ceil(1) == 0, Log2_32_Ceil(6) == 3
-inline unsigned Log2_32_Ceil(unsigned Value) {
+inline unsigned Log2_32_Ceil(uint32_t Value) {
   return 32-CountLeadingZeros_32(Value-1);
 }
 
