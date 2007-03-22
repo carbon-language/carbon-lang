@@ -158,8 +158,9 @@
      NORETURN = 384,
      INREG = 385,
      SRET = 386,
-     DEFAULT = 387,
-     HIDDEN = 388
+     NOUNWIND = 387,
+     DEFAULT = 388,
+     HIDDEN = 389
    };
 #endif
 /* Tokens.  */
@@ -292,8 +293,9 @@
 #define NORETURN 384
 #define INREG 385
 #define SRET 386
-#define DEFAULT 387
-#define HIDDEN 388
+#define NOUNWIND 387
+#define DEFAULT 388
+#define HIDDEN 389
 
 
 
@@ -347,7 +349,7 @@ typedef union YYSTYPE {
   llvm::FCmpInst::Predicate         FPredicate;
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 351 "llvmAsmParser.tab.h"
+#line 353 "llvmAsmParser.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

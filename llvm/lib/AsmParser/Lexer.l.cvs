@@ -235,6 +235,8 @@ x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
 inreg           { return INREG; }
 sret            { return SRET;  }
+nounwind        { return NOUNWIND; }
+noreturn        { return NORETURN; }
 
 void            { RET_TY(Type::VoidTy,  VOID);  }
 float           { RET_TY(Type::FloatTy, FLOAT); }
