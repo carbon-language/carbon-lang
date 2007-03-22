@@ -152,6 +152,16 @@ defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw" , int_x86_mmx_pmulh_w , 1>;
 defm MMX_PMADDWD : MMXI_binop_rm_int<0xF5, "pmaddwd", int_x86_mmx_pmadd_wd, 1>;
 
 
+// MMX_SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to
+// MMX_PSHUF*, MMX_SHUFP* etc. imm.
+def MMX_SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
+  return getI8Imm(X86::getShuffleSHUFImmediate(N));
+}]>;
+
+def MMX_splat_mask : PatLeaf<(build_vector), [{
+  return X86::isSplatMask(N);
+}], MMX_SHUFFLE_get_shuf_imm>;
+
 def MMX_UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isUNPCKHMask(N);
 }]>;
@@ -315,15 +325,12 @@ def : Pat<(v2i32 (bitconvert (v8i8  VR64:$src))), (v2i32 VR64:$src)>;
 // Splat v2i32
 let AddedComplexity = 10 in {
   def : Pat<(vector_shuffle (v2i32 VR64:$src), (undef),
+             MMX_splat_mask:$sm),
+            (MMX_PUNPCKHDQrr VR64:$src, VR64:$src)>;
+  def : Pat<(vector_shuffle (v2i32 VR64:$src), (undef),
              MMX_UNPCKH_shuffle_mask:$sm),
             (MMX_PUNPCKHDQrr VR64:$src, VR64:$src)>;
 }
-
-// FIXME: Temporary workaround because 2-wide shuffle is broken.
-def : Pat<(int_x86_mmx_punpckh_dq VR64:$src1, VR64:$src2),
-          (v2i32 (MMX_PUNPCKHDQrr VR64:$src1, VR64:$src2))>;
-def : Pat<(int_x86_mmx_punpckh_dq VR64:$src1, (load addr:$src2)),
-          (v2i32 (MMX_PUNPCKHDQrm VR64:$src1, addr:$src2))>;
 
 def MMX_X86s2vec : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 

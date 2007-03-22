@@ -616,10 +616,3 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
                          llvm_v2i32_ty], [IntrNoMem]>;
 }
-
-// Vector pack/unpack ops.
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_mmx_punpckh_dq : GCCBuiltin<"__builtin_ia32_punpckhdq">,
-              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
-                         llvm_v2i32_ty], [IntrNoMem]>;
-}
