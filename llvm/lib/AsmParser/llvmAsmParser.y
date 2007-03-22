@@ -1078,7 +1078,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 
 // Function Attributes
-%token NORETURN INREG SRET
+%token NORETURN INREG SRET NOUNWIND
 
 // Visibility Styles
 %token DEFAULT HIDDEN
@@ -1204,6 +1204,7 @@ OptParamAttrs : /* empty */  { $$ = FunctionType::NoAttributeSet; }
               ;
 
 FuncAttr      : NORETURN { $$ = FunctionType::NoReturnAttribute; }
+              | NOUNWIND { $$ = FunctionType::NoUnwindAttribute; }
               | ParamAttr
               ;
 
