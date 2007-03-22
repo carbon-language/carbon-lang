@@ -6951,8 +6951,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
 
   // See if we can simplify any instructions used by the LHS whose sole 
   // purpose is to compute bits we don't care about.
-  uint64_t KnownZero = 0, KnownOne = 0;
-  if (SimplifyDemandedBits(&CI, cast<IntegerType>(DestTy)->getBitMask(),
+  APInt KnownZero(DestBitSize, 0), KnownOne(DestBitSize, 0);
+  if (SimplifyDemandedBits(&CI, APInt::getAllOnesValue(DestBitSize),
                            KnownZero, KnownOne))
     return &CI;
 
@@ -7008,10 +7008,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       case Instruction::ZExt: {
         // We need to emit an AND to clear the high bits.
         assert(SrcBitSize < DestBitSize && "Not a zext?");
-        Constant *C = 
-          ConstantInt::get(Type::Int64Ty, (1ULL << SrcBitSize)-1);
-        if (DestBitSize < 64)
-          C = ConstantExpr::getTrunc(C, DestTy);
+        Constant *C = ConstantInt::get(APInt::getAllOnesValue(SrcBitSize));
+        C = ConstantExpr::getZExt(C, DestTy);
         return BinaryOperator::createAnd(Res, C);
       }
       case Instruction::SExt:
@@ -7113,7 +7111,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     // to an integer, then shift the bit to the appropriate place and then
     // cast to integer to avoid the comparison.
     if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-      uint64_t Op1CV = Op1C->getZExtValue();
+      APInt Op1CV(Op1C->getValue());
       // cast (X == 0) to int --> X^1      iff X has only the low bit set.
       // cast (X == 0) to int --> (X>>1)^1 iff X has only the 2nd bit set.
       // cast (X == 1) to int --> X        iff X has only the low bit set.
@@ -7122,10 +7120,11 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       // cast (X != 0) to int --> X>>1     iff X has only the 2nd bit set.
       // cast (X != 1) to int --> X^1      iff X has only the low bit set.
       // cast (X != 2) to int --> (X>>1)^1 iff X has only the 2nd bit set.
-      if (Op1CV == 0 || isPowerOf2_64(Op1CV)) {
+      if (Op1CV == 0 || Op1CV.isPowerOf2()) {
         // If Op1C some other power of two, convert:
-        uint64_t KnownZero, KnownOne;
-        uint64_t TypeMask = Op1C->getType()->getBitMask();
+        uint32_t BitWidth = Op1C->getType()->getBitWidth();
+        APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+        APInt TypeMask(APInt::getAllOnesValue(BitWidth));
         ComputeMaskedBits(Op0, TypeMask, KnownZero, KnownOne);
 
         // This only works for EQ and NE
@@ -7133,9 +7132,9 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         if (pred != ICmpInst::ICMP_NE && pred != ICmpInst::ICMP_EQ)
           break;
         
-        if (isPowerOf2_64(KnownZero^TypeMask)) { // Exactly 1 possible 1?
+        if ((KnownZero^TypeMask).isPowerOf2()) { // Exactly 1 possible 1?
           bool isNE = pred == ICmpInst::ICMP_NE;
-          if (Op1CV && (Op1CV != (KnownZero^TypeMask))) {
+          if (Op1CV != 0 && (Op1CV != (KnownZero^TypeMask))) {
             // (X&4) == 2 --> false
             // (X&4) != 2 --> true
             Constant *Res = ConstantInt::get(Type::Int1Ty, isNE);
@@ -7143,7 +7142,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
             return ReplaceInstUsesWith(CI, Res);
           }
           
-          unsigned ShiftAmt = Log2_64(KnownZero^TypeMask);
+          unsigned ShiftAmt = (KnownZero^TypeMask).logBase2();
           Value *In = Op0;
           if (ShiftAmt) {
             // Perform a logical shr by shiftamt.
@@ -7179,6 +7178,7 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
   Value *Src = CI.getOperand(0);
   const Type *Ty = CI.getType();
   unsigned DestBitWidth = Ty->getPrimitiveSizeInBits();
+  unsigned SrcBitWidth = cast<IntegerType>(Src->getType())->getBitWidth();
   
   if (Instruction *SrcI = dyn_cast<Instruction>(Src)) {
     switch (SrcI->getOpcode()) {
@@ -7190,7 +7190,8 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
         unsigned ShAmt = ShAmtV->getZExtValue();
         
         // Get a mask for the bits shifting in.
-        uint64_t Mask = (~0ULL >> (64-ShAmt)) << DestBitWidth;
+        APInt Mask(APInt::getAllOnesValue(SrcBitWidth).lshr(
+                     SrcBitWidth-ShAmt).shl(DestBitWidth));
         Value* SrcIOp0 = SrcI->getOperand(0);
         if (SrcI->hasOneUse() && MaskedValueIsZero(SrcIOp0, Mask)) {
           if (ShAmt >= DestBitWidth)        // All zeros.
@@ -7249,8 +7250,8 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
       // If we're actually extending zero bits and the trunc is a no-op
       if (MidSize < DstSize && SrcSize == DstSize) {
         // Replace both of the casts with an And of the type mask.
-        uint64_t AndValue = cast<IntegerType>(CSrc->getType())->getBitMask();
-        Constant *AndConst = ConstantInt::get(A->getType(), AndValue);
+        APInt AndValue(APInt::getAllOnesValue(MidSize).zext(SrcSize));
+        Constant *AndConst = ConstantInt::get(AndValue);
         Instruction *And = 
           BinaryOperator::createAnd(CSrc->getOperand(0), AndConst);
         // Unfortunately, if the type changed, we need to cast it back.
