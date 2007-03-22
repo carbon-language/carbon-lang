@@ -3894,9 +3894,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
-  uint64_t KnownZero, KnownOne;
   if (!isa<VectorType>(I.getType())) {
-    if (SimplifyDemandedBits(&I, cast<IntegerType>(I.getType())->getBitMask(),
+    uint32_t BitWidth = cast<IntegerType>(I.getType())->getBitWidth();
+    APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+    if (SimplifyDemandedBits(&I, APInt::getAllOnesValue(BitWidth),
                              KnownZero, KnownOne))
     return &I;
   } else {
@@ -3907,9 +3908,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   }
   
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
-    uint64_t AndRHSMask = AndRHS->getZExtValue();
-    uint64_t TypeMask = cast<IntegerType>(Op0->getType())->getBitMask();
-    uint64_t NotAndRHS = AndRHSMask^TypeMask;
+    APInt AndRHSMask(AndRHS->getValue());
+    APInt TypeMask(cast<IntegerType>(Op0->getType())->getMask());
+    APInt NotAndRHS = AndRHSMask^TypeMask;
 
     // Optimize a variety of ((val OP C1) & C2) combinations...
     if (isa<BinaryOperator>(Op0)) {
@@ -4373,9 +4374,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
-  uint64_t KnownZero, KnownOne;
+  uint32_t BitWidth = cast<IntegerType>(I.getType())->getBitWidth();
+  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
   if (!isa<VectorType>(I.getType()) &&
-      SimplifyDemandedBits(&I, cast<IntegerType>(I.getType())->getBitMask(),
+      SimplifyDemandedBits(&I, APInt::getAllOnesValue(BitWidth),
                            KnownZero, KnownOne))
     return &I;
   
@@ -4430,7 +4432,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   
   // (X^C)|Y -> (X|Y)^C iff Y&C == 0
   if (Op0->hasOneUse() && match(Op0, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
-      MaskedValueIsZero(Op1, C1->getZExtValue())) {
+      MaskedValueIsZero(Op1, C1->getValue())) {
     Instruction *NOr = BinaryOperator::createOr(A, Op1);
     InsertNewInstBefore(NOr, I);
     NOr->takeName(Op0);
@@ -4439,7 +4441,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   // Y|(X^C) -> (X|Y)^C iff Y&C == 0
   if (Op1->hasOneUse() && match(Op1, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
-      MaskedValueIsZero(Op0, C1->getZExtValue())) {
+      MaskedValueIsZero(Op0, C1->getValue())) {
     Instruction *NOr = BinaryOperator::createOr(A, Op0);
     InsertNewInstBefore(NOr, I);
     NOr->takeName(Op0);
@@ -4459,21 +4461,21 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     // replace with V+N.
     if (C1 == ConstantExpr::getNot(C2)) {
       Value *V1 = 0, *V2 = 0;
-      if ((C2->getZExtValue() & (C2->getZExtValue()+1)) == 0 && // C2 == 0+1+
+      if ((C2->getValue() & (C2->getValue()+1)) == 0 && // C2 == 0+1+
           match(A, m_Add(m_Value(V1), m_Value(V2)))) {
         // Add commutes, try both ways.
-        if (V1 == B && MaskedValueIsZero(V2, C2->getZExtValue()))
+        if (V1 == B && MaskedValueIsZero(V2, C2->getValue()))
           return ReplaceInstUsesWith(I, A);
-        if (V2 == B && MaskedValueIsZero(V1, C2->getZExtValue()))
+        if (V2 == B && MaskedValueIsZero(V1, C2->getValue()))
           return ReplaceInstUsesWith(I, A);
       }
       // Or commutes, try both ways.
-      if ((C1->getZExtValue() & (C1->getZExtValue()+1)) == 0 &&
+      if ((C1->getValue() & (C1->getValue()+1)) == 0 &&
           match(B, m_Add(m_Value(V1), m_Value(V2)))) {
         // Add commutes, try both ways.
-        if (V1 == A && MaskedValueIsZero(V2, C1->getZExtValue()))
+        if (V1 == A && MaskedValueIsZero(V2, C1->getValue()))
           return ReplaceInstUsesWith(I, B);
-        if (V2 == A && MaskedValueIsZero(V1, C1->getZExtValue()))
+        if (V2 == A && MaskedValueIsZero(V1, C1->getValue()))
           return ReplaceInstUsesWith(I, B);
       }
     }
@@ -4704,11 +4706,13 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
-  uint64_t KnownZero, KnownOne;
-  if (!isa<VectorType>(I.getType()) &&
-      SimplifyDemandedBits(&I, cast<IntegerType>(I.getType())->getBitMask(),
-                           KnownZero, KnownOne))
-    return &I;
+  if (!isa<VectorType>(I.getType())) {
+    uint32_t BitWidth = cast<IntegerType>(I.getType())->getBitWidth();
+    APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+    if (SimplifyDemandedBits(&I, APInt::getAllOnesValue(BitWidth),
+                             KnownZero, KnownOne))
+      return &I;
+  }
 
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // xor (icmp A, B), true = not (icmp A, B) = !icmp A, B
@@ -4751,7 +4755,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           }
         } else if (Op0I->getOpcode() == Instruction::Or) {
           // (X|C1)^C2 -> X^(C1|C2) iff X&~C1 == 0
-          if (MaskedValueIsZero(Op0I->getOperand(0), Op0CI->getZExtValue())) {
+          if (MaskedValueIsZero(Op0I->getOperand(0), Op0CI->getValue())) {
             Constant *NewRHS = ConstantExpr::getOr(Op0CI, RHS);
             // Anything in both C1 and C2 is known to be zero, remove it from
             // NewRHS.
