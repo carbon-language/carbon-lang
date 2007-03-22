@@ -585,3 +585,41 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v2i32_ty, llvm_v4i16_ty,
                          llvm_v4i16_ty], [IntrNoMem]>;
 }
+
+// Integer shift ops.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  // Shift left logical
+  def int_x86_mmx_psll_w : GCCBuiltin<"__builtin_ia32_psllw">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+  def int_x86_mmx_psll_d : GCCBuiltin<"__builtin_ia32_pslld">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+  def int_x86_mmx_psll_q : GCCBuiltin<"__builtin_ia32_psllq">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+
+  def int_x86_mmx_psrl_w : GCCBuiltin<"__builtin_ia32_psrlw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+  def int_x86_mmx_psrl_d : GCCBuiltin<"__builtin_ia32_psrld">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+  def int_x86_mmx_psrl_q : GCCBuiltin<"__builtin_ia32_psrlq">,
+              Intrinsic<[llvm_v2i32_ty,   llvm_v2i32_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+
+  def int_x86_mmx_psra_w : GCCBuiltin<"__builtin_ia32_psraw">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+  def int_x86_mmx_psra_d : GCCBuiltin<"__builtin_ia32_psrad">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+}
+
+// Vector pack/unpack ops.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_mmx_punpckh_dq : GCCBuiltin<"__builtin_ia32_punpckhdq">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+}

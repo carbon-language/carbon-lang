@@ -355,6 +355,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v8i8,  Expand);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v4i16, Expand);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i32, Expand);
+
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v8i8,  Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4i16, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i32, Custom);
   }
 
   if (Subtarget->hasSSE1()) {
@@ -2312,7 +2316,7 @@ static SDOperand LowerBuildVectorv16i8(SDOperand Op, unsigned NonZeros,
   return DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, V);
 }
 
-/// LowerBuildVectorv16i8 - Custom lower build_vector of v8i16.
+/// LowerBuildVectorv8i16 - Custom lower build_vector of v8i16.
 ///
 static SDOperand LowerBuildVectorv8i16(SDOperand Op, unsigned NonZeros,
                                        unsigned NumNonZero, unsigned NumZero,

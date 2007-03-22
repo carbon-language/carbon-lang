@@ -44,6 +44,10 @@ def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>;
 
 def loadv2i32 : PatFrag<(ops node:$ptr), (v2i32 (load node:$ptr))>;
 
+def bc_v8i8  : PatFrag<(ops node:$in), (v8i8  (bitconvert node:$in))>;
+def bc_v4i16 : PatFrag<(ops node:$in), (v4i16 (bitconvert node:$in))>;
+def bc_v2i32 : PatFrag<(ops node:$in), (v2i32 (bitconvert node:$in))>;
+
 //===----------------------------------------------------------------------===//
 // MMX Multiclasses
 //===----------------------------------------------------------------------===//
@@ -94,13 +98,28 @@ let isTwoAddress = 1 in {
                   [(set VR64:$dst,
                     (OpNode VR64:$src1,(loadv2i32 addr:$src2)))]>;
   }
+
+  multiclass MMXI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
+                                string OpcodeStr, Intrinsic IntId> {
+    def rr : MMXI<opc, MRMSrcReg, (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                  !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                  [(set VR64:$dst, (IntId VR64:$src1, VR64:$src2))]>;
+    def rm : MMXI<opc, MRMSrcMem, (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                  !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                  [(set VR64:$dst, (IntId VR64:$src1,
+                                    (bitconvert (loadv2i32 addr:$src2))))]>;
+    def ri : MMXIi8<opc2, ImmForm, (ops VR64:$dst, VR64:$src1, i32i8imm:$src2),
+                    !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                    [(set VR64:$dst, (IntId VR64:$src1,
+                                      (scalar_to_vector (i32 imm:$src2))))]>;
+  }
 }
 
 //===----------------------------------------------------------------------===//
 // MMX EMMS Instruction
 //===----------------------------------------------------------------------===//
 
-def EMMS : MMXI<0x77, RawFrm, (ops), "emms", [(int_x86_mmx_emms)]>;
+def MMX_EMMS : MMXI<0x77, RawFrm, (ops), "emms", [(int_x86_mmx_emms)]>;
 
 //===----------------------------------------------------------------------===//
 // MMX Scalar Instructions
@@ -132,6 +151,53 @@ defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>;
 defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw" , int_x86_mmx_pmulh_w , 1>;
 defm MMX_PMADDWD : MMXI_binop_rm_int<0xF5, "pmaddwd", int_x86_mmx_pmadd_wd, 1>;
 
+
+def MMX_UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKHMask(N);
+}]>;
+
+let isTwoAddress = 1 in {
+def MMX_PUNPCKHBWrr : MMXI<0x68, MRMSrcReg, 
+                           (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                           "punpckhbw {$src2, $dst|$dst, $src2}",
+                           [(set VR64:$dst,
+                             (v8i8 (vector_shuffle VR64:$src1, VR64:$src2,
+                                    MMX_UNPCKH_shuffle_mask)))]>;
+def MMX_PUNPCKHBWrm : MMXI<0x68, MRMSrcMem, 
+                           (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                           "punpckhbw {$src2, $dst|$dst, $src2}",
+                           [(set VR64:$dst,
+                             (v8i8 (vector_shuffle VR64:$src1,
+                                    (bc_v8i8 (loadv2i32 addr:$src2)),
+                                    MMX_UNPCKH_shuffle_mask)))]>;
+def MMX_PUNPCKHWDrr : MMXI<0x69, MRMSrcReg, 
+                           (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                           "punpckhwd {$src2, $dst|$dst, $src2}",
+                           [(set VR64:$dst,
+                             (v4i16 (vector_shuffle VR64:$src1, VR64:$src2,
+                                     MMX_UNPCKH_shuffle_mask)))]>;
+def MMX_PUNPCKHWDrm : MMXI<0x69, MRMSrcMem, 
+                           (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                           "punpckhwd {$src2, $dst|$dst, $src2}",
+                           [(set VR64:$dst,
+                             (v4i16 (vector_shuffle VR64:$src1,
+                                     (bc_v4i16 (loadv2i32 addr:$src2)),
+                                     MMX_UNPCKH_shuffle_mask)))]>;
+def MMX_PUNPCKHDQrr : MMXI<0x6A, MRMSrcReg, 
+                           (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                           "punpckhdq {$src2, $dst|$dst, $src2}",
+                           [(set VR64:$dst,
+                             (v2i32 (vector_shuffle VR64:$src1, VR64:$src2,
+                                     MMX_UNPCKH_shuffle_mask)))]>;
+def MMX_PUNPCKHDQrm : MMXI<0x6A, MRMSrcMem,
+                           (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                           "punpckhdq {$src2, $dst|$dst, $src2}",
+                           [(set VR64:$dst,
+                             (v2i32 (vector_shuffle VR64:$src1,
+                                     (loadv2i32 addr:$src2),
+                                     MMX_UNPCKH_shuffle_mask)))]>;
+}
+
 // Logical Instructions
 defm MMX_PAND : MMXI_binop_rm_v2i32<0xDB, "pand", and, 1>;
 defm MMX_POR  : MMXI_binop_rm_v2i32<0xEB, "por" , or,  1>;
@@ -149,6 +215,26 @@ let isTwoAddress = 1 in {
                          [(set VR64:$dst, (v2i32 (and (vnot VR64:$src1),
                                                   (load addr:$src2))))]>;
 }
+
+// Shift Instructions
+defm MMX_PSRLW : MMXI_binop_rmi_int<0xD1, 0x71, MRM2r, "psrlw",
+                                    int_x86_mmx_psrl_w>;
+defm MMX_PSRLD : MMXI_binop_rmi_int<0xD2, 0x72, MRM2r, "psrld",
+                                    int_x86_mmx_psrl_d>;
+defm MMX_PSRLQ : MMXI_binop_rmi_int<0xD3, 0x73, MRM2r, "psrlq",
+                                    int_x86_mmx_psrl_q>;
+
+defm MMX_PSLLW : MMXI_binop_rmi_int<0xF1, 0x71, MRM6r, "psllw",
+                                    int_x86_mmx_psll_w>;
+defm MMX_PSLLD : MMXI_binop_rmi_int<0xF2, 0x72, MRM6r, "pslld",
+                                    int_x86_mmx_psll_d>;
+defm MMX_PSLLQ : MMXI_binop_rmi_int<0xF3, 0x73, MRM6r, "psllq",
+                                    int_x86_mmx_psll_q>;
+
+defm MMX_PSRAW : MMXI_binop_rmi_int<0xE1, 0x71, MRM4r, "psraw",
+                                    int_x86_mmx_psra_w>;
+defm MMX_PSRAD : MMXI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad",
+                                    int_x86_mmx_psra_d>;
 
 // Move Instructions
 def MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
@@ -225,3 +311,23 @@ def : Pat<(v4i16 (bitconvert (v2i32 VR64:$src))), (v4i16 VR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v8i8  VR64:$src))), (v4i16 VR64:$src)>;
 def : Pat<(v2i32 (bitconvert (v4i16 VR64:$src))), (v2i32 VR64:$src)>;
 def : Pat<(v2i32 (bitconvert (v8i8  VR64:$src))), (v2i32 VR64:$src)>;
+
+// Splat v2i32
+let AddedComplexity = 10 in {
+  def : Pat<(vector_shuffle (v2i32 VR64:$src), (undef),
+             MMX_UNPCKH_shuffle_mask:$sm),
+            (MMX_PUNPCKHDQrr VR64:$src, VR64:$src)>;
+}
+
+// FIXME: Temporary workaround because 2-wide shuffle is broken.
+def : Pat<(int_x86_mmx_punpckh_dq VR64:$src1, VR64:$src2),
+          (v2i32 (MMX_PUNPCKHDQrr VR64:$src1, VR64:$src2))>;
+def : Pat<(int_x86_mmx_punpckh_dq VR64:$src1, (load addr:$src2)),
+          (v2i32 (MMX_PUNPCKHDQrm VR64:$src1, addr:$src2))>;
+
+def MMX_X86s2vec : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
+
+// Scalar to v4i16 / v8i8. The source may be a GR32, but only the lower 8 or
+// 16-bits matter.
+def : Pat<(v4i16 (MMX_X86s2vec GR32:$src)), (MOVD64rr GR32:$src)>;
+def : Pat<(v8i8 (MMX_X86s2vec GR32:$src)), (MOVD64rr GR32:$src)>;
