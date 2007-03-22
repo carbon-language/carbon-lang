@@ -148,7 +148,8 @@ public:
     SExtAttribute     = 1 << 1, ///< sign extended before/after call
     NoReturnAttribute = 1 << 2, ///< mark the function as not returning
     InRegAttribute    = 1 << 3, ///< force argument to be passed in register
-    StructRetAttribute= 1 << 4  ///< hidden pointer to structure to return
+    StructRetAttribute= 1 << 4, ///< hidden pointer to structure to return
+    NoUnwindAttribute = 1 << 5  ///< Function doesn't unwind stack
   };
   typedef std::vector<ParameterAttributes> ParamAttrsList;
 private:
