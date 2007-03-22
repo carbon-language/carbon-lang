@@ -739,6 +739,10 @@ a power of 2.</p>
     <dt><tt>sret</tt></dt>
     <dd>This indicates that the parameter specifies the address of a structure
     that is the return value of the function in the source program.</dd>
+    <dt><tt>noreturn</tt></dt>
+    <dd>This function attribute indicates that the function never returns. This
+    indicates to LLVM that every call to this function should be treated as if
+    an <tt>unreachable</tt> instruction immediately followed the call.</dd> 
     <dt><tt>nounwind</tt></dt>
     <dd>This function attribute indicates that the function type does not use
     the unwind instruction and does not allow stack unwinding to propagate
