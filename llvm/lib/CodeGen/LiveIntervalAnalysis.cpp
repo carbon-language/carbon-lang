@@ -924,14 +924,14 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   MachineOperand *mopd = CopyMI->findRegisterDefOperand(DstReg);
   bool isDead = mopd->isDead();
   bool isShorten = false;
-  unsigned SrcStart = 0;
-  unsigned SrcEnd = 0;
+  unsigned SrcStart = 0, RemoveStart = 0;
+  unsigned SrcEnd = 0, RemoveEnd = 0;
   if (isDead) {
     unsigned CopyIdx = getInstructionIndex(CopyMI);
     LiveInterval::iterator SrcLR =
       SrcInt.FindLiveRangeContaining(getUseIndex(CopyIdx));
-    SrcStart = SrcLR->start;
-    SrcEnd   = SrcLR->end;
+    RemoveStart = SrcStart = SrcLR->start;
+    RemoveEnd   = SrcEnd   = SrcLR->end;
     // The instruction which defines the src is only truly dead if there are
     // no intermediate uses and there isn't a use beyond the copy.
     // FIXME: find the last use, mark is kill and shorten the live range.
@@ -939,18 +939,16 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
       isDead = false;
     else {
       MachineOperand *MOU;
-      MachineInstr *LastUse =
-        lastRegisterUse(repSrcReg, SrcStart, CopyIdx, MOU);
+      MachineInstr *LastUse= lastRegisterUse(repSrcReg, SrcStart, CopyIdx, MOU);
       if (LastUse) {
         // Shorten the liveinterval to the end of last use.
         MOU->setIsKill();
         isDead = false;
         isShorten = true;
-        SrcEnd = getUseIndex(getInstructionIndex(LastUse));
+        RemoveStart = getDefIndex(getInstructionIndex(LastUse));
+        RemoveEnd   = SrcEnd;
       }
     }
-    if (isDead)
-      isShorten = true;
   }
 
   // We need to be careful about coalescing a source physical register with a
@@ -1030,10 +1028,10 @@ TryJoin:
       }
     }
 
-    if (isShorten) {
+    if (isShorten || isDead) {
       // Shorten the live interval.
       LiveInterval &LiveInInt = (repSrcReg == DestInt.reg) ? DestInt : SrcInt;
-      LiveInInt.removeRange(SrcStart, SrcEnd);
+      LiveInInt.removeRange(RemoveStart, RemoveEnd);
     }
   } else {
     // Coallescing failed.
