@@ -273,6 +273,7 @@ namespace {
     SDOperand BuildSDIV(SDNode *N);
     SDOperand BuildUDIV(SDNode *N);
     SDNode *MatchRotate(SDOperand LHS, SDOperand RHS);
+    SDOperand ReduceLoadWidth(SDNode *N);
     
     /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
     /// looking for aliasing nodes and adding them to the Aliases vector.
@@ -2012,9 +2013,17 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0.getOperand(0));
   
+  // fold (sext (truncate (load x))) -> (sext (smaller load x))
+  // fold (sext (truncate (srl (load x), c))) -> (sext (smaller load (x+c/n)))
   if (N0.getOpcode() == ISD::TRUNCATE) {
-    // See if the value being truncated is already sign extended.  If so, just
-    // eliminate the trunc/sext pair.
+    SDOperand NarrowLoad = ReduceLoadWidth(N0.Val);
+    if (NarrowLoad.Val)
+      N0 = NarrowLoad;
+  }
+
+  // See if the value being truncated is already sign extended.  If so, just
+  // eliminate the trunc/sext pair.
+  if (N0.getOpcode() == ISD::TRUNCATE) {
     SDOperand Op = N0.getOperand(0);
     unsigned OpBits   = MVT::getSizeInBits(Op.getValueType());
     unsigned MidBits  = MVT::getSizeInBits(N0.getValueType());
@@ -2096,6 +2105,14 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
     return DAG.getNode(ISD::ZERO_EXTEND, VT, N0.getOperand(0));
 
+  // fold (zext (truncate (load x))) -> (zext (smaller load x))
+  // fold (zext (truncate (srl (load x), c))) -> (zext (small load (x+c/n)))
+  if (N0.getOpcode() == ISD::TRUNCATE) {
+    SDOperand NarrowLoad = ReduceLoadWidth(N0.Val);
+    if (NarrowLoad.Val)
+      N0 = NarrowLoad;
+  }
+
   // fold (zext (truncate x)) -> (and x, mask)
   if (N0.getOpcode() == ISD::TRUNCATE &&
       (!AfterLegalize || TLI.isOperationLegal(ISD::AND, VT))) {
@@ -2168,6 +2185,14 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
       N0.getOpcode() == ISD::SIGN_EXTEND)
     return DAG.getNode(N0.getOpcode(), VT, N0.getOperand(0));
   
+  // fold (aext (truncate (load x))) -> (aext (smaller load x))
+  // fold (aext (truncate (srl (load x), c))) -> (aext (small load (x+c/n)))
+  if (N0.getOpcode() == ISD::TRUNCATE) {
+    SDOperand NarrowLoad = ReduceLoadWidth(N0.Val);
+    if (NarrowLoad.Val)
+      N0 = NarrowLoad;
+  }
+
   // fold (aext (truncate x))
   if (N0.getOpcode() == ISD::TRUNCATE) {
     SDOperand TruncOp = N0.getOperand(0);
@@ -2226,6 +2251,72 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   return SDOperand();
 }
 
+/// ReduceLoadWidth - If the result of a wider load is shifted to right of N
+/// bits and then truncated to a narrower type and where N is a multiple
+/// of number of bits of the narrower type, transform it to a narrower load
+/// from address + N / num of bits of new type. If the result is to be
+/// extended, also fold the extension to form a extending load.
+SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
+  unsigned Opc = N->getOpcode();
+  ISD::LoadExtType ExtType = ISD::NON_EXTLOAD;
+  SDOperand N0 = N->getOperand(0);
+  MVT::ValueType VT = N->getValueType(0);
+  MVT::ValueType EVT = N->getValueType(0);
+
+  if (Opc == ISD::SIGN_EXTEND_INREG) {
+    ExtType = ISD::SEXTLOAD;
+    EVT = cast<VTSDNode>(N->getOperand(1))->getVT();
+  }
+
+  unsigned EVTBits = MVT::getSizeInBits(EVT);
+  unsigned ShAmt = 0;
+  if (N0.getOpcode() == ISD::SRL && N0.hasOneUse()) {
+    if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+      ShAmt = N01->getValue();
+      // Is the shift amount a multiple of size of VT?
+      if ((ShAmt & (EVTBits-1)) == 0) {
+        N0 = N0.getOperand(0);
+        if (MVT::getSizeInBits(N0.getValueType()) <= EVTBits)
+          return SDOperand();
+        ShAmt /= EVTBits;
+      }
+    }
+  }
+
+  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
+      // Do not allow folding to i1 here.  i1 is implicitly stored in memory in
+      // zero extended form: by shrinking the load, we lose track of the fact
+      // that it is already zero extended.
+      // FIXME: This should be reevaluated.
+      VT != MVT::i1) {
+    assert(MVT::getSizeInBits(N0.getValueType()) > EVTBits &&
+           "Cannot truncate to larger type!");
+    LoadSDNode *LN0 = cast<LoadSDNode>(N0);
+    MVT::ValueType PtrType = N0.getOperand(1).getValueType();
+    // For big endian targets, we need to add an offset to the pointer to load
+    // the correct bytes.  For little endian systems, we merely need to read
+    // fewer bytes from the same pointer.
+    uint64_t PtrOff =  ShAmt
+      ? ShAmt : (TLI.isLittleEndian() ? 0
+                 : (MVT::getSizeInBits(N0.getValueType()) - EVTBits) / 8);
+    SDOperand NewPtr = DAG.getNode(ISD::ADD, PtrType, LN0->getBasePtr(),
+                                   DAG.getConstant(PtrOff, PtrType));
+    AddToWorkList(NewPtr.Val);
+    SDOperand Load = (ExtType == ISD::NON_EXTLOAD)
+      ? DAG.getLoad(VT, LN0->getChain(), NewPtr,
+                    LN0->getSrcValue(), LN0->getSrcValueOffset())
+      : DAG.getExtLoad(ExtType, VT, LN0->getChain(), NewPtr,
+                       LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT);
+    AddToWorkList(N);
+    CombineTo(N0.Val, Load, Load.getValue(1));
+    if (ShAmt)
+      return DAG.getNode(N->getOpcode(), VT, Load);
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+  }
+
+  return SDOperand();
+}
+
 
 SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
@@ -2252,6 +2343,12 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   if (TLI.MaskedValueIsZero(N0, 1ULL << (EVTBits-1)))
     return DAG.getZeroExtendInReg(N0, EVT);
   
+  // fold (sext_in_reg (load x)) -> (smaller sextload x)
+  // fold (sext_in_reg (srl (load x), c)) -> (smaller sextload (x+c/evtbits))
+  SDOperand NarrowLoad = ReduceLoadWidth(N);
+  if (NarrowLoad.Val)
+    return NarrowLoad;
+
   // fold (sext_in_reg (srl X, 24), i8) -> sra X, 24
   // fold (sext_in_reg (srl X, 23), i8) -> sra X, 23 iff possible.
   // We already fold "(sext_in_reg (srl X, 25), i8) -> srl X, 25" above.
@@ -2265,7 +2362,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
           return DAG.getNode(ISD::SRA, VT, N0.getOperand(0), N0.getOperand(1));
       }
   }
-  
+
   // fold (sext_inreg (extload x)) -> (sextload x)
   if (ISD::isEXTLoad(N0.Val) && 
       ISD::isUNINDEXEDLoad(N0.Val) &&
@@ -2298,7 +2395,6 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
 SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   MVT::ValueType VT = N->getValueType(0);
-  unsigned VTBits = MVT::getSizeInBits(VT);
 
   // noop truncate
   if (N0.getValueType() == N->getValueType(0))
@@ -2326,47 +2422,7 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
 
   // fold (truncate (load x)) -> (smaller load x)
   // fold (truncate (srl (load x), c)) -> (smaller load (x+c/evtbits))
-  unsigned ShAmt = 0;
-  if (N0.getOpcode() == ISD::SRL && N0.hasOneUse()) {
-    if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
-      ShAmt = N01->getValue();
-      // Is the shift amount a multiple of size of VT?
-      if ((ShAmt & (VTBits-1)) == 0) {
-        N0 = N0.getOperand(0);
-        if (MVT::getSizeInBits(N0.getValueType()) <= VTBits)
-          return SDOperand();
-        ShAmt /= VTBits;
-      }
-    }
-  }
-  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
-      // Do not allow folding to i1 here.  i1 is implicitly stored in memory in
-      // zero extended form: by shrinking the load, we lose track of the fact
-      // that it is already zero extended.
-      // FIXME: This should be reevaluated.
-      VT != MVT::i1) {
-    assert(MVT::getSizeInBits(N0.getValueType()) > VTBits &&
-           "Cannot truncate to larger type!");
-    LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    MVT::ValueType PtrType = N0.getOperand(1).getValueType();
-    // For big endian targets, we need to add an offset to the pointer to load
-    // the correct bytes.  For little endian systems, we merely need to read
-    // fewer bytes from the same pointer.
-    uint64_t PtrOff =  ShAmt
-      ? ShAmt : (TLI.isLittleEndian() ? 0
-                 : (MVT::getSizeInBits(N0.getValueType()) - VTBits) / 8);
-    SDOperand NewPtr = DAG.getNode(ISD::ADD, PtrType, LN0->getBasePtr(),
-                                   DAG.getConstant(PtrOff, PtrType));
-    AddToWorkList(NewPtr.Val);
-    SDOperand Load = DAG.getLoad(VT, LN0->getChain(), NewPtr,
-                                 LN0->getSrcValue(), LN0->getSrcValueOffset());
-    AddToWorkList(N);
-    CombineTo(N0.Val, Load, Load.getValue(1));
-    if (ShAmt)
-      return DAG.getNode(ISD::TRUNCATE, VT, Load);
-    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
-  }
-  return SDOperand();
+  return ReduceLoadWidth(N);
 }
 
 SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
