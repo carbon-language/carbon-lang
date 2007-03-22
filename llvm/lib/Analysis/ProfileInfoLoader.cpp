@@ -152,7 +152,8 @@ void ProfileInfoLoader::getFunctionCounts(std::vector<std::pair<Function*,
       getBlockCounts(BlockCounts);
 
       for (unsigned i = 0, e = BlockCounts.size(); i != e; ++i)
-        if (&BlockCounts[i].first->getParent()->front() == BlockCounts[i].first)
+        if (&BlockCounts[i].first->getParent()->getEntryBlock() ==
+            BlockCounts[i].first)
           Counts.push_back(std::make_pair(BlockCounts[i].first->getParent(),
                                           BlockCounts[i].second));
     } else {

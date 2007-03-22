@@ -108,7 +108,7 @@ static bool CheckForEscapingAllocas(BasicBlock *BB,
       // If this alloca is in the body of the function, or if it is a variable
       // sized allocation, we cannot tail call eliminate calls marked 'tail'
       // with this mechanism.
-      if (BB != &BB->getParent()->front() ||
+      if (BB != &BB->getParent()->getEntryBlock() ||
           !isa<ConstantInt>(AI->getArraySize()))
         CannotTCETailMarkedCall = true;
     }

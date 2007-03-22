@@ -33,7 +33,7 @@ unsigned ProfileInfo::getExecutionCount(BasicBlock *BB) const {
   // Are there zero predecessors of this block?
   if (PI == PE) {
     // If this is the entry block, look for the Null -> Entry edge.
-    if (BB == &BB->getParent()->front())
+    if (BB == &BB->getParent()->getEntryBlock())
       return getEdgeWeight(0, BB);
     else
       return 0;   // Otherwise, this is a dead block.

@@ -1036,7 +1036,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->getParent() == 0)
     Out << "\t\t; Error: Block without parent!";
   else {
-    if (BB != &BB->getParent()->front()) {  // Not the entry block?
+    if (BB != &BB->getParent()->getEntryBlock()) {  // Not the entry block?
       // Output predecessors for the block...
       Out << "\t\t;";
       pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);

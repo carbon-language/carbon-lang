@@ -471,7 +471,7 @@ void LICM::sink(Instruction &I) {
 
     if (I.getType() != Type::VoidTy)
       AI = new AllocaInst(I.getType(), 0, I.getName(),
-                          I.getParent()->getParent()->front().begin());
+                          I.getParent()->getParent()->getEntryBlock().begin());
 
     // Secondly, insert load instructions for each use of the instruction
     // outside of the loop.

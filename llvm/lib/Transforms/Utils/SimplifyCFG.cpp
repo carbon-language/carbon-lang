@@ -1185,7 +1185,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
   assert(BB && BB->getParent() && "Block not embedded in function!");
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
-  assert(&BB->getParent()->front() != BB && "Can't Simplify entry block!");
+  assert(&BB->getParent()->getEntryBlock() != BB &&
+         "Can't Simplify entry block!");
 
   // Remove basic blocks that have no predecessors... which are unreachable.
   if (pred_begin(BB) == pred_end(BB) ||

@@ -4328,7 +4328,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   std::vector<SDOperand> UnorderedChains;
 
   // Lower any arguments needed in this block if this is the entry block.
-  if (LLVMBB == &LLVMBB->getParent()->front())
+  if (LLVMBB == &LLVMBB->getParent()->getEntryBlock())
     LowerArguments(LLVMBB, SDL, UnorderedChains);
 
   BB = FuncInfo.MBBMap[LLVMBB];

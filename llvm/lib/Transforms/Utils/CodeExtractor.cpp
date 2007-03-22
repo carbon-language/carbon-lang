@@ -104,7 +104,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
   bool HasPredsFromRegion = false;
   unsigned NumPredsOutsideRegion = 0;
 
-  if (Header != &Header->getParent()->front()) {
+  if (Header != &Header->getParent()->getEntryBlock()) {
     PHINode *PN = dyn_cast<PHINode>(Header->begin());
     if (!PN) return;  // No PHI nodes.
 

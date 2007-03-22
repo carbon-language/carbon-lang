@@ -59,7 +59,7 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
     CodeInfo->ContainsUnwinds        |= isa<UnwindInst>(BB->getTerminator());
     CodeInfo->ContainsDynamicAllocas |= hasDynamicAllocas;
     CodeInfo->ContainsDynamicAllocas |= hasStaticAllocas && 
-                                        BB != &BB->getParent()->front();
+                                        BB != &BB->getParent()->getEntryBlock();
   }
   return NewBB;
 }

@@ -9946,7 +9946,8 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   if (isa<PHINode>(I) || I->mayWriteToMemory()) return false;
 
   // Do not sink alloca instructions out of the entry block.
-  if (isa<AllocaInst>(I) && I->getParent() == &DestBlock->getParent()->front())
+  if (isa<AllocaInst>(I) && I->getParent() ==
+        &DestBlock->getParent()->getEntryBlock())
     return false;
 
   // We can only sink load instructions if there is nothing between the load and

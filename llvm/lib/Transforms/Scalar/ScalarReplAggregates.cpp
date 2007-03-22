@@ -891,7 +891,7 @@ void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
   ++NumConverted;
   
   BasicBlock *EntryBlock = AI->getParent();
-  assert(EntryBlock == &EntryBlock->getParent()->front() &&
+  assert(EntryBlock == &EntryBlock->getParent()->getEntryBlock() &&
          "Not in the entry block!");
   EntryBlock->getInstList().remove(AI);  // Take the alloca out of the program.
   

@@ -265,9 +265,10 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
           // Transfer all of the allocas over in a block.  Using splice means
           // that the instructions aren't removed from the symbol table, then
           // reinserted.
-          Caller->front().getInstList().splice(InsertPoint,
-                                               FirstNewBlock->getInstList(),
-                                               AI, I);
+          Caller->getEntryBlock().getInstList().splice(
+              InsertPoint,
+              FirstNewBlock->getInstList(),
+              AI, I);
         }
       }
   }
