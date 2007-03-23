@@ -27,7 +27,7 @@ class TargetInstrDescriptor;
 class MachineInstrBuilder {
   MachineInstr *MI;
 public:
-  MachineInstrBuilder(MachineInstr *mi) : MI(mi) {}
+  explicit MachineInstrBuilder(MachineInstr *mi) : MI(mi) {}
 
   /// Allow automatic conversion to the machine instruction we are working on.
   ///

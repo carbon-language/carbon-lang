@@ -42,7 +42,8 @@ public:
   std::vector<SDNode*> TopOrder;
   unsigned DAGSize;
 
-  SelectionDAGISel(TargetLowering &tli) : TLI(tli), DAGSize(0), JT(0,0,0,0) {}
+  explicit SelectionDAGISel(TargetLowering &tli)
+  : TLI(tli), DAGSize(0), JT(0,0,0,0) {}
   
   TargetLowering &getTargetLowering() { return TLI; }
 

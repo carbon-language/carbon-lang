@@ -1075,7 +1075,7 @@ class HandleSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   SDOperand Op;
 public:
-  HandleSDNode(SDOperand X)
+  explicit HandleSDNode(SDOperand X)
     : SDNode(ISD::HANDLENODE, getSDVTList(MVT::Other)), Op(X) {
     InitOperands(&Op, 1);
   }
@@ -1088,7 +1088,7 @@ class StringSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  StringSDNode(const std::string &val)
+  explicit StringSDNode(const std::string &val)
     : SDNode(ISD::STRING, getSDVTList(MVT::Other)), Value(val) {
   }
 public:
@@ -1298,7 +1298,7 @@ class BasicBlockSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  BasicBlockSDNode(MachineBasicBlock *mbb)
+  explicit BasicBlockSDNode(MachineBasicBlock *mbb)
     : SDNode(ISD::BasicBlock, getSDVTList(MVT::Other)), MBB(mbb) {
   }
 public:
@@ -1375,7 +1375,7 @@ class CondCodeSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  CondCodeSDNode(ISD::CondCode Cond)
+  explicit CondCodeSDNode(ISD::CondCode Cond)
     : SDNode(ISD::CONDCODE, getSDVTList(MVT::Other)), Condition(Cond) {
   }
 public:
@@ -1395,7 +1395,7 @@ class VTSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
-  VTSDNode(MVT::ValueType VT)
+  explicit VTSDNode(MVT::ValueType VT)
     : SDNode(ISD::VALUETYPE, getSDVTList(MVT::Other)), ValueType(VT) {
   }
 public:

@@ -34,7 +34,8 @@ struct MachineJumpTableEntry {
   /// MBBs - The vector of basic blocks from which to create the jump table.
   std::vector<MachineBasicBlock*> MBBs;
   
-  MachineJumpTableEntry(const std::vector<MachineBasicBlock*> &M) : MBBs(M) {}
+  explicit MachineJumpTableEntry(const std::vector<MachineBasicBlock*> &M)
+  : MBBs(M) {}
 };
   
 class MachineJumpTableInfo {

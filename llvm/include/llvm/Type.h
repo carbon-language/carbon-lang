@@ -103,8 +103,8 @@ private:
   const Type *getForwardedTypeInternal() const;
 protected:
   Type(const char *Name, TypeID id);
-  Type(TypeID id) : ID(id), Abstract(false), SubclassData(0), RefCount(0), 
-                    ForwardType(0) {}
+  explicit Type(TypeID id) : ID(id), Abstract(false), SubclassData(0),
+                             RefCount(0), ForwardType(0) {}
   virtual ~Type() {
     assert(AbstractTypeUsers.empty());
   }

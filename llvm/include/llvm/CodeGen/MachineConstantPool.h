@@ -35,7 +35,7 @@ class MachineConstantPoolValue {
   const Type *Ty;
 
 public:
-  MachineConstantPoolValue(const Type *ty) : Ty(ty) {}
+  explicit MachineConstantPoolValue(const Type *ty) : Ty(ty) {}
   virtual ~MachineConstantPoolValue() {};
 
   /// getType - get type of this MachineConstantPoolValue.

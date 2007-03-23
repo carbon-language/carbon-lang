@@ -104,7 +104,7 @@ private:
 public:
   /// The Module constructor. Note that there is no default constructor. You
   /// must provide a name for the module upon construction.
-  Module(const std::string &ModuleID);
+  explicit Module(const std::string &ModuleID);
   /// The module destructor. This will dropAllReferences.
   ~Module();
 

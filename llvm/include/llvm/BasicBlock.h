@@ -70,8 +70,8 @@ public:
   /// is automatically inserted at either the end of the function (if
   /// InsertBefore is null), or before the specified basic block.
   ///
-  BasicBlock(const std::string &Name = "", Function *Parent = 0,
-             BasicBlock *InsertBefore = 0);
+  explicit BasicBlock(const std::string &Name = "", Function *Parent = 0,
+                      BasicBlock *InsertBefore = 0);
   ~BasicBlock();
 
   /// getParent - Return the enclosing method, or null if none

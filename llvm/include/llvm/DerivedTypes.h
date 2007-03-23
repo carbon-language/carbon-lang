@@ -36,7 +36,7 @@ class DerivedType : public Type {
   friend class Type;
 
 protected:
-  DerivedType(TypeID id) : Type(id) {}
+  explicit DerivedType(TypeID id) : Type(id) {}
 
   /// notifyUsesThatTypeBecameConcrete - Notify AbstractTypeUsers of this type
   /// that the current type has transitioned from being abstract to being
@@ -79,7 +79,7 @@ public:
 /// @brief Integer representation type
 class IntegerType : public DerivedType {
 protected:
-  IntegerType(unsigned NumBits) : DerivedType(IntegerTyID) {
+  explicit IntegerType(unsigned NumBits) : DerivedType(IntegerTyID) {
     setSubclassData(NumBits);
   }
   friend class TypeMap<IntegerValType, IntegerType>;
@@ -230,7 +230,7 @@ public:
 /// and VectorType
 class CompositeType : public DerivedType {
 protected:
-  inline CompositeType(TypeID id) : DerivedType(id) { }
+  inline explicit CompositeType(TypeID id) : DerivedType(id) { }
 public:
 
   /// getTypeAtIndex - Given an index value into the type, return the type of
@@ -404,7 +404,7 @@ class PointerType : public SequentialType {
   friend class TypeMap<PointerValType, PointerType>;
   PointerType(const PointerType &);                   // Do not implement
   const PointerType &operator=(const PointerType &);  // Do not implement
-  PointerType(const Type *ElType);
+  explicit PointerType(const Type *ElType);
 public:
   /// PointerType::get - This is the only way to construct a new pointer type.
   static PointerType *get(const Type *ElementType);

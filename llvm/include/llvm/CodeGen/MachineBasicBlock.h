@@ -79,9 +79,10 @@ class MachineBasicBlock {
   bool IsLandingPad;
 
 public:
-  MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0), BB(bb),
-                                                Number(-1), Parent(0),
-                                                IsLandingPad(false) {
+  explicit MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0),
+                                                         BB(bb), Number(-1),
+                                                         Parent(0),
+                                                         IsLandingPad(false) {
     Insts.parent = this;
   }
 

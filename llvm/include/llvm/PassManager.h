@@ -59,7 +59,7 @@ private:
 /// FunctionPassManager manages FunctionPasses and BasicBlockPassManagers.
 class FunctionPassManager {
 public:
-  FunctionPassManager(ModuleProvider *P);
+  explicit FunctionPassManager(ModuleProvider *P);
   FunctionPassManager();
   ~FunctionPassManager();
  

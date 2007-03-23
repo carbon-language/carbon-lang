@@ -231,7 +231,7 @@ class ConstantAggregateZero : public Constant {
   friend struct ConstantCreator<ConstantAggregateZero, Type, char>;
   ConstantAggregateZero(const ConstantAggregateZero &);      // DO NOT IMPLEMENT
 protected:
-  ConstantAggregateZero(const Type *Ty)
+  explicit ConstantAggregateZero(const Type *Ty)
     : Constant(Ty, ConstantAggregateZeroVal, 0, 0) {}
 public:
   /// get() - static factory method for creating a null aggregate.  It is
@@ -420,7 +420,7 @@ class ConstantPointerNull : public Constant {
   friend struct ConstantCreator<ConstantPointerNull, PointerType, char>;
   ConstantPointerNull(const ConstantPointerNull &);      // DO NOT IMPLEMENT
 protected:
-  ConstantPointerNull(const PointerType *T)
+  explicit ConstantPointerNull(const PointerType *T)
     : Constant(reinterpret_cast<const Type*>(T),
                Value::ConstantPointerNullVal, 0, 0) {}
 
@@ -669,7 +669,7 @@ class UndefValue : public Constant {
   friend struct ConstantCreator<UndefValue, Type, char>;
   UndefValue(const UndefValue &);      // DO NOT IMPLEMENT
 protected:
-  UndefValue(const Type *T) : Constant(T, UndefValueVal, 0, 0) {}
+  explicit UndefValue(const Type *T) : Constant(T, UndefValueVal, 0, 0) {}
 public:
   /// get() - Static factory methods - Return an 'undef' object of the specified
   /// type.

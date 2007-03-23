@@ -40,7 +40,7 @@ public:
   , Register(0)
   , Offset(0)
   {}
-  MachineLocation(unsigned R)
+  explicit MachineLocation(unsigned R)
   : IsRegister(true)
   , Register(R)
   , Offset(0)

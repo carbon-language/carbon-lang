@@ -137,7 +137,7 @@ public:
   /// then return NULL.
   Pass *findAnalysisPass(AnalysisID AID);
 
-  PMTopLevelManager(enum TopLevelManagerType t);
+  explicit PMTopLevelManager(enum TopLevelManagerType t);
   virtual ~PMTopLevelManager(); 
 
   /// Add immutable pass and initialize it.
@@ -198,7 +198,7 @@ private:
 class PMDataManager {
 public:
 
-  PMDataManager(int Depth) : TPM(NULL), Depth(Depth) {
+  explicit PMDataManager(int Depth) : TPM(NULL), Depth(Depth) {
     initializeAnalysisInfo();
   }
 
@@ -321,7 +321,7 @@ private:
 class FPPassManager : public ModulePass, public PMDataManager {
  
 public:
-  FPPassManager(int Depth) : PMDataManager(Depth) { }
+  explicit FPPassManager(int Depth) : PMDataManager(Depth) { }
   
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.

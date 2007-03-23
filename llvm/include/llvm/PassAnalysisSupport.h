@@ -111,7 +111,7 @@ private:
   AnalysisResolver();  // DO NOT IMPLEMENT
 
 public:
-  AnalysisResolver(PMDataManager &P) : PM(P) { }
+  explicit AnalysisResolver(PMDataManager &P) : PM(P) { }
   
   inline PMDataManager &getPMDataManager() { return PM; }
 

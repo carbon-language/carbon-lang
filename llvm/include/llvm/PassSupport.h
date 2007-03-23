@@ -193,20 +193,20 @@ class RegisterAGBase : public RegisterPassBase {
   const PassInfo *ImplementationInfo;
   bool isDefaultImplementation;
 protected:
-  RegisterAGBase(const std::type_info &Interface,
-                 const std::type_info *Pass = 0,
-                 bool isDefault = false);
+  explicit RegisterAGBase(const std::type_info &Interface,
+                          const std::type_info *Pass = 0,
+                          bool isDefault = false);
   void setGroupName(const char *Name);
 };
 
 template<typename Interface, bool Default = false>
 struct RegisterAnalysisGroup : public RegisterAGBase {
-  RegisterAnalysisGroup(RegisterPassBase &RPB)
+  explicit RegisterAnalysisGroup(RegisterPassBase &RPB)
     : RegisterAGBase(typeid(Interface), &RPB.getPassInfo()->getTypeInfo(), 
                      Default) {
   }
 
-  RegisterAnalysisGroup(const char *Name)
+  explicit RegisterAnalysisGroup(const char *Name)
   : RegisterAGBase(typeid(Interface)) {
     setGroupName(Name);
   }
