@@ -6801,7 +6801,7 @@ static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
     // already zeros.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
       uint32_t BitWidth = OrigTy->getBitWidth();
-      if (Ty->getBitWidth() < OrigTy->getBitWidth() &&
+      if (Ty->getBitWidth() < BitWidth &&
           MaskedValueIsZero(I->getOperand(0),
             APInt::getAllOnesValue(BitWidth) & 
          APInt::getAllOnesValue(Ty->getBitWidth()).zextOrTrunc(BitWidth).flip())
