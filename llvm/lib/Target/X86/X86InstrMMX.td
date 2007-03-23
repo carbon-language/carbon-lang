@@ -23,7 +23,7 @@
 class MMXI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, Requires<[HasMMX]>;
 class MMX2I<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
-      : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
+      : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasMMX]>;
 class MMXIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : Ii8<o, F, ops, asm, pattern>, TB, Requires<[HasMMX]>;
 
@@ -151,7 +151,6 @@ defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>;
 defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw" , int_x86_mmx_pmulh_w , 1>;
 defm MMX_PMADDWD : MMXI_binop_rm_int<0xF5, "pmaddwd", int_x86_mmx_pmadd_wd, 1>;
 
-
 // MMX_SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to
 // MMX_PSHUF*, MMX_SHUFP* etc. imm.
 def MMX_SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
@@ -245,6 +244,11 @@ defm MMX_PSRAW : MMXI_binop_rmi_int<0xE1, 0x71, MRM4r, "psraw",
                                     int_x86_mmx_psra_w>;
 defm MMX_PSRAD : MMXI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad",
                                     int_x86_mmx_psra_d>;
+
+// Pack instructions
+defm MMX_PACKSSWB : MMXI_binop_rm_int<0x63, "packsswb", int_x86_mmx_packsswb>;
+defm MMX_PACKSSDW : MMXI_binop_rm_int<0x6B, "packssdw", int_x86_mmx_packssdw>;
+defm MMX_PACKUSWB : MMXI_binop_rm_int<0x67, "packuswb", int_x86_mmx_packuswb>;
 
 // Move Instructions
 def MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
