@@ -2279,6 +2279,7 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
 
   unsigned EVTBits = MVT::getSizeInBits(EVT);
   unsigned ShAmt = 0;
+  bool CombineSRL =  false;
   if (N0.getOpcode() == ISD::SRL && N0.hasOneUse()) {
     if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
       ShAmt = N01->getValue();
@@ -2288,6 +2289,7 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
         if (MVT::getSizeInBits(N0.getValueType()) <= EVTBits)
           return SDOperand();
         ShAmt /= 8;
+        CombineSRL = true;
       }
     }
   }
@@ -2317,7 +2319,12 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
       : DAG.getExtLoad(ExtType, VT, LN0->getChain(), NewPtr,
                        LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT);
     AddToWorkList(N);
-    CombineTo(N0.Val, Load, Load.getValue(1));
+    if (CombineSRL) {
+      std::vector<SDNode*> NowDead;
+      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1), NowDead);
+      CombineTo(N->getOperand(0).Val, Load);
+    } else
+      CombineTo(N0.Val, Load, Load.getValue(1));
     if (ShAmt)
       return DAG.getNode(N->getOpcode(), VT, Load);
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
