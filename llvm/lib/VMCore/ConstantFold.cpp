@@ -651,17 +651,27 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       case Instruction::Mul:     
         return ConstantFP::get(CFP1->getType(), C1Val * C2Val);
       case Instruction::FDiv:
-        if (CFP2->isExactlyValue(0.0)) 
-          return ConstantFP::get(CFP1->getType(),
-                                 std::numeric_limits<double>::infinity());
-        if (CFP2->isExactlyValue(-0.0))
-          return ConstantFP::get(CFP1->getType(),
-                                 -std::numeric_limits<double>::infinity());
+        if (CFP2->isExactlyValue(0.0) || CFP2->isExactlyValue(-0.0))
+          if (CFP1->isExactlyValue(0.0) || CFP1->isExactlyValue(-0.0))
+            // IEEE 754, Section 7.1, #4
+            return ConstantFP::get(CFP1->getType(),
+                                   std::numeric_limits<double>::quiet_NaN());
+          else if (CFP2->isExactlyValue(-0.0) || C1Val < 0.0)
+            // IEEE 754, Section 7.2, negative infinity case
+            return ConstantFP::get(CFP1->getType(),
+                                   -std::numeric_limits<double>::infinity());
+          else
+            // IEEE 754, Section 7.2, positive infinity case
+            return ConstantFP::get(CFP1->getType(),
+                                   std::numeric_limits<double>::infinity());
         return ConstantFP::get(CFP1->getType(), C1Val / C2Val);
       case Instruction::FRem:
-        if (CFP2->isNullValue()) 
-          return 0;
+        if (CFP2->isExactlyValue(0.0) || CFP2->isExactlyValue(-0.0))
+          // IEEE 754, Section 7.1, #5
+          return ConstantFP::get(CFP1->getType(), 
+                                 std::numeric_limits<double>::quiet_NaN());
         return ConstantFP::get(CFP1->getType(), std::fmod(C1Val, C2Val));
+
       }
     }
   } else if (const ConstantVector *CP1 = dyn_cast<ConstantVector>(C1)) {
