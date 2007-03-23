@@ -9989,58 +9989,66 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
                                        SmallPtrSet<BasicBlock*, 64> &Visited,
                                        InstCombiner &IC,
                                        const TargetData *TD) {
-  // We have now visited this block!  If we've already been here, bail out.
-  if (!Visited.insert(BB)) return;
-    
-  for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
-    Instruction *Inst = BBI++;
-    
-    // DCE instruction if trivially dead.
-    if (isInstructionTriviallyDead(Inst)) {
-      ++NumDeadInst;
-      DOUT << "IC: DCE: " << *Inst;
-      Inst->eraseFromParent();
-      continue;
-    }
-    
-    // ConstantProp instruction if trivially constant.
-    if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
-      DOUT << "IC: ConstFold to: " << *C << " from: " << *Inst;
-      Inst->replaceAllUsesWith(C);
-      ++NumConstProp;
-      Inst->eraseFromParent();
-      continue;
-    }
-    
-    IC.AddToWorkList(Inst);
-  }
+  std::vector<BasicBlock*> Worklist;
+  Worklist.push_back(BB);
 
-  // Recursively visit successors.  If this is a branch or switch on a constant,
-  // only visit the reachable successor.
-  TerminatorInst *TI = BB->getTerminator();
-  if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-    if (BI->isConditional() && isa<ConstantInt>(BI->getCondition())) {
-      bool CondVal = cast<ConstantInt>(BI->getCondition())->getZExtValue();
-      AddReachableCodeToWorklist(BI->getSuccessor(!CondVal), Visited, IC, TD);
-      return;
-    }
-  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-    if (ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition())) {
-      // See if this is an explicit destination.
-      for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i)
-        if (SI->getCaseValue(i) == Cond) {
-          AddReachableCodeToWorklist(SI->getSuccessor(i), Visited, IC, TD);
-          return;
-        }
+  while (!Worklist.empty()) {
+    BB = Worklist.back();
+    Worklist.pop_back();
+    
+    // We have now visited this block!  If we've already been here, ignore it.
+    if (!Visited.insert(BB)) continue;
+    
+    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
+      Instruction *Inst = BBI++;
       
-      // Otherwise it is the default destination.
-      AddReachableCodeToWorklist(SI->getSuccessor(0), Visited, IC, TD);
-      return;
+      // DCE instruction if trivially dead.
+      if (isInstructionTriviallyDead(Inst)) {
+        ++NumDeadInst;
+        DOUT << "IC: DCE: " << *Inst;
+        Inst->eraseFromParent();
+        continue;
+      }
+      
+      // ConstantProp instruction if trivially constant.
+      if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
+        DOUT << "IC: ConstFold to: " << *C << " from: " << *Inst;
+        Inst->replaceAllUsesWith(C);
+        ++NumConstProp;
+        Inst->eraseFromParent();
+        continue;
+      }
+      
+      IC.AddToWorkList(Inst);
     }
+
+    // Recursively visit successors.  If this is a branch or switch on a
+    // constant, only visit the reachable successor.
+    TerminatorInst *TI = BB->getTerminator();
+    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+      if (BI->isConditional() && isa<ConstantInt>(BI->getCondition())) {
+        bool CondVal = cast<ConstantInt>(BI->getCondition())->getZExtValue();
+        Worklist.push_back(BI->getSuccessor(!CondVal));
+        continue;
+      }
+    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+      if (ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition())) {
+        // See if this is an explicit destination.
+        for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i)
+          if (SI->getCaseValue(i) == Cond) {
+            Worklist.push_back(SI->getSuccessor(i));
+            continue;
+          }
+        
+        // Otherwise it is the default destination.
+        Worklist.push_back(SI->getSuccessor(0));
+        continue;
+      }
+    }
+    
+    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+      Worklist.push_back(TI->getSuccessor(i));
   }
-  
-  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-    AddReachableCodeToWorklist(TI->getSuccessor(i), Visited, IC, TD);
 }
 
 bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
