@@ -16,6 +16,7 @@
 
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/Decl.h"
 
 namespace llvm {
 namespace clang {
@@ -27,10 +28,15 @@ namespace clang {
 /// is required.
 ///
 class Expr : public Stmt {
-  TypeRef Type;
-public:
-  Expr(StmtClass SC, TypeRef T=0) : Stmt(SC), Type(T) {}
+  TypeRef TR;
+protected:
+  Expr(StmtClass SC, TypeRef T=0) : Stmt(SC), TR(T) {}
   ~Expr() {}
+public:  
+  // FIXME: the return type of getType is inconsistent with ObjectDecl.
+  // this is confusing and needs to be reconciled (by making one conform).
+  Type *getType() const { return TR.getTypePtr(); }
+  TypeRef getTypeRef() const { return TR; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -47,9 +53,9 @@ public:
 /// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
 /// enum, etc.
 class DeclRefExpr : public Expr {
-  Decl *D;
+  ObjectDecl *D;
 public:
-  DeclRefExpr(Decl *d) : Expr(DeclRefExprClass), D(d) {}
+  DeclRefExpr(ObjectDecl *d) : Expr(DeclRefExprClass, d->getType()), D(d) {}
   
   Decl *getDecl() const { return D; }
   
@@ -77,8 +83,10 @@ public:
 };
 
 class FloatingLiteral : public Expr {
+  float Value; // FIXME
 public:
-  FloatingLiteral() : Expr(FloatingLiteralClass) {} 
+  FloatingLiteral(float value, TypeRef type) : 
+    Expr(FloatingLiteralClass, type), Value(value) {} 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == FloatingLiteralClass; 
@@ -91,7 +99,7 @@ class StringLiteral : public Expr {
   unsigned ByteLength;
   bool IsWide;
 public:
-  StringLiteral(const char *strData, unsigned byteLength, bool Wide);
+  StringLiteral(const char *strData, unsigned byteLength, bool Wide, TypeRef t);
   virtual ~StringLiteral();
   
   const char *getStrData() const { return StrData; }
@@ -174,9 +182,9 @@ class SizeOfAlignOfTypeExpr : public Expr {
   bool isSizeof;  // true if sizeof, false if alignof.
   TypeRef Ty;
 public:
-  SizeOfAlignOfTypeExpr(bool issizeof, TypeRef ty) : 
-    Expr(SizeOfAlignOfTypeExprClass),
-    isSizeof(issizeof), Ty(ty) {}
+  SizeOfAlignOfTypeExpr(bool issizeof, TypeRef argType, TypeRef resultType) : 
+    Expr(SizeOfAlignOfTypeExprClass, resultType),
+    isSizeof(issizeof), Ty(argType) {}
   
   bool isSizeOf() const { return isSizeof; }
   TypeRef getArgumentType() const { return Ty; }
@@ -196,8 +204,8 @@ public:
 class ArraySubscriptExpr : public Expr {
   Expr *Base, *Idx;
 public:
-  ArraySubscriptExpr(Expr *base, Expr *idx) : 
-    Expr(ArraySubscriptExprClass),
+  ArraySubscriptExpr(Expr *base, Expr *idx, TypeRef t) : 
+    Expr(ArraySubscriptExprClass, t),
     Base(base), Idx(idx) {}
   
   Expr *getBase() { return Base; }

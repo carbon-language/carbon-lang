@@ -43,6 +43,7 @@ public:
   virtual ~Stmt() {}
 
   StmtClass getStmtClass() const { return sClass; }
+  const char *getStmtClassName() const;
 
   void dump() const;
   void print(std::ostream &OS) const;

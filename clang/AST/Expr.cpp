@@ -22,7 +22,8 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 StringLiteral::StringLiteral(const char *strData, unsigned byteLength, 
-                             bool Wide) : Expr(StringLiteralClass) {
+                             bool Wide, TypeRef t) : 
+  Expr(StringLiteralClass, t) {
   // OPTIMIZE: could allocate this appended to the StringLiteral.
   char *AStrData = new char[byteLength];
   memcpy(AStrData, strData, byteLength);
@@ -73,7 +74,7 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 //===----------------------------------------------------------------------===//
 
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs)
-  : Expr(CallExprClass), Fn(fn), NumArgs(numargs) {
+  : Expr(CallExprClass, fn->getTypeRef()), Fn(fn), NumArgs(numargs) {
   Args = new Expr*[numargs];
   for (unsigned i = 0; i != numargs; ++i)
     Args[i] = args[i];

@@ -42,7 +42,7 @@ bool Type::isArrayType() const {
 }
 
 bool Type::isStructureType() const { 
-  if (const TaggedType *TT = dyn_cast<TaggedType>(CanonicalType)) {
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
     if (TT->getDecl()->getKind() == Decl::Struct)
       return true;
   }
@@ -50,7 +50,7 @@ bool Type::isStructureType() const {
 }
 
 bool Type::isUnionType() const { 
-  if (const TaggedType *TT = dyn_cast<TaggedType>(CanonicalType)) {
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
     if (TT->getDecl()->getKind() == Decl::Union)
       return true;
   }
@@ -65,7 +65,7 @@ bool Type::isIntegralType() const {
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::ULongLong;
   case Tagged:
-    const TaggedType *TT = static_cast<TaggedType*>(CanonicalType);
+    const TagType *TT = static_cast<TagType*>(CanonicalType);
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
     return false;
@@ -110,7 +110,7 @@ bool Type::isAggregateType() const {
   case Array:
     return true;
   case Tagged:
-    const TaggedType *TT = static_cast<TaggedType*>(CanonicalType);
+    const TagType *TT = static_cast<TagType*>(CanonicalType);
     if (TT->getDecl()->getKind() == Decl::Struct)
       return true;
     return true;
@@ -131,7 +131,7 @@ bool Type::isIncompleteType() const {
   case Tagged:
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
-    return !cast<TaggedType>(CanonicalType)->getDecl()->isDefinition();
+    return !cast<TagType>(CanonicalType)->getDecl()->isDefinition();
   case Array:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
     return cast<ArrayType>(CanonicalType)->getSize() == 0;
@@ -179,7 +179,7 @@ void FunctionTypeProto::Profile(FoldingSetNodeID &ID) {
 
 
 bool RecordType::classof(const Type *T) {
-  if (const TaggedType *TT = dyn_cast<TaggedType>(T))
+  if (const TagType *TT = dyn_cast<TagType>(T))
     return isa<RecordDecl>(TT->getDecl());
   return false;
 }
@@ -304,7 +304,7 @@ void TypedefType::getAsString(std::string &InnerString) const {
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
 }
 
-void TaggedType::getAsString(std::string &InnerString) const {
+void TagType::getAsString(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   

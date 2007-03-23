@@ -42,11 +42,14 @@ Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
   SmallVector<SourceLocation, 4> StringTokLocs;
   for (unsigned i = 0; i != NumStringToks; ++i)
     StringTokLocs.push_back(StringToks[i].getLocation());
-    
+  
+  // FIXME: handle wchar_t
+  TypeRef t = Context.getPointerType(Context.CharTy);
+  
   // FIXME: use factory.
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
   return new StringLiteral(Literal.GetString(), Literal.GetStringLength(), 
-                           Literal.AnyWide);
+                           Literal.AnyWide, t);
 }
 
 
@@ -63,22 +66,20 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
     // in C90, extension in C99).
     if (HasTrailingLParen &&
         // Not in C++.
-        !getLangOptions().CPlusPlus) {
+        !getLangOptions().CPlusPlus)
       D = ImplicitlyDefineFunction(Loc, II, S);
-    } else {
+    else
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
-      Diag(Loc, diag::err_undeclared_var_use, II.getName());
-      return true;
-    }
+      return Diag(Loc, diag::err_undeclared_var_use, II.getName());
   }
   
-  if (isa<TypedefDecl>(D)) {
-    Diag(Loc, diag::err_unexpected_typedef, II.getName());
-    return true;
-  }
-    
-  return new DeclRefExpr(D);
+  if (ObjectDecl *OD = dyn_cast<ObjectDecl>(D)) {
+    return new DeclRefExpr(OD);
+  } else if (isa<TypedefDecl>(D))
+    return Diag(Loc, diag::err_unexpected_typedef, II.getName());
+
+  assert(0 && "Invalid decl");
 }
 
 Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
@@ -136,7 +137,8 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
       return new IntegerLiteral(val, t);
     } 
   } else if (Literal.isFloatingLiteral()) {
-    // TODO: add floating point processing...
+    // FIXME: fill in the value and compute the real type...
+    return new FloatingLiteral(7.7, Context.FloatTy);
   }
   return ExprResult(true);
 }
@@ -199,7 +201,7 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
     return new IntegerLiteral(0, Context.IntTy);
   }
   
-  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy);
+  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy, Context.IntTy);
 }
 
 
@@ -219,13 +221,59 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
 Action::ExprResult Sema::
 ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
-  return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx);
+  TypeRef t1 = ((Expr *)Base)->getTypeRef();
+  TypeRef t2 = ((Expr *)Idx)->getTypeRef();
+
+  assert(!t1.isNull() && "no type for array base expression");
+  assert(!t1.isNull() && "no type for array index expression");
+
+  // In C, the expression e1[e2] is by definition precisely equivalent to
+  // the expression *((e1)+(e2)). This means the array "Base" may actually be 
+  // in the subscript position. As a result, we need to derive the array base 
+  // and index from the expression types.
+  
+  TypeRef baseType, indexType;
+  if (isa<ArrayType>(t1) || isa<PointerType>(t1)) {
+    baseType = t1;
+    indexType = t2;
+  } else if (isa<ArrayType>(t2) || isa<PointerType>(t2)) { // uncommon case
+    baseType = t2;
+    indexType = t1;
+  } else 
+    return Diag(LLoc, diag::err_typecheck_subscript_value);
+
+  if (indexType->isIntegralType())
+    return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, baseType);
+  else 
+    return Diag(LLoc, diag::err_typecheck_subscript);
 }
 
 Action::ExprResult Sema::
 ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
+  TypeRef BT = ((Expr *)Base)->getTypeRef();
+
+  assert(!BT.isNull() && "no type for member expression");
+
+  if (OpKind == tok::arrow) {
+    if (PointerType *PT = dyn_cast<PointerType>(BT))
+      BT = PT->getPointeeType();
+    else
+      return Diag(OpLoc, diag::err_typecheck_member_reference_arrow);
+  }
+  RecordDecl *RD;
+
+  // derive the structure/union definition from the type.
+  if (BT->isStructureType() || BT->isUnionType()) {
+    TagDecl *TD = cast<TagType>(BT)->getDecl();
+    if (BT->isIncompleteType())
+      return Diag(OpLoc, diag::err_typecheck_incomplete_tag, TD->getName());
+    if (!(RD = dyn_cast<RecordDecl>(TD)))
+      return Diag(OpLoc, diag::err_typecheck_internal_error);
+  } else
+    return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion);
+
   Decl *MemberDecl = 0;
   // TODO: Look up MemberDecl.
   return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
@@ -288,6 +336,10 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   case tok::pipeequal:            Opc = BinaryOperator::OrAssign; break;
   case tok::comma:                Opc = BinaryOperator::Comma; break;
   }
+
+  // perform implicit conversions (C99 6.3)
+  Expr *e1 = ImplicitConversion((Expr*)LHS);
+  Expr *e2 = ImplicitConversion((Expr*)RHS);
   
   if (BinaryOperator::isMultiplicativeOp(Opc)) 
     CheckMultiplicativeOperands((Expr*)LHS, (Expr*)RHS);
@@ -314,6 +366,15 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
                                             ExprTy *Cond, ExprTy *LHS,
                                             ExprTy *RHS) {
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
+}
+
+Expr *Sema::ImplicitConversion(Expr *E) {
+#if 0
+  TypeRef t = E->getTypeRef();
+  if (t != 0) t.dump();
+  else printf("no type for expr %s\n", E->getStmtClassName());
+#endif
+  return E;
 }
 
 void Sema::CheckMultiplicativeOperands(Expr *op1, Expr *op2) {

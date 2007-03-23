@@ -608,7 +608,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       
       if (!LHS.isInvalid && !Idx.isInvalid && Tok.getKind() == tok::r_square)
         LHS = Actions.ParseArraySubscriptExpr(LHS.Val, Loc, Idx.Val, RLoc);
-      else
+      else 
         LHS = ExprResult(true);
 
       // Match the ']'.

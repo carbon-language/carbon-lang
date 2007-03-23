@@ -322,6 +322,8 @@ StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
   SizeBound = StringToks[0].getLength()-2;  // -2 for "".
   AnyWide = StringToks[0].getKind() == tok::wide_string_literal;
   
+  hadError = false;
+  
   // The common case is that there is only one string fragment.
   for (unsigned i = 1; i != NumStringToks; ++i) {
     // The string could be shorter than this if it needs cleaning, but this is a

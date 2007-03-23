@@ -53,9 +53,10 @@ public:
   
   const LangOptions &getLangOptions() const;
   
-  void Diag(SourceLocation Loc, unsigned DiagID,
+  /// always returns true, which simplifies error handling (i.e. less code).
+  bool Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());
-  void Diag(const LexerToken &Tok, unsigned DiagID,
+  bool Diag(const LexerToken &Tok, unsigned DiagID,
             const std::string &M = std::string());
   
   //===--------------------------------------------------------------------===//
@@ -220,6 +221,8 @@ public:
   virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind);
 private:
+  Expr *ImplicitConversion(Expr *E); // C99 6.3
+  
   /// type checking binary operators (subroutines of ParseBinOp).
   void CheckMultiplicativeOperands(Expr *op1, Expr *op2); // C99 6.5.5
   void CheckAdditiveOperands(Expr *op1, Expr *op2);       // C99 6.5.6

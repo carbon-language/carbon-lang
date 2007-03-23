@@ -55,7 +55,7 @@ void ASTContext::PrintStats() const {
       ++NumFunctionP;
     else if (isa<TypedefType>(T))
       ++NumTypeName;
-    else if (TaggedType *TT = dyn_cast<TaggedType>(T)) {
+    else if (TagType *TT = dyn_cast<TagType>(T)) {
       ++NumTagged;
       switch (TT->getDecl()->getKind()) {
       default: assert(0 && "Unknown tagged type!");
@@ -280,7 +280,7 @@ TypeRef ASTContext::getTagDeclType(TagDecl *Decl) {
   // The decl stores the type cache.
   if (Decl->TypeForDecl) return Decl->TypeForDecl;
   
-  Types.push_back(Decl->TypeForDecl = new TaggedType(Decl, 0));
+  Types.push_back(Decl->TypeForDecl = new TagType(Decl, 0));
   return Types.back();
 }
 

@@ -424,9 +424,9 @@ public:
 };
 
 
-class TaggedType : public Type {
+class TagType : public Type {
   TagDecl *Decl;
-  TaggedType(TagDecl *D, Type *can) : Type(Tagged, can), Decl(D) {}
+  TagType(TagDecl *D, Type *can) : Type(Tagged, can), Decl(D) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
     
@@ -435,17 +435,17 @@ public:
   virtual void getAsString(std::string &InnerString) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Tagged; }
-  static bool classof(const TaggedType *) { return true; }
+  static bool classof(const TagType *) { return true; }
 };
 
 /// RecordType - This is a helper class that allows the use of isa/cast/dyncast
-/// to detect TaggedType objects of structs/unions/classes.
-class RecordType : public TaggedType {
+/// to detect TagType objects of structs/unions/classes.
+class RecordType : public TagType {
   RecordType(); // DO NOT IMPLEMENT
 public:
     
   RecordDecl *getDecl() const {
-    return reinterpret_cast<RecordDecl*>(TaggedType::getDecl());
+    return reinterpret_cast<RecordDecl*>(TagType::getDecl());
   }
   
   static bool classof(const Type *T);

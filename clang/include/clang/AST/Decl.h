@@ -59,11 +59,12 @@ private:
   ///
   Decl *Next;
   
-public:
+protected:
   Decl(Kind DK, SourceLocation L, IdentifierInfo *Id)
     : DeclKind(DK), Loc(L), Identifier(Id), Next(0) {}
   virtual ~Decl();
   
+public:
   IdentifierInfo *getIdentifier() const { return Identifier; }
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
@@ -106,6 +107,8 @@ protected:
   ObjectDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T,
              StorageClass S = None): Decl(DK, L, Id), DeclType(T), SClass(S) {}
 public:
+  // FIXME: should rename to getTypeRef/getCanonicalTypeRef to distinguish
+  // TypeRef's from Type's...
   TypeRef getType() const { return DeclType; }
   TypeRef getCanonicalType() const { return DeclType.getCanonicalType(); }
   StorageClass getStorageClass() const { return SClass; }
@@ -185,7 +188,7 @@ public:
 /// EnumConstantDecl - An instance of this object exists for each enum constant
 /// that is defined.  For example, in "enum X {a,b}", each of a/b are
 /// EnumConstantDecl's, X is an instance of EnumDecl, and the type of a/b is a
-/// TaggedType for the X EnumDecl.
+/// TagType for the X EnumDecl.
 class EnumConstantDecl : public ObjectDecl {
 public:
   // FIXME: Capture value info.

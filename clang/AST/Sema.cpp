@@ -26,12 +26,14 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
 // Helper functions.
 //===----------------------------------------------------------------------===//
 
-void Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
+bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
   PP.Diag(Loc, DiagID, Msg);
+  return true;
 }
 
-void Sema::Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M) {
+bool Sema::Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M) {
   Diag(Tok.getLocation(), DiagID, M);
+  return true;
 }
 
 const LangOptions &Sema::getLangOptions() const {
