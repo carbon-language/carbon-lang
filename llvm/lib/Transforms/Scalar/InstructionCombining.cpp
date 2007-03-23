@@ -7136,9 +7136,10 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         if (pred != ICmpInst::ICMP_NE && pred != ICmpInst::ICMP_EQ)
           break;
         
-        if ((KnownZero^TypeMask).isPowerOf2()) { // Exactly 1 possible 1?
+        APInt KnownZeroMask(KnownZero ^ TypeMask);
+        if (KnownZeroMask.isPowerOf2()) { // Exactly 1 possible 1?
           bool isNE = pred == ICmpInst::ICMP_NE;
-          if (Op1CV != 0 && (Op1CV != (KnownZero^TypeMask))) {
+          if (Op1CV != 0 && (Op1CV != KnownZeroMask)) {
             // (X&4) == 2 --> false
             // (X&4) != 2 --> true
             Constant *Res = ConstantInt::get(Type::Int1Ty, isNE);
@@ -7146,7 +7147,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
             return ReplaceInstUsesWith(CI, Res);
           }
           
-          unsigned ShiftAmt = (KnownZero^TypeMask).logBase2();
+          unsigned ShiftAmt = KnownZeroMask.logBase2();
           Value *In = Op0;
           if (ShiftAmt) {
             // Perform a logical shr by shiftamt.
