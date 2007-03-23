@@ -2017,8 +2017,11 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   // fold (sext (truncate (srl (load x), c))) -> (sext (smaller load (x+c/n)))
   if (N0.getOpcode() == ISD::TRUNCATE) {
     SDOperand NarrowLoad = ReduceLoadWidth(N0.Val);
-    if (NarrowLoad.Val)
-      N0 = NarrowLoad;
+    if (NarrowLoad.Val) {
+      if (NarrowLoad.Val != N0.Val)
+        CombineTo(N0.Val, NarrowLoad);
+      return DAG.getNode(ISD::SIGN_EXTEND, VT, NarrowLoad);
+    }
   }
 
   // See if the value being truncated is already sign extended.  If so, just
@@ -2109,8 +2112,11 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   // fold (zext (truncate (srl (load x), c))) -> (zext (small load (x+c/n)))
   if (N0.getOpcode() == ISD::TRUNCATE) {
     SDOperand NarrowLoad = ReduceLoadWidth(N0.Val);
-    if (NarrowLoad.Val)
-      N0 = NarrowLoad;
+    if (NarrowLoad.Val) {
+      if (NarrowLoad.Val != N0.Val)
+        CombineTo(N0.Val, NarrowLoad);
+      return DAG.getNode(ISD::ZERO_EXTEND, VT, NarrowLoad);
+    }
   }
 
   // fold (zext (truncate x)) -> (and x, mask)
@@ -2189,8 +2195,11 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   // fold (aext (truncate (srl (load x), c))) -> (aext (small load (x+c/n)))
   if (N0.getOpcode() == ISD::TRUNCATE) {
     SDOperand NarrowLoad = ReduceLoadWidth(N0.Val);
-    if (NarrowLoad.Val)
-      N0 = NarrowLoad;
+    if (NarrowLoad.Val) {
+      if (NarrowLoad.Val != N0.Val)
+        CombineTo(N0.Val, NarrowLoad);
+      return DAG.getNode(ISD::ANY_EXTEND, VT, NarrowLoad);
+    }
   }
 
   // fold (aext (truncate x))
@@ -2278,7 +2287,7 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
         N0 = N0.getOperand(0);
         if (MVT::getSizeInBits(N0.getValueType()) <= EVTBits)
           return SDOperand();
-        ShAmt /= EVTBits;
+        ShAmt /= 8;
       }
     }
   }
