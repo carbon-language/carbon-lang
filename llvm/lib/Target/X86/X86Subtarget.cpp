@@ -106,19 +106,20 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   
   if (X86::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1))
     return;
+
+  X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
   
-  // FIXME: support for AMD family of processors.
+  if ((EDX >> 23) & 0x1) X86SSELevel = MMX;
+  if ((EDX >> 25) & 0x1) X86SSELevel = SSE1;
+  if ((EDX >> 26) & 0x1) X86SSELevel = SSE2;
+  if (ECX & 0x1)         X86SSELevel = SSE3;
+
   if (memcmp(text.c, "GenuineIntel", 12) == 0) {
-    X86::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
-
-    if ((EDX >> 23) & 0x1) X86SSELevel = MMX;
-    if ((EDX >> 25) & 0x1) X86SSELevel = SSE1;
-    if ((EDX >> 26) & 0x1) X86SSELevel = SSE2;
-    if (ECX & 0x1)         X86SSELevel = SSE3;
-
     X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
     HasX86_64 = (EDX >> 29) & 0x1;
-  }
+  } else if (memcmp(text.c, "AuthenticAMD", 12) == 0) {    
+    // FIXME: Correctly check for 64-bit stuff
+  }  
 }
 
 static const char *GetCurrentX86CPU() {
@@ -203,10 +204,10 @@ static const char *GetCurrentX86CPU() {
         }
       case 15:
         switch (Model) {
+        case 1:  return "opteron";
         case 5:  return "athlon-fx"; // also opteron
         default: return "athlon64";
         }
-
     default:
       return "generic";
     }
