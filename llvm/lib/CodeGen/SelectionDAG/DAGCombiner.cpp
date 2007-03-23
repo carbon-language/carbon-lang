@@ -2272,9 +2272,13 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType EVT = N->getValueType(0);
 
+  // Special case: SIGN_EXTEND_INREG is basically truncating to EVT then
+  // extended to VT.
   if (Opc == ISD::SIGN_EXTEND_INREG) {
     ExtType = ISD::SEXTLOAD;
     EVT = cast<VTSDNode>(N->getOperand(1))->getVT();
+    if (AfterLegalize && !TLI.isLoadXLegal(ISD::SEXTLOAD, EVT))
+      return SDOperand();
   }
 
   unsigned EVTBits = MVT::getSizeInBits(EVT);
