@@ -2961,11 +2961,10 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       if (CI->isAllOnesValue())              // X * -1 == 0 - X
         return BinaryOperator::createNeg(Op0, I.getName());
 
-      int64_t Val = (int64_t)cast<ConstantInt>(CI)->getZExtValue();
-      if (isPowerOf2_64(Val)) {          // Replace X*(2^C) with X << C
-        uint64_t C = Log2_64(Val);
+      APInt Val(cast<ConstantInt>(CI)->getValue());
+      if (Val.isPowerOf2()) {          // Replace X*(2^C) with X << C
         return BinaryOperator::createShl(Op0,
-                                      ConstantInt::get(Op0->getType(), C));
+                 ConstantInt::get(Op0->getType(), Val.logBase2()));
       }
     } else if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1)) {
       if (Op1F->isNullValue())
@@ -3128,7 +3127,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
                                         ConstantExpr::getMul(RHS, LHSRHS));
         }
 
-    if (!RHS->isNullValue()) { // avoid X udiv 0
+    if (!RHS->isZero()) { // avoid X udiv 0
       if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
         if (Instruction *R = FoldOpIntoSelect(I, SI, this))
           return R;
@@ -3157,23 +3156,21 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   // Check to see if this is an unsigned division with an exact power of 2,
   // if so, convert to a right shift.
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
-    if (uint64_t Val = C->getZExtValue())    // Don't break X / 0
-      if (isPowerOf2_64(Val)) {
-        uint64_t ShiftAmt = Log2_64(Val);
-        return BinaryOperator::createLShr(Op0, 
-                                    ConstantInt::get(Op0->getType(), ShiftAmt));
-      }
+    APInt Val(C->getValue());
+    if (Val != 0 && Val.isPowerOf2())    // Don't break X / 0
+      return BinaryOperator::createLShr(Op0, 
+               ConstantInt::get(Op0->getType(), Val.logBase2()));
   }
 
   // X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
   if (BinaryOperator *RHSI = dyn_cast<BinaryOperator>(I.getOperand(1))) {
     if (RHSI->getOpcode() == Instruction::Shl &&
         isa<ConstantInt>(RHSI->getOperand(0))) {
-      uint64_t C1 = cast<ConstantInt>(RHSI->getOperand(0))->getZExtValue();
-      if (isPowerOf2_64(C1)) {
+      APInt C1(cast<ConstantInt>(RHSI->getOperand(0))->getValue());
+      if (C1.isPowerOf2()) {
         Value *N = RHSI->getOperand(1);
         const Type *NTy = N->getType();
-        if (uint64_t C2 = Log2_64(C1)) {
+        if (uint64_t C2 = C1.logBase2()) {
           Constant *C2V = ConstantInt::get(NTy, C2);
           N = InsertNewInstBefore(BinaryOperator::createAdd(N, C2V, "tmp"), I);
         }
@@ -3187,10 +3184,10 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) 
     if (ConstantInt *STO = dyn_cast<ConstantInt>(SI->getOperand(1)))
       if (ConstantInt *SFO = dyn_cast<ConstantInt>(SI->getOperand(2)))  {
-        uint64_t TVA = STO->getZExtValue(), FVA = SFO->getZExtValue();
-        if (isPowerOf2_64(TVA) && isPowerOf2_64(FVA)) {
+        APInt TVA(STO->getValue()), FVA(SFO->getValue());
+        if (TVA.isPowerOf2() && FVA.isPowerOf2()) {
           // Compute the shift amounts
-          unsigned TSA = Log2_64(TVA), FSA = Log2_64(FVA);
+          uint32_t TSA = TVA.logBase2(), FSA = FVA.logBase2();
           // Construct the "on true" case of the select
           Constant *TC = ConstantInt::get(Op0->getType(), TSA);
           Instruction *TSI = BinaryOperator::createLShr(
@@ -3230,7 +3227,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a udiv.
   if (I.getType()->isInteger()) {
-    uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
+    APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
     if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
       return BinaryOperator::createUDiv(Op0, Op1, I.getName());
     }
@@ -3381,7 +3378,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
     // Check to see if this is an unsigned remainder with an exact power of 2,
     // if so, convert to a bitwise and.
     if (ConstantInt *C = dyn_cast<ConstantInt>(RHS))
-      if (isPowerOf2_64(C->getZExtValue()))
+      if (C->getValue().isPowerOf2())
         return BinaryOperator::createAnd(Op0, SubOne(C));
   }
 
@@ -3389,8 +3386,8 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
     // Turn A % (C << N), where C is 2^k, into A & ((C << N)-1)  
     if (RHSI->getOpcode() == Instruction::Shl &&
         isa<ConstantInt>(RHSI->getOperand(0))) {
-      unsigned C1 = cast<ConstantInt>(RHSI->getOperand(0))->getZExtValue();
-      if (isPowerOf2_64(C1)) {
+      APInt C1(cast<ConstantInt>(RHSI->getOperand(0))->getValue());
+      if (C1.isPowerOf2()) {
         Constant *N1 = ConstantInt::getAllOnesValue(I.getType());
         Value *Add = InsertNewInstBefore(BinaryOperator::createAdd(RHSI, N1,
                                                                    "tmp"), I);
@@ -3405,8 +3402,8 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
     if (ConstantInt *STO = dyn_cast<ConstantInt>(SI->getOperand(1)))
       if (ConstantInt *SFO = dyn_cast<ConstantInt>(SI->getOperand(2))) {
         // STO == 0 and SFO == 0 handled above.
-        if (isPowerOf2_64(STO->getZExtValue()) && 
-            isPowerOf2_64(SFO->getZExtValue())) {
+        if ((STO->getValue().isPowerOf2()) && 
+            (SFO->getValue().isPowerOf2())) {
           Value *TrueAnd = InsertNewInstBefore(
             BinaryOperator::createAnd(Op0, SubOne(STO), SI->getName()+".t"), I);
           Value *FalseAnd = InsertNewInstBefore(
@@ -3427,7 +3424,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   
   if (Value *RHSNeg = dyn_castNegVal(Op1))
     if (!isa<ConstantInt>(RHSNeg) || 
-        cast<ConstantInt>(RHSNeg)->getSExtValue() > 0) {
+        cast<ConstantInt>(RHSNeg)->getValue().isPositive()) {
       // X % -Y -> X % Y
       AddUsesToWorkList(I);
       I.setOperand(1, RHSNeg);
@@ -3436,7 +3433,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
  
   // If the top bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a urem.
-  uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
+  APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
   if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
     // X srem Y -> X urem Y, iff X and Y don't have sign bit set
     return BinaryOperator::createURem(Op0, Op1, I.getName());
