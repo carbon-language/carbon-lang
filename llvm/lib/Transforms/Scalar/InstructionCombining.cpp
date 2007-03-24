@@ -733,7 +733,7 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero <<= ShiftAmt;
       KnownOne  <<= ShiftAmt;
-      KnownZero |= APInt(BitWidth, 1ULL).shl(ShiftAmt)-1;  // low bits known zero.
+      KnownZero |= APInt(BitWidth, 1ULL).shl(ShiftAmt)-1;  // low bits known 0
       return;
     }
     break;
@@ -2213,12 +2213,12 @@ static bool isSignBitCheck(ICmpInst::Predicate pred, ConstantInt *RHS) {
       return RHS->isAllOnesValue();
     case ICmpInst::ICMP_UGE: 
       // True if LHS u>= RHS and RHS == high-bit-mask (2^7, 2^15, 2^31, etc)
-      return RHS->getZExtValue() == (1ULL << 
-        (RHS->getType()->getPrimitiveSizeInBits()-1));
+      return RHS->getValue() == 
+             APInt::getSignBit(RHS->getType()->getPrimitiveSizeInBits());
     case ICmpInst::ICMP_UGT:
       // True if LHS u> RHS and RHS == high-bit-mask - 1
-      return RHS->getZExtValue() ==
-        (1ULL << (RHS->getType()->getPrimitiveSizeInBits()-1))-1;
+      return RHS->getValue() ==
+             APInt::getSignedMaxValue(RHS->getType()->getPrimitiveSizeInBits());
     default:
       return false;
   }
@@ -2553,7 +2553,7 @@ static Constant *GetFactor(Value *V) {
   } else if (I->getOpcode() == Instruction::And) {
     if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // X & 0xFFF0 is known to be a multiple of 16.
-      unsigned Zeros = CountTrailingZeros_64(RHS->getZExtValue());
+      uint32_t Zeros = RHS->getValue().countTrailingZeros();
       if (Zeros != V->getType()->getPrimitiveSizeInBits())
         return ConstantExpr::getShl(Result, 
                                     ConstantInt::get(Result->getType(), Zeros));
@@ -3082,17 +3082,16 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
 // MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
 // not, since all 1s are not contiguous.
 static bool isRunOfOnes(ConstantInt *Val, unsigned &MB, unsigned &ME) {
-  uint64_t V = Val->getZExtValue();
-  if (!isShiftedMask_64(V)) return false;
+  APInt V = Val->getValue();
+  uint32_t BitWidth = Val->getType()->getBitWidth();
+  if (!APIntOps::isShiftedMask(BitWidth, V)) return false;
 
   // look for the first zero bit after the run of ones
-  MB = 64-CountLeadingZeros_64((V - 1) ^ V);
+  MB = BitWidth - ((V - 1) ^ V).countLeadingZeros();
   // look for the first non-zero bit
-  ME = 64-CountLeadingZeros_64(V);
+  ME = V.getActiveBits(); 
   return true;
 }
-
-
 
 /// FoldLogicalPlusAnd - This is part of an expression (LHS +/- RHS) & Mask,
 /// where isSub determines whether the operator is a sub.  If we can fold one of
