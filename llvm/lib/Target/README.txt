@@ -377,3 +377,35 @@ Promote for i32 bswap can use i64 bswap + shr.  Useful on targets with 64-bit
 regs and bswap, like itanium.
 
 //===---------------------------------------------------------------------===//
+
+LSR should know what GPR types a target has.  This code:
+
+volatile short X, Y; // globals
+
+void foo(int N) {
+  int i;
+  for (i = 0; i < N; i++) { X = i; Y = i*4; }
+}
+
+produces two identical IV's (after promotion) on PPC/ARM:
+
+LBB1_1: @bb.preheader
+        mov r3, #0
+        mov r2, r3
+        mov r1, r3
+LBB1_2: @bb
+        ldr r12, LCPI1_0
+        ldr r12, [r12]
+        strh r2, [r12]
+        ldr r12, LCPI1_1
+        ldr r12, [r12]
+        strh r3, [r12]
+        add r1, r1, #1    <- [0,+,1]
+        add r3, r3, #4
+        add r2, r2, #1    <- [0,+,1]
+        cmp r1, r0
+        bne LBB1_2      @bb
+
+
+//===---------------------------------------------------------------------===//
+
