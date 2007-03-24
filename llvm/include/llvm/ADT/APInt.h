@@ -552,9 +552,11 @@ public:
     return this->udiv(RHS);
   }
 
-  /// Perform an Unsigned remainder operation on this APInt with RHS being the
+  /// Perform an unsigned remainder operation on this APInt with RHS being the
   /// divisor. Both this and RHS are treated as unsigned quantities for purposes
-  /// of this operation.
+  /// of this operation. Note that this is a true remainder operation and not
+  /// a modulo operation because the sign follows the sign of the dividend
+  /// which is *this.
   /// @returns a new APInt value containing the remainder result
   /// @brief Unsigned remainder operation.
   APInt urem(const APInt& RHS) const;
@@ -566,9 +568,9 @@ public:
       if (RHS.isNegative())
         return -((-(*this)).urem(-RHS));
       else
-        return (-(*this)).urem(RHS);
+        return -(-(*this)).urem(RHS);
     else if (RHS.isNegative())
-      return -(this->urem(-RHS));
+      return this->urem(-RHS);
     return this->urem(RHS);
   }
 
