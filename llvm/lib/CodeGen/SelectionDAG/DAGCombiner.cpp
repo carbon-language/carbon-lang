@@ -2292,7 +2292,6 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
         N0 = N0.getOperand(0);
         if (MVT::getSizeInBits(N0.getValueType()) <= EVTBits)
           return SDOperand();
-        ShAmt /= 8;
         CombineSRL = true;
       }
     }
@@ -2308,12 +2307,11 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
            "Cannot truncate to larger type!");
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     MVT::ValueType PtrType = N0.getOperand(1).getValueType();
-    // For big endian targets, we need to add an offset to the pointer to load
-    // the correct bytes.  For little endian systems, we merely need to read
-    // fewer bytes from the same pointer.
-    uint64_t PtrOff =  ShAmt
-      ? ShAmt : (TLI.isLittleEndian() ? 0
-                 : (MVT::getSizeInBits(N0.getValueType()) - EVTBits) / 8);
+    // For big endian targets, we need to adjust the offset to the pointer to
+    // load the correct bytes.
+    if (!TLI.isLittleEndian())
+      ShAmt = MVT::getSizeInBits(N0.getValueType()) - ShAmt - EVTBits;
+    uint64_t PtrOff =  ShAmt / 8;
     SDOperand NewPtr = DAG.getNode(ISD::ADD, PtrType, LN0->getBasePtr(),
                                    DAG.getConstant(PtrOff, PtrType));
     AddToWorkList(NewPtr.Val);
