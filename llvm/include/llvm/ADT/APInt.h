@@ -357,12 +357,11 @@ public:
   /// @brief Get a value with high bits set
   static APInt getHighBitsSet(uint32_t numBits, uint32_t hiBitsSet) {
     assert(hiBitsSet <= numBits && "Too many bits to set!");
-    uint32_t mvBits = numBits - hiBitsSet;
+    uint32_t shiftAmt = numBits - hiBitsSet;
     // For small values, return quickly
     if (numBits <= APINT_BITS_PER_WORD)
-      return APInt(numBits, ((1ULL << hiBitsSet) - 1) << mvBits);
-    APInt Result(numBits, 1);
-    return (APInt(numBits, 1).shl(hiBitsSet) - APInt(numBits, 1)).shl(mvBits);
+      return APInt(numBits, ~0ULL << shiftAmt);
+    return (~APInt(numBits, 0)).shl(shiftAmt);
   }
 
   /// Constructs an APInt value that has the bottom loBitsSet bits set.
@@ -371,10 +370,11 @@ public:
   /// @brief Get a value with low bits set
   static APInt getLowBitsSet(uint32_t numBits, uint32_t loBitsSet) {
     assert(loBitsSet <= numBits && "Too many bits to set!");
+    uint32_t shiftAmt = numBits - loBitsSet;
     // For small values, return quickly
     if (numBits <= APINT_BITS_PER_WORD)
-      return APInt(numBits, (1ULL << loBitsSet) - 1ULL);
-    return APInt(numBits, 1).shl(loBitsSet) - APInt(numBits, 1);
+      return APInt(numBits, ~0ULL >> shiftAmt);
+    return (~APInt(numBits, 0)).lshr(shiftAmt);
   }
 
   /// The hash value is computed as the sum of the words and the bit width.
