@@ -336,18 +336,16 @@ public:
   /// less than loBit then the set bits "wrap". For example, with 
   /// parameters (32, 3, 28), you would get 0xF000000F. 
   /// @param numBits the intended bit width of the result
-  /// @param hiBit the index of the highest bit set.
   /// @param loBit the index of the lowest bit set.
+  /// @param hiBit the index of the highest bit set.
   /// @returns An APInt value with the requested bits set.
   /// @brief Get a value with a block of bits set.
-  static APInt getBitsSet(uint32_t numBits, uint32_t hiBit, uint32_t loBit = 0){
+  static APInt getBitsSet(uint32_t numBits, uint32_t loBit, uint32_t hiBit) {
     assert(hiBit < numBits && "hiBit out of range");
     assert(loBit < numBits && "loBit out of range");
     if (hiBit < loBit)
       return getLowBitsSet(numBits, hiBit+1) |
              getHighBitsSet(numBits, numBits-loBit+1);
-    else if (loBit == 0)
-      return getLowBitsSet(numBits, hiBit+1);
     return getLowBitsSet(numBits, hiBit-loBit+1).shl(loBit);
   }
 
