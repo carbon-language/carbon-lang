@@ -340,7 +340,16 @@ public:
   /// @param loBit the index of the lowest bit set.
   /// @returns An APInt value with the requested bits set.
   /// @brief Get a value with a block of bits set.
-  static APInt getBitsSet(uint32_t numBits, uint32_t hiBit, uint32_t loBit = 0);
+  static APInt getBitsSet(uint32_t numBits, uint32_t hiBit, uint32_t loBit = 0){
+    assert(hiBit < numBits && "hiBit out of range");
+    assert(loBit < numBits && "loBit out of range");
+    if (hiBit < loBit)
+      return getLowBitsSet(numBits, hiBit+1) |
+             getHighBitsSet(numBits, numBits-loBit+1);
+    else if (loBit == 0)
+      return getLowBitsSet(numBits, hiBit+1);
+    return getLowBitsSet(numBits, hiBit-loBit+1).shl(loBit);
+  }
 
   /// Constructs an APInt value that has the top hiBitsSet bits set.
   /// @param numBits the bitwidth of the result
