@@ -38,6 +38,7 @@ const char *MVT::getValueTypeString(MVT::ValueType VT) {
   case MVT::v8i8:  return "v8i8";
   case MVT::v4i16: return "v4i16";
   case MVT::v2i32: return "v2i32";
+  case MVT::v1i64: return "v1i64";
   case MVT::v16i8: return "v16i8";
   case MVT::v8i16: return "v8i16";
   case MVT::v4i32: return "v4i32";
@@ -68,6 +69,7 @@ MVT::ValueType MVT::getVectorType(ValueType VT, unsigned NumElements) {
     if (NumElements == 4)  return MVT::v4i32;
     break;
   case MVT::i64:
+    if (NumElements == 1)  return MVT::v1i64;
     if (NumElements == 2)  return MVT::v2i64;
     break;
   case MVT::f32:
@@ -99,6 +101,7 @@ const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   case MVT::v8i8:  return VectorType::get(Type::Int8Ty, 8);
   case MVT::v4i16: return VectorType::get(Type::Int16Ty, 4);
   case MVT::v2i32: return VectorType::get(Type::Int32Ty, 2);
+  case MVT::v1i64: return VectorType::get(Type::Int64Ty, 1);
   case MVT::v16i8: return VectorType::get(Type::Int8Ty, 16);
   case MVT::v8i16: return VectorType::get(Type::Int16Ty, 8);
   case MVT::v4i32: return VectorType::get(Type::Int32Ty, 4);

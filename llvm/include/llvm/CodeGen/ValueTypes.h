@@ -52,18 +52,19 @@ namespace MVT {  // MVT = Machine Value Types
     v8i8           =  14,   //  8 x i8
     v4i16          =  15,   //  4 x i16
     v2i32          =  16,   //  2 x i32
-    v16i8          =  17,   // 16 x i8
-    v8i16          =  18,   //  8 x i16
-    v4i32          =  19,   //  4 x i32
-    v2i64          =  20,   //  2 x i64
+    v1i64          =  17,   //  1 x i64
+    v16i8          =  18,   // 16 x i8
+    v8i16          =  19,   //  8 x i16
+    v4i32          =  20,   //  4 x i32
+    v2i64          =  21,   //  2 x i64
 
-    v2f32          =  21,   //  2 x f32
-    v4f32          =  22,   //  4 x f32
-    v2f64          =  23,   //  2 x f64
+    v2f32          =  22,   //  2 x f32
+    v4f32          =  23,   //  4 x f32
+    v2f64          =  24,   //  2 x f64
     FIRST_VECTOR_VALUETYPE = v8i8,
     LAST_VECTOR_VALUETYPE  = v2f64,
 
-    LAST_VALUETYPE =  24,   // This always remains at the end of the list.
+    LAST_VALUETYPE =  25,   // This always remains at the end of the list.
 
     // iPTR - An int value the size of the pointer of the current
     // target.  This should only be used internal to tblgen!
@@ -103,6 +104,7 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::v8i8:
     case MVT::v4i16:
     case MVT::v2i32: 
+    case MVT::v1i64:
     case MVT::v2f32: return 64;
     case MVT::f80 :  return 80;
     case MVT::f128:
@@ -133,6 +135,7 @@ namespace MVT {  // MVT = Machine Value Types
     case v8i16: return i16; 
     case v2i32:
     case v4i32: return i32;
+    case v1i64:
     case v2i64: return i64;
     case v2f32:
     case v4f32: return f32;
@@ -144,17 +147,18 @@ namespace MVT {  // MVT = Machine Value Types
   /// of elements it contains.
   static inline unsigned getVectorNumElements(ValueType VT) {
     switch (VT) {
-      default: assert(0 && "Invalid vector type!");
-      case v16i8: return 16;
-      case v8i8 :
-      case v8i16: return 8;
-      case v4i16:
-      case v4i32: 
-      case v4f32: return 4;
-      case v2i32:
-      case v2i64:
-      case v2f32:
-      case v2f64: return 2;
+    default: assert(0 && "Invalid vector type!");
+    case v16i8: return 16;
+    case v8i8 :
+    case v8i16: return 8;
+    case v4i16:
+    case v4i32: 
+    case v4f32: return 4;
+    case v2i32:
+    case v2i64:
+    case v2f32:
+    case v2f64: return 2;
+    case v1i64: return 1;
     }
   }
   
@@ -163,6 +167,7 @@ namespace MVT {  // MVT = Machine Value Types
   static inline ValueType getIntVectorWithNumElements(unsigned NumElts) {
     switch (NumElts) {
     default: assert(0 && "Invalid vector type!");
+    case  1: return v1i64;
     case  2: return v2i32;
     case  4: return v4i16;
     case  8: return v8i8;
