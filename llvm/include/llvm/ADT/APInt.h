@@ -564,9 +564,9 @@ public:
   inline APInt srem(const APInt& RHS) const {
     if (isNegative())
       if (RHS.isNegative())
-        return (-(*this)).urem(-RHS);
+        return -((-(*this)).urem(-RHS));
       else
-        return -((-(*this)).urem(RHS));
+        return (-(*this)).urem(RHS);
     else if (RHS.isNegative())
       return -(this->urem(-RHS));
     return this->urem(RHS);
