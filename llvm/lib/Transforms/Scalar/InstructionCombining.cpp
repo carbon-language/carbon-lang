@@ -3636,9 +3636,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (isa<UndefValue>(Op1))
-    return ReplaceInstUsesWith(I,                         // X | undef -> -1
-                               ConstantInt::getAllOnesValue(I.getType()));
+  if (isa<UndefValue>(Op1))                       // X | undef -> -1
+    return ReplaceInstUsesWith(I, ConstantInt::getAllOnesValue(I.getType()));
 
   // or X, X = X
   if (Op0 == Op1)
@@ -3646,12 +3645,13 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
-  uint32_t BitWidth = cast<IntegerType>(I.getType())->getBitWidth();
-  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-  if (!isa<VectorType>(I.getType()) &&
-      SimplifyDemandedBits(&I, APInt::getAllOnesValue(BitWidth),
-                           KnownZero, KnownOne))
-    return &I;
+  if (!isa<VectorType>(I.getType())) {
+    uint32_t BitWidth = cast<IntegerType>(I.getType())->getBitWidth();
+    APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+    if (SimplifyDemandedBits(&I, APInt::getAllOnesValue(BitWidth),
+                             KnownZero, KnownOne))
+      return &I;
+  }
   
   // or X, -1 == -1
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
