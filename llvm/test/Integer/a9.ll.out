@@ -13,7 +13,7 @@
 @q = constant i9 0		; <i9*> [#uses=0]
 @r = constant i9 255		; <i9*> [#uses=0]
 @s = constant i9 0		; <i9*> [#uses=0]
-@t = constant i9 -1		; <i9*> [#uses=0]
+@t = constant i9 1		; <i9*> [#uses=0]
 @o = constant i9 0		; <i9*> [#uses=0]
 @p = constant i9 -1		; <i9*> [#uses=0]
 
