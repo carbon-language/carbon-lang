@@ -18,8 +18,9 @@
 @n = constant i33 mul(i33 8589934591, i33 2)
 @q = constant i33 sdiv(i33 -1,        i33 4294967295)
 @r = constant i33 udiv(i33 -1,        i33 4294967295)
-@s = constant i33 srem(i33  3,        i33 8589934590)
+@s = constant i33 srem(i33  1,        i33 8589934590)
 @t = constant i33 urem(i33 8589934591,i33 -1)
 @o = constant i33 trunc( i34 8589934592 to i33 )
 @p = constant i33 trunc( i34 8589934591  to i33 )
+@u = constant i33 srem(i33  -1,       i33 17)
  

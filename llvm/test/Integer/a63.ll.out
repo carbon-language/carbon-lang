@@ -13,7 +13,7 @@
 @q = constant i63 0		; <i63*> [#uses=0]
 @u = constant i63 -1		; <i63*> [#uses=0]
 @r = constant i63 2		; <i63*> [#uses=0]
-@s = constant i63 1		; <i63*> [#uses=0]
+@s = constant i63 -1		; <i63*> [#uses=0]
 @t = constant i63 0		; <i63*> [#uses=0]
 @o = constant i63 0		; <i63*> [#uses=0]
 @p = constant i63 -1		; <i63*> [#uses=0]

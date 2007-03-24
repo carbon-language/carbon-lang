@@ -23,4 +23,5 @@
 @u = constant i15 urem(i15 32767,i15 -1)
 @o = constant i15 trunc( i16 32768  to i15 )
 @p = constant i15 trunc( i16 32767  to i15 )
+@v = constant i15 srem(i15 -1,    i15 768)
  

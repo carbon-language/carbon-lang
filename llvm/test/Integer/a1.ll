@@ -22,3 +22,4 @@
 @r = constant i1 udiv(i1 1, i1 -1)
 @s = constant i1 srem(i1 -1, i1 1) ; overflow
 @t = constant i1 urem(i1 -1, i1 1)
+@u = constant i1 srem(i1  1, i1 -1) ; overflow

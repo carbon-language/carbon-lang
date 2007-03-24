@@ -12,9 +12,10 @@
 @n = constant i33 -2		; <i33*> [#uses=0]
 @q = constant i33 0		; <i33*> [#uses=0]
 @r = constant i33 2		; <i33*> [#uses=0]
-@s = constant i33 1		; <i33*> [#uses=0]
+@s = constant i33 -1		; <i33*> [#uses=0]
 @t = constant i33 0		; <i33*> [#uses=0]
 @o = constant i33 0		; <i33*> [#uses=0]
 @p = constant i33 -1		; <i33*> [#uses=0]
+@u = constant i33 1		; <i33*> [#uses=0]
 
 implementation   ; Functions:

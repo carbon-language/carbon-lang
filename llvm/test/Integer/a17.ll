@@ -22,3 +22,4 @@
 @t = constant i17 urem(i17 131071,i17 -1)
 @o = constant i17 trunc( i18 131072  to i17 )
 @p = constant i17 trunc( i18 131071  to i17 )
+@v = constant i17 srem(i17  -1,    i17 15)
