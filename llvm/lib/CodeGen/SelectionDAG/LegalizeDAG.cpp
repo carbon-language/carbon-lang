@@ -484,7 +484,7 @@ void SelectionDAGLegalize::HandleOp(SDOperand Op) {
       unsigned NumElements =
         cast<ConstantSDNode>(N->getOperand(NumOps-2))->getValue();
       MVT::ValueType EVT = cast<VTSDNode>(N->getOperand(NumOps-1))->getVT();
-      MVT::ValueType PackedVT = getVectorType(EVT, NumElements);
+      MVT::ValueType PackedVT = MVT::getVectorType(EVT, NumElements);
       if (PackedVT != MVT::Other && TLI.isTypeLegal(PackedVT)) {
         // In the common case, this is a legal vector type, convert it to the
         // packed operation and type now.
