@@ -346,13 +346,27 @@ public:
   /// @param numBits the bitwidth of the result
   /// @param hiBitsSet the number of high-order bits set in the result.
   /// @brief Get a value with high bits set
-  static APInt getHighBitsSet(uint32_t numBits, uint32_t hiBitsSet);
+  static APInt getHighBitsSet(uint32_t numBits, uint32_t hiBitsSet) {
+    assert(hiBitsSet <= numBits && "Too many bits to set!");
+    uint32_t mvBits = numBits - hiBitsSet;
+    // For small values, return quickly
+    if (numBits <= APINT_BITS_PER_WORD)
+      return APInt(numBits, ((1ULL << hiBitsSet) - 1) << mvBits);
+    APInt Result(numBits, 1);
+    return (APInt(numBits, 1).shl(hiBitsSet) - APInt(numBits, 1)).shl(mvBits);
+  }
 
   /// Constructs an APInt value that has the bottom loBitsSet bits set.
   /// @param numBits the bitwidth of the result
   /// @param loBitsSet the number of low-order bits set in the result.
   /// @brief Get a value with low bits set
-  static APInt getLowBitsSet(uint32_t numBits, uint32_t loBitsSet);
+  static APInt getLowBitsSet(uint32_t numBits, uint32_t loBitsSet) {
+    assert(loBitsSet <= numBits && "Too many bits to set!");
+    // For small values, return quickly
+    if (numBits <= APINT_BITS_PER_WORD)
+      return APInt(numBits, (1ULL << loBitsSet) - 1ULL);
+    return APInt(numBits, 1).shl(loBitsSet) - APInt(numBits, 1);
+  }
 
   /// The hash value is computed as the sum of the words and the bit width.
   /// @returns A hash value computed from the sum of the APInt words.
