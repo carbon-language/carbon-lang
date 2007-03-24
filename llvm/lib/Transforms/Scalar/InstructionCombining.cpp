@@ -3117,7 +3117,9 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
   case Instruction::And:
     if (ConstantExpr::getAnd(N, Mask) == Mask) {
       // If the AndRHS is a power of two minus one (0+1+), this is simple.
-      if ((Mask->getValue() & Mask->getValue()+1) == 0)
+      if ((Mask->getValue().countLeadingZeros() + 
+           Mask->getValue().countPopulation()) == 
+          Mask->getValue().getBitWidth())
         break;
 
       // Otherwise, if Mask is 0+1+0+, and if B is known to have the low 0+
@@ -3127,7 +3129,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
       if (isRunOfOnes(Mask, MB, ME)) {  // begin/end bit of run, inclusive
         uint32_t BitWidth = cast<IntegerType>(RHS->getType())->getBitWidth();
         APInt Mask(APInt::getAllOnesValue(BitWidth));
-        Mask = APIntOps::lshr(Mask, BitWidth-MB+1);
+        Mask = Mask.lshr(BitWidth-MB+1);
         if (MaskedValueIsZero(RHS, Mask))
           break;
       }
@@ -3136,8 +3138,9 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
   case Instruction::Or:
   case Instruction::Xor:
     // If the AndRHS is a power of two minus one (0+1+), and N&Mask == 0
-    if ((Mask->getValue() & Mask->getValue()+1) == 0 &&
-        ConstantExpr::getAnd(N, Mask)->isNullValue())
+    if ((Mask->getValue().countLeadingZeros() + 
+         Mask->getValue().countPopulation()) == Mask->getValue().getBitWidth()
+        && ConstantExpr::getAnd(N, Mask)->isNullValue())
       break;
     return 0;
   }
@@ -5731,8 +5734,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         // operation.
         //
         if (isValid && !isLeftShift && I.getOpcode() == Instruction::AShr) {
-          APInt Val(Op0C->getValue());
-          isValid = ((Val & APInt::getSignBit(TypeBits)) != 0) == highBitSet;
+          isValid = ((Op0C->getValue() & APInt::getSignBit(TypeBits)) != 0) == 
+                    highBitSet;
         }
         
         if (isValid) {
@@ -5757,7 +5760,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   
   if (ShiftOp && isa<ConstantInt>(ShiftOp->getOperand(1))) {
     ConstantInt *ShiftAmt1C = cast<ConstantInt>(ShiftOp->getOperand(1));
-    // shift amount always <= 32 bits
+    // These shift amounts are always <= 32 bits.
     unsigned ShiftAmt1 = (unsigned)ShiftAmt1C->getZExtValue();
     unsigned ShiftAmt2 = (unsigned)Op1->getZExtValue();
     assert(ShiftAmt2 != 0 && "Should have been simplified earlier");
@@ -5785,7 +5788,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         BinaryOperator::createAShr(X, ConstantInt::get(Ty, AmtSum));
       InsertNewInstBefore(Shift, I);
 
-      APInt Mask(APInt::getAllOnesValue(TypeBits).lshr(ShiftAmt2));
+      APInt Mask(Ty->getMask().lshr(ShiftAmt2));
       return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
     }
     
@@ -5794,12 +5797,12 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     if (ShiftAmt1 == ShiftAmt2) {
       // If we have ((X >>? C) << C), turn this into X & (-1 << C).
       if (I.getOpcode() == Instruction::Shl) {
-        APInt Mask(APInt::getAllOnesValue(TypeBits).shl(ShiftAmt1));
+        APInt Mask(Ty->getMask().shl(ShiftAmt1));
         return BinaryOperator::createAnd(X, ConstantInt::get(Mask));
       }
       // If we have ((X << C) >>u C), turn this into X & (-1 >>u C).
       if (I.getOpcode() == Instruction::LShr) {
-        APInt Mask(APInt::getAllOnesValue(TypeBits).lshr(ShiftAmt1));
+        APInt Mask(Ty->getMask().lshr(ShiftAmt1));
         return BinaryOperator::createAnd(X, ConstantInt::get(Mask));
       }
       // We can simplify ((X << C) >>s C) into a trunc + sext.
@@ -5813,7 +5816,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       case 16 : SExtType = Type::Int16Ty; break;
       case 32 : SExtType = Type::Int32Ty; break;
       case 64 : SExtType = Type::Int64Ty; break;
-      case 128: SExtType = IntegerType::get(128); break;
       default: break;
       }
       if (SExtType) {
@@ -5833,7 +5835,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        APInt Mask(APInt::getAllOnesValue(TypeBits).shl(ShiftAmt2));
+        APInt Mask(Ty->getMask().shl(ShiftAmt2));
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
       }
       
@@ -5844,7 +5846,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           BinaryOperator::createLShr(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        APInt Mask(APInt::getAllOnesValue(TypeBits).lshr(ShiftAmt2));
+        APInt Mask(Ty->getMask().lshr(ShiftAmt2));
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
       }
       
@@ -5862,7 +5864,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                  ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        APInt Mask(APInt::getAllOnesValue(TypeBits).shl(ShiftAmt2));
+        APInt Mask(Ty->getMask().shl(ShiftAmt2));
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
       }
       
@@ -5873,7 +5875,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        APInt Mask(APInt::getAllOnesValue(TypeBits).lshr(ShiftAmt2));
+        APInt Mask(Ty->getMask().lshr(ShiftAmt2));
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
       }
       
