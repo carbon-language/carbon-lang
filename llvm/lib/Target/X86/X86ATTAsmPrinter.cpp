@@ -500,6 +500,10 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'w': // Print HImode register
     case 'k': // Print SImode register
       return printAsmMRegister(MI->getOperand(OpNo), ExtraCode[0]);
+      
+    case 'P': // Don't print @PLT, but do print as memory.
+      printOperand(MI, OpNo, "mem");
+      return false;
     }
   }
   
