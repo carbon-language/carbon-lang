@@ -20,5 +20,11 @@ define i16 @test2(i16 %a) {
         ret i16 %tmp.upgrd.3
 }
 
+; PR1263
+define i32* @test3(i32* %tmp1) {
+        %tmp64 = bitcast i32* %tmp1 to { i32 }*         ; <{ i32 }*> [#uses=1]
+        %tmp65 = getelementptr { i32 }* %tmp64, i32 0, i32 0            ; <i32*> [#uses=1]
+        ret i32* %tmp65
+}
 
 
