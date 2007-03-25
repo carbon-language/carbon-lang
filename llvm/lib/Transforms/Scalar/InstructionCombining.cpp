@@ -578,7 +578,7 @@ static ConstantInt *SubOne(ConstantInt *C) {
 /// optimized based on the contradictory assumption that it is non-zero.
 /// Because instcombine aggressively folds operations with undef args anyway,
 /// this won't lose us code quality.
-static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero, 
+static void ComputeMaskedBits(Value *V, const APInt& Mask, APInt& KnownZero, 
                               APInt& KnownOne, unsigned Depth = 0) {
   assert(V && "No Value?");
   assert(Depth <= 6 && "Limit Search Depth");
@@ -603,14 +603,13 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
 
   KnownZero.clear(); KnownOne.clear();   // Don't know anything.
   APInt KnownZero2(KnownZero), KnownOne2(KnownOne);
-  Mask &= APInt::getAllOnesValue(BitWidth);
   
   switch (I->getOpcode()) {
-  case Instruction::And:
+  case Instruction::And: {
     // If either the LHS or the RHS are Zero, the result is zero.
     ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
-    Mask &= ~KnownZero;
-    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
+    APInt Mask2(Mask & ~KnownZero);
+    ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
     
@@ -619,10 +618,11 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
     // Output known-0 are known to be clear if zero in either the LHS | RHS.
     KnownZero |= KnownZero2;
     return;
-  case Instruction::Or:
+  }
+  case Instruction::Or: {
     ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
-    Mask &= ~KnownOne;
-    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
+    APInt Mask2(Mask & ~KnownOne);
+    ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero2, KnownOne2, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
     
@@ -631,6 +631,7 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
     // Output known-1 are known to be set if set in either the LHS | RHS.
     KnownOne |= KnownOne2;
     return;
+  }
   case Instruction::Xor: {
     ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
     ComputeMaskedBits(I->getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
@@ -667,7 +668,7 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
     // All these have integer operands
     uint32_t SrcBitWidth = 
       cast<IntegerType>(I->getOperand(0)->getType())->getBitWidth();
-    ComputeMaskedBits(I->getOperand(0), Mask.zext(SrcBitWidth), 
+    ComputeMaskedBits(I->getOperand(0), APInt(Mask).zext(SrcBitWidth), 
       KnownZero.zext(SrcBitWidth), KnownOne.zext(SrcBitWidth), Depth+1);
     KnownZero.trunc(BitWidth);
     KnownOne.trunc(BitWidth);
@@ -687,7 +688,7 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
     APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
       
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
-    ComputeMaskedBits(I->getOperand(0), Mask.trunc(SrcBitWidth), 
+    ComputeMaskedBits(I->getOperand(0), APInt(Mask).trunc(SrcBitWidth), 
       KnownZero.trunc(SrcBitWidth), KnownOne.trunc(SrcBitWidth), Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     // The top bits are known to be zero.
@@ -702,7 +703,7 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
     APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
       
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
-    ComputeMaskedBits(I->getOperand(0), Mask.trunc(SrcBitWidth), 
+    ComputeMaskedBits(I->getOperand(0), APInt(Mask).trunc(SrcBitWidth), 
       KnownZero.trunc(SrcBitWidth), KnownOne.trunc(SrcBitWidth), Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     KnownZero.zext(BitWidth);
@@ -728,8 +729,8 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
     // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       uint64_t ShiftAmt = SA->getZExtValue();
-      Mask = APIntOps::lshr(Mask, ShiftAmt);
-      ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+      APInt Mask2(Mask.lshr(ShiftAmt));
+      ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero <<= ShiftAmt;
       KnownOne  <<= ShiftAmt;
@@ -745,8 +746,8 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
       APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth-ShiftAmt));
       
       // Unsigned shift right.
-      Mask <<= ShiftAmt;
-      ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
+      APInt Mask2(Mask.shl(ShiftAmt));
+      ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero,KnownOne,Depth+1);
       assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
       KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
       KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
@@ -762,8 +763,8 @@ static void ComputeMaskedBits(Value *V, APInt Mask, APInt& KnownZero,
       APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth-ShiftAmt));
       
       // Signed shift right.
-      Mask <<= ShiftAmt;
-      ComputeMaskedBits(I->getOperand(0), Mask, KnownZero,KnownOne,Depth+1);
+      APInt Mask2(Mask.shl(ShiftAmt));
+      ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero,KnownOne,Depth+1);
       assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
       KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
       KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
@@ -924,8 +925,6 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;        // Only analyze instructions.
 
-  DemandedMask &= APInt::getAllOnesValue(BitWidth);
-  
   APInt LHSKnownZero(BitWidth, 0), LHSKnownOne(BitWidth, 0);
   APInt &RHSKnownZero = KnownZero, &RHSKnownOne = KnownOne;
   switch (I->getOpcode()) {
@@ -1280,7 +1279,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     if ((DemandedMask & APInt::getSignBit(BitWidth)) == 0) {
       // Right fill the mask of bits for this SUB to demand the most
       // significant bit and all those below it.
-      unsigned NLZ = DemandedMask.countLeadingZeros();
+      uint32_t NLZ = DemandedMask.countLeadingZeros();
       APInt DemandedFromOps(APInt::getAllOnesValue(BitWidth).lshr(NLZ));
       if (SimplifyDemandedBits(I->getOperand(0), DemandedFromOps,
                                LHSKnownZero, LHSKnownOne, Depth+1))
@@ -4865,8 +4864,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             if (LHSI->hasOneUse()) {
               // Otherwise strength reduce the shift into an and.
               unsigned ShAmtVal = (unsigned)ShAmt->getZExtValue();
-              uint64_t Val = (1ULL << (TypeBits-ShAmtVal))-1;
-              Constant *Mask = ConstantInt::get(CI->getType(), Val);
+              Constant *Mask = ConstantInt::get(APInt::getLowBitsSet(TypeBits, 
+                                                          TypeBits - ShAmtVal));
 
               Instruction *AndI =
                 BinaryOperator::createAnd(LHSI->getOperand(0),
@@ -5835,8 +5834,9 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        APInt Mask(Ty->getMask().shl(ShiftAmt2));
-        return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
+        ConstantInt *Mask = ConstantInt::get(
+            APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
+        return BinaryOperator::createAnd(Shift, Mask);
       }
       
       // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
