@@ -405,7 +405,9 @@ public:
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.
   std::vector<SelectionDAGISel::CaseBlock> SwitchCases;
-  SelectionDAGISel::JumpTable JT;
+  /// JTCases - Vector of JumpTable structures used to communicate
+  /// SwitchInst code generation information.
+  std::vector<SelectionDAGISel::JumpTableBlock> JTCases;
   
   /// FuncInfo - Information about the function as a whole.
   ///
@@ -414,7 +416,7 @@ public:
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
                        FunctionLoweringInfo &funcinfo)
     : TLI(tli), DAG(dag), TD(DAG.getTarget().getTargetData()),
-      JT(0,0,0,0), FuncInfo(funcinfo) {
+      FuncInfo(funcinfo) {
   }
 
   /// getRoot - Return the current virtual root of the Selection DAG.
@@ -497,6 +499,8 @@ public:
   // Helper for visitSwitch
   void visitSwitchCase(SelectionDAGISel::CaseBlock &CB);
   void visitJumpTable(SelectionDAGISel::JumpTable &JT);
+  void visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
+                            SelectionDAGISel::JumpTableHeader &JTH);
   
   // These all get lowered before this pass.
   void visitInvoke(InvokeInst &I);
@@ -1065,7 +1069,7 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
     Cond = DAG.getNode(ISD::XOR, CondLHS.getValueType(), CondLHS, True);
   } else
     Cond = DAG.getSetCC(MVT::i1, CondLHS, getValue(CB.CmpRHS), CB.CC);
-  
+
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
@@ -1092,8 +1096,10 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
   CurMBB->addSuccessor(CB.FalseBB);
 }
 
+/// visitJumpTable - Emit JumpTable node in the current MBB
 void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   // Emit the code for the jump table
+  assert(JT.Reg != -1UL && "Should lower JT Header first!");
   MVT::ValueType PTy = TLI.getPointerTy();
   SDOperand Index = DAG.getCopyFromReg(getRoot(), JT.Reg, PTy);
   SDOperand Table = DAG.getJumpTable(JT.JTI, PTy);
@@ -1101,6 +1107,57 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
                           Table, Index));
   return;
 }
+
+/// visitJumpTableHeader - This function emits necessary code to produce index
+/// in the JumpTable from switch case.
+void SelectionDAGLowering::visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
+                                         SelectionDAGISel::JumpTableHeader &JTH) {
+  // Subtract the lowest switch case value from the value being switched on
+  // and conditional branch to default mbb if the result is greater than the
+  // difference between smallest and largest cases.
+  SDOperand SwitchOp = getValue(JTH.SValue);
+  MVT::ValueType VT = SwitchOp.getValueType();
+  SDOperand SUB = DAG.getNode(ISD::SUB, VT, SwitchOp,
+                              DAG.getConstant(JTH.First, VT));
+  
+  // The SDNode we just created, which holds the value being switched on
+  // minus the the smallest case value, needs to be copied to a virtual
+  // register so it can be used as an index into the jump table in a 
+  // subsequent basic block.  This value may be smaller or larger than the
+  // target's pointer type, and therefore require extension or truncating.
+  if (VT > TLI.getPointerTy())
+    SwitchOp = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), SUB);
+  else
+    SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), SUB);
+  
+  unsigned JumpTableReg = FuncInfo.MakeReg(TLI.getPointerTy());
+  SDOperand CopyTo = DAG.getCopyToReg(getRoot(), JumpTableReg, SwitchOp);
+  JT.Reg = JumpTableReg;
+
+  // Emit the range check for the jump table, and branch to the default
+  // block for the switch statement if the value being switched on exceeds
+  // the largest case in the switch.
+  SDOperand CMP = DAG.getSetCC(TLI.getSetCCResultTy(), SUB,
+                               DAG.getConstant(JTH.Last-JTH.First,VT),
+                               ISD::SETUGT);
+
+  // Set NextBlock to be the MBB immediately after the current one, if any.
+  // This is used to avoid emitting unnecessary branches to the next block.
+  MachineBasicBlock *NextBlock = 0;
+  MachineFunction::iterator BBI = CurMBB;
+  if (++BBI != CurMBB->getParent()->end())
+    NextBlock = BBI;
+
+  SDOperand BrCond = DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, CMP,
+                                 DAG.getBasicBlock(JT.Default));
+
+  if (JT.MBB == NextBlock)
+    DAG.setRoot(BrCond);
+  else
+    DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond, 
+                            DAG.getBasicBlock(JT.MBB))); 
+}
+
 
 void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
   assert(0 && "Should never be visited directly");
@@ -1151,14 +1208,11 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I, bool AsTerminator) {
 void SelectionDAGLowering::visitUnwind(UnwindInst &I) {
 }
 
-void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
+void SelectionDAGLowering::visitSwitch(SwitchInst &I) {  
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CurMBB;
 
-  if (++BBI != CurMBB->getParent()->end())
-    NextBlock = BBI;
-  
   MachineBasicBlock *Default = FuncInfo.MBBMap[I.getDefaultDest()];
 
   // If there is only the default destination, branch to it if it is not the
@@ -1184,7 +1238,6 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
     MachineBasicBlock *SMBB = FuncInfo.MBBMap[I.getSuccessor(i)];
     Cases.push_back(Case(I.getSuccessorValue(i), SMBB));
   }
-
   std::sort(Cases.begin(), Cases.end(), CaseCmp());
   
   // Get the Value to be switched on and default basic blocks, which will be
@@ -1195,174 +1248,161 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // Get the MachineFunction which holds the current MBB.  This is used during
   // emission of jump tables, and when inserting any additional MBBs necessary
   // to represent the switch.
-  MachineFunction *CurMF = CurMBB->getParent();
-  const BasicBlock *LLVMBB = CurMBB->getBasicBlock();
-  
-  // If the switch has few cases (two or less) emit a series of specific
-  // tests.
-  if (Cases.size() < 3) {
-    // TODO: If any two of the cases has the same destination, and if one value
-    // is the same as the other, but has one bit unset that the other has set,
-    // use bit manipulation to do two compares at once.  For example:
-    // "if (X == 6 || X == 4)" -> "if ((X|2) == 6)"
-    
-    // Rearrange the case blocks so that the last one falls through if possible.
-    if (NextBlock && Default != NextBlock && Cases.back().second != NextBlock) {
-      // The last case block won't fall through into 'NextBlock' if we emit the
-      // branches in this order.  See if rearranging a case value would help.
-      for (unsigned i = 0, e = Cases.size()-1; i != e; ++i) {
-        if (Cases[i].second == NextBlock) {
-          std::swap(Cases[i], Cases.back());
-          break;
-        }
-      }
-    }
-    
-    // Create a CaseBlock record representing a conditional branch to
-    // the Case's target mbb if the value being switched on SV is equal
-    // to C.
-    MachineBasicBlock *CurBlock = CurMBB;
-    for (unsigned i = 0, e = Cases.size(); i != e; ++i) {
-      MachineBasicBlock *FallThrough;
-      if (i != e-1) {
-        FallThrough = new MachineBasicBlock(CurMBB->getBasicBlock());
-        CurMF->getBasicBlockList().insert(BBI, FallThrough);
-      } else {
-        // If the last case doesn't match, go to the default block.
-        FallThrough = Default;
-      }
-      
-      SelectionDAGISel::CaseBlock CB(ISD::SETEQ, SV, Cases[i].first,
-                                     Cases[i].second, FallThrough, CurBlock);
-    
-      // If emitting the first comparison, just call visitSwitchCase to emit the
-      // code into the current block.  Otherwise, push the CaseBlock onto the
-      // vector to be later processed by SDISel, and insert the node's MBB
-      // before the next MBB.
-      if (CurBlock == CurMBB)
-        visitSwitchCase(CB);
-      else
-        SwitchCases.push_back(CB);
-      
-      CurBlock = FallThrough;
-    }
-    return;
-  }
+  MachineFunction *CurMF = CurMBB->getParent();  
 
-  // If the switch has more than 5 blocks, and at least 31.25% dense, and the 
-  // target supports indirect branches, then emit a jump table rather than 
-  // lowering the switch to a binary tree of conditional branches.
-  if ((TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
-       TLI.isOperationLegal(ISD::BRIND, MVT::Other)) &&
-      Cases.size() > 5) {
-    uint64_t First =cast<ConstantInt>(Cases.front().first)->getSExtValue();
-    uint64_t Last  = cast<ConstantInt>(Cases.back().first)->getSExtValue();
-    double Density = (double)Cases.size() / (double)((Last - First) + 1ULL);
-    
-    if (Density >= 0.3125) {
-      // Create a new basic block to hold the code for loading the address
-      // of the jump table, and jumping to it.  Update successor information;
-      // we will either branch to the default case for the switch, or the jump
-      // table.
-      MachineBasicBlock *JumpTableBB = new MachineBasicBlock(LLVMBB);
-      CurMF->getBasicBlockList().insert(BBI, JumpTableBB);
-      CurMBB->addSuccessor(Default);
-      CurMBB->addSuccessor(JumpTableBB);
-      
-      // Subtract the lowest switch case value from the value being switched on
-      // and conditional branch to default mbb if the result is greater than the
-      // difference between smallest and largest cases.
-      SDOperand SwitchOp = getValue(SV);
-      MVT::ValueType VT = SwitchOp.getValueType();
-      SDOperand SUB = DAG.getNode(ISD::SUB, VT, SwitchOp, 
-                                  DAG.getConstant(First, VT));
-
-      // The SDNode we just created, which holds the value being switched on
-      // minus the the smallest case value, needs to be copied to a virtual
-      // register so it can be used as an index into the jump table in a 
-      // subsequent basic block.  This value may be smaller or larger than the
-      // target's pointer type, and therefore require extension or truncating.
-      if (VT > TLI.getPointerTy())
-        SwitchOp = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), SUB);
-      else
-        SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), SUB);
-
-      unsigned JumpTableReg = FuncInfo.MakeReg(TLI.getPointerTy());
-      SDOperand CopyTo = DAG.getCopyToReg(getRoot(), JumpTableReg, SwitchOp);
-      
-      // Emit the range check for the jump table, and branch to the default
-      // block for the switch statement if the value being switched on exceeds
-      // the largest case in the switch.
-      SDOperand CMP = DAG.getSetCC(TLI.getSetCCResultTy(), SUB,
-                                   DAG.getConstant(Last-First,VT), ISD::SETUGT);
-      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, CMP, 
-                              DAG.getBasicBlock(Default)));
-
-      // Build a vector of destination BBs, corresponding to each target
-      // of the jump table.  If the value of the jump table slot corresponds to
-      // a case statement, push the case's BB onto the vector, otherwise, push
-      // the default BB.
-      std::vector<MachineBasicBlock*> DestBBs;
-      int64_t TEI = First;
-      for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++TEI)
-        if (cast<ConstantInt>(ii->first)->getSExtValue() == TEI) {
-          DestBBs.push_back(ii->second);
-          ++ii;
-        } else {
-          DestBBs.push_back(Default);
-        }
-      
-      // Update successor info.  Add one edge to each unique successor.
-      // Vector bool would be better, but vector<bool> is really slow.
-      std::vector<unsigned char> SuccsHandled;
-      SuccsHandled.resize(CurMBB->getParent()->getNumBlockIDs());
-      
-      for (std::vector<MachineBasicBlock*>::iterator I = DestBBs.begin(), 
-           E = DestBBs.end(); I != E; ++I) {
-        if (!SuccsHandled[(*I)->getNumber()]) {
-          SuccsHandled[(*I)->getNumber()] = true;
-          JumpTableBB->addSuccessor(*I);
-        }
-      }
-      
-      // Create a jump table index for this jump table, or return an existing
-      // one.
-      unsigned JTI = CurMF->getJumpTableInfo()->getJumpTableIndex(DestBBs);
-      
-      // Set the jump table information so that we can codegen it as a second
-      // MachineBasicBlock
-      JT.Reg = JumpTableReg;
-      JT.JTI = JTI;
-      JT.MBB = JumpTableBB;
-      JT.Default = Default;
-      return;
-    }
-  }
-  
   // Push the initial CaseRec onto the worklist
-  std::vector<CaseRec> CaseVec;
-  CaseVec.push_back(CaseRec(CurMBB,0,0,CaseRange(Cases.begin(),Cases.end())));
-  
-  while (!CaseVec.empty()) {
+  std::vector<CaseRec> WorkList;
+  WorkList.push_back(CaseRec(CurMBB,0,0,CaseRange(Cases.begin(),Cases.end())));
+
+  while (!WorkList.empty()) {
     // Grab a record representing a case range to process off the worklist
-    CaseRec CR = CaseVec.back();
-    CaseVec.pop_back();
+    CaseRec CR = WorkList.back();
+    WorkList.pop_back();
+    Case& FrontCase = *CR.Range.first;
+    Case& BackCase  = *(CR.Range.second-1);
+    const BasicBlock *LLVMBB = CR.CaseBB->getBasicBlock();
+
+    // Figure out which block is immediately after the current one.
+    NextBlock = 0;
+    BBI = CR.CaseBB;
+        
+    if (++BBI != CurMBB->getParent()->end())
+      NextBlock = BBI;
     
-    // Size is the number of Cases represented by this range.  If Size is 1,
-    // then we are processing a leaf of the binary search tree.  Otherwise,
-    // we need to pick a pivot, and push left and right ranges onto the 
-    // worklist.
+    // Size is the number of Cases represented by this range.
     unsigned Size = CR.Range.second - CR.Range.first;
+
+    // If the range has few cases (two or less) emit a series of specific
+    // tests.
+    if (Size < 3) {
+      // TODO: If any two of the cases has the same destination, and if one value
+      // is the same as the other, but has one bit unset that the other has set,
+      // use bit manipulation to do two compares at once.  For example:
+      // "if (X == 6 || X == 4)" -> "if ((X|2) == 6)"
     
-    if (Size == 1) {
+      // Rearrange the case blocks so that the last one falls through if possible.
+      if (NextBlock && Default != NextBlock && BackCase.second != NextBlock) {
+        // The last case block won't fall through into 'NextBlock' if we emit the
+        // branches in this order.  See if rearranging a case value would help.
+        for (CaseItr I = CR.Range.first, E = CR.Range.second-1; I != E; ++I) {
+          if (I->second == NextBlock) {
+            std::swap(*I, BackCase);
+            break;
+          }
+        }
+      }
+    
+      // Create a CaseBlock record representing a conditional branch to
+      // the Case's target mbb if the value being switched on SV is equal
+      // to C.
+      MachineBasicBlock *CurBlock = CR.CaseBB;
+      for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I) {
+        MachineBasicBlock *FallThrough;
+        if (I != E-1) {
+          FallThrough = new MachineBasicBlock(CurBlock->getBasicBlock());
+          CurMF->getBasicBlockList().insert(BBI, FallThrough);
+        } else {
+          // If the last case doesn't match, go to the default block.
+          FallThrough = Default;
+        }
+      
+        SelectionDAGISel::CaseBlock CB(ISD::SETEQ, SV, I->first,
+                                       I->second, FallThrough, CurBlock);
+    
+        // If emitting the first comparison, just call visitSwitchCase to emit the
+        // code into the current block.  Otherwise, push the CaseBlock onto the
+        // vector to be later processed by SDISel, and insert the node's MBB
+        // before the next MBB.
+        if (CurBlock == CurMBB)
+          visitSwitchCase(CB);
+        else
+          SwitchCases.push_back(CB);
+      
+        CurBlock = FallThrough;
+      }
+
+      continue;      
+    }
+
+    // If the switch has more than 5 blocks, and at least 31.25% dense, and the 
+    // target supports indirect branches, then emit a jump table rather than 
+    // lowering the switch to a binary tree of conditional branches.
+
+    if ((TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
+         TLI.isOperationLegal(ISD::BRIND, MVT::Other)) &&
+        Size > 5) {
+      uint64_t First = cast<ConstantInt>(FrontCase.first)->getSExtValue();
+      uint64_t Last  = cast<ConstantInt>(BackCase.first)->getSExtValue();
+      double Density = (double)Size / (double)((Last - First) + 1ULL);
+    
+      if (Density >= 0.3125) {
+        // Create a new basic block to hold the code for loading the address
+        // of the jump table, and jumping to it.  Update successor information;
+        // we will either branch to the default case for the switch, or the jump
+        // table.
+        MachineBasicBlock *JumpTableBB = new MachineBasicBlock(LLVMBB);
+        CurMF->getBasicBlockList().insert(BBI, JumpTableBB);
+        CR.CaseBB->addSuccessor(Default);
+        CR.CaseBB->addSuccessor(JumpTableBB);
+                
+        // Build a vector of destination BBs, corresponding to each target
+        // of the jump table.  If the value of the jump table slot corresponds to
+        // a case statement, push the case's BB onto the vector, otherwise, push
+        // the default BB.
+        std::vector<MachineBasicBlock*> DestBBs;
+        int64_t TEI = First;
+        for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++TEI)
+          if (cast<ConstantInt>(I->first)->getSExtValue() == TEI) {
+            DestBBs.push_back(I->second);
+            ++I;
+          } else {
+            DestBBs.push_back(Default);
+          }
+        
+        // Update successor info. Add one edge to each unique successor.
+        // Vector bool would be better, but vector<bool> is really slow.
+        std::vector<unsigned char> SuccsHandled;
+        SuccsHandled.resize(CR.CaseBB->getParent()->getNumBlockIDs());
+      
+        for (std::vector<MachineBasicBlock*>::iterator I = DestBBs.begin(), 
+               E = DestBBs.end(); I != E; ++I) {
+          if (!SuccsHandled[(*I)->getNumber()]) {
+            SuccsHandled[(*I)->getNumber()] = true;
+            JumpTableBB->addSuccessor(*I);
+          }
+        }
+      
+        // Create a jump table index for this jump table, or return an existing
+        // one.
+        unsigned JTI = CurMF->getJumpTableInfo()->getJumpTableIndex(DestBBs);
+      
+        // Set the jump table information so that we can codegen it as a second
+        // MachineBasicBlock
+        SelectionDAGISel::JumpTable JT(-1UL, JTI, JumpTableBB, Default);
+        SelectionDAGISel::JumpTableHeader JTH(First, Last, SV, CR.CaseBB,
+                                              (CR.CaseBB == CurMBB));
+        if (CR.CaseBB == CurMBB)
+          visitJumpTableHeader(JT, JTH);
+        
+        JTCases.push_back(SelectionDAGISel::JumpTableBlock(JTH, JT));
+
+        continue;
+      }
+    }
+
+    // Emit binary tree. If Size is 1, then we are processing a leaf of the
+    // binary search tree.  Otherwise, we need to pick a pivot, and push left
+    // and right ranges onto the worklist.
+    
+    if (Size == 1) {     
       // Create a CaseBlock record representing a conditional branch to
       // the Case's target mbb if the value being switched on SV is equal
       // to C.  Otherwise, branch to default.
-      Constant *C = CR.Range.first->first;
-      MachineBasicBlock *Target = CR.Range.first->second;
+      Constant *C = FrontCase.first;
+      MachineBasicBlock *Target = FrontCase.second;
       SelectionDAGISel::CaseBlock CB(ISD::SETEQ, SV, C, Target, Default, 
                                      CR.CaseBB);
-
+      
       // If the MBB representing the leaf node is the current MBB, then just
       // call visitSwitchCase to emit the code into the current block.
       // Otherwise, push the CaseBlock onto the vector to be later processed
@@ -1372,13 +1412,32 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       else
         SwitchCases.push_back(CB);
     } else {
-      // split case range at pivot
-      CaseItr Pivot = CR.Range.first + (Size / 2);
+      uint64_t First = cast<ConstantInt>(FrontCase.first)->getSExtValue();
+      uint64_t Last  = cast<ConstantInt>(BackCase.first)->getSExtValue();
+      double Density = 0;
+      CaseItr Pivot;
+
+      // Select optimal pivot, maximizing sum density of LHS and RHS. This will
+      // (heuristically) allow us to emit JumpTable's later.
+      unsigned LSize = 1;
+      unsigned RSize = Size-1;
+      for (CaseItr I = CR.Range.first, J=I+1, E = CR.Range.second;
+           J!=E; ++I, ++J, ++LSize, --RSize) {
+        uint64_t LEnd = cast<ConstantInt>(I->first)->getSExtValue();
+        uint64_t RBegin = cast<ConstantInt>(J->first)->getSExtValue();
+        double LDensity = (double)LSize / (double)((LEnd - First) + 1ULL);
+        double RDensity = (double)RSize / (double)((Last - RBegin) + 1ULL);
+        if (Density < (LDensity + RDensity)) {
+          Pivot = J;
+          Density = LDensity + RDensity;
+        }
+      }
+
       CaseRange LHSR(CR.Range.first, Pivot);
       CaseRange RHSR(Pivot, CR.Range.second);
       Constant *C = Pivot->first;
       MachineBasicBlock *FalseBB = 0, *TrueBB = 0;
-
+      
       // We know that we branch to the LHS if the Value being switched on is
       // less than the Pivot value, C.  We use this to optimize our binary 
       // tree a bit, by recognizing that if SV is greater than or equal to the
@@ -1393,9 +1452,9 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       } else {
         TrueBB = new MachineBasicBlock(LLVMBB);
         CurMF->getBasicBlockList().insert(BBI, TrueBB);
-        CaseVec.push_back(CaseRec(TrueBB, C, CR.GE, LHSR));
+        WorkList.push_back(CaseRec(TrueBB, C, CR.GE, LHSR));
       }
-
+      
       // Similar to the optimization above, if the Value being switched on is
       // known to be less than the Constant CR.LT, and the current Case Value
       // is CR.LT - 1, then we can branch directly to the target block for
@@ -1407,7 +1466,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       } else {
         FalseBB = new MachineBasicBlock(LLVMBB);
         CurMF->getBasicBlockList().insert(BBI, FalseBB);
-        CaseVec.push_back(CaseRec(FalseBB,CR.LT,C,RHSR));
+        WorkList.push_back(CaseRec(FalseBB,CR.LT,C,RHSR));
       }
 
       // Create a CaseBlock record representing a conditional branch to
@@ -1423,6 +1482,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
     }
   }
 }
+
 
 void SelectionDAGLowering::visitSub(User &I) {
   // -0.0 - X --> fneg
@@ -4477,7 +4537,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   // lowering, as well as any jump table information.
   SwitchCases.clear();
   SwitchCases = SDL.SwitchCases;
-  JT = SDL.JT;
+  JTCases.clear();
+  JTCases = SDL.JTCases;
   
   // Make sure the root of the DAG is up-to-date.
   DAG.setRoot(SDL.getRoot());
@@ -4530,7 +4591,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   
   // Next, now that we know what the last MBB the LLVM BB expanded is, update
   // PHI nodes in successors.
-  if (SwitchCases.empty() && JT.Reg == 0) {
+  if (SwitchCases.empty() && JTCases.empty()) {
     for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i) {
       MachineInstr *PHI = PHINodesToUpdate[i].first;
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
@@ -4544,35 +4605,47 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   // If the JumpTable record is filled in, then we need to emit a jump table.
   // Updating the PHI nodes is tricky in this case, since we need to determine
   // whether the PHI is a successor of the range check MBB or the jump table MBB
-  if (JT.Reg) {
-    assert(SwitchCases.empty() && "Cannot have jump table and lowered switch");
-    SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
-    CurDAG = &SDAG;
-    SelectionDAGLowering SDL(SDAG, TLI, FuncInfo);
-    MachineBasicBlock *RangeBB = BB;
+  for (unsigned i = 0, e = JTCases.size(); i != e; ++i) {
+    // Lower header first, if it wasn't already lowered
+    if (!JTCases[i].first.Emitted) {
+      SelectionDAG HSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
+      CurDAG = &HSDAG;
+      SelectionDAGLowering HSDL(HSDAG, TLI, FuncInfo);    
+      // Set the current basic block to the mbb we wish to insert the code into
+      BB = JTCases[i].first.HeaderBB;
+      HSDL.setCurrentBasicBlock(BB);
+      // Emit the code
+      HSDL.visitJumpTableHeader(JTCases[i].second, JTCases[i].first);
+      HSDAG.setRoot(HSDL.getRoot());
+      CodeGenAndEmitDAG(HSDAG);
+    }    
+    
+    SelectionDAG JSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
+    CurDAG = &JSDAG;
+    SelectionDAGLowering JSDL(JSDAG, TLI, FuncInfo);
     // Set the current basic block to the mbb we wish to insert the code into
-    BB = JT.MBB;
-    SDL.setCurrentBasicBlock(BB);
+    BB = JTCases[i].second.MBB;
+    JSDL.setCurrentBasicBlock(BB);
     // Emit the code
-    SDL.visitJumpTable(JT);
-    SDAG.setRoot(SDL.getRoot());
-    CodeGenAndEmitDAG(SDAG);
+    JSDL.visitJumpTable(JTCases[i].second);
+    JSDAG.setRoot(JSDL.getRoot());
+    CodeGenAndEmitDAG(JSDAG);
+    
     // Update PHI Nodes
     for (unsigned pi = 0, pe = PHINodesToUpdate.size(); pi != pe; ++pi) {
       MachineInstr *PHI = PHINodesToUpdate[pi].first;
       MachineBasicBlock *PHIBB = PHI->getParent();
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
-      if (PHIBB == JT.Default) {
+      if (PHIBB == JTCases[i].second.Default) {
         PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
-        PHI->addMachineBasicBlockOperand(RangeBB);
+        PHI->addMachineBasicBlockOperand(JTCases[i].first.HeaderBB);
       }
       if (BB->succ_end() != std::find(BB->succ_begin(),BB->succ_end(), PHIBB)) {
         PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
         PHI->addMachineBasicBlockOperand(BB);
       }
     }
-    return;
   }
   
   // If the switch block involved a branch to one of the actual successors, we

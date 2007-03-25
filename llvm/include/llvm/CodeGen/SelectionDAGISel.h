@@ -42,8 +42,7 @@ public:
   std::vector<SDNode*> TopOrder;
   unsigned DAGSize;
 
-  explicit SelectionDAGISel(TargetLowering &tli)
-  : TLI(tli), DAGSize(0), JT(0,0,0,0) {}
+  explicit SelectionDAGISel(TargetLowering &tli) : TLI(tli), DAGSize(0) {}
   
   TargetLowering &getTargetLowering() { return TLI; }
 
@@ -99,19 +98,31 @@ public:
   };
   struct JumpTable {
     JumpTable(unsigned R, unsigned J, MachineBasicBlock *M,
-              MachineBasicBlock *D) : Reg(R), JTI(J), MBB(M), Default(D) {}
-    // Reg - the virtual register containing the index of the jump table entry
-    // to jump to.
+              MachineBasicBlock *D): Reg(R), JTI(J), MBB(M), Default(D) {};
+    
+    /// Reg - the virtual register containing the index of the jump table entry
+    //. to jump to.
     unsigned Reg;
-    // JTI - the JumpTableIndex for this jump table in the function.
+    /// JTI - the JumpTableIndex for this jump table in the function.
     unsigned JTI;
-    // MBB - the MBB into which to emit the code for the indirect jump.
+    /// MBB - the MBB into which to emit the code for the indirect jump.
     MachineBasicBlock *MBB;
-    // Default - the MBB of the default bb, which is a successor of the range
-    // check MBB.  This is when updating PHI nodes in successors.
+    /// Default - the MBB of the default bb, which is a successor of the range
+    /// check MBB.  This is when updating PHI nodes in successors.
     MachineBasicBlock *Default;
   };
-  
+  struct JumpTableHeader {
+    JumpTableHeader(uint64_t F, uint64_t L, Value* SV, MachineBasicBlock* H,
+                    bool E = false):
+      First(F), Last(L), SValue(SV), HeaderBB(H), Emitted(E) {};
+    uint64_t First;
+    uint64_t Last;
+    Value *SValue;
+    MachineBasicBlock *HeaderBB;
+    bool Emitted;
+  };
+  typedef std::pair<JumpTableHeader, JumpTable> JumpTableBlock;
+ 
 protected:
   /// Pick a safe ordering and emit instructions for each target node in the
   /// graph.
@@ -141,8 +152,9 @@ private:
   /// SwitchInst code generation information.
   std::vector<CaseBlock> SwitchCases;
 
-  /// JT - Record which holds necessary information for emitting a jump table
-  JumpTable JT;
+  /// JTCases - Vector of JumpTable structures which holds necessary information
+  /// for emitting a jump tables during SwitchInst code generation.
+  std::vector<JumpTableBlock> JTCases;
 };
 
 }
