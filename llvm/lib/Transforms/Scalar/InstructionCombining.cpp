@@ -2443,10 +2443,9 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   // Check to see if this is an unsigned division with an exact power of 2,
   // if so, convert to a right shift.
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
-    APInt Val(C->getValue());
-    if (Val != 0 && Val.isPowerOf2())    // Don't break X / 0
+    if (!C->isZero() && C->getValue().isPowerOf2())  // Don't break X / 0
       return BinaryOperator::createLShr(Op0, 
-               ConstantInt::get(Op0->getType(), Val.logBase2()));
+               ConstantInt::get(Op0->getType(), C->getValue().logBase2()));
   }
 
   // X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
@@ -2673,8 +2672,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
     // Turn A % (C << N), where C is 2^k, into A & ((C << N)-1)  
     if (RHSI->getOpcode() == Instruction::Shl &&
         isa<ConstantInt>(RHSI->getOperand(0))) {
-      APInt C1(cast<ConstantInt>(RHSI->getOperand(0))->getValue());
-      if (C1.isPowerOf2()) {
+      if (cast<ConstantInt>(RHSI->getOperand(0))->getValue().isPowerOf2()) {
         Constant *N1 = ConstantInt::getAllOnesValue(I.getType());
         Value *Add = InsertNewInstBefore(BinaryOperator::createAdd(RHSI, N1,
                                                                    "tmp"), I);
@@ -2711,7 +2709,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   
   if (Value *RHSNeg = dyn_castNegVal(Op1))
     if (!isa<ConstantInt>(RHSNeg) || 
-        cast<ConstantInt>(RHSNeg)->getValue().isPositive()) {
+        cast<ConstantInt>(RHSNeg)->getValue().isStrictlyPositive()) {
       // X % -Y -> X % Y
       AddUsesToWorkList(I);
       I.setOperand(1, RHSNeg);
@@ -7466,7 +7464,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       (ParamTy->isInteger() && ActTy->isInteger() &&
        ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()) ||
       (c && ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()
-       && c->getValue().isPositive());
+       && c->getValue().isStrictlyPositive());
     if (Callee->isDeclaration() && !isConvertible) return false;
   }
 
