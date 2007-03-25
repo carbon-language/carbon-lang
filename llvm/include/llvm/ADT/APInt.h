@@ -355,7 +355,9 @@ public:
   /// @brief Get a value with high bits set
   static APInt getHighBitsSet(uint32_t numBits, uint32_t hiBitsSet) {
     assert(hiBitsSet <= numBits && "Too many bits to set!");
-    assert(hiBitsSet > 0 && "You must set SOME bits");
+    // Handle a degenerate case, to avoid shifting by word size
+    if (hiBitsSet == 0)
+      return APInt(numBits, 0);
     uint32_t shiftAmt = numBits - hiBitsSet;
     // For small values, return quickly
     if (numBits <= APINT_BITS_PER_WORD)
@@ -369,7 +371,9 @@ public:
   /// @brief Get a value with low bits set
   static APInt getLowBitsSet(uint32_t numBits, uint32_t loBitsSet) {
     assert(loBitsSet <= numBits && "Too many bits to set!");
-    assert(loBitsSet > 0 && "You must set SOME bits");
+    // Handle a degenerate case, to avoid shifting by word size
+    if (loBitsSet == 0)
+      return APInt(numBits, 0);
     uint32_t shiftAmt = numBits - loBitsSet;
     // For small values, return quickly
     if (numBits <= APINT_BITS_PER_WORD)
