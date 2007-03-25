@@ -540,8 +540,9 @@ static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
       if (I->getOpcode() == Instruction::Shl)
         if ((CST = dyn_cast<ConstantInt>(I->getOperand(1)))) {
           // The multiplier is really 1 << CST.
-          Constant *One = ConstantInt::get(V->getType(), 1);
-          CST = cast<ConstantInt>(ConstantExpr::getShl(One, CST));
+          APInt Multiplier(V->getType()->getPrimitiveSizeInBits(), 0);
+          Multiplier.set(CST->getZExtValue()); // set bit is == 1 << CST
+          CST = ConstantInt::get(Multiplier);
           return I->getOperand(0);
         }
     }
@@ -558,14 +559,31 @@ static User *dyn_castGetElementPtr(Value *V) {
   return false;
 }
 
-// AddOne, SubOne - Add or subtract a constant one from an integer constant...
+/// AddOne - Add one to a ConstantInt
 static ConstantInt *AddOne(ConstantInt *C) {
-  return cast<ConstantInt>(ConstantExpr::getAdd(C,
-                                         ConstantInt::get(C->getType(), 1)));
+  APInt One(C->getType()->getPrimitiveSizeInBits(),1);
+  return ConstantInt::get(C->getValue() + One);
 }
+/// SubOne - Subtract one from a ConstantInt
 static ConstantInt *SubOne(ConstantInt *C) {
-  return cast<ConstantInt>(ConstantExpr::getSub(C,
-                                         ConstantInt::get(C->getType(), 1)));
+  APInt One(C->getType()->getPrimitiveSizeInBits(),1);
+  return ConstantInt::get(C->getValue() - One);
+}
+/// Add - Add two ConstantInts together
+static ConstantInt *Add(ConstantInt *C1, ConstantInt *C2) {
+  return ConstantInt::get(C1->getValue() + C2->getValue());
+}
+/// And - Bitwise AND two ConstantInts together
+static ConstantInt *And(ConstantInt *C1, ConstantInt *C2) {
+  return ConstantInt::get(C1->getValue() & C2->getValue());
+}
+/// Subtract - Subtract one ConstantInt from another
+static ConstantInt *Subtract(ConstantInt *C1, ConstantInt *C2) {
+  return ConstantInt::get(C1->getValue() - C2->getValue());
+}
+/// Multiply - Multiply two ConstantInts together
+static ConstantInt *Multiply(ConstantInt *C1, ConstantInt *C2) {
+  return ConstantInt::get(C1->getValue() * C2->getValue());
 }
 
 /// ComputeMaskedBits - Determine which of the bits specified in Mask are
@@ -1966,7 +1984,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     // X*C1 + X*C2 --> X * (C1+C2)
     ConstantInt *C1;
     if (X == dyn_castFoldableMul(RHS, C1))
-      return BinaryOperator::createMul(X, ConstantExpr::getAdd(C1, C2));
+      return BinaryOperator::createMul(X, Add(C1, C2));
   }
 
   // X + X*C --> X * (C+1)
@@ -1986,14 +2004,12 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
   if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
     Value *X = 0;
-    if (match(LHS, m_Not(m_Value(X)))) {   // ~X + C --> (C-1) - X
-      Constant *C= ConstantExpr::getSub(CRHS, ConstantInt::get(I.getType(), 1));
-      return BinaryOperator::createSub(C, X);
-    }
+    if (match(LHS, m_Not(m_Value(X))))    // ~X + C --> (C-1) - X
+      return BinaryOperator::createSub(SubOne(CRHS), X);
 
     // (X & FF00) + xx00  -> (X+xx00) & FF00
     if (LHS->hasOneUse() && match(LHS, m_And(m_Value(X), m_ConstantInt(C2)))) {
-      Constant *Anded = ConstantExpr::getAnd(CRHS, C2);
+      Constant *Anded = And(CRHS, C2);
       if (Anded == CRHS) {
         // See if all bits from the first bit set in the Add RHS up are included
         // in the mask.  First, get the rightmost bit.
@@ -2075,8 +2091,8 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     // C - ~X == X + (1+C)
     Value *X = 0;
     if (match(Op1, m_Not(m_Value(X))))
-      return BinaryOperator::createAdd(X,
-                    ConstantExpr::getAdd(C, ConstantInt::get(I.getType(), 1)));
+      return BinaryOperator::createAdd(X, AddOne(C));
+
     // -(X >>u 31) -> (X >>s 31)
     // -(X >>s 31) -> (X >>u 31)
     if (C->isNullValue()) {
@@ -2125,7 +2141,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       else if (ConstantInt *CI1 = dyn_cast<ConstantInt>(I.getOperand(0))) {
         if (ConstantInt *CI2 = dyn_cast<ConstantInt>(Op1I->getOperand(1)))
           // C1-(X+C2) --> (C1-C2)-X
-          return BinaryOperator::createSub(ConstantExpr::getSub(CI1, CI2),
+          return BinaryOperator::createSub(Subtract(CI1, CI2), 
                                            Op1I->getOperand(0));
       }
     }
@@ -2167,8 +2183,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       // X - X*C --> X * (1-C)
       ConstantInt *C2 = 0;
       if (dyn_castFoldableMul(Op1I, C2) == Op0) {
-        Constant *CP1 =
-          ConstantExpr::getSub(ConstantInt::get(I.getType(), 1), C2);
+        Constant *CP1 = Subtract(ConstantInt::get(I.getType(), 1), C2);
         return BinaryOperator::createMul(Op0, CP1);
       }
     }
@@ -2188,14 +2203,12 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
   ConstantInt *C1;
   if (Value *X = dyn_castFoldableMul(Op0, C1)) {
-    if (X == Op1) { // X*C - X --> X * (C-1)
-      Constant *CP1 = ConstantExpr::getSub(C1, ConstantInt::get(I.getType(),1));
-      return BinaryOperator::createMul(Op1, CP1);
-    }
+    if (X == Op1)  // X*C - X --> X * (C-1)
+      return BinaryOperator::createMul(Op1, SubOne(C1));
 
     ConstantInt *C2;   // X*C1 - X*C2 -> X * (C1-C2)
     if (X == dyn_castFoldableMul(Op1, C2))
-      return BinaryOperator::createMul(Op1, ConstantExpr::getSub(C1, C2));
+      return BinaryOperator::createMul(Op1, Subtract(C1, C2));
   }
   return 0;
 }
@@ -2411,7 +2424,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
       if (Instruction::BinaryOps(LHS->getOpcode()) == I.getOpcode())
         if (ConstantInt *LHSRHS = dyn_cast<ConstantInt>(LHS->getOperand(1))) {
           return BinaryOperator::create(I.getOpcode(), LHS->getOperand(0),
-                                        ConstantExpr::getMul(RHS, LHSRHS));
+                                        Multiply(RHS, LHSRHS));
         }
 
     if (!RHS->isZero()) { // avoid X udiv 0
@@ -2906,7 +2919,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
   Value *X = Op->getOperand(0);
   Constant *Together = 0;
   if (!Op->isShift())
-    Together = ConstantExpr::getAnd(AndRHS, OpRHS);
+    Together = And(AndRHS, OpRHS);
 
   switch (Op->getOpcode()) {
   case Instruction::Xor:
@@ -3112,7 +3125,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
   switch (LHSI->getOpcode()) {
   default: return 0;
   case Instruction::And:
-    if (ConstantExpr::getAnd(N, Mask) == Mask) {
+    if (And(N, Mask) == Mask) {
       // If the AndRHS is a power of two minus one (0+1+), this is simple.
       if ((Mask->getValue().countLeadingZeros() + 
            Mask->getValue().countPopulation()) == 
@@ -3137,7 +3150,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
     // If the AndRHS is a power of two minus one (0+1+), and N&Mask == 0
     if ((Mask->getValue().countLeadingZeros() + 
          Mask->getValue().countPopulation()) == Mask->getValue().getBitWidth()
-        && ConstantExpr::getAnd(N, Mask)->isNullValue())
+        && And(N, Mask)->isNullValue())
       break;
     return 0;
   }
