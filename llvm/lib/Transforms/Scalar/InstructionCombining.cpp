@@ -685,9 +685,9 @@ static void ComputeMaskedBits(Value *V, const APInt& Mask, APInt& KnownZero,
   case Instruction::ZExt:  {
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
-    APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
-      
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
+    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
+      
     ComputeMaskedBits(I->getOperand(0), APInt(Mask).trunc(SrcBitWidth), 
       KnownZero.trunc(SrcBitWidth), KnownOne.trunc(SrcBitWidth), Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
@@ -700,9 +700,9 @@ static void ComputeMaskedBits(Value *V, const APInt& Mask, APInt& KnownZero,
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
-    APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
-      
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
+    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
+      
     ComputeMaskedBits(I->getOperand(0), APInt(Mask).trunc(SrcBitWidth), 
       KnownZero.trunc(SrcBitWidth), KnownOne.trunc(SrcBitWidth), Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
@@ -743,7 +743,7 @@ static void ComputeMaskedBits(Value *V, const APInt& Mask, APInt& KnownZero,
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
       uint64_t ShiftAmt = SA->getZExtValue();
-      APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth-ShiftAmt));
+      APInt HighBits(APInt::getHighBitsSet(BitWidth, ShiftAmt));
       
       // Unsigned shift right.
       APInt Mask2(Mask.shl(ShiftAmt));
@@ -760,7 +760,7 @@ static void ComputeMaskedBits(Value *V, const APInt& Mask, APInt& KnownZero,
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
       uint64_t ShiftAmt = SA->getZExtValue();
-      APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth-ShiftAmt));
+      APInt HighBits(APInt::getHighBitsSet(BitWidth, ShiftAmt));
       
       // Signed shift right.
       APInt Mask2(Mask.shl(ShiftAmt));
@@ -830,8 +830,7 @@ static void ComputeSignedMinMaxValuesFromKnownBits(const Type *Ty,
          KnownOne.getBitWidth() == BitWidth &&
          Min.getBitWidth() == BitWidth && Max.getBitWidth() == BitWidth &&
          "Ty, KnownZero, KnownOne and Min, Max must have equal bitwidth.");
-  APInt TypeBits(APInt::getAllOnesValue(BitWidth));
-  APInt UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
+  APInt UnknownBits = ~(KnownZero|KnownOne);
 
   APInt SignBit(APInt::getSignBit(BitWidth));
   
@@ -860,8 +859,7 @@ static void ComputeUnsignedMinMaxValuesFromKnownBits(const Type *Ty,
          KnownOne.getBitWidth() == BitWidth &&
          Min.getBitWidth() == BitWidth && Max.getBitWidth() &&
          "Ty, KnownZero, KnownOne and Min, Max must have equal bitwidth.");
-  APInt TypeBits(APInt::getAllOnesValue(BitWidth));
-  APInt UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
+  APInt UnknownBits = ~(KnownZero|KnownOne);
   
   // The minimum value is when the unknown bits are all zeros.
   Min = KnownOne;
@@ -1118,7 +1116,8 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
   case Instruction::ZExt: {
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
-    APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
+    uint32_t SrcBitWidth = SrcTy->getBitWidth();
+    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
     
     DemandedMask &= SrcTy->getMask().zext(BitWidth);
     uint32_t zextBf = SrcTy->getBitWidth();
@@ -1137,7 +1136,8 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
-    APInt NewBits(APInt::getAllOnesValue(BitWidth).shl(SrcTy->getBitWidth()));
+    uint32_t SrcBitWidth = SrcTy->getBitWidth();
+    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
     
     // Get the sign bit for the source type
     APInt InSignBit(APInt::getSignBit(SrcTy->getPrimitiveSizeInBits()));
