@@ -7896,10 +7896,22 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   if (GEP.getNumOperands() == 2 && HasZeroPointerIndex)
     return ReplaceInstUsesWith(GEP, PtrOp);
 
+  // Keep track of whether all indices are zero constants integers.
+  bool AllZeroIndices = true;
+  
   // Eliminate unneeded casts for indices.
   bool MadeChange = false;
+  
   gep_type_iterator GTI = gep_type_begin(GEP);
-  for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i, ++GTI)
+  for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i, ++GTI) {
+    // Track whether this GEP has all zero indices, if so, it doesn't move the
+    // input pointer, it just changes its type.
+    if (AllZeroIndices) {
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP.getOperand(i)))
+        AllZeroIndices = CI->isNullValue();
+      else
+        AllZeroIndices = false;
+    }
     if (isa<SequentialType>(*GTI)) {
       if (CastInst *CI = dyn_cast<CastInst>(GEP.getOperand(i))) {
         if (CI->getOpcode() == Instruction::ZExt ||
@@ -7929,8 +7941,16 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           MadeChange = true;
         }
     }
+  }
   if (MadeChange) return &GEP;
 
+  // If this GEP instruction doesn't move the pointer, and if the input operand
+  // is a bitcast of another pointer, just replace the GEP with a bitcast of the
+  // real input to the dest type.
+  if (AllZeroIndices && isa<BitCastInst>(GEP.getOperand(0)))
+    return new BitCastInst(cast<BitCastInst>(GEP.getOperand(0))->getOperand(0),
+                           GEP.getType());
+    
   // Combine Indices - If the source pointer to this getelementptr instruction
   // is a getelementptr instruction, combine the indices of the two
   // getelementptr instructions into a single instruction.
