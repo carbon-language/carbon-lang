@@ -595,7 +595,7 @@ static ConstantInt *Multiply(ConstantInt *C1, ConstantInt *C2) {
 /// optimized based on the contradictory assumption that it is non-zero.
 /// Because instcombine aggressively folds operations with undef args anyway,
 /// this won't lose us code quality.
-static void ComputeMaskedBits(Value *V, const APInt& Mask, APInt& KnownZero, 
+static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero, 
                               APInt& KnownOne, unsigned Depth = 0) {
   assert(V && "No Value?");
   assert(Depth <= 6 && "Limit Search Depth");
@@ -1200,7 +1200,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     // Figure out what the input bits are.  If the top bits of the and result
     // are not demanded, then the add doesn't demand them from its input
     // either.
-    unsigned NLZ = DemandedMask.countLeadingZeros();
+    uint32_t NLZ = DemandedMask.countLeadingZeros();
       
     // If there is a constant on the RHS, there are a variety of xformations
     // we can do.
@@ -1296,7 +1296,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     if ((DemandedMask & APInt::getSignBit(BitWidth)) == 0) {
       // Right fill the mask of bits for this SUB to demand the most
       // significant bit and all those below it.
-      uint32_t NLZ = DemandedMask.countLeadingZeros();
+      unsigned NLZ = DemandedMask.countLeadingZeros();
       APInt DemandedFromOps(APInt::getAllOnesValue(BitWidth).lshr(NLZ));
       if (SimplifyDemandedBits(I->getOperand(0), DemandedFromOps,
                                LHSKnownZero, LHSKnownOne, Depth+1))
@@ -4877,8 +4877,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             if (LHSI->hasOneUse()) {
               // Otherwise strength reduce the shift into an and.
               unsigned ShAmtVal = (unsigned)ShAmt->getZExtValue();
-              Constant *Mask = ConstantInt::get(APInt::getLowBitsSet(TypeBits, 
-                                                          TypeBits - ShAmtVal));
+              uint64_t Val = (1ULL << (TypeBits-ShAmtVal))-1;
+              Constant *Mask = ConstantInt::get(CI->getType(), Val);
 
               Instruction *AndI =
                 BinaryOperator::createAnd(LHSI->getOperand(0),
@@ -5809,7 +5809,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     if (ShiftAmt1 == ShiftAmt2) {
       // If we have ((X >>? C) << C), turn this into X & (-1 << C).
       if (I.getOpcode() == Instruction::Shl) {
-        APInt Mask(Ty->getMask().shl(ShiftAmt1));
+        APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt1));
         return BinaryOperator::createAnd(X, ConstantInt::get(Mask));
       }
       // If we have ((X << C) >>u C), turn this into X & (-1 >>u C).
@@ -5847,9 +5847,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        ConstantInt *Mask = ConstantInt::get(
-            APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
-        return BinaryOperator::createAnd(Shift, Mask);
+        APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
+        return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
       }
       
       // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
@@ -5859,7 +5858,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           BinaryOperator::createLShr(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        APInt Mask(Ty->getMask().lshr(ShiftAmt2));
+        APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
       }
       
@@ -5877,7 +5876,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                  ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        APInt Mask(Ty->getMask().shl(ShiftAmt2));
+        APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
       }
       
@@ -5888,7 +5887,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        APInt Mask(Ty->getMask().lshr(ShiftAmt2));
+        APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
       }
       
