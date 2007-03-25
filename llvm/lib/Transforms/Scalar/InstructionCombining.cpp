@@ -540,9 +540,8 @@ static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
       if (I->getOpcode() == Instruction::Shl)
         if ((CST = dyn_cast<ConstantInt>(I->getOperand(1)))) {
           // The multiplier is really 1 << CST.
-          APInt Multiplier(V->getType()->getPrimitiveSizeInBits(), 0);
-          Multiplier.set(CST->getZExtValue()); // set bit is == 1 << CST
-          CST = ConstantInt::get(Multiplier);
+          Constant *One = ConstantInt::get(V->getType(), 1);
+          CST = cast<ConstantInt>(ConstantExpr::getShl(One, CST));
           return I->getOperand(0);
         }
     }
@@ -561,13 +560,13 @@ static User *dyn_castGetElementPtr(Value *V) {
 
 /// AddOne - Add one to a ConstantInt
 static ConstantInt *AddOne(ConstantInt *C) {
-  APInt One(C->getType()->getPrimitiveSizeInBits(),1);
-  return ConstantInt::get(C->getValue() + One);
+  APInt Val(C->getValue());
+  return ConstantInt::get(++Val);
 }
 /// SubOne - Subtract one from a ConstantInt
 static ConstantInt *SubOne(ConstantInt *C) {
-  APInt One(C->getType()->getPrimitiveSizeInBits(),1);
-  return ConstantInt::get(C->getValue() - One);
+  APInt Val(C->getValue());
+  return ConstantInt::get(--Val);
 }
 /// Add - Add two ConstantInts together
 static ConstantInt *Add(ConstantInt *C1, ConstantInt *C2) {
@@ -752,7 +751,7 @@ static void ComputeMaskedBits(Value *V, const APInt& Mask, APInt& KnownZero,
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero <<= ShiftAmt;
       KnownOne  <<= ShiftAmt;
-      KnownZero |= APInt(BitWidth, 1ULL).shl(ShiftAmt)-1;  // low bits known 0
+      KnownZero |= APInt::getLowBitsSet(BitWidth, ShiftAmt); // low bits known 0
       return;
     }
     break;
@@ -4654,14 +4653,17 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // appropriate icmp lt or icmp gt instruction.  Since the border cases have
     // already been handled above, this requires little checking.
     //
-    if (I.getPredicate() == ICmpInst::ICMP_ULE)
-      return new ICmpInst(ICmpInst::ICMP_ULT, Op0, AddOne(CI));
-    if (I.getPredicate() == ICmpInst::ICMP_SLE)
-      return new ICmpInst(ICmpInst::ICMP_SLT, Op0, AddOne(CI));
-    if (I.getPredicate() == ICmpInst::ICMP_UGE)
-      return new ICmpInst( ICmpInst::ICMP_UGT, Op0, SubOne(CI));
-    if (I.getPredicate() == ICmpInst::ICMP_SGE)
-      return new ICmpInst(ICmpInst::ICMP_SGT, Op0, SubOne(CI));
+    switch (I.getPredicate()) {
+      default: break;
+      case ICmpInst::ICMP_ULE: 
+        return new ICmpInst(ICmpInst::ICMP_ULT, Op0, AddOne(CI));
+      case ICmpInst::ICMP_SLE:
+        return new ICmpInst(ICmpInst::ICMP_SLT, Op0, AddOne(CI));
+      case ICmpInst::ICMP_UGE:
+        return new ICmpInst( ICmpInst::ICMP_UGT, Op0, SubOne(CI));
+      case ICmpInst::ICMP_SGE:
+        return new ICmpInst(ICmpInst::ICMP_SGT, Op0, SubOne(CI));
+    }
     
     // See if we can fold the comparison based on bits known to be zero or one
     // in the input.
