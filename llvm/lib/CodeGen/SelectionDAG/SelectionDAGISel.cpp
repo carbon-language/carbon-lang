@@ -2387,14 +2387,23 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
   if (RegVT == ValueVT)
     return Val;
   
+  if (MVT::isVector(RegVT)) {
+    assert(ValueVT == MVT::Vector && "Unknown vector conversion!");
+    return DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Val, 
+                       DAG.getConstant(MVT::getVectorNumElements(RegVT),
+                                       MVT::i32),
+                       DAG.getValueType(MVT::getVectorBaseType(RegVT)));
+  }
+  
   if (MVT::isInteger(RegVT)) {
     if (ValueVT < RegVT)
       return DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
     else
       return DAG.getNode(ISD::ANY_EXTEND, ValueVT, Val);
-  } else {
-    return DAG.getNode(ISD::FP_ROUND, ValueVT, Val);
   }
+  
+  assert(MVT::isFloatingPoint(RegVT) && MVT::isFloatingPoint(ValueVT));
+  return DAG.getNode(ISD::FP_ROUND, ValueVT, Val);
 }
 
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
@@ -2407,7 +2416,10 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
     // If there is a single register and the types differ, this must be
     // a promotion.
     if (RegVT != ValueVT) {
-      if (MVT::isInteger(RegVT)) {
+      if (MVT::isVector(RegVT)) {
+        assert(Val.getValueType() == MVT::Vector &&"Not a vector-vector cast?");
+        Val = DAG.getNode(ISD::VBIT_CONVERT, RegVT, Val);
+      } else if (MVT::isInteger(RegVT)) {
         if (RegVT < ValueVT)
           Val = DAG.getNode(ISD::TRUNCATE, RegVT, Val);
         else
@@ -3424,7 +3436,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       // If this value was promoted, truncate it down.
       if (ResVal.getValueType() != VT) {
         if (VT == MVT::Vector) {
-          // Insert a VBITCONVERT to convert from the packed result type to the
+          // Insert a VBIT_CONVERT to convert from the packed result type to the
           // MVT::Vector type.
           unsigned NumElems = cast<VectorType>(RetTy)->getNumElements();
           const Type *EltTy = cast<VectorType>(RetTy)->getElementType();
