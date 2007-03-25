@@ -1550,12 +1550,14 @@ void ARMTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
 ARMTargetLowering::ConstraintType
-ARMTargetLowering::getConstraintType(char ConstraintLetter) const {
-  switch (ConstraintLetter) {
-    case 'l':
-      return C_RegisterClass;
-    default: return TargetLowering::getConstraintType(ConstraintLetter);
+ARMTargetLowering::getConstraintType(const std::string &Constraint) const {
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    default:  break;
+    case 'l': return C_RegisterClass;
+    }
   }
+  return TargetLowering::getConstraintType(Constraint);
 }
 
 std::pair<unsigned, const TargetRegisterClass*> 

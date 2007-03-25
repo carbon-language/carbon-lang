@@ -133,7 +133,7 @@ namespace llvm {
                                                 uint64_t &KnownZero, 
                                                 uint64_t &KnownOne,
                                                 unsigned Depth) const;
-    ConstraintType getConstraintType(char ConstraintLetter) const;
+    ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*> 
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    MVT::ValueType VT) const;

@@ -2633,9 +2633,9 @@ static std::string GetMostGeneralConstraint(std::vector<std::string> &C,
   std::string *Current = &C[0];
   // If we have multiple constraints, try to pick the most general one ahead
   // of time.  This isn't a wonderful solution, but handles common cases.
-  TargetLowering::ConstraintType Flavor = TLI.getConstraintType(Current[0][0]);
+  TargetLowering::ConstraintType Flavor = TLI.getConstraintType(Current[0]);
   for (unsigned j = 1, e = C.size(); j != e; ++j) {
-    TargetLowering::ConstraintType ThisFlavor = TLI.getConstraintType(C[j][0]);
+    TargetLowering::ConstraintType ThisFlavor = TLI.getConstraintType(C[j]);
     if (getConstraintGenerality(ThisFlavor) > 
         getConstraintGenerality(Flavor)) {
       // This constraint letter is more general than the previous one,
@@ -2748,7 +2748,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     case InlineAsm::isOutput: {
       TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
       if (ConstraintCode.size() == 1)   // not a physreg name.
-        CTy = TLI.getConstraintType(ConstraintCode[0]);
+        CTy = TLI.getConstraintType(ConstraintCode);
       
       if (CTy == TargetLowering::C_Memory) {
         // Memory output.
@@ -2863,7 +2863,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       
       TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
       if (ConstraintCode.size() == 1)   // not a physreg name.
-        CTy = TLI.getConstraintType(ConstraintCode[0]);
+        CTy = TLI.getConstraintType(ConstraintCode);
         
       if (CTy == TargetLowering::C_Other) {
         InOperandVal = TLI.isOperandValidForConstraint(InOperandVal,

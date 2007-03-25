@@ -571,14 +571,16 @@ SDOperand AlphaTargetLowering::CustomPromoteOperation(SDOperand Op,
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
 AlphaTargetLowering::ConstraintType 
-AlphaTargetLowering::getConstraintType(char ConstraintLetter) const {
-  switch (ConstraintLetter) {
-  default: break;
-  case 'f':
-  case 'r':
-    return C_RegisterClass;
-  }  
-  return TargetLowering::getConstraintType(ConstraintLetter);
+AlphaTargetLowering::getConstraintType(const std::string &Constraint) const {
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    default: break;
+    case 'f':
+    case 'r':
+      return C_RegisterClass;
+    }
+  }
+  return TargetLowering::getConstraintType(Constraint);
 }
 
 std::vector<unsigned> AlphaTargetLowering::

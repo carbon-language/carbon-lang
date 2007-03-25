@@ -229,7 +229,7 @@ namespace llvm {
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB);
     
-    ConstraintType getConstraintType(char ConstraintLetter) const;
+    ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*> 
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    MVT::ValueType VT) const;

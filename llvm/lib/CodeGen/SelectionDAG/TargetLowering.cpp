@@ -1828,28 +1828,32 @@ PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
 //===----------------------------------------------------------------------===//
 
 TargetLowering::ConstraintType
-TargetLowering::getConstraintType(char ConstraintLetter) const {
+TargetLowering::getConstraintType(const std::string &Constraint) const {
   // FIXME: lots more standard ones to handle.
-  switch (ConstraintLetter) {
-  default: return C_Unknown;
-  case 'r': return C_RegisterClass;
-  case 'm':    // memory
-  case 'o':    // offsetable
-  case 'V':    // not offsetable
-    return C_Memory;
-  case 'i':    // Simple Integer or Relocatable Constant
-  case 'n':    // Simple Integer
-  case 's':    // Relocatable Constant
-  case 'I':    // Target registers.
-  case 'J':
-  case 'K':
-  case 'L':
-  case 'M':
-  case 'N':
-  case 'O':
-  case 'P':
-    return C_Other;
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    default: break;
+    case 'r': return C_RegisterClass;
+    case 'm':    // memory
+    case 'o':    // offsetable
+    case 'V':    // not offsetable
+      return C_Memory;
+    case 'i':    // Simple Integer or Relocatable Constant
+    case 'n':    // Simple Integer
+    case 's':    // Relocatable Constant
+    case 'I':    // Target registers.
+    case 'J':
+    case 'K':
+    case 'L':
+    case 'M':
+    case 'N':
+    case 'O':
+    case 'P':
+      return C_Other;
+    }
   }
+  // TODO: Handle registers.
+  return C_Unknown;
 }
 
 /// isOperandValidForConstraint - Return the specified operand (possibly

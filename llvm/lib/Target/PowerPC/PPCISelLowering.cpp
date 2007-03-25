@@ -3105,20 +3105,22 @@ void PPCTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
 }
 
 
-/// getConstraintType - Given a constraint letter, return the type of
+/// getConstraintType - Given a constraint, return the type of
 /// constraint it is for this target.
 PPCTargetLowering::ConstraintType 
-PPCTargetLowering::getConstraintType(char ConstraintLetter) const {
-  switch (ConstraintLetter) {
-  default: break;
-  case 'b':
-  case 'r':
-  case 'f':
-  case 'v':
-  case 'y':
-    return C_RegisterClass;
-  }  
-  return TargetLowering::getConstraintType(ConstraintLetter);
+PPCTargetLowering::getConstraintType(const std::string &Constraint) const {
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    default: break;
+    case 'b':
+    case 'r':
+    case 'f':
+    case 'v':
+    case 'y':
+      return C_RegisterClass;
+    }
+  }
+  return TargetLowering::getConstraintType(Constraint);
 }
 
 std::pair<unsigned, const TargetRegisterClass*> 

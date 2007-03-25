@@ -806,9 +806,9 @@ public:
     C_Unknown              // Unsupported constraint.
   };
   
-  /// getConstraintType - Given a constraint letter, return the type of
-  /// constraint it is for this target.
-  virtual ConstraintType getConstraintType(char ConstraintLetter) const;
+  /// getConstraintType - Given a constraint, return the type of constraint it
+  /// is for this target.
+  virtual ConstraintType getConstraintType(const std::string &Constraint) const;
   
   
   /// getRegClassForInlineAsmConstraint - Given a constraint letter (e.g. "r"),

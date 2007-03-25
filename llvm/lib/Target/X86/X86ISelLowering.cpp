@@ -4521,19 +4521,23 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
 X86TargetLowering::ConstraintType
-X86TargetLowering::getConstraintType(char ConstraintLetter) const {
-  switch (ConstraintLetter) {
-  case 'A':
-  case 'r':
-  case 'R':
-  case 'l':
-  case 'q':
-  case 'Q':
-  case 'x':
-  case 'Y':
-    return C_RegisterClass;
-  default: return TargetLowering::getConstraintType(ConstraintLetter);
+X86TargetLowering::getConstraintType(const std::string &Constraint) const {
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    case 'A':
+    case 'r':
+    case 'R':
+    case 'l':
+    case 'q':
+    case 'Q':
+    case 'x':
+    case 'Y':
+      return C_RegisterClass;
+    default:
+      break;
+    }
   }
+  return TargetLowering::getConstraintType(Constraint);
 }
 
 /// isOperandValidForConstraint - Return the specified operand (possibly
