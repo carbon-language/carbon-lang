@@ -374,11 +374,12 @@ public:
     // Handle a degenerate case, to avoid shifting by word size
     if (loBitsSet == 0)
       return APInt(numBits, 0);
-    uint32_t shiftAmt = numBits - loBitsSet;
+    if (loBitsSet == APINT_BITS_PER_WORD)
+      return APInt(numBits, -1ULL);
     // For small values, return quickly
-    if (numBits <= APINT_BITS_PER_WORD)
-      return APInt(numBits, ~0ULL >> shiftAmt);
-    return (~APInt(numBits, 0)).lshr(shiftAmt);
+    if (numBits < APINT_BITS_PER_WORD)
+      return APInt(numBits, (1ULL << loBitsSet) - 1);
+    return (~APInt(numBits, 0)).lshr(numBits - loBitsSet);
   }
 
   /// The hash value is computed as the sum of the words and the bit width.
