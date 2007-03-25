@@ -519,10 +519,20 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
             return Constant::getNullValue(CI->getType());         // X % 1 == 0
         break;
       case Instruction::And:
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
+        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2)) {
+          if (CI->isZero()) return const_cast<Constant*>(C2);     // X & 0 == 0
           if (CI->isAllOnesValue())
             return const_cast<Constant*>(C1);                     // X & -1 == X
-        if (C2->isNullValue()) return const_cast<Constant*>(C2);  // X & 0 == 0
+          
+          // (zext i32 to i64) & 4294967295 -> (zext i32 to i64)
+          if (CE1->getOpcode() == Instruction::ZExt) {
+            APInt PossiblySetBits
+              = cast<IntegerType>(CE1->getOperand(0)->getType())->getMask();
+            PossiblySetBits.zext(C1->getType()->getPrimitiveSizeInBits());
+            if ((PossiblySetBits & CI->getValue()) == PossiblySetBits)
+              return const_cast<Constant*>(C1);
+          }
+        }
         if (CE1->isCast() && isa<GlobalValue>(CE1->getOperand(0))) {
           GlobalValue *CPR = cast<GlobalValue>(CE1->getOperand(0));
 
@@ -542,6 +552,11 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         break;
       case Instruction::Xor:
         if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X ^ 0 == X
+        break;
+      case Instruction::AShr:
+        if (CE1->getOpcode() == Instruction::ZExt)  // Top bits known zero.
+          return ConstantExpr::getLShr(const_cast<Constant*>(C1),
+                                       const_cast<Constant*>(C2));
         break;
       }
     }
