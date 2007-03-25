@@ -4544,16 +4544,17 @@ isOperandValidForConstraint(SDOperand Op, char Constraint, SelectionDAG &DAG) {
   switch (Constraint) {
   default: break;
   case 'I':
-    if (isa<ConstantSDNode>(Op)) {
-      unsigned Value = cast<ConstantSDNode>(Op)->getValue();
-      if (Value <= 31)
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      if (C->getValue() <= 31)
         return Op;
-      else 
-        return SDOperand(0,0);
-    } else {
-        return SDOperand(0,0);
     }
-    break;
+    return SDOperand(0,0);
+  case 'N':
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      if (C->getValue() <= 255)
+        return Op;
+    }
+    return SDOperand(0,0);
   case 'i':
     // Literal immediates are always ok.
     if (isa<ConstantSDNode>(Op)) return Op;
