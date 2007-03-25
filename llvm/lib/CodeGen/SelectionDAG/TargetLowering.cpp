@@ -1841,6 +1841,7 @@ TargetLowering::getConstraintType(const std::string &Constraint) const {
     case 'i':    // Simple Integer or Relocatable Constant
     case 'n':    // Simple Integer
     case 's':    // Relocatable Constant
+    case 'X':    // Allow ANY value.
     case 'I':    // Target registers.
     case 'J':
     case 'K':
@@ -1870,6 +1871,7 @@ SDOperand TargetLowering::isOperandValidForConstraint(SDOperand Op,
   case 'i':    // Simple Integer or Relocatable Constant
   case 'n':    // Simple Integer
   case 's':    // Relocatable Constant
+  case 'X':    // Allows any operand.
     // These are okay if the operand is either a global variable address or a
     // simple immediate value.  If we have one of these, map to the TargetXXX
     // version so that the value itself doesn't get selected.
