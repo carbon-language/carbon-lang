@@ -1852,7 +1852,10 @@ TargetLowering::getConstraintType(const std::string &Constraint) const {
       return C_Other;
     }
   }
-  // TODO: Handle registers.
+  
+  if (Constraint.size() > 1 && Constraint[0] == '{' && 
+      Constraint[Constraint.size()-1] == '}')
+    return C_Register;
   return C_Unknown;
 }
 
