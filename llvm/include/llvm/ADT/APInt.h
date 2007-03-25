@@ -726,7 +726,7 @@ public:
   /// @brief Sign extend to a new width.
   APInt &sext(uint32_t width);
 
-  /// This operation zero extends the APInt to a new width. Thie high order bits
+  /// This operation zero extends the APInt to a new width. The high order bits
   /// are filled with 0 bits.  It is an error to specify a width that is less 
   /// than or equal to the current width.
   /// @brief Zero extend to a new width.
