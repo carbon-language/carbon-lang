@@ -2327,8 +2327,12 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
       CombineTo(N->getOperand(0).Val, Load);
     } else
       CombineTo(N0.Val, Load, Load.getValue(1));
-    if (ShAmt)
-      return DAG.getNode(N->getOpcode(), VT, Load);
+    if (ShAmt) {
+      if (Opc == ISD::SIGN_EXTEND_INREG)
+        return DAG.getNode(Opc, VT, Load, N->getOperand(1));
+      else
+        return DAG.getNode(Opc, VT, Load);
+    }
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
 
