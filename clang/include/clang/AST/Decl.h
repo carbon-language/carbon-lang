@@ -208,7 +208,8 @@ public:
 ///
 class TypeDecl : public Decl {
   /// TypeForDecl - This indicates the Type object that represents this
-  /// TypeDecl.  It is a cache maintained by ASTContext::getTypeDeclType.
+  /// TypeDecl.  It is a cache maintained by ASTContext::getTypedefType and
+  /// ASTContext::getTagDeclType.
   Type *TypeForDecl;
   friend class ASTContext;
 protected:
