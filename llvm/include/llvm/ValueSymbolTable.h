@@ -61,7 +61,7 @@ public:
 /// @{
 public:
 
-  ValueSymbolTable() : LastUnique(0) {}
+  ValueSymbolTable() : vmap(16), LastUnique(0) {}
   ~ValueSymbolTable();
 
 /// @}
