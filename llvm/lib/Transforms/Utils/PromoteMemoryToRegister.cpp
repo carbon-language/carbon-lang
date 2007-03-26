@@ -77,7 +77,7 @@ namespace {
   class VISIBILITY_HIDDEN RenamePassData {
   public:
     RenamePassData(BasicBlock *B, BasicBlock *P,
-                   std::vector<Value *> V) : BB(B), Pred(P), Values(V) {}
+                   const std::vector<Value *> &V) : BB(B), Pred(P), Values(V) {}
     BasicBlock *BB;
     BasicBlock *Pred;
     std::vector<Value *> Values;
@@ -123,7 +123,7 @@ namespace {
     DenseMap<BasicBlock*, unsigned> BBNumbers;
 
     /// RenamePassWorkList - Worklist used by RenamePass()
-    std::vector<RenamePassData *> RenamePassWorkList;
+    std::vector<RenamePassData> RenamePassWorkList;
 
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A,
@@ -407,13 +407,12 @@ void PromoteMem2Reg::run() {
   // and inserting the phi nodes we marked as necessary
   //
   RenamePassWorkList.clear();
-  RenamePassData *RPD = new RenamePassData(F.begin(), 0, Values);
-  RenamePassWorkList.push_back(RPD);
+  RenamePassWorkList.push_back(RenamePassData(F.begin(), 0, Values));
   while(!RenamePassWorkList.empty()) {
-    RenamePassData *RPD = RenamePassWorkList.back(); RenamePassWorkList.pop_back();
+    RenamePassData RPD = RenamePassWorkList.back(); 
+    RenamePassWorkList.pop_back();
     // RenamePass may add new worklist entries.
-    RenamePass(RPD->BB, RPD->Pred, RPD->Values);
-    delete RPD;
+    RenamePass(RPD.BB, RPD.Pred, RPD.Values);
   }
   
   // The renamer uses the Visited set to avoid infinite loops.  Clear it now.
@@ -794,11 +793,8 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 
   // Recurse to our successors.
   TerminatorInst *TI = BB->getTerminator();
-  for (unsigned i = 0; i != TI->getNumSuccessors(); i++) {
-    RenamePassData *RPD = new RenamePassData(TI->getSuccessor(i), BB,
-                                             IncomingVals);
-    RenamePassWorkList.push_back(RPD);
-  }
+  for (unsigned i = 0; i != TI->getNumSuccessors(); i++)
+    RenamePassWorkList.push_back(RenamePassData(TI->getSuccessor(i), BB, IncomingVals));
 }
 
 /// PromoteMemToReg - Promote the specified list of alloca instructions into
