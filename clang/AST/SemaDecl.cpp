@@ -570,7 +570,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
 
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
-  SmallVector<Decl*, 32> RecFields;
+  SmallVector<FieldDecl*, 32> RecFields;
   SmallSet<const IdentifierInfo*, 32> FieldIDs;
   
   for (unsigned i = 0; i != NumFields; ++i) {

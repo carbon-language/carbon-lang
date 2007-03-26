@@ -65,12 +65,25 @@ void EnumDecl::defineElements(EnumConstantDecl **Elts, unsigned NumElts) {
 /// defineBody - When created, RecordDecl's correspond to a forward declared
 /// record.  This method is used to mark the decl as being defined, with the
 /// specified contents.
-void RecordDecl::defineBody(Decl **members, unsigned numMembers) {
+void RecordDecl::defineBody(FieldDecl **members, unsigned numMembers) {
   assert(!isDefinition() && "Cannot redefine record!");
   setDefinition(true);
   NumMembers = numMembers;
   if (numMembers) {
-    Members = new Decl*[numMembers];
+    Members = new FieldDecl*[numMembers];
     memcpy(Members, members, numMembers*sizeof(Decl*));
   }
 }
+
+FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
+  if (Members == 0 || NumMembers < 0)
+    return 0;
+	
+  // linear search. When C++ classes come along, will likely need to revisit.
+  for (int i = 0; i < NumMembers; ++i) {
+    if (Members[i]->getIdentifier() == name)
+      return Members[i];
+  }
+  return 0;
+}
+

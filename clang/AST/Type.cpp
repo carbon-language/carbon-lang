@@ -41,7 +41,7 @@ bool Type::isArrayType() const {
   return isa<ArrayType>(CanonicalType) ? true : false;
 }
 
-bool Type::isStructureType() const { 
+bool Type::isStructureType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
     if (TT->getDecl()->getKind() == Decl::Struct)
       return true;

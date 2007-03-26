@@ -258,15 +258,15 @@ public:
 ///
 class MemberExpr : public Expr {
   Expr *Base;
-  Decl *MemberDecl;
+  FieldDecl *MemberDecl;
   bool IsArrow;      // True if this is "X->F", false if this is "X.F".
 public:
-  MemberExpr(Expr *base, bool isarrow, Decl *memberdecl) 
-    : Expr(MemberExprClass),
+  MemberExpr(Expr *base, bool isarrow, FieldDecl *memberdecl) 
+    : Expr(MemberExprClass, memberdecl->getType()),
       Base(base), MemberDecl(memberdecl), IsArrow(isarrow) {}
   
   Expr *getBase() { return Base; }
-  Decl *getMemberDecl() { return MemberDecl; }
+  FieldDecl *getMemberDecl() { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
   
   virtual void visit(StmtVisitor &Visitor);

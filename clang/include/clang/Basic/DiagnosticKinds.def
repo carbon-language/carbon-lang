@@ -485,13 +485,13 @@ DIAG(err_typecheck_subscript_value, ERROR,
 DIAG(err_typecheck_subscript, ERROR,
      "array subscript is not an integer")
 DIAG(err_typecheck_member_reference_structUnion, ERROR,
-     "member reference is neither a structure or union")
+     "member reference is not a structure or union")
 DIAG(err_typecheck_member_reference_arrow, ERROR,
      "member reference is not a pointer")
 DIAG(err_typecheck_incomplete_tag, ERROR,
-     "incomplete definition of struct/union '%s'")
-DIAG(err_typecheck_internal_error, ERROR,
-     "*internal* typechecking error")
+     "incomplete definition of type '%s'")
+DIAG(err_typecheck_no_member, ERROR,
+     "no member named '%s'")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

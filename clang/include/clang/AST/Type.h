@@ -191,12 +191,13 @@ public:
   bool isScalarType() const;     // arithmetic + pointers
   bool isAggregateType() const;  // arrays, structures
   
+  /// FIXME: consider adding classes to complete the "isa" support.
   bool isVoidType() const;       
   bool isFunctionType() const;   
   bool isPointerType() const;
   bool isArrayType() const;
-  bool isStructureType() const;
-  bool isUnionType() const;
+  bool isStructureType() const;  // no isa<StructType>(t) support 
+  bool isUnionType() const;      // no isa<UnionType>(t) support
   
   /// isIncompleteType - Return true if this is an incomplete type (C99 6.2.5p1)
   /// - a type that can describe objects, but which lacks information needed to

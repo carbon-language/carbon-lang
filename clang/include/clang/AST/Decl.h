@@ -171,8 +171,8 @@ public:
 };
 
 
-/// FunctionDecl - An instance of this class is created to represent a function
-/// declaration or definition.
+/// FieldDecl - An instance of this class is created by Sema::ParseField to 
+/// represent a member of a struct/union/class.
 class FieldDecl : public ObjectDecl {
 public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
@@ -312,7 +312,7 @@ class RecordDecl : public TagDecl {
   bool HasFlexibleArrayMember : 1;
 
   /// Members/NumMembers - This is a new[]'d array of pointers to Decls.
-  Decl **Members;   // Null if not defined.
+  FieldDecl **Members;   // Null if not defined.
   int NumMembers;   // -1 if not defined.
 public:
   RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) :TagDecl(DK, L, Id){
@@ -328,8 +328,12 @@ public:
   /// defineBody - When created, RecordDecl's correspond to a forward declared
   /// record.  This method is used to mark the decl as being defined, with the
   /// specified contents.
-  void defineBody(Decl **Members, unsigned numMembers);
-  
+  void defineBody(FieldDecl **Members, unsigned numMembers);
+
+  /// getMember - If the member doesn't exist, or there are no members, this 
+  /// function will return 0;
+  FieldDecl *getMember(IdentifierInfo *name);
+
   static bool classof(const Decl *D) {
     return D->getKind() == Struct || D->getKind() == Union ||
            D->getKind() == Class;

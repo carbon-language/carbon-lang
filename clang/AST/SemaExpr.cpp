@@ -262,21 +262,18 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     else
       return Diag(OpLoc, diag::err_typecheck_member_reference_arrow);
   }
-  RecordDecl *RD;
-
-  // derive the structure/union definition from the type.
-  if (BT->isStructureType() || BT->isUnionType()) {
-    TagDecl *TD = cast<TagType>(BT)->getDecl();
+  if (isa<RecordType>(BT)) { // get the struct/union definition from the type.
+    RecordDecl *RD = cast<RecordType>(BT)->getDecl();
+    
     if (BT->isIncompleteType())
-      return Diag(OpLoc, diag::err_typecheck_incomplete_tag, TD->getName());
-    if (!(RD = dyn_cast<RecordDecl>(TD)))
-      return Diag(OpLoc, diag::err_typecheck_internal_error);
-  } else
-    return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion);
-
-  Decl *MemberDecl = 0;
-  // TODO: Look up MemberDecl.
-  return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
+      return Diag(OpLoc, diag::err_typecheck_incomplete_tag, RD->getName());
+    
+    if (FieldDecl *MemberDecl = RD->getMember(&Member))
+      return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
+    else
+      return Diag(OpLoc, diag::err_typecheck_no_member, Member.getName());
+  }
+  return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion);
 }
 
 /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
