@@ -330,22 +330,28 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::MUL,                MVT::v4i16, Legal);
 
     setOperationAction(ISD::AND,                MVT::v8i8,  Promote);
-    AddPromotedToType (ISD::AND,                MVT::v8i8,  MVT::v2i32);
+    AddPromotedToType (ISD::AND,                MVT::v8i8,  MVT::v1i64);
     setOperationAction(ISD::AND,                MVT::v4i16, Promote);
-    AddPromotedToType (ISD::AND,                MVT::v4i16, MVT::v2i32);
-    setOperationAction(ISD::AND,                MVT::v2i32, Legal);
+    AddPromotedToType (ISD::AND,                MVT::v4i16, MVT::v1i64);
+    setOperationAction(ISD::AND,                MVT::v2i32, Promote);
+    AddPromotedToType (ISD::AND,                MVT::v2i32, MVT::v1i64);
+    setOperationAction(ISD::AND,                MVT::v1i64, Legal);
 
     setOperationAction(ISD::OR,                 MVT::v8i8,  Promote);
-    AddPromotedToType (ISD::OR,                 MVT::v8i8,  MVT::v2i32);
+    AddPromotedToType (ISD::OR,                 MVT::v8i8,  MVT::v1i64);
     setOperationAction(ISD::OR,                 MVT::v4i16, Promote);
-    AddPromotedToType (ISD::OR,                 MVT::v4i16, MVT::v2i32);
-    setOperationAction(ISD::OR,                 MVT::v2i32, Legal);
+    AddPromotedToType (ISD::OR,                 MVT::v4i16, MVT::v1i64);
+    setOperationAction(ISD::OR,                 MVT::v2i32, Promote);
+    AddPromotedToType (ISD::OR,                 MVT::v2i32, MVT::v1i64);
+    setOperationAction(ISD::OR,                 MVT::v1i64, Legal);
 
     setOperationAction(ISD::XOR,                MVT::v8i8,  Promote);
-    AddPromotedToType (ISD::XOR,                MVT::v8i8,  MVT::v2i32);
+    AddPromotedToType (ISD::XOR,                MVT::v8i8,  MVT::v1i64);
     setOperationAction(ISD::XOR,                MVT::v4i16, Promote);
-    AddPromotedToType (ISD::XOR,                MVT::v4i16, MVT::v2i32);
-    setOperationAction(ISD::XOR,                MVT::v2i32, Legal);
+    AddPromotedToType (ISD::XOR,                MVT::v4i16, MVT::v1i64);
+    setOperationAction(ISD::XOR,                MVT::v2i32, Promote);
+    AddPromotedToType (ISD::XOR,                MVT::v2i32, MVT::v1i64);
+    setOperationAction(ISD::XOR,                MVT::v1i64, Legal);
 
     setOperationAction(ISD::LOAD,               MVT::v8i8,  Promote);
     AddPromotedToType (ISD::LOAD,               MVT::v8i8,  MVT::v1i64);
