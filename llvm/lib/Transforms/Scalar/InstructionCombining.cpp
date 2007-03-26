@@ -57,6 +57,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <set>
+#ifndef NDEBUG
+#include <sstream>
+#endif
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -3134,7 +3137,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
       // Otherwise, if Mask is 0+1+0+, and if B is known to have the low 0+
       // part, we don't need any explicit masks to take them out of A.  If that
       // is all N is, ignore it.
-      unsigned MB, ME;
+      unsigned MB = 0, ME = 0;
       if (isRunOfOnes(Mask, MB, ME)) {  // begin/end bit of run, inclusive
         uint32_t BitWidth = cast<IntegerType>(RHS->getType())->getBitWidth();
         APInt Mask(APInt::getAllOnesValue(BitWidth));
@@ -9445,6 +9448,10 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     }
 
     // Now that we have an instruction, try combining it to simplify it...
+#ifndef NDEBUG
+    std::string OrigI;
+#endif
+    DEBUG(std::ostringstream SS; I->print(SS); OrigI = SS.str(););
     if (Instruction *Result = visit(*I)) {
       ++NumCombined;
       // Should we replace the old instruction with a new one?
@@ -9483,7 +9490,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         // Erase the old instruction.
         InstParent->getInstList().erase(I);
       } else {
-        DOUT << "IC: MOD = " << *I;
+        DOUT << "IC: Mod = " << OrigI
+             << "    New = " << *I;
 
         // If the instruction was modified, it's possible that it is now dead.
         // if so, remove it.
