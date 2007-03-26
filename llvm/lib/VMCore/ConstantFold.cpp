@@ -554,6 +554,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X ^ 0 == X
         break;
       case Instruction::AShr:
+        // ashr (zext C to Ty), C2 -> lshr (zext C, CSA), C2
         if (CE1->getOpcode() == Instruction::ZExt)  // Top bits known zero.
           return ConstantExpr::getLShr(const_cast<Constant*>(C1),
                                        const_cast<Constant*>(C2));
