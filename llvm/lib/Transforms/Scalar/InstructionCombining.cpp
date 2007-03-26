@@ -56,10 +56,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <set>
-#ifndef NDEBUG
 #include <sstream>
-#endif
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -7808,12 +7805,13 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
 
 /// DeadPHICycle - Return true if this PHI node is only used by a PHI node cycle
 /// that is dead.
-static bool DeadPHICycle(PHINode *PN, std::set<PHINode*> &PotentiallyDeadPHIs) {
+static bool DeadPHICycle(PHINode *PN,
+                         SmallPtrSet<PHINode*, 16> &PotentiallyDeadPHIs) {
   if (PN->use_empty()) return true;
   if (!PN->hasOneUse()) return false;
 
   // Remember this node, and if we find the cycle, return.
-  if (!PotentiallyDeadPHIs.insert(PN).second)
+  if (!PotentiallyDeadPHIs.insert(PN))
     return true;
 
   if (PHINode *PU = dyn_cast<PHINode>(PN->use_back()))
@@ -7844,7 +7842,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   if (PN.hasOneUse()) {
     Instruction *PHIUser = cast<Instruction>(PN.use_back());
     if (PHINode *PU = dyn_cast<PHINode>(PHIUser)) {
-      std::set<PHINode*> PotentiallyDeadPHIs;
+      SmallPtrSet<PHINode*, 16> PotentiallyDeadPHIs;
       PotentiallyDeadPHIs.insert(&PN);
       if (DeadPHICycle(PU, PotentiallyDeadPHIs))
         return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
