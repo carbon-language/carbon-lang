@@ -1,0 +1,984 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>LLVM's Analysis and Transform Passes</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+
+<div class="doc_title">LLVM's Analysis and Transform Passes</div>
+
+<ol>
+  <li><a href="#intro">Introduction</a></li>
+  <li><a href="#analyses">Analysis Passes</a>
+  <li><a href="#transforms">Transform Passes</a></li>
+  <li><a href="#utilities">Utility Passes</a></li>
+</ol>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a></p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="intro">Introduction</a> </div>
+<div class="doc_text">
+  <p>This document serves as a high level summary of the optimization features 
+  that LLVM provides. Optimizations are implemented as Passes that traverse some
+  portion of a program to either collect information or transform the program.
+  THe table below divides the passes that LLVM provides into three categories.
+  Analysis passes compute information that other passes can use or for debugging
+  or program visualization purposes. Transform passes can use (or invalidate)
+  the analysis passes. Transform passes all mutate the program in some way. 
+  Utility passes provides ome utility but don't otherwise fit categorization.
+  For example passes to extract functions to bytecode or write a module to
+  bytecode are neither analysis nor transform passes.
+  <p>The table below provides a quick summary of each pass and links to the more
+  complete pass description later in the document.</p>
+</div>
+<div class="doc_text" >
+<table>
+<tr><th colspan="3"><b>ANALYSIS PASSES</b></th></tr>
+<tr><th>Option</th><th>Name</th><th>Directory</th></tr>
+<tr><td><a href="#aa-eval">-aa-eval</a></td><td>Exhaustive Alias Analysis Precision Evaluator</td></tr>
+<tr><td><a href="#anders-aa">-anders-aa</a></td><td>Andersen's Interprocedural Alias Analysis</td></tr>
+<tr><td><a href="#basicaa">-basicaa</a></td><td>Basic Alias Analysis (default AA impl)</td></tr>
+<tr><td><a href="#basiccg">-basiccg</a></td><td>Basic CallGraph Construction</td></tr>
+<tr><td><a href="#basicvn">-basicvn</a></td><td>Basic Value Numbering (default GVN impl)</td></tr>
+<tr><td><a href="#callgraph">-callgraph</a></td><td>Print a call graph</td></tr>
+<tr><td><a href="#callscc">-callscc</a></td><td>Print SCCs of the Call Graph</td></tr>
+<tr><td><a href="#cfgscc">-cfgscc</a></td><td>Print SCCs of each function CFG</td></tr>
+<tr><td><a href="#count-aa">-count-aa</a></td><td>Count Alias Analysis Query Responses</td></tr>
+<tr><td><a href="#debug-aa">-debug-aa</a></td><td>AA use debugger</td></tr>
+<tr><td><a href="#domfrontier">-domfrontier</a></td><td>Dominance Frontier Construction</td></tr>
+<tr><td><a href="#domset">-domset</a></td><td>Dominator Set Construction</td></tr>
+<tr><td><a href="#domtree">-domtree</a></td><td>Dominator Tree Construction</td></tr>
+<tr><td><a href="#etforest">-etforest</a></td><td>ET Forest Construction</td></tr>
+<tr><td><a href="#externalfnconstants">-externalfnconstants</a></td><td>Print external fn callsites passed constants</td></tr>
+<tr><td><a href="#globalsmodref-aa">-globalsmodref-aa</a></td><td>Simple mod/ref analysis for globals</td></tr>
+<tr><td><a href="#idom">-idom</a></td><td>Immediate Dominators Construction</td></tr>
+<tr><td><a href="#instcount">-instcount</a></td><td>Counts the various types of Instructions</td></tr>
+<tr><td><a href="#intervals">-intervals</a></td><td>Interval Partition Construction</td></tr>
+<tr><td><a href="#load-vn">-load-vn</a></td><td>Load Value Numbering</td></tr>
+<tr><td><a href="#loops">-loops</a></td><td>Natural Loop Construction</td></tr>
+<tr><td><a href="#no-aa">-no-aa</a></td><td>No Alias Analysis (always returns 'may' alias)</td></tr>
+<tr><td><a href="#no-profile">-no-profile</a></td><td>No Profile Information</td></tr>
+<tr><td><a href="#postdomfrontier">-postdomfrontier</a></td><td>Post-Dominance Frontier Construction</td></tr>
+<tr><td><a href="#postdomset">-postdomset</a></td><td>Post-Dominator Set Construction</td></tr>
+<tr><td><a href="#postdomtree">-postdomtree</a></td><td>Post-Dominator Tree Construction</td></tr>
+<tr><td><a href="#postetforest">-postetforest</a></td><td>Post-ET-Forest Construction</td></tr>
+<tr><td><a href="#postidom">-postidom</a></td><td>Immediate Post-Dominators Construction</td></tr>
+<tr><td><a href="#print">-print</a></td><td>Print function to stderr</td></tr>
+<tr><td><a href="#print-alias-sets">-print-alias-sets</a></td><td>Alias Set Printer</td></tr>
+<tr><td><a href="#print-callgraph">-print-callgraph</a></td><td>Print Call Graph to 'dot' file</td></tr>
+<tr><td><a href="#print-cfg">-print-cfg</a></td><td>Print CFG of function to 'dot' file</td></tr>
+<tr><td><a href="#print-cfg-only">-print-cfg-only</a></td><td>Print CFG of function to 'dot' file (with no function bodies)</td></tr>
+<tr><td><a href="#printm">-printm</a></td><td>Print module to stderr</td></tr>
+<tr><td><a href="#printusedtypes">-printusedtypes</a></td><td>Find Used Types</td></tr>
+<tr><td><a href="#profile-loader">-profile-loader</a></td><td>Load profile information from llvmprof.out</td></tr>
+<tr><td><a href="#scalar-evolution">-scalar-evolution</a></td><td>Scalar Evolution Analysis</td></tr>
+<tr><td><a href="#targetdata">-targetdata</a></td><td>Target Data Layout</td></tr>
+
+
+<tr><th colspan="3"><b>TRANSFORM PASSES</b></th></tr>
+<tr><th>Option</th><th>Name</th><th>Directory</th></tr>
+<tr><td><a href="#adce">-adce</a></td><td>Aggressive Dead Code Elimination</td></tr>
+<tr><td><a href="#argpromotion">-argpromotion</a></td><td>Promote 'by reference' arguments to scalars</td></tr>
+<tr><td><a href="#block-placement">-block-placement</a></td><td>Profile Guided Basic Block Placement</td></tr>
+<tr><td><a href="#break-crit-edges">-break-crit-edges</a></td><td>Break Critical Edges in CFG</td></tr>
+<tr><td><a href="#cee">-cee</a></td><td>Correlated Expression Elimination</td></tr>
+<tr><td><a href="#condprop">-condprop</a></td><td>Conditional Propagation</td></tr>
+<tr><td><a href="#constmerge">-constmerge</a></td><td>Merge Duplicate Global Constants</td></tr>
+<tr><td><a href="#constprop">-constprop</a></td><td>Simple constant propagation</td></tr>
+<tr><td><a href="#dce">-dce</a></td><td>Dead Code Elimination</td></tr>
+<tr><td><a href="#deadargelim">-deadargelim</a></td><td>Dead Argument Elimination</td></tr>
+<tr><td><a href="#deadtypeelim">-deadtypeelim</a></td><td>Dead Type Elimination</td></tr>
+<tr><td><a href="#die">-die</a></td><td>Dead Instruction Elimination</td></tr>
+<tr><td><a href="#dse">-dse</a></td><td>Dead Store Elimination</td></tr>
+<tr><td><a href="#gcse">-gcse</a></td><td>Global Common Subexpression Elimination</td></tr>
+<tr><td><a href="#globaldce">-globaldce</a></td><td>Dead Global Elimination</td></tr>
+<tr><td><a href="#globalopt">-globalopt</a></td><td>Global Variable Optimizer</td></tr>
+<tr><td><a href="#indmemrem">-indmemrem</a></td><td>Indirect Malloc and Free Removal</td></tr>
+<tr><td><a href="#indvars">-indvars</a></td><td>Canonicalize Induction Variables</td></tr>
+<tr><td><a href="#inline">-inline</a></td><td>Function Integration/Inlining</td></tr>
+<tr><td><a href="#insert-block-profiling">-insert-block-profiling</a></td><td>Insert instrumentation for block profiling</td></tr>
+<tr><td><a href="#insert-edge-profiling">-insert-edge-profiling</a></td><td>Insert instrumentation for edge profiling</td></tr>
+<tr><td><a href="#insert-function-profiling">-insert-function-profiling</a></td><td>Insert instrumentation for function profiling</td></tr>
+<tr><td><a href="#insert-null-profiling-rs">-insert-null-profiling-rs</a></td><td>Measure profiling framework overhead</td></tr>
+<tr><td><a href="#insert-rs-profiling-framework">-insert-rs-profiling-framework</a></td><td>Insert random sampling instrumentation framework</td></tr>
+<tr><td><a href="#instcombine">-instcombine</a></td><td>Combine redundant instructions</td></tr>
+<tr><td><a href="#internalize">-internalize</a></td><td>Internalize Global Symbols</td></tr>
+<tr><td><a href="#ipconstprop">-ipconstprop</a></td><td>Interprocedural constant propagation</td></tr>
+<tr><td><a href="#ipsccp">-ipsccp</a></td><td>Interprocedural Sparse Conditional Constant Propagation</td></tr>
+<tr><td><a href="#lcssa">-lcssa</a></td><td>Loop-Closed SSA Form Pass</td></tr>
+<tr><td><a href="#licm">-licm</a></td><td>Loop Invariant Code Motion</td></tr>
+<tr><td><a href="#loop-extract">-loop-extract</a></td><td>Extract loops into new functions</td></tr>
+<tr><td><a href="#loop-extract-single">-loop-extract-single</a></td><td>Extract at most one loop into a new function</td></tr>
+<tr><td><a href="#loop-reduce">-loop-reduce</a></td><td>Loop Strength Reduction</td></tr>
+<tr><td><a href="#loop-unroll">-loop-unroll</a></td><td>Unroll Loops</td></tr>
+<tr><td><a href="#loop-unswitch">-loop-unswitch</a></td><td>Unswitch Loops</td></tr>
+<tr><td><a href="#loopsimplify">-loopsimplify</a></td><td>Canonicalize Natural Loops</td></tr>
+<tr><td><a href="#lower-packed">-lower-packed</a></td><td>Lower Packed Operations</td></tr>
+<tr><td><a href="#lowerallocs">-lowerallocs</a></td><td>Lower allocations from instructions to calls</td></tr>
+<tr><td><a href="#lowergc">-lowergc</a></td><td>Lower GC intrinsics, for GCless code generators</td></tr>
+<tr><td><a href="#lowerinvoke">-lowerinvoke</a></td><td>Lower Invoke and Unwind</td></tr>
+<tr><td><a href="#lowerselect">-lowerselect</a></td><td>Lower Selects To Branches</td></tr>
+<tr><td><a href="#lowersetjmp">-lowersetjmp</a></td><td>Lower Set Jump</td></tr>
+<tr><td><a href="#lowerswitch">-lowerswitch</a></td><td>Lower SwitchInst's to branches</td></tr>
+<tr><td><a href="#mem2reg">-mem2reg</a></td><td>Promote Memory to Register</td></tr>
+<tr><td><a href="#mergereturn">-mergereturn</a></td><td>Unify Function Exit Nodes</td></tr>
+<tr><td><a href="#predsimplify">-predsimplify</a></td><td>Predicate Simplifier</td></tr>
+<tr><td><a href="#prune-eh">-prune-eh</a></td><td>Remove unused exception handling info</td></tr>
+<tr><td><a href="#raiseallocs">-raiseallocs</a></td><td>Raise allocations from calls to instructions</td></tr>
+<tr><td><a href="#reassociate">-reassociate</a></td><td>Reassociate Expressions</td></tr>
+<tr><td><a href="#reg2mem">-reg2mem</a></td><td>Demote Values to Memory</td></tr>
+<tr><td><a href="#scalarrepl">-scalarrepl</a></td><td>Scalar Replacement of Aggregates</td></tr>
+<tr><td><a href="#sccp">-sccp</a></td><td>Sparse Conditional Constant Propagation</td></tr>
+<tr><td><a href="#simplify-libcalls">-simplify-libcalls</a></td><td>Simplify well-known library calls</td></tr>
+<tr><td><a href="#simplifycfg">-simplifycfg</a></td><td>Simplify the CFG</td></tr>
+<tr><td><a href="#strip">-strip</a></td><td>Strip all symbols from a module</td></tr>
+<tr><td><a href="#tailcallelim">-tailcallelim</a></td><td>Tail Call Elimination</td></tr>
+<tr><td><a href="#tailduplicate">-tailduplicate</a></td><td>Tail Duplication</td></tr>
+<tr><th colspan="3"><b>UTILITY PASSES</b></th></tr>
+<tr><th>Option</th><th>Name</th><th>Directory</th></tr>
+<tr><td><a href="#deadarghaX0r">-deadarghaX0r</a></td><td>Dead Argument Hacking (BUGPOINT ONLY)</td></tr>
+<tr><td><a href="#extract-blocks">-extract-blocks</a></td><td>Extract Basic Blocks From Module (BUGPOINT ONLY)</td></tr>
+<tr><td><a href="#emitbytecode">-emitbytecode</a></td><td>Bytecode Writer</td></tr>
+<tr><td><a href="#verify">-verify</a></td><td>Module Verifier</td></tr>
+</table>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="example">Analysis Passes</a></div>
+<div class="doc_text">
+  <p>This section describes the LLVM Analysis Passes.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="aa-eval">Exhaustive Alias Analysis Precision Evaluator</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="anders-aa">Andersen's Interprocedural Alias Analysis</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="basicaa">Basic Alias Analysis</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="basiccg">Basic Call Graph Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="basicvn">Basic Value Numbering</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="callgraph">Print Call Graph</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="callscc">Print SCCs of the Call Graph</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="cfgscc">Print SCCs of each Function Control Flow Graph</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="count-aa">Count Alias Analysis Query Responses</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="debug-aa">Alias Analysis Usage Debugger</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="domfrontier">Dominance Frontier Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="domset">Dominator Set Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="domtree">Dominator Tree Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="etforest">ET Forest Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="basicvn">Basic Value Numbering</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="externalfnconstants">Print external fn callsites passed constants</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="globalsmodref-aa">Simple mod/ref analysis for globals</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="idom">Immediate Dominators Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="instcount">Counts the various types of Instructions</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="intervals">Interval Partition Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="load-vn">Load Value Numbering</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="loops">Natural Loop Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="no-aa">No Alias Analysis (always returns 'may' alias)</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="no-profile">No Profile Information</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="postdomfrontier">Post-Dominance Frontier Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="postdomset">Post-Dominator Set Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="postdomtree">Post-Dominator Tree Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="postetforest">Post-ET-Forest Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="postidom">Immediate Post-Dominators Construction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print">Print function to stderr</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print-alias-sets">Alias Set Printer</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print-callgraph">Print Call Graph to 'dot' file</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print-cfg">Print CFG of function to 'dot' file</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="print-cfg-only">Print CFG of function to 'dot' file (with no function bodies)</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="printm">Print module to stderr</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="printusedtypes">Find Used Types</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="profile-loader">Load profile information from llvmprof.out</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="scalar-evolution">Scalar Evolution Analysis</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="targetdata">Target Data Layout</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="transform">Transform Passes</a></div>
+<div class="doc_text">
+  <p>This section describes the LLVM Transform Passes.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="adce">Aggressive Dead Code Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="argpromotion">Promote 'by reference' arguments to scalars</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="block-placement">Profile Guided Basic Block Placement</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="break-crit-edges">Break Critical Edges in CFG</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="cee">Correlated Expression Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="condprop">Conditional Propagation</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="constmerge">Merge Duplicate Global Constants</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="constprop">Simple constant propagation</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="dce">Dead Code Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="deadargelim">Dead Argument Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="deadtypeelim">Dead Type Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="die">Dead Instruction Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="dse">Dead Store Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="gcse">Global Common Subexpression Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="globaldce">Dead Global Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="globalopt">Global Variable Optimizer</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="indmemrem">Indirect Malloc and Free Removal</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="indvars">Canonicalize Induction Variables</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="inline">Function Integration/Inlining</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="insert-block-profiling">Insert instrumentation for block profiling</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="insert-edge-profiling">Insert instrumentation for edge profiling</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="insert-function-profiling">Insert instrumentation for function profiling</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="insert-null-profiling-rs">Measure profiling framework overhead</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="insert-rs-profiling-framework">Insert random sampling instrumentation framework</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="instcombine">Combine redundant instructions</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="internalize">Internalize Global Symbols</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="ipconstprop">Interprocedural constant propagation</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="ipsccp">Interprocedural Sparse Conditional Constant Propagation</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="lcssa">Loop-Closed SSA Form Pass</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="licm">Loop Invariant Code Motion</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="loop-extract">Extract loops into new functions</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="loop-extract-single">Extract at most one loop into a new function</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="loop-reduce">Loop Strength Reduction</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="loop-unroll">Unroll Loops</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="loop-unswitch">Unswitch Loops</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="loopsimplify">Canonicalize Natural Loops</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="lower-packed">Lower Packed Operations</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="lowerallocs">Lower allocations from instructions to calls</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="lowergc">Lower GC intrinsics, for GCless code generators</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="lowerinvoke">Lower Invoke and Unwind</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="lowerselect">Lower Selects To Branches</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="lowersetjmp">Lower Set Jump</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="lowerswitch">Lower SwitchInst's to branches</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="mem2reg">Promote Memory to Register</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="mergereturn">Unify Function Exit Nodes</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="predsimplify">Predicate Simplifier</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="prune-eh">Remove unused exception handling info</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="raiseallocs">Raise allocations from calls to instructions</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="reassociate">Reassociate Expressions</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="reg2mem">Demote Values to Memory</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="scalarrepl">Scalar Replacement of Aggregates</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="sccp">Sparse Conditional Constant Propagation</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="simplify-libcalls">Simplify well-known library calls</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="simplifycfg">Simplify the CFG</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="strip">Strip all symbols from a module</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="tailcallelim">Tail Call Elimination</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="tailduplicate">Tail Duplication</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_section"> <a name="transform">Utility Passes</a></div>
+<div class="doc_text">
+  <p>This section describes the LLVM Utility Passes.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="deadarghaX0r">Dead Argument Hacking (BUGPOINT ONLY)</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="extract-blocks">Extract Basic Blocks From Module (BUGPOINT ONLY)</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="emitbytecode">Bytecode Writer</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="verify">Module Verifier</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-- *********************************************************************** -->
+
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
+
+  <a href="mailto:rspencer@x10sys.com">Reid Spencer</a><br>
+  <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date$
+</address>
+
+</body>
+</html>
