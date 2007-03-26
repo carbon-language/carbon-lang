@@ -36,7 +36,7 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
 
   if (!MBB) {
     NumPhysRegs = RegInfo->getNumRegs();
-    RegStates.resize(NumPhysRegs);
+    RegsAvailable.resize(NumPhysRegs);
 
     // Create reserved registers bitvector.
     ReservedRegs = RegInfo->getReservedRegs(MF);
@@ -54,10 +54,10 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   ScavengedRC = NULL;
 
   // All registers started out unused.
-  RegStates.set();
+  RegsAvailable.set();
 
   // Reserved registers are always used.
-  RegStates ^= ReservedRegs;
+  RegsAvailable ^= ReservedRegs;
 
   // Live-in registers are in use.
   if (!MBB->livein_empty())
@@ -182,9 +182,9 @@ void RegScavenger::backward() {
 
 void RegScavenger::getRegsUsed(BitVector &used, bool includeReserved) {
   if (includeReserved)
-    used = RegStates;
+    used = ~RegsAvailable;
   else
-    used = RegStates & ~ReservedRegs;
+    used = ~RegsAvailable & ~ReservedRegs;
 }
 
 /// CreateRegClassMask - Set the bits that represent the registers in the
@@ -198,32 +198,32 @@ static void CreateRegClassMask(const TargetRegisterClass *RC, BitVector &Mask) {
 unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
                                      const BitVector &Candidates) const {
   // Mask off the registers which are not in the TargetRegisterClass.
-  BitVector RegStatesCopy(NumPhysRegs, false);
-  CreateRegClassMask(RegClass, RegStatesCopy);
-  RegStatesCopy &= RegStates;
+  BitVector RegsAvailableCopy(NumPhysRegs, false);
+  CreateRegClassMask(RegClass, RegsAvailableCopy);
+  RegsAvailableCopy &= RegsAvailable;
 
   // Restrict the search to candidates.
-  RegStatesCopy &= Candidates;
+  RegsAvailableCopy &= Candidates;
 
   // Returns the first unused (bit is set) register, or 0 is none is found.
-  int Reg = RegStatesCopy.find_first();
+  int Reg = RegsAvailableCopy.find_first();
   return (Reg == -1) ? 0 : Reg;
 }
 
 unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RegClass,
                                      bool ExCalleeSaved) const {
   // Mask off the registers which are not in the TargetRegisterClass.
-  BitVector RegStatesCopy(NumPhysRegs, false);
-  CreateRegClassMask(RegClass, RegStatesCopy);
-  RegStatesCopy &= RegStates;
+  BitVector RegsAvailableCopy(NumPhysRegs, false);
+  CreateRegClassMask(RegClass, RegsAvailableCopy);
+  RegsAvailableCopy &= RegsAvailable;
 
   // If looking for a non-callee-saved register, mask off all the callee-saved
   // registers.
   if (ExCalleeSaved)
-    RegStatesCopy &= ~CalleeSavedRegs;
+    RegsAvailableCopy &= ~CalleeSavedRegs;
 
   // Returns the first unused (bit is set) register, or 0 is none is found.
-  int Reg = RegStatesCopy.find_first();
+  int Reg = RegsAvailableCopy.find_first();
   return (Reg == -1) ? 0 : Reg;
 }
 

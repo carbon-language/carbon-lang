@@ -47,10 +47,10 @@ class RegScavenger {
   ///
   const TargetRegisterClass *ScavengedRC;
 
-  /// RegStates - The current state of all the physical registers immediately
+  /// RegsAvailable - The current state of all the physical registers immediately
   /// before MBBI. One bit per physical register. If bit is set that means it's
   /// available, unset means the register is currently being used.
-  BitVector RegStates;
+  BitVector RegsAvailable;
 
 public:
   RegScavenger()
@@ -88,18 +88,18 @@ public:
 
   /// isUsed / isUsed - Test if a register is currently being used.
   ///
-  bool isUsed(unsigned Reg) const   { return !RegStates[Reg]; }
-  bool isUnused(unsigned Reg) const { return RegStates[Reg]; }
+  bool isUsed(unsigned Reg) const   { return !RegsAvailable[Reg]; }
+  bool isUnused(unsigned Reg) const { return RegsAvailable[Reg]; }
 
   /// getRegsUsed - return all registers currently in use in used.
   void getRegsUsed(BitVector &used, bool includeReserved);
 
   /// setUsed / setUnused - Mark the state of one or a number of registers.
   ///
-  void setUsed(unsigned Reg)     { RegStates.reset(Reg); }
-  void setUsed(BitVector Regs)   { RegStates &= ~Regs; }
-  void setUnused(unsigned Reg)   { RegStates.set(Reg); }
-  void setUnused(BitVector Regs) { RegStates |= Regs; }
+  void setUsed(unsigned Reg)     { RegsAvailable.reset(Reg); }
+  void setUsed(BitVector Regs)   { RegsAvailable &= ~Regs; }
+  void setUnused(unsigned Reg)   { RegsAvailable.set(Reg); }
+  void setUnused(BitVector Regs) { RegsAvailable |= Regs; }
 
   /// FindUnusedReg - Find a unused register of the specified register class
   /// from the specified set of registers. It return 0 is none is found.
