@@ -177,10 +177,13 @@ int main(int argc, char **argv) {
     sys::PrintStackTraceOnErrorSignal();
 
     // Load the module to be compiled...
+    std::string errmsg;
     std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, 
-                                            Compressor::decompressToNewBuffer));
+                                              Compressor::decompressToNewBuffer,
+                                              &errmsg));
     if (M.get() == 0) {
       std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
+      std::cerr << "Reason: " << errmsg << "\n";
       return 1;
     }
     Module &mod = *M.get();
