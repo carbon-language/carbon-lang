@@ -455,13 +455,12 @@ DominanceFrontier::calculate(const DominatorTree &DT,
   BasicBlock *BB = Node->getBlock();
   DomSetType *Result = NULL;
 
-  std::vector<DFCalculateWorkObject *> workList;
+  std::vector<DFCalculateWorkObject> workList;
   std::set<BasicBlock *> visited;
 
-  DFCalculateWorkObject *W = new DFCalculateWorkObject(BB, NULL, Node, NULL);
-  workList.push_back(W);
+  workList.push_back(DFCalculateWorkObject(BB, NULL, Node, NULL));
   do {
-    DFCalculateWorkObject *currentW = workList.back();
+    DFCalculateWorkObject *currentW = &workList.back();
     assert (currentW && "Missing work object.");
 
     BasicBlock *currentBB = currentW->currentBB;
@@ -494,9 +493,7 @@ DominanceFrontier::calculate(const DominatorTree &DT,
       DominatorTree::Node *IDominee = *NI;
       BasicBlock *childBB = IDominee->getBlock();
       if (visited.count(childBB) == 0) {
-        DFCalculateWorkObject *newW = 
-          new DFCalculateWorkObject(childBB, currentBB, IDominee, currentNode);
-        workList.push_back(newW);
+        workList.push_back(DFCalculateWorkObject(childBB, currentBB, IDominee, currentNode));
         visitChild = true;
       }
     }
