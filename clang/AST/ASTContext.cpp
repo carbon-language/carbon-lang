@@ -270,8 +270,9 @@ TypeRef ASTContext::getTypedefType(TypedefDecl *Decl) {
   
   // FIXME: does this lose qualifiers from the typedef??
   Type *Canonical = Decl->getUnderlyingType().getCanonicalType().getTypePtr();
-  Types.push_back(Decl->TypeForDecl = new TypedefType(Decl, Canonical));
-  return Types.back();
+  Decl->TypeForDecl = new TypedefType(Decl, Canonical);
+  Types.push_back(Decl->TypeForDecl);
+  return Decl->TypeForDecl;
 }
 
 /// getTagDeclType - Return the unique reference to the type for the
@@ -280,8 +281,9 @@ TypeRef ASTContext::getTagDeclType(TagDecl *Decl) {
   // The decl stores the type cache.
   if (Decl->TypeForDecl) return Decl->TypeForDecl;
   
-  Types.push_back(Decl->TypeForDecl = new TagType(Decl, 0));
-  return Types.back();
+  Decl->TypeForDecl = new TagType(Decl, 0);
+  Types.push_back(Decl->TypeForDecl);
+  return Decl->TypeForDecl;
 }
 
 
