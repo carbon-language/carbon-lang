@@ -5887,7 +5887,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
-        APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
+        APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
         return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
       }
       
