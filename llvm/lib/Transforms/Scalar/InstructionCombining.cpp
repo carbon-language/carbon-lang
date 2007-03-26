@@ -2455,7 +2455,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   // Check to see if this is an unsigned division with an exact power of 2,
   // if so, convert to a right shift.
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
-    if (!C->isZero() && C->getValue().isPowerOf2())  // Don't break X / 0
+    if (C->getValue().isPowerOf2())  // 0 not included in isPowerOf2
       return BinaryOperator::createLShr(Op0, 
                ConstantInt::get(Op0->getType(), C->getValue().logBase2()));
   }
@@ -3149,7 +3149,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
     // If the AndRHS is a power of two minus one (0+1+), and N&Mask == 0
     if ((Mask->getValue().countLeadingZeros() + 
          Mask->getValue().countPopulation()) == Mask->getValue().getBitWidth()
-        && And(N, Mask)->isNullValue())
+        && And(N, Mask)->isZero())
       break;
     return 0;
   }
@@ -3180,7 +3180,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
     if (SimplifyDemandedBits(&I, APInt::getAllOnesValue(BitWidth),
                              KnownZero, KnownOne))
-    return &I;
+      return &I;
   } else {
     if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1)) {
       if (CP->isAllOnesValue())
