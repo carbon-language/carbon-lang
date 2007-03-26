@@ -754,10 +754,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           // necessary.
           bool WasKill = false;
           if (SSMI) {
-            MachineOperand *MOK = SSMI->findRegisterUseOperand(PhysReg, true);
-            if (MOK) {
-              WasKill = MOK->isKill();
-              MOK->unsetIsKill();
+            int UIdx = SSMI->findRegisterUseOperand(PhysReg, true);
+            if (UIdx != -1) {
+              MachineOperand &MOK = SSMI->getOperand(UIdx);
+              WasKill = MOK.isKill();
+              MOK.unsetIsKill();
             }
           }
           if (ti == -1) {
@@ -840,17 +841,20 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         // necessary.
         bool WasKill = false;
         if (SSMI) {
-          MachineOperand *MOK = SSMI->findRegisterUseOperand(PhysReg, true);
-          if (MOK) {
-            WasKill = MOK->isKill();
-            MOK->unsetIsKill();
+          int UIdx = SSMI->findRegisterUseOperand(PhysReg, true);
+          if (UIdx != -1) {
+            MachineOperand &MOK = SSMI->getOperand(UIdx);
+            WasKill = MOK.isKill();
+            MOK.unsetIsKill();
           }
         }
         MachineInstr *CopyMI = prior(MII);
         if (WasKill) {
           // Transfer kill to the next use.
-          MachineOperand *MOU = CopyMI->findRegisterUseOperand(PhysReg);
-          MOU->setIsKill();
+          int UIdx = CopyMI->findRegisterUseOperand(PhysReg);
+          assert(UIdx != -1);
+          MachineOperand &MOU = CopyMI->getOperand(UIdx);
+          MOU.setIsKill();
         }
         Spills.addLastUse(PhysReg, CopyMI);
 
@@ -945,18 +949,25 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
               // extended. Remove its kill.
               bool WasKill = false;
               if (SSMI) {
-                MachineOperand *MOK = SSMI->findRegisterUseOperand(InReg, true);
-                if (MOK) {
-                  WasKill = MOK->isKill();
-                  MOK->unsetIsKill();
+                int UIdx = SSMI->findRegisterUseOperand(InReg, true);
+                if (UIdx != -1) {
+                  MachineOperand &MOK = SSMI->getOperand(UIdx);
+                  WasKill = MOK.isKill();
+                  MOK.unsetIsKill();
                 }
               }
               if (NextMII != MBB.end()) {
-                // If NextMII uses InReg (must be the copy?), mark it killed.
-                MachineOperand *MOU = NextMII->findRegisterUseOperand(InReg);
-                if (MOU) {
-                  if (WasKill)
-                    MOU->setIsKill();
+                // If NextMII uses InReg and the use is not a two address
+                // operand, mark it killed.
+                int UIdx = NextMII->findRegisterUseOperand(InReg);
+                if (UIdx != -1) {
+                  MachineOperand &MOU = NextMII->getOperand(UIdx);
+                  if (WasKill) {
+                    const TargetInstrDescriptor *NTID =
+                      NextMII->getInstrDescriptor();
+                    if (NTID->getOperandConstraint(UIdx, TOI::TIED_TO) == -1)
+                      MOU.setIsKill();
+                  }
                   Spills.addLastUse(InReg, &(*NextMII));
                 }
               }

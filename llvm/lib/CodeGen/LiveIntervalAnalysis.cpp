@@ -854,9 +854,9 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
 
   // If the source instruction was killing the source register before the
   // merge, unset the isKill marker given the live range has been extended.
-  MachineOperand *MOK = ValLREndInst->findRegisterUseOperand(IntB.reg, true);
-  if (MOK)
-    MOK->unsetIsKill();
+  int UIdx = ValLREndInst->findRegisterUseOperand(IntB.reg, true);
+  if (UIdx != -1)
+    ValLREndInst->getOperand(UIdx).unsetIsKill();
   
   // Finally, delete the copy instruction.
   RemoveMachineInstrFromMaps(CopyMI);
