@@ -19,6 +19,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
+#include "llvm/Instructions.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -264,6 +265,11 @@ B("domset", "Dominator Set Construction", true);
 bool DominatorSetBase::dominates(Instruction *A, Instruction *B) const {
   BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
   if (BBA != BBB) return dominates(BBA, BBB);
+
+  // It is not possible to determie dominance between two PHI nodes 
+  // based on their ordering.
+  if (isa<PHINode>(A) && isa<PHINode>(B)) 
+    return false;
 
   // Loop through the basic block until we find A or B.
   BasicBlock::iterator I = BBA->begin();
