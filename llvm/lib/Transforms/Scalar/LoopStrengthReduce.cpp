@@ -235,6 +235,16 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
 /// GetExpressionSCEV - Compute and return the SCEV for the specified
 /// instruction.
 SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
+  // Pointer to pointer bitcast instructions return the same value as their
+  // operand.
+  if (BitCastInst *BCI = dyn_cast<BitCastInst>(Exp)) {
+    if (SE->hasSCEV(BCI) || !isa<Instruction>(BCI->getOperand(0)))
+      return SE->getSCEV(BCI);
+    SCEVHandle R = GetExpressionSCEV(cast<Instruction>(BCI->getOperand(0)), L);
+    SE->setSCEV(BCI, R);
+    return R;
+  }
+
   // Scalar Evolutions doesn't know how to compute SCEV's for GEP instructions.
   // If this is a GEP that SE doesn't know about, compute it now and insert it.
   // If this is not a GEP, or if we have already done this computation, just let
