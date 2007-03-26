@@ -314,6 +314,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
     addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
+    addRegisterClass(MVT::v1i64, X86::VR64RegisterClass);
 
     // FIXME: add MMX packed arithmetics
 
@@ -347,10 +348,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::XOR,                MVT::v2i32, Legal);
 
     setOperationAction(ISD::LOAD,               MVT::v8i8,  Promote);
-    AddPromotedToType (ISD::LOAD,               MVT::v8i8,  MVT::v2i32);
+    AddPromotedToType (ISD::LOAD,               MVT::v8i8,  MVT::v1i64);
     setOperationAction(ISD::LOAD,               MVT::v4i16, Promote);
-    AddPromotedToType (ISD::LOAD,               MVT::v4i16, MVT::v2i32);
-    setOperationAction(ISD::LOAD,               MVT::v2i32, Legal);
+    AddPromotedToType (ISD::LOAD,               MVT::v4i16, MVT::v1i64);
+    setOperationAction(ISD::LOAD,               MVT::v2i32, Promote);
+    AddPromotedToType (ISD::LOAD,               MVT::v2i32, MVT::v1i64);
+    setOperationAction(ISD::LOAD,               MVT::v1i64, Legal);
 
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v8i8,  Expand);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v4i16, Expand);

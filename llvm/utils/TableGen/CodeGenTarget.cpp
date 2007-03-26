@@ -52,6 +52,7 @@ std::string llvm::getName(MVT::ValueType T) {
   case MVT::v8i8:  return "MVT::v8i8";
   case MVT::v4i16: return "MVT::v4i16";
   case MVT::v2i32: return "MVT::v2i32";
+  case MVT::v1i64: return "MVT::v1i64";
   case MVT::v16i8: return "MVT::v16i8";
   case MVT::v8i16: return "MVT::v8i16";
   case MVT::v4i32: return "MVT::v4i32";
@@ -82,6 +83,7 @@ std::string llvm::getEnumName(MVT::ValueType T) {
   case MVT::v8i8:  return "MVT::v8i8";
   case MVT::v4i16: return "MVT::v4i16";
   case MVT::v2i32: return "MVT::v2i32";
+  case MVT::v1i64: return "MVT::v1i64";
   case MVT::v16i8: return "MVT::v16i8";
   case MVT::v8i16: return "MVT::v8i16";
   case MVT::v4i32: return "MVT::v4i32";
