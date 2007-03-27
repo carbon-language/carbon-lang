@@ -136,8 +136,10 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
       // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
       if (T->isIncompleteType()) { 
+        std::string Name;
+        T->getAsString(Name);
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type,
-             D.getIdentifier()->getName());
+             Name);
         return TypeRef();
       } else if (isa<FunctionType>(CanonicalT)) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,

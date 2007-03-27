@@ -465,7 +465,7 @@ DIAG(err_flexible_array_in_array, ERROR,
 DIAG(err_illegal_decl_array_of_functions, ERROR,
      "'%s' declared as array of functions")
 DIAG(err_illegal_decl_array_incomplete_type, ERROR,
-     "array type for '%s' has incomplete element type")
+     "array has incomplete element type '%s'")
      
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,
