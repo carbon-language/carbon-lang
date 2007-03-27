@@ -462,7 +462,11 @@ DIAG(ext_flexible_array_in_struct, EXTENSION,
      "'%s' may not be nested in a struct due to flexible array member")
 DIAG(err_flexible_array_in_array, ERROR,
      "'%s' may not be used as an array element due to flexible array member")
-
+DIAG(err_illegal_decl_array_of_functions, ERROR,
+     "'%s' declared as array of functions")
+DIAG(err_illegal_decl_array_of_voids, ERROR,
+     "'%s' declared as array of voids")
+     
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,
      "invalid application of 'sizeof' to a function type")

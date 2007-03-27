@@ -15,6 +15,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Lex/IdentifierTable.h"
 using namespace llvm;
 using namespace clang;
 
@@ -130,15 +131,23 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       else
         ASM = ArrayType::Normal;
       
+      Type *CanonicalT = T->getCanonicalType();
+      
       // If the element type is a struct or union that contains a variadic
       // array, reject it: C99 6.7.2.1p2.
-      if (RecordType *EltTy = dyn_cast<RecordType>(T->getCanonicalType())) {
+      if (RecordType *EltTy = dyn_cast<RecordType>(CanonicalT)) {
         if (EltTy->getDecl()->hasFlexibleArrayMember()) {
           std::string Name;
           T->getAsString(Name);
           Diag(DeclType.Loc, diag::err_flexible_array_in_array, Name);
           return TypeRef();
         }
+      } else if (isa<FunctionType>(CanonicalT)) {// reject "void aryOfFunc[3]()"
+        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
+             D.getIdentifier()->getName());
+      } else if (CanonicalT->isVoidType()) { // reject "void aryOfVoids[3]"
+        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_voids,
+             D.getIdentifier()->getName());
       }
       
       T = Context.getArrayType(T, ASM, ATI.TypeQuals, 
