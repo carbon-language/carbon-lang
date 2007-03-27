@@ -2,8 +2,8 @@
 // 
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the Evan Cheng and is distributed under
-// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by the Evan Cheng and is distributed under the
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
 //
@@ -128,6 +128,8 @@ def MMX_EMMS : MMXI<0x77, RawFrm, (ops), "emms", [(int_x86_mmx_emms)]>;
 //===----------------------------------------------------------------------===//
 
 // Arithmetic Instructions
+
+// -- Addition
 defm MMX_PADDB : MMXI_binop_rm<0xFC, "paddb", add, v8i8, 1>;
 defm MMX_PADDW : MMXI_binop_rm<0xFD, "paddw", add, v4i16, 1>;
 defm MMX_PADDD : MMXI_binop_rm<0xFE, "paddd", add, v2i32, 1>;
@@ -138,6 +140,7 @@ defm MMX_PADDSW  : MMXI_binop_rm_int<0xED, "paddsw" , int_x86_mmx_padds_w, 1>;
 defm MMX_PADDUSB : MMXI_binop_rm_int<0xDC, "paddusb", int_x86_mmx_paddus_b, 1>;
 defm MMX_PADDUSW : MMXI_binop_rm_int<0xDD, "paddusw", int_x86_mmx_paddus_w, 1>;
 
+// -- Subtraction
 defm MMX_PSUBB : MMXI_binop_rm<0xF8, "psubb", sub, v8i8>;
 defm MMX_PSUBW : MMXI_binop_rm<0xF9, "psubw", sub, v4i16>;
 defm MMX_PSUBD : MMXI_binop_rm<0xFA, "psubd", sub, v2i32>;
@@ -148,66 +151,12 @@ defm MMX_PSUBSW  : MMXI_binop_rm_int<0xE9, "psubsw" , int_x86_mmx_psubs_w>;
 defm MMX_PSUBUSB : MMXI_binop_rm_int<0xD8, "psubusb", int_x86_mmx_psubus_b>;
 defm MMX_PSUBUSW : MMXI_binop_rm_int<0xD9, "psubusw", int_x86_mmx_psubus_w>;
 
+// -- Multiplication
 defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>;
-
 defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw" , int_x86_mmx_pmulh_w , 1>;
+
+// -- Multiply and Add
 defm MMX_PMADDWD : MMXI_binop_rm_int<0xF5, "pmaddwd", int_x86_mmx_pmadd_wd, 1>;
-
-// MMX_SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to
-// MMX_PSHUF*, MMX_SHUFP* etc. imm.
-def MMX_SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
-  return getI8Imm(X86::getShuffleSHUFImmediate(N));
-}]>;
-
-def MMX_splat_mask : PatLeaf<(build_vector), [{
-  return X86::isSplatMask(N);
-}], MMX_SHUFFLE_get_shuf_imm>;
-
-def MMX_UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isUNPCKHMask(N);
-}]>;
-
-let isTwoAddress = 1 in {
-def MMX_PUNPCKHBWrr : MMXI<0x68, MRMSrcReg, 
-                           (ops VR64:$dst, VR64:$src1, VR64:$src2),
-                           "punpckhbw {$src2, $dst|$dst, $src2}",
-                           [(set VR64:$dst,
-                             (v8i8 (vector_shuffle VR64:$src1, VR64:$src2,
-                                    MMX_UNPCKH_shuffle_mask)))]>;
-def MMX_PUNPCKHBWrm : MMXI<0x68, MRMSrcMem, 
-                           (ops VR64:$dst, VR64:$src1, i64mem:$src2),
-                           "punpckhbw {$src2, $dst|$dst, $src2}",
-                           [(set VR64:$dst,
-                             (v8i8 (vector_shuffle VR64:$src1,
-                                    (bc_v8i8 (load_mmx addr:$src2)),
-                                    MMX_UNPCKH_shuffle_mask)))]>;
-def MMX_PUNPCKHWDrr : MMXI<0x69, MRMSrcReg, 
-                           (ops VR64:$dst, VR64:$src1, VR64:$src2),
-                           "punpckhwd {$src2, $dst|$dst, $src2}",
-                           [(set VR64:$dst,
-                             (v4i16 (vector_shuffle VR64:$src1, VR64:$src2,
-                                     MMX_UNPCKH_shuffle_mask)))]>;
-def MMX_PUNPCKHWDrm : MMXI<0x69, MRMSrcMem, 
-                           (ops VR64:$dst, VR64:$src1, i64mem:$src2),
-                           "punpckhwd {$src2, $dst|$dst, $src2}",
-                           [(set VR64:$dst,
-                             (v4i16 (vector_shuffle VR64:$src1,
-                                     (bc_v4i16 (load_mmx addr:$src2)),
-                                     MMX_UNPCKH_shuffle_mask)))]>;
-def MMX_PUNPCKHDQrr : MMXI<0x6A, MRMSrcReg, 
-                           (ops VR64:$dst, VR64:$src1, VR64:$src2),
-                           "punpckhdq {$src2, $dst|$dst, $src2}",
-                           [(set VR64:$dst,
-                             (v1i64 (vector_shuffle VR64:$src1, VR64:$src2,
-                                     MMX_UNPCKH_shuffle_mask)))]>;
-def MMX_PUNPCKHDQrm : MMXI<0x6A, MRMSrcMem,
-                           (ops VR64:$dst, VR64:$src1, i64mem:$src2),
-                           "punpckhdq {$src2, $dst|$dst, $src2}",
-                           [(set VR64:$dst,
-                             (v1i64 (vector_shuffle VR64:$src1,
-                                     (load_mmx addr:$src2),
-                                     MMX_UNPCKH_shuffle_mask)))]>;
-}
 
 // Logical Instructions
 defm MMX_PAND : MMXI_binop_rm_v1i64<0xDB, "pand", and, 1>;
@@ -247,12 +196,7 @@ defm MMX_PSRAW : MMXI_binop_rmi_int<0xE1, 0x71, MRM4r, "psraw",
 defm MMX_PSRAD : MMXI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad",
                                     int_x86_mmx_psra_d>;
 
-// Pack instructions
-defm MMX_PACKSSWB : MMXI_binop_rm_int<0x63, "packsswb", int_x86_mmx_packsswb>;
-defm MMX_PACKSSDW : MMXI_binop_rm_int<0x6B, "packssdw", int_x86_mmx_packssdw>;
-defm MMX_PACKUSWB : MMXI_binop_rm_int<0x67, "packuswb", int_x86_mmx_packuswb>;
-
-// Integer comparison
+// Comparison Instructions
 defm MMX_PCMPEQB : MMXI_binop_rm_int<0x74, "pcmpeqb", int_x86_mmx_pcmpeq_b>;
 defm MMX_PCMPEQW : MMXI_binop_rm_int<0x75, "pcmpeqw", int_x86_mmx_pcmpeq_w>;
 defm MMX_PCMPEQD : MMXI_binop_rm_int<0x76, "pcmpeqd", int_x86_mmx_pcmpeq_d>;
@@ -261,7 +205,110 @@ defm MMX_PCMPGTB : MMXI_binop_rm_int<0x64, "pcmpgtb", int_x86_mmx_pcmpgt_b>;
 defm MMX_PCMPGTW : MMXI_binop_rm_int<0x65, "pcmpgtw", int_x86_mmx_pcmpgt_w>;
 defm MMX_PCMPGTD : MMXI_binop_rm_int<0x66, "pcmpgtd", int_x86_mmx_pcmpgt_d>;
 
-// Move Instructions
+// Conversion Instructions
+def MMX_UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKHMask(N);
+}]>;
+
+def MMX_UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKLMask(N);
+}]>;
+
+// -- Unpack Instructions
+let isTwoAddress = 1 in {
+  // Unpack High Packed Data Instructions
+  def MMX_PUNPCKHBWrr : MMXI<0x68, MRMSrcReg, 
+                             (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                             "punpckhbw {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v8i8 (vector_shuffle VR64:$src1, VR64:$src2,
+                                      MMX_UNPCKH_shuffle_mask)))]>;
+  def MMX_PUNPCKHBWrm : MMXI<0x68, MRMSrcMem, 
+                             (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                             "punpckhbw {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v8i8 (vector_shuffle VR64:$src1,
+                                      (bc_v8i8 (load_mmx addr:$src2)),
+                                      MMX_UNPCKH_shuffle_mask)))]>;
+
+  def MMX_PUNPCKHWDrr : MMXI<0x69, MRMSrcReg, 
+                             (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                             "punpckhwd {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v4i16 (vector_shuffle VR64:$src1, VR64:$src2,
+                                       MMX_UNPCKH_shuffle_mask)))]>;
+  def MMX_PUNPCKHWDrm : MMXI<0x69, MRMSrcMem, 
+                             (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                             "punpckhwd {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v4i16 (vector_shuffle VR64:$src1,
+                                       (bc_v4i16 (load_mmx addr:$src2)),
+                                       MMX_UNPCKH_shuffle_mask)))]>;
+
+  def MMX_PUNPCKHDQrr : MMXI<0x6A, MRMSrcReg, 
+                             (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                             "punpckhdq {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v2i32 (vector_shuffle VR64:$src1, VR64:$src2,
+                                       MMX_UNPCKH_shuffle_mask)))]>;
+  def MMX_PUNPCKHDQrm : MMXI<0x6A, MRMSrcMem,
+                             (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                             "punpckhdq {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v2i32 (vector_shuffle VR64:$src1,
+                                       (bc_v2i32 (load_mmx addr:$src2)),
+                                       MMX_UNPCKH_shuffle_mask)))]>;
+
+  // Unpack Low Packed Data Instructions
+  def MMX_PUNPCKLBWrr : MMXI<0x60, MRMSrcReg,
+                             (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                             "punpcklbw {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v8i8 (vector_shuffle VR64:$src1, VR64:$src2,
+                                      MMX_UNPCKL_shuffle_mask)))]>;
+  def MMX_PUNPCKLBWrm : MMXI<0x60, MRMSrcMem,
+                             (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                             "punpcklbw {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v8i8 (vector_shuffle VR64:$src1,
+                                      (bc_v8i8 (load_mmx addr:$src2)),
+                                      MMX_UNPCKL_shuffle_mask)))]>;
+
+  def MMX_PUNPCKLWDrr : MMXI<0x61, MRMSrcReg,
+                             (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                             "punpcklwd {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v4i16 (vector_shuffle VR64:$src1, VR64:$src2,
+                                       MMX_UNPCKL_shuffle_mask)))]>;
+  def MMX_PUNPCKLWDrm : MMXI<0x61, MRMSrcMem,
+                             (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                             "punpcklwd {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v4i16 (vector_shuffle VR64:$src1,
+                                       (bc_v4i16 (load_mmx addr:$src2)),
+                                       MMX_UNPCKL_shuffle_mask)))]>;
+
+  def MMX_PUNPCKLDQrr : MMXI<0x62, MRMSrcReg, 
+                             (ops VR64:$dst, VR64:$src1, VR64:$src2),
+                             "punpckldq {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v2i32 (vector_shuffle VR64:$src1, VR64:$src2,
+                                       MMX_UNPCKL_shuffle_mask)))]>;
+  def MMX_PUNPCKLDQrm : MMXI<0x62, MRMSrcMem, 
+                             (ops VR64:$dst, VR64:$src1, i64mem:$src2),
+                             "punpckldq {$src2, $dst|$dst, $src2}",
+                             [(set VR64:$dst,
+                               (v2i32 (vector_shuffle VR64:$src1,
+                                       (bc_v2i32 (load_mmx addr:$src2)),
+                                       MMX_UNPCKL_shuffle_mask)))]>;
+}
+
+// -- Pack Instructions
+defm MMX_PACKSSWB : MMXI_binop_rm_int<0x63, "packsswb", int_x86_mmx_packsswb>;
+defm MMX_PACKSSDW : MMXI_binop_rm_int<0x6B, "packssdw", int_x86_mmx_packssdw>;
+defm MMX_PACKUSWB : MMXI_binop_rm_int<0x67, "packuswb", int_x86_mmx_packuswb>;
+
+// Data Transfer Instructions
 def MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
                     "movd {$src, $dst|$dst, $src}", []>;
 def MOVD64rm : MMXI<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),
@@ -326,12 +373,12 @@ def MASKMOVQ : I<0xF7, MRMDestMem, (ops VR64:$src, VR64:$mask),
 // Alias instructions that map zero vector to pxor.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 let isReMaterializable = 1 in {
-def MMX_V_SET0 : MMXI<0xEF, MRMInitReg, (ops VR64:$dst),
-                      "pxor $dst, $dst",
-                      [(set VR64:$dst, (v1i64 immAllZerosV))]>;
-def MMX_V_SETALLONES : MMXI<0x76, MRMInitReg, (ops VR64:$dst),
-                            "pcmpeqd $dst, $dst",
-                            [(set VR64:$dst, (v1i64 immAllOnesV))]>;
+  def MMX_V_SET0       : MMXI<0xEF, MRMInitReg, (ops VR64:$dst),
+                              "pxor $dst, $dst",
+                              [(set VR64:$dst, (v1i64 immAllZerosV))]>;
+  def MMX_V_SETALLONES : MMXI<0x76, MRMInitReg, (ops VR64:$dst),
+                              "pcmpeqd $dst, $dst",
+                              [(set VR64:$dst, (v1i64 immAllOnesV))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -373,6 +420,16 @@ def : Pat<(v1i64 (bitconvert (v4i16 VR64:$src))), (v1i64 VR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v8i8  VR64:$src))), (v1i64 VR64:$src)>;
 
 // Splat v1i64
+// MMX_SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to
+// MMX_PSHUF*, MMX_SHUFP* etc. imm.
+def MMX_SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
+  return getI8Imm(X86::getShuffleSHUFImmediate(N));
+}]>;
+
+def MMX_splat_mask : PatLeaf<(build_vector), [{
+  return X86::isSplatMask(N);
+}], MMX_SHUFFLE_get_shuf_imm>;
+
 let AddedComplexity = 10 in {
   def : Pat<(vector_shuffle (v1i64 VR64:$src), (undef),
              MMX_splat_mask:$sm),
@@ -389,7 +446,7 @@ def MMX_X86s2vec : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 def : Pat<(v8i8  (MMX_X86s2vec GR32:$src)), (MOVD64rr GR32:$src)>;
 def : Pat<(v4i16 (MMX_X86s2vec GR32:$src)), (MOVD64rr GR32:$src)>;
 
-// Some special case pandn patterns.
+// Some special case PANDN patterns.
 def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v2i32 immAllOnesV))),
                   VR64:$src2)),
           (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
