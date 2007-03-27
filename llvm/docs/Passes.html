@@ -477,7 +477,10 @@
   <a name="adce">Aggressive Dead Code Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>ADCE aggressively tries to eliminate code. This pass is similar to
+  <a href="#dce">DCE</a> but it assumes that values are dead until proven 
+  otherwise. This is similar to <a href="#sccp">SCCP</a>, except applied to 
+  the liveness of values.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -493,7 +496,21 @@
   <a name="block-placement">Profile Guided Basic Block Placement</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>This pass implements a very simple profile guided basic block placement
+  algorithm.  The idea is to put frequently executed blocks together at the
+  start of the function, and hopefully increase the number of fall-through
+  conditional branches.  If there is no profile information for a particular
+  function, this pass basically orders blocks in depth-first order.</p>
+  <p>The algorithm implemented here is basically "Algo1" from "Profile Guided 
+  Code Positioning" by Pettis and Hansen, except that it uses basic block 
+  counts instead of edge counts.  This could be improved in many ways, but is 
+  very simple for now.</p>
+  <p>Basically we "place" the entry block, then loop over all successors in a 
+  DFO, placing the most frequently executed successor until we run out of 
+  blocks.  Did we mention that this was <b>extremely</b> simplistic? This is 
+  also much slower than it could be.  When it becomes important, this pass 
+  will be rewritten to use a better algorithm, and then we can worry about 
+  efficiency.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -509,7 +526,23 @@
   <a name="cee">Correlated Expression Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>Correlated Expression Elimination propagates information from conditional
+  branches to blocks dominated by destinations of the branch.  It propagates
+  information from the condition check itself into the body of the branch,
+  allowing transformations like these for example:
+  <pre>
+    if (i == 7)
+      ... 4*i;  // constant propagation
+
+    M = i+1; N = j+1;
+    if (i == j)
+      X = M-N;  // = M-M == 0;
+   </pre></p>
+
+   <p>This is called Correlated Expression Elimination because we eliminate or
+   simplify expressions that are correlated with the direction of a branch. In
+   this way we use static information to give us some information about the
+   dynamic value of a variable.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -517,7 +550,8 @@
   <a name="condprop">Conditional Propagation</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>This pass propagates information about conditional expressions through the
+  program, allowing it to eliminate conditional branches in some cases.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -530,10 +564,18 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="constprop">Simple constant propagation</a>
+  <a name="constprop">Constant Propagation</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>This file implements constant propagation and merging. It looks for
+  instructions involving only constant operands and replaces them with a
+  constant value instead of an instruction. For example:
+  <pre>add i32 1, 2</pre><br/>
+  becomes
+  <pre>i32 3</pre></p>
+  <p>NOTE: this pass has a habit of making definitions be dead.  It is a good 
+  idea to to run a <a href="#die">DIE</a> (Dead Instruction Elimination) pass 
+  sometime after running this pass.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
