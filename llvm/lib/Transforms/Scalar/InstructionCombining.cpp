@@ -9488,8 +9488,10 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         // Erase the old instruction.
         InstParent->getInstList().erase(I);
       } else {
+#ifndef NDEBUG
         DOUT << "IC: Mod = " << OrigI
              << "    New = " << *I;
+#endif
 
         // If the instruction was modified, it's possible that it is now dead.
         // if so, remove it.
