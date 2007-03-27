@@ -464,8 +464,8 @@ DIAG(err_flexible_array_in_array, ERROR,
      "'%s' may not be used as an array element due to flexible array member")
 DIAG(err_illegal_decl_array_of_functions, ERROR,
      "'%s' declared as array of functions")
-DIAG(err_illegal_decl_array_of_voids, ERROR,
-     "'%s' declared as array of voids")
+DIAG(err_illegal_decl_array_incomplete_type, ERROR,
+     "array type for '%s' has incomplete element type")
      
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,
