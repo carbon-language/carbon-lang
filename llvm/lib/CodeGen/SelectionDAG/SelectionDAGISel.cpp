@@ -3776,7 +3776,6 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   // updates dom and loop info.
   AU.addRequired<AliasAnalysis>();
   AU.addRequired<LoopInfo>();
-  AU.setPreservesAll();
 }
 
 
