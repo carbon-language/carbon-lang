@@ -2219,7 +2219,7 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
 
     // Check to see if this is a wide variety of vsplti*, binop self cases.
     unsigned SplatBitSize = SplatSize*8;
-    static const char SplatCsts[] = {
+    static const signed char SplatCsts[] = {
       -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -7, 7,
       -8, 8, -9, 9, -10, 10, -11, 11, -12, 12, -13, 13, 14, -14, 15, -15, -16
     };
