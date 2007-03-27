@@ -1,32 +1,51 @@
 ;; Maintainer:  The LLVM team, http://llvm.org/
 ;; Description: Major mode for TableGen description files (part of LLVM project)
-;; Updated:     2003-08-11
+;; Updated:     2007-03-26
+
+(require 'comint)
+(require 'custom)
+(require 'ansi-color)
 
 ;; Create mode-specific tables.
 (defvar tablegen-mode-syntax-table nil
   "Syntax table used while in TableGen mode.")
 
+(defvar td-decorators-face 'td-decorators-face
+  "Face method decorators.")
+(make-face 'td-decorators-face)
+
 (defvar tablegen-font-lock-keywords
-  (list
-   ;; Comments
-   '("\/\/.*" . font-lock-comment-face)
-   ;; Strings
-   '("\"[^\"]+\"" . font-lock-string-face)
-   ;; Hex constants
-   '("0x[0-9A-Fa-f]+" . font-lock-preprocessor-face)
-   ;; Binary constants
-   '("0b[01]+" . font-lock-preprocessor-face)
-   ;; Integer literals
-   '("[-]?[0-9]+" . font-lock-preprocessor-face)
-   ;; Floating point constants
-   '("[-+]?[0-9]+\.[0-9]*\([eE][-+]?[0-9]+\)?" . font-lock-preprocessor-face)
-   ;; Keywords
-   '("include\\|def\\|let\\|in\\|code\\|dag\\|field" . font-lock-keyword-face)
-   ;; Types
-   '("class\\|int\\|string\\|list\\|bits?" . font-lock-type-face)
-   )
-  "Syntax highlighting for TableGen"
-  )
+  (let ((kw (mapconcat 'identity
+                       '("class" "def" "defm" "field" "in" "include"
+                         "let" "multiclass")
+                       "\\|"))
+        (type-kw (mapconcat 'identity
+                            '("bit" "bits" "code" "dag" "int" "list" "string")
+                            "\\|"))
+        )
+    (list
+     ;; Comments
+     '("\/\/" . font-lock-comment-face)
+     ;; Strings
+     '("\"[^\"]+\"" . font-lock-string-face)
+     ;; Hex constants
+     '("0x[0-9A-Fa-f]+" . font-lock-preprocessor-face)
+     ;; Binary constants
+     '("0b[01]+" . font-lock-preprocessor-face)
+     ;; Integer literals
+     '("[-]?[0-9]+" . font-lock-preprocessor-face)
+     ;; Floating point constants
+     '("[-+]?[0-9]+\.[0-9]*\([eE][-+]?[0-9]+\)?" . font-lock-preprocessor-face)
+
+     '("^[ \t]*\\(@.+\\)" 1 'td-decorators-face)
+     ;; Keywords
+     (cons (concat "\\<\\(" kw "\\)\\>[ \n\t(]") 1)
+
+     ;; Type keywords
+     (cons (concat "\\<\\(" type-kw "\\)[ \n\t(]") 1)
+     ))
+  "Additional expressions to highlight in TableGen mode.")
+(put 'tablegen-mode 'font-lock-defaults '(tablegen-font-lock-keywords))
 
 ;; ---------------------- Syntax table ---------------------------
 ;; Shamelessly ripped from jasmin.el
