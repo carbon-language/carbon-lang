@@ -18,7 +18,7 @@ DOXYGEN = doxygen
 PACKAGE_VERSION = $(shell grep AC_INIT ../autoconf/configure.ac | sed -e 's/[^,]*,[[][[]//' -e 's/]],.*//')
 $(warning VERSION=$(VERSION))
 
-doxygen.cfg: doxygen.cfg.in
+$(PROJ_OBJ_DIR)/doxygen.cfg: doxygen.cfg.in
 	cat $< | sed \
 	  -e 's/@abs_top_srcdir@/../g' \
 	  -e 's/@DOT@/dot/g' \
