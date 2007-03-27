@@ -499,19 +499,15 @@ public:
   void visitUnreachable(UnreachableInst &I) { /* noop */ }
 
   // Helpers for visitSwitch
-  void handleSmallSwitchRange(CaseRec& CR,
+  bool handleSmallSwitchRange(CaseRec& CR,
                               CaseRecVector& WorkList,
                               Value* SV,
                               MachineBasicBlock* Default);
-  void handleJTSwitchCase(CaseRec& CR,
+  bool handleJTSwitchCase(CaseRec& CR,
                           CaseRecVector& WorkList,
                           Value* SV,
                           MachineBasicBlock* Default);
-  void handleBTSplitSwitchCase(CaseRec& CR,
-                               CaseRecVector& WorkList,
-                               Value* SV,
-                               MachineBasicBlock* Default);
-  void handleBTSmallSwitchCase(CaseRec& CR,
+  bool handleBTSplitSwitchCase(CaseRec& CR,
                                CaseRecVector& WorkList,
                                Value* SV,
                                MachineBasicBlock* Default);
@@ -1228,10 +1224,17 @@ void SelectionDAGLowering::visitUnwind(UnwindInst &I) {
 
 /// handleSmaaSwitchCaseRange - Emit a series of specific tests (suitable for
 /// small case ranges).
-void SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
+bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
                                                   CaseRecVector& WorkList,
                                                   Value* SV,
                                                   MachineBasicBlock* Default) {
+  Case& BackCase  = *(CR.Range.second-1);
+  
+  // Size is the number of Cases represented by this range.
+  unsigned Size = CR.Range.second - CR.Range.first;
+  if (Size >=3)
+    return false;  
+    
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
   MachineFunction *CurMF = CurMBB->getParent();  
@@ -1239,8 +1242,6 @@ void SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
   MachineFunction::iterator BBI = CR.CaseBB;
-
-  Case& BackCase  = *(CR.Range.second-1);
 
   if (++BBI != CurMBB->getParent()->end())
     NextBlock = BBI;
@@ -1290,16 +1291,36 @@ void SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
     
     CurBlock = FallThrough;
   }
+
+  return true;
 }
 
 /// handleJTSwitchCase - Emit jumptable for current switch case range
-void SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
+bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
                                               CaseRecVector& WorkList,
                                               Value* SV,
                                               MachineBasicBlock* Default) {
+  Case& FrontCase = *CR.Range.first;
+  Case& BackCase  = *(CR.Range.second-1);
+
+  // Size is the number of Cases represented by this range.
+  unsigned Size = CR.Range.second - CR.Range.first;
+
+  uint64_t First = cast<ConstantInt>(FrontCase.first)->getSExtValue();
+  uint64_t Last  = cast<ConstantInt>(BackCase.first)->getSExtValue();
+
+  if ((!TLI.isOperationLegal(ISD::BR_JT, MVT::Other) &&
+       !TLI.isOperationLegal(ISD::BRIND, MVT::Other)) ||
+      Size <= 5)
+    return false;
+  
+  double Density = (double)Size / (double)((Last - First) + 1ULL);
+  if (Density < 0.3125)
+    return false;
+
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
-  MachineFunction *CurMF = CurMBB->getParent();  
+  MachineFunction *CurMF = CurMBB->getParent();
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
@@ -1308,12 +1329,7 @@ void SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   if (++BBI != CurMBB->getParent()->end())
     NextBlock = BBI;
 
-  Case& FrontCase = *CR.Range.first;
-  Case& BackCase  = *(CR.Range.second-1);
   const BasicBlock *LLVMBB = CR.CaseBB->getBasicBlock();
-
-  uint64_t First = cast<ConstantInt>(FrontCase.first)->getSExtValue();
-  uint64_t Last  = cast<ConstantInt>(BackCase.first)->getSExtValue();
 
   // Create a new basic block to hold the code for loading the address
   // of the jump table, and jumping to it.  Update successor information;
@@ -1364,37 +1380,13 @@ void SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
     visitJumpTableHeader(JT, JTH);
         
   JTCases.push_back(SelectionDAGISel::JumpTableBlock(JTH, JT));
-}
 
-/// handleBTSmallSwitchCase - handle leaf in the binary comparison tree. Just
-/// emit test.
-void SelectionDAGLowering::handleBTSmallSwitchCase(CaseRec& CR,
-                                                   CaseRecVector& WorkList,
-                                                   Value* SV,
-                                                   MachineBasicBlock* Default) {
-  Case& FrontCase = *CR.Range.first;
-  
-  // Create a CaseBlock record representing a conditional branch to
-  // the Case's target mbb if the value being switched on SV is equal
-  // to C.  Otherwise, branch to default.
-  Constant *C = FrontCase.first;
-  MachineBasicBlock *Target = FrontCase.second;
-  SelectionDAGISel::CaseBlock CB(ISD::SETEQ, SV, C, Target, Default, 
-                                 CR.CaseBB);
-    
-  // If the MBB representing the leaf node is the current MBB, then just
-  // call visitSwitchCase to emit the code into the current block.
-  // Otherwise, push the CaseBlock onto the vector to be later processed
-  // by SDISel, and insert the node's MBB before the next MBB.
-  if (CR.CaseBB == CurMBB)
-    visitSwitchCase(CB);
-  else
-    SwitchCases.push_back(CB);
+  return true;
 }
 
 /// handleBTSplitSwitchCase - emit comparison and split binary search tree into
 /// 2 subtrees.
-void SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
+bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
                                                    CaseRecVector& WorkList,
                                                    Value* SV,
                                                    MachineBasicBlock* Default) {
@@ -1483,6 +1475,8 @@ void SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
     visitSwitchCase(CB);
   else
     SwitchCases.push_back(CB);
+
+  return true;
 }
 
 void SelectionDAGLowering::visitSwitch(SwitchInst &I) {  
@@ -1530,51 +1524,21 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
     // Grab a record representing a case range to process off the worklist
     CaseRec CR = WorkList.back();
     WorkList.pop_back();
-    Case& FrontCase = *CR.Range.first;
-    Case& BackCase  = *(CR.Range.second-1);
-
-    // Figure out which block is immediately after the current one.
-    NextBlock = 0;
-    BBI = CR.CaseBB;
-        
-    if (++BBI != CurMBB->getParent()->end())
-      NextBlock = BBI;
-    
-    // Size is the number of Cases represented by this range.
-    unsigned Size = CR.Range.second - CR.Range.first;
 
     // If the range has few cases (two or less) emit a series of specific
     // tests.
-    if (Size < 3) {
-      handleSmallSwitchRange(CR, WorkList, SV, Default);
-      continue;      
-    }
-
+    if (handleSmallSwitchRange(CR, WorkList, SV, Default))
+      continue;
+    
     // If the switch has more than 5 blocks, and at least 31.25% dense, and the 
     // target supports indirect branches, then emit a jump table rather than 
     // lowering the switch to a binary tree of conditional branches.
-
-    if ((TLI.isOperationLegal(ISD::BR_JT, MVT::Other) ||
-         TLI.isOperationLegal(ISD::BRIND, MVT::Other)) &&
-        Size > 5) {
-      uint64_t First = cast<ConstantInt>(FrontCase.first)->getSExtValue();
-      uint64_t Last  = cast<ConstantInt>(BackCase.first)->getSExtValue();
-      double Density = (double)Size / (double)((Last - First) + 1ULL);
-    
-      if (Density >= 0.3125) {
-        handleJTSwitchCase(CR, WorkList, SV, Default);        
-        continue;
-      }
-    }
-
-    // Emit binary tree. If Size is 1, then we are processing a leaf of the
-    // binary search tree.  Otherwise, we need to pick a pivot, and push left
-    // and right ranges onto the worklist.
-
-    if (Size == 1)
-      handleBTSmallSwitchCase(CR, WorkList, SV, Default);
-    else
-      handleBTSplitSwitchCase(CR, WorkList, SV, Default);    
+    if (handleJTSwitchCase(CR, WorkList, SV, Default))
+      continue;
+          
+    // Emit binary tree. We need to pick a pivot, and push left and right ranges
+    // onto the worklist. Leafs are handled via handleSmallSwitchRange() call.
+    handleBTSplitSwitchCase(CR, WorkList, SV, Default);
   }
 }
 
