@@ -19,6 +19,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Instructions.h"
 #include <algorithm>
 using namespace llvm;
@@ -462,7 +463,7 @@ DominanceFrontier::calculate(const DominatorTree &DT,
   DomSetType *Result = NULL;
 
   std::vector<DFCalculateWorkObject> workList;
-  std::set<BasicBlock *> visited;
+  SmallPtrSet<BasicBlock *, 32> visited;
 
   workList.push_back(DFCalculateWorkObject(BB, NULL, Node, NULL));
   do {
