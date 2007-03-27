@@ -361,13 +361,15 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     AddPromotedToType (ISD::LOAD,               MVT::v2i32, MVT::v1i64);
     setOperationAction(ISD::LOAD,               MVT::v1i64, Legal);
 
-    setOperationAction(ISD::BUILD_VECTOR,       MVT::v8i8,  Expand);
-    setOperationAction(ISD::BUILD_VECTOR,       MVT::v4i16, Expand);
-    setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v8i8,  Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v4i16, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v1i64, Custom);
 
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v8i8,  Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4i16, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v1i64, Custom);
   }
 
   if (Subtarget->hasSSE1()) {

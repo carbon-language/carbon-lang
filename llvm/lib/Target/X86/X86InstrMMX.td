@@ -43,11 +43,12 @@ def : Pat<(v1i64 (undef)), (IMPLICIT_DEF_VR64)>;
 // MMX Pattern Fragments
 //===----------------------------------------------------------------------===//
 
-def loadv1i64 : PatFrag<(ops node:$ptr), (v1i64 (load node:$ptr))>;
+def load_mmx : PatFrag<(ops node:$ptr), (v1i64 (load node:$ptr))>;
 
 def bc_v8i8  : PatFrag<(ops node:$in), (v8i8  (bitconvert node:$in))>;
 def bc_v4i16 : PatFrag<(ops node:$in), (v4i16 (bitconvert node:$in))>;
 def bc_v2i32 : PatFrag<(ops node:$in), (v2i32 (bitconvert node:$in))>;
+def bc_v1i64 : PatFrag<(ops node:$in), (v1i64 (bitconvert node:$in))>;
 
 //===----------------------------------------------------------------------===//
 // MMX Multiclasses
@@ -66,7 +67,7 @@ let isTwoAddress = 1 in {
                   !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                   [(set VR64:$dst, (OpVT (OpNode VR64:$src1,
                                          (bitconvert
-                                          (loadv1i64 addr:$src2)))))]>;
+                                          (load_mmx addr:$src2)))))]>;
   }
 
   multiclass MMXI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
@@ -79,7 +80,7 @@ let isTwoAddress = 1 in {
     def rm : MMXI<opc, MRMSrcMem, (ops VR64:$dst, VR64:$src1, i64mem:$src2),
                  !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                  [(set VR64:$dst, (IntId VR64:$src1,
-                                   (bitconvert (loadv1i64 addr:$src2))))]>;
+                                   (bitconvert (load_mmx addr:$src2))))]>;
   }
 
   // MMXI_binop_rm_v1i64 - Simple MMX binary operator whose type is v1i64.
@@ -97,7 +98,7 @@ let isTwoAddress = 1 in {
     def rm : MMXI<opc, MRMSrcMem, (ops VR64:$dst, VR64:$src1, i64mem:$src2),
                   !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                   [(set VR64:$dst,
-                    (OpNode VR64:$src1,(loadv1i64 addr:$src2)))]>;
+                    (OpNode VR64:$src1,(load_mmx addr:$src2)))]>;
   }
 
   multiclass MMXI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
@@ -108,7 +109,7 @@ let isTwoAddress = 1 in {
     def rm : MMXI<opc, MRMSrcMem, (ops VR64:$dst, VR64:$src1, i64mem:$src2),
                   !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                   [(set VR64:$dst, (IntId VR64:$src1,
-                                    (bitconvert (loadv1i64 addr:$src2))))]>;
+                                    (bitconvert (load_mmx addr:$src2))))]>;
     def ri : MMXIi8<opc2, ImmForm, (ops VR64:$dst, VR64:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
                     [(set VR64:$dst, (IntId VR64:$src1,
@@ -178,7 +179,7 @@ def MMX_PUNPCKHBWrm : MMXI<0x68, MRMSrcMem,
                            "punpckhbw {$src2, $dst|$dst, $src2}",
                            [(set VR64:$dst,
                              (v8i8 (vector_shuffle VR64:$src1,
-                                    (bc_v8i8 (loadv1i64 addr:$src2)),
+                                    (bc_v8i8 (load_mmx addr:$src2)),
                                     MMX_UNPCKH_shuffle_mask)))]>;
 def MMX_PUNPCKHWDrr : MMXI<0x69, MRMSrcReg, 
                            (ops VR64:$dst, VR64:$src1, VR64:$src2),
@@ -191,7 +192,7 @@ def MMX_PUNPCKHWDrm : MMXI<0x69, MRMSrcMem,
                            "punpckhwd {$src2, $dst|$dst, $src2}",
                            [(set VR64:$dst,
                              (v4i16 (vector_shuffle VR64:$src1,
-                                     (bc_v4i16 (loadv1i64 addr:$src2)),
+                                     (bc_v4i16 (load_mmx addr:$src2)),
                                      MMX_UNPCKH_shuffle_mask)))]>;
 def MMX_PUNPCKHDQrr : MMXI<0x6A, MRMSrcReg, 
                            (ops VR64:$dst, VR64:$src1, VR64:$src2),
@@ -204,7 +205,7 @@ def MMX_PUNPCKHDQrm : MMXI<0x6A, MRMSrcMem,
                            "punpckhdq {$src2, $dst|$dst, $src2}",
                            [(set VR64:$dst,
                              (v1i64 (vector_shuffle VR64:$src1,
-                                     (loadv1i64 addr:$src2),
+                                     (load_mmx addr:$src2),
                                      MMX_UNPCKH_shuffle_mask)))]>;
 }
 
@@ -251,6 +252,15 @@ defm MMX_PACKSSWB : MMXI_binop_rm_int<0x63, "packsswb", int_x86_mmx_packsswb>;
 defm MMX_PACKSSDW : MMXI_binop_rm_int<0x6B, "packssdw", int_x86_mmx_packssdw>;
 defm MMX_PACKUSWB : MMXI_binop_rm_int<0x67, "packuswb", int_x86_mmx_packuswb>;
 
+// Integer comparison
+defm MMX_PCMPEQB : MMXI_binop_rm_int<0x74, "pcmpeqb", int_x86_mmx_pcmpeq_b>;
+defm MMX_PCMPEQW : MMXI_binop_rm_int<0x75, "pcmpeqw", int_x86_mmx_pcmpeq_w>;
+defm MMX_PCMPEQD : MMXI_binop_rm_int<0x76, "pcmpeqd", int_x86_mmx_pcmpeq_d>;
+
+defm MMX_PCMPGTB : MMXI_binop_rm_int<0x64, "pcmpgtb", int_x86_mmx_pcmpgt_b>;
+defm MMX_PCMPGTW : MMXI_binop_rm_int<0x65, "pcmpgtw", int_x86_mmx_pcmpgt_w>;
+defm MMX_PCMPGTD : MMXI_binop_rm_int<0x66, "pcmpgtd", int_x86_mmx_pcmpgt_d>;
+
 // Move Instructions
 def MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
                     "movd {$src, $dst|$dst, $src}", []>;
@@ -263,7 +273,7 @@ def MOVQ64rr : MMXI<0x6F, MRMSrcReg, (ops VR64:$dst, VR64:$src),
                     "movq {$src, $dst|$dst, $src}", []>;
 def MOVQ64rm : MMXI<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
                     "movq {$src, $dst|$dst, $src}",
-                    [(set VR64:$dst, (loadv1i64 addr:$src))]>;
+                    [(set VR64:$dst, (load_mmx addr:$src))]>;
 def MOVQ64mr : MMXI<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
                     "movq {$src, $dst|$dst, $src}",
                     [(store (v1i64 VR64:$src), addr:$dst)]>;
@@ -319,6 +329,9 @@ let isReMaterializable = 1 in {
 def MMX_V_SET0 : MMXI<0xEF, MRMInitReg, (ops VR64:$dst),
                       "pxor $dst, $dst",
                       [(set VR64:$dst, (v1i64 immAllZerosV))]>;
+def MMX_V_SETALLONES : MMXI<0x76, MRMInitReg, (ops VR64:$dst),
+                            "pcmpeqd $dst, $dst",
+                            [(set VR64:$dst, (v1i64 immAllOnesV))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -333,11 +346,17 @@ def : Pat<(store (v4i16 VR64:$src), addr:$dst),
 def : Pat<(store (v2i32 VR64:$src), addr:$dst),
           (MOVQ64mr addr:$dst, VR64:$src)>;
 
-// 128-bit vector all zero's.
+// 64-bit vector all zero's.
 def : Pat<(v8i8  immAllZerosV), (MMX_V_SET0)>;
 def : Pat<(v4i16 immAllZerosV), (MMX_V_SET0)>;
 def : Pat<(v2i32 immAllZerosV), (MMX_V_SET0)>;
 def : Pat<(v1i64 immAllZerosV), (MMX_V_SET0)>;
+
+// 64-bit vector all one's.
+def : Pat<(v8i8  immAllOnesV), (MMX_V_SETALLONES)>;
+def : Pat<(v4i16 immAllOnesV), (MMX_V_SETALLONES)>;
+def : Pat<(v2i32 immAllOnesV), (MMX_V_SETALLONES)>;
+def : Pat<(v1i64 immAllOnesV), (MMX_V_SETALLONES)>;
 
 // Bit convert.
 def : Pat<(v8i8  (bitconvert (v1i64 VR64:$src))), (v8i8  VR64:$src)>;
@@ -369,3 +388,24 @@ def MMX_X86s2vec : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 // 16-bits matter.
 def : Pat<(v8i8  (MMX_X86s2vec GR32:$src)), (MOVD64rr GR32:$src)>;
 def : Pat<(v4i16 (MMX_X86s2vec GR32:$src)), (MOVD64rr GR32:$src)>;
+
+// Some special case pandn patterns.
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v2i32 immAllOnesV))),
+                  VR64:$src2)),
+          (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v4i16 immAllOnesV))),
+                  VR64:$src2)),
+          (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV))),
+                  VR64:$src2)),
+          (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
+
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v2i32 immAllOnesV))),
+                  (load addr:$src2))),
+          (MMX_PANDNrm VR64:$src1, addr:$src2)>;
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v4i16 immAllOnesV))),
+                  (load addr:$src2))),
+          (MMX_PANDNrm VR64:$src1, addr:$src2)>;
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV))),
+                  (load addr:$src2))),
+          (MMX_PANDNrm VR64:$src1, addr:$src2)>;
