@@ -965,7 +965,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                   if (WasKill) {
                     const TargetInstrDescriptor *NTID =
                       NextMII->getInstrDescriptor();
-                    if (NTID->getOperandConstraint(UIdx, TOI::TIED_TO) == -1)
+                    if (UIdx >= NTID->numOperands ||
+                        NTID->getOperandConstraint(UIdx, TOI::TIED_TO) == -1)
                       MOU.setIsKill();
                   }
                   Spills.addLastUse(InReg, &(*NextMII));
