@@ -555,10 +555,10 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     CallOpc = (isDirect || Subtarget->hasV5TOps())
       ? ARMISD::CALL : ARMISD::CALL_NOLINK;
   }
-  if (CallOpc == ARMISD::CALL_NOLINK) {
-    // On CALL_NOLINK we must move PC to LR
+  if (CallOpc == ARMISD::CALL_NOLINK && !Subtarget->isThumb()) {
+    // implicit def LR - LR mustn't be allocated as GRP:$dst of CALL_NOLINK
     Chain = DAG.getCopyToReg(Chain, ARM::LR,
-                             DAG.getRegister(ARM::PC, MVT::i32), InFlag);
+                             DAG.getNode(ISD::UNDEF, MVT::i32), InFlag);
     InFlag = Chain.getValue(1);
   }
 

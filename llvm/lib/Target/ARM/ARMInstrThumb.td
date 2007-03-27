@@ -189,12 +189,10 @@ let isCall = 1, noResults = 1,
   def tBLXr : TI<(ops GPR:$dst, variable_ops),
                   "blx $dst",
                   [(ARMtcall GPR:$dst)]>, Requires<[HasV5T]>;
-  let Uses = [LR] in {
-    // ARMv4T
-    def tBX : TI<(ops GPR:$dst, variable_ops),
-                  "bx $dst",
+  // ARMv4T
+  def tBX : TIx2<(ops GPR:$dst, variable_ops),
+                  "cpy lr, pc\n\tbx $dst",
                   [(ARMcall_nolink GPR:$dst)]>;
-  }
 }
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
