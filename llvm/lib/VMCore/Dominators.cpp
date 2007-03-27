@@ -266,7 +266,7 @@ bool DominatorSetBase::dominates(Instruction *A, Instruction *B) const {
   BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
   if (BBA != BBB) return dominates(BBA, BBB);
 
-  // It is not possible to determie dominance between two PHI nodes 
+  // It is not possible to determine dominance between two PHI nodes 
   // based on their ordering.
   if (isa<PHINode>(A) && isa<PHINode>(B)) 
     return false;
