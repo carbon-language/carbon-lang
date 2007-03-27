@@ -629,3 +629,26 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v8i8_ty, llvm_v4i16_ty,
                          llvm_v4i16_ty], [IntrNoMem]>;
 }
+
+// Integer comparison ops
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_mmx_pcmpeq_b : GCCBuiltin<"__builtin_ia32_pcmpeqb">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
+  def int_x86_mmx_pcmpeq_w : GCCBuiltin<"__builtin_ia32_pcmpeqw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+  def int_x86_mmx_pcmpeq_d : GCCBuiltin<"__builtin_ia32_pcmpeqd">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+
+  def int_x86_mmx_pcmpgt_b : GCCBuiltin<"__builtin_ia32_pcmpgtb">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
+  def int_x86_mmx_pcmpgt_w : GCCBuiltin<"__builtin_ia32_pcmpgtw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+  def int_x86_mmx_pcmpgt_d : GCCBuiltin<"__builtin_ia32_pcmpgtd">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
+}
