@@ -141,7 +141,7 @@ namespace {
     SDNode *Select(SDOperand N);
 
     bool MatchAddress(SDOperand N, X86ISelAddressMode &AM,
-                      bool isRoot = true,unsigned Depth = 0);
+                      bool isRoot = true, unsigned Depth = 0);
     bool SelectAddr(SDOperand Op, SDOperand N, SDOperand &Base,
                     SDOperand &Scale, SDOperand &Index, SDOperand &Disp);
     bool SelectLEAAddr(SDOperand Op, SDOperand N, SDOperand &Base,
