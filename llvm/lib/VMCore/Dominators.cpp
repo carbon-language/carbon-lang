@@ -952,6 +952,11 @@ bool ETForestBase::dominates(Instruction *A, Instruction *B) {
   BasicBlock::iterator I = BBA->begin();
   for (; &*I != A && &*I != B; ++I) /*empty*/;
   
+  // It is not possible to determine dominance between two PHI nodes 
+  // based on their ordering.
+  if (isa<PHINode>(A) && isa<PHINode>(B)) 
+    return false;
+
   if(!IsPostDominators) {
     // A dominates B if it is found first in the basic block.
     return &*I == A;
