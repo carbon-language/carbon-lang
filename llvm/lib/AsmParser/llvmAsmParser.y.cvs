@@ -1039,7 +1039,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <UIntVal> OptAlign OptCAlign
 %type <StrVal> OptSection SectionString
 
-%token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
+%token CHECKPOINT ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF INTERNAL LINKONCE WEAK APPENDING
 %token DLLIMPORT DLLEXPORT EXTERN_WEAK
@@ -1942,7 +1942,7 @@ Definition
   | MODULE ASM_TOK AsmBlock {
     CHECK_FOR_ERROR
   }  
-  | IMPLEMENTATION {
+  | CHECKPOINT {
     // Emit an error if there are any unresolved types left.
     if (!CurModule.LateResolveTypes.empty()) {
       const ValID &DID = CurModule.LateResolveTypes.begin()->first;
