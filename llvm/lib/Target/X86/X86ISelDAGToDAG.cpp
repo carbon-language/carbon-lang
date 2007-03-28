@@ -140,7 +140,8 @@ namespace {
   private:
     SDNode *Select(SDOperand N);
 
-    bool MatchAddress(SDOperand N, X86ISelAddressMode &AM, bool isRoot = true);
+    bool MatchAddress(SDOperand N, X86ISelAddressMode &AM,
+                      bool isRoot = true,unsigned Depth = 0);
     bool SelectAddr(SDOperand Op, SDOperand N, SDOperand &Base,
                     SDOperand &Scale, SDOperand &Index, SDOperand &Disp);
     bool SelectLEAAddr(SDOperand Op, SDOperand N, SDOperand &Base,
@@ -561,7 +562,14 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// returning true if it cannot be done.  This just pattern matches for the
 /// addressing mode
 bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
-                                   bool isRoot) {
+                                   bool isRoot, unsigned Depth) {
+  if (Depth > 5) {
+    // Default, generate it as a register.
+    AM.BaseType = X86ISelAddressMode::RegBase;
+    AM.Base.Reg = N;
+    return false;
+  }
+  
   // RIP relative addressing: %rip + 32-bit displacement!
   if (AM.isRIPRel) {
     if (!AM.ES && AM.JT != -1 && N.getOpcode() == ISD::Constant) {
@@ -711,12 +719,12 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
   case ISD::ADD:
     if (!Available) {
       X86ISelAddressMode Backup = AM;
-      if (!MatchAddress(N.Val->getOperand(0), AM, false) &&
-          !MatchAddress(N.Val->getOperand(1), AM, false))
+      if (!MatchAddress(N.Val->getOperand(0), AM, false, Depth+1) &&
+          !MatchAddress(N.Val->getOperand(1), AM, false, Depth+1))
         return false;
       AM = Backup;
-      if (!MatchAddress(N.Val->getOperand(1), AM, false) &&
-          !MatchAddress(N.Val->getOperand(0), AM, false))
+      if (!MatchAddress(N.Val->getOperand(1), AM, false, Depth+1) &&
+          !MatchAddress(N.Val->getOperand(0), AM, false, Depth+1))
         return false;
       AM = Backup;
     }
