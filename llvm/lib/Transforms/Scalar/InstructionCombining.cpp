@@ -6304,8 +6304,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       case Instruction::ZExt: {
         // We need to emit an AND to clear the high bits.
         assert(SrcBitSize < DestBitSize && "Not a zext?");
-        Constant *C = ConstantInt::get(APInt::getAllOnesValue(SrcBitSize));
-        C = ConstantExpr::getZExt(C, DestTy);
+        Constant *C = ConstantInt::get(APInt::getLowBitsSet(DestBitSize, SrcBitSize));
         return BinaryOperator::createAnd(Res, C);
       }
       case Instruction::SExt:
@@ -6487,8 +6486,7 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
         unsigned ShAmt = ShAmtV->getZExtValue();
         
         // Get a mask for the bits shifting in.
-        APInt Mask(APInt::getAllOnesValue(SrcBitWidth).lshr(
-                     SrcBitWidth-ShAmt).shl(DestBitWidth));
+        APInt Mask(APInt::getLowBitsSet(SrcBitWidth, ShAmt).shl(DestBitWidth));
         Value* SrcIOp0 = SrcI->getOperand(0);
         if (SrcI->hasOneUse() && MaskedValueIsZero(SrcIOp0, Mask)) {
           if (ShAmt >= DestBitWidth)        // All zeros.
@@ -6547,7 +6545,7 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
       // If we're actually extending zero bits and the trunc is a no-op
       if (MidSize < DstSize && SrcSize == DstSize) {
         // Replace both of the casts with an And of the type mask.
-        APInt AndValue(APInt::getAllOnesValue(MidSize).zext(SrcSize));
+        APInt AndValue(APInt::getLowBitsSet(SrcSize, MidSize));
         Constant *AndConst = ConstantInt::get(AndValue);
         Instruction *And = 
           BinaryOperator::createAnd(CSrc->getOperand(0), AndConst);
