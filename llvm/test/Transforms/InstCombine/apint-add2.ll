@@ -40,14 +40,6 @@ define i128 @test4(i128 %x) {
         ret i128 %tmp.4
 }
 
-define i99 @test5(i99 %x) {
-        ;; If we have ADD(XOR(AND(X, 0xFF), 0x80), 0xF..F80), it's a sext.
-        %X = and i99 %x, 562949953421311
-        %tmp.2 = xor i99 %X, 281474976710656 
-        %tmp.4 = add i99 %tmp.2, -281474976710656
-        ret i99 %tmp.4
-}
-
 define i77 @test6(i77 %x) {
         ;; (x & 254)+1 -> (x & 254)|1
         %tmp.2 = and i77 %x, 562949953421310

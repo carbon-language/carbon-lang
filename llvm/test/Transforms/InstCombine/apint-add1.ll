@@ -28,22 +28,6 @@ define i15 @test3(i15 %x) {
         ret i15 %tmp.4
 }
 
-define i12 @test4(i12 %x) {
-        ;; If we have ADD(XOR(AND(X, 0xFF), 0xF..F80), 0x80), it's a sext.
-        %X = and i12 %x, 63
-        %tmp.2 = xor i12 %X, 4064    ; 0xFE0
-        %tmp.4 = add i12 %tmp.2, 32  ; 0x020
-        ret i12 %tmp.4
-}
-
-define i49 @test5(i49 %x) {
-        ;; If we have ADD(XOR(AND(X, 0xFF), 0x80), 0xF..F80), it's a sext.
-        %X = and i49 %x, 16777215                     ; 0x0000000ffffff
-        %tmp.2 = xor i49 %X, 8388608                  ; 0x0000000800000
-        %tmp.4 = add i49 %tmp.2, -8388608             ; 0x1FFFFFF800000
-        ret i49 %tmp.4
-}
-
 define i49 @test6(i49 %x) {
         ;; (x & 254)+1 -> (x & 254)|1
         %tmp.2 = and i49 %x, 562949953421310
