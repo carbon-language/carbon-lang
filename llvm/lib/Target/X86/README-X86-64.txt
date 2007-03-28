@@ -30,27 +30,6 @@ We need to do the tailcall optimization as well.
 
 //===---------------------------------------------------------------------===//
 
-For this:
-
-int test(int a)
-{
-  return a * 3;
-}
-
-We generates
-	leal (%edi,%edi,2), %eax
-
-We should be generating 
-	leal (%rdi,%rdi,2), %eax
-
-instead. The later form does not require an address-size prefix 67H.
-
-It's probably ok to simply emit the corresponding 64-bit super class registers
-in this case?
-
-
-//===---------------------------------------------------------------------===//
-
 AMD64 Optimization Manual 8.2 has some nice information about optimizing integer
 multiplication by a constant. How much of it applies to Intel's X86-64
 implementation? There are definite trade-offs to consider: latency vs. register
