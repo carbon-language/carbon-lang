@@ -1940,11 +1940,21 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         CFF80Val = APIntOps::ashr(CFF80Val, Size);
       } while (Size >= 1);
       
-      if (Size) {
-        const Type *MiddleType = IntegerType::get(Size);
+      // FIXME: This shouldn't be necessary. When the backends can handle types
+      // with funny bit widths then this whole cascade of if statements should
+      // be removed. It is just here to get the size of the "middle" type back
+      // up to something that the back ends can handle.
+      const Type *MiddleType = 0;
+      switch (Size) {
+        default: break;
+        case 32: MiddleType = Type::Int32Ty; break;
+        case 16: MiddleType = Type::Int16Ty; break;
+        case  8: MiddleType = Type::Int8Ty; break;
+      }
+      if (MiddleType) {
         Instruction *NewTrunc = new TruncInst(XorLHS, MiddleType, "sext");
         InsertNewInstBefore(NewTrunc, I);
-        return new SExtInst(NewTrunc, I.getType());
+        return new SExtInst(NewTrunc, I.getType(), I.getName());
       }
     }
   }
