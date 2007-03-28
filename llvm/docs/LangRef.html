@@ -27,6 +27,7 @@
       <li><a href="#paramattrs">Parameter Attributes</a></li>
       <li><a href="#moduleasm">Module-Level Inline Assembly</a></li>
       <li><a href="#datalayout">Data Layout</a></li>
+      <li><a href="#checkpoint">Check Points</a></li>
     </ol>
   </li>
   <li><a href="#typesystem">Type System</a>
@@ -371,9 +372,6 @@ symbol table entries. Here is an example of the "hello world" module:</p>
 <i>; External declaration of the puts function</i>
 <a href="#functionstructure">declare</a> i32 %puts(i8 *)                                            <i>; i32(i8 *)* </i>
 
-<i>; Global variable / Function body section separator</i>
-implementation
-
 <i>; Definition of main function</i>
 define i32 %main() {                                                 <i>; i32()* </i>
         <i>; Convert [13x i8 ]* to i8  *...</i>
@@ -396,13 +394,6 @@ where both functions and global variables are global values.  Global values are
 represented by a pointer to a memory location (in this case, a pointer to an
 array of char, and a pointer to a function), and have one of the following <a
 href="#linkage">linkage types</a>.</p>
-
-<p>Due to a limitation in the current LLVM assembly parser (it is limited by
-one-token lookahead), modules are split into two pieces by the "implementation"
-keyword.  Global variable prototypes and definitions must occur before the
-keyword, and function definitions must occur after it.  Function prototypes may
-occur either before or after it.  In the future, the implementation keyword may
-become a noop, if the parser gets smarter.</p>
 
 </div>
 
@@ -855,6 +846,16 @@ following rules:
   as a fall back.  This happens because <128 x double> can be implemented in 
   terms of 64 <2 x double>, for example.</li>
 </ol>
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="datalayout">Data Layout</a>
+</div>
+<div class="doc_text">
+  <p>At the top level, the keyword <tt>checkpoint</tt> may be used to force the
+  assembler to check point the types and values it has defined so far. Any
+  unresolved types or references will generate error messages. This is useful
+  as an assertion point or for debugging.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -2718,8 +2719,6 @@ compiled to LLVM:</p>
 <pre>
   %RT = type { i8 , [10 x [20 x i32]], i8  }
   %ST = type { i32, double, %RT }
-
-  implementation
 
   define i32* %foo(%ST* %s) {
   entry:
