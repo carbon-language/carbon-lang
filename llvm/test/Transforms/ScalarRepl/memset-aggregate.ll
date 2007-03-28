@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep 'ret i32 16843009'
+; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep 'ret i32 16843009' &&
 ; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | not grep alloca
 ; PR1226
 
