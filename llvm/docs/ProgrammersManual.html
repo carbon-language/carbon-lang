@@ -803,7 +803,7 @@ vector is also useful when interfacing with code that expects vectors :).
 <div class="doc_code">
 <pre>
 for ( ... ) {
-   std::vector<foo> V;
+   std::vector&lt;foo&gt; V;
    use V;
 }
 </pre>
@@ -813,7 +813,7 @@ for ( ... ) {
 
 <div class="doc_code">
 <pre>
-std::vector<foo> V;
+std::vector&lt;foo&gt; V;
 for ( ... ) {
    use V;
    V.clear();
