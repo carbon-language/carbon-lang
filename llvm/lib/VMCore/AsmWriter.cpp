@@ -842,8 +842,6 @@ void AssemblyWriter::printModule(const Module *M) {
        I != E; ++I)
     printGlobal(I);
 
-  Out << "\nimplementation   ; Functions:\n";
-
   // Output all of the functions.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     printFunction(I);
