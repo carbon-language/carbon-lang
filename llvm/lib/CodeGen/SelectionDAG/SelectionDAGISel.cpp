@@ -13,7 +13,6 @@
 
 #define DEBUG_TYPE "isel"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CallingConv.h"
@@ -3834,7 +3833,6 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   // FIXME: we only modify the CFG to split critical edges.  This
   // updates dom and loop info.
   AU.addRequired<AliasAnalysis>();
-  AU.addRequired<LoopInfo>();
 }
 
 
@@ -4091,25 +4089,14 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   return true;
 }
 
-/// isLoopInvariantInst - Returns true if all operands of the instruction are
-/// loop invariants in the specified loop.
-static bool isLoopInvariantInst(Instruction *I, Loop *L) {
-  // The instruction is loop invariant if all of its operands are loop-invariant
-  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-    if (!L->isLoopInvariant(I->getOperand(i)))
-      return false;
-  return true;
-}
-
 /// SinkInvariantGEPIndex - If a GEP instruction has a variable index that has
 /// been hoisted out of the loop by LICM pass, sink it back into the use BB
 /// if it can be determined that the index computation can be folded into the
 /// addressing mode of the load / store uses.
-static bool SinkInvariantGEPIndex(BinaryOperator *BinOp, LoopInfo *loopInfo,
-                             const TargetLowering &TLI) {
-  // Only look at Add / Sub for now.
-  if (BinOp->getOpcode() != Instruction::Add &&
-      BinOp->getOpcode() != Instruction::Sub)
+static bool SinkInvariantGEPIndex(BinaryOperator *BinOp,
+                                  const TargetLowering &TLI) {
+  // Only look at Add.
+  if (BinOp->getOpcode() != Instruction::Add)
     return false;
 
   // DestBBs - These are the blocks where a copy of BinOp will be inserted.
@@ -4118,32 +4105,43 @@ static bool SinkInvariantGEPIndex(BinaryOperator *BinOp, LoopInfo *loopInfo,
   bool MadeChange = false;
   for (Value::use_iterator UI = BinOp->use_begin(), E = BinOp->use_end(); 
        UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+    Instruction *GEPI = cast<Instruction>(*UI);
     // Only look for GEP use in another block.
-    if (User->getParent() == DefBB) continue;
+    if (GEPI->getParent() == DefBB) continue;
 
-    if (isa<GetElementPtrInst>(User)) {
-      BasicBlock *UserBB = User->getParent();
-      Loop *L = loopInfo->getLoopFor(UserBB);
+    if (isa<GetElementPtrInst>(GEPI)) {
+      // If the GEP has another variable index, abondon.
+      bool hasVariableIndex = false;
+      for (GetElementPtrInst::op_iterator OI = GEPI->op_begin()+1,
+             OE = GEPI->op_end(); OI != OE; ++OI)
+        if (*OI != BinOp && !isa<ConstantInt>(*OI)) {
+          hasVariableIndex = true;
+          break;
+        }
+      if (hasVariableIndex)
+        break;
 
-      // Only sink if expression is a loop invariant in the use BB.
-      if (L && isLoopInvariantInst(BinOp, L) && !User->use_empty()) {
+      BasicBlock *GEPIBB = GEPI->getParent();
+      for (Value::use_iterator UUI = GEPI->use_begin(), UE = GEPI->use_end(); 
+           UUI != UE; ++UUI) {
+        Instruction *GEPIUser = cast<Instruction>(*UUI);
         const Type *UseTy = NULL;
-        // FIXME: We are assuming all the uses of the GEP will have the
-        // same type.
-        Instruction *GEPUser = cast<Instruction>(*User->use_begin());
-        if (LoadInst *Load = dyn_cast<LoadInst>(GEPUser))
+        if (LoadInst *Load = dyn_cast<LoadInst>(GEPIUser))
           UseTy = Load->getType();
-        else if (StoreInst *Store = dyn_cast<StoreInst>(GEPUser))
+        else if (StoreInst *Store = dyn_cast<StoreInst>(GEPIUser))
           UseTy = Store->getOperand(0)->getType();
 
         // Check if it is possible to fold the expression to address mode.
-        if (UseTy &&
-            TLI.isLegalAddressExpression(BinOp->getOpcode(),
-                                         BinOp->getOperand(0),
-                                         BinOp->getOperand(1), UseTy)) {
-          DestBBs.insert(UserBB);
-          MadeChange = true;
+        if (UseTy && isa<ConstantInt>(BinOp->getOperand(1))) {
+          uint64_t Scale = TLI.getTargetData()->getTypeSize(UseTy);
+          int64_t Cst = cast<ConstantInt>(BinOp->getOperand(1))->getSExtValue();
+          // e.g. load (gep i32 * %P, (X+42)) => load (%P + X*4 + 168).
+          if (TLI.isLegalAddressImmediate(Cst*Scale, UseTy) &&
+              TLI.isLegalAddressScale(Scale, UseTy)) {
+            DestBBs.insert(GEPIBB);
+            MadeChange = true;
+            break;
+          }
         }
       }
     }
@@ -4248,9 +4246,6 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   RegMap = MF.getSSARegMap();
   DOUT << "\n\n\n=== " << Fn.getName() << "\n";
 
-  LoopInfo *loopInfo = &getAnalysis<LoopInfo>();
-
-  // First, split all critical edges.
   //
   // In this pass we also look for GEP and cast instructions that are used
   // across basic blocks and rewrite them to improve basic-block-at-a-time
@@ -4319,7 +4314,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
         if (SrcVT == DstVT)
           MadeChange |= OptimizeNoopCopyExpression(CI);
       } else if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(I)) {
-        MadeChange |= SinkInvariantGEPIndex(BinOp, loopInfo, TLI);
+        MadeChange |= SinkInvariantGEPIndex(BinOp, TLI);
       }
     }
   }
