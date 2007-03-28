@@ -1281,20 +1281,6 @@ ARMTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 //                           ARM Optimization Hooks
 //===----------------------------------------------------------------------===//
 
-/// isLegalAddressExpression - Return true if the binary expression made up of
-/// specified opcode, operands, and type can be folded into target addressing
-/// mode for load / store of the given type.
-bool ARMTargetLowering::isLegalAddressExpression(unsigned Opc, Value *Op0,
-                                             Value *Op1, const Type *Ty) const {
-  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-    if (Opc == Instruction::Add)
-      return isLegalAddressImmediate(Op1C->getSExtValue(), Ty);
-    if (Opc == Instruction::Sub)
-      return isLegalAddressImmediate(-Op1C->getSExtValue(), Ty);
-  }
-  return false;
-}
-
 /// isLegalAddressImmediate - Return true if the integer value can be used
 /// as the offset of the target addressing mode for load / store of the
 /// given type.

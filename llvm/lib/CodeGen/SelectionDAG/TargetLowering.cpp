@@ -1940,14 +1940,6 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
 //  Loop Strength Reduction hooks
 //===----------------------------------------------------------------------===//
 
-/// isLegalAddressExpression - Return true if the binary expression made up of
-/// specified opcode, operands, and type can be folded into target addressing
-/// mode for load / store of the given type.
-bool TargetLowering::isLegalAddressExpression(unsigned Opc, Value *Op0,
-                                             Value *Op1, const Type *Ty) const {
-  return false;
-}
-
 /// isLegalAddressImmediate - Return true if the integer value can be used as
 /// the offset of the target addressing mode for load / store of the given
 /// type.
