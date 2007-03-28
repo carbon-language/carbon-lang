@@ -851,7 +851,7 @@ static void ComputeSignedMinMaxValuesFromKnownBits(const Type *Ty,
   Min = KnownOne;
   Max = KnownOne|UnknownBits;
   
-  if ((SignBit & UnknownBits) != 0) { // Sign bit is unknown
+  if (UnknownBits[BitWidth-1]) { // Sign bit is unknown
     Min |= SignBit;
     Max &= ~SignBit;
   }
