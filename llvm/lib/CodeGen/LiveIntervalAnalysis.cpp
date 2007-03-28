@@ -935,9 +935,9 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
     // The instruction which defines the src is only truly dead if there are
     // no intermediate uses and there isn't a use beyond the copy.
     // FIXME: find the last use, mark is kill and shorten the live range.
-    if (SrcEnd > getDefIndex(CopyIdx))
+    if (SrcEnd > getDefIndex(CopyIdx)) {
       isDead = false;
-    else {
+    } else {
       MachineOperand *MOU;
       MachineInstr *LastUse= lastRegisterUse(repSrcReg, SrcStart, CopyIdx, MOU);
       if (LastUse) {
@@ -947,7 +947,9 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
         isShorten = true;
         RemoveStart = getDefIndex(getInstructionIndex(LastUse));
         RemoveEnd   = SrcEnd;
-      }
+      } else if (RemoveStart > 0)
+        // A dead def should have a single cycle interval.
+        ++RemoveStart;
     }
   }
 
