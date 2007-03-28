@@ -158,7 +158,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned ShAmt = MI->getOperand(2).getImm();
     if (ShAmt == 0 || ShAmt >= 4) return 0;
     
-    NewMI = BuildMI(get(X86::LEA32r), Dest)
+    unsigned Opc = TM.getSubtarget<X86Subtarget>().is64Bit() ?
+      X86::LEA64_32r : X86::LEA32r;
+    NewMI = BuildMI(get(Opc), Dest)
       .addReg(0).addImm(1 << ShAmt).addReg(Src).addImm(0);
     break;
   }
