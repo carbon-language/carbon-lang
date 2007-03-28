@@ -600,11 +600,10 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
   assert(V && "No Value?");
   assert(Depth <= 6 && "Limit Search Depth");
   uint32_t BitWidth = Mask.getBitWidth();
-  const IntegerType *VTy = cast<IntegerType>(V->getType());
-  assert(VTy->getBitWidth() == BitWidth &&
+  assert(cast<IntegerType>(V->getType())->getBitWidth() == BitWidth &&
          KnownZero.getBitWidth() == BitWidth && 
          KnownOne.getBitWidth() == BitWidth &&
-         "VTy, Mask, KnownOne and KnownZero should have same BitWidth");
+         "V, Mask, KnownOne and KnownZero should have same BitWidth");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     // We know all of the bits for a constant!
     KnownOne = CI->getValue() & Mask;
@@ -685,8 +684,11 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
     // All these have integer operands
     uint32_t SrcBitWidth = 
       cast<IntegerType>(I->getOperand(0)->getType())->getBitWidth();
-    ComputeMaskedBits(I->getOperand(0), APInt(Mask).zext(SrcBitWidth), 
-      KnownZero.zext(SrcBitWidth), KnownOne.zext(SrcBitWidth), Depth+1);
+    APInt MaskIn(Mask);
+    MaskIn.zext(SrcBitWidth);
+    KnownZero.zext(SrcBitWidth);
+    KnownOne.zext(SrcBitWidth);
+    ComputeMaskedBits(I->getOperand(0), MaskIn, KnownZero, KnownOne, Depth+1);
     KnownZero.trunc(BitWidth);
     KnownOne.trunc(BitWidth);
     return;
@@ -703,43 +705,40 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
-    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
       
-    ComputeMaskedBits(I->getOperand(0), APInt(Mask).trunc(SrcBitWidth), 
-      KnownZero.trunc(SrcBitWidth), KnownOne.trunc(SrcBitWidth), Depth+1);
+    APInt MaskIn(Mask);
+    MaskIn.trunc(SrcBitWidth);
+    KnownZero.trunc(SrcBitWidth);
+    KnownOne.trunc(SrcBitWidth);
+    ComputeMaskedBits(I->getOperand(0), MaskIn, KnownZero, KnownOne, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     // The top bits are known to be zero.
     KnownZero.zext(BitWidth);
     KnownOne.zext(BitWidth);
-    KnownZero |= NewBits;
+    KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth);
     return;
   }
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
-    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
       
-    ComputeMaskedBits(I->getOperand(0), APInt(Mask).trunc(SrcBitWidth), 
-      KnownZero.trunc(SrcBitWidth), KnownOne.trunc(SrcBitWidth), Depth+1);
+    APInt MaskIn(Mask); 
+    MaskIn.trunc(SrcBitWidth);
+    KnownZero.trunc(SrcBitWidth);
+    KnownOne.trunc(SrcBitWidth);
+    ComputeMaskedBits(I->getOperand(0), MaskIn, KnownZero, KnownOne, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     KnownZero.zext(BitWidth);
     KnownOne.zext(BitWidth);
 
     // If the sign bit of the input is known set or clear, then we know the
     // top bits of the result.
-    APInt InSignBit(APInt::getSignBit(SrcTy->getBitWidth()));
-    InSignBit.zext(BitWidth);
-    if ((KnownZero & InSignBit) != 0) {          // Input sign bit known zero
+    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
+    if (KnownZero[SrcBitWidth-1])             // Input sign bit known zero
       KnownZero |= NewBits;
-      KnownOne &= ~NewBits;
-    } else if ((KnownOne & InSignBit) != 0) {    // Input sign bit known set
+    else if (KnownOne[SrcBitWidth-1])           // Input sign bit known set
       KnownOne |= NewBits;
-      KnownZero &= ~NewBits;
-    } else {                              // Input sign bit unknown
-      KnownZero &= ~NewBits;
-      KnownOne &= ~NewBits;
-    }
     return;
   }
   case Instruction::Shl:
@@ -760,7 +759,6 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
       uint64_t ShiftAmt = SA->getZExtValue();
-      APInt HighBits(APInt::getHighBitsSet(BitWidth, ShiftAmt));
       
       // Unsigned shift right.
       APInt Mask2(Mask.shl(ShiftAmt));
@@ -768,16 +766,16 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
       assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
       KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
       KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
-      KnownZero |= HighBits;  // high bits known zero.
+      // high bits known zero.
+      KnownZero |= APInt::getHighBitsSet(BitWidth, ShiftAmt);
       return;
     }
     break;
   case Instruction::AShr:
-    // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+    // (ashr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
       uint64_t ShiftAmt = SA->getZExtValue();
-      APInt HighBits(APInt::getHighBitsSet(BitWidth, ShiftAmt));
       
       // Signed shift right.
       APInt Mask2(Mask.shl(ShiftAmt));
@@ -789,11 +787,11 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
       // Handle the sign bits and adjust to where it is now in the mask.
       APInt SignBit(APInt::getSignBit(BitWidth).lshr(ShiftAmt));
         
-      if ((KnownZero & SignBit) != 0) {       // New bits are known zero.
+      APInt HighBits(APInt::getHighBitsSet(BitWidth, ShiftAmt));
+      if (KnownZero[BitWidth-ShiftAmt-1])    // New bits are known zero.
         KnownZero |= HighBits;
-      } else if ((KnownOne & SignBit) != 0) { // New bits are known one.
+      else if (KnownOne[BitWidth-ShiftAmt-1])  // New bits are known one.
         KnownOne |= HighBits;
-      }
       return;
     }
     break;
