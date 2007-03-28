@@ -370,6 +370,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4i16, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v1i64, Custom);
+
+    setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i8,  Custom);
+    setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v4i16, Custom);
   }
 
   if (Subtarget->hasSSE1()) {
@@ -2283,6 +2286,78 @@ static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, MVT::ValueType VT,
   return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
 }
 
+/// LowerBuildVectorv8i8 - Custom lower build_vector of v8i8.
+///
+static SDOperand LowerBuildVectorv8i8(SDOperand Op, unsigned NonZeros,
+                                      unsigned NumNonZero, unsigned NumZero,
+                                      SelectionDAG &DAG, TargetLowering &TLI) {
+  if (NumNonZero > 8)
+    return SDOperand();
+
+  SDOperand V(0, 0);
+  bool First = true;
+  for (unsigned i = 0; i < 8; ++i) {
+    bool ThisIsNonZero = (NonZeros & (1 << i)) != 0;
+    if (ThisIsNonZero && First) {
+      if (NumZero)
+        V = getZeroVector(MVT::v4i16, DAG);
+      else
+        V = DAG.getNode(ISD::UNDEF, MVT::v4i16);
+      First = false;
+    }
+
+    if ((i & 1) != 0) {
+      SDOperand ThisElt(0, 0), LastElt(0, 0);
+      bool LastIsNonZero = (NonZeros & (1 << (i-1))) != 0;
+      if (LastIsNonZero) {
+        LastElt = DAG.getNode(ISD::ZERO_EXTEND, MVT::i16, Op.getOperand(i-1));
+      }
+      if (ThisIsNonZero) {
+        ThisElt = DAG.getNode(ISD::ZERO_EXTEND, MVT::i16, Op.getOperand(i));
+        ThisElt = DAG.getNode(ISD::SHL, MVT::i16,
+                              ThisElt, DAG.getConstant(8, MVT::i8));
+        if (LastIsNonZero)
+          ThisElt = DAG.getNode(ISD::OR, MVT::i16, ThisElt, LastElt);
+      } else
+        ThisElt = LastElt;
+
+      if (ThisElt.Val)
+        V = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v4i16, V, ThisElt,
+                        DAG.getConstant(i/2, TLI.getPointerTy()));
+    }
+  }
+
+  return DAG.getNode(ISD::BIT_CONVERT, MVT::v8i8, V);
+}
+
+/// LowerBuildVectorv4i16 - Custom lower build_vector of v4i16.
+///
+static SDOperand LowerBuildVectorv4i16(SDOperand Op, unsigned NonZeros,
+                                       unsigned NumNonZero, unsigned NumZero,
+                                       SelectionDAG &DAG, TargetLowering &TLI) {
+  if (NumNonZero > 4)
+    return SDOperand();
+
+  SDOperand V(0, 0);
+  bool First = true;
+  for (unsigned i = 0; i < 4; ++i) {
+    bool isNonZero = (NonZeros & (1 << i)) != 0;
+    if (isNonZero) {
+      if (First) {
+        if (NumZero)
+          V = getZeroVector(MVT::v4i16, DAG);
+        else
+          V = DAG.getNode(ISD::UNDEF, MVT::v4i16);
+        First = false;
+      }
+      V = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v4i16, V, Op.getOperand(i),
+                      DAG.getConstant(i, TLI.getPointerTy()));
+    }
+  }
+
+  return V;
+}
+
 /// LowerBuildVectorv16i8 - Custom lower build_vector of v16i8.
 ///
 static SDOperand LowerBuildVectorv16i8(SDOperand Op, unsigned NonZeros,
@@ -2426,13 +2501,13 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     return SDOperand();
 
   // If element VT is < 32 bits, convert it to inserts into a zero vector.
-  if (EVTBits == 8) {
+  if (EVTBits == 8 && NumElems == 16) {
     SDOperand V = LowerBuildVectorv16i8(Op, NonZeros,NumNonZero,NumZero, DAG,
                                         *this);
     if (V.Val) return V;
   }
 
-  if (EVTBits == 16) {
+  if (EVTBits == 16 && NumElems == 8) {
     SDOperand V = LowerBuildVectorv8i16(Op, NonZeros,NumNonZero,NumZero, DAG,
                                         *this);
     if (V.Val) return V;
