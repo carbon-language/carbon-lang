@@ -149,6 +149,19 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     NewMI = BuildMI(get(X86::PSHUFDri), A).addReg(B).addImm(M);
     break;
   }
+  case X86::SHL64ri: {
+    assert(MI->getNumOperands() == 3 && "Unknown shift instruction!");
+    // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
+    // the flags produced by a shift yet, so this is safe.
+    unsigned Dest = MI->getOperand(0).getReg();
+    unsigned Src = MI->getOperand(1).getReg();
+    unsigned ShAmt = MI->getOperand(2).getImm();
+    if (ShAmt == 0 || ShAmt >= 4) return 0;
+    
+    NewMI = BuildMI(get(X86::LEA64r), Dest)
+      .addReg(0).addImm(1 << ShAmt).addReg(Src).addImm(0);
+    break;
+  }
   case X86::SHL32ri: {
     assert(MI->getNumOperands() == 3 && "Unknown shift instruction!");
     // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
