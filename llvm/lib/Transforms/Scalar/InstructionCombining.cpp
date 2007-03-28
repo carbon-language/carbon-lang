@@ -1313,7 +1313,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       RHSKnownOne  <<= ShiftAmt;
       // low bits known zero.
       if (ShiftAmt)
-        RHSKnownZero |= APInt::getAllOnesValue(ShiftAmt).zextOrCopy(BitWidth);
+        RHSKnownZero |= APInt::getLowBitsSet(BitWidth, ShiftAmt);
     }
     break;
   case Instruction::LShr:
@@ -5608,7 +5608,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
   // of a signed value.
   //
-  if (Op1->getZExtValue() >= TypeBits) {  // shift amount always <= 32 bits
+  if (Op1->getValue().getActiveBits() > 64 || Op1->getZExtValue() >= TypeBits) {
     if (I.getOpcode() != Instruction::AShr)
       return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
     else {
@@ -5751,8 +5751,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         // operation.
         //
         if (isValid && !isLeftShift && I.getOpcode() == Instruction::AShr) {
-          isValid = ((Op0C->getValue() & APInt::getSignBit(TypeBits)) != 0) == 
-                    highBitSet;
+          isValid = Op0C->getValue()[TypeBits-1] == highBitSet;
         }
         
         if (isValid) {
@@ -5777,9 +5776,10 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   
   if (ShiftOp && isa<ConstantInt>(ShiftOp->getOperand(1))) {
     ConstantInt *ShiftAmt1C = cast<ConstantInt>(ShiftOp->getOperand(1));
-    // These shift amounts are always <= 32 bits.
-    unsigned ShiftAmt1 = (unsigned)ShiftAmt1C->getZExtValue();
-    unsigned ShiftAmt2 = (unsigned)Op1->getZExtValue();
+    uint32_t ShiftAmt1 = ShiftAmt1C->getValue().getActiveBits() > 64 ? 
+                           TypeBits : (uint32_t)ShiftAmt1C->getZExtValue();
+    uint32_t ShiftAmt2 = Op1->getValue().getActiveBits() > 64 ? 
+                           TypeBits : (uint32_t)Op1->getZExtValue();
     assert(ShiftAmt2 != 0 && "Should have been simplified earlier");
     if (ShiftAmt1 == 0) return 0;  // Will be simplified in the future.
     Value *X = ShiftOp->getOperand(0);
@@ -5805,7 +5805,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         BinaryOperator::createAShr(X, ConstantInt::get(Ty, AmtSum));
       InsertNewInstBefore(Shift, I);
 
-      APInt Mask(Ty->getMask().lshr(ShiftAmt2));
+      APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
       return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
     }
     
@@ -5828,11 +5828,14 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       // generators.
       const Type *SExtType = 0;
       switch (Ty->getBitWidth() - ShiftAmt1) {
-      case 1  : SExtType = Type::Int1Ty; break;
-      case 8  : SExtType = Type::Int8Ty; break;
-      case 16 : SExtType = Type::Int16Ty; break;
-      case 32 : SExtType = Type::Int32Ty; break;
-      case 64 : SExtType = Type::Int64Ty; break;
+      case 1  :
+      case 8  :
+      case 16 :
+      case 32 :
+      case 64 :
+      case 128:
+        SExtType = IntegerType::get(Ty->getBitWidth() - ShiftAmt1);
+        break;
       default: break;
       }
       if (SExtType) {
