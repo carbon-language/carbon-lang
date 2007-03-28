@@ -1,7 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86
 
 ; ModuleID = 'a.bc'
-implementation   ; Functions:
 
 define i32 @foo(i32 %A, i32 %B) {
 entry:

@@ -3,7 +3,6 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep select &&
 ; RUN: llvm-as < %s | opt -instcombine -disable-output
 
-implementation
 
 define i41 @test1(i1 %C) {
 	%V = select i1 %C, i41 1, i41 0  ; V = C

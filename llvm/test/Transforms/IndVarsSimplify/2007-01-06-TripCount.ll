@@ -7,7 +7,6 @@ target triple = "i686-apple-darwin8"
 @foo = internal constant [5 x i8] c"\00abc\00"		; <[5 x i8]*> [#uses=1]
 @str = internal constant [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]
 
-implementation   ; Functions:
 
 define i32 @test(i32 %J) {
 entry:

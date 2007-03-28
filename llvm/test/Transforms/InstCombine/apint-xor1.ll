@@ -4,7 +4,6 @@
 ; RUN: llvm-as < %s | opt -instcombine -disable-output &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 'xor '
 
-implementation
 
 define i47 @test1(i47 %A, i47 %B) {
         ;; (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0

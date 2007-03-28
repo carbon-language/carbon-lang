@@ -3,7 +3,6 @@
 target datalayout = "e-p:64:64"
 target triple = "x86_64-apple-darwin8"
 
-implementation   ; Functions:
 
 declare void @llvm.memset.i64(i8*, i8, i64, i32)
 

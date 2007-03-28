@@ -2,7 +2,6 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-implementation
 
 declare i32 @"atoi"(i8 *)
 

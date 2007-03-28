@@ -1,7 +1,5 @@
 ; RUN:  llvm-as %s -o - | opt -adce
 
-implementation
-
 define i32 @"main"(i32 %argc)
 begin
 	br label %2

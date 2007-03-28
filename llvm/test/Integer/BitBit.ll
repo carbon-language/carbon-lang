@@ -4,7 +4,6 @@
 
 declare void @"foo"(i31 %i, i33 %j)
 
-implementation
 
 ; foo test basic bitwise operations
 define void @"foo"(i31 %i, i33 %j)

@@ -5,7 +5,6 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis > /tmp/or2.rel &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep or
 
-implementation
 
 define i777 @test0(i777 %X) {
     %Y = or i777 %X, 0

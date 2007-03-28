@@ -6,7 +6,6 @@ target triple = "i686-apple-darwin8"
 @Y = weak global i32 0          ; <i32*> [#uses=1]
 @X = weak global i32 0          ; <i32*> [#uses=2]
 
-implementation   ; Functions:
 
 define void @fn1() {
 entry:

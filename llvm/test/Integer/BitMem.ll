@@ -4,7 +4,6 @@
 
 declare void @"foo"()
 
-implementation
 
 ; foo test basic arith operations
 define void @"foo"() {

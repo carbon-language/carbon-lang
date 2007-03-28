@@ -5,7 +5,6 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v OK | not grep add
 
-implementation
 
 define i1 @test1(i1 %x) {
         %tmp.2 = xor i1 %x, 1

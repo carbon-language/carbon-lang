@@ -4,7 +4,6 @@
 
 %x = type i19
 
-implementation
 
 define i19 @"foo"(i19 %in) 
 begin

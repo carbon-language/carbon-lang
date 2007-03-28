@@ -4,7 +4,6 @@
 
 %FunTy = type i31(i31)
 
-implementation
 
 define void @"invoke"(%FunTy *%x)
 begin

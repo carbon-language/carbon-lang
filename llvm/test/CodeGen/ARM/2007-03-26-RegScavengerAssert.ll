@@ -225,7 +225,6 @@ target triple = "arm-linux-gnueabi"
 @__FUNCTION__.21382 = external global [19 x i8]		; <[19 x i8]*> [#uses=0]
 @__FUNCTION__.21117 = external global [21 x i8]		; <[21 x i8]*> [#uses=0]
 
-implementation   ; Functions:
 
 declare void @push_gimplify_context()
 

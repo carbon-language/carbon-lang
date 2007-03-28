@@ -6,7 +6,6 @@
 @a = hidden global i32 0
 @b = external global i32
 
-implementation   ; Functions:
 
 define weak hidden void @_ZN6Person13privateMethodEv(%struct.Person* %this) {
   ret void

@@ -8,7 +8,6 @@
 declare i16 @"test"(i16 sext %arg) sext 
 declare i8  @"test2" (i16 zext %a2) zext 
 
-implementation
 
 define i33 @main(i33 %argc, i8 **%argv) {
     %val = trunc i33 %argc to i16

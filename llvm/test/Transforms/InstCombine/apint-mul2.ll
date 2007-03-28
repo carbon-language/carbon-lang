@@ -4,7 +4,6 @@
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep mul
 
-implementation
 
 define i177 @test1(i177 %X) {
     %C = shl i177 1, 155

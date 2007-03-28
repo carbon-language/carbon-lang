@@ -29,5 +29,4 @@ declare void @"f"()               ;; External method
 @somestr = constant [11x i8] c"hello world"
 @sptr2   = global [11x i8]* @somestr
 
-implementation
 

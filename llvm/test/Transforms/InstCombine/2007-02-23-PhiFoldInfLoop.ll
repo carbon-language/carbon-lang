@@ -5,7 +5,6 @@ target datalayout = "e-p:32:32"
 target triple = "i686-pc-linux-gnu"
 	%struct.termbox = type { %struct.termbox*, i32, i32, i32, i32, i32 }
 
-implementation   ; Functions:
 
 define void @ggenorien() {
 entry:

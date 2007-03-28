@@ -4,7 +4,6 @@
 ; RUN: llvm-as < %s | opt -instcombine -disable-output &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep rem
 
-implementation
 
 define i333 @test1(i333 %A) {
     %B = urem i333 %A, 70368744177664

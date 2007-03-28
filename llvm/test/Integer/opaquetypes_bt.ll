@@ -55,7 +55,6 @@ type %BBB
 %Y1 = type { { \3 * }, \2 * }
 %Z1 = type { { \3 * }, [12x\3] *, { { { \5 * } } } }
 
-implementation
 
 
 

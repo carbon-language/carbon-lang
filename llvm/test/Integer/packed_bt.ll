@@ -5,7 +5,6 @@
 @foo1 = external global <4 x float>;
 @foo2 = external global <2 x i10>;
 
-implementation   ; Functions:
 
 define void @main() 
 {

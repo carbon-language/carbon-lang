@@ -8,7 +8,6 @@
 @numi = external global i32		; <i32*> [#uses=1]
 @counter = external global [2 x i32]		; <[2 x i32]*> [#uses=1]
 
-implementation   ; Functions:
 
 define void @main_bb_2E_i_bb205_2E_i_2E_i_bb115_2E_i_2E_i() {
 newFuncRoot:

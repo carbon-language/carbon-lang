@@ -25,7 +25,6 @@ target triple = "i686-apple-darwin8"
 @outfile = external global %struct.FILE*		; <%struct.FILE**> [#uses=1]
 @str1 = external global [11 x i8]		; <[11 x i8]*> [#uses=1]
 
-implementation   ; Functions:
 
 declare i32 @fprintf(%struct.FILE*, i8*, ...)
 

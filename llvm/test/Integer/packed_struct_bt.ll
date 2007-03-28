@@ -12,7 +12,6 @@
 @E1 = global <{i8, i35, i35}> <{i8 1, i35 2, i35 3}>
 @E2 = global {i8, i35, i35} {i8 4, i35 5, i35 6}
 
-implementation   ; Functions:
 
 define i35 @main() 
 {

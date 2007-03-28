@@ -3,7 +3,6 @@
 target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8.8.0"
 
-implementation   ; Functions:
 
 define void @blargh() {
 entry:

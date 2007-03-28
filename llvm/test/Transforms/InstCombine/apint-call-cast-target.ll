@@ -3,7 +3,6 @@
 target datalayout = "e-p:32:32"
 target triple = "i686-pc-linux-gnu"
 
-implementation   ; Functions:
 
 define i32 @main() {
 entry:

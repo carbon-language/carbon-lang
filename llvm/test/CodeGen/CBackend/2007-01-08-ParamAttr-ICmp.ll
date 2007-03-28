@@ -6,7 +6,6 @@ target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8"
         %struct.Connector = type { i16, i16, i8, i8, %struct.Connector*, i8* }
 
-implementation   ; Functions:
 
 define i1 @prune_match_entry_2E_ce(%struct.Connector* %a, i16 %b.0.0.val) {
 newFuncRoot:

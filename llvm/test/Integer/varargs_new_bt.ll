@@ -5,7 +5,6 @@
 ; Demonstrate all of the variable argument handling intrinsic functions plus 
 ; the va_arg instruction.
 
-implementation   ; Functions:
 declare void @llvm.va_start(i8**)
 declare void @llvm.va_copy(i8**, i8*)
 declare void @llvm.va_end(i8**)

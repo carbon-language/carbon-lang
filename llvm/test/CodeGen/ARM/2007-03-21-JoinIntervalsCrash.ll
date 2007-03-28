@@ -33,7 +33,6 @@
 	%struct.varray_head_tag = type opaque
 	%union.tree_ann_d = type opaque
 
-implementation   ; Functions:
 
 define void @declspecs_add_type(i32 %spec.1) {
 entry:

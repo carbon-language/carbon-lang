@@ -25,7 +25,6 @@
 @s.10319 = external global %struct.aa_ss*		; <%struct.aa_ss**> [#uses=2]
 @str15 = external constant [24 x i8]		; <[24 x i8]*> [#uses=1]
 
-implementation   ; Functions:
 
 define i8 @test(%struct.__fooY* %calendar, double* %atp, i8* %componentDesc, ...) zext  {
 entry:

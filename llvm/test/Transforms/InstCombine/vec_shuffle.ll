@@ -3,7 +3,6 @@
 
 %T = type <4 x float>
 
-implementation
 
 define %T @test1(%T %v1) {
   %v2 = shufflevector %T %v1, %T undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>

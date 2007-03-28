@@ -15,7 +15,6 @@
 @ZeroInit  = global { [100 x i27 ], [40 x float ] } { [100 x i27] zeroinitializer,
                                                       [40  x float] zeroinitializer }
 
-implementation
 
 define i27 @"foo"(i27 %blah)
 begin

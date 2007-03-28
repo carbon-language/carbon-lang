@@ -5,7 +5,6 @@ target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8.8.0"
 	%struct.foo = type { i8, i8 }
 
-implementation   ; Functions:
 
 define i32 @test1(%struct.foo* %P) {
 entry:

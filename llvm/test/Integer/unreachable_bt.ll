@@ -3,7 +3,6 @@
 ; RUN: diff %t1.ll %t2.ll
 
 
-implementation
 
 declare void @bar()
 

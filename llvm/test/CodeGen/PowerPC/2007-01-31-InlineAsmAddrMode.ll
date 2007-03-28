@@ -6,7 +6,6 @@
 
 	%struct.A = type { i32, i32 }
 
-implementation   ; Functions:
 
 define void @test1() {
 entry:

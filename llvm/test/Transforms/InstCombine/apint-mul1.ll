@@ -4,7 +4,6 @@
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep mul
 
-implementation
 
 define i17 @test1(i17 %X) {
     %Y = mul i17 %X, 1024

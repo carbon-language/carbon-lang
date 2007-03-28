@@ -2,7 +2,6 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-implementation
 
 declare i31 @"printf"(i8*, ...)   ;; Prototype for: i32 __builtin_printf(const char*, ...)
 

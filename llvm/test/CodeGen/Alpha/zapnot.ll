@@ -1,7 +1,6 @@
 ; Make sure this testcase codegens to the bic instruction
 ; RUN: llvm-as < %s | llc -march=alpha | grep 'zapnot'
 
-implementation   ; Functions:
 
 define i16 @foo(i64 %y) zext {
 entry:

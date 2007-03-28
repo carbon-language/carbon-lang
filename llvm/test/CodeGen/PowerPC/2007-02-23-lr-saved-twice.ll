@@ -4,7 +4,6 @@ target datalayout = "e-p:32:32"
 target triple = "powerpc-apple-darwin8"
 @str = internal constant [18 x i8] c"hello world!, %d\0A\00"            ; <[18 x i8]*> [#uses=1]
 
-implementation   ; Functions:
 
 define i32 @main() {
 entry:

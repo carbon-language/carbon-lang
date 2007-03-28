@@ -4,8 +4,6 @@
 	%struct.rtx_def = type { i16, i8, i8, %struct.u }
 	%struct.u = type { [1 x i64] }
 
-implementation   ; Functions:
-
 define fastcc void @find_reloads_address(%struct.rtx_def** %loc) {
 entry:
 	%ad_addr = alloca %struct.rtx_def*		; <%struct.rtx_def**> [#uses=2]

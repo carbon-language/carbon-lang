@@ -17,7 +17,6 @@
 ; RUN: grep 's4subq' %t.s | wc -l | grep 2 &&
 ; RUN: grep 's8subq' %t.s | wc -l | grep 2
 
-implementation   ; Functions:
 
 define i32 @al(i32 sext %x.s, i32 sext %y.s) sext {
 entry:

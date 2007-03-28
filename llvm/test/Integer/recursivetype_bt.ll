@@ -43,7 +43,6 @@
 declare i8 *@"malloc"(i32)
 
 ;;**********************
-implementation
 ;;**********************
 
 define void @"InsertIntoListTail"(%list** %L, i36 %Data)

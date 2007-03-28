@@ -4,7 +4,6 @@
 
   %i35 = type i35
 
-implementation
 
 define i35 @"squared"(%i35 %i0)
 begin

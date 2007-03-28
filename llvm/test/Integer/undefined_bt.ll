@@ -5,7 +5,6 @@
 
 @X = global i31 undef
 
-implementation
 
 declare i32 @"atoi"(i8 *)
 

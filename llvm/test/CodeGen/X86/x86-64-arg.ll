@@ -6,7 +6,6 @@
 target datalayout = "e-p:64:64"
 target triple = "x86_64-apple-darwin8"
 
-implementation   ; Functions:
 
 define i32 @test(i16 sext  %X) {
 entry:

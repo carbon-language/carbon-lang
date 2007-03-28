@@ -1,7 +1,6 @@
 ; RUN: llvm-as < %s | llc
 ; PR1197
 
-implementation   ; Functions:
 
 define void @exp_attr__expand_n_attribute_reference() {
 entry:

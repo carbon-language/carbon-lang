@@ -6,7 +6,6 @@
 %struct = type { i31 , {float, {i9 } } , i64 }
 %complexty = type {i31, {[4 x i9 *], float}, double}
 
-implementation
 
 define i31 @"main"()
 begin

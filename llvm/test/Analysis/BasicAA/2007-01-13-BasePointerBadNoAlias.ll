@@ -17,7 +17,6 @@ target triple = "i686-apple-darwin8"
 	%struct.head_type = type { [2 x %struct.LIST], %struct.FIRST_UNION, %struct.SECOND_UNION, %struct.THIRD_UNION, %struct.FOURTH_UNION, %struct.rec*, { %struct.rec* }, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, %struct.rec*, i32 }
 	%struct.rec = type { %struct.head_type }
 
-implementation   ; Functions:
 
 define i32 @test(%struct.closure_type* %tmp18169) {
 	%tmp18174 = getelementptr %struct.closure_type* %tmp18169, i32 0, i32 4, i32 0, i32 0		; <i32*> [#uses=2]

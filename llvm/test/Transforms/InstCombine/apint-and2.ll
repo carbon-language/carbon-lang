@@ -4,7 +4,6 @@
 ; RUN: llvm-as < %s | opt -instcombine -disable-output &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 'and '
 
-implementation
 
 define i999 @test0(i999 %A) {
         %B = and i999 %A, 0 ; zero result

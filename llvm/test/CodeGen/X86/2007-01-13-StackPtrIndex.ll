@@ -5,7 +5,6 @@
 target datalayout = "e-p:64:64"
 @i6000 = global [128 x i64] zeroinitializer, align 16
 
-implementation
 
 define void @foo(i32* %a0, i32* %a1, i32* %a2, i32* %a3, i32* %a4, i32* %a5) {
 b:

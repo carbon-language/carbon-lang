@@ -15,7 +15,6 @@ target triple = "arm-apple-darwin8"
 	%struct.aal_state_t = type { %struct.CGPoint, %struct.CGPoint, %struct.CGPoint, i32, float, float, float, float, %struct.CGPoint, %struct.CGPoint, float, float, float, float, i32, i32, i32, i32, float, float, i8*, i32, i32, %struct.aal_edge_pool_t*, %struct.aal_edge_pool_t*, i8*, %struct.aal_callback_t*, i32, %struct.aal_span_t*, %struct.aal_span_t*, %struct.aal_span_t*, %struct.aal_span_pool_t*, i8, float, i8, i32 }
 	%struct.anon = type { %struct.aal_spanarray_t }
 
-implementation   ; Functions:
 
 declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
 

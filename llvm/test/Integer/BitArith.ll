@@ -5,7 +5,6 @@
 
 declare void @"foo"(i31 %i, i63 %j, i10 %k)
 
-implementation
 
 ; foo test basic arith operations
 define void @"foo"(i31 %i, i63 %j, i10 %k)

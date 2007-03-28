@@ -4,7 +4,6 @@
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep or
 
-implementation
 
 define i7 @test0(i7 %X) {
     %Y = or i7 %X, 0

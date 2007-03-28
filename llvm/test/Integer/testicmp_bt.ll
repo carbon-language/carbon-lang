@@ -2,7 +2,6 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-implementation
 
 define i31 @"simpleIcmp"(i31 %i0, i31 %j0)
 begin

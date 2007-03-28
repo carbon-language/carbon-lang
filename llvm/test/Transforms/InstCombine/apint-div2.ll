@@ -4,7 +4,6 @@
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep div
 
-implementation
 
 define i333 @test1(i333 %X) {
     %Y = udiv i333 %X, 70368744177664

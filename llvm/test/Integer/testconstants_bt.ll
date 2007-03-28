@@ -6,7 +6,6 @@
 @array   = constant [2 x i55] [ i55 12, i55 52 ]
            constant { i55, i55 } { i55 4, i55 3 }
 
-implementation
  
 define [2 x i55]* @testfunction(i55 %i0, i55 %j0)
 begin

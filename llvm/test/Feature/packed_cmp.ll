@@ -13,7 +13,6 @@
 %fvec1 = constant %fvec_type <float 1.0, float 1.0, float 1.0, float 1.0>
 %fvec2 = constant %fvec_type <float 0.0, float 0.0, float 0.0, float 0.0>
 
-implementation   ; Functions:
 
 define bool %ivectest1() {
     %v1 = load %ivec_type* getelementptr(%ivec_type* %ivec1, i32 0)

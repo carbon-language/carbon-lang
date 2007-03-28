@@ -12,7 +12,6 @@
 	%struct.vorbis_dsp_state = type { i32, %struct.vorbis_info*, float**, float**, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64, i64, i64, i64, i64, i64, i8* }
 	%struct.vorbis_info = type { i32, i32, i32, i32, i32, i32, i32, i8* }
 
-implementation   ; Functions:
 
 define void @ov_read() {
 entry:

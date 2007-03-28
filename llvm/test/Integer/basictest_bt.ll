@@ -2,7 +2,6 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-implementation   ; Functions:
 
 ; Test "stripped" format where nothing is symbolic... this is how the bytecode
 ; format looks anyways (except for negative vs positive offsets)...

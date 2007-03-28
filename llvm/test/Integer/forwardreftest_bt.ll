@@ -9,7 +9,6 @@
   type i55(i55(i55)*)
 
   %thisfuncty = type i55 (i55) *
-implementation
 
 declare void @F(%thisfuncty, %thisfuncty, %thisfuncty)
 

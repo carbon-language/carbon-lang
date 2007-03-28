@@ -4,7 +4,6 @@
 
 @A = weak global [1000 x i32] zeroinitializer, align 32         
 
-implementation   ; Functions:
 
 define void @test(i32 %N) {
 entry:

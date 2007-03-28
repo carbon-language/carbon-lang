@@ -7,7 +7,6 @@ target triple = "i686-apple-darwin8"
 	%struct.bar = type { %struct.foo, i64, double }
 	%struct.foo = type { i32, i32 }
 
-implementation   ; Functions:
 
 define i32 @test1(%struct.foo* %P) {
 entry:

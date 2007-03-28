@@ -4,7 +4,6 @@
 
 declare void @"foo"(i31 %i, i1280 %j, i1 %k, float %f)
 
-implementation
 
 ; foo test basic arith operations
 define void @"foo"(i31 %i, i1280 %j, i1 %k, float %f)

@@ -6,7 +6,6 @@
 %inners = type {float, {i8 } }
 %struct = type { i33 , {float, {i8 } } , i64 }
 
-implementation
 
 define i33 @testfunction(i33 %i0, i33 %j0)
 begin
