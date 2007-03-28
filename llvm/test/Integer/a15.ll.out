@@ -18,5 +18,3 @@
 @o = constant i15 0		; <i15*> [#uses=0]
 @p = constant i15 -1		; <i15*> [#uses=0]
 @v = constant i15 -1		; <i15*> [#uses=0]
-
-implementation   ; Functions:

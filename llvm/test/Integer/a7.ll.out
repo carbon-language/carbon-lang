@@ -22,5 +22,3 @@
 @y = constant i7 0		; <i7*> [#uses=0]
 @o = constant i7 0		; <i7*> [#uses=0]
 @p = constant i7 -1		; <i7*> [#uses=0]
-
-implementation   ; Functions:

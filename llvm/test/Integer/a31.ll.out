@@ -17,5 +17,3 @@
 @o = constant i31 0		; <i31*> [#uses=0]
 @p = constant i31 -1		; <i31*> [#uses=0]
 @u = constant i31 -3		; <i31*> [#uses=0]
-
-implementation   ; Functions:

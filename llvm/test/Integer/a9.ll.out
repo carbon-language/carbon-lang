@@ -16,5 +16,3 @@
 @t = constant i9 1		; <i9*> [#uses=0]
 @o = constant i9 0		; <i9*> [#uses=0]
 @p = constant i9 -1		; <i9*> [#uses=0]
-
-implementation   ; Functions:

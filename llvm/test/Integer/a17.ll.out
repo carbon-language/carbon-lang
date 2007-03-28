@@ -17,5 +17,3 @@
 @o = constant i17 0		; <i17*> [#uses=0]
 @p = constant i17 -1		; <i17*> [#uses=0]
 @v = constant i17 -1		; <i17*> [#uses=0]
-
-implementation   ; Functions:
