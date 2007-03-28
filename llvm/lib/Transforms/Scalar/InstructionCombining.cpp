@@ -734,11 +734,10 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
 
     // If the sign bit of the input is known set or clear, then we know the
     // top bits of the result.
-    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
     if (KnownZero[SrcBitWidth-1])             // Input sign bit known zero
-      KnownZero |= NewBits;
+      KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth);
     else if (KnownOne[SrcBitWidth-1])           // Input sign bit known set
-      KnownOne |= NewBits;
+      KnownOne |= APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth);
     return;
   }
   case Instruction::Shl:
