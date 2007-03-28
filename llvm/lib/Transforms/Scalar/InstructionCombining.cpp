@@ -784,9 +784,6 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
       KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
       KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
         
-      // Handle the sign bits and adjust to where it is now in the mask.
-      APInt SignBit(APInt::getSignBit(BitWidth).lshr(ShiftAmt));
-        
       APInt HighBits(APInt::getHighBitsSet(BitWidth, ShiftAmt));
       if (KnownZero[BitWidth-ShiftAmt-1])    // New bits are known zero.
         KnownZero |= HighBits;
