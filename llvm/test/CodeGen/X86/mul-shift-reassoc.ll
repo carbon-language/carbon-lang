@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep lea
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep lea &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep add
 
 int %test(int %X, int %Y) {
