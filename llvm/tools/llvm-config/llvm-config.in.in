@@ -44,6 +44,10 @@ my $TARGET_HAS_JIT      = q{@TARGET_HAS_JIT@};
 my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
 #---- end autoconf values ----
 
+# Must pretend x86_64 architecture is really x86, otherwise the native backend
+# won't get linked in.
+$ARCH = "x86" if $ARCH eq "x86_64";
+
 #---- begin Makefile values ----
 my $CFLAGS              = q{@LLVM_CFLAGS@};
 my $CXXFLAGS            = q{@LLVM_CXXFLAGS@};
