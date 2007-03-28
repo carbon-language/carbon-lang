@@ -50,11 +50,6 @@ namespace {
   EnableJoining("join-liveintervals",
                 cl::desc("Coallesce copies (default=true)"),
                 cl::init(true));
-
-  static cl::opt<bool>
-  EnableReMat("enable-rematerialization",
-                cl::desc("Perform trivial re-materialization"),
-                cl::init(false));
 }
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -436,8 +431,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   // time we see a vreg.
   if (interval.empty()) {
     // Remember if the definition can be rematerialized.
-    if (EnableReMat &&
-        vi.DefInst && tii_->isReMaterializable(vi.DefInst->getOpcode()))
+    if (vi.DefInst && tii_->isReMaterializable(vi.DefInst->getOpcode()))
       interval.remat = vi.DefInst;
 
     // Get the Idx of the defining instructions.
