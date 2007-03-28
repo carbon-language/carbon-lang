@@ -29,6 +29,20 @@ bool Type::isVoidType() const {
   return false;
 }
 
+bool Type::isObjectType() const {
+  if (isa<FunctionType>(CanonicalType))
+    return false;
+  else if (CanonicalType->isIncompleteType())
+    return false;
+  else
+    return true;
+}
+
+bool Type::isDerivedType() const {
+  return isPointerType() || isArrayType() || isFunctionType() ||
+         isStructureType() || isUnionType();
+}
+
 bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType) ? true : false;
 }

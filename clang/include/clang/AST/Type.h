@@ -183,28 +183,39 @@ public:
   bool isCanonical() const { return CanonicalType == this; }
   Type *getCanonicalType() const { return CanonicalType; }
 
-  /// Helper methods to distinguish type categories. All type predicates
-  /// operate on the canonical type, ignoring typedefs.
-  bool isIntegralType() const;   // short/int/long, char, bool, enum { ... }
-  bool isFloatingType() const;   // float, double, long double, complex
-  bool isArithmeticType() const; // integral + floating
-  bool isScalarType() const;     // arithmetic + pointers
-  bool isAggregateType() const;  // arrays, structures
+  /// Types are partitioned into 3 broad categories (C99 6.2.5p1): 
+  /// object types, function types, and incomplete types.
   
-  /// FIXME: consider adding classes to complete the "isa" support.
-  bool isVoidType() const;       
+  /// isObjectType - types that fully describe objects. An object is a region
+  /// of memory that can be examined and stored into (H&S).
+  bool isObjectType() const;
+
+  /// isFunctionType - types that describe functions.
   bool isFunctionType() const;   
-  bool isPointerType() const;
-  bool isArrayType() const;
-  bool isStructureType() const;  // no isa<StructType>(t) support 
-  bool isUnionType() const;      // no isa<UnionType>(t) support
-  
-  /// isIncompleteType - Return true if this is an incomplete type (C99 6.2.5p1)
-  /// - a type that can describe objects, but which lacks information needed to
+
+  /// isIncompleteType - Return true if this is an incomplete type.
+  /// A type that can describe objects, but which lacks information needed to
   /// determine its size (e.g. void, or a fwd declared struct). Clients of this
   /// routine will need to determine if the size is actually required.  
   bool isIncompleteType() const;
   
+  /// Helper methods to distinguish type categories. All type predicates
+  /// operate on the canonical type, ignoring typedefs.
+  bool isIntegralType() const;   // C99 6.2.5p17 (int, char, bool, enum)
+  bool isFloatingType() const;   // C99 6.2.5p11 (float, double, long double)
+  bool isArithmeticType() const; // C99 6.2.5p18 (integral + floating)
+  bool isVoidType() const;       // C99 6.2.5p19
+
+  /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.
+  bool isDerivedType() const;
+  bool isPointerType() const;
+  bool isArrayType() const;
+  bool isStructureType() const;   
+  bool isUnionType() const;
+  
+  bool isScalarType() const;     // C99 6.2.5p21 (arithmetic + pointers)
+  bool isAggregateType() const;  // C99 6.2.5p21 (arrays, structures)
+
   virtual void getAsString(std::string &InnerString) const = 0;
   
   static bool classof(const Type *) { return true; }

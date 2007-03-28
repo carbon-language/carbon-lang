@@ -488,6 +488,8 @@ DIAG(err_typecheck_subscript_value, ERROR,
      "subscripted value is neither array nor pointer")
 DIAG(err_typecheck_subscript, ERROR,
      "array subscript is not an integer")
+DIAG(err_typecheck_subscript_not_object, ERROR,
+     "illegal subscript of non-object type '%s'")
 DIAG(err_typecheck_member_reference_structUnion, ERROR,
      "member reference is not a structure or union")
 DIAG(err_typecheck_member_reference_arrow, ERROR,

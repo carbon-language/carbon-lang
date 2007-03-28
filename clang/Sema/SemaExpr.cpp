@@ -225,10 +225,10 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   TypeRef t2 = ((Expr *)Idx)->getTypeRef();
 
   assert(!t1.isNull() && "no type for array base expression");
-  assert(!t1.isNull() && "no type for array index expression");
+  assert(!t2.isNull() && "no type for array index expression");
 
-  // In C, the expression e1[e2] is by definition precisely equivalent to
-  // the expression *((e1)+(e2)). This means the array "Base" may actually be 
+  // C99 6.5.2.1p2: the expression e1[e2] is by definition precisely equivalent
+  // to the expression *((e1)+(e2)). This means the array "Base" may actually be 
   // in the subscript position. As a result, we need to derive the array base 
   // and index from the expression types.
   
@@ -242,10 +242,24 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   } else 
     return Diag(LLoc, diag::err_typecheck_subscript_value);
 
-  if (indexType->isIntegralType())
-    return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, baseType);
-  else 
+  // C99 6.5.2.1p1
+  if (!indexType->isIntegralType())
     return Diag(LLoc, diag::err_typecheck_subscript);
+
+  TypeRef resultType;
+  if (ArrayType *ary = dyn_cast<ArrayType>(baseType)) {
+    resultType = ary->getElementType();
+  } else if (PointerType *ary = dyn_cast<PointerType>(baseType)) {
+    resultType = ary->getPointeeType();
+    // in practice, the following check catches trying to index a pointer
+    // to a function (e.g. void (*)(int)). Functions are not objects in c99.
+    if (!resultType->isObjectType()) {
+      std::string Name;
+      baseType->getAsString(Name);
+      Diag(LLoc, diag::err_typecheck_subscript_not_object, Name);    
+    }
+  } 
+  return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, resultType);
 }
 
 Action::ExprResult Sema::
