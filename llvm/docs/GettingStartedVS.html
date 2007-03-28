@@ -258,7 +258,7 @@ All these paths are absolute:</p>
        </pre></li>
 
   <li><p>Next, compile the C file into a LLVM bytecode file:</p>
-      <p><tt>% llvm-gcc hello.c -emit-llvm -o hello.bc</tt></p>
+      <p><tt>% llvm-gcc -c hello.c -emit-llvm -o hello.bc</tt></p>
 
       <p>This will create the result file <tt>hello.bc</tt> which is the LLVM 
       bytecode that corresponds the the compiled program and the library 
@@ -267,11 +267,16 @@ All these paths are absolute:</p>
       optimize or analyze it further with the <tt>opt</tt> tool, etc.</p> 
       
       <p><b>Note: while you cannot do this step on Windows, you can do it on a
-        Unix system and transfer <tt>hello.bc</tt> to Windows.</b></p></li>
+        Unix system and transfer <tt>hello.bc</tt> to Windows.  Important:
+        transfer as a binary file!</b></p></li>
 
   <li><p>Run the program using the just-in-time compiler:</p>
       
       <p><tt>% lli hello.bc</tt></p></li>
+
+      <p>Note: this will only work for trivial C programs.  Non-trivial programs
+        (and any C++ program) will have dependencies on the GCC runtime that
+        won't be satisfied by the Microsoft runtime libraries.</p>
 
   <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
       code:</p>
@@ -285,6 +290,11 @@ All these paths are absolute:</p>
   <li><p>Compile to binary using Microsoft C:</p>
 
       <p><tt>% cl hello.cbe.c</tt></p></li>
+
+      <p>Note: this will only work for trivial C programs.  Non-trivial programs
+        (and any C++ program) will have dependencies on the GCC runtime that
+        won't be satisfied by the Microsoft runtime libraries.  Currently, it
+        doesn't even work for trivial C programs such as the one above.</p>
 
   <li><p>Execute the native code program:</p>
 
