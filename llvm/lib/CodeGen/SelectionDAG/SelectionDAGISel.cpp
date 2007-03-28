@@ -4137,7 +4137,7 @@ static bool SinkInvariantGEPIndex(BinaryOperator *BinOp,
           int64_t Cst = cast<ConstantInt>(BinOp->getOperand(1))->getSExtValue();
           // e.g. load (gep i32 * %P, (X+42)) => load (%P + X*4 + 168).
           if (TLI.isLegalAddressImmediate(Cst*Scale, UseTy) &&
-              TLI.isLegalAddressScale(Scale, UseTy)) {
+              (Scale == 1 || TLI.isLegalAddressScale(Scale, UseTy))) {
             DestBBs.insert(GEPIBB);
             MadeChange = true;
             break;
