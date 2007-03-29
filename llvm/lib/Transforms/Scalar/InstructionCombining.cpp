@@ -540,8 +540,10 @@ static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
       if (I->getOpcode() == Instruction::Shl)
         if ((CST = dyn_cast<ConstantInt>(I->getOperand(1)))) {
           // The multiplier is really 1 << CST.
-          Constant *One = ConstantInt::get(V->getType(), 1);
-          CST = cast<ConstantInt>(ConstantExpr::getShl(One, CST));
+          uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
+          uint32_t CSTVal = CST->getValue().getActiveBits() > 64 ?
+                              BitWidth : CST->getZExtValue();
+          CST = ConstantInt::get(APInt(BitWidth, 1).shl(CSTVal));
           return I->getOperand(0);
         }
     }
@@ -2264,7 +2266,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       if (CI->isAllOnesValue())              // X * -1 == 0 - X
         return BinaryOperator::createNeg(Op0, I.getName());
 
-      APInt Val(cast<ConstantInt>(CI)->getValue());
+      const APInt& Val = cast<ConstantInt>(CI)->getValue();
       if (Val.isPowerOf2()) {          // Replace X*(2^C) with X << C
         return BinaryOperator::createShl(Op0,
                  ConstantInt::get(Op0->getType(), Val.logBase2()));
