@@ -379,7 +379,7 @@ def tLSRrr : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
                  "lsr $dst, $rhs",
                  [(set GPR:$dst, (srl GPR:$lhs, GPR:$rhs))]>;
 
-let isReMaterializable = 1 in
+// FIXME: This is not rematerializable because mov changes the condition code.
 def tMOVi8 : TI<(ops GPR:$dst, i32imm:$src),
                  "mov $dst, $src",
                  [(set GPR:$dst, imm0_255:$src)]>;
