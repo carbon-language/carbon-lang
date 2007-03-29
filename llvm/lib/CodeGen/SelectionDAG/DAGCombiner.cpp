@@ -2110,7 +2110,9 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
 
   // fold (zext (truncate (load x))) -> (zext (smaller load x))
   // fold (zext (truncate (srl (load x), c))) -> (zext (small load (x+c/n)))
-  if (N0.getOpcode() == ISD::TRUNCATE) {
+  // FIXME: Temporarily disable this for big endian machines until llvm-gcc
+  // build issue has been resolved.
+  if (TLI.isLittleEndian() && N0.getOpcode() == ISD::TRUNCATE) {
     SDOperand NarrowLoad = ReduceLoadWidth(N0.Val);
     if (NarrowLoad.Val) {
       if (NarrowLoad.Val != N0.Val)
