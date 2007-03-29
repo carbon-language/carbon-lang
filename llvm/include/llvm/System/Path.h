@@ -163,6 +163,7 @@ namespace sys {
       /// other lib/System functionality.
       /// @brief Construct an empty (and invalid) path.
       Path() : path(), status(0) {}
+      ~Path() { delete status; }
 
       /// This constructor will accept a std::string as a path. No checking is
       /// done on this path to determine if it is valid. To determine validity
