@@ -25,10 +25,12 @@ EXTRA_DIST := test llvm.spec include win32 Xcode
 
 include $(LEVEL)/Makefile.config 
 
-# llvm-gcc4 doesn't need runtime libs.
-ifeq ($(LLVMGCC_MAJVERS),4)
+# llvm-gcc4 doesn't need runtime libs.  llvm-gcc4 is the only supported one.
+# FIXME: Remove runtime entirely once we have an understanding of where
+# libprofile etc should go.
+#ifeq ($(LLVMGCC_MAJVERS),4)
   DIRS := $(filter-out runtime, $(DIRS))
-endif
+#endif
 
 ifeq ($(MAKECMDGOALS),libs-only)
   DIRS := $(filter-out tools runtime docs, $(DIRS))
