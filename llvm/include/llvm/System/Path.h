@@ -52,7 +52,7 @@ namespace sys {
     uint32_t getMode() const { return mode; }
     uint32_t getUser() const { return user; }
     uint32_t getGroup() const { return group; }
-    uint32_t getUniqueID() const { return uniqueID; }
+    uint64_t getUniqueID() const { return uniqueID; }
   };
 
   /// This class provides an abstraction for the path to a file or directory
