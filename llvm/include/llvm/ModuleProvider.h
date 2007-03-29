@@ -43,6 +43,13 @@ public:
   ///
   virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0) = 0;
 
+  /// dematerializeFunction - If the given function is read in, and if the
+  /// module provider supports it, release the memory for the function, and set
+  /// it up to be materialized lazily.  If the provider doesn't support this
+  /// capability, this method is a noop.
+  ///
+  virtual void dematerializeFunction(Function *F) {}
+  
   /// materializeModule - make sure the entire Module has been completely read.
   /// On error, return null and fill in the error string if specified.
   ///
