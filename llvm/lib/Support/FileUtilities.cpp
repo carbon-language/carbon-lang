@@ -153,9 +153,9 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
                                  double AbsTol, double RelTol,
                                  std::string *Error) {
   sys::FileStatus FileAStat, FileBStat;
-  if (FileA.getFileStatus(FileAStat, Error))
+  if (FileA.getFileStatus(FileAStat, false, Error))
     return 2;
-  if (FileB.getFileStatus(FileBStat, Error))
+  if (FileB.getFileStatus(FileBStat, false, Error))
     return 2;
 
   // Check for zero length files because some systems croak when you try to

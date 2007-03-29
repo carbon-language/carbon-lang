@@ -116,7 +116,7 @@ bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
     path.getMagicNumber(magic,4);
     signature = magic.c_str();
     std::string err;
-    if (path.getFileStatus(info, ErrMsg))
+    if (path.getFileStatus(info, false, ErrMsg))
       return true;
   }
 
