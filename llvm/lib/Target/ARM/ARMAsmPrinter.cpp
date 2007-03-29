@@ -205,6 +205,10 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   }
 
+  if (F->hasHiddenVisibility())
+    if (const char *Directive = TAI->getHiddenDirective())
+      O << Directive << CurrentFnName << "\n";
+
   if (AFI->isThumbFunction()) {
     EmitAlignment(1, F);
     O << "\t.code\t16\n";
