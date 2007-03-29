@@ -105,6 +105,13 @@ Path::isValid() const {
   return true;
 }
 
+bool 
+Path::isAbsolute() const {
+  if (path.length() < 3)
+    return false;
+  return path[0] == 'C' && path[1] == ':' && path[2] == '\\';
+} 
+
 static Path *TempDirectory = NULL;
 
 Path
@@ -294,24 +301,30 @@ Path::getLast() const {
 }
 
 bool
-Path::getFileStatus(FileStatus &info, std::string *ErrStr) const {
-  WIN32_FILE_ATTRIBUTE_DATA fi;
-  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
-    return MakeErrMsg(ErrStr, "getStatusInfo():" + std::string(path) +
-                    ": Can't get status: ");
+Path::getFileStatus(FileStatus &info, bool update, std::string *ErrStr) const {
+  if (status == 0 || update) {
+    WIN32_FILE_ATTRIBUTE_DATA fi;
+    if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
+      return MakeErrMsg(ErrStr, "getStatusInfo():" + std::string(path) +
+                      ": Can't get status: ");
 
-  info.fileSize = fi.nFileSizeHigh;
-  info.fileSize <<= sizeof(fi.nFileSizeHigh)*8;
-  info.fileSize += fi.nFileSizeLow;
+    if (status == 0)
+      status = new FileStatus;
 
-  info.mode = fi.dwFileAttributes & FILE_ATTRIBUTE_READONLY ? 0555 : 0777;
-  info.user = 9999;    // Not applicable to Windows, so...
-  info.group = 9999;   // Not applicable to Windows, so...
+    status->fileSize = fi.nFileSizeHigh;
+    status->fileSize <<= sizeof(fi.nFileSizeHigh)*8;
+    status->fileSize += fi.nFileSizeLow;
 
-  __int64 ft = *reinterpret_cast<__int64*>(&fi.ftLastWriteTime);
-  info.modTime.fromWin32Time(ft);
+    status->mode = fi.dwFileAttributes & FILE_ATTRIBUTE_READONLY ? 0555 : 0777;
+    status->user = 9999;    // Not applicable to Windows, so...
+    status->group = 9999;   // Not applicable to Windows, so...
 
-  info.isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+    __int64 ft = *reinterpret_cast<__int64*>(&fi.ftLastWriteTime);
+    status->modTime.fromWin32Time(ft);
+
+    status->isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+  }
+  info = *status;
   return false;
 }
 

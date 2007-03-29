@@ -123,7 +123,7 @@ namespace sys {
       /// Find the path to a library using its short name. Use the system
       /// dependent library paths to locate the library.
       /// @brief Find a library.
-      static Path  FindLibrary(std::string& short_name);
+      static Path FindLibrary(std::string& short_name);
 
       /// Construct a path to the default LLVM configuration directory. The
       /// implementation must ensure that this is a well-known (same on many
@@ -162,14 +162,14 @@ namespace sys {
       /// provided so that they can be used to indicate null or error results in
       /// other lib/System functionality.
       /// @brief Construct an empty (and invalid) path.
-      Path() : path() {}
+      Path() : path(), status(0) {}
 
       /// This constructor will accept a std::string as a path. No checking is
       /// done on this path to determine if it is valid. To determine validity
       /// of the path, use the isValid method. 
       /// @param p The path to assign.
       /// @brief Construct a Path from a string.
-      explicit Path(const std::string& p) : path(p) {}
+      explicit Path(const std::string& p) : path(p), status(0) {}
 
     /// @}
     /// @name Operators
@@ -265,6 +265,11 @@ namespace sys {
       /// @brief Determines if the path references the root directory.
       bool isRootDirectory() const;
 
+      /// This function determines if the path name is absolute, as opposed to
+      /// relative. 
+      /// @breif Determine if the path is absolute.
+      bool isAbsolute() const;
+
       /// This function opens the file associated with the path name provided by
       /// the Path object and reads its magic number. If the magic number at the
       /// start of the file matches \p magic, true is returned. In all other
@@ -352,7 +357,11 @@ namespace sys {
       /// of the file system.  This returns false on success, or true on error
       /// and fills in the specified error string if specified.
       /// @brief Get file status.
-      bool getFileStatus(FileStatus &Status, std::string *Error = 0) const;
+      bool getFileStatus(
+          FileStatus &Status,       ///< The resulting file status
+          bool forceUpdate = false, ///< Force an update from the file system
+          std::string *Error = 0    ///< Optional place to return an error msg.
+      ) const;
 
     /// @}
     /// @name Path Mutators
@@ -511,6 +520,7 @@ namespace sys {
     /// @{
     private:
       mutable std::string path;   ///< Storage for the path name.
+      mutable FileStatus *status; ///< Status information.
 
     /// @}
   };

@@ -79,6 +79,12 @@ Path::isValid() const {
   return i >= len; 
 }
 
+bool 
+Path::isAbsolute() const {
+  if (path.empty())
+    return false;
+  return path[0] == '/';
+} 
 Path
 Path::GetRootDirectory() {
   Path result;
@@ -357,18 +363,22 @@ Path::getLast() const {
 }
 
 bool
-Path::getFileStatus(FileStatus &info, std::string *ErrStr) const {
-  struct stat buf;
-  if (0 != stat(path.c_str(), &buf))
-    return MakeErrMsg(ErrStr, 
-      path + ": can't get status of file '" + path + "'");
-  info.fileSize = buf.st_size;
-  info.modTime.fromEpochTime(buf.st_mtime);
-  info.mode = buf.st_mode;
-  info.user = buf.st_uid;
-  info.group = buf.st_gid;
-  info.isDir  = S_ISDIR(buf.st_mode);
-  info.isFile = S_ISREG(buf.st_mode);
+Path::getFileStatus(FileStatus &info, bool update, std::string *ErrStr) const {
+  if (status == 0 || update) {
+    struct stat buf;
+    if (0 != stat(path.c_str(), &buf))
+      return MakeErrMsg(ErrStr, path + ": can't get status of file");
+    if (status == 0)
+      status = new FileStatus;
+    status->fileSize = buf.st_size;
+    status->modTime.fromEpochTime(buf.st_mtime);
+    status->mode = buf.st_mode;
+    status->user = buf.st_uid;
+    status->group = buf.st_gid;
+    status->isDir  = S_ISDIR(buf.st_mode);
+    status->isFile = S_ISREG(buf.st_mode);
+  }
+  info = *status;
   return false;
 }
 
