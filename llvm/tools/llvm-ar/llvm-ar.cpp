@@ -310,7 +310,7 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
         throw std::string("File does not exist: ") + Members[i];
       sys::FileStatus si;
       std::string Err;
-      if (aPath.getFileStatus(si, &Err))
+      if (aPath.getFileStatus(si, false, &Err))
         throw Err;
       if (si.isDir) {
         std::set<sys::Path> dirpaths;
@@ -646,7 +646,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
     if (found != remaining.end()) {
       sys::FileStatus si;
       std::string Err;
-      if (found->getFileStatus(si, &Err))
+      if (found->getFileStatus(si, false, &Err))
         return true;
       if (si.isDir) {
         if (OnlyUpdate) {
