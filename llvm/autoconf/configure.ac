@@ -757,7 +757,8 @@ AC_CACHE_CHECK([whether llvm-gcc is sane],[llvm_cv_llvmgcc_sanity],
 [llvm_cv_llvmgcc_sanity="no"
 if test -x "$LLVMGCC" ; then
   cp /dev/null conftest.c
-  "$LLVMGCC" -emit-llvm -S -o - conftest.c | grep implementation > /dev/null 2>&1
+  "$LLVMGCC" -emit-llvm -S -o - conftest.c | \
+      grep 'target datalayout =' > /dev/null 2>&1
   if test $? -eq 0 ; then
     llvm_cv_llvmgcc_sanity="yes"
   fi
