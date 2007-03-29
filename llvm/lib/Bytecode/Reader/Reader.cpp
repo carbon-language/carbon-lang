@@ -1636,8 +1636,6 @@ bool BytecodeReader::ParseFunction(Function* Func, std::string* ErrMsg) {
   BlockEnd = Fi->second.EndBuf;
   assert(Fi->first == Func && "Found wrong function?");
 
-  LazyFunctionLoadMap.erase(Fi);
-
   this->ParseFunctionBody(Func);
   return false;
 }
@@ -1668,7 +1666,6 @@ bool BytecodeReader::ParseAllFunctionBodies(std::string* ErrMsg) {
     ParseFunctionBody(Func);
     ++Fi;
   }
-  LazyFunctionLoadMap.clear();
   return false;
 }
 

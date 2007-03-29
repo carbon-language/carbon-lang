@@ -154,19 +154,37 @@ public:
   bool ParseAllFunctionBodies(std::string* ErrMsg);
 
   /// @brief Parse the next function of specific type
-  bool ParseFunction(Function* Func, std::string* ErrMsg) ;
+  bool ParseFunction(Function* Func, std::string* ErrMsg);
 
   /// This method is abstract in the parent ModuleProvider class. Its
   /// implementation is identical to the ParseFunction method.
   /// @see ParseFunction
   /// @brief Make a specific function materialize.
   virtual bool materializeFunction(Function *F, std::string *ErrMsg = 0) {
-    LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.find(F);
-    if (Fi == LazyFunctionLoadMap.end()) 
-      return false;
+    // If it already is material, ignore the request.
+    if (!F->hasNotBeenReadFromBytecode()) return false;
+
+    assert(LazyFunctionLoadMap.count(F) &&
+           "not materialized but I don't know about it?");
     if (ParseFunction(F,ErrMsg))
       return true;
     return false;
+  }
+  
+  /// dematerializeFunction - If the given function is read in, and if the
+  /// module provider supports it, release the memory for the function, and set
+  /// it up to be materialized lazily.  If the provider doesn't support this
+  /// capability, this method is a noop.
+  ///
+  virtual void dematerializeFunction(Function *F) {
+    // If the function is not materialized, or if it is a prototype, ignore.
+    if (F->hasNotBeenReadFromBytecode() ||
+        F->isDeclaration())
+      return;
+    
+    // Just forget the function body, we can remat it later.
+    F->deleteBody();
+    F->setLinkage(GlobalValue::GhostLinkage);    
   }
 
   /// This method is abstract in the parent ModuleProvider class. Its
