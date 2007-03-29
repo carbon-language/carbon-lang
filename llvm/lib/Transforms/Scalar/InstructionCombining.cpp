@@ -1135,10 +1135,9 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
     
     DemandedMask &= SrcTy->getMask().zext(BitWidth);
-    uint32_t zextBf = SrcTy->getBitWidth();
-    DemandedMask.trunc(zextBf);
-    RHSKnownZero.trunc(zextBf);
-    RHSKnownOne.trunc(zextBf);
+    DemandedMask.trunc(SrcBitWidth);
+    RHSKnownZero.trunc(SrcBitWidth);
+    RHSKnownOne.trunc(SrcBitWidth);
     if (SimplifyDemandedBits(I->getOperand(0), DemandedMask,
                              RHSKnownZero, RHSKnownOne, Depth+1))
       return true;
@@ -1168,10 +1167,9 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     if ((NewBits & DemandedMask) != 0)
       InputDemandedBits |= InSignBit;
       
-    uint32_t sextBf = SrcTy->getBitWidth();
-    InputDemandedBits.trunc(sextBf);
-    RHSKnownZero.trunc(sextBf);
-    RHSKnownOne.trunc(sextBf);
+    InputDemandedBits.trunc(SrcBitWidth);
+    RHSKnownZero.trunc(SrcBitWidth);
+    RHSKnownOne.trunc(SrcBitWidth);
     if (SimplifyDemandedBits(I->getOperand(0), InputDemandedBits,
                              RHSKnownZero, RHSKnownOne, Depth+1))
       return true;
@@ -1193,10 +1191,6 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       return UpdateValueUsesWith(I, NewCast);
     } else if (RHSKnownOne[SrcBitWidth-1]) {    // Input sign bit known set
       RHSKnownOne |= NewBits;
-      RHSKnownZero &= ~NewBits;
-    } else {                              // Input sign bit unknown
-      RHSKnownZero &= ~NewBits;
-      RHSKnownOne &= ~NewBits;
     }
     break;
   }
