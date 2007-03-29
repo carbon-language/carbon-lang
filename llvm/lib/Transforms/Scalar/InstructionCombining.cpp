@@ -1921,9 +1921,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
           if ((RHSVal == CFF80Val && XorRHS->getValue() == C0080Val) ||
               (RHSVal == C0080Val && XorRHS->getValue() == CFF80Val)) {
             // This is a sign extend if the top bits are known zero.
-            APInt Mask(APInt::getAllOnesValue(TySizeBits));
-            Mask <<= Size;
-            if (!MaskedValueIsZero(XorLHS, Mask))
+            if (!MaskedValueIsZero(XorLHS, 
+                   APInt::getHighBitsSet(TySizeBits, TySizeBits - Size)))
               Size = 0;  // Not a sign ext, but can't be any others either.
             break;
           }
@@ -2984,11 +2983,14 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     // We know that the AND will not produce any of the bits shifted in, so if
     // the anded constant includes them, clear them now!
     //
-    Constant *AllOne = ConstantInt::getAllOnesValue(AndRHS->getType());
-    Constant *ShlMask = ConstantExpr::getShl(AllOne, OpRHS);
-    Constant *CI = ConstantExpr::getAnd(AndRHS, ShlMask);
+    uint32_t BitWidth = AndRHS->getType()->getBitWidth();
+    uint32_t OpRHSVal = OpRHS->getValue().getActiveBits() > 64 ?
+                        BitWidth : OpRHS->getZExtValue();
+    APInt ShlMask(APInt::getHighBitsSet(BitWidth, BitWidth-OpRHSVal));
+    ConstantInt *CI = ConstantInt::get(AndRHS->getValue() & ShlMask);
 
-    if (CI == ShlMask) {   // Masking out bits that the shift already masks
+    if (CI->getValue() == ShlMask) { 
+    // Masking out bits that the shift already masks
       return ReplaceInstUsesWith(TheAnd, Op);   // No need for the and.
     } else if (CI != AndRHS) {                  // Reducing bits set in and.
       TheAnd.setOperand(1, CI);
@@ -3002,11 +3004,14 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     // the anded constant includes them, clear them now!  This only applies to
     // unsigned shifts, because a signed shr may bring in set bits!
     //
-    Constant *AllOne = ConstantInt::getAllOnesValue(AndRHS->getType());
-    Constant *ShrMask = ConstantExpr::getLShr(AllOne, OpRHS);
-    Constant *CI = ConstantExpr::getAnd(AndRHS, ShrMask);
+    uint32_t BitWidth = AndRHS->getType()->getBitWidth();
+    uint32_t OpRHSVal = OpRHS->getValue().getActiveBits() > 64 ?
+                        BitWidth : OpRHS->getZExtValue();
+    APInt ShrMask(APInt::getLowBitsSet(BitWidth, BitWidth - OpRHSVal));
+    ConstantInt *CI = ConstantInt::get(AndRHS->getValue() & ShrMask);
 
-    if (CI == ShrMask) {   // Masking out bits that the shift already masks.
+    if (CI->getValue() == ShrMask) {   
+    // Masking out bits that the shift already masks.
       return ReplaceInstUsesWith(TheAnd, Op);
     } else if (CI != AndRHS) {
       TheAnd.setOperand(1, CI);  // Reduce bits set in and cst.
@@ -3019,9 +3024,11 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     // See if this is shifting in some sign extension, then masking it out
     // with an and.
     if (Op->hasOneUse()) {
-      Constant *AllOne = ConstantInt::getAllOnesValue(AndRHS->getType());
-      Constant *ShrMask = ConstantExpr::getLShr(AllOne, OpRHS);
-      Constant *C = ConstantExpr::getAnd(AndRHS, ShrMask);
+      uint32_t BitWidth = AndRHS->getType()->getBitWidth();
+      uint32_t OpRHSVal = OpRHS->getValue().getActiveBits() > 64 ?
+                          BitWidth : OpRHS->getZExtValue();
+      APInt ShrMask(APInt::getLowBitsSet(BitWidth, BitWidth - OpRHSVal));
+      Constant *C = ConstantInt::get(AndRHS->getValue() & ShrMask);
       if (C == AndRHS) {          // Masking out bits shifted in.
         // (Val ashr C1) & C2 -> (Val lshr C1) & C2
         // Make the argument unsigned.
@@ -3140,8 +3147,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
       unsigned MB = 0, ME = 0;
       if (isRunOfOnes(Mask, MB, ME)) {  // begin/end bit of run, inclusive
         uint32_t BitWidth = cast<IntegerType>(RHS->getType())->getBitWidth();
-        APInt Mask(APInt::getAllOnesValue(BitWidth));
-        Mask = Mask.lshr(BitWidth-MB+1);
+        APInt Mask(APInt::getLowBitsSet(BitWidth, MB-1));
         if (MaskedValueIsZero(RHS, Mask))
           break;
       }
@@ -4786,11 +4792,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               int ShAmtVal = Ty->getPrimitiveSizeInBits()-ShAmt->getZExtValue();
               if (ShAmtVal < 0) ShAmtVal = 0; // Out of range shift.
 
-              Constant *OShAmt = ConstantInt::get(AndTy, ShAmtVal);
-              Constant *ShVal =
-                ConstantExpr::getShl(ConstantInt::getAllOnesValue(AndTy), 
-                                     OShAmt);
-              if (ConstantExpr::getAnd(ShVal, AndCST)->isNullValue())
+              uint32_t BitWidth = AndTy->getPrimitiveSizeInBits();
+              if ((APInt::getHighBitsSet(BitWidth, BitWidth-ShAmtVal) & 
+                   AndCST->getValue()) == 0)
                 CanFold = true;
             }
 
@@ -4925,7 +4929,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               unsigned ShAmtVal = (unsigned)ShAmt->getZExtValue();
 
               // Otherwise strength reduce the shift into an and.
-              APInt Val(APInt::getAllOnesValue(TypeBits).shl(ShAmtVal));
+              APInt Val(APInt::getHighBitsSet(TypeBits, TypeBits - ShAmtVal));
               Constant *Mask = ConstantInt::get(Val);
 
               Instruction *AndI =
