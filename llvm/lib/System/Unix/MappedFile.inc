@@ -54,15 +54,14 @@ bool MappedFile::initialize(std::string* ErrMsg) {
     MakeErrMsg(ErrMsg, "can't open file '" + path_.toString() + "'");
     return true;
   } 
-  struct stat sbuf;
-  if(::fstat(FD, &sbuf) < 0) {
-    MakeErrMsg(ErrMsg, "can't stat file '"+ path_.toString() + "'");
+  const FileStatus *Status = path_.getFileStatus(false, ErrMsg);
+  if (!Status) {
     ::close(FD);
     return true;
   }
   info_ = new MappedFileInfo;
   info_->FD = FD;
-  info_->Size = sbuf.st_size;
+  info_->Size = Status->getSize();
   return false;
 }
 
