@@ -65,3 +65,24 @@ Some potential added complexities:
 4. As stated in 3, not as simple as cloning in some cases. The target will have
    to decide how to remat it. For example, an ARM 2-piece constant generation
    instruction is remat'ed as a load from constantpool.
+
+//===---------------------------------------------------------------------===//
+
+bb27 ...
+        ...
+	%reg1037 = ADDri %reg1039, 1
+	%reg1038 = ADDrs %reg1032, %reg1039, %NOREG, 10
+    Successors according to CFG: 0x8b03bf0 (#5)
+
+bb76 (0x8b03bf0, LLVM BB @0x8b032d0, ID#5):
+    Predecessors according to CFG: 0x8b0c5f0 (#3) 0x8b0a7c0 (#4)
+	%reg1039 = PHI %reg1070, mbb<bb76.outer,0x8b0c5f0>, %reg1037, mbb<bb27,0x8b0a7c0>
+
+Note ADDri is not a two-address instruction. However, its result %reg1037 is an
+operand of the PHI node in bb76 and its operand %reg1039 is the result of the
+PHI node. We should treat it as a two-address code and make sure the ADDri is
+scheduled after any node that reads %reg1039.
+
+//===---------------------------------------------------------------------===//
+
+Re-Materialize load from frame index.
