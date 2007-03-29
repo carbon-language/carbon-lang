@@ -319,6 +319,13 @@ Path::getFileStatus(FileStatus &info, bool update, std::string *ErrStr) const {
     status->user = 9999;    // Not applicable to Windows, so...
     status->group = 9999;   // Not applicable to Windows, so...
 
+    // FIXME: this is only unique if the file is accessed by the same file path.
+    // How do we do this for C:\dir\file and ..\dir\file ? Unix has inode
+    // numbers, but the concept doesn't exist in Windows.
+    status->uniqueID = 0;
+    for (unsigned i = 0; i < path.length(); ++i)
+      status->uniqueID += path[i];
+
     __int64 ft = *reinterpret_cast<__int64*>(&fi.ftLastWriteTime);
     status->modTime.fromWin32Time(ft);
 
