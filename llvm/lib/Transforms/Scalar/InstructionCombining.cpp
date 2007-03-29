@@ -1106,8 +1106,11 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
   case Instruction::Trunc: {
     uint32_t truncBf = 
       cast<IntegerType>(I->getOperand(0)->getType())->getBitWidth();
-    if (SimplifyDemandedBits(I->getOperand(0), DemandedMask.zext(truncBf),
-        RHSKnownZero.zext(truncBf), RHSKnownOne.zext(truncBf), Depth+1))
+    DemandedMask.zext(truncBf);
+    RHSKnownZero.zext(truncBf);
+    RHSKnownOne.zext(truncBf);
+    if (SimplifyDemandedBits(I->getOperand(0), DemandedMask, 
+                             RHSKnownZero, RHSKnownOne, Depth+1))
       return true;
     DemandedMask.trunc(BitWidth);
     RHSKnownZero.trunc(BitWidth);
@@ -1130,12 +1133,14 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
-    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
     
     DemandedMask &= SrcTy->getMask().zext(BitWidth);
     uint32_t zextBf = SrcTy->getBitWidth();
-    if (SimplifyDemandedBits(I->getOperand(0), DemandedMask.trunc(zextBf),
-          RHSKnownZero.trunc(zextBf), RHSKnownOne.trunc(zextBf), Depth+1))
+    DemandedMask.trunc(zextBf);
+    RHSKnownZero.trunc(zextBf);
+    RHSKnownOne.trunc(zextBf);
+    if (SimplifyDemandedBits(I->getOperand(0), DemandedMask,
+                             RHSKnownZero, RHSKnownOne, Depth+1))
       return true;
     DemandedMask.zext(BitWidth);
     RHSKnownZero.zext(BitWidth);
@@ -1143,29 +1148,32 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     assert((RHSKnownZero & RHSKnownOne) == 0 && 
            "Bits known to be one AND zero?"); 
     // The top bits are known to be zero.
-    RHSKnownZero |= NewBits;
+    RHSKnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth);
     break;
   }
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
-    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
     
     // Get the sign bit for the source type
-    APInt InSignBit(APInt::getSignBit(SrcTy->getPrimitiveSizeInBits()));
+    APInt InSignBit(APInt::getSignBit(SrcBitWidth));
     InSignBit.zext(BitWidth);
     APInt InputDemandedBits = DemandedMask & 
-                              SrcTy->getMask().zext(BitWidth);
+                              APInt::getLowBitsSet(BitWidth, SrcBitWidth);
 
+    APInt NewBits(APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth));
     // If any of the sign extended bits are demanded, we know that the sign
     // bit is demanded.
     if ((NewBits & DemandedMask) != 0)
       InputDemandedBits |= InSignBit;
       
     uint32_t sextBf = SrcTy->getBitWidth();
-    if (SimplifyDemandedBits(I->getOperand(0), InputDemandedBits.trunc(sextBf),
-          RHSKnownZero.trunc(sextBf), RHSKnownOne.trunc(sextBf), Depth+1))
+    InputDemandedBits.trunc(sextBf);
+    RHSKnownZero.trunc(sextBf);
+    RHSKnownOne.trunc(sextBf);
+    if (SimplifyDemandedBits(I->getOperand(0), InputDemandedBits,
+                             RHSKnownZero, RHSKnownOne, Depth+1))
       return true;
     InputDemandedBits.zext(BitWidth);
     RHSKnownZero.zext(BitWidth);
@@ -1178,12 +1186,12 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
 
     // If the input sign bit is known zero, or if the NewBits are not demanded
     // convert this into a zero extension.
-    if ((RHSKnownZero & InSignBit) != 0 || (NewBits & ~DemandedMask) == NewBits)
+    if (RHSKnownZero[SrcBitWidth-1] || (NewBits & ~DemandedMask) == NewBits)
     {
       // Convert to ZExt cast
       CastInst *NewCast = new ZExtInst(I->getOperand(0), VTy, I->getName(), I);
       return UpdateValueUsesWith(I, NewCast);
-    } else if ((RHSKnownOne & InSignBit) != 0) {    // Input sign bit known set
+    } else if (RHSKnownOne[SrcBitWidth-1]) {    // Input sign bit known set
       RHSKnownOne |= NewBits;
       RHSKnownZero &= ~NewBits;
     } else {                              // Input sign bit unknown
@@ -1208,7 +1216,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       
       // If the top bit of the output is demanded, demand everything from the
       // input.  Otherwise, we demand all the input bits except NLZ top bits.
-      APInt InDemandedBits(APInt::getAllOnesValue(BitWidth).lshr(NLZ));
+      APInt InDemandedBits(APInt::getLowBitsSet(BitWidth, BitWidth - NLZ));
 
       // Find information about known zero/one bits in the input.
       if (SimplifyDemandedBits(I->getOperand(0), InDemandedBits, 
@@ -1272,10 +1280,10 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     } else {
       // If the high-bits of this ADD are not demanded, then it does not demand
       // the high bits of its LHS or RHS.
-      if ((DemandedMask & APInt::getSignBit(BitWidth)) == 0) {
+      if (DemandedMask[BitWidth-1] == 0) {
         // Right fill the mask of bits for this ADD to demand the most
         // significant bit and all those below it.
-        APInt DemandedFromOps = APInt::getAllOnesValue(BitWidth).lshr(NLZ);
+        APInt DemandedFromOps(APInt::getLowBitsSet(BitWidth, BitWidth-NLZ));
         if (SimplifyDemandedBits(I->getOperand(0), DemandedFromOps,
                                  LHSKnownZero, LHSKnownOne, Depth+1))
           return true;
@@ -1289,11 +1297,11 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
   case Instruction::Sub:
     // If the high-bits of this SUB are not demanded, then it does not demand
     // the high bits of its LHS or RHS.
-    if ((DemandedMask & APInt::getSignBit(BitWidth)) == 0) {
+    if (DemandedMask[BitWidth-1] == 0) {
       // Right fill the mask of bits for this SUB to demand the most
       // significant bit and all those below it.
       unsigned NLZ = DemandedMask.countLeadingZeros();
-      APInt DemandedFromOps(APInt::getAllOnesValue(BitWidth).lshr(NLZ));
+      APInt DemandedFromOps(APInt::getLowBitsSet(BitWidth, BitWidth-NLZ));
       if (SimplifyDemandedBits(I->getOperand(0), DemandedFromOps,
                                LHSKnownZero, LHSKnownOne, Depth+1))
         return true;
@@ -1305,7 +1313,8 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
   case Instruction::Shl:
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       uint64_t ShiftAmt = SA->getZExtValue();
-      if (SimplifyDemandedBits(I->getOperand(0), DemandedMask.lshr(ShiftAmt), 
+      APInt DemandedMaskIn(DemandedMask.lshr(ShiftAmt));
+      if (SimplifyDemandedBits(I->getOperand(0), DemandedMaskIn, 
                                RHSKnownZero, RHSKnownOne, Depth+1))
         return true;
       assert((RHSKnownZero & RHSKnownOne) == 0 && 
@@ -1322,22 +1331,18 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       unsigned ShiftAmt = SA->getZExtValue();
       
-      APInt TypeMask(APInt::getAllOnesValue(BitWidth));
       // Unsigned shift right.
-      if (SimplifyDemandedBits(I->getOperand(0),
-                              (DemandedMask.shl(ShiftAmt)) & TypeMask,
+      APInt DemandedMaskIn(DemandedMask.shl(ShiftAmt));
+      if (SimplifyDemandedBits(I->getOperand(0), DemandedMaskIn,
                                RHSKnownZero, RHSKnownOne, Depth+1))
         return true;
       assert((RHSKnownZero & RHSKnownOne) == 0 && 
              "Bits known to be one AND zero?"); 
-      RHSKnownZero &= TypeMask;
-      RHSKnownOne  &= TypeMask;
       RHSKnownZero = APIntOps::lshr(RHSKnownZero, ShiftAmt);
       RHSKnownOne  = APIntOps::lshr(RHSKnownOne, ShiftAmt);
       if (ShiftAmt) {
         // Compute the new bits that are at the top now.
-        APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(
-                         BitWidth - ShiftAmt));
+        APInt HighBits(APInt::getHighBitsSet(BitWidth, ShiftAmt));
         RHSKnownZero |= HighBits;  // high bits known zero.
       }
     }
@@ -1358,18 +1363,16 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       unsigned ShiftAmt = SA->getZExtValue();
       
-      APInt TypeMask(APInt::getAllOnesValue(BitWidth));
       // Signed shift right.
+      APInt DemandedMaskIn(DemandedMask.shl(ShiftAmt));
       if (SimplifyDemandedBits(I->getOperand(0),
-                               (DemandedMask.shl(ShiftAmt)) & TypeMask,
+                               DemandedMaskIn,
                                RHSKnownZero, RHSKnownOne, Depth+1))
         return true;
       assert((RHSKnownZero & RHSKnownOne) == 0 && 
              "Bits known to be one AND zero?"); 
       // Compute the new bits that are at the top now.
-      APInt HighBits(APInt::getAllOnesValue(BitWidth).shl(BitWidth - ShiftAmt));
-      RHSKnownZero &= TypeMask;
-      RHSKnownOne  &= TypeMask;
+      APInt HighBits(APInt::getHighBitsSet(BitWidth, ShiftAmt));
       RHSKnownZero = APIntOps::lshr(RHSKnownZero, ShiftAmt);
       RHSKnownOne  = APIntOps::lshr(RHSKnownOne, ShiftAmt);
         
@@ -1380,7 +1383,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
         
       // If the input sign bit is known to be zero, or if none of the top bits
       // are demanded, turn this into an unsigned shift right.
-      if ((RHSKnownZero & SignBit) != 0 || 
+      if (RHSKnownZero[BitWidth-ShiftAmt-1] || 
           (HighBits & ~DemandedMask) == HighBits) {
         // Perform the logical shift right.
         Value *NewVal = BinaryOperator::createLShr(
