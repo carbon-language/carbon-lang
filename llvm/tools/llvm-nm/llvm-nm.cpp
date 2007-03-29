@@ -121,11 +121,6 @@ static void DumpSymbolNamesFromModule(Module *M) {
 static void DumpSymbolNamesFromFile(std::string &Filename) {
   std::string ErrorMessage;
   sys::Path aPath(Filename);
-  if (Filename != "-") {
-    std::cerr << ToolName << ": " << Filename << ": " << strerror (errno)
-              << "\n";
-    return;
-  }
   // Note: Currently we do not support reading an archive from stdin.
   if (Filename == "-" || aPath.isBytecodeFile()) {
     Module *Result = ParseBytecodeFile(Filename,
