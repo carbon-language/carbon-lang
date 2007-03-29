@@ -107,9 +107,15 @@ Path::isValid() const {
 
 bool 
 Path::isAbsolute() const {
-  if (path.length() < 3)
-    return false;
-  return path[0] == 'C' && path[1] == ':' && path[2] == '\\';
+  switch (path.length()) {
+    case 0:
+      return false;
+    case 1:
+    case 2:
+      return path[0] == '/';
+    default:
+      return path[0] == '/' || (path[1] == ':' && path[2] == '/');
+  }
 } 
 
 static Path *TempDirectory = NULL;
