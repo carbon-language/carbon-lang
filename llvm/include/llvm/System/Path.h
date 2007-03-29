@@ -166,6 +166,7 @@ namespace sys {
       /// @brief Construct an empty (and invalid) path.
       Path() : path(), status(0) {}
       ~Path() { delete status; }
+      Path(const Path &that) : path(that.path), status(0) {}
 
       /// This constructor will accept a std::string as a path. No checking is
       /// done on this path to determine if it is valid. To determine validity
@@ -183,6 +184,9 @@ namespace sys {
       /// @brief Assignment Operator
       Path &operator=(const Path &that) {
         path = that.path;
+        if (status)
+          delete status;
+        status = 0;
         return *this;
       }
 
@@ -223,9 +227,11 @@ namespace sys {
       /// @brief Determine if a path is syntactically valid or not.
       bool isValid() const;
 
-      /// This function determines if the contents of the path name are
-      /// empty. That is, the path has a zero length. This does NOT determine if
-      /// if the file is empty. Use the getSize method for that.
+      /// This function determines if the contents of the path name are empty. 
+      /// That is, the path name has a zero length. This does NOT determine if
+      /// if the file is empty. To get the length of the file itself, Use the 
+      /// getFileStatus() method and then the getSize() on the returned
+      /// FileStatus object
       /// @returns true iff the path is empty.
       /// @brief Determines if the path name is empty (invalid).
       bool isEmpty() const { return path.empty(); }
@@ -357,13 +363,13 @@ namespace sys {
 
       /// This function returns status information about the file. The type of
       /// path (file or directory) is updated to reflect the actual contents
-      /// of the file system.  This returns false on success, or true on error
-      /// and fills in the specified error string if specified.
+      /// of the file system.
+      /// @returns 0 on failure, with Error explaining why (if non-zero)
+      /// @returns a pointer to a FileStatus structure on success.
       /// @brief Get file status.
-      bool getFileStatus(
-          FileStatus &Status,       ///< The resulting file status
-          bool forceUpdate = false, ///< Force an update from the file system
-          std::string *Error = 0    ///< Optional place to return an error msg.
+      const FileStatus *getFileStatus(
+        bool forceUpdate = false, ///< Force an update from the file system
+        std::string *Error = 0    ///< Optional place to return an error msg.
       ) const;
 
     /// @}

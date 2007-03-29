@@ -168,8 +168,10 @@ bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
 // RemoveDirectoryOnSignal - The public API
 bool sys::RemoveDirectoryOnSignal(const sys::Path& path, std::string* ErrMsg) {
   // Not a directory?
-  sys::FileStatus Status;
-  if (path.getFileStatus(Status) || !Status.isDir) {
+  const sys::FileStatus *Status = path.getFileStatus(false, ErrMsg);
+  if (!Status)
+    return true;
+  if (!Status->isDir) {
     if (ErrMsg)
       *ErrMsg = path.toString() + " is not a directory";
     return true;

@@ -50,11 +50,11 @@ void CLIDebugger::startProgramRunning() {
 
   // If the program has been modified, reload it!
   sys::Path Program(Dbg.getProgramPath());
-  sys::FileStatus Status;
   std::string Err;
-  if (Program.getFileStatus(Status, &Err))
+  const sys::FileStatus *Status = Program.getFileStatus(false, &Err);
+  if (!Status)
     throw Err;
-  if (TheProgramInfo->getProgramTimeStamp() != Status.getTimestamp()) {
+  if (TheProgramInfo->getProgramTimeStamp() != Status->getTimestamp()) {
     std::cout << "'" << Program << "' has changed; re-reading program.\n";
 
     // Unload an existing program.  This kills the program if necessary.

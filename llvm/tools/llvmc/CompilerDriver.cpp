@@ -195,8 +195,8 @@ private:
 
   void cleanup() {
     if (!isSet(KEEP_TEMPS_FLAG)) {
-      sys::FileStatus Status;
-      if (!TempDir.getFileStatus(Status) && Status.isDir)
+      const sys::FileStatus *Status = TempDir.getFileStatus();
+      if (Status && Status->isDir)
         TempDir.eraseFromDisk(/*remove_contents=*/true);
     } else {
       std::cout << "Temporary files are in " << TempDir << "\n";

@@ -74,6 +74,8 @@ PROJ_VERSION := 1.0
 endif
 endif
 
+LLVMMAKE := $(LLVM_SRC_ROOT)/make
+
 PROJ_bindir     := $(DESTDIR)$(PROJ_prefix)/bin
 PROJ_libdir     := $(DESTDIR)$(PROJ_prefix)/lib
 PROJ_datadir    := $(DESTDIR)$(PROJ_prefix)/share

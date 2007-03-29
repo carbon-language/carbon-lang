@@ -1760,3 +1760,5 @@ printvars::
 	$(Echo) "Module       : " '$(Module)'
 	$(Echo) "FilesToConfig: " '$(FilesToConfigPATH)'
 	$(Echo) "SubDirs      : " '$(SubDirs)'
+	$(Echo) "ProjLibsPaths: " '$(ProjLibsPaths)'
+	$(Echo) "ProjLibsOptions: " '$(ProjLibsOptions)'

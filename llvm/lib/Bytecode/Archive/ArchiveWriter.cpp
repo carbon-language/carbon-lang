@@ -163,7 +163,10 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where,
 
   mbr->data = 0;
   mbr->path = filePath;
-  if (mbr->path.getFileStatus(mbr->info, false, ErrMsg))
+  const sys::FileStatus *FSInfo = mbr->path.getFileStatus(false, ErrMsg);
+  if (FSInfo)
+    mbr->info = *FSInfo;
+  else
     return true;
 
   unsigned flags = 0;

@@ -306,13 +306,15 @@ Path::getLast() const {
   return path.substr(pos+1);
 }
 
-bool
-Path::getFileStatus(FileStatus &info, bool update, std::string *ErrStr) const {
+const FileStatus *
+Path::getFileStatus(bool update, std::string *ErrStr) const {
   if (status == 0 || update) {
     WIN32_FILE_ATTRIBUTE_DATA fi;
-    if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
-      return MakeErrMsg(ErrStr, "getStatusInfo():" + std::string(path) +
+    if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi)) {
+      MakeErrMsg(ErrStr, "getStatusInfo():" + std::string(path) +
                       ": Can't get status: ");
+      return 0;
+    }
 
     if (status == 0)
       status = new FileStatus;
@@ -337,8 +339,7 @@ Path::getFileStatus(FileStatus &info, bool update, std::string *ErrStr) const {
 
     status->isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
   }
-  info = *status;
-  return false;
+  return status;
 }
 
 bool Path::makeReadableOnDisk(std::string* ErrMsg) {
@@ -369,11 +370,10 @@ bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
 
 bool
 Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
-  FileStatus Status;
-  if (getFileStatus(Status, ErrMsg))
+  const FileStatus *Status = getFileStatus(false, ErrMsg);
+  if (!Status)
     return true;
-
-  if (!Status.isDir) {
+  if (!Status->isDir) {
     MakeErrMsg(ErrMsg, path + ": not a directory");
     return true;
   }
@@ -567,11 +567,11 @@ Path::createFileOnDisk(std::string* ErrMsg) {
 
 bool
 Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
-  FileStatus Status;
-  if (getFileStatus(Status, ErrStr))
+  const FileStatus *Status = getFileStatus(false, ErrStr);
+  if (!Status)
     return false;
     
-  if (Status.isFile) {
+  if (Status->isFile) {
     DWORD attr = GetFileAttributes(path.c_str());
 
     // If it doesn't exist, we're done.
@@ -588,7 +588,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
     if (!DeleteFile(path.c_str()))
       return MakeErrMsg(ErrStr, path + ": Can't destroy file: ");
     return false;
-  } else if (Status.isDir) {
+  } else if (Status->isDir) {
     // If it doesn't exist, we're done.
     if (!exists())
       return false;

@@ -333,9 +333,10 @@ bool
 Path::canExecute() const {
   if (0 != access(path.c_str(), R_OK | X_OK ))
     return false;
-  struct stat st;
-  int r = stat(path.c_str(), &st);
-  if (r != 0 || !S_ISREG(st.st_mode))
+  if (const FileStatus *fs = getFileStatus(true, 0)) {
+    if (!S_ISREG(fs->mode))
+      return false;
+  } else
     return false;
   return true;
 }
@@ -362,12 +363,14 @@ Path::getLast() const {
   return path.substr(pos+1);
 }
 
-bool
-Path::getFileStatus(FileStatus &info, bool update, std::string *ErrStr) const {
+const FileStatus*
+Path::getFileStatus(bool update, std::string *ErrStr) const {
   if (status == 0 || update) {
     struct stat buf;
-    if (0 != stat(path.c_str(), &buf))
-      return MakeErrMsg(ErrStr, path + ": can't get status of file");
+    if (0 != stat(path.c_str(), &buf)) {
+      MakeErrMsg(ErrStr, path + ": can't get status of file");
+      return 0;
+    }
     if (status == 0)
       status = new FileStatus;
     status->fileSize = buf.st_size;
@@ -379,8 +382,7 @@ Path::getFileStatus(FileStatus &info, bool update, std::string *ErrStr) const {
     status->isDir  = S_ISDIR(buf.st_mode);
     status->isFile = S_ISREG(buf.st_mode);
   }
-  info = *status;
-  return false;
+  return status;
 }
 
 static bool AddPermissionBits(const Path &File, int bits) {
@@ -392,12 +394,12 @@ static bool AddPermissionBits(const Path &File, int bits) {
   umask(mask);            // Restore the umask.
 
   // Get the file's current mode.
-  FileStatus Stat;
-  if (File.getFileStatus(Stat)) return false;
-
-  // Change the file to have whichever permissions bits from 'bits'
-  // that the umask would not disable.
-  if ((chmod(File.c_str(), (Stat.getMode() | (bits & ~mask)))) == -1)
+  if (const FileStatus *fs = File.getFileStatus()) {
+    // Change the file to have whichever permissions bits from 'bits'
+    // that the umask would not disable.
+    if ((chmod(File.c_str(), (fs->getMode() | (bits & ~mask)))) == -1)
+      return false;
+  } else 
     return false;
 
   return true;
@@ -593,24 +595,25 @@ Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
 bool
 Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   FileStatus Status;
-  if (getFileStatus(Status, ErrStr))
-    return true;
+  if (const FileStatus *Status = getFileStatus(false, ErrStr)) {
+    // Note: this check catches strange situations. In all cases, LLVM should 
+    // only be involved in the creation and deletion of regular files.  This 
+    // check ensures that what we're trying to erase is a regular file. It 
+    // effectively prevents LLVM from erasing things like /dev/null, any block 
+    // special file, or other things that aren't "regular" files. 
+    if (Status->isFile) {
+      if (unlink(path.c_str()) != 0)
+        return MakeErrMsg(ErrStr, path + ": can't destroy file");
+      return false;
+    }
     
-  // Note: this check catches strange situations. In all cases, LLVM should only
-  // be involved in the creation and deletion of regular files.  This check 
-  // ensures that what we're trying to erase is a regular file. It effectively
-  // prevents LLVM from erasing things like /dev/null, any block special file,
-  // or other things that aren't "regular" files. 
-  if (Status.isFile) {
-    if (unlink(path.c_str()) != 0)
-      return MakeErrMsg(ErrStr, path + ": can't destroy file");
-    return false;
-  }
-  
-  if (!Status.isDir) {
-    if (ErrStr) *ErrStr = "not a file or directory";
+    if (!Status->isDir) {
+      if (ErrStr) *ErrStr = "not a file or directory";
+      return true;
+    }
+  } else
     return true;
-  }
+
   if (remove_contents) {
     // Recursively descend the directory to remove its contents.
     std::string cmd = "/bin/rm -rf " + path;
@@ -629,7 +632,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
     
   if (rmdir(pathname) != 0)
     return MakeErrMsg(ErrStr, 
-      std::string(pathname) + ": can't destroy directory");
+      std::string(pathname) + ": can't erase directory");
   return false;
 }
 

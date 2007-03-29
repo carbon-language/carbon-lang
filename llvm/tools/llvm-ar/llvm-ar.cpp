@@ -281,16 +281,16 @@ recurseDirectories(const sys::Path& path,
     for (std::set<sys::Path>::iterator I = content.begin(), E = content.end();
          I != E; ++I) {
       // Make sure it exists and is a directory
-      sys::FileStatus Status;
-      if (I->getFileStatus(Status)) {
-        if (Status.isDir) {
-          std::set<sys::Path> moreResults;
-          if (recurseDirectories(*I, moreResults, ErrMsg))
-            return true;
-          result.insert(moreResults.begin(), moreResults.end());
-        } else {
+      const sys::FileStatus *Status = I->getFileStatus(false, ErrMsg);
+      if (!Status)
+        return true;
+      if (Status->isDir) {
+        std::set<sys::Path> moreResults;
+        if (recurseDirectories(*I, moreResults, ErrMsg))
+          return true;
+        result.insert(moreResults.begin(), moreResults.end());
+      } else {
           result.insert(*I);
-        }
       }
     }
   }
@@ -308,11 +308,11 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
     if (checkExistence) {
       if (!aPath.exists())
         throw std::string("File does not exist: ") + Members[i];
-      sys::FileStatus si;
       std::string Err;
-      if (aPath.getFileStatus(si, false, &Err))
+      const sys::FileStatus *si = aPath.getFileStatus(false, &Err);
+      if (!si)
         throw Err;
-      if (si.isDir) {
+      if (si->isDir) {
         std::set<sys::Path> dirpaths;
         if (recurseDirectories(aPath, dirpaths, ErrMsg))
           return true;
@@ -644,14 +644,14 @@ doReplaceOrInsert(std::string* ErrMsg) {
     }
 
     if (found != remaining.end()) {
-      sys::FileStatus si;
       std::string Err;
-      if (found->getFileStatus(si, false, &Err))
+      const sys::FileStatus *si = found->getFileStatus(false, &Err);
+      if (!si)
         return true;
-      if (si.isDir) {
+      if (si->isDir) {
         if (OnlyUpdate) {
           // Replace the item only if it is newer.
-          if (si.modTime > I->getModTime())
+          if (si->modTime > I->getModTime())
             if (I->replaceWith(*found, ErrMsg))
               return true;
         } else {
