@@ -3199,6 +3199,39 @@ isOperandValidForConstraint(SDOperand Op, char Letter, SelectionDAG &DAG) {
   return TargetLowering::isOperandValidForConstraint(Op, Letter, DAG);
 }
 
+// isLegalAddressingMode - Return true if the addressing mode represented
+// by AM is legal for this target, for a load/store of the specified type.
+bool PPCTargetLowering::isLegalAddressingMode(const AddrMode &AM, 
+                                              const Type *Ty) const {
+  // FIXME: PPC does not allow r+i addressing modes for vectors!
+  
+  // PPC allows a sign-extended 16-bit immediate field.
+  if (AM.BaseOffs <= -(1LL << 16) || AM.BaseOffs >= (1LL << 16)-1)
+    return false;
+  
+  // No global is ever allowed as a base.
+  if (AM.BaseGV)
+    return false;
+  
+  // PPC only support r+r, 
+  switch (AM.Scale) {
+  case 0:  // "r+i" or just "i", depending on HasBaseReg.
+    break;
+  case 1:
+    if (AM.HasBaseReg && AM.BaseOffs)  // "r+r+i" is not allowed.
+      return false;
+    // Otherwise we have r+r or r+i.
+    break;
+  case 2:
+    if (AM.HasBaseReg || AM.BaseOffs)  // 2*r+r  or  2*r+i is not allowed.
+      return false;
+    // Allow 2*r as r+r.
+    break;
+  }
+  
+  return true;
+}
+
 /// isLegalAddressImmediate - Return true if the integer value can be used
 /// as the offset of the target addressing mode for load / store of the
 /// given type.
@@ -3208,7 +3241,7 @@ bool PPCTargetLowering::isLegalAddressImmediate(int64_t V,const Type *Ty) const{
 }
 
 bool PPCTargetLowering::isLegalAddressImmediate(llvm::GlobalValue* GV) const {
-  return TargetLowering::isLegalAddressImmediate(GV); 
+  return false; 
 }
 
 SDOperand PPCTargetLowering::LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG)

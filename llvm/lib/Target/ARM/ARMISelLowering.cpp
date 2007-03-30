@@ -1281,6 +1281,44 @@ ARMTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 //                           ARM Optimization Hooks
 //===----------------------------------------------------------------------===//
 
+/// isLegalAddressingMode - Return true if the addressing mode represented
+/// by AM is legal for this target, for a load/store of the specified type.
+bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM, 
+                                              const Type *Ty) const {
+  if (!isLegalAddressImmediate(AM.BaseOffs, Ty))
+    return false;
+  
+  // Can never fold addr of global into load/store.
+  if (AM.BaseGV) 
+    return false;
+  
+  switch (AM.Scale) {
+  case 0:  // no scale reg, must be "r+i" or "r", or "i".
+    break;
+  case 1:
+    if (Subtarget->isThumb())
+      return false;
+
+  default:
+    // FIXME: verify.
+    switch (getValueType(Ty)) {
+    default: return false;
+    case MVT::i1:
+    case MVT::i8:
+    // TODO: i16?  i64 should be i32, no?
+    case MVT::i32:
+      // r + r
+      if (AM.Scale == 2)
+        return true;
+      // r + r << imm
+      if (!isPowerOf2_32(AM.Scale & ~1))
+        return false;
+    }
+    break;
+  }
+  return true;
+}
+
 /// isLegalAddressImmediate - Return true if the integer value can be used
 /// as the offset of the target addressing mode for load / store of the
 /// given type.

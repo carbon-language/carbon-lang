@@ -4047,6 +4047,51 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
+// isLegalAddressingMode - Return true if the addressing mode represented
+// by AM is legal for this target, for a load/store of the specified type.
+bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM, 
+                                              const Type *Ty) const {
+  // X86 supports extremely general addressing modes.
+  
+  // X86 allows a sign-extended 32-bit immediate field as a displacement.
+  if (AM.BaseOffs <= -(1LL << 32) || AM.BaseOffs >= (1LL << 32)-1)
+    return false;
+  
+  if (AM.BaseGV) {
+    // X86-64 only supports addr of globals in small code model.
+    if (Subtarget->is64Bit() &&
+        getTargetMachine().getCodeModel() != CodeModel::Small)
+      return false;
+    
+    // We can only fold this if we don't need a load either.
+    if (Subtarget->GVRequiresExtraLoad(AM.BaseGV, getTargetMachine(), false))
+      return false;
+  }
+  
+  switch (AM.Scale) {
+  case 0:
+  case 1:
+  case 2:
+  case 4:
+  case 8:
+    // These scales always work.
+    break;
+  case 3:
+  case 5:
+  case 9:
+    // These scales are formed with basereg+scalereg.  Only accept if there is
+    // no basereg yet.
+    if (AM.HasBaseReg)
+      return false;
+    break;
+  default:  // Other stuff never works.
+    return false;
+  }
+  
+  return true;
+}
+
+
 /// isLegalAddressImmediate - Return true if the integer value can be used
 /// as the offset of the target addressing mode for load / store of the
 /// given type.

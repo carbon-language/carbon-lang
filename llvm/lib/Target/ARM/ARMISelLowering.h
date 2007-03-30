@@ -80,6 +80,10 @@ namespace llvm {
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB);
 
+    /// isLegalAddressingMode - Return true if the addressing mode represented
+    /// by AM is legal for this target, for a load/store of the specified type.
+    virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty)const;
+    
     /// isLegalAddressImmediate - Return true if the integer value can be used
     /// as the offset of the target addressing mode for load / store of the
     /// given type.
