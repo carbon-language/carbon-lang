@@ -1354,7 +1354,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     }    
     
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      unsigned ShiftAmt = SA->getZExtValue();
+      uint32_t ShiftAmt = SA->getLimitedValue(BitWidth);
       
       // Signed shift right.
       APInt DemandedMaskIn(DemandedMask.shl(ShiftAmt));
@@ -2095,12 +2095,12 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
     // -(X >>u 31) -> (X >>s 31)
     // -(X >>s 31) -> (X >>u 31)
-    if (C->isNullValue()) {
+    if (C->isZero()) {
       if (BinaryOperator *SI = dyn_cast<BinaryOperator>(Op1))
         if (SI->getOpcode() == Instruction::LShr) {
           if (ConstantInt *CU = dyn_cast<ConstantInt>(SI->getOperand(1))) {
             // Check to see if we are shifting out everything but the sign bit.
-            if (CU->getZExtValue() == 
+            if (CU->getLimitedValue(SI->getType()->getPrimitiveSizeInBits()) ==
                 SI->getType()->getPrimitiveSizeInBits()-1) {
               // Ok, the transformation is safe.  Insert AShr.
               return BinaryOperator::create(Instruction::AShr, 
@@ -2111,7 +2111,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         else if (SI->getOpcode() == Instruction::AShr) {
           if (ConstantInt *CU = dyn_cast<ConstantInt>(SI->getOperand(1))) {
             // Check to see if we are shifting out everything but the sign bit.
-            if (CU->getZExtValue() == 
+            if (CU->getLimitedValue(SI->getType()->getPrimitiveSizeInBits()) ==
                 SI->getType()->getPrimitiveSizeInBits()-1) {
               // Ok, the transformation is safe.  Insert LShr. 
               return BinaryOperator::createLShr(
@@ -4789,7 +4789,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             if (!CanFold) {
               // To test for the bad case of the signed shr, see if any
               // of the bits shifted in could be tested after the mask.
-              int ShAmtVal = Ty->getPrimitiveSizeInBits()-ShAmt->getZExtValue();
+              uint32_t TyBits = Ty->getPrimitiveSizeInBits();
+              int ShAmtVal = TyBits - ShAmt->getLimitedValue(TyBits);
               if (ShAmtVal < 0) ShAmtVal = 0; // Out of range shift.
 
               uint32_t BitWidth = AndTy->getPrimitiveSizeInBits();
@@ -4883,7 +4884,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
             if (LHSI->hasOneUse()) {
               // Otherwise strength reduce the shift into an and.
-              unsigned ShAmtVal = (unsigned)ShAmt->getZExtValue();
+              uint32_t ShAmtVal = (uint32_t)ShAmt->getLimitedValue(TypeBits);
               uint64_t Val = (1ULL << (TypeBits-ShAmtVal))-1;
               Constant *Mask = ConstantInt::get(CI->getType(), Val);
 
@@ -4926,7 +4927,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             }
 
             if (LHSI->hasOneUse() || CI->isNullValue()) {
-              unsigned ShAmtVal = (unsigned)ShAmt->getZExtValue();
+              uint32_t ShAmtVal = (uint32_t)ShAmt->getLimitedValue(TypeBits);
 
               // Otherwise strength reduce the shift into an and.
               APInt Val(APInt::getHighBitsSet(TypeBits, TypeBits - ShAmtVal));
@@ -5658,7 +5659,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
               BinaryOperator::create(Op0BO->getOpcode(), YS, V1,
                                      Op0BO->getOperand(1)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
-            uint32_t Op1Val = Op1->getZExtValue();
+            uint32_t Op1Val = Op1->getLimitedValue(TypeBits);
             return BinaryOperator::createAnd(X, ConstantInt::get(
                        APInt::getHighBitsSet(TypeBits, TypeBits-Op1Val)));
           }
@@ -5697,7 +5698,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
               BinaryOperator::create(Op0BO->getOpcode(), V1, YS,
                                      Op0BO->getOperand(0)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
-            uint32_t Op1Val = Op1->getZExtValue();
+            uint32_t Op1Val = Op1->getLimitedValue(TypeBits);
             return BinaryOperator::createAnd(X, ConstantInt::get(
                        APInt::getHighBitsSet(TypeBits, TypeBits-Op1Val)));
           }
@@ -6084,8 +6085,9 @@ static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
     // If we are truncating the result of this SHL, and if it's a shift of a
     // constant amount, we can always perform a SHL in a smaller type.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      if (Ty->getBitWidth() < OrigTy->getBitWidth() &&
-          CI->getZExtValue() < Ty->getBitWidth())
+      uint32_t BitWidth = Ty->getBitWidth();
+      if (BitWidth < OrigTy->getBitWidth() && 
+          CI->getLimitedValue(BitWidth) < BitWidth)
         return CanEvaluateInDifferentType(I->getOperand(0), Ty,NumCastsRemoved);
     }
     break;
@@ -6095,12 +6097,12 @@ static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
     // lshr iff we know that the bits we would otherwise be shifting in are
     // already zeros.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      uint32_t BitWidth = OrigTy->getBitWidth();
-      if (Ty->getBitWidth() < BitWidth &&
+      uint32_t OrigBitWidth = OrigTy->getBitWidth();
+      uint32_t BitWidth = Ty->getBitWidth();
+      if (BitWidth < OrigBitWidth &&
           MaskedValueIsZero(I->getOperand(0),
-            APInt::getAllOnesValue(BitWidth) & 
-         APInt::getAllOnesValue(Ty->getBitWidth()).zextOrTrunc(BitWidth).flip())
-         && CI->getZExtValue() < Ty->getBitWidth()) {
+            APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth)) &&
+          CI->getLimitedValue(BitWidth) < BitWidth) {
         return CanEvaluateInDifferentType(I->getOperand(0), Ty, NumCastsRemoved);
       }
     }
@@ -6396,7 +6398,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     // simplifications.
     if (DestBitSize < SrcBitSize &&
         isa<ConstantInt>(Op1)) {
-      unsigned ShiftAmt = cast<ConstantInt>(Op1)->getZExtValue();
+      uint32_t ShiftAmt = cast<ConstantInt>(Op1)->getLimitedValue(SrcBitSize);
       if (SrcBitSize > ShiftAmt && SrcBitSize-ShiftAmt >= DestBitSize) {
         // Insert the new logical shift right.
         return BinaryOperator::createLShr(Op0, Op1);
@@ -6486,7 +6488,7 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
       // We can shrink lshr to something smaller if we know the bits shifted in
       // are already zeros.
       if (ConstantInt *ShAmtV = dyn_cast<ConstantInt>(SrcI->getOperand(1))) {
-        unsigned ShAmt = ShAmtV->getZExtValue();
+        uint32_t ShAmt = ShAmtV->getLimitedValue(SrcBitWidth);
         
         // Get a mask for the bits shifting in.
         APInt Mask(APInt::getLowBitsSet(SrcBitWidth, ShAmt).shl(DestBitWidth));
