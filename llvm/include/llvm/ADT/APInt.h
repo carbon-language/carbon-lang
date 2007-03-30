@@ -272,7 +272,7 @@ public:
   /// @returns true if the argument APInt value is a power of two > 0.
   bool isPowerOf2() const; 
 
-  /// This converts the APInt to a boolean valy as a test against zero.
+  /// This converts the APInt to a boolean value as a test against zero.
   /// @brief Boolean conversion function. 
   inline bool getBoolValue() const {
     return countLeadingZeros() != BitWidth;
