@@ -174,6 +174,22 @@ public:
       return Val.isMinValue();
   }
 
+  /// This function will return true iff this constant represents a value with
+  /// active bits bigger than 64 bits or a value greater than the given uint64_t
+  /// value.
+  /// @returns true iff this constant is greater or equal to the given number.
+  /// @brief Determine if the value is greater or equal to the given number.
+  bool greaterOrEqual(uint64_t Num) {
+    return Val.getActiveBits() > 64 || Val.getZExtValue() > Num;
+  }
+
+  /// @returns the 64-bit value of this constant if its active bits number is 
+  /// not greater than 64, otherwise, just return the given uint64_t number.
+  /// @brief Get the constant's value if possible.
+  uint64_t getLimitedValue(uint64_t Limit) {
+    return (Val.getActiveBits() > 64) ? Limit : Val.getZExtValue();
+  }
+
   /// @returns the value for an integer constant of the given type that has all
   /// its bits set to true.
   /// @brief Get the all ones value
