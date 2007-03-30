@@ -541,8 +541,7 @@ static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
         if ((CST = dyn_cast<ConstantInt>(I->getOperand(1)))) {
           // The multiplier is really 1 << CST.
           uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-          uint32_t CSTVal = CST->getValue().getActiveBits() > 64 ?
-                              BitWidth : CST->getZExtValue();
+          uint32_t CSTVal = CST->getLimitedValue(BitWidth);
           CST = ConstantInt::get(APInt(BitWidth, 1).shl(CSTVal));
           return I->getOperand(0);
         }
@@ -745,7 +744,7 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
   case Instruction::Shl:
     // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      uint64_t ShiftAmt = SA->getZExtValue();
+      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
       APInt Mask2(Mask.lshr(ShiftAmt));
       ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
@@ -759,7 +758,7 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
     // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
-      uint64_t ShiftAmt = SA->getZExtValue();
+      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
       
       // Unsigned shift right.
       APInt Mask2(Mask.shl(ShiftAmt));
@@ -776,7 +775,7 @@ static void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
     // (ashr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
-      uint64_t ShiftAmt = SA->getZExtValue();
+      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
       
       // Signed shift right.
       APInt Mask2(Mask.shl(ShiftAmt));
@@ -1306,7 +1305,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     break;
   case Instruction::Shl:
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      uint64_t ShiftAmt = SA->getZExtValue();
+      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
       APInt DemandedMaskIn(DemandedMask.lshr(ShiftAmt));
       if (SimplifyDemandedBits(I->getOperand(0), DemandedMaskIn, 
                                RHSKnownZero, RHSKnownOne, Depth+1))
@@ -1323,7 +1322,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
   case Instruction::LShr:
     // For a logical shift right
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      unsigned ShiftAmt = SA->getZExtValue();
+      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
       
       // Unsigned shift right.
       APInt DemandedMaskIn(DemandedMask.shl(ShiftAmt));
@@ -2984,8 +2983,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     // the anded constant includes them, clear them now!
     //
     uint32_t BitWidth = AndRHS->getType()->getBitWidth();
-    uint32_t OpRHSVal = OpRHS->getValue().getActiveBits() > 64 ?
-                        BitWidth : OpRHS->getZExtValue();
+    uint32_t OpRHSVal = OpRHS->getLimitedValue(BitWidth);
     APInt ShlMask(APInt::getHighBitsSet(BitWidth, BitWidth-OpRHSVal));
     ConstantInt *CI = ConstantInt::get(AndRHS->getValue() & ShlMask);
 
@@ -3005,8 +3003,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     // unsigned shifts, because a signed shr may bring in set bits!
     //
     uint32_t BitWidth = AndRHS->getType()->getBitWidth();
-    uint32_t OpRHSVal = OpRHS->getValue().getActiveBits() > 64 ?
-                        BitWidth : OpRHS->getZExtValue();
+    uint32_t OpRHSVal = OpRHS->getLimitedValue(BitWidth);
     APInt ShrMask(APInt::getLowBitsSet(BitWidth, BitWidth - OpRHSVal));
     ConstantInt *CI = ConstantInt::get(AndRHS->getValue() & ShrMask);
 
@@ -3025,8 +3022,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     // with an and.
     if (Op->hasOneUse()) {
       uint32_t BitWidth = AndRHS->getType()->getBitWidth();
-      uint32_t OpRHSVal = OpRHS->getValue().getActiveBits() > 64 ?
-                          BitWidth : OpRHS->getZExtValue();
+      uint32_t OpRHSVal = OpRHS->getLimitedValue(BitWidth);
       APInt ShrMask(APInt::getLowBitsSet(BitWidth, BitWidth - OpRHSVal));
       Constant *C = ConstantInt::get(AndRHS->getValue() & ShrMask);
       if (C == AndRHS) {          // Masking out bits shifted in.
@@ -3541,11 +3537,12 @@ static bool CollectBSwapParts(Value *V, SmallVector<Value*, 8> &ByteValues) {
     return CollectBSwapParts(I->getOperand(0), ByteValues) ||
            CollectBSwapParts(I->getOperand(1), ByteValues);
   
+  uint32_t BitWidth = I->getType()->getPrimitiveSizeInBits();
   // If this is a shift by a constant int, and it is "24", then its operand
   // defines a byte.  We only handle unsigned types here.
   if (I->isShift() && isa<ConstantInt>(I->getOperand(1))) {
     // Not shifting the entire input by N-1 bytes?
-    if (cast<ConstantInt>(I->getOperand(1))->getZExtValue() !=
+    if (cast<ConstantInt>(I->getOperand(1))->getLimitedValue(BitWidth) !=
         8*(ByteValues.size()-1))
       return true;
     
@@ -3576,14 +3573,17 @@ static bool CollectBSwapParts(Value *V, SmallVector<Value*, 8> &ByteValues) {
   Instruction *SI = cast<Instruction>(Shift);
 
   // Make sure that the shift amount is by a multiple of 8 and isn't too big.
-  if (ShiftAmt->getZExtValue() & 7 ||
-      ShiftAmt->getZExtValue() > 8*ByteValues.size())
+  if (ShiftAmt->getLimitedValue(BitWidth) & 7 ||
+      ShiftAmt->getLimitedValue(BitWidth) > 8*ByteValues.size())
     return true;
   
   // Turn 0xFF -> 0, 0xFF00 -> 1, 0xFF0000 -> 2, etc.
   unsigned DestByte;
+  if (AndAmt->getValue().getActiveBits() > 64)
+    return true;
+  uint64_t AndAmtVal = AndAmt->getZExtValue();
   for (DestByte = 0; DestByte != ByteValues.size(); ++DestByte)
-    if (AndAmt->getZExtValue() == uint64_t(0xFF) << 8*DestByte)
+    if (AndAmtVal == uint64_t(0xFF) << 8*DestByte)
       break;
   // Unknown mask for bswap.
   if (DestByte == ByteValues.size()) return true;
@@ -4868,7 +4868,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             // Check that the shift amount is in range.  If not, don't perform
             // undefined shifts.  When the shift is visited it will be
             // simplified.
-            if (ShAmt->getZExtValue() >= TypeBits)
+            if (ShAmt->uge(TypeBits))
               break;
 
             // If we are comparing against bits always shifted out, the
@@ -4906,7 +4906,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             // undefined shifts.  When the shift is visited it will be
             // simplified.
             unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
-            if (ShAmt->getZExtValue() >= TypeBits)
+            if (ShAmt->uge(TypeBits))
               break;
 
             // If we are comparing against bits always shifted out, the
@@ -5610,7 +5610,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
   // of a signed value.
   //
-  if (Op1->getValue().getActiveBits() > 64 || Op1->getZExtValue() >= TypeBits) {
+  if (Op1->uge(TypeBits)) {
     if (I.getOpcode() != Instruction::AShr)
       return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
     else {
@@ -5778,10 +5778,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   
   if (ShiftOp && isa<ConstantInt>(ShiftOp->getOperand(1))) {
     ConstantInt *ShiftAmt1C = cast<ConstantInt>(ShiftOp->getOperand(1));
-    uint32_t ShiftAmt1 = ShiftAmt1C->getValue().getActiveBits() > 64 ? 
-                           TypeBits : (uint32_t)ShiftAmt1C->getZExtValue();
-    uint32_t ShiftAmt2 = Op1->getValue().getActiveBits() > 64 ? 
-                           TypeBits : (uint32_t)Op1->getZExtValue();
+    uint32_t ShiftAmt1 = ShiftAmt1C->getLimitedValue(TypeBits);
+    uint32_t ShiftAmt2 = Op1->getLimitedValue(TypeBits);
     assert(ShiftAmt2 != 0 && "Should have been simplified earlier");
     if (ShiftAmt1 == 0) return 0;  // Will be simplified in the future.
     Value *X = ShiftOp->getOperand(0);
@@ -8129,9 +8127,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         } else if (Instruction *Inst =dyn_cast<Instruction>(GEP.getOperand(1))){
           if (Inst->getOpcode() == Instruction::Shl &&
               isa<ConstantInt>(Inst->getOperand(1))) {
-            unsigned ShAmt =
-              cast<ConstantInt>(Inst->getOperand(1))->getZExtValue();
-            Scale = ConstantInt::get(Inst->getType(), 1ULL << ShAmt);
+            ConstantInt *ShAmt = cast<ConstantInt>(Inst->getOperand(1));
+            uint32_t ShAmtVal = ShAmt->getLimitedValue(64);
+            Scale = ConstantInt::get(Inst->getType(), 1ULL << ShAmtVal);
             NewIdx = Inst->getOperand(0);
           } else if (Inst->getOpcode() == Instruction::Mul &&
                      isa<ConstantInt>(Inst->getOperand(1))) {
