@@ -27,7 +27,6 @@
       <li><a href="#paramattrs">Parameter Attributes</a></li>
       <li><a href="#moduleasm">Module-Level Inline Assembly</a></li>
       <li><a href="#datalayout">Data Layout</a></li>
-      <li><a href="#checkpoint">Check Points</a></li>
     </ol>
   </li>
   <li><a href="#typesystem">Type System</a>
@@ -886,7 +885,7 @@ system. The current set of primitive types is as follows:</p>
       <table>
         <tbody>
         <tr><th>Type</th><th>Description</th></tr>
-        <tr><td><tt>void</tt></td><td>No value</td></tr>
+        <tr><td><tt><a name="t_void">void</a></tt></td><td>No value</td></tr>
         <tr><td><tt>i8</tt></td><td>8-bit value</td></tr>
         <tr><td><tt>i32</tt></td><td>32-bit value</td></tr>
         <tr><td><tt>float</tt></td><td>32-bit floating point value</td></tr>
@@ -1714,7 +1713,7 @@ continued at the dynamically nearest "exception" label.</p>
 
 <ol>
   <li>
-    The optional "cconv" marker indicates which <a href="callingconv">calling
+    The optional "cconv" marker indicates which <a href="#callingconv">calling
     convention</a> the call should use.  If none is specified, the call defaults
     to using C calling conventions.
   </li>
@@ -2966,8 +2965,8 @@ type must be smaller than the destination type.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>fpext</tt>' instruction extends the <tt>value</tt> from a smaller
-<a href="t_floating">floating point</a> type to a larger 
-<a href="t_floating">floating point</a> type. The <tt>fpext</tt> cannot be 
+<a href="#t_floating">floating point</a> type to a larger 
+<a href="#t_floating">floating point</a> type. The <tt>fpext</tt> cannot be 
 used to make a <i>no-op cast</i> because it always changes bits. Use 
 <tt>bitcast</tt> to make a <i>no-op cast</i> for a floating point cast.</p>
 
@@ -3140,7 +3139,7 @@ the integer type <tt>ty2</tt>.</p>
 
 <h5>Arguments:</h5>
 <p>The '<tt>ptrtoint</tt>' instruction takes a <tt>value</tt> to cast, which 
-must be a <a href="t_pointer">pointer</a> value, and a type to cast it to
+must be a <a href="#t_pointer">pointer</a> value, and a type to cast it to
 <tt>ty2</tt>, which must be an <a href="#t_integer">integer</a> type. 
 
 <h5>Semantics:</h5>
@@ -3174,7 +3173,7 @@ are the same size, then nothing is done (<i>no-op cast</i>).</p>
 a pointer type, <tt>ty2</tt>.</p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>inttoptr</tt>' instruction takes an <a href="i_integer">integer</a>
+<p>The '<tt>inttoptr</tt>' instruction takes an <a href="#t_integer">integer</a>
 value to cast, and a type to cast it to, which must be a 
 <a href="#t_pointer">pointer</a> type.
 
@@ -3490,7 +3489,7 @@ value argument; otherwise, it returns the second value argument.
     href="#i_ret"><tt>ret</tt></a> instruction.
   </li>
   <li>
-    <p>The optional "cconv" marker indicates which <a href="callingconv">calling
+    <p>The optional "cconv" marker indicates which <a href="#callingconv">calling
     convention</a> the call should use.  If none is specified, the call defaults
     to using C calling conventions.
   </li>
@@ -3747,7 +3746,7 @@ The second argument is a pointer to a <tt>va_list</tt> element to copy from.</p>
 <p>The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt> macro
 available in C.  In a target-dependent way, it copies the source
 <tt>va_list</tt> element into the destination list.  This intrinsic is necessary
-because the <tt><a href="i_va_begin">llvm.va_begin</a></tt> intrinsic may be
+because the <tt><a href="#i_va_start">llvm.va_start</a></tt> intrinsic may be
 arbitrarily complex and require memory allocation, for example.</p>
 
 </div>
@@ -4029,7 +4028,7 @@ that were allocated after the <tt>llvm.stacksave</tt> was executed.
 <p>
 The '<tt>llvm.stackrestore</tt>' intrinsic is used to restore the state of
 the function stack to the state it was in when the corresponding <a
-href="#llvm.stacksave"><tt>llvm.stacksave</tt></a> intrinsic executed.  This is
+href="#i_stacksave"><tt>llvm.stacksave</tt></a> intrinsic executed.  This is
 useful for implementing language features like scoped automatic variable sized
 arrays in C99.
 </p>

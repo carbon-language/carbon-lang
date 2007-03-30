@@ -2195,7 +2195,7 @@ the <tt>lib/VMCore</tt> directory.</p>
   point type.</dd>
   <dt><tt>StructType</tt></dt>
   <dd>Subclass of DerivedTypes for struct types.</dd>
-  <dt><tt>FunctionType</tt></dt>
+  <dt><tt><a name="FunctionType">FunctionType</a></tt></dt>
   <dd>Subclass of DerivedTypes for function types.
     <ul>
       <li><tt>bool isVarArg() const</tt>: Returns true if its a vararg
@@ -2389,7 +2389,7 @@ method. In addition, all LLVM values can be named.  The "name" of the
 </pre>
 </div>
 
-<p><a name="#nameWarning">The name of this instruction is "foo".</a> <b>NOTE</b>
+<p><a name="nameWarning">The name of this instruction is "foo".</a> <b>NOTE</b>
 that the name of any value may be missing (an empty string), so names should
 <b>ONLY</b> be used for debugging (making the source code easier to read,
 debugging printouts), they should not be used to keep track of values or map
@@ -2805,7 +2805,7 @@ is its address (after linking) which is guaranteed to be constant.</p>
     create and what type of linkage the function should have. The <a 
     href="#FunctionType"><tt>FunctionType</tt></a> argument
     specifies the formal arguments and return value for the function. The same
-    <a href="#FunctionTypel"><tt>FunctionType</tt></a> value can be used to
+    <a href="#FunctionType"><tt>FunctionType</tt></a> value can be used to
     create multiple functions. The <tt>Parent</tt> argument specifies the Module
     in which the function is defined. If this argument is provided, the function
     will automatically be inserted into that module's list of
