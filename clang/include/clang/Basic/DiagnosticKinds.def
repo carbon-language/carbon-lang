@@ -498,6 +498,10 @@ DIAG(err_typecheck_incomplete_tag, ERROR,
      "incomplete definition of type '%s'")
 DIAG(err_typecheck_no_member, ERROR,
      "no member named '%s'")
+DIAG(err_typecheck_illegal_increment_decrement, ERROR,
+     "cannot modify value of type '%s'")
+DIAG(err_typecheck_not_modifiable, ERROR,
+     "cannot modify read-only value of type '%s'")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

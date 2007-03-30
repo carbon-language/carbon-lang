@@ -173,8 +173,22 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     //Opc = UnaryOperator::Extension;
     //break;
   }
+  TypeRef type = ((Expr *)Input)->getTypeRef();
 
-  return new UnaryOperator((Expr*)Input, Opc);
+  assert(!type.isNull() && "no type for prefix unary expression");
+
+  if (Opc == UnaryOperator::PreInc || Opc == UnaryOperator::PreDec) {
+    // C99 6.5.3.1: isRealType excludes complex (GCC allows complex).
+    if (!type->isRealType() && !type->isPointerType())
+      return Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, type);    
+
+    // At this point, we know we have a real or pointer type. As a result, the
+    // following predicate is overkill (i.e. it will check for types we know we
+    // don't have in this context). Nevertheless, we model the C99 spec closely.
+    if (!type.isModifiableLvalue())
+      return Diag(OpLoc, diag::err_typecheck_not_modifiable, type);
+  }
+  return new UnaryOperator((Expr*)Input, Opc, type);
 }
 
 Action::ExprResult Sema::
@@ -214,8 +228,21 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
   case tok::plusplus:   Opc = UnaryOperator::PostInc; break;
   case tok::minusminus: Opc = UnaryOperator::PostDec; break;
   }
+  TypeRef type = ((Expr *)Input)->getTypeRef();
+
+  assert(!type.isNull() && "no type for postfix unary expression");
   
-  return new UnaryOperator((Expr*)Input, Opc);
+  // C99 6.5.2.4: isRealType excludes complex (GCC allows complex).
+  if (!type->isRealType() && !type->isPointerType())
+    return Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, type);    
+
+  // At this point, we know we have a real or pointer type. As a result, the
+  // following predicate is overkill (i.e. it will check for types we know we
+  // don't have in this context). Nevertheless, we model the C99 spec closely.
+  if (!type.isModifiableLvalue())
+    return Diag(OpLoc, diag::err_typecheck_not_modifiable, type);
+    
+  return new UnaryOperator((Expr*)Input, Opc, type);
 }
 
 Action::ExprResult Sema::
@@ -253,11 +280,8 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     resultType = ary->getPointeeType();
     // in practice, the following check catches trying to index a pointer
     // to a function (e.g. void (*)(int)). Functions are not objects in c99.
-    if (!resultType->isObjectType()) {
-      std::string Name;
-      baseType->getAsString(Name);
-      Diag(LLoc, diag::err_typecheck_subscript_not_object, Name);    
-    }
+    if (!resultType->isObjectType())
+      return Diag(LLoc, diag::err_typecheck_subscript_not_object, baseType);    
   } 
   return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, resultType);
 }

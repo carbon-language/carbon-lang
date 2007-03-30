@@ -58,6 +58,7 @@ public:
             const std::string &Msg = std::string());
   bool Diag(const LexerToken &Tok, unsigned DiagID,
             const std::string &M = std::string());
+  bool Diag(SourceLocation Loc, unsigned DiagID, TypeRef t);
   
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.

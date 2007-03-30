@@ -44,15 +44,15 @@ bool Type::isDerivedType() const {
 }
 
 bool Type::isFunctionType() const {
-  return isa<FunctionType>(CanonicalType) ? true : false;
+  return isa<FunctionType>(CanonicalType);
 }
 
 bool Type::isPointerType() const {
-  return isa<PointerType>(CanonicalType) ? true : false;
+  return isa<PointerType>(CanonicalType);
 }
 
 bool Type::isArrayType() const {
-  return isa<ArrayType>(CanonicalType) ? true : false;
+  return isa<ArrayType>(CanonicalType);
 }
 
 bool Type::isStructureType() const {
@@ -92,6 +92,42 @@ bool Type::isFloatingType() const {
   case Builtin:
     const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
     return BT->getKind() >= BuiltinType::Float &&
+           BT->getKind() <= BuiltinType::LongDoubleComplex;
+  }
+}
+
+bool Type::isRealFloatingType() const {
+  switch (CanonicalType->getTypeClass()) {
+  default: return false;
+  case Builtin:
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    return BT->getKind() >= BuiltinType::Float &&
+           BT->getKind() <= BuiltinType::LongDouble;
+  }
+}
+
+bool Type::isRealType() const {
+  // this is equivalent to (isIntegralType() || isRealFloatingType()).
+  switch (CanonicalType->getTypeClass()) { // inlined for performance
+  default: return false;
+  case Builtin:
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    return BT->getKind() >= BuiltinType::Bool &&
+           BT->getKind() <= BuiltinType::LongDouble;
+  case Tagged:
+    const TagType *TT = static_cast<TagType*>(CanonicalType);
+    if (TT->getDecl()->getKind() == Decl::Enum)
+      return true;
+    return false;
+  }
+}
+
+bool Type::isComplexType() const {
+  switch (CanonicalType->getTypeClass()) {
+  default: return false;
+  case Builtin:
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    return BT->getKind() >= BuiltinType::FloatComplex &&
            BT->getKind() <= BuiltinType::LongDoubleComplex;
   }
 }
@@ -152,6 +188,42 @@ bool Type::isIncompleteType() const {
   }
 }
 
+/// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or
+/// an incomplete type other than void.
+bool Type::isLvalue() const {
+  if (isObjectType())
+    return true;
+  else if (isIncompleteType())
+    return isVoidType() ? false : true;
+  else 
+    return false;    
+}
+
+/// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
+/// does not have an incomplete type, does not have a const-qualified type, and
+/// if it is a structure or union, does not have any member (including, 
+/// recursively, any member or element of all contained aggregates or unions)
+/// with a const-qualified type.
+
+bool TypeRef::isModifiableLvalue() const {
+  if (isConstQualified())
+    return false;
+  else
+    return getTypePtr()->isModifiableLvalue();
+}
+
+bool Type::isModifiableLvalue() const {
+  if (!isLvalue())
+    return false;
+    
+  if (isArrayType())
+    return false;
+  if (isIncompleteType())
+    return false;
+  if (const RecordType *r = dyn_cast<RecordType>(this))
+    return r->isModifiableLvalue();
+  return true;    
+}
 
 const char *BuiltinType::getName() const {
   switch (getKind()) {

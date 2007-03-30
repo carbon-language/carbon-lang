@@ -149,8 +149,8 @@ public:
     Extension         // __extension__ marker.
   };
 
-  UnaryOperator(Expr *input, Opcode opc)
-    : Expr(UnaryOperatorClass), Val(input), Opc(opc) {}
+  UnaryOperator(Expr *input, Opcode opc, TypeRef type)
+    : Expr(UnaryOperatorClass, type), Val(input), Opc(opc) {}
   
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "sizeof" or "[pre]++"

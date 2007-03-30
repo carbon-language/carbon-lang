@@ -116,7 +116,9 @@ public:
   /// getCanonicalType - Return the canonical version of this type, with the
   /// appropriate type qualifiers on it.
   inline TypeRef getCanonicalType() const;
-  
+
+  bool isModifiableLvalue() const;
+    
   void getAsString(std::string &S) const;
   void dump() const;
 };
@@ -201,10 +203,13 @@ public:
   
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs.
-  bool isIntegralType() const;   // C99 6.2.5p17 (int, char, bool, enum)
-  bool isFloatingType() const;   // C99 6.2.5p11 (float, double, long double)
-  bool isArithmeticType() const; // C99 6.2.5p18 (integral + floating)
-  bool isVoidType() const;       // C99 6.2.5p19
+  bool isIntegralType() const;     // C99 6.2.5p17 (int, char, bool, enum)
+  bool isRealFloatingType() const; // C99 6.2.5p10 (float, double, long double)
+  bool isComplexType() const;      // C99 6.2.5p11 (complex)
+  bool isFloatingType() const;     // C99 6.2.5p11 (real floating + complex)
+  bool isRealType() const;         // C99 6.2.5p17 (real floating + integer)
+  bool isArithmeticType() const;   // C99 6.2.5p18 (integral + floating)
+  bool isVoidType() const;         // C99 6.2.5p19
 
   /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.
   bool isDerivedType() const;
@@ -215,7 +220,14 @@ public:
   
   bool isScalarType() const;     // C99 6.2.5p21 (arithmetic + pointers)
   bool isAggregateType() const;  // C99 6.2.5p21 (arrays, structures)
-
+  
+  bool isLvalue() const;         // C99 6.3.2.1
+private:
+  // this forces clients to use isModifiableLvalue on TypeRef, the class that 
+  // knows if the type is const. This predicate is a helper to TypeRef. 
+  bool isModifiableLvalue() const; // C99 6.3.2.1
+  friend class TypeRef;
+public:
   virtual void getAsString(std::string &InnerString) const = 0;
   
   static bool classof(const Type *) { return true; }
@@ -459,6 +471,7 @@ public:
   RecordDecl *getDecl() const {
     return reinterpret_cast<RecordDecl*>(TagType::getDecl());
   }
+  bool isModifiableLvalue() const { return true; } // FIXME
   
   static bool classof(const Type *T);
   static bool classof(const RecordType *) { return true; }
