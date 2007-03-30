@@ -5658,9 +5658,9 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
               BinaryOperator::create(Op0BO->getOpcode(), YS, V1,
                                      Op0BO->getOperand(1)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
-            Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
-            C2 = ConstantExpr::getShl(C2, Op1);
-            return BinaryOperator::createAnd(X, C2);
+            uint32_t Op1Val = Op1->getZExtValue();
+            return BinaryOperator::createAnd(X, ConstantInt::get(
+                       APInt::getHighBitsSet(TypeBits, TypeBits-Op1Val)));
           }
           
           // Turn (Y + ((X >> C) & CC)) << C  ->  ((X & (CC << C)) + (Y << C))
@@ -5697,9 +5697,9 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
               BinaryOperator::create(Op0BO->getOpcode(), V1, YS,
                                      Op0BO->getOperand(0)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
-            Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
-            C2 = ConstantExpr::getShl(C2, Op1);
-            return BinaryOperator::createAnd(X, C2);
+            uint32_t Op1Val = Op1->getZExtValue();
+            return BinaryOperator::createAnd(X, ConstantInt::get(
+                       APInt::getHighBitsSet(TypeBits, TypeBits-Op1Val)));
           }
           
           // Turn (((X >> C)&CC) + Y) << C  ->  (X + (Y << C)) & (CC << C)
