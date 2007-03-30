@@ -316,7 +316,9 @@ public:
       assert(II != SpillSlotsAvailable.end() && "Slot not available!");
       unsigned Val = II->second.first;
       assert((Val >> 1) == PhysReg && "Bidirectional map mismatch!");
-      II->second.second.push_back(Use);
+      // This can be true if there are multiple uses of the same register.
+      if (II->second.second.back() != Use)
+        II->second.second.push_back(Use);
     }
   }
   
@@ -1117,6 +1119,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
             ++NumDCE;
             DOUT << "Removing now-noop copy: " << MI;
+            Spills.removeLastUse(Src, &MI);
             MBB.erase(&MI);
             VRM.RemoveFromFoldedVirtMap(&MI);
             goto ProcessNextInst;
