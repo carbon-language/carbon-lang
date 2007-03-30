@@ -179,8 +179,8 @@ public:
   /// value.
   /// @returns true iff this constant is greater or equal to the given number.
   /// @brief Determine if the value is greater or equal to the given number.
-  bool greaterOrEqual(uint64_t Num) {
-    return Val.getActiveBits() > 64 || Val.getZExtValue() > Num;
+  bool uge(uint64_t Num) {
+    return Val.getActiveBits() > 64 || Val.getZExtValue() >= Num;
   }
 
   /// @returns the 64-bit value of this constant if its active bits number is 
