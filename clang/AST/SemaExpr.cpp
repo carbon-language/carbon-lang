@@ -173,22 +173,11 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     //Opc = UnaryOperator::Extension;
     //break;
   }
-  TypeRef type = ((Expr *)Input)->getTypeRef();
-
-  assert(!type.isNull() && "no type for prefix unary expression");
-
-  if (Opc == UnaryOperator::PreInc || Opc == UnaryOperator::PreDec) {
-    // C99 6.5.3.1: isRealType excludes complex (GCC allows complex).
-    if (!type->isRealType() && !type->isPointerType())
-      return Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, type);    
-
-    // At this point, we know we have a real or pointer type. As a result, the
-    // following predicate is overkill (i.e. it will check for types we know we
-    // don't have in this context). Nevertheless, we model the C99 spec closely.
-    if (!type.isModifiableLvalue())
-      return Diag(OpLoc, diag::err_typecheck_not_modifiable, type);
-  }
-  return new UnaryOperator((Expr*)Input, Opc, type);
+  if (Opc == UnaryOperator::PreInc || Opc == UnaryOperator::PreDec)
+    return CheckIncrementDecrementOperand((Expr *)Input, OpLoc, Opc);
+  
+  // when all the check functions are written, this will go away...
+  return new UnaryOperator((Expr*)Input, Opc, 0);
 }
 
 Action::ExprResult Sema::
@@ -228,21 +217,7 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
   case tok::plusplus:   Opc = UnaryOperator::PostInc; break;
   case tok::minusminus: Opc = UnaryOperator::PostDec; break;
   }
-  TypeRef type = ((Expr *)Input)->getTypeRef();
-
-  assert(!type.isNull() && "no type for postfix unary expression");
-  
-  // C99 6.5.2.4: isRealType excludes complex (GCC allows complex).
-  if (!type->isRealType() && !type->isPointerType())
-    return Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, type);    
-
-  // At this point, we know we have a real or pointer type. As a result, the
-  // following predicate is overkill (i.e. it will check for types we know we
-  // don't have in this context). Nevertheless, we model the C99 spec closely.
-  if (!type.isModifiableLvalue())
-    return Diag(OpLoc, diag::err_typecheck_not_modifiable, type);
-    
-  return new UnaryOperator((Expr*)Input, Opc, type);
+  return CheckIncrementDecrementOperand((Expr *)Input, OpLoc, Opc);
 }
 
 Action::ExprResult Sema::
@@ -273,6 +248,7 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   if (!indexType->isIntegralType())
     return Diag(LLoc, diag::err_typecheck_subscript);
 
+  // FIXME: need to deal with const...
   TypeRef resultType;
   if (ArrayType *ary = dyn_cast<ArrayType>(baseType)) {
     resultType = ary->getElementType();
@@ -412,24 +388,54 @@ Expr *Sema::ImplicitConversion(Expr *E) {
   return E;
 }
 
-void Sema::CheckMultiplicativeOperands(Expr *op1, Expr *op2) {
+Action::ExprResult Sema::CheckMultiplicativeOperands(Expr *op1, Expr *op2) {
+  return false;
 }
 
-void Sema::CheckAdditiveOperands(Expr *op1, Expr *op2) {
+Action::ExprResult Sema::CheckAdditiveOperands(Expr *op1, Expr *op2) {
+  return false;
 }
 
-void Sema::CheckShiftOperands(Expr *op1, Expr *op2) {
+Action::ExprResult Sema::CheckShiftOperands(Expr *op1, Expr *op2) {
+  return false;
 }
 
-void Sema::CheckRelationalOperands(Expr *op1, Expr *op2) {
+Action::ExprResult Sema::CheckRelationalOperands(Expr *op1, Expr *op2) {
+  return false;
 }
 
-void Sema::CheckEqualityOperands(Expr *op1, Expr *op2) {
+Action::ExprResult Sema::CheckEqualityOperands(Expr *op1, Expr *op2) {
+  return false;
 }
 
-void Sema::CheckBitwiseOperands(Expr *op1, Expr *op2) {
+Action::ExprResult Sema::CheckBitwiseOperands(Expr *op1, Expr *op2) {
+  return false;
 }
 
-void Sema::CheckLogicalOperands(Expr *op1, Expr *op2) {
+Action::ExprResult Sema::CheckLogicalOperands(Expr *op1, Expr *op2) {
+  return false;
+}
+
+Action::ExprResult
+Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
+                                               UnaryOperator::Opcode OpCode) {
+  TypeRef type = op->getTypeRef();
+
+  assert(!type.isNull() && "no type for increment/decrement expression");
+  
+  if (const PointerType *pt = dyn_cast<PointerType>(type)) {
+    if (!pt->getPointeeType()->isObjectType()) // C99 6.5.6p2
+      return Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type, type);    
+  } else if (!type->isRealType()) // C99 6.5.2.4: isRealType excludes complex.
+    // FIXME: Allow Complex as a GCC extension.
+    return Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, type);    
+
+  // At this point, we know we have a real or pointer type. As a result, the
+  // following predicate is overkill (i.e. it will check for types we know we
+  // don't have in this context). Nevertheless, we model the C99 spec closely.
+  if (!type.isModifiableLvalue())
+    return Diag(OpLoc, diag::err_typecheck_not_modifiable, type);
+
+  return new UnaryOperator(op, OpCode, type);
 }
 

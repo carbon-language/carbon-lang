@@ -117,6 +117,11 @@ public:
   /// appropriate type qualifiers on it.
   inline TypeRef getCanonicalType() const;
 
+  /// isModifiableLvalue - C99 6.3.2.1p1: returns true if the type is an lvalue
+  /// that does not have array type, does not have an incomplete type, does
+  /// not have a const-qualified type, and if it is a struct/union, does not 
+  /// have any member (including, recursively, any member or element of all
+  /// contained aggregates or unions) with a const-qualified type.
   bool isModifiableLvalue() const;
     
   void getAsString(std::string &S) const;
@@ -225,7 +230,7 @@ public:
 private:
   // this forces clients to use isModifiableLvalue on TypeRef, the class that 
   // knows if the type is const. This predicate is a helper to TypeRef. 
-  bool isModifiableLvalue() const; // C99 6.3.2.1
+  bool isModifiableLvalue() const; // C99 6.3.2.1p1
   friend class TypeRef;
 public:
   virtual void getAsString(std::string &InnerString) const = 0;
@@ -471,7 +476,10 @@ public:
   RecordDecl *getDecl() const {
     return reinterpret_cast<RecordDecl*>(TagType::getDecl());
   }
-  bool isModifiableLvalue() const { return true; } // FIXME
+  // FIXME: This predicate is a helper to TypeRef/Type. It needs to 
+  // recursively check all fields for const-ness. If any field is declared
+  // const, it needs to return false. 
+  bool isModifiableLvalue() const { return true; } 
   
   static bool classof(const Type *T);
   static bool classof(const RecordType *) { return true; }

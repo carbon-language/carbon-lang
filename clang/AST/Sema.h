@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_SEMA_H
 
 #include "clang/Parse/Action.h"
+#include "clang/AST/Expr.h"
 #include <vector>
 #include <string>
 
@@ -24,7 +25,6 @@ namespace clang {
   class ASTContext;
   class Preprocessor;
   class Decl;
-  class Expr;
   class VarDecl;
   class TypedefDecl;
   class FunctionDecl;
@@ -225,13 +225,18 @@ private:
   Expr *ImplicitConversion(Expr *E); // C99 6.3
   
   /// type checking binary operators (subroutines of ParseBinOp).
-  void CheckMultiplicativeOperands(Expr *op1, Expr *op2); // C99 6.5.5
-  void CheckAdditiveOperands(Expr *op1, Expr *op2);       // C99 6.5.6
-  void CheckShiftOperands(Expr *op1, Expr *op2);          // C99 6.5.7
-  void CheckRelationalOperands(Expr *op1, Expr *op2);     // C99 6.5.8
-  void CheckEqualityOperands(Expr *op1, Expr *op2);       // C99 6.5.9
-  void CheckBitwiseOperands(Expr *op1, Expr *op2);        // C99 6.5.[10...12]
-  void CheckLogicalOperands(Expr *op1, Expr *op2);        // C99 6.5.[13,14]
+  /// the following "Check" methods will either return a well formed AST node
+  /// or will return true if the expressions didn't type check properly.
+  ExprResult CheckMultiplicativeOperands(Expr *op1, Expr *op2); // C99 6.5.5
+  ExprResult CheckAdditiveOperands(Expr *op1, Expr *op2);       // C99 6.5.6
+  ExprResult CheckShiftOperands(Expr *op1, Expr *op2);          // C99 6.5.7
+  ExprResult CheckRelationalOperands(Expr *op1, Expr *op2);     // C99 6.5.8
+  ExprResult CheckEqualityOperands(Expr *op1, Expr *op2);       // C99 6.5.9
+  ExprResult CheckBitwiseOperands(Expr *op1, Expr *op2);   // C99 6.5.[10...12]
+  ExprResult CheckLogicalOperands(Expr *op1, Expr *op2);   // C99 6.5.[13,14]
+  
+  ExprResult CheckIncrementDecrementOperand(Expr *op, SourceLocation loc,
+                                            UnaryOperator::Opcode Opc);
 };
 
 
