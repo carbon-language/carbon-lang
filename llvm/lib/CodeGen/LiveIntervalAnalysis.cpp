@@ -915,6 +915,7 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
 
   // Check if it is necessary to propagate "isDead" property before intervals
   // are joined.
+  MachineBasicBlock *CopyBB = CopyMI->getParent();
   MachineOperand *mopd = CopyMI->findRegisterDefOperand(DstReg);
   bool isDead = mopd->isDead();
   bool isShorten = false;
@@ -941,9 +942,15 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
         isShorten = true;
         RemoveStart = getDefIndex(getInstructionIndex(LastUse));
         RemoveEnd   = SrcEnd;
-      } else if (RemoveStart > 0)
-        // A dead def should have a single cycle interval.
-        ++RemoveStart;
+      } else {
+        MachineInstr *SrcMI = getInstructionFromIndex(SrcStart);
+        if (SrcMI) {
+          MachineOperand *mops = SrcMI->findRegisterDefOperand(SrcReg);
+          if (mops)
+            // A dead def should have a single cycle interval.
+            ++RemoveStart;
+        }
+      }
     }
   }
 
@@ -959,7 +966,6 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
 
     LiveVariables::VarInfo& dvi = lv_->getVarInfo(repDstReg);
     // Is the value used in the current BB or any immediate successroe BB?
-    MachineBasicBlock *CopyBB = CopyMI->getParent();
     if (dvi.UsedBlocks[CopyBB->getNumber()])
       goto TryJoin;
     for (MachineBasicBlock::succ_iterator SI = CopyBB->succ_begin(),
@@ -1018,7 +1024,6 @@ TryJoin:
         if (SrcMI) {
           MachineOperand *mops = SrcMI->findRegisterDefOperand(SrcReg);
           if (mops)
-            // FIXME: mops == NULL means SrcMI defines a subregister?
             mops->setIsDead();
         }
       }
