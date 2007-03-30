@@ -853,9 +853,29 @@ public:
                                                      MachineBasicBlock *MBB);
 
   //===--------------------------------------------------------------------===//
-  // Loop Strength Reduction hooks
+  // Addressing mode description hooks (used by LSR etc).
   //
 
+  /// AddrMode - This represents an addressing mode of:
+  ///    BaseGV + BaseOffs + BaseReg + Scale*ScaleReg
+  /// If BaseGV is null,  there is no BaseGV.
+  /// If BaseOffs is zero, there is no base offset.
+  /// If HasBaseReg is false, there is no base register.
+  /// If Scale is zero, there is no ScaleReg.  Scale of 1 indicates a reg with
+  /// no scale.
+  ///
+  struct AddrMode {
+    GlobalValue *BaseGV;
+    int64_t      BaseOffs;
+    bool         HasBaseReg;
+    int64_t      Scale;
+  };
+  
+  /// isLegalAddressingMode - Return true if the addressing mode represented by
+  /// AM is legal for this target, for a load/store of the specified type.
+  /// TODO: Handle pre/postinc as well.
+  virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty) const;
+  
   /// isLegalAddressImmediate - Return true if the integer value can be used as
   /// the offset of the target addressing mode for load / store of the given
   /// type.

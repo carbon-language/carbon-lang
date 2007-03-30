@@ -1940,6 +1940,40 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
 //  Loop Strength Reduction hooks
 //===----------------------------------------------------------------------===//
 
+/// isLegalAddressingMode - Return true if the addressing mode represented
+/// by AM is legal for this target, for a load/store of the specified type.
+bool TargetLowering::isLegalAddressingMode(const AddrMode &AM, 
+                                           const Type *Ty) const {
+  // The default implementation of this implements a conservative RISCy, r+r and
+  // r+i addr mode.
+
+  // Allows a sign-extended 16-bit immediate field.
+  if (AM.BaseOffs <= -(1LL << 16) || AM.BaseOffs >= (1LL << 16)-1)
+    return false;
+  
+  // No global is ever allowed as a base.
+  if (AM.BaseGV)
+    return false;
+  
+  // Only support r+r, 
+  switch (AM.Scale) {
+  case 0:  // "r+i" or just "i", depending on HasBaseReg.
+    break;
+  case 1:
+    if (AM.HasBaseReg && AM.BaseOffs)  // "r+r+i" is not allowed.
+      return false;
+    // Otherwise we have r+r or r+i.
+    break;
+  case 2:
+    if (AM.HasBaseReg || AM.BaseOffs)  // 2*r+r  or  2*r+i is not allowed.
+      return false;
+    // Allow 2*r as r+r.
+    break;
+  }
+  
+  return true;
+}
+
 /// isLegalAddressImmediate - Return true if the integer value can be used as
 /// the offset of the target addressing mode for load / store of the given
 /// type.
