@@ -5946,6 +5946,38 @@ static Module* RunParser(Module * M) {
     return 0;
   }
 
+  // Emit an error if there are any unresolved types left.
+  if (!CurModule.LateResolveTypes.empty()) {
+    const ValID &DID = CurModule.LateResolveTypes.begin()->first;
+    if (DID.Type == ValID::LocalName) {
+      GenerateError("Undefined type remains at eof: '"+DID.getName() + "'");
+    } else {
+      GenerateError("Undefined type remains at eof: #" + itostr(DID.Num));
+    }
+    if (ParserResult)
+      delete ParserResult;
+    return 0;
+  }
+
+  // Emit an error if there are any unresolved values left.
+  if (!CurModule.LateResolveValues.empty()) {
+    Value *V = CurModule.LateResolveValues.back();
+    std::map<Value*, std::pair<ValID, int> >::iterator I =
+      CurModule.PlaceHolderInfo.find(V);
+
+    if (I != CurModule.PlaceHolderInfo.end()) {
+      ValID &DID = I->second.first;
+      if (DID.Type == ValID::LocalName) {
+        GenerateError("Undefined value remains at eof: "+DID.getName() + "'");
+      } else {
+        GenerateError("Undefined value remains at eof: #" + itostr(DID.Num));
+      }
+      if (ParserResult)
+        delete ParserResult;
+      return 0;
+    }
+  }
+
   // Check to make sure that parsing produced a result
   if (!ParserResult)
     return 0;
