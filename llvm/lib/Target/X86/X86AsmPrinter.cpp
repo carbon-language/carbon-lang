@@ -24,6 +24,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
@@ -84,16 +85,21 @@ void X86SharedAsmPrinter::decorateName(std::string &Name,
   } else {
     Info = &info_item->second;
   }
-        
+  
+  const FunctionType *FT = F->getFunctionType();
   switch (Info->getDecorationStyle()) {
   case None:
     break;
   case StdCall:
-    if (!F->isVarArg()) // Variadic functions do not receive @0 suffix.
+    // "Pure" variadic functions do not receive @0 suffix.
+    if (!FT->isVarArg() || (FT->getNumParams() == 0) ||
+        (FT->getNumParams() == 1 && FT->isStructReturn())) 
       Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
     break;
   case FastCall:
-    if (!F->isVarArg()) // Variadic functions do not receive @0 suffix.
+    // "Pure" variadic functions do not receive @0 suffix.
+    if (!FT->isVarArg() || (FT->getNumParams() == 0) ||
+        (FT->getNumParams() == 1 && FT->isStructReturn())) 
       Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
 
     if (Name[0] == '_') {
