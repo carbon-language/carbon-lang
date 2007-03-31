@@ -14,11 +14,15 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+static cl::opt<bool> PrintLSR("print-lsr-output");
 
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
@@ -28,7 +32,11 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   // Standard LLVM-Level Passes.
   
   // Run loop strength reduction before anything else.
-  if (!Fast) PM.add(createLoopStrengthReducePass(getTargetLowering()));
+  if (!Fast) {
+    PM.add(createLoopStrengthReducePass(getTargetLowering()));
+    if (PrintLSR)
+      PM.add(new PrintFunctionPass("\n\n*** Code after LSR *** \n", &cerr));
+  }
   
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
