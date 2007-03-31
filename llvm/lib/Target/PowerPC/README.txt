@@ -639,3 +639,26 @@ __ZNK4llvm5APInt17countLeadingZerosEv:
 The dead or is a 'truncate' from 64- to 32-bits.
 
 ===-------------------------------------------------------------------------===
+
+We generate horrible ppc code for this:
+
+#define N  2000000
+double   a[N],c[N];
+void simpleloop() {
+   int j;
+   for (j=0; j<N; j++)
+     c[j] = a[j];
+}
+
+LBB1_1: ;bb
+        lfdx f0, r3, r4
+        addi r5, r5, 1                 ;; Extra IV for the exit value compare.
+        stfdx f0, r2, r4
+        addi r4, r4, 8
+
+        xoris r6, r5, 30               ;; This is due to a large immediate.
+        cmplwi cr0, r6, 33920
+        bne cr0, LBB1_1
+
+===-------------------------------------------------------------------------===
+
