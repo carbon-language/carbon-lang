@@ -4777,7 +4777,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               // of the bits shifted in could be tested after the mask.
               uint32_t TyBits = Ty->getPrimitiveSizeInBits();
               int ShAmtVal = TyBits - ShAmt->getLimitedValue(TyBits);
-              if (ShAmtVal < 0) ShAmtVal = 0; // Out of range shift.
 
               uint32_t BitWidth = AndTy->getPrimitiveSizeInBits();
               if ((APInt::getHighBitsSet(BitWidth, BitWidth-ShAmtVal) & 
