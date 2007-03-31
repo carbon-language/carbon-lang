@@ -23,7 +23,7 @@
 using namespace llvm;
 
 static cl::opt<bool> PrintLSR("print-lsr-output");
-
+static cl::opt<bool> PrintISelInput("print-isel-input");
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
                                        std::ostream &Out,
@@ -48,6 +48,13 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
+  if (!Fast)
+    PM.add(createCodeGenPreparePass(getTargetLowering()));
+
+  if (PrintISelInput)
+    PM.add(new PrintFunctionPass("\n\n*** Final LLVM Code input to ISel *** \n",
+                                 &cerr));
+  
   // Ask the target for an isel.
   if (addInstSelector(PM, Fast))
     return FileModel::Error;
@@ -126,7 +133,11 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   // Standard LLVM-Level Passes.
   
   // Run loop strength reduction before anything else.
-  if (!Fast) PM.add(createLoopStrengthReducePass(getTargetLowering()));
+  if (!Fast) {
+    PM.add(createLoopStrengthReducePass(getTargetLowering()));
+    if (PrintLSR)
+      PM.add(new PrintFunctionPass("\n\n*** Code after LSR *** \n", &cerr));
+  }
   
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -136,6 +147,13 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
+
+  if (!Fast)
+    PM.add(createCodeGenPreparePass(getTargetLowering()));
+
+  if (PrintISelInput)
+    PM.add(new PrintFunctionPass("\n\n*** Final LLVM Code input to ISel *** \n",
+                                 &cerr));
 
   // Ask the target for an isel.
   if (addInstSelector(PM, Fast))
