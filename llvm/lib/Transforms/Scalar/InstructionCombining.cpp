@@ -1243,22 +1243,8 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       // To compute this, we first compute the potential carry bits.  These are
       // the bits which may be modified.  I'm not aware of a better way to do
       // this scan.
-      APInt RHSVal(RHS->getValue());
-      
-      bool CarryIn = false;
-      APInt CarryBits(BitWidth, 0);
-      const uint64_t *LHSKnownZeroRawVal = LHSKnownZero.getRawData(),
-                     *RHSRawVal = RHSVal.getRawData();
-      for (uint32_t i = 0; i != RHSVal.getNumWords(); ++i) {
-        uint64_t AddVal = ~LHSKnownZeroRawVal[i] + RHSRawVal[i],
-                 XorVal = ~LHSKnownZeroRawVal[i] ^ RHSRawVal[i];
-        uint64_t WordCarryBits = AddVal ^ XorVal + CarryIn;
-        if (AddVal < RHSRawVal[i])
-          CarryIn = true;
-        else
-          CarryIn = false;
-        CarryBits.setWordToValue(i, WordCarryBits);
-      }
+      const APInt& RHSVal = RHS->getValue();
+      APInt CarryBits((~LHSKnownZero + RHSVal) ^ (~LHSKnownZero ^ RHSVal));
       
       // Now that we know which bits have carries, compute the known-1/0 sets.
       
