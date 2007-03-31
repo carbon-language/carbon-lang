@@ -101,6 +101,10 @@ def CC_X86_64_C : CallingConv<[
   CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
               CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>,
 
+  // The first 8 MMX vector arguments are passed in MMX registers.
+  CCIfType<[v8i8, v4i16, v2i32, v1i64],
+              CCAssignToReg<[RDI, RSI, RDX, RCX, R8 , R9 ]>>,
+
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>,
