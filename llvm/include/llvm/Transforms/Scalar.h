@@ -121,7 +121,7 @@ LoopPass *createLICMPass();
 // optional parameter used to consult the target machine whether certain
 // transformations are profitable.
 //
-LoopPass *createLoopStrengthReducePass(const TargetLowering *TLI = NULL);
+LoopPass *createLoopStrengthReducePass(const TargetLowering *TLI = 0);
 
 //===----------------------------------------------------------------------===//
 //
@@ -308,6 +308,12 @@ extern const PassInfo *LCSSAID;
 // canonical form, and tries to simplify expressions along the way.
 //
 FunctionPass *createPredicateSimplifierPass();
+
+//===----------------------------------------------------------------------===//
+//
+// CodeGenPrepare - This pass prepares a function for instruction selection.
+//
+FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
 
 } // End llvm namespace
 

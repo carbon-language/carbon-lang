@@ -109,6 +109,7 @@ namespace {
       (void) llvm::createIndMemRemPass();
       (void) llvm::createInstCountPass();
       (void) llvm::createPredicateSimplifierPass();
+      (void) llvm::createCodeGenPreparePass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::ImmediateDominators();
