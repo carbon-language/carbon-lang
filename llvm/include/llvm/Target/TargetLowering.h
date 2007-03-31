@@ -340,7 +340,10 @@ public:
 
   /// getValueType - Return the MVT::ValueType corresponding to this LLVM type.
   /// This is fixed by the LLVM operations except for the pointer size.
-  MVT::ValueType getValueType(const Type *Ty) const;
+  MVT::ValueType getValueType(const Type *Ty) const {
+    MVT::ValueType VT = MVT::getValueType(Ty);
+    return VT == MVT::iPTR ? PointerTy : VT;
+  }
 
   /// getNumElements - Return the number of registers that this ValueType will
   /// eventually require.  This is one for any types promoted to live in larger
