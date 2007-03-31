@@ -110,3 +110,31 @@ const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   case MVT::v2f64: return VectorType::get(Type::DoubleTy, 2);
   }
 }
+
+/// MVT::getValueType - Return the value type corresponding to the specified
+/// type.  This returns all vectors as MVT::Vector and all pointers as
+/// MVT::iPTR.
+MVT::ValueType MVT::getValueType(const Type *Ty) {
+  switch (Ty->getTypeID()) {
+  default: assert(0 && "Unknown type!");
+  case Type::VoidTyID:
+    return MVT::isVoid;
+  case Type::IntegerTyID:
+    switch (cast<IntegerType>(Ty)->getBitWidth()) {
+    default:
+      // FIXME: Return MVT::iANY.
+      assert(0 && "Invalid width for value type");
+    case 1:    return MVT::i1;
+    case 8:    return MVT::i8;
+    case 16:   return MVT::i16;
+    case 32:   return MVT::i32;
+    case 64:   return MVT::i64;
+    case 128:  return MVT::i128;
+    }
+    break;
+  case Type::FloatTyID:   return MVT::f32;
+  case Type::DoubleTyID:  return MVT::f64;
+  case Type::PointerTyID: return MVT::iPTR;
+  case Type::VectorTyID:  return MVT::Vector;
+  }
+}

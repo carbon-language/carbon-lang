@@ -197,6 +197,11 @@ namespace MVT {  // MVT = Machine Value Types
   /// to the specified ValueType.  For integer types, this returns an unsigned
   /// type.  Note that this will abort for types that cannot be represented.
   const Type *getTypeForValueType(ValueType VT);
+  
+  /// MVT::getValueType - Return the value type corresponding to the specified
+  /// type.  This returns all vectors as MVT::Vector and all pointers as
+  /// MVT::iPTR.
+  ValueType getValueType(const Type *Ty);
 }
 
 } // End llvm namespace
