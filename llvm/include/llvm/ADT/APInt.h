@@ -396,15 +396,6 @@ public:
     return &pVal[0];
   }
 
-  /// @brief Set a sepcific word in the value to a new value.
-  inline void setWordToValue(uint32_t idx, uint64_t Val) {
-    assert(idx < getNumWords() && "Invalid word array index");
-    if (isSingleWord())
-      VAL = Val;
-    else
-      pVal[idx] = Val;
-  }
-
   /// @}
   /// @name Unary Operators
   /// @{
@@ -742,15 +733,6 @@ public:
   /// extended, truncated, or left alone to make it that width.
   /// @brief Zero extend or truncate to width
   APInt &zextOrTrunc(uint32_t width);
-
-  /// This is a help function for convenience. If the given \p width equals to
-  /// this APInt's BitWidth, just return this APInt, otherwise, just zero 
-  /// extend it.
-  inline APInt &zextOrCopy(uint32_t width) {
-    if (width == BitWidth)
-      return *this;
-    return zext(width);
-  }
 
   /// @}
   /// @name Bit Manipulation Operators
