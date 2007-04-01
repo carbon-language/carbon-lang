@@ -1029,10 +1029,12 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     IncV   = ReuseIV.IncV;
   }
 
+  const Type *ReplacedTy = CommonExprs->getType();
+  
   // Now that we know what we need to do, insert the PHI node itself.
   //
-  DOUT << "INSERTING IV of STRIDE " << *Stride << " and BASE "
-       << *CommonExprs << " :\n";
+  DOUT << "INSERTING IV of TYPE " << *ReplacedTy << " of STRIDE "
+       << *Stride << " and BASE " << *CommonExprs << " :\n";
 
   SCEVExpander Rewriter(*SE, *LI);
   SCEVExpander PreheaderRewriter(*SE, *LI);
@@ -1043,7 +1045,6 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   
   BasicBlock *LatchBlock = L->getLoopLatch();
 
-  const Type *ReplacedTy = CommonExprs->getType();
 
   // Emit the initial base value into the loop preheader.
   Value *CommonBaseV
