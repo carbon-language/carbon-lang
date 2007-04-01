@@ -250,9 +250,9 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
 
 /// unionWith - Return the range that results from the union of this range with
 /// another range.  The resultant range is guaranteed to include the elements of
-/// both sets, but may contain more.  For example, [3, 9) union [12,15) is [3,
-/// 15), which includes 9, 10, and 11, which were not included in either set
-/// before.
+/// both sets, but may contain more.  For example, [3, 9) union [12,15) is
+/// [3, 15), which includes 9, 10, and 11, which were not included in either
+/// set before.
 ///
 ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
   assert(getBitWidth() == CR.getBitWidth() && 
@@ -261,13 +261,71 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
   if (   isFullSet() || CR.isEmptySet()) return *this;
   if (CR.isFullSet() ||    isEmptySet()) return CR;
 
+  if (!isWrappedSet() && CR.isWrappedSet()) return CR.unionWith(*this);
+
   APInt L = Lower, U = Upper;
 
-  if (!contains(CR.Lower))
-    L = APIntOps::umin(L, CR.Lower);
+  if (!isWrappedSet() && !CR.isWrappedSet()) {
+    if (CR.Lower.ult(L))
+      L = CR.Lower;
 
-  if (!contains(CR.Upper - 1))
-    U = APIntOps::umax(U, CR.Upper);
+    if (CR.Upper.ugt(U))
+      U = CR.Upper;
+  }
+
+  if (isWrappedSet() && !CR.isWrappedSet()) {
+    if ((CR.Lower.ult(Upper) && CR.Upper.ult(Upper)) ||
+        (CR.Lower.ugt(Lower) && CR.Upper.ugt(Lower))) {
+      return *this;
+    }
+
+    if (CR.Lower.ule(Upper) && Lower.ule(CR.Upper)) {
+      return ConstantRange(getBitWidth());
+    }
+
+    if (CR.Lower.ule(Upper) && CR.Upper.ule(Lower)) {
+      APInt d1 = CR.Upper - Upper, d2 = Lower - CR.Upper;
+      if (d1.ult(d2)) {
+        U = CR.Upper;
+      } else {
+        L = CR.Upper;
+      }
+    }
+
+    if (Upper.ult(CR.Lower) && CR.Upper.ult(Lower)) {
+      APInt d1 = CR.Lower - Upper, d2 = Lower - CR.Upper;
+      if (d1.ult(d2)) {
+        U = CR.Lower + 1;
+      } else {
+        L = CR.Upper - 1;
+      }
+    }
+
+    if (Upper.ult(CR.Lower) && Lower.ult(CR.Upper)) {
+      APInt d1 = CR.Lower - Upper, d2 = Lower - CR.Lower;
+
+      if (d1.ult(d2)) {
+        U = CR.Lower + 1;
+      } else {
+        L = CR.Lower;
+      }
+    }
+  }
+
+  if (isWrappedSet() && CR.isWrappedSet()) {
+    if (Lower.ult(CR.Upper) || CR.Lower.ult(Upper))
+      return ConstantRange(getBitWidth());
+
+    if (CR.Upper.ugt(U)) {
+      U = CR.Upper;
+    }
+
+    if (CR.Lower.ult(L)) {
+      L = CR.Lower;
+    }
+
+    if (L == U) return ConstantRange(getBitWidth());
+  }
 
   return ConstantRange(L, U);
 }
