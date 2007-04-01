@@ -46,6 +46,8 @@ def v2f32  : ValueType<64,  22>;   //  2 x f32 vector value
 def v4f32  : ValueType<128, 23>;   //  4 x f32 vector value
 def v2f64  : ValueType<128, 24>;   //  2 x f64 vector value
 
+// Pseudo valuetype to represent "integer of any bit width"
+def iAny   : ValueType<0  , 254>;   // integer value of any bit width
 
 // Pseudo valuetype mapped to the current pointer size.
 def iPTR   : ValueType<0  , 255>;
