@@ -4083,8 +4083,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       else if (Op0 == B)                                     // A^(B^A) == B
         return ReplaceInstUsesWith(I, A);
     } else if (match(Op1I, m_And(m_Value(A), m_Value(B))) && Op1I->hasOneUse()){
-      if (A == Op0)                                        // A^(A&B) -> A^(B&A)
+      if (A == Op0) {                                      // A^(A&B) -> A^(B&A)
         Op1I->swapOperands();
+        std::swap(A, B);
+      }
       if (B == Op0) {                                      // A^(B&A) -> (B&A)^A
         I.swapOperands();     // Simplified below.
         std::swap(Op0, Op1);
