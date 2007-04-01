@@ -188,6 +188,9 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
+/// FIXME: Need to carefully consider tentative definition rules (C99 6.9.2p2).
+/// For example, we incorrectly complain about i1, i4 from C99 6.9.2p4.
+/// 
 VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   // Verify the old decl was also a variable.
   VarDecl *Old = dyn_cast<VarDecl>(OldD);
@@ -270,17 +273,31 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       case DeclSpec::SCS_auto:        SC = ObjectDecl::Auto; break;
       case DeclSpec::SCS_register:    SC = ObjectDecl::Register; break;
     }
-    // C99 6.9.2p3: If the declaration of an identifier for an object is a 
-    // tentative definition and has internal linkage, the declared type shall 
-    // not be an incomplete type.
-    if ((S->getParent() == 0 && !Init && SC == ObjectDecl::None) || 
-        SC == ObjectDecl::Static) { 
-      // FIXME: need a check for internal linkage.
-      if (R->isIncompleteType()) {
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type, R);
-        return 0;
+    if (S->getParent() == 0) {
+      // File scope. C99 6.9.2p2: A declaration of an identifier for and 
+      // object that has file scope without an initializer, and without a
+      // storage-class specifier or with the storage-class specifier "static",
+      // constitutes a tentative definition. Note: A tentative definition with
+      // external linkage is valid (C99 6.2.2p5).
+      if (!Init && SC == ObjectDecl::Static) {
+        // C99 6.9.2p3: If the declaration of an identifier for an object is
+        // a tentative definition and has internal linkage (C99 6.2.2p3), the  
+        // declared type shall not be an incomplete type.
+        if (R->isIncompleteType()) {
+          Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type, R);
+          return 0;
+        }
       }
-    }
+    } else { 
+      // Block scope. C99 6.7p7: If an identifier for an object is declared with
+      // no linkage (C99 6.2.2p6), the type for the object shall be complete...
+      if (SC != ObjectDecl::Extern) {
+        if (R->isIncompleteType()) {
+          Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type, R);
+          return 0;
+        }
+      }
+	}
     VarDecl *NewVD = new VarDecl(D.getIdentifierLoc(), II, R, SC);
     
     // Merge the decl with the existing one if appropriate.
