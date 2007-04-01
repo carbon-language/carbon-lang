@@ -4587,6 +4587,52 @@ of src.  For example, <tt>llvm.cttz(2) = 1</tt>.
 </p>
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_cttz">'<tt>llvm.bit.concat.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.concat</tt> on any 
+integer bit width.
+<pre>
+  declare i32 @llvm.bit.concat.i32.i17.i15 (i17 %hi, i15 %lo)
+  declare i29 @llvm.bit.concat.i29(i16 %lo, i13 %lo)
+</pre>
+
+<h5>Overview:</h5>
+<p>
+The '<tt>llvm.bit.concat</tt>' family of intrinsic functions concatenates two
+integer values to produce a longer one.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The two arguments may be any bit width. The result must be an integer whose bit
+width is the sum of the arguments' bit widths. The first argument represents the
+bits that will occupy the high order bit locations in the concatenated result.
+THe second argument will occupy the lower order bit locations in the result.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.bit.concat</tt>' intrinsic is the equivalent of two <tt>zext</tt>
+instructions, a <tt>shl</tt> and an <tt>or</tt>. This sequence can be
+implemented in hardware so this intrinsic assists with recognizing the sequence
+for code generation purposes.  The operation proceeds as follows:</p>
+<ol>
+  <li>Each of the arguments is <tt>zext</tt>'d to the result bit width.</li>
+  <li>The <tt>%hi</tt> argument is shift left by the width of the <tt>%lo</tt>
+  argument (shifted into to high order bits).</li>
+  <li>The shifted <tt>%hi</tt> value and <tt>%lo</tt> are <tt>or</tt>'d together
+  to form the result.</li>
+</ol>
+</div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="int_debugger">Debugger Intrinsics</a>
