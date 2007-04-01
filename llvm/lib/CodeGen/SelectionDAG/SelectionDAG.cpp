@@ -2644,7 +2644,7 @@ uint64_t SDNode::getConstantOperandVal(unsigned Num) const {
   return cast<ConstantSDNode>(OperandList[Num])->getValue();
 }
 
-const char *SDNode::getOperationName(const SelectionDAG *G) const {
+std::string SDNode::getOperationName(const SelectionDAG *G) const {
   switch (getOpcode()) {
   default:
     if (getOpcode() < ISD::BUILTIN_OP_END)
