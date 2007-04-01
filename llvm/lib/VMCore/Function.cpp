@@ -176,7 +176,7 @@ unsigned Function::getIntrinsicID() const {
   return 0;
 }
 
-const char *Intrinsic::getName(ID id) {
+std::string Intrinsic::getName(ID id, const Type **Tys, unsigned numTys) { 
   assert(id < num_intrinsics && "Invalid intrinsic ID!");
   const char * const Table[] = {
     "not_intrinsic",
@@ -184,10 +184,17 @@ const char *Intrinsic::getName(ID id) {
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_NAME_TABLE
   };
-  return Table[id];
+  if (numTys == 0)
+    return Table[id];
+  std::string Result(Table[id]);
+  for (unsigned i = 0; i < numTys; ++i) 
+    if (Tys[i])
+      Result += "." + Tys[i]->getDescription();
+  return Result;
 }
 
-const FunctionType *Intrinsic::getType(ID id) {
+const FunctionType *Intrinsic::getType(ID id, const Type **Tys, 
+                                       uint32_t numTys) {
   const Type *ResultTy = NULL;
   std::vector<const Type*> ArgTys;
   std::vector<FunctionType::ParameterAttributes> Attrs;
@@ -200,10 +207,12 @@ const FunctionType *Intrinsic::getType(ID id) {
   return FunctionType::get(ResultTy, ArgTys, IsVarArg, Attrs); 
 }
 
-Function *Intrinsic::getDeclaration(Module *M, ID id) {
+Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys, 
+                                    unsigned numTys) {
 // There can never be multiple globals with the same name of different types,
 // because intrinsics must be a specific type.
-  return cast<Function>(M->getOrInsertFunction(getName(id), getType(id)));
+  return cast<Function>(M->getOrInsertFunction(getName(id, Tys, numTys), 
+                                               getType(id, Tys, numTys)));
 }
 
 Value *IntrinsicInst::StripPointerCasts(Value *Ptr) {
