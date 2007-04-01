@@ -43,6 +43,7 @@ std::string llvm::getName(MVT::ValueType T) {
   case MVT::i32:   return "MVT::i32";
   case MVT::i64:   return "MVT::i64";
   case MVT::i128:  return "MVT::i128";
+  case MVT::iAny:  return "MVT::iAny";
   case MVT::f32:   return "MVT::f32";
   case MVT::f64:   return "MVT::f64";
   case MVT::f80:   return "MVT::f80";
@@ -74,6 +75,7 @@ std::string llvm::getEnumName(MVT::ValueType T) {
   case MVT::i32:   return "MVT::i32";
   case MVT::i64:   return "MVT::i64";
   case MVT::i128:  return "MVT::i128";
+  case MVT::iAny:  return "MVT::iAny";
   case MVT::f32:   return "MVT::f32";
   case MVT::f64:   return "MVT::f64";
   case MVT::f80:   return "MVT::f80";
@@ -570,6 +572,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
   TheDef = R;
   std::string DefName = R->getName();
   ModRef = WriteMem;
+  isOverloaded = false;
   
   if (DefName.size() <= 4 || 
       std::string(DefName.begin(), DefName.begin()+4) != "int_")
@@ -610,13 +613,14 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
-    
-    if (CGT)
-      ArgVTs.push_back(getValueType(TyEl->getValueAsDef("VT"), CGT));
+    MVT::ValueType VT = getValueType(TyEl->getValueAsDef("VT"), CGT);
+    isOverloaded |= VT == MVT::iAny;
+    ArgVTs.push_back(VT);
     ArgTypeDefs.push_back(TyEl);
   }
   if (ArgTypes.size() == 0)
     throw "Intrinsic '"+DefName+"' needs at least a type for the ret value!";
+
   
   // Parse the intrinsic properties.
   ListInit *PropList = R->getValueAsListInit("Properties");

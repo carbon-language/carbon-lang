@@ -24,7 +24,7 @@ namespace llvm {
   class CodeGenTarget;
 
   struct CodeGenIntrinsic {
-    Record *TheDef;            // The actual record defining this instruction.
+    Record *TheDef;            // The actual record defining this intrinsic.
     std::string Name;          // The name of the LLVM function "llvm.bswap.i32"
     std::string EnumName;      // The name of the enum "bswap_i32"
     std::string GCCBuiltinName;// Name of the corresponding GCC builtin, or "".
@@ -48,6 +48,10 @@ namespace llvm {
     enum {
       NoMem, ReadArgMem, ReadMem, WriteArgMem, WriteMem
     } ModRef;
+
+    // This is set to true if the intrinsic is overloaded by its argument
+    // types.
+    bool isOverloaded;
 
     CodeGenIntrinsic(Record *R, CodeGenTarget *CGT);
   };

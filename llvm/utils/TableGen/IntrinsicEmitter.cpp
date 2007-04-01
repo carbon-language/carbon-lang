@@ -74,9 +74,9 @@ void IntrinsicEmitter::
 EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints, 
                      std::ostream &OS) {
   // Build a function name -> intrinsic name mapping.
-  std::map<std::string, std::string> IntMapping;
+  std::map<std::string, unsigned> IntMapping;
   for (unsigned i = 0, e = Ints.size(); i != e; ++i)
-    IntMapping[Ints[i].Name] = Ints[i].EnumName;
+    IntMapping[Ints[i].Name] = i;
     
   OS << "// Function name -> enum value recognizer code.\n";
   OS << "#ifdef GET_FUNCTION_RECOGNIZER\n";
@@ -84,7 +84,7 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "  default:\n";
   // Emit the intrinsics in sorted order.
   char LastChar = 0;
-  for (std::map<std::string, std::string>::iterator I = IntMapping.begin(),
+  for (std::map<std::string, unsigned>::iterator I = IntMapping.begin(),
        E = IntMapping.end(); I != E; ++I) {
     if (I->first[5] != LastChar) {
       LastChar = I->first[5];
@@ -92,9 +92,15 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
       OS << "  case '" << LastChar << "':\n";
     }
     
-    OS << "    if (Len == " << I->first.size()
-       << " && !memcmp(Name, \"" << I->first << "\", Len)) return Intrinsic::"
-       << I->second << ";\n";
+    // For overloaded intrinsics, only the prefix needs to match
+    if (Ints[I->second].isOverloaded)
+      OS << "    if (Len >= " << I->first.size()
+       << " && !memcmp(Name, \"" << I->first << "\", " << I->first.size()
+       << ")) return Intrinsic::" << Ints[I->second].EnumName << ";\n";
+    else 
+      OS << "    if (Len == " << I->first.size()
+         << " && !memcmp(Name, \"" << I->first << "\", Len)) return Intrinsic::"
+         << Ints[I->second].EnumName << ";\n";
   }
   OS << "  }\n";
   OS << "  // The 'llvm.' namespace is reserved!\n";
@@ -130,16 +136,20 @@ static bool EmitTypeVerify(std::ostream &OS, Record *ArgType) {
   return false;
 }
 
-static void EmitTypeGenerate(std::ostream &OS, Record *ArgType) {
+static void EmitTypeGenerate(std::ostream &OS, Record *ArgType, unsigned ArgNo){
   if (ArgType->isSubClassOf("LLVMIntegerType")) {
-    OS << "IntegerType::get(" << ArgType->getValueAsInt("Width") << ")";
+    unsigned BitWidth = ArgType->getValueAsInt("Width");
+    if (BitWidth == 0)
+      OS << "Tys[" << ArgNo << "]";
+    else
+      OS << "IntegerType::get(" << BitWidth << ")";
   } else if (ArgType->isSubClassOf("LLVMVectorType")) {
     OS << "VectorType::get(";
-    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"));
+    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
     OS << ", " << ArgType->getValueAsInt("NumElts") << ")";
   } else if (ArgType->isSubClassOf("LLVMPointerType")) {
     OS << "PointerType::get(";
-    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"));
+    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
     OS << ")";
   } else if (ArgType->isSubClassOf("LLVMEmptyStructType")) {
     OS << "StructType::get(std::vector<const Type *>())";
@@ -194,7 +204,7 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
     }
     
     const std::vector<Record*> &ArgTypes = I->first;
-    OS << "    VerifyIntrinsicPrototype(IF, ";
+    OS << "    VerifyIntrinsicPrototype(ID, IF, ";
     bool VarArg = false;
     for (unsigned j = 0; j != ArgTypes.size(); ++j) {
       VarArg = EmitTypeVerify(OS, ArgTypes[j]);
@@ -246,12 +256,12 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
     }
     
     OS << "    ResultTy = ";
-    EmitTypeGenerate(OS, ArgTypes[0]);
+    EmitTypeGenerate(OS, ArgTypes[0], 0);
     OS << ";\n";
     
     for (unsigned j = 1; j != N; ++j) {
       OS << "    ArgTys.push_back(";
-      EmitTypeGenerate(OS, ArgTypes[j]);
+      EmitTypeGenerate(OS, ArgTypes[j], j);
       OS << ");\n";
     }
     
