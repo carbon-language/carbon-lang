@@ -433,18 +433,17 @@ llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
           break;
       }
     } else if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
-      const IntegerType *OpTy = cast<IntegerType>(Op->getType());
       if (Name.size() > 11 && !memcmp(&Name[0], "llvm.bswap", 10)) {
         return ConstantInt::get(Op->getValue().byteSwap());
       } else if (Name.size() > 11 && !memcmp(&Name[0],"llvm.ctpop",10)) {
         uint64_t ctpop = Op->getValue().countPopulation();
-        return ConstantInt::get(OpTy, ctpop);
+        return ConstantInt::get(Type::Int32Ty, ctpop);
       } else if (Name.size() > 10 && !memcmp(&Name[0], "llvm.cttz", 9)) {
         uint64_t cttz = Op->getValue().countTrailingZeros();
-        return ConstantInt::get(OpTy, cttz);
+        return ConstantInt::get(Type::Int32Ty, cttz);
       } else if (Name.size() > 10 && !memcmp(&Name[0], "llvm.ctlz", 9)) {
         uint64_t ctlz = Op->getValue().countLeadingZeros();
-        return ConstantInt::get(OpTy, ctlz);
+        return ConstantInt::get(Type::Int32Ty, ctlz);
       }
     }
   } else if (NumOperands == 2) {
