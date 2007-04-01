@@ -78,7 +78,8 @@ class LLVMEmptyStructType
 } 
 
 def llvm_void_ty       : LLVMType<isVoid, "Type::VoidTyID">;
-def llvm_bool_ty       : LLVMIntegerType<i1, 1>;
+def llvm_int_ty        : LLVMIntegerType<iAny, 0>;
+def llvm_i1_ty         : LLVMIntegerType<i1 , 1>;
 def llvm_i8_ty         : LLVMIntegerType<i8 , 8>;
 def llvm_i16_ty        : LLVMIntegerType<i16, 16>;
 def llvm_i32_ty        : LLVMIntegerType<i32, 32>;
@@ -202,24 +203,10 @@ def int_siglongjmp : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_i32_ty]>;
 
 // None of these intrinsics accesses memory at all.
 let Properties = [IntrNoMem] in {
-  def int_bswap_i16 : Intrinsic<[llvm_i16_ty, llvm_i16_ty]>;
-  def int_bswap_i32 : Intrinsic<[llvm_i32_ty,   llvm_i32_ty]>;
-  def int_bswap_i64 : Intrinsic<[llvm_i64_ty,  llvm_i64_ty]>;
-
-  def int_ctpop_i8  : Intrinsic<[llvm_i8_ty,  llvm_i8_ty]>;
-  def int_ctpop_i16 : Intrinsic<[llvm_i16_ty, llvm_i16_ty]>;
-  def int_ctpop_i32 : Intrinsic<[llvm_i32_ty,   llvm_i32_ty]>;
-  def int_ctpop_i64 : Intrinsic<[llvm_i64_ty,  llvm_i64_ty]>;
-  
-  def int_ctlz_i8  : Intrinsic<[llvm_i8_ty,  llvm_i8_ty]>;
-  def int_ctlz_i16 : Intrinsic<[llvm_i16_ty, llvm_i16_ty]>;
-  def int_ctlz_i32 : Intrinsic<[llvm_i32_ty,   llvm_i32_ty]>;
-  def int_ctlz_i64 : Intrinsic<[llvm_i64_ty,  llvm_i64_ty]>;
-
-  def int_cttz_i8  : Intrinsic<[llvm_i8_ty,  llvm_i8_ty]>;
-  def int_cttz_i16 : Intrinsic<[llvm_i16_ty, llvm_i16_ty]>;
-  def int_cttz_i32 : Intrinsic<[llvm_i32_ty,   llvm_i32_ty]>;
-  def int_cttz_i64 : Intrinsic<[llvm_i64_ty,  llvm_i64_ty]>;
+  def int_bswap: Intrinsic<[llvm_int_ty, llvm_int_ty]>;
+  def int_ctpop: Intrinsic<[llvm_i32_ty, llvm_int_ty]>;
+  def int_ctlz : Intrinsic<[llvm_i32_ty, llvm_int_ty]>;
+  def int_cttz : Intrinsic<[llvm_i32_ty, llvm_int_ty]>;
 } 
 
 //===------------------------ Debugger Intrinsics -------------------------===//
