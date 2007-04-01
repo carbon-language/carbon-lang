@@ -4589,7 +4589,261 @@ of src.  For example, <tt>llvm.cttz(2) = 1</tt>.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_cttz">'<tt>llvm.bit.concat.*</tt>' Intrinsic</a>
+  <a name="int_bit_and_reduce">'<tt>llvm.bit.and.reduce.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.and.reduce</tt> on
+any integer bit width.
+<pre>
+  declare i1 @llvm.bit.and.reduce.i32(i32 %val)
+  declare i1 @llvm.bit.and.reduce.i97(i97 %val)
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.and.reduce</tt>' family of intrinsic functions applies the
+AND operator bitwise to each bit in <tt>%val</tt> until it yields the result.
+</p>
+
+<h5>Arguments:</h5>
+<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.and.reduce</tt>' intrinsic is the equivalent of a test
+against <tt>-1</tt>. Only if all bits in <tt>%val</tt> are set will the result
+be 1, otherwise 0.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_or_reduce">'<tt>llvm.bit.or.reduce.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.or.reduce</tt> on
+any integer bit width.
+<pre>
+  declare i1 @llvm.bit.or.reduce.i32(i32 %val)
+  declare i1 @llvm.bit.or.reduce.i97(i97 %val)
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.or.reduce</tt>' family of intrinsic functions applies the
+OR operator bitwise to each bit in <tt>%val</tt> until it yields the result.
+</p>
+
+<h5>Arguments:</h5>
+<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.or.reduce</tt>' intrinsic is the equivalent of a test
+against <tt>0</tt>. Only if all bits in <tt>%val</tt> are clear will the result
+be 0, otherwise 1.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_xor_reduce">'<tt>llvm.bit.xor.reduce.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.xor.reduce</tt> on
+any integer bit width.
+<pre>
+  declare i1 @llvm.bit.xor.reduce.i32(i32 %val)
+  declare i1 @llvm.bit.xor.reduce.i97(i97 %val)
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.xor.reduce</tt>' family of intrinsic functions applies the
+XOR operator bitwise to each bit in <tt>%val</tt> until it yields the result.
+</p>
+
+<h5>Arguments:</h5>
+<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.xor.reduce</tt>' computes its result by performing an XOR
+operation on the two lowest order bits in <tt>%val</tt>. That result is then
+XOR'd with the next bit in <tt>%val</tt> and this process continues until all
+bits in <tt>%val</tt> have been XOR'd with the result of the previous XORs. The
+resulting bit is returned.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_nand_reduce">'<tt>llvm.bit.nand.reduce.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.nand.reduce</tt> on
+any integer bit width.
+<pre>
+  declare i1 @llvm.bit.nand.reduce.i32(i32 %val)
+  declare i1 @llvm.bit.nand.reduce.i97(i97 %val)
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.nand.reduce</tt>' family of intrinsic functions applies the
+NAND operator bitwise to each bit in <tt>%val</tt> until it yields the result.
+</p>
+
+<h5>Arguments:</h5>
+<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.nand.reduce</tt>' intrinsic is the equivalent of taking the
+complement of the <tt>llvm.bit.and.reduce</tt> intrinsic. That is, it returns 0
+if <tt>%val</tt> is all ones (-1) and 1 otherwise.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_nor_reduce">'<tt>llvm.bit.nor.reduce.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.nor.reduce</tt> on
+any integer bit width.
+<pre>
+  declare i1 @llvm.bit.nor.reduce.i32(i32 %val)
+  declare i1 @llvm.bit.nor.reduce.i97(i97 %val)
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.nor.reduce</tt>' family of intrinsic functions applies the
+NOR operator bitwise to each bit in <tt>%val</tt> until it yields the result.
+</p>
+
+<h5>Arguments:</h5>
+<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.nor.reduce</tt>' intrinsic is equivalent to the complement
+of the <tt>llvm.bit.or.reduce</tt> intrinsic. That is, it returns 1 if all bits
+in <tt>%val</tt> are 0, and 1 otherwise.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_nxor_reduce">'<tt>llvm.bit.nxor.reduce.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.nxor.reduce</tt> on
+any integer bit width.
+<pre>
+  declare i1 @llvm.bit.nxor.reduce.i32(i32 %val)
+  declare i1 @llvm.bit.nxor.reduce.i97(i97 %val)
+</pre>
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.nxor.reduce</tt>' family of intrinsic functions applies the
+AND operator bitwise to each bit in <tt>%val</tt> until it yields the result.
+</p>
+
+<h5>Arguments:</h5>
+<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.nxor.reduce</tt>' intrinsic is the equivalent of the
+complement of the <tt>llvm.bit.xor.reduce</tt> intrinsic.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_select">'<tt>llvm.bit.select.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.select</tt> on any 
+integer bit width.
+<pre>
+  declare i1 @llvm.bit.select.i17  (i17 %val, i32 %bit)
+  declare i1 @llvm.bit.select.i29  (i29 %val, i32 %bit)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.select</tt>' family of intrinsic functions selects a
+specific bit from an integer value and returns it.</p>
+
+<h5>Arguments:</h5>
+<p>The two arguments may be any bit width. The result is always a 1-bit
+integer. The first argument, <tt>%val</tt> may be any bit width and is the 
+value from which the bit is selected. The second argument, <tt>%bit</tt> must
+be an <tt>i32</tt> and is the bit index of the bit to be selected. Bits are 
+numbered starting with 0 as the lowest ordered bit.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.select</tt>' intrinsic is the equivalent of shift and a
+truncate operation. The <tt>%val</tt> is shifted right by <tt>%bit</tt> bits and
+then truncated to a 1-bit integer.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_set">'<tt>llvm.bit.set.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.set</tt> on any 
+integer bit width.
+<pre>
+  declare i17 @llvm.bit.set.i17.i17 (i17 %val, i32 %bit)
+  declare i52 @llvm.bit.set.i52.i52 (i52 %val, i32 %bit)
+</pre>
+
+<h5>Overview:</h5>
+<p>
+The '<tt>llvm.bit.set</tt>' family of intrinsic functions sets a specific bit in
+a <tt>%val</tt> and returns the result.</p>
+
+<h5>Arguments:</h5>
+<p>The result and the first argument, <tt>%val</tt>, may be an integer of any
+bit width, but they must be the same bit width.  The second argument must be an
+<tt>i32</tt>.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.set</tt>' intrinsic is the equivalent of creating a bit
+mask for the <tt>%bit</tt> requested in the width of <tt>%val</tt>, ORing that
+mask with <tt>%val</tt> and returning the result.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_clear">'<tt>llvm.bit.clear.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.clear</tt> on any 
+integer bit width.
+<pre>
+  declare i17 @llvm.bit.clear.i17.i17 (i17 %val, i32 %bit)
+  declare i29 @llvm.bit.clear.i29.i29 (i29 %val, i32 %bit)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.clear</tt>' family of intrinsic functions clears a specific
+bit in a value and returns the result.</p>
+
+<h5>Arguments:</h5>
+<p>The result and the first argument, <tt>%val</tt>, may be an integer of any
+bit width, but they must be the same bit width.  The second argument must be an
+<tt>i32</tt>.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.clear</tt>' intrinsic is the equivalent of making a bit
+mask in the width of <tt>%val</tt> but with the bit at index <tt>%bit</tt> set 
+to zero, ANDing that mask with <tt>%val</tt> and returning the result.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_concat">'<tt>llvm.bit.concat.*</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -4599,37 +4853,108 @@ of src.  For example, <tt>llvm.cttz(2) = 1</tt>.
 integer bit width.
 <pre>
   declare i32 @llvm.bit.concat.i32.i17.i15 (i17 %hi, i15 %lo)
-  declare i29 @llvm.bit.concat.i29(i16 %lo, i13 %lo)
+  declare i29 @llvm.bit.concat.i29.i12.i15 (i12 %hi, i15 %lo)
 </pre>
 
 <h5>Overview:</h5>
-<p>
-The '<tt>llvm.bit.concat</tt>' family of intrinsic functions concatenates two
-integer values to produce a longer one.
-</p>
+<p>The '<tt>llvm.bit.concat</tt>' family of intrinsic functions concatenates two
+integer values to produce a longer one.</p>
 
 <h5>Arguments:</h5>
-
-<p>
-The two arguments may be any bit width. The result must be an integer whose bit
-width is the sum of the arguments' bit widths. The first argument represents the
-bits that will occupy the high order bit locations in the concatenated result.
-THe second argument will occupy the lower order bit locations in the result.
-</p>
+<p>The two arguments may be any bit width. The result must be an integer type 
+whose bit width is the sum of the arguments' bit widths. The first argument,
+<tt>%hi</tt>, represents the bits that will occupy the high order bit locations
+in the concatenated result.  The second argument, <tt>%lo</tt>, will occupy the
+lower order bit locations in the result.</p>
 
 <h5>Semantics:</h5>
 
-<p>
-The '<tt>llvm.bit.concat</tt>' intrinsic is the equivalent of two <tt>zext</tt>
-instructions, a <tt>shl</tt> and an <tt>or</tt>. This sequence can be
-implemented in hardware so this intrinsic assists with recognizing the sequence
-for code generation purposes.  The operation proceeds as follows:</p>
+<p>The '<tt>llvm.bit.concat</tt>' intrinsic is the equivalent of two 
+<tt>zext</tt> instructions, a <tt>shl</tt> and an <tt>or</tt>.  The operation 
+proceeds as follows:</p>
 <ol>
   <li>Each of the arguments is <tt>zext</tt>'d to the result bit width.</li>
   <li>The <tt>%hi</tt> argument is shift left by the width of the <tt>%lo</tt>
   argument (shifted into to high order bits).</li>
   <li>The shifted <tt>%hi</tt> value and <tt>%lo</tt> are <tt>or</tt>'d together
   to form the result.</li>
+</ol>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_part_select">'<tt>llvm.bit.part.select.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.part.select</tt> 
+on any integer bit width.
+<pre>
+  declare i17 @llvm.bit.part.select.i17.i17 (i17 %val, i32 %loBit, i32 %hiBit)
+  declare i29 @llvm.bit.part.select.i29.i29 (i29 %val, i32 %loBit, i32 %hiBit)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.part.select</tt>' family of intrinsic functions selects a
+range of bits from an integer value and returns them in the same bit width as
+the original value.</p>
+
+<h5>Arguments:</h5>
+<p>The first argument, <tt>%val</tt> and the result may be integer types of 
+any bit width but they must have the same bit width. The second and third 
+arguments must be <tt>i32</tt> type.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.part.select</tt>' intrinsic is the equivalent of shifting
+<tt>%val</tt> right by <tt>%loBit</tt> bits and then ANDing it with a mask with
+only the <tt>%hiBit - %loBit</tt> bits set, as follows:</p>
+<ol>
+  <li>The <tt>%val</tt> is shifted right (LSHR) by the number of bits specified
+  by <tt>%loBits</tt>. This normalizes the value to the low order bits.</li>
+  <li>The <tt>%loBits</tt> value is subtracted from the <tt>%hiBits</tt> value
+  to determine the number of bits to retain.</li>
+  <li>A mask of the retained bits is created by shifting a -1 value.</li>
+  <li>The mask is ANDed with <tt>%val</tt> to produce the result.
+</ol>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_bit_part_set">'<tt>llvm.bit.part.set.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.part.set</tt> on 
+any integer bit width.
+<pre>
+  declare i17 @llvm.bit.part.set.i17.i17.i9 (i17 %val, i32 %bit, i9 %newbits)
+  declare i29 @llvm.bit.part.set.i29.i29.i13(i29 %val, i32 %bit, i13 %newbits)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.bit.part.set</tt>' family of intrinsic functions sets a range
+of bits in a given value to a new value and returns the result.</p>
+
+<h5>Arguments:</h5>
+<p>The first argument and the result may be an integer type of any bit width but
+they must have the same bit width. The second argument must be an <tt>i32</tt>.
+The third argument may be any any bit width less than or equal to the bit width
+of the first argument.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>llvm.bit.part.set</tt>' intrinsic sets the value given by
+<tt>%newbits</tt> into <tt>%val</tt> at the bit index given by <tt>%bit</tt>.
+This is equivalent to the following sequence:</p>
+<ol>
+  <li>The bits in <tt>%val</tt> starting at <tt>%bit</tt> and up to the width
+  of <tt>%newbits</tt> are cleared by ANDing them with a zero mask.</li>
+  <li>The bits in <tt>%newbits</tt> are shifted left by <tt>%bit</tt> bits.
+  <li>The shifted <tt>%newbits</tt> value is OR'd into <tt>%val</tt> to produce
+  the result.</li>
 </ol>
 </div>
 
