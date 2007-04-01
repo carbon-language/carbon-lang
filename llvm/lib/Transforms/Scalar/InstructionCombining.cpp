@@ -1870,7 +1870,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
       // X + (signbit) --> X ^ signbit
-      APInt Val(CI->getValue());
+      const APInt& Val = CI->getValue();
       unsigned BitWidth = Val.getBitWidth();
       if (Val == APInt::getSignBit(BitWidth))
         return BinaryOperator::createXor(LHS, RHS);
@@ -1894,7 +1894,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (isa<ConstantInt>(RHSC) &&
         match(LHS, m_Xor(m_Value(XorLHS), m_ConstantInt(XorRHS)))) {
       unsigned TySizeBits = I.getType()->getPrimitiveSizeInBits();
-      APInt RHSVal(cast<ConstantInt>(RHSC)->getValue());
+      const APInt& RHSVal = cast<ConstantInt>(RHSC)->getValue();
       
       unsigned Size = TySizeBits / 2;
       APInt C0080Val(APInt(TySizeBits, 1ULL).shl(Size - 1));
@@ -1999,14 +1999,13 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (Anded == CRHS) {
         // See if all bits from the first bit set in the Add RHS up are included
         // in the mask.  First, get the rightmost bit.
-        APInt AddRHSV(CRHS->getValue());
+        const APInt& AddRHSV = CRHS->getValue();
 
         // Form a mask of all bits from the lowest bit added through the top.
-        APInt AddRHSHighBits = ~((AddRHSV & -AddRHSV)-1);
-        AddRHSHighBits &= C2->getType()->getMask();
+        APInt AddRHSHighBits(~((AddRHSV & -AddRHSV)-1));
 
         // See if the and mask includes all of these bits.
-        APInt AddRHSHighBitsAnd = AddRHSHighBits & C2->getValue();
+        APInt AddRHSHighBitsAnd(AddRHSHighBits & C2->getValue());
 
         if (AddRHSHighBits == AddRHSHighBitsAnd) {
           // Okay, the xform is safe.  Insert the new add pronto.
@@ -2451,7 +2450,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   if (BinaryOperator *RHSI = dyn_cast<BinaryOperator>(I.getOperand(1))) {
     if (RHSI->getOpcode() == Instruction::Shl &&
         isa<ConstantInt>(RHSI->getOperand(0))) {
-      APInt C1(cast<ConstantInt>(RHSI->getOperand(0))->getValue());
+      const APInt& C1 = cast<ConstantInt>(RHSI->getOperand(0))->getValue();
       if (C1.isPowerOf2()) {
         Value *N = RHSI->getOperand(1);
         const Type *NTy = N->getType();
@@ -2469,7 +2468,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) 
     if (ConstantInt *STO = dyn_cast<ConstantInt>(SI->getOperand(1)))
       if (ConstantInt *SFO = dyn_cast<ConstantInt>(SI->getOperand(2)))  {
-        APInt TVA(STO->getValue()), FVA(SFO->getValue());
+        const APInt &TVA = STO->getValue(), &FVA = SFO->getValue();
         if (TVA.isPowerOf2() && FVA.isPowerOf2()) {
           // Compute the shift amounts
           uint32_t TSA = TVA.logBase2(), FSA = FVA.logBase2();
@@ -2934,14 +2933,14 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       // Adding a one to a single bit bit-field should be turned into an XOR
       // of the bit.  First thing to check is to see if this AND is with a
       // single bit constant.
-      APInt AndRHSV(cast<ConstantInt>(AndRHS)->getValue());
+      const APInt& AndRHSV = cast<ConstantInt>(AndRHS)->getValue();
 
       // If there is only one bit set...
       if (isOneBitSet(cast<ConstantInt>(AndRHS))) {
         // Ok, at this point, we know that we are masking the result of the
         // ADD down to exactly one bit.  If the constant we are adding has
         // no bits set below this bit, then we can eliminate the ADD.
-        APInt AddRHS(cast<ConstantInt>(OpRHS)->getValue());
+        const APInt& AddRHS = cast<ConstantInt>(OpRHS)->getValue();
 
         // Check to see if any bits below the one bit set in AndRHSV are set.
         if ((AddRHS & (AndRHSV-1)) == 0) {
@@ -3083,7 +3082,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
 // MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
 // not, since all 1s are not contiguous.
 static bool isRunOfOnes(ConstantInt *Val, unsigned &MB, unsigned &ME) {
-  APInt V = Val->getValue();
+  const APInt& V = Val->getValue();
   uint32_t BitWidth = Val->getType()->getBitWidth();
   if (!APIntOps::isShiftedMask(BitWidth, V)) return false;
 
@@ -3180,9 +3179,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   }
   
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
-    APInt AndRHSMask(AndRHS->getValue());
-    APInt TypeMask(cast<IntegerType>(Op0->getType())->getMask());
-    APInt NotAndRHS = AndRHSMask^TypeMask;
+    const APInt& AndRHSMask = AndRHS->getValue();
+    APInt NotAndRHS(~AndRHSMask);
 
     // Optimize a variety of ((val OP C1) & C2) combinations...
     if (isa<BinaryOperator>(Op0)) {
@@ -4675,7 +4673,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if ((KnownOne | KnownZero) != 0) {
       // Compute the Min, Max and RHS values based on the known bits. For the
       // EQ and NE we use unsigned values.
-      APInt Min(BitWidth, 0), Max(BitWidth, 0), RHSVal(CI->getValue());
+      APInt Min(BitWidth, 0), Max(BitWidth, 0);
+      const APInt& RHSVal = CI->getValue();
       if (ICmpInst::isSignedPredicate(I.getPredicate())) {
         ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, Min, 
                                                Max);
@@ -5078,7 +5077,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           // If we have a signed (X % (2^c)) == 0, turn it into an unsigned one.
           if (CI->isZero() && isa<ConstantInt>(BO->getOperand(1)) &&
               BO->hasOneUse()) {
-            APInt V(cast<ConstantInt>(BO->getOperand(1))->getValue());
+            const APInt& V = cast<ConstantInt>(BO->getOperand(1))->getValue();
             if (V.sgt(APInt(V.getBitWidth(), 1)) && V.isPowerOf2()) {
               Value *NewRem = InsertNewInstBefore(BinaryOperator::createURem(
                   BO->getOperand(0), BO->getOperand(1), BO->getName()), I);
@@ -5789,7 +5788,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       }
       // If we have ((X << C) >>u C), turn this into X & (-1 >>u C).
       if (I.getOpcode() == Instruction::LShr) {
-        APInt Mask(Ty->getMask().lshr(ShiftAmt1));
+        APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt1));
         return BinaryOperator::createAnd(X, ConstantInt::get(Mask));
       }
       // We can simplify ((X << C) >>s C) into a trunc + sext.
@@ -6380,7 +6379,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     // to an integer, then shift the bit to the appropriate place and then
     // cast to integer to avoid the comparison.
     if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-      APInt Op1CV(Op1C->getValue());
+      const APInt& Op1CV = Op1C->getValue();
       // cast (X == 0) to int --> X^1      iff X has only the low bit set.
       // cast (X == 0) to int --> (X>>1)^1 iff X has only the 2nd bit set.
       // cast (X == 1) to int --> X        iff X has only the low bit set.
