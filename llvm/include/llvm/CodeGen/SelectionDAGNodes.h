@@ -911,7 +911,7 @@ public:
 
   /// getOperationName - Return the opcode of this operation for printing.
   ///
-  const char* getOperationName(const SelectionDAG *G = 0) const;
+  std::string getOperationName(const SelectionDAG *G = 0) const;
   static const char* getIndexedModeName(ISD::MemIndexedMode AM);
   void dump() const;
   void dump(const SelectionDAG *G) const;
