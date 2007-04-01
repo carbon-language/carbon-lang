@@ -212,7 +212,7 @@ namespace {  // Anonymous namespace for class
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
 
-    void VerifyIntrinsicPrototype(Function *F, ...);
+    void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F, ...);
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -961,12 +961,17 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 /// VerifyIntrinsicPrototype - TableGen emits calls to this function into
 /// Intrinsics.gen.  This implements a little state machine that verifies the
 /// prototype of intrinsics.
-void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
+void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F, ...) {
   va_list VA;
   va_start(VA, F);
   
   const FunctionType *FTy = F->getFunctionType();
   
+  // For overloaded intrinsics, the Suffix of the function name must match the
+  // types of the arguments. This variable keeps track of the expected
+  // suffix, to be checked at the end.
+  std::string Suffix;
+
   // Note that "arg#0" is the return type.
   for (unsigned ArgNo = 0; 1; ++ArgNo) {
     int TypeID = va_arg(VA, int);
@@ -987,7 +992,7 @@ void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
     }
     
     const Type *Ty;
-    if (ArgNo == 0) 
+    if (ArgNo == 0)
       Ty = FTy->getReturnType();
     else
       Ty = FTy->getParamType(ArgNo-1);
@@ -1001,10 +1006,12 @@ void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
     }
 
     if (TypeID == Type::IntegerTyID) {
-      unsigned GotBits = (unsigned) va_arg(VA, int);
-      unsigned ExpectBits = cast<IntegerType>(Ty)->getBitWidth();
-      if (GotBits != ExpectBits) {
-        std::string bitmsg = " Expecting " + utostr(ExpectBits) + " but got " +
+      unsigned ExpectedBits = (unsigned) va_arg(VA, int);
+      unsigned GotBits = cast<IntegerType>(Ty)->getBitWidth();
+      if (ExpectedBits == 0) {
+        Suffix += ".i" + utostr(GotBits);
+      } else if (GotBits != ExpectedBits) {
+        std::string bitmsg = " Expected " + utostr(ExpectedBits) + " but got "+
                              utostr(GotBits) + " bits.";
         if (ArgNo == 0)
           CheckFailed("Intrinsic prototype has incorrect integer result width!"
@@ -1013,6 +1020,21 @@ void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
           CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " has "
                       "incorrect integer width!" + bitmsg, F);
         break;
+      }
+      // Check some constraints on various intrinsics.
+      switch (ID) {
+        default: break; // Not everything needs to be checked.
+        case Intrinsic::bswap:
+          if (GotBits < 16 || GotBits % 16 != 0)
+            CheckFailed("Intrinsic requires even byte width argument", F);
+          if (ArgNo == 1) {
+            unsigned ResultBits = 
+              cast<IntegerType>(FTy->getReturnType())->getBitWidth();
+            if (GotBits != ResultBits)
+              CheckFailed("Intrinsic requires parameter and result bit "
+                          "widths to match", F);
+          }
+          break;
       }
     } else if (TypeID == Type::VectorTyID) {
       // If this is a packed argument, verify the number and type of elements.
@@ -1042,6 +1064,19 @@ void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
   }
 
   va_end(VA);
+
+  // If we computed a Suffix then the intrinsic is overloaded and we need to 
+  // make sure that the name of the function is correct. We add the suffix to
+  // the name of the intrinsic and compare against the given function name. If
+  // they are not the same, the function name is invalid. This ensures that
+  // overloading of intrinsics uses a sane and consistent naming convention.
+  if (!Suffix.empty()) {
+    std::string Name(Intrinsic::getName(ID));
+    if (Name + Suffix != F->getName())
+      CheckFailed("Overloaded intrinsic has incorrect suffix: '" +
+                  F->getName().substr(Name.length()) + "'. It should be '" +
+                  Suffix + "'", F);
+  }
 }
 
 
