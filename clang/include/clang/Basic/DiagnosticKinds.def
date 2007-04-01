@@ -504,6 +504,8 @@ DIAG(err_typecheck_not_modifiable, ERROR,
      "cannot modify read-only value of type '%s'")
 DIAG(err_typecheck_arithmetic_incomplete_type, ERROR,
      "arithmetic on pointer to incomplete type '%s'")
+DIAG(err_typecheck_decl_incomplete_type, ERROR,
+     "variable has incomplete type '%s'")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

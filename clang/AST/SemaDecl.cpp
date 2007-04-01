@@ -260,17 +260,28 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
     TypeRef R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0;
 
-    ObjectDecl::StorageClass S;
+    ObjectDecl::StorageClass SC;
     switch (D.getDeclSpec().getStorageClassSpec()) {
       default: assert(0 && "Unknown storage class!");
-      case 0: S = ObjectDecl::None;
-      case DeclSpec::SCS_extern:   S = ObjectDecl::Extern; break;
-      case DeclSpec::SCS_static:   S = ObjectDecl::Static; break;
+      case DeclSpec::SCS_unspecified: SC = ObjectDecl::None; break;
+      case DeclSpec::SCS_extern:      SC = ObjectDecl::Extern; break;
+      case DeclSpec::SCS_static:      SC = ObjectDecl::Static; break;
       // The following 2 should never be seen in this context.
-      case DeclSpec::SCS_auto:     S = ObjectDecl::Auto; break;
-      case DeclSpec::SCS_register: S = ObjectDecl::Register; break;
+      case DeclSpec::SCS_auto:        SC = ObjectDecl::Auto; break;
+      case DeclSpec::SCS_register:    SC = ObjectDecl::Register; break;
     }
-    VarDecl *NewVD = new VarDecl(D.getIdentifierLoc(), II, R, S);
+    // C99 6.9.2p3: If the declaration of an identifier for an object is a 
+    // tentative definition and has internal linkage, the declared type shall 
+    // not be an incomplete type.
+    if ((S->getParent() == 0 && !Init && SC == ObjectDecl::None) || 
+        SC == ObjectDecl::Static) { 
+      // FIXME: need a check for internal linkage.
+      if (R->isIncompleteType()) {
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type, R);
+        return 0;
+      }
+    }
+    VarDecl *NewVD = new VarDecl(D.getIdentifierLoc(), II, R, SC);
     
     // Merge the decl with the existing one if appropriate.
     if (PrevDecl) {

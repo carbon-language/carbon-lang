@@ -266,20 +266,24 @@ Action::ExprResult Sema::
 ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
-  TypeRef BT = ((Expr *)Base)->getTypeRef();
-
-  assert(!BT.isNull() && "no type for member expression");
+  TypeRef qualifiedType = ((Expr *)Base)->getTypeRef();
+  
+  assert(!qualifiedType.isNull() && "no type for member expression");
+  
+  Type *canonType = qualifiedType->getCanonicalType();
 
   if (OpKind == tok::arrow) {
-    if (PointerType *PT = dyn_cast<PointerType>(BT))
-      BT = PT->getPointeeType();
-    else
+    if (PointerType *PT = dyn_cast<PointerType>(canonType)) {
+      qualifiedType = PT->getPointeeType();
+	  canonType = qualifiedType->getCanonicalType();
+    } else
       return Diag(OpLoc, diag::err_typecheck_member_reference_arrow);
   }
-  if (isa<RecordType>(BT)) { // get the struct/union definition from the type.
-    RecordDecl *RD = cast<RecordType>(BT)->getDecl();
+  if (isa<RecordType>(canonType)) { 
+    // get the struct/union definition from the type.
+    RecordDecl *RD = cast<RecordType>(canonType)->getDecl();
     
-    if (BT->isIncompleteType())
+    if (canonType->isIncompleteType())
       return Diag(OpLoc, diag::err_typecheck_incomplete_tag, RD->getName());
     
     if (FieldDecl *MemberDecl = RD->getMember(&Member))
