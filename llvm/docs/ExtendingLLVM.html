@@ -87,7 +87,10 @@ function and then be turned into an instruction if warranted.</p>
 
 <li><tt>llvm/include/llvm/Intrinsics*.td</tt>:
     Add an entry for your intrinsic.  Describe its memory access characteristics
-    for optimization (this controls whether it will be DCE'd, CSE'd, etc).</li>
+    for optimization (this controls whether it will be DCE'd, CSE'd, etc). Note
+    that any intrinsic using the <tt>llvm_int_ty</tt> type for an argument will
+    be deemed by <tt>tblgen</tt> as overloaded and the corresponding suffix 
+    will be required on the intrinsic's name.</li>
 
 <li><tt>llvm/lib/Analysis/ConstantFolding.cpp</tt>: If it is possible to 
     constant fold your intrinsic, add support to it in the 
