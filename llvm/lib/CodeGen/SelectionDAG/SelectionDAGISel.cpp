@@ -2328,37 +2328,44 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Tmp.getValue(1));
     return 0;
   }
-  case Intrinsic::bswap_i16:
-  case Intrinsic::bswap_i32:
-  case Intrinsic::bswap_i64:
+  case Intrinsic::bswap:
     setValue(&I, DAG.getNode(ISD::BSWAP,
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
     return 0;
-  case Intrinsic::cttz_i8:
-  case Intrinsic::cttz_i16:
-  case Intrinsic::cttz_i32:
-  case Intrinsic::cttz_i64:
-    setValue(&I, DAG.getNode(ISD::CTTZ,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+  case Intrinsic::cttz: {
+    SDOperand Arg = getValue(I.getOperand(1));
+    MVT::ValueType Ty = Arg.getValueType();
+    SDOperand result = DAG.getNode(ISD::CTTZ, Ty, Arg);
+    if (Ty < MVT::i32)
+      result = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, result);
+    else if (Ty > MVT::i32)
+      result = DAG.getNode(ISD::TRUNCATE, MVT::i32, result);
+    setValue(&I, result);
     return 0;
-  case Intrinsic::ctlz_i8:
-  case Intrinsic::ctlz_i16:
-  case Intrinsic::ctlz_i32:
-  case Intrinsic::ctlz_i64:
-    setValue(&I, DAG.getNode(ISD::CTLZ,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+  }
+  case Intrinsic::ctlz: {
+    SDOperand Arg = getValue(I.getOperand(1));
+    MVT::ValueType Ty = Arg.getValueType();
+    SDOperand result = DAG.getNode(ISD::CTLZ, Ty, Arg);
+    if (Ty < MVT::i32)
+      result = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, result);
+    else if (Ty > MVT::i32)
+      result = DAG.getNode(ISD::TRUNCATE, MVT::i32, result);
+    setValue(&I, result);
     return 0;
-  case Intrinsic::ctpop_i8:
-  case Intrinsic::ctpop_i16:
-  case Intrinsic::ctpop_i32:
-  case Intrinsic::ctpop_i64:
-    setValue(&I, DAG.getNode(ISD::CTPOP,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+  }
+  case Intrinsic::ctpop: {
+    SDOperand Arg = getValue(I.getOperand(1));
+    MVT::ValueType Ty = Arg.getValueType();
+    SDOperand result = DAG.getNode(ISD::CTPOP, Ty, Arg);
+    if (Ty < MVT::i32)
+      result = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, result);
+    else if (Ty > MVT::i32)
+      result = DAG.getNode(ISD::TRUNCATE, MVT::i32, result);
+    setValue(&I, result);
     return 0;
+  }
   case Intrinsic::stacksave: {
     SDOperand Op = getRoot();
     SDOperand Tmp = DAG.getNode(ISD::STACKSAVE,
