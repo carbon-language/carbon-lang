@@ -317,24 +317,12 @@ llvm::canConstantFoldCallTo(Function *F) {
   switch (F->getIntrinsicID()) {
   case Intrinsic::sqrt_f32:
   case Intrinsic::sqrt_f64:
-  case Intrinsic::bswap_i16:
-  case Intrinsic::bswap_i32:
-  case Intrinsic::bswap_i64:
   case Intrinsic::powi_f32:
   case Intrinsic::powi_f64:
-  // FIXME: these should be constant folded as well
-  //case Intrinsic::ctpop_i8:
-  //case Intrinsic::ctpop_i16:
-  //case Intrinsic::ctpop_i32:
-  //case Intrinsic::ctpop_i64:
-  //case Intrinsic::ctlz_i8:
-  //case Intrinsic::ctlz_i16:
-  //case Intrinsic::ctlz_i32:
-  //case Intrinsic::ctlz_i64:
-  //case Intrinsic::cttz_i8:
-  //case Intrinsic::cttz_i16:
-  //case Intrinsic::cttz_i32:
-  //case Intrinsic::cttz_i64:
+  case Intrinsic::bswap:
+  case Intrinsic::ctpop:
+  case Intrinsic::ctlz:
+  case Intrinsic::cttz:
     return true;
   default: break;
   }
@@ -445,13 +433,19 @@ llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
           break;
       }
     } else if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
-      uint64_t V = Op->getZExtValue();
-      if (Name == "llvm.bswap.i16")
-        return ConstantInt::get(Ty, ByteSwap_16(V));
-      else if (Name == "llvm.bswap.i32")
-        return ConstantInt::get(Ty, ByteSwap_32(V));
-      else if (Name == "llvm.bswap.i64")
-        return ConstantInt::get(Ty, ByteSwap_64(V));
+      const IntegerType *OpTy = cast<IntegerType>(Op->getType());
+      if (Name.size() > 11 && !memcmp(&Name[0], "llvm.bswap", 10)) {
+        return ConstantInt::get(Op->getValue().byteSwap());
+      } else if (Name.size() > 11 && !memcmp(&Name[0],"llvm.ctpop",10)) {
+        uint64_t ctpop = Op->getValue().countPopulation();
+        return ConstantInt::get(OpTy, ctpop);
+      } else if (Name.size() > 10 && !memcmp(&Name[0], "llvm.cttz", 9)) {
+        uint64_t cttz = Op->getValue().countTrailingZeros();
+        return ConstantInt::get(OpTy, cttz);
+      } else if (Name.size() > 10 && !memcmp(&Name[0], "llvm.ctlz", 9)) {
+        uint64_t ctlz = Op->getValue().countLeadingZeros();
+        return ConstantInt::get(OpTy, ctlz);
+      }
     }
   } else if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {

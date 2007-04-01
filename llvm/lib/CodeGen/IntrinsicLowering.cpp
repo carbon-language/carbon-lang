@@ -236,8 +236,6 @@ static Value *LowerCTLZ(Value *V, Instruction *IP) {
   return LowerCTPOP(V, IP);
 }
 
-
-
 void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
@@ -283,30 +281,19 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     Type::VoidTy, AbortFCache);
     break;
   }
-  case Intrinsic::ctpop_i8:
-  case Intrinsic::ctpop_i16:
-  case Intrinsic::ctpop_i32:
-  case Intrinsic::ctpop_i64:
+  case Intrinsic::ctpop:
     CI->replaceAllUsesWith(LowerCTPOP(CI->getOperand(1), CI));
     break;
 
-  case Intrinsic::bswap_i16:
-  case Intrinsic::bswap_i32:
-  case Intrinsic::bswap_i64:
+  case Intrinsic::bswap:
     CI->replaceAllUsesWith(LowerBSWAP(CI->getOperand(1), CI));
     break;
     
-  case Intrinsic::ctlz_i8:
-  case Intrinsic::ctlz_i16:
-  case Intrinsic::ctlz_i32:
-  case Intrinsic::ctlz_i64:
+  case Intrinsic::ctlz:
     CI->replaceAllUsesWith(LowerCTLZ(CI->getOperand(1), CI));
     break;
 
-  case Intrinsic::cttz_i8:
-  case Intrinsic::cttz_i16:
-  case Intrinsic::cttz_i32:
-  case Intrinsic::cttz_i64: {
+  case Intrinsic::cttz: {
     // cttz(x) -> ctpop(~X & (X-1))
     Value *Src = CI->getOperand(1);
     Value *NotSrc = BinaryOperator::createNot(Src, Src->getName()+".not", CI);

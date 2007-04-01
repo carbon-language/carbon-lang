@@ -3624,11 +3624,11 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   Module *M = I.getParent()->getParent()->getParent();
   const char *FnName = 0;
   if (I.getType() == Type::Int16Ty)
-    FnName = "llvm.bswap.i16";
+    FnName = "llvm.bswap.i16.i16";
   else if (I.getType() == Type::Int32Ty)
-    FnName = "llvm.bswap.i32";
+    FnName = "llvm.bswap.i32.i32";
   else if (I.getType() == Type::Int64Ty)
-    FnName = "llvm.bswap.i64";
+    FnName = "llvm.bswap.i64.i64";
   else
     assert(0 && "Unknown integer type!");
   Constant *F = M->getOrInsertFunction(FnName, I.getType(), I.getType(), NULL);
@@ -5173,29 +5173,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         default: break;
         }
       } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op0)) {
-        // Handle set{eq|ne} <intrinsic>, intcst.
-        switch (II->getIntrinsicID()) {
-        default: break;
-        case Intrinsic::bswap_i16: 
-          // icmp eq (bswap(x)), c -> icmp eq (x,bswap(c))
-          AddToWorkList(II);  // Dead?
+        // Handle icmp {eq|ne} <intrinsic>, intcst.
+        if (II->getIntrinsicID() == Intrinsic::bswap) {
+          AddToWorkList(II);
           I.setOperand(0, II->getOperand(1));
-          I.setOperand(1, ConstantInt::get(Type::Int16Ty,
-                                           ByteSwap_16(CI->getZExtValue())));
-          return &I;
-        case Intrinsic::bswap_i32:   
-          // icmp eq (bswap(x)), c -> icmp eq (x,bswap(c))
-          AddToWorkList(II);  // Dead?
-          I.setOperand(0, II->getOperand(1));
-          I.setOperand(1, ConstantInt::get(Type::Int32Ty,
-                                           ByteSwap_32(CI->getZExtValue())));
-          return &I;
-        case Intrinsic::bswap_i64:   
-          // icmp eq (bswap(x)), c -> icmp eq (x,bswap(c))
-          AddToWorkList(II);  // Dead?
-          I.setOperand(0, II->getOperand(1));
-          I.setOperand(1, ConstantInt::get(Type::Int64Ty,
-                                           ByteSwap_64(CI->getZExtValue())));
+          I.setOperand(1, ConstantInt::get(CI->getValue().byteSwap()));
           return &I;
         }
       }
