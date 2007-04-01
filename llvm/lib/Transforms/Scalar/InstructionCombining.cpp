@@ -3594,14 +3594,14 @@ static bool CollectBSwapParts(Value *V, SmallVector<Value*, 8> &ByteValues) {
 /// MatchBSwap - Given an OR instruction, check to see if this is a bswap idiom.
 /// If so, insert the new bswap intrinsic and return it.
 Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
-  // We cannot bswap one byte.
-  if (I.getType() == Type::Int8Ty)
-    return 0;
+  const IntegerType *ITy = dyn_cast<IntegerType>(I.getType());
+  if (!ITy || ITy->getBitWidth() % 16) 
+    return 0;   // Can only bswap pairs of bytes.  Can't do vectors.
   
   /// ByteValues - For each byte of the result, we keep track of which value
   /// defines each byte.
   SmallVector<Value*, 8> ByteValues;
-  ByteValues.resize(TD->getTypeSize(I.getType()));
+  ByteValues.resize(ITy->getBitWidth()/8);
     
   // Try to find all the pieces corresponding to the bswap.
   if (CollectBSwapParts(I.getOperand(0), ByteValues) ||
@@ -3616,20 +3616,9 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   for (unsigned i = 1, e = ByteValues.size(); i != e; ++i)
     if (ByteValues[i] != V)
       return 0;
-    
-  // If they do then *success* we can turn this into a bswap.  Figure out what
-  // bswap to make it into.
+  const Type *Tys[] = { ITy, ITy };
   Module *M = I.getParent()->getParent()->getParent();
-  const char *FnName = 0;
-  if (I.getType() == Type::Int16Ty)
-    FnName = "llvm.bswap.i16.i16";
-  else if (I.getType() == Type::Int32Ty)
-    FnName = "llvm.bswap.i32.i32";
-  else if (I.getType() == Type::Int64Ty)
-    FnName = "llvm.bswap.i64.i64";
-  else
-    assert(0 && "Unknown integer type!");
-  Constant *F = M->getOrInsertFunction(FnName, I.getType(), I.getType(), NULL);
+  Function *F = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 2);
   return new CallInst(F, V);
 }
 
