@@ -18,6 +18,7 @@
 
 namespace llvm {
 
+class Type;
 class FunctionType;
 class Function;
 class Module;
@@ -39,15 +40,16 @@ namespace Intrinsic {
   
   /// Intrinsic::getName(ID) - Return the LLVM name for an intrinsic, such as
   /// "llvm.ppc.altivec.lvx".
-  const char *getName(ID id);
+  std::string getName(ID id, const Type **Tys = 0, unsigned numTys = 0);
   
   /// Intrinsic::getType(ID) - Return the function type for an intrinsic.
   ///
-  const FunctionType *getType(ID id);
+  const FunctionType *getType(ID id, const Type **Tys = 0, unsigned numTys = 0);
 
   /// Intrinsic::getDeclaration(M, ID) - Create or insert an LLVM Function
   /// declaration for an intrinsic, and return it.
-  Function *getDeclaration(Module *M, ID id);
+  Function *getDeclaration(Module *M, ID id, const Type **Tys = 0, 
+                           unsigned numTys = 0);
   
 } // End Intrinsic namespace
 
