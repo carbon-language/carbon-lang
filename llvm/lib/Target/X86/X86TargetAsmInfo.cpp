@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
@@ -199,24 +200,14 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
       !CI->getType()->isInteger())
     return false;
   
-  const Type *Ty = CI->getType();
-  const char *IntName;
-  if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
-    unsigned BitWidth = ITy->getBitWidth();
-    if (BitWidth == 16)
-      IntName = "llvm.bswap.i16";
-    else if (BitWidth == 32)
-      IntName = "llvm.bswap.i32";
-    else if (BitWidth == 64)
-      IntName = "llvm.bswap.i64";
-    else
-      return false;
-  } else
+  const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
+  if (!Ty || Ty->getBitWidth() % 16 != 0)
     return false;
-
+  
   // Okay, we can do this xform, do so now.
+  const Type *Tys[] = { Ty, Ty };
   Module *M = CI->getParent()->getParent()->getParent();
-  Constant *Int = M->getOrInsertFunction(IntName, Ty, Ty, (Type*)0);
+  Constant *Int = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 2);
   
   Value *Op = CI->getOperand(1);
   Op = new CallInst(Int, Op, CI->getName(), CI);
