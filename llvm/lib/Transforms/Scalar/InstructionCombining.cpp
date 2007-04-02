@@ -4019,8 +4019,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
             // (X + C) ^ signbit -> (X + C + signbit)
             Constant *C = ConstantInt::get(RHS->getValue() + Op0CI->getValue());
             return BinaryOperator::createAdd(Op0I->getOperand(0), C);
-                                             
-                                                              
+
           }
         } else if (Op0I->getOpcode() == Instruction::Or) {
           // (X|C1)^C2 -> X^(C1|C2) iff X&~C1 == 0
@@ -6272,7 +6271,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       case Instruction::ZExt: {
         // We need to emit an AND to clear the high bits.
         assert(SrcBitSize < DestBitSize && "Not a zext?");
-        Constant *C = ConstantInt::get(APInt::getLowBitsSet(DestBitSize, SrcBitSize));
+        Constant *C = ConstantInt::get(APInt::getLowBitsSet(DestBitSize,
+                                                            SrcBitSize));
         return BinaryOperator::createAnd(Res, C);
       }
       case Instruction::SExt:
