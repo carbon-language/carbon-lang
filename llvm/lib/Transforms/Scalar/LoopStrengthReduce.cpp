@@ -899,8 +899,15 @@ bool LoopStrengthReduce::ValidStride(int64_t Scale,
       Imm = SC->getValue()->getSExtValue();
     else
       Imm = 0;
-    if (!TLI->isLegalAddressScaleAndImm(Scale, Imm, 
-                                  UsersToProcess[i].Inst->getType()))
+    
+    // If this is a load or other access, pass the type of the access in.
+    const Type *AccessTy = Type::VoidTy;
+    if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst))
+      AccessTy = SI->getOperand(0)->getType();
+    else if (LoadInst *LI = dyn_cast<LoadInst>(UsersToProcess[i].Inst))
+      AccessTy = LI->getType();
+    
+    if (!TLI->isLegalAddressScaleAndImm(Scale, Imm, AccessTy))
       return false;
   }
   return true;
