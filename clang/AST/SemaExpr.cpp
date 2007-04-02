@@ -68,10 +68,11 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
         // Not in C++.
         !getLangOptions().CPlusPlus)
       D = ImplicitlyDefineFunction(Loc, II, S);
-    else
+    else {
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
       return Diag(Loc, diag::err_undeclared_var_use, II.getName());
+    }
   }
   
   if (ObjectDecl *OD = dyn_cast<ObjectDecl>(D)) {
@@ -203,8 +204,8 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
          diag::err_alignof_incomplete_type, TypeName);
     return new IntegerLiteral(0, Context.IntTy);
   }
-  
-  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy, Context.IntTy);
+  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
+  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy, Context.getSizeType());
 }
 
 
@@ -275,23 +276,24 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   if (OpKind == tok::arrow) {
     if (PointerType *PT = dyn_cast<PointerType>(canonType)) {
       qualifiedType = PT->getPointeeType();
-	  canonType = qualifiedType->getCanonicalType();
+      canonType = qualifiedType->getCanonicalType();
     } else
       return Diag(OpLoc, diag::err_typecheck_member_reference_arrow);
   }
-  if (isa<RecordType>(canonType)) { 
-    // get the struct/union definition from the type.
-    RecordDecl *RD = cast<RecordType>(canonType)->getDecl();
+  if (!isa<RecordType>(canonType))
+    return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion);
+  
+  // get the struct/union definition from the type.
+  RecordDecl *RD = cast<RecordType>(canonType)->getDecl();
     
-    if (canonType->isIncompleteType())
-      return Diag(OpLoc, diag::err_typecheck_incomplete_tag, RD->getName());
+  if (canonType->isIncompleteType())
+    return Diag(OpLoc, diag::err_typecheck_incomplete_tag, RD->getName());
     
-    if (FieldDecl *MemberDecl = RD->getMember(&Member))
-      return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
-    else
-      return Diag(OpLoc, diag::err_typecheck_no_member, Member.getName());
-  }
-  return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion);
+  FieldDecl *MemberDecl = RD->getMember(&Member);
+  if (!MemberDecl)
+    return Diag(OpLoc, diag::err_typecheck_no_member, Member.getName());
+    
+  return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
 }
 
 /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.

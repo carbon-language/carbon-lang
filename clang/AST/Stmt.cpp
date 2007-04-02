@@ -24,7 +24,7 @@ void CLASS::visit(StmtVisitor &V) { return V.Visit##CLASS(this); }
 STMT(0, Stmt, )
 #include "clang/AST/StmtNodes.def"
 
-static struct StmtClassNameTable {
+static const struct StmtClassNameTable {
   int enumValue;
   const char *className;
 } sNames[] = {

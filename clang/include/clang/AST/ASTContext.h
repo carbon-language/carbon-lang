@@ -53,7 +53,6 @@ public:
   
   void PrintStats() const;
   
-  
   /// getPointerType - Return the uniqued reference to the type for a pointer to
   /// the specified type.
   TypeRef getPointerType(TypeRef T);
@@ -80,6 +79,9 @@ public:
   /// specified TagDecl (struct/union/class/enum) decl.
   TypeRef getTagDeclType(TagDecl *Decl);
   
+  /// getSizeType - Return the unique type for "size_t" (C99 7.17), defined
+  /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
+  TypeRef getSizeType();
 private:
   void InitBuiltinTypes();
   void InitBuiltinType(TypeRef &R, BuiltinType::Kind K);

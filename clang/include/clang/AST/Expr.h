@@ -57,7 +57,7 @@ class DeclRefExpr : public Expr {
 public:
   DeclRefExpr(ObjectDecl *d) : Expr(DeclRefExprClass, d->getType()), D(d) {}
   
-  Decl *getDecl() const { return D; }
+  ObjectDecl *getDecl() const { return D; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
