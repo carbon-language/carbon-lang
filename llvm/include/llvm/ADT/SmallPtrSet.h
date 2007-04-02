@@ -90,6 +90,12 @@ public:
   /// was already in the set.
   bool insert(void *Ptr);
   
+  template <typename IterT>
+  void insert(IterT I, IterT E) {
+    for (; I != E; ++I)
+      insert((void*)*I);
+  }
+  
   /// erase - If the set contains the specified pointer, remove it and return
   /// true, otherwise return false.
   bool erase(void *Ptr);
@@ -212,8 +218,7 @@ public:
   template<typename It>
   SmallPtrSet(It I, It E)
     : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {
-    for (; I != E; ++I)
-      insert(*I);
+    insert(I, E);
   }
   
   typedef SmallPtrSetIterator<PtrType> iterator;
