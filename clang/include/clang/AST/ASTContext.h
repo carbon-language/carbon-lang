@@ -81,7 +81,7 @@ public:
   
   /// getSizeType - Return the unique type for "size_t" (C99 7.17), defined
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
-  TypeRef getSizeType();
+  TypeRef getSizeType() const;
 private:
   void InitBuiltinTypes();
   void InitBuiltinType(TypeRef &R, BuiltinType::Kind K);
