@@ -1279,7 +1279,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     if (DemandedMask[BitWidth-1] == 0) {
       // Right fill the mask of bits for this SUB to demand the most
       // significant bit and all those below it.
-      unsigned NLZ = DemandedMask.countLeadingZeros();
+      uint32_t NLZ = DemandedMask.countLeadingZeros();
       APInt DemandedFromOps(APInt::getLowBitsSet(BitWidth, BitWidth-NLZ));
       if (SimplifyDemandedBits(I->getOperand(0), DemandedFromOps,
                                LHSKnownZero, LHSKnownOne, Depth+1))
@@ -1871,7 +1871,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
       // X + (signbit) --> X ^ signbit
       const APInt& Val = CI->getValue();
-      unsigned BitWidth = Val.getBitWidth();
+      uint32_t BitWidth = Val.getBitWidth();
       if (Val == APInt::getSignBit(BitWidth))
         return BinaryOperator::createXor(LHS, RHS);
       
@@ -1893,10 +1893,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     Value *XorLHS = 0;
     if (isa<ConstantInt>(RHSC) &&
         match(LHS, m_Xor(m_Value(XorLHS), m_ConstantInt(XorRHS)))) {
-      unsigned TySizeBits = I.getType()->getPrimitiveSizeInBits();
+      uint32_t TySizeBits = I.getType()->getPrimitiveSizeInBits();
       const APInt& RHSVal = cast<ConstantInt>(RHSC)->getValue();
       
-      unsigned Size = TySizeBits / 2;
+      uint32_t Size = TySizeBits / 2;
       APInt C0080Val(APInt(TySizeBits, 1ULL).shl(Size - 1));
       APInt CFF80Val(-C0080Val);
       do {
@@ -2049,7 +2049,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 // isSignBit - Return true if the value represented by the constant only has the
 // highest order bit set.
 static bool isSignBit(ConstantInt *CI) {
-  unsigned NumBits = CI->getType()->getPrimitiveSizeInBits();
+  uint32_t NumBits = CI->getType()->getPrimitiveSizeInBits();
   return CI->getValue() == APInt::getSignBit(NumBits);
 }
 
@@ -2321,8 +2321,8 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         // If the multiply type is not the same as the source type, sign extend
         // or truncate to the multiply type.
         if (I.getType() != V->getType()) {
-          unsigned SrcBits = V->getType()->getPrimitiveSizeInBits();
-          unsigned DstBits = I.getType()->getPrimitiveSizeInBits();
+          uint32_t SrcBits = V->getType()->getPrimitiveSizeInBits();
+          uint32_t DstBits = I.getType()->getPrimitiveSizeInBits();
           Instruction::CastOps opcode = 
             (SrcBits == DstBits ? Instruction::BitCast : 
              (SrcBits < DstBits ? Instruction::SExt : Instruction::Trunc));
@@ -3081,7 +3081,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
 // any number of 0s on either side.  The 1s are allowed to wrap from LSB to
 // MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
 // not, since all 1s are not contiguous.
-static bool isRunOfOnes(ConstantInt *Val, unsigned &MB, unsigned &ME) {
+static bool isRunOfOnes(ConstantInt *Val, uint32_t &MB, uint32_t &ME) {
   const APInt& V = Val->getValue();
   uint32_t BitWidth = Val->getType()->getBitWidth();
   if (!APIntOps::isShiftedMask(BitWidth, V)) return false;
@@ -3125,7 +3125,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
       // Otherwise, if Mask is 0+1+0+, and if B is known to have the low 0+
       // part, we don't need any explicit masks to take them out of A.  If that
       // is all N is, ignore it.
-      unsigned MB = 0, ME = 0;
+      uint32_t MB = 0, ME = 0;
       if (isRunOfOnes(Mask, MB, ME)) {  // begin/end bit of run, inclusive
         uint32_t BitWidth = cast<IntegerType>(RHS->getType())->getBitWidth();
         APInt Mask(APInt::getLowBitsSet(BitWidth, MB-1));
@@ -4844,7 +4844,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       case Instruction::Shl:         // (icmp pred (shl X, ShAmt), CI)
         if (ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
           if (I.isEquality()) {
-            unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
+            uint32_t TypeBits = CI->getType()->getPrimitiveSizeInBits();
 
             // Check that the shift amount is in range.  If not, don't perform
             // undefined shifts.  When the shift is visited it will be
@@ -4865,8 +4865,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             if (LHSI->hasOneUse()) {
               // Otherwise strength reduce the shift into an and.
               uint32_t ShAmtVal = (uint32_t)ShAmt->getLimitedValue(TypeBits);
-              uint64_t Val = (1ULL << (TypeBits-ShAmtVal))-1;
-              Constant *Mask = ConstantInt::get(CI->getType(), Val);
+              Constant *Mask = ConstantInt::get(
+                APInt::getLowBitsSet(TypeBits, TypeBits-ShAmtVal));
 
               Instruction *AndI =
                 BinaryOperator::createAnd(LHSI->getOperand(0),
@@ -4886,7 +4886,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             // Check that the shift amount is in range.  If not, don't perform
             // undefined shifts.  When the shift is visited it will be
             // simplified.
-            unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
+            uint32_t TypeBits = CI->getType()->getPrimitiveSizeInBits();
             if (ShAmt->uge(TypeBits))
               break;
 
@@ -5180,7 +5180,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if (CastInst *Cast = dyn_cast<CastInst>(Op0)) {
         Value *CastOp = Cast->getOperand(0);
         const Type *SrcTy = CastOp->getType();
-        unsigned SrcTySize = SrcTy->getPrimitiveSizeInBits();
+        uint32_t SrcTySize = SrcTy->getPrimitiveSizeInBits();
         if (SrcTy->isInteger() && 
             SrcTySize == Cast->getType()->getPrimitiveSizeInBits()) {
           // If this is an unsigned comparison, try to make the comparison use
@@ -5747,7 +5747,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     if (ShiftAmt1 == 0) return 0;  // Will be simplified in the future.
     Value *X = ShiftOp->getOperand(0);
     
-    unsigned AmtSum = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
+    uint32_t AmtSum = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
     if (AmtSum > TypeBits)
       AmtSum = TypeBits;
     
@@ -5808,7 +5808,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       }
       // Otherwise, we can't handle it yet.
     } else if (ShiftAmt1 < ShiftAmt2) {
-      unsigned ShiftDiff = ShiftAmt2-ShiftAmt1;
+      uint32_t ShiftDiff = ShiftAmt2-ShiftAmt1;
       
       // (X >>? C1) << C2 --> X << (C2-C1) & (-1 << C2)
       if (I.getOpcode() == Instruction::Shl) {
@@ -5836,7 +5836,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       // We can't handle (X << C1) >>s C2, it shifts arbitrary bits in.
     } else {
       assert(ShiftAmt2 < ShiftAmt1);
-      unsigned ShiftDiff = ShiftAmt1-ShiftAmt2;
+      uint32_t ShiftDiff = ShiftAmt1-ShiftAmt2;
 
       // (X >>? C1) << C2 --> X >>? (C1-C2) & (-1 << C2)
       if (I.getOpcode() == Instruction::Shl) {
@@ -6209,8 +6209,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   Value *Src = CI.getOperand(0);
   const Type *SrcTy = Src->getType();
   const Type *DestTy = CI.getType();
-  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
-  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+  uint32_t SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+  uint32_t DestBitSize = DestTy->getPrimitiveSizeInBits();
 
   // See if we can simplify any instructions used by the LHS whose sole 
   // purpose is to compute bits we don't care about.
@@ -6406,7 +6406,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
             return ReplaceInstUsesWith(CI, Res);
           }
           
-          unsigned ShiftAmt = KnownZeroMask.logBase2();
+          uint32_t ShiftAmt = KnownZeroMask.logBase2();
           Value *In = Op0;
           if (ShiftAmt) {
             // Perform a logical shr by shiftamt.
@@ -6441,8 +6441,8 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
   
   Value *Src = CI.getOperand(0);
   const Type *Ty = CI.getType();
-  unsigned DestBitWidth = Ty->getPrimitiveSizeInBits();
-  unsigned SrcBitWidth = cast<IntegerType>(Src->getType())->getBitWidth();
+  uint32_t DestBitWidth = Ty->getPrimitiveSizeInBits();
+  uint32_t SrcBitWidth = cast<IntegerType>(Src->getType())->getBitWidth();
   
   if (Instruction *SrcI = dyn_cast<Instruction>(Src)) {
     switch (SrcI->getOpcode()) {
@@ -6507,9 +6507,9 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
     if (isa<TruncInst>(CSrc)) {
       // Get the sizes of the types involved
       Value *A = CSrc->getOperand(0);
-      unsigned SrcSize = A->getType()->getPrimitiveSizeInBits();
-      unsigned MidSize = CSrc->getType()->getPrimitiveSizeInBits();
-      unsigned DstSize = CI.getType()->getPrimitiveSizeInBits();
+      uint32_t SrcSize = A->getType()->getPrimitiveSizeInBits();
+      uint32_t MidSize = CSrc->getType()->getPrimitiveSizeInBits();
+      uint32_t DstSize = CI.getType()->getPrimitiveSizeInBits();
       // If we're actually extending zero bits and the trunc is a no-op
       if (MidSize < DstSize && SrcSize == DstSize) {
         // Replace both of the casts with an And of the type mask.
@@ -6838,7 +6838,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               CanXForm = CmpCst->isZero() && 
                          IC->getPredicate() == ICmpInst::ICMP_SLT;
             else {
-              unsigned Bits = CmpCst->getType()->getPrimitiveSizeInBits();
+              uint32_t Bits = CmpCst->getType()->getPrimitiveSizeInBits();
               CanXForm = CmpCst->getValue() == APInt::getSignedMaxValue(Bits) &&
                          IC->getPredicate() == ICmpInst::ICMP_UGT;
             }
@@ -6847,7 +6847,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               // The comparison constant and the result are not neccessarily the
               // same width. Make an all-ones value by inserting a AShr.
               Value *X = IC->getOperand(0);
-              unsigned Bits = X->getType()->getPrimitiveSizeInBits();
+              uint32_t Bits = X->getType()->getPrimitiveSizeInBits();
               Constant *ShAmt = ConstantInt::get(X->getType(), Bits-1);
               Instruction *SRA = BinaryOperator::create(Instruction::AShr, X,
                                                         ShAmt, "ones");
@@ -6856,8 +6856,8 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               // Finally, convert to the type of the select RHS.  We figure out
               // if this requires a SExt, Trunc or BitCast based on the sizes.
               Instruction::CastOps opc = Instruction::BitCast;
-              unsigned SRASize = SRA->getType()->getPrimitiveSizeInBits();
-              unsigned SISize  = SI.getType()->getPrimitiveSizeInBits();
+              uint32_t SRASize = SRA->getType()->getPrimitiveSizeInBits();
+              uint32_t SISize  = SI.getType()->getPrimitiveSizeInBits();
               if (SRASize < SISize)
                 opc = Instruction::SExt;
               else if (SRASize > SISize)
