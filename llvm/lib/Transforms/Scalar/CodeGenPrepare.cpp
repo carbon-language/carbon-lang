@@ -20,13 +20,14 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {  
@@ -39,6 +40,9 @@ namespace {
     bool runOnFunction(Function &F);
     
   private:
+    bool EliminateMostlyEmptyBlocks(Function &F);
+    bool CanMergeBlocks(const BasicBlock *BB, const BasicBlock *DestBB) const;
+    void EliminateMostlyEmptyBlock(BasicBlock *BB);
     bool OptimizeBlock(BasicBlock &BB);
     bool OptimizeGEPExpression(GetElementPtrInst *GEPI);
   };
@@ -52,8 +56,13 @@ FunctionPass *llvm::createCodeGenPreparePass(const TargetLowering *TLI) {
 
 
 bool CodeGenPrepare::runOnFunction(Function &F) {
-  bool MadeChange = true;
   bool EverMadeChange = false;
+  
+  // First pass, eliminate blocks that contain only PHI nodes and an
+  // unconditional branch.
+  EverMadeChange |= EliminateMostlyEmptyBlocks(F);
+  
+  bool MadeChange = true;
   while (MadeChange) {
     MadeChange = false;
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
@@ -62,6 +71,170 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   }
   return EverMadeChange;
 }
+
+/// EliminateMostlyEmptyBlocks - eliminate blocks that contain only PHI nodes
+/// and an unconditional branch.  Passes before isel (e.g. LSR/loopsimplify) 
+/// often split edges in ways that are non-optimal for isel.  Start by
+/// eliminating these blocks so we can split them the way we want them.
+bool CodeGenPrepare::EliminateMostlyEmptyBlocks(Function &F) {
+  bool MadeChange = false;
+  // Note that this intentionally skips the entry block.
+  for (Function::iterator I = ++F.begin(), E = F.end(); I != E; ) {
+    BasicBlock *BB = I++;
+
+    // If this block doesn't end with an uncond branch, ignore it.
+    BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator());
+    if (!BI || !BI->isUnconditional())
+      continue;
+    
+    // If the instruction before the branch isn't a phi node, then other stuff
+    // is happening here.
+    BasicBlock::iterator BBI = BI;
+    if (BBI != BB->begin()) {
+      --BBI;
+      if (!isa<PHINode>(BBI)) continue;
+    }
+    
+    // Do not break infinite loops.
+    BasicBlock *DestBB = BI->getSuccessor(0);
+    if (DestBB == BB)
+      continue;
+    
+    if (!CanMergeBlocks(BB, DestBB))
+      continue;
+    
+    EliminateMostlyEmptyBlock(BB);
+    MadeChange = true;
+  }
+  return MadeChange;
+}
+
+/// CanMergeBlocks - Return true if we can merge BB into DestBB if there is a
+/// single uncond branch between them, and BB contains no other non-phi
+/// instructions.
+bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
+                                    const BasicBlock *DestBB) const {
+  // We only want to eliminate blocks whose phi nodes are used by phi nodes in
+  // the successor.  If there are more complex condition (e.g. preheaders),
+  // don't mess around with them.
+  BasicBlock::const_iterator BBI = BB->begin();
+  while (const PHINode *PN = dyn_cast<PHINode>(BBI++)) {
+    for (Value::use_const_iterator UI = PN->use_begin(), E = PN->use_end();
+         UI != E; ++UI) {
+      const Instruction *User = cast<Instruction>(*UI);
+      if (User->getParent() != DestBB || !isa<PHINode>(User))
+        return false;
+    }
+  }
+  
+  // If BB and DestBB contain any common predecessors, then the phi nodes in BB
+  // and DestBB may have conflicting incoming values for the block.  If so, we
+  // can't merge the block.
+  const PHINode *DestBBPN = dyn_cast<PHINode>(DestBB->begin());
+  if (!DestBBPN) return true;  // no conflict.
+  
+  // Collect the preds of BB.
+  SmallPtrSet<BasicBlock*, 16> BBPreds;
+  if (const PHINode *BBPN = dyn_cast<PHINode>(BB->begin())) {
+    // It is faster to get preds from a PHI than with pred_iterator.
+    for (unsigned i = 0, e = BBPN->getNumIncomingValues(); i != e; ++i)
+      BBPreds.insert(BBPN->getIncomingBlock(i));
+  } else {
+    BBPreds.insert(pred_begin(BB), pred_end(BB));
+  }
+  
+  // Walk the preds of DestBB.
+  for (unsigned i = 0, e = DestBBPN->getNumIncomingValues(); i != e; ++i) {
+    BasicBlock *Pred = DestBBPN->getIncomingBlock(i);
+    if (BBPreds.count(Pred)) {   // Common predecessor?
+      BBI = DestBB->begin();
+      while (const PHINode *PN = dyn_cast<PHINode>(BBI++)) {
+        const Value *V1 = PN->getIncomingValueForBlock(Pred);
+        const Value *V2 = PN->getIncomingValueForBlock(BB);
+        
+        // If V2 is a phi node in BB, look up what the mapped value will be.
+        if (const PHINode *V2PN = dyn_cast<PHINode>(V2))
+          if (V2PN->getParent() == BB)
+            V2 = V2PN->getIncomingValueForBlock(Pred);
+        
+        // If there is a conflict, bail out.
+        if (V1 != V2) return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+
+/// EliminateMostlyEmptyBlock - Eliminate a basic block that have only phi's and
+/// an unconditional branch in it.
+void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
+  BranchInst *BI = cast<BranchInst>(BB->getTerminator());
+  BasicBlock *DestBB = BI->getSuccessor(0);
+  
+  DOUT << "MERGING MOSTLY EMPTY BLOCKS - BEFORE:\n" << *BB << *DestBB;
+  
+  // If the destination block has a single pred, then this is a trivial edge,
+  // just collapse it.
+  if (DestBB->getSinglePredecessor()) {
+    // If DestBB has single-entry PHI nodes, fold them.
+    while (PHINode *PN = dyn_cast<PHINode>(DestBB->begin())) {
+      PN->replaceAllUsesWith(PN->getIncomingValue(0));
+      PN->eraseFromParent();
+    }
+    
+    // Splice all the PHI nodes from BB over to DestBB.
+    DestBB->getInstList().splice(DestBB->begin(), BB->getInstList(),
+                                 BB->begin(), BI);
+    
+    // Anything that branched to BB now branches to DestBB.
+    BB->replaceAllUsesWith(DestBB);
+    
+    // Nuke BB.
+    BB->eraseFromParent();
+    
+    DOUT << "AFTER:\n" << *DestBB << "\n\n\n";
+    return;
+  }
+  
+  // Otherwise, we have multiple predecessors of BB.  Update the PHIs in DestBB
+  // to handle the new incoming edges it is about to have.
+  PHINode *PN;
+  for (BasicBlock::iterator BBI = DestBB->begin();
+       (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
+    // Remove the incoming value for BB, and remember it.
+    Value *InVal = PN->removeIncomingValue(BB, false);
+    
+    // Two options: either the InVal is a phi node defined in BB or it is some
+    // value that dominates BB.
+    PHINode *InValPhi = dyn_cast<PHINode>(InVal);
+    if (InValPhi && InValPhi->getParent() == BB) {
+      // Add all of the input values of the input PHI as inputs of this phi.
+      for (unsigned i = 0, e = InValPhi->getNumIncomingValues(); i != e; ++i)
+        PN->addIncoming(InValPhi->getIncomingValue(i),
+                        InValPhi->getIncomingBlock(i));
+    } else {
+      // Otherwise, add one instance of the dominating value for each edge that
+      // we will be adding.
+      if (PHINode *BBPN = dyn_cast<PHINode>(BB->begin())) {
+        for (unsigned i = 0, e = BBPN->getNumIncomingValues(); i != e; ++i)
+          PN->addIncoming(InVal, BBPN->getIncomingBlock(i));
+      } else {
+        for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+          PN->addIncoming(InVal, *PI);
+      }
+    }
+  }
+  
+  // The PHIs are now updated, change everything that refers to BB to use
+  // DestBB and remove BB.
+  BB->replaceAllUsesWith(DestBB);
+  BB->eraseFromParent();
+  
+  DOUT << "AFTER:\n" << *DestBB << "\n\n\n";
+}
+
 
 /// SplitEdgeNicely - Split the critical edge from TI to it's specified
 /// successor if it will improve codegen.  We only do this if the successor has
