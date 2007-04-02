@@ -1332,6 +1332,15 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
       // r + r
       if (((unsigned)AM.HasBaseReg + AM.Scale) <= 2)
         return true;
+
+    case MVT::isVoid:
+      // Note, we allow "void" uses (basically, uses that aren't loads or
+      // stores), because arm allows folding a scale into many arithmetic
+      // operations.  This should be made more precise and revisited later.
+      
+      // Allow r << imm, but the imm has to be a multiple of two.
+      if (AM.Scale & 1) return false;
+      return isPowerOf2_32(AM.Scale);
     }
     break;
   }
@@ -1413,11 +1422,18 @@ bool ARMTargetLowering::isLegalAddressScale(int64_t S, const Type *Ty) const {
   case MVT::i1:
   case MVT::i8:
   case MVT::i32:
-    // r + r
-    if (S == 2)
-      return true;
-    // r + r << imm
+    // Allow: r + r
+    // Allow: r << imm
+    // Allow: r + r << imm
     S &= ~1;
+    return isPowerOf2_32(S);
+  case MVT::isVoid:
+    // Note, we allow "void" uses (basically, uses that aren't loads or
+    // stores), because arm allows folding a scale into many arithmetic
+    // operations.  This should be made more precise and revisited later.
+    
+    // Allow r << imm, but the imm has to be a multiple of two.
+    if (S & 1) return false;
     return isPowerOf2_32(S);
   }
 }
