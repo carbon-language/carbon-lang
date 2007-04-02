@@ -1457,7 +1457,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
       }
       break;
     case 'b':
-      if (Name.length() > 10 && !memcmp(&Name[5], "bswap.", 6)) {
+      if (Name.length() == 14 && !memcmp(&Name[5], "bswap.i", 7)) {
         const Type* ArgTy = Args[0]->getType();
         Name += ".i" + utostr(cast<IntegerType>(ArgTy)->getBitWidth());
         Function *F = cast<Function>(
