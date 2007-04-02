@@ -508,7 +508,7 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
           return SDOperand(CurDAG->getTargetNode(PPC::CMPLWI, MVT::i32, LHS,
                                                  getI32Imm(Imm & 0xFFFF)), 0);
         // If this is a 16-bit signed immediate, fold it.
-        if (isInt16(Imm))
+        if (isInt16((int)Imm))
           return SDOperand(CurDAG->getTargetNode(PPC::CMPWI, MVT::i32, LHS,
                                                  getI32Imm(Imm & 0xFFFF)), 0);
         
