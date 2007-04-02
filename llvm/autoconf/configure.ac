@@ -235,13 +235,13 @@ else
   AC_SUBST(LLVM_CROSS_COMPILING, [0])
 fi
 
-dnl Check to see if there's a "CVS" directory indicating that this build is
-dnl being done from a CVS checkout. This sets up several defaults for the
+dnl Check to see if there's a "CVS" (or .svn) directory indicating that this 
+dnl build is being done from a checkout. This sets up several defaults for the
 dnl command line switches. When we build with a CVS directory, we get a 
 dnl debug with assertions turned on. Without, we assume a source release and we
 dnl get an optimized build without assertions. See --enable-optimized and
 dnl --enable-assertions below
-if test -d "CVS" -o -d "${srcdir}/CVS"; then
+if test -d "CVS" -o -d "${srcdir}/CVS" -o -d ".svn" -o -d "${srcdir}/.svn"; then
   cvsbuild="yes"
   optimize="no"
   AC_SUBST(CVSBUILD,[[CVSBUILD=1]])
