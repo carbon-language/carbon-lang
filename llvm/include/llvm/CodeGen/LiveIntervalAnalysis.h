@@ -267,6 +267,10 @@ namespace llvm {
     MachineInstr *lastRegisterUse(unsigned Reg, unsigned Start, unsigned End,
                                   MachineOperand *&MOU);
 
+    /// findDefOperand - Returns the MachineOperand that is a def of the specific
+    /// register. It returns NULL if the def is not found.
+    MachineOperand *findDefOperand(MachineInstr *MI, unsigned Reg);
+
     /// unsetRegisterKill - Unset IsKill property of all uses of the specific
     /// register of the specific instruction.
     void unsetRegisterKill(MachineInstr *MI, unsigned Reg);

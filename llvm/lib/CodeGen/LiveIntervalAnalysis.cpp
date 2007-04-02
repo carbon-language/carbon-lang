@@ -945,7 +945,7 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
       } else {
         MachineInstr *SrcMI = getInstructionFromIndex(SrcStart);
         if (SrcMI) {
-          MachineOperand *mops = SrcMI->findRegisterDefOperand(SrcReg);
+          MachineOperand *mops = findDefOperand(SrcMI, repSrcReg);
           if (mops)
             // A dead def should have a single cycle interval.
             ++RemoveStart;
@@ -1022,7 +1022,7 @@ TryJoin:
       } else {
         MachineInstr *SrcMI = getInstructionFromIndex(SrcStart);
         if (SrcMI) {
-          MachineOperand *mops = SrcMI->findRegisterDefOperand(SrcReg);
+          MachineOperand *mops = findDefOperand(SrcMI, repSrcReg);
           if (mops)
             mops->setIsDead();
         }
@@ -1614,6 +1614,19 @@ LiveIntervals::lastRegisterUse(unsigned Reg, unsigned Start, unsigned End,
     e -= InstrSlots::NUM;
   }
 
+  return NULL;
+}
+
+
+/// findDefOperand - Returns the MachineOperand that is a def of the specific
+/// register. It returns NULL if the def is not found.
+MachineOperand *LiveIntervals::findDefOperand(MachineInstr *MI, unsigned Reg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isDef() &&
+        mri_->regsOverlap(rep(MO.getReg()), Reg))
+      return &MO;
+  }
   return NULL;
 }
 
