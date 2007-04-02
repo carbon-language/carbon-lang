@@ -1488,23 +1488,24 @@ SDNode *DAGCombiner::MatchRotate(SDOperand LHS, SDOperand RHS) {
   }
 
   unsigned OpSizeInBits = MVT::getSizeInBits(VT);
+  SDOperand LHSShiftArg = LHSShift.getOperand(0);
+  SDOperand LHSShiftAmt = LHSShift.getOperand(1);
+  SDOperand RHSShiftAmt = RHSShift.getOperand(1);
 
   // fold (or (shl x, C1), (srl x, C2)) -> (rotl x, C1)
   // fold (or (shl x, C1), (srl x, C2)) -> (rotr x, C2)
-  if (LHSShift.getOperand(1).getOpcode() == ISD::Constant &&
-      RHSShift.getOperand(1).getOpcode() == ISD::Constant) {
-    uint64_t LShVal = cast<ConstantSDNode>(LHSShift.getOperand(1))->getValue();
-    uint64_t RShVal = cast<ConstantSDNode>(RHSShift.getOperand(1))->getValue();
+  if (LHSShiftAmt.getOpcode() == ISD::Constant &&
+      RHSShiftAmt.getOpcode() == ISD::Constant) {
+    uint64_t LShVal = cast<ConstantSDNode>(LHSShiftAmt)->getValue();
+    uint64_t RShVal = cast<ConstantSDNode>(RHSShiftAmt)->getValue();
     if ((LShVal + RShVal) != OpSizeInBits)
       return 0;
 
     SDOperand Rot;
     if (HasROTL)
-      Rot = DAG.getNode(ISD::ROTL, VT, LHSShift.getOperand(0),
-                        LHSShift.getOperand(1));
+      Rot = DAG.getNode(ISD::ROTL, VT, LHSShiftArg, LHSShiftAmt);
     else
-      Rot = DAG.getNode(ISD::ROTR, VT, LHSShift.getOperand(0),
-                        RHSShift.getOperand(1));
+      Rot = DAG.getNode(ISD::ROTR, VT, LHSShiftArg, RHSShiftAmt);
     
     // If there is an AND of either shifted operand, apply it to the result.
     if (LHSMask.Val || RHSMask.Val) {
@@ -1532,33 +1533,69 @@ SDNode *DAGCombiner::MatchRotate(SDOperand LHS, SDOperand RHS) {
   
   // fold (or (shl x, y), (srl x, (sub 32, y))) -> (rotl x, y)
   // fold (or (shl x, y), (srl x, (sub 32, y))) -> (rotr x, (sub 32, y))
-  if (RHSShift.getOperand(1).getOpcode() == ISD::SUB &&
-      LHSShift.getOperand(1) == RHSShift.getOperand(1).getOperand(1)) {
+  if (RHSShiftAmt.getOpcode() == ISD::SUB &&
+      LHSShiftAmt == RHSShiftAmt.getOperand(1)) {
     if (ConstantSDNode *SUBC = 
-          dyn_cast<ConstantSDNode>(RHSShift.getOperand(1).getOperand(0))) {
+          dyn_cast<ConstantSDNode>(RHSShiftAmt.getOperand(0))) {
       if (SUBC->getValue() == OpSizeInBits)
         if (HasROTL)
-          return DAG.getNode(ISD::ROTL, VT, LHSShift.getOperand(0),
-                             LHSShift.getOperand(1)).Val;
+          return DAG.getNode(ISD::ROTL, VT, LHSShiftArg, LHSShiftAmt).Val;
         else
-          return DAG.getNode(ISD::ROTR, VT, LHSShift.getOperand(0),
-                             LHSShift.getOperand(1)).Val;
+          return DAG.getNode(ISD::ROTR, VT, LHSShiftArg, RHSShiftAmt).Val;
     }
   }
   
   // fold (or (shl x, (sub 32, y)), (srl x, r)) -> (rotr x, y)
   // fold (or (shl x, (sub 32, y)), (srl x, r)) -> (rotl x, (sub 32, y))
-  if (LHSShift.getOperand(1).getOpcode() == ISD::SUB &&
-      RHSShift.getOperand(1) == LHSShift.getOperand(1).getOperand(1)) {
+  if (LHSShiftAmt.getOpcode() == ISD::SUB &&
+      RHSShiftAmt == LHSShiftAmt.getOperand(1)) {
     if (ConstantSDNode *SUBC = 
-          dyn_cast<ConstantSDNode>(LHSShift.getOperand(1).getOperand(0))) {
+          dyn_cast<ConstantSDNode>(LHSShiftAmt.getOperand(0))) {
       if (SUBC->getValue() == OpSizeInBits)
         if (HasROTL)
-          return DAG.getNode(ISD::ROTL, VT, LHSShift.getOperand(0),
-                             LHSShift.getOperand(1)).Val;
+          return DAG.getNode(ISD::ROTL, VT, LHSShiftArg, LHSShiftAmt).Val;
         else
-          return DAG.getNode(ISD::ROTR, VT, LHSShift.getOperand(0), 
-                             RHSShift.getOperand(1)).Val;
+          return DAG.getNode(ISD::ROTR, VT, LHSShiftArg, RHSShiftAmt).Val;
+    }
+  }
+
+  // Look for sign/zext/any-extended cases:
+  if ((LHSShiftAmt.getOpcode() == ISD::SIGN_EXTEND
+       || LHSShiftAmt.getOpcode() == ISD::ZERO_EXTEND
+       || LHSShiftAmt.getOpcode() == ISD::ANY_EXTEND) &&
+      (RHSShiftAmt.getOpcode() == ISD::SIGN_EXTEND
+       || RHSShiftAmt.getOpcode() == ISD::ZERO_EXTEND
+       || RHSShiftAmt.getOpcode() == ISD::ANY_EXTEND)) {
+    SDOperand LExtOp0 = LHSShiftAmt.getOperand(0);
+    SDOperand RExtOp0 = RHSShiftAmt.getOperand(0);
+    if (RExtOp0.getOpcode() == ISD::SUB &&
+        RExtOp0.getOperand(1) == LExtOp0) {
+      // fold (or (shl x, (*ext y)), (srl x, (*ext (sub 32, y)))) ->
+      //   (rotr x, y)
+      // fold (or (shl x, (*ext y)), (srl x, (*ext (sub 32, y)))) ->
+      //   (rotl x, (sub 32, y))
+      if (ConstantSDNode *SUBC = cast<ConstantSDNode>(RExtOp0.getOperand(0))) {
+        if (SUBC->getValue() == OpSizeInBits) {
+          if (HasROTL)
+            return DAG.getNode(ISD::ROTL, VT, LHSShiftArg, LHSShiftAmt).Val;
+          else
+            return DAG.getNode(ISD::ROTR, VT, LHSShiftArg, RHSShiftAmt).Val;
+        }
+      }
+    } else if (LExtOp0.getOpcode() == ISD::SUB &&
+               RExtOp0 == LExtOp0.getOperand(1)) {
+      // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext r))) -> 
+      //   (rotl x, y)
+      // fold (or (shl x, (*ext (sub 32, y))), (srl x, (*ext r))) ->
+      //   (rotr x, (sub 32, y))
+      if (ConstantSDNode *SUBC = cast<ConstantSDNode>(LExtOp0.getOperand(0))) {
+        if (SUBC->getValue() == OpSizeInBits) {
+          if (HasROTL)
+            return DAG.getNode(ISD::ROTL, VT, LHSShiftArg, RHSShiftAmt).Val;
+          else
+            return DAG.getNode(ISD::ROTL, VT, LHSShiftArg, LHSShiftAmt).Val;
+        }
+      }
     }
   }
   

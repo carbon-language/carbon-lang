@@ -2683,10 +2683,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::ROTR:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
-    
-    assert(TLI.isOperationLegal(Node->getOpcode(), Node->getValueType(0)) &&
-           "Cannot handle this yet!");
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    default:
+      assert(0 && "ROTL/ROTR legalize operation not supported");
+      break;
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
+      break;
+    case TargetLowering::Promote:
+      assert(0 && "Do not know how to promote ROTL/ROTR");
+      break;
+    case TargetLowering::Expand:
+      assert(0 && "Do not know how to expand ROTL/ROTR");
+      break;
+    }
     break;
     
   case ISD::BSWAP:
