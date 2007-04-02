@@ -1,6 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'b LBB.*' | wc -l | grep 5
-;;; FIXME, 4 unconditional branches is minimal
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'b LBB.*' | wc -l | grep 4
 
 target endian = big
 target pointersize = 32
