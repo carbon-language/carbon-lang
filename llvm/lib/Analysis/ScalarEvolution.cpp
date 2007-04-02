@@ -1427,7 +1427,16 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
         }
       }
       break;
-      
+    case Instruction::Xor:
+      // If the RHS of the xor is a signbit, then this is just an add.
+      // Instcombine turns add of signbit into xor as a strength reduction step.
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+        if (CI->getValue().isSignBit())
+          return SCEVAddExpr::get(getSCEV(I->getOperand(0)),
+                                  getSCEV(I->getOperand(1)));
+      }
+      break;
+
     case Instruction::Shl:
       // Turn shift left of a constant amount into a multiply.
       if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
