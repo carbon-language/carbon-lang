@@ -929,7 +929,8 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
     for (std::map<SCEVHandle, IVsOfOneStride>::iterator SI= IVsByStride.begin(),
            SE = IVsByStride.end(); SI != SE; ++SI) {
       int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
-      if (unsigned(abs(SInt)) < SSInt || (SInt % SSInt) != 0)
+      if (SInt != -SSInt &&
+          (unsigned(abs(SInt)) < SSInt || (SInt % SSInt) != 0))
         continue;
       int64_t Scale = SInt / SSInt;
       // Check that this stride is valid for all the types used for loads and
