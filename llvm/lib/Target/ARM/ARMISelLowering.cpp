@@ -1598,6 +1598,7 @@ ARMTargetLowering::getConstraintType(const std::string &Constraint) const {
     switch (Constraint[0]) {
     default:  break;
     case 'l': return C_RegisterClass;
+    case 'w': return C_RegisterClass;
     }
   }
   return TargetLowering::getConstraintType(Constraint);
@@ -1609,12 +1610,17 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   if (Constraint.size() == 1) {
     // GCC RS6000 Constraint Letters
     switch (Constraint[0]) {
-      case 'l':
-      // FIXME: in thumb mode, 'l' is only low-regs.
-      // FALL THROUGH.
-      case 'r':
-        return std::make_pair(0U, ARM::GPRRegisterClass);
-        break;
+    case 'l':
+    // FIXME: in thumb mode, 'l' is only low-regs.
+    // FALL THROUGH.
+    case 'r':
+      return std::make_pair(0U, ARM::GPRRegisterClass);
+    case 'w':
+      if (VT == MVT::f32)
+        return std::make_pair(0U, ARM::SPRRegisterClass);
+      if (VT == MVT::f32)
+        return std::make_pair(0U, ARM::DPRRegisterClass);
+      break;
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
@@ -1634,6 +1640,22 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                  ARM::R4, ARM::R5, ARM::R6, ARM::R7,
                                  ARM::R8, ARM::R9, ARM::R10, ARM::R11,
                                  ARM::R12, ARM::LR, 0);
+  case 'w':
+    if (VT == MVT::f32)
+      return make_vector<unsigned>(ARM::S0, ARM::S1, ARM::S2, ARM::S3,
+                                   ARM::S4, ARM::S5, ARM::S6, ARM::S7,
+                                   ARM::S8, ARM::S9, ARM::S10, ARM::S11,
+                                   ARM::S12,ARM::S13,ARM::S14,ARM::S15,
+                                   ARM::S16,ARM::S17,ARM::S18,ARM::S19,
+                                   ARM::S20,ARM::S21,ARM::S22,ARM::S23,
+                                   ARM::S24,ARM::S25,ARM::S26,ARM::S27,
+                                   ARM::S28,ARM::S29,ARM::S30,ARM::S31, 0);
+    if (VT == MVT::f64)
+      return make_vector<unsigned>(ARM::D0, ARM::D1, ARM::D2, ARM::D3,
+                                   ARM::D4, ARM::D5, ARM::D6, ARM::D7,
+                                   ARM::D8, ARM::D9, ARM::D10,ARM::D11,
+                                   ARM::D12,ARM::D13,ARM::D14,ARM::D15, 0);
+      break;
   }
 
   return std::vector<unsigned>();
