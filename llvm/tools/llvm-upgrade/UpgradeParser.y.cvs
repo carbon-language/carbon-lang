@@ -1466,6 +1466,25 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
         return new CallInst(F, Args[0]);
       }
       break;
+    case 'c':
+      if ((Name.length() <= 14 && !memcmp(&Name[5], "ctpop.i", 7)) ||
+          (Name.length() <= 13 && !memcmp(&Name[5], "ctlz.i", 6)) ||
+          (Name.length() <= 13 && !memcmp(&Name[5], "cttz.i", 6))) {
+        // These intrinsics changed their result type.
+        const Type* ArgTy = Args[0]->getType();
+        Function *OldF = CurModule.CurrentModule->getFunction(Name);
+        if (OldF)
+          OldF->setName("upgrd.rm." + Name);
+
+        Function *NewF = cast<Function>(
+          CurModule.CurrentModule->getOrInsertFunction(Name, Type::Int32Ty, 
+                                                       ArgTy, (void*)0));
+
+        Instruction *Call = new CallInst(NewF, Args[0], "", CurBB);
+        return CastInst::createIntegerCast(Call, RetTy, false);
+      }
+      break;
+
     case 'v' : {
       const Type* PtrTy = PointerType::get(Type::Int8Ty);
       std::vector<const Type*> Params;
