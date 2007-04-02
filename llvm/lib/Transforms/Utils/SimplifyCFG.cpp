@@ -22,6 +22,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -39,7 +40,7 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
   // conflicting incoming values from the two switch blocks.
   BasicBlock *SI1BB = SI1->getParent();
   BasicBlock *SI2BB = SI2->getParent();
-  std::set<BasicBlock*> SI1Succs(succ_begin(SI1BB), succ_end(SI1BB));
+  SmallPtrSet<BasicBlock*, 16> SI1Succs(succ_begin(SI1BB), succ_end(SI1BB));
   
   for (succ_iterator I = succ_begin(SI2BB), E = succ_end(SI2BB); I != E; ++I)
     if (SI1Succs.count(*I))
@@ -84,10 +85,10 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // with incompatible values coming in from the two edges!
   //
   if (isa<PHINode>(Succ->front())) {
-    std::set<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
+    SmallPtrSet<BasicBlock*, 16> BBPreds(pred_begin(BB), pred_end(BB));
     for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
          PI != PE; ++PI)
-      if (std::find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end()) {
+      if (BBPreds.count(*PI)) {
         // Loop over all of the PHI nodes checking to see if there are
         // incompatible values coming in.
         for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
@@ -109,7 +110,7 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // update the PHI nodes correctly.
   if (!isa<PHINode>(BB->begin()) || Succ->getSinglePredecessor()) return true;
 
-  // If the predecessors of Succ are only BB and Succ itself, we can handle this.
+  // If the predecessors of Succ are only BB and Succ itself, handle it.
   bool IsSafe = true;
   for (pred_iterator PI = pred_begin(Succ), E = pred_end(Succ); PI != E; ++PI)
     if (*PI != Succ && *PI != BB) {
@@ -131,7 +132,7 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // Scan the predecessor sets of BB and Succ, making sure there are no common
   // predecessors.  Common predecessors would cause us to build a phi node with
   // differing incoming values, which is not legal.
-  std::set<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
+  SmallPtrSet<BasicBlock*, 16> BBPreds(pred_begin(BB), pred_end(BB));
   for (pred_iterator PI = pred_begin(Succ), E = pred_end(Succ); PI != E; ++PI)
     if (BBPreds.count(*PI))
       return false;
@@ -633,7 +634,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
       } else {
         SwitchInst *SI = cast<SwitchInst>(TI);
         // Okay, TI has cases that are statically dead, prune them away.
-        std::set<Constant*> DeadCases;
+        SmallPtrSet<Constant*, 16> DeadCases;
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
           DeadCases.insert(PredCases[i].first);
 
