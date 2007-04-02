@@ -1448,35 +1448,52 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
                      std::vector<Value*>& Args) {
 
   std::string Name = ID.Type == ValID::NameVal ? ID.Name : "";
-  if (Name == "llvm.isunordered.f32" || Name == "llvm.isunordered.f64") {
-    if (Args.size() != 2)
-      error("Invalid prototype for " + Name + " prototype");
-    return new FCmpInst(FCmpInst::FCMP_UNO, Args[0], Args[1]);
-  } else {
-    const Type* PtrTy = PointerType::get(Type::Int8Ty);
-    std::vector<const Type*> Params;
-    if (Name == "llvm.va_start" || Name == "llvm.va_end") {
-      if (Args.size() != 1)
-        error("Invalid prototype for " + Name + " prototype");
-      Params.push_back(PtrTy);
-      const FunctionType *FTy = FunctionType::get(Type::VoidTy, Params, false);
-      const PointerType *PFTy = PointerType::get(FTy);
-      Value* Func = getVal(PFTy, ID);
-      Args[0] = new BitCastInst(Args[0], PtrTy, makeNameUnique("va"), CurBB);
-      return new CallInst(Func, &Args[0], Args.size());
-    } else if (Name == "llvm.va_copy") {
-      if (Args.size() != 2)
-        error("Invalid prototype for " + Name + " prototype");
-      Params.push_back(PtrTy);
-      Params.push_back(PtrTy);
-      const FunctionType *FTy = FunctionType::get(Type::VoidTy, Params, false);
-      const PointerType *PFTy = PointerType::get(FTy);
-      Value* Func = getVal(PFTy, ID);
-      std::string InstName0(makeNameUnique("va0"));
-      std::string InstName1(makeNameUnique("va1"));
-      Args[0] = new BitCastInst(Args[0], PtrTy, InstName0, CurBB);
-      Args[1] = new BitCastInst(Args[1], PtrTy, InstName1, CurBB);
-      return new CallInst(Func, &Args[0], Args.size());
+  switch (Name[5]) {
+    case 'i':
+      if (Name == "llvm.isunordered.f32" || Name == "llvm.isunordered.f64") {
+        if (Args.size() != 2)
+          error("Invalid prototype for " + Name);
+        return new FCmpInst(FCmpInst::FCMP_UNO, Args[0], Args[1]);
+      }
+      break;
+    case 'b':
+      if (Name.length() == 14 && !memcmp(&Name[5], "bswap.i", 7)) {
+        const Type* ArgTy = Args[0]->getType();
+        Name += ".i" + utostr(cast<IntegerType>(ArgTy)->getBitWidth());
+        Function *F = cast<Function>(
+          CurModule.CurrentModule->getOrInsertFunction(Name, RetTy, ArgTy, 
+                                                       (void*)0));
+        return new CallInst(F, Args[0]);
+      }
+      break;
+    case 'v' : {
+      const Type* PtrTy = PointerType::get(Type::Int8Ty);
+      std::vector<const Type*> Params;
+      if (Name == "llvm.va_start" || Name == "llvm.va_end") {
+        if (Args.size() != 1)
+          error("Invalid prototype for " + Name + " prototype");
+        Params.push_back(PtrTy);
+        const FunctionType *FTy = 
+          FunctionType::get(Type::VoidTy, Params, false);
+        const PointerType *PFTy = PointerType::get(FTy);
+        Value* Func = getVal(PFTy, ID);
+        Args[0] = new BitCastInst(Args[0], PtrTy, makeNameUnique("va"), CurBB);
+        return new CallInst(Func, &Args[0], Args.size());
+      } else if (Name == "llvm.va_copy") {
+        if (Args.size() != 2)
+          error("Invalid prototype for " + Name + " prototype");
+        Params.push_back(PtrTy);
+        Params.push_back(PtrTy);
+        const FunctionType *FTy = 
+          FunctionType::get(Type::VoidTy, Params, false);
+        const PointerType *PFTy = PointerType::get(FTy);
+        Value* Func = getVal(PFTy, ID);
+        std::string InstName0(makeNameUnique("va0"));
+        std::string InstName1(makeNameUnique("va1"));
+        Args[0] = new BitCastInst(Args[0], PtrTy, InstName0, CurBB);
+        Args[1] = new BitCastInst(Args[1], PtrTy, InstName1, CurBB);
+        return new CallInst(Func, &Args[0], Args.size());
+      }
     }
   }
   return 0;
@@ -3661,7 +3678,7 @@ InstVal
     if ($6)
       for (unsigned i = 0, e = $6->size(); i < e; ++i) 
         Args.push_back((*$6)[i].V);
-    Instruction *Inst = upgradeIntrinsicCall(FTy, $4, Args);
+    Instruction *Inst = upgradeIntrinsicCall(FTy->getReturnType(), $4, Args);
 
     // If we got an upgraded intrinsic
     if (Inst) {
