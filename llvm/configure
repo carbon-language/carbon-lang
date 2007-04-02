@@ -4535,7 +4535,7 @@ else
 
 fi
 
-if test -d "CVS" -o -d "${srcdir}/CVS"; then
+if test -d "CVS" -o -d "${srcdir}/CVS" -o -d ".svn" -o -d "${srcdir}/.svn"; then
   cvsbuild="yes"
   optimize="no"
   CVSBUILD=CVSBUILD=1
