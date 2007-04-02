@@ -1,6 +1,6 @@
 ; Tests to make sure bit counts of constants are folded
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis -o /dev/null -f && 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 'llvm.ct'
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'ret i32 19' &&
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v declare | not grep 'llvm.ct'
 
 declare i32 @llvm.ctpop.i31(i31 %val) 
 declare i32 @llvm.cttz.i32(i32 %val) 
