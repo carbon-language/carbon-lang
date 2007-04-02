@@ -4015,7 +4015,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                            ConstantExpr::getSub(NegOp0CI,
                                              ConstantInt::get(I.getType(), 1)),
                                           Op0I->getOperand(0));
-          } else if (RHS->getValue().isMinSignedValue()) {
+          } else if (RHS->getValue().isSignBit()) {
             // (X + C) ^ signbit -> (X + C + signbit)
             Constant *C = ConstantInt::get(RHS->getValue() + Op0CI->getValue());
             return BinaryOperator::createAdd(Op0I->getOperand(0), C);
