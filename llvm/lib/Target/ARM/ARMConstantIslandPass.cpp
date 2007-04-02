@@ -593,6 +593,11 @@ bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
        Water->begin()->getOpcode() != ARM::CONSTPOOL_ENTRY))
     CPEOffset += 2;
 
+  // If the CPE is to be inserted before the instruction, that will raise
+  // the offset of the instruction.
+  if (CPEOffset < UserOffset)
+    UserOffset += isThumb ? 2 : 4;
+
   return OffsetIsInRange (UserOffset, CPEOffset, MaxDisp, !isThumb);
 }
 
