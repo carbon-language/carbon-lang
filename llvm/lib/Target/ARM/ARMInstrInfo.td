@@ -70,6 +70,9 @@ def ARMbrjt          : SDNode<"ARMISD::BR_JT", SDT_ARMBrJT,
 def ARMcmp           : SDNode<"ARMISD::CMP", SDT_ARMCmp,
                               [SDNPOutFlag]>;
 
+def ARMcmpNZ         : SDNode<"ARMISD::CMPNZ", SDT_ARMCmp,
+                              [SDNPOutFlag]>;
+
 def ARMpic_add       : SDNode<"ARMISD::PIC_ADD", SDT_ARMPICAdd>;
 
 def ARMsrl_flag      : SDNode<"ARMISD::SRL_FLAG", SDTIntUnaryOp, [SDNPOutFlag]>;
@@ -1023,10 +1026,15 @@ def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),
              (CMNri  GPR:$src, so_imm_neg:$imm)>;
 
 // Note that TST/TEQ don't set all the same flags that CMP does!
-def TSTrr : AI1<(ops GPR:$a, so_reg:$b), "tst $a, $b", []>;
-def TSTri : AI1<(ops GPR:$a, so_imm:$b), "tst $a, $b", []>;
-def TEQrr : AI1<(ops GPR:$a, so_reg:$b), "teq $a, $b", []>;
-def TEQri : AI1<(ops GPR:$a, so_imm:$b), "teq $a, $b", []>;
+defm TST  : AI1_bin0_irs<"tst", BinOpFrag<(ARMcmpNZ (and node:$LHS, node:$RHS), 0)>>;
+defm TEQ  : AI1_bin0_irs<"teq", BinOpFrag<(ARMcmpNZ (xor node:$LHS, node:$RHS), 0)>>;
+
+defm CMPnz : AI1_bin0_irs<"cmp", BinOpFrag<(ARMcmpNZ node:$LHS, node:$RHS)>>;
+defm CMNnz : AI1_bin0_irs<"cmn", BinOpFrag<(ARMcmpNZ node:$LHS,(ineg node:$RHS))>>;
+
+def : ARMPat<(ARMcmpNZ GPR:$src, so_imm_neg:$imm),
+             (CMNri  GPR:$src, so_imm_neg:$imm)>;
+
 
 // Conditional moves
 def MOVCCr : AI<(ops GPR:$dst, GPR:$false, GPR:$true, CCOp:$cc),

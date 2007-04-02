@@ -266,6 +266,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::RET_FLAG:      return "ARMISD::RET_FLAG";
   case ARMISD::PIC_ADD:       return "ARMISD::PIC_ADD";
   case ARMISD::CMP:           return "ARMISD::CMP";
+  case ARMISD::CMPNZ:         return "ARMISD::CMPNZ";
   case ARMISD::CMPFP:         return "ARMISD::CMPFP";
   case ARMISD::CMPFPw0:       return "ARMISD::CMPFPw0";
   case ARMISD::FMSTAT:        return "ARMISD::FMSTAT";
@@ -946,8 +947,21 @@ static SDOperand getARMCmp(SDOperand LHS, SDOperand RHS, ISD::CondCode CC,
   }
 
   ARMCC::CondCodes CondCode = IntCCToARMCC(CC);
+  ARMISD::NodeType CompareType;
+  switch (CondCode) {
+  default:
+    CompareType = ARMISD::CMP;
+    break;
+  case ARMCC::EQ:
+  case ARMCC::NE:
+  case ARMCC::MI:
+  case ARMCC::PL:
+    // Uses only N and Z Flags
+    CompareType = ARMISD::CMPNZ;
+    break;
+  }
   ARMCC = DAG.getConstant(CondCode, MVT::i32);
-  return DAG.getNode(ARMISD::CMP, MVT::Flag, LHS, RHS);
+  return DAG.getNode(CompareType, MVT::Flag, LHS, RHS);
 }
 
 /// Returns a appropriate VFP CMP (fcmp{s|d}+fmstat) for the given operands.

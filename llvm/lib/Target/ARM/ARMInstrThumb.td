@@ -356,7 +356,23 @@ def tCMPi8 : TI<(ops GPR:$lhs, i32imm:$rhs),
 def tCMPr : TI<(ops GPR:$lhs, GPR:$rhs),
                "cmp $lhs, $rhs",
                [(ARMcmp GPR:$lhs, GPR:$rhs)]>;
-               
+
+def tTST  : TI<(ops GPR:$lhs, GPR:$rhs),
+               "tst $lhs, $rhs",
+               [(ARMcmpNZ (and GPR:$lhs, GPR:$rhs), 0)]>;
+
+def tCMNNZ : TI<(ops GPR:$lhs, GPR:$rhs),
+                "cmn $lhs, $rhs",
+                [(ARMcmpNZ GPR:$lhs, (ineg GPR:$rhs))]>;
+
+def tCMPNZi8 : TI<(ops GPR:$lhs, i32imm:$rhs),
+                 "cmp $lhs, $rhs",
+                 [(ARMcmpNZ GPR:$lhs, imm0_255:$rhs)]>;
+
+def tCMPNZr : TI<(ops GPR:$lhs, GPR:$rhs),
+                 "cmp $lhs, $rhs",
+                 [(ARMcmpNZ GPR:$lhs, GPR:$rhs)]>;
+
 // TODO: A7-37: CMP(3) - cmp hi regs
 
 def tEOR : TIt<(ops GPR:$dst, GPR:$lhs, GPR:$rhs),
@@ -472,7 +488,6 @@ def tSXTH  : TI<(ops GPR:$dst, GPR:$src),
                 [(set GPR:$dst, (sext_inreg GPR:$src, i16))]>,
                 Requires<[IsThumb, HasV6]>;
 
-// TODO: A7-122: TST - test.
 
 def tUXTB  : TI<(ops GPR:$dst, GPR:$src),
                 "uxtb $dst, $src",
