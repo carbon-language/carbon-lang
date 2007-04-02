@@ -218,7 +218,7 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
     V = BinaryOperator::createAdd(LHS, RHS, "ctpop.step", IP);
   }
 
-  return V;
+  return CastInst::createIntegerCast(V, Type::Int32Ty, false, "ctpop", IP);
 }
 
 /// LowerCTLZ - Emit the code to lower ctlz of V before the specified
