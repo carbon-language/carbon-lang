@@ -4005,7 +4005,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           return BinaryOperator::createOr(Op0NotVal, NotY);
         }
       }
-
+          
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
         if (Op0I->getOpcode() == Instruction::Add) {
           // ~(X-c) --> (-c-1)-X
@@ -4015,6 +4015,12 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                            ConstantExpr::getSub(NegOp0CI,
                                              ConstantInt::get(I.getType(), 1)),
                                           Op0I->getOperand(0));
+          } else if (RHS->getValue().isMinSignedValue()) {
+            // (X + C) ^ signbit -> (X + C + signbit)
+            Constant *C = ConstantInt::get(RHS->getValue() + Op0CI->getValue());
+            return BinaryOperator::createAdd(Op0I->getOperand(0), C);
+                                             
+                                                              
           }
         } else if (Op0I->getOpcode() == Instruction::Or) {
           // (X|C1)^C2 -> X^(C1|C2) iff X&~C1 == 0
