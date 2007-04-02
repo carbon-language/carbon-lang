@@ -522,7 +522,7 @@ static inline Value *dyn_castNotVal(Value *V) {
 
   // Constants can be considered to be not'ed values...
   if (ConstantInt *C = dyn_cast<ConstantInt>(V))
-    return ConstantExpr::getNot(C);
+    return ConstantInt::get(~C->getValue());
   return 0;
 }
 
@@ -844,16 +844,14 @@ static void ComputeSignedMinMaxValuesFromKnownBits(const Type *Ty,
          "Ty, KnownZero, KnownOne and Min, Max must have equal bitwidth.");
   APInt UnknownBits = ~(KnownZero|KnownOne);
 
-  APInt SignBit(APInt::getSignBit(BitWidth));
-  
   // The minimum value is when all unknown bits are zeros, EXCEPT for the sign
   // bit if it is unknown.
   Min = KnownOne;
   Max = KnownOne|UnknownBits;
   
   if (UnknownBits[BitWidth-1]) { // Sign bit is unknown
-    Min |= SignBit;
-    Max &= ~SignBit;
+    Min.set(BitWidth-1);
+    Max.clear(BitWidth-1);
   }
 }
 
@@ -1133,7 +1131,6 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
     
-    DemandedMask &= SrcTy->getMask().zext(BitWidth);
     DemandedMask.trunc(SrcBitWidth);
     RHSKnownZero.trunc(SrcBitWidth);
     RHSKnownOne.trunc(SrcBitWidth);
@@ -1154,9 +1151,6 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
     uint32_t SrcBitWidth = SrcTy->getBitWidth();
     
-    // Get the sign bit for the source type
-    APInt InSignBit(APInt::getSignBit(SrcBitWidth));
-    InSignBit.zext(BitWidth);
     APInt InputDemandedBits = DemandedMask & 
                               APInt::getLowBitsSet(BitWidth, SrcBitWidth);
 
@@ -1164,7 +1158,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     // If any of the sign extended bits are demanded, we know that the sign
     // bit is demanded.
     if ((NewBits & DemandedMask) != 0)
-      InputDemandedBits |= InSignBit;
+      InputDemandedBits.set(SrcBitWidth-1);
       
     InputDemandedBits.trunc(SrcBitWidth);
     RHSKnownZero.trunc(SrcBitWidth);
@@ -3652,7 +3646,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       Instruction *Or = BinaryOperator::createOr(X, RHS);
       InsertNewInstBefore(Or, I);
       Or->takeName(Op0);
-      return BinaryOperator::createAnd(Or, ConstantExpr::getOr(RHS, C1));
+      return BinaryOperator::createAnd(Or, 
+               ConstantInt::get(RHS->getValue() | C1->getValue()));
     }
 
     // (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
@@ -3661,7 +3656,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       InsertNewInstBefore(Or, I);
       Or->takeName(Op0);
       return BinaryOperator::createXor(Or,
-                 ConstantExpr::getAnd(C1, ConstantExpr::getNot(RHS)));
+                 ConstantInt::get(C1->getValue() & ~RHS->getValue()));
     }
 
     // Try to fold constant and into select arguments.
@@ -3716,13 +3711,14 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       match(Op1, m_And(m_Value(B), m_ConstantInt(C2)))) {
 
     if (A == B)  // (A & C1)|(A & C2) == A & (C1|C2)
-      return BinaryOperator::createAnd(A, ConstantExpr::getOr(C1, C2));
+      return BinaryOperator::createAnd(A, 
+                 ConstantInt::get(C1->getValue() | C2->getValue()));
 
 
     // If we have: ((V + N) & C1) | (V & C2)
     // .. and C2 = ~C1 and C2 is 0+1+ and (N & C2) == 0
     // replace with V+N.
-    if (C1 == ConstantExpr::getNot(C2)) {
+    if (C1->getValue() == ~C2->getValue()) {
       Value *V1 = 0, *V2 = 0;
       if ((C2->getValue() & (C2->getValue()+1)) == 0 && // C2 == 0+1+
           match(A, m_Add(m_Value(V1), m_Value(V2)))) {
@@ -3826,7 +3822,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
                 Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
                                                       LHSVal->getName()+".off");
                 InsertNewInstBefore(Add, I);
-                AddCST = ConstantExpr::getSub(AddOne(RHSCst), LHSCst);
+                AddCST = Subtract(AddOne(RHSCst), LHSCst);
                 return new ICmpInst(ICmpInst::ICMP_ULT, Add, AddCST);
               }
               break;                         // (X == 13 | X == 15) -> no change
@@ -4027,7 +4023,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
             Constant *NewRHS = ConstantExpr::getOr(Op0CI, RHS);
             // Anything in both C1 and C2 is known to be zero, remove it from
             // NewRHS.
-            Constant *CommonBits = ConstantExpr::getAnd(Op0CI, RHS);
+            Constant *CommonBits = And(Op0CI, RHS);
             NewRHS = ConstantExpr::getAnd(NewRHS, 
                                           ConstantExpr::getNot(CommonBits));
             AddToWorkList(Op0I);
@@ -4196,7 +4192,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 /// overflowed for this type.
 static bool AddWithOverflow(ConstantInt *&Result, ConstantInt *In1,
                             ConstantInt *In2, bool IsSigned = false) {
-  Result = cast<ConstantInt>(ConstantExpr::getAdd(In1, In2));
+  Result = cast<ConstantInt>(Add(In1, In2));
 
   if (IsSigned)
     if (In2->getValue().isNegative())
@@ -4956,8 +4952,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           // of form X/C1=C2. We solve for X by multiplying C1 (DivRHS) and 
           // C2 (CI). By solving for X we can turn this into a range check 
           // instead of computing a divide. 
-          ConstantInt *Prod = 
-            cast<ConstantInt>(ConstantExpr::getMul(CI, DivRHS));
+          ConstantInt *Prod = Multiply(CI, DivRHS);
 
           // Determine if the product overflows by seeing if the product is
           // not equal to the divide. Make sure we do the same kind of divide
@@ -5005,7 +5000,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             } else {                       // (X / neg) op neg
               LoBound = Prod;
               LoOverflow = HiOverflow = ProdOV;
-              HiBound = cast<ConstantInt>(ConstantExpr::getSub(Prod, DivRHS));
+              HiBound = Subtract(Prod, DivRHS);
             }
 
             // Dividing by a negate swaps the condition.
@@ -5085,7 +5080,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           if (ConstantInt *BOp1C = dyn_cast<ConstantInt>(BO->getOperand(1))) {
             if (BO->hasOneUse())
               return new ICmpInst(I.getPredicate(), BO->getOperand(0),
-                                  ConstantExpr::getSub(CI, BOp1C));
+                                  Subtract(CI, BOp1C));
           } else if (CI->isNullValue()) {
             // Replace ((add A, B) != 0) with (A != -B) if A or B is
             // efficiently invertible, or if the add has just this one use.
@@ -5133,8 +5128,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           if (ConstantInt *BOC = dyn_cast<ConstantInt>(BO->getOperand(1))) {
             // If bits are being compared against that are and'd out, then the
             // comparison can never succeed!
-            if (!ConstantExpr::getAnd(CI,
-                                      ConstantExpr::getNot(BOC))->isNullValue())
+            if (!And(CI, ConstantInt::get(~BOC->getValue()))->isZero())
               return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty,
                                                              isICMP_NE));
 
@@ -5323,7 +5317,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         if (ConstantInt *C1 = dyn_cast<ConstantInt>(B))
           if (ConstantInt *C2 = dyn_cast<ConstantInt>(D))
             if (Op1->hasOneUse()) {
-              Constant *NC = ConstantExpr::getXor(C1, C2);
+              Constant *NC = ConstantInt::get(C1->getValue() ^ C2->getValue());
               Instruction *Xor = BinaryOperator::createXor(C, NC, "tmp");
               return new ICmpInst(I.getPredicate(), A,
                                   InsertNewInstBefore(Xor, I));
@@ -5975,8 +5969,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
     // If the allocation size is constant, form a constant mul expression
     Amt = ConstantInt::get(Type::Int32Ty, Scale);
     if (isa<ConstantInt>(NumElements))
-      Amt = ConstantExpr::getMul(
-              cast<ConstantInt>(NumElements), cast<ConstantInt>(Amt));
+      Amt = Multiply(cast<ConstantInt>(NumElements), cast<ConstantInt>(Amt));
     // otherwise multiply the amount and the number of elements
     else if (Scale != 1) {
       Instruction *Tmp = BinaryOperator::createMul(Amt, NumElements, "tmp");
