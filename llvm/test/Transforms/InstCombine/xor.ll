@@ -190,3 +190,9 @@ int %test27(int %b, int %c, int %d) {
         ret int %tmp6
 }
 
+int %test28(int %indvar) {
+        %tmp7 = add int %indvar, -2147483647
+        %tmp214 = xor int %tmp7, -2147483648
+        ret int %tmp214
+}
+
