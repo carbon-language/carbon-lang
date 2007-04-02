@@ -16,7 +16,6 @@
 #define LLVM_CLANG_AST_SEMA_H
 
 #include "clang/Parse/Action.h"
-#include "clang/AST/Expr.h"
 #include <vector>
 #include <string>
 
@@ -25,6 +24,7 @@ namespace clang {
   class ASTContext;
   class Preprocessor;
   class Decl;
+  class Expr;
   class VarDecl;
   class TypedefDecl;
   class FunctionDecl;
@@ -236,7 +236,7 @@ private:
   ExprResult CheckLogicalOperands(Expr *op1, Expr *op2);   // C99 6.5.[13,14]
   
   ExprResult CheckIncrementDecrementOperand(Expr *op, SourceLocation loc,
-                                            UnaryOperator::Opcode Opc);
+                                            unsigned /*UnaryOperator::Opcode*/c);
 };
 
 

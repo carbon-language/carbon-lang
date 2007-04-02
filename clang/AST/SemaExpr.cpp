@@ -424,7 +424,7 @@ Action::ExprResult Sema::CheckLogicalOperands(Expr *op1, Expr *op2) {
 
 Action::ExprResult
 Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
-                                               UnaryOperator::Opcode OpCode) {
+                                               unsigned OpCode) {
   TypeRef type = op->getTypeRef();
 
   assert(!type.isNull() && "no type for increment/decrement expression");
@@ -442,6 +442,6 @@ Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
   if (!type.isModifiableLvalue())
     return Diag(OpLoc, diag::err_typecheck_not_modifiable, type);
 
-  return new UnaryOperator(op, OpCode, type);
+  return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, type);
 }
 
