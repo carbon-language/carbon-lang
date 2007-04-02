@@ -83,7 +83,9 @@ conservative escape analysis.
 
 <div class="doc_text">
   <p>The following example illustrates the advantages of LTO's integrated 
-  approach and clean interface.</p>
+  approach and clean interface. This example requires optimization support,
+  using interface described in this document, from system linker. Here,
+  llvm-gcc4 transparantly invokes system linker. </p>
   <ul>
     <li> Input source file <tt>a.c</tt> is compiled into LLVM byte code form.
     <li> Input source file <tt>main.c</tt> is compiled into native object code.
