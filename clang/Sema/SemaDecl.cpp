@@ -273,6 +273,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       case DeclSpec::SCS_auto:        SC = ObjectDecl::Auto; break;
       case DeclSpec::SCS_register:    SC = ObjectDecl::Register; break;
     }
+    VarDecl *NewVD;
+    
     if (S->getParent() == 0) {
       // File scope. C99 6.9.2p2: A declaration of an identifier for and 
       // object that has file scope without an initializer, and without a
@@ -288,6 +290,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
           return 0;
         }
       }
+      NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC);
     } else { 
       // Block scope. C99 6.7p7: If an identifier for an object is declared with
       // no linkage (C99 6.2.2p6), the type for the object shall be complete...
@@ -297,9 +300,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
           return 0;
         }
       }
-	}
-    VarDecl *NewVD = new VarDecl(D.getIdentifierLoc(), II, R, SC);
-    
+      NewVD = new BlockVarDecl(D.getIdentifierLoc(), II, R, SC);
+    }    
     // Merge the decl with the existing one if appropriate.
     if (PrevDecl) {
       NewVD = MergeVarDecl(NewVD, PrevDecl);
@@ -337,9 +339,9 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   }
   
   // FIXME: Handle storage class (auto, register). No declarator?
-  VarDecl *New = new VarDecl(PI.IdentLoc, II, 
-                             TypeRef::getFromOpaquePtr(PI.TypeInfo), 
-                             ObjectDecl::None);
+  VarDecl *New = new ParmVarDecl(PI.IdentLoc, II, 
+                                 TypeRef::getFromOpaquePtr(PI.TypeInfo), 
+                                 ObjectDecl::None);
 
   // If this has an identifier, add it to the scope stack.
   if (II) {

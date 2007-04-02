@@ -30,8 +30,16 @@ class FunctionDecl;
 class Decl {
 public:
   enum Kind {
-    Typedef, Function, Variable, Field, EnumConstant,
-    Struct, Union, Class, Enum
+    FIRST_ObjectDecl,
+    Function, 
+    BlockVariable, FileVariable, ParmVariable, // subclasses of VarDecl
+    Field, 
+    EnumConstant,
+    LAST_ObjectDecl,
+    FIRST_TypeDecl,
+    Typedef, 
+    Struct, Union, Class, Enum, // subclasses of TagDecl
+    LAST_TypeDecl
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
@@ -79,7 +87,9 @@ public:
     default: assert(0 && "Unknown decl kind!");
     case Typedef:
     case Function:
-    case Variable:
+    case BlockVariable:
+    case FileVariable:
+    case ParmVariable:
     case EnumConstant:
       return IDNS_Ordinary;
     case Struct:
@@ -115,7 +125,7 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return D->getKind() == Variable || D->getKind() == Function;
+    return D->getKind() > FIRST_ObjectDecl && D->getKind() < LAST_ObjectDecl;
   }
   static bool classof(const ObjectDecl *D) { return true; }
 };
@@ -124,13 +134,54 @@ public:
 /// declaration or definition.
 class VarDecl : public ObjectDecl {
   // TODO: Initializer.
+protected:
+  VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
+    : ObjectDecl(DK, L, Id, T, S) {}
+public:  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { 
+    return D->getKind() >= BlockVariable && D->getKind() <= ParmVariable; 
+  }
+  static bool classof(const VarDecl *D) { return true; }
+};
+
+/// BlockVarDecl - Represent a local variable declaration.
+class BlockVarDecl : public VarDecl {
 public:
-  VarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
-    : ObjectDecl(Variable, L, Id, T, S) {}
+  BlockVarDecl(SourceLocation L, IdentifierInfo *Id, 
+                     TypeRef T, StorageClass S)
+    : VarDecl(BlockVariable, L, Id, T, S) {}
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == Variable; }
-  static bool classof(const VarDecl *D) { return true; }
+  static bool classof(const VarDecl *D) { return D->getKind() == BlockVariable; }
+  static bool classof(const BlockVarDecl *D) { return true; }
+};
+
+/// FileVarDecl - Represent a file scoped variable declaration. This
+/// will allow us to reason about external variable declarations and tentative 
+/// definitions (C99 6.9.2p2) using our type system (without storing a
+/// pointer to the decl's scope, which is transient).
+class FileVarDecl : public VarDecl {
+public:
+  FileVarDecl(SourceLocation L, IdentifierInfo *Id, 
+                    TypeRef T, StorageClass S)
+    : VarDecl(FileVariable, L, Id, T, S) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const VarDecl *D) { return D->getKind() == FileVariable; }
+  static bool classof(const FileVarDecl *D) { return true; }
+};
+
+/// ParmVarDecl - Represent a parameter to a function.
+class ParmVarDecl : public VarDecl {
+public:
+  ParmVarDecl(SourceLocation L, IdentifierInfo *Id, 
+                     TypeRef T, StorageClass S)
+    : VarDecl(ParmVariable, L, Id, T, S) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const VarDecl *D) { return D->getKind() == ParmVariable; }
+  static bool classof(const ParmVarDecl *D) { return true; }
 };
 
 /// FunctionDecl - An instance of this class is created to represent a function
@@ -219,9 +270,7 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return D->getKind() == Typedef ||
-           D->getKind() == Struct || D->getKind() == Union ||
-           D->getKind() == Class || D->getKind() == Enum;
+    return D->getKind() > FIRST_TypeDecl && D->getKind() < LAST_TypeDecl;
   }
   static bool classof(const TypeDecl *D) { return true; }
 };
