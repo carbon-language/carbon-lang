@@ -272,6 +272,9 @@ public:
   /// @returns true if the argument APInt value is a power of two > 0.
   bool isPowerOf2() const; 
 
+  /// isSignBit - Return true if this is the value returned by getSignBit.
+  bool isSignBit() const { return isMinSignedValue(); }
+  
   /// This converts the APInt to a boolean value as a test against zero.
   /// @brief Boolean conversion function. 
   inline bool getBoolValue() const {
