@@ -20,7 +20,7 @@
 using namespace llvm;
 using namespace clang;
 
-HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM) {
+HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM), FrameworkMap(64) {
   SystemDirIdx = 0;
   NoCurDirSearch = false;
   
