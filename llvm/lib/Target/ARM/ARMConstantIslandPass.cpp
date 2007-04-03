@@ -139,13 +139,15 @@ namespace {
     MachineBasicBlock *SplitBlockBeforeInstr(MachineInstr *MI);
     void UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB);
     void AdjustBBOffsetsAfter(MachineBasicBlock *BB, int delta);
-    bool DecrementOldEntry(unsigned CPI, MachineInstr* CPEMI, unsigned Size);
+    bool DecrementOldEntry(unsigned CPI, MachineInstr* CPEMI);
     int LookForExistingCPEntry(CPUser& U, unsigned UserOffset);
     bool LookForWater(CPUser&U, unsigned UserOffset, bool* PadNewWater,
                       MachineBasicBlock** NewMBB);
     void CreateNewWater(unsigned CPUserIndex, unsigned UserOffset,
                       MachineBasicBlock** NewMBB);
     bool HandleConstantPoolUser(MachineFunction &Fn, unsigned CPUserIndex);
+    void RemoveDeadCPEMI(MachineInstr *CPEMI);
+    bool RemoveUnusedCPEntries();
     bool CPEIsInRange(MachineInstr *MI, unsigned UserOffset, 
                       MachineInstr *CPEMI, unsigned Disp,
                       bool DoDump);
@@ -197,6 +199,9 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   InitialFunctionScan(Fn, CPEMIs);
   CPEMIs.clear();
   
+  /// Remove dead constant pool entries.
+  RemoveUnusedCPEntries();
+
   // Iteratively place constant pool entries and fix up branches until there
   // is no change.
   bool MadeChange = false;
@@ -210,7 +215,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
       break;
     MadeChange = true;
   }
-  
+
   // If LR has been forced spilled and no far jumps (i.e. BL) has been issued.
   // Undo the spill / restore of LR if possible.
   if (!HasFarJump && AFI->isLRSpilledForFarJump() && isThumb)
@@ -648,34 +653,13 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB, int delta)
 /// becomes 0 remove the entry and instruction.  Returns true if we removed 
 /// the entry, false if we didn't.
 
-bool ARMConstantIslands::DecrementOldEntry(unsigned CPI, MachineInstr *CPEMI, 
-                              unsigned Size) {
+bool ARMConstantIslands::DecrementOldEntry(unsigned CPI, MachineInstr *CPEMI) {
   // Find the old entry. Eliminate it if it is no longer used.
-  CPEntry *OldCPE = findConstPoolEntry(CPI, CPEMI);
-  assert(OldCPE && "Unexpected!");
-  if (--OldCPE->RefCount == 0) {
-    MachineBasicBlock *OldCPEBB = OldCPE->CPEMI->getParent();
-    if (OldCPEBB->empty()) {
-      // In thumb mode, the size of island is padded by two to compensate for
-      // the alignment requirement.  Thus it will now be 2 when the block is
-      // empty, so fix this.
-      // All succeeding offsets have the current size value added in, fix this.
-      if (BBSizes[OldCPEBB->getNumber()] != 0) {
-        AdjustBBOffsetsAfter(OldCPEBB, -BBSizes[OldCPEBB->getNumber()]);
-        BBSizes[OldCPEBB->getNumber()] = 0;
-      }
-      // An island has only one predecessor BB and one successor BB. Check if
-      // this BB's predecessor jumps directly to this BB's successor. This
-      // shouldn't happen currently.
-      assert(!BBIsJumpedOver(OldCPEBB) && "How did this happen?");
-      // FIXME: remove the empty blocks after all the work is done?
-    } else {
-      BBSizes[OldCPEBB->getNumber()] -= Size;
-      // All succeeding offsets have the current size value added in, fix this.
-      AdjustBBOffsetsAfter(OldCPEBB, -Size);
-    }
-    OldCPE->CPEMI->eraseFromParent();
-    OldCPE->CPEMI = NULL;
+  CPEntry *CPE = findConstPoolEntry(CPI, CPEMI);
+  assert(CPE && "Unexpected!");
+  if (--CPE->RefCount == 0) {
+    RemoveDeadCPEMI(CPEMI);
+    CPE->CPEMI = NULL;
     NumCPEs--;
     return true;
   }
@@ -723,8 +707,7 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
       CPEs[i].RefCount++;
       // ...and the original.  If we didn't remove the old entry, none of the
       // addresses changed, so we don't need another pass.
-      unsigned Size = CPEMI->getOperand(2).getImm();
-      return DecrementOldEntry(CPI, CPEMI, Size) ? 2 : 1;
+      return DecrementOldEntry(CPI, CPEMI) ? 2 : 1;
     }
   }
   return 0;
@@ -910,7 +893,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   UpdateForInsertedWaterBlock(NewIsland);
 
   // Decrement the old entry, and remove it if refcount becomes 0.
-  DecrementOldEntry(CPI, CPEMI, Size);
+  DecrementOldEntry(CPI, CPEMI);
 
   // Now that we have an island to add the CPE to, clone the original CPE and
   // add it to the island.
@@ -936,6 +919,51 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   DOUT << "  Moved CPE to #" << ID << " CPI=" << CPI << "\t" << *UserMI;
       
   return true;
+}
+
+/// RemoveDeadCPEMI - Remove a dead constant pool entry instruction. Update
+/// sizes and offsets of impacted basic blocks.
+void ARMConstantIslands::RemoveDeadCPEMI(MachineInstr *CPEMI) {
+  MachineBasicBlock *CPEBB = CPEMI->getParent();
+  if (CPEBB->empty()) {
+    // In thumb mode, the size of island is padded by two to compensate for
+    // the alignment requirement.  Thus it will now be 2 when the block is
+    // empty, so fix this.
+    // All succeeding offsets have the current size value added in, fix this.
+    if (BBSizes[CPEBB->getNumber()] != 0) {
+      AdjustBBOffsetsAfter(CPEBB, -BBSizes[CPEBB->getNumber()]);
+      BBSizes[CPEBB->getNumber()] = 0;
+    }
+    // An island has only one predecessor BB and one successor BB. Check if
+    // this BB's predecessor jumps directly to this BB's successor. This
+    // shouldn't happen currently.
+    assert(!BBIsJumpedOver(CPEBB) && "How did this happen?");
+    // FIXME: remove the empty blocks after all the work is done?
+  } else {
+    unsigned Size = CPEMI->getOperand(2).getImm();
+    BBSizes[CPEBB->getNumber()] -= Size;
+    // All succeeding offsets have the current size value added in, fix this.
+    AdjustBBOffsetsAfter(CPEBB, -Size);
+  }
+
+  CPEMI->eraseFromParent();
+}
+
+/// RemoveUnusedCPEntries - Remove constant pool entries whose refcounts
+/// are zero.
+bool ARMConstantIslands::RemoveUnusedCPEntries() {
+  unsigned MadeChange = false;
+  for (unsigned i = 0, e = CPEntries.size(); i != e; ++i) {
+      std::vector<CPEntry> &CPEs = CPEntries[i];
+      for (unsigned j = 0, ee = CPEs.size(); j != ee; ++j) {
+        if (CPEs[j].RefCount == 0 && CPEs[j].CPEMI) {
+          RemoveDeadCPEMI(CPEs[j].CPEMI);
+          CPEs[j].CPEMI = NULL;
+          MadeChange = true;
+        }
+      }
+  }  
+  return MadeChange;
 }
 
 /// BBIsInRange - Returns true if the distance between specific MI and
