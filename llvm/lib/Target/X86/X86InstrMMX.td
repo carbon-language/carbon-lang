@@ -118,10 +118,11 @@ let isTwoAddress = 1 in {
 }
 
 //===----------------------------------------------------------------------===//
-// MMX EMMS Instruction
+// MMX EMMS & FEMMS Instructions
 //===----------------------------------------------------------------------===//
 
-def MMX_EMMS : MMXI<0x77, RawFrm, (ops), "emms", [(int_x86_mmx_emms)]>;
+def MMX_EMMS  : MMXI<0x77, RawFrm, (ops), "emms",  [(int_x86_mmx_emms)]>;
+def MMX_FEMMS : MMXI<0x0E, RawFrm, (ops), "femms", [(int_x86_mmx_femms)]>;
 
 //===----------------------------------------------------------------------===//
 // MMX Scalar Instructions
@@ -130,9 +131,10 @@ def MMX_EMMS : MMXI<0x77, RawFrm, (ops), "emms", [(int_x86_mmx_emms)]>;
 // Arithmetic Instructions
 
 // -- Addition
-defm MMX_PADDB : MMXI_binop_rm<0xFC, "paddb", add, v8i8, 1>;
+defm MMX_PADDB : MMXI_binop_rm<0xFC, "paddb", add, v8i8,  1>;
 defm MMX_PADDW : MMXI_binop_rm<0xFD, "paddw", add, v4i16, 1>;
 defm MMX_PADDD : MMXI_binop_rm<0xFE, "paddd", add, v2i32, 1>;
+defm MMX_PADDQ : MMXI_binop_rm<0xD4, "paddq", add, v1i64, 1>;
 
 defm MMX_PADDSB  : MMXI_binop_rm_int<0xEC, "paddsb" , int_x86_mmx_padds_b, 1>;
 defm MMX_PADDSW  : MMXI_binop_rm_int<0xED, "paddsw" , int_x86_mmx_padds_w, 1>;
@@ -309,45 +311,52 @@ defm MMX_PACKSSDW : MMXI_binop_rm_int<0x6B, "packssdw", int_x86_mmx_packssdw>;
 defm MMX_PACKUSWB : MMXI_binop_rm_int<0x67, "packuswb", int_x86_mmx_packuswb>;
 
 // Data Transfer Instructions
-def MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
-                    "movd {$src, $dst|$dst, $src}", []>;
-def MOVD64rm : MMXI<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),
-                    "movd {$src, $dst|$dst, $src}", []>;
-def MOVD64mr : MMXI<0x7E, MRMDestMem, (ops i32mem:$dst, VR64:$src),
-                    "movd {$src, $dst|$dst, $src}", []>;
+def MMX_MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
+                        "movd {$src, $dst|$dst, $src}", []>;
+def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),
+                        "movd {$src, $dst|$dst, $src}", []>;
+def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (ops i32mem:$dst, VR64:$src),
+                        "movd {$src, $dst|$dst, $src}", []>;
 
-def MOVQ64rr : MMXI<0x6F, MRMSrcReg, (ops VR64:$dst, VR64:$src),
-                    "movq {$src, $dst|$dst, $src}", []>;
-def MOVQ64rm : MMXI<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
-                    "movq {$src, $dst|$dst, $src}",
-                    [(set VR64:$dst, (load_mmx addr:$src))]>;
-def MOVQ64mr : MMXI<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
-                    "movq {$src, $dst|$dst, $src}",
-                    [(store (v1i64 VR64:$src), addr:$dst)]>;
+def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (ops VR64:$dst, VR64:$src),
+                        "movq {$src, $dst|$dst, $src}", []>;
+def MMX_MOVQ64rm : MMXI<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
+                        "movq {$src, $dst|$dst, $src}",
+                        [(set VR64:$dst, (load_mmx addr:$src))]>;
+def MMX_MOVQ64mr : MMXI<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
+                        "movq {$src, $dst|$dst, $src}",
+                        [(store (v1i64 VR64:$src), addr:$dst)]>;
 
 // Conversion instructions
-def CVTPI2PSrr : MMXI<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
-                      "cvtpi2ps {$src, $dst|$dst, $src}", []>;
-def CVTPI2PSrm : MMXI<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
-                      "cvtpi2ps {$src, $dst|$dst, $src}", []>;
-def CVTPI2PDrr : MMX2I<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
-                       "cvtpi2pd {$src, $dst|$dst, $src}", []>;
-def CVTPI2PDrm : MMX2I<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
-                       "cvtpi2pd {$src, $dst|$dst, $src}", []>;
-def CVTTPS2PIrr: I<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
-                   "cvttps2pi {$src, $dst|$dst, $src}", []>, TB,
-                   Requires<[HasMMX]>;
-def CVTTPS2PIrm: I<0x2C, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
-                   "cvttps2pi {$src, $dst|$dst, $src}", []>, TB,
-                 Requires<[HasMMX]>;
-def CVTPS2PIrr : MMXI<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
-                      "cvtps2pi {$src, $dst|$dst, $src}", []>;
-def CVTPS2PIrm : MMXI<0x2D, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
-                      "cvtps2pi {$src, $dst|$dst, $src}", []>;
-def CVTPD2PIrr : MMX2I<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
-                       "cvtpd2pi {$src, $dst|$dst, $src}", []>;
-def CVTPD2PIrm : MMX2I<0x2D, MRMSrcMem, (ops VR64:$dst, f128mem:$src),
-                       "cvtpd2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPD2PIrr : MMX2I<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                           "cvtpd2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPD2PIrm : MMX2I<0x2D, MRMSrcMem, (ops VR64:$dst, f128mem:$src),
+                           "cvtpd2pi {$src, $dst|$dst, $src}", []>;
+
+def MMX_CVTPI2PDrr : MMX2I<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
+                           "cvtpi2pd {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPI2PDrm : MMX2I<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
+                           "cvtpi2pd {$src, $dst|$dst, $src}", []>;
+
+def MMX_CVTPI2PSrr : MMXI<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
+                          "cvtpi2ps {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPI2PSrm : MMXI<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
+                          "cvtpi2ps {$src, $dst|$dst, $src}", []>;
+
+def MMX_CVTPS2PIrr : MMXI<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                          "cvtps2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPS2PIrm : MMXI<0x2D, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
+                          "cvtps2pi {$src, $dst|$dst, $src}", []>;
+
+def MMX_CVTTPD2PIrr: MMX2I<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                           "cvttpd2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTTPD2PIrm: MMX2I<0x2C, MRMSrcMem, (ops VR64:$dst, f128mem:$src),
+                           "cvttpd2pi {$src, $dst|$dst, $src}", []>;
+
+def MMX_CVTTPS2PIrr: MMXI<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                          "cvttps2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTTPS2PIrm: MMXI<0x2C, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
+                          "cvttps2pi {$src, $dst|$dst, $src}", []>;
 
 // Shuffle and unpack instructions
 def PSHUFWri : MMXIi8<0x70, MRMSrcReg,
@@ -387,11 +396,13 @@ let isReMaterializable = 1 in {
 
 // Store 64-bit integer vector values.
 def : Pat<(store (v8i8  VR64:$src), addr:$dst),
-          (MOVQ64mr addr:$dst, VR64:$src)>;
+          (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
 def : Pat<(store (v4i16 VR64:$src), addr:$dst),
-          (MOVQ64mr addr:$dst, VR64:$src)>;
+          (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
 def : Pat<(store (v2i32 VR64:$src), addr:$dst),
-          (MOVQ64mr addr:$dst, VR64:$src)>;
+          (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
+def : Pat<(store (v1i64 VR64:$src), addr:$dst),
+          (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
 
 // 64-bit vector all zero's.
 def : Pat<(v8i8  immAllZerosV), (MMX_V_SET0)>;
@@ -419,34 +430,39 @@ def : Pat<(v1i64 (bitconvert (v2i32 VR64:$src))), (v1i64 VR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v4i16 VR64:$src))), (v1i64 VR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v8i8  VR64:$src))), (v1i64 VR64:$src)>;
 
-// Splat v1i64
-// MMX_SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to
-// MMX_PSHUF*, MMX_SHUFP* etc. imm.
-def MMX_SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
-  return getI8Imm(X86::getShuffleSHUFImmediate(N));
-}]>;
-
-def MMX_splat_mask : PatLeaf<(build_vector), [{
-  return X86::isSplatMask(N);
-}], MMX_SHUFFLE_get_shuf_imm>;
-
-let AddedComplexity = 10 in {
-  def : Pat<(vector_shuffle (v1i64 VR64:$src), (undef),
-             MMX_splat_mask:$sm),
-            (MMX_PUNPCKHDQrr VR64:$src, VR64:$src)>;
-  def : Pat<(vector_shuffle (v1i64 VR64:$src), (undef),
-             MMX_UNPCKH_shuffle_mask:$sm),
-            (MMX_PUNPCKHDQrr VR64:$src, VR64:$src)>;
-}
-
 def MMX_X86s2vec : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 
 // Scalar to v4i16 / v8i8. The source may be a GR32, but only the lower 8 or
 // 16-bits matter.
-def : Pat<(v8i8  (MMX_X86s2vec GR32:$src)), (MOVD64rr GR32:$src)>;
-def : Pat<(v4i16 (MMX_X86s2vec GR32:$src)), (MOVD64rr GR32:$src)>;
+def : Pat<(v8i8  (MMX_X86s2vec GR32:$src)), (MMX_MOVD64rr GR32:$src)>;
+def : Pat<(v4i16 (MMX_X86s2vec GR32:$src)), (MMX_MOVD64rr GR32:$src)>;
+
+// Recipes for: vector_shuffle v1, <undef>, <0, 0, 1, 1, ...>
+def MMX_UNPCKL_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKL_v_undef_Mask(N);
+}]>;
+
+let AddedComplexity = 10 in {
+  def : Pat<(v8i8  (vector_shuffle VR64:$src, (undef),
+                    MMX_UNPCKL_v_undef_shuffle_mask)),
+            (MMX_PUNPCKLBWrr VR64:$src, VR64:$src)>;
+  def : Pat<(v4i16 (vector_shuffle VR64:$src, (undef),
+                    MMX_UNPCKL_v_undef_shuffle_mask)),
+            (MMX_PUNPCKLWDrr VR64:$src, VR64:$src)>;
+  def : Pat<(v2i32 (vector_shuffle VR64:$src, (undef),
+                    MMX_UNPCKL_v_undef_shuffle_mask)),
+            (MMX_PUNPCKLDQrr VR64:$src, VR64:$src)>;
+}
+
+let AddedComplexity = 20 in {
+  def : Pat<(bc_v2i32 (vector_shuffle immAllZerosV,
+                       (v2i32 (scalar_to_vector (load_mmx addr:$src))),
+                       MMX_UNPCKL_shuffle_mask)),
+            (MMX_PUNPCKLDQrm VR64:$src, VR64:$src)>;
+}
 
 // Some special case PANDN patterns.
+// FIXME: Get rid of these.
 def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v2i32 immAllOnesV))),
                   VR64:$src2)),
           (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
