@@ -169,8 +169,13 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   
+  // VAARG is custom lowered with ELF 32 ABI
+  if (TM.getSubtarget<PPCSubtarget>().isELF32_ABI())
+    setOperationAction(ISD::VAARG, MVT::Other, Custom);
+  else
+    setOperationAction(ISD::VAARG, MVT::Other, Expand);
+  
   // Use the default implementation.
-  setOperationAction(ISD::VAARG             , MVT::Other, Expand);
   setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand); 
@@ -1086,15 +1091,96 @@ static SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand();
 }
 
+static SDOperand LowerVAARG(SDOperand Op, SelectionDAG &DAG,
+                              int VarArgsFrameIndex,
+                              int VarArgsStackOffset,
+                              unsigned VarArgsNumGPR,
+                              unsigned VarArgsNumFPR,
+                              const PPCSubtarget &Subtarget) {
+  
+  assert(0 && "VAARG in ELF32 ABI not implemented yet!");
+}
+
 static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
-                              unsigned VarArgsFrameIndex) {
-  // vastart just stores the address of the VarArgsFrameIndex slot into the
-  // memory location argument.
+                              int VarArgsFrameIndex,
+                              int VarArgsStackOffset,
+                              unsigned VarArgsNumGPR,
+                              unsigned VarArgsNumFPR,
+                              const PPCSubtarget &Subtarget) {
+
+  if (Subtarget.isMachoABI()) {
+    // vastart just stores the address of the VarArgsFrameIndex slot into the
+    // memory location argument.
+    MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+    SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+    SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
+    return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV->getValue(),
+                        SV->getOffset());
+  }
+
+  // For ELF 32 ABI we follow the layout of the va_list struct.
+  // We suppose the given va_list is already allocated.
+  //
+  // typedef struct {
+  //  char gpr;     /* index into the array of 8 GPRs
+  //                 * stored in the register save area
+  //                 * gpr=0 corresponds to r3,
+  //                 * gpr=1 to r4, etc.
+  //                 */
+  //  char fpr;     /* index into the array of 8 FPRs
+  //                 * stored in the register save area
+  //                 * fpr=0 corresponds to f1,
+  //                 * fpr=1 to f2, etc.
+  //                 */
+  //  char *overflow_arg_area;
+  //                /* location on stack that holds
+  //                 * the next overflow argument
+  //                 */
+  //  char *reg_save_area;
+  //               /* where r3:r10 and f1:f8 (if saved)
+  //                * are stored
+  //                */
+  // } va_list[1];
+
+
+  SDOperand ArgGPR = DAG.getConstant(VarArgsNumGPR, MVT::i8);
+  SDOperand ArgFPR = DAG.getConstant(VarArgsNumFPR, MVT::i8);
+  
+
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  
+  SDOperand StackOffset = DAG.getFrameIndex(VarArgsStackOffset, PtrVT);
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+  
+  SDOperand ConstFrameOffset = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8,
+                                               PtrVT);
+  SDOperand ConstStackOffset = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8 - 1,
+                                               PtrVT);
+  SDOperand ConstFPROffset   = DAG.getConstant(1, PtrVT);
+  
   SrcValueSDNode *SV = cast<SrcValueSDNode>(Op.getOperand(2));
-  return DAG.getStore(Op.getOperand(0), FR, Op.getOperand(1), SV->getValue(),
+  
+  // Store first byte : number of int regs
+  SDOperand firstStore = DAG.getStore(Op.getOperand(0), ArgGPR,
+                                      Op.getOperand(1), SV->getValue(),
+                                      SV->getOffset());
+  SDOperand nextPtr = DAG.getNode(ISD::ADD, PtrVT, Op.getOperand(1),
+                                  ConstFPROffset);
+  
+  // Store second byte : number of float regs
+  SDOperand secondStore = DAG.getStore(firstStore, ArgFPR, nextPtr,
+                                       SV->getValue(), SV->getOffset());
+  nextPtr = DAG.getNode(ISD::ADD, PtrVT, nextPtr, ConstStackOffset);
+  
+  // Store second word : arguments given on stack
+  SDOperand thirdStore = DAG.getStore(secondStore, StackOffset, nextPtr,
+                                      SV->getValue(), SV->getOffset());
+  nextPtr = DAG.getNode(ISD::ADD, PtrVT, nextPtr, ConstFrameOffset);
+
+  // Store third word : arguments given in registers
+  return DAG.getStore(thirdStore, FR, nextPtr, SV->getValue(),
                       SV->getOffset());
+
 }
 
 #include "PPCGenCallingConv.inc"
@@ -1120,6 +1206,9 @@ static const unsigned *GetFPR(const PPCSubtarget &Subtarget) {
 
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
                                        int &VarArgsFrameIndex,
+                                       int &VarArgsStackOffset,
+                                       unsigned &VarArgsNumGPR,
+                                       unsigned &VarArgsNumFPR,
                                        const PPCSubtarget &Subtarget) {
   // TODO: add description of PPC stack frame format, or at least some docs.
   //
@@ -1287,13 +1376,47 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   // the start of the first vararg value... for expansion of llvm.va_start.
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   if (isVarArg) {
+    
+    int depth;
+    if (isELF32_ABI) {
+      VarArgsNumGPR = GPR_idx;
+      VarArgsNumFPR = FPR_idx;
+   
+      // Make room for Num_GPR_Regs, Num_FPR_Regs and for a possible frame
+      // pointer.
+      depth = -(Num_GPR_Regs * MVT::getSizeInBits(PtrVT)/8 +
+                Num_FPR_Regs * MVT::getSizeInBits(MVT::f64)/8 +
+                MVT::getSizeInBits(PtrVT)/8);
+      
+      VarArgsStackOffset = MFI->CreateFixedObject(MVT::getSizeInBits(PtrVT)/8,
+                                                  ArgOffset);
+
+    }
+    else
+      depth = ArgOffset;
+    
     VarArgsFrameIndex = MFI->CreateFixedObject(MVT::getSizeInBits(PtrVT)/8,
-                                               ArgOffset);
+                                               depth);
     SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
+    
+    SmallVector<SDOperand, 8> MemOps;
+    
+    // In ELF 32 ABI, the fixed integer arguments of a variadic function are
+    // stored to the VarArgsFrameIndex on the stack.
+    if (isELF32_ABI) {
+      for (GPR_idx = 0; GPR_idx != VarArgsNumGPR; ++GPR_idx) {
+        SDOperand Val = DAG.getRegister(GPR[GPR_idx], PtrVT);
+        SDOperand Store = DAG.getStore(Root, Val, FIN, NULL, 0);
+        MemOps.push_back(Store);
+        // Increment the address by four for the next argument to store
+        SDOperand PtrOff = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8, PtrVT);
+        FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
+      }
+    }
+
     // If this function is vararg, store any remaining integer argument regs
     // to their spots on the stack so that they may be loaded by deferencing the
     // result of va_next.
-    SmallVector<SDOperand, 8> MemOps;
     for (; GPR_idx != Num_GPR_Regs; ++GPR_idx) {
       unsigned VReg;
       if (isPPC64)
@@ -1309,6 +1432,35 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       SDOperand PtrOff = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8, PtrVT);
       FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
     }
+
+    // In ELF 32 ABI, the double arguments are stored to the VarArgsFrameIndex
+    // on the stack.
+    if (isELF32_ABI) {
+      for (FPR_idx = 0; FPR_idx != VarArgsNumFPR; ++FPR_idx) {
+        SDOperand Val = DAG.getRegister(FPR[FPR_idx], MVT::f64);
+        SDOperand Store = DAG.getStore(Root, Val, FIN, NULL, 0);
+        MemOps.push_back(Store);
+        // Increment the address by eight for the next argument to store
+        SDOperand PtrOff = DAG.getConstant(MVT::getSizeInBits(MVT::f64)/8,
+                                           PtrVT);
+        FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
+      }
+
+      for (; FPR_idx != Num_FPR_Regs; ++FPR_idx) {
+        unsigned VReg;
+        VReg = RegMap->createVirtualRegister(&PPC::F8RCRegClass);
+
+        MF.addLiveIn(FPR[FPR_idx], VReg);
+        SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::f64);
+        SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
+        MemOps.push_back(Store);
+        // Increment the address by eight for the next argument to store
+        SDOperand PtrOff = DAG.getConstant(MVT::getSizeInBits(MVT::f64)/8,
+                                           PtrVT);
+        FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
+      }
+    }
+
     if (!MemOps.empty())
       Root = DAG.getNode(ISD::TokenFactor, MVT::Other,&MemOps[0],MemOps.size());
   }
@@ -2709,9 +2861,19 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
-  case ISD::VASTART:            return LowerVASTART(Op, DAG, VarArgsFrameIndex);
+  case ISD::VASTART:            
+    return LowerVASTART(Op, DAG, VarArgsFrameIndex, VarArgsStackOffset,
+                        VarArgsNumGPR, VarArgsNumFPR, PPCSubTarget);
+  
+  case ISD::VAARG:            
+    return LowerVAARG(Op, DAG, VarArgsFrameIndex, VarArgsStackOffset,
+                      VarArgsNumGPR, VarArgsNumFPR, PPCSubTarget);
+
   case ISD::FORMAL_ARGUMENTS:
-    return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex, PPCSubTarget);
+    return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex, 
+                                 VarArgsStackOffset, VarArgsNumGPR,
+                                 VarArgsNumFPR, PPCSubTarget);
+
   case ISD::CALL:               return LowerCALL(Op, DAG, PPCSubTarget);
   case ISD::RET:                return LowerRET(Op, DAG, getTargetMachine());
   case ISD::STACKRESTORE:       return LowerSTACKRESTORE(Op, DAG, PPCSubTarget);
