@@ -4714,7 +4714,36 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // instruction can be folded into the icmp 
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
-      case Instruction::And:
+      case Instruction::Xor:         // (icmp pred (and X, XorCST), CI)
+        if (ConstantInt *XorCST = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
+          // If this is a comparison that tests the signbit (X < 0) or (x > -1),
+          // fold the xor.
+          if (I.getPredicate() == ICmpInst::ICMP_SLT && CI->isZero() ||
+              I.getPredicate() == ICmpInst::ICMP_SGT && CI->isAllOnesValue()) {
+            Value *CompareVal = LHSI->getOperand(0);
+            
+            // If the sign bit of the XorCST is not set, there is no change to
+            // the operation, just stop using the Xor.
+            if (!XorCST->getValue().isNegative()) {
+              I.setOperand(0, CompareVal);
+              AddToWorkList(LHSI);
+              return &I;
+            }
+            
+            // Was the old condition true if the operand is positive?
+            bool isTrueIfPositive = I.getPredicate() == ICmpInst::ICMP_SGT;
+            
+            // If so, the new one isn't.
+            isTrueIfPositive ^= true;
+            
+            if (isTrueIfPositive)
+              return new ICmpInst(ICmpInst::ICMP_SGT, CompareVal, SubOne(CI));
+            else
+              return new ICmpInst(ICmpInst::ICMP_SLT, CompareVal, AddOne(CI));
+          }
+        }
+        break;
+      case Instruction::And:         // (icmp pred (and X, AndCST), CI)
         if (LHSI->hasOneUse() && isa<ConstantInt>(LHSI->getOperand(1)) &&
             LHSI->getOperand(0)->hasOneUse()) {
           ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
