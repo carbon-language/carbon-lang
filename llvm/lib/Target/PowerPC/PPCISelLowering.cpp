@@ -1113,7 +1113,7 @@ static const unsigned *GetFPR(const PPCSubtarget &Subtarget) {
   
   static const unsigned FPR[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
-    PPC::F8, PPC::F9, PPC::F10
+    PPC::F8
   };
   return FPR;
 }
@@ -1154,7 +1154,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   };
 
   const unsigned Num_GPR_Regs = sizeof(GPR_32)/sizeof(GPR_32[0]);
-  const unsigned Num_FPR_Regs = isMachoABI ? 13 : 10;
+  const unsigned Num_FPR_Regs = isMachoABI ? 13 : 8;
   const unsigned Num_VR_Regs  = sizeof( VR)/sizeof( VR[0]);
 
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
@@ -1410,7 +1410,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
   const unsigned NumGPRs = sizeof(GPR_32)/sizeof(GPR_32[0]);
-  const unsigned NumFPRs = isMachoABI ? 13 : 10;
+  const unsigned NumFPRs = isMachoABI ? 13 : 8;
   const unsigned NumVRs  = sizeof( VR)/sizeof( VR[0]);
   
   const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;

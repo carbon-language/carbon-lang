@@ -278,7 +278,8 @@ const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
     PPC::R24, PPC::R25, PPC::R26, PPC::R27,
     PPC::R28, PPC::R29, PPC::R30, PPC::R31,
 
-              PPC::F11, PPC::F12, PPC::F13,
+                                  PPC::F9,
+    PPC::F10, PPC::F11, PPC::F12, PPC::F13,
     PPC::F14, PPC::F15, PPC::F16, PPC::F17,
     PPC::F18, PPC::F19, PPC::F20, PPC::F21,
     PPC::F22, PPC::F23, PPC::F24, PPC::F25,
@@ -320,8 +321,9 @@ const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
     PPC::X20, PPC::X21, PPC::X22, PPC::X23,
     PPC::X24, PPC::X25, PPC::X26, PPC::X27,
     PPC::X28, PPC::X29, PPC::X30, PPC::X31,
-    
-              PPC::F11, PPC::F12, PPC::F13,
+                                  
+                                  PPC::F9,
+    PPC::F10, PPC::F11, PPC::F12, PPC::F13,
     PPC::F14, PPC::F15, PPC::F16, PPC::F17,
     PPC::F18, PPC::F19, PPC::F20, PPC::F21,
     PPC::F22, PPC::F23, PPC::F24, PPC::F25,

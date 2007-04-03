@@ -44,8 +44,8 @@ def CC_PPC : CallingConv<[
   // Darwin passes FP values in F1 - F13
   CCIfType<[f32, f64], CCIfSubtarget<"isMachoABI()",
            CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8,F9,F10,F11,F12,F13]>>>,
-  // Other sub-targets pass FP values in F1-10.
-  CCIfType<[f32, f64], CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8, F9,F10]>>,
+  // Other sub-targets pass FP values in F1-F8.
+  CCIfType<[f32, f64], CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
            
   // The first 12 Vector arguments are passed in altivec registers.
   CCIfType<[v16i8, v8i16, v4i32, v4f32],
