@@ -52,6 +52,9 @@ public:
   inline const APInt& getValue() const {
     return Val;
   }
+  
+  /// getBitWidth - Return the bitwidth of this constant.
+  unsigned getBitWidth() const { return Val.getBitWidth(); }
 
   /// Return the constant as a 64-bit unsigned integer value after it
   /// has been zero extended as appropriate for the type of this constant. Note
