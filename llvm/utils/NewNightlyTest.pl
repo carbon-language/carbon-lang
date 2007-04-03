@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use POSIX qw(strftime);
 use File::Copy;
+use Date::Parse;
 use Socket;
 
 #
@@ -45,6 +46,10 @@ use Socket;
 #  -gccpath         Path to gcc/g++ used to build LLVM
 #  -cvstag          Check out a specific CVS tag to build LLVM (useful for
 #                   testing release branches)
+#  -usesvn          Check code out from a subversion repository. With no
+#                   argument, use the standard repository. An argument specifies
+#                   the repository URL to use.
+#  -svnurl          Specify the SVN URL where LLVM can be found
 #  -target          Specify the target triplet
 #  -cflags          Next argument specifies that C compilation options that
 #                   override the default.
@@ -91,6 +96,8 @@ use Socket;
 #
 ##############################################################
 my $HOME       = $ENV{'HOME'};
+my $SVNURL     = $ENV{"SVNURL"};
+$SVNURL        = 'svn://anon@hlvm.org:3691/llvm.svn' unless $SVNURL;
 my $CVSRootDir = $ENV{'CVSROOT'};
 $CVSRootDir    = "/home/vadve/shared/PublicCVS" unless $CVSRootDir;
 my $BuildDir   = $ENV{'BUILDDIR'};
@@ -116,6 +123,7 @@ my $TestStartTime = gmtime() . "GMT<br>" . localtime() . " (local)";
 $CONFIGUREARGS="";
 $nickname="";
 $NOTEST=0;
+$USESVN=0;
 $NORUNNINGTESTS=0;
 $MAKECMD="make";
 $SUBMITSERVER = "llvm.org";
@@ -163,6 +171,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   else                     { $GCCPATH=""; }
   if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; } 
   else                     { $CVSCOOPT="";}
+  if (/^-usesvn/)          { $USESVN = 1; }
+  if (/^-svnurl/)          { $SVNURL = $ARGV[0]; shift; next; }
   if (/^-target/)          { $CONFIGUREARGS .= " --target=$ARGV[0]"; 
                              shift; next; }
   if (/^-cflags/)          { $MAKEOPTS = "$MAKEOPTS C.Flags=\'$ARGV[0]\'"; 
@@ -225,7 +235,7 @@ if ($BUILDTYPE ne "release" && $BUILDTYPE ne "release-asserts") {
 ##############################################################
 my $Prefix = "$WebDir/$DATE";
 my $BuildLog = "$Prefix-Build-Log.txt";
-my $CVSLog = "$Prefix-CVS-Log.txt";
+my $COLog = "$Prefix-CVS-Log.txt";
 my $OldenTestsLog = "$Prefix-Olden-tests.txt";
 my $SingleSourceLog = "$Prefix-SingleSource-ProgramTest.txt.gz";
 my $MultiSourceLog = "$Prefix-MultiSource-ProgramTest.txt.gz";
@@ -242,11 +252,15 @@ if (! -d $WebDir) {
 
 if ($VERBOSE) {
   print "INITIALIZED\n";
-  print "CVS Root = $CVSRootDir\n";
+  if ($USESVN) {
+    print "SVN URL  = $SVNURL\n";
+  } else {
+    print "CVS Root = $CVSRootDir\n";
+  }
+  print "COLog    = $COLog\n";
   print "BuildDir = $BuildDir\n";
   print "WebDir   = $WebDir\n";
   print "Prefix   = $Prefix\n";
-  print "CVSLog   = $CVSLog\n";
   print "BuildLog = $BuildLog\n";
 }
 
@@ -477,39 +491,48 @@ if (!$NOCHECKOUT) {
         print "Build directory exists! Removing it\n";
       }
       system "rm -rf $BuildDir";
-      mkdir $BuildDir or die "Could not create CVS checkout directory $BuildDir!";
+      mkdir $BuildDir or die "Could not create checkout directory $BuildDir!";
     } else {
       if ( $VERBOSE ) {
         print "Build directory exists!\n";
       }
     }
   } else {
-    mkdir $BuildDir or die "Could not create CVS checkout directory $BuildDir!";
+    mkdir $BuildDir or die "Could not create checkout directory $BuildDir!";
   }
 }
-ChangeDir( $BuildDir, "CVS checkout directory" );
+ChangeDir( $BuildDir, "checkout directory" );
 
 
 ##############################################################
 #
-# Check out the llvm tree, saving CVS messages to the cvs log...
+# Check out the llvm tree, using either SVN or CVS 
 #
 ##############################################################
-my $CVSOPT = "";
-# Use compression if going over ssh.
-$CVSOPT = "-z3" 
-  if $CVSRootDir =~ /^:ext:/;
-my $CVSCMD = "$NICE cvs $CVSOPT -d $CVSRootDir co -P $CVSCOOPT";
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { 
     print "CHECKOUT STAGE:\n"; 
-    print "( time -p $CVSCMD llvm; cd llvm/projects ; $CVSCMD llvm-test ) " .
-          "> $CVSLog 2>&1\n";
   }
-  system "( time -p $CVSCMD llvm; cd llvm/projects ; " .
-      "$CVSCMD llvm-test ) > $CVSLog 2>&1";
-  ChangeDir( $BuildDir , "CVS Checkout directory") ;
+  if ($USESVN) {
+    my $SVNCMD = "$NICE svn co $SVNURL";
+    if ($VERBOSE) {
+      print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
+            "$SVNCMD/llvm-test/trunk llvm-test ) > $COLog 2>&1\n";
+      system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
+            "$SVNCMD/llvm-test/trunk llvm-test ) > $COLog 2>&1\n";
+    }
+  } else {
+    my $CVSOPT = "";
+    $CVSOPT = "-z3" # Use compression if going over ssh.
+      if $CVSRootDir =~ /^:ext:/;
+    my $CVSCMD = "$NICE cvs $CVSOPT -d $CVSRootDir co -P $CVSCOOPT";
+    print "( time -p $CVSCMD llvm; cd llvm/projects ; " .
+          "$CVSCMD llvm-test ) > $COLog 2>&1";
+    system "( time -p $CVSCMD llvm; cd llvm/projects ; " .
+          "$CVSCMD llvm-test ) > $COLog 2>&1";
+  }
 }
+ChangeDir( $BuildDir , "Checkout directory") ;
 ChangeDir( "llvm" , "llvm source directory") ;
 
 ##############################################################
@@ -519,14 +542,20 @@ ChangeDir( "llvm" , "llvm source directory") ;
 # This can probably be put on the server side
 #
 ##############################################################
-my $CVSCheckoutTime_Wall = GetRegex "([0-9.]+)", `grep '^real' $CVSLog`;
-my $CVSCheckoutTime_User = GetRegex "([0-9.]+)", `grep '^user' $CVSLog`;
-my $CVSCheckoutTime_Sys = GetRegex "([0-9.]+)", `grep '^sys' $CVSLog`;
-my $CVSCheckoutTime_CPU = $CVSCheckoutTime_User + $CVSCheckoutTime_Sys;
+my $CheckoutTime_Wall = GetRegex "([0-9.]+)", `grep '^real' $COLog`;
+my $CheckoutTime_User = GetRegex "([0-9.]+)", `grep '^user' $COLog`;
+my $CheckoutTime_Sys = GetRegex "([0-9.]+)", `grep '^sys' $COLog`;
+my $CheckoutTime_CPU = $CVSCheckoutTime_User + $CVSCheckoutTime_Sys;
 
-my $NumFilesInCVS = `egrep '^U' $CVSLog | wc -l` + 0;
-my $NumDirsInCVS  = 
-   `egrep '^cvs (checkout|server|update):' $CVSLog | wc -l` + 0;
+my $NumFilesInCVS = 0;
+my $NumDirsInCVS  = 0;
+if ($USESVN) {
+  $NumFilesInCVS = `egrep '^A' $COLog | wc -l` + 0;
+  $NumDirsInCVS  = `sed -e 's#/[^/]*$##' $COLog | sort | uniq | wc -l` + 0;
+} else {
+  $NumFilesInCVS = `egrep '^U' $COLog | wc -l` + 0;
+  $NumDirsInCVS  = `egrep '^cvs (checkout|server|update):' $COLog | wc -l` + 0;
+}
 
 ##############################################################
 #
@@ -538,47 +567,103 @@ my $NumDirsInCVS  =
 
 my (%AddedFiles, %ModifiedFiles, %RemovedFiles, %UsersCommitted, %UsersUpdated);
 
-if(!$NOCVSSTATS){
-
+if (!$NOCVSSTATS) {
   if ($VERBOSE) { print "CVS HISTORY ANALYSIS STAGE\n"; }
-  @CVSHistory = split "\n", `cvs history -D '1 day ago' -a -xAMROCGUW`;
+
+  if ($USESVN) {
+    my $delimiter = "----------------------------------------------------" . 
+                    "--------------------\n";
+    @SVNHistory = split $delimiter, `svn log --verbose -r{$DATE}:HEAD`;
+
+# Skip very first entry.
+    shift @SVNHistory;
+    foreach $Record (@SVNHistory) {
+      my (@Lines, @Fields);
+      my ($Rev, $Author, $StrTime, $LogLines, $Time);
+      @Lines = split "\n", $Record;
+#  print join"\n", @Lines;
+
+      ($Rev, $Author, $StrTime, $LogLines) = split ' \| ', $Lines[0];
+      $Time = str2time($StrTime);
+      if (time() - $Time > 24*3600) {
+        next;
+      }
+
+      $UsersCommitted{$Author} = 1;
+
+      #print $Rev, $Author, $Time, $LogLines, "\n";
+
+      my $i = 2;
+      while ($Lines[$i] ne '') {
+        my ($Type, $Filename, $FromFile, $FromRev);
+        #print $Lines[$i], "\n";
+
+        if ($Lines[$i] =~ / ([MAD]) ([^ ]+) \(from ([^ ]+):([^ ]+)\)/) {
+          ($Type, $Filename, $FromFile, $FromRev) = ($1, $2, $3, $4);
+        } elsif ($Lines[$i] =~ / ([MAD]) ([^ ]+)/) {
+          ($Type, $Filename, $FromFile, $FromRev) = ($1, $2, "", "");
+        } else {
+          print "UNMATCHABLE: $Lines[$i]\n";
+        }
+
+        if ($Type eq 'M') {        # Modified
+          $ModifiedFiles{$Filename} = 1;
+        } elsif ($Type eq 'A') {   # Added
+          if ($FromFile eq "") { # File was added
+            $AddedFiles{$Filename} = 1;
+          } else { #File was added from another file - moved or copied.
+            $MovedFiles{$Filename} = 1;
+          }
+        } elsif ($Type eq 'D') {   # Removed
+          $RemovedFiles{$Filename} = 1;
+        } else {
+          print "INVALID TYPE: $Type";
+        }
+
+        #print $Filename, "\n";
+        #print $Type, $File, $FromFile, $FromRev, "\n";
+        ++$i;
+      }
+    }
+  } else {
+    @CVSHistory = split "\n", `cvs history -D '1 day ago' -a -xAMROCGUW`;
 #print join "\n", @CVSHistory; print "\n";
 
-  my $DateRE = '[-/:0-9 ]+\+[0-9]+';
+    my $DateRE = '[-/:0-9 ]+\+[0-9]+';
 
 # Loop over every record from the CVS history, filling in the hashes.
-  foreach $File (@CVSHistory) {
-      my ($Type, $Date, $UID, $Rev, $Filename);
-      if ($File =~ /([AMRUGC]) ($DateRE) ([^ ]+) +([^ ]+) +([^ ]+) +([^ ]+)/) {
-          ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
-      } elsif ($File =~ /([W]) ($DateRE) ([^ ]+)/) {
-          ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "");
-      } elsif ($File =~ /([O]) ($DateRE) ([^ ]+) +([^ ]+)/) {
-          ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "$4/");
-      } else {
-          print "UNMATCHABLE: $File\n";
-          next;
-      }
-      # print "$File\nTy = $Type Date = '$Date' UID=$UID Rev=$Rev File = '$Filename'\n";
-      
-      if ($Filename =~ /^llvm/) {
-          if ($Type eq 'M') {        # Modified
-              $ModifiedFiles{$Filename} = 1;
-              $UsersCommitted{$UID} = 1;
-          } elsif ($Type eq 'A') {   # Added
-              $AddedFiles{$Filename} = 1;
-              $UsersCommitted{$UID} = 1;
-          } elsif ($Type eq 'R') {   # Removed
-              $RemovedFiles{$Filename} = 1;
-              $UsersCommitted{$UID} = 1;
-          } else {
-              $UsersUpdated{$UID} = 1;
-          }
-      }
-  }
+    foreach $File (@CVSHistory) {
+        my ($Type, $Date, $UID, $Rev, $Filename);
+        if ($File =~ /([AMRUGC]) ($DateRE) ([^ ]+) +([^ ]+) +([^ ]+) +([^ ]+)/) {
+            ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, $4, "$6/$5");
+        } elsif ($File =~ /([W]) ($DateRE) ([^ ]+)/) {
+            ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "");
+        } elsif ($File =~ /([O]) ($DateRE) ([^ ]+) +([^ ]+)/) {
+            ($Type, $Date, $UID, $Rev, $Filename) = ($1, $2, $3, "", "$4/");
+        } else {
+            print "UNMATCHABLE: $File\n";
+            next;
+        }
+        # print "$File\nTy = $Type Date = '$Date' UID=$UID Rev=$Rev File = '$Filename'\n";
+        
+        if ($Filename =~ /^llvm/) {
+            if ($Type eq 'M') {        # Modified
+                $ModifiedFiles{$Filename} = 1;
+                $UsersCommitted{$UID} = 1;
+            } elsif ($Type eq 'A') {   # Added
+                $AddedFiles{$Filename} = 1;
+                $UsersCommitted{$UID} = 1;
+            } elsif ($Type eq 'R') {   # Removed
+                $RemovedFiles{$Filename} = 1;
+                $UsersCommitted{$UID} = 1;
+            } else {
+                $UsersUpdated{$UID} = 1;
+            }
+        }
+    }
 
-  my $TestError = 1;
-
+    my $TestError = 1;
+  } #$USESVN
 }#!NOCVSSTATS
 
 my $CVSAddedFiles = join "\n", sort keys %AddedFiles;
@@ -944,7 +1029,7 @@ $machine_data = "uname: ".`uname -a`.
 
 my @CVS_DATA;
 my $cvs_data;
-@CVS_DATA = ReadFile "$CVSLog";
+@CVS_DATA = ReadFile "$COLog";
 $cvs_data = join("\n", @CVS_DATA);
 
 my @BUILD_DATA;
@@ -990,8 +1075,8 @@ my %hash_of_data = (
   'nickname' => $nickname,
   'dejagnutime_wall' => $DejagnuWallTime,
   'dejagnutime_cpu' => $DejagnuTime,
-  'cvscheckouttime_wall' => $CVSCheckoutTime_Wall,
-  'cvscheckouttime_cpu' => $CVSCheckoutTime_CPU,
+  'cvscheckouttime_wall' => $CheckoutTime_Wall,
+  'cvscheckouttime_cpu' => $CheckoutTime_CPU,
   'configtime_wall' => $ConfigWallTime,
   'configtime_cpu'=> $ConfigTime,
   'buildtime_wall' => $BuildWallTime,
