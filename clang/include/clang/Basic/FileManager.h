@@ -82,7 +82,7 @@ class FileManager {
   unsigned NumDirLookups, NumFileLookups;
   unsigned NumDirCacheMisses, NumFileCacheMisses;
 public:
-  FileManager() : NextFileUID(0) {
+  FileManager() : DirEntries(64), FileEntries(64), NextFileUID(0) {
     NumDirLookups = NumFileLookups = 0;
     NumDirCacheMisses = NumFileCacheMisses = 0;
   }
