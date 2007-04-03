@@ -5087,7 +5087,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                                       Mask, LHSI->getName()+".mask");
           Value *And = InsertNewInstBefore(AndI, ICI);
           return new ICmpInst(ICI.getPredicate(), And,
-                              ConstantInt::get(RHSV << ShAmtVal));
+                              ConstantInt::get(RHSV.lshr(ShAmtVal)));
         }
       }
     }
