@@ -542,6 +542,10 @@ public:
   APInt operator-(uint64_t RHS) const {
     return (*this) - APInt(BitWidth, RHS);
   }
+  
+  APInt operator<<(unsigned Bits) const {
+    return shl(Bits);
+  }
 
   /// Arithmetic right-shift this APInt by shiftAmt.
   /// @brief Arithmetic right-shift function.
