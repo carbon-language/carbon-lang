@@ -2,6 +2,12 @@
 // Random ideas for the X86 backend.
 //===---------------------------------------------------------------------===//
 
+Missing features:
+  - support for 3DNow!
+  - weird abis?
+
+//===---------------------------------------------------------------------===//
+
 Add a MUL2U and MUL2S nodes to represent a multiply that returns both the
 Hi and Lo parts (combination of MUL and MULH[SU] into one node).  Add this to
 X86, & make the dag combiner produce it when needed.  This will eliminate one
@@ -1040,6 +1046,4 @@ int decode_byte (const decode_t* decode) {
   return 0;
 }
 
-//===---------------------------------------------------------------------===//
 
-Add support for 3DNow!
