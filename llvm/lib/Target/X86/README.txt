@@ -1039,3 +1039,7 @@ int decode_byte (const decode_t* decode) {
     return f(decode);
   return 0;
 }
+
+//===---------------------------------------------------------------------===//
+
+Add support for 3DNow!
