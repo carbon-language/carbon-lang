@@ -176,6 +176,8 @@ private:
     SCEVHandle GetExpressionSCEV(Instruction *E, Loop *L);
 
     void OptimizeIndvars(Loop *L);
+    bool FindIVForUser(ICmpInst *Cond, IVStrideUse *&CondUse,
+                       const SCEVHandle *&CondStride);
 
     unsigned CheckForIVReuse(const SCEVHandle&, IVExpr&, const Type*,
                              const std::vector<BasedUser>& UsersToProcess);
@@ -1222,6 +1224,31 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // different starting values, into different PHIs.
 }
 
+/// FindIVForUser - If Cond has an operand that is an expression of an IV,
+/// set the IV user and stride information and return true, otherwise return
+/// false.
+bool LoopStrengthReduce::FindIVForUser(ICmpInst *Cond, IVStrideUse *&CondUse,
+                                       const SCEVHandle *&CondStride) {
+  for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e && !CondUse;
+       ++Stride) {
+    std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI = 
+    IVUsesByStride.find(StrideOrder[Stride]);
+    assert(SI != IVUsesByStride.end() && "Stride doesn't exist!");
+    
+    for (std::vector<IVStrideUse>::iterator UI = SI->second.Users.begin(),
+         E = SI->second.Users.end(); UI != E; ++UI)
+      if (UI->User == Cond) {
+        // NOTE: we could handle setcc instructions with multiple uses here, but
+        // InstCombine does it as well for simple uses, it's not clear that it
+        // occurs enough in real life to handle.
+        CondUse = &*UI;
+        CondStride = &SI->first;
+        return true;
+      }
+  }
+  return false;
+}    
+
 // OptimizeIndvars - Now that IVUsesByStride is set up with all of the indvar
 // uses in the loop, look to see if we can eliminate some, in favor of using
 // common indvars for the different uses.
@@ -1246,24 +1273,9 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   IVStrideUse *CondUse = 0;
   const SCEVHandle *CondStride = 0;
 
-  for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e && !CondUse;
-       ++Stride) {
-    std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI = 
-      IVUsesByStride.find(StrideOrder[Stride]);
-    assert(SI != IVUsesByStride.end() && "Stride doesn't exist!");
-    
-    for (std::vector<IVStrideUse>::iterator UI = SI->second.Users.begin(),
-           E = SI->second.Users.end(); UI != E; ++UI)
-      if (UI->User == Cond) {
-        CondUse = &*UI;
-        CondStride = &SI->first;
-        // NOTE: we could handle setcc instructions with multiple uses here, but
-        // InstCombine does it as well for simple uses, it's not clear that it
-        // occurs enough in real life to handle.
-        break;
-      }
-  }
-  if (!CondUse) return;  // setcc doesn't use the IV.
+  if (!FindIVForUser(Cond, CondUse, CondStride))
+    return; // setcc doesn't use the IV.
+  
 
   // It's possible for the setcc instruction to be anywhere in the loop, and
   // possible for it to have multiple users.  If it is not immediately before
