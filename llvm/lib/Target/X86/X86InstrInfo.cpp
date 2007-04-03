@@ -38,7 +38,8 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
       oc == X86::MOVAPSrr || oc == X86::MOVAPDrr ||
       oc == X86::MOVSS2PSrr || oc == X86::MOVSD2PDrr ||
       oc == X86::MOVPS2SSrr || oc == X86::MOVPD2SDrr ||
-      oc == X86::MMX_MOVD64rr || oc == X86::MMX_MOVQ64rr) {
+      oc == X86::MMX_MOVD64rr || oc == X86::MMX_MOVQ64rr ||
+      oc == X86::MMX_MOVDQ2Qrr || oc == X86::MMX_MOVQ2DQrr) {
       assert(MI.getNumOperands() == 2 &&
              MI.getOperand(0).isRegister() &&
              MI.getOperand(1).isRegister() &&
@@ -97,6 +98,7 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case X86::MOVAPDmr:
   case X86::MMX_MOVD64mr:
   case X86::MMX_MOVQ64mr:
+  case X86::MMX_MOVNTQmr:
     if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
         MI->getOperand(2).isRegister() && MI->getOperand(3).isImmediate() &&
         MI->getOperand(1).getImmedValue() == 1 &&

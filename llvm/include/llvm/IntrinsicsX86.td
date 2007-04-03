@@ -583,9 +583,44 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_mmx_pmulh_w : GCCBuiltin<"__builtin_ia32_pmulhw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
                          llvm_v4i16_ty], [IntrNoMem]>;
+  def int_x86_mmx_pmulhu_w : GCCBuiltin<"__builtin_ia32_pmulhuw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+  def int_x86_mmx_pmulu_dq : GCCBuiltin<"__builtin_ia32_pmuludq">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+                         llvm_v2i32_ty], [IntrNoMem]>;
   def int_x86_mmx_pmadd_wd : GCCBuiltin<"__builtin_ia32_pmaddwd">,
               Intrinsic<[llvm_v2i32_ty, llvm_v4i16_ty,
                          llvm_v4i16_ty], [IntrNoMem]>;
+
+  // Averages
+  def int_x86_mmx_pavg_b : GCCBuiltin<"__builtin_ia32_pavgb">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
+  def int_x86_mmx_pavg_w : GCCBuiltin<"__builtin_ia32_pavgw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+
+  // Maximum
+  def int_x86_mmx_pmaxu_b : GCCBuiltin<"__builtin_ia32_pmaxub">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
+  def int_x86_mmx_pmaxs_w : GCCBuiltin<"__builtin_ia32_pmaxsw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+
+  // Minimum
+  def int_x86_mmx_pminu_b : GCCBuiltin<"__builtin_ia32_pminub">,
+              Intrinsic<[llvm_v8i8_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
+  def int_x86_mmx_pmins_w : GCCBuiltin<"__builtin_ia32_pminsw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
+                         llvm_v4i16_ty], [IntrNoMem]>;
+
+  // Packed sum of absolute differences
+  def int_x86_mmx_psad_bw : GCCBuiltin<"__builtin_ia32_psadbw">,
+              Intrinsic<[llvm_v4i16_ty, llvm_v8i8_ty,
+                         llvm_v8i8_ty], [IntrNoMem]>;
 }
 
 // Integer shift ops.
@@ -653,4 +688,10 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_mmx_pcmpgt_d : GCCBuiltin<"__builtin_ia32_pcmpgtd">,
               Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
                          llvm_v2i32_ty], [IntrNoMem]>;
+}
+
+// Misc.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_mmx_pmovmskb : GCCBuiltin<"__builtin_ia32_pmovmskb">,
+              Intrinsic<[llvm_i32_ty, llvm_v8i8_ty], [IntrNoMem]>;
 }

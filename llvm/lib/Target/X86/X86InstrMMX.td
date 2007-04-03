@@ -20,12 +20,19 @@
 // MMXI   - MMX instructions with TB prefix.
 // MMX2I  - MMX / SSE2 instructions with TB and OpSize prefixes.
 // MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
+// MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
+// MMXID  - MMX instructions with XD prefix.
+// MMXIS  - MMX instructions with XS prefix.
 class MMXI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, Requires<[HasMMX]>;
 class MMX2I<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasMMX]>;
 class MMXIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : Ii8<o, F, ops, asm, pattern>, TB, Requires<[HasMMX]>;
+class MMXID<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : Ii8<o, F, ops, asm, pattern>, XD, Requires<[HasMMX]>;
+class MMXIS<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : Ii8<o, F, ops, asm, pattern>, XS, Requires<[HasMMX]>;
 
 // Some 'special' instructions
 def IMPLICIT_DEF_VR64 : I<0, Pseudo, (ops VR64:$dst),
@@ -49,6 +56,18 @@ def bc_v8i8  : PatFrag<(ops node:$in), (v8i8  (bitconvert node:$in))>;
 def bc_v4i16 : PatFrag<(ops node:$in), (v4i16 (bitconvert node:$in))>;
 def bc_v2i32 : PatFrag<(ops node:$in), (v2i32 (bitconvert node:$in))>;
 def bc_v1i64 : PatFrag<(ops node:$in), (v1i64 (bitconvert node:$in))>;
+
+//===----------------------------------------------------------------------===//
+// MMX Masks
+//===----------------------------------------------------------------------===//
+
+def MMX_UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKHMask(N);
+}]>;
+
+def MMX_UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKLMask(N);
+}]>;
 
 //===----------------------------------------------------------------------===//
 // MMX Multiclasses
@@ -128,6 +147,35 @@ def MMX_FEMMS : MMXI<0x0E, RawFrm, (ops), "femms", [(int_x86_mmx_femms)]>;
 // MMX Scalar Instructions
 //===----------------------------------------------------------------------===//
 
+// Data Transfer Instructions
+def MMX_MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
+                        "movd {$src, $dst|$dst, $src}", []>;
+def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),
+                        "movd {$src, $dst|$dst, $src}", []>;
+def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (ops i32mem:$dst, VR64:$src),
+                        "movd {$src, $dst|$dst, $src}", []>;
+
+def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (ops VR64:$dst, VR64:$src),
+                        "movq {$src, $dst|$dst, $src}", []>;
+def MMX_MOVQ64rm : MMXI<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
+                        "movq {$src, $dst|$dst, $src}",
+                        [(set VR64:$dst, (load_mmx addr:$src))]>;
+def MMX_MOVQ64mr : MMXI<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
+                        "movq {$src, $dst|$dst, $src}",
+                        [(store (v1i64 VR64:$src), addr:$dst)]>;
+
+def MMX_MOVDQ2Qrr : MMXID<0xD6, MRMDestMem, (ops VR64:$dst, VR128:$src),
+                          "movdq2q {$src, $dst|$dst, $src}",
+                          [(store (i64 (vector_extract (v2i64 VR128:$src),
+                                        (iPTR 0))), VR64:$dst)]>;
+def MMX_MOVQ2DQrr : MMXIS<0xD6, MRMDestMem, (ops VR128:$dst, VR64:$src),
+                          "movq2dq {$src, $dst|$dst, $src}",
+                          [(store (v1i64 VR64:$src), VR128:$dst)]>;
+
+def MMX_MOVNTQmr  : MMXI<0xE7, MRMDestMem, (ops i64mem:$dst, VR64:$src),
+                         "movntq {$src, $dst|$dst, $src}", []>;
+
+
 // Arithmetic Instructions
 
 // -- Addition
@@ -155,10 +203,24 @@ defm MMX_PSUBUSW : MMXI_binop_rm_int<0xD9, "psubusw", int_x86_mmx_psubus_w>;
 
 // -- Multiplication
 defm MMX_PMULLW  : MMXI_binop_rm<0xD5, "pmullw", mul, v4i16, 1>;
-defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw" , int_x86_mmx_pmulh_w , 1>;
 
-// -- Multiply and Add
+defm MMX_PMULHW  : MMXI_binop_rm_int<0xE5, "pmulhw",  int_x86_mmx_pmulh_w,  1>;
+defm MMX_PMULHUW : MMXI_binop_rm_int<0xE4, "pmulhuw", int_x86_mmx_pmulhu_w, 1>;
+defm MMX_PMULUDQ : MMXI_binop_rm_int<0xF4, "pmuludq", int_x86_mmx_pmulu_dq, 1>;
+
+// -- Miscellanea
 defm MMX_PMADDWD : MMXI_binop_rm_int<0xF5, "pmaddwd", int_x86_mmx_pmadd_wd, 1>;
+
+defm MMX_PAVGB   : MMXI_binop_rm_int<0xE0, "pavgb", int_x86_mmx_pavg_b, 1>;
+defm MMX_PAVGW   : MMXI_binop_rm_int<0xE3, "pavgw", int_x86_mmx_pavg_w, 1>;
+
+defm MMX_PMINUB  : MMXI_binop_rm_int<0xDA, "pminub", int_x86_mmx_pminu_b, 1>;
+defm MMX_PMINSW  : MMXI_binop_rm_int<0xEA, "pminsw", int_x86_mmx_pmins_w, 1>;
+
+defm MMX_PMAXUB  : MMXI_binop_rm_int<0xDE, "pmaxub", int_x86_mmx_pmaxu_b, 1>;
+defm MMX_PMAXSW  : MMXI_binop_rm_int<0xEE, "pmaxsw", int_x86_mmx_pmaxs_w, 1>;
+
+defm MMX_PSADBW  : MMXI_binop_rm_int<0xE0, "psadbw", int_x86_mmx_psad_bw, 1>;
 
 // Logical Instructions
 defm MMX_PAND : MMXI_binop_rm_v1i64<0xDB, "pand", and, 1>;
@@ -208,13 +270,6 @@ defm MMX_PCMPGTW : MMXI_binop_rm_int<0x65, "pcmpgtw", int_x86_mmx_pcmpgt_w>;
 defm MMX_PCMPGTD : MMXI_binop_rm_int<0x66, "pcmpgtd", int_x86_mmx_pcmpgt_d>;
 
 // Conversion Instructions
-def MMX_UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isUNPCKHMask(N);
-}]>;
-
-def MMX_UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isUNPCKLMask(N);
-}]>;
 
 // -- Unpack Instructions
 let isTwoAddress = 1 in {
@@ -310,53 +365,36 @@ defm MMX_PACKSSWB : MMXI_binop_rm_int<0x63, "packsswb", int_x86_mmx_packsswb>;
 defm MMX_PACKSSDW : MMXI_binop_rm_int<0x6B, "packssdw", int_x86_mmx_packssdw>;
 defm MMX_PACKUSWB : MMXI_binop_rm_int<0x67, "packuswb", int_x86_mmx_packuswb>;
 
-// Data Transfer Instructions
-def MMX_MOVD64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
-                        "movd {$src, $dst|$dst, $src}", []>;
-def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),
-                        "movd {$src, $dst|$dst, $src}", []>;
-def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (ops i32mem:$dst, VR64:$src),
-                        "movd {$src, $dst|$dst, $src}", []>;
+// -- Conversion Instructions
+def MMX_CVTPD2PIrr  : MMX2I<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                            "cvtpd2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPD2PIrm  : MMX2I<0x2D, MRMSrcMem, (ops VR64:$dst, f128mem:$src),
+                            "cvtpd2pi {$src, $dst|$dst, $src}", []>;
 
-def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (ops VR64:$dst, VR64:$src),
-                        "movq {$src, $dst|$dst, $src}", []>;
-def MMX_MOVQ64rm : MMXI<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
-                        "movq {$src, $dst|$dst, $src}",
-                        [(set VR64:$dst, (load_mmx addr:$src))]>;
-def MMX_MOVQ64mr : MMXI<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
-                        "movq {$src, $dst|$dst, $src}",
-                        [(store (v1i64 VR64:$src), addr:$dst)]>;
+def MMX_CVTPI2PDrr  : MMX2I<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
+                            "cvtpi2pd {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPI2PDrm  : MMX2I<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
+                            "cvtpi2pd {$src, $dst|$dst, $src}", []>;
 
-// Conversion instructions
-def MMX_CVTPD2PIrr : MMX2I<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
-                           "cvtpd2pi {$src, $dst|$dst, $src}", []>;
-def MMX_CVTPD2PIrm : MMX2I<0x2D, MRMSrcMem, (ops VR64:$dst, f128mem:$src),
-                           "cvtpd2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPI2PSrr  : MMXI<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
+                           "cvtpi2ps {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPI2PSrm  : MMXI<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
+                           "cvtpi2ps {$src, $dst|$dst, $src}", []>;
 
-def MMX_CVTPI2PDrr : MMX2I<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
-                           "cvtpi2pd {$src, $dst|$dst, $src}", []>;
-def MMX_CVTPI2PDrm : MMX2I<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
-                           "cvtpi2pd {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPS2PIrr  : MMXI<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                           "cvtps2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTPS2PIrm  : MMXI<0x2D, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
+                           "cvtps2pi {$src, $dst|$dst, $src}", []>;
 
-def MMX_CVTPI2PSrr : MMXI<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
-                          "cvtpi2ps {$src, $dst|$dst, $src}", []>;
-def MMX_CVTPI2PSrm : MMXI<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
-                          "cvtpi2ps {$src, $dst|$dst, $src}", []>;
+def MMX_CVTTPD2PIrr : MMX2I<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                            "cvttpd2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTTPD2PIrm : MMX2I<0x2C, MRMSrcMem, (ops VR64:$dst, f128mem:$src),
+                            "cvttpd2pi {$src, $dst|$dst, $src}", []>;
 
-def MMX_CVTPS2PIrr : MMXI<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
-                          "cvtps2pi {$src, $dst|$dst, $src}", []>;
-def MMX_CVTPS2PIrm : MMXI<0x2D, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
-                          "cvtps2pi {$src, $dst|$dst, $src}", []>;
-
-def MMX_CVTTPD2PIrr: MMX2I<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
-                           "cvttpd2pi {$src, $dst|$dst, $src}", []>;
-def MMX_CVTTPD2PIrm: MMX2I<0x2C, MRMSrcMem, (ops VR64:$dst, f128mem:$src),
-                           "cvttpd2pi {$src, $dst|$dst, $src}", []>;
-
-def MMX_CVTTPS2PIrr: MMXI<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
-                          "cvttps2pi {$src, $dst|$dst, $src}", []>;
-def MMX_CVTTPS2PIrm: MMXI<0x2C, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
-                          "cvttps2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTTPS2PIrr : MMXI<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                           "cvttps2pi {$src, $dst|$dst, $src}", []>;
+def MMX_CVTTPS2PIrm : MMXI<0x2C, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
+                           "cvttps2pi {$src, $dst|$dst, $src}", []>;
 
 // Shuffle and unpack instructions
 def PSHUFWri : MMXIi8<0x70, MRMSrcReg,
@@ -366,14 +404,38 @@ def PSHUFWmi : MMXIi8<0x70, MRMSrcMem,
                       (ops VR64:$dst, i64mem:$src1, i8imm:$src2),
                       "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
 
-// Misc.
-def MOVNTQ   : I<0xE7, MRMDestMem, (ops i64mem:$dst, VR64:$src),
-                 "movntq {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasMMX]>;
+// Extract / Insert
+def MMX_X86pextrw : SDNode<"X86ISD::PEXTRW", SDTypeProfile<1, 2, []>, []>;
+def MMX_X86pinsrw : SDNode<"X86ISD::PINSRW", SDTypeProfile<1, 3, []>, []>;
 
-def MASKMOVQ : I<0xF7, MRMDestMem, (ops VR64:$src, VR64:$mask),
-                 "maskmovq {$mask, $src|$src, $mask}", []>, TB,
-               Requires<[HasMMX]>;
+def MMX_PEXTRWri  : MMXIi8<0xC5, MRMSrcReg,
+                           (ops GR32:$dst, VR64:$src1, i16i8imm:$src2),
+                           "pextrw {$src2, $src1, $dst|$dst, $src1, $src2}",
+                           [(set GR32:$dst, (MMX_X86pextrw (v4i16 VR64:$src1),
+                                             (iPTR imm:$src2)))]>;
+let isTwoAddress = 1 in {
+  def MMX_PINSRWrri : MMXIi8<0xC4, MRMSrcReg,
+                      (ops VR64:$dst, VR64:$src1, GR32:$src2, i16i8imm:$src3),
+                      "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
+                      [(set VR64:$dst, (v4i16 (MMX_X86pinsrw (v4i16 VR64:$src1),
+                                               GR32:$src2, (iPTR imm:$src3))))]>;
+  def MMX_PINSRWrmi : MMXIi8<0xC4, MRMSrcMem,
+                     (ops VR64:$dst, VR64:$src1, i16mem:$src2, i16i8imm:$src3),
+                     "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
+                     [(set VR64:$dst,
+                       (v4i16 (MMX_X86pinsrw (v4i16 VR64:$src1),
+                               (i32 (anyext (loadi16 addr:$src2))),
+                               (iPTR imm:$src3))))]>;
+}
+
+// Mask creation
+def MMX_PMOVMSKBrr : MMXI<0xD7, MRMSrcReg, (ops GR32:$dst, VR64:$src),
+                          "pmovmskb {$src, $dst|$dst, $src}",
+                          [(set GR32:$dst, (int_x86_mmx_pmovmskb VR64:$src))]>;
+
+// Misc.
+def MMX_MASKMOVQ : MMXI<0xF7, MRMDestMem, (ops VR64:$src, VR64:$mask),
+                        "maskmovq {$mask, $src|$src, $mask}", []>;
 
 //===----------------------------------------------------------------------===//
 // Alias Instructions
