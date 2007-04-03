@@ -279,7 +279,7 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
           // Look at the two new MI's in reverse order.
           MachineInstr *NewMI = NewMIs[j];
           int NIdx = NewMI->findRegisterUseOperand(Reg);
-          if (NIdx != -1)
+          if (NIdx == -1)
             continue;
           LV.addVirtualRegisterKilled(Reg, NewMI);
           if (VI.removeKill(MI))
