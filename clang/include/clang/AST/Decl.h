@@ -165,7 +165,7 @@ public:
     : VarDecl(FileVariable, L, Id, T, S) {}
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const VarDecl *D) { return D->getKind() == FileVariable; }
+  static bool classof(const Decl *D) { return D->getKind() == FileVariable; }
   static bool classof(const FileVarDecl *D) { return true; }
 };
 
