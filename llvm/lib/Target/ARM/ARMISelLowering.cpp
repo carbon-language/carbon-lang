@@ -1323,7 +1323,7 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
       // This assumes i64 is legalized to a pair of i32. If not (i.e.
       // ldrd / strd are used, then its address mode is same as i16.
       // r + r
-      if (AM.Scale == 2)
+      if (AM.Scale == 1)
         return true;
       // r + r << imm
       if (!isPowerOf2_32(AM.Scale & ~1))
@@ -1422,7 +1422,9 @@ bool ARMTargetLowering::isLegalAddressScale(int64_t S, const Type *Ty) const {
   case MVT::i1:
   case MVT::i8:
   case MVT::i32:
-    // Allow: r + r
+    if (S < 0) S = -S;
+    if (S == 1) return true;   // Allow: r + r
+      
     // Allow: r << imm
     // Allow: r + r << imm
     S &= ~1;
@@ -1431,7 +1433,8 @@ bool ARMTargetLowering::isLegalAddressScale(int64_t S, const Type *Ty) const {
     // Note, we allow "void" uses (basically, uses that aren't loads or
     // stores), because arm allows folding a scale into many arithmetic
     // operations.  This should be made more precise and revisited later.
-    
+    if (S == 1) return true;   // Allow: r + r
+
     // Allow r << imm, but the imm has to be a multiple of two.
     if (S & 1) return false;
     return isPowerOf2_32(S);
