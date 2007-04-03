@@ -18,7 +18,7 @@ using namespace llvm;
 StringMapImpl::StringMapImpl(unsigned InitSize, unsigned itemSize) {
   assert((InitSize & (InitSize-1)) == 0 &&
          "Init Size must be a power of 2 or zero!");
-  NumBuckets = InitSize ? InitSize : 512;
+  NumBuckets = InitSize ? InitSize : 16;
   ItemSize = itemSize;
   NumItems = 0;
   NumTombstones = 0;
