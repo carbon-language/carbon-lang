@@ -250,7 +250,7 @@ void PPCRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
 
 const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
   // 32-bit Darwin calling convention. 
-  static const unsigned Darwin32_CalleeSavedRegs[] = {
+  static const unsigned Macho32_CalleeSavedRegs[] = {
               PPC::R13, PPC::R14, PPC::R15,
     PPC::R16, PPC::R17, PPC::R18, PPC::R19,
     PPC::R20, PPC::R21, PPC::R22, PPC::R23,
@@ -294,36 +294,13 @@ const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
     PPC::LR,  0
   };
   // 64-bit Darwin calling convention. 
-  static const unsigned Darwin64_CalleeSavedRegs[] = {
+  static const unsigned Macho64_CalleeSavedRegs[] = {
     PPC::X14, PPC::X15,
     PPC::X16, PPC::X17, PPC::X18, PPC::X19,
     PPC::X20, PPC::X21, PPC::X22, PPC::X23,
     PPC::X24, PPC::X25, PPC::X26, PPC::X27,
     PPC::X28, PPC::X29, PPC::X30, PPC::X31,
     
-    PPC::F14, PPC::F15, PPC::F16, PPC::F17,
-    PPC::F18, PPC::F19, PPC::F20, PPC::F21,
-    PPC::F22, PPC::F23, PPC::F24, PPC::F25,
-    PPC::F26, PPC::F27, PPC::F28, PPC::F29,
-    PPC::F30, PPC::F31,
-    
-    PPC::CR2, PPC::CR3, PPC::CR4,
-    PPC::V20, PPC::V21, PPC::V22, PPC::V23,
-    PPC::V24, PPC::V25, PPC::V26, PPC::V27,
-    PPC::V28, PPC::V29, PPC::V30, PPC::V31,
-    
-    PPC::LR8,  0
-  };
-  
-  static const unsigned ELF64_CalleeSavedRegs[] = {
-    PPC::X14, PPC::X15,
-    PPC::X16, PPC::X17, PPC::X18, PPC::X19,
-    PPC::X20, PPC::X21, PPC::X22, PPC::X23,
-    PPC::X24, PPC::X25, PPC::X26, PPC::X27,
-    PPC::X28, PPC::X29, PPC::X30, PPC::X31,
-                                  
-                                  PPC::F9,
-    PPC::F10, PPC::F11, PPC::F12, PPC::F13,
     PPC::F14, PPC::F15, PPC::F16, PPC::F17,
     PPC::F18, PPC::F19, PPC::F20, PPC::F21,
     PPC::F22, PPC::F23, PPC::F24, PPC::F25,
@@ -339,17 +316,17 @@ const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
   };
   
   if (Subtarget.isMachoABI())
-    return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegs :
-                                 Darwin32_CalleeSavedRegs;
+    return Subtarget.isPPC64() ? Macho64_CalleeSavedRegs :
+                                 Macho32_CalleeSavedRegs;
   
-  // ELF.
-  return Subtarget.isPPC64() ? ELF64_CalleeSavedRegs : ELF32_CalleeSavedRegs;
+  // ELF 32.
+  return ELF32_CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const*
 PPCRegisterInfo::getCalleeSavedRegClasses() const {
-  // 32-bit Darwin calling convention. 
-  static const TargetRegisterClass * const Darwin32_CalleeSavedRegClasses[] = {
+  // 32-bit Macho calling convention. 
+  static const TargetRegisterClass * const Macho32_CalleeSavedRegClasses[] = {
                        &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
@@ -395,8 +372,8 @@ PPCRegisterInfo::getCalleeSavedRegClasses() const {
     &PPC::GPRCRegClass, 0
   };
   
-  // 64-bit Darwin calling convention. 
-  static const TargetRegisterClass * const Darwin64_CalleeSavedRegClasses[] = {
+  // 64-bit Macho calling convention. 
+  static const TargetRegisterClass * const Macho64_CalleeSavedRegClasses[] = {
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
@@ -418,37 +395,12 @@ PPCRegisterInfo::getCalleeSavedRegClasses() const {
     &PPC::G8RCRegClass, 0
   };
   
-  static const TargetRegisterClass * const ELF64_CalleeSavedRegClasses[] = {
-    &PPC::G8RCRegClass,&PPC::G8RCRegClass,
-    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
-    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
-    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
-    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
-    
-                                                             &PPC::F8RCRegClass,
-    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
-    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
-    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
-    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
-    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
-    &PPC::F8RCRegClass,&PPC::F8RCRegClass,
-    
-    &PPC::CRRCRegClass,&PPC::CRRCRegClass,&PPC::CRRCRegClass,
-    
-    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
-    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
-    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
-    
-    &PPC::G8RCRegClass, 0
-  };
- 
   if (Subtarget.isMachoABI())
-    return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegClasses :
-                                 Darwin32_CalleeSavedRegClasses;
+    return Subtarget.isPPC64() ? Macho64_CalleeSavedRegClasses :
+                                 Macho32_CalleeSavedRegClasses;
   
-  // ELF.
-  return Subtarget.isPPC64() ? ELF64_CalleeSavedRegClasses :
-                               ELF32_CalleeSavedRegClasses;
+  // ELF 32.
+  return ELF32_CalleeSavedRegClasses;
 }
 
 // needsFP - Return true if the specified function should have a dedicated frame
@@ -900,15 +852,16 @@ void PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //  Save R31 if necessary
   int FPSI = FI->getFramePointerSaveIndex();
   bool IsPPC64 = Subtarget.isPPC64();
-  bool IsELF_ABI = Subtarget.isELF_ABI();
+  bool IsELF32_ABI = Subtarget.isELF32_ABI();
+  bool IsMachoABI  = Subtarget.isMachoABI();
   const MachineFrameInfo *MFI = MF.getFrameInfo();
  
   // If the frame pointer save index hasn't been defined yet.
   if (!FPSI &&  (NoFramePointerElim || MFI->hasVarSizedObjects()) 
-                                                  && IsELF_ABI) {
+                                                  && IsELF32_ABI) {
     // Find out what the fix offset of the frame pointer save area.
-    int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, 
-                                                              !IsELF_ABI);
+    int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64,
+                                                           IsMachoABI);
     // Allocate the frame index for frame pointer save area.
     FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, FPOffset);
     // Save the result.

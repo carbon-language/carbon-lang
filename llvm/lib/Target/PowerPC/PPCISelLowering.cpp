@@ -1132,7 +1132,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
   bool isMachoABI = Subtarget.isMachoABI();
-  bool isELF_ABI = Subtarget.isELF_ABI();
+  bool isELF32_ABI = Subtarget.isELF32_ABI();
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
   unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64, isMachoABI);
@@ -1165,7 +1165,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   // entry to a function on PPC, the arguments start after the linkage area,
   // although the first ones are often in registers.
   // 
-  // In the ELF ABI, GPRs and stack are double word align: an argument
+  // In the ELF 32 ABI, GPRs and stack are double word align: an argument
   // represented with two words (long long or double) must be copied to an
   // even GPR_idx value or to an even ArgOffset value.
 
@@ -1187,7 +1187,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     default: assert(0 && "Unhandled argument type!");
     case MVT::i32:
       // Double word align in ELF
-      if (Expand && isELF_ABI && !isPPC64) GPR_idx += (GPR_idx % 2);
+      if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
       if (GPR_idx != Num_GPR_Regs) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
         MF.addLiveIn(GPR[GPR_idx], VReg);
@@ -1198,7 +1198,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
         ArgSize = PtrByteSize;
       }
       // Stack align in ELF
-      if (needsLoad && Expand && isELF_ABI && !isPPC64) 
+      if (needsLoad && Expand && isELF32_ABI) 
         ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
       // All int arguments reserve stack space in Macho ABI.
       if (isMachoABI || needsLoad) ArgOffset += PtrByteSize;
@@ -1240,7 +1240,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       }
       
       // Stack align in ELF
-      if (needsLoad && Expand && isELF_ABI && !isPPC64)
+      if (needsLoad && Expand && isELF32_ABI)
         ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
       // All FP arguments reserve stack space in Macho ABI.
       if (isMachoABI || needsLoad) ArgOffset += isPPC64 ? 8 : ObjSize;
@@ -1344,7 +1344,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
   unsigned NumOps  = (Op.getNumOperands() - 5) / 2;
   
   bool isMachoABI = Subtarget.isMachoABI();
-  bool isELF_ABI  = Subtarget.isELF_ABI();
+  bool isELF32_ABI  = Subtarget.isELF32_ABI();
 
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   bool isPPC64 = PtrVT == MVT::i64;
@@ -1432,8 +1432,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
     // register cannot be found for it.
     SDOperand PtrOff;
     
-    // Stack align in ELF
-    if (isELF_ABI && Expand && !isPPC64)
+    // Stack align in ELF 32
+    if (isELF32_ABI && Expand)
       PtrOff = DAG.getConstant(ArgOffset + ((ArgOffset/4) % 2) * PtrByteSize,
                                StackPtr.getValueType());
     else
@@ -1453,7 +1453,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
     case MVT::i32:
     case MVT::i64:
       // Double word align in ELF
-      if (isELF_ABI && Expand && !isPPC64) GPR_idx += (GPR_idx % 2);
+      if (isELF32_ABI && Expand) GPR_idx += (GPR_idx % 2);
       if (GPR_idx != NumGPRs) {
         RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Arg));
       } else {
@@ -1462,7 +1462,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
       }
       if (inMem || isMachoABI) {
         // Stack align in ELF
-        if (isELF_ABI && Expand && !isPPC64)
+        if (isELF32_ABI && Expand)
           ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
 
         ArgOffset += PtrByteSize;
@@ -1516,7 +1516,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
       }
       if (inMem || isMachoABI) {
         // Stack align in ELF
-        if (isELF_ABI && Expand && !isPPC64)
+        if (isELF32_ABI && Expand)
           ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
         if (isPPC64)
           ArgOffset += 8;
@@ -1548,8 +1548,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
     InFlag = Chain.getValue(1);
   }
  
-  // With the ELF ABI, set CR6 to true if this is a vararg call.
-  if (isVarArg && isELF_ABI) {
+  // With the ELF 32 ABI, set CR6 to true if this is a vararg call.
+  if (isVarArg && isELF32_ABI) {
     SDOperand SetCR(DAG.getTargetNode(PPC::SETCR, MVT::i32), 0);
     Chain = DAG.getCopyToReg(Chain, PPC::CR6, SetCR, InFlag);
     InFlag = Chain.getValue(1);

@@ -32,8 +32,8 @@ public:
   static unsigned getReturnSaveOffset(bool LP64, bool isMacho) {
     if (isMacho)
       return LP64 ? 16 : 8;
-    // For ELF ABI:
-    return LP64 ? 8 : 4;
+    // For ELF 32 ABI:
+    return 4;
   }
 
   /// getFramePointerSaveOffset - Return the previous frame offset to save the
@@ -46,9 +46,9 @@ public:
     if (isMacho)
       return LP64 ? 40 : 20;
     
-    // For ELF ABI:
+    // For ELF 32 ABI:
     // Save it right before the link register
-    return LP64 ? -8 : -4;
+    return -4;
   }
   
   /// getLinkageSize - Return the size of the PowerPC ABI linkage area.
@@ -57,8 +57,8 @@ public:
     if (isMacho)
       return 6 * (LP64 ? 8 : 4);
     
-    // For ELF ABI:
-    return LP64 ? 16 : 8;
+    // For ELF 32 ABI:
+    return 8;
   }
 
   /// getMinCallArgumentsSize - Return the size of the minium PowerPC ABI
@@ -73,7 +73,7 @@ public:
     if (isMacho)
       return 8 * (LP64 ? 8 : 4);
     
-    // For Linux ABI:
+    // For ELF 32 ABI:
     // There is no default stack allocated for the 8 first GPR arguments.
     return 0;
   }
