@@ -732,7 +732,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // a sequence of ADDri instructions.  First though, pull as much of the imm
     // into this ADDri as possible.
     unsigned RotAmt = ARM_AM::getSOImmValRotate(Offset);
-    unsigned ThisImmVal = Offset & ARM_AM::rotr32(0xFF, (32-RotAmt) & 31);
+    unsigned ThisImmVal = Offset & ARM_AM::rotr32(0xFF, RotAmt);
     
     // We will handle these bits from offset, clear them.
     Offset &= ~ThisImmVal;
