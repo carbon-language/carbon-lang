@@ -235,7 +235,7 @@ static unsigned calcDistanceToUse(MachineBasicBlock *MBB,
   I = next(I);
   while (I != MBB->end()) {
     Dist++;
-    if (I->findRegisterUseOperand(Reg))
+    if (I->findRegisterUseOperand(Reg) != -1)
         return Dist;
     I = next(I);    
   }
