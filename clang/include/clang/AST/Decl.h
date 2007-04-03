@@ -30,16 +30,12 @@ class FunctionDecl;
 class Decl {
 public:
   enum Kind {
-    FIRST_ObjectDecl,
-    Function, 
-    BlockVariable, FileVariable, ParmVariable, // subclasses of VarDecl
-    Field, 
-    EnumConstant,
-    LAST_ObjectDecl,
-    FIRST_TypeDecl,
-    Typedef, 
-    Struct, Union, Class, Enum, // subclasses of TagDecl
-    LAST_TypeDecl
+    // Concrete sub-classes of ValueDecl
+    Function, BlockVariable, FileVariable, ParmVariable, EnumConstant,
+    // Concrete sub-classes of TypeDecl
+    Typedef, Struct, Union, Class, Enum, 
+    // Concrete sub-class of Decl
+    Field
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
@@ -104,56 +100,58 @@ public:
   static bool classof(const Decl *) { return true; }
 };
 
-/// ObjectDecl - Represents a declaration of a value.
-class ObjectDecl : public Decl {
-public:
-  enum StorageClass {
-    None, Extern, Static, Auto, Register
-  };
-private:
+/// ValueDecl - Represent the declaration of a variable (in which case it is 
+/// an lvalue) a function (in which case it is a function designator) or
+/// an enum constant. 
+class ValueDecl : public Decl {
   TypeRef DeclType;
-  StorageClass SClass;
 protected:
-  ObjectDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T,
-             StorageClass S = None): Decl(DK, L, Id), DeclType(T), SClass(S) {}
+  ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T): 
+             Decl(DK, L, Id), DeclType(T) {}
 public:
   // FIXME: should rename to getTypeRef/getCanonicalTypeRef to distinguish
   // TypeRef's from Type's...
   TypeRef getType() const { return DeclType; }
   TypeRef getCanonicalType() const { return DeclType.getCanonicalType(); }
-  StorageClass getStorageClass() const { return SClass; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return D->getKind() > FIRST_ObjectDecl && D->getKind() < LAST_ObjectDecl;
+    return D->getKind() >= Function && D->getKind() <= EnumConstant;
   }
-  static bool classof(const ObjectDecl *D) { return true; }
+  static bool classof(const ValueDecl *D) { return true; }
 };
 
 /// VarDecl - An instance of this class is created to represent a variable
 /// declaration or definition.
-class VarDecl : public ObjectDecl {
-  // TODO: Initializer.
-protected:
-  VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
-    : ObjectDecl(DK, L, Id, T, S) {}
-public:  
+class VarDecl : public ValueDecl {
+public:
+  enum StorageClass {
+    None, Extern, Static, Auto, Register
+  };
+  StorageClass getStorageClass() const { return SClass; }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 
     return D->getKind() >= BlockVariable && D->getKind() <= ParmVariable; 
   }
   static bool classof(const VarDecl *D) { return true; }
+protected:
+  VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T,
+          StorageClass SC)
+    : ValueDecl(DK, L, Id, T) {}
+private:
+  StorageClass SClass;
+  // TODO: Initializer.
 };
 
 /// BlockVarDecl - Represent a local variable declaration.
 class BlockVarDecl : public VarDecl {
 public:
-  BlockVarDecl(SourceLocation L, IdentifierInfo *Id, 
-                     TypeRef T, StorageClass S)
+  BlockVarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
     : VarDecl(BlockVariable, L, Id, T, S) {}
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const VarDecl *D) { return D->getKind() == BlockVariable; }
+  static bool classof(const Decl *D) { return D->getKind() == BlockVariable; }
   static bool classof(const BlockVarDecl *D) { return true; }
 };
 
@@ -163,8 +161,7 @@ public:
 /// pointer to the decl's scope, which is transient).
 class FileVarDecl : public VarDecl {
 public:
-  FileVarDecl(SourceLocation L, IdentifierInfo *Id, 
-                    TypeRef T, StorageClass S)
+  FileVarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
     : VarDecl(FileVariable, L, Id, T, S) {}
   
   // Implement isa/cast/dyncast/etc.
@@ -175,34 +172,26 @@ public:
 /// ParmVarDecl - Represent a parameter to a function.
 class ParmVarDecl : public VarDecl {
 public:
-  ParmVarDecl(SourceLocation L, IdentifierInfo *Id, 
-                     TypeRef T, StorageClass S)
+  ParmVarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
     : VarDecl(ParmVariable, L, Id, T, S) {}
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const VarDecl *D) { return D->getKind() == ParmVariable; }
+  static bool classof(const Decl *D) { return D->getKind() == ParmVariable; }
   static bool classof(const ParmVarDecl *D) { return true; }
 };
 
 /// FunctionDecl - An instance of this class is created to represent a function
 /// declaration or definition.
-class FunctionDecl : public ObjectDecl {
-  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
-  /// parameters of this function.  This is null if a prototype or if there are
-  /// no formals.  TODO: we could allocate this space immediately after the
-  /// FunctionDecl object to save an allocation like FunctionType does.
-  VarDecl **ParamInfo;
-  
-  Stmt *Body;  // Null if a prototype.
-  
-  /// DeclChain - Linked list of declarations that are defined inside this
-  /// function.
-  Decl *DeclChain;
+class FunctionDecl : public ValueDecl {
 public:
-  FunctionDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
-    : ObjectDecl(Function, L, Id, T), ParamInfo(0), Body(0), DeclChain(0) {}
+  enum StorageClass {
+    None, Extern, Static
+  };
+  FunctionDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S=None)
+    : ValueDecl(Function, L, Id, T), 
+      ParamInfo(0), Body(0), DeclChain(0), SClass(S) {}
   virtual ~FunctionDecl();
-  
+
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
   
@@ -215,19 +204,39 @@ public:
     return ParamInfo[i];
   }
   void setParams(VarDecl **NewParamInfo, unsigned NumParams);
+
+  StorageClass getStorageClass() const { return SClass; }
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Function; }
   static bool classof(const FunctionDecl *D) { return true; }
+private:
+  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
+  /// parameters of this function.  This is null if a prototype or if there are
+  /// no formals.  TODO: we could allocate this space immediately after the
+  /// FunctionDecl object to save an allocation like FunctionType does.
+  VarDecl **ParamInfo;
+  
+  Stmt *Body;  // Null if a prototype.
+  
+  /// DeclChain - Linked list of declarations that are defined inside this
+  /// function.
+  Decl *DeclChain;
+
+  StorageClass SClass;
 };
 
 
 /// FieldDecl - An instance of this class is created by Sema::ParseField to 
 /// represent a member of a struct/union/class.
-class FieldDecl : public ObjectDecl {
+class FieldDecl : public Decl {
+  TypeRef DeclType;
 public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
-    : ObjectDecl(Field, L, Id, T) {}
+    : Decl(Field, L, Id), DeclType(T) {}
+
+  TypeRef getType() const { return DeclType; }
+  TypeRef getCanonicalType() const { return DeclType.getCanonicalType(); }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -240,18 +249,17 @@ public:
 /// that is defined.  For example, in "enum X {a,b}", each of a/b are
 /// EnumConstantDecl's, X is an instance of EnumDecl, and the type of a/b is a
 /// TagType for the X EnumDecl.
-class EnumConstantDecl : public ObjectDecl {
+class EnumConstantDecl : public ValueDecl {
 public:
   // FIXME: Capture value info.
   EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
-    : ObjectDecl(EnumConstant, L, Id, T) {}
-  
+    : ValueDecl(EnumConstant, L, Id, T) {}
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() == EnumConstant;
   }
   static bool classof(const EnumConstantDecl *D) { return true; }
-  
 };
 
 
@@ -270,7 +278,7 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return D->getKind() > FIRST_TypeDecl && D->getKind() < LAST_TypeDecl;
+    return D->getKind() >= Typedef && D->getKind() <= Enum;
   }
   static bool classof(const TypeDecl *D) { return true; }
 };
@@ -323,7 +331,7 @@ public:
     return D->getKind() == Struct || D->getKind() == Union ||
            D->getKind() == Class || D->getKind() == Enum;
   }
-  static bool classof(const ObjectDecl *D) { return true; }
+  static bool classof(const TagDecl *D) { return true; }
 protected:
   void setDefinition(bool V) { IsDefinition = V; }
 };

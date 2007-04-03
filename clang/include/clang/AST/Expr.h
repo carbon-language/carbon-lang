@@ -33,7 +33,7 @@ protected:
   Expr(StmtClass SC, TypeRef T=0) : Stmt(SC), TR(T) {}
   ~Expr() {}
 public:  
-  // FIXME: the return type of getType is inconsistent with ObjectDecl.
+  // FIXME: the return type of getType is inconsistent with Decls.
   // this is confusing and needs to be reconciled (by making one conform).
   Type *getType() const { return TR.getTypePtr(); }
   TypeRef getTypeRef() const { return TR; }
@@ -53,11 +53,11 @@ public:
 /// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
 /// enum, etc.
 class DeclRefExpr : public Expr {
-  ObjectDecl *D;
+  Decl *D; // a ValueDecl or EnumConstantDecl
 public:
-  DeclRefExpr(ObjectDecl *d) : Expr(DeclRefExprClass, d->getType()), D(d) {}
+  DeclRefExpr(Decl *d, TypeRef t) : Expr(DeclRefExprClass, t), D(d) {}
   
-  ObjectDecl *getDecl() const { return D; }
+  Decl *getDecl() const { return D; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

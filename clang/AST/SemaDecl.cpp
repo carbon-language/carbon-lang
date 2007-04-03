@@ -207,7 +207,7 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     return New;
   }
   // We've verified the types match, now check if Old is "extern".
-  if (Old->getStorageClass() != ObjectDecl::Extern) {
+  if (Old->getStorageClass() != VarDecl::Extern) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
   }
@@ -223,7 +223,6 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   
   return 0;
 }
-
 
 Action::DeclTy *
 Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
@@ -249,9 +248,21 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
     New = NewTD;
   } else if (D.isFunctionDeclarator()) {
     TypeRef R = GetTypeForDeclarator(D, S);
-    if (R.isNull()) return 0;
+    if (R.isNull()) return 0; // FIXME: "auto func();" passes through...
     
-    FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R);
+    FunctionDecl::StorageClass SC;
+    switch (D.getDeclSpec().getStorageClassSpec()) {
+      default: assert(0 && "Unknown storage class!");
+      case DeclSpec::SCS_auto:        
+      case DeclSpec::SCS_register:
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func, R);
+        return 0;
+      case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
+      case DeclSpec::SCS_extern:      SC = FunctionDecl::Extern; break;
+      case DeclSpec::SCS_static:      SC = FunctionDecl::Static; break;
+    }
+
+    FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R, SC);
     
     // Merge the decl with the existing one if appropriate.
     if (PrevDecl) {
@@ -263,25 +274,23 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
     TypeRef R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0;
 
-    ObjectDecl::StorageClass SC;
+    VarDecl *NewVD;
+    VarDecl::StorageClass SC;
     switch (D.getDeclSpec().getStorageClassSpec()) {
       default: assert(0 && "Unknown storage class!");
-      case DeclSpec::SCS_unspecified: SC = ObjectDecl::None; break;
-      case DeclSpec::SCS_extern:      SC = ObjectDecl::Extern; break;
-      case DeclSpec::SCS_static:      SC = ObjectDecl::Static; break;
-      // The following 2 should never be seen in this context.
-      case DeclSpec::SCS_auto:        SC = ObjectDecl::Auto; break;
-      case DeclSpec::SCS_register:    SC = ObjectDecl::Register; break;
-    }
-    VarDecl *NewVD;
-    
+      case DeclSpec::SCS_unspecified: SC = VarDecl::None; break;
+      case DeclSpec::SCS_extern:      SC = VarDecl::Extern; break;
+      case DeclSpec::SCS_static:      SC = VarDecl::Static; break;
+      case DeclSpec::SCS_auto:        SC = VarDecl::Auto; break;
+      case DeclSpec::SCS_register:    SC = VarDecl::Register; break;
+    }    
     if (S->getParent() == 0) {
       // File scope. C99 6.9.2p2: A declaration of an identifier for and 
       // object that has file scope without an initializer, and without a
       // storage-class specifier or with the storage-class specifier "static",
       // constitutes a tentative definition. Note: A tentative definition with
       // external linkage is valid (C99 6.2.2p5).
-      if (!Init && SC == ObjectDecl::Static) {
+      if (!Init && SC == VarDecl::Static) {
         // C99 6.9.2p3: If the declaration of an identifier for an object is
         // a tentative definition and has internal linkage (C99 6.2.2p3), the  
         // declared type shall not be an incomplete type.
@@ -290,11 +299,16 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
           return 0;
         }
       }
+      // FIXME: Find C99 spec reference
+      if (SC == VarDecl::Auto || SC == VarDecl::Register) {
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope, R);
+        return 0;
+      }
       NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC);
     } else { 
       // Block scope. C99 6.7p7: If an identifier for an object is declared with
       // no linkage (C99 6.2.2p6), the type for the object shall be complete...
-      if (SC != ObjectDecl::Extern) {
+      if (SC != VarDecl::Extern) {
         if (R->isIncompleteType()) {
           Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type, R);
           return 0;
@@ -341,7 +355,7 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   // FIXME: Handle storage class (auto, register). No declarator?
   VarDecl *New = new ParmVarDecl(PI.IdentLoc, II, 
                                  TypeRef::getFromOpaquePtr(PI.TypeInfo), 
-                                 ObjectDecl::None);
+                                 VarDecl::None);
 
   // If this has an identifier, add it to the scope stack.
   if (II) {

@@ -75,9 +75,9 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
     }
   }
   
-  if (ObjectDecl *OD = dyn_cast<ObjectDecl>(D)) {
-    return new DeclRefExpr(OD);
-  } else if (isa<TypedefDecl>(D))
+  if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+    return new DeclRefExpr(VD, VD->getType());
+  if (isa<TypedefDecl>(D))
     return Diag(Loc, diag::err_unexpected_typedef, II.getName());
 
   assert(0 && "Invalid decl");
@@ -425,23 +425,26 @@ Action::ExprResult Sema::CheckLogicalOperands(Expr *op1, Expr *op2) {
 Action::ExprResult
 Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
                                                unsigned OpCode) {
-  TypeRef type = op->getTypeRef();
+  TypeRef qType = op->getTypeRef();
 
-  assert(!type.isNull() && "no type for increment/decrement expression");
+  assert(!qType.isNull() && "no type for increment/decrement expression");
+
+  Type *canonType = qType->getCanonicalType();
   
-  if (const PointerType *pt = dyn_cast<PointerType>(type)) {
-    if (!pt->getPointeeType()->isObjectType()) // C99 6.5.6p2
-      return Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type, type);    
-  } else if (!type->isRealType()) // C99 6.5.2.4: isRealType excludes complex.
+  // C99 6.5.2.4p1
+  if (const PointerType *pt = dyn_cast<PointerType>(canonType)) {
+    if (!pt->getPointeeType()->isObjectType()) // C99 6.5.2.4p2, 6.5.6p2
+      return Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type, qType);    
+  } else if (!canonType->isRealType()) { 
     // FIXME: Allow Complex as a GCC extension.
-    return Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, type);    
-
+    return Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, qType);    
+  }
   // At this point, we know we have a real or pointer type. As a result, the
   // following predicate is overkill (i.e. it will check for types we know we
   // don't have in this context). Nevertheless, we model the C99 spec closely.
-  if (!type.isModifiableLvalue())
-    return Diag(OpLoc, diag::err_typecheck_not_modifiable, type);
+  if (!qType.isModifiableLvalue())
+    return Diag(OpLoc, diag::err_typecheck_not_modifiable, qType);
 
-  return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, type);
+  return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, qType);
 }
 
