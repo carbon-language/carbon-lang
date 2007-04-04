@@ -184,7 +184,8 @@
           <li><a href="#int_ctpop">'<tt>llvm.ctpop.*</tt>' Intrinsic </a></li>
           <li><a href="#int_ctlz">'<tt>llvm.ctlz.*</tt>' Intrinsic </a></li>
           <li><a href="#int_cttz">'<tt>llvm.cttz.*</tt>' Intrinsic </a></li>
-          <li><a href="#int_bit_part_select">'<tt>llvm.part.select.*</tt>' Intrinsic </a></li>
+          <li><a href="#int_bit_part_select">'<tt>llvm.bit.part_select.*</tt>' Intrinsic </a></li>
+          <li><a href="#int_bit_part_set">'<tt>llvm.bit.part_set.*</tt>' Intrinsic </a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
@@ -4590,21 +4591,21 @@ of src.  For example, <tt>llvm.cttz(2) = 1</tt>.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_bit_part_select">'<tt>llvm.bit.part.select.*</tt>' Intrinsic</a>
+  <a name="int_bit_part_select">'<tt>llvm.bit.part_select.*</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
 
 <h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.part.select</tt> 
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.part_select</tt> 
 on any integer bit width.
 <pre>
-  declare i17 @llvm.bit.part.select.i17.i17 (i17 %val, i32 %loBit, i32 %hiBit)
-  declare i29 @llvm.bit.part.select.i29.i29 (i29 %val, i32 %loBit, i32 %hiBit)
+  declare i17 @llvm.bit.part_select.i17.i17 (i17 %val, i32 %loBit, i32 %hiBit)
+  declare i29 @llvm.bit.part_select.i29.i29 (i29 %val, i32 %loBit, i32 %hiBit)
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>llvm.bit.part.select</tt>' family of intrinsic functions selects a
+<p>The '<tt>llvm.bit.part_select</tt>' family of intrinsic functions selects a
 range of bits from an integer value and returns them in the same bit width as
 the original value.</p>
 
@@ -4614,7 +4615,7 @@ any bit width but they must have the same bit width. The second and third
 arguments must be <tt>i32</tt> type since they specify only a bit index.</p>
 
 <h5>Semantics:</h5>
-<p>The operation of the '<tt>llvm.bit.part.select</tt>' intrinsic has two modes
+<p>The operation of the '<tt>llvm.bit.part_select</tt>' intrinsic has two modes
 of operation: forwards and reverse. If <tt>%loBit</tt> is greater than
 <tt>%hiBits</tt> then the intrinsic operates in reverse mode. Otherwise it
 operates in forward mode.</p>
@@ -4643,21 +4644,21 @@ only the <tt>%hiBit - %loBit</tt> bits set, as follows:</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_bit_part_set">'<tt>llvm.bit.part.set.*</tt>' Intrinsic</a>
+  <a name="int_bit_part_set">'<tt>llvm.bit.part_set.*</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
 
 <h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.part.set</tt> on 
+<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.part_set</tt> on 
 any integer bit width.
 <pre>
-  declare i17 @llvm.bit.part.set.i17.i17.i9 (i17 %val, i32 %bit, i9 %newbits)
-  declare i29 @llvm.bit.part.set.i29.i29.i13(i29 %val, i32 %bit, i13 %newbits)
+  declare i17 @llvm.bit.part_set.i17.i17.i9 (i17 %val, i32 %bit, i9 %newbits)
+  declare i29 @llvm.bit.part_set.i29.i29.i13(i29 %val, i32 %bit, i13 %newbits)
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>llvm.bit.part.set</tt>' family of intrinsic functions sets a range
+<p>The '<tt>llvm.bit.part_set</tt>' family of intrinsic functions sets a range
 of bits in a given value to a new value and returns the result.</p>
 
 <h5>Arguments:</h5>
@@ -4667,7 +4668,7 @@ The third argument may be any any bit width less than or equal to the bit width
 of the first argument.</p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.part.set</tt>' intrinsic sets the value given by
+<p>The '<tt>llvm.bit.part_set</tt>' intrinsic sets the value given by
 <tt>%newbits</tt> into <tt>%val</tt> at the bit index given by <tt>%bit</tt>.
 This is equivalent to the following sequence:</p>
 <ol>
