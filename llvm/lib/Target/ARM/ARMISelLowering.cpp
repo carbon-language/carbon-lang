@@ -1637,7 +1637,7 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     case 'w':
       if (VT == MVT::f32)
         return std::make_pair(0U, ARM::SPRRegisterClass);
-      if (VT == MVT::f32)
+      if (VT == MVT::f64)
         return std::make_pair(0U, ARM::DPRRegisterClass);
       break;
     }
