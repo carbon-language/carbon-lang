@@ -38,8 +38,7 @@ void StringMapImpl::init(unsigned InitSize) {
   NumItems = 0;
   NumTombstones = 0;
   
-  TheTable = new ItemBucket[NumBuckets+1]();
-  memset(TheTable, 0, NumBuckets*sizeof(ItemBucket));
+  TheTable = (ItemBucket*)calloc(NumBuckets+1, sizeof(ItemBucket));
   
   // Allocate one extra bucket, set it to look filled so the iterators stop at
   // end.
@@ -200,8 +199,7 @@ void StringMapImpl::RehashTable() {
   unsigned NewSize = NumBuckets*2;
   // Allocate one extra bucket which will always be non-empty.  This allows the
   // iterators to stop at end.
-  ItemBucket *NewTableArray = new ItemBucket[NewSize+1]();
-  memset(NewTableArray, 0, NewSize*sizeof(ItemBucket));
+  ItemBucket *NewTableArray =(ItemBucket*)calloc(NewSize+1, sizeof(ItemBucket));
   NewTableArray[NewSize].Item = (StringMapEntryBase*)2;
   
   // Rehash all the items into their new buckets.  Luckily :) we already have

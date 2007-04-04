@@ -279,7 +279,7 @@ public:
       if (I->Item && I->Item != getTombstoneVal())
         static_cast<MapEntryTy*>(I->Item)->Destroy(Allocator);
     }
-    delete [] TheTable;
+    free(TheTable);
   }
 };
   
