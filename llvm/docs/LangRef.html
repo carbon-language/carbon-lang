@@ -146,44 +146,45 @@
     <ol>
       <li><a href="#int_varargs">Variable Argument Handling Intrinsics</a>
         <ol>
-          <li><a href="#i_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a></li>
-          <li><a href="#i_va_end">'<tt>llvm.va_end</tt>'   Intrinsic</a></li>
-          <li><a href="#i_va_copy">'<tt>llvm.va_copy</tt>'  Intrinsic</a></li>
+          <li><a href="#int_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a></li>
+          <li><a href="#int_va_end">'<tt>llvm.va_end</tt>'   Intrinsic</a></li>
+          <li><a href="#int_va_copy">'<tt>llvm.va_copy</tt>'  Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_gc">Accurate Garbage Collection Intrinsics</a>
         <ol>
-          <li><a href="#i_gcroot">'<tt>llvm.gcroot</tt>' Intrinsic</a></li>
-          <li><a href="#i_gcread">'<tt>llvm.gcread</tt>' Intrinsic</a></li>
-          <li><a href="#i_gcwrite">'<tt>llvm.gcwrite</tt>' Intrinsic</a></li>
+          <li><a href="#int_gcroot">'<tt>llvm.gcroot</tt>' Intrinsic</a></li>
+          <li><a href="#int_gcread">'<tt>llvm.gcread</tt>' Intrinsic</a></li>
+          <li><a href="#int_gcwrite">'<tt>llvm.gcwrite</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_codegen">Code Generator Intrinsics</a>
         <ol>
-          <li><a href="#i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a></li>
-          <li><a href="#i_frameaddress">'<tt>llvm.frameaddress</tt>'   Intrinsic</a></li>
-          <li><a href="#i_stacksave">'<tt>llvm.stacksave</tt>' Intrinsic</a></li>
-          <li><a href="#i_stackrestore">'<tt>llvm.stackrestore</tt>' Intrinsic</a></li>
-          <li><a href="#i_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a></li>
-          <li><a href="#i_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a></li>
-          <li><a href="#i_readcyclecounter"><tt>llvm.readcyclecounter</tt>' Intrinsic</a></li>
+          <li><a href="#int_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a></li>
+          <li><a href="#int_frameaddress">'<tt>llvm.frameaddress</tt>'   Intrinsic</a></li>
+          <li><a href="#int_stacksave">'<tt>llvm.stacksave</tt>' Intrinsic</a></li>
+          <li><a href="#int_stackrestore">'<tt>llvm.stackrestore</tt>' Intrinsic</a></li>
+          <li><a href="#int_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a></li>
+          <li><a href="#int_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a></li>
+          <li><a href="#int_readcyclecounter"><tt>llvm.readcyclecounter</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_libc">Standard C Library Intrinsics</a>
         <ol>
-          <li><a href="#i_memcpy">'<tt>llvm.memcpy.*</tt>' Intrinsic</a></li>
-          <li><a href="#i_memmove">'<tt>llvm.memmove.*</tt>' Intrinsic</a></li>
-          <li><a href="#i_memset">'<tt>llvm.memset.*</tt>' Intrinsic</a></li>
-          <li><a href="#i_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a></li>
-          <li><a href="#i_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_memcpy">'<tt>llvm.memcpy.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_memmove">'<tt>llvm.memmove.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_memset">'<tt>llvm.memset.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_manip">Bit Manipulation Intrinsics</a>
         <ol>
-          <li><a href="#i_bswap">'<tt>llvm.bswap.*</tt>' Intrinsics</a></li>
+          <li><a href="#int_bswap">'<tt>llvm.bswap.*</tt>' Intrinsics</a></li>
           <li><a href="#int_ctpop">'<tt>llvm.ctpop.*</tt>' Intrinsic </a></li>
           <li><a href="#int_ctlz">'<tt>llvm.ctlz.*</tt>' Intrinsic </a></li>
           <li><a href="#int_cttz">'<tt>llvm.cttz.*</tt>' Intrinsic </a></li>
+          <li><a href="#int_bit_part_select">'<tt>llvm.part.select.*</tt>' Intrinsic </a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
@@ -1498,7 +1499,7 @@ a <a href="#i_call"><tt>call</tt> instruction</a>.  Thus, typically we have:
 </p>
 
 <pre>
-  %X = call i32 asm "<a href="#i_bswap">bswap</a> $0", "=r,r"(i32 %Y)
+  %X = call i32 asm "<a href="#int_bswap">bswap</a> $0", "=r,r"(i32 %Y)
 </pre>
 
 <p>
@@ -3663,7 +3664,7 @@ declare void @llvm.va_end(i8*)
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
+  <a name="int_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
 </div>
 
 
@@ -3692,7 +3693,7 @@ last argument of the function, the compiler can figure that out.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
- <a name="i_va_end">'<tt>llvm.va_end</tt>' Intrinsic</a>
+ <a name="int_va_end">'<tt>llvm.va_end</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -3701,7 +3702,7 @@ last argument of the function, the compiler can figure that out.</p>
 <h5>Overview:</h5>
 
 <p>The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>&lt;arglist&gt;</tt>
-which has been initialized previously with <tt><a href="#i_va_start">llvm.va_start</a></tt>
+which has been initialized previously with <tt><a href="#int_va_start">llvm.va_start</a></tt>
 or <tt><a href="#i_va_copy">llvm.va_copy</a></tt>.</p>
 
 <h5>Arguments:</h5>
@@ -3712,15 +3713,15 @@ or <tt><a href="#i_va_copy">llvm.va_copy</a></tt>.</p>
 
 <p>The '<tt>llvm.va_end</tt>' intrinsic works just like the <tt>va_end</tt>
 macro available in C.  In a target-dependent way, it destroys the <tt>va_list</tt>.
-Calls to <a href="#i_va_start"><tt>llvm.va_start</tt></a> and <a
- href="#i_va_copy"><tt>llvm.va_copy</tt></a> must be matched exactly
+Calls to <a href="#int_va_start"><tt>llvm.va_start</tt></a> and <a
+ href="#int_va_copy"><tt>llvm.va_copy</tt></a> must be matched exactly
 with calls to <tt>llvm.va_end</tt>.</p>
 
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_va_copy">'<tt>llvm.va_copy</tt>' Intrinsic</a>
+  <a name="int_va_copy">'<tt>llvm.va_copy</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -3747,7 +3748,7 @@ The second argument is a pointer to a <tt>va_list</tt> element to copy from.</p>
 <p>The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt> macro
 available in C.  In a target-dependent way, it copies the source
 <tt>va_list</tt> element into the destination list.  This intrinsic is necessary
-because the <tt><a href="#i_va_start">llvm.va_start</a></tt> intrinsic may be
+because the <tt><a href="#int_va_start">llvm.va_start</a></tt> intrinsic may be
 arbitrarily complex and require memory allocation, for example.</p>
 
 </div>
@@ -3762,9 +3763,9 @@ arbitrarily complex and require memory allocation, for example.</p>
 <p>
 LLVM support for <a href="GarbageCollection.html">Accurate Garbage
 Collection</a> requires the implementation and generation of these intrinsics.
-These intrinsics allow identification of <a href="#i_gcroot">GC roots on the
+These intrinsics allow identification of <a href="#int_gcroot">GC roots on the
 stack</a>, as well as garbage collector implementations that require <a
-href="#i_gcread">read</a> and <a href="#i_gcwrite">write</a> barriers.
+href="#int_gcread">read</a> and <a href="#int_gcwrite">write</a> barriers.
 Front-ends for type-safe garbage collected languages should generate these
 intrinsics to make use of the LLVM garbage collectors.  For more details, see <a
 href="GarbageCollection.html">Accurate Garbage Collection with LLVM</a>.
@@ -3773,7 +3774,7 @@ href="GarbageCollection.html">Accurate Garbage Collection with LLVM</a>.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_gcroot">'<tt>llvm.gcroot</tt>' Intrinsic</a>
+  <a name="int_gcroot">'<tt>llvm.gcroot</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -3807,7 +3808,7 @@ the runtime to find the pointer at GC safe points.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_gcread">'<tt>llvm.gcread</tt>' Intrinsic</a>
+  <a name="int_gcread">'<tt>llvm.gcread</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -3842,7 +3843,7 @@ garbage collector runtime, as needed.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_gcwrite">'<tt>llvm.gcwrite</tt>' Intrinsic</a>
+  <a name="int_gcwrite">'<tt>llvm.gcwrite</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -3891,7 +3892,7 @@ be implemented with code generator support.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a>
+  <a name="int_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -3936,7 +3937,7 @@ source-language caller.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_frameaddress">'<tt>llvm.frameaddress</tt>' Intrinsic</a>
+  <a name="int_frameaddress">'<tt>llvm.frameaddress</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -3979,7 +3980,7 @@ source-language caller.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_stacksave">'<tt>llvm.stacksave</tt>' Intrinsic</a>
+  <a name="int_stacksave">'<tt>llvm.stacksave</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -3993,7 +3994,7 @@ source-language caller.
 
 <p>
 The '<tt>llvm.stacksave</tt>' intrinsic is used to remember the current state of
-the function stack, for use with <a href="#i_stackrestore">
+the function stack, for use with <a href="#int_stackrestore">
 <tt>llvm.stackrestore</tt></a>.  This is useful for implementing language
 features like scoped automatic variable sized arrays in C99.
 </p>
@@ -4002,7 +4003,7 @@ features like scoped automatic variable sized arrays in C99.
 
 <p>
 This intrinsic returns a opaque pointer value that can be passed to <a
-href="#i_stackrestore"><tt>llvm.stackrestore</tt></a>.  When an
+href="#int_stackrestore"><tt>llvm.stackrestore</tt></a>.  When an
 <tt>llvm.stackrestore</tt> intrinsic is executed with a value saved from 
 <tt>llvm.stacksave</tt>, it effectively restores the state of the stack to the
 state it was in when the <tt>llvm.stacksave</tt> intrinsic executed.  In
@@ -4014,7 +4015,7 @@ that were allocated after the <tt>llvm.stacksave</tt> was executed.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_stackrestore">'<tt>llvm.stackrestore</tt>' Intrinsic</a>
+  <a name="int_stackrestore">'<tt>llvm.stackrestore</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -4029,7 +4030,7 @@ that were allocated after the <tt>llvm.stacksave</tt> was executed.
 <p>
 The '<tt>llvm.stackrestore</tt>' intrinsic is used to restore the state of
 the function stack to the state it was in when the corresponding <a
-href="#i_stacksave"><tt>llvm.stacksave</tt></a> intrinsic executed.  This is
+href="#int_stacksave"><tt>llvm.stacksave</tt></a> intrinsic executed.  This is
 useful for implementing language features like scoped automatic variable sized
 arrays in C99.
 </p>
@@ -4037,7 +4038,7 @@ arrays in C99.
 <h5>Semantics:</h5>
 
 <p>
-See the description for <a href="#i_stacksave"><tt>llvm.stacksave</tt></a>.
+See the description for <a href="#int_stacksave"><tt>llvm.stacksave</tt></a>.
 </p>
 
 </div>
@@ -4045,7 +4046,7 @@ See the description for <a href="#i_stacksave"><tt>llvm.stacksave</tt></a>.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a>
+  <a name="int_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -4090,7 +4091,7 @@ performance.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a>
+  <a name="int_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -4131,7 +4132,7 @@ support this intrinisic may ignore it.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_readcyclecounter">'<tt>llvm.readcyclecounter</tt>' Intrinsic</a>
+  <a name="int_readcyclecounter">'<tt>llvm.readcyclecounter</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -4179,7 +4180,7 @@ for more efficient code generation.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a>
+  <a name="int_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -4233,7 +4234,7 @@ be set to 0 or 1.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a>
+  <a name="int_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -4288,7 +4289,7 @@ be set to 0 or 1.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_memset">'<tt>llvm.memset.*</tt>' Intrinsics</a>
+  <a name="int_memset">'<tt>llvm.memset.*</tt>' Intrinsics</a>
 </div>
 
 <div class="doc_text">
@@ -4341,7 +4342,7 @@ this can be specified as the fourth argument, otherwise it should be set to 0 or
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a>
+  <a name="int_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -4377,7 +4378,7 @@ floating point number.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a>
+  <a name="int_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
@@ -4426,7 +4427,7 @@ These allow efficient code generation for some algorithms.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_bswap">'<tt>llvm.bswap.*</tt>' Intrinsics</a>
+  <a name="int_bswap">'<tt>llvm.bswap.*</tt>' Intrinsics</a>
 </div>
 
 <div class="doc_text">
@@ -4589,300 +4590,6 @@ of src.  For example, <tt>llvm.cttz(2) = 1</tt>.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_bit_and_reduce">'<tt>llvm.bit.and.reduce.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.and.reduce</tt> on
-any integer bit width.
-<pre>
-  declare i1 @llvm.bit.and.reduce.i32(i32 %val)
-  declare i1 @llvm.bit.and.reduce.i97(i97 %val)
-</pre>
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.and.reduce</tt>' family of intrinsic functions applies the
-AND operator bitwise to each bit in <tt>%val</tt> until it yields the result.
-</p>
-
-<h5>Arguments:</h5>
-<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.and.reduce</tt>' intrinsic is the equivalent of a test
-against <tt>-1</tt>. Only if all bits in <tt>%val</tt> are set will the result
-be 1, otherwise 0.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_or_reduce">'<tt>llvm.bit.or.reduce.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.or.reduce</tt> on
-any integer bit width.
-<pre>
-  declare i1 @llvm.bit.or.reduce.i32(i32 %val)
-  declare i1 @llvm.bit.or.reduce.i97(i97 %val)
-</pre>
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.or.reduce</tt>' family of intrinsic functions applies the
-OR operator bitwise to each bit in <tt>%val</tt> until it yields the result.
-</p>
-
-<h5>Arguments:</h5>
-<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.or.reduce</tt>' intrinsic is the equivalent of a test
-against <tt>0</tt>. Only if all bits in <tt>%val</tt> are clear will the result
-be 0, otherwise 1.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_xor_reduce">'<tt>llvm.bit.xor.reduce.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.xor.reduce</tt> on
-any integer bit width.
-<pre>
-  declare i1 @llvm.bit.xor.reduce.i32(i32 %val)
-  declare i1 @llvm.bit.xor.reduce.i97(i97 %val)
-</pre>
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.xor.reduce</tt>' family of intrinsic functions applies the
-XOR operator bitwise to each bit in <tt>%val</tt> until it yields the result.
-</p>
-
-<h5>Arguments:</h5>
-<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.xor.reduce</tt>' computes its result by performing an XOR
-operation on the two lowest order bits in <tt>%val</tt>. That result is then
-XOR'd with the next bit in <tt>%val</tt> and this process continues until all
-bits in <tt>%val</tt> have been XOR'd with the result of the previous XORs. The
-resulting bit is returned.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_nand_reduce">'<tt>llvm.bit.nand.reduce.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.nand.reduce</tt> on
-any integer bit width.
-<pre>
-  declare i1 @llvm.bit.nand.reduce.i32(i32 %val)
-  declare i1 @llvm.bit.nand.reduce.i97(i97 %val)
-</pre>
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.nand.reduce</tt>' family of intrinsic functions applies the
-NAND operator bitwise to each bit in <tt>%val</tt> until it yields the result.
-</p>
-
-<h5>Arguments:</h5>
-<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.nand.reduce</tt>' intrinsic is the equivalent of taking the
-complement of the <tt>llvm.bit.and.reduce</tt> intrinsic. That is, it returns 0
-if <tt>%val</tt> is all ones (-1) and 1 otherwise.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_nor_reduce">'<tt>llvm.bit.nor.reduce.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.nor.reduce</tt> on
-any integer bit width.
-<pre>
-  declare i1 @llvm.bit.nor.reduce.i32(i32 %val)
-  declare i1 @llvm.bit.nor.reduce.i97(i97 %val)
-</pre>
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.nor.reduce</tt>' family of intrinsic functions applies the
-NOR operator bitwise to each bit in <tt>%val</tt> until it yields the result.
-</p>
-
-<h5>Arguments:</h5>
-<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.nor.reduce</tt>' intrinsic is equivalent to the complement
-of the <tt>llvm.bit.or.reduce</tt> intrinsic. That is, it returns 1 if all bits
-in <tt>%val</tt> are 0, and 1 otherwise.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_nxor_reduce">'<tt>llvm.bit.nxor.reduce.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.nxor.reduce</tt> on
-any integer bit width.
-<pre>
-  declare i1 @llvm.bit.nxor.reduce.i32(i32 %val)
-  declare i1 @llvm.bit.nxor.reduce.i97(i97 %val)
-</pre>
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.nxor.reduce</tt>' family of intrinsic functions applies the
-AND operator bitwise to each bit in <tt>%val</tt> until it yields the result.
-</p>
-
-<h5>Arguments:</h5>
-<p>The argument may be any bit width. The result is always a 1-bit integer.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.nxor.reduce</tt>' intrinsic is the equivalent of the
-complement of the <tt>llvm.bit.xor.reduce</tt> intrinsic.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_select">'<tt>llvm.bit.select.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.select</tt> on any 
-integer bit width.
-<pre>
-  declare i1 @llvm.bit.select.i17  (i17 %val, i32 %bit)
-  declare i1 @llvm.bit.select.i29  (i29 %val, i32 %bit)
-</pre>
-
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.select</tt>' family of intrinsic functions selects a
-specific bit from an integer value and returns it.</p>
-
-<h5>Arguments:</h5>
-<p>The two arguments may be any bit width. The result is always a 1-bit
-integer. The first argument, <tt>%val</tt> may be any bit width and is the 
-value from which the bit is selected. The second argument, <tt>%bit</tt> must
-be an <tt>i32</tt> and is the bit index of the bit to be selected. Bits are 
-numbered starting with 0 as the lowest ordered bit.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.select</tt>' intrinsic is the equivalent of shift and a
-truncate operation. The <tt>%val</tt> is shifted right by <tt>%bit</tt> bits and
-then truncated to a 1-bit integer.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_set">'<tt>llvm.bit.set.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.set</tt> on any 
-integer bit width.
-<pre>
-  declare i17 @llvm.bit.set.i17.i17 (i17 %val, i32 %bit)
-  declare i52 @llvm.bit.set.i52.i52 (i52 %val, i32 %bit)
-</pre>
-
-<h5>Overview:</h5>
-<p>
-The '<tt>llvm.bit.set</tt>' family of intrinsic functions sets a specific bit in
-a <tt>%val</tt> and returns the result.</p>
-
-<h5>Arguments:</h5>
-<p>The result and the first argument, <tt>%val</tt>, may be an integer of any
-bit width, but they must be the same bit width.  The second argument must be an
-<tt>i32</tt>.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.set</tt>' intrinsic is the equivalent of creating a bit
-mask for the <tt>%bit</tt> requested in the width of <tt>%val</tt>, ORing that
-mask with <tt>%val</tt> and returning the result.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_clear">'<tt>llvm.bit.clear.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.clear</tt> on any 
-integer bit width.
-<pre>
-  declare i17 @llvm.bit.clear.i17.i17 (i17 %val, i32 %bit)
-  declare i29 @llvm.bit.clear.i29.i29 (i29 %val, i32 %bit)
-</pre>
-
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.clear</tt>' family of intrinsic functions clears a specific
-bit in a value and returns the result.</p>
-
-<h5>Arguments:</h5>
-<p>The result and the first argument, <tt>%val</tt>, may be an integer of any
-bit width, but they must be the same bit width.  The second argument must be an
-<tt>i32</tt>.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.clear</tt>' intrinsic is the equivalent of making a bit
-mask in the width of <tt>%val</tt> but with the bit at index <tt>%bit</tt> set 
-to zero, ANDing that mask with <tt>%val</tt> and returning the result.</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_concat">'<tt>llvm.bit.concat.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.concat</tt> on any 
-integer bit width.
-<pre>
-  declare i32 @llvm.bit.concat.i32.i17.i15 (i17 %hi, i15 %lo)
-  declare i29 @llvm.bit.concat.i29.i12.i15 (i12 %hi, i15 %lo)
-</pre>
-
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.concat</tt>' family of intrinsic functions concatenates two
-integer values to produce a longer one.</p>
-
-<h5>Arguments:</h5>
-<p>The two arguments may be any bit width. The result must be an integer type 
-whose bit width is the sum of the arguments' bit widths. The first argument,
-<tt>%hi</tt>, represents the bits that will occupy the high order bit locations
-in the concatenated result.  The second argument, <tt>%lo</tt>, will occupy the
-lower order bit locations in the result.</p>
-
-<h5>Semantics:</h5>
-
-<p>The '<tt>llvm.bit.concat</tt>' intrinsic is the equivalent of two 
-<tt>zext</tt> instructions, a <tt>shl</tt> and an <tt>or</tt>.  The operation 
-proceeds as follows:</p>
-<ol>
-  <li>Each of the arguments is <tt>zext</tt>'d to the result bit width.</li>
-  <li>The <tt>%hi</tt> argument is shift left by the width of the <tt>%lo</tt>
-  argument (shifted into to high order bits).</li>
-  <li>The shifted <tt>%hi</tt> value and <tt>%lo</tt> are <tt>or</tt>'d together
-  to form the result.</li>
-</ol>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
   <a name="int_bit_part_select">'<tt>llvm.bit.part.select.*</tt>' Intrinsic</a>
 </div>
 
@@ -4904,11 +4611,15 @@ the original value.</p>
 <h5>Arguments:</h5>
 <p>The first argument, <tt>%val</tt> and the result may be integer types of 
 any bit width but they must have the same bit width. The second and third 
-arguments must be <tt>i32</tt> type.</p>
+arguments must be <tt>i32</tt> type since they specify only a bit index.</p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.part.select</tt>' intrinsic is the equivalent of shifting
-<tt>%val</tt> right by <tt>%loBit</tt> bits and then ANDing it with a mask with
+<p>The operation of the '<tt>llvm.bit.part.select</tt>' intrinsic has two modes
+of operation: forwards and reverse. If <tt>%loBit</tt> is greater than
+<tt>%hiBits</tt> then the intrinsic operates in reverse mode. Otherwise it
+operates in forward mode.</p>
+<p>In forward mode, this intrinsic is the equivalent of shifting <tt>%val</tt>
+right by <tt>%loBit</tt> bits and then ANDing it with a mask with
 only the <tt>%hiBit - %loBit</tt> bits set, as follows:</p>
 <ol>
   <li>The <tt>%val</tt> is shifted right (LSHR) by the number of bits specified
@@ -4917,6 +4628,16 @@ only the <tt>%hiBit - %loBit</tt> bits set, as follows:</p>
   to determine the number of bits to retain.</li>
   <li>A mask of the retained bits is created by shifting a -1 value.</li>
   <li>The mask is ANDed with <tt>%val</tt> to produce the result.
+</ol>
+<p>In reverse mode, a similar computation is made except that:</p>
+<ol>
+  <li>The bits selected wrap around to include both the highest and lowest bits.
+  For example, part_select(i16 X, 4, 7) selects bits from X with a mask of 
+  0x00F0 (forwards case) while part_select(i16 X, 8, 3) selects bits from X 
+  with a mask of 0xFF0F.</li>
+  <li>The bits returned in the reverse case are reversed. So, if X has the value
+  0x6ACF and we apply part_select(i16 X, 8, 3) to it, we get back the value
+  0x0A6F.</li>
 </ol>
 </div>
 
