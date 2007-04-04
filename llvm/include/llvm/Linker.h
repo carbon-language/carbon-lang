@@ -182,7 +182,8 @@ class Linker {
     /// @see getLastError
     /// @brief Link in a single file.
     bool LinkInFile(
-      const sys::Path& File ///< File to link in.
+      const sys::Path& File, ///< File to link in.
+      bool &is_native        ///< Indicates if the file is native object file
     );
 
     /// This function provides a way to selectively link in a set of modules,
@@ -212,7 +213,7 @@ class Linker {
     /// @brief Link one library into the module
     bool LinkInLibrary (
       const std::string& Library, ///< The library to link in
-      bool& is_file               ///< Indicates if lib is really a bc file
+      bool& is_native             ///< Indicates if lib a native library
     );
 
     /// This function links one bytecode archive, \p Filename, into the module.
