@@ -33,14 +33,17 @@ Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
     if (I->second) {
       // Link in the library suggested.
       bool is_bytecode = true;
-      if (LinkInLibrary(I->first,is_bytecode))
+      if (LinkInLibrary(I->first, is_bytecode))
         return true;
       if (!is_bytecode)
         NativeItems.push_back(*I);
     } else {
       // Link in the file suggested
-      if (LinkInFile(sys::Path(I->first)))
+      bool is_native = false;
+      if (LinkInFile(sys::Path(I->first), is_native))
         return true;
+      if (is_native)
+        NativeItems.push_back(*I);
     }
   }
 
@@ -61,8 +64,8 @@ Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
 
 /// LinkInLibrary - links one library into the HeadModule.
 ///
-bool Linker::LinkInLibrary(const std::string& Lib, bool& is_bytecode) {
-  is_bytecode = false;
+bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
+  is_native = false;
   // Determine where this library lives.
   sys::Path Pathname = FindLib(Lib);
   if (Pathname.isEmpty())
@@ -72,20 +75,27 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_bytecode) {
   std::string Magic;
   Pathname.getMagicNumber(Magic, 64);
   switch (sys::IdentifyFileType(Magic.c_str(), 64)) {
-    case sys::BytecodeFileType:
-    case sys::CompressedBytecodeFileType:
+    default: assert(0 && "Bad file type identification");
+    case sys::Unknown_FileType:
+      return warning("Supposed library '" + Lib + "' isn't a library.");
+
+    case sys::Bytecode_FileType:
+    case sys::CompressedBytecode_FileType:
       // LLVM ".so" file.
-      if (LinkInFile(Pathname))
+      if (LinkInFile(Pathname, is_native))
         return error("Cannot link file '" + Pathname.toString() + "'");
-      is_bytecode = true;
       break;
-    case sys::ArchiveFileType:
+
+    case sys::Archive_FileType:
       if (LinkInArchive(Pathname))
         return error("Cannot link archive '" + Pathname.toString() + "'");
-      is_bytecode = true;
       break;
-    default:
-      return warning("Supposed library '" + Lib + "' isn't a library.");
+
+    case sys::ELF_FileType:
+    case sys::Mach_O_FileType:
+    case sys::COFF_FileType:
+      is_native = true;
+      break;
   }
   return false;
 }
@@ -135,28 +145,47 @@ bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
 ///  TRUE  - An error occurred.
 ///  FALSE - No errors.
 ///
-bool Linker::LinkInFile(const sys::Path &File) {
+bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
+  is_native = false;
   // Make sure we can at least read the file
   if (!File.canRead())
     return error("Cannot find linker input '" + File.toString() + "'");
 
-  // A user may specify an ar archive without -l, perhaps because it
-  // is not installed as a library. Detect that and link the library.
-  if (File.isArchive()) {
-    if (LinkInArchive(File))
-      return error("Cannot link archive '" + File.toString() + "'");
-  } else if (File.isBytecodeFile()) {
-    verbose("Linking bytecode file '" + File.toString() + "'");
+  // If its an archive, try to link it in
+  std::string Magic;
+  File.getMagicNumber(Magic, 64);
+  switch (sys::IdentifyFileType(Magic.c_str(), 64)) {
+    default: assert(0 && "Bad file type identification");
+    case sys::Unknown_FileType:
+      return warning("Supposed object file '" + File.toString() + 
+                     "' not recognized as such");
 
-    std::auto_ptr<Module> M(LoadObject(File));
-    if (M.get() == 0)
-      return error("Cannot load file '" + File.toString() + "'" + Error);
-    if (LinkInModule(M.get()))
-      return error("Cannot link file '" + File.toString() + "'" + Error);
+    case sys::Archive_FileType:
+      // A user may specify an ar archive without -l, perhaps because it
+      // is not installed as a library. Detect that and link the archive.
+      verbose("Linking archive file '" + File.toString() + "'");
+      if (LinkInArchive(File))
+        return error("Cannot link archive '" + File.toString() + "'");
+      break;
 
-    verbose("Linked in file '" + File.toString() + "'");
-  } else {
-    return warning("File of unknown type '" + File.toString() + "' ignored.");
+    case sys::Bytecode_FileType:
+    case sys::CompressedBytecode_FileType: {
+      verbose("Linking bytecode file '" + File.toString() + "'");
+      std::auto_ptr<Module> M(LoadObject(File));
+      if (M.get() == 0)
+        return error("Cannot load file '" + File.toString() + "'" + Error);
+      if (LinkInModule(M.get()))
+        return error("Cannot link file '" + File.toString() + "'" + Error);
+
+      verbose("Linked in file '" + File.toString() + "'");
+      break;
+    }
+
+    case sys::ELF_FileType:
+    case sys::Mach_O_FileType:
+    case sys::COFF_FileType:
+      is_native = true;
+      break;
   }
   return false;
 }
@@ -175,8 +204,9 @@ bool Linker::LinkInFile(const sys::Path &File) {
 ///  TRUE  - Some error occurred.
 ///
 bool Linker::LinkInFiles(const std::vector<sys::Path> &Files) {
+  bool is_native;
   for (unsigned i = 0; i < Files.size(); ++i)
-    if (LinkInFile(Files[i]))
+    if (LinkInFile(Files[i], is_native))
       return true;
   return false;
 }
