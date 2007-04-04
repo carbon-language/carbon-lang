@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// FIXME: implement testing for asserts.
+// FIXME: implement testing for #assert's.
 // FIXME: Track signed/unsigned correctly.
 // FIXME: Track and report integer overflow correctly.
 //
@@ -146,21 +146,21 @@ static bool EvaluateValue(APInt &Result, LexerToken &PeekTok,
     PP.Diag(PeekTok, diag::err_pp_expected_value_in_expr);
     return true;
   case tok::numeric_constant: {
-    SmallString<512> IntegerBuffer;
+    SmallString<64> IntegerBuffer;
     IntegerBuffer.resize(PeekTok.getLength());
     const char *ThisTokBegin = &IntegerBuffer[0];
     unsigned ActualLength = PP.getSpelling(PeekTok, ThisTokBegin);
     NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
                                  PeekTok.getLocation(), PP);
-    if (Literal.hadError) 
+    if (Literal.hadError)
       return true; // a diagnostic was already reported.
     
     if (Literal.isFloatingLiteral()) {
       PP.Diag(PeekTok, diag::err_pp_illegal_floating_literal);
       return true;
     }
-    
     assert(Literal.isIntegerLiteral() && "Unknown ppnumber");
+    
     // FIXME: Handle overflow based on whether the value is signed.  If signed
     // and if the value is too large, emit a warning "integer constant is so
     // large that it is unsigned" e.g. 12345678901234567890.
