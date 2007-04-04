@@ -16,10 +16,25 @@
 using namespace llvm;
 
 StringMapImpl::StringMapImpl(unsigned InitSize, unsigned itemSize) {
+  ItemSize = itemSize;
+  
+  // If a size is specified, initialize the table with that many buckets.
+  if (InitSize) {
+    init(InitSize);
+    return;
+  }
+  
+  // Otherwise, initialize it with zero buckets to avoid the allocation.
+  TheTable = 0;
+  NumBuckets = 0;
+  NumItems = 0;
+  NumTombstones = 0;
+}
+
+void StringMapImpl::init(unsigned InitSize) {
   assert((InitSize & (InitSize-1)) == 0 &&
          "Init Size must be a power of 2 or zero!");
   NumBuckets = InitSize ? InitSize : 16;
-  ItemSize = itemSize;
   NumItems = 0;
   NumTombstones = 0;
   
@@ -52,8 +67,12 @@ static unsigned HashString(const char *Start, const char *End) {
 /// case, the FullHashValue field of the bucket will be set to the hash value
 /// of the string.
 unsigned StringMapImpl::LookupBucketFor(const char *NameStart,
-                                         const char *NameEnd) {
+                                        const char *NameEnd) {
   unsigned HTSize = NumBuckets;
+  if (HTSize == 0) {  // Hash table unallocated so far?
+    init(16);
+    HTSize = NumBuckets;
+  }
   unsigned FullHashValue = HashString(NameStart, NameEnd);
   unsigned BucketNo = FullHashValue & (HTSize-1);
   
@@ -110,6 +129,7 @@ unsigned StringMapImpl::LookupBucketFor(const char *NameStart,
 /// This does not modify the map.
 int StringMapImpl::FindKey(const char *KeyStart, const char *KeyEnd) const {
   unsigned HTSize = NumBuckets;
+  if (HTSize == 0) return -1;  // Really empty table?
   unsigned FullHashValue = HashString(KeyStart, KeyEnd);
   unsigned BucketNo = FullHashValue & (HTSize-1);
   

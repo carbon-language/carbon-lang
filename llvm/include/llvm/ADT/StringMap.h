@@ -55,6 +55,7 @@ protected:
   unsigned NumTombstones;
   unsigned ItemSize;
 protected:
+  StringMapImpl(unsigned itemSize) : ItemSize(itemSize) { init(16); }
   StringMapImpl(unsigned InitSize, unsigned ItemSize);
   void RehashTable();
   
@@ -87,7 +88,8 @@ protected:
   /// RemoveKey - Remove the StringMapEntry for the specified key from the
   /// table, returning it.  If the key is not in the table, this returns null.
   StringMapEntryBase *RemoveKey(const char *KeyStart, const char *KeyEnd);
-  
+private:
+  void init(unsigned Size);
 public:
   static StringMapEntryBase *getTombstoneVal() {
     return (StringMapEntryBase*)-1;
@@ -185,7 +187,8 @@ class StringMap : public StringMapImpl {
   AllocatorTy Allocator;
   typedef StringMapEntry<ValueTy> MapEntryTy;
 public:
-  StringMap(unsigned InitialSize = 0)
+  StringMap() : StringMapImpl(sizeof(MapEntryTy)) {}
+  StringMap(unsigned InitialSize)
     : StringMapImpl(InitialSize, sizeof(MapEntryTy)) {}
   
   AllocatorTy &getAllocator() { return Allocator; }
@@ -194,11 +197,18 @@ public:
   typedef StringMapConstIterator<ValueTy> const_iterator;
   typedef StringMapIterator<ValueTy> iterator;
   
-  iterator begin() { return iterator(TheTable); }
-  iterator end() { return iterator(TheTable+NumBuckets); }
-  const_iterator begin() const { return const_iterator(TheTable); }
-  const_iterator end() const { return const_iterator(TheTable+NumBuckets); }
-  
+  iterator begin() {
+    return iterator(TheTable, NumBuckets == 0);
+  }
+  iterator end() {
+    return iterator(TheTable+NumBuckets, true);
+  }
+  const_iterator begin() const {
+    return const_iterator(TheTable, NumBuckets == 0);
+  }
+  const_iterator end() const {
+    return const_iterator(TheTable+NumBuckets, true);
+  }
   
   iterator find(const char *KeyStart, const char *KeyEnd) {
     int Bucket = FindKey(KeyStart, KeyEnd);
@@ -279,8 +289,10 @@ class StringMapConstIterator {
 protected:
   StringMapImpl::ItemBucket *Ptr;
 public:
-  StringMapConstIterator(StringMapImpl::ItemBucket *Bucket) : Ptr(Bucket) {
-    AdvancePastEmptyBuckets();
+  StringMapConstIterator(StringMapImpl::ItemBucket *Bucket,
+                         bool NoAdvance = false)
+  : Ptr(Bucket) {
+    if (!NoAdvance) AdvancePastEmptyBuckets();
   }
   
   const StringMapEntry<ValueTy> &operator*() const {
@@ -316,8 +328,9 @@ private:
 template<typename ValueTy>
 class StringMapIterator : public StringMapConstIterator<ValueTy> {
 public:  
-  StringMapIterator(StringMapImpl::ItemBucket *Bucket)
-    : StringMapConstIterator<ValueTy>(Bucket) {
+  StringMapIterator(StringMapImpl::ItemBucket *Bucket,
+                    bool NoAdvance = false)
+    : StringMapConstIterator<ValueTy>(Bucket, NoAdvance) {
   }
   StringMapEntry<ValueTy> &operator*() const {
     return *static_cast<StringMapEntry<ValueTy>*>(this->Ptr->Item);
