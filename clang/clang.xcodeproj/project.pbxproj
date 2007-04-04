@@ -413,6 +413,7 @@
 				DED7D73A0A524295003AD0FB /* IdentifierTable.h */,
 				DED7D73B0A524295003AD0FB /* Lexer.h */,
 				DED7D73C0A524295003AD0FB /* LexerToken.h */,
+				1A869A6E0BA2164C008DA07A /* LiteralSupport.h */,
 				DED7D73D0A524295003AD0FB /* MacroExpander.h */,
 				DED7D73E0A524295003AD0FB /* MacroInfo.h */,
 				DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */,
@@ -420,7 +421,6 @@
 				DED7D73F0A524295003AD0FB /* Pragma.h */,
 				DED7D7400A524295003AD0FB /* Preprocessor.h */,
 				DED7D9170A52518C003AD0FB /* ScratchBuffer.h */,
-				1A869A6E0BA2164C008DA07A /* LiteralSupport.h */,
 			);
 			name = Lex;
 			path = clang/Lex;
@@ -442,10 +442,10 @@
 		DED7D78C0A5242E6003AD0FB /* Lex */ = {
 			isa = PBXGroup;
 			children = (
-				1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */,
 				DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */,
 				DED7D79D0A5242E6003AD0FB /* IdentifierTable.cpp */,
 				DED7D79E0A5242E6003AD0FB /* Lexer.cpp */,
+				1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */,
 				DE3451570AEC176100DBC861 /* MacroExpander.cpp */,
 				DED7D7A00A5242E6003AD0FB /* MacroInfo.cpp */,
 				DED7D7A20A5242E6003AD0FB /* PPExpressions.cpp */,
@@ -483,12 +483,10 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
-			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
 			projectRoot = "";
-			shouldCheckCompatibility = 1;
 			targets = (
 				8DD76F620486A84900D96B5E /* clang */,
 			);
