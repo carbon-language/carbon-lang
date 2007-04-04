@@ -103,6 +103,13 @@ public:
     return WCharWidth;
   }
   
+  /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
+  /// target, in bits.  
+  unsigned getIntMaxTWidth(SourceLocation Loc) {
+    // FIXME: implement correctly.
+    return 64;
+  }
+  
   /// getTargetBuiltins - Return information about target-specific builtins for
   /// the current primary target, and info about which builtins are non-portable
   /// across the current set of primary and secondary targets.
