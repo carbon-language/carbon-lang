@@ -31,8 +31,8 @@ namespace llvm {
   public:
     enum {
       NO_PHYS_REG = 0,
-      NO_STACK_SLOT = ~0 >> 1,
-      MAX_STACK_SLOT = (1 << 18)-1
+      NO_STACK_SLOT = (1L << 30)-1,
+      MAX_STACK_SLOT = (1L << 18)-1
     };
 
     enum ModRef { isRef = 1, isMod = 2, isModRef = 3 };
@@ -60,13 +60,13 @@ namespace llvm {
     /// read/written by this instruction.
     MI2VirtMapTy MI2VirtMap;
 
-    /// ReMatMap - This is irtual register to re-materialized instruction
+    /// ReMatMap - This is virtual register to re-materialized instruction
     /// mapping. Each virtual register whose definition is going to be
     /// re-materialized has an entry in it.
     std::map<unsigned, const MachineInstr*> ReMatMap;
 
     /// ReMatId - Instead of assigning a stack slot to a to be rematerialized
-    /// virtaul register, an unique id is being assinged. This keeps track of
+    /// virtual register, an unique id is being assigned. This keeps track of
     /// the highest id used so far. Note, this starts at (1<<18) to avoid
     /// conflicts with stack slot numbers.
     int ReMatId;

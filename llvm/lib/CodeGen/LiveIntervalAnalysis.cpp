@@ -167,8 +167,10 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
             LiveInterval &RegInt = getInterval(reg);
             float w = (mop.isUse()+mop.isDef()) * powf(10.0F, (float)loopDepth);
             // If the definition instruction is re-materializable, its spill
-            // weight is half of what it would have been normally.
-            if (RegInt.remat)
+            // weight is half of what it would have been normally unless it's
+            // a load from fixed stack slot.
+            int Dummy;
+            if (RegInt.remat && !tii_->isLoadFromStackSlot(RegInt.remat, Dummy))
               w /= 2;
             RegInt.weight += w;
           }
@@ -430,8 +432,13 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   // done once for the vreg.  We use an empty interval to detect the first
   // time we see a vreg.
   if (interval.empty()) {
-    // Remember if the definition can be rematerialized.
-    if (vi.DefInst && tii_->isReMaterializable(vi.DefInst->getOpcode()))
+    // Remember if the definition can be rematerialized. All load's from fixed
+    // stack slots are re-materializable.
+    int FrameIdx = 0;
+    if (vi.DefInst &&
+        (tii_->isReMaterializable(vi.DefInst->getOpcode()) ||
+         (tii_->isLoadFromStackSlot(vi.DefInst, FrameIdx) &&
+          mf_->getFrameInfo()->isFixedObjectIndex(FrameIdx))))
       interval.remat = vi.DefInst;
 
     // Get the Idx of the defining instructions.
@@ -509,7 +516,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     }
 
   } else {
-    // Can't safely assume definition is rematierializable anymore.
+    // Can no longer safely assume definition is rematerializable.
     interval.remat = NULL;
 
     // If this is the second time we see a virtual register definition, it

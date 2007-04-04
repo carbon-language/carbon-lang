@@ -87,6 +87,9 @@ void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int frameIndex) {
   assert(MRegisterInfo::isVirtualRegister(virtReg));
   assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign stack slot to already spilled register");
+  assert((frameIndex >= 0 ||
+          (frameIndex >= MF.getFrameInfo()->getObjectIndexBegin())) &&
+         "illegal fixed frame index");
   Virt2StackSlotMap[virtReg] = frameIndex;
 }
 
@@ -94,8 +97,14 @@ int VirtRegMap::assignVirtReMatId(unsigned virtReg) {
   assert(MRegisterInfo::isVirtualRegister(virtReg));
   assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign re-mat id to already spilled register");
+  const MachineInstr *DefMI = getReMaterializedMI(virtReg);
+  int FrameIdx;
+  if (TII.isLoadFromStackSlot((MachineInstr*)DefMI, FrameIdx)) {
+    // Load from stack slot is re-materialize as reload from the stack slot!
+    Virt2StackSlotMap[virtReg] = FrameIdx;
+    return FrameIdx;
+  }
   Virt2StackSlotMap[virtReg] = ReMatId;
-  ++NumReMats;
   return ReMatId++;
 }
 
@@ -625,7 +634,6 @@ namespace {
 /// register allocator is done with them.  If possible, avoid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                               std::vector<MachineInstr*> &ReMatedMIs) {
-
   DOUT << MBB.getBasicBlock()->getName() << ":\n";
 
   // Spills - Keep track of which spilled values are available in physregs so
@@ -656,7 +664,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
     const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
 
     // If this instruction is being rematerialized, just remove it!
-    if (TID->Flags & M_REMATERIALIZIBLE) {
+    int FrameIdx;
+    if ((TID->Flags & M_REMATERIALIZIBLE) ||
+        TII->isLoadFromStackSlot(&MI, FrameIdx)) {
       bool Remove = true;
       for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI.getOperand(i);
@@ -886,10 +896,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       
       PhysRegsUsed[PhysReg] = true;
       ReusedOperands.markClobbered(PhysReg);
-      if (doReMat)
+      if (doReMat) {
         MRI->reMaterialize(MBB, &MI, PhysReg, VRM.getReMaterializedMI(VirtReg));
-      else
+        ++NumReMats;
+      } else {
         MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
+        ++NumLoads;
+      }
       // This invalidates PhysReg.
       Spills.ClobberPhysReg(PhysReg);
 
@@ -901,7 +914,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       // unless it's a two-address operand.
       if (TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
         MI.getOperand(i).setIsKill();
-      ++NumLoads;
       MI.getOperand(i).setReg(PhysReg);
       DOUT << '\t' << *prior(MII);
     }
