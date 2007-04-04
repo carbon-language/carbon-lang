@@ -48,7 +48,7 @@ public:
     
     // For ELF 32 ABI:
     // Save it right before the link register
-    return -4;
+    return -4U;
   }
   
   /// getLinkageSize - Return the size of the PowerPC ABI linkage area.
