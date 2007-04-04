@@ -32,10 +32,10 @@ Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
        I != E; ++I) {
     if (I->second) {
       // Link in the library suggested.
-      bool is_bytecode = true;
-      if (LinkInLibrary(I->first, is_bytecode))
+      bool is_native = false;
+      if (LinkInLibrary(I->first, is_native))
         return true;
-      if (!is_bytecode)
+      if (is_native)
         NativeItems.push_back(*I);
     } else {
       // Link in the file suggested
@@ -52,10 +52,10 @@ Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
   // that module should also be aggregated with duplicates eliminated. This is
   // now the time to process the dependent libraries to resolve any remaining
   // symbols.
-  bool is_bytecode;
+  bool is_native;
   for (Module::lib_iterator I = Composite->lib_begin(),
          E = Composite->lib_end(); I != E; ++I)
-    if(LinkInLibrary(*I, is_bytecode))
+    if(LinkInLibrary(*I, is_native))
       return true;
 
   return false;
@@ -113,9 +113,9 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
 bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
 
   // Process the set of libraries we've been provided.
-  bool is_bytecode;
+  bool is_native = false;
   for (unsigned i = 0; i < Libraries.size(); ++i)
-    if (LinkInLibrary(Libraries[i], is_bytecode))
+    if (LinkInLibrary(Libraries[i], is_native))
       return true;
 
   // At this point we have processed all the libraries provided to us. Since
@@ -126,7 +126,7 @@ bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
   const Module::LibraryListType& DepLibs = Composite->getLibraries();
   for (Module::LibraryListType::const_iterator I = DepLibs.begin(),
          E = DepLibs.end(); I != E; ++I)
-    if (LinkInLibrary(*I, is_bytecode))
+    if (LinkInLibrary(*I, is_native))
       return true;
 
   return false;
