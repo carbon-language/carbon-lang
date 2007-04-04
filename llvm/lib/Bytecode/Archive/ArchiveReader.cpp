@@ -205,10 +205,10 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
 
   // Determine if this is a bytecode file
   switch (sys::IdentifyFileType(At, 4)) {
-    case sys::BytecodeFileType:
+    case sys::Bytecode_FileType:
       flags |= ArchiveMember::BytecodeFlag;
       break;
-    case sys::CompressedBytecodeFileType:
+    case sys::CompressedBytecode_FileType:
       flags |= ArchiveMember::CompressedBytecodeFlag;
       flags &= ~ArchiveMember::CompressedFlag;
       break;

@@ -178,10 +178,10 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where,
   std::string magic;
   mbr->path.getMagicNumber(magic,4);
   switch (sys::IdentifyFileType(magic.c_str(),4)) {
-    case sys::BytecodeFileType:
+    case sys::Bytecode_FileType:
       flags |= ArchiveMember::BytecodeFlag;
       break;
-    case sys::CompressedBytecodeFileType:
+    case sys::CompressedBytecode_FileType:
       flags |= ArchiveMember::CompressedBytecodeFlag;
       break;
     default:
