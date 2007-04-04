@@ -6,7 +6,7 @@
 // RUN: ( echo "break DeepStack::deepest"; echo "run 17" ; echo "where" ) > Output/StackTrace.gdbin 
 // RUN: gdb -q -batch -n -x Output/StackTrace.gdbin Output/StackTrace.exe | tee Output/StackTrace.out | grep '#0  DeepStack::deepest.*(this=.*,.*x=33)'
 // RUN: gdb -q -batch -n -x Output/StackTrace.gdbin Output/StackTrace.exe | grep '#7  0x.* in main.*(argc=[12],.*argv=.*)'
-// XFAIL: i[1-9]86|alpha|ia64|arm
+// XFAIL: i[1-9]86|alpha|ia64|arm|x86_64
 
 #include <stdlib.h>
 
