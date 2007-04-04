@@ -278,7 +278,7 @@ public:
   /// This converts the APInt to a boolean value as a test against zero.
   /// @brief Boolean conversion function. 
   inline bool getBoolValue() const {
-    return countLeadingZeros() != BitWidth;
+    return *this != 0;
   }
 
   /// @}
