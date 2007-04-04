@@ -281,12 +281,7 @@ bool NumericLiteralParser::GetIntegerValue(APInt &Val) {
     unsigned C = HexLetterToVal(*s++);
     
     // If this letter is out of bound for this radix, reject it.
-    if (C >= radix) {
-      // FIXME: This is an error, not a warning.  This should be caught by
-      // NumericLiteralParser ctor.
-      C = C % radix;
-      OverflowOccurred = true;
-    }
+    assert(C < radix && "NumericLiteralParser ctor should have rejected this");
     
     CharVal = C;
     
