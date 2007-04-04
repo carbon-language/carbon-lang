@@ -266,32 +266,45 @@ bool NumericLiteralParser::GetIntegerValue(int &val) {
 }
 
 /// GetIntegerValue - Convert this numeric literal value to an APInt that
-/// matches Val's input width.  If there is an overflow, saturate Val to zero
-/// and return false.  Otherwise, set Val and return true.
+/// matches Val's input width.  If there is an overflow, set Val to the low bits
+/// of the result and return true.  Otherwise, return false.
 bool NumericLiteralParser::GetIntegerValue(APInt &Val) {
   Val = 0;
   s = DigitsBegin;
 
-  // FIXME: This doesn't handle sign right, doesn't autopromote to wider
-  // integer, and is generally not conformant.
   APInt RadixVal(Val.getBitWidth(), radix);
   APInt CharVal(Val.getBitWidth(), 0);
   APInt OldVal = Val;
+  
+  bool OverflowOccurred = false;
   while (s < SuffixBegin) {
     unsigned C = HexLetterToVal(*s++);
     
     // If this letter is out of bound for this radix, reject it.
-    if (C >= radix) { Val = 0; return false; }
+    if (C >= radix) {
+      // FIXME: This is an error, not a warning.  This should be caught by
+      // NumericLiteralParser ctor.
+      C = C % radix;
+      OverflowOccurred = true;
+    }
     
     CharVal = C;
     
+    // Add the digit to the value in the appropriate radix.  If adding in digits
+    // made the value smaller, then this overflowed.
     OldVal = Val;
+
+    // Multiply by radix, did overflow occur on the multiply?
     Val *= RadixVal;
+    OverflowOccurred |= Val.udiv(RadixVal) != OldVal;
+
+    OldVal = Val;
+    // Add value, did overflow occur on the value?
     Val += CharVal;
-    if (OldVal.ugt(Val))
-      return false; // Overflow!
+    OverflowOccurred |= Val.ult(OldVal);
+    OverflowOccurred |= Val.ult(CharVal);
   }
-  return true;
+  return OverflowOccurred;
 }
 
 

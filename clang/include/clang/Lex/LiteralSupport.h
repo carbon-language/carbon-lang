@@ -63,9 +63,15 @@ public:
   /// type (int, unsigned, long, unsigned long, long long, unsigned long long) 
   /// will be done elsewhere - the size computation is target dependent. We  
   /// return true if the value fit into "val", false otherwise. 
+  /// NOTE: The api of these returns an inverted value for 'overflow' than the
+  /// version below does.
   bool GetIntegerValue(uintmax_t &val);
   bool GetIntegerValue(int &val);
-  bool GetIntegerValue(APInt &Val);  //< Return the same width as Val.
+  
+  /// GetIntegerValue - Convert this numeric literal value to an APInt that
+  /// matches Val's input width.  If there is an overflow, set Val to the low
+  /// bits of the result and return true.  Otherwise, return false.
+  bool GetIntegerValue(APInt &Val);
 
 private:  
   void Diag(SourceLocation Loc, unsigned DiagID, 
