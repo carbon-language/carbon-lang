@@ -44,25 +44,54 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
   assert(length >=4 && "Invalid magic number length");
   switch (magic[0]) {
     case 'l':
-      if (magic[1] == 'l' && magic[2] == 'v') {
+      if (magic[1] == 'l' && magic[2] == 'v')
         if (magic[3] == 'c')
-          return CompressedBytecodeFileType;
+          return CompressedBytecode_FileType;
         else if (magic[3] == 'm')
-          return BytecodeFileType;
-      }
+          return Bytecode_FileType;
+      break;
+    case '!':
+      if (length >= 8)
+        if (memcmp(magic,"!<arch>\n",8) == 0)
+          return Archive_FileType;
+      break;
+      
+    case '\177':
+      if (magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F')
+        return ELF_FileType;
       break;
 
-    case '!':
-      if (length >= 8) {
-        if (memcmp(magic,"!<arch>\n",8) == 0)
-          return ArchiveFileType;
-      }
+    case 0xCE:
+    case 0xCF:
+      // This is complicated by an overlap with Java class files. 
+      // See the Mach-O section in /usr/share/file/magic for details.
+      if (magic[1] == char(0xFA) && magic[2] == char(0xED) && 
+          magic[3] == char(0xFE))
+        if (length >= 15)
+          if (magic[15] == 1 || magic[15] == 3 || magic[15] == 6 || 
+              magic[15] == 9)
+            return Mach_O_FileType;
+      break;
+
+    case 0xF0: // PowerPC Windows
+    case 0x83: // Alpha 32-bit
+    case 0x84: // Alpha 64-bit
+    case 0x66: // MPS R4000 Windows
+    case 0x50: // mc68K
+    case 0x4c: // 80386 Windows
+      if (magic[1] == 0x01)
+        return COFF_FileType;
+
+    case 0x90: // PA-RISC Windows
+    case 0x68: // mc68K Windows
+      if (magic[1] == 0x02)
+        return COFF_FileType;
       break;
 
     default:
       break;
   }
-  return UnknownFileType;
+  return Unknown_FileType;
 }
 
 bool
