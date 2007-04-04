@@ -536,10 +536,13 @@ namespace sys {
 
   /// This enumeration delineates the kinds of files that LLVM knows about.
   enum LLVMFileType {
-    UnknownFileType = 0,            ///< Unrecognized file
-    BytecodeFileType = 1,           ///< Uncompressed bytecode file
-    CompressedBytecodeFileType = 2, ///< Compressed bytecode file
-    ArchiveFileType = 3             ///< ar style archive file
+    Unknown_FileType = 0,            ///< Unrecognized file
+    Bytecode_FileType = 1,           ///< Uncompressed bytecode file
+    CompressedBytecode_FileType = 2, ///< Compressed bytecode file
+    Archive_FileType = 3,            ///< ar style archive file
+    ELF_FileType = 4,                ///< Native ELF object file or lib
+    Mach_O_FileType = 5,             ///< Native Mach-O object file or lib
+    COFF_FileType = 6                ///< COFF object file or lib
   };
 
   /// This utility function allows any memory block to be examined in order
