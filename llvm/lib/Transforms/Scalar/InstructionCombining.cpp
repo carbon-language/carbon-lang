@@ -5901,7 +5901,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
 /// X*Scale+Offset.
 ///
 static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
-                                        unsigned &Offset) {
+                                        int &Offset) {
   assert(Val->getType() == Type::Int32Ty && "Unexpected allocation size type!");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     Offset = CI->getZExtValue();
@@ -5985,7 +5985,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
 
   // See if we can satisfy the modulus by pulling a scale out of the array
   // size argument.
-  unsigned ArraySizeScale, ArrayOffset;
+  unsigned ArraySizeScale;
+  int ArrayOffset;
   Value *NumElements = // See if the array size is a decomposable linear expr.
     DecomposeSimpleLinearExpr(AI.getOperand(0), ArraySizeScale, ArrayOffset);
  
@@ -6010,8 +6011,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
     }
   }
   
-  if (unsigned Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
-    Value *Off = ConstantInt::get(Type::Int32Ty, Offset);
+  if (int Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
+    Value *Off = ConstantInt::get(Type::Int32Ty, Offset, true);
     Instruction *Tmp = BinaryOperator::createAdd(Amt, Off, "tmp");
     Amt = InsertNewInstBefore(Tmp, AI);
   }
