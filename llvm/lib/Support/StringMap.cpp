@@ -227,7 +227,7 @@ void StringMapImpl::RehashTable() {
     }
   }
   
-  delete[] TheTable;
+  free(TheTable);
   
   TheTable = NewTableArray;
   NumBuckets = NewSize;
