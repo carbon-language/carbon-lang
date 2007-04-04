@@ -263,6 +263,12 @@ public:
     return -++NumFixedObjects;
   }
 
+  /// isFixedObjectIndex - Returns true if the specified index corresponds to a
+  /// fixed stack object.
+  bool isFixedObjectIndex(int ObjectIdx) const {
+    return ObjectIdx < 0 && (ObjectIdx >= -(int)NumFixedObjects);
+  }
+
   /// CreateStackObject - Create a new statically sized stack object, returning
   /// a postive identifier to represent it.
   ///
