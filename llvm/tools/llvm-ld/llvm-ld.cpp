@@ -268,12 +268,12 @@ static int GenerateCFile(const std::string &OutputFile,
 /// specified bytecode file.
 ///
 /// Inputs:
-///  InputFilename  - The name of the input bytecode file.
-///  OutputFilename - The name of the file to generate.
-///  LinkItems      - The native libraries, files, code with which to link
-///  LibPaths       - The list of directories in which to find libraries.
-///  gcc            - The pathname to use for GGC.
-///  envp           - A copy of the process's current environment.
+///  InputFilename   - The name of the input bytecode file.
+///  OutputFilename  - The name of the file to generate.
+///  NativeLinkItems - The native libraries, files, code with which to link
+///  LibPaths        - The list of directories in which to find libraries.
+///  gcc             - The pathname to use for GGC.
+///  envp            - A copy of the process's current environment.
 ///
 /// Outputs:
 ///  None.
@@ -446,8 +446,9 @@ int main(int argc, char **argv, char **envp) {
 
     // Construct a Linker (now that Verbose is set)
     Linker TheLinker(progname, OutputFilename, Verbose);
-    // Keep track of the native link items (vice the bytecode items)
-    Linker::ItemList LinkItems;
+
+    // Keep track of the native link items (versus the bytecode items)
+    Linker::ItemList NativeLinkItems;
 
     // Add library paths to the linker
     TheLinker.addPaths(LibPaths);
@@ -476,7 +477,7 @@ int main(int argc, char **argv, char **envp) {
       BuildLinkItems(Items, InputFilenames, Libraries);
 
       // Link all the items together
-      if (TheLinker.LinkInItems(Items,LinkItems) )
+      if (TheLinker.LinkInItems(Items, NativeLinkItems) )
         return 1; // Error already printed
     }
 
@@ -563,7 +564,7 @@ int main(int argc, char **argv, char **envp) {
         if (Verbose) 
           cout << "Generating Native Code\n";
         if (0 != GenerateNative(OutputFilename, AssemblyFile.toString(),
-            LinkItems,gcc,envp,ErrMsg))
+                                NativeLinkItems, gcc, envp, ErrMsg))
           PrintAndExit(ErrMsg);
 
         // Remove the assembly language file.
@@ -595,8 +596,8 @@ int main(int argc, char **argv, char **envp) {
 
         if (Verbose) 
           cout << "Generating Native Code\n";
-        if (0 != GenerateNative(OutputFilename, CFile.toString(), LinkItems, 
-            gcc, envp, ErrMsg))
+        if (0 != GenerateNative(OutputFilename, CFile.toString(), 
+                                NativeLinkItems, gcc, envp, ErrMsg))
           PrintAndExit(ErrMsg);
 
         // Remove the assembly language file.
