@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | grep -F 'str r1, [r3, -r0, lsl #2]'
+; RUN: llvm-as < %s | llc -march=arm | grep "str r1, \[r.*, -r.*, lsl #2]"
 
 define void @test(i32* %P, i32 %A, i32 %i) {
 entry:
