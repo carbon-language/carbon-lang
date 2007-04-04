@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc &&
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-darwin | grep 'addl $20, %esp'
+; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-darwin | grep 'addl $16, %esp'
 
 define void @foo(i8** %buf, i32 %size, i32 %col, i8* %p) {
 entry:
