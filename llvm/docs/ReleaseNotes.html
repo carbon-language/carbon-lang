@@ -363,8 +363,8 @@ supported</a>.  This should not affect LLVM produced by the C or C++
 frontends.</li>
 
 <li>The C backend does not correctly implement the <a 
-href="LangRef.html#i_stacksave"><tt>llvm.stacksave</tt></a> or
-<a href="LangRef.html#i_stackrestore"><tt>llvm.stackrestore</tt></a> 
+href="LangRef.html#int_stacksave"><tt>llvm.stacksave</tt></a> or
+<a href="LangRef.html#int_stackrestore"><tt>llvm.stackrestore</tt></a> 
 intrinsics.  This means that some code compiled by it can run out of stack
 space if they depend on these (e.g. C99 varargs).</li>
 
