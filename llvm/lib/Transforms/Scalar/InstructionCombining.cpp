@@ -4903,7 +4903,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
   const APInt &RHSV = RHS->getValue();
   
   switch (LHSI->getOpcode()) {
-  case Instruction::Xor:         // (icmp pred (and X, XorCST), CI)
+  case Instruction::Xor:         // (icmp pred (xor X, XorCST), CI)
     if (ConstantInt *XorCST = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
       // If this is a comparison that tests the signbit (X < 0) or (x > -1),
       // fold the xor.
