@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallString.h"
 
 namespace llvm {
+  class APInt;
 namespace clang {
 
 class Diagnostic;
@@ -64,6 +65,7 @@ public:
   /// return true if the value fit into "val", false otherwise. 
   bool GetIntegerValue(uintmax_t &val);
   bool GetIntegerValue(int &val);
+  bool GetIntegerValue(APInt &Val);  //< Return the same width as Val.
 
 private:  
   void Diag(SourceLocation Loc, unsigned DiagID, 

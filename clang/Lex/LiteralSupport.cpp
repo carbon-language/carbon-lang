@@ -15,8 +15,8 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
-
 using namespace llvm;
 using namespace clang;
 
@@ -217,27 +217,30 @@ NumericLiteralParser(const char *begin, const char *end,
   }
 }
 
+static unsigned HexLetterToVal(char c) {
+  if (c >= '0' && c <= '9')
+    return c - '0';
+  else if (c >= 'A' && c <= 'F') 
+    return c - 'A' - 10; 
+  else
+    assert(c >= 'a' && c <= 'f' && "Lexer scanning error");
+  return c - 'a' - 10;
+}
+
 bool NumericLiteralParser::GetIntegerValue(uintmax_t &val) {
   uintmax_t max_value = UINTMAX_MAX / radix;
-  int max_digit = UINTMAX_MAX % radix;
-  char c;
+  unsigned max_digit = UINTMAX_MAX % radix;
   
   val = 0;
   s = DigitsBegin;
   while (s < SuffixBegin) {
-    c = *s++;
-    if (c >= '0' && c <= '9')
-      c -= '0';
-    else if (c >= 'A' && c <= 'F') 
-      c -= 'A' - 10; 
-    else if (c >= 'a' && c <= 'f') 
-      c -= 'a' - 10;
+    unsigned C = HexLetterToVal(*s++);
     
-    if (val > max_value || (val == max_value && c > max_digit)) {
+    if (val > max_value || (val == max_value && C > max_digit)) {
       return false; // Overflow!
     } else {
       val *= radix;
-      val += c;
+      val += C;
     }
   }
   return true;
@@ -245,29 +248,52 @@ bool NumericLiteralParser::GetIntegerValue(uintmax_t &val) {
 
 bool NumericLiteralParser::GetIntegerValue(int &val) {
   intmax_t max_value = INT_MAX / radix;
-  int max_digit = INT_MAX % radix;
-  char c;
+  unsigned max_digit = INT_MAX % radix;
   
   val = 0;
   s = DigitsBegin;
   while (s < SuffixBegin) {
-    c = *s++;
-    if (c >= '0' && c <= '9')
-      c -= '0';
-    else if (c >= 'A' && c <= 'F') 
-      c -= 'A' - 10;
-    else if (c >= 'a' && c <= 'f')
-      c -= 'a' - 10;
+    unsigned C = HexLetterToVal(*s++);
     
-    if (val > max_value || (val == max_value && c > max_digit)) {
+    if (val > max_value || (val == max_value && C > max_digit)) {
       return false; // Overflow!
     } else {
       val *= radix;
-      val += c;
+      val += C;
     }
   }
   return true;
 }
+
+/// GetIntegerValue - Convert this numeric literal value to an APInt that
+/// matches Val's input width.  If there is an overflow, saturate Val to zero
+/// and return false.  Otherwise, set Val and return true.
+bool NumericLiteralParser::GetIntegerValue(APInt &Val) {
+  Val = 0;
+  s = DigitsBegin;
+
+  // FIXME: This doesn't handle sign right, doesn't autopromote to wider
+  // integer, and is generally not conformant.
+  APInt RadixVal(Val.getBitWidth(), radix);
+  APInt CharVal(Val.getBitWidth(), 0);
+  APInt OldVal = Val;
+  while (s < SuffixBegin) {
+    unsigned C = HexLetterToVal(*s++);
+    
+    // If this letter is out of bound for this radix, reject it.
+    if (C >= radix) { Val = 0; return false; }
+    
+    CharVal = C;
+    
+    OldVal = Val;
+    Val *= RadixVal;
+    Val += CharVal;
+    if (OldVal.ugt(Val))
+      return false; // Overflow!
+  }
+  return true;
+}
+
 
 void NumericLiteralParser::Diag(SourceLocation Loc, unsigned DiagID, 
           const std::string &M) {
