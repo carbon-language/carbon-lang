@@ -2,3 +2,4 @@ Output
 *.log
 *.sum
 *.bc
+*.bc.cbe.c
