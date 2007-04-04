@@ -164,13 +164,13 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
             unsigned reg = rep(mop.getReg());
             mii->getOperand(i).setReg(reg);
 
-            // If the definition instruction is re-materializable, its spill
-            // weight is zero.
             LiveInterval &RegInt = getInterval(reg);
-            if (!RegInt.remat) {
-              RegInt.weight +=
-                (mop.isUse() + mop.isDef()) * pow(10.0F, (int)loopDepth);
-            }
+            float w = (mop.isUse()+mop.isDef()) * powf(10.0F, (float)loopDepth);
+            // If the definition instruction is re-materializable, its spill
+            // weight is half of what it would have been normally.
+            if (RegInt.remat)
+              w /= 2;
+            RegInt.weight += w;
           }
         }
         ++mii;
