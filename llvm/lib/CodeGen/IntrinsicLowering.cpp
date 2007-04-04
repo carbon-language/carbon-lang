@@ -236,6 +236,177 @@ static Value *LowerCTLZ(Value *V, Instruction *IP) {
   return LowerCTPOP(V, IP);
 }
 
+/// Convert the llvm.bit.part_select.iX.iY.iZ intrinsic. This intrinsic takes 
+/// three integer operands of arbitrary bit width. The first operand is the 
+/// value from which to select the bits. The second and third operands define a 
+/// range of bits to select.  The result is the bits selected and has a 
+/// corresponding width of Left-Right (second operand - third operand).
+/// @see IEEE 1666-2005, System C, Section 7.2.6, pg 175. 
+/// @brief Lowering of llvm.bit.part_select intrinsic.
+static Instruction *LowerBitPartSelect(CallInst *CI) {
+  // Make sure we're dealing with a part select intrinsic here
+  Function *F = CI->getCalledFunction();
+  const FunctionType *FT = F->getFunctionType();
+  if (!F->isDeclaration() || !FT->getReturnType()->isInteger() ||
+      FT->getNumParams() != 3 || !FT->getParamType(0)->isInteger() ||
+      !FT->getParamType(1)->isInteger() || !FT->getParamType(2)->isInteger())
+    return CI;
+
+  // Get the intrinsic implementation function by converting all the . to _
+  // in the intrinsic's function name and then reconstructing the function
+  // declaration.
+  std::string Name(F->getName());
+  for (unsigned i = 4; i < Name.length(); ++i)
+    if (Name[i] == '.')
+      Name[i] = '_';
+  Module* M = F->getParent();
+  F = cast<Function>(M->getOrInsertFunction(Name, FT));
+  F->setLinkage(GlobalValue::InternalLinkage);
+
+  // If we haven't defined the impl function yet, do so now
+  if (F->isDeclaration()) {
+
+    // Get the arguments to the function
+    Value* Val = F->getOperand(0);
+    Value* Left = F->getOperand(1);
+    Value* Right = F->getOperand(2);
+
+    // We want to select a range of bits here such that [Left, Right] is shifted
+    // down to the low bits. However, it is quite possible that Left is smaller
+    // than Right in which case the bits have to be reversed. 
+    
+    // Create the blocks we will need for the two cases (forward, reverse)
+    BasicBlock* CurBB   = new BasicBlock("entry", F);
+    BasicBlock *RevSize = new BasicBlock("revsize", CurBB->getParent());
+    BasicBlock *FwdSize = new BasicBlock("fwdsize", CurBB->getParent());
+    BasicBlock *Compute = new BasicBlock("compute", CurBB->getParent());
+    BasicBlock *Reverse = new BasicBlock("reverse", CurBB->getParent());
+    BasicBlock *RsltBlk = new BasicBlock("result",  CurBB->getParent());
+
+    // Cast Left and Right to the size of Val so the widths are all the same
+    if (Left->getType() != Val->getType())
+      Left = CastInst::createIntegerCast(Left, Val->getType(), false, 
+                                         "tmp", CurBB);
+    if (Right->getType() != Val->getType())
+      Right = CastInst::createIntegerCast(Right, Val->getType(), false, 
+                                          "tmp", CurBB);
+
+    // Compute a few things that both cases will need, up front.
+    Constant* Zero = ConstantInt::get(Val->getType(), 0);
+    Constant* One = ConstantInt::get(Val->getType(), 1);
+    Constant* AllOnes = ConstantInt::getAllOnesValue(Val->getType());
+
+    // Compare the Left and Right bit positions. This is used to determine 
+    // which case we have (forward or reverse)
+    ICmpInst *Cmp = new ICmpInst(ICmpInst::ICMP_ULT, Left, Right, "less",CurBB);
+    new BranchInst(RevSize, FwdSize, Cmp, CurBB);
+
+    // First, copmute the number of bits in the forward case.
+    Instruction* FBitSize = 
+      BinaryOperator::createSub(Left, Right,"fbits", FwdSize);
+    new BranchInst(Compute, FwdSize);
+
+    // Second, compute the number of bits in the reverse case.
+    Instruction* RBitSize = 
+      BinaryOperator::createSub(Right, Left, "rbits", RevSize);
+    new BranchInst(Compute, RevSize);
+
+    // Now, compute the bit range. Start by getting the bitsize and the shift
+    // amount (either Left or Right) from PHI nodes. Then we compute a mask for 
+    // the number of bits we want in the range. We shift the bits down to the 
+    // least significant bits, apply the mask to zero out unwanted high bits, 
+    // and we have computed the "forward" result. It may still need to be 
+    // reversed.
+
+    // Get the BitSize from one of the two subtractions
+    PHINode *BitSize = new PHINode(Val->getType(), "bits", Compute);
+    BitSize->reserveOperandSpace(2);
+    BitSize->addIncoming(FBitSize, FwdSize);
+    BitSize->addIncoming(RBitSize, RevSize);
+
+    // Get the ShiftAmount as the smaller of Left/Right
+    PHINode *ShiftAmt = new PHINode(Val->getType(), "shiftamt", Compute);
+    ShiftAmt->reserveOperandSpace(2);
+    ShiftAmt->addIncoming(Right, FwdSize);
+    ShiftAmt->addIncoming(Left, RevSize);
+
+    // Increment the bit size
+    Instruction *BitSizePlusOne = 
+      BinaryOperator::createAdd(BitSize, One, "bits", Compute);
+
+    // Create a Mask to zero out the high order bits.
+    Instruction* Mask = 
+      BinaryOperator::createShl(AllOnes, BitSizePlusOne, "mask", Compute);
+    Mask = BinaryOperator::createNot(Mask, "mask", Compute);
+
+    // Shift the bits down and apply the mask
+    Instruction* FRes = 
+      BinaryOperator::createLShr(Val, ShiftAmt, "fres", Compute);
+    FRes = BinaryOperator::createAnd(FRes, Mask, "fres", Compute);
+    new BranchInst(Reverse, RsltBlk, Cmp, Compute);
+
+    // In the Reverse block we have the mask already in FRes but we must reverse
+    // it by shifting FRes bits right and putting them in RRes by shifting them 
+    // in from left.
+
+    // First set up our loop counters
+    PHINode *Count = new PHINode(Val->getType(), "count", Reverse);
+    Count->reserveOperandSpace(2);
+    Count->addIncoming(BitSizePlusOne, Compute);
+
+    // Next, get the value that we are shifting.
+    PHINode *BitsToShift   = new PHINode(Val->getType(), "val", Reverse);
+    BitsToShift->reserveOperandSpace(2);
+    BitsToShift->addIncoming(FRes, Compute);
+
+    // Finally, get the result of the last computation
+    PHINode *RRes  = new PHINode(Val->getType(), "rres", Reverse);
+    RRes->reserveOperandSpace(2);
+    RRes->addIncoming(Zero, Compute);
+
+    // Decrement the counter
+    Instruction *Decr = BinaryOperator::createSub(Count, One, "decr", Reverse);
+    Count->addIncoming(Decr, Reverse);
+
+    // Compute the Bit that we want to move
+    Instruction *Bit = 
+      BinaryOperator::createAnd(BitsToShift, One, "bit", Reverse);
+
+    // Compute the new value for next iteration.
+    Instruction *NewVal = 
+      BinaryOperator::createLShr(BitsToShift, One, "rshift", Reverse);
+    BitsToShift->addIncoming(NewVal, Reverse);
+
+    // Shift the bit into the low bits of the result.
+    Instruction *NewRes = 
+      BinaryOperator::createShl(RRes, One, "lshift", Reverse);
+    NewRes = BinaryOperator::createOr(NewRes, Bit, "addbit", Reverse);
+    RRes->addIncoming(NewRes, Reverse);
+    
+    // Terminate loop if we've moved all the bits.
+    ICmpInst *Cond = 
+      new ICmpInst(ICmpInst::ICMP_EQ, Decr, Zero, "cond", Reverse);
+    new BranchInst(RsltBlk, Reverse, Cond, Reverse);
+
+    // Finally, in the result block, select one of the two results with a PHI
+    // node and return the result;
+    CurBB = RsltBlk;
+    PHINode *BitSelect = new PHINode(Val->getType(), "part_select", CurBB);
+    BitSelect->reserveOperandSpace(2);
+    BitSelect->addIncoming(FRes, Compute);
+    BitSelect->addIncoming(NewRes, Reverse);
+    new ReturnInst(BitSelect, CurBB);
+  }
+
+  // Return a call to the implementation function
+  Value *Args[3];
+  Args[0] = CI->getOperand(0);
+  Args[1] = CI->getOperand(1);
+  Args[2] = CI->getOperand(2);
+  return new CallInst(F, Args, 3, CI->getName(), CI);
+}
+
+
 void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
@@ -303,6 +474,10 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     CI->replaceAllUsesWith(Src);
     break;
   }
+
+  case Intrinsic::bit_part_select:
+    CI->replaceAllUsesWith(LowerBitPartSelect(CI));
+    break;
 
   case Intrinsic::stacksave:
   case Intrinsic::stackrestore: {

@@ -2438,6 +2438,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Tmp.getValue(1));
     return 0;
   }
+  case Intrinsic::bit_part_select: {
+    MVT::ValueType Ty = getValue(I.getOperand(1)).getValueType();
+    setValue(&I, DAG.getTargetConstant(0, Ty));
+    return 0;
+  }
   case Intrinsic::bswap:
     setValue(&I, DAG.getNode(ISD::BSWAP,
                              getValue(I.getOperand(1)).getValueType(),

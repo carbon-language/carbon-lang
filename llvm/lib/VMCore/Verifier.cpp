@@ -1027,6 +1027,8 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F, ...) {
         case Intrinsic::bswap:
           if (GotBits < 16 || GotBits % 16 != 0)
             CheckFailed("Intrinsic requires even byte width argument", F);
+          /* FALL THROUGH */
+        case Intrinsic::bit_part_select:
           if (ArgNo == 1) {
             unsigned ResultBits = 
               cast<IntegerType>(FTy->getReturnType())->getBitWidth();
