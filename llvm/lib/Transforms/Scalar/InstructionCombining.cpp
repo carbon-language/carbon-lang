@@ -7469,6 +7469,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     const Type *ParamTy = FT->getParamType(i);
     const Type *ActTy = (*AI)->getType();
     ConstantInt *c = dyn_cast<ConstantInt>(*AI);
+    //Some conversions are safe even if we do not have a body.
     //Either we can cast directly, or we can upconvert the argument
     bool isConvertible = ActTy == ParamTy ||
       (isa<PointerType>(ParamTy) && isa<PointerType>(ActTy)) ||
@@ -7477,6 +7478,40 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       (c && ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()
        && c->getValue().isStrictlyPositive());
     if (Callee->isDeclaration() && !isConvertible) return false;
+
+    // Most other conversions can be done if we have a body, even if these
+    // lose information, e.g. int->short.
+    // Some conversions cannot be done at all, e.g. float to pointer.
+    // Logic here parallels CastInst::getCastOpcode (the design there
+    // requires legality checks like this be done before calling it).
+    if (ParamTy->isInteger()) {
+      if (const VectorType *VActTy = dyn_cast<VectorType>(ActTy)) {
+        if (VActTy->getBitWidth() != ParamTy->getPrimitiveSizeInBits())
+          return false;
+      }
+      if (!ActTy->isInteger() && !ActTy->isFloatingPoint() &&
+          !isa<PointerType>(ActTy))
+        return false;
+    } else if (ParamTy->isFloatingPoint()) {
+      if (const VectorType *VActTy = dyn_cast<VectorType>(ActTy)) {
+        if (VActTy->getBitWidth() != ParamTy->getPrimitiveSizeInBits())
+          return false;
+      }
+      if (!ActTy->isInteger() && !ActTy->isFloatingPoint())
+        return false;
+    } else if (const VectorType *VParamTy = dyn_cast<VectorType>(ParamTy)) {
+      if (const VectorType *VActTy = dyn_cast<VectorType>(ActTy)) {
+        if (VActTy->getBitWidth() != VParamTy->getBitWidth())
+          return false;
+      }
+      if (VParamTy->getBitWidth() != ActTy->getPrimitiveSizeInBits())      
+        return false;
+    } else if (isa<PointerType>(ParamTy)) {
+      if (!ActTy->isInteger() && !isa<PointerType>(ActTy))
+        return false;
+    } else {
+      return false;
+    }
   }
 
   if (FT->getNumParams() < NumActualArgs && !FT->isVarArg() &&
