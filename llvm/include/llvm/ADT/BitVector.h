@@ -15,6 +15,8 @@
 #define LLVM_ADT_BITVECTOR_H
 
 #include "llvm/Support/MathExtras.h"
+#include <algorithm>
+#include <cstdlib>
 
 namespace llvm {
 

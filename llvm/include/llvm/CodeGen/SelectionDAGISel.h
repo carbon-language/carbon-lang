@@ -82,15 +82,17 @@ public:
   /// SDISel for the code generation of additional basic blocks needed by multi-
   /// case switch statements.
   struct CaseBlock {
-    CaseBlock(ISD::CondCode cc, Value *cmplhs, Value *cmprhs, 
+    CaseBlock(ISD::CondCode cc, Value *cmplhs, Value *cmprhs, Value *cmpmiddle,
               MachineBasicBlock *truebb, MachineBasicBlock *falsebb,
               MachineBasicBlock *me)
-      : CC(cc), CmpLHS(cmplhs), CmpRHS(cmprhs),
+      : CC(cc), CmpLHS(cmplhs), CmpMHS(cmpmiddle), CmpRHS(cmprhs),
         TrueBB(truebb), FalseBB(falsebb), ThisBB(me) {}
     // CC - the condition code to use for the case block's setcc node
     ISD::CondCode CC;
-    // CmpLHS/CmpRHS - The LHS/RHS of the comparison to emit.
-    Value *CmpLHS, *CmpRHS;
+    // CmpLHS/CmpRHS/CmpMHS - The LHS/MHS/RHS of the comparison to emit.
+    // Emit by default LHS op RHS. MHS is used for range comparisons:
+    // If MHS is not null: (LHS <= MHS) and (MHS <= RHS).
+    Value *CmpLHS, *CmpMHS, *CmpRHS;
     // TrueBB/FalseBB - the block to branch to if the setcc is true/false.
     MachineBasicBlock *TrueBB, *FalseBB;
     // ThisBB - the block into which to emit the code for the setcc and branches
