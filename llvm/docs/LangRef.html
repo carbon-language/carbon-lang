@@ -185,7 +185,6 @@
           <li><a href="#int_ctlz">'<tt>llvm.ctlz.*</tt>' Intrinsic </a></li>
           <li><a href="#int_cttz">'<tt>llvm.cttz.*</tt>' Intrinsic </a></li>
           <li><a href="#int_bit_part_select">'<tt>llvm.bit.part_select.*</tt>' Intrinsic </a></li>
-          <li><a href="#int_bit_part_set">'<tt>llvm.bit.part_set.*</tt>' Intrinsic </a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
@@ -4639,44 +4638,6 @@ only the <tt>%hiBit - %loBit</tt> bits set, as follows:</p>
   <li>The bits returned in the reverse case are reversed. So, if X has the value
   0x6ACF and we apply part_select(i16 X, 8, 3) to it, we get back the value
   0x0A6F.</li>
-</ol>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_bit_part_set">'<tt>llvm.bit.part_set.*</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.part_set</tt> on 
-any integer bit width.
-<pre>
-  declare i17 @llvm.bit.part_set.i17.i17.i9 (i17 %val, i32 %bit, i9 %newbits)
-  declare i29 @llvm.bit.part_set.i29.i29.i13(i29 %val, i32 %bit, i13 %newbits)
-</pre>
-
-<h5>Overview:</h5>
-<p>The '<tt>llvm.bit.part_set</tt>' family of intrinsic functions sets a range
-of bits in a given value to a new value and returns the result.</p>
-
-<h5>Arguments:</h5>
-<p>The first argument and the result may be an integer type of any bit width but
-they must have the same bit width. The second argument must be an <tt>i32</tt>.
-The third argument may be any any bit width less than or equal to the bit width
-of the first argument.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>llvm.bit.part_set</tt>' intrinsic sets the value given by
-<tt>%newbits</tt> into <tt>%val</tt> at the bit index given by <tt>%bit</tt>.
-This is equivalent to the following sequence:</p>
-<ol>
-  <li>The bits in <tt>%val</tt> starting at <tt>%bit</tt> and up to the width
-  of <tt>%newbits</tt> are cleared by ANDing them with a zero mask.</li>
-  <li>The bits in <tt>%newbits</tt> are shifted left by <tt>%bit</tt> bits.
-  <li>The shifted <tt>%newbits</tt> value is OR'd into <tt>%val</tt> to produce
-  the result.</li>
 </ol>
 </div>
 
