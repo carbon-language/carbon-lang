@@ -17,6 +17,7 @@
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cstdlib>
+#include <cassert>
 
 namespace llvm {
 
