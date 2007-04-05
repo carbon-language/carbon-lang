@@ -482,6 +482,8 @@ DIAG(err_invalid_suffix_float_constant, ERROR,
      "invalid suffix '%s' on floating constant")
 DIAG(warn_integer_too_large, WARNING,
      "integer constant is too large for its type")
+DIAG(warn_integer_too_large_for_signed, WARNING,
+     "integer constant is so large that it is unsigned")
 DIAG(err_exponent_has_no_digits, ERROR,
      "exponent has no digits")
 DIAG(err_hexconstant_requires_exponent, ERROR,

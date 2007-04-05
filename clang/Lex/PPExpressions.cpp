@@ -13,8 +13,7 @@
 //===----------------------------------------------------------------------===//
 //
 // FIXME: implement testing for #assert's.
-// FIXME: Track signed/unsigned correctly.
-// FIXME: Track and report integer overflow correctly.
+// FIXME: Detect and report overflow in expression (e.g. (1 << 62)*2)
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,12 +23,12 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/Diagnostic.h"
-#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
 using namespace clang;
 
-static bool EvaluateDirectiveSubExpr(APInt &LHS, unsigned MinPrec,
+static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
                                      LexerToken &PeekTok, Preprocessor &PP);
 
 /// DefinedTracker - This struct is used while parsing expressions to keep track
@@ -58,7 +57,7 @@ struct DefinedTracker {
 /// return the computed value in Result.  Return true if there was an error
 /// parsing.  This function also returns information about the form of the
 /// expression in DT.  See above for information on what DT means.
-static bool EvaluateValue(APInt &Result, LexerToken &PeekTok,
+static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
                           DefinedTracker &DT, Preprocessor &PP) {
   Result = 0;
   DT.State = DefinedTracker::Unknown;
@@ -71,6 +70,7 @@ static bool EvaluateValue(APInt &Result, LexerToken &PeekTok,
     // into a simple 0.
     if (II->getPPKeywordID() != tok::pp_defined) {
       Result = 0;
+      Result.setIsUnsigned(false);  // "0" is signed intmax_t 0.
       PP.LexNonComment(PeekTok);
       return false;
     }
@@ -96,7 +96,8 @@ static bool EvaluateValue(APInt &Result, LexerToken &PeekTok,
     
     // Otherwise, we got an identifier, is it defined to something?
     Result = II->getMacroInfo() != 0;
-    
+    Result.setIsUnsigned(false);  // Result is signed intmax_t.
+
     // If there is a macro, mark it used.
     if (Result != 0) {
       II->getMacroInfo()->setIsUsed(true);
@@ -160,12 +161,28 @@ static bool EvaluateValue(APInt &Result, LexerToken &PeekTok,
       return true;
     }
     assert(Literal.isIntegerLiteral() && "Unknown ppnumber");
-    
-    // FIXME: Handle overflow based on whether the value is signed.  If signed
-    // and if the value is too large, emit a warning "integer constant is so
-    // large that it is unsigned" e.g. 12345678901234567890.
-    if (Literal.GetIntegerValue(Result))
+
+    // Parse the integer literal into Result.
+    if (Literal.GetIntegerValue(Result)) {
+      // Overflow parsing integer literal.
       PP.Diag(PeekTok, diag::warn_integer_too_large);
+      Result.setIsUnsigned(true);
+    } else {
+      // Set the signedness of the result to match whether there was a U suffix
+      // or not.
+      Result.setIsUnsigned(Literal.isUnsigned);
+    
+      // Detect overflow based on whether the value is signed.  If signed
+      // and if the value is too large, emit a warning "integer constant is so
+      // large that it is unsigned" e.g. on 12345678901234567890 where intmax_t
+      // is 64-bits.
+      if (!Literal.isUnsigned && Result.isNegative()) {
+        PP.Diag(PeekTok, diag::warn_integer_too_large_for_signed);
+        Result.setIsUnsigned(true);
+      }
+    }
+    
+    // Consume the token.
     PP.LexNonComment(PeekTok);
     return false;
   }
@@ -198,6 +215,7 @@ static bool EvaluateValue(APInt &Result, LexerToken &PeekTok,
   case tok::minus:
     PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
+    // C99 6.5.3.3p3: The sign of the result matches the sign of the operand.
     Result = -Result;
     DT.State = DefinedTracker::Unknown;
     return false;
@@ -205,6 +223,7 @@ static bool EvaluateValue(APInt &Result, LexerToken &PeekTok,
   case tok::tilde:
     PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
+    // C99 6.5.3.3p4: The sign of the result matches the sign of the operand.
     Result = ~Result;
     DT.State = DefinedTracker::Unknown;
     return false;
@@ -213,6 +232,8 @@ static bool EvaluateValue(APInt &Result, LexerToken &PeekTok,
     PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
     Result = !Result;
+    // C99 6.5.3.3p5: The sign of the result is 'int', aka it is signed.
+    Result.setIsUnsigned(false);
     
     if (DT.State == DefinedTracker::DefinedMacro)
       DT.State = DefinedTracker::NotDefinedMacro;
@@ -274,7 +295,7 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
 
 /// EvaluateDirectiveSubExpr - Evaluate the subexpression whose first token is
 /// PeekTok, and whose precedence is PeekPrec.
-static bool EvaluateDirectiveSubExpr(APInt &LHS, unsigned MinPrec,
+static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
                                      LexerToken &PeekTok, Preprocessor &PP) {
   unsigned PeekPrec = getPrecedence(PeekTok.getKind());
   // If this token isn't valid, report the error.
@@ -295,7 +316,7 @@ static bool EvaluateDirectiveSubExpr(APInt &LHS, unsigned MinPrec,
     LexerToken OpToken = PeekTok;
     PP.LexNonComment(PeekTok);
 
-    APInt RHS(LHS.getBitWidth(), 0);
+    APSInt RHS(LHS.getBitWidth());
     // Parse the RHS of the operator.
     DefinedTracker DT;
     if (EvaluateValue(RHS, PeekTok, DT, PP)) return true;
@@ -323,6 +344,14 @@ static bool EvaluateDirectiveSubExpr(APInt &LHS, unsigned MinPrec,
     }
     assert(PeekPrec <= ThisPrec && "Recursion didn't work!");
     
+    // Usual arithmetic conversions (C99 6.3.1.8p1): result is unsigned if
+    // either operand is unsigned.  Don't do this for x and y in "x ? y : z".
+    if (Operator != tok::question) {
+      if (RHS.isUnsigned()) LHS.setIsUnsigned(true);
+      RHS.setIsUnsigned(LHS.isUnsigned());
+    }
+    
+    // FIXME: All of these should detect and report overflow??
     switch (Operator) {
     default: assert(0 && "Unknown operator token!");
     case tok::percent:
@@ -330,53 +359,69 @@ static bool EvaluateDirectiveSubExpr(APInt &LHS, unsigned MinPrec,
         PP.Diag(OpToken, diag::err_pp_remainder_by_zero);
         return true;
       }
-      // FIXME: sign.
-      LHS = LHS.urem(RHS);
+      LHS %= RHS;
       break;
     case tok::slash:
       if (RHS == 0) {
         PP.Diag(OpToken, diag::err_pp_division_by_zero);
         return true;
       }
-      // FIXME: sign.
-      LHS = LHS.udiv(RHS);
+      LHS /= RHS;
       break;
-    case tok::star :           LHS *= RHS; break;
+    case tok::star:
+      LHS *= RHS;
+      break;
     case tok::lessless:
       // FIXME: shift amt overflow?
       // FIXME: Don't use getZExtValue.
-      LHS = LHS << RHS.getZExtValue();
+      LHS <<= RHS.getZExtValue();
       break;
     case tok::greatergreater:
       // FIXME: signed vs unsigned
       // FIXME: Don't use getZExtValue.
-      LHS = LHS.ashr(RHS.getZExtValue());
+      LHS >>= RHS.getZExtValue();
       break;
-    case tok::plus :           LHS += RHS; break;
-    case tok::minus:           LHS -= RHS; break;
+    case tok::plus:
+      LHS += RHS;
+      break;
+    case tok::minus:
+      LHS -= RHS;
+      break;
     case tok::lessequal:
-      // FIXME: signed vs unsigned
-      LHS = LHS.sle(RHS);
+      LHS = LHS <= RHS;
+      LHS.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::less:
-      // FIXME: signed vs unsigned
-      LHS = LHS.slt(RHS);
+      LHS = LHS < RHS;
+      LHS.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::greaterequal:
-      // FIXME: signed vs unsigned
-      LHS = LHS.sge(RHS);
+      LHS = LHS >= RHS;
+      LHS.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::greater:
-      // FIXME: signed vs unsigned
-      LHS = LHS.sgt(RHS);
+      LHS = LHS > RHS;
+      LHS.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
-    case tok::exclaimequal:    LHS = LHS != RHS; break;
-    case tok::equalequal:      LHS = LHS == RHS; break;
+    case tok::exclaimequal:
+      LHS = LHS != RHS;
+      LHS.setIsUnsigned(false);  // C99 6.5.9p3, result is always int (signed)
+      break;
+    case tok::equalequal:
+      LHS = LHS == RHS;
+      LHS.setIsUnsigned(false);  // C99 6.5.9p3, result is always int (signed)
+      break;
     case tok::amp:             LHS &= RHS; break;
     case tok::caret:           LHS ^= RHS; break;
     case tok::pipe:            LHS |= RHS; break;
-    case tok::ampamp:          LHS = LHS != 0 && RHS != 0; break;
-    case tok::pipepipe:        LHS = LHS != 0 || RHS != 0; break;
+    case tok::ampamp:
+      LHS = LHS != 0 && RHS != 0;
+      LHS.setIsUnsigned(false);  // C99 6.5.13p3, result is always int (signed)
+      break;
+    case tok::pipepipe:
+      LHS = LHS != 0 || RHS != 0;
+      LHS.setIsUnsigned(false);  // C99 6.5.14p3, result is always int (signed)
+      break;
     case tok::comma:
       PP.Diag(OpToken, diag::ext_pp_comma_expr);
       LHS = RHS; // LHS = LHS,RHS -> RHS.
@@ -391,7 +436,7 @@ static bool EvaluateDirectiveSubExpr(APInt &LHS, unsigned MinPrec,
       PP.LexNonComment(PeekTok);
 
       // Evaluate the value after the :.
-      APInt AfterColonVal(LHS.getBitWidth(), 0);
+      APSInt AfterColonVal(LHS.getBitWidth());
       DefinedTracker DT;
       if (EvaluateValue(AfterColonVal, PeekTok, DT, PP)) return true;
 
@@ -402,6 +447,10 @@ static bool EvaluateDirectiveSubExpr(APInt &LHS, unsigned MinPrec,
       
       // Now that we have the condition, the LHS and the RHS of the :, evaluate.
       LHS = LHS != 0 ? RHS : AfterColonVal;
+
+      // Usual arithmetic conversions (C99 6.3.1.8p1): result is unsigned if
+      // either operand is unsigned.
+      LHS.setIsUnsigned(RHS.isUnsigned() | AfterColonVal.isUnsigned());
       
       // Figure out the precedence of the token after the : part.
       PeekPrec = getPrecedence(PeekTok.getKind());
@@ -428,7 +477,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   
   // C99 6.10.1p3 - All expressions are evaluated as intmax_t or uintmax_t.
   unsigned BitWidth = getTargetInfo().getIntMaxTWidth(Tok.getLocation());
-  APInt ResVal(BitWidth, 0);
+  APSInt ResVal(BitWidth);
   DefinedTracker DT;
   if (EvaluateValue(ResVal, Tok, DT, *this)) {
     // Parse error, skip the rest of the macro line.
