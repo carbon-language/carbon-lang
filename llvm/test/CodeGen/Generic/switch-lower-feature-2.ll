@@ -8,6 +8,8 @@
 ; RUN: llvm-as < %s | llc -march=x86 -o - | grep ja | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=x86 -o - | grep js | wc -l | grep 1
 
+target triple = "i686-pc-linux-gnu"
+
 define i32 @main(i32 %tmp158) {
 entry:
         switch i32 %tmp158, label %bb336 [
