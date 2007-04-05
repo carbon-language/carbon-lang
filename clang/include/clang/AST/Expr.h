@@ -33,10 +33,7 @@ protected:
   Expr(StmtClass SC, TypeRef T=0) : Stmt(SC), TR(T) {}
   ~Expr() {}
 public:  
-  // FIXME: the return type of getType is inconsistent with Decls.
-  // this is confusing and needs to be reconciled (by making one conform).
-  Type *getType() const { return TR.getTypePtr(); }
-  TypeRef getTypeRef() const { return TR; }
+  TypeRef getType() const { return TR; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

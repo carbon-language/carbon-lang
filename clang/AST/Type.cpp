@@ -75,11 +75,11 @@ bool Type::isIntegralType() const {
   switch (CanonicalType->getTypeClass()) {
   default: return false;
   case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::ULongLong;
   case Tagged:
-    const TagType *TT = static_cast<TagType*>(CanonicalType);
+    const TagType *TT = static_cast<TagType*>(CanonicalType.getTypePtr());
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
     return false;
@@ -90,7 +90,7 @@ bool Type::isFloatingType() const {
   switch (CanonicalType->getTypeClass()) {
   default: return false;
   case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
     return BT->getKind() >= BuiltinType::Float &&
            BT->getKind() <= BuiltinType::LongDoubleComplex;
   }
@@ -100,7 +100,7 @@ bool Type::isRealFloatingType() const {
   switch (CanonicalType->getTypeClass()) {
   default: return false;
   case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
     return BT->getKind() >= BuiltinType::Float &&
            BT->getKind() <= BuiltinType::LongDouble;
   }
@@ -111,11 +111,11 @@ bool Type::isRealType() const {
   switch (CanonicalType->getTypeClass()) { // inlined for performance
   default: return false;
   case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDouble;
   case Tagged:
-    const TagType *TT = static_cast<TagType*>(CanonicalType);
+    const TagType *TT = static_cast<TagType*>(CanonicalType.getTypePtr());
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
     return false;
@@ -126,7 +126,7 @@ bool Type::isComplexType() const {
   switch (CanonicalType->getTypeClass()) {
   default: return false;
   case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
     return BT->getKind() >= BuiltinType::FloatComplex &&
            BT->getKind() <= BuiltinType::LongDoubleComplex;
   }
@@ -136,7 +136,7 @@ bool Type::isArithmeticType() const {
   switch (CanonicalType->getTypeClass()) {
   default: return false;
   case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDoubleComplex;
   }
@@ -146,7 +146,7 @@ bool Type::isScalarType() const {
   switch (CanonicalType->getTypeClass()) {
   default: return false;
   case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType);
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDoubleComplex;
   case Pointer:
@@ -160,7 +160,7 @@ bool Type::isAggregateType() const {
   case Array:
     return true;
   case Tagged:
-    const TagType *TT = static_cast<TagType*>(CanonicalType);
+    const TagType *TT = static_cast<TagType*>(CanonicalType.getTypePtr());
     if (TT->getDecl()->getKind() == Decl::Struct)
       return true;
     return true;

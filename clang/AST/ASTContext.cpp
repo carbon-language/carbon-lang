@@ -137,15 +137,14 @@ TypeRef ASTContext::getPointerType(TypeRef T) {
   
   // If the pointee type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
-  Type *Canonical = 0;
+  TypeRef Canonical = 0;
   if (!T->isCanonical()) {
-    Canonical = getPointerType(T.getCanonicalType()).getTypePtr();
+    Canonical = getPointerType(T.getCanonicalType());
    
     // Get the new insert position for the node we care about.
     PointerType *NewIP = PointerTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!");
   }
-  
   PointerType *New = new PointerType(T, Canonical);
   Types.push_back(New);
   PointerTypes.InsertNode(New, InsertPos);
@@ -167,10 +166,10 @@ TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
   
   // If the element type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
-  Type *Canonical = 0;
+  TypeRef Canonical = 0;
   if (!EltTy->isCanonical()) {
     Canonical = getArrayType(EltTy.getCanonicalType(), ASM, EltTypeQuals,
-                             NumElts).getTypePtr();
+                             NumElts);
     
     // Get the new insert position for the node we care about.
     ArrayType *NewIP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -196,7 +195,7 @@ TypeRef ASTContext::getFunctionTypeNoProto(TypeRef ResultTy) {
         FunctionTypeNoProtos.FindNodeOrInsertPos(ID, InsertPos))
     return FT;
   
-  Type *Canonical = 0;
+  TypeRef Canonical = 0;
   if (!ResultTy->isCanonical()) {
     Canonical =getFunctionTypeNoProto(ResultTy.getCanonicalType()).getTypePtr();
     
@@ -233,7 +232,7 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
       isCanonical = false;
 
   // If this type isn't canonical, get the canonical version of it.
-  Type *Canonical = 0;
+  TypeRef Canonical = 0;
   if (!isCanonical) {
     SmallVector<TypeRef, 16> CanonicalArgs;
     CanonicalArgs.reserve(NumArgs);
@@ -242,7 +241,7 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
     
     Canonical = getFunctionType(ResultTy.getCanonicalType(),
                                 &CanonicalArgs[0], NumArgs,
-                                isVariadic).getTypePtr();
+                                isVariadic);
     
     // Get the new insert position for the node we care about.
     FunctionTypeProto *NewIP =
@@ -268,8 +267,7 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
 TypeRef ASTContext::getTypedefType(TypedefDecl *Decl) {
   if (Decl->TypeForDecl) return Decl->TypeForDecl;
   
-  // FIXME: does this lose qualifiers from the typedef??
-  Type *Canonical = Decl->getUnderlyingType().getCanonicalType().getTypePtr();
+  TypeRef Canonical = Decl->getUnderlyingType().getCanonicalType();
   Decl->TypeForDecl = new TypedefType(Decl, Canonical);
   Types.push_back(Decl->TypeForDecl);
   return Decl->TypeForDecl;

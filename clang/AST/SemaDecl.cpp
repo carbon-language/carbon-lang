@@ -23,6 +23,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallSet.h"
+
 using namespace llvm;
 using namespace clang;
 
@@ -622,7 +623,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     if (!FD) continue;  // Already issued a diagnostic.
     
     // Get the type for the field.
-    Type *FDTy = FD->getType()->getCanonicalType();
+    Type *FDTy = FD->getType().getCanonicalType().getTypePtr();
     
     // C99 6.7.2.1p2 - A field may not be a function type.
     if (isa<FunctionType>(FDTy)) {

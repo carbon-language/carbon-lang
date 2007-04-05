@@ -131,7 +131,7 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       else
         ASM = ArrayType::Normal;
       
-      Type *CanonicalT = T->getCanonicalType();
+      Type *CanonicalT = T.getCanonicalType().getTypePtr();
       
       // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
       // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())

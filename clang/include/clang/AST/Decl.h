@@ -109,8 +109,6 @@ protected:
   ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T): 
              Decl(DK, L, Id), DeclType(T) {}
 public:
-  // FIXME: should rename to getTypeRef/getCanonicalTypeRef to distinguish
-  // TypeRef's from Type's...
   TypeRef getType() const { return DeclType; }
   TypeRef getCanonicalType() const { return DeclType.getCanonicalType(); }
   
@@ -288,8 +286,7 @@ class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
   TypeRef UnderlyingType;
 public:
-    // FIXME: Remove Declarator argument.
-    TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+  TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
     : TypeDecl(Typedef, L, Id), UnderlyingType(T) {}
   
   TypeRef getUnderlyingType() const { return UnderlyingType; }

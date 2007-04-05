@@ -224,24 +224,27 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
 Action::ExprResult Sema::
 ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
-  TypeRef t1 = ((Expr *)Base)->getTypeRef();
-  TypeRef t2 = ((Expr *)Idx)->getTypeRef();
+  TypeRef t1 = ((Expr *)Base)->getType();
+  TypeRef t2 = ((Expr *)Idx)->getType();
 
   assert(!t1.isNull() && "no type for array base expression");
   assert(!t2.isNull() && "no type for array index expression");
 
+  TypeRef canonT1 = t1.getCanonicalType();
+  TypeRef canonT2 = t2.getCanonicalType();
+  
   // C99 6.5.2.1p2: the expression e1[e2] is by definition precisely equivalent
   // to the expression *((e1)+(e2)). This means the array "Base" may actually be 
   // in the subscript position. As a result, we need to derive the array base 
   // and index from the expression types.
   
   TypeRef baseType, indexType;
-  if (isa<ArrayType>(t1) || isa<PointerType>(t1)) {
-    baseType = t1;
-    indexType = t2;
-  } else if (isa<ArrayType>(t2) || isa<PointerType>(t2)) { // uncommon case
-    baseType = t2;
-    indexType = t1;
+  if (isa<ArrayType>(canonT1) || isa<PointerType>(canonT1)) {
+    baseType = canonT1;
+    indexType = canonT2;
+  } else if (isa<ArrayType>(canonT2) || isa<PointerType>(canonT2)) { // uncommon
+    baseType = canonT2;
+    indexType = canonT1;
   } else 
     return Diag(LLoc, diag::err_typecheck_subscript_value);
 
@@ -267,16 +270,16 @@ Action::ExprResult Sema::
 ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
-  TypeRef qualifiedType = ((Expr *)Base)->getTypeRef();
+  TypeRef qualifiedType = ((Expr *)Base)->getType();
   
   assert(!qualifiedType.isNull() && "no type for member expression");
   
-  Type *canonType = qualifiedType->getCanonicalType();
+  TypeRef canonType = qualifiedType.getCanonicalType();
 
   if (OpKind == tok::arrow) {
     if (PointerType *PT = dyn_cast<PointerType>(canonType)) {
       qualifiedType = PT->getPointeeType();
-      canonType = qualifiedType->getCanonicalType();
+      canonType = qualifiedType.getCanonicalType();
     } else
       return Diag(OpLoc, diag::err_typecheck_member_reference_arrow);
   }
@@ -387,7 +390,7 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
 
 Expr *Sema::ImplicitConversion(Expr *E) {
 #if 0
-  TypeRef t = E->getTypeRef();
+  TypeRef t = E->getType();
   if (t != 0) t.dump();
   else printf("no type for expr %s\n", E->getStmtClassName());
 #endif
@@ -425,12 +428,12 @@ Action::ExprResult Sema::CheckLogicalOperands(Expr *op1, Expr *op2) {
 Action::ExprResult
 Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
                                                unsigned OpCode) {
-  TypeRef qType = op->getTypeRef();
+  TypeRef qType = op->getType();
 
   assert(!qType.isNull() && "no type for increment/decrement expression");
 
-  Type *canonType = qType->getCanonicalType();
-  
+  TypeRef canonType = qType.getCanonicalType();
+
   // C99 6.5.2.4p1
   if (const PointerType *pt = dyn_cast<PointerType>(canonType)) {
     if (!pt->getPointeeType()->isObjectType()) // C99 6.5.2.4p2, 6.5.6p2
@@ -442,7 +445,7 @@ Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
   // At this point, we know we have a real or pointer type. As a result, the
   // following predicate is overkill (i.e. it will check for types we know we
   // don't have in this context). Nevertheless, we model the C99 spec closely.
-  if (!qType.isModifiableLvalue())
+  if (!canonType.isModifiableLvalue())
     return Diag(OpLoc, diag::err_typecheck_not_modifiable, qType);
 
   return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, qType);

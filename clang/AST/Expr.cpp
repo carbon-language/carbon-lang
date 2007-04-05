@@ -74,7 +74,7 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 //===----------------------------------------------------------------------===//
 
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs)
-  : Expr(CallExprClass, fn->getTypeRef()), Fn(fn), NumArgs(numargs) {
+  : Expr(CallExprClass, fn->getType()), Fn(fn), NumArgs(numargs) {
   Args = new Expr*[numargs];
   for (unsigned i = 0; i != numargs; ++i)
     Args[i] = args[i];

@@ -112,11 +112,6 @@ public:
   bool operator!=(const TypeRef &RHS) const {
     return ThePtr != RHS.ThePtr;
   }
-  
-  /// getCanonicalType - Return the canonical version of this type, with the
-  /// appropriate type qualifiers on it.
-  inline TypeRef getCanonicalType() const;
-
   /// isModifiableLvalue - C99 6.3.2.1p1: returns true if the type is an lvalue
   /// that does not have array type, does not have an incomplete type, does
   /// not have a const-qualified type, and if it is a struct/union, does not 
@@ -126,6 +121,10 @@ public:
     
   void getAsString(std::string &S) const;
   void dump() const;
+
+  /// getCanonicalType - Return the canonical version of this type, with the
+  /// appropriate type qualifiers on it.
+  inline TypeRef getCanonicalType() const;
 };
 
 } // end clang.
@@ -174,21 +173,21 @@ public:
     Builtin, Pointer, Array, FunctionNoProto, FunctionProto, TypeName, Tagged
   };
 private:
-  Type *CanonicalType;
+  TypeRef CanonicalType;
 
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
   TypeClass TC : 3;
-public:
-  Type(TypeClass tc, Type *Canonical)
-    : CanonicalType(Canonical ? Canonical : this), TC(tc) {}
+protected:
+  Type(TypeClass tc, TypeRef Canonical)
+    : CanonicalType(Canonical.isNull() ? TypeRef(this,0) : Canonical), TC(tc) {}
   virtual ~Type();
-  
+  friend class ASTContext;
+public:  
   TypeClass getTypeClass() const { return TC; }
   
-  bool isCanonical() const { return CanonicalType == this; }
-  Type *getCanonicalType() const { return CanonicalType; }
+  bool isCanonical() const { return CanonicalType.getTypePtr() == this; }
 
   /// Types are partitioned into 3 broad categories (C99 6.2.5p1): 
   /// object types, function types, and incomplete types.
@@ -231,6 +230,8 @@ private:
   // this forces clients to use isModifiableLvalue on TypeRef, the class that 
   // knows if the type is const. This predicate is a helper to TypeRef. 
   bool isModifiableLvalue() const; // C99 6.3.2.1p1
+  
+  TypeRef getCanonicalType() const { return CanonicalType; }
   friend class TypeRef;
 public:
   virtual void getAsString(std::string &InnerString) const = 0;
@@ -267,7 +268,7 @@ public:
 ///
 class PointerType : public Type, public FoldingSetNode {
   TypeRef PointeeType;
-  PointerType(TypeRef Pointee, Type *CanonicalPtr) :
+  PointerType(TypeRef Pointee, TypeRef CanonicalPtr) :
     Type(Pointer, CanonicalPtr), PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -314,7 +315,7 @@ private:
   /// Variable Length Arrays). VLA's are only permitted within a function block. 
   Expr *SizeExpr;
   
-  ArrayType(TypeRef et, ArraySizeModifier sm, unsigned tq, Type *can, Expr *e)
+  ArrayType(TypeRef et, ArraySizeModifier sm, unsigned tq, TypeRef can, Expr *e)
     : Type(Array, can), SizeModifier(sm), IndexTypeQuals(tq), ElementType(et),
       SizeExpr(e) {}
   friend class ASTContext;  // ASTContext creates these.
@@ -355,7 +356,7 @@ class FunctionType : public Type {
   // The type returned by the function.
   TypeRef ResultType;
 protected:
-  FunctionType(TypeClass tc, TypeRef res, bool SubclassInfo, Type *Canonical)
+  FunctionType(TypeClass tc, TypeRef res, bool SubclassInfo, TypeRef Canonical)
     : Type(tc, Canonical), SubClassData(SubclassInfo), ResultType(res) {}
   bool getSubClassData() const { return SubClassData; }
 public:
@@ -373,7 +374,7 @@ public:
 /// FunctionTypeNoProto - Represents a K&R-style 'int foo()' function, which has
 /// no information available about its arguments.
 class FunctionTypeNoProto : public FunctionType, public FoldingSetNode {
-  FunctionTypeNoProto(TypeRef Result, Type *Canonical)
+  FunctionTypeNoProto(TypeRef Result, TypeRef Canonical)
     : FunctionType(FunctionNoProto, Result, false, Canonical) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -399,7 +400,7 @@ public:
 /// arguments, not as having a single void argument.
 class FunctionTypeProto : public FunctionType, public FoldingSetNode {
   FunctionTypeProto(TypeRef Result, TypeRef *ArgArray, unsigned numArgs,
-                    bool isVariadic, Type *Canonical)
+                    bool isVariadic, TypeRef Canonical)
     : FunctionType(FunctionProto, Result, isVariadic, Canonical),
       NumArgs(numArgs) {
     for (unsigned i = 0; i != numArgs; ++i)
@@ -438,7 +439,7 @@ public:
 
 class TypedefType : public Type {
   TypedefDecl *Decl;
-  TypedefType(TypedefDecl *D, Type *can) : Type(TypeName, can), Decl(D) {
+  TypedefType(TypedefDecl *D, TypeRef can) : Type(TypeName, can), Decl(D) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -455,7 +456,7 @@ public:
 
 class TagType : public Type {
   TagDecl *Decl;
-  TagType(TagDecl *D, Type *can) : Type(Tagged, can), Decl(D) {}
+  TagType(TagDecl *D, TypeRef can) : Type(Tagged, can), Decl(D) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
     
@@ -494,13 +495,13 @@ public:
 // specify the same type, we want to print the default argument only if
 // specified in the source code.
 
-
 /// getCanonicalType - Return the canonical version of this type, with the
 /// appropriate type qualifiers on it.
 inline TypeRef TypeRef::getCanonicalType() const {
-  return TypeRef(getTypePtr()->getCanonicalType(), getQualifiers());
+  return TypeRef(getTypePtr()->getCanonicalType().getTypePtr(),
+                 getQualifiers() |
+                 getTypePtr()->getCanonicalType().getQualifiers());
 }
-
   
 }  // end namespace clang
 }  // end namespace llvm
