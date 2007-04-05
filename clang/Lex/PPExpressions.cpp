@@ -186,6 +186,47 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
     PP.LexNonComment(PeekTok);
     return false;
   }
+  case tok::char_constant: {   // 'x'
+    SmallString<32> CharBuffer;
+    CharBuffer.resize(PeekTok.getLength());
+    const char *ThisTokBegin = &CharBuffer[0];
+    unsigned ActualLength = PP.getSpelling(PeekTok, ThisTokBegin);
+    CharLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
+                              PeekTok.getLocation(), PP);
+    if (Literal.hadError())
+      return true;  // A diagnostic was already emitted.
+
+    // Character literals are always int or wchar_t, expand to intmax_t.
+    TargetInfo &TI = PP.getTargetInfo();
+    unsigned NumBits;
+    if (Literal.isWide())
+      NumBits = TI.getWCharWidth(PeekTok.getLocation());
+    else
+      NumBits = TI.getCharWidth(PeekTok.getLocation());
+    
+    // Set the width.
+    APSInt Val(NumBits);
+    // Set the value.
+    Val = Literal.getValue();
+    // Set the signedness.
+    Val.setIsUnsigned(!TI.isCharSigned(PeekTok.getLocation()));
+    
+    if (Result.getBitWidth() > Val.getBitWidth()) {
+      if (Val.isSigned())
+        Result = Val.sext(Result.getBitWidth());
+      else
+        Result = Val.zext(Result.getBitWidth());
+      Result.setIsUnsigned(Val.isUnsigned());
+    } else {
+      assert(Result.getBitWidth() == Val.getBitWidth() &&
+             "intmax_t smaller than char/wchar_t?");
+      Result = Val;
+    }
+
+    // Consume the token.
+    PP.LexNonComment(PeekTok);
+    return false;
+  }
   case tok::l_paren:
     PP.LexNonComment(PeekTok);  // Eat the (.
     // Parse the value and if there are any binary operators involved, parse
