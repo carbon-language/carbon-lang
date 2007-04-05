@@ -138,9 +138,6 @@ class Option {
   virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) = 0;
 
-  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const {
-    return Optional;
-  }
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueOptional;
   }
@@ -163,9 +160,7 @@ public:
   const char *ValueStr; // String describing what the value of this option is
 
   inline enum NumOccurrences getNumOccurrencesFlag() const {
-    int NO = Flags & OccurrencesMask;
-    return NO ? static_cast<enum NumOccurrences>(NO)
-              : getNumOccurrencesFlagDefault();
+    return (enum NumOccurrences)(Flags & OccurrencesMask);
   }
   inline enum ValueExpected getValueExpectedFlag() const {
     int VE = Flags & ValueMask;
@@ -211,8 +206,9 @@ public:
   void setMiscFlag(enum MiscFlags M) { setFlag(M, M); }
   void setPosition(unsigned pos) { Position = pos; }
 protected:
-  Option() : NumOccurrences(0), Flags(0), Position(0),
-             ArgStr(""), HelpStr(""), ValueStr("") {}
+  Option(enum NumOccurrences DefaultOccFlag)
+    : NumOccurrences(0), Flags(DefaultOccFlag), Position(0),
+      ArgStr(""), HelpStr(""), ValueStr("") {}
 
 public:
   // addArgument - Tell the system that this Option subclass will handle all
@@ -809,34 +805,35 @@ public:
 
   // One option...
   template<class M0t>
-  opt(const M0t &M0) {
+  opt(const M0t &M0) : Option(Optional) {
     apply(M0, this);
     done();
   }
 
   // Two options...
   template<class M0t, class M1t>
-  opt(const M0t &M0, const M1t &M1) {
+  opt(const M0t &M0, const M1t &M1) : Option(Optional) {
     apply(M0, this); apply(M1, this);
     done();
   }
 
   // Three options...
   template<class M0t, class M1t, class M2t>
-  opt(const M0t &M0, const M1t &M1, const M2t &M2) {
+  opt(const M0t &M0, const M1t &M1, const M2t &M2) : Option(Optional) {
     apply(M0, this); apply(M1, this); apply(M2, this);
     done();
   }
   // Four options...
   template<class M0t, class M1t, class M2t, class M3t>
-  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3) {
+  opt(const M0t &M0, const M1t &M1, const M2t &M2,
+      const M3t &M3) : Option(Optional) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     done();
   }
   // Five options...
   template<class M0t, class M1t, class M2t, class M3t, class M4t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4) {
+      const M4t &M4) : Option(Optional) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this);
     done();
@@ -845,7 +842,7 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4, const M5t &M5) {
+      const M4t &M4, const M5t &M5) : Option(Optional) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this);
     done();
@@ -854,7 +851,7 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t, class M6t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4, const M5t &M5, const M6t &M6) {
+      const M4t &M4, const M5t &M5, const M6t &M6) : Option(Optional) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this);
     done();
@@ -863,7 +860,8 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t, class M6t, class M7t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7) {
+      const M4t &M4, const M5t &M5, const M6t &M6,
+      const M7t &M7) : Option(Optional) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this); apply(M7, this);
     done();
@@ -926,9 +924,6 @@ class list : public Option, public list_storage<DataType, Storage> {
   std::vector<unsigned> Positions;
   ParserClass Parser;
 
-  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const {
-    return ZeroOrMore;
-  }
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
@@ -965,32 +960,33 @@ public:
 
   // One option...
   template<class M0t>
-  list(const M0t &M0) {
+  list(const M0t &M0) : Option(ZeroOrMore) {
     apply(M0, this);
     done();
   }
   // Two options...
   template<class M0t, class M1t>
-  list(const M0t &M0, const M1t &M1) {
+  list(const M0t &M0, const M1t &M1) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this);
     done();
   }
   // Three options...
   template<class M0t, class M1t, class M2t>
-  list(const M0t &M0, const M1t &M1, const M2t &M2) {
+  list(const M0t &M0, const M1t &M1, const M2t &M2) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this);
     done();
   }
   // Four options...
   template<class M0t, class M1t, class M2t, class M3t>
-  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3) {
+  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
+    : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     done();
   }
   // Five options...
   template<class M0t, class M1t, class M2t, class M3t, class M4t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4) {
+       const M4t &M4) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this);
     done();
@@ -999,7 +995,7 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5) {
+       const M4t &M4, const M5t &M5) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this);
     done();
@@ -1008,7 +1004,7 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t, class M6t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4, const M5t &M5, const M6t &M6) {
+       const M4t &M4, const M5t &M5, const M6t &M6) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this);
     done();
@@ -1017,7 +1013,8 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t, class M6t, class M7t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7) {
+       const M4t &M4, const M5t &M5, const M6t &M6,
+       const M7t &M7) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this); apply(M7, this);
     done();
@@ -1108,9 +1105,6 @@ class bits : public Option, public bits_storage<DataType, Storage> {
   std::vector<unsigned> Positions;
   ParserClass Parser;
 
-  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const {
-    return ZeroOrMore;
-  }
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
@@ -1147,32 +1141,33 @@ public:
 
   // One option...
   template<class M0t>
-  bits(const M0t &M0) {
+  bits(const M0t &M0) : Option(ZeroOrMore) {
     apply(M0, this);
     done();
   }
   // Two options...
   template<class M0t, class M1t>
-  bits(const M0t &M0, const M1t &M1) {
+  bits(const M0t &M0, const M1t &M1) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this);
     done();
   }
   // Three options...
   template<class M0t, class M1t, class M2t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2) {
+  bits(const M0t &M0, const M1t &M1, const M2t &M2) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this);
     done();
   }
   // Four options...
   template<class M0t, class M1t, class M2t, class M3t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3) {
+  bits(const M0t &M0, const M1t &M1, const M2t &M2,
+       const M3t &M3) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     done();
   }
   // Five options...
   template<class M0t, class M1t, class M2t, class M3t, class M4t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4) {
+       const M4t &M4) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this);
     done();
@@ -1181,7 +1176,7 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5) {
+       const M4t &M4, const M5t &M5) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this);
     done();
@@ -1190,7 +1185,7 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t, class M6t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4, const M5t &M5, const M6t &M6) {
+       const M4t &M4, const M5t &M5, const M6t &M6) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this);
     done();
@@ -1199,7 +1194,8 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t, class M6t, class M7t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7) {
+       const M4t &M4, const M5t &M5, const M6t &M6,
+       const M7t &M7) : Option(ZeroOrMore) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this); apply(M7, this);
     done();
@@ -1239,26 +1235,27 @@ public:
 
   // One option...
   template<class M0t>
-  alias(const M0t &M0) : AliasFor(0) {
+  alias(const M0t &M0) : Option(Optional), AliasFor(0) {
     apply(M0, this);
     done();
   }
   // Two options...
   template<class M0t, class M1t>
-  alias(const M0t &M0, const M1t &M1) : AliasFor(0) {
+  alias(const M0t &M0, const M1t &M1) : Option(Optional), AliasFor(0) {
     apply(M0, this); apply(M1, this);
     done();
   }
   // Three options...
   template<class M0t, class M1t, class M2t>
-  alias(const M0t &M0, const M1t &M1, const M2t &M2) : AliasFor(0) {
+  alias(const M0t &M0, const M1t &M1, const M2t &M2)
+    : Option(Optional), AliasFor(0) {
     apply(M0, this); apply(M1, this); apply(M2, this);
     done();
   }
   // Four options...
   template<class M0t, class M1t, class M2t, class M3t>
   alias(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-    : AliasFor(0) {
+    : Option(Optional), AliasFor(0) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     done();
   }
