@@ -378,7 +378,7 @@ class LinuxTargetInfo : public DarwinTargetInfo {
 public:
   LinuxTargetInfo() {
     // Note: I have no idea if this is right, just for testing.
-    WCharWidth = 2;
+    WCharWidth = 16;
   }
   
   virtual void getTargetDefines(std::vector<std::string> &Defines) const {

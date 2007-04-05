@@ -118,7 +118,7 @@ public:
     return 32;
   }
   
-  /// getWCharWidth - Return the size of wchar_t in bytes.
+  /// getWCharWidth - Return the size of wchar_t in bits.
   ///
   unsigned getWCharWidth(SourceLocation Loc) {
     if (!WCharWidth) ComputeWCharWidth(Loc);
@@ -151,9 +151,9 @@ private:
 /// not appropriate for the target.
 class TargetInfoImpl {
 protected:
-  unsigned WCharWidth;    /// sizeof(wchar_t) in bytes.  Default value is 4.
+  unsigned WCharWidth;    /// sizeof(wchar_t) in bits.  Default value is 32.
 public:
-  TargetInfoImpl() : WCharWidth(4) {}
+  TargetInfoImpl() : WCharWidth(32) {}
   virtual ~TargetInfoImpl() {}
   
   /// getTargetDefines - Return a list of the target-specific #define values set
@@ -161,7 +161,7 @@ public:
   /// which results in '#define X 1' or "X=Y" which results in "#define X Y"
   virtual void getTargetDefines(std::vector<std::string> &Defines) const = 0;
 
-  /// getWCharWidth - Return the size of wchar_t in bytes.
+  /// getWCharWidth - Return the size of wchar_t in bits.
   ///
   unsigned getWCharWidth() const { return WCharWidth; }
   
