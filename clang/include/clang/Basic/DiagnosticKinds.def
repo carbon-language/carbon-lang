@@ -367,10 +367,19 @@ DIAG(err_matching, ERROR,
 // Semantic Analysis
 //===----------------------------------------------------------------------===//
 
+// Semantic analysis of string and character constant literals.
 DIAG(ext_nonstandard_escape, EXTENSION,
      "use of non-standard escape character '\\%s'")
 DIAG(ext_unknown_escape, EXTENSION,
      "unknown escape sequence '\\%s'")
+DIAG(warn_extraneous_wide_char_constant, WARNING,
+     "extraneous characters in wide character constant ignored")
+DIAG(warn_char_constant_too_large, WARNING,
+     "character constant too long for its type")
+DIAG(warn_hex_escape_too_large, WARNING,
+     "hex escape sequence out of range")
+DIAG(warn_octal_escape_too_large, WARNING,
+     "octal escape sequence out of range")
 
 DIAG(err_hex_escape_no_digits, ERROR,
      "\\x used with no following hex digits")
