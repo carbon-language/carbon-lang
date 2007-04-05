@@ -1347,7 +1347,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         if (GV->getType()->getElementType() != Type::Int1Ty &&
             !GV->getType()->getElementType()->isFloatingPoint() &&
             !isa<VectorType>(GV->getType()->getElementType()) &&
-            !GS.HasPHIUser) {
+            !GS.HasPHIUser && !GS.isNotSuitableForSRA) {
           DOUT << "   *** SHRINKING TO BOOL: " << *GV;
           ShrinkGlobalToBoolean(GV, SOVConstant);
           ++NumShrunkToBool;
