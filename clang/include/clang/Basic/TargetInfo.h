@@ -96,6 +96,28 @@ public:
   /// target set to the specified buffer.
   void getTargetDefines(std::vector<char> &DefineBuffer);
   
+  /// isCharSigned - Return true if 'char' is 'signed char' or false if it is
+  /// treated as 'unsigned char'.  This is implementation defined according to
+  /// C99 6.2.5p15.  In our implementation, this is target-specific.
+  bool isCharSigned(SourceLocation Loc) {
+    // FIXME: implement correctly.
+    return true;
+  }
+  
+  /// getCharWidth - Return the size of 'char', 'signed char' and
+  /// 'unsigned char' for this target, in bits.  
+  unsigned getCharWidth(SourceLocation Loc) {
+    // FIXME: implement correctly.
+    return 8;
+  }
+  
+  /// getIntWidth - Return the size of 'signed int' and 'unsigned int' for this
+  /// target, in bits.  
+  unsigned getIntWidth(SourceLocation Loc) {
+    // FIXME: implement correctly.
+    return 32;
+  }
+  
   /// getWCharWidth - Return the size of wchar_t in bytes.
   ///
   unsigned getWCharWidth(SourceLocation Loc) {
