@@ -47,36 +47,45 @@ FunctionPass *llvm::createCFGSimplificationPass() {
 
 static bool MarkAliveBlocks(BasicBlock *BB,
                             SmallPtrSet<BasicBlock*, 16> &Reachable) {
-  if (!Reachable.insert(BB)) return false;
+  
+  std::vector<BasicBlock*> Worklist;
+  Worklist.push_back(BB);
+  bool Changed = false;
+  while (!Worklist.empty()) {
+    BB = Worklist.back();
+    Worklist.pop_back();
+    
+    if (!Reachable.insert(BB))
+      continue;
 
-  // Do a quick scan of the basic block, turning any obviously unreachable
-  // instructions into LLVM unreachable insts.  The instruction combining pass
-  // canonnicalizes unreachable insts into stores to null or undef.
-  for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ++BBI)
-    if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
-      if (isa<ConstantPointerNull>(SI->getOperand(1)) ||
-          isa<UndefValue>(SI->getOperand(1))) {
-        // Loop over all of the successors, removing BB's entry from any PHI
-        // nodes.
-        for (succ_iterator I = succ_begin(BB), SE = succ_end(BB); I != SE; ++I)
-          (*I)->removePredecessor(BB);
+    // Do a quick scan of the basic block, turning any obviously unreachable
+    // instructions into LLVM unreachable insts.  The instruction combining pass
+    // canonnicalizes unreachable insts into stores to null or undef.
+    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ++BBI)
+      if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+        if (isa<ConstantPointerNull>(SI->getOperand(1)) ||
+            isa<UndefValue>(SI->getOperand(1))) {
+          // Loop over all of the successors, removing BB's entry from any PHI
+          // nodes.
+          for (succ_iterator I = succ_begin(BB), SE = succ_end(BB); I != SE;++I)
+            (*I)->removePredecessor(BB);
 
-        new UnreachableInst(SI);
+          new UnreachableInst(SI);
 
-        // All instructions after this are dead.
-        for (; BBI != E; ) {
-          if (!BBI->use_empty())
-            BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
-          BB->getInstList().erase(BBI++);
+          // All instructions after this are dead.
+          while (BBI != E) {
+            if (!BBI->use_empty())
+              BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
+            BB->getInstList().erase(BBI++);
+          }
+          break;
         }
-        break;
-      }
 
 
-  bool Changed = ConstantFoldTerminator(BB);
-  for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
-    Changed |= MarkAliveBlocks(*SI, Reachable);
-
+    Changed |= ConstantFoldTerminator(BB);
+    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+      Worklist.push_back(*SI);
+  }
   return Changed;
 }
 
