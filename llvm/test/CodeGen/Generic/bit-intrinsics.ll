@@ -1,6 +1,7 @@
 ; Make sure this testcase is supported by all code generators. Either the
 ; intrinsic is supported natively or IntrinsicLowering provides it.
 ; RUN: llvm-as < %s | llc
+; XFAIL: *
 
 
 declare i32 @llvm.bit.part.select.i32.i32(i32 %x, i32 %hi, i32 %lo)
