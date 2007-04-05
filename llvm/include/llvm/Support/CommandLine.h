@@ -219,7 +219,6 @@ public:
   // occurrences of -ArgStr on the command line.
   //
   void addArgument(const char *ArgStr);
-  void removeArgument(const char *ArgStr);
 
   // Return the width of the option tag for printing...
   virtual unsigned getOptionWidth() const = 0;

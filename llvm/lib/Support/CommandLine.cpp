@@ -75,12 +75,12 @@ extrahelp::extrahelp(const char *Help)
 // Basic, shared command line option processing machinery.
 //
 
-static ManagedStatic<std::map<std::string, Option*> > Options;
+static ManagedStatic<std::map<std::string, Option*> > OptionsMap;
 static ManagedStatic<std::vector<Option*> > PositionalOptions;
 
 static Option *getOption(const std::string &Str) {
-  std::map<std::string,Option*>::iterator I = Options->find(Str);
-  return I != Options->end() ? I->second : 0;
+  std::map<std::string,Option*>::iterator I = OptionsMap->find(Str);
+  return I != OptionsMap->end() ? I->second : 0;
 }
 
 static void AddArgument(const char *ArgName, Option *Opt) {
@@ -89,23 +89,31 @@ static void AddArgument(const char *ArgName, Option *Opt) {
          << ArgName << "' defined more than once!\n";
   } else {
     // Add argument to the argument map!
-    (*Options)[ArgName] = Opt;
+    (*OptionsMap)[ArgName] = Opt;
   }
 }
 
-// RemoveArgument - It's possible that the argument is no longer in the map if
-// options have already been processed and the map has been deleted!
-//
-static void RemoveArgument(const char *ArgName, Option *Opt) {
-  if (Options->empty()) return;
-
-#ifndef NDEBUG
-  // This disgusting HACK is brought to you courtesy of GCC 3.3.2, which ICE's
-  // If we pass ArgName directly into getOption here.
-  std::string Tmp = ArgName;
-  assert(getOption(Tmp) == Opt && "Arg not in map!");
-#endif
-  Options->erase(ArgName);
+/// LookupOption - Lookup the option specified by the specified option on the
+/// command line.  If there is a value specified (after an equal sign) return
+/// that as well.
+static Option *LookupOption(const char *&Arg, const char *&Value) {
+  while (*Arg == '-') ++Arg;  // Eat leading dashes
+  
+  const char *ArgEnd = Arg;
+  while (*ArgEnd && *ArgEnd != '=')
+    ++ArgEnd; // Scan till end of argument name.
+  
+  if (*ArgEnd == '=')  // If we have an equals sign...
+    Value = ArgEnd+1;  // Get the value, not the equals
+  
+  
+  if (*Arg == 0) return 0;
+  
+  // Look up the option.
+  std::map<std::string, Option*> &Opts = *OptionsMap;
+  std::map<std::string, Option*>::iterator I =
+    Opts.find(std::string(Arg, ArgEnd));
+  return (I != Opts.end()) ? I->second : 0;
 }
 
 static inline bool ProvideOption(Option *Handler, const char *ArgName,
@@ -276,32 +284,9 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
     free (*i);
 }
 
-/// LookupOption - Lookup the option specified by the specified option on the
-/// command line.  If there is a value specified (after an equal sign) return
-/// that as well.
-static Option *LookupOption(const char *&Arg, const char *&Value) {
-  while (*Arg == '-') ++Arg;  // Eat leading dashes
-
-  const char *ArgEnd = Arg;
-  while (*ArgEnd && *ArgEnd != '=')
-    ++ArgEnd; // Scan till end of argument name.
-
-  if (*ArgEnd == '=')  // If we have an equals sign...
-    Value = ArgEnd+1;  // Get the value, not the equals
-
-
-  if (*Arg == 0) return 0;
-
-  // Look up the option.
-  std::map<std::string, Option*> &Opts = *Options;
-  std::map<std::string, Option*>::iterator I =
-    Opts.find(std::string(Arg, ArgEnd));
-  return (I != Opts.end()) ? I->second : 0;
-}
-
 void cl::ParseCommandLineOptions(int &argc, char **argv,
                                  const char *Overview) {
-  assert((!Options->empty() || !PositionalOptions->empty()) &&
+  assert((!OptionsMap->empty() || !PositionalOptions->empty()) &&
          "No options specified, or ParseCommandLineOptions called more"
          " than once!");
   sys::Path progname(argv[0]);
@@ -314,7 +299,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   ProgramOverview = Overview;
   bool ErrorParsing = false;
 
-  std::map<std::string, Option*> &Opts = *Options;
+  std::map<std::string, Option*> &Opts = *OptionsMap;
   std::vector<Option*> &PositionalOpts = *PositionalOptions;
 
   // Check out the positional arguments to collect information about them.
@@ -665,22 +650,6 @@ void Option::addArgument(const char *ArgStr) {
   }
 }
 
-void Option::removeArgument(const char *ArgStr) {
-  if (ArgStr[0])
-    RemoveArgument(ArgStr, this);
-
-  if (getFormattingFlag() == Positional) {
-    std::vector<Option*>::iterator I =
-      std::find(PositionalOptions->begin(), PositionalOptions->end(), this);
-    assert(I != PositionalOptions->end() && "Arg not registered!");
-    PositionalOptions->erase(I);
-  } else if (getNumOccurrencesFlag() == ConsumeAfter) {
-    assert(!PositionalOptions->empty() && (*PositionalOptions)[0] == this &&
-           "Arg not registered correctly!");
-    PositionalOptions->erase(PositionalOptions->begin());
-  }
-}
-
 
 // getValueStr - Get the value description string, using "DefaultMsg" if nothing
 // has been specified yet.
@@ -900,7 +869,7 @@ public:
 
     // Copy Options into a vector so we can sort them as we like...
     std::vector<std::pair<std::string, Option*> > Opts;
-    copy(Options->begin(), Options->end(), std::back_inserter(Opts));
+    copy(OptionsMap->begin(), OptionsMap->end(), std::back_inserter(Opts));
 
     // Eliminate Hidden or ReallyHidden arguments, depending on ShowHidden
     Opts.erase(std::remove_if(Opts.begin(), Opts.end(),
@@ -955,7 +924,7 @@ public:
     MoreHelp->clear();
 
     // Halt the program since help information was printed
-    Options->clear();  // Don't bother making option dtors remove from map.
+    OptionsMap->clear();  // Don't bother making option dtors remove from map.
     exit(1);
   }
 };
@@ -1001,7 +970,7 @@ public:
     if (OptionWasSpecified) {
       if (OverrideVersionPrinter == 0) {
         print();
-        Options->clear();  // Don't bother making option dtors remove from map.
+        OptionsMap->clear();// Don't bother making option dtors remove from map.
         exit(1);
       } else {
         (*OverrideVersionPrinter)();
