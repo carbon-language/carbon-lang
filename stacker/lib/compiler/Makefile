@@ -14,7 +14,6 @@ EXTRA_DIST := Lexer.cpp.cvs Lexer.l.cvs \
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
-include $(LLVMMAKE)/archive
 
 ifdef PARSE_DEBUG
 INCLUDES += -DPARSE_DEBUG

@@ -26,4 +26,4 @@ PROJ_OBJ_ROOT := $(subst //,/,@abs_top_objdir@)
 PROJ_INSTALL_ROOT := @prefix@
 
 # Include LLVM's Master Makefile.
-include $(LLVM_OBJ_ROOT)/Makefile.config
+include $(LLVM_OBJ_ROOT)/Makefile.common
