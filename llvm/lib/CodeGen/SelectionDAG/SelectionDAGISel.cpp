@@ -2439,9 +2439,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::bit_part_select: {
-    MVT::ValueType Ty = getValue(I.getOperand(1)).getValueType();
-    setValue(&I, DAG.getTargetConstant(0, Ty));
-    return 0;
+    // MVT::ValueType Ty = getValue(I.getOperand(1)).getValueType();
+    // setValue(&I, DAG.getTargetConstant(0, Ty));
+    // Currently not implemented: just abort
+    assert(0 && "bit_part_select intrinsic not implemented");
+    abort();
   }
   case Intrinsic::bswap:
     setValue(&I, DAG.getNode(ISD::BSWAP,
