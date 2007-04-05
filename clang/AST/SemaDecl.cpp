@@ -109,7 +109,7 @@ Decl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
 Decl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
   Builtin::ID BID = (Builtin::ID)bid;
 
-  TypeRef R = Context.BuiltinInfo.GetBuiltinType(BID, Context);
+  QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);
   FunctionDecl *New = new FunctionDecl(SourceLocation(), II, R);
   
   // Find translation-unit scope to insert this function into.
@@ -248,7 +248,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
     }
     New = NewTD;
   } else if (D.isFunctionDeclarator()) {
-    TypeRef R = GetTypeForDeclarator(D, S);
+    QualType R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0; // FIXME: "auto func();" passes through...
     
     FunctionDecl::StorageClass SC;
@@ -272,7 +272,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
     }
     New = NewFD;
   } else {
-    TypeRef R = GetTypeForDeclarator(D, S);
+    QualType R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0;
 
     VarDecl *NewVD;
@@ -355,7 +355,7 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   
   // FIXME: Handle storage class (auto, register). No declarator?
   VarDecl *New = new ParmVarDecl(PI.IdentLoc, II, 
-                                 TypeRef::getFromOpaquePtr(PI.TypeInfo), 
+                                 QualType::getFromOpaquePtr(PI.TypeInfo), 
                                  VarDecl::None);
 
   // If this has an identifier, add it to the scope stack.
@@ -464,7 +464,7 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
 TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
   assert(D.getIdentifier() && "Wrong callback for declspec withotu declarator");
   
-  TypeRef T = GetTypeForDeclarator(D, S);
+  QualType T = GetTypeForDeclarator(D, S);
   if (T.isNull()) return 0;
   
   // Scope manipulation handled by caller.
@@ -593,7 +593,7 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
     
   }
   
-  TypeRef T = GetTypeForDeclarator(D, S);
+  QualType T = GetTypeForDeclarator(D, S);
   if (T.isNull()) return 0;
 
   return new FieldDecl(Loc, II, T);
@@ -729,7 +729,7 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
     }
   }
   
-  TypeRef Ty = Context.getTagDeclType(TheEnumDecl);
+  QualType Ty = Context.getTagDeclType(TheEnumDecl);
   EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, Ty);
   
   // Register this decl in the current scope stack.

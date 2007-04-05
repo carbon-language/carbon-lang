@@ -56,7 +56,7 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
 
 /// DecodeTypeFromStr - This decodes one type descriptor from Str, advancing the
 /// pointer over the consumed characters.  This returns the resultant type.
-static TypeRef DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
+static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
   // Modifiers.
   bool Long = false, LongLong = false, Signed = false, Unsigned = false;
   
@@ -109,12 +109,12 @@ static TypeRef DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
 }
 
 /// GetBuiltinType - Return the type for the specified builtin.
-TypeRef Builtin::Context::GetBuiltinType(unsigned id, ASTContext &Context)const{
+QualType Builtin::Context::GetBuiltinType(unsigned id, ASTContext &Context)const{
   const char *TypeStr = GetRecord(id).Type;
   
-  SmallVector<TypeRef, 8> ArgTypes;
+  SmallVector<QualType, 8> ArgTypes;
   
-  TypeRef ResType = DecodeTypeFromStr(TypeStr, Context);
+  QualType ResType = DecodeTypeFromStr(TypeStr, Context);
   while (TypeStr[0] && TypeStr[0] != '.')
     ArgTypes.push_back(DecodeTypeFromStr(TypeStr, Context));
   

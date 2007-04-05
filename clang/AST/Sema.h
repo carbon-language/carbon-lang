@@ -28,7 +28,7 @@ namespace clang {
   class VarDecl;
   class TypedefDecl;
   class FunctionDecl;
-  class TypeRef;
+  class QualType;
   class LangOptions;
   class DeclaratorChunk;
   class LexerToken;
@@ -58,12 +58,12 @@ public:
             const std::string &Msg = std::string());
   bool Diag(const LexerToken &Tok, unsigned DiagID,
             const std::string &M = std::string());
-  bool Diag(SourceLocation Loc, unsigned DiagID, TypeRef t);
+  bool Diag(SourceLocation Loc, unsigned DiagID, QualType t);
   
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
-  TypeRef GetTypeForDeclarator(Declarator &D, Scope *S);
+  QualType GetTypeForDeclarator(Declarator &D, Scope *S);
   
   virtual TypeResult ParseTypeName(Scope *S, Declarator &D);
   

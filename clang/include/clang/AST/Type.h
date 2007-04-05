@@ -27,7 +27,7 @@ namespace clang {
   class EnumDecl;
   class Expr;
   
-/// TypeRef - For efficiency, we don't store CVR-qualified types as nodes on
+/// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
 /// greatly reduces the number of nodes we need to allocate for types (for
 /// example we only need one for 'int', 'const int', 'volatile int',
@@ -35,9 +35,9 @@ namespace clang {
 ///
 /// As an added efficiency bonus, instead of making this a pair, we just store
 /// the three bits we care about in the low bits of the pointer.  To handle the
-/// packing/unpacking, we make TypeRef be a simple wrapper class that acts like
+/// packing/unpacking, we make QualType be a simple wrapper class that acts like
 /// a smart pointer.
-class TypeRef {
+class QualType {
   uintptr_t ThePtr;
 public:
   enum TQ {   // NOTE: These flags must be kept in sync with DeclSpec::TQ.
@@ -47,17 +47,17 @@ public:
     CVRFlags = Const|Restrict|Volatile
   };
   
-  TypeRef() : ThePtr(0) {}
+  QualType() : ThePtr(0) {}
   
-  TypeRef(Type *Ptr, unsigned Quals = 0) {
+  QualType(Type *Ptr, unsigned Quals) {
     assert((Quals & ~CVRFlags) == 0 && "Invalid type qualifiers!");
     ThePtr = reinterpret_cast<uintptr_t>(Ptr);
     assert((ThePtr & CVRFlags) == 0 && "Type pointer not 8-byte aligned?");
     ThePtr |= Quals;
   }
 
-  static TypeRef getFromOpaquePtr(void *Ptr) {
-    TypeRef T;
+  static QualType getFromOpaquePtr(void *Ptr) {
+    QualType T;
     T.ThePtr = reinterpret_cast<uintptr_t>(Ptr);
     return T;
   }
@@ -81,7 +81,7 @@ public:
     return getTypePtr();
   }
   
-  /// isNull - Return true if this TypeRef doesn't point to a type yet.
+  /// isNull - Return true if this QualType doesn't point to a type yet.
   bool isNull() const {
     return ThePtr == 0;
   }
@@ -96,20 +96,20 @@ public:
     return ThePtr & Restrict;
   }
   
-  TypeRef getQualifiedType(unsigned TQs) const {
-    return TypeRef(getTypePtr(), TQs);
+  QualType getQualifiedType(unsigned TQs) const {
+    return QualType(getTypePtr(), TQs);
   }
   
-  TypeRef getUnqualifiedType() const {
-    return TypeRef(getTypePtr());
+  QualType getUnqualifiedType() const {
+    return QualType(getTypePtr(), 0);
   }
   
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
-  bool operator==(const TypeRef &RHS) const {
+  bool operator==(const QualType &RHS) const {
     return ThePtr == RHS.ThePtr;
   }
-  bool operator!=(const TypeRef &RHS) const {
+  bool operator!=(const QualType &RHS) const {
     return ThePtr != RHS.ThePtr;
   }
   /// isModifiableLvalue - C99 6.3.2.1p1: returns true if the type is an lvalue
@@ -124,21 +124,21 @@ public:
 
   /// getCanonicalType - Return the canonical version of this type, with the
   /// appropriate type qualifiers on it.
-  inline TypeRef getCanonicalType() const;
+  inline QualType getCanonicalType() const;
 };
 
 } // end clang.
 
-/// Implement simplify_type for TypeRef, so that we can dyn_cast from TypeRef to
+/// Implement simplify_type for QualType, so that we can dyn_cast from QualType to
 /// a specific Type class.
-template<> struct simplify_type<const clang::TypeRef> {
+template<> struct simplify_type<const clang::QualType> {
   typedef clang::Type* SimpleType;
-  static SimpleType getSimplifiedValue(const clang::TypeRef &Val) {
+  static SimpleType getSimplifiedValue(const clang::QualType &Val) {
     return Val.getTypePtr();
   }
 };
-template<> struct simplify_type<clang::TypeRef>
-  : public simplify_type<const clang::TypeRef> {};
+template<> struct simplify_type<clang::QualType>
+  : public simplify_type<const clang::QualType> {};
 
 namespace clang {
 
@@ -173,15 +173,15 @@ public:
     Builtin, Pointer, Array, FunctionNoProto, FunctionProto, TypeName, Tagged
   };
 private:
-  TypeRef CanonicalType;
+  QualType CanonicalType;
 
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
   TypeClass TC : 3;
 protected:
-  Type(TypeClass tc, TypeRef Canonical)
-    : CanonicalType(Canonical.isNull() ? TypeRef(this,0) : Canonical), TC(tc) {}
+  Type(TypeClass tc, QualType Canonical)
+    : CanonicalType(Canonical.isNull() ? QualType(this,0) : Canonical), TC(tc) {}
   virtual ~Type();
   friend class ASTContext;
 public:  
@@ -227,12 +227,12 @@ public:
   
   bool isLvalue() const;         // C99 6.3.2.1
 private:
-  // this forces clients to use isModifiableLvalue on TypeRef, the class that 
-  // knows if the type is const. This predicate is a helper to TypeRef. 
+  // this forces clients to use isModifiableLvalue on QualType, the class that 
+  // knows if the type is const. This predicate is a helper to QualType. 
   bool isModifiableLvalue() const; // C99 6.3.2.1p1
   
-  TypeRef getCanonicalType() const { return CanonicalType; }
-  friend class TypeRef;
+  QualType getCanonicalType() const { return CanonicalType; }
+  friend class QualType;
 public:
   virtual void getAsString(std::string &InnerString) const = 0;
   
@@ -253,7 +253,7 @@ public:
 private:
   Kind TypeKind;
 public:
-  BuiltinType(Kind K) : Type(Builtin, 0), TypeKind(K) {}
+  BuiltinType(Kind K) : Type(Builtin, QualType()), TypeKind(K) {}
   
   Kind getKind() const { return TypeKind; }
   const char *getName() const;
@@ -267,14 +267,14 @@ public:
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
 ///
 class PointerType : public Type, public FoldingSetNode {
-  TypeRef PointeeType;
-  PointerType(TypeRef Pointee, TypeRef CanonicalPtr) :
+  QualType PointeeType;
+  PointerType(QualType Pointee, QualType CanonicalPtr) :
     Type(Pointer, CanonicalPtr), PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
     
-  TypeRef getPointeeType() const { return PointeeType; }
+  QualType getPointeeType() const { return PointeeType; }
   
   virtual void getAsString(std::string &InnerString) const;
   
@@ -282,7 +282,7 @@ public:
   void Profile(FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType());
   }
-  static void Profile(FoldingSetNodeID &ID, TypeRef Pointee) {
+  static void Profile(FoldingSetNodeID &ID, QualType Pointee) {
     ID.AddPointer(Pointee.getAsOpaquePtr());
   }
   
@@ -309,19 +309,19 @@ private:
   unsigned IndexTypeQuals : 3;
   
   /// ElementType - The element type of the array.
-  TypeRef ElementType;
+  QualType ElementType;
   
   /// SizeExpr - The size is either a constant or assignment expression (for 
   /// Variable Length Arrays). VLA's are only permitted within a function block. 
   Expr *SizeExpr;
   
-  ArrayType(TypeRef et, ArraySizeModifier sm, unsigned tq, TypeRef can, Expr *e)
+  ArrayType(QualType et, ArraySizeModifier sm, unsigned tq, QualType can, Expr *e)
     : Type(Array, can), SizeModifier(sm), IndexTypeQuals(tq), ElementType(et),
       SizeExpr(e) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
     
-  TypeRef getElementType() const { return ElementType; }
+  QualType getElementType() const { return ElementType; }
   ArraySizeModifier getSizeModifier() const { return SizeModifier; }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   Expr *getSize() const { return SizeExpr; }
@@ -333,7 +333,7 @@ public:
             getSize());
   }
   static void Profile(FoldingSetNodeID &ID, ArraySizeModifier SizeModifier,
-                      unsigned IndexTypeQuals, TypeRef ElementType,
+                      unsigned IndexTypeQuals, QualType ElementType,
                       Expr *SizeExpr) {
     ID.AddInteger(SizeModifier);
     ID.AddInteger(IndexTypeQuals);
@@ -354,14 +354,14 @@ class FunctionType : public Type {
   bool SubClassData : 1;
   
   // The type returned by the function.
-  TypeRef ResultType;
+  QualType ResultType;
 protected:
-  FunctionType(TypeClass tc, TypeRef res, bool SubclassInfo, TypeRef Canonical)
+  FunctionType(TypeClass tc, QualType res, bool SubclassInfo, QualType Canonical)
     : Type(tc, Canonical), SubClassData(SubclassInfo), ResultType(res) {}
   bool getSubClassData() const { return SubClassData; }
 public:
   
-  TypeRef getResultType() const { return ResultType; }
+  QualType getResultType() const { return ResultType; }
 
   
   static bool classof(const Type *T) {
@@ -374,7 +374,7 @@ public:
 /// FunctionTypeNoProto - Represents a K&R-style 'int foo()' function, which has
 /// no information available about its arguments.
 class FunctionTypeNoProto : public FunctionType, public FoldingSetNode {
-  FunctionTypeNoProto(TypeRef Result, TypeRef Canonical)
+  FunctionTypeNoProto(QualType Result, QualType Canonical)
     : FunctionType(FunctionNoProto, Result, false, Canonical) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -385,7 +385,7 @@ public:
   void Profile(FoldingSetNodeID &ID) {
     Profile(ID, getResultType());
   }
-  static void Profile(FoldingSetNodeID &ID, TypeRef ResultType) {
+  static void Profile(FoldingSetNodeID &ID, QualType ResultType) {
     ID.AddPointer(ResultType.getAsOpaquePtr());
   }
   
@@ -399,8 +399,8 @@ public:
 /// 'int foo(int)' or 'int foo(void)'.  'void' is represented as having no
 /// arguments, not as having a single void argument.
 class FunctionTypeProto : public FunctionType, public FoldingSetNode {
-  FunctionTypeProto(TypeRef Result, TypeRef *ArgArray, unsigned numArgs,
-                    bool isVariadic, TypeRef Canonical)
+  FunctionTypeProto(QualType Result, QualType *ArgArray, unsigned numArgs,
+                    bool isVariadic, QualType Canonical)
     : FunctionType(FunctionProto, Result, isVariadic, Canonical),
       NumArgs(numArgs) {
     for (unsigned i = 0; i != numArgs; ++i)
@@ -413,11 +413,11 @@ class FunctionTypeProto : public FunctionType, public FoldingSetNode {
   /// ArgInfo - This array holds the argument types.  Note that this is actually
   /// a variable-sized array, so it must be the last instance variable in the
   /// class.
-  TypeRef ArgInfo[1];
+  QualType ArgInfo[1];
   friend class ASTContext;  // ASTContext creates these.
 public:
   unsigned getNumArgs() const { return NumArgs; }
-  TypeRef getArgType(unsigned i) const {
+  QualType getArgType(unsigned i) const {
     assert(i < NumArgs && "Invalid argument number!");
     return ArgInfo[i];
   }
@@ -432,14 +432,14 @@ public:
   static bool classof(const FunctionTypeProto *) { return true; }
   
   void Profile(FoldingSetNodeID &ID);
-  static void Profile(FoldingSetNodeID &ID, TypeRef Result, TypeRef* ArgTys,
+  static void Profile(FoldingSetNodeID &ID, QualType Result, QualType* ArgTys,
                       unsigned NumArgs, bool isVariadic);
 };
 
 
 class TypedefType : public Type {
   TypedefDecl *Decl;
-  TypedefType(TypedefDecl *D, TypeRef can) : Type(TypeName, can), Decl(D) {
+  TypedefType(TypedefDecl *D, QualType can) : Type(TypeName, can), Decl(D) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -456,7 +456,7 @@ public:
 
 class TagType : public Type {
   TagDecl *Decl;
-  TagType(TagDecl *D, TypeRef can) : Type(Tagged, can), Decl(D) {}
+  TagType(TagDecl *D, QualType can) : Type(Tagged, can), Decl(D) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
     
@@ -477,7 +477,7 @@ public:
   RecordDecl *getDecl() const {
     return reinterpret_cast<RecordDecl*>(TagType::getDecl());
   }
-  // FIXME: This predicate is a helper to TypeRef/Type. It needs to 
+  // FIXME: This predicate is a helper to QualType/Type. It needs to 
   // recursively check all fields for const-ness. If any field is declared
   // const, it needs to return false. 
   bool isModifiableLvalue() const { return true; } 
@@ -497,10 +497,10 @@ public:
 
 /// getCanonicalType - Return the canonical version of this type, with the
 /// appropriate type qualifiers on it.
-inline TypeRef TypeRef::getCanonicalType() const {
-  return TypeRef(getTypePtr()->getCanonicalType().getTypePtr(),
-                 getQualifiers() |
-                 getTypePtr()->getCanonicalType().getQualifiers());
+inline QualType QualType::getCanonicalType() const {
+  return QualType(getTypePtr()->getCanonicalType().getTypePtr(),
+                  getQualifiers() |
+                  getTypePtr()->getCanonicalType().getQualifiers());
 }
   
 }  // end namespace clang

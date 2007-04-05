@@ -36,14 +36,14 @@ public:
   Builtin::Context BuiltinInfo;
 
   // Builtin Types.
-  TypeRef VoidTy;
-  TypeRef BoolTy;
-  TypeRef CharTy;
-  TypeRef SignedCharTy, ShortTy, IntTy, LongTy, LongLongTy;
-  TypeRef UnsignedCharTy, UnsignedShortTy, UnsignedIntTy, UnsignedLongTy;
-  TypeRef UnsignedLongLongTy;
-  TypeRef FloatTy, DoubleTy, LongDoubleTy;
-  TypeRef FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
+  QualType VoidTy;
+  QualType BoolTy;
+  QualType CharTy;
+  QualType SignedCharTy, ShortTy, IntTy, LongTy, LongLongTy;
+  QualType UnsignedCharTy, UnsignedShortTy, UnsignedIntTy, UnsignedLongTy;
+  QualType UnsignedLongLongTy;
+  QualType FloatTy, DoubleTy, LongDoubleTy;
+  QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   
   ASTContext(TargetInfo &t, IdentifierTable &idents) : Target(t) {
     InitBuiltinTypes();
@@ -55,36 +55,36 @@ public:
   
   /// getPointerType - Return the uniqued reference to the type for a pointer to
   /// the specified type.
-  TypeRef getPointerType(TypeRef T);
+  QualType getPointerType(QualType T);
   
   /// getArrayType - Return the unique reference to the type for an array of the
   /// specified element type.
-  TypeRef getArrayType(TypeRef EltTy, ArrayType::ArraySizeModifier ASM,
-                       unsigned EltTypeQuals, Expr *NumElts);
+  QualType getArrayType(QualType EltTy, ArrayType::ArraySizeModifier ASM,
+                        unsigned EltTypeQuals, Expr *NumElts);
 
   /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
   ///
-  TypeRef getFunctionTypeNoProto(TypeRef ResultTy);
+  QualType getFunctionTypeNoProto(QualType ResultTy);
   
   /// getFunctionType - Return a normal function type with a typed argument
   /// list.  isVariadic indicates whether the argument list includes '...'.
-  TypeRef getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
-                          unsigned NumArgs, bool isVariadic);
+  QualType getFunctionType(QualType ResultTy, QualType *ArgArray,
+                           unsigned NumArgs, bool isVariadic);
   
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
-  TypeRef getTypedefType(TypedefDecl *Decl);
+  QualType getTypedefType(TypedefDecl *Decl);
 
   /// getTagDeclType - Return the unique reference to the type for the
   /// specified TagDecl (struct/union/class/enum) decl.
-  TypeRef getTagDeclType(TagDecl *Decl);
+  QualType getTagDeclType(TagDecl *Decl);
   
   /// getSizeType - Return the unique type for "size_t" (C99 7.17), defined
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
-  TypeRef getSizeType() const;
+  QualType getSizeType() const;
 private:
   void InitBuiltinTypes();
-  void InitBuiltinType(TypeRef &R, BuiltinType::Kind K);
+  void InitBuiltinType(QualType &R, BuiltinType::Kind K);
 };
   
 }  // end namespace clang

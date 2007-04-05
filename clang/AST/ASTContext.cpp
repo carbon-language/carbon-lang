@@ -83,8 +83,8 @@ void ASTContext::PrintStats() const {
 }
 
 
-void ASTContext::InitBuiltinType(TypeRef &R, BuiltinType::Kind K) {
-  Types.push_back((R = new BuiltinType(K)).getTypePtr());
+void ASTContext::InitBuiltinType(QualType &R, BuiltinType::Kind K) {
+  Types.push_back((R = QualType(new BuiltinType(K),0)).getTypePtr());
 }
 
 
@@ -125,7 +125,7 @@ void ASTContext::InitBuiltinTypes() {
 
 /// getPointerType - Return the uniqued reference to the type for a pointer to
 /// the specified type.
-TypeRef ASTContext::getPointerType(TypeRef T) {
+QualType ASTContext::getPointerType(QualType T) {
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
   FoldingSetNodeID ID;
@@ -133,11 +133,11 @@ TypeRef ASTContext::getPointerType(TypeRef T) {
   
   void *InsertPos = 0;
   if (PointerType *PT = PointerTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return PT;
+    return QualType(PT, 0);
   
   // If the pointee type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
-  TypeRef Canonical = 0;
+  QualType Canonical;
   if (!T->isCanonical()) {
     Canonical = getPointerType(T.getCanonicalType());
    
@@ -148,13 +148,13 @@ TypeRef ASTContext::getPointerType(TypeRef T) {
   PointerType *New = new PointerType(T, Canonical);
   Types.push_back(New);
   PointerTypes.InsertNode(New, InsertPos);
-  return New;
+  return QualType(New, 0);
 }
 
 /// getArrayType - Return the unique reference to the type for an array of the
 /// specified element type.
-TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
-                                 unsigned EltTypeQuals, Expr *NumElts) {
+QualType ASTContext::getArrayType(QualType EltTy,ArrayType::ArraySizeModifier ASM,
+                                  unsigned EltTypeQuals, Expr *NumElts) {
   // Unique array types, to guarantee there is only one array of a particular
   // structure.
   FoldingSetNodeID ID;
@@ -162,11 +162,11 @@ TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
       
   void *InsertPos = 0;
   if (ArrayType *ATP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return ATP;
+    return QualType(ATP, 0);
   
   // If the element type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
-  TypeRef Canonical = 0;
+  QualType Canonical;
   if (!EltTy->isCanonical()) {
     Canonical = getArrayType(EltTy.getCanonicalType(), ASM, EltTypeQuals,
                              NumElts);
@@ -179,12 +179,12 @@ TypeRef ASTContext::getArrayType(TypeRef EltTy,ArrayType::ArraySizeModifier ASM,
   ArrayType *New = new ArrayType(EltTy, ASM, EltTypeQuals, Canonical, NumElts);
   ArrayTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
-  return New;
+  return QualType(New, 0);
 }
 
 /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
 ///
-TypeRef ASTContext::getFunctionTypeNoProto(TypeRef ResultTy) {
+QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   FoldingSetNodeID ID;
@@ -193,11 +193,11 @@ TypeRef ASTContext::getFunctionTypeNoProto(TypeRef ResultTy) {
   void *InsertPos = 0;
   if (FunctionTypeNoProto *FT = 
         FunctionTypeNoProtos.FindNodeOrInsertPos(ID, InsertPos))
-    return FT;
+    return QualType(FT, 0);
   
-  TypeRef Canonical = 0;
+  QualType Canonical;
   if (!ResultTy->isCanonical()) {
-    Canonical =getFunctionTypeNoProto(ResultTy.getCanonicalType()).getTypePtr();
+    Canonical = getFunctionTypeNoProto(ResultTy.getCanonicalType());
     
     // Get the new insert position for the node we care about.
     FunctionTypeNoProto *NewIP =
@@ -208,13 +208,13 @@ TypeRef ASTContext::getFunctionTypeNoProto(TypeRef ResultTy) {
   FunctionTypeNoProto *New = new FunctionTypeNoProto(ResultTy, Canonical);
   Types.push_back(New);
   FunctionTypeProtos.InsertNode(New, InsertPos);
-  return New;
+  return QualType(New, 0);
 }
 
 /// getFunctionType - Return a normal function type with a typed argument
 /// list.  isVariadic indicates whether the argument list includes '...'.
-TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
-                                    unsigned NumArgs, bool isVariadic) {
+QualType ASTContext::getFunctionType(QualType ResultTy, QualType *ArgArray,
+                                     unsigned NumArgs, bool isVariadic) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   FoldingSetNodeID ID;
@@ -223,7 +223,7 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
   void *InsertPos = 0;
   if (FunctionTypeProto *FTP = 
         FunctionTypeProtos.FindNodeOrInsertPos(ID, InsertPos))
-    return FTP;
+    return QualType(FTP, 0);
     
   // Determine whether the type being created is already canonical or not.  
   bool isCanonical = ResultTy->isCanonical();
@@ -232,9 +232,9 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
       isCanonical = false;
 
   // If this type isn't canonical, get the canonical version of it.
-  TypeRef Canonical = 0;
+  QualType Canonical;
   if (!isCanonical) {
-    SmallVector<TypeRef, 16> CanonicalArgs;
+    SmallVector<QualType, 16> CanonicalArgs;
     CanonicalArgs.reserve(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
       CanonicalArgs.push_back(ArgArray[i].getCanonicalType());
@@ -253,41 +253,41 @@ TypeRef ASTContext::getFunctionType(TypeRef ResultTy, TypeRef *ArgArray,
   // variable size array (for parameter types) at the end of them.
   FunctionTypeProto *FTP = 
     (FunctionTypeProto*)malloc(sizeof(FunctionTypeProto) + 
-                               (NumArgs-1)*sizeof(TypeRef));
+                               (NumArgs-1)*sizeof(QualType));
   new (FTP) FunctionTypeProto(ResultTy, ArgArray, NumArgs, isVariadic,
                               Canonical);
   
   Types.push_back(FTP);
   FunctionTypeProtos.InsertNode(FTP, InsertPos);
-  return FTP;
+  return QualType(FTP, 0);
 }
 
 /// getTypedefType - Return the unique reference to the type for the
 /// specified typename decl.
-TypeRef ASTContext::getTypedefType(TypedefDecl *Decl) {
-  if (Decl->TypeForDecl) return Decl->TypeForDecl;
+QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
+  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
-  TypeRef Canonical = Decl->getUnderlyingType().getCanonicalType();
+  QualType Canonical = Decl->getUnderlyingType().getCanonicalType();
   Decl->TypeForDecl = new TypedefType(Decl, Canonical);
   Types.push_back(Decl->TypeForDecl);
-  return Decl->TypeForDecl;
+  return QualType(Decl->TypeForDecl, 0);
 }
 
 /// getTagDeclType - Return the unique reference to the type for the
 /// specified TagDecl (struct/union/class/enum) decl.
-TypeRef ASTContext::getTagDeclType(TagDecl *Decl) {
+QualType ASTContext::getTagDeclType(TagDecl *Decl) {
   // The decl stores the type cache.
-  if (Decl->TypeForDecl) return Decl->TypeForDecl;
+  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
-  Decl->TypeForDecl = new TagType(Decl, 0);
+  Decl->TypeForDecl = new TagType(Decl, QualType());
   Types.push_back(Decl->TypeForDecl);
-  return Decl->TypeForDecl;
+  return QualType(Decl->TypeForDecl, 0);
 }
 
 /// getSizeType - Return the unique type for "size_t" (C99 7.17), the result 
 /// of the sizeof operator (C99 6.5.3.4p4). The value is target dependent and 
 /// needs to agree with the definition in <stddef.h>. 
-TypeRef ASTContext::getSizeType() const {
+QualType ASTContext::getSizeType() const {
   // On Darwin, size_t is defined as a "long unsigned int". 
   // FIXME: should derive from "Target".
   return UnsignedLongTy; 

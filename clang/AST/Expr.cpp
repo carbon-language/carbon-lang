@@ -22,7 +22,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 StringLiteral::StringLiteral(const char *strData, unsigned byteLength, 
-                             bool Wide, TypeRef t) : 
+                             bool Wide, QualType t) : 
   Expr(StringLiteralClass, t) {
   // OPTIMIZE: could allocate this appended to the StringLiteral.
   char *AStrData = new char[byteLength];

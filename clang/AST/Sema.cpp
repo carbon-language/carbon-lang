@@ -31,7 +31,7 @@ bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
   return true;
 }
 
-bool Sema::Diag(SourceLocation Loc, unsigned DiagID, TypeRef t) {
+bool Sema::Diag(SourceLocation Loc, unsigned DiagID, QualType t) {
   std::string Name;
   t.getAsString(Name);
   PP.Diag(Loc, DiagID, Name);

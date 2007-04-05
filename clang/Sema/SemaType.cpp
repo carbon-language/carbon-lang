@@ -21,12 +21,12 @@ using namespace clang;
 
 /// ConvertDeclSpecToType - Convert the specified declspec to the appropriate
 /// type object.  This returns null on error.
-static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
+static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   
   switch (DS.getTypeSpecType()) {
-  default: return TypeRef(); // FIXME: Handle unimp cases!
+  default: return QualType(); // FIXME: Handle unimp cases!
   case DeclSpec::TST_void: return Ctx.VoidTy;
   case DeclSpec::TST_char:
     if (DS.getTypeSpecSign() == DeclSpec::TSS_unspecified)
@@ -100,8 +100,8 @@ static TypeRef ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
 
 /// GetTypeForDeclarator - Convert the type for the specified declarator to Type
 /// instances.
-TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
-  TypeRef T = ConvertDeclSpecToType(D.getDeclSpec(), Context);
+QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
+  QualType T = ConvertDeclSpecToType(D.getDeclSpec(), Context);
 
   // If there was an error parsing declspecs, return a null type pointer.
   if (T.isNull()) return T;
@@ -140,11 +140,11 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         T->getAsString(Name);
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type,
              Name);
-        return TypeRef();
+        return QualType();
       } else if (isa<FunctionType>(CanonicalT)) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
              D.getIdentifier()->getName());
-        return TypeRef();
+        return QualType();
       } else if (RecordType *EltTy = dyn_cast<RecordType>(CanonicalT)) {
         // If the element type is a struct or union that contains a variadic
         // array, reject it: C99 6.7.2.1p2.
@@ -152,7 +152,7 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           std::string Name;
           T->getAsString(Name);
           Diag(DeclType.Loc, diag::err_flexible_array_in_array, Name);
-          return TypeRef();
+          return QualType();
         }
       }
       T = Context.getArrayType(T, ASM, ATI.TypeQuals, 
@@ -175,12 +175,12 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       } else {
         // Otherwise, we have a function with an argument list that is
         // potentially variadic.
-        SmallVector<TypeRef, 16> ArgTys;
+        SmallVector<QualType, 16> ArgTys;
         
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-          TypeRef ArgTy = TypeRef::getFromOpaquePtr(FTI.ArgInfo[i].TypeInfo);
+          QualType ArgTy = QualType::getFromOpaquePtr(FTI.ArgInfo[i].TypeInfo);
           if (ArgTy.isNull())
-            return TypeRef();  // Error occurred parsing argument type.
+            return QualType();  // Error occurred parsing argument type.
           
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
@@ -191,7 +191,7 @@ TypeRef Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
             // have arguments of incomplete type.
             if (FTI.NumArgs != 1 || FTI.isVariadic) {
               Diag(DeclType.Loc, diag::err_void_only_param);
-              return TypeRef();
+              return QualType();
             }
             // Reject, but continue to parse 'int(void abc)'.
             if (FTI.ArgInfo[i].Ident)
@@ -223,7 +223,7 @@ Sema::TypeResult Sema::ParseTypeName(Scope *S, Declarator &D) {
   // the parser.
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
   
-  TypeRef T = GetTypeForDeclarator(D, S);
+  QualType T = GetTypeForDeclarator(D, S);
   
   // If the type of the declarator was invalid, this is an invalid typename.
   if (T.isNull())
@@ -235,7 +235,7 @@ Sema::TypeResult Sema::ParseTypeName(Scope *S, Declarator &D) {
 Sema::TypeResult Sema::ParseParamDeclaratorType(Scope *S, Declarator &D) {
   // Note: parameters have identifiers, but we don't care about them here, we
   // just want the type converted.
-  TypeRef T = GetTypeForDeclarator(D, S);
+  QualType T = GetTypeForDeclarator(D, S);
   
   // If the type of the declarator was invalid, this is an invalid typename.
   if (T.isNull())

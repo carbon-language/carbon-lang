@@ -104,13 +104,13 @@ public:
 /// an lvalue) a function (in which case it is a function designator) or
 /// an enum constant. 
 class ValueDecl : public Decl {
-  TypeRef DeclType;
+  QualType DeclType;
 protected:
-  ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T): 
+  ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T): 
              Decl(DK, L, Id), DeclType(T) {}
 public:
-  TypeRef getType() const { return DeclType; }
-  TypeRef getCanonicalType() const { return DeclType.getCanonicalType(); }
+  QualType getType() const { return DeclType; }
+  QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -134,7 +134,7 @@ public:
   }
   static bool classof(const VarDecl *D) { return true; }
 protected:
-  VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, TypeRef T,
+  VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
           StorageClass SC)
     : ValueDecl(DK, L, Id, T) {}
 private:
@@ -145,7 +145,7 @@ private:
 /// BlockVarDecl - Represent a local variable declaration.
 class BlockVarDecl : public VarDecl {
 public:
-  BlockVarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
+  BlockVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S)
     : VarDecl(BlockVariable, L, Id, T, S) {}
   
   // Implement isa/cast/dyncast/etc.
@@ -159,7 +159,7 @@ public:
 /// pointer to the decl's scope, which is transient).
 class FileVarDecl : public VarDecl {
 public:
-  FileVarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
+  FileVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S)
     : VarDecl(FileVariable, L, Id, T, S) {}
   
   // Implement isa/cast/dyncast/etc.
@@ -170,7 +170,7 @@ public:
 /// ParmVarDecl - Represent a parameter to a function.
 class ParmVarDecl : public VarDecl {
 public:
-  ParmVarDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S)
+  ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S)
     : VarDecl(ParmVariable, L, Id, T, S) {}
   
   // Implement isa/cast/dyncast/etc.
@@ -185,7 +185,7 @@ public:
   enum StorageClass {
     None, Extern, Static
   };
-  FunctionDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T, StorageClass S=None)
+  FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S=None)
     : ValueDecl(Function, L, Id, T), 
       ParamInfo(0), Body(0), DeclChain(0), SClass(S) {}
   virtual ~FunctionDecl();
@@ -228,13 +228,13 @@ private:
 /// FieldDecl - An instance of this class is created by Sema::ParseField to 
 /// represent a member of a struct/union/class.
 class FieldDecl : public Decl {
-  TypeRef DeclType;
+  QualType DeclType;
 public:
-  FieldDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
     : Decl(Field, L, Id), DeclType(T) {}
 
-  TypeRef getType() const { return DeclType; }
-  TypeRef getCanonicalType() const { return DeclType.getCanonicalType(); }
+  QualType getType() const { return DeclType; }
+  QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -250,7 +250,7 @@ public:
 class EnumConstantDecl : public ValueDecl {
 public:
   // FIXME: Capture value info.
-  EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+  EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
     : ValueDecl(EnumConstant, L, Id, T) {}
 
   // Implement isa/cast/dyncast/etc.
@@ -284,12 +284,12 @@ public:
 
 class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
-  TypeRef UnderlyingType;
+  QualType UnderlyingType;
 public:
-  TypedefDecl(SourceLocation L, IdentifierInfo *Id, TypeRef T)
+  TypedefDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
     : TypeDecl(Typedef, L, Id), UnderlyingType(T) {}
   
-  TypeRef getUnderlyingType() const { return UnderlyingType; }
+  QualType getUnderlyingType() const { return UnderlyingType; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }

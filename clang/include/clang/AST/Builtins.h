@@ -22,7 +22,7 @@ namespace clang {
   class TargetInfo;
   class IdentifierTable;
   class ASTContext;
-  class TypeRef;
+  class QualType;
 
 namespace Builtin {
 enum ID {
@@ -63,7 +63,7 @@ public:
   }
   
   /// GetBuiltinType - Return the type for the specified builtin.
-  TypeRef GetBuiltinType(unsigned ID, ASTContext &Context) const;
+  QualType GetBuiltinType(unsigned ID, ASTContext &Context) const;
 private:
   const Info &GetRecord(unsigned ID) const;
 };

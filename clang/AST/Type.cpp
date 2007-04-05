@@ -205,7 +205,7 @@ bool Type::isLvalue() const {
 /// recursively, any member or element of all contained aggregates or unions)
 /// with a const-qualified type.
 
-bool TypeRef::isModifiableLvalue() const {
+bool QualType::isModifiableLvalue() const {
   if (isConstQualified())
     return false;
   else
@@ -250,8 +250,8 @@ const char *BuiltinType::getName() const {
   }
 }
 
-void FunctionTypeProto::Profile(FoldingSetNodeID &ID, TypeRef Result,
-                                TypeRef* ArgTys,
+void FunctionTypeProto::Profile(FoldingSetNodeID &ID, QualType Result,
+                                QualType* ArgTys,
                                 unsigned NumArgs, bool isVariadic) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
@@ -275,7 +275,7 @@ bool RecordType::classof(const Type *T) {
 // Type Printing
 //===----------------------------------------------------------------------===//
 
-void TypeRef::dump() const {
+void QualType::dump() const {
   std::string R = "foo";
   getAsString(R);
   std::cerr << R << "\n";
@@ -284,15 +284,15 @@ void TypeRef::dump() const {
 static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
   // Note: funkiness to ensure we get a space only between quals.
   bool NonePrinted = true;
-  if (TypeQuals & TypeRef::Const)
+  if (TypeQuals & QualType::Const)
     S += "const", NonePrinted = false;
-  if (TypeQuals & TypeRef::Volatile)
+  if (TypeQuals & QualType::Volatile)
     S += (NonePrinted+" volatile"), NonePrinted = false;
-  if (TypeQuals & TypeRef::Restrict)
+  if (TypeQuals & QualType::Restrict)
     S += (NonePrinted+" restrict"), NonePrinted = false;
 }
 
-void TypeRef::getAsString(std::string &S) const {
+void QualType::getAsString(std::string &S) const {
   if (isNull()) {
     S += "NULL TYPE\n";
     return;

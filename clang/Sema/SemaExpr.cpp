@@ -44,7 +44,7 @@ Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
     StringTokLocs.push_back(StringToks[i].getLocation());
   
   // FIXME: handle wchar_t
-  TypeRef t = Context.getPointerType(Context.CharTy);
+  QualType t = Context.getPointerType(Context.CharTy);
   
   // FIXME: use factory.
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
@@ -122,7 +122,7 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
     return ExprResult(true);
 
   if (Literal.isIntegerLiteral()) {
-    TypeRef t;
+    QualType t;
     if (Literal.hasSuffix()) {
       if (Literal.isLong) 
         t = Literal.isUnsigned ? Context.UnsignedLongTy : Context.LongTy;
@@ -178,7 +178,7 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     return CheckIncrementDecrementOperand((Expr *)Input, OpLoc, Opc);
   
   // when all the check functions are written, this will go away...
-  return new UnaryOperator((Expr*)Input, Opc, 0);
+  return new UnaryOperator((Expr*)Input, Opc, QualType());
 }
 
 Action::ExprResult Sema::
@@ -189,7 +189,7 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
   if (Ty == 0) return true;
   
   // Verify that this is a valid expression.
-  TypeRef ArgTy = TypeRef::getFromOpaquePtr(Ty);
+  QualType ArgTy = QualType::getFromOpaquePtr(Ty);
   
   if (isa<FunctionType>(ArgTy) && isSizeof) {
     // alignof(function) is allowed.
@@ -224,21 +224,21 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
 Action::ExprResult Sema::
 ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
-  TypeRef t1 = ((Expr *)Base)->getType();
-  TypeRef t2 = ((Expr *)Idx)->getType();
+  QualType t1 = ((Expr *)Base)->getType();
+  QualType t2 = ((Expr *)Idx)->getType();
 
   assert(!t1.isNull() && "no type for array base expression");
   assert(!t2.isNull() && "no type for array index expression");
 
-  TypeRef canonT1 = t1.getCanonicalType();
-  TypeRef canonT2 = t2.getCanonicalType();
+  QualType canonT1 = t1.getCanonicalType();
+  QualType canonT2 = t2.getCanonicalType();
   
   // C99 6.5.2.1p2: the expression e1[e2] is by definition precisely equivalent
   // to the expression *((e1)+(e2)). This means the array "Base" may actually be 
   // in the subscript position. As a result, we need to derive the array base 
   // and index from the expression types.
   
-  TypeRef baseType, indexType;
+  QualType baseType, indexType;
   if (isa<ArrayType>(canonT1) || isa<PointerType>(canonT1)) {
     baseType = canonT1;
     indexType = canonT2;
@@ -253,7 +253,7 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     return Diag(LLoc, diag::err_typecheck_subscript);
 
   // FIXME: need to deal with const...
-  TypeRef resultType;
+  QualType resultType;
   if (ArrayType *ary = dyn_cast<ArrayType>(baseType)) {
     resultType = ary->getElementType();
   } else if (PointerType *ary = dyn_cast<PointerType>(baseType)) {
@@ -270,11 +270,11 @@ Action::ExprResult Sema::
 ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
-  TypeRef qualifiedType = ((Expr *)Base)->getType();
+  QualType qualifiedType = ((Expr *)Base)->getType();
   
   assert(!qualifiedType.isNull() && "no type for member expression");
   
-  TypeRef canonType = qualifiedType.getCanonicalType();
+  QualType canonType = qualifiedType.getCanonicalType();
 
   if (OpKind == tok::arrow) {
     if (PointerType *PT = dyn_cast<PointerType>(canonType)) {
@@ -314,7 +314,7 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
   // If error parsing type, ignore.
   if (Ty == 0) return true;
-  return new CastExpr(TypeRef::getFromOpaquePtr(Ty), (Expr*)Op);
+  return new CastExpr(QualType::getFromOpaquePtr(Ty), (Expr*)Op);
 }
 
 
@@ -390,7 +390,7 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
 
 Expr *Sema::ImplicitConversion(Expr *E) {
 #if 0
-  TypeRef t = E->getType();
+  QualType t = E->getType();
   if (t != 0) t.dump();
   else printf("no type for expr %s\n", E->getStmtClassName());
 #endif
@@ -428,11 +428,11 @@ Action::ExprResult Sema::CheckLogicalOperands(Expr *op1, Expr *op2) {
 Action::ExprResult
 Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
                                                unsigned OpCode) {
-  TypeRef qType = op->getType();
+  QualType qType = op->getType();
 
   assert(!qType.isNull() && "no type for increment/decrement expression");
 
-  TypeRef canonType = qType.getCanonicalType();
+  QualType canonType = qType.getCanonicalType();
 
   // C99 6.5.2.4p1
   if (const PointerType *pt = dyn_cast<PointerType>(canonType)) {

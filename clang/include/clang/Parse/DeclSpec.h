@@ -76,7 +76,7 @@ public:
   };
   
   // type-qualifiers
-  enum TQ {   // NOTE: These flags must be kept in sync with TypeRef::TQ.
+  enum TQ {   // NOTE: These flags must be kept in sync with QualType::TQ.
     TQ_unspecified = 0,
     TQ_const       = 1,
     TQ_restrict    = 2,
