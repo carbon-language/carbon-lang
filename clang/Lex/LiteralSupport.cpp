@@ -1,4 +1,4 @@
-//===--- LiteralSupport.cpp - Code to parse and process literals-*- C++ -*-===//
+//===--- LiteralSupport.cpp - Code to parse and process literals ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements the NumericLiteralParser interface.
+// This file implements the NumericLiteralParser, CharLiteralParser, and
+// StringLiteralParser interfaces.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,6 +20,103 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 using namespace clang;
+
+/// HexDigitValue - Return the value of the specified hex digit, or -1 if it's
+/// not valid.
+static int HexDigitValue(char C) {
+  if (C >= '0' && C <= '9') return C-'0';
+  if (C >= 'a' && C <= 'f') return C-'a'+10;
+  if (C >= 'A' && C <= 'F') return C-'A'+10;
+  return -1;
+}
+
+/// ProcessCharEscape - Parse a standard C escape sequence, which can occur in
+/// either a character or a string literal.
+static unsigned ProcessCharEscape(const char *&ThisTokBuf,
+                                  const char *ThisTokEnd, bool &HadError,
+                                  SourceLocation Loc, Preprocessor &PP) {
+  // Skip the '\' char.
+  ++ThisTokBuf;
+
+  // We know that this character can't be off the end of the buffer, because
+  // that would have been \", which would not have been the end of string.
+  unsigned ResultChar = *ThisTokBuf++;
+  switch (ResultChar) {
+  // These map to themselves.
+  case '\\': case '\'': case '"': case '?': break;
+    
+    // These have fixed mappings.
+  case 'a':
+    // TODO: K&R: the meaning of '\\a' is different in traditional C
+    ResultChar = 7;
+    break;
+  case 'b':
+    ResultChar = 8;
+    break;
+  case 'e':
+    PP.Diag(Loc, diag::ext_nonstandard_escape, "e");
+    ResultChar = 27;
+    break;
+  case 'f':
+    ResultChar = 12;
+    break;
+  case 'n':
+    ResultChar = 10;
+    break;
+  case 'r':
+    ResultChar = 13;
+    break;
+  case 't':
+    ResultChar = 9;
+    break;
+  case 'v':
+    ResultChar = 11;
+    break;
+    
+    //case 'u': case 'U':  // FIXME: UCNs.
+  case 'x': // Hex escape.
+    if (ThisTokBuf == ThisTokEnd ||
+        (ResultChar = HexDigitValue(*ThisTokBuf)) == ~0U) {
+      PP.Diag(Loc, diag::err_hex_escape_no_digits);
+      HadError = 1;
+      ResultChar = 0;
+      break;
+    }
+    ++ThisTokBuf; // Consumed one hex digit.
+    
+    // FIXME: warn_hex_escape_too_large. '\x12345'
+    assert(0 && "hex escape: unimp!");
+    break;
+  case '0': case '1': case '2': case '3':
+  case '4': case '5': case '6': case '7':
+    // Octal escapes.
+    // FIXME: warn_octal_escape_too_large. '\012345'
+    assert(0 && "octal escape: unimp!");
+    break;
+    
+    // Otherwise, these are not valid escapes.
+  case '(': case '{': case '[': case '%':
+    // GCC accepts these as extensions.  We warn about them as such though.
+    if (!PP.getLangOptions().NoExtensions) {
+      PP.Diag(Loc, diag::ext_nonstandard_escape,
+              std::string()+(char)ResultChar);
+      break;
+    }
+    // FALL THROUGH.
+  default:
+    if (isgraph(ThisTokBuf[0])) {
+      PP.Diag(Loc, diag::ext_unknown_escape, std::string()+(char)ResultChar);
+    } else {
+      PP.Diag(Loc, diag::ext_unknown_escape, "x"+utohexstr(ResultChar));
+    }
+    break;
+  }
+  
+  return ResultChar;
+}
+
+
+
 
 ///       integer-constant: [C99 6.4.4.1]
 ///         decimal-constant integer-suffix
@@ -61,9 +159,8 @@ using namespace clang;
 
 NumericLiteralParser::
 NumericLiteralParser(const char *begin, const char *end,
-                     SourceLocation TokLoc, Preprocessor &pp) :
-  PP(pp), ThisTokBegin(begin), ThisTokEnd(end)
-{
+                     SourceLocation TokLoc, Preprocessor &pp)
+  : PP(pp), ThisTokBegin(begin), ThisTokEnd(end) {
   s = DigitsBegin = begin;
   saw_exponent = false;
   saw_period = false;
@@ -217,16 +314,6 @@ NumericLiteralParser(const char *begin, const char *end,
   }
 }
 
-static unsigned HexLetterToVal(char c) {
-  if (c >= '0' && c <= '9')
-    return c - '0';
-  else if (c >= 'A' && c <= 'F') 
-    return c - 'A' - 10; 
-  else
-    assert(c >= 'a' && c <= 'f' && "Lexer scanning error");
-  return c - 'a' - 10;
-}
-
 bool NumericLiteralParser::GetIntegerValue(uintmax_t &val) {
   uintmax_t max_value = UINTMAX_MAX / radix;
   unsigned max_digit = UINTMAX_MAX % radix;
@@ -234,7 +321,7 @@ bool NumericLiteralParser::GetIntegerValue(uintmax_t &val) {
   val = 0;
   s = DigitsBegin;
   while (s < SuffixBegin) {
-    unsigned C = HexLetterToVal(*s++);
+    unsigned C = HexDigitValue(*s++);
     
     if (val > max_value || (val == max_value && C > max_digit)) {
       return false; // Overflow!
@@ -253,7 +340,7 @@ bool NumericLiteralParser::GetIntegerValue(int &val) {
   val = 0;
   s = DigitsBegin;
   while (s < SuffixBegin) {
-    unsigned C = HexLetterToVal(*s++);
+    unsigned C = HexDigitValue(*s++);
     
     if (val > max_value || (val == max_value && C > max_digit)) {
       return false; // Overflow!
@@ -278,7 +365,7 @@ bool NumericLiteralParser::GetIntegerValue(APInt &Val) {
   
   bool OverflowOccurred = false;
   while (s < SuffixBegin) {
-    unsigned C = HexLetterToVal(*s++);
+    unsigned C = HexDigitValue(*s++);
     
     // If this letter is out of bound for this radix, reject it.
     assert(C < radix && "NumericLiteralParser ctor should have rejected this");
@@ -308,6 +395,80 @@ void NumericLiteralParser::Diag(SourceLocation Loc, unsigned DiagID,
   PP.Diag(Loc, DiagID, M);
   hadError = true;
 }
+
+
+CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
+                                     SourceLocation Loc, Preprocessor &PP) {
+  // At this point we know that the character matches the regex "L?'.*'".
+  HadError = false;
+  Value = 0;
+  
+  // Determine if this is a wide character.
+  IsWide = begin[0] == 'L';
+  if (IsWide) ++begin;
+  
+  // Skip over the entry quote.
+  assert(begin[0] == '\'' && "Invalid token lexed");
+  ++begin;
+
+  // FIXME: This assumes that 'int' is 32-bits in overflow calculation, and the
+  // size of "value".
+  assert(PP.getTargetInfo().getIntWidth(Loc) == 32 &&
+         "Assumes sizeof(int) == 4 for now");
+  // FIXME: This assumes that wchar_t is 32-bits for now.
+  assert(PP.getTargetInfo().getWCharWidth(Loc) == 32 && 
+         "Assumes sizeof(wchar_t) == 4 for now");
+  // FIXME: This extensively assumes that 'char' is 8-bits.
+  assert(PP.getTargetInfo().getCharWidth(Loc) == 8 &&
+         "Assumes char is 8 bits");
+  
+  bool isFirstChar = true;
+  bool isMultiChar = false;
+  while (begin[0] != '\'') {
+    unsigned ResultChar;
+    if (begin[0] != '\\')     // If this is a normal character, consume it.
+      ResultChar = *begin++;
+    else                      // Otherwise, this is an escape character.
+      ResultChar = ProcessCharEscape(begin, end, HadError, Loc, PP);
+
+    // If this is a multi-character constant (e.g. 'abc'), handle it.  These are
+    // implementation defined (C99 6.4.4.4p10).
+    if (!isFirstChar) {
+      // If this is the second character being processed, do special handling.
+      if (!isMultiChar) {
+        isMultiChar = true;
+      
+        // Warn about discarding the top bits for multi-char wide-character
+        // constants (L'abcd').
+        if (IsWide)
+          PP.Diag(Loc, diag::warn_extraneous_wide_char_constant);
+      }
+
+      if (IsWide) {
+        // Emulate GCC's (unintentional?) behavior: L'ab' -> L'b'.
+        Value = 0;
+      } else {
+        // Narrow character literals act as though their value is concatenated
+        // in this implementation.
+        if (((Value << 8) >> 8) != Value)
+          PP.Diag(Loc, diag::warn_char_constant_too_large);
+        Value <<= 8;
+      }
+    }
+    
+    Value += ResultChar;
+    isFirstChar = false;
+  }
+  
+  // If this is a single narrow character, sign extend it (e.g. '\xFF' is "-1")
+  // if 'char' is signed for this target (C99 6.4.4.4p10).  Note that multiple
+  // character constants are not sign extended in the this implementation:
+  // '\xFF\xFF' = 65536 and '\x0\xFF' = 255, which matches GCC.
+  if (!IsWide && !isMultiChar && (Value & 128) &&
+      PP.getTargetInfo().isCharSigned(Loc))
+    Value = (signed char)Value;
+}
+
 
 ///       string-literal: [C99 6.4.5]
 ///          " [s-char-sequence] "
@@ -342,12 +503,11 @@ void NumericLiteralParser::Diag(SourceLocation Loc, unsigned DiagID,
 ///         \U hex-quad hex-quad
 ///       hex-quad:
 ///         hex-digit hex-digit hex-digit hex-digit
-
+///
 StringLiteralParser::
 StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
-                    Preprocessor &pp, TargetInfo &t) : 
-  PP(pp), Target(t) 
-{
+                    Preprocessor &pp, TargetInfo &t)
+  : PP(pp), Target(t) {
   // Scan all of the string portions, remember the max individual token length,
   // computing a bound on the concatenated string length, and see whether any
   // piece is a wide-string.  If any of the string portions is a wide-string
@@ -357,8 +517,9 @@ StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
   AnyWide = StringToks[0].getKind() == tok::wide_string_literal;
   
   hadError = false;
-  
-  // The common case is that there is only one string fragment.
+
+  // Implement Translation Phase #6: concatenation of string literals
+  /// (C99 5.1.1.2p1).  The common case is only one string fragment.
   for (unsigned i = 1; i != NumStringToks; ++i) {
     // The string could be shorter than this if it needs cleaning, but this is a
     // reasonable bound, which is all we need.
@@ -381,8 +542,11 @@ StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
   // Get the width in bytes of wchar_t.  If no wchar_t strings are used, do not
   // query the target.  As such, wchar_tByteWidth is only valid if AnyWide=true.
   wchar_tByteWidth = ~0U;
-  if (AnyWide)
+  if (AnyWide) {
     wchar_tByteWidth = Target.getWCharWidth(StringToks[0].getLocation());
+    assert((wchar_tByteWidth & 7) == 0 && "Assumes wchar_t is byte multiple!");
+    wchar_tByteWidth /= 8;
+  }
   
   // The output buffer size needs to be large enough to hold wide characters.
   // This is a worst-case assumption which basically corresponds to L"" "long".
@@ -441,80 +605,9 @@ StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
         continue;
       }
       
-      // Otherwise, this is an escape character.  Skip the '\' char.
-      ++ThisTokBuf;
-      
-      // We know that this character can't be off the end of the buffer, because
-      // that would have been \", which would not have been the end of string.
-      unsigned ResultChar = *ThisTokBuf++;
-      switch (ResultChar) {
-        // These map to themselves.
-      case '\\': case '\'': case '"': case '?': break;
-        
-        // These have fixed mappings.
-      case 'a':
-        // TODO: K&R: the meaning of '\\a' is different in traditional C
-        ResultChar = 7;
-        break;
-      case 'b':
-        ResultChar = 8;
-        break;
-      case 'e':
-        Diag(StringToks[i].getLocation(), diag::ext_nonstandard_escape, "e");
-        ResultChar = 27;
-        break;
-      case 'f':
-        ResultChar = 12;
-        break;
-      case 'n':
-        ResultChar = 10;
-        break;
-      case 'r':
-        ResultChar = 13;
-        break;
-      case 't':
-        ResultChar = 9;
-        break;
-      case 'v':
-        ResultChar = 11;
-        break;
-        
-        //case 'u': case 'U':  // FIXME: UCNs.
-      case 'x': // Hex escape.
-        if (ThisTokBuf == ThisTokEnd ||
-            (ResultChar = HexDigitValue(*ThisTokBuf)) == ~0U) {
-          Diag(StringToks[i].getLocation(), diag::err_hex_escape_no_digits);
-          ResultChar = 0;
-          break;
-        }
-        ++ThisTokBuf; // Consumed one hex digit.
-        
-        assert(0 && "hex escape: unimp!");
-        break;
-      case '0': case '1': case '2': case '3':
-      case '4': case '5': case '6': case '7':
-        // Octal escapes.
-        assert(0 && "octal escape: unimp!");
-        break;
-        
-        // Otherwise, these are not valid escapes.
-      case '(': case '{': case '[': case '%':
-        // GCC accepts these as extensions.  We warn about them as such though.
-        if (!PP.getLangOptions().NoExtensions) {
-          Diag(StringToks[i].getLocation(), diag::ext_nonstandard_escape,
-               std::string()+(char)ResultChar);
-          break;
-        }
-        // FALL THROUGH.
-      default:
-        if (isgraph(ThisTokBuf[0])) {
-          Diag(StringToks[i].getLocation(), diag::ext_unknown_escape,
-               std::string()+(char)ResultChar);
-        } else {
-          Diag(StringToks[i].getLocation(), diag::ext_unknown_escape,
-               "x"+utohexstr(ResultChar));
-        }
-      }
+      // Otherwise, this is an escape character.  Process it.
+      unsigned ResultChar = ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
+                                              StringToks[i].getLocation(), PP);
       
       // Note: our internal rep of wide char tokens is always little-endian.
       *ResultPtr++ = ResultChar & 0xFF;
@@ -533,10 +626,3 @@ StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
     *ResultPtr++ = 0;
   }
 }
-
-void StringLiteralParser::Diag(SourceLocation Loc, unsigned DiagID, 
-                               const std::string &M) {
-  PP.Diag(Loc, DiagID, M);
-  hadError = true;
-}
-

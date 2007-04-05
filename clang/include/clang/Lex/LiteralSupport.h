@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the NumericLiteralParser interface.
+// This file defines the NumericLiteralParser, CharLiteralParser, and
+// StringLiteralParser interfaces.
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,6 +28,9 @@ class LexerToken;
 class SourceLocation;
 class TargetInfo;
     
+/// NumericLiteralParser - This performs strict semantic analysis of the content
+/// of a ppnumber, classifying it as either integer, floating, or erroneous,
+/// determines the radix of the value and can convert it to a useful value.
 class NumericLiteralParser {
   Preprocessor &PP; // needed for diagnostics
   
@@ -102,6 +106,24 @@ private:
   }
 };
 
+/// CharLiteralParser - Perform interpretation and semantic analysis of a
+/// character literal.
+class CharLiteralParser {
+  unsigned Value;
+  bool IsWide;
+  bool HadError;
+public:
+  CharLiteralParser(const char *begin, const char *end,
+                    SourceLocation Loc, Preprocessor &PP);
+
+  bool hadError() const { return HadError; }
+  bool isWide() const { return IsWide; }
+  unsigned getValue() const { return Value; }
+};
+
+/// StringLiteralParser - This decodes string escape characters and performs
+/// wide string analysis and Translation Phase #6 (concatenation of string
+/// literals) (C99 5.1.1.2p1).
 class StringLiteralParser {
   Preprocessor &PP;
   TargetInfo &Target;
@@ -119,18 +141,6 @@ public:
   
   const char *GetString() { return &ResultBuf[0]; }
   unsigned GetStringLength() { return ResultPtr-&ResultBuf[0]; }
-private:
-  void Diag(SourceLocation Loc, unsigned DiagID, 
-            const std::string &M = std::string());
-
-  /// HexDigitValue - Return the value of the specified hex digit, or -1 if it's
-  /// not valid.
-  static int HexDigitValue(char C) {
-    if (C >= '0' && C <= '9') return C-'0';
-    if (C >= 'a' && C <= 'f') return C-'a'+10;
-    if (C >= 'A' && C <= 'F') return C-'A'+10;
-    return -1;
-  }
 };
   
 }  // end namespace clang
