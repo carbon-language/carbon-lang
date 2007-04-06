@@ -4744,7 +4744,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         if (Instruction *NV = FoldOpIntoPhi(I))
           return NV;
         break;
-      case Instruction::Select:
+      case Instruction::Select: {
         // If either operand of the select is a constant, we can fold the
         // comparison into the select arms, which will cause one to be
         // constant folded and the select turned into a bitwise or.
@@ -4769,6 +4769,16 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
         if (Op1)
           return new SelectInst(LHSI->getOperand(0), Op1, Op2);
+        break;
+      }
+      case Instruction::Malloc:
+        // If we have (malloc != null), and if the malloc has a single use, we
+        // can assume it is successful and remove the malloc.
+        if (LHSI->hasOneUse() && isa<ConstantPointerNull>(RHSC)) {
+          AddToWorkList(LHSI);
+          return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty,
+                                                         !isTrueWhenEqual(I)));
+        }
         break;
       }
   }
