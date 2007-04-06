@@ -2840,7 +2840,7 @@ GetRegistersForValue(const std::string &ConstrCode,
     // Okay, this register is good, we can use it.
     ++NumAllocated;
 
-    // If we allocated enough consecutive   
+    // If we allocated enough consecutive registers, succeed.
     if (NumAllocated == NumRegs) {
       unsigned RegStart = (i-NumAllocated)+1;
       unsigned RegEnd   = i+1;
