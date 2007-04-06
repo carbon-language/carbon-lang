@@ -23,6 +23,7 @@
 #include "llvm/Support/type_traits.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/SmallVector.h"
 #include <string>
 #include <vector>
 #include <utility>
@@ -303,7 +304,7 @@ class ValuesClass {
   // Use a vector instead of a map, because the lists should be short,
   // the overhead is less, and most importantly, it keeps them in the order
   // inserted so we can print our option out nicely.
-  std::vector<std::pair<const char *, std::pair<int, const char *> > > Values;
+  SmallVector<std::pair<const char *, std::pair<int, const char *> >,4> Values;
   void processValues(va_list Vals);
 public:
   ValuesClass(const char *EnumName, DataType Val, const char *Desc,
@@ -424,8 +425,8 @@ protected:
 template <class DataType>
 class parser : public generic_parser_base {
 protected:
-  std::vector<std::pair<const char *,
-                        std::pair<DataType, const char *> > > Values;
+  SmallVector<std::pair<const char *,
+                        std::pair<DataType, const char *> >, 8> Values;
 public:
   typedef DataType parser_data_type;
 
@@ -454,7 +455,8 @@ public:
     return O.error(": Cannot find option named '" + ArgVal + "'!");
   }
 
-  // addLiteralOption - Add an entry to the mapping table...
+  /// addLiteralOption - Add an entry to the mapping table.
+  ///
   template <class DT>
   void addLiteralOption(const char *Name, const DT &V, const char *HelpStr) {
     assert(findOption(Name) == Values.size() && "Option already exists!");
@@ -462,8 +464,8 @@ public:
                              std::make_pair(static_cast<DataType>(V),HelpStr)));
   }
 
-  // removeLiteralOption - Remove the specified option.
-  //
+  /// removeLiteralOption - Remove the specified option.
+  ///
   void removeLiteralOption(const char *Name) {
     unsigned N = findOption(Name);
     assert(N != Values.size() && "Option not found!");
