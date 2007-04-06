@@ -384,8 +384,8 @@ ModulePass *llvm::createSimplifyLibCallsPass() {
 namespace {
 
 // Forward declare utility functions.
-static bool getConstantStringLength(Value* V, uint64_t& len, 
-                                    ConstantArray** A = 0 );
+static bool GetConstantStringInfo(Value *V, ConstantArray *&Array,
+                                  uint64_t &Length, uint64_t &StartIdx);
 static Value *CastToCStr(Value *V, Instruction &IP);
 
 /// This LibCallOptimization will find instances of a call to "exit" that occurs
@@ -482,8 +482,9 @@ public:
     // Extract the initializer (while making numerous checks) from the
     // source operand of the call to strcat. If we get null back, one of
     // a variety of checks in get_GVInitializer failed
-    uint64_t len = 0;
-    if (!getConstantStringLength(src,len))
+    uint64_t len, StartIdx;
+    ConstantArray *Arr;
+    if (!GetConstantStringInfo(src, Arr, len, StartIdx))
       return false;
 
     // Handle the simple, do-nothing case
@@ -553,16 +554,16 @@ public:
 
     // Check that the first argument to strchr is a constant array of sbyte.
     // If it is, get the length and data, otherwise return false.
-    uint64_t len = 0;
+    uint64_t len, StartIdx;
     ConstantArray* CA = 0;
-    if (!getConstantStringLength(ci->getOperand(1), len, &CA))
+    if (!GetConstantStringInfo(ci->getOperand(1), CA, len, StartIdx))
       return false;
 
     // Check that the second argument to strchr is a constant int. If it isn't
-    // a constant signed integer, we can try an alternate optimization
+    // a constant integer, we can try an alternate optimization
     ConstantInt* CSI = dyn_cast<ConstantInt>(ci->getOperand(2));
     if (!CSI) {
-      // The second operand is not constant, or not signed. Just lower this to 
+      // The second operand is not constant just lower this to 
       // memchr since we know the length of the string since it is constant.
       Constant *f = SLC.get_memchr();
       Value* args[3] = {
@@ -639,9 +640,9 @@ public:
     }
 
     bool isstr_1 = false;
-    uint64_t len_1 = 0;
-    ConstantArray* A1;
-    if (getConstantStringLength(s1,len_1,&A1)) {
+    uint64_t len_1 = 0, StartIdx;
+    ConstantArray *A1;
+    if (GetConstantStringInfo(s1, A1, len_1, StartIdx)) {
       isstr_1 = true;
       if (len_1 == 0) {
         // strcmp("",x) -> *x
@@ -657,9 +658,9 @@ public:
     }
 
     bool isstr_2 = false;
-    uint64_t len_2 = 0;
+    uint64_t len_2;
     ConstantArray* A2;
-    if (getConstantStringLength(s2, len_2, &A2)) {
+    if (GetConstantStringInfo(s2, A2, len_2, StartIdx)) {
       isstr_2 = true;
       if (len_2 == 0) {
         // strcmp(x,"") -> *x
@@ -733,9 +734,9 @@ public:
     }
 
     bool isstr_1 = false;
-    uint64_t len_1 = 0;
+    uint64_t len_1 = 0, StartIdx;
     ConstantArray* A1;
-    if (getConstantStringLength(s1, len_1, &A1)) {
+    if (GetConstantStringInfo(s1, A1, len_1, StartIdx)) {
       isstr_1 = true;
       if (len_1 == 0) {
         // strncmp("",x) -> *x
@@ -752,7 +753,7 @@ public:
     bool isstr_2 = false;
     uint64_t len_2 = 0;
     ConstantArray* A2;
-    if (getConstantStringLength(s2,len_2,&A2)) {
+    if (GetConstantStringInfo(s2, A2, len_2, StartIdx)) {
       isstr_2 = true;
       if (len_2 == 0) {
         // strncmp(x,"") -> *x
@@ -821,10 +822,11 @@ public:
 
     // Get the length of the constant string referenced by the second operand,
     // the "src" parameter. Fail the optimization if we can't get the length
-    // (note that getConstantStringLength does lots of checks to make sure this
+    // (note that GetConstantStringInfo does lots of checks to make sure this
     // is valid).
-    uint64_t len = 0;
-    if (!getConstantStringLength(ci->getOperand(2),len))
+    uint64_t len, StartIdx;
+    ConstantArray *A;
+    if (!GetConstantStringInfo(ci->getOperand(2), A, len, StartIdx))
       return false;
 
     // If the constant string's length is zero we can optimize this by just
@@ -914,8 +916,9 @@ struct VISIBILITY_HIDDEN StrLenOptimization : public LibCallOptimization {
         }
 
     // Get the length of the constant string operand
-    uint64_t len = 0;
-    if (!getConstantStringLength(ci->getOperand(1),len))
+    uint64_t len = 0, StartIdx;
+    ConstantArray *A;
+    if (!GetConstantStringInfo(ci->getOperand(1), A, len, StartIdx))
       return false;
 
     // strlen("xyz") -> 3 (for example)
@@ -1321,9 +1324,9 @@ public:
 
     // All the optimizations depend on the length of the first argument and the
     // fact that it is a constant string array. Check that now
-    uint64_t len = 0;
+    uint64_t len, StartIdx;
     ConstantArray* CA = 0;
-    if (!getConstantStringLength(ci->getOperand(1), len, &CA))
+    if (!GetConstantStringInfo(ci->getOperand(1), CA, len, StartIdx))
       return false;
 
     if (len != 2 && len != 3)
@@ -1399,9 +1402,9 @@ public:
 
     // All the optimizations depend on the length of the second argument and the
     // fact that it is a constant string array. Check that now
-    uint64_t len = 0;
+    uint64_t len, StartIdx;
     ConstantArray* CA = 0;
-    if (!getConstantStringLength(ci->getOperand(2), len, &CA))
+    if (!GetConstantStringInfo(ci->getOperand(2), CA, len, StartIdx))
       return false;
 
     if (ci->getNumOperands() == 3) {
@@ -1451,9 +1454,9 @@ public:
     switch (CI->getZExtValue()) {
       case 's':
       {
-        uint64_t len = 0;
+        uint64_t len, StartIdx;
         ConstantArray* CA = 0;
-        if (getConstantStringLength(ci->getOperand(3), len, &CA)) {
+        if (GetConstantStringInfo(ci->getOperand(3), CA, len, StartIdx)) {
           // fprintf(file,"%s",str) -> fwrite(str,strlen(str),1,file)
           const Type* FILEptr_type = ci->getOperand(1)->getType();
           Value* args[4] = {
@@ -1516,9 +1519,9 @@ public:
 
     // All the optimizations depend on the length of the second argument and the
     // fact that it is a constant string array. Check that now
-    uint64_t len = 0;
+    uint64_t len, StartIdx;
     ConstantArray* CA = 0;
-    if (!getConstantStringLength(ci->getOperand(2), len, &CA))
+    if (!GetConstantStringInfo(ci->getOperand(2), CA, len, StartIdx))
       return false;
 
     if (ci->getNumOperands() == 3) {
@@ -1641,8 +1644,9 @@ public:
 
     // All the optimizations depend on the length of the first argument and the
     // fact that it is a constant string array. Check that now
-    uint64_t len = 0;
-    if (!getConstantStringLength(ci->getOperand(1), len))
+    uint64_t len, StartIdx;
+    ConstantArray *CA;
+    if (!GetConstantStringInfo(ci->getOperand(1), CA, len, StartIdx))
       return false;
 
     switch (len) {
@@ -1988,33 +1992,41 @@ struct VISIBILITY_HIDDEN NearByIntOptimization : public UnaryDoubleFPOptimizer {
   }
 } NearByIntOptimizer;
 
-/// A function to compute the length of a null-terminated constant array of
-/// integers.  This function can't rely on the size of the constant array
-/// because there could be a null terminator in the middle of the array.
+/// GetConstantStringInfo - This function computes the length of a
+/// null-terminated constant array of integers.  This function can't rely on the
+/// size of the constant array because there could be a null terminator in the
+/// middle of the array.
+///
 /// We also have to bail out if we find a non-integer constant initializer
 /// of one of the elements or if there is no null-terminator. The logic
 /// below checks each of these conditions and will return true only if all
-/// conditions are met. In that case, the \p len parameter is set to the length
-/// of the null-terminated string. If false is returned, the conditions were
-/// not met and len is set to 0.
-/// @brief Get the length of a constant string (null-terminated array).
-static bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA)
-{
-  assert(V != 0 && "Invalid args to getConstantStringLength");
-  len = 0; // make sure we initialize this
-  User* GEP = 0;
+/// conditions are met.  If the conditions aren't met, this returns false.
+///
+/// If successful, the \p Array param is set to the constant array being
+/// indexed, the \p Length parameter is set to the length of the null-terminated
+/// string pointed to by V, the \p StartIdx value is set to the first
+/// element of the Array that V points to, and true is returned.
+static bool GetConstantStringInfo(Value *V, ConstantArray *&Array,
+                                  uint64_t &Length, uint64_t &StartIdx) {
+  assert(V != 0 && "Invalid args to GetConstantStringInfo");
+  // Initialize results.
+  Length = 0;
+  StartIdx = 0;
+  Array = 0;
+  
+  User *GEP = 0;
   // If the value is not a GEP instruction nor a constant expression with a
   // GEP instruction, then return false because ConstantArray can't occur
   // any other way
-  if (GetElementPtrInst* GEPI = dyn_cast<GetElementPtrInst>(V))
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V)) {
     GEP = GEPI;
-  else if (ConstantExpr* CE = dyn_cast<ConstantExpr>(V))
-    if (CE->getOpcode() == Instruction::GetElementPtr)
-      GEP = CE;
-    else
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->getOpcode() != Instruction::GetElementPtr)
       return false;
-  else
+    GEP = CE;
+  } else {
     return false;
+  }
 
   // Make sure the GEP has exactly three arguments.
   if (GEP->getNumOperands() != 3)
@@ -2028,13 +2040,12 @@ static bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA)
   } else
     return false;
 
-  // Ensure that the second operand is a ConstantInt. If it isn't then this
-  // GEP is wonky and we're not really sure what were referencing into and
-  // better of not optimizing it. While we're at it, get the second index
-  // value. We'll need this later for indexing the ConstantArray.
-  uint64_t start_idx = 0;
-  if (ConstantInt* CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
-    start_idx = CI->getZExtValue();
+  // If the second index isn't a ConstantInt, then this is a variable index
+  // into the array.  If this occurs, we can't say anything meaningful about
+  // the string.
+  StartIdx = 0;
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
+    StartIdx = CI->getZExtValue();
   else
     return false;
 
@@ -2044,44 +2055,42 @@ static bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA)
   GlobalVariable* GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
   if (!GV || !GV->isConstant() || !GV->hasInitializer())
     return false;
-
-  // Get the initializer.
-  Constant* INTLZR = GV->getInitializer();
+  Constant *GlobalInit = GV->getInitializer();
 
   // Handle the ConstantAggregateZero case
-  if (isa<ConstantAggregateZero>(INTLZR)) {
+  if (isa<ConstantAggregateZero>(GlobalInit)) {
     // This is a degenerate case. The initializer is constant zero so the
     // length of the string must be zero.
-    len = 0;
+    Length = 0;
     return true;
   }
 
   // Must be a Constant Array
-  ConstantArray* A = dyn_cast<ConstantArray>(INTLZR);
-  if (!A)
-    return false;
+  Array = dyn_cast<ConstantArray>(GlobalInit);
+  if (!Array) return false;
 
   // Get the number of elements in the array
-  uint64_t max_elems = A->getType()->getNumElements();
+  uint64_t NumElts = Array->getType()->getNumElements();
 
   // Traverse the constant array from start_idx (derived above) which is
   // the place the GEP refers to in the array.
-  for (len = start_idx; len < max_elems; len++) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(A->getOperand(len))) {
-      // Check for the null terminator
+  Length = StartIdx;
+  while (1) {
+    if (Length >= NumElts)
+      return false; // The array isn't null terminated.
+    
+    Constant *Elt = Array->getOperand(Length);
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Elt)) {
+      // Check for the null terminator.
       if (CI->isZero())
         break; // we found end of string
     } else
       return false; // This array isn't suitable, non-int initializer
+    ++Length;
   }
   
-  if (len >= max_elems)
-    return false; // This array isn't null terminated
-
   // Subtract out the initial value from the length
-  len -= start_idx;
-  if (CA)
-    *CA = A;
+  Length -= StartIdx;
   return true; // success!
 }
 
