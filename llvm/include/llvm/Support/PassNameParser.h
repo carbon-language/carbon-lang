@@ -70,7 +70,6 @@ public:
       abort();
     }
     addLiteralOption(P->getPassArgument(), P, P->getPassName());
-    Opt->addArgument(P->getPassArgument());
   }
   virtual void passEnumerate(const PassInfo *P) { passRegistered(P); }
 

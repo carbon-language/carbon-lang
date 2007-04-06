@@ -71,32 +71,63 @@ extrahelp::extrahelp(const char *Help)
   MoreHelp->push_back(Help);
 }
 
+/// RegisteredOptionList - This is the list of the command line options that
+/// have statically constructed themselves.
+static Option *RegisteredOptionList = 0;
+
+void Option::addArgument() {
+  assert(NextRegistered == 0 && "argument multiply registered!");
+  
+  NextRegistered = RegisteredOptionList;
+  RegisteredOptionList = this;
+}
+
 //===----------------------------------------------------------------------===//
 // Basic, shared command line option processing machinery.
 //
 
-static ManagedStatic<std::map<std::string, Option*> > OptionsMap;
-static ManagedStatic<std::vector<Option*> > PositionalOptions;
-
-static Option *getOption(const std::string &Str) {
-  std::map<std::string,Option*>::iterator I = OptionsMap->find(Str);
-  return I != OptionsMap->end() ? I->second : 0;
-}
-
-static void AddArgument(const char *ArgName, Option *Opt) {
-  if (getOption(ArgName)) {
-    cerr << ProgramName << ": CommandLine Error: Argument '"
-         << ArgName << "' defined more than once!\n";
-  } else {
-    // Add argument to the argument map!
-    (*OptionsMap)[ArgName] = Opt;
+/// GetOptionInfo - Scan the list of registered options, turning them into data
+/// structures that are easier to handle.
+static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
+                          std::map<std::string, Option*> &OptionsMap) {
+  std::vector<const char*> OptionNames;
+  for (Option *O = RegisteredOptionList; O; O = O->getNextRegisteredOption()) {
+    // If this option wants to handle multiple option names, get the full set.
+    // This handles enum options like "-O1 -O2" etc.
+    O->getExtraOptionNames(OptionNames);
+    if (O->ArgStr[0])
+      OptionNames.push_back(O->ArgStr);
+    
+    // Handle named options.
+    for (unsigned i = 0, e = OptionNames.size(); i != e; ++i) {
+      // Add argument to the argument map!
+      if (!OptionsMap.insert(std::pair<std::string,Option*>(OptionNames[i],
+                                                            O)).second) {
+        cerr << ProgramName << ": CommandLine Error: Argument '"
+             << OptionNames[0] << "' defined more than once!\n";
+      }
+    }
+    
+    OptionNames.clear();
+    
+    // Remember information about positional options.
+    if (O->getFormattingFlag() == cl::Positional)
+      PositionalOpts.push_back(O);
+    else if (O->getNumOccurrencesFlag() == cl::ConsumeAfter) {
+      if (!PositionalOpts.empty() &&
+          PositionalOpts.front()->getNumOccurrencesFlag() == cl::ConsumeAfter)
+        O->error("Cannot specify more than one option with cl::ConsumeAfter!");
+      PositionalOpts.insert(PositionalOpts.begin(), O);
+    }
   }
 }
+
 
 /// LookupOption - Lookup the option specified by the specified option on the
 /// command line.  If there is a value specified (after an equal sign) return
 /// that as well.
-static Option *LookupOption(const char *&Arg, const char *&Value) {
+static Option *LookupOption(const char *&Arg, const char *&Value,
+                            std::map<std::string, Option*> &OptionsMap) {
   while (*Arg == '-') ++Arg;  // Eat leading dashes
   
   const char *ArgEnd = Arg;
@@ -110,10 +141,9 @@ static Option *LookupOption(const char *&Arg, const char *&Value) {
   if (*Arg == 0) return 0;
   
   // Look up the option.
-  std::map<std::string, Option*> &Opts = *OptionsMap;
   std::map<std::string, Option*>::iterator I =
-    Opts.find(std::string(Arg, ArgEnd));
-  return (I != Opts.end()) ? I->second : 0;
+    OptionsMap.find(std::string(Arg, ArgEnd));
+  return I != OptionsMap.end() ? I->second : 0;
 }
 
 static inline bool ProvideOption(Option *Handler, const char *ArgName,
@@ -171,27 +201,28 @@ static inline bool isPrefixedOrGrouping(const Option *O) {
 // otherwise return null.
 //
 static Option *getOptionPred(std::string Name, unsigned &Length,
-                             bool (*Pred)(const Option*)) {
+                             bool (*Pred)(const Option*),
+                             std::map<std::string, Option*> &OptionsMap) {
 
-  Option *Op = getOption(Name);
-  if (Op && Pred(Op)) {
+  std::map<std::string, Option*>::iterator OMI = OptionsMap.find(Name);
+  if (OMI != OptionsMap.end() && Pred(OMI->second)) {
     Length = Name.length();
-    return Op;
+    return OMI->second;
   }
 
   if (Name.size() == 1) return 0;
   do {
     Name.erase(Name.end()-1, Name.end());   // Chop off the last character...
-    Op = getOption(Name);
+    OMI = OptionsMap.find(Name);
 
     // Loop while we haven't found an option and Name still has at least two
     // characters in it (so that the next iteration will not be the empty
     // string...
-  } while ((Op == 0 || !Pred(Op)) && Name.size() > 1);
+  } while ((OMI == OptionsMap.end() || !Pred(OMI->second)) && Name.size() > 1);
 
-  if (Op && Pred(Op)) {
+  if (OMI != OptionsMap.end() && Pred(OMI->second)) {
     Length = Name.length();
-    return Op;             // Found one!
+    return OMI->second;    // Found one!
   }
   return 0;                // No option found!
 }
@@ -286,9 +317,13 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
 
 void cl::ParseCommandLineOptions(int &argc, char **argv,
                                  const char *Overview) {
-  assert((!OptionsMap->empty() || !PositionalOptions->empty()) &&
-         "No options specified, or ParseCommandLineOptions called more"
-         " than once!");
+  // Process all registered options.
+  std::vector<Option*> PositionalOpts;
+  std::map<std::string, Option*> Opts;
+  GetOptionInfo(PositionalOpts, Opts);
+  
+  assert((!Opts.empty() || !PositionalOpts.empty()) &&
+         "No options specified!");
   sys::Path progname(argv[0]);
 
   // Copy the program name into ProgName, making sure not to overflow it.
@@ -298,9 +333,6 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   
   ProgramOverview = Overview;
   bool ErrorParsing = false;
-
-  std::map<std::string, Option*> &Opts = *OptionsMap;
-  std::vector<Option*> &PositionalOpts = *PositionalOptions;
 
   // Check out the positional arguments to collect information about them.
   unsigned NumPositionalRequired = 0;
@@ -398,7 +430,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
       // option is another positional argument.  If so, treat it as an argument,
       // otherwise feed it to the eating positional.
       ArgName = argv[i]+1;
-      Handler = LookupOption(ArgName, Value);
+      Handler = LookupOption(ArgName, Value, Opts);
       if (!Handler || Handler->getFormattingFlag() != cl::Positional) {
         ProvidePositionalOption(ActivePositionalArg, argv[i], i);
         continue;  // We are done!
@@ -406,14 +438,15 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
     } else {     // We start with a '-', must be an argument...
       ArgName = argv[i]+1;
-      Handler = LookupOption(ArgName, Value);
+      Handler = LookupOption(ArgName, Value, Opts);
 
       // Check to see if this "option" is really a prefixed or grouped argument.
       if (Handler == 0) {
         std::string RealName(ArgName);
         if (RealName.size() > 1) {
           unsigned Length = 0;
-          Option *PGOpt = getOptionPred(RealName, Length, isPrefixedOrGrouping);
+          Option *PGOpt = getOptionPred(RealName, Length, isPrefixedOrGrouping,
+                                        Opts);
 
           // If the option is a prefixed option, then the value is simply the
           // rest of the name...  so fall through to later processing, by
@@ -444,7 +477,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
                                             0, 0, 0, Dummy);
 
               // Get the next grouping option...
-              PGOpt = getOptionPred(RealName, Length, isGrouping);
+              PGOpt = getOptionPred(RealName, Length, isGrouping, Opts);
             } while (PGOpt && Length != RealName.size());
 
             Handler = PGOpt; // Ate all of the options.
@@ -631,23 +664,6 @@ bool Option::addOccurrence(unsigned pos, const char *ArgName,
   }
 
   return handleOccurrence(pos, ArgName, Value);
-}
-
-// addArgument - Tell the system that this Option subclass will handle all
-// occurrences of -ArgStr on the command line.
-//
-void Option::addArgument(const char *ArgStr) {
-  if (ArgStr[0])
-    AddArgument(ArgStr, this);
-
-  if (getFormattingFlag() == Positional)
-    PositionalOptions->push_back(this);
-  else if (getNumOccurrencesFlag() == ConsumeAfter) {
-    if (!PositionalOptions->empty() &&
-        PositionalOptions->front()->getNumOccurrencesFlag() == ConsumeAfter)
-      error("Cannot specify more than one option with cl::ConsumeAfter!");
-    PositionalOptions->insert(PositionalOptions->begin(), this);
-  }
 }
 
 
@@ -867,9 +883,14 @@ public:
   void operator=(bool Value) {
     if (Value == false) return;
 
+    // Get all the options.
+    std::vector<Option*> PositionalOpts;
+    std::map<std::string, Option*> OptMap;
+    GetOptionInfo(PositionalOpts, OptMap);
+    
     // Copy Options into a vector so we can sort them as we like...
     std::vector<std::pair<std::string, Option*> > Opts;
-    copy(OptionsMap->begin(), OptionsMap->end(), std::back_inserter(Opts));
+    copy(OptMap.begin(), OptMap.end(), std::back_inserter(Opts));
 
     // Eliminate Hidden or ReallyHidden arguments, depending on ShowHidden
     Opts.erase(std::remove_if(Opts.begin(), Opts.end(),
@@ -892,15 +913,15 @@ public:
     cout << "USAGE: " << ProgramName << " [options]";
 
     // Print out the positional options.
-    std::vector<Option*> &PosOpts = *PositionalOptions;
     Option *CAOpt = 0;   // The cl::ConsumeAfter option, if it exists...
-    if (!PosOpts.empty() && PosOpts[0]->getNumOccurrencesFlag() == ConsumeAfter)
-      CAOpt = PosOpts[0];
+    if (!PositionalOpts.empty() && 
+        PositionalOpts[0]->getNumOccurrencesFlag() == ConsumeAfter)
+      CAOpt = PositionalOpts[0];
 
-    for (unsigned i = CAOpt != 0, e = PosOpts.size(); i != e; ++i) {
-      if (PosOpts[i]->ArgStr[0])
-        cout << " --" << PosOpts[i]->ArgStr;
-      cout << " " << PosOpts[i]->HelpStr;
+    for (unsigned i = CAOpt != 0, e = PositionalOpts.size(); i != e; ++i) {
+      if (PositionalOpts[i]->ArgStr[0])
+        cout << " --" << PositionalOpts[i]->ArgStr;
+      cout << " " << PositionalOpts[i]->HelpStr;
     }
 
     // Print the consume after option info if it exists...
@@ -924,7 +945,6 @@ public:
     MoreHelp->clear();
 
     // Halt the program since help information was printed
-    OptionsMap->clear();  // Don't bother making option dtors remove from map.
     exit(1);
   }
 };
@@ -970,7 +990,6 @@ public:
     if (OptionWasSpecified) {
       if (OverrideVersionPrinter == 0) {
         print();
-        OptionsMap->clear();// Don't bother making option dtors remove from map.
         exit(1);
       } else {
         (*OverrideVersionPrinter)();

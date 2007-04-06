@@ -142,16 +142,18 @@ class Option {
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueOptional;
   }
+  
   // Out of line virtual function to provide home for the class.
   virtual void anchor();
   
-  int NumOccurrences;   // The number of times specified
-  int Flags;            // Flags for the argument
-  unsigned Position;    // Position of last occurrence of the option
+  int NumOccurrences;     // The number of times specified
+  int Flags;              // Flags for the argument
+  unsigned Position;      // Position of last occurrence of the option
+  Option *NextRegistered; // Singly linked list of registered options.
 public:
-  const char *ArgStr;   // The argument string itself (ex: "help", "o")
-  const char *HelpStr;  // The descriptive text message for --help
-  const char *ValueStr; // String describing what the value of this option is
+  const char *ArgStr;     // The argument string itself (ex: "help", "o")
+  const char *HelpStr;    // The descriptive text message for --help
+  const char *ValueStr;   // String describing what the value of this option is
 
   inline enum NumOccurrences getNumOccurrencesFlag() const {
     return static_cast<enum NumOccurrences>(Flags & OccurrencesMask);
@@ -198,16 +200,17 @@ public:
 protected:
   Option(unsigned DefaultFlags)
     : NumOccurrences(0), Flags(DefaultFlags | NormalFormatting), Position(0),
-      ArgStr(""), HelpStr(""), ValueStr("") {
+      NextRegistered(0), ArgStr(""), HelpStr(""), ValueStr("") {
     assert(getNumOccurrencesFlag() != 0 &&
            getOptionHiddenFlag() != 0 && "Not all default flags specified!");
   }
 
 public:
-  // addArgument - Tell the system that this Option subclass will handle all
-  // occurrences of -ArgStr on the command line.
+  // addArgument - Register this argument with the commandline system.
   //
-  void addArgument(const char *ArgStr);
+  void addArgument();
+  
+  Option *getNextRegisteredOption() const { return NextRegistered; }
 
   // Return the width of the option tag for printing...
   virtual unsigned getOptionWidth() const = 0;
@@ -217,6 +220,8 @@ public:
   //
   virtual void printOptionInfo(unsigned GlobalWidth) const = 0;
 
+  virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {}
+  
   // addOccurrence - Wrapper around handleOccurrence that enforces Flags
   //
   bool addOccurrence(unsigned pos, const char *ArgName,
@@ -379,15 +384,17 @@ struct generic_parser_base {
     // argstr field should be stable, copy it down now.
     //
     hasArgStr = O.hasArgStr();
-
+  }
+  
+  void getExtraOptionNames(std::vector<const char*> &OptionNames) {
     // If there has been no argstr specified, that means that we need to add an
     // argument for every possible option.  This ensures that our options are
     // vectored to us.
-    //
     if (!hasArgStr)
       for (unsigned i = 0, e = getNumOptions(); i != e; ++i)
-        O.addArgument(getOption(i));
+        OptionNames.push_back(getOption(i));
   }
+
 
   enum ValueExpected getValueExpectedFlagDefault() const {
     // If there is an ArgStr specified, then we are of the form:
@@ -482,6 +489,8 @@ struct basic_parser_impl {  // non-template implementation of basic_parser<t>
   enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueRequired;
   }
+
+  void getExtraOptionNames(std::vector<const char*> &OptionNames) {}
 
   void initialize(Option &O) {}
 
@@ -772,6 +781,9 @@ class opt : public Option,
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
+  virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {
+    return Parser.getExtraOptionNames(OptionNames);
+  }
 
   // Forward printing stuff to the parser...
   virtual unsigned getOptionWidth() const {return Parser.getOptionWidth(*this);}
@@ -780,7 +792,7 @@ class opt : public Option,
   }
 
   void done() {
-    addArgument(ArgStr);
+    addArgument();
     Parser.initialize(*this);
   }
 public:
@@ -923,7 +935,10 @@ class list : public Option, public list_storage<DataType, Storage> {
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
-
+  virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {
+    return Parser.getExtraOptionNames(OptionNames);
+  }
+  
   virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) {
     typename ParserClass::parser_data_type Val =
@@ -943,7 +958,7 @@ class list : public Option, public list_storage<DataType, Storage> {
   }
 
   void done() {
-    addArgument(ArgStr);
+    addArgument();
     Parser.initialize(*this);
   }
 public:
@@ -1106,7 +1121,10 @@ class bits : public Option, public bits_storage<DataType, Storage> {
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
-
+  virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {
+    return Parser.getExtraOptionNames(OptionNames);
+  }
+  
   virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) {
     typename ParserClass::parser_data_type Val =
@@ -1126,7 +1144,7 @@ class bits : public Option, public bits_storage<DataType, Storage> {
   }
 
   void done() {
-    addArgument(ArgStr);
+    addArgument();
     Parser.initialize(*this);
   }
 public:
@@ -1221,7 +1239,7 @@ class alias : public Option {
       error(": cl::alias must have argument name specified!");
     if (AliasFor == 0)
       error(": cl::alias must have an cl::aliasopt(option) specified!");
-    addArgument(ArgStr);
+      addArgument();
   }
 public:
   void setAliasFor(Option &O) {
