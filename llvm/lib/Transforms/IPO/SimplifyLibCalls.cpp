@@ -474,57 +474,50 @@ public:
   }
 
   /// @brief Optimize the strcat library function
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
     // Extract some information from the instruction
-    Value* dest = ci->getOperand(1);
-    Value* src  = ci->getOperand(2);
+    Value *Dst = CI->getOperand(1);
+    Value *Src = CI->getOperand(2);
 
     // Extract the initializer (while making numerous checks) from the
-    // source operand of the call to strcat. If we get null back, one of
-    // a variety of checks in get_GVInitializer failed
-    uint64_t len, StartIdx;
+    // source operand of the call to strcat.
+    uint64_t SrcLength, StartIdx;
     ConstantArray *Arr;
-    if (!GetConstantStringInfo(src, Arr, len, StartIdx))
+    if (!GetConstantStringInfo(Src, Arr, SrcLength, StartIdx))
       return false;
 
     // Handle the simple, do-nothing case
-    if (len == 0) {
-      ci->replaceAllUsesWith(dest);
-      ci->eraseFromParent();
+    if (SrcLength == 0) {
+      CI->replaceAllUsesWith(Dst);
+      CI->eraseFromParent();
       return true;
     }
 
-    // Increment the length because we actually want to memcpy the null
-    // terminator as well.
-    len++;
-
     // We need to find the end of the destination string.  That's where the
     // memory is to be moved to. We just generate a call to strlen (further
-    // optimized in another pass).  Note that the SLC.get_strlen() call
-    // caches the Function* for us.
-    CallInst* strlen_inst =
-      new CallInst(SLC.get_strlen(), dest, dest->getName()+".len",ci);
+    // optimized in another pass).
+    CallInst *DstLen = new CallInst(SLC.get_strlen(), Dst,
+                                    Dst->getName()+".len", CI);
 
     // Now that we have the destination's length, we must index into the
     // destination's pointer to get the actual memcpy destination (end of
     // the string .. we're concatenating).
-    GetElementPtrInst* gep =
-      new GetElementPtrInst(dest, strlen_inst, dest->getName()+".indexed", ci);
+    Dst = new GetElementPtrInst(Dst, DstLen, Dst->getName()+".indexed", CI);
 
     // We have enough information to now generate the memcpy call to
     // do the concatenation for us.
-    Value *vals[4];
-    vals[0] = gep; // destination
-    vals[1] = ci->getOperand(2); // source
-    vals[2] = ConstantInt::get(SLC.getIntPtrType(),len); // length
-    vals[3] = ConstantInt::get(Type::Int32Ty,1); // alignment
-    new CallInst(SLC.get_memcpy(), vals, 4, "", ci);
+    Value *Vals[] = {
+      Dst, Src,
+      ConstantInt::get(SLC.getIntPtrType(), SrcLength+1), // copy nul term.
+      ConstantInt::get(Type::Int32Ty, 1)  // alignment
+    };
+    new CallInst(SLC.get_memcpy(), Vals, 4, "", CI);
 
     // Finally, substitute the first operand of the strcat call for the
     // strcat call itself since strcat returns its first operand; and,
     // kill the strcat CallInst.
-    ci->replaceAllUsesWith(dest);
-    ci->eraseFromParent();
+    CI->replaceAllUsesWith(Dst);
+    CI->eraseFromParent();
     return true;
   }
 } StrCatOptimizer;
