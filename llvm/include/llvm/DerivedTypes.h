@@ -163,6 +163,7 @@ private:
                bool IsVarArgs, const ParamAttrsList &Attrs);
 
 public:
+  virtual ~FunctionType() { delete ParamAttrs; }
   /// FunctionType::get - This static method is the primary way of constructing
   /// a FunctionType. 
   ///
@@ -179,9 +180,9 @@ public:
   inline bool isVarArg() const { return isVarArgs; }
   inline const Type *getReturnType() const { return ContainedTys[0]; }
 
-  typedef std::vector<PATypeHandle>::const_iterator param_iterator;
-  param_iterator param_begin() const { return ContainedTys.begin()+1; }
-  param_iterator param_end() const { return ContainedTys.end(); }
+  typedef Type::subtype_iterator param_iterator;
+  param_iterator param_begin() const { return ContainedTys + 1; }
+  param_iterator param_end() const { return &ContainedTys[NumContainedTys]; }
 
   // Parameter type accessors...
   const Type *getParamType(unsigned i) const { return ContainedTys[i+1]; }
@@ -189,7 +190,7 @@ public:
   /// getNumParams - Return the number of fixed parameters this function type
   /// requires.  This does not consider varargs.
   ///
-  unsigned getNumParams() const { return unsigned(ContainedTys.size()-1); }
+  unsigned getNumParams() const { return NumContainedTys - 1; }
 
   bool isStructReturn() const {
     return (getNumParams() && paramHasAttr(1, StructRetAttribute));
@@ -265,14 +266,14 @@ public:
                          bool isPacked=false);
 
   // Iterator access to the elements
-  typedef std::vector<PATypeHandle>::const_iterator element_iterator;
-  element_iterator element_begin() const { return ContainedTys.begin(); }
-  element_iterator element_end() const { return ContainedTys.end(); }
+  typedef Type::subtype_iterator element_iterator;
+  element_iterator element_begin() const { return ContainedTys; }
+  element_iterator element_end() const { return &ContainedTys[NumContainedTys];}
 
   // Random access to the elements
-  unsigned getNumElements() const { return unsigned(ContainedTys.size()); }
+  unsigned getNumElements() const { return NumContainedTys; }
   const Type *getElementType(unsigned N) const {
-    assert(N < ContainedTys.size() && "Element number out of range!");
+    assert(N < NumContainedTys && "Element number out of range!");
     return ContainedTys[N];
   }
 
@@ -305,12 +306,14 @@ public:
 /// components out in memory identically.
 ///
 class SequentialType : public CompositeType {
+  PATypeHandle ContainedType; ///< Storage for the single contained type
   SequentialType(const SequentialType &);                  // Do not implement!
   const SequentialType &operator=(const SequentialType &); // Do not implement!
 protected:
-  SequentialType(TypeID TID, const Type *ElType) : CompositeType(TID) {
-    ContainedTys.reserve(1);
-    ContainedTys.push_back(PATypeHandle(ElType, this));
+  SequentialType(TypeID TID, const Type *ElType) 
+    : CompositeType(TID), ContainedType(ElType, this) {
+    ContainedTys = &ContainedType; 
+    NumContainedTys = 1;
   }
 
 public:

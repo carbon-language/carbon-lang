@@ -63,11 +63,52 @@ static ManagedStatic<std::map<const Type*,
                               std::string> > AbstractTypeDescriptions;
 
 Type::Type(const char *Name, TypeID id)
-  : ID(id), Abstract(false),  SubclassData(0), RefCount(0), ForwardType(0) {
+  : ID(id), Abstract(false),  SubclassData(0), RefCount(0), ForwardType(0),
+    NumContainedTys(0),  ContainedTys(0) {
   assert(Name && Name[0] && "Should use other ctor if no name!");
   (*ConcreteTypeDescriptions)[this] = Name;
 }
 
+/// Because of the way Type subclasses are allocated, this function is necessary
+/// to use the correct kind of "delete" operator to deallocate the Type object.
+/// Some type objects (FunctionTy, StructTy) allocate additional space after 
+/// the space for their derived type to hold the contained types array of
+/// PATypeHandles. Using this allocation scheme means all the PATypeHandles are
+/// allocated with the type object, decreasing allocations and eliminating the
+/// need for a std::vector to be used in the Type class itself. 
+/// @brief Type destruction function
+void Type::destroy() const {
+
+  // Structures and Functions allocate their contained types past the end of
+  // the type object itself. These need to be destroyed differently than the
+  // other types.
+  if (isa<FunctionType>(this) || isa<StructType>(this)) {
+    // First, make sure we destruct any PATypeHandles allocated by these
+    // subclasses.  They must be manually destructed. 
+    for (unsigned i = 0; i < NumContainedTys; ++i)
+      ContainedTys[i].PATypeHandle::~PATypeHandle();
+
+    // Now call the destructor for the subclass directly because we're going
+    // to delete this as an array of char.
+    if (isa<FunctionType>(this))
+      ((FunctionType*)this)->FunctionType::~FunctionType();
+    else
+      ((StructType*)this)->StructType::~StructType();
+
+    // Finally, remove the memory as an array deallocation of the chars it was
+    // constructed from.
+    delete [] reinterpret_cast<const char*>(this); 
+
+    return;
+  }
+
+  // For all the other type subclasses, there is either no contained types or 
+  // just one (all Sequentials). For Sequentials, the PATypeHandle is not
+  // allocated past the type object, its included directly in the SequentialType
+  // class. This means we can safely just do "normal" delete of this object and
+  // all the destructors that need to run will be run.
+  delete this; 
+}
 
 const Type *Type::getPrimitiveType(TypeID IDNumber) {
   switch (IDNumber) {
@@ -330,7 +371,7 @@ bool StructType::indexValid(const Value *V) const {
   // Structure indexes require 32-bit integer constants.
   if (V->getType() == Type::Int32Ty)
     if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
-      return CU->getZExtValue() < ContainedTys.size();
+      return CU->getZExtValue() < NumContainedTys;
   return false;
 }
 
@@ -371,19 +412,19 @@ const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
 FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params,
                            bool IsVarArgs, const ParamAttrsList &Attrs) 
-  : DerivedType(FunctionTyID), isVarArgs(IsVarArgs) {
+  : DerivedType(FunctionTyID), isVarArgs(IsVarArgs), ParamAttrs(0) {
+  ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
+  NumContainedTys = Params.size() + 1; // + 1 for result type
   assert((Result->isFirstClassType() || Result == Type::VoidTy ||
          isa<OpaqueType>(Result)) &&
          "LLVM functions cannot return aggregates");
   bool isAbstract = Result->isAbstract();
-  ContainedTys.reserve(Params.size()+1);
-  ContainedTys.push_back(PATypeHandle(Result, this));
+  new (&ContainedTys[0]) PATypeHandle(Result, this);
 
   for (unsigned i = 0; i != Params.size(); ++i) {
     assert((Params[i]->isFirstClassType() || isa<OpaqueType>(Params[i])) &&
            "Function arguments must be value types!");
-
-    ContainedTys.push_back(PATypeHandle(Params[i], this));
+    new (&ContainedTys[i+1]) PATypeHandle(Params[i],this);
     isAbstract |= Params[i]->isAbstract();
   }
 
@@ -400,12 +441,13 @@ FunctionType::FunctionType(const Type *Result,
 
 StructType::StructType(const std::vector<const Type*> &Types, bool isPacked)
   : CompositeType(StructTyID) {
+  ContainedTys = reinterpret_cast<PATypeHandle*>(this + 1);
+  NumContainedTys = Types.size();
   setSubclassData(isPacked);
-  ContainedTys.reserve(Types.size());
   bool isAbstract = false;
   for (unsigned i = 0; i < Types.size(); ++i) {
     assert(Types[i] != Type::VoidTy && "Void type for structure field!!");
-    ContainedTys.push_back(PATypeHandle(Types[i], this));
+     new (&ContainedTys[i]) PATypeHandle(Types[i], this);
     isAbstract |= Types[i]->isAbstract();
   }
 
@@ -449,17 +491,17 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 // another (more concrete) type, we must eliminate all references to other
 // types, to avoid some circular reference problems.
 void DerivedType::dropAllTypeUses() {
-  if (!ContainedTys.empty()) {
+  if (NumContainedTys != 0) {
     // The type must stay abstract.  To do this, we insert a pointer to a type
     // that will never get resolved, thus will always be abstract.
     static Type *AlwaysOpaqueTy = OpaqueType::get();
     static PATypeHolder Holder(AlwaysOpaqueTy);
     ContainedTys[0] = AlwaysOpaqueTy;
 
-    // Change the rest of the types to be intty's.  It doesn't matter what we
+    // Change the rest of the types to be Int32Ty's.  It doesn't matter what we
     // pick so long as it doesn't point back to this type.  We choose something
     // concrete to avoid overhead for adding to AbstracTypeUser lists and stuff.
-    for (unsigned i = 1, e = ContainedTys.size(); i != e; ++i)
+    for (unsigned i = 1, e = NumContainedTys; i != e; ++i)
       ContainedTys[i] = Type::Int32Ty;
   }
 }
@@ -812,7 +854,7 @@ public:
     unsigned OldTypeHash = ValType::hashTypeStructure(Ty);
 
     // Find the type element we are refining... and change it now!
-    for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
+    for (unsigned i = 0, e = Ty->getNumContainedTypes(); i != e; ++i)
       if (Ty->ContainedTys[i] == OldType)
         Ty->ContainedTys[i] = NewType;
     unsigned NewTypeHash = ValType::hashTypeStructure(Ty);
@@ -1047,7 +1089,9 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   FunctionType *MT = FunctionTypes->get(VT);
   if (MT) return MT;
 
-  MT = new FunctionType(ReturnType, Params, isVarArg, *TheAttrs);
+  MT = (FunctionType*) new char[sizeof(FunctionType) + 
+                                sizeof(PATypeHandle)*(Params.size()+1)];
+  new (MT) FunctionType(ReturnType, Params, isVarArg, *TheAttrs);
   FunctionTypes->add(VT, MT);
 
 #ifdef DEBUG_MERGE_TYPES
@@ -1214,7 +1258,10 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes,
   if (ST) return ST;
 
   // Value not found.  Derive a new type!
-  StructTypes->add(STV, ST = new StructType(ETypes, isPacked));
+  ST = (StructType*) new char[sizeof(StructType) + 
+                              sizeof(PATypeHandle) * ETypes.size()];
+  new (ST) StructType(ETypes, isPacked);
+  StructTypes->add(STV, ST);
 
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *ST << "\n";
@@ -1304,10 +1351,9 @@ void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
     DOUT << "DELETEing unused abstract type: <" << *this
          << ">[" << (void*)this << "]" << "\n";
 #endif
-    delete this;                  // No users of this abstract type!
+    this->destroy();
   }
 }
-
 
 // refineAbstractTypeTo - This function is used when it is discovered that
 // the 'this' abstract type is actually equivalent to the NewType specified.

@@ -101,12 +101,18 @@ private:
   mutable unsigned RefCount;
 
   const Type *getForwardedTypeInternal() const;
+
+  // Some Type instances are allocated as arrays, some aren't. So we provide
+  // this method to get the right kind of destruction for the type of Type.
+  void destroy() const; // const is a lie, this does "delete this"!
+
 protected:
   Type(const char *Name, TypeID id);
   explicit Type(TypeID id) : ID(id), Abstract(false), SubclassData(0),
-                             RefCount(0), ForwardType(0) {}
+                             RefCount(0), ForwardType(0), NumContainedTys(0),
+                             ContainedTys(0) {}
   virtual ~Type() {
-    assert(AbstractTypeUsers.empty());
+    assert(AbstractTypeUsers.empty() && "Abstract types remain");
   }
 
   /// Types can become nonabstract later, if they are refined.
@@ -123,19 +129,31 @@ protected:
   /// to the more refined type.  Only abstract types can be forwarded.
   mutable const Type *ForwardType;
 
-  /// ContainedTys - The list of types contained by this one.  For example, this
-  /// includes the arguments of a function type, the elements of the structure,
-  /// the pointee of a pointer, etc.  Note that keeping this vector in the Type
-  /// class wastes some space for types that do not contain anything (such as
-  /// primitive types).  However, keeping it here allows the subtype_* members
-  /// to be implemented MUCH more efficiently, and dynamically very few types do
-  /// not contain any elements (most are derived).
-  std::vector<PATypeHandle> ContainedTys;
 
   /// AbstractTypeUsers - Implement a list of the users that need to be notified
   /// if I am a type, and I get resolved into a more concrete type.
   ///
   mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
+
+  /// NumContainedTys - Keeps track of how many PATypeHandle instances there
+  /// are at the end of this type instance for the list of contained types. It
+  /// is the subclasses responsibility to set this up. Set to 0 if there are no
+  /// contained types in this type.
+  unsigned NumContainedTys;
+
+  /// ContainedTys - A pointer to the array of Types (PATypeHandle) contained 
+  /// by this Type.  For example, this includes the arguments of a function 
+  /// type, the elements of a structure, the pointee of a pointer, the element
+  /// type of an array, etc.  This pointer may be 0 for types that don't 
+  /// contain other types (Integer, Double, Float).  In general, the subclass 
+  /// should arrange for space for the PATypeHandles to be included in the 
+  /// allocation of the type object and set this pointer to the address of the 
+  /// first element. This allows the Type class to manipulate the ContainedTys 
+  /// without understanding the subclass's placement for this array.  keeping 
+  /// it here also allows the subtype_* members to be implemented MUCH more 
+  /// efficiently, and dynamically very few types do not contain any elements.
+  PATypeHandle *ContainedTys;
+
 public:
   void print(std::ostream &O) const;
   void print(std::ostream *O) const { if (O) print(*O); }
@@ -235,23 +253,22 @@ public:
   //===--------------------------------------------------------------------===//
   // Type Iteration support
   //
-  typedef std::vector<PATypeHandle>::const_iterator subtype_iterator;
-  subtype_iterator subtype_begin() const { return ContainedTys.begin(); }
-  subtype_iterator subtype_end() const { return ContainedTys.end(); }
+  typedef PATypeHandle *subtype_iterator;
+  subtype_iterator subtype_begin() const { return ContainedTys; }
+  subtype_iterator subtype_end() const { return &ContainedTys[NumContainedTys];}
 
   /// getContainedType - This method is used to implement the type iterator
   /// (defined a the end of the file).  For derived types, this returns the
   /// types 'contained' in the derived type.
   ///
   const Type *getContainedType(unsigned i) const {
-    assert(i < ContainedTys.size() && "Index out of range!");
-    return ContainedTys[i];
+    assert(i < NumContainedTys && "Index out of range!");
+    return ContainedTys[i].get();
   }
 
   /// getNumContainedTypes - Return the number of types in the derived type.
   ///
-  typedef std::vector<PATypeHandle>::size_type size_type;
-  size_type getNumContainedTypes() const { return ContainedTys.size(); }
+  unsigned getNumContainedTypes() const { return NumContainedTys; }
 
   //===--------------------------------------------------------------------===//
   // Static members exported by the Type class itself.  Useful for getting
@@ -282,7 +299,7 @@ public:
     // If this is the last PATypeHolder using this object, and there are no
     // PATypeHandles using it, the type is dead, delete it now.
     if (--RefCount == 0 && AbstractTypeUsers.empty())
-      delete this;
+      this->destroy();
   }
   
   /// addAbstractTypeUser - Notify an abstract type that there is a new user of
