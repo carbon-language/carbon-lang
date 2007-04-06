@@ -141,13 +141,6 @@ class Option {
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueOptional;
   }
-  virtual enum OptionHidden getOptionHiddenFlagDefault() const {
-    return NotHidden;
-  }
-  virtual enum FormattingFlags getFormattingFlagDefault() const {
-    return NormalFormatting;
-  }
-
   // Out of line virtual function to provide home for the class.
   virtual void anchor();
   
@@ -160,7 +153,7 @@ public:
   const char *ValueStr; // String describing what the value of this option is
 
   inline enum NumOccurrences getNumOccurrencesFlag() const {
-    return (enum NumOccurrences)(Flags & OccurrencesMask);
+    return static_cast<enum NumOccurrences>(Flags & OccurrencesMask);
   }
   inline enum ValueExpected getValueExpectedFlag() const {
     int VE = Flags & ValueMask;
@@ -168,14 +161,10 @@ public:
               : getValueExpectedFlagDefault();
   }
   inline enum OptionHidden getOptionHiddenFlag() const {
-    int OH = Flags & HiddenMask;
-    return OH ? static_cast<enum OptionHidden>(OH)
-              : getOptionHiddenFlagDefault();
+    return static_cast<enum OptionHidden>(Flags & HiddenMask);
   }
   inline enum FormattingFlags getFormattingFlag() const {
-    int OH = Flags & FormattingMask;
-    return OH ? static_cast<enum FormattingFlags>(OH)
-              : getFormattingFlagDefault();
+    return static_cast<enum FormattingFlags>(Flags & FormattingMask);
   }
   inline unsigned getMiscFlags() const {
     return Flags & MiscMask;
@@ -206,9 +195,12 @@ public:
   void setMiscFlag(enum MiscFlags M) { setFlag(M, M); }
   void setPosition(unsigned pos) { Position = pos; }
 protected:
-  Option(enum NumOccurrences DefaultOccFlag)
-    : NumOccurrences(0), Flags(DefaultOccFlag), Position(0),
-      ArgStr(""), HelpStr(""), ValueStr("") {}
+  Option(unsigned DefaultFlags)
+    : NumOccurrences(0), Flags(DefaultFlags | NormalFormatting), Position(0),
+      ArgStr(""), HelpStr(""), ValueStr("") {
+    assert(getNumOccurrencesFlag() != 0 &&
+           getOptionHiddenFlag() != 0 && "Not all default flags specified!");
+  }
 
 public:
   // addArgument - Tell the system that this Option subclass will handle all
@@ -805,35 +797,36 @@ public:
 
   // One option...
   template<class M0t>
-  opt(const M0t &M0) : Option(Optional) {
+  opt(const M0t &M0) : Option(Optional | NotHidden) {
     apply(M0, this);
     done();
   }
 
   // Two options...
   template<class M0t, class M1t>
-  opt(const M0t &M0, const M1t &M1) : Option(Optional) {
+  opt(const M0t &M0, const M1t &M1) : Option(Optional | NotHidden) {
     apply(M0, this); apply(M1, this);
     done();
   }
 
   // Three options...
   template<class M0t, class M1t, class M2t>
-  opt(const M0t &M0, const M1t &M1, const M2t &M2) : Option(Optional) {
+  opt(const M0t &M0, const M1t &M1,
+      const M2t &M2) : Option(Optional | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this);
     done();
   }
   // Four options...
   template<class M0t, class M1t, class M2t, class M3t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2,
-      const M3t &M3) : Option(Optional) {
+      const M3t &M3) : Option(Optional | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     done();
   }
   // Five options...
   template<class M0t, class M1t, class M2t, class M3t, class M4t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4) : Option(Optional) {
+      const M4t &M4) : Option(Optional | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this);
     done();
@@ -842,7 +835,7 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4, const M5t &M5) : Option(Optional) {
+      const M4t &M4, const M5t &M5) : Option(Optional | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this);
     done();
@@ -851,7 +844,8 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t, class M6t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-      const M4t &M4, const M5t &M5, const M6t &M6) : Option(Optional) {
+      const M4t &M4, const M5t &M5,
+      const M6t &M6) : Option(Optional | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this);
     done();
@@ -861,7 +855,7 @@ public:
            class M4t, class M5t, class M6t, class M7t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
       const M4t &M4, const M5t &M5, const M6t &M6,
-      const M7t &M7) : Option(Optional) {
+      const M7t &M7) : Option(Optional | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this); apply(M7, this);
     done();
@@ -960,33 +954,34 @@ public:
 
   // One option...
   template<class M0t>
-  list(const M0t &M0) : Option(ZeroOrMore) {
+  list(const M0t &M0) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this);
     done();
   }
   // Two options...
   template<class M0t, class M1t>
-  list(const M0t &M0, const M1t &M1) : Option(ZeroOrMore) {
+  list(const M0t &M0, const M1t &M1) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this);
     done();
   }
   // Three options...
   template<class M0t, class M1t, class M2t>
-  list(const M0t &M0, const M1t &M1, const M2t &M2) : Option(ZeroOrMore) {
+  list(const M0t &M0, const M1t &M1, const M2t &M2)
+    : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this);
     done();
   }
   // Four options...
   template<class M0t, class M1t, class M2t, class M3t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-    : Option(ZeroOrMore) {
+    : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     done();
   }
   // Five options...
   template<class M0t, class M1t, class M2t, class M3t, class M4t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4) : Option(ZeroOrMore) {
+       const M4t &M4) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this);
     done();
@@ -995,7 +990,7 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5) : Option(ZeroOrMore) {
+       const M4t &M4, const M5t &M5) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this);
     done();
@@ -1004,7 +999,8 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t, class M6t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5, const M6t &M6) : Option(ZeroOrMore) {
+       const M4t &M4, const M5t &M5, const M6t &M6)
+    : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this);
     done();
@@ -1014,7 +1010,7 @@ public:
            class M4t, class M5t, class M6t, class M7t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4, const M5t &M5, const M6t &M6,
-       const M7t &M7) : Option(ZeroOrMore) {
+       const M7t &M7) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this); apply(M7, this);
     done();
@@ -1141,33 +1137,34 @@ public:
 
   // One option...
   template<class M0t>
-  bits(const M0t &M0) : Option(ZeroOrMore) {
+  bits(const M0t &M0) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this);
     done();
   }
   // Two options...
   template<class M0t, class M1t>
-  bits(const M0t &M0, const M1t &M1) : Option(ZeroOrMore) {
+  bits(const M0t &M0, const M1t &M1) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this);
     done();
   }
   // Three options...
   template<class M0t, class M1t, class M2t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2) : Option(ZeroOrMore) {
+  bits(const M0t &M0, const M1t &M1, const M2t &M2)
+    : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this);
     done();
   }
   // Four options...
   template<class M0t, class M1t, class M2t, class M3t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2,
-       const M3t &M3) : Option(ZeroOrMore) {
+  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
+    : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     done();
   }
   // Five options...
   template<class M0t, class M1t, class M2t, class M3t, class M4t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4) : Option(ZeroOrMore) {
+       const M4t &M4) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this);
     done();
@@ -1176,7 +1173,7 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5) : Option(ZeroOrMore) {
+       const M4t &M4, const M5t &M5) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this);
     done();
@@ -1185,7 +1182,8 @@ public:
   template<class M0t, class M1t, class M2t, class M3t,
            class M4t, class M5t, class M6t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5, const M6t &M6) : Option(ZeroOrMore) {
+       const M4t &M4, const M5t &M5, const M6t &M6)
+    : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this);
     done();
@@ -1195,7 +1193,7 @@ public:
            class M4t, class M5t, class M6t, class M7t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4, const M5t &M5, const M6t &M6,
-       const M7t &M7) : Option(ZeroOrMore) {
+       const M7t &M7) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     apply(M4, this); apply(M5, this); apply(M6, this); apply(M7, this);
     done();
@@ -1212,9 +1210,6 @@ class alias : public Option {
                                 const std::string &Arg) {
     return AliasFor->handleOccurrence(pos, AliasFor->ArgStr, Arg);
   }
-  // Aliases default to be hidden...
-  virtual enum OptionHidden getOptionHiddenFlagDefault() const {return Hidden;}
-
   // Handle printing stuff...
   virtual unsigned getOptionWidth() const;
   virtual void printOptionInfo(unsigned GlobalWidth) const;
@@ -1235,27 +1230,27 @@ public:
 
   // One option...
   template<class M0t>
-  alias(const M0t &M0) : Option(Optional), AliasFor(0) {
+  alias(const M0t &M0) : Option(Optional | Hidden), AliasFor(0) {
     apply(M0, this);
     done();
   }
   // Two options...
   template<class M0t, class M1t>
-  alias(const M0t &M0, const M1t &M1) : Option(Optional), AliasFor(0) {
+  alias(const M0t &M0, const M1t &M1) : Option(Optional | Hidden), AliasFor(0) {
     apply(M0, this); apply(M1, this);
     done();
   }
   // Three options...
   template<class M0t, class M1t, class M2t>
   alias(const M0t &M0, const M1t &M1, const M2t &M2)
-    : Option(Optional), AliasFor(0) {
+    : Option(Optional | Hidden), AliasFor(0) {
     apply(M0, this); apply(M1, this); apply(M2, this);
     done();
   }
   // Four options...
   template<class M0t, class M1t, class M2t, class M3t>
   alias(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-    : Option(Optional), AliasFor(0) {
+    : Option(Optional | Hidden), AliasFor(0) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     done();
   }
