@@ -1189,67 +1189,65 @@ public:
       "Number of 'printf' calls simplified") {}
 
   /// @brief Make sure that the "printf" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     // Just make sure this has at least 1 arguments
-    return (f->arg_size() >= 1);
+    return F->arg_size() >= 1;
   }
 
   /// @brief Perform the printf optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
     // If the call has more than 2 operands, we can't optimize it
-    if (ci->getNumOperands() > 3 || ci->getNumOperands() <= 2)
+    if (CI->getNumOperands() != 3)
       return false;
 
     // If the result of the printf call is used, none of these optimizations
     // can be made.
-    if (!ci->use_empty())
+    if (!CI->use_empty())
       return false;
 
     // All the optimizations depend on the length of the first argument and the
     // fact that it is a constant string array. Check that now
-    uint64_t len, StartIdx;
-    ConstantArray* CA = 0;
-    if (!GetConstantStringInfo(ci->getOperand(1), CA, len, StartIdx))
+    uint64_t FormatLen, FormatIdx;
+    ConstantArray *CA = 0;
+    if (!GetConstantStringInfo(CI->getOperand(1), CA, FormatLen, FormatIdx))
       return false;
 
-    if (len != 2 && len != 3)
+    if (FormatLen != 2 && FormatLen != 3)
       return false;
 
     // The first character has to be a %
-    if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(0)))
-      if (CI->getZExtValue() != '%')
-        return false;
+    if (cast<ConstantInt>(CA->getOperand(FormatIdx))->getZExtValue() != '%')
+      return false;
 
     // Get the second character and switch on its value
-    ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(1));
-    switch (CI->getZExtValue()) {
-      case 's':
-      {
-        if (len != 3 ||
-            dyn_cast<ConstantInt>(CA->getOperand(2))->getZExtValue() != '\n')
-          return false;
-
-        // printf("%s\n",str) -> puts(str)
-        std::vector<Value*> args;
-        new CallInst(SLC.get_puts(), CastToCStr(ci->getOperand(2), *ci),
-                     ci->getName(), ci);
-        return ReplaceCallWith(ci, ConstantInt::get(Type::Int32Ty, len));
-      }
-      case 'c':
-      {
-        // printf("%c",c) -> putchar(c)
-        if (len != 2)
-          return false;
-
-        CastInst *Char = CastInst::createSExtOrBitCast(
-            ci->getOperand(2), Type::Int32Ty, CI->getName()+".int", ci);
-        new CallInst(SLC.get_putchar(), Char, "", ci);
-        return ReplaceCallWith(ci, ConstantInt::get(Type::Int32Ty, 1));
-      }
-      default:
+    switch (cast<ConstantInt>(CA->getOperand(FormatIdx+1))->getZExtValue()) {
+    default:  return false;
+    case 's': {
+      if (FormatLen != 3 ||
+          cast<ConstantInt>(CA->getOperand(FormatIdx+2))->getZExtValue() !='\n')
         return false;
+
+      // printf("%s\n",str) -> puts(str)
+      new CallInst(SLC.get_puts(), CastToCStr(CI->getOperand(2), *CI),
+                   CI->getName(), CI);
+      return ReplaceCallWith(CI, 0);
     }
-    return false;
+    case 'c': {
+      // printf("%c",c) -> putchar(c)
+      if (FormatLen != 2)
+        return false;
+      
+      Value *V = CI->getOperand(2);
+      if (!isa<IntegerType>(V->getType()) ||
+          cast<IntegerType>(V->getType())->getBitWidth() < 32)
+        return false;
+
+      V = CastInst::createSExtOrBitCast(V, Type::Int32Ty, CI->getName()+".int",
+                                        CI);
+      new CallInst(SLC.get_putchar(), V, "", CI);
+      return ReplaceCallWith(CI, 0);
+    }
+    }
   }
 } PrintfOptimizer;
 
