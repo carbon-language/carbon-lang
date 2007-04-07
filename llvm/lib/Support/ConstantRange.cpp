@@ -346,6 +346,23 @@ ConstantRange ConstantRange::zeroExtend(uint32_t DstTySize) const {
   return ConstantRange(L, U);
 }
 
+/// signExtend - Return a new range in the specified integer type, which must
+/// be strictly larger than the current type.  The returned range will
+/// correspond to the possible range of values as if the source range had been
+/// sign extended.
+ConstantRange ConstantRange::signExtend(uint32_t DstTySize) const {
+  unsigned SrcTySize = getBitWidth();
+  assert(SrcTySize < DstTySize && "Not a value extension");
+  if (isFullSet()) {
+    return ConstantRange(APInt::getHighBitsSet(DstTySize,DstTySize-SrcTySize+1),
+                         APInt::getLowBitsSet(DstTySize, SrcTySize-1));
+  }
+
+  APInt L = Lower; L.sext(DstTySize);
+  APInt U = Upper; U.sext(DstTySize);
+  return ConstantRange(L, U);
+}
+
 /// truncate - Return a new range in the specified integer type, which must be
 /// strictly smaller than the current type.  The returned range will
 /// correspond to the possible range of values as if the source range had been

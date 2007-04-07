@@ -157,6 +157,12 @@ class ConstantRange {
   /// zero extended to BitWidth.
   ConstantRange zeroExtend(uint32_t BitWidth) const;
 
+  /// signExtend - Return a new range in the specified integer type, which must
+  /// be strictly larger than the current type.  The returned range will
+  /// correspond to the possible range of values if the source range had been
+  /// sign extended to BitWidth.
+  ConstantRange signExtend(uint32_t BitWidth) const;
+
   /// truncate - Return a new range in the specified integer type, which must be
   /// strictly smaller than the current type.  The returned range will
   /// correspond to the possible range of values if the source range had been
