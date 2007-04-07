@@ -3291,7 +3291,10 @@ BBTerminatorInst
       $$.S.copy($3.S);
     } else {
       FTySign = $3.S;
-      $$.S.copy($3.S.get(0)); // 0th element of FuncTy sign is result ty
+      // Get the signedness of the result type. $3 is the pointer to the
+      // function type so we get the 0th element to extract the function type,
+      // and then the 0th element again to get the result type.
+      $$.S.copy($3.S.get(0).get(0)); 
     }
     $4.S.makeComposite(FTySign);
     Value *V = getVal(PFTy, $4);   // Get the function we're calling...
@@ -3688,7 +3691,10 @@ InstVal
       $$.S.copy($3.S);
     } else {
       FTySign = $3.S;
-      $$.S.copy($3.S.get(0)); // 0th element of FuncTy signedness is result sign
+      // Get the signedness of the result type. $3 is the pointer to the
+      // function type so we get the 0th element to extract the function type,
+      // and then the 0th element again to get the result type.
+      $$.S.copy($3.S.get(0).get(0)); 
     }
     $4.S.makeComposite(FTySign);
 
