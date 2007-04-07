@@ -91,6 +91,7 @@ void Option::addArgument() {
 static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
                           std::map<std::string, Option*> &OptionsMap) {
   std::vector<const char*> OptionNames;
+  Option *CAOpt = 0;  // The ConsumeAfter option if it exists.
   for (Option *O = RegisteredOptionList; O; O = O->getNextRegisteredOption()) {
     // If this option wants to handle multiple option names, get the full set.
     // This handles enum options like "-O1 -O2" etc.
@@ -114,12 +115,17 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
     if (O->getFormattingFlag() == cl::Positional)
       PositionalOpts.push_back(O);
     else if (O->getNumOccurrencesFlag() == cl::ConsumeAfter) {
-      if (!PositionalOpts.empty() &&
-          PositionalOpts.front()->getNumOccurrencesFlag() == cl::ConsumeAfter)
+      if (CAOpt)
         O->error("Cannot specify more than one option with cl::ConsumeAfter!");
-      PositionalOpts.insert(PositionalOpts.begin(), O);
+      CAOpt = O;
     }
   }
+  
+  if (CAOpt)
+    PositionalOpts.push_back(CAOpt);
+  
+  // Make sure that they are in order of registration not backwards.
+  std::reverse(PositionalOpts.begin(), PositionalOpts.end());
 }
 
 
