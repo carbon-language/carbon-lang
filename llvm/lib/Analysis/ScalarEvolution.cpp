@@ -500,7 +500,7 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
   // Handle this case efficiently, it is common to have constant iteration
   // counts while computing loop exit values.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
-    APInt Val = SC->getValue()->getValue();
+    const APInt& Val = SC->getValue()->getValue();
     APInt Result(Val.getBitWidth(), 1);
     for (; NumSteps; --NumSteps)
       Result *= Val-(NumSteps-1);
@@ -1336,7 +1336,7 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
 /// example, turn {4,+,8} -> 4.    (S umod result) should always equal zero.
 static APInt GetConstantFactor(SCEVHandle S) {
   if (SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
-    APInt V = C->getValue()->getValue();
+    const APInt& V = C->getValue()->getValue();
     if (!V.isMinValue())
       return V;
     else   // Zero is a multiple of everything.
@@ -2096,23 +2096,22 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
   }
 
   uint32_t BitWidth = LC->getValue()->getValue().getBitWidth();
-  APInt L(LC->getValue()->getValue());
-  APInt M(MC->getValue()->getValue());
-  APInt N(MC->getValue()->getValue());
+  const APInt& L = LC->getValue()->getValue();
+  const APInt& M = MC->getValue()->getValue();
+  const APInt& N = MC->getValue()->getValue();
   APInt Two(BitWidth, 2);
   APInt Four(BitWidth, 4);
 
   { 
     using namespace APIntOps;
-    APInt C(L);
+    const APInt& C = L;
     // Convert from chrec coefficients to polynomial coefficients AX^2+BX+C
     // The B coefficient is M-N/2
     APInt B(M);
     B -= sdiv(N,Two);
 
     // The A coefficient is N/2
-    APInt A(N);
-    A = A.sdiv(Two);
+    APInt A(N.sdiv(Two));
 
     // Compute the B^2-4ac term.
     APInt SqrtTerm(B);
