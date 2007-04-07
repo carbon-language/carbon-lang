@@ -799,59 +799,46 @@ struct VISIBILITY_HIDDEN StrLenOptimization : public LibCallOptimization {
 
   /// @brief Make sure that the "strlen" function has the right prototype
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
-    if (F->getReturnType() == SLC.getTargetData()->getIntPtrType())
-      if (F->arg_size() == 1)
-        if (Function::const_arg_iterator AI = F->arg_begin())
-          if (AI->getType() == PointerType::get(Type::Int8Ty))
-            return true;
-    return false;
+    const FunctionType *FT = F->getFunctionType();
+    return FT->getNumParams() == 1 &&
+           FT->getParamType(0) == PointerType::get(Type::Int8Ty) &&
+           isa<IntegerType>(FT->getReturnType());
   }
 
   /// @brief Perform the strlen optimization
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
     // Make sure we're dealing with an sbyte* here.
-    Value* str = ci->getOperand(1);
-    if (str->getType() != PointerType::get(Type::Int8Ty))
-      return false;
+    Value *Str = CI->getOperand(1);
 
     // Does the call to strlen have exactly one use?
-    if (ci->hasOneUse())
+    if (CI->hasOneUse()) {
       // Is that single use a icmp operator?
-      if (ICmpInst* bop = dyn_cast<ICmpInst>(ci->use_back()))
+      if (ICmpInst *Cmp = dyn_cast<ICmpInst>(CI->use_back()))
         // Is it compared against a constant integer?
-        if (ConstantInt* CI = dyn_cast<ConstantInt>(bop->getOperand(1)))
-        {
-          // Get the value the strlen result is compared to
-          uint64_t val = CI->getZExtValue();
-
+        if (ConstantInt *Cst = dyn_cast<ConstantInt>(Cmp->getOperand(1))) {
           // If its compared against length 0 with == or !=
-          if (val == 0 &&
-              (bop->getPredicate() == ICmpInst::ICMP_EQ ||
-               bop->getPredicate() == ICmpInst::ICMP_NE))
-          {
+          if (Cst->getZExtValue() == 0 && Cmp->isEquality()) {
             // strlen(x) != 0 -> *x != 0
             // strlen(x) == 0 -> *x == 0
-            LoadInst* load = new LoadInst(str,str->getName()+".first",ci);
-            ICmpInst* rbop = new ICmpInst(bop->getPredicate(), load, 
-                                          ConstantInt::get(Type::Int8Ty,0),
-                                          bop->getName()+".strlen", ci);
-            bop->replaceAllUsesWith(rbop);
-            bop->eraseFromParent();
-            ci->eraseFromParent();
-            return true;
+            Value *V = new LoadInst(Str, Str->getName()+".first", CI);
+            V = new ICmpInst(Cmp->getPredicate(), V, 
+                             ConstantInt::get(Type::Int8Ty, 0),
+                             Cmp->getName()+".strlen", CI);
+            Cmp->replaceAllUsesWith(V);
+            Cmp->eraseFromParent();
+            return ReplaceCallWith(CI, 0);  // no uses.
           }
         }
+    }
 
     // Get the length of the constant string operand
-    uint64_t len = 0, StartIdx;
+    uint64_t StrLen = 0, StartIdx;
     ConstantArray *A;
-    if (!GetConstantStringInfo(ci->getOperand(1), A, len, StartIdx))
+    if (!GetConstantStringInfo(CI->getOperand(1), A, StrLen, StartIdx))
       return false;
 
     // strlen("xyz") -> 3 (for example)
-    const Type *Ty = SLC.getTargetData()->getIntPtrType();
-    return ReplaceCallWith(ci, ConstantInt::get(Ty, len));
+    return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), StrLen));
   }
 } StrLenOptimizer;
 
