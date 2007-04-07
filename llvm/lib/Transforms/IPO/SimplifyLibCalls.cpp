@@ -621,66 +621,57 @@ public:
 
   /// @brief Make sure that the "strcmp" function has the right prototype
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
-    return F->getReturnType() == Type::Int32Ty && F->arg_size() == 2;
+    const FunctionType *FT = F->getFunctionType();
+    return FT->getReturnType() == Type::Int32Ty && FT->getNumParams() == 2 &&
+           FT->getParamType(0) == FT->getParamType(1) &&
+           FT->getParamType(0) == PointerType::get(Type::Int8Ty);
   }
 
   /// @brief Perform the strcmp optimization
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
     // First, check to see if src and destination are the same. If they are,
     // then the optimization is to replace the CallInst with a constant 0
     // because the call is a no-op.
-    Value* s1 = ci->getOperand(1);
-    Value* s2 = ci->getOperand(2);
-    if (s1 == s2) {
+    Value *Str1P = CI->getOperand(1);
+    Value *Str2P = CI->getOperand(2);
+    if (Str1P == Str2P) {
       // strcmp(x,x)  -> 0
-      ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,0));
-      ci->eraseFromParent();
+      CI->replaceAllUsesWith(ConstantInt::get(CI->getType(), 0));
+      CI->eraseFromParent();
       return true;
     }
 
-    bool isstr_1 = false;
-    uint64_t len_1 = 0, StartIdx;
+    uint64_t Str1Len, Str1StartIdx;
     ConstantArray *A1;
-    if (GetConstantStringInfo(s1, A1, len_1, StartIdx)) {
-      isstr_1 = true;
-      if (len_1 == 0) {
-        // strcmp("",x) -> *x
-        LoadInst* load =
-          new LoadInst(CastToCStr(s2,*ci), ci->getName()+".load",ci);
-        CastInst* cast =
-          CastInst::create(Instruction::SExt, load, Type::Int32Ty, 
-                           ci->getName()+".int", ci);
-        ci->replaceAllUsesWith(cast);
-        ci->eraseFromParent();
-        return true;
-      }
+    bool Str1IsCst = GetConstantStringInfo(Str1P, A1, Str1Len, Str1StartIdx);
+    if (Str1IsCst && Str1Len == 0) {
+      // strcmp("", x) -> *x
+      Value *V = new LoadInst(Str2P, CI->getName()+".load", CI);
+      V = new ZExtInst(V, CI->getType(), CI->getName()+".int", CI);
+      CI->replaceAllUsesWith(V);
+      CI->eraseFromParent();
+      return true;
     }
 
-    bool isstr_2 = false;
-    uint64_t len_2;
+    uint64_t Str2Len, Str2StartIdx;
     ConstantArray* A2;
-    if (GetConstantStringInfo(s2, A2, len_2, StartIdx)) {
-      isstr_2 = true;
-      if (len_2 == 0) {
-        // strcmp(x,"") -> *x
-        LoadInst* load =
-          new LoadInst(CastToCStr(s1,*ci),ci->getName()+".val",ci);
-        CastInst* cast =
-          CastInst::create(Instruction::SExt, load, Type::Int32Ty, 
-                           ci->getName()+".int", ci);
-        ci->replaceAllUsesWith(cast);
-        ci->eraseFromParent();
-        return true;
-      }
+    bool Str2IsCst = GetConstantStringInfo(Str2P, A2, Str2Len, Str2StartIdx);
+    if (Str2IsCst && Str2Len == 0) {
+      // strcmp(x,"") -> *x
+      Value *V = new LoadInst(Str1P, CI->getName()+".load", CI);
+      V = new ZExtInst(V, CI->getType(), CI->getName()+".int", CI);
+      CI->replaceAllUsesWith(V);
+      CI->eraseFromParent();
+      return true;
     }
 
-    if (isstr_1 && isstr_2) {
-      // strcmp(x,y)  -> cnst  (if both x and y are constant strings)
-      std::string str1 = A1->getAsString();
-      std::string str2 = A2->getAsString();
-      int result = strcmp(str1.c_str(), str2.c_str());
-      ci->replaceAllUsesWith(ConstantInt::get(Type::Int32Ty,result));
-      ci->eraseFromParent();
+    if (Str1IsCst && Str2IsCst && A1->isCString() && A2->isCString()) {
+      // strcmp(x, y)  -> cnst  (if both x and y are constant strings)
+      std::string S1 = A1->getAsString();
+      std::string S2 = A2->getAsString();
+      int R = strcmp(S1.c_str()+Str1StartIdx, S2.c_str()+Str2StartIdx);
+      CI->replaceAllUsesWith(ConstantInt::get(CI->getType(), R));
+      CI->eraseFromParent();
       return true;
     }
     return false;
