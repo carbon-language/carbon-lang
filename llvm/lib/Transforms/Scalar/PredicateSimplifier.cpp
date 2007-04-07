@@ -75,7 +75,8 @@
 //
 // It never stores an empty range, because that means that the code is
 // unreachable. It never stores a single-element range since that's an equality
-// relationship and better stored in the InequalityGraph.
+// relationship and better stored in the InequalityGraph, nor an empty range
+// since that is better stored in UnreachableBlocks.
 //
 //===----------------------------------------------------------------------===//
 
@@ -97,6 +98,7 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 #include <deque>
@@ -669,6 +671,8 @@ namespace {
       }
     };
 
+    TargetData *TD;
+
     std::vector<ScopedRange> Ranges;
     typedef std::vector<ScopedRange>::iterator iterator;
 
@@ -810,10 +814,15 @@ namespace {
       return Range;
     }
 
+    // rangeFromValue - converts a Value into a range. If the value is a
+    // constant it constructs the single element range, otherwise it performs
+    // a lookup. The width W must be retrieved from typeToWidth and may not
+    // be zero.
     ConstantRange rangeFromValue(Value *V, ETNode *Subtree, uint32_t W) {
-      ConstantInt *C = dyn_cast<ConstantInt>(V);
-      if (C) {
+      if (ConstantInt *C = dyn_cast<ConstantInt>(V)) {
         return ConstantRange(C->getValue());
+      } else if (isa<ConstantPointerNull>(V)) {
+        return ConstantRange(APInt::getNullValue(W));
       } else {
         iterator I = find(V, Subtree);
         if (I != end())
@@ -822,13 +831,14 @@ namespace {
       return ConstantRange(W);
     }
 
-    static uint32_t widthOfValue(Value *V) {
-      const Type *Ty = V->getType();
+    // typeToWidth - returns the number of bits necessary to store a value of
+    // this type, or zero if unknown.
+    uint32_t typeToWidth(const Type *Ty) const {
+      if (TD)
+        return TD->getTypeSizeInBits(Ty);
+
       if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty))
         return ITy->getBitWidth();
-
-      // XXX: I'd like to transform T* into the appropriate integer by
-      // bit length, however that data may not be available.
 
       return 0;
     }
@@ -839,8 +849,10 @@ namespace {
 
   public:
 
+    explicit ValueRanges(TargetData *TD) : TD(TD) {}
+
     bool isRelatedBy(Value *V1, Value *V2, ETNode *Subtree, LatticeVal LV) {
-      uint32_t W = widthOfValue(V1);
+      uint32_t W = typeToWidth(V1->getType());
       if (!W) return false;
 
       ConstantRange CR1 = rangeFromValue(V1, Subtree, W);
@@ -901,7 +913,7 @@ namespace {
                    VRPSolver *VRP) {
       assert(isCanonical(New, Subtree, VRP) && "Best choice not canonical?");
 
-      uint32_t W = widthOfValue(New);
+      uint32_t W = typeToWidth(New->getType());
       if (!W) return;
 
       ConstantRange CR_New = rangeFromValue(New, Subtree, W);
@@ -933,7 +945,7 @@ namespace {
       // XXX: except in the case where isSingleElement and equal to either
       // Lower or Upper. That's probably not profitable. (Type::Int1Ty?)
 
-      uint32_t W = widthOfValue(V1);
+      uint32_t W = typeToWidth(V1->getType());
       if (!W) return;
 
       ConstantRange CR1 = rangeFromValue(V1, Subtree, W);
@@ -1102,6 +1114,9 @@ namespace {
 
     bool makeEqual(Value *V1, Value *V2) {
       DOUT << "makeEqual(" << *V1 << ", " << *V2 << ")\n";
+
+      assert(V1->getType() == V2->getType() &&
+             "Can't make two values with different types equal.");
 
       if (V1 == V2) return true;
 
@@ -1421,6 +1436,9 @@ namespace {
       else DOUT << " default context";
       DOUT << "\n";
 
+      assert(V1->getType() == V2->getType() &&
+             "Can't relate two values with different types.");
+
       WorkList.push_back(Operation());
       Operation &O = WorkList.back();
       O.LHS = V1, O.RHS = V2, O.Op = Pred, O.ContextInst = I;
@@ -1703,7 +1721,6 @@ namespace {
     }
 
     /// solve - process the work queue
-    /// Return false if a logical contradiction occurs.
     void solve() {
       //DOUT << "WorkList entry, size: " << WorkList.size() << "\n";
       while (!WorkList.empty()) {
@@ -1862,6 +1879,8 @@ namespace {
       AU.addRequiredID(BreakCriticalEdgesID);
       AU.addRequired<DominatorTree>();
       AU.addRequired<ETForest>();
+      AU.addRequired<TargetData>();
+      AU.addPreserved<TargetData>();
     }
 
   private:
@@ -1980,6 +1999,8 @@ namespace {
     DT = &getAnalysis<DominatorTree>();
     Forest = &getAnalysis<ETForest>();
 
+    TargetData *TD = &getAnalysis<TargetData>();
+
     Forest->updateDFSNumbers(); // XXX: should only act when numbers are out of date
 
     DOUT << "Entering Function: " << F.getName() << "\n";
@@ -1987,7 +2008,7 @@ namespace {
     modified = false;
     BasicBlock *RootBlock = &F.getEntryBlock();
     IG = new InequalityGraph(Forest->getNodeForBlock(RootBlock));
-    VR = new ValueRanges();
+    VR = new ValueRanges(TD);
     WorkList.push_back(DT->getRootNode());
 
     do {
