@@ -526,9 +526,9 @@ if (!$NOCHECKOUT) {
       if $CVSRootDir =~ /^:ext:/;
     my $CVSCMD = "$NICE cvs $CVSOPT -d $CVSRootDir co -P $CVSCOOPT";
     print "( time -p $CVSCMD llvm; cd llvm/projects ; " .
-          "$CVSCMD llvm-test ) > $COLog 2>&1";
+          "$CVSCMD llvm-test ) > $COLog 2>&1\n";
     system "( time -p $CVSCMD llvm; cd llvm/projects ; " .
-          "$CVSCMD llvm-test ) > $COLog 2>&1";
+          "$CVSCMD llvm-test ) > $COLog 2>&1\n";
   }
 }
 ChangeDir( $BuildDir , "Checkout directory") ;
