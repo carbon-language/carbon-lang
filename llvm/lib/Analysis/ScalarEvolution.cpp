@@ -602,7 +602,8 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
     assert(Idx < Ops.size());
     while (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      Constant *Fold = ConstantExpr::getAdd(LHSC->getValue(), RHSC->getValue());
+      Constant *Fold = ConstantInt::get(LHSC->getValue()->getValue() + 
+                                        RHSC->getValue()->getValue());
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Fold)) {
         Ops[0] = SCEVConstant::get(CI);
         Ops.erase(Ops.begin()+1);  // Erase the folded element
@@ -839,7 +840,8 @@ SCEVHandle SCEVMulExpr::get(std::vector<SCEVHandle> &Ops) {
     ++Idx;
     while (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      Constant *Fold = ConstantExpr::getMul(LHSC->getValue(), RHSC->getValue());
+      Constant *Fold = ConstantInt::get(LHSC->getValue()->getValue() * 
+                                        RHSC->getValue()->getValue());
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Fold)) {
         Ops[0] = SCEVConstant::get(CI);
         Ops.erase(Ops.begin()+1);  // Erase the folded element
@@ -1412,10 +1414,9 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       // optimizations will transparently handle this case.
       if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
         SCEVHandle LHS = getSCEV(I->getOperand(0));
-        APInt CommonFact = GetConstantFactor(LHS);
+        APInt CommonFact(GetConstantFactor(LHS));
         assert(!CommonFact.isMinValue() &&
                "Common factor should at least be 1!");
-        CommonFact.zextOrTrunc(CI->getValue().getBitWidth());
         if (CommonFact.ugt(CI->getValue())) {
           // If the LHS is a multiple that is larger than the RHS, use +.
           return SCEVAddExpr::get(LHS,
@@ -1436,8 +1437,9 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
     case Instruction::Shl:
       // Turn shift left of a constant amount into a multiply.
       if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
-        Constant *X = ConstantInt::get(V->getType(), 1);
-        X = ConstantExpr::getShl(X, SA);
+        uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
+        Constant *X = ConstantInt::get(
+          APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
         return SCEVMulExpr::get(getSCEV(I->getOperand(0)), getSCEV(X));
       }
       break;
@@ -2428,9 +2430,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
                                                              R1->getValue());
         if (Range.contains(R1Val->getValue())) {
           // The next iteration must be out of the range...
-          Constant *NextVal =
-            ConstantExpr::getAdd(R1->getValue(),
-                                 ConstantInt::get(R1->getType(), 1));
+          Constant *NextVal = ConstantInt::get(R1->getValue()->getValue()+1);
 
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
           if (!Range.contains(R1Val->getValue()))
@@ -2440,9 +2440,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
         // If R1 was not in the range, then it is a good return value.  Make
         // sure that R1-1 WAS in the range though, just in case.
-        Constant *NextVal =
-          ConstantExpr::getSub(R1->getValue(),
-                               ConstantInt::get(R1->getType(), 1));
+        Constant *NextVal = ConstantInt::get(R1->getValue()->getValue()-1);
         R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
         if (Range.contains(R1Val->getValue()))
           return R1;
@@ -2457,7 +2455,6 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
   // incredibly important, we will be able to simplify the exit test a lot, and
   // we are almost guaranteed to get a trip count in this case.
   ConstantInt *TestVal = ConstantInt::get(getType(), 0);
-  ConstantInt *One     = ConstantInt::get(getType(), 1);
   ConstantInt *EndVal  = TestVal;  // Stop when we wrap around.
   do {
     ++NumBruteForceEvaluations;
@@ -2470,7 +2467,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
       return SCEVConstant::get(TestVal);
 
     // Increment to test the next index.
-    TestVal = cast<ConstantInt>(ConstantExpr::getAdd(TestVal, One));
+    TestVal = ConstantInt::get(TestVal->getValue()+1);
   } while (TestVal != EndVal);
 
   return new SCEVCouldNotCompute();
