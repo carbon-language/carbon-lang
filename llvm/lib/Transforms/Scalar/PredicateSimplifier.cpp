@@ -2182,11 +2182,33 @@ namespace {
     // Eg., if x = [0, 4) and we're being asked icmp uge %x, 3 then change
     // the predicate to eq.
 
+    // XXX: once we do full PHI handling, modifying the instruction in the
+    // Forwards visitor will cause missed optimizations.
+
     ICmpInst::Predicate Pred = IC.getPredicate();
+
+    switch (Pred) {
+      default: break;
+      case ICmpInst::ICMP_ULE: Pred = ICmpInst::ICMP_ULT; break;
+      case ICmpInst::ICMP_UGE: Pred = ICmpInst::ICMP_UGT; break;
+      case ICmpInst::ICMP_SLE: Pred = ICmpInst::ICMP_SLT; break;
+      case ICmpInst::ICMP_SGE: Pred = ICmpInst::ICMP_SGT; break;
+    }
+    if (Pred != IC.getPredicate()) {
+      VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &IC);
+      if (VRP.isRelatedBy(IC.getOperand(1), IC.getOperand(0),
+                          ICmpInst::ICMP_NE)) {
+        ++NumSnuggle;
+        PS->modified = true;
+        IC.setPredicate(Pred);
+      }
+    }
+
+    Pred = IC.getPredicate();
 
     if (ConstantInt *Op1 = dyn_cast<ConstantInt>(IC.getOperand(1))) {
       ConstantInt *NextVal = 0;
-      switch(Pred) {
+      switch (Pred) {
         default: break;
         case ICmpInst::ICMP_SLT:
         case ICmpInst::ICMP_ULT:
@@ -2214,23 +2236,8 @@ namespace {
           IC.eraseFromParent();
           ++NumSnuggle;
           PS->modified = true;
-          return;
         }
       }
-    }
-
-    switch(Pred) {
-      default: return;
-      case ICmpInst::ICMP_ULE: Pred = ICmpInst::ICMP_ULT; break;
-      case ICmpInst::ICMP_UGE: Pred = ICmpInst::ICMP_UGT; break;
-      case ICmpInst::ICMP_SLE: Pred = ICmpInst::ICMP_SLT; break;
-      case ICmpInst::ICMP_SGE: Pred = ICmpInst::ICMP_SGT; break;
-    }
-    VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &IC);
-    if (VRP.isRelatedBy(IC.getOperand(1), IC.getOperand(0), Pred)) {
-      ++NumSnuggle;
-      PS->modified = true;
-      IC.setPredicate(Pred);
     }
   }
 
