@@ -949,6 +949,60 @@ namespace {
       update(V, CR, Subtree);
     }
 
+    void addNotEquals(Value *V1, Value *V2, ETNode *Subtree, VRPSolver *VRP) {
+      uint32_t W = typeToWidth(V1->getType());
+      if (!W) return;
+
+      ConstantRange CR1 = rangeFromValue(V1, Subtree, W);
+      ConstantRange CR2 = rangeFromValue(V2, Subtree, W);
+
+      if (const APInt *I = CR1.getSingleElement()) {
+        if (CR2.isFullSet()) {
+          ConstantRange NewCR2(CR1.getUpper(), CR1.getLower());
+          applyRange(V2, NewCR2, Subtree, VRP);
+        } else if (*I == CR2.getLower()) {
+          APInt NewLower = CR2.getLower() + 1,
+                NewUpper = CR2.getUpper();
+          if (NewLower == NewUpper)
+            NewLower = NewUpper = APInt::getMinValue(W);
+
+          ConstantRange NewCR2(NewLower, NewUpper);
+          applyRange(V2, NewCR2, Subtree, VRP);
+        } else if (*I == CR2.getUpper() - 1) {
+          APInt NewLower = CR2.getLower(),
+                NewUpper = CR2.getUpper() - 1;
+          if (NewLower == NewUpper)
+            NewLower = NewUpper = APInt::getMinValue(W);
+
+          ConstantRange NewCR2(NewLower, NewUpper);
+          applyRange(V2, NewCR2, Subtree, VRP);
+        }
+      }
+
+      if (const APInt *I = CR2.getSingleElement()) {
+        if (CR1.isFullSet()) {
+          ConstantRange NewCR1(CR2.getUpper(), CR2.getLower());
+          applyRange(V1, NewCR1, Subtree, VRP);
+        } else if (*I == CR1.getLower()) {
+          APInt NewLower = CR1.getLower() + 1,
+                NewUpper = CR1.getUpper();
+          if (NewLower == NewUpper)
+            NewLower = NewUpper = APInt::getMinValue(W);
+
+          ConstantRange NewCR1(NewLower, NewUpper);
+          applyRange(V1, NewCR1, Subtree, VRP);
+        } else if (*I == CR1.getUpper() - 1) {
+          APInt NewLower = CR1.getLower(),
+                NewUpper = CR1.getUpper() - 1;
+          if (NewLower == NewUpper)
+            NewLower = NewUpper = APInt::getMinValue(W);
+
+          ConstantRange NewCR1(NewLower, NewUpper);
+          applyRange(V1, NewCR1, Subtree, VRP);
+        }
+      }
+    }
+
     void addInequality(Value *V1, Value *V2, ETNode *Subtree, LatticeVal LV,
                        VRPSolver *VRP) {
       assert(!isRelatedBy(V1, V2, Subtree, LV) && "Asked to do useless work.");
@@ -956,9 +1010,10 @@ namespace {
       assert(isCanonical(V1, Subtree, VRP) && "Value not canonical.");
       assert(isCanonical(V2, Subtree, VRP) && "Value not canonical.");
 
-      if (LV == NE) return; // we can't represent those.
-      // XXX: except in the case where isSingleElement and equal to either
-      // Lower or Upper. That's probably not profitable. (Type::Int1Ty?)
+      if (LV == NE) {
+        addNotEquals(V1, V2, Subtree, VRP);
+        return;
+      }
 
       uint32_t W = typeToWidth(V1->getType());
       if (!W) return;
