@@ -38,9 +38,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<ETForest>();
-      AU.addPreserved<DominatorSet>();
       AU.addPreserved<ImmediateDominators>();
-      AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
       AU.addPreserved<LoopInfo>();
 
@@ -108,7 +106,7 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 }
 
 // SplitCriticalEdge - If this edge is a critical edge, insert a new node to
-// split the critical edge.  This will update DominatorSet, ImmediateDominator,
+// split the critical edge.  This will update ETForest, ImmediateDominator,
 // DominatorTree, and DominatorFrontier information if it is available, thus
 // calling this pass will not invalidate any of them.  This returns true if
 // the edge was split, false otherwise.  This ensures that all edges to that
@@ -176,38 +174,26 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
     if (*I != NewBB)
       OtherPreds.push_back(*I);
   
-  // NewBBDominatesDestBB is valid if OtherPreds is empty, otherwise it isn't
-  // yet computed.
   bool NewBBDominatesDestBB = true;
   
-  // Should we update DominatorSet information?
-  if (DominatorSet *DS = P->getAnalysisToUpdate<DominatorSet>()) {
-    DominatorSet::iterator DSI = DS->find(TIBB);
-    if (DSI != DS->end()) {    // TIBB is reachable?
-      // The blocks that dominate the new one are the blocks that dominate TIBB
-      // plus the new block itself.
-      DominatorSet::DomSetType DomSet = DSI->second;  // Copy domset.
-      DomSet.insert(NewBB);  // A block always dominates itself.
-      DS->addBasicBlock(NewBB, DomSet);
-      
-      // If NewBBDominatesDestBB hasn't been computed yet, do so with DS.
-      if (!OtherPreds.empty()) {
-        while (!OtherPreds.empty() && NewBBDominatesDestBB) {
-          NewBBDominatesDestBB = DS->dominates(DestBB, OtherPreds.back());
-          OtherPreds.pop_back();
-        }
-        OtherPreds.clear();
+  // Update the forest?
+  if (ETForest *EF = P->getAnalysisToUpdate<ETForest>()) {
+    // NewBB is dominated by TIBB.
+    EF->addNewBlock(NewBB, TIBB);
+    
+    // If NewBBDominatesDestBB hasn't been computed yet, do so with EF.
+    if (!OtherPreds.empty()) {
+      while (!OtherPreds.empty() && NewBBDominatesDestBB) {
+        NewBBDominatesDestBB = EF->dominates(DestBB, OtherPreds.back());
+        OtherPreds.pop_back();
       }
-      
-      // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
-      // doesn't dominate anything.  If NewBB does dominates DestBB, then it
-      // dominates everything that DestBB dominates.
-      if (NewBBDominatesDestBB) {
-        for (DominatorSet::iterator I = DS->begin(), E = DS->end(); I != E; ++I)
-          if (I->second.count(DestBB))
-            I->second.insert(NewBB);
-      }
+      OtherPreds.clear();
     }
+    
+    // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
+    // doesn't dominate anything.
+    if (NewBBDominatesDestBB)
+      EF->setImmediateDominator(DestBB, NewBB);
   }
 
   // Should we update ImmediateDominator information?
@@ -232,27 +218,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
         ID->setImmediateDominator(DestBB, NewBB);
     }
   }
-
-  // Update the forest?
-  if (ETForest *EF = P->getAnalysisToUpdate<ETForest>()) {
-    // NewBB is dominated by TIBB.
-    EF->addNewBlock(NewBB, TIBB);
-    
-    // If NewBBDominatesDestBB hasn't been computed yet, do so with EF.
-    if (!OtherPreds.empty()) {
-      while (!OtherPreds.empty() && NewBBDominatesDestBB) {
-        NewBBDominatesDestBB = EF->dominates(DestBB, OtherPreds.back());
-        OtherPreds.pop_back();
-      }
-      OtherPreds.clear();
-    }
-    
-    // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
-    // doesn't dominate anything.
-    if (NewBBDominatesDestBB)
-      EF->setImmediateDominator(DestBB, NewBB);
-  }
-
+  
   // Should we update DominatorTree information?
   if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) {
     DominatorTree::Node *TINode = DT->getNode(TIBB);
