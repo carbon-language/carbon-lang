@@ -152,7 +152,7 @@ namespace sys {
   /// @name Data
   /// @{
   private:
-    sys::Path path_;       ///< Path to the file.
+    sys::PathWithStatus path_;       ///< Path to the file.
     int options_;          ///< Options used to create the mapping
     void* base_;           ///< Pointer to the base memory address
     mutable MappedFileInfo* info_; ///< Platform specific info for the mapping

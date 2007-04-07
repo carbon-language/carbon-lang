@@ -21,6 +21,9 @@
 #if HAVE_SIGNAL_H
 #include <signal.h>
 #endif
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 using namespace llvm;
 
 namespace {
@@ -168,10 +171,13 @@ bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
 // RemoveDirectoryOnSignal - The public API
 bool sys::RemoveDirectoryOnSignal(const sys::Path& path, std::string* ErrMsg) {
   // Not a directory?
-  const sys::FileStatus *Status = path.getFileStatus(false, ErrMsg);
-  if (!Status)
+  struct stat buf;
+  if (0 != stat(path.c_str(), &buf)) {
+    MakeErrMsg(ErrMsg, path.toString() + ": can't get status of file");
     return true;
-  if (!Status->isDir) {
+  }
+
+  if (!S_ISDIR(buf.st_mode)) {
     if (ErrMsg)
       *ErrMsg = path.toString() + " is not a directory";
     return true;

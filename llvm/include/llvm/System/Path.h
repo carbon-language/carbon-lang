@@ -29,9 +29,9 @@ namespace sys {
   /// platform independent and eliminates many of the unix-specific fields.
   /// However, to support llvm-ar, the mode, user, and group fields are
   /// retained. These pertain to unix security and may not have a meaningful
-  /// value on non-Unix platforms. However, the fileSize and modTime fields
-  /// should always be applicable on all platforms.  The structure is
-  /// filled in by the Path::getFileStatus method.
+  /// value on non-Unix platforms. However, the other fields fields should 
+  /// always be applicable on all platforms.  The structure is filled in by 
+  /// the PathWithStatus class.
   /// @brief File status structure
   class FileStatus {
   public:
@@ -164,16 +164,15 @@ namespace sys {
       /// provided so that they can be used to indicate null or error results in
       /// other lib/System functionality.
       /// @brief Construct an empty (and invalid) path.
-      Path() : path(), status(0) {}
-      ~Path() { delete status; }
-      Path(const Path &that) : path(that.path), status(0) {}
+      Path() : path() {}
+      Path(const Path &that) : path(that.path) {}
 
       /// This constructor will accept a std::string as a path. No checking is
       /// done on this path to determine if it is valid. To determine validity
       /// of the path, use the isValid method. 
       /// @param p The path to assign.
       /// @brief Construct a Path from a string.
-      explicit Path(const std::string& p) : path(p), status(0) {}
+      explicit Path(const std::string& p) : path(p) {}
 
     /// @}
     /// @name Operators
@@ -184,9 +183,6 @@ namespace sys {
       /// @brief Assignment Operator
       Path &operator=(const Path &that) {
         path = that.path;
-        if (status)
-          delete status;
-        status = 0;
         return *this;
       }
 
@@ -230,8 +226,8 @@ namespace sys {
       /// This function determines if the contents of the path name are empty. 
       /// That is, the path name has a zero length. This does NOT determine if
       /// if the file is empty. To get the length of the file itself, Use the 
-      /// getFileStatus() method and then the getSize() on the returned
-      /// FileStatus object
+      /// PathWithStatus::getFileStatus() method and then the getSize() method 
+      /// on the returned FileStatus object.
       /// @returns true iff the path is empty.
       /// @brief Determines if the path name is empty (invalid).
       bool isEmpty() const { return path.empty(); }
@@ -359,17 +355,6 @@ namespace sys {
       bool getDirectoryContents(
         std::set<Path> &paths, ///< The resulting list of file & directory names
         std::string* ErrMsg    ///< Optional place to return an error message.
-      ) const;
-
-      /// This function returns status information about the file. The type of
-      /// path (file or directory) is updated to reflect the actual contents
-      /// of the file system.
-      /// @returns 0 on failure, with Error explaining why (if non-zero)
-      /// @returns a pointer to a FileStatus structure on success.
-      /// @brief Get file status.
-      const FileStatus *getFileStatus(
-        bool forceUpdate = false, ///< Force an update from the file system
-        std::string *Error = 0    ///< Optional place to return an error msg.
       ) const;
 
     /// @}
@@ -527,9 +512,85 @@ namespace sys {
     /// @}
     /// @name Data
     /// @{
-    private:
+    protected:
       mutable std::string path;   ///< Storage for the path name.
-      mutable FileStatus *status; ///< Status information.
+
+    /// @}
+  };
+
+  /// This class is identical to Path class except it allows you to obtain the
+  /// file status of the Path as well. The reason for the distinction is one of
+  /// efficiency. First, the file status requires additional space and the space
+  /// is incorporated directly into PathWithStatus without an additional malloc.
+  /// Second, obtaining status information is an expensive operation on most
+  /// operating systems so we want to be careful and explicity about where we
+  /// allow this operation in LLVM.
+  /// @brief Path with file status class.
+  class PathWithStatus : public Path {
+    /// @name Constructors
+    /// @{
+    public: 
+      /// @brief Default constructor
+      PathWithStatus() : Path(), status(), fsIsValid(false) {}
+
+      /// @brief Copy constructor
+      PathWithStatus(const PathWithStatus &that) 
+        : Path(static_cast<const Path&>(that)), status(that.status), 
+           fsIsValid(that.fsIsValid) {}
+
+      /// This constructor allows construction from a Path object
+      /// @brief Path constructor
+      PathWithStatus(const Path &other) 
+        : Path(other), status(), fsIsValid(false) {}
+
+      /// This constructor will accept a std::string as a path. No checking is
+      /// done on this path to determine if it is valid. To determine validity
+      /// of the path, use the isValid method. 
+      /// @param p The path to assign.
+      /// @brief Construct a Path from a string.
+      explicit PathWithStatus(const std::string& p) 
+        : Path(p), status(), fsIsValid(false) {}
+
+      /// Makes a copy of \p that to \p this.
+      /// @returns \p this
+      /// @brief Assignment Operator
+      PathWithStatus &operator=(const PathWithStatus &that) {
+        static_cast<Path&>(*this) = static_cast<const Path&>(that);
+        status = that.status;
+        fsIsValid = that.fsIsValid;
+        return *this;
+      }
+
+      /// Makes a copy of \p that to \p this.
+      /// @returns \p this
+      /// @brief Assignment Operator
+      PathWithStatus &operator=(const Path &that) {
+        static_cast<Path&>(*this) = static_cast<const Path&>(that);
+        fsIsValid = false;
+        return *this;
+      }
+
+    /// @}
+    /// @name Methods
+    /// @{
+    public:
+      /// This function returns status information about the file. The type of
+      /// path (file or directory) is updated to reflect the actual contents
+      /// of the file system.
+      /// @returns 0 on failure, with Error explaining why (if non-zero)
+      /// @returns a pointer to a FileStatus structure on success.
+      /// @brief Get file status.
+      const FileStatus *getFileStatus(
+        bool forceUpdate = false, ///< Force an update from the file system
+        std::string *Error = 0    ///< Optional place to return an error msg.
+      ) const;
+
+    /// @}
+    /// @name Data
+    /// @{
+    private:
+      mutable FileStatus status; ///< Status information.
+      mutable bool fsIsValid;    ///< Whether we've obtained it or not
 
     /// @}
   };
@@ -556,7 +617,9 @@ namespace sys {
   bool CopyFile(const Path& Dest, const Path& Src, std::string* ErrMsg);
 }
 
+
 std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);
+std::ostream& operator<<(std::ostream& strm, const sys::PathWithStatus& aPath);
 
 }
 

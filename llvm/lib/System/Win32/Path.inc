@@ -307,8 +307,8 @@ Path::getLast() const {
 }
 
 const FileStatus *
-Path::getFileStatus(bool update, std::string *ErrStr) const {
-  if (status == 0 || update) {
+PathWithStatus::getFileStatus(bool update, std::string *ErrStr) const {
+  if (!fsIsValid || update) {
     WIN32_FILE_ATTRIBUTE_DATA fi;
     if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi)) {
       MakeErrMsg(ErrStr, "getStatusInfo():" + std::string(path) +
@@ -316,30 +316,28 @@ Path::getFileStatus(bool update, std::string *ErrStr) const {
       return 0;
     }
 
-    if (status == 0)
-      status = new FileStatus;
+    status.fileSize = fi.nFileSizeHigh;
+    status.fileSize <<= sizeof(fi.nFileSizeHigh)*8;
+    status.fileSize += fi.nFileSizeLow;
 
-    status->fileSize = fi.nFileSizeHigh;
-    status->fileSize <<= sizeof(fi.nFileSizeHigh)*8;
-    status->fileSize += fi.nFileSizeLow;
-
-    status->mode = fi.dwFileAttributes & FILE_ATTRIBUTE_READONLY ? 0555 : 0777;
-    status->user = 9999;    // Not applicable to Windows, so...
-    status->group = 9999;   // Not applicable to Windows, so...
+    status.mode = fi.dwFileAttributes & FILE_ATTRIBUTE_READONLY ? 0555 : 0777;
+    status.user = 9999;    // Not applicable to Windows, so...
+    status.group = 9999;   // Not applicable to Windows, so...
 
     // FIXME: this is only unique if the file is accessed by the same file path.
     // How do we do this for C:\dir\file and ..\dir\file ? Unix has inode
     // numbers, but the concept doesn't exist in Windows.
-    status->uniqueID = 0;
+    status.uniqueID = 0;
     for (unsigned i = 0; i < path.length(); ++i)
-      status->uniqueID += path[i];
+      status.uniqueID += path[i];
 
     __int64 ft = *reinterpret_cast<__int64*>(&fi.ftLastWriteTime);
-    status->modTime.fromWin32Time(ft);
+    status.modTime.fromWin32Time(ft);
 
-    status->isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+    status.isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+    fsIsValid = true;
   }
-  return status;
+  return &status;
 }
 
 bool Path::makeReadableOnDisk(std::string* ErrMsg) {
