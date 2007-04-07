@@ -1147,7 +1147,7 @@ namespace {
     SCEVHandle ComputeIterationCount(const Loop *L);
 
     /// ComputeLoadConstantCompareIterationCount - Given an exit condition of
-    /// 'setcc load X, cst', try to se if we can compute the trip count.
+    /// 'setcc load X, cst', try to see if we can compute the trip count.
     SCEVHandle ComputeLoadConstantCompareIterationCount(LoadInst *LI,
                                                         Constant *RHS,
                                                         const Loop *L,
@@ -1342,21 +1342,19 @@ static APInt GetConstantFactor(SCEVHandle S) {
   }
 
   if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S)) {
-    APInt Mask(cast<IntegerType>(T->getType())->getMask());
-    APInt GCF(GetConstantFactor(T->getOperand()));
-    Mask.zextOrTrunc(GCF.getBitWidth());
-    return GCF & Mask;
+    return GetConstantFactor(T->getOperand()).trunc(
+                               cast<IntegerType>(T->getType())->getBitWidth());
   }
   if (SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S))
-    return GetConstantFactor(E->getOperand());
+    return GetConstantFactor(E->getOperand()).zext(
+                               cast<IntegerType>(E->getType())->getBitWidth());
   
   if (SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
     // The result is the min of all operands.
-    APInt Res = GetConstantFactor(A->getOperand(0));
+    APInt Res(GetConstantFactor(A->getOperand(0)));
     for (unsigned i = 1, e = A->getNumOperands(); 
          i != e && Res.ugt(APInt(Res.getBitWidth(),1)); ++i) {
       APInt Tmp(GetConstantFactor(A->getOperand(i)));
-      Tmp.zextOrTrunc(Res.getBitWidth());
       Res = APIntOps::umin(Res, Tmp);
     }
     return Res;
@@ -1364,10 +1362,9 @@ static APInt GetConstantFactor(SCEVHandle S) {
 
   if (SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S)) {
     // The result is the product of all the operands.
-    APInt Res = GetConstantFactor(M->getOperand(0));
+    APInt Res(GetConstantFactor(M->getOperand(0)));
     for (unsigned i = 1, e = M->getNumOperands(); i != e; ++i) {
       APInt Tmp(GetConstantFactor(M->getOperand(i)));
-      Tmp.zextOrTrunc(Res.getBitWidth());
       Res *= Tmp;
     }
     return Res;
@@ -1377,11 +1374,10 @@ static APInt GetConstantFactor(SCEVHandle S) {
     // For now, we just handle linear expressions.
     if (A->getNumOperands() == 2) {
       // We want the GCD between the start and the stride value.
-      APInt Start = GetConstantFactor(A->getOperand(0));
+      APInt Start(GetConstantFactor(A->getOperand(0)));
       if (Start == 1) 
-        return APInt(A->getBitWidth(),1);
-      APInt Stride = GetConstantFactor(A->getOperand(1));
-      Start.zextOrTrunc(Stride.getBitWidth());
+        return Start;
+      APInt Stride(GetConstantFactor(A->getOperand(1)));
       return APIntOps::GreatestCommonDivisor(Start, Stride);
     }
   }
