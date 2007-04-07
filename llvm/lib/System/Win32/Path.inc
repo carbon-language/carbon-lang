@@ -368,11 +368,15 @@ bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
 
 bool
 Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
-  const FileStatus *Status = getFileStatus(false, ErrMsg);
-  if (!Status)
+  WIN32_FILE_ATTRIBUTE_DATA fi;
+  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi)) {
+    MakeErrMsg(ErrMsg, path + ": can't get status of file");
     return true;
-  if (!Status->isDir) {
-    MakeErrMsg(ErrMsg, path + ": not a directory");
+  }
+    
+  if (!(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+    if (ErrMsg)
+      *ErrMsg = path + ": not a directory";
     return true;
   }
 
@@ -565,28 +569,11 @@ Path::createFileOnDisk(std::string* ErrMsg) {
 
 bool
 Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
-  const FileStatus *Status = getFileStatus(false, ErrStr);
-  if (!Status)
-    return false;
+  WIN32_FILE_ATTRIBUTE_DATA fi;
+  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
+    return true;
     
-  if (Status->isFile) {
-    DWORD attr = GetFileAttributes(path.c_str());
-
-    // If it doesn't exist, we're done.
-    if (attr == INVALID_FILE_ATTRIBUTES)
-      return false;
-
-    // Read-only files cannot be deleted on Windows.  Must remove the read-only
-    // attribute first.
-    if (attr & FILE_ATTRIBUTE_READONLY) {
-      if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
-        return MakeErrMsg(ErrStr, path + ": Can't destroy file: ");
-    }
-
-    if (!DeleteFile(path.c_str()))
-      return MakeErrMsg(ErrStr, path + ": Can't destroy file: ");
-    return false;
-  } else if (Status->isDir) {
+  if (fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
     // If it doesn't exist, we're done.
     if (!exists())
       return false;
@@ -645,9 +632,19 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
       return MakeErrMsg(ErrStr, 
         std::string(pathname) + ": Can't destroy directory: ");
     return false;
-  } 
-  // It appears the path doesn't exist.
-  return true;
+  } else {
+    // Read-only files cannot be deleted on Windows.  Must remove the read-only
+    // attribute first.
+    if (fi.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
+      if (!SetFileAttributes(path.c_str(),
+                             fi.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY))
+        return MakeErrMsg(ErrStr, path + ": Can't destroy file: ");
+    }
+
+    if (!DeleteFile(path.c_str()))
+      return MakeErrMsg(ErrStr, path + ": Can't destroy file: ");
+    return false;
+  }
 }
 
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {

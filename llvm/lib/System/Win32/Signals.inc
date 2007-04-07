@@ -101,12 +101,15 @@ bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
 // RemoveDirectoryOnSignal - The public API
 bool sys::RemoveDirectoryOnSignal(const sys::Path& path, std::string* ErrMsg) {
   // Not a directory?
-  const sys::FileStatus *Status =  path.getFileStatus(false, ErrMsg);
-  if (!Status)
+  WIN32_FILE_ATTRIBUTE_DATA fi;
+  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi)) {
+    MakeErrMsg(ErrMsg, path.toString() + ": can't get status of file");
     return true;
-  if (!Status->isDir) {
+  }
+    
+  if (!(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
     if (ErrMsg)
-      *ErrMsg = path.toString() + " is not a directory";
+      *ErrMsg = path.toString() + ": not a directory";
     return true;
   }
 
