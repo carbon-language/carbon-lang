@@ -137,6 +137,13 @@ LoopPass *createLoopUnrollPass();
 
 //===----------------------------------------------------------------------===//
 //
+// LoopRotate - This pass is a simple loop rotating pass.
+//
+LoopPass *createLoopRotatePass();
+
+
+//===----------------------------------------------------------------------===//
+//
 // PromoteMemoryToRegister - This pass is used to promote memory references to
 // be register references. A simple example of the transformation performed by
 // this pass is:
