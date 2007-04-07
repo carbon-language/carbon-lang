@@ -44,13 +44,14 @@ namespace {
   class VISIBILITY_HIDDEN CodeExtractor {
     typedef std::vector<Value*> Values;
     std::set<BasicBlock*> BlocksToExtract;
-    DominatorSet *DS;
+    ETForest *EF;
+    DominatorTree* DT;
     bool AggregateArgs;
     unsigned NumExitBlocks;
     const Type *RetTy;
   public:
-    CodeExtractor(DominatorSet *ds = 0, bool AggArgs = false)
-      : DS(ds), AggregateArgs(AggArgs||AggregateArgsOpt), NumExitBlocks(~0U) {}
+    CodeExtractor(ETForest *ef = 0, DominatorTree* dt = 0, bool AggArgs = false)
+      : EF(ef), DT(dt), AggregateArgs(AggArgs||AggregateArgsOpt), NumExitBlocks(~0U) {}
 
     Function *ExtractCodeRegion(const std::vector<BasicBlock*> &code);
 
@@ -140,17 +141,18 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
 
   // Okay, update dominator sets. The blocks that dominate the new one are the
   // blocks that dominate TIBB plus the new block itself.
-  if (DS) {
-    DominatorSet::DomSetType DomSet = DS->getDominators(OldPred);
-    DomSet.insert(NewBB);  // A block always dominates itself.
-    DS->addBasicBlock(NewBB, DomSet);
+  if (EF) {
+    DominatorTree::Node* idom = DT->getNode(OldPred)->getIDom();
+    DT->createNewNode(NewBB, idom);
+    EF->addNewBlock(NewBB, idom->getBlock());
 
-    // Additionally, NewBB dominates all blocks in the function that are
-    // dominated by OldPred.
+    // Additionally, NewBB replaces OldPred as the immediate dominator of blocks
     Function *F = Header->getParent();
     for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-      if (DS->properlyDominates(OldPred, I))
-        DS->addDominator(I, NewBB);
+      if (DT->getNode(I)->getIDom()->getBlock() == OldPred) {
+        DT->changeImmediateDominator(DT->getNode(I), DT->getNode(NewBB));
+	EF->setImmediateDominator(I, NewBB);
+      }
   }
 
   // Okay, now we need to adjust the PHI nodes and any branches from within the
@@ -507,12 +509,12 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
               // In the extract block case, if the block we are extracting ends
               // with an invoke instruction, make sure that we don't emit a
               // store of the invoke value for the unwind block.
-              if (!DS && DefBlock != OldTarget)
+              if (!EF && DefBlock != OldTarget)
                 DominatesDef = false;
             }
 
-            if (DS)
-              DominatesDef = DS->dominates(DefBlock, OldTarget);
+            if (EF)
+              DominatesDef = EF->dominates(DefBlock, OldTarget);
 
             if (DominatesDef) {
               if (AggregateArgs) {
@@ -726,16 +728,16 @@ bool CodeExtractor::isEligible(const std::vector<BasicBlock*> &code) {
 /// ExtractCodeRegion - slurp a sequence of basic blocks into a brand new
 /// function
 ///
-Function* llvm::ExtractCodeRegion(DominatorSet &DS,
+Function* llvm::ExtractCodeRegion(ETForest &EF, DominatorTree &DT,
                                   const std::vector<BasicBlock*> &code,
                                   bool AggregateArgs) {
-  return CodeExtractor(&DS, AggregateArgs).ExtractCodeRegion(code);
+  return CodeExtractor(&EF, &DT, AggregateArgs).ExtractCodeRegion(code);
 }
 
 /// ExtractBasicBlock - slurp a natural loop into a brand new function
 ///
-Function* llvm::ExtractLoop(DominatorSet &DS, Loop *L, bool AggregateArgs) {
-  return CodeExtractor(&DS, AggregateArgs).ExtractCodeRegion(L->getBlocks());
+Function* llvm::ExtractLoop(ETForest &EF, DominatorTree &DF, Loop *L, bool AggregateArgs) {
+  return CodeExtractor(&EF, &DF, AggregateArgs).ExtractCodeRegion(L->getBlocks());
 }
 
 /// ExtractBasicBlock - slurp a basic block into a brand new function
@@ -743,5 +745,5 @@ Function* llvm::ExtractLoop(DominatorSet &DS, Loop *L, bool AggregateArgs) {
 Function* llvm::ExtractBasicBlock(BasicBlock *BB, bool AggregateArgs) {
   std::vector<BasicBlock*> Blocks;
   Blocks.push_back(BB);
-  return CodeExtractor(0, AggregateArgs).ExtractCodeRegion(Blocks);
+  return CodeExtractor(0, 0, AggregateArgs).ExtractCodeRegion(Blocks);
 }

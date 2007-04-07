@@ -43,7 +43,8 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);
       AU.addRequiredID(LoopSimplifyID);
-      AU.addRequired<DominatorSet>();
+      AU.addRequired<ETForest>();
+      AU.addRequired<DominatorTree>();
       AU.addRequired<LoopInfo>();
     }
   };
@@ -72,7 +73,8 @@ bool LoopExtractor::runOnFunction(Function &F) {
   if (LI.begin() == LI.end())
     return false;
 
-  DominatorSet &DS = getAnalysis<DominatorSet>();
+  ETForest &EF = getAnalysis<ETForest>();
+  DominatorTree &DT = getAnalysis<DominatorTree>();
 
   // If there is more than one top-level loop in this function, extract all of
   // the loops.
@@ -81,7 +83,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
     for (LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
       if (NumLoops == 0) return Changed;
       --NumLoops;
-      Changed |= ExtractLoop(DS, *i) != 0;
+      Changed |= ExtractLoop(EF, DT, *i) != 0;
       ++NumExtracted;
     }
   } else {
@@ -111,7 +113,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
     if (ShouldExtractLoop) {
       if (NumLoops == 0) return Changed;
       --NumLoops;
-      Changed |= ExtractLoop(DS, TLL) != 0;
+      Changed |= ExtractLoop(EF, DT, TLL) != 0;
       ++NumExtracted;
     } else {
       // Okay, this function is a minimal container around the specified loop.
@@ -121,7 +123,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
       for (Loop::iterator i = TLL->begin(), e = TLL->end(); i != e; ++i) {
         if (NumLoops == 0) return Changed;
         --NumLoops;
-        Changed |= ExtractLoop(DS, *i) != 0;
+        Changed |= ExtractLoop(EF, DT, *i) != 0;
         ++NumExtracted;
       }
     }

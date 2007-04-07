@@ -14,6 +14,7 @@
 #ifndef LLVM_TRANSFORMS_UTILS_FUNCTION_H
 #define LLVM_TRANSFORMS_UTILS_FUNCTION_H
 
+#include <llvm/Analysis/Dominators.h>
 #include <vector>
 
 namespace llvm {
@@ -24,13 +25,13 @@ namespace llvm {
 
   /// ExtractCodeRegion - rip out a sequence of basic blocks into a new function
   ///
-  Function* ExtractCodeRegion(DominatorSet &DS,
+  Function* ExtractCodeRegion(ETForest &DS, DominatorTree& DT,
                               const std::vector<BasicBlock*> &code,
                               bool AggregateArgs = false);
 
   /// ExtractLoop - rip out a natural loop into a new function
   ///
-  Function* ExtractLoop(DominatorSet &DS, Loop *L,
+  Function* ExtractLoop(ETForest &DS, DominatorTree& DT, Loop *L,
                         bool AggregateArgs = false);
 
   /// ExtractBasicBlock - rip out a basic block into a new function
