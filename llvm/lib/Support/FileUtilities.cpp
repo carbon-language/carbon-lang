@@ -148,8 +148,8 @@ static void PadFileIfNeeded(char *&FileStart, char *&FileEnd, char *&FP) {
 /// error occurs, allowing the caller to distinguish between a failed diff and a
 /// file system error.
 ///
-int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
-                                 const sys::Path &FileB,
+int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
+                                 const sys::PathWithStatus &FileB,
                                  double AbsTol, double RelTol,
                                  std::string *Error) {
   const sys::FileStatus *FileAStat = FileA.getFileStatus(false, Error);

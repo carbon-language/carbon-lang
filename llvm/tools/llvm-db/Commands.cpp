@@ -51,7 +51,8 @@ void CLIDebugger::startProgramRunning() {
   // If the program has been modified, reload it!
   sys::Path Program(Dbg.getProgramPath());
   std::string Err;
-  const sys::FileStatus *Status = Program.getFileStatus(false, &Err);
+  const sys::FileStatus *Status = 
+    sys::PathWithStatus(Program).getFileStatus(false, &Err);
   if (!Status)
     throw Err;
   if (TheProgramInfo->getProgramTimeStamp() != Status->getTimestamp()) {

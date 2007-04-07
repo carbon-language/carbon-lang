@@ -195,7 +195,8 @@ private:
 
   void cleanup() {
     if (!isSet(KEEP_TEMPS_FLAG)) {
-      const sys::FileStatus *Status = TempDir.getFileStatus();
+      const sys::FileStatus *Status = 
+        sys::PathWithStatus(TempDir).getFileStatus();
       if (Status && Status->isDir)
         TempDir.eraseFromDisk(/*remove_contents=*/true);
     } else {
