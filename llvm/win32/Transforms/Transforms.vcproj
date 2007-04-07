@@ -234,6 +234,9 @@
 					RelativePath="..\..\lib\Transforms\Scalar\LICM.cpp">
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Scalar\LoopRotation.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LoopStrengthReduce.cpp">
 				</File>
 				<File
