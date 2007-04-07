@@ -847,16 +847,11 @@ struct VISIBILITY_HIDDEN StrLenOptimization : public LibCallOptimization {
 static bool IsOnlyUsedInEqualsZeroComparison(Instruction *I) {
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
        UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
-    if (ICmpInst *IC = dyn_cast<ICmpInst>(User)) {
-      if ((IC->getPredicate() == ICmpInst::ICMP_NE ||
-           IC->getPredicate() == ICmpInst::ICMP_EQ) &&
-          isa<Constant>(IC->getOperand(1)) &&
-          cast<Constant>(IC->getOperand(1))->isNullValue())
-        continue;
-    } else if (CastInst *CI = dyn_cast<CastInst>(User))
-      if (CI->getType() == Type::Int1Ty)
-        continue;
+    if (ICmpInst *IC = dyn_cast<ICmpInst>(*UI))
+      if (IC->isEquality())
+        if (Constant *C = dyn_cast<Constant>(IC->getOperand(1)))
+          if (C->isNullValue())
+            continue;
     // Unknown instruction.
     return false;
   }
