@@ -251,6 +251,113 @@ void ImmediateDominatorsBase::print(std::ostream &o, const Module* ) const {
   o << "\n";
 }
 
+
+
+//===----------------------------------------------------------------------===//
+//  DominatorSet Implementation
+//===----------------------------------------------------------------------===//
+
+static RegisterPass<DominatorSet>
+B("domset", "Dominator Set Construction", true);
+
+// dominates - Return true if A dominates B.  This performs the special checks
+// necessary if A and B are in the same basic block.
+//
+bool DominatorSetBase::dominates(Instruction *A, Instruction *B) const {
+  BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
+  if (BBA != BBB) return dominates(BBA, BBB);
+
+  // It is not possible to determine dominance between two PHI nodes 
+  // based on their ordering.
+  if (isa<PHINode>(A) && isa<PHINode>(B)) 
+    return false;
+
+  // Loop through the basic block until we find A or B.
+  BasicBlock::iterator I = BBA->begin();
+  for (; &*I != A && &*I != B; ++I) /*empty*/;
+
+  if(!IsPostDominators) {
+    // A dominates B if it is found first in the basic block.
+    return &*I == A;
+  } else {
+    // A post-dominates B if B is found first in the basic block.
+    return &*I == B;
+  }
+}
+
+
+// runOnFunction - This method calculates the forward dominator sets for the
+// specified function.
+//
+bool DominatorSet::runOnFunction(Function &F) {
+  BasicBlock *Root = &F.getEntryBlock();
+  Roots.clear();
+  Roots.push_back(Root);
+  assert(pred_begin(Root) == pred_end(Root) &&
+         "Root node has predecessors in function!");
+
+  ImmediateDominators &ID = getAnalysis<ImmediateDominators>();
+  Doms.clear();
+  if (Roots.empty()) return false;
+
+  // Root nodes only dominate themselves.
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
+    Doms[Roots[i]].insert(Roots[i]);
+
+  // Loop over all of the blocks in the function, calculating dominator sets for
+  // each function.
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (BasicBlock *IDom = ID[I]) {   // Get idom if block is reachable
+      DomSetType &DS = Doms[I];
+      assert(DS.empty() && "Domset already filled in for this block?");
+      DS.insert(I);  // Blocks always dominate themselves
+
+      // Insert all dominators into the set...
+      while (IDom) {
+        // If we have already computed the dominator sets for our immediate
+        // dominator, just use it instead of walking all the way up to the root.
+        DomSetType &IDS = Doms[IDom];
+        if (!IDS.empty()) {
+          DS.insert(IDS.begin(), IDS.end());
+          break;
+        } else {
+          DS.insert(IDom);
+          IDom = ID[IDom];
+        }
+      }
+    } else {
+      // Ensure that every basic block has at least an empty set of nodes.  This
+      // is important for the case when there is unreachable blocks.
+      Doms[I];
+    }
+
+  return false;
+}
+
+namespace llvm {
+static std::ostream &operator<<(std::ostream &o,
+                                const std::set<BasicBlock*> &BBs) {
+  for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
+       I != E; ++I)
+    if (*I)
+      WriteAsOperand(o, *I, false);
+    else
+      o << " <<exit node>>";
+  return o;
+}
+}
+
+void DominatorSetBase::print(std::ostream &o, const Module* ) const {
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
+    o << "  DomSet For BB: ";
+    if (I->first)
+      WriteAsOperand(o, I->first, false);
+    else
+      o << " <<exit node>>";
+    o << " is:\t" << I->second << "\n";
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //  DominatorTree Implementation
 //===----------------------------------------------------------------------===//
@@ -420,20 +527,6 @@ DominanceFrontier::calculate(const DominatorTree &DT,
 
   return *Result;
 }
-
-namespace llvm {
-static std::ostream &operator<<(std::ostream &o,
-                                const std::set<BasicBlock*> &BBs) {
-  for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
-       I != E; ++I)
-    if (*I)
-      WriteAsOperand(o, *I, false);
-    else
-      o << " <<exit node>>";
-  return o;
-}
-}
-
 
 void DominanceFrontierBase::print(std::ostream &o, const Module* ) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
@@ -978,3 +1071,5 @@ void ETForestBase::print(std::ostream &o, const Module *) const {
   }
   o << "\n";
 }
+
+DEFINING_FILE_FOR(DominatorSet)
