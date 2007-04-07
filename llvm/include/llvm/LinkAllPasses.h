@@ -80,6 +80,7 @@ namespace {
       (void) llvm::createLoopStrengthReducePass();
       (void) llvm::createLoopUnrollPass();
       (void) llvm::createLoopUnswitchPass();
+      (void) llvm::createLoopRotatePass();
       (void) llvm::createLowerAllocationsPass();
       (void) llvm::createLowerGCPass();
       (void) llvm::createLowerInvokePass();
