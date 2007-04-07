@@ -190,13 +190,13 @@ class ArchiveMember {
   /// @name Data
   /// @{
   private:
-    ArchiveMember* next;        ///< Pointer to next archive member
-    ArchiveMember* prev;        ///< Pointer to previous archive member
-    Archive*       parent;      ///< Pointer to parent archive
-    sys::Path      path;        ///< Path of file containing the member
-    sys::FileStatus info;       ///< Status info (size,mode,date)
-    unsigned       flags;       ///< Flags about the archive member
-    const void*    data;        ///< Data for the member
+    ArchiveMember*      next;     ///< Pointer to next archive member
+    ArchiveMember*      prev;     ///< Pointer to previous archive member
+    Archive*            parent;   ///< Pointer to parent archive
+    sys::PathWithStatus path;     ///< Path of file containing the member
+    sys::FileStatus     info;     ///< Status info (size,mode,date)
+    unsigned            flags;    ///< Flags about the archive member
+    const void*         data;     ///< Data for the member
 
   /// @}
   /// @name Constructors
