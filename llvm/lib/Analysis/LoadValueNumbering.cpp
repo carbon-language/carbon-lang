@@ -98,7 +98,7 @@ void LoadVN::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequiredTransitive<AliasAnalysis>();
   AU.addRequired<ValueNumbering>();
-  AU.addRequiredTransitive<DominatorSet>();
+  AU.addRequiredTransitive<ETForest>();
   AU.addRequiredTransitive<TargetData>();
 }
 
@@ -198,20 +198,20 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
   // ANY memory.
   //
   if (MRB == AliasAnalysis::OnlyReadsMemory) {
-    DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
+    ETForest &EF = getAnalysis<ETForest>();
     BasicBlock *CIBB = CI->getParent();
     for (unsigned i = 0; i != IdenticalCalls.size(); ++i) {
       CallInst *C = IdenticalCalls[i];
       bool CantEqual = false;
 
-      if (DomSetInfo.dominates(CIBB, C->getParent())) {
+      if (EF.dominates(CIBB, C->getParent())) {
         // FIXME: we currently only handle the case where both calls are in the
         // same basic block.
         if (CIBB != C->getParent()) {
           CantEqual = true;
         } else {
           Instruction *First = CI, *Second = C;
-          if (!DomSetInfo.dominates(CI, C))
+          if (!EF.dominates(CI, C))
             std::swap(First, Second);
 
           // Scan the instructions between the calls, checking for stores or
@@ -236,7 +236,7 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
           }
         }
 
-      } else if (DomSetInfo.dominates(C->getParent(), CIBB)) {
+      } else if (EF.dominates(C->getParent(), CIBB)) {
         // FIXME: We could implement this, but we don't for now.
         CantEqual = true;
       } else {
@@ -374,7 +374,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
     }
 
   // Get dominators.
-  DominatorSet &DomSetInfo = getAnalysis<DominatorSet>();
+  ETForest &EF = getAnalysis<ETForest>();
 
   // TransparentBlocks - For each basic block the load/store is alive across,
   // figure out if the pointer is invalidated or not.  If it is invalidated, the
@@ -393,12 +393,12 @@ void LoadVN::getEqualNumberNodes(Value *V,
     // Right now we only can handle cases where one load dominates the other.
     // FIXME: generalize this!
     BasicBlock *BB1 = I->first, *BB2 = LoadBB;
-    if (DomSetInfo.dominates(BB1, BB2)) {
+    if (EF.dominates(BB1, BB2)) {
       // The other load dominates LI.  If the loaded value is killed entering
       // the LoadBB block, we know the load is not live.
       if (LoadInvalidatedInBBBefore)
         CantEqual = true;
-    } else if (DomSetInfo.dominates(BB2, BB1)) {
+    } else if (EF.dominates(BB2, BB1)) {
       std::swap(BB1, BB2);          // Canonicalize
       // LI dominates the other load.  If the loaded value is killed exiting
       // the LoadBB block, we know the load is not live.
@@ -480,7 +480,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
 
   for (std::set<BasicBlock*>::iterator I = CandidateStores.begin(),
          E = CandidateStores.end(); I != E; ++I)
-    if (DomSetInfo.dominates(*I, LoadBB)) {
+    if (EF.dominates(*I, LoadBB)) {
       BasicBlock *StoreBB = *I;
 
       // Check to see if the path from the store to the load is transparent
