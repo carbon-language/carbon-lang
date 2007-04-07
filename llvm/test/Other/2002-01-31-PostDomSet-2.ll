@@ -1,7 +1,7 @@
 ; Crash in post dominator set construction.
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -postdomset
-;
+; XFAIL: *
 
 implementation
 
