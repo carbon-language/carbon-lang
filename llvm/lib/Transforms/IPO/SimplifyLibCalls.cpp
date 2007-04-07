@@ -780,7 +780,7 @@ public:
     // do the concatenation for us.
     Value *MemcpyOps[] = {
       Dst, Src,
-      ConstantInt::get(SLC.getIntPtrType(), SrcLen), // length including nul.
+      ConstantInt::get(SLC.getIntPtrType(), SrcLen+1), // length including nul.
       ConstantInt::get(Type::Int32Ty, 1) // alignment
     };
     new CallInst(SLC.get_memcpy(), MemcpyOps, 4, "", CI);
