@@ -813,6 +813,14 @@ namespace {
       return Range;
     }
 
+#ifndef NDEBUG
+    bool isCanonical(Value *V, ETNode *Subtree, VRPSolver *VRP);
+#endif
+
+  public:
+
+    explicit ValueRanges(TargetData *TD) : TD(TD) {}
+
     // rangeFromValue - converts a Value into a range. If the value is a
     // constant it constructs the single element range, otherwise it performs
     // a lookup. The width W must be retrieved from typeToWidth and may not
@@ -841,14 +849,6 @@ namespace {
 
       return 0;
     }
-
-#ifndef NDEBUG
-    bool isCanonical(Value *V, ETNode *Subtree, VRPSolver *VRP);
-#endif
-
-  public:
-
-    explicit ValueRanges(TargetData *TD) : TD(TD) {}
 
     bool isRelatedBy(Value *V1, Value *V2, ETNode *Subtree, LatticeVal LV) {
       uint32_t W = typeToWidth(V1->getType());
@@ -907,6 +907,7 @@ namespace {
 
     void addToWorklist(Value *V, Constant *C, ICmpInst::Predicate Pred,
                        VRPSolver *VRP);
+    void markBlock(VRPSolver *VRP);
 
     void mergeInto(Value **I, unsigned n, Value *New, ETNode *Subtree,
                    VRPSolver *VRP) {
@@ -946,7 +947,14 @@ namespace {
         }
       }
 
-      update(V, CR, Subtree);
+      ConstantRange Merged = CR.intersectWith(
+                                rangeFromValue(V, Subtree, CR.getBitWidth()));
+      if (Merged.isEmptySet()) {
+        markBlock(VRP);
+        return;
+      }
+
+      update(V, Merged, Subtree);
     }
 
     void addNotEquals(Value *V1, Value *V2, ETNode *Subtree, VRPSolver *VRP) {
@@ -1608,8 +1616,29 @@ namespace {
           add(Ptr, Constant::getNullValue(Ptr->getType()), ICmpInst::ICMP_NE,
               NewContext);
         }
+      } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
+        const Type *SrcTy = CI->getSrcTy();
+
+        Value *TheCI = IG.canonicalize(CI, Top);
+        uint32_t W = VR.typeToWidth(SrcTy);
+        if (!W) return;
+        ConstantRange CR = VR.rangeFromValue(TheCI, Top, W);
+
+        if (CR.isFullSet()) return;
+
+        switch (CI->getOpcode()) {
+          default: break;
+          case Instruction::ZExt:
+          case Instruction::SExt:
+            VR.applyRange(IG.canonicalize(CI->getOperand(0), Top),
+                          CR.truncate(W), Top, this);
+            break;
+          case Instruction::BitCast:
+            VR.applyRange(IG.canonicalize(CI->getOperand(0), Top),
+                          CR, Top, this);
+            break;
+        }
       }
-      // TODO: CastInst "%a = cast ... %b" where %a is EQ or NE a constant.
     }
 
     /// opsToDef - A new relationship was discovered involving one of this
@@ -1639,7 +1668,7 @@ namespace {
         assert(!Ty->isFPOrFPVector() && "Float in work queue!");
 
         Constant *Zero = Constant::getNullValue(Ty);
-        Constant *AllOnes = ConstantInt::getAllOnesValue(Ty);
+        ConstantInt *AllOnes = ConstantInt::getAllOnesValue(Ty);
 
         switch (Opcode) {
           default: break;
@@ -1753,16 +1782,41 @@ namespace {
           add(SI, SI->getTrueValue(), ICmpInst::ICMP_EQ, NewContext);
         }
       } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
-        const Type *Ty = CI->getDestTy();
-        if (Ty->isFPOrFPVector()) return;
+        const Type *DestTy = CI->getDestTy();
+        if (DestTy->isFPOrFPVector()) return;
 
-        if (Constant *C = dyn_cast<Constant>(
-                IG.canonicalize(CI->getOperand(0), Top))) {
-          add(CI, ConstantExpr::getCast(CI->getOpcode(), C, Ty),
+        Value *Op = IG.canonicalize(CI->getOperand(0), Top);
+        Instruction::CastOps Opcode = CI->getOpcode();
+
+        if (Constant *C = dyn_cast<Constant>(Op)) {
+          add(CI, ConstantExpr::getCast(Opcode, C, DestTy),
               ICmpInst::ICMP_EQ, NewContext);
         }
 
-        // TODO: "%a = cast ... %b" where %b is NE/LT/GT a constant.
+        uint32_t W = VR.typeToWidth(DestTy);
+        Value *TheCI = IG.canonicalize(CI, Top);
+        ConstantRange CR = VR.rangeFromValue(Op, Top, W);
+
+        if (!CR.isFullSet()) {
+          switch (Opcode) {
+            default: break;
+            case Instruction::ZExt:
+              VR.applyRange(TheCI, CR.zeroExtend(W), Top, this);
+              break;
+            case Instruction::SExt:
+              VR.applyRange(TheCI, CR.signExtend(W), Top, this);
+              break;
+            case Instruction::Trunc: {
+              ConstantRange Result = CR.truncate(W);
+              if (!Result.isFullSet())
+                VR.applyRange(TheCI, Result, Top, this);
+            } break;
+            case Instruction::BitCast:
+              VR.applyRange(TheCI, CR, Top, this);
+              break;
+            // TODO: other casts?
+          }
+        }
       } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
         for (GetElementPtrInst::op_iterator OI = GEPI->idx_begin(),
              OE = GEPI->idx_end(); OI != OE; ++OI) {
@@ -1910,6 +1964,10 @@ namespace {
   void ValueRanges::addToWorklist(Value *V, Constant *C,
                                   ICmpInst::Predicate Pred, VRPSolver *VRP) {
     VRP->add(V, C, Pred, VRP->TopInst);
+  }
+
+  void ValueRanges::markBlock(VRPSolver *VRP) {
+    VRP->UB.mark(VRP->TopBB);
   }
 
 #ifndef NDEBUG
