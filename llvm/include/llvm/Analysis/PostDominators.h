@@ -38,29 +38,6 @@ private:
   void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
 };
 
-/// PostDominatorSet Class - Concrete subclass of DominatorSetBase that is used
-/// to compute the post-dominator set.  Because there can be multiple exit nodes
-/// in an LLVM function, we calculate post dominators with a special null block
-/// which is the virtual exit node that the real exit nodes all virtually branch
-/// to.  Clients should be prepared to see an entry in the dominator sets with a
-/// null BasicBlock*.
-///
-struct PostDominatorSet : public DominatorSetBase {
-  PostDominatorSet() : DominatorSetBase(true) {}
-  
-  virtual bool runOnFunction(Function &F);
-  
-  /// getAnalysisUsage - This simply provides a dominator set
-  ///
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<ImmediatePostDominators>();
-    AU.setPreservesAll();
-  }
-  
-  // stub - dummy function, just ignore it
-  static void stub();
-};
-
 /// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
 /// compute the a post-dominator tree.
 ///

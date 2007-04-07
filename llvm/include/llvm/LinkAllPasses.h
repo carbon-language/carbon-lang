@@ -114,7 +114,6 @@ namespace {
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::ImmediateDominators();
-      (void)new llvm::PostDominatorSet();
       (void)new llvm::FindUsedTypes();
       (void)new llvm::ScalarEvolution();
       ((llvm::Function*)0)->viewCFGOnly();

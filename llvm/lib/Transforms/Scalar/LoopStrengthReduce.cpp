@@ -154,7 +154,6 @@ namespace {
       // many analyses if they are around.
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreserved<LoopInfo>();
-      AU.addPreserved<DominatorSet>();
       AU.addPreserved<ETForest>();
       AU.addPreserved<ImmediateDominators>();
       AU.addPreserved<DominanceFrontier>();
