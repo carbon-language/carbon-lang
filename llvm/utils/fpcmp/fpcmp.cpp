@@ -33,7 +33,8 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
 
   std::string ErrorMsg;
-  int DF = DiffFilesWithTolerance(sys::Path(File1), sys::Path(File2),
+  int DF = DiffFilesWithTolerance(sys::PathWithStatus(File1), 
+                                  sys::PathWithStatus(File2),
                                   AbsTolerance, RelTolerance, &ErrorMsg);
   if (!ErrorMsg.empty())
     std::cerr << argv[0] << ": " << ErrorMsg << "\n";
