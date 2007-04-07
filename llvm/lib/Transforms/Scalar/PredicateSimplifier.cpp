@@ -461,7 +461,6 @@ namespace {
       ToRepoint.push_back(V);
 
       if (unsigned Conflict = getNode(V, Subtree)) {
-        // XXX: NodeMap.size() exceeds 68,000 entries compiling kimwitu++!
         for (NodeMapType::iterator I = NodeMap.begin(), E = NodeMap.end();
              I != E; ++I) {
           if (I->index == Conflict && Subtree->DominatedBy(I->Subtree))
@@ -512,15 +511,17 @@ namespace {
       // Suppose we're adding %n1 < %n2. Find all the %a < %n1 and
       // add %a < %n2 too. This keeps the graph fully connected.
       if (LV1 != NE) {
-        // Someone with a head for this sort of logic, please review this.
-        // Given that %x SLTUGT %y and %a SLE %x, what is the relationship
-        // between %a and %y? I believe the below code is correct, but I don't
-        // think it's the most efficient solution.
+        // Break up the relationship into signed and unsigned comparison parts.
+        // If the signed parts of %a op1 %n1 match that of %n1 op2 %n2, and
+        // op1 and op2 aren't NE, then add %a op3 %n2. The new relationship
+        // should have the EQ_BIT iff it's set for both op1 and op2.
 
         unsigned LV1_s = LV1 & (SLT_BIT|SGT_BIT);
         unsigned LV1_u = LV1 & (ULT_BIT|UGT_BIT);
+
         for (Node::iterator I = N1->begin(), E = N1->end(); I != E; ++I) {
           if (I->LV != NE && I->To != n2) {
+
             ETNode *Local_Subtree = NULL;
             if (Subtree->DominatedBy(I->Subtree))
               Local_Subtree = Subtree;
@@ -535,7 +536,6 @@ namespace {
 
               if (LV1_s != (SLT_BIT|SGT_BIT) && ILV_s == LV1_s)
                 new_relationship |= ILV_s;
-
               if (LV1_u != (ULT_BIT|UGT_BIT) && ILV_u == LV1_u)
                 new_relationship |= ILV_u;
 
@@ -719,10 +719,9 @@ namespace {
           // Also, we have to tighten any edge that Subtree dominates.
           for (iterator B = begin(); I->V == V; --I) {
             if (I->Subtree->DominatedBy(Subtree)) {
-              CR = CR.intersectWith(I->CR);
-              assert(!CR.isEmptySet() &&
+              I->CR = CR.intersectWith(I->CR);
+              assert(!I->CR.isEmptySet() &&
                      "Empty intersection of ConstantRanges!");
-              I->CR = CR;
             }
             if (I == B) break;
           }
@@ -906,7 +905,7 @@ namespace {
       }
     }
 
-    void addToWorklist(Value *V, const APInt *I, ICmpInst::Predicate Pred,
+    void addToWorklist(Value *V, Constant *C, ICmpInst::Predicate Pred,
                        VRPSolver *VRP);
 
     void mergeInto(Value **I, unsigned n, Value *New, ETNode *Subtree,
@@ -927,11 +926,27 @@ namespace {
 
       if (Merged.isFullSet() || Merged == CR_New) return;
 
-      if (Merged.isSingleElement())
-        addToWorklist(New, Merged.getSingleElement(),
+      applyRange(New, Merged, Subtree, VRP);
+    }
+
+    void applyRange(Value *V, const ConstantRange &CR, ETNode *Subtree,
+                    VRPSolver *VRP) {
+      assert(isCanonical(V, Subtree, VRP) && "Value not canonical.");
+
+      if (const APInt *I = CR.getSingleElement()) {
+        const Type *Ty = V->getType();
+        if (Ty->isInteger()) {
+          addToWorklist(V, ConstantInt::get(*I), ICmpInst::ICMP_EQ, VRP);
+          return;
+        } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
+          assert(*I == 0 && "Pointer is null but not zero?");
+          addToWorklist(V, ConstantPointerNull::get(PTy),
                       ICmpInst::ICMP_EQ, VRP);
-      else
-        update(New, Merged, Subtree);
+          return;
+        }
+      }
+
+      update(V, CR, Subtree);
     }
 
     void addInequality(Value *V1, Value *V2, ETNode *Subtree, LatticeVal LV,
@@ -953,25 +968,15 @@ namespace {
 
       if (!CR1.isSingleElement()) {
         ConstantRange NewCR1 = CR1.intersectWith(create(LV, CR2));
-        if (NewCR1 != CR1) {
-          if (NewCR1.isSingleElement())
-            addToWorklist(V1, NewCR1.getSingleElement(),
-                          ICmpInst::ICMP_EQ, VRP);
-          else
-            update(V1, NewCR1, Subtree);
-        }
+        if (NewCR1 != CR1)
+          applyRange(V1, NewCR1, Subtree, VRP);
       }
 
       if (!CR2.isSingleElement()) {
         ConstantRange NewCR2 = CR2.intersectWith(create(reversePredicate(LV),
                                                         CR1));
-        if (NewCR2 != CR2) {
-          if (NewCR2.isSingleElement())
-            addToWorklist(V2, NewCR2.getSingleElement(),
-                          ICmpInst::ICMP_EQ, VRP);
-          else
-            update(V2, NewCR2, Subtree);
-        }
+        if (NewCR2 != CR2)
+          applyRange(V2, NewCR2, Subtree, VRP);
       }
     }
   };
@@ -1847,9 +1852,9 @@ namespace {
     }
   };
 
-  void ValueRanges::addToWorklist(Value *V, const APInt *I,
+  void ValueRanges::addToWorklist(Value *V, Constant *C,
                                   ICmpInst::Predicate Pred, VRPSolver *VRP) {
-    VRP->add(V, ConstantInt::get(*I), Pred, VRP->TopInst);
+    VRP->add(V, C, Pred, VRP->TopInst);
   }
 
 #ifndef NDEBUG
