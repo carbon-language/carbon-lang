@@ -314,7 +314,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       // Can we eliminate this phi node now?
       if (Value *V = PN->hasConstantValue(true)) {
         if (!isa<Instruction>(V) ||
-            getAnalysis<DominatorSet>().dominates(cast<Instruction>(V), PN)) {
+            getAnalysis<ETForest>().dominates(cast<Instruction>(V), PN)) {
           PN->replaceAllUsesWith(V);
           if (AA) AA->deleteValue(PN);
           BB->getInstList().erase(PN);
@@ -542,10 +542,9 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
 
   // Determine which blocks should stay in L and which should be moved out to
   // the Outer loop now.
-  DominatorSet &DS = getAnalysis<DominatorSet>();
   std::set<BasicBlock*> BlocksInL;
   for (pred_iterator PI = pred_begin(Header), E = pred_end(Header); PI!=E; ++PI)
-    if (DS.dominates(Header, *PI))
+    if (EF->dominates(Header, *PI))
       AddBlockAndPredsToSet(*PI, Header, BlocksInL);
 
 
