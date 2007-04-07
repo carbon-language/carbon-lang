@@ -39,6 +39,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<ETForest>();
       AU.addPreserved<ImmediateDominators>();
+      AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
       AU.addPreserved<LoopInfo>();
 
