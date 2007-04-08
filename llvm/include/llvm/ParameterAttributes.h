@@ -17,7 +17,7 @@
 #ifndef LLVM_PARAMETER_ATTRIBUTES_H
 #define LLVM_PARAMETER_ATTRIBUTES_H
 
-#include <llvm/ADT/SmallVector.h>
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -121,11 +121,10 @@ class ParamAttrsList {
   /// @{
   public:
     /// This adds a pair to the list of parameter index and attribute pairs 
-    /// represented by this class. No check is made to determine whether 
-    /// param_index exists already. This pair is just added to the end. It is
-    /// the user's responsibility to insert the pairs wisely.
+    /// represented by this class. If the parameter index already exists then
+    /// its attributes are overwritten. Otherwise it is added to the list.
     /// @brief Insert ParameterAttributes for an index
-    void insert(uint16_t param_index, uint16_t attrs);
+    void setAttributes(uint16_t param_index, uint16_t attrs);
 
   /// @}
   /// @name Data
