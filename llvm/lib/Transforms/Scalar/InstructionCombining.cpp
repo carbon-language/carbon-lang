@@ -3713,10 +3713,36 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   Value *C, *D;
   if (match(Op0, m_And(m_Value(A), m_Value(C))) &&
       match(Op1, m_And(m_Value(B), m_Value(D)))) {
-
+    Value *V1 = 0, *V2 = 0, *V3 = 0;
+    C1 = dyn_cast<ConstantInt>(C);
+    C2 = dyn_cast<ConstantInt>(D);
+    if (C1 && C2) {  // (A & C1)|(B & C2)
+      // If we have: ((V + N) & C1) | (V & C2)
+      // .. and C2 = ~C1 and C2 is 0+1+ and (N & C2) == 0
+      // replace with V+N.
+      if (C1->getValue() == ~C2->getValue()) {
+        if ((C2->getValue() & (C2->getValue()+1)) == 0 && // C2 == 0+1+
+            match(A, m_Add(m_Value(V1), m_Value(V2)))) {
+          // Add commutes, try both ways.
+          if (V1 == B && MaskedValueIsZero(V2, C2->getValue()))
+            return ReplaceInstUsesWith(I, A);
+          if (V2 == B && MaskedValueIsZero(V1, C2->getValue()))
+            return ReplaceInstUsesWith(I, A);
+        }
+        // Or commutes, try both ways.
+        if ((C1->getValue() & (C1->getValue()+1)) == 0 &&
+            match(B, m_Add(m_Value(V1), m_Value(V2)))) {
+          // Add commutes, try both ways.
+          if (V1 == A && MaskedValueIsZero(V2, C1->getValue()))
+            return ReplaceInstUsesWith(I, B);
+          if (V2 == A && MaskedValueIsZero(V1, C1->getValue()))
+            return ReplaceInstUsesWith(I, B);
+        }
+      }
+    }
+    
     // Check to see if we have any common things being and'ed.  If so, find the
     // terms for V1 & (V2|V3).
-    Value *V1 = 0, *V2 = 0, *V3 = 0;
     if (isOnlyUse(Op0) || isOnlyUse(Op1)) {
       if (A == B)      // (A & C)|(A & D) == A & (C|D)
         V1 = A, V2 = C, V3 = D;
@@ -3734,7 +3760,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
       
       // (V1 & V3)|(V2 & ~V3) -> ((V1 ^ V2) & V3) ^ V2
-      if (isOnlyUse(Op0) && isOnlyUse(Op1)) {
+      if (0 && isOnlyUse(Op0) && isOnlyUse(Op1)) {
         // Try all combination of terms to find V3 and ~V3.
         if (A->hasOneUse() && match(A, m_Not(m_Value(V3)))) {
           if (V3 == B)
@@ -3764,33 +3790,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           A = InsertNewInstBefore(BinaryOperator::createXor(V1, V2, "tmp"), I);
           A = InsertNewInstBefore(BinaryOperator::createAnd(A, V3, "tmp"), I);
           return BinaryOperator::createXor(A, V2);
-        }
-      }
-    }
-    
-    C1 = dyn_cast<ConstantInt>(C);
-    C2 = dyn_cast<ConstantInt>(D);
-    if (C1 && C2) {  // (A & C1)|(B & C2)
-      // If we have: ((V + N) & C1) | (V & C2)
-      // .. and C2 = ~C1 and C2 is 0+1+ and (N & C2) == 0
-      // replace with V+N.
-      if (C1->getValue() == ~C2->getValue()) {
-        if ((C2->getValue() & (C2->getValue()+1)) == 0 && // C2 == 0+1+
-            match(A, m_Add(m_Value(V1), m_Value(V2)))) {
-          // Add commutes, try both ways.
-          if (V1 == B && MaskedValueIsZero(V2, C2->getValue()))
-            return ReplaceInstUsesWith(I, A);
-          if (V2 == B && MaskedValueIsZero(V1, C2->getValue()))
-            return ReplaceInstUsesWith(I, A);
-        }
-        // Or commutes, try both ways.
-        if ((C1->getValue() & (C1->getValue()+1)) == 0 &&
-            match(B, m_Add(m_Value(V1), m_Value(V2)))) {
-          // Add commutes, try both ways.
-          if (V1 == A && MaskedValueIsZero(V2, C1->getValue()))
-            return ReplaceInstUsesWith(I, B);
-          if (V2 == A && MaskedValueIsZero(V1, C1->getValue()))
-            return ReplaceInstUsesWith(I, B);
         }
       }
     }
