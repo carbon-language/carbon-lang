@@ -48,15 +48,6 @@ class ParamAttrsList {
   /// @name Accessors
   /// @{
   public:
-    /// Returns the parameter index of a particular parameter attribute in this
-    /// list of attributes. Note that the attr_index is an index into this 
-    /// class's list of attributes, not the index of the parameter. The result
-    /// is the index of the parameter. 
-    /// @brief Get a parameter index
-    uint16_t getParamIndex(unsigned attr_index) const {
-      return attrs[attr_index].index;
-    }
-
     /// The parameter attributes for the \p indexth parameter are returned. 
     /// The 0th parameter refers to the return type of the function. Note that
     /// the \p param_index is an index into the function's parameters, not an
@@ -74,17 +65,6 @@ class ParamAttrsList {
     bool paramHasAttr(uint16_t i, ParameterAttributes attr) const {
       return getParamAttrs(i) & attr;
     }
-
-    /// Determines how many parameter attributes are set in this ParamAttrsList.
-    /// This says nothing about how many parameters the function has. It also
-    /// says nothing about the highest parameter index that has attributes.
-    /// @returns the number of parameter attributes in this ParamAttrsList.
-    /// @brief Return the number of parameter attributes this type has.
-    unsigned size() const { return attrs.size(); }
-
-    /// @returns true if this ParamAttrsList is empty.
-    /// @brief Determine emptiness of ParamAttrsList.
-    unsigned empty() const { return attrs.empty(); }
 
     /// The set of ParameterAttributes set in Attributes is converted to a
     /// string of equivalent mnemonics. This is, presumably, for writing out
@@ -116,15 +96,65 @@ class ParamAttrsList {
       }
       return false;
     }
+
+    /// Returns the parameter index of a particular parameter attribute in this
+    /// list of attributes. Note that the attr_index is an index into this 
+    /// class's list of attributes, not the index of a parameter. The result
+    /// is the index of the parameter. Clients generally should not use this
+    /// method. It is used internally by LLVM.
+    /// @brief Get a parameter index
+    uint16_t getParamIndex(unsigned attr_index) const {
+      return attrs[attr_index].index;
+    }
+
+    /// Determines how many parameter attributes are set in this ParamAttrsList.
+    /// This says nothing about how many parameters the function has. It also
+    /// says nothing about the highest parameter index that has attributes. 
+    /// Clients generally should not use this method. It is used internally by
+    /// LLVM.
+    /// @returns the number of parameter attributes in this ParamAttrsList.
+    /// @brief Return the number of parameter attributes this type has.
+    unsigned size() const { return attrs.size(); }
+
+    /// Clients generally should not use this method. It is used internally by
+    /// LLVM.
+    /// @returns true if this ParamAttrsList is empty.
+    /// @brief Determine emptiness of ParamAttrsList.
+    unsigned empty() const { return attrs.empty(); }
+
   /// @}
   /// @name Mutators
   /// @{
   public:
-    /// This adds a pair to the list of parameter index and attribute pairs 
-    /// represented by this class. If the parameter index already exists then
-    /// its attributes are overwritten. Otherwise it is added to the list.
+    /// This method will add the \p attr to the parameter with index
+    /// \p param_index. If the parameter index does not exist it will be created
+    /// and the \p will be the only attribute set. Otherwise, any existing
+    /// attributes for the specified parameter remain set and the attribute
+    /// given by \p attr is also set.
+    /// @brief Add a single ParameterAttribute
+    void addAttribute(uint16_t param_index, ParameterAttribute attr);
+
+    /// This method will remove the \p attr to the parameter with index
+    /// \p param_index. If the parameter index does not exist in the list,  
+    /// an assertion will occur. If the specified attribute is the last 
+    /// attribute set for the specified parameter index, the attributes for 
+    /// that index are removed completely from the list (size is decremented).
+    /// Otherwise, the specified attribute is removed from the set of attributes
+    /// for the given index.
+    /// @brief Remove a single ParameterAttribute
+    void removeAttribute(uint16_t param_index, ParameterAttribute attr);
+
+    /// This is identical to addAttribute but permits you to set multiple
+    /// attributes at the same time. The \p attrs value is expected to be a
+    /// bitwise OR of the attributes you would like to have added.
     /// @brief Insert ParameterAttributes for an index
-    void setAttributes(uint16_t param_index, uint16_t attrs);
+    void addAttributes(uint16_t param_index, uint16_t attrs);
+
+    /// This is identical to removeAttribute but permits you to remove multiple
+    /// attributes at the same time. The\p attrs value is expected to be a
+    /// bitwise OR of the attribute syou would like to have removed.
+    /// @brief Remove ParameterAttributes for an index
+    void removeAttributes(uint16_t param_index, uint16_t attrs);
 
   /// @}
   /// @name Data
