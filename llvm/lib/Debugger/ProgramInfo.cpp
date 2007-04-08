@@ -194,8 +194,8 @@ void SourceFunctionInfo::getSourceLocation(unsigned &RetLineNo,
 
 ProgramInfo::ProgramInfo(Module *m) : M(m), ProgramTimeStamp(0,0) {
   assert(M && "Cannot create program information with a null module!");
-  const sys::FileStatus *Stat;
-  Stat = sys::PathWithStatus(M->getModuleIdentifier()).getFileStatus();
+  sys::PathWithStatus ModPath(M->getModuleIdentifier());
+  const sys::FileStatus *Stat = ModPath.getFileStatus();
   if (Stat)
     ProgramTimeStamp = Stat->getTimestamp();
 
