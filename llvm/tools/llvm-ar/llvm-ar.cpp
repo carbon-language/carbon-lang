@@ -281,8 +281,8 @@ recurseDirectories(const sys::Path& path,
     for (std::set<sys::Path>::iterator I = content.begin(), E = content.end();
          I != E; ++I) {
       // Make sure it exists and is a directory
-      const sys::FileStatus *Status =
-        sys::PathWithStatus(*I).getFileStatus(false, ErrMsg);
+      sys::PathWithStatus PwS(*I);
+      const sys::FileStatus *Status = PwS.getFileStatus(false, ErrMsg);
       if (!Status)
         return true;
       if (Status->isDir) {
@@ -310,8 +310,8 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
       if (!aPath.exists())
         throw std::string("File does not exist: ") + Members[i];
       std::string Err;
-      const sys::FileStatus *si = 
-        sys::PathWithStatus(aPath).getFileStatus(false, &Err);
+      sys::PathWithStatus PwS(aPath);
+      const sys::FileStatus *si = PwS.getFileStatus(false, &Err);
       if (!si)
         throw Err;
       if (si->isDir) {
@@ -647,8 +647,8 @@ doReplaceOrInsert(std::string* ErrMsg) {
 
     if (found != remaining.end()) {
       std::string Err;
-      const sys::FileStatus *si = 
-        sys::PathWithStatus(*found).getFileStatus(false, &Err);
+      sys::PathWithStatus PwS(*found); 
+      const sys::FileStatus *si = PwS.getFileStatus(false, &Err);
       if (!si)
         return true;
       if (si->isDir) {
