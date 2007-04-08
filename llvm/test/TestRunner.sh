@@ -39,6 +39,7 @@ grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm
 
 /bin/sh $SCRIPT > $OUTPUT 2>&1 || (
   echo "******************** TEST '$TESTNAME' FAILED! ********************"
+  grep XFAIL $FILENAME
   echo "Command: "
   cat $SCRIPT
   echo "Output:"
