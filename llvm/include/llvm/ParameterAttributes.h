@@ -132,7 +132,7 @@ class ParamAttrsList {
     /// attributes for the specified parameter remain set and the attribute
     /// given by \p attr is also set.
     /// @brief Add a single ParameterAttribute
-    void addAttribute(uint16_t param_index, ParameterAttribute attr);
+    void addAttribute(uint16_t param_index, ParameterAttributes attr);
 
     /// This method will remove the \p attr to the parameter with index
     /// \p param_index. If the parameter index does not exist in the list,  
@@ -142,7 +142,7 @@ class ParamAttrsList {
     /// Otherwise, the specified attribute is removed from the set of attributes
     /// for the given index.
     /// @brief Remove a single ParameterAttribute
-    void removeAttribute(uint16_t param_index, ParameterAttribute attr);
+    void removeAttribute(uint16_t param_index, ParameterAttributes attr);
 
     /// This is identical to addAttribute but permits you to set multiple
     /// attributes at the same time. The \p attrs value is expected to be a
