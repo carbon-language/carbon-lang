@@ -2687,7 +2687,7 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
 /// values added into it.
 void RegsForValue::AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
                                         std::vector<SDOperand> &Ops) const {
-  Ops.push_back(DAG.getConstant(Code | (Regs.size() << 3), MVT::i32));
+  Ops.push_back(DAG.getTargetConstant(Code | (Regs.size() << 3), MVT::i32));
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
     Ops.push_back(DAG.getRegister(Regs[i], RegVT));
 }
