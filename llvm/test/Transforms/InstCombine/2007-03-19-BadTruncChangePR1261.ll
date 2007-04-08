@@ -1,10 +1,7 @@
-; For PR1261. Before bit accurate type support in InstCombine, this would
-; turn the sext into a zext.
-; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | grep sext
-; XFAIL: *
+; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | grep zext
+; PR1261. 
 
 define i16 @test(i31 %zzz) {
-entry:
   %A = sext i31 %zzz to i32
   %B = add i32 %A, 16384
   %C = lshr i32 %B, 15
