@@ -935,8 +935,9 @@ void ETForestBase::updateDFSNumbers()
     for (df_iterator<BasicBlock*> I = df_begin(Roots[i]),
            E = df_end(Roots[i]); I != E; ++I) {
       BasicBlock *BB = *I;
-      if (!getNode(BB)->hasFather())
-        getNode(BB)->assignDFSNumber(dfsnum);    
+      ETNode *ETN = getNode(BB);
+      if (ETN && !ETN->hasFather())
+        ETN->assignDFSNumber(dfsnum);    
   }
   SlowQueries = 0;
   DFSInfoValid = true;
