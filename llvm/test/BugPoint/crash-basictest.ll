@@ -1,6 +1,6 @@
 ; Basic test for bugpoint.
-; RUN: bugpoint %s -domset -idom -domset -bugpoint-crashcalls \
-; RUN:   -domset -idom -domset
+; RUN: bugpoint %s -idom -bugpoint-crashcalls \
+; RUN:   -idom
 
 define i32 @test() {
 	call i32 @test()

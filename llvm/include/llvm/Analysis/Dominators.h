@@ -10,12 +10,11 @@
 // This file defines the following classes:
 //  1. ImmediateDominators: Calculates and holds a mapping between BasicBlocks
 //     and their immediate dominator.
-//  2. DominatorSet: Calculates the [reverse] dominator set for a function
-//  3. DominatorTree: Represent the ImmediateDominator as an explicit tree
+//  2. DominatorTree: Represent the ImmediateDominator as an explicit tree
 //     structure.
-//  4. ETForest: Efficient data structure for dominance comparisons and 
+//  3. ETForest: Efficient data structure for dominance comparisons and 
 //     nearest-common-ancestor queries.
-//  5. DominanceFrontier: Calculate and hold the dominance frontier for a
+//  4. DominanceFrontier: Calculate and hold the dominance frontier for a
 //     function.
 //
 //  These data structures are listed in increasing order of complexity.  It
@@ -173,126 +172,6 @@ private:
   void Compress(BasicBlock *V, InfoRec &VInfo);
   BasicBlock *Eval(BasicBlock *v);
   void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
-};
-
-
-
-//===----------------------------------------------------------------------===//
-/// DominatorSet - Maintain a set<BasicBlock*> for every basic block in a
-/// function, that represents the blocks that dominate the block.  If the block
-/// is unreachable in this function, the set will be empty.  This cannot happen
-/// for reachable code, because every block dominates at least itself.
-///
-class DominatorSetBase : public DominatorBase {
-public:
-  typedef std::set<BasicBlock*> DomSetType;    // Dom set for a bb
-  // Map of dom sets
-  typedef std::map<BasicBlock*, DomSetType> DomSetMapType;
-protected:
-  DomSetMapType Doms;
-public:
-  DominatorSetBase(bool isPostDom) : DominatorBase(isPostDom) {}
-
-  virtual void releaseMemory() { Doms.clear(); }
-
-  // Accessor interface:
-  typedef DomSetMapType::const_iterator const_iterator;
-  typedef DomSetMapType::iterator iterator;
-  inline const_iterator begin() const { return Doms.begin(); }
-  inline       iterator begin()       { return Doms.begin(); }
-  inline const_iterator end()   const { return Doms.end(); }
-  inline       iterator end()         { return Doms.end(); }
-  inline const_iterator find(BasicBlock* B) const { return Doms.find(B); }
-  inline       iterator find(BasicBlock* B)       { return Doms.find(B); }
-
-
-  /// getDominators - Return the set of basic blocks that dominate the specified
-  /// block.
-  ///
-  inline const DomSetType &getDominators(BasicBlock *BB) const {
-    const_iterator I = find(BB);
-    assert(I != end() && "BB not in function!");
-    return I->second;
-  }
-
-  /// isReachable - Return true if the specified basicblock is reachable.  If
-  /// the block is reachable, we have dominator set information for it.
-  ///
-  bool isReachable(BasicBlock *BB) const {
-    return !getDominators(BB).empty();
-  }
-
-  /// dominates - Return true if A dominates B.
-  ///
-  inline bool dominates(BasicBlock *A, BasicBlock *B) const {
-    return getDominators(B).count(A) != 0;
-  }
-
-  /// properlyDominates - Return true if A dominates B and A != B.
-  ///
-  bool properlyDominates(BasicBlock *A, BasicBlock *B) const {
-    return dominates(A, B) && A != B;
-  }
-
-  /// print - Convert to human readable form
-  ///
-  virtual void print(std::ostream &OS, const Module* = 0) const;
-  void print(std::ostream *OS, const Module* M = 0) const {
-    if (OS) print(*OS, M);
-  }
-
-  /// dominates - Return true if A dominates B.  This performs the special
-  /// checks necessary if A and B are in the same basic block.
-  ///
-  bool dominates(Instruction *A, Instruction *B) const;
-
-  //===--------------------------------------------------------------------===//
-  // API to update (Post)DominatorSet information based on modifications to
-  // the CFG...
-
-  /// addBasicBlock - Call to update the dominator set with information about a
-  /// new block that was inserted into the function.
-  ///
-  void addBasicBlock(BasicBlock *BB, const DomSetType &Dominators) {
-    assert(find(BB) == end() && "Block already in DominatorSet!");
-    Doms.insert(std::make_pair(BB, Dominators));
-  }
-
-  /// addDominator - If a new block is inserted into the CFG, then method may be
-  /// called to notify the blocks it dominates that it is in their set.
-  ///
-  void addDominator(BasicBlock *BB, BasicBlock *NewDominator) {
-    iterator I = find(BB);
-    assert(I != end() && "BB is not in DominatorSet!");
-    I->second.insert(NewDominator);
-  }
-};
-
-
-//===-------------------------------------
-/// DominatorSet Class - Concrete subclass of DominatorSetBase that is used to
-/// compute a normal dominator set.
-///
-class DominatorSet : public DominatorSetBase {
-public:
-  DominatorSet() : DominatorSetBase(false) {}
-
-  virtual bool runOnFunction(Function &F);
-
-  BasicBlock *getRoot() const {
-    assert(Roots.size() == 1 && "Should always have entry node!");
-    return Roots[0];
-  }
-
-  /// getAnalysisUsage - This simply provides a dominator set
-  ///
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<ImmediateDominators>();
-    AU.setPreservesAll();
-  }
-
-  // stub - dummy function, just ignore it
-  static int stub;
 };
 
 
@@ -690,8 +569,5 @@ private:
 
 
 } // End llvm namespace
-
-// Make sure that any clients of this file link in Dominators.cpp
-FORCE_DEFINING_FILE_TO_BE_LINKED(DominatorSet)
 
 #endif
