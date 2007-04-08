@@ -36,10 +36,10 @@ ulimit -t 40
 SCRIPT=$OUTPUT.script
 grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc -emit-llvm|g;s|%llvmgxx|llvm-g++ -emit-llvm|g;s|%prcontext|prcontext.tcl|g" > $SCRIPT
 
+grep -q XFAIL $FILENAME && (printf "XFAILED '$TESTNAME': "; grep XFAIL $FILENAME)
 
 /bin/sh $SCRIPT > $OUTPUT 2>&1 || (
   echo "******************** TEST '$TESTNAME' FAILED! ********************"
-  grep XFAIL $FILENAME
   echo "Command: "
   cat $SCRIPT
   echo "Output:"
