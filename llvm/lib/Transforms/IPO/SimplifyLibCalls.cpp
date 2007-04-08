@@ -1388,7 +1388,7 @@ public:
 /// This LibCallOptimization will simplify calls to the "fputs" library
 /// function. It looks for cases where the result of fputs is not used and the
 /// operation can be reduced to something simpler.
-/// @brief Simplify the puts library function.
+/// @brief Simplify the fputs library function.
 struct VISIBILITY_HIDDEN FPutsOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
@@ -1413,36 +1413,66 @@ public:
     if (!GetConstantStringInfo(CI->getOperand(1), Str))
       return false;
 
-    Value *Ptr = CI->getOperand(1);
     const Type *FILETy = CI->getOperand(2)->getType();
-    // FIXME: Remove these optimizations and fold fwrite with 0/1 length
-    // instead.
-    switch (Str.size()) {
-    case 0:
-      // fputs("",F) -> noop
-      break;
-    case 1: {
-      // fputs(s,F)  -> fputc(s[0],F)  (if s is constant and strlen(s) == 1)
-      Value *Val = new LoadInst(Ptr, Ptr->getName()+".byte", CI);
-      Val = new ZExtInst(Val, Type::Int32Ty, Val->getName()+".int", CI);
-      new CallInst(SLC.get_fputc(FILETy), Val, CI->getOperand(2), "", CI);
-      break;
-    }
-    default: {
-      // fputs(s,F)  -> fwrite(s,1,len,F) (if s is constant and strlen(s) > 1)
-      Value *FWriteParms[4] = {
-        CI->getOperand(1),
-        ConstantInt::get(SLC.getIntPtrType(), Str.size()),
-        ConstantInt::get(SLC.getIntPtrType(), 1),
-        CI->getOperand(2)
-      };
-      new CallInst(SLC.get_fwrite(FILETy), FWriteParms, 4, "", CI);
-      break;
-    }
-    }
+    // fputs(s,F)  -> fwrite(s,1,len,F) (if s is constant and strlen(s) > 1)
+    Value *FWriteParms[4] = {
+      CI->getOperand(1),
+      ConstantInt::get(SLC.getIntPtrType(), Str.size()),
+      ConstantInt::get(SLC.getIntPtrType(), 1),
+      CI->getOperand(2)
+    };
+    new CallInst(SLC.get_fwrite(FILETy), FWriteParms, 4, "", CI);
     return ReplaceCallWith(CI, 0);  // Known to have no uses (see above).
   }
-} PutsOptimizer;
+} FPutsOptimizer;
+
+/// This LibCallOptimization will simplify calls to the "fwrite" function.
+struct VISIBILITY_HIDDEN FWriteOptimization : public LibCallOptimization {
+public:
+  /// @brief Default Constructor
+  FWriteOptimization() : LibCallOptimization("fwrite",
+                                       "Number of 'fwrite' calls simplified") {}
+  
+  /// @brief Make sure that the "fputs" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
+    const FunctionType *FT = F->getFunctionType();
+    return FT->getNumParams() == 4 && 
+           FT->getParamType(0) == PointerType::get(Type::Int8Ty) &&
+           FT->getParamType(1) == FT->getParamType(2) &&
+           isa<IntegerType>(FT->getParamType(1)) &&
+           isa<PointerType>(FT->getParamType(3)) &&
+           isa<IntegerType>(FT->getReturnType());
+  }
+  
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
+    // Get the element size and count.
+    uint64_t EltSize, EltCount;
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(2)))
+      EltSize = C->getZExtValue();
+    else
+      return false;
+    if (ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(3)))
+      EltCount = C->getZExtValue();
+    else
+      return false;
+    
+    // If this is writing zero records, remove the call (it's a noop).
+    if (EltSize * EltCount == 0)
+      return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 0));
+    
+    // If this is writing one byte, turn it into fputc.
+    if (EltSize == 1 && EltCount == 1) {
+      // fwrite(s,1,1,F) -> fputc(s[0],F)
+      Value *Ptr = CI->getOperand(1);
+      Value *Val = new LoadInst(Ptr, Ptr->getName()+".byte", CI);
+      Val = new ZExtInst(Val, Type::Int32Ty, Val->getName()+".int", CI);
+      const Type *FILETy = CI->getOperand(4)->getType();
+      new CallInst(SLC.get_fputc(FILETy), Val, CI->getOperand(4), "", CI);
+      return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 1));
+    }
+    return false;
+  }
+} FWriteOptimizer;
 
 /// This LibCallOptimization will simplify calls to the "isdigit" library
 /// function. It simply does range checks the parameter explicitly.
