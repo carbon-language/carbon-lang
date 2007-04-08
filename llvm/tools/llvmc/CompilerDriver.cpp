@@ -195,8 +195,7 @@ private:
 
   void cleanup() {
     if (!isSet(KEEP_TEMPS_FLAG)) {
-      const sys::FileStatus *Status = 
-        sys::PathWithStatus(TempDir).getFileStatus();
+      const sys::FileStatus *Status = TempDir.getFileStatus();
       if (Status && Status->isDir)
         TempDir.eraseFromDisk(/*remove_contents=*/true);
     } else {
@@ -997,7 +996,7 @@ private:
   PathVector IncludePaths;      ///< -I options
   PathVector ToolPaths;         ///< -B options
   StringVector Defines;         ///< -D options
-  sys::Path TempDir;            ///< Name of the temporary directory.
+  sys::PathWithStatus TempDir;  ///< Name of the temporary directory.
   StringTable AdditionalArgs;   ///< The -Txyz options
   StringVector fOptions;        ///< -f options
   StringVector MOptions;        ///< -M options
