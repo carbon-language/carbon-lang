@@ -617,9 +617,12 @@ namespace sys {
   bool CopyFile(const Path& Dest, const Path& Src, std::string* ErrMsg);
 }
 
-
 std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);
-std::ostream& operator<<(std::ostream& strm, const sys::PathWithStatus& aPath);
+inline std::ostream& operator<<(std::ostream& strm, 
+                                const sys::PathWithStatus& aPath) {
+  strm << static_cast<const sys::Path&>(aPath);
+  return strm;
+}
 
 }
 
