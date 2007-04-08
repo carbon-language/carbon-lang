@@ -1342,7 +1342,7 @@ public:
       return false;
 
     // Get the second character and switch on its value
-    switch (FormatStr[2]) {
+    switch (FormatStr[1]) {
     case 'c': {
       // sprintf(dest,"%c",chr) -> store chr, dest
       Value *V = CastInst::createTruncOrBitCast(CI->getOperand(3),
