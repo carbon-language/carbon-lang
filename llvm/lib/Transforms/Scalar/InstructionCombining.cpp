@@ -3739,6 +3739,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             return ReplaceInstUsesWith(I, B);
         }
       }
+      V1 = 0; V2 = 0; V3 = 0;
     }
     
     // Check to see if we have any common things being and'ed.  If so, find the
@@ -3760,7 +3761,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
       
       // (V1 & V3)|(V2 & ~V3) -> ((V1 ^ V2) & V3) ^ V2
-      if (0 && isOnlyUse(Op0) && isOnlyUse(Op1)) {
+      if (isOnlyUse(Op0) && isOnlyUse(Op1)) {
         // Try all combination of terms to find V3 and ~V3.
         if (A->hasOneUse() && match(A, m_Not(m_Value(V3)))) {
           if (V3 == B)
