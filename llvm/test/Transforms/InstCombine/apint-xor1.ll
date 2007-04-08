@@ -8,7 +8,7 @@
 define i47 @test1(i47 %A, i47 %B) {
         ;; (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
         %A1 = and i47 %A, 70368744177664
-        %B1 = and i47 %B, 70368744177663
+        %B1 = and i47 %B, 70368744177661
         %C1 = xor i47 %A1, %B1
         ret i47 %C1
 }
