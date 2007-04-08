@@ -1,0 +1,148 @@
+//===-- llvm/ParameterAttributes.h - Container for Param Attrs --*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by Reid Spencer and is distributed under the 
+// University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains the types necessary to represent the parameter attributes
+// associated with functions and their calls.
+//
+// The implementations of these classes live in lib/VMCore/Function.cpp.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_PARAMETER_ATTRIBUTES_H
+#define LLVM_PARAMETER_ATTRIBUTES_H
+
+#include <llvm/ADT/SmallVector.h>
+
+namespace llvm {
+
+/// Function parameters can have attributes to indicate how they should be
+/// treated by optimizations and code generation. This enumeration lists the
+/// attributes that can be associated with parameters or function results.
+/// @brief Function parameter attributes.
+enum ParameterAttributes {
+  NoAttributeSet     = 0,      ///< No attributes have been set
+  ZExtAttribute      = 1 << 0, ///< zero extended before/after call
+  SExtAttribute      = 1 << 1, ///< sign extended before/after call
+  NoReturnAttribute  = 1 << 2, ///< mark the function as not returning
+  InRegAttribute     = 1 << 3, ///< force argument to be passed in register
+  StructRetAttribute = 1 << 4, ///< hidden pointer to structure to return
+  NoUnwindAttribute  = 1 << 5  ///< Function doesn't unwind stack
+};
+
+/// This class is used by Function and CallInst to represent the set of 
+/// parameter attributes used. It represents a list of pairs of uint16_t, one
+/// for the parameter index, and one a set of ParameterAttributes bits.
+/// Parameters that have no attributes are not present in the list. The list
+/// may also be empty, but this doesn't occur in practice.  The list constructs
+/// as empty and is filled by the insert method. The list can be turned into 
+/// a string of mnemonics suitable for LLVM Assembly output. Various accessors
+/// are provided to obtain information about the attributes.
+/// @brief A List of ParameterAttributes.
+class ParamAttrsList {
+  /// @name Accessors
+  /// @{
+  public:
+    /// Returns the parameter index of a particular parameter attribute in this
+    /// list of attributes. Note that the attr_index is an index into this 
+    /// class's list of attributes, not the index of the parameter. The result
+    /// is the index of the parameter. 
+    /// @brief Get a parameter index
+    uint16_t getParamIndex(unsigned attr_index) const {
+      return attrs[attr_index].index;
+    }
+
+    /// The parameter attributes for the \p indexth parameter are returned. 
+    /// The 0th parameter refers to the return type of the function. Note that
+    /// the \p param_index is an index into the function's parameters, not an
+    /// index into this class's list of attributes. The result of getParamIndex
+    /// is always suitable input to this function.
+    /// @returns The all the ParameterAttributes for the \p indexth parameter
+    /// as a uint16_t of enumeration values OR'd together.
+    /// @brief Get the attributes for a parameter
+    uint16_t getParamAttrs(uint16_t param_index) const;
+
+    /// This checks to see if the \p ith function parameter has the parameter
+    /// attribute given by \p attr set.
+    /// @returns true if the parameter attribute is set
+    /// @brief Determine if a ParameterAttributes is set
+    bool paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+      return getParamAttrs(i) & attr;
+    }
+
+    /// Determines how many parameter attributes are set in this ParamAttrsList.
+    /// This says nothing about how many parameters the function has. It also
+    /// says nothing about the highest parameter index that has attributes.
+    /// @returns the number of parameter attributes in this ParamAttrsList.
+    /// @brief Return the number of parameter attributes this type has.
+    unsigned size() const { return attrs.size(); }
+
+    /// @returns true if this ParamAttrsList is empty.
+    /// @brief Determine emptiness of ParamAttrsList.
+    unsigned empty() const { return attrs.empty(); }
+
+    /// The set of ParameterAttributes set in Attributes is converted to a
+    /// string of equivalent mnemonics. This is, presumably, for writing out
+    /// the mnemonics for the assembly writer. 
+    /// @brief Convert parameter attribute bits to text
+    static std::string getParamAttrsText(uint16_t Attributes);
+
+    /// The \p Indexth parameter attribute is converted to string.
+    /// @brief Get the text for the parmeter attributes for one parameter.
+    std::string getParamAttrsTextByIndex(uint16_t Index) const {
+      return getParamAttrsText(getParamAttrs(Index));
+    }
+
+    /// @brief Comparison operator for ParamAttrsList
+    bool operator < (const ParamAttrsList& that) const {
+      if (this->attrs.size() < that.attrs.size())
+        return true;
+      if (this->attrs.size() > that.attrs.size())
+        return false;
+      for (unsigned i = 0; i < attrs.size(); ++i) {
+        if (attrs[i].index < that.attrs[i].index)
+          return true;
+        if (attrs[i].index > that.attrs[i].index)
+          return false;
+        if (attrs[i].attrs < that.attrs[i].attrs)
+          return true;
+        if (attrs[i].attrs > that.attrs[i].attrs)
+          return false;
+      }
+      return false;
+    }
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    /// This adds a pair to the list of parameter index and attribute pairs 
+    /// represented by this class. No check is made to determine whether 
+    /// param_index exists already. This pair is just added to the end. It is
+    /// the user's responsibility to insert the pairs wisely.
+    /// @brief Insert ParameterAttributes for an index
+    void insert(uint16_t param_index, uint16_t attrs);
+
+  /// @}
+  /// @name Data
+  /// @{
+  private:
+    /// This is an internal structure used to associate the ParameterAttributes
+    /// with a parameter index. 
+    /// @brief ParameterAttributes with a parameter index.
+    struct ParamAttrsWithIndex {
+      uint16_t attrs; ///< The attributes that are set, |'d together
+      uint16_t index; ///< Index of the parameter for which the attributes apply
+    };
+
+    SmallVector<ParamAttrsWithIndex,2> attrs; ///< The list of attributes
+  /// @}
+};
+
+} // End llvm namespace
+
+#endif
