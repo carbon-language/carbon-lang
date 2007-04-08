@@ -281,6 +281,9 @@
 				RelativePath="..\..\include\llvm\ModuleProvider.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\ParameterAttributes.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Pass.h">
 			</File>
 			<File
