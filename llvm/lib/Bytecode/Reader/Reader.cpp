@@ -276,16 +276,17 @@ Value * BytecodeReader::getValue(unsigned type, unsigned oNum, bool Create) {
     }
   }
 
-  if (GlobalTyID < ModuleValues.size() && ModuleValues[GlobalTyID]) {
-    if (Num < ModuleValues[GlobalTyID]->size())
-      return ModuleValues[GlobalTyID]->getOperand(Num);
-    Num -= ModuleValues[GlobalTyID]->size();
-  }
+  if (GlobalTyID < ModuleValues.size()) 
+    if (ValueList *Globals = ModuleValues[GlobalTyID]) {
+      if (Num < Globals->size())
+        return Globals->getOperand(Num);
+      Num -= Globals->size();
+    }
 
-  if (FunctionValues.size() > type &&
-      FunctionValues[type] &&
-      Num < FunctionValues[type]->size())
-    return FunctionValues[type]->getOperand(Num);
+  if (type < FunctionValues.size())
+    if (ValueList *Locals = FunctionValues[type])
+      if (Num < Locals->size())
+        return Locals->getOperand(Num);
 
   if (!Create) return 0;  // Do not create a placeholder?
 
