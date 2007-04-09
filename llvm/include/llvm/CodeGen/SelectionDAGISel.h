@@ -124,7 +124,33 @@ public:
     bool Emitted;
   };
   typedef std::pair<JumpTableHeader, JumpTable> JumpTableBlock;
- 
+
+  struct BitTestCase {
+    BitTestCase(uint64_t M, MachineBasicBlock* T, MachineBasicBlock* Tr):
+      Mask(M), ThisBB(T), TargetBB(Tr) { };
+    uint64_t Mask;
+    MachineBasicBlock* ThisBB;
+    MachineBasicBlock* TargetBB;
+  };
+  
+  typedef SmallVector<BitTestCase, 3> BitTestInfo;
+
+  struct BitTestBlock {
+    BitTestBlock(uint64_t F, uint64_t R, Value* SV,
+                 unsigned Rg, bool E,
+                 MachineBasicBlock* P, MachineBasicBlock* D,
+                 const BitTestInfo& C):
+      First(F), Range(R), SValue(SV), Reg(Rg), Emitted(E),
+      Parent(P), Default(D), Cases(C) { };
+    uint64_t First;
+    uint64_t Range;
+    Value  *SValue;
+    unsigned Reg;
+    bool Emitted;
+    MachineBasicBlock *Parent;
+    MachineBasicBlock *Default;
+    BitTestInfo Cases;
+  };
 protected:
   /// Pick a safe ordering and emit instructions for each target node in the
   /// graph.
@@ -157,6 +183,8 @@ private:
   /// JTCases - Vector of JumpTable structures which holds necessary information
   /// for emitting a jump tables during SwitchInst code generation.
   std::vector<JumpTableBlock> JTCases;
+
+  std::vector<BitTestBlock> BitTestCases;
 };
 
 }

@@ -1,10 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 -o - | grep \$7 | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=x86 -o - | grep \$6 | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=x86 -o - | grep 1024 | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep 1023 | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep jg | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep jb | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep jae | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=x86 -o - | grep jb | wc -l | grep 2 &&
 ; RUN: llvm-as < %s | llc -march=x86 -o - | grep je | wc -l | grep 1
 
 define i32 @main(i32 %tmp158) {
