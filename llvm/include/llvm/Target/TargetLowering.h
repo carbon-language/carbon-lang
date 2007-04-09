@@ -872,6 +872,7 @@ public:
     int64_t      BaseOffs;
     bool         HasBaseReg;
     int64_t      Scale;
+    AddrMode() : BaseGV(0), BaseOffs(0), HasBaseReg(false), Scale(0) {}
   };
   
   /// isLegalAddressingMode - Return true if the addressing mode represented by
