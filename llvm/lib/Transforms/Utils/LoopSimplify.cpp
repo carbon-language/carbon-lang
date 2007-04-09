@@ -419,8 +419,8 @@ static void AddBlockAndPredsToSet(BasicBlock *BB, BasicBlock *StopBlock,
 
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
 /// PHI node that tells us how to partition the loops.
-static PHINode *FindPHIToPartitionLoops(Loop *L, ETForest *EF, 
-          AliasAnalysis *AA) {
+static PHINode *FindPHIToPartitionLoops(Loop *L, ETForest *EF,
+                                        AliasAnalysis *AA) {
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
@@ -675,7 +675,7 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
 
 // Returns true if BasicBlock A dominates at least one block in vector B
 // Helper function for UpdateDomInfoForRevectoredPreds
-static bool BlockDominatesAny(BasicBlock* A, std::vector<BasicBlock*>& B, ETForest& ETF) {
+static bool BlockDominatesAny(BasicBlock* A, const std::vector<BasicBlock*>& B, const ETForest& ETF) {
   for (std::vector<BasicBlock*>::iterator BI = B.begin(), BE = B.end(); BI != BE; ++BI) {
     if (ETF.dominates(A, *BI))
       return true;
@@ -858,6 +858,7 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
       
       // Only consider dominators of NewBBSucc
       if (!DFI->second.count(NewBBSucc)) continue;
+      
       if (BlockDominatesAny(FI, PredBlocks, ETF)) {
         // If NewBBSucc should not stay in our dominator frontier, remove it.
         // We remove it unless there is a predecessor of NewBBSucc that we
