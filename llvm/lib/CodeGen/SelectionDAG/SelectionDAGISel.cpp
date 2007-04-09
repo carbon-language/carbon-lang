@@ -45,7 +45,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
-#include <math.h>
 using namespace llvm;
 
 #ifndef NDEBUG
