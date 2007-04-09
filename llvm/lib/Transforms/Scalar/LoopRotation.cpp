@@ -73,7 +73,7 @@ namespace {
 
     /// Find Replacement information for instruction. Return NULL if it is
     /// not available.
-    RenameData *findReplacementData(Instruction *I);
+    const RenameData *findReplacementData(Instruction *I);
 
   private:
 
@@ -179,12 +179,9 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 
   NewPreHeader = new BasicBlock("bb.nph", OrigHeader->getParent(), OrigHeader);
   BasicBlock::iterator I = OrigHeader->begin(), E = OrigHeader->end();
-  for (; I != E; ++I) {
+  PHINode *PN = NULL;
+  for (; (PN = dyn_cast<PHINode>(I)); ++I) {
     Instruction *In = I;
-
-    PHINode *PN = dyn_cast<PHINode>(I);
-    if (!PN)
-      break;
 
     // Create new PHI node with one value incoming from OrigPreHeader.
     // NewPreHeader has only one predecessor, OrigPreHeader.
@@ -235,10 +232,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // Update new pre-header.
   // Rename values that are defined in original header to reflects values
   // defined in new pre-header.
-  for (SmallVector<RenameData, MAX_HEADER_SIZE>::iterator 
-         I = LoopHeaderInfo.begin(), E = LoopHeaderInfo.end(); I != E; ++I) {
-    
-    const RenameData &ILoopHeaderInfo = *I;
+  for(unsigned LHI = 0, LHI_E = LoopHeaderInfo.size(); LHI != LHI_E; ++LHI) {
+    const RenameData &ILoopHeaderInfo = LoopHeaderInfo[LHI];
     Instruction *In = ILoopHeaderInfo.Original;
     Instruction *C = ILoopHeaderInfo.PreHeader;
 
@@ -253,12 +248,12 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 
     for (unsigned opi = 0, e = In->getNumOperands(); opi != e; ++opi) {
       if (Instruction *OpPhi = dyn_cast<PHINode>(In->getOperand(opi))) {
-        if (RenameData *D = findReplacementData(OpPhi))
+        if (const RenameData *D = findReplacementData(OpPhi))
           C->setOperand(opi, D->PreHeader);
       }
       else if (Instruction *OpInsn = 
                dyn_cast<Instruction>(In->getOperand(opi))) {
-        if (RenameData *D = findReplacementData(OpInsn))
+        if (const RenameData *D = findReplacementData(OpInsn))
           C->setOperand(opi, D->PreHeader);
       }
     }
@@ -282,10 +277,9 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // 2) Inside loop but not in original header
   //
   //    Replace this use to reflect definition from new header.
-  for (SmallVector<RenameData, MAX_HEADER_SIZE>::iterator 
-         I = LoopHeaderInfo.begin(), E = LoopHeaderInfo.end(); I != E; ++I) {
+  for(unsigned LHI = 0, LHI_E = LoopHeaderInfo.size(); LHI != LHI_E; ++LHI) {
+    const RenameData &ILoopHeaderInfo = LoopHeaderInfo[LHI];
 
-    const RenameData &ILoopHeaderInfo = *I;
     if (!ILoopHeaderInfo.Header)
       continue;
 
@@ -318,7 +312,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
         if (PU->getBasicBlockIndex(NewHeader) != -1
             && PU->getIncomingValueForBlock(NewHeader) == U)
           continue;
-
+        
        U->replaceUsesOfWith(OldPhi, NewPhi);
        continue;
       }
@@ -385,7 +379,7 @@ void LoopRotate::updateExitBlock() {
     if (PN->getBasicBlockIndex(NewPreHeader) != -1)
       return;
 
-    RenameData *ILoopHeaderInfo;
+    const RenameData *ILoopHeaderInfo;
     Value *V = PN->getIncomingValueForBlock(OrigHeader);
     if (isa<Instruction>(V) && 
         (ILoopHeaderInfo = findReplacementData(cast<Instruction>(V)))) {
@@ -427,13 +421,13 @@ bool LoopRotate::usedOutsideOriginalHeader(Instruction *In) {
 
 /// Find Replacement information for instruction. Return NULL if it is
 /// not available.
-RenameData *LoopRotate::findReplacementData(Instruction *In) {
+const RenameData *LoopRotate::findReplacementData(Instruction *In) {
 
   // Since LoopHeaderInfo is small, linear walk is OK.
-  for (SmallVector<RenameData, MAX_HEADER_SIZE>::iterator 
-         I = LoopHeaderInfo.begin(), E = LoopHeaderInfo.end(); I != E; ++I) 
-    if (I->Original == In)
-      return &(*I);
-
+  for(unsigned LHI = 0, LHI_E = LoopHeaderInfo.size(); LHI != LHI_E; ++LHI) {
+    const RenameData &ILoopHeaderInfo = LoopHeaderInfo[LHI];
+    if (ILoopHeaderInfo.Original == In)
+      return &ILoopHeaderInfo;
+  }
   return NULL;
 }
