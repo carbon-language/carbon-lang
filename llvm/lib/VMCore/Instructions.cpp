@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConstantRange.h"
 using namespace llvm;
@@ -185,6 +186,7 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
 
 CallInst::~CallInst() {
   delete [] OperandList;
+  delete ParamAttrs; // FIXME: ParamAttrsList should be uniqued!
 }
 
 void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
@@ -337,6 +339,7 @@ CallInst::CallInst(Value *Func, const std::string &Name,
 CallInst::CallInst(const CallInst &CI)
   : Instruction(CI.getType(), Instruction::Call, new Use[CI.getNumOperands()],
                 CI.getNumOperands()) {
+  ParamAttrs = 0;
   SubclassData = CI.SubclassData;
   Use *OL = OperandList;
   Use *InOL = CI.OperandList;
@@ -351,10 +354,12 @@ CallInst::CallInst(const CallInst &CI)
 
 InvokeInst::~InvokeInst() {
   delete [] OperandList;
+  delete ParamAttrs; // FIXME: ParamAttrsList should be uniqued!
 }
 
 void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
                       Value* const *Args, unsigned NumArgs) {
+  ParamAttrs = 0;
   NumOperands = 3+NumArgs;
   Use *OL = OperandList = new Use[3+NumArgs];
   OL[0].init(Fn, this);
@@ -402,6 +407,7 @@ InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
 InvokeInst::InvokeInst(const InvokeInst &II)
   : TerminatorInst(II.getType(), Instruction::Invoke,
                    new Use[II.getNumOperands()], II.getNumOperands()) {
+  ParamAttrs = 0;
   SubclassData = II.SubclassData;
   Use *OL = OperandList, *InOL = II.OperandList;
   for (unsigned i = 0, e = II.getNumOperands(); i != e; ++i)

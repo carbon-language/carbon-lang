@@ -737,10 +737,11 @@ public:
     SubclassData = (SubclassData & 1) | (CC << 1);
   }
 
-  /// Obtains a constant pointer to the ParamAttrsList object which holds the
-  /// parameter attributes information, if any. 
+  /// Obtains a pointer to the ParamAttrsList object which holds the
+  /// parameter attributes information, if any.
+  /// @returns 0 if no attributes have been set.
   /// @brief Get the parameter attributes.
-  const ParamAttrsList *getParamAttrs() const { return ParamAttrs; }
+  ParamAttrsList *getParamAttrs() const { return ParamAttrs; }
 
   /// Sets the parameter attributes for this CallInst. To construct a 
   /// ParamAttrsList, see ParameterAttributes.h
@@ -1445,6 +1446,7 @@ private:
 /// calling convention of the call.
 ///
 class InvokeInst : public TerminatorInst {
+  ParamAttrsList *ParamAttrs;
   InvokeInst(const InvokeInst &BI);
   void init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
             Value* const *Args, unsigned NumArgs);
@@ -1465,6 +1467,17 @@ public:
   void setCallingConv(unsigned CC) {
     SubclassData = CC;
   }
+
+  /// Obtains a pointer to the ParamAttrsList object which holds the
+  /// parameter attributes information, if any.
+  /// @returns 0 if no attributes have been set.
+  /// @brief Get the parameter attributes.
+  ParamAttrsList *getParamAttrs() const { return ParamAttrs; }
+
+  /// Sets the parameter attributes for this InvokeInst. To construct a 
+  /// ParamAttrsList, see ParameterAttributes.h
+  /// @brief Set the parameter attributes.
+  void setParamAttrs(ParamAttrsList *attrs) { ParamAttrs = attrs; }
 
   /// getCalledFunction - Return the function called, or null if this is an
   /// indirect function invocation.
