@@ -27,7 +27,6 @@
 #define LLVM_ANALYSIS_DOMINATORS_H
 
 #include "llvm/Analysis/ET-Forest.h"
-#include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include <set>
 
@@ -408,9 +407,7 @@ public:
 
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
-  bool isReachableFromEntry(BasicBlock* A) {
-    return dominates(&A->getParent()->getEntryBlock(), A);
-  }
+  const bool isReachableFromEntry(BasicBlock* A);
   
   /// Return the nearest common dominator of A and B.
   BasicBlock *nearestCommonDominator(BasicBlock *A, BasicBlock *B) const  {

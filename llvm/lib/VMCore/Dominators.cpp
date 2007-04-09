@@ -873,6 +873,12 @@ bool ETForestBase::dominates(Instruction *A, Instruction *B) {
   }
 }
 
+/// isReachableFromEntry - Return true if A is dominated by the entry
+/// block of the function containing it.
+const bool ETForestBase::isReachableFromEntry(BasicBlock* A) {
+  return dominates(&A->getParent()->getEntryBlock(), A);
+}
+
 ETNode *ETForest::getNodeForBlock(BasicBlock *BB) {
   ETNode *&BBNode = Nodes[BB];
   if (BBNode) return BBNode;
