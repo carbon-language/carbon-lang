@@ -536,11 +536,15 @@ static bool SinkInvariantGEPIndex(BinaryOperator *BinOp,
 
         // Check if it is possible to fold the expression to address mode.
         if (UseTy && isa<ConstantInt>(BinOp->getOperand(1))) {
-          uint64_t Scale = TLI.getTargetData()->getTypeSize(UseTy);
           int64_t Cst = cast<ConstantInt>(BinOp->getOperand(1))->getSExtValue();
           // e.g. load (gep i32 * %P, (X+42)) => load (%P + X*4 + 168).
-          if (TLI.isLegalAddressImmediate(Cst*Scale, UseTy) &&
-              (Scale == 1 || TLI.isLegalAddressScale(Scale, UseTy))) {
+          TargetLowering::AddrMode AM;
+          // FIXME: This computation isn't right, scale is incorrect.
+          AM.Scale = TLI.getTargetData()->getTypeSize(UseTy);
+          // FIXME: Should should also include other fixed offsets.
+          AM.BaseOffs = Cst*AM.Scale;
+          
+          if (TLI.isLegalAddressingMode(AM, UseTy)) {
             DestBBs.insert(GEPIBB);
             MadeChange = true;
             break;
