@@ -420,7 +420,7 @@ static void AddBlockAndPredsToSet(BasicBlock *BB, BasicBlock *StopBlock,
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
 /// PHI node that tells us how to partition the loops.
 static PHINode *FindPHIToPartitionLoops(Loop *L, ETForest *EF, 
-					AliasAnalysis *AA) {
+          AliasAnalysis *AA) {
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
@@ -676,11 +676,11 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
 // Returns true if BasicBlock A dominates at least one block in vector B
 // Helper function for UpdateDomInfoForRevectoredPreds
 static bool BlockDominatesAny(BasicBlock* A, std::vector<BasicBlock*>& B, ETForest& ETF) {
-	for (std::vector<BasicBlock*>::iterator BI = B.begin(), BE = B.end(); BI != BE; ++BI) {
-		if (ETF.dominates(A, *BI))
-			return true;
-	}
-	return false;
+  for (std::vector<BasicBlock*>::iterator BI = B.begin(), BE = B.end(); BI != BE; ++BI) {
+    if (ETF.dominates(A, *BI))
+      return true;
+  }
+  return false;
 }
 
 /// UpdateDomInfoForRevectoredPreds - This method is used to update the four
@@ -852,36 +852,36 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     // their dominance frontier must be updated to contain NewBB instead.
     //
     for (Function::iterator FI = NewBB->getParent()->begin(),
-				 FE = NewBB->getParent()->end(); FI != FE; ++FI) {
-			DominanceFrontier::iterator DFI = DF->find(FI);
-			if (DFI == DF->end()) continue;  // unreachable block.
-			
-			// Only consider dominators of NewBBSucc
-			if (!DFI->second.count(NewBBSucc)) continue;
-			if (BlockDominatesAny(FI, PredBlocks, ETF)) {
-				// If NewBBSucc should not stay in our dominator frontier, remove it.
-				// We remove it unless there is a predecessor of NewBBSucc that we
-				// dominate, but we don't strictly dominate NewBBSucc.
-				bool ShouldRemove = true;
-				if ((BasicBlock*)FI == NewBBSucc || !ETF.dominates(FI, NewBBSucc)) {
-					// Okay, we know that PredDom does not strictly dominate NewBBSucc.
-					// Check to see if it dominates any predecessors of NewBBSucc.
-					for (pred_iterator PI = pred_begin(NewBBSucc),
-							 E = pred_end(NewBBSucc); PI != E; ++PI)
-						if (ETF.dominates(FI, *PI)) {
-							ShouldRemove = false;
-							break;
-						}
-				  
-					if (ShouldRemove)
-						DF->removeFromFrontier(DFI, NewBBSucc);
-					DF->addToFrontier(DFI, NewBB);
-					
-					break;
-				}
-			}
-		}
-	}
+         FE = NewBB->getParent()->end(); FI != FE; ++FI) {
+      DominanceFrontier::iterator DFI = DF->find(FI);
+      if (DFI == DF->end()) continue;  // unreachable block.
+      
+      // Only consider dominators of NewBBSucc
+      if (!DFI->second.count(NewBBSucc)) continue;
+      if (BlockDominatesAny(FI, PredBlocks, ETF)) {
+        // If NewBBSucc should not stay in our dominator frontier, remove it.
+        // We remove it unless there is a predecessor of NewBBSucc that we
+        // dominate, but we don't strictly dominate NewBBSucc.
+        bool ShouldRemove = true;
+        if ((BasicBlock*)FI == NewBBSucc || !ETF.dominates(FI, NewBBSucc)) {
+          // Okay, we know that PredDom does not strictly dominate NewBBSucc.
+          // Check to see if it dominates any predecessors of NewBBSucc.
+          for (pred_iterator PI = pred_begin(NewBBSucc),
+               E = pred_end(NewBBSucc); PI != E; ++PI)
+            if (ETF.dominates(FI, *PI)) {
+              ShouldRemove = false;
+              break;
+            }
+          
+          if (ShouldRemove)
+            DF->removeFromFrontier(DFI, NewBBSucc);
+          DF->addToFrontier(DFI, NewBB);
+          
+          break;
+        }
+      }
+    }
+  }
 }
 
 
