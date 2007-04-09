@@ -3389,6 +3389,9 @@ bool PPCTargetLowering::isLegalAddressingMode(const AddrMode &AM,
       return false;
     // Allow 2*r as r+r.
     break;
+  default:
+    // No other scales are supported.
+    return false;
   }
   
   return true;
