@@ -48,19 +48,6 @@ using namespace llvm;
 static RegisterPass<ImmediateDominators>
 C("idom", "Immediate Dominators Construction", true);
 
-namespace {
-  class  DFCalculateWorkObject  {
-  public:
-    DFCalculateWorkObject(BasicBlock *B, BasicBlock *P, 
-                          const DominatorTree::Node *N,
-                          const DominatorTree::Node *PN)
-      : currentBB(B), parentBB(P), Node(N), parentNode(PN) {}
-    BasicBlock *currentBB;
-    BasicBlock *parentBB;
-    const DominatorTree::Node *Node;
-    const DominatorTree::Node *parentNode;
-  };
-}
 unsigned ImmediateDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
                                       unsigned N) {
   VInfo.Semi = ++N;
@@ -362,6 +349,20 @@ void DominatorTreeBase::print(std::ostream &o, const Module* ) const {
 static RegisterPass<DominanceFrontier>
 G("domfrontier", "Dominance Frontier Construction", true);
 
+namespace {
+  class DFCalculateWorkObject {
+  public:
+    DFCalculateWorkObject(BasicBlock *B, BasicBlock *P, 
+                          const DominatorTree::Node *N,
+                          const DominatorTree::Node *PN)
+    : currentBB(B), parentBB(P), Node(N), parentNode(PN) {}
+    BasicBlock *currentBB;
+    BasicBlock *parentBB;
+    const DominatorTree::Node *Node;
+    const DominatorTree::Node *parentNode;
+  };
+}
+
 const DominanceFrontier::DomSetType &
 DominanceFrontier::calculate(const DominatorTree &DT,
                              const DominatorTree::Node *Node) {
@@ -406,7 +407,8 @@ DominanceFrontier::calculate(const DominatorTree &DT,
       DominatorTree::Node *IDominee = *NI;
       BasicBlock *childBB = IDominee->getBlock();
       if (visited.count(childBB) == 0) {
-        workList.push_back(DFCalculateWorkObject(childBB, currentBB, IDominee, currentNode));
+        workList.push_back(DFCalculateWorkObject(childBB, currentBB,
+                                                 IDominee, currentNode));
         visitChild = true;
       }
     }
