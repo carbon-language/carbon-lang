@@ -2439,8 +2439,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::bit_part_select: {
-    // MVT::ValueType Ty = getValue(I.getOperand(1)).getValueType();
-    // setValue(&I, DAG.getTargetConstant(0, Ty));
     // Currently not implemented: just abort
     assert(0 && "bit_part_select intrinsic not implemented");
     abort();
@@ -2687,7 +2685,8 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
 /// values added into it.
 void RegsForValue::AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
                                         std::vector<SDOperand> &Ops) const {
-  Ops.push_back(DAG.getTargetConstant(Code | (Regs.size() << 3), MVT::i32));
+  MVT::ValueType IntPtrTy = DAG.getTargetLoweringInfo().getPointerTy();
+  Ops.push_back(DAG.getTargetConstant(Code | (Regs.size() << 3), IntPtrTy));
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
     Ops.push_back(DAG.getRegister(Regs[i], RegVT));
 }
@@ -4524,8 +4523,9 @@ SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops, SelectionDAG &DAG) {
       }
       
       // Add this to the output node.
+      MVT::ValueType IntPtrTy = DAG.getTargetLoweringInfo().getPointerTy();
       Ops.push_back(DAG.getTargetConstant(4/*MEM*/ | (SelOps.size() << 3),
-                                          MVT::i32));
+                                          IntPtrTy));
       Ops.insert(Ops.end(), SelOps.begin(), SelOps.end());
       i += 2;
     }
