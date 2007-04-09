@@ -4715,9 +4715,9 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     switch (Constraint[0]) {
     default: break;
     case 'x': 
-      if (VT == MVT::f32)
+      if (VT == MVT::f32 || VT == MVT::i32)
         return std::make_pair(0U, X86::FR32RegisterClass);
-      if (VT == MVT::f64)
+      if (VT == MVT::f64 || VT == MVT::i64)
         return std::make_pair(0U, X86::FR64RegisterClass);
       break;
     }
