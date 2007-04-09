@@ -1604,7 +1604,7 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
     assert((RBegin-LEnd>=1) && "Invalid case distance");
     double LDensity = (double)LSize / (double)((LEnd - First) + 1ULL);
     double RDensity = (double)RSize / (double)((Last - RBegin) + 1ULL);
-    double Metric = log(double(RBegin-LEnd))*(LDensity+RDensity);
+    double Metric = Log2_64(RBegin-LEnd)*(LDensity+RDensity);
     // Should always split in some non-trivial place
     DOUT <<"=>Step\n"
          << "LEnd: " << LEnd << ", RBegin: " << RBegin << "\n"
@@ -1620,7 +1620,7 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
     RSize -= J->size();
   }
   // If our case is dense we *really* should handle it earlier!
-  assert((FMetric != 0) && "Should handle dense range earlier!");
+  assert((FMetric > 0) && "Should handle dense range earlier!");
   
   CaseRange LHSR(CR.Range.first, Pivot);
   CaseRange RHSR(Pivot, CR.Range.second);
