@@ -429,7 +429,7 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
   // exit block. Insert new block between original pre-header and
   // new header such that loop's new pre-header has only one successor.
   BasicBlock *NewPreHeader = new BasicBlock("bb.nph", OrigHeader->getParent(), 
-                                OrigPreHeader);
+                                NewHeader);
   LoopInfo &LI = LPM.getAnalysis<LoopInfo>();
   if (Loop *PL = LI.getLoopFor(OrigPreHeader))
     PL->addBasicBlockToLoop(NewPreHeader, LI);
@@ -439,7 +439,7 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
   if (OrigPH_BI->getSuccessor(0) == NewHeader)
     OrigPH_BI->setSuccessor(0, NewPreHeader);
   else {
-    assert (OrigPH_BI->getSuccessor(1) == NewPreHeader &&
+    assert (OrigPH_BI->getSuccessor(1) == NewHeader &&
             "Unexpected original pre-header terminator");
     OrigPH_BI->setSuccessor(1, NewPreHeader);
   }
