@@ -31,6 +31,7 @@ class PointerValType;
 class VectorValType;
 class IntegerValType;
 class APInt;
+class ParamAttrsList;
 
 class DerivedType : public Type {
   friend class Type;
@@ -137,22 +138,6 @@ public:
 /// FunctionType - Class to represent function types
 ///
 class FunctionType : public DerivedType {
-public:
-  /// Function parameters can have attributes to indicate how they should be
-  /// treated by optimizations and code generation. This enumeration lists the
-  /// set of possible attributes.
-  /// @brief Function parameter attributes enumeration.
-  enum ParameterAttributes {
-    NoAttributeSet    = 0,      ///< No attribute value has been set 
-    ZExtAttribute     = 1,      ///< zero extended before/after call
-    SExtAttribute     = 1 << 1, ///< sign extended before/after call
-    NoReturnAttribute = 1 << 2, ///< mark the function as not returning
-    InRegAttribute    = 1 << 3, ///< force argument to be passed in register
-    StructRetAttribute= 1 << 4, ///< hidden pointer to structure to return
-    NoUnwindAttribute = 1 << 5  ///< Function doesn't unwind stack
-  };
-  typedef std::vector<ParameterAttributes> ParamAttrsList;
-private:
   friend class TypeMap<FunctionValType, FunctionType>;
   bool isVarArgs;
   ParamAttrsList *ParamAttrs;
@@ -160,10 +145,10 @@ private:
   FunctionType(const FunctionType &);                   // Do not implement
   const FunctionType &operator=(const FunctionType &);  // Do not implement
   FunctionType(const Type *Result, const std::vector<const Type*> &Params,
-               bool IsVarArgs, const ParamAttrsList &Attrs);
+               bool IsVarArgs, ParamAttrsList *Attrs = 0);
 
 public:
-  virtual ~FunctionType() { delete ParamAttrs; }
+  virtual ~FunctionType();
   /// FunctionType::get - This static method is the primary way of constructing
   /// a FunctionType. 
   ///
@@ -171,10 +156,11 @@ public:
     const Type *Result, ///< The result type
     const std::vector<const Type*> &Params, ///< The types of the parameters
     bool isVarArg, ///< Whether this is a variable argument length function
-    const ParamAttrsList & Attrs = ParamAttrsList()
+    ParamAttrsList *Attrs = 0
       ///< Indicates the parameter attributes to use, if any. The 0th entry
       ///< in the list refers to the return type. Parameters are numbered
-      ///< starting at 1. 
+      ///< starting at 1. This argument must be on the heap and FunctionType
+      ///< owns it after its passed here.
   );
 
   inline bool isVarArg() const { return isVarArgs; }
@@ -192,28 +178,13 @@ public:
   ///
   unsigned getNumParams() const { return NumContainedTys - 1; }
 
-  bool isStructReturn() const {
-    return (getNumParams() && paramHasAttr(1, StructRetAttribute));
-  }
+  bool isStructReturn() const;
   
   /// The parameter attributes for the \p ith parameter are returned. The 0th
   /// parameter refers to the return type of the function.
   /// @returns The ParameterAttributes for the \p ith parameter.
   /// @brief Get the attributes for a parameter
-  ParameterAttributes getParamAttrs(unsigned i) const;
-
-  /// @brief Determine if a parameter attribute is set
-  bool paramHasAttr(unsigned i, ParameterAttributes attr) const {
-    return getParamAttrs(i) & attr;
-  }
-
-  /// @brief Return the number of parameter attributes this type has.
-  unsigned getNumAttrs() const { 
-    return (ParamAttrs ?  unsigned(ParamAttrs->size()) : 0);
-  }
-
-  /// @brief Convert a ParameterAttribute into its assembly text
-  static std::string getParamAttrsText(ParameterAttributes Attr);
+  const ParamAttrsList *getParamAttrs() const { return ParamAttrs; }
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
