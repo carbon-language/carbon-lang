@@ -4640,7 +4640,6 @@ isOperandValidForConstraint(SDOperand Op, char Constraint, SelectionDAG &DAG) {
   return TargetLowering::isOperandValidForConstraint(Op, Constraint, DAG);
 }
 
-
 std::vector<unsigned> X86TargetLowering::
 getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                   MVT::ValueType VT) const {
@@ -4709,6 +4708,21 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
 std::pair<unsigned, const TargetRegisterClass*>
 X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
                                                 MVT::ValueType VT) const {
+  // First, see if this is a constraint that directly corresponds to an LLVM
+  // register class.
+  if (Constraint.size() == 1) {
+    // GCC Constraint Letters
+    switch (Constraint[0]) {
+    default: break;
+    case 'x': 
+      if (VT == MVT::f32)
+        return std::make_pair(0U, X86::FR32RegisterClass);
+      if (VT == MVT::f64)
+        return std::make_pair(0U, X86::FR64RegisterClass);
+      break;
+    }
+  }
+  
   // Use the default implementation in TargetLowering to convert the register
   // constraint into a member of a register class.
   std::pair<unsigned, const TargetRegisterClass*> Res;
