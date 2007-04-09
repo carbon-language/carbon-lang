@@ -4741,13 +4741,13 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       case ICmpInst::ICMP_ULT:
         if (Max.ult(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (Min.ugt(RHSVal))
+        if (Min.uge(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getFalse());
         break;
       case ICmpInst::ICMP_UGT:
         if (Min.ugt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (Max.ult(RHSVal))
+        if (Max.ule(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getFalse());
         break;
       case ICmpInst::ICMP_SLT:
@@ -4759,7 +4759,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       case ICmpInst::ICMP_SGT: 
         if (Min.sgt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (Max.slt(RHSVal))
+        if (Max.sle(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getFalse());
         break;
       }
