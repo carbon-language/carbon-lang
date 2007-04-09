@@ -1993,23 +1993,6 @@ bool TargetLowering::isLegalAddressScale(int64_t S, const Type *Ty) const {
   return false;
 }
 
-/// isLegalAddressScaleAndImm - Return true if S works for IsLegalAddressScale
-/// and V works for isLegalAddressImmediate _and_ both can be applied
-/// simultaneously to the same instruction.
-bool TargetLowering::isLegalAddressScaleAndImm(int64_t S, int64_t V, 
-                                               const Type* Ty) const {
-  return false;
-}
-
-/// isLegalAddressScaleAndImm - Return true if S works for IsLegalAddressScale
-/// and GV works for isLegalAddressImmediate _and_ both can be applied
-/// simultaneously to the same instruction.
-bool TargetLowering::isLegalAddressScaleAndImm(int64_t S, GlobalValue *GV,
-                                               const Type* Ty) const {
-
-  return false;
-}
-
 // Magic for divide replacement
 
 struct ms {

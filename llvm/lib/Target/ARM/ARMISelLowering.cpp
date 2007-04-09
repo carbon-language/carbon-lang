@@ -1441,24 +1441,6 @@ bool ARMTargetLowering::isLegalAddressScale(int64_t S, const Type *Ty) const {
   }
 }
 
-/// isLegalAddressScaleAndImm - Return true if S works for IsLegalAddressScale
-/// and V works for isLegalAddressImmediate _and_ both can be applied
-/// simultaneously to the same instruction.
-bool ARMTargetLowering::isLegalAddressScaleAndImm(int64_t S, int64_t V, 
-                                               const Type* Ty) const {
-  if (V == 0)
-    return isLegalAddressScale(S, Ty);
-  return false;
-}
-
-/// isLegalAddressScaleAndImm - Return true if S works for IsLegalAddressScale
-/// and GV works for isLegalAddressImmediate _and_ both can be applied
-/// simultaneously to the same instruction.
-bool ARMTargetLowering::isLegalAddressScaleAndImm(int64_t S, GlobalValue *GV,
-                                                  const Type* Ty) const {
-  return false;
-}
-
 static bool getIndexedAddressParts(SDNode *Ptr, MVT::ValueType VT,
                                    bool isSEXTLoad, SDOperand &Base,
                                    SDOperand &Offset, bool &isInc,
