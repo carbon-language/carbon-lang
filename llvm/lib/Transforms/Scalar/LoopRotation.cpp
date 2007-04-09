@@ -369,7 +369,6 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   return true;
 }
 
-
 /// Make sure all Exit block PHINodes have required incoming values.
 /// If incoming value is constant or defined outside the loop then
 /// PHINode may not have an entry for new pre-header. 
@@ -382,19 +381,21 @@ void LoopRotate::updateExitBlock() {
     if (!PN)
       break;
 
-    if (PN->getBasicBlockIndex(NewPreHeader) == -1) {
-      Value *V = PN->getIncomingValueForBlock(OrigHeader);
-      if (isa<Constant>(V))
-        PN->addIncoming(V, NewPreHeader);
-      else {
-        RenameData *ILoopHeaderInfo = findReplacementData(cast<Instruction>(V));
-        assert (ILoopHeaderInfo && ILoopHeaderInfo->PreHeader && "Missing New Preheader Instruction");
-        PN->addIncoming(ILoopHeaderInfo->PreHeader, NewPreHeader);
-      }
+    // There is already one incoming value from new pre-header block.
+    if (PN->getBasicBlockIndex(NewPreHeader) != -1)
+      return;
+
+    RenameData *ILoopHeaderInfo;
+    Value *V = PN->getIncomingValueForBlock(OrigHeader);
+    if (isa<Instruction>(V) && 
+        (ILoopHeaderInfo = findReplacementData(cast<Instruction>(V)))) {
+      assert (ILoopHeaderInfo->PreHeader && "Missing New Preheader Instruction");
+      PN->addIncoming(ILoopHeaderInfo->PreHeader, NewPreHeader);
+    } else {
+      PN->addIncoming(V, NewPreHeader);
     }
   }
 }
-
 
 /// Initialize local data
 void LoopRotate::initialize() {
