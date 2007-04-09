@@ -10,7 +10,7 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMHello
 LOADABLE_MODULE = 1
-USEDLIBS = LLVMSupport.a LLVMSystem.a
+USEDLIBS = 
 
 include $(LEVEL)/Makefile.common
 
