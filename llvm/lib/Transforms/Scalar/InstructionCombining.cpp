@@ -8943,11 +8943,19 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   // If extracting a specified index from the vector, see if we can recursively
   // find a previously computed scalar that was inserted into the vector.
   if (ConstantInt *IdxC = dyn_cast<ConstantInt>(EI.getOperand(1))) {
+    unsigned IndexVal = IdxC->getZExtValue();
+    unsigned VectorWidth = 
+      cast<VectorType>(EI.getOperand(0)->getType())->getNumElements();
+      
+    // If this is extracting an invalid index, turn this into undef, to avoid
+    // crashing the code below.
+    if (IndexVal >= VectorWidth)
+      return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
+    
     // This instruction only demands the single element from the input vector.
     // If the input vector has a single use, simplify it based on this use
     // property.
-    uint64_t IndexVal = IdxC->getZExtValue();
-    if (EI.getOperand(0)->hasOneUse()) {
+    if (EI.getOperand(0)->hasOneUse() && VectorWidth != 1) {
       uint64_t UndefElts;
       if (Value *V = SimplifyDemandedVectorElts(EI.getOperand(0),
                                                 1 << IndexVal,
