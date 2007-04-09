@@ -366,7 +366,7 @@ void LoopRotate::updateExitBlock() {
 
     // There is already one incoming value from original pre-header block.
     if (PN->getBasicBlockIndex(OrigPreHeader) != -1)
-      return;
+      continue;
 
     const RenameData *ILoopHeaderInfo;
     Value *V = PN->getIncomingValueForBlock(OrigHeader);
