@@ -238,10 +238,12 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   for (SmallVector<RenameData, MAX_HEADER_SIZE>::iterator 
          I = LoopHeaderInfo.begin(), E = LoopHeaderInfo.end(); I != E; ++I) {
     
-    RenameData ILoopHeaderInfo = (*I);
+    const RenameData &ILoopHeaderInfo = *I;
     Instruction *In = ILoopHeaderInfo.Original;
     Instruction *C = ILoopHeaderInfo.PreHeader;
-    
+
+    // If this instruction is not from new pre-header then is not new 
+    // pre-header then this instruction is not handled here.
     if (C->getParent() != NewPreHeader)
       continue;
 
@@ -249,7 +251,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     if (isa<PHINode>(In))
       continue;
 
-    for (unsigned opi = 0; opi < In->getNumOperands(); ++opi) {
+    for (unsigned opi = 0, e = In->getNumOperands(); opi != e; ++opi) {
       if (Instruction *OpPhi = dyn_cast<PHINode>(In->getOperand(opi))) {
         if (RenameData *D = findReplacementData(OpPhi))
           C->setOperand(opi, D->PreHeader);
@@ -283,7 +285,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   for (SmallVector<RenameData, MAX_HEADER_SIZE>::iterator 
          I = LoopHeaderInfo.begin(), E = LoopHeaderInfo.end(); I != E; ++I) {
 
-    RenameData ILoopHeaderInfo = (*I);
+    const RenameData &ILoopHeaderInfo = *I;
     if (!ILoopHeaderInfo.Header)
       continue;
 
@@ -294,7 +296,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // not invalidated.
     SmallVector<Instruction *, 16> AllUses;
     for (Value::use_iterator UI = OldPhi->use_begin(), UE = OldPhi->use_end();
-         UI != UE; ++UI ) {
+         UI != UE; ++UI) {
       Instruction *U = cast<Instruction>(UI);
       AllUses.push_back(U);
     }
@@ -307,9 +309,10 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
       // Used inside original header
       if (Parent == OrigHeader) {
         // Do not rename uses inside original header non-phi instructions.
-        if (!isa<PHINode>(U))
-          continue;
         PHINode *PU = dyn_cast<PHINode>(U);
+        if (!PU)
+          continue;
+
         // Do not rename uses inside original header phi nodes, if the
         // incoming value is for new header.
         if (PU->getBasicBlockIndex(NewHeader) != -1
@@ -322,13 +325,14 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 
       // Used inside loop, but not in original header.
       if (L->contains(U->getParent())) {
-        if (U != NewPhi )
+        if (U != NewPhi)
           U->replaceUsesOfWith(OldPhi, NewPhi);
         continue;
       }
 
       // Used inside Exit Block. Since we are in LCSSA form, U must be PHINode.
-      assert ( U->getParent() == Exit && "Need to propagate new PHI into Exit blocks");
+      assert (U->getParent() == Exit 
+              && "Need to propagate new PHI into Exit blocks");
       assert (isa<PHINode>(U) && "Use in Exit Block that is not PHINode");        
 
       PHINode *UPhi = cast<PHINode>(U);
@@ -374,10 +378,9 @@ void LoopRotate::updateExitBlock() {
   for (BasicBlock::iterator I = Exit->begin(), E = Exit->end();
        I != E; ++I) {
 
-    if (!isa<PHINode>(I))
-      break;
-
     PHINode *PN = dyn_cast<PHINode>(I);
+    if (!PN)
+      break;
 
     if (PN->getBasicBlockIndex(NewPreHeader) == -1) {
       Value *V = PN->getIncomingValueForBlock(OrigHeader);
@@ -405,7 +408,8 @@ void LoopRotate::initialize() {
   LoopHeaderInfo.clear();
 }
 
-/// Return true if this instruction is used outside original header.
+/// Return true if this instruction is used by any instructions in the loop that
+/// aren't in original header.
 bool LoopRotate::usedOutsideOriginalHeader(Instruction *In) {
 
   for (Value::use_iterator UI = In->use_begin(), UE = In->use_end();
@@ -427,7 +431,7 @@ RenameData *LoopRotate::findReplacementData(Instruction *In) {
   // Since LoopHeaderInfo is small, linear walk is OK.
   for (SmallVector<RenameData, MAX_HEADER_SIZE>::iterator 
          I = LoopHeaderInfo.begin(), E = LoopHeaderInfo.end(); I != E; ++I) 
-    if ((*I).Original == In)
+    if (I->Original == In)
       return &(*I);
 
   return NULL;
