@@ -13,6 +13,7 @@
 
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Constants.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/StringExtras.h"
@@ -279,11 +280,13 @@ static std::string getTypeDescription(const Type *Ty,
       Result += " ";
     Result += getTypeDescription(FTy->getReturnType(), TypeStack) + " (";
     unsigned Idx = 1;
+    const ParamAttrsList *Attrs = FTy->getParamAttrs();
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Result += ", ";
-      Result +=  FunctionType::getParamAttrsText(FTy->getParamAttrs(Idx));
+      if (Attrs && Attrs->getParamAttrs(Idx) != NoAttributeSet)
+        Result += Attrs->getParamAttrsTextByIndex(Idx);
       Idx++;
       Result += getTypeDescription(*I, TypeStack);
     }
@@ -292,8 +295,8 @@ static std::string getTypeDescription(const Type *Ty,
       Result += "...";
     }
     Result += ")";
-    if (FTy->getParamAttrs(0)) {
-      Result += " " + FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
+    if (Attrs && Attrs->getParamAttrs(0) != NoAttributeSet) {
+      Result += " " + Attrs->getParamAttrsTextByIndex(0);
     }
     break;
   }
@@ -411,8 +414,8 @@ const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
 
 FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params,
-                           bool IsVarArgs, const ParamAttrsList &Attrs) 
-  : DerivedType(FunctionTyID), isVarArgs(IsVarArgs), ParamAttrs(0) {
+                           bool IsVarArgs, ParamAttrsList *Attrs) 
+  : DerivedType(FunctionTyID), isVarArgs(IsVarArgs), ParamAttrs(Attrs) {
   ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
   NumContainedTys = Params.size() + 1; // + 1 for result type
   assert((Result->isFirstClassType() || Result == Type::VoidTy ||
@@ -427,12 +430,6 @@ FunctionType::FunctionType(const Type *Result,
     new (&ContainedTys[i+1]) PATypeHandle(Params[i],this);
     isAbstract |= Params[i]->isAbstract();
   }
-
-  // Set the ParameterAttributes
-  if (!Attrs.empty()) 
-    ParamAttrs = new ParamAttrsList(Attrs);
-  else
-    ParamAttrs = 0;
 
   // Calculate whether or not this type is abstract
   setAbstract(isAbstract);
@@ -639,12 +636,24 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
     const FunctionType *FTy2 = cast<FunctionType>(Ty2);
     if (FTy->isVarArg() != FTy2->isVarArg() ||
         FTy->getNumParams() != FTy2->getNumParams() ||
-        FTy->getNumAttrs() != FTy2->getNumAttrs() ||
-        FTy->getParamAttrs(0) != FTy2->getParamAttrs(0) ||
         !TypesEqual(FTy->getReturnType(), FTy2->getReturnType(), EqTypes))
       return false;
+    const ParamAttrsList *Attrs1 = FTy->getParamAttrs();
+    const ParamAttrsList *Attrs2 = FTy2->getParamAttrs();
+    if ((!Attrs1 && Attrs2 && !Attrs2->empty()) ||
+        (!Attrs2 && Attrs1 && !Attrs1->empty()) ||
+        (Attrs1 && Attrs2 && (Attrs1->size() != Attrs2->size() ||
+         (Attrs1->size() > 0 && 
+          Attrs1->getParamAttrs(0) != Attrs2->getParamAttrs(0)))))
+      return false;
+    ParamAttrsList PAL1;
+    if (Attrs1)
+      PAL1 = *Attrs1;
+    ParamAttrsList PAL2;
+    if (Attrs2)
+      PAL2 = *Attrs2;
     for (unsigned i = 0, e = FTy2->getNumParams(); i != e; ++i) {
-      if (FTy->getParamAttrs(i+1) != FTy->getParamAttrs(i+1))
+      if (PAL1.getParamAttrs(i+1) != PAL2.getParamAttrs(i+1))
         return false;
       if (!TypesEqual(FTy->getParamType(i), FTy2->getParamType(i), EqTypes))
         return false;
@@ -1024,22 +1033,23 @@ namespace llvm {
 class FunctionValType {
   const Type *RetTy;
   std::vector<const Type*> ArgTypes;
-  std::vector<FunctionType::ParameterAttributes> ParamAttrs;
+  const ParamAttrsList *ParamAttrs;
   bool isVarArg;
 public:
   FunctionValType(const Type *ret, const std::vector<const Type*> &args,
-                  bool IVA, const FunctionType::ParamAttrsList &attrs) 
-    : RetTy(ret), isVarArg(IVA) {
+                  bool IVA, const ParamAttrsList *attrs) 
+    : RetTy(ret), ParamAttrs(attrs), isVarArg(IVA) {
     for (unsigned i = 0; i < args.size(); ++i)
       ArgTypes.push_back(args[i]);
-    for (unsigned i = 0; i < attrs.size(); ++i)
-      ParamAttrs.push_back(attrs[i]);
   }
 
   static FunctionValType get(const FunctionType *FT);
 
   static unsigned hashTypeStructure(const FunctionType *FT) {
-    return FT->getNumParams()*64+FT->getNumAttrs()*2+FT->isVarArg();
+    unsigned Result = FT->getNumParams()*64 + FT->isVarArg();
+    if (FT->getParamAttrs())
+      Result += FT->getParamAttrs()->size()*2;
+    return Result;
   }
 
   inline bool operator<(const FunctionValType &MTV) const {
@@ -1048,7 +1058,20 @@ public:
     if (isVarArg < MTV.isVarArg) return true;
     if (isVarArg > MTV.isVarArg) return false;
     if (ArgTypes < MTV.ArgTypes) return true;
-    return ArgTypes == MTV.ArgTypes && ParamAttrs < MTV.ParamAttrs;
+    if (ArgTypes > MTV.ArgTypes) return false;
+    if (ParamAttrs)
+      if (MTV.ParamAttrs)
+        return *ParamAttrs < *MTV.ParamAttrs;
+      else if (ParamAttrs->empty())
+        return true;
+      else
+        return false;
+    else if (MTV.ParamAttrs)
+      if (MTV.ParamAttrs->empty())
+        return false;
+      else
+        return true;
+    return false;
   }
 };
 }
@@ -1059,14 +1082,11 @@ static ManagedStatic<TypeMap<FunctionValType, FunctionType> > FunctionTypes;
 FunctionValType FunctionValType::get(const FunctionType *FT) {
   // Build up a FunctionValType
   std::vector<const Type *> ParamTypes;
-  std::vector<FunctionType::ParameterAttributes> ParamAttrs;
   ParamTypes.reserve(FT->getNumParams());
   for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i)
     ParamTypes.push_back(FT->getParamType(i));
-  for (unsigned i = 0, e = FT->getNumAttrs(); i != e; ++i)
-    ParamAttrs.push_back(FT->getParamAttrs(i));
   return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg(),
-                         ParamAttrs);
+                         FT->getParamAttrs());
 }
 
 
@@ -1074,24 +1094,15 @@ FunctionValType FunctionValType::get(const FunctionType *FT) {
 FunctionType *FunctionType::get(const Type *ReturnType,
                                 const std::vector<const Type*> &Params,
                                 bool isVarArg,
-                                const std::vector<ParameterAttributes> &Attrs) {
-  bool noAttrs = true;
-  for (unsigned i = 0, e = Attrs.size(); i < e; ++i)
-    if (Attrs[i] != FunctionType::NoAttributeSet) {
-      noAttrs = false;
-      break;
-    }
-  const std::vector<FunctionType::ParameterAttributes> NullAttrs;
-  const std::vector<FunctionType::ParameterAttributes> *TheAttrs = &Attrs;
-  if (noAttrs)
-    TheAttrs = &NullAttrs;
-  FunctionValType VT(ReturnType, Params, isVarArg, *TheAttrs);
+                                ParamAttrsList *Attrs) {
+
+  FunctionValType VT(ReturnType, Params, isVarArg, Attrs);
   FunctionType *MT = FunctionTypes->get(VT);
   if (MT) return MT;
 
   MT = (FunctionType*) new char[sizeof(FunctionType) + 
                                 sizeof(PATypeHandle)*(Params.size()+1)];
-  new (MT) FunctionType(ReturnType, Params, isVarArg, *TheAttrs);
+  new (MT) FunctionType(ReturnType, Params, isVarArg, Attrs);
   FunctionTypes->add(VT, MT);
 
 #ifdef DEBUG_MERGE_TYPES
@@ -1100,30 +1111,73 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   return MT;
 }
 
-FunctionType::ParameterAttributes 
-FunctionType::getParamAttrs(unsigned Idx) const {
-  if (!ParamAttrs)
-    return NoAttributeSet;
-  if (Idx >= ParamAttrs->size())
-    return NoAttributeSet;
-  return (*ParamAttrs)[Idx];
+FunctionType::~FunctionType() {
+  delete ParamAttrs;
 }
 
-std::string FunctionType::getParamAttrsText(ParameterAttributes Attr) {
+bool FunctionType::isStructReturn() const {
+  if (ParamAttrs)
+    return ParamAttrs->paramHasAttr(1, StructRetAttribute);
+  return false;
+}
+
+uint16_t
+ParamAttrsList::getParamAttrs(uint16_t Index) const {
+  unsigned limit = attrs.size();
+  for (unsigned i = 0; i < limit; ++i)
+    if (attrs[i].index == Index)
+      return attrs[i].attrs;
+  return NoAttributeSet;
+}
+
+
+std::string 
+ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
   std::string Result;
-  if (Attr & ZExtAttribute)
+  if (Attrs & ZExtAttribute)
     Result += "zext ";
-  if (Attr & SExtAttribute)
+  if (Attrs & SExtAttribute)
     Result += "sext ";
-  if (Attr & NoReturnAttribute)
+  if (Attrs & NoReturnAttribute)
     Result += "noreturn ";
-  if (Attr & NoUnwindAttribute)
+  if (Attrs & NoUnwindAttribute)
     Result += "nounwind ";
-  if (Attr & InRegAttribute)
+  if (Attrs & InRegAttribute)
     Result += "inreg ";
-  if (Attr & StructRetAttribute)
+  if (Attrs & StructRetAttribute)
     Result += "sret ";  
   return Result;
+}
+
+void
+ParamAttrsList::addAttributes(uint16_t Index, uint16_t Attrs) {
+  // First, try to replace an existing one
+  for (unsigned i = 0; i < attrs.size(); ++i)
+    if (attrs[i].index == Index) {
+      attrs[i].attrs |= Attrs;
+      return;
+    }
+
+  // If not found, add a new one
+  ParamAttrsWithIndex Val;
+  Val.attrs = Attrs;
+  Val.index = Index;
+  attrs.push_back(Val);
+}
+
+void
+ParamAttrsList::removeAttributes(uint16_t Index, uint16_t Attrs) {
+  // Find the index from which to remove the attributes
+  for (unsigned i = 0; i < attrs.size(); ++i)
+    if (attrs[i].index == Index) {
+      attrs[i].attrs &= ~Attrs;
+      if (attrs[i].attrs == NoAttributeSet)
+        attrs.erase(&attrs[i]);
+      return;
+    }
+
+  // The index wasn't found above
+  assert(0 && "Index not found for removeAttributes");
 }
 
 //===----------------------------------------------------------------------===//
