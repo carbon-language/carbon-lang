@@ -143,8 +143,7 @@ namespace {
     const TargetLowering *TLI;
 
   public:
-    LoopStrengthReduce(const TargetLowering *tli = NULL)
-      : TLI(tli) {
+    LoopStrengthReduce(const TargetLowering *tli = NULL) : TLI(tli) {
     }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -631,20 +630,25 @@ static bool isTargetConstant(const SCEVHandle &V, const Type *UseTy,
                              const TargetLowering *TLI) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
     int64_t VC = SC->getValue()->getSExtValue();
-    if (TLI)
-      return TLI->isLegalAddressImmediate(VC, UseTy);
-    else
+    if (TLI) {
+      TargetLowering::AddrMode AM;
+      AM.BaseOffs = VC;
+      return TLI->isLegalAddressingMode(AM, UseTy);
+    } else {
       // Defaults to PPC. PPC allows a sign-extended 16-bit immediate field.
       return (VC > -(1 << 16) && VC < (1 << 16)-1);
+    }
   }
 
   if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V))
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(SU->getValue()))
-      if (CE->getOpcode() == Instruction::PtrToInt) {
+      if (TLI && CE->getOpcode() == Instruction::PtrToInt) {
         Constant *Op0 = CE->getOperand(0);
-        if (isa<GlobalValue>(Op0) && TLI &&
-            TLI->isLegalAddressImmediate(cast<GlobalValue>(Op0)))
-          return true;
+        if (GlobalValue *GV = dyn_cast<GlobalValue>(Op0)) {
+          TargetLowering::AddrMode AM;
+          AM.BaseGV = GV;
+          return TLI->isLegalAddressingMode(AM, UseTy);
+        }
       }
   return false;
 }
@@ -889,18 +893,11 @@ static bool isZero(SCEVHandle &V) {
 }
 
 /// ValidStride - Check whether the given Scale is valid for all loads and 
-/// stores in UsersToProcess.  Pulled into a function to avoid disturbing the
-/// sensibilities of those who dislike goto's.
+/// stores in UsersToProcess.
 ///
 bool LoopStrengthReduce::ValidStride(int64_t Scale, 
                                const std::vector<BasedUser>& UsersToProcess) {
-  int64_t Imm;
   for (unsigned i=0, e = UsersToProcess.size(); i!=e; ++i) {
-    if (SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
-      Imm = SC->getValue()->getSExtValue();
-    else
-      Imm = 0;
-    
     // If this is a load or other access, pass the type of the access in.
     const Type *AccessTy = Type::VoidTy;
     if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst))
@@ -908,7 +905,13 @@ bool LoopStrengthReduce::ValidStride(int64_t Scale,
     else if (LoadInst *LI = dyn_cast<LoadInst>(UsersToProcess[i].Inst))
       AccessTy = LI->getType();
     
-    if (!TLI->isLegalAddressScaleAndImm(Scale, Imm, AccessTy))
+    TargetLowering::AddrMode AM;
+    if (SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
+      AM.BaseOffs = SC->getValue()->getSExtValue();
+    AM.Scale = Scale;
+
+    // If load[imm+r*scale] is illegal, bail out.
+    if (!TLI->isLegalAddressingMode(AM, AccessTy))
       return false;
   }
   return true;
