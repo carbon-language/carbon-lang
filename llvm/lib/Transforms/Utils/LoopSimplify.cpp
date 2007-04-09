@@ -312,6 +312,8 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       // Can we eliminate this phi node now?
       if (Value *V = PN->hasConstantValue(true)) {
         Instruction *I = dyn_cast<Instruction>(V);
+        // If I is in NewBB, the ETForest call will fail, because NewBB isn't
+        // registered in ETForest yet.  Handle this case explicitly.
         if (!I || (I->getParent() != NewBB &&
                    getAnalysis<ETForest>().dominates(I, PN))) {
           PN->replaceAllUsesWith(V);
@@ -701,15 +703,13 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
   {
     BasicBlock *OnePred = PredBlocks[0];
     unsigned i = 1, e = PredBlocks.size();
-    for (i = 1; !ETF.dominates(&OnePred->getParent()->getEntryBlock(), OnePred);
-         ++i) {
+    for (i = 1; !ETF.isReachableFromEntry(OnePred); ++i) {
       assert(i != e && "Didn't find reachable pred?");
       OnePred = PredBlocks[i];
     }
     
     for (; i != e; ++i)
-      if (PredBlocks[i] != OnePred &&
-          ETF.dominates(&PredBlocks[i]->getParent()->getEntryBlock(), OnePred)){
+      if (PredBlocks[i] != OnePred && ETF.isReachableFromEntry(OnePred)){
         NewBBDominatesNewBBSucc = false;
         break;
       }

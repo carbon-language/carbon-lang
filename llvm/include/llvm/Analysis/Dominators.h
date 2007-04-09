@@ -27,6 +27,7 @@
 #define LLVM_ANALYSIS_DOMINATORS_H
 
 #include "llvm/Analysis/ET-Forest.h"
+#include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include <set>
 
@@ -395,7 +396,7 @@ public:
     }
   }
 
-  // dominates - Return true if A dominates B. THis performs the
+  // dominates - Return true if A dominates B. This performs the
   // special checks necessary if A and B are in the same basic block.
   bool dominates(Instruction *A, Instruction *B);
 
@@ -405,6 +406,12 @@ public:
     return dominates(A, B) && A != B;
   }
 
+  /// isReachableFromEntry - Return true if A is dominated by the entry
+  /// block of the function containing it.
+  bool isReachableFromEntry(BasicBlock* A) {
+    return dominates(&A->getParent()->getEntryBlock(), A);
+  }
+  
   /// Return the nearest common dominator of A and B.
   BasicBlock *nearestCommonDominator(BasicBlock *A, BasicBlock *B) const  {
     ETNode *NodeA = getNode(A);
