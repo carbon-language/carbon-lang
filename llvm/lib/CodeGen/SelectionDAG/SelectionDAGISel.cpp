@@ -45,6 +45,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
+#include <math.h>
 using namespace llvm;
 
 #ifndef NDEBUG
@@ -1603,7 +1604,7 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
     assert((RBegin-LEnd>=1) && "Invalid case distance");
     double LDensity = (double)LSize / (double)((LEnd - First) + 1ULL);
     double RDensity = (double)RSize / (double)((Last - RBegin) + 1ULL);
-    double Metric = log(RBegin-LEnd)*(LDensity+RDensity);
+    double Metric = log(double(RBegin-LEnd))*(LDensity+RDensity);
     // Should always split in some non-trivial place
     DOUT <<"=>Step\n"
          << "LEnd: " << LEnd << ", RBegin: " << RBegin << "\n"
@@ -1783,7 +1784,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
   }
   
   SelectionDAGISel::BitTestBlock BTB(lowBound, range, SV,
-                                     -1ULL, (CR.CaseBB == CurMBB),
+                                     -1U, (CR.CaseBB == CurMBB),
                                      CR.CaseBB, Default, BTC);
 
   if (CR.CaseBB == CurMBB)
