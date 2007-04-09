@@ -1046,19 +1046,30 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   switch (Opcode) {
   case ISD::TokenFactor:
     return Operand;         // Factor of one node?  No factor.
+  case ISD::FP_ROUND:
+  case ISD::FP_EXTEND:
+    assert(MVT::isFloatingPoint(VT) &&
+           MVT::isFloatingPoint(Operand.getValueType()) && "Invalid FP cast!");
+    break;
   case ISD::SIGN_EXTEND:
+    assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
+           "Invalid SIGN_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
     assert(Operand.getValueType() < VT && "Invalid sext node, dst < src!");
     if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
       return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
     break;
   case ISD::ZERO_EXTEND:
+    assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
+           "Invalid ZERO_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
     assert(Operand.getValueType() < VT && "Invalid zext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND)   // (zext (zext x)) -> (zext x)
       return getNode(ISD::ZERO_EXTEND, VT, Operand.Val->getOperand(0));
     break;
   case ISD::ANY_EXTEND:
+    assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
+           "Invalid ANY_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
     assert(Operand.getValueType() < VT && "Invalid anyext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND)
@@ -1066,6 +1077,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
     break;
   case ISD::TRUNCATE:
+    assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
+           "Invalid TRUNCATE!");
     if (Operand.getValueType() == VT) return Operand;   // noop truncate
     assert(Operand.getValueType() > VT && "Invalid truncate node, src < dst!");
     if (OpOpcode == ISD::TRUNCATE)
