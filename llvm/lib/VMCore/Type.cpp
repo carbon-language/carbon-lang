@@ -1098,7 +1098,11 @@ FunctionType *FunctionType::get(const Type *ReturnType,
 
   FunctionValType VT(ReturnType, Params, isVarArg, Attrs);
   FunctionType *MT = FunctionTypes->get(VT);
-  if (MT) return MT;
+  if (MT) { 
+    delete Attrs; // not needed any more
+    return MT;
+  }
+
 
   MT = (FunctionType*) new char[sizeof(FunctionType) + 
                                 sizeof(PATypeHandle)*(Params.size()+1)];
