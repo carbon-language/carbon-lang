@@ -156,7 +156,7 @@ class ParamAttrsList {
       uint16_t index; ///< Index of the parameter for which the attributes apply
     };
 
-    SmallVector<ParamAttrsWithIndex,2> attrs; ///< The list of attributes
+    SmallVector<ParamAttrsWithIndex,4> attrs; ///< The list of attributes
   /// @}
 };
 
