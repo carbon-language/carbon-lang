@@ -673,6 +673,16 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
   UpdateDomInfoForRevectoredPreds(BEBlock, BackedgeBlocks);
 }
 
+// Returns true if BasicBlock A dominates at least one block in vector B
+// Helper function for UpdateDomInfoForRevectoredPreds
+static bool BlockDominatesAny(BasicBlock* A, std::vector<BasicBlock*>& B, ETForest& ETF) {
+	for (std::vector<BasicBlock*>::iterator BI = B.begin(), BE = B.end(); BI != BE; ++BI) {
+		if (ETF.dominates(A, *BI))
+			return true;
+	}
+	return false;
+}
+
 /// UpdateDomInfoForRevectoredPreds - This method is used to update the four
 /// different kinds of dominator information (immediate dominators,
 /// dominator trees, et-forest and dominance frontiers) after a new block has
@@ -841,47 +851,37 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     // blocks that dominate a block in PredBlocks and contained NewBBSucc in
     // their dominance frontier must be updated to contain NewBB instead.
     //
-    for (unsigned i = 0, e = PredBlocks.size(); i != e; ++i) {
-      BasicBlock *Pred = PredBlocks[i];
-      // Get all of the dominators of the predecessor...
-      // FIXME: There's probably a better way to do this...
-      std::vector<BasicBlock*> PredDoms;
-      for (Function::iterator I = Pred->getParent()->begin(),
-           E = Pred->getParent()->end(); I != E; ++I)
-        if (ETF.dominates(&(*I), Pred))
-          PredDoms.push_back(I);
-      
-      for (std::vector<BasicBlock*>::const_iterator PDI = PredDoms.begin(),
-             PDE = PredDoms.end(); PDI != PDE; ++PDI) {
-        BasicBlock *PredDom = *PDI;
-
-        // If the NewBBSucc node is in DF(PredDom), then PredDom didn't
-        // dominate NewBBSucc but did dominate a predecessor of it.  Now we
-        // change this entry to include NewBB in the DF instead of NewBBSucc.
-        DominanceFrontier::iterator DFI = DF->find(PredDom);
-        assert(DFI != DF->end() && "No dominance frontier for node?");
-        if (DFI->second.count(NewBBSucc)) {
-          // If NewBBSucc should not stay in our dominator frontier, remove it.
-          // We remove it unless there is a predecessor of NewBBSucc that we
-          // dominate, but we don't strictly dominate NewBBSucc.
-          bool ShouldRemove = true;
-          if (PredDom == NewBBSucc || !ETF.dominates(PredDom, NewBBSucc)) {
-            // Okay, we know that PredDom does not strictly dominate NewBBSucc.
-            // Check to see if it dominates any predecessors of NewBBSucc.
-            for (pred_iterator PI = pred_begin(NewBBSucc),
-                   E = pred_end(NewBBSucc); PI != E; ++PI)
-              if (ETF.dominates(PredDom, *PI)) {
-                ShouldRemove = false;
-                break;
-              }
-          }
-
-          if (ShouldRemove)
-            DF->removeFromFrontier(DFI, NewBBSucc);
-          DF->addToFrontier(DFI, NewBB);
-        }
-      }
-    }
-  }
+    for (Function::iterator FI = NewBB->getParent()->begin(),
+				 FE = NewBB->getParent()->end(); FI != FE; ++FI) {
+			DominanceFrontier::iterator DFI = DF->find(FI);
+			if (DFI == DF->end()) continue;  // unreachable block.
+			
+			// Only consider dominators of NewBBSucc
+			if (!DFI->second.count(NewBBSucc)) continue;
+			if (BlockDominatesAny(FI, PredBlocks, ETF)) {
+				// If NewBBSucc should not stay in our dominator frontier, remove it.
+				// We remove it unless there is a predecessor of NewBBSucc that we
+				// dominate, but we don't strictly dominate NewBBSucc.
+				bool ShouldRemove = true;
+				if ((BasicBlock*)FI == NewBBSucc || !ETF.dominates(FI, NewBBSucc)) {
+					// Okay, we know that PredDom does not strictly dominate NewBBSucc.
+					// Check to see if it dominates any predecessors of NewBBSucc.
+					for (pred_iterator PI = pred_begin(NewBBSucc),
+							 E = pred_end(NewBBSucc); PI != E; ++PI)
+						if (ETF.dominates(FI, *PI)) {
+							ShouldRemove = false;
+							break;
+						}
+				  
+					if (ShouldRemove)
+						DF->removeFromFrontier(DFI, NewBBSucc);
+					DF->addToFrontier(DFI, NewBB);
+					
+					break;
+				}
+			}
+		}
+	}
 }
+
 
