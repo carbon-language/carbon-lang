@@ -9160,6 +9160,10 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
   Value *ScalarOp = IE.getOperand(1);
   Value *IdxOp    = IE.getOperand(2);
   
+  // Inserting an undef or into an undefined place, remove this.
+  if (isa<UndefValue>(ScalarOp) || isa<UndefValue>(IdxOp))
+    ReplaceInstUsesWith(IE, VecOp);
+  
   // If the inserted element was extracted from some other vector, and if the 
   // indexes are constant, try to turn this into a shufflevector operation.
   if (ExtractElementInst *EI = dyn_cast<ExtractElementInst>(ScalarOp)) {
