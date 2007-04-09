@@ -126,34 +126,22 @@ class ParamAttrsList {
   /// @name Mutators
   /// @{
   public:
-    /// This method will add the \p attr to the parameter with index
+    /// This method will add the \p attrs to the parameter with index
     /// \p param_index. If the parameter index does not exist it will be created
-    /// and the \p will be the only attribute set. Otherwise, any existing
-    /// attributes for the specified parameter remain set and the attribute
-    /// given by \p attr is also set.
-    /// @brief Add a single ParameterAttribute
-    void addAttribute(uint16_t param_index, ParameterAttributes attr);
-
-    /// This method will remove the \p attr to the parameter with index
-    /// \p param_index. If the parameter index does not exist in the list,  
-    /// an assertion will occur. If the specified attribute is the last 
-    /// attribute set for the specified parameter index, the attributes for 
-    /// that index are removed completely from the list (size is decremented).
-    /// Otherwise, the specified attribute is removed from the set of attributes
-    /// for the given index.
-    /// @brief Remove a single ParameterAttribute
-    void removeAttribute(uint16_t param_index, ParameterAttributes attr);
-
-    /// This is identical to addAttribute but permits you to set multiple
-    /// attributes at the same time. The \p attrs value is expected to be a
-    /// bitwise OR of the attributes you would like to have added.
-    /// @brief Insert ParameterAttributes for an index
+    /// and the \p attrs will be the only attributes set. Otherwise, any 
+    /// existing attributes for the specified parameter remain set and the 
+    /// attributes given by \p attrs are also set.
+    /// @brief Add ParameterAttributes.
     void addAttributes(uint16_t param_index, uint16_t attrs);
 
-    /// This is identical to removeAttribute but permits you to remove multiple
-    /// attributes at the same time. The\p attrs value is expected to be a
-    /// bitwise OR of the attribute syou would like to have removed.
-    /// @brief Remove ParameterAttributes for an index
+    /// This method will remove the \p attrs to the parameter with index
+    /// \p param_index. If the parameter index does not exist in the list,  
+    /// an assertion will occur. If the specified attributes are the last 
+    /// attributes set for the specified parameter index, the attributes for 
+    /// that index are removed completely from the list (size is decremented).
+    /// Otherwise, the specified attributes are removed from the set of 
+    /// attributes for the given index, retaining any others.
+    /// @brief Remove a single ParameterAttribute
     void removeAttributes(uint16_t param_index, uint16_t attrs);
 
   /// @}
