@@ -2656,13 +2656,20 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
       if (MVT::isVector(RegVT)) {
         assert(Val.getValueType() == MVT::Vector &&"Not a vector-vector cast?");
         Val = DAG.getNode(ISD::VBIT_CONVERT, RegVT, Val);
-      } else if (MVT::isInteger(RegVT)) {
+      } else if (MVT::isInteger(RegVT) && MVT::isInteger(Val.getValueType())) {
         if (RegVT < ValueVT)
           Val = DAG.getNode(ISD::TRUNCATE, RegVT, Val);
         else
           Val = DAG.getNode(ISD::ANY_EXTEND, RegVT, Val);
-      } else
+      } else if (MVT::isFloatingPoint(RegVT) &&
+                 MVT::isFloatingPoint(Val.getValueType())) {
         Val = DAG.getNode(ISD::FP_EXTEND, RegVT, Val);
+      } else if (MVT::getSizeInBits(RegVT) == 
+                 MVT::getSizeInBits(Val.getValueType())) {
+        Val = DAG.getNode(ISD::BIT_CONVERT, RegVT, Val);
+      } else {
+        assert(0 && "Unknown mismatch!");
+      }
     }
     Chain = DAG.getCopyToReg(Chain, Regs[0], Val, Flag);
     Flag = Chain.getValue(1);
