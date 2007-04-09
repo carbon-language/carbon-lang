@@ -1039,7 +1039,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <UIntVal> OptAlign OptCAlign
 %type <StrVal> OptSection SectionString
 
-%token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
+%token ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF INTERNAL LINKONCE WEAK APPENDING
 %token DLLIMPORT DLLEXPORT EXTERN_WEAK
@@ -1942,18 +1942,6 @@ Definition
   | MODULE ASM_TOK AsmBlock {
     CHECK_FOR_ERROR
   }  
-  | IMPLEMENTATION {
-    // Emit an error if there are any unresolved types left.
-    if (!CurModule.LateResolveTypes.empty()) {
-      const ValID &DID = CurModule.LateResolveTypes.begin()->first;
-      if (DID.Type == ValID::LocalName) {
-        GEN_ERROR("Reference to an undefined type: '"+DID.getName() + "'");
-      } else {
-        GEN_ERROR("Reference to an undefined type: #" + itostr(DID.Num));
-      }
-    }
-    CHECK_FOR_ERROR
-  }
   | OptLocalAssign TYPE Types {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());

@@ -208,7 +208,6 @@ dllexport       { return DLLEXPORT; }
 hidden          { return HIDDEN; }
 extern_weak     { return EXTERN_WEAK; }
 external        { return EXTERNAL; }
-implementation  { return IMPLEMENTATION; }
 zeroinitializer { return ZEROINITIALIZER; }
 \.\.\.          { return DOTDOTDOT; }
 undef           { return UNDEF; }
