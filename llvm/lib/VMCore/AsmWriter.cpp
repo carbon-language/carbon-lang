@@ -20,6 +20,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
@@ -284,14 +285,15 @@ static void calcTypeName(const Type *Ty,
     calcTypeName(FTy->getReturnType(), TypeStack, TypeNames, Result);
     Result += " (";
     unsigned Idx = 1;
+    const ParamAttrsList *Attrs = FTy->getParamAttrs();
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Result += ", ";
       calcTypeName(*I, TypeStack, TypeNames, Result);
-      if (FTy->getParamAttrs(Idx)) {
+      if (Attrs && Attrs->getParamAttrs(Idx) != NoAttributeSet) {
         Result += + " ";
-        Result += FunctionType::getParamAttrsText(FTy->getParamAttrs(Idx));
+        Result += Attrs->getParamAttrsTextByIndex(Idx);
       }
       Idx++;
     }
@@ -300,9 +302,9 @@ static void calcTypeName(const Type *Ty,
       Result += "...";
     }
     Result += ")";
-    if (FTy->getParamAttrs(0)) {
+    if (Attrs && Attrs->getParamAttrs(0) != NoAttributeSet) {
       Result += " ";
-      Result += FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
+      Result += Attrs->getParamAttrsTextByIndex(0);
     }
     break;
   }
@@ -697,7 +699,7 @@ private:
   void printTypeSymbolTable(const TypeSymbolTable &ST);
   void printGlobal(const GlobalVariable *GV);
   void printFunction(const Function *F);
-  void printArgument(const Argument *FA, FunctionType::ParameterAttributes A);
+  void printArgument(const Argument *FA, uint16_t ParamAttrs);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction &I);
 
@@ -729,13 +731,14 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
     printType(FTy->getReturnType());
     Out << " (";
     unsigned Idx = 1;
+    const ParamAttrsList *Attrs = FTy->getParamAttrs();
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Out << ", ";
       printType(*I);
-      if (FTy->getParamAttrs(Idx)) {
-        Out << " " << FunctionType::getParamAttrsText(FTy->getParamAttrs(Idx));
+      if (Attrs && Attrs->getParamAttrs(Idx) != NoAttributeSet) {
+        Out << " " << Attrs->getParamAttrsTextByIndex(Idx);
       }
       Idx++;
     }
@@ -744,8 +747,8 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
       Out << "...";
     }
     Out << ')';
-    if (FTy->getParamAttrs(0))
-      Out << ' ' << FunctionType::getParamAttrsText(FTy->getParamAttrs(0));
+    if (Attrs && Attrs->getParamAttrs(0) != NoAttributeSet)
+      Out << ' ' << Attrs->getParamAttrsTextByIndex(0);
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     if (STy->isPacked())
       Out << '<';
@@ -954,6 +957,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   }
 
   const FunctionType *FT = F->getFunctionType();
+  const ParamAttrsList *Attrs = FT->getParamAttrs();
   printType(F->getReturnType()) << ' ';
   if (!F->getName().empty())
     Out << getLLVMName(F->getName(), GlobalPrefix);
@@ -969,7 +973,8 @@ void AssemblyWriter::printFunction(const Function *F) {
        I != E; ++I) {
     // Insert commas as we go... the first arg doesn't get a comma
     if (I != F->arg_begin()) Out << ", ";
-    printArgument(I, FT->getParamAttrs(Idx));
+    printArgument(I, (Attrs ? Attrs->getParamAttrs(Idx)
+                            : uint16_t(NoAttributeSet)));
     Idx++;
   }
 
@@ -979,8 +984,8 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "...";  // Output varargs portion of signature!
   }
   Out << ')';
-  if (FT->getParamAttrs(0))
-    Out << ' ' << FunctionType::getParamAttrsText(FT->getParamAttrs(0));
+  if (Attrs && Attrs->getParamAttrs(0) != NoAttributeSet)
+    Out << ' ' << Attrs->getParamAttrsTextByIndex(0);
   if (F->hasSection())
     Out << " section \"" << F->getSection() << '"';
   if (F->getAlignment())
@@ -1004,13 +1009,12 @@ void AssemblyWriter::printFunction(const Function *F) {
 /// printArgument - This member is called for every argument that is passed into
 /// the function.  Simply print it out
 ///
-void AssemblyWriter::printArgument(const Argument *Arg, 
-                                   FunctionType::ParameterAttributes attrs) {
+void AssemblyWriter::printArgument(const Argument *Arg, uint16_t Attrs) {
   // Output type...
   printType(Arg->getType());
 
-  if (attrs != FunctionType::NoAttributeSet)
-    Out << ' ' << FunctionType::getParamAttrsText(attrs);
+  if (Attrs != NoAttributeSet)
+    Out << ' ' << ParamAttrsList::getParamAttrsText(Attrs);
 
   // Output name, if available...
   if (Arg->hasName())
@@ -1162,9 +1166,10 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     default: Out << " cc" << CI->getCallingConv(); break;
     }
 
-    const PointerType  *PTy = cast<PointerType>(Operand->getType());
-    const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
-    const Type       *RetTy = FTy->getReturnType();
+    const PointerType    *PTy = cast<PointerType>(Operand->getType());
+    const FunctionType   *FTy = cast<FunctionType>(PTy->getElementType());
+    const Type         *RetTy = FTy->getReturnType();
+    const ParamAttrsList *PAL = FTy->getParamAttrs();
 
     // If possible, print out the short form of the call instruction.  We can
     // only do this if the first argument is a pointer to a nonvararg function,
@@ -1183,16 +1188,17 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       if (op > 1)
         Out << ',';
       writeOperand(I.getOperand(op), true);
-      if (FTy->getParamAttrs(op) != FunctionType::NoAttributeSet)
-        Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(op));
+      if (PAL && PAL->getParamAttrs(op) != NoAttributeSet)
+        Out << " " << PAL->getParamAttrsTextByIndex(op);
     }
     Out << " )";
-    if (FTy->getParamAttrs(0) != FunctionType::NoAttributeSet)
-      Out << ' ' << FTy->getParamAttrsText(FTy->getParamAttrs(0));
+    if (PAL && PAL->getParamAttrs(0) != NoAttributeSet)
+      Out << ' ' << PAL->getParamAttrsTextByIndex(0);
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
-    const PointerType  *PTy = cast<PointerType>(Operand->getType());
-    const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
-    const Type       *RetTy = FTy->getReturnType();
+    const PointerType    *PTy = cast<PointerType>(Operand->getType());
+    const FunctionType   *FTy = cast<FunctionType>(PTy->getElementType());
+    const Type         *RetTy = FTy->getReturnType();
+    const ParamAttrsList *PAL = FTy->getParamAttrs();
 
     // Print the calling convention being used.
     switch (II->getCallingConv()) {
@@ -1222,13 +1228,13 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       if (op > 3)
         Out << ',';
       writeOperand(I.getOperand(op), true);
-      if (FTy->getParamAttrs(op-2) != FunctionType::NoAttributeSet)
-        Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(op-2));
+      if (PAL && PAL->getParamAttrs(op-2) != NoAttributeSet)
+        Out << " " << PAL->getParamAttrsTextByIndex(op-2);
     }
 
     Out << " )";
-    if (FTy->getParamAttrs(0) != FunctionType::NoAttributeSet)
-      Out << " " << FTy->getParamAttrsText(FTy->getParamAttrs(0));
+    if (PAL && PAL->getParamAttrs(0) != NoAttributeSet)
+      Out << " " << PAL->getParamAttrsTextByIndex(0);
     Out << "\n\t\t\tto";
     writeOperand(II->getNormalDest(), true);
     Out << " unwind";
