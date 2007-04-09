@@ -498,20 +498,22 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     if (RS) RS->enterBasicBlock(BB);
-    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (I->getOperand(i).isFrameIndex()) {
+    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
+      MachineInstr *MI = I++;
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
+        if (MI->getOperand(i).isFrameIndex()) {
           // If this instruction has a FrameIndex operand, we need to use that
           // target machine register info object to eliminate it.
-          MRI.eliminateFrameIndex(I, RS);
+          MRI.eliminateFrameIndex(MI, RS);
 
           // Revisit the instruction in full.  Some instructions (e.g. inline
           // asm instructions) can have multiple frame indices.
-          e = I->getNumOperands();
-          i = -1U;
+          --I;
+          MI = 0;
+          break;
         }
       // Update register states.
-      if (RS) RS->forward(I);
+      if (RS && MI) RS->forward(MI);
     }
   }
 }
