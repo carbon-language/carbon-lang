@@ -188,6 +188,7 @@ CallInst::~CallInst() {
 }
 
 void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
+  ParamAttrs = 0;
   NumOperands = NumParams+1;
   Use *OL = OperandList = new Use[NumParams+1];
   OL[0].init(Func, this);
@@ -208,6 +209,7 @@ void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
 }
 
 void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
+  ParamAttrs = 0;
   NumOperands = 3;
   Use *OL = OperandList = new Use[3];
   OL[0].init(Func, this);
@@ -230,6 +232,7 @@ void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
 }
 
 void CallInst::init(Value *Func, Value *Actual) {
+  ParamAttrs = 0;
   NumOperands = 2;
   Use *OL = OperandList = new Use[2];
   OL[0].init(Func, this);
@@ -248,6 +251,7 @@ void CallInst::init(Value *Func, Value *Actual) {
 }
 
 void CallInst::init(Value *Func) {
+  ParamAttrs = 0;
   NumOperands = 1;
   Use *OL = OperandList = new Use[1];
   OL[0].init(Func, this);

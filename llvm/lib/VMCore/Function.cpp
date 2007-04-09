@@ -72,12 +72,76 @@ void Argument::setParent(Function *parent) {
 }
 
 //===----------------------------------------------------------------------===//
+// ParamAttrsList Implementation
+//===----------------------------------------------------------------------===//
+
+uint16_t
+ParamAttrsList::getParamAttrs(uint16_t Index) const {
+  unsigned limit = attrs.size();
+  for (unsigned i = 0; i < limit; ++i)
+    if (attrs[i].index == Index)
+      return attrs[i].attrs;
+  return NoAttributeSet;
+}
+
+
+std::string 
+ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
+  std::string Result;
+  if (Attrs & ZExtAttribute)
+    Result += "zext ";
+  if (Attrs & SExtAttribute)
+    Result += "sext ";
+  if (Attrs & NoReturnAttribute)
+    Result += "noreturn ";
+  if (Attrs & NoUnwindAttribute)
+    Result += "nounwind ";
+  if (Attrs & InRegAttribute)
+    Result += "inreg ";
+  if (Attrs & StructRetAttribute)
+    Result += "sret ";  
+  return Result;
+}
+
+void
+ParamAttrsList::addAttributes(uint16_t Index, uint16_t Attrs) {
+  // First, try to replace an existing one
+  for (unsigned i = 0; i < attrs.size(); ++i)
+    if (attrs[i].index == Index) {
+      attrs[i].attrs |= Attrs;
+      return;
+    }
+
+  // If not found, add a new one
+  ParamAttrsWithIndex Val;
+  Val.attrs = Attrs;
+  Val.index = Index;
+  attrs.push_back(Val);
+}
+
+void
+ParamAttrsList::removeAttributes(uint16_t Index, uint16_t Attrs) {
+  // Find the index from which to remove the attributes
+  for (unsigned i = 0; i < attrs.size(); ++i)
+    if (attrs[i].index == Index) {
+      attrs[i].attrs &= ~Attrs;
+      if (attrs[i].attrs == NoAttributeSet)
+        attrs.erase(&attrs[i]);
+      return;
+    }
+
+  // The index wasn't found above
+  assert(0 && "Index not found for removeAttributes");
+}
+
+//===----------------------------------------------------------------------===//
 // Function Implementation
 //===----------------------------------------------------------------------===//
 
 Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
                    const std::string &name, Module *ParentModule)
   : GlobalValue(PointerType::get(Ty), Value::FunctionVal, 0, 0, Linkage, name) {
+  ParamAttrs = 0;
   CallingConvention = 0;
   BasicBlocks.setItemParent(this);
   BasicBlocks.setParent(this);

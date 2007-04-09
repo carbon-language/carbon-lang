@@ -26,6 +26,7 @@
 namespace llvm {
 
 class FunctionType;
+class ParamAttrsList;
 
 // Traits for intrusive list of instructions...
 template<> struct ilist_traits<BasicBlock>
@@ -60,11 +61,11 @@ public:
 
 private:
   // Important things that make up a function!
-  BasicBlockListType  BasicBlocks;      // The basic blocks
-  ArgumentListType ArgumentList;        // The formal arguments
-
-  ValueSymbolTable *SymTab;
-  unsigned CallingConvention;
+  BasicBlockListType  BasicBlocks;   ///< The basic blocks
+  ArgumentListType ArgumentList;     ///< The formal arguments
+  ValueSymbolTable *SymTab;          ///< Symbol table of args/instructions
+  ParamAttrsList *ParamAttrs;        ///< Parameter attributes
+  unsigned CallingConvention;        ///< Calling convention to use
 
   friend class SymbolTableListTraits<Function, Module, Module>;
 
@@ -110,6 +111,17 @@ public:
   /// calling conventions are defined in CallingConv.h.
   unsigned getCallingConv() const { return CallingConvention; }
   void setCallingConv(unsigned CC) { CallingConvention = CC; }
+
+  /// Obtains a constant pointer to the ParamAttrsList object which holds the
+  /// parameter attributes information, if any. 
+  /// @returns 0 if no parameter attributes have been set.
+  /// @brief Get the parameter attributes.
+  const ParamAttrsList *getParamAttrs() const { return ParamAttrs; }
+
+  /// Sets the parameter attributes for this Function. To construct a 
+  /// ParamAttrsList, see ParameterAttributes.h
+  /// @brief Set the parameter attributes.
+  void setParamAttrs(ParamAttrsList *attrs) { ParamAttrs = attrs; }
 
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.

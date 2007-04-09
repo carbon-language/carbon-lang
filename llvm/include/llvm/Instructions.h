@@ -26,6 +26,7 @@ class PointerType;
 class VectorType;
 class ConstantRange;
 class APInt;
+class ParamAttrsList;
 
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class
@@ -694,6 +695,7 @@ public:
 /// hold the calling convention of the call.
 ///
 class CallInst : public Instruction {
+  ParamAttrsList *ParamAttrs; ///< parameter attributes for call
   CallInst(const CallInst &CI);
   void init(Value *Func, Value* const *Params, unsigned NumParams);
   void init(Value *Func, Value *Actual1, Value *Actual2);
@@ -734,6 +736,16 @@ public:
   void setCallingConv(unsigned CC) {
     SubclassData = (SubclassData & 1) | (CC << 1);
   }
+
+  /// Obtains a constant pointer to the ParamAttrsList object which holds the
+  /// parameter attributes information, if any. 
+  /// @brief Get the parameter attributes.
+  const ParamAttrsList *getParamAttrs() const { return ParamAttrs; }
+
+  /// Sets the parameter attributes for this CallInst. To construct a 
+  /// ParamAttrsList, see ParameterAttributes.h
+  /// @brief Set the parameter attributes.
+  void setParamAttrs(ParamAttrsList *attrs) { ParamAttrs = attrs; }
 
   /// getCalledFunction - Return the function being called by this instruction
   /// if it is a direct call.  If it is a call through a function pointer,
