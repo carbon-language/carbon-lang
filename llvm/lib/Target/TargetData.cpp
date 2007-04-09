@@ -342,7 +342,7 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 
   // Otherwise, create the struct layout.  Because it is variable length, we 
   // malloc it, then use placement new.
-  unsigned NumElts = Ty->getNumElements();
+  int NumElts = Ty->getNumElements();
   StructLayout *L =
     (StructLayout *)malloc(sizeof(StructLayout)+(NumElts-1)*sizeof(uint64_t));
   
