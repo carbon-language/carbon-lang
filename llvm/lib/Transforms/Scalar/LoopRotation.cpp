@@ -75,6 +75,11 @@ namespace {
     /// not available.
     const RenameData *findReplacementData(Instruction *I);
 
+    /// After loop rotation, loop pre-header has multiple sucessors.
+    /// Insert one forwarding basic block to ensure that loop pre-header
+    /// has only one successor.
+    void preserveCanonicalLoopForm(LPPassManager &LPM);
+
   private:
 
     Loop *L;
@@ -121,11 +126,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   if (L->getBlocks().size() == 1)
     return false;
 
-  if (!OrigHeader || !OrigLatch || !OrigPreHeader)
-    return false;
-
-  if (!OrigHeader || !OrigLatch || !OrigPreHeader)
-    return false;
+  assert (OrigHeader && OrigLatch && OrigPreHeader &&
+          "Loop is not in cannocial form");
 
   // If loop header is not one of the loop exit block then
   // either this loop is already rotated or it is not 
@@ -344,6 +346,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // Make NewHeader as the new header for the loop.
   L->moveToHeader(NewHeader);
 
+  preserveCanonicalLoopForm(LPM);
+
   NumRotated++;
   return true;
 }
@@ -414,4 +418,50 @@ const RenameData *LoopRotate::findReplacementData(Instruction *In) {
       return &ILoopHeaderInfo;
   }
   return NULL;
+}
+
+/// After loop rotation, loop pre-header has multiple sucessors.
+/// Insert one forwarding basic block to ensure that loop pre-header
+/// has only one successor.
+void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
+
+  // Right now original pre-header has two successors, new header and
+  // exit block. Insert new block between original pre-header and
+  // new header such that loop's new pre-header has only one successor.
+  BasicBlock *NewPreHeader = new BasicBlock("bb.nph", OrigHeader->getParent(), 
+                                OrigPreHeader);
+  LoopInfo &LI = LPM.getAnalysis<LoopInfo>();
+  if (Loop *PL = LI.getLoopFor(OrigPreHeader))
+    PL->addBasicBlockToLoop(NewPreHeader, LI);
+  new BranchInst(NewHeader, NewPreHeader);
+  
+  BranchInst *OrigPH_BI = cast<BranchInst>(OrigPreHeader->getTerminator());
+  if (OrigPH_BI->getSuccessor(0) == NewHeader)
+    OrigPH_BI->setSuccessor(0, NewPreHeader);
+  else {
+    assert (OrigPH_BI->getSuccessor(1) == NewPreHeader &&
+            "Unexpected original pre-header terminator");
+    OrigPH_BI->setSuccessor(1, NewPreHeader);
+  }
+  
+  for (BasicBlock::iterator I = NewHeader->begin(), E = NewHeader->end();
+       I != E; ++I) {
+    Instruction *In = I;
+    PHINode *PN = dyn_cast<PHINode>(In);
+    if (!PN)
+      break;
+
+    int index = PN->getBasicBlockIndex(OrigPreHeader);
+    assert (index != -1 && "Expected incoming value from Original PreHeader");
+    PN->setIncomingBlock(index, NewPreHeader);
+    assert (PN->getBasicBlockIndex(OrigPreHeader) == -1 && 
+            "Expected only one incoming value from Original PreHeader");
+  }
+
+  assert (NewHeader && L->getHeader() == NewHeader 
+          && "Invalid loop header after loop rotation");
+  assert (NewPreHeader && L->getLoopPreheader() == NewPreHeader
+          && "Invalid loop preheader after loop rotation");
+  assert (L->getLoopLatch() 
+          && "Invalid loop latch after loop rotation");
 }
