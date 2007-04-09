@@ -25,6 +25,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -802,10 +803,11 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       else
         TmpVT = MVT::i32;
       const FunctionType *FTy = I.getParent()->getParent()->getFunctionType();
+      const ParamAttrsList *Attrs = FTy->getParamAttrs();
       ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-      if (FTy->paramHasAttr(0, FunctionType::SExtAttribute))
+      if (Attrs && Attrs->paramHasAttr(0, SExtAttribute))
         ExtendKind = ISD::SIGN_EXTEND;
-      if (FTy->paramHasAttr(0, FunctionType::ZExtAttribute))
+      if (Attrs && Attrs->paramHasAttr(0, ZExtAttribute))
         ExtendKind = ISD::ZERO_EXTEND;
       RetOp = DAG.getNode(ExtendKind, TmpVT, RetOp);
     }
@@ -2508,6 +2510,7 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
                                        SDOperand Callee, unsigned OpIdx) {
   const PointerType *PT = cast<PointerType>(CalledValueTy);
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  const ParamAttrsList *Attrs = FTy->getParamAttrs();
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
@@ -2516,16 +2519,16 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     Value *Arg = I.getOperand(i);
     SDOperand ArgNode = getValue(Arg);
     Entry.Node = ArgNode; Entry.Ty = Arg->getType();
-    Entry.isSExt   = FTy->paramHasAttr(i, FunctionType::SExtAttribute);
-    Entry.isZExt   = FTy->paramHasAttr(i, FunctionType::ZExtAttribute);
-    Entry.isInReg  = FTy->paramHasAttr(i, FunctionType::InRegAttribute);
-    Entry.isSRet   = FTy->paramHasAttr(i, FunctionType::StructRetAttribute);
+    Entry.isSExt   = Attrs && Attrs->paramHasAttr(i, SExtAttribute);
+    Entry.isZExt   = Attrs && Attrs->paramHasAttr(i, ZExtAttribute);
+    Entry.isInReg  = Attrs && Attrs->paramHasAttr(i, InRegAttribute);
+    Entry.isSRet   = Attrs && Attrs->paramHasAttr(i, StructRetAttribute);
     Args.push_back(Entry);
   }
 
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), 
-                    FTy->paramHasAttr(0,FunctionType::SExtAttribute),
+                    Attrs && Attrs->paramHasAttr(0, SExtAttribute),
                     FTy->isVarArg(), CallingConv, IsTailCall, 
                     Callee, Args, DAG);
   if (I.getType() != Type::VoidTy)
@@ -3346,6 +3349,7 @@ static SDOperand ExpandScalarFormalArgs(MVT::ValueType VT, SDNode *Arg,
 std::vector<SDOperand> 
 TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   const FunctionType *FTy = F.getFunctionType();
+  const ParamAttrsList *Attrs = FTy->getParamAttrs();
   // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
   std::vector<SDOperand> Ops;
   Ops.push_back(DAG.getRoot());
@@ -3364,13 +3368,13 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
     // FIXME: Distinguish between a formal with no [sz]ext attribute from one
     // that is zero extended!
-    if (FTy->paramHasAttr(j, FunctionType::ZExtAttribute))
+    if (Attrs && Attrs->paramHasAttr(j, ZExtAttribute))
       Flags &= ~(ISD::ParamFlags::SExt);
-    if (FTy->paramHasAttr(j, FunctionType::SExtAttribute))
+    if (Attrs && Attrs->paramHasAttr(j, SExtAttribute))
       Flags |= ISD::ParamFlags::SExt;
-    if (FTy->paramHasAttr(j, FunctionType::InRegAttribute))
+    if (Attrs && Attrs->paramHasAttr(j, InRegAttribute))
       Flags |= ISD::ParamFlags::InReg;
-    if (FTy->paramHasAttr(j, FunctionType::StructRetAttribute))
+    if (Attrs && Attrs->paramHasAttr(j, StructRetAttribute))
       Flags |= ISD::ParamFlags::StructReturn;
     Flags |= (OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs);
     
@@ -3444,10 +3448,10 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     case Promote: {
       SDOperand Op(Result, i++);
       if (MVT::isInteger(VT)) {
-        if (FTy->paramHasAttr(Idx, FunctionType::SExtAttribute))
+        if (Attrs && Attrs->paramHasAttr(Idx, SExtAttribute))
           Op = DAG.getNode(ISD::AssertSext, Op.getValueType(), Op,
                            DAG.getValueType(VT));
-        else if (FTy->paramHasAttr(Idx, FunctionType::ZExtAttribute))
+        else if (Attrs && Attrs->paramHasAttr(Idx, ZExtAttribute))
           Op = DAG.getNode(ISD::AssertZext, Op.getValueType(), Op,
                            DAG.getValueType(VT));
         Op = DAG.getNode(ISD::TRUNCATE, VT, Op);

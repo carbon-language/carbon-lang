@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/TypeSymbolTable.h"
@@ -350,11 +351,12 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
   FunctionType::param_iterator I = FTy->param_begin(), E = FTy->param_end();
   const Type *RetTy = cast<PointerType>(I->get())->getElementType();
   unsigned Idx = 1;
+  const ParamAttrsList *Attrs = FTy->getParamAttrs();
   for (++I; I != E; ++I) {
     if (PrintedType)
       FunctionInnards << ", ";
     printType(FunctionInnards, *I, 
-        /*isSigned=*/FTy->paramHasAttr(Idx, FunctionType::SExtAttribute), "");
+        /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute), "");
     PrintedType = true;
   }
   if (FTy->isVarArg()) {
@@ -366,7 +368,7 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
   FunctionInnards << ')';
   std::string tstr = FunctionInnards.str();
   printType(Out, RetTy, 
-      /*isSigned=*/FTy->paramHasAttr(0, FunctionType::SExtAttribute), tstr);
+      /*isSigned=*/Attrs && Attrs->paramHasAttr(0, SExtAttribute), tstr);
 }
 
 std::ostream &
@@ -421,13 +423,14 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     const FunctionType *FTy = cast<FunctionType>(Ty);
     std::stringstream FunctionInnards;
     FunctionInnards << " (" << NameSoFar << ") (";
+    const ParamAttrsList *Attrs = FTy->getParamAttrs();
     unsigned Idx = 1;
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         FunctionInnards << ", ";
       printType(FunctionInnards, *I, 
-         /*isSigned=*/FTy->paramHasAttr(Idx, FunctionType::SExtAttribute), "");
+         /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute), "");
       ++Idx;
     }
     if (FTy->isVarArg()) {
@@ -439,7 +442,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     FunctionInnards << ')';
     std::string tstr = FunctionInnards.str();
     printType(Out, FTy->getReturnType(), 
-        /*isSigned=*/FTy->paramHasAttr(0, FunctionType::SExtAttribute), tstr);
+        /*isSigned=*/Attrs && Attrs->paramHasAttr(0, SExtAttribute), tstr);
     return Out;
   }
   case Type::StructTyID: {
@@ -1801,6 +1804,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   
   // Loop over the arguments, printing them...
   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
+  const ParamAttrsList *Attrs = FT->getParamAttrs();
 
   std::stringstream FunctionInnards;
 
@@ -1828,7 +1832,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
         else
           ArgName = "";
         printType(FunctionInnards, I->getType(), 
-            /*isSigned=*/FT->paramHasAttr(Idx, FunctionType::SExtAttribute), 
+            /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute), 
             ArgName);
         PrintedArg = true;
         ++Idx;
@@ -1849,7 +1853,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     for (; I != E; ++I) {
       if (PrintedArg) FunctionInnards << ", ";
       printType(FunctionInnards, *I,
-             /*isSigned=*/FT->paramHasAttr(Idx, FunctionType::SExtAttribute));
+             /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute));
       PrintedArg = true;
       ++Idx;
     }
@@ -1877,7 +1881,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     
   // Print out the return type and the signature built above.
   printType(Out, RetTy, 
-            /*isSigned=*/FT->paramHasAttr(0, FunctionType::SExtAttribute), 
+            /*isSigned=*/ Attrs && Attrs->paramHasAttr(0, SExtAttribute), 
             FunctionInnards.str());
 }
 
@@ -2573,6 +2577,7 @@ void CWriter::visitCallInst(CallInst &I) {
     ++ArgNo;
   }
       
+  const ParamAttrsList *Attrs = FTy->getParamAttrs();
   bool PrintedArg = false;
   unsigned Idx = 1;
   for (; AI != AE; ++AI, ++ArgNo, ++Idx) {
@@ -2581,7 +2586,7 @@ void CWriter::visitCallInst(CallInst &I) {
         (*AI)->getType() != FTy->getParamType(ArgNo)) {
       Out << '(';
       printType(Out, FTy->getParamType(ArgNo), 
-            /*isSigned=*/FTy->paramHasAttr(Idx, FunctionType::SExtAttribute));
+            /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute));
       Out << ')';
     }
     writeOperand(*AI);
