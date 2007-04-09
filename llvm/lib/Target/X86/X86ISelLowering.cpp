@@ -4645,38 +4645,11 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                   MVT::ValueType VT) const {
   if (Constraint.size() == 1) {
     // FIXME: not handling fp-stack yet!
-    // FIXME: not handling MMX registers yet ('y' constraint).
     switch (Constraint[0]) {      // GCC X86 Constraint Letters
     default: break;  // Unknown constraint letter
     case 'A':   // EAX/EDX
       if (VT == MVT::i32 || VT == MVT::i64)
         return make_vector<unsigned>(X86::EAX, X86::EDX, 0);
-      break;
-    case 'r':   // GENERAL_REGS
-    case 'R':   // LEGACY_REGS
-      if (VT == MVT::i64 && Subtarget->is64Bit())
-        return make_vector<unsigned>(X86::RAX, X86::RDX, X86::RCX, X86::RBX,
-                                     X86::RSI, X86::RDI, X86::RBP, X86::RSP,
-                                     X86::R8,  X86::R9,  X86::R10, X86::R11,
-                                     X86::R12, X86::R13, X86::R14, X86::R15, 0);
-      if (VT == MVT::i32)
-        return make_vector<unsigned>(X86::EAX, X86::EDX, X86::ECX, X86::EBX,
-                                     X86::ESI, X86::EDI, X86::EBP, X86::ESP, 0);
-      else if (VT == MVT::i16)
-        return make_vector<unsigned>(X86::AX, X86::DX, X86::CX, X86::BX,
-                                     X86::SI, X86::DI, X86::BP, X86::SP, 0);
-      else if (VT == MVT::i8)
-        return make_vector<unsigned>(X86::AL, X86::DL, X86::CL, X86::BL, 0);
-      break;
-    case 'l':   // INDEX_REGS
-      if (VT == MVT::i32)
-        return make_vector<unsigned>(X86::EAX, X86::EDX, X86::ECX, X86::EBX,
-                                     X86::ESI, X86::EDI, X86::EBP, 0);
-      else if (VT == MVT::i16)
-        return make_vector<unsigned>(X86::AX, X86::DX, X86::CX, X86::BX,
-                                     X86::SI, X86::DI, X86::BP, 0);
-      else if (VT == MVT::i8)
-        return make_vector<unsigned>(X86::AL, X86::DL, X86::CL, X86::DL, 0);
       break;
     case 'q':   // Q_REGS (GENERAL_REGS in 64-bit mode)
     case 'Q':   // Q_REGS
@@ -4687,18 +4660,6 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
       else if (VT == MVT::i8)
         return make_vector<unsigned>(X86::AL, X86::DL, X86::CL, X86::DL, 0);
         break;
-    case 'x':   // SSE_REGS if SSE1 allowed
-      if (Subtarget->hasSSE1())
-        return make_vector<unsigned>(X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
-                                     X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7,
-                                     0);
-      return std::vector<unsigned>();
-    case 'Y':   // SSE_REGS if SSE2 allowed
-      if (Subtarget->hasSSE2())
-        return make_vector<unsigned>(X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
-                                     X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7,
-                                     0);
-      return std::vector<unsigned>();
     }
   }
 
@@ -4714,11 +4675,44 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     // GCC Constraint Letters
     switch (Constraint[0]) {
     default: break;
-    case 'x': 
-      if (VT == MVT::f32 || VT == MVT::i32)
+    case 'r':   // GENERAL_REGS
+    case 'R':   // LEGACY_REGS
+    case 'l':   // INDEX_REGS
+      if (VT == MVT::i64 && Subtarget->is64Bit())
+        return std::make_pair(0U, X86::GR64RegisterClass);
+      if (VT == MVT::i32)
+        return std::make_pair(0U, X86::GR32RegisterClass);
+      else if (VT == MVT::i16)
+        return std::make_pair(0U, X86::GR16RegisterClass);
+      else if (VT == MVT::i8)
+        return std::make_pair(0U, X86::GR8RegisterClass);
+      break;
+    // FIXME: not handling MMX registers yet ('y' constraint).
+    case 'Y':   // SSE_REGS if SSE2 allowed
+      if (!Subtarget->hasSSE2()) break;
+      // FALL THROUGH.
+    case 'x':   // SSE_REGS if SSE1 allowed
+      if (!Subtarget->hasSSE1()) break;
+      
+      switch (VT) {
+      default: break;
+      // Scalar SSE types.
+      case MVT::f32:
+      case MVT::i32:
         return std::make_pair(0U, X86::FR32RegisterClass);
-      if (VT == MVT::f64 || VT == MVT::i64)
+      case MVT::f64:
+      case MVT::i64:
         return std::make_pair(0U, X86::FR64RegisterClass);
+      // Vector types.
+      case MVT::Vector:
+      case MVT::v16i8:
+      case MVT::v8i16:
+      case MVT::v4i32:
+      case MVT::v2i64:
+      case MVT::v4f32:
+      case MVT::v2f64:
+        return std::make_pair(0U, X86::VR128RegisterClass);
+      }
       break;
     }
   }
