@@ -675,8 +675,10 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
 
 // Returns true if BasicBlock A dominates at least one block in vector B
 // Helper function for UpdateDomInfoForRevectoredPreds
-static bool BlockDominatesAny(BasicBlock* A, std::vector<BasicBlock*>& B, ETForest& ETF) {
-  for (std::vector<BasicBlock*>::iterator BI = B.begin(), BE = B.end(); BI != BE; ++BI) {
+static bool BlockDominatesAny(BasicBlock* A, const std::vector<BasicBlock*>& B,
+                              ETForest& ETF) {
+  for (std::vector<BasicBlock*>::const_iterator BI = B.begin(), BE = B.end();
+       BI != BE; ++BI) {
     if (ETF.dominates(A, *BI))
       return true;
   }
