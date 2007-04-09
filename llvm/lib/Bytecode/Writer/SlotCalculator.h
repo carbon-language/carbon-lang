@@ -73,7 +73,7 @@ public:
   SlotCalculator(const Module *M);
 
   /// getSlot - Return the slot number of the specified value in it's type
-  /// plane.  This returns < 0 on error!
+  /// plane.
   ///
   unsigned getSlot(const Value *V) const {
     NodeMapType::const_iterator I = NodeMap.find(V);

@@ -24,6 +24,7 @@ namespace llvm {
   class InlineAsm;
   class TypeSymbolTable;
   class ValueSymbolTable;
+  class ParamAttrsList;
 
 class BytecodeWriter {
   std::vector<unsigned char> &Out;
@@ -61,6 +62,7 @@ private:
   void outputTypeSymbolTable(const TypeSymbolTable &TST);
   void outputValueSymbolTable(const ValueSymbolTable &ST);
   void outputTypes(unsigned StartNo);
+  void outputParamAttrsList(const ParamAttrsList* Attrs);
   void outputConstantsInPlane(const Value *const*Plane, unsigned PlaneSize,
                               unsigned StartNo);
   void outputConstant(const Constant *CPV);

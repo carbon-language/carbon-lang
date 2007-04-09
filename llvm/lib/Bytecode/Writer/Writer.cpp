@@ -17,12 +17,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "bytecodewriter"
+#define DEBUG_TYPE "bcwriter"
 #include "WriterInternals.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -197,6 +198,21 @@ inline BytecodeBlock::~BytecodeBlock() { // Do backpatch when block goes out
 //===                           Constant Output                            ===//
 //===----------------------------------------------------------------------===//
 
+void BytecodeWriter::outputParamAttrsList(const ParamAttrsList *Attrs) {
+  if (!Attrs) {
+    output_vbr(unsigned(0));
+    return;
+  }
+  unsigned numAttrs = Attrs->size();
+  output_vbr(numAttrs);
+  for (unsigned i = 0; i < numAttrs; ++i) {
+    uint16_t index = Attrs->getParamIndex(i);
+    uint16_t attrs = Attrs->getParamAttrs(index);
+    output_vbr(uint32_t(index));
+    output_vbr(uint32_t(attrs));
+  }
+}
+
 void BytecodeWriter::outputType(const Type *T) {
   const StructType* STy = dyn_cast<StructType>(T);
   if(STy && STy->isPacked())
@@ -213,25 +229,23 @@ void BytecodeWriter::outputType(const Type *T) {
     output_vbr(cast<IntegerType>(T)->getBitWidth());
     break;
   case Type::FunctionTyID: {
-    const FunctionType *MT = cast<FunctionType>(T);
-    output_typeid(Table.getTypeSlot(MT->getReturnType()));
-    output_vbr(unsigned(MT->getParamAttrs(0)));
+    const FunctionType *FT = cast<FunctionType>(T);
+    output_typeid(Table.getTypeSlot(FT->getReturnType()));
 
     // Output the number of arguments to function (+1 if varargs):
-    output_vbr((unsigned)MT->getNumParams()+MT->isVarArg());
+    output_vbr((unsigned)FT->getNumParams()+FT->isVarArg());
 
     // Output all of the arguments...
-    FunctionType::param_iterator I = MT->param_begin();
-    unsigned Idx = 1;
-    for (; I != MT->param_end(); ++I) {
+    FunctionType::param_iterator I = FT->param_begin();
+    for (; I != FT->param_end(); ++I)
       output_typeid(Table.getTypeSlot(*I));
-      output_vbr(unsigned(MT->getParamAttrs(Idx)));
-      Idx++;
-    }
 
     // Terminate list with VoidTy if we are a varargs function...
-    if (MT->isVarArg())
+    if (FT->isVarArg())
       output_typeid((unsigned)Type::VoidTyID);
+
+    // Put out all the parameter attributes
+    outputParamAttrsList(FT->getParamAttrs());
     break;
   }
 
@@ -1107,7 +1121,7 @@ void BytecodeWriter::outputValueSymbolTable(const ValueSymbolTable &VST) {
 
   // Organize the symbol table by type
   typedef SmallVector<const ValueName*, 8> PlaneMapVector;
-  typedef DenseMap<const Type*, PlaneMapVector > PlaneMap;
+  typedef DenseMap<const Type*, PlaneMapVector> PlaneMap;
   PlaneMap Planes;
   for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
        SI != SE; ++SI) 

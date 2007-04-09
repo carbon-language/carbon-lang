@@ -236,6 +236,7 @@ protected:
   /// @brief Parse global types
   void ParseGlobalTypes();
 
+
   /// @brief Parse a basic block (for LLVM 1.0 basic block blocks)
   BasicBlock* ParseBasicBlock(unsigned BlockNo);
 
@@ -263,6 +264,9 @@ protected:
 
   /// @brief Parse a single type constant
   const Type *ParseType();
+
+  /// @brief Parse a list of parameter attributes
+  ParamAttrsList *ParseParamAttrsList();
 
   /// @brief Parse a string constants block
   void ParseStringConstants(unsigned NumEntries, ValueTable &Tab);

@@ -23,6 +23,7 @@
 #include "llvm/Constants.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Bytecode/Format.h"
 #include "llvm/Config/alloca.h"
@@ -288,6 +289,8 @@ Value * BytecodeReader::getValue(unsigned type, unsigned oNum, bool Create) {
       if (Num < Locals->size())
         return Locals->getOperand(Num);
 
+  // We did not find the value.
+  
   if (!Create) return 0;  // Do not create a placeholder?
 
   // Did we already create a place holder?
@@ -1005,21 +1008,18 @@ const Type *BytecodeReader::ParseType() {
   }
   case Type::FunctionTyID: {
     const Type *RetType = readType();
-    unsigned RetAttr = read_vbr_uint();
-
     unsigned NumParams = read_vbr_uint();
 
     std::vector<const Type*> Params;
-    std::vector<FunctionType::ParameterAttributes> Attrs;
-    Attrs.push_back(FunctionType::ParameterAttributes(RetAttr));
     while (NumParams--) {
       Params.push_back(readType());
-      if (Params.back() != Type::VoidTy)
-        Attrs.push_back(FunctionType::ParameterAttributes(read_vbr_uint()));
     }
 
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
-    if (isVarArg) Params.pop_back();
+    if (isVarArg) 
+      Params.pop_back();
+
+    ParamAttrsList *Attrs = ParseParamAttrsList();
 
     Result = FunctionType::get(RetType, Params, isVarArg, Attrs);
     break;
@@ -1075,6 +1075,21 @@ const Type *BytecodeReader::ParseType() {
   if (Handler) Handler->handleType(Result);
   return Result;
 }
+
+ParamAttrsList *BytecodeReader::ParseParamAttrsList() {
+  unsigned NumAttrs = read_vbr_uint();
+  ParamAttrsList *Attrs = 0;
+  if (NumAttrs) {
+    Attrs = new ParamAttrsList();
+    while (NumAttrs--) {
+      uint16_t index = read_vbr_uint();
+      uint16_t attrs = read_vbr_uint();
+      Attrs->addAttributes(index, attrs);
+    }
+  }
+  return Attrs;
+}
+
 
 // ParseTypes - We have to use this weird code to handle recursive
 // types.  We know that recursive types will only reference the current slab of
@@ -2106,4 +2121,3 @@ bool BytecodeReader::ParseBytecode(volatile BufPtr Buf, unsigned Length,
 //===----------------------------------------------------------------------===//
 
 BytecodeHandler::~BytecodeHandler() {}
-

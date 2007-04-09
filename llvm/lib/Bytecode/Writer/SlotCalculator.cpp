@@ -332,6 +332,10 @@ void SlotCalculator::purgeFunction() {
   SC_DEBUG("end purgeFunction!\n");
 }
 
+inline static bool hasImplicitNull(const Type* Ty) {
+  return Ty != Type::LabelTy && Ty != Type::VoidTy && !isa<OpaqueType>(Ty);
+}
+
 void SlotCalculator::CreateFunctionValueSlot(const Value *V) {
   assert(!NodeMap.count(V) && "Function-local value can't be inserted!");
   
@@ -353,7 +357,7 @@ void SlotCalculator::CreateFunctionValueSlot(const Value *V) {
   // to insert the implicit null value.
   if (Table[TyPlane].empty()) {
     // Label's and opaque types can't have a null value.
-    if (Ty != Type::LabelTy && !isa<OpaqueType>(Ty)) {
+    if (hasImplicitNull(Ty)) {
       Value *ZeroInitializer = Constant::getNullValue(Ty);
       
       // If we are pushing zeroinit, it will be handled below.
@@ -370,5 +374,4 @@ void SlotCalculator::CreateFunctionValueSlot(const Value *V) {
   
   SC_DEBUG("  Inserting value [" << TyPlane << "] = " << *V << " slot=" <<
            NodeMap[V] << "\n");
-}  
-
+} 
