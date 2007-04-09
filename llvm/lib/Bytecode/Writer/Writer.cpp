@@ -429,8 +429,14 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
   output_typeid(Type);                      // Result type
 
   unsigned NumArgs = I->getNumOperands();
-  output_vbr(NumArgs + (isa<CastInst>(I)  || isa<InvokeInst>(I) || 
-                        isa<CmpInst>(I) || isa<VAArgInst>(I) || Opcode == 58));
+  bool HasExtraArg = false;
+  if (isa<CastInst>(I)  || isa<InvokeInst>(I) || 
+      isa<CmpInst>(I) || isa<VAArgInst>(I) || Opcode == 58)
+    HasExtraArg = true;
+  if (const AllocationInst *AI = dyn_cast<AllocationInst>(I))
+    HasExtraArg = AI->getAlignment() != 0;
+  
+  output_vbr(NumArgs + HasExtraArg);
 
   if (!isa<GetElementPtrInst>(&I)) {
     for (unsigned i = 0; i < NumArgs; ++i)
@@ -445,6 +451,9 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
     } else if (Opcode == 58) {  // Call escape sequence
       output_vbr((cast<CallInst>(I)->getCallingConv() << 1) |
                  unsigned(cast<CallInst>(I)->isTailCall()));
+    } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(I)) {
+      if (AI->getAlignment())
+        output_vbr((unsigned)Log2_32(AI->getAlignment())+1);
     }
   } else {
     output_vbr(Table.getSlot(I->getOperand(0)));
