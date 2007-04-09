@@ -200,8 +200,6 @@ static struct PerModuleInfo {
     }
     return false;
   }
-
-
 } CurModule;
 
 static struct PerFunctionInfo {
@@ -962,7 +960,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
   llvm::GlobalValue::LinkageTypes         Linkage;
   llvm::GlobalValue::VisibilityTypes      Visibility;
-  llvm::FunctionType::ParameterAttributes ParamAttrs;
+  uint16_t                          ParamAttrs;
   llvm::APInt                       *APIntVal;
   int64_t                           SInt64Val;
   uint64_t                          UInt64Val;
@@ -1191,26 +1189,26 @@ OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                   CHECK_FOR_ERROR
                  };
 
-ParamAttr     : ZEXT  { $$ = FunctionType::ZExtAttribute;      }
-              | SEXT  { $$ = FunctionType::SExtAttribute;      }
-              | INREG { $$ = FunctionType::InRegAttribute;     }
-              | SRET  { $$ = FunctionType::StructRetAttribute; }
+ParamAttr     : ZEXT  { $$ = ZExtAttribute;      }
+              | SEXT  { $$ = SExtAttribute;      }
+              | INREG { $$ = InRegAttribute;     }
+              | SRET  { $$ = StructRetAttribute; }
               ;
 
-OptParamAttrs : /* empty */  { $$ = FunctionType::NoAttributeSet; }
+OptParamAttrs : /* empty */  { $$ = NoAttributeSet; }
               | OptParamAttrs ParamAttr {
-                $$ = FunctionType::ParameterAttributes($1 | $2);
+                $$ = $1 | $2;
               }
               ;
 
-FuncAttr      : NORETURN { $$ = FunctionType::NoReturnAttribute; }
-              | NOUNWIND { $$ = FunctionType::NoUnwindAttribute; }
+FuncAttr      : NORETURN { $$ = NoReturnAttribute; }
+              | NOUNWIND { $$ = NoUnwindAttribute; }
               | ParamAttr
               ;
 
-OptFuncAttrs  : /* empty */ { $$ = FunctionType::NoAttributeSet; }
+OptFuncAttrs  : /* empty */ { $$ = NoAttributeSet; }
               | OptFuncAttrs FuncAttr {
-                $$ = FunctionType::ParameterAttributes($1 | $2);
+                $$ = $1 | $2;
               }
               ;
 
@@ -1299,18 +1297,25 @@ Types
   }
   | Types '(' ArgTypeListI ')' OptFuncAttrs {
     std::vector<const Type*> Params;
-    std::vector<FunctionType::ParameterAttributes> Attrs;
-    Attrs.push_back($5);
-    for (TypeWithAttrsList::iterator I=$3->begin(), E=$3->end(); I != E; ++I) {
+    ParamAttrsList Attrs;
+    if ($5 != NoAttributeSet)
+      Attrs.addAttributes(0, $5);
+    unsigned index = 1;
+    TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
+    for (; I != E; ++I, ++index) {
       const Type *Ty = I->Ty->get();
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
-        Attrs.push_back(I->Attrs);
+        if (I->Attrs != NoAttributeSet)
+          Attrs.addAttributes(index, I->Attrs);
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    FunctionType *FT = FunctionType::get(*$1, Params, isVarArg, Attrs);
+    ParamAttrsList *ActualAttrs = 0;
+    if (!Attrs.empty())
+      ActualAttrs = new ParamAttrsList(Attrs);
+    FunctionType *FT = FunctionType::get(*$1, Params, isVarArg, ActualAttrs);
     delete $3;   // Delete the argument list
     delete $1;   // Delete the return type handle
     $$ = new PATypeHolder(HandleUpRefs(FT)); 
@@ -1318,18 +1323,26 @@ Types
   }
   | VOID '(' ArgTypeListI ')' OptFuncAttrs {
     std::vector<const Type*> Params;
-    std::vector<FunctionType::ParameterAttributes> Attrs;
-    Attrs.push_back($5);
-    for (TypeWithAttrsList::iterator I=$3->begin(), E=$3->end(); I != E; ++I) {
+    ParamAttrsList Attrs;
+    if ($5 != NoAttributeSet)
+      Attrs.addAttributes(0, $5);
+    TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
+    unsigned index = 1;
+    for ( ; I != E; ++I, ++index) {
       const Type* Ty = I->Ty->get();
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
-        Attrs.push_back(I->Attrs);
+        if (I->Attrs != NoAttributeSet)
+          Attrs.addAttributes(index, I->Attrs);
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    FunctionType *FT = FunctionType::get($1, Params, isVarArg, Attrs);
+    ParamAttrsList *ActualAttrs = 0;
+    if (!Attrs.empty())
+      ActualAttrs = new ParamAttrsList(Attrs);
+
+    FunctionType *FT = FunctionType::get($1, Params, isVarArg, ActualAttrs);
     delete $3;      // Delete the argument list
     $$ = new PATypeHolder(HandleUpRefs(FT)); 
     CHECK_FOR_ERROR
@@ -1417,14 +1430,14 @@ ArgTypeListI
   : ArgTypeList
   | ArgTypeList ',' DOTDOTDOT {
     $$=$1;
-    TypeWithAttrs TWA; TWA.Attrs = FunctionType::NoAttributeSet;
+    TypeWithAttrs TWA; TWA.Attrs = NoAttributeSet;
     TWA.Ty = new PATypeHolder(Type::VoidTy);
     $$->push_back(TWA);
     CHECK_FOR_ERROR
   }
   | DOTDOTDOT {
     $$ = new TypeWithAttrsList;
-    TypeWithAttrs TWA; TWA.Attrs = FunctionType::NoAttributeSet;
+    TypeWithAttrs TWA; TWA.Attrs = NoAttributeSet;
     TWA.Ty = new PATypeHolder(Type::VoidTy);
     $$->push_back(TWA);
     CHECK_FOR_ERROR
@@ -2087,7 +2100,7 @@ ArgList : ArgListH {
     struct ArgListEntry E;
     E.Ty = new PATypeHolder(Type::VoidTy);
     E.Name = 0;
-    E.Attrs = FunctionType::NoAttributeSet;
+    E.Attrs = NoAttributeSet;
     $$->push_back(E);
     CHECK_FOR_ERROR
   }
@@ -2096,7 +2109,7 @@ ArgList : ArgListH {
     struct ArgListEntry E;
     E.Ty = new PATypeHolder(Type::VoidTy);
     E.Name = 0;
-    E.Attrs = FunctionType::NoAttributeSet;
+    E.Attrs = NoAttributeSet;
     $$->push_back(E);
     CHECK_FOR_ERROR
   }
@@ -2117,24 +2130,31 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     GEN_ERROR("Reference to abstract result: "+ $2->get()->getDescription());
 
   std::vector<const Type*> ParamTypeList;
-  std::vector<FunctionType::ParameterAttributes> ParamAttrs;
-  ParamAttrs.push_back($7);
+  ParamAttrsList ParamAttrs;
+  if ($7 != NoAttributeSet)
+    ParamAttrs.addAttributes(0, $7);
   if ($5) {   // If there are arguments...
-    for (ArgListType::iterator I = $5->begin(); I != $5->end(); ++I) {
+    unsigned index = 1;
+    for (ArgListType::iterator I = $5->begin(); I != $5->end(); ++I, ++index) {
       const Type* Ty = I->Ty->get();
       if (!CurFun.isDeclare && CurModule.TypeIsUnresolved(I->Ty))
         GEN_ERROR("Reference to abstract argument: " + Ty->getDescription());
       ParamTypeList.push_back(Ty);
       if (Ty != Type::VoidTy)
-        ParamAttrs.push_back(I->Attrs);
+        if (I->Attrs != NoAttributeSet)
+          ParamAttrs.addAttributes(index, I->Attrs);
     }
   }
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg,
-                                       ParamAttrs);
+  ParamAttrsList *ActualAttrs = 0;
+  if (!ParamAttrs.empty())
+    ActualAttrs = new ParamAttrsList(ParamAttrs);
+
+  FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg, 
+                                       ActualAttrs);
   const PointerType *PFT = PointerType::get(FT);
   delete $2;
 
@@ -2465,17 +2485,24 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      FunctionType::ParamAttrsList ParamAttrs;
-      ParamAttrs.push_back($8);
-      for (ValueRefList::iterator I = $6->begin(), E = $6->end(); I != E; ++I) {
+      ParamAttrsList ParamAttrs;
+      if ($8 != NoAttributeSet)
+        ParamAttrs.addAttributes(0, $8);
+      ValueRefList::iterator I = $6->begin(), E = $6->end();
+      unsigned index = 1;
+      for (; I != E; ++I, ++index) {
         const Type *Ty = I->Val->getType();
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        ParamAttrs.push_back(I->Attrs);
+        if (I->Attrs != NoAttributeSet)
+          ParamAttrs.addAttributes(index, I->Attrs);
       }
 
-      Ty = FunctionType::get($3->get(), ParamTypes, false, ParamAttrs);
+      ParamAttrsList *Attrs = 0;
+      if (!ParamAttrs.empty())
+        Attrs = new ParamAttrsList(ParamAttrs);
+      Ty = FunctionType::get($3->get(), ParamTypes, false, Attrs);
       PFTy = PointerType::get(Ty);
     }
 
@@ -2764,17 +2791,25 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      FunctionType::ParamAttrsList ParamAttrs;
-      ParamAttrs.push_back($8);
-      for (ValueRefList::iterator I = $6->begin(), E = $6->end(); I != E; ++I) {
+      ParamAttrsList ParamAttrs;
+      if ($8 != NoAttributeSet)
+        ParamAttrs.addAttributes(0, $8);
+      unsigned index = 1;
+      ValueRefList::iterator I = $6->begin(), E = $6->end();
+      for (; I != E; ++I, ++index) {
         const Type *Ty = I->Val->getType();
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        ParamAttrs.push_back(I->Attrs);
+        if (I->Attrs != NoAttributeSet)
+          ParamAttrs.addAttributes(index, I->Attrs);
       }
 
-      Ty = FunctionType::get($3->get(), ParamTypes, false, ParamAttrs);
+      ParamAttrsList *Attrs = 0;
+      if (!ParamAttrs.empty())
+        Attrs = new ParamAttrsList(ParamAttrs);
+
+      Ty = FunctionType::get($3->get(), ParamTypes, false, Attrs);
       PFTy = PointerType::get(Ty);
     }
 

@@ -17,6 +17,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/STLExtras.h"
@@ -377,14 +378,21 @@ static Signedness getElementSign(const ConstInfo& CI,
 static bool FuncTysDifferOnlyBySRet(const FunctionType *F1, 
                                     const FunctionType *F2) {
   if (F1->getReturnType() != F2->getReturnType() ||
-      F1->getNumParams() != F2->getNumParams() ||
-      F1->getParamAttrs(0) != F2->getParamAttrs(0))
+      F1->getNumParams() != F2->getNumParams())
     return false;
-  unsigned SRetMask = ~unsigned(FunctionType::StructRetAttribute);
+  ParamAttrsList PAL1;
+  if (F1->getParamAttrs())
+    PAL1 = *F1->getParamAttrs();
+  ParamAttrsList PAL2;
+  if (F2->getParamAttrs())
+    PAL2 = *F2->getParamAttrs();
+  if (PAL1.getParamAttrs(0) != PAL2.getParamAttrs(0))
+    return false;
+  unsigned SRetMask = ~unsigned(StructRetAttribute);
   for (unsigned i = 0; i < F1->getNumParams(); ++i) {
     if (F1->getParamType(i) != F2->getParamType(i) ||
-        unsigned(F1->getParamAttrs(i+1)) & SRetMask !=
-        unsigned(F2->getParamAttrs(i+1)) & SRetMask)
+        unsigned(PAL1.getParamAttrs(i+1)) & SRetMask !=
+        unsigned(PAL2.getParamAttrs(i+1)) & SRetMask)
       return false;
   }
   return true;
@@ -423,13 +431,15 @@ static Value* handleSRetFuncTypeMerge(Value *V, const Type* Ty) {
   if (PF1 && PF2) {
     const FunctionType *FT1 = dyn_cast<FunctionType>(PF1->getElementType());
     const FunctionType *FT2 = dyn_cast<FunctionType>(PF2->getElementType());
-    if (FT1 && FT2 && FuncTysDifferOnlyBySRet(FT1, FT2))
-      if (FT2->paramHasAttr(1, FunctionType::StructRetAttribute))
+    if (FT1 && FT2 && FuncTysDifferOnlyBySRet(FT1, FT2)) {
+      const ParamAttrsList *PAL2 = FT2->getParamAttrs();
+      if (PAL2 && PAL2->paramHasAttr(1, StructRetAttribute))
         return V;
       else if (Constant *C = dyn_cast<Constant>(V))
         return ConstantExpr::getBitCast(C, PF1);
       else
         return new BitCastInst(V, PF1, "upgrd.cast", CurBB);
+    }
       
   }
   return 0;
@@ -2103,13 +2113,13 @@ UpRTypes
       Params.push_back(I->PAT->get());
       $$.S.add(I->S);
     }
-    FunctionType::ParamAttrsList ParamAttrs;
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    $$.PAT = new PATypeHolder(
-      HandleUpRefs(FunctionType::get($1.PAT->get(), Params, isVarArg, 
-                   ParamAttrs), $$.S));
+    const FunctionType *FTy =
+      FunctionType::get($1.PAT->get(), Params, isVarArg, 0);
+
+    $$.PAT = new PATypeHolder( HandleUpRefs(FTy, $$.S) );
     delete $1.PAT;  // Delete the return type handle
     delete $3;      // Delete the argument list
   }
@@ -2891,14 +2901,15 @@ FunctionHeaderH
 
     // Convert the CSRet calling convention into the corresponding parameter
     // attribute.
-    FunctionType::ParamAttrsList ParamAttrs;
+    ParamAttrsList *ParamAttrs = 0;
     if ($1 == OldCallingConv::CSRet) {
-      ParamAttrs.push_back(FunctionType::NoAttributeSet);     // result
-      ParamAttrs.push_back(FunctionType::StructRetAttribute); // first arg
+      ParamAttrs = new ParamAttrsList();
+      ParamAttrs->addAttributes(0, NoAttributeSet);     // result
+      ParamAttrs->addAttributes(1, StructRetAttribute); // first arg
     }
 
-    const FunctionType *FT = FunctionType::get(RetTy, ParamTyList, isVarArg,
-                                               ParamAttrs);
+    const FunctionType *FT = 
+      FunctionType::get(RetTy, ParamTyList, isVarArg, ParamAttrs);
     const PointerType *PFT = PointerType::get(FT);
     delete $2.PAT;
 
@@ -3279,10 +3290,11 @@ BBTerminatorInst
           FTySign.add(I->S);
         }
       }
-      FunctionType::ParamAttrsList ParamAttrs;
+      ParamAttrsList *ParamAttrs = 0;
       if ($2 == OldCallingConv::CSRet) {
-        ParamAttrs.push_back(FunctionType::NoAttributeSet);
-        ParamAttrs.push_back(FunctionType::StructRetAttribute);
+        ParamAttrs = new ParamAttrsList();
+        ParamAttrs->addAttributes(0, NoAttributeSet);      // Function result
+        ParamAttrs->addAttributes(1, StructRetAttribute);  // first param
       }
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
@@ -3296,6 +3308,7 @@ BBTerminatorInst
       // and then the 0th element again to get the result type.
       $$.S.copy($3.S.get(0).get(0)); 
     }
+
     $4.S.makeComposite(FTySign);
     Value *V = getVal(PFTy, $4);   // Get the function we're calling...
     BasicBlock *Normal = getBBVal($10);
@@ -3656,7 +3669,7 @@ InstVal
     $$.S.copy($2.S);
     delete $2.P;  // Free the list...
   }
-  | OptTailCall OptCallingConv TypesV ValueRef '(' ValueRefListE ')'  {
+  | OptTailCall OptCallingConv TypesV ValueRef '(' ValueRefListE ')' {
     // Handle the short call syntax
     const PointerType *PFTy;
     const FunctionType *FTy;
@@ -3674,17 +3687,20 @@ InstVal
         }
       }
 
-      FunctionType::ParamAttrsList ParamAttrs;
-      if ($2 == OldCallingConv::CSRet) {
-        ParamAttrs.push_back(FunctionType::NoAttributeSet);
-        ParamAttrs.push_back(FunctionType::StructRetAttribute);
-      }
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
       const Type *RetTy = $3.PAT->get();
       if (!RetTy->isFirstClassType() && RetTy != Type::VoidTy)
         error("Functions cannot return aggregate types");
+
+      // Deal with CSRetCC
+      ParamAttrsList *ParamAttrs = 0;
+      if ($2 == OldCallingConv::CSRet) {
+        ParamAttrs = new ParamAttrsList();
+        ParamAttrs->addAttributes(0, NoAttributeSet);     // function result
+        ParamAttrs->addAttributes(1, StructRetAttribute); // first parameter
+      }
 
       FTy = FunctionType::get(RetTy, ParamTypes, isVarArg, ParamAttrs);
       PFTy = PointerType::get(FTy);
