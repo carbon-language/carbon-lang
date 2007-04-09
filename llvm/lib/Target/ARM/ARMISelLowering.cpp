@@ -1295,66 +1295,14 @@ ARMTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 //                           ARM Optimization Hooks
 //===----------------------------------------------------------------------===//
 
-/// isLegalAddressingMode - Return true if the addressing mode represented
-/// by AM is legal for this target, for a load/store of the specified type.
-bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM, 
-                                              const Type *Ty) const {
-  if (!isLegalAddressImmediate(AM.BaseOffs, Ty))
-    return false;
-  
-  // Can never fold addr of global into load/store.
-  if (AM.BaseGV) 
-    return false;
-  
-  switch (AM.Scale) {
-  case 0:  // no scale reg, must be "r+i" or "r", or "i".
-    break;
-  case 1:
-    if (Subtarget->isThumb())
-      return false;
-
-  default:
-    switch (getValueType(Ty)) {
-    default: return false;
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i32:
-    case MVT::i64:
-      // This assumes i64 is legalized to a pair of i32. If not (i.e.
-      // ldrd / strd are used, then its address mode is same as i16.
-      // r + r
-      if (AM.Scale == 1)
-        return true;
-      // r + r << imm
-      if (!isPowerOf2_32(AM.Scale & ~1))
-        return false;
-    case MVT::i16:
-      // r + r
-      if (((unsigned)AM.HasBaseReg + AM.Scale) <= 2)
-        return true;
-
-    case MVT::isVoid:
-      // Note, we allow "void" uses (basically, uses that aren't loads or
-      // stores), because arm allows folding a scale into many arithmetic
-      // operations.  This should be made more precise and revisited later.
-      
-      // Allow r << imm, but the imm has to be a multiple of two.
-      if (AM.Scale & 1) return false;
-      return isPowerOf2_32(AM.Scale);
-    }
-    break;
-  }
-  return true;
-}
-
 /// isLegalAddressImmediate - Return true if the integer value can be used
 /// as the offset of the target addressing mode for load / store of the
 /// given type.
-bool ARMTargetLowering::isLegalAddressImmediate(int64_t V,const Type *Ty) const{
+static bool isLegalAddressImmediate(int64_t V, MVT::ValueType VT,
+                                    const ARMSubtarget *Subtarget) {
   if (V == 0)
     return true;
 
-  MVT::ValueType VT = getValueType(Ty);
   if (Subtarget->isThumb()) {
     if (V < 0)
       return false;
@@ -1405,41 +1353,58 @@ bool ARMTargetLowering::isLegalAddressImmediate(int64_t V,const Type *Ty) const{
   }
 }
 
-bool ARMTargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
-  return false;
-}
-
-/// isLegalAddressScale - Return true if the integer value can be used as
-/// the scale of the target addressing mode for load / store of the given
-/// type.
-bool ARMTargetLowering::isLegalAddressScale(int64_t S, const Type *Ty) const {
-  if (Subtarget->isThumb())
+/// isLegalAddressingMode - Return true if the addressing mode represented
+/// by AM is legal for this target, for a load/store of the specified type.
+bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM, 
+                                              const Type *Ty) const {
+  if (!isLegalAddressImmediate(AM.BaseOffs, getValueType(Ty), Subtarget))
     return false;
+  
+  // Can never fold addr of global into load/store.
+  if (AM.BaseGV) 
+    return false;
+  
+  switch (AM.Scale) {
+  case 0:  // no scale reg, must be "r+i" or "r", or "i".
+    break;
+  case 1:
+    if (Subtarget->isThumb())
+      return false;
 
-  MVT::ValueType VT = getValueType(Ty);
-  switch (VT) {
-  default: return false;
-  case MVT::i1:
-  case MVT::i8:
-  case MVT::i32:
-    if (S < 0) S = -S;
-    if (S == 1) return true;   // Allow: r + r
+  default:
+    switch (getValueType(Ty)) {
+    default: return false;
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i32:
+    case MVT::i64:
+      // This assumes i64 is legalized to a pair of i32. If not (i.e.
+      // ldrd / strd are used, then its address mode is same as i16.
+      // r + r
+      if (AM.Scale == 1)
+        return true;
+      // r + r << imm
+      if (!isPowerOf2_32(AM.Scale & ~1))
+        return false;
+    case MVT::i16:
+      // r + r
+      if (((unsigned)AM.HasBaseReg + AM.Scale) <= 2)
+        return true;
+
+    case MVT::isVoid:
+      // Note, we allow "void" uses (basically, uses that aren't loads or
+      // stores), because arm allows folding a scale into many arithmetic
+      // operations.  This should be made more precise and revisited later.
       
-    // Allow: r << imm
-    // Allow: r + r << imm
-    S &= ~1;
-    return isPowerOf2_32(S);
-  case MVT::isVoid:
-    // Note, we allow "void" uses (basically, uses that aren't loads or
-    // stores), because arm allows folding a scale into many arithmetic
-    // operations.  This should be made more precise and revisited later.
-    if (S == 1) return true;   // Allow: r + r
-
-    // Allow r << imm, but the imm has to be a multiple of two.
-    if (S & 1) return false;
-    return isPowerOf2_32(S);
+      // Allow r << imm, but the imm has to be a multiple of two.
+      if (AM.Scale & 1) return false;
+      return isPowerOf2_32(AM.Scale);
+    }
+    break;
   }
+  return true;
 }
+
 
 static bool getIndexedAddressParts(SDNode *Ptr, MVT::ValueType VT,
                                    bool isSEXTLoad, SDOperand &Base,
