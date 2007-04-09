@@ -32,8 +32,7 @@ using namespace llvm;
 
 Function *ilist_traits<Function>::createSentinel() {
   FunctionType *FTy =
-    FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false, 
-                      std::vector<FunctionType::ParameterAttributes>() );
+    FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
   Function *Ret = new Function(FTy, GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
