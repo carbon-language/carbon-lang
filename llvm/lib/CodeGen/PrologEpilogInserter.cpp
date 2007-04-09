@@ -504,7 +504,11 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
           // If this instruction has a FrameIndex operand, we need to use that
           // target machine register info object to eliminate it.
           MRI.eliminateFrameIndex(I, RS);
-          break;
+
+          // Revisit the instruction in full.  Some instructions (e.g. inline
+          // asm instructions) can have multiple frame indices.
+          e = I->getNumOperands();
+          i = -1U;
         }
       // Update register states.
       if (RS) RS->forward(I);
