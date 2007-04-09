@@ -1672,15 +1672,14 @@ bool BytecodeReader::ParseAllFunctionBodies(std::string* ErrMsg) {
     return true;
   }
 
-  LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.begin();
-  LazyFunctionMap::iterator Fe = LazyFunctionLoadMap.end();
-
-  while (Fi != Fe) {
-    Function* Func = Fi->first;
-    BlockStart = At = Fi->second.Buf;
-    BlockEnd = Fi->second.EndBuf;
-    ParseFunctionBody(Func);
-    ++Fi;
+  for (LazyFunctionMap::iterator I = LazyFunctionLoadMap.begin(),
+       E = LazyFunctionLoadMap.end(); I != E; ++I) {
+    Function *Func = I->first;
+    if (Func->hasNotBeenReadFromBytecode()) {
+      BlockStart = At = I->second.Buf;
+      BlockEnd = I->second.EndBuf;
+      ParseFunctionBody(Func);
+    }
   }
   return false;
 }
