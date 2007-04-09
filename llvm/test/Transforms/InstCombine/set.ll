@@ -145,3 +145,8 @@ int %test24(uint %a) {
         ret int %tmp.3
 }
 
+bool %test25(uint %A) {
+	%B = and uint %A, 2
+	%C = setgt uint %B, 2
+	ret bool %C
+}
