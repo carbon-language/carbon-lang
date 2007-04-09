@@ -13,6 +13,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
@@ -197,14 +198,13 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
                                        uint32_t numTys) {
   const Type *ResultTy = NULL;
   std::vector<const Type*> ArgTys;
-  std::vector<FunctionType::ParameterAttributes> Attrs;
   bool IsVarArg = false;
   
 #define GET_INTRINSIC_GENERATOR
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_GENERATOR
 
-  return FunctionType::get(ResultTy, ArgTys, IsVarArg, Attrs); 
+  return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
 }
 
 Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys, 
