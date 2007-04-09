@@ -879,19 +879,6 @@ public:
   /// AM is legal for this target, for a load/store of the specified type.
   /// TODO: Handle pre/postinc as well.
   virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty) const;
-  
-  /// isLegalAddressImmediate - Return true if the integer value can be used as
-  /// the offset of the target addressing mode for load / store of the given
-  /// type.
-  virtual bool isLegalAddressImmediate(int64_t V, const Type *Ty) const;
-
-  /// isLegalAddressImmediate - Return true if the GlobalValue can be used as
-  /// the offset of the target addressing mode.
-  virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
-
-  /// isLegalAddressScale - Return true if the integer value can be used as the
-  /// scale of the target addressing mode for load / store of the given type.
-  virtual bool isLegalAddressScale(int64_t S, const Type *Ty) const;
 
   //===--------------------------------------------------------------------===//
   // Div utility functions

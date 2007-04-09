@@ -1974,25 +1974,6 @@ bool TargetLowering::isLegalAddressingMode(const AddrMode &AM,
   return true;
 }
 
-/// isLegalAddressImmediate - Return true if the integer value can be used as
-/// the offset of the target addressing mode for load / store of the given
-/// type.
-bool TargetLowering::isLegalAddressImmediate(int64_t V, const Type *Ty) const {
-  return false;
-}
-
-/// isLegalAddressImmediate - Return true if the GlobalValue can be used as
-/// the offset of the target addressing mode.
-bool TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
-  return false;
-}
-
-/// isLegalAddressScale - Return true if the integer value can be used as the
-/// scale of the target addressing mode for load / store of the given type.
-bool TargetLowering::isLegalAddressScale(int64_t S, const Type *Ty) const {
-  return false;
-}
-
 // Magic for divide replacement
 
 struct ms {
