@@ -1050,6 +1050,8 @@ my ($gcc_version, $gcc_version_long) = "";
 $gcc_version_long="";
 if ($GCCPATH ne "") {
 	$gcc_version_long = `$GCCPATH/gcc --version`;
+} elsif ($ENV{"CC"}) {
+	$gcc_version_long = `$ENV{"CC"} --version`;
 } else {
 	$gcc_version_long = `gcc --version`;
 }
