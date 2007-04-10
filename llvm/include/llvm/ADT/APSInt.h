@@ -68,13 +68,21 @@ public:
       *this = sdiv(RHS);
     return *this;
   }
+  APSInt operator%(const APSInt &RHS) const {
+    assert(IsUnsigned == RHS.IsUnsigned && "Signedness mismatch!");
+    return IsUnsigned ? urem(RHS) : srem(RHS);
+  }
+  APSInt operator/(const APSInt &RHS) const {
+    assert(IsUnsigned == RHS.IsUnsigned && "Signedness mismatch!");
+    return IsUnsigned ? udiv(RHS) : sdiv(RHS);
+  }
   
   const APSInt &operator>>=(unsigned Amt) {
     *this = *this >> Amt;
     return *this;
   }
   
-  APSInt operator>>(unsigned Amt) {
+  APSInt operator>>(unsigned Amt) const {
     return IsUnsigned ? lshr(Amt) : ashr(Amt);
   }
   
