@@ -184,7 +184,7 @@
           <li><a href="#int_ctpop">'<tt>llvm.ctpop.*</tt>' Intrinsic </a></li>
           <li><a href="#int_ctlz">'<tt>llvm.ctlz.*</tt>' Intrinsic </a></li>
           <li><a href="#int_cttz">'<tt>llvm.cttz.*</tt>' Intrinsic </a></li>
-          <li><a href="#int_bit_part_select">'<tt>llvm.bit.part_select.*</tt>' Intrinsic </a></li>
+          <li><a href="#int_part_select">'<tt>llvm.part_select.*</tt>' Intrinsic </a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
@@ -4590,21 +4590,21 @@ of src.  For example, <tt>llvm.cttz(2) = 1</tt>.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_bit_part_select">'<tt>llvm.bit.part_select.*</tt>' Intrinsic</a>
+  <a name="int_part_select">'<tt>llvm.part.select.*</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
 
 <h5>Syntax:</h5>
-<p>This is an overloaded intrinsic. You can use <tt>llvm.bit.part_select</tt> 
+<p>This is an overloaded intrinsic. You can use <tt>llvm.part.select</tt> 
 on any integer bit width.
 <pre>
-  declare i17 @llvm.bit.part_select.i17.i17 (i17 %val, i32 %loBit, i32 %hiBit)
-  declare i29 @llvm.bit.part_select.i29.i29 (i29 %val, i32 %loBit, i32 %hiBit)
+  declare i17 @llvm.part.select.i17.i17 (i17 %val, i32 %loBit, i32 %hiBit)
+  declare i29 @llvm.part.select.i29.i29 (i29 %val, i32 %loBit, i32 %hiBit)
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>llvm.bit.part_select</tt>' family of intrinsic functions selects a
+<p>The '<tt>llvm.part.select</tt>' family of intrinsic functions selects a
 range of bits from an integer value and returns them in the same bit width as
 the original value.</p>
 
@@ -4614,7 +4614,7 @@ any bit width but they must have the same bit width. The second and third
 arguments must be <tt>i32</tt> type since they specify only a bit index.</p>
 
 <h5>Semantics:</h5>
-<p>The operation of the '<tt>llvm.bit.part_select</tt>' intrinsic has two modes
+<p>The operation of the '<tt>llvm.part.select</tt>' intrinsic has two modes
 of operation: forwards and reverse. If <tt>%loBit</tt> is greater than
 <tt>%hiBits</tt> then the intrinsic operates in reverse mode. Otherwise it
 operates in forward mode.</p>
@@ -4632,11 +4632,11 @@ only the <tt>%hiBit - %loBit</tt> bits set, as follows:</p>
 <p>In reverse mode, a similar computation is made except that:</p>
 <ol>
   <li>The bits selected wrap around to include both the highest and lowest bits.
-  For example, part_select(i16 X, 4, 7) selects bits from X with a mask of 
-  0x00F0 (forwards case) while part_select(i16 X, 8, 3) selects bits from X 
+  For example, part.select(i16 X, 4, 7) selects bits from X with a mask of 
+  0x00F0 (forwards case) while part.select(i16 X, 8, 3) selects bits from X 
   with a mask of 0xFF0F.</li>
   <li>The bits returned in the reverse case are reversed. So, if X has the value
-  0x6ACF and we apply part_select(i16 X, 8, 3) to it, we get back the value
+  0x6ACF and we apply part.select(i16 X, 8, 3) to it, we get back the value
   0x0A6F.</li>
 </ol>
 </div>
