@@ -1573,7 +1573,8 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
   const FileEntry *File = LookupFile(FilenameStart, FilenameEnd,
                                      isAngled, LookupFrom, CurDir);
   if (File == 0)
-    return Diag(FilenameTok, diag::err_pp_file_not_found);
+    return Diag(FilenameTok, diag::err_pp_file_not_found,
+                std::string(FilenameStart, FilenameEnd));
   
   // Ask HeaderInfo if we should enter this #include file.
   if (!HeaderInfo.ShouldEnterIncludeFile(File, isImport)) {
@@ -1584,7 +1585,8 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
   // Look up the file, create a File ID for it.
   unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation());
   if (FileID == 0)
-    return Diag(FilenameTok, diag::err_pp_file_not_found);
+    return Diag(FilenameTok, diag::err_pp_file_not_found,
+                std::string(FilenameStart, FilenameEnd));
 
   // Finally, if all is good, enter the new file!
   EnterSourceFile(FileID, CurDir);

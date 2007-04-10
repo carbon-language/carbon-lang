@@ -156,7 +156,7 @@ DIAG(err_pp_invalid_directive, ERROR,
 DIAG(err_pp_hash_error, ERROR,
      "#error%s")
 DIAG(err_pp_file_not_found, ERROR,
-     "file not found")
+     "'%s' file not found")
 DIAG(err_pp_empty_filename, ERROR,
      "empty filename")
 DIAG(err_pp_include_too_deep, ERROR,

@@ -272,7 +272,8 @@ void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
   const FileEntry *File = LookupFile(FilenameStart, FilenameEnd,
                                      isAngled, 0, CurDir);
   if (File == 0)
-    return Diag(FilenameTok, diag::err_pp_file_not_found);
+    return Diag(FilenameTok, diag::err_pp_file_not_found,
+                std::string(FilenameStart, FilenameEnd));
   
   unsigned FileID = getCurrentFileLexer()->getCurFileID();
   const FileEntry *CurFile = SourceMgr.getFileEntryForFileID(FileID);
