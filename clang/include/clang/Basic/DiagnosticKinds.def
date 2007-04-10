@@ -114,6 +114,8 @@ DIAG(pp_macro_not_used, WARNING,    // -Wunused-macros
      "macro is not used")
 DIAG(pp_invalid_string_literal, WARNING,
      "invalid string literal, ignoring final '\\'")
+DIAG(warn_pp_expr_overflow, WARNING,
+     "integer overflow in preprocessor expression")
 
 DIAG(ext_pp_import_directive, EXTENSION,
      "#import is a language extension")

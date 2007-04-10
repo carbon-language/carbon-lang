@@ -421,6 +421,7 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     }
     
     // FIXME: All of these should detect and report overflow??
+    bool Overflow = false;
     switch (Operator) {
     default: assert(0 && "Unknown operator token!");
     case tok::percent:
@@ -440,16 +441,29 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     case tok::star:
       LHS *= RHS;
       break;
-    case tok::lessless:
-      // FIXME: shift amt overflow?
-      // FIXME: Don't use getZExtValue.
-      LHS <<= RHS.getZExtValue();
+    case tok::lessless: {
+      // Determine whether overflow is about to happen.
+      unsigned ShAmt = RHS.getLimitedValue();
+      if (ShAmt >= LHS.getBitWidth())
+        Overflow = true, ShAmt = LHS.getBitWidth()-1;
+      else if (LHS.isUnsigned())
+        Overflow = ShAmt > LHS.countLeadingZeros();
+      else if (LHS.isPositive())
+        Overflow = ShAmt >= LHS.countLeadingZeros(); // Don't allow sign change.
+      else
+        Overflow = ShAmt >= LHS.countLeadingOnes();
+      
+      LHS <<= ShAmt;
       break;
-    case tok::greatergreater:
-      // FIXME: signed vs unsigned
-      // FIXME: Don't use getZExtValue.
-      LHS >>= RHS.getZExtValue();
+    }
+    case tok::greatergreater: {
+      // Determine whether overflow is about to happen.
+      unsigned ShAmt = RHS.getLimitedValue();
+      if (ShAmt >= LHS.getBitWidth())
+        Overflow = true, ShAmt = LHS.getBitWidth()-1;
+      LHS >>= ShAmt;
       break;
+    }
     case tok::plus:
       LHS += RHS;
       break;
@@ -532,6 +546,10 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
       PP.Diag(OpToken, diag::err_pp_colon_without_question);
       return true;
     }
+
+    // If this operator is live and overflowed, report the issue.
+    if (Overflow && ValueLive)
+      PP.Diag(OpToken, diag::warn_pp_expr_overflow);
   }
   
   return false;
