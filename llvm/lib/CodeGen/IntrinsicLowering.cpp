@@ -475,7 +475,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
 
-  case Intrinsic::bit_part_select:
+  case Intrinsic::part_select:
     CI->replaceAllUsesWith(LowerBitPartSelect(CI));
     break;
 

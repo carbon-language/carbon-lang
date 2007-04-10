@@ -2689,7 +2689,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Tmp.getValue(1));
     return 0;
   }
-  case Intrinsic::bit_part_select: {
+  case Intrinsic::part_select: {
     // Currently not implemented: just abort
     assert(0 && "bit_part_select intrinsic not implemented");
     abort();
