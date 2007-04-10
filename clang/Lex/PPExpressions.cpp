@@ -422,6 +422,7 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     
     // FIXME: All of these should detect and report overflow??
     bool Overflow = false;
+    APSInt Res(LHS.getBitWidth());
     switch (Operator) {
     default: assert(0 && "Unknown operator token!");
     case tok::percent:
@@ -429,17 +430,17 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
         if (ValueLive) PP.Diag(OpToken, diag::err_pp_remainder_by_zero);
         return true;
       }
-      LHS %= RHS;
+      Res = LHS % RHS;
       break;
     case tok::slash:
       if (RHS == 0) {
         if (ValueLive) PP.Diag(OpToken, diag::err_pp_division_by_zero);
         return true;
       }
-      LHS /= RHS;
+      Res = LHS / RHS;
       break;
     case tok::star:
-      LHS *= RHS;
+      Res = LHS * RHS;
       break;
     case tok::lessless: {
       // Determine whether overflow is about to happen.
@@ -453,7 +454,7 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
       else
         Overflow = ShAmt >= LHS.countLeadingOnes();
       
-      LHS <<= ShAmt;
+      Res = LHS << ShAmt;
       break;
     }
     case tok::greatergreater: {
@@ -461,53 +462,59 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
       unsigned ShAmt = RHS.getLimitedValue();
       if (ShAmt >= LHS.getBitWidth())
         Overflow = true, ShAmt = LHS.getBitWidth()-1;
-      LHS >>= ShAmt;
+      Res = LHS >> ShAmt;
       break;
     }
     case tok::plus:
-      LHS += RHS;
+      Res = LHS + RHS;
       break;
     case tok::minus:
-      LHS -= RHS;
+      Res = LHS - RHS;
       break;
     case tok::lessequal:
-      LHS = LHS <= RHS;
-      LHS.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
+      Res = LHS <= RHS;
+      Res.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::less:
-      LHS = LHS < RHS;
-      LHS.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
+      Res = LHS < RHS;
+      Res.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::greaterequal:
-      LHS = LHS >= RHS;
-      LHS.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
+      Res = LHS >= RHS;
+      Res.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::greater:
-      LHS = LHS > RHS;
-      LHS.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
+      Res = LHS > RHS;
+      Res.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::exclaimequal:
-      LHS = LHS != RHS;
-      LHS.setIsUnsigned(false);  // C99 6.5.9p3, result is always int (signed)
+      Res = LHS != RHS;
+      Res.setIsUnsigned(false);  // C99 6.5.9p3, result is always int (signed)
       break;
     case tok::equalequal:
-      LHS = LHS == RHS;
-      LHS.setIsUnsigned(false);  // C99 6.5.9p3, result is always int (signed)
+      Res = LHS == RHS;
+      Res.setIsUnsigned(false);  // C99 6.5.9p3, result is always int (signed)
       break;
-    case tok::amp:             LHS &= RHS; break;
-    case tok::caret:           LHS ^= RHS; break;
-    case tok::pipe:            LHS |= RHS; break;
+    case tok::amp:
+      Res = LHS & RHS;
+      break;
+    case tok::caret:
+      Res = LHS ^ RHS;
+      break;
+    case tok::pipe:
+      Res = LHS | RHS;
+      break;
     case tok::ampamp:
-      LHS = LHS != 0 && RHS != 0;
-      LHS.setIsUnsigned(false);  // C99 6.5.13p3, result is always int (signed)
+      Res = (LHS != 0 && RHS != 0);
+      Res.setIsUnsigned(false);  // C99 6.5.13p3, result is always int (signed)
       break;
     case tok::pipepipe:
-      LHS = LHS != 0 || RHS != 0;
-      LHS.setIsUnsigned(false);  // C99 6.5.14p3, result is always int (signed)
+      Res = (LHS != 0 || RHS != 0);
+      Res.setIsUnsigned(false);  // C99 6.5.14p3, result is always int (signed)
       break;
     case tok::comma:
       PP.Diag(OpToken, diag::ext_pp_comma_expr);
-      LHS = RHS; // LHS = LHS,RHS -> RHS.
+      Res = RHS; // LHS = LHS,RHS -> RHS.
       break; 
     case tok::question: {
       // Parse the : part of the expression.
@@ -531,11 +538,11 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
         return true;
       
       // Now that we have the condition, the LHS and the RHS of the :, evaluate.
-      LHS = LHS != 0 ? RHS : AfterColonVal;
+      Res = LHS != 0 ? RHS : AfterColonVal;
 
       // Usual arithmetic conversions (C99 6.3.1.8p1): result is unsigned if
       // either operand is unsigned.
-      LHS.setIsUnsigned(RHS.isUnsigned() | AfterColonVal.isUnsigned());
+      Res.setIsUnsigned(RHS.isUnsigned() | AfterColonVal.isUnsigned());
       
       // Figure out the precedence of the token after the : part.
       PeekPrec = getPrecedence(PeekTok.getKind());
@@ -550,6 +557,9 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     // If this operator is live and overflowed, report the issue.
     if (Overflow && ValueLive)
       PP.Diag(OpToken, diag::warn_pp_expr_overflow);
+    
+    // Put the result back into 'LHS' for our next iteration.
+    LHS = Res;
   }
   
   return false;
