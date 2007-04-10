@@ -29,7 +29,8 @@ using namespace llvm;
 using namespace clang;
 
 static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
-                                     LexerToken &PeekTok, Preprocessor &PP);
+                                     LexerToken &PeekTok, bool ValueLive,
+                                     Preprocessor &PP);
 
 /// DefinedTracker - This struct is used while parsing expressions to keep track
 /// of whether !defined(X) has been seen.
@@ -57,8 +58,13 @@ struct DefinedTracker {
 /// return the computed value in Result.  Return true if there was an error
 /// parsing.  This function also returns information about the form of the
 /// expression in DT.  See above for information on what DT means.
+///
+/// If ValueLive is false, then this value is being evaluated in a context where
+/// the result is not used.  As such, avoid diagnostics that relate to
+/// evaluation.
 static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
-                          DefinedTracker &DT, Preprocessor &PP) {
+                          DefinedTracker &DT, bool ValueLive,
+                          Preprocessor &PP) {
   Result = 0;
   DT.State = DefinedTracker::Unknown;
   
@@ -99,7 +105,7 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
     Result.setIsUnsigned(false);  // Result is signed intmax_t.
 
     // If there is a macro, mark it used.
-    if (Result != 0) {
+    if (Result != 0 && ValueLive) {
       II->getMacroInfo()->setIsUsed(true);
       
       // If this is the first use of a target-specific macro, warn about it.
@@ -109,7 +115,7 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
         PP.getTargetInfo().DiagnoseNonPortability(PeekTok.getLocation(),
                                                   diag::port_target_macro_use);
       }
-    } else {
+    } else if (ValueLive) {
       // Use of a target-specific macro for some other target?  If so, warn.
       if (II->isOtherTargetMacro()) {
         II->setIsOtherTargetMacro(false);  // Don't warn on second use.
@@ -165,7 +171,7 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
     // Parse the integer literal into Result.
     if (Literal.GetIntegerValue(Result)) {
       // Overflow parsing integer literal.
-      PP.Diag(PeekTok, diag::warn_integer_too_large);
+      if (ValueLive) PP.Diag(PeekTok, diag::warn_integer_too_large);
       Result.setIsUnsigned(true);
     } else {
       // Set the signedness of the result to match whether there was a U suffix
@@ -177,7 +183,7 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
       // large that it is unsigned" e.g. on 12345678901234567890 where intmax_t
       // is 64-bits.
       if (!Literal.isUnsigned && Result.isNegative()) {
-        PP.Diag(PeekTok, diag::warn_integer_too_large_for_signed);
+        if (ValueLive)PP.Diag(PeekTok, diag::warn_integer_too_large_for_signed);
         Result.setIsUnsigned(true);
       }
     }
@@ -231,14 +237,15 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
     PP.LexNonComment(PeekTok);  // Eat the (.
     // Parse the value and if there are any binary operators involved, parse
     // them.
-    if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
+    if (EvaluateValue(Result, PeekTok, DT, ValueLive, PP)) return true;
 
     // If this is a silly value like (X), which doesn't need parens, check for
     // !(defined X).
     if (PeekTok.getKind() == tok::r_paren) {
       // Just use DT unmodified as our result.
     } else {
-      if (EvaluateDirectiveSubExpr(Result, 1, PeekTok, PP)) return true;
+      if (EvaluateDirectiveSubExpr(Result, 1, PeekTok, ValueLive, PP))
+        return true;
       
       if (PeekTok.getKind() != tok::r_paren) {
         PP.Diag(PeekTok, diag::err_pp_expected_rparen);
@@ -252,10 +259,10 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
   case tok::plus:
     // Unary plus doesn't modify the value.
     PP.LexNonComment(PeekTok);
-    return EvaluateValue(Result, PeekTok, DT, PP);
+    return EvaluateValue(Result, PeekTok, DT, ValueLive, PP);
   case tok::minus:
     PP.LexNonComment(PeekTok);
-    if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
+    if (EvaluateValue(Result, PeekTok, DT, ValueLive, PP)) return true;
     // C99 6.5.3.3p3: The sign of the result matches the sign of the operand.
     Result = -Result;
     DT.State = DefinedTracker::Unknown;
@@ -263,7 +270,7 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
     
   case tok::tilde:
     PP.LexNonComment(PeekTok);
-    if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
+    if (EvaluateValue(Result, PeekTok, DT, ValueLive, PP)) return true;
     // C99 6.5.3.3p4: The sign of the result matches the sign of the operand.
     Result = ~Result;
     DT.State = DefinedTracker::Unknown;
@@ -271,7 +278,7 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
     
   case tok::exclaim:
     PP.LexNonComment(PeekTok);
-    if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
+    if (EvaluateValue(Result, PeekTok, DT, ValueLive, PP)) return true;
     Result = !Result;
     // C99 6.5.3.3p5: The sign of the result is 'int', aka it is signed.
     Result.setIsUnsigned(false);
@@ -336,8 +343,13 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
 
 /// EvaluateDirectiveSubExpr - Evaluate the subexpression whose first token is
 /// PeekTok, and whose precedence is PeekPrec.
+///
+/// If ValueLive is false, then this value is being evaluated in a context where
+/// the result is not used.  As such, avoid diagnostics that relate to
+/// evaluation.
 static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
-                                     LexerToken &PeekTok, Preprocessor &PP) {
+                                     LexerToken &PeekTok, bool ValueLive,
+                                     Preprocessor &PP) {
   unsigned PeekPrec = getPrecedence(PeekTok.getKind());
   // If this token isn't valid, report the error.
   if (PeekPrec == ~0U) {
@@ -352,6 +364,21 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
       return false;
     
     tok::TokenKind Operator = PeekTok.getKind();
+    
+    // If this is a short-circuiting operator, see if the RHS of the operator is
+    // dead.  Note that this cannot just clobber ValueLive.  Consider 
+    // "0 && 1 ? 4 : 1 / 0", which is parsed as "(0 && 1) ? 4 : (1 / 0)".  In
+    // this example, the RHS of the && being dead does not make the rest of the
+    // expr dead.
+    bool RHSIsLive;
+    if (Operator == tok::ampamp && LHS == 0)
+      RHSIsLive = false;   // RHS of "0 && x" is dead.
+    else if (Operator == tok::pipepipe && LHS != 0)
+      RHSIsLive = false;   // RHS of "1 || x" is dead.
+    else if (Operator == tok::question && LHS == 0)
+      RHSIsLive = false;   // RHS (x) of "0 ? x : y" is dead.
+    else
+      RHSIsLive = ValueLive;
 
     // Consume the operator, saving the operator token for error reporting.
     LexerToken OpToken = PeekTok;
@@ -360,7 +387,7 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     APSInt RHS(LHS.getBitWidth());
     // Parse the RHS of the operator.
     DefinedTracker DT;
-    if (EvaluateValue(RHS, PeekTok, DT, PP)) return true;
+    if (EvaluateValue(RHS, PeekTok, DT, RHSIsLive, PP)) return true;
 
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
@@ -379,7 +406,7 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     // more tightly with RHS than we do, evaluate it completely first.
     if (ThisPrec < PeekPrec ||
         (ThisPrec == PeekPrec && isRightAssoc)) {
-      if (EvaluateDirectiveSubExpr(RHS, ThisPrec+1, PeekTok, PP))
+      if (EvaluateDirectiveSubExpr(RHS, ThisPrec+1, PeekTok, RHSIsLive, PP))
         return true;
       PeekPrec = getPrecedence(PeekTok.getKind());
     }
@@ -397,14 +424,14 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     default: assert(0 && "Unknown operator token!");
     case tok::percent:
       if (RHS == 0) {
-        PP.Diag(OpToken, diag::err_pp_remainder_by_zero);
+        if (ValueLive) PP.Diag(OpToken, diag::err_pp_remainder_by_zero);
         return true;
       }
       LHS %= RHS;
       break;
     case tok::slash:
       if (RHS == 0) {
-        PP.Diag(OpToken, diag::err_pp_division_by_zero);
+        if (ValueLive) PP.Diag(OpToken, diag::err_pp_division_by_zero);
         return true;
       }
       LHS /= RHS;
@@ -477,13 +504,15 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
       PP.LexNonComment(PeekTok);
 
       // Evaluate the value after the :.
+      bool AfterColonLive = ValueLive && LHS == 0;
       APSInt AfterColonVal(LHS.getBitWidth());
       DefinedTracker DT;
-      if (EvaluateValue(AfterColonVal, PeekTok, DT, PP)) return true;
+      if (EvaluateValue(AfterColonVal, PeekTok, DT, AfterColonLive, PP))
+        return true;
 
       // Parse anything after the : RHS that has a higher precedence than ?.
       if (EvaluateDirectiveSubExpr(AfterColonVal, ThisPrec+1,
-                                   PeekTok, PP))
+                                   PeekTok, AfterColonLive, PP))
         return true;
       
       // Now that we have the condition, the LHS and the RHS of the :, evaluate.
@@ -520,7 +549,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   unsigned BitWidth = getTargetInfo().getIntMaxTWidth(Tok.getLocation());
   APSInt ResVal(BitWidth);
   DefinedTracker DT;
-  if (EvaluateValue(ResVal, Tok, DT, *this)) {
+  if (EvaluateValue(ResVal, Tok, DT, true, *this)) {
     // Parse error, skip the rest of the macro line.
     if (Tok.getKind() != tok::eom)
       DiscardUntilEndOfDirective();
@@ -541,7 +570,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   
   // Otherwise, we must have a binary operator (e.g. "#if 1 < 2"), so parse the
   // operator and the stuff after it.
-  if (EvaluateDirectiveSubExpr(ResVal, 1, Tok, *this)) {
+  if (EvaluateDirectiveSubExpr(ResVal, 1, Tok, true, *this)) {
     // Parse error, skip the rest of the macro line.
     if (Tok.getKind() != tok::eom)
       DiscardUntilEndOfDirective();
