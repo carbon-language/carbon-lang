@@ -584,6 +584,14 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::TB:
     Need0FPrefix = true;   // Two-byte opcode prefix
     break;
+  case X86II::T8:
+    MCE.emitByte(0x0F);
+    MCE.emitByte(0x38);
+    break;
+  case X86II::TA:
+    MCE.emitByte(0x0F);
+    MCE.emitByte(0x3A);
+    break;
   case X86II::REP: break; // already handled.
   case X86II::XS:   // F3 0F
     MCE.emitByte(0xF3);

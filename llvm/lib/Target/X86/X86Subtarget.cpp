@@ -113,6 +113,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   if ((EDX >> 25) & 0x1) X86SSELevel = SSE1;
   if ((EDX >> 26) & 0x1) X86SSELevel = SSE2;
   if (ECX & 0x1)         X86SSELevel = SSE3;
+  if ((ECX >> 9)  & 0x1) X86SSELevel = SSSE3;
 
   if (memcmp(text.c, "GenuineIntel", 12) == 0) {
     X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);

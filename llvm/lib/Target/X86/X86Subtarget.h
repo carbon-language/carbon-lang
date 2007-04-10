@@ -38,7 +38,7 @@ public:
   };
 protected:
   enum X86SSEEnum {
-    NoMMXSSE, MMX, SSE1, SSE2, SSE3
+    NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3
   };
 
   enum X863DNowEnum {
@@ -51,7 +51,7 @@ protected:
   /// PICStyle - Which PIC style to use
   PICStyle::Style PICStyle;
   
-  /// X86SSELevel - MMX, SSE1, SSE2, SSE3, or none supported.
+  /// X86SSELevel - MMX, SSE1, SSE2, SSE3, SSSE3, or none supported.
   X86SSEEnum X86SSELevel;
 
   /// X863DNowLevel - 3DNow or 3DNow Athlon, or none supported.
@@ -110,6 +110,7 @@ public:
   bool hasSSE1() const { return X86SSELevel >= SSE1; }
   bool hasSSE2() const { return X86SSELevel >= SSE2; }
   bool hasSSE3() const { return X86SSELevel >= SSE3; }
+  bool hasSSSE3() const { return X86SSELevel >= SSSE3; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
 

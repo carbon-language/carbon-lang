@@ -167,6 +167,7 @@ def HasMMX       : Predicate<"Subtarget->hasMMX()">;
 def HasSSE1      : Predicate<"Subtarget->hasSSE1()">;
 def HasSSE2      : Predicate<"Subtarget->hasSSE2()">;
 def HasSSE3      : Predicate<"Subtarget->hasSSE3()">;
+def HasSSSE3     : Predicate<"Subtarget->hasSSSE3()">;
 def FPStack      : Predicate<"!Subtarget->hasSSE2()">;
 def In32BitMode  : Predicate<"!Subtarget->is64Bit()">;
 def In64BitMode  : Predicate<"Subtarget->is64Bit()">;
@@ -248,6 +249,8 @@ class DE     { bits<4> Prefix = 9; }
 class DF     { bits<4> Prefix = 10; }
 class XD     { bits<4> Prefix = 11; }
 class XS     { bits<4> Prefix = 12; }
+class T8     { bits<4> Prefix = 13; }
+class TA     { bits<4> Prefix = 14; }
 
 
 //===----------------------------------------------------------------------===//

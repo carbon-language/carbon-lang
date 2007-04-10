@@ -30,6 +30,8 @@ def FeatureSSE2      : SubtargetFeature<"sse2", "X86SSELevel", "SSE2",
                                         "Enable SSE2 instructions">;
 def FeatureSSE3      : SubtargetFeature<"sse3", "X86SSELevel", "SSE3",
                                         "Enable SSE3 instructions">;
+def FeatureSSSE3     : SubtargetFeature<"ssse3", "X86SSELevel", "SSSE3",
+                                        "Enable SSSE3 instructions">;
 def Feature3DNow     : SubtargetFeature<"3dnow", "X863DNowLevel", "ThreeDNow",
                                         "Enable 3DNow! instructions">;
 def Feature3DNowA    : SubtargetFeature<"3dnowa", "X863DNowLevel", "ThreeDNowA",

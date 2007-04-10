@@ -154,7 +154,10 @@ namespace X86II {
 
     // XS, XD - These prefix codes are for single and double precision scalar
     // floating point operations performed in the SSE registers.
-    XD = 11 << Op0Shift,   XS = 12 << Op0Shift,
+    XD = 11 << Op0Shift,  XS = 12 << Op0Shift,
+
+    // T8, TA - Prefix after the 0x0F prefix.
+    T8 = 13 << Op0Shift,  TA = 14 << Op0Shift,
 
     //===------------------------------------------------------------------===//
     // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.

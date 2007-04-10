@@ -183,15 +183,17 @@ def PSHUFD_binary_shuffle_mask : PatLeaf<(build_vector), [{
 //===----------------------------------------------------------------------===//
 
 // Instruction templates
-// SSI - SSE1 instructions with XS prefix.
-// SDI - SSE2 instructions with XD prefix.
-// PSI - SSE1 instructions with TB prefix.
-// PDI - SSE2 instructions with TB and OpSize prefixes.
+// SSI   - SSE1 instructions with XS prefix.
+// SDI   - SSE2 instructions with XD prefix.
+// PSI   - SSE1 instructions with TB prefix.
+// PDI   - SSE2 instructions with TB and OpSize prefixes.
 // PSIi8 - SSE1 instructions with ImmT == Imm8 and TB prefix.
 // PDIi8 - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
-// S3I - SSE3 instructions with TB and OpSize prefixes.
-// S3SI - SSE3 instructions with XS prefix.
-// S3DI - SSE3 instructions with XD prefix.
+// S3I   - SSE3 instructions with TB and OpSize prefixes.
+// S3SI  - SSE3 instructions with XS prefix.
+// S3DI  - SSE3 instructions with XD prefix.
+// SS38I - SSSE3 instructions with T8 and OpSize prefixes.
+// SS3AI - SSSE3 instructions with TA and OpSize prefixes.
 class SSI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, XS, Requires<[HasSSE1]>;
 class SDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
@@ -211,6 +213,11 @@ class S3DI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, XD, Requires<[HasSSE3]>;
 class S3I<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE3]>;
+
+class SS38I<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : I<o, F, ops, asm, pattern>, T8, OpSize, Requires<[HasSSSE3]>;
+class SS3AI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : I<o, F, ops, asm, pattern>, TA, OpSize, Requires<[HasSSSE3]>;
 
 //===----------------------------------------------------------------------===//
 // Helpers for defining instructions that directly correspond to intrinsics.
@@ -1311,6 +1318,22 @@ multiclass PDI_binop_rm_v2i64<bits<8> opc, string OpcodeStr, SDNode OpNode,
 }
 }
 
+/// SS3I_binop_rm_int - Simple SSSE3 binary operatr whose type is v2i64.
+let isTwoAddress = 1 in {
+  multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
+                               bit Commutable = 0> {
+    def rr : SS38I<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                   !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                   [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]> {
+      let isCommutable = Commutable;
+    }
+    def rm : SS38I<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                   !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
+                   [(set VR128:$dst,
+                     (IntId VR128:$src1,
+                      (bitconvert (loadv2i64 addr:$src2))))]>;
+  }
+}
 
 // 128-bit Integer Arithmetic
 
@@ -1339,6 +1362,9 @@ defm PMULLW : PDI_binop_rm<0xD5, "pmullw", mul, v8i16, 1>;
 defm PMULHUW : PDI_binop_rm_int<0xE4, "pmulhuw", int_x86_sse2_pmulhu_w, 1>;
 defm PMULHW  : PDI_binop_rm_int<0xE5, "pmulhw" , int_x86_sse2_pmulh_w , 1>;
 defm PMULUDQ : PDI_binop_rm_int<0xF4, "pmuludq", int_x86_sse2_pmulu_dq, 1>;
+
+defm PMULHRSW128 : SS3I_binop_rm_int<0x0B, "pmulhrsw",
+                                     int_x86_ssse3_pmulhrsw_128, 1>;
 
 defm PMADDWD : PDI_binop_rm_int<0xF5, "pmaddwd", int_x86_sse2_pmadd_wd, 1>;
 
