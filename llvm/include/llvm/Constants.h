@@ -189,9 +189,8 @@ public:
   /// @returns the 64-bit value of this constant if its active bits number is 
   /// not greater than 64, otherwise, just return the given uint64_t number.
   /// @brief Get the constant's value if possible.
-  uint64_t getLimitedValue(uint64_t Limit) {
-    return (Val.getActiveBits() > 64 || Val.getZExtValue() > Limit) ? 
-           Limit : Val.getZExtValue();
+  uint64_t getLimitedValue(uint64_t Limit = ~0ULL) const {
+    return Val.getLimitedValue(Limit);
   }
 
   /// @returns the value for an integer constant of the given type that has all
