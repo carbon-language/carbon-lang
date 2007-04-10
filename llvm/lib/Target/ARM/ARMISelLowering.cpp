@@ -1372,6 +1372,7 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
       return false;
 
   default:
+    int Scale = AM.Scale;
     switch (getValueType(Ty)) {
     default: return false;
     case MVT::i1:
@@ -1381,14 +1382,15 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
       // This assumes i64 is legalized to a pair of i32. If not (i.e.
       // ldrd / strd are used, then its address mode is same as i16.
       // r + r
-      if (AM.Scale == 1)
+      if (Scale < 0) Scale = -Scale;
+      if (Scale == 1)
         return true;
       // r + r << imm
-      if (!isPowerOf2_32(AM.Scale & ~1))
+      if (!isPowerOf2_32(Scale & ~1))
         return false;
     case MVT::i16:
       // r + r
-      if (((unsigned)AM.HasBaseReg + AM.Scale) <= 2)
+      if (((unsigned)AM.HasBaseReg + Scale) <= 2)
         return true;
 
     case MVT::isVoid:
