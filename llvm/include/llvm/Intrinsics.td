@@ -203,7 +203,7 @@ def int_siglongjmp : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_i32_ty]>;
 
 // None of these intrinsics accesses memory at all.
 let Properties = [IntrNoMem] in {
-  def int_bit_part_select : 
+  def int_part_select : 
      Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_i32_ty, llvm_i32_ty]>;
   def int_bswap: Intrinsic<[llvm_int_ty, llvm_int_ty]>;
   def int_ctpop: Intrinsic<[llvm_i32_ty, llvm_int_ty]>;
