@@ -281,8 +281,9 @@ public:
     return *this != 0;
   }
 
-  /// getLimitedValue - Return this value, or return all ones if it is too large
-  /// to return.
+  /// getLimitedValue - If this value is smaller than the specified limit,
+  /// return it, otherwise return the limit value.  This causes the value
+  /// to saturate to the limit.
   uint64_t getLimitedValue(uint64_t Limit = ~0ULL) const {
     return (getActiveBits() > 64 || getZExtValue() > Limit) ?
       Limit :  getZExtValue();
