@@ -281,6 +281,13 @@ public:
     return *this != 0;
   }
 
+  /// getLimitedValue - Return this value, or return all ones if it is too large
+  /// to return.
+  uint64_t getLimitedValue(uint64_t Limit = ~0ULL) const {
+    return (getActiveBits() > 64 || getZExtValue() > Limit) ?
+      Limit :  getZExtValue();
+  }
+
   /// @}
   /// @name Value Generators
   /// @{
