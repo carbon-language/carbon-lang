@@ -774,7 +774,8 @@ static void ResolveTypeTo(char *Name, const Type *ToTy, const Signedness& Sign){
     D = ValID::create((int)CurModule.Types.size());
   D.S.copy(Sign);
 
-  CurModule.NamedTypeSigns[Name] = Sign;
+  if (Name)
+    CurModule.NamedTypeSigns[Name] = Sign;
 
   std::map<ValID, PATypeHolder>::iterator I =
     CurModule.LateResolveTypes.find(D);
