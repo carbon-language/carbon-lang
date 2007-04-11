@@ -68,12 +68,14 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
           }
       break;
 
-    case 0xCE:
-    case 0xCF:
+    case 0xCA:
       // This is complicated by an overlap with Java class files. 
       // See the Mach-O section in /usr/share/file/magic for details.
-      if (magic[1] == char(0xFA) && magic[2] == char(0xED) && 
-          magic[3] == char(0xFE))
+      if (magic[1] == char(0xFE) && magic[2] == char(0xBA) && 
+          magic[3] == char(0xBE)) {
+        return Mach_O_DynamicallyLinkedSharedLib_FileType;
+        
+        // FIXME: How does this work?
         if (length >= 14 && magic[13] == 0)
           switch (magic[12]) {
             default: break;
@@ -87,6 +89,7 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
             case 8: return Mach_O_Bundle_FileType;
             case 9: return Mach_O_DynamicallyLinkedSharedLibStub_FileType;
           }
+      }
       break;
 
     case 0xF0: // PowerPC Windows
