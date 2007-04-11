@@ -428,14 +428,15 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     
     // Usual arithmetic conversions (C99 6.3.1.8p1): result is unsigned if
     // either operand is unsigned.  Don't do this for x and y in "x ? y : z".
+    APSInt Res(LHS.getBitWidth());
     if (Operator != tok::question) {
       if (RHS.isUnsigned()) LHS.setIsUnsigned(true);
       RHS.setIsUnsigned(LHS.isUnsigned());
+      Res.setIsUnsigned(LHS.isUnsigned());
     }
     
     // FIXME: All of these should detect and report overflow??
     bool Overflow = false;
-    APSInt Res(LHS.getBitWidth());
     switch (Operator) {
     default: assert(0 && "Unknown operator token!");
     case tok::percent:
@@ -451,9 +452,13 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
         return true;
       }
       Res = LHS / RHS;
+      if (LHS.isSigned())
+        Overflow = LHS.isMinSignedValue() && RHS.isAllOnesValue(); // MININT/-1
       break;
     case tok::star:
       Res = LHS * RHS;
+      if (LHS != 0 && RHS != 0)
+        Overflow = Res/RHS != LHS || Res/LHS != RHS;
       break;
     case tok::lessless: {
       // Determine whether overflow is about to happen.
