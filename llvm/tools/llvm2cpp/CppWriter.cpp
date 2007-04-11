@@ -18,6 +18,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ADT/StringExtras.h"
@@ -457,6 +458,29 @@ CppWriter::printTypeInternal(const Type* Ty) {
         Out << ");";
         nl(Out);
       }
+      const ParamAttrsList *PAL = FT->getParamAttrs();
+      Out << "ParamAttrsList *" << typeName << "_PAL = 0;";
+      if (PAL && !PAL->empty()) {
+        Out << typeName << "_PAL = new ParamAttrsList();";
+        for (unsigned i = 0; i < PAL->size(); ++i) {
+          uint16_t index = PAL->getParamIndex(i);
+          uint16_t attrs = PAL->getParamAttrs(index);
+          Out << typeName << "_PAL->addAttribute(" << index << ", 0";
+          if (attrs & ParamAttr::SExt)
+            Out << " | ParamAttr::SExt";
+          if (attrs & ParamAttr::ZExt)
+            Out << " | ParamAttr::ZExt";
+          if (attrs & ParamAttr::StructRet)
+            Out << " | ParamAttr::StructRet";
+          if (attrs & ParamAttr::InReg)
+            Out << " | ParamAttr::InReg";
+          if (attrs & ParamAttr::NoReturn)
+            Out << " | ParamAttr::NoReturn";
+          if (attrs & ParamAttr::NoUnwind)
+            Out << " | ParamAttr::NoUnwind";
+          Out << ");";
+        }
+      }
       bool isForward = printTypeInternal(FT->getReturnType());
       std::string retTypeName(getCppName(FT->getReturnType()));
       Out << "FunctionType* " << typeName << " = FunctionType::get(";
@@ -465,7 +489,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
         Out << "_fwd";
       Out << ",";
       nl(Out) << "/*Params=*/" << typeName << "_args,";
-      nl(Out) << "/*isVarArg=*/" << (FT->isVarArg() ? "true" : "false") << ");";
+      nl(Out) << "/*isVarArg=*/" << (FT->isVarArg() ? "true" : "false") ;
+      nl(Out) << "/*ParamAttrs=/" << typeName << "_PAL" << ");";
       out(); 
       nl(Out);
       break;
