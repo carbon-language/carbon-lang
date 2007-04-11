@@ -91,8 +91,12 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
         return error("Cannot link archive '" + Pathname.toString() + "'");
       break;
 
-    case sys::ELF_FileType:
-    case sys::Mach_O_FileType:
+    case sys::ELF_Relocatable_FileType:
+    case sys::ELF_SharedObject_FileType:
+    case sys::Mach_O_Object_FileType:
+    case sys::Mach_O_FixedVirtualMemorySharedLib_FileType:
+    case sys::Mach_O_DynamicallyLinkedSharedLib_FileType:
+    case sys::Mach_O_DynamicallyLinkedSharedLibStub_FileType:
     case sys::COFF_FileType:
       is_native = true;
       break;
@@ -181,8 +185,12 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
       break;
     }
 
-    case sys::ELF_FileType:
-    case sys::Mach_O_FileType:
+    case sys::ELF_Relocatable_FileType:
+    case sys::ELF_SharedObject_FileType:
+    case sys::Mach_O_Object_FileType:
+    case sys::Mach_O_FixedVirtualMemorySharedLib_FileType:
+    case sys::Mach_O_DynamicallyLinkedSharedLib_FileType:
+    case sys::Mach_O_DynamicallyLinkedSharedLibStub_FileType:
     case sys::COFF_FileType:
       is_native = true;
       break;

@@ -828,9 +828,9 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       const FunctionType *FTy = I.getParent()->getParent()->getFunctionType();
       const ParamAttrsList *Attrs = FTy->getParamAttrs();
       ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-      if (Attrs && Attrs->paramHasAttr(0, SExtAttribute))
+      if (Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt))
         ExtendKind = ISD::SIGN_EXTEND;
-      if (Attrs && Attrs->paramHasAttr(0, ZExtAttribute))
+      if (Attrs && Attrs->paramHasAttr(0, ParamAttr::ZExt))
         ExtendKind = ISD::ZERO_EXTEND;
       RetOp = DAG.getNode(ExtendKind, TmpVT, RetOp);
     }
@@ -2768,16 +2768,16 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     Value *Arg = I.getOperand(i);
     SDOperand ArgNode = getValue(Arg);
     Entry.Node = ArgNode; Entry.Ty = Arg->getType();
-    Entry.isSExt   = Attrs && Attrs->paramHasAttr(i, SExtAttribute);
-    Entry.isZExt   = Attrs && Attrs->paramHasAttr(i, ZExtAttribute);
-    Entry.isInReg  = Attrs && Attrs->paramHasAttr(i, InRegAttribute);
-    Entry.isSRet   = Attrs && Attrs->paramHasAttr(i, StructRetAttribute);
+    Entry.isSExt   = Attrs && Attrs->paramHasAttr(i, ParamAttr::SExt);
+    Entry.isZExt   = Attrs && Attrs->paramHasAttr(i, ParamAttr::ZExt);
+    Entry.isInReg  = Attrs && Attrs->paramHasAttr(i, ParamAttr::InReg);
+    Entry.isSRet   = Attrs && Attrs->paramHasAttr(i, ParamAttr::StructRet);
     Args.push_back(Entry);
   }
 
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), 
-                    Attrs && Attrs->paramHasAttr(0, SExtAttribute),
+                    Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt),
                     FTy->isVarArg(), CallingConv, IsTailCall, 
                     Callee, Args, DAG);
   if (I.getType() != Type::VoidTy)
@@ -3617,13 +3617,13 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
     // FIXME: Distinguish between a formal with no [sz]ext attribute from one
     // that is zero extended!
-    if (Attrs && Attrs->paramHasAttr(j, ZExtAttribute))
+    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::ZExt))
       Flags &= ~(ISD::ParamFlags::SExt);
-    if (Attrs && Attrs->paramHasAttr(j, SExtAttribute))
+    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::SExt))
       Flags |= ISD::ParamFlags::SExt;
-    if (Attrs && Attrs->paramHasAttr(j, InRegAttribute))
+    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::InReg))
       Flags |= ISD::ParamFlags::InReg;
-    if (Attrs && Attrs->paramHasAttr(j, StructRetAttribute))
+    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::StructRet))
       Flags |= ISD::ParamFlags::StructReturn;
     Flags |= (OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs);
     
@@ -3697,10 +3697,10 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     case Promote: {
       SDOperand Op(Result, i++);
       if (MVT::isInteger(VT)) {
-        if (Attrs && Attrs->paramHasAttr(Idx, SExtAttribute))
+        if (Attrs && Attrs->paramHasAttr(Idx, ParamAttr::SExt))
           Op = DAG.getNode(ISD::AssertSext, Op.getValueType(), Op,
                            DAG.getValueType(VT));
-        else if (Attrs && Attrs->paramHasAttr(Idx, ZExtAttribute))
+        else if (Attrs && Attrs->paramHasAttr(Idx, ParamAttr::ZExt))
           Op = DAG.getNode(ISD::AssertZext, Op.getValueType(), Op,
                            DAG.getValueType(VT));
         Op = DAG.getNode(ISD::TRUNCATE, VT, Op);

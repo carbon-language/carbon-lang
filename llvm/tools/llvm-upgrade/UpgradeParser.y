@@ -388,7 +388,7 @@ static bool FuncTysDifferOnlyBySRet(const FunctionType *F1,
     PAL2 = *F2->getParamAttrs();
   if (PAL1.getParamAttrs(0) != PAL2.getParamAttrs(0))
     return false;
-  unsigned SRetMask = ~unsigned(StructRetAttribute);
+  unsigned SRetMask = ~unsigned(ParamAttr::StructRet);
   for (unsigned i = 0; i < F1->getNumParams(); ++i) {
     if (F1->getParamType(i) != F2->getParamType(i) ||
         unsigned(PAL1.getParamAttrs(i+1)) & SRetMask !=
@@ -433,7 +433,7 @@ static Value* handleSRetFuncTypeMerge(Value *V, const Type* Ty) {
     const FunctionType *FT2 = dyn_cast<FunctionType>(PF2->getElementType());
     if (FT1 && FT2 && FuncTysDifferOnlyBySRet(FT1, FT2)) {
       const ParamAttrsList *PAL2 = FT2->getParamAttrs();
-      if (PAL2 && PAL2->paramHasAttr(1, StructRetAttribute))
+      if (PAL2 && PAL2->paramHasAttr(1, ParamAttr::StructRet))
         return V;
       else if (Constant *C = dyn_cast<Constant>(V))
         return ConstantExpr::getBitCast(C, PF1);
@@ -2904,8 +2904,8 @@ FunctionHeaderH
     ParamAttrsList *ParamAttrs = 0;
     if ($1 == OldCallingConv::CSRet) {
       ParamAttrs = new ParamAttrsList();
-      ParamAttrs->addAttributes(0, NoAttributeSet);     // result
-      ParamAttrs->addAttributes(1, StructRetAttribute); // first arg
+      ParamAttrs->addAttributes(0, ParamAttr::None);     // result
+      ParamAttrs->addAttributes(1, ParamAttr::StructRet); // first arg
     }
 
     const FunctionType *FT = 
@@ -3293,8 +3293,8 @@ BBTerminatorInst
       ParamAttrsList *ParamAttrs = 0;
       if ($2 == OldCallingConv::CSRet) {
         ParamAttrs = new ParamAttrsList();
-        ParamAttrs->addAttributes(0, NoAttributeSet);      // Function result
-        ParamAttrs->addAttributes(1, StructRetAttribute);  // first param
+        ParamAttrs->addAttributes(0, ParamAttr::None);      // Function result
+        ParamAttrs->addAttributes(1, ParamAttr::StructRet);  // first param
       }
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
@@ -3698,8 +3698,8 @@ InstVal
       ParamAttrsList *ParamAttrs = 0;
       if ($2 == OldCallingConv::CSRet) {
         ParamAttrs = new ParamAttrsList();
-        ParamAttrs->addAttributes(0, NoAttributeSet);     // function result
-        ParamAttrs->addAttributes(1, StructRetAttribute); // first parameter
+        ParamAttrs->addAttributes(0, ParamAttr::None);     // function result
+        ParamAttrs->addAttributes(1, ParamAttr::StructRet); // first parameter
       }
 
       FTy = FunctionType::get(RetTy, ParamTypes, isVarArg, ParamAttrs);

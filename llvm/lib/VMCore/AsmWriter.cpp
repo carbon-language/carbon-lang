@@ -291,7 +291,7 @@ static void calcTypeName(const Type *Ty,
       if (I != FTy->param_begin())
         Result += ", ";
       calcTypeName(*I, TypeStack, TypeNames, Result);
-      if (Attrs && Attrs->getParamAttrs(Idx) != NoAttributeSet) {
+      if (Attrs && Attrs->getParamAttrs(Idx) != ParamAttr::None) {
         Result += + " ";
         Result += Attrs->getParamAttrsTextByIndex(Idx);
       }
@@ -302,7 +302,7 @@ static void calcTypeName(const Type *Ty,
       Result += "...";
     }
     Result += ")";
-    if (Attrs && Attrs->getParamAttrs(0) != NoAttributeSet) {
+    if (Attrs && Attrs->getParamAttrs(0) != ParamAttr::None) {
       Result += " ";
       Result += Attrs->getParamAttrsTextByIndex(0);
     }
@@ -737,7 +737,7 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
       if (I != FTy->param_begin())
         Out << ", ";
       printType(*I);
-      if (Attrs && Attrs->getParamAttrs(Idx) != NoAttributeSet) {
+      if (Attrs && Attrs->getParamAttrs(Idx) != ParamAttr::None) {
         Out << " " << Attrs->getParamAttrsTextByIndex(Idx);
       }
       Idx++;
@@ -747,7 +747,7 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
       Out << "...";
     }
     Out << ')';
-    if (Attrs && Attrs->getParamAttrs(0) != NoAttributeSet)
+    if (Attrs && Attrs->getParamAttrs(0) != ParamAttr::None)
       Out << ' ' << Attrs->getParamAttrsTextByIndex(0);
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     if (STy->isPacked())
@@ -974,7 +974,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     // Insert commas as we go... the first arg doesn't get a comma
     if (I != F->arg_begin()) Out << ", ";
     printArgument(I, (Attrs ? Attrs->getParamAttrs(Idx)
-                            : uint16_t(NoAttributeSet)));
+                            : uint16_t(ParamAttr::None)));
     Idx++;
   }
 
@@ -984,7 +984,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "...";  // Output varargs portion of signature!
   }
   Out << ')';
-  if (Attrs && Attrs->getParamAttrs(0) != NoAttributeSet)
+  if (Attrs && Attrs->getParamAttrs(0) != ParamAttr::None)
     Out << ' ' << Attrs->getParamAttrsTextByIndex(0);
   if (F->hasSection())
     Out << " section \"" << F->getSection() << '"';
@@ -1013,7 +1013,7 @@ void AssemblyWriter::printArgument(const Argument *Arg, uint16_t Attrs) {
   // Output type...
   printType(Arg->getType());
 
-  if (Attrs != NoAttributeSet)
+  if (Attrs != ParamAttr::None)
     Out << ' ' << ParamAttrsList::getParamAttrsText(Attrs);
 
   // Output name, if available...
@@ -1188,11 +1188,11 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       if (op > 1)
         Out << ',';
       writeOperand(I.getOperand(op), true);
-      if (PAL && PAL->getParamAttrs(op) != NoAttributeSet)
+      if (PAL && PAL->getParamAttrs(op) != ParamAttr::None)
         Out << " " << PAL->getParamAttrsTextByIndex(op);
     }
     Out << " )";
-    if (PAL && PAL->getParamAttrs(0) != NoAttributeSet)
+    if (PAL && PAL->getParamAttrs(0) != ParamAttr::None)
       Out << ' ' << PAL->getParamAttrsTextByIndex(0);
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     const PointerType    *PTy = cast<PointerType>(Operand->getType());
@@ -1228,12 +1228,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       if (op > 3)
         Out << ',';
       writeOperand(I.getOperand(op), true);
-      if (PAL && PAL->getParamAttrs(op-2) != NoAttributeSet)
+      if (PAL && PAL->getParamAttrs(op-2) != ParamAttr::None)
         Out << " " << PAL->getParamAttrsTextByIndex(op-2);
     }
 
     Out << " )";
-    if (PAL && PAL->getParamAttrs(0) != NoAttributeSet)
+    if (PAL && PAL->getParamAttrs(0) != ParamAttr::None)
       Out << " " << PAL->getParamAttrsTextByIndex(0);
     Out << "\n\t\t\tto";
     writeOperand(II->getNormalDest(), true);

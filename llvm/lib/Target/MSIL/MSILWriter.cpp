@@ -1133,7 +1133,7 @@ void MSILWriter::printStaticInitializerList() {
 void MSILWriter::printFunction(const Function& F) {
   const FunctionType* FTy = F.getFunctionType();
   const ParamAttrsList *Attrs = FTy->getParamAttrs();
-  bool isSigned = Attrs && Attrs->paramHasAttr(0, SExtAttribute);
+  bool isSigned = Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt);
   Out << "\n.method static ";
   Out << (F.hasInternalLinkage() ? "private " : "public ");
   if (F.isVarArg()) Out << "vararg ";
@@ -1144,7 +1144,7 @@ void MSILWriter::printFunction(const Function& F) {
   unsigned ArgIdx = 1;
   for (Function::const_arg_iterator I = F.arg_begin(), E = F.arg_end(); I!=E;
        ++I, ++ArgIdx) {
-    isSigned = Attrs && Attrs->paramHasAttr(ArgIdx, SExtAttribute);
+    isSigned = Attrs && Attrs->paramHasAttr(ArgIdx, ParamAttr::SExt);
     if (I!=F.arg_begin()) Out << ", ";
     Out << getTypeName(I->getType(),isSigned) << getValueName(I);
   }

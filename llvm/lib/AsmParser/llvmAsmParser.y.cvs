@@ -1189,24 +1189,24 @@ OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                   CHECK_FOR_ERROR
                  };
 
-ParamAttr     : ZEXT  { $$ = ZExtAttribute;      }
-              | SEXT  { $$ = SExtAttribute;      }
-              | INREG { $$ = InRegAttribute;     }
-              | SRET  { $$ = StructRetAttribute; }
+ParamAttr     : ZEXT  { $$ = ParamAttr::ZExt;      }
+              | SEXT  { $$ = ParamAttr::SExt;      }
+              | INREG { $$ = ParamAttr::InReg;     }
+              | SRET  { $$ = ParamAttr::StructRet; }
               ;
 
-OptParamAttrs : /* empty */  { $$ = NoAttributeSet; }
+OptParamAttrs : /* empty */  { $$ = ParamAttr::None; }
               | OptParamAttrs ParamAttr {
                 $$ = $1 | $2;
               }
               ;
 
-FuncAttr      : NORETURN { $$ = NoReturnAttribute; }
-              | NOUNWIND { $$ = NoUnwindAttribute; }
+FuncAttr      : NORETURN { $$ = ParamAttr::NoReturn; }
+              | NOUNWIND { $$ = ParamAttr::NoUnwind; }
               | ParamAttr
               ;
 
-OptFuncAttrs  : /* empty */ { $$ = NoAttributeSet; }
+OptFuncAttrs  : /* empty */ { $$ = ParamAttr::None; }
               | OptFuncAttrs FuncAttr {
                 $$ = $1 | $2;
               }
@@ -1298,7 +1298,7 @@ Types
   | Types '(' ArgTypeListI ')' OptFuncAttrs {
     std::vector<const Type*> Params;
     ParamAttrsList Attrs;
-    if ($5 != NoAttributeSet)
+    if ($5 != ParamAttr::None)
       Attrs.addAttributes(0, $5);
     unsigned index = 1;
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
@@ -1306,7 +1306,7 @@ Types
       const Type *Ty = I->Ty->get();
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           Attrs.addAttributes(index, I->Attrs);
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
@@ -1324,7 +1324,7 @@ Types
   | VOID '(' ArgTypeListI ')' OptFuncAttrs {
     std::vector<const Type*> Params;
     ParamAttrsList Attrs;
-    if ($5 != NoAttributeSet)
+    if ($5 != ParamAttr::None)
       Attrs.addAttributes(0, $5);
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     unsigned index = 1;
@@ -1332,7 +1332,7 @@ Types
       const Type* Ty = I->Ty->get();
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           Attrs.addAttributes(index, I->Attrs);
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
@@ -1430,14 +1430,14 @@ ArgTypeListI
   : ArgTypeList
   | ArgTypeList ',' DOTDOTDOT {
     $$=$1;
-    TypeWithAttrs TWA; TWA.Attrs = NoAttributeSet;
+    TypeWithAttrs TWA; TWA.Attrs = ParamAttr::None;
     TWA.Ty = new PATypeHolder(Type::VoidTy);
     $$->push_back(TWA);
     CHECK_FOR_ERROR
   }
   | DOTDOTDOT {
     $$ = new TypeWithAttrsList;
-    TypeWithAttrs TWA; TWA.Attrs = NoAttributeSet;
+    TypeWithAttrs TWA; TWA.Attrs = ParamAttr::None;
     TWA.Ty = new PATypeHolder(Type::VoidTy);
     $$->push_back(TWA);
     CHECK_FOR_ERROR
@@ -2100,7 +2100,7 @@ ArgList : ArgListH {
     struct ArgListEntry E;
     E.Ty = new PATypeHolder(Type::VoidTy);
     E.Name = 0;
-    E.Attrs = NoAttributeSet;
+    E.Attrs = ParamAttr::None;
     $$->push_back(E);
     CHECK_FOR_ERROR
   }
@@ -2109,7 +2109,7 @@ ArgList : ArgListH {
     struct ArgListEntry E;
     E.Ty = new PATypeHolder(Type::VoidTy);
     E.Name = 0;
-    E.Attrs = NoAttributeSet;
+    E.Attrs = ParamAttr::None;
     $$->push_back(E);
     CHECK_FOR_ERROR
   }
@@ -2131,7 +2131,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
 
   std::vector<const Type*> ParamTypeList;
   ParamAttrsList ParamAttrs;
-  if ($7 != NoAttributeSet)
+  if ($7 != ParamAttr::None)
     ParamAttrs.addAttributes(0, $7);
   if ($5) {   // If there are arguments...
     unsigned index = 1;
@@ -2141,7 +2141,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
         GEN_ERROR("Reference to abstract argument: " + Ty->getDescription());
       ParamTypeList.push_back(Ty);
       if (Ty != Type::VoidTy)
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           ParamAttrs.addAttributes(index, I->Attrs);
     }
   }
@@ -2486,7 +2486,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
       ParamAttrsList ParamAttrs;
-      if ($8 != NoAttributeSet)
+      if ($8 != ParamAttr::None)
         ParamAttrs.addAttributes(0, $8);
       ValueRefList::iterator I = $6->begin(), E = $6->end();
       unsigned index = 1;
@@ -2495,7 +2495,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           ParamAttrs.addAttributes(index, I->Attrs);
       }
 
@@ -2792,7 +2792,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
       ParamAttrsList ParamAttrs;
-      if ($8 != NoAttributeSet)
+      if ($8 != ParamAttr::None)
         ParamAttrs.addAttributes(0, $8);
       unsigned index = 1;
       ValueRefList::iterator I = $6->begin(), E = $6->end();
@@ -2801,7 +2801,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           ParamAttrs.addAttributes(index, I->Attrs);
       }
 

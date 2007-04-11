@@ -356,7 +356,7 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
     if (PrintedType)
       FunctionInnards << ", ";
     printType(FunctionInnards, *I, 
-        /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute), "");
+        /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, ParamAttr::SExt), "");
     PrintedType = true;
   }
   if (FTy->isVarArg()) {
@@ -368,7 +368,7 @@ void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
   FunctionInnards << ')';
   std::string tstr = FunctionInnards.str();
   printType(Out, RetTy, 
-      /*isSigned=*/Attrs && Attrs->paramHasAttr(0, SExtAttribute), tstr);
+      /*isSigned=*/Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt), tstr);
 }
 
 std::ostream &
@@ -430,7 +430,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
       if (I != FTy->param_begin())
         FunctionInnards << ", ";
       printType(FunctionInnards, *I, 
-         /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute), "");
+         /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, ParamAttr::SExt), "");
       ++Idx;
     }
     if (FTy->isVarArg()) {
@@ -442,7 +442,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     FunctionInnards << ')';
     std::string tstr = FunctionInnards.str();
     printType(Out, FTy->getReturnType(), 
-        /*isSigned=*/Attrs && Attrs->paramHasAttr(0, SExtAttribute), tstr);
+        /*isSigned=*/Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt), tstr);
     return Out;
   }
   case Type::StructTyID: {
@@ -1832,7 +1832,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
         else
           ArgName = "";
         printType(FunctionInnards, I->getType(), 
-            /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute), 
+            /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, ParamAttr::SExt), 
             ArgName);
         PrintedArg = true;
         ++Idx;
@@ -1853,7 +1853,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     for (; I != E; ++I) {
       if (PrintedArg) FunctionInnards << ", ";
       printType(FunctionInnards, *I,
-             /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute));
+             /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, ParamAttr::SExt));
       PrintedArg = true;
       ++Idx;
     }
@@ -1881,7 +1881,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
     
   // Print out the return type and the signature built above.
   printType(Out, RetTy, 
-            /*isSigned=*/ Attrs && Attrs->paramHasAttr(0, SExtAttribute), 
+            /*isSigned=*/ Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt), 
             FunctionInnards.str());
 }
 
@@ -2586,7 +2586,7 @@ void CWriter::visitCallInst(CallInst &I) {
         (*AI)->getType() != FTy->getParamType(ArgNo)) {
       Out << '(';
       printType(Out, FTy->getParamType(ArgNo), 
-            /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, SExtAttribute));
+            /*isSigned=*/Attrs && Attrs->paramHasAttr(Idx, ParamAttr::SExt));
       Out << ')';
     }
     writeOperand(*AI);

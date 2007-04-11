@@ -1,4 +1,4 @@
-//===-- llvm/ParameterAttributes.h - Container for Param Attrs --*- C++ -*-===//
+//===-- llvm/ParameterAttributes.h - Container for ParamAttrs ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -25,15 +25,21 @@ namespace llvm {
 /// treated by optimizations and code generation. This enumeration lists the
 /// attributes that can be associated with parameters or function results.
 /// @brief Function parameter attributes.
-enum ParameterAttributes {
-  NoAttributeSet     = 0,      ///< No attributes have been set
-  ZExtAttribute      = 1 << 0, ///< zero extended before/after call
-  SExtAttribute      = 1 << 1, ///< sign extended before/after call
-  NoReturnAttribute  = 1 << 2, ///< mark the function as not returning
-  InRegAttribute     = 1 << 3, ///< force argument to be passed in register
-  StructRetAttribute = 1 << 4, ///< hidden pointer to structure to return
-  NoUnwindAttribute  = 1 << 5  ///< Function doesn't unwind stack
+namespace ParamAttr {
+
+enum Attributes {
+  None       = 0,      ///< No attributes have been set
+  ZExt       = 1 << 0, ///< zero extended before/after call
+  SExt       = 1 << 1, ///< sign extended before/after call
+  NoReturn   = 1 << 2, ///< mark the function as not returning
+  InReg      = 1 << 3, ///< force argument to be passed in register
+  StructRet  = 1 << 4, ///< hidden pointer to structure to return
+  NoUnwind   = 1 << 5  ///< Function doesn't unwind stack
 };
+
+}
+
+typedef ParamAttr::Attributes ParameterAttributes;
 
 /// This class is used by Function and CallInst to represent the set of 
 /// parameter attributes used. It represents a list of pairs of uint16_t, one
@@ -45,6 +51,39 @@ enum ParameterAttributes {
 /// are provided to obtain information about the attributes.
 /// @brief A List of ParameterAttributes.
 class ParamAttrsList {
+  //void operator=(const ParamAttrsList &); // Do not implement
+  //ParamAttrsList(const ParamAttrsList &); // Do not implement
+
+  /// @name Types
+  /// @{
+  public:
+    /// This is an internal structure used to associate the ParameterAttributes
+    /// with a parameter index. 
+    /// @brief ParameterAttributes with a parameter index.
+    struct ParamAttrsWithIndex {
+      uint16_t attrs; ///< The attributes that are set, |'d together
+      uint16_t index; ///< Index of the parameter for which the attributes apply
+    };
+
+    /// @brief A vector of attribute/index pairs.
+    typedef SmallVector<ParamAttrsWithIndex,4> ParamAttrsVector;
+
+  /// @}
+  /// @name Construction
+  /// @{
+  public:
+    /// @brief Construct an empty ParamAttrsList
+    ParamAttrsList() {}
+
+    /// This method ensures the uniqueness of ParamAttrsList instances. The
+    /// argument is a vector of attribute/index pairs as represented by the
+    /// ParamAttrsWithIndex structure. The vector is used in the construction of
+    /// the ParamAttrsList instance. If an instance with identical vector pairs
+    /// exists, it will be returned instead of creating a new instance.
+    /// @brief Get a ParamAttrsList instance.
+    ParamAttrsList *get(const ParamAttrsVector &attrVec);
+
+  /// @}
   /// @name Accessors
   /// @{
   public:
@@ -148,15 +187,7 @@ class ParamAttrsList {
   /// @name Data
   /// @{
   private:
-    /// This is an internal structure used to associate the ParameterAttributes
-    /// with a parameter index. 
-    /// @brief ParameterAttributes with a parameter index.
-    struct ParamAttrsWithIndex {
-      uint16_t attrs; ///< The attributes that are set, |'d together
-      uint16_t index; ///< Index of the parameter for which the attributes apply
-    };
-
-    SmallVector<ParamAttrsWithIndex,4> attrs; ///< The list of attributes
+    ParamAttrsVector attrs; ///< The list of attributes
   /// @}
 };
 

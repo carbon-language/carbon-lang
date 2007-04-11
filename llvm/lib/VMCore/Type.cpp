@@ -285,7 +285,7 @@ static std::string getTypeDescription(const Type *Ty,
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Result += ", ";
-      if (Attrs && Attrs->getParamAttrs(Idx) != NoAttributeSet)
+      if (Attrs && Attrs->getParamAttrs(Idx) != ParamAttr::None)
         Result += Attrs->getParamAttrsTextByIndex(Idx);
       Idx++;
       Result += getTypeDescription(*I, TypeStack);
@@ -295,7 +295,7 @@ static std::string getTypeDescription(const Type *Ty,
       Result += "...";
     }
     Result += ")";
-    if (Attrs && Attrs->getParamAttrs(0) != NoAttributeSet) {
+    if (Attrs && Attrs->getParamAttrs(0) != ParamAttr::None) {
       Result += " " + Attrs->getParamAttrsTextByIndex(0);
     }
     break;
@@ -1121,7 +1121,7 @@ FunctionType::~FunctionType() {
 
 bool FunctionType::isStructReturn() const {
   if (ParamAttrs)
-    return ParamAttrs->paramHasAttr(1, StructRetAttribute);
+    return ParamAttrs->paramHasAttr(1, ParamAttr::StructRet);
   return false;
 }
 

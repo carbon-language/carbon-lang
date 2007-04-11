@@ -81,24 +81,24 @@ ParamAttrsList::getParamAttrs(uint16_t Index) const {
   for (unsigned i = 0; i < limit; ++i)
     if (attrs[i].index == Index)
       return attrs[i].attrs;
-  return NoAttributeSet;
+  return ParamAttr::None;
 }
 
 
 std::string 
 ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
   std::string Result;
-  if (Attrs & ZExtAttribute)
+  if (Attrs & ParamAttr::ZExt)
     Result += "zext ";
-  if (Attrs & SExtAttribute)
+  if (Attrs & ParamAttr::SExt)
     Result += "sext ";
-  if (Attrs & NoReturnAttribute)
+  if (Attrs & ParamAttr::NoReturn)
     Result += "noreturn ";
-  if (Attrs & NoUnwindAttribute)
+  if (Attrs & ParamAttr::NoUnwind)
     Result += "nounwind ";
-  if (Attrs & InRegAttribute)
+  if (Attrs & ParamAttr::InReg)
     Result += "inreg ";
-  if (Attrs & StructRetAttribute)
+  if (Attrs & ParamAttr::StructRet)
     Result += "sret ";  
   return Result;
 }
@@ -125,7 +125,7 @@ ParamAttrsList::removeAttributes(uint16_t Index, uint16_t Attrs) {
   for (unsigned i = 0; i < attrs.size(); ++i)
     if (attrs[i].index == Index) {
       attrs[i].attrs &= ~Attrs;
-      if (attrs[i].attrs == NoAttributeSet)
+      if (attrs[i].attrs == ParamAttr::None)
         attrs.erase(&attrs[i]);
       return;
     }

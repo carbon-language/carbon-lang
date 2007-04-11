@@ -3337,27 +3337,27 @@ yyreduce:
 
   case 93:
 #line 1192 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.ParamAttrs) = ZExtAttribute;      ;}
+    { (yyval.ParamAttrs) = ParamAttr::ZExt;      ;}
     break;
 
   case 94:
 #line 1193 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.ParamAttrs) = SExtAttribute;      ;}
+    { (yyval.ParamAttrs) = ParamAttr::SExt;      ;}
     break;
 
   case 95:
 #line 1194 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.ParamAttrs) = InRegAttribute;     ;}
+    { (yyval.ParamAttrs) = ParamAttr::InReg;     ;}
     break;
 
   case 96:
 #line 1195 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.ParamAttrs) = StructRetAttribute; ;}
+    { (yyval.ParamAttrs) = ParamAttr::StructRet; ;}
     break;
 
   case 97:
 #line 1198 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.ParamAttrs) = NoAttributeSet; ;}
+    { (yyval.ParamAttrs) = ParamAttr::None; ;}
     break;
 
   case 98:
@@ -3369,17 +3369,17 @@ yyreduce:
 
   case 99:
 #line 1204 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.ParamAttrs) = NoReturnAttribute; ;}
+    { (yyval.ParamAttrs) = ParamAttr::NoReturn; ;}
     break;
 
   case 100:
 #line 1205 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.ParamAttrs) = NoUnwindAttribute; ;}
+    { (yyval.ParamAttrs) = ParamAttr::NoUnwind; ;}
     break;
 
   case 102:
 #line 1209 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
-    { (yyval.ParamAttrs) = NoAttributeSet; ;}
+    { (yyval.ParamAttrs) = ParamAttr::None; ;}
     break;
 
   case 103:
@@ -3522,7 +3522,7 @@ yyreduce:
     {
     std::vector<const Type*> Params;
     ParamAttrsList Attrs;
-    if ((yyvsp[0].ParamAttrs) != NoAttributeSet)
+    if ((yyvsp[0].ParamAttrs) != ParamAttr::None)
       Attrs.addAttributes(0, (yyvsp[0].ParamAttrs));
     unsigned index = 1;
     TypeWithAttrsList::iterator I = (yyvsp[-2].TypeWithAttrsList)->begin(), E = (yyvsp[-2].TypeWithAttrsList)->end();
@@ -3530,7 +3530,7 @@ yyreduce:
       const Type *Ty = I->Ty->get();
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           Attrs.addAttributes(index, I->Attrs);
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
@@ -3552,7 +3552,7 @@ yyreduce:
     {
     std::vector<const Type*> Params;
     ParamAttrsList Attrs;
-    if ((yyvsp[0].ParamAttrs) != NoAttributeSet)
+    if ((yyvsp[0].ParamAttrs) != ParamAttr::None)
       Attrs.addAttributes(0, (yyvsp[0].ParamAttrs));
     TypeWithAttrsList::iterator I = (yyvsp[-2].TypeWithAttrsList)->begin(), E = (yyvsp[-2].TypeWithAttrsList)->end();
     unsigned index = 1;
@@ -3560,7 +3560,7 @@ yyreduce:
       const Type* Ty = I->Ty->get();
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           Attrs.addAttributes(index, I->Attrs);
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
@@ -3693,7 +3693,7 @@ yyreduce:
 #line 1431 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList)=(yyvsp[-2].TypeWithAttrsList);
-    TypeWithAttrs TWA; TWA.Attrs = NoAttributeSet;
+    TypeWithAttrs TWA; TWA.Attrs = ParamAttr::None;
     TWA.Ty = new PATypeHolder(Type::VoidTy);
     (yyval.TypeWithAttrsList)->push_back(TWA);
     CHECK_FOR_ERROR
@@ -3704,7 +3704,7 @@ yyreduce:
 #line 1438 "/proj/llvm/llvm-1/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.TypeWithAttrsList) = new TypeWithAttrsList;
-    TypeWithAttrs TWA; TWA.Attrs = NoAttributeSet;
+    TypeWithAttrs TWA; TWA.Attrs = ParamAttr::None;
     TWA.Ty = new PATypeHolder(Type::VoidTy);
     (yyval.TypeWithAttrsList)->push_back(TWA);
     CHECK_FOR_ERROR
@@ -4578,7 +4578,7 @@ yyreduce:
     struct ArgListEntry E;
     E.Ty = new PATypeHolder(Type::VoidTy);
     E.Name = 0;
-    E.Attrs = NoAttributeSet;
+    E.Attrs = ParamAttr::None;
     (yyval.ArgList)->push_back(E);
     CHECK_FOR_ERROR
   ;}
@@ -4591,7 +4591,7 @@ yyreduce:
     struct ArgListEntry E;
     E.Ty = new PATypeHolder(Type::VoidTy);
     E.Name = 0;
-    E.Attrs = NoAttributeSet;
+    E.Attrs = ParamAttr::None;
     (yyval.ArgList)->push_back(E);
     CHECK_FOR_ERROR
   ;}
@@ -4619,7 +4619,7 @@ yyreduce:
 
   std::vector<const Type*> ParamTypeList;
   ParamAttrsList ParamAttrs;
-  if ((yyvsp[-2].ParamAttrs) != NoAttributeSet)
+  if ((yyvsp[-2].ParamAttrs) != ParamAttr::None)
     ParamAttrs.addAttributes(0, (yyvsp[-2].ParamAttrs));
   if ((yyvsp[-4].ArgList)) {   // If there are arguments...
     unsigned index = 1;
@@ -4629,7 +4629,7 @@ yyreduce:
         GEN_ERROR("Reference to abstract argument: " + Ty->getDescription());
       ParamTypeList.push_back(Ty);
       if (Ty != Type::VoidTy)
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           ParamAttrs.addAttributes(index, I->Attrs);
     }
   }
@@ -5075,7 +5075,7 @@ yyreduce:
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
       ParamAttrsList ParamAttrs;
-      if ((yyvsp[-6].ParamAttrs) != NoAttributeSet)
+      if ((yyvsp[-6].ParamAttrs) != ParamAttr::None)
         ParamAttrs.addAttributes(0, (yyvsp[-6].ParamAttrs));
       ValueRefList::iterator I = (yyvsp[-8].ValueRefList)->begin(), E = (yyvsp[-8].ValueRefList)->end();
       unsigned index = 1;
@@ -5084,7 +5084,7 @@ yyreduce:
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           ParamAttrs.addAttributes(index, I->Attrs);
       }
 
@@ -5471,7 +5471,7 @@ yyreduce:
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
       ParamAttrsList ParamAttrs;
-      if ((yyvsp[0].ParamAttrs) != NoAttributeSet)
+      if ((yyvsp[0].ParamAttrs) != ParamAttr::None)
         ParamAttrs.addAttributes(0, (yyvsp[0].ParamAttrs));
       unsigned index = 1;
       ValueRefList::iterator I = (yyvsp[-2].ValueRefList)->begin(), E = (yyvsp[-2].ValueRefList)->end();
@@ -5480,7 +5480,7 @@ yyreduce:
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        if (I->Attrs != NoAttributeSet)
+        if (I->Attrs != ParamAttr::None)
           ParamAttrs.addAttributes(index, I->Attrs);
       }
 
