@@ -1049,31 +1049,3 @@ int decode_byte (const decode_t* decode) {
 
 //===---------------------------------------------------------------------===//
 
-Consider:
-
-int isnegative(unsigned int X) {
-   return !(X < 2147483648U);
-}
-
-We current compile this to:
-
-define i32 @isnegative(i32 %X) {
-        icmp slt i32 %X, 0              ; <i1>:0 [#uses=1]
-        %retval = zext i1 %0 to i32             ; <i32> [#uses=1]
-        ret i32 %retval
-}
-
-and:
-
-_isnegative:
-        cmpl $0, 4(%esp)
-        sets %al
-        movzbl %al, %eax
-        ret
-
-We should produce:
-
-	movl	4(%esp), %eax
-	shrl	$31, %eax
-        ret
-
