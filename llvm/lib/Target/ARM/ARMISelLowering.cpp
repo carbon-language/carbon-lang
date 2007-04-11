@@ -1386,13 +1386,13 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
       if (Scale == 1)
         return true;
       // r + r << imm
-      if (!isPowerOf2_32(Scale & ~1))
-        return false;
+      return isPowerOf2_32(Scale & ~1);
     case MVT::i16:
       // r + r
       if (((unsigned)AM.HasBaseReg + Scale) <= 2)
         return true;
-
+      return false;
+      
     case MVT::isVoid:
       // Note, we allow "void" uses (basically, uses that aren't loads or
       // stores), because arm allows folding a scale into many arithmetic
