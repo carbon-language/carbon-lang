@@ -460,8 +460,10 @@ CppWriter::printTypeInternal(const Type* Ty) {
       }
       const ParamAttrsList *PAL = FT->getParamAttrs();
       Out << "ParamAttrsList *" << typeName << "_PAL = 0;";
+      nl(Out);
       if (PAL && !PAL->empty()) {
         Out << typeName << "_PAL = new ParamAttrsList();";
+        nl(Out);
         for (unsigned i = 0; i < PAL->size(); ++i) {
           uint16_t index = PAL->getParamIndex(i);
           uint16_t attrs = PAL->getParamAttrs(index);
@@ -479,6 +481,7 @@ CppWriter::printTypeInternal(const Type* Ty) {
           if (attrs & ParamAttr::NoUnwind)
             Out << " | ParamAttr::NoUnwind";
           Out << ");";
+          nl(Out);
         }
       }
       bool isForward = printTypeInternal(FT->getReturnType());
@@ -490,7 +493,7 @@ CppWriter::printTypeInternal(const Type* Ty) {
       Out << ",";
       nl(Out) << "/*Params=*/" << typeName << "_args,";
       nl(Out) << "/*isVarArg=*/" << (FT->isVarArg() ? "true" : "false") ;
-      nl(Out) << "/*ParamAttrs=/" << typeName << "_PAL" << ");";
+      nl(Out) << "/*ParamAttrs=*/" << typeName << "_PAL" << ");";
       out(); 
       nl(Out);
       break;
