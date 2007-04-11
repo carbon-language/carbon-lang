@@ -1,5 +1,6 @@
-proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx prcontext llvmgcc_version} {
-
+proc llvm-runtest { programs } { 
+    global objdir srcdir subdir target_triplet llvmgcc llvmgxx prcontext
+    global llvmgcc_version srcroot objroot llvmlibsdir
 
     set timeout 60
 
@@ -63,6 +64,12 @@ proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx
 		#replace %llvmgxx with actual path to llvmg++
 		regsub -all {%llvmgxx} $new_runline "$llvmgxx -emit-llvm" new_runline
 		
+		#replace %L with path to libraries
+		regsub -all {%L} $new_runline "$llvmlibsdir" new_runline
+
+		#replace %I with path to includes
+		regsub -all {%I} $new_runline "$srcroot/include" new_runline
+
 		puts $scriptFileId $new_runline
 	    } elseif {[regexp {XFAIL:[ *](.+)} $line match targets]} {
 		set targets
@@ -127,5 +134,3 @@ proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx
 	}
     }
 }
-
-
