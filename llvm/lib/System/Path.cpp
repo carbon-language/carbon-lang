@@ -103,8 +103,16 @@ Path::isArchive() const {
 
 bool
 Path::isDynamicLibrary() const {
-  if (canRead())
-    return hasMagicNumber("\177ELF");
+  if (canRead()) {
+    std::string Magic;
+    if (getMagicNumber(Magic, 64))
+      switch (IdentifyFileType(Magic.c_str(), Magic.length())) {
+        default: return false;
+        case ELF_FileType:
+        case Mach_O_FileType:
+        case COFF_FileType:  return true;
+      }
+  }
   return false;
 }
 
