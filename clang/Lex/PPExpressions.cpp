@@ -430,9 +430,19 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     // either operand is unsigned.  Don't do this for x and y in "x ? y : z".
     APSInt Res(LHS.getBitWidth());
     if (Operator != tok::question) {
-      if (RHS.isUnsigned()) LHS.setIsUnsigned(true);
-      RHS.setIsUnsigned(LHS.isUnsigned());
-      Res.setIsUnsigned(LHS.isUnsigned());
+      Res.setIsUnsigned(LHS.isUnsigned()|RHS.isUnsigned());
+      // If this just promoted something from signed to unsigned, and if the
+      // value was negative, warn about it.
+      if (ValueLive && Res.isUnsigned()) {
+        if (!LHS.isUnsigned() && LHS.isNegative())
+          PP.Diag(OpToken, diag::warn_pp_convert_lhs_to_positive,
+                  LHS.toString(10, true) + " to " + LHS.toString(10, false));
+        if (!RHS.isUnsigned() && RHS.isNegative())
+          PP.Diag(OpToken, diag::warn_pp_convert_rhs_to_positive,
+                  RHS.toString(10, true) + " to " + RHS.toString(10, false));
+      }
+      LHS.setIsUnsigned(Res.isUnsigned());
+      RHS.setIsUnsigned(Res.isUnsigned());
     }
     
     // FIXME: All of these should detect and report overflow??

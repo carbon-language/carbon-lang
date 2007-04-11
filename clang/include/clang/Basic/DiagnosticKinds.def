@@ -116,6 +116,10 @@ DIAG(pp_invalid_string_literal, WARNING,
      "invalid string literal, ignoring final '\\'")
 DIAG(warn_pp_expr_overflow, WARNING,
      "integer overflow in preprocessor expression")
+DIAG(warn_pp_convert_lhs_to_positive, WARNING,
+     "left side of operator converted from negative value to unsigned: %s")
+DIAG(warn_pp_convert_rhs_to_positive, WARNING,
+     "right side of operator converted from negative value to unsigned: %s")
 
 DIAG(ext_pp_import_directive, EXTENSION,
      "#import is a language extension")
