@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep cmp | wc -l | grep 2 &&
+; RUN: llvm-as < %s | llc -march=arm | grep cmp | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=thumb &&
-; RUN: llvm-as < %s | llc -march=thumb | grep cmp | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=thumb | grep cmp | wc -l | grep 1
 
 
 define i1 @t1(i64 %x) {

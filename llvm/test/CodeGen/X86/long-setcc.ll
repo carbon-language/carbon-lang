@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 &&
-; RUN: llvm-as < %s | llc -march=x86 | grep cmp | wc -l | grep 2 &&
+; RUN: llvm-as < %s | llc -march=x86 | grep cmp | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=x86 | grep shr | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=x86 | grep xor | wc -l | grep 1
 
 define i1 @t1(i64 %x) {
