@@ -193,9 +193,9 @@ namespace {
                                      BinaryOperator &I);
     Instruction *commonCastTransforms(CastInst &CI);
     Instruction *commonIntCastTransforms(CastInst &CI);
-    Instruction *visitTrunc(CastInst &CI);
-    Instruction *visitZExt(CastInst &CI);
-    Instruction *visitSExt(CastInst &CI);
+    Instruction *visitTrunc(TruncInst &CI);
+    Instruction *visitZExt(ZExtInst &CI);
+    Instruction *visitSExt(SExtInst &CI);
     Instruction *visitFPTrunc(CastInst &CI);
     Instruction *visitFPExt(CastInst &CI);
     Instruction *visitFPToUI(CastInst &CI);
@@ -6471,7 +6471,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   return 0;
 }
 
-Instruction *InstCombiner::visitTrunc(CastInst &CI) {
+Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   if (Instruction *Result = commonIntCastTransforms(CI))
     return Result;
   
@@ -6528,7 +6528,7 @@ Instruction *InstCombiner::visitTrunc(CastInst &CI) {
   return 0;
 }
 
-Instruction *InstCombiner::visitZExt(CastInst &CI) {
+Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   // If one of the common conversion will work ..
   if (Instruction *Result = commonIntCastTransforms(CI))
     return Result;
@@ -6653,13 +6653,44 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
   return 0;
 }
 
-Instruction *InstCombiner::visitSExt(CastInst &CI) {
+Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   if (Instruction *I = commonIntCastTransforms(CI))
     return I;
   
-  // (x <s 0) ? -1 : 0 -> ashr x, 31
-  // (x >u 2147483647) ? -1 : 0 -> ashr x, 31
-
+  Value *Src = CI.getOperand(0);
+  
+  // sext (x <s 0) -> ashr x, 31   -> all ones if signed
+  // sext (x >s -1) -> ashr x, 31  -> all ones if not signed
+  if (ICmpInst *ICI = dyn_cast<ICmpInst>(Src)) {
+    // If we are just checking for a icmp eq of a single bit and zext'ing it
+    // to an integer, then shift the bit to the appropriate place and then
+    // cast to integer to avoid the comparison.
+    if (ConstantInt *Op1C = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
+      const APInt &Op1CV = Op1C->getValue();
+      
+      // sext (x <s  0) to i32 --> x>>s31      true if signbit set.
+      // sext (x >s -1) to i32 --> (x>>s31)^-1  true if signbit clear.
+      if ((ICI->getPredicate() == ICmpInst::ICMP_SLT && Op1CV == 0) ||
+          (ICI->getPredicate() == ICmpInst::ICMP_SGT &&Op1CV.isAllOnesValue())){
+        Value *In = ICI->getOperand(0);
+        Value *Sh = ConstantInt::get(In->getType(),
+                                     In->getType()->getPrimitiveSizeInBits()-1);
+        In = InsertNewInstBefore(BinaryOperator::createAShr(In, Sh,
+                                                        In->getName()+".lobit"), 
+                                 CI);
+        if (In->getType() != CI.getType())
+          In = CastInst::createIntegerCast(In, CI.getType(),
+                                           true/*SExt*/, "tmp", &CI);
+        
+        if (ICI->getPredicate() == ICmpInst::ICMP_SGT)
+          In = InsertNewInstBefore(BinaryOperator::createNot(In,
+                                     In->getName()+".not"), CI);
+        
+        return ReplaceInstUsesWith(CI, In);
+      }
+    }
+  }
+      
   return 0;
 }
 
