@@ -261,13 +261,26 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
     // Unary plus doesn't modify the value.
     PP.LexNonComment(PeekTok);
     return EvaluateValue(Result, PeekTok, DT, ValueLive, PP);
-  case tok::minus:
+  case tok::minus: {
+    SourceLocation Loc = PeekTok.getLocation();
     PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, ValueLive, PP)) return true;
     // C99 6.5.3.3p3: The sign of the result matches the sign of the operand.
     Result = -Result;
+    
+    bool Overflow = false;
+    if (Result.isUnsigned())
+      Overflow = !Result.isPositive();
+    else if (Result.isMinSignedValue())
+      Overflow = true;   // -MININT is the only thing that overflows.
+      
+    // If this operator is live and overflowed, report the issue.
+    if (Overflow && ValueLive)
+      PP.Diag(Loc, diag::warn_pp_expr_overflow);
+    
     DT.State = DefinedTracker::Unknown;
     return false;
+  }
     
   case tok::tilde:
     PP.LexNonComment(PeekTok);
