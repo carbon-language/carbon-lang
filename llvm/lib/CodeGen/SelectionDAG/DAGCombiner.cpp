@@ -2320,7 +2320,7 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
     SDOperand SCC = 
       SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
                        DAG.getConstant(1, VT), DAG.getConstant(0, VT),
-                       cast<CondCodeSDNode>(N0.getOperand(2))->get());
+                       cast<CondCodeSDNode>(N0.getOperand(2))->get(), true);
     if (SCC.Val)
       return SCC;
   }
