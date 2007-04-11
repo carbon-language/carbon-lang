@@ -515,7 +515,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
         nl(Out);
       }
       Out << "StructType* " << typeName << " = StructType::get("
-          << typeName << "_fields);";
+          << typeName << "_fields, /*isPacked=*/"
+          << (ST->isPacked() ? "true" : "false") << ");";
       nl(Out);
       break;
     }
