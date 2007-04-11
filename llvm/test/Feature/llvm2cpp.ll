@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as < %s | llvm2cpp -gen-program -o %t2.cpp -
-; RUN: gcc -g -D__STDC_LIMIT_MACROS -o %t2.exe %t2.cpp -I%I -L%L -lLLVMCore -lLLVMSupport -lLLVMbzip2 -lLLVMSystem -lstdc++
+; RUN: %link -o %t2.exe %t2.cpp -lLLVMCore -lLLVMSupport -lLLVMbzip2 -lLLVMSystem -lstdc++
 ; RUN: %t2.exe > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
