@@ -12,6 +12,7 @@ proc llvm2cpp-test { files } {
   set llvm2cpp [file join $llvmtoolsdir llvm2cpp ]
   set llvmas [file join $llvmtoolsdir llvm-as ]
   set llvmdis [file join $llvmtoolsdir llvm-dis ]
+  set llvmupgrade [ file join $llvmtoolsdir llvm-upgrade ]
 
   #Make Output Directory if it does not exist already
   if { [file exists path] } {
@@ -33,20 +34,51 @@ proc llvm2cpp-test { files } {
     set testname [file rootname $filename]
     set bytecode [file join Output $filename.bc]
 
-    # Note that the stderr for llvm-as must be redirected to /dev/null because
-    # otherwise exec will see the msgs and return 1 even though they are only 
-    # warnings. If real errors are generated on stderr then llvm-as will return
-    # a non-zero retval anyway so we're good.
+    # Note that the stderr for llvm-as, etc. must be redirected to /dev/null 
+    # because otherwise exec will see the msgs and return 1 even though they 
+    # are only warnings. If real errors are generated on stderr then llvm-as 
+    # will return a non-zero retval anyway so we're good.
+
+    # Scan the test file to see if there's an XFAIL file. If so, don't run it
     set retval [ catch { 
-      exec -keepnewline $llvmas $test -o - | $llvmdis -f -o $assembly 2>/dev/null } msg ]
+      exec -keepnewline grep XFAIL $test 2>/dev/null } msg ]
+    if { $retval == 0 } {
+      continue;
+    }
+
+    # Scan the test file to see if there's a line with "lvm-upgrade" in it. 
+    # If so, run llvm-upgrade first or else llvm-as will fail on it.
+    set retval [ catch { 
+      exec -keepnewline grep llvm-upgrade $test 2>/dev/null } msg ]
+
+    if { $retval == 0 } {
+      # In this case we must run llvm-upgrade before llvm-as
+      set pipeline llvm-upgrade|llvm-as|llvm-dis
+      set retval [ catch { 
+        exec -keepnewline $llvmupgrade < $test -o - | $llvmas | $llvmdis -f -o $assembly 2>/dev/null } msg ]
+    } else {
+      # llvm-upgrade not necessary, just llvm-as/llvm-dis
+      set pipeline llvm-as|llvm-dis
+      set retval [ catch { 
+        exec -keepnewline $llvmas < $test -o - | $llvmdis -f -o $assembly 2>/dev/null } msg ]
+    }
 
     if { $retval != 0 } {
-      fail "$test: llvm-as/llvm-dis returned $retval\n$msg"
+      fail "$test: $pipeline returned $retval\n$msg"
+      continue 
+    }
+
+    # Build bytecode for llvm2cpp input
+    set retval [ catch { 
+      exec -keepnewline $llvmas < $assembly > $bytecode 2>/dev/null } msg ]
+
+    if { $retval != 0 } {
+      fail "$test: llvm-as returned $retval\n$msg"
       continue 
     }
 
     set retval [ catch { 
-      exec -keepnewline $llvm2cpp -f -o $generated < $test 2>/dev/null } msg]
+      exec -keepnewline $llvm2cpp -f -o $generated < $bytecode 2>/dev/null } msg]
 
     if { $retval != 0 } {
       fail "$test: llvm2cpp returned $retval\n$msg"
