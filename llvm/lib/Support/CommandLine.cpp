@@ -394,6 +394,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   // the positional args into the PositionalVals list...
   Option *ActivePositionalArg = 0;
 
+  // Keep track of the option list so far so that we can tell if it is ever
+  // extended.
+  Option *CurOptionList = RegisteredOptionList;
+  
   // Loop over all of the arguments... processing them.
   bool DashDashFound = false;  // Have we read '--'?
   for (int i = 1; i < argc; ++i) {
@@ -401,6 +405,16 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     const char *Value = 0;
     const char *ArgName = "";
 
+    // If the head of the option list changed, this means that some command line
+    // option has just been registered or deregistered.  This can occur in
+    // response to things like -load, etc.  If this happens, rescan the options.
+    if (CurOptionList != RegisteredOptionList) {
+      PositionalOpts.clear();
+      Opts.clear();
+      GetOptionInfo(PositionalOpts, Opts);
+      CurOptionList = RegisteredOptionList;
+    }
+    
     // Check to see if this is a positional argument.  This argument is
     // considered to be positional if it doesn't start with '-', if it is "-"
     // itself, or if we have seen "--" already.
