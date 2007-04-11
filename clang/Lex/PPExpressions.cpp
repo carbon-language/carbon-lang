@@ -467,9 +467,19 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     }
     case tok::plus:
       Res = LHS + RHS;
+      if (LHS.isUnsigned())
+        Overflow = Res.ult(LHS);
+      else if (LHS.isPositive() == RHS.isPositive() &&
+               Res.isPositive() != LHS.isPositive())
+        Overflow = true;  // Overflow for signed addition.
       break;
     case tok::minus:
       Res = LHS - RHS;
+      if (LHS.isUnsigned())
+        Overflow = Res.ugt(LHS);
+      else if (LHS.isPositive() != RHS.isPositive() &&
+               Res.isPositive() != LHS.isPositive())
+        Overflow = true;  // Overflow for signed subtraction.
       break;
     case tok::lessequal:
       Res = LHS <= RHS;
