@@ -467,7 +467,7 @@ CppWriter::printTypeInternal(const Type* Ty) {
         for (unsigned i = 0; i < PAL->size(); ++i) {
           uint16_t index = PAL->getParamIndex(i);
           uint16_t attrs = PAL->getParamAttrs(index);
-          Out << typeName << "_PAL->addAttribute(" << index << ", 0";
+          Out << typeName << "_PAL->addAttributes(" << index << ", 0";
           if (attrs & ParamAttr::SExt)
             Out << " | ParamAttr::SExt";
           if (attrs & ParamAttr::ZExt)
@@ -492,7 +492,7 @@ CppWriter::printTypeInternal(const Type* Ty) {
         Out << "_fwd";
       Out << ",";
       nl(Out) << "/*Params=*/" << typeName << "_args,";
-      nl(Out) << "/*isVarArg=*/" << (FT->isVarArg() ? "true" : "false") ;
+      nl(Out) << "/*isVarArg=*/" << (FT->isVarArg() ? "true," : "false,") ;
       nl(Out) << "/*ParamAttrs=*/" << typeName << "_PAL" << ");";
       out(); 
       nl(Out);
@@ -563,10 +563,11 @@ CppWriter::printTypeInternal(const Type* Ty) {
   // If the type had a name, make sure we recreate it.
   const std::string* progTypeName = 
     findTypeName(TheModule->getTypeSymbolTable(),Ty);
-  if (progTypeName)
+  if (progTypeName) {
     Out << "mod->addTypeName(\"" << *progTypeName << "\", " 
         << typeName << ");";
     nl(Out);
+  }
 
   // Pop us off the type stack
   TypeStack.pop_back();
@@ -693,7 +694,7 @@ void CppWriter::printConstant(const Constant *CV) {
   }
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     Out << "ConstantInt* " << constName << " = ConstantInt::get(" 
-        << "APInt(cast<IntegerTyp>(" << typeName << ")->getBitWidth()," 
+        << "APInt(cast<IntegerType>(" << typeName << ")->getBitWidth()," 
         << " \"" << CI->getValue().toStringSigned(10)  << "\", 10));";
   } else if (isa<ConstantAggregateZero>(CV)) {
     Out << "ConstantAggregateZero* " << constName 
@@ -769,7 +770,8 @@ void CppWriter::printConstant(const Constant *CV) {
       Out << "Constant* " << constName 
           << " = ConstantExpr::getGetElementPtr(" 
           << getCppName(CE->getOperand(0)) << ", " 
-          << constName << "_indices);";
+          << "&" << constName << "_indices[0], " << CE->getNumOperands() - 1
+          << " );";
     } else if (CE->isCast()) {
       printConstant(CE->getOperand(0));
       Out << "Constant* " << constName << " = ConstantExpr::getCast(";
@@ -1016,13 +1018,13 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
   switch (I->getOpcode()) {
     case Instruction::Ret: {
       const ReturnInst* ret =  cast<ReturnInst>(I);
-      Out << "ReturnInst* " << iName << " = new ReturnInst("
+      Out << "new ReturnInst("
           << (ret->getReturnValue() ? opNames[0] + ", " : "") << bbname << ");";
       break;
     }
     case Instruction::Br: {
       const BranchInst* br = cast<BranchInst>(I);
-      Out << "BranchInst* " << iName << " = new BranchInst(" ;
+      Out << "new BranchInst(" ;
       if (br->getNumOperands() == 3 ) {
         Out << opNames[0] << ", " 
             << opNames[1] << ", "
@@ -1060,11 +1062,12 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
             << opNames[i] << ");";
         nl(Out);
       }
-      Out << "InvokeInst* " << iName << " = new InvokeInst("
+      Out << "InvokeInst *" << iName << " = new InvokeInst("
           << opNames[0] << ", "
           << opNames[1] << ", "
           << opNames[2] << ", "
-          << iName << "_params, \"";
+          << "&" << iName << "_params[0], " << inv->getNumOperands() - 3 
+          << ", \"";
       printEscapedString(inv->getName());
       Out << "\", " << bbname << ");";
       nl(Out) << iName << "->setCallingConv(";
@@ -1073,12 +1076,12 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
       break;
     }
     case Instruction::Unwind: {
-      Out << "UnwindInst* " << iName << " = new UnwindInst("
+      Out << "new UnwindInst("
           << bbname << ");";
       break;
     }
     case Instruction::Unreachable:{
-      Out << "UnreachableInst* " << iName << " = new UnreachableInst("
+      Out << "new UnreachableInst("
           << bbname << ");";
       break;
     }
@@ -1234,7 +1237,8 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
           nl(Out);
         }
         Out << "Instruction* " << iName << " = new GetElementPtrInst(" 
-            << opNames[0] << ", " << iName << "_indices";
+            << opNames[0] << ", &" << iName << "_indices[0], " 
+            << gep->getNumOperands() - 1;
       }
       Out << ", \"";
       printEscapedString(gep->getName());
@@ -1283,7 +1287,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
         case Instruction::FPToSI:   Out << "FPToSIInst"; break;
         case Instruction::UIToFP:   Out << "UIToFPInst"; break;
         case Instruction::SIToFP:   Out << "SIToFPInst"; break;
-        case Instruction::PtrToInt: Out << "PtrToInst"; break;
+        case Instruction::PtrToInt: Out << "PtrToIntInst"; break;
         case Instruction::IntToPtr: Out << "IntToPtrInst"; break;
         case Instruction::BitCast:  Out << "BitCastInst"; break;
         default: assert(!"Unreachable"); break;
@@ -1312,7 +1316,8 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
           nl(Out);
         }
         Out << "CallInst* " << iName << " = new CallInst("
-            << opNames[0] << ", " << iName << "_params, \"";
+            << opNames[0] << ", &" << iName << "_params[0], " 
+            << call->getNumOperands() - 1 << ", \"";
       } else if (call->getNumOperands() == 3) {
         Out << "CallInst* " << iName << " = new CallInst("
             << opNames[0] << ", " << opNames[1] << ", " << opNames[2] << ", \"";
@@ -1664,6 +1669,7 @@ void CppWriter::printProgram(
   Out << "#include <llvm/BasicBlock.h>\n";
   Out << "#include <llvm/Instructions.h>\n";
   Out << "#include <llvm/InlineAsm.h>\n";
+  Out << "#include <llvm/ParameterAttributes.h>\n";
   Out << "#include <llvm/Support/MathExtras.h>\n";
   Out << "#include <llvm/Pass.h>\n";
   Out << "#include <llvm/PassManager.h>\n";
@@ -1679,7 +1685,7 @@ void CppWriter::printProgram(
   Out << "  std::cerr.flush();\n";
   Out << "  std::cout.flush();\n";
   Out << "  PassManager PM;\n";
-  Out << "  PM.add(new PrintModulePass(&std::cout));\n";
+  Out << "  PM.add(new PrintModulePass(&llvm::cout));\n";
   Out << "  PM.run(*Mod);\n";
   Out << "  return 0;\n";
   Out << "}\n\n";
@@ -1693,31 +1699,20 @@ void CppWriter::printModule(
   nl(Out) << "Module* " << fname << "() {";
   nl(Out,1) << "// Module Construction";
   nl(Out) << "Module* mod = new Module(\"" << mName << "\");"; 
-  nl(Out) << "mod->setEndianness(";
-  switch (TheModule->getEndianness()) {
-    case Module::LittleEndian: Out << "Module::LittleEndian);"; break;
-    case Module::BigEndian:    Out << "Module::BigEndian);";    break;
-    case Module::AnyEndianness:Out << "Module::AnyEndianness);";  break;
-  }
-  nl(Out) << "mod->setPointerSize(";
-  switch (TheModule->getPointerSize()) {
-    case Module::Pointer32:      Out << "Module::Pointer32);"; break;
-    case Module::Pointer64:      Out << "Module::Pointer64);"; break;
-    case Module::AnyPointerSize: Out << "Module::AnyPointerSize);"; break;
-  }
-  nl(Out);
   if (!TheModule->getTargetTriple().empty()) {
-    Out << "mod->setTargetTriple(\"" << TheModule->getTargetTriple() 
-        << "\");";
-    nl(Out);
+    nl(Out) << "mod->setDataLayout(\"" << TheModule->getDataLayout() << "\");";
+  }
+  if (!TheModule->getTargetTriple().empty()) {
+    nl(Out) << "mod->setTargetTriple(\"" << TheModule->getTargetTriple() 
+            << "\");";
   }
 
   if (!TheModule->getModuleInlineAsm().empty()) {
-    Out << "mod->setModuleInlineAsm(\"";
+    nl(Out) << "mod->setModuleInlineAsm(\"";
     printEscapedString(TheModule->getModuleInlineAsm());
     Out << "\");";
-    nl(Out);
   }
+  nl(Out);
   
   // Loop over the dependent libraries and emit them.
   Module::lib_iterator LI = TheModule->lib_begin();
