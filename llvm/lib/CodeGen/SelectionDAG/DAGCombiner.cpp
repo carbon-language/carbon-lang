@@ -266,7 +266,8 @@ namespace {
     SDOperand SimplifyBinOpWithSameOpcodeHands(SDNode *N);
     SDOperand SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2);
     SDOperand SimplifySelectCC(SDOperand N0, SDOperand N1, SDOperand N2, 
-                               SDOperand N3, ISD::CondCode CC);
+                               SDOperand N3, ISD::CondCode CC, 
+                               bool NotExtCompare = false);
     SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
                             ISD::CondCode Cond, bool foldBooleans = true);
     SDOperand ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *, MVT::ValueType);
@@ -2133,10 +2134,10 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   // sext(setcc x,y,cc) -> select_cc x, y, -1, 0, cc
   if (N0.getOpcode() == ISD::SETCC) {
     SDOperand SCC = 
-    SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
-                     DAG.getConstant(~0ULL, VT), DAG.getConstant(0, VT),
-                     cast<CondCodeSDNode>(N0.getOperand(2))->get());
-    if (SCC.Val && SCC.Val != N) return SCC;
+      SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
+                       DAG.getConstant(~0ULL, VT), DAG.getConstant(0, VT),
+                       cast<CondCodeSDNode>(N0.getOperand(2))->get(), true);
+    if (SCC.Val) return SCC;
   }
   
   return SDOperand();
@@ -2225,8 +2226,8 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     SDOperand SCC = 
       SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
                        DAG.getConstant(1, VT), DAG.getConstant(0, VT),
-                       cast<CondCodeSDNode>(N0.getOperand(2))->get());
-    if (SCC.Val && SCC.Val != N) return SCC;
+                       cast<CondCodeSDNode>(N0.getOperand(2))->get(), true);
+    if (SCC.Val) return SCC;
   }
   
   return SDOperand();
@@ -2317,10 +2318,10 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   // aext(setcc x,y,cc) -> select_cc x, y, 1, 0, cc
   if (N0.getOpcode() == ISD::SETCC) {
     SDOperand SCC = 
-    SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
-                     DAG.getConstant(1, VT), DAG.getConstant(0, VT),
-                     cast<CondCodeSDNode>(N0.getOperand(2))->get());
-    if (SCC.Val && SCC.Val != N && SCC.getOpcode() != ISD::ZERO_EXTEND)
+      SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
+                       DAG.getConstant(1, VT), DAG.getConstant(0, VT),
+                       cast<CondCodeSDNode>(N0.getOperand(2))->get());
+    if (SCC.Val)
       return SCC;
   }
   
@@ -4047,7 +4048,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
 
 SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1, 
                                         SDOperand N2, SDOperand N3,
-                                        ISD::CondCode CC) {
+                                        ISD::CondCode CC, bool NotExtCompare) {
   
   MVT::ValueType VT = N2.getValueType();
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
@@ -4123,6 +4124,12 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
   // fold select C, 16, 0 -> shl C, 4
   if (N2C && N3C && N3C->isNullValue() && isPowerOf2_64(N2C->getValue()) &&
       TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult) {
+    
+    // If the caller doesn't want us to simplify this into a zext of a compare,
+    // don't do it.
+    if (NotExtCompare && N2C->getValue() == 1)
+      return SDOperand();
+    
     // Get a SetCC of the condition
     // FIXME: Should probably make sure that setcc is legal if we ever have a
     // target where it isn't.
