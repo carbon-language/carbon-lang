@@ -6457,69 +6457,6 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       }
     }
     break;
-
-  case Instruction::ICmp:
-    // If we are just checking for a icmp eq of a single bit and casting it
-    // to an integer, then shift the bit to the appropriate place and then
-    // cast to integer to avoid the comparison.
-    if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-      const APInt& Op1CV = Op1C->getValue();
-      // cast (X == 0) to int --> X^1      iff X has only the low bit set.
-      // cast (X == 0) to int --> (X>>1)^1 iff X has only the 2nd bit set.
-      // cast (X == 1) to int --> X        iff X has only the low bit set.
-      // cast (X == 2) to int --> X>>1     iff X has only the 2nd bit set.
-      // cast (X != 0) to int --> X        iff X has only the low bit set.
-      // cast (X != 0) to int --> X>>1     iff X has only the 2nd bit set.
-      // cast (X != 1) to int --> X^1      iff X has only the low bit set.
-      // cast (X != 2) to int --> (X>>1)^1 iff X has only the 2nd bit set.
-      if (Op1CV == 0 || Op1CV.isPowerOf2()) {
-        // If Op1C some other power of two, convert:
-        uint32_t BitWidth = Op1C->getType()->getBitWidth();
-        APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-        APInt TypeMask(APInt::getAllOnesValue(BitWidth));
-        ComputeMaskedBits(Op0, TypeMask, KnownZero, KnownOne);
-
-        // This only works for EQ and NE
-        ICmpInst::Predicate pred = cast<ICmpInst>(SrcI)->getPredicate();
-        if (pred != ICmpInst::ICMP_NE && pred != ICmpInst::ICMP_EQ)
-          break;
-        
-        APInt KnownZeroMask(KnownZero ^ TypeMask);
-        if (KnownZeroMask.isPowerOf2()) { // Exactly 1 possible 1?
-          bool isNE = pred == ICmpInst::ICMP_NE;
-          if (Op1CV != 0 && (Op1CV != KnownZeroMask)) {
-            // (X&4) == 2 --> false
-            // (X&4) != 2 --> true
-            Constant *Res = ConstantInt::get(Type::Int1Ty, isNE);
-            Res = ConstantExpr::getZExt(Res, CI.getType());
-            return ReplaceInstUsesWith(CI, Res);
-          }
-          
-          uint32_t ShiftAmt = KnownZeroMask.logBase2();
-          Value *In = Op0;
-          if (ShiftAmt) {
-            // Perform a logical shr by shiftamt.
-            // Insert the shift to put the result in the low bit.
-            In = InsertNewInstBefore(
-              BinaryOperator::createLShr(In,
-                                     ConstantInt::get(In->getType(), ShiftAmt),
-                                     In->getName()+".lobit"), CI);
-          }
-          
-          if ((Op1CV != 0) == isNE) { // Toggle the low bit.
-            Constant *One = ConstantInt::get(In->getType(), 1);
-            In = BinaryOperator::createXor(In, One, "tmp");
-            InsertNewInstBefore(cast<Instruction>(In), CI);
-          }
-          
-          if (CI.getType() == In->getType())
-            return ReplaceInstUsesWith(CI, In);
-          else
-            return CastInst::createIntegerCast(In, CI.getType(), false/*ZExt*/);
-        }
-      }
-    }
-    break;
   }
   return 0;
 }
@@ -6617,6 +6554,65 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
     }
   }
 
+  if (ICmpInst *ICI = dyn_cast<ICmpInst>(Src)) {
+    // If we are just checking for a icmp eq of a single bit and zext'ing it
+    // to an integer, then shift the bit to the appropriate place and then
+    // cast to integer to avoid the comparison.
+    if (ConstantInt *Op1C = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
+      const APInt& Op1CV = Op1C->getValue();
+      // cast (X == 0) to int --> X^1      iff X has only the low bit set.
+      // cast (X == 0) to int --> (X>>1)^1 iff X has only the 2nd bit set.
+      // cast (X == 1) to int --> X        iff X has only the low bit set.
+      // cast (X == 2) to int --> X>>1     iff X has only the 2nd bit set.
+      // cast (X != 0) to int --> X        iff X has only the low bit set.
+      // cast (X != 0) to int --> X>>1     iff X has only the 2nd bit set.
+      // cast (X != 1) to int --> X^1      iff X has only the low bit set.
+      // cast (X != 2) to int --> (X>>1)^1 iff X has only the 2nd bit set.
+      if ((Op1CV == 0 || Op1CV.isPowerOf2()) && 
+          // This only works for EQ and NE
+          ICI->isEquality()) {
+        // If Op1C some other power of two, convert:
+        uint32_t BitWidth = Op1C->getType()->getBitWidth();
+        APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+        APInt TypeMask(APInt::getAllOnesValue(BitWidth));
+        ComputeMaskedBits(ICI->getOperand(0), TypeMask, KnownZero, KnownOne);
+        
+        APInt KnownZeroMask(~KnownZero);
+        if (KnownZeroMask.isPowerOf2()) { // Exactly 1 possible 1?
+          bool isNE = ICI->getPredicate() == ICmpInst::ICMP_NE;
+          if (Op1CV != 0 && (Op1CV != KnownZeroMask)) {
+            // (X&4) == 2 --> false
+            // (X&4) != 2 --> true
+            Constant *Res = ConstantInt::get(Type::Int1Ty, isNE);
+            Res = ConstantExpr::getZExt(Res, CI.getType());
+            return ReplaceInstUsesWith(CI, Res);
+          }
+          
+          uint32_t ShiftAmt = KnownZeroMask.logBase2();
+          Value *In = ICI->getOperand(0);
+          if (ShiftAmt) {
+            // Perform a logical shr by shiftamt.
+            // Insert the shift to put the result in the low bit.
+            In = InsertNewInstBefore(
+                   BinaryOperator::createLShr(In,
+                                     ConstantInt::get(In->getType(), ShiftAmt),
+                                              In->getName()+".lobit"), CI);
+          }
+          
+          if ((Op1CV != 0) == isNE) { // Toggle the low bit.
+            Constant *One = ConstantInt::get(In->getType(), 1);
+            In = BinaryOperator::createXor(In, One, "tmp");
+            InsertNewInstBefore(cast<Instruction>(In), CI);
+          }
+          
+          if (CI.getType() == In->getType())
+            return ReplaceInstUsesWith(CI, In);
+          else
+            return CastInst::createIntegerCast(In, CI.getType(), false/*ZExt*/);
+        }
+      }
+    }
+  }    
   return 0;
 }
 
