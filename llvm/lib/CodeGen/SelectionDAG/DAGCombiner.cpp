@@ -2130,6 +2130,15 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     }
   }
   
+  // sext(setcc x,y,cc) -> select_cc x, y, -1, 0, cc
+  if (N0.getOpcode() == ISD::SETCC) {
+    SDOperand SCC = 
+    SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
+                     DAG.getConstant(~0ULL, VT), DAG.getConstant(0, VT),
+                     cast<CondCodeSDNode>(N0.getOperand(2))->get());
+    if (SCC.Val) return SCC;
+  }
+  
   return SDOperand();
 }
 
@@ -2210,6 +2219,16 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
               ExtLoad.getValue(1));
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
+  
+  // zext(setcc x,y,cc) -> select_cc x, y, 1, 0, cc
+  if (N0.getOpcode() == ISD::SETCC) {
+    SDOperand SCC = 
+      SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
+                       DAG.getConstant(1, VT), DAG.getConstant(0, VT),
+                       cast<CondCodeSDNode>(N0.getOperand(2))->get());
+    if (SCC.Val) return SCC;
+  }
+  
   return SDOperand();
 }
 
@@ -2294,6 +2313,16 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
               ExtLoad.getValue(1));
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
+  
+  // aext(setcc x,y,cc) -> select_cc x, y, 1, 0, cc
+  if (N0.getOpcode() == ISD::SETCC) {
+    SDOperand SCC = 
+    SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
+                     DAG.getConstant(1, VT), DAG.getConstant(0, VT),
+                     cast<CondCodeSDNode>(N0.getOperand(2))->get());
+    if (SCC.Val) return SCC;
+  }
+  
   return SDOperand();
 }
 
