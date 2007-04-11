@@ -454,7 +454,6 @@ All Global Variables and Functions have one of the following types of linkage:
     until linked, if not linked, the symbol becomes null instead of being an
     undefined reference.
   </dd>
-</dl>
 
   <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
 
@@ -462,6 +461,7 @@ All Global Variables and Functions have one of the following types of linkage:
   visible, meaning that it participates in linkage and can be used to resolve
   external symbol references.
   </dd>
+</dl>
 
   <p>
   The next two types of linkage are targeted for Microsoft Windows platform
@@ -779,13 +779,12 @@ desired.  The syntax is very simple:
 
 <div class="doc_text">
 <p>A module may specify a target specific data layout string that specifies how
-data is to be laid out in memory. The syntax for the data layout is simply:<br/>
-<pre>    target datalayout = "<i>layout specification</i>"
-</pre>
-The <i>layout specification</i> consists of a list of specifications separated
-by the minus sign character ('-').  Each specification starts with a letter 
-and may include other information after the letter to define some aspect of the
-data layout.  The specifications accepted are as follows: </p>
+data is to be laid out in memory. The syntax for the data layout is simply:</p>
+<pre>    target datalayout = "<i>layout specification</i>"</pre>
+<p>The <i>layout specification</i> consists of a list of specifications 
+separated by the minus sign character ('-').  Each specification starts with a 
+letter and may include other information after the letter to define some 
+aspect of the data layout.  The specifications accepted are as follows: </p>
 <dl>
   <dt><tt>E</tt></dt>
   <dd>Specifies that the target lays out data in big-endian form. That is, the
@@ -4690,6 +4689,7 @@ cause these bits to be set: <tt>0xFF1F</tt>.</p>
   llvm.part.set(0xFFFF, 0, Y, 7, 4) -&gt; 0x0060
   llvm.part.set(0xFFFF, 0, Y, 8, 3) -&gt; 0x00F0
   llvm.part.set(0xFFFF, 0, Y, 3, 8) -&gt; 0xFE07
+</pre>
 </div>
 
 <!-- ======================================================================= -->
