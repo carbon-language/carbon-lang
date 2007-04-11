@@ -539,6 +539,8 @@ the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
    miscompiles portions of LLVM</a> when compiling llvm itself into 64-bit 
    code.  LLVM will appear to mostly work but will be buggy, e.g. failing 
    portions of its testsuite.</p>
+<p><b>GCC 4.1.2 on OpenSUSE</b>: Seg faults during libstdc++ build and on x86_64
+platforms compiling md5.c gets a mangled constant.</p>
 <p><b>GNU ld 2.16.X</b>. Some 2.16.X versions of the ld linker will produce very
 long warning messages complaining that some ".gnu.linkonce.t.*" symbol was
 defined in a discarded section. You can safely ignore these messages as they are
