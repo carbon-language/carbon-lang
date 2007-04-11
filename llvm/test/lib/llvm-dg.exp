@@ -1,6 +1,7 @@
 proc llvm-runtest { programs } { 
-    global objdir srcdir subdir target_triplet llvmgcc llvmgxx prcontext
-    global llvmgcc_version srcroot objroot llvmlibsdir
+    global srcroot objroot srcdir objdir subdir target_triplet prcontext 
+    global llvmgcc llvmgxx global llvmgcc_version llvmgccmajvers 
+    global gccpath gxxpath compile_c compile_cxx link 
 
     set timeout 60
 
@@ -46,30 +47,25 @@ proc llvm-runtest { programs } {
 		set runline
 		set hasRunline 1
 
-		#replace %s with filename
-		regsub -all {%s} $runline $test new_runline
-
-		#replace %t with temp filenames
-		regsub -all {%t} $new_runline [file join Output $tmpFile] new_runline
-
+                set new_runline $runline
 		#replace %prcontext with prcontext.tcl (Must replace before %p)
 		regsub -all {%prcontext} $new_runline $prcontext new_runline
-
-		#replace %p with path to source, 
-		regsub -all {%p} $new_runline [file join $srcdir $subdir] new_runline
-
 		#replace %llvmgcc with actual path to llvmgcc
 		regsub -all {%llvmgcc} $new_runline "$llvmgcc -emit-llvm" new_runline
-
 		#replace %llvmgxx with actual path to llvmg++
 		regsub -all {%llvmgxx} $new_runline "$llvmgxx -emit-llvm" new_runline
-		
-		#replace %L with path to libraries
-		regsub -all {%L} $new_runline "$llvmlibsdir" new_runline
-
-		#replace %I with path to includes
-		regsub -all {%I} $new_runline "$srcroot/include" new_runline
-
+		#replace %compile_c with C compilation command
+		regsub -all {%compile_c} $new_runline "$compile_c" new_runline
+		#replace %compile_cxx with C++ compilation command
+		regsub -all {%compile_cxx} $new_runline "$compile_cxx" new_runline
+		#replace %link with C++ link command
+		regsub -all {%link} $new_runline "$link" new_runline
+		#replace %p with path to source, 
+		regsub -all {%p} $new_runline [file join $srcdir $subdir] new_runline
+		#replace %s with filename
+		regsub -all {%s} $new_runline $test new_runline
+		#replace %t with temp filenames
+		regsub -all {%t} $new_runline [file join Output $tmpFile] new_runline
 		puts $scriptFileId $new_runline
 	    } elseif {[regexp {XFAIL:[ *](.+)} $line match targets]} {
 		set targets
