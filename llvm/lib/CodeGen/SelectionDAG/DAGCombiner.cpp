@@ -2136,7 +2136,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
                      DAG.getConstant(~0ULL, VT), DAG.getConstant(0, VT),
                      cast<CondCodeSDNode>(N0.getOperand(2))->get());
-    if (SCC.Val) return SCC;
+    if (SCC.Val && SCC.Val != N) return SCC;
   }
   
   return SDOperand();
@@ -2226,7 +2226,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
                        DAG.getConstant(1, VT), DAG.getConstant(0, VT),
                        cast<CondCodeSDNode>(N0.getOperand(2))->get());
-    if (SCC.Val) return SCC;
+    if (SCC.Val && SCC.Val != N) return SCC;
   }
   
   return SDOperand();
@@ -2320,7 +2320,8 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
     SimplifySelectCC(N0.getOperand(0), N0.getOperand(1),
                      DAG.getConstant(1, VT), DAG.getConstant(0, VT),
                      cast<CondCodeSDNode>(N0.getOperand(2))->get());
-    if (SCC.Val) return SCC;
+    if (SCC.Val && SCC.Val != N && SCC.getOpcode() != ISD::ZERO_EXTEND)
+      return SCC;
   }
   
   return SDOperand();
@@ -4139,6 +4140,9 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
     }
     AddToWorkList(SCC.Val);
     AddToWorkList(Temp.Val);
+    
+    if (N2C->getValue() == 1)
+      return Temp;
     // shl setcc result by log2 n2c
     return DAG.getNode(ISD::SHL, N2.getValueType(), Temp,
                        DAG.getConstant(Log2_64(N2C->getValue()),
