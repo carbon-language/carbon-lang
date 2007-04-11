@@ -1726,7 +1726,7 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
   assert(slen <= numbits || radix != 2 && "Insufficient bit width");
   assert(slen*3 <= numbits || radix != 8 && "Insufficient bit width");
   assert(slen*4 <= numbits || radix != 16 && "Insufficient bit width");
-  assert((slen*64)/20 <= numbits || radix != 10 && "Insufficient bit width");
+  assert((slen*64)/22 <= numbits || radix != 10 && "Insufficient bit width");
 
   // Allocate memory
   if (!isSingleWord())
