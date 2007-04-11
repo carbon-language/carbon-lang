@@ -2070,6 +2070,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
     Ops[0].init(LHS, this);
     Ops[1].init(RHS, this);
   SubclassData = predicate;
+  setName(Name);
   if (op == Instruction::ICmp) {
     assert(predicate >= ICmpInst::FIRST_ICMP_PREDICATE &&
            predicate <= ICmpInst::LAST_ICMP_PREDICATE &&
@@ -2093,7 +2094,6 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
   // Check that the operands are the right type
   assert(Op0Ty->isFloatingPoint() &&
          "Invalid operand types for FCmp instruction");
-  setName(Name);
 }
   
 CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
@@ -2102,6 +2102,7 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
   Ops[0].init(LHS, this);
   Ops[1].init(RHS, this);
   SubclassData = predicate;
+  setName(Name);
   if (op == Instruction::ICmp) {
     assert(predicate >= ICmpInst::FIRST_ICMP_PREDICATE &&
            predicate <= ICmpInst::LAST_ICMP_PREDICATE &&
@@ -2126,7 +2127,6 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
   // Check that the operands are the right type
   assert(Op0Ty->isFloatingPoint() &&
         "Invalid operand types for FCmp instruction");
-  setName(Name);
 }
 
 CmpInst *
