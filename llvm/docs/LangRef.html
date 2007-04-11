@@ -4683,7 +4683,7 @@ to the <tt>%hi</tt>th bit.
 <p>In reverse mode, a similar computation is made except that the bits replaced
 wrap around to include both the highest and lowest bits. For example, if a
 16 bit value is being replaced then <tt>%lo=8</tt> and <tt>%hi=4</tt> would
-cause these bits to be set: <tt>0xFF1F</p>.
+cause these bits to be set: <tt>0xFF1F.</p>
 <h5>Examples:</h5>
 <pre>
   llvm.part.set(0xFFFF, 0, Y, 4, 7) -&gt; 0xFF0F
