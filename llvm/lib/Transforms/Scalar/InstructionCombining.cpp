@@ -4624,6 +4624,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return new ICmpInst(ICmpInst::ICMP_NE, Op0,Op1);
       if (isMinValuePlusOne(CI,false))              // A <u MIN+1 -> A == MIN
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0, SubOne(CI));
+      // (x <u 2147483648) -> (x >s -1)  -> true if sign bit clear
+      if (CI->isMinValue(true))
+        return new ICmpInst(ICmpInst::ICMP_SGT, Op0,
+                            ConstantInt::getAllOnesValue(Op0->getType()));
+          
       break;
 
     case ICmpInst::ICMP_SLT:
@@ -4642,6 +4647,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (isMaxValueMinusOne(CI, false))          // A >u MAX-1 -> A == MAX
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
+        
+      // (x >u 2147483647) -> (x <s 0)  -> true if sign bit set
+      if (CI->isMaxValue(true))
+        return new ICmpInst(ICmpInst::ICMP_SLT, Op0,
+                            ConstantInt::getNullValue(Op0->getType()));
       break;
 
     case ICmpInst::ICMP_SGT:
@@ -6559,15 +6569,15 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
     // to an integer, then shift the bit to the appropriate place and then
     // cast to integer to avoid the comparison.
     if (ConstantInt *Op1C = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
-      const APInt& Op1CV = Op1C->getValue();
-      // cast (X == 0) to int --> X^1      iff X has only the low bit set.
-      // cast (X == 0) to int --> (X>>1)^1 iff X has only the 2nd bit set.
-      // cast (X == 1) to int --> X        iff X has only the low bit set.
-      // cast (X == 2) to int --> X>>1     iff X has only the 2nd bit set.
-      // cast (X != 0) to int --> X        iff X has only the low bit set.
-      // cast (X != 0) to int --> X>>1     iff X has only the 2nd bit set.
-      // cast (X != 1) to int --> X^1      iff X has only the low bit set.
-      // cast (X != 2) to int --> (X>>1)^1 iff X has only the 2nd bit set.
+      const APInt &Op1CV = Op1C->getValue();
+      // zext (X == 0) to i32 --> X^1      iff X has only the low bit set.
+      // zext (X == 0) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
+      // zext (X == 1) to i32 --> X        iff X has only the low bit set.
+      // zext (X == 2) to i32 --> X>>1     iff X has only the 2nd bit set.
+      // zext (X != 0) to i32 --> X        iff X has only the low bit set.
+      // zext (X != 0) to i32 --> X>>1     iff X has only the 2nd bit set.
+      // zext (X != 1) to i32 --> X^1      iff X has only the low bit set.
+      // zext (X != 2) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
       if ((Op1CV == 0 || Op1CV.isPowerOf2()) && 
           // This only works for EQ and NE
           ICI->isEquality()) {
@@ -6617,7 +6627,13 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
 }
 
 Instruction *InstCombiner::visitSExt(CastInst &CI) {
-  return commonIntCastTransforms(CI);
+  if (Instruction *I = commonIntCastTransforms(CI))
+    return I;
+  
+  // (x <s 0) ? -1 : 0 -> ashr x, 31
+  // (x >u 2147483647) ? -1 : 0 -> ashr x, 31
+
+  return 0;
 }
 
 Instruction *InstCombiner::visitFPTrunc(CastInst &CI) {
@@ -6901,34 +6917,25 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   // Selecting between two integer constants?
   if (ConstantInt *TrueValC = dyn_cast<ConstantInt>(TrueVal))
     if (ConstantInt *FalseValC = dyn_cast<ConstantInt>(FalseVal)) {
-      // select C, 1, 0 -> cast C to int
+      // select C, 1, 0 -> zext C to int
       if (FalseValC->isZero() && TrueValC->getValue() == 1) {
         return CastInst::create(Instruction::ZExt, CondVal, SI.getType());
       } else if (TrueValC->isZero() && FalseValC->getValue() == 1) {
-        // select C, 0, 1 -> cast !C to int
+        // select C, 0, 1 -> zext !C to int
         Value *NotCond =
           InsertNewInstBefore(BinaryOperator::createNot(CondVal,
                                                "not."+CondVal->getName()), SI);
         return CastInst::create(Instruction::ZExt, NotCond, SI.getType());
       }
+      
+      // FIXME: Turn select 0/-1 and -1/0 into sext from condition!
 
       if (ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition())) {
 
         // (x <s 0) ? -1 : 0 -> ashr x, 31
-        // (x >u 2147483647) ? -1 : 0 -> ashr x, 31
         if (TrueValC->isAllOnesValue() && FalseValC->isZero())
           if (ConstantInt *CmpCst = dyn_cast<ConstantInt>(IC->getOperand(1))) {
-            bool CanXForm = false;
-            if (IC->isSignedPredicate())
-              CanXForm = CmpCst->isZero() && 
-                         IC->getPredicate() == ICmpInst::ICMP_SLT;
-            else {
-              uint32_t Bits = CmpCst->getType()->getPrimitiveSizeInBits();
-              CanXForm = CmpCst->getValue() == APInt::getSignedMaxValue(Bits) &&
-                         IC->getPredicate() == ICmpInst::ICMP_UGT;
-            }
-            
-            if (CanXForm) {
+            if (IC->getPredicate() == ICmpInst::ICMP_SLT && CmpCst->isZero()) {
               // The comparison constant and the result are not neccessarily the
               // same width. Make an all-ones value by inserting a AShr.
               Value *X = IC->getOperand(0);
@@ -6953,7 +6960,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
 
         // If one of the constants is zero (we know they can't both be) and we
-        // have a fcmp instruction with zero, and we have an 'and' with the
+        // have an icmp instruction with zero, and we have an 'and' with the
         // non-constant value, eliminate this whole mess.  This corresponds to
         // cases like this: ((X & 27) ? 27 : 0)
         if (TrueValC->isZero() || FalseValC->isZero())
