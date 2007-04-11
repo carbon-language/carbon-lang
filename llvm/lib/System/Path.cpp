@@ -58,7 +58,14 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
       
     case '\177':
       if (magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F')
-        return ELF_FileType;
+        if (length >= 18 && magic[17] == 0)
+          switch (magic[16]) {
+            default: break;
+            case 1: return ELF_Relocatable_FileType;
+            case 2: return ELF_Executable_FileType;
+            case 3: return ELF_SharedObject_FileType;
+            case 4: return ELF_Core_FileType;
+          }
       break;
 
     case 0xCE:
@@ -67,10 +74,19 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
       // See the Mach-O section in /usr/share/file/magic for details.
       if (magic[1] == char(0xFA) && magic[2] == char(0xED) && 
           magic[3] == char(0xFE))
-        if (length >= 15)
-          if (magic[15] == 1 || magic[15] == 3 || magic[15] == 6 || 
-              magic[15] == 9)
-            return Mach_O_FileType;
+        if (length >= 14 && magic[13] == 0)
+          switch (magic[12]) {
+            default: break;
+            case 1: return Mach_O_Object_FileType;
+            case 2: return Mach_O_Executable_FileType;
+            case 3: return Mach_O_FixedVirtualMemorySharedLib_FileType;
+            case 4: return Mach_O_Core_FileType;
+            case 5: return Mach_O_PreloadExectuable_FileType;
+            case 6: return Mach_O_DynamicallyLinkedSharedLib_FileType;
+            case 7: return Mach_O_DynamicLinker_FileType;
+            case 8: return Mach_O_Bundle_FileType;
+            case 9: return Mach_O_DynamicallyLinkedSharedLibStub_FileType;
+          }
       break;
 
     case 0xF0: // PowerPC Windows
@@ -108,8 +124,10 @@ Path::isDynamicLibrary() const {
     if (getMagicNumber(Magic, 64))
       switch (IdentifyFileType(Magic.c_str(), Magic.length())) {
         default: return false;
-        case ELF_FileType:
-        case Mach_O_FileType:
+        case Mach_O_FixedVirtualMemorySharedLib_FileType:
+        case Mach_O_DynamicallyLinkedSharedLib_FileType:
+        case Mach_O_DynamicallyLinkedSharedLibStub_FileType:
+        case ELF_SharedObject_FileType:
         case COFF_FileType:  return true;
       }
   }

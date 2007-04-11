@@ -597,13 +597,24 @@ namespace sys {
 
   /// This enumeration delineates the kinds of files that LLVM knows about.
   enum LLVMFileType {
-    Unknown_FileType = 0,            ///< Unrecognized file
-    Bytecode_FileType = 1,           ///< Uncompressed bytecode file
-    CompressedBytecode_FileType = 2, ///< Compressed bytecode file
-    Archive_FileType = 3,            ///< ar style archive file
-    ELF_FileType = 4,                ///< Native ELF object file or lib
-    Mach_O_FileType = 5,             ///< Native Mach-O object file or lib
-    COFF_FileType = 6                ///< COFF object file or lib
+    Unknown_FileType = 0,              ///< Unrecognized file
+    Bytecode_FileType,                 ///< Uncompressed bytecode file
+    CompressedBytecode_FileType,       ///< Compressed bytecode file
+    Archive_FileType,                  ///< ar style archive file
+    ELF_Relocatable_FileType,          ///< ELF Relocatable object file
+    ELF_Executable_FileType,           ///< ELF Executable image
+    ELF_SharedObject_FileType,         ///< ELF dynamically linked shared lib
+    ELF_Core_FileType,                 ///< ELF core image
+    Mach_O_Object_FileType,            ///< Mach-O Object file
+    Mach_O_Executable_FileType,        ///< Mach-O Executable
+    Mach_O_FixedVirtualMemorySharedLib_FileType, ///< Mach-O Shared Lib, FVM
+    Mach_O_Core_FileType,              ///< Mach-O Core File
+    Mach_O_PreloadExectuable_FileType, ///< Mach-O Preloaded Executable
+    Mach_O_DynamicallyLinkedSharedLib_FileType, ///< Mach-O dynlinked shared lib
+    Mach_O_DynamicLinker_FileType,     ///< The Mach-O dynamic linker
+    Mach_O_Bundle_FileType,            ///< Mach-O Bundle file
+    Mach_O_DynamicallyLinkedSharedLibStub_FileType, ///< Mach-O Shared lib stub
+    COFF_FileType                      ///< COFF object file or lib
   };
 
   /// This utility function allows any memory block to be examined in order
