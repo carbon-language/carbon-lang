@@ -1002,6 +1002,11 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
                                      ConstantInt::get(Type::Int32Ty, Elt),
                                      "tmp", SI);
         }
+      } else if (isa<PointerType>(AllocaType)) {
+        // If the alloca type is a pointer, then all the elements must be
+        // pointers.
+        if (SV->getType() != AllocaType)
+          SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
       } else {
         Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
 
@@ -1013,12 +1018,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         if (SV->getType()->isFloatingPoint())
           SV = new BitCastInst(SV, IntegerType::get(SrcWidth),
                                SV->getName(), SI);
-        else if (isa<PointerType>(SV->getType())) {
-          if (isa<PointerType>(AllocaType))
-            SV = new BitCastInst(SV, AllocaType, SV->getName(), SI);
-          else
-            SV = new PtrToIntInst(SV, TD.getIntPtrType(), SV->getName(), SI);
-        }
+        else if (isa<PointerType>(SV->getType()))
+          SV = new PtrToIntInst(SV, TD.getIntPtrType(), SV->getName(), SI);
                  
         // Always zero extend the value if needed.
         if (SV->getType() != AllocaType)
