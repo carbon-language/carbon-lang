@@ -6570,6 +6570,33 @@ Instruction *InstCombiner::visitZExt(CastInst &CI) {
     // cast to integer to avoid the comparison.
     if (ConstantInt *Op1C = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
       const APInt &Op1CV = Op1C->getValue();
+      
+      // zext (x <s  0) to i32 --> x>>u31      true if signbit set.
+      // zext (x >s -1) to i32 --> (x>>u31)^1  true if signbit clear.
+      if ((ICI->getPredicate() == ICmpInst::ICMP_SLT && Op1CV == 0) ||
+          (ICI->getPredicate() == ICmpInst::ICMP_SGT &&Op1CV.isAllOnesValue())){
+        Value *In = ICI->getOperand(0);
+        Value *Sh = ConstantInt::get(In->getType(),
+                                    In->getType()->getPrimitiveSizeInBits()-1);
+        In = InsertNewInstBefore(BinaryOperator::createLShr(In, Sh,
+                                                        In->getName()+".lobit"), 
+                                 CI);
+        if (In->getType() != CI.getType())
+          In = CastInst::createIntegerCast(In, CI.getType(),
+                                           false/*ZExt*/, "tmp", &CI);
+
+        if (ICI->getPredicate() == ICmpInst::ICMP_SGT) {
+          Constant *One = ConstantInt::get(In->getType(), 1);
+          In = InsertNewInstBefore(BinaryOperator::createXor(In, One,
+                                                          In->getName()+".not"), 
+                                   CI);
+        }
+
+        return ReplaceInstUsesWith(CI, In);
+      }
+      
+      
+      
       // zext (X == 0) to i32 --> X^1      iff X has only the low bit set.
       // zext (X == 0) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
       // zext (X == 1) to i32 --> X        iff X has only the low bit set.
