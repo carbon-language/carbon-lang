@@ -4159,13 +4159,27 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
   // Check to see if this is an integer abs. select_cc setl[te] X, 0, -X, X ->
   // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
   if (N1C && N1C->isNullValue() && (CC == ISD::SETLT || CC == ISD::SETLE) &&
-      N0 == N3 && N2.getOpcode() == ISD::SUB && N0 == N2.getOperand(1)) {
-    if (ConstantSDNode *SubC = dyn_cast<ConstantSDNode>(N2.getOperand(0))) {
+      N0 == N3 && N2.getOpcode() == ISD::SUB && N0 == N2.getOperand(1) &&
+      N2.getOperand(0) == N1 && MVT::isInteger(N0.getValueType())) {
+    MVT::ValueType XType = N0.getValueType();
+    SDOperand Shift = DAG.getNode(ISD::SRA, XType, N0,
+                                  DAG.getConstant(MVT::getSizeInBits(XType)-1,
+                                                  TLI.getShiftAmountTy()));
+    SDOperand Add = DAG.getNode(ISD::ADD, XType, N0, Shift);
+    AddToWorkList(Shift.Val);
+    AddToWorkList(Add.Val);
+    return DAG.getNode(ISD::XOR, XType, Add, Shift);
+  }
+  // Check to see if this is an integer abs. select_cc setgt X, -1, X, -X ->
+  // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
+  if (N1C && N1C->isAllOnesValue() && CC == ISD::SETGT &&
+      N0 == N2 && N3.getOpcode() == ISD::SUB && N0 == N3.getOperand(1)) {
+    if (ConstantSDNode *SubC = dyn_cast<ConstantSDNode>(N3.getOperand(0))) {
       MVT::ValueType XType = N0.getValueType();
       if (SubC->isNullValue() && MVT::isInteger(XType)) {
         SDOperand Shift = DAG.getNode(ISD::SRA, XType, N0,
                                     DAG.getConstant(MVT::getSizeInBits(XType)-1,
-                                                    TLI.getShiftAmountTy()));
+                                                      TLI.getShiftAmountTy()));
         SDOperand Add = DAG.getNode(ISD::ADD, XType, N0, Shift);
         AddToWorkList(Shift.Val);
         AddToWorkList(Add.Val);
@@ -4173,7 +4187,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
       }
     }
   }
-
+  
   return SDOperand();
 }
 
