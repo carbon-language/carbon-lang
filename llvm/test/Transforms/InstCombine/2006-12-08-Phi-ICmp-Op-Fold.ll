@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis|grep 'icmp slt'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis|grep 'icmp sgt'
 ; ModuleID = 'visible.bc'
 target datalayout = "e-p:32:32"
 target endian = little
