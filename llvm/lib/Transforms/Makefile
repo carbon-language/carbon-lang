@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-PARALLEL_DIRS = Utils Instrumentation Scalar IPO
+PARALLEL_DIRS = Utils Instrumentation Scalar IPO Hello
 
 include $(LEVEL)/Makefile.common
 
