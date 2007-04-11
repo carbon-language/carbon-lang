@@ -184,7 +184,8 @@
           <li><a href="#int_ctpop">'<tt>llvm.ctpop.*</tt>' Intrinsic </a></li>
           <li><a href="#int_ctlz">'<tt>llvm.ctlz.*</tt>' Intrinsic </a></li>
           <li><a href="#int_cttz">'<tt>llvm.cttz.*</tt>' Intrinsic </a></li>
-          <li><a href="#int_part_select">'<tt>llvm.part_select.*</tt>' Intrinsic </a></li>
+          <li><a href="#int_part_select">'<tt>llvm.part.select.*</tt>' Intrinsic </a></li>
+          <li><a href="#int_part_set">'<tt>llvm.part.set.*</tt>' Intrinsic </a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
@@ -4639,6 +4640,56 @@ only the <tt>%hiBit - %loBit</tt> bits set, as follows:</p>
   0x6ACF and we apply part.select(i16 X, 8, 3) to it, we get back the value
   0x0A6F.</li>
 </ol>
+</div>
+
+<div class="doc_subsubsection">
+  <a name="int_part_set">'<tt>llvm.part.set.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.part.set</tt> 
+on any integer bit width.
+<pre>
+  declare i17 @llvm.part.set.i17.i17.i9 (i17 %val, i9 %repl, i32 %lo, i32 %hi)
+  declare i29 @llvm.part.set.i29.i29.i9 (i29 %val, i9 %repl, i32 %lo, i32 %hi)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.part.set</tt>' family of intrinsic functions replaces a range
+of bits in an integer value with another integer value. It returns the integer
+with the replaced bits.</p>
+
+<h5>Arguments:</h5>
+<p>The first argument, <tt>%val</tt> and the result may be integer types of 
+any bit width but they must have the same bit width. <tt>%val</tt> is the value
+whose bits will be replaced.  The second argument, <tt>%repl</tt> may be an
+integer of any bit width. The third and fourth arguments must be <tt>i32</tt> 
+type since they specify only a bit index.</p>
+
+<h5>Semantics:</h5>
+<p>The operation of the '<tt>llvm.part.set</tt>' intrinsic has two modes
+of operation: forwards and reverse. If <tt>%lo</tt> is greater than
+<tt>%hi</tt> then the intrinsic operates in reverse mode. Otherwise it
+operates in forward mode.</p>
+<p>For both modes, the <tt>%repl</tt> value is prepared for use by either
+truncating it down to the size of the replacement area or zero extending it 
+up to that size.</p>
+<p>In forward mode, the bits between <tt>%lo</tt> and <tt>%hi</tt> (inclusive)
+are replaced with corresponding bits from <tt>%repl</tt>. That is the 0th bit
+in <tt>%repl</tt> replaces the <tt>%lo</tt>th bit in <tt>%val</tt> and etc. up
+to the <tt>%hi</tt>th bit. 
+<p>In reverse mode, a similar computation is made except that the bits replaced
+wrap around to include both the highest and lowest bits. For example, if a
+16 bit value is being replaced then <tt>%lo=8</tt> and <tt>%hi=4</tt> would
+cause these bits to be set: <tt>0xFF1F</p>.
+<h5>Examples:</h5>
+<pre>
+  llvm.part.set(0xFFFF, 0, Y, 4, 7) -&gt; 0xFF0F
+  llvm.part.set(0xFFFF, 0, Y, 7, 4) -&gt; 0x0060
+  llvm.part.set(0xFFFF, 0, Y, 8, 3) -&gt; 0x00F0
+  llvm.part.set(0xFFFF, 0, Y, 3, 8) -&gt; 0xFE07
 </div>
 
 <!-- ======================================================================= -->
