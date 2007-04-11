@@ -1,8 +1,6 @@
 ; RUN: llvm-as < %s | opt -loop-rotate -disable-output
 ; ModuleID = 'PhiSelfRefernce-1.bc'
 
-implementation   ; Functions:
-
 define void @snrm2(i32 %incx) {
 entry:
 	br i1 false, label %START, label %return
