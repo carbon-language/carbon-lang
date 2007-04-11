@@ -970,20 +970,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         if (isa<IntegerType>(LI->getType())) {
           assert(NV->getType() == LI->getType() && "Truncate wasn't enough?");
         } else if (LI->getType()->isFloatingPoint()) {
-          // If needed, truncate the integer to the appropriate size.
-          if (NTy->getBitWidth() > LIBitWidth) {
-            switch (LI->getType()->getTypeID()) {
-            default: assert(0 && "Unknown FP type!");
-            case Type::FloatTyID:
-              NV = new TruncInst(NV, Type::Int32Ty, LI->getName(), LI);
-              break;
-            case Type::DoubleTyID:
-              NV = new TruncInst(NV, Type::Int64Ty, LI->getName(), LI);
-              break;
-            }
-          }
-          
-          // Then do a bitcast.
+          // Just do a bitcast, we know the sizes match up.
           NV = new BitCastInst(NV, LI->getType(), LI->getName(), LI);
         } else {
           // Otherwise must be a pointer.
