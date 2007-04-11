@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llvm-dis | not grep bitcast
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis -o /dev/null && 
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep bitcast
 
 int %test1() {
    ret int bitcast(float 3.7 to int)
