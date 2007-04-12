@@ -264,7 +264,7 @@ static Instruction *LowerPartSelect(CallInst *CI) {
       Name[i] = '_';
   Module* M = F->getParent();
   F = cast<Function>(M->getOrInsertFunction(Name, FT));
-  F->setLinkage(GlobalValue::InternalLinkage);
+  F->setLinkage(GlobalValue::WeakLinkage);
 
   // If we haven't defined the impl function yet, do so now
   if (F->isDeclaration()) {
@@ -437,7 +437,7 @@ static Instruction *LowerPartSet(CallInst *CI) {
       Name[i] = '_';
   Module* M = F->getParent();
   F = cast<Function>(M->getOrInsertFunction(Name, FT));
-  F->setLinkage(GlobalValue::InternalLinkage);
+  F->setLinkage(GlobalValue::WeakLinkage);
 
   // If we haven't defined the impl function yet, do so now
   if (F->isDeclaration()) {
