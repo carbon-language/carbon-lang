@@ -45,6 +45,7 @@
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <sstream>
+// #include <set>
 using namespace llvm;
 
 namespace {
@@ -78,8 +79,9 @@ namespace {
     const TargetAsmInfo* TAsm;
     const TargetData* TD;
     std::map<const Type *, std::string> TypeNames;
-
     std::map<const ConstantFP *, unsigned> FPConstantMap;
+    std::set<Function*> intrinsicPrototypesAlreadyGenerated;
+
   public:
     CWriter(std::ostream &o) : Out(o), IL(0), Mang(0), LI(0), TheModule(0), 
                                TAsm(0), TD(0) {}
@@ -2364,6 +2366,13 @@ void CWriter::visitSelectInst(SelectInst &I) {
 
 
 void CWriter::lowerIntrinsics(Function &F) {
+  // This is used to keep track of intrinsics that get generated to a lowered
+  // function. We must generate the prototypes before the function body which
+  // will only be expanded on first use (by the loop below).
+  std::vector<Function*> prototypesToGen;
+
+  // Examine all the instructions in this function to find the intrinsics that
+  // need to be lowered.
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(I++))
@@ -2404,10 +2413,31 @@ void CWriter::lowerIntrinsics(Function &F) {
             } else {
               I = BB->begin();
             }
+            // If the intrinsic got lowered to another call, and that call has
+            // a definition then we need to make sure its prototype is emitted
+            // before any calls to it.
+            if (CallInst *Call = dyn_cast<CallInst>(I))
+              if (Function *NewF = Call->getCalledFunction())
+                if (!NewF->isDeclaration())
+                  prototypesToGen.push_back(NewF);
+
             break;
           }
-}
 
+  // We may have collected some prototypes to emit in the loop above. 
+  // Emit them now, before the function that uses them is emitted. But,
+  // be careful not to emit them twice.
+  std::vector<Function*>::iterator I = prototypesToGen.begin();
+  std::vector<Function*>::iterator E = prototypesToGen.end();
+  for ( ; I != E; ++I) {
+    if (intrinsicPrototypesAlreadyGenerated.count(*I) == 0) {
+      Out << '\n';
+      printFunctionSignature(*I, true);
+      Out << ";\n";
+      intrinsicPrototypesAlreadyGenerated.insert(*I);
+    }
+  }
+}
 
 
 void CWriter::visitCallInst(CallInst &I) {
