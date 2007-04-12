@@ -1,5 +1,4 @@
 // RUN: %llvmgcc -xc++ -S -o - %s | not grep weak
-// XFAIL: llvmgcc4
 // The template should compile to linkonce linkage, not weak linkage.
 
 template<class T>
