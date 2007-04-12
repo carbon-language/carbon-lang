@@ -1505,22 +1505,23 @@ bool CWriter::doInitialization(Module &M) {
     Out << "\n/* External Global Variable Declarations */\n";
     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
-      if (I->hasExternalLinkage()) {
+
+      if (I->hasExternalLinkage() || I->hasExternalWeakLinkage())
         Out << "extern ";
-        printType(Out, I->getType()->getElementType(), false, 
-                  GetValueName(I));
-        Out << ";\n";
-      } else if (I->hasDLLImportLinkage()) {
+      else if (I->hasDLLImportLinkage())
         Out << "__declspec(dllimport) ";
-        printType(Out, I->getType()->getElementType(), false, 
-                  GetValueName(I));
-        Out << ";\n";        
-      } else if (I->hasExternalWeakLinkage()) {
-        Out << "extern ";
-        printType(Out, I->getType()->getElementType(), false,
-                  GetValueName(I));
-        Out << " __EXTERNAL_WEAK__ ;\n";
-      }
+      else
+        continue; // Internal Global
+
+      // Thread Local Storage
+      if (I->isThreadLocal())
+        Out << "__thread ";
+
+      printType(Out, I->getType()->getElementType(), false, GetValueName(I));
+
+      if (I->hasExternalWeakLinkage())
+         Out << " __EXTERNAL_WEAK__";
+      Out << ";\n";
     }
   }
 
@@ -1563,11 +1564,16 @@ bool CWriter::doInitialization(Module &M) {
         // Ignore special globals, such as debug info.
         if (getGlobalVariableClass(I))
           continue;
-        
+
         if (I->hasInternalLinkage())
           Out << "static ";
         else
           Out << "extern ";
+
+        // Thread Local Storage
+        if (I->isThreadLocal())
+          Out << "__thread ";
+
         printType(Out, I->getType()->getElementType(), false, 
                   GetValueName(I));
 
@@ -1592,14 +1598,18 @@ bool CWriter::doInitialization(Module &M) {
         // Ignore special globals, such as debug info.
         if (getGlobalVariableClass(I))
           continue;
-        
+
         if (I->hasInternalLinkage())
           Out << "static ";
         else if (I->hasDLLImportLinkage())
           Out << "__declspec(dllimport) ";
         else if (I->hasDLLExportLinkage())
           Out << "__declspec(dllexport) ";
-            
+
+        // Thread Local Storage
+        if (I->isThreadLocal())
+          Out << "__thread ";
+
         printType(Out, I->getType()->getElementType(), false, 
                   GetValueName(I));
         if (I->hasLinkOnceLinkage())
