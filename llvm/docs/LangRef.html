@@ -603,8 +603,10 @@ All Global Variables and Functions have one of the following visibility styles:
 <p>Global variables define regions of memory allocated at compilation time
 instead of run-time.  Global variables may optionally be initialized, may have
 an explicit section to be placed in, and may
-have an optional explicit alignment specified.  A
-variable may be defined as a global "constant," which indicates that the
+have an optional explicit alignment specified.  A variable may be defined as
+"thread_local", which means that it will not be shared by threads (each thread
+will have a separated copy of the variable).
+A variable may be defined as a global "constant," which indicates that the
 contents of the variable will <b>never</b> be modified (enabling better
 optimization, allowing the global data to be placed in the read-only section of
 an executable, etc).  Note that variables that need runtime initialization
