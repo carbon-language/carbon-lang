@@ -2691,7 +2691,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::part_select: {
     // Currently not implemented: just abort
-    assert(0 && "bit_part_select intrinsic not implemented");
+    assert(0 && "part_select intrinsic not implemented");
+    abort();
+  }
+  case Intrinsic::part_set: {
+    // Currently not implemented: just abort
+    assert(0 && "part_set intrinsic not implemented");
     abort();
   }
   case Intrinsic::bswap:

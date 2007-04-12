@@ -1028,13 +1028,14 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F, ...) {
           if (GotBits < 16 || GotBits % 16 != 0)
             CheckFailed("Intrinsic requires even byte width argument", F);
           /* FALL THROUGH */
+        case Intrinsic::part_set:
         case Intrinsic::part_select:
           if (ArgNo == 1) {
             unsigned ResultBits = 
               cast<IntegerType>(FTy->getReturnType())->getBitWidth();
             if (GotBits != ResultBits)
-              CheckFailed("Intrinsic requires parameter and result bit "
-                          "widths to match", F);
+              CheckFailed("Intrinsic requires the bit widths of the first "
+                          "parameter and the result to match", F);
           }
           break;
       }
