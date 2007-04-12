@@ -81,11 +81,11 @@ void GlobalValue::destroyConstant() {
 //===----------------------------------------------------------------------===//
 
 GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
-                               Constant *InitVal,
-                               const std::string &Name, Module *ParentModule)
+                               Constant *InitVal, const std::string &Name,
+                               Module *ParentModule, bool ThreadLocal)
   : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal,
                 &Initializer, InitVal != 0, Link, Name),
-    isConstantGlobal(constant) {
+    isConstantGlobal(constant), isThreadLocalSymbol(ThreadLocal) {
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");
@@ -101,11 +101,11 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
 }
 
 GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
-                               Constant *InitVal,
-                               const std::string &Name, GlobalVariable *Before)
+                               Constant *InitVal, const std::string &Name,
+                               GlobalVariable *Before, bool ThreadLocal)
   : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal,
                 &Initializer, InitVal != 0, Link, Name), 
-    isConstantGlobal(constant) {
+    isConstantGlobal(constant), isThreadLocalSymbol(ThreadLocal) {
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");

@@ -208,6 +208,7 @@ dllexport       { return DLLEXPORT; }
 hidden          { return HIDDEN; }
 extern_weak     { return EXTERN_WEAK; }
 external        { return EXTERNAL; }
+thread_local    { return THREAD_LOCAL; }
 zeroinitializer { return ZEROINITIALIZER; }
 \.\.\.          { return DOTDOTDOT; }
 undef           { return UNDEF; }

@@ -704,7 +704,7 @@ ParseGlobalVariable(char *NameStr,
                     GlobalValue::LinkageTypes Linkage,
                     GlobalValue::VisibilityTypes Visibility,
                     bool isConstantGlobal, const Type *Ty,
-                    Constant *Initializer) {
+                    Constant *Initializer, bool IsThreadLocal) {
   if (isa<FunctionType>(Ty)) {
     GenerateError("Cannot declare global vars of function type");
     return 0;
@@ -737,6 +737,7 @@ ParseGlobalVariable(char *NameStr,
     GV->setLinkage(Linkage);
     GV->setVisibility(Visibility);
     GV->setConstant(isConstantGlobal);
+    GV->setThreadLocal(IsThreadLocal);
     InsertValue(GV, CurModule.Values);
     return GV;
   }
@@ -761,7 +762,7 @@ ParseGlobalVariable(char *NameStr,
   // Otherwise there is no existing GV to use, create one now.
   GlobalVariable *GV =
     new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name,
-                       CurModule.CurrentModule);
+                       CurModule.CurrentModule, IsThreadLocal);
   GV->setVisibility(Visibility);
   InsertValue(GV, CurModule.Values);
   return GV;
@@ -997,6 +998,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <TypeWithAttrs> ArgType
 %type <JumpTable>     JumpTable
 %type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
+%type <BoolVal>       ThreadLocal                 // 'thread_local' or not
 %type <BoolVal>       OptVolatile                 // 'volatile' or not
 %type <BoolVal>       OptTailCall                 // TAIL CALL or plain CALL.
 %type <BoolVal>       OptSideEffect               // 'sideeffect' or not.
@@ -1038,7 +1040,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <StrVal> OptSection SectionString
 
 %token ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
-%token DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE
+%token DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE THREAD_LOCAL
 %token TO DOTDOTDOT NULL_TOK UNDEF INTERNAL LINKONCE WEAK APPENDING
 %token DLLIMPORT DLLEXPORT EXTERN_WEAK
 %token OPAQUE EXTERNAL TARGET TRIPLE ALIGN
@@ -1918,6 +1920,9 @@ ConstVector : ConstVector ',' ConstVal {
 // GlobalType - Match either GLOBAL or CONSTANT for global declarations...
 GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; };
 
+// ThreadLocal 
+ThreadLocal : THREAD_LOCAL { $$ = true; } | { $$ = false; };
+
 
 //===----------------------------------------------------------------------===//
 //                             Rules to match Modules
@@ -1990,30 +1995,30 @@ Definition
     }
     CHECK_FOR_ERROR
   }
-  | OptGlobalAssign GVVisibilityStyle GlobalType ConstVal { 
+  | OptGlobalAssign GVVisibilityStyle ThreadLocal GlobalType ConstVal { 
     /* "Externally Visible" Linkage */
-    if ($4 == 0) 
-      GEN_ERROR("Global value initializer is not a constant");
-    CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage,
-                                $2, $3, $4->getType(), $4);
-    CHECK_FOR_ERROR
-  } GlobalVarAttributes {
-    CurGV = 0;
-  }
-  | OptGlobalAssign GVInternalLinkage GVVisibilityStyle GlobalType ConstVal {
     if ($5 == 0) 
       GEN_ERROR("Global value initializer is not a constant");
-    CurGV = ParseGlobalVariable($1, $2, $3, $4, $5->getType(), $5);
+    CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage,
+                                $2, $4, $5->getType(), $5, $3);
     CHECK_FOR_ERROR
   } GlobalVarAttributes {
     CurGV = 0;
   }
-  | OptGlobalAssign GVExternalLinkage GVVisibilityStyle GlobalType Types {
-    if (!UpRefs.empty())
-      GEN_ERROR("Invalid upreference in type: " + (*$5)->getDescription());
-    CurGV = ParseGlobalVariable($1, $2, $3, $4, *$5, 0);
+  | OptGlobalAssign GVInternalLinkage GVVisibilityStyle ThreadLocal GlobalType ConstVal {
+    if ($6 == 0) 
+      GEN_ERROR("Global value initializer is not a constant");
+    CurGV = ParseGlobalVariable($1, $2, $3, $5, $6->getType(), $6, $4);
     CHECK_FOR_ERROR
-    delete $5;
+  } GlobalVarAttributes {
+    CurGV = 0;
+  }
+  | OptGlobalAssign GVExternalLinkage GVVisibilityStyle ThreadLocal GlobalType Types {
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + (*$6)->getDescription());
+    CurGV = ParseGlobalVariable($1, $2, $3, $5, *$6, 0, $4);
+    CHECK_FOR_ERROR
+    delete $6;
   } GlobalVarAttributes {
     CurGV = 0;
     CHECK_FOR_ERROR

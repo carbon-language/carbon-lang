@@ -112,7 +112,8 @@ public:
     GlobalValue::LinkageTypes,///< The linkage type of the GV
     GlobalValue::VisibilityTypes,///< The visibility style of the GV
     unsigned SlotNum,         ///< Slot number of GV
-    unsigned initSlot         ///< Slot number of GV's initializer (0 if none)
+    unsigned initSlot,         ///< Slot number of GV's initializer (0 if none)
+    bool isThreadLocal        ///< Whether the GV is thread local or not
   ) {}
 
   /// This method is called when a type list is recognized. It simply

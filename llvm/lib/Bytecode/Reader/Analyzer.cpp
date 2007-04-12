@@ -154,12 +154,14 @@ public:
     GlobalValue::LinkageTypes Linkage,
     GlobalValue::VisibilityTypes Visibility,
     unsigned SlotNum,
-    unsigned initSlot
+    unsigned initSlot,
+    bool isThreadLocal
   ) {
     if (os) {
       *os << "      GV: "
           << ( initSlot == 0 ? "Uni" : "I" ) << "nitialized, "
           << ( isConstant? "Constant, " : "Variable, ")
+          << " Thread Local = " << ( isThreadLocal? "yes, " : "no, ")
           << " Linkage=" << Linkage
           << " Visibility="<< Visibility
           << " Type=";

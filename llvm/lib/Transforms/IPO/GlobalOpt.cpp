@@ -390,7 +390,9 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
       assert(In && "Couldn't get element of initializer?");
       GlobalVariable *NGV = new GlobalVariable(STy->getElementType(i), false,
                                                GlobalVariable::InternalLinkage,
-                                               In, GV->getName()+"."+utostr(i));
+                                               In, GV->getName()+"."+utostr(i),
+                                               (Module *)NULL,
+                                               GV->isThreadLocal());
       Globals.insert(GV, NGV);
       NewGlobals.push_back(NGV);
     }
@@ -413,7 +415,9 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
 
       GlobalVariable *NGV = new GlobalVariable(STy->getElementType(), false,
                                                GlobalVariable::InternalLinkage,
-                                               In, GV->getName()+"."+utostr(i));
+                                               In, GV->getName()+"."+utostr(i),
+                                               (Module *)NULL,
+                                               GV->isThreadLocal());
       Globals.insert(GV, NGV);
       NewGlobals.push_back(NGV);
     }
@@ -699,7 +703,9 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   Constant *Init = UndefValue::get(MI->getAllocatedType());
   GlobalVariable *NewGV = new GlobalVariable(MI->getAllocatedType(), false,
                                              GlobalValue::InternalLinkage, Init,
-                                             GV->getName()+".body");
+                                             GV->getName()+".body",
+                                             (Module *)NULL,
+                                             GV->isThreadLocal());
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
   // Anything that used the malloc now uses the global directly.
@@ -714,7 +720,8 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   // keep track of whether the global was initialized yet or not.
   GlobalVariable *InitBool =
     new GlobalVariable(Type::Int1Ty, false, GlobalValue::InternalLinkage,
-                       ConstantInt::getFalse(), GV->getName()+".init");
+                       ConstantInt::getFalse(), GV->getName()+".init",
+                       (Module *)NULL, GV->isThreadLocal());
   bool InitBoolUsed = false;
 
   // Loop over all uses of GV, processing them in turn.
@@ -943,7 +950,8 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
     GlobalVariable *NGV =
       new GlobalVariable(PFieldTy, false, GlobalValue::InternalLinkage,
                          Constant::getNullValue(PFieldTy),
-                         GV->getName() + ".f" + utostr(FieldNo), GV);
+                         GV->getName() + ".f" + utostr(FieldNo), GV,
+                         GV->isThreadLocal());
     FieldGlobals.push_back(NGV);
     
     MallocInst *NMI = new MallocInst(FieldTy, MI->getArraySize(),
@@ -1145,7 +1153,9 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(Type::Int1Ty, false,
          GlobalValue::InternalLinkage, ConstantInt::getFalse(),
-                                             GV->getName()+".b");
+                                             GV->getName()+".b",
+                                             (Module *)NULL,
+                                             GV->isThreadLocal());
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
   Constant *InitVal = GV->getInitializer();
@@ -1519,7 +1529,9 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   
   // Create the new global and insert it next to the existing list.
   GlobalVariable *NGV = new GlobalVariable(CA->getType(), GCL->isConstant(),
-                                           GCL->getLinkage(), CA);
+                                           GCL->getLinkage(), CA, "",
+                                           (Module *)NULL,
+                                           GCL->isThreadLocal());
   GCL->getParent()->getGlobalList().insert(GCL, NGV);
   NGV->takeName(GCL);
   

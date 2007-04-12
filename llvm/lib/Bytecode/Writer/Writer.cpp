@@ -950,7 +950,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
            "Global must have an initializer or have external linkage!");
     
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2-4=Linkage,
-    // bit5+ = Slot # for type.
+    // bit5 = isThreadLocal, bit6+ = Slot # for type.
     bool HasExtensionWord = (I->getAlignment() != 0) ||
                             I->hasSection() ||
       (I->getVisibility() != GlobalValue::DefaultVisibility);
@@ -958,12 +958,13 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     // If we need to use the extension byte, set linkage=3(internal) and
     // initializer = 0 (impossible!).
     if (!HasExtensionWord) {
-      unsigned oSlot = (Slot << 5) | (getEncodedLinkage(I) << 2) |
-                        (I->hasInitializer() << 1) | (unsigned)I->isConstant();
+      unsigned oSlot = (Slot << 6)| (((unsigned)I->isThreadLocal()) << 5) |
+                       (getEncodedLinkage(I) << 2) | (I->hasInitializer() << 1)
+                       | (unsigned)I->isConstant();
       output_vbr(oSlot);
     } else {  
-      unsigned oSlot = (Slot << 5) | (3 << 2) |
-                        (0 << 1) | (unsigned)I->isConstant();
+      unsigned oSlot = (Slot << 6) | (((unsigned)I->isThreadLocal()) << 5) |
+                       (3 << 2) | (0 << 1) | (unsigned)I->isConstant();
       output_vbr(oSlot);
       
       // The extension word has this format: bit 0 = has initializer, bit 1-3 =

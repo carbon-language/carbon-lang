@@ -44,6 +44,7 @@ class GlobalVariable : public GlobalValue {
   void setPrev(GlobalVariable *N) { Prev = N; }
 
   bool isConstantGlobal;               // Is this a global constant?
+  bool isThreadLocalSymbol;            // Is this symbol "Thread Local"?
   Use Initializer;
 
 public:
@@ -51,12 +52,12 @@ public:
   /// automatically inserted into the end of the specified modules global list.
   GlobalVariable(const Type *Ty, bool isConstant, LinkageTypes Linkage,
                  Constant *Initializer = 0, const std::string &Name = "",
-                 Module *Parent = 0);
+                 Module *Parent = 0, bool ThreadLocal = false);
   /// GlobalVariable ctor - This creates a global and inserts it before the
   /// specified other global.
   GlobalVariable(const Type *Ty, bool isConstant, LinkageTypes Linkage,
                  Constant *Initializer, const std::string &Name,
-                 GlobalVariable *InsertBefore);
+                 GlobalVariable *InsertBefore, bool ThreadLocal = false);
   
   /// isDeclaration - Is this global variable lacking an initializer?  If so, 
   /// the global variable is defined in some other translation unit, and is thus
@@ -106,6 +107,10 @@ public:
   ///
   bool isConstant() const { return isConstantGlobal; }
   void setConstant(bool Value) { isConstantGlobal = Value; }
+
+  /// If the value is "Thread Local", its value isn't shared by the threads.
+  bool isThreadLocal() const { return isThreadLocalSymbol; }
+  void setThreadLocal(bool Value) { isThreadLocalSymbol = Value; }
 
   /// removeFromParent - This method unlinks 'this' from the containing module,
   /// but does not delete it.

@@ -477,7 +477,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
       GlobalVariable *NewDGV =
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                           SGV->getName(), Dest);
+                           SGV->getName(), Dest, SGV->isThreadLocal());
       // Propagate alignment, visibility and section info.
       CopyGVAttributes(NewDGV, SGV);
 
@@ -500,7 +500,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
       GlobalVariable *NewDGV =
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                           "", Dest);
+                           "", Dest, SGV->isThreadLocal());
 
       // Propagate alignment, section and visibility  info.
       NewDGV->setAlignment(DGV->getAlignment());
@@ -522,6 +522,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
         GlobalVariable *NewDGV =
           new GlobalVariable(SGV->getType()->getElementType(),
                              DGV->isConstant(), DGV->getLinkage());
+        NewDGV->setThreadLocal(DGV->isThreadLocal());
         CopyGVAttributes(NewDGV, DGV);
         Dest->getGlobalList().insert(DGV, NewDGV);
         DGV->replaceAllUsesWith(
@@ -821,7 +822,7 @@ static bool LinkAppendingVars(Module *M,
       // Create the new global variable...
       GlobalVariable *NG =
         new GlobalVariable(NewType, G1->isConstant(), G1->getLinkage(),
-                           /*init*/0, First->first, M);
+                           /*init*/0, First->first, M, G1->isThreadLocal());
 
       // Merge the initializer...
       Inits.reserve(NewSize);

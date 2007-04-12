@@ -878,7 +878,8 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     case GlobalValue::HiddenVisibility: Out << "hidden "; break;
     }
   }
-  
+
+  if (GV->isThreadLocal()) Out << "thread_local ";
   Out << (GV->isConstant() ? "constant " : "global ");
   printType(GV->getType()->getElementType());
 

@@ -80,6 +80,8 @@ Module *llvm::CloneModule(const Module *M,
       GV->setInitializer(cast<Constant>(MapValue(I->getInitializer(),
                                                  ValueMap)));
     GV->setLinkage(I->getLinkage());
+    GV->setThreadLocal(I->isThreadLocal());
+    GV->setConstant(I->isConstant());
   }
 
   // Similarly, copy over function bodies now...

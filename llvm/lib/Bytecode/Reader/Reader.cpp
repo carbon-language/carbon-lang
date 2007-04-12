@@ -1704,11 +1704,12 @@ void BytecodeReader::ParseModuleGlobalInfo() {
   unsigned VarType = read_vbr_uint();
   while (VarType != Type::VoidTyID) { // List is terminated by Void
     // VarType Fields: bit0 = isConstant, bit1 = hasInitializer, bit2,3,4 =
-    // Linkage, bit4+ = slot#
-    unsigned SlotNo = VarType >> 5;
+    // Linkage, bit5 = isThreadLocal, bit6+ = slot#
+    unsigned SlotNo = VarType >> 6;
     unsigned LinkageID = (VarType >> 2) & 7;
     unsigned VisibilityID = 0;
     bool isConstant = VarType & 1;
+    bool isThreadLocal = (VarType >> 5) & 1;
     bool hasInitializer = (VarType & 2) != 0;
     unsigned Alignment = 0;
     unsigned GlobalSectionID = 0;
@@ -1764,7 +1765,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
 
     // Create the global variable...
     GlobalVariable *GV = new GlobalVariable(ElTy, isConstant, Linkage,
-                                            0, "", TheModule);
+                                            0, "", TheModule, isThreadLocal);
     GV->setAlignment(Alignment);
     GV->setVisibility(Visibility);
     insertValue(GV, SlotNo, ModuleValues);
@@ -1781,7 +1782,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     // Notify handler about the global value.
     if (Handler)
       Handler->handleGlobalVariable(ElTy, isConstant, Linkage, Visibility,
-                                    SlotNo, initSlot);
+                                    SlotNo, initSlot, isThreadLocal);
 
     // Get next item
     VarType = read_vbr_uint();
