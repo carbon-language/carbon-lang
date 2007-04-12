@@ -512,8 +512,8 @@ static Instruction *LowerPartSet(CallInst *CI) {
     BasicBlock* entry = new BasicBlock("entry",F,0);
     BasicBlock* large = new BasicBlock("large",F,0);
     BasicBlock* small = new BasicBlock("small",F,0);
-    BasicBlock* forward = new BasicBlock("cond_true24",F,0);
-    BasicBlock* reverse = new BasicBlock("cond_next60",F,0);
+    BasicBlock* forward = new BasicBlock("forward",F,0);
+    BasicBlock* reverse = new BasicBlock("reverse",F,0);
 
     // Block entry (entry)
     // First, convert Lo and Hi to ValTy bit width
@@ -546,7 +546,11 @@ static Instruction *LowerPartSet(CallInst *CI) {
     Rep3->reserveOperandSpace(2);
     Rep3->addIncoming(Rep2, small);
     Rep3->addIncoming(Rep, entry);
-    CastInst* Rep4 = new ZExtInst(Rep3, ValTy, "", small);
+    Value* Rep4 = Rep3;
+    if (ValBits > RepBits)
+      Rep4 = new ZExtInst(Rep3, ValTy, "", small);
+    else if (ValBits < RepBits)
+      Rep4 = new TruncInst(Rep3, ValTy, "", small);
     ICmpInst* is_reverse = 
       new ICmpInst(ICmpInst::ICMP_UGT, Lo, Hi, "", small);
     new BranchInst(reverse, forward, is_reverse, small);
