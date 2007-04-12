@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 | grep shrl.*31 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep 'srwi r?3, r?3, 31' &&
+; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 | grep 'srwi r3, r3, 31' &&
 ; RUN: llvm-as < %s | llc -march=arm | grep 'mov r0, r0, lsr #31' &&
 ; RUN: llvm-as < %s | llc -march=thumb | grep 'lsr r0, r0, #31'
 
