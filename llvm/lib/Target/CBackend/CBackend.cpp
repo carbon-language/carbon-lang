@@ -45,7 +45,6 @@
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <sstream>
-// #include <set>
 using namespace llvm;
 
 namespace {
@@ -2430,11 +2429,10 @@ void CWriter::lowerIntrinsics(Function &F) {
   std::vector<Function*>::iterator I = prototypesToGen.begin();
   std::vector<Function*>::iterator E = prototypesToGen.end();
   for ( ; I != E; ++I) {
-    if (intrinsicPrototypesAlreadyGenerated.count(*I) == 0) {
+    if (intrinsicPrototypesAlreadyGenerated.insert(*I).second) {
       Out << '\n';
       printFunctionSignature(*I, true);
       Out << ";\n";
-      intrinsicPrototypesAlreadyGenerated.insert(*I);
     }
   }
 }
