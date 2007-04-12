@@ -270,13 +270,14 @@ static Instruction *LowerPartSelect(CallInst *CI) {
   if (F->isDeclaration()) {
 
     // Get the arguments to the function
-    Value* Val = F->getOperand(0);
-    Value* Right = F->getOperand(1);
-    Value* Left = F->getOperand(2);
+    Function::arg_iterator args = F->arg_begin();
+    Value* Val = args++; Val->setName("Val");
+    Value* Lo = args++; Lo->setName("Lo");
+    Value* Hi  = args++; Hi->setName("High");
 
-    // We want to select a range of bits here such that [Left, Right] is shifted
-    // down to the low bits. However, it is quite possible that Left is smaller
-    // than Right in which case the bits have to be reversed. 
+    // We want to select a range of bits here such that [Hi, Lo] is shifted
+    // down to the low bits. However, it is quite possible that Hi is smaller
+    // than Lo in which case the bits have to be reversed. 
     
     // Create the blocks we will need for the two cases (forward, reverse)
     BasicBlock* CurBB   = new BasicBlock("entry", F);
@@ -286,12 +287,12 @@ static Instruction *LowerPartSelect(CallInst *CI) {
     BasicBlock *Reverse = new BasicBlock("reverse", CurBB->getParent());
     BasicBlock *RsltBlk = new BasicBlock("result",  CurBB->getParent());
 
-    // Cast Left and Right to the size of Val so the widths are all the same
-    if (Left->getType() != Val->getType())
-      Left = CastInst::createIntegerCast(Left, Val->getType(), false, 
+    // Cast Hi and Lo to the size of Val so the widths are all the same
+    if (Hi->getType() != Val->getType())
+      Hi = CastInst::createIntegerCast(Hi, Val->getType(), false, 
                                          "tmp", CurBB);
-    if (Right->getType() != Val->getType())
-      Right = CastInst::createIntegerCast(Right, Val->getType(), false, 
+    if (Lo->getType() != Val->getType())
+      Lo = CastInst::createIntegerCast(Lo, Val->getType(), false, 
                                           "tmp", CurBB);
 
     // Compute a few things that both cases will need, up front.
@@ -299,23 +300,23 @@ static Instruction *LowerPartSelect(CallInst *CI) {
     Constant* One = ConstantInt::get(Val->getType(), 1);
     Constant* AllOnes = ConstantInt::getAllOnesValue(Val->getType());
 
-    // Compare the Left and Right bit positions. This is used to determine 
+    // Compare the Hi and Lo bit positions. This is used to determine 
     // which case we have (forward or reverse)
-    ICmpInst *Cmp = new ICmpInst(ICmpInst::ICMP_ULT, Left, Right, "less",CurBB);
+    ICmpInst *Cmp = new ICmpInst(ICmpInst::ICMP_ULT, Hi, Lo, "less",CurBB);
     new BranchInst(RevSize, FwdSize, Cmp, CurBB);
 
     // First, copmute the number of bits in the forward case.
     Instruction* FBitSize = 
-      BinaryOperator::createSub(Left, Right,"fbits", FwdSize);
+      BinaryOperator::createSub(Hi, Lo,"fbits", FwdSize);
     new BranchInst(Compute, FwdSize);
 
     // Second, compute the number of bits in the reverse case.
     Instruction* RBitSize = 
-      BinaryOperator::createSub(Right, Left, "rbits", RevSize);
+      BinaryOperator::createSub(Lo, Hi, "rbits", RevSize);
     new BranchInst(Compute, RevSize);
 
     // Now, compute the bit range. Start by getting the bitsize and the shift
-    // amount (either Left or Right) from PHI nodes. Then we compute a mask for 
+    // amount (either Hi or Lo) from PHI nodes. Then we compute a mask for 
     // the number of bits we want in the range. We shift the bits down to the 
     // least significant bits, apply the mask to zero out unwanted high bits, 
     // and we have computed the "forward" result. It may still need to be 
@@ -327,11 +328,11 @@ static Instruction *LowerPartSelect(CallInst *CI) {
     BitSize->addIncoming(FBitSize, FwdSize);
     BitSize->addIncoming(RBitSize, RevSize);
 
-    // Get the ShiftAmount as the smaller of Left/Right
+    // Get the ShiftAmount as the smaller of Hi/Lo
     PHINode *ShiftAmt = new PHINode(Val->getType(), "shiftamt", Compute);
     ShiftAmt->reserveOperandSpace(2);
-    ShiftAmt->addIncoming(Right, FwdSize);
-    ShiftAmt->addIncoming(Left, RevSize);
+    ShiftAmt->addIncoming(Lo, FwdSize);
+    ShiftAmt->addIncoming(Hi, RevSize);
 
     // Increment the bit size
     Instruction *BitSizePlusOne = 
@@ -403,9 +404,9 @@ static Instruction *LowerPartSelect(CallInst *CI) {
 
   // Return a call to the implementation function
   Value *Args[3];
-  Args[0] = CI->getOperand(0);
-  Args[1] = CI->getOperand(1);
-  Args[2] = CI->getOperand(2);
+  Args[0] = CI->getOperand(1);
+  Args[1] = CI->getOperand(2);
+  Args[2] = CI->getOperand(3);
   return new CallInst(F, Args, 3, CI->getName(), CI);
 }
 
@@ -516,7 +517,13 @@ static Instruction *LowerPartSet(CallInst *CI) {
     BasicBlock* reverse = new BasicBlock("reverse",F,0);
 
     // Block entry (entry)
-    // First, convert Lo and Hi to ValTy bit width
+    // First, get the number of bits that we're placing as an i32
+    ICmpInst* is_forward = 
+      new ICmpInst(ICmpInst::ICMP_ULT, Lo, Hi, "", entry);
+    SelectInst* Lo_pn = new SelectInst(is_forward, Hi, Lo, "", entry);
+    SelectInst* Hi_pn = new SelectInst(is_forward, Lo, Hi, "", entry);
+    BinaryOperator* NumBits = BinaryOperator::createSub(Lo_pn, Hi_pn, "",entry);
+    // Now, convert Lo and Hi to ValTy bit width
     if (ValBits > 32) {
       Hi = new ZExtInst(Hi, ValTy, "", entry);
       Lo = new ZExtInst(Lo, ValTy, "", entry);
@@ -524,11 +531,8 @@ static Instruction *LowerPartSet(CallInst *CI) {
       Hi = new TruncInst(Hi, ValTy, "", entry);
       Lo = new TruncInst(Lo, ValTy, "", entry);
     }
-    ICmpInst* is_forward = 
-      new ICmpInst(ICmpInst::ICMP_ULT, Lo, Hi, "", entry);
-    SelectInst* Lo_pn = new SelectInst(is_forward, Hi, Lo, "", entry);
-    SelectInst* Hi_pn = new SelectInst(is_forward, Lo, Hi, "", entry);
-    BinaryOperator* NumBits = BinaryOperator::createSub(Lo_pn, Hi_pn, "",entry);
+    // Determine if the replacement bits are larger than the number of bits we
+    // are replacing and deal with it.
     ICmpInst* is_large = 
       new ICmpInst(ICmpInst::ICMP_ULT, NumBits, RepBitWidth, "", entry);
     new BranchInst(large, small, is_large, entry);
@@ -544,7 +548,7 @@ static Instruction *LowerPartSet(CallInst *CI) {
     // Block "small"
     PHINode* Rep3 = new PHINode(RepTy, "", small);
     Rep3->reserveOperandSpace(2);
-    Rep3->addIncoming(Rep2, small);
+    Rep3->addIncoming(Rep2, large);
     Rep3->addIncoming(Rep, entry);
     Value* Rep4 = Rep3;
     if (ValBits > RepBits)
@@ -571,9 +575,14 @@ static Instruction *LowerPartSet(CallInst *CI) {
     Value* t8    = BinaryOperator::createXor(t7, ValMask, "", reverse);
     Value* t9    = BinaryOperator::createAnd(t8, Val, "", reverse);
     Value* t10   = BinaryOperator::createShl(Rep4, Lo, "", reverse);
+    if (RepBits < ValBits)
+      RepBitWidth = 
+        cast<ConstantInt>(ConstantExpr::getZExt(RepBitWidth, ValTy));
+    else if (RepBits > ValBits)
+      RepBitWidth = 
+        cast<ConstantInt>(ConstantExpr::getTrunc(RepBitWidth, ValTy));
     Value* t11   = BinaryOperator::createSub(RepBitWidth, Hi, "", reverse);
-    Value* t12   = new ZExtInst(t11, ValTy, "", reverse);
-    Value* t13   = BinaryOperator::createLShr(Rep4, t12, "",reverse);
+    Value* t13   = BinaryOperator::createLShr(Rep4, t11, "",reverse);
     Value* t14   = BinaryOperator::createOr(t10, t9, "", reverse);
     Value* RRslt = BinaryOperator::createOr(t14, t13, "", reverse);
     new ReturnInst(RRslt, reverse);
@@ -581,10 +590,10 @@ static Instruction *LowerPartSet(CallInst *CI) {
 
   // Return a call to the implementation function
   Value *Args[3];
-  Args[0] = CI->getOperand(0);
-  Args[1] = CI->getOperand(1);
-  Args[2] = CI->getOperand(2);
-  Args[3] = CI->getOperand(3);
+  Args[0] = CI->getOperand(1);
+  Args[1] = CI->getOperand(2);
+  Args[2] = CI->getOperand(3);
+  Args[3] = CI->getOperand(4);
   return new CallInst(F, Args, 4, CI->getName(), CI);
 }
 
