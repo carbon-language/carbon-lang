@@ -71,6 +71,13 @@ extrahelp::extrahelp(const char *Help)
   MoreHelp->push_back(Help);
 }
 
+static bool OptionListChanged = false;
+
+// MarkOptionsChanged - Internal helper function.
+void cl::MarkOptionsChanged() {
+  OptionListChanged = true;
+}
+
 /// RegisteredOptionList - This is the list of the command line options that
 /// have statically constructed themselves.
 static Option *RegisteredOptionList = 0;
@@ -80,7 +87,9 @@ void Option::addArgument() {
   
   NextRegistered = RegisteredOptionList;
   RegisteredOptionList = this;
+  MarkOptionsChanged();
 }
+
 
 //===----------------------------------------------------------------------===//
 // Basic, shared command line option processing machinery.
@@ -394,10 +403,6 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   // the positional args into the PositionalVals list...
   Option *ActivePositionalArg = 0;
 
-  // Keep track of the option list so far so that we can tell if it is ever
-  // extended.
-  Option *CurOptionList = RegisteredOptionList;
-  
   // Loop over all of the arguments... processing them.
   bool DashDashFound = false;  // Have we read '--'?
   for (int i = 1; i < argc; ++i) {
@@ -405,14 +410,14 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     const char *Value = 0;
     const char *ArgName = "";
 
-    // If the head of the option list changed, this means that some command line
+    // If the option list changed, this means that some command line
     // option has just been registered or deregistered.  This can occur in
     // response to things like -load, etc.  If this happens, rescan the options.
-    if (CurOptionList != RegisteredOptionList) {
+    if (OptionListChanged) {
       PositionalOpts.clear();
       Opts.clear();
       GetOptionInfo(PositionalOpts, Opts);
-      CurOptionList = RegisteredOptionList;
+      OptionListChanged = false;
     }
     
     // Check to see if this is a positional argument.  This argument is

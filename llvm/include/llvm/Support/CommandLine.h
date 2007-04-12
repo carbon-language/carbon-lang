@@ -57,6 +57,10 @@ void ParseEnvironmentOptions(const char *progName, const char *envvar,
 ///                     CommandLine utilities to print their own version string.
 void SetVersionPrinter(void (*func)());
 
+
+// MarkOptionsChanged - Internal helper function.
+void MarkOptionsChanged();
+
 //===----------------------------------------------------------------------===//
 // Flags permitted to be passed to command line arguments
 //
@@ -469,6 +473,7 @@ public:
     assert(findOption(Name) == Values.size() && "Option already exists!");
     Values.push_back(std::make_pair(Name,
                              std::make_pair(static_cast<DataType>(V),HelpStr)));
+    MarkOptionsChanged();
   }
 
   /// removeLiteralOption - Remove the specified option.
