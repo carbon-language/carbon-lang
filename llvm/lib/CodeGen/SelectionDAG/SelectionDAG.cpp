@@ -1484,6 +1484,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            MVT::getVectorNumElements(VT) == N3.getNumOperands() &&
            "Illegal VECTOR_SHUFFLE node!");
     break;
+  case ISD::VBIT_CONVERT:
+    // Fold vbit_convert nodes from a type to themselves.
+    if (N1.getValueType() == MVT::Vector) {
+      assert(isa<ConstantSDNode>(*(N1.Val->op_end()-2)) &&
+             isa<VTSDNode>(*(N1.Val->op_end()-1)) && "Malformed vector input!");
+      if (*(N1.Val->op_end()-2) == N2 && *(N1.Val->op_end()-1) == N3)
+        return N1;
+    }
+    break;
   }
 
   // Memoize node if it doesn't produce a flag.
