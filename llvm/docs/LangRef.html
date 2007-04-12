@@ -4685,10 +4685,10 @@ wrap around to include both the highest and lowest bits. For example, if a
 cause these bits to be set: <tt>0xFF1F</tt>.</p>
 <h5>Examples:</h5>
 <pre>
-  llvm.part.set(0xFFFF, 0, Y, 4, 7) -&gt; 0xFF0F
-  llvm.part.set(0xFFFF, 0, Y, 7, 4) -&gt; 0x0060
-  llvm.part.set(0xFFFF, 0, Y, 8, 3) -&gt; 0x00F0
-  llvm.part.set(0xFFFF, 0, Y, 3, 8) -&gt; 0xFE07
+  llvm.part.set(0xFFFF, 0, 4, 7) -&gt; 0xFF0F
+  llvm.part.set(0xFFFF, 0, 7, 4) -&gt; 0x0060
+  llvm.part.set(0xFFFF, 0, 8, 3) -&gt; 0x00F0
+  llvm.part.set(0xFFFF, 0, 3, 8) -&gt; 0xFE07
 </pre>
 </div>
 
