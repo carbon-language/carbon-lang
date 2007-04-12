@@ -3055,9 +3055,10 @@ GetRegistersForValue(const std::string &ConstrCode,
     // how to maintain the constraint.  If it isn't, go ahead and create vreg
     // and let the regalloc do the right thing.
     if (!isOutReg || !isInReg) {
-      if (VT == MVT::Other)
-        ValueVT = *PhysReg.second->vt_begin();
       RegVT = *PhysReg.second->vt_begin();
+      
+      if (VT == MVT::Other)
+        ValueVT = RegVT;
 
       // Create the appropriate number of virtual registers.
       SSARegMap *RegMap = DAG.getMachineFunction().getSSARegMap();
@@ -3459,8 +3460,24 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
 
   // If this asm returns a register value, copy the result from that register
   // and set it as the value of the call.
-  if (!RetValRegs.Regs.empty())
-    setValue(&I, RetValRegs.getCopyFromRegs(DAG, Chain, Flag));
+  if (!RetValRegs.Regs.empty()) {
+    SDOperand Val = RetValRegs.getCopyFromRegs(DAG, Chain, Flag);
+    
+    // If the result of the inline asm is a vector, it may have the wrong
+    // width/num elts.  Make sure to convert it to the right type with
+    // vbit_convert.
+    if (Val.getValueType() == MVT::Vector) {
+      const VectorType *VTy = cast<VectorType>(I.getType());
+      unsigned DesiredNumElts = VTy->getNumElements();
+      MVT::ValueType DesiredEltVT = TLI.getValueType(VTy->getElementType());
+      
+      Val = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Val, 
+                        DAG.getConstant(DesiredNumElts, MVT::i32),
+                        DAG.getValueType(DesiredEltVT));
+    }
+    
+    setValue(&I, Val);
+  }
   
   std::vector<std::pair<SDOperand, Value*> > StoresToEmit;
   
