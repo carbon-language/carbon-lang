@@ -321,6 +321,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ADD,                MVT::v8i8,  Legal);
     setOperationAction(ISD::ADD,                MVT::v4i16, Legal);
     setOperationAction(ISD::ADD,                MVT::v2i32, Legal);
+    setOperationAction(ISD::ADD,                MVT::v1i64, Legal);
 
     setOperationAction(ISD::SUB,                MVT::v8i8,  Legal);
     setOperationAction(ISD::SUB,                MVT::v4i16, Legal);
@@ -4636,7 +4637,10 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       else if (VT == MVT::i8)
         return std::make_pair(0U, X86::GR8RegisterClass);
       break;
-    // FIXME: not handling MMX registers yet ('y' constraint).
+    case 'y':   // MMX_REGS if MMX allowed.
+      if (!Subtarget->hasMMX()) break;
+      return std::make_pair(0U, X86::VR64RegisterClass);
+      break;
     case 'Y':   // SSE_REGS if SSE2 allowed
       if (!Subtarget->hasSSE2()) break;
       // FALL THROUGH.
