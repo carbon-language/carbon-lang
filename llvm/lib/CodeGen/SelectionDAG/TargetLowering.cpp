@@ -303,12 +303,9 @@ unsigned TargetLowering::getVectorTypeBreakdown(const VectorType *PTy,
     NumVectorRegs <<= 1;
   }
   
-  MVT::ValueType VT;
-  if (NumElts == 1) {
+  MVT::ValueType VT = getVectorType(EltTy, NumElts);
+  if (!isTypeLegal(VT))
     VT = EltTy;
-  } else {
-    VT = getVectorType(EltTy, NumElts); 
-  }
   PTyElementVT = VT;
 
   MVT::ValueType DestVT = getTypeToTransformTo(VT);
