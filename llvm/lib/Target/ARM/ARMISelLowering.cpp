@@ -1370,8 +1370,12 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
   case 1:
     if (Subtarget->isThumb())
       return false;
-
+    // FALL THROUGH.
   default:
+    // ARM doesn't support any R+R*scale+imm addr modes.
+    if (AM.BaseOffs)
+      return false;
+    
     int Scale = AM.Scale;
     switch (getValueType(Ty)) {
     default: return false;
