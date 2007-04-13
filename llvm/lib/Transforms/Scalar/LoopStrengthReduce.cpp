@@ -568,7 +568,25 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                                SCEVExpander &Rewriter,
                                                Loop *L, Pass *P) {
   if (!isa<PHINode>(Inst)) {
-    Value *NewVal = InsertCodeForBaseAtPosition(NewBase, Rewriter, Inst, L);
+    // By default, insert code at the user instruction.
+    BasicBlock::iterator InsertPt = Inst;
+    
+    // However, if the Operand is itself an instruction, the (potentially
+    // complex) inserted code may be shared by many users.  Because of this, we
+    // want to emit code for the computation of the operand right before its old
+    // computation.  This is usually safe, because we obviously used to use the
+    // computation when it was computed in its current block.  However, in some
+    // cases (e.g. use of a post-incremented induction variable) the NewBase
+    // value will be pinned to live somewhere after the original computation.
+    // In this case, we have to back off.
+    if (!isUseOfPostIncrementedValue) {
+      if (Instruction *OpInst = dyn_cast<Instruction>(OperandValToReplace)) { 
+        InsertPt = OpInst;
+        while (isa<PHINode>(InsertPt)) ++InsertPt;
+      }
+    }
+    
+    Value *NewVal = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
     DOUT << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst;
