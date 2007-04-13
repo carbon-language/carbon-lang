@@ -108,7 +108,7 @@ APInt ConstantRange::getUnsignedMin() const {
 /// ConstantRange.
 ///
 APInt ConstantRange::getSignedMax() const {
-  APInt SignedMax = APInt::getSignedMaxValue(getBitWidth());
+  APInt SignedMax(APInt::getSignedMaxValue(getBitWidth()));
   if (!isWrappedSet()) {
     if (getLower().slt(getUpper() - 1))
       return getUpper() - 1;
@@ -130,7 +130,7 @@ APInt ConstantRange::getSignedMax() const {
 /// ConstantRange.
 ///
 APInt ConstantRange::getSignedMin() const {
-  APInt SignedMin = APInt::getSignedMinValue(getBitWidth());
+  APInt SignedMin(APInt::getSignedMinValue(getBitWidth()));
   if (!isWrappedSet()) {
     if (getLower().slt(getUpper() - 1))
       return getLower();
@@ -370,7 +370,7 @@ ConstantRange ConstantRange::signExtend(uint32_t DstTySize) const {
 ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
   unsigned SrcTySize = getBitWidth();
   assert(SrcTySize > DstTySize && "Not a value truncation");
-  APInt Size = APInt::getMaxValue(DstTySize).zext(SrcTySize);
+  APInt Size(APInt::getLowBitsSet(SrcTySize, DstTySize));
   if (isFullSet() || getSetSize().ugt(Size))
     return ConstantRange(DstTySize);
 
