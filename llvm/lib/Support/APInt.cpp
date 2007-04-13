@@ -659,6 +659,43 @@ APInt& APInt::flip(uint32_t bitPosition) {
   return *this;
 }
 
+uint32_t APInt::getBitsNeeded(const char* str, uint32_t slen, uint8_t radix) {
+  assert(str != 0 && "Invalid value string");
+  assert(slen > 0 && "Invalid string length");
+
+  // Each computation below needs to know if its negative
+  uint32_t isNegative = str[0] == '-';
+  if (isNegative) {
+    slen--;
+    str++;
+  }
+  // For radixes of power-of-two values, the bits required is accurately and
+  // easily computed
+  if (radix == 2)
+    return slen + isNegative;
+  if (radix == 8)
+    return slen * 3 + isNegative;
+  if (radix == 16)
+    return slen * 4 + isNegative;
+
+  // Otherwise it must be radix == 10, the hard case
+  assert(radix == 10 && "Invalid radix");
+
+  // This is grossly inefficient but accurate. We could probably do something
+  // with a computation of roughly slen*64/20 and then adjust by the value of
+  // the first few digits. But, I'm not sure how accurate that could be.
+
+  // Compute a sufficient number of bits that is always large enough but might
+  // be too large. This avoids the assertion in the constructor.
+  uint32_t sufficient = slen*64/18;
+
+  // Convert to the actual binary value.
+  APInt tmp(sufficient, str, slen, radix);
+
+  // Compute how many bits are required.
+  return isNegative + tmp.logBase2();
+}
+
 uint64_t APInt::getHashValue() const {
   // Put the bit width into the low order bits.
   uint64_t hash = BitWidth;

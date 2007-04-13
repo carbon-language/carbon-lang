@@ -840,6 +840,12 @@ public:
     assert(getActiveBits() <= 64 && "Too many bits for int64_t");
     return int64_t(pVal[0]);
   }
+
+  /// This method determines how many bits are required to hold the APInt
+  /// equivalent of the string given by \p str of length \p slen.
+  /// @brief Get bits required for string value.
+  static uint32_t getBitsNeeded(const char* str, uint32_t slen, uint8_t radix);
+
   /// countLeadingZeros - This function is an APInt version of the
   /// countLeadingZeros_{32,64} functions in MathExtras.h. It counts the number
   /// of zeros from the most significant bit to the first one bit.
