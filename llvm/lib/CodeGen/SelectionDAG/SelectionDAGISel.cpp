@@ -4634,6 +4634,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       if (PHIBB == BitTestCases[i].Default) {
         PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
         PHI->addMachineBasicBlockOperand(BitTestCases[i].Parent);
+        PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
         PHI->addMachineBasicBlockOperand(BitTestCases[i].Cases.back().ThisBB);
       }
       // One of "cases" BB.
