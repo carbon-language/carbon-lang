@@ -68,6 +68,25 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
   return CastInst::create(opcode, V, Ty, V->getName(), IP);
 }
 
+/// InsertBinop - Insert the specified binary operator, doing a small amount
+/// of work to avoid inserting an obviously redundant operation.
+Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
+                                 Value *RHS, Instruction *InsertPt) {
+  // Do a quick scan to see if we have this binop nearby.  If so, reuse it.
+  unsigned ScanLimit = 6;
+  for (BasicBlock::iterator IP = InsertPt, E = InsertPt->getParent()->begin();
+       ScanLimit; --IP, --ScanLimit) {
+    if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(IP))
+      if (BinOp->getOpcode() == Opcode && BinOp->getOperand(0) == LHS &&
+          BinOp->getOperand(1) == RHS)
+        return BinOp;
+    if (IP == E) break;
+  }
+
+  // If we don't have 
+  return BinaryOperator::create(Opcode, LHS, RHS, "tmp.", InsertPt);
+}
+
 Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
   const Type *Ty = S->getType();
   int FirstOp = 0;  // Set if we should emit a subtract.
@@ -80,11 +99,12 @@ Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
 
   // Emit a bunch of multiply instructions
   for (; i >= FirstOp; --i)
-    V = BinaryOperator::createMul(V, expandInTy(S->getOperand(i), Ty),
-                                  "tmp.", InsertPt);
+    V = InsertBinop(Instruction::Mul, V, expandInTy(S->getOperand(i), Ty),
+                    InsertPt);
   // -1 * ...  --->  0 - ...
   if (FirstOp == 1)
-    V = BinaryOperator::createNeg(V, "tmp.", InsertPt);
+    V = InsertBinop(Instruction::Sub, Constant::getNullValue(V->getType()), V,
+                    InsertPt);
   return V;
 }
 
@@ -103,7 +123,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
     Value *Rest = expandInTy(SCEVAddRecExpr::get(NewOps, L), Ty);
 
     // FIXME: look for an existing add to use.
-    return BinaryOperator::createAdd(Rest, Start, "tmp.", InsertPt);
+    return InsertBinop(Instruction::Add, Rest, Start, InsertPt);
   }
 
   // {0,+,1} --> Insert a canonical induction variable into the loop!
@@ -164,7 +184,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
       }
     }
     
-    return BinaryOperator::createMul(I, F, "tmp.", MulInsertPt);
+    return InsertBinop(Instruction::Mul, I, F, MulInsertPt);
   }
 
   // If this is a chain of recurrences, turn it into a closed form, using the

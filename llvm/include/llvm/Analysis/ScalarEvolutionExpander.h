@@ -89,7 +89,10 @@ namespace llvm {
     /// we can to share the casts.
     static Value *InsertCastOfTo(Instruction::CastOps opcode, Value *V, 
                                  const Type *Ty);
-    
+    /// InsertBinop - Insert the specified binary operator, doing a small amount
+    /// of work to avoid inserting an obviously redundant operation.
+    static Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
+                              Value *RHS, Instruction *InsertPt);
   protected:
     Value *expand(SCEV *S) {
       // Check to see if we already expanded this.
@@ -141,8 +144,8 @@ namespace llvm {
 
       // Emit a bunch of add instructions
       for (int i = S->getNumOperands()-2; i >= 0; --i)
-        V = BinaryOperator::createAdd(V, expandInTy(S->getOperand(i), Ty),
-                                      "tmp.", InsertPt);
+        V = InsertBinop(Instruction::Add, V, expandInTy(S->getOperand(i), Ty),
+                        InsertPt);
       return V;
     }
 
@@ -152,7 +155,7 @@ namespace llvm {
       const Type *Ty = S->getType();
       Value *LHS = expandInTy(S->getLHS(), Ty);
       Value *RHS = expandInTy(S->getRHS(), Ty);
-      return BinaryOperator::createSDiv(LHS, RHS, "tmp.", InsertPt);
+      return InsertBinop(Instruction::SDiv, LHS, RHS, InsertPt);
     }
 
     Value *visitAddRecExpr(SCEVAddRecExpr *S);
