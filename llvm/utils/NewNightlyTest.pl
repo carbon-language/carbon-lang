@@ -193,7 +193,12 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 
 if ($ENV{'LLVMGCCDIR'}) {
   $CONFIGUREARGS .= " --with-llvmgccdir=" . $ENV{'LLVMGCCDIR'};
+  $LLVMGCCPATH = $ENV{'LLVMGCCDIR'};
 }
+else {
+  $LLVMGCCPATH = "";
+}
+
 if ($CONFIGUREARGS !~ /--disable-jit/) {
   $CONFIGUREARGS .= " --enable-jit";
 }
@@ -1058,6 +1063,17 @@ if ($GCCPATH ne "") {
 @GCC_VERSION = split '\n', $gcc_version_long;
 $gcc_version = $GCC_VERSION[0];
 
+$llvmgcc_version_long="";
+if ($LLVMGCCPATH ne "") {
+  $llvmgcc_version_long = `$LLVMGCCPATH/llvm-gcc -v 2>&1`;
+} else {
+  $llvmgcc_version_long = `llvm-gcc -v 2>&1`;
+}
+@LLVMGCC_VERSION = split '\n', $llvmgcc_version_long;
+$llvmgcc_versionTarget = $LLVMGCC_VERSION[1];
+$llvmgcc_versionTarget =~ /Target: (.+)/;
+$targetTriple = $1;
+
 if(!$BuildError){
   @DEJAGNU_LOG = ReadFile "$DejagnuLog";
   @DEJAGNU_SUM = ReadFile "$DejagnuSum";
@@ -1116,7 +1132,8 @@ my %hash_of_data = (
   'starttime' => $starttime,
   'endtime' => $endtime,
   'o_file_sizes' => $o_file_sizes,
-  'a_file_sizes' => $a_file_sizes
+  'a_file_sizes' => $a_file_sizes,
+  'target_triple' => $targetTriple
 );
 
 $TESTING = 0;
