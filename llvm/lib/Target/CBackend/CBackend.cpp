@@ -2372,7 +2372,7 @@ void CWriter::lowerIntrinsics(Function &F) {
 
   // Examine all the instructions in this function to find the intrinsics that
   // need to be lowered.
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+  for (Function::iterator BB = F.begin(), EE = F.end(); BB != EE; ++BB)
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(I++))
         if (Function *F = CI->getCalledFunction())
