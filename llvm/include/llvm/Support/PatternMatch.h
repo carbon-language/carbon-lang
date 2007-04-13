@@ -81,7 +81,7 @@ struct BinaryOp_match {
 
   template<typename OpTy>
   bool match(OpTy *V) {
-    if (V->getValueType() == Value::InstructionVal + Opcode) {
+    if (V->getValueID() == Value::InstructionVal + Opcode) {
       ConcreteTy *I = cast<ConcreteTy>(V);
       return I->getOpcode() == Opcode && L.match(I->getOperand(0)) &&
              R.match(I->getOperand(1));
@@ -195,8 +195,8 @@ struct Shr_match {
 
   template<typename OpTy>
   bool match(OpTy *V) {
-    if (V->getValueType() == Value::InstructionVal + Instruction::LShr ||
-        V->getValueType() == Value::InstructionVal + Instruction::AShr) {
+    if (V->getValueID() == Value::InstructionVal + Instruction::LShr ||
+        V->getValueID() == Value::InstructionVal + Instruction::AShr) {
       ConcreteTy *I = cast<ConcreteTy>(V);
       return (I->getOpcode() == Instruction::AShr ||
               I->getOpcode() == Instruction::LShr) &&

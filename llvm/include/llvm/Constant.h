@@ -88,8 +88,8 @@ public:
   static inline bool classof(const Constant *) { return true; }
   static inline bool classof(const GlobalValue *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() >= ConstantFirstVal &&
-           V->getValueType() <= ConstantLastVal;
+    return V->getValueID() >= ConstantFirstVal &&
+           V->getValueID() <= ConstantLastVal;
   }
 
   /// replaceUsesOfWithOnConstant - This method is a special form of

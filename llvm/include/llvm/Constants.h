@@ -201,7 +201,7 @@ public:
   /// @brief Methods to support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const ConstantInt *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == ConstantIntVal;
+    return V->getValueID() == ConstantIntVal;
   }
   static void ResetTrueFalse() { TheTrueVal = TheFalseVal = 0; }
 private:
@@ -239,7 +239,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantFP *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == ConstantFPVal;
+    return V->getValueID() == ConstantFPVal;
   }
 };
 
@@ -267,7 +267,7 @@ public:
   ///
   static bool classof(const ConstantAggregateZero *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == ConstantAggregateZeroVal;
+    return V->getValueID() == ConstantAggregateZeroVal;
   }
 };
 
@@ -331,7 +331,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantArray *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == ConstantArrayVal;
+    return V->getValueID() == ConstantArrayVal;
   }
 };
 
@@ -376,7 +376,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantStruct *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == ConstantStructVal;
+    return V->getValueID() == ConstantStructVal;
   }
 };
 
@@ -428,7 +428,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantVector *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == ConstantVectorVal;
+    return V->getValueID() == ConstantVectorVal;
   }
 };
 
@@ -464,7 +464,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerNull *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == ConstantPointerNullVal;
+    return V->getValueID() == ConstantPointerNullVal;
   }
 };
 
@@ -673,7 +673,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantExpr *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == ConstantExprVal;
+    return V->getValueID() == ConstantExprVal;
   }
 };
 
@@ -704,7 +704,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const UndefValue *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == UndefValueVal;
+    return V->getValueID() == UndefValueVal;
   }
 };
 

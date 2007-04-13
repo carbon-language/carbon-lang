@@ -158,7 +158,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BasicBlock *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::BasicBlockVal;
+    return V->getValueID() == Value::BasicBlockVal;
   }
 
   /// dropAllReferences() - This function causes all the subinstructions to "let

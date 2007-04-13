@@ -220,7 +220,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Function *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::FunctionVal;
+    return V->getValueID() == Value::FunctionVal;
   }
 
   /// dropAllReferences() - This method causes all the subinstructions to "let

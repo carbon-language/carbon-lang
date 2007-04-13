@@ -110,7 +110,7 @@ public:
   /// Subclass classification... getOpcode() returns a member of
   /// one of the enums that is coming soon (down below)...
   ///
-  unsigned getOpcode() const { return getValueType() - InstructionVal; }
+  unsigned getOpcode() const { return getValueID() - InstructionVal; }
   const char *getOpcodeName() const {
     return getOpcodeName(getOpcode());
   }
@@ -193,7 +193,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() >= Value::InstructionVal;
+    return V->getValueID() >= Value::InstructionVal;
   }
 
   //----------------------------------------------------------------------

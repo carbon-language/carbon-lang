@@ -178,7 +178,7 @@ public:
     ConstantLastVal  = ConstantPointerNullVal
   };
 
-  /// getValueType - Return an ID for the concrete type of this object.  This is
+  /// getValueID - Return an ID for the concrete type of this object.  This is
   /// used to implement the classof checks.  This should not be used for any
   /// other purpose, as the values may change as LLVM evolves.  Also, note that
   /// for instructions, the Instruction's opcode is added to InstructionVal. So
@@ -187,7 +187,7 @@ public:
   /// # there are more possible values for the value type than in ValueTy enum.
   /// # the InstructionVal enumerator must be the highest valued enumerator in
   ///   the ValueTy enum.
-  unsigned getValueType() const {
+  unsigned getValueID() const {
     return SubclassID;
   }
 
@@ -227,26 +227,26 @@ void Use::set(Value *V) {
 // the subtype header files to test to see if the value is a subclass...
 //
 template <> inline bool isa_impl<Constant, Value>(const Value &Val) {
-  return Val.getValueType() >= Value::ConstantFirstVal &&
-         Val.getValueType() <= Value::ConstantLastVal;
+  return Val.getValueID() >= Value::ConstantFirstVal &&
+         Val.getValueID() <= Value::ConstantLastVal;
 }
 template <> inline bool isa_impl<Argument, Value>(const Value &Val) {
-  return Val.getValueType() == Value::ArgumentVal;
+  return Val.getValueID() == Value::ArgumentVal;
 }
 template <> inline bool isa_impl<InlineAsm, Value>(const Value &Val) {
-  return Val.getValueType() == Value::InlineAsmVal;
+  return Val.getValueID() == Value::InlineAsmVal;
 }
 template <> inline bool isa_impl<Instruction, Value>(const Value &Val) {
-  return Val.getValueType() >= Value::InstructionVal;
+  return Val.getValueID() >= Value::InstructionVal;
 }
 template <> inline bool isa_impl<BasicBlock, Value>(const Value &Val) {
-  return Val.getValueType() == Value::BasicBlockVal;
+  return Val.getValueID() == Value::BasicBlockVal;
 }
 template <> inline bool isa_impl<Function, Value>(const Value &Val) {
-  return Val.getValueType() == Value::FunctionVal;
+  return Val.getValueID() == Value::FunctionVal;
 }
 template <> inline bool isa_impl<GlobalVariable, Value>(const Value &Val) {
-  return Val.getValueType() == Value::GlobalVariableVal;
+  return Val.getValueID() == Value::GlobalVariableVal;
 }
 template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) {
   return isa<GlobalVariable>(Val) || isa<Function>(Val);

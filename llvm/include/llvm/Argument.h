@@ -64,7 +64,7 @@ public:
   ///
   static inline bool classof(const Argument *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == ArgumentVal;
+    return V->getValueID() == ArgumentVal;
   }
 };
 
