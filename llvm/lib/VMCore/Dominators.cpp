@@ -899,15 +899,15 @@ bool ETForestBase::dominates(Instruction *A, Instruction *B) {
   BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
   if (BBA != BBB) return dominates(BBA, BBB);
   
-  // Loop through the basic block until we find A or B.
-  BasicBlock::iterator I = BBA->begin();
-  for (; &*I != A && &*I != B; ++I) /*empty*/;
-  
   // It is not possible to determine dominance between two PHI nodes 
   // based on their ordering.
   if (isa<PHINode>(A) && isa<PHINode>(B)) 
     return false;
 
+  // Loop through the basic block until we find A or B.
+  BasicBlock::iterator I = BBA->begin();
+  for (; &*I != A && &*I != B; ++I) /*empty*/;
+  
   if(!IsPostDominators) {
     // A dominates B if it is found first in the basic block.
     return &*I == A;
@@ -929,7 +929,7 @@ ETNode *ETForest::getNodeForBlock(BasicBlock *BB) {
 
   // Haven't calculated this node yet?  Get or calculate the node for the
   // immediate dominator.
-  BasicBlock *IDom = getAnalysis<ImmediateDominators>()[BB];
+	BasicBlock *IDom = getAnalysis<DominatorTree>().getNode(BB)->getIDom()->getBlock();
 
   // If we are unreachable, we may not have an immediate dominator.
   if (!IDom)
@@ -945,15 +945,17 @@ ETNode *ETForest::getNodeForBlock(BasicBlock *BB) {
   }
 }
 
-void ETForest::calculate(const ImmediateDominators &ID) {
+void ETForest::calculate(const DominatorTree &DT) {
   assert(Roots.size() == 1 && "ETForest should have 1 root block!");
   BasicBlock *Root = Roots[0];
   Nodes[Root] = new ETNode(Root); // Add a node for the root
 
   Function *F = Root->getParent();
   // Loop over all of the reachable blocks in the function...
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-    if (BasicBlock *ImmDom = ID.get(I)) {  // Reachable block.
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+		DominatorTree::Node* node = DT.getNode(I);
+    if (node && node->getIDom()) {  // Reachable block.
+			BasicBlock* ImmDom = node->getIDom()->getBlock();
       ETNode *&BBNode = Nodes[I];
       if (!BBNode) {  // Haven't calculated this node yet?
         // Get or calculate the node for the immediate dominator
@@ -965,6 +967,7 @@ void ETForest::calculate(const ImmediateDominators &ID) {
         BBNode->setFather(IDomNode);
       }
     }
+	}
 
   // Make sure we've got nodes around for every block
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {

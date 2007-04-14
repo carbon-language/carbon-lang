@@ -422,7 +422,7 @@ public:
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired<ImmediateDominators>();
+    AU.addRequired<DominatorTree>();
   }
   //===--------------------------------------------------------------------===//
   // API to update Forest information based on modifications
@@ -480,13 +480,13 @@ public:
 
   virtual bool runOnFunction(Function &F) {
     reset();     // Reset from the last time we were run...
-    ImmediateDominators &ID = getAnalysis<ImmediateDominators>();
-    Roots = ID.getRoots();
-    calculate(ID);
+    DominatorTree &DT = getAnalysis<DominatorTree>();
+    Roots = DT.getRoots();
+    calculate(DT);
     return false;
   }
 
-  void calculate(const ImmediateDominators &ID);
+  void calculate(const DominatorTree &DT);
   ETNode *getNodeForBlock(BasicBlock *BB);
 };
 
