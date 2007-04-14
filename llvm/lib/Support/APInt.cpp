@@ -693,7 +693,7 @@ uint32_t APInt::getBitsNeeded(const char* str, uint32_t slen, uint8_t radix) {
   APInt tmp(sufficient, str, slen, radix);
 
   // Compute how many bits are required.
-  return isNegative + tmp.logBase2();
+  return isNegative + tmp.logBase2() + 1;
 }
 
 uint64_t APInt::getHashValue() const {
