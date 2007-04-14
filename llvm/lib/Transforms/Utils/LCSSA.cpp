@@ -69,7 +69,8 @@ namespace {
       AU.addRequired<DominatorTree>();
     }
   private:
-    SetVector<Instruction*> getLoopValuesUsedOutsideLoop(Loop *L);
+    void getLoopValuesUsedOutsideLoop(Loop *L,
+                                      SetVector<Instruction*> &AffectedValues);
 
     Value *GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
                             std::map<DominatorTree::Node*, Value*> &Phis);
@@ -110,7 +111,8 @@ bool LCSSA::visitSubloop(Loop* L) {
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
   std::sort(LoopBlocks.begin(), LoopBlocks.end());
   
-  SetVector<Instruction*> AffectedValues = getLoopValuesUsedOutsideLoop(L);
+  SetVector<Instruction*> AffectedValues;
+  getLoopValuesUsedOutsideLoop(L, AffectedValues);
   
   // If no values are affected, we can save a lot of work, since we know that
   // nothing will be changed.
@@ -196,14 +198,12 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
 
 /// getLoopValuesUsedOutsideLoop - Return any values defined in the loop that
 /// are used by instructions outside of it.
-SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
-  
+void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
+                                      SetVector<Instruction*> &AffectedValues) {
   // FIXME: For large loops, we may be able to avoid a lot of use-scanning
   // by using dominance information.  In particular, if a block does not
   // dominate any of the loop exits, then none of the values defined in the
   // block could be used outside the loop.
-  
-  SetVector<Instruction*> AffectedValues;  
   for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
        BB != E; ++BB) {
     for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ++I)
@@ -221,7 +221,6 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
         }
       }
   }
-  return AffectedValues;
 }
 
 /// GetValueForBlock - Get the value to use within the specified basic block.
