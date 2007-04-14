@@ -925,9 +925,9 @@ void SCCPSolver::visitInsertElementInst(InsertElementInst &I) {
                                                     IdxState.getConstant()));
   else if (ValState.isUndefined() && EltState.isConstant() &&
            IdxState.isConstant()) 
-    markConstant(&I, ConstantExpr::getInsertElement(UndefValue::get(I.getType()),
-                                                    EltState.getConstant(),
-                                                    IdxState.getConstant()));
+    markConstant(&I,ConstantExpr::getInsertElement(UndefValue::get(I.getType()),
+                                                   EltState.getConstant(),
+                                                   IdxState.getConstant()));
 #endif
 }
 
@@ -1365,7 +1365,7 @@ bool SCCP::runOnFunction(Function &F) {
   Solver.MarkBlockExecutable(F.begin());
 
   // Mark all arguments to the function as being overdefined.
-  for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
+  for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E;++AI)
     Solver.markOverdefined(AI);
 
   // Solve for constants.

@@ -315,7 +315,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
       // Used inside Exit Block. Since we are in LCSSA form, U must be PHINode.
       assert (U->getParent() == Exit 
               && "Need to propagate new PHI into Exit blocks");
-      assert (isa<PHINode>(U) && "Use in Exit Block that is not PHINode");        
+      assert (isa<PHINode>(U) && "Use in Exit Block that is not PHINode");
 
       PHINode *UPhi = cast<PHINode>(U);
 
@@ -372,7 +372,7 @@ void LoopRotate::updateExitBlock() {
     Value *V = PN->getIncomingValueForBlock(OrigHeader);
     if (isa<Instruction>(V) && 
         (ILoopHeaderInfo = findReplacementData(cast<Instruction>(V)))) {
-      assert (ILoopHeaderInfo->PreHeader && "Missing New Preheader Instruction");
+      assert(ILoopHeaderInfo->PreHeader && "Missing New Preheader Instruction");
       PN->addIncoming(ILoopHeaderInfo->PreHeader, OrigPreHeader);
     } else {
       PN->addIncoming(V, OrigPreHeader);

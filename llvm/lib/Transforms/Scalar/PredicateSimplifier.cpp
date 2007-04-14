@@ -339,7 +339,7 @@ namespace {
             for (iterator B = begin(); I->To == n; --I) {
               if (I->Subtree->DominatedBy(Subtree)) {
                 LatticeVal LV = static_cast<LatticeVal>(I->LV & R);
-                assert(validPredicate(LV) && "Invalid union of lattice values.");
+                assert(validPredicate(LV) && "Invalid union of lattice values");
                 I->LV = LV;
               }
               if (I == B) break;
@@ -2119,7 +2119,8 @@ namespace {
 
     TargetData *TD = &getAnalysis<TargetData>();
 
-    Forest->updateDFSNumbers(); // XXX: should only act when numbers are out of date
+    // XXX: should only act when numbers are out of date
+    Forest->updateDFSNumbers();
 
     DOUT << "Entering Function: " << F.getName() << "\n";
 

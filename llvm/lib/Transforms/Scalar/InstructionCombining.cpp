@@ -5523,8 +5523,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       }
     }
   } else {  // Not a ICMP_EQ/ICMP_NE
-            // If the LHS is a cast from an integral value of the same size, then 
-            // since we know the RHS is a constant, try to simlify.
+            // If the LHS is a cast from an integral value of the same size, 
+            // then since we know the RHS is a constant, try to simlify.
     if (CastInst *Cast = dyn_cast<CastInst>(LHSI)) {
       Value *CastOp = Cast->getOperand(0);
       const Type *SrcTy = CastOp->getType();
@@ -6231,7 +6231,7 @@ static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
           MaskedValueIsZero(I->getOperand(0),
             APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth)) &&
           CI->getLimitedValue(BitWidth) < BitWidth) {
-        return CanEvaluateInDifferentType(I->getOperand(0), Ty, NumCastsRemoved);
+        return CanEvaluateInDifferentType(I->getOperand(0), Ty,NumCastsRemoved);
       }
     }
     break;
@@ -6645,7 +6645,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
         Value *Sh = ConstantInt::get(In->getType(),
                                     In->getType()->getPrimitiveSizeInBits()-1);
         In = InsertNewInstBefore(BinaryOperator::createLShr(In, Sh,
-                                                        In->getName()+".lobit"), 
+                                                        In->getName()+".lobit"),
                                  CI);
         if (In->getType() != CI.getType())
           In = CastInst::createIntegerCast(In, CI.getType(),
@@ -6654,7 +6654,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
         if (ICI->getPredicate() == ICmpInst::ICMP_SGT) {
           Constant *One = ConstantInt::get(In->getType(), 1);
           In = InsertNewInstBefore(BinaryOperator::createXor(In, One,
-                                                          In->getName()+".not"), 
+                                                          In->getName()+".not"),
                                    CI);
         }
 
@@ -6742,7 +6742,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
         Value *Sh = ConstantInt::get(In->getType(),
                                      In->getType()->getPrimitiveSizeInBits()-1);
         In = InsertNewInstBefore(BinaryOperator::createAShr(In, Sh,
-                                                        In->getName()+".lobit"), 
+                                                        In->getName()+".lobit"),
                                  CI);
         if (In->getType() != CI.getType())
           In = CastInst::createIntegerCast(In, CI.getType(),
@@ -7484,7 +7484,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           for (unsigned i = 0; i != 16; ++i) {
             if (isa<UndefValue>(Mask->getOperand(i)))
               continue;
-            unsigned Idx =cast<ConstantInt>(Mask->getOperand(i))->getZExtValue();
+            unsigned Idx=cast<ConstantInt>(Mask->getOperand(i))->getZExtValue();
             Idx &= 31;  // Match the hardware behavior.
             
             if (ExtractedElts[Idx] == 0) {
@@ -9331,7 +9331,8 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
     if (isa<ConstantInt>(EI->getOperand(1)) && isa<ConstantInt>(IdxOp) &&
         EI->getOperand(0)->getType() == IE.getType()) {
       unsigned NumVectorElts = IE.getType()->getNumElements();
-      unsigned ExtractedIdx=cast<ConstantInt>(EI->getOperand(1))->getZExtValue();
+      unsigned ExtractedIdx =
+        cast<ConstantInt>(EI->getOperand(1))->getZExtValue();
       unsigned InsertedIdx = cast<ConstantInt>(IdxOp)->getZExtValue();
       
       if (ExtractedIdx >= NumVectorElts) // Out of range extract.

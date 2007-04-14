@@ -240,7 +240,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   for (std::vector<BasicBlock*>::const_iterator I = L->getBlocks().begin(),
          E = L->getBlocks().end(); I != E; ++I)
     if (LI->getLoopFor(*I) == L)        // Ignore blocks in subloops...
-      CurAST->add(**I);                     // Incorporate the specified basic block
+      CurAST->add(**I);                 // Incorporate the specified basic block
 
   // We want to visit all of the instructions in this loop... that are not parts
   // of our subloops (they have already had their invariants hoisted out of
