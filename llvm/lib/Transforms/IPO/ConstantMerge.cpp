@@ -60,8 +60,10 @@ bool ConstantMerge::runOnModule(Module &M) {
     // because doing so may cause initializers of other globals to be rewritten,
     // invalidating the Constant* pointers in CMap.
     //
-    for (Module::global_iterator GV = M.global_begin(), E = M.global_end();
-         GV != E; ++GV) {
+    for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
+         GVI != E; ) {
+      GlobalVariable *GV = GVI++;
+      
       // If this GV is dead, remove it.
       GV->removeDeadConstantUsers();
       if (GV->use_empty() && GV->hasInternalLinkage()) {
