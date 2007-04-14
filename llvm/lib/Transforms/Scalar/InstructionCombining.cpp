@@ -9109,6 +9109,17 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     
     if (Value *Elt = FindScalarElement(EI.getOperand(0), IndexVal))
       return ReplaceInstUsesWith(EI, Elt);
+    
+    // If the this extractelement is directly using a bitcast from a vector of
+    // the same number of elements, see if we can find the source element from
+    // it.  In this case, we will end up needing to bitcast the scalars.
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(EI.getOperand(0))) {
+      if (const VectorType *VT = 
+              dyn_cast<VectorType>(BCI->getOperand(0)->getType()))
+        if (VT->getNumElements() == VectorWidth)
+          if (Value *Elt = FindScalarElement(BCI->getOperand(0), IndexVal))
+            return new BitCastInst(Elt, EI.getType());
+    }
   }
   
   if (Instruction *I = dyn_cast<Instruction>(EI.getOperand(0))) {
