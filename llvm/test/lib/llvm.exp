@@ -5,7 +5,7 @@ proc execOneLine { test outcome lineno line } {
   if { $retval != 0 } {
     set code [lindex $::errorCode 0]
     set lineno [expr $lineno + 1]
-    set errmsg " at RUN: line $lineno\n$::errorInfo\n$errmsg"
+    set errmsg " at RUN: line $lineno\n$::errorInfo"
     switch "$code" {
       CHILDSTATUS {
         set status [lindex $::errorCode 2]
@@ -101,7 +101,7 @@ proc llvm-runtest { programs } {
       #see if this is our run line
       if {[regexp {END.[ *]$} $line match endofscript]} {
         break
-      } elseif {[regexp {RUN: *([^\\]+)(\\)} $line match oneline suffix]} {
+      } elseif {[regexp {RUN: *([^\\]+)(\\)$} $line match oneline suffix]} {
         set runline "$runline$oneline "
       } elseif {[regexp {RUN: *([^&]+)(&&)?} $line match oneline suffix]} {
         set runline "$runline$oneline"
