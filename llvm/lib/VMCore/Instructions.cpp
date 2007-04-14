@@ -966,6 +966,22 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
   return PTy->getElementType();
 }
 
+
+/// hasAllZeroIndices - Return true if all of the indices of this GEP are
+/// zeros.  If so, the result pointer and the first operand have the same
+/// value, just potentially different types.
+bool GetElementPtrInst::hasAllZeroIndices() const {
+  for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(getOperand(i))) {
+      if (!CI->isZero()) return false;
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                           ExtractElementInst Implementation
 //===----------------------------------------------------------------------===//

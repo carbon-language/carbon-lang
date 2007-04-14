@@ -408,6 +408,11 @@ public:
   inline bool hasIndices() const {
     return getNumOperands() > 1;
   }
+  
+  /// hasAllZeroIndices - Return true if all of the indices of this GEP are
+  /// zeros.  If so, the result pointer and the first operand have the same
+  /// value, just potentially different types.
+  bool hasAllZeroIndices() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GetElementPtrInst *) { return true; }
