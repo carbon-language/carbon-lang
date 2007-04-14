@@ -4,25 +4,27 @@ proc execOneLine { test outcome lineno line } {
   set retval [ catch { eval exec -keepnewline -- $line } errmsg ]
   if { $retval != 0 } {
     set code [lindex $::errorCode 0]
+    set lineno [expr $lineno + 1]
+    set errmsg " at RUN: line $lineno\nwhile running: $line\n$errmsg"
     switch "$code" {
       CHILDSTATUS {
         set status [lindex $::errorCode 2]
         if { $status ne 0 } {
-          set resultmsg "$test: exit($status)\nwhile running: $line\n$errmsg"
+          set resultmsg "$test: exit($status)$errmsg"
         }
       }
       CHILDKILLED {
         set signal [lindex $::errorCode 2]
-        set resultmsg "$test: signal($signal)\nwhile running: $line\n$errmsg"
+        set resultmsg "$test: signal($signal)$errmsg"
       }
       CHILDSUSP {
         set signal [lindex $::errorCode 2]
-        set resultmsg "$test: suspend($signal)\nwhile running: $line\n$errmsg"
+        set resultmsg "$test: suspend($signal)$errmsg"
       }
       POSIX {
         set posixNum [lindex $::errorCode 1]
         set posixMsg [lindex $::errorCode 2]
-        set resultmsg "$test: posix($posixNum)\n$posixMsg\nwhile running: $line\n$errmsg"
+        set resultmsg "$test: posix($posixNum,$posixMsg)$errmsg"
       }
       NONE {
       }
