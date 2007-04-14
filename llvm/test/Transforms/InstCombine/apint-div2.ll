@@ -1,7 +1,6 @@
 ; This test makes sure that div instructions are properly eliminated.
 ; This test is for Integer BitWidth >= 64 && BitWidth <= 1024.
 ;
-
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep div
 
 
@@ -16,8 +15,8 @@ define i499 @test2(i499 %X) {
     ret i499 %Y
 }
 
-define i599 @test3(i599 %X, bool %C) {
-        %V = select bool %C, i599 70368744177664, i599 4096
+define i599 @test3(i599 %X, i1 %C) {
+        %V = select i1 %C, i599 70368744177664, i599 4096
         %R = udiv i599 %X, %V
         ret i599 %R
 }
