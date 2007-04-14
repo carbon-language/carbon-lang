@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -dse | llvm-dis | grep 'store i32 0'
+; RUN: llvm-upgrade < %s | llvm-as | opt -dse | llvm-dis | grep {store i32 0}
 
 void %test({int,int }* %P) {
 	%Q = getelementptr {int,int}* %P, int 1

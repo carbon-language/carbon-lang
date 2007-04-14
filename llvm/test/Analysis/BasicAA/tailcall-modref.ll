@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | grep 'ret i32 0'
+; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine |\
+; RUN:   llvm-dis | grep {ret i32 0}
 declare void %foo(int*)
 declare void %bar()
 

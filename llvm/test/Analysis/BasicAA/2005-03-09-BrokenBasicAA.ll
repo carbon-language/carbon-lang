@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine | llvm-dis | grep 'load i32\* %A'
+; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -load-vn -gcse -instcombine |\
+; RUN:    llvm-dis | grep {load i32\\* %A}
 
 declare double* %useit(int*)
 

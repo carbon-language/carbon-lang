@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | opt -load-vn -gcse -instcombine | llvm-dis | not grep load
+; RUN: llvm-upgrade < %s | llvm-as | opt -load-vn -gcse -instcombine | \
+; RUN:    llvm-dis | not grep load
 
 %X = constant [2 x int] [int 4, int 5]
 
