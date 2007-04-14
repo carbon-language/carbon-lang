@@ -1725,6 +1725,9 @@ uninstall-local::
 endif
 endif
 
+check-line-length:
+	@egrep '.{81}' $(Sources)
+
 #------------------------------------------------------------------------
 # Print out the directories used for building
 #------------------------------------------------------------------------
