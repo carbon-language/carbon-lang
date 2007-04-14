@@ -323,6 +323,24 @@ location of these external programs is configured by the llvm-test
   any process in the pipeline fails, the entire line (and test case) fails too.
   </p>
 
+  <p>As with a Unix shell, the RUN: lines permit pipelines and I/O redirection
+  to be used. However, the usage is slightly different than for Bash. To check
+  what's legal, see the documentation for the 
+  <a href="http://www.tcl.tk/man/tcl8.5/TclCmd/exec.htm#M2">Tcl exec</a>
+  command and the 
+  <a href="http://www.tcl.tk/man/tcl8.5/tutorial/Tcl26.html">tutorial</a>. 
+  The major differences are:</p>
+  <ul>
+    <li>You can't do <tt>2&gt;&amp;1</tt>. That will cause Tcl to write to a
+    file named <tt>&amp;1</tt>. Usually this is done to get stderr to go through
+    a pipe. You can do that in tcl with <tt>|&amp;</tt> so replace this idiom:
+    <tt>... 2&gt;&amp;1 | grep</tt> with <tt>... |&amp; grep</tt></li>
+    <li>You can only redirect to a file, not to another descriptor and not from
+    a here document.</li>
+    <li>tcl supports redirecting to open files with the @ syntax but you
+    shouldn't use that here.</li>
+  </ul>
+
   <p> Below is an example of legal RUN lines in a <tt>.ll</tt> file:</p>
   <pre>
   ; RUN: llvm-as &lt; %s | llvm-dis &gt; %t1
