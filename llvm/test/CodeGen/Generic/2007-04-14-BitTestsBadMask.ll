@@ -2,6 +2,9 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep '4294981120'
 ; PR 1325
 
+; FIXME: this is xfailed until we figure out ppc bootstrap
+; XFAIL: *
+
 ; ModuleID = 'bugpoint.test.bc'
 target datalayout = "E-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"
 target triple = "powerpc-apple-darwin8.8.0"
