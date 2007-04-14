@@ -1,7 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
 
-uint %testAdd(int %X, int %Y) {
-	%tmp = add int %X, %Y
-	%tmp.l = sext int %tmp to uint
-	ret uint %tmp.l
+define i32 @testAdd(i32 %X, i32 %Y) {
+	%tmp = add i32 %X, %Y
+	%tmp.l = bitcast i32 %tmp to i32
+	ret i32 %tmp.l
 }
