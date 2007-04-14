@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 'call.*llvm.bswap' | wc -l | grep 5
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    grep {call.*llvm.bswap} | wc -l | grep 5
 
 uint %test1(uint %i) {
         %tmp1 = shr uint %i, ubyte 24           ; <uint> [#uses=1]

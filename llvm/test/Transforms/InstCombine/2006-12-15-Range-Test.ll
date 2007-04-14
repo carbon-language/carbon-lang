@@ -1,8 +1,9 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:   grep 'icmp' | wc -l | grep 1
+; RUN:   grep icmp | wc -l | grep 1
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:   grep 'icmp ugt' | wc -l | grep 1
-;
+; RUN:   grep {icmp ugt} | wc -l | grep 1
+; END.
+
 ; ModuleID = 'bugpoint-tooptimize.bc'
 target datalayout = "e-p:32:32"
 target endian = little

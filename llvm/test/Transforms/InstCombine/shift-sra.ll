@@ -1,6 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:    grep 'lshr i32' | wc -l | grep 2 &&
+; RUN:    grep {lshr i32} | wc -l | grep 2
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep ashr
 
 int %test1(int %X, ubyte %A) {

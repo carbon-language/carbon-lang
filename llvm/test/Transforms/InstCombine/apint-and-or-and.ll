@@ -11,7 +11,7 @@
 ; 
 ; This tests arbitrary precision integers.
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 'or '
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {or }
 
 define i17 @test1(i17 %X, i17 %Y) {
 	%A = and i17 %X, 7

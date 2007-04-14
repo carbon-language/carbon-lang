@@ -1,7 +1,7 @@
 ; This test case checks that the merge of and/xor can work on arbitrary
 ; precision integers.
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep and | wc -l | grep 1 &&
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep and | wc -l | grep 1
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep xor | wc -l | grep 2
 
 ; (x &z ) ^ (y & z) -> (x ^ y) & z

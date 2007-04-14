@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'icmp sle'
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {icmp sle}
 ; PR1244
 
 define i1 @test(i32 %c.3.i, i32 %d.292.2.i) {

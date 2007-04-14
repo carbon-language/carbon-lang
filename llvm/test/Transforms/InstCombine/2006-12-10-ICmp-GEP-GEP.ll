@@ -1,5 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:    grep -v 'icmp ult int'
+; RUN:    grep -v {icmp ult int}
+; END.
 ; ModuleID = 'good.bc'
 target datalayout = "e-p:32:32"
 target endian = little

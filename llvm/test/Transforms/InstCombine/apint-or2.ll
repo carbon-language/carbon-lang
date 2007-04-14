@@ -1,8 +1,6 @@
 ; This test makes sure that or instructions are properly eliminated.
 ; This test is for Integer BitWidth > 64 && BitWidth <= 1024.
 ;
-
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis > /tmp/or2.rel &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep or
 
 

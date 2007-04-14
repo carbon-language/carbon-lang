@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep mul | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   grep mul | wc -l | grep 2
 
 
 <4 x float> %test(<4 x float> %V) {

@@ -9,7 +9,8 @@
 ; be eliminated. In many cases the setCC is also eliminated based on the
 ; constant value and the range of the casted value.
 ;
-; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | notcast '.*int'
+; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    notcast .*int
 
 implementation   ; Functions:
 

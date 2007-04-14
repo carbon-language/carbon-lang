@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -simplifycfg -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -simplifycfg | llvm-dis | not grep 'call void %abort'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -simplifycfg | llvm-dis |\
+; RUN:    not grep {call void %abort}
 
 %b_rec.0 = external global int
 

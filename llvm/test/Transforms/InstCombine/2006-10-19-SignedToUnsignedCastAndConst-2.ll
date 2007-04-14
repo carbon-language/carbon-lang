@@ -1,5 +1,6 @@
 ; The optimizer should be able to remove cast operation here.
-; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | not grep 'sext.*i32'
+; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    not grep sext.*i32
 
 bool %eq_signed_to_small_unsigned(sbyte %SB) {
    %Y = cast sbyte %SB to uint         ; <uint> [#uses=1]

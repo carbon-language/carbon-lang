@@ -1,8 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep -v xor | not grep 'or '
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    grep -v xor | not grep {or }
 
 implementation
 

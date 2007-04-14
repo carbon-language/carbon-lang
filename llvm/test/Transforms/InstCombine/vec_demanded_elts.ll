@@ -1,8 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 'sub float' &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 'mul float' &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 'insertelement.*0.00' &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 'call.*llvm.x86.sse.mul' &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 'call.*llvm.x86.sse.sub'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   grep {sub float}
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   grep {mul float}
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   not grep {insertelement.*0.00}
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   not grep {call.*llvm.x86.sse.mul}
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   not grep {call.*llvm.x86.sse.sub}
+; END.
 
 ushort %Convert_sse(float %f) {
 entry:

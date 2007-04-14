@@ -1,6 +1,7 @@
 ; For PR1065. This causes an assertion in instcombine if a select with two cmp
 ; operands is encountered.
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; END.
 ; ModuleID = 'PR1065.bc'
 target datalayout = "e-p:32:32"
 target endian = little

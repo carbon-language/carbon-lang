@@ -1,5 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep ret | wc -l | grep 3 &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 'call.*bswap'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   grep ret | wc -l | grep 3
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   not grep call.*bswap
 
 bool %test1(ushort %tmp2) {
 	%tmp10 = call ushort %llvm.bswap.i16( ushort %tmp2 )		

@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 'setne\|setle\|setge'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    not grep {setne\|setle\|setge}
 
 int %test1(uint %X, uint %Y) {
 	%C = setne uint %X, %Y

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis > /tmp/sht.rel &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep shl
+; END.
 
 define i1 @test0(i39 %X, i39 %A) {
 	%B = lshr i39 %X, %A

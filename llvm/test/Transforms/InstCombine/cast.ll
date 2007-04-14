@@ -1,6 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep '%c' | notcast
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    grep %c | notcast
 
 %inbuf = external global [32832 x ubyte]
 

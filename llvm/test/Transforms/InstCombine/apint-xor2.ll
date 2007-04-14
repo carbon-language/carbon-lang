@@ -1,8 +1,7 @@
 ; This test makes sure that xor instructions are properly eliminated.
 ; This test is for Integer BitWidth > 64 && BitWidth <= 1024.
 
-; RUN: llvm-as < %s | opt -instcombine -disable-output &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep 'xor '
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {xor }
 
 
 define i447 @test1(i447 %A, i447 %B) {

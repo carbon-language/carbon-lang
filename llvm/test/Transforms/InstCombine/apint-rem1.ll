@@ -1,7 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ; This test is for Integer BitWidth < 64 && BitWidth % 2 != 0.
 ;
-; RUN: llvm-as < %s | opt -instcombine -disable-output &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep rem
 
 

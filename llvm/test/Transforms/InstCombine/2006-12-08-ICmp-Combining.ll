@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep '%bothcond ='
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    grep {%bothcond =}
 bool %Doit_bb(int %i.0) {
 bb:             ; preds = %newFuncRoot
         %tmp = setgt int %i.0, 0             ; <bool> [#uses=1]

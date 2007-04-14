@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:    egrep 'shl|lshr|ashr' | wc -l | grep 3
+; RUN:    egrep {shl|lshr|ashr} | wc -l | grep 3
 
 define i32 @test0(i32 %A, i32 %B, i32 %C) {
 	%X = shl i32 %A, %C

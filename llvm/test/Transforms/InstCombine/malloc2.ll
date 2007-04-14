@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'ret i32 0' &&
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 0}
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep malloc
 ; PR1313
 

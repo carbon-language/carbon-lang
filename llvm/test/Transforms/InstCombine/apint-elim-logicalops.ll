@@ -1,9 +1,8 @@
 ; Test that elimination of logical operators works with 
 ; arbitrary precision integers.
-
-; RUN: llvm-as < %s | opt -instcombine -disable-output &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:    not grep '(and\|xor\|add\|shl\|shr)'
+; RUN:    not grep {(and\|xor\|add\|shl\|shr)}
+; END.
 
 define i33 @test1(i33 %x) {
         %tmp.1 = and i33 %x, 65535           ; <i33> [#uses=1]

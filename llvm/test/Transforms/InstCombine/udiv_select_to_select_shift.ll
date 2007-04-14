@@ -1,10 +1,10 @@
-; This tests that this transform:
+; Test that this transform works:
 ; udiv X, (Select Cond, C1, C2) --> Select Cond, (shr X, C1), (shr X, C2)
 ;
-; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis -f -o %t && \
-; RUN:   grep select %t | wc -l | grep 1 && \
-; RUN:   grep lshr %t | wc -l | grep 2 && \ 
-; RUN:   grep udiv %t | wc -l | grep 0
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis -f -o %t
+; RUN:   grep select %t | wc -l | grep 1
+; RUN:   grep lshr %t | wc -l | grep 2 
+; RUN:   ignore grep udiv %t | wc -l | grep 0
 
 define i64 @test(i64 %X, i1 %Cond ) {
 entry:

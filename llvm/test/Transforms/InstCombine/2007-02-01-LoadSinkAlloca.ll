@@ -1,5 +1,7 @@
-; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | grep '%A = alloca' &&
-; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | not grep '%B = alloca'
+; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | grep {%A = alloca} 
+; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | \
+; RUN:    not grep {%B = alloca}
+; END.
 
 ; Ensure that instcombine doesn't sink the loads in entry/cond_true into 
 ; cond_next.  Doing so prevents mem2reg from promoting the B alloca.

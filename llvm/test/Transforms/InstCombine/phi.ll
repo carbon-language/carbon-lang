@@ -1,7 +1,5 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep phi
 
 implementation

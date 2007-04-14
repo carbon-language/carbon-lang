@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -mem2reg | llvm-dis | not grep 'int 1'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -mem2reg | llvm-dis | \
+; RUN:   not grep {int 1}
 
 ; When propagating the load through the select, make sure that the load is
 ; inserted where the original load was, not where the select is.  Not doing

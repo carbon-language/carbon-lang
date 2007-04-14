@@ -1,4 +1,5 @@
-;  RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | grep 'and'
+; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    grep and
 ulong %foo(ulong %tmp, ulong %tmp2) {
   %tmp = cast ulong %tmp to uint
   %tmp2 = cast ulong %tmp2 to uint

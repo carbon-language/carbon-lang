@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | %prcontext div 1 | grep ret
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   %prcontext div 1 | grep ret
 
 ;; This tests that the instructions in the entry blocks are sunk into each
 ;; arm of the 'if'.

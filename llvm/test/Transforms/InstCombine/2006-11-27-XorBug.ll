@@ -1,5 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep 'and.*32' &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep 'or.*153'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep and.*32
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    not grep or.*153
 ; PR1014
 
 int %test(int %tmp1) {

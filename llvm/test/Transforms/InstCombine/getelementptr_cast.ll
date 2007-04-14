@@ -1,4 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast '' 'getelementptr.*'
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    notcast {} {getelementptr.*}
+
 %G = external global [3 x sbyte]
 
 implementation

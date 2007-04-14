@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -gcse -instcombine | llvm-dis | not grep getelementptr
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -gcse -instcombine | \
+; RUN:    llvm-dis | not grep getelementptr
 
 bool %test(int* %A) {
 	%B = getelementptr int* %A, int 1

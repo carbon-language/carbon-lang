@@ -1,11 +1,9 @@
-;RUN: llvm-upgrade < %s | llvm-as | opt -instcombine |llvm-dis |grep zext
+;RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep zext
 
-;Make sure the uint isn't removed.
-;instcombine in llvm 1.9 was dropping the uint cast which was causing a sign
-;extend
-;this only affected code with pointers in the high half of memory, so it wasn't
-;noticed much :)
-;compile a kernel though...
+; Make sure the uint isn't removed.  Instcombine in llvm 1.9 was dropping the 
+; uint cast which was causing a sign extend. This only affected code with 
+; pointers in the high half of memory, so it wasn't noticed much
+; compile a kernel though...
 
 target datalayout = "e-p:32:32"
 target endian = little

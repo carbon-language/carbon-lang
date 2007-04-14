@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'ret i32 0' &&
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 0}
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep malloc
 ; PR1201
 define i32 @main(i32 %argc, i8** %argv) {
@@ -9,4 +9,3 @@ define i32 @main(i32 %argc, i8** %argv) {
         free i8* %tmp_207
         ret i32 0
 }
-

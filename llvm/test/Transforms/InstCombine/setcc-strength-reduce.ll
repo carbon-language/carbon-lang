@@ -2,8 +2,9 @@
 ; working.  Basically this boils down to converting setlt,gt,le,ge instructions
 ; into equivalent setne,eq instructions.
 ;
-
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep -v 'icmp eq' | grep -v 'icmp ne' | not grep icmp
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:    grep -v {icmp eq} | grep -v {icmp ne} | not grep icmp
+; END.
 
 bool %test1(uint %A) {
 	%B = setge uint %A, 1   ; setne %A, 0

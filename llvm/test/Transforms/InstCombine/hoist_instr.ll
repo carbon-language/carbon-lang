@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | %prcontext div 1 | grep then:
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
+; RUN:   %prcontext div 1 | grep then:
 
 ;; This tests that the div is hoisted into the then block.
 

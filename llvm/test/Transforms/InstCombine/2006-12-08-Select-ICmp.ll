@@ -1,4 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep select
+; END.
 target datalayout = "e-p:32:32"
 target endian = little
 target pointersize = 32

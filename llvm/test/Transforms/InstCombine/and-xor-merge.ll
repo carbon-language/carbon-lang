@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep and | wc -l | grep 1 &&
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep and | wc -l | grep 1
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep xor | wc -l | grep 2
 
 ; (x&z) ^ (y&z) -> (x^y)&z

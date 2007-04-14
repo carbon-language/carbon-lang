@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep and &&
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep ' or'
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep { or}
 
 define i32 @test1(i32 %b, i32 %c, i32 %d) {
         %tmp3 = and i32 %c, %b

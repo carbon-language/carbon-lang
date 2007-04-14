@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep shl &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep shl
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
 
 ; This cannot be turned into a sign extending cast!
