@@ -1,7 +1,7 @@
 ; Test some floating point casting cases
 ; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | notcast
 ; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:   grep 'ret i8 \(-1\)\|\(255\)'
+; RUN:   egrep {ret i8 \(-1\)\|\(255\)}
 
 sbyte %test1() {
     %x = fptoui float 255.0 to sbyte 
