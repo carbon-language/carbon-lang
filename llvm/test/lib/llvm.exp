@@ -1,11 +1,14 @@
-proc execOneLine { test outcome lineno line } {
+proc execOneLine { test PRS outcome lineno line } {
   set status 0
   set resultmsg ""
   set retval [ catch { eval exec -keepnewline -- $line } errmsg ]
   if { $retval != 0 } {
     set code [lindex $::errorCode 0]
     set lineno [expr $lineno + 1]
-    set errmsg " at RUN: line $lineno\n$::errorInfo"
+    if { $PRS != ""} {
+      set PRS " for $PRS" 
+    }
+    set errmsg " at line $lineno$PRS\nwhile running: $line\n$errmsg"
     switch "$code" {
       CHILDSTATUS {
         set status [lindex $::errorCode 2]
@@ -96,19 +99,34 @@ proc llvm-runtest { programs } {
     # Open the test file and start reading lines
     set testFileId [ open $test r]
     set runline ""
+    set PRNUMS ""
     foreach line [split [read $testFileId] \n] {
 
-      #see if this is our run line
+      # if its the END. line then stop parsing (optimization for big files)
       if {[regexp {END.[ *]$} $line match endofscript]} {
         break
+
+      # if the line is continued, concatente and continue the loop
       } elseif {[regexp {RUN: *([^\\]+)(\\)$} $line match oneline suffix]} {
         set runline "$runline$oneline "
+
+      # if its a terminating RUN: line then do substitution on the whole line
+      # and then save the line.
       } elseif {[regexp {RUN: *([^&]+)(&&)?} $line match oneline suffix]} {
         set runline "$runline$oneline"
         set runline [ substitute $runline $test $tmpFile ]
         set lines($numLines) $runline
         set numLines [expr $numLines + 1]
         set runline ""
+
+      # if its an PR line, save the problem report number
+      } elseif {[regexp {PR([0-9]+)} $line match prnum]} {
+        if {$PRNUMS == ""} {
+          set PRNUMS $prnum
+        } else {
+          set PRNUMS "$PRNUMS,$prnum"
+        }
+      # if its an XFAIL line, see if we should be XFAILing or not.
       } elseif {[regexp {XFAIL:[ *](.+)} $line match targets]} {
         set targets
 
@@ -138,7 +156,7 @@ proc llvm-runtest { programs } {
       for { set i 0 } { $i < $numLines } { set i [ expr $i + 1 ] } {
         regsub ^.*RUN:(.*) $lines($i) \1 theLine
         set theLine [subst $theLine ]
-        set resultmsg [execOneLine $test $outcome $i $theLine ]
+        set resultmsg [execOneLine $test $PRNUMS $outcome $i $theLine ]
         if { $resultmsg != "" } {
           if { $outcome == "XFAIL" } {
             xfail "$resultmsg"
@@ -150,10 +168,13 @@ proc llvm-runtest { programs } {
         }
       }
       if { !$failed } {
+        if {$PRNUMS != ""} {
+          set PRNUMS " for $PRNUMS"
+        }
         if { $outcome == "XFAIL" } {
-          xpass "$test"
+          xpass "$test$PRNUMS"
         } else {
-          pass "$resultmsg"
+          pass "$test$PRNUMS"
         }
       }
     }
