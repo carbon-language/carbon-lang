@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
 
 define i47 @testAdd(i31 %X, i31 %Y) {
