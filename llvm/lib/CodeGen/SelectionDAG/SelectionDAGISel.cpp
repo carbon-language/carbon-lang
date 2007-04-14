@@ -1677,7 +1677,9 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
 bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
                                                     CaseRecVector& WorkList,
                                                     Value* SV,
-                                                    MachineBasicBlock* Default) {
+                                                    MachineBasicBlock* Default){
+  return false;  // DISABLED FOR NOW: PR1325.
+  
   unsigned IntPtrBits = getSizeInBits(TLI.getPointerTy());
 
   Case& FrontCase = *CR.Range.first;
