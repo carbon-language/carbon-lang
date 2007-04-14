@@ -8367,13 +8367,6 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
 Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   Value *Op = FI.getOperand(0);
 
-  // Change free <ty>* (cast <ty2>* X to <ty>*) into free <ty2>* X
-  if (CastInst *CI = dyn_cast<CastInst>(Op))
-    if (isa<PointerType>(CI->getOperand(0)->getType())) {
-      FI.setOperand(0, CI->getOperand(0));
-      return &FI;
-    }
-
   // free undef -> unreachable.
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
@@ -8381,11 +8374,33 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
                   UndefValue::get(PointerType::get(Type::Int1Ty)), &FI);
     return EraseInstFromFunction(FI);
   }
-
+  
   // If we have 'free null' delete the instruction.  This can happen in stl code
   // when lots of inlining happens.
   if (isa<ConstantPointerNull>(Op))
     return EraseInstFromFunction(FI);
+  
+  // Change free <ty>* (cast <ty2>* X to <ty>*) into free <ty2>* X
+  if (BitCastInst *CI = dyn_cast<BitCastInst>(Op)) {
+    FI.setOperand(0, CI->getOperand(0));
+    return &FI;
+  }
+  
+  // Change free (gep X, 0,0,0,0) into free(X)
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
+    if (GEPI->hasAllZeroIndices()) {
+      AddToWorkList(GEPI);
+      FI.setOperand(0, GEPI->getOperand(0));
+      return &FI;
+    }
+  }
+  
+  // Change free(malloc) into nothing, if the malloc has a single use.
+  if (MallocInst *MI = dyn_cast<MallocInst>(Op))
+    if (MI->hasOneUse()) {
+      EraseInstFromFunction(FI);
+      return EraseInstFromFunction(*MI);
+    }
 
   return 0;
 }
