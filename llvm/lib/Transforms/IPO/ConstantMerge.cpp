@@ -65,9 +65,8 @@ bool ConstantMerge::runOnModule(Module &M) {
       // If this GV is dead, remove it.
       GV->removeDeadConstantUsers();
       if (GV->use_empty() && GV->hasInternalLinkage()) {
-        (GV++)->eraseFromParent();
-        if (GV == E)
-          break;
+        GV->eraseFromParent();
+        continue;
       }
       
       // Only process constants with initializers.
