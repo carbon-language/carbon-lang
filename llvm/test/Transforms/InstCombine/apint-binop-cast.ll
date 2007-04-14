@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
 
 define i47 @testAdd(i31 %X, i31 %Y) {
 	%tmp = add i31 %X, %Y
