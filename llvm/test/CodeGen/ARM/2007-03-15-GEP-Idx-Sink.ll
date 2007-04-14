@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm -stats 2>&1 | not grep 'register spills' 
+; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-apple-darwin8 -stats 2>&1 | not grep 'register spills' 
 
 ;; Must talk to evan about this.
 ; XFAIL: *
