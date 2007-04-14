@@ -24,6 +24,6 @@ define i32 @main(i32 %argc, i8** %argv) {
   %result = sext i17 %X to i32
   %fmt = getelementptr [4 x i8]* @FORMAT, i32 0, i32 0
   call i32 (i8*,...)* @printf(i8* %fmt, i32 %result)
-  ret i32 %result
+  ret i32 0
 }
 
