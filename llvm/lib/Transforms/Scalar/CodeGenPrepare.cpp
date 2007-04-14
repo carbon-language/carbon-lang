@@ -886,21 +886,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
                                             SI->getOperand(0)->getType(),
                                             SunkAddrs);
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
-      bool HasNonZeroIdx = false;
-      for (GetElementPtrInst::op_iterator OI = GEPI->op_begin()+1,
-           E = GEPI->op_end(); OI != E; ++OI) {
-        if (ConstantInt *CI = dyn_cast<ConstantInt>(*OI)) {
-          if (!CI->isZero()) {
-            HasNonZeroIdx = true;
-            break;
-          }
-        } else {
-          HasNonZeroIdx = true;
-          break;
-        }
-      }
-      
-      if (!HasNonZeroIdx) {
+      if (GEPI->hasAllZeroIndices()) {
         /// The GEP operand must be a pointer, so must its result -> BitCast
         Instruction *NC = new BitCastInst(GEPI->getOperand(0), GEPI->getType(), 
                                           GEPI->getName(), GEPI);
