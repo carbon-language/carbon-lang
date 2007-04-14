@@ -929,13 +929,13 @@ ETNode *ETForest::getNodeForBlock(BasicBlock *BB) {
 
   // Haven't calculated this node yet?  Get or calculate the node for the
   // immediate dominator.
-	BasicBlock *IDom = getAnalysis<DominatorTree>().getNode(BB)->getIDom()->getBlock();
+  DominatorTree::Node *node= getAnalysis<DominatorTree>().getNode(BB);
 
   // If we are unreachable, we may not have an immediate dominator.
-  if (!IDom)
+  if (!node || !node->getIDom())
     return BBNode = new ETNode(BB);
   else {
-    ETNode *IDomNode = getNodeForBlock(IDom);
+    ETNode *IDomNode = getNodeForBlock(node->getIDom()->getBlock());
     
     // Add a new tree node for this BasicBlock, and link it as a child of
     // IDomNode
@@ -953,9 +953,9 @@ void ETForest::calculate(const DominatorTree &DT) {
   Function *F = Root->getParent();
   // Loop over all of the reachable blocks in the function...
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-		DominatorTree::Node* node = DT.getNode(I);
+    DominatorTree::Node* node = DT.getNode(I);
     if (node && node->getIDom()) {  // Reachable block.
-			BasicBlock* ImmDom = node->getIDom()->getBlock();
+      BasicBlock* ImmDom = node->getIDom()->getBlock();
       ETNode *&BBNode = Nodes[I];
       if (!BBNode) {  // Haven't calculated this node yet?
         // Get or calculate the node for the immediate dominator
@@ -967,7 +967,7 @@ void ETForest::calculate(const DominatorTree &DT) {
         BBNode->setFather(IDomNode);
       }
     }
-	}
+  }
 
   // Make sure we've got nodes around for every block
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
