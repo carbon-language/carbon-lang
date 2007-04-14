@@ -1049,3 +1049,21 @@ int decode_byte (const decode_t* decode) {
 
 //===---------------------------------------------------------------------===//
 
+This:
+#include <xmmintrin.h>
+unsigned test(float f) {
+ return _mm_cvtsi128_si32( (__m128i) _mm_set_ss( f ));
+}
+
+Compiles to:
+_test:
+        movss 4(%esp), %xmm0
+        movd %xmm0, %eax
+        ret
+
+it should compile to a move from the stack slot directly into eax.  DAGCombine
+has this xform, but it is currently disabled until the alignment fields of 
+the load/store nodes are trustworthy.
+
+
+
