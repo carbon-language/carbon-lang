@@ -61,7 +61,13 @@ bool ConstantMerge::runOnModule(Module &M) {
     // invalidating the Constant* pointers in CMap.
     //
     for (Module::global_iterator GV = M.global_begin(), E = M.global_end();
-         GV != E; ++GV)
+         GV != E; ++GV) {
+      // If this GV is dead, remove it.
+      GV->removeDeadConstantUsers();
+      if (GV->use_empty() && GV->hasInternalLinkage()) {
+        (GV++)->eraseFromParent();
+      }
+      
       // Only process constants with initializers.
       if (GV->isConstant() && GV->hasInitializer()) {
         Constant *Init = GV->getInitializer();
@@ -80,6 +86,7 @@ bool ConstantMerge::runOnModule(Module &M) {
           Slot = GV;
         }
       }
+    }
 
     if (Replacements.empty())
       return MadeChange;
