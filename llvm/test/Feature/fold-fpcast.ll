@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis -o /dev/null && 
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis -o /dev/null -f &&
 ; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep bitcast
 
 int %test1() {
