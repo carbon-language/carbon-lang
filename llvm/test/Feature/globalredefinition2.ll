@@ -1,5 +1,5 @@
 ; Test that redefinitions of globals produces an error in llvm-upgrade
-; RUN: llvm-upgrade < %s -o /dev/null -f 2>&1 | \
+; RUN: llvm-upgrade < %s -o /dev/null -f |& \
 ; RUN:   grep "Renaming global variable 'B' to.*linkage errors"
 
 %B = global int 7

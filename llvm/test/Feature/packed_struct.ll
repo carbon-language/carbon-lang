@@ -1,8 +1,9 @@
 ; RUN: llvm-as < %s | llvm-dis > %t1.ll
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
-; RUN: diff %t1.ll %t2.ll &&
-; RUN: not grep cast %t2.ll &&
-; RUN: grep "<{" %t2.ll
+; RUN: diff %t1.ll %t2.ll
+; RUN: not grep cast %t2.ll
+; RUN: grep '\<{' %t2.ll
+; END.
 
 %struct.anon = type <{ i8, i32, i32, i32 }>
 @foos = external global %struct.anon 
