@@ -1678,6 +1678,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
                                                     CaseRecVector& WorkList,
                                                     Value* SV,
                                                     MachineBasicBlock* Default){
+  return false;
   unsigned IntPtrBits = getSizeInBits(TLI.getPointerTy());
 
   Case& FrontCase = *CR.Range.first;
