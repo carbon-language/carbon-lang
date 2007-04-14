@@ -4,7 +4,8 @@
 
 ; Fix #2: The unary not instruction now no longer exists. Change to xor.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | not grep 'int 0'
+; RUN: llvm-upgrade < $test | llvm-as | opt -constprop | llvm-dis | \
+; RUN:   not grep {int 0}
 
 int "test1"() {
 	%R = xor int 123, -1

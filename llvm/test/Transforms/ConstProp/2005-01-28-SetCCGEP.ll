@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | not grep 'ret bool false'
+; RUN: llvm-upgrade < %s | llvm-as | opt -constprop | llvm-dis | \
+; RUN:    not grep {ret bool false}
 
 %b = external global [2 x {  }] 
 
