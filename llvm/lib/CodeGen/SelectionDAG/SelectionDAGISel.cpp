@@ -1678,8 +1678,6 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
                                                     CaseRecVector& WorkList,
                                                     Value* SV,
                                                     MachineBasicBlock* Default){
-  return false;  // DISABLED FOR NOW: PR1325.
-  
   unsigned IntPtrBits = getSizeInBits(TLI.getPointerTy());
 
   Case& FrontCase = *CR.Range.first;
@@ -1732,7 +1730,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
   // word without having to subtract minValue. In this case,
   // we can optimize away the subtraction.
   if (cast<ConstantInt>(minValue)->getSExtValue() >= 0 &&
-      cast<ConstantInt>(maxValue)->getSExtValue() <= IntPtrBits) {
+      cast<ConstantInt>(maxValue)->getSExtValue() <  IntPtrBits) {
     range = cast<ConstantInt>(maxValue)->getSExtValue();
   } else {
     lowBound = cast<ConstantInt>(minValue)->getSExtValue();
@@ -1757,7 +1755,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
     uint64_t hi = cast<ConstantInt>(I->High)->getSExtValue() - lowBound;
     
     for (uint64_t j = lo; j <= hi; j++) {
-      CasesBits[i].Mask |=  1 << j;
+      CasesBits[i].Mask |=  1ULL << j;
       CasesBits[i].Bits++;
     }
       
