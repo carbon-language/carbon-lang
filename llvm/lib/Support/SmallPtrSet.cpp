@@ -141,5 +141,33 @@ void SmallPtrSetImpl::Grow() {
     }
     
     delete [] OldBuckets;
+    NumTombstones = 0;
+  }
+}
+
+SmallPtrSetImpl::SmallPtrSetImpl(const SmallPtrSetImpl& that) {
+  NumElements = that.NumElements;
+  NumTombstones = 0;
+  if (that.isSmall()) {
+    CurArraySize = that.CurArraySize;
+    CurArray = &SmallArray[0];
+    memcpy(CurArray, that.CurArray, sizeof(void*)*CurArraySize);
+  } else {
+    CurArraySize = that.NumElements < 64 ? 128 : that.NumElements*2;
+    CurArray = new void*[CurArraySize+1];
+    memset(CurArray, -1, CurArraySize*sizeof(void*));
+    
+    // The end pointer, always valid, is set to a valid element to help the
+    // iterator.
+    CurArray[CurArraySize] = 0;
+
+    // Copy over all valid entries.
+    for (void **BucketPtr = that.CurArray, **E = that.CurArray+CurArraySize;
+         BucketPtr != E; ++BucketPtr) {
+      // Copy over the element if it is valid.
+      void *Elt = *BucketPtr;
+      if (Elt != getTombstoneMarker() && Elt != getEmptyMarker())
+        *const_cast<void**>(FindBucketFor(Elt)) = Elt;
+    }
   }
 }

@@ -53,6 +53,9 @@ protected:
   unsigned NumElements;
   unsigned NumTombstones;
   void *SmallArray[1];  // Must be last ivar.
+
+  // Helper to copy construct a SmallPtrSet.
+  SmallPtrSetImpl(const SmallPtrSetImpl& that);
 public:
   SmallPtrSetImpl(unsigned SmallSize) {
     assert(SmallSize && (SmallSize & (SmallSize-1)) == 0 &&
@@ -214,6 +217,7 @@ class SmallPtrSet : public SmallPtrSetImpl {
   void *SmallArray[SmallSizePowTwo];
 public:
   SmallPtrSet() : SmallPtrSetImpl(NextPowerOfTwo<SmallSizePowTwo>::Val) {}
+  SmallPtrSet(const SmallPtrSet &that) : SmallPtrSetImpl(that) {}
   
   template<typename It>
   SmallPtrSet(It I, It E)
