@@ -1489,7 +1489,73 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     UndefElts |= 1ULL << IdxNo;
     break;
   }
+  case Instruction::BitCast: {
+    // Packed->packed casts only.
+    const VectorType *VTy = dyn_cast<VectorType>(I->getOperand(0)->getType());
+    if (!VTy) break;
+    unsigned InVWidth = VTy->getNumElements();
+    uint64_t InputDemandedElts = 0;
+    unsigned Ratio;
+
+    if (VWidth == InVWidth) {
+      // If we are converting from <4x i32> -> <4 x f32>, we demand the same
+      // elements as are demanded of us.
+      Ratio = 1;
+      InputDemandedElts = DemandedElts;
+    } else if (VWidth > InVWidth) {
+      // Untested so far.
+      break;
+      
+      // If there are more elements in the result than there are in the source,
+      // then an input element is live if any of the corresponding output
+      // elements are live.
+      Ratio = VWidth/InVWidth;
+      for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx) {
+        if (DemandedElts & (1ULL << OutIdx))
+          InputDemandedElts |= 1ULL << (OutIdx/Ratio);
+      }
+    } else {
+      // Untested so far.
+      break;
+      
+      // If there are more elements in the source than there are in the result,
+      // then an input element is live if the corresponding output element is
+      // live.
+      Ratio = InVWidth/VWidth;
+      for (unsigned InIdx = 0; InIdx != InVWidth; ++InIdx)
+        if (DemandedElts & (1ULL << InIdx/Ratio))
+          InputDemandedElts |= 1ULL << InIdx;
+    }
     
+    // div/rem demand all inputs, because they don't want divide by zero.
+    TmpV = SimplifyDemandedVectorElts(I->getOperand(0), InputDemandedElts,
+                                      UndefElts2, Depth+1);
+    if (TmpV) {
+      I->setOperand(0, TmpV);
+      MadeChange = true;
+    }
+    
+    UndefElts = UndefElts2;
+    if (VWidth > InVWidth) {
+      assert(0 && "Unimp");
+      // If there are more elements in the result than there are in the source,
+      // then an output element is undef if the corresponding input element is
+      // undef.
+      for (unsigned OutIdx = 0; OutIdx != VWidth; ++OutIdx)
+        if (UndefElts2 & (1ULL << (OutIdx/Ratio)))
+          UndefElts |= 1ULL << OutIdx;
+    } else if (VWidth < InVWidth) {
+      assert(0 && "Unimp");
+      // If there are more elements in the source than there are in the result,
+      // then a result element is undef if all of the corresponding input
+      // elements are undef.
+      UndefElts = ~0ULL >> (64-VWidth);  // Start out all undef.
+      for (unsigned InIdx = 0; InIdx != InVWidth; ++InIdx)
+        if ((UndefElts2 & (1ULL << InIdx)) == 0)    // Not undef?
+          UndefElts &= ~(1ULL << (InIdx/Ratio));    // Clear undef bit.
+    }
+    break;
+  }
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
