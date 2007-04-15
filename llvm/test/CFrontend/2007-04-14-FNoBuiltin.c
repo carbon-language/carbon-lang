@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -O2 -fno-builtin -o - | llvm-as -f | llc | grep -v puts
+// RUN: %llvmgcc -S %s -O2 -fno-builtin -o - | grep call.*printf
 // Check that -fno-builtin is honored.
 
 extern int printf(const char*, ...);
