@@ -4,14 +4,15 @@
 ; Check by running globaldce, which will remove the constant if there are
 ; no references to it!
 ; 
-; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce | llvm-dis | not grep constant
+; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce | llvm-dis | \
+; RUN:   not grep constant
 ;
 	
 %v1 = internal constant int 5
 
 implementation
 
-int "createtask"()
+int "createtask"() begin
 	%v1 = alloca int           ;; Alloca should have one use!
 	%reg112 = load int* %v1    ;; This load should not use the global!
 	ret int %reg112

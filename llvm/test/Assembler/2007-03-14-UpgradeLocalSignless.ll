@@ -1,6 +1,6 @@
 ; PR1256
-; RUN: llvm-upgrade < %s | grep 'call void @f( i32 .tmp )'
-; RUN: llvm-upgrade < %s | grep 'call void @g( i8 .tmp\.upgrd\.2 )'
+; RUN: llvm-upgrade < %s | grep {call void @f( i32 .tmp )}
+; RUN: llvm-upgrade < %s | grep {call void @g( i8 .tmp\.upgrd\.2 )}
 
 target datalayout = "e-p:32:32"
 target endian = little

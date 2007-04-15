@@ -1,7 +1,8 @@
 ; For PR1093: This test checks that llvm-upgrade correctly translates
 ; the llvm.va_* intrinsics to their cannonical argument form (i8*).
 ; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | \
-; RUN:   grep ' bitcast' | wc -l | grep 5
+; RUN:   grep { bitcast} | wc -l | grep 5
+
 %str = internal constant [7 x ubyte] c"%d %d\0A\00"		; <[7 x ubyte]*> [#uses=1]
 
 implementation   ; Functions:
