@@ -1,7 +1,8 @@
 ; Test that if an invoked function is inlined, and if that function cannot
 ; throw, that the dead handler is now unreachable.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -simplifycfg | llvm-dis | not grep UnreachableExceptionHandler
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline -simplifycfg | llvm-dis | \
+; RUN:   not grep UnreachableExceptionHandler
 
 declare void %might_throw()
 

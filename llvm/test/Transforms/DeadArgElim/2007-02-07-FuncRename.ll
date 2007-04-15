@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | grep '@test(' &&
+; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | grep {@test(}
 ; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | not grep dead
 
 define internal i32 @test(i32 %X, i32 %dead) {

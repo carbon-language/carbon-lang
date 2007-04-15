@@ -1,7 +1,8 @@
 ; This testcase ensures that we can sink instructions from loops with
 ; multiple exits.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis | %prcontext mul 1 | grep 'Out[12]:'
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis | \
+; RUN:    %prcontext mul 1 | grep {Out\[12\]:}
 
 int %test(int %N, bool %C) {
 Entry:

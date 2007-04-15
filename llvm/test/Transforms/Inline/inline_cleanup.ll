@@ -1,9 +1,10 @@
 ; Test that the inliner doesn't leave around dead allocas, and that it folds
 ; uncond branches away after it is done specializing.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep 'alloca.*uses=0' &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep 'br label'
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | \
+; RUN:    not grep {alloca.*uses=0}
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | \
+; RUN:    not grep {br label}
 
 %A = weak global int 0		; <int*> [#uses=1]
 %B = weak global int 0		; <int*> [#uses=1]

@@ -1,6 +1,5 @@
-; RUN: llvm-as < %s | opt -indvars -disable-output &&
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | not grep 'ret i32 0'
 ; PR1015
+; RUN: llvm-as < %s | opt -indvars | llvm-dis | not grep {ret i32 0}
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8"

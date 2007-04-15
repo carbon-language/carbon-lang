@@ -1,10 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis &&
-
 ; Base should not be i*3, it should be i*2.
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | not grep 'mul.*%i, 3' &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | \
+; RUN:   not grep {mul.*%i, 3} 
 
 ; Indvar should not start at zero:
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | not grep 'phi uint .* 0'
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | \
+; RUN:   not grep {phi uint .* 0}
+; END.
 
 ; mul uint %i, 3
 

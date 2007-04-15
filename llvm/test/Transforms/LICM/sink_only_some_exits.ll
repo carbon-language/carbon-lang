@@ -2,7 +2,8 @@
 ; some exits out of the loop, and that we can do so without breaking dominator
 ; info.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis | %prcontext add 1 | grep exit2:
+; RUN: llvm-upgrade < %s | llvm-as | opt -licm | llvm-dis | \
+; RUN:   %prcontext add 1 | grep exit2:
 
 implementation   ; Functions:
 

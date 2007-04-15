@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -dse | llvm-dis | not grep 'store sbyte'
+; RUN: llvm-upgrade < %s | llvm-as | opt -dse | llvm-dis | \
+; RUN:    not grep {store sbyte}
 ; Ensure that the dead store is deleted in this case.  It is wholely
 ; overwritten by the second store.
 int %test() {

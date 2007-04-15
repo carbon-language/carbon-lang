@@ -2,7 +2,8 @@
 ; these loops all have predictable exit values we can replace the use outside
 ; of the loop with a closed-form computation, making the loop dead.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -adce -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars -adce -simplifycfg | \
+; RUN:   llvm-dis | not grep br
 
 int %polynomial_constant() {
         br label %Loop

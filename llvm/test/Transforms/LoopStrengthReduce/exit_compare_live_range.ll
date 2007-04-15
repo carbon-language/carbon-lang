@@ -3,7 +3,7 @@
 ; instruction immediately before the conditional branch.
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | \
-; RUN:    %prcontext 'br i1' 1 | grep icmp
+; RUN:    %prcontext {br i1} 1 | grep icmp
 
 void %foo(float* %D, uint %E) {
 entry:

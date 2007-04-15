@@ -1,4 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | not grep 'cast uint 1 to uint'
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | \
+; RUN:   not grep {cast uint 1 to uint}
+; END.
 ; The setlt wants to use a value that is incremented one more than the dominant
 ; IV.  Don't insert the 1 outside the loop, preventing folding it into the add.
 

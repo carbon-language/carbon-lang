@@ -1,4 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -std-compile-opts | llvm-dis | %prcontext strstr 2 | grep -v declare |grep "bb36.outer:"
+; RUN: llvm-upgrade < %s | llvm-as | opt -std-compile-opts | llvm-dis | \
+; RUN:   %prcontext strstr 2 | grep -v declare | grep bb36.outer:
+; END.
+
 @str = internal constant [68 x i8] c"Dot. date. datum. 123. Some more doubtful demonstration dummy data.\00"		; <[68 x i8]*> [#uses=1]
 @str1 = internal constant [5 x i8] c"ummy\00"		; <[5 x i8]*> [#uses=1]
 @str2 = internal constant [6 x i8] c" data\00"		; <[6 x i8]*> [#uses=1]

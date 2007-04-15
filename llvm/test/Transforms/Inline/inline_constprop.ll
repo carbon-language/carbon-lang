@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep callee &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep callee
 ; RUN: llvm-upgrade < %s | llvm-as | opt -inline | llvm-dis | not grep div
 
 implementation

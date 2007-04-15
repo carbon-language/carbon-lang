@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep 'add i32 %iv.*inc, 1'
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | \
+; RUN:   grep {add i32 %iv.*inc, 1}
 ;
 ; Make sure that the use of the IV outside of the loop (the store) uses the 
 ; post incremented value of the IV, not the preincremented value.  This 
