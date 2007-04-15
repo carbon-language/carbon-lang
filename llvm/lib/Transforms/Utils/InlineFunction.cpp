@@ -69,10 +69,11 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
           if (!isa<CallInst>(I)) continue;
           CallInst *CI = cast<CallInst>(I);
 
-          // If this is an intrinsic function call, don't convert it to an
-          // invoke.
-          if (CI->getCalledFunction() &&
-              CI->getCalledFunction()->getIntrinsicID())
+          // If this is an intrinsic function call or an inline asm, don't
+          // convert it to an invoke.
+          if ((CI->getCalledFunction() &&
+               CI->getCalledFunction()->getIntrinsicID()) ||
+              isa<InlineAsm>(CI->getCalledValue()))
             continue;
           
           // Convert this function call into an invoke instruction.
