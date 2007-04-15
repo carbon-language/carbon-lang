@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -o - | grep 'call i32 asm'
+// RUN: %llvmgcc %s -S -emit-llvm -o - | grep {call i32 asm}
 
 struct V { short X, Y; };
 int bar() {

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -g -o - | grep 'llvm.dbg.stoppoint.*i32 14'
+// RUN: %llvmgcc %s -S -g -o - | grep {llvm.dbg.stoppoint.*i32 14}
 // PR664: ensure that line #'s are emitted for declarations
 
 

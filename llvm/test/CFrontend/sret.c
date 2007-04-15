@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep 'sret' | wc -l | grep '5'
+// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep sret | wc -l | grep 5
 
 struct abc {
  int a;

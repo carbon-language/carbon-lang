@@ -1,4 +1,5 @@
-// RUN: %llvmgcc -S 2004-11-27-StaticFunctionRedeclare.c -o - | gccas | llvm-dis | not grep 'declare int.*func'
+// RUN: %llvmgcc -c -emit-llvm 2004-11-27-StaticFunctionRedeclare.c -o - | \
+// RUN:   opt -std-compile-opts | llvm-dis | not grep {declare int.*func}
 
 // There should not be an unresolved reference to func here.  Believe it or not,
 // the "expected result" is a function named 'func' which is internal and 

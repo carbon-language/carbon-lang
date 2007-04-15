@@ -1,6 +1,5 @@
-// RUN: %llvmgcc %s -S -o /dev/null &&
-// RUN: %llvmgcc %s -S -o - | grep 'ext: xorl %eax, eax; movl' &&
-// RUN: %llvmgcc %s -S -o - | grep 'nonext: xorl %eax, %eax; mov'
+// RUN: %llvmgcc %s -S -o - | grep {ext: xorl %eax, eax; movl}
+// RUN: %llvmgcc %s -S -o - | grep {nonext: xorl %eax, %eax; mov}
 // PR924
 
 void bar() {
