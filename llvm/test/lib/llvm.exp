@@ -173,7 +173,7 @@ proc RunLLVMTests { test_source_files } {
         }
       }
       if { $failed } {
-        break;
+        continue
       } else {
         if { $PRNUMS != "" } {
           set PRNUMS " for $PRNUMS"
