@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion | llvm-dis | grep 'load i32\* %A'
+; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion | llvm-dis | \
+; RUN:   grep {load i32\\* %A}
 
 implementation
 
