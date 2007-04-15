@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | grep alloca | grep '4 x'
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
+; RUN:   grep alloca | grep {4 x}
 
 ; Test that an array is not incorrectly deconstructed...
 

@@ -2,7 +2,8 @@
 ; a PHI node and a return.  Make sure the simplify cfg can straighten out this
 ; important case.  This is basically the most trivial form of tail-duplication.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep 'br label'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN:    not grep {br label}
 
 int %test(bool %B, int %A, int %B) {
 	br bool %B, label %T, label %F

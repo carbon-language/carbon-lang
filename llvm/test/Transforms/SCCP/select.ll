@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -disable-output &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | not grep select
 
 int %test1(bool %C) {

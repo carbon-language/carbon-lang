@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep switch
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN:   not grep switch
 
 int %test1() {   ; Test normal folding
 	switch uint 5, label %Default [

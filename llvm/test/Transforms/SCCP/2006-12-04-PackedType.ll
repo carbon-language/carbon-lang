@@ -2,6 +2,7 @@
 ; SCCP ignores VectorTypes until PR 1034 is fixed
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | opt -sccp 
+; END.
 target datalayout = "E-p:32:32"
 target endian = big
 target pointersize = 32

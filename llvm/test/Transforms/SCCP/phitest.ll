@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -dce -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -dce -simplifycfg | llvm-dis | \
+; RUN:   not grep br
 
 int %test(int %param) {
 entry:

@@ -1,6 +1,7 @@
 ; Basic block #2 should not be merged into BB #3!
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | grep 'br label'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN:   grep {br label}
 ;
 declare void %foo()
 implementation

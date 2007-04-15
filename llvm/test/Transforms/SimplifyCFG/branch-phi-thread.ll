@@ -1,5 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -adce | llvm-dis | not grep 'call void %f1' &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -adce -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -adce | llvm-dis | \
+; RUN:   not grep {call void %f1}
+; END.
+
 declare void %f1()
 declare void %f2()
 declare void %f3()

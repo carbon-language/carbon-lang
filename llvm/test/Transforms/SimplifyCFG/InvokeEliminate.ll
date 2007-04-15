@@ -3,7 +3,8 @@
 
 ; If this test is successful, the function should be reduced to 'call; ret'
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not egrep 'invoke|br'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN:   not egrep {\\(invoke\\)|\\(br\\)}
 
 declare void %bar()
 

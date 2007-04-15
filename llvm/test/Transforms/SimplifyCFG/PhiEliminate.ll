@@ -4,7 +4,8 @@
 ; 'if conversion'.
 
 ; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis > %t.xform
-; RUN: not grep phi %t.xform && grep ret %t.xform
+; RUN:   not grep phi %t.xform 
+; RUN:   grep ret %t.xform
 
 declare void %use(bool)
 declare void %use(int)

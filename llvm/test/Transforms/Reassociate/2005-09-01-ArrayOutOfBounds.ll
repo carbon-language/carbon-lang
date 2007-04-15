@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | grep 'ret i32 0'
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis |\
+; RUN:   grep {ret i32 0}
 
 int %f(int %a0, int %a1, int %a2, int %a3, int %a4) {
 	%tmp.2 = add int %a4, %a3		; <int> [#uses=1]

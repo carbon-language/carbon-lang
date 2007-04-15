@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -load-vn -gcse -simplifycfg -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -load-vn -gcse -simplifycfg \
+; RUN:   -disable-output
 ; PR867
 
 target endian = big

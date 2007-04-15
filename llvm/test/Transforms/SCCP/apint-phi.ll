@@ -1,4 +1,3 @@
-; RUN: llvm-as < %s | opt -sccp | llvm-dis -o /dev/null -f &&
 ; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep phi
 
 define i999 @test(i999%A, i1 %c) {

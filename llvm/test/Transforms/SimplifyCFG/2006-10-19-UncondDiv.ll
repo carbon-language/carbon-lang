@@ -1,7 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep select
-
 ; PR957
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN:   not grep select
 
 uint %test(uint %tmp) {
 cond_false179:          ; preds = %cond_true

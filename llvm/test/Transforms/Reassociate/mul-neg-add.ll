@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | not grep 'sub int 0'
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis |\
+; RUN:   not grep {sub i32 0}
 
 int %test(int %X, int %Y, int %Z) {
 	%A = sub int 0, %X

@@ -1,7 +1,8 @@
 ; This is the test case taken from appel's book that illustrates a hard case
 ; that SCCP gets right. BB3 should be completely eliminated.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -constprop -dce -cfgsimplify | llvm-dis | not grep BB3
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -constprop -dce -simplifycfg | \
+; RUN:   llvm-dis | not grep BB3
 
 int %testfunction(int %i0, int %j0) {
 BB1:

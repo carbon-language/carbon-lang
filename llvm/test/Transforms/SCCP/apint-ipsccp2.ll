@@ -1,7 +1,5 @@
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis -o /dev/null -f &&
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | grep -v 'ret i101 0' | \
-; RUN:    grep -v 'ret i101 undef' | not grep ret
-
+; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | grep -v {ret i101 0} | \
+; RUN:    grep -v {ret i101 undef} | not grep ret
 
 
 define internal i101 @bar(i101 %A) {

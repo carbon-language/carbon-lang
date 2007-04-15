@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep select
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | \
+; RUN:   not grep select
 
 ;; The PHI node in this example should not be turned into a select, as we are
 ;; not able to ifcvt the entire block.  As such, converting to a select just 

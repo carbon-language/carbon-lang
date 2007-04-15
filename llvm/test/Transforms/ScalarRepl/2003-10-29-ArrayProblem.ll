@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | grep alloca | grep '{'
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
+; RUN:   grep alloca | grep \{
 implementation   ; Functions:
 
 declare int %.callback_1(sbyte*)

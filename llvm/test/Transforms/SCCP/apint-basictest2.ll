@@ -1,7 +1,6 @@
 ; This is a basic sanity check for constant propogation.  The add instruction 
 ; and phi instruction should be eliminated.
 
-; RUN: llvm-as < %s | opt -sccp | llvm-dis -o /dev/null -f &&
 ; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep phi
 ; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep add
 

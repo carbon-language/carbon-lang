@@ -1,7 +1,5 @@
 ; This test makes sure that these instructions are properly constant propagated.
-;
 
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis -o /dev/null -f &&
 ; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | not grep load
 ; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | not grep add
 ; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | not grep phi

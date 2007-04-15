@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep 'br'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep br
 declare void %bar(int)
 
 void %test(bool %P, int* %Q) {

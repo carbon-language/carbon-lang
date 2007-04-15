@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | grep 'br i1' | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | grep {br i1} | wc -l | grep 1
 
 void %test(int* %P, int* %Q, bool %A, bool %B) {
 	br bool %A, label %a, label %b   ;; fold the two branches into one

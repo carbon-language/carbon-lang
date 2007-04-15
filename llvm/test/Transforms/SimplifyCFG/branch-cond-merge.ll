@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -instcombine -simplifycfg | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -instcombine \
+; RUN:   -simplifycfg | llvm-dis | not grep call
 
 declare void %bar()
 

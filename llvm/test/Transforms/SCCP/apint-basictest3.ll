@@ -2,7 +2,6 @@
 ; arithmatic operations.
 
 
-; RUN: llvm-as < %s | opt -sccp | llvm-dis -o /dev/null -f &&
 ; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep mul
 ; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep umod
 
@@ -16,7 +15,7 @@ BB1:
 BB2:
         %f1 = udiv i128 -1, 1
         %f2 = add i128 %f1, 1
-        %f3 = umod i128 %f2, 2121
+        %f3 = urem i128 %f2, 2121
 	br label %BB3
 BB3:
 	%Ret = phi i128 [%t3, %BB1], [%f3, %BB2]

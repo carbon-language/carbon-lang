@@ -1,4 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -disable-output
+; END.
 
 	%arraytype.1.Char = type { int, [0 x sbyte] }
 	%arraytype.4.Signed = type { int, [0 x int] }

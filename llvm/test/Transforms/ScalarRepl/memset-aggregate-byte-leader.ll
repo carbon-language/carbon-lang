@@ -1,6 +1,9 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | not grep 'call void @llvm.memcpy.i32' &&
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep 'getelementptr'
 ; PR1226
+; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
+; RUN:   not grep {call void @llvm.memcpy.i32}
+; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep getelementptr
+; END.
+
 target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8.8.0"
 	%struct.foo = type { i8, i8 }

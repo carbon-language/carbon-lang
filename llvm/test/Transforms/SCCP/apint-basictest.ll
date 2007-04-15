@@ -1,7 +1,6 @@
 ; This is a basic sanity check for constant propogation.  The add instruction 
 ; should be eliminated.
 
-; RUN: llvm-as < %s | opt -sccp | llvm-dis -o /dev/null -f &&
 ; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep add
 
 define i128 @test(i1 %B) {

@@ -1,4 +1,3 @@
-; RUN:  llvm-as < %s | opt -sccp | llvm-dis -o /dev/null -f &&
 ; RUN:  llvm-as < %s | opt -sccp | llvm-dis | not grep xor
 
 define i11129 @test1() {

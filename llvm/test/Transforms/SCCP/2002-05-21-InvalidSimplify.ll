@@ -2,7 +2,8 @@
 ; this is in fact NOT the case, so the return should still be alive in the code
 ; after sccp and CFG simplification have been performed.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -simplifycfg | llvm-dis | grep ret
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp -simplifycfg | llvm-dis | \
+; RUN:   grep ret
 
 
 void "old_main"() {

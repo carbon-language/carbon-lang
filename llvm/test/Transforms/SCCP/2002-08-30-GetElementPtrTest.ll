@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | not grep '%X'
+; RUN: llvm-upgrade < %s | llvm-as | opt -sccp | llvm-dis | not grep %X
 
 %G = uninitialized global [40x int]
 

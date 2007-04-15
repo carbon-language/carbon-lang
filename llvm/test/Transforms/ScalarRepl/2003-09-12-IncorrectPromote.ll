@@ -1,6 +1,7 @@
 ; Scalar replacement was incorrectly promoting this alloca!!
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | sed 's/;.*//g' | grep '\['
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
+; RUN:   sed {s/;.*//g} | grep \[
 
 sbyte *%test() {
 	%A = alloca [30 x sbyte]

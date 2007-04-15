@@ -1,5 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | not grep alloca &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | grep 'bitcast'
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
+; RUN:   not grep alloca
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
+; RUN:   grep bitcast
 
 target endian = little
 

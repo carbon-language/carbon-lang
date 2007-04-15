@@ -2,7 +2,7 @@
 ; where the mergedinto block doesn't have any PHI nodes, and is in fact 
 ; dominated by the block-to-be-eliminated
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep 'N:'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg | llvm-dis | not grep N:
 ;
 
 int %test(bool %a, bool %b) {

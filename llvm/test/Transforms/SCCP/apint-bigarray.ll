@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | opt -sccp | llvm-dis -o /dev/null -f &&
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep '%X'
+; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep %X
 
 @G =  global [1000000 x i10000] zeroinitializer
 
