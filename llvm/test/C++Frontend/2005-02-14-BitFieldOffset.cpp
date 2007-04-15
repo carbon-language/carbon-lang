@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -S -o - | not grep 'int 6'
+// RUN: %llvmgxx %s -S -o - | not grep {i32 6}
 
 struct QVectorTypedData {
     int size;

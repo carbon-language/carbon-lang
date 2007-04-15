@@ -1,4 +1,5 @@
-// RUN: llvmgcc -xc++ %s -c -o - | llvm-dis | grep callDefaultCtor | not grep declare
+// RUN: %llvmgxx -xc++ %s -c -o - | llvm-dis | grep callDefaultCtor | \
+// RUN:   not grep declare
 
 // This is a testcase for LLVM PR445, which was a problem where the 
 // instantiation of callDefaultCtor was not being emitted correctly.

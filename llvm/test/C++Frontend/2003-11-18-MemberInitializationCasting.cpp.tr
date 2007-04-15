@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc++ -S -o - %s | llvm-as | opt -die | llvm-dis | not grep ' cast '
+// RUN: %llvmgcc -xc++ -S -o - %s | llvm-as | opt -die | llvm-dis | notcast
 
 struct A {
         A() : i(0) {}

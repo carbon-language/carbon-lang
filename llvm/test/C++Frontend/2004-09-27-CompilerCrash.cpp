@@ -1,7 +1,5 @@
 // RUN: %llvmgxx -S %s -o - | llvm-as -f -o /dev/null
 
-
-
 struct Pass {} ;
 template<typename PassName>
 Pass *callDefaultCtor() { return new PassName(); }
