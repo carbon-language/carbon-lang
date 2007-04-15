@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as -f -o %t1.bc
-; RUN: llvm-upgrade < `dirname %s`/2004-05-07-TypeResolution2.ll | \
+; RUN: llvm-upgrade < %p/2004-05-07-TypeResolution2.ll | \
 ; RUN:    llvm-as -o %t2.bc -f
 ; RUN: llvm-link -f -o %t3.bc %t1.bc %t2.bc
 

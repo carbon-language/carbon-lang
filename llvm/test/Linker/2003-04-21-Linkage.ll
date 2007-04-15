@@ -1,15 +1,14 @@
-; RUN: echo "%X = linkonce global int 5  implementation linkonce int %foo() { ret int 7 }" | llvm-upgrade | llvm-as > %t.1.bc
-; RUN: llvm-upgrade < %s | llvm-as -o %t.2.bc -f
-; RUN: llvm-link %t.[12].bc 
-%X = external global int 
+; RUN: echo {@X = linkonce global i32 5 \
+; RUN:   define linkonce i32 @foo() \{ ret i32 7 \} } | llvm-as > %t.1.bc
+; RUN: llvm-as < %s -o %t.2.bc -f
+; RUN: llvm-link %t.1.bc  %t.2.bc
+@X = external global i32 
 
-implementation
+declare i32 @foo() 
 
-declare int %foo() 
-
-void %bar() {
-	load int* %X
-	call int %foo()
+define void @bar() {
+	load i32* @X
+	call i32 @foo()
 	ret void
 }
 

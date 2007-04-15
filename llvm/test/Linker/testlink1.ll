@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as > %t.bc
-; RUN: llvm-upgrade < `dirname %s`/testlink2.ll | llvm-as > %t2.bc
+; RUN: llvm-upgrade < %p/testlink2.ll | llvm-as > %t2.bc
 ; RUN: llvm-link %t.bc %t2.bc
 
 %MyVar     = external global int

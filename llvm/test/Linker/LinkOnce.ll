@@ -3,6 +3,6 @@
 
 ; RUN: echo "%X = linkonce global int 8" | llvm-upgrade | llvm-as > %t.2.bc
 ; RUN: llvm-upgrade < %s | llvm-as > %t.1.bc
-; RUN: llvm-link %t.[12].bc | llvm-dis
+; RUN: llvm-link %t.1.bc %t.2.bc | llvm-dis
 
 %X = linkonce global int 7
