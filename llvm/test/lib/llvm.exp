@@ -76,7 +76,7 @@ proc substitute { line test tmpFile } {
 }
 
 proc RunLLVMTests { test_source_files } {
-  global srcroot objroot srcdir objdir subdir target_triplet
+  global srcroot objroot srcdir objdir subdir target_triplet llvmgcc_version
   set timeout 60
 
   set path [file join $objdir $subdir]
@@ -106,7 +106,7 @@ proc RunLLVMTests { test_source_files } {
     set testFileId [ open $test r]
     set runline ""
     set PRNUMS ""
-    foreach line [split [read $testFileId 4096] \n] {
+    foreach line [split [read $testFileId] \n] {
 
       # if its the END. line then stop parsing (optimization for big files)
       if {[regexp {END.[ *]$} $line match endofscript]} {
