@@ -106,7 +106,7 @@ proc RunLLVMTests { test_source_files } {
     set testFileId [ open $test r]
     set runline ""
     set PRNUMS ""
-    foreach line [split [read $testFileId] \n] {
+    foreach line [split [read $testFileId 1024] \n] {
 
       # if its the END. line then stop parsing (optimization for big files)
       if {[regexp {END.[ *]$} $line match endofscript]} {
@@ -128,7 +128,7 @@ proc RunLLVMTests { test_source_files } {
       # if its an PR line, save the problem report number
       } elseif {[regexp {PR([0-9]+)} $line match prnum]} {
         if {$PRNUMS == ""} {
-          set PRNUMS $prnum
+          set PRNUMS "PR$prnum"
         } else {
           set PRNUMS "$PRNUMS,$prnum"
         }
