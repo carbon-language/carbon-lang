@@ -1,6 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep 'mov.*str1' | wc -l | grep 1
 ; PR925
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
+; RUN:   grep mov.*str1 | wc -l | grep 1
 
 target endian = little
 target pointersize = 32

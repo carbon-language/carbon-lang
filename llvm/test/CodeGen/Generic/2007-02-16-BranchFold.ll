@@ -1,6 +1,5 @@
-; RUN: llvm-as < %s | llc &&
-; RUN: llvm-as < %s | llc | grep jmp | wc -l | grep 0
 ; PR 1200
+; RUN: llvm-as < %s | llc | not grep jmp 
 
 ; ModuleID = '<stdin>'
 target datalayout = "e-p:32:32"

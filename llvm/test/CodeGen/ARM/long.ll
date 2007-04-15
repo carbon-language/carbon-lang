@@ -16,6 +16,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | \
 ; RUN:   grep sbc | wc -l | grep 1 
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | grep __muldi3
+; END.
 
 long %f1() {
 entry:

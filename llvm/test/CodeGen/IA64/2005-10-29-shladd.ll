@@ -1,5 +1,5 @@
 ; this should turn into shladd 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ia64 | grep 'shladd'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ia64 | grep shladd
 
 implementation   ; Functions:
 
