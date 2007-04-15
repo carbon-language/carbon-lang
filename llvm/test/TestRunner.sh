@@ -12,4 +12,21 @@
 #     %llvmgxx - llvm-g++ command
 #     %prcontext - prcontext.tcl script
 #
-make check-one TESTONE=$1
+TESTFILE=$1
+if test `dirname $TESTFILE` == . ; then
+  TESTPATH=`pwd`
+  SUBDIR=""
+  while test `basename $TESTPATH` != "test" -a ! -z "$TESTPATH" ; do
+    tmp=`basename $TESTPATH`
+    SUBDIR="$tmp/$SUBDIR"
+    TESTPATH=`dirname $TESTPATH`
+  done
+  if test -d "$TESTPATH" ; then
+    cd $TESTPATH
+    make check-one TESTONE="$SUBDIR$TESTFILE"
+  else
+    echo "Can't find llvm/test directory in " `pwd`
+  fi
+else
+  make check-one TESTONE=$TESTFILE
+fi
