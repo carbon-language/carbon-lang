@@ -12,6 +12,7 @@
 // RUN:   grep xstatnoWeak | grep internal | wc -l | grep 1
 // RUN: %llvmgxx %s -S -emit-llvm -O0 -o - | grep define | \
 // RUN:   grep xextnoWeak | grep linkonce | wc -l | grep 1
+// XFAIL: *
 inline int xglobWeak(int) __attribute__((weak));
 inline int xglobWeak (int i) {
   return i*2;

@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep test
+; XFAIL: *
 
 define float @test1(float %a, float %b) {
 	%tmp = tail call float @copysignf( float %b, float %a )

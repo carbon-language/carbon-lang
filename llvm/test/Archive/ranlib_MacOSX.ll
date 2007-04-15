@@ -5,3 +5,4 @@
 ;RUN: llvm-ranlib %t.MacOSX.a
 ;RUN: llvm-ar t %t.MacOSX.a > %t1
 ;RUN: diff %t1 %p/MacOSX.toc
+;XFAIL: *

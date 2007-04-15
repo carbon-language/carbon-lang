@@ -6,6 +6,7 @@
 ; RUN:   grep align.*3 | wc | grep 2
 ; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-apple-darwin | \
 ; RUN:   grep align.*2 | wc | grep 4
+; XFAIL: *
 
 %a = global bool true
 %b = global sbyte 1

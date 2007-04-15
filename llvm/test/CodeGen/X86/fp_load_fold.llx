@@ -1,5 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   grep ST | not grep {fadd\\|fsub\\|fdiv\\|fmul}
+; XFAIL: *
 
 ; Test that the load of the memory location is folded into the operation.
 

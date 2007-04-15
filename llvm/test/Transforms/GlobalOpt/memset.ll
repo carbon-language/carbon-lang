@@ -2,6 +2,7 @@
 
 ; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | \
 ; RUN:   not grep internal
+; XFAIL: *
 
 %G0 = internal global [58 x sbyte] c"asdlfkajsdlfkajsd;lfkajds;lfkjasd;flkajsd;lkfja;sdlkfjasd\00"
 

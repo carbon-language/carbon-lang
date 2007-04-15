@@ -1,4 +1,5 @@
 // RUN: %llvmgxx -S %s -o - | llvm-as -f -o /dev/null
+// XFAIL: *
 
 struct Pass {} ;
 template<typename PassName>

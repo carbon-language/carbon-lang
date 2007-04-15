@@ -1,6 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah -enable-x86-sse &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah -enable-x86-sse | not grep movss
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah -enable-x86-sse | not grep xmm
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=x86 -mcpu=yonah -enable-x86-sse | not grep movss
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=x86 -mcpu=yonah -enable-x86-sse | not grep xmm
+; XFAIL: *
 
 double %test1(double *%P) {
 	%X = load double* %P

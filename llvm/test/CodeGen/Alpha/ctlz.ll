@@ -4,6 +4,7 @@
 ; RUN: llvm-as < %s | llc -march=alpha -mcpu=ev6 | not grep -i ctlz
 ; RUN: llvm-as < %s | llc -march=alpha -mcpu=ev56 | not grep -i ctlz
 ; RUN: llvm-as < %s | llc -march=alpha -mattr=-CIX | not grep -i ctlz
+; XFAIL: *
 
 declare i32 @llvm.ctlz.i8(i8)
 

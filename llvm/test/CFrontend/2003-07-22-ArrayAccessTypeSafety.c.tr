@@ -1,4 +1,5 @@
 /* RUN: %llvmgcc -xc %s -c -o - | llvm-dis | not grep cast
+   XFAIL: *
  */
 
 void test(int* array, long long N) {

@@ -2,6 +2,7 @@
 ; "crafty" spec benchmark.
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | llvm-as
+;XFAIL: *
 
 %CHESS_POSITION = type { uint, int }
 

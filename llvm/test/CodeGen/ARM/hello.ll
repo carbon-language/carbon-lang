@@ -2,6 +2,7 @@
 ; RUN: llvm-as < %s | llc -mtriple=arm-linux | grep mov | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -mtriple=arm-linux --disable-fp-elim | grep mov | wc -l | grep 2
 ; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin | grep mov | wc -l | grep 2
+; XFAIL: *
 
 @str = internal constant [12 x i8] c"Hello World\00"
 

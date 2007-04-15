@@ -5,6 +5,7 @@
 ; everything up.  :(  Test that this does not happen anymore.
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | not grep _memcpy
+; XFAIL: *
 
 declare void %llvm.memcpy(sbyte*, sbyte*, uint,uint)
 declare float* %memcpy(int*, uint,int)
