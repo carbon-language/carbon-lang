@@ -68,6 +68,8 @@ proc substitute { line test tmpFile } {
   regsub -all {%s} $new_line $test new_line
   #replace %t with temp filenames
   regsub -all {%t} $new_line [file join Output $tmpFile] new_line
+  #replace %% with %
+  regsub -all {%%} $new_line % new_line
   return $new_line
 }
 
