@@ -2096,9 +2096,9 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
   }
 
   uint32_t BitWidth = LC->getValue()->getValue().getBitWidth();
-  const APInt& L = LC->getValue()->getValue();
-  const APInt& M = MC->getValue()->getValue();
-  const APInt& N = MC->getValue()->getValue();
+  const APInt &L = LC->getValue()->getValue();
+  const APInt &M = MC->getValue()->getValue();
+  const APInt &N = NC->getValue()->getValue();
   APInt Two(BitWidth, 2);
   APInt Four(BitWidth, 4);
 
@@ -2125,7 +2125,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
     // Compute the two solutions for the quadratic formula. 
     // The divisions must be performed as signed divisions.
     APInt NegB(-B);
-    APInt TwoA( A * Two );
+    APInt TwoA(A << 1);
     ConstantInt *Solution1 = ConstantInt::get((NegB + SqrtVal).sdiv(TwoA));
     ConstantInt *Solution2 = ConstantInt::get((NegB - SqrtVal).sdiv(TwoA));
 
