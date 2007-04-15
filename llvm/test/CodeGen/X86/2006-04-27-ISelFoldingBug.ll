@@ -1,5 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mtriple=i686-apple-darwin8 -relocation-model=static | grep 'movl _last' | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mtriple=i686-apple-darwin8 -relocation-model=static | grep 'cmpl.*_last' | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=x86 -mtriple=i686-apple-darwin8 -relocation-model=static | \
+; RUN:   grep {movl _last} | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=x86 -mtriple=i686-apple-darwin8 -relocation-model=static | \
+; RUN:   grep {cmpl.*_last} | wc -l | grep 1
 
 %block = external global ubyte*		; <ubyte**> [#uses=1]
 %last = external global int		; <int*> [#uses=3]

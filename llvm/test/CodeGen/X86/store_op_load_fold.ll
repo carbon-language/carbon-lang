@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep 'mov'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep mov
 ;
 ; Test the add and load are folded into the store instruction.
 

@@ -2,7 +2,8 @@
 ; overlapping live intervals. When two overlapping intervals have the same
 ; value, they can be joined though.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -regalloc=linearscan | not grep 'mov %[A-Z]\{2,3\}, %[A-Z]\{2,3\}'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -regalloc=linearscan | \
+; RUN:   not grep {mov %\[A-Z\]\\\{2,3\\\}, %\[A-Z\]\\\{2,3\\\}}
 
 long %test(long %x) {
 entry:

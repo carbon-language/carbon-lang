@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=i386 | not grep 'movl %eax, %edx'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=i386 | \
+; RUN:    not grep {movl %eax, %edx}
 
 int %foo(int %t, int %C) {
 entry:

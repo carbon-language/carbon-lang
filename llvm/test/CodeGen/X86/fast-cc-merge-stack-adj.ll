@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep 'add ESP, 8'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN:   grep {add ESP, 8}
 
 target triple = "i686-pc-linux-gnu"
 

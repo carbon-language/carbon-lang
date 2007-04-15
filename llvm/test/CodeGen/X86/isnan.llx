@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep call
-declare bool %llvm.isunordered(double)
+declare bool %llvm.isunordered.f64(double)
 
 bool %test_isnan(double %X) {
-	%R = call bool %llvm.isunordered(double %X, double %X)
+	%R = call bool %llvm.isunordered.f64(double %X, double %X)
 	ret bool %R
 }

@@ -1,7 +1,8 @@
 ; Coalescing from R32 to a subset R32_. Once another register coalescer bug is
 ; fixed, the movb should go away as well.
 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -relocation-model=static | grep 'movl' | wc -l
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -relocation-model=static | \
+; RUN:   grep movl | wc -l
 
 %B = external global uint
 %C = external global ushort*

@@ -1,5 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -relocation-model=static | grep 'test1 $_GV' &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -relocation-model=static | grep 'test2 _GV'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -relocation-model=static | \
+; RUN:   grep {test1 \$_GV}
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -relocation-model=static | \
+; RUN:   grep {test2 _GV}
 ; PR882
 
 target datalayout = "e-p:32:32"

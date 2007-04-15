@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep '.byte[[:space:]]*true'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
+; RUN:   not grep {.byte\[\[:space:\]\]*true}
 
 %X = global bool true
 

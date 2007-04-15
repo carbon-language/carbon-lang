@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mtriple=mingw32 | grep '@12'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mtriple=mingw32 | \
+; RUN:   grep {@12}
 
 ; Check that a fastcall function gets correct mangling
 

@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep 'and DWORD PTR' | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN:   grep {and DWORD PTR} | wc -l | grep 2
 
 target endian = little
 target pointersize = 32

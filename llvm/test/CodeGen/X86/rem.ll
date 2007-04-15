@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep div
 
 int %test1(int %X) {

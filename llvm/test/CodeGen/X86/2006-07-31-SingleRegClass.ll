@@ -1,7 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=att | grep 'movl 4(%eax),%ebp' &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=att | grep 'movl 0(%eax), %ebx'
-
 ; PR850
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=att | \
+; RUN:   grep {movl 4(%eax),%ebp}
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=att | \
+; RUN:   grep {movl 0(%eax), %ebx}
 
 int %foo(int %__s.i.i, int %tmp5.i.i, int %tmp6.i.i, int %tmp7.i.i, int %tmp8.i.i ) {
 

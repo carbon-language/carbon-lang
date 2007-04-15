@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep 'j[lgbe]'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep {j\[lgbe\]}
 
 int %max(int %A, int %B) {
   %gt = setgt int %A, %B

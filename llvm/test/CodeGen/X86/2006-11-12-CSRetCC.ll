@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep 'subl $4, %esp'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep {subl \$4, %esp}
 
 target triple = "i686-pc-linux-gnu"
 

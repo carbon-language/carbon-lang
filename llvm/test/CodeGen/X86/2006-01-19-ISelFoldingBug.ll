@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep 'shld' | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
+; RUN:   grep shld | wc -l | grep 1
 ;
 ; Check that the isel does not fold the shld, which already folds a load
 ; and has two uses, into a store.

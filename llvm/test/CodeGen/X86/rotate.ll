@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep ro[rl] | wc -l | grep 12
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN:   grep {ro\[rl\]} | wc -l | grep 12
 
 uint %rotl32(uint %A, ubyte %Amt) {
 	%B = shl uint %A, ubyte %Amt
