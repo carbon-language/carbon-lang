@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | grep rev16 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | grep rev16
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | grep revsh
 
 int %test1(uint %X) {

@@ -1,6 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | grep smmul | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
+; RUN:   grep smmul | wc -l | grep 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep umull | wc -l | grep 1
 
 int %smulhi(int %x, int %y) {

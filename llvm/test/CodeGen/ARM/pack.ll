@@ -1,6 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | grep pkhbt | wc -l | grep 5 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | grep pkhtb | wc -l | grep 4
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
+; RUN:   grep pkhbt | wc -l | grep 5 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
+; RUN:   grep pkhtb | wc -l | grep 4
+; END.
+
 implementation   ; Functions:
 
 int %test1(int %X, int %Y) {

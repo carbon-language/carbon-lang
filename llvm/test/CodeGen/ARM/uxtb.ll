@@ -1,5 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | grep uxt | wc -l | grep 10
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
+; RUN:   grep uxt | wc -l | grep 10
+; END.
 
 uint %test1(uint %x) {
 	%tmp1 = and uint %x, 16711935		; <uint> [#uses=1]

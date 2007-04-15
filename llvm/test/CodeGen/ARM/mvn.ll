@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | wc -l | grep 8
+; END.
 
 int %f1() {
 entry:

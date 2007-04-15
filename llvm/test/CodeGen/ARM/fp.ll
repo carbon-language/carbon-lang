@@ -1,16 +1,21 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmsr  | wc -l | grep 4 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fsitos &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmrs &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fsitod &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmrrd | wc -l | grep 5 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fmdrr | wc -l | grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fldd &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep flds &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitod &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitos &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep 1065353216
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
+; RUN:   grep fmsr | wc -l | grep 4
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
+; RUN:   grep fsitos
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
+; RUN:   grep fmrs
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
+; RUN:   grep fsitod
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
+; RUN:   grep fmrrd | wc -l | grep 5
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
+; RUN:   grep fmdrr | wc -l | grep 2 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fldd
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep flds
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitod
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitos
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
+; RUN:   grep 1065353216
 
 float %f(int %a) {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep add | grep lsl &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep add | grep lsl
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep bic | grep asr
 
 int %test1(int %X, int %Y, ubyte %sh) {

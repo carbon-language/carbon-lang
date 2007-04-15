@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "strh .*\[.*], #-4"  | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "str .*\[.*],"  | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN:   grep {strh .*\\\[.*\], #-4}  | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN:   grep {str .*\\\[.*\],}  | wc -l | grep 1
 
 short %test1(int *%X, short *%A) {
         %Y = load int* %X

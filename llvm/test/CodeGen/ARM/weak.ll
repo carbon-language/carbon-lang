@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep .weak.*f &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep .weak.*f
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep .weak.*h
 
 implementation   ; Functions:

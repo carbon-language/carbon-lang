@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | grep -F 'str r2, [r0, +r3, lsl #2]'
+; RUN: llvm-as < %s | llc -march=arm | grep -F {str r2, \[r0, +r3, lsl #2\]}
 ; Should use scaled addressing mode.
 
 define void @sintzero(i32* %a) {

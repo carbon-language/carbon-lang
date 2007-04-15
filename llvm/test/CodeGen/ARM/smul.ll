@@ -1,8 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5TE &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5TE | grep "smulbt" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5TE | grep "smultt" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5TE | grep "smlabt" | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5TE
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5TE | \
+; RUN:   grep smulbt | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5TE | \
+; RUN:   grep smultt | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5TE | \
+; RUN:   grep smlabt | wc -l | grep 1
 
 %x = weak global short 0
 %y = weak global short 0

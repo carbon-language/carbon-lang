@@ -1,4 +1,3 @@
-; RUN: llvm-as < %s | llc -march=thumb &&
 ; RUN: llvm-as < %s | llc -march=thumb | not grep CPI
 
 

@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "str.*\!"  | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN:   grep {str.*\\!}  | wc -l | grep 2
 
 void %test1(int *%X, int *%A, int **%dest) {
         %B = load int* %A

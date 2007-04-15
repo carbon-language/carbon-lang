@@ -1,8 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 &&
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | grep "uxtb"  | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | grep "uxtab" | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | grep "uxth"  | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | grep uxtb  | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | grep uxtab | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | grep uxth  | wc -l | grep 1
 
 define i8 @test1(i32 %A.u) zext {
     %B.u = trunc i32 %A.u to i8

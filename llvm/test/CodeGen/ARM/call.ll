@@ -1,6 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep 'mov lr, pc' &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5t | grep 'blx'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep {mov lr, pc}
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5t | grep blx
 
 %t = weak global int ()* null
 declare void %g(int, int, int, int)
