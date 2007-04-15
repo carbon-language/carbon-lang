@@ -8830,64 +8830,98 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
 ///   if () { *P = v1; } else { *P = v2 }
 /// into a phi node with a store in the successor.
 ///
+/// Simplify things like:
+///   *P = v1; if () { *P = v2; }
+/// into a phi node with a store in the successor.
+///
 bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   BasicBlock *StoreBB = SI.getParent();
   
   // Check to see if the successor block has exactly two incoming edges.  If
   // so, see if the other predecessor contains a store to the same location.
   // if so, insert a PHI node (if needed) and move the stores down.
-  BasicBlock *Dest = StoreBB->getTerminator()->getSuccessor(0);
+  BasicBlock *DestBB = StoreBB->getTerminator()->getSuccessor(0);
   
   // Determine whether Dest has exactly two predecessors and, if so, compute
   // the other predecessor.
-  pred_iterator PI = pred_begin(Dest);
-  BasicBlock *Other = 0;
+  pred_iterator PI = pred_begin(DestBB);
+  BasicBlock *OtherBB = 0;
   if (*PI != StoreBB)
-    Other = *PI;
+    OtherBB = *PI;
   ++PI;
-  if (PI == pred_end(Dest))
+  if (PI == pred_end(DestBB))
     return false;
   
   if (*PI != StoreBB) {
-    if (Other)
+    if (OtherBB)
       return false;
-    Other = *PI;
+    OtherBB = *PI;
   }
-  if (++PI != pred_end(Dest))
+  if (++PI != pred_end(DestBB))
     return false;
   
   
-  BasicBlock::iterator BBI = Other->getTerminator();
+  // Verify that the other block ends in a branch and is not otherwise empty.
+  BasicBlock::iterator BBI = OtherBB->getTerminator();
   BranchInst *OtherBr = dyn_cast<BranchInst>(BBI);
-  
-  // Make sure this other block ends in an unconditional branch and that
-  // there is an instruction before the branch.
-  if (!OtherBr || !cast<BranchInst>(BBI)->isUnconditional() ||
-      BBI == Other->begin())
+  if (!OtherBr || BBI == OtherBB->begin())
     return false;
   
-  // See if the last instruction in other block is a store to the same location.
-  --BBI;
-  StoreInst *OtherStore = dyn_cast<StoreInst>(BBI);
+  // If the other block ends in an unconditional branch, check for the 'if then
+  // else' case.  there is an instruction before the branch.
+  StoreInst *OtherStore = 0;
+  if (OtherBr->isUnconditional()) {
+    // If this isn't a store, or isn't a store to the same location, bail out.
+    --BBI;
+    OtherStore = dyn_cast<StoreInst>(BBI);
+    if (!OtherStore || OtherStore->getOperand(1) != SI.getOperand(1))
+      return false;
+  } else {
+    // Otherwise, the other block ended with a conditional branch.  If one of the
+    // destinations is StoreBB, then we have the if/then case.
+    if (OtherBr->getSuccessor(0) != StoreBB && 
+        OtherBr->getSuccessor(1) != StoreBB)
+      return false;
+    
+    // Okay, we know that OtherBr now goes to Dest and StoreBB, so this is an
+    // if/then triangle.  See if there is a store to the same ptr as SI that lives
+    // in OtherBB.
+    for (;; --BBI) {
+      // Check to see if we find the matching store.
+      if ((OtherStore = dyn_cast<StoreInst>(BBI))) {
+        if (OtherStore->getOperand(1) != SI.getOperand(1))
+          return false;
+        break;
+      }
+      // If we find something that may be using the stored value, or if we run out
+      // of instructions, we can't do the xform.
+      if (isa<LoadInst>(BBI) || BBI->mayWriteToMemory() ||
+          BBI == OtherBB->begin())
+        return false;
+    }
+    
+    // In order to eliminate the store in OtherBr, we have to
+    // make sure nothing reads the stored value in StoreBB.
+    for (BasicBlock::iterator I = StoreBB->begin(); &*I != &SI; ++I) {
+      // FIXME: This should really be AA driven.
+      if (isa<LoadInst>(I) || I->mayWriteToMemory())
+        return false;
+    }
+  }
   
-  // If this instruction is a store to the same location.
-  if (!OtherStore || OtherStore->getOperand(1) != SI.getOperand(1))
-    return false;
-  
-  // Okay, we know we can perform this transformation.  Insert a PHI
-  // node now if we need it.
+  // Insert a PHI node now if we need it.
   Value *MergedVal = OtherStore->getOperand(0);
   if (MergedVal != SI.getOperand(0)) {
     PHINode *PN = new PHINode(MergedVal->getType(), "storemerge");
     PN->reserveOperandSpace(2);
     PN->addIncoming(SI.getOperand(0), SI.getParent());
-    PN->addIncoming(OtherStore->getOperand(0), Other);
-    MergedVal = InsertNewInstBefore(PN, Dest->front());
+    PN->addIncoming(OtherStore->getOperand(0), OtherBB);
+    MergedVal = InsertNewInstBefore(PN, DestBB->front());
   }
   
   // Advance to a place where it is safe to insert the new store and
   // insert it.
-  BBI = Dest->begin();
+  BBI = DestBB->begin();
   while (isa<PHINode>(BBI)) ++BBI;
   InsertNewInstBefore(new StoreInst(MergedVal, SI.getOperand(1),
                                     OtherStore->isVolatile()), *BBI);
