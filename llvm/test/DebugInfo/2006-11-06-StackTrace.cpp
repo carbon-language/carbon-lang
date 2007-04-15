@@ -1,11 +1,13 @@
 // This is a regression test on debug info to make sure that we can get a
 // meaningful stack trace from a C++ program.
-// RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | llc --disable-fp-elim -o Output/StackTrace.s -f
-// RUN: as Output/StackTrace.s -o Output/StackTrace.o
-// RUN: g++ Output/StackTrace.o -o Output/StackTrace.exe
-// RUN: ( echo "break DeepStack::deepest"; echo "run 17" ; echo "where" ) > Output/StackTrace.gdbin 
-// RUN: gdb -q -batch -n -x Output/StackTrace.gdbin Output/StackTrace.exe | tee Output/StackTrace.out | grep '#0  DeepStack::deepest.*(this=.*,.*x=33)'
-// RUN: gdb -q -batch -n -x Output/StackTrace.gdbin Output/StackTrace.exe | grep '#7  0x.* in main.*(argc=[12],.*argv=.*)'
+// RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | llc --disable-fp-elim -o %t.s -f
+// RUN: as %t.s -o %t.o
+// RUN: %link %t.o -o %t.exe
+// RUN: echo {break DeepStack::deepest\nrun 17\nwhere\n} > %t.in 
+// RUN: gdb -q -batch -n -x %t.in %t.exe | tee %t.out | \
+// RUN:   grep {#0  DeepStack::deepest.*(this=.*,.*x=33)}
+// RUN: gdb -q -batch -n -x %t.in %t.exe | \
+// RUN:   grep {#7  0x.* in main.*(argc=\[12\],.*argv=.*)}
 // XFAIL: i[1-9]86|alpha|ia64|arm|x86_64
 
 #include <stdlib.h>
