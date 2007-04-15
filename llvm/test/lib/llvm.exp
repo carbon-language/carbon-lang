@@ -45,7 +45,9 @@ proc substitute { line test tmpFile } {
   set path [file join $srcdir $subdir]
   set tmp  [file join Output $tmpFile]
 
-  set new_line $line
+  # Substitute all Tcl variables.
+  set new_line [subst $line ]
+
   #replace %prcontext with prcontext.tcl (Must replace before %p)
   regsub -all {%prcontext} $new_line $prcontext new_line
   #replace %llvmgcc with actual path to llvmgcc
@@ -159,7 +161,6 @@ proc RunLLVMTests { test_source_files } {
       set failed 0
       for { set i 0 } { $i < $numLines } { set i [ expr $i + 1 ] } {
         regsub ^.*RUN:(.*) $lines($i) \1 theLine
-        set theLine [subst $theLine ]
         set resultmsg [execOneLine $test $PRNUMS $outcome $i $theLine ]
         if { $resultmsg != "" } {
           if { $outcome == "XFAIL" } {
@@ -171,8 +172,10 @@ proc RunLLVMTests { test_source_files } {
           break
         }
       }
-      if { !$failed } {
-        if {$PRNUMS != ""} {
+      if { $failed } {
+        break;
+      } else {
+        if { $PRNUMS != "" } {
           set PRNUMS " for $PRNUMS"
         }
         if { $outcome == "XFAIL" } {
