@@ -1571,7 +1571,7 @@ public:
                               ConstantInt::get(V->getType(), 128), 
                               V->getName()+".isascii", CI);
     if (Cmp->getType() != CI->getType())
-      Cmp = new BitCastInst(Cmp, CI->getType(), Cmp->getName(), CI);
+      Cmp = new ZExtInst(Cmp, CI->getType(), Cmp->getName(), CI);
     return ReplaceCallWith(CI, Cmp);
   }
 } isasciiOptimizer;
