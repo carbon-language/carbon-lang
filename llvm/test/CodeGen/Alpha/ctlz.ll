@@ -1,16 +1,14 @@
 ; Make sure this testcase codegens to the ctlz instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev67 | grep -i 'ctlz'
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mattr=+CIX | grep -i 'ctlz'
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev6 | not grep -i 'ctlz'
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev56 | not grep -i 'ctlz'
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mattr=-CIX | not grep -i 'ctlz'
+; RUN: llvm-as < %s | llc -march=alpha -mcpu=ev67 | grep -i ctlz
+; RUN: llvm-as < %s | llc -march=alpha -mattr=+CIX | grep -i ctlz
+; RUN: llvm-as < %s | llc -march=alpha -mcpu=ev6 | not grep -i ctlz
+; RUN: llvm-as < %s | llc -march=alpha -mcpu=ev56 | not grep -i ctlz
+; RUN: llvm-as < %s | llc -march=alpha -mattr=-CIX | not grep -i ctlz
 
-declare ubyte %llvm.ctlz(ubyte)
+declare i32 @llvm.ctlz.i8(i8)
 
-implementation   ; Functions:
-
-ubyte %bar(ubyte %x) {
+define i32 @bar(i8 %x) {
 entry:
-	%tmp.1 = call ubyte %llvm.ctlz( ubyte %x ) 
-	ret ubyte %tmp.1
+	%tmp.1 = call i32 @llvm.ctlz.i8( i8 %x ) 
+	ret i32 %tmp.1
 }

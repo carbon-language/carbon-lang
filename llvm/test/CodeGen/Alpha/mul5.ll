@@ -1,5 +1,6 @@
 ; Make sure this testcase does not use mulq
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep -i 'mul' |wc -l |grep 0
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | \
+; RUN:   not grep -i mul
 
 implementation   ; Functions:
 

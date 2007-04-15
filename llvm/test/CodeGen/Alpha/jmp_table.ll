@@ -1,8 +1,10 @@
-; try to check that we have the most important instructions, which shouldn't appear otherwise
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'jmp' &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'gprel32' &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'ldl' &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'rodata'
+; try to check that we have the most important instructions, which shouldn't 
+; appear otherwise
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep jmp
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep gprel32
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep ldl
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep rodata
+; END.
 
 target endian = little
 target pointersize = 64

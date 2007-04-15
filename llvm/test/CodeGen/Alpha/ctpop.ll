@@ -1,10 +1,13 @@
 ; Make sure this testcase codegens to the ctpop instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev67 | grep -i 'ctpop'
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mattr=+CIX | grep -i 'ctpop'
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev6 | not grep -i 'ctpop'
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev56 | not grep -i 'ctpop'
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mattr=-CIX | not grep -i 'ctpop'
-
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev67 | grep -i ctpop
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mattr=+CIX | \
+; RUN:   grep -i ctpop
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev6 | \
+; RUN:   not grep -i ctpop
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev56 | \
+; RUN:   not grep -i ctpop
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mattr=-CIX | \
+; RUN:   not grep -i 'ctpop'
 
 declare long %llvm.ctpop(long)
 

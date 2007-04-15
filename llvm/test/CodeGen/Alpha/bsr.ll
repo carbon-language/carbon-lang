@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens the bsr instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'bsr'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep bsr
 
 implementation
 

@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the bic instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'bic'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep {bic}
 
 implementation   ; Functions:
 

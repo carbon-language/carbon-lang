@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the ornot instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'ornot'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep ornot
 
 implementation   ; Functions:
 

@@ -1,21 +1,21 @@
 ;test all the shifted and signextending adds and subs with and without consts
 ;
-; RUN: llvm-as < %s | llc -march=alpha -o %t.s -f &&
-; RUN: grep '	addl' %t.s | wc -l | grep 2 &&
-; RUN: grep '	addq' %t.s | wc -l | grep 2 &&
-; RUN: grep '	subl' %t.s | wc -l | grep 2 &&
-; RUN: grep '	subq' %t.s | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=alpha -o %t.s -f
+; RUN: grep {	addl} %t.s | wc -l | grep 2
+; RUN: grep {	addq} %t.s | wc -l | grep 2
+; RUN: grep {	subl} %t.s | wc -l | grep 2
+; RUN: grep {	subq} %t.s | wc -l | grep 1
 ;
-; RUN: grep 'lda $0,-100($16)' %t.s | wc -l | grep 1 &&
-; RUN: grep 's4addl' %t.s | wc -l | grep 2 &&
-; RUN: grep 's8addl' %t.s | wc -l | grep 2 &&
-; RUN: grep 's4addq' %t.s | wc -l | grep 2 &&
-; RUN: grep 's8addq' %t.s | wc -l | grep 2 &&
+; RUN: grep {lda \$0,-100(\$16)} %t.s | wc -l | grep 1
+; RUN: grep {s4addl} %t.s | wc -l | grep 2
+; RUN: grep {s8addl} %t.s | wc -l | grep 2
+; RUN: grep {s4addq} %t.s | wc -l | grep 2
+; RUN: grep {s8addq} %t.s | wc -l | grep 2
 ;
-; RUN: grep 's4subl' %t.s | wc -l | grep 2 &&
-; RUN: grep 's8subl' %t.s | wc -l | grep 2 &&
-; RUN: grep 's4subq' %t.s | wc -l | grep 2 &&
-; RUN: grep 's8subq' %t.s | wc -l | grep 2
+; RUN: grep {s4subl} %t.s | wc -l | grep 2
+; RUN: grep {s8subl} %t.s | wc -l | grep 2
+; RUN: grep {s4subq} %t.s | wc -l | grep 2
+; RUN: grep {s8subq} %t.s | wc -l | grep 2
 
 
 define i32 @al(i32 sext %x.s, i32 sext %y.s) sext {

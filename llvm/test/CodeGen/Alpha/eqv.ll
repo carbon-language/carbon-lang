@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the eqv instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'eqv'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep eqv
 
 implementation   ; Functions:
 

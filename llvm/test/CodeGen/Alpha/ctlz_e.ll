@@ -1,5 +1,5 @@
 ; Make sure this testcase does not use ctpop
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep -i 'ctpop' |wc -l |grep 0
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | not grep -i ctpop 
 
 declare ulong %llvm.ctlz(ulong)
 

@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the zapnot instruction
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep 'zapnot'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep zapnot
 
 implementation   ; Functions:
 
