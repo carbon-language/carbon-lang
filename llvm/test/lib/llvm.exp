@@ -113,7 +113,7 @@ proc RunLLVMTests { test_source_files } {
         break
 
       # if the line is continued, concatente and continue the loop
-      } elseif {[regexp {RUN: *([^\\]+)(\\)$} $line match oneline suffix]} {
+      } elseif {[regexp {RUN: *(.+)(\\)$} $line match oneline suffix]} {
         set runline "$runline$oneline "
 
       # if its a terminating RUN: line then do substitution on the whole line
