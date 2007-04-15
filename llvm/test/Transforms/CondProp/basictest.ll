@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -condprop | llvm-dis | not grep 'br label'
+; RUN: llvm-upgrade < %s | llvm-as | opt -condprop | llvm-dis | \
+; RUN:    not grep {br label}
 
 int %test(bool %C) {
 	br bool %C, label %T1, label %F1
