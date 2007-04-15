@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | grep 'tail call void @foo'
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | \
+; RUN:    grep {tail call void @foo}
 
 declare void %foo()
 

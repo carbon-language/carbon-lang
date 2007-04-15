@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | \
-; RUN:    grep 'call i32 @foo'
+; RUN:    grep {call i32 @foo}
 
 declare void %bar(int*)
 int %foo(uint %N) {

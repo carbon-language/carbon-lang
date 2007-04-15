@@ -1,5 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate | llc -march=x86 | grep 'je ' &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate | llc -march=x86 | not grep jmp
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate | llc -march=x86 | \
+; RUN:    grep {je } &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate | llc -march=x86 | \
+; RUN:    not grep jmp
+; END.
 ; This should have no unconditional jumps in it.  The C source is:
 
 ;void foo(int c, int* P) {
