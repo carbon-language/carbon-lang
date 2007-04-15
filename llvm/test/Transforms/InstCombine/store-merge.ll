@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 %storemerge} | wc -l | grep 2
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 \045storemerge} | wc -l | grep 2
 ;; Simple sinking tests
 
 ; "if then else"
