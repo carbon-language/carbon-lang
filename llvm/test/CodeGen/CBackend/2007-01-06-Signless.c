@@ -1,5 +1,5 @@
 // RUN: %llvmgcc -S %s -o - | llvm-as | llc -march=c | \
-// RUN:  grep '(unsigned short'
+// RUN:  grep {(unsigned short}
 
 int Z = -1;
 
