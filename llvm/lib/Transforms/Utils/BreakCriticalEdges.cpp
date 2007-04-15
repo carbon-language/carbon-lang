@@ -38,7 +38,6 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<ETForest>();
-      AU.addPreserved<ImmediateDominators>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
       AU.addPreserved<LoopInfo>();
@@ -195,29 +194,6 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
     // doesn't dominate anything.
     if (NewBBDominatesDestBB)
       EF->setImmediateDominator(DestBB, NewBB);
-  }
-
-  // Should we update ImmediateDominator information?
-  if (ImmediateDominators *ID = P->getAnalysisToUpdate<ImmediateDominators>()) {
-    // Only do this if TIBB is reachable.
-    if (ID->get(TIBB) || &TIBB->getParent()->getEntryBlock() == TIBB) {
-      // TIBB is the new immediate dominator for NewBB.
-      ID->addNewBlock(NewBB, TIBB);
-      
-      // If NewBBDominatesDestBB hasn't been computed yet, do so with ID.
-      if (!OtherPreds.empty()) {
-        while (!OtherPreds.empty() && NewBBDominatesDestBB) {
-          NewBBDominatesDestBB = ID->dominates(DestBB, OtherPreds.back());
-          OtherPreds.pop_back();
-        }
-        OtherPreds.clear();
-      }
-      
-      // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
-      // doesn't dominate anything.
-      if (NewBBDominatesDestBB)
-        ID->setImmediateDominator(DestBB, NewBB);
-    }
   }
   
   // Should we update DominatorTree information?

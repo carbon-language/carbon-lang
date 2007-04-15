@@ -18,26 +18,6 @@
 
 namespace llvm {
 
-//===-------------------------------------
-/// ImmediatePostDominators Class - Concrete subclass of ImmediateDominatorsBase
-/// that is used to compute a normal immediate dominator set.
-///
-struct ImmediatePostDominators : public ImmediateDominatorsBase {
-  ImmediatePostDominators() : ImmediateDominatorsBase(false) {}
-  
-  virtual bool runOnFunction(Function &F);
-  
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  }
-  
-private:
-  unsigned DFSPass(BasicBlock *V, InfoRec &VInfo, unsigned N);
-  void Compress(BasicBlock *V, InfoRec &VInfo);
-  BasicBlock *Eval(BasicBlock *v);
-  void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
-};
-
 /// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
 /// compute the a post-dominator tree.
 ///
@@ -46,19 +26,25 @@ struct PostDominatorTree : public DominatorTreeBase {
 
   virtual bool runOnFunction(Function &F) {
     reset();     // Reset from the last time we were run...
-    ImmediatePostDominators &IPD = getAnalysis<ImmediatePostDominators>();
-    Roots = IPD.getRoots();
-    calculate(IPD);
+    calculate(F);
     return false;
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired<ImmediatePostDominators>();
   }
 private:
-  void calculate(const ImmediatePostDominators &IPD);
+  void calculate(Function &F);
   Node *getNodeForBlock(BasicBlock *BB);
+  unsigned DFSPass(BasicBlock *V, InfoRec &VInfo,unsigned N);
+	void Compress(BasicBlock *V, InfoRec &VInfo);
+	BasicBlock *Eval(BasicBlock *V);
+	void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
+
+  inline BasicBlock *getIDom(BasicBlock *BB) const {
+	  std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
+	  return I != IDoms.end() ? I->second : 0;
+	}
 };
 
 
@@ -69,18 +55,18 @@ struct PostETForest : public ETForestBase {
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired<ImmediatePostDominators>();
+    AU.addRequired<PostDominatorTree>();
   }
 
   virtual bool runOnFunction(Function &F) {
     reset();     // Reset from the last time we were run...
-    ImmediatePostDominators &ID = getAnalysis<ImmediatePostDominators>();
-    Roots = ID.getRoots();
-    calculate(ID);
+    PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
+    Roots = DT.getRoots();
+    calculate(DT);
     return false;
   }
 
-  void calculate(const ImmediatePostDominators &ID);
+  void calculate(const PostDominatorTree &DT);
   ETNode *getNodeForBlock(BasicBlock *BB);
 };
 

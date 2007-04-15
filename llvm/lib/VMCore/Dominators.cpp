@@ -24,11 +24,24 @@
 #include <algorithm>
 using namespace llvm;
 
+namespace llvm {
+static std::ostream &operator<<(std::ostream &o,
+                                const std::set<BasicBlock*> &BBs) {
+  for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
+       I != E; ++I)
+    if (*I)
+      WriteAsOperand(o, *I, false);
+    else
+      o << " <<exit node>>";
+  return o;
+}
+}
+
 //===----------------------------------------------------------------------===//
-//  ImmediateDominators Implementation
+//  DominatorTree Implementation
 //===----------------------------------------------------------------------===//
 //
-// Immediate Dominators construction - This pass constructs immediate dominator
+// DominatorTree construction - This pass constructs immediate dominator
 // information for a flow-graph based on the algorithm described in this
 // document:
 //
@@ -45,10 +58,10 @@ using namespace llvm;
 //
 //===----------------------------------------------------------------------===//
 
-static RegisterPass<ImmediateDominators>
-C("idom", "Immediate Dominators Construction", true);
+static RegisterPass<DominatorTree>
+E("domtree", "Dominator Tree Construction", true);
 
-unsigned ImmediateDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
+unsigned DominatorTree::DFSPass(BasicBlock *V, InfoRec &VInfo,
                                       unsigned N) {
   // This is more understandable as a recursive algorithm, but we can't use the
   // recursive algorithm due to stack depth issues.  Keep it here for
@@ -110,7 +123,7 @@ unsigned ImmediateDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
   return N;
 }
 
-void ImmediateDominators::Compress(BasicBlock *V, InfoRec &VInfo) {
+void DominatorTree::Compress(BasicBlock *V, InfoRec &VInfo) {
   BasicBlock *VAncestor = VInfo.Ancestor;
   InfoRec &VAInfo = Info[VAncestor];
   if (VAInfo.Ancestor == 0)
@@ -126,7 +139,7 @@ void ImmediateDominators::Compress(BasicBlock *V, InfoRec &VInfo) {
   VInfo.Ancestor = VAInfo.Ancestor;
 }
 
-BasicBlock *ImmediateDominators::Eval(BasicBlock *V) {
+BasicBlock *DominatorTree::Eval(BasicBlock *V) {
   InfoRec &VInfo = Info[V];
 #if !BALANCE_IDOM_TREE
   // Higher-complexity but faster implementation
@@ -149,7 +162,7 @@ BasicBlock *ImmediateDominators::Eval(BasicBlock *V) {
 #endif
 }
 
-void ImmediateDominators::Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo){
+void DominatorTree::Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo){
 #if !BALANCE_IDOM_TREE
   // Higher-complexity but faster implementation
   WInfo.Ancestor = V;
@@ -196,13 +209,10 @@ void ImmediateDominators::Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo){
 #endif
 }
 
-
-
-bool ImmediateDominators::runOnFunction(Function &F) {
-  IDoms.clear();     // Reset from the last time we were run...
-  BasicBlock *Root = &F.getEntryBlock();
-  Roots.clear();
-  Roots.push_back(Root);
+void DominatorTree::calculate(Function& F) {
+	BasicBlock* Root = Roots[0];
+	
+  Nodes[Root] = RootNode = new Node(Root, 0); // Add a node for the root...
 
   Vertex.push_back(0);
 
@@ -247,58 +257,25 @@ bool ImmediateDominators::runOnFunction(Function &F) {
       WIDom = IDoms[WIDom];
   }
 
+  // Loop over all of the reachable blocks in the function...
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (BasicBlock *ImmDom = getIDom(I)) {  // Reachable block.
+			Node *&BBNode = Nodes[I];
+      if (!BBNode) {  // Haven't calculated this node yet?
+        // Get or calculate the node for the immediate dominator
+        Node *IDomNode = getNodeForBlock(ImmDom);
+
+        // Add a new tree node for this BasicBlock, and link it as a child of
+        // IDomNode
+        BBNode = IDomNode->addChild(new Node(I, IDomNode));
+      }
+    }
+
   // Free temporary memory used to construct idom's
   Info.clear();
+	IDoms.clear();
   std::vector<BasicBlock*>().swap(Vertex);
-
-  return false;
 }
-
-/// dominates - Return true if A dominates B.
-///
-bool ImmediateDominatorsBase::dominates(BasicBlock *A, BasicBlock *B) const {
-  assert(A && B && "Null pointers?");
-  
-  // Walk up the dominator tree from B to determine if A dom B.
-  while (A != B && B)
-    B = get(B);
-  return A == B;
-}
-
-void ImmediateDominatorsBase::print(std::ostream &o, const Module* ) const {
-  Function *F = getRoots()[0]->getParent();
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    o << "  Immediate Dominator For Basic Block:";
-    WriteAsOperand(o, I, false);
-    o << " is:";
-    if (BasicBlock *ID = get(I))
-      WriteAsOperand(o, ID, false);
-    else
-      o << " <<exit node>>";
-    o << "\n";
-  }
-  o << "\n";
-}
-
-namespace llvm {
-static std::ostream &operator<<(std::ostream &o,
-                                const std::set<BasicBlock*> &BBs) {
-  for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
-       I != E; ++I)
-    if (*I)
-      WriteAsOperand(o, *I, false);
-    else
-      o << " <<exit node>>";
-  return o;
-}
-}
-
-//===----------------------------------------------------------------------===//
-//  DominatorTree Implementation
-//===----------------------------------------------------------------------===//
-
-static RegisterPass<DominatorTree>
-E("domtree", "Dominator Tree Construction", true);
 
 // DominatorTreeBase::reset - Free all of the tree node memory.
 //
@@ -306,6 +283,8 @@ void DominatorTreeBase::reset() {
   for (NodeMapType::iterator I = Nodes.begin(), E = Nodes.end(); I != E; ++I)
     delete I->second;
   Nodes.clear();
+	IDoms.clear();
+	Roots.clear();
   RootNode = 0;
 }
 
@@ -331,33 +310,12 @@ DominatorTreeBase::Node *DominatorTree::getNodeForBlock(BasicBlock *BB) {
 
   // Haven't calculated this node yet?  Get or calculate the node for the
   // immediate dominator.
-  BasicBlock *IDom = getAnalysis<ImmediateDominators>()[BB];
+  BasicBlock *IDom = getIDom(BB);
   Node *IDomNode = getNodeForBlock(IDom);
 
   // Add a new tree node for this BasicBlock, and link it as a child of
   // IDomNode
   return BBNode = IDomNode->addChild(new Node(BB, IDomNode));
-}
-
-void DominatorTree::calculate(const ImmediateDominators &ID) {
-  assert(Roots.size() == 1 && "DominatorTree should have 1 root block!");
-  BasicBlock *Root = Roots[0];
-  Nodes[Root] = RootNode = new Node(Root, 0); // Add a node for the root...
-
-  Function *F = Root->getParent();
-  // Loop over all of the reachable blocks in the function...
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-    if (BasicBlock *ImmDom = ID.get(I)) {  // Reachable block.
-      Node *&BBNode = Nodes[I];
-      if (!BBNode) {  // Haven't calculated this node yet?
-        // Get or calculate the node for the immediate dominator
-        Node *IDomNode = getNodeForBlock(ImmDom);
-
-        // Add a new tree node for this BasicBlock, and link it as a child of
-        // IDomNode
-        BBNode = IDomNode->addChild(new Node(I, IDomNode));
-      }
-    }
 }
 
 static std::ostream &operator<<(std::ostream &o,
@@ -383,6 +341,12 @@ void DominatorTreeBase::print(std::ostream &o, const Module* ) const {
   PrintDomTree(getRootNode(), o, 1);
 }
 
+bool DominatorTree::runOnFunction(Function &F) {
+  reset();     // Reset from the last time we were run...
+	Roots.push_back(&F.getEntryBlock());
+  calculate(F);
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 //  DominanceFrontier Implementation

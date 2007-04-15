@@ -68,7 +68,6 @@ namespace {
       AU.addRequired<ETForest>();
 
       AU.addPreserved<LoopInfo>();
-      AU.addPreserved<ImmediateDominators>();
       AU.addPreserved<ETForest>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
@@ -749,31 +748,6 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
   }
 
   BasicBlock *NewBBIDom = 0;
-  
-  // Update immediate dominator information if we have it.
-  if (ImmediateDominators *ID = getAnalysisToUpdate<ImmediateDominators>()) {
-    unsigned i = 0;
-    for (i = 0; i < PredBlocks.size(); ++i)
-      if (ETF.dominates(&PredBlocks[i]->getParent()->getEntryBlock(), PredBlocks[i])) {
-        NewBBIDom = PredBlocks[i];
-        break;
-      }
-    assert(i != PredBlocks.size() && "No reachable preds?");
-    for (i = i + 1; i < PredBlocks.size(); ++i) {
-      if (ETF.dominates(&PredBlocks[i]->getParent()->getEntryBlock(), PredBlocks[i]))
-        NewBBIDom = ETF.nearestCommonDominator(NewBBIDom, PredBlocks[i]);
-    }
-    assert(NewBBIDom && "No immediate dominator found??");
-  
-    // Set the immediate dominator now...
-    ID->addNewBlock(NewBB, NewBBIDom);
-
-    // If NewBB strictly dominates other blocks, we need to update their idom's
-    // now.  The only block that need adjustment is the NewBBSucc block, whose
-    // idom should currently be set to PredBlocks[0].
-    if (NewBBDominatesNewBBSucc)
-      ID->setImmediateDominator(NewBBSucc, NewBB);
-  }
 
   // Update DominatorTree information if it is active.
   if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {

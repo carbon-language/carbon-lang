@@ -8,13 +8,11 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the following classes:
-//  1. ImmediateDominators: Calculates and holds a mapping between BasicBlocks
-//     and their immediate dominator.
-//  2. DominatorTree: Represent the ImmediateDominator as an explicit tree
+//  1. DominatorTree: Represent the ImmediateDominator as an explicit tree
 //     structure.
-//  3. ETForest: Efficient data structure for dominance comparisons and 
+//  2. ETForest: Efficient data structure for dominance comparisons and 
 //     nearest-common-ancestor queries.
-//  4. DominanceFrontier: Calculate and hold the dominance frontier for a
+//  3. DominanceFrontier: Calculate and hold the dominance frontier for a
 //     function.
 //
 //  These data structures are listed in increasing order of complexity.  It
@@ -58,123 +56,6 @@ public:
   bool isPostDominator() const { return IsPostDominators; }
 };
 
-
-//===----------------------------------------------------------------------===//
-/// ImmediateDominators - Calculate the immediate dominator for each node in a
-/// function.
-///
-class ImmediateDominatorsBase : public DominatorBase {
-protected:
-  struct InfoRec {
-    unsigned Semi;
-    unsigned Size;
-    BasicBlock *Label, *Parent, *Child, *Ancestor;
-    
-    std::vector<BasicBlock*> Bucket;
-    
-    InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0){}
-  };
-  
-  std::map<BasicBlock*, BasicBlock*> IDoms;
-
-  // Vertex - Map the DFS number to the BasicBlock*
-  std::vector<BasicBlock*> Vertex;
-  
-  // Info - Collection of information used during the computation of idoms.
-  std::map<BasicBlock*, InfoRec> Info;
-public:
-  ImmediateDominatorsBase(bool isPostDom) : DominatorBase(isPostDom) {}
-
-  virtual void releaseMemory() { IDoms.clear(); }
-
-  // Accessor interface:
-  typedef std::map<BasicBlock*, BasicBlock*> IDomMapType;
-  typedef IDomMapType::const_iterator const_iterator;
-  inline const_iterator begin() const { return IDoms.begin(); }
-  inline const_iterator end()   const { return IDoms.end(); }
-  inline const_iterator find(BasicBlock* B) const { return IDoms.find(B);}
-
-  /// operator[] - Return the idom for the specified basic block.  The start
-  /// node returns null, because it does not have an immediate dominator.
-  ///
-  inline BasicBlock *operator[](BasicBlock *BB) const {
-    return get(BB);
-  }
-  
-  /// dominates - Return true if A dominates B.
-  ///
-  bool dominates(BasicBlock *A, BasicBlock *B) const;
-
-  /// properlyDominates - Return true if A dominates B and A != B.
-  ///
-  bool properlyDominates(BasicBlock *A, BasicBlock *B) const {
-    return A != B || properlyDominates(A, B);
-  }
-  
-  /// get() - Synonym for operator[].
-  ///
-  inline BasicBlock *get(BasicBlock *BB) const {
-    std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
-    return I != IDoms.end() ? I->second : 0;
-  }
-
-  //===--------------------------------------------------------------------===//
-  // API to update Immediate(Post)Dominators information based on modifications
-  // to the CFG...
-
-  /// addNewBlock - Add a new block to the CFG, with the specified immediate
-  /// dominator.
-  ///
-  void addNewBlock(BasicBlock *BB, BasicBlock *IDom) {
-    assert(get(BB) == 0 && "BasicBlock already in idom info!");
-    IDoms[BB] = IDom;
-  }
-
-  /// setImmediateDominator - Update the immediate dominator information to
-  /// change the current immediate dominator for the specified block to another
-  /// block.  This method requires that BB already have an IDom, otherwise just
-  /// use addNewBlock.
-  ///
-  void setImmediateDominator(BasicBlock *BB, BasicBlock *NewIDom) {
-    assert(IDoms.find(BB) != IDoms.end() && "BB doesn't have idom yet!");
-    IDoms[BB] = NewIDom;
-  }
-
-  /// print - Convert to human readable form
-  ///
-  virtual void print(std::ostream &OS, const Module* = 0) const;
-  void print(std::ostream *OS, const Module* M = 0) const {
-    if (OS) print(*OS, M);
-  }
-};
-
-//===-------------------------------------
-/// ImmediateDominators Class - Concrete subclass of ImmediateDominatorsBase
-/// that is used to compute a normal immediate dominator set.
-///
-class ImmediateDominators : public ImmediateDominatorsBase {
-public:
-  ImmediateDominators() : ImmediateDominatorsBase(false) {}
-
-  BasicBlock *getRoot() const {
-    assert(Roots.size() == 1 && "Should always have entry node!");
-    return Roots[0];
-  }
-
-  virtual bool runOnFunction(Function &F);
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  }
-
-private:
-  unsigned DFSPass(BasicBlock *V, InfoRec &VInfo, unsigned N);
-  void Compress(BasicBlock *V, InfoRec &VInfo);
-  BasicBlock *Eval(BasicBlock *v);
-  void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
-};
-
-
 //===----------------------------------------------------------------------===//
 /// DominatorTree - Calculate the immediate dominator tree for a function.
 ///
@@ -187,6 +68,25 @@ protected:
   typedef std::map<BasicBlock*, Node*> NodeMapType;
 
   Node *RootNode;
+
+	struct InfoRec {
+    unsigned Semi;
+    unsigned Size;
+    BasicBlock *Label, *Parent, *Child, *Ancestor;
+
+    std::vector<BasicBlock*> Bucket;
+
+    InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0){}
+  };
+
+  std::map<BasicBlock*, BasicBlock*> IDoms;
+
+  // Vertex - Map the DFS number to the BasicBlock*
+  std::vector<BasicBlock*> Vertex;
+
+  // Info - Collection of information used during the computation of idoms.
+  std::map<BasicBlock*, InfoRec> Info;
+
 public:
   class Node {
     friend class DominatorTree;
@@ -313,21 +213,22 @@ public:
     return Roots[0];
   }
   
-  virtual bool runOnFunction(Function &F) {
-    reset();     // Reset from the last time we were run...
-    ImmediateDominators &ID = getAnalysis<ImmediateDominators>();
-    Roots = ID.getRoots();
-    calculate(ID);
-    return false;
-  }
+	virtual bool runOnFunction(Function &F);
   
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired<ImmediateDominators>();
   }
 private:
-  void calculate(const ImmediateDominators &ID);
+  void calculate(Function& F);
   Node *getNodeForBlock(BasicBlock *BB);
+  unsigned DFSPass(BasicBlock *V, InfoRec &VInfo, unsigned N);
+  void Compress(BasicBlock *V, InfoRec &VInfo);
+  BasicBlock *Eval(BasicBlock *v);
+  void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
+	inline BasicBlock *getIDom(BasicBlock *BB) const {
+	    std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
+	    return I != IDoms.end() ? I->second : 0;
+	  }
 };
 
 //===-------------------------------------

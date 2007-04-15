@@ -154,7 +154,6 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreserved<LoopInfo>();
       AU.addPreserved<ETForest>();
-      AU.addPreserved<ImmediateDominators>();
       AU.addPreserved<DominanceFrontier>();
       AU.addPreserved<DominatorTree>();
 

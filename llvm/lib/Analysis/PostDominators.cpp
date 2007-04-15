@@ -19,13 +19,13 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-//  ImmediatePostDominators Implementation
+//  PostDominatorTree Implementation
 //===----------------------------------------------------------------------===//
 
-static RegisterPass<ImmediatePostDominators>
-D("postidom", "Immediate Post-Dominators Construction", true);
+static RegisterPass<PostDominatorTree>
+F("postdomtree", "Post-Dominator Tree Construction", true);
 
-unsigned ImmediatePostDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
+unsigned PostDominatorTree::DFSPass(BasicBlock *V, InfoRec &VInfo,
                                           unsigned N) {
   std::vector<std::pair<BasicBlock *, InfoRec *> > workStack;
   std::set<BasicBlock *> visited;
@@ -73,7 +73,7 @@ unsigned ImmediatePostDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
   return N;
 }
 
-void ImmediatePostDominators::Compress(BasicBlock *V, InfoRec &VInfo) {
+void PostDominatorTree::Compress(BasicBlock *V, InfoRec &VInfo) {
   BasicBlock *VAncestor = VInfo.Ancestor;
   InfoRec &VAInfo = Info[VAncestor];
   if (VAInfo.Ancestor == 0)
@@ -89,7 +89,7 @@ void ImmediatePostDominators::Compress(BasicBlock *V, InfoRec &VInfo) {
   VInfo.Ancestor = VAInfo.Ancestor;
 }
 
-BasicBlock *ImmediatePostDominators::Eval(BasicBlock *V) {
+BasicBlock *PostDominatorTree::Eval(BasicBlock *V) {
   InfoRec &VInfo = Info[V];
 
   // Higher-complexity but faster implementation
@@ -99,16 +99,13 @@ BasicBlock *ImmediatePostDominators::Eval(BasicBlock *V) {
   return VInfo.Label;
 }
 
-void ImmediatePostDominators::Link(BasicBlock *V, BasicBlock *W, 
+void PostDominatorTree::Link(BasicBlock *V, BasicBlock *W, 
                                    InfoRec &WInfo) {
   // Higher-complexity but faster implementation
   WInfo.Ancestor = V;
 }
 
-bool ImmediatePostDominators::runOnFunction(Function &F) {
-  IDoms.clear();     // Reset from the last time we were run...
-  Roots.clear();
-
+void PostDominatorTree::calculate(Function &F) {
   // Step #0: Scan the function looking for the root nodes of the post-dominance
   // relationships.  These blocks, which have no successors, end with return and
   // unwind instructions.
@@ -159,35 +156,6 @@ bool ImmediatePostDominators::runOnFunction(Function &F) {
       WIDom = IDoms[WIDom];
   }
   
-  // Free temporary memory used to construct idom's
-  Info.clear();
-  std::vector<BasicBlock*>().swap(Vertex);
-  
-  return false;
-}
-
-//===----------------------------------------------------------------------===//
-//  PostDominatorTree Implementation
-//===----------------------------------------------------------------------===//
-
-static RegisterPass<PostDominatorTree>
-F("postdomtree", "Post-Dominator Tree Construction", true);
-
-DominatorTreeBase::Node *PostDominatorTree::getNodeForBlock(BasicBlock *BB) {
-  Node *&BBNode = Nodes[BB];
-  if (BBNode) return BBNode;
-  
-  // Haven't calculated this node yet?  Get or calculate the node for the
-  // immediate postdominator.
-  BasicBlock *IPDom = getAnalysis<ImmediatePostDominators>()[BB];
-  Node *IPDomNode = getNodeForBlock(IPDom);
-  
-  // Add a new tree node for this BasicBlock, and link it as a child of
-  // IDomNode
-  return BBNode = IPDomNode->addChild(new Node(BB, IPDomNode));
-}
-
-void PostDominatorTree::calculate(const ImmediatePostDominators &IPD) {
   if (Roots.empty()) return;
 
   // Add a node for the root.  This node might be the actual root, if there is
@@ -196,10 +164,9 @@ void PostDominatorTree::calculate(const ImmediatePostDominators &IPD) {
   BasicBlock *Root = Roots.size() == 1 ? Roots[0] : 0;
   Nodes[Root] = RootNode = new Node(Root, 0);
   
-  Function *F = Roots[0]->getParent();
   // Loop over all of the reachable blocks in the function...
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-    if (BasicBlock *ImmPostDom = IPD.get(I)) {  // Reachable block.
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (BasicBlock *ImmPostDom = getIDom(I)) {  // Reachable block.
       Node *&BBNode = Nodes[I];
       if (!BBNode) {  // Haven't calculated this node yet?
                       // Get or calculate the node for the immediate dominator
@@ -210,6 +177,26 @@ void PostDominatorTree::calculate(const ImmediatePostDominators &IPD) {
         BBNode = IPDomNode->addChild(new Node(I, IPDomNode));
       }
     }
+
+  // Free temporary memory used to construct idom's
+  IDoms.clear();
+  Info.clear();
+  std::vector<BasicBlock*>().swap(Vertex);
+}
+
+
+DominatorTreeBase::Node *PostDominatorTree::getNodeForBlock(BasicBlock *BB) {
+  Node *&BBNode = Nodes[BB];
+  if (BBNode) return BBNode;
+  
+  // Haven't calculated this node yet?  Get or calculate the node for the
+  // immediate postdominator.
+  BasicBlock *IPDom = getIDom(BB);
+  Node *IPDomNode = getNodeForBlock(IPDom);
+  
+  // Add a new tree node for this BasicBlock, and link it as a child of
+  // IDomNode
+  return BBNode = IPDomNode->addChild(new Node(BB, IPDomNode));
 }
 
 //===----------------------------------------------------------------------===//
@@ -225,13 +212,15 @@ ETNode *PostETForest::getNodeForBlock(BasicBlock *BB) {
 
   // Haven't calculated this node yet?  Get or calculate the node for the
   // immediate dominator.
-  BasicBlock *IDom = getAnalysis<ImmediatePostDominators>()[BB];
+  PostDominatorTree::Node *node = getAnalysis<PostDominatorTree>().getNode(BB);
 
   // If we are unreachable, we may not have an immediate dominator.
-  if (!IDom)
+  if (!node)
+		return 0;
+	else if (!node->getIDom())
     return BBNode = new ETNode(BB);
   else {
-    ETNode *IDomNode = getNodeForBlock(IDom);
+    ETNode *IDomNode = getNodeForBlock(node->getIDom()->getBlock());
     
     // Add a new tree node for this BasicBlock, and link it as a child of
     // IDomNode
@@ -241,7 +230,7 @@ ETNode *PostETForest::getNodeForBlock(BasicBlock *BB) {
   }
 }
 
-void PostETForest::calculate(const ImmediatePostDominators &ID) {
+void PostETForest::calculate(const PostDominatorTree &DT) {
   for (unsigned i = 0, e = Roots.size(); i != e; ++i)
     Nodes[Roots[i]] = new ETNode(Roots[i]); // Add a node for the root
 
@@ -253,9 +242,9 @@ void PostETForest::calculate(const ImmediatePostDominators &ID) {
     ETNode *&BBNode = Nodes[BB];
     if (!BBNode) {  
       ETNode *IDomNode =  NULL;
-
-      if (ID.get(BB))
-        IDomNode = getNodeForBlock(ID.get(BB));
+			PostDominatorTree::Node *node = DT.getNode(BB);
+      if (node && node->getIDom())
+        IDomNode = getNodeForBlock(node->getIDom()->getBlock());
 
       // Add a new ETNode for this BasicBlock, and set it's parent
       // to it's immediate dominator.

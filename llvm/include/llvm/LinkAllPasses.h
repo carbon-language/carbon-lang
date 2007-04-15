@@ -113,7 +113,6 @@ namespace {
       (void) llvm::createCodeGenPreparePass();
 
       (void)new llvm::IntervalPartition();
-      (void)new llvm::ImmediateDominators();
       (void)new llvm::FindUsedTypes();
       (void)new llvm::ScalarEvolution();
       ((llvm::Function*)0)->viewCFGOnly();
