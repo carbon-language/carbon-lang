@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | grep '\* *volatile *\*'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | grep {\\* *volatile *\\*}
 
 %G = external global void()*
 

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | not grep "\-\-65535"
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | not grep -- -65535
 ; ModuleID = '<stdin>'
 target endian = little
 target pointersize = 32
