@@ -1,4 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -cee -constprop -instcombine -dce | llvm-dis | not grep 'REMOVE'
+; RUN: llvm-upgrade < %s | llvm-as | opt -cee -constprop -instcombine -dce | \
+; RUN:   llvm-dis | not grep REMOVE
+; END.
 
 int %test_case_values_should_propagate(int %A) {
     switch int %A, label %D [
