@@ -106,7 +106,7 @@ proc RunLLVMTests { test_source_files } {
     set testFileId [ open $test r]
     set runline ""
     set PRNUMS ""
-    foreach line [split [read $testFileId 1024] \n] {
+    foreach line [split [read $testFileId 4096] \n] {
 
       # if its the END. line then stop parsing (optimization for big files)
       if {[regexp {END.[ *]$} $line match endofscript]} {
