@@ -210,8 +210,8 @@ void DominatorTree::Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo){
 }
 
 void DominatorTree::calculate(Function& F) {
-	BasicBlock* Root = Roots[0];
-	
+  BasicBlock* Root = Roots[0];
+  
   Nodes[Root] = RootNode = new Node(Root, 0); // Add a node for the root...
 
   Vertex.push_back(0);
@@ -260,7 +260,7 @@ void DominatorTree::calculate(Function& F) {
   // Loop over all of the reachable blocks in the function...
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (BasicBlock *ImmDom = getIDom(I)) {  // Reachable block.
-			Node *&BBNode = Nodes[I];
+      Node *&BBNode = Nodes[I];
       if (!BBNode) {  // Haven't calculated this node yet?
         // Get or calculate the node for the immediate dominator
         Node *IDomNode = getNodeForBlock(ImmDom);
@@ -273,7 +273,7 @@ void DominatorTree::calculate(Function& F) {
 
   // Free temporary memory used to construct idom's
   Info.clear();
-	IDoms.clear();
+  IDoms.clear();
   std::vector<BasicBlock*>().swap(Vertex);
 }
 
@@ -283,8 +283,8 @@ void DominatorTreeBase::reset() {
   for (NodeMapType::iterator I = Nodes.begin(), E = Nodes.end(); I != E; ++I)
     delete I->second;
   Nodes.clear();
-	IDoms.clear();
-	Roots.clear();
+  IDoms.clear();
+  Roots.clear();
   RootNode = 0;
 }
 
@@ -343,7 +343,7 @@ void DominatorTreeBase::print(std::ostream &o, const Module* ) const {
 
 bool DominatorTree::runOnFunction(Function &F) {
   reset();     // Reset from the last time we were run...
-	Roots.push_back(&F.getEntryBlock());
+  Roots.push_back(&F.getEntryBlock());
   calculate(F);
   return false;
 }

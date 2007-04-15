@@ -69,7 +69,7 @@ protected:
 
   Node *RootNode;
 
-	struct InfoRec {
+  struct InfoRec {
     unsigned Semi;
     unsigned Size;
     BasicBlock *Label, *Parent, *Child, *Ancestor;
@@ -213,7 +213,7 @@ public:
     return Roots[0];
   }
   
-	virtual bool runOnFunction(Function &F);
+  virtual bool runOnFunction(Function &F);
   
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
@@ -225,10 +225,10 @@ private:
   void Compress(BasicBlock *V, InfoRec &VInfo);
   BasicBlock *Eval(BasicBlock *v);
   void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
-	inline BasicBlock *getIDom(BasicBlock *BB) const {
-	    std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
-	    return I != IDoms.end() ? I->second : 0;
-	  }
+  inline BasicBlock *getIDom(BasicBlock *BB) const {
+      std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
+      return I != IDoms.end() ? I->second : 0;
+    }
 };
 
 //===-------------------------------------

@@ -216,8 +216,8 @@ ETNode *PostETForest::getNodeForBlock(BasicBlock *BB) {
 
   // If we are unreachable, we may not have an immediate dominator.
   if (!node)
-		return 0;
-	else if (!node->getIDom())
+    return 0;
+  else if (!node->getIDom())
     return BBNode = new ETNode(BB);
   else {
     ETNode *IDomNode = getNodeForBlock(node->getIDom()->getBlock());
@@ -242,7 +242,7 @@ void PostETForest::calculate(const PostDominatorTree &DT) {
     ETNode *&BBNode = Nodes[BB];
     if (!BBNode) {  
       ETNode *IDomNode =  NULL;
-			PostDominatorTree::Node *node = DT.getNode(BB);
+      PostDominatorTree::Node *node = DT.getNode(BB);
       if (node && node->getIDom())
         IDomNode = getNodeForBlock(node->getIDom()->getBlock());
 

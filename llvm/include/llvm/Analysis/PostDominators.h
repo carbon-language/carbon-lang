@@ -37,14 +37,14 @@ private:
   void calculate(Function &F);
   Node *getNodeForBlock(BasicBlock *BB);
   unsigned DFSPass(BasicBlock *V, InfoRec &VInfo,unsigned N);
-	void Compress(BasicBlock *V, InfoRec &VInfo);
-	BasicBlock *Eval(BasicBlock *V);
-	void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
+  void Compress(BasicBlock *V, InfoRec &VInfo);
+  BasicBlock *Eval(BasicBlock *V);
+  void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
 
   inline BasicBlock *getIDom(BasicBlock *BB) const {
-	  std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
-	  return I != IDoms.end() ? I->second : 0;
-	}
+    std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
+    return I != IDoms.end() ? I->second : 0;
+  }
 };
 
 
