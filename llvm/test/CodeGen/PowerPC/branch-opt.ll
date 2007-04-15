@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep 'b LBB.*' | wc -l | grep 4
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN:   grep {b LBB.*} | wc -l | grep 4
 
 target endian = big
 target pointersize = 32

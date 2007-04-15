@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc &&
-; RUN: llvm-upgrade < %s | llvm-as | llc | not grep ', f1'
+; RUN: llvm-upgrade < %s | llvm-as | llc | not grep {, f1}
 
 target endian = big
 target pointersize = 32

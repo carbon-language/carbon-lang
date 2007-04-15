@@ -1,4 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 | grep 'srwi r., r., 5'
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=ppc32 -mtriple=powerpc-apple-darwin8 | \
+; RUN:   grep {srwi r., r., 5}
 
 int %eq0(int %a) {
 	%tmp.1 = seteq int %a, 0		; <bool> [#uses=1]

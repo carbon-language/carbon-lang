@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwimi &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep 'or '
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwimi
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep {or }
 
 ; Make sure there is no register-register copies here.
 

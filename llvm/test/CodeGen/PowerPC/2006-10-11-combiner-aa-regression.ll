@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -combiner-alias-analysis | grep 'f5'
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=ppc32 -combiner-alias-analysis | grep f5
 
 target endian = big
 target pointersize = 32

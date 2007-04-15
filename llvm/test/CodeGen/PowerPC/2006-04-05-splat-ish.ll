@@ -1,4 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mcpu=g5 | grep 'vspltish v.*, 10'
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mcpu=g5 | \
+; RUN:   grep {vspltish v.*, 10}
 
 void %test(<8 x short>* %P) {
 	%tmp = load <8 x short>* %P		; <<8 x short>> [#uses=1]
