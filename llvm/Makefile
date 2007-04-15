@@ -113,6 +113,9 @@ endif
 check-llvm2cpp:
 	$(MAKE) check TESTSUITE=Feature RUNLLVM2CPP=1
 
+check-one:
+	$(MAKE) -C test check-one TESTONE=$(TESTONE)
+
 srpm: $(LLVM_OBJ_ROOT)/llvm.spec 
 	rpmbuild -bs $(LLVM_OBJ_ROOT)/llvm.spec
 
