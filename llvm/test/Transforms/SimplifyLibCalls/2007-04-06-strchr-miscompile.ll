@@ -1,8 +1,9 @@
-; RUN: llvm-as < %s | opt -simplify-libcalls -instcombine | llvm-dis > %t &&
-; RUN: grep '@str,.*i64 3' %t && 
-; RUN: grep '@str1,.*i64 7' %t &&
-; RUN: grep 'ret i8.*null' %t
 ; PR1307
+; RUN: llvm-as < %s | opt -simplify-libcalls -instcombine | llvm-dis > %t
+; RUN: grep {@str,.*i64 3} %t
+; RUN: grep {@str1,.*i64 7} %t
+; RUN: grep {ret i8.*null} %t
+; END.
 
 @str = internal constant [5 x i8] c"foog\00"
 @str1 = internal constant [8 x i8] c"blahhh!\00"

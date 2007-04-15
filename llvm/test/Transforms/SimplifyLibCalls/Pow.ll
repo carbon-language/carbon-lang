@@ -1,8 +1,9 @@
 ; Testcase for calls to the standard C "pow" function
 ;
 ; Equivalent to: http://gcc.gnu.org/ml/gcc-patches/2003-02/msg01786.html
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call double .pow'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
+; RUN:   not grep {call double .pow}
+; END.
 
 declare double %pow(double, double)
 
