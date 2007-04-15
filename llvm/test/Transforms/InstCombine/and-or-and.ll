@@ -11,6 +11,7 @@
 
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:   not grep {or }
+; END.
 
 int %test1(int %X, int %Y) {
 	%A = and int %X, 7

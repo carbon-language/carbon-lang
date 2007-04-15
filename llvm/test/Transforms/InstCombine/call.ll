@@ -1,5 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:    grep call | notcast
+; END.
 
 implementation
 

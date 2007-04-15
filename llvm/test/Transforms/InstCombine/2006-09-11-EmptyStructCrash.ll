@@ -1,5 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
 ; PR905
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; END.
 
 	%RPYTHON_EXCEPTION = type { %RPYTHON_EXCEPTION_VTABLE* }
 	%RPYTHON_EXCEPTION_VTABLE = type { %RPYTHON_EXCEPTION_VTABLE*, int, int, %RPyOpaque_RuntimeTypeInfo*, %arraytype_Char*, %functiontype_12* }

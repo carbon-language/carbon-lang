@@ -1,10 +1,11 @@
-; This testcase, obviously distilled from a large program (bzip2 from Specint2000)
-; caused instcombine to fail because it got the same instruction on it's worklist
-; more than once (which is ok), but then deleted the instruction.  Since the inst
-; stayed on the worklist, as soon as it came back up to be processed, bad things
-; happened, and opt asserted.
+; This testcase, obviously distilled from a large program (bzip2 from 
+; Specint2000) caused instcombine to fail because it got the same instruction 
+; on it's worklist more than once (which is ok), but then deleted the 
+; instruction.  Since the inst stayed on the worklist, as soon as it came back 
+; up to be processed, bad things happened, and opt asserted.
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine
+; END.
 ;
 
 %.LC0 = internal global [21 x sbyte] c"hbMakeCodeLengths(1)\00"		; <[21 x sbyte]*> [#uses=1]

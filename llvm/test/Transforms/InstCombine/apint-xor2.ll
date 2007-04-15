@@ -2,6 +2,7 @@
 ; This test is for Integer BitWidth > 64 && BitWidth <= 1024.
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {xor }
+; END.
 
 
 define i447 @test1(i447 %A, i447 %B) {

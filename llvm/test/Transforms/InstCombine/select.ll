@@ -2,6 +2,7 @@
 
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:    not grep select
+; END.
 
 implementation
 

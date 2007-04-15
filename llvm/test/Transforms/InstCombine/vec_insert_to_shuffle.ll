@@ -4,6 +4,7 @@
 ; RUN:   not grep insertelement
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:   not grep extractelement
+; END.
 
 <4 x float> %test(<4 x float> %tmp, <4 x float> %tmp1) {
 	%tmp4 = extractelement <4 x float> %tmp, uint 1		; <float> [#uses=1]

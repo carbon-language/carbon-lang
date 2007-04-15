@@ -2,6 +2,7 @@
 ; This test is for Integer BitWidth <= 64 && BitWidth % 8 != 0.
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {and }
+; END.
 
 define i39 @test0(i39 %A) {
         %B = and i39 %A, 0 ; zero result

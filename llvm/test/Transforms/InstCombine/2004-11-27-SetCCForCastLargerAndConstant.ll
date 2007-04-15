@@ -11,6 +11,7 @@
 ;
 ; RUN: llvm-upgrade %s -o - | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:    notcast .*int
+; END.
 
 implementation   ; Functions:
 

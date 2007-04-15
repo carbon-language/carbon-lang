@@ -1,5 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:   not grep getelementptr
+; END.
 
 bool %test1(short* %P, int %I, int %J) {
     %X = getelementptr short* %P, int %I

@@ -3,6 +3,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output &&
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v OK | not grep add
+; END.
 
 implementation
 

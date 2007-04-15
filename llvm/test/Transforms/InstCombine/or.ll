@@ -2,6 +2,7 @@
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v xor | not grep {or }
+; END.
 
 implementation
 

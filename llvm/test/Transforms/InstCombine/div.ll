@@ -2,6 +2,7 @@
 ;
 
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep div
+; END.
 
 implementation
 

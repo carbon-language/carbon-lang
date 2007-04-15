@@ -1,4 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; END.
 
 	%struct.gs_matrix = type { float, int, float, int, float, int, float, int, float, int, float, int }
 	%struct.gx_bitmap = type { ubyte*, int, int, int }

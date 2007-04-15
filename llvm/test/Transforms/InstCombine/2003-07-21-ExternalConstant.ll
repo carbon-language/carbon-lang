@@ -11,6 +11,7 @@
 ;
 ; Extra code:
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine
+; END.
 ;
 
 target endian = little

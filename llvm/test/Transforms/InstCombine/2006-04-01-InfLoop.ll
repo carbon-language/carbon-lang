@@ -1,4 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; END.
 
 	%struct.DecRefPicMarking_s = type { int, int, int, int, int, %struct.DecRefPicMarking_s* }
 	%struct.datapartition = type { %typedef.Bitstream*, %typedef.DecodingEnvironment, int (%struct.syntaxelement*, %struct.img_par*, %struct.inp_par*, %struct.datapartition*)* }

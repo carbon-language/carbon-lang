@@ -1,6 +1,7 @@
 ; This test makes sure that mul instructions are properly eliminated.
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep mul
+; END.
 
 implementation
 

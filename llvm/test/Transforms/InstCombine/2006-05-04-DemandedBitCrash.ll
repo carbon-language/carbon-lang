@@ -1,4 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -disable-output
+; END.
 
 void %test() {
 bb38.i:

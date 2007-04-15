@@ -2,6 +2,7 @@
 ; This test is for Integer BitWidth > 64 && BitWidth <= 1024.
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {and }
+; END.
 
 
 define i999 @test0(i999 %A) {

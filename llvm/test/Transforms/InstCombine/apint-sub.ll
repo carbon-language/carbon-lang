@@ -4,6 +4,7 @@
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:   grep -v {sub i19 %Cok, %Bok} | not grep sub
+; END.
 
 define i23 @test1(i23 %A) {
 	%B = sub i23 %A, %A		; <i23> [#uses=1]

@@ -3,7 +3,7 @@
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v OK | not grep add
-
+; END.
 
 define i111 @test1(i111 %x) {
         %tmp.2 = shl i111 1, 110

@@ -3,6 +3,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:    grep -v %B | not grep getelementptr
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | grep foo1
+; END.
 
 %Global = constant [10 x sbyte] c"helloworld"
 

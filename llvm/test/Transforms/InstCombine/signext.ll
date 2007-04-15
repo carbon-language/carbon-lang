@@ -1,5 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:    not grep {(and\|xor\|add\|shl\|shr)}
+; END.
 
 int %test1(int %x) {
         %tmp.1 = and int %x, 65535              ; <int> [#uses=1]
