@@ -1,5 +1,4 @@
-// RUN: tblgen %s &&
-// RUN: tblgen %s | grep 'zing = 4' | wc -l | grep 2
+// RUN: tblgen %s | grep {zing = 4} | wc -l | grep 2
 
 class C1<int A, string B> { 
   int bar = A;

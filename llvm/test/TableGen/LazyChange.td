@@ -1,4 +1,4 @@
-// RUN: tblgen %s | grep 'int Y = 3'
+// RUN: tblgen %s | grep {int Y = 3}
 
 
 class C {

@@ -2,7 +2,8 @@
 ; figure out that loop "Inner" should be nested inside of leep "LoopHeader", 
 ; and instead nests it just inside loop "Top"
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -loops | grep '     Loop Containing:[ ]*%Inner'
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -loops | \
+; RUN:   grep {     Loop Containing:\[ \]*%Inner}
 ;
 
 implementation
