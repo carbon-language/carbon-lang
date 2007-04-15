@@ -1,4 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -postdomfrontier -disable-verify
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -postdomfrontier \
+; RUN:   -disable-verify
+; END.
 ;
 ; ModuleID = '2006-09-26-PostDominanceFrontier.bc'
 target endian = little
