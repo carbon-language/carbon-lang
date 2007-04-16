@@ -190,6 +190,11 @@ public:
     Info.setPreservesAll();
   }
 
+  /// Add RequiredPass into list of lower level passes required by pass P.
+  /// RequiredPass is run on the fly by Pass Manager when P requests it
+  /// through getAnalysis interface.
+  virtual void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass);
+
   virtual const char *getPassName() const {
     return "Module Pass Manager";
   }
@@ -400,9 +405,14 @@ void PMTopLevelManager::schedulePass(Pass *P) {
 
     Pass *AnalysisPass = findAnalysisPass(*I);
     if (!AnalysisPass) {
-      // Schedule this analysis run first.
       AnalysisPass = (*I)->createPass();
-      schedulePass(AnalysisPass);
+      // Schedule this analysis run first only if it is not a lower level
+      // analysis pass. Lower level analsyis passes are run on the fly.
+      if (P->getPotentialPassManagerType () >=
+          AnalysisPass->getPotentialPassManagerType())
+        schedulePass(AnalysisPass);
+      else
+        delete AnalysisPass;
     }
   }
 
@@ -642,11 +652,14 @@ void PMDataManager::add(Pass *P,
 
     // At the moment, this pass is the last user of all required passes.
     std::vector<Pass *> LastUses;
-    std::vector<Pass *> RequiredPasses;
+    SmallVector<Pass *, 8> RequiredPasses;
+    SmallVector<AnalysisID, 8> ReqAnalysisNotAvailable;
+
     unsigned PDepth = this->getDepth();
 
-    collectRequiredAnalysisPasses(RequiredPasses, P);
-    for (std::vector<Pass *>::iterator I = RequiredPasses.begin(),
+    collectRequiredAnalysis(RequiredPasses, 
+                            ReqAnalysisNotAvailable, P);
+    for (SmallVector<Pass *, 8>::iterator I = RequiredPasses.begin(),
            E = RequiredPasses.end(); I != E; ++I) {
       Pass *PRequired = *I;
       unsigned RDepth = 0;
@@ -661,11 +674,16 @@ void PMDataManager::add(Pass *P,
         TransferLastUses.push_back(PRequired);
         // Keep track of higher level analysis used by this manager.
         HigherLevelAnalysis.push_back(PRequired);
-      } else {
-        // Note : This feature is not yet implemented
-        assert (0 && 
-                "Unable to handle Pass that requires lower level Analysis pass");
-      }
+      } else 
+        assert (0 && "Unable to accomodate Required Pass");
+    }
+
+    // Now, take care of required analysises that are not available.
+    for (SmallVector<AnalysisID, 8>::iterator 
+           I = ReqAnalysisNotAvailable.begin(), 
+           E = ReqAnalysisNotAvailable.end() ;I != E; ++I) {
+      Pass *AnalysisPass = (*I)->createPass();
+      this->addLowerLevelRequiredPass(P, AnalysisPass);
     }
 
     // Set P as P's last user until someone starts using P.
@@ -691,27 +709,34 @@ void PMDataManager::add(Pass *P,
   PassVector.push_back(P);
 }
 
-/// Populate RequiredPasses with the analysis pass that are required by
-/// pass P.
-void PMDataManager::collectRequiredAnalysisPasses(std::vector<Pass *> &RP,
-                                                  Pass *P) {
+
+/// Populate RP with analysis pass that are required by
+/// pass P and are available. Populate RP_NotAvail with analysis
+/// pass that are required by pass P but are not available.
+void PMDataManager::collectRequiredAnalysis(SmallVector<Pass *, 8>&RP,
+                                       SmallVector<AnalysisID, 8> &RP_NotAvail,
+                                            Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
   const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
   for (std::vector<AnalysisID>::const_iterator 
          I = RequiredSet.begin(), E = RequiredSet.end();
        I != E; ++I) {
-    Pass *AnalysisPass = findAnalysisPass(*I, true);
-    assert (AnalysisPass && "Analysis pass is not available");
-    RP.push_back(AnalysisPass);
+    AnalysisID AID = *I;
+    if (Pass *AnalysisPass = findAnalysisPass(*I, true))
+      RP.push_back(AnalysisPass);   
+    else
+      RP_NotAvail.push_back(AID);
   }
 
   const std::vector<AnalysisID> &IDs = AnUsage.getRequiredTransitiveSet();
   for (std::vector<AnalysisID>::const_iterator I = IDs.begin(),
          E = IDs.end(); I != E; ++I) {
-    Pass *AnalysisPass = findAnalysisPass(*I, true);
-    assert (AnalysisPass && "Analysis pass is not available");
-    RP.push_back(AnalysisPass);
+    AnalysisID AID = *I;
+    if (Pass *AnalysisPass = findAnalysisPass(*I, true))
+      RP.push_back(AnalysisPass);   
+    else
+      RP_NotAvail.push_back(AID);
   }
 }
 
@@ -1154,6 +1179,21 @@ MPPassManager::runOnModule(Module &M) {
   return Changed;
 }
 
+/// Add RequiredPass into list of lower level passes required by pass P.
+/// RequiredPass is run on the fly by Pass Manager when P requests it
+/// through getAnalysis interface.
+void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
+
+  assert (P->getPotentialPassManagerType() == PMT_ModulePassManager
+          && "Unable to handle Pass that requires lower level Analysis pass");
+  assert ((P->getPotentialPassManagerType() < 
+           RequiredPass->getPotentialPassManagerType())
+          && "Unable to handle Pass that requires lower level Analysis pass");
+
+  assert (0 && 
+          "Unable to handle Pass that requires lower level Analysis pass");
+}
+ 
 //===----------------------------------------------------------------------===//
 // PassManagerImpl implementation
 //

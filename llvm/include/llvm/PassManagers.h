@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassManager.h"
-
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 class llvm::PMDataManager;
 class llvm::PMStack;
@@ -221,6 +221,19 @@ public:
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
   void add(Pass *P, bool ProcessAnalysis = true);
 
+  /// Add RequiredPass into list of lower level passes required by pass P.
+  /// RequiredPass is run on the fly by Pass Manager when P requests it
+  /// through getAnalysis interface.
+  virtual void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
+    assert (0 && 
+            "Unable to handle Pass that requires lower level Analysis pass");
+  }
+
+  virtual Pass * getOnTheFlyPass(Pass *P, const PassInfo *PI, Function &F) {
+    assert (0 && "Unable to find on the fly pass");
+    return NULL;
+  }
+
   /// Initialize available analysis information.
   void initializeAnalysisInfo() { 
     AvailableAnalysis.clear();
@@ -233,10 +246,12 @@ public:
   bool preserveHigherLevelAnalysis(Pass *P);
 
 
-  /// Populate RequiredPasses with the analysis pass that are required by
-  /// pass P.
-  void collectRequiredAnalysisPasses(std::vector<Pass *> &RequiredPasses,
-                                     Pass *P);
+  /// Populate RequiredPasses with analysis pass that are required by
+  /// pass P and are available. Populate ReqPassNotAvailable with analysis
+  /// pass that are required by pass P but are not available.
+  void collectRequiredAnalysis(SmallVector<Pass *, 8> &RequiredPasses,
+                               SmallVector<AnalysisID, 8> &ReqPassNotAvailable,
+                               Pass *P);
 
   /// All Required analyses should be available to the pass as it runs!  Here
   /// we fill in the AnalysisImpls member of the pass so that it can
