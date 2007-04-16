@@ -2125,7 +2125,12 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
     // Compute the two solutions for the quadratic formula. 
     // The divisions must be performed as signed divisions.
     APInt NegB(-B);
-    APInt TwoA(A << 1);
+    APInt TwoA( A << Two );
+    if (TwoA == 0) {
+      const Type* Ty = LC->getValue()->getType();
+      return std::make_pair(SCEVUnknown::get(UndefValue::get(Ty)),
+                            SCEVUnknown::get(UndefValue::get(Ty)));
+    }
     ConstantInt *Solution1 = ConstantInt::get((NegB + SqrtVal).sdiv(TwoA));
     ConstantInt *Solution2 = ConstantInt::get((NegB - SqrtVal).sdiv(TwoA));
 
