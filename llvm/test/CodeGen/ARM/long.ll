@@ -3,7 +3,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | wc -l | grep 3
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep adds | wc -l | grep 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep adc | wc -l | grep 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep subs | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep {subs } | wc -l | grep 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep sbc | wc -l | grep 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
 ; RUN:   grep smull | wc -l | grep 1
