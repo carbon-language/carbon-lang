@@ -1716,8 +1716,8 @@ static const unsigned short int yyrline[] =
     2396,  2405,  2414,  2423,  2427,  2432,  2436,  2440,  2445,  2455,
     2474,  2483,  2559,  2563,  2570,  2581,  2594,  2604,  2615,  2625,
     2634,  2643,  2646,  2647,  2654,  2658,  2663,  2684,  2701,  2715,
-    2729,  2741,  2749,  2756,  2762,  2768,  2774,  2789,  2869,  2874,
-    2878,  2885,  2892,  2900,  2907,  2915,  2923,  2937,  2954
+    2729,  2741,  2749,  2756,  2762,  2768,  2774,  2789,  2870,  2875,
+    2879,  2886,  2893,  2901,  2908,  2916,  2924,  2938,  2955
 };
 #endif
 
@@ -5488,7 +5488,8 @@ yyreduce:
 
     // Check for call to invalid intrinsic to avoid crashing later.
     if (Function *theF = dyn_cast<Function>(V)) {
-      if (theF->hasName() && 0 == strncmp(theF->getName().c_str(), "llvm.", 5)&&
+      if (theF->hasName() && 
+          0 == strncmp(theF->getValueName()->getKeyData(), "llvm.", 5) &&
         !theF->getIntrinsicID(true))
         GEN_ERROR("Call to invalid LLVM intrinsic function '" +
                   theF->getName() + "'");
@@ -5534,7 +5535,7 @@ yyreduce:
     break;
 
   case 278:
-#line 2869 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2870 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.InstVal) = (yyvsp[0].InstVal);
     CHECK_FOR_ERROR
@@ -5542,7 +5543,7 @@ yyreduce:
     break;
 
   case 279:
-#line 2874 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2875 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = true;
     CHECK_FOR_ERROR
@@ -5550,7 +5551,7 @@ yyreduce:
     break;
 
   case 280:
-#line 2878 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2879 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     (yyval.BoolVal) = false;
     CHECK_FOR_ERROR
@@ -5558,7 +5559,7 @@ yyreduce:
     break;
 
   case 281:
-#line 2885 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2886 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
@@ -5569,7 +5570,7 @@ yyreduce:
     break;
 
   case 282:
-#line 2892 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2893 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-4].TypeVal))->getDescription());
@@ -5581,7 +5582,7 @@ yyreduce:
     break;
 
   case 283:
-#line 2900 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2901 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
@@ -5592,7 +5593,7 @@ yyreduce:
     break;
 
   case 284:
-#line 2907 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2908 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-4].TypeVal))->getDescription());
@@ -5604,7 +5605,7 @@ yyreduce:
     break;
 
   case 285:
-#line 2915 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2916 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     if (!isa<PointerType>((yyvsp[0].ValueVal)->getType()))
       GEN_ERROR("Trying to free nonpointer type " + 
@@ -5615,7 +5616,7 @@ yyreduce:
     break;
 
   case 286:
-#line 2923 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2924 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
@@ -5633,7 +5634,7 @@ yyreduce:
     break;
 
   case 287:
-#line 2937 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2938 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-1].TypeVal))->getDescription());
@@ -5654,7 +5655,7 @@ yyreduce:
     break;
 
   case 288:
-#line 2954 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2955 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
     {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*(yyvsp[-2].TypeVal))->getDescription());
@@ -5677,7 +5678,7 @@ yyreduce:
     }
 
 /* Line 1126 of yacc.c.  */
-#line 5681 "llvmAsmParser.tab.c"
+#line 5682 "llvmAsmParser.tab.c"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -5945,7 +5946,7 @@ yyreturn:
 }
 
 
-#line 2971 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 2972 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
 
 
 // common code from the two 'RunVMAsmParser' functions
