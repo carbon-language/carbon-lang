@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/APInt.h"
@@ -844,8 +845,8 @@ void Interpreter::visitCallSite(CallSite CS) {
   ExecutionContext &SF = ECStack.back();
 
   // Check to see if this is an intrinsic function call...
-  if (Function *F = CS.getCalledFunction())
-   if (F->isDeclaration ())
+  Function *F = CS.getCalledFunction();
+  if (F && F->isDeclaration ())
     switch (F->getIntrinsicID()) {
     case Intrinsic::not_intrinsic:
       break;
@@ -880,21 +881,28 @@ void Interpreter::visitCallSite(CallSite CS) {
       return;
     }
 
+
   SF.Caller = CS;
   std::vector<GenericValue> ArgVals;
   const unsigned NumArgs = SF.Caller.arg_size();
   ArgVals.reserve(NumArgs);
+  uint16_t pNum = 1;
   for (CallSite::arg_iterator i = SF.Caller.arg_begin(),
-         e = SF.Caller.arg_end(); i != e; ++i) {
+         e = SF.Caller.arg_end(); i != e; ++i, ++pNum) {
     Value *V = *i;
     ArgVals.push_back(getOperandValue(V, SF));
-    // Promote all integral types whose size is < sizeof(int) into ints.  We do
-    // this by zero or sign extending the value as appropriate according to the
-    // source type.
-    const Type *Ty = V->getType();
-    if (Ty->isInteger())
-      if (ArgVals.back().IntVal.getBitWidth() < 32)
-        ArgVals.back().IntVal = ArgVals.back().IntVal.sext(32);
+    if (F) {
+     // Promote all integral types whose size is < sizeof(i32) into i32.  
+     // We do this by zero or sign extending the value as appropriate 
+     // according to the parameter attributes
+      const Type *Ty = V->getType();
+      if (Ty->isInteger() && (ArgVals.back().IntVal.getBitWidth() < 32))
+        if (const ParamAttrsList *PA = F->getParamAttrs())
+          if (PA->paramHasAttr(pNum, ParamAttr::ZExt))
+            ArgVals.back().IntVal = ArgVals.back().IntVal.zext(32);
+          else if (PA->paramHasAttr(pNum, ParamAttr::SExt))
+            ArgVals.back().IntVal = ArgVals.back().IntVal.sext(32);
+     }
   }
 
   // To handle indirect calls, we must get the pointer value from the argument
@@ -1317,7 +1325,8 @@ void Interpreter::callFunction(Function *F,
 
   // Handle non-varargs arguments...
   unsigned i = 0;
-  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E; ++AI, ++i)
+  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); 
+       AI != E; ++AI, ++i)
     SetValue(AI, ArgVals[i], StackFrame);
 
   // Handle varargs arguments...
