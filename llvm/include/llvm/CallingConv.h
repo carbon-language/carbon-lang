@@ -26,16 +26,16 @@ namespace CallingConv {
   enum ID {
     /// C - The default llvm calling convention, compatible with C.  This
     /// convention is the only calling convention that supports varargs calls.
-    /// As with typical C calling conventions, the callee/caller have to tolerate
-    /// certain amounts of prototype mismatch.
+    /// As with typical C calling conventions, the callee/caller have to 
+    /// tolerate certain amounts of prototype mismatch.
     C = 0,
     
     // Generic LLVM calling conventions.  None of these calling conventions
     // support varargs calls, and all assume that the caller and callee
     // prototype exactly match.
 
-    /// Fast - This calling convention attempts to make calls as fast as possible
-    /// (e.g. by passing things in registers).
+    /// Fast - This calling convention attempts to make calls as fast as 
+    /// possible /// (e.g. by passing things in registers).
     Fast = 8,
 
     // Cold - This calling convention attempts to make code in the caller as
