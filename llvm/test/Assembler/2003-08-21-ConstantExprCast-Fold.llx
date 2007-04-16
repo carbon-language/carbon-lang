@@ -1,5 +1,4 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep getelementptr
-; XFAIL: *
 
 %A = external global { float }          ; <{ float }*> [#uses=1]
 global int* cast (float* getelementptr ({ float }* %A, long 0, ubyte 0) to int*)

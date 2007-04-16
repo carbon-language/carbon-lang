@@ -1,6 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | \
 ; RUN:   not grep {getelementptr.*getelementptr}
-; XFAIL: *
 
         %struct.TUVVertex = type { short, short, short, short }
         %struct.TTriangleItem = type { sbyte*, sbyte*, [3 x %struct.TUVVertex] }
