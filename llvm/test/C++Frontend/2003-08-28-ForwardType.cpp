@@ -1,7 +1,9 @@
 // RUN: %llvmgxx -S %s -o - | llvm-as -f -o /dev/null
 
 // Default placement versions of operator new.
-inline void* operator new(unsigned, void* __p) throw();
+#include <new>
+
+void* operator new(size_t, void* __p) throw();
 
 
 template<typename _CharT>
