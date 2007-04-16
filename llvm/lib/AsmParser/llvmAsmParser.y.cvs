@@ -2823,9 +2823,9 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
 
     // Check for call to invalid intrinsic to avoid crashing later.
     if (Function *theF = dyn_cast<Function>(V)) {
-      if (theF->hasName() && 
-          0 == strncmp(theF->getValueName()->getKeyData(), "llvm.", 5) &&
-        !theF->getIntrinsicID(true))
+      if (theF->hasName() && (strlen(theF->getValueName()->getKeyData()) >= 5)&&
+          (0 == strncmp(theF->getValueName()->getKeyData(), "llvm.", 5)) &&
+          !theF->getIntrinsicID(true))
         GEN_ERROR("Call to invalid LLVM intrinsic function '" +
                   theF->getName() + "'");
     }
