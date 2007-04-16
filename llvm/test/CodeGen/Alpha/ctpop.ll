@@ -10,12 +10,12 @@
 ; RUN:   not grep -i 'ctpop'
 ; XFAIL: *
 
-declare long %llvm.ctpop(long)
+declare long %llvm.ctpop.i64(long)
 
 implementation   ; Functions:
 
 long %bar(long %x) {
 entry:
-	%tmp.1 = call long %llvm.ctpop( long %x ) 
+	%tmp.1 = call long %llvm.ctpop.i64( long %x ) 
 	ret long %tmp.1
 }
