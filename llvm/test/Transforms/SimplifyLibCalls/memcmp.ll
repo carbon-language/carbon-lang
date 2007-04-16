@@ -1,5 +1,6 @@
 ; Test that the memcmpOptimizer works correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*memcmp' &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
+; RUN:   not grep {call.*memcmp}
 ; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls -disable-output
 
 declare int %memcmp(sbyte*,sbyte*,int)

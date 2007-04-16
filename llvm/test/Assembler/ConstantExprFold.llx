@@ -1,8 +1,7 @@
 ; This test checks to make sure that constant exprs fold in some simple 
 ; situations
 
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep '(' &&
-; RUN: llvm-upgrade < %s | llvm-as
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep {(}
 
 %A = global long 0
 

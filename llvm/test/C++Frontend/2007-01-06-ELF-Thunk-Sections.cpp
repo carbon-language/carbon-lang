@@ -1,5 +1,4 @@
-// RUN: %llvmgxx %s -emit-llvm -S -o - &&
-// RUN: %llvmgxx %s -emit-llvm -S -o - | not grep 'gnu.linkonce.'
+// RUN: %llvmgxx %s -emit-llvm -S -o - | not grep gnu.linkonce.
 // PR1085
 
 class 

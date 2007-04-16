@@ -1,5 +1,6 @@
 ; Test that the StrCmpOptimizer works correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | not grep 'call.*strcmp'
+; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
+; RUN:   not grep {call.*strcmp}
 
 declare int %strcmp(sbyte*,sbyte*)
 declare int %puts(sbyte*)

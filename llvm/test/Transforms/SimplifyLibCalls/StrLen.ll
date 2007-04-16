@@ -1,6 +1,6 @@
 ; Test that the StrCatOptimizer works correctly
 ; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
-; RUN:    not grep 'call.*strlen'
+; RUN:    not grep {call.*strlen}
 
 target datalayout = "e-p:32:32"
 

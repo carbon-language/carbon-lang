@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep 'ori\|lis'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep {ori\\|lis}
 
 int %test(int %X) {
 	%Y = and int %X, 32769   ; andi. r3, r3, 32769

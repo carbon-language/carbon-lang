@@ -1,6 +1,6 @@
 ; Test that the StrCatOptimizer works correctly
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop -simplify-libcalls -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -constprop -simplify-libcalls | llvm-dis | not grep 'call.*llvm.memcpy.i32'
+; RUN: llvm-upgrade < %s | llvm-as | opt -constprop -simplify-libcalls | \
+; RUN:   llvm-dis | not grep {call.*llvm.memcpy.i32}
 
 declare void %llvm.memcpy.i32(sbyte*,sbyte*,uint,uint)
 %h = constant [2 x sbyte] c"h\00"

@@ -1,5 +1,5 @@
 ; Check that variable strides are reduced to adds instead of multiplies.
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | not grep 'mul'
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | not grep mul
 
 declare bool %pred(int)
 

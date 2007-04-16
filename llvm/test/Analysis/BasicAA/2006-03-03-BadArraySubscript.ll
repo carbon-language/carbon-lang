@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | \
-; RUN:   opt -aa-eval -disable-output |& grep '2 no alias respon'
+; RUN:   opt -aa-eval -disable-output |& grep {2 no alias respon}
 
 ;; TEST that A[1][0] may alias A[0][i].
 

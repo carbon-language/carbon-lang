@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -o - | llvm-as | llvm-dis | not grep 'call.*__builtin'
+// RUN: %llvmgcc %s -S -o - | llvm-as | llvm-dis | not grep call.*__builtin
 
 int G, H, I;
 void foo(int P) {

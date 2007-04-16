@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep 'extsh\|rlwinm'
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep {extsh\\|rlwinm}
 
 declare i16 @foo() sext 
 

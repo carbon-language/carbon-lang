@@ -3,7 +3,7 @@
 ; is invalid code (there is no correct way to order the instruction).  Check
 ; that we do not fold the load into the sub.
 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep 'sub.*GLOBAL'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep sub.*GLOBAL
 
 %GLOBAL = external global int
 

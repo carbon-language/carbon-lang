@@ -1,5 +1,6 @@
 ; Check that the index of 'P[outer]' is pulled out of the loop.
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | not grep 'getelementptr.*%outer.*%INDVAR'
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | \
+; RUN:   not grep {getelementptr.*%outer.*%INDVAR}
 
 declare bool %pred()
 declare int %foo()

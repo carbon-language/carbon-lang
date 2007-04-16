@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep 'subl.*%esp'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep {subl.*%esp}
 
 int %f(int %a, int %b) {
 	%tmp.2 = mul int %a, %a

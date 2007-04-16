@@ -7,7 +7,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mcpu=ev56 | \
 ; RUN:   not grep -i ctpop
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha -mattr=-CIX | \
-; RUN:   not grep -i 'ctpop'
+; RUN:   not grep -i ctpop
 ; XFAIL: *
 
 declare long %llvm.ctpop.i64(long)

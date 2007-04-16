@@ -1,5 +1,5 @@
 ; Simple sanity check testcase.  Both alloca's should be eliminated.
-; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg | llvm-dis | not grep 'alloca'
+; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg | llvm-dis | not grep alloca
 
 implementation
 

@@ -1,7 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep unpcklps | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep unpckhps | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | not grep 'sub.*esp'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | \
+; RUN:   grep unpcklps | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | \
+; RUN:   grep unpckhps | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | \
+; RUN:   not grep {sub.*esp}
 
 void %test(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B) {
         %tmp = load <4 x float>* %B             ; <<4 x float>> [#uses=2]

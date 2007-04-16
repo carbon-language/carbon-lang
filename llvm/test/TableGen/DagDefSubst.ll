@@ -1,5 +1,5 @@
-// RUN: tblgen %s | grep 'dag d = (X Y)' &&
-// RUN: tblgen %s | grep 'dag e = (Y X)'
+// RUN: tblgen %s | grep {dag d = (X Y)}
+// RUN: tblgen %s | grep {dag e = (Y X)}
 def X;
 
 class yclass;

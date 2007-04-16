@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep 'jmp \*ecx'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep {jmp \\*ecx}
 declare int %putchar(int)
 
 int %main(){ 

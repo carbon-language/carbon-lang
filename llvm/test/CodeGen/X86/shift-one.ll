@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep 'leal'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep leal
 
 %x = external global int
 

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | not grep 'extern.*msg'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | not grep extern.*msg
 
 ; This is PR472
 

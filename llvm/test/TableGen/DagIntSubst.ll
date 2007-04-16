@@ -1,4 +1,4 @@
-// RUN: tblgen %s | grep 'dag d = (X 13)'
+// RUN: tblgen %s | grep {dag d = (X 13)}
 def X;
 
 class C<int N> {
