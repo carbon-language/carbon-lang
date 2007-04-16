@@ -224,20 +224,21 @@ void Function::dropAllReferences() {
 /// particular intrinsic functions which correspond to this value are defined in
 /// llvm/Intrinsics.h.
 ///
-unsigned Function::getIntrinsicID() const {
+unsigned Function::getIntrinsicID(bool noAssert) const {
   const ValueName *ValName = this->getValueName();
   unsigned Len = ValName->getKeyLength();
   const char *Name = ValName->getKeyData();
   
-  if (Len < 5 || Name[4] != '.' || Name[0] != 'l' || Name[1] != 'l'
+  if (Len <= 5 || Name[4] != '.' || Name[0] != 'l' || Name[1] != 'l'
       || Name[2] != 'v' || Name[3] != 'm')
     return 0;  // All intrinsics start with 'llvm.'
 
-  assert(Len != 5 && "'llvm.' is an invalid intrinsic name!");
+  assert((Len != 5 || noAssert) && "'llvm.' is an invalid intrinsic name!");
 
 #define GET_FUNCTION_RECOGNIZER
 #include "llvm/Intrinsics.gen"
 #undef GET_FUNCTION_RECOGNIZER
+  assert(noAssert && "Invalid LLVM intrinsic name");
   return 0;
 }
 

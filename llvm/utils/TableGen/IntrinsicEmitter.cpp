@@ -103,8 +103,6 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
          << Ints[I->second].EnumName << ";\n";
   }
   OS << "  }\n";
-  OS << "  // The 'llvm.' namespace is reserved!\n";
-  OS << "  assert(0 && \"Unknown LLVM intrinsic function!\");\n";
   OS << "#endif\n\n";
 }
 
