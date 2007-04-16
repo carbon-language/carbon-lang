@@ -231,7 +231,7 @@ unsigned Function::getIntrinsicID(bool noAssert) const {
   unsigned Len = ValName->getKeyLength();
   const char *Name = ValName->getKeyData();
   
-  if (Len <= 5 || Name[4] != '.' || Name[0] != 'l' || Name[1] != 'l'
+  if (Len < 5 || Name[4] != '.' || Name[0] != 'l' || Name[1] != 'l'
       || Name[2] != 'v' || Name[3] != 'm')
     return 0;  // All intrinsics start with 'llvm.'
 
