@@ -1000,7 +1000,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     unsigned CC = I->getCallingConv()+1;
     unsigned ID = (Slot << 5) | (CC & 15);
 
-    if (I->isDeclaration())   // If external, we don't have an FunctionInfo block.
+    if (I->isDeclaration()) // If external, we don't have an FunctionInfo block.
       ID |= 1 << 4;
     
     if (I->getAlignment() || I->hasSection() || (CC & ~15) != 0 ||
