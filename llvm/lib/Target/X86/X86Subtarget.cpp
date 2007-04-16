@@ -115,12 +115,8 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   if (ECX & 0x1)         X86SSELevel = SSE3;
   if ((ECX >> 9)  & 0x1) X86SSELevel = SSSE3;
 
-  if (memcmp(text.c, "GenuineIntel", 12) == 0) {
-    X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
-    HasX86_64 = (EDX >> 29) & 0x1;
-  } else if (memcmp(text.c, "AuthenticAMD", 12) == 0) {    
-    // FIXME: Correctly check for 64-bit stuff
-  }  
+  X86::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
+  HasX86_64 = (EDX >> 29) & 0x1;
 }
 
 static const char *GetCurrentX86CPU() {
