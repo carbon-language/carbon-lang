@@ -1,10 +1,11 @@
-; RUN: llvm-as < %s 2>&1 | not grep Asserti
+; RUN: llvm-as < %s |& not grep Asserti
+; RUN: llvm-as < %s |& grep Redefinition
 
-void %test() {
-	%tmp.1 = add int 0, 1
+define void @test() {
+	%tmp.1 = add i32 0, 1
 	br label %return
 return:
-	%tmp.1 = add int 0, 1
+	%tmp.1 = add i32 0, 1
 	ret void
 }
 
