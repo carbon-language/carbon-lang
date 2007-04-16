@@ -3034,7 +3034,12 @@ FunctionHeaderH
         Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
         InsertValue(Fn, CurModule.Values);
       }
+    } else {
+      // There's no conflict, just define the function
+      Fn = new Function(FT, CurFun.Linkage, FunctionName, M);
+      InsertValue(Fn, CurModule.Values);
     }
+
 
     CurFun.FunctionStart(Fn);
 
