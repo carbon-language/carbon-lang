@@ -2821,6 +2821,14 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     Value *V = getVal(PFTy, $4);   // Get the function we're calling...
     CHECK_FOR_ERROR
 
+    // Check for call to invalid intrinsic to avoid crashing later.
+    if (Function *theF = dyn_cast<Function>(V)) {
+      if (theF->hasName() && 0 == strncmp(theF->getName().c_str(), "llvm.", 5)&&
+        !theF->getIntrinsicID(true))
+        GEN_ERROR("Call to invalid LLVM intrinsic function '" +
+                  theF->getName() + "'");
+    }
+
     // Check the arguments 
     ValueList Args;
     if ($6->empty()) {                                   // Has no arguments?
