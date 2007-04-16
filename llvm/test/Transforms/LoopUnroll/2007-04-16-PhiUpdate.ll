@@ -1,3 +1,4 @@
+; PR 1334
 ; RUN: llvm-upgrade < %s | llvm-as | opt -loop-unroll -disable-output
 
 void @sal__math_float_manipulator_7__math__joint_array_dcv_ops__Omultiply__3([6 x float]* %agg.result) {
