@@ -781,7 +781,9 @@ void PMDataManager::initializeAnalysisImpl(Pass *P) {
          E = AnUsage.getRequiredSet().end(); I != E; ++I) {
     Pass *Impl = findAnalysisPass(*I, true);
     if (Impl == 0)
-      assert(0 && "Analysis used but not available!");
+      // This may be analysis pass that is initialized on the fly.
+      // If that is not the case then it will raise an assert when it is used.
+      continue;
     AnalysisResolver *AR = P->getResolver();
     AR->addAnalysisImplsPair(*I, Impl);
   }
