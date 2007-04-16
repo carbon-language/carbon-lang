@@ -121,8 +121,8 @@ exceptions, the exception handling ABI provides a mechanism for supplying
 <i>personalities.</i> An exception handling personality is defined by way of a
 <i>personality function</i> (ex. for C++ <tt>__gxx_personality_v0</tt>) which
 receives the context of the exception, an <i>exception structure</i> containing
-the exception object type and value, and a reference the exception table for the
-current function.  The personality function for the current compile unit is
+the exception object type and value, and a reference to the exception table for
+the current function.  The personality function for the current compile unit is
 specified in a <i>common exception frame</i>.</p>
 
 <p>The organization of an exception table is language dependent.  For C++, an
@@ -195,7 +195,7 @@ unwinding of a throw.</p>
 
 <p>The term used to define a the place where an invoke continues after an
 exception is called a <i>landing pad</i>.  LLVM landing pads are conceptually
-alternative entry points into where a exception structure reference and a type
+alternative function entry points where a exception structure reference and a type
 info index are passed in as arguments.  The landing pad saves the exception
 structure reference and then proceeds to select the catch block that corresponds
 to the type info of the exception object.</p>
