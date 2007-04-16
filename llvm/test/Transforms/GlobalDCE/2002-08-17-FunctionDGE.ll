@@ -2,7 +2,6 @@
 ; a global that is dead.  Make sure any globals they refer to die as well.
 
 ; RUN: llvm-upgrade < %s | llvm-as | opt -globaldce | llvm-dis | not grep foo
-; XFAIL: *
 
 %b = internal global int ()* %foo   ;; Unused, kills %foo
 
