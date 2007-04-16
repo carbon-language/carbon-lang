@@ -466,7 +466,9 @@ class is the most general of all superclasses that you can use.  Deriving from
 <tt>ModulePass</tt> indicates that your pass uses the entire program as a unit,
 refering to function bodies in no predictable order, or adding and removing
 functions.  Because nothing is known about the behavior of <tt>ModulePass</tt>
-subclasses, no optimization can be done for their execution.</p>
+subclasses, no optimization can be done for their execution. A module pass
+can use function level passes (e.g. dominators) using getAnalysis interface
+<tt> getAnalysis<DominatorTree>(Function)</tt>. </p> 
 
 <p>To write a correct <tt>ModulePass</tt> subclass, derive from
 <tt>ModulePass</tt> and overload the <tt>runOnModule</tt> method with the
@@ -1127,7 +1129,21 @@ runtime assertion failure if you attempt to get an analysis that you did not
 declare as required in your <a
 href="#getAnalysisUsage"><tt>getAnalysisUsage</tt></a> implementation.  This
 method can be called by your <tt>run*</tt> method implementation, or by any
-other local method invoked by your <tt>run*</tt> method.</p>
+other local method invoked by your <tt>run*</tt> method.
+
+A module level pass can use function level analysis info using this interface.
+For example:</p>
+
+<div class="doc_code"><pre>
+   bool ModuleLevelPass::runOnModule(Module &amp;M) {
+     ...
+     DominatorTree &amp;DT = getAnalysis&lt;DominatorTree&gt;(Function &amp;F);
+     ...
+   }
+</pre></div>
+
+In above example, runOnFunction for DominatorTree is called by pass manager
+before returning a reference to the desired pass.</p>
 
 <p>
 If your pass is capable of updating analyses if they exist (e.g.,
