@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep -v align | not grep li
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN:   grep -v align | not grep li
 
 ;; Test that immediates are folded into these instructions correctly.
 

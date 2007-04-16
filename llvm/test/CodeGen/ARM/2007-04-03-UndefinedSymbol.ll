@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -relocation-model=pic | not grep "LPC9"
+; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -relocation-model=pic | \
+; RUN:   not grep LPC9
 
 	%struct.B = type { i32 }
 	%struct.anon = type { void (%struct.B*)*, i32 }

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vsldoi &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vsldoi
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep vor
 
 <4 x float> %func(<4 x float> %fp0, <4 x float> %fp1) {

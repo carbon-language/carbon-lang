@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -deadargelim -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -deadargelim | llvm-dis | not grep 47 &&
+; RUN: llvm-upgrade < %s | llvm-as | opt -deadargelim | llvm-dis | not grep 47 
 ; RUN: llvm-upgrade < %s | llvm-as | opt -deadargelim | llvm-dis | not grep 1.0
 
 int %bar(int %A) {

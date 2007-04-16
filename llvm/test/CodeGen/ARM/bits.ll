@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep and      | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep orr      | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep eor      | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep mov.*lsl | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep mov.*asr | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm > %t
+; RUN: grep and      %t | wc -l | grep 1
+; RUN: grep orr      %t | wc -l | grep 1
+; RUN: grep eor      %t | wc -l | grep 1
+; RUN: grep mov.*lsl %t | wc -l | grep 1
+; RUN: grep mov.*asr %t | wc -l | grep 1
 
 define i32 @f1(i32 %a, i32 %b) {
 entry:

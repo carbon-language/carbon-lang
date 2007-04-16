@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 &&
+; RUN: llvm-as < %s | llc -march=ppc32
 ; RUN: llvm-as < %s | llc -march=ppc64
 
 ; Test two things: 1) that a frameidx can be rewritten in an inline asm

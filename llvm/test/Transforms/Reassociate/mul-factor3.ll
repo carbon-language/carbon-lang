@@ -1,7 +1,9 @@
 ; This should be one add and two multiplies.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | grep mul | wc -l | grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -instcombine | llvm-dis | grep add | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   opt -reassociate -instcombine | llvm-dis > %t 
+; RUN: grep mul %t | wc -l | grep 2
+; RUN: grep add %t | wc -l | grep 1
 
 int %test(int %A, int %B, int %C) {
 	%aa = mul int %A, %A

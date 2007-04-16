@@ -1,7 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -enable-ppc-preinc &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -enable-ppc-preinc | not grep addi &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 -enable-ppc-preinc &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 -enable-ppc-preinc | not grep addi
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -enable-ppc-preinc | \
+; RUN:   not grep addi
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 -enable-ppc-preinc | \
+; RUN:   not grep addi
 %Glob = global ulong 4
 
 int *%test0(int *%X,  int *%dest) {

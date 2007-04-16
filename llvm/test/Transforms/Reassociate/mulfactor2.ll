@@ -1,7 +1,10 @@
 ; This should turn into one multiply and one add.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -reassociate -instcombine | llvm-dis | grep mul | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine -reassociate -instcombine | llvm-dis | grep add | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   opt -instcombine -reassociate -instcombine | llvm-dis -o %t 
+; RUN: grep mul %t | wc -l | grep 1
+; RUN: grep add %t | wc -l | grep 1
+
 int %main(int %t) {
         %tmp.3 = mul int %t, 12         ; <int> [#uses=1]
         %tmp.4 = add int %tmp.3, 5              ; <int> [#uses=1]

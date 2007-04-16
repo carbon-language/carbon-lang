@@ -1,5 +1,5 @@
 ; Should fold the ori into the lfs.
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep lfs &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep lfs
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep ori
 
 float %test() {

@@ -1,7 +1,8 @@
 ; All of these ands and shifts should be folded into rlwimi's
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwimi | wc -l | grep 3 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep srwi   | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep slwi
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -o %t -f
+; RUN: grep rlwimi %t | wc -l | grep 3
+; RUN: grep srwi   %t | wc -l | grep 1
+; RUN: not grep slwi %t
 
 implementation   ; Functions:
 

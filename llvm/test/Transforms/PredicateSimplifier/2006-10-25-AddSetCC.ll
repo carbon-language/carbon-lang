@@ -1,5 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -instcombine -simplifycfg -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -predsimplify -instcombine -simplifycfg | llvm-dis | grep -v declare | grep -c pass | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   opt -predsimplify -instcombine -simplifycfg | llvm-dis | \
+; RUN:   grep -v declare | grep -c pass | grep 2
 
 int %test(int %x, int %y) {
 entry:

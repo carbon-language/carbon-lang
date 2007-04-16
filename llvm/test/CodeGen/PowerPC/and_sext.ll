@@ -1,6 +1,5 @@
 ; These tests should not contain a sign extend.
-; RUN: llvm-as < %s | llc -march=ppc32 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep extsh  &&
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep extsh
 ; RUN: llvm-as < %s | llc -march=ppc32 | not grep extsb
 
 define i32 @test1(i32 %mode.0.i.0) {

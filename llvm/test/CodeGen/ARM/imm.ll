@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | not grep CPI
 
 int %test1(int %A) {

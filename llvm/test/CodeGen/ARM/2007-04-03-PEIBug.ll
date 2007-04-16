@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | not grep "add.*#0"
+; RUN: llvm-as < %s | llc -march=arm | not grep {add.*#0}
 
 define i32 @foo() {
 entry:

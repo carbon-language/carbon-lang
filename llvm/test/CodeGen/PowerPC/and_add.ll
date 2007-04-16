@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep slwi &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep addi &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwinm
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -o %t -f
+; RUN: grep slwi %t
+; RUN: not grep addi %t
+; RUN: not grep rlwinm %t
 
 int %test(int %A) {
   %B = mul int %A, 8  ;; shift

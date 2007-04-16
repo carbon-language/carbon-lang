@@ -1,5 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | grep sub &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis > %t
+; RUN: grep sub %t
+; RUN: not grep call %t
 
 int %test(int %X) {
 	%Y = sub int %X, 1

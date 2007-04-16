@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc &&
-; RUN: llvm-upgrade < %s | llvm-as | llc | not grep ori && 
+; RUN: llvm-upgrade < %s | llvm-as | llc | not grep ori
 ; RUN: llvm-upgrade < %s | llvm-as | llc | not grep rlwimi
 
 int %test1(sbyte* %P) {  ;; or -> lwzx

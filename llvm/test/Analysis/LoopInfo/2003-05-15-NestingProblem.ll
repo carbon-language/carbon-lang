@@ -1,7 +1,8 @@
 ; This testcase was incorrectly computing that the loopentry.7 loop was
 ; not a child of the loopentry.6 loop.
 ;
-; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -loops | grep "^            Loop Containing:  %loopentry.7"
+; RUN: llvm-upgrade < %s | llvm-as | opt -analyze -loops | \
+; RUN:   grep {^            Loop Containing:  %loopentry.7}
 
 void %getAndMoveToFrontDecode() {		; No predecessors!
 	br label %endif.2

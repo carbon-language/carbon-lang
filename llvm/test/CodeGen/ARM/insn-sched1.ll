@@ -1,5 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-apple-darwin -mattr=+v6 | grep mov | wc -l | grep 3
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-apple-darwin -mattr=+v6 |\
+; RUN:   grep mov | wc -l | grep 3
 
 int %test(int %x) {
 	%tmp = cast int %x to short

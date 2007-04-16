@@ -1,6 +1,7 @@
 ; bswap should be constant folded when it is passed a constant argument
 
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep bswapl | wc -l | grep 3 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
+; RUN:   grep bswapl | wc -l | grep 3
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep rolw | wc -l | grep 1
 
 declare ushort %llvm.bswap.i16(ushort)

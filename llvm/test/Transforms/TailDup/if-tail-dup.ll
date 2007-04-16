@@ -1,7 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate | llc -march=x86 | \
-; RUN:    grep {je } &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate | llc -march=x86 | \
-; RUN:    not grep jmp
+; RUN: llvm-upgrade < %s | llvm-as | opt -tailduplicate | \
+; RUN:   llc -march=x86 -o %t -f
+; RUN: grep {je } %t
+; RUN: not grep jmp %t
 ; END.
 ; This should have no unconditional jumps in it.  The C source is:
 

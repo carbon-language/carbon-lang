@@ -1,8 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep "foos+5" &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep "foos+1" &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep "foos+9" &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep "bara+19" &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep "bara+4"
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep foos+5
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep foos+1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep foos+9
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep bara+19
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep bara+4
 
 ; make sure we compute the correct offset for a packed structure
 

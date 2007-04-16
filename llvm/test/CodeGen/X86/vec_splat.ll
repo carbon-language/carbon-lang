@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep shufps &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep shufps 
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse3 | grep movddup
 
 void %test_v4sf(<4 x float>* %P, <4 x float>* %Q, float %X) {

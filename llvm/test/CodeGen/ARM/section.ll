@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-linux
 ; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-linux | \
 ; RUN:   grep {__DTOR_END__:}
 ; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-linux | \

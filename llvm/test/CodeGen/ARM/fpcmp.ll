@@ -1,11 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep movmi &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep moveq &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep movgt &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep movge &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep movne &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fcmped | wc -l | grep 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fcmpes | wc -l | grep 6
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 > %t
+; RUN: grep movmi %t
+; RUN: grep moveq %t
+; RUN: grep movgt %t
+; RUN: grep movge %t
+; RUN: grep movne %t
+; RUN: grep fcmped %t | wc -l | grep 1
+; RUN: grep fcmpes %t | wc -l | grep 6
 
 int %f1(float %a) {
 entry:

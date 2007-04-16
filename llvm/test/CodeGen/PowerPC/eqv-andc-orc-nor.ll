@@ -1,8 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep eqv | wc -l  | grep 3 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep andc | wc -l | grep 3 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep orc | wc -l  | grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep nor | wc -l  | grep 3 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep nand | wc -l  | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN:   grep eqv | wc -l  | grep 3
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | \
+; RUN:   grep andc | wc -l | grep 3
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN:   grep orc | wc -l  | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | \
+; RUN:   grep nor | wc -l  | grep 3
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
+; RUN:   grep nand | wc -l  | grep 1
 
 int %EQV1(int %X, int %Y) {
 	%A = xor int %X, %Y

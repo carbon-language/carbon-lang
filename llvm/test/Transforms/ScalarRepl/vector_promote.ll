@@ -1,6 +1,5 @@
-
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | not grep alloca
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
+; RUN:   not grep alloca
 
 void %test(<4 x float>* %F, float %f) {
 entry:

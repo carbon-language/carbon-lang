@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep srawi &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep srawi 
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep blr
 
 int %test1(int %X) {

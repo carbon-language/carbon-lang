@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -lcssa | llvm-dis | \
-; RUN:   grep "X3.lcssa = phi i32" &&
+; RUN:   grep {X3.lcssa = phi i32}
 ; RUN: llvm-upgrade < %s | llvm-as | opt -lcssa | llvm-dis | \
-; RUN:   grep "X4 = add i32 3, %X3.lcssa"
+; RUN:   grep {X4 = add i32 3, %X3.lcssa}
 
 void %lcssa(bool %S2) {
 entry:

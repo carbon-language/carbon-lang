@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=sparc &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=sparc | grep xnor | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=sparc | \
+; RUN:   grep xnor | wc -l | grep 2
 
 int %test1(int %X, int %Y) {
 	%A = xor int %X, %Y

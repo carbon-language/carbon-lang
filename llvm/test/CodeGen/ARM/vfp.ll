@@ -7,7 +7,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
 ; RUN:   grep fuito | wc -l | grep 2
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fto.i | wc -l | grep 4 &&
+; RUN:   grep fto.i | wc -l | grep 4
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
 ; RUN:   grep bmi | wc -l | grep 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \

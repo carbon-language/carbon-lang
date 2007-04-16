@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep or
 
 %struct.foo = type { int, int, [0 x ubyte] }

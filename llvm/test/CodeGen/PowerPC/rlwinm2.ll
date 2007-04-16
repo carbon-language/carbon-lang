@@ -1,10 +1,11 @@
 ; All of these ands and shifts should be folded into rlw[i]nm instructions
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep and && 
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep srawi && 
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep srwi && 
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep slwi && 
-; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwnm | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwinm | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=ppc32 -o %t -f
+; RUN: not grep and %t
+; RUN: not grep srawi %t 
+; RUN: not grep srwi %t 
+; RUN: not grep slwi %t 
+; RUN: grep rlwnm %t | wc -l | grep 1
+; RUN: grep rlwinm %t | wc -l | grep 1
 
 define i32 @test1(i32 %X, i32 %Y) {
 entry:

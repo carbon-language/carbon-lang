@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
-; RUN:   grep pkhbt | wc -l | grep 5 &&
+; RUN:   grep pkhbt | wc -l | grep 5
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
 ; RUN:   grep pkhtb | wc -l | grep 4
 ; END.

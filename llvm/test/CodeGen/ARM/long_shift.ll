@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | grep rrx | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=arm | grep __ashldi3 &&
-; RUN: llvm-as < %s | llc -march=arm | grep __ashrdi3 &&
-; RUN: llvm-as < %s | llc -march=arm | grep __lshrdi3 &&
 ; RUN: llvm-as < %s | llc -march=thumb
+; RUN: llvm-as < %s | llc -march=arm > %t
+; RUN: grep rrx %t | wc -l | grep 1
+; RUN: grep __ashldi3 %t
+; RUN: grep __ashrdi3 %t
+; RUN: grep __lshrdi3 %t
 
 define i64 @f0(i64 %A, i64 %B) {
 	%tmp = bitcast i64 %A to i64

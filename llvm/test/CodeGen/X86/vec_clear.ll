@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | not grep and
 <4 x float> %test(<4 x float>* %v1) {
 	%tmp = load <4 x float>* %v1

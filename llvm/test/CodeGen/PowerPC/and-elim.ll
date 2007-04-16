@@ -1,4 +1,3 @@
-; RUN: llvm-as < %s | llc -march=ppc32 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwin
 
 define void @test(i8* %P) {

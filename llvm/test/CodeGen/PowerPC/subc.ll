@@ -1,9 +1,10 @@
 ; All of these should be codegen'd without loading immediates
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep subfc | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep subfe | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep subfze | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep subfme | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep subfic | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -o %t -f
+; RUN: grep subfc %t | wc -l | grep 1
+; RUN: grep subfe %t | wc -l | grep 1
+; RUN: grep subfze %t | wc -l | grep 1
+; RUN: grep subfme %t | wc -l | grep 1
+; RUN: grep subfic %t | wc -l | grep 2
 implementation   ; Functions:
 
 long %sub_ll(long %a, long %b) {

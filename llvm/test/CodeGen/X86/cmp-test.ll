@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep cmp  | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep cmp  | wc -l | grep 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep test | wc -l | grep 1
 
 int %f1(int %X, int* %y) {

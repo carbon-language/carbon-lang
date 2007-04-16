@@ -1,4 +1,4 @@
 ; Found by inspection of the code
-; RUN: llvm-as < %s > /dev/null |& grep "Logical operator requires integral"
+; RUN: llvm-as < %s > /dev/null |& grep {Logical operator requires integral}
 
 global i32 ashr (float 1.0, float 2.0)

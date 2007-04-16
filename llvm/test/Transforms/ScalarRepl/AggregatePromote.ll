@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | not grep alloca &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
+; RUN:   not grep alloca 
 
 target endian = big
 target pointersize = 32

@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6,+vfp2 | grep fcmpes
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6,+vfp2 | \
+; RUN:   grep fcmpes
 
 void %test3(float* %glob, int %X) {
 entry:

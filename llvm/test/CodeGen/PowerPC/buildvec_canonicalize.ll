@@ -1,8 +1,12 @@
 ; There should be exactly one vxor here.
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 --enable-unsafe-fp-math | grep vxor | wc -l | grep 1 &&
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=ppc32 -mcpu=g5 --enable-unsafe-fp-math | \
+; RUN:   grep vxor | wc -l | grep 1
 
 ; There should be exactly one vsplti here.
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 --enable-unsafe-fp-math | grep vsplti | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=ppc32 -mcpu=g5 --enable-unsafe-fp-math | \
+; RUN:   grep vsplti | wc -l | grep 1
 
 
 void %VXOR(<4 x float>* %P1, <4 x int>* %P2, <4 x float>* %P3) {

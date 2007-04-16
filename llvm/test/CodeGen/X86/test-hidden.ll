@@ -1,6 +1,7 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu &&
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu | grep ".hidden" | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin8.8.0 | grep ".private_extern" | wc -l | grep 2 
+; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu | \
+; RUN:   grep .hidden | wc -l | grep 2
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin8.8.0 | \
+; RUN:   grep .private_extern | wc -l | grep 2 
 
 %struct.Person = type { i32 }
 @a = hidden global i32 0

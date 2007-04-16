@@ -1,14 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fcvtsd &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fcvtds &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep ftosizs &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep ftouizs &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep ftosizd &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep ftouizd &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fsitos &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fsitod &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitos &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitod
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 > %t
+; RUN: grep fcvtsd %t
+; RUN: grep fcvtds %t
+; RUN: grep ftosizs %t
+; RUN: grep ftouizs %t
+; RUN: grep ftosizd %t
+; RUN: grep ftouizd %t
+; RUN: grep fsitos %t
+; RUN: grep fsitod %t
+; RUN: grep fuitos %t
+; RUN: grep fuitod %t
 
 float %f1(double %x) {
 entry:

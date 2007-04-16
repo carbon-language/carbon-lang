@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep mul
 
 int %test1(int %a) {

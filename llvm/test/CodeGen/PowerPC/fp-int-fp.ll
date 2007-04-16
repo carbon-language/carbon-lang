@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep r1
 
 double %test1(double %X) {

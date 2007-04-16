@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep shufp | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep movups | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep pshufhw | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t -f
+; RUN: grep shufp   %t | wc -l | grep 1 
+; RUN: grep movups  %t | wc -l | grep 1 
+; RUN: grep pshufhw %t | wc -l | grep 1
 
 void %test_v4sf(<4 x float>* %P, float %X, float %Y) {
 	%tmp = insertelement <4 x float> zeroinitializer, float %X, uint 0

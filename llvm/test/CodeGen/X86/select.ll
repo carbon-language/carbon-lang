@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=pentium
 
 bool %boolSel(bool %A, bool %B, bool %C) {

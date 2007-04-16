@@ -1,9 +1,10 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic &&
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic | grep _GLOBAL_OFFSET_TABLE_ &&
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic | grep piclabel | wc -l | grep 3 &&
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic | grep PLT | wc -l | grep 13 &&
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic | grep GOTOFF | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic | grep JTI | wc -l | grep 15
+; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic \
+; RUN:   -o %t -f
+; RUN: grep _GLOBAL_OFFSET_TABLE_ %t
+; RUN: grep piclabel %t | wc -l | grep 3 
+; RUN: grep PLT %t | wc -l | grep 13 
+; RUN: grep GOTOFF %t | wc -l | grep 1 
+; RUN: grep JTI %t | wc -l | grep 15
 
 define void @bar(i32 %n.u) {
 entry:

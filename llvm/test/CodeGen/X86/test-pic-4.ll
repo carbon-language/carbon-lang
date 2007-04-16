@@ -3,8 +3,8 @@
 ; RUN: grep _GLOBAL_OFFSET_TABLE_ %t
 ; RUN: grep piclabel %t | wc -l | grep 3
 ; RUN: grep PLT %t | wc -l | grep 1
-; RUN: grep "GOT" %t | wc -l | grep 1
-; RUN: not grep "GOTOFF" %t
+; RUN: grep GOT %t | wc -l | grep 1
+; RUN: not grep GOTOFF %t
 
 @pfoo = external global void(...)* 
 

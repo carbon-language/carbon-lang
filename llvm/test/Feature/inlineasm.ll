@@ -1,6 +1,6 @@
-; RUN: llvm-upgrade %s -o - | llvm-as -o /dev/null -f &&
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > Output/t1.ll &&
-; RUN: llvm-as Output/t1.ll -o - | llvm-dis > Output/t2.ll &&
+; RUN: llvm-upgrade %s -o - | llvm-as -o /dev/null -f
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > Output/t1.ll
+; RUN: llvm-as Output/t1.ll -o - | llvm-dis > Output/t2.ll
 ; RUN: diff Output/t1.ll Output/t2.ll
 
 

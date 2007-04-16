@@ -1,8 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep bne &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep bge &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep bhs &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep blo
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm > %t 
+; RUN: grep bne %t
+; RUN: grep bge %t
+; RUN: grep bhs %t
+; RUN: grep blo %t
 
 void %f1(int %a, int %b, int* %v) {
 entry:

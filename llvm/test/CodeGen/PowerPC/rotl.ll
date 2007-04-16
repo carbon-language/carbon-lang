@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep or && 
-; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwnm  | wc -l | grep 2 &&
+; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwnm  | wc -l | grep 2
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwinm | wc -l | grep 2
 
 define i32 @rotlw(i32 %x, i32 %sh) {

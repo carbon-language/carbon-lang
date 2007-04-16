@@ -1,6 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep punpck | wc -l | grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | not grep pextrw
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t -f
+; RUN: grep punpck %t | wc -l | grep 2
+; RUN: not grep pextrw %t
 
 <4 x int> %test(sbyte** %ptr) {
 entry:

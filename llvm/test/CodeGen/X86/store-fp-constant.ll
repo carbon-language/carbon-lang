@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep rodata &&
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep rodata
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | not grep literal
 ;
 ; Check that no FP constants in this testcase ends up in the 

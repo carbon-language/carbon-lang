@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep xori &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep xori
 
 int %test(bool %B, int* %P) {
    br bool %B, label %T, label %F

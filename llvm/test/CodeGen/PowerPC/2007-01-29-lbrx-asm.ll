@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 &&
+; RUN: llvm-as < %s | llc -march=ppc32
 ; RUN: llvm-as < %s | llc -march=ppc64
 
 define i16 @test(i8* %d1, i16* %d2) {

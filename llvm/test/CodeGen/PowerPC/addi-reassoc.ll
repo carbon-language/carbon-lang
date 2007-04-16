@@ -1,4 +1,3 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 &&
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep addi
 
         %struct.X = type { [5 x sbyte] }

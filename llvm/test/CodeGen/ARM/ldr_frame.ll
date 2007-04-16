@@ -1,6 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm | not grep mov &&
-; RUN: llvm-as < %s | llc -march=thumb &&
+; RUN: llvm-as < %s | llc -march=arm | not grep mov
 ; RUN: llvm-as < %s | llc -march=thumb | grep cpy | wc -l | grep 2
 
 define i32 @f1() {

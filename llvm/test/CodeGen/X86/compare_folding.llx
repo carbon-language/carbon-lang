@@ -1,5 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah | grep movsd | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah | grep ucomisd
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah | \
+; RUN:   grep movsd | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah | \
+; RUN:   grep ucomisd
 declare bool %llvm.isunordered.f64(double,double)
 
 bool %test1(double %X, double %Y) {  ;; Returns isunordered(X,Y)

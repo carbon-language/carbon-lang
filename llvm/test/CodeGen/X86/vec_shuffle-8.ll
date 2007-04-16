@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | not grep shufps
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | \
+; RUN:   not grep shufps
 
 void %test(<4 x float>* %res, <4 x float>* %A) {
 	%tmp1 = load <4 x float>* %A

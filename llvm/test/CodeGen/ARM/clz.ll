@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5t | grep "clz"
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v5t | grep clz
 
 declare uint %llvm.ctlz.i32(uint)
 

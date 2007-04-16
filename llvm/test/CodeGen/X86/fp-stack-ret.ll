@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -mtriple=i686-apple-darwin8 -mcpu=yonah -march=x86 > %t
 ; RUN: grep fldl %t | wc -l | grep 1
-; RUN: not grep xmm %t &&
+; RUN: not grep xmm %t
 ; RUN: grep {sub.*esp} %t | wc -l | grep 1
 
 ; These testcases shouldn't require loading into an XMM register then storing 

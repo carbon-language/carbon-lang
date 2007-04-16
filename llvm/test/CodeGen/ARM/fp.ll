@@ -1,21 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fmsr | wc -l | grep 4
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fsitos
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fmrs
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fsitod
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fmrrd | wc -l | grep 5
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fmdrr | wc -l | grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fldd
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep flds
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitod
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | grep fuitos
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep 1065353216
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 > %t
+; RUN: grep fmsr %t | wc -l | grep 4
+; RUN: grep fsitos %t
+; RUN: grep fmrs %t
+; RUN: grep fsitod %t
+; RUN: grep fmrrd %t | wc -l | grep 5
+; RUN: grep fmdrr %t | wc -l | grep 2
+; RUN: grep fldd %t
+; RUN: grep flds %t
+; RUN: grep fuitod %t
+; RUN: grep fuitos %t
+; RUN: grep 1065353216 %t
 
 float %f(int %a) {
 entry:

@@ -1,9 +1,9 @@
 ; Test that vectors are scalarized/lowered correctly.
-; RUN: llvm-upgrade < %s | llvm-as | llc &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple a-b-c &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g3 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=i386 &&
+; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple a-b-c
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g3
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=i386
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah
 
 %f1 = type <1 x float>

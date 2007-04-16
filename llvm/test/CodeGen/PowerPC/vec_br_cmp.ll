@@ -1,5 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vcmpeqfp. &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep mfcr
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 -o %t -f
+; RUN: grep vcmpeqfp. %t
+; RUN: not grep mfcr %t
 
 ; A predicate compare used immediately by a branch should not generate an mfcr.
 

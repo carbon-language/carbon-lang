@@ -1,6 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mtriple=arm-linux-gnu | grep "mov r11, sp" &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mtriple=arm-linux-gnu | grep "mov sp, r11"
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mtriple=arm-linux-gnu | \
+; RUN:   grep {mov r11, sp}
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mtriple=arm-linux-gnu | \
+; RUN:   grep {mov sp, r11}
 
 void %f(uint %a) {
 entry:

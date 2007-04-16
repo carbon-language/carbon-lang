@@ -1,7 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=stfiwx | grep stfiwx &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=stfiwx | not grep r1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=-stfiwx | not grep stfiwx &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=-stfiwx | grep r1
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=stfiwx -o %t1 -f
+; RUN: grep stfiwx %t1
+; RUN: not grep r1 %t1
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=-stfiwx \
+; RUN:   -o %t2 -f
+; RUN: not grep stfiwx %t2
+; RUN: grep r1 %t2
 
 void %test(float %a, int* %b) {
         %tmp.2 = cast float %a to int

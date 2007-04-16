@@ -1,8 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep ldrsb &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep ldrb &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep ldrsh &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep ldrh
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm > %t
+; RUN: grep ldrsb %t
+; RUN: grep ldrb %t
+; RUN: grep ldrsh %t
+; RUN: grep ldrh %t
 
 int %f1(sbyte* %p) {
 entry:

@@ -1,12 +1,13 @@
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep jb | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep \$6 | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep 1024 | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep 1023 | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep 119  | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep JTI | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep jg | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep ja | wc -l | grep 1 &&
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep js | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 -o %t -f
+; RUN: grep jb %t | wc -l | grep 1
+; RUN: grep \\\$6 %t | wc -l | grep 2 
+; RUN: grep 1024 %t | wc -l | grep 1 
+; RUN: grep 1023 %t | wc -l | grep 1 
+; RUN: grep 119  %t | wc -l | grep 1 
+; RUN: grep JTI %t | wc -l | grep 2 
+; RUN: grep jg %t | wc -l | grep 1 
+; RUN: grep ja %t | wc -l | grep 1 
+; RUN: grep js %t | wc -l | grep 1
 
 target triple = "i686-pc-linux-gnu"
 

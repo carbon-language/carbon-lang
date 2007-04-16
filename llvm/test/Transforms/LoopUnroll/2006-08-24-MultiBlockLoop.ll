@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-unroll | llvm-dis | grep "bb72.2"
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-unroll | llvm-dis | grep bb72.2
 
 void %vorbis_encode_noisebias_setup() {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep 8388635  &&
+; RUN: llvm-as < %s | llc -march=x86 | grep 8388635
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep 4294981120
 ; PR 1325
 

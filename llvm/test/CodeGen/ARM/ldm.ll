@@ -1,7 +1,9 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "ldmia" | wc -l | grep 2 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep "ldmib" | wc -l | grep 1 &&
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-apple-darwin | grep "ldmfd sp\!" | wc -l | grep 3
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN:   grep ldmia | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
+; RUN:   grep ldmib | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=arm-apple-darwin | \
+; RUN:   grep {ldmfd sp\!} | wc -l | grep 3
 
 %X = external global [0 x int]
 

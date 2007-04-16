@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | grep select &&
+; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | grep select
 ; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | not grep br
 ; PR1179
 
