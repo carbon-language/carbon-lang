@@ -1,7 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | not grep -- -65535
-; XFAIL: *
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | not grep -- --65535
+; PR596
 
-; ModuleID = '<stdin>'
 target endian = little
 target pointersize = 32
 target triple = "i686-pc-linux-gnu"
