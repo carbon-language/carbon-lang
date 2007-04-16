@@ -48,7 +48,7 @@ CLEANED_TESTONE := $(patsubst test/%,%,$(CLEANED_TESTONE))
 SUBDIR := $(shell dirname $(CLEANED_TESTONE))
 TESTPATH := $(LLVM_SRC_ROOT)/test/$(CLEANED_TESTONE)
 check-one: site.exp $(TCLSH)
-	$(Verb)( echo "source $(LLVM_SRC_ROOT)/test/site.exp" ; \
+	$(Verb)( echo "source $(LLVM_OBJ_ROOT)/test/site.exp" ; \
 	  echo "set subdir $(SUBDIR)" ; \
 	  echo "proc pass  { msg } { puts \"PASS: \$$msg\" } "; \
 	  echo "proc fail  { msg } { puts \"FAIL: \$$msg\" }" ; \
