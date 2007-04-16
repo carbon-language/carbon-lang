@@ -12,7 +12,7 @@ proc execOneLine { test PRS outcome lineno line } {
     switch "$code" {
       CHILDSTATUS {
         set status [lindex $::errorCode 2]
-        if { $status ne 0 } {
+        if { $status != 0 } {
           set resultmsg "$test: exit($status)$errmsg"
         }
       }
