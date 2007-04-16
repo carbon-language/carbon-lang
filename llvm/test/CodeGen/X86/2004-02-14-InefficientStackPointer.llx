@@ -1,5 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep ESP | not grep sub
-; XFAIL: *
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep -i ESP | not grep sub
 
 int %test(int %X) {
 	ret int %X
