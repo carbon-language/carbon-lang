@@ -1,5 +1,7 @@
-; RUN: llvm-as < %s | llc -march=arm -stats 2>&1 | grep '3 .*Number of machine instrs printed' &&
-; RUN: llvm-as < %s | llc -march=thumb -stats 2>&1 | grep '4 .*Number of machine instrs printed'
+; RUN: llvm-as < %s | llc -march=arm -stats |& \
+; RUN:   grep {3 .*Number of machine instrs printed}
+; RUN: llvm-as < %s | llc -march=thumb -stats |& \
+; RUN:   grep {4 .*Number of machine instrs printed}
 
 ;; Integer absolute value, should produce something as good as: ARM:
 ;;   add r3, r0, r0, asr #31

@@ -1,6 +1,7 @@
 ; A very rudimentary test on AliasAnalysis::getModRefInfo.
-; RUN: llvm-upgrade < %s | llvm-as | opt -print-all-alias-modref-info -aa-eval -disable-output &&
-; RUN: llvm-upgrade < %s | llvm-as | opt -print-all-alias-modref-info -aa-eval -disable-output 2>&1 | not grep NoModRef
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   opt -print-all-alias-modref-info -aa-eval -disable-output |& 
+; RUN:   not grep NoModRef
 
 int %callee() {
   %X = alloca { int, int }

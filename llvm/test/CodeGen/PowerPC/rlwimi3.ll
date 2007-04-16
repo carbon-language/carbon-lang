@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -stats 2>&1 | grep 'Number of machine instrs printed' | grep 12
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -stats |& \
+; RUN:   grep {Number of machine instrs printed} | grep 12
 
 ushort %Trans16Bit(uint %srcA, uint %srcB, uint %alpha) {
         %tmp1 = shl uint %srcA, ubyte 15                ; <uint> [#uses=1]

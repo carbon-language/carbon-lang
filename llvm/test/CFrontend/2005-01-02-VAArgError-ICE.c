@@ -1,6 +1,6 @@
 // This file is erroneous, but should not cause the compiler to ICE.
 // PR481
-// RUN: %llvmgcc %s -S -o /dev/null 2>&1 | not grep 'internal compiler error'
+// RUN: %llvmgcc %s -S -o /dev/null |& not grep {internal compiler error}
 
 #include <stdarg.h>
 int flags(int a, int b, ...) {

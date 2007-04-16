@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah -stats 2>&1 | not grep 'Number of register spills'
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah -stats |& \
+; RUN:   not grep {Number of register spills}
 
 int %foo(<4 x float>* %a, <4 x float>* %b, <4 x float>* %c, <4 x float>* %d) {
 	%tmp44 = load <4 x float>* %a		; <<4 x float>> [#uses=9]

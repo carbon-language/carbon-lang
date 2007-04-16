@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc %s -S -o /dev/null 2>&1 | not grep 'warning'
+// RUN: %llvmgcc -xc %s -S -o /dev/null |& not grep 'warning'
 
 struct item {
   short delta[4];

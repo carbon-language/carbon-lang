@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -relocation-model=pic -mattr=+v6 -stats 2>&1 | grep 'asm-printer' | grep 41
+; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -relocation-model=pic \
+; RUN:   -mattr=+v6 -stats |& grep asm-printer | grep 41
 
 define void @test(i32 %tmp56222, i32 %tmp36224, i32 %tmp46223, i32 %i.0196.0.ph, i32 %tmp8, i32* %tmp1011, i32** %tmp1, i32* %d2.1.out, i32* %d3.1.out, i32* %d0.1.out, i32* %d1.1.out) {
 newFuncRoot:

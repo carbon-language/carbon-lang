@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -stats 2>&1 | grep '40.*Number of machine instrs printed'
-; This test really wants to check that the resultant "cond_true" block only has a single
-; store in it, and that cond_true55 only has code to materialize the constant and do
-; a store.  We do *not* want something like this:
+; RUN: llvm-as < %s | llc -stats |& grep {40.*Number of machine instrs printed}
+; This test really wants to check that the resultant "cond_true" block only 
+; has a single store in it, and that cond_true55 only has code to materialize 
+; the constant and do a store.  We do *not* want something like this:
 ;
 ;LBB1_3: @cond_true
 ;        add r8, r0, r6

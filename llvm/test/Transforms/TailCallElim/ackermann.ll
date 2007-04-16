@@ -1,5 +1,6 @@
 ; This function contains two tail calls, which should be eliminated
-; RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim -stats -disable-output 2>&1 | grep '2 tailcallelim'
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   opt -tailcallelim -stats -disable-output |& grep {2 tailcallelim}
 
 int %Ack(int %M.1, int %N.1) {
 entry:

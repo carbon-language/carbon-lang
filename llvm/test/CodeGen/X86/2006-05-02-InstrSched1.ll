@@ -1,4 +1,7 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -relocation-model=static -stats 2>&1 | grep "asm-printer" | grep 14
+; RUN: llvm-upgrade < %s | llvm-as | \
+; RUN:   llc -march=x86 -relocation-model=static -stats |& \
+; RUN:   grep asm-printer | grep 14
+;
 %size20 = external global uint		; <uint*> [#uses=1]
 %in5 = external global ubyte*		; <ubyte**> [#uses=1]
 

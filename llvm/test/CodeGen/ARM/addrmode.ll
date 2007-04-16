@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm &&
-; RUN: llvm-as < %s | llc -march=arm -stats 2>&1 | grep 'asm-printer' | grep 4
+; RUN: llvm-as < %s | llc -march=arm -stats |& grep asm-printer | grep 4
 
 define i32 @t1(i32 %a) {
 	%b = mul i32 %a, 9
