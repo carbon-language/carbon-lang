@@ -2,7 +2,6 @@
 
 ; RUN: llvm-upgrade < %s | llvm-as | opt -globalopt | llvm-dis | \
 ; RUN:   not grep internal
-; XFAIL: *
 
 %G0 = internal global [58 x sbyte] c"asdlfkajsdlfkajsd;lfkajds;lfkjasd;flkajsd;lkfja;sdlkfjasd\00"
 
@@ -17,7 +16,7 @@ void %foo() {
         %Blah = alloca [58 x sbyte]             ; <[58 x sbyte]*> [#uses=2]
         %tmp3 = cast [58 x sbyte]* %Blah to sbyte*
 	call void %llvm.memcpy.i32( sbyte* cast ([4 x int]* %G1 to sbyte*), sbyte* %tmp3, uint 16, uint 1)
- 	call void %llvm.memset.i32( sbyte* getelementptr ([58 x sbyte]* %G0, int 0, int 0), uint 17, uint 58, uint 1)
+ 	call void %llvm.memset.i32( sbyte* getelementptr ([58 x sbyte]* %G0, int 0, int 0), ubyte 17, uint 58, uint 1)
 	ret void
 }
 
