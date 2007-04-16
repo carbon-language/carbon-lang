@@ -126,6 +126,11 @@ public:
                                  PassManagerType T = PMT_Unknown) {}
   /// Check if available pass managers are suitable for this pass or not.
   virtual void preparePassManager(PMStack &PMS) {}
+  
+  ///  Return what kind of Pass Manager can manage this pass.
+  virtual PassManagerType getPotentialPassManagerType() const {
+    return PMT_Unknown; 
+  }
 
   // Access AnalysisResolver
   inline void setResolver(AnalysisResolver *AR) { Resolver = AR; }
@@ -193,7 +198,7 @@ public:
 
   template<typename AnalysisType>
   AnalysisType &getAnalysisID(const PassInfo *PI) const;
-    
+
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
@@ -216,6 +221,12 @@ public:
 
   virtual void assignPassManager(PMStack &PMS, 
                                  PassManagerType T = PMT_ModulePassManager);
+
+  ///  Return what kind of Pass Manager can manage this pass.
+  virtual PassManagerType getPotentialPassManagerType() const {
+    return PMT_ModulePassManager;
+  }
+
   // Force out-of-line virtual method.
   virtual ~ModulePass();
 };
@@ -283,6 +294,11 @@ public:
 
   virtual void assignPassManager(PMStack &PMS, 
                                  PassManagerType T = PMT_FunctionPassManager);
+
+  ///  Return what kind of Pass Manager can manage this pass.
+  virtual PassManagerType getPotentialPassManagerType() const {
+    return PMT_FunctionPassManager;
+  }
 };
 
 
@@ -338,6 +354,11 @@ public:
 
   virtual void assignPassManager(PMStack &PMS, 
                                  PassManagerType T = PMT_BasicBlockPassManager);
+
+  ///  Return what kind of Pass Manager can manage this pass.
+  virtual PassManagerType getPotentialPassManagerType() const {
+    return PMT_BasicBlockPassManager; 
+  }
 };
 
 /// PMStack

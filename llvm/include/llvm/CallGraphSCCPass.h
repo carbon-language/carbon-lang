@@ -54,6 +54,11 @@ struct CallGraphSCCPass : public Pass {
   virtual void assignPassManager(PMStack &PMS,
                                  PassManagerType PMT = PMT_CallGraphPassManager);
 
+  ///  Return what kind of Pass Manager can manage this pass.
+  virtual PassManagerType getPotentialPassManagerType() const {
+    return PMT_CallGraphPassManager;
+  }
+
   /// getAnalysisUsage - For this class, we declare that we require and preserve
   /// the call graph.  If the derived class implements this method, it should
   /// always explicitly call the implementation here.
