@@ -127,6 +127,9 @@ public:
     return ResultPass;
   }
 
+  // Find pass that is implementing PI. Initialize pass for Function F.
+  Pass *findImplPass(Pass *P, const PassInfo *PI, Function &F);
+
   void addAnalysisImplsPair(const PassInfo *PI, Pass *P) {
     std::pair<const PassInfo*, Pass*> pir = std::make_pair(PI,P);
     AnalysisImpls.push_back(pir);
@@ -195,6 +198,39 @@ AnalysisType &Pass::getAnalysisID(const PassInfo *PI) const {
   AnalysisType *Result = dynamic_cast<AnalysisType*>(ResultPass);
   assert(Result && "Pass does not implement interface required!");
   return *Result;
+}
+
+/// getAnalysis<AnalysisType>() - This function is used by subclasses to get
+/// to the analysis information that they claim to use by overriding the
+/// getAnalysisUsage function.
+///
+template<typename AnalysisType>
+AnalysisType &Pass::getAnalysis(Function &F) {
+  assert(Resolver &&"Pass has not been inserted into a PassManager object!");
+
+  return getAnalysisID<AnalysisType>(getClassPassInfo<AnalysisType>(), F);
+}
+
+template<typename AnalysisType>
+AnalysisType &Pass::getAnalysisID(const PassInfo *PI, Function &F) {
+  assert(PI && "getAnalysis for unregistered pass!");
+   assert(Resolver&&"Pass has not been inserted into a PassManager object!");
+   // PI *must* appear in AnalysisImpls.  Because the number of passes used
+   // should be a small number, we just do a linear search over a (dense)
+   // vector.
+   Pass *ResultPass = Resolver->findImplPass(this, PI, F);
+   assert (ResultPass && 
+           "getAnalysis*() called on an analysis that was not "
+           "'required' by pass!");
+ 
+   // Because the AnalysisType may not be a subclass of pass (for
+   // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
+   // return pointer (because the class may multiply inherit, once from pass,
+   // once from AnalysisType).
+   //
+   AnalysisType *Result = dynamic_cast<AnalysisType*>(ResultPass);
+   assert(Result && "Pass does not implement interface required!");
+   return *Result;
 }
 
 } // End llvm namespace

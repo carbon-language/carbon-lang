@@ -906,6 +906,11 @@ Pass *AnalysisResolver::getAnalysisToUpdate(AnalysisID ID, bool dir) const {
   return PM.findAnalysisPass(ID, dir);
 }
 
+Pass *AnalysisResolver::findImplPass(Pass *P, const PassInfo *AnalysisPI, 
+                                     Function &F) {
+  return PM.getOnTheFlyPass(P, AnalysisPI, F);
+}
+
 //===----------------------------------------------------------------------===//
 // BBPassManager implementation
 

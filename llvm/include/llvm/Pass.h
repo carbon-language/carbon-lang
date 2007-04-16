@@ -197,8 +197,13 @@ public:
   AnalysisType &getAnalysis() const; // Defined in PassAnalysisSupport.h
 
   template<typename AnalysisType>
+  AnalysisType &getAnalysis(Function &F); // Defined in PassanalysisSupport.h
+
+  template<typename AnalysisType>
   AnalysisType &getAnalysisID(const PassInfo *PI) const;
 
+  template<typename AnalysisType>
+  AnalysisType &getAnalysisID(const PassInfo *PI, Function &F);
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
