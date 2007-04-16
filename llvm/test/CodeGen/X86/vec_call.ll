@@ -1,6 +1,6 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -mtriple=powerpc-apple-darwin8 | \
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin8 | \
 ; RUN:   grep {subl.*60}
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -mtriple=powerpc-apple-darwin8 | \
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin8 | \
 ; RUN:   grep {movdqa.*32}
 
 void %test() {
