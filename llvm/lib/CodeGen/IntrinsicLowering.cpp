@@ -538,8 +538,10 @@ static Instruction *LowerPartSet(CallInst *CI) {
     new BranchInst(large, small, is_large, entry);
 
     // Block "large"
-    BinaryOperator* MaskBits = 
+    Instruction* MaskBits = 
       BinaryOperator::createSub(RepBitWidth, NumBits, "", large);
+    MaskBits = CastInst::createIntegerCast(MaskBits, RepMask->getType(), 
+                                           false, "", large);
     BinaryOperator* Mask1 = 
       BinaryOperator::createLShr(RepMask, MaskBits, "", large);
     BinaryOperator* Rep2 = BinaryOperator::createAnd(Mask1, Rep, "", large);
@@ -575,10 +577,10 @@ static Instruction *LowerPartSet(CallInst *CI) {
     Value* t8    = BinaryOperator::createXor(t7, ValMask, "", reverse);
     Value* t9    = BinaryOperator::createAnd(t8, Val, "", reverse);
     Value* t10   = BinaryOperator::createShl(Rep4, Lo, "", reverse);
-    if (RepBits < ValBits)
+    if (32 < ValBits)
       RepBitWidth = 
         cast<ConstantInt>(ConstantExpr::getZExt(RepBitWidth, ValTy));
-    else if (RepBits > ValBits)
+    else if (32 > ValBits)
       RepBitWidth = 
         cast<ConstantInt>(ConstantExpr::getTrunc(RepBitWidth, ValTy));
     Value* t11   = BinaryOperator::createSub(RepBitWidth, Hi, "", reverse);
