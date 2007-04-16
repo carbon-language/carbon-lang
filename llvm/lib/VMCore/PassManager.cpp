@@ -180,7 +180,17 @@ class MPPassManager : public Pass, public PMDataManager {
  
 public:
   MPPassManager(int Depth) : PMDataManager(Depth) { }
-  
+
+  // Delete on the fly managers.
+  virtual ~MPPassManager() {
+    for (std::map<Pass *, FPPassManager *>::iterator 
+           I = OnTheFlyManagers.begin(), E = OnTheFlyManagers.end();
+         I != E; ++I) {
+      FPPassManager *FPP = I->second;
+      delete FPP;
+    }
+  }
+
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnModule(Module &M);
@@ -210,6 +220,8 @@ public:
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       ModulePass *MP = getContainedPass(Index);
       MP->dumpPassStructure(Offset + 1);
+      if (FPPassManager *FPP = OnTheFlyManagers[MP])
+        FPP->dumpPassStructure(Offset + 2);
       dumpLastUses(MP, Offset+1);
     }
   }
@@ -625,6 +637,7 @@ void PMDataManager::removeDeadPasses(Pass *P, std::string Msg,
 
   std::vector<Pass *> DeadPasses;
 
+  // If this is a on the fly manager then it does not have TPM.
   if (!TPM)
     return;
 
@@ -795,8 +808,11 @@ Pass *PMDataManager::findAnalysisPass(AnalysisID AID, bool SearchParent) {
 void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
 
   std::vector<Pass *> LUses;
-  
-  assert (TPM && "Top Level Manager is missing");
+
+  // If this is a on the fly manager then it does not have TPM.
+  if (!TPM)
+    return;
+
   TPM->collectLastUses(LUses, P);
   
   for (std::vector<Pass *>::iterator I = LUses.begin(),
