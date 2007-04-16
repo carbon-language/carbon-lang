@@ -934,8 +934,9 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   // of this global in the module and emit warnings if there are conflicts.
   if (!Name.empty()) {
     // The global has a name. See if there's an existing one of the same name.
-    if (CurModule.CurrentModule->getNamedGlobal(Name)) {
-      // We found an existing global ov the same name. This isn't allowed 
+    if (CurModule.CurrentModule->getNamedGlobal(Name) ||
+        CurModule.CurrentModule->getFunction(Name)) {
+      // We found an existing global of the same name. This isn't allowed 
       // in LLVM 2.0. Consequently, we must alter the name of the global so it
       // can at least compile. This can happen because of type planes 
       // There is alread a global of the same name which means there is a
@@ -2999,7 +3000,7 @@ FunctionHeaderH
               AI->setName("");
         }
       } else if (Conflict) {
-        // We have two globals with the same name and  different types. 
+        // We have two globals with the same name and different types. 
         // Previously, this was permitted because the symbol table had 
         // "type planes" and names only needed to be distinct within a 
         // type plane. After PR411 was fixed, this is no loner the case. 
