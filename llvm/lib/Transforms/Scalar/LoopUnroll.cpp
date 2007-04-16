@@ -304,6 +304,12 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
       (*SI)->removeIncomingValue(LatchBlock, false);
       if (InVal)
         (*SI)->addIncoming(InVal, cast<BasicBlock>(LastValueMap[LatchBlock]));
+      if ((*SI)->getNumIncomingValues() == 0) {
+        // Remove this phi node.
+        // If anyone is using this PHI, make them use a dummy value instead...
+        (*SI)->replaceAllUsesWith(UndefValue::get((*SI)->getType()));
+        (*SI)->eraseFromParent();
+      }
     }
   }
 
