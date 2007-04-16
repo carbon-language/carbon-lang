@@ -33,7 +33,7 @@ namespace {
     virtual bool runOnFunction(Function &F);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      // This is a cluster of orthogonal Transforms	
+      // This is a cluster of orthogonal Transforms
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreservedID(PromoteMemoryToRegisterID);
       AU.addPreservedID(LowerSelectID);

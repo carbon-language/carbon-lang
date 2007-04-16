@@ -68,7 +68,7 @@ InternalizePass::InternalizePass(bool InternalizeEverything)
 InternalizePass::InternalizePass(const std::vector<const char *>&exportList) 
   : DontInternalize(false){
   for(std::vector<const char *>::const_iterator itr = exportList.begin();
-	itr != exportList.end(); itr++) {
+        itr != exportList.end(); itr++) {
     ExternalNames.insert(*itr);
   }
 }

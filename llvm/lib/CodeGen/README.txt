@@ -2,29 +2,29 @@
 
 Common register allocation / spilling problem:
 
-	mul lr, r4, lr
-	str lr, [sp, #+52]
-	ldr lr, [r1, #+32]
-	sxth r3, r3
-	ldr r4, [sp, #+52]
-	mla r4, r3, lr, r4
+        mul lr, r4, lr
+        str lr, [sp, #+52]
+        ldr lr, [r1, #+32]
+        sxth r3, r3
+        ldr r4, [sp, #+52]
+        mla r4, r3, lr, r4
 
 can be:
 
-	mul lr, r4, lr
+        mul lr, r4, lr
         mov r4, lr
-	str lr, [sp, #+52]
-	ldr lr, [r1, #+32]
-	sxth r3, r3
-	mla r4, r3, lr, r4
+        str lr, [sp, #+52]
+        ldr lr, [r1, #+32]
+        sxth r3, r3
+        mla r4, r3, lr, r4
 
 and then "merge" mul and mov:
 
-	mul r4, r4, lr
-	str lr, [sp, #+52]
-	ldr lr, [r1, #+32]
-	sxth r3, r3
-	mla r4, r3, lr, r4
+        mul r4, r4, lr
+        str lr, [sp, #+52]
+        ldr lr, [r1, #+32]
+        sxth r3, r3
+        mla r4, r3, lr, r4
 
 It also increase the likelyhood the store may become dead.
 
@@ -70,13 +70,13 @@ Some potential added complexities:
 
 bb27 ...
         ...
-	%reg1037 = ADDri %reg1039, 1
-	%reg1038 = ADDrs %reg1032, %reg1039, %NOREG, 10
+        %reg1037 = ADDri %reg1039, 1
+        %reg1038 = ADDrs %reg1032, %reg1039, %NOREG, 10
     Successors according to CFG: 0x8b03bf0 (#5)
 
 bb76 (0x8b03bf0, LLVM BB @0x8b032d0, ID#5):
     Predecessors according to CFG: 0x8b0c5f0 (#3) 0x8b0a7c0 (#4)
-	%reg1039 = PHI %reg1070, mbb<bb76.outer,0x8b0c5f0>, %reg1037, mbb<bb27,0x8b0a7c0>
+        %reg1039 = PHI %reg1070, mbb<bb76.outer,0x8b0c5f0>, %reg1037, mbb<bb27,0x8b0a7c0>
 
 Note ADDri is not a two-address instruction. However, its result %reg1037 is an
 operand of the PHI node in bb76 and its operand %reg1039 is the result of the

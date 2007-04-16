@@ -172,7 +172,7 @@ static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Zero = DAG.getConstant(0, PtrVT);
   
   SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, JTI,
-			     DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                             DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, JTI, Hi);
   return Lo;
 }
@@ -197,8 +197,8 @@ static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
 // //#define SP    $30
 
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
-				       int &VarArgsBase,
-				       int &VarArgsOffset) {
+                                       int &VarArgsBase,
+                                       int &VarArgsOffset) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   std::vector<SDOperand> ArgValues;
@@ -224,17 +224,17 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
         abort();
       case MVT::f64:
         args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
-				      &Alpha::F8RCRegClass);
+                                      &Alpha::F8RCRegClass);
         ArgVal = DAG.getCopyFromReg(Root, args_float[ArgNo], ObjectVT);
         break;
       case MVT::f32:
         args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
-				      &Alpha::F4RCRegClass);
+                                      &Alpha::F4RCRegClass);
         ArgVal = DAG.getCopyFromReg(Root, args_float[ArgNo], ObjectVT);
         break;
       case MVT::i64:
         args_int[ArgNo] = AddLiveIn(MF, args_int[ArgNo], 
-				    &Alpha::GPRCRegClass);
+                                    &Alpha::GPRCRegClass);
         ArgVal = DAG.getCopyFromReg(Root, args_int[ArgNo], MVT::i64);
         break;
       }
@@ -286,9 +286,9 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
 
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Copy = DAG.getCopyToReg(Op.getOperand(0), Alpha::R26, 
-				    DAG.getNode(AlphaISD::GlobalRetAddr, 
-                                    MVT::i64),
-				    SDOperand());
+                                    DAG.getNode(AlphaISD::GlobalRetAddr, 
+                                                MVT::i64),
+                                    SDOperand());
   switch (Op.getNumOperands()) {
   default:
     assert(0 && "Do not know how to return this many arguments!");
@@ -306,7 +306,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
       ArgReg = Alpha::F0;
     }
     Copy = DAG.getCopyToReg(Copy, ArgReg, Op.getOperand(1), Copy.getValue(1));
-    if(DAG.getMachineFunction().liveout_empty())
+    if (DAG.getMachineFunction().liveout_empty())
       DAG.getMachineFunction().addLiveOut(ArgReg);
     break;
   }
@@ -387,8 +387,8 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!");
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG, 
-							   VarArgsBase,
-							   VarArgsOffset);
+                                                           VarArgsBase,
+                                                           VarArgsOffset);
 
   case ISD::RET: return LowerRET(Op,DAG);
   case ISD::JumpTable: return LowerJumpTable(Op, DAG);
@@ -420,7 +420,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i64, CP->getAlignment());
     
     SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, CPI,
-			       DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                               DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
     SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, CPI, Hi);
     return Lo;
   }
@@ -432,18 +432,18 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     //    if (!GV->hasWeakLinkage() && !GV->isDeclaration() && !GV->hasLinkOnceLinkage()) {
     if (GV->hasInternalLinkage()) {
       SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, GA,
-				 DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                                DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
       SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, GA, Hi);
       return Lo;
     } else
       return DAG.getNode(AlphaISD::RelLit, MVT::i64, GA, 
-			 DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                         DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   }
   case ISD::ExternalSymbol: {
     return DAG.getNode(AlphaISD::RelLit, MVT::i64, 
-		       DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)
-						   ->getSymbol(), MVT::i64),
-		       DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
+                       DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)
+                                                   ->getSymbol(), MVT::i64),
+                       DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i64));
   }
 
   case ISD::UREM:
@@ -452,8 +452,8 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (Op.getOperand(1).getOpcode() == ISD::Constant) {
       MVT::ValueType VT = Op.Val->getValueType(0);
       SDOperand Tmp1 = Op.Val->getOpcode() == ISD::UREM ?
-	BuildUDIV(Op.Val, DAG, NULL) :
-	BuildSDIV(Op.Val, DAG, NULL);
+        BuildUDIV(Op.Val, DAG, NULL) :
+        BuildSDIV(Op.Val, DAG, NULL);
       Tmp1 = DAG.getNode(ISD::MUL, VT, Tmp1, Op.getOperand(1));
       Tmp1 = DAG.getNode(ISD::SUB, VT, Op.getOperand(0), Tmp1);
       return Tmp1;
@@ -463,10 +463,10 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::UDIV:
     if (MVT::isInteger(Op.getValueType())) {
       if (Op.getOperand(1).getOpcode() == ISD::Constant)
-	return Op.getOpcode() == ISD::SDIV ? BuildSDIV(Op.Val, DAG, NULL) 
-	  : BuildUDIV(Op.Val, DAG, NULL);
+        return Op.getOpcode() == ISD::SDIV ? BuildSDIV(Op.Val, DAG, NULL) 
+          : BuildUDIV(Op.Val, DAG, NULL);
       const char* opstr = 0;
-      switch(Op.getOpcode()) {
+      switch (Op.getOpcode()) {
       case ISD::UREM: opstr = "__remqu"; break;
       case ISD::SREM: opstr = "__remq";  break;
       case ISD::UDIV: opstr = "__divqu"; break;
@@ -591,29 +591,28 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
     default: break;  // Unknown constriant letter
     case 'f': 
       return make_vector<unsigned>(Alpha::F0 , Alpha::F1 , Alpha::F2 ,
-				   Alpha::F3 , Alpha::F4 , Alpha::F5 , 
-				   Alpha::F6 , Alpha::F7 , Alpha::F8 , 
-				   Alpha::F9 , Alpha::F10, Alpha::F11, 
+                                   Alpha::F3 , Alpha::F4 , Alpha::F5 ,
+                                   Alpha::F6 , Alpha::F7 , Alpha::F8 , 
+                                   Alpha::F9 , Alpha::F10, Alpha::F11, 
                                    Alpha::F12, Alpha::F13, Alpha::F14, 
-				   Alpha::F15, Alpha::F16, Alpha::F17, 
-				   Alpha::F18, Alpha::F19, Alpha::F20, 
-				   Alpha::F21, Alpha::F22, Alpha::F23, 
+                                   Alpha::F15, Alpha::F16, Alpha::F17, 
+                                   Alpha::F18, Alpha::F19, Alpha::F20, 
+                                   Alpha::F21, Alpha::F22, Alpha::F23, 
                                    Alpha::F24, Alpha::F25, Alpha::F26, 
-				   Alpha::F27, Alpha::F28, Alpha::F29, 
-				   Alpha::F30, Alpha::F31, 0);
+                                   Alpha::F27, Alpha::F28, Alpha::F29, 
+                                   Alpha::F30, Alpha::F31, 0);
     case 'r': 
       return make_vector<unsigned>(Alpha::R0 , Alpha::R1 , Alpha::R2 , 
-				   Alpha::R3 , Alpha::R4 , Alpha::R5 , 
-				   Alpha::R6 , Alpha::R7 , Alpha::R8 , 
-				   Alpha::R9 , Alpha::R10, Alpha::R11, 
+                                   Alpha::R3 , Alpha::R4 , Alpha::R5 , 
+                                   Alpha::R6 , Alpha::R7 , Alpha::R8 , 
+                                   Alpha::R9 , Alpha::R10, Alpha::R11, 
                                    Alpha::R12, Alpha::R13, Alpha::R14, 
-				   Alpha::R15, Alpha::R16, Alpha::R17, 
-				   Alpha::R18, Alpha::R19, Alpha::R20, 
-				   Alpha::R21, Alpha::R22, Alpha::R23, 
+                                   Alpha::R15, Alpha::R16, Alpha::R17, 
+                                   Alpha::R18, Alpha::R19, Alpha::R20, 
+                                   Alpha::R21, Alpha::R22, Alpha::R23, 
                                    Alpha::R24, Alpha::R25, Alpha::R26, 
-				   Alpha::R27, Alpha::R28, Alpha::R29, 
-				   Alpha::R30, Alpha::R31, 0);
- 
+                                   Alpha::R27, Alpha::R28, Alpha::R29, 
+                                   Alpha::R30, Alpha::R31, 0);
     }
   }
   

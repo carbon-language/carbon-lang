@@ -1372,7 +1372,7 @@ static bool isCSRestore(MachineInstr *MI, const unsigned *CSRegs) {
 }
 
 void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
-				   MachineBasicBlock &MBB) const {
+                                   MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   assert((MBBI->getOpcode() == ARM::BX_RET ||
           MBBI->getOpcode() == ARM::tBX_RET ||

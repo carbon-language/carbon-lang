@@ -82,8 +82,7 @@ bool CGPassManager::runOnModule(Module &M) {
        I != E; ++I) {
 
     // Run all passes on current SCC
-    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-
+    for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       Pass *P = getContainedPass(Index);
       AnalysisUsage AnUsage;
       P->getAnalysisUsage(AnUsage);
@@ -95,20 +94,20 @@ bool CGPassManager::runOnModule(Module &M) {
 
       StartPassTimer(P);
       if (CallGraphSCCPass *CGSP = dynamic_cast<CallGraphSCCPass *>(P))
-	Changed |= CGSP->runOnSCC(*I);   // TODO : What if CG is changed ?
+        Changed |= CGSP->runOnSCC(*I);   // TODO : What if CG is changed ?
       else {
-	FPPassManager *FPP = dynamic_cast<FPPassManager *>(P);
-	assert (FPP && "Invalid CGPassManager member");
+        FPPassManager *FPP = dynamic_cast<FPPassManager *>(P);
+        assert (FPP && "Invalid CGPassManager member");
 
-	// Run pass P on all functions current SCC
-	std::vector<CallGraphNode*> &SCC = *I;
-	for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
-	  Function *F = SCC[i]->getFunction();
-	  if (F) {
+        // Run pass P on all functions current SCC
+        std::vector<CallGraphNode*> &SCC = *I;
+        for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+          Function *F = SCC[i]->getFunction();
+          if (F) {
             dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
             Changed |= FPP->runOnFunction(*F);
           }
-	}
+        }
       }
       StopPassTimer(P);
 
@@ -149,7 +148,7 @@ bool CGPassManager::doFinalization(CallGraph &CG) {
 
 /// Assign pass manager to manage this pass.
 void CallGraphSCCPass::assignPassManager(PMStack &PMS,
-					 PassManagerType PreferredType) {
+                                         PassManagerType PreferredType) {
   // Find CGPassManager 
   while (!PMS.empty()) {
     if (PMS.top()->getPassManagerType() > PMT_CallGraphPassManager)

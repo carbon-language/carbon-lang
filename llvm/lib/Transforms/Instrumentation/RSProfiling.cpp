@@ -60,7 +60,7 @@ namespace {
       cl::values(
                  clEnumValN(GBV, "global", "global counter"),
                  clEnumValN(GBVO, "ra_global", 
-			    "register allocated global counter"),
+                            "register allocated global counter"),
                  clEnumValN(HOSTCC, "rdcc", "cycle counter"),
                  clEnumValEnd));
   
@@ -82,7 +82,7 @@ namespace {
 
   static RegisterAnalysisGroup<RSProfilers> A("Profiling passes");
   static RegisterPass<NullProfilerRS> NP("insert-null-profiling-rs",
-					"Measure profiling framework overhead");
+                                         "Measure profiling framework overhead");
   static RegisterAnalysisGroup<RSProfilers, true> NPT(NP);
 
   /// Chooser - Something that chooses when to make a sample of the profiled code
@@ -155,7 +155,7 @@ namespace {
   };
 
   RegisterPass<ProfilerRS> X("insert-rs-profiling-framework",
-			   "Insert random sampling instrumentation framework");
+                             "Insert random sampling instrumentation framework");
 }
 
 //Local utilities
@@ -202,14 +202,14 @@ void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
                              "countercc", t);
 
   Value* nv = BinaryOperator::createSub(l, ConstantInt::get(T, 1),
-                                     "counternew", t);
+                                        "counternew", t);
   new StoreInst(nv, Counter, t);
   t->setCondition(s);
   
   //reset counter
   BasicBlock* oldnext = t->getSuccessor(0);
   BasicBlock* resetblock = new BasicBlock("reset", oldnext->getParent(), 
-					  oldnext);
+                                          oldnext);
   TerminatorInst* t2 = new BranchInst(oldnext, resetblock);
   t->setSuccessor(0, resetblock);
   new StoreInst(ResetValue, Counter, t2);
@@ -275,14 +275,14 @@ void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
                              "countercc", t);
 
   Value* nv = BinaryOperator::createSub(l, ConstantInt::get(T, 1),
-                                     "counternew", t);
+                                        "counternew", t);
   new StoreInst(nv, AI, t);
   t->setCondition(s);
   
   //reset counter
   BasicBlock* oldnext = t->getSuccessor(0);
   BasicBlock* resetblock = new BasicBlock("reset", oldnext->getParent(), 
-					  oldnext);
+                                          oldnext);
   TerminatorInst* t2 = new BranchInst(oldnext, resetblock);
   t->setSuccessor(0, resetblock);
   new StoreInst(ResetValue, AI, t2);
@@ -304,7 +304,7 @@ void CycleCounter::ProcessChoicePoint(BasicBlock* bb) {
   CallInst* c = new CallInst(F, "rdcc", t);
   BinaryOperator* b = 
     BinaryOperator::createAnd(c, ConstantInt::get(Type::Int64Ty, rm),
-			      "mrdcc", t);
+                              "mrdcc", t);
   
   ICmpInst *s = new ICmpInst(ICmpInst::ICMP_EQ, b,
                              ConstantInt::get(Type::Int64Ty, 0), 
@@ -342,8 +342,8 @@ void RSProfilers_std::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNu
   Value *OldVal = new LoadInst(ElementPtr, "OldCounter", InsertPos);
   profcode.insert(OldVal);
   Value *NewVal = BinaryOperator::createAdd(OldVal,
-					    ConstantInt::get(Type::Int32Ty, 1),
-					    "NewCounter", InsertPos);
+                                            ConstantInt::get(Type::Int32Ty, 1),
+                                            "NewCounter", InsertPos);
   profcode.insert(NewVal);
   profcode.insert(new StoreInst(NewVal, ElementPtr, InsertPos));
 }
@@ -366,7 +366,7 @@ Value* ProfilerRS::Translate(Value* v) {
       TransCache[bb] = bb; //don't translate entry block
     else
       TransCache[bb] = new BasicBlock("dup_" + bb->getName(), bb->getParent(), 
-				      NULL);
+                                      NULL);
     return TransCache[bb];
   } else if (Instruction* i = dyn_cast<Instruction>(v)) {
     //we have already translated this
@@ -462,7 +462,7 @@ void ProfilerRS::ProcessBackEdge(BasicBlock* src, BasicBlock* dst, Function& F) 
   //b:
   new BranchInst(cast<BasicBlock>(Translate(dst)), bbC);
   new BranchInst(dst, cast<BasicBlock>(Translate(dst)), 
-		 ConstantInt::get(Type::Int1Ty, true), bbCp);
+                 ConstantInt::get(Type::Int1Ty, true), bbCp);
   //c:
   {
     TerminatorInst* iB = src->getTerminator();
@@ -484,7 +484,7 @@ void ProfilerRS::ProcessBackEdge(BasicBlock* src, BasicBlock* dst, Function& F) 
   CollapsePhi(dst, bbC);
   //f:
   ReplacePhiPred(cast<BasicBlock>(Translate(dst)),
-		 cast<BasicBlock>(Translate(src)),bbCp);
+                 cast<BasicBlock>(Translate(src)),bbCp);
   CollapsePhi(cast<BasicBlock>(Translate(dst)), bbCp);
   //g:
   for(BasicBlock::iterator ib = dst->begin(), ie = dst->end(); ib != ie;
@@ -494,7 +494,7 @@ void ProfilerRS::ProcessBackEdge(BasicBlock* src, BasicBlock* dst, Function& F) 
         if(bbC == phi->getIncomingBlock(x)) {
           phi->addIncoming(Translate(phi->getIncomingValue(x)), bbCp);
           cast<PHINode>(Translate(phi))->addIncoming(phi->getIncomingValue(x), 
-						     bbC);
+                                                     bbC);
         }
       phi->removeIncomingValue(bbC);
     }
@@ -510,15 +510,16 @@ bool ProfilerRS::runOnFunction(Function& F) {
     //assume that stuff worked.  now connect the duplicated basic blocks 
     //with the originals in such a way as to preserve ssa.  yuk!
     for (std::set<std::pair<BasicBlock*, BasicBlock*> >::iterator 
-	   ib = BackEdges.begin(), ie = BackEdges.end(); ib != ie; ++ib)
+           ib = BackEdges.begin(), ie = BackEdges.end(); ib != ie; ++ib)
       ProcessBackEdge(ib->first, ib->second, F);
     
     //oh, and add the edge from the reg2mem created entry node to the 
     //duplicated second node
     TerminatorInst* T = F.getEntryBlock().getTerminator();
     ReplaceInstWithInst(T, new BranchInst(T->getSuccessor(0),
-			       cast<BasicBlock>(Translate(T->getSuccessor(0))),
-					 ConstantInt::get(Type::Int1Ty, true)));
+                                          cast<BasicBlock>(
+                                            Translate(T->getSuccessor(0))),
+                                          ConstantInt::get(Type::Int1Ty, true)));
     
     //do whatever is needed now that the function is duplicated
     c->PrepFunction(&F);
@@ -527,7 +528,7 @@ bool ProfilerRS::runOnFunction(Function& F) {
     ChoicePoints.insert(&F.getEntryBlock());
     
     for (std::set<BasicBlock*>::iterator 
-	   ii = ChoicePoints.begin(), ie = ChoicePoints.end(); ii != ie; ++ii)
+           ii = ChoicePoints.begin(), ie = ChoicePoints.end(); ii != ie; ++ii)
       c->ProcessChoicePoint(*ii);
     
     ChoicePoints.clear();

@@ -55,7 +55,7 @@ class LoopPass : public Pass {
 
   /// Assign pass manager to manager this pass
   virtual void assignPassManager(PMStack &PMS,
-				 PassManagerType PMT = PMT_LoopPassManager);
+                                 PassManagerType PMT = PMT_LoopPassManager);
 
 };
 

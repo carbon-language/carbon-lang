@@ -137,8 +137,10 @@ struct RegisterPassBase {
   ///
   const PassInfo *getPassInfo() const { return &PIObj; }
 
+  typedef Pass* (*NormalCtor_t)();
+  
   RegisterPassBase(const char *Name, const char *Arg, const std::type_info &TI,
-                   Pass *(*NormalCtor)() = 0, bool CFGOnly = false)
+                   NormalCtor_t NormalCtor = 0, bool CFGOnly = false)
     : PIObj(Name, Arg, TI, NormalCtor, CFGOnly) {
     registerPass();
   }
@@ -164,7 +166,7 @@ struct RegisterPass : public RegisterPassBase {
   // Register Pass using default constructor...
   RegisterPass(const char *PassArg, const char *Name, bool CFGOnly = false)
   : RegisterPassBase(Name, PassArg, typeid(PassName),
-                     callDefaultCtor<PassName>, CFGOnly) {
+                     (RegisterPassBase::NormalCtor_t)callDefaultCtor<PassName>, CFGOnly) {
   }
 };
 

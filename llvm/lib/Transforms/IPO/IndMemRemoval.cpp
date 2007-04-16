@@ -49,8 +49,8 @@ bool IndMemRemPass::runOnModule(Module &M) {
     assert(F->isDeclaration() && "free not external?");
     if (!F->use_empty()) {
       Function* FN = new Function(F->getFunctionType(), 
-				  GlobalValue::LinkOnceLinkage, 
-				  "free_llvm_bounce", &M);
+                                  GlobalValue::LinkOnceLinkage, 
+                                  "free_llvm_bounce", &M);
       BasicBlock* bb = new BasicBlock("entry",FN);
       Instruction* R = new ReturnInst(bb);
       new FreeInst(FN->arg_begin(), R);
@@ -64,8 +64,8 @@ bool IndMemRemPass::runOnModule(Module &M) {
     assert(F->isDeclaration() && "malloc not external?");
     if (!F->use_empty()) {
       Function* FN = new Function(F->getFunctionType(), 
-				  GlobalValue::LinkOnceLinkage, 
-				  "malloc_llvm_bounce", &M);
+                                  GlobalValue::LinkOnceLinkage, 
+                                  "malloc_llvm_bounce", &M);
       BasicBlock* bb = new BasicBlock("entry",FN);
       Instruction* c = CastInst::createIntegerCast(
           FN->arg_begin(), Type::Int32Ty, false, "c", bb);

@@ -123,7 +123,7 @@ public:
   /// Each pass is responsible for assigning a pass manager to itself.
   /// PMS is the stack of available pass manager. 
   virtual void assignPassManager(PMStack &PMS, 
-				 PassManagerType T = PMT_Unknown) {}
+                                 PassManagerType T = PMT_Unknown) {}
   /// Check if available pass managers are suitable for this pass or not.
   virtual void preparePassManager(PMStack &PMS) {}
 
@@ -215,7 +215,7 @@ public:
   virtual bool runPass(BasicBlock&) { return false; }
 
   virtual void assignPassManager(PMStack &PMS, 
-				 PassManagerType T = PMT_ModulePassManager);
+                                 PassManagerType T = PMT_ModulePassManager);
   // Force out-of-line virtual method.
   virtual ~ModulePass();
 };
@@ -282,7 +282,7 @@ public:
   bool run(Function &F);
 
   virtual void assignPassManager(PMStack &PMS, 
-				 PassManagerType T = PMT_FunctionPassManager);
+                                 PassManagerType T = PMT_FunctionPassManager);
 };
 
 
@@ -337,7 +337,7 @@ public:
   virtual bool runPass(BasicBlock &BB);
 
   virtual void assignPassManager(PMStack &PMS, 
-				 PassManagerType T = PMT_BasicBlockPassManager);
+                                 PassManagerType T = PMT_BasicBlockPassManager);
 };
 
 /// PMStack

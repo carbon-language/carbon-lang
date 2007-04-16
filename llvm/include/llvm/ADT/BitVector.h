@@ -128,12 +128,12 @@ public:
   int find_first() const {
     for (unsigned i = 0; i < NumBitWords(size()); ++i)
       if (Bits[i] != 0) {
-	if (sizeof(BitWord) == 4)
-	  return i * BITS_PER_WORD + CountTrailingZeros_32(Bits[i]);
-	else if (sizeof(BitWord) == 8)
-	  return i * BITS_PER_WORD + CountTrailingZeros_64(Bits[i]);
-	else
-	  assert(0 && "Unsupported!");
+        if (sizeof(BitWord) == 4)
+          return i * BITS_PER_WORD + CountTrailingZeros_32(Bits[i]);
+        else if (sizeof(BitWord) == 8)
+          return i * BITS_PER_WORD + CountTrailingZeros_64(Bits[i]);
+        else
+          assert(0 && "Unsupported!");
       }
     return -1;
   }
@@ -153,22 +153,22 @@ public:
 
     if (Copy != 0) {
       if (sizeof(BitWord) == 4)
-	return WordPos * BITS_PER_WORD + CountTrailingZeros_32(Copy);
+        return WordPos * BITS_PER_WORD + CountTrailingZeros_32(Copy);
       else if (sizeof(BitWord) == 8)
-	return WordPos * BITS_PER_WORD + CountTrailingZeros_64(Copy);
+        return WordPos * BITS_PER_WORD + CountTrailingZeros_64(Copy);
       else
-	assert(0 && "Unsupported!");
+        assert(0 && "Unsupported!");
     }
 
     // Check subsequent words.
     for (unsigned i = WordPos+1; i < NumBitWords(size()); ++i)
       if (Bits[i] != 0) {
-	if (sizeof(BitWord) == 4)
-	  return i * BITS_PER_WORD + CountTrailingZeros_32(Bits[i]);
-	else if (sizeof(BitWord) == 8)
-	  return i * BITS_PER_WORD + CountTrailingZeros_64(Bits[i]);
-	else
-	  assert(0 && "Unsupported!");
+        if (sizeof(BitWord) == 4)
+          return i * BITS_PER_WORD + CountTrailingZeros_32(Bits[i]);
+        else if (sizeof(BitWord) == 8)
+          return i * BITS_PER_WORD + CountTrailingZeros_64(Bits[i]);
+        else
+          assert(0 && "Unsupported!");
       }
     return -1;
   }

@@ -2150,7 +2150,7 @@ static mu magicu64(uint64_t d)
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDOperand TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG, 
-				    std::vector<SDNode*>* Created) const {
+                                    std::vector<SDNode*>* Created) const {
   MVT::ValueType VT = N->getValueType(0);
   
   // Check to see if we can do this.
@@ -2198,7 +2198,7 @@ SDOperand TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDOperand TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
-				    std::vector<SDNode*>* Created) const {
+                                    std::vector<SDNode*>* Created) const {
   MVT::ValueType VT = N->getValueType(0);
   
   // Check to see if we can do this.

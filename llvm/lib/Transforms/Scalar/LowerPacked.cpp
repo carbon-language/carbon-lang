@@ -379,7 +379,7 @@ void LowerPacked::visitExtractElementInst(ExtractElementInst& EI)
       new AllocaInst(PTy->getElementType(),
                      ConstantInt::get(Type::Int32Ty, PTy->getNumElements()),
                      EI.getName() + ".alloca", 
-		     EI.getParent()->getParent()->getEntryBlock().begin());
+                     EI.getParent()->getParent()->getEntryBlock().begin());
     for (unsigned i = 0; i < PTy->getNumElements(); ++i) {
       GetElementPtrInst *GEP = 
         new GetElementPtrInst(alloca, ConstantInt::get(Type::Int32Ty, i),

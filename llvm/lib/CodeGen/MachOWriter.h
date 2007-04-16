@@ -254,19 +254,19 @@ namespace llvm {
       // The following constants are getting pulled in by one of the
       // system headers, which creates a neat clash with the enum.
 #if !defined(VM_PROT_NONE)
-#define VM_PROT_NONE		0x00
+#define VM_PROT_NONE    0x00
 #endif
 #if !defined(VM_PROT_READ)
-#define VM_PROT_READ		0x01
+#define VM_PROT_READ    0x01
 #endif
 #if !defined(VM_PROT_WRITE)
-#define VM_PROT_WRITE		0x02
+#define VM_PROT_WRITE   0x02
 #endif
 #if !defined(VM_PROT_EXECUTE)
-#define VM_PROT_EXECUTE		0x04
+#define VM_PROT_EXECUTE 0x04
 #endif
 #if !defined(VM_PROT_ALL)
-#define VM_PROT_ALL		0x07
+#define VM_PROT_ALL     0x07
 #endif
 
       // Constants for the vm protection fields

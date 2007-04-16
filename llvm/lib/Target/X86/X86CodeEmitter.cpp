@@ -487,13 +487,13 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
     for (unsigned e = NumOps; i != e; ++i) {
       const MachineOperand& MO = MI.getOperand(i);
       if (MO.isRegister()) {
-	unsigned Reg = MO.getReg();
-	// Trunc to byte are actually movb. The real source operand is the low
-	// byte of the register.
-	if (isTrunc8 && i == 1)
-	  Reg = getX86SubSuperRegister(Reg, MVT::i8);
-	if (isX86_64NonExtLowByteReg(Reg))
-	  REX |= 0x40;
+        unsigned Reg = MO.getReg();
+        // Trunc to byte are actually movb. The real source operand is the low
+        // byte of the register.
+        if (isTrunc8 && i == 1)
+          Reg = getX86SubSuperRegister(Reg, MVT::i8);
+        if (isX86_64NonExtLowByteReg(Reg))
+          REX |= 0x40;
       }
     }
 

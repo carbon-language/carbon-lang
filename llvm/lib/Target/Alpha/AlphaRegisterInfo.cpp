@@ -117,17 +117,17 @@ MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
    case Alpha::CPYST:
      if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
        if (OpNum == 0) {  // move -> store
-	 unsigned InReg = MI->getOperand(1).getReg();
-	 Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
-	   ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
-	 NewMI = BuildMI(TII.get(Opc)).addReg(InReg).addFrameIndex(FrameIndex)
-	   .addReg(Alpha::F31);
+         unsigned InReg = MI->getOperand(1).getReg();
+         Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
+           ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
+         NewMI = BuildMI(TII.get(Opc)).addReg(InReg).addFrameIndex(FrameIndex)
+           .addReg(Alpha::F31);
        } else {           // load -> move
-	 unsigned OutReg = MI->getOperand(0).getReg();
-	 Opc = (Opc == Alpha::BISr) ? Alpha::LDQ : 
-	   ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
-	 NewMI = BuildMI(TII.get(Opc), OutReg).addFrameIndex(FrameIndex)
-	   .addReg(Alpha::F31);
+         unsigned OutReg = MI->getOperand(0).getReg();
+         Opc = (Opc == Alpha::BISr) ? Alpha::LDQ : 
+           ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
+         NewMI = BuildMI(TII.get(Opc), OutReg).addFrameIndex(FrameIndex)
+           .addReg(Alpha::F31);
        }
      }
      break;

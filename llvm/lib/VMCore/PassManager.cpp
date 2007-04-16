@@ -1293,7 +1293,7 @@ void PMStack::dump() {
 /// Find appropriate Module Pass Manager in the PM Stack and
 /// add self into that manager. 
 void ModulePass::assignPassManager(PMStack &PMS, 
-				   PassManagerType PreferredType) {
+                                   PassManagerType PreferredType) {
 
   // Find Module Pass Manager
   while(!PMS.empty()) {
@@ -1312,7 +1312,7 @@ void ModulePass::assignPassManager(PMStack &PMS,
 /// Find appropriate Function Pass Manager or Call Graph Pass Manager
 /// in the PM Stack and add self into that manager. 
 void FunctionPass::assignPassManager(PMStack &PMS,
-				     PassManagerType PreferredType) {
+                                     PassManagerType PreferredType) {
 
   // Find Module Pass Manager (TODO : Or Call Graph Pass Manager)
   while(!PMS.empty()) {
@@ -1357,7 +1357,7 @@ void FunctionPass::assignPassManager(PMStack &PMS,
 /// Find appropriate Basic Pass Manager or Call Graph Pass Manager
 /// in the PM Stack and add self into that manager. 
 void BasicBlockPass::assignPassManager(PMStack &PMS,
-				       PassManagerType PreferredType) {
+                                       PassManagerType PreferredType) {
 
   BBPassManager *BBP = NULL;
 

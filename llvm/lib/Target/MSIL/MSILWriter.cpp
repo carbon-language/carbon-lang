@@ -1,6 +1,6 @@
 //===-- MSILWriter.cpp - Library for converting LLVM code to MSIL ---------===//
 //
-//		       The LLVM Compiler Infrastructure
+//                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Roman Samoilov and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
@@ -1333,7 +1333,7 @@ void MSILWriter::printExternals() {
 }
 
 //===----------------------------------------------------------------------===//
-//			 External Interface declaration
+//                      External Interface declaration
 //===----------------------------------------------------------------------===//
 
 bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM, std::ostream &o,

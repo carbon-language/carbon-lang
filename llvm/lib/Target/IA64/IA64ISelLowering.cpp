@@ -366,9 +366,9 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
           ValToStore = Val;
         } else {
           RegValuesToPass.push_back(Val);
-	  if(1 /* TODO: if(calling external or varadic function)*/ ) {
-	    ValToConvert = Val; // additionally pass this FP value as an int
-	  }
+          if(1 /* TODO: if(calling external or varadic function)*/ ) {
+            ValToConvert = Val; // additionally pass this FP value as an int
+          }
         }
         break;
       }
@@ -384,7 +384,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
       }
 
       if(ValToConvert.Val) {
-	Converts.push_back(DAG.getNode(IA64ISD::GETFD, MVT::i64, ValToConvert)); 
+        Converts.push_back(DAG.getNode(IA64ISD::GETFD, MVT::i64, ValToConvert)); 
       }
     }
 
@@ -492,7 +492,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
       Chain = boolInR8.getValue(1);
       SDOperand zeroReg = DAG.getCopyFromReg(Chain, IA64::r0, MVT::i64, InFlag);
       InFlag = zeroReg.getValue(2);
-      Chain = zeroReg.getValue(1); 	
+      Chain = zeroReg.getValue(1);
       
       RetVal = DAG.getSetCC(MVT::i1, boolInR8, zeroReg, ISD::SETNE);
       break;

@@ -288,9 +288,9 @@ private:
                                         // Tally iterator 
   
   /// SlotsAvailable - Returns true if all units are available.
-	///
+  ///
   bool SlotsAvailable(Iter Begin, unsigned N, unsigned ResourceSet,
-                                              unsigned &Resource) {
+                      unsigned &Resource) {
     assert(N && "Must check availability with N != 0");
     // Determine end of interval
     Iter End = Begin + N;
@@ -318,23 +318,23 @@ private:
     Resource = 0;
     return false;
   }
-	
-	/// RetrySlot - Finds a good candidate slot to retry search.
+  
+  /// RetrySlot - Finds a good candidate slot to retry search.
   Iter RetrySlot(Iter Begin, unsigned N, unsigned ResourceSet) {
     assert(N && "Must check availability with N != 0");
     // Determine end of interval
     Iter End = Begin + N;
     assert(End <= Tally.end() && "Tally is not large enough for schedule");
-		
-		while (Begin != End--) {
-			// Clear units in use
-			ResourceSet &= ~*End;
-			// If no units left then we should go no further 
-			if (!ResourceSet) return End + 1;
-		}
-		// Made it all the way through
-		return Begin;
-	}
+    
+    while (Begin != End--) {
+      // Clear units in use
+      ResourceSet &= ~*End;
+      // If no units left then we should go no further 
+      if (!ResourceSet) return End + 1;
+    }
+    // Made it all the way through
+    return Begin;
+  }
   
   /// FindAndReserveStages - Return true if the stages can be completed. If
   /// so mark as busy.
@@ -391,13 +391,13 @@ public:
   // FindAndReserve - Locate an ideal slot for the specified stages and mark
   // as busy.
   unsigned FindAndReserve(unsigned Slot, InstrStage *StageBegin,
-                                         InstrStage *StageEnd) {
-		// Where to begin 
-		Iter Begin = Tally.begin() + Slot;
-		// Find a free slot
-		Iter Where = FindSlots(Begin, StageBegin, StageEnd);
-		// Distance is slot number
-		unsigned Final = Where - Tally.begin();
+                          InstrStage *StageEnd) {
+    // Where to begin 
+    Iter Begin = Tally.begin() + Slot;
+    // Find a free slot
+    Iter Where = FindSlots(Begin, StageBegin, StageEnd);
+    // Distance is slot number
+    unsigned Final = Where - Tally.begin();
     return Final;
   }
 

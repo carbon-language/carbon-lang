@@ -53,8 +53,8 @@ bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
   case ARM::MOVr:
   case ARM::tMOVr:
     assert(MI.getNumOperands() == 2 && MI.getOperand(0).isRegister() &&
-	   MI.getOperand(1).isRegister() &&
-	   "Invalid ARM MOV instruction");
+           MI.getOperand(1).isRegister() &&
+           "Invalid ARM MOV instruction");
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
     return true;

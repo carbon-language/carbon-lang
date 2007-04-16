@@ -44,7 +44,7 @@ namespace {
       for(Value::use_iterator ii = i->use_begin(), ie = i->use_end();
           ii != ie; ++ii)
         if (cast<Instruction>(*ii)->getParent() != bb ||
-	    isa<PHINode>(*ii))
+            isa<PHINode>(*ii))
           return true;
       return false;
     }
@@ -52,9 +52,9 @@ namespace {
     virtual bool runOnFunction(Function &F) {
       if (!F.isDeclaration()) {
         //give us a clean block
-	BasicBlock* bbold = &F.getEntryBlock();
-	BasicBlock* bbnew = new BasicBlock("allocablock", &F, &F.getEntryBlock());
-	new BranchInst(bbold, bbnew);
+        BasicBlock* bbold = &F.getEntryBlock();
+        BasicBlock* bbnew = new BasicBlock("allocablock", &F, &F.getEntryBlock());
+        new BranchInst(bbold, bbnew);
 
         //find the instructions
         std::list<Instruction*> worklist;

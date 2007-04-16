@@ -151,7 +151,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
     for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
       if (DT->getNode(I)->getIDom()->getBlock() == OldPred) {
         DT->changeImmediateDominator(DT->getNode(I), DT->getNode(NewBB));
-	EF->setImmediateDominator(I, NewBB);
+        EF->setImmediateDominator(I, NewBB);
       }
   }
 

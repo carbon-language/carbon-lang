@@ -1726,8 +1726,10 @@ endif
 endif
 
 check-line-length:
-	@egrep '.{81}' $(Sources)
+	@egrep -n '.{81}' $(Sources)
 
+check-for-tabs:
+	@egrep -n '	' $(Sources)
 #------------------------------------------------------------------------
 # Print out the directories used for building
 #------------------------------------------------------------------------

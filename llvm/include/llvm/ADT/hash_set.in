@@ -84,7 +84,7 @@ namespace HASH_NAMESPACE {
 /*
 template <class DataType> struct hash {
     unsigned int operator()(const unsigned int& x) const {
-	return x;
+      return x;
     }
 };
 */

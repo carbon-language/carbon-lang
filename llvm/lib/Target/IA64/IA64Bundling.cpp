@@ -56,10 +56,10 @@ namespace {
       return Changed;
     }
 
-    std::set<unsigned> PendingRegWrites; // XXX: ugly global, but
-                         // pending writes can cross basic blocks. Note that
-                         // taken branches end instruction groups. So we
-			 // only need to worry about 'fallthrough' code
+    // XXX: ugly global, but pending writes can cross basic blocks. Note that
+    // taken branches end instruction groups. So we only need to worry about
+    // 'fallthrough' code
+    std::set<unsigned> PendingRegWrites;
   };
 } // end of anonymous namespace
 

@@ -1345,8 +1345,8 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
     // We should use extra load for direct calls to dllimported functions in
     // non-JIT mode.
     if (getTargetMachine().getCodeModel() != CodeModel::Large
-	&& !Subtarget->GVRequiresExtraLoad(G->getGlobal(),
-					   getTargetMachine(), true))
+        && !Subtarget->GVRequiresExtraLoad(G->getGlobal(),
+                                           getTargetMachine(), true))
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     if (getTargetMachine().getCodeModel() != CodeModel::Large)
