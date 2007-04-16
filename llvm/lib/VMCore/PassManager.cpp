@@ -195,6 +195,11 @@ public:
   /// through getAnalysis interface.
   virtual void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass);
 
+  /// Return function pass corresponding to PassInfo PI, that is 
+  /// required by module pass MP. Instantiate analysis pass, by using
+  /// its runOnFunction() for function F.
+  virtual Pass* getOnTheFlyPass(Pass *MP, const PassInfo *PI, Function &F);
+
   virtual const char *getPassName() const {
     return "Module Pass Manager";
   }
@@ -218,6 +223,11 @@ public:
   virtual PassManagerType getPassManagerType() const { 
     return PMT_ModulePassManager; 
   }
+
+ private:
+  /// Collection of on the fly FPPassManagers. These managers manage
+  /// function passes that are required by module passes.
+  std::map<Pass *, FPPassManager *> OnTheFlyManagers;
 };
 
 //===----------------------------------------------------------------------===//
@@ -614,6 +624,10 @@ void PMDataManager::removeDeadPasses(Pass *P, std::string Msg,
                                      enum PassDebuggingString DBG_STR) {
 
   std::vector<Pass *> DeadPasses;
+
+  if (!TPM)
+    return;
+
   TPM->collectLastUses(DeadPasses, P);
 
   for (std::vector<Pass *>::iterator I = DeadPasses.begin(),
@@ -678,14 +692,6 @@ void PMDataManager::add(Pass *P,
         assert (0 && "Unable to accomodate Required Pass");
     }
 
-    // Now, take care of required analysises that are not available.
-    for (SmallVector<AnalysisID, 8>::iterator 
-           I = ReqAnalysisNotAvailable.begin(), 
-           E = ReqAnalysisNotAvailable.end() ;I != E; ++I) {
-      Pass *AnalysisPass = (*I)->createPass();
-      this->addLowerLevelRequiredPass(P, AnalysisPass);
-    }
-
     // Set P as P's last user until someone starts using P.
     // However, if P is a Pass Manager then it does not need
     // to record its last user.
@@ -697,6 +703,14 @@ void PMDataManager::add(Pass *P,
       Pass *My_PM = dynamic_cast<Pass *>(this);
       TPM->setLastUser(TransferLastUses, My_PM);
       TransferLastUses.clear();
+    }
+
+    // Now, take care of required analysises that are not available.
+    for (SmallVector<AnalysisID, 8>::iterator 
+           I = ReqAnalysisNotAvailable.begin(), 
+           E = ReqAnalysisNotAvailable.end() ;I != E; ++I) {
+      Pass *AnalysisPass = (*I)->createPass();
+      this->addLowerLevelRequiredPass(P, AnalysisPass);
     }
 
     // Take a note of analysis required and made available by this pass.
@@ -1190,10 +1204,29 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
            RequiredPass->getPotentialPassManagerType())
           && "Unable to handle Pass that requires lower level Analysis pass");
 
-  assert (0 && 
-          "Unable to handle Pass that requires lower level Analysis pass");
+  FPPassManager *FPP = OnTheFlyManagers[P];
+  if (!FPP) {
+    FPP = new FPPassManager(getDepth() + 1);
+    OnTheFlyManagers[P] = FPP;
+  }
+
+  FPP->add(RequiredPass, false);
 }
- 
+
+/// Return function pass corresponding to PassInfo PI, that is 
+/// required by module pass MP. Instantiate analysis pass, by using
+/// its runOnFunction() for function F.
+Pass* MPPassManager::getOnTheFlyPass(Pass *MP, const PassInfo *PI, 
+                                     Function &F) {
+   AnalysisID AID = PI;
+  FPPassManager *FPP =OnTheFlyManagers[MP];
+  assert (FPP && "Unable to find on the fly pass");
+  
+  FPP->runOnFunction(F);
+  return FPP->findAnalysisPass(AID, false);
+}
+
+
 //===----------------------------------------------------------------------===//
 // PassManagerImpl implementation
 //
