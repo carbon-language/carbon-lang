@@ -1529,56 +1529,84 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
   return 0;
 }
 
-const Type* upgradeGEPIndices(const Type* PTy, 
-                       std::vector<ValueInfo> *Indices, 
-                       std::vector<Value*>    &VIndices, 
-                       std::vector<Constant*> *CIndices = 0) {
-  // Traverse the indices with a gep_type_iterator so we can build the list
-  // of constant and value indices for use later. Also perform upgrades
-  VIndices.clear();
-  if (CIndices) CIndices->clear();
-  for (unsigned i = 0, e = Indices->size(); i != e; ++i)
-    VIndices.push_back((*Indices)[i].V);
-  generic_gep_type_iterator<std::vector<Value*>::iterator>
-    GTI = gep_type_begin(PTy, VIndices.begin(),  VIndices.end()),
-    GTE = gep_type_end(PTy,  VIndices.begin(),  VIndices.end());
-  for (unsigned i = 0, e = Indices->size(); i != e && GTI != GTE; ++i, ++GTI) {
-    Value *Index = VIndices[i];
-    if (CIndices && !isa<Constant>(Index))
-      error("Indices to constant getelementptr must be constants");
-    // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte 
-    // struct indices to i32 struct indices with ZExt for compatibility.
-    else if (isa<StructType>(*GTI)) {        // Only change struct indices
-      if (ConstantInt *CUI = dyn_cast<ConstantInt>(Index))
-        if (CUI->getType()->getBitWidth() == 8)
-          Index = 
-            ConstantExpr::getCast(Instruction::ZExt, CUI, Type::Int32Ty);
+const Type* upgradeGEPCEIndices(const Type* PTy, 
+                                std::vector<ValueInfo> *Indices, 
+                                std::vector<Constant*> &Result) {
+  const Type *Ty = PTy;
+  Result.clear();
+  for (unsigned i = 0, e = Indices->size(); i != e ; ++i) {
+    Constant *Index = cast<Constant>((*Indices)[i].V);
+
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Index)) {
+      // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte 
+      // struct indices to i32 struct indices with ZExt for compatibility.
+      if (CI->getBitWidth() < 32)
+        Index = ConstantExpr::getCast(Instruction::ZExt, CI, Type::Int32Ty);
+    }
+    
+    if (isa<SequentialType>(Ty)) {
+      // Make sure that unsigned SequentialType indices are zext'd to 
+      // 64-bits if they were smaller than that because LLVM 2.0 will sext 
+      // all indices for SequentialType elements. We must retain the same 
+      // semantic (zext) for unsigned types.
+      if (const IntegerType *Ity = dyn_cast<IntegerType>(Index->getType())) {
+        if (Ity->getBitWidth() < 64 && (*Indices)[i].S.isUnsigned()) {
+          Index = ConstantExpr::getCast(Instruction::ZExt, Index,Type::Int64Ty);
+        }
+      }
+    }
+    Result.push_back(Index);
+    Ty = GetElementPtrInst::getIndexedType(PTy, (Value**)&Result[0], 
+                                           Result.size(),true);
+    if (!Ty)
+      error("Index list invalid for constant getelementptr");
+  }
+  return Ty;
+}
+
+const Type* upgradeGEPInstIndices(const Type* PTy, 
+                                  std::vector<ValueInfo> *Indices, 
+                                  std::vector<Value*>    &Result) {
+  const Type *Ty = PTy;
+  Result.clear();
+  for (unsigned i = 0, e = Indices->size(); i != e ; ++i) {
+    Value *Index = (*Indices)[i].V;
+
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Index)) {
+      // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte 
+      // struct indices to i32 struct indices with ZExt for compatibility.
+      if (CI->getBitWidth() < 32)
+        Index = ConstantExpr::getCast(Instruction::ZExt, CI, Type::Int32Ty);
+    }
+    
+
+    if (isa<StructType>(Ty)) {        // Only change struct indices
+      if (!isa<Constant>(Index)) {
+        error("Invalid non-constant structure index");
+        return 0;
+      }
     } else {
       // Make sure that unsigned SequentialType indices are zext'd to 
       // 64-bits if they were smaller than that because LLVM 2.0 will sext 
       // all indices for SequentialType elements. We must retain the same 
       // semantic (zext) for unsigned types.
-      if (const IntegerType *Ity = dyn_cast<IntegerType>(Index->getType()))
+      if (const IntegerType *Ity = dyn_cast<IntegerType>(Index->getType())) {
         if (Ity->getBitWidth() < 64 && (*Indices)[i].S.isUnsigned()) {
-          if (CIndices)
+          if (isa<Constant>(Index))
             Index = ConstantExpr::getCast(Instruction::ZExt, 
               cast<Constant>(Index), Type::Int64Ty);
           else
             Index = CastInst::create(Instruction::ZExt, Index, Type::Int64Ty,
               makeNameUnique("gep"), CurBB);
-          VIndices[i] = Index;
         }
+      }
     }
-    // Add to the CIndices list, if requested.
-    if (CIndices)
-      CIndices->push_back(cast<Constant>(Index));
-  }
-
-  const Type *IdxTy =
-    GetElementPtrInst::getIndexedType(PTy, &VIndices[0], VIndices.size(), true);
-    if (!IdxTy)
+    Result.push_back(Index);
+    Ty = GetElementPtrInst::getIndexedType(PTy, &Result[0], Result.size(),true);
+    if (!Ty)
       error("Index list invalid for constant getelementptr");
-  return IdxTy;
+  }
+  return Ty;
 }
 
 unsigned upgradeCallingConv(unsigned CC) {
@@ -2525,9 +2553,8 @@ ConstExpr
     if (!isa<PointerType>(Ty))
       error("GetElementPtr requires a pointer operand");
 
-    std::vector<Value*> VIndices;
     std::vector<Constant*> CIndices;
-    upgradeGEPIndices($3.C->getType(), $4, VIndices, &CIndices);
+    upgradeGEPCEIndices($3.C->getType(), $4, CIndices);
 
     delete $4;
     $$.C = ConstantExpr::getGetElementPtr($3.C, &CIndices[0], CIndices.size());
@@ -3857,7 +3884,7 @@ MemoryInst
       error("getelementptr insn requires pointer operand");
 
     std::vector<Value*> VIndices;
-    upgradeGEPIndices(Ty, $4, VIndices);
+    upgradeGEPInstIndices(Ty, $4, VIndices);
 
     Value* tmpVal = getVal(Ty, $3);
     $$.I = new GetElementPtrInst(tmpVal, &VIndices[0], VIndices.size());

@@ -335,7 +335,7 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 1742 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1770 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;

@@ -1889,56 +1889,84 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
   return 0;
 }
 
-const Type* upgradeGEPIndices(const Type* PTy, 
-                       std::vector<ValueInfo> *Indices, 
-                       std::vector<Value*>    &VIndices, 
-                       std::vector<Constant*> *CIndices = 0) {
-  // Traverse the indices with a gep_type_iterator so we can build the list
-  // of constant and value indices for use later. Also perform upgrades
-  VIndices.clear();
-  if (CIndices) CIndices->clear();
-  for (unsigned i = 0, e = Indices->size(); i != e; ++i)
-    VIndices.push_back((*Indices)[i].V);
-  generic_gep_type_iterator<std::vector<Value*>::iterator>
-    GTI = gep_type_begin(PTy, VIndices.begin(),  VIndices.end()),
-    GTE = gep_type_end(PTy,  VIndices.begin(),  VIndices.end());
-  for (unsigned i = 0, e = Indices->size(); i != e && GTI != GTE; ++i, ++GTI) {
-    Value *Index = VIndices[i];
-    if (CIndices && !isa<Constant>(Index))
-      error("Indices to constant getelementptr must be constants");
-    // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte 
-    // struct indices to i32 struct indices with ZExt for compatibility.
-    else if (isa<StructType>(*GTI)) {        // Only change struct indices
-      if (ConstantInt *CUI = dyn_cast<ConstantInt>(Index))
-        if (CUI->getType()->getBitWidth() == 8)
-          Index = 
-            ConstantExpr::getCast(Instruction::ZExt, CUI, Type::Int32Ty);
+const Type* upgradeGEPCEIndices(const Type* PTy, 
+                                std::vector<ValueInfo> *Indices, 
+                                std::vector<Constant*> &Result) {
+  const Type *Ty = PTy;
+  Result.clear();
+  for (unsigned i = 0, e = Indices->size(); i != e ; ++i) {
+    Constant *Index = cast<Constant>((*Indices)[i].V);
+
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Index)) {
+      // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte 
+      // struct indices to i32 struct indices with ZExt for compatibility.
+      if (CI->getBitWidth() < 32)
+        Index = ConstantExpr::getCast(Instruction::ZExt, CI, Type::Int32Ty);
+    }
+    
+    if (isa<SequentialType>(Ty)) {
+      // Make sure that unsigned SequentialType indices are zext'd to 
+      // 64-bits if they were smaller than that because LLVM 2.0 will sext 
+      // all indices for SequentialType elements. We must retain the same 
+      // semantic (zext) for unsigned types.
+      if (const IntegerType *Ity = dyn_cast<IntegerType>(Index->getType())) {
+        if (Ity->getBitWidth() < 64 && (*Indices)[i].S.isUnsigned()) {
+          Index = ConstantExpr::getCast(Instruction::ZExt, Index,Type::Int64Ty);
+        }
+      }
+    }
+    Result.push_back(Index);
+    Ty = GetElementPtrInst::getIndexedType(PTy, (Value**)&Result[0], 
+                                           Result.size(),true);
+    if (!Ty)
+      error("Index list invalid for constant getelementptr");
+  }
+  return Ty;
+}
+
+const Type* upgradeGEPInstIndices(const Type* PTy, 
+                                  std::vector<ValueInfo> *Indices, 
+                                  std::vector<Value*>    &Result) {
+  const Type *Ty = PTy;
+  Result.clear();
+  for (unsigned i = 0, e = Indices->size(); i != e ; ++i) {
+    Value *Index = (*Indices)[i].V;
+
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Index)) {
+      // LLVM 1.2 and earlier used ubyte struct indices.  Convert any ubyte 
+      // struct indices to i32 struct indices with ZExt for compatibility.
+      if (CI->getBitWidth() < 32)
+        Index = ConstantExpr::getCast(Instruction::ZExt, CI, Type::Int32Ty);
+    }
+    
+
+    if (isa<StructType>(Ty)) {        // Only change struct indices
+      if (!isa<Constant>(Index)) {
+        error("Invalid non-constant structure index");
+        return 0;
+      }
     } else {
       // Make sure that unsigned SequentialType indices are zext'd to 
       // 64-bits if they were smaller than that because LLVM 2.0 will sext 
       // all indices for SequentialType elements. We must retain the same 
       // semantic (zext) for unsigned types.
-      if (const IntegerType *Ity = dyn_cast<IntegerType>(Index->getType()))
+      if (const IntegerType *Ity = dyn_cast<IntegerType>(Index->getType())) {
         if (Ity->getBitWidth() < 64 && (*Indices)[i].S.isUnsigned()) {
-          if (CIndices)
+          if (isa<Constant>(Index))
             Index = ConstantExpr::getCast(Instruction::ZExt, 
               cast<Constant>(Index), Type::Int64Ty);
           else
             Index = CastInst::create(Instruction::ZExt, Index, Type::Int64Ty,
               makeNameUnique("gep"), CurBB);
-          VIndices[i] = Index;
         }
+      }
     }
-    // Add to the CIndices list, if requested.
-    if (CIndices)
-      CIndices->push_back(cast<Constant>(Index));
-  }
-
-  const Type *IdxTy =
-    GetElementPtrInst::getIndexedType(PTy, &VIndices[0], VIndices.size(), true);
-    if (!IdxTy)
+    Result.push_back(Index);
+    Ty = GetElementPtrInst::getIndexedType(PTy, &Result[0], Result.size(),true);
+    if (!Ty)
       error("Index list invalid for constant getelementptr");
-  return IdxTy;
+  }
+  return Ty;
 }
 
 unsigned upgradeCallingConv(unsigned CC) {
@@ -2118,7 +2146,7 @@ using namespace llvm;
 #endif
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 1742 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1770 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -2161,7 +2189,7 @@ typedef union YYSTYPE {
   llvm::Module::Endianness          Endianness;
 } YYSTYPE;
 /* Line 196 of yacc.c.  */
-#line 2165 "UpgradeParser.tab.c"
+#line 2193 "UpgradeParser.tab.c"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -2173,7 +2201,7 @@ typedef union YYSTYPE {
 
 
 /* Line 219 of yacc.c.  */
-#line 2177 "UpgradeParser.tab.c"
+#line 2205 "UpgradeParser.tab.c"
 
 #if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
 # define YYSIZE_T __SIZE_TYPE__
@@ -2533,38 +2561,38 @@ static const short int yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const unsigned short int yyrline[] =
 {
-       0,  1882,  1882,  1883,  1891,  1892,  1902,  1902,  1902,  1902,
-    1902,  1902,  1902,  1902,  1902,  1902,  1902,  1906,  1906,  1906,
-    1910,  1910,  1910,  1910,  1910,  1910,  1914,  1914,  1915,  1915,
-    1916,  1916,  1917,  1917,  1918,  1918,  1922,  1922,  1923,  1923,
-    1924,  1924,  1925,  1925,  1926,  1926,  1927,  1927,  1928,  1928,
-    1929,  1930,  1933,  1933,  1933,  1933,  1937,  1937,  1937,  1937,
-    1937,  1937,  1937,  1938,  1938,  1938,  1938,  1938,  1938,  1944,
-    1944,  1944,  1944,  1948,  1948,  1948,  1948,  1952,  1952,  1956,
-    1956,  1961,  1964,  1969,  1970,  1971,  1972,  1973,  1974,  1975,
-    1976,  1980,  1981,  1982,  1983,  1984,  1985,  1986,  1987,  1997,
-    1998,  2006,  2007,  2015,  2024,  2025,  2032,  2033,  2037,  2041,
-    2057,  2058,  2065,  2066,  2073,  2081,  2081,  2081,  2081,  2081,
-    2081,  2081,  2082,  2082,  2082,  2082,  2082,  2087,  2091,  2095,
-    2100,  2109,  2127,  2133,  2146,  2157,  2161,  2174,  2178,  2192,
-    2196,  2203,  2204,  2210,  2217,  2229,  2259,  2272,  2295,  2323,
-    2345,  2356,  2378,  2389,  2398,  2403,  2462,  2469,  2477,  2484,
-    2491,  2495,  2499,  2508,  2523,  2536,  2545,  2573,  2586,  2595,
-    2601,  2607,  2618,  2624,  2630,  2641,  2642,  2651,  2652,  2664,
-    2673,  2674,  2675,  2676,  2677,  2693,  2713,  2715,  2717,  2717,
-    2724,  2724,  2732,  2732,  2740,  2740,  2749,  2751,  2753,  2758,
-    2772,  2773,  2777,  2780,  2788,  2792,  2799,  2803,  2807,  2811,
-    2819,  2819,  2823,  2824,  2828,  2836,  2841,  2849,  2850,  2857,
-    2864,  2868,  3050,  3050,  3054,  3054,  3064,  3064,  3068,  3073,
-    3074,  3075,  3079,  3080,  3079,  3092,  3093,  3098,  3099,  3100,
-    3101,  3105,  3109,  3110,  3111,  3112,  3133,  3137,  3151,  3152,
-    3157,  3157,  3165,  3175,  3178,  3187,  3198,  3203,  3212,  3223,
-    3223,  3226,  3230,  3234,  3239,  3249,  3267,  3276,  3346,  3350,
-    3357,  3369,  3384,  3414,  3424,  3434,  3438,  3445,  3446,  3450,
-    3453,  3459,  3478,  3496,  3512,  3526,  3540,  3551,  3569,  3578,
-    3587,  3594,  3615,  3639,  3645,  3651,  3657,  3673,  3763,  3771,
-    3772,  3776,  3777,  3781,  3787,  3794,  3800,  3807,  3814,  3827,
-    3853
+       0,  1910,  1910,  1911,  1919,  1920,  1930,  1930,  1930,  1930,
+    1930,  1930,  1930,  1930,  1930,  1930,  1930,  1934,  1934,  1934,
+    1938,  1938,  1938,  1938,  1938,  1938,  1942,  1942,  1943,  1943,
+    1944,  1944,  1945,  1945,  1946,  1946,  1950,  1950,  1951,  1951,
+    1952,  1952,  1953,  1953,  1954,  1954,  1955,  1955,  1956,  1956,
+    1957,  1958,  1961,  1961,  1961,  1961,  1965,  1965,  1965,  1965,
+    1965,  1965,  1965,  1966,  1966,  1966,  1966,  1966,  1966,  1972,
+    1972,  1972,  1972,  1976,  1976,  1976,  1976,  1980,  1980,  1984,
+    1984,  1989,  1992,  1997,  1998,  1999,  2000,  2001,  2002,  2003,
+    2004,  2008,  2009,  2010,  2011,  2012,  2013,  2014,  2015,  2025,
+    2026,  2034,  2035,  2043,  2052,  2053,  2060,  2061,  2065,  2069,
+    2085,  2086,  2093,  2094,  2101,  2109,  2109,  2109,  2109,  2109,
+    2109,  2109,  2110,  2110,  2110,  2110,  2110,  2115,  2119,  2123,
+    2128,  2137,  2155,  2161,  2174,  2185,  2189,  2202,  2206,  2220,
+    2224,  2231,  2232,  2238,  2245,  2257,  2287,  2300,  2323,  2351,
+    2373,  2384,  2406,  2417,  2426,  2431,  2490,  2497,  2505,  2512,
+    2519,  2523,  2527,  2536,  2551,  2563,  2572,  2600,  2613,  2622,
+    2628,  2634,  2645,  2651,  2657,  2668,  2669,  2678,  2679,  2691,
+    2700,  2701,  2702,  2703,  2704,  2720,  2740,  2742,  2744,  2744,
+    2751,  2751,  2759,  2759,  2767,  2767,  2776,  2778,  2780,  2785,
+    2799,  2800,  2804,  2807,  2815,  2819,  2826,  2830,  2834,  2838,
+    2846,  2846,  2850,  2851,  2855,  2863,  2868,  2876,  2877,  2884,
+    2891,  2895,  3077,  3077,  3081,  3081,  3091,  3091,  3095,  3100,
+    3101,  3102,  3106,  3107,  3106,  3119,  3120,  3125,  3126,  3127,
+    3128,  3132,  3136,  3137,  3138,  3139,  3160,  3164,  3178,  3179,
+    3184,  3184,  3192,  3202,  3205,  3214,  3225,  3230,  3239,  3250,
+    3250,  3253,  3257,  3261,  3266,  3276,  3294,  3303,  3373,  3377,
+    3384,  3396,  3411,  3441,  3451,  3461,  3465,  3472,  3473,  3477,
+    3480,  3486,  3505,  3523,  3539,  3553,  3567,  3578,  3596,  3605,
+    3614,  3621,  3642,  3666,  3672,  3678,  3684,  3700,  3790,  3798,
+    3799,  3803,  3804,  3808,  3814,  3821,  3827,  3834,  3841,  3854,
+    3880
 };
 #endif
 
@@ -3954,7 +3982,7 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 1883 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1911 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[0].UIntVal) > (uint32_t)INT32_MAX)     // Outside of my range!
       error("Value too large for type");
@@ -3963,7 +3991,7 @@ yyreduce:
     break;
 
   case 5:
-#line 1892 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1920 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[0].UInt64Val) > (uint64_t)INT64_MAX)     // Outside of my range!
       error("Value too large for type");
@@ -3972,226 +4000,226 @@ yyreduce:
     break;
 
   case 26:
-#line 1914 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1942 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_EQ; ;}
     break;
 
   case 27:
-#line 1914 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1942 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_NE; ;}
     break;
 
   case 28:
-#line 1915 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1943 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_SLT; ;}
     break;
 
   case 29:
-#line 1915 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1943 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_SGT; ;}
     break;
 
   case 30:
-#line 1916 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1944 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_SLE; ;}
     break;
 
   case 31:
-#line 1916 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1944 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_SGE; ;}
     break;
 
   case 32:
-#line 1917 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1945 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_ULT; ;}
     break;
 
   case 33:
-#line 1917 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1945 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_UGT; ;}
     break;
 
   case 34:
-#line 1918 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1946 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_ULE; ;}
     break;
 
   case 35:
-#line 1918 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1946 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.IPred) = ICmpInst::ICMP_UGE; ;}
     break;
 
   case 36:
-#line 1922 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1950 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OEQ; ;}
     break;
 
   case 37:
-#line 1922 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1950 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_ONE; ;}
     break;
 
   case 38:
-#line 1923 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1951 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OLT; ;}
     break;
 
   case 39:
-#line 1923 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1951 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OGT; ;}
     break;
 
   case 40:
-#line 1924 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1952 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OLE; ;}
     break;
 
   case 41:
-#line 1924 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1952 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_OGE; ;}
     break;
 
   case 42:
-#line 1925 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1953 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_ORD; ;}
     break;
 
   case 43:
-#line 1925 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1953 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UNO; ;}
     break;
 
   case 44:
-#line 1926 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1954 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UEQ; ;}
     break;
 
   case 45:
-#line 1926 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1954 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UNE; ;}
     break;
 
   case 46:
-#line 1927 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1955 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_ULT; ;}
     break;
 
   case 47:
-#line 1927 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1955 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UGT; ;}
     break;
 
   case 48:
-#line 1928 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1956 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_ULE; ;}
     break;
 
   case 49:
-#line 1928 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1956 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_UGE; ;}
     break;
 
   case 50:
-#line 1929 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1957 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_TRUE; ;}
     break;
 
   case 51:
-#line 1930 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1958 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.FPred) = FCmpInst::FCMP_FALSE; ;}
     break;
 
   case 81:
-#line 1961 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1989 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.StrVal) = (yyvsp[-1].StrVal);
   ;}
     break;
 
   case 82:
-#line 1964 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1992 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.StrVal) = 0;
   ;}
     break;
 
   case 83:
-#line 1969 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1997 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::InternalLinkage; ;}
     break;
 
   case 84:
-#line 1970 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1998 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::LinkOnceLinkage; ;}
     break;
 
   case 85:
-#line 1971 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 1999 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::WeakLinkage; ;}
     break;
 
   case 86:
-#line 1972 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2000 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::AppendingLinkage; ;}
     break;
 
   case 87:
-#line 1973 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2001 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::DLLImportLinkage; ;}
     break;
 
   case 88:
-#line 1974 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2002 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::DLLExportLinkage; ;}
     break;
 
   case 89:
-#line 1975 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2003 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalWeakLinkage; ;}
     break;
 
   case 90:
-#line 1976 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2004 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 91:
-#line 1980 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2008 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = OldCallingConv::C; ;}
     break;
 
   case 92:
-#line 1981 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2009 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = OldCallingConv::C; ;}
     break;
 
   case 93:
-#line 1982 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2010 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = OldCallingConv::CSRet; ;}
     break;
 
   case 94:
-#line 1983 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2011 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = OldCallingConv::Fast; ;}
     break;
 
   case 95:
-#line 1984 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2012 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = OldCallingConv::Cold; ;}
     break;
 
   case 96:
-#line 1985 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2013 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = OldCallingConv::X86_StdCall; ;}
     break;
 
   case 97:
-#line 1986 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2014 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = OldCallingConv::X86_FastCall; ;}
     break;
 
   case 98:
-#line 1987 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2015 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((unsigned)(yyvsp[0].UInt64Val) != (yyvsp[0].UInt64Val))
       error("Calling conv too large");
@@ -4200,12 +4228,12 @@ yyreduce:
     break;
 
   case 99:
-#line 1997 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2025 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = 0; ;}
     break;
 
   case 100:
-#line 1998 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2026 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.UIntVal) = (yyvsp[0].UInt64Val);
     if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
@@ -4214,12 +4242,12 @@ yyreduce:
     break;
 
   case 101:
-#line 2006 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2034 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.UIntVal) = 0; ;}
     break;
 
   case 102:
-#line 2007 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2035 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.UIntVal) = (yyvsp[0].UInt64Val);
     if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
@@ -4228,7 +4256,7 @@ yyreduce:
     break;
 
   case 103:
-#line 2015 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2043 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     for (unsigned i = 0, e = strlen((yyvsp[0].StrVal)); i != e; ++i)
       if ((yyvsp[0].StrVal)[i] == '"' || (yyvsp[0].StrVal)[i] == '\\')
@@ -4238,27 +4266,27 @@ yyreduce:
     break;
 
   case 104:
-#line 2024 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2052 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.StrVal) = 0; ;}
     break;
 
   case 105:
-#line 2025 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2053 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.StrVal) = (yyvsp[0].StrVal); ;}
     break;
 
   case 106:
-#line 2032 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2060 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {;}
     break;
 
   case 107:
-#line 2033 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2061 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {;}
     break;
 
   case 108:
-#line 2037 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2065 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV->setSection((yyvsp[0].StrVal));
     free((yyvsp[0].StrVal));
@@ -4266,7 +4294,7 @@ yyreduce:
     break;
 
   case 109:
-#line 2041 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2069 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[0].UInt64Val) != 0 && !isPowerOf2_32((yyvsp[0].UInt64Val)))
       error("Alignment must be a power of two");
@@ -4276,7 +4304,7 @@ yyreduce:
     break;
 
   case 111:
-#line 2058 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2086 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.TypeVal).PAT = new PATypeHolder((yyvsp[0].PrimType).T); 
     (yyval.TypeVal).S.makeSignless();
@@ -4284,7 +4312,7 @@ yyreduce:
     break;
 
   case 113:
-#line 2066 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2094 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.TypeVal).PAT = new PATypeHolder((yyvsp[0].PrimType).T); 
     (yyval.TypeVal).S.makeSignless();
@@ -4292,7 +4320,7 @@ yyreduce:
     break;
 
   case 114:
-#line 2073 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2101 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!UpRefs.empty())
       error("Invalid upreference in type: " + (*(yyvsp[0].TypeVal).PAT)->getDescription());
@@ -4301,7 +4329,7 @@ yyreduce:
     break;
 
   case 127:
-#line 2087 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2115 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.TypeVal).PAT = new PATypeHolder((yyvsp[0].PrimType).T);
     (yyval.TypeVal).S.copy((yyvsp[0].PrimType).S);
@@ -4309,7 +4337,7 @@ yyreduce:
     break;
 
   case 128:
-#line 2091 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2119 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TypeVal).PAT = new PATypeHolder(OpaqueType::get());
     (yyval.TypeVal).S.makeSignless();
@@ -4317,7 +4345,7 @@ yyreduce:
     break;
 
   case 129:
-#line 2095 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2123 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {            // Named types are also simple types...
     (yyval.TypeVal).S.copy(getTypeSign((yyvsp[0].ValIDVal)));
     const Type* tmp = getType((yyvsp[0].ValIDVal));
@@ -4326,7 +4354,7 @@ yyreduce:
     break;
 
   case 130:
-#line 2100 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2128 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                   // Type UpReference
     if ((yyvsp[0].UInt64Val) > (uint64_t)~0U) 
       error("Value out of range");
@@ -4339,7 +4367,7 @@ yyreduce:
     break;
 
   case 131:
-#line 2109 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2137 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {           // Function derived type?
     (yyval.TypeVal).S.makeComposite((yyvsp[-3].TypeVal).S);
     std::vector<const Type*> Params;
@@ -4361,7 +4389,7 @@ yyreduce:
     break;
 
   case 132:
-#line 2127 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2155 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {          // Sized array type?
     (yyval.TypeVal).S.makeComposite((yyvsp[-1].TypeVal).S);
     (yyval.TypeVal).PAT = new PATypeHolder(HandleUpRefs(ArrayType::get((yyvsp[-1].TypeVal).PAT->get(), 
@@ -4371,7 +4399,7 @@ yyreduce:
     break;
 
   case 133:
-#line 2133 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2161 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {          // Vector type?
     const llvm::Type* ElemTy = (yyvsp[-1].TypeVal).PAT->get();
     if ((unsigned)(yyvsp[-3].UInt64Val) != (yyvsp[-3].UInt64Val))
@@ -4388,7 +4416,7 @@ yyreduce:
     break;
 
   case 134:
-#line 2146 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2174 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                        // Structure type?
     std::vector<const Type*> Elements;
     (yyval.TypeVal).S.makeComposite();
@@ -4403,7 +4431,7 @@ yyreduce:
     break;
 
   case 135:
-#line 2157 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2185 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                                  // Empty structure type?
     (yyval.TypeVal).PAT = new PATypeHolder(StructType::get(std::vector<const Type*>()));
     (yyval.TypeVal).S.makeComposite();
@@ -4411,7 +4439,7 @@ yyreduce:
     break;
 
   case 136:
-#line 2161 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2189 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                // Packed Structure type?
     (yyval.TypeVal).S.makeComposite();
     std::vector<const Type*> Elements;
@@ -4428,7 +4456,7 @@ yyreduce:
     break;
 
   case 137:
-#line 2174 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2202 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                          // Empty packed structure type?
     (yyval.TypeVal).PAT = new PATypeHolder(StructType::get(std::vector<const Type*>(),true));
     (yyval.TypeVal).S.makeComposite();
@@ -4436,7 +4464,7 @@ yyreduce:
     break;
 
   case 138:
-#line 2178 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2206 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                             // Pointer type?
     if ((yyvsp[-1].TypeVal).PAT->get() == Type::LabelTy)
       error("Cannot form a pointer to a basic block");
@@ -4448,7 +4476,7 @@ yyreduce:
     break;
 
   case 139:
-#line 2192 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2220 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TypeList) = new std::list<PATypeInfo>();
     (yyval.TypeList)->push_back((yyvsp[0].TypeVal)); 
@@ -4456,14 +4484,14 @@ yyreduce:
     break;
 
   case 140:
-#line 2196 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2224 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     ((yyval.TypeList)=(yyvsp[-2].TypeList))->push_back((yyvsp[0].TypeVal));
   ;}
     break;
 
   case 142:
-#line 2204 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2232 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
@@ -4473,7 +4501,7 @@ yyreduce:
     break;
 
   case 143:
-#line 2210 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2238 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TypeList) = new std::list<PATypeInfo>();
     PATypeInfo VoidTI;
@@ -4484,14 +4512,14 @@ yyreduce:
     break;
 
   case 144:
-#line 2217 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2245 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TypeList) = new std::list<PATypeInfo>();
   ;}
     break;
 
   case 145:
-#line 2229 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2257 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { // Nonempty unsized arr
     const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-3].TypeVal).PAT->get());
     if (ATy == 0)
@@ -4525,7 +4553,7 @@ yyreduce:
     break;
 
   case 146:
-#line 2259 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2287 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal).PAT->get());
     if (ATy == 0)
@@ -4542,7 +4570,7 @@ yyreduce:
     break;
 
   case 147:
-#line 2272 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2300 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal).PAT->get());
     if (ATy == 0)
@@ -4569,7 +4597,7 @@ yyreduce:
     break;
 
   case 148:
-#line 2295 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2323 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { // Nonempty unsized arr
     const VectorType *PTy = dyn_cast<VectorType>((yyvsp[-3].TypeVal).PAT->get());
     if (PTy == 0)
@@ -4601,7 +4629,7 @@ yyreduce:
     break;
 
   case 149:
-#line 2323 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2351 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[-3].TypeVal).PAT->get());
     if (STy == 0)
@@ -4627,7 +4655,7 @@ yyreduce:
     break;
 
   case 150:
-#line 2345 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2373 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[-2].TypeVal).PAT->get());
     if (STy == 0)
@@ -4642,7 +4670,7 @@ yyreduce:
     break;
 
   case 151:
-#line 2356 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2384 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[-5].TypeVal).PAT->get());
     if (STy == 0)
@@ -4668,7 +4696,7 @@ yyreduce:
     break;
 
   case 152:
-#line 2378 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2406 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const StructType *STy = dyn_cast<StructType>((yyvsp[-4].TypeVal).PAT->get());
     if (STy == 0)
@@ -4683,7 +4711,7 @@ yyreduce:
     break;
 
   case 153:
-#line 2389 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2417 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const PointerType *PTy = dyn_cast<PointerType>((yyvsp[-1].TypeVal).PAT->get());
     if (PTy == 0)
@@ -4696,7 +4724,7 @@ yyreduce:
     break;
 
   case 154:
-#line 2398 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2426 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ConstVal).C = UndefValue::get((yyvsp[-1].TypeVal).PAT->get());
     (yyval.ConstVal).S.copy((yyvsp[-1].TypeVal).S);
@@ -4705,7 +4733,7 @@ yyreduce:
     break;
 
   case 155:
-#line 2403 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2431 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const PointerType *Ty = dyn_cast<PointerType>((yyvsp[-1].TypeVal).PAT->get());
     if (Ty == 0)
@@ -4768,7 +4796,7 @@ yyreduce:
     break;
 
   case 156:
-#line 2462 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2490 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[-1].TypeVal).PAT->get() != (yyvsp[0].ConstVal).C->getType())
       error("Mismatched types for constant expression");
@@ -4779,7 +4807,7 @@ yyreduce:
     break;
 
   case 157:
-#line 2469 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2497 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[-1].TypeVal).PAT->get();
     if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || isa<OpaqueType>(Ty))
@@ -4791,7 +4819,7 @@ yyreduce:
     break;
 
   case 158:
-#line 2477 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2505 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {      // integral constants
     const Type *Ty = (yyvsp[-1].PrimType).T;
     if (!ConstantInt::isValueValidForType(Ty, (yyvsp[0].SInt64Val)))
@@ -4802,7 +4830,7 @@ yyreduce:
     break;
 
   case 159:
-#line 2484 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2512 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {            // integral constants
     const Type *Ty = (yyvsp[-1].PrimType).T;
     if (!ConstantInt::isValueValidForType(Ty, (yyvsp[0].UInt64Val)))
@@ -4813,7 +4841,7 @@ yyreduce:
     break;
 
   case 160:
-#line 2491 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2519 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                      // Boolean constants
     (yyval.ConstVal).C = ConstantInt::get(Type::Int1Ty, true);
     (yyval.ConstVal).S.makeUnsigned();
@@ -4821,7 +4849,7 @@ yyreduce:
     break;
 
   case 161:
-#line 2495 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2523 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                     // Boolean constants
     (yyval.ConstVal).C = ConstantInt::get(Type::Int1Ty, false);
     (yyval.ConstVal).S.makeUnsigned();
@@ -4829,7 +4857,7 @@ yyreduce:
     break;
 
   case 162:
-#line 2499 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2527 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                   // Float & Double constants
     if (!ConstantFP::isValueValidForType((yyvsp[-1].PrimType).T, (yyvsp[0].FPVal)))
       error("Floating point constant invalid for type");
@@ -4839,7 +4867,7 @@ yyreduce:
     break;
 
   case 163:
-#line 2508 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2536 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* SrcTy = (yyvsp[-3].ConstVal).C->getType();
     const Type* DstTy = (yyvsp[-1].TypeVal).PAT->get();
@@ -4858,15 +4886,14 @@ yyreduce:
     break;
 
   case 164:
-#line 2523 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2551 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[-2].ConstVal).C->getType();
     if (!isa<PointerType>(Ty))
       error("GetElementPtr requires a pointer operand");
 
-    std::vector<Value*> VIndices;
     std::vector<Constant*> CIndices;
-    upgradeGEPIndices((yyvsp[-2].ConstVal).C->getType(), (yyvsp[-1].ValueList), VIndices, &CIndices);
+    upgradeGEPCEIndices((yyvsp[-2].ConstVal).C->getType(), (yyvsp[-1].ValueList), CIndices);
 
     delete (yyvsp[-1].ValueList);
     (yyval.ConstVal).C = ConstantExpr::getGetElementPtr((yyvsp[-2].ConstVal).C, &CIndices[0], CIndices.size());
@@ -4875,7 +4902,7 @@ yyreduce:
     break;
 
   case 165:
-#line 2536 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2563 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!(yyvsp[-5].ConstVal).C->getType()->isInteger() ||
         cast<IntegerType>((yyvsp[-5].ConstVal).C->getType())->getBitWidth() != 1)
@@ -4888,7 +4915,7 @@ yyreduce:
     break;
 
   case 166:
-#line 2545 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2572 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[-3].ConstVal).C->getType();
     if (Ty != (yyvsp[-1].ConstVal).C->getType())
@@ -4920,7 +4947,7 @@ yyreduce:
     break;
 
   case 167:
-#line 2573 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2600 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* Ty = (yyvsp[-3].ConstVal).C->getType();
     if (Ty != (yyvsp[-1].ConstVal).C->getType())
@@ -4937,7 +4964,7 @@ yyreduce:
     break;
 
   case 168:
-#line 2586 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2613 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* Ty = (yyvsp[-3].ConstVal).C->getType();
     if (Ty != (yyvsp[-1].ConstVal).C->getType())
@@ -4950,7 +4977,7 @@ yyreduce:
     break;
 
   case 169:
-#line 2595 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2622 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[-3].ConstVal).C->getType() != (yyvsp[-1].ConstVal).C->getType()) 
       error("icmp operand types must match");
@@ -4960,7 +4987,7 @@ yyreduce:
     break;
 
   case 170:
-#line 2601 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2628 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[-3].ConstVal).C->getType() != (yyvsp[-1].ConstVal).C->getType()) 
       error("fcmp operand types must match");
@@ -4970,7 +4997,7 @@ yyreduce:
     break;
 
   case 171:
-#line 2607 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2634 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!(yyvsp[-1].ConstVal).C->getType()->isInteger() ||
         cast<IntegerType>((yyvsp[-1].ConstVal).C->getType())->getBitWidth() != 8)
@@ -4985,7 +5012,7 @@ yyreduce:
     break;
 
   case 172:
-#line 2618 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2645 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C))
       error("Invalid extractelement operands");
@@ -4995,7 +5022,7 @@ yyreduce:
     break;
 
   case 173:
-#line 2624 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2651 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[-5].ConstVal).C, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C))
       error("Invalid insertelement operands");
@@ -5005,7 +5032,7 @@ yyreduce:
     break;
 
   case 174:
-#line 2630 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2657 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[-5].ConstVal).C, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C))
       error("Invalid shufflevector operands");
@@ -5015,12 +5042,12 @@ yyreduce:
     break;
 
   case 175:
-#line 2641 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2668 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { ((yyval.ConstVector) = (yyvsp[-2].ConstVector))->push_back((yyvsp[0].ConstVal)); ;}
     break;
 
   case 176:
-#line 2642 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2669 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ConstVector) = new std::vector<ConstInfo>();
     (yyval.ConstVector)->push_back((yyvsp[0].ConstVal));
@@ -5028,17 +5055,17 @@ yyreduce:
     break;
 
   case 177:
-#line 2651 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2678 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 178:
-#line 2652 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2679 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 179:
-#line 2664 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2691 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ModuleVal) = ParserResult = (yyvsp[0].ModuleVal);
     CurModule.ModuleDone();
@@ -5046,27 +5073,27 @@ yyreduce:
     break;
 
   case 180:
-#line 2673 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2700 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ModuleVal) = (yyvsp[-1].ModuleVal); CurFun.FunctionDone(); ;}
     break;
 
   case 181:
-#line 2674 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2701 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ModuleVal) = (yyvsp[-1].ModuleVal); ;}
     break;
 
   case 182:
-#line 2675 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2702 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ModuleVal) = (yyvsp[-3].ModuleVal); ;}
     break;
 
   case 183:
-#line 2676 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2703 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ModuleVal) = (yyvsp[-1].ModuleVal); ;}
     break;
 
   case 184:
-#line 2677 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2704 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ModuleVal) = CurModule.CurrentModule;
     // Emit an error if there are any unresolved types left.
@@ -5082,7 +5109,7 @@ yyreduce:
     break;
 
   case 185:
-#line 2693 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2720 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     // Eagerly resolve types.  This is not an optimization, this is a
     // requirement that is due to the fact that we could have this:
@@ -5106,19 +5133,19 @@ yyreduce:
     break;
 
   case 186:
-#line 2713 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2740 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {       // Function prototypes can be in const pool
   ;}
     break;
 
   case 187:
-#line 2715 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2742 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {  // Asm blocks can be in the const pool
   ;}
     break;
 
   case 188:
-#line 2717 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2744 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[0].ConstVal).C == 0) 
       error("Global value initializer is not a constant");
@@ -5127,14 +5154,14 @@ yyreduce:
     break;
 
   case 189:
-#line 2721 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2748 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 190:
-#line 2724 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2751 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[0].TypeVal).PAT->get();
     CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::ExternalLinkage, (yyvsp[-1].BoolVal), Ty, 0,
@@ -5144,14 +5171,14 @@ yyreduce:
     break;
 
   case 191:
-#line 2729 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2756 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 192:
-#line 2732 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2759 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[0].TypeVal).PAT->get();
     CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::DLLImportLinkage, (yyvsp[-1].BoolVal), Ty, 0,
@@ -5161,14 +5188,14 @@ yyreduce:
     break;
 
   case 193:
-#line 2737 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2764 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 194:
-#line 2740 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2767 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[0].TypeVal).PAT->get();
     CurGV = 
@@ -5179,32 +5206,32 @@ yyreduce:
     break;
 
   case 195:
-#line 2746 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2773 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 196:
-#line 2749 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2776 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { 
   ;}
     break;
 
   case 197:
-#line 2751 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2778 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
   ;}
     break;
 
   case 198:
-#line 2753 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2780 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { 
   ;}
     break;
 
   case 199:
-#line 2758 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2785 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const std::string &AsmSoFar = CurModule.CurrentModule->getModuleInlineAsm();
     char *EndStr = UnEscapeLexed((yyvsp[0].StrVal), true);
@@ -5219,24 +5246,24 @@ yyreduce:
     break;
 
   case 200:
-#line 2772 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2799 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Endianness) = Module::BigEndian; ;}
     break;
 
   case 201:
-#line 2773 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2800 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Endianness) = Module::LittleEndian; ;}
     break;
 
   case 202:
-#line 2777 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2804 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurModule.setEndianness((yyvsp[0].Endianness));
   ;}
     break;
 
   case 203:
-#line 2780 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2807 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[0].UInt64Val) == 32)
       CurModule.setPointerSize(Module::Pointer32);
@@ -5248,7 +5275,7 @@ yyreduce:
     break;
 
   case 204:
-#line 2788 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2815 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurModule.CurrentModule->setTargetTriple((yyvsp[0].StrVal));
     free((yyvsp[0].StrVal));
@@ -5256,7 +5283,7 @@ yyreduce:
     break;
 
   case 205:
-#line 2792 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2819 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurModule.CurrentModule->setDataLayout((yyvsp[0].StrVal));
     free((yyvsp[0].StrVal));
@@ -5264,7 +5291,7 @@ yyreduce:
     break;
 
   case 207:
-#line 2803 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2830 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
       CurModule.CurrentModule->addLibrary((yyvsp[0].StrVal));
       free((yyvsp[0].StrVal));
@@ -5272,7 +5299,7 @@ yyreduce:
     break;
 
   case 208:
-#line 2807 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2834 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurModule.CurrentModule->addLibrary((yyvsp[0].StrVal));
     free((yyvsp[0].StrVal));
@@ -5280,17 +5307,17 @@ yyreduce:
     break;
 
   case 209:
-#line 2811 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2838 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { ;}
     break;
 
   case 213:
-#line 2824 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2851 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.StrVal) = 0; ;}
     break;
 
   case 214:
-#line 2828 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2855 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[-1].TypeVal).PAT->get() == Type::VoidTy)
       error("void typed arguments are invalid");
@@ -5299,7 +5326,7 @@ yyreduce:
     break;
 
   case 215:
-#line 2836 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2863 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ArgList) = (yyvsp[-2].ArgList);
     (yyval.ArgList)->push_back(*(yyvsp[0].ArgVal));
@@ -5308,7 +5335,7 @@ yyreduce:
     break;
 
   case 216:
-#line 2841 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2868 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ArgList) = new std::vector<std::pair<PATypeInfo,char*> >();
     (yyval.ArgList)->push_back(*(yyvsp[0].ArgVal));
@@ -5317,12 +5344,12 @@ yyreduce:
     break;
 
   case 217:
-#line 2849 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2876 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ArgList) = (yyvsp[0].ArgList); ;}
     break;
 
   case 218:
-#line 2850 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2877 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ArgList) = (yyvsp[-2].ArgList);
     PATypeInfo VoidTI;
@@ -5333,7 +5360,7 @@ yyreduce:
     break;
 
   case 219:
-#line 2857 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2884 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ArgList) = new std::vector<std::pair<PATypeInfo,char*> >();
     PATypeInfo VoidTI;
@@ -5344,12 +5371,12 @@ yyreduce:
     break;
 
   case 220:
-#line 2864 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2891 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ArgList) = 0; ;}
     break;
 
   case 221:
-#line 2868 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 2895 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     UnEscapeLexed((yyvsp[-5].StrVal));
     std::string FunctionName((yyvsp[-5].StrVal));
@@ -5532,12 +5559,12 @@ yyreduce:
     break;
 
   case 224:
-#line 3054 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3081 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { CurFun.Linkage = (yyvsp[0].Linkage); ;}
     break;
 
   case 225:
-#line 3054 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3081 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.FunctionVal) = CurFun.CurrentFunction;
 
@@ -5548,39 +5575,39 @@ yyreduce:
     break;
 
   case 228:
-#line 3068 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3095 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.FunctionVal) = (yyvsp[-1].FunctionVal);
   ;}
     break;
 
   case 229:
-#line 3073 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3100 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 230:
-#line 3074 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3101 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::DLLImportLinkage; ;}
     break;
 
   case 231:
-#line 3075 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3102 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.Linkage) = GlobalValue::ExternalWeakLinkage; ;}
     break;
 
   case 232:
-#line 3079 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3106 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { CurFun.isDeclare = true; ;}
     break;
 
   case 233:
-#line 3080 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3107 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { CurFun.Linkage = (yyvsp[0].Linkage); ;}
     break;
 
   case 234:
-#line 3080 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3107 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.FunctionVal) = CurFun.CurrentFunction;
     CurFun.FunctionDone();
@@ -5589,32 +5616,32 @@ yyreduce:
     break;
 
   case 235:
-#line 3092 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3119 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 236:
-#line 3093 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3120 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 237:
-#line 3098 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3125 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::create((yyvsp[0].SInt64Val)); ;}
     break;
 
   case 238:
-#line 3099 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3126 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::create((yyvsp[0].UInt64Val)); ;}
     break;
 
   case 239:
-#line 3100 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3127 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::create((yyvsp[0].FPVal)); ;}
     break;
 
   case 240:
-#line 3101 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3128 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.ValIDVal) = ValID::create(ConstantInt::get(Type::Int1Ty, true));
     (yyval.ValIDVal).S.makeUnsigned();
@@ -5622,7 +5649,7 @@ yyreduce:
     break;
 
   case 241:
-#line 3105 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3132 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { 
     (yyval.ValIDVal) = ValID::create(ConstantInt::get(Type::Int1Ty, false)); 
     (yyval.ValIDVal).S.makeUnsigned();
@@ -5630,22 +5657,22 @@ yyreduce:
     break;
 
   case 242:
-#line 3109 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3136 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::createNull(); ;}
     break;
 
   case 243:
-#line 3110 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3137 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::createUndef(); ;}
     break;
 
   case 244:
-#line 3111 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3138 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValIDVal) = ValID::createZeroInit(); ;}
     break;
 
   case 245:
-#line 3112 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3139 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { // Nonempty unsized packed vector
     const Type *ETy = (*(yyvsp[-1].ConstVector))[0].C->getType();
     int NumElements = (yyvsp[-1].ConstVector)->size(); 
@@ -5670,7 +5697,7 @@ yyreduce:
     break;
 
   case 246:
-#line 3133 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3160 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ValIDVal) = ValID::create((yyvsp[0].ConstVal).C);
     (yyval.ValIDVal).S.copy((yyvsp[0].ConstVal).S);
@@ -5678,7 +5705,7 @@ yyreduce:
     break;
 
   case 247:
-#line 3137 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3164 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     char *End = UnEscapeLexed((yyvsp[-2].StrVal), true);
     std::string AsmStr = std::string((yyvsp[-2].StrVal), End);
@@ -5691,17 +5718,17 @@ yyreduce:
     break;
 
   case 248:
-#line 3151 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3178 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {  (yyval.ValIDVal) = ValID::create((yyvsp[0].SIntVal)); (yyval.ValIDVal).S.makeSignless(); ;}
     break;
 
   case 249:
-#line 3152 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3179 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {  (yyval.ValIDVal) = ValID::create((yyvsp[0].StrVal)); (yyval.ValIDVal).S.makeSignless(); ;}
     break;
 
   case 252:
-#line 3165 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3192 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { 
     const Type *Ty = (yyvsp[-1].TypeVal).PAT->get();
     (yyvsp[0].ValIDVal).S.copy((yyvsp[-1].TypeVal).S);
@@ -5712,21 +5739,21 @@ yyreduce:
     break;
 
   case 253:
-#line 3175 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3202 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.FunctionVal) = (yyvsp[-1].FunctionVal);
   ;}
     break;
 
   case 254:
-#line 3178 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3205 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { // Do not allow functions with 0 basic blocks   
     (yyval.FunctionVal) = (yyvsp[-1].FunctionVal);
   ;}
     break;
 
   case 255:
-#line 3187 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3214 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     ValueInfo VI; VI.V = (yyvsp[0].TermInstVal).TI; VI.S.copy((yyvsp[0].TermInstVal).S);
     setValueName(VI, (yyvsp[-1].StrVal));
@@ -5738,7 +5765,7 @@ yyreduce:
     break;
 
   case 256:
-#line 3198 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3225 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if ((yyvsp[0].InstVal).I)
       (yyvsp[-1].BasicBlockVal)->getInstList().push_back((yyvsp[0].InstVal).I);
@@ -5747,7 +5774,7 @@ yyreduce:
     break;
 
   case 257:
-#line 3203 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3230 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.BasicBlockVal) = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++),true);
     // Make sure to move the basic block to the correct location in the
@@ -5760,7 +5787,7 @@ yyreduce:
     break;
 
   case 258:
-#line 3212 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3239 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.BasicBlockVal) = CurBB = getBBVal(ValID::create((yyvsp[0].StrVal)), true);
     // Make sure to move the basic block to the correct location in the
@@ -5773,7 +5800,7 @@ yyreduce:
     break;
 
   case 261:
-#line 3226 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3253 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {              // Return with a result...
     (yyval.TermInstVal).TI = new ReturnInst((yyvsp[0].ValueVal).V);
     (yyval.TermInstVal).S.makeSignless();
@@ -5781,7 +5808,7 @@ yyreduce:
     break;
 
   case 262:
-#line 3230 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3257 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                                       // Return with no result...
     (yyval.TermInstVal).TI = new ReturnInst();
     (yyval.TermInstVal).S.makeSignless();
@@ -5789,7 +5816,7 @@ yyreduce:
     break;
 
   case 263:
-#line 3234 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3261 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {                         // Unconditional Branch...
     BasicBlock* tmpBB = getBBVal((yyvsp[0].ValIDVal));
     (yyval.TermInstVal).TI = new BranchInst(tmpBB);
@@ -5798,7 +5825,7 @@ yyreduce:
     break;
 
   case 264:
-#line 3239 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3266 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {  
     (yyvsp[-3].ValIDVal).S.makeSignless();
     (yyvsp[0].ValIDVal).S.makeSignless();
@@ -5812,7 +5839,7 @@ yyreduce:
     break;
 
   case 265:
-#line 3249 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3276 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[-6].ValIDVal).S.copy((yyvsp[-7].PrimType).S);
     Value* tmpVal = getVal((yyvsp[-7].PrimType).T, (yyvsp[-6].ValIDVal));
@@ -5834,7 +5861,7 @@ yyreduce:
     break;
 
   case 266:
-#line 3267 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3294 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[-5].ValIDVal).S.copy((yyvsp[-6].PrimType).S);
     Value* tmpVal = getVal((yyvsp[-6].PrimType).T, (yyvsp[-5].ValIDVal));
@@ -5847,7 +5874,7 @@ yyreduce:
     break;
 
   case 267:
-#line 3277 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3304 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const PointerType *PFTy;
     const FunctionType *Ty;
@@ -5920,7 +5947,7 @@ yyreduce:
     break;
 
   case 268:
-#line 3346 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3373 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TermInstVal).TI = new UnwindInst();
     (yyval.TermInstVal).S.makeSignless();
@@ -5928,7 +5955,7 @@ yyreduce:
     break;
 
   case 269:
-#line 3350 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3377 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.TermInstVal).TI = new UnreachableInst();
     (yyval.TermInstVal).S.makeSignless();
@@ -5936,7 +5963,7 @@ yyreduce:
     break;
 
   case 270:
-#line 3357 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3384 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.JumpTable) = (yyvsp[-5].JumpTable);
     (yyvsp[-3].ValIDVal).S.copy((yyvsp[-4].PrimType).S);
@@ -5952,7 +5979,7 @@ yyreduce:
     break;
 
   case 271:
-#line 3369 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3396 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.JumpTable) = new std::vector<std::pair<Constant*, BasicBlock*> >();
     (yyvsp[-3].ValIDVal).S.copy((yyvsp[-4].PrimType).S);
@@ -5968,7 +5995,7 @@ yyreduce:
     break;
 
   case 272:
-#line 3384 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3411 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     bool omit = false;
     if ((yyvsp[-1].StrVal))
@@ -6001,7 +6028,7 @@ yyreduce:
     break;
 
   case 273:
-#line 3414 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3441 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {    // Used for PHI nodes
     (yyval.PHIList).P = new std::list<std::pair<Value*, BasicBlock*> >();
     (yyval.PHIList).S.copy((yyvsp[-5].TypeVal).S);
@@ -6015,7 +6042,7 @@ yyreduce:
     break;
 
   case 274:
-#line 3424 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3451 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.PHIList) = (yyvsp[-6].PHIList);
     (yyvsp[-3].ValIDVal).S.copy((yyvsp[-6].PHIList).S);
@@ -6027,7 +6054,7 @@ yyreduce:
     break;
 
   case 275:
-#line 3434 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3461 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {    // Used for call statements, and memory insts...
     (yyval.ValueList) = new std::vector<ValueInfo>();
     (yyval.ValueList)->push_back((yyvsp[0].ValueVal));
@@ -6035,7 +6062,7 @@ yyreduce:
     break;
 
   case 276:
-#line 3438 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3465 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.ValueList) = (yyvsp[-2].ValueList);
     (yyvsp[-2].ValueList)->push_back((yyvsp[0].ValueVal));
@@ -6043,26 +6070,26 @@ yyreduce:
     break;
 
   case 278:
-#line 3446 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3473 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValueList) = 0; ;}
     break;
 
   case 279:
-#line 3450 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3477 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.BoolVal) = true;
   ;}
     break;
 
   case 280:
-#line 3453 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3480 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.BoolVal) = false;
   ;}
     break;
 
   case 281:
-#line 3459 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3486 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
     (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
@@ -6085,7 +6112,7 @@ yyreduce:
     break;
 
   case 282:
-#line 3478 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3505 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
     (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
@@ -6107,7 +6134,7 @@ yyreduce:
     break;
 
   case 283:
-#line 3496 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3523 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
     (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
@@ -6127,7 +6154,7 @@ yyreduce:
     break;
 
   case 284:
-#line 3512 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3539 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
     (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
@@ -6145,7 +6172,7 @@ yyreduce:
     break;
 
   case 285:
-#line 3526 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3553 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
     (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
@@ -6163,7 +6190,7 @@ yyreduce:
     break;
 
   case 286:
-#line 3540 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3567 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     warning("Use of obsolete 'not' instruction: Replacing with 'xor");
     const Type *Ty = (yyvsp[0].ValueVal).V->getType();
@@ -6178,7 +6205,7 @@ yyreduce:
     break;
 
   case 287:
-#line 3551 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3578 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!(yyvsp[0].ValueVal).V->getType()->isInteger() ||
         cast<IntegerType>((yyvsp[0].ValueVal).V->getType())->getBitWidth() != 8)
@@ -6200,7 +6227,7 @@ yyreduce:
     break;
 
   case 288:
-#line 3569 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3596 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *DstTy = (yyvsp[0].TypeVal).PAT->get();
     if (!DstTy->isFirstClassType())
@@ -6213,7 +6240,7 @@ yyreduce:
     break;
 
   case 289:
-#line 3578 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3605 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!(yyvsp[-4].ValueVal).V->getType()->isInteger() ||
         cast<IntegerType>((yyvsp[-4].ValueVal).V->getType())->getBitWidth() != 1)
@@ -6226,7 +6253,7 @@ yyreduce:
     break;
 
   case 290:
-#line 3587 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3614 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[0].TypeVal).PAT->get();
     NewVarArgs = true;
@@ -6237,7 +6264,7 @@ yyreduce:
     break;
 
   case 291:
-#line 3594 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3621 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* ArgTy = (yyvsp[-2].ValueVal).V->getType();
     const Type* DstTy = (yyvsp[0].TypeVal).PAT->get();
@@ -6262,7 +6289,7 @@ yyreduce:
     break;
 
   case 292:
-#line 3615 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3642 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* ArgTy = (yyvsp[-2].ValueVal).V->getType();
     const Type* DstTy = (yyvsp[0].TypeVal).PAT->get();
@@ -6290,7 +6317,7 @@ yyreduce:
     break;
 
   case 293:
-#line 3639 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3666 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!ExtractElementInst::isValidOperands((yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V))
       error("Invalid extractelement operands");
@@ -6300,7 +6327,7 @@ yyreduce:
     break;
 
   case 294:
-#line 3645 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3672 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!InsertElementInst::isValidOperands((yyvsp[-4].ValueVal).V, (yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V))
       error("Invalid insertelement operands");
@@ -6310,7 +6337,7 @@ yyreduce:
     break;
 
   case 295:
-#line 3651 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3678 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!ShuffleVectorInst::isValidOperands((yyvsp[-4].ValueVal).V, (yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V))
       error("Invalid shufflevector operands");
@@ -6320,7 +6347,7 @@ yyreduce:
     break;
 
   case 296:
-#line 3657 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3684 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[0].PHIList).P->front().first->getType();
     if (!Ty->isFirstClassType())
@@ -6340,7 +6367,7 @@ yyreduce:
     break;
 
   case 297:
-#line 3673 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3700 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     // Handle the short call syntax
     const PointerType *PFTy;
@@ -6434,34 +6461,34 @@ yyreduce:
     break;
 
   case 298:
-#line 3763 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3790 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyval.InstVal) = (yyvsp[0].InstVal);
   ;}
     break;
 
   case 299:
-#line 3771 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3798 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValueList) = (yyvsp[0].ValueList); ;}
     break;
 
   case 300:
-#line 3772 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3799 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.ValueList) = new std::vector<ValueInfo>(); ;}
     break;
 
   case 301:
-#line 3776 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3803 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = true; ;}
     break;
 
   case 302:
-#line 3777 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3804 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     { (yyval.BoolVal) = false; ;}
     break;
 
   case 303:
-#line 3781 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3808 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[-1].TypeVal).PAT->get();
     (yyval.InstVal).S.makeComposite((yyvsp[-1].TypeVal).S);
@@ -6471,7 +6498,7 @@ yyreduce:
     break;
 
   case 304:
-#line 3787 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3814 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[-4].TypeVal).PAT->get();
     (yyvsp[-1].ValIDVal).S.makeUnsigned();
@@ -6482,7 +6509,7 @@ yyreduce:
     break;
 
   case 305:
-#line 3794 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3821 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[-1].TypeVal).PAT->get();
     (yyval.InstVal).S.makeComposite((yyvsp[-1].TypeVal).S);
@@ -6492,7 +6519,7 @@ yyreduce:
     break;
 
   case 306:
-#line 3800 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3827 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *Ty = (yyvsp[-4].TypeVal).PAT->get();
     (yyvsp[-1].ValIDVal).S.makeUnsigned();
@@ -6503,7 +6530,7 @@ yyreduce:
     break;
 
   case 307:
-#line 3807 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3834 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type *PTy = (yyvsp[0].ValueVal).V->getType();
     if (!isa<PointerType>(PTy))
@@ -6514,7 +6541,7 @@ yyreduce:
     break;
 
   case 308:
-#line 3814 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3841 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     const Type* Ty = (yyvsp[-1].TypeVal).PAT->get();
     (yyvsp[0].ValIDVal).S.copy((yyvsp[-1].TypeVal).S);
@@ -6531,7 +6558,7 @@ yyreduce:
     break;
 
   case 309:
-#line 3827 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3854 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[0].ValIDVal).S.copy((yyvsp[-1].TypeVal).S);
     const PointerType *PTy = dyn_cast<PointerType>((yyvsp[-1].TypeVal).PAT->get());
@@ -6561,7 +6588,7 @@ yyreduce:
     break;
 
   case 310:
-#line 3853 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3880 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
     {
     (yyvsp[-1].ValIDVal).S.copy((yyvsp[-2].TypeVal).S);
     const Type* Ty = (yyvsp[-2].TypeVal).PAT->get();
@@ -6569,7 +6596,7 @@ yyreduce:
       error("getelementptr insn requires pointer operand");
 
     std::vector<Value*> VIndices;
-    upgradeGEPIndices(Ty, (yyvsp[0].ValueList), VIndices);
+    upgradeGEPInstIndices(Ty, (yyvsp[0].ValueList), VIndices);
 
     Value* tmpVal = getVal(Ty, (yyvsp[-1].ValIDVal));
     (yyval.InstVal).I = new GetElementPtrInst(tmpVal, &VIndices[0], VIndices.size());
@@ -6585,7 +6612,7 @@ yyreduce:
     }
 
 /* Line 1126 of yacc.c.  */
-#line 6589 "UpgradeParser.tab.c"
+#line 6616 "UpgradeParser.tab.c"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -6853,7 +6880,7 @@ yyreturn:
 }
 
 
-#line 3871 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
+#line 3898 "/proj/llvm/llvm-2/tools/llvm-upgrade/UpgradeParser.y"
 
 
 int yyerror(const char *ErrorMsg) {
