@@ -5,13 +5,12 @@
 ; everything up.  :(  Test that this does not happen anymore.
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=c | not grep _memcpy
-; XFAIL: *
 
-declare void %llvm.memcpy(sbyte*, sbyte*, uint,uint)
+declare void %llvm.memcpy.i32(sbyte*, sbyte*, uint,uint)
 declare float* %memcpy(int*, uint,int)
 
 int %test(sbyte *%A, sbyte* %B, int* %C) {
 	call float* %memcpy(int* %C, uint 4, int 17)
-	call void %llvm.memcpy(sbyte* %A, sbyte* %B, uint 123, uint 14)
+	call void %llvm.memcpy.i32(sbyte* %A, sbyte* %B, uint 123, uint 14)
 	ret int 7
 }
