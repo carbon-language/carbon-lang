@@ -112,7 +112,7 @@ proc RunLLVMTests { test_source_files } {
       if {[regexp {END.[ *]$} $line match endofscript]} {
         break
 
-      # if the line is continued, concatente and continue the loop
+      # if the line is continued, concatenate and continue the loop
       } elseif {[regexp {RUN: *(.+)(\\)$} $line match oneline suffix]} {
         set runline "$runline$oneline "
 
