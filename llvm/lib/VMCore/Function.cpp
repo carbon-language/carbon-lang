@@ -226,6 +226,8 @@ void Function::dropAllReferences() {
 ///
 unsigned Function::getIntrinsicID(bool noAssert) const {
   const ValueName *ValName = this->getValueName();
+  if (!ValName)
+    return 0;
   unsigned Len = ValName->getKeyLength();
   const char *Name = ValName->getKeyData();
   
