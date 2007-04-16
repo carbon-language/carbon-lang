@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -c -emit-llvm 2004-11-27-StaticFunctionRedeclare.c -o - | \
+// RUN: %llvmgcc -c -emit-llvm %s -o - | \
 // RUN:   opt -std-compile-opts | llvm-dis | not grep {declare int.*func}
 
 // There should not be an unresolved reference to func here.  Believe it or not,
