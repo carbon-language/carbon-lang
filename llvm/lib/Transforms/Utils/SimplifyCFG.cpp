@@ -1447,10 +1447,11 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       // predecessor and use logical operations to pick the right destination.
       BasicBlock *TrueDest  = BI->getSuccessor(0);
       BasicBlock *FalseDest = BI->getSuccessor(1);
-      if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition()))
+      if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition())) {
+        BasicBlock::iterator CondIt = Cond;
         if ((isa<CmpInst>(Cond) || isa<BinaryOperator>(Cond)) &&
             Cond->getParent() == BB && &BB->front() == Cond &&
-            Cond->getNext() == BI && Cond->hasOneUse() &&
+            &*++CondIt == BI && Cond->hasOneUse() &&
             TrueDest != BB && FalseDest != BB)
           for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI!=E; ++PI)
             if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
@@ -1496,8 +1497,9 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                   return SimplifyCFG(BB) | 1;
                 }
               }
+      }
 
-      // Scan predessor blocks for conditional branchs.
+      // Scan predessor blocks for conditional branches.
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
         if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
           if (PBI != BI && PBI->isConditional()) {
