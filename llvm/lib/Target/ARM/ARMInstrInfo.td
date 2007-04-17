@@ -982,7 +982,7 @@ def REVSH : AI<(ops GPR:$dst, GPR:$src),
                "revsh $dst, $src",
                [(set GPR:$dst,
                   (sext_inreg
-                    (or (srl (and GPR:$src, 0xFFFF), 8),
+                    (or (srl (and GPR:$src, 0xFF00), 8),
                         (shl GPR:$src, 8)), i16))]>,
                Requires<[IsARM, HasV6]>;
 
