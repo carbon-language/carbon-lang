@@ -401,6 +401,7 @@ namespace llvm {
     SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG);

@@ -1039,14 +1039,39 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
     if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
+      // Check, whether EAX is livein for this function
+      bool isEAXAlive = false;
+      for (MachineFunction::livein_iterator II = MF.livein_begin(),
+             EE = MF.livein_end(); (II != EE) && !isEAXAlive; ++II) {
+        unsigned Reg = II->first;
+        isEAXAlive = (Reg == X86::EAX || Reg == X86::AX ||
+                      Reg == X86::AH || Reg == X86::AL);
+      }
+
       // Function prologue calls _alloca to probe the stack when allocating  
       // more than 4k bytes in one go. Touching the stack at 4K increments is  
       // necessary to ensure that the guard pages used by the OS virtual memory
       // manager are allocated in correct sequence.
-      MI = BuildMI(TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes);
-      MBB.insert(MBBI, MI);
-      MI = BuildMI(TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
-      MBB.insert(MBBI, MI);
+      if (!isEAXAlive) {
+        MI = BuildMI(TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes);
+        MBB.insert(MBBI, MI);
+        MI = BuildMI(TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
+        MBB.insert(MBBI, MI);
+      } else {
+        // Save EAX
+        MI = BuildMI(TII.get(X86::PUSH32r), X86::EAX);
+        MBB.insert(MBBI, MI);
+        // Allocate NumBytes-4 bytes on stack. We'll also use 4 already
+        // allocated bytes for EAX.
+        MI = BuildMI(TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes-4);
+        MBB.insert(MBBI, MI);
+        MI = BuildMI(TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
+        MBB.insert(MBBI, MI);
+        // Restore EAX
+        MI = addRegOffset(BuildMI(TII.get(X86::MOV32rm), X86::EAX),
+                          StackPtr, NumBytes-4);
+        MBB.insert(MBBI, MI);
+      }
     } else {
       unsigned Opc = (NumBytes < 128) ?
         (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :

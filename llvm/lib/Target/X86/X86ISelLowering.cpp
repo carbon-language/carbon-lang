@@ -237,7 +237,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
   if (Subtarget->is64Bit())
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
+  if (Subtarget->isTargetCygMing())
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
+  else
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
   if (X86ScalarSSE) {
     // Set up the FP register classes.
@@ -3401,6 +3404,36 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     }
 }
 
+SDOperand X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
+                                                     SelectionDAG &DAG) {
+  // Get the inputs.
+  SDOperand Chain = Op.getOperand(0);
+  SDOperand Size  = Op.getOperand(1);
+  // FIXME: Ensure alignment here
+
+  TargetLowering::ArgListTy Args; 
+  TargetLowering::ArgListEntry Entry;
+  MVT::ValueType IntPtr = getPointerTy();
+  MVT::ValueType SPTy = (Subtarget->is64Bit() ? MVT::i64 : MVT::i32);
+  const Type *IntPtrTy = getTargetData()->getIntPtrType();
+  
+  Entry.Node    = Size;
+  Entry.Ty      = IntPtrTy;
+  Entry.isInReg = true; // Should pass in EAX
+  Args.push_back(Entry);
+  std::pair<SDOperand, SDOperand> CallResult =
+    LowerCallTo(Chain, IntPtrTy, false, false, CallingConv::C, false,
+                DAG.getExternalSymbol("_alloca", IntPtr), Args, DAG);
+
+  SDOperand SP = DAG.getCopyFromReg(CallResult.second, X86StackPtr, SPTy);
+  
+  std::vector<MVT::ValueType> Tys;
+  Tys.push_back(SPTy);
+  Tys.push_back(MVT::Other);
+  SDOperand Ops[2] = { SP, CallResult.second };
+  return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 2);
+}
+
 SDOperand
 X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
@@ -4002,6 +4035,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
+  case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   }
   return SDOperand();
 }

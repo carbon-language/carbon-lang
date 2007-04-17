@@ -477,6 +477,9 @@ def LEAVE    : I<0xC9, RawFrm,
 def POP32r   : I<0x58, AddRegFrm,
                  (ops GR32:$reg), "pop{l} $reg", []>, Imp<[ESP],[ESP]>;
 
+def PUSH32r  : I<0x50, AddRegFrm,
+                 (ops GR32:$reg), "push{l} $reg", []>, Imp<[ESP],[ESP]>;
+
 def MovePCtoStack : I<0, Pseudo, (ops piclabel:$label),
                       "call $label", []>;
 
