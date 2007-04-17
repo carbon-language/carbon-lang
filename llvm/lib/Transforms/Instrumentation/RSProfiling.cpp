@@ -230,9 +230,10 @@ GlobalRandomCounterOpt::~GlobalRandomCounterOpt() {}
 void GlobalRandomCounterOpt::PrepFunction(Function* F) {
   //make a local temporary to cache the global
   BasicBlock& bb = F->getEntryBlock();
-  AI = new AllocaInst(T, 0, "localcounter", bb.begin());
-  LoadInst* l = new LoadInst(Counter, "counterload", AI->getNext());
-  new StoreInst(l, AI, l->getNext());
+  BasicBlock::iterator InsertPt = bb.begin();
+  AI = new AllocaInst(T, 0, "localcounter", InsertPt);
+  LoadInst* l = new LoadInst(Counter, "counterload", InsertPt);
+  new StoreInst(l, AI, InsertPt);
   
   //modify all functions and return values to restore the local variable to/from
   //the global variable
@@ -240,25 +241,26 @@ void GlobalRandomCounterOpt::PrepFunction(Function* F) {
       fib != fie; ++fib)
     for(BasicBlock::iterator bib = fib->begin(), bie = fib->end();
         bib != bie; ++bib)
-      if (isa<CallInst>(&*bib)) {
+      if (isa<CallInst>(bib)) {
         LoadInst* l = new LoadInst(AI, "counter", bib);
         new StoreInst(l, Counter, bib);
-        l = new LoadInst(Counter, "counter", bib->getNext());
-        new StoreInst(l, AI, l->getNext());
-      } else if (isa<InvokeInst>(&*bib)) {
+        l = new LoadInst(Counter, "counter", ++bib);
+        new StoreInst(l, AI, bib--);
+      } else if (isa<InvokeInst>(bib)) {
         LoadInst* l = new LoadInst(AI, "counter", bib);
         new StoreInst(l, Counter, bib);
         
-        BasicBlock* bb = cast<InvokeInst>(&*bib)->getNormalDest();
-        Instruction* i = bb->begin();
-        while (isa<PHINode>(i)) i = i->getNext();
+        BasicBlock* bb = cast<InvokeInst>(bib)->getNormalDest();
+        BasicBlock::iterator i = bb->begin();
+        while (isa<PHINode>(i))
+          ++i;
         l = new LoadInst(Counter, "counter", i);
         
-        bb = cast<InvokeInst>(&*bib)->getUnwindDest();
+        bb = cast<InvokeInst>(bib)->getUnwindDest();
         i = bb->begin();
-        while (isa<PHINode>(i)) i = i->getNext();
+        while (isa<PHINode>(i)) ++i;
         l = new LoadInst(Counter, "counter", i);
-        new StoreInst(l, AI, l->getNext());
+        new StoreInst(l, AI, i);
       } else if (isa<UnwindInst>(&*bib) || isa<ReturnInst>(&*bib)) {
         LoadInst* l = new LoadInst(AI, "counter", bib);
         new StoreInst(l, Counter, bib);
