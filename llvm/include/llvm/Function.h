@@ -246,11 +246,11 @@ public:
   
   static unsigned getBasicBlockListOffset() {
     Function *Obj = 0;
-    return reinterpret_cast<unsigned>(&Obj->BasicBlocks);
+    return unsigned(reinterpret_cast<uintptr_t>(&Obj->BasicBlocks));
   }
   static unsigned getArgumentListOffset() {
     Function *Obj = 0;
-    return reinterpret_cast<unsigned>(&Obj->ArgumentList);
+    return unsigned(reinterpret_cast<uintptr_t>(&Obj->ArgumentList));
   }
 };
 

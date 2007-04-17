@@ -199,7 +199,7 @@ public:
   
   static unsigned getInstListOffset() {
     BasicBlock *Obj = 0;
-    return reinterpret_cast<unsigned>(&Obj->InstList);
+    return unsigned(reinterpret_cast<uintptr_t>(&Obj->InstList));
   }
 };
 

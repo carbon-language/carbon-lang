@@ -318,11 +318,11 @@ public:
 
   static unsigned getFunctionListOffset() {
     Module *Obj = 0;
-    return reinterpret_cast<unsigned>(&Obj->FunctionList);
+    return unsigned(reinterpret_cast<uintptr_t>(&Obj->FunctionList));
   }
   static unsigned getGlobalVariableListOffset() {
     Module *Obj = 0;
-    return reinterpret_cast<unsigned>(&Obj->GlobalList);
+    return unsigned(reinterpret_cast<uintptr_t>(&Obj->GlobalList));
   }
 };
 
