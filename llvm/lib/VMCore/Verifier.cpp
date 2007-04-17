@@ -640,7 +640,8 @@ void Verifier::visitPHINode(PHINode &PN) {
   // This can be tested by checking whether the instruction before this is
   // either nonexistent (because this is begin()) or is a PHI node.  If not,
   // then there is some other instruction before a PHI.
-  Assert2(&PN.getParent()->front() == &PN || isa<PHINode>(PN.getPrev()),
+  Assert2(&PN == &PN.getParent()->front() || 
+          isa<PHINode>(--BasicBlock::iterator(&PN)),
           "PHI nodes not grouped at top of basic block!",
           &PN, PN.getParent());
 
