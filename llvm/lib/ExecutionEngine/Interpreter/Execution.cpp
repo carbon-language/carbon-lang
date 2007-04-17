@@ -866,16 +866,19 @@ void Interpreter::visitCallSite(CallSite CS) {
       // If it is an unknown intrinsic function, use the intrinsic lowering
       // class to transform it into hopefully tasty LLVM code.
       //
-      Instruction *Prev = CS.getInstruction()->getPrev();
+      BasicBlock::iterator me(CS.getInstruction());
       BasicBlock *Parent = CS.getInstruction()->getParent();
+      bool atBegin(Parent->begin() == me);
+      if (!atBegin)
+        --me;
       IL->LowerIntrinsicCall(cast<CallInst>(CS.getInstruction()));
 
       // Restore the CurInst pointer to the first instruction newly inserted, if
       // any.
-      if (!Prev) {
+      if (atBegin) {
         SF.CurInst = Parent->begin();
       } else {
-        SF.CurInst = Prev;
+        SF.CurInst = me;
         ++SF.CurInst;
       }
       return;
