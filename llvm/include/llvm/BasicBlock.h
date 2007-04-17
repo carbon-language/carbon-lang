@@ -82,12 +82,6 @@ public:
   const Function *getParent() const { return Parent; }
         Function *getParent()       { return Parent; }
 
-  // getNext/Prev - Return the next or previous basic block in the list.
-        BasicBlock *getNext()       { return Next; }
-  const BasicBlock *getNext() const { return Next; }
-        BasicBlock *getPrev()       { return Prev; }
-  const BasicBlock *getPrev() const { return Prev; }
-
   /// use_back - Specialize the methods defined in Value, as we know that an
   /// BasicBlock can only be used by Instructions (specifically PHI and terms).
   Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
@@ -201,6 +195,14 @@ public:
     BasicBlock *Obj = 0;
     return unsigned(reinterpret_cast<uintptr_t>(&Obj->InstList));
   }
+
+private:
+  // getNext/Prev - Return the next or previous basic block in the list.  Access
+  // these with Function::iterator.
+  BasicBlock *getNext()       { return Next; }
+  const BasicBlock *getNext() const { return Next; }
+  BasicBlock *getPrev()       { return Prev; }
+  const BasicBlock *getPrev() const { return Prev; }
 };
 
 inline int 
