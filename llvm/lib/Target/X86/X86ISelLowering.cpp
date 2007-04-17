@@ -3406,8 +3406,17 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     }
 }
 
+
+// Lower dynamic stack allocation to _alloca call for Cygwin/Mingw targets.
+// Calls to _alloca is needed to probe the stack when allocating more than 4k
+// bytes in one go. Touching the stack at 4K increments is necessary to ensure
+// that the guard pages used by the OS virtual memory manager are allocated in
+// correct sequence.
 SDOperand X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
                                                      SelectionDAG &DAG) {
+  assert(Subtarget->isTargetCygMing() &&
+         "This should be used only on Cygwin/Mingw targets");
+  
   // Get the inputs.
   SDOperand Chain = Op.getOperand(0);
   SDOperand Size  = Op.getOperand(1);
