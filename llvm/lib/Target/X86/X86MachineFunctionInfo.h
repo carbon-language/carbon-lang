@@ -24,9 +24,9 @@ enum NameDecorationStyle {
   FastCall
 };
   
-/// X86FunctionInfo - This class is derived from MachineFunction private
+/// X86MachineFunctionInfo - This class is derived from MachineFunction private
 /// X86 target-specific information for each MachineFunction.
-class X86FunctionInfo : public MachineFunctionInfo {
+class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// ForceFramePointer - True if the function is required to use of frame
   /// pointer for reasons other than it containing dynamic allocation or 
   /// that FP eliminatation is turned off. For example, Cygwin main function
@@ -42,13 +42,13 @@ class X86FunctionInfo : public MachineFunctionInfo {
   NameDecorationStyle DecorationStyle;
   
 public:
-  X86FunctionInfo() : ForceFramePointer(false),
-                      BytesToPopOnReturn(0),
-                      DecorationStyle(None) {}
+  X86MachineFunctionInfo() : ForceFramePointer(false),
+                             BytesToPopOnReturn(0),
+                             DecorationStyle(None) {}
   
-  X86FunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
-                                         BytesToPopOnReturn(0),
-                                         DecorationStyle(None) {}
+  X86MachineFunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
+                                                BytesToPopOnReturn(0),
+                                                DecorationStyle(None) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }

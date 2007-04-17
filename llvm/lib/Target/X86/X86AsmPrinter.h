@@ -48,7 +48,7 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
   //
   // This structure is using e.g. for name decoration for stdcall & fastcall'ed
   // function, since we have to use arguments' size for decoration.
-  typedef std::map<const Function*, X86FunctionInfo> FMFInfoMap;
+  typedef std::map<const Function*, X86MachineFunctionInfo> FMFInfoMap;
   FMFInfoMap FunctionInfoMap;
 
   void decorateName(std::string& Name, const GlobalValue* GV);

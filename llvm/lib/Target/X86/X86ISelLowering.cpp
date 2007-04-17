@@ -729,7 +729,8 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
   RegSaveFrameIndex = 0xAAAAAAA;  // X86-64 only.
   ReturnAddrIndex = 0;            // No return address slot generated yet.
 
-  MF.getInfo<X86FunctionInfo>()->setBytesToPopOnReturn(BytesToPopOnReturn);
+  MF.getInfo<X86MachineFunctionInfo>()
+    ->setBytesToPopOnReturn(BytesToPopOnReturn);
 
   // Return the new list of results.
   return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
@@ -973,7 +974,8 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   BytesToPopOnReturn = StackSize;  // Callee pops all stack arguments.
   BytesCallerReserves = 0;
 
-  MF.getInfo<X86FunctionInfo>()->setBytesToPopOnReturn(BytesToPopOnReturn);
+  MF.getInfo<X86MachineFunctionInfo>()
+    ->setBytesToPopOnReturn(BytesToPopOnReturn);
 
   // Return the new list of results.
   return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
@@ -3441,7 +3443,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   if (Fn->hasExternalLinkage() &&
       Subtarget->isTargetCygMing() &&
       Fn->getName() == "main")
-    MF.getInfo<X86FunctionInfo>()->setForceFramePointer(true);
+    MF.getInfo<X86MachineFunctionInfo>()->setForceFramePointer(true);
 
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   if (Subtarget->is64Bit())
@@ -3457,10 +3459,10 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
     case CallingConv::C:
       return LowerCCCArguments(Op, DAG);
     case CallingConv::X86_StdCall:
-      MF.getInfo<X86FunctionInfo>()->setDecorationStyle(StdCall);
+      MF.getInfo<X86MachineFunctionInfo>()->setDecorationStyle(StdCall);
       return LowerCCCArguments(Op, DAG, true);
     case CallingConv::X86_FastCall:
-      MF.getInfo<X86FunctionInfo>()->setDecorationStyle(FastCall);
+      MF.getInfo<X86MachineFunctionInfo>()->setDecorationStyle(FastCall);
       return LowerFastCCArguments(Op, DAG);
     }
 }

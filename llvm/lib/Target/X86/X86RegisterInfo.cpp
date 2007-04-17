@@ -927,7 +927,7 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
   return (NoFramePointerElim || 
           MF.getFrameInfo()->hasVarSizedObjects() ||
-          MF.getInfo<X86FunctionInfo>()->getForceFramePointer());
+          MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer());
 }
 
 void X86RegisterInfo::

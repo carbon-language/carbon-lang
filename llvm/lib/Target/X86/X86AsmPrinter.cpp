@@ -32,9 +32,9 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-static X86FunctionInfo calculateFunctionInfo(const Function *F,
-                                             const TargetData *TD) {
-  X86FunctionInfo Info;
+static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
+                                                    const TargetData *TD) {
+  X86MachineFunctionInfo Info;
   uint64_t Size = 0;
   
   switch (F->getCallingConv()) {
@@ -77,7 +77,7 @@ void X86SharedAsmPrinter::decorateName(std::string &Name,
     
   FMFInfoMap::const_iterator info_item = FunctionInfoMap.find(F);
 
-  const X86FunctionInfo *Info;
+  const X86MachineFunctionInfo *Info;
   if (info_item == FunctionInfoMap.end()) {
     // Calculate apropriate function info and populate map
     FunctionInfoMap[F] = calculateFunctionInfo(F, TM.getTargetData());
