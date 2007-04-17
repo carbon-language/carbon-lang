@@ -158,14 +158,16 @@ class OForm2<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, Inst
 class OForm4<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let OperandList = (ops GPRC:$RDEST, GPRC:$RFALSE, GPRC:$RTRUE, GPRC:$RCOND);
+  let OperandList = (ops GPRC:$RDEST, GPRC:$RCOND, GPRC:$RTRUE, GPRC:$RFALSE);
+  let Constraints = "$RFALSE = $RDEST";
+  let DisableEncoding = "$RFALSE";
 
   bits<5> Rc;
-  bits<5> Rb;
   bits<5> Ra;
+  bits<5> Rb;
   bits<7> Function = fun;
 
-  let isTwoAddress = 1;
+//  let isTwoAddress = 1;
   let Inst{25-21} = Ra;
   let Inst{20-16} = Rb;
   let Inst{15-13} = 0;
@@ -195,14 +197,16 @@ class OFormL<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, Inst
 class OForm4L<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let OperandList = (ops GPRC:$RDEST, GPRC:$RFALSE, s64imm:$RTRUE, GPRC:$RCOND);
- 
+  let OperandList = (ops GPRC:$RDEST, GPRC:$RCOND, s64imm:$RTRUE, GPRC:$RFALSE);
+  let Constraints = "$RFALSE = $RDEST";
+  let DisableEncoding = "$RFALSE";
+
   bits<5> Rc;
-  bits<8> LIT;
   bits<5> Ra;
+  bits<8> LIT;
   bits<7> Function = fun;
 
-  let isTwoAddress = 1;
+//  let isTwoAddress = 1;
   let Inst{25-21} = Ra;
   let Inst{20-13} = LIT;
   let Inst{12} = 1;

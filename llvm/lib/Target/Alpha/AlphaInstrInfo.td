@@ -190,16 +190,16 @@ def : Pat<(select GPRC:$which, GPRC:$src1, immUExt8:$src2),
       (CMOVEQi GPRC:$src1, immUExt8:$src2, GPRC:$which)>;
 
 //Invert sense when we can for constants:
-//def : Pat<(select (setne GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-//          (CMOVNEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
-//def : Pat<(select (setgt GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-//          (CMOVGTi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
-//def : Pat<(select (setge GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-//          (CMOVGEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
-//def : Pat<(select (setlt GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-//          (CMOVLTi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
-//def : Pat<(select (setle GPRC:$RCOND, 0), immUExt8:$RFALSE, GPRC:$RTRUE),
-//          (CMOVLEi GPRC:$RTRUE, immUExt8:$RFALSE, GPRC:$RCOND)>;
+def : Pat<(select (setne GPRC:$RCOND, 0), GPRC:$RTRUE, immUExt8:$RFALSE),
+          (CMOVEQi GPRC:$RCOND, immUExt8:$RFALSE, GPRC:$RTRUE)>;
+def : Pat<(select (setgt GPRC:$RCOND, 0), GPRC:$RTRUE, immUExt8:$RFALSE),
+          (CMOVLEi GPRC:$RCOND, immUExt8:$RFALSE, GPRC:$RTRUE)>;
+def : Pat<(select (setge GPRC:$RCOND, 0), GPRC:$RTRUE, immUExt8:$RFALSE),
+          (CMOVLTi GPRC:$RCOND, immUExt8:$RFALSE, GPRC:$RTRUE)>;
+def : Pat<(select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, immUExt8:$RFALSE),
+          (CMOVGEi GPRC:$RCOND, immUExt8:$RFALSE, GPRC:$RTRUE)>;
+def : Pat<(select (setle GPRC:$RCOND, 0), GPRC:$RTRUE, immUExt8:$RFALSE),
+          (CMOVGTi GPRC:$RCOND, immUExt8:$RFALSE, GPRC:$RTRUE)>;
 
 multiclass all_inst<bits<6> opc, bits<7> funl, bits<7> funq, 
                     string asmstr, PatFrag OpNode, InstrItinClass itin> {
