@@ -72,8 +72,6 @@ template class SymbolTableListTraits<Instruction, BasicBlock>;
 BasicBlock::BasicBlock(const std::string &Name, Function *NewParent,
                        BasicBlock *InsertBefore)
   : Value(Type::LabelTy, Value::BasicBlockVal), Parent(0) {
-  // Initialize the instlist.
-  InstList.setItemParent(this);
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);

@@ -31,6 +31,7 @@ template<> struct ilist_traits<Instruction>
   static void destroySentinel(Instruction *I) { delete I; }
   static iplist<Instruction> &getList(BasicBlock *BB);
   static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);
+  static int getListOffset();
 };
 
 /// This represents a single basic block in LLVM. A basic block is simply a
@@ -194,7 +195,18 @@ public:
   /// the basic block).
   ///
   BasicBlock *splitBasicBlock(iterator I, const std::string &BBName = "");
+  
+  
+  static unsigned getInstListOffset() {
+    BasicBlock *Obj = 0;
+    return reinterpret_cast<unsigned>(&Obj->InstList);
+  }
 };
+
+inline int 
+ilist_traits<Instruction>::getListOffset() {
+  return BasicBlock::getInstListOffset();
+}
 
 } // End llvm namespace
 

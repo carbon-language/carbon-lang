@@ -37,6 +37,7 @@ template<> struct ilist_traits<BasicBlock>
   static void destroySentinel(BasicBlock *BB) { delete BB; }
   static iplist<BasicBlock> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
+  static int getListOffset();
 };
 
 template<> struct ilist_traits<Argument>
@@ -47,6 +48,7 @@ template<> struct ilist_traits<Argument>
   static void destroySentinel(Argument *A) { delete A; }
   static iplist<Argument> &getList(Function *F);
   static ValueSymbolTable *getSymTab(Function *ItemParent);
+  static int getListOffset();
 };
 
 class Function : public GlobalValue, public Annotable {
@@ -238,6 +240,15 @@ public:
   /// including any contained basic blocks.
   ///
   void dropAllReferences();
+  
+  static unsigned getBasicBlockListOffset() {
+    Function *Obj = 0;
+    return reinterpret_cast<unsigned>(&Obj->BasicBlocks);
+  }
+  static unsigned getArgumentListOffset() {
+    Function *Obj = 0;
+    return reinterpret_cast<unsigned>(&Obj->ArgumentList);
+  }
 };
 
 inline ValueSymbolTable *
@@ -249,6 +260,17 @@ inline ValueSymbolTable *
 ilist_traits<Argument>::getSymTab(Function *F) {
   return F ? &F->getValueSymbolTable() : 0;
 }
+
+inline int 
+ilist_traits<BasicBlock>::getListOffset() {
+  return Function::getBasicBlockListOffset();
+}
+
+inline int 
+ilist_traits<Argument>::getListOffset() {
+  return Function::getArgumentListOffset();
+}
+
 
 } // End llvm namespace
 

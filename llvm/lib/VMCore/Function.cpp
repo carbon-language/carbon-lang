@@ -143,8 +143,6 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
   : GlobalValue(PointerType::get(Ty), Value::FunctionVal, 0, 0, Linkage, name) {
   ParamAttrs = 0;
   CallingConvention = 0;
-  BasicBlocks.setItemParent(this);
-  ArgumentList.setItemParent(this);
   SymTab = new ValueSymbolTable();
 
   assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy)

@@ -64,8 +64,6 @@ template class SymbolTableListTraits<Function, Module>;
 
 Module::Module(const std::string &MID)
   : ModuleID(MID), DataLayout("") {
-  FunctionList.setItemParent(this);
-  GlobalList.setItemParent(this);
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();
 }

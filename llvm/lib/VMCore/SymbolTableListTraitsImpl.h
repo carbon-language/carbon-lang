@@ -29,19 +29,19 @@ template<typename TPtr>
 void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 ::setSymTabObject(TPtr *Dest, TPtr Src) {
   // Get the old symtab and value list before doing the assignment.
-  ValueSymbolTable *OldST = TraitsClass::getSymTab(ItemParent);
+  ValueSymbolTable *OldST = TraitsClass::getSymTab(getListOwner());
 
   // Do it.
   *Dest = Src;
   
   // Get the new SymTab object.
-  ValueSymbolTable *NewST = TraitsClass::getSymTab(ItemParent);
+  ValueSymbolTable *NewST = TraitsClass::getSymTab(getListOwner());
   
   // If there is nothing to do, quick exit.
   if (OldST == NewST) return;
   
   // Move all the elements from the old symtab to the new one.
-  iplist<ValueSubClass> &ItemList = TraitsClass::getList(ItemParent);
+  iplist<ValueSubClass> &ItemList = TraitsClass::getList(getListOwner());
   if (ItemList.empty()) return;
   
   if (OldST) {
@@ -66,9 +66,10 @@ template<typename ValueSubClass, typename ItemParentClass>
 void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 ::addNodeToList(ValueSubClass *V) {
   assert(V->getParent() == 0 && "Value already in a container!!");
-  V->setParent(ItemParent);
+  ItemParentClass *Owner = getListOwner();
+  V->setParent(Owner);
   if (V->hasName())
-    if (ValueSymbolTable *ST = TraitsClass::getSymTab(ItemParent))
+    if (ValueSymbolTable *ST = TraitsClass::getSymTab(Owner))
       ST->reinsertValue(V);
 }
 
@@ -77,7 +78,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 ::removeNodeFromList(ValueSubClass *V) {
   V->setParent(0);
   if (V->hasName())
-    if (ValueSymbolTable *ST = TraitsClass::getSymTab(ItemParent))
+    if (ValueSymbolTable *ST = TraitsClass::getSymTab(getListOwner()))
       ST->removeValueName(V->getValueName());
 }
 
@@ -87,12 +88,12 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
                         ilist_iterator<ValueSubClass> first,
                         ilist_iterator<ValueSubClass> last) {
   // We only have to do work here if transferring instructions between BBs
-  ItemParentClass *NewIP = ItemParent, *OldIP = L2.ItemParent;
+  ItemParentClass *NewIP = getListOwner(), *OldIP = L2.getListOwner();
   if (NewIP == OldIP) return;  // No work to do at all...
 
   // We only have to update symbol table entries if we are transferring the
   // instructions to a different symtab object...
-  ValueSymbolTable *NewST = TraitsClass::getSymTab(ItemParent);
+  ValueSymbolTable *NewST = TraitsClass::getSymTab(NewIP);
   ValueSymbolTable *OldST = TraitsClass::getSymTab(OldIP);
   if (NewST != OldST) {
     for (; first != last; ++first) {

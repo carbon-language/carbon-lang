@@ -39,10 +39,15 @@ template<typename Ty> struct ilist_traits;
 template<typename ValueSubClass, typename ItemParentClass>
 class SymbolTableListTraits {
   typedef ilist_traits<ValueSubClass> TraitsClass;
-  ItemParentClass *ItemParent;
 public:
-  SymbolTableListTraits() : ItemParent(0) {}
+  SymbolTableListTraits() {}
 
+  /// getListOwner - Return the object that owns this list.  If this is a list
+  /// of instructions, it returns the BasicBlock that owns them.
+  ItemParentClass *getListOwner() {
+    return reinterpret_cast<ItemParentClass*>((char*)this-
+                                              TraitsClass::getListOffset());
+  }
   static ValueSubClass *getPrev(ValueSubClass *V) { return V->getPrev(); }
   static ValueSubClass *getNext(ValueSubClass *V) { return V->getNext(); }
   static const ValueSubClass *getPrev(const ValueSubClass *V) {
@@ -62,7 +67,6 @@ public:
                              ilist_iterator<ValueSubClass> first,
                              ilist_iterator<ValueSubClass> last);
 //private:
-  void setItemParent(ItemParentClass *IP) { ItemParent = IP; }
   template<typename TPtr>
   void setSymTabObject(TPtr *, TPtr);
 };

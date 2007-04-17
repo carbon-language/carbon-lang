@@ -32,6 +32,7 @@ template<> struct ilist_traits<Function>
   static void destroySentinel(Function *F) { delete F; }
   static iplist<Function> &getList(Module *M);
   static inline ValueSymbolTable *getSymTab(Module *M);
+  static int getListOffset();
 };
 template<> struct ilist_traits<GlobalVariable>
   : public SymbolTableListTraits<GlobalVariable, Module> {
@@ -40,6 +41,7 @@ template<> struct ilist_traits<GlobalVariable>
   static void destroySentinel(GlobalVariable *GV) { delete GV; }
   static iplist<GlobalVariable> &getList(Module *M);
   static inline ValueSymbolTable *getSymTab(Module *M);
+  static int getListOffset();
 };
 
 /// A Module instance is used to store all the information related to an
@@ -313,6 +315,15 @@ public:
   /// that has "dropped all references", except operator delete.
   void dropAllReferences();
 /// @}
+
+  static unsigned getFunctionListOffset() {
+    Module *Obj = 0;
+    return reinterpret_cast<unsigned>(&Obj->FunctionList);
+  }
+  static unsigned getGlobalVariableListOffset() {
+    Module *Obj = 0;
+    return reinterpret_cast<unsigned>(&Obj->GlobalList);
+  }
 };
 
 /// An iostream inserter for modules.
@@ -331,6 +342,15 @@ ilist_traits<GlobalVariable>::getSymTab(Module *M) {
   return M ? &M->getValueSymbolTable() : 0;
 }
 
+inline int 
+ilist_traits<Function>::getListOffset() {
+  return Module::getFunctionListOffset();
+}
+
+inline int 
+ilist_traits<GlobalVariable>::getListOffset() {
+  return Module::getGlobalVariableListOffset();
+}
 
 } // End llvm namespace
 
