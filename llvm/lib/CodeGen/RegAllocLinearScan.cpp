@@ -563,15 +563,17 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   // Find a register to spill.
   float minWeight = HUGE_VALF;
-  unsigned minReg = 0;
-  for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
-       e = RC->allocation_order_end(*mf_); i != e; ++i) {
-    unsigned reg = *i;
-    if (minWeight > SpillWeights[reg]) {
-      minWeight = SpillWeights[reg];
-      minReg = reg;
+  unsigned minReg = cur->preference;  // Try the preferred register first.
+  
+  if (!minReg || SpillWeights[minReg] == HUGE_VALF)
+    for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
+           e = RC->allocation_order_end(*mf_); i != e; ++i) {
+      unsigned reg = *i;
+      if (minWeight > SpillWeights[reg]) {
+        minWeight = SpillWeights[reg];
+        minReg = reg;
+      }
     }
-  }
   
   // If we didn't find a register that is spillable, try aliases?
   if (!minReg) {
@@ -778,7 +780,18 @@ unsigned RA::getFreePhysReg(LiveInterval *cur) {
 
   unsigned FreeReg = 0;
   unsigned FreeRegInactiveCount = 0;
-  
+
+  // If copy coalescer has assigned a "preferred" register, check if it's
+  // available first.
+  if (cur->preference)
+    if (prt_->isRegAvail(cur->preference)) {
+      DOUT << "\t\tassigned the preferred register: "
+           << mri_->getName(cur->preference) << "\n";
+      return cur->preference;
+    } else
+      DOUT << "\t\tunable to assign the preferred register: "
+           << mri_->getName(cur->preference) << "\n";
+
   // Scan for the first available register.
   TargetRegisterClass::iterator I = rc->allocation_order_begin(*mf_);
   TargetRegisterClass::iterator E = rc->allocation_order_end(*mf_);

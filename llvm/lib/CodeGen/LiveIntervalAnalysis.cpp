@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -87,8 +88,11 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   mri_ = tm_->getRegisterInfo();
   tii_ = tm_->getInstrInfo();
   lv_ = &getAnalysis<LiveVariables>();
-  allocatableRegs_ = mri_->getAllocatableSet(fn);
   r2rMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
+  allocatableRegs_ = mri_->getAllocatableSet(fn);
+  for (MRegisterInfo::regclass_iterator I = mri_->regclass_begin(),
+         E = mri_->regclass_end(); I != E; ++I)
+    allocatableRCRegs_.insert(std::make_pair(*I,mri_->getAllocatableSet(fn, *I)));
 
   // Number MachineInstrs and MachineBasicBlocks.
   // Initialize MBB indexes to a sentinal.
@@ -120,10 +124,16 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   }
 
   // Join (coallesce) intervals if requested.
-  if (EnableJoining) joinIntervals();
+  if (EnableJoining) {
+    joinIntervals();
+    DOUT << "********** INTERVALS POST JOINING **********\n";
+    for (iterator I = begin(), E = end(); I != E; ++I) {
+      I->second.print(DOUT, mri_);
+      DOUT << "\n";
+    }
+  }
 
   numIntervalsAfter += getNumIntervals();
-  
 
   // perform a final pass over the instructions and compute spill
   // weights, coalesce virtual registers and remove identity moves.
@@ -156,6 +166,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         mii = mbbi->erase(mii);
         ++numPeep;
       } else {
+        SmallSet<unsigned, 4> UniqueUses;
         for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
           const MachineOperand &mop = mii->getOperand(i);
           if (mop.isRegister() && mop.getReg() &&
@@ -164,6 +175,10 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
             unsigned reg = rep(mop.getReg());
             mii->getOperand(i).setReg(reg);
 
+            // Multiple uses of reg by the same instruction. It should not
+            // contribute to spill weight again.
+            if (UniqueUses.count(reg) != 0)
+              continue;
             LiveInterval &RegInt = getInterval(reg);
             float w = (mop.isUse()+mop.isDef()) * powf(10.0F, (float)loopDepth);
             // If the definition instruction is re-materializable, its spill
@@ -173,6 +188,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
             if (RegInt.remat && !tii_->isLoadFromStackSlot(RegInt.remat, Dummy))
               w /= 2;
             RegInt.weight += w;
+            UniqueUses.insert(reg);
           }
         }
         ++mii;
@@ -188,15 +204,15 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       // it and hope it will be easier to allocate for this li.
       if (isZeroLengthInterval(&LI))
         LI.weight = HUGE_VALF;
-      
+
+      // Slightly prefer live interval that has been assigned a preferred reg.
+      if (LI.preference)
+        LI.weight *= 1.01F;
+
       // Divide the weight of the interval by its size.  This encourages 
       // spilling of intervals that are large and have few uses, and
       // discourages spilling of small intervals with many uses.
-      unsigned Size = 0;
-      for (LiveInterval::iterator II = LI.begin(), E = LI.end(); II != E;++II)
-        Size += II->end - II->start;
-      
-      LI.weight /= Size;
+      LI.weight /= LI.getSize();
     }
   }
 
@@ -866,14 +882,15 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   return true;
 }
 
+
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
 /// if the copy was successfully coallesced away, or if it is never possible
-/// to coallesce these this copy, due to register constraints.  It returns
+/// to coallesce this copy, due to register constraints.  It returns
 /// false if it is not currently possible to coallesce this interval, but
 /// it may be possible if other things get coallesced.
 bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
-                             unsigned SrcReg, unsigned DstReg) {
+                             unsigned SrcReg, unsigned DstReg, bool PhysOnly) {
   DOUT << getInstructionIndex(CopyMI) << '\t' << *CopyMI;
 
   // Get representative registers.
@@ -886,21 +903,24 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
     return true;  // Not coallescable.
   }
   
+  bool SrcIsPhys = MRegisterInfo::isPhysicalRegister(repSrcReg);
+  bool DstIsPhys = MRegisterInfo::isPhysicalRegister(repDstReg);
+  if (PhysOnly && !SrcIsPhys && !DstIsPhys)
+    // Only joining physical registers with virtual registers in this round.
+    return true;
+
   // If they are both physical registers, we cannot join them.
-  if (MRegisterInfo::isPhysicalRegister(repSrcReg) &&
-      MRegisterInfo::isPhysicalRegister(repDstReg)) {
+  if (SrcIsPhys && DstIsPhys) {
     DOUT << "\tCan not coallesce physregs.\n";
     return true;  // Not coallescable.
   }
   
   // We only join virtual registers with allocatable physical registers.
-  if (MRegisterInfo::isPhysicalRegister(repSrcReg) &&
-      !allocatableRegs_[repSrcReg]) {
+  if (SrcIsPhys && !allocatableRegs_[repSrcReg]) {
     DOUT << "\tSrc reg is unallocatable physreg.\n";
     return true;  // Not coallescable.
   }
-  if (MRegisterInfo::isPhysicalRegister(repDstReg) &&
-      !allocatableRegs_[repDstReg]) {
+  if (DstIsPhys && !allocatableRegs_[repDstReg]) {
     DOUT << "\tDst reg is unallocatable physreg.\n";
     return true;  // Not coallescable.
   }
@@ -912,17 +932,16 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   }
   
   LiveInterval &SrcInt = getInterval(repSrcReg);
-  LiveInterval &DestInt = getInterval(repDstReg);
-  assert(SrcInt.reg == repSrcReg && DestInt.reg == repDstReg &&
+  LiveInterval &DstInt = getInterval(repDstReg);
+  assert(SrcInt.reg == repSrcReg && DstInt.reg == repDstReg &&
          "Register mapping is horribly broken!");
-  
+
   DOUT << "\t\tInspecting "; SrcInt.print(DOUT, mri_);
-  DOUT << " and "; DestInt.print(DOUT, mri_);
+  DOUT << " and "; DstInt.print(DOUT, mri_);
   DOUT << ": ";
 
   // Check if it is necessary to propagate "isDead" property before intervals
   // are joined.
-  MachineBasicBlock *CopyBB = CopyMI->getParent();
   MachineOperand *mopd = CopyMI->findRegisterDefOperand(DstReg);
   bool isDead = mopd->isDead();
   bool isShorten = false;
@@ -965,59 +984,32 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   // virtual register. Once the coalescing is done, it cannot be broken and
   // these are not spillable! If the destination interval uses are far away,
   // think twice about coalescing them!
-  if (!mopd->isDead() && MRegisterInfo::isPhysicalRegister(repSrcReg)) {
-    // Small function. No need to worry!
-    unsigned Threshold = allocatableRegs_.count() * 2;
-    if (r2iMap_.size() <= Threshold)
-      goto TryJoin;
+  if (!mopd->isDead() && (SrcIsPhys || DstIsPhys)) {
+    LiveInterval &JoinVInt = SrcIsPhys ? DstInt : SrcInt;
+    unsigned JoinVReg = SrcIsPhys ? repDstReg : repSrcReg;
+    unsigned JoinPReg = SrcIsPhys ? repSrcReg : repDstReg;
+    const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(JoinVReg);
+    unsigned Threshold = allocatableRCRegs_[RC].count();
 
-    LiveVariables::VarInfo& dvi = lv_->getVarInfo(repDstReg);
-    // Is the value used in the current BB or any immediate successroe BB?
-    if (dvi.UsedBlocks[CopyBB->getNumber()])
-      goto TryJoin;
-    for (MachineBasicBlock::succ_iterator SI = CopyBB->succ_begin(),
-           SE = CopyBB->succ_end(); SI != SE; ++SI) {
-      MachineBasicBlock *SuccMBB = *SI;
-      if (dvi.UsedBlocks[SuccMBB->getNumber()])
-          goto TryJoin;
-    }
-
-    // Ok, no use in this BB and no use in immediate successor BB's. Be really
-    // careful now!
-    // It's only used in one BB, forget about it!
-    if (dvi.UsedBlocks.count() < 2) {
+    // If the virtual register live interval is long has it has low use desity,
+    // do not join them, instead mark the physical register as its allocation
+    // preference.
+    unsigned Length = JoinVInt.getSize() / InstrSlots::NUM;
+    LiveVariables::VarInfo &vi = lv_->getVarInfo(JoinVReg);
+    if (Length > Threshold &&
+        (((float)vi.NumUses / Length) < (1.0 / Threshold))) {
+      JoinVInt.preference = JoinPReg;
       ++numAborts;
-      return false;
-    }
-
-    // Determine whether to allow coalescing based on how far the closest
-    // use is.
-    unsigned CopyIdx = getInstructionIndex(CopyMI);
-    unsigned MinDist = i2miMap_.size() * InstrSlots::NUM;
-    int UseBBNum = dvi.UsedBlocks.find_first();
-    while (UseBBNum != -1) {
-      MachineBasicBlock *UseBB = mf_->getBlockNumbered(UseBBNum);
-      unsigned UseIdx = getMBBStartIdx(UseBB);
-      if (UseIdx > CopyIdx) {
-        MinDist = std::min(MinDist, UseIdx - CopyIdx);
-        if (MinDist <= Threshold)
-          break;
-      }
-      UseBBNum = dvi.UsedBlocks.find_next(UseBBNum);
-    }
-    if (MinDist > Threshold) {
-      // Don't do it!
-      ++numAborts;
+      DOUT << "\tMay tie down a physical register, abort!\n";
       return false;
     }
   }
 
-TryJoin:
   // Okay, attempt to join these two intervals.  On failure, this returns false.
   // Otherwise, if one of the intervals being joined is a physreg, this method
-  // always canonicalizes DestInt to be it.  The output "SrcInt" will not have
+  // always canonicalizes DstInt to be it.  The output "SrcInt" will not have
   // been modified, so we can use this information below to update aliases.
-  if (JoinIntervals(DestInt, SrcInt)) {
+  if (JoinIntervals(DstInt, SrcInt)) {
     if (isDead) {
       // Result of the copy is dead. Propagate this property.
       if (SrcStart == 0) {
@@ -1038,14 +1030,14 @@ TryJoin:
 
     if (isShorten || isDead) {
       // Shorten the live interval.
-      LiveInterval &LiveInInt = (repSrcReg == DestInt.reg) ? DestInt : SrcInt;
+      LiveInterval &LiveInInt = (repSrcReg == DstInt.reg) ? DstInt : SrcInt;
       LiveInInt.removeRange(RemoveStart, RemoveEnd);
     }
   } else {
     // Coallescing failed.
     
     // If we can eliminate the copy without merging the live ranges, do so now.
-    if (AdjustCopiesBackFrom(SrcInt, DestInt, CopyMI))
+    if (AdjustCopiesBackFrom(SrcInt, DstInt, CopyMI))
       return true;
 
     // Otherwise, we are unable to join the intervals.
@@ -1053,7 +1045,7 @@ TryJoin:
     return false;
   }
 
-  bool Swapped = repSrcReg == DestInt.reg;
+  bool Swapped = repSrcReg == DstInt.reg;
   if (Swapped)
     std::swap(repSrcReg, repDstReg);
   assert(MRegisterInfo::isVirtualRegister(repSrcReg) &&
@@ -1070,9 +1062,10 @@ TryJoin:
     LiveVariables::VarInfo& dVI = lv_->getVarInfo(repDstReg);
     LiveVariables::VarInfo& sVI = lv_->getVarInfo(repSrcReg);
     dVI.UsedBlocks |= sVI.UsedBlocks;
+    dVI.NumUses += sVI.NumUses;
   }
 
-  DOUT << "\n\t\tJoined.  Result = "; DestInt.print(DOUT, mri_);
+  DOUT << "\n\t\tJoined.  Result = "; DstInt.print(DOUT, mri_);
   DOUT << "\n";
 
   // Remember these liveintervals have been joined.
@@ -1082,7 +1075,7 @@ TryJoin:
 
   // If the intervals were swapped by Join, swap them back so that the register
   // mapping (in the r2i map) is correct.
-  if (Swapped) SrcInt.swap(DestInt);
+  if (Swapped) SrcInt.swap(DstInt);
   removeInterval(repSrcReg);
   r2rMap_[repSrcReg] = repDstReg;
 
@@ -1270,6 +1263,8 @@ bool LiveIntervals::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) {
   // the LHS.
   LHS.MergeRangesInAsValue(RHS, LHSValNo);
   LHS.weight += RHS.weight;
+  if (RHS.preference && !LHS.preference)
+    LHS.preference = RHS.preference;
   
   return true;
 }
@@ -1478,7 +1473,7 @@ namespace {
 
 
 void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
-                                       std::vector<CopyRec> &TryAgain) {
+                                std::vector<CopyRec> &TryAgain, bool PhysOnly) {
   DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
   
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
@@ -1489,7 +1484,7 @@ void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg)) continue;
     
-    if (!JoinCopy(Inst, SrcReg, DstReg))
+    if (!JoinCopy(Inst, SrcReg, DstReg, PhysOnly))
       TryAgain.push_back(getCopyRec(Inst, SrcReg, DstReg));
   }
 }
@@ -1512,9 +1507,11 @@ void LiveIntervals::joinIntervals() {
     // Otherwise, join intervals in inner loops before other intervals.
     // Unfortunately we can't just iterate over loop hierarchy here because
     // there may be more MBB's than BB's.  Collect MBB's for sorting.
+
+    // Join intervals in the function prolog first. We want to join physical
+    // registers with virtual registers before the intervals got too long.
     std::vector<std::pair<unsigned, MachineBasicBlock*> > MBBs;
-    for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
-         I != E; ++I)
+    for (MachineFunction::iterator I = mf_->begin(), E = mf_->end(); I != E;++I)
       MBBs.push_back(std::make_pair(LI.getLoopDepth(I->getBasicBlock()), I));
 
     // Sort by loop depth.
@@ -1522,7 +1519,9 @@ void LiveIntervals::joinIntervals() {
 
     // Finally, join intervals in loop nest order.
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      CopyCoallesceInMBB(MBBs[i].second, TryAgainList);
+      CopyCoallesceInMBB(MBBs[i].second, TryAgainList, true);
+    for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
+      CopyCoallesceInMBB(MBBs[i].second, TryAgainList, false);
   }
   
   // Joining intervals can allow other intervals to be joined.  Iteratively join

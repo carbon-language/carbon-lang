@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
 
 namespace llvm {
@@ -30,6 +31,7 @@ namespace llvm {
   class LiveVariables;
   class MRegisterInfo;
   class TargetInstrInfo;
+  class TargetRegisterClass;
   class VirtRegMap;
 
   class LiveIntervals : public MachineFunctionPass {
@@ -56,6 +58,7 @@ namespace llvm {
     Reg2RegMap r2rMap_;
 
     BitVector allocatableRegs_;
+    DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs_;
 
     /// JoinedLIs - Keep track which register intervals have been coalesced
     /// with other intervals.
@@ -202,7 +205,7 @@ namespace llvm {
     /// CopyCoallesceInMBB - Coallsece copies in the specified MBB, putting
     /// copies that cannot yet be coallesced into the "TryAgain" list.
     void CopyCoallesceInMBB(MachineBasicBlock *MBB,
-                            std::vector<CopyRec> &TryAgain);
+                         std::vector<CopyRec> &TryAgain, bool PhysOnly = false);
 
     /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
     /// which are the src/dst of the copy instruction CopyMI.  This returns true
@@ -210,7 +213,8 @@ namespace llvm {
     /// to coallesce these this copy, due to register constraints.  It returns
     /// false if it is not currently possible to coallesce this interval, but
     /// it may be possible if other things get coallesced.
-    bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg);
+    bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg,
+                  bool PhysOnly = false);
     
     /// JoinIntervals - Attempt to join these two intervals.  On failure, this
     /// returns false.  Otherwise, if one of the intervals being joined is a
