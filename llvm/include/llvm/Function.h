@@ -149,15 +149,6 @@ public:
   void eraseFromParent();
 
 
-  // getNext/Prev - Return the next or previous function in the list.  These
-  // methods should never be used directly, and are only used to implement the
-  // function list as part of the module.
-  //
-        Function *getNext()       { return Next; }
-  const Function *getNext() const { return Next; }
-        Function *getPrev()       { return Prev; }
-  const Function *getPrev() const { return Prev; }
-
   /// Get the underlying elements of the Function... the basic block list is
   /// empty for external functions.
   ///
@@ -252,6 +243,15 @@ public:
     Function *Obj = 0;
     return unsigned(reinterpret_cast<uintptr_t>(&Obj->ArgumentList));
   }
+private:
+  // getNext/Prev - Return the next or previous function in the list.  These
+  // methods should never be used directly, and are only used to implement the
+  // function list as part of the module.
+  //
+  Function *getNext()             { return Next; }
+  const Function *getNext() const { return Next; }
+  Function *getPrev()             { return Prev; }
+  const Function *getPrev() const { return Prev; }
 };
 
 inline ValueSymbolTable *

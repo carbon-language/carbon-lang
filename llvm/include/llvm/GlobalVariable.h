@@ -93,12 +93,6 @@ public:
     }
   }
 
-  // getNext/Prev - Return the next or previous global variable in the list.
-        GlobalVariable *getNext()       { return Next; }
-  const GlobalVariable *getNext() const { return Next; }
-        GlobalVariable *getPrev()       { return Prev; }
-  const GlobalVariable *getPrev() const { return Prev; }
-
   /// If the value is a global constant, its value is immutable throughout the
   /// runtime execution of the program.  Assigning a value into the constant
   /// leads to undefined behavior.
@@ -132,6 +126,12 @@ public:
   static inline bool classof(const Value *V) {
     return V->getValueID() == Value::GlobalVariableVal;
   }
+private:
+  // getNext/Prev - Return the next or previous global variable in the list.
+        GlobalVariable *getNext()       { return Next; }
+  const GlobalVariable *getNext() const { return Next; }
+        GlobalVariable *getPrev()       { return Prev; }
+  const GlobalVariable *getPrev() const { return Prev; }
 };
 
 } // End llvm namespace
