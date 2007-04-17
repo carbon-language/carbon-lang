@@ -336,15 +336,18 @@ void LoadVN::getEqualNumberNodes(Value *V,
   // we see any candidate loads, then we know they have the same value # as LI.
   //
   bool LoadInvalidatedInBBAfter = false;
-  for (BasicBlock::iterator I = LI->getNext(); I != LoadBB->end(); ++I) {
-    // If this instruction is a load, then this instruction returns the same
-    // value as LI.
-    if (isa<LoadInst>(I) && cast<LoadInst>(I)->getOperand(0) == LoadPtr)
-      RetVals.push_back(I);
+  {
+    BasicBlock::iterator I = LI;
+    for (++I; I != LoadBB->end(); ++I) {
+      // If this instruction is a load, then this instruction returns the same
+      // value as LI.
+      if (isa<LoadInst>(I) && cast<LoadInst>(I)->getOperand(0) == LoadPtr)
+        RetVals.push_back(I);
 
-    if (AA.getModRefInfo(I, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
-      LoadInvalidatedInBBAfter = true;
-      break;
+      if (AA.getModRefInfo(I, LoadPtr, LoadSize) & AliasAnalysis::Mod) {
+        LoadInvalidatedInBBAfter = true;
+        break;
+      }
     }
   }
 
