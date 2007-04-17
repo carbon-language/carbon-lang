@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines classes to implement an intrusive doubly linked list class
-// (ie each node of the list must contain a next and previous field for the
+// (i.e. each node of the list must contain a next and previous field for the
 // list.
 //
 // The ilist_traits trait class is used to gain access to the next and previous
@@ -22,7 +22,7 @@
 // really want to know if it's empty.
 //
 // The ilist class is implemented by allocating a 'tail' node when the list is
-// created (using ilist_traits<>::createEndMarker()).  This tail node is
+// created (using ilist_traits<>::createSentinel()).  This tail node is
 // absolutely required because the user must be able to compute end()-1. Because
 // of this, users of the direct next/prev links will see an extra link on the
 // end of the list, which should be ignored.
@@ -134,7 +134,7 @@ public:
   // Increment and decrement operators...
   ilist_iterator &operator--() {      // predecrement - Back up
     NodePtr = Traits::getPrev(NodePtr);
-    assert(NodePtr && "--'d off the beginning of an ilist!");
+    assert(Traits::getNext(NodePtr) && "--'d off the beginning of an ilist!");
     return *this;
   }
   ilist_iterator &operator++() {      // preincrement - Advance
@@ -213,12 +213,20 @@ template<typename NodeTy> struct simplify_type<const ilist_iterator<NodeTy> > {
 //===----------------------------------------------------------------------===//
 //
 // iplist - The subset of list functionality that can safely be used on nodes of
-// polymorphic types, ie a heterogeneus list with a common base class that holds
-// the next/prev pointers...
+// polymorphic types, i.e. a heterogenous list with a common base class that
+// holds the next/prev pointers...
 //
 template<typename NodeTy, typename Traits=ilist_traits<NodeTy> >
 class iplist : public Traits {
-  NodeTy *Head, *Tail;
+  NodeTy *Head;
+
+  // Use the prev node pointer of 'head' as the tail pointer.  This is really a
+  // circularly linked list where we snip the 'next' link from the sentinel node
+  // back to the first node in the list (to preserve assertions about going off
+  // the end of the list).
+  NodeTy *getTail() { return getPrev(Head); }
+  const NodeTy *getTail() const { return getPrev(Head); }
+  void setTail(NodeTy *N) { setPrev(Head, N); }
 
   static bool op_less(NodeTy &L, NodeTy &R) { return L < R; }
   static bool op_equal(NodeTy &L, NodeTy &R) { return L == R; }
@@ -235,28 +243,28 @@ public:
   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
   typedef std::reverse_iterator<iterator>  reverse_iterator;
 
-  iplist() : Head(Traits::createSentinel()), Tail(Head) {
+  iplist() : Head(Traits::createSentinel()) {
     setNext(Head, 0);
-    setPrev(Head, 0);
+    setTail(Head);
   }
-  ~iplist() { clear(); Traits::destroySentinel(Tail); }
+  ~iplist() { clear(); Traits::destroySentinel(getTail()); }
 
   // Iterator creation methods.
   iterator begin()             { return iterator(Head); }
   const_iterator begin() const { return const_iterator(Head); }
-  iterator end()               { return iterator(Tail); }
-  const_iterator end() const   { return const_iterator(Tail); }
+  iterator end()               { return iterator(getTail()); }
+  const_iterator end() const   { return const_iterator(getTail()); }
 
   // reverse iterator creation methods.
   reverse_iterator rbegin()            { return reverse_iterator(end()); }
   const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
   reverse_iterator rend()              { return reverse_iterator(begin()); }
-  const_reverse_iterator rend() const  {return const_reverse_iterator(begin());}
+  const_reverse_iterator rend() const  { return const_reverse_iterator(begin()); }
 
 
   // Miscellaneous inspection routines.
   size_type max_size() const { return size_type(-1); }
-  bool empty() const { return Head == Tail; }
+  bool empty() const { return Head == getTail(); }
 
   // Front and back accessor functions...
   reference front() {
@@ -269,17 +277,16 @@ public:
   }
   reference back() {
     assert(!empty() && "Called back() on empty list!");
-    return *getPrev(Tail);
+    return *getPrev(getTail());
   }
   const_reference back() const {
     assert(!empty() && "Called back() on empty list!");
-    return *getPrev(Tail);
+    return *getPrev(getTail());
   }
 
   void swap(iplist &RHS) {
     abort();     // Swap does not use list traits callback correctly yet!
     std::swap(Head, RHS.Head);
-    std::swap(Tail, RHS.Tail);
   }
 
   iterator insert(iterator where, NodeTy *New) {
@@ -287,7 +294,7 @@ public:
     setNext(New, CurNode);
     setPrev(New, PrevNode);
 
-    if (PrevNode)
+    if (CurNode != Head)  // Is PrevNode off the beginning of the list?
       setNext(PrevNode, New);
     else
       Head = New;
@@ -303,7 +310,7 @@ public:
     NodeTy *NextNode = getNext(Node);
     NodeTy *PrevNode = getPrev(Node);
 
-    if (PrevNode)
+    if (Node != Head)  // Is PrevNode off the beginning of the list?
       setNext(PrevNode, NextNode);
     else
       Head = NextNode;
@@ -331,7 +338,15 @@ private:
   //
   void transfer(iterator position, iplist &L2, iterator first, iterator last) {
     assert(first != last && "Should be checked by callers");
+
     if (position != last) {
+      // Note: we have to be careful about the case when we move the first node
+      // in the list.  This node is the list sentinel node and we can't move it.
+      NodeTy *ThisSentinel = getTail();
+      setTail(0);
+      NodeTy *L2Sentinel = L2.getTail();
+      L2.setTail(0);
+
       // Remove [first, last) from its old position.
       NodeTy *First = &*first, *Prev = getPrev(First);
       NodeTy *Next = last.getNodePtrUnchecked(), *Last = getPrev(Next);
@@ -357,6 +372,10 @@ private:
       setPrev(PosNext, Last);
 
       transferNodesFromList(L2, First, PosNext);
+
+      // Now that everything is set, restore the pointers to the list sentinals.
+      L2.setTail(L2Sentinel);
+      setTail(ThisSentinel);
     }
   }
 
