@@ -27,13 +27,11 @@ namespace llvm {
 class Module;
 class Constant;
 class PointerType;
-template<typename SC> struct ilist_traits;
-template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
-         typename SubClass> class SymbolTableListTraits;
+template<typename ValueSubClass, typename ItemParentClass>
+  class SymbolTableListTraits;
 
 class GlobalVariable : public GlobalValue {
-  friend class SymbolTableListTraits<GlobalVariable, Module, Module,
-                                     ilist_traits<GlobalVariable> >;
+  friend class SymbolTableListTraits<GlobalVariable, Module>;
   void operator=(const GlobalVariable &);     // Do not implement
   GlobalVariable(const GlobalVariable &);     // Do not implement
 

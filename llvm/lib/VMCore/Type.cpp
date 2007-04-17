@@ -433,7 +433,6 @@ FunctionType::FunctionType(const Type *Result,
 
   // Calculate whether or not this type is abstract
   setAbstract(isAbstract);
-
 }
 
 StructType::StructType(const std::vector<const Type*> &Types, bool isPacked)

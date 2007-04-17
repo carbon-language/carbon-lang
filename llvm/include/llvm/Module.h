@@ -26,18 +26,20 @@ class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class FunctionType;
 
 template<> struct ilist_traits<Function>
-  : public SymbolTableListTraits<Function, Module, Module> {
+  : public SymbolTableListTraits<Function, Module> {
   // createSentinel is used to create a node that marks the end of the list.
   static Function *createSentinel();
   static void destroySentinel(Function *F) { delete F; }
   static iplist<Function> &getList(Module *M);
+  static inline ValueSymbolTable *getSymTab(Module *M);
 };
 template<> struct ilist_traits<GlobalVariable>
-  : public SymbolTableListTraits<GlobalVariable, Module, Module> {
+  : public SymbolTableListTraits<GlobalVariable, Module> {
   // createSentinel is used to create a node that marks the end of the list.
   static GlobalVariable *createSentinel();
   static void destroySentinel(GlobalVariable *GV) { delete GV; }
   static iplist<GlobalVariable> &getList(Module *M);
+  static inline ValueSymbolTable *getSymTab(Module *M);
 };
 
 /// A Module instance is used to store all the information related to an
@@ -318,6 +320,17 @@ inline std::ostream &operator<<(std::ostream &O, const Module &M) {
   M.print(O);
   return O;
 }
+
+inline ValueSymbolTable *
+ilist_traits<Function>::getSymTab(Module *M) {
+  return M ? &M->getValueSymbolTable() : 0;
+}
+
+inline ValueSymbolTable *
+ilist_traits<GlobalVariable>::getSymTab(Module *M) {
+  return M ? &M->getValueSymbolTable() : 0;
+}
+
 
 } // End llvm namespace
 

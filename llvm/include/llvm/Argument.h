@@ -18,9 +18,8 @@
 
 namespace llvm {
 
-template<typename SC> struct ilist_traits;
-template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
-         typename SubClass> class SymbolTableListTraits;
+template<typename ValueSubClass, typename ItemParentClass>
+  class SymbolTableListTraits;
 
 /// A class to represent an incoming formal argument to a Function. An argument
 /// is a very simple Value. It is essentially a named (optional) type. When used
@@ -33,8 +32,7 @@ class Argument : public Value {  // Defined in the Function.cpp file
   Argument *Prev, *Next; // Next and Prev links for our intrusive linked list
   void setNext(Argument *N) { Next = N; }
   void setPrev(Argument *N) { Prev = N; }
-  friend class SymbolTableListTraits<Argument, Function, Function,
-                                     ilist_traits<Argument> >;
+  friend class SymbolTableListTraits<Argument, Function>;
   void setParent(Function *parent);
 
 public:

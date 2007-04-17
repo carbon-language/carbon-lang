@@ -30,21 +30,23 @@ class ParamAttrsList;
 
 // Traits for intrusive list of instructions...
 template<> struct ilist_traits<BasicBlock>
-  : public SymbolTableListTraits<BasicBlock, Function, Function> {
+  : public SymbolTableListTraits<BasicBlock, Function> {
 
   // createSentinel is used to create a node that marks the end of the list...
   static BasicBlock *createSentinel();
   static void destroySentinel(BasicBlock *BB) { delete BB; }
   static iplist<BasicBlock> &getList(Function *F);
+  static ValueSymbolTable *getSymTab(Function *ItemParent);
 };
 
 template<> struct ilist_traits<Argument>
-  : public SymbolTableListTraits<Argument, Function, Function> {
+  : public SymbolTableListTraits<Argument, Function> {
 
   // createSentinel is used to create a node that marks the end of the list...
   static Argument *createSentinel();
   static void destroySentinel(Argument *A) { delete A; }
   static iplist<Argument> &getList(Function *F);
+  static ValueSymbolTable *getSymTab(Function *ItemParent);
 };
 
 class Function : public GlobalValue, public Annotable {
@@ -67,7 +69,7 @@ private:
   ParamAttrsList *ParamAttrs;        ///< Parameter attributes
   unsigned CallingConvention;        ///< Calling convention to use
 
-  friend class SymbolTableListTraits<Function, Module, Module>;
+  friend class SymbolTableListTraits<Function, Module>;
 
   void setParent(Module *parent);
   Function *Prev, *Next;
@@ -237,6 +239,16 @@ public:
   ///
   void dropAllReferences();
 };
+
+inline ValueSymbolTable *
+ilist_traits<BasicBlock>::getSymTab(Function *F) {
+  return F ? &F->getValueSymbolTable() : 0;
+}
+
+inline ValueSymbolTable *
+ilist_traits<Argument>::getSymTab(Function *F) {
+  return F ? &F->getValueSymbolTable() : 0;
+}
 
 } // End llvm namespace
 

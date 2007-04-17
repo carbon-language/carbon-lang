@@ -25,11 +25,12 @@ template <class Term, class BB> class SuccIterator;  // Successor Iterator
 template <class Ptr, class USE_iterator> class PredIterator;
 
 template<> struct ilist_traits<Instruction>
-  : public SymbolTableListTraits<Instruction, BasicBlock, Function> {
+  : public SymbolTableListTraits<Instruction, BasicBlock> {
   // createSentinel is used to create a node that marks the end of the list...
   static Instruction *createSentinel();
   static void destroySentinel(Instruction *I) { delete I; }
   static iplist<Instruction> &getList(BasicBlock *BB);
+  static ValueSymbolTable *getSymTab(BasicBlock *ItemParent);
 };
 
 /// This represents a single basic block in LLVM. A basic block is simply a
@@ -52,11 +53,12 @@ public:
 private :
   InstListType InstList;
   BasicBlock *Prev, *Next; // Next and Prev links for our intrusive linked list
+  Function *Parent;
 
   void setParent(Function *parent);
   void setNext(BasicBlock *N) { Next = N; }
   void setPrev(BasicBlock *N) { Prev = N; }
-  friend class SymbolTableListTraits<BasicBlock, Function, Function>;
+  friend class SymbolTableListTraits<BasicBlock, Function>;
 
   BasicBlock(const BasicBlock &);     // Do not implement
   void operator=(const BasicBlock &); // Do not implement
@@ -76,8 +78,8 @@ public:
 
   /// getParent - Return the enclosing method, or null if none
   ///
-  const Function *getParent() const { return InstList.getParent(); }
-        Function *getParent()       { return InstList.getParent(); }
+  const Function *getParent() const { return Parent; }
+        Function *getParent()       { return Parent; }
 
   // getNext/Prev - Return the next or previous basic block in the list.
         BasicBlock *getNext()       { return Next; }

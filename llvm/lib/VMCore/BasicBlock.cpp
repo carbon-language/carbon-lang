@@ -22,6 +22,15 @@
 #include <algorithm>
 using namespace llvm;
 
+inline ValueSymbolTable *
+ilist_traits<Instruction>::getSymTab(BasicBlock *BB) {
+  if (BB)
+    if (Function *F = BB->getParent())
+      return &F->getValueSymbolTable();
+  return 0;
+}
+
+
 namespace {
   /// DummyInst - An instance of this class is used to mark the end of the
   /// instruction list.  This is not a real instruction.
@@ -57,24 +66,24 @@ iplist<Instruction> &ilist_traits<Instruction>::getList(BasicBlock *BB) {
 
 // Explicit instantiation of SymbolTableListTraits since some of the methods
 // are not in the public header file...
-template class SymbolTableListTraits<Instruction, BasicBlock, Function>;
+template class SymbolTableListTraits<Instruction, BasicBlock>;
 
 
-BasicBlock::BasicBlock(const std::string &Name, Function *Parent,
+BasicBlock::BasicBlock(const std::string &Name, Function *NewParent,
                        BasicBlock *InsertBefore)
-  : Value(Type::LabelTy, Value::BasicBlockVal) {
-  // Initialize the instlist...
+  : Value(Type::LabelTy, Value::BasicBlockVal), Parent(0) {
+  // Initialize the instlist.
   InstList.setItemParent(this);
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
 
   if (InsertBefore) {
-    assert(Parent &&
+    assert(NewParent &&
            "Cannot insert block before another block with no function!");
-    Parent->getBasicBlockList().insert(InsertBefore, this);
-  } else if (Parent) {
-    Parent->getBasicBlockList().push_back(this);
+    NewParent->getBasicBlockList().insert(InsertBefore, this);
+  } else if (NewParent) {
+    NewParent->getBasicBlockList().push_back(this);
   }
   
   setName(Name);
@@ -91,7 +100,8 @@ void BasicBlock::setParent(Function *parent) {
   if (getParent())
     LeakDetector::addGarbageObject(this);
 
-  InstList.setParent(parent);
+  // Set Parent=parent, updating instruction symtab entries as appropriate.
+  InstList.setSymTabObject(&Parent, parent);
 
   if (getParent())
     LeakDetector::removeGarbageObject(this);

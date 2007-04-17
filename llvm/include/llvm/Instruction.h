@@ -22,9 +22,8 @@ namespace llvm {
 struct AssemblyAnnotationWriter;
 class BinaryOperator;
 
-template<typename SC> struct ilist_traits;
-template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
-         typename SubClass> class SymbolTableListTraits;
+template<typename ValueSubClass, typename ItemParentClass>
+  class SymbolTableListTraits;
 
 class Instruction : public User {
   void operator=(const Instruction &);     // Do not implement
@@ -36,8 +35,7 @@ class Instruction : public User {
   void setNext(Instruction *N) { Next = N; }
   void setPrev(Instruction *N) { Prev = N; }
 
-  friend class SymbolTableListTraits<Instruction, BasicBlock, Function,
-                                     ilist_traits<Instruction> >;
+  friend class SymbolTableListTraits<Instruction, BasicBlock>;
   void setParent(BasicBlock *P);
 protected:
   Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,

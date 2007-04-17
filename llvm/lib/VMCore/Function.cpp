@@ -44,8 +44,8 @@ iplist<Argument> &ilist_traits<Argument>::getList(Function *F) {
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file...
-template class SymbolTableListTraits<Argument, Function, Function>;
-template class SymbolTableListTraits<BasicBlock, Function, Function>;
+template class SymbolTableListTraits<Argument, Function>;
+template class SymbolTableListTraits<BasicBlock, Function>;
 
 //===----------------------------------------------------------------------===//
 // Argument Implementation
@@ -144,9 +144,7 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
   ParamAttrs = 0;
   CallingConvention = 0;
   BasicBlocks.setItemParent(this);
-  BasicBlocks.setParent(this);
   ArgumentList.setItemParent(this);
-  ArgumentList.setParent(this);
   SymTab = new ValueSymbolTable();
 
   assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy)
@@ -171,7 +169,6 @@ Function::~Function() {
 
   // Delete all of the method arguments and unlink from symbol table...
   ArgumentList.clear();
-  ArgumentList.setParent(0);
   delete SymTab;
 }
 

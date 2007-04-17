@@ -31,24 +31,17 @@ template<typename NodeTy> class ilist_iterator;
 template<typename NodeTy, typename Traits> class iplist;
 template<typename Ty> struct ilist_traits;
 
-// ValueSubClass  - The type of objects that I hold
-// ItemParentType - I call setParent() on all of my "ValueSubclass" items, and
-//                  this is the value that I pass in.
-// SymTabType     - This is the class type, whose symtab I insert my
-//                  ValueSubClass items into.  Most of the time it is
-//                  ItemParentType, but Instructions have item parents of BB's
-//                  but symtabtype's of a Function
+// ValueSubClass  - The type of objects that I hold, e.g. Instruction.
+// ItemParentType - The type of object that owns the list, e.g. BasicBlock.
+// TraitBaseClass - The class this trait should inherit from, it should
+//                  inherit from ilist_traits<ValueSubClass>
 //
-template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
-         typename SubClass=ilist_traits<ValueSubClass> >
+template<typename ValueSubClass, typename ItemParentClass>
 class SymbolTableListTraits {
-  SymTabClass     *SymTabObject;
+  typedef ilist_traits<ValueSubClass> TraitsClass;
   ItemParentClass *ItemParent;
 public:
-  SymbolTableListTraits() : SymTabObject(0), ItemParent(0) {}
-
-        SymTabClass *getParent()       { return SymTabObject; }
-  const SymTabClass *getParent() const { return SymTabObject; }
+  SymbolTableListTraits() : ItemParent(0) {}
 
   static ValueSubClass *getPrev(ValueSubClass *V) { return V->getPrev(); }
   static ValueSubClass *getNext(ValueSubClass *V) { return V->getNext(); }
@@ -68,10 +61,10 @@ public:
                              ilist_traits<ValueSubClass> > &L2,
                              ilist_iterator<ValueSubClass> first,
                              ilist_iterator<ValueSubClass> last);
-
 //private:
-  void setItemParent(ItemParentClass *IP) { ItemParent = IP; }//This is private!
-  void setParent(SymTabClass *Parent);  // This is private!
+  void setItemParent(ItemParentClass *IP) { ItemParent = IP; }
+  template<typename TPtr>
+  void setSymTabObject(TPtr *, TPtr);
 };
 
 } // End llvm namespace

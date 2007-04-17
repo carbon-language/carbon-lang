@@ -55,8 +55,8 @@ iplist<GlobalVariable> &ilist_traits<GlobalVariable>::getList(Module *M) {
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file.
-template class SymbolTableListTraits<GlobalVariable, Module, Module>;
-template class SymbolTableListTraits<Function, Module, Module>;
+template class SymbolTableListTraits<GlobalVariable, Module>;
+template class SymbolTableListTraits<Function, Module>;
 
 //===----------------------------------------------------------------------===//
 // Primitive Module methods.
@@ -65,9 +65,7 @@ template class SymbolTableListTraits<Function, Module, Module>;
 Module::Module(const std::string &MID)
   : ModuleID(MID), DataLayout("") {
   FunctionList.setItemParent(this);
-  FunctionList.setParent(this);
   GlobalList.setItemParent(this);
-  GlobalList.setParent(this);
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();
 }
@@ -75,9 +73,7 @@ Module::Module(const std::string &MID)
 Module::~Module() {
   dropAllReferences();
   GlobalList.clear();
-  GlobalList.setParent(0);
   FunctionList.clear();
-  FunctionList.setParent(0);
   LibraryList.clear();
   delete ValSymTab;
   delete TypeSymTab;

@@ -18,10 +18,8 @@
 #include "llvm/ADT/StringMap.h"
 
 namespace llvm {
-  template<typename ValueSubClass, typename ItemParentClass,
-           typename SymTabClass, typename SubClass>
+  template<typename ValueSubClass, typename ItemParentClass>
         class SymbolTableListTraits;
-  template<typename NodeTy> struct ilist_traits;
   class BasicBlock;
   class Function;
   class Module;
@@ -32,16 +30,11 @@ namespace llvm {
 ///
 class ValueSymbolTable {
   friend class Value;
-  friend class SymbolTableListTraits<Argument, Function, Function,
-                                     ilist_traits<Argument> >;
-  friend class SymbolTableListTraits<BasicBlock, Function, Function,
-                                     ilist_traits<BasicBlock> >;
-  friend class SymbolTableListTraits<Instruction, BasicBlock, Function,
-                                     ilist_traits<Instruction> >;
-  friend class SymbolTableListTraits<Function, Module, Module, 
-                                     ilist_traits<Function> >;
-  friend class SymbolTableListTraits<GlobalVariable, Module, Module, 
-                                     ilist_traits<GlobalVariable> >;
+  friend class SymbolTableListTraits<Argument, Function>;
+  friend class SymbolTableListTraits<BasicBlock, Function>;
+  friend class SymbolTableListTraits<Instruction, BasicBlock>;
+  friend class SymbolTableListTraits<Function, Module>;
+  friend class SymbolTableListTraits<GlobalVariable, Module>;
 /// @name Types
 /// @{
 public:
