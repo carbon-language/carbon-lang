@@ -476,3 +476,46 @@ More LSR enhancements possible:
    in a load / store.
 2. Allow iv reuse even when a type conversion is required. For example, i8
    and i32 load / store addressing modes are identical.
+
+
+//===---------------------------------------------------------------------===//
+
+This:
+
+int foo(int a, int b, int c, int d) {
+  long long acc = (long long)a * (long long)b;
+  acc += (long long)c * (long long)d;
+  return (int)(acc >> 32);
+}
+
+Should compile to use SMLAL (Signed Multiply Accumulate Long) which multiplies 
+two signed 32-bit values to produce a 64-bit value, and accumulates this with 
+a 64-bit value.
+
+We currently get this with v6:
+
+_foo:
+        mul r12, r1, r0
+        smmul r1, r1, r0
+        smmul r0, r3, r2
+        mul r3, r3, r2
+        adds r3, r3, r12
+        adc r0, r0, r1
+        bx lr
+
+and this with v4:
+
+_foo:
+        stmfd sp!, {r7, lr}
+        mov r7, sp
+        mul r12, r1, r0
+        smull r0, r1, r1, r0
+        smull lr, r0, r3, r2
+        mul r3, r3, r2
+        adds r3, r3, r12
+        adc r0, r0, r1
+        ldmfd sp!, {r7, pc}
+
+This apparently occurs in real code.
+
+//===---------------------------------------------------------------------===//
