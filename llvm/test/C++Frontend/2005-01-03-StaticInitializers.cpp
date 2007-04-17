@@ -4,5 +4,5 @@ struct S {
   int  A[2];
 };
 
-int XX = (int)&(((struct S*)0)->A[1]);
+int XX = (int)(long)&(((struct S*)0)->A[1]);
 
