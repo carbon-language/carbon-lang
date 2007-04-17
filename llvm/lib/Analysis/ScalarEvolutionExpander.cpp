@@ -71,15 +71,20 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
 /// InsertBinop - Insert the specified binary operator, doing a small amount
 /// of work to avoid inserting an obviously redundant operation.
 Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
-                                 Value *RHS, Instruction *InsertPt) {
+                                 Value *RHS, Instruction *&InsertPt) {
   // Do a quick scan to see if we have this binop nearby.  If so, reuse it.
   unsigned ScanLimit = 6;
   for (BasicBlock::iterator IP = InsertPt, E = InsertPt->getParent()->begin();
        ScanLimit; --IP, --ScanLimit) {
     if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(IP))
       if (BinOp->getOpcode() == Opcode && BinOp->getOperand(0) == LHS &&
-          BinOp->getOperand(1) == RHS)
+          BinOp->getOperand(1) == RHS) {
+        // If we found the instruction *at* the insert point, insert later
+        // instructions after it.
+        if (BinOp == InsertPt)
+          InsertPt = ++IP;
         return BinOp;
+      }
     if (IP == E) break;
   }
 
