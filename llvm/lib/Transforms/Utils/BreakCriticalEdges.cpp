@@ -129,7 +129,8 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
 
   // Insert the block into the function... right after the block TI lives in.
   Function &F = *TIBB->getParent();
-  F.getBasicBlockList().insert(TIBB->getNext(), NewBB);
+  Function::iterator FBBI = TIBB;
+  F.getBasicBlockList().insert(++FBBI, NewBB);
   
   // If there are any PHI nodes in DestBB, we need to update them so that they
   // merge incoming values from NewBB instead of from TIBB.

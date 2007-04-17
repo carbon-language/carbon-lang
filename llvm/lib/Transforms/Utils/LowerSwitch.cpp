@@ -155,7 +155,8 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   // left branch if it is and right branch if not.
   Function* F = OrigBlock->getParent();
   BasicBlock* NewNode = new BasicBlock("NodeBlock");
-  F->getBasicBlockList().insert(OrigBlock->getNext(), NewNode);
+  Function::iterator FI = OrigBlock;
+  F->getBasicBlockList().insert(++FI, NewNode);
 
   ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_SLT, Val, Pivot.Low, "Pivot");
   NewNode->getInstList().push_back(Comp);
@@ -175,7 +176,8 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
 {
   Function* F = OrigBlock->getParent();
   BasicBlock* NewLeaf = new BasicBlock("LeafBlock");
-  F->getBasicBlockList().insert(OrigBlock->getNext(), NewLeaf);
+  Function::iterator FI = OrigBlock;
+  F->getBasicBlockList().insert(++FI, NewLeaf);
 
   // Emit comparison
   ICmpInst* Comp = NULL;
