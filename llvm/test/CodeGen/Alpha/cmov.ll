@@ -1,6 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | not grep cmovlt
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep cmoveq
-; XFAIL: *
+
 
 long %cmov_lt(long %a, long %c) {
 entry:
