@@ -563,7 +563,32 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     break;
   case ISD::SHL:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask >> SA->getValue(),
+      unsigned ShAmt = SA->getValue();
+      SDOperand InOp = Op.getOperand(0);
+
+      // If this is ((X >>u C1) << ShAmt), see if we can simplify this into a
+      // single shift.  We can do this if the bottom bits (which are shifted
+      // out) are never demanded.
+      if (InOp.getOpcode() == ISD::SRL &&
+          isa<ConstantSDNode>(InOp.getOperand(1))) {
+        if (ShAmt && (DemandedMask & ((1ULL << ShAmt)-1)) == 0) {
+          unsigned C1 = cast<ConstantSDNode>(InOp.getOperand(1))->getValue();
+          unsigned Opc = ISD::SHL;
+          int Diff = ShAmt-C1;
+          if (Diff < 0) {
+            Diff = -Diff;
+            Opc = ISD::SRL;
+          }          
+          
+          SDOperand NewSA = 
+            TLO.DAG.getConstant(ShAmt-C1, Op.getOperand(0).getValueType());
+          MVT::ValueType VT = Op.getValueType();
+          return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, VT,
+                                                   InOp.getOperand(0), NewSA));
+        }
+      }      
+      
+      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask >> ShAmt,
                                KnownZero, KnownOne, TLO, Depth+1))
         return true;
       KnownZero <<= SA->getValue();
@@ -575,11 +600,33 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       MVT::ValueType VT = Op.getValueType();
       unsigned ShAmt = SA->getValue();
+      uint64_t TypeMask = MVT::getIntVTBitMask(VT);
+      unsigned VTSize = MVT::getSizeInBits(VT);
+      SDOperand InOp = Op.getOperand(0);
+      
+      // If this is ((X << C1) >>u ShAmt), see if we can simplify this into a
+      // single shift.  We can do this if the top bits (which are shifted out)
+      // are never demanded.
+      if (InOp.getOpcode() == ISD::SHL &&
+          isa<ConstantSDNode>(InOp.getOperand(1))) {
+        if (ShAmt && (DemandedMask & (~0ULL << (VTSize-ShAmt))) == 0) {
+          unsigned C1 = cast<ConstantSDNode>(InOp.getOperand(1))->getValue();
+          unsigned Opc = ISD::SRL;
+          int Diff = ShAmt-C1;
+          if (Diff < 0) {
+            Diff = -Diff;
+            Opc = ISD::SHL;
+          }          
+          
+          SDOperand NewSA =
+            TLO.DAG.getConstant(Diff, Op.getOperand(0).getValueType());
+          return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, VT,
+                                                   InOp.getOperand(0), NewSA));
+        }
+      }      
       
       // Compute the new bits that are at the top now.
-      uint64_t TypeMask = MVT::getIntVTBitMask(VT);
-      if (SimplifyDemandedBits(Op.getOperand(0), 
-                               (DemandedMask << ShAmt) & TypeMask,
+      if (SimplifyDemandedBits(InOp, (DemandedMask << ShAmt) & TypeMask,
                                KnownZero, KnownOne, TLO, Depth+1))
         return true;
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
@@ -589,7 +636,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
       KnownOne  >>= ShAmt;
 
       uint64_t HighBits = (1ULL << ShAmt)-1;
-      HighBits <<= MVT::getSizeInBits(VT) - ShAmt;
+      HighBits <<= VTSize - ShAmt;
       KnownZero |= HighBits;  // High bits known zero.
     }
     break;
