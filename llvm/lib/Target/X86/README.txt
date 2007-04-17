@@ -3,6 +3,8 @@
 //===---------------------------------------------------------------------===//
 
 Missing features:
+  - Support for SSE4: http://www.intel.com/software/penryn
+http://softwarecommunity.intel.com/isn/Downloads/Intel%20SSE4%20Programming%20Reference.pdf
   - support for 3DNow!
   - weird abis?
 
