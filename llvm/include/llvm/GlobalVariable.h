@@ -41,8 +41,8 @@ class GlobalVariable : public GlobalValue {
   void setNext(GlobalVariable *N) { Next = N; }
   void setPrev(GlobalVariable *N) { Prev = N; }
 
-  bool isConstantGlobal;               // Is this a global constant?
-  bool isThreadLocalSymbol;            // Is this symbol "Thread Local"?
+  bool isConstantGlobal : 1;           // Is this a global constant?
+  bool isThreadLocalSymbol : 1;        // Is this symbol "Thread Local"?
   Use Initializer;
 
 public:
