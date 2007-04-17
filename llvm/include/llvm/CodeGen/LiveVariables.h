@@ -83,12 +83,16 @@ public:
     /// is a bit set which uses the basic block number as an index.
     BitVector UsedBlocks;
 
+    /// NumUses - Number of uses of this register across the entire function.
+    ///
+    unsigned NumUses;
+
     /// Kills - List of MachineInstruction's which are the last use of this
     /// virtual register (kill it) in their basic block.
     ///
     std::vector<MachineInstr*> Kills;
 
-    VarInfo() : DefInst(0) {}
+    VarInfo() : DefInst(0), NumUses(0) {}
 
     /// removeKill - Delete a kill corresponding to the specified
     /// machine instruction. Returns true if there was a kill
