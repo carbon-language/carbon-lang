@@ -2429,9 +2429,14 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0), N1);
   }
 
-  // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is zero
+  // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is known zero.
   if (TLI.MaskedValueIsZero(N0, 1ULL << (EVTBits-1)))
     return DAG.getZeroExtendInReg(N0, EVT);
+  
+  // fold operands of sext_in_reg based on knowledge that the top bits are not
+  // demanded.
+  if (SimplifyDemandedBits(SDOperand(N, 0)))
+    return SDOperand(N, 0);
   
   // fold (sext_in_reg (load x)) -> (smaller sextload x)
   // fold (sext_in_reg (srl (load x), c)) -> (smaller sextload (x+c/evtbits))
