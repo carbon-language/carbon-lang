@@ -103,8 +103,6 @@
   <li><a href="#future">Future extensions planned</a>
     <ul>
     <li><a href="#SMP">Multithreaded LLVM</a></li>
-    <li><a href="#PassFunctionPass"><tt>ModulePass</tt>es requiring 
-                                    <tt>FunctionPass</tt>es</a></li>
     </ul></li>
 </ol>
 
@@ -1137,7 +1135,7 @@ For example:</p>
 <div class="doc_code"><pre>
    bool ModuleLevelPass::runOnModule(Module &amp;M) {
      ...
-     DominatorTree &amp;DT = getAnalysis&lt;DominatorTree&gt;(Function &amp;F);
+     DominatorTree &amp;DT = getAnalysis&lt;DominatorTree&gt;(Func);
      ...
    }
 </pre></div>
@@ -1779,31 +1777,6 @@ multithreaded constructs, requiring only the LLVM core to have locking in a few
 places (for global resources).  Although this is a simple extension, we simply
 haven't had time (or multiprocessor machines, thus a reason) to implement this.
 Despite that, we have kept the LLVM passes SMP ready, and you should too.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-<a name="PassFunctionPass"><tt>ModulePass</tt>es requiring <tt>FunctionPass</tt>es</a>
-</div>
-
-<div class="doc_text">
-
-<p>Currently it is illegal for a <a href="#ModulePass"><tt>ModulePass</tt></a>
-to require a <a href="#FunctionPass"><tt>FunctionPass</tt></a>.  This is because
-there is only one instance of the <a
-href="#FunctionPass"><tt>FunctionPass</tt></a> object ever created, thus nowhere
-to store information for all of the functions in the program at the same time.
-Although this has come up a couple of times before, this has always been worked
-around by factoring one big complicated pass into a global and an
-interprocedural part, both of which are distinct.  In the future, it would be
-nice to have this though.</p>
-
-<p>Note that it is no problem for a <a
-href="#FunctionPass"><tt>FunctionPass</tt></a> to require the results of a <a
-href="#ModulePass"><tt>ModulePass</tt></a>, only the other way around.</p>
-
-</div>
 
 <!-- *********************************************************************** -->
 <hr>
