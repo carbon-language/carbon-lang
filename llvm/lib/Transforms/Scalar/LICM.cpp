@@ -77,7 +77,7 @@ namespace {
       AU.addRequired<AliasAnalysis>();
     }
 
-    bool doFinalize() {
+    bool doFinalization() {
       LoopToAliasMap.clear();
       return false;
     }
