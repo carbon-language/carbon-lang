@@ -455,10 +455,11 @@ void ProfilerRS::ProcessBackEdge(BasicBlock* src, BasicBlock* dst, Function& F) 
   //       add in edge from C using x in A'
   
   //a:
-  BasicBlock* bbC = new BasicBlock("choice", &F, src->getNext() );
+  Function::iterator BBN = src; ++BBN;
+  BasicBlock* bbC = new BasicBlock("choice", &F, BBN);
   //ChoicePoints.insert(bbC);
-  BasicBlock* bbCp = 
-    new BasicBlock("choice", &F, cast<BasicBlock>(Translate(src))->getNext() );
+  BBN = cast<BasicBlock>(Translate(src));
+  BasicBlock* bbCp = new BasicBlock("choice", &F, ++BBN);
   ChoicePoints.insert(bbCp);
   
   //b:
