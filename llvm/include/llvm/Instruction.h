@@ -82,13 +82,6 @@ public:
   inline const BasicBlock *getParent() const { return Parent; }
   inline       BasicBlock *getParent()       { return Parent; }
 
-  // getNext/Prev - Return the next or previous instruction in the list.  The
-  // last node in the list is a terminator instruction.
-        Instruction *getNext()       { return Next; }
-  const Instruction *getNext() const { return Next; }
-        Instruction *getPrev()       { return Prev; }
-  const Instruction *getPrev() const { return Prev; }
-
   /// removeFromParent - This method unlinks 'this' from the containing basic
   /// block, but does not delete it.
   ///
@@ -231,6 +224,14 @@ public:
 #define   LAST_OTHER_INST(N)             OtherOpsEnd = N+1
 #include "llvm/Instruction.def"
   };
+  
+private:
+  // getNext/Prev - Return the next or previous instruction in the list.  The
+  // last node in the list is a terminator instruction.
+  Instruction *getNext()             { return Next; }
+  const Instruction *getNext() const { return Next; }
+  Instruction *getPrev()             { return Prev; }
+  const Instruction *getPrev() const { return Prev; }
 };
 
 } // End llvm namespace
