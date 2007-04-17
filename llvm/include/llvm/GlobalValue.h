@@ -29,7 +29,7 @@ class GlobalValue : public Constant {
 public:
   /// @brief An enumeration for the kinds of linkage for global values.
   enum LinkageTypes {
-    ExternalLinkage,    ///< Externally visible function
+    ExternalLinkage = 0,///< Externally visible function
     LinkOnceLinkage,    ///< Keep one copy of function when linking (inline)
     WeakLinkage,        ///< Keep one copy of named function when linking (weak)
     AppendingLinkage,   ///< Special purpose, only applies to global arrays
@@ -42,8 +42,8 @@ public:
 
   /// @brief An enumeration for the kinds of visibility of global values.
   enum VisibilityTypes {
-    DefaultVisibility,  ///< The GV is visible
-    HiddenVisibility    ///< The GV is hidden
+    DefaultVisibility = 0,  ///< The GV is visible
+    HiddenVisibility        ///< The GV is hidden
   };
 
 protected:
@@ -55,10 +55,10 @@ protected:
   }
 
   Module *Parent;
-  LinkageTypes Linkage;   // The linkage of this global
-  VisibilityTypes Visibility;  // The visibility style of this global
-  unsigned Alignment;     // Alignment of this symbol, must be power of two
-  std::string Section;    // Section to emit this into, empty mean default
+  LinkageTypes Linkage : 4;   // The linkage of this global
+  VisibilityTypes Visibility : 1;  // The visibility style of this global
+  unsigned Alignment : 16;    // Alignment of this symbol, must be power of two
+  std::string Section;        // Section to emit this into, empty mean default
 public:
   ~GlobalValue() {
     removeDeadConstantUsers();   // remove any dead constants using this.

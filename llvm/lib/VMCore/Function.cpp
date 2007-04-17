@@ -142,7 +142,6 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
                    const std::string &name, Module *ParentModule)
   : GlobalValue(PointerType::get(Ty), Value::FunctionVal, 0, 0, Linkage, name) {
   ParamAttrs = 0;
-  CallingConvention = 0;
   SymTab = new ValueSymbolTable();
 
   assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy)

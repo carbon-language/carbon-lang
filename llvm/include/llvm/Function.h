@@ -69,7 +69,10 @@ private:
   ArgumentListType ArgumentList;     ///< The formal arguments
   ValueSymbolTable *SymTab;          ///< Symbol table of args/instructions
   ParamAttrsList *ParamAttrs;        ///< Parameter attributes
-  unsigned CallingConvention;        ///< Calling convention to use
+
+  
+  // The Calling Convention is stored in Value::SubclassData.
+  /*unsigned CallingConvention;*/
 
   friend class SymbolTableListTraits<Function, Module>;
 
@@ -113,8 +116,8 @@ public:
   /// getCallingConv()/setCallingConv(uint) - These method get and set the
   /// calling convention of this function.  The enum values for the known
   /// calling conventions are defined in CallingConv.h.
-  unsigned getCallingConv() const { return CallingConvention; }
-  void setCallingConv(unsigned CC) { CallingConvention = CC; }
+  unsigned getCallingConv() const { return SubclassData; }
+  void setCallingConv(unsigned CC) { SubclassData = CC; }
 
   /// Obtains a constant pointer to the ParamAttrsList object which holds the
   /// parameter attributes information, if any. 
