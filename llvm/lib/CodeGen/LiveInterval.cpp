@@ -349,6 +349,8 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   ValueNumberInfo.clear();
   ValueNumberInfo.append(NewValueNumberInfo.begin(), NewValueNumberInfo.end());
   weight += Other.weight;
+  if (Other.preference && !preference)
+    preference = Other.preference;
 }
 
 /// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
@@ -465,6 +467,13 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
   } else {
     ValueNumberInfo[V1].first = ~1U;
   }
+}
+
+unsigned LiveInterval::getSize() const {
+  unsigned Sum = 0;
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    Sum += I->end - I->start;
+  return Sum;
 }
 
 std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {

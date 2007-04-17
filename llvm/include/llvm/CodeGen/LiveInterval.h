@@ -81,6 +81,7 @@ namespace llvm {
   struct LiveInterval {
     typedef SmallVector<LiveRange,4> Ranges;
     unsigned reg;        // the register of this interval
+    unsigned preference; // preferred register to allocate for this interval
     float weight;        // weight of this interval
     MachineInstr* remat; // definition if the definition rematerializable
     Ranges ranges;       // the ranges in which this register is live
@@ -94,7 +95,7 @@ namespace llvm {
   public:
 
     LiveInterval(unsigned Reg, float Weight)
-      : reg(Reg), weight(Weight), remat(NULL) {
+      : reg(Reg), preference(0), weight(Weight), remat(NULL) {
     }
 
     typedef Ranges::iterator iterator;
@@ -255,6 +256,10 @@ namespace llvm {
     void removeRange(LiveRange LR) {
       removeRange(LR.start, LR.end);
     }
+
+    /// getSize - Returns the sum of sizes of all the LiveRange's.
+    ///
+    unsigned getSize() const;
 
     bool operator<(const LiveInterval& other) const {
       return beginNumber() < other.beginNumber();
