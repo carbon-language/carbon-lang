@@ -34,13 +34,16 @@ MRegisterInfo::MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
 
 MRegisterInfo::~MRegisterInfo() {}
 
-BitVector MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
+BitVector MRegisterInfo::getAllocatableSet(MachineFunction &MF,
+                                           const TargetRegisterClass *RC) const {
   BitVector Allocatable(NumRegs);
   for (MRegisterInfo::regclass_iterator I = regclass_begin(),
          E = regclass_end(); I != E; ++I) {
-    const TargetRegisterClass *RC = *I;
-    for (TargetRegisterClass::iterator I = RC->allocation_order_begin(MF),
-           E = RC->allocation_order_end(MF); I != E; ++I)
+    const TargetRegisterClass *TRC = *I;
+    if (RC && TRC != RC)
+      continue;
+    for (TargetRegisterClass::iterator I = TRC->allocation_order_begin(MF),
+           E = TRC->allocation_order_end(MF); I != E; ++I)
       Allocatable.set(*I);
   }
   return Allocatable;
