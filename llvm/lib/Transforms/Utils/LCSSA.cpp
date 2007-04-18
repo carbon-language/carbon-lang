@@ -49,7 +49,7 @@ namespace {
   struct VISIBILITY_HIDDEN LCSSA : public FunctionPass {
     // Cached analysis information for the current function.
     LoopInfo *LI;
-    DominatorTree *DT;
+    ETForest *ET;
     std::vector<BasicBlock*> LoopBlocks;
     
     virtual bool runOnFunction(Function &F);
@@ -66,14 +66,14 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
-      AU.addRequired<DominatorTree>();
+      AU.addRequired<ETForest>();
     }
   private:
     void getLoopValuesUsedOutsideLoop(Loop *L,
                                       SetVector<Instruction*> &AffectedValues);
 
-    Value *GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
-                            std::map<DominatorTree::Node*, Value*> &Phis);
+    Value *GetValueForBlock(BasicBlock *BB, Instruction *OrigInst,
+                            std::map<BasicBlock*, Value*> &Phis);
 
     /// inLoop - returns true if the given block is within the current loop
     const bool inLoop(BasicBlock* B) {
@@ -92,7 +92,7 @@ bool LCSSA::runOnFunction(Function &F) {
   bool changed = false;
   
   LI = &getAnalysis<LoopInfo>();
-  DT = &getAnalysis<DominatorTree>();
+  ET = &getAnalysis<ETForest>();
     
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     changed |= visitSubloop(*I);
@@ -142,18 +142,17 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
   ++NumLCSSA; // We are applying the transformation
 
   // Keep track of the blocks that have the value available already.
-  std::map<DominatorTree::Node*, Value*> Phis;
+  std::map<BasicBlock*, Value*> Phis;
 
-  DominatorTree::Node *InstrNode = DT->getNode(Instr->getParent());
+  //ETNode *InstrNode = ET->getNodeForBlock(Instr->getParent());
 
   // Insert the LCSSA phi's into the exit blocks (dominated by the value), and
   // add them to the Phi's map.
   for (std::vector<BasicBlock*>::const_iterator BBI = exitBlocks.begin(),
       BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
-    DominatorTree::Node *ExitBBNode = DT->getNode(BB);
-    Value *&Phi = Phis[ExitBBNode];
-    if (!Phi && InstrNode->dominates(ExitBBNode)) {
+    Value *&Phi = Phis[BB];
+    if (!Phi && ET->dominates(Instr->getParent(), BB)) {
       PHINode *PN = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
                                 BB->begin());
       PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
@@ -186,7 +185,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
     
     // Otherwise, patch up uses of the value with the appropriate LCSSA Phi,
     // inserting PHI nodes into join points where needed.
-    Value *Val = GetValueForBlock(DT->getNode(UserBB), Instr, Phis);
+    Value *Val = GetValueForBlock(UserBB, Instr, Phis);
     
     // Preincrement the iterator to avoid invalidating it when we change the
     // value.
@@ -225,8 +224,8 @@ void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
 
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
-Value *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
-                               std::map<DominatorTree::Node*, Value*> &Phis) {
+Value *LCSSA::GetValueForBlock(BasicBlock *BB, Instruction *OrigInst,
+                               std::map<BasicBlock*, Value*> &Phis) {
   // If there is no dominator info for this BB, it is unreachable.
   if (BB == 0)
     return UndefValue::get(OrigInst->getType());
@@ -235,7 +234,7 @@ Value *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
   Value *&V = Phis[BB];
   if (V) return V;
 
-  DominatorTree::Node *IDom = BB->getIDom();
+  BasicBlock* IDom = ET->getIDom(BB);
 
   // Otherwise, there are two cases: we either have to insert a PHI node or we
   // don't.  We need to insert a PHI node if this block is not dominated by one
@@ -248,24 +247,22 @@ Value *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
   // dominate this block.  Note that we *know* that the block defining the
   // original instruction is in the idom chain, because if it weren't, then the
   // original value didn't dominate this use.
-  if (!inLoop(IDom->getBlock())) {
+  if (!inLoop(IDom)) {
     // Idom is not in the loop, we must still be "below" the exit block and must
     // be fully dominated by the value live in the idom.
     return V = GetValueForBlock(IDom, OrigInst, Phis);
   }
   
-  BasicBlock *BBN = BB->getBlock();
-  
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
   PHINode *PN = new PHINode(OrigInst->getType(), OrigInst->getName()+".lcssa",
-                            BBN->begin());
-  PN->reserveOperandSpace(std::distance(pred_begin(BBN), pred_end(BBN)));
+                            BB->begin());
+  PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
   V = PN;
                                  
   // Fill in the incoming values for the block.
-  for (pred_iterator PI = pred_begin(BBN), E = pred_end(BBN); PI != E; ++PI)
-    PN->addIncoming(GetValueForBlock(DT->getNode(*PI), OrigInst, Phis), *PI);
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+    PN->addIncoming(GetValueForBlock(*PI, OrigInst, Phis), *PI);
   return PN;
 }
 
