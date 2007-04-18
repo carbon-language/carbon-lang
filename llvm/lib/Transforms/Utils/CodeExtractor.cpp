@@ -142,14 +142,14 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
   // Okay, update dominator sets. The blocks that dominate the new one are the
   // blocks that dominate TIBB plus the new block itself.
   if (EF) {
-    DominatorTree::Node* idom = DT->getNode(OldPred)->getIDom();
-    DT->createNewNode(NewBB, idom);
-    EF->addNewBlock(NewBB, idom->getBlock());
+    BasicBlock* idom = EF->getIDom(OldPred);
+    DT->createNewNode(NewBB, DT->getNode(idom));
+    EF->addNewBlock(NewBB, idom);
 
     // Additionally, NewBB replaces OldPred as the immediate dominator of blocks
     Function *F = Header->getParent();
     for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-      if (DT->getNode(I)->getIDom()->getBlock() == OldPred) {
+      if (EF->getIDom(I) == OldPred) {
         DT->changeImmediateDominator(DT->getNode(I), DT->getNode(NewBB));
         EF->setImmediateDominator(I, NewBB);
       }
