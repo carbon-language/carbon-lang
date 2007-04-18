@@ -182,6 +182,13 @@ namespace {
       // something else needing this node.
       if (TLO.Old.Val->use_empty()) {
         removeFromWorkList(TLO.Old.Val);
+        
+        // If the operands of this node are only used by the node, they will now
+        // be dead.  Make sure to visit them first to delete dead nodes early.
+        for (unsigned i = 0, e = TLO.Old.Val->getNumOperands(); i != e; ++i)
+          if (TLO.Old.Val->getOperand(i).Val->hasOneUse())
+            AddToWorkList(TLO.Old.Val->getOperand(i).Val);
+        
         DAG.DeleteNode(TLO.Old.Val);
       }
       return true;
@@ -1838,6 +1845,7 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
   // if (srl x, c) is known to be zero, return 0
   if (N1C && TLI.MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits)))
     return DAG.getConstant(0, VT);
+  
   // fold (srl (srl x, c1), c2) -> 0 or (srl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SRL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
@@ -1899,7 +1907,6 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
       return DAG.getNode(ISD::XOR, VT, Op, DAG.getConstant(1, VT));
     }
   }
-  
   return SDOperand();
 }
 
