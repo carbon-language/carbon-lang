@@ -970,13 +970,30 @@ void AssemblyWriter::printFunction(const Function *F) {
   // Loop over the arguments, printing them...
 
   unsigned Idx = 1;
-  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
-       I != E; ++I) {
-    // Insert commas as we go... the first arg doesn't get a comma
-    if (I != F->arg_begin()) Out << ", ";
-    printArgument(I, (Attrs ? Attrs->getParamAttrs(Idx)
-                            : uint16_t(ParamAttr::None)));
-    Idx++;
+  if (!F->isDeclaration()) {
+    // If this isn't a declaration, print the argument names as well.
+    for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+         I != E; ++I) {
+      // Insert commas as we go... the first arg doesn't get a comma
+      if (I != F->arg_begin()) Out << ", ";
+      printArgument(I, (Attrs ? Attrs->getParamAttrs(Idx)
+                              : uint16_t(ParamAttr::None)));
+      Idx++;
+    }
+  } else {
+    // Otherwise, print the types from the function type.
+    for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i) {
+      // Insert commas as we go... the first arg doesn't get a comma
+      if (i) Out << ", ";
+      
+      // Output type...
+      printType(FT->getParamType(i));
+      
+      unsigned ArgAttrs = ParamAttr::None;
+      if (Attrs) ArgAttrs = Attrs->getParamAttrs(i+1);
+      if (ArgAttrs != ParamAttr::None)
+        Out << ' ' << ParamAttrsList::getParamAttrsText(ArgAttrs);
+    }
   }
 
   // Finish printing arguments...
