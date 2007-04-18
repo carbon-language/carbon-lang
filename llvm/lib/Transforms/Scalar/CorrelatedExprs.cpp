@@ -224,14 +224,12 @@ namespace {
     std::map<Value*, unsigned> RankMap;
     std::map<BasicBlock*, RegionInfo> RegionInfoMap;
     ETForest *EF;
-    DominatorTree *DT;
   public:
     virtual bool runOnFunction(Function &F);
 
     // We don't modify the program, so we preserve all analyses
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<ETForest>();
-      AU.addRequired<DominatorTree>();
       AU.addRequiredID(BreakCriticalEdgesID);
     };
 
@@ -302,7 +300,6 @@ bool CEE::runOnFunction(Function &F) {
   // tree.  Note that our traversal will not even touch unreachable basic
   // blocks.
   EF = &getAnalysis<ETForest>();
-  DT = &getAnalysis<DominatorTree>();
 
   std::set<BasicBlock*> VisitedBlocks;
   bool Changed = TransformRegion(&F.getEntryBlock(), VisitedBlocks);
@@ -349,14 +346,16 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   // blocks that are dominated by this one, we can safely propagate the
   // information down now.
   //
-  DominatorTree::Node *BBN = (*DT)[BB];
-  if (!RI.empty())        // Time opt: only propagate if we can change something
-    for (unsigned i = 0, e = BBN->getChildren().size(); i != e; ++i) {
-      BasicBlock *Dominated = BBN->getChildren()[i]->getBlock();
-      assert(RegionInfoMap.find(Dominated) == RegionInfoMap.end() &&
+  std::vector<BasicBlock*> children;
+  EF->getChildren(BB, children);
+  if (!RI.empty()) {        // Time opt: only propagate if we can change something
+    for (std::vector<BasicBlock*>::iterator CI = children.begin(), E = children.end();
+         CI != E; ++CI) {
+      assert(RegionInfoMap.find(*CI) == RegionInfoMap.end() &&
              "RegionInfo should be calculated in dominanace order!");
-      getRegionInfo(Dominated) = RI;
+      getRegionInfo(*CI) = RI;
     }
+  }
 
   // Now that all of our successors have information if they deserve it,
   // propagate any information our terminator instruction finds to our
@@ -379,8 +378,9 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
     }
 
   // Now that all of our successors have information, recursively process them.
-  for (unsigned i = 0, e = BBN->getChildren().size(); i != e; ++i)
-    Changed |= TransformRegion(BBN->getChildren()[i]->getBlock(),VisitedBlocks);
+  for (std::vector<BasicBlock*>::iterator CI = children.begin(), E = children.end();
+       CI != E; ++CI)
+    Changed |= TransformRegion(*CI, VisitedBlocks);
 
   return Changed;
 }
