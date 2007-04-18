@@ -72,7 +72,8 @@ namespace {
       AU.setPreservesCFG();
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
-      AU.addRequired<DominatorTree>();
+      AU.addRequired<ETForest>();
+      AU.addRequired<DominatorTree>();      // For scalar promotion (mem2reg)
       AU.addRequired<DominanceFrontier>();  // For scalar promotion (mem2reg)
       AU.addRequired<AliasAnalysis>();
     }
@@ -86,6 +87,7 @@ namespace {
     // Various analyses that we use...
     AliasAnalysis *AA;       // Current AliasAnalysis information
     LoopInfo      *LI;       // Current LoopInfo
+    ETForest *ET;       // ETForest for the current Loop...
     DominatorTree *DT;       // Dominator Tree for the current Loop...
     DominanceFrontier *DF;   // Current Dominance Frontier
 
@@ -98,19 +100,19 @@ namespace {
 
     /// SinkRegion - Walk the specified region of the CFG (defined by all blocks
     /// dominated by the specified block, and that are in the current loop) in
-    /// reverse depth first order w.r.t the DominatorTree.  This allows us to
+    /// reverse depth first order w.r.t the ETForest.  This allows us to
     /// visit uses before definitions, allowing us to sink a loop body in one
     /// pass without iteration.
     ///
-    void SinkRegion(DominatorTree::Node *N);
+    void SinkRegion(BasicBlock *BB);
 
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
-    /// loop) in depth first order w.r.t the DominatorTree.  This allows us to
+    /// loop) in depth first order w.r.t the ETForest.  This allows us to
     /// visit definitions before uses, allowing us to hoist a loop body in one
     /// pass without iteration.
     ///
-    void HoistRegion(DominatorTree::Node *N);
+    void HoistRegion(BasicBlock *BB);
 
     /// inSubLoop - Little predicate that returns true if the specified basic
     /// block is in a subloop of the current one, not the current one itself.
@@ -135,21 +137,20 @@ namespace {
       if (BlockInLoop == LoopHeader)
         return true;
 
-      DominatorTree::Node *BlockInLoopNode = DT->getNode(BlockInLoop);
-      DominatorTree::Node *IDom            = DT->getNode(ExitBlock);
+      BasicBlock *IDom = ExitBlock;
 
       // Because the exit block is not in the loop, we know we have to get _at
       // least_ its immediate dominator.
       do {
         // Get next Immediate Dominator.
-        IDom = IDom->getIDom();
+        IDom = ET->getIDom(IDom);
 
         // If we have got to the header of the loop, then the instructions block
         // did not dominate the exit node, so we can't hoist it.
-        if (IDom->getBlock() == LoopHeader)
+        if (IDom == LoopHeader)
           return false;
 
-      } while (IDom != BlockInLoopNode);
+      } while (IDom != BlockInLoop);
 
       return true;
     }
@@ -213,6 +214,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   AA = &getAnalysis<AliasAnalysis>();
   DF = &getAnalysis<DominanceFrontier>();
+  ET = &getAnalysis<ETForest>();
   DT = &getAnalysis<DominatorTree>();
 
   CurAST = new AliasSetTracker(*AA);
@@ -252,8 +254,8 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   // us to sink instructions in one pass, without iteration.  AFter sinking
   // instructions, we perform another pass to hoist them out of the loop.
   //
-  SinkRegion(DT->getNode(L->getHeader()));
-  HoistRegion(DT->getNode(L->getHeader()));
+  SinkRegion(L->getHeader());
+  HoistRegion(L->getHeader());
 
   // Now that all loop invariants have been removed from the loop, promote any
   // memory references to scalars that we can...
@@ -270,19 +272,19 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
 
 /// SinkRegion - Walk the specified region of the CFG (defined by all blocks
 /// dominated by the specified block, and that are in the current loop) in
-/// reverse depth first order w.r.t the DominatorTree.  This allows us to visit
+/// reverse depth first order w.r.t the ETForest.  This allows us to visit
 /// uses before definitions, allowing us to sink a loop body in one pass without
 /// iteration.
 ///
-void LICM::SinkRegion(DominatorTree::Node *N) {
-  assert(N != 0 && "Null dominator tree node?");
-  BasicBlock *BB = N->getBlock();
+void LICM::SinkRegion(BasicBlock *BB) {
+  assert(BB != 0 && "Null sink block?");
 
   // If this subregion is not in the top level loop at all, exit.
   if (!CurLoop->contains(BB)) return;
 
   // We are processing blocks in reverse dfo, so process children first...
-  const std::vector<DominatorTree::Node*> &Children = N->getChildren();
+  std::vector<BasicBlock*> Children;
+  ET->getChildren(BB, Children);
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
     SinkRegion(Children[i]);
 
@@ -311,9 +313,8 @@ void LICM::SinkRegion(DominatorTree::Node *N) {
 /// first order w.r.t the DominatorTree.  This allows us to visit definitions
 /// before uses, allowing us to hoist a loop body in one pass without iteration.
 ///
-void LICM::HoistRegion(DominatorTree::Node *N) {
-  assert(N != 0 && "Null dominator tree node?");
-  BasicBlock *BB = N->getBlock();
+void LICM::HoistRegion(BasicBlock *BB) {
+  assert(BB != 0 && "Null hoist block?");
 
   // If this subregion is not in the top level loop at all, exit.
   if (!CurLoop->contains(BB)) return;
@@ -333,7 +334,8 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
         hoist(I);
       }
 
-  const std::vector<DominatorTree::Node*> &Children = N->getChildren();
+  std::vector<BasicBlock*> Children;
+  ET->getChildren(BB, Children);    
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
     HoistRegion(Children[i]);
 }
@@ -604,7 +606,7 @@ bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   std::vector<BasicBlock*> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
 
-  // For each exit block, get the DT node and walk up the DT until the
+  // For each exit block, walk up the ET until the
   // instruction's basic block is found or we exit the loop.
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
     if (!isExitBlockDominatedByBlockInLoop(ExitBlocks[i], Inst.getParent()))
