@@ -1645,7 +1645,7 @@ def MASKMOVDQU : PDI<0xF7, MRMSrcReg, (ops VR128:$src, VR128:$mask),
 def PREFETCHT0   : PSI<0x18, MRM1m, (ops i8mem:$src), "prefetcht0 $src", []>;
 def PREFETCHT1   : PSI<0x18, MRM2m, (ops i8mem:$src), "prefetcht1 $src", []>;
 def PREFETCHT2   : PSI<0x18, MRM3m, (ops i8mem:$src), "prefetcht2 $src", []>;
-def PREFETCHTNTA : PSI<0x18, MRM0m, (ops i8mem:$src), "prefetchtnta $src", []>;
+def PREFETCHNTA  : PSI<0x18, MRM0m, (ops i8mem:$src), "prefetchnta $src", []>;
 
 // Non-temporal stores
 def MOVNTPSmr : PSI<0x2B, MRMDestMem, (ops i128mem:$dst, VR128:$src),
