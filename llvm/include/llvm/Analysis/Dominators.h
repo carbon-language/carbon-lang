@@ -327,6 +327,20 @@ public:
     const ETNode *idom = NodeA->getFather();
     return idom ? idom->getData<BasicBlock>() : 0;
   }
+  
+  void getChildren(BasicBlock *A, std::vector<BasicBlock*>& children) {
+    ETNode *NodeA = getNode(A);
+    const ETNode* son = NodeA->getSon();
+    
+    if (!son) return;
+    children.push_back(son->getData<BasicBlock>());
+        
+    const ETNode* brother = son->getBrother();
+    while (brother != son) {
+      children.push_back(brother->getData<BasicBlock>());
+      brother = brother->getBrother();
+    }
+  }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();

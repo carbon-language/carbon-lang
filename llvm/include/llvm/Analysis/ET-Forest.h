@@ -275,6 +275,14 @@ public:
     return DFSNumOut;
   }
 
+  const ETNode *getSon() const {
+    return Son;
+  }
+  
+  const ETNode *getBrother() const {
+    return Left;
+  }
+
  private:
   // Data represented by the node
   void *data;
