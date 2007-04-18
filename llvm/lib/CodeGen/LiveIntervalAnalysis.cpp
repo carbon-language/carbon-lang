@@ -1058,10 +1058,9 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
     for (const unsigned *AS = mri_->getAliasSet(repDstReg); *AS; ++AS)
       getInterval(*AS).MergeInClobberRanges(SrcInt);
   } else {
-    // Merge UsedBlocks info if the destination is a virtual register.
+    // Merge use info if the destination is a virtual register.
     LiveVariables::VarInfo& dVI = lv_->getVarInfo(repDstReg);
     LiveVariables::VarInfo& sVI = lv_->getVarInfo(repSrcReg);
-    dVI.UsedBlocks |= sVI.UsedBlocks;
     dVI.NumUses += sVI.NumUses;
   }
 

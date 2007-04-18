@@ -48,9 +48,6 @@ void LiveVariables::VarInfo::dump() const {
   cerr << "  Alive in blocks: ";
   for (unsigned i = 0, e = AliveBlocks.size(); i != e; ++i)
     if (AliveBlocks[i]) cerr << i << ", ";
-  cerr << "  Used in blocks: ";
-  for (unsigned i = 0, e = UsedBlocks.size(); i != e; ++i)
-    if (UsedBlocks[i]) cerr << i << ", ";
   cerr << "\n  Killed by:";
   if (Kills.empty())
     cerr << " No instructions.\n";
@@ -73,7 +70,6 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
   }
   VarInfo &VI = VirtRegInfo[RegIdx];
   VI.AliveBlocks.resize(MF->getNumBlockIDs());
-  VI.UsedBlocks.resize(MF->getNumBlockIDs());
   return VI;
 }
 
@@ -138,9 +134,6 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
                                      MachineInstr *MI) {
   assert(VRInfo.DefInst && "Register use before def!");
 
-  unsigned BBNum = MBB->getNumber();
-
-  VRInfo.UsedBlocks[BBNum] = true;
   VRInfo.NumUses++;
 
   // Check to see if this basic block is already a kill block...
@@ -163,7 +156,7 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
   // If this virtual register is already marked as alive in this basic block,
   // that means it is alive in at least one of the successor block, it's not
   // a kill.
-  if (!VRInfo.AliveBlocks[BBNum])
+  if (!VRInfo.AliveBlocks[MBB->getNumber()])
     VRInfo.Kills.push_back(MI);
 
   // Update all dominating blocks to mark them known live.
