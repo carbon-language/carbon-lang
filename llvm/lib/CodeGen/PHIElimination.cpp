@@ -138,6 +138,9 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   if (LV) {
     MachineInstr *PHICopy = prior(AfterPHIsIt);
 
+    // Increment use count of the newly created virtual register.
+    LV->getVarInfo(IncomingReg).NumUses++;
+
     // Add information to LiveVariables to know that the incoming value is
     // killed.  Note that because the value is defined in several places (once
     // each for each incoming block), the "def" block and instruction fields
