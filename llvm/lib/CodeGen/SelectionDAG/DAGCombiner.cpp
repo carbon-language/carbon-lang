@@ -1728,7 +1728,7 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   // if (shl x, c) is known to be zero, return 0
   if (TLI.MaskedValueIsZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT)))
     return DAG.getConstant(0, VT);
-  if (SimplifyDemandedBits(SDOperand(N, 0)))
+  if (N1C && SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand(N, 0);
   // fold (shl (shl x, c1), c2) -> 0 or (shl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SHL && 
@@ -1907,6 +1907,12 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
       return DAG.getNode(ISD::XOR, VT, Op, DAG.getConstant(1, VT));
     }
   }
+  
+  // fold operands of srl based on knowledge that the low bits are not
+  // demanded.
+  if (N1C && SimplifyDemandedBits(SDOperand(N, 0)))
+    return SDOperand(N, 0);
+  
   return SDOperand();
 }
 
