@@ -282,10 +282,12 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
 
   if (BB)
     for (pred_iterator SI = pred_begin(BB), SE = pred_end(BB);
-         SI != SE; ++SI)
+         SI != SE; ++SI) {
       // Does Node immediately dominate this predecessor?
-      if (DT[*SI] && DT[*SI]->getIDom() != Node)
+      DominatorTree::Node *SINode = DT[*SI];
+      if (SINode && SINode->getIDom() != Node)
         S.insert(*SI);
+    }
 
   // At this point, S is DFlocal.  Now we union in DFup's of our children...
   // Loop through and visit the nodes that Node immediately dominates (Node's
