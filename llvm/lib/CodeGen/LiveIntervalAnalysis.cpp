@@ -1473,7 +1473,7 @@ namespace {
 
 
 void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
-                                std::vector<CopyRec> &TryAgain, bool PhysOnly) {
+                                std::vector<CopyRec> *TryAgain, bool PhysOnly) {
   DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
   
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
@@ -1484,8 +1484,8 @@ void LiveIntervals::CopyCoallesceInMBB(MachineBasicBlock *MBB,
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg)) continue;
     
-    if (!JoinCopy(Inst, SrcReg, DstReg, PhysOnly))
-      TryAgain.push_back(getCopyRec(Inst, SrcReg, DstReg));
+    if (TryAgain && !JoinCopy(Inst, SrcReg, DstReg, PhysOnly))
+      TryAgain->push_back(getCopyRec(Inst, SrcReg, DstReg));
   }
 }
 
@@ -1502,7 +1502,7 @@ void LiveIntervals::joinIntervals() {
     // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
          I != E; ++I)
-      CopyCoallesceInMBB(I, TryAgainList);
+      CopyCoallesceInMBB(I, &TryAgainList);
   } else {
     // Otherwise, join intervals in inner loops before other intervals.
     // Unfortunately we can't just iterate over loop hierarchy here because
@@ -1519,9 +1519,9 @@ void LiveIntervals::joinIntervals() {
 
     // Finally, join intervals in loop nest order.
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      CopyCoallesceInMBB(MBBs[i].second, TryAgainList, true);
+      CopyCoallesceInMBB(MBBs[i].second, NULL, true);
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      CopyCoallesceInMBB(MBBs[i].second, TryAgainList, false);
+      CopyCoallesceInMBB(MBBs[i].second, &TryAgainList, false);
   }
   
   // Joining intervals can allow other intervals to be joined.  Iteratively join
