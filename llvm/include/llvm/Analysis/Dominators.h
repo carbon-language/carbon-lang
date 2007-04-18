@@ -320,6 +320,13 @@ public:
       return NULL;
     return Common->getData<BasicBlock>();
   }
+  
+  /// Return the immediate dominator of A.
+  BasicBlock *getIDom(BasicBlock *A) {
+    ETNode *NodeA = getNode(A);
+    const ETNode *idom = NodeA->getFather();
+    return idom ? idom->getData<BasicBlock>() : 0;
+  }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
