@@ -68,7 +68,7 @@ public:
     // can be marked live that wouldn't necessarily be otherwise.
     AU.addRequired<UnifyFunctionExitNodes>();
     AU.addRequired<AliasAnalysis>();
-    AU.addRequired<PostDominatorTree>();
+    AU.addRequired<PostETForest>();
     AU.addRequired<PostDominanceFrontier>();
   }
 
@@ -246,8 +246,8 @@ bool ADCE::doADCE() {
   // have any post-dominance information, thus we cannot perform our
   // transformations safely.
   //
-  PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
-  if (DT[&Func->getEntryBlock()] == 0) {
+  PostETForest &ET = getAnalysis<PostETForest>();
+  if (ET.getNodeForBlock(&Func->getEntryBlock()) == 0) {
     WorkList.clear();
     return MadeChanges;
   }
@@ -258,7 +258,7 @@ bool ADCE::doADCE() {
   // function which unwinds, exits or has side-effects, we don't want to delete
   // the infinite loop or those blocks leading up to it.
   for (Function::iterator I = Func->begin(), E = Func->end(); I != E; ++I)
-    if (DT[I] == 0 && ReachableBBs.count(I))
+    if (ET.getNodeForBlock(I) == 0 && ReachableBBs.count(I))
       for (pred_iterator PI = pred_begin(I), E = pred_end(I); PI != E; ++PI)
         markInstructionLive((*PI)->getTerminator());
 
@@ -383,16 +383,16 @@ bool ADCE::doADCE() {
           // postdominator that is alive, and the last postdominator that is
           // dead...
           //
-          PostDominatorTree::Node *LastNode = DT[TI->getSuccessor(i)];
-          PostDominatorTree::Node *NextNode = 0;
-
-          if (LastNode) {
-            NextNode = LastNode->getIDom();
-            while (!AliveBlocks.count(NextNode->getBlock())) {
-              LastNode = NextNode;
-              NextNode = NextNode->getIDom();
-              if (NextNode == 0) {
-                LastNode = 0;
+          BasicBlock *LastDead = TI->getSuccessor(i);
+          BasicBlock *NextAlive = 0;
+          
+          if (LastDead) {
+            NextAlive = ET.getIDom(LastDead);
+            while (!AliveBlocks.count(NextAlive)) {
+              LastDead = NextAlive;
+              NextAlive = ET.getIDom(NextAlive);
+              if (NextAlive == 0) {
+                LastDead = 0;
                 break;
               }
             }
@@ -406,7 +406,7 @@ bool ADCE::doADCE() {
           // drawback of ADCE, so in the future if we choose to revisit the
           // decision, this is where it should be.
           //
-          if (LastNode == 0) {        // No postdominator!
+          if (LastDead == 0) {        // No postdominator!
             if (!isa<InvokeInst>(TI)) {
               // Call RemoveSuccessor to transmogrify the terminator instruction
               // to not contain the outgoing branch, or to create a new
@@ -427,10 +427,6 @@ bool ADCE::doADCE() {
 
             }
           } else {
-            // Get the basic blocks that we need...
-            BasicBlock *LastDead = LastNode->getBlock();
-            BasicBlock *NextAlive = NextNode->getBlock();
-
             // Make the conditional branch now go to the next alive block...
             TI->getSuccessor(i)->removePredecessor(BB);
             TI->setSuccessor(i, NextAlive);
