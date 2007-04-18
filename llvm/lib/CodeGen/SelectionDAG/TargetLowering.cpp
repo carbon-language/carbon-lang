@@ -583,7 +583,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
           SDOperand NewSA = 
             TLO.DAG.getConstant(ShAmt-C1, Op.getOperand(1).getValueType());
           MVT::ValueType VT = Op.getValueType();
-          return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, VT,
+          return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, VT,
                                                    InOp.getOperand(0), NewSA));
         }
       }      
