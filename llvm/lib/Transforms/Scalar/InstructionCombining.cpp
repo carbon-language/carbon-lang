@@ -2224,7 +2224,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       // 0 - (X sdiv C)  -> (X sdiv -C)
       if (Op1I->getOpcode() == Instruction::SDiv)
         if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
-          if (CSI->isNullValue())
+          if (CSI->isZero())
             if (Constant *DivRHS = dyn_cast<Constant>(Op1I->getOperand(1)))
               return BinaryOperator::createSDiv(Op1I->getOperand(0),
                                                ConstantExpr::getNeg(DivRHS));
@@ -2268,7 +2268,7 @@ static bool isSignBitCheck(ICmpInst::Predicate pred, ConstantInt *RHS) {
   switch (pred) {
     case ICmpInst::ICMP_SLT: 
       // True if LHS s< RHS and RHS == 0
-      return RHS->isNullValue();
+      return RHS->isZero();
     case ICmpInst::ICMP_SLE: 
       // True if LHS s<= RHS and RHS == -1
       return RHS->isAllOnesValue();
@@ -2303,7 +2303,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
             return BinaryOperator::createMul(SI->getOperand(0),
                                              ConstantExpr::getShl(CI, ShOp));
 
-      if (CI->isNullValue())
+      if (CI->isZero())
         return ReplaceInstUsesWith(I, Op1);  // X * 0  == 0
       if (CI->equalsInt(1))                  // X * 1  == X
         return ReplaceInstUsesWith(I, Op0);
@@ -8131,7 +8131,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     // input pointer, it just changes its type.
     if (AllZeroIndices) {
       if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP.getOperand(i)))
-        AllZeroIndices = CI->isNullValue();
+        AllZeroIndices = CI->isZero();
       else
         AllZeroIndices = false;
     }

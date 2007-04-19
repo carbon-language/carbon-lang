@@ -834,7 +834,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
       } else if (GEP->getNumOperands() == 3 && 
                  isa<ConstantInt>(GEP->getOperand(1)) &&
                  isa<ConstantInt>(GEP->getOperand(2)) &&
-                 cast<Constant>(GEP->getOperand(1))->isNullValue()) {
+                 cast<ConstantInt>(GEP->getOperand(1))->isZero()) {
         // We are stepping into an element, e.g. a structure or an array:
         // GEP Ptr, int 0, uint C
         const Type *AggTy = PTy->getElementType();

@@ -620,7 +620,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
     if (NumGEP1Ops > MinOperands) {
       for (unsigned i = FirstConstantOper; i != MaxOperands; ++i)
         if (isa<ConstantInt>(GEP1Ops[i]) && 
-            !cast<Constant>(GEP1Ops[i])->isNullValue()) {
+            !cast<ConstantInt>(GEP1Ops[i])->isZero()) {
           // Yup, there's a constant in the tail.  Set all variables to
           // constants in the GEP instruction to make it suiteable for
           // TargetData::getIndexedOffset.
