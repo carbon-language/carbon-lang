@@ -117,3 +117,41 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   case Comma:     return ",";
   }
 }
+
+/// Expressions that can be lvalues:
+///  - name, where name must be a variable
+///  - e[i]
+///  - (e), where e must be an lvalue
+///  - e.name, where e must be an lvalue
+///  - e->name
+///  - *e
+///  - string-constant
+///
+bool Expr::isLvalue() {
+  switch (getStmtClass()) {
+  case StringLiteralClass:
+    return true;
+  case ArraySubscriptExprClass:
+    return true;
+  case DeclRefExprClass:
+    const DeclRefExpr *d = cast<DeclRefExpr>(this);
+	  if (isa<VarDecl>(d->getDecl()))
+      return true;
+    return false;
+  case MemberExprClass:
+    const MemberExpr *m = cast<MemberExpr>(this);
+    if (m->isArrow())
+      return true;
+    return m->getBase()->isLvalue(); // make sure "." is an lvalue
+  case UnaryOperatorClass:
+    const UnaryOperator *u = cast<UnaryOperator>(this);
+    if (u->getOpcode() == UnaryOperator::Deref)
+      return true;
+    return false;
+  case ParenExprClass:
+    const ParenExpr *pref = cast<ParenExpr>(this);
+    return pref->getSubExpr()->isLvalue();
+  default: 
+    return false;
+  }
+}

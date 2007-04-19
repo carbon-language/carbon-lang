@@ -176,6 +176,10 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   }
   if (Opc == UnaryOperator::PreInc || Opc == UnaryOperator::PreDec)
     return CheckIncrementDecrementOperand((Expr *)Input, OpLoc, Opc);
+  else if (Opc == UnaryOperator::AddrOf)
+    return CheckAddressOfOperand((Expr *)Input, OpLoc, Opc);
+  else if (Opc == UnaryOperator::Deref) 
+    return CheckIndirectionOperand((Expr *)Input, OpLoc, Opc);
   
   // when all the check functions are written, this will go away...
   return new UnaryOperator((Expr*)Input, Opc, QualType());
@@ -451,3 +455,64 @@ Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
   return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, qType);
 }
 
+/// getDecl - This is currently a helper function for CheckAddressOfOperand().
+/// This routine allows us to typecheck complex/recursive expressions
+/// where the declaration is needed for type checking. Here are some
+/// examples: &s.xx, &s.zz[1].yy, &(1+2), &(XX), &"123"[2].
+Decl *Sema::getDecl(Expr *e) {
+  switch (e->getStmtClass()) {
+  case Stmt::DeclRefExprClass:
+    return cast<DeclRefExpr>(e)->getDecl();
+  case Stmt::MemberExprClass:
+    return getDecl(cast<MemberExpr>(e)->getBase());
+  case Stmt::ArraySubscriptExprClass:
+    return getDecl(cast<ArraySubscriptExpr>(e)->getBase());
+  case Stmt::CallExprClass:
+    return getDecl(cast<CallExpr>(e)->getCallee());
+  case Stmt::UnaryOperatorClass:
+    return getDecl(cast<UnaryOperator>(e)->getSubExpr());
+  case Stmt::ParenExprClass:
+    return getDecl(cast<ParenExpr>(e)->getSubExpr());
+  default:
+    return 0;
+  }
+}
+
+/// CheckAddressOfOperand - The operand of & must be either a function
+/// designator or an lvalue designating an object. If it is an lvalue, the 
+/// object cannot be declared with storage class register or be a bit field.
+/// Note: The usual conversions are *not* applied to the operand of the & 
+/// operator, and its result is never an lvalue.
+Action::ExprResult
+Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc, unsigned OpCode) {
+  Decl *dcl = getDecl(op);
+  
+  if (!op->isLvalue()) {
+    if (dcl && isa<FunctionDecl>(dcl))
+      ;  // C99 6.5.3.2p1: Allow function designators.
+    else
+      return Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof);      
+  } else if (dcl) {
+    // We have an lvalue with a decl. Make sure the decl is not declared 
+    // with the register storage-class specifier.
+    if (const VarDecl *vd = dyn_cast<VarDecl>(dcl)) {
+      if (vd->getStorageClass() == VarDecl::Register)
+        return Diag(OpLoc, diag::err_typecheck_address_of_register);
+    }
+    // FIXME: add check for bitfields!
+  }
+  // If the operand has type "type", the result has type "pointer to type".
+  return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, 
+                           Context.getPointerType(op->getType()));
+}
+
+Action::ExprResult
+Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc, unsigned OpCode) {
+  QualType qType = op->getType();
+
+  assert(!qType.isNull() && "no type for * expression");
+
+  QualType canonType = qType.getCanonicalType();
+  
+  return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, QualType());
+}

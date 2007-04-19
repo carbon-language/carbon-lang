@@ -50,6 +50,9 @@ namespace clang {
   public:
     CXXBoolLiteralExpr(bool val) : 
       Expr(CXXBoolLiteralExprClass, QualType()), Value(val) {}
+      
+    virtual Expr *getPrimaryExpr() { return this; }
+
     virtual void visit(StmtVisitor &Visitor);
   };
 

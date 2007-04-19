@@ -529,6 +529,10 @@ DIAG(err_typecheck_sclass_fscope, ERROR,
      "illegal storage class on file-scoped variable")
 DIAG(err_typecheck_sclass_func, ERROR,
      "illegal storage class on function")
+DIAG(err_typecheck_address_of_register, ERROR,
+     "address of register variable requested")
+DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
+     "invalid lvalue in address expression")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

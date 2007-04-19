@@ -223,10 +223,11 @@ public:
                                          tok::TokenKind Kind);
 private:
   Expr *ImplicitConversion(Expr *E); // C99 6.3
-  
-  /// type checking binary operators (subroutines of ParseBinOp).
+
   /// the following "Check" methods will either return a well formed AST node
   /// or will return true if the expressions didn't type check properly.
+  
+  /// type checking binary operators (subroutines of ParseBinOp).
   ExprResult CheckMultiplicativeOperands(Expr *op1, Expr *op2); // C99 6.5.5
   ExprResult CheckAdditiveOperands(Expr *op1, Expr *op2);       // C99 6.5.6
   ExprResult CheckShiftOperands(Expr *op1, Expr *op2);          // C99 6.5.7
@@ -234,6 +235,12 @@ private:
   ExprResult CheckEqualityOperands(Expr *op1, Expr *op2);       // C99 6.5.9
   ExprResult CheckBitwiseOperands(Expr *op1, Expr *op2);   // C99 6.5.[10...12]
   ExprResult CheckLogicalOperands(Expr *op1, Expr *op2);   // C99 6.5.[13,14]
+  
+  /// type checking unary operators (subroutines of ParseUnaryOp).
+  /// C99 6.5.3.2
+  ExprResult CheckAddressOfOperand(Expr *op, SourceLocation loc, unsigned c);
+  Decl *getDecl(Expr *e);
+  ExprResult CheckIndirectionOperand(Expr *op, SourceLocation loc, unsigned c);
   
   ExprResult CheckIncrementDecrementOperand(Expr *op, SourceLocation loc,
                                             unsigned /*UnaryOperator::Opcode*/c);

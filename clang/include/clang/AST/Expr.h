@@ -35,6 +35,17 @@ protected:
 public:  
   QualType getType() const { return TR; }
   
+  /// isLvalue - return true if the expression is one of the following:
+  ///  - name, where name must be a variable
+  ///  - e[i]
+  ///  - (e), where e must be an lvalue
+  ///  - e.name, where e must be an lvalue
+  ///  - e->name
+  ///  - *e
+  ///  - string-constant
+  ///
+  bool isLvalue();
+  
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() >= firstExprConstant &&
@@ -55,7 +66,7 @@ public:
   DeclRefExpr(Decl *d, QualType t) : Expr(DeclRefExprClass, t), D(d) {}
   
   Decl *getDecl() const { return D; }
-  
+    
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DeclRefExprClass; 
@@ -72,6 +83,7 @@ public:
     : Expr(IntegerLiteralClass, type), Value(value) {
     assert(type->isIntegralType() && "Illegal type in IntegerLiteral");
   }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IntegerLiteralClass; 
@@ -84,6 +96,7 @@ class FloatingLiteral : public Expr {
 public:
   FloatingLiteral(float value, QualType type) : 
     Expr(FloatingLiteralClass, type), Value(value) {} 
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == FloatingLiteralClass; 
@@ -119,8 +132,8 @@ public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
     : Expr(ParenExprClass, QualType()), L(l), R(r), Val(val) {}
   
-  Expr *getSubExpr() { return Val; }
-  
+  Expr *getSubExpr() const { return Val; }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ParenExprClass; 
@@ -156,12 +169,16 @@ public:
   /// isPostfix - Return true if this is a postfix operation, like x++.
   static bool isPostfix(Opcode Op);
 
-  
   Opcode getOpcode() const { return Opc; }
-  Expr *getSubExpr() { return Val; }
+  Expr *getSubExpr() const { return Val; }
   
   bool isPostfix() const { return isPostfix(Opc); }
   
+  /// getDecl - a recursive routine that derives the base decl for an
+  /// expression. For example, it will return the declaration for "s" from
+  /// the following complex expression "s.zz[2].bb.vv".
+  static bool isAddressable(Expr *e);
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == UnaryOperatorClass; 
@@ -205,7 +222,7 @@ public:
     Expr(ArraySubscriptExprClass, t),
     Base(base), Idx(idx) {}
   
-  Expr *getBase() { return Base; }
+  Expr *getBase() const { return Base; }
   Expr *getIdx() { return Idx; }
   
   virtual void visit(StmtVisitor &Visitor);
@@ -228,7 +245,7 @@ public:
     delete [] Args;
   }
   
-  Expr *getCallee() { return Fn; }
+  Expr *getCallee() const { return Fn; }
   
   /// getNumArgs - Return the number of actual arguments to this call.
   ///
@@ -243,7 +260,7 @@ public:
   /// getNumCommas - Return the number of commas that must have been present in
   /// this function call.
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
-  
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CallExprClass; 
@@ -262,8 +279,8 @@ public:
     : Expr(MemberExprClass, memberdecl->getType()),
       Base(base), MemberDecl(memberdecl), IsArrow(isarrow) {}
   
-  Expr *getBase() { return Base; }
-  FieldDecl *getMemberDecl() { return MemberDecl; }
+  Expr *getBase() const { return Base; }
+  FieldDecl *getMemberDecl() const { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
   
   virtual void visit(StmtVisitor &Visitor);
@@ -287,6 +304,7 @@ public:
   QualType getDestType() const { return Ty; }
   
   Expr *getSubExpr() { return Op; }
+  
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CastExprClass; 

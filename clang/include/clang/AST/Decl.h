@@ -136,7 +136,7 @@ public:
 protected:
   VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
           StorageClass SC)
-    : ValueDecl(DK, L, Id, T) {}
+    : ValueDecl(DK, L, Id, T) { SClass = SC; }
 private:
   StorageClass SClass;
   // TODO: Initializer.
