@@ -747,35 +747,34 @@ namespace {
         case ICmpInst::ICMP_SLT:
           return ConstantRange(APInt::getSignedMinValue(W), CR.getSignedMax());
         case ICmpInst::ICMP_ULE: {
-          APInt UMax = CR.getUnsignedMax();
+          APInt UMax(CR.getUnsignedMax());
           if (UMax == APInt::getMaxValue(W))
             return ConstantRange(W);
           return ConstantRange(APInt::getMinValue(W), UMax + 1);
         }
         case ICmpInst::ICMP_SLE: {
-          APInt SMax = CR.getSignedMax();
+          APInt SMax(CR.getSignedMax());
           if (SMax     == APInt::getSignedMaxValue(W) ||
               SMax + 1 == APInt::getSignedMaxValue(W))
             return ConstantRange(W);
           return ConstantRange(APInt::getSignedMinValue(W), SMax + 1);
         }
         case ICmpInst::ICMP_UGT:
-          return ConstantRange(CR.getUnsignedMin() + 1, 
-                               APInt::getMaxValue(W) + 1);
+          return ConstantRange(CR.getUnsignedMin() + 1, APInt::getNullValue(W));
         case ICmpInst::ICMP_SGT:
           return ConstantRange(CR.getSignedMin() + 1,
-                               APInt::getSignedMaxValue(W) + 1);
+                               APInt::getSignedMinValue(W));
         case ICmpInst::ICMP_UGE: {
-          APInt UMin = CR.getUnsignedMin();
+          APInt UMin(CR.getUnsignedMin());
           if (UMin == APInt::getMinValue(W))
             return ConstantRange(W);
-          return ConstantRange(UMin, APInt::getMaxValue(W) + 1);
+          return ConstantRange(UMin, APInt::getNullValue(W));
         }
         case ICmpInst::ICMP_SGE: {
-          APInt SMin = CR.getSignedMin();
+          APInt SMin(CR.getSignedMin());
           if (SMin == APInt::getSignedMinValue(W))
             return ConstantRange(W);
-          return ConstantRange(SMin, APInt::getSignedMaxValue(W) + 1);
+          return ConstantRange(SMin, APInt::getSignedMinValue(W));
         }
       }
     }
@@ -969,16 +968,16 @@ namespace {
           ConstantRange NewCR2(CR1.getUpper(), CR1.getLower());
           applyRange(V2, NewCR2, Subtree, VRP);
         } else if (*I == CR2.getLower()) {
-          APInt NewLower = CR2.getLower() + 1,
-                NewUpper = CR2.getUpper();
+          APInt NewLower(CR2.getLower() + 1),
+                NewUpper(CR2.getUpper());
           if (NewLower == NewUpper)
             NewLower = NewUpper = APInt::getMinValue(W);
 
           ConstantRange NewCR2(NewLower, NewUpper);
           applyRange(V2, NewCR2, Subtree, VRP);
         } else if (*I == CR2.getUpper() - 1) {
-          APInt NewLower = CR2.getLower(),
-                NewUpper = CR2.getUpper() - 1;
+          APInt NewLower(CR2.getLower()),
+                NewUpper(CR2.getUpper() - 1);
           if (NewLower == NewUpper)
             NewLower = NewUpper = APInt::getMinValue(W);
 
@@ -992,16 +991,16 @@ namespace {
           ConstantRange NewCR1(CR2.getUpper(), CR2.getLower());
           applyRange(V1, NewCR1, Subtree, VRP);
         } else if (*I == CR1.getLower()) {
-          APInt NewLower = CR1.getLower() + 1,
-                NewUpper = CR1.getUpper();
+          APInt NewLower(CR1.getLower() + 1),
+                NewUpper(CR1.getUpper());
           if (NewLower == NewUpper)
             NewLower = NewUpper = APInt::getMinValue(W);
 
           ConstantRange NewCR1(NewLower, NewUpper);
           applyRange(V1, NewCR1, Subtree, VRP);
         } else if (*I == CR1.getUpper() - 1) {
-          APInt NewLower = CR1.getLower(),
-                NewUpper = CR1.getUpper() - 1;
+          APInt NewLower(CR1.getLower()),
+                NewUpper(CR1.getUpper() - 1);
           if (NewLower == NewUpper)
             NewLower = NewUpper = APInt::getMinValue(W);
 
@@ -2242,10 +2241,8 @@ namespace {
     VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &SI);
     uint32_t SrcBitWidth = cast<IntegerType>(SI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(SI.getDestTy())->getBitWidth();
-    APInt Min(APInt::getSignedMinValue(SrcBitWidth));
-    APInt Max(APInt::getSignedMaxValue(SrcBitWidth));
-    Min.sext(DstBitWidth);
-    Max.sext(DstBitWidth);
+    APInt Min(APInt::getHighBitsSet(DstBitWidth, DstBitWidth-SrcBitWidth+1));
+    APInt Max(APInt::getLowBitsSet(DstBitWidth, SrcBitWidth-1));
     VRP.add(ConstantInt::get(Min), &SI, ICmpInst::ICMP_SLE);
     VRP.add(ConstantInt::get(Max), &SI, ICmpInst::ICMP_SGE);
     VRP.solve();
@@ -2255,8 +2252,7 @@ namespace {
     VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &ZI);
     uint32_t SrcBitWidth = cast<IntegerType>(ZI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(ZI.getDestTy())->getBitWidth();
-    APInt Max(APInt::getMaxValue(SrcBitWidth));
-    Max.zext(DstBitWidth);
+    APInt Max(APInt::getLowBitsSet(DstBitWidth, SrcBitWidth));
     VRP.add(ConstantInt::get(Max), &ZI, ICmpInst::ICMP_UGE);
     VRP.solve();
   }
@@ -2353,14 +2349,12 @@ namespace {
         case ICmpInst::ICMP_SLT:
         case ICmpInst::ICMP_ULT:
           if (Op1->getValue() != 0)
-            NextVal = cast<ConstantInt>(ConstantExpr::getSub(
-                          Op1, ConstantInt::get(Op1->getType(), 1)));
+            NextVal = ConstantInt::get(Op1->getValue()-1);
          break;
         case ICmpInst::ICMP_SGT:
         case ICmpInst::ICMP_UGT:
           if (!Op1->getValue().isAllOnesValue())
-            NextVal = cast<ConstantInt>(ConstantExpr::getAdd(
-                          Op1, ConstantInt::get(Op1->getType(), 1)));
+            NextVal = ConstantInt::get(Op1->getValue()+1);
          break;
 
       }
