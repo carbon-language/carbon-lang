@@ -93,7 +93,7 @@ namespace {
   cl::opt<llvm::CodeModel::Model, true>
   DefCodeModel(
     "code-model",
-    cl::desc("Choose relocation model"),
+    cl::desc("Choose code model"),
     cl::location(CMModel),
     cl::init(CodeModel::Default),
     cl::values(
