@@ -1474,7 +1474,10 @@ unsigned ARMRegisterInfo::getRARegister() const {
 }
 
 unsigned ARMRegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  return STI.useThumbBacktraces() ? ARM::R7 : ARM::R11;
+  if (STI.isTargetDarwin() || hasFP(MF))
+    return STI.useThumbBacktraces() ? ARM::R7 : ARM::R11;
+  else
+    return ARM::SP;
 }
 
 unsigned ARMRegisterInfo::getEHExceptionRegister() const {
