@@ -308,8 +308,8 @@ private:
 // Define this out-of-line to dissuade the C++ compiler from inlining it.
 template <typename T>
 void SmallVectorImpl<T>::grow(unsigned MinSize) {
-  unsigned CurCapacity = Capacity-Begin;
-  unsigned CurSize = size();
+  unsigned CurCapacity = unsigned(Capacity-Begin);
+  unsigned CurSize = unsigned(size());
   unsigned NewCapacity = 2*CurCapacity;
   if (NewCapacity < MinSize)
     NewCapacity = MinSize;
@@ -376,8 +376,8 @@ SmallVectorImpl<T>::operator=(const SmallVectorImpl<T> &RHS) {
   
   // If we already have sufficient space, assign the common elements, then
   // destroy any excess.
-  unsigned RHSSize = RHS.size();
-  unsigned CurSize = size();
+  unsigned RHSSize = unsigned(RHS.size());
+  unsigned CurSize = unsigned(size());
   if (CurSize >= RHSSize) {
     // Assign common elements.
     iterator NewEnd = std::copy(RHS.Begin, RHS.Begin+RHSSize, Begin);
