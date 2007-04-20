@@ -39,15 +39,16 @@ MAttrs("mattr",
 /// for the current target.  Otherwise, return null.
 ///
 ExecutionEngine *JIT::create(ModuleProvider *MP, std::string *ErrorStr) {
-  if (MArch == 0) {
+  const TargetMachineRegistry::Entry *TheArch = MArch;
+  if (TheArch == 0) {
     std::string Error;
-    MArch = TargetMachineRegistry::getClosestTargetForJIT(Error);
-    if (MArch == 0) {
+    TheArch = TargetMachineRegistry::getClosestTargetForJIT(Error);
+    if (TheArch == 0) {
       if (ErrorStr)
         *ErrorStr = Error;
       return 0;
     }
-  } else if (MArch->JITMatchQualityFn() == 0) {
+  } else if (TheArch->JITMatchQualityFn() == 0) {
     cerr << "WARNING: This target JIT is not designed for the host you are"
          << " running.  If bad things happen, please choose a different "
          << "-march switch.\n";
@@ -64,7 +65,7 @@ ExecutionEngine *JIT::create(ModuleProvider *MP, std::string *ErrorStr) {
   }
 
   // Allocate a target...
-  TargetMachine *Target = MArch->CtorFn(*MP->getModule(), FeaturesStr);
+  TargetMachine *Target = TheArch->CtorFn(*MP->getModule(), FeaturesStr);
   assert(Target && "Could not allocate target machine!");
 
   // If the target supports JIT code generation, return a new JIT now.
