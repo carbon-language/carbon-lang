@@ -149,8 +149,12 @@ bool LowerInvoke::doInitialization(Module &M) {
 
   // We need the 'write' and 'abort' functions for both models.
   AbortFn = M.getOrInsertFunction("abort", Type::VoidTy, (Type *)0);
+#if 0 // "write" is Unix-specific.. code is going away soon anyway.
   WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::Int32Ty,
                                   VoidPtrTy, Type::Int32Ty, (Type *)0);
+#else
+  WriteFn = 0;
+#endif
   return true;
 }
 
@@ -185,6 +189,7 @@ void LowerInvoke::createAbortMessage(Module *M) {
 
 
 void LowerInvoke::writeAbortMessage(Instruction *IB) {
+#if 0
   if (AbortMessage == 0)
     createAbortMessage(IB->getParent()->getParent()->getParent());
 
@@ -194,6 +199,7 @@ void LowerInvoke::writeAbortMessage(Instruction *IB) {
   Args[1] = AbortMessage;
   Args[2] = ConstantInt::get(Type::Int32Ty, AbortMessageLength);
   (new CallInst(WriteFn, Args, 3, "", IB))->setTailCall();
+#endif
 }
 
 bool LowerInvoke::insertCheapEHSupport(Function &F) {
