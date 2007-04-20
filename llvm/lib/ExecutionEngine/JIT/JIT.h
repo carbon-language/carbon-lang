@@ -39,11 +39,11 @@ private:
 public:
   JITState(ModuleProvider *MP) : PM(MP) {}
 
-  FunctionPassManager& getPM(const MutexGuard& locked) {
+  FunctionPassManager &getPM(const MutexGuard &L) {
     return PM;
   }
 
-  std::vector<const GlobalVariable*>& getPendingGlobals(const MutexGuard& locked) {
+  std::vector<const GlobalVariable*> &getPendingGlobals(const MutexGuard &L) {
     return PendingGlobals;
   }
 };
