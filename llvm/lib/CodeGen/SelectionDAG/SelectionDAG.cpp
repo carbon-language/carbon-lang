@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -296,7 +297,9 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     ID.AddDouble(cast<ConstantFPSDNode>(N)->getValue());
     break;
   case ISD::TargetGlobalAddress:
-  case ISD::GlobalAddress: {
+  case ISD::GlobalAddress:
+  case ISD::TargetGlobalTLSAddress:
+  case ISD::GlobalTLSAddress: {
     GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
     ID.AddPointer(GA->getGlobal());
     ID.AddInteger(GA->getOffset());
@@ -692,7 +695,12 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
 SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
                                          MVT::ValueType VT, int Offset,
                                          bool isTargetGA) {
-  unsigned Opc = isTargetGA ? ISD::TargetGlobalAddress : ISD::GlobalAddress;
+  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
+  unsigned Opc;
+  if (GVar && GVar->isThreadLocal())
+    Opc = isTargetGA ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress;
+  else
+    Opc = isTargetGA ? ISD::TargetGlobalAddress : ISD::GlobalAddress;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddPointer(GV);
@@ -2282,6 +2290,14 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
   SDOperand Ops[] = { Op1, Op2 };
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 2).Val;
 }
+SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                                    MVT::ValueType VT2, MVT::ValueType VT3,
+                                    SDOperand Op1, SDOperand Op2,
+                                    SDOperand Op3) {
+  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2, VT3);
+  SDOperand Ops[] = { Op1, Op2, Op3 };
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 3).Val;
+}
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
                                     MVT::ValueType VT2, MVT::ValueType VT3,
                                     const SDOperand *Ops, unsigned NumOps) {
@@ -2702,6 +2718,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::Constant:      return "Constant";
   case ISD::ConstantFP:    return "ConstantFP";
   case ISD::GlobalAddress: return "GlobalAddress";
+  case ISD::GlobalTLSAddress: return "GlobalTLSAddress";
   case ISD::FrameIndex:    return "FrameIndex";
   case ISD::JumpTable:     return "JumpTable";
   case ISD::GLOBAL_OFFSET_TABLE: return "GLOBAL_OFFSET_TABLE";
@@ -2725,6 +2742,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::TargetConstant: return "TargetConstant";
   case ISD::TargetConstantFP:return "TargetConstantFP";
   case ISD::TargetGlobalAddress: return "TargetGlobalAddress";
+  case ISD::TargetGlobalTLSAddress: return "TargetGlobalTLSAddress";
   case ISD::TargetFrameIndex: return "TargetFrameIndex";
   case ISD::TargetJumpTable:  return "TargetJumpTable";
   case ISD::TargetConstantPool:  return "TargetConstantPool";

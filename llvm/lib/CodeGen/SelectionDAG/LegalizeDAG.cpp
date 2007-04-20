@@ -622,6 +622,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::TargetConstantFP:
   case ISD::TargetConstantPool:
   case ISD::TargetGlobalAddress:
+  case ISD::TargetGlobalTLSAddress:
   case ISD::TargetExternalSymbol:
   case ISD::VALUETYPE:
   case ISD::SRCVALUE:
@@ -653,6 +654,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     assert(0 && "Do not know how to legalize this operator!");
     abort();
   case ISD::GlobalAddress:
+  case ISD::GlobalTLSAddress:
   case ISD::ExternalSymbol:
   case ISD::ConstantPool:
   case ISD::JumpTable: // Nothing to do.

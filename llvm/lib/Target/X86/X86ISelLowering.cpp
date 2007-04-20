@@ -20,6 +20,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/VectorExtras.h"
@@ -200,6 +201,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ConstantPool    , MVT::i32  , Custom);
   setOperationAction(ISD::JumpTable       , MVT::i32  , Custom);
   setOperationAction(ISD::GlobalAddress   , MVT::i32  , Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i32  , Custom);
   setOperationAction(ISD::ExternalSymbol  , MVT::i32  , Custom);
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::ConstantPool  , MVT::i64  , Custom);
@@ -2943,6 +2945,76 @@ X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
   return Result;
 }
 
+// Lower ISD::GlobalTLSAddress using the "general dynamic" model
+static SDOperand
+LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
+                              const MVT::ValueType PtrVT) {
+  SDOperand InFlag;
+  SDOperand Chain = DAG.getCopyToReg(DAG.getEntryNode(), X86::EBX,
+                                     DAG.getNode(X86ISD::GlobalBaseReg,
+                                                 PtrVT), InFlag);
+  InFlag = Chain.getValue(1);
+
+  // emit leal symbol@TLSGD(,%ebx,1), %eax
+  SDVTList NodeTys = DAG.getVTList(PtrVT, MVT::Other, MVT::Flag);
+  SDOperand TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
+                                             GA->getValueType(0),
+                                             GA->getOffset());
+  SDOperand Ops[] = { Chain,  TGA, InFlag };
+  SDOperand Result = DAG.getNode(X86ISD::TLSADDR, NodeTys, Ops, 3);
+  InFlag = Result.getValue(2);
+  Chain = Result.getValue(1);
+
+  // call ___tls_get_addr. This function receives its argument in
+  // the register EAX.
+  Chain = DAG.getCopyToReg(Chain, X86::EAX, Result, InFlag);
+  InFlag = Chain.getValue(1);
+
+  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDOperand Ops1[] = { Chain,
+                      DAG.getTargetExternalSymbol("___tls_get_addr",
+                                                  PtrVT),
+                      DAG.getRegister(X86::EAX, PtrVT),
+                      DAG.getRegister(X86::EBX, PtrVT),
+                      InFlag };
+  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops1, 5);
+  InFlag = Chain.getValue(1);
+
+  return DAG.getCopyFromReg(Chain, X86::EAX, PtrVT, InFlag);
+}
+
+// Lower ISD::GlobalTLSAddress using the "initial exec" (for no-pic) or
+// "local exec" model.
+static SDOperand
+LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
+                         const MVT::ValueType PtrVT) {
+  // Get the Thread Pointer
+  SDOperand ThreadPointer = DAG.getNode(X86ISD::THREAD_POINTER, PtrVT);
+  // emit "addl x@ntpoff,%eax" (local exec) or "addl x@indntpoff,%eax" (initial
+  // exec)
+  SDOperand TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
+                                             GA->getValueType(0),
+                                             GA->getOffset());
+  SDOperand Offset = DAG.getNode(X86ISD::Wrapper, PtrVT, TGA);
+  // The address of the thread local variable is the add of the thread
+  // pointer with the offset of the variable.
+  return DAG.getNode(ISD::ADD, PtrVT, ThreadPointer, Offset);
+}
+
+SDOperand
+X86TargetLowering::LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG) {
+  // TODO: implement the "local dynamic" model
+  // TODO: implement the "initial exec"model for pic executables 
+  assert(!Subtarget->is64Bit() && "TLS not implemented for X86_64");
+  GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
+  // If the relocation model is PIC, use the "General Dynamic" TLS Model,
+  // otherwise use the "Local Exec"TLS Model
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+    return LowerToTLSGeneralDynamicModel(GA, DAG, getPointerTy());
+  else
+    return LowerToTLSExecModel(GA, DAG, getPointerTy());
+}
+
 SDOperand
 X86TargetLowering::LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG) {
   const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
@@ -4022,6 +4094,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SCALAR_TO_VECTOR:   return LowerSCALAR_TO_VECTOR(Op, DAG);
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
+  case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
   case ISD::ExternalSymbol:     return LowerExternalSymbol(Op, DAG);
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
@@ -4090,6 +4163,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
+  case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
+  case X86ISD::THREAD_POINTER:     return "X86ISD::THREAD_POINTER";
   }
 }
 

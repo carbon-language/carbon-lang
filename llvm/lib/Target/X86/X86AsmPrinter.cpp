@@ -171,7 +171,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         }
       }
       
-      if (!I->hasSection() &&
+      if (!I->hasSection() && !I->isThreadLocal() &&
           (I->hasInternalLinkage() || I->hasWeakLinkage() ||
            I->hasLinkOnceLinkage())) {
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
@@ -256,9 +256,13 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         SwitchToDataSection(SectionName.c_str());
       } else {
         if (C->isNullValue() && !NoZerosInBSS && TAI->getBSSSection())
-          SwitchToDataSection(TAI->getBSSSection(), I);
+          SwitchToDataSection(I->isThreadLocal() ? TAI->getTLSBSSSection() :
+                              TAI->getBSSSection(), I);
         else if (!I->isConstant())
-          SwitchToDataSection(TAI->getDataSection(), I);
+          SwitchToDataSection(I->isThreadLocal() ? TAI->getTLSDataSection() :
+                              TAI->getDataSection(), I);
+        else if (I->isThreadLocal())
+          SwitchToDataSection(TAI->getTLSDataSection());
         else {
           // Read-only data.
           bool HasReloc = C->ContainsRelocations();

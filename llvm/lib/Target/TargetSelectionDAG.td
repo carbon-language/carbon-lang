@@ -211,6 +211,10 @@ def globaladdr : SDNode<"ISD::GlobalAddress",         SDTPtrLeaf, [],
                         "GlobalAddressSDNode">;
 def tglobaladdr : SDNode<"ISD::TargetGlobalAddress",  SDTPtrLeaf, [],
                          "GlobalAddressSDNode">;
+def globaltlsaddr : SDNode<"ISD::GlobalTLSAddress",         SDTPtrLeaf, [],
+                          "GlobalAddressSDNode">;
+def tglobaltlsaddr : SDNode<"ISD::TargetGlobalTLSAddress",  SDTPtrLeaf, [],
+                           "GlobalAddressSDNode">;
 def constpool   : SDNode<"ISD::ConstantPool",         SDTPtrLeaf, [],
                          "ConstantPoolSDNode">;
 def tconstpool  : SDNode<"ISD::TargetConstantPool",   SDTPtrLeaf, [],

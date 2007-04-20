@@ -47,6 +47,10 @@ def SDTX86RdTsc   : SDTypeProfile<0, 0, []>;
 
 def SDTX86Wrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
+def SDT_X86TLSADDR : SDTypeProfile<1, 1, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
+
+def SDT_X86TLSTP : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
+
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
@@ -86,6 +90,11 @@ def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
 
 def X86Wrapper    : SDNode<"X86ISD::Wrapper",     SDTX86Wrapper>;
 def X86WrapperRIP : SDNode<"X86ISD::WrapperRIP",  SDTX86Wrapper>;
+
+def X86tlsaddr : SDNode<"X86ISD::TLSADDR", SDT_X86TLSADDR,
+                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+def X86TLStp : SDNode<"X86ISD::THREAD_POINTER", SDT_X86TLSTP, []>;
+
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -2447,6 +2456,19 @@ def MOV16_mr : I<0x89, MRMDestMem, (ops i16mem:$dst, GR16_:$src),
                 "mov{w} {$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32_mr : I<0x89, MRMDestMem, (ops i32mem:$dst, GR32_:$src),
                 "mov{l} {$src, $dst|$dst, $src}", []>;
+
+//===----------------------------------------------------------------------===//
+// Thread Local Storage Instructions
+//
+
+def TLS_addr : I<0, Pseudo, (ops GR32:$dst, i32imm:$sym),
+               "leal $sym(,%ebx,1), $dst",
+               [(set GR32:$dst, (X86tlsaddr tglobaltlsaddr:$sym))]>,
+               Imp<[EBX],[]>;
+
+def TLS_tp : I<0, Pseudo, (ops GR32:$dst),
+               "movl %gs:0, $dst",
+               [(set GR32:$dst, X86TLStp)]>;
 
 //===----------------------------------------------------------------------===//
 // DWARF Pseudo Instructions

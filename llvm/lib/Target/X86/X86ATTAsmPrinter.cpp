@@ -272,9 +272,13 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    if (!isMemOp && !isCallOp) O << '$';
 
     GlobalValue *GV = MO.getGlobal();
+    GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
+    bool isThreadLocal = GVar && GVar->isThreadLocal();
+
+    if (!isMemOp && !isCallOp && !isThreadLocal) O << '$';
+
     std::string Name = Mang->getValueName(GV);
     X86SharedAsmPrinter::decorateName(Name, GV);
     
@@ -328,7 +332,15 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     else if (Offset < 0)
       O << Offset;
 
-    if (isMemOp) {
+    if (isThreadLocal) {
+      if (TM.getRelocationModel() == Reloc::PIC_)
+        O << "@TLSGD"; // general dynamic TLS model
+      else
+        if (GV->isDeclaration())
+          O << "@INDNTPOFF"; // initial exec TLS model
+        else
+          O << "@NTPOFF"; // local exec TLS model
+    } else if (isMemOp) {
       if (printGOT(TM, Subtarget)) {
         if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
           O << "@GOT";

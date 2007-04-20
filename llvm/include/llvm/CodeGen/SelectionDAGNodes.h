@@ -19,6 +19,7 @@
 #ifndef LLVM_CODEGEN_SELECTIONDAGNODES_H
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
+#include "llvm/GlobalVariable.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
@@ -95,7 +96,8 @@ namespace ISD {
     // Various leaf nodes.
     STRING, BasicBlock, VALUETYPE, CONDCODE, Register,
     Constant, ConstantFP,
-    GlobalAddress, FrameIndex, JumpTable, ConstantPool, ExternalSymbol,
+    GlobalAddress, GlobalTLSAddress, FrameIndex,
+    JumpTable, ConstantPool, ExternalSymbol,
 
     // The address of the GOT
     GLOBAL_OFFSET_TABLE,
@@ -124,6 +126,7 @@ namespace ISD {
     // anything else with this node, and this is valid in the target-specific
     // dag, turning into a GlobalAddress operand.
     TargetGlobalAddress,
+    TargetGlobalTLSAddress,
     TargetFrameIndex,
     TargetJumpTable,
     TargetConstantPool,
@@ -1164,7 +1167,12 @@ protected:
   friend class SelectionDAG;
   GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT::ValueType VT,
                       int o = 0)
-    : SDNode(isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress,
+    : SDNode(dyn_cast<GlobalVariable>(GA) &&
+             dyn_cast<GlobalVariable>(GA)->isThreadLocal() ?
+             // Thread Local
+             (isTarget ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress) :
+             // Non Thread Local
+             (isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress),
              getSDVTList(VT)), Offset(o) {
     TheGlobal = const_cast<GlobalValue*>(GA);
   }
@@ -1176,10 +1184,11 @@ public:
   static bool classof(const GlobalAddressSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::GlobalAddress ||
-           N->getOpcode() == ISD::TargetGlobalAddress;
+           N->getOpcode() == ISD::TargetGlobalAddress ||
+           N->getOpcode() == ISD::GlobalTLSAddress ||
+           N->getOpcode() == ISD::TargetGlobalTLSAddress;
   }
 };
-
 
 class FrameIndexSDNode : public SDNode {
   int FI;

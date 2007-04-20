@@ -20,6 +20,8 @@ TargetAsmInfo::TargetAsmInfo() :
   TextSection(".text"),
   DataSection(".data"),
   BSSSection(".bss"),
+  TLSDataSection("\t.section .tdata,\"awT\",@progbits"),
+  TLSBSSSection("\t.section .tbss,\"awT\",@nobits"),
   ZeroFillDirective(0),
   AddressSize(4),
   NeedsSet(false),

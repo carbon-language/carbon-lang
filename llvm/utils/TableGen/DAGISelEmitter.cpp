@@ -2654,10 +2654,12 @@ public:
         } else {
           NodeOps.push_back(Val);
         }
-      } else if (!N->isLeaf() && N->getOperator()->getName() == "tglobaladdr") {
+      } else if (!N->isLeaf() && (N->getOperator()->getName() == "tglobaladdr"
+                 || N->getOperator()->getName() == "tglobaltlsaddr")) {
         Record *Op = OperatorMap[N->getName()];
         // Transform GlobalAddress to TargetGlobalAddress
-        if (Op && Op->getName() == "globaladdr") {
+        if (Op && (Op->getName() == "globaladdr" ||
+                   Op->getName() == "globaltlsaddr")) {
           emitCode("SDOperand Tmp" + utostr(ResNo) + " = CurDAG->getTarget"
                    "GlobalAddress(cast<GlobalAddressSDNode>(" + Val +
                    ")->getGlobal(), " + getEnumName(N->getTypeNum(0)) +
@@ -3716,6 +3718,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::TargetConstantPool:\n"
      << "  case ISD::TargetFrameIndex:\n"
      << "  case ISD::TargetJumpTable:\n"
+     << "  case ISD::TargetGlobalTLSAddress:\n"
      << "  case ISD::TargetGlobalAddress: {\n"
      << "    return NULL;\n"
      << "  }\n"

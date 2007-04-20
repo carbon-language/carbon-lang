@@ -398,6 +398,9 @@ public:
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                         MVT::ValueType VT2, MVT::ValueType VT3,
                         SDOperand Op1, SDOperand Op2);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, MVT::ValueType VT3,
+                        SDOperand Op1, SDOperand Op2, SDOperand Op3);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
                         MVT::ValueType VT2, MVT::ValueType VT3,
                         const SDOperand *Ops, unsigned NumOps);

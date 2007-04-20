@@ -43,7 +43,15 @@ namespace llvm {
     /// target doesn't support a BSS section.
     ///
     const char *BSSSection;               // Default to ".bss".
-    
+
+    /// TLSDataSection - Section directive for Thread Local data.
+    ///
+    const char *TLSDataSection;// Defaults to ".section .tdata,"awT",@progbits".
+
+    /// TLSBSSSection - Section directive for Thread Local uninitialized data.
+    /// Null if this target doesn't support a BSS section.
+    ///
+    const char *TLSBSSSection;// Default to ".section .tbss,"awT",@nobits".
     /// ZeroFillDirective - Directive for emitting a global to the ZeroFill
     /// section on this target.  Null if this target doesn't support zerofill.
     const char *ZeroFillDirective;        // Default is null.
@@ -361,6 +369,12 @@ namespace llvm {
     }
     const char *getBSSSection() const {
       return BSSSection;
+    }
+    const char *getTLSDataSection() const {
+      return TLSDataSection;
+    }
+    const char *getTLSBSSSection() const {
+      return TLSBSSSection;
     }
     const char *getZeroFillDirective() const {
       return ZeroFillDirective;

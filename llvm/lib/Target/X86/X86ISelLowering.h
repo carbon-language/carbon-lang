@@ -176,7 +176,9 @@ namespace llvm {
 
       /// FMAX, FMIN - Floating point max and min.
       ///
-      FMAX, FMIN
+      FMAX, FMIN,
+      // Thread Local Storage
+      TLSADDR, THREAD_POINTER
     };
   }
 
@@ -386,6 +388,7 @@ namespace llvm {
     SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerShift(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG);
