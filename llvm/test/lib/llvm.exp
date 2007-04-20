@@ -187,3 +187,17 @@ proc RunLLVMTests { test_source_files } {
     }
   }
 }
+
+proc llvm_gcc_supports_objc { } {
+    global llvmgcc 
+    catch { set file_h [ open "/tmp/llvm_obj_check.m" w] }
+    set R [ catch { exec $llvmgcc -c "/tmp/llvm_obj_check.m"  -o /dev/null >& /tmp/llvm_obj_check.out } ]
+    set RESULT [ file size "/tmp/llvm_obj_check.out" ]
+    catch { file delete "/tmp/llvm_obj_check.m" }
+    if { $RESULT == 0 } {
+        return 1
+    } else {
+        return 0
+    }
+}
+
