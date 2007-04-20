@@ -38,10 +38,13 @@ class Type;
 /// to a Zero terminated array of registers that this register aliases.  This is
 /// needed for architectures like X86 which have AL alias AX alias EAX.
 /// Registers that this does not apply to simply should set this to null.
+/// The SubRegs field is a zero terminated array of registers that are
+/// sub-registers of the specific register, e.g. AL, AH are sub-registers of AX.
 ///
 struct TargetRegisterDesc {
   const char     *Name;         // Assembly language name for the register
   const unsigned *AliasSet;     // Register Alias Set, described above
+  const unsigned *SubRegs;      // Sub-register set, described above
 };
 
 class TargetRegisterClass {
