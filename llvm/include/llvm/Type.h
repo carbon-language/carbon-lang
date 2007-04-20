@@ -107,7 +107,6 @@ private:
   void destroy() const; // const is a lie, this does "delete this"!
 
 protected:
-  Type(const char *Name, TypeID id);
   explicit Type(TypeID id) : ID(id), Abstract(false), SubclassData(0),
                              RefCount(0), ForwardType(0), NumContainedTys(0),
                              ContainedTys(0) {}

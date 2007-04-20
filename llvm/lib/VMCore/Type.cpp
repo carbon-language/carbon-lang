@@ -63,13 +63,6 @@ static ManagedStatic<std::map<const Type*,
 static ManagedStatic<std::map<const Type*,
                               std::string> > AbstractTypeDescriptions;
 
-Type::Type(const char *Name, TypeID id)
-  : ID(id), Abstract(false),  SubclassData(0), RefCount(0), ForwardType(0),
-    NumContainedTys(0),  ContainedTys(0) {
-  assert(Name && Name[0] && "Should use other ctor if no name!");
-  (*ConcreteTypeDescriptions)[this] = Name;
-}
-
 /// Because of the way Type subclasses are allocated, this function is necessary
 /// to use the correct kind of "delete" operator to deallocate the Type object.
 /// Some type objects (FunctionTy, StructTy) allocate additional space after 
@@ -250,7 +243,18 @@ static std::string getTypeDescription(const Type *Ty,
   if (!Ty->isAbstract()) {                       // Base case for the recursion
     std::map<const Type*, std::string>::iterator I =
       ConcreteTypeDescriptions->find(Ty);
-    if (I != ConcreteTypeDescriptions->end()) return I->second;
+    if (I != ConcreteTypeDescriptions->end()) 
+      return I->second;
+    
+    if (Ty->isPrimitiveType()) {
+      switch (Ty->getTypeID()) {
+      default: assert(0 && "Unknown prim type!");
+      case Type::VoidTyID:   return (*ConcreteTypeDescriptions)[Ty] = "void";
+      case Type::FloatTyID:  return (*ConcreteTypeDescriptions)[Ty] = "float";
+      case Type::DoubleTyID: return (*ConcreteTypeDescriptions)[Ty] = "double";
+      case Type::LabelTyID:  return (*ConcreteTypeDescriptions)[Ty] = "label";
+      }
+    }
   }
 
   // Check to see if the Type is already on the stack...
@@ -391,10 +395,10 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 //                          Primitive 'Type' data
 //===----------------------------------------------------------------------===//
 
-const Type *Type::VoidTy   = new Type("void", Type::VoidTyID);
-const Type *Type::FloatTy  = new Type("float", Type::FloatTyID);
-const Type *Type::DoubleTy = new Type("double", Type::DoubleTyID);
-const Type *Type::LabelTy  = new Type("label", Type::LabelTyID);
+const Type *Type::VoidTy   = new Type(Type::VoidTyID);
+const Type *Type::FloatTy  = new Type(Type::FloatTyID);
+const Type *Type::DoubleTy = new Type(Type::DoubleTyID);
+const Type *Type::LabelTy  = new Type(Type::LabelTyID);
 
 namespace {
   struct BuiltinIntegerType : public IntegerType {
