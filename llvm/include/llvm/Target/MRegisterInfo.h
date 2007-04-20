@@ -270,6 +270,14 @@ public:
     return get(RegNo).AliasSet;
   }
 
+  /// getSubRegisters - Return the set of registers that are sub-registers of
+  // the specified register, or a null list of there are none. The list
+  /// returned is zero terminated.
+  ///
+  const unsigned *getSubRegisters(unsigned RegNo) const {
+    return get(RegNo).SubRegs;
+  }
+
   /// getName - Return the symbolic target specific name for the specified
   /// physical register.
   const char *getName(unsigned RegNo) const {
