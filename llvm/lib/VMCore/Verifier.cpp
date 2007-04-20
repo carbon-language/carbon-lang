@@ -113,7 +113,9 @@ namespace {  // Anonymous namespace for class
     bool runOnFunction(Function &F) {
       // Get dominator information if we are being run by PassManager
       if (RealPass) EF = &getAnalysis<ETForest>();
-      
+
+      Mod = F.getParent();
+
       visit(F);
       InstsInThisBlock.clear();
 
