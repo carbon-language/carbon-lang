@@ -182,7 +182,8 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     return CheckIndirectionOperand((Expr *)Input, OpLoc, Opc);
   else { 
     // handle the arithmetic unary operators (C99 6.5.3.3)
-    QualType opType = ImplicitConversion((Expr *)Input)->getType();
+    Expr *operand = ImplicitConversion((Expr *)Input);
+    QualType opType = operand->getType();
     assert(!opType.isNull() && "no type for arithmetic unary expression");
     QualType resultType = opType;
     
@@ -214,7 +215,7 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     default: 
       break;
     }
-    return new UnaryOperator((Expr*)Input, Opc, resultType);
+    return new UnaryOperator(operand, Opc, resultType);
   }
 }
 
@@ -395,25 +396,25 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   }
 
   // perform implicit conversions (C99 6.3)
-  Expr *e1 = ImplicitConversion((Expr*)LHS);
-  Expr *e2 = ImplicitConversion((Expr*)RHS);
+  Expr *lhs = ImplicitConversion((Expr*)LHS);
+  Expr *rhs = ImplicitConversion((Expr*)RHS);
   
   if (BinaryOperator::isMultiplicativeOp(Opc)) 
-    CheckMultiplicativeOperands((Expr*)LHS, (Expr*)RHS);
+    return CheckMultiplicativeOperands(lhs, rhs, TokLoc, Opc);
   else if (BinaryOperator::isAdditiveOp(Opc))
-    CheckAdditiveOperands((Expr*)LHS, (Expr*)RHS);
+    CheckAdditiveOperands(lhs, rhs);
   else if (BinaryOperator::isShiftOp(Opc))
-    CheckShiftOperands((Expr*)LHS, (Expr*)RHS);
+    CheckShiftOperands(lhs, rhs);
   else if (BinaryOperator::isRelationalOp(Opc))
-    CheckRelationalOperands((Expr*)LHS, (Expr*)RHS);
+    CheckRelationalOperands(lhs, rhs);
   else if (BinaryOperator::isEqualityOp(Opc))
-    CheckEqualityOperands((Expr*)LHS, (Expr*)RHS);
+    CheckEqualityOperands(lhs, rhs);
   else if (BinaryOperator::isBitwiseOp(Opc))
-    CheckBitwiseOperands((Expr*)LHS, (Expr*)RHS);
+    CheckBitwiseOperands(lhs, rhs);
   else if (BinaryOperator::isLogicalOp(Opc))
-    CheckLogicalOperands((Expr*)LHS, (Expr*)RHS);
+    CheckLogicalOperands(lhs, rhs);
   
-  return new BinaryOperator((Expr*)LHS, (Expr*)RHS, Opc);
+  return new BinaryOperator(lhs, rhs, Opc);
 }
 
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
@@ -443,8 +444,24 @@ Expr *Sema::ImplicitConversion(Expr *E) {
   return E;
 }
 
-Action::ExprResult Sema::CheckMultiplicativeOperands(Expr *op1, Expr *op2) {
-  return false;
+Action::ExprResult Sema::CheckMultiplicativeOperands(
+  Expr *lexpr, Expr *rexpr, SourceLocation loc, unsigned code) 
+{
+  lexpr = ImplicitConversion((Expr *)lexpr);
+  rexpr = ImplicitConversion((Expr *)rexpr);
+  QualType ltype = lexpr->getType();
+  QualType rtype = rexpr->getType();
+  assert(!ltype.isNull() && "no left type for CheckMultiplicativeOperands()");
+  assert(!rtype.isNull() && "no right type for CheckMultiplicativeOperands()");
+  
+  if ((BinaryOperator::Opcode)code == BinaryOperator::Rem) {
+    if (!ltype->isIntegralType() || !rtype->isIntegralType())
+      return Diag(loc, diag::err_typecheck_invalid_operands);
+  } else {
+    if (!ltype->isArithmeticType() || !rtype->isArithmeticType())
+      return Diag(loc, diag::err_typecheck_invalid_operands);
+  }
+  return new BinaryOperator(lexpr, rexpr, (BinaryOperator::Opcode)code);
 }
 
 Action::ExprResult Sema::CheckAdditiveOperands(Expr *op1, Expr *op2) {

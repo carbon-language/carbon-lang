@@ -535,6 +535,8 @@ DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
      "invalid lvalue in address expression")
 DIAG(err_typecheck_unary_expr, ERROR,
      "invalid argument type to unary expression '%s'")
+DIAG(err_typecheck_invalid_operands, ERROR,
+     "invalid operands to binary expression")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

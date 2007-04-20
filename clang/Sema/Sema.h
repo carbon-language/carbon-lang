@@ -228,7 +228,9 @@ private:
   /// or will return true if the expressions didn't type check properly.
   
   /// type checking binary operators (subroutines of ParseBinOp).
-  ExprResult CheckMultiplicativeOperands(Expr *op1, Expr *op2); // C99 6.5.5
+  ExprResult CheckMultiplicativeOperands(Expr *op1, Expr *op2,
+          SourceLocation OpLoc, 
+          unsigned /*BinaryOperator::Opcode*/OpCode); // C99 6.5.5
   ExprResult CheckAdditiveOperands(Expr *op1, Expr *op2);       // C99 6.5.6
   ExprResult CheckShiftOperands(Expr *op1, Expr *op2);          // C99 6.5.7
   ExprResult CheckRelationalOperands(Expr *op1, Expr *op2);     // C99 6.5.8
