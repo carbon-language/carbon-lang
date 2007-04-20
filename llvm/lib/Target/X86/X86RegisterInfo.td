@@ -24,91 +24,91 @@ let Namespace = "X86" in {
   // AL aliases AX if we tell it that AX aliased AL (for example).
 
   // FIXME: X86-64 have different Dwarf numbers.
-  // 64-bit registers, X86-64 only
-  def RAX : Register<"RAX">, DwarfRegNum<0>;
-  def RDX : Register<"RDX">, DwarfRegNum<1>;
-  def RCX : Register<"RCX">, DwarfRegNum<2>;
-  def RBX : Register<"RBX">, DwarfRegNum<3>;
-  def RSI : Register<"RSI">, DwarfRegNum<4>;
-  def RDI : Register<"RDI">, DwarfRegNum<5>;
-  def RBP : Register<"RBP">, DwarfRegNum<6>;
-  def RSP : Register<"RSP">, DwarfRegNum<7>;
-
-  def R8  : Register<"R8">,  DwarfRegNum<8>;
-  def R9  : Register<"R9">,  DwarfRegNum<9>;
-  def R10 : Register<"R10">, DwarfRegNum<10>;
-  def R11 : Register<"R11">, DwarfRegNum<11>;
-  def R12 : Register<"R12">, DwarfRegNum<12>;
-  def R13 : Register<"R13">, DwarfRegNum<13>;
-  def R14 : Register<"R14">, DwarfRegNum<14>;
-  def R15 : Register<"R15">, DwarfRegNum<15>;
-
-  // 32-bit registers
-  def EAX : RegisterGroup<"EAX", [RAX]>, DwarfRegNum<0>;
-  def ECX : RegisterGroup<"ECX", [RCX]>, DwarfRegNum<1>;
-  def EDX : RegisterGroup<"EDX", [RDX]>, DwarfRegNum<2>;
-  def EBX : RegisterGroup<"EBX", [RBX]>, DwarfRegNum<3>;
-  def ESP : RegisterGroup<"ESP", [RSP]>, DwarfRegNum<4>;
-  def EBP : RegisterGroup<"EBP", [RBP]>, DwarfRegNum<5>;
-  def ESI : RegisterGroup<"ESI", [RSI]>, DwarfRegNum<6>;
-  def EDI : RegisterGroup<"EDI", [RDI]>, DwarfRegNum<7>;
-  
-  // X86-64 only
-  def R8D  : RegisterGroup<"R8D",  [R8]>,  DwarfRegNum<8>;
-  def R9D  : RegisterGroup<"R9D",  [R9]>,  DwarfRegNum<9>;
-  def R10D : RegisterGroup<"R10D", [R10]>, DwarfRegNum<10>;
-  def R11D : RegisterGroup<"R11D", [R11]>, DwarfRegNum<11>;
-  def R12D : RegisterGroup<"R12D", [R12]>, DwarfRegNum<12>;
-  def R13D : RegisterGroup<"R13D", [R13]>, DwarfRegNum<13>;
-  def R14D : RegisterGroup<"R14D", [R14]>, DwarfRegNum<14>;
-  def R15D : RegisterGroup<"R15D", [R15]>, DwarfRegNum<15>;
-
-  // 16-bit registers
-  def AX : RegisterGroup<"AX", [EAX,RAX]>, DwarfRegNum<0>;
-  def CX : RegisterGroup<"CX", [ECX,RCX]>, DwarfRegNum<1>;
-  def DX : RegisterGroup<"DX", [EDX,RDX]>, DwarfRegNum<2>;
-  def BX : RegisterGroup<"BX", [EBX,RBX]>, DwarfRegNum<3>;
-  def SP : RegisterGroup<"SP", [ESP,RSP]>, DwarfRegNum<4>;
-  def BP : RegisterGroup<"BP", [EBP,RBP]>, DwarfRegNum<5>;
-  def SI : RegisterGroup<"SI", [ESI,RSI]>, DwarfRegNum<6>;
-  def DI : RegisterGroup<"DI", [EDI,RDI]>, DwarfRegNum<7>;
-  
-  // X86-64 only
-  def R8W  : RegisterGroup<"R8W",  [R8D,R8]>,   DwarfRegNum<8>;
-  def R9W  : RegisterGroup<"R9W",  [R9D,R9]>,   DwarfRegNum<9>;
-  def R10W : RegisterGroup<"R10W", [R10D,R10]>, DwarfRegNum<10>;
-  def R11W : RegisterGroup<"R11W", [R11D,R11]>, DwarfRegNum<11>;
-  def R12W : RegisterGroup<"R12W", [R12D,R12]>, DwarfRegNum<12>;
-  def R13W : RegisterGroup<"R13W", [R13D,R13]>, DwarfRegNum<13>;
-  def R14W : RegisterGroup<"R14W", [R14D,R14]>, DwarfRegNum<14>;
-  def R15W : RegisterGroup<"R15W", [R15D,R15]>, DwarfRegNum<15>;
-
   // 8-bit registers
   // Low registers
-  def AL : RegisterGroup<"AL", [AX,EAX,RAX]>, DwarfRegNum<0>;
-  def CL : RegisterGroup<"CL", [CX,ECX,RCX]>, DwarfRegNum<1>;
-  def DL : RegisterGroup<"DL", [DX,EDX,RDX]>, DwarfRegNum<2>;
-  def BL : RegisterGroup<"BL", [BX,EBX,RBX]>, DwarfRegNum<3>;
+  def AL : Register<"AL">, DwarfRegNum<0>;
+  def CL : Register<"CL">, DwarfRegNum<1>;
+  def DL : Register<"DL">, DwarfRegNum<2>;
+  def BL : Register<"BL">, DwarfRegNum<3>;
 
   // X86-64 only
-  def SIL : RegisterGroup<"SIL", [SI,ESI,RSI]>, DwarfRegNum<4>;
-  def DIL : RegisterGroup<"DIL", [DI,EDI,RDI]>, DwarfRegNum<5>;
-  def BPL : RegisterGroup<"BPL", [BP,EBP,RBP]>, DwarfRegNum<6>;
-  def SPL : RegisterGroup<"SPL", [SP,ESP,RSP]>, DwarfRegNum<7>;
-  def R8B  : RegisterGroup<"R8B",  [R8W,R8D,R8]>,    DwarfRegNum<8>;
-  def R9B  : RegisterGroup<"R9B",  [R9W,R9D,R9]>,    DwarfRegNum<9>;
-  def R10B : RegisterGroup<"R10B", [R10W,R10D,R10]>, DwarfRegNum<10>;
-  def R11B : RegisterGroup<"R11B", [R11W,R11D,R11]>, DwarfRegNum<11>;
-  def R12B : RegisterGroup<"R12B", [R12W,R12D,R12]>, DwarfRegNum<12>;
-  def R13B : RegisterGroup<"R13B", [R13W,R13D,R13]>, DwarfRegNum<13>;
-  def R14B : RegisterGroup<"R14B", [R14W,R14D,R14]>, DwarfRegNum<14>;
-  def R15B : RegisterGroup<"R15B", [R15W,R15D,R15]>, DwarfRegNum<15>;
+  def SIL : Register<"SIL">, DwarfRegNum<4>;
+  def DIL : Register<"DIL">, DwarfRegNum<5>;
+  def BPL : Register<"BPL">, DwarfRegNum<6>;
+  def SPL : Register<"SPL">, DwarfRegNum<7>;
+  def R8B  : Register<"R8B">,  DwarfRegNum<8>;
+  def R9B  : Register<"R9B">,  DwarfRegNum<9>;
+  def R10B : Register<"R10B">, DwarfRegNum<10>;
+  def R11B : Register<"R11B">, DwarfRegNum<11>;
+  def R12B : Register<"R12B">, DwarfRegNum<12>;
+  def R13B : Register<"R13B">, DwarfRegNum<13>;
+  def R14B : Register<"R14B">, DwarfRegNum<14>;
+  def R15B : Register<"R15B">, DwarfRegNum<15>;
 
   // High registers X86-32 only
-  def AH : RegisterGroup<"AH", [AX,EAX,RAX]>, DwarfRegNum<0>;
-  def CH : RegisterGroup<"CH", [CX,ECX,RCX]>, DwarfRegNum<1>;
-  def DH : RegisterGroup<"DH", [DX,EDX,RDX]>, DwarfRegNum<2>;
-  def BH : RegisterGroup<"BH", [BX,EBX,RBX]>, DwarfRegNum<3>;
+  def AH : Register<"AH">, DwarfRegNum<0>;
+  def CH : Register<"CH">, DwarfRegNum<1>;
+  def DH : Register<"DH">, DwarfRegNum<2>;
+  def BH : Register<"BH">, DwarfRegNum<3>;
+
+  // 16-bit registers
+  def AX : RegisterWithSubRegs<"AX", [AH,AL]>, DwarfRegNum<0>;
+  def CX : RegisterWithSubRegs<"CX", [CH,CL]>, DwarfRegNum<1>;
+  def DX : RegisterWithSubRegs<"DX", [DH,DL]>, DwarfRegNum<2>;
+  def BX : RegisterWithSubRegs<"BX", [BH,BL]>, DwarfRegNum<3>;
+  def SP : RegisterWithSubRegs<"SP", [SPL]>, DwarfRegNum<4>;
+  def BP : RegisterWithSubRegs<"BP", [BPL]>, DwarfRegNum<5>;
+  def SI : RegisterWithSubRegs<"SI", [SIL]>, DwarfRegNum<6>;
+  def DI : RegisterWithSubRegs<"DI", [DIL]>, DwarfRegNum<7>;
+  
+  // X86-64 only
+  def R8W  : RegisterWithSubRegs<"R8W", [R8B]>, DwarfRegNum<8>;
+  def R9W  : RegisterWithSubRegs<"R9W", [R9B]>, DwarfRegNum<9>;
+  def R10W : RegisterWithSubRegs<"R10W", [R10B]>, DwarfRegNum<10>;
+  def R11W : RegisterWithSubRegs<"R11W", [R11B]>, DwarfRegNum<11>;
+  def R12W : RegisterWithSubRegs<"R12W", [R12B]>, DwarfRegNum<12>;
+  def R13W : RegisterWithSubRegs<"R13W", [R13B]>, DwarfRegNum<13>;
+  def R14W : RegisterWithSubRegs<"R14W", [R14B]>, DwarfRegNum<14>;
+  def R15W : RegisterWithSubRegs<"R15W", [R15B]>, DwarfRegNum<15>;
+
+  // 32-bit registers
+  def EAX : RegisterWithSubRegs<"EAX", [AX]>, DwarfRegNum<0>;
+  def ECX : RegisterWithSubRegs<"ECX", [CX]>, DwarfRegNum<1>;
+  def EDX : RegisterWithSubRegs<"EDX", [DX]>, DwarfRegNum<2>;
+  def EBX : RegisterWithSubRegs<"EBX", [BX]>, DwarfRegNum<3>;
+  def ESP : RegisterWithSubRegs<"ESP", [SP]>, DwarfRegNum<4>;
+  def EBP : RegisterWithSubRegs<"EBP", [BP]>, DwarfRegNum<5>;
+  def ESI : RegisterWithSubRegs<"ESI", [SI]>, DwarfRegNum<6>;
+  def EDI : RegisterWithSubRegs<"EDI", [DI]>, DwarfRegNum<7>;
+  
+  // X86-64 only
+  def R8D  : RegisterWithSubRegs<"R8D", [R8W]>, DwarfRegNum<8>;
+  def R9D  : RegisterWithSubRegs<"R9D", [R9W]>, DwarfRegNum<9>;
+  def R10D : RegisterWithSubRegs<"R10D", [R10W]>, DwarfRegNum<10>;
+  def R11D : RegisterWithSubRegs<"R11D", [R11W]>, DwarfRegNum<11>;
+  def R12D : RegisterWithSubRegs<"R12D", [R12W]>, DwarfRegNum<12>;
+  def R13D : RegisterWithSubRegs<"R13D", [R13W]>, DwarfRegNum<13>;
+  def R14D : RegisterWithSubRegs<"R14D", [R14W]>, DwarfRegNum<14>;
+  def R15D : RegisterWithSubRegs<"R15D", [R15W]>, DwarfRegNum<15>;
+
+  // 64-bit registers, X86-64 only
+  def RAX : RegisterWithSubRegs<"RAX", [EAX]>, DwarfRegNum<0>;
+  def RDX : RegisterWithSubRegs<"RDX", [EDX]>, DwarfRegNum<1>;
+  def RCX : RegisterWithSubRegs<"RCX", [ECX]>, DwarfRegNum<2>;
+  def RBX : RegisterWithSubRegs<"RBX", [EBX]>, DwarfRegNum<3>;
+  def RSI : RegisterWithSubRegs<"RSI", [ESI]>, DwarfRegNum<4>;
+  def RDI : RegisterWithSubRegs<"RDI", [EDI]>, DwarfRegNum<5>;
+  def RBP : RegisterWithSubRegs<"RBP", [EBP]>, DwarfRegNum<6>;
+  def RSP : RegisterWithSubRegs<"RSP", [ESP]>, DwarfRegNum<7>;
+
+  def R8  : RegisterWithSubRegs<"R8", [R8D]>, DwarfRegNum<8>;
+  def R9  : RegisterWithSubRegs<"R9", [R9D]>, DwarfRegNum<9>;
+  def R10 : RegisterWithSubRegs<"R10", [R10D]>, DwarfRegNum<10>;
+  def R11 : RegisterWithSubRegs<"R11", [R11D]>, DwarfRegNum<11>;
+  def R12 : RegisterWithSubRegs<"R12", [R12D]>, DwarfRegNum<12>;
+  def R13 : RegisterWithSubRegs<"R13", [R13D]>, DwarfRegNum<13>;
+  def R14 : RegisterWithSubRegs<"R14", [R14D]>, DwarfRegNum<14>;
+  def R15 : RegisterWithSubRegs<"R15", [R15D]>, DwarfRegNum<15>;
 
   // MMX Registers. These are actually aliased to ST0 .. ST7
   def MM0 : Register<"MM0">, DwarfRegNum<29>;
