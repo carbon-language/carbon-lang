@@ -628,7 +628,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::SRCVALUE:
   case ISD::STRING:
   case ISD::CONDCODE:
-  case ISD::GLOBAL_OFFSET_TABLE:
     // Primitives must all be legal.
     assert(TLI.isOperationLegal(Node->getValueType(0), Node->getValueType(0)) &&
            "This must be legal!");
@@ -653,6 +652,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 #endif
     assert(0 && "Do not know how to legalize this operator!");
     abort();
+  case ISD::GLOBAL_OFFSET_TABLE:
   case ISD::GlobalAddress:
   case ISD::GlobalTLSAddress:
   case ISD::ExternalSymbol:
