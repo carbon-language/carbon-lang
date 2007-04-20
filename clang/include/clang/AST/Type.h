@@ -226,6 +226,9 @@ public:
   bool isAggregateType() const;  // C99 6.2.5p21 (arrays, structures)
   
   bool isLvalue() const;         // C99 6.3.2.1
+  
+  /// Type Conversions/Promotions
+  bool isPromotableIntegerType() const; // C99 6.3.1.1p2
 private:
   // this forces clients to use isModifiableLvalue on QualType, the class that 
   // knows if the type is const. This predicate is a helper to QualType. 

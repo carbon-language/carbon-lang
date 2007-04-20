@@ -180,9 +180,42 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     return CheckAddressOfOperand((Expr *)Input, OpLoc, Opc);
   else if (Opc == UnaryOperator::Deref) 
     return CheckIndirectionOperand((Expr *)Input, OpLoc, Opc);
-  
-  // when all the check functions are written, this will go away...
-  return new UnaryOperator((Expr*)Input, Opc, QualType());
+  else { 
+    // handle the arithmetic unary operators (C99 6.5.3.3)
+    QualType opType = ImplicitConversion((Expr *)Input)->getType();
+    assert(!opType.isNull() && "no type for arithmetic unary expression");
+    QualType resultType = opType;
+    
+    switch (Opc) {
+    case UnaryOperator::Plus:
+    case UnaryOperator::Minus:
+      if (!opType->isArithmeticType()) // C99 6.5.3.3p1
+        return Diag(OpLoc, diag::err_typecheck_unary_expr, opType);
+
+      if (opType->isPromotableIntegerType()) // C99 6.5.3.3p2
+        resultType = Context.IntTy;
+      break;
+    case UnaryOperator::Not: // bitwise complement
+      if (!opType->isIntegralType()) // C99 6.5.3.3p1
+        return Diag(OpLoc, diag::err_typecheck_unary_expr, opType);
+
+      if (opType->isPromotableIntegerType()) // C99 6.5.3.3p2
+        resultType = Context.IntTy;
+      break;
+    case UnaryOperator::LNot: // logical negation
+      if (!opType->isScalarType()) // C99 6.5.3.3p1
+        return Diag(OpLoc, diag::err_typecheck_unary_expr, opType);
+
+      if (opType->isPromotableIntegerType()) // C99 6.5.3.3p2
+        resultType = Context.IntTy;
+      break;
+    case UnaryOperator::SizeOf: // C99 6.5.3.4 TODO
+      break;
+    default: 
+      break;
+    }
+    return new UnaryOperator((Expr*)Input, Opc, resultType);
+  }
 }
 
 Action::ExprResult Sema::
@@ -392,12 +425,21 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
 }
 
+/// ImplicitConversion - Performs various conversions that are common to most
+/// operators. At present, this routine only handles conversions that require
+/// synthesizing an expression/type. Arithmetic type promotions are done locally,
+/// since they don't require a new expression.
 Expr *Sema::ImplicitConversion(Expr *E) {
-#if 0
   QualType t = E->getType();
-  if (t != 0) t.dump();
-  else printf("no type for expr %s\n", E->getStmtClassName());
-#endif
+  assert(!t.isNull() && "no type for implicit conversion");
+  
+  if (t->isFunctionType()) // C99 6.3.2.1p4
+    return new UnaryOperator(E, UnaryOperator::AddrOf, Context.getPointerType(t));
+  else if (t->isArrayType()) { // C99 6.3.2.1p3
+    QualType elt = cast<ArrayType>(t)->getElementType();
+    QualType convertedType = Context.getPointerType(elt);
+    return new UnaryOperator(E, UnaryOperator::AddrOf, convertedType);
+  }
   return E;
 }
 

@@ -199,6 +199,24 @@ bool Type::isLvalue() const {
     return false;    
 }
 
+bool Type::isPromotableIntegerType() const {
+  if (CanonicalType->getTypeClass() == Builtin) {
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
+    switch (BT->getKind()) {
+      case BuiltinType::Bool:
+      case BuiltinType::Char:
+      case BuiltinType::SChar:
+      case BuiltinType::UChar:
+      case BuiltinType::Short:
+      case BuiltinType::UShort:
+        return true;
+      default: 
+        return false;
+    }
+  }
+  return false;
+}
+
 /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
 /// does not have an incomplete type, does not have a const-qualified type, and
 /// if it is a structure or union, does not have any member (including, 

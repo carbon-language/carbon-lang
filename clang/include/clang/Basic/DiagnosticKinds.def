@@ -533,6 +533,8 @@ DIAG(err_typecheck_address_of_register, ERROR,
      "address of register variable requested")
 DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
      "invalid lvalue in address expression")
+DIAG(err_typecheck_unary_expr, ERROR,
+     "invalid argument type to unary expression '%s'")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,
