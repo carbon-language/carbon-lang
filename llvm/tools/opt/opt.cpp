@@ -27,7 +27,6 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
-#include "llvm/Support/Timer.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
 #include <iostream>
@@ -94,8 +93,6 @@ QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 
 static cl::opt<bool>
 AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
-
-static Timer BytecodeLoadTimer("Bytecode Loader");
 
 // ---------- Define Printers for module and function passes ------------
 namespace {
