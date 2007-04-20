@@ -355,6 +355,10 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
       if (I->hasDLLImportLinkage()) {
         O << "__imp_";
       }      
+      // Microsoft sticks an extra _ in front of "_write" (whether LLVM should
+      // hard-code usage of a Unix API is another question).
+      if (Name == "_write")
+        Name = "__write";
       O << Name << ":near\n";
     }
   
