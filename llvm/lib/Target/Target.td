@@ -41,15 +41,30 @@ class Register<string n> {
   // Aliases - A list of registers that this register overlaps with.  A read or
   // modification of this register can potentially read or modify the aliased
   // registers.
-  //
   list<Register> Aliases = [];
   
+  // SubRegs - A list of registers that are parts of this register. Note these
+  // are "immediate" sub-registers and the registers within the list do not
+  // themselves overlap. e.g. For X86, EAX's SubRegs list contains only [AX],
+  // not [AX, AH, AL].
+  list<Register> SubRegs = [];
+
   // DwarfNumber - Number used internally by gcc/gdb to identify the register.
   // These values can be determined by locating the <target>.h file in the
   // directory llvmgcc/gcc/config/<target>/ and looking for REGISTER_NAMES.  The
   // order of these names correspond to the enumeration used by gcc.  A value of
   // -1 indicates that the gcc number is undefined.
   int DwarfNumber = -1;
+}
+
+// RegisterWithSubRegs - This can be used to define instances of Register which
+// need to specify sub-registers.
+// List "subregs" specifies which registers are sub-registers to this one. This
+// is used to populate the SubRegs and AliasSet fields of TargetRegisterDesc.
+// This allows the code generator to be careful not to put two values with 
+// overlapping live ranges into registers which alias.
+class RegisterWithSubRegs<string n, list<Register> subregs> : Register<n> {
+  let SubRegs = subregs;
 }
 
 // RegisterGroup - This can be used to define instances of Register which

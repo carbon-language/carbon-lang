@@ -107,6 +107,27 @@ bool isSubRegisterClass(const CodeGenRegisterClass &RC,
   return true;
 }
 
+static void addSubReg(Record *R, Record *S,
+                      std::map<Record*, std::set<Record*> > &SubRegs,
+                      std::map<Record*, std::set<Record*> > &Aliases,
+                      RegisterInfoEmitter &RIE) {
+  if (R == S) {
+    cerr << "Error: recursive sub-register relationship between"
+         << " register " << RIE.getQualifiedName(R)
+         << " and its sub-registers?\n";
+    abort();
+  }
+
+  if (!SubRegs[R].insert(S).second)
+    return;
+  Aliases[R].insert(S);
+  Aliases[S].insert(R);
+  if (SubRegs.count(S))
+    for (std::set<Record*>::iterator I = SubRegs[S].begin(),
+           E = SubRegs[S].end(); I != E; ++I)
+      addSubReg(R, *I, SubRegs, Aliases, RIE);
+}
+
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
 void RegisterInfoEmitter::run(std::ostream &OS) {
@@ -273,7 +294,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << "RegClass,\n";
   OS << "  };\n";
 
-  // Emit register class aliases...
+  // Emit register sub-registers / aliases...
+  std::map<Record*, std::set<Record*> > RegisterSubRegs;
   std::map<Record*, std::set<Record*> > RegisterAliases;
   const std::vector<CodeGenRegister> &Regs = Target.getRegisters();
 
@@ -298,6 +320,20 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     }
   }
 
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    Record *R = Regs[i].TheDef;
+    std::vector<Record*> LI = Regs[i].TheDef->getValueAsListOfDefs("SubRegs");
+    // Process sub-register set and add aliases information.
+    for (unsigned j = 0, e = LI.size(); j != e; ++j) {
+      Record *SubReg = LI[j];
+      if (RegisterSubRegs[R].count(SubReg))
+        cerr << "Warning: register " << getQualifiedName(SubReg)
+             << " specified as a sub-register of " << getQualifiedName(R)
+             << " multiple times!\n";
+      addSubReg(R, SubReg, RegisterSubRegs, RegisterAliases, *this);
+    }
+  }
+
   if (!RegisterAliases.empty())
     OS << "\n\n  // Register Alias Sets...\n";
 
@@ -314,12 +350,27 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     OS << "0 };\n";
   }
 
+  if (!RegisterSubRegs.empty())
+    OS << "\n\n  // Register Sub-registers Sets...\n";
+
+  // Emit the empty sub-registers list
+  OS << "  const unsigned Empty_SubRegsSet[] = { 0 };\n";
+  // Loop over all of the registers which have sub-registers, emitting the
+  // sub-registers list to memory.
+  for (std::map<Record*, std::set<Record*> >::iterator
+         I = RegisterSubRegs.begin(), E = RegisterSubRegs.end(); I != E; ++I) {
+    OS << "  const unsigned " << I->first->getName() << "_SubRegsSet[] = { ";
+    for (std::set<Record*>::iterator ASI = I->second.begin(),
+           E = I->second.end(); ASI != E; ++ASI)
+      OS << getQualifiedName(*ASI) << ", ";
+    OS << "0 };\n";
+  }
   OS<<"\n  const TargetRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
-  OS << "    { \"NOREG\",\t0 },\n";
+  OS << "    { \"NOREG\",\t0,\t0 },\n";
 
 
-  // Now that register alias sets have been emitted, emit the register
-  // descriptors now.
+  // Now that register alias and sub-registers sets have been emitted, emit the
+  // register descriptors now.
   const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     const CodeGenRegister &Reg = Registers[i];
@@ -330,9 +381,13 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       OS << Reg.getName();
     OS << "\",\t";
     if (RegisterAliases.count(Reg.TheDef))
-      OS << Reg.getName() << "_AliasSet },\n";
+      OS << Reg.getName() << "_AliasSet,\t";
     else
-      OS << "Empty_AliasSet },\n";
+      OS << "Empty_AliasSet,\t";
+    if (RegisterSubRegs.count(Reg.TheDef))
+      OS << Reg.getName() << "_SubRegsSet },\n";
+    else
+      OS << "Empty_SubRegsSet },\n";
   }
   OS << "  };\n";      // End of register descriptors...
   OS << "}\n\n";       // End of anonymous namespace...
