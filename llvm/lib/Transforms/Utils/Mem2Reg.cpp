@@ -36,7 +36,7 @@ namespace {
     // getAnalysisUsage - We need dominance frontiers
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<DominatorTree>();
+      AU.addRequired<ETForest>();
       AU.addRequired<DominanceFrontier>();
       AU.addRequired<TargetData>();
       AU.setPreservesCFG();
@@ -60,7 +60,7 @@ bool PromotePass::runOnFunction(Function &F) {
 
   bool Changed  = false;
 
-  DominatorTree     &DT = getAnalysis<DominatorTree>();
+  ETForest     &ET = getAnalysis<ETForest>();
   DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
 
   while (1) {
@@ -75,7 +75,7 @@ bool PromotePass::runOnFunction(Function &F) {
 
     if (Allocas.empty()) break;
 
-    PromoteMemToReg(Allocas, DT, DF, TD);
+    PromoteMemToReg(Allocas, ET, DF, TD);
     NumPromoted += Allocas.size();
     Changed = true;
   }

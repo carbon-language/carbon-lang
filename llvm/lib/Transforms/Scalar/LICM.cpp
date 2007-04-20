@@ -73,7 +73,6 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<ETForest>();
-      AU.addRequired<DominatorTree>();      // For scalar promotion (mem2reg)
       AU.addRequired<DominanceFrontier>();  // For scalar promotion (mem2reg)
       AU.addRequired<AliasAnalysis>();
     }
@@ -88,7 +87,6 @@ namespace {
     AliasAnalysis *AA;       // Current AliasAnalysis information
     LoopInfo      *LI;       // Current LoopInfo
     ETForest *ET;       // ETForest for the current Loop...
-    DominatorTree *DT;       // Dominator Tree for the current Loop...
     DominanceFrontier *DF;   // Current Dominance Frontier
 
     // State that is updated as we process loops
@@ -215,7 +213,6 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   AA = &getAnalysis<AliasAnalysis>();
   DF = &getAnalysis<DominanceFrontier>();
   ET = &getAnalysis<ETForest>();
-  DT = &getAnalysis<DominatorTree>();
 
   CurAST = new AliasSetTracker(*AA);
   // Collect Alias info frmo subloops
@@ -554,7 +551,7 @@ void LICM::sink(Instruction &I) {
     if (AI) {
       std::vector<AllocaInst*> Allocas;
       Allocas.push_back(AI);
-      PromoteMemToReg(Allocas, *DT, *DF, AA->getTargetData(), CurAST);
+      PromoteMemToReg(Allocas, *ET, *DF, AA->getTargetData(), CurAST);
     }
   }
 }
@@ -735,7 +732,7 @@ void LICM::PromoteValuesInLoop() {
   PromotedAllocas.reserve(PromotedValues.size());
   for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i)
     PromotedAllocas.push_back(PromotedValues[i].first);
-  PromoteMemToReg(PromotedAllocas, *DT, *DF, AA->getTargetData(), CurAST);
+  PromoteMemToReg(PromotedAllocas, *ET, *DF, AA->getTargetData(), CurAST);
 }
 
 /// FindPromotableValuesInLoop - Check the current loop for stores to definite
