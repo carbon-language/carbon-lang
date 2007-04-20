@@ -35,7 +35,7 @@ namespace llvm {
     // aligned to the specified power of two boundary.
     void align(unsigned Boundary) {
       assert(Boundary && (Boundary & (Boundary - 1)) == 0 &&
-             "Must alitypedef std::vector<unsigned char> DataBuffer;gn to 2^k boundary");
+             "Must align to 2^k boundary");
       size_t Size = Output.size();
       
       if (Size & (Boundary - 1)) {
