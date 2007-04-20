@@ -407,13 +407,20 @@ BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
 /// AddBlockAndPredsToSet - Add the specified block, and all of its
 /// predecessors, to the specified set, if it's not already in there.  Stop
 /// predecessor traversal when we reach StopBlock.
-static void AddBlockAndPredsToSet(BasicBlock *BB, BasicBlock *StopBlock,
+static void AddBlockAndPredsToSet(BasicBlock *InputBB, BasicBlock *StopBlock,
                                   std::set<BasicBlock*> &Blocks) {
-  if (!Blocks.insert(BB).second) return;  // already processed.
-  if (BB == StopBlock) return;  // Stop here!
-
-  for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I)
-    AddBlockAndPredsToSet(*I, StopBlock, Blocks);
+  std::vector<BasicBlock *> WorkList;
+  WorkList.push_back(InputBB);
+  do {
+    BasicBlock *BB = WorkList.back(); WorkList.pop_back();
+    if (Blocks.insert(BB).second && BB != StopBlock)
+      // If BB is not already processed and it is not a stop block then
+      // insert its predecessor in the work list
+      for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I) {
+        BasicBlock *WBB = *I;
+        WorkList.push_back(WBB);
+      }
+  } while(!WorkList.empty());
 }
 
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
