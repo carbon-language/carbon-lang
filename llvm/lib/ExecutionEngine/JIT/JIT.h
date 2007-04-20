@@ -54,7 +54,7 @@ class JIT : public ExecutionEngine {
   TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
   MachineCodeEmitter *MCE; // MCE object
 
-  JITState state;
+  JITState jitstate;
 
   JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji);
 public:

@@ -50,7 +50,7 @@ namespace llvm {
 }
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
-  : ExecutionEngine(MP), TM(tm), TJI(tji), state(MP) {
+  : ExecutionEngine(MP), TM(tm), TJI(tji), jitstate(MP) {
   setTargetData(TM.getTargetData());
 
   // Initialize MCE
@@ -58,7 +58,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
 
   // Add target data
   MutexGuard locked(lock);
-  FunctionPassManager &PM = state.getPM(locked);
+  FunctionPassManager &PM = jitstate.getPM(locked);
   PM.add(new TargetData(*TM.getTargetData()));
 
   // Turn the machine code intermediate representation into bytes in memory that
@@ -235,15 +235,15 @@ void JIT::runJITOnFunction(Function *F) {
 
   // JIT the function
   isAlreadyCodeGenerating = true;
-  state.getPM(locked).run(*F);
+  jitstate.getPM(locked).run(*F);
   isAlreadyCodeGenerating = false;
 
   // If the function referred to a global variable that had not yet been
   // emitted, it allocates memory for the global, but doesn't emit it yet.  Emit
   // all of these globals now.
-  while (!state.getPendingGlobals(locked).empty()) {
-    const GlobalVariable *GV = state.getPendingGlobals(locked).back();
-    state.getPendingGlobals(locked).pop_back();
+  while (!jitstate.getPendingGlobals(locked).empty()) {
+    const GlobalVariable *GV = jitstate.getPendingGlobals(locked).back();
+    jitstate.getPendingGlobals(locked).pop_back();
     EmitGlobalVariable(GV);
   }
 }
@@ -335,7 +335,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
       unsigned MisAligned = ((intptr_t)Ptr & (A-1));
       Ptr = (char*)Ptr + (MisAligned ? (A-MisAligned) : 0);
     }
-    state.getPendingGlobals(locked).push_back(GV);
+    jitstate.getPendingGlobals(locked).push_back(GV);
   }
   addGlobalMapping(GV, Ptr);
   return Ptr;
