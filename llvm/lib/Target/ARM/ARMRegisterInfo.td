@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 // Registers are identified with 4-bit ID numbers.
-class ARMReg<bits<4> num, string n, list<Register> aliases = []> : Register<n> {
+class ARMReg<bits<4> num, string n, list<Register> subregs = []> : Register<n> {
   field bits<4> Num;
   let Namespace = "ARM";
-  let Aliases = aliases;
+  let SubRegs = subregs;
 }
 
 class ARMFReg<bits<5> num, string n> : Register<n> {
