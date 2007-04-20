@@ -867,12 +867,17 @@ void Verifier::visitInstruction(Instruction &I) {
       // taken.
       Assert1(!F->isIntrinsic() || (i == 0 && isa<CallInst>(I)),
               "Cannot take the address of an intrinsic!", &I);
+      Assert1(F->getParent() == Mod, "Referencing function in another module!",
+              &I);
     } else if (BasicBlock *OpBB = dyn_cast<BasicBlock>(I.getOperand(i))) {
       Assert1(OpBB->getParent() == BB->getParent(),
               "Referring to a basic block in another function!", &I);
     } else if (Argument *OpArg = dyn_cast<Argument>(I.getOperand(i))) {
       Assert1(OpArg->getParent() == BB->getParent(),
               "Referring to an argument in another function!", &I);
+    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(I.getOperand(i))) {
+      Assert1(GV->getParent() == Mod, "Referencing global in another module!",
+              &I);
     } else if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i))) {
       BasicBlock *OpBlock = Op->getParent();
 
@@ -952,7 +957,8 @@ void Verifier::visitInstruction(Instruction &I) {
 ///
 void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   Function *IF = CI.getCalledFunction();
-  Assert1(IF->isDeclaration(), "Intrinsic functions should never be defined!", IF);
+  Assert1(IF->isDeclaration(), "Intrinsic functions should never be defined!",
+          IF);
   
 #define GET_INTRINSIC_VERIFIER
 #include "llvm/Intrinsics.gen"
