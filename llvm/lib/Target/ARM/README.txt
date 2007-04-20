@@ -17,6 +17,18 @@ Reimplement 'select' in terms of 'SEL'.
 
 //===---------------------------------------------------------------------===//
 
+Crazy idea:  Consider code that uses lots of 8-bit or 16-bit values.  By the
+time regalloc happens, these values are now in a 32-bit register, usually with
+the top-bits known to be sign or zero extended.  If spilled, we should be able
+to spill these to a 8-bit or 16-bit stack slot, zero or sign extending as part
+of the reload.
+
+Doing this reduces the size of the stack frame (important for thumb etc), and
+also increases the likelihood that we will be able to reload multiple values
+from the stack with a single load.
+
+//===---------------------------------------------------------------------===//
+
 The constant island pass is in good shape.  Some cleanups might be desirable,
 but there is unlikely to be much improvement in the generated code.
 
