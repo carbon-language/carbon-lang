@@ -63,7 +63,7 @@ class MachineRelocation {
   } Target;
 
   unsigned TargetReloType : 6; // The target relocation ID.
-  AddressType AddrType    : 3; // The field of Target to use.
+  AddressType AddrType    : 4; // The field of Target to use.
   bool DoesntNeedFnStub   : 1; // True if we don't need a fn stub.
   bool GOTRelative        : 1; // Should this relocation be relative to the GOT?
 
