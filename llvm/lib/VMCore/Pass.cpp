@@ -189,8 +189,18 @@ public:
 };
 }
 
-static ManagedStatic<PassRegistrar> PassRegistrarObj;
 static std::vector<PassRegistrationListener*> *Listeners = 0;
+
+// FIXME: This should use ManagedStatic to manage the pass registrar.
+// Unfortunately, we can't do this, because passes are registered with static
+// ctors, and having llvm_shutdown clear this map prevents successful
+// ressurection after llvm_shutdown is run.
+static PassRegistrar *getPassRegistrar() {
+  static PassRegistrar *PassRegistrarObj = 0;
+  if (!PassRegistrarObj)
+    PassRegistrarObj = new PassRegistrar();
+  return PassRegistrarObj;
+}
 
 // getPassInfo - Return the PassInfo data structure that corresponds to this
 // pass...
@@ -200,11 +210,11 @@ const PassInfo *Pass::getPassInfo() const {
 }
 
 const PassInfo *Pass::lookupPassInfo(const std::type_info &TI) {
-  return PassRegistrarObj->GetPassInfo(TI);
+  return getPassRegistrar()->GetPassInfo(TI);
 }
 
 void RegisterPassBase::registerPass() {
-  PassRegistrarObj->RegisterPass(PIObj);
+  getPassRegistrar()->RegisterPass(PIObj);
 
   // Notify any listeners.
   if (Listeners)
@@ -214,7 +224,7 @@ void RegisterPassBase::registerPass() {
 }
 
 void RegisterPassBase::unregisterPass() {
-  PassRegistrarObj->UnregisterPass(PIObj);
+  getPassRegistrar()->UnregisterPass(PIObj);
 }
 
 //===----------------------------------------------------------------------===//
@@ -247,7 +257,7 @@ RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
     PassInfo *IIPI = const_cast<PassInfo*>(ImplementationInfo);
     IIPI->addInterfaceImplemented(InterfaceInfo);
     
-    PassRegistrarObj->RegisterAnalysisGroup(InterfaceInfo, IIPI, isDefault);
+    getPassRegistrar()->RegisterAnalysisGroup(InterfaceInfo, IIPI, isDefault);
   }
 }
 
@@ -286,7 +296,7 @@ PassRegistrationListener::~PassRegistrationListener() {
 // passEnumerate callback on each PassInfo object.
 //
 void PassRegistrationListener::enumeratePasses() {
-  PassRegistrarObj->EnumerateWith(this);
+  getPassRegistrar()->EnumerateWith(this);
 }
 
 //===----------------------------------------------------------------------===//
