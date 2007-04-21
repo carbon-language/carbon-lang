@@ -285,6 +285,7 @@ void DominatorTreeBase::reset() {
   Nodes.clear();
   IDoms.clear();
   Roots.clear();
+  Vertex.clear();
   RootNode = 0;
 }
 
