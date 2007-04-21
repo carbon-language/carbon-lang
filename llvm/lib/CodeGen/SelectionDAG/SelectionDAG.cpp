@@ -13,7 +13,6 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Constants.h"
-#include "llvm/GlobalValue.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Assembly/Writer.h"
@@ -2573,6 +2572,17 @@ HandleSDNode::~HandleSDNode() {
   MorphNodeTo(ISD::HANDLENODE, VTs, 0, 0);  // Drops operand uses.
 }
 
+GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
+                                         MVT::ValueType VT, int o)
+  : SDNode(isa<GlobalVariable>(GA) &&
+           dyn_cast<GlobalVariable>(GA)->isThreadLocal() ?
+           // Thread Local
+           (isTarget ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress) :
+           // Non Thread Local
+           (isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress),
+           getSDVTList(VT)), Offset(o) {
+  TheGlobal = const_cast<GlobalValue*>(GA);
+}
 
 /// Profile - Gather unique data for the node.
 ///

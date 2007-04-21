@@ -3004,8 +3004,9 @@ LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 SDOperand
 X86TargetLowering::LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG) {
   // TODO: implement the "local dynamic" model
-  // TODO: implement the "initial exec"model for pic executables 
-  assert(!Subtarget->is64Bit() && "TLS not implemented for X86_64");
+  // TODO: implement the "initial exec"model for pic executables
+  assert(!Subtarget->is64Bit() && Subtarget->isTargetELF() &&
+         "TLS not implemented for non-ELF and 64-bit targets");
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
   // If the relocation model is PIC, use the "General Dynamic" TLS Model,
   // otherwise use the "Local Exec"TLS Model

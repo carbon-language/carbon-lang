@@ -19,7 +19,6 @@
 #ifndef LLVM_CODEGEN_SELECTIONDAGNODES_H
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
-#include "llvm/GlobalVariable.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
@@ -1166,16 +1165,7 @@ class GlobalAddressSDNode : public SDNode {
 protected:
   friend class SelectionDAG;
   GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT::ValueType VT,
-                      int o = 0)
-    : SDNode(dyn_cast<GlobalVariable>(GA) &&
-             dyn_cast<GlobalVariable>(GA)->isThreadLocal() ?
-             // Thread Local
-             (isTarget ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress) :
-             // Non Thread Local
-             (isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress),
-             getSDVTList(VT)), Offset(o) {
-    TheGlobal = const_cast<GlobalValue*>(GA);
-  }
+                      int o = 0);
 public:
 
   GlobalValue *getGlobal() const { return TheGlobal; }
