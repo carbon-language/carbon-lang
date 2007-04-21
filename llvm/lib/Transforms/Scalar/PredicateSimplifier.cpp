@@ -1980,21 +1980,19 @@ namespace {
   /// can't be equal and will solve setcc instructions when possible.
   /// @brief Root of the predicate simplifier optimization.
   class VISIBILITY_HIDDEN PredicateSimplifier : public FunctionPass {
-    DominatorTree *DT;
     ETForest *Forest;
     bool modified;
     InequalityGraph *IG;
     UnreachableBlocks UB;
     ValueRanges *VR;
 
-    std::vector<DominatorTree::Node *> WorkList;
+    std::vector<BasicBlock *> WorkList;
 
   public:
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);
-      AU.addRequired<DominatorTree>();
       AU.addRequired<ETForest>();
       AU.addRequired<TargetData>();
       AU.addPreserved<TargetData>();
@@ -2010,15 +2008,15 @@ namespace {
     class VISIBILITY_HIDDEN Forwards : public InstVisitor<Forwards> {
       friend class InstVisitor<Forwards>;
       PredicateSimplifier *PS;
-      DominatorTree::Node *DTNode;
+      BasicBlock *Node;
 
     public:
       InequalityGraph &IG;
       UnreachableBlocks &UB;
       ValueRanges &VR;
 
-      Forwards(PredicateSimplifier *PS, DominatorTree::Node *DTNode)
-        : PS(PS), DTNode(DTNode), IG(*PS->IG), UB(PS->UB), VR(*PS->VR) {}
+      Forwards(PredicateSimplifier *PS, BasicBlock* node)
+        : PS(PS), Node(node), IG(*PS->IG), UB(PS->UB), VR(*PS->VR) {}
 
       void visitTerminatorInst(TerminatorInst &TI);
       void visitBranchInst(BranchInst &BI);
@@ -2038,31 +2036,32 @@ namespace {
     // Used by terminator instructions to proceed from the current basic
     // block to the next. Verifies that "current" dominates "next",
     // then calls visitBasicBlock.
-    void proceedToSuccessors(DominatorTree::Node *Current) {
-      for (DominatorTree::Node::iterator I = Current->begin(),
-           E = Current->end(); I != E; ++I) {
+    void proceedToSuccessors(BasicBlock *Current) {
+      std::vector<BasicBlock*> Children;
+      Forest->getChildren(Current, Children);
+      for (std::vector<BasicBlock*>::iterator I = Children.begin(),
+           E = Children.end(); I != E; ++I) {
         WorkList.push_back(*I);
       }
     }
 
-    void proceedToSuccessor(DominatorTree::Node *Next) {
+    void proceedToSuccessor(BasicBlock *Next) {
       WorkList.push_back(Next);
     }
 
     // Visits each instruction in the basic block.
-    void visitBasicBlock(DominatorTree::Node *Node) {
-      BasicBlock *BB = Node->getBlock();
+    void visitBasicBlock(BasicBlock *BB) {
       ETNode *ET = Forest->getNodeForBlock(BB);
       DOUT << "Entering Basic Block: " << BB->getName()
            << " (" << ET->getDFSNumIn() << ")\n";
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
-        visitInstruction(I++, Node, ET);
+        visitInstruction(I++, BB, ET);
       }
     }
 
     // Tries to simplify each Instruction and add new properties to
     // the PropertySet.
-    void visitInstruction(Instruction *I, DominatorTree::Node *DT, ETNode *ET) {
+    void visitInstruction(Instruction *I, BasicBlock *node, ETNode *ET) {
       DOUT << "Considering instruction " << *I << "\n";
       DEBUG(IG->dump());
 
@@ -2106,14 +2105,13 @@ namespace {
 
       std::string name = I->getParent()->getName();
       DOUT << "push (%" << name << ")\n";
-      Forwards visit(this, DT);
+      Forwards visit(this, node);
       visit.visit(*I);
       DOUT << "pop (%" << name << ")\n";
     }
   };
 
   bool PredicateSimplifier::runOnFunction(Function &F) {
-    DT = &getAnalysis<DominatorTree>();
     Forest = &getAnalysis<ETForest>();
 
     TargetData *TD = &getAnalysis<TargetData>();
@@ -2127,12 +2125,12 @@ namespace {
     BasicBlock *RootBlock = &F.getEntryBlock();
     IG = new InequalityGraph(Forest->getNodeForBlock(RootBlock));
     VR = new ValueRanges(TD);
-    WorkList.push_back(DT->getRootNode());
+    WorkList.push_back(Forest->getRoot());
 
     do {
-      DominatorTree::Node *DTNode = WorkList.back();
+      BasicBlock *node = WorkList.back();
       WorkList.pop_back();
-      if (!UB.isDead(DTNode->getBlock())) visitBasicBlock(DTNode);
+      if (!UB.isDead(node)) visitBasicBlock(node);
     } while (!WorkList.empty());
 
     delete VR;
@@ -2144,12 +2142,12 @@ namespace {
   }
 
   void PredicateSimplifier::Forwards::visitTerminatorInst(TerminatorInst &TI) {
-    PS->proceedToSuccessors(DTNode);
+    PS->proceedToSuccessors(Node);
   }
 
   void PredicateSimplifier::Forwards::visitBranchInst(BranchInst &BI) {
     if (BI.isUnconditional()) {
-      PS->proceedToSuccessors(DTNode);
+      PS->proceedToSuccessors(Node);
       return;
     }
 
@@ -2158,24 +2156,26 @@ namespace {
     BasicBlock *FalseDest = BI.getSuccessor(1);
 
     if (isa<Constant>(Condition) || TrueDest == FalseDest) {
-      PS->proceedToSuccessors(DTNode);
+      PS->proceedToSuccessors(Node);
       return;
     }
 
-    for (DominatorTree::Node::iterator I = DTNode->begin(), E = DTNode->end();
-         I != E; ++I) {
-      BasicBlock *Dest = (*I)->getBlock();
+    std::vector<BasicBlock*> Children;
+    PS->Forest->getChildren(Node, Children);
+    for (std::vector<BasicBlock*>::iterator I = Children.begin(),
+         E = Children.end(); I != E; ++I) {
+      BasicBlock *Dest = *I;
       DOUT << "Branch thinking about %" << Dest->getName()
            << "(" << PS->Forest->getNodeForBlock(Dest)->getDFSNumIn() << ")\n";
 
       if (Dest == TrueDest) {
-        DOUT << "(" << DTNode->getBlock()->getName() << ") true set:\n";
+        DOUT << "(" << Node->getName() << ") true set:\n";
         VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, Dest);
         VRP.add(ConstantInt::getTrue(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
         DEBUG(IG.dump());
       } else if (Dest == FalseDest) {
-        DOUT << "(" << DTNode->getBlock()->getName() << ") false set:\n";
+        DOUT << "(" << Node->getName() << ") false set:\n";
         VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, Dest);
         VRP.add(ConstantInt::getFalse(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
@@ -2191,10 +2191,11 @@ namespace {
 
     // Set the EQProperty in each of the cases BBs, and the NEProperties
     // in the default BB.
-
-    for (DominatorTree::Node::iterator I = DTNode->begin(), E = DTNode->end();
-         I != E; ++I) {
-      BasicBlock *BB = (*I)->getBlock();
+    std::vector<BasicBlock*> Children;
+    PS->Forest->getChildren(Node, Children);
+    for (std::vector<BasicBlock*>::iterator I = Children.begin(),
+         E = Children.end(); I != E; ++I) {
+      BasicBlock *BB = *I;
       DOUT << "Switch thinking about BB %" << BB->getName()
            << "(" << PS->Forest->getNodeForBlock(BB)->getDFSNumIn() << ")\n";
 
