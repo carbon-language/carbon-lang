@@ -40,11 +40,15 @@ class Type;
 /// Registers that this does not apply to simply should set this to null.
 /// The SubRegs field is a zero terminated array of registers that are
 /// sub-registers of the specific register, e.g. AL, AH are sub-registers of AX.
+/// The SuperRegs field is a zero terminated array of registers that are
+/// super-registers of the specific register, e.g. RAX, EAX, are sub-registers
+/// of AX.
 ///
 struct TargetRegisterDesc {
   const char     *Name;         // Assembly language name for the register
   const unsigned *AliasSet;     // Register Alias Set, described above
   const unsigned *SubRegs;      // Sub-register set, described above
+  const unsigned *SuperRegs;    // Super-register set, described above
 };
 
 class TargetRegisterClass {
@@ -271,11 +275,19 @@ public:
   }
 
   /// getSubRegisters - Return the set of registers that are sub-registers of
-  // the specified register, or a null list of there are none. The list
+  /// the specified register, or a null list of there are none. The list
   /// returned is zero terminated.
   ///
   const unsigned *getSubRegisters(unsigned RegNo) const {
     return get(RegNo).SubRegs;
+  }
+
+  /// getSuperRegisters - Return the set of registers that are super-registers
+  /// of the specified register, or a null list of there are none. The list
+  /// returned is zero terminated.
+  ///
+  const unsigned *getSuperRegisters(unsigned RegNo) const {
+    return get(RegNo).SuperRegs;
   }
 
   /// getName - Return the symbolic target specific name for the specified
