@@ -246,7 +246,7 @@ public:
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
-  void setVolatile(bool V) { SubclassData = (SubclassData & ~1) | (V) ? 1 : 0; }
+  void setVolatile(bool V) { SubclassData = (SubclassData & ~1) | unsigned(V); }
 
   virtual LoadInst *clone() const;
 
@@ -311,7 +311,7 @@ public:
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
-  void setVolatile(bool V) { SubclassData = (SubclassData & ~1) | (V) ? 1 : 0; }
+  void setVolatile(bool V) { SubclassData = (SubclassData & ~1) | unsigned(V); }
 
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
