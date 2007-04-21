@@ -767,6 +767,7 @@ fi])
 
 dnl Since we have a sane llvm-gcc, identify it and its sub-tools 
 if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
+  AC_MSG_CHECKING([llvm-gcc component support])
   llvmcc1path=`"$LLVMGCC" --print-prog-name=cc1`
   AC_SUBST(LLVMCC1,$llvmcc1path)
   llvmcc1pluspath=`"$LLVMGCC" --print-prog-name=cc1plus`
@@ -779,6 +780,9 @@ if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   llvmgccmajvers=[`echo $llvmgccversion | sed 's/^\([0-9]\).*/\1/'`]
   AC_SUBST(LLVMGCC_VERSION,$llvmgccversion)
   AC_SUBST(LLVMGCC_MAJVERS,$llvmgccmajvers)
+  llvmgcclangs=[`"$LLVMGCC" -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ -]*\).*/\1/'`]
+  AC_SUBST(LLVMGCC_LANGS,$llvmgcclangs)
+  AC_MSG_RESULT([ok])
 fi
 
 dnl Propagate the shared library extension that the libltdl checks did to 
