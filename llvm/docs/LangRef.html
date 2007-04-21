@@ -2609,7 +2609,7 @@ instructions), the memory is reclaimed.</p>
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;<br>  &lt;result&gt; = volatile load &lt;ty&gt;* &lt;pointer&gt;<br></pre>
+<pre>  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;]<br>  &lt;result&gt; = volatile load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;]<br></pre>
 <h5>Overview:</h5>
 <p>The '<tt>load</tt>' instruction is used to read from memory.</p>
 <h5>Arguments:</h5>
@@ -2634,8 +2634,8 @@ instructions. </p>
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;                   <i>; yields {void}</i>
-  volatile store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;                   <i>; yields {void}</i>
+<pre>  store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;]                   <i>; yields {void}</i>
+  volatile store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;]          <i>; yields {void}</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>store</tt>' instruction is used to write to memory.</p>

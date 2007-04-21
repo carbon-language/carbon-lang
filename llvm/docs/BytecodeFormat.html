@@ -1587,15 +1587,15 @@ possible. </p>
       <tr><td>Call+FastCC+TailCall</td><td>59</td><td>5</td><td>1.5</td></tr>
       <tr><td>Call+FastCC</td><td>60</td><td>5</td><td>1.5</td></tr>
       <tr><td>Call+CCC+TailCall</td><td>61</td><td>5</td><td>1.5</td></tr>
-      <tr><td>Load+Volatile</td><td>62</td><td>3</td><td>1.3</td></tr>
-      <tr><td>Store+Volatile</td><td>63</td><td>3</td><td>1.3</td></tr>
+      <tr><td>Load+Attributes</td><td>62</td><td>7</td><td>2.0</td></tr>
+      <tr><td>Store+Attributes</td><td>63</td><td>7</td><td>2.0</td></tr>
     </tbody>
   </table>
 
 <p><b><a name="pi_note">* Note: </a></b>
 These aren't really opcodes from an LLVM language perspective. They encode
 information into other opcodes without reserving space for that information. 
-For example, opcode=63 is a Volatile Store. The opcode for this
+For example, opcode=63 is an Attributed Store. The opcode for this
 instruction is 25 (Store) but we encode it as 63 to indicate that is a Volatile
 Store. The same is done for the calling conventions and tail calls.
 In each of these entries in range 56-63, the opcode is documented as the base

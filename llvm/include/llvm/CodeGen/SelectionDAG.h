@@ -311,10 +311,12 @@ public:
   /// determined by their operands, and they produce a value AND a token chain.
   ///
   SDOperand getLoad(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr,
-                    const Value *SV, int SVOffset, bool isVolatile=false);
+                    const Value *SV, int SVOffset, bool isVolatile=false,
+                    unsigned Alignment=0);
   SDOperand getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
                        SDOperand Chain, SDOperand Ptr, const Value *SV,
-                       int SVOffset, MVT::ValueType EVT, bool isVolatile=false);
+                       int SVOffset, MVT::ValueType EVT, bool isVolatile=false,
+                       unsigned Alignment=0);
   SDOperand getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
                            SDOperand Offset, ISD::MemIndexedMode AM);
   SDOperand getVecLoad(unsigned Count, MVT::ValueType VT, SDOperand Chain, 
@@ -323,10 +325,11 @@ public:
   /// getStore - Helper function to build ISD::STORE nodes.
   ///
   SDOperand getStore(SDOperand Chain, SDOperand Val, SDOperand Ptr,
-                     const Value *SV, int SVOffset, bool isVolatile=false);
+                     const Value *SV, int SVOffset, bool isVolatile=false,
+                     unsigned Alignment=0);
   SDOperand getTruncStore(SDOperand Chain, SDOperand Val, SDOperand Ptr,
                           const Value *SV, int SVOffset, MVT::ValueType TVT,
-                          bool isVolatile=false);
+                          bool isVolatile=false, unsigned Alignment=0);
   SDOperand getIndexedStore(SDOperand OrigStoe, SDOperand Base,
                            SDOperand Offset, ISD::MemIndexedMode AM);
 

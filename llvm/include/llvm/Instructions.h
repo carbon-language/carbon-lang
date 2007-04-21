@@ -211,9 +211,11 @@ public:
 /// SubclassData field in Value to store whether or not the load is volatile.
 ///
 class LoadInst : public UnaryInstruction {
+
   LoadInst(const LoadInst &LI)
     : UnaryInstruction(LI.getType(), Load, LI.getOperand(0)) {
     setVolatile(LI.isVolatile());
+    setAlignment(LI.getAlignment());
 
 #ifndef NDEBUG
     AssertOK();
@@ -223,14 +225,16 @@ class LoadInst : public UnaryInstruction {
 public:
   LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAtEnd);
-  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile = false,
+  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile = false, 
+           Instruction *InsertBefore = 0);
+  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile, unsigned Align,
            Instruction *InsertBefore = 0);
   LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
            BasicBlock *InsertAtEnd);
 
   LoadInst(Value *Ptr, const char *Name, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAtEnd);
-  explicit LoadInst(Value *Ptr, const char *Name = 0, bool isVolatile = false,
+  explicit LoadInst(Value *Ptr, const char *Name = 0, bool isVolatile = false, 
                     Instruction *InsertBefore = 0);
   LoadInst(Value *Ptr, const char *Name, bool isVolatile,
            BasicBlock *InsertAtEnd);
@@ -238,13 +242,22 @@ public:
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
   ///
-  bool isVolatile() const { return SubclassData; }
+  bool isVolatile() const { return SubclassData & 1; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
-  void setVolatile(bool V) { SubclassData = V; }
+  void setVolatile(bool V) { SubclassData = (SubclassData & ~1) | (V) ? 1 : 0; }
 
   virtual LoadInst *clone() const;
+
+  /// getAlignment - Return the alignment of the access that is being performed
+  ///
+  unsigned getAlignment() const {
+    signed Log2AlignVal = ((SubclassData>>1)-1);
+    return ((Log2AlignVal < 0) ? 0 : 1<<Log2AlignVal);
+  }
+  
+  void setAlignment(unsigned Align);
 
   Value *getPointerOperand() { return getOperand(0); }
   const Value *getPointerOperand() const { return getOperand(0); }
@@ -269,10 +282,13 @@ public:
 ///
 class StoreInst : public Instruction {
   Use Ops[2];
+  
   StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store, Ops, 2) {
     Ops[0].init(SI.Ops[0], this);
     Ops[1].init(SI.Ops[1], this);
     setVolatile(SI.isVolatile());
+    setAlignment(SI.getAlignment());
+    
 #ifndef NDEBUG
     AssertOK();
 #endif
@@ -283,17 +299,19 @@ public:
   StoreInst(Value *Val, Value *Ptr, BasicBlock *InsertAtEnd);
   StoreInst(Value *Val, Value *Ptr, bool isVolatile = false,
             Instruction *InsertBefore = 0);
+  StoreInst(Value *Val, Value *Ptr, bool isVolatile,
+            unsigned Align, Instruction *InsertBefore = 0);
   StoreInst(Value *Val, Value *Ptr, bool isVolatile, BasicBlock *InsertAtEnd);
 
 
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
   ///
-  bool isVolatile() const { return SubclassData; }
+  bool isVolatile() const { return SubclassData & 1; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
-  void setVolatile(bool V) { SubclassData = V; }
+  void setVolatile(bool V) { SubclassData = (SubclassData & ~1) | (V) ? 1 : 0; }
 
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
@@ -306,7 +324,15 @@ public:
   }
   unsigned getNumOperands() const { return 2; }
 
-
+  /// getAlignment - Return the alignment of the access that is being performed
+  ///
+  unsigned getAlignment() const {
+    signed Log2AlignVal = ((SubclassData>>1)-1);
+    return ((Log2AlignVal < 0) ? 0 : 1<<Log2AlignVal);
+  }
+  
+  void setAlignment(unsigned Align);
+  
   virtual StoreInst *clone() const;
 
   Value *getPointerOperand() { return getOperand(1); }

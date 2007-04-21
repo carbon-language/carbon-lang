@@ -1263,7 +1263,9 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
-                                         LN0->getSrcValueOffset(), EVT);
+                                         LN0->getSrcValueOffset(), EVT,
+                                         LN0->isVolatile(), 
+                                         LN0->getAlignment());
       AddToWorkList(N);
       CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
       return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
@@ -1280,7 +1282,9 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
-                                         LN0->getSrcValueOffset(), EVT);
+                                         LN0->getSrcValueOffset(), EVT,
+                                         LN0->isVolatile(), 
+                                         LN0->getAlignment());
       AddToWorkList(N);
       CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
       return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
@@ -1320,7 +1324,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         AddToWorkList(NewPtr.Val);
         SDOperand Load =
           DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(), NewPtr,
-                         LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT);
+                         LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT,
+                         LN0->isVolatile(), LN0->getAlignment());
         AddToWorkList(N);
         CombineTo(N0.Val, Load, Load.getValue(1));
         return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
@@ -2120,7 +2125,8 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(),
-                                       N0.getValueType());
+                                       N0.getValueType(), 
+                                       LN0->isVolatile());
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -2136,7 +2142,9 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     if (!AfterLegalize || TLI.isLoadXLegal(ISD::SEXTLOAD, EVT)) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
                                          LN0->getBasePtr(), LN0->getSrcValue(),
-                                         LN0->getSrcValueOffset(), EVT);
+                                         LN0->getSrcValueOffset(), EVT,
+                                         LN0->isVolatile(), 
+                                         LN0->getAlignment());
       CombineTo(N, ExtLoad);
       CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
                 ExtLoad.getValue(1));
@@ -2212,7 +2220,9 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(),
-                                       N0.getValueType());
+                                       N0.getValueType(),
+                                       LN0->isVolatile(), 
+                                       LN0->getAlignment());
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -2227,7 +2237,9 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     MVT::ValueType EVT = LN0->getLoadedVT();
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
-                                       LN0->getSrcValueOffset(), EVT);
+                                       LN0->getSrcValueOffset(), EVT,
+                                       LN0->isVolatile(), 
+                                       LN0->getAlignment());
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -2303,7 +2315,9 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(),
-                                       N0.getValueType());
+                                       N0.getValueType(),
+                                       LN0->isVolatile(), 
+                                       LN0->getAlignment());
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -2321,7 +2335,9 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(LN0->getExtensionType(), VT,
                                        LN0->getChain(), LN0->getBasePtr(),
                                        LN0->getSrcValue(),
-                                       LN0->getSrcValueOffset(), EVT);
+                                       LN0->getSrcValueOffset(), EVT,
+                                       LN0->isVolatile(), 
+                                       LN0->getAlignment());
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -2398,9 +2414,11 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
     AddToWorkList(NewPtr.Val);
     SDOperand Load = (ExtType == ISD::NON_EXTLOAD)
       ? DAG.getLoad(VT, LN0->getChain(), NewPtr,
-                    LN0->getSrcValue(), LN0->getSrcValueOffset())
+                    LN0->getSrcValue(), LN0->getSrcValueOffset(),
+                    LN0->isVolatile(), LN0->getAlignment())
       : DAG.getExtLoad(ExtType, VT, LN0->getChain(), NewPtr,
-                       LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT);
+                       LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT,
+                       LN0->isVolatile(), LN0->getAlignment());
     AddToWorkList(N);
     if (CombineSRL) {
       std::vector<SDNode*> NowDead;
@@ -2479,7 +2497,9 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
-                                       LN0->getSrcValueOffset(), EVT);
+                                       LN0->getSrcValueOffset(), EVT,
+                                       LN0->isVolatile(), 
+                                       LN0->getAlignment());
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
@@ -2492,7 +2512,9 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
-                                       LN0->getSrcValueOffset(), EVT);
+                                       LN0->getSrcValueOffset(), EVT,
+                                       LN0->isVolatile(), 
+                                       LN0->getAlignment());
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
     return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
@@ -2552,7 +2574,8 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   if (0 && ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse()) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDOperand Load = DAG.getLoad(VT, LN0->getChain(), LN0->getBasePtr(),
-                                 LN0->getSrcValue(), LN0->getSrcValueOffset());
+                                 LN0->getSrcValue(), LN0->getSrcValueOffset(),
+                                 LN0->isVolatile(), LN0->getAlignment());
     AddToWorkList(N);
     CombineTo(N0.Val, DAG.getNode(ISD::BIT_CONVERT, N0.getValueType(), Load),
               Load.getValue(1));
@@ -2942,7 +2965,9 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, LN0->getChain(),
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(),
-                                       N0.getValueType());
+                                       N0.getValueType(),
+                                       LN0->isVolatile(), 
+                                       LN0->getAlignment());
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::FP_ROUND, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -3331,13 +3356,16 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
       // Replace the chain to void dependency.
       if (LD->getExtensionType() == ISD::NON_EXTLOAD) {
         ReplLoad = DAG.getLoad(N->getValueType(0), BetterChain, Ptr,
-                              LD->getSrcValue(), LD->getSrcValueOffset());
+                              LD->getSrcValue(), LD->getSrcValueOffset(),
+                              LD->isVolatile(), LD->getAlignment());
       } else {
         ReplLoad = DAG.getExtLoad(LD->getExtensionType(),
                                   LD->getValueType(0),
                                   BetterChain, Ptr, LD->getSrcValue(),
                                   LD->getSrcValueOffset(),
-                                  LD->getLoadedVT());
+                                  LD->getLoadedVT(),
+                                  LD->isVolatile(), 
+                                  LD->getAlignment());
       }
 
       // Create token factor to keep old chain connected.
@@ -4040,13 +4068,17 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS,
           if (LLD->getExtensionType() == ISD::NON_EXTLOAD)
             Load = DAG.getLoad(TheSelect->getValueType(0), LLD->getChain(),
                                Addr,LLD->getSrcValue(), 
-                               LLD->getSrcValueOffset());
+                               LLD->getSrcValueOffset(),
+                               LLD->isVolatile(), 
+                               LLD->getAlignment());
           else {
             Load = DAG.getExtLoad(LLD->getExtensionType(),
                                   TheSelect->getValueType(0),
                                   LLD->getChain(), Addr, LLD->getSrcValue(),
                                   LLD->getSrcValueOffset(),
-                                  LLD->getLoadedVT());
+                                  LLD->getLoadedVT(),
+                                  LLD->isVolatile(), 
+                                  LLD->getAlignment());
           }
           // Users of the select now use the result of the load.
           CombineTo(TheSelect, Load);

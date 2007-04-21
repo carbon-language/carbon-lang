@@ -1307,6 +1307,13 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(I.getOperand(i), PrintAllTypes);
     }
   }
+  
+  // Print post operand alignment for load/store
+  if (isa<LoadInst>(I) && cast<LoadInst>(I).getAlignment()) {
+    Out << ", align " << cast<LoadInst>(I).getAlignment();
+  } else if (isa<StoreInst>(I) && cast<StoreInst>(I).getAlignment()) {
+    Out << ", align " << cast<StoreInst>(I).getAlignment();
+  }
 
   printInfoComment(I);
   Out << "\n";

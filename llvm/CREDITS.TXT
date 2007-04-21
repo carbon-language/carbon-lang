@@ -118,6 +118,10 @@ N: Sumant Kowshik
 E: kowshik@uiuc.edu
 D: Author of the original C backend
 
+N: Christopher Lamb
+E: christopher.lamb@gmail.com
+D: aligned load/store support
+
 N: Jim Laskey
 E: jlaskey@apple.com
 D: Improvements to the PPC backend, instruction scheduling
