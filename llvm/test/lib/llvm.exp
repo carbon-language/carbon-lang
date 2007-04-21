@@ -194,6 +194,23 @@ proc llvm_gcc_supports_objc { } {
     set R [ catch { exec $llvmgcc -c "/tmp/llvm_obj_check.m"  -o /dev/null >& /tmp/llvm_obj_check.out } ]
     set RESULT [ file size "/tmp/llvm_obj_check.out" ]
     catch { file delete "/tmp/llvm_obj_check.m" }
+    catch { file delete "/tmp/llvm_obj_check.out" }
+    if { $RESULT == 0 } {
+        return 1
+    } else {
+        return 0
+    }
+}
+
+proc llvm_gcc_supports_ada { } {
+    global llvmgcc 
+    catch { set file_h [ open "/tmp/llvm_ada_check.adb" w] }
+    catch { puts $file_h "procedure llvm_ada_check is begin null; end;" }
+    catch { close $file_h }
+    set R [ catch { exec $llvmgcc -c -gnats "/tmp/llvm_ada_check.adb" >& /tmp/llvm_ada_check.out } ]
+    set RESULT [ file size "/tmp/llvm_ada_check.out" ]
+    catch { file delete "/tmp/llvm_ada_check.adb" }
+    catch { file delete "/tmp/llvm_ada_check.out" }
     if { $RESULT == 0 } {
         return 1
     } else {
