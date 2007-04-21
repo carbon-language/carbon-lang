@@ -307,7 +307,7 @@ void LICM::SinkRegion(BasicBlock *BB) {
 
 /// HoistRegion - Walk the specified region of the CFG (defined by all blocks
 /// dominated by the specified block, and that are in the current loop) in depth
-/// first order w.r.t the DominatorTree.  This allows us to visit definitions
+/// first order w.r.t the ETForest.  This allows us to visit definitions
 /// before uses, allowing us to hoist a loop body in one pass without iteration.
 ///
 void LICM::HoistRegion(BasicBlock *BB) {

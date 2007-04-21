@@ -142,7 +142,7 @@ namespace {
       return ET.properlyDominates(I1->getParent(), I2->getParent());
     }
     
-    /// dominates - Return true if BB1 dominates BB2 using the DominatorTree.
+    /// dominates - Return true if BB1 dominates BB2 using the ETForest.
     ///
     bool dominates(BasicBlock *BB1, BasicBlock *BB2) const {
       return ET.dominates(BB1, BB2);
