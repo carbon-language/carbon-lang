@@ -71,6 +71,7 @@ site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@echo '# edit the last section' >>site.tmp
 	@echo 'set target_triplet "$(TARGET_TRIPLE)"' >> site.tmp
 	@echo 'set TARGETS_TO_BUILD "$(TARGETS_TO_BUILD)"' >> site.tmp
+	@echo 'set llvmgcc_langs "$(LLVMGCC_LANGS)"' >> site.tmp
 	@echo 'set llvmgcc_version "$(LLVMGCC_VERSION)"' >> site.tmp
 	@echo 'set prcontext "$(TCLSH) $(LLVM_SRC_ROOT)/test/Scripts/prcontext.tcl"' >> site.tmp
 	@echo 'set llvmtoolsdir "$(ToolDir)"' >>site.tmp
