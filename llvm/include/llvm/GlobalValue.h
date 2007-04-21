@@ -55,8 +55,10 @@ protected:
   }
 
   Module *Parent;
-  LinkageTypes Linkage : 4;   // The linkage of this global
-  VisibilityTypes Visibility : 1;  // The visibility style of this global
+  // Note: VC++ treats enums as signed, so an extra bit is required to prevent
+  // Linkage and Visibility from turning into negative values.
+  LinkageTypes Linkage : 5;   // The linkage of this global
+  VisibilityTypes Visibility : 2;  // The visibility style of this global
   unsigned Alignment : 16;    // Alignment of this symbol, must be power of two
   std::string Section;        // Section to emit this into, empty mean default
 public:
