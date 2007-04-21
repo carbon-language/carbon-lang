@@ -1,3 +1,5 @@
 load_lib llvm.exp
 
-RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{ll,llx,c,cpp,tr}]]
+if { [llvm_supports_target PowerPC] } {
+  RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{ll,llx,c,cpp,tr}]]
+}
