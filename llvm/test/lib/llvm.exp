@@ -13,21 +13,21 @@ proc execOneLine { test PRS outcome lineno line } {
       CHILDSTATUS {
         set status [lindex $::errorCode 2]
         if { $status != 0 } {
-          set resultmsg "$test: exit($status)$errmsg"
+          set resultmsg "$test\nFailed with exit($status)$errmsg"
         }
       }
       CHILDKILLED {
         set signal [lindex $::errorCode 2]
-        set resultmsg "$test: signal($signal)$errmsg"
+        set resultmsg "$test\nFailed with signal($signal)$errmsg"
       }
       CHILDSUSP {
         set signal [lindex $::errorCode 2]
-        set resultmsg "$test: suspend($signal)$errmsg"
+        set resultmsg "$test\nFailed with suspend($signal)$errmsg"
       }
       POSIX {
         set posixNum [lindex $::errorCode 1]
         set posixMsg [lindex $::errorCode 2]
-        set resultmsg "$test: posix($posixNum,$posixMsg)$errmsg"
+        set resultmsg "$test\nFailed with posix($posixNum,$posixMsg)$errmsg"
       }
       NONE {
       }
