@@ -218,3 +218,12 @@ proc llvm_gcc_supports_ada { } {
     }
 }
 
+proc llvm_supports_target { tgtName } {
+  global TARGETS_TO_BUILD
+  foreach target [split $TARGETS_TO_BUILD] {
+    if { [regexp $tgtName $target match] } {
+      return 1
+    }
+  }
+  return 0
+}
