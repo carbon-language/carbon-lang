@@ -112,20 +112,8 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 //
 extern "C" {  // Don't add C++ manglings to llvm mangling :)
 
-// void putchar(sbyte)
-GenericValue lle_VB_putchar(FunctionType *FT, const vector<GenericValue> &Args){
-  cout << ((char)Args[0].IntVal.getZExtValue());
-  return GenericValue();
-}
-
-// int putchar(int)
-GenericValue lle_ii_putchar(FunctionType *FT, const vector<GenericValue> &Args){
-  cout << ((char)Args[0].IntVal.getZExtValue()) << std::flush;
-  return Args[0];
-}
-
 // void putchar(ubyte)
-GenericValue lle_Vb_putchar(FunctionType *FT, const vector<GenericValue> &Args){
+GenericValue lle_X_putchar(FunctionType *FT, const vector<GenericValue> &Args){
   cout << ((char)Args[0].IntVal.getZExtValue()) << std::flush;
   return Args[0];
 }
@@ -354,13 +342,14 @@ GenericValue lle_X_sprintf(FunctionType *FT, const vector<GenericValue> &Args) {
       break;
     }
   }
+  return GV;
 }
 
 // int printf(sbyte *, ...) - a very rough implementation to make output useful.
 GenericValue lle_X_printf(FunctionType *FT, const vector<GenericValue> &Args) {
   char Buffer[10000];
   vector<GenericValue> NewArgs;
-  NewArgs.push_back(PTOGV(Buffer));
+  NewArgs.push_back(PTOGV((void*)&Buffer[0]));
   NewArgs.insert(NewArgs.end(), Args.begin(), Args.end());
   GenericValue GV = lle_X_sprintf(FT, NewArgs);
   cout << Buffer;
@@ -704,9 +693,7 @@ GenericValue lle_X_fprintf(FunctionType *FT, const vector<GenericValue> &Args) {
 
 
 void Interpreter::initializeExternalFunctions() {
-  FuncNames["lle_Vb_putchar"]     = lle_Vb_putchar;
-  FuncNames["lle_ii_putchar"]     = lle_ii_putchar;
-  FuncNames["lle_VB_putchar"]     = lle_VB_putchar;
+  FuncNames["lle_X_putchar"]      = lle_X_putchar;
   FuncNames["lle_X_exit"]         = lle_X_exit;
   FuncNames["lle_X_abort"]        = lle_X_abort;
   FuncNames["lle_X_malloc"]       = lle_X_malloc;
