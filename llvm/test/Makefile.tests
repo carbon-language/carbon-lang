@@ -37,7 +37,6 @@ endif
 LCCFLAGS  += -O2 -Wall
 LCXXFLAGS += -O2 -Wall
 LLCFLAGS =
-FAILURE  = $(LLVM_SRC_ROOT)/test/Failure.sh
 TESTRUNR = @echo Running test: $<; \
              PATH="$(LLVMTOOLCURRENT):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
                   $(LLVM_SRC_ROOT)/test/TestRunner.sh
