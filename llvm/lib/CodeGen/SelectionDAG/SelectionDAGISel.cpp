@@ -498,7 +498,7 @@ public:
 
   SDOperand getLoadFrom(const Type *Ty, SDOperand Ptr,
                         const Value *SV, SDOperand Root,
-                        bool isVolatile, unsigned Alignment);
+                        bool isVolatile);
 
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
@@ -2313,21 +2313,19 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
   }
 
   setValue(&I, getLoadFrom(I.getType(), Ptr, I.getOperand(0),
-                           Root, I.isVolatile(), I.getAlignment()));
+                           Root, I.isVolatile()));
 }
 
 SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
                                             const Value *SV, SDOperand Root,
-                                            bool isVolatile, 
-                                            unsigned Alignment) {
+                                            bool isVolatile) {
   SDOperand L;
   if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
     MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
     L = DAG.getVecLoad(PTy->getNumElements(), PVT, Root, Ptr,
                        DAG.getSrcValue(SV));
   } else {
-    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SV, 0, 
-                    isVolatile, Alignment);
+    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SV, 0, isVolatile);
   }
 
   if (isVolatile)
@@ -2344,7 +2342,7 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   SDOperand Src = getValue(SrcV);
   SDOperand Ptr = getValue(I.getOperand(1));
   DAG.setRoot(DAG.getStore(getRoot(), Src, Ptr, I.getOperand(1), 0,
-                           I.isVolatile(), I.getAlignment()));
+                           I.isVolatile()));
 }
 
 /// IntrinsicCannotAccessMemory - Return true if the specified intrinsic cannot

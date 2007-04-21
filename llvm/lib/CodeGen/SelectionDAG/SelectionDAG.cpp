@@ -20,7 +20,6 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -1540,7 +1539,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 SDOperand Chain, SDOperand Ptr,
                                 const Value *SV, int SVOffset,
-                                bool isVolatile, unsigned Alignment) {
+                                bool isVolatile) {
+  // FIXME: Alignment == 1 for now.
+  unsigned Alignment = 1;
   SDVTList VTs = getVTList(VT, MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Ptr, Undef };
@@ -1556,10 +1557,6 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = MVT::getTypeForValueType(VT);
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
   SDNode *N = new LoadSDNode(Ops, VTs, ISD::UNINDEXED,
                              ISD::NON_EXTLOAD, VT, SV, SVOffset, Alignment,
                              isVolatile);
@@ -1572,7 +1569,7 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
                                    SDOperand Chain, SDOperand Ptr,
                                    const Value *SV,
                                    int SVOffset, MVT::ValueType EVT,
-                                   bool isVolatile, unsigned Alignment) {
+                                   bool isVolatile) {
   // If they are asking for an extending load from/to the same thing, return a
   // normal load.
   if (VT == EVT)
@@ -1587,6 +1584,8 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   assert(MVT::isInteger(VT) == MVT::isInteger(EVT) &&
          "Cannot convert from FP to Int or Int -> FP!");
 
+  // FIXME: Alignment == 1 for now.
+  unsigned Alignment = 1;
   SDVTList VTs = getVTList(VT, MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Ptr, Undef };
@@ -1602,10 +1601,6 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = MVT::getTypeForValueType(VT);
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
   SDNode *N = new LoadSDNode(Ops, VTs, ISD::UNINDEXED, ExtType, EVT,
                              SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
@@ -1653,9 +1648,11 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
 
 SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
                                  SDOperand Ptr, const Value *SV, int SVOffset,
-                                 bool isVolatile, unsigned Alignment) {
+                                 bool isVolatile) {
   MVT::ValueType VT = Val.getValueType();
 
+  // FIXME: Alignment == 1 for now.
+  unsigned Alignment = 1;
   SDVTList VTs = getVTList(MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Val, Ptr, Undef };
@@ -1671,10 +1668,6 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = MVT::getTypeForValueType(VT);
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
   SDNode *N = new StoreSDNode(Ops, VTs, ISD::UNINDEXED, false,
                               VT, SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
@@ -1685,7 +1678,7 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
 SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
                                       SDOperand Ptr, const Value *SV,
                                       int SVOffset, MVT::ValueType SVT,
-                                      bool isVolatile, unsigned Alignment) {
+                                      bool isVolatile) {
   MVT::ValueType VT = Val.getValueType();
   bool isTrunc = VT != SVT;
 
@@ -1693,6 +1686,8 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   assert(MVT::isInteger(VT) == MVT::isInteger(SVT) &&
          "Can't do FP-INT conversion!");
 
+  // FIXME: Alignment == 1 for now.
+  unsigned Alignment = 1;
   SDVTList VTs = getVTList(MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Val, Ptr, Undef };
@@ -1708,10 +1703,6 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = MVT::getTypeForValueType(VT);
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
   SDNode *N = new StoreSDNode(Ops, VTs, ISD::UNINDEXED, isTrunc,
                               SVT, SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);

@@ -20,7 +20,6 @@
 #include "llvm/ParameterAttributes.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConstantRange.h"
-#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 unsigned CallSite::getCallingConv() const {
@@ -686,7 +685,6 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertBef) {
   setVolatile(false);
-  setAlignment(0);
   AssertOK();
   setName(Name);
 }
@@ -695,7 +693,6 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertAE) {
   setVolatile(false);
-  setAlignment(0);
   AssertOK();
   setName(Name);
 }
@@ -705,17 +702,6 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertBef) {
   setVolatile(isVolatile);
-  setAlignment(0);
-  AssertOK();
-  setName(Name);
-}
-
-LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile, 
-                   unsigned Align, Instruction *InsertBef)
-  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                     Load, Ptr, InsertBef) {
-  setVolatile(isVolatile);
-  setAlignment(Align);
   AssertOK();
   setName(Name);
 }
@@ -725,7 +711,6 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertAE) {
   setVolatile(isVolatile);
-  setAlignment(0);
   AssertOK();
   setName(Name);
 }
@@ -736,7 +721,6 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertBef) {
   setVolatile(false);
-  setAlignment(0);
   AssertOK();
   if (Name && Name[0]) setName(Name);
 }
@@ -745,7 +729,6 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertAE) {
   setVolatile(false);
-  setAlignment(0);
   AssertOK();
   if (Name && Name[0]) setName(Name);
 }
@@ -755,7 +738,6 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
 : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                    Load, Ptr, InsertBef) {
   setVolatile(isVolatile);
-  setAlignment(0);
   AssertOK();
   if (Name && Name[0]) setName(Name);
 }
@@ -765,15 +747,10 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertAE) {
   setVolatile(isVolatile);
-  setAlignment(0);
   AssertOK();
   if (Name && Name[0]) setName(Name);
 }
 
-void LoadInst::setAlignment(unsigned Align) {
-  assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-  SubclassData = (SubclassData & 1) | ((Log2_32(Align)+1)<<1);
-}
 
 //===----------------------------------------------------------------------===//
 //                           StoreInst Implementation
@@ -793,7 +770,6 @@ StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
   setVolatile(false);
-  setAlignment(0);
   AssertOK();
 }
 
@@ -802,7 +778,6 @@ StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
   setVolatile(false);
-  setAlignment(0);
   AssertOK();
 }
 
@@ -812,17 +787,6 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
   setVolatile(isVolatile);
-  setAlignment(0);
-  AssertOK();
-}
-
-StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
-                     unsigned Align, Instruction *InsertBefore)
-  : Instruction(Type::VoidTy, Store, Ops, 2, InsertBefore) {
-  Ops[0].init(val, this);
-  Ops[1].init(addr, this);
-  setVolatile(isVolatile);
-  setAlignment(Align);
   AssertOK();
 }
 
@@ -832,13 +796,7 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
   setVolatile(isVolatile);
-  setAlignment(0);
   AssertOK();
-}
-
-void StoreInst::setAlignment(unsigned Align) {
-  assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-  SubclassData = (SubclassData & 1) | ((Log2_32(Align)+1)<<1);
 }
 
 //===----------------------------------------------------------------------===//
