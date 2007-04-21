@@ -323,16 +323,15 @@ public:
   
   /// Return the immediate dominator of A.
   BasicBlock *getIDom(BasicBlock *A) const {
-    if (!A) return 0;
-    
     ETNode *NodeA = getNode(A);
+    if (!NodeA) return 0;
     const ETNode *idom = NodeA->getFather();
     return idom ? idom->getData<BasicBlock>() : 0;
   }
   
   void getChildren(BasicBlock *A, std::vector<BasicBlock*>& children) const {
-    if (!A) return;
     ETNode *NodeA = getNode(A);
+    if (!NodeA) return;
     const ETNode* son = NodeA->getSon();
     
     if (!son) return;
