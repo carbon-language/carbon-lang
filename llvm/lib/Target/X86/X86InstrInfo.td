@@ -2462,9 +2462,14 @@ def MOV32_mr : I<0x89, MRMDestMem, (ops i32mem:$dst, GR32_:$src),
 //
 
 def TLS_addr : I<0, Pseudo, (ops GR32:$dst, i32imm:$sym),
-               "leal $sym(,%ebx,1), $dst",
+               "leal ${sym:mem}(,%ebx,1), $dst",
                [(set GR32:$dst, (X86tlsaddr tglobaltlsaddr:$sym))]>,
                Imp<[EBX],[]>;
+
+let AddedComplexity = 10 in
+def TLS_gs : I<0, Pseudo, (ops GR32:$dst, GR32:$src),
+               "movl %gs:($src), $dst",
+               [(set GR32:$dst, (load (add X86TLStp, GR32:$src)))]>;
 
 def TLS_tp : I<0, Pseudo, (ops GR32:$dst),
                "movl %gs:0, $dst",

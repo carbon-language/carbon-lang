@@ -2996,6 +2996,10 @@ LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                              GA->getValueType(0),
                                              GA->getOffset());
   SDOperand Offset = DAG.getNode(X86ISD::Wrapper, PtrVT, TGA);
+
+  if (GA->getGlobal()->isDeclaration()) // initial exec TLS model
+    Offset = DAG.getLoad(PtrVT, DAG.getEntryNode(), Offset, NULL, 0);
+
   // The address of the thread local variable is the add of the thread
   // pointer with the offset of the variable.
   return DAG.getNode(ISD::ADD, PtrVT, ThreadPointer, Offset);

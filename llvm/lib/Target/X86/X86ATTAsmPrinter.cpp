@@ -277,7 +277,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
     bool isThreadLocal = GVar && GVar->isThreadLocal();
 
-    if (!isMemOp && !isCallOp && !isThreadLocal) O << '$';
+    if (!isMemOp && !isCallOp) O << '$';
 
     std::string Name = Mang->getValueName(GV);
     X86SharedAsmPrinter::decorateName(Name, GV);
