@@ -195,6 +195,7 @@ Options:
   --libfiles             Fully qualified library filenames for makefile depends.
   --components           List of all possible components.
   --targets-built        List of all targets currently built.
+  --host-target          Target triple used to configure LLVM.
   --build-mode           Print build mode of LLVM tree (e.g. Debug or Release).
 Typical components:
   all                    All LLVM libraries (default).
