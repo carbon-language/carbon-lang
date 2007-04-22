@@ -17,6 +17,7 @@
 
 #include "llvm/Bitcode/BitCodes.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 
 namespace llvm {
@@ -91,7 +92,7 @@ public:
   
   uint32_t ReadVBR(unsigned NumBits) {
     uint32_t Piece = Read(NumBits);
-    if ((Piece & (1U << NumBits-1)) == 0)
+    if ((Piece & (1U << (NumBits-1))) == 0)
       return Piece;
 
     uint32_t Result = 0;
@@ -99,7 +100,7 @@ public:
     while (1) {
       Result |= (Piece & ((1U << (NumBits-1))-1)) << NextBit;
 
-      if ((Piece & (1U << NumBits-1)) == 0)
+      if ((Piece & (1U << (NumBits-1))) == 0)
         return Result;
       
       NextBit += NumBits-1;
@@ -109,7 +110,7 @@ public:
   
   uint64_t ReadVBR64(unsigned NumBits) {
     uint64_t Piece = Read(NumBits);
-    if ((Piece & (1U << NumBits-1)) == 0)
+    if ((Piece & (1U << (NumBits-1))) == 0)
       return Piece;
     
     uint64_t Result = 0;
@@ -117,7 +118,7 @@ public:
     while (1) {
       Result |= (Piece & ((1U << (NumBits-1))-1)) << NextBit;
       
-      if ((Piece & (1U << NumBits-1)) == 0)
+      if ((Piece & (1U << (NumBits-1))) == 0)
         return Result;
       
       NextBit += NumBits-1;
@@ -209,6 +210,7 @@ public:
     }
     
     assert(0 && "Reading with abbrevs not implemented!");
+    return 0;
   }
   
 };

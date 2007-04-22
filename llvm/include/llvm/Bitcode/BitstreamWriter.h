@@ -17,6 +17,7 @@
 
 #include "llvm/Bitcode/BitCodes.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <vector>
 
@@ -72,7 +73,7 @@ public:
     Out.push_back((unsigned char)(V >> 24));
     
     if (CurBit)
-      CurValue = Val >> 32-CurBit;
+      CurValue = Val >> (32-CurBit);
     else
       CurValue = 0;
     CurBit = (CurBit+NumBits) & 31;
