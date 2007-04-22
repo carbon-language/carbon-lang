@@ -218,7 +218,7 @@ void SubtargetEmitter::FormItineraryString(Record *ItinData,
 
   // For each stage
   unsigned N = NStages = StageList.size();
-  for (unsigned i = 0; i < N; i++) {
+  for (unsigned i = 0; i < N;) {
     // Next stage
     Record *Stage = StageList[i];
   
@@ -241,6 +241,7 @@ void SubtargetEmitter::FormItineraryString(Record *ItinData,
     
     // Close off stage
     ItinString += " }";
+    if (++i < N) ItinString += ", ";
   }
 }
 
