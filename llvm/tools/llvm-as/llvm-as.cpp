@@ -19,6 +19,7 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
@@ -49,6 +50,10 @@ NoCompress("disable-compression", cl::init(true),
 static cl::opt<bool>
 DisableVerify("disable-verify", cl::Hidden,
               cl::desc("Do not run verifier on input LLVM (dangerous!)"));
+
+static cl::opt<bool>
+EnableBitcode("bitcode", cl::desc("Emit bitcode"));
+
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
@@ -130,8 +135,12 @@ int main(int argc, char **argv) {
     }
 
     if (Force || !CheckBytecodeOutputToConsole(Out,true)) {
-      OStream L(*Out);
-      WriteBytecodeToFile(M.get(), L, !NoCompress);
+      if (EnableBitcode) {
+        WriteBitcodeToFile(M.get(), *Out);
+      } else {
+        OStream L(*Out);
+        WriteBytecodeToFile(M.get(), L, !NoCompress);
+      }
     }
   } catch (const std::string& msg) {
     cerr << argv[0] << ": " << msg << "\n";
