@@ -493,9 +493,15 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
   case Type::DoubleTyID:
     AlignType = FLOAT_ALIGN;
     break;
-  case Type::VectorTyID:
-    AlignType = VECTOR_ALIGN;
+  case Type::VectorTyID: {
+    const VectorType *VTy = cast<VectorType>(Ty);
+    // Degenerate vectors are assumed to be scalar-ized
+    if (VTy->getNumElements() == 1)
+      return getAlignment(VTy->getElementType(), abi_or_pref);
+    else
+      AlignType = VECTOR_ALIGN;
     break;
+  }
   default:
     assert(0 && "Bad type for getAlignment!!!");
     break;
