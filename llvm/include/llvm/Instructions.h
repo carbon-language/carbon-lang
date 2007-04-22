@@ -255,8 +255,7 @@ public:
   /// getAlignment - Return the alignment of the access that is being performed
   ///
   unsigned getAlignment() const {
-    signed Log2AlignVal = ((SubclassData>>1)-1);
-    return ((Log2AlignVal < 0) ? 0 : 1<<Log2AlignVal);
+    return (1 << (SubclassData>>1)) >> 1;
   }
   
   void setAlignment(unsigned Align);
@@ -331,8 +330,7 @@ public:
   /// getAlignment - Return the alignment of the access that is being performed
   ///
   unsigned getAlignment() const {
-    signed Log2AlignVal = ((SubclassData>>1)-1);
-    return ((Log2AlignVal < 0) ? 0 : 1<<Log2AlignVal);
+    return (1 << (SubclassData>>1)) >> 1;
   }
   
   void setAlignment(unsigned Align);
