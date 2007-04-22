@@ -54,8 +54,9 @@ int main(int argc, char **argv) {
     std::string ErrorMessage;
 
     std::auto_ptr<Module> M;
-    
-    M.reset(ParseBitcodeFile(InputFilename, &ErrorMessage));
+   
+    if (InputFilename != "-") 
+      M.reset(ParseBitcodeFile(InputFilename, &ErrorMessage));
     
     if (M.get() == 0)
       M.reset(ParseBytecodeFile(InputFilename,Compressor::decompressToNewBuffer,
