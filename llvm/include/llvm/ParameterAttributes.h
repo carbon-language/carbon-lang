@@ -21,13 +21,13 @@
 #include "llvm/ADT/FoldingSet.h"
 
 namespace llvm {
-
-/// Function parameters can have attributes to indicate how they should be
-/// treated by optimizations and code generation. This enumeration lists the
-/// attributes that can be associated with parameters or function results.
-/// @brief Function parameter attributes.
 namespace ParamAttr {
 
+/// Function parameters and results can have attributes to indicate how they 
+/// should be treated by optimizations and code generation. This enumeration 
+/// lists the attributes that can be associated with parameters or function 
+/// results.
+/// @brief Function parameter attributes.
 enum Attributes {
   None       = 0,      ///< No attributes have been set
   ZExt       = 1 << 0, ///< zero extended before/after call
@@ -41,7 +41,7 @@ enum Attributes {
 }
 
 /// This is just a pair of values to associate a set of parameter attributes
-/// with a parameter index.
+/// with a parameter index. 
 /// @brief ParameterAttributes with a parameter index.
 struct ParamAttrsWithIndex {
   uint16_t attrs; ///< The attributes that are set, |'d together
@@ -51,29 +51,43 @@ struct ParamAttrsWithIndex {
 /// @brief A vector of attribute/index pairs.
 typedef SmallVector<ParamAttrsWithIndex,4> ParamAttrsVector;
 
+/// @brief A more friendly way to reference the attributes.
 typedef ParamAttr::Attributes ParameterAttributes;
 
-/// This class is used by Function and CallInst to represent the set of 
-/// parameter attributes used. It represents a list of pairs of uint16_t, one
-/// for the parameter index, and one a set of ParameterAttributes bits.
-/// Parameters that have no attributes are not present in the list. The list
-/// may also be empty, but this doesn't occur in practice.  The list constructs
-/// as empty and is filled by the insert method. The list can be turned into 
-/// a string of mnemonics suitable for LLVM Assembly output. Various accessors
-/// are provided to obtain information about the attributes.
+/// This class represents a list of attribute/index pairs for parameter 
+/// attributes. Each entry in the list contains the index of a function 
+/// parameter and the associated ParameterAttributes. If a parameter's index is
+/// not present in the list, then no attributes are set for that parameter. The
+/// list may also be empty, but this does not occur in practice. An item in
+/// the list with an index of 0 refers to the function as a whole or its result.
+/// To construct a ParamAttrsList, you must first fill a ParamAttrsVector with 
+/// the attribute/index pairs you wish to set.  The list of attributes can be 
+/// turned into a string of mnemonics suitable for LLVM Assembly output. 
+/// Various accessors are provided to obtain information about the attributes.
+/// Note that objects of this class are "uniqued". The \p get method can return
+/// the pointer of an existing and identical instance. Consequently, reference
+/// counting is necessary in order to determine when the last reference to a 
+/// ParamAttrsList of a given shape is dropped. Users of this class should use
+/// the addRef and dropRef methods to add/drop references. When the reference
+/// count goes to zero, the ParamAttrsList object is deleted.
+/// This class is used by Function, CallInst and InvokeInst to represent their
+/// sets of parameter attributes. 
 /// @brief A List of ParameterAttributes.
 class ParamAttrsList : public FoldingSetNode {
   /// @name Construction
   /// @{
   private:
-    // ParamAttrsList is uniqued, thes should not be publicly available
+    // ParamAttrsList is uniqued, these should not be publicly available
     void operator=(const ParamAttrsList &); // Do not implement
     ParamAttrsList(const ParamAttrsList &); // Do not implement
     ParamAttrsList();                       // Do not implement
-    ~ParamAttrsList() {}                    // Not public!
+    ~ParamAttrsList();                      // Private implementation
 
+    /// Only the \p get method can invoke this when it wants to create a
+    /// new instance.
     /// @brief Construct an ParamAttrsList from a ParamAttrsVector
-    explicit ParamAttrsList(const ParamAttrsVector &attrVec) : attrs(attrVec) {}
+    explicit ParamAttrsList(const ParamAttrsVector &attrVec) 
+      : attrs(attrVec), refCount(0) {}
 
   public:
     /// This method ensures the uniqueness of ParamAttrsList instances. The
@@ -156,6 +170,23 @@ class ParamAttrsList : public FoldingSetNode {
     /// @brief Return the number of parameter attributes this type has.
     unsigned size() const { return attrs.size(); }
 
+    /// Classes retaining references to ParamAttrsList objects should call this
+    /// method to increment the reference count. This ensures that the
+    /// ParamAttrsList object will not disappear until the class drops it.
+    /// @brief Add a reference to this instance.
+    void addRef() const { refCount++; }
+
+    /// Classes retaining references to ParamAttrsList objects should call this
+    /// method to decrement the reference count and possibly delete the 
+    /// ParamAttrsList object. This ensures that ParamAttrsList objects are 
+    /// cleaned up only when the last reference to them is dropped.
+    /// @brief Drop a reference to this instance.
+    void dropRef() const { 
+      assert(refCount != 0 && "dropRef without addRef");
+      if (--refCount == 0) 
+        delete this; 
+    }
+
   /// @}
   /// @name Implementation Details
   /// @{
@@ -167,7 +198,8 @@ class ParamAttrsList : public FoldingSetNode {
   /// @name Data
   /// @{
   private:
-    ParamAttrsVector attrs; ///< The list of attributes
+    ParamAttrsVector attrs;     ///< The list of attributes
+    mutable unsigned refCount;  ///< The number of references to this object
   /// @}
 };
 

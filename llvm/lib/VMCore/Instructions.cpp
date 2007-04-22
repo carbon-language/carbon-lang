@@ -186,6 +186,8 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
 
 CallInst::~CallInst() {
   delete [] OperandList;
+  if (ParamAttrs)
+    ParamAttrs->dropRef();
 }
 
 void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
@@ -346,6 +348,15 @@ CallInst::CallInst(const CallInst &CI)
     OL[i].init(InOL[i], this);
 }
 
+void CallInst::setParamAttrs(ParamAttrsList *newAttrs) {
+  if (ParamAttrs)
+    ParamAttrs->dropRef();
+
+  if (newAttrs)
+    newAttrs->addRef();
+
+  ParamAttrs = newAttrs; 
+}
 
 //===----------------------------------------------------------------------===//
 //                        InvokeInst Implementation
@@ -353,6 +364,8 @@ CallInst::CallInst(const CallInst &CI)
 
 InvokeInst::~InvokeInst() {
   delete [] OperandList;
+  if (ParamAttrs)
+    ParamAttrs->dropRef();
 }
 
 void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
@@ -422,6 +435,15 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   return setSuccessor(idx, B);
 }
 
+void InvokeInst::setParamAttrs(ParamAttrsList *newAttrs) {
+  if (ParamAttrs)
+    ParamAttrs->dropRef();
+
+  if (newAttrs)
+    newAttrs->addRef();
+
+  ParamAttrs = newAttrs; 
+}
 
 //===----------------------------------------------------------------------===//
 //                        ReturnInst Implementation

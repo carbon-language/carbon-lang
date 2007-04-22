@@ -751,7 +751,7 @@ public:
   /// Sets the parameter attributes for this CallInst. To construct a 
   /// ParamAttrsList, see ParameterAttributes.h
   /// @brief Set the parameter attributes.
-  void setParamAttrs(ParamAttrsList *attrs) { ParamAttrs = attrs; }
+  void setParamAttrs(ParamAttrsList *attrs);
 
   /// getCalledFunction - Return the function being called by this instruction
   /// if it is a direct call.  If it is a call through a function pointer,
@@ -1482,7 +1482,7 @@ public:
   /// Sets the parameter attributes for this InvokeInst. To construct a 
   /// ParamAttrsList, see ParameterAttributes.h
   /// @brief Set the parameter attributes.
-  void setParamAttrs(ParamAttrsList *attrs) { ParamAttrs = attrs; }
+  void setParamAttrs(ParamAttrsList *attrs);
 
   /// getCalledFunction - Return the function called, or null if this is an
   /// indirect function invocation.

@@ -129,6 +129,10 @@ ParamAttrsList::get(const ParamAttrsVector &attrVec) {
   return PAL;
 }
 
+ParamAttrsList::~ParamAttrsList() {
+  ParamAttrsLists->RemoveNode(this);
+}
+
 //===----------------------------------------------------------------------===//
 // Function Implementation
 //===----------------------------------------------------------------------===//
@@ -162,6 +166,10 @@ Function::~Function() {
   // Delete all of the method arguments and unlink from symbol table...
   ArgumentList.clear();
   delete SymTab;
+
+  // Drop our reference to the parameter attributes, if any.
+  if (ParamAttrs)
+    ParamAttrs->dropRef();
 }
 
 void Function::setParent(Module *parent) {
@@ -170,6 +178,16 @@ void Function::setParent(Module *parent) {
   Parent = parent;
   if (getParent())
     LeakDetector::removeGarbageObject(this);
+}
+
+void Function::setParamAttrs(ParamAttrsList *attrs) { 
+  if (ParamAttrs)
+    ParamAttrs->dropRef();
+
+  if (attrs)
+    attrs->addRef();
+
+  ParamAttrs = attrs; 
 }
 
 const FunctionType *Function::getFunctionType() const {

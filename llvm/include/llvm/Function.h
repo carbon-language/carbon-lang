@@ -128,7 +128,7 @@ public:
   /// Sets the parameter attributes for this Function. To construct a 
   /// ParamAttrsList, see ParameterAttributes.h
   /// @brief Set the parameter attributes.
-  void setParamAttrs(ParamAttrsList *attrs) { ParamAttrs = attrs; }
+  void setParamAttrs(ParamAttrsList *attrs);
 
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.
