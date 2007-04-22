@@ -1299,24 +1299,28 @@ Types
   }
   | Types '(' ArgTypeListI ')' OptFuncAttrs {
     std::vector<const Type*> Params;
-    ParamAttrsList Attrs;
-    if ($5 != ParamAttr::None)
-      Attrs.addAttributes(0, $5);
+    ParamAttrsVector Attrs;
+    if ($5 != ParamAttr::None) {
+      ParamAttrsWithIndex X; X.index = 0; X.attrs = $5;
+      Attrs.push_back(X);
+    }
     unsigned index = 1;
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     for (; I != E; ++I, ++index) {
       const Type *Ty = I->Ty->get();
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
-        if (I->Attrs != ParamAttr::None)
-          Attrs.addAttributes(index, I->Attrs);
+        if (I->Attrs != ParamAttr::None) {
+          ParamAttrsWithIndex X; X.index = index; X.attrs = I->Attrs;
+          Attrs.push_back(X);
+        }
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
     ParamAttrsList *ActualAttrs = 0;
     if (!Attrs.empty())
-      ActualAttrs = new ParamAttrsList(Attrs);
+      ActualAttrs = ParamAttrsList::get(Attrs);
     FunctionType *FT = FunctionType::get(*$1, Params, isVarArg, ActualAttrs);
     delete $3;   // Delete the argument list
     delete $1;   // Delete the return type handle
@@ -1325,24 +1329,28 @@ Types
   }
   | VOID '(' ArgTypeListI ')' OptFuncAttrs {
     std::vector<const Type*> Params;
-    ParamAttrsList Attrs;
-    if ($5 != ParamAttr::None)
-      Attrs.addAttributes(0, $5);
+    ParamAttrsVector Attrs;
+    if ($5 != ParamAttr::None) {
+      ParamAttrsWithIndex X; X.index = 0; X.attrs = $5;
+      Attrs.push_back(X);
+    }
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     unsigned index = 1;
     for ( ; I != E; ++I, ++index) {
       const Type* Ty = I->Ty->get();
       Params.push_back(Ty);
       if (Ty != Type::VoidTy)
-        if (I->Attrs != ParamAttr::None)
-          Attrs.addAttributes(index, I->Attrs);
+        if (I->Attrs != ParamAttr::None) {
+          ParamAttrsWithIndex X; X.index = index; X.attrs = I->Attrs;
+          Attrs.push_back(X);
+        }
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
     ParamAttrsList *ActualAttrs = 0;
     if (!Attrs.empty())
-      ActualAttrs = new ParamAttrsList(Attrs);
+      ActualAttrs = ParamAttrsList::get(Attrs);
 
     FunctionType *FT = FunctionType::get($1, Params, isVarArg, ActualAttrs);
     delete $3;      // Delete the argument list
@@ -2135,9 +2143,11 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     GEN_ERROR("Reference to abstract result: "+ $2->get()->getDescription());
 
   std::vector<const Type*> ParamTypeList;
-  ParamAttrsList ParamAttrs;
-  if ($7 != ParamAttr::None)
-    ParamAttrs.addAttributes(0, $7);
+  ParamAttrsVector Attrs;
+  if ($7 != ParamAttr::None) {
+    ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = $7;
+    Attrs.push_back(PAWI);
+  }
   if ($5) {   // If there are arguments...
     unsigned index = 1;
     for (ArgListType::iterator I = $5->begin(); I != $5->end(); ++I, ++index) {
@@ -2146,20 +2156,21 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
         GEN_ERROR("Reference to abstract argument: " + Ty->getDescription());
       ParamTypeList.push_back(Ty);
       if (Ty != Type::VoidTy)
-        if (I->Attrs != ParamAttr::None)
-          ParamAttrs.addAttributes(index, I->Attrs);
+        if (I->Attrs != ParamAttr::None) {
+          ParamAttrsWithIndex PAWI; PAWI.index = index; PAWI.attrs = I->Attrs;
+          Attrs.push_back(PAWI);
+        }
     }
   }
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  ParamAttrsList *ActualAttrs = 0;
-  if (!ParamAttrs.empty())
-    ActualAttrs = new ParamAttrsList(ParamAttrs);
+  ParamAttrsList *PAL = 0;
+  if (!Attrs.empty())
+    PAL = ParamAttrsList::get(Attrs);
 
-  FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg, 
-                                       ActualAttrs);
+  FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg, PAL);
   const PointerType *PFT = PointerType::get(FT);
   delete $2;
 
@@ -2490,9 +2501,11 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      ParamAttrsList ParamAttrs;
-      if ($8 != ParamAttr::None)
-        ParamAttrs.addAttributes(0, $8);
+      ParamAttrsVector Attrs;
+      if ($8 != ParamAttr::None) {
+        ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = 8;
+        Attrs.push_back(PAWI);
+      }
       ValueRefList::iterator I = $6->begin(), E = $6->end();
       unsigned index = 1;
       for (; I != E; ++I, ++index) {
@@ -2500,14 +2513,16 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        if (I->Attrs != ParamAttr::None)
-          ParamAttrs.addAttributes(index, I->Attrs);
+        if (I->Attrs != ParamAttr::None) {
+          ParamAttrsWithIndex PAWI; PAWI.index = index; PAWI.attrs = I->Attrs;
+          Attrs.push_back(PAWI);
+        }
       }
 
-      ParamAttrsList *Attrs = 0;
-      if (!ParamAttrs.empty())
-        Attrs = new ParamAttrsList(ParamAttrs);
-      Ty = FunctionType::get($3->get(), ParamTypes, false, Attrs);
+      ParamAttrsList *PAL = 0;
+      if (!Attrs.empty())
+        PAL = ParamAttrsList::get(Attrs);
+      Ty = FunctionType::get($3->get(), ParamTypes, false, PAL);
       PFTy = PointerType::get(Ty);
     }
 
@@ -2796,9 +2811,11 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      ParamAttrsList ParamAttrs;
-      if ($8 != ParamAttr::None)
-        ParamAttrs.addAttributes(0, $8);
+      ParamAttrsVector Attrs;
+      if ($8 != ParamAttr::None) {
+        ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = $8;
+        Attrs.push_back(PAWI);
+      }
       unsigned index = 1;
       ValueRefList::iterator I = $6->begin(), E = $6->end();
       for (; I != E; ++I, ++index) {
@@ -2806,15 +2823,17 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        if (I->Attrs != ParamAttr::None)
-          ParamAttrs.addAttributes(index, I->Attrs);
+        if (I->Attrs != ParamAttr::None) {
+          ParamAttrsWithIndex PAWI; PAWI.index = index; PAWI.attrs = I->Attrs;
+          Attrs.push_back(PAWI);
+        }
       }
 
-      ParamAttrsList *Attrs = 0;
-      if (!ParamAttrs.empty())
-        Attrs = new ParamAttrsList(ParamAttrs);
+      ParamAttrsList *PAL = 0;
+      if (!Attrs.empty())
+        PAL = ParamAttrsList::get(Attrs);
 
-      Ty = FunctionType::get($3->get(), ParamTypes, false, Attrs);
+      Ty = FunctionType::get($3->get(), ParamTypes, false, PAL);
       PFTy = PointerType::get(Ty);
     }
 
@@ -2921,7 +2940,7 @@ MemoryInst : MALLOC Types OptCAlign {
     CHECK_FOR_ERROR
   }
 
-  | OptVolatile LOAD Types ValueRef {
+  | OptVolatile LOAD Types ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     if (!isa<PointerType>($3->get()))
@@ -2932,10 +2951,10 @@ MemoryInst : MALLOC Types OptCAlign {
                      (*$3)->getDescription());
     Value* tmpVal = getVal(*$3, $4);
     CHECK_FOR_ERROR
-    $$ = new LoadInst(tmpVal, "", $1);
+    $$ = new LoadInst(tmpVal, "", $1, $5);
     delete $3;
   }
-  | OptVolatile STORE ResolvedVal ',' Types ValueRef {
+  | OptVolatile STORE ResolvedVal ',' Types ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$5)->getDescription());
     const PointerType *PT = dyn_cast<PointerType>($5->get());
@@ -2949,7 +2968,7 @@ MemoryInst : MALLOC Types OptCAlign {
 
     Value* tmpVal = getVal(*$5, $6);
     CHECK_FOR_ERROR
-    $$ = new StoreInst($3, tmpVal, $1);
+    $$ = new StoreInst($3, tmpVal, $1, $7);
     delete $5;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
