@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = llvm-as
-LINK_COMPONENTS := asmparser bcwriter
+LINK_COMPONENTS := asmparser bcwriter bitwriter
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
