@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/AbstractTypeUser.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ParameterAttributes.h"
 #include "llvm/Constants.h"

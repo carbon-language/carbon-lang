@@ -14,9 +14,11 @@
 #ifndef LLVM_ABSTRACT_TYPE_USER_H
 #define LLVM_ABSTRACT_TYPE_USER_H
 
-// IMPORTANT: Do not include this file directly.  Include Type.h instead.
-// Some versions of GCC can't handle the inlined method PATypeHolder::dropRef()
-// correctly otherwise.
+#if !defined(LLVM_TYPE_H) && !defined(LLVM_VALUE_H)
+#error Do not include this file directly.  Include Type.h instead.
+#error Some versions of GCC (e.g. 3.4 and 4.1) can't handle the inlined method
+#error PATypeHolder::dropRef() correctly otherwise.
+#endif
 
 // This is the "master" include for <cassert> Whether this file needs it or not,
 // it must always include <cassert> for the files which include
