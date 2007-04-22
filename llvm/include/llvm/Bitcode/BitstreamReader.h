@@ -218,5 +218,3 @@ public:
 } // End llvm namespace
 
 #endif
-
-    
