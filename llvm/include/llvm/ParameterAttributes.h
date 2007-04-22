@@ -70,7 +70,7 @@ class ParamAttrsList : public FoldingSetNode {
     void operator=(const ParamAttrsList &); // Do not implement
     ParamAttrsList(const ParamAttrsList &); // Do not implement
     ParamAttrsList();                       // Do not implement
-    ~ParamAttrsList();
+    ~ParamAttrsList() {}                    // Not public!
 
     /// @brief Construct an ParamAttrsList from a ParamAttrsVector
     explicit ParamAttrsList(const ParamAttrsVector &attrVec) : attrs(attrVec) {}
@@ -162,15 +162,12 @@ class ParamAttrsList : public FoldingSetNode {
   public:
     void Profile(FoldingSetNodeID &ID) const;
     void dump() const;
-    void addRef() const { refCount++; }
-    void dropRef() const { if (--refCount == 0) delete this; }
 
   /// @}
   /// @name Data
   /// @{
   private:
     ParamAttrsVector attrs; ///< The list of attributes
-    mutable unsigned refCount;      ///< The number of references to this object
   /// @}
 };
 
