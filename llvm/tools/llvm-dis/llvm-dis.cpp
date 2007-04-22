@@ -18,6 +18,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/Compressor.h"
@@ -52,9 +53,13 @@ int main(int argc, char **argv) {
     std::ostream *Out = &std::cout;  // Default to printing to stdout.
     std::string ErrorMessage;
 
-    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, 
-                                              Compressor::decompressToNewBuffer,
-                                              &ErrorMessage));
+    std::auto_ptr<Module> M;
+    
+    M.reset(ParseBitcodeFile(InputFilename, &ErrorMessage));
+    
+    if (M.get() == 0)
+      M.reset(ParseBytecodeFile(InputFilename,Compressor::decompressToNewBuffer,
+                                &ErrorMessage));
     if (M.get() == 0) {
       cerr << argv[0] << ": ";
       if (ErrorMessage.size())
