@@ -1438,7 +1438,7 @@ protected:
   friend class SelectionDAG;
   LoadSDNode(SDOperand *ChainPtrOff, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, MVT::ValueType LVT,
-             const Value *SV, int O=0, unsigned Align=1, bool Vol=false)
+             const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : SDNode(ISD::LOAD, VTs),
       AddrMode(AM), ExtType(ETy), LoadedVT(LVT), SrcValue(SV), SVOffset(O),
       Alignment(Align), IsVolatile(Vol) {
@@ -1446,6 +1446,7 @@ protected:
     Ops[1] = ChainPtrOff[1]; // Ptr
     Ops[2] = ChainPtrOff[2]; // Off
     InitOperands(Ops, 3);
+    assert(Align != 0 && "Loads should have non-zero aligment");
     assert((getOffset().getOpcode() == ISD::UNDEF ||
             AddrMode != ISD::UNINDEXED) &&
            "Only indexed load has a non-undef offset operand");
@@ -1508,6 +1509,7 @@ protected:
     Ops[2] = ChainValuePtrOff[2]; // Ptr
     Ops[3] = ChainValuePtrOff[3]; // Off
     InitOperands(Ops, 4);
+    assert(Align != 0 && "Stores should have non-zero aligment");
     assert((getOffset().getOpcode() == ISD::UNDEF || 
             AddrMode != ISD::UNINDEXED) &&
            "Only indexed store has a non-undef offset operand");
