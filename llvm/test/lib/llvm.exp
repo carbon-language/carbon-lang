@@ -207,7 +207,7 @@ proc llvm_gcc_supports { lang } {
     fortran { set file fcc1 }
     default { return 0 }
   }
-  if { [ regexp $lang $llvmgcc_langs match ] } {
+  if { [ string first "$lang" "$llvmgcc_langs" ] >= 0 } {
     # FIXME: Knowing it is configured is not enough. We should do two more
     # checks here. First, we need to run llvm-gcc -print-prog-name=$file to get
     # the path to the compiler. If we don't get a path, the language isn't
