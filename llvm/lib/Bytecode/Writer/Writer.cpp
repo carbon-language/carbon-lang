@@ -445,7 +445,8 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
   unsigned NumArgs = I->getNumOperands();
   bool HasExtraArg = false;
   if (isa<CastInst>(I)  || isa<InvokeInst>(I) || 
-      isa<CmpInst>(I) || isa<VAArgInst>(I) || Opcode == 58)
+      isa<CmpInst>(I) || isa<VAArgInst>(I) || Opcode == 58 || 
+      Opcode == 62 || Opcode == 63)
     HasExtraArg = true;
   if (const AllocationInst *AI = dyn_cast<AllocationInst>(I))
     HasExtraArg = AI->getAlignment() != 0;
@@ -468,6 +469,12 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
     } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(I)) {
       if (AI->getAlignment())
         output_vbr((unsigned)Log2_32(AI->getAlignment())+1);
+    } else if (Opcode == 62) { // Attributed load
+      output_vbr((unsigned)(((Log2_32(cast<LoadInst>(I)->getAlignment())+1)<<1)
+                            + (cast<LoadInst>(I)->isVolatile() ? 1 : 0)));
+    } else if (Opcode == 63) { // Attributed store
+      output_vbr((unsigned)(((Log2_32(cast<StoreInst>(I)->getAlignment())+1)<<1)
+                            + (cast<StoreInst>(I)->isVolatile() ? 1 : 0)));
     }
   } else {
     output_vbr(Table.getSlot(I->getOperand(0)));
@@ -616,7 +623,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
   unsigned Opcode = I.getOpcode();
   unsigned NumOperands = I.getNumOperands();
 
-  // Encode 'tail call' as 61, 'volatile load' as 62, and 'volatile store' as
+  // Encode 'tail call' as 61
   // 63.
   if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
     if (CI->getCallingConv() == CallingConv::C) {
@@ -632,10 +639,6 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
     } else {
       Opcode = 58;      // Call escape sequence.
     }
-  } else if (isa<LoadInst>(I) && cast<LoadInst>(I).isVolatile()) {
-    Opcode = 62;
-  } else if (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()) {
-    Opcode = 63;
   }
 
   // Figure out which type to encode with the instruction.  Typically we want
@@ -744,6 +747,32 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
     } else if (isa<InvokeInst>(I)) {
       // Invoke escape seq has at least 4 operands to encode.
       ++NumOperands;
+    } else if (const LoadInst *LI = dyn_cast<LoadInst>(&I)) {
+      // Encode attributed load as opcode 62
+      // We need to encode the attributes of the load instruction as the second
+      // operand. Its not really a slot, but we don't want to break the 
+      // instruction format for these instructions.
+      if (LI->getAlignment() || LI->isVolatile()) {
+        NumOperands = 2;
+        Slots[1] = ((Log2_32(LI->getAlignment())+1)<<1) + 
+                    (LI->isVolatile() ? 1 : 0);
+        if (Slots[1] > MaxOpSlot) 
+          MaxOpSlot = Slots[1];
+        Opcode = 62;
+      }
+    } else if (const StoreInst *SI = dyn_cast<StoreInst>(&I)) {
+      // Encode attributed store as opcode 63
+      // We need to encode the attributes of the store instruction as the third
+      // operand. Its not really a slot, but we don't want to break the 
+      // instruction format for these instructions.
+      if (SI->getAlignment() || SI->isVolatile()) {
+        NumOperands = 3;
+        Slots[2] = ((Log2_32(SI->getAlignment())+1)<<1) + 
+                    (SI->isVolatile() ? 1 : 0);
+        if (Slots[2] > MaxOpSlot) 
+          MaxOpSlot = Slots[2];
+        Opcode = 63;
+      }
     }
 
     // Decide which instruction encoding to use.  This is determined primarily

@@ -831,13 +831,31 @@ void BytecodeReader::ParseInstruction(SmallVector<unsigned, 8> &Oprnds,
                                      &Idx[0], Idx.size());
       break;
     }
-    case 62:   // volatile load
+    case 62: {   // attributed load
+        if (Oprnds.size() != 2 || !isa<PointerType>(InstTy))
+          error("Invalid attributed load instruction!");
+        signed Log2AlignVal = ((Oprnds[1]>>1)-1);
+        Result = new LoadInst(getValue(iType, Oprnds[0]), "", (Oprnds[1] & 1),
+                              ((Log2AlignVal < 0) ? 0 : 1<<Log2AlignVal));
+        break;
+      }
     case Instruction::Load:
       if (Oprnds.size() != 1 || !isa<PointerType>(InstTy))
         error("Invalid load instruction!");
-      Result = new LoadInst(getValue(iType, Oprnds[0]), "", Opcode == 62);
+      Result = new LoadInst(getValue(iType, Oprnds[0]), "");
       break;
-    case 63:   // volatile store
+    case 63: {   // attributed store
+        if (!isa<PointerType>(InstTy) || Oprnds.size() != 3)
+          error("Invalid attributed store instruction!");
+
+        Value *Ptr = getValue(iType, Oprnds[1]);
+        const Type *ValTy = cast<PointerType>(Ptr->getType())->getElementType();
+        signed Log2AlignVal = ((Oprnds[2]>>1)-1);
+        Result = new StoreInst(getValue(getTypeSlot(ValTy), Oprnds[0]), Ptr,
+                               (Oprnds[2] & 1), 
+                               ((Log2AlignVal < 0) ? 0 : 1<<Log2AlignVal));
+        break;
+      }
     case Instruction::Store: {
       if (!isa<PointerType>(InstTy) || Oprnds.size() != 2)
         error("Invalid store instruction!");

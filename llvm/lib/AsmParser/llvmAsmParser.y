@@ -2940,7 +2940,7 @@ MemoryInst : MALLOC Types OptCAlign {
     CHECK_FOR_ERROR
   }
 
-  | OptVolatile LOAD Types ValueRef {
+  | OptVolatile LOAD Types ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     if (!isa<PointerType>($3->get()))
@@ -2951,10 +2951,10 @@ MemoryInst : MALLOC Types OptCAlign {
                      (*$3)->getDescription());
     Value* tmpVal = getVal(*$3, $4);
     CHECK_FOR_ERROR
-    $$ = new LoadInst(tmpVal, "", $1);
+    $$ = new LoadInst(tmpVal, "", $1, $5);
     delete $3;
   }
-  | OptVolatile STORE ResolvedVal ',' Types ValueRef {
+  | OptVolatile STORE ResolvedVal ',' Types ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$5)->getDescription());
     const PointerType *PT = dyn_cast<PointerType>($5->get());
@@ -2968,7 +2968,7 @@ MemoryInst : MALLOC Types OptCAlign {
 
     Value* tmpVal = getVal(*$5, $6);
     CHECK_FOR_ERROR
-    $$ = new StoreInst($3, tmpVal, $1);
+    $$ = new StoreInst($3, tmpVal, $1, $7);
     delete $5;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
