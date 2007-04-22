@@ -179,6 +179,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::RET,           MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32,   Custom);
+  setOperationAction(ISD::GLOBAL_OFFSET_TABLE, MVT::i32, Custom);
 
   // Expand mem operations genericly.
   setOperationAction(ISD::MEMSET          , MVT::Other, Expand);
@@ -694,6 +695,31 @@ static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ARMISD::Wrapper, MVT::i32, Res);
 }
 
+SDOperand ARMTargetLowering::LowerGlobalAddressELF(SDOperand Op,
+                                                   SelectionDAG &DAG) {
+  MVT::ValueType PtrVT = getPointerTy();
+  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  Reloc::Model RelocM = getTargetMachine().getRelocationModel();
+  if (RelocM == Reloc::PIC_) {
+    bool UseGOTOFF = GV->hasInternalLinkage();
+    ARMConstantPoolValue *CPV =
+      new ARMConstantPoolValue(GV, ARMCP::CPValue, UseGOTOFF ? "GOTOFF":"GOT");
+    SDOperand CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+    CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+    SDOperand Result = DAG.getLoad(PtrVT, DAG.getEntryNode(), CPAddr, NULL, 0);
+    SDOperand Chain = Result.getValue(1);
+    SDOperand GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, PtrVT);
+    Result = DAG.getNode(ISD::ADD, PtrVT, Result, GOT);
+    if (!UseGOTOFF)
+      Result = DAG.getLoad(PtrVT, Chain, Result, NULL, 0);
+    return Result;
+  } else {
+    SDOperand CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 2);
+    CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+    return DAG.getLoad(PtrVT, DAG.getEntryNode(), CPAddr, NULL, 0);
+  }
+}
+
 /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect symbol
 /// even in dynamic-no-pic mode.
 static bool GVIsIndirectSymbol(GlobalValue *GV) {
@@ -701,12 +727,12 @@ static bool GVIsIndirectSymbol(GlobalValue *GV) {
           (GV->isDeclaration() && !GV->hasNotBeenReadFromBytecode()));
 }
 
-SDOperand ARMTargetLowering::LowerGlobalAddress(SDOperand Op,
-                                                SelectionDAG &DAG) {
+SDOperand ARMTargetLowering::LowerGlobalAddressDarwin(SDOperand Op,
+                                                      SelectionDAG &DAG) {
   MVT::ValueType PtrVT = getPointerTy();
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
-  bool IsIndirect = Subtarget->isTargetDarwin() && GVIsIndirectSymbol(GV);
+  bool IsIndirect = GVIsIndirectSymbol(GV);
   SDOperand CPAddr;
   if (RelocM == Reloc::Static)
     CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 2);
@@ -732,6 +758,22 @@ SDOperand ARMTargetLowering::LowerGlobalAddress(SDOperand Op,
     Result = DAG.getLoad(PtrVT, Chain, Result, NULL, 0);
 
   return Result;
+}
+
+SDOperand ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDOperand Op,
+                                                      SelectionDAG &DAG){
+  assert(Subtarget->isTargetELF() &&
+         "GLOBAL OFFSET TABLE not implemented for non-ELF targets");
+  MVT::ValueType PtrVT = getPointerTy();
+  unsigned PCAdj = Subtarget->isThumb() ? 4 : 8;
+  ARMConstantPoolValue *CPV = new ARMConstantPoolValue("_GLOBAL_OFFSET_TABLE_",
+                                                       ARMPCLabelIndex,
+                                                       ARMCP::CPValue, PCAdj);
+  SDOperand CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+  CPAddr = DAG.getNode(ARMISD::Wrapper, MVT::i32, CPAddr);
+  SDOperand Result = DAG.getLoad(PtrVT, DAG.getEntryNode(), CPAddr, NULL, 0);
+  SDOperand PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
+  return DAG.getNode(ARMISD::PIC_ADD, PtrVT, Result, PICLabel);
 }
 
 static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
@@ -1198,7 +1240,9 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Don't know how to custom lower this!"); abort();
   case ISD::ConstantPool:  return LowerConstantPool(Op, DAG);
-  case ISD::GlobalAddress: return LowerGlobalAddress(Op, DAG);
+  case ISD::GlobalAddress:
+    return Subtarget->isTargetDarwin() ? LowerGlobalAddressDarwin(Op, DAG) :
+      LowerGlobalAddressELF(Op, DAG);
   case ISD::CALL:          return LowerCALL(Op, DAG);
   case ISD::RET:           return LowerRET(Op, DAG);
   case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG, Subtarget);
@@ -1220,6 +1264,7 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::RETURNADDR:    break;
   case ISD::FRAMEADDR:     break;
+  case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
   }
   return SDOperand();
 }

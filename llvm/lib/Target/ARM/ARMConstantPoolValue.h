@@ -36,17 +36,23 @@ class ARMConstantPoolValue : public MachineConstantPoolValue {
   ARMCP::ARMCPKind Kind;   // non_lazy_ptr or stub?
   unsigned char PCAdjust;  // Extra adjustment if constantpool is pc relative.
                            // 8 for ARM, 4 for Thumb.
+  const char *Modifier;    // GV modifier i.e. (&GV(modifier)-(LPIC+8))
 
 public:
   ARMConstantPoolValue(GlobalValue *gv, unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
-                       unsigned char PCAdj = 0);
+                       unsigned char PCAdj = 0, const char *Modifier = NULL);
   ARMConstantPoolValue(const char *s, unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
-                       unsigned char PCAdj = 0);
+                       unsigned char PCAdj = 0, const char *Modifier = NULL);
+  ARMConstantPoolValue(GlobalValue *GV, ARMCP::ARMCPKind Kind,
+                       const char *Modifier);
+
 
   GlobalValue *getGV() const { return GV; }
   const char *getSymbol() const { return S; }
+  const char *getModifier() const { return Modifier; }
+  bool hasModifier() const { return Modifier != NULL; }
   unsigned getLabelId() const { return LabelId; }
   bool isNonLazyPointer() const { return Kind == ARMCP::CPNonLazyPtr; }
   bool isStub() const { return Kind == ARMCP::CPStub; }

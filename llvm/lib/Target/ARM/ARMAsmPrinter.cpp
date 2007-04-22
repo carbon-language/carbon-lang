@@ -133,6 +133,7 @@ namespace {
         O << TAI->getPrivateGlobalPrefix() << Name << "$stub";
       } else
         O << Name;
+      if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
       if (ACPV->getPCAdjustment() != 0)
         O << "-(" << TAI->getPrivateGlobalPrefix() << "PC"
           << utostr(ACPV->getLabelId())
@@ -284,7 +285,9 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       FnStubs.insert(Name);
     } else
       O << Name;
-
+    if (isCallOp && Subtarget->isTargetELF() &&
+        TM.getRelocationModel() == Reloc::PIC_)
+      O << "(PLT)";
     if (GV->hasExternalWeakLinkage())
       ExtWeakSymbols.insert(GV);
     break;
@@ -299,6 +302,9 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       FnStubs.insert(Name);
     } else
       O << Name;
+    if (isCallOp && Subtarget->isTargetELF() &&
+        TM.getRelocationModel() == Reloc::PIC_)
+      O << "(PLT)";
     break;
   }
   case MachineOperand::MO_ConstantPoolIndex:

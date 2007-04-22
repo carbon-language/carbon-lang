@@ -19,15 +19,26 @@ using namespace llvm;
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, unsigned id,
                                            ARMCP::ARMCPKind k,
-                                           unsigned char PCAdj)
+                                           unsigned char PCAdj,
+                                           const char *Modif)
   : MachineConstantPoolValue((const Type*)gv->getType()),
-    GV(gv), S(NULL), LabelId(id), Kind(k), PCAdjust(PCAdj) {}
+    GV(gv), S(NULL), LabelId(id), Kind(k), PCAdjust(PCAdj),
+    Modifier(Modif) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(const char *s, unsigned id,
                                            ARMCP::ARMCPKind k,
-                                           unsigned char PCAdj)
+                                           unsigned char PCAdj,
+                                           const char *Modif)
   : MachineConstantPoolValue((const Type*)Type::Int32Ty),
-    GV(NULL), S(s), LabelId(id), Kind(k), PCAdjust(PCAdj) {}
+    GV(NULL), S(s), LabelId(id), Kind(k), PCAdjust(PCAdj),
+    Modifier(Modif) {}
+
+ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv,
+                                           ARMCP::ARMCPKind k,
+                                           const char *Modif)
+  : MachineConstantPoolValue((const Type*)Type::Int32Ty),
+    GV(gv), S(NULL), LabelId(0), Kind(k), PCAdjust(0),
+    Modifier(Modif) {}
 
 int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
                                                     unsigned Alignment) {
@@ -66,6 +77,7 @@ void ARMConstantPoolValue::print(std::ostream &O) const {
     O << S;
   if (isNonLazyPointer()) O << "$non_lazy_ptr";
   else if (isStub()) O << "$stub";
+  if (Modifier) O << "(" << Modifier << ")";
   if (PCAdjust != 0) O << "-(LPIC" << LabelId << "+"
                        << (unsigned)PCAdjust << ")";
 }
