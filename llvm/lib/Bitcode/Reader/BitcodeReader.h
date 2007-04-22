@@ -14,7 +14,7 @@
 #ifndef BITCODE_READER_H
 #define BITCODE_READER_H
 
-#include "llvm/AbstractTypeUser.h"
+#include "llvm/Type.h"
 #include "llvm/ModuleProvider.h"
 #include "../LLVMBitCodes.h"
 #include <vector>
