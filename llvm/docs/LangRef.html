@@ -1068,16 +1068,14 @@ instruction.</p>
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
-    <td class="left">
-      <tt>{ i32, i32, i32 }</tt><br/>
-      <tt>{ float, i32 (i32) * }</tt><br/>
-    </td>
-    <td class="left">
-      a triple of three <tt>i32</tt> values<br/>
-      A pair, where the first element is a <tt>float</tt> and the second element 
-      is a <a href="#t_pointer">pointer</a> to a <a href="#t_function">function</a> 
-      that takes an <tt>i32</tt>, returning an <tt>i32</tt>.<br/>
-    </td>
+    <td class="left"><tt>{ i32, i32, i32 }</tt></td>
+    <td class="left">A triple of three <tt>i32</tt> values</td>
+  </tr><tr class="layout">
+    <td class="left"><tt>{&nbsp;float,&nbsp;i32&nbsp;(i32)&nbsp;*&nbsp;}</tt></td>
+    <td class="left">A pair, where the first element is a <tt>float</tt> and the
+      second element is a <a href="#t_pointer">pointer</a> to a
+      <a href="#t_function">function</a> that takes an <tt>i32</tt>, returning
+      an <tt>i32</tt>.</td>
   </tr>
 </table>
 </div>
@@ -1100,16 +1098,14 @@ instruction.</p>
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
-    <td class="left">
-      <tt> &lt; { i32, i32, i32 } &gt; </tt><br/>
-      <tt> &lt; { float, i32 (i32) * } &gt; </tt><br/>
-    </td>
-    <td class="left">
-      a triple of three <tt>i32</tt> values<br/>
-      A pair, where the first element is a <tt>float</tt> and the second element 
-      is a <a href="#t_pointer">pointer</a> to a <a href="#t_function">function</a> 
-      that takes an <tt>i32</tt>, returning an <tt>i32</tt>.<br/>
-    </td>
+    <td class="left"><tt>&lt; { i32, i32, i32 } &gt;</tt></td>
+    <td class="left">A triple of three <tt>i32</tt> values</td>
+  </tr><tr class="layout">
+  <td class="left"><tt>&lt;&nbsp;{&nbsp;float,&nbsp;i32&nbsp;(i32)&nbsp;*&nbsp;}&nbsp;&gt;</tt></td>
+    <td class="left">A pair, where the first element is a <tt>float</tt> and the
+      second element is a <a href="#t_pointer">pointer</a> to a
+      <a href="#t_function">function</a> that takes an <tt>i32</tt>, returning
+      an <tt>i32</tt>.</td>
   </tr>
 </table>
 </div>
@@ -1302,7 +1298,7 @@ and smaller aggregate constants.</p>
   <dd>Vector constants are represented with notation similar to vector type
   definitions (a comma separated list of elements, surrounded by
   less-than/greater-than's (<tt>&lt;&gt;</tt>)).  For example: "<tt>&lt; i32 42,
-  i32 11, i32 74, i32 100 &gt;</tt>".  VEctor constants must have <a
+  i32 11, i32 74, i32 100 &gt;</tt>".  Vector constants must have <a
   href="#t_vector">vector type</a>, and the number and types of elements must
   match those specified by the type.
   </dd>
@@ -1400,12 +1396,12 @@ following is the syntax for constant expressions:</p>
   <dt><b><tt>uitofp ( CST to TYPE )</tt></b></dt>
   <dd>Convert an unsigned integer constant to the corresponding floating point
   constant. TYPE must be floating point. CST must be of integer type. If the
-  value won't fit in the floating point type, the results are undefined.</dd>
+  value won't fit in the floating point type, precision may be lost.</dd>
 
   <dt><b><tt>sitofp ( CST to TYPE )</tt></b></dt>
   <dd>Convert a signed integer constant to the corresponding floating point
   constant. TYPE must be floating point. CST must be of integer type. If the
-  value won't fit in the floating point type, the results are undefined.</dd>
+  value won't fit in the floating point type, precision may be lost.</dd>
 
   <dt><b><tt>ptrtoint ( CST to TYPE )</tt></b></dt>
   <dd>Convert a pointer typed constant to the corresponding integer constant
@@ -1746,10 +1742,10 @@ exception.  Additionally, this is important for implementation of
 
 <h5>Example:</h5>
 <pre>
-  %retval = invoke i32 %Test(i32 15)             to label %Continue
-              unwind label %TestCleanup     <i>; {i32}:retval set</i>
-  %retval = invoke <a href="#callingconv">coldcc</a> i32 %Test(i32 15)             to label %Continue
-              unwind label %TestCleanup     <i>; {i32}:retval set</i>
+  %retval = invoke i32 %Test(i32 15) to label %Continue
+              unwind label %TestCleanup              <i>; {i32}:retval set</i>
+  %retval = invoke <a href="#callingconv">coldcc</a> i32 %Test(i32 15) to label %Continue
+              unwind label %TestCleanup              <i>; {i32}:retval set</i>
 </pre>
 </div>
 
@@ -1950,10 +1946,10 @@ Instruction</a> </div>
 <p>The '<tt>fdiv</tt>' instruction returns the quotient of its two
 operands.</p>
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>div</tt>' instruction must be
+<p>The two arguments to the '<tt>fdiv</tt>' instruction must be
 <a href="#t_floating">floating point</a> values.  Both arguments must have
 identical types.  This instruction can also take <a href="#t_vector">vector</a>
-versions of the values in which case the elements must be floating point.</p>
+versions of floating point values.</p>
 <h5>Semantics:</h5>
 <p>The value produced is the floating point quotient of the two operands.</p>
 <h5>Example:</h5>
@@ -2075,7 +2071,7 @@ Instruction</a> </div>
 
 <h5>Overview:</h5>
 <p>The '<tt>lshr</tt>' instruction (logical shift right) returns the first 
-operand shifted to the right a specified number of bits.</p>
+operand shifted to the right a specified number of bits with zero fill.</p>
 
 <h5>Arguments:</h5>
 <p>Both arguments to the '<tt>lshr</tt>' instruction must be the same 
@@ -2106,7 +2102,7 @@ Instruction</a> </div>
 
 <h5>Overview:</h5>
 <p>The '<tt>ashr</tt>' instruction (arithmetic shift right) returns the first 
-operand shifted to the right a specified number of bits.</p>
+operand shifted to the right a specified number of bits with sign extension.</p>
 
 <h5>Arguments:</h5>
 <p>Both arguments to the '<tt>ashr</tt>' instruction must be the same 
@@ -2299,7 +2295,7 @@ identical types.</p>
 <div class="doc_text">
 
 <p>LLVM supports several instructions to represent vector operations in a
-target-independent manner.  This instructions cover the element-access and
+target-independent manner.  These instructions cover the element-access and
 vector-specific operations needed to process vectors effectively.  While LLVM
 does directly support these vector operations, many sophisticated algorithms
 will want to use target-specific intrinsics to take full advantage of a specific
@@ -2447,7 +2443,7 @@ operand may be undef if performing a shuffle from only one vector.
 
 <pre>
   %result = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; %v2, 
-                          &lt;4 x i32&gt; &lt;i32 0, i32 4, i32 1, i32 5&gt;    <i>; yields &lt;4 x i32&gt;</i>
+                          &lt;4 x i32&gt; &lt;i32 0, i32 4, i32 1, i32 5&gt;  <i>; yields &lt;4 x i32&gt;</i>
   %result = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; undef, 
                           &lt;4 x i32&gt; &lt;i32 0, i32 1, i32 2, i32 3&gt;  <i>; yields &lt;4 x i32&gt;</i> - Identity shuffle.
 </pre>
@@ -2569,8 +2565,8 @@ after this instruction executes.</p>
 
 <h5>Overview:</h5>
 
-<p>The '<tt>alloca</tt>' instruction allocates memory on the current
-stack frame of the procedure that is live until the current function
+<p>The '<tt>alloca</tt>' instruction allocates memory on the stack frame of the
+currently executing function, to be automatically released when this function
 returns to its caller.</p>
 
 <h5>Arguments:</h5>
@@ -2641,7 +2637,7 @@ Instruction</a> </div>
 <p>The '<tt>store</tt>' instruction is used to write to memory.</p>
 <h5>Arguments:</h5>
 <p>There are two arguments to the '<tt>store</tt>' instruction: a value
-to store and an address in which to store it.  The type of the '<tt>&lt;pointer&gt;</tt>'
+to store and an address at which to store it.  The type of the '<tt>&lt;pointer&gt;</tt>'
 operand must be a pointer to the type of the '<tt>&lt;value&gt;</tt>'
 operand. If the <tt>store</tt> is marked as <tt>volatile</tt>, then the
 optimizer is not allowed to modify the number or order of execution of
@@ -2725,7 +2721,7 @@ compiled to LLVM:</p>
 on the pointer type that is being indexed into. <a href="#t_pointer">Pointer</a>
 and <a href="#t_array">array</a> types can use a 32-bit or 64-bit
 <a href="#t_integer">integer</a> type but the value will always be sign extended
-to 64-bits.  <a href="#t_struct">Structure</a> types, require <tt>i32</tt>
+to 64-bits.  <a href="#t_struct">Structure</a> types require <tt>i32</tt>
 <b>constants</b>.</p>
 
 <p>In the example above, the first index is indexing into the '<tt>%ST*</tt>'
@@ -2745,8 +2741,8 @@ the LLVM code for the given testcase is equivalent to:</p>
 <pre>
   define i32* %foo(%ST* %s) {
     %t1 = getelementptr %ST* %s, i32 1                        <i>; yields %ST*:%t1</i>
-    %t2 = getelementptr %ST* %t1, i32 0, i32 2               <i>; yields %RT*:%t2</i>
-    %t3 = getelementptr %RT* %t2, i32 0, i32 1               <i>; yields [10 x [20 x i32]]*:%t3</i>
+    %t2 = getelementptr %ST* %t1, i32 0, i32 2                <i>; yields %RT*:%t2</i>
+    %t3 = getelementptr %RT* %t2, i32 0, i32 1                <i>; yields [10 x [20 x i32]]*:%t3</i>
     %t4 = getelementptr [10 x [20 x i32]]* %t3, i32 0, i32 5  <i>; yields [20 x i32]*:%t4</i>
     %t5 = getelementptr [20 x i32]* %t4, i32 0, i32 13        <i>; yields i32*:%t5</i>
     ret i32* %t5
@@ -3073,7 +3069,7 @@ be a <a href="#t_floating">floating point</a> type.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>uitofp</tt>' instruction interprets its operand as an unsigned
 integer quantity and converts it to the corresponding floating point value. If
-the value cannot fit in the floating point value, the results are undefined.</p>
+the value cannot fit in the floating point value, precision may be lost.</p>
 
 
 <h5>Example:</h5>
@@ -3106,7 +3102,7 @@ a <a href="#t_floating">floating point</a> type.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>sitofp</tt>' instruction interprets its operand as a signed
 integer quantity and converts it to the corresponding floating point value. If
-the value cannot fit in the floating point value, the results are undefined.</p>
+the value cannot fit in the floating point value, precision may be lost.</p>
 
 <h5>Example:</h5>
 <pre>
