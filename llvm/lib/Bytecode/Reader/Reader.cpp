@@ -1078,16 +1078,18 @@ const Type *BytecodeReader::ParseType() {
 
 ParamAttrsList *BytecodeReader::ParseParamAttrsList() {
   unsigned NumAttrs = read_vbr_uint();
-  ParamAttrsList *Attrs = 0;
+  ParamAttrsList *PAL = 0;
   if (NumAttrs) {
-    Attrs = new ParamAttrsList();
+    ParamAttrsVector Attrs;
+    ParamAttrsWithIndex PAWI;
     while (NumAttrs--) {
-      uint16_t index = read_vbr_uint();
-      uint16_t attrs = read_vbr_uint();
-      Attrs->addAttributes(index, attrs);
+      PAWI.index = read_vbr_uint();
+      PAWI.attrs = read_vbr_uint();
+      Attrs.push_back(PAWI);
     }
+    PAL = ParamAttrsList::get(Attrs);
   }
-  return Attrs;
+  return PAL;
 }
 
 

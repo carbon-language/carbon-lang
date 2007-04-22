@@ -16,6 +16,7 @@
 #include "llvm/ParameterAttributes.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
@@ -103,35 +104,29 @@ ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
   return Result;
 }
 
-void
-ParamAttrsList::addAttributes(uint16_t Index, uint16_t Attrs) {
-  // First, try to replace an existing one
-  for (unsigned i = 0; i < attrs.size(); ++i)
-    if (attrs[i].index == Index) {
-      attrs[i].attrs |= Attrs;
-      return;
-    }
-
-  // If not found, add a new one
-  ParamAttrsWithIndex Val;
-  Val.attrs = Attrs;
-  Val.index = Index;
-  attrs.push_back(Val);
+void 
+ParamAttrsList::Profile(FoldingSetNodeID &ID) const {
+  for (unsigned i = 0; i < attrs.size(); ++i) {
+    unsigned val = attrs[i].attrs << 16 | attrs[i].index;
+    ID.AddInteger(val);
+  }
 }
 
-void
-ParamAttrsList::removeAttributes(uint16_t Index, uint16_t Attrs) {
-  // Find the index from which to remove the attributes
-  for (unsigned i = 0; i < attrs.size(); ++i)
-    if (attrs[i].index == Index) {
-      attrs[i].attrs &= ~Attrs;
-      if (attrs[i].attrs == ParamAttr::None)
-        attrs.erase(&attrs[i]);
-      return;
-    }
+static ManagedStatic<FoldingSet<ParamAttrsList> > ParamAttrsLists;
 
-  // The index wasn't found above
-  assert(0 && "Index not found for removeAttributes");
+ParamAttrsList *
+ParamAttrsList::get(const ParamAttrsVector &attrVec) {
+  assert(!attrVec.empty() && "Illegal to create empty ParamAttrsList");
+  ParamAttrsList key(attrVec);
+  FoldingSetNodeID ID;
+  key.Profile(ID);
+  void *InsertPos;
+  ParamAttrsList* PAL = ParamAttrsLists->FindNodeOrInsertPos(ID, InsertPos);
+  if (!PAL) {
+    PAL = new ParamAttrsList(attrVec);
+    ParamAttrsLists->InsertNode(PAL, InsertPos);
+  }
+  return PAL;
 }
 
 //===----------------------------------------------------------------------===//

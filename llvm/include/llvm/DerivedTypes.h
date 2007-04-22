@@ -148,7 +148,6 @@ class FunctionType : public DerivedType {
                bool IsVarArgs, ParamAttrsList *Attrs = 0);
 
 public:
-  virtual ~FunctionType();
   /// FunctionType::get - This static method is the primary way of constructing
   /// a FunctionType. 
   ///

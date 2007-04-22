@@ -643,20 +643,13 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
       return false;
     const ParamAttrsList *Attrs1 = FTy->getParamAttrs();
     const ParamAttrsList *Attrs2 = FTy2->getParamAttrs();
-    if ((!Attrs1 && Attrs2 && !Attrs2->empty()) ||
-        (!Attrs2 && Attrs1 && !Attrs1->empty()) ||
+    if ((!Attrs1 && Attrs2) || (!Attrs2 && Attrs1) ||
         (Attrs1 && Attrs2 && (Attrs1->size() != Attrs2->size() ||
-         (Attrs1->size() > 0 && 
-          Attrs1->getParamAttrs(0) != Attrs2->getParamAttrs(0)))))
+         (Attrs1->getParamAttrs(0) != Attrs2->getParamAttrs(0)))))
       return false;
-    ParamAttrsList PAL1;
-    if (Attrs1)
-      PAL1 = *Attrs1;
-    ParamAttrsList PAL2;
-    if (Attrs2)
-      PAL2 = *Attrs2;
+
     for (unsigned i = 0, e = FTy2->getNumParams(); i != e; ++i) {
-      if (PAL1.getParamAttrs(i+1) != PAL2.getParamAttrs(i+1))
+      if (Attrs1 && Attrs1->getParamAttrs(i+1) != Attrs2->getParamAttrs(i+1))
         return false;
       if (!TypesEqual(FTy->getParamType(i), FTy2->getParamType(i), EqTypes))
         return false;
@@ -1065,15 +1058,10 @@ public:
     if (ParamAttrs)
       if (MTV.ParamAttrs)
         return *ParamAttrs < *MTV.ParamAttrs;
-      else if (ParamAttrs->empty())
-        return true;
       else
         return false;
     else if (MTV.ParamAttrs)
-      if (MTV.ParamAttrs->empty())
-        return false;
-      else
-        return true;
+      return true;
     return false;
   }
 };
@@ -1100,26 +1088,20 @@ FunctionType *FunctionType::get(const Type *ReturnType,
                                 ParamAttrsList *Attrs) {
 
   FunctionValType VT(ReturnType, Params, isVarArg, Attrs);
-  FunctionType *MT = FunctionTypes->get(VT);
-  if (MT) { 
-    delete Attrs; // not needed any more
-    return MT;
+  FunctionType *FT = FunctionTypes->get(VT);
+  if (FT) { 
+    return FT;
   }
 
-
-  MT = (FunctionType*) new char[sizeof(FunctionType) + 
+  FT = (FunctionType*) new char[sizeof(FunctionType) + 
                                 sizeof(PATypeHandle)*(Params.size()+1)];
-  new (MT) FunctionType(ReturnType, Params, isVarArg, Attrs);
-  FunctionTypes->add(VT, MT);
+  new (FT) FunctionType(ReturnType, Params, isVarArg, Attrs);
+  FunctionTypes->add(VT, FT);
 
 #ifdef DEBUG_MERGE_TYPES
-  DOUT << "Derived new type: " << MT << "\n";
+  DOUT << "Derived new type: " << FT << "\n";
 #endif
-  return MT;
-}
-
-FunctionType::~FunctionType() {
-  delete ParamAttrs;
+  return FT;
 }
 
 bool FunctionType::isStructReturn() const {

@@ -1,4 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -simplifycfg -disable-output
+; XFAIL: *
+; Un-XFAIL this when PR1146 is finished.
 
 	%struct..4._102 = type { %struct.QVectorData* }
 	%struct..5._125 = type { %struct.QMapData* }

@@ -1,5 +1,7 @@
 ; For PR1187
 ; RUN: llvm-upgrade < %s > /dev/null
+; XFAIL: *
+; Un-XFAIL this when PR1146 is fixed.
 
 %mystruct = type { int, double }
 %glob = global %mystruct { int 3, double 42.0 }

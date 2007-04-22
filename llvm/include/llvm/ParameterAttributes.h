@@ -18,6 +18,7 @@
 #define LLVM_PARAMETER_ATTRIBUTES_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/FoldingSet.h"
 
 namespace llvm {
 
@@ -39,6 +40,17 @@ enum Attributes {
 
 }
 
+/// This is just a pair of values to associate a set of parameter attributes
+/// with a parameter index.
+/// @brief ParameterAttributes with a parameter index.
+struct ParamAttrsWithIndex {
+  uint16_t attrs; ///< The attributes that are set, |'d together
+  uint16_t index; ///< Index of the parameter for which the attributes apply
+};
+
+/// @brief A vector of attribute/index pairs.
+typedef SmallVector<ParamAttrsWithIndex,4> ParamAttrsVector;
+
 typedef ParamAttr::Attributes ParameterAttributes;
 
 /// This class is used by Function and CallInst to represent the set of 
@@ -50,38 +62,27 @@ typedef ParamAttr::Attributes ParameterAttributes;
 /// a string of mnemonics suitable for LLVM Assembly output. Various accessors
 /// are provided to obtain information about the attributes.
 /// @brief A List of ParameterAttributes.
-class ParamAttrsList {
-  //void operator=(const ParamAttrsList &); // Do not implement
-  //ParamAttrsList(const ParamAttrsList &); // Do not implement
-
-  /// @name Types
-  /// @{
-  public:
-    /// This is an internal structure used to associate the ParameterAttributes
-    /// with a parameter index. 
-    /// @brief ParameterAttributes with a parameter index.
-    struct ParamAttrsWithIndex {
-      uint16_t attrs; ///< The attributes that are set, |'d together
-      uint16_t index; ///< Index of the parameter for which the attributes apply
-    };
-
-    /// @brief A vector of attribute/index pairs.
-    typedef SmallVector<ParamAttrsWithIndex,4> ParamAttrsVector;
-
-  /// @}
+class ParamAttrsList : public FoldingSetNode {
   /// @name Construction
   /// @{
-  public:
-    /// @brief Construct an empty ParamAttrsList
-    ParamAttrsList() {}
+  private:
+    // ParamAttrsList is uniqued, thes should not be publicly available
+    void operator=(const ParamAttrsList &); // Do not implement
+    ParamAttrsList(const ParamAttrsList &); // Do not implement
+    ParamAttrsList();                       // Do not implement
+    ~ParamAttrsList() {}                    // Not public!
 
+    /// @brief Construct an ParamAttrsList from a ParamAttrsVector
+    explicit ParamAttrsList(const ParamAttrsVector &attrVec) : attrs(attrVec) {}
+
+  public:
     /// This method ensures the uniqueness of ParamAttrsList instances. The
     /// argument is a vector of attribute/index pairs as represented by the
     /// ParamAttrsWithIndex structure. The vector is used in the construction of
     /// the ParamAttrsList instance. If an instance with identical vector pairs
     /// exists, it will be returned instead of creating a new instance.
     /// @brief Get a ParamAttrsList instance.
-    ParamAttrsList *get(const ParamAttrsVector &attrVec);
+    static ParamAttrsList *get(const ParamAttrsVector &attrVec);
 
   /// @}
   /// @name Accessors
@@ -155,33 +156,12 @@ class ParamAttrsList {
     /// @brief Return the number of parameter attributes this type has.
     unsigned size() const { return attrs.size(); }
 
-    /// Clients generally should not use this method. It is used internally by
-    /// LLVM.
-    /// @returns true if this ParamAttrsList is empty.
-    /// @brief Determine emptiness of ParamAttrsList.
-    unsigned empty() const { return attrs.empty(); }
-
   /// @}
-  /// @name Mutators
+  /// @name Implementation Details
   /// @{
   public:
-    /// This method will add the \p attrs to the parameter with index
-    /// \p param_index. If the parameter index does not exist it will be created
-    /// and the \p attrs will be the only attributes set. Otherwise, any 
-    /// existing attributes for the specified parameter remain set and the 
-    /// attributes given by \p attrs are also set.
-    /// @brief Add ParameterAttributes.
-    void addAttributes(uint16_t param_index, uint16_t attrs);
-
-    /// This method will remove the \p attrs to the parameter with index
-    /// \p param_index. If the parameter index does not exist in the list,  
-    /// an assertion will occur. If the specified attributes are the last 
-    /// attributes set for the specified parameter index, the attributes for 
-    /// that index are removed completely from the list (size is decremented).
-    /// Otherwise, the specified attributes are removed from the set of 
-    /// attributes for the given index, retaining any others.
-    /// @brief Remove a single ParameterAttribute
-    void removeAttributes(uint16_t param_index, uint16_t attrs);
+    void Profile(FoldingSetNodeID &ID) const;
+    void dump() const;
 
   /// @}
   /// @name Data

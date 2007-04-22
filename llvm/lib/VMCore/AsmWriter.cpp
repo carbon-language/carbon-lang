@@ -1383,6 +1383,17 @@ void Value::dump() const { print(*cerr.stream()); cerr << '\n'; }
 // Located here because so much of the needed functionality is here.
 void Type::dump() const { print(*cerr.stream()); cerr << '\n'; }
 
+void
+ParamAttrsList::dump() const {
+  cerr << "PAL[ ";
+  for (unsigned i = 0; i < attrs.size(); ++i) {
+    uint16_t index = getParamIndex(i);
+    uint16_t attrs = getParamAttrs(index);
+    cerr << "{" << index << "," << attrs << "} ";
+  }
+  cerr << "]\n";
+}
+
 //===----------------------------------------------------------------------===//
 //                         SlotMachine Implementation
 //===----------------------------------------------------------------------===//

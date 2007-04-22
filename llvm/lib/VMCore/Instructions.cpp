@@ -186,7 +186,6 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
 
 CallInst::~CallInst() {
   delete [] OperandList;
-  delete ParamAttrs; // FIXME: ParamAttrsList should be uniqued!
 }
 
 void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
@@ -354,7 +353,6 @@ CallInst::CallInst(const CallInst &CI)
 
 InvokeInst::~InvokeInst() {
   delete [] OperandList;
-  delete ParamAttrs; // FIXME: ParamAttrsList should be uniqued!
 }
 
 void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,

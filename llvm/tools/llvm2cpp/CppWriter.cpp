@@ -461,13 +461,14 @@ CppWriter::printTypeInternal(const Type* Ty) {
       const ParamAttrsList *PAL = FT->getParamAttrs();
       Out << "ParamAttrsList *" << typeName << "_PAL = 0;";
       nl(Out);
-      if (PAL && !PAL->empty()) {
-        Out << typeName << "_PAL = new ParamAttrsList();";
-        nl(Out);
+      if (PAL) {
+        Out << '{'; in(); nl(Out);
+        Out << "ParamAttrsVector Attrs;"; nl(Out);
+        Out << "ParamAttrsWithIndex PAWI;"; nl(Out);
         for (unsigned i = 0; i < PAL->size(); ++i) {
           uint16_t index = PAL->getParamIndex(i);
           uint16_t attrs = PAL->getParamAttrs(index);
-          Out << typeName << "_PAL->addAttributes(" << index << ", 0";
+          Out << "PAWI.index = " << index << "; PAWI.attrs = 0 ";
           if (attrs & ParamAttr::SExt)
             Out << " | ParamAttr::SExt";
           if (attrs & ParamAttr::ZExt)
@@ -480,9 +481,15 @@ CppWriter::printTypeInternal(const Type* Ty) {
             Out << " | ParamAttr::NoReturn";
           if (attrs & ParamAttr::NoUnwind)
             Out << " | ParamAttr::NoUnwind";
-          Out << ");";
+          Out << ";";
+          nl(Out);
+          Out << "Attrs.push_back(PAWI);";
           nl(Out);
         }
+        Out << typeName << "_PAL = ParamAttrsList::get(Attrs);";
+        nl(Out);
+        out(); nl(Out);
+        Out << '}'; nl(Out);
       }
       bool isForward = printTypeInternal(FT->getReturnType());
       std::string retTypeName(getCppName(FT->getReturnType()));
