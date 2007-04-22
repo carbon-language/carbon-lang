@@ -1396,12 +1396,12 @@ following is the syntax for constant expressions:</p>
   <dt><b><tt>uitofp ( CST to TYPE )</tt></b></dt>
   <dd>Convert an unsigned integer constant to the corresponding floating point
   constant. TYPE must be floating point. CST must be of integer type. If the
-  value won't fit in the floating point type, precision may be lost.</dd>
+  value won't fit in the floating point type, the results are undefined.</dd>
 
   <dt><b><tt>sitofp ( CST to TYPE )</tt></b></dt>
   <dd>Convert a signed integer constant to the corresponding floating point
   constant. TYPE must be floating point. CST must be of integer type. If the
-  value won't fit in the floating point type, precision may be lost.</dd>
+  value won't fit in the floating point type, the results are undefined.</dd>
 
   <dt><b><tt>ptrtoint ( CST to TYPE )</tt></b></dt>
   <dd>Convert a pointer typed constant to the corresponding integer constant
@@ -3069,7 +3069,7 @@ be a <a href="#t_floating">floating point</a> type.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>uitofp</tt>' instruction interprets its operand as an unsigned
 integer quantity and converts it to the corresponding floating point value. If
-the value cannot fit in the floating point value, precision may be lost.</p>
+the value cannot fit in the floating point value, the results are undefined.</p>
 
 
 <h5>Example:</h5>
@@ -3102,7 +3102,7 @@ a <a href="#t_floating">floating point</a> type.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>sitofp</tt>' instruction interprets its operand as a signed
 integer quantity and converts it to the corresponding floating point value. If
-the value cannot fit in the floating point value, precision may be lost.</p>
+the value cannot fit in the floating point value, the results are undefined.</p>
 
 <h5>Example:</h5>
 <pre>
