@@ -204,9 +204,11 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
   // compute the maximum alignment value.
   std::map<std::string, unsigned> SectionMap;
   unsigned MaxAlignment = 0;
+  unsigned MaxGlobalType = 0;
   for (Module::const_global_iterator GV = M->global_begin(),E = M->global_end();
        GV != E; ++GV) {
     MaxAlignment = std::max(MaxAlignment, GV->getAlignment());
+    MaxGlobalType = std::max(MaxGlobalType, VE.getTypeID(GV->getType()));
     
     if (!GV->hasSection()) continue;
     // Give section names unique ID's.
@@ -229,10 +231,12 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
   
   // Emit abbrev for globals, now that we know # sections and max alignment.
   unsigned SimpleGVarAbbrev = 0;
-  if (!M->global_empty() && 0) { 
+  if (!M->global_empty()) { 
     // Add an abbrev for common globals with no visibility or thread localness.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::MODULE_CODE_GLOBALVAR));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
+                              Log2_32_Ceil(MaxGlobalType+1)));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth, 1)); // Constant.
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));        // Initializer.
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth, 3)); // Linkage.
@@ -241,7 +245,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     else {
       unsigned MaxEncAlignment = Log2_32(MaxAlignment)+1;
       Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
-                               Log2_32_Ceil(MaxEncAlignment)));
+                               Log2_32_Ceil(MaxEncAlignment+1)));
     }
     if (SectionMap.empty())                                    // Section.
       Abbv->Add(BitCodeAbbrevOp(0));
@@ -300,7 +304,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
 
 /// WriteModule - Emit the specified module to the bitstream.
 static void WriteModule(const Module *M, BitstreamWriter &Stream) {
-  Stream.EnterSubblock(bitc::MODULE_BLOCK_ID, 2);
+  Stream.EnterSubblock(bitc::MODULE_BLOCK_ID, 3);
   
   // Emit the version number if it is non-zero.
   if (CurVersion) {

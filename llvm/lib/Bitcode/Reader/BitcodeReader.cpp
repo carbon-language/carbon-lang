@@ -94,7 +94,8 @@ bool BitcodeReader::ParseTypeTable(BitstreamReader &Stream) {
     }
     
     if (Code == bitc::DEFINE_ABBREV) {
-      assert(0 && "Abbrevs not implemented yet!");
+      Stream.ReadAbbrevRecord();
+      continue;
     }
     
     // Read a record.
@@ -231,7 +232,8 @@ bool BitcodeReader::ParseTypeSymbolTable(BitstreamReader &Stream) {
     }
     
     if (Code == bitc::DEFINE_ABBREV) {
-      assert(0 && "Abbrevs not implemented yet!");
+      Stream.ReadAbbrevRecord();
+      continue;
     }
     
     // Read a record.
@@ -294,7 +296,8 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
     }
     
     if (Code == bitc::DEFINE_ABBREV) {
-      assert(0 && "Abbrevs not implemented yet!");
+      Stream.ReadAbbrevRecord();
+      continue;
     }
     
     // Read a record.
