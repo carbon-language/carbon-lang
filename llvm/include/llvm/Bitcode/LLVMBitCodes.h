@@ -33,7 +33,7 @@ namespace bitc {
     GLOBALCONSTANTS_BLOCK_ID = 3,
     FUNCTION_BLOCK_ID        = 4,
     TYPE_SYMTAB_BLOCK_ID     = 5,
-    GLOBAL_SYMTAB_BLOCK_ID   = 6
+    VALUE_SYMTAB_BLOCK_ID    = 6
   };
   
   
@@ -79,6 +79,11 @@ namespace bitc {
   // The type symbol table only has one code (TST_ENTRY_CODE).
   enum TypeSymtabCodes {
     TST_ENTRY_CODE = 1     // TST_ENTRY: [typeid, namelen, namechar x N]
+  };
+  
+  // The value symbol table only has one code (VST_ENTRY_CODE).
+  enum ValueSymtabCodes {
+    VST_ENTRY_CODE = 1     // VST_ENTRY: [valid, namelen, namechar x N]
   };
   
 } // End bitc namespace

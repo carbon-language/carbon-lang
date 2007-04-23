@@ -147,12 +147,8 @@ public:
     EmitVBR(CodeLen, bitc::CodeLenWidth);
     FlushToWord();
     BlockScope.push_back(Block(CurCodeSize, Out.size()/4));
-    
-    // Delete all abbrevs.
-    for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
-      delete CurAbbrevs[i];
-    
     BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
+    
     // Emit a placeholder, which will be replaced when the block is popped.
     Emit(0, bitc::BlockSizeWidth);
     
@@ -161,6 +157,11 @@ public:
   
   void ExitBlock() {
     assert(!BlockScope.empty() && "Block scope imbalance!");
+    
+    // Delete all abbrevs.
+    for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
+      delete CurAbbrevs[i];
+    
     const Block &B = BlockScope.back();
     
     // Block tail:
