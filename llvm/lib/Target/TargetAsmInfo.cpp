@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetAsmInfo.h"
+#include <cctype>
+#include <cstring>
 
 using namespace llvm;
 
@@ -100,15 +102,27 @@ TargetAsmInfo::~TargetAsmInfo() {
 
 /// Measure the specified inline asm to determine an approximation of its
 /// length.
+/// Comments (which run till the next SeparatorChar or newline) do not
+/// count as an instruction.
+/// Any other non-whitespace text is considered an instruction, with
+/// multiple instructions separated by SeparatorChar or newlines.
+/// Variable-length instructions are not handled here; this function
+/// may be overloaded in the target code to do that.
 unsigned TargetAsmInfo::getInlineAsmLength(const char *Str) const {
   // Count the number of instructions in the asm.
-  unsigned NumInsts = 0;
+  bool atInsnStart = true;
+  unsigned Length = 0;
   for (; *Str; ++Str) {
     if (*Str == '\n' || *Str == SeparatorChar)
-      ++NumInsts;
+      atInsnStart = true;
+    if (atInsnStart && !isspace(*Str)) {
+      Length += MaxInstLength;
+      atInsnStart = false;
+    }
+    if (atInsnStart && strncmp(Str, CommentString, strlen(CommentString))==0)
+      atInsnStart = false;
   }
 
-  // Multiply by the worst-case length for each instruction.
-  return NumInsts * MaxInstLength;
+  return Length;
 }
 
