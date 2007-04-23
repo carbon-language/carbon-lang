@@ -13,6 +13,8 @@
 
 #include "ARMTargetAsmInfo.h"
 #include "ARMTargetMachine.h"
+#include <cstring>
+#include <cctype>
 using namespace llvm;
 
 ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
@@ -80,4 +82,5 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   InlineAsmStart = "@ InlineAsm Start";
   InlineAsmEnd = "@ InlineAsm End";
   LCOMMDirective = "\t.lcomm\t";
+  isThumb = Subtarget->isThumb();
 }

@@ -23,6 +23,8 @@ namespace llvm {
 
   struct ARMTargetAsmInfo : public TargetAsmInfo {
     ARMTargetAsmInfo(const ARMTargetMachine &TM);
+
+    bool isThumb;
   };
 
 
