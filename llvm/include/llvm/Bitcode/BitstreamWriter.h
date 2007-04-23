@@ -32,7 +32,10 @@ class BitstreamWriter {
   // CurCodeSize - This is the declared size of code values used for the current
   // block, in bits.
   unsigned CurCodeSize;
-  
+
+  /// CurAbbrevs - Abbrevs installed at in this block.
+  std::vector<BitCodeAbbrev*> CurAbbrevs;
+
   struct Block {
     unsigned PrevCodeSize;
     unsigned StartSizeWord;
@@ -43,14 +46,13 @@ class BitstreamWriter {
   /// BlockScope - This tracks the current blocks that we have entered.
   std::vector<Block> BlockScope;
   
-  std::vector<BitCodeAbbrev*> CurAbbrevs;
 public:
   BitstreamWriter(std::vector<unsigned char> &O) 
     : Out(O), CurBit(0), CurValue(0), CurCodeSize(2) {}
 
   ~BitstreamWriter() {
     assert(CurBit == 0 && "Unflused data remaining");
-    assert(BlockScope.empty() && "Block imbalance");
+    assert(BlockScope.empty() && CurAbbrevs.empty() && "Block imbalance");
   }
   //===--------------------------------------------------------------------===//
   // Basic Primitives for emitting bits to the stream.
