@@ -54,7 +54,7 @@ public:
   unsigned getValueID(const Value *V) const {
     ValueMapType::const_iterator I = ValueMap.find(V);
     assert(I != ValueMap.end() && "Value not in slotcalculator!");
-    return I->second;
+    return I->second-1;
   }
   
   unsigned getTypeID(const Type *T) const {
