@@ -200,10 +200,14 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     WriteStringRecord(bitc::MODULE_CODE_ASM, M->getModuleInlineAsm(),
                       0/*TODO*/, Stream);
 
-  // Emit information about sections.
+  // Emit information about sections, computing how many there are.  Also
+  // compute the maximum alignment value.
   std::map<std::string, unsigned> SectionMap;
+  unsigned MaxAlignment = 0;
   for (Module::const_global_iterator GV = M->global_begin(),E = M->global_end();
        GV != E; ++GV) {
+    MaxAlignment = std::max(MaxAlignment, GV->getAlignment());
+    
     if (!GV->hasSection()) continue;
     // Give section names unique ID's.
     unsigned &Entry = SectionMap[GV->getSection()];
@@ -213,6 +217,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Entry = SectionMap.size();
   }
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
+    MaxAlignment = std::max(MaxAlignment, F->getAlignment());
     if (!F->hasSection()) continue;
     // Give section names unique ID's.
     unsigned &Entry = SectionMap[F->getSection()];
@@ -222,13 +227,37 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Entry = SectionMap.size();
   }
   
-  // TODO: Emit abbrev, now that we know # sections.
+  // Emit abbrev for globals, now that we know # sections and max alignment.
+  unsigned SimpleGVarAbbrev = 0;
+  if (!M->global_empty() && 0) { 
+    // Add an abbrev for common globals with no visibility or thread localness.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::MODULE_CODE_GLOBALVAR));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth, 1)); // Constant.
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));        // Initializer.
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth, 3)); // Linkage.
+    if (MaxAlignment == 0)                                     // Alignment.
+      Abbv->Add(BitCodeAbbrevOp(0));
+    else {
+      unsigned MaxEncAlignment = Log2_32(MaxAlignment)+1;
+      Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
+                               Log2_32_Ceil(MaxEncAlignment)));
+    }
+    if (SectionMap.empty())                                    // Section.
+      Abbv->Add(BitCodeAbbrevOp(0));
+    else
+      Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
+                               Log2_32_Ceil(SectionMap.size())));
+    // Don't bother emitting vis + thread local.
+    SimpleGVarAbbrev = Stream.EmitAbbrev(Abbv);
+  }
   
   // Emit the global variable information.
   SmallVector<unsigned, 64> Vals;
   for (Module::const_global_iterator GV = M->global_begin(),E = M->global_end();
        GV != E; ++GV) {
-    
+    unsigned AbbrevToUse = 0;
+
     // GLOBALVAR: [type, isconst, initid, 
     //             linkage, alignment, section, visibility, threadlocal]
     Vals.push_back(VE.getTypeID(GV->getType()));
@@ -238,10 +267,14 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(getEncodedLinkage(GV));
     Vals.push_back(Log2_32(GV->getAlignment())+1);
     Vals.push_back(GV->hasSection() ? SectionMap[GV->getSection()] : 0);
-    Vals.push_back(getEncodedVisibility(GV));
-    Vals.push_back(GV->isThreadLocal());
+    if (GV->isThreadLocal() || 
+        GV->getVisibility() != GlobalValue::DefaultVisibility) {
+      Vals.push_back(getEncodedVisibility(GV));
+      Vals.push_back(GV->isThreadLocal());
+    } else {
+      AbbrevToUse = SimpleGVarAbbrev;
+    }
     
-    unsigned AbbrevToUse = 0;
     Stream.EmitRecord(bitc::MODULE_CODE_GLOBALVAR, Vals, AbbrevToUse);
     Vals.clear();
   }

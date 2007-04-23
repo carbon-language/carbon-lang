@@ -16,9 +16,6 @@
 #define BITSTREAM_WRITER_H
 
 #include "llvm/Bitcode/BitCodes.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/DataTypes.h"
-#include <cassert>
 #include <vector>
 
 namespace llvm {
@@ -39,11 +36,14 @@ class BitstreamWriter {
   struct Block {
     unsigned PrevCodeSize;
     unsigned StartSizeWord;
+    std::vector<BitCodeAbbrev*> PrevAbbrevs;
     Block(unsigned PCS, unsigned SSW) : PrevCodeSize(PCS), StartSizeWord(SSW) {}
   };
   
   /// BlockScope - This tracks the current blocks that we have entered.
   std::vector<Block> BlockScope;
+  
+  std::vector<BitCodeAbbrev*> CurAbbrevs;
 public:
   BitstreamWriter(std::vector<unsigned char> &O) 
     : Out(O), CurBit(0), CurValue(0), CurCodeSize(2) {}
@@ -145,6 +145,12 @@ public:
     EmitVBR(CodeLen, bitc::CodeLenWidth);
     FlushToWord();
     BlockScope.push_back(Block(CurCodeSize, Out.size()/4));
+    
+    // Delete all abbrevs.
+    for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
+      delete CurAbbrevs[i];
+    
+    BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
     // Emit a placeholder, which will be replaced when the block is popped.
     Emit(0, bitc::BlockSizeWidth);
     
@@ -153,8 +159,7 @@ public:
   
   void ExitBlock() {
     assert(!BlockScope.empty() && "Block scope imbalance!");
-    Block B = BlockScope.back();
-    BlockScope.pop_back();
+    const Block &B = BlockScope.back();
     
     // Block tail:
     //    [END_BLOCK, <align4bytes>]
@@ -171,8 +176,10 @@ public:
     Out[ByteNo++] = (unsigned char)(SizeInWords >> 16);
     Out[ByteNo++] = (unsigned char)(SizeInWords >> 24);
     
-    // Restore the outer block's code size.
+    // Restore the inner block's code size and abbrev table.
     CurCodeSize = B.PrevCodeSize;
+    BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
+    BlockScope.pop_back();
   }
   
   //===--------------------------------------------------------------------===//
@@ -184,7 +191,14 @@ public:
   void EmitRecord(unsigned Code, SmallVectorImpl<uint64_t> &Vals,
                   unsigned Abbrev = 0) {
     if (Abbrev) {
-      assert(0 && "abbrevs not implemented yet!");
+      unsigned AbbrevNo = Abbrev-bitc::FIRST_ABBREV;
+      assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
+      BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
+      assert(0 && "TODO");
+      for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
+      }
+      
+      
     } else {
       // If we don't have an abbrev to use, emit this in its fully unabbreviated
       // form.
@@ -211,6 +225,32 @@ public:
       for (unsigned i = 0, e = Vals.size(); i != e; ++i)
         EmitVBR(Vals[i], 6);
     }
+  }
+  
+  //===--------------------------------------------------------------------===//
+  // Abbrev Emission
+  //===--------------------------------------------------------------------===//
+  
+  /// EmitAbbrev - This emits an abbreviation to the stream.  Note that this
+  /// method takes ownership of the specified abbrev.
+  unsigned EmitAbbrev(BitCodeAbbrev *Abbv) {
+    // Emit the abbreviation as a record.
+    EmitCode(bitc::DEFINE_ABBREV);
+    EmitVBR(Abbv->getNumOperandInfos(), 5);
+    for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
+      const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
+      Emit(Op.isLiteral(), 1);
+      if (Op.isLiteral()) {
+        EmitVBR64(Op.getLiteralValue(), 8);
+      } else {
+        Emit(Op.getEncoding(), 3);
+        if (Op.hasEncodingData())
+          EmitVBR64(Op.getEncodingData(), 5);
+      }
+    }
+    
+    CurAbbrevs.push_back(Abbv);
+    return CurAbbrevs.size()-1+bitc::FIRST_ABBREV;
   }
 };
 

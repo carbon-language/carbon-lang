@@ -93,7 +93,7 @@ bool BitcodeReader::ParseTypeTable(BitstreamReader &Stream) {
       continue;
     }
     
-    if (Code == bitc::DEFINE_ABBREVS) {
+    if (Code == bitc::DEFINE_ABBREV) {
       assert(0 && "Abbrevs not implemented yet!");
     }
     
@@ -230,7 +230,7 @@ bool BitcodeReader::ParseTypeSymbolTable(BitstreamReader &Stream) {
       continue;
     }
     
-    if (Code == bitc::DEFINE_ABBREVS) {
+    if (Code == bitc::DEFINE_ABBREV) {
       assert(0 && "Abbrevs not implemented yet!");
     }
     
@@ -293,7 +293,7 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
       continue;
     }
     
-    if (Code == bitc::DEFINE_ABBREVS) {
+    if (Code == bitc::DEFINE_ABBREV) {
       assert(0 && "Abbrevs not implemented yet!");
     }
     
@@ -345,7 +345,7 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
     // GLOBALVAR: [type, isconst, initid, 
     //             linkage, alignment, section, visibility, threadlocal]
     case bitc::MODULE_CODE_GLOBALVAR: {
-      if (Record.size() < 8)
+      if (Record.size() < 6)
         return Error("Invalid MODULE_CODE_GLOBALVAR record");
       const Type *Ty = getTypeByID(Record[0]);
       if (!isa<PointerType>(Ty))
@@ -361,8 +361,10 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
           return Error("Invalid section ID");
         Section = SectionTable[Record[5]-1];
       }
-      GlobalValue::VisibilityTypes Visibility = GetDecodedVisibility(Record[6]);
-      bool isThreadLocal = Record[7];
+      GlobalValue::VisibilityTypes Visibility = GlobalValue::DefaultVisibility;
+      if (Record.size() >= 6) Visibility = GetDecodedVisibility(Record[6]);
+      bool isThreadLocal = false;
+      if (Record.size() >= 7) isThreadLocal = Record[7];
 
       GlobalVariable *NewGV =
         new GlobalVariable(Ty, isConstant, Linkage, 0, "", TheModule);

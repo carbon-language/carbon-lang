@@ -16,9 +16,6 @@
 #define BITSTREAM_READER_H
 
 #include "llvm/Bitcode/BitCodes.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/DataTypes.h"
-#include <cassert>
 
 namespace llvm {
   
