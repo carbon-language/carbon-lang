@@ -49,6 +49,11 @@ public:
     this->append(RHS, RHS+strlen(RHS));
     return *this;
   }
+  SmallString &operator+=(char C) {
+    this->push_back(C);
+    return *this;
+  }
+  
 };
   
   
