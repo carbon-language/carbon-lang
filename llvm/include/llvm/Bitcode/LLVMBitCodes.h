@@ -30,7 +30,7 @@ namespace bitc {
     // Module sub-block id's
     TYPE_BLOCK_ID            = 1,
     MODULEINFO_BLOCK_ID      = 2,
-    GLOBALCONSTANTS_BLOCK_ID = 3,
+    CONSTANTS_BLOCK_ID       = 3,
     FUNCTION_BLOCK_ID        = 4,
     TYPE_SYMTAB_BLOCK_ID     = 5,
     VALUE_SYMTAB_BLOCK_ID    = 6
@@ -78,12 +78,26 @@ namespace bitc {
   
   // The type symbol table only has one code (TST_ENTRY_CODE).
   enum TypeSymtabCodes {
-    TST_ENTRY_CODE = 1     // TST_ENTRY: [typeid, namelen, namechar x N]
+    TST_CODE_ENTRY = 1     // TST_ENTRY: [typeid, namelen, namechar x N]
   };
   
   // The value symbol table only has one code (VST_ENTRY_CODE).
   enum ValueSymtabCodes {
-    VST_ENTRY_CODE = 1     // VST_ENTRY: [valid, namelen, namechar x N]
+    VST_CODE_ENTRY = 1     // VST_ENTRY: [valid, namelen, namechar x N]
+  };
+  
+  // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
+  // constant and maintains an implicit current type value.
+  enum ConstantsSymtabCodes {
+    CST_CODE_SETTYPE      = 1,  // SETTYPE: [typeid]
+    CST_CODE_NULL         = 2,  // NULL
+    CST_CODE_UNDEF        = 3,  // UNDEF
+    CST_CODE_INTEGER      = 4,  // INTEGER: [intval]
+    CST_CODE_WIDE_INTEGER = 5,  // WIDE_INTEGER: [n, n x intval]
+    CST_CODE_FLOAT        = 6,  // FLOAT: [fpval]
+    CST_CODE_AGGREGATE    = 7,  // AGGREGATE: [n, n x value number]
+    CST_CODE_CONSTEXPR    = 8   // CONSTEXPR: [opcode, n, n x val#]
+    // TODO: CE_BINOP ETC
   };
   
 } // End bitc namespace
