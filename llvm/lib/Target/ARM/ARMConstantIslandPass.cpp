@@ -121,7 +121,6 @@ namespace {
     bool HasFarJump;
 
     const TargetInstrInfo *TII;
-    const ARMFunctionInfo *AFI;
     bool isThumb;
   public:
     virtual bool runOnMachineFunction(MachineFunction &Fn);
@@ -173,9 +172,9 @@ FunctionPass *llvm::createARMConstantIslandPass() {
 
 bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   MachineConstantPool &MCP = *Fn.getConstantPool();
+  ARMFunctionInfo *AFI = Fn.getInfo<ARMFunctionInfo>();
   
   TII = Fn.getTarget().getInstrInfo();
-  AFI = Fn.getInfo<ARMFunctionInfo>();
   isThumb = AFI->isThumbFunction();
 
   HasFarJump = false;
@@ -184,11 +183,18 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   // the numbers agree with the position of the block in the function.
   Fn.RenumberBlocks();
 
+  /// Thumb functions containing constant pools get 2-byte alignment.  This is so
+  /// we can keep exact track of where the alignment padding goes.  Set default.
+  AFI->setAlign(isThumb ? 1U : 2U);
+
   // Perform the initial placement of the constant pool entries.  To start with,
   // we put them all at the end of the function.
   std::vector<MachineInstr*> CPEMIs;
-  if (!MCP.isEmpty())
+  if (!MCP.isEmpty()) {
     DoInitialPlacement(Fn, CPEMIs);
+    if (isThumb)
+      AFI->setAlign(2U);
+  }
   
   /// The next UID to take is the first unused one.
   NextUID = CPEMIs.size();
@@ -1071,6 +1077,9 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
     SplitBlockBeforeInstr(MI);
     // No need for the branch to the next block. We're adding a unconditional
     // branch to the destination.
+    int delta = ARM::GetInstSize(&MBB->back());
+    BBSizes[MBB->getNumber()] -= delta;
+    AdjustBBOffsetsAfter(MBB, -delta);
     MBB->back().eraseFromParent();
   }
   MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
@@ -1079,18 +1088,22 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
        << " also invert condition and change dest. to BB#"
        << NextBB->getNumber() << "\n";
 
-  // Insert a unconditional branch and replace the conditional branch.
+  // Insert a new conditional branch and a new unconditional branch.
   // Also update the ImmBranch as well as adding a new entry for the new branch.
   BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB).addImm(CC);
   Br.MI = &MBB->back();
+  BBSizes[MBB->getNumber()] += ARM::GetInstSize(&MBB->back());
   BuildMI(MBB, TII->get(Br.UncondBr)).addMBB(DestBB);
+  BBSizes[MBB->getNumber()] += ARM::GetInstSize(&MBB->back());
   unsigned MaxDisp = getUnconditionalBrDisp(Br.UncondBr);
   ImmBranches.push_back(ImmBranch(&MBB->back(), MaxDisp, false, Br.UncondBr));
+
+  // Remove the old conditional branch.  It may or may not still be in MBB.
+  BBSizes[MI->getParent()->getNumber()] -= ARM::GetInstSize(MI);
   MI->eraseFromParent();
 
-  // Increase the size of MBB to account for the new unconditional branch.
+  // The net size change is an addition of one unconditional branch.
   int delta = ARM::GetInstSize(&MBB->back());
-  BBSizes[MBB->getNumber()] += delta;
   AdjustBBOffsetsAfter(MBB, delta);
   return true;
 }
