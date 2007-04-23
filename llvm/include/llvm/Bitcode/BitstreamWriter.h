@@ -194,11 +194,40 @@ public:
       unsigned AbbrevNo = Abbrev-bitc::FIRST_ABBREV;
       assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
       BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
-      assert(0 && "TODO");
+      
+      EmitCode(Abbrev);
+      
+      // Insert the code into Vals to treat it uniformly.
+      Vals.insert(Vals.begin(), Code);
+      
+      unsigned RecordIdx = 0;
       for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
+        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
+        const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
+        uint64_t RecordVal = Vals[RecordIdx];
+        
+        if (Op.isLiteral()) {
+          // If the abbrev specifies the literal value to use, don't emit
+          // anything.
+          assert(RecordVal == Op.getLiteralValue() &&
+                 "Invalid abbrev for record!");
+          ++RecordIdx;
+        } else {
+          // Encode the value as we are commanded.
+          switch (Op.getEncoding()) {
+          default: assert(0 && "Unknown encoding!");
+          case BitCodeAbbrevOp::FixedWidth:
+            Emit64(RecordVal, Op.getEncodingData());
+            ++RecordIdx;
+            break;
+          case BitCodeAbbrevOp::VBR:
+            EmitVBR64(RecordVal, Op.getEncodingData());
+            ++RecordIdx;
+            break;
+          }
+        }
       }
-      
-      
+      assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
     } else {
       // If we don't have an abbrev to use, emit this in its fully unabbreviated
       // form.
@@ -215,7 +244,43 @@ public:
   void EmitRecord(unsigned Code, SmallVectorImpl<unsigned> &Vals,
                   unsigned Abbrev = 0) {
     if (Abbrev) {
-      assert(0 && "abbrevs not implemented yet!");
+      unsigned AbbrevNo = Abbrev-bitc::FIRST_ABBREV;
+      assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
+      BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
+      
+      EmitCode(Abbrev);
+
+      // Insert the code into Vals to treat it uniformly.
+      Vals.insert(Vals.begin(), Code);
+      
+      unsigned RecordIdx = 0;
+      for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
+        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
+        const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
+        unsigned RecordVal = Vals[RecordIdx];
+        
+        if (Op.isLiteral()) {
+          // If the abbrev specifies the literal value to use, don't emit
+          // anything.
+          assert(RecordVal == Op.getLiteralValue() &&
+                 "Invalid abbrev for record!");
+          ++RecordIdx;
+        } else {
+          // Encode the value as we are commanded.
+          switch (Op.getEncoding()) {
+          default: assert(0 && "Unknown encoding!");
+          case BitCodeAbbrevOp::FixedWidth:
+            Emit(RecordVal, Op.getEncodingData());
+            ++RecordIdx;
+            break;
+          case BitCodeAbbrevOp::VBR:
+            EmitVBR(RecordVal, Op.getEncodingData());
+            ++RecordIdx;
+            break;
+          }
+        }
+      }
+      assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
     } else {
       // If we don't have an abbrev to use, emit this in its fully unabbreviated
       // form.
