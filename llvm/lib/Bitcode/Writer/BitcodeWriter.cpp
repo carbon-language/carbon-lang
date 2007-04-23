@@ -13,7 +13,7 @@
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
-#include "../LLVMBitCodes.h"
+#include "llvm/Bitcode/LLVMBitCodes.h"
 #include "ValueEnumerator.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"

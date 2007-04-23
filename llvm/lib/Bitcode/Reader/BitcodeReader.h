@@ -16,7 +16,7 @@
 
 #include "llvm/Type.h"
 #include "llvm/ModuleProvider.h"
-#include "../LLVMBitCodes.h"
+#include "llvm/Bitcode/LLVMBitCodes.h"
 #include <vector>
 
 namespace llvm {
