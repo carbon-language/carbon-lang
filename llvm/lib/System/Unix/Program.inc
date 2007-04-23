@@ -119,10 +119,12 @@ static void SetMemoryLimits (unsigned size)
   getrlimit (RLIMIT_DATA, &r);
   r.rlim_cur = limit;
   setrlimit (RLIMIT_DATA, &r);
+#ifndef __CYGWIN__
   // Resident set size.
   getrlimit (RLIMIT_RSS, &r);
   r.rlim_cur = limit;
   setrlimit (RLIMIT_RSS, &r);
+#endif
   // Virtual memory.
   getrlimit (RLIMIT_AS, &r);
   r.rlim_cur = limit;
