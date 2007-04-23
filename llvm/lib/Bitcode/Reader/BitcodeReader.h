@@ -21,11 +21,13 @@
 
 namespace llvm {
   class BitstreamReader;
+  class Value;
 
 class BitcodeReader : public ModuleProvider {
   const char *ErrorString;
   
   std::vector<PATypeHolder> TypeList;
+  std::vector<Value*> ValueList;
 public:
   virtual ~BitcodeReader() {}
   
@@ -59,6 +61,7 @@ private:
   bool ParseModule(BitstreamReader &Stream, const std::string &ModuleID);
   bool ParseTypeTable(BitstreamReader &Stream);
   bool ParseTypeSymbolTable(BitstreamReader &Stream);
+  bool ParseValueSymbolTable(BitstreamReader &Stream);
 };
   
 } // End llvm namespace

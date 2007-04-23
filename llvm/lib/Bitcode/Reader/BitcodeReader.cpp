@@ -15,12 +15,14 @@
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
 /// ConvertToString - Convert a string from a record into an std::string, return
 /// true on failure.
+template<typename StrTy>
 static bool ConvertToString(SmallVector<uint64_t, 64> &Record, unsigned Idx,
-                            std::string &Result) {
+                            StrTy &Result) {
   if (Record.size() < Idx+1 || Record.size() < Record[Idx]+Idx+1)
     return true;
   
@@ -255,6 +257,52 @@ bool BitcodeReader::ParseTypeSymbolTable(BitstreamReader &Stream) {
   }
 }
 
+bool BitcodeReader::ParseValueSymbolTable(BitstreamReader &Stream) {
+  if (Stream.EnterSubBlock())
+    return Error("Malformed block record");
+
+  SmallVector<uint64_t, 64> Record;
+  
+  // Read all the records for this value table.
+  SmallString<128> ValueName;
+  while (1) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == bitc::END_BLOCK)
+      return Stream.ReadBlockEnd();
+    
+    if (Code == bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      continue;
+    }
+    
+    if (Code == bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read a record.
+    Record.clear();
+    switch (Stream.ReadRecord(Code, Record)) {
+    default:  // Default behavior: unknown type.
+      break;
+    case bitc::VST_ENTRY_CODE:    // VST_ENTRY: [valueid, namelen, namechar x N]
+      if (ConvertToString(Record, 1, ValueName))
+        return Error("Invalid TST_ENTRY record");
+      unsigned ValueID = Record[0];
+      if (ValueID >= ValueList.size())
+        return Error("Invalid Value ID in VST_ENTRY record");
+      Value *V = ValueList[ValueID];
+      
+      V->setName(&ValueName[0], ValueName.size());
+      ValueName.clear();
+      break;
+    }
+  }
+}
+
 
 bool BitcodeReader::ParseModule(BitstreamReader &Stream,
                                 const std::string &ModuleID) {
@@ -289,6 +337,10 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
         break;
       case bitc::TYPE_SYMTAB_BLOCK_ID:
         if (ParseTypeSymbolTable(Stream))
+          return true;
+        break;
+      case bitc::VALUE_SYMTAB_BLOCK_ID:
+        if (ParseValueSymbolTable(Stream))
           return true;
         break;
       }
@@ -377,7 +429,8 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
       NewGV->setVisibility(Visibility);
       NewGV->setThreadLocal(isThreadLocal);
       
-      // TODO: Add to value table.
+      ValueList.push_back(NewGV);
+      
       // TODO: remember initializer/global pair for later substitution.
       break;
     }
@@ -407,7 +460,7 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
       }
       Func->setVisibility(GetDecodedVisibility(Record[6]));
       
-      // TODO: Add to value table.
+      ValueList.push_back(Func);
       // TODO: remember initializer/global pair for later substitution.
       break;
     }
