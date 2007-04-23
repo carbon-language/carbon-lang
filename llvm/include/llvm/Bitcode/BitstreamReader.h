@@ -34,10 +34,19 @@ class BitstreamReader {
   // CurCodeSize - This is the declared size of code values used for the current
   // block, in bits.
   unsigned CurCodeSize;
+
+  /// CurAbbrevs - Abbrevs installed at in this block.
+  std::vector<BitCodeAbbrev*> CurAbbrevs;
+  
+  struct Block {
+    unsigned PrevCodeSize;
+    std::vector<BitCodeAbbrev*> PrevAbbrevs;
+    explicit Block(unsigned PCS) : PrevCodeSize(PCS) {}
+  };
   
   /// BlockScope - This tracks the codesize of parent blocks.
-  SmallVector<unsigned, 8> BlockScope;
-  
+  SmallVector<Block, 8> BlockScope;
+
 public:
   BitstreamReader(const unsigned char *Start, const unsigned char *End)
     : NextChar(Start), LastChar(End) {
@@ -45,6 +54,19 @@ public:
     CurWord = 0;
     BitsInCurWord = 0;
     CurCodeSize = 2;
+  }
+  
+  ~BitstreamReader() {
+    // Abbrevs could still exist if the stream was broken.  If so, don't leak
+    // them.
+    for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
+      delete CurAbbrevs[i];
+
+    for (unsigned S = 0, e = BlockScope.size(); S != e; ++S) {
+      std::vector<BitCodeAbbrev*> &Abbrevs = BlockScope[S].PrevAbbrevs;
+      for (unsigned i = 0, e = Abbrevs.size(); i != e; ++i)
+        delete Abbrevs[i];
+    }
   }
   
   bool AtEndOfStream() const { return NextChar == LastChar; }
@@ -85,6 +107,13 @@ public:
       CurWord = 0;
     BitsInCurWord = 32-BitsLeft;
     return R;
+  }
+  
+  uint64_t Read64(unsigned NumBits) {
+    if (NumBits <= 32) return Read(NumBits);
+    
+    uint64_t V = Read(32);
+    return V | (uint64_t)Read(NumBits-32) << 32;
   }
   
   uint32_t ReadVBR(unsigned NumBits) {
@@ -168,7 +197,8 @@ public:
   /// EnterSubBlock - Having read the ENTER_SUBBLOCK abbrevid, read and enter
   /// the block, returning the BlockID of the block we just entered.
   bool EnterSubBlock() {
-    BlockScope.push_back(CurCodeSize);
+    BlockScope.push_back(Block(CurCodeSize));
+    BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
     
     // Get the codesize of this block.
     CurCodeSize = ReadVBR(bitc::CodeLenWidth);
@@ -188,7 +218,13 @@ public:
     // Block tail:
     //    [END_BLOCK, <align4bytes>]
     SkipToWord();
-    CurCodeSize = BlockScope.back();
+    CurCodeSize = BlockScope.back().PrevCodeSize;
+    
+    // Delete abbrevs from popped scope.
+    for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
+      delete CurAbbrevs[i];
+    
+    BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
     BlockScope.pop_back();
     return false;
   }
@@ -206,10 +242,57 @@ public:
       return Code;
     }
     
-    assert(0 && "Reading with abbrevs not implemented!");
-    return 0;
+    unsigned AbbrevNo = AbbrevID-bitc::FIRST_ABBREV;
+    assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
+    BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
+
+    for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
+      const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
+      if (Op.isLiteral()) {
+        // If the abbrev specifies the literal value to use, use it.
+        Vals.push_back(Op.getLiteralValue());
+      } else {
+        // Decode the value as we are commanded.
+        switch (Op.getEncoding()) {
+        default: assert(0 && "Unknown encoding!");
+        case BitCodeAbbrevOp::FixedWidth:
+          Vals.push_back(Read(Op.getEncodingData()));
+          break;
+        case BitCodeAbbrevOp::VBR:
+          Vals.push_back(ReadVBR64(Op.getEncodingData()));
+          break;
+        }
+      }
+    }
+    
+    unsigned Code = Vals[0];
+    Vals.erase(Vals.begin());
+    return Code;
   }
   
+  //===--------------------------------------------------------------------===//
+  // Abbrev Processing
+  //===--------------------------------------------------------------------===//
+  
+  void ReadAbbrevRecord() {
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    unsigned NumOpInfo = ReadVBR(5);
+    for (unsigned i = 0; i != NumOpInfo; ++i) {
+      bool IsLiteral = Read(1);
+      if (IsLiteral) {
+        Abbv->Add(BitCodeAbbrevOp(ReadVBR64(8)));
+        continue;
+      }
+
+      BitCodeAbbrevOp::Encoding E = (BitCodeAbbrevOp::Encoding)Read(3);
+      if (BitCodeAbbrevOp::hasEncodingData(E)) {
+        Abbv->Add(BitCodeAbbrevOp(E, ReadVBR64(5)));
+      } else {
+        assert(0 && "unimp");
+      }
+    }
+    CurAbbrevs.push_back(Abbv);
+  }
 };
 
 } // End llvm namespace
