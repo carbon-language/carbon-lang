@@ -85,7 +85,7 @@ namespace MVT {  // MVT = Machine Value Types
   /// MVT::isFloatingPoint - Return true if this is a simple FP, or a packed
   /// vector FP type.
   static inline bool isFloatingPoint(ValueType VT) {
-    return (VT >= f32 && VT <= f128) || (VT >= v4f32 && VT <= v2f64);
+    return (VT >= f32 && VT <= f128) || (VT >= v2f32 && VT <= v2f64);
   }
   
   /// MVT::isVector - Return true if this is a packed vector type (i.e. not 
