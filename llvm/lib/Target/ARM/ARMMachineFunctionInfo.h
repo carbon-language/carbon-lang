@@ -27,8 +27,13 @@ namespace llvm {
 class ARMFunctionInfo : public MachineFunctionInfo {
 
   /// isThumb - True if this function is compiled under Thumb mode.
-  ///
+  /// Used to initialized Align, so must precede it.
   bool isThumb;
+
+  /// Align - required alignment.  ARM functions and Thumb functions with
+  /// constant pools require 4-byte alignment; other Thumb functions
+  /// require only 2-byte alignment.
+  unsigned Align;
 
   /// VarArgsRegSaveSize - Size of the register save area for vararg functions.
   ///
@@ -84,7 +89,8 @@ class ARMFunctionInfo : public MachineFunctionInfo {
 
 public:
   ARMFunctionInfo() :
-    isThumb(false),
+    isThumb(false), 
+    Align(2U),
     VarArgsRegSaveSize(0), HasStackFrame(false),
     LRSpilledForFarJump(false), R3IsLiveIn(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
@@ -94,6 +100,7 @@ public:
 
   ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
+    Align(isThumb ? 1U : 2U),
     VarArgsRegSaveSize(0), HasStackFrame(false),
     LRSpilledForFarJump(false), R3IsLiveIn(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
@@ -103,6 +110,9 @@ public:
     JumpTableUId(0) {}
 
   bool isThumbFunction() const { return isThumb; }
+
+  unsigned getAlign() const { return Align; }
+  void setAlign(unsigned a) { Align = a; }
 
   unsigned getVarArgsRegSaveSize() const { return VarArgsRegSaveSize; }
   void setVarArgsRegSaveSize(unsigned s) { VarArgsRegSaveSize = s; }
