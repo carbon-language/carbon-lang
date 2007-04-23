@@ -579,8 +579,10 @@ void AsmPrinter::EmitString(const std::string &String) const {
 //===----------------------------------------------------------------------===//
 
 // EmitAlignment - Emit an alignment directive to the specified power of two.
+// Use the maximum of the specified alignment and the alignment from the
+// specified GlobalValue (if any).
 void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
-  if (GV && GV->getAlignment())
+  if (GV && GV->getAlignment() && Log2_32(GV->getAlignment()) > NumBits)
     NumBits = Log2_32(GV->getAlignment());
   if (NumBits == 0) return;   // No need to emit alignment.
   if (TAI->getAlignmentIsInBytes()) NumBits = 1 << NumBits;
