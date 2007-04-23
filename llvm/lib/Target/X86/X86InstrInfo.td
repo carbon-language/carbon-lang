@@ -2467,9 +2467,15 @@ def TLS_addr : I<0, Pseudo, (ops GR32:$dst, i32imm:$sym),
                Imp<[EBX],[]>;
 
 let AddedComplexity = 10 in
-def TLS_gs : I<0, Pseudo, (ops GR32:$dst, GR32:$src),
-               "movl %gs:($src), $dst",
-               [(set GR32:$dst, (load (add X86TLStp, GR32:$src)))]>;
+def TLS_gs_rr : I<0, Pseudo, (ops GR32:$dst, GR32:$src),
+                  "movl %gs:($src), $dst",
+                  [(set GR32:$dst, (load (add X86TLStp, GR32:$src)))]>;
+
+let AddedComplexity = 15 in
+def TLS_gs_ri : I<0, Pseudo, (ops GR32:$dst, i32imm:$src),
+                  "movl %gs:${src:mem}, $dst",
+                  [(set GR32:$dst,
+                    (load (add X86TLStp, (X86Wrapper tglobaltlsaddr:$src))))]>;
 
 def TLS_tp : I<0, Pseudo, (ops GR32:$dst),
                "movl %gs:0, $dst",
@@ -2491,6 +2497,7 @@ def DWARF_LOC   : I<0, Pseudo, (ops i32imm:$line, i32imm:$col, i32imm:$file),
 // ConstantPool GlobalAddress, ExternalSymbol, and JumpTable
 def : Pat<(i32 (X86Wrapper tconstpool  :$dst)), (MOV32ri tconstpool  :$dst)>;
 def : Pat<(i32 (X86Wrapper tjumptable  :$dst)), (MOV32ri tjumptable  :$dst)>;
+def : Pat<(i32 (X86Wrapper tglobaltlsaddr:$dst)), (MOV32ri tglobaltlsaddr:$dst)>;
 def : Pat<(i32 (X86Wrapper tglobaladdr :$dst)), (MOV32ri tglobaladdr :$dst)>;
 def : Pat<(i32 (X86Wrapper texternalsym:$dst)), (MOV32ri texternalsym:$dst)>;
 
