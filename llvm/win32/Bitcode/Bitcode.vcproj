@@ -149,10 +149,10 @@
 				RelativePath="..\..\include\llvm\Bitcode\BitstreamWriter.h">
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Bitcode\ReaderWriter.h">
+				RelativePath="..\..\include\llvm\Bitcode\LLVMBitCodes.h">
 			</File>
 			<File
-				RelativePath="..\..\lib\Bitcode\LLVMBitCodes.h">
+				RelativePath="..\..\include\llvm\Bitcode\ReaderWriter.h">
 			</File>
 		</Filter>
 	</Files>
