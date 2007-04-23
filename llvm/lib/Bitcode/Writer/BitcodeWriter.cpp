@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
@@ -123,39 +124,6 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     TypeVals.clear();
   }
   
-  Stream.ExitBlock();
-}
-
-/// WriteTypeSymbolTable - Emit a block for the specified type symtab.
-static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
-                                 const ValueEnumerator &VE,
-                                 BitstreamWriter &Stream) {
-  if (TST.empty()) return;
-
-  Stream.EnterSubblock(bitc::TYPE_SYMTAB_BLOCK_ID, 3);
-
-  // FIXME: Set up the abbrev, we know how many types there are!
-  // FIXME: We know if the type names can use 7-bit ascii.
-  
-  SmallVector<unsigned, 64> NameVals;
-
-  for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end(); 
-       TI != TE; ++TI) {
-    unsigned AbbrevToUse = 0;
-
-    // TST_ENTRY: [typeid, namelen, namechar x N]
-    NameVals.push_back(VE.getTypeID(TI->second));
-    
-    const std::string &Str = TI->first;
-    NameVals.push_back(Str.size());
-    for (unsigned i = 0, e = Str.size(); i != e; ++i)
-      NameVals.push_back(Str[i]);
-  
-    // Emit the finished record.
-    Stream.EmitRecord(bitc::TST_ENTRY_CODE, NameVals, AbbrevToUse);
-    NameVals.clear();
-  }
-
   Stream.ExitBlock();
 }
 
@@ -302,6 +270,71 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
 }
 
 
+/// WriteTypeSymbolTable - Emit a block for the specified type symtab.
+static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
+                                 const ValueEnumerator &VE,
+                                 BitstreamWriter &Stream) {
+  if (TST.empty()) return;
+  
+  Stream.EnterSubblock(bitc::TYPE_SYMTAB_BLOCK_ID, 3);
+  
+  // FIXME: Set up the abbrev, we know how many types there are!
+  // FIXME: We know if the type names can use 7-bit ascii.
+  
+  SmallVector<unsigned, 64> NameVals;
+  
+  for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end(); 
+       TI != TE; ++TI) {
+    unsigned AbbrevToUse = 0;
+    
+    // TST_ENTRY: [typeid, namelen, namechar x N]
+    NameVals.push_back(VE.getTypeID(TI->second));
+    
+    const std::string &Str = TI->first;
+    NameVals.push_back(Str.size());
+    for (unsigned i = 0, e = Str.size(); i != e; ++i)
+      NameVals.push_back(Str[i]);
+    
+    // Emit the finished record.
+    Stream.EmitRecord(bitc::TST_ENTRY_CODE, NameVals, AbbrevToUse);
+    NameVals.clear();
+  }
+  
+  Stream.ExitBlock();
+}
+
+// Emit names for globals/functions etc.
+static void WriteValueSymbolTable(const ValueSymbolTable &VST,
+                                  const ValueEnumerator &VE,
+                                  BitstreamWriter &Stream) {
+  if (VST.empty()) return;
+  Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
+
+  // FIXME: Set up the abbrev, we know how many values there are!
+  // FIXME: We know if the type names can use 7-bit ascii.
+  SmallVector<unsigned, 64> NameVals;
+
+  for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
+       SI != SE; ++SI) {
+    unsigned AbbrevToUse = 0;
+
+    // VST_ENTRY: [valueid, namelen, namechar x N]
+    NameVals.push_back(VE.getValueID(SI->getValue()));
+  
+    NameVals.push_back(SI->getKeyLength());
+    for (const char *P = SI->getKeyData(),
+         *E = SI->getKeyData()+SI->getKeyLength(); P != E; ++P)
+      NameVals.push_back((unsigned char)*P);
+    
+    // Emit the finished record.
+    Stream.EmitRecord(bitc::VST_ENTRY_CODE, NameVals, AbbrevToUse);
+    NameVals.clear();
+  }
+  Stream.ExitBlock();
+}
+
+
+
 /// WriteModule - Emit the specified module to the bitstream.
 static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::MODULE_BLOCK_ID, 3);
@@ -327,6 +360,10 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   
   // Emit the type symbol table information.
   WriteTypeSymbolTable(M->getTypeSymbolTable(), VE, Stream);
+  
+  // Emit names for globals/functions etc.
+  WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream);
+  
   Stream.ExitBlock();
 }
 
