@@ -207,13 +207,15 @@ proc llvm_gcc_supports { lang } {
     fortran { set file fcc1 }
     default { return 0 }
   }
-  if { [ string first "$lang" "$llvmgcc_langs" ] >= 0 } {
-    # FIXME: Knowing it is configured is not enough. We should do two more
-    # checks here. First, we need to run llvm-gcc -print-prog-name=$file to get
-    # the path to the compiler. If we don't get a path, the language isn't
-    # properly configured or built. If we do get a path, we should check to make
-    # sure that it is executable and perhaps even try executing it.
-    return 1;
+  foreach supported_lang [split "$llvmgcc_langs" ,] {
+    if { "$lang" == "$supported_lang" } {
+      # FIXME: Knowing it is configured is not enough. We should do two more
+      # checks here. First, we need to run llvm-gcc -print-prog-name=$file to 
+      # get the path to the compiler. If we don't get a path, the language isn't
+      # properly configured or built. If we do get a path, we should check to 
+      # make sure that it is executable and perhaps even try executing it.
+      return 1;
+    }
   }
   return 0;
 }
