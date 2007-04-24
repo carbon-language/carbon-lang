@@ -322,8 +322,11 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
   // Read all the records for this module.
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
-    if (Code == bitc::END_BLOCK)
+    if (Code == bitc::END_BLOCK) {
+      if (!GlobalInits.empty())
+        return Error("Malformed global initializer set");
       return Stream.ReadBlockEnd();
+    }
     
     if (Code == bitc::ENTER_SUBBLOCK) {
       switch (Stream.ReadSubBlockID()) {
@@ -358,8 +361,6 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
     case bitc::MODULE_CODE_VERSION:  // VERSION: [version#]
       if (Record.size() < 1)
         return Error("Malformed MODULE_CODE_VERSION");
-      if (!GlobalInits.empty())
-        return Error("Malformed global initializer set");
       // Only version #0 is supported so far.
       if (Record[0] != 0)
         return Error("Unknown bitstream version!");
