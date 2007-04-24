@@ -35,15 +35,13 @@ public:
   // For each value, we remember its Value* and occurrence frequency.
   typedef std::vector<std::pair<const Value*, unsigned> > ValueList;
 private:
-  TypeList Types;
-  
   typedef DenseMap<const Type*, unsigned> TypeMapType;
   TypeMapType TypeMap;
+  TypeList Types;
 
-  ValueList Values;
-  
   typedef DenseMap<const Value*, unsigned> ValueMapType;
   ValueMapType ValueMap;
+  ValueList Values;
   
   
   ValueEnumerator(const ValueEnumerator &);  // DO NOT IMPLEMENT
@@ -63,7 +61,7 @@ public:
     return I->second-1;
   }
 
-
+  const ValueList &getValues() const { return Values; }
   const TypeList &getTypes() const { return Types; }
 
   /// incorporateFunction/purgeFunction - If you'd like to deal with a function,

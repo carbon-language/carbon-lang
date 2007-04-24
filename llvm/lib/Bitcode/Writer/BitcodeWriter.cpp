@@ -15,6 +15,7 @@
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
 #include "ValueEnumerator.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
@@ -296,7 +297,7 @@ static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
       NameVals.push_back(Str[i]);
     
     // Emit the finished record.
-    Stream.EmitRecord(bitc::TST_ENTRY_CODE, NameVals, AbbrevToUse);
+    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
     NameVals.clear();
   }
   
@@ -327,13 +328,118 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
       NameVals.push_back((unsigned char)*P);
     
     // Emit the finished record.
-    Stream.EmitRecord(bitc::VST_ENTRY_CODE, NameVals, AbbrevToUse);
+    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
     NameVals.clear();
   }
   Stream.ExitBlock();
 }
 
+static void WriteConstants(unsigned FirstVal, unsigned LastVal,
+                           const ValueEnumerator &VE,
+                           BitstreamWriter &Stream) {
+  if (FirstVal == LastVal) return;
+  
+  Stream.EnterSubblock(bitc::CONSTANTS_BLOCK_ID, 2);
 
+  // FIXME: Install and use abbrevs to reduce size.
+  
+  SmallVector<uint64_t, 64> Record;
+
+  const ValueEnumerator::ValueList &Vals = VE.getValues();
+  const Type *LastTy = 0;
+  for (unsigned i = FirstVal; i != LastVal; ++i) {
+    const Value *V = Vals[i].first;
+    // If we need to switch types, do so now.
+    if (V->getType() != LastTy) {
+      LastTy = V->getType();
+      Record.push_back(VE.getTypeID(LastTy));
+      Stream.EmitRecord(bitc::CST_CODE_SETTYPE, Record);
+      Record.clear();
+    }
+    
+    if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
+      assert(0 && IA && "FIXME: Inline asm writing unimp!");
+      continue;
+    }
+    const Constant *C = cast<Constant>(V);
+    unsigned Code = -1U;
+    unsigned AbbrevToUse = 0;
+    if (C->isNullValue()) {
+      Code = bitc::CST_CODE_NULL;
+    } else if (isa<UndefValue>(C)) {
+      Code = bitc::CST_CODE_UNDEF;
+    } else if (const ConstantInt *IV = dyn_cast<ConstantInt>(C)) {
+      if (IV->getBitWidth() <= 64) {
+        int64_t V = IV->getSExtValue();
+        if (V >= 0)
+          Record.push_back(V << 1);
+        else
+          Record.push_back((-V << 1) | 1);
+        Code = bitc::CST_CODE_INTEGER;
+      } else {                             // Wide integers, > 64 bits in size.
+        // We have an arbitrary precision integer value to write whose 
+        // bit width is > 64. However, in canonical unsigned integer 
+        // format it is likely that the high bits are going to be zero.
+        // So, we only write the number of active words.
+        unsigned NWords = IV->getValue().getActiveWords(); 
+        const uint64_t *RawWords = IV->getValue().getRawData();
+        Record.push_back(NWords);
+        for (unsigned i = 0; i != NWords; ++i) {
+          int64_t V = RawWords[i];
+          if (V >= 0)
+            Record.push_back(V << 1);
+          else
+            Record.push_back((-V << 1) | 1);
+        }
+        Code = bitc::CST_CODE_WIDE_INTEGER;
+      }
+    } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
+      Code = bitc::CST_CODE_FLOAT;
+      if (CFP->getType() == Type::FloatTy) {
+        Record.push_back(FloatToBits((float)CFP->getValue()));
+      } else {
+        assert (CFP->getType() == Type::DoubleTy && "Unknown FP type!");
+        Record.push_back(DoubleToBits((double)CFP->getValue()));
+      }
+    } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(V) ||
+               isa<ConstantVector>(V)) {
+      Code = bitc::CST_CODE_AGGREGATE;
+      Record.push_back(C->getNumOperands());
+      for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
+        Record.push_back(VE.getValueID(C->getOperand(i)));
+    } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      Code = bitc::CST_CODE_CONSTEXPR;
+      // FIXME: optimize for binops, compares, etc.
+      Record.push_back(CE->getOpcode());
+      Record.push_back(CE->getNumOperands());
+      for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
+        Record.push_back(VE.getValueID(C->getOperand(i)));
+      // Compares also pass their predicate.
+      if (CE->isCompare())
+        Record.push_back((unsigned)CE->getPredicate());
+    } else {
+      assert(0 && "Unknown constant!");
+    }
+    Stream.EmitRecord(Code, Record, AbbrevToUse);
+    Record.clear();
+  }
+
+  Stream.ExitBlock();
+}
+
+static void WriteModuleConstants(const ValueEnumerator &VE,
+                                 BitstreamWriter &Stream) {
+  const ValueEnumerator::ValueList &Vals = VE.getValues();
+  
+  // Find the first constant to emit, which is the first non-globalvalue value.
+  // We know globalvalues have been emitted by WriteModuleInfo.
+  for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
+    if (!isa<GlobalValue>(Vals[i].first)) {
+      WriteConstants(i, Vals.size(), VE, Stream);
+      return;
+    }
+  }
+}
 
 /// WriteModule - Emit the specified module to the bitstream.
 static void WriteModule(const Module *M, BitstreamWriter &Stream) {
@@ -352,11 +458,12 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // Emit information describing all of the types in the module.
   WriteTypeTable(VE, Stream);
   
-  // FIXME: Emit constants.
-  
   // Emit top-level description of module, including target triple, inline asm,
   // descriptors for global variables, and function prototype info.
   WriteModuleInfo(M, VE, Stream);
+  
+  // Emit constants.
+  WriteModuleConstants(VE, Stream);
   
   // Emit the type symbol table information.
   WriteTypeSymbolTable(M->getTypeSymbolTable(), VE, Stream);

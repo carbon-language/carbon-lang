@@ -56,9 +56,12 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
     
   
   // FIXME: std::partition the type and value tables so that first-class types
-  // come earlier than aggregates.
+  // come earlier than aggregates.  FIXME: Emit a marker into the module
+  // indicating which aggregates types AND values can be dropped form the table.
   
   // FIXME: Sort type/value tables by frequency.
+    
+  // FIXME: Sort constants by type to reduce size.
 }
 
 /// EnumerateTypeSymbolTable - Insert all of the types in the specified symbol
