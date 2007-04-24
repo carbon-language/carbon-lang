@@ -106,6 +106,10 @@ N: Brad Jones
 E: kungfoomaster@nondot.org
 D: Support for packed types
 
+N: Dale Johannesen
+E: dalej@apple.com
+D: ARM constant islands improvments
+
 N: Eric Kidd
 W: http://randomhacks.net/
 D: llvm-config script
