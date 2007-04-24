@@ -428,13 +428,81 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
     return t1;
   
   // at this point, we have two different arithmetic types. Handle the
-  // real floating types first (C99 6.3.1.8p1). If either operand is float,
-  // double, or long double, the result is float, double, or long double.
-  if (t1->isRealFloatingType()) 
-    return t1;
-  else if (t2->isRealFloatingType())
-    return t2;
-    
+  // six floating types first (C99 6.3.1.8p1). 
+  if (t1->isFloatingType() || t2->isFloatingType()) {
+    if (t1->isRealFloatingType() && t2->isRealFloatingType()) {
+      // types are homogeneous, return the type with the greatest precision
+      if (t1->isLongDoubleType())
+        return t1;
+      else if (t2->isLongDoubleType())
+        return t2;
+      if (t1->isDoubleType())
+        return t1;
+      else if (t2->isDoubleType())
+        return t2;
+      assert(0 && "UsualArithmeticConversions(): floating point conversion");
+    } else if (t1->isComplexType() && t2->isComplexType()) {
+      // types are homogeneous, return the type with the greatest precision
+      if (t1->isLongDoubleComplexType())
+        return t1;
+      else if (t2->isLongDoubleComplexType())
+        return t2;
+      if (t1->isDoubleComplexType())
+        return t1;
+      else if (t2->isDoubleComplexType())
+        return t2;
+      assert(0 && "UsualArithmeticConversions(): floating point conversion");
+    }
+    // type are heterogeneous, handle various permutations.
+    if (t1->isRealFloatingType()) {
+      if (t2->isIntegerType())
+        return t1;
+        
+      // return the complex type with the greatest precision (across domains).
+      if (t2->isComplexType()) {
+        if (t1->isLongDoubleType()) {
+          if (t2->isLongDoubleComplexType())
+            return t2;
+          else
+            return t1; // FIXME: need to return "long double _Complex"?
+        } else if (t1->isDoubleType()) {
+          if (t2->isLongDoubleComplexType() || t2->isDoubleComplexType())
+            return t2;
+          else
+            return t1; // FIXME: need to return "double _Complex"?
+        } else {
+          // t1 is a float, there is no need to promote t2 (the complex type).
+          return t2;
+        }
+      } 
+      assert(0 && "UsualArithmeticConversions(): floating point conversion");
+    }
+    if (t1->isComplexType()) {
+      if (t2->isIntegerType())
+        return t1;
+        
+      if (t2->isRealFloatingType()) {
+        // return the complex type with the greatest precision (across domains).
+        if (t2->isLongDoubleType()) {
+          if (t1->isLongDoubleComplexType())
+            return t1;
+          else
+            return t2; // FIXME: need to return "long double _Complex"?
+        } else if (t2->isDoubleType()) {
+          if (t1->isLongDoubleComplexType() || t1->isDoubleComplexType())
+            return t1;
+          else
+            return t2; // FIXME: need to return "double _Complex"?
+        } else {
+          // t2 is a float, there is no need to promote t1 (the complex type).
+          return t1;
+        }
+      } 
+      assert(0 && "UsualArithmeticConversions(): floating point conversion");
+    }
+    if (t1->isIntegerType())
+      return t2;
+  }
   bool t1Unsigned = t1->isUnsignedIntegerType();
   bool t2Unsigned = t2->isUnsignedIntegerType();
   

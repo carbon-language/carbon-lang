@@ -208,9 +208,20 @@ public:
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs.
   bool isIntegerType() const;     // C99 6.2.5p17 (int, char, bool, enum)
+  
+  /// Floating point categories.
   bool isRealFloatingType() const; // C99 6.2.5p10 (float, double, long double)
   bool isComplexType() const;      // C99 6.2.5p11 (complex)
   bool isFloatingType() const;     // C99 6.2.5p11 (real floating + complex)
+  
+  /// Floating point types.
+  bool isFloatType() const;
+  bool isDoubleType() const;
+  bool isLongDoubleType() const;
+  bool isFloatComplexType() const;
+  bool isDoubleComplexType() const;
+  bool isLongDoubleComplexType() const;
+  
   bool isRealType() const;         // C99 6.2.5p17 (real floating + integer)
   bool isArithmeticType() const;   // C99 6.2.5p18 (integral + floating)
   bool isVoidType() const;         // C99 6.2.5p19
