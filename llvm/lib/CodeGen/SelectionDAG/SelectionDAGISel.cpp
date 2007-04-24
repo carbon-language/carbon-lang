@@ -1177,7 +1177,7 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
 /// visitJumpTable - Emit JumpTable node in the current MBB
 void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   // Emit the code for the jump table
-  assert(JT.Reg != -1UL && "Should lower JT Header first!");
+  assert(JT.Reg != -1U && "Should lower JT Header first!");
   MVT::ValueType PTy = TLI.getPointerTy();
   SDOperand Index = DAG.getCopyFromReg(getRoot(), JT.Reg, PTy);
   SDOperand Table = DAG.getJumpTable(JT.JTI, PTy);
@@ -1544,7 +1544,7 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   
   // Set the jump table information so that we can codegen it as a second
   // MachineBasicBlock
-  SelectionDAGISel::JumpTable JT(-1UL, JTI, JumpTableBB, Default);
+  SelectionDAGISel::JumpTable JT(-1U, JTI, JumpTableBB, Default);
   SelectionDAGISel::JumpTableHeader JTH(First, Last, SV, CR.CaseBB,
                                         (CR.CaseBB == CurMBB));
   if (CR.CaseBB == CurMBB)
