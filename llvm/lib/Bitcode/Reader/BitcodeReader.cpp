@@ -13,6 +13,7 @@
 
 #include "BitcodeReader.h"
 #include "llvm/Bitcode/BitstreamReader.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallString.h"
@@ -303,6 +304,78 @@ bool BitcodeReader::ParseValueSymbolTable(BitstreamReader &Stream) {
   }
 }
 
+bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
+  if (Stream.EnterSubBlock())
+    return Error("Malformed block record");
+
+  SmallVector<uint64_t, 64> Record;
+  
+  // Read all the records for this value table.
+  const Type *CurTy = Type::Int32Ty;
+  while (1) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == bitc::END_BLOCK) {
+      // If there are global var inits to process, do so now.
+      if (!GlobalInits.empty()) {
+        while (!GlobalInits.empty()) {
+          unsigned ValID = GlobalInits.back().second;
+          if (ValID >= ValueList.size())
+            return Error("Invalid value ID for global var init!");
+          if (Constant *C = dyn_cast<Constant>(ValueList[ValID]))
+            GlobalInits.back().first->setInitializer(C);
+          else
+            return Error("Global variable initializer is not a constant!");
+          GlobalInits.pop_back(); 
+        }
+      }
+      
+      return Stream.ReadBlockEnd();
+    }
+    
+    if (Code == bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      continue;
+    }
+    
+    if (Code == bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read a record.
+    Record.clear();
+    Value *V = 0;
+    switch (Stream.ReadRecord(Code, Record)) {
+    default:  // Default behavior: unknown constant
+    case bitc::CST_CODE_UNDEF:     // UNDEF
+      V = UndefValue::get(CurTy);
+      break;
+    case bitc::CST_CODE_SETTYPE:   // SETTYPE: [typeid]
+      if (Record.empty())
+        return Error("Malformed CST_SETTYPE record");
+      if (Record[0] >= TypeList.size())
+        return Error("Invalid Type ID in CST_SETTYPE record");
+      CurTy = TypeList[Record[0]];
+      continue;
+    case bitc::CST_CODE_NULL:      // NULL
+      V = Constant::getNullValue(CurTy);
+      break;
+    case bitc::CST_CODE_INTEGER:   // INTEGER: [intval]
+      if (!isa<IntegerType>(CurTy))
+        return Error("Invalid type for CST_INTEGER");
+      if (Record[0] & 1)
+        V = ConstantInt::get(CurTy, -(Record[0]>>1));
+      else
+        V = ConstantInt::get(CurTy, Record[0]>>1);
+      break;
+    }
+    
+    ValueList.push_back(V);
+  }
+}
 
 bool BitcodeReader::ParseModule(BitstreamReader &Stream,
                                 const std::string &ModuleID) {
@@ -344,6 +417,10 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
         break;
       case bitc::VALUE_SYMTAB_BLOCK_ID:
         if (ParseValueSymbolTable(Stream))
+          return true;
+        break;
+      case bitc::CONSTANTS_BLOCK_ID:
+        if (ParseConstants(Stream))
           return true;
         break;
       }
