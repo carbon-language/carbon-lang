@@ -22,12 +22,14 @@
 namespace llvm {
   class BitstreamReader;
   class Value;
+  class GlobalValue;
 
 class BitcodeReader : public ModuleProvider {
   const char *ErrorString;
   
   std::vector<PATypeHolder> TypeList;
   std::vector<Value*> ValueList;
+  std::vector<std::pair<GlobalValue*, unsigned> > GlobalInits;
 public:
   virtual ~BitcodeReader() {}
   

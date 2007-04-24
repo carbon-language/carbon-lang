@@ -243,7 +243,7 @@ bool BitcodeReader::ParseTypeSymbolTable(BitstreamReader &Stream) {
     switch (Stream.ReadRecord(Code, Record)) {
     default:  // Default behavior: unknown type.
       break;
-    case bitc::TST_ENTRY_CODE:    // TST_ENTRY: [typeid, namelen, namechar x N]
+    case bitc::TST_CODE_ENTRY:    // TST_ENTRY: [typeid, namelen, namechar x N]
       if (ConvertToString(Record, 1, TypeName))
         return Error("Invalid TST_ENTRY record");
       unsigned TypeID = Record[0];
@@ -288,7 +288,7 @@ bool BitcodeReader::ParseValueSymbolTable(BitstreamReader &Stream) {
     switch (Stream.ReadRecord(Code, Record)) {
     default:  // Default behavior: unknown type.
       break;
-    case bitc::VST_ENTRY_CODE:    // VST_ENTRY: [valueid, namelen, namechar x N]
+    case bitc::TST_CODE_ENTRY:    // VST_ENTRY: [valueid, namelen, namechar x N]
       if (ConvertToString(Record, 1, ValueName))
         return Error("Invalid TST_ENTRY record");
       unsigned ValueID = Record[0];
@@ -358,6 +358,8 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
     case bitc::MODULE_CODE_VERSION:  // VERSION: [version#]
       if (Record.size() < 1)
         return Error("Malformed MODULE_CODE_VERSION");
+      if (!GlobalInits.empty())
+        return Error("Malformed global initializer set");
       // Only version #0 is supported so far.
       if (Record[0] != 0)
         return Error("Unknown bitstream version!");
@@ -431,7 +433,9 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
       
       ValueList.push_back(NewGV);
       
-      // TODO: remember initializer/global pair for later substitution.
+      // Remember which value to use for the global initializer.
+      if (unsigned InitID = Record[2])
+        GlobalInits.push_back(std::make_pair(NewGV, InitID-1));
       break;
     }
     // FUNCTION:  [type, callingconv, isproto, linkage, alignment, section,
