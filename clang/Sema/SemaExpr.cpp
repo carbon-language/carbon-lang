@@ -180,43 +180,11 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     return CheckAddressOfOperand((Expr *)Input, OpLoc, Opc);
   else if (Opc == UnaryOperator::Deref) 
     return CheckIndirectionOperand((Expr *)Input, OpLoc, Opc);
-  else { 
-    // handle the arithmetic unary operators (C99 6.5.3.3)
-    Expr *operand = ImplicitConversion((Expr *)Input);
-    QualType opType = operand->getType();
-    assert(!opType.isNull() && "no type for arithmetic unary expression");
-    QualType resultType = opType;
-    
-    switch (Opc) {
-    case UnaryOperator::Plus:
-    case UnaryOperator::Minus:
-      if (!opType->isArithmeticType()) // C99 6.5.3.3p1
-        return Diag(OpLoc, diag::err_typecheck_unary_expr, opType);
-
-      if (opType->isPromotableIntegerType()) // C99 6.5.3.3p2
-        resultType = Context.IntTy;
-      break;
-    case UnaryOperator::Not: // bitwise complement
-      if (!opType->isIntegralType()) // C99 6.5.3.3p1
-        return Diag(OpLoc, diag::err_typecheck_unary_expr, opType);
-
-      if (opType->isPromotableIntegerType()) // C99 6.5.3.3p2
-        resultType = Context.IntTy;
-      break;
-    case UnaryOperator::LNot: // logical negation
-      if (!opType->isScalarType()) // C99 6.5.3.3p1
-        return Diag(OpLoc, diag::err_typecheck_unary_expr, opType);
-
-      if (opType->isPromotableIntegerType()) // C99 6.5.3.3p2
-        resultType = Context.IntTy;
-      break;
-    case UnaryOperator::SizeOf: // C99 6.5.3.4 TODO
-      break;
-    default: 
-      break;
-    }
-    return new UnaryOperator(operand, Opc, resultType);
-  }
+  else if (UnaryOperator::isArithmeticOp(Opc))
+    return CheckArithmeticOperand((Expr *)Input, OpLoc, Opc);
+  
+  // will go away when all cases are handled...
+  return new UnaryOperator((Expr *)Input, Opc, QualType());
 }
 
 Action::ExprResult Sema::
@@ -287,7 +255,7 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     return Diag(LLoc, diag::err_typecheck_subscript_value);
 
   // C99 6.5.2.1p1
-  if (!indexType->isIntegralType())
+  if (!indexType->isIntegerType())
     return Diag(LLoc, diag::err_typecheck_subscript);
 
   // FIXME: need to deal with const...
@@ -395,26 +363,24 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   case tok::comma:                Opc = BinaryOperator::Comma; break;
   }
 
-  // perform implicit conversions (C99 6.3)
-  Expr *lhs = ImplicitConversion((Expr*)LHS);
-  Expr *rhs = ImplicitConversion((Expr*)RHS);
+  Expr *lhs = (Expr *)LHS, *rhs = (Expr*)RHS;
   
   if (BinaryOperator::isMultiplicativeOp(Opc)) 
     return CheckMultiplicativeOperands(lhs, rhs, TokLoc, Opc);
   else if (BinaryOperator::isAdditiveOp(Opc))
-    CheckAdditiveOperands(lhs, rhs);
+    return CheckAdditiveOperands(lhs, rhs, TokLoc, Opc);
   else if (BinaryOperator::isShiftOp(Opc))
-    CheckShiftOperands(lhs, rhs);
+    return CheckShiftOperands(lhs, rhs, TokLoc, Opc);
   else if (BinaryOperator::isRelationalOp(Opc))
-    CheckRelationalOperands(lhs, rhs);
+    return CheckRelationalOperands(lhs, rhs, TokLoc, Opc);
   else if (BinaryOperator::isEqualityOp(Opc))
-    CheckEqualityOperands(lhs, rhs);
+    return CheckEqualityOperands(lhs, rhs, TokLoc, Opc);
   else if (BinaryOperator::isBitwiseOp(Opc))
-    CheckBitwiseOperands(lhs, rhs);
+    return CheckBitwiseOperands(lhs, rhs, TokLoc, Opc);
   else if (BinaryOperator::isLogicalOp(Opc))
-    CheckLogicalOperands(lhs, rhs);
-  
-  return new BinaryOperator(lhs, rhs, Opc);
+    return CheckLogicalOperands(lhs, rhs, TokLoc, Opc);
+    
+  assert(0 && "ParseBinOp() not handling all binary ops properly");
 }
 
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
@@ -426,66 +392,145 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
 }
 
-/// ImplicitConversion - Performs various conversions that are common to most
-/// operators. At present, this routine only handles conversions that require
-/// synthesizing an expression/type. Arithmetic type promotions are done locally,
-/// since they don't require a new expression.
-Expr *Sema::ImplicitConversion(Expr *E) {
-  QualType t = E->getType();
-  assert(!t.isNull() && "no type for implicit conversion");
+/// UsualUnaryConversion - Performs various conversions that are common to most
+/// operators (C99 6.3). The conversions of array and function types are 
+/// sometimes surpressed. For example, the array->pointer conversion doesn't
+/// apply if the array is an argument to the sizeof or address (&) operators.
+/// In these instances, this routine should *not* be called.
+QualType Sema::UsualUnaryConversion(QualType t) {
+  assert(!t.isNull() && "UsualUnaryConversion - missing type");
   
-  if (t->isFunctionType()) // C99 6.3.2.1p4
-    return new UnaryOperator(E, UnaryOperator::AddrOf, Context.getPointerType(t));
-  else if (t->isArrayType()) { // C99 6.3.2.1p3
-    QualType elt = cast<ArrayType>(t)->getElementType();
-    QualType convertedType = Context.getPointerType(elt);
-    return new UnaryOperator(E, UnaryOperator::AddrOf, convertedType);
-  }
-  return E;
+  if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
+    return Context.IntTy;
+  else if (t->isFunctionType()) // C99 6.3.2.1p4
+    return Context.getPointerType(t);
+  else if (t->isArrayType()) // C99 6.3.2.1p3
+    return Context.getPointerType(cast<ArrayType>(t)->getElementType());
+  return t;
+}
+
+/// UsualArithmeticConversions - Performs various conversions that are common to 
+/// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
+/// routine returns the first non-arithmetic type found. The client is 
+/// responsible for emitting appropriate error diagnostics.
+QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
+  t1 = UsualUnaryConversion(t1);
+  t2 = UsualUnaryConversion(t2);
+  
+  // if either operand is not of arithmetic type, no conversion is possible.
+  if (!t1->isArithmeticType())
+    return t1;
+  else if (!t2->isArithmeticType())
+    return t2;
+    
+  // if both operands have the same type, no conversion is needed.
+  if (t1 == t2) 
+    return t1;
+  
+  // at this point, we have two different arithmetic types. Handle the
+  // real floating types first (C99 6.3.1.8p1). If either operand is float,
+  // double, or long double, the result is float, double, or long double.
+  if (t1->isRealFloatingType()) 
+    return t1;
+  else if (t2->isRealFloatingType())
+    return t2;
+    
+  bool t1Unsigned = t1->isUnsignedIntegerType();
+  bool t2Unsigned = t2->isUnsignedIntegerType();
+  
+  if (t1Unsigned && t2Unsigned)
+    return t1; // FIXME: return the unsigned type with the greatest rank
+  else if (!t1Unsigned && !t2Unsigned)
+    return t1; // FIXME: return the signed type with the greatest rank
+  else 
+    return t1; // FIXME: we have a mixture...
 }
 
 Action::ExprResult Sema::CheckMultiplicativeOperands(
-  Expr *lexpr, Expr *rexpr, SourceLocation loc, unsigned code) 
+  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
 {
-  lexpr = ImplicitConversion((Expr *)lexpr);
-  rexpr = ImplicitConversion((Expr *)rexpr);
-  QualType ltype = lexpr->getType();
-  QualType rtype = rexpr->getType();
-  assert(!ltype.isNull() && "no left type for CheckMultiplicativeOperands()");
-  assert(!rtype.isNull() && "no right type for CheckMultiplicativeOperands()");
+  QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
   
   if ((BinaryOperator::Opcode)code == BinaryOperator::Rem) {
-    if (!ltype->isIntegralType() || !rtype->isIntegralType())
+    if (!resType->isIntegerType())
       return Diag(loc, diag::err_typecheck_invalid_operands);
-  } else {
-    if (!ltype->isArithmeticType() || !rtype->isArithmeticType())
+  } else { // *, /
+    if (!resType->isArithmeticType())
       return Diag(loc, diag::err_typecheck_invalid_operands);
   }
-  return new BinaryOperator(lexpr, rexpr, (BinaryOperator::Opcode)code);
+  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, resType);
 }
 
-Action::ExprResult Sema::CheckAdditiveOperands(Expr *op1, Expr *op2) {
-  return false;
+Action::ExprResult Sema::CheckAdditiveOperands( // C99 6.5.6
+  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
+{
+  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, Context.IntTy);
 }
 
-Action::ExprResult Sema::CheckShiftOperands(Expr *op1, Expr *op2) {
-  return false;
+Action::ExprResult Sema::CheckShiftOperands( // C99 6.5.7
+  Expr *lex, Expr *rex, SourceLocation loc, unsigned code)
+{
+  QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
+  
+  if (!resType->isIntegerType())
+    return Diag(loc, diag::err_typecheck_invalid_operands);
+
+  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, resType);
 }
 
-Action::ExprResult Sema::CheckRelationalOperands(Expr *op1, Expr *op2) {
-  return false;
+Action::ExprResult Sema::CheckRelationalOperands( // C99 6.5.8
+  Expr *lex, Expr *rex, SourceLocation loc, unsigned code)
+{
+  QualType lType = lex->getType(), rType = rex->getType();
+  
+  if (lType->isRealType() && rType->isRealType())
+    ;
+  else if (lType->isPointerType() &&  rType->isPointerType())
+    ;
+  else {
+    // The following test is for GCC compatibility.
+    if (lType->isIntegerType() || rType->isIntegerType())
+      return Diag(loc, diag::err_typecheck_comparison_of_pointer_integer);
+    return Diag(loc, diag::err_typecheck_invalid_operands);
+  }
+  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, 
+                            Context.IntTy);
 }
 
-Action::ExprResult Sema::CheckEqualityOperands(Expr *op1, Expr *op2) {
-  return false;
+Action::ExprResult Sema::CheckEqualityOperands( // C99 6.5.9
+  Expr *lex, Expr *rex, SourceLocation loc, unsigned code)
+{
+  QualType lType = lex->getType(), rType = rex->getType();
+  
+  if (lType->isArithmeticType() && rType->isArithmeticType())
+    ;
+  else if (lType->isPointerType() &&  rType->isPointerType())
+    ;
+  else {
+    // The following test is for GCC compatibility.
+    if (lType->isIntegerType() || rType->isIntegerType())
+      return Diag(loc, diag::err_typecheck_comparison_of_pointer_integer);
+    return Diag(loc, diag::err_typecheck_invalid_operands);
+  }
+  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, 
+                            Context.IntTy);
 }
 
-Action::ExprResult Sema::CheckBitwiseOperands(Expr *op1, Expr *op2) {
-  return false;
+Action::ExprResult Sema::CheckBitwiseOperands(
+  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
+{
+  QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
+  
+  if (!resType->isIntegerType())
+    return Diag(loc, diag::err_typecheck_invalid_operands);
+
+  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, resType);
 }
 
-Action::ExprResult Sema::CheckLogicalOperands(Expr *op1, Expr *op2) {
-  return false;
+Action::ExprResult Sema::CheckLogicalOperands( // C99 6.5.[13,14]
+  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
+{
+  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code);
 }
 
 Action::ExprResult
@@ -514,24 +559,24 @@ Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
   return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, qType);
 }
 
-/// getDecl - This is currently a helper function for CheckAddressOfOperand().
+/// getPrimaryDeclaration - Helper function for CheckAddressOfOperand().
 /// This routine allows us to typecheck complex/recursive expressions
 /// where the declaration is needed for type checking. Here are some
 /// examples: &s.xx, &s.zz[1].yy, &(1+2), &(XX), &"123"[2].
-Decl *Sema::getDecl(Expr *e) {
+static Decl *getPrimaryDeclaration(Expr *e) {
   switch (e->getStmtClass()) {
   case Stmt::DeclRefExprClass:
     return cast<DeclRefExpr>(e)->getDecl();
   case Stmt::MemberExprClass:
-    return getDecl(cast<MemberExpr>(e)->getBase());
+    return getPrimaryDeclaration(cast<MemberExpr>(e)->getBase());
   case Stmt::ArraySubscriptExprClass:
-    return getDecl(cast<ArraySubscriptExpr>(e)->getBase());
+    return getPrimaryDeclaration(cast<ArraySubscriptExpr>(e)->getBase());
   case Stmt::CallExprClass:
-    return getDecl(cast<CallExpr>(e)->getCallee());
+    return getPrimaryDeclaration(cast<CallExpr>(e)->getCallee());
   case Stmt::UnaryOperatorClass:
-    return getDecl(cast<UnaryOperator>(e)->getSubExpr());
+    return getPrimaryDeclaration(cast<UnaryOperator>(e)->getSubExpr());
   case Stmt::ParenExprClass:
-    return getDecl(cast<ParenExpr>(e)->getSubExpr());
+    return getPrimaryDeclaration(cast<ParenExpr>(e)->getSubExpr());
   default:
     return 0;
   }
@@ -544,7 +589,7 @@ Decl *Sema::getDecl(Expr *e) {
 /// operator, and its result is never an lvalue.
 Action::ExprResult
 Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc, unsigned OpCode) {
-  Decl *dcl = getDecl(op);
+  Decl *dcl = getPrimaryDeclaration(op);
   
   if (!op->isLvalue()) {
     if (dcl && isa<FunctionDecl>(dcl))
@@ -574,4 +619,27 @@ Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc, unsigned OpCode) {
   QualType canonType = qType.getCanonicalType();
   
   return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, QualType());
+}
+
+/// CheckArithmeticOperand - Check the arithmetic unary operators (C99 6.5.3.3).
+Action::ExprResult
+Sema::CheckArithmeticOperand(Expr *op, SourceLocation OpLoc, unsigned Opc) {
+  QualType resultType = UsualUnaryConversion(op->getType());
+  
+  switch (Opc) {
+  case UnaryOperator::Plus:
+  case UnaryOperator::Minus:
+    if (!resultType->isArithmeticType()) // C99 6.5.3.3p1
+      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
+    break;
+  case UnaryOperator::Not: // bitwise complement
+    if (!resultType->isIntegerType()) // C99 6.5.3.3p1
+      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
+    break;
+  case UnaryOperator::LNot: // logical negation
+    if (!resultType->isScalarType()) // C99 6.5.3.3p1
+      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
+    break;
+  }
+  return new UnaryOperator(op, (UnaryOperator::Opcode)Opc, resultType);
 }

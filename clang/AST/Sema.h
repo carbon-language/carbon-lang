@@ -222,30 +222,39 @@ public:
   virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind);
 private:
-  Expr *ImplicitConversion(Expr *E); // C99 6.3
-
+  QualType UsualUnaryConversion(QualType t); // C99 6.3
+  QualType UsualArithmeticConversions(QualType t1, QualType t2); // C99 6.3.1.8
+  
   /// the following "Check" methods will either return a well formed AST node
   /// or will return true if the expressions didn't type check properly.
   
   /// type checking binary operators (subroutines of ParseBinOp).
-  ExprResult CheckMultiplicativeOperands(Expr *op1, Expr *op2,
-          SourceLocation OpLoc, 
-          unsigned /*BinaryOperator::Opcode*/OpCode); // C99 6.5.5
-  ExprResult CheckAdditiveOperands(Expr *op1, Expr *op2);       // C99 6.5.6
-  ExprResult CheckShiftOperands(Expr *op1, Expr *op2);          // C99 6.5.7
-  ExprResult CheckRelationalOperands(Expr *op1, Expr *op2);     // C99 6.5.8
-  ExprResult CheckEqualityOperands(Expr *op1, Expr *op2);       // C99 6.5.9
-  ExprResult CheckBitwiseOperands(Expr *op1, Expr *op2);   // C99 6.5.[10...12]
-  ExprResult CheckLogicalOperands(Expr *op1, Expr *op2);   // C99 6.5.[13,14]
+  /// The unsigned arguments are really enums (BinaryOperator::Opcode)
+  ExprResult CheckMultiplicativeOperands( // C99 6.5.5
+    Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode); 
+  ExprResult CheckAdditiveOperands( // C99 6.5.6
+    Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode);
+  ExprResult CheckShiftOperands( // C99 6.5.7
+    Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode);
+  ExprResult CheckRelationalOperands( // C99 6.5.8
+    Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode);
+  ExprResult CheckEqualityOperands( // C99 6.5.9
+    Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode); 
+  ExprResult CheckBitwiseOperands( // C99 6.5.[10...12]
+    Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode); 
+  ExprResult CheckLogicalOperands( // C99 6.5.[13,14]
+    Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode);
   
   /// type checking unary operators (subroutines of ParseUnaryOp).
-  /// C99 6.5.3.2
-  ExprResult CheckAddressOfOperand(Expr *op, SourceLocation loc, unsigned c);
-  Decl *getDecl(Expr *e);
-  ExprResult CheckIndirectionOperand(Expr *op, SourceLocation loc, unsigned c);
-  
-  ExprResult CheckIncrementDecrementOperand(Expr *op, SourceLocation loc,
-                                            unsigned /*UnaryOperator::Opcode*/c);
+  /// The unsigned arguments are really enums (UnaryOperator::Opcode)
+  ExprResult CheckIncrementDecrementOperand( // C99 6.5.3.1 
+    Expr *op, SourceLocation loc, unsigned c);
+  ExprResult CheckAddressOfOperand( // C99 6.5.3.2
+    Expr *op, SourceLocation loc, unsigned c);
+  ExprResult CheckIndirectionOperand( // C99 6.5.3.2
+    Expr *op, SourceLocation loc, unsigned c);
+  ExprResult CheckArithmeticOperand( // C99 6.5.3.3
+    Expr *op, SourceLocation OpLoc, unsigned Opc);
 };
 
 

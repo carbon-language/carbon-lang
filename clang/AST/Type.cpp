@@ -71,7 +71,7 @@ bool Type::isUnionType() const {
   return false;
 }
 
-bool Type::isIntegralType() const {
+bool Type::isIntegerType() const {
   switch (CanonicalType->getTypeClass()) {
   default: return false;
   case Builtin:
@@ -83,6 +83,26 @@ bool Type::isIntegralType() const {
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
     return false;
+  }
+}
+
+bool Type::isSignedIntegerType() const {
+  switch (CanonicalType->getTypeClass()) {
+  default: return false;
+  case Builtin:
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
+    return BT->getKind() >= BuiltinType::SChar &&
+           BT->getKind() <= BuiltinType::LongLong;
+  }
+}
+
+bool Type::isUnsignedIntegerType() const {
+  switch (CanonicalType->getTypeClass()) {
+  default: return false;
+  case Builtin:
+    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
+    return BT->getKind() >= BuiltinType::UChar &&
+           BT->getKind() <= BuiltinType::ULongLong;
   }
 }
 
@@ -107,7 +127,7 @@ bool Type::isRealFloatingType() const {
 }
 
 bool Type::isRealType() const {
-  // this is equivalent to (isIntegralType() || isRealFloatingType()).
+  // this is equivalent to (isIntegerType() || isRealFloatingType()).
   switch (CanonicalType->getTypeClass()) { // inlined for performance
   default: return false;
   case Builtin:

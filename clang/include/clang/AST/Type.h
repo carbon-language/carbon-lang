@@ -207,7 +207,7 @@ public:
   
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs.
-  bool isIntegralType() const;     // C99 6.2.5p17 (int, char, bool, enum)
+  bool isIntegerType() const;     // C99 6.2.5p17 (int, char, bool, enum)
   bool isRealFloatingType() const; // C99 6.2.5p10 (float, double, long double)
   bool isComplexType() const;      // C99 6.2.5p11 (complex)
   bool isFloatingType() const;     // C99 6.2.5p11 (real floating + complex)
@@ -227,8 +227,10 @@ public:
   
   bool isLvalue() const;         // C99 6.3.2.1
   
-  /// Type Conversions/Promotions
+  /// More type predicates useful for type checking/promotion
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2
+  bool isSignedIntegerType() const;     // C99 6.2.5p4
+  bool isUnsignedIntegerType() const;   // C99 6.2.5p6
 private:
   // this forces clients to use isModifiableLvalue on QualType, the class that 
   // knows if the type is const. This predicate is a helper to QualType. 

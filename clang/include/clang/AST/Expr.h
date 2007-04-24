@@ -81,7 +81,7 @@ public:
   // or UnsignedLongLongTy
   IntegerLiteral(intmax_t value, QualType type)
     : Expr(IntegerLiteralClass, type), Value(value) {
-    assert(type->isIntegralType() && "Illegal type in IntegerLiteral");
+    assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
 
   virtual void visit(StmtVisitor &Visitor);
@@ -168,6 +168,8 @@ public:
 
   /// isPostfix - Return true if this is a postfix operation, like x++.
   static bool isPostfix(Opcode Op);
+
+  static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
 
   Opcode getOpcode() const { return Opc; }
   Expr *getSubExpr() const { return Val; }
@@ -336,8 +338,8 @@ public:
     Comma             // [C99 6.5.17] Comma operator.
   };
   
-  BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc)
-    : Expr(BinaryOperatorClass, QualType()), LHS(lhs), RHS(rhs), Opc(opc) {}
+  BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType t=QualType())
+    : Expr(BinaryOperatorClass, t), LHS(lhs), RHS(rhs), Opc(opc) {}
 
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "<<=".
