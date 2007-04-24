@@ -89,15 +89,52 @@ namespace bitc {
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
   // constant and maintains an implicit current type value.
   enum ConstantsSymtabCodes {
-    CST_CODE_SETTYPE      = 1,  // SETTYPE: [typeid]
-    CST_CODE_NULL         = 2,  // NULL
-    CST_CODE_UNDEF        = 3,  // UNDEF
-    CST_CODE_INTEGER      = 4,  // INTEGER: [intval]
-    CST_CODE_WIDE_INTEGER = 5,  // WIDE_INTEGER: [n, n x intval]
-    CST_CODE_FLOAT        = 6,  // FLOAT: [fpval]
-    CST_CODE_AGGREGATE    = 7,  // AGGREGATE: [n, n x value number]
-    CST_CODE_CONSTEXPR    = 8   // CONSTEXPR: [opcode, n, n x val#]
-    // TODO: CE_BINOP ETC
+    CST_CODE_SETTYPE       =  1,  // SETTYPE:       [typeid]
+    CST_CODE_NULL          =  2,  // NULL
+    CST_CODE_UNDEF         =  3,  // UNDEF
+    CST_CODE_INTEGER       =  4,  // INTEGER:       [intval]
+    CST_CODE_WIDE_INTEGER  =  5,  // WIDE_INTEGER:  [n, n x intval]
+    CST_CODE_FLOAT         =  6,  // FLOAT:         [fpval]
+    CST_CODE_AGGREGATE     =  7,  // AGGREGATE:     [n, n x value number]
+    CST_CODE_CE_BINOP      =  8,  // CE_BINOP:      [opcode, opval, opval]
+    CST_CODE_CE_CAST       =  9,  // CE_CAST:       [opcode, opty, opval]
+    CST_CODE_CE_GEP        = 10,  // CE_GEP:        [n, n x operands]
+    CST_CODE_CE_SELECT     = 11,  // CE_SELECT:     [opval, opval, opval]
+    CST_CODE_CE_EXTRACTELT = 12,  // CE_EXTRACTELT: [opty, opval, opval]
+    CST_CODE_CE_INSERTELT  = 13,  // CE_INSERTELT:  [opval, opval, opval]
+    CST_CODE_CE_SHUFFLEVEC = 14,  // CE_SHUFFLEVEC: [opval, opval, opval]
+    CST_CODE_CE_CMP        = 15   // CE_CMP:        [opty, opval, opval, pred]
+  };
+  
+  enum CastOpcodes {
+    CAST_TRUNC    =  0,
+    CAST_ZEXT     =  1,
+    CAST_SEXT     =  2,
+    CAST_FPTOUI   =  3,
+    CAST_FPTOSI   =  4,
+    CAST_UITOFP   =  5,
+    CAST_SITOFP   =  6,
+    CAST_FPTRUNC  =  7,
+    CAST_FPEXT    =  8,
+    CAST_PTRTOINT =  9,
+    CAST_INTTOPTR = 10,
+    CAST_BITCAST  = 11
+  };
+  
+  enum BinaryOpcodes {
+    BINOP_ADD  =  0,
+    BINOP_SUB  =  1,
+    BINOP_MUL  =  2,
+    BINOP_UDIV =  3,
+    BINOP_SDIV =  4,    // overloaded for FP
+    BINOP_UREM =  5,
+    BINOP_SREM =  6,    // overloaded for FP
+    BINOP_SHL  =  7,
+    BINOP_LSHR =  8,
+    BINOP_ASHR =  9,
+    BINOP_AND  = 10,
+    BINOP_OR   = 11,
+    BINOP_XOR  = 12
   };
   
 } // End bitc namespace
