@@ -465,11 +465,12 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
         return Error("Invalid WIDE_INTEGER record");
       
       unsigned NumWords = Record[0];
-      uint64_t *Data = new uint64_t[NumWords];
+      SmallVector<uint64_t, 8> Words;
+      Words.resize(NumWords);
       for (unsigned i = 0; i != NumWords; ++i)
-        Data[i] = DecodeSignRotatedValue(Record[i+1]);
+        Words[i] = DecodeSignRotatedValue(Record[i+1]);
       V = ConstantInt::get(APInt(cast<IntegerType>(CurTy)->getBitWidth(),
-                                 NumWords, Data));
+                                 NumWords, &Words[0]));
       break;
     }
     case bitc::CST_CODE_FLOAT:     // FLOAT: [fpval]
