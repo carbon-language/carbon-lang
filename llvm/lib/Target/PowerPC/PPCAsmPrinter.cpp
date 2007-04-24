@@ -442,6 +442,12 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
         return true;
       ++OpNo;   // Return the high-part.
       break;
+    case 'I':
+      // Write 'i' if an integer constant, otherwise nothing.  Used to print
+      // addi vs add, etc.
+      if (MI->getOperand(OpNo).isImm())
+        O << "i";
+      return false;
     }
   }
   
