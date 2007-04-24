@@ -1299,11 +1299,12 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       Result = ConstantInt::get(IT, Val);
       if (Handler) Handler->handleConstantValue(Result);
     } else {
-      uint32_t numWords = read_vbr_uint();
-      uint64_t *data = new uint64_t[numWords];
-      for (uint32_t i = 0; i < numWords; ++i)
-        data[i] = read_vbr_uint64();
-      Result = ConstantInt::get(APInt(IT->getBitWidth(), numWords, data));
+      uint32_t NumWords = read_vbr_uint();
+      SmallVector<uint64_t, 8> Words;
+      Words.resize(NumWords);
+      for (uint32_t i = 0; i < NumWords; ++i)
+        Words[i] = read_vbr_uint64();
+      Result = ConstantInt::get(APInt(IT->getBitWidth(), NumWords, &Words[0]));
       if (Handler) Handler->handleConstantValue(Result);
     }
     break;

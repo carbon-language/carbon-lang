@@ -165,7 +165,7 @@ public:
           << " Linkage=" << Linkage
           << " Visibility="<< Visibility
           << " Type=";
-      WriteTypeSymbolic(*os, ElemType, M);
+      //WriteTypeSymbolic(*os, ElemType, M);
       *os << " Slot=" << SlotNum << " InitSlot=" << initSlot
           << "\n";
     }
@@ -187,7 +187,7 @@ public:
     bca.numTypes++;
     if (os) {
       *os << "      Type: ";
-      WriteTypeSymbolic(*os,Ty,M);
+      //WriteTypeSymbolic(*os,Ty,M);
       *os << "\n";
     }
   }
@@ -199,7 +199,7 @@ public:
     bca.numValues++;
     if (os) {
       *os << "      Function Decl: ";
-      WriteTypeSymbolic(*os,Func->getType(),M);
+      //WriteTypeSymbolic(*os,Func->getType(),M);
       *os <<", Linkage=" << Func->getLinkage();
       *os <<", Visibility=" << Func->getVisibility();
       *os << "\n";
@@ -276,13 +276,13 @@ public:
           << "      Linkage: " << Func->getLinkage() << "\n"
           << "      Visibility: " << Func->getVisibility() << "\n"
           << "      Type: ";
-      WriteTypeSymbolic(*os,Func->getType(),M);
+      //WriteTypeSymbolic(*os,Func->getType(),M);
       *os << "\n";
     }
 
     currFunc = &bca.FunctionInfo[Func];
     std::ostringstream tmp;
-    WriteTypeSymbolic(tmp,Func->getType(),M);
+    //WriteTypeSymbolic(tmp,Func->getType(),M);
     currFunc->description = tmp.str();
     currFunc->name = Func->getName();
     currFunc->byteSize = Size;
@@ -388,7 +388,7 @@ public:
           Constant* ArrayVal ) {
     if (os) {
       *os << "      ARRAY: ";
-      WriteTypeSymbolic(*os,AT,M);
+      //WriteTypeSymbolic(*os,AT,M);
       *os << " TypeSlot=" << TypeSlot << "\n";
       for (unsigned i = 0; i != NumElts; ++i) {
         *os << "        #" << i;
@@ -411,7 +411,7 @@ public:
   {
     if (os) {
       *os << "      STRUC: ";
-      WriteTypeSymbolic(*os,ST,M);
+      //WriteTypeSymbolic(*os,ST,M);
       *os << "\n";
       for ( unsigned i = 0; i != NumElts; ++i) {
         *os << "        #" << i << " "; Elements[i]->print(*os);
@@ -433,7 +433,7 @@ public:
   {
     if (os) {
       *os << "      PACKD: ";
-      WriteTypeSymbolic(*os,PT,M);
+      //WriteTypeSymbolic(*os,PT,M);
       *os << " TypeSlot=" << TypeSlot << "\n";
       for ( unsigned i = 0; i != NumElts; ++i ) {
         *os << "        #" << i;
@@ -453,7 +453,7 @@ public:
       unsigned Slot, GlobalValue* GV ) {
     if (os) {
       *os << "       PNTR: ";
-      WriteTypeSymbolic(*os,PT,M);
+      //WriteTypeSymbolic(*os,PT,M);
       *os << " Slot=" << Slot << " GlobalValue=";
       GV->print(*os);
       *os << "\n";
