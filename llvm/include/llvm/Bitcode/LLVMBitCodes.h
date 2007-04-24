@@ -106,6 +106,10 @@ namespace bitc {
     CST_CODE_CE_CMP        = 15   // CE_CMP:        [opty, opval, opval, pred]
   };
   
+  /// CastOpcodes - These are values used in the bitcode files to encode which
+  /// cast a CST_CODE_CE_CAST or a XXX refers to.  The values of these enums
+  /// have no fixed relation to the LLVM IR enum values.  Changing these will
+  /// break compatibility with old files.
   enum CastOpcodes {
     CAST_TRUNC    =  0,
     CAST_ZEXT     =  1,
@@ -121,6 +125,10 @@ namespace bitc {
     CAST_BITCAST  = 11
   };
   
+  /// BinaryOpcodes - These are values used in the bitcode files to encode which
+  /// binop a CST_CODE_CE_BINOP or a XXX refers to.  The values of these enums
+  /// have no fixed relation to the LLVM IR enum values.  Changing these will
+  /// break compatibility with old files.
   enum BinaryOpcodes {
     BINOP_ADD  =  0,
     BINOP_SUB  =  1,
