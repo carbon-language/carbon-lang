@@ -51,6 +51,7 @@ bool BitcodeFileReader::Read(std::string *ErrMsg) {
   unsigned char *Buffer = reinterpret_cast<unsigned char*>(File.base());
   if (!ParseBitcode(Buffer, File.size(), Filename))
     return false;
+  assert(getErrorString() && "Didn't set an error string?");
   if (ErrMsg) *ErrMsg = getErrorString();
   return true;
 }

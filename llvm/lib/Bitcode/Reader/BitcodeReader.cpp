@@ -161,7 +161,9 @@ bool BitcodeReader::ParseTypeTable(BitstreamReader &Stream) {
     if (Code == bitc::END_BLOCK) {
       if (NumRecords != TypeList.size())
         return Error("Invalid type forward reference in TYPE_BLOCK");
-      return Stream.ReadBlockEnd();
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of type table block");
+      return false;
     }
     
     if (Code == bitc::ENTER_SUBBLOCK) {
@@ -299,8 +301,11 @@ bool BitcodeReader::ParseTypeSymbolTable(BitstreamReader &Stream) {
   std::string TypeName;
   while (1) {
     unsigned Code = Stream.ReadCode();
-    if (Code == bitc::END_BLOCK)
-      return Stream.ReadBlockEnd();
+    if (Code == bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of type symbol table block");
+      return false;
+    }
     
     if (Code == bitc::ENTER_SUBBLOCK) {
       // No known subblocks, always skip them.
@@ -344,9 +349,11 @@ bool BitcodeReader::ParseValueSymbolTable(BitstreamReader &Stream) {
   SmallString<128> ValueName;
   while (1) {
     unsigned Code = Stream.ReadCode();
-    if (Code == bitc::END_BLOCK)
-      return Stream.ReadBlockEnd();
-    
+    if (Code == bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of value symbol table block");
+      return false;
+    }    
     if (Code == bitc::ENTER_SUBBLOCK) {
       // No known subblocks, always skip them.
       Stream.ReadSubBlockID();
@@ -420,7 +427,9 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
       if (NextCstNo != ValueList.size())
         return Error("Invalid constant reference!");
       
-      return Stream.ReadBlockEnd();
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of constants block");
+      return false;
     }
     
     if (Code == bitc::ENTER_SUBBLOCK) {
@@ -515,21 +524,25 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
     case bitc::CST_CODE_CE_BINOP: {  // CE_BINOP: [opcode, opval, opval]
       if (Record.size() < 3) return Error("Invalid CE_BINOP record");
       int Opc = GetDecodedBinaryOpcode(Record[0], CurTy);
-      if (Opc < 0) return UndefValue::get(CurTy);  // Unknown binop.
-      
-      Constant *LHS = ValueList.getConstantFwdRef(Record[1], CurTy);
-      Constant *RHS = ValueList.getConstantFwdRef(Record[2], CurTy);
-      V = ConstantExpr::get(Opc, LHS, RHS);
+      if (Opc < 0) {
+        V = UndefValue::get(CurTy);  // Unknown binop.
+      } else {
+        Constant *LHS = ValueList.getConstantFwdRef(Record[1], CurTy);
+        Constant *RHS = ValueList.getConstantFwdRef(Record[2], CurTy);
+        V = ConstantExpr::get(Opc, LHS, RHS);
+      }
       break;
     }  
     case bitc::CST_CODE_CE_CAST: {  // CE_CAST: [opcode, opty, opval]
       if (Record.size() < 3) return Error("Invalid CE_CAST record");
       int Opc = GetDecodedCastOpcode(Record[0]);
-      if (Opc < 0) return UndefValue::get(CurTy);  // Unknown cast.
-      
-      const Type *OpTy = getTypeByID(Record[1]);
-      Constant *Op = ValueList.getConstantFwdRef(Record[2], OpTy);
-      V = ConstantExpr::getCast(Opc, Op, CurTy);
+      if (Opc < 0) {
+        V = UndefValue::get(CurTy);  // Unknown cast.
+      } else {
+        const Type *OpTy = getTypeByID(Record[1]);
+        Constant *Op = ValueList.getConstantFwdRef(Record[2], OpTy);
+        V = ConstantExpr::getCast(Opc, Op, CurTy);
+      }
       break;
     }  
     case bitc::CST_CODE_CE_GEP: {  // CE_GEP:        [n x operands]
@@ -540,7 +553,8 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
         if (!ElTy) return Error("Invalid CE_GEP record");
         Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
       }
-      return ConstantExpr::getGetElementPtr(Elts[0], &Elts[1], Elts.size()-1);
+      V = ConstantExpr::getGetElementPtr(Elts[0], &Elts[1], Elts.size()-1);
+      break;
     }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
       if (Record.size() < 3) return Error("Invalid CE_SELECT record");
@@ -634,7 +648,9 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
     if (Code == bitc::END_BLOCK) {
       if (!GlobalInits.empty())
         return Error("Malformed global initializer set");
-      return Stream.ReadBlockEnd();
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of module block");
+      return false;
     }
     
     if (Code == bitc::ENTER_SUBBLOCK) {

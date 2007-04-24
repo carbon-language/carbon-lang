@@ -58,6 +58,7 @@ class BitcodeReader : public ModuleProvider {
   BitcodeReaderValueList ValueList;
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
 public:
+  BitcodeReader() : ErrorString(0) {}
   virtual ~BitcodeReader() {}
   
   virtual void FreeState() {}
