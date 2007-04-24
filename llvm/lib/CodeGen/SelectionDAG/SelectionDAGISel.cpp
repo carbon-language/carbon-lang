@@ -308,19 +308,22 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
     const VectorType *PTy = cast<VectorType>(V->getType());
     unsigned NumElts = PTy->getNumElements();
     MVT::ValueType EltTy = TLI.getValueType(PTy->getElementType());
+    MVT::ValueType VecTy = getVectorType(EltTy, NumElts);
     
     // Divide the input until we get to a supported size.  This will always
     // end with a scalar if the target doesn't support vectors.
-    while (NumElts > 1 && !TLI.isTypeLegal(getVectorType(EltTy, NumElts))) {
+    while (NumElts > 1 && !TLI.isTypeLegal(VecTy)) {
       NumElts >>= 1;
       NumVectorRegs <<= 1;
     }
-    if (NumElts == 1)
+
+    // Check that VecTy isn't a 1-element vector.
+    if (NumElts == 1 && VecTy == MVT::Other)
       VT = EltTy;
     else
-      VT = getVectorType(EltTy, NumElts);
+      VT = VecTy;
   }
-  
+
   // The common case is that we will only create one register for this
   // value.  If we have that case, create and return the virtual register.
   unsigned NV = TLI.getNumElements(VT);
