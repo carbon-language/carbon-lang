@@ -14,21 +14,48 @@
 #ifndef BITCODE_READER_H
 #define BITCODE_READER_H
 
-#include "llvm/Type.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/Type.h"
+#include "llvm/User.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
 #include <vector>
 
 namespace llvm {
   class BitstreamReader;
-  class Value;
-  class GlobalVariable;
+  
+class BitcodeReaderValueList : public User {
+  std::vector<Use> Uses;
+public:
+  BitcodeReaderValueList() : User(Type::VoidTy, Value::ArgumentVal, 0, 0) {}
+  
+  // vector compatibility methods
+  unsigned size() const { return getNumOperands(); }
+  void push_back(Value *V) {
+    Uses.push_back(Use(V, this));
+    OperandList = &Uses[0];
+    ++NumOperands;
+  }
+  
+  Value *operator[](unsigned i) const { return getOperand(i); }
+  
+  Value *back() const { return Uses.back(); }
+  void pop_back() { Uses.pop_back(); --NumOperands; }
+  bool empty() const { return NumOperands == 0; }
+  virtual void print(std::ostream&) const {}
+  
+  Constant *getConstantFwdRef(unsigned Idx, const Type *Ty);
+  void initVal(unsigned Idx, Value *V) {
+    assert(Uses[Idx] == 0 && "Cannot init an already init'd Use!");
+    Uses[Idx].init(V, this);
+  }
+};
+  
 
 class BitcodeReader : public ModuleProvider {
   const char *ErrorString;
   
   std::vector<PATypeHolder> TypeList;
-  std::vector<Value*> ValueList;
+  BitcodeReaderValueList ValueList;
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
 public:
   virtual ~BitcodeReader() {}

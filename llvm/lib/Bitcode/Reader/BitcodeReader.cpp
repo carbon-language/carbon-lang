@@ -55,6 +55,39 @@ static GlobalValue::VisibilityTypes GetDecodedVisibility(unsigned Val) {
   }
 }
 
+namespace {
+  /// @brief A class for maintaining the slot number definition
+  /// as a placeholder for the actual definition for forward constants defs.
+  class ConstantPlaceHolder : public ConstantExpr {
+    ConstantPlaceHolder();                       // DO NOT IMPLEMENT
+    void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
+public:
+  Use Op;
+  ConstantPlaceHolder(const Type *Ty)
+    : ConstantExpr(Ty, Instruction::UserOp1, &Op, 1),
+      Op(UndefValue::get(Type::Int32Ty), this) {
+    }
+  };
+}
+
+Constant *BitcodeReaderValueList::getConstantFwdRef(unsigned Idx,
+                                                    const Type *Ty) {
+  if (Idx >= size()) {
+    // Insert a bunch of null values.
+    Uses.resize(Idx+1);
+    OperandList = &Uses[0];
+    NumOperands = Idx+1;
+  }
+
+  if (Uses[Idx])
+    return cast<Constant>(getOperand(Idx));
+
+  // Create and return a placeholder, which will later be RAUW'd.
+  Constant *C = new ConstantPlaceHolder(Ty);
+  Uses[Idx].init(C, this);
+  return C;
+}
+
 
 const Type *BitcodeReader::getTypeByID(unsigned ID, bool isTypeTable) {
   // If the TypeID is in range, return it.
@@ -324,6 +357,7 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
   
   // Read all the records for this value table.
   const Type *CurTy = Type::Int32Ty;
+  unsigned NextCstNo = ValueList.size();
   while (1) {
     unsigned Code = Stream.ReadCode();
     if (Code == bitc::END_BLOCK) {
@@ -340,6 +374,9 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
           GlobalInits.pop_back(); 
         }
       }
+      
+      if (NextCstNo != ValueList.size())
+        return Error("Invalid constant reference!");
       
       return Stream.ReadBlockEnd();
     }
@@ -403,9 +440,48 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
       else
         V = UndefValue::get(CurTy);
       break;
+      
+    case bitc::CST_CODE_AGGREGATE: {// AGGREGATE: [n, n x value number]
+      if (Record.empty() || Record.size() < Record[0]+1)
+        return Error("Invalid CST_AGGREGATE record");
+      
+      unsigned Size = Record[0];
+      std::vector<Constant*> Elts;
+      
+      if (const StructType *STy = dyn_cast<StructType>(CurTy)) {
+        for (unsigned i = 0; i != Size; ++i)
+          Elts.push_back(ValueList.getConstantFwdRef(Record[i+1],
+                                                     STy->getElementType(i)));
+        V = ConstantStruct::get(STy, Elts);
+      } else if (const ArrayType *ATy = dyn_cast<ArrayType>(CurTy)) {
+        const Type *EltTy = ATy->getElementType();
+        for (unsigned i = 0; i != Size; ++i)
+          Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], EltTy));
+        V = ConstantArray::get(ATy, Elts);
+      } else if (const VectorType *VTy = dyn_cast<VectorType>(CurTy)) {
+        const Type *EltTy = VTy->getElementType();
+        for (unsigned i = 0; i != Size; ++i)
+          Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], EltTy));
+        V = ConstantVector::get(Elts);
+      } else {
+        V = UndefValue::get(CurTy);
+      }
+    }
     }
     
-    ValueList.push_back(V);
+    if (NextCstNo == ValueList.size())
+      ValueList.push_back(V);
+    else if (ValueList[NextCstNo] == 0)
+      ValueList.initVal(NextCstNo, V);
+    else {
+      // If there was a forward reference to this constant, 
+      Value *OldV = ValueList[NextCstNo];
+      ValueList.setOperand(NextCstNo, V);
+      OldV->replaceAllUsesWith(V);
+      delete OldV;
+    }
+    
+    ++NextCstNo;
   }
 }
 
