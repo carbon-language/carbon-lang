@@ -379,6 +379,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i8,  Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v4i16, Custom);
+    setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v2i32, Custom);
+    setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v1i64, Custom);
   }
 
   if (Subtarget->hasSSE1()) {
@@ -1776,12 +1778,35 @@ bool X86::isUNPCKL_v_undef_Mask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
 
   unsigned NumElems = N->getNumOperands();
-  if (NumElems != 4 && NumElems != 8 && NumElems != 16)
+  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
     return false;
 
   for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
     SDOperand BitI  = N->getOperand(i);
     SDOperand BitI1 = N->getOperand(i+1);
+
+    if (!isUndefOrEqual(BitI, j))
+      return false;
+    if (!isUndefOrEqual(BitI1, j))
+      return false;
+  }
+
+  return true;
+}
+
+/// isUNPCKH_v_undef_Mask - Special case of isUNPCKHMask for canonical form
+/// of vector_shuffle v, v, <2, 6, 3, 7>, i.e. vector_shuffle v, undef,
+/// <2, 2, 3, 3>
+bool X86::isUNPCKH_v_undef_Mask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  unsigned NumElems = N->getNumOperands();
+  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
+    return false;
+
+  for (unsigned i = 0, j = NumElems / 2; i != NumElems; i += 2, ++j) {
+    SDOperand BitI  = N->getOperand(i);
+    SDOperand BitI1 = N->getOperand(i + 1);
 
     if (!isUndefOrEqual(BitI, j))
       return false;
@@ -2432,7 +2457,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     }
   }
 
-  // Let legalizer expand 2-wide build_vector's.
+  // Let legalizer expand 2-wide build_vectors.
   if (EVTBits == 64)
     return SDOperand();
 
@@ -2591,6 +2616,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   }
 
   if (X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
+      X86::isUNPCKH_v_undef_Mask(PermMask.Val) ||
       X86::isUNPCKLMask(PermMask.Val) ||
       X86::isUNPCKHMask(PermMask.Val))
     return Op;
@@ -2619,6 +2645,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     // Commute is back and try unpck* again.
     Op = CommuteVectorShuffle(Op, V1, V2, PermMask, DAG);
     if (X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
+        X86::isUNPCKH_v_undef_Mask(PermMask.Val) ||
         X86::isUNPCKLMask(PermMask.Val) ||
         X86::isUNPCKHMask(PermMask.Val))
       return Op;
@@ -4231,6 +4258,7 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
           isPSHUFHW_PSHUFLWMask(Mask.Val) ||
           X86::isUNPCKLMask(Mask.Val) ||
           X86::isUNPCKL_v_undef_Mask(Mask.Val) ||
+          X86::isUNPCKH_v_undef_Mask(Mask.Val) ||
           X86::isUNPCKHMask(Mask.Val));
 }
 
