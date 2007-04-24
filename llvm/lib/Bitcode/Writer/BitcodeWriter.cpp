@@ -25,6 +25,47 @@ using namespace llvm;
 
 static const unsigned CurVersion = 0;
 
+static unsigned GetEncodedCastOpcode(unsigned Opcode) {
+  switch (Opcode) {
+  default: assert(0 && "Unknown cast instruction!");
+  case Instruction::Trunc   : return bitc::CAST_TRUNC;
+  case Instruction::ZExt    : return bitc::CAST_ZEXT;
+  case Instruction::SExt    : return bitc::CAST_SEXT;
+  case Instruction::FPToUI  : return bitc::CAST_FPTOUI;
+  case Instruction::FPToSI  : return bitc::CAST_FPTOSI;
+  case Instruction::UIToFP  : return bitc::CAST_UITOFP;
+  case Instruction::SIToFP  : return bitc::CAST_SITOFP;
+  case Instruction::FPTrunc : return bitc::CAST_FPTRUNC;
+  case Instruction::FPExt   : return bitc::CAST_FPEXT;
+  case Instruction::PtrToInt: return bitc::CAST_PTRTOINT;
+  case Instruction::IntToPtr: return bitc::CAST_INTTOPTR;
+  case Instruction::BitCast : return bitc::CAST_BITCAST;
+  }
+}
+
+static unsigned GetEncodedBinaryOpcode(unsigned Opcode) {
+  switch (Opcode) {
+  default: assert(0 && "Unknown binary instruction!");
+  case Instruction::Add:  return bitc::BINOP_ADD;
+  case Instruction::Sub:  return bitc::BINOP_SUB;
+  case Instruction::Mul:  return bitc::BINOP_MUL;
+  case Instruction::UDiv: return bitc::BINOP_UDIV;
+  case Instruction::FDiv:
+  case Instruction::SDiv: return bitc::BINOP_SDIV;
+  case Instruction::URem: return bitc::BINOP_UREM;
+  case Instruction::FRem:
+  case Instruction::SRem: return bitc::BINOP_SREM;
+  case Instruction::Shl:  return bitc::BINOP_SHL;
+  case Instruction::LShr: return bitc::BINOP_LSHR;
+  case Instruction::AShr: return bitc::BINOP_ASHR;
+  case Instruction::And:  return bitc::BINOP_AND;
+  case Instruction::Or:   return bitc::BINOP_OR;
+  case Instruction::Xor:  return bitc::BINOP_XOR;
+  }
+}
+
+
+
 static void WriteStringRecord(unsigned Code, const std::string &Str, 
                               unsigned AbbrevToUse, BitstreamWriter &Stream) {
   SmallVector<unsigned, 64> Vals;
@@ -408,15 +449,62 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
         Record.push_back(VE.getValueID(C->getOperand(i)));
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      Code = bitc::CST_CODE_CONSTEXPR;
-      // FIXME: optimize for binops, compares, etc.
-      Record.push_back(CE->getOpcode());
-      Record.push_back(CE->getNumOperands());
-      for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
-        Record.push_back(VE.getValueID(C->getOperand(i)));
-      // Compares also pass their predicate.
-      if (CE->isCompare())
-        Record.push_back((unsigned)CE->getPredicate());
+      switch (CE->getOpcode()) {
+      default:
+        if (Instruction::isCast(CE->getOpcode())) {
+          Code = bitc::CST_CODE_CE_CAST;
+          Record.push_back(GetEncodedCastOpcode(CE->getOpcode()));
+          Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
+          Record.push_back(VE.getValueID(C->getOperand(0)));
+        } else {
+          assert(CE->getNumOperands() == 2 && "Unknown constant expr!");
+          Code = bitc::CST_CODE_CE_BINOP;
+          Record.push_back(GetEncodedBinaryOpcode(CE->getOpcode()));
+          Record.push_back(VE.getValueID(C->getOperand(0)));
+          Record.push_back(VE.getValueID(C->getOperand(1)));
+        }
+        break;
+      case Instruction::GetElementPtr:
+        Code = bitc::CST_CODE_CE_GEP;
+        Record.push_back(CE->getNumOperands());
+        for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i) {
+          Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
+          Record.push_back(VE.getValueID(C->getOperand(i)));
+        }
+        break;
+      case Instruction::Select:
+        Code = bitc::CST_CODE_CE_SELECT;
+        Record.push_back(VE.getValueID(C->getOperand(0)));
+        Record.push_back(VE.getValueID(C->getOperand(1)));
+        Record.push_back(VE.getValueID(C->getOperand(2)));
+        break;
+      case Instruction::ExtractElement:
+        Code = bitc::CST_CODE_CE_EXTRACTELT;
+        Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
+        Record.push_back(VE.getValueID(C->getOperand(0)));
+        Record.push_back(VE.getValueID(C->getOperand(1)));
+        break;
+      case Instruction::InsertElement:
+        Code = bitc::CST_CODE_CE_INSERTELT;
+        Record.push_back(VE.getValueID(C->getOperand(0)));
+        Record.push_back(VE.getValueID(C->getOperand(1)));
+        Record.push_back(VE.getValueID(C->getOperand(2)));
+        break;
+      case Instruction::ShuffleVector:
+        Code = bitc::CST_CODE_CE_SHUFFLEVEC;
+        Record.push_back(VE.getValueID(C->getOperand(0)));
+        Record.push_back(VE.getValueID(C->getOperand(1)));
+        Record.push_back(VE.getValueID(C->getOperand(2)));
+        break;
+      case Instruction::ICmp:
+      case Instruction::FCmp:
+        Code = bitc::CST_CODE_CE_CMP;
+        Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
+        Record.push_back(VE.getValueID(C->getOperand(0)));
+        Record.push_back(VE.getValueID(C->getOperand(1)));
+        Record.push_back(CE->getPredicate());
+        break;
+      }
     } else {
       assert(0 && "Unknown constant!");
     }

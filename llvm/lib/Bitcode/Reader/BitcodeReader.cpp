@@ -55,17 +55,56 @@ static GlobalValue::VisibilityTypes GetDecodedVisibility(unsigned Val) {
   }
 }
 
+static int GetDecodedCastOpcode(unsigned Val) {
+  switch (Val) {
+  default: return -1;
+  case bitc::CAST_TRUNC   : return Instruction::Trunc;
+  case bitc::CAST_ZEXT    : return Instruction::ZExt;
+  case bitc::CAST_SEXT    : return Instruction::SExt;
+  case bitc::CAST_FPTOUI  : return Instruction::FPToUI;
+  case bitc::CAST_FPTOSI  : return Instruction::FPToSI;
+  case bitc::CAST_UITOFP  : return Instruction::UIToFP;
+  case bitc::CAST_SITOFP  : return Instruction::SIToFP;
+  case bitc::CAST_FPTRUNC : return Instruction::FPTrunc;
+  case bitc::CAST_FPEXT   : return Instruction::FPExt;
+  case bitc::CAST_PTRTOINT: return Instruction::PtrToInt;
+  case bitc::CAST_INTTOPTR: return Instruction::IntToPtr;
+  case bitc::CAST_BITCAST : return Instruction::BitCast;
+  }
+}
+static int GetDecodedBinaryOpcode(unsigned Val, const Type *Ty) {
+  switch (Val) {
+  default: return -1;
+  case bitc::BINOP_ADD:  return Instruction::Add;
+  case bitc::BINOP_SUB:  return Instruction::Sub;
+  case bitc::BINOP_MUL:  return Instruction::Mul;
+  case bitc::BINOP_UDIV: return Instruction::UDiv;
+  case bitc::BINOP_SDIV:
+    return Ty->isFPOrFPVector() ? Instruction::FDiv : Instruction::SDiv;
+  case bitc::BINOP_UREM: return Instruction::URem;
+  case bitc::BINOP_SREM:
+    return Ty->isFPOrFPVector() ? Instruction::FRem : Instruction::SRem;
+  case bitc::BINOP_SHL:  return Instruction::Shl;
+  case bitc::BINOP_LSHR: return Instruction::LShr;
+  case bitc::BINOP_ASHR: return Instruction::AShr;
+  case bitc::BINOP_AND:  return Instruction::And;
+  case bitc::BINOP_OR:   return Instruction::Or;
+  case bitc::BINOP_XOR:  return Instruction::Xor;
+  }
+}
+
+
 namespace {
   /// @brief A class for maintaining the slot number definition
   /// as a placeholder for the actual definition for forward constants defs.
   class ConstantPlaceHolder : public ConstantExpr {
     ConstantPlaceHolder();                       // DO NOT IMPLEMENT
     void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
-public:
-  Use Op;
-  ConstantPlaceHolder(const Type *Ty)
-    : ConstantExpr(Ty, Instruction::UserOp1, &Op, 1),
-      Op(UndefValue::get(Type::Int32Ty), this) {
+  public:
+    Use Op;
+    ConstantPlaceHolder(const Type *Ty)
+      : ConstantExpr(Ty, Instruction::UserOp1, &Op, 1),
+        Op(UndefValue::get(Type::Int32Ty), this) {
     }
   };
 }
@@ -79,8 +118,11 @@ Constant *BitcodeReaderValueList::getConstantFwdRef(unsigned Idx,
     NumOperands = Idx+1;
   }
 
-  if (Uses[Idx])
+  if (Uses[Idx]) {
+    assert(Ty == getOperand(Idx)->getType() &&
+           "Type mismatch in constant table!");
     return cast<Constant>(getOperand(Idx));
+  }
 
   // Create and return a placeholder, which will later be RAUW'd.
   Constant *C = new ConstantPlaceHolder(Ty);
@@ -466,6 +508,91 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
       } else {
         V = UndefValue::get(CurTy);
       }
+      break;
+    }
+
+    case bitc::CST_CODE_CE_BINOP: {  // CE_BINOP: [opcode, opval, opval]
+      if (Record.size() < 3) return Error("Invalid CE_BINOP record");
+      int Opc = GetDecodedBinaryOpcode(Record[0], CurTy);
+      if (Opc < 0) return UndefValue::get(CurTy);  // Unknown binop.
+      
+      Constant *LHS = ValueList.getConstantFwdRef(Record[1], CurTy);
+      Constant *RHS = ValueList.getConstantFwdRef(Record[2], CurTy);
+      V = ConstantExpr::get(Opc, LHS, RHS);
+      break;
+    }  
+    case bitc::CST_CODE_CE_CAST: {  // CE_CAST: [opcode, opty, opval]
+      if (Record.size() < 3) return Error("Invalid CE_CAST record");
+      int Opc = GetDecodedCastOpcode(Record[0]);
+      if (Opc < 0) return UndefValue::get(CurTy);  // Unknown cast.
+      
+      const Type *OpTy = getTypeByID(Record[1]);
+      Constant *Op = ValueList.getConstantFwdRef(Record[2], OpTy);
+      V = ConstantExpr::getCast(Opc, Op, CurTy);
+      break;
+    }  
+    case bitc::CST_CODE_CE_GEP: {  // CE_GEP:        [n x operands]
+      if ((Record.size() & 1) == 0) return Error("Invalid CE_GEP record");
+      SmallVector<Constant*, 16> Elts;
+      for (unsigned i = 1, e = Record.size(); i != e; i += 2) {
+        const Type *ElTy = getTypeByID(Record[i]);
+        if (!ElTy) return Error("Invalid CE_GEP record");
+        Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
+      }
+      return ConstantExpr::getGetElementPtr(Elts[0], &Elts[1], Elts.size()-1);
+    }
+    case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
+      if (Record.size() < 3) return Error("Invalid CE_SELECT record");
+      V = ConstantExpr::getSelect(ValueList.getConstantFwdRef(Record[0],
+                                                              Type::Int1Ty),
+                                  ValueList.getConstantFwdRef(Record[1],CurTy),
+                                  ValueList.getConstantFwdRef(Record[2],CurTy));
+      break;
+    case bitc::CST_CODE_CE_EXTRACTELT: { // CE_EXTRACTELT: [opty, opval, opval]
+      if (Record.size() < 3) return Error("Invalid CE_EXTRACTELT record");
+      const VectorType *OpTy = 
+        dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
+      if (OpTy == 0) return Error("Invalid CE_EXTRACTELT record");
+      Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
+      Constant *Op1 = ValueList.getConstantFwdRef(Record[2],
+                                                  OpTy->getElementType());
+      V = ConstantExpr::getExtractElement(Op0, Op1);
+      break;
+    }
+    case bitc::CST_CODE_CE_INSERTELT: { // CE_INSERTELT: [opval, opval, opval]
+      const VectorType *OpTy = dyn_cast<VectorType>(CurTy);
+      if (Record.size() < 3 || OpTy == 0)
+        return Error("Invalid CE_INSERTELT record");
+      Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy);
+      Constant *Op1 = ValueList.getConstantFwdRef(Record[1],
+                                                  OpTy->getElementType());
+      Constant *Op2 = ValueList.getConstantFwdRef(Record[2], Type::Int32Ty);
+      V = ConstantExpr::getInsertElement(Op0, Op1, Op2);
+      break;
+    }
+    case bitc::CST_CODE_CE_SHUFFLEVEC: { // CE_SHUFFLEVEC: [opval, opval, opval]
+      const VectorType *OpTy = dyn_cast<VectorType>(CurTy);
+      if (Record.size() < 3 || OpTy == 0)
+        return Error("Invalid CE_INSERTELT record");
+      Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy);
+      Constant *Op1 = ValueList.getConstantFwdRef(Record[1], OpTy);
+      const Type *ShufTy=VectorType::get(Type::Int32Ty, OpTy->getNumElements());
+      Constant *Op2 = ValueList.getConstantFwdRef(Record[2], ShufTy);
+      V = ConstantExpr::getShuffleVector(Op0, Op1, Op2);
+      break;
+    }
+    case bitc::CST_CODE_CE_CMP: {     // CE_CMP: [opty, opval, opval, pred]
+      if (Record.size() < 4) return Error("Invalid CE_CMP record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      if (OpTy == 0) return Error("Invalid CE_CMP record");
+      Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
+      Constant *Op1 = ValueList.getConstantFwdRef(Record[2], OpTy);
+
+      if (OpTy->isFloatingPoint())
+        V = ConstantExpr::getFCmp(Record[3], Op0, Op1);
+      else
+        V = ConstantExpr::getICmp(Record[3], Op0, Op1);
+      break;
     }
     }
     
