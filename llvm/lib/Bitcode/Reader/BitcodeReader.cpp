@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 /// ConvertToString - Convert a string from a record into an std::string, return
@@ -204,8 +205,8 @@ bool BitcodeReader::ParseTypeTable(BitstreamReader &Stream) {
       const_cast<OpaqueType*>(OldTy)->refineAbstractTypeTo(ResultTy);
       
       // This should have replaced the old opaque type with the new type in the
-      // value table... or with a preexisting type that was already in the system.
-      // Let's just make sure it did.
+      // value table... or with a preexisting type that was already in the
+      // system.  Let's just make sure it did.
       assert(TypeList[NumRecords-1].get() != OldTy &&
              "refineAbstractType didn't work!");
     }
@@ -304,6 +305,17 @@ bool BitcodeReader::ParseValueSymbolTable(BitstreamReader &Stream) {
   }
 }
 
+/// DecodeSignRotatedValue - Decode a signed value stored with the sign bit in
+/// the LSB for dense VBR encoding.
+static uint64_t DecodeSignRotatedValue(uint64_t V) {
+  if ((V & 1) == 0)
+    return V >> 1;
+  if (V != 1) 
+    return -(V >> 1);
+  // There is no such thing as -0 with integers.  "-0" really means MININT.
+  return 1ULL << 63;
+}
+
 bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
   if (Stream.EnterSubBlock())
     return Error("Malformed block record");
@@ -359,17 +371,37 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
       if (Record[0] >= TypeList.size())
         return Error("Invalid Type ID in CST_SETTYPE record");
       CurTy = TypeList[Record[0]];
-      continue;
+      continue;  // Skip the ValueList manipulation.
     case bitc::CST_CODE_NULL:      // NULL
       V = Constant::getNullValue(CurTy);
       break;
     case bitc::CST_CODE_INTEGER:   // INTEGER: [intval]
-      if (!isa<IntegerType>(CurTy))
-        return Error("Invalid type for CST_INTEGER");
-      if (Record[0] & 1)
-        V = ConstantInt::get(CurTy, -(Record[0]>>1));
+      if (!isa<IntegerType>(CurTy) || Record.empty())
+        return Error("Invalid CST_INTEGER record");
+      V = ConstantInt::get(CurTy, DecodeSignRotatedValue(Record[0]));
+      break;
+    case bitc::CST_CODE_WIDE_INTEGER: {// WIDE_INTEGER: [n, n x intval]
+      if (!isa<IntegerType>(CurTy) || Record.empty() ||
+          Record.size() < Record[0]+1)
+        return Error("Invalid WIDE_INTEGER record");
+      
+      unsigned NumWords = Record[0];
+      uint64_t *Data = new uint64_t[NumWords];
+      for (unsigned i = 0; i != NumWords; ++i)
+        Data[i] = DecodeSignRotatedValue(Record[i+1]);
+      V = ConstantInt::get(APInt(cast<IntegerType>(CurTy)->getBitWidth(),
+                                 NumWords, Data));
+      break;
+    }
+    case bitc::CST_CODE_FLOAT:     // FLOAT: [fpval]
+      if (Record.empty())
+        return Error("Invalid FLOAT record");
+      if (CurTy == Type::FloatTy)
+        V = ConstantFP::get(CurTy, BitsToFloat(Record[0]));
+      else if (CurTy == Type::DoubleTy)
+        V = ConstantFP::get(CurTy, BitsToDouble(Record[0]));
       else
-        V = ConstantInt::get(CurTy, Record[0]>>1);
+        V = UndefValue::get(CurTy);
       break;
     }
     
