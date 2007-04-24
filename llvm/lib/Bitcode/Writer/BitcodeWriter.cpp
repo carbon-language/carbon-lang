@@ -220,7 +220,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
       Abbv->Add(BitCodeAbbrevOp(0));
     else
       Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
-                               Log2_32_Ceil(SectionMap.size())));
+                               Log2_32_Ceil(SectionMap.size()+1)));
     // Don't bother emitting vis + thread local.
     SimpleGVarAbbrev = Stream.EmitAbbrev(Abbv);
   }
