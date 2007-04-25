@@ -19,7 +19,6 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 using namespace llvm;
@@ -38,7 +37,6 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<ETForest>();
       AU.addRequired<DominanceFrontier>();
-      AU.addRequired<TargetData>();
       AU.setPreservesCFG();
       // This is a cluster of orthogonal Transforms
       AU.addPreserved<UnifyFunctionExitNodes>();
@@ -54,7 +52,6 @@ namespace {
 
 bool PromotePass::runOnFunction(Function &F) {
   std::vector<AllocaInst*> Allocas;
-  const TargetData &TD = getAnalysis<TargetData>();
 
   BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
 
@@ -75,7 +72,7 @@ bool PromotePass::runOnFunction(Function &F) {
 
     if (Allocas.empty()) break;
 
-    PromoteMemToReg(Allocas, ET, DF, TD);
+    PromoteMemToReg(Allocas, ET, DF);
     NumPromoted += Allocas.size();
     Changed = true;
   }

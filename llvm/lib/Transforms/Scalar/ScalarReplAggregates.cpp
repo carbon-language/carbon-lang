@@ -104,7 +104,6 @@ bool SROA::runOnFunction(Function &F) {
 
 bool SROA::performPromotion(Function &F) {
   std::vector<AllocaInst*> Allocas;
-  const TargetData &TD = getAnalysis<TargetData>();
   ETForest         &ET = getAnalysis<ETForest>();
   DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
 
@@ -124,7 +123,7 @@ bool SROA::performPromotion(Function &F) {
 
     if (Allocas.empty()) break;
 
-    PromoteMemToReg(Allocas, ET, DF, TD);
+    PromoteMemToReg(Allocas, ET, DF);
     NumPromoted += Allocas.size();
     Changed = true;
   }

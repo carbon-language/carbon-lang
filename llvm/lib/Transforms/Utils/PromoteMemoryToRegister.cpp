@@ -90,7 +90,6 @@ namespace {
     SmallVector<AllocaInst*, 16> &RetryList;
     ETForest &ET;
     DominanceFrontier &DF;
-    const TargetData &TD;
 
     /// AST - An AliasSetTracker object to update.  If null, don't update it.
     ///
@@ -128,9 +127,8 @@ namespace {
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A,
                    SmallVector<AllocaInst*, 16> &Retry, ETForest &et,
-                   DominanceFrontier &df, const TargetData &td,
-                   AliasSetTracker *ast)
-      : Allocas(A), RetryList(Retry), ET(et), DF(df), TD(td), AST(ast) {}
+                   DominanceFrontier &df, AliasSetTracker *ast)
+      : Allocas(A), RetryList(Retry), ET(et), DF(df), AST(ast) {}
 
     void run();
 
@@ -806,12 +804,12 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 ///
 void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                            ETForest &ET, DominanceFrontier &DF,
-                           const TargetData &TD, AliasSetTracker *AST) {
+                           AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
 
   SmallVector<AllocaInst*, 16> RetryList;
-  PromoteMem2Reg(Allocas, RetryList, ET, DF, TD, AST).run();
+  PromoteMem2Reg(Allocas, RetryList, ET, DF, AST).run();
 
   // PromoteMem2Reg may not have been able to promote all of the allocas in one
   // pass, run it again if needed.
@@ -829,7 +827,7 @@ void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
 
     NewAllocas.assign(RetryList.begin(), RetryList.end());
     RetryList.clear();
-    PromoteMem2Reg(NewAllocas, RetryList, ET, DF, TD, AST).run();
+    PromoteMem2Reg(NewAllocas, RetryList, ET, DF, AST).run();
     NewAllocas.clear();
   }
 }
