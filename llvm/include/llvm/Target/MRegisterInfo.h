@@ -321,6 +321,22 @@ public:
     return areAliases(regA, regB);
   }
 
+  /// isSubRegister - Returns true if regB is a sub-register of regA.
+  ///
+  bool isSubRegister(unsigned regA, unsigned regB) const {
+    for (const unsigned *SR = getSubRegisters(regA); *SR; ++SR)
+      if (*SR == regB) return true;
+    return false;
+  }
+
+  /// isSuperRegister - Returns true if regB is a super-register of regA.
+  ///
+  bool isSuperRegister(unsigned regA, unsigned regB) const {
+    for (const unsigned *SR = getSuperRegisters(regA); *SR; ++SR)
+      if (*SR == regB) return true;
+    return false;
+  }
+
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee saved registers on this target. The register should be in the
   /// order of desired callee-save stack frame offset. The first register is
