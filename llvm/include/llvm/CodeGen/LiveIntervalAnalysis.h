@@ -255,7 +255,7 @@ namespace llvm {
     /// handleLiveInRegister - Create interval for a livein register.
     void handleLiveInRegister(MachineBasicBlock* mbb,
                               unsigned MIIdx,
-                              LiveInterval &interval);
+                              LiveInterval &interval, bool isAlias = false);
 
     /// Return true if the two specified registers belong to different
     /// register classes.  The registers may be either phys or virt regs.

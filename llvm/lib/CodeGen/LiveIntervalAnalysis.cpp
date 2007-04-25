@@ -675,8 +675,12 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
 exit:
   assert(start < end && "did not find end of interval?");
 
-  LiveRange LR(start, end, interval.getNextValue(SrcReg != 0 ? start : ~0U,
-                                                 SrcReg));
+  // Already exists? Extend old live interval.
+  LiveInterval::iterator OldLR = interval.FindLiveRangeContaining(start);
+  unsigned Id = (OldLR != interval.end())
+    ? OldLR->ValId
+    : interval.getNextValue(SrcReg != 0 ? start : ~0U, SrcReg);
+  LiveRange LR(start, end, Id);
   interval.addRange(LR);
   DOUT << " +" << LR << '\n';
 }
@@ -692,14 +696,17 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
     if (!tii_->isMoveInstr(*MI, SrcReg, DstReg))
       SrcReg = 0;
     handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg), SrcReg);
-    for (const unsigned* AS = mri_->getAliasSet(reg); *AS; ++AS)
-      handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(*AS), 0);
+    // Def of a register also defines its sub-registers.
+    for (const unsigned* AS = mri_->getSubRegisters(reg); *AS; ++AS)
+      // Avoid processing some defs more than once.
+      if (!MI->findRegisterDefOperand(*AS))
+        handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(*AS), 0);
   }
 }
 
 void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
                                          unsigned MIIdx,
-                                         LiveInterval &interval) {
+                                         LiveInterval &interval, bool isAlias) {
   DOUT << "\t\tlivein register: "; DEBUG(printRegName(interval.reg));
 
   // Look for kills, if it reaches a def before it's killed, then it shouldn't
@@ -728,6 +735,12 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   }
 
 exit:
+  // Alias of a live-in register might not be used at all.
+  if (isAlias && end == 0) {
+    DOUT << " dead";
+    end = getDefIndex(start) + 1;
+  }
+
   assert(start < end && "did not find end of interval?");
 
   LiveRange LR(start, end, interval.getNextValue(~0U, 0));
@@ -757,8 +770,10 @@ void LiveIntervals::computeIntervals() {
       for (MachineBasicBlock::const_livein_iterator LI = MBB->livein_begin(),
              LE = MBB->livein_end(); LI != LE; ++LI) {
         handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*LI));
-        for (const unsigned* AS = mri_->getAliasSet(*LI); *AS; ++AS)
-          handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*AS));
+        // Multiple live-ins can alias the same register.
+        for (const unsigned* AS = mri_->getSubRegisters(*LI); *AS; ++AS)
+          if (!hasInterval(*AS))
+            handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*AS), true);
       }
     }
     
@@ -856,7 +871,8 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
   // If the IntB live range is assigned to a physical register, and if that
   // physreg has aliases, 
   if (MRegisterInfo::isPhysicalRegister(IntB.reg)) {
-    for (const unsigned *AS = mri_->getAliasSet(IntB.reg); *AS; ++AS) {
+    // Update the liveintervals of sub-registers.
+    for (const unsigned *AS = mri_->getSubRegisters(IntB.reg); *AS; ++AS) {
       LiveInterval &AliasLI = getInterval(*AS);
       AliasLI.addRange(LiveRange(FillerStart, FillerEnd,
                                  AliasLI.getNextValue(~0U, 0)));
@@ -1055,8 +1071,9 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   // we have to update any aliased register's live ranges to indicate that they
   // have clobbered values for this range.
   if (MRegisterInfo::isPhysicalRegister(repDstReg)) {
-    for (const unsigned *AS = mri_->getAliasSet(repDstReg); *AS; ++AS)
-      getInterval(*AS).MergeInClobberRanges(SrcInt);
+    // Update the liveintervals of sub-registers.
+    for (const unsigned *AS = mri_->getSubRegisters(repDstReg); *AS; ++AS)
+        getInterval(*AS).MergeInClobberRanges(SrcInt);
   } else {
     // Merge use info if the destination is a virtual register.
     LiveVariables::VarInfo& dVI = lv_->getVarInfo(repDstReg);
@@ -1279,6 +1296,27 @@ bool LiveIntervals::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
   SmallVector<int, 16> LHSValNoAssignments;
   SmallVector<int, 16> RHSValNoAssignments;
   SmallVector<std::pair<unsigned,unsigned>, 16> ValueNumberInfo;
+
+  // If a live interval is a physical register, conservatively check if any
+  // of its sub-registers is overlapping the live interval of the virtual
+  // register. If so, do not coalesce.
+  if (MRegisterInfo::isPhysicalRegister(LHS.reg) &&
+      *mri_->getSubRegisters(LHS.reg)) {
+    for (const unsigned* SR = mri_->getSubRegisters(LHS.reg); *SR; ++SR)
+      if (hasInterval(*SR) && RHS.overlaps(getInterval(*SR))) {
+        DOUT << "Interfere with sub-register ";
+        DEBUG(getInterval(*SR).print(DOUT, mri_));
+        return false;
+      }
+  } else if (MRegisterInfo::isPhysicalRegister(RHS.reg) &&
+             *mri_->getSubRegisters(RHS.reg)) {
+    for (const unsigned* SR = mri_->getSubRegisters(RHS.reg); *SR; ++SR)
+      if (hasInterval(*SR) && LHS.overlaps(getInterval(*SR))) {
+        DOUT << "Interfere with sub-register ";
+        DEBUG(getInterval(*SR).print(DOUT, mri_));
+        return false;
+      }
+  }
                           
   // Compute ultimate value numbers for the LHS and RHS values.
   if (RHS.containsOneValue()) {

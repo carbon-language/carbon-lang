@@ -124,8 +124,25 @@ private:   // Intermediate data structures
 
   const MRegisterInfo *RegInfo;
 
-  MachineInstr **PhysRegInfo;
-  bool          *PhysRegUsed;
+  // PhysRegInfo - Keep track of which instruction was the last def/use of a
+  // physical register. This is a purely local property, because all physical
+  // register references as presumed dead across basic blocks.
+  std::vector<MachineInstr*> PhysRegInfo;
+
+  // PhysRegUsed - Keep track whether the physical register has been used after
+  // its last definition. This is local property.
+  BitVector                  PhysRegUsed;
+
+  // PhysRegPartDef - Keep track of a list of instructions which "partially"
+  // defined the physical register (e.g. on X86 AX partially defines EAX).
+  // These are turned into use/mod/write if there is a use of the register
+  // later in the same block. This is local property.
+  std::vector<std::vector<MachineInstr*> > PhysRegPartDef;
+
+  // PhysRegPartUse - Keep track of which instruction was the last partial use
+  // of a physical register (e.g. on X86 a def of EAX followed by a use of AX).
+  // This is a purely local property.
+  std::vector<MachineInstr*> PhysRegPartUse;
 
   typedef std::map<const MachineBasicBlock*,
                    std::vector<unsigned> > PHIVarInfoMap;
