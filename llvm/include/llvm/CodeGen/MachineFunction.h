@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/Annotation.h"
+#include "llvm/ADT/BitVector.h"
 
 namespace llvm {
 
@@ -103,12 +104,12 @@ class MachineFunction : private Annotation {
   // numbered and this vector keeps track of the mapping from ID's to MBB's.
   std::vector<MachineBasicBlock*> MBBNumbering;
 
-  /// UsedPhysRegs - This is a new[]'d array of bools that is computed and set
-  /// by the register allocator, and must be kept up to date by passes that run
-  /// after register allocation (though most don't modify this).  This is used
+  /// UsedPhysRegs - This is a bit vector that is computed and set by the
+  /// register allocator, and must be kept up to date by passes that run after
+  /// register allocation (though most don't modify this).  This is used
   /// so that the code generator knows which callee save registers to save and
   /// for other target specific uses.
-  bool *UsedPhysRegs;
+  BitVector UsedPhysRegs;
 
   /// LiveIns/LiveOuts - Keep track of the physical registers that are
   /// livein/liveout of the function.  Live in values are typically arguments in
@@ -170,26 +171,17 @@ public:
      return const_cast<MachineFunction*>(this)->getInfo<Ty>();
   }
 
-  /// setUsedPhysRegs - The register allocator should call this to initialized
-  /// the UsedPhysRegs set.  This should be passed a new[]'d array with entries
-  /// for all of the physical registers that the target supports.  Each array
-  /// entry should be set to true iff the physical register is used within the
-  /// function.
-  void setUsedPhysRegs(bool *UPR) { UsedPhysRegs = UPR; }
-
-  /// getUsedPhysregs - This returns the UsedPhysRegs array.  This returns null
-  /// before register allocation.
-  bool *getUsedPhysregs() { return UsedPhysRegs; }
-  const bool *getUsedPhysregs() const { return UsedPhysRegs; }
-
   /// isPhysRegUsed - Return true if the specified register is used in this
   /// function.  This only works after register allocation.
   bool isPhysRegUsed(unsigned Reg) const { return UsedPhysRegs[Reg]; }
 
-  /// changePhyRegUsed - This method allows code that runs after register
-  /// allocation to keep the PhysRegsUsed array up-to-date.
-  void changePhyRegUsed(unsigned Reg, bool State) { UsedPhysRegs[Reg] = State; }
+  /// setPhysRegUsed - Mark the specified register used in this function.
+  /// This should only be called during and after register allocation.
+  void setPhysRegUsed(unsigned Reg) { UsedPhysRegs[Reg] = true; }
 
+  /// setPhysRegUnused - Mark the specified register unused in this function.
+  /// This should only be called during and after register allocation.
+  void setPhysRegUnused(unsigned Reg) { UsedPhysRegs[Reg] = false; }
 
   // LiveIn/LiveOut management methods.
 

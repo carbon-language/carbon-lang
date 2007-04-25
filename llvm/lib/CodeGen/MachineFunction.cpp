@@ -114,11 +114,12 @@ void ilist_traits<MachineBasicBlock>::transferNodesFromList(
 
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
-  : Annotation(MF_AID), Fn(F), Target(TM), UsedPhysRegs(0) {
+  : Annotation(MF_AID), Fn(F), Target(TM) {
   SSARegMapping = new SSARegMap();
   MFInfo = 0;
   FrameInfo = new MachineFrameInfo();
   ConstantPool = new MachineConstantPool(TM.getTargetData());
+  UsedPhysRegs.resize(TM.getRegisterInfo()->getNumRegs());
   
   // Set up jump table.
   const TargetData &TD = *TM.getTargetData();
@@ -138,7 +139,6 @@ MachineFunction::~MachineFunction() {
   delete FrameInfo;
   delete ConstantPool;
   delete JumpTableInfo;
-  delete[] UsedPhysRegs;
 }
 
 
