@@ -409,109 +409,103 @@ QualType Sema::UsualUnaryConversion(QualType t) {
   return t;
 }
 
+/// GetFloatingRank - Helper function for UsualArithmeticConversions().
+static inline int GetFloatingRank(QualType t) {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
+    switch (BT->getKind()) {
+    case BuiltinType::Float:
+    case BuiltinType::FloatComplex:
+      return 1;
+    case BuiltinType::Double:
+    case BuiltinType::DoubleComplex:
+      return 2;
+    case BuiltinType::LongDouble:
+    case BuiltinType::LongDoubleComplex:
+      return 3;
+    default:
+      assert(0 && "getFloatingPointRank(): not a floating type");
+    }
+  }
+  return 0;
+}
+
+/// ConvertFloatingRankToComplexType - Another helper for converting floats.
+static inline QualType ConvertFloatingRankToComplexType(int rank, 
+                                                        ASTContext C) {
+  switch (rank) {
+  case 1:
+    return C.FloatComplexTy;
+  case 2:
+    return C.DoubleComplexTy;
+  case 3:
+    return C.LongDoubleComplexTy;
+  default:
+    assert(0 && "convertRankToComplex(): illegal value for rank");
+  }
+}
+
 /// UsualArithmeticConversions - Performs various conversions that are common to 
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
 QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
-  t1 = UsualUnaryConversion(t1);
-  t2 = UsualUnaryConversion(t2);
+  QualType lhs = UsualUnaryConversion(t1);
+  QualType rhs = UsualUnaryConversion(t2);
   
   // if either operand is not of arithmetic type, no conversion is possible.
-  if (!t1->isArithmeticType())
-    return t1;
-  else if (!t2->isArithmeticType())
-    return t2;
+  if (!lhs->isArithmeticType())
+    return lhs;
+  else if (!rhs->isArithmeticType())
+    return rhs;
     
   // if both operands have the same type, no conversion is needed.
-  if (t1 == t2) 
-    return t1;
+  if (lhs == rhs) 
+    return lhs;
   
-  // at this point, we have two different arithmetic types. Handle the
-  // six floating types first (C99 6.3.1.8p1). 
-  if (t1->isFloatingType() || t2->isFloatingType()) {
-    if (t1->isRealFloatingType() && t2->isRealFloatingType()) {
-      // types are homogeneous, return the type with the greatest precision
-      if (t1->isLongDoubleType())
-        return t1;
-      else if (t2->isLongDoubleType())
-        return t2;
-      if (t1->isDoubleType())
-        return t1;
-      else if (t2->isDoubleType())
-        return t2;
-      assert(0 && "UsualArithmeticConversions(): floating point conversion");
-    } else if (t1->isComplexType() && t2->isComplexType()) {
-      // types are homogeneous, return the type with the greatest precision
-      if (t1->isLongDoubleComplexType())
-        return t1;
-      else if (t2->isLongDoubleComplexType())
-        return t2;
-      if (t1->isDoubleComplexType())
-        return t1;
-      else if (t2->isDoubleComplexType())
-        return t2;
-      assert(0 && "UsualArithmeticConversions(): floating point conversion");
-    }
-    // type are heterogeneous, handle various permutations.
-    if (t1->isRealFloatingType()) {
-      if (t2->isIntegerType())
-        return t1;
-        
-      // return the complex type with the greatest precision (across domains).
-      if (t2->isComplexType()) {
-        if (t1->isLongDoubleType()) {
-          if (t2->isLongDoubleComplexType())
-            return t2;
-          else
-            return t1; // FIXME: need to return "long double _Complex"?
-        } else if (t1->isDoubleType()) {
-          if (t2->isLongDoubleComplexType() || t2->isDoubleComplexType())
-            return t2;
-          else
-            return t1; // FIXME: need to return "double _Complex"?
-        } else {
-          // t1 is a float, there is no need to promote t2 (the complex type).
-          return t2;
-        }
-      } 
-      assert(0 && "UsualArithmeticConversions(): floating point conversion");
-    }
-    if (t1->isComplexType()) {
-      if (t2->isIntegerType())
-        return t1;
-        
-      if (t2->isRealFloatingType()) {
-        // return the complex type with the greatest precision (across domains).
-        if (t2->isLongDoubleType()) {
-          if (t1->isLongDoubleComplexType())
-            return t1;
-          else
-            return t2; // FIXME: need to return "long double _Complex"?
-        } else if (t2->isDoubleType()) {
-          if (t1->isLongDoubleComplexType() || t1->isDoubleComplexType())
-            return t1;
-          else
-            return t2; // FIXME: need to return "double _Complex"?
-        } else {
-          // t2 is a float, there is no need to promote t1 (the complex type).
-          return t1;
-        }
-      } 
-      assert(0 && "UsualArithmeticConversions(): floating point conversion");
-    }
-    if (t1->isIntegerType())
-      return t2;
+  // at this point, we have two different arithmetic types. 
+  
+  // Handle complex types first (C99 6.3.1.8p1).
+  if (lhs->isComplexType() || rhs->isComplexType()) {
+    // if we have an integer operand, the result is the complex type.
+    if (rhs->isIntegerType())
+      return lhs;
+    if (lhs->isIntegerType())
+      return rhs;
+
+    // the following code handles three different combinations:
+    // complex/complex, complex/float, float/complex.
+    int lhsRank = GetFloatingRank(lhs);
+    int rhsRank = GetFloatingRank(rhs);
+    
+    if (lhsRank >= rhsRank)
+      return ConvertFloatingRankToComplexType(lhsRank, Context);
+    else
+      return ConvertFloatingRankToComplexType(rhsRank, Context);
   }
-  bool t1Unsigned = t1->isUnsignedIntegerType();
-  bool t2Unsigned = t2->isUnsignedIntegerType();
+  // Now handle "real" floating types (i.e. float, double, long double).
+  if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
+    // if we have an integer operand, the result is the real floating type.
+    if (rhs->isIntegerType())
+      return lhs;
+    if (lhs->isIntegerType())
+      return rhs;
+
+    // we have two real floating types, float/complex combos were handled above.
+    if (GetFloatingRank(lhs) >= GetFloatingRank(rhs))
+      return lhs;
+    else
+      return rhs;
+  }
+  // Lastly, handle two integers.
+  bool t1Unsigned = lhs->isUnsignedIntegerType();
+  bool t2Unsigned = rhs->isUnsignedIntegerType();
   
   if (t1Unsigned && t2Unsigned)
-    return t1; // FIXME: return the unsigned type with the greatest rank
+    return lhs; // FIXME: return the unsigned type with the greatest rank
   else if (!t1Unsigned && !t2Unsigned)
-    return t1; // FIXME: return the signed type with the greatest rank
+    return lhs; // FIXME: return the signed type with the greatest rank
   else 
-    return t1; // FIXME: we have a mixture...
+    return lhs; // FIXME: we have a mixture...
 }
 
 Action::ExprResult Sema::CheckMultiplicativeOperands(

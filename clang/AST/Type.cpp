@@ -107,42 +107,6 @@ bool Type::isFloatingType() const {
   return false;
 }
 
-bool Type::isFloatType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::Float;
-  return false;
-}
-
-bool Type::isDoubleType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::Double;
-  return false;
-}
-
-bool Type::isLongDoubleType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::LongDouble;
-  return false;
-}
-
-bool Type::isFloatComplexType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::FloatComplex;
-  return false;
-}
-
-bool Type::isDoubleComplexType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::DoubleComplex;
-  return false;
-}
-
-bool Type::isLongDoubleComplexType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::LongDoubleComplex;
-  return false;
-}
-
 bool Type::isRealFloatingType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Float &&
