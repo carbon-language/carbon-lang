@@ -77,7 +77,7 @@ class MachineFrameInfo {
   // StackObject - Represent a single object allocated on the stack.
   struct StackObject {
     // The size of this object on the stack. 0 means a variable sized object
-    unsigned Size;
+    uint64_t Size;
 
     // Alignment - The required alignment of this stack slot.
     unsigned Alignment;
@@ -86,7 +86,7 @@ class MachineFrameInfo {
     // the function.  This field has no meaning for a variable sized element.
     int SPOffset;
 
-    StackObject(unsigned Sz, unsigned Al, int SP)
+    StackObject(uint64_t Sz, unsigned Al, int SP)
       : Size(Sz), Alignment(Al), SPOffset(SP) {}
   };
 
@@ -110,7 +110,7 @@ class MachineFrameInfo {
   /// above.  It then updates StackSize to contain the number of bytes that need
   /// to be allocated on entry to the function.
   ///
-  unsigned StackSize;
+  uint64_t StackSize;
   
   /// OffsetAdjustment - The amount that a frame offset needs to be adjusted to
   /// have the actual offset from the stack/frame pointer.  The calculation is 
@@ -257,7 +257,7 @@ public:
   /// All fixed objects should be created before other objects are created for
   /// efficiency.  This returns an index with a negative value.
   ///
-  int CreateFixedObject(unsigned Size, int SPOffset) {
+  int CreateFixedObject(uint64_t Size, int SPOffset) {
     assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
     Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset));
     return -++NumFixedObjects;
@@ -272,7 +272,7 @@ public:
   /// CreateStackObject - Create a new statically sized stack object, returning
   /// a postive identifier to represent it.
   ///
-  int CreateStackObject(unsigned Size, unsigned Alignment) {
+  int CreateStackObject(uint64_t Size, unsigned Alignment) {
     // Keep track of the maximum alignment.
     if (MaxAlignment < Alignment) MaxAlignment = Alignment;
     
