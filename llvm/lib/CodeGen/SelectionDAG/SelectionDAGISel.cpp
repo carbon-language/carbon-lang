@@ -249,7 +249,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
         TySize *= CUI->getZExtValue();   // Get total allocated size.
         if (TySize == 0) TySize = 1; // Don't create zero-sized stack objects.
         StaticAllocaMap[AI] =
-          MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
+          MF.getFrameInfo()->CreateStackObject(TySize, Align);
       }
 
   for (; BB != EB; ++BB)
