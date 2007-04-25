@@ -739,16 +739,16 @@ static void RemoveVRSaveCode(MachineInstr *MI) {
 // HandleVRSaveUpdate - MI is the UPDATE_VRSAVE instruction introduced by the
 // instruction selector.  Based on the vector registers that have been used,
 // transform this into the appropriate ORI instruction.
-static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs,
-                               const TargetInstrInfo &TII) {
+static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
+  MachineFunction *MF = MI->getParent()->getParent();
+
   unsigned UsedRegMask = 0;
   for (unsigned i = 0; i != 32; ++i)
-    if (UsedRegs[VRRegNo[i]])
+    if (MF->isPhysRegUsed(VRRegNo[i]))
       UsedRegMask |= 1 << (31-i);
   
   // Live in and live out values already must be in the mask, so don't bother
   // marking them.
-  MachineFunction *MF = MI->getParent()->getParent();
   for (MachineFunction::livein_iterator I = 
        MF->livein_begin(), E = MF->livein_end(); I != E; ++I) {
     unsigned RegNo = PPCRegisterInfo::getRegisterNumbering(I->first);
@@ -846,8 +846,7 @@ void PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   unsigned LR = getRARegister();
   FI->setUsesLR(MF.isPhysRegUsed(LR));
-  MF.changePhyRegUsed(LR, false);
-
+  MF.setPhysRegUnused(LR);
 
   //  Save R31 if necessary
   int FPSI = FI->getFramePointerSaveIndex();
@@ -883,7 +882,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // process it.
   for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
     if (MBBI->getOpcode() == PPC::UPDATE_VRSAVE) {
-      HandleVRSaveUpdate(MBBI, MF.getUsedPhysregs(), TII);
+      HandleVRSaveUpdate(MBBI, TII);
       break;
     }
   }

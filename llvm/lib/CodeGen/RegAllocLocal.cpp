@@ -47,7 +47,6 @@ namespace {
     MachineFunction *MF;
     const MRegisterInfo *RegInfo;
     LiveVariables *LV;
-    bool *PhysRegsEverUsed;
 
     // StackSlotForVirtReg - Maps virtual regs to the frame index where these
     // values are spilled.
@@ -511,7 +510,7 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   RegInfo->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
   ++NumLoads;    // Update statistics
 
-  PhysRegsEverUsed[PhysReg] = true;
+  MF->setPhysRegUsed(PhysReg);
   MI->getOperand(OpNum).setReg(PhysReg);  // Assign the input register
   return MI;
 }
@@ -532,7 +531,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     for (MachineFunction::livein_iterator I = MF->livein_begin(),
          E = MF->livein_end(); I != E; ++I) {
       unsigned Reg = I->first;
-      PhysRegsEverUsed[Reg] = true;
+      MF->setPhysRegUsed(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
       PhysRegsUseOrder.push_back(Reg);
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
@@ -540,7 +539,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         if (PhysRegsUsed[*AliasSet] != -2) {
           PhysRegsUseOrder.push_back(*AliasSet);
           PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-          PhysRegsEverUsed[*AliasSet] = true;
+          MF->setPhysRegUsed(*AliasSet);
         }
       }
     }    
@@ -630,7 +629,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned Reg = MO.getReg();
         if (PhysRegsUsed[Reg] == -2) continue;  // Something like ESP.
             
-        PhysRegsEverUsed[Reg] = true;
+        MF->setPhysRegUsed(Reg);
         spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         PhysRegsUseOrder.push_back(Reg);
@@ -639,7 +638,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
           if (PhysRegsUsed[*AliasSet] != -2) {
             PhysRegsUseOrder.push_back(*AliasSet);
             PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-            PhysRegsEverUsed[*AliasSet] = true;
+            MF->setPhysRegUsed(*AliasSet);
           }
         }
       }
@@ -656,7 +655,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
           PhysRegsUseOrder.push_back(Reg);
           PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         }
-        PhysRegsEverUsed[Reg] = true;
+        MF->setPhysRegUsed(Reg);
 
         for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
              *AliasSet; ++AliasSet) {
@@ -665,7 +664,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
               PhysRegsUseOrder.push_back(*AliasSet);
               PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
             }
-            PhysRegsEverUsed[*AliasSet] = true;
+            MF->setPhysRegUsed(*AliasSet);
           }
         }
       }
@@ -693,7 +692,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // If DestVirtReg already has a value, use it.
         if (!(DestPhysReg = getVirt2PhysRegMapSlot(DestVirtReg)))
           DestPhysReg = getReg(MBB, MI, DestVirtReg);
-        PhysRegsEverUsed[DestPhysReg] = true;
+        MF->setPhysRegUsed(DestPhysReg);
         markVirtRegModified(DestVirtReg);
         MI->getOperand(i).setReg(DestPhysReg);  // Assign the output register
       }
@@ -778,10 +777,6 @@ bool RA::runOnMachineFunction(MachineFunction &Fn) {
   TM = &Fn.getTarget();
   RegInfo = TM->getRegisterInfo();
   LV = &getAnalysis<LiveVariables>();
-
-  PhysRegsEverUsed = new bool[RegInfo->getNumRegs()];
-  std::fill(PhysRegsEverUsed, PhysRegsEverUsed+RegInfo->getNumRegs(), false);
-  Fn.setUsedPhysRegs(PhysRegsEverUsed);
 
   PhysRegsUsed.assign(RegInfo->getNumRegs(), -1);
   

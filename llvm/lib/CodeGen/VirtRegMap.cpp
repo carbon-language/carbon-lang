@@ -174,7 +174,6 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
   DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
   const TargetMachine &TM = MF.getTarget();
   const MRegisterInfo &MRI = *TM.getRegisterInfo();
-  bool *PhysRegsUsed = MF.getUsedPhysregs();
 
   // LoadedRegs - Keep track of which vregs are loaded, so that we only load
   // each vreg once (in the case where a spilled vreg is used by multiple
@@ -214,10 +213,10 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
                 ++NumStores;
               }
             }
-            PhysRegsUsed[PhysReg] = true;
+            MF.setPhysRegUsed(PhysReg);
             MI.getOperand(i).setReg(PhysReg);
           } else {
-            PhysRegsUsed[MO.getReg()] = true;
+            MF.setPhysRegUsed(MO.getReg());
           }
       }
 
@@ -648,8 +647,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
   // same stack slot, the original store is deleted.
   std::map<int, MachineInstr*> MaybeDeadStores;
 
-  bool *PhysRegsUsed = MBB.getParent()->getUsedPhysregs();
-
+  MachineFunction &MF = *MBB.getParent();
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
     MachineInstr &MI = *MII;
@@ -688,7 +686,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
     const unsigned *ImpDef = TID->ImplicitDefs;
     if (ImpDef) {
       for ( ; *ImpDef; ++ImpDef) {
-        PhysRegsUsed[*ImpDef] = true;
+        MF.setPhysRegUsed(*ImpDef);
         ReusedOperands.markClobbered(*ImpDef);
         Spills.ClobberPhysReg(*ImpDef);
       }
@@ -703,7 +701,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       if (MRegisterInfo::isPhysicalRegister(MO.getReg())) {
         // Ignore physregs for spilling, but remember that it is used by this
         // function.
-        PhysRegsUsed[MO.getReg()] = true;
+        MF.setPhysRegUsed(MO.getReg());
         ReusedOperands.markClobbered(MO.getReg());
         continue;
       }
@@ -715,7 +713,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       if (!VRM.hasStackSlot(VirtReg)) {
         // This virtual register was assigned a physreg!
         unsigned Phys = VRM.getPhys(VirtReg);
-        PhysRegsUsed[Phys] = true;
+        MF.setPhysRegUsed(Phys);
         if (MO.isDef())
           ReusedOperands.markClobbered(Phys);
         MI.getOperand(i).setReg(Phys);
@@ -842,10 +840,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           continue;
         }
         
-        const TargetRegisterClass* RC =
-          MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
-
-        PhysRegsUsed[DesignatedReg] = true;
+        const TargetRegisterClass* RC = MF.getSSARegMap()->getRegClass(VirtReg);
+        MF.setPhysRegUsed(DesignatedReg);
         ReusedOperands.markClobbered(DesignatedReg);
         MRI->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC);
 
@@ -883,8 +879,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       // Otherwise, reload it and remember that we have it.
       PhysReg = VRM.getPhys(VirtReg);
       assert(PhysReg && "Must map virtreg to physreg!");
-      const TargetRegisterClass* RC =
-        MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
+      const TargetRegisterClass* RC = MF.getSSARegMap()->getRegClass(VirtReg);
 
       // Note that, if we reused a register for a previous operand, the
       // register we want to reload into might not actually be
@@ -894,7 +889,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
                                                  Spills, MaybeDeadStores);
       
-      PhysRegsUsed[PhysReg] = true;
+      MF.setPhysRegUsed(PhysReg);
       ReusedOperands.markClobbered(PhysReg);
       if (doReMat) {
         MRI->reMaterialize(MBB, &MI, PhysReg, VRM.getReMaterializedMI(VirtReg));
@@ -947,7 +942,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
             MachineInstr *SSMI = NULL;
             if (unsigned InReg = Spills.getSpillSlotPhysReg(SS, SSMI)) {
               DOUT << "Promoted Load To Copy: " << MI;
-              MachineFunction &MF = *MBB.getParent();
               if (DestReg != InReg) {
                 MRI->copyRegToReg(MBB, &MI, DestReg, InReg,
                                   MF.getSSARegMap()->getRegClass(VirtReg));
@@ -1081,8 +1075,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
 
         // The only vregs left are stack slot definitions.
         int StackSlot = VRM.getStackSlot(VirtReg);
-        const TargetRegisterClass *RC =
-          MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
+        const TargetRegisterClass *RC = MF.getSSARegMap()->getRegClass(VirtReg);
 
         // If this def is part of a two-address operand, make sure to execute
         // the store from the correct physical register.
@@ -1100,7 +1093,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           }
         }
 
-        PhysRegsUsed[PhysReg] = true;
+        MF.setPhysRegUsed(PhysReg);
         ReusedOperands.markClobbered(PhysReg);
         MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
         DOUT << "Store:\t" << *next(MII);

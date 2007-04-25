@@ -350,9 +350,6 @@ BitVector ARMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // Some targets reserve R9.
   if (STI.isR9Reserved())
     Reserved.set(ARM::R9);
-  // At PEI time, if LR is used, it will be spilled upon entry.
-  if (MF.getUsedPhysregs() && !MF.isPhysRegUsed((unsigned)ARM::LR))
-    Reserved.set(ARM::LR);
   return Reserved;
 }
 
@@ -1094,7 +1091,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
     // Spill LR as well so we can fold BX_RET to the registers restore (LDM).
     if (!LRSpilled && CS1Spilled) {
-      MF.changePhyRegUsed(ARM::LR, true);
+      MF.setPhysRegUsed(ARM::LR);
       AFI->setCSRegisterIsSpilled(ARM::LR);
       NumGPRSpills++;
       UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
@@ -1106,7 +1103,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // Darwin ABI requires FP to point to the stack slot that contains the
     // previous FP.
     if (STI.isTargetDarwin() || hasFP(MF)) {
-      MF.changePhyRegUsed(FramePtr, true);
+      MF.setPhysRegUsed(FramePtr);
       NumGPRSpills++;
     }
 
@@ -1117,13 +1114,13 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     if (TargetAlign == 8 && (NumGPRSpills & 1)) {
       if (CS1Spilled && !UnspilledCS1GPRs.empty()) {
         unsigned Reg = UnspilledCS1GPRs.front();
-        MF.changePhyRegUsed(Reg, true);
+        MF.setPhysRegUsed(Reg);
         AFI->setCSRegisterIsSpilled(Reg);
         if (!isReservedReg(MF, Reg))
           ExtraCSSpill = true;
       } else if (!UnspilledCS2GPRs.empty()) {
         unsigned Reg = UnspilledCS2GPRs.front();
-        MF.changePhyRegUsed(Reg, true);
+        MF.setPhysRegUsed(Reg);
         AFI->setCSRegisterIsSpilled(Reg);
         if (!isReservedReg(MF, Reg))
           ExtraCSSpill = true;
@@ -1178,7 +1175,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
         }
         if (Extras.size() && NumExtras == 0) {
           for (unsigned i = 0, e = Extras.size(); i != e; ++i) {
-            MF.changePhyRegUsed(Extras[i], true);
+            MF.setPhysRegUsed(Extras[i]);
             AFI->setCSRegisterIsSpilled(Extras[i]);
           }
         } else {
@@ -1192,7 +1189,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 
   if (ForceLRSpill) {
-    MF.changePhyRegUsed(ARM::LR, true);
+    MF.setPhysRegUsed(ARM::LR);
     AFI->setCSRegisterIsSpilled(ARM::LR);
     AFI->setLRIsSpilledForFarJump(true);
   }
