@@ -776,8 +776,6 @@ unsigned RA::getFreePhysReg(LiveInterval *cur) {
     }
   }
 
-  const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
-
   unsigned FreeReg = 0;
   unsigned FreeRegInactiveCount = 0;
 
@@ -793,8 +791,8 @@ unsigned RA::getFreePhysReg(LiveInterval *cur) {
            << mri_->getName(cur->preference) << "\n";
 
   // Scan for the first available register.
-  TargetRegisterClass::iterator I = rc->allocation_order_begin(*mf_);
-  TargetRegisterClass::iterator E = rc->allocation_order_end(*mf_);
+  TargetRegisterClass::iterator I = RC->allocation_order_begin(*mf_);
+  TargetRegisterClass::iterator E = RC->allocation_order_end(*mf_);
   for (; I != E; ++I)
     if (prt_->isRegAvail(*I)) {
       FreeReg = *I;
