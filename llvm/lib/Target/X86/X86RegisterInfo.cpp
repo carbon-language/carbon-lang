@@ -1016,7 +1016,8 @@ void
 X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF) const{
   if (hasFP(MF)) {
     // Create a frame entry for the EBP register that must be saved.
-    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(SlotSize,SlotSize * -2);
+    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(SlotSize,
+                                                        (int)SlotSize * -2);
     assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
            "Slot for EBP register must be last in order to be found!");
   }
