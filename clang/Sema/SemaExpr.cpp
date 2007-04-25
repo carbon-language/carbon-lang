@@ -409,6 +409,40 @@ QualType Sema::UsualUnaryConversion(QualType t) {
   return t;
 }
 
+/// GetIntegerRank - Helper function for UsualArithmeticConversions().
+static inline int GetIntegerRank(QualType t) {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
+    switch (BT->getKind()) {
+    case BuiltinType::SChar:
+    case BuiltinType::UChar:
+      return 1;
+    case BuiltinType::Short:
+    case BuiltinType::UShort:
+      return 2;
+    case BuiltinType::Int:
+    case BuiltinType::UInt:
+      return 3;
+    case BuiltinType::Long:
+    case BuiltinType::ULong:
+      return 4;
+    case BuiltinType::LongLong:
+    case BuiltinType::ULongLong:
+      return 5;
+    default:
+      assert(0 && "getFloatingPointRank(): not a floating type");
+    }
+  }
+  return 0;
+}
+
+static inline QualType ConvertSignedWithGreaterRankThanUnsigned(
+  QualType signedType, QualType unsignedType) {
+  // FIXME: Need to check if the signed type can represent all values of the 
+  // unsigned type. If it can, then the result is the signed type. If it can't, 
+  // then the result is the unsigned version of the signed type.
+  return signedType; 
+}
+
 /// GetFloatingRank - Helper function for UsualArithmeticConversions().
 static inline int GetFloatingRank(QualType t) {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
@@ -501,16 +535,21 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
     // we have two real floating types, float/complex combos were handled above.
     return GetFloatingRank(lhs) >= GetFloatingRank(rhs) ? lhs : rhs;
   }
-  // Lastly, handle two integers.
+  // Lastly, handle two integers (C99 6.3.1.8p1)
   bool t1Unsigned = lhs->isUnsignedIntegerType();
   bool t2Unsigned = rhs->isUnsignedIntegerType();
   
-  if (t1Unsigned && t2Unsigned)
-    return lhs; // FIXME: return the unsigned type with the greatest rank
-  else if (!t1Unsigned && !t2Unsigned)
-    return lhs; // FIXME: return the signed type with the greatest rank
+  if ((t1Unsigned && t2Unsigned) || (!t1Unsigned && !t2Unsigned))
+    return GetIntegerRank(lhs) >= GetIntegerRank(rhs) ? lhs : rhs; 
+  
+  // We have two integer types with differing signs
+  QualType unsignedType = t1Unsigned ? lhs : rhs;
+  QualType signedType = t1Unsigned ? rhs : lhs;
+  
+  if (GetIntegerRank(unsignedType) >= GetIntegerRank(signedType))
+    return unsignedType;
   else 
-    return lhs; // FIXME: we have a mixture...
+    return ConvertSignedWithGreaterRankThanUnsigned(signedType, unsignedType); 
 }
 
 Action::ExprResult Sema::CheckMultiplicativeOperands(

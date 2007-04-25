@@ -72,18 +72,13 @@ bool Type::isUnionType() const {
 }
 
 bool Type::isIntegerType() const {
-  switch (CanonicalType->getTypeClass()) {
-  default: return false;
-  case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::ULongLong;
-  case Tagged:
-    const TagType *TT = static_cast<TagType*>(CanonicalType.getTypePtr());
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
-    return false;
-  }
+  return false;
 }
 
 bool Type::isSignedIntegerType() const {
@@ -115,19 +110,13 @@ bool Type::isRealFloatingType() const {
 }
 
 bool Type::isRealType() const {
-  // this is equivalent to (isIntegerType() || isRealFloatingType()).
-  switch (CanonicalType->getTypeClass()) { // inlined for performance
-  default: return false;
-  case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDouble;
-  case Tagged:
-    const TagType *TT = static_cast<TagType*>(CanonicalType.getTypePtr());
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
-    return false;
-  }
+  return false;
 }
 
 bool Type::isComplexType() const {
@@ -145,28 +134,17 @@ bool Type::isArithmeticType() const {
 }
 
 bool Type::isScalarType() const {
-  switch (CanonicalType->getTypeClass()) {
-  default: return false;
-  case Builtin:
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDoubleComplex;
-  case Pointer:
-    return true;
-  }
+  return CanonicalType->getTypeClass() == Pointer;
 }
 
 bool Type::isAggregateType() const {
-  switch (CanonicalType->getTypeClass()) {
-  default: return false;
-  case Array:
-    return true;
-  case Tagged:
-    const TagType *TT = static_cast<TagType*>(CanonicalType.getTypePtr());
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Struct)
       return true;
-    return true;
-  }
+  return CanonicalType->getTypeClass() == Array;
 }
 
 
@@ -202,8 +180,7 @@ bool Type::isLvalue() const {
 }
 
 bool Type::isPromotableIntegerType() const {
-  if (CanonicalType->getTypeClass() == Builtin) {
-    const BuiltinType *BT = static_cast<BuiltinType*>(CanonicalType.getTypePtr());
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
     switch (BT->getKind()) {
       case BuiltinType::Bool:
       case BuiltinType::Char:
