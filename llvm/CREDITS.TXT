@@ -108,7 +108,7 @@ D: Support for packed types
 
 N: Dale Johannesen
 E: dalej@apple.com
-D: ARM constant islands improvments
+D: ARM constant islands improvements
 
 N: Eric Kidd
 W: http://randomhacks.net/
