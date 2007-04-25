@@ -239,6 +239,9 @@
 				RelativePath="..\..\include\llvm\Function.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\GlobalAlias.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\GlobalValue.h">
 			</File>
 			<File
