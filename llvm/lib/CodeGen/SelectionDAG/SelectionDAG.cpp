@@ -1294,13 +1294,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
           double   F;
           uint64_t I;
         } u1;
-        union {
-          double  F;
-          int64_t I;
-        } u2;
         u1.F = C1;
-        u2.F = C2;
-        if (u2.I < 0)  // Sign bit of RHS set?
+        if (int64_t(DoubleToBits(C2)) < 0)  // Sign bit of RHS set?
           u1.I |= 1ULL << 63;      // Set the sign bit of the LHS.
         else 
           u1.I &= (1ULL << 63)-1;  // Clear the sign bit of the LHS.
@@ -1336,7 +1331,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       case ISD::SREM:
       case ISD::SRL:
       case ISD::SHL:
-        return getConstant(0, VT);    // fold op(undef, arg2) -> 0
+        if (!MVT::isVector(VT)) 
+          return getConstant(0, VT);    // fold op(undef, arg2) -> 0
+        // For vectors, we can't easily build an all zero vector, just return
+        // the LHS.
+        return N2;
       }
     }
   }
@@ -1363,9 +1362,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::AND:
     case ISD::SRL:
     case ISD::SHL:
-      return getConstant(0, VT);  // fold op(arg1, undef) -> 0
+      if (!MVT::isVector(VT)) 
+        return getConstant(0, VT);  // fold op(arg1, undef) -> 0
+      // For vectors, we can't easily build an all zero vector, just return
+      // the LHS.
+      return N1;
     case ISD::OR:
-      return getConstant(MVT::getIntVTBitMask(VT), VT);
+      if (!MVT::isVector(VT)) 
+        return getConstant(MVT::getIntVTBitMask(VT), VT);
+      // For vectors, we can't easily build an all one vector, just return
+      // the LHS.
+      return N1;
     case ISD::SRA:
       return N1;
     }
